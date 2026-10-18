@@ -76,6 +76,10 @@ use crate::{
     islands::{island_seed, next_seeds, Champion},
     prepare::Cut,
     receipt::Phase,
+    search_events::{
+        self, BehaviorLaw, EditTransition, Effort, EvidenceRef, Recorder, SearchBinding,
+        SearchDecision, SearchEvent, SearchEventLog,
+    },
     sha256_hex,
 };
 
@@ -171,6 +175,10 @@ pub struct SearchOptions {
     /// once set, nothing new starts, in-flight fits finish, and the search returns
     /// [`crate::parallel::Cancelled`] without publishing the interrupted cut.
     pub cancel: Option<Arc<AtomicBool>>,
+    /// Additive sidecar recording. Disable only for observational parity/control runs.
+    pub record_events: bool,
+    /// Original run/role/profile bindings, when supplied by the admitted caller.
+    pub event_binding: Option<SearchBinding>,
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -187,6 +195,8 @@ impl SearchOptions {
             migration_interval: DEFAULT_MIGRATION_INTERVAL,
             clock: Clock::Wall,
             cancel: None,
+            record_events: true,
+            event_binding: None,
         }
     }
 
@@ -451,6 +461,7 @@ fn migrate(
     cut: usize,
     after_generation: usize,
     events: &mut Vec<crate::receipt::Migration>,
+    recorder: Option<&Recorder>,
 ) {
     let tops: Vec<(usize, Champion)> = islands
         .iter()
@@ -472,6 +483,20 @@ fn migrate(
             let admitted = !before.contains(&champion.genome)
                 && counted.insert(champion.genome.clone())
                 && island.survivors.iter().any(|c| c.genome == champion.genome);
+            record_draw(
+                recorder,
+                format!("migration/{after_generation}/{from}/{to}"),
+                "migration",
+                Some(&champion.genome),
+                None,
+                &[],
+                if admitted {
+                    "migration_admitted"
+                } else {
+                    "migration_rejected"
+                },
+                None,
+            );
             events.push(crate::receipt::Migration {
                 cut: cut as u64,
                 after_generation: after_generation as u64,
@@ -597,6 +622,7 @@ pub(crate) fn evaluate(
 
 /// Draw one offspring from the scored survivors, preferring one this cut has not
 /// already measured. Falls back to a mutation of the best, then to the bootstrap.
+#[cfg(test)]
 fn offspring(
     parents: &[Scored],
     seen: &BTreeSet<String>,
@@ -605,49 +631,199 @@ fn offspring(
     generation: usize,
     slot: usize,
 ) -> (String, &'static str) {
-    // Nothing measured yet on this cut, so there is nothing to mutate or cross:
-    // every slot is a fresh grammar-random draw. (Reachable when a whole
-    // generation failed to fit but the budget still allows more candidates.)
+    let (genome, origin, _) =
+        offspring_recorded(parents, seen, rng_seed, cut, generation, slot, 0, None);
+    (genome, origin)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn offspring_recorded(
+    parents: &[Scored],
+    seen: &BTreeSet<String>,
+    rng_seed: u64,
+    cut: usize,
+    generation: usize,
+    slot: usize,
+    island: usize,
+    recorder: Option<&Recorder>,
+) -> (String, &'static str, Option<String>) {
+    let coordinate = |attempt| format!("exploration/{generation}/{island}/{slot}/{attempt}");
     if parents.is_empty() {
         let seed = stream(rng_seed, cut, generation, slot, 0);
-        return (
-            evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS),
+        let genome = evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS);
+        let draw = record_draw(
+            recorder,
+            coordinate(0),
             "random",
+            Some(&genome),
+            Some(seed),
+            &[],
+            "candidate",
+            None,
         );
+        return (genome, "random", draw);
     }
     for attempt in 0..DISTINCT_CHILD_ATTEMPTS {
         let seed = stream(rng_seed, cut, generation, slot, attempt as u64);
-        // Crossover whenever there are two parents to cross, mutation otherwise;
-        // alternating on the slot keeps both operators in every generation.
-        let (child, origin) = if parents.len() >= 2 && slot.is_multiple_of(2) {
+        let (child, origin, selected) = if parents.len() >= 2 && slot.is_multiple_of(2) {
             let left = &parents[(seed as usize) % parents.len()].genome;
             let right = &parents[((seed >> 17) as usize) % parents.len()].genome;
             (
                 evolve::crossover_canonical_pipelines(left, right, seed, MAX_TRANSFORMS),
                 "crossover",
+                vec![left.as_str(), right.as_str()],
             )
         } else {
             let parent = &parents[(seed as usize) % parents.len()].genome;
             (
                 evolve::mutate_canonical_pipeline(parent, seed, MAX_TRANSFORMS),
                 "mutate",
+                vec![parent.as_str()],
             )
         };
         match child {
-            Ok(child) if !seen.contains(&child) => return (child, origin),
-            // A drawn duplicate or an operator that could not apply: try another
-            // stream rather than spending a fit on a genome already measured.
-            _ => continue,
+            Ok(child) => {
+                let duplicate = seen.contains(&child);
+                let draw = record_draw(
+                    recorder,
+                    coordinate(attempt),
+                    origin,
+                    Some(&child),
+                    Some(seed),
+                    &selected,
+                    if duplicate { "duplicate" } else { "candidate" },
+                    None,
+                );
+                if !duplicate {
+                    return (child, origin, draw);
+                }
+            }
+            Err(error) => {
+                record_draw(
+                    recorder,
+                    coordinate(attempt),
+                    origin,
+                    None,
+                    Some(seed),
+                    &selected,
+                    "operator_failed",
+                    Some(error.to_string()),
+                );
+            }
         }
     }
-    // Every attempt collided. Spend the slot on a fresh grammar-random pipeline
-    // rather than re-measuring: it is the one draw that does not depend on the
-    // population at all.
     let seed = stream(rng_seed, cut, generation, slot, 0xFFFF);
-    (
-        evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS),
-        "random",
-    )
+    let genome = evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS);
+    let draw = record_draw(
+        recorder,
+        coordinate(DISTINCT_CHILD_ATTEMPTS),
+        "random_fallback",
+        Some(&genome),
+        Some(seed),
+        &[],
+        "candidate",
+        None,
+    );
+    (genome, "random", draw)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn record_draw(
+    recorder: Option<&Recorder>,
+    coordinate: String,
+    source: &str,
+    genome: Option<&str>,
+    seed: Option<u64>,
+    parents: &[&str],
+    outcome: &str,
+    detail: Option<String>,
+) -> Option<String> {
+    recorder.and_then(|recorder| recorder.update(|log| {
+        let canonical = genome.and_then(search_events::canonical_recipe);
+        let program = genome.map(|g| sha256_hex(g.as_bytes()));
+        let request_id = program.as_ref().map(|g| log.request_id(g, &canonical)).transpose()?;
+        let behavior_law = if matches!(source, BOOTSTRAP | INCUMBENT | REMEASURE | "migration") {
+            BehaviorLaw::NotApplicable { reason: "deterministic population insertion/reuse; no sampled child probability".into() }
+        } else { BehaviorLaw::Unknown { reason: "actual marginal program law has not been reconstructed; seed/parent likelihood is not child density".into() } };
+        let draw = log.append(SearchEvent::Draw { decision: SearchDecision {
+            schema: search_events::DECISION_SCHEMA.into(), coordinate: coordinate.clone(), source: source.into(), seed_hex: seed.map(|s| format!("{s:016x}")),
+            program_sha256: program, canonical_sha256: canonical.clone(), request_id, outcome: outcome.into(), detail: detail.clone(), behavior_law,
+            proposal_cost: Effort::unknown("proposal stage not timed independently; no evaluation cost implied"),
+        } })?;
+        if matches!(source, "mutate" | "crossover" | "random_fallback") {
+            let parent_hashes: Vec<_> = parents.iter().map(|p| sha256_hex(p.as_bytes())).collect();
+            log.append(SearchEvent::Edit { transition: EditTransition {
+                schema: search_events::EDIT_SCHEMA.into(), draw_id: draw.clone(), donor: if source == "crossover" { parent_hashes.get(1).cloned() } else { None },
+                parents: parent_hashes, parent_canonical_sha256: parents.iter().map(|p| search_events::canonical_recipe(p)).collect(),
+                sibling_group: coordinate.rsplit_once('/').map(|(group,_)| group).unwrap_or(&coordinate).into(), operator: source.into(),
+                parameters: [("max_transforms".into(), MAX_TRANSFORMS.to_string()), ("stream_seed_hex".into(), seed.map(|s| format!("{s:016x}")).unwrap_or_default())].into(),
+                post_canonical_sha256: canonical.clone(), legal: canonical.is_some(), refusal: if canonical.is_none() { Some(detail.unwrap_or_else(|| "parser refused operator output".into())) } else { None },
+            } })?;
+        }
+        Ok(draw)
+    }))
+}
+
+fn admission(recorder: Option<&Recorder>, draw: &Option<String>, disposition: &str) {
+    if let (Some(recorder), Some(draw)) = (recorder, draw) {
+        recorder.update(|log| {
+            log.append(SearchEvent::Admission {
+                draw_id: draw.clone(),
+                disposition: disposition.into(),
+            })
+        });
+    }
+}
+
+fn record_evaluation(
+    recorder: Option<&Recorder>,
+    draw: &Option<String>,
+    evaluate: impl FnOnce() -> Observation,
+) -> Observation {
+    let attempt = recorder.and_then(|r| {
+        draw.as_ref()
+            .and_then(|d| r.update(|log| log.start(d, 1, None)))
+    });
+    let observation = evaluate();
+    if let (Some(recorder), Some(attempt_id)) = (recorder, attempt) {
+        recorder.update(|log| {
+            log.append(SearchEvent::Finished {
+                attempt_id,
+                status: observation.status.into(),
+                reason: observation.failure.clone(),
+                observation_sha256: Some(sha256_hex(&serde_json::to_vec(&observation)?)),
+                cost: Effort::wall(observation.seconds)?,
+            })
+        });
+    }
+    observation
+}
+
+fn search_recorder(cut: &Cut, options: &SearchOptions, output: &Path) -> Result<Option<Recorder>> {
+    if !options.record_events {
+        return Ok(None);
+    }
+    let context = search_events::cut_context_sha256(cut)?;
+    let binding = options.event_binding.clone().unwrap_or_else(|| SearchBinding {
+        run_id: sha256_hex(output.to_string_lossy().as_bytes()), task: "regression".into(),
+        experiment: EvidenceRef::unknown("legacy search caller supplied no experiment manifest"),
+        role_exposure: EvidenceRef::unknown("legacy search caller supplied no authenticated I04 exposure receipt; observation grants no replay eligibility"),
+        context_sha256: context.clone(), source_sha256: search_events::source_sha256(),
+        evaluator: EvidenceRef::unknown("legacy evaluator identity not provided by caller"),
+        profile: EvidenceRef::unknown("legacy GP does not select a registered SearchProfile ID/revision"),
+        legal_set: EvidenceRef::unknown("legacy canonical pipeline grammar has no adopted legal-set receipt"),
+        fidelity: "full-cut-fit-and-heldout-score".into(),
+    });
+    // A caller binding must identify these exact numerical inputs, never a different cut.
+    ensure!(
+        binding.context_sha256 == context,
+        "search-event context differs from actual cut inputs"
+    );
+    ensure!(
+        binding.source_sha256 == search_events::source_sha256(),
+        "search-event source differs from actual implementation"
+    );
+    Ok(Some(Recorder::new(SearchEventLog::new(binding)?)))
 }
 
 /// Run one cut's search and publish its evidence under `output` (sequentially, on the
@@ -722,14 +898,16 @@ pub fn run_cuts_with(
 /// pool, every result lands back in its slot, whatever order the threads finished in. Each
 /// worker reads the clock for its own candidate, so once the deadline passes mid-batch, which
 /// slots started depends on timing and on the worker count.
+#[allow(clippy::too_many_arguments)]
 fn evaluate_admitted(
-    admitted: &[(usize, String, &'static str)],
+    admitted: &[(usize, String, &'static str, Option<String>)],
     cut: &Cut,
     generation: usize,
     options: &SearchOptions,
     pool: Option<&rayon::ThreadPool>,
     started: Stamp,
     deadline: Duration,
+    recorder: Option<&Recorder>,
 ) -> Vec<Option<Observation>> {
     let clock = options.clock;
     // A stop request is honoured exactly where the seconds bound is: before a fit starts.
@@ -739,11 +917,15 @@ fn evaluate_admitted(
     match pool {
         None => {
             let mut results = Vec::with_capacity(admitted.len());
-            for (_, genome, origin) in admitted {
+            for (island, genome, origin, draw) in admitted {
                 if !may_start(origin) {
                     break;
                 }
-                results.push(Some(evaluate(genome, cut, generation, origin, clock)));
+                results.push(Some(record_evaluation(recorder, draw, || {
+                    let mut observation = evaluate(genome, cut, generation, origin, clock);
+                    observation.island = (options.islands > 1).then_some(*island);
+                    observation
+                })));
             }
             results.resize(admitted.len(), None);
             results
@@ -751,8 +933,14 @@ fn evaluate_admitted(
         Some(pool) => pool.install(|| {
             admitted
                 .par_iter()
-                .map(|(_, genome, origin)| {
-                    may_start(origin).then(|| evaluate(genome, cut, generation, origin, clock))
+                .map(|(island, genome, origin, draw)| {
+                    may_start(origin).then(|| {
+                        record_evaluation(recorder, draw, || {
+                            let mut observation = evaluate(genome, cut, generation, origin, clock);
+                            observation.island = (options.islands > 1).then_some(*island);
+                            observation
+                        })
+                    })
                 })
                 .collect()
         }),
@@ -773,6 +961,9 @@ fn run_cut_allocated(
         "{}: a completed search is already published here",
         output.display()
     );
+    ensure!(!output.join("search-events.json").exists(), "{}: previous search-event evidence already exists; preserve it and use a new run destination", output.display());
+    let recorder = search_recorder(cut, options, output)?;
+    let recorder = recorder.as_ref();
     let started = clock.start();
     let evaluation_limit = exploration_limit(budget, if reserve { 2 } else { 1 });
     let seconds_limit = budget.seconds as f64 / if reserve { 2.0 } else { 1.0 };
@@ -799,33 +990,64 @@ fn run_cut_allocated(
         // are never re-fitted, so a slot here is always an unmeasured genome.
         // With islands, each island draws its own generation from its own stream,
         // in island order.
-        let mut candidates: Vec<(usize, String, &'static str)> = Vec::new();
+        let mut candidates: Vec<(usize, String, &'static str, Option<String>)> = Vec::new();
         for (index, island) in islands.iter().enumerate() {
             if generation == 0 {
-                candidates.push((index, BOOTSTRAP_GENOME.to_owned(), BOOTSTRAP));
+                let draw = record_draw(
+                    recorder,
+                    format!("exploration/0/{index}/bootstrap"),
+                    BOOTSTRAP,
+                    Some(BOOTSTRAP_GENOME),
+                    None,
+                    &[],
+                    "candidate",
+                    None,
+                );
+                candidates.push((index, BOOTSTRAP_GENOME.to_owned(), BOOTSTRAP, draw));
                 // Seeds follow the bootstrap and precede every random draw, so a budget that
                 // admits generation 0 at all re-measures them first; the random slots are the
                 // unseeded search's own draws, unchanged.
-                candidates.extend(options.seeds.iter().map(|g| (index, g.clone(), INCUMBENT)));
+                candidates.extend(options.seeds.iter().enumerate().map(|(slot, g)| {
+                    let draw = record_draw(
+                        recorder,
+                        format!("exploration/0/{index}/incumbent/{slot}"),
+                        INCUMBENT,
+                        Some(g),
+                        None,
+                        &[],
+                        "candidate",
+                        None,
+                    );
+                    (index, g.clone(), INCUMBENT, draw)
+                }));
                 for slot in 1..POPULATION {
                     let seed = stream(island.rng_seed, cut.index, 0, slot, 0);
-                    candidates.push((
-                        index,
-                        evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS),
+                    let genome = evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS);
+                    let draw = record_draw(
+                        recorder,
+                        format!("exploration/0/{index}/{slot}/0"),
                         "random",
-                    ));
+                        Some(&genome),
+                        Some(seed),
+                        &[],
+                        "candidate",
+                        None,
+                    );
+                    candidates.push((index, genome, "random", draw));
                 }
             } else {
                 candidates.extend((island.survivors.len()..POPULATION).map(|slot| {
-                    let (genome, origin) = offspring(
+                    let (genome, origin, draw) = offspring_recorded(
                         &island.survivors,
                         &seen,
                         island.rng_seed,
                         cut.index,
                         generation,
                         slot,
+                        index,
+                        recorder,
                     );
-                    (index, genome, origin)
+                    (index, genome, origin, draw)
                 }));
             }
         }
@@ -835,35 +1057,49 @@ fn run_cut_allocated(
         // with its checks in its order — the evaluation bound, then the seconds bound, then
         // "never fit a genome twice on one cut". The seconds bound is checked again before each
         // fit starts (`evaluate_admitted`).
-        let mut admitted: Vec<(usize, String, &'static str)> = Vec::new();
+        let mut admitted: Vec<(usize, String, &'static str, Option<String>)> = Vec::new();
         // Another island's draw of a genome this cut already measured: it joins that island's
         // candidates with its existing score instead of being fitted again.
         let mut shared: Vec<(usize, String)> = Vec::new();
         let mut bound = None;
-        for (island, genome, origin) in candidates {
+        let mut candidates = candidates.into_iter();
+        while let Some((island, genome, origin, draw)) = candidates.next() {
             if evaluations + admitted.len() >= evaluation_limit {
                 bound = Some(STOPPED_BY_EVALUATIONS);
+                admission(recorder, &draw, STOPPED_BY_EVALUATIONS);
                 break;
             }
             if !seconds_exempt(generation, origin) && started.elapsed() >= deadline {
                 bound = Some(STOPPED_BY_SECONDS);
+                admission(recorder, &draw, STOPPED_BY_SECONDS);
                 break;
             }
             if !seen.insert(genome.clone()) {
+                admission(recorder, &draw, "duplicate");
                 if multi {
                     shared.push((island, genome));
                 }
                 continue;
             }
-            admitted.push((island, genome, origin));
+            admission(recorder, &draw, "admitted");
+            admitted.push((island, genome, origin, draw));
+        }
+        for (_, _, _, draw) in candidates {
+            admission(recorder, &draw, bound.unwrap_or("cancelled"));
+        }
+        if options.cancelled() {
+            if let Some(recorder) = recorder {
+                recorder.publish(output)?;
+            }
         }
         options.check_cancelled()?;
-        let results =
-            evaluate_admitted(&admitted, cut, generation, options, pool, started, deadline);
+        let results = evaluate_admitted(
+            &admitted, cut, generation, options, pool, started, deadline, recorder,
+        );
         // The fold, in slot order: survivors and observations never depend on which worker
         // finished first.
         let mut late = false;
-        for ((island, genome, _), result) in admitted.into_iter().zip(results) {
+        for ((island, genome, _, _), result) in admitted.into_iter().zip(results) {
             let Some(mut observation) = result else {
                 late = true;
                 continue;
@@ -877,6 +1113,11 @@ fn run_cut_allocated(
         }
         // Stopped between evaluations: nothing of this cut is published, and the run that
         // asked for it writes no receipt.
+        if options.cancelled() {
+            if let Some(recorder) = recorder {
+                recorder.publish(output)?;
+            }
+        }
         options.check_cancelled()?;
         if late {
             break 'search STOPPED_BY_SECONDS;
@@ -917,12 +1158,21 @@ fn run_cut_allocated(
             && options.migration_interval > 0
             && (generation + 1).is_multiple_of(options.migration_interval)
         {
-            migrate(&mut islands, cut.index, generation, &mut migrations);
+            migrate(
+                &mut islands,
+                cut.index,
+                generation,
+                &mut migrations,
+                recorder,
+            );
         }
         generation += 1;
     };
 
     let seconds = started.elapsed().as_secs_f64();
+    if let Some(recorder) = recorder {
+        recorder.publish(output)?;
+    }
     let successful = observations.iter().filter(|o| o.measured()).count() as u64;
     let failed = observations.len() as u64 - successful;
 
@@ -1026,27 +1276,46 @@ fn remeasure_in(
     let Some(genomes) = open_comparison(cuts, searches)? else {
         return Ok(());
     };
+    let recorders = comparison_recorders(searches)?;
     let clock = options.clock;
     let stop = || options.cancelled();
     match pool {
         None => {
-            for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
-                remeasure_cut(cut, search, &genomes, clock, &stop, &mut |g, c, n, o| {
-                    evaluate(g, c, n, o, clock)
-                });
+            for ((cut, search), recorder) in cuts.iter().zip(searches.iter_mut()).zip(&recorders) {
+                remeasure_cut(
+                    cut,
+                    search,
+                    &genomes,
+                    clock,
+                    &stop,
+                    recorder.as_ref(),
+                    &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                );
             }
         }
         Some(pool) => pool.install(|| {
             cuts.par_iter()
                 .zip(searches.par_iter_mut())
-                .for_each(|(cut, search)| {
-                    remeasure_cut(cut, search, &genomes, clock, &stop, &mut |g, c, n, o| {
-                        evaluate(g, c, n, o, clock)
-                    })
+                .zip(recorders.par_iter())
+                .for_each(|((cut, search), recorder)| {
+                    remeasure_cut(
+                        cut,
+                        search,
+                        &genomes,
+                        clock,
+                        &stop,
+                        recorder.as_ref(),
+                        &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                    )
                 })
         }),
     }
-    // Stopped mid-comparison: the cuts' comparison phases are incomplete, so none is published.
+    for (search, recorder) in searches.iter().zip(&recorders) {
+        if let Some(recorder) = recorder {
+            recorder.publish(&search.output)?;
+        }
+    }
+    // Stopped mid-comparison: preserve attempt evidence without publishing a completed cut.
     options.check_cancelled()?;
     close_comparison(searches)
 }
@@ -1060,15 +1329,20 @@ fn remeasure_with(
     let Some(genomes) = open_comparison(cuts, searches)? else {
         return Ok(());
     };
-    for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
+    let recorders = comparison_recorders(searches)?;
+    for ((cut, search), recorder) in cuts.iter().zip(searches.iter_mut()).zip(&recorders) {
         remeasure_cut(
             cut,
             search,
             &genomes,
             Clock::Wall,
             &|| false,
+            recorder.as_ref(),
             &mut evaluate_candidate,
         );
+        if let Some(recorder) = recorder {
+            recorder.publish(&search.output)?;
+        }
     }
     close_comparison(searches)
 }
@@ -1137,17 +1411,34 @@ fn open_comparison(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<Option<Ve
     Ok(Some(pool))
 }
 
+fn comparison_recorders(searches: &[CutSearch]) -> Result<Vec<Option<Recorder>>> {
+    searches
+        .iter()
+        .map(|s| {
+            let path = s.output.join("search-events.json");
+            if !path.exists() {
+                return Ok(None);
+            } // Explicit legacy/no-logging route.
+            let log = SearchEventLog::from_bytes(&std::fs::read(path)?)?;
+            log.reconcile()?;
+            Ok(Some(Recorder::new(log)))
+        })
+        .collect()
+}
+
 /// One cut's comparison: the pool in order, each genome this cut has not attempted, while its
 /// total evaluation and seconds allowances last.
+#[allow(clippy::too_many_arguments)]
 fn remeasure_cut(
     cut: &Cut,
     search: &mut CutSearch,
     pool: &[String],
     clock: Clock,
     stop: &(dyn Fn() -> bool + Sync),
+    recorder: Option<&Recorder>,
     evaluate_candidate: &mut dyn FnMut(&str, &Cut, usize, &'static str) -> Observation,
 ) {
-    for genome in pool {
+    for (slot, genome) in pool.iter().enumerate() {
         if stop() {
             return;
         }
@@ -1155,12 +1446,33 @@ fn remeasure_cut(
         // Failed attempts count and are never retried on the same cut.
         let already = search.observations.iter().any(|o| &o.genome == genome);
         let elapsed = search.seconds + started.secs();
+        let draw = record_draw(
+            recorder,
+            format!("comparison/{slot}"),
+            REMEASURE,
+            Some(genome),
+            None,
+            &[],
+            if already { "duplicate" } else { "candidate" },
+            None,
+        );
+        let disposition = if already {
+            "duplicate"
+        } else if search.completed_evaluations >= search.budget.evaluations as u64 {
+            STOPPED_BY_EVALUATIONS
+        } else if elapsed >= search.budget.seconds as f64 {
+            STOPPED_BY_SECONDS
+        } else {
+            "admitted"
+        };
+        admission(recorder, &draw, disposition);
         if !already
             && search.completed_evaluations < search.budget.evaluations as u64
             && elapsed < search.budget.seconds as f64
         {
-            let observation =
-                evaluate_candidate(genome, cut, search.generations as usize, REMEASURE);
+            let observation = record_evaluation(recorder, &draw, || {
+                evaluate_candidate(genome, cut, search.generations as usize, REMEASURE)
+            });
             search.completed_evaluations += 1;
             search.comparison.completed_evaluations += 1;
             if observation.measured() {
@@ -1816,7 +2128,7 @@ mod tests {
             },
         ];
         let mut events = Vec::new();
-        migrate(&mut islands, 0, 3, &mut events);
+        migrate(&mut islands, 0, 3, &mut events, None);
         assert_eq!(events.len(), 2);
         // `c` (0.5) enters island 0; `a` (1.0) is worse than all of island 1's four elites.
         let into_zero = events.iter().find(|e| e.to_island == 0).unwrap();
@@ -1948,6 +2260,13 @@ mod tests {
         let error =
             run_cuts_with(&preparation.cuts, &stopped, &temp.path().join("stopped")).unwrap_err();
         assert!(crate::parallel::is_cancelled(&error), "{error:#}");
+        let log = SearchEventLog::from_bytes(
+            &std::fs::read(temp.path().join("stopped/cut-0/search-events.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(log.reconcile().unwrap().evaluation_attempts, 0);
+        assert!(log.require_complete().is_err());
+        assert!(!temp.path().join("stopped/cut-0/search.json").exists());
     }
 
     #[test]
@@ -2055,6 +2374,15 @@ mod tests {
             error.contains("score_failed") || error.contains("fit_failed"),
             "{error}"
         );
+        let log = SearchEventLog::from_bytes(
+            &std::fs::read(temp.path().join("search/search-events.json")).unwrap(),
+        )
+        .unwrap();
+        let counts = log.require_complete().unwrap();
+        assert!(counts.failed_attempts > 0);
+        assert_eq!(counts.failed_attempts, counts.evaluation_attempts);
+        assert_eq!(counts.logical_completed, 0);
+        assert!(!temp.path().join("search/search.json").exists());
     }
 
     #[test]
@@ -2069,5 +2397,194 @@ mod tests {
         run_cut(&cut, budget, 7, &output).unwrap();
         let error = format!("{:#}", run_cut(&cut, budget, 7, &output).unwrap_err());
         assert!(error.contains("already published"), "{error}");
+    }
+    #[test]
+    fn event_logging_preserves_frozen_choices_observations_and_migration() {
+        let temp = tempfile::tempdir().unwrap();
+        let cut = one_cut(&temp.path().join("prepared"), "event-parity");
+        let mut options = SearchOptions {
+            clock: Clock::Frozen,
+            islands: 2,
+            threads: 2,
+            migration_interval: 1,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 28,
+                    seconds: 600,
+                },
+                23,
+            )
+        };
+        let logged = run_cuts_with(
+            std::slice::from_ref(&cut),
+            &options,
+            &temp.path().join("logged"),
+        )
+        .unwrap();
+        options.record_events = false;
+        let control = run_cuts_with(
+            std::slice::from_ref(&cut),
+            &options,
+            &temp.path().join("control"),
+        )
+        .unwrap();
+        assert_eq!(logged[0].observations, control[0].observations);
+        assert_eq!(logged[0].best_program, control[0].best_program);
+        assert_eq!(logged[0].migrations, control[0].migrations);
+        assert!(!logged[0].migrations.is_empty());
+        for name in ["observations.json", "search.json"] {
+            assert_eq!(
+                std::fs::read(logged[0].output.join(name)).unwrap(),
+                std::fs::read(control[0].output.join(name)).unwrap()
+            );
+        }
+        let log = SearchEventLog::from_bytes(
+            &std::fs::read(logged[0].output.join("search-events.json")).unwrap(),
+        )
+        .unwrap();
+        let counts = log.require_complete().unwrap();
+        assert_eq!(counts.evaluation_attempts, logged[0].observations.len());
+        assert_eq!(
+            counts.logical_completed,
+            logged[0].successful_measurements as usize
+        );
+        assert!(counts.draws > counts.evaluation_attempts);
+        assert!(counts.migration_decisions > 0);
+        assert!(log.events.iter().any(|e| matches!(&e.event, SearchEvent::Edit { transition } if transition.operator == "crossover" && transition.parents.len() == 2)));
+        assert!(!control[0].output.join("search-events.json").exists());
+        let observed: BTreeSet<_> = log
+            .events
+            .iter()
+            .filter_map(|e| match &e.event {
+                SearchEvent::Finished {
+                    observation_sha256, ..
+                } => observation_sha256.clone(),
+                _ => None,
+            })
+            .collect();
+        for observation in &logged[0].observations {
+            assert!(observed.contains(&sha256_hex(&serde_json::to_vec(observation).unwrap())));
+        }
+    }
+
+    #[test]
+    fn event_logging_preserves_retry_streams_duplicates_and_random_fallback() {
+        let temp = tempfile::tempdir().unwrap();
+        let cut = one_cut(&temp.path().join("prepared"), "fallback-parity");
+        let options = SearchOptions::new(
+            Budget {
+                evaluations: 1,
+                seconds: 1,
+            },
+            7,
+        );
+        let recorder = search_recorder(&cut, &options, temp.path())
+            .unwrap()
+            .unwrap();
+        let parents = vec![Scored {
+            genome: BOOTSTRAP_GENOME.into(),
+            rmse: 1.,
+        }];
+        let mut seen = BTreeSet::new();
+        for attempt in 0..DISTINCT_CHILD_ATTEMPTS {
+            let seed = stream(7, cut.index, 1, 1, attempt as u64);
+            if let Ok(child) =
+                evolve::mutate_canonical_pipeline(BOOTSTRAP_GENOME, seed, MAX_TRANSFORMS)
+            {
+                seen.insert(child);
+            }
+        }
+        let expected = offspring(&parents, &seen, 7, cut.index, 1, 1);
+        let (genome, origin, _) =
+            offspring_recorded(&parents, &seen, 7, cut.index, 1, 1, 0, Some(&recorder));
+        assert_eq!((genome.clone(), origin), expected);
+        assert_eq!(
+            genome,
+            evolve::random_canonical_pipeline(stream(7, cut.index, 1, 1, 0xFFFF), MAX_TRANSFORMS)
+        );
+        recorder.publish(temp.path()).unwrap();
+        let log = SearchEventLog::from_bytes(
+            &std::fs::read(temp.path().join("search-events.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(log.reconcile().unwrap().draws, DISTINCT_CHILD_ATTEMPTS + 1);
+        assert!(log.events.iter().any(|e| matches!(&e.event, SearchEvent::Draw { decision } if decision.source == "random_fallback")));
+        let invalid = vec![Scored {
+            genome: "invalid-parent".into(),
+            rmse: 1.,
+        }];
+        let recorder = search_recorder(&cut, &options, &temp.path().join("invalid"))
+            .unwrap()
+            .unwrap();
+        let expected = offspring(&invalid, &seen, 7, cut.index, 2, 1);
+        let (genome, origin, _) =
+            offspring_recorded(&invalid, &seen, 7, cut.index, 2, 1, 0, Some(&recorder));
+        assert_eq!((genome, origin), expected);
+        recorder.publish(&temp.path().join("invalid")).unwrap();
+        let log = SearchEventLog::from_bytes(
+            &std::fs::read(temp.path().join("invalid/search-events.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(log.reconcile().unwrap().draws, 9);
+        assert_eq!(log.events.iter().filter(|e| matches!(&e.event, SearchEvent::Draw { decision } if decision.outcome == "operator_failed")).count(), 8);
+    }
+
+    #[test]
+    fn comparison_event_joins_preserve_frozen_numerical_results() {
+        let temp = tempfile::tempdir().unwrap();
+        let cuts = prepare::build(
+            &linear_rows(50),
+            "comparison-events",
+            7,
+            2,
+            &temp.path().join("prepared"),
+        )
+        .unwrap()
+        .cuts;
+        let mut options = SearchOptions {
+            clock: Clock::Frozen,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 8,
+                    seconds: 600,
+                },
+                9,
+            )
+        };
+        let logged = run_cuts_with(&cuts, &options, &temp.path().join("logged")).unwrap();
+        options.record_events = false;
+        let control = run_cuts_with(&cuts, &options, &temp.path().join("control")).unwrap();
+        let mut comparisons = 0;
+        for (logged, control) in logged.iter().zip(&control) {
+            assert_eq!(logged.observations, control.observations);
+            let log = SearchEventLog::from_bytes(
+                &std::fs::read(logged.output.join("search-events.json")).unwrap(),
+            )
+            .unwrap();
+            assert_eq!(
+                log.require_complete().unwrap().evaluation_attempts,
+                logged.observations.len()
+            );
+            comparisons += log.events.iter().filter(|r| matches!(&r.event, SearchEvent::Draw { decision } if decision.source == REMEASURE)).count();
+        }
+        assert!(comparisons > 0);
+    }
+    #[test]
+    fn event_persistence_failure_refuses_success_publication() {
+        let temp = tempfile::tempdir().unwrap();
+        let cut = one_cut(&temp.path().join("prepared"), "event-write-failure");
+        let blocked = temp.path().join("blocked");
+        std::fs::write(&blocked, b"existing bytes").unwrap();
+        let result = run_cut(
+            &cut,
+            Budget {
+                evaluations: 1,
+                seconds: 60,
+            },
+            7,
+            &blocked,
+        );
+        assert!(result.is_err());
+        assert_eq!(std::fs::read(&blocked).unwrap(), b"existing bytes");
     }
 }
