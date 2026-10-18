@@ -1,0 +1,141 @@
+{
+  "schema": "jopedime.research-role-candidates.v1",
+  "status": "candidate_only_not_provisioned",
+  "deployable_iam_document": false,
+  "operational_status": "NOT_EXECUTED",
+  "purpose": "Reviewable logical capability candidates; not an installed-role inventory or policy to apply.",
+  "account_binding": null,
+  "trust_principals": null,
+  "external_provisioning_blockers": [
+    "No scoped research actor, evaluator, trainer, judge, publisher, or curator role has been provisioned and verified for this task.",
+    "Repository/workflow/branch trust subjects and exact resource ARNs require owner-approved, source-bound configuration.",
+    "Bucket-policy enforcement and denied-operation behavior require an independently admitted live qualification after provisioning."
+  ],
+  "current_adapter_observation": {
+    "source": "crates/jope-datasets/src/credentials.rs and crates/jope-datasets/src/store.rs",
+    "resolution": "A profile is exported through `aws configure export-credentials --format env` when Store::open resolves credentials.",
+    "credential_fields_retained": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"],
+    "expiration_retained": false,
+    "refresh_boundary": "The resolved tuple is attached as a StaticCredentialProvider to the opened S3 Store. Reopening a store resolves again; an already-open Store does not refresh its static snapshot.",
+    "helper_deadline": null,
+    "status": "source_review_only_no_credentials_invoked"
+  },
+  "proposed_refresh_contract": {
+    "status": "draft_not_implemented_or_live_verified",
+    "credential_source": "short-lived role credentials with an explicit expiration, refreshed by a provider rather than copied into an unexpiring static snapshot",
+    "refresh_before_expiry_seconds": 60,
+    "max_refresh_attempts_per_operation": 1,
+    "on_refresh_failure": "fail_closed_without_stale_or_ambient_credential_fallback",
+    "on_expired_credential": "refresh_once_then_retry_the_authorized_operation_once",
+    "secret_handling": "never persist or log access keys, secret keys, or session tokens; diagnostics contain only status, role candidate ID, expiration boundary, and request ID",
+    "deadline_seconds": 30
+  },
+  "global_constraints": [
+    "Candidate policies are deny-by-default and must be narrowed to owner-approved exact account, bucket, prefix, action, and trust-claim values before provisioning.",
+    "Actor, evaluator, trainer, and curator must not read judge rows; only the judge candidate may read sealed or dconfirm inputs.",
+    "Only the publisher candidate may write accepted pointers, and only with an If-Match precondition bound to a reviewed decision receipt.",
+    "No role in this candidate set receives s3:DeleteObject or s3:DeleteObjectVersion.",
+    "A host administrator profile is not evidence that any candidate role exists or is least privilege."
+  ],
+  "roles": [
+    {
+      "id": "actor",
+      "candidate_role_name": "jope-research-actor",
+      "status": "not_provisioned",
+      "trust_principal": null,
+      "session_duration_seconds_proposed_max": 3600,
+      "allow": [
+        {"capability": "read_training_inputs", "actions": ["s3:GetObject"], "resources": ["${DATASETS_BUCKET}/datasets/<owner-approved-training-prefix>/*"]},
+        {"capability": "write_actor_proposal", "actions": ["s3:PutObject"], "resources": ["${LEARNING_BUCKET}/staging/actors/${actor_id}/*"], "conditions": ["create-only"]}
+      ],
+      "deny": [
+        {"capability": "read_judge_rows", "actions": ["s3:GetObject", "s3:GetObjectVersion"], "resources": ["${DATASETS_BUCKET}/dconfirm/*", "${DATASETS_BUCKET}/sealed/*"]},
+        {"capability": "write_accepted_pointer", "actions": ["s3:PutObject", "s3:DeleteObject"], "resources": ["${LEARNING_BUCKET}/pointers/*", "${LEARNING_BUCKET}/accepted/*"]},
+        {"capability": "delete_any_object", "actions": ["s3:DeleteObject", "s3:DeleteObjectVersion"], "resources": ["*"]}
+      ]
+    },
+    {
+      "id": "evaluator",
+      "candidate_role_name": "jope-research-evaluator",
+      "status": "not_provisioned",
+      "trust_principal": null,
+      "session_duration_seconds_proposed_max": 3600,
+      "allow": [
+        {"capability": "read_training_inputs", "actions": ["s3:GetObject"], "resources": ["${DATASETS_BUCKET}/datasets/<owner-approved-training-prefix>/*"]},
+        {"capability": "write_evaluation_evidence", "actions": ["s3:PutObject"], "resources": ["${LEARNING_BUCKET}/evals/${source_id}/*", "${LEARNING_BUCKET}/exe/${source_id}/*", "${LEARNING_BUCKET}/lake/${source_id}/date=*/"], "conditions": ["create-only"]}
+      ],
+      "deny": [
+        {"capability": "read_judge_rows", "actions": ["s3:GetObject", "s3:GetObjectVersion"], "resources": ["${DATASETS_BUCKET}/dconfirm/*", "${DATASETS_BUCKET}/sealed/*"]},
+        {"capability": "write_accepted_pointer", "actions": ["s3:PutObject", "s3:DeleteObject"], "resources": ["${LEARNING_BUCKET}/pointers/*", "${LEARNING_BUCKET}/accepted/*"]},
+        {"capability": "delete_any_object", "actions": ["s3:DeleteObject", "s3:DeleteObjectVersion"], "resources": ["*"]}
+      ]
+    },
+    {
+      "id": "trainer",
+      "candidate_role_name": "jope-research-trainer",
+      "status": "not_provisioned",
+      "trust_principal": null,
+      "session_duration_seconds_proposed_max": 3600,
+      "allow": [
+        {"capability": "read_accepted_training_inputs", "actions": ["s3:GetObject"], "resources": ["${LEARNING_BUCKET}/lake/<approved-training-prefix>/*", "${DATASETS_BUCKET}/datasets/<owner-approved-training-prefix>/*"]},
+        {"capability": "write_checkpoints", "actions": ["s3:PutObject"], "resources": ["${LEARNING_BUCKET}/checkpoints/${run_id}/*"], "conditions": ["create-only"]}
+      ],
+      "deny": [
+        {"capability": "read_judge_rows", "actions": ["s3:GetObject", "s3:GetObjectVersion"], "resources": ["${DATASETS_BUCKET}/dconfirm/*", "${DATASETS_BUCKET}/sealed/*"]},
+        {"capability": "write_accepted_pointer", "actions": ["s3:PutObject", "s3:DeleteObject"], "resources": ["${LEARNING_BUCKET}/pointers/*", "${LEARNING_BUCKET}/accepted/*"]},
+        {"capability": "delete_any_object", "actions": ["s3:DeleteObject", "s3:DeleteObjectVersion"], "resources": ["*"]}
+      ]
+    },
+    {
+      "id": "judge",
+      "candidate_role_name": "jope-research-judge",
+      "status": "not_provisioned",
+      "trust_principal": null,
+      "session_duration_seconds_proposed_max": 3600,
+      "allow": [
+        {"capability": "read_judge_rows", "actions": ["s3:GetObject", "s3:GetObjectVersion"], "resources": ["${DATASETS_BUCKET}/dconfirm/<admitted-family>/*", "${DATASETS_BUCKET}/sealed/<admitted-family>/*"]},
+        {"capability": "write_verdict_receipt", "actions": ["s3:PutObject"], "resources": ["${LEARNING_BUCKET}/verdicts/${decision_id}/*"], "conditions": ["create-only"]}
+      ],
+      "deny": [
+        {"capability": "write_accepted_pointer", "actions": ["s3:PutObject", "s3:DeleteObject"], "resources": ["${LEARNING_BUCKET}/pointers/*", "${LEARNING_BUCKET}/accepted/*"]},
+        {"capability": "delete_any_object", "actions": ["s3:DeleteObject", "s3:DeleteObjectVersion"], "resources": ["*"]}
+      ]
+    },
+    {
+      "id": "publisher",
+      "candidate_role_name": "jope-research-publisher",
+      "status": "not_provisioned",
+      "trust_principal": null,
+      "session_duration_seconds_proposed_max": 900,
+      "allow": [
+        {"capability": "read_signed_verdict_receipt", "actions": ["s3:GetObject"], "resources": ["${LEARNING_BUCKET}/verdicts/${decision_id}/*"]},
+        {"capability": "write_accepted_pointer", "actions": ["s3:PutObject"], "resources": ["${LEARNING_BUCKET}/pointers/${task_id}"], "conditions": ["If-Match must equal reviewed prior pointer etag", "decision receipt must be signature-verified"]}
+      ],
+      "deny": [
+        {"capability": "read_judge_rows", "actions": ["s3:GetObject", "s3:GetObjectVersion"], "resources": ["${DATASETS_BUCKET}/dconfirm/*", "${DATASETS_BUCKET}/sealed/*"]},
+        {"capability": "delete_any_object", "actions": ["s3:DeleteObject", "s3:DeleteObjectVersion"], "resources": ["*"]}
+      ]
+    },
+    {
+      "id": "curator",
+      "candidate_role_name": "jope-research-curator",
+      "status": "not_provisioned",
+      "trust_principal": null,
+      "session_duration_seconds_proposed_max": 1800,
+      "allow": [
+        {"capability": "read_catalog_metadata", "actions": ["s3:GetObject"], "resources": ["${DATASETS_BUCKET}/catalog/*", "${DATASETS_BUCKET}/collections/*"]},
+        {"capability": "write_curated_records", "actions": ["s3:PutObject"], "resources": ["${LEARNING_BUCKET}/lake/v1/programs/*", "${LEARNING_BUCKET}/lake/v1/contexts/*", "${LEARNING_BUCKET}/lake/v1/capsules/*", "${LEARNING_BUCKET}/lake/v1/retention/*", "${LEARNING_BUCKET}/lake/v1/tombstones/*"], "conditions": ["create-only", "approved manifest identity required"]}
+      ],
+      "deny": [
+        {"capability": "read_judge_rows", "actions": ["s3:GetObject", "s3:GetObjectVersion"], "resources": ["${DATASETS_BUCKET}/dconfirm/*", "${DATASETS_BUCKET}/sealed/*"]},
+        {"capability": "write_accepted_pointer", "actions": ["s3:PutObject", "s3:DeleteObject"], "resources": ["${LEARNING_BUCKET}/pointers/*", "${LEARNING_BUCKET}/accepted/*"]},
+        {"capability": "delete_any_object", "actions": ["s3:DeleteObject", "s3:DeleteObjectVersion"], "resources": ["*"]}
+      ]
+    }
+  ],
+  "live_qualification": {
+    "positive_tests": "NOT_EXECUTED",
+    "denied_tests": "NOT_EXECUTED",
+    "blocker": "No owner-approved scoped roles, exact trust/resource policy, and operational admission are present in this task checkout."
+  }
+}
