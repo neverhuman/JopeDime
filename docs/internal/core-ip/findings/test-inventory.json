@@ -2897,6 +2897,15 @@
         "teaching"
       ]
     },
+    "target:jope-learning/test/observation_import": {
+      "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ],
+      "source": "crates/jope-learning/tests/observation_import.rs"
+    },
     "target:jope-learning/test/pipeline_bank": {
       "role": "regression",
       "subsystems": [
@@ -3463,6 +3472,14 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/policy_export_lineage": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training"
+      ],
+      "source": "crates/jope-engine/tests/policy_export_lineage.rs"
+    },
     "target:jope-parallel/test/preparation_semantics": {
       "role": "regression",
       "subsystems": [
@@ -3653,6 +3670,13 @@
         "encoders"
       ]
     },
+    "target:jope-policy/test/challenger_lineage": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ],
+      "source": "crates/jope-policy/tests/challenger_lineage.rs"
+    },
     "target:jope-policy/test/decode_outcomes": {
       "role": "regression",
       "subsystems": [
@@ -3703,6 +3727,13 @@
         "encoders",
         "policy"
       ]
+    },
+    "target:jope-records/test/research_state": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ],
+      "source": "crates/jope-records/tests/research_state.rs"
     },
     "target:jope-records/test/wire_contract": {
       "role": "regression",

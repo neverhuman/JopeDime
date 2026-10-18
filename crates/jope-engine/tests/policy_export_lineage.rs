@@ -1,3 +1,4 @@
+#![cfg(feature = "neural")]
 //! Exporter-side guard regressions for the v1/v2 boundary.
 //!
 //! Full checkpoint export and backend parity require the admitted neural toolchain; this bounded
