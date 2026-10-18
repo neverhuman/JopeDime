@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5078,
+  "count": 5108,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -4400,7 +4400,7 @@
     }
    },
    "jope-learning": {
-    "count": 428,
+    "count": 445,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
@@ -4776,6 +4776,28 @@
        "an_ordinary_rejection_still_gets_its_readable_ledger_event"
       ]
      },
+     "jope-learning::observation_import": {
+      "kind": "test",
+      "count": 15,
+      "ignored": 0,
+      "tests": [
+       "all_unscored_and_empty_inputs_are_honest_archives",
+       "archive_multigroup_zstd_pages_preserve_scores_nulls_and_observation_masks",
+       "duplicate_delivery_keeps_multiplicity_and_conflicts_hold_every_participant",
+       "fixed_fixture_manifest_and_source_root_are_authenticated_as_fixture_only",
+       "historical_18380_is_explicitly_held_without_original_authenticated_fixture",
+       "input_tampering_and_missing_source_command_or_roots_hold_all_rows",
+       "malformed_or_ambiguous_index_is_refused_without_a_completeness_claim",
+       "missing_or_protected_role_and_forged_dependency_json_cannot_grant_replay",
+       "mixed_status_denominator_retains_every_original_occurrence",
+       "producer_binding_is_deterministic_and_requires_independently_pinned_closure",
+       "scores_preserve_exact_binary64_identity_and_legacy_order",
+       "signed_zero_and_unknown_score_identity_are_retained_without_validation_upgrade",
+       "timeout_is_censored_and_malformed_scores_keep_their_original_evidence",
+       "typed_statistics_use_numeric_and_unsigned_byte_order_and_exclude_nonfinite_bounds",
+       "unknown_failure_reason_and_missing_status_never_become_labels"
+      ]
+     },
      "jope-learning::pipeline_bank": {
       "kind": "test",
       "count": 6,
@@ -4921,11 +4943,13 @@
      },
      "jope-learning::retention_pack": {
       "kind": "test",
-      "count": 7,
+      "count": 9,
       "ignored": 0,
       "tests": [
        "distilled_rows_that_would_corrupt_meaning_are_refused",
        "distilled_table_round_trips_and_reconciles",
+       "nullable_multigroup_statistics_reconcile_to_legacy_streamed_values",
+       "optional_statistics_preserve_legacy_distilled_bytes_and_reader",
        "pack_tampering_and_misuse_are_refused",
        "packs_round_trip_and_verify",
        "parquet_subset_round_trips_every_type_and_null",
@@ -6265,6 +6289,12 @@
       "ignored": 0,
       "tests": []
      },
+     "jope-parallel::policy_export_lineage": {
+      "kind": "test",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
      "jope-parallel::preparation_semantics": {
       "kind": "test",
       "count": 13,
@@ -6900,7 +6930,7 @@
     }
    },
    "jope-policy": {
-    "count": 72,
+    "count": 77,
     "ignored": 3,
     "binaries": {
      "jope-policy": {
@@ -6987,6 +7017,18 @@
       "ignored": 0,
       "tests": []
      },
+     "jope-policy::challenger_lineage": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "ancestry_and_delta_must_bind_the_accepted_parent",
+       "high_step_and_rejected_checkpoint_are_refused",
+       "malformed_tensor_inventory_is_refused",
+       "unknown_v2_fields_are_refused",
+       "verified_3000_and_6000_descendants_are_valid_challengers"
+      ]
+     },
      "jope-policy::grammar_differential": {
       "kind": "test",
       "count": 4,
@@ -7011,12 +7053,12 @@
     }
    },
    "jope-records": {
-    "count": 200,
+    "count": 208,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 85,
+      "count": 89,
       "ignored": 0,
       "tests": [
        "coverage::tests::changed_target_requirements_fail",
@@ -7099,6 +7141,10 @@
        "repo_layout::tests::package_name_refuses_what_cargo_cannot_read",
        "repo_layout::tests::package_name_says_toml_1_0_for_toml_1_1_only_syntax",
        "repo_layout::tests::test_code_is_whole_test_files_and_cfg_test_modules",
+       "research::tests::brief_is_deterministic_linked_and_capped_without_truncation",
+       "research::tests::exact_repeat_warns_but_explicit_preregistered_replication_is_preserved",
+       "research::tests::pooled_descriptive_summary_excludes_unresolved_correlated_and_incompatible_records",
+       "research::tests::unresolved_or_stale_source_and_ci_never_render_current_green",
        "scope_check::tests::declared_reads_the_first_assignment",
        "selfplay_baseline::tests::distinguish_current_ci_historical_runs_and_proposed_protocols",
        "selfplay_baseline::tests::reconcile_benchmark_and_product_profile_identities",
@@ -7231,6 +7277,17 @@
        "test_inventory::committed_inventory",
        "test_inventory::messages_name_the_python_identities",
        "test_inventory::mutations_are_rejected"
+      ]
+     },
+     "jope-records::research_state": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "brief_is_deterministic_and_enforces_the_byte_cap",
+       "descriptive_pool_excludes_unresolved_correlated_and_incompatible_evidence",
+       "repeat_warning_keeps_explicit_preregistered_replication_available",
+       "unresolved_or_stale_source_and_ci_cannot_be_current_green"
       ]
      },
      "jope-records::wire_contract": {
@@ -7732,7 +7789,7 @@
   }
  },
  "totals": {
-  "rust": 5078,
+  "rust": 5108,
   "python": 182
  }
 }

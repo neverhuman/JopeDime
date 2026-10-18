@@ -7234,6 +7234,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-learning/test/observation_import": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/observation_import.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Write-time tags, jope.s3-pack/v1 pack round-trip/tamper checks and gp_distilled/v1 Parquet round-trip/validation on fixtures. Offline; no S3 call."
+    },
     "target:jope-learning/test/pipeline_bank": {
       "discovery": {
         "doctest": false,
@@ -8617,6 +8633,21 @@
       ],
       "scope": "W7-T06 wiring: explicit v2 selection and trainer gate, v2 consumption journal shards, per-rank exposure, v2 validation panel, v2 continuation recovery, and a three-rank checkpoint through the real commit path; v1 records byte-for-byte; neural-gated CPU fixtures, step compile-checked only."
     },
+    "target:jope-parallel/test/policy_export_lineage": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/policy_export_lineage.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-parallel/test/preparation_semantics": {
       "discovery": {
         "doctest": false,
@@ -9105,6 +9136,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-policy/test/challenger_lineage": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-policy/tests/challenger_lineage.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile. Grammar masks versus the typed parser over the committed vocabularies; no model, GPU or proposal-quality claim."
+    },
     "target:jope-policy/test/decode_outcomes": {
       "discovery": {
         "doctest": false,
@@ -9236,6 +9283,22 @@
         "full-default"
       ],
       "scope": "Core-IP record verifiers and STATUS/PROGRESS renderers against the committed records and adversarial fixtures: findings inventory integrity, disposition evidence binding, claim-to-evidence binding and revocation closure (synthetic evidence never backs live, measurement or promotion claims), test-inventory completeness against this map, task-state evidence rules, and byte-identical STATUS.md/PROGRESS.md renders with stale-view detection; the accepted tensor-inventory verifier on synthetic safetensors fixtures (layout, per-tensor digests, dtype/field closure, role accounting, Candle forward references, optimizer moments; the real asset is verified on the host) and tensors.json against the documented geometry; and the independent replay of every retained reproducible Elo ladder (Golden45 included, zstd decoded in process) with substitution, duplicate-delivery and disposition-upgrade refusals, historical-ranking-only consumers, lineage continuity/exposure refusals and derived plot-table consistency. Records status only; it qualifies nothing."
+    },
+    "target:jope-records/test/research_state": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-records/tests/research_state.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Additive jope.canonical-json/v1 wire-contract conformance suite (I02): positive canonical payload byte and length-prefixed domain-separated SHA-256 vectors (reordered nested keys, Unicode precomposed vs combining preservation, array order, ExactF32/ExactF64 +0/-0/subnormal bit tags, display_f64 stripping), negative lexical/numeric/cycle/authority refusals (duplicate keys at all depths, unpaired surrogates, -0/leading-zero/overflow integers, raw floats, NaN/Inf bits, self-referential own_id/signature/later_assessment_id cycles, unknown fields/enums), native/inference/storage adapter golden-byte equality, VerifiedMeasuredOutcome proof verification, independent Node.js cross-language vector verification, and 29 legacy schema + historical hash preservation."
     },
     "target:jope-records/test/wire_contract": {
       "discovery": {

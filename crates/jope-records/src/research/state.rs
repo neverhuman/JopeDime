@@ -563,7 +563,9 @@ mod tests {
         second.outcome = BeliefOutcome::Null;
         let mut third = record("c", "group-c");
         third.outcome = BeliefOutcome::Inconclusive;
-        let mut correlated = record("d", "group-a");
+        let mut correlated = record("d", "group-d");
+        let mut correlated_peer = record("i", "group-d");
+        correlated_peer.outcome = BeliefOutcome::Measured(0.95);
         let mut stale = record("e", "group-e");
         stale.source_head = HEAD_B.into();
         let mut ci_pending = record("f", "group-f");
@@ -583,6 +585,7 @@ mod tests {
                 stale,
                 first,
                 correlated,
+                correlated_peer,
                 third,
             ],
         );
@@ -602,6 +605,7 @@ mod tests {
             .map(|item| (item.record_id.as_str(), item.reason.as_str()))
             .collect();
         assert_eq!(reasons["d"], "correlated independence group");
+        assert_eq!(reasons["i"], "correlated independence group");
         assert_eq!(reasons["e"], "source head is stale");
         assert_eq!(reasons["f"], "CI is unresolved or failed");
         assert_eq!(
