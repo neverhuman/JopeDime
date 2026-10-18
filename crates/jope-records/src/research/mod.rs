@@ -10,3 +10,4 @@ pub mod wave_git;
 pub use capsule::{EvidenceLocator, EvidenceValue, ResearchCapsuleV2, RoundInput, Stage};
 pub use compile::{compile, CompileError, EvidenceResolver};
 pub use render::{render_capsule, CapsuleBytes, RenderError, CAPSULE_BYTE_LIMIT};
+pub use state::*;

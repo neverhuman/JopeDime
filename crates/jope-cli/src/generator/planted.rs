@@ -4,8 +4,8 @@
 //! Callers must opt in to `hidden_answer()`; serialization of `SolverTask`
 //! cannot expose program text or weights.
 
-use anyhow::{Context, Result, ensure};
-use feat_math::{Rows, genome::GenomeIr, model};
+use anyhow::{ensure, Context, Result};
+use feat_math::{genome::GenomeIr, model, Rows};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::time::Instant;

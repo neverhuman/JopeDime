@@ -641,7 +641,6 @@ pub fn read_identity_v3(
     expected: &feat_math::artifact_manifest::ExpectedArtifactV3,
 ) -> Result<feat_math::artifact_manifest::ArtifactManifestV3> {
     feat_math::artifact_manifest::verify_directory(directory, "manifest.json", expected)
-    }
 }
 
 /// Task-local I09 adapter: fitted predictor with explicit requested target and profile.
@@ -697,5 +696,4 @@ pub fn reload_numeric_v2(
         "shipped codec mismatch"
     );
     artifact.reload(expected, model_digest)
-    }
 }
