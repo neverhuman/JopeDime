@@ -475,6 +475,13 @@ fn mixed_cpu_gpu_units_require_prospective_conversion_and_exact_device() {
     ledger
         .start(&r.request.ids.attempt_id, 100, |_| Ok(()))
         .unwrap();
+    assert!(ledger.finish(receipt, |_| Ok(())).is_err());
+    let mut receipt = cost(&r, Disposition::Completed, 300);
+    receipt
+        .measurements
+        .get_mut(&Unit::GpuDeviceMicros)
+        .unwrap()
+        .allocation = p.gpu_allocation.clone().unwrap();
     ledger.finish(receipt, |_| Ok(())).unwrap();
     assert_eq!(ledger.credits().unwrap(), 500);
     p.conversion.as_mut().unwrap().registered_unix_us = 101;
