@@ -13,6 +13,9 @@ use super::{
     CHECKPOINT_VOCABULARY_SHA256, REJECTED_STEP,
 };
 
+/// Draft additive v2 ancestry validation. The v1 parser below remains strict and unchanged.
+pub mod lineage;
+
 /// Schema tag written by jain-datasets `tools/ot-export` (plan v2 W4 PR-A).
 pub const EXPORT_RECEIPT_SCHEMA: &str = "jope.checkpoint_export.v1";
 
