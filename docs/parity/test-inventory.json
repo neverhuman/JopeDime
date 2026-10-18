@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5031,
+  "count": 5058,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -40,7 +40,7 @@
     }
    },
    "feat-math": {
-    "count": 1182,
+    "count": 1209,
     "ignored": 12,
     "binaries": {
      "feat-math": {
@@ -1464,6 +1464,23 @@
        "utility::smooth_energy_five_seed_equal_budget_and_exported_winners"
       ]
      },
+     "feat-math::registry_agreement": {
+      "kind": "test",
+      "count": 10,
+      "ignored": 0,
+      "tests": [
+       "declared_recipe_targets_execute_and_quarantine_never_enters_draws",
+       "every_new_consumer_projection_agrees",
+       "frozen_draw_order_weights_moduli_and_rng_are_preserved",
+       "generator_is_reproducible_and_checked_in_bytes_match",
+       "head_reachability_executes_fit_draw_seed_and_target_refusals",
+       "lag_dialects_remain_distinct_and_within_row_executes",
+       "malformed_duplicate_alias_identity_and_lifecycle_data_refuse",
+       "stable_ids_aliases_and_legacy_registry_bytes_are_preserved",
+       "stale_output_fails_without_writing_and_explicit_write_repairs",
+       "unknown_inactive_noop_and_wrong_dialect_parameters_refuse"
+      ]
+     },
      "feat-math::registry_vocabulary": {
       "kind": "test",
       "count": 3,
@@ -1646,6 +1663,30 @@
        "estimator_exact_on_golden_fixtures",
        "estimator_exact_with_custom_options",
        "estimator_is_fast_and_reports_cost"
+      ]
+     },
+     "feat-math::typed_graph": {
+      "kind": "test",
+      "count": 17,
+      "ignored": 0,
+      "tests": [
+       "canonical_projection_matches_all_adopted_i02_positive_vectors",
+       "crossover_serializes_both_exact_parents_and_rechecks_donor_binding",
+       "cycles_forward_refs_dead_nodes_shape_overflow_and_limits_refuse_before_fit",
+       "every_committed_historical_program_roundtrips_typed_or_explicitly_opaque",
+       "every_enumerated_tiny_legal_action_applies_validates_and_actually_executes",
+       "exact_constants_order_signed_zero_subnormals_and_noncommutation_are_identity_bearing",
+       "fit_plan_pins_source_split_schema_operator_seed_and_monotone_row_closure",
+       "forged_bridge_cannot_attach_a_different_valid_graph_to_old_identity",
+       "forged_edits_versions_profiles_parameters_and_parents_cannot_bypass_admission",
+       "graph_codec_rejects_unknown_versions_fields_duplicates_and_noncanonical_bytes",
+       "opaque_compositions_nonfinite_and_unsafe_integer_legacy_values_keep_exact_bytes",
+       "schema_addressing_above_seven_executes_and_bad_index_key_or_schema_refuses",
+       "seeded_width_effect_executes_and_training_content_binding_precedes_fit",
+       "supported_bridge_executes_existing_interpreter_and_preserves_old_identity",
+       "target_aware_heldout_poison_leaves_fitted_state_and_prescore_predictions_unchanged",
+       "target_derived_stack_and_residual_are_unavailable_before_any_fit",
+       "unchanged_actions_keep_explicit_outcome_and_original_parent"
       ]
      },
      "feat-math::versioned_conversion": {
@@ -7657,7 +7698,7 @@
   }
  },
  "totals": {
-  "rust": 5013,
+  "rust": 5058,
   "python": 182
  }
 }

@@ -3859,6 +3859,24 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
+    "target:feat-math/example/registry_codegen": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/examples/registry_codegen.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
     "target:feat-math/example/registry_dump": {
       "discovery": {
         "doctest": false,
@@ -4712,6 +4730,23 @@
       ],
       "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
+    "target:feat-math/test/registry_agreement": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/registry_agreement.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/registry_vocabulary": {
       "discovery": {
         "doctest": false,
@@ -4879,6 +4914,23 @@
         "kind": "target",
         "required_features": [],
         "source": "crates/feat-math/tests/tokens.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/typed_graph": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/typed_graph.rs",
         "test": true
       },
       "dispositions": [],
