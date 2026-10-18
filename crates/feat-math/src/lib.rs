@@ -15,6 +15,7 @@
 
 // DSL + interpreter (the execution engine).
 pub mod advanced_v3;
+pub mod artifact_manifest;
 pub mod boost2;
 pub mod cxx;
 pub mod dsl;

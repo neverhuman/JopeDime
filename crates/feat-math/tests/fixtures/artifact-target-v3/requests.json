@@ -1,0 +1,7 @@
+{
+  "schema": "jope.battle-artifact/v3",
+  "envelope_schema": "jope.canonical-json/v1",
+  "formula": "sha256(schema_utf8||0x00||u64_be(len)||canonical_payload_bytes)",
+  "requests": ["python", "rust", "cpp17", "cpp20", "javascript", "cpp17-recipe-v2", "cpp17-fitted"],
+  "rejected_requests": ["", "go", "py,python", "cpp17,cpp17", "all,rs", "rust,"]
+}

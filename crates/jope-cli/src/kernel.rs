@@ -94,6 +94,58 @@ pub fn emit_genome_with_train(
     train: Option<&Path>,
     output: Option<&Path>,
 ) -> Result<EmitReport> {
+    // Explicit version selection through the existing string-valued language
+    // argument; no parser or legacy default changes are needed.
+    if let Some(targets) = lang.strip_prefix("v3:") {
+        let root = output.context("v3 emission requires --output to retain its bound bytes")?;
+        let emitted = emit_genome_v3(genome, targets, train, root)?;
+        let unsupported: Vec<_> = emitted
+            .manifest
+            .targets
+            .iter()
+            .filter_map(|r| match &r.state {
+                feat_math::artifact_manifest::TargetState::Unsupported { reason, .. } => {
+                    Some(format!("{}: {reason}", r.target.as_str()))
+                }
+                _ => None,
+            })
+            .collect();
+        anyhow::ensure!(
+            unsupported.is_empty(),
+            "unsupported requested targets: {}; retained manifest {} sha256 {}",
+            unsupported.join("; "),
+            root.join("manifest.json").display(),
+            emitted.expected.manifest_sha256
+        );
+        let mut artifacts = Vec::new();
+        for record in &emitted.manifest.targets {
+            if let feat_math::artifact_manifest::TargetState::Supported { files, .. } =
+                &record.state
+            {
+                for file in files {
+                    artifacts.push(Artifact {
+                        lang: record.target.as_str().into(),
+                        bytes: file.bytes as usize,
+                        sha256: file.sha256.clone(),
+                        path: Some(root.join(&file.path).display().to_string()),
+                    });
+                }
+            }
+        }
+        let manifest_bytes = feat_math::artifact_manifest::read_artifact(root, "manifest.json")?;
+        artifacts.push(Artifact {
+            lang: "manifest-v3".into(),
+            bytes: manifest_bytes.len(),
+            sha256: emitted.expected.manifest_sha256,
+            path: Some(root.join("manifest.json").display().to_string()),
+        });
+        return Ok(EmitReport {
+            schema: "jope.emit.v3",
+            ok: emitted.manifest.all_supported(),
+            genome: emitted.manifest.dsl,
+            artifacts,
+        });
+    }
     let parsed = GenomeIr::parse(genome).context("parse genome")?;
     if lang == "cpp17-fitted" {
         let train = train.context("cpp17-fitted requires --train <numeric.csv>")?;
@@ -379,4 +431,73 @@ fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64> {
 
 fn digest(source: &str) -> String {
     format!("{:x}", Sha256::digest(source.as_bytes()))
+}
+
+/// Emit-only v3 adapter, selected with the existing `--lang v3:<targets>` string.
+/// Existing language aliases, report schema and default emission stay compatible.
+pub fn emit_genome_v3(
+    genome: &str,
+    lang: &str,
+    train: Option<&Path>,
+    output: &Path,
+) -> Result<jope_pipeline::emit::EmittedV3> {
+    use feat_math::artifact_manifest::Target;
+    let requested = Target::parse_list(lang)?;
+    anyhow::ensure!(
+        train.is_none() || requested.contains(&Target::Cpp17Fitted),
+        "--train requires cpp17-fitted"
+    );
+    let rows = if let Some(path) = train {
+        let (x, y) = read_numeric_training_csv(path)?;
+        Some(
+            x.into_iter()
+                .zip(y)
+                .map(|(mut row, target)| {
+                    row.push(target);
+                    row
+                })
+                .collect::<Vec<_>>(),
+        )
+    } else {
+        None
+    };
+    jope_pipeline::emit::emit_v3(genome, &requested, output, rows.as_deref())
+}
+
+#[cfg(test)]
+mod artifact_v3_tests {
+    use super::*;
+    #[test]
+    fn emit_adapter_preserves_default_route_and_binds_opt_in_outputs() {
+        let dir = tempfile::tempdir().unwrap();
+        let legacy = dir.path().join("legacy");
+        emit_genome(DEFAULT_GENOME, "rust", Some(&legacy)).unwrap();
+        assert!(!legacy.join("manifest.json").exists());
+        let routed = dir.path().join("routed");
+        let report = emit_genome(DEFAULT_GENOME, "v3:rs,js,cpp20", Some(&routed)).unwrap();
+        assert_eq!(report.schema, "jope.emit.v3");
+        assert!(report.ok);
+        assert!(report.artifacts.iter().any(|a| a.lang == "manifest-v3"));
+        let refused = dir.path().join("unsupported");
+        let err = emit_genome("(pipe X (histgbm))", "v3:js", Some(&refused)).unwrap_err();
+        assert!(err.to_string().contains("unsupported requested targets"));
+        assert!(refused.join("manifest.json").is_file());
+        let new = dir.path().join("v3");
+        let out = emit_genome_v3(DEFAULT_GENOME, "rs,js,cpp20", None, &new).unwrap();
+        assert!(out.manifest.all_supported());
+        jope_pipeline::emit::read_identity_v3(&new, &out.expected).unwrap();
+        assert!(emit_genome_v3(DEFAULT_GENOME, "rs,rust", None, &dir.path().join("bad")).is_err());
+    }
+    #[test]
+    fn fitted_emit_adapter_binds_validated_training_rows() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = dir.path().join("train.csv");
+        fs::write(&train, "a,target\n0,1\n1,3\n2,5\n3,7\n").unwrap();
+        let new = dir.path().join("v3");
+        let out = emit_genome_v3(DEFAULT_GENOME, "cpp17-fitted", Some(&train), &new).unwrap();
+        assert!(out.manifest.all_supported());
+        jope_pipeline::emit::read_identity_v3(&new, &out.expected).unwrap();
+        fs::write(new.join("cpp17-fitted/model.codec.json"), "{}").unwrap();
+        assert!(jope_pipeline::emit::read_identity_v3(&new, &out.expected).is_err());
+    }
 }

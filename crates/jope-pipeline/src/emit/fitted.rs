@@ -133,3 +133,87 @@ int main(int argc, char** argv) {
 }
 #endif
 "#;
+
+/// Add fitted state and all three components to a v3 emission before any files
+/// are published. Empty/ragged/nonfinite rows remain hard errors, not exclusions.
+pub(super) fn add_v3(
+    emission: &mut feat_math::artifact_manifest::TargetEmission,
+    genome: &GenomeIr,
+    rows: &[Vec<f64>],
+) -> Result<()> {
+    use feat_math::artifact_manifest::{sha256, FittedIdentity, Target, TargetRecord};
+    let mut x = Vec::new();
+    let mut y = Vec::new();
+    for row in rows {
+        let (target, features) = row
+            .split_last()
+            .context("training row needs features and target")?;
+        ensure!(
+            !features.is_empty(),
+            "training row needs at least one feature"
+        );
+        x.push(features.to_vec());
+        y.push(*target);
+    }
+    let model = fit_legacy_numeric_bound(genome, &x, &y).context("fit v3 C++17 export")?;
+    let fitted = match emit_fitted_cpp17(&model) {
+        Ok(fitted) => fitted,
+        Err(error) => {
+            let record = emission
+                .manifest
+                .targets
+                .iter_mut()
+                .find(|r| r.target == Target::Cpp17Fitted)
+                .context("fitted target was not requested")?;
+            *record = TargetRecord::unsupported(
+                Target::Cpp17Fitted,
+                format!("fitted emitter refused: {error:#}"),
+            );
+            return Ok(());
+        }
+    };
+    let codec: serde_json::Value = serde_json::from_str(&fitted.codec)?;
+    let revision = codec["emitter_revision"]
+        .as_u64()
+        .context("missing fitted emitter revision")?;
+    let identity = FittedIdentity {
+        state_sha256: sha256(&serde_json::to_vec(&model)?),
+        // Bit patterns retain -0.0 and all finite input values exactly.
+        input_sha256: sha256(&serde_json::to_vec(
+            &rows
+                .iter()
+                .map(|r| {
+                    r.iter()
+                        .map(|v| format!("{:016x}", v.to_bits()))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>(),
+        )?),
+        task_sha256: model.task_sha256.clone(),
+        schema_sha256: model.schema_sha256.clone(),
+        vocabulary_sha256: model.vocabulary_sha256.clone(),
+    };
+    let sources = [
+        ("cpp17-fitted/model.cpp", fitted.source.as_str()),
+        ("cpp17-fitted/model.codec.json", fitted.codec.as_str()),
+        ("cpp17-fitted/standalone.cpp", STANDALONE),
+    ];
+    let record = TargetRecord::supported(
+        Target::Cpp17Fitted,
+        "legacy_recipe",
+        &format!("feat-math-fitted-cpp17/{revision}"),
+        &sources,
+        Some(identity),
+    );
+    let previous = emission
+        .manifest
+        .targets
+        .iter_mut()
+        .find(|r| r.target == Target::Cpp17Fitted)
+        .context("fitted target was not requested")?;
+    *previous = record;
+    for (path, source) in sources {
+        emission.sources.insert(path.into(), source.into());
+    }
+    Ok(())
+}

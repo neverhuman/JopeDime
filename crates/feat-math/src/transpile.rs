@@ -1468,3 +1468,99 @@ modelUnload(fitted.handle);
         assert_eq!(case_index, 44);
     }
 }
+
+/// Opt-in target-complete manifest. Historical `emit` and its defaults stay unchanged.
+/// Unsupported targets remain explicit; successful rendering binds exact source bytes.
+pub fn emit_targets_v3(
+    genome: &GenomeIr,
+    options: &EmitOptions,
+    requested: &[crate::artifact_manifest::Target],
+) -> Result<crate::artifact_manifest::TargetEmission> {
+    use crate::artifact_manifest::{ArtifactManifestV3, Target, TargetEmission, TargetRecord};
+    validate_math_kernel(options)?;
+    // Validate the independent request set before invoking an emitter.
+    anyhow::ensure!(!requested.is_empty(), "empty requested target set");
+    anyhow::ensure!(
+        requested
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            == requested.len(),
+        "duplicate requested target"
+    );
+    let mut sources = std::collections::BTreeMap::new();
+    let mut records = Vec::new();
+    for &target in requested {
+        let result: Result<(String, String)> = (|| {
+            // I07's declared per-stage support supplements the actual recipe gate.
+            // Expression-recipe-v2 and fitted exports keep their separate existing gates.
+            if Target::RECIPES.contains(&target) {
+                if let GenomeIr::Pipeline(pipe) = genome {
+                    for stage in &pipe.stages {
+                        let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
+                            .ok_or_else(|| {
+                                anyhow::anyhow!("unregistered legacy operation {}", stage.op)
+                            })?;
+                        row.supports(target.registry_target())
+                            .map_err(anyhow::Error::msg)?;
+                    }
+                }
+            }
+            Ok(match target {
+                Target::Python | Target::Rust => {
+                    let pair = emit(genome, options)?;
+                    let identity: serde_json::Value = serde_json::from_str(&pair.manifest)?;
+                    let version = identity["emitter_version"]
+                        .as_str()
+                        .unwrap_or(EMITTER_VERSION)
+                        .to_owned();
+                    (
+                        if target == Target::Python {
+                            pair.python
+                        } else {
+                            pair.rust
+                        },
+                        version,
+                    )
+                }
+                Target::Cpp17 | Target::Cpp20 => (
+                    emit_cpp17(genome, options)?,
+                    format!("feat-math-cpp17/{EMITTER_VERSION}"),
+                ),
+                Target::JavaScript => (
+                    emit_javascript(genome, options)?,
+                    format!("feat-math-javascript/{EMITTER_VERSION}"),
+                ),
+                Target::Cpp17RecipeV2 => {
+                    let e = crate::kernel::expression_recipe::emit_cpp17(genome, options)
+                        .map_err(anyhow::Error::msg)?;
+                    (e.source, e.profile.into())
+                }
+                Target::Cpp17Fitted => {
+                    anyhow::bail!("fitted target requires explicit training rows")
+                }
+            })
+        })();
+        match result {
+            Ok((source, emitter)) => {
+                records.push(TargetRecord::supported(
+                    target,
+                    "legacy_recipe",
+                    &emitter,
+                    &[(target.path(), &source)],
+                    None,
+                ));
+                sources.insert(target.path().into(), source);
+            }
+            Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
+        }
+    }
+    let manifest = ArtifactManifestV3::new(
+        &genome.canonical(),
+        "legacy_recipe",
+        options,
+        requested,
+        records,
+    )?;
+    Ok(TargetEmission { manifest, sources })
+}
