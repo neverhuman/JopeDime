@@ -412,7 +412,8 @@ pub fn text_streams(
 fn inspected(
     result: std::io::Result<std::fs::Metadata>,
 ) -> std::io::Result<Option<std::fs::Metadata>> {
-    const IGNORED: [i32; 4] = [2, 9, 20, 40]; // ENOENT, EBADF, ENOTDIR, ELOOP (Linux)
+    const ELOOP: i32 = if cfg!(target_os = "macos") { 62 } else { 40 };
+    const IGNORED: [i32; 4] = [2, 9, 20, ELOOP]; // ENOENT, EBADF, ENOTDIR, ELOOP
     match result {
         Ok(meta) => Ok(Some(meta)),
         Err(e) if e.raw_os_error().is_some_and(|code| IGNORED.contains(&code)) => Ok(None),
@@ -943,7 +944,7 @@ pub fn realpath(path: &Path, strict: bool) -> std::result::Result<PathBuf, Resol
 /// here or with `std::fs::canonicalize`, which is the same resolution in strict mode; none
 /// normalises `..` lexically before symlinks are resolved.
 pub fn resolve(path: &Path, strict: bool) -> std::result::Result<PathBuf, ResolveError> {
-    const ELOOP: i32 = 40; // Linux
+    const ELOOP: i32 = if cfg!(target_os = "macos") { 62 } else { 40 };
     let resolved = realpath(path, strict)?;
     if !strict {
         if let Err(error) = std::fs::metadata(&resolved) {
@@ -1532,9 +1533,10 @@ mod tests {
             assert!(!path_is_file(&path).unwrap(), "{absent}");
         }
         assert!(path_is_symlink(&c.join("loop")).unwrap());
+        const ENAMETOOLONG: i32 = if cfg!(target_os = "macos") { 63 } else { 36 };
         let long = c.join("x".repeat(300));
         for probe in [path_exists, path_is_dir, path_is_file, path_is_symlink] {
-            assert_eq!(probe(&long).unwrap_err().raw_os_error(), Some(36));
+            assert_eq!(probe(&long).unwrap_err().raw_os_error(), Some(ENAMETOOLONG));
         }
         // A directory that may be listed but not searched: its entries cannot be inspected.
         std::fs::set_permissions(c.join("dir"), std::fs::Permissions::from_mode(0o644)).unwrap();
@@ -1816,10 +1818,11 @@ mod tests {
         );
         assert!(!path_exists(Path::new("/nonexistent-q/a")).unwrap());
         assert!(!path_exists(Path::new("/nonexistent-q/a\0b")).unwrap());
+        const ENAMETOOLONG: i32 = if cfg!(target_os = "macos") { 63 } else { 36 };
         let long = format!("/{}", "x".repeat(300));
         assert_eq!(
             path_exists(Path::new(&long)).unwrap_err().raw_os_error(),
-            Some(36)
+            Some(ENAMETOOLONG)
         );
     }
 

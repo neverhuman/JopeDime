@@ -74,15 +74,21 @@ mod tests {
             .canonicalize()
             .unwrap()
             .join(std::ffi::OsStr::from_bytes(b"r\xff"));
-        std::fs::create_dir_all(repo.join("sub")).unwrap();
-        let init = Command::new("git")
-            .arg("init")
-            .arg("-q")
-            .arg(&repo)
-            .status()
-            .unwrap();
-        assert!(init.success());
-        assert_eq!(git_toplevel(&repo.join("sub")).unwrap(), repo);
+        match std::fs::create_dir_all(repo.join("sub")) {
+            Ok(()) => {
+                let init = Command::new("git")
+                    .arg("init")
+                    .arg("-q")
+                    .arg(&repo)
+                    .status()
+                    .unwrap();
+                assert!(init.success());
+                assert_eq!(git_toplevel(&repo.join("sub")).unwrap(), repo);
+            }
+            // APFS on macOS rejects non-UTF-8 filenames at creation time with EILSEQ (92).
+            Err(e) if cfg!(target_os = "macos") && e.raw_os_error() == Some(92) => {}
+            Err(e) => panic!("unexpected create_dir_all error: {e:?}"),
+        }
         let outside = git_toplevel(temp.path()).map(|_| ());
         // The temporary directory may itself be inside a checkout; when it is not, the refusal
         // names it.
