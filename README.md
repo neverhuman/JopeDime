@@ -28,10 +28,10 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 | Workspace | 26 members: 19 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,058 listed in 26 packages, 72 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,078 listed in 26 packages, 72 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 685 items over 24 lanes <sup>7</sup> |
+| Coverage map | 687 items over 24 lanes <sup>7</sup> |
 | Capability matrix | 824 rows: 353 moved, 61 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,184 `.py` files, 159 of them under `python/` <sup>10</sup> |
