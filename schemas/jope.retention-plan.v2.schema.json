@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jope.retention-plan/v2",
+  "$comment": "Worker draft for I50/I51 integration. Agy must reconcile and register the canonical shared contract before release.",
+  "title": "JopeDime retention review plan v2",
+  "description": "Read-only exact-version retention plan. Both forms are proposals and carry no application authority.",
+  "oneOf": [
+    {"$ref": "#/$defs/obligationPlan"},
+    {"$ref": "#/$defs/valuePlan"}
+  ],
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "versionId": {
+      "oneOf": [
+        {"type": "object", "required": ["state", "value"], "properties": {"state": {"const": "explicit"}, "value": {"type": "string", "minLength": 1}}, "additionalProperties": false},
+        {"type": "object", "required": ["state"], "properties": {"state": {"enum": ["null", "unknown"]}}, "additionalProperties": false}
+      ]
+    },
+    "strongPhysicalRef": {
+      "type": "object",
+      "required": ["account", "bucket", "key", "version_id", "sha256", "bytes"],
+      "properties": {
+        "account": {"type": "string", "minLength": 1},
+        "bucket": {"type": "string", "minLength": 1},
+        "key": {"type": "string", "minLength": 1},
+        "version_id": {"$ref": "#/$defs/versionId"},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "bytes": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "provenanceRef": {
+      "type": "object",
+      "required": ["schema", "identity", "sha256", "description"],
+      "properties": {
+        "schema": {"type": "string", "minLength": 1},
+        "identity": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "description": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "obligationRow": {
+      "type": "object",
+      "required": ["object", "disposition", "strong_roots", "promises", "provenance", "unresolved"],
+      "properties": {
+        "object": {"$ref": "#/$defs/strongPhysicalRef"},
+        "disposition": {"enum": ["keep", "hold", "review_after_root_transition"]},
+        "strong_roots": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "promises": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenanceRef"}},
+        "unresolved": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "obligationPlan": {
+      "type": "object",
+      "required": ["schema", "root_generation", "pin_generation", "rows", "plan_sha256"],
+      "properties": {
+        "schema": {"const": "jope.retention-plan/v2"},
+        "root_generation": {"type": "string", "minLength": 1},
+        "pin_generation": {"type": "string", "minLength": 1},
+        "rows": {"type": "array", "items": {"$ref": "#/$defs/obligationRow"}},
+        "plan_sha256": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "valuePlan": {
+      "type": "object",
+      "required": ["schema", "as_of_unix", "inventory_max_age_secs", "source_inventory_sha256", "policy", "items", "current_objects", "current_bytes", "hypothetical_objects_after_review", "hypothetical_bytes_after_review", "hypothetical_bytes_avoided", "net_bytes_delta", "plan_sha256"],
+      "properties": {
+        "schema": {"const": "jope.retention-plan/v2"},
+        "as_of_unix": {"type": "integer", "minimum": 0},
+        "inventory_max_age_secs": {"type": "integer", "minimum": 1},
+        "source_inventory_sha256": {"$ref": "#/$defs/digest"},
+        "policy": {"type": "object"},
+        "items": {"type": "array", "items": {"type": "object"}},
+        "current_objects": {"type": "integer", "minimum": 0},
+        "current_bytes": {"type": "integer", "minimum": 0},
+        "hypothetical_objects_after_review": {"type": "integer", "minimum": 0},
+        "hypothetical_bytes_after_review": {"type": "integer", "minimum": 0},
+        "hypothetical_bytes_avoided": {"type": "integer", "minimum": 0},
+        "net_bytes_delta": {"type": "integer"},
+        "plan_sha256": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": true
+    }
+  }
+}
