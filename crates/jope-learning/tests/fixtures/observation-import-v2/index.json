@@ -1,0 +1,72 @@
+{
+  "schema": "jopedime.gp-results-index/v1",
+  "fixture_only": true,
+  "runs": [
+    {
+      "bucket": "fixture-bucket",
+      "key": "z.json",
+      "object_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "program_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "dataset": "fixture-dataset",
+      "context_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "fold": 0,
+      "score_name": "validation_rmse",
+      "score": 0.61,
+      "qualified": false,
+      "split_role": "train",
+      "run_id": "fixture-run",
+      "family": "fixture-family",
+      "version_id": "fixture-version"
+    },
+    {
+      "bucket": "fixture-bucket",
+      "key": "a.json",
+      "object_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "program_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "dataset": "fixture-dataset",
+      "context_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "fold": 0,
+      "score_name": "validation_rmse",
+      "score": 0.59,
+      "qualified": false,
+      "split_role": "train",
+      "run_id": "fixture-run",
+      "family": "fixture-family",
+      "version_id": "fixture-version"
+    },
+    {
+      "outcome": "failed",
+      "failure_reason": null,
+      "attempt_id": "attempt-failed",
+      "request_id": "request-a"
+    },
+    {
+      "outcome": "timeout",
+      "lower_bound_ms": 32,
+      "split_role": "sealed",
+      "cost_ref": {
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    },
+    {
+      "outcome": "partial",
+      "reason": "interrupted",
+      "elapsed_ms": 8
+    },
+    {
+      "outcome": "ok",
+      "score": null
+    },
+    {},
+    {
+      "score": 0.12345678901234566,
+      "score_name": "validation_rmse"
+    },
+    {
+      "outcome": "failed",
+      "score": "NaN",
+      "reason": "fit_failed"
+    },
+    null
+  ]
+}

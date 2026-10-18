@@ -680,6 +680,35 @@ pub struct GpIndexDistillStats {
     pub reconciled_s3_keys: usize,
 }
 
+/// Additive complete archive. Unlike the v1 scored-only API, this preserves every supplied
+/// occurrence and keeps missing producer/role/event evidence held. It grants no replay access.
+pub fn import_gp_results_index_complete(
+    index_bytes: &[u8],
+    producer: Option<crate::replay::index_producer::ProducerInput<'_>>,
+    known_scores: &BTreeSet<String>,
+    dependencies: &BTreeMap<String, crate::replay::observation::DependencyEvidence>,
+    historical: Option<&crate::replay::index_producer::HistoricalFixture>,
+) -> Result<crate::replay::observation::ObservationArchive> {
+    crate::replay::observation::import_index(
+        index_bytes,
+        producer,
+        known_scores,
+        dependencies,
+        historical,
+    )
+}
+
+/// Exact legacy compatibility projection, including original order/ranks/skip statistics and
+/// refusals. Explicit caller role is diagnostic v1 metadata, never an I04 replay capability.
+pub fn legacy_scored_projection(
+    archive: &crate::replay::observation::ObservationArchive,
+    diagnostic_split_role: SplitRole,
+    known_scores: &BTreeSet<String>,
+) -> Result<(Vec<DistilledRow>, BTreeSet<String>, GpIndexDistillStats)> {
+    let index = crate::replay::index_producer::parse_index(archive.original_index.as_bytes())?;
+    distill_gp_results_index_with_stats(&index, diagnostic_split_role, known_scores)
+}
+
 /// Distills all S3 context-level GP records from a `jopedime.gp-results-index/v1` document
 /// (`GP_RESULTS_INDEX.json`) into validated `gp_distilled/v1` rows and returns both the rows and
 /// the set of distilled S3 object keys (`raw_keys`) after checking [`reconcile`].

@@ -1,0 +1,1 @@
+Tiny I27 fixture producer input, fixture-only authority. No estate census.

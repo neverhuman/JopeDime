@@ -1,0 +1,17 @@
+[
+  {
+    "locator": "/runs/0",
+    "f64_bits": "3fe3851eb851eb85",
+    "score_name": "validation_rmse"
+  },
+  {
+    "locator": "/runs/1",
+    "f64_bits": "3fe2e147ae147ae1",
+    "score_name": "validation_rmse"
+  },
+  {
+    "locator": "/runs/7",
+    "f64_bits": "3fbf9add3746f65e",
+    "score_name": "validation_rmse"
+  }
+]
