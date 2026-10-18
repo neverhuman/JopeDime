@@ -1,0 +1,1271 @@
+# Governed new-profile policy. Frozen facts are inherited, never copied or rebaselined.
+# Restricted TOML: single-line strings/arrays, unsigned integers, no escapes or inline comments.
+version = 2
+profile = "operator-registry-v2"
+legacy_heads = ["histgbm", "histgbm", "ridge", "ridge_gcv", "elasticnet", "histgbm2", "histgbm2", "gpr", "ksmooth"]
+legacy_stages = ["standardize", "robust_scale", "rank", "blom", "quantile_bins", "bin_onehot", "hinge", "winsor_clip", "cheb", "poly_interact", "rff_cos", "rff_sin", "rand_proj", "oblique_hinge", "row_stats", "pair_prod", "target_bin_encode", "sigmoid"]
+full_heads = ["ridge", "ridge_gcv", "elasticnet", "histgbm", "ensemble", "histgbm2", "krr", "gpr", "ksmooth", "stack", "portfolio"]
+full_stages = ["standardize", "robust_scale", "rank", "blom", "quantile_bins", "bin_onehot", "hinge", "winsor_clip", "cheb", "poly_interact", "rff_cos", "rff_sin", "rand_proj", "landmark_dist", "oblique_hinge", "row_stats", "pair_prod", "target_bin_encode", "sigmoid", "step", "norm_row", "polar", "lag", "roll", "fft_mag", "row_spectral", "row_diff_stats", "svd_project", "nystrom", "map", "derive"]
+expansion = ["symlog", "select_corr", "impute", "pair_ratio", "spline"]
+target_draw = ["rank_gauss", "log1p", "winsor"]
+target_valid = ["rank_gauss", "log1p", "winsor", "zscore"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "target"
+inherit = "registry_v1"
+identity = "wire:0"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = ["q:kind:winsor"]
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "bag"
+inherit = "registry_v1"
+identity = "wire:1"
+axis = "none"
+admission = "quarantined"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "standardize"
+inherit = "registry_v1"
+identity = "wire:2"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "norm_features"
+inherit = "registry_v1"
+identity = "wire:3"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "robust_scale"
+inherit = "registry_v1"
+identity = "wire:4"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "rank"
+inherit = "registry_v1"
+identity = "wire:5"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "blom"
+inherit = "registry_v1"
+identity = "wire:6"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "quantile_bins"
+inherit = "registry_v1"
+identity = "wire:7"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "bin_onehot"
+inherit = "registry_v1"
+identity = "wire:8"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "hinge"
+inherit = "registry_v1"
+identity = "wire:9"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "winsor_clip"
+inherit = "registry_v1"
+identity = "wire:10"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "winsor_moments"
+inherit = "registry_v1"
+identity = "wire:11"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "cheb"
+inherit = "registry_v1"
+identity = "wire:12"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "poly_interact"
+inherit = "registry_v1"
+identity = "wire:13"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = ["topk"]
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "rff_cos"
+inherit = "registry_v1"
+identity = "wire:14"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "rff_sin"
+inherit = "registry_v1"
+identity = "wire:15"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "rand_proj"
+inherit = "registry_v1"
+identity = "wire:16"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "landmark_dist"
+inherit = "registry_v1"
+identity = "wire:17"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "oblique_hinge"
+inherit = "registry_v1"
+identity = "wire:18"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "row_stats"
+inherit = "registry_v1"
+identity = "wire:19"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "pair_prod"
+inherit = "registry_v1"
+identity = "wire:20"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "target_bin_encode"
+inherit = "registry_v1"
+identity = "wire:21"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "sigmoid"
+inherit = "registry_v1"
+identity = "wire:22"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "step"
+inherit = "registry_v1"
+identity = "wire:23"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "norm_row"
+inherit = "registry_v1"
+identity = "wire:24"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "polar"
+inherit = "registry_v1"
+identity = "wire:25"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "lag"
+inherit = "registry_v1"
+identity = "wire:26"
+axis = "feature_within_row"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "roll"
+inherit = "registry_v1"
+identity = "wire:27"
+axis = "feature_within_row"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "fft_mag"
+inherit = "registry_v1"
+identity = "wire:28"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "row_spectral"
+inherit = "registry_v1"
+identity = "wire:29"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "row_diff_stats"
+inherit = "registry_v1"
+identity = "wire:30"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "svd_project"
+inherit = "registry_v1"
+identity = "wire:31"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "nystrom"
+inherit = "registry_v1"
+identity = "wire:32"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "map"
+inherit = "registry_v1"
+identity = "wire:33"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "derive"
+inherit = "registry_v1"
+identity = "wire:34"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "ridge"
+inherit = "registry_v1"
+identity = "wire:35"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "logistic"
+inherit = "registry_v1"
+identity = "wire:36"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "elasticnet"
+inherit = "registry_v1"
+identity = "wire:37"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe", "cpp17_recipe", "javascript"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "histgbm"
+inherit = "registry_v1"
+identity = "wire:38"
+axis = "none"
+admission = "enabled"
+weight = 2
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "gbm"
+inherit = "registry_v1"
+identity = "wire:39"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "ensemble"
+inherit = "registry_v1"
+identity = "wire:40"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "ensemble_ridge_gbm"
+inherit = "registry_v1"
+identity = "wire:41"
+axis = "none"
+admission = "compatibility"
+weight = 0
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "histgbm2"
+inherit = "registry_v1"
+identity = "wire:42"
+axis = "none"
+admission = "enabled"
+weight = 2
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = ["delta:loss:huber"]
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "krr"
+inherit = "registry_v1"
+identity = "wire:43"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "gpr"
+inherit = "registry_v1"
+identity = "wire:44"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "ksmooth"
+inherit = "registry_v1"
+identity = "wire:45"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "stack"
+inherit = "registry_v1"
+identity = "wire:46"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "rff_orthogonal"
+inherit = "registry_v1"
+identity = "wire:47"
+axis = "none"
+admission = "quarantined"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "rff_halton"
+inherit = "registry_v1"
+identity = "wire:48"
+axis = "none"
+admission = "quarantined"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "nystrom_leverage"
+inherit = "registry_v1"
+identity = "wire:49"
+axis = "none"
+admission = "quarantined"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "fastfood_rbf"
+inherit = "registry_v1"
+identity = "wire:50"
+axis = "none"
+admission = "quarantined"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "count_sketch"
+inherit = "registry_v1"
+identity = "wire:51"
+axis = "none"
+admission = "quarantined"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "tensor_sketch"
+inherit = "registry_v1"
+identity = "wire:52"
+axis = "none"
+admission = "quarantined"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "symlog"
+inherit = "recipe_v1"
+identity = "recipe-v1:symlog"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = ["fit=none", "width=preserve"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "select_corr"
+inherit = "recipe_v1"
+identity = "recipe-v1:select_corr"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = ["fit=xy", "width=selected-k"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "impute"
+inherit = "recipe_v1"
+identity = "recipe-v1:impute"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = ["value:strategy:const"]
+parameters = []
+effects = ["fit=x", "width=input-and-optional-missing-indicators"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "pair_ratio"
+inherit = "recipe_v1"
+identity = "recipe-v1:pair_ratio"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = ["fit=xy", "width=bounded-topk-ordered-pairs"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "spline"
+inherit = "recipe_v1"
+identity = "recipe-v1:spline"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = ["fit=x", "width=per-feature-spline-basis"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "ridge_gcv"
+inherit = "recipe_v1"
+identity = "recipe-v1:ridge_gcv"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = ["fit=xy", "width=head"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "portfolio"
+inherit = "recipe_v1"
+identity = "recipe-v1:portfolio"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime", "rust_recipe", "python_recipe"]
+reject = []
+inactive = []
+parameters = []
+effects = ["fit=xy", "width=head"]
+
+[[operator]]
+dialect = "legacy_recipe"
+name = "hurdle2"
+inherit = "hurdle2_v1"
+identity = "recipe-v1:hurdle2"
+axis = "none"
+admission = "enabled"
+weight = 1
+targets = ["runtime"]
+reject = []
+inactive = []
+parameters = ["q:f64:0.86:0:1", "q_spread:f64:0.03:0:1", "lambda_frac:f64:0.2:0:1", "gate_l2:f64:0.05:0:1"]
+effects = ["fit=xy", "width=head"]
+
+[[operator]]
+dialect = "advanced_v3"
+name = "target"
+inherit = "advanced_v3"
+identity = "advanced-v3:target"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "input"
+inherit = "advanced_v3"
+identity = "advanced-v3:input"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "standardize"
+inherit = "advanced_v3"
+identity = "advanced-v3:standardize"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "norm_features"
+inherit = "advanced_v3"
+identity = "advanced-v3:norm_features"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "robust_scale"
+inherit = "advanced_v3"
+identity = "advanced-v3:robust_scale"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "maxabs_scale"
+inherit = "advanced_v3"
+identity = "advanced-v3:maxabs_scale"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "power_transform"
+inherit = "advanced_v3"
+identity = "advanced-v3:power_transform"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "piecewise_linear"
+inherit = "advanced_v3"
+identity = "advanced-v3:piecewise_linear"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "corr_screen"
+inherit = "advanced_v3"
+identity = "advanced-v3:corr_screen"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "pls_project"
+inherit = "advanced_v3"
+identity = "advanced-v3:pls_project"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "target_bin_encode"
+inherit = "advanced_v3"
+identity = "advanced-v3:target_bin_encode"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "sigmoid"
+inherit = "advanced_v3"
+identity = "advanced-v3:sigmoid"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "step"
+inherit = "advanced_v3"
+identity = "advanced-v3:step"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "norm_row"
+inherit = "advanced_v3"
+identity = "advanced-v3:norm_row"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "lag"
+inherit = "advanced_v3"
+identity = "advanced-v3:lag"
+axis = "ordered_rows"
+admission = "disabled"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "roll"
+inherit = "advanced_v3"
+identity = "advanced-v3:roll"
+axis = "ordered_rows"
+admission = "disabled"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "select_corr"
+inherit = "advanced_v3"
+identity = "advanced-v3:select_corr"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "winsor_clip"
+inherit = "advanced_v3"
+identity = "advanced-v3:winsor_clip"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "winsor_moments"
+inherit = "advanced_v3"
+identity = "advanced-v3:winsor_moments"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "impute"
+inherit = "advanced_v3"
+identity = "advanced-v3:impute"
+axis = "none"
+admission = "disabled"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "ridge"
+inherit = "advanced_v3"
+identity = "advanced-v3:ridge"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "logistic"
+inherit = "advanced_v3"
+identity = "advanced-v3:logistic"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "logit_ridge"
+inherit = "advanced_v3"
+identity = "advanced-v3:logit_ridge"
+axis = "none"
+admission = "enabled"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "multiclass_ridge"
+inherit = "advanced_v3"
+identity = "advanced-v3:multiclass_ridge"
+axis = "none"
+admission = "disabled"
+weight = 0
+targets = []
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "tab_boost"
+inherit = "advanced_v3"
+identity = "advanced-v3:tab_boost"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "extra_trees"
+inherit = "advanced_v3"
+identity = "advanced-v3:extra_trees"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "gam_boost"
+inherit = "advanced_v3"
+identity = "advanced-v3:gam_boost"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "pls"
+inherit = "advanced_v3"
+identity = "advanced-v3:pls"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []
+
+[[operator]]
+dialect = "advanced_v3"
+name = "portfolio"
+inherit = "advanced_v3"
+identity = "advanced-v3:portfolio"
+axis = "none"
+admission = "receipt"
+weight = 0
+targets = ["runtime", "rust_bound", "python_bound"]
+reject = []
+inactive = []
+parameters = []
+effects = []

@@ -12,6 +12,15 @@ use serde::{Serialize, Serializer};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
+/// Dialect-specific facts for the opt-in registry profile. The historical
+/// manifest above/below is a compatibility projection and remains unchanged.
+pub fn registry_v2_manifest() -> Vec<super::registry_v2::Facts> {
+    super::registry_v2::OPERATORS
+        .iter()
+        .map(|row| row.facts())
+        .collect()
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Grammar {
