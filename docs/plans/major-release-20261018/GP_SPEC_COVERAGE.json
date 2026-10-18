@@ -1,0 +1,1053 @@
+{
+  "schema": "jope.gp_spec_coverage.v1",
+  "observed_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+  "source_documents": {
+    "spec_a": {
+      "name": "SPEC_A_final_engineering_spec_gated_plan.md",
+      "original_path_xbabe2": "/home/ubuntu/xbabe2_kicker/captains-20261017/jopedime_major_release_20261018/SPEC_A_final_engineering_spec_gated_plan.md",
+      "bytes": 104474,
+      "sha256": "f770b84f2e00cb8d2015755eb7593563dc94024944e8a754913436dc4ea48bb9",
+      "line_count": 1399,
+      "document_role": "source proposal; embedded orders are not new human authorization"
+    },
+    "spec_b": {
+      "name": "SPEC_B_language_for_learning_algorithms.md",
+      "original_path_xbabe2": "/home/ubuntu/xbabe2_kicker/captains-20261017/jopedime_major_release_20261018/SPEC_B_language_for_learning_algorithms.md",
+      "bytes": 133329,
+      "sha256": "9958867bfde1fac49c0f5df384de5e6994a63091eff4ac708209cb45f8886551",
+      "line_count": 1241,
+      "document_role": "source proposal; embedded orders are not new human authorization"
+    },
+    "spec_c": {
+      "name": "SPEC_C_proposal_review_eng_spec_gated_plan.md",
+      "original_path_xbabe2": "/home/ubuntu/xbabe2_kicker/captains-20261017/jopedime_major_release_20261018/SPEC_C_proposal_review_eng_spec_gated_plan.md",
+      "bytes": 146315,
+      "sha256": "73a04b7a3cfdaaed6c5629a61743e825f82d53176097ff81038c19c85f7a41ad",
+      "line_count": 2140,
+      "document_role": "source proposal; embedded orders are not new human authorization"
+    }
+  },
+  "inventory_counts": {
+    "spec_a": 20,
+    "spec_b": 26,
+    "spec_c": 23
+  },
+  "total_source_work_packets": 69,
+  "mapping_rule": "All required_tasks_all are required for a packet; a name match, subfixture, stale receipt or PASS on one member cannot close the source packet.",
+  "source_namespace_rule": "SPEC_A gates G0..G10, SPEC_B G00..G20, SPEC_C G00..G14 and unified release gates are separate namespaces; read the source criterion, not the bare number.",
+  "scope_limit": "Work-package coverage audit, not proof that every source paragraph is semantically accepted or that any capability is implemented. Original six unique October-17 self-play specs and 66-task ledger remain preserved.",
+  "packets": [
+    {
+      "source": "spec_a",
+      "packet": "P00",
+      "lines": [
+        1160,
+        1160
+      ],
+      "source_text": "| P00 | Pinned baseline, capability/witness roster | jope-records; registries, grammar assets, compatibility fixtures | None | G0; count/identity report; actual default route documented |",
+      "source_text_sha256": "5e7778c5aef39e2fae949179ef0b26e7204785eab38955b7db925a1996e3fe18",
+      "required_tasks_all": [
+        "MR11",
+        "MR12"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P01",
+      "lines": [
+        1161,
+        1161
+      ],
+      "source_text": "| P01 | Historical preservation harness | compat_freeze, registry, policy grammar/differential and emitter suites | P00 | G1; zero unexplained pin/trace/output drift |",
+      "source_text_sha256": "d65eba3b5a96832abcebb47a6104981926e3d124aa9f34e7029433e0e9b37815",
+      "required_tasks_all": [
+        "MR13"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P02",
+      "lines": [
+        1162,
+        1162
+      ],
+      "source_text": "| P02 | Strict successor ingress and exact bridge | kernel/ir/canon, legacy_bridge, versioned parser | P00–P01 | G2; duplicate/numeric/nesting and opaque preservation cases |",
+      "source_text_sha256": "8cf19c017a46517b77e0cb64399650bd2ecad66067f2e4f2d0b2fbca0e2325ea",
+      "required_tasks_all": [
+        "MR13",
+        "MR16"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P03",
+      "lines": [
+        1163,
+        1163
+      ],
+      "source_text": "| P03 | Numeric-v2 route completion | numeric_v2, numeric_v2_emit, pipeline/CLI kernel adapters | P00–P02 | Supported caller/target subset executes without old default change |",
+      "source_text_sha256": "f624804dc2dbc10ad66d0ef43a1bb5f7992cb772a0c91462b9240658a920496e",
+      "required_tasks_all": [
+        "MR15",
+        "MR44"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P04",
+      "lines": [
+        1164,
+        1164
+      ],
+      "source_text": "| P04 | Schema/value pointer and exact numeric payload | kernel/ir/edit; jope-policy/edit_policy | P02 | W02 through edit, fit, record and exact replay |",
+      "source_text_sha256": "235efbfb0877726308325a76d30fa549cb604e6d87525785a21e1b3e1bba8da9",
+      "required_tasks_all": [
+        "MR17"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P05",
+      "lines": [
+        1165,
+        1165
+      ],
+      "source_text": "| P05 | Pure DAG executor and liveness | kernel/ir graph; union/route draft source | P02 | W03, cycle/width/resource checks; actual selected-target export |",
+      "source_text_sha256": "df40bb9dddabb8cd3a729acbced4ec7c103017bc0b0a273b47af08140b347920",
+      "required_tasks_all": [
+        "MR18",
+        "MR19"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P06",
+      "lines": [
+        1166,
+        1166
+      ],
+      "source_text": "| P06 | GP constructor/mutation/crossover closure | existing legal_edits/apply; new region edit adapters | P04–P05 | G3 for enabled subset; no invalid committed children |",
+      "source_text_sha256": "f3f4eb8f6d5a0151f330bb769a6268f7407ec7a7bc0306719d5d03dce5e68309",
+      "required_tasks_all": [
+        "MR20",
+        "MR43"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P07",
+      "lines": [
+        1167,
+        1167
+      ],
+      "source_text": "| P07 | First portable export slice | existing Rust/Python emit ownership and artifact manifests | P03–P06 | G6 on W01–W03; unsupported targets explicit |",
+      "source_text_sha256": "2741337de674e512ac074f7a2f48e2475175e3b4167d264fa137f262de2e4648",
+      "required_tasks_all": [
+        "MR21",
+        "MR42"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P08",
+      "lines": [
+        1168,
+        1168
+      ],
+      "source_text": "| P08 | Nested fit planner and OOF adapters | kernel/ir/effects; residual/stack prototypes; pipeline fits | P05–P07 | G4 and W04, two-level sentinel suite, complete cost |",
+      "source_text_sha256": "02dfaaaa481be0458cca2f97aee6a80cd17d626279059124da87d599e2ccfecf",
+      "required_tasks_all": [
+        "MR22",
+        "MR23",
+        "MR24"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P09",
+      "lines": [
+        1169,
+        1169
+      ],
+      "source_text": "| P09 | PSD kernel AST and solver subset | gpr.rs, kernel registry, reference numerical kernels | P02, P07 | W05, constructor/oracle/residual and export gates |",
+      "source_text_sha256": "00ce0a2be6b7415531efd4f63ca31a862b000eb17756c207cad71d875c92a7b6",
+      "required_tasks_all": [
+        "MR26",
+        "MR27",
+        "MR41"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P10",
+      "lines": [
+        1170,
+        1170
+      ],
+      "source_text": "| P10 | Variable projection | expression refinement and fit/measurement seams | P09 | W06; scale/rank/conditioning controls; equal-cost development report |",
+      "source_text_sha256": "49747193659621abc5a4e1615598c300beaec7bed92dbe48951ebbca10f8fd3d",
+      "required_tasks_all": [
+        "MR25"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P11",
+      "lines": [
+        1171,
+        1171
+      ],
+      "source_text": "| P11 | Bounded learner-state/update core | successor regions under existing semantic ownership | P05–P07 | W07 without hidden host trainer; state/scan/freeze and Rust recipe |",
+      "source_text_sha256": "4dd858182c40818abdf779718503c3868b1a9e49fef850bf44673de8a653ed48",
+      "required_tasks_all": [
+        "MR28",
+        "MR32",
+        "MR41",
+        "MR42",
+        "MR43"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P12",
+      "lines": [
+        1172,
+        1172
+      ],
+      "source_text": "| P12 | Elementary loss/proximal library | task/number contracts, update primitives | P11 | W09; independent convex/KKT fixtures |",
+      "source_text_sha256": "65875889a399bb0d2f579cf5d2b608c13bcb24186bb37962c090ed21a2b83dca",
+      "required_tasks_all": [
+        "MR29"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P13",
+      "lines": [
+        1173,
+        1173
+      ],
+      "source_text": "| P13 | First-order AD and tied parameters | scalar AD design generalized over qualified pure tensor ops | P11 | G5 derivatives; W08; tape/loop/status and export evidence |",
+      "source_text_sha256": "b0d9690f4701f391e830408b24d1d09392177abf1553966c9359b463c0426067",
+      "required_tasks_all": [
+        "MR30",
+        "MR31",
+        "MR43"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P14",
+      "lines": [
+        1174,
+        1174
+      ],
+      "source_text": "| P14 | Factored edit-policy challenger | jope-policy/edit_policy; lineage-bound corpus/export | P04, P06–P07 | G7; old actor frozen; actual structural/numeric/pointer sampling |",
+      "source_text_sha256": "f7cc302bb565b98a5c4dae689daa5eea8a7aabb7698cac01e44bba4c6be832b5",
+      "required_tasks_all": [
+        "MR33",
+        "MR34"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P15",
+      "lines": [
+        1175,
+        1175
+      ],
+      "source_text": "| P15 | Typed library learning | jope-motifs plus exact typed graph expansions | P06, P11, P14 | W10; hygienic costed definitions; future-task development benefit |",
+      "source_text_sha256": "44f9e92b4567f506d5ec08aacf4e50d6a8df451fa3bd10d2ab9d0a39a907d2ed",
+      "required_tasks_all": [
+        "MR35"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P16",
+      "lines": [
+        1176,
+        1176
+      ],
+      "source_text": "| P16 | Resource/performance qualification | pipeline ledger, worker containment, artifact runner | Relevant executed packages | G8; end-to-end accounting and failure recovery |",
+      "source_text_sha256": "907b27a1feea8485aa2e2895f3a096d9204530137dd436294805548f440a2830",
+      "required_tasks_all": [
+        "MR36"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P17",
+      "lines": [
+        1177,
+        1177
+      ],
+      "source_text": "| P17 | Prospective search/default qualification | jope-bench; adopted study-local protocol adapter | P07–P16 as enabled | G9; keep inconclusive/negative result if it fails |",
+      "source_text_sha256": "9a7639e9a5ab2c81476e8133350c74eda40fe78074ab51500be201d7d10a3365",
+      "required_tasks_all": [
+        "MR37"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P18",
+      "lines": [
+        1178,
+        1178
+      ],
+      "source_text": "| P18 | Release/rollback package | versioned profile/model/library/artifact manifests | G0–G9 for scope | G10; exact-head CI/review; reproducible evidence bundle |",
+      "source_text_sha256": "26bde520253b9c577e2cec10802851c3a056387a60d9df307c32f4a4c18a9719",
+      "required_tasks_all": [
+        "MR38"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_a",
+      "packet": "P19",
+      "lines": [
+        1179,
+        1179
+      ],
+      "source_text": "| P19 | Optional mathematical packs | potentials/mirror first, then domain-specific packs | Relevant core gates | Separate value/coverage experiment before default admission |",
+      "source_text_sha256": "dbd60183a931463bc8e1ad4458fc460fce45e0052e66524593bcb82304cf945b",
+      "required_tasks_all": [
+        "MR39",
+        "MR40"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-00",
+      "lines": [
+        1034,
+        1034
+      ],
+      "source_text": "| GP-00 | Pinned audit, route manifest, historical corpus and benchmark fixtures; records/bench ownership | — | G00; current/old source differences and all unknowns recorded. |",
+      "source_text_sha256": "7bda592f4b9a740769aa54abcec300df8153f3d004e635f333dd4eab31b0ca56",
+      "required_tasks_all": [
+        "MR11"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-01",
+      "lines": [
+        1035,
+        1035
+      ],
+      "source_text": "| GP-01 | Generated capability join across registry, profiles, callers, policy and emitters | GP-00 | Machine-readable rows distinguish declare/parse/generate/edit/fit/AD/save/policy/export/qualify; unreachable positive claims are reported. |",
+      "source_text_sha256": "ef5f44daa096ae24ea401c60b61f2ef02c8890177a79b50984ee13f862aeb002",
+      "required_tasks_all": [
+        "MR12"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-02",
+      "lines": [
+        1036,
+        1036
+      ],
+      "source_text": "| GP-02 | Strict successor parameter ingress and parameter-effect fixtures | GP-01 | Invalid ratio/dimension/duplicate/unknown cases refuse; every advertised active gene has an existential effect witness; G02/G04. |",
+      "source_text_sha256": "b08e744e80ed1cfcf4903d73bc617c0e43a5e85f995c9ba65b6f54d1c4f36285",
+      "required_tasks_all": [
+        "MR14",
+        "MR16"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-03",
+      "lines": [
+        1037,
+        1037
+      ],
+      "source_text": "| GP-03 | Mask-based inputs and explicit output/width/feature-selection contracts | GP-01 | Zero/missing and scaled-target/late-feature fixtures pass; no change to old profile semantics; G01/G04. |",
+      "source_text_sha256": "6364b34f29fdb4f338dc70c48fd5e33ec828a96a2332f623b00640c4c87c9107",
+      "required_tasks_all": [
+        "MR15",
+        "MR17",
+        "MR44"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-04",
+      "lines": [
+        1038,
+        1038
+      ],
+      "source_text": "| GP-04 | New learner envelope, exact codec, primitive descriptor schema and bounded reader | GP-01 | Canonical roundtrip, alpha/tie identity, malformed/deep/large input limits; legacy islands preserve bytes and unsupported conversion. |",
+      "source_text_sha256": "e2fa010040e0ab7ac24cfc2588ef8ce420bd97da1fc16ecd2ca7c33b1bb5f9c0",
+      "required_tasks_all": [
+        "MR13",
+        "MR16"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-05",
+      "lines": [
+        1039,
+        1039
+      ],
+      "source_text": "| GP-05 | Semantic schema/layout maps, raw/derived pointers and pure DAG executor | GP-04 | Wide-column/reorder/fan-out/sharing tests; G03/G05; no claim of fitted stacking yet. |",
+      "source_text_sha256": "4e90ee3a87e9fef88445ed9a8e52ba35bdc5b4bd62a6c6fd53f52c850c4b8965",
+      "required_tasks_all": [
+        "MR17",
+        "MR18",
+        "MR19"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-06",
+      "lines": [
+        1040,
+        1040
+      ],
+      "source_text": "| GP-06 | Runtime Fit/Predict capabilities, full fit signatures and nested scopes | GP-05 | Train-only positive tests and held-label/wrong-fold/selection attacks; existing `narrow` unchanged; G06. |",
+      "source_text_sha256": "c5aa92f7adec1ecd1dc0b0dacb8a2450dd23afb482e9577f3f767bbbb5ac22db",
+      "required_tasks_all": [
+        "MR22",
+        "MR23",
+        "MR24"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-07",
+      "lines": [
+        1041,
+        1041
+      ],
+      "source_text": "| GP-07 | Owned parameter/state records, bounded scan and freeze/reload | GP-05, GP-06 | Explicit analytical-gradient learner trains and predicts; schedule/RNG/limit behavior; G07/G16. |",
+      "source_text_sha256": "3d29881224aa3d356f3152b23a2b002c52a56d1612cede7658de74996d78985c",
+      "required_tasks_all": [
+        "MR28"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-08",
+      "lines": [
+        1042,
+        1042
+      ],
+      "source_text": "| GP-08 | Small tensor/linear-solve reference subset and ridge witness | GP-07 | Independent solve/centering/intercept/state references; failed solve explicit; no large tensor framework required. |",
+      "source_text_sha256": "30042a59d6aa62e337a16df068bd27c30abedabda7cb894b68ed53a0e9e3526e",
+      "required_tasks_all": [
+        "MR41"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-09",
+      "lines": [
+        1043,
+        1043
+      ],
+      "source_text": "| GP-09 | Typed insert/delete/replace/pointer/crossover and action receipts | GP-05, GP-07 | G10/G11; both-parent remapping and exact changed-child identities through the real search consumer. |",
+      "source_text_sha256": "1372dc8c3f4e3712a393daef95f57ababaf6bf959ff46625984af8206c05e5d7",
+      "required_tasks_all": [
+        "MR20",
+        "MR43"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-10",
+      "lines": [
+        1044,
+        1044
+      ],
+      "source_text": "| GP-10 | Standalone Rust fitted emitter for the tiny subset | GP-08 | Fresh compiled artifact predicts on runtime inputs; state/schema errors visible; G09 fitted product. |",
+      "source_text_sha256": "641a34fbd1fc4ea608e1517b24d26de2125099bbc34e9693dfb6e8f2b4e20675",
+      "required_tasks_all": [
+        "MR21",
+        "MR42"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-11",
+      "lines": [
+        1045,
+        1045
+      ],
+      "source_text": "| GP-11 | Complete vertical-slice pipeline integration | GP-06–GP-10 | Fit → mutate → crossover → refit → freeze → emit → fresh-process replay, with every operation charged and old route unchanged. |",
+      "source_text_sha256": "6a8c47703ea4fb8b76972cf25bf37c0ba36a1c8b033fc328a2d39ca9e6689a05",
+      "required_tasks_all": [
+        "MR42"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-12",
+      "lines": [
+        1046,
+        1046
+      ],
+      "source_text": "| GP-12 | First-order JVP/VJP and bounded-scan AD | GP-07, GP-08 | Shared/broadcast/branch derivatives match independent references; analytical learner control retained; G08. |",
+      "source_text_sha256": "d34f1e84aedd3674f777c686cee281dabac1de7b929929628e634343b6d3a4ee",
+      "required_tasks_all": [
+        "MR30"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-13",
+      "lines": [
+        1047,
+        1047
+      ],
+      "source_text": "| GP-13 | Full Rust training recipe and exact optimizer witnesses | GP-10, GP-12 | Raw-data retraining reproduces the supported reference contract; exact SGD/momentum/Adam distinguished; G09 recipe product. |",
+      "source_text_sha256": "d77384cc98d5d6d061c8235e5f1dde0ae3a231ff25f5352755a3ddc89d280b1c",
+      "required_tasks_all": [
+        "MR31"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-14",
+      "lines": [
+        1048,
+        1048
+      ],
+      "source_text": "| GP-14 | Variable-projection refinement and conditional analytic criteria | GP-08, GP-12, GP-13 | Stable independent solves, scale/rank/derivative tests and E02 pilot with complete costs. |",
+      "source_text_sha256": "9fc4285f41c070aaa54271b2a9865ae89ebcadff260c6be19a5cd51489cfdf25",
+      "required_tasks_all": [
+        "MR25"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-15",
+      "lines": [
+        1049,
+        1049
+      ],
+      "source_text": "| GP-15 | PSD kernel/operator AST and scalable support state | GP-08, GP-12 | Constructor proofs, support/query replay, approximation identities and E03 controls; no automatic unquarantine. |",
+      "source_text_sha256": "9d04441724d1ebf045eb2592a24d6da7208942917d12b19661f750da4dfd681b",
+      "required_tasks_all": [
+        "MR26",
+        "MR27"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-16",
+      "lines": [
+        1050,
+        1050
+      ],
+      "source_text": "| GP-16 | Sparse/proximal/diagonal metric update library | GP-12 | Correlated convex references, metric-prox semantics, constrained domains and E04 pilot. |",
+      "source_text_sha256": "5336994c9dd4240d1000e7f0ade06172e6d3f3eed9cfbc6b9ab4213d520d4cd1",
+      "required_tasks_all": [
+        "MR29"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-17",
+      "lines": [
+        1051,
+        1051
+      ],
+      "source_text": "| GP-17 | Successor typed action/graph encoding and all-attempt corpus adapters | GP-09, GP-11 | G12/G13; exact values/pointers/support status and old policy/grammar preserved. |",
+      "source_text_sha256": "6542201b63dcf07a69364a8698afb04bfac99f11b11ebf153e2e9a001697b2ff",
+      "required_tasks_all": [
+        "MR33"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-18",
+      "lines": [
+        1052,
+        1052
+      ],
+      "source_text": "| GP-18 | Actual successor editor training/export/reload/next-proposal path | GP-17, GP-12 | G14; frozen reference actor remains operational; useful-policy claim deferred to E07. |",
+      "source_text_sha256": "d811ee95cf0ffb9e4c6b907cff2c51cd9bcaad1e4d511bfb4c50cf61fcbf8754",
+      "required_tasks_all": [
+        "MR34"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-19",
+      "lines": [
+        1053,
+        1053
+      ],
+      "source_text": "| GP-19 | Typed parameterized abstraction extraction/admission | GP-09, GP-17 | G15; exact expansions, no forbidden captures, train-only provenance, E06 with size/cost controls. |",
+      "source_text_sha256": "3641c829001d9f0fdb99dfe5f45762aa28cb82bf7aa1d1f8694e59d3e4ad3bd8",
+      "required_tasks_all": [
+        "MR35"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-20",
+      "lines": [
+        1054,
+        1054
+      ],
+      "source_text": "| GP-20 | Matched-resource runner, expected-cell roster and statistical report | GP-00; integrate progressively | Full assigned outcomes, frozen hardware/budgets, failure/fallback policy and reproducible analysis; no paid/live campaign implicit. |",
+      "source_text_sha256": "f59779950a72926eb9b9dca6bc944072d59c6d1941a4527c6293f96f0f3b87c2",
+      "required_tasks_all": [
+        "MR36",
+        "MR37"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-21",
+      "lines": [
+        1055,
+        1055
+      ],
+      "source_text": "| GP-21 | Mechanism-aware fidelity and pruned-candidate audit | GP-11, GP-20 | E08; missed-winner and total-cost evidence; existing search strategy remains a control. |",
+      "source_text_sha256": "ca2e272f572cb402318d0a835d5a06465be3ce11501eb8c1c49af9489c163dbc",
+      "required_tasks_all": [
+        "MR36"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-22",
+      "lines": [
+        1056,
+        1056
+      ],
+      "source_text": "| GP-22 | Registered development selection and fresh-family confirmation | Applicable semantic packets, GP-20 | G18/G19; a useful improvement, a scoped tradeoff, or an explicit negative/inconclusive result. |",
+      "source_text_sha256": "68469f28b251a13bf59b3dc586ddd774659d258b1ec4cb984e3eed341ce3d6d7",
+      "required_tasks_all": [
+        "MR37"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-23",
+      "lines": [
+        1057,
+        1057
+      ],
+      "source_text": "| GP-23 | Profile release/canary/fallback and migration tooling | G01–G17 applicable; GP-22 for default changes | G20; new jobs pinned; opt-out restores previous behavior; partial artifacts never promoted. |",
+      "source_text_sha256": "1668b2cf7e48f26a636439ec97f3396095ceb315101f169511d9bcce2c59141d",
+      "required_tasks_all": [
+        "MR38"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-24",
+      "lines": [
+        1058,
+        1058
+      ],
+      "source_text": "| GP-24 | Convex-potential and learned-geometry research slice | GP-12, GP-16 | P1 quadratic learned-potential derivative fixture plus E05; no dependency for the early tabular release. |",
+      "source_text_sha256": "d5e1444e29a6dbb7d5677cfc01fb7677473155ffaf3dd5733c7c4f5c306ca6f0",
+      "required_tasks_all": [
+        "MR29",
+        "MR39"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_b",
+      "packet": "GP-25",
+      "lines": [
+        1059,
+        1059
+      ],
+      "source_text": "| GP-25 | Optional probability/semiring/graph/time/transport packs | Relevant core, task and mathematical gates | Each has its own witness, task protocol, export subset, budget and with/without study. |",
+      "source_text_sha256": "06bb188a3d8fac8a3289c8724caaa94c939825015fe43701f26554800a1c2b99",
+      "required_tasks_all": [
+        "MR40"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP00",
+      "lines": [
+        1430,
+        1437
+      ],
+      "source_text": "**WP00 — Freeze baseline and evidence.**  \nOwner competency: maintainer/evaluation. Depends: none.  \nArea: records, release fixtures and current profile manifests.\n\nCapture source revision, historical program/grammar/numerical identities, current exported target matrix, representative program/fitted-state fixtures and exact candidate-sequence controls. Register the existing and successor routes separately.\n\n**Done when:** the static counts and source paths in section 6 reproduce; old-route conformance fixtures are runnable; every known limitation is represented as supported, unsupported, prototype or receipt-gated rather than guessed. Gates: G00/G01.",
+      "source_text_sha256": "c572e5c35055daf554d5f36bf180f6f580705b6d905171d8e75e46fd714d5d32",
+      "required_tasks_all": [
+        "MR11"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP01",
+      "lines": [
+        1438,
+        1445
+      ],
+      "source_text": "**WP01 — Descriptor and capability authority.**  \nOwner competency: runtime/compiler. Depends: WP00.  \nArea: existing registry and generated records.\n\nAdd successor type/effect/domain/resource/state/export/action fields. Generate a route-specific capability matrix. Retain inherited lifecycle checks and old registry authority.\n\n**Done when:** positive-weight or advertised successor actions without runtime/export witnesses are rejected; frozen registry/grammar checks remain unchanged; unsupported states have precise reasons. Gate: G00.",
+      "source_text_sha256": "d0b5ec77340558b4b81f5caf9cf19a8bfa3108459217f2af9c830da99f477412",
+      "required_tasks_all": [
+        "MR12"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP02",
+      "lines": [
+        1446,
+        1453
+      ],
+      "source_text": "**WP02 — Parameter and numeric repair witnesses.**  \nOwner competency: numerical/runtime. Depends: WP00/WP01.  \nArea: affected legacy implementations and successor descriptors.\n\nCreate reproduction fixtures for permissive ratio domains, missing-zero collision, width visibility, absolute output clamps and ignored parameters. Implement only one narrowly scoped successor repair per change.\n\n**Done when:** each changed parameter has a declared effect witness; valid zeros remain distinct from missing values in the new path; repaired programs have new identities; old fixtures remain unchanged. Gates: G01/G06.",
+      "source_text_sha256": "40546cf4853222149617735cd6549c911df1f4b9e71e85dc11d368c40ade2e3d",
+      "required_tasks_all": [
+        "MR14",
+        "MR15",
+        "MR44"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP03",
+      "lines": [
+        1454,
+        1461
+      ],
+      "source_text": "**WP03 — Strict successor reader and canonical identity.**  \nOwner competency: compiler. Depends: WP01.  \nArea: kernel/ir/learning frontend/codec.\n\nBound bytes/nesting during reading; reject duplicates, invalid numeric kinds, unknown versions and unresolved references; preserve exact literals and parameter ties; alpha-normalize locals.\n\n**Done when:** canonical roundtrip, malformed-input and pre-allocation limits pass; no duplicate field is silently overwritten. Gates: G02/G03.",
+      "source_text_sha256": "509296dadb39f0a5de4c96f8fcee12a900a85dc46ca7c85ca61a9080a57bd2d6",
+      "required_tasks_all": [
+        "MR16"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP04",
+      "lines": [
+        1462,
+        1469
+      ],
+      "source_text": "**WP04 — Exact-or-opaque legacy bridge.**  \nOwner competency: compiler/runtime. Depends: WP03.  \nArea: existing legacy bridge plus successor wrapper.\n\nStore original bytes/identity and relation proof. Keep unsupported exact conversions opaque; bind execution/export to the old qualified path.\n\n**Done when:** all W01 fixtures retain their promised behavior and targets; conversion failure does not remove capability; old/source/successor identities cannot collide. Gate: G01.",
+      "source_text_sha256": "a8c40dfe22eb7eb0b0894f4c95e4616f0423237e68a3529f258fbf2704915198",
+      "required_tasks_all": [
+        "MR13",
+        "MR16"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP05",
+      "lines": [
+        1470,
+        1477
+      ],
+      "source_text": "**WP05 — Schema/value pointers and numeric action ABI.**  \nOwner competency: search/policy. Depends: WP01/WP03.  \nArea: jope-policy draft edit ABI, checked action adapter, schema resolver.\n\nBind raw/derived references and exact numeric values to checked nodes rather than tokens. Record proposed versus executed/refined identities. Preserve old lossy projection as a separately identified channel.\n\n**Done when:** columns 17/63/511 where admitted, schema reorder, missing key, stale derived reference and off-bin values survive or refuse correctly through action → fit → Rust fitted export. Gates: G03/G08/G10.",
+      "source_text_sha256": "f7bd340609e917090ec67b37f7ad12825c7fb638d4860798cb74a776b88941a8",
+      "required_tasks_all": [
+        "MR17"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP06",
+      "lines": [
+        1478,
+        1485
+      ],
+      "source_text": "**WP06 — Lazy control and pure DAG execution.**  \nOwner competency: compiler/runtime. Depends: WP03/WP04.  \nArea: learning regions, interpreter and first Rust fitted lowering.\n\nImplement Let, branch/join, explicit concatenation, exact width and typed lazy conditional. Keep automatic algebraic optimization disabled initially.\n\n**Done when:** W03/W04 execute natively and as emitted fitted artifacts; inactive invalid branches are not evaluated; cycles, dangling values and illegal widths refuse before fit. Gates: G03/G05/G08.",
+      "source_text_sha256": "c5d867caf2b3e6a6e5d8f4f6b501dae8f108fd6d3902fd10cd0638bcc80eb95d",
+      "required_tasks_all": [
+        "MR18",
+        "MR19",
+        "MR21"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP07",
+      "lines": [
+        1486,
+        1493
+      ],
+      "source_text": "**WP07 — Nested fitting and cache signatures.**  \nOwner competency: effects/evaluation. Depends: WP06.  \nArea: FitPlan successor adapter, pipeline planner, state cache.\n\nAdd NestedFitScope without changing narrow. Implement complete fit signatures and runtime-projected data views. Track selection/tuning ancestry.\n\n**Done when:** nested row exclusions, cross-fold cache rejection, supervised-selection canaries, group/time constraints and numeric-payload noninterference pass. Gate: G04.",
+      "source_text_sha256": "e2b76ca2bf19508ab11c91b05c06d68b2cd8800f01b1eca7cc64c854d0945758",
+      "required_tasks_all": [
+        "MR22"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP08",
+      "lines": [
+        1494,
+        1501
+      ],
+      "source_text": "**WP08 — Fitted composition and exports.**  \nOwner competency: runtime/evaluation. Depends: WP07.  \nArea: existing draft combinators reconciled through the common executor.\n\nImplement two-base stacking, OOF residual stacking and a separately specified gate/branch fitting policy. Preserve ordinary boosting semantics.\n\n**Done when:** W05 fits, refits, freezes, reloads and exports; selection/preprocessing occurs in the right closures; empty partitions/fold failures have defined outcomes. Gates: G04/G08.",
+      "source_text_sha256": "d96e12b880b9f0389938d5284b05bf2ef96ad9183a6cba285675b690c14b83c1",
+      "required_tasks_all": [
+        "MR23",
+        "MR24"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP09",
+      "lines": [
+        1502,
+        1509
+      ],
+      "source_text": "**WP09 — Variable projection.**  \nOwner competency: numerical ML. Depends: WP02/WP06/WP07.  \nArea: existing refinement and feature/ridge fitting seams.\n\nImplement bounded multi-feature fitting and shared nonlinear constants with explicit scale/rank/derivative policy. Reuse current refinement only where qualified.\n\n**Done when:** W06/W07 independent solves, derivatives, state and exports pass; pilot reports complete time/cost versus current refinement. Gates: G06/G07/G08/G13 for benefit claims.",
+      "source_text_sha256": "6e943d9e07196efe36155d60d7e5f966d52308131efac1657748cfe0cf1eccb6",
+      "required_tasks_all": [
+        "MR25"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP10",
+      "lines": [
+        1510,
+        1517
+      ],
+      "source_text": "**WP10 — Kernel/operator algebra.**  \nOwner competency: numerical ML. Depends: WP06/WP07 and the required solve subset.  \nArea: existing GPR/kernel code and successor typed descriptors.\n\nAdd valid PSD constructors, schema subsets, pullbacks/gates and explicit approximation/operator storage. Start with small dense and low-rank cases.\n\n**Done when:** W14 construction, solve, approximation identity and artifact tests pass; arbitrary similarities cannot acquire a PSD certificate. Gates: G06/G08.",
+      "source_text_sha256": "93b29210c885d9bebc00ce6c14c7f25695651d057b033966a868640bbe2f9d2f",
+      "required_tasks_all": [
+        "MR26",
+        "MR27",
+        "MR41"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP11",
+      "lines": [
+        1518,
+        1525
+      ],
+      "source_text": "**WP11 — Bounded tensor/state learner runtime.**  \nOwner competency: compiler/runtime. Depends: WP03/WP06/WP07.  \nArea: learning IR, reference executor, state codec.\n\nImplement records, parameter references, state transitions, tensor operations, bounded scan and finalization. Begin with a manually differentiated or analytic-gradient tiny learner before general reverse AD.\n\n**Done when:** a complete learner fits/finalizes/reloads/predicts; state/loop/allocation bounds hold; interrupted work cannot publish a complete model. Gates: G03/G05/G11.",
+      "source_text_sha256": "f530db53a7d0a3634a5308520f9572ace62c1fe0a5c878e96876de7cb79fbc75",
+      "required_tasks_all": [
+        "MR28",
+        "MR32",
+        "MR41",
+        "MR42"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP12",
+      "lines": [
+        1526,
+        1533
+      ],
+      "source_text": "**WP12 — First-order AD and solver derivatives.**  \nOwner competency: numerical/compiler. Depends: WP11.  \nArea: pure-region AD and qualified numerical primitives.\n\nImplement JVP/VJP, tied parameters, bounded-scan differentiation, tape planning and the initial solve derivative subset. Keep unavailable derivatives explicit.\n\n**Done when:** W09–W11, analytic/directional/adjoint tests, nonsmooth policy and failure boundaries pass. Gate: G07.",
+      "source_text_sha256": "4db9c67a57f8f29c28b62ec9ec37bf18096093c4ff548771cdb0d06c29ba4621",
+      "required_tasks_all": [
+        "MR30"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP13A",
+      "lines": [
+        1534,
+        1541
+      ],
+      "source_text": "**WP13A — Checked DAG genetic edits.**  \nOwner competency: search. Depends: WP05/WP06.  \nArea: existing graph edit/search interfaces.\n\nImplement deterministic CheckedEdit, generation masks, capture-safe crossover and replay for the composition subset.\n\n**Done when:** tiny-space enumeration, both-parent traces, later-column edits and native/export descendants pass; unchanged/rejected outcomes are counted. Gate: G09.",
+      "source_text_sha256": "afa6c5c198e087aa233c244e29ffe3a73826f5d90e8ed2f1dde61714b8728f4d",
+      "required_tasks_all": [
+        "MR20"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP13B",
+      "lines": [
+        1542,
+        1548
+      ],
+      "source_text": "**WP13B — State/update genetic edits.**  \nOwner competency: search/compiler. Depends: WP11/WP12/WP13A.\n\nExtend edits to parameter ties, state fields, scan bodies and update equations. Revalidate full initializer/update/finalize/predict consistency.\n\n**Done when:** actual GP changes a learning procedure, refits it and emits a valid artifact; no donated fitted state or broadened capability is accepted. Gates: G09/G08.",
+      "source_text_sha256": "643a3d2328b5f275d5e2ca568aa1d388a28c1cfb9e509858da805d590854eac2",
+      "required_tasks_all": [
+        "MR43"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP14",
+      "lines": [
+        1549,
+        1555
+      ],
+      "source_text": "**WP14 — Successor policy training and decoding.**  \nOwner competency: policy ML. Depends: WP05/WP13A; state actions require WP13B.\n\nImplement the factorized policy, exact structural targets, conditional masks, numeric chart law and versioned checkpoint binding. Preserve the old release.\n\n**Done when:** exact action replay and support-law checks pass; held-out policy-on/off discovery at matched total resources supports deployment. Gates: G10/G13.",
+      "source_text_sha256": "7156ff0403d728fbcf5acbef99d552973f3c57e855739c8d58fc7acdfc04ad46",
+      "required_tasks_all": [
+        "MR33",
+        "MR34"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP15",
+      "lines": [
+        1556,
+        1562
+      ],
+      "source_text": "**WP15 — Full learner recipe export.**  \nOwner competency: compiler/numerical. Depends: WP11; extend with WP12 as derivative support qualifies.\n\nEmit the training schedule, update/derivative runtime, finalization and prediction. Begin with Rust; then qualify Python/C++17 subsets. Keep fitted exports from earlier slices.\n\n**Done when:** a fresh process fits new authorized data using the generated recipe, freezes/reloads/predicts, and agrees under the declared numerical contract without the original repository. Gate: G08.",
+      "source_text_sha256": "aac7275cd1497ada3762ea56704222776a4e5cb48b5539385f8c213ed2808b70",
+      "required_tasks_all": [
+        "MR31",
+        "MR32",
+        "MR42"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP16",
+      "lines": [
+        1563,
+        1569
+      ],
+      "source_text": "**WP16 — Proximal and potential modules.**  \nOwner competency: numerical researcher. Depends: WP10–WP12 as applicable.\n\nStart with soft thresholding and simple projections. Add a small certified potential AST only after solve/AD interfaces pass.\n\n**Done when:** W08/W17/W18 closed forms, gradients, constraints, residuals and exports pass. A research experiment may reject the module without invalidating the core release. Gates: G06/G07/G13.",
+      "source_text_sha256": "5b2355a7e7872e2607b96322452d88853377cb55e88d9f908f7dc75bd9a684d6",
+      "required_tasks_all": [
+        "MR29",
+        "MR39"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP17",
+      "lines": [
+        1570,
+        1576
+      ],
+      "source_text": "**WP17 — Typed library learning.**  \nOwner competency: synthesis/search. Depends: WP13A, then WP13B for learning bodies.\n\nImplement exact hygienic functions, bounded expansion, typed anti-unification and source-family tracking. Compare fixed/no/learned libraries.\n\n**Done when:** captured scope cannot leak; expansion preserves effects/cost; held-development-family utility is measured after library-construction costs. Gate: G12.",
+      "source_text_sha256": "38bea203ca530b5a16e29487df2b7a388a6eb475f7838341d983513777267f45",
+      "required_tasks_all": [
+        "MR35"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP18",
+      "lines": [
+        1577,
+        1583
+      ],
+      "source_text": "**WP18 — Runtime and cache optimization.**  \nOwner competency: performance/runtime. Depends: relevant reference/exact-state slices.\n\nProfile dispatch, repeated fitting, serialization and emission; add liveness/workspace reuse and qualified batching/compilation.\n\n**Done when:** equivalence, seed/budget preservation and measured break-even evidence pass; baseline protected resources remain available. Gates: G01/G11.",
+      "source_text_sha256": "2dfa2d8863be9a23c974475675f551feab477d6db42f53cd552ff80c8d3ae6af",
+      "required_tasks_all": [
+        "MR36"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP19",
+      "lines": [
+        1584,
+        1590
+      ],
+      "source_text": "**WP19 — Prospective evaluation and confirmation.**  \nOwner competency: evaluation/statistics. Depends: a frozen candidate release with all required semantic/export gates.\n\nRegister family splits, comparator budgets, power, failure handling, primary endpoint and multiplicity. Execute development selection and one justified confirmation.\n\n**Done when:** a complete result—including negative/inconclusive outcomes—is reproducible; no failure or expenditure is omitted. Gate: G13.",
+      "source_text_sha256": "dda567891016df1cf13dcc8fbbe86cf66d2e9fc057e7553f9c72818e75f6ae54",
+      "required_tasks_all": [
+        "MR37"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP20",
+      "lines": [
+        1591,
+        1597
+      ],
+      "source_text": "**WP20 — Release/promotion/rollback.**  \nOwner competency: maintainer/runtime. Depends: all applicable gates; default promotion additionally requires WP19.\n\nPublish immutable compatible bundles and change only future-run pointers. Keep a known-good bundle, profile defaults and artifact readers.\n\n**Done when:** stale/mismatched gate evidence cannot activate a release; rollback stops new admissions to the successor and restores future defaults without rewriting active-run semantics. Gate: G14.",
+      "source_text_sha256": "59bd5d4d496bd4bfe6b349a6eaae8185596caaf0b91d6dd0039bdb8f23f66b2c",
+      "required_tasks_all": [
+        "MR38"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    },
+    {
+      "source": "spec_c",
+      "packet": "WP21",
+      "lines": [
+        1598,
+        1604
+      ],
+      "source_text": "**WP21 — Specialized research packs.**  \nOwner competency: relevant domain researcher. Depends: core semantics plus task/data contracts.\n\nAdd probability, semirings, geometry, dynamics, operators or transport one module at a time. No pack receives global generation weight merely because it compiles.\n\n**Done when:** its task-specific witnesses, costs, export subset and value experiment pass; otherwise retain it as experimental.",
+      "source_text_sha256": "7f6858cef1e090521b42f22a6043569464fa0679dcb3358e1f3ca9f954133ec8",
+      "required_tasks_all": [
+        "MR40"
+      ],
+      "coverage_state": "PLANNED_NOT_QUALIFIED"
+    }
+  ]
+}
