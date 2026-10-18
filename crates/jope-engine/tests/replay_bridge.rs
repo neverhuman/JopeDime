@@ -9,6 +9,7 @@ use jope_parallel::{
         },
     },
 };
+use std::collections::BTreeMap;
 use tch::{nn, Device, Kind, Tensor};
 
 fn identity() -> ReplayIdentity {
@@ -191,55 +192,96 @@ fn forward(policy: &Policy, batch: &(Tensor, Tensor, Tensor, Tensor, Vec<RowLabe
     .0
 }
 
+fn gradient_sums(vs: &nn::VarStore) -> BTreeMap<String, f64> {
+    vs.variables()
+        .into_iter()
+        .filter_map(|(name, parameter)| {
+            let gradient = parameter.grad();
+            gradient
+                .defined()
+                .then(|| (name, gradient.abs().sum(Kind::Float).double_value(&[])))
+        })
+        .collect()
+}
+
 #[test]
 fn fresh_label_changes_native_gradient_and_zero_decay_update_survives_restart() {
     tch::set_num_threads(1);
     tch::manual_seed(20261018);
     let expected = identity();
-    let bundle =
-        ReplayBundle::seal(expected.clone(), group("native-consumption", 0, None)).unwrap();
+    let mut measured = group("native-consumption", 0, None);
+    measured[0].value = 0.97;
+    let bundle = ReplayBundle::seal(expected.clone(), measured).unwrap();
     let selection = bundle.select(&expected).unwrap();
     assert_eq!(selection.occurrences.len(), 8);
     assert!(selection
         .occurrences
         .iter()
         .all(|occurrence| occurrence.occurrence_id.starts_with("native-consumption-")));
-    let mut batch = fixture_batch();
-    batch.4 = selection.labels.clone();
+    let no_fresh_batch = fixture_batch();
+    let mut fresh_batch = fixture_batch();
+    fresh_batch.4 = selection.labels.clone();
     let config = tiny_config();
     let vs = nn::VarStore::new(Device::Cpu);
     let policy = Policy::new(vs.root(), config.clone()).unwrap();
     let initial_trace = {
-        let pad = batch.2.ne(0);
+        let pad = fresh_batch.2.ne(0);
         policy
-            .forward(&batch.0, &batch.1, &batch.2, &pad, false)
+            .forward(&fresh_batch.0, &fresh_batch.1, &fresh_batch.2, &pad, false)
             .unwrap()
             .1
     };
-    let baseline_loss = forward(&policy, &batch);
+    tch::manual_seed(20261018);
+    let control_vs = nn::VarStore::new(Device::Cpu);
+    let control = Policy::new(control_vs.root(), config.clone()).unwrap();
+    let control_initial_trace = {
+        let pad = no_fresh_batch.2.ne(0);
+        control
+            .forward(
+                &no_fresh_batch.0,
+                &no_fresh_batch.1,
+                &no_fresh_batch.2,
+                &pad,
+                false,
+            )
+            .unwrap()
+            .1
+    };
+    assert_eq!(
+        (&control_initial_trace - &initial_trace)
+            .abs()
+            .max()
+            .double_value(&[]),
+        0.0,
+        "frozen and no-fresh controls must share the same seeded parent"
+    );
+    let baseline_loss = forward(&control, &no_fresh_batch);
     let baseline = baseline_loss.double_value(&[]);
-    // Perturb only one eligible fresh observation's measured value.
-    let mut perturbed = batch;
-    perturbed.4[0].value = 0.72;
+    baseline_loss.backward();
+    let baseline_gradients = gradient_sums(&control_vs);
+    let mut control_optimizer = AdamW::new(1e-3, 0.0);
+    control_optimizer.update_reference(&control_vs).unwrap();
+    // Fresh measurement changes only the selected chosen row's label.
+    let perturbed = fresh_batch;
     let loss = forward(&policy, &perturbed);
     assert!((loss.double_value(&[]) - baseline).abs() > 1e-7);
     loss.backward();
-    let gradients = vs
-        .trainable_variables()
-        .into_iter()
-        .filter_map(|p| {
-            let g = p.grad();
-            g.defined()
-                .then(|| g.abs().sum(Kind::Float).double_value(&[]))
-        })
+    let gradients = gradient_sums(&vs);
+    let reward_gradient_delta = gradients
+        .iter()
+        .filter(|(name, _)| name.starts_with("reward_heads."))
+        .map(|(name, value)| (value - baseline_gradients.get(name).copied().unwrap_or(0.0)).abs())
         .sum::<f64>();
     assert!(
-        gradients.is_finite() && gradients > 0.0,
+        gradients.values().sum::<f64>().is_finite()
+            && gradients.values().sum::<f64>() > 0.0
+            && reward_gradient_delta > 0.0,
         "fresh objective had no active gradient"
     );
     let mut optimizer = AdamW::new(1e-3, 0.0);
     optimizer.update_reference(&vs).unwrap();
     assert_eq!(optimizer.step, 1);
+    assert_eq!(control_optimizer.step, 1);
     let path = tempfile::tempdir().unwrap();
     let model = path.path().join("model.ot");
     vs.save(&model).unwrap();
@@ -270,5 +312,20 @@ fn fresh_label_changes_native_gradient_and_zero_decay_update_survives_restart() 
     assert_eq!(
         (&after_trace - &live_trace).abs().max().double_value(&[]),
         0.0
+    );
+    let no_fresh_trace = {
+        let pad = perturbed.2.ne(0);
+        control
+            .forward(&perturbed.0, &perturbed.1, &perturbed.2, &pad, false)
+            .unwrap()
+            .1
+    };
+    assert!(
+        (&after_trace - &no_fresh_trace)
+            .abs()
+            .max()
+            .double_value(&[])
+            > 0.0,
+        "fresh and no-fresh updates must remain distinguishable"
     );
 }
