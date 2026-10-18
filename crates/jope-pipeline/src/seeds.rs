@@ -18,6 +18,7 @@ use std::{io::Write, path::Path};
 use crate::{search, sha256_hex};
 
 pub const SEEDS_SCHEMA_ID: &str = "jope.pipeline-seeds/v1";
+pub const SEEDS_V2_SCHEMA_ID: &str = "jope.pipeline-seeds/v2";
 
 /// Where an admitted seed came from.
 pub const FROM_SEEDS_FILE: &str = "seeds_file";
@@ -173,6 +174,157 @@ pub fn admit(offered: &[(String, &'static str)]) -> Result<Admitted> {
         seeds,
         offered: offered.len(),
     })
+}
+
+/// Provenance category for an immutable v2 seed draw. v1 remains the legacy interchange.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SeedSourceV2 {
+    OwnIncumbent,
+    OtherLineageRetrieval,
+    NeuralProposal,
+}
+
+/// Complete, already flattened ancestry supplied by the archive reader. Missing ancestry is
+/// representable for audit, but learning retrieval must refuse to call it transfer.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SeedAncestryV2 {
+    pub parent_families: Vec<String>,
+    pub dataset_families: Vec<String>,
+    pub canonical_program_sha256: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SeedDrawV2 {
+    pub draw_id: String,
+    pub genome: String,
+    pub program_sha256: String,
+    pub source: SeedSourceV2,
+    #[serde(default)]
+    pub ancestry: Option<SeedAncestryV2>,
+}
+
+/// Versioned input with explicit cap and requested source mixture. It is data only: callers
+/// materialize it before pipeline execution; the pipeline never loads an archive.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SeedSetV2 {
+    pub schema: String,
+    pub source_snapshot_sha256: String,
+    pub cap: usize,
+    pub requested_by_source: std::collections::BTreeMap<SeedSourceV2, usize>,
+    pub draws: Vec<SeedDrawV2>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct AdmittedV2 {
+    pub seeds: Vec<Seed>,
+    pub provenance: Vec<AdmittedSeedV2>,
+    pub offered_by_source: std::collections::BTreeMap<SeedSourceV2, usize>,
+    pub realized_by_source: std::collections::BTreeMap<SeedSourceV2, usize>,
+    pub rejected_duplicates: usize,
+    pub rejected_bootstrap: usize,
+    pub surplus: usize,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AdmittedSeedV2 {
+    pub draw_id: String,
+    pub source: SeedSourceV2,
+    pub ancestry: Option<SeedAncestryV2>,
+    pub program_sha256: String,
+}
+
+impl SeedSetV2 {
+    pub fn check(&self) -> Result<()> {
+        ensure!(self.schema == SEEDS_V2_SCHEMA_ID, "unknown v2 seeds schema");
+        ensure!(
+            is_hex64(&self.source_snapshot_sha256),
+            "invalid source snapshot digest"
+        );
+        ensure!(self.cap > 0, "v2 seed cap must be explicit and positive");
+        ensure!(
+            !self.requested_by_source.is_empty()
+                && self.requested_by_source.values().any(|count| *count > 0),
+            "v2 requested source mixture must be explicit and nonzero"
+        );
+        ensure!(!self.draws.is_empty(), "v2 seed set has no draws");
+        let mut ids = std::collections::BTreeSet::new();
+        for (i, draw) in self.draws.iter().enumerate() {
+            ensure!(
+                !draw.draw_id.is_empty() && ids.insert(&draw.draw_id),
+                "duplicate or empty draw id at {i}"
+            );
+            ensure!(
+                draw.program_sha256 == sha256_hex(draw.genome.as_bytes()),
+                "draw {i} program digest mismatch"
+            );
+            if let Some(a) = &draw.ancestry {
+                for digest in &a.canonical_program_sha256 {
+                    ensure!(is_hex64(digest), "draw {i} ancestry program digest invalid");
+                }
+            }
+            if draw.source == SeedSourceV2::OtherLineageRetrieval {
+                let ancestry = draw
+                    .ancestry
+                    .as_ref()
+                    .context("retrieval draw ancestry is unknown")?;
+                ensure!(
+                    !ancestry.parent_families.is_empty()
+                        && !ancestry.dataset_families.is_empty()
+                        && ancestry
+                            .canonical_program_sha256
+                            .contains(&draw.program_sha256),
+                    "retrieval draw {i} ancestry is incomplete"
+                );
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Canonicalize/deduplicate with the explicitly versioned cap, retaining raw effort counts.
+pub fn admit_v2(set: &SeedSetV2) -> Result<AdmittedV2> {
+    set.check()?;
+    let mut result = AdmittedV2::default();
+    let mut seen = std::collections::BTreeSet::new();
+    for draw in &set.draws {
+        *result.offered_by_source.entry(draw.source).or_default() += 1;
+        let genome = canonical_pipeline(&draw.genome)?;
+        if genome == search::BOOTSTRAP_GENOME {
+            result.rejected_bootstrap += 1;
+            continue;
+        }
+        if !seen.insert(genome.clone()) {
+            result.rejected_duplicates += 1;
+            continue;
+        }
+        if result.seeds.len() == set.cap {
+            result.surplus += 1;
+            continue;
+        }
+        let canonical_sha256 = sha256_hex(genome.as_bytes());
+        result.seeds.push(Seed {
+            program_sha256: canonical_sha256.clone(),
+            genome,
+            source: match draw.source {
+                SeedSourceV2::OwnIncumbent => FROM_INCUMBENT,
+                SeedSourceV2::OtherLineageRetrieval | SeedSourceV2::NeuralProposal => {
+                    FROM_SEEDS_FILE
+                }
+            },
+        });
+        result.provenance.push(AdmittedSeedV2 {
+            draw_id: draw.draw_id.clone(),
+            source: draw.source,
+            ancestry: draw.ancestry.clone(),
+            program_sha256: canonical_sha256,
+        });
+        *result.realized_by_source.entry(draw.source).or_default() += 1;
+    }
+    Ok(result)
 }
 
 #[cfg(test)]

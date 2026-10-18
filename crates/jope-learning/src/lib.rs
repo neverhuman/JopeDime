@@ -43,6 +43,7 @@ pub mod record;
 pub mod replay;
 pub mod retention;
 pub mod revocation;
+pub mod retrieval;
 pub mod scores;
 pub mod selfplay;
 pub mod sources;

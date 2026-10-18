@@ -1,0 +1,14 @@
+{
+  "own_parent_families": ["parent-own"],
+  "own_dataset_families": ["dataset-own"],
+  "own_program_sha256": ["own-program"],
+  "cases": [
+    {"id":"own-parent-descendant","parent_families":["parent-own"],"dataset_families":["dataset-other"],"program":"program-a","role":"train","context":[0.0,10.0]},
+    {"id":"own-dataset-alias","parent_families":["parent-other"],"dataset_families":["dataset-own"],"program":"program-b","role":"train","context":[1.0,9.0]},
+    {"id":"same-program-renamed-bank-key","parent_families":["parent-other"],"dataset_families":["dataset-other"],"program":"own-program","role":"train","context":[2.0,8.0]},
+    {"id":"unknown-ancestry","parent_families":[],"dataset_families":[],"program":"program-c","role":"train","context":[3.0,7.0]},
+    {"id":"validation-role","parent_families":["parent-other"],"dataset_families":["dataset-other"],"program":"program-d","role":"validation","context":[4.0,6.0]},
+    {"id":"eligible-near","parent_families":["parent-2"],"dataset_families":["dataset-2"],"program":"program-e","role":"train","context":[0.0,10.0]},
+    {"id":"eligible-far","parent_families":["parent-3"],"dataset_families":["dataset-3"],"program":"program-f","role":"train","context":[10.0,0.0]}
+  ]
+}
