@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for Batch 4 algorithmic self-play additive feat-math modules (I18, I20, I22, I24, I40, I41, I42). Updating crates/feat-math/src/{heads.rs,lib.rs,math_expr.rs,stack.rs} moves the ADR-0004 evaluator identity. All default v1/v2 emitted bytes, behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "docs/plans/algorithmic-selfplay-20261017/UNIFIED_SELFPLAY_WORKPLAN.md §I18-I42",
+  "pr_reference": "Batch 4 integration: feat(selfplay): land remaining 42 self-play tasks (I04..I66)",
+  "source_commit": "541f5e5a68c5b865d72b42b8f87e9b2196102e42",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "e4bb2d24b3c1257f2215a0c4223b1ac95d5865f9acdf44659b69ad3ec8a6af46",
+      "after": "2f1d48fee631f57123b1f458ede91a4817a0f6c094beb8110aa4b8c4d71e2a36"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "beb59847485373f4e77cbd758fc86af3c1159b5b",
+  "generated_at_sha": "541f5e5a68c5b865d72b42b8f87e9b2196102e42",
   "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
@@ -102,7 +102,7 @@
     {
       "label": "vendor/feat-math/src/heads.rs",
       "path": "crates/feat-math/src/heads.rs",
-      "sha256": "7bc1281a76c0ab7e397c0ef9743a098623cbf6c9c9b2382bb4fd83cb58e38425"
+      "sha256": "1d63aab8a327e74236c11175a7ecfb92934259097da01d92ed5c5a95ad747df9"
     },
     {
       "label": "vendor/feat-math/src/krr.rs",
@@ -117,12 +117,12 @@
     {
       "label": "vendor/feat-math/src/lib.rs",
       "path": "crates/feat-math/src/lib.rs",
-      "sha256": "911670879e9f55b24fb822f5928737d09ce70b0b5a3029078aba62f04b6a18d5"
+      "sha256": "dd6b753ef5e9315458480c52afe6c1d6c0b9b2c3cdb7bc05e99c708eb0b2491b"
     },
     {
       "label": "vendor/feat-math/src/math_expr.rs",
       "path": "crates/feat-math/src/math_expr.rs",
-      "sha256": "47bc9ba5a7e7627d998bca5429f1c593fe364a132e84375bc20840e66baf1e57"
+      "sha256": "9458b8b4dd7f39886e0a6ef5b0a3ff6fd6e08957beb29f908eb159c02bf5bea3"
     },
     {
       "label": "vendor/feat-math/src/mathexpr.rs",
@@ -172,7 +172,7 @@
     {
       "label": "vendor/feat-math/src/stack.rs",
       "path": "crates/feat-math/src/stack.rs",
-      "sha256": "5f368863f0df4b0554cf72a1b27cf632cc3b86b7b72f4fcc31c9b715f938cd61"
+      "sha256": "2ba265881298a79414dffb63a46072bf012617cb5898abeaedba4501ef3d335b"
     },
     {
       "label": "vendor/feat-math/src/stage_cache.rs",
@@ -195,10 +195,10 @@
       "sha256": "fdcada3e1344b667bf3aa155564289a814953b906f85aeece5670b741e5dfe93"
     }
   ],
-  "implementation_sha256": "a92a0e5b3fe59f232fb32f44e9e71a8613e761724e5dcb2bfedf1c1244840b9f",
+  "implementation_sha256": "bf6d4345fc5edc3e617afccc6dfbf1fc55737cc80a1ad3b364c08c83bff10136",
   "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389",
   "cargo_lock_sha256": "b4dbf8bd5b4d121e315489ad01bd7912fa8f3a6be42eeb04254bcbccd980f11c",
-  "identity_digest": "3971d80127042721fc248ae46f6bf20610c5245d884d96fe08ee557beb48f0d7",
+  "identity_digest": "16f9085d3fe4f3e18d25e2eb5fbc04f990f1d65d8be98d46a0113deb44176344",
   "known_identities_sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "known_identity_rows": 2
 }

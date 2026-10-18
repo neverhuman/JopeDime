@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 2",
-  "count": 5193,
+  "count": 5569,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -40,12 +40,12 @@
     }
    },
    "feat-math": {
-    "count": 1231,
+    "count": 1285,
     "ignored": 12,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 518,
+      "count": 521,
       "ignored": 6,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -332,6 +332,9 @@
        "kernel::ridge_fast::tests::unsafe_pivots_high_leverage_and_bad_designs_are_refused",
        "kernel::ridge_fast::tests::zero_variance_and_huge_constant_columns_match_the_legacy_fit",
        "kernel::scalar_program::recipe::tests::scalar_old_operation_contract_refuses_portable_recipes",
+       "kernel::strategy::qd::tests::bins_are_deterministic_and_upper_exclusive",
+       "kernel::strategy::qd::tests::descriptor_space_requires_two_to_four_unique_axes",
+       "kernel::strategy::qd::tests::descriptor_version_and_bounds_change_identity",
        "krr::tests::krr_beats_plain_ridge_on_nonlinearity",
        "krr::tests::krr_is_deterministic_and_learns_toy",
        "krr::tests::krr_small_n_falls_back_to_mean",
@@ -707,12 +710,13 @@
      },
      "feat-math::clover_quantile": {
       "kind": "test",
-      "count": 5,
+      "count": 6,
       "ignored": 0,
       "tests": [
        "emitted_rust_and_python_match_independent_oracles",
        "exp_next_04_exp008_champion_parity_replay_matches_native_partition_point",
        "exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_point",
+       "numeric_v2_near_tie_edges_are_monotone_and_use_first_equal",
        "runtime_matches_independent_quantile_and_binning_oracles",
        "versioned_contract_detects_shared_wrong_tie_semantics"
       ]
@@ -812,6 +816,17 @@
        "width_boundary::maximum_width_checkpoint_and_empty_row_refusal_are_transactional"
       ]
      },
+     "feat-math::dag_composition": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "columns_17_and_63_keep_semantic_identity_under_schema_shuffle",
+       "cycles_and_incompatible_shared_target_fits_are_refused",
+       "invalid_predicate_and_unavailable_emitter_fail_explicitly",
+       "width_and_eager_route_fuel_are_bounded_before_evaluation"
+      ]
+     },
      "feat-math::export_report": {
       "kind": "test",
       "count": 5,
@@ -909,6 +924,19 @@
        "select_corr_fitted_on_eight_columns_refuses_six",
        "stored_compat_models_try_predict_equals_predict",
        "symbolic_models_accept_any_width"
+      ]
+     },
+     "feat-math::foundation_operator_admission": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "equal_prediction_identities_do_not_prove_distillation_parity",
+       "inference_and_model_load_are_both_charged_to_the_budget",
+       "sealed_and_context_rows_cannot_enter_oof_fit_or_validation",
+       "sealed_row_overlap_is_rejected",
+       "teacher_and_distilled_predictions_and_artifacts_remain_distinct",
+       "unavailable_license_or_runtime_stays_research_disabled"
       ]
      },
      "feat-math::golden": {
@@ -1028,6 +1056,21 @@
        "bounded_exponential_compositions_keep_tiny_tails_and_backend_faults",
        "gp_language_adversarial_boundaries_are_explicit",
        "gp_tricks_compile_and_match_independent_references"
+      ]
+     },
+     "feat-math::gumbel_root": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "budget_charges_failed_work_even_when_actual_cpu_crosses_ceiling",
+       "fit_slot_planning_respects_remaining_fit_and_estimated_cpu_limits",
+       "gumbel_top_k_is_deterministic_unique_and_reports_truncated_legal_mass",
+       "incomplete_halving_keeps_unscheduled_actions_and_never_names_a_winner",
+       "measured_fidelity_controls_halving_and_completed_q_cannot_win",
+       "measured_fit_budget_charges_prior_argmax_best_of_n_and_failures_separately_from_visits",
+       "root_rejects_unsupported_sampling_trace_and_invalid_measurement_can_be_retried",
+       "teacher_targets_reject_unsupported_sampling_laws"
       ]
      },
      "feat-math::historical_v1": {
@@ -1372,6 +1415,22 @@
        "x_in_row_context_is_an_error_and_a_zero_derive_output"
       ]
      },
+     "feat-math::numeric_profile_v2": {
+      "kind": "test",
+      "count": 9,
+      "ignored": 0,
+      "tests": [
+       "artifact_identity_mismatch_and_rollback",
+       "fitted_python_and_rust_execute_exact_emitted_bytes",
+       "iid_oof_refits_without_held_labels",
+       "invalid_fitted_state_and_ordered_shuffle_are_refused",
+       "legacy_reproducers_and_successor_raw_targets",
+       "legacy_width_and_gbm_prefix_are_characterized_not_relabelled",
+       "meaningful_topk_and_no_silent_width_loss",
+       "named_high_columns_and_schema_order",
+       "zeros_and_missing_are_distinct_and_train_only"
+      ]
+     },
      "feat-math::numerical_policy_execution": {
       "kind": "test",
       "count": 13,
@@ -1429,6 +1488,32 @@
        "scaled_l2_saturates_huge_finite_norms_and_retains_tiny_norms",
        "stable_reductions_match_the_independent_boundary_oracle",
        "sum_retains_nested_finite_cancellation_across_widths_and_orders"
+      ]
+     },
+     "feat-math::oof_composition": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "failed_member_unequal_prediction_width_and_target_transform_keep_incumbent",
+       "label_permutation_and_held_label_canaries_respect_each_oof_boundary",
+       "nested_residual_boost_has_exact_outer_fit_boundaries_and_emission_parity",
+       "unsupported_portable_emission_is_reported_without_interpreter_substitution"
+      ]
+     },
+     "feat-math::operator_bandit": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "delayed_failure_and_ineligible_feedback_are_logged_but_do_not_update",
+       "empty_legal_set_is_retained_as_unavailable_without_invented_probability",
+       "exact_tiny_exp3_distribution_updates_from_eligible_gain_only",
+       "extreme_weight_underflow_keeps_a_positive_uniform_floor",
+       "known_law_records_actual_categorical_propensity_and_exact_log_probability",
+       "rejected_actions_are_retained_and_rejection_does_not_create_a_reward",
+       "unknown_thompson_law_cannot_supply_unbiased_pg_or_ope_propensity",
+       "zero_gain_ties_and_single_legal_arm_have_defined_probabilities"
       ]
      },
      "feat-math::ordered_axis_contract": {
@@ -1520,6 +1605,18 @@
        "restricted_vocabulary_ops_are_executable_in_the_registry"
       ]
      },
+     "feat-math::restricted_kernel_candidate": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "bounded_arithmetic_scan_and_fold_are_deterministic",
+       "caller_pinned_toolchain_target_source_and_artifact_are_required",
+       "external_state_escape_and_scientific_authority_operations_are_rejected",
+       "resource_exhaustion_and_invalid_programs_fail_closed",
+       "unpinned_identity_and_self_issued_certificate_are_refused"
+      ]
+     },
      "feat-math::ridge_press_oracle": {
       "kind": "test",
       "count": 2,
@@ -1584,6 +1681,19 @@
        "the_race_refuses_an_invalid_penalty",
        "the_scope_check_sees_the_program_as_the_search_fits_it",
        "the_surrogate_search_refuses_an_invalid_penalty"
+      ]
+     },
+     "feat-math::search_strategy": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "duplicate_and_cost_bounds_are_recorded_without_recharging",
+       "failures_and_panics_are_retained_without_a_rankable_score",
+       "identical_inputs_replay_the_same_ordered_trace_and_result",
+       "injected_recorder_receives_the_same_complete_ordered_trace",
+       "oversized_candidates_and_nonfinite_scores_are_rejected",
+       "strategy_identity_is_orthogonal_to_vocabulary_identity"
       ]
      },
      "feat-math::stable_exponential_execution_v2": {
@@ -2369,7 +2479,7 @@
     }
    },
    "jope-bench": {
-    "count": 157,
+    "count": 162,
     "ignored": 1,
     "binaries": {
      "jope-bench": {
@@ -2564,6 +2674,25 @@
        "cuts_agree_with_feat_math_cv_and_the_run_is_deterministic"
       ]
      },
+     "jope-bench::shared_strategy": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "actual_bench_entrypoint_and_product_route_share_exact_trace",
+       "benchmark_config_identity_does_not_change_historical_search_config",
+       "historical_method_ids_cannot_be_relabelled_as_shared_evidence"
+      ]
+     },
+     "jope-bench::strategy_controls": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "bench_legacy_control_matches_frozen_driver_trace",
+       "bench_lite_race_control_matches_frozen_driver_cut"
+      ]
+     },
      "jope-bench::transfer_independent": {
       "kind": "test",
       "count": 7,
@@ -2674,18 +2803,19 @@
     }
    },
    "jope-cli": {
-    "count": 71,
+    "count": 79,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
       "kind": "lib",
-      "count": 25,
+      "count": 26,
       "ignored": 0,
       "tests": [
        "champions::tests::champions_and_training_keep_the_admitted_snapshot_after_paths_change",
        "champions::tests::supported_evaluation_failure_aborts_champions_and_training",
        "kernel::artifact_v3_tests::emit_adapter_preserves_default_route_and_binds_opt_in_outputs",
        "kernel::artifact_v3_tests::fitted_emit_adapter_binds_validated_training_rows",
+       "kernel::numeric_v2_tests::numeric_v2_kernel_export_and_option_selection",
        "router::tests::routing_embeds_and_fits_the_same_snapshot_after_input_is_replaced",
        "router::tests::routing_features_and_fit_do_not_depend_on_test_features_or_targets",
        "tests::a_fifo_is_rejected_without_waiting_for_a_writer",
@@ -2781,6 +2911,27 @@
        "pipeline_cli_emits_fitted_cpp_and_records_executable_build",
        "sigterm_during_a_round_keeps_only_completed_rounds_in_the_lineage",
        "sigterm_mid_search_stops_between_evaluations_and_writes_no_receipt"
+      ]
+     },
+     "jope-cli::planted_tasks": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "finite_probe_match_never_certifies_semantic_equivalence",
+       "misspecified_fixture_is_explicit_and_reproducible",
+       "noise_floor_and_each_oracle_refit_are_charged",
+       "solver_context_contains_only_train_rows_and_not_hidden_answer"
+      ]
+     },
+     "jope-cli::research_workflow": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "configured_command_is_not_reported_as_executed_proof",
+       "stale_receipt_keeps_its_original_date_and_source_identity",
+       "unavailable_status_has_a_stable_machine_reason_and_nonzero_code"
       ]
      }
     }
@@ -4430,12 +4581,12 @@
     }
    },
    "jope-learning": {
-    "count": 472,
+    "count": 658,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
       "kind": "lib",
-      "count": 206,
+      "count": 215,
       "ignored": 0,
       "tests": [
        "canon::tests::sha256_vector",
@@ -4463,6 +4614,7 @@
        "eligibility::tests::fitted::v1_artifacts_stay_unbound_and_their_qualifications_keep_their_bytes",
        "eligibility::tests::fitted::v2_fitted_artifacts_bind_every_fold_to_its_own_training_input",
        "eligibility::tests::freeze_is_independent_and_cannot_be_recreated_from_a_candidate",
+       "eligibility::tests::global_companions_require_qualification_and_context_exposure_proofs",
        "eligibility::tests::handoff::a_freeze_without_a_preregistered_producer_stays_quarantined",
        "eligibility::tests::handoff::pre_handoff_formats_keep_their_meaning_and_stay_quarantined",
        "eligibility::tests::handoff::teacher_admission_consumes_an_authenticated_w2_handoff",
@@ -4590,8 +4742,13 @@
        "pools::selectors::tests::pre_screen_funnel_deduplicates_before_proposal_pool_truncation",
        "pools::source::tests::coverage_adapter_keeps_train_only_and_honours_exclusions",
        "pools::source::tests::roster_vectors_check_digests",
+       "progress::checkpoint::tests::duplicate_checkpoint_and_ack_identity_do_not_inflate_verified_updates",
+       "progress::checkpoint::tests::unsupported_or_conflicting_commit_proof_is_held_or_refused",
        "progress::remote::tests::every_s3_spelling_the_store_opens_goes_through_the_preflight",
        "progress::remote::tests::only_the_admitted_store_kinds_pass_the_publishing_preflight",
+       "progress::segment::tests::append_lookup_reopen_are_hash_bound_and_bounded",
+       "progress::segment::tests::conflicting_key_and_caps_refuse_without_moving_root",
+       "progress::segment::tests::every_root_publish_boundary_reopens_as_old_or_new_complete_state",
        "progress::tests::cadence::a_failed_flush_stays_pending_and_never_claims_durability",
        "progress::tests::cadence::each_checkpoint_trigger_fires_at_committed_updates_and_shutdown",
        "progress::tests::cadence::each_flush_trigger_fires_exactly_when_due",
@@ -4633,8 +4790,11 @@
        "progress::tests::receiving::hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication",
        "progress::tests::reconcile::a_lost_race_is_rebased_onto_the_winner_only_on_apply",
        "progress::tests::reconcile::a_rebase_the_receiving_checks_would_refuse_writes_nothing",
+       "proposals::tests::bundle_preserves_equal_canonical_draws_as_distinct_denominator_rows",
+       "proposals::tests::physical_key_binds_context_and_original_reservation",
        "record::tests::identity_hash_is_sha256_of_sorted_compact_json",
        "record::tests::unknown_fields_are_rejected",
+       "replay::admission::tests::cyclic_ancestry_is_held_before_reuse_or_content_traversal",
        "retention::inventory::tests::ledger_conflict_needs_a_difference_no_later_write_can_explain",
        "retention::md5::tests::incremental_equals_one_shot",
        "retention::md5::tests::rfc1321_test_suite",
@@ -4644,6 +4804,42 @@
        "retention::snappy::tests::hostile_streams_are_refused",
        "support::probability::tests::decomposed_kl_distinguishes_new_winner_allocation_from_base_drift",
        "support::probability::tests::decomposed_kl_rejects_excessive_base_drift_or_excessive_new_mass"
+      ]
+     },
+     "jope-learning::accepted_root_publication": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "absent_remote_closure_and_retired_strong_refs_block_promotion",
+       "negative_or_inconclusive_evidence_retains_parent_and_is_recorded",
+       "rollback_moves_pointer_and_preserves_committed_child_and_ledger_events",
+       "two_cas_contenders_have_one_winner_and_stale_grant_cannot_advance_again"
+      ]
+     },
+     "jope-learning::arena_exact": {
+      "kind": "test",
+      "count": 18,
+      "ignored": 0,
+      "tests": [
+       "all_failures_have_typed_outcome",
+       "auc_declares_clock_failures_and_diagnostic_status",
+       "auc_rejects_unknown_or_invalid_horizon",
+       "b_zero_requires_incumbent_for_available_result",
+       "conflicting_duplicate_outcome_refused",
+       "correlated_sampling_is_refused",
+       "deduplicated_sampling_is_refused",
+       "duplicate_action_mass_is_aggregated",
+       "exact_tiny_law_matches_ordered_draw_enumeration",
+       "failures_remain_explicit_mass",
+       "fixed_seed_independent_monte_carlo_within_predeclared_four_se",
+       "incumbent_collects_failures_and_non_improving_outcomes",
+       "large_b_stays_finite_with_small_mass",
+       "partial_support_is_not_full_exact",
+       "rejects_nonfinite_score",
+       "selected_handoff_is_refused",
+       "unsupported_sampling_is_typed",
+       "without_replacement_is_not_iid_formula"
       ]
      },
      "jope-learning::bin/jope-learning": {
@@ -4786,6 +4982,22 @@
        "verified_source_manifest_reads_the_exact_version_and_preserves_locators"
       ]
      },
+     "jope-learning::league_registry": {
+      "kind": "test",
+      "count": 9,
+      "ignored": 0,
+      "tests": [
+       "baseline_registry_freezes_parent_controls_identity_and_cost",
+       "frozen_baseline_payoff_table_must_include_parent_and_simple_control",
+       "measured_cycle_or_family_specialization_only_yields_separate_review_candidate",
+       "member_counts_alone_never_activate_pf_scheduling",
+       "member_identity_and_historical_cost_are_bound_into_frozen_table",
+       "partial_coverage_and_changed_protocol_are_rejected",
+       "qualification_and_baseline_purposes_never_enable_adaptive_league",
+       "qualification_manifest_cannot_enter_training_matchmaking_memory",
+       "restored_registry_cannot_rebind_map_key_to_member_identity"
+      ]
+     },
      "jope-learning::learning_snapshot": {
       "kind": "test",
       "count": 6,
@@ -4808,6 +5020,25 @@
        "a_seal_declaring_an_impossible_event_count_is_a_break_not_an_abort",
        "freeze_refuses_a_destination_blob_that_does_not_hash_to_the_path_it_sits_under",
        "freeze_refuses_to_export_from_a_chain_it_cannot_walk"
+      ]
+     },
+     "jope-learning::measured_universe": {
+      "kind": "test",
+      "count": 12,
+      "ignored": 0,
+      "tests": [
+       "compatible_backfill_preserves_each_immutable_source_locator",
+       "complete_value_without_sealed_i02_authority_is_refused",
+       "distinct_declared_replicates_remain_separate_keys",
+       "equal_key_conflicting_values_are_quarantined_independent_of_arrival_order",
+       "fixture_has_exact_hand_checked_values_and_finite_support",
+       "full_and_partial_support_are_reported_per_context_and_checkpoint",
+       "mismatched_evaluator_or_role_cannot_join",
+       "nonfinite_exact_bits_are_refused",
+       "observation_outside_authenticated_view_is_refused",
+       "probability_mass_remains_unknown_without_adopted_frozen_law",
+       "revoked_source_view_fails_before_observations_are_examined",
+       "unavailable_outcomes_keep_status_and_requested_denominator"
       ]
      },
      "jope-learning::mirror_lost_update": {
@@ -4898,6 +5129,27 @@
        "the_cli_ingests_a_pipeline_receipt"
       ]
      },
+     "jope-learning::policy_discovery_protocol": {
+      "kind": "test",
+      "count": 14,
+      "ignored": 0,
+      "tests": [
+       "absent_or_unverified_authority_never_becomes_adopted_by_schema",
+       "candidate_budget_selection_is_confined_to_development_or_holdout",
+       "context_and_seed_cells_are_averaged_before_family_weighting",
+       "existing_f10_is_not_relabelled_as_discovery_q_auc",
+       "failed_primary_cell_is_not_imputed_as_zero",
+       "family_deletion_is_forbidden_for_incomplete_contexts",
+       "missing_primary_cell_makes_result_inconclusive_without_shrinking_roster",
+       "no_fresh_feedback_contrast_requires_matching_updates",
+       "program_critic_actor_and_feedback_contrasts_remain_distinct",
+       "repeated_confirmatory_use_of_outer_families_is_prohibited",
+       "schema_is_closed_json_and_has_non_authorizing_constants",
+       "scientific_power_inputs_are_explicit_but_unvalidated",
+       "synthetic_manifest_binds_one_linear_clock_primary",
+       "unequal_family_and_seed_counts_keep_equal_family_weight"
+      ]
+     },
      "jope-learning::pools": {
       "kind": "test",
       "count": 15,
@@ -4954,6 +5206,54 @@
        "progress_verbs_publish_engine_events_to_an_explicit_store_only"
       ]
      },
+     "jope-learning::progress_segments": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "bad_source_digest_and_index_conflict_are_rejected_before_root_advance",
+       "committed_progress_requires_source_proof_and_duplicate_ack_does_not_count_twice",
+       "exact_dedup_keeps_proof_and_bounded_index_across_reopen",
+       "saturation_missing_source_and_stale_writer_fail_closed"
+      ]
+     },
+     "jope-learning::proposal_delivery": {
+      "kind": "test",
+      "count": 12,
+      "ignored": 0,
+      "tests": [
+       "changed_content_under_same_physical_key_is_rejected",
+       "crash_after_lease_waits_for_expiry_then_advances_fence",
+       "crash_before_record_commit_replays_into_same_bounded_row",
+       "pinned_request_and_draw_bundle_fixtures_decode",
+       "request_key_binds_context_and_capacity_backpressures",
+       "same_recipe_in_distinct_contexts_keeps_distinct_requests",
+       "stale_lease_cannot_start_or_charge_after_expiry",
+       "startup_index_refuses_history_above_admitted_bound",
+       "ten_thousand_duplicate_transports_keep_draws_and_authorize_one_fit",
+       "terminal_headroom_is_reserved_before_admission",
+       "unknown_started_attempt_requires_terminal_proof_before_retry_and_charges_both",
+       "upload_before_ack_recovers_exact_content_without_refit"
+      ]
+     },
+     "jope-learning::qd_archive": {
+      "kind": "test",
+      "count": 11,
+      "ignored": 0,
+      "tests": [
+       "archive_bytes_and_event_history_remain_bounded",
+       "archive_enforces_encoded_byte_cap",
+       "descriptor_version_changes_archive_identity",
+       "evaluator_fidelity_and_role_are_part_of_cell_identity",
+       "exposure_filters_apply_before_policy_and_ranking",
+       "low_fidelity_elite_remains_proposal_and_is_never_a_champion_result",
+       "lower_quality_and_cell_capacity_are_retained_as_rejections",
+       "malformed_candidate_identity_and_descriptor_shape_are_refused",
+       "per_family_scope_groups_contexts_but_per_context_does_not",
+       "persisted_archive_round_trips_and_rejects_identity_tampering",
+       "replacement_ties_are_deterministic_and_logged"
+      ]
+     },
      "jope-learning::qualify_gate": {
       "kind": "test",
       "count": 22,
@@ -4983,6 +5283,19 @@
        "unknown_outcomes_drop_their_family_and_are_never_imputed"
       ]
      },
+     "jope-learning::ranked_curriculum": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "alpha_mints_a_new_view_without_changing_raw_measurements",
+       "curriculum_schedule_and_actual_exposure_parent_chain_are_enforced",
+       "empty_buffer_is_explicitly_unavailable_and_repeatable",
+       "invalid_or_ambiguous_rank_inputs_are_refused",
+       "synthetic_success_is_training_signal_only_and_replay_is_bounded",
+       "ties_are_deterministic_under_the_pinned_seed"
+      ]
+     },
      "jope-learning::recovery_cli": {
       "kind": "test",
       "count": 3,
@@ -4991,6 +5304,62 @@
        "hwm_recover_is_read_only_by_default_and_rolls_forward_only_with_apply",
        "progress_reconcile_is_read_only_by_default_and_rebases_only_with_apply",
        "revocations_import_is_read_only_by_default_and_refuses_the_revoked_record_once_applied"
+      ]
+     },
+     "jope-learning::replay_admission": {
+      "kind": "test",
+      "count": 18,
+      "ignored": 0,
+      "tests": [
+       "absent_unknown_altered_and_self_referential_ancestry_remain_held",
+       "ancestor_revocation_invalidates_cached_admission_and_only_its_descendants",
+       "authenticated_train_chain_has_independent_quality_runtime_failure_and_policy_labels",
+       "candidate_policy_json_and_role_strings_cannot_install_controller_adoption",
+       "diamond_ancestry_is_valid_but_missing_branch_duplicate_parent_and_excess_depth_are_held",
+       "episode_fit_permission_does_not_grant_global_use_or_outer_label_access",
+       "forged_role_boolean_signature_and_unadmitted_proof_cannot_issue_capability",
+       "global_bank_export_requires_subject_bound_admission_and_filters_before_ranking",
+       "infrastructure_or_unknown_timeout_does_not_fabricate_program_failure",
+       "malformed_or_noncanonical_claim_cannot_be_made_authoritative_by_listing_its_digest",
+       "proposal_has_no_fabricated_labels_and_failure_is_not_quality",
+       "prospective_revision_never_relabels_old_observations_or_erasures_of_exposure",
+       "sealed_and_judge_summaries_embeddings_and_selections_inherit_every_parent",
+       "successor_policy_requires_new_boundary_and_invalidates_stale_verifier",
+       "test_adaptive_representation_and_copied_role_with_exposure_are_refused",
+       "timeout_supplies_only_censored_cost_and_valid_failure_without_quality_or_policy",
+       "versioned_coverage_ingress_binds_actual_document_before_global_use",
+       "wrong_subject_purpose_epoch_version_and_expired_policy_are_held"
+      ]
+     },
+     "jope-learning::replay_sampling_design": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "adaptive_reused_threshold_does_not_create_known_unconditional_pi_or_ht_claim",
+       "probability_and_estimator_contracts_fail_closed",
+       "protected_failures_parents_and_exposure_ancestry_survive_training_exclusion",
+       "restart_and_disjoint_merge_reproduce_exact_selection_and_byte_cap"
+      ]
+     },
+     "jope-learning::research_loop_smoke": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "independent_candle_reload_and_next_actor_behavior",
+       "native_update_crash_leakage_and_rejected_parent_trace"
+      ]
+     },
+     "jope-learning::research_roles": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "actor_cannot_read_judge_rows_or_write_accepted_pointers",
+       "candidate_is_explicitly_uninstalled_and_live_checks_remain_unexecuted",
+       "expired_fake_lease_refreshes_once_and_uses_new_lease",
+       "refresh_failure_or_expired_replacement_fails_closed_without_stale_fallback"
       ]
      },
      "jope-learning::retention": {
@@ -5014,6 +5383,22 @@
        "tv_index_and_cost_fields_are_derived_from_the_inputs"
       ]
      },
+     "jope-learning::retention_obligations": {
+      "kind": "test",
+      "count": 9,
+      "ignored": 0,
+      "tests": [
+       "ancestor_checkpoint_corpus_and_optimizer_remain_pinned_by_resume_promise",
+       "byte_equality_does_not_replace_runtime_restore_evidence",
+       "plan_is_stable_and_rejects_null_or_unknown_versions_for_review",
+       "promise_release_requires_a_recorded_transition_at_the_current_root",
+       "provenance_only_metadata_does_not_pin_bytes",
+       "source_has_no_storage_or_process_mutation_path",
+       "stale_publisher_cannot_reintroduce_a_retired_version",
+       "tested_capability_specific_restore_can_move_promise_to_exact_replacement",
+       "unknown_lifecycle_tag_bypass_and_incomplete_root_closure_hold"
+      ]
+     },
      "jope-learning::retention_pack": {
       "kind": "test",
       "count": 9,
@@ -5028,6 +5413,47 @@
        "parquet_subset_round_trips_every_type_and_null",
        "selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools",
        "write_tags_enforce_retention_invariants"
+      ]
+     },
+     "jope-learning::retention_value": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "exact_duplicate_requires_current_consumer_and_recovery_proofs",
+       "new_classifier_source_contains_no_storage_mutation_primitive",
+       "plan_is_deterministic_and_source_is_non_destructive",
+       "stale_september_inventory_cannot_propose_a_present_change",
+       "supersession_requires_qualified_margin_grace_and_score_row_retention",
+       "t0_pins_score_rows_and_keeper_reservoir_are_never_candidates",
+       "value_signals_rank_only_and_v2_policy_rejects_invalid_knobs",
+       "verified_pack_plan_accounts_for_added_pack_bytes_without_applying"
+      ]
+     },
+     "jope-learning::retirement_candidate": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "approval_must_bind_exact_plan_and_independent_restore_proof",
+       "crash_before_request_reconciles_only_same_exact_version",
+       "disabled_candidate_cannot_run_and_default_is_off",
+       "publisher_pin_during_plan_or_reservation_aborts_without_mock_effect",
+       "response_loss_after_exact_request_is_observed_without_retry"
+      ]
+     },
+     "jope-learning::retrieval_exposure": {
+      "kind": "test",
+      "count": 7,
+      "ignored": 0,
+      "tests": [
+       "ancestry_and_digest_provenance_are_retained_in_immutable_seed_draws",
+       "cold_warm_and_shuffled_controls_share_the_frozen_eligible_support",
+       "missing_snapshot_support_or_ancestry_fails_closed",
+       "own_hwm_parent_dataset_aliases_and_indirect_ancestry_never_become_transfer",
+       "retrieval_draws_materialize_through_the_pipeline_v2_seed_import",
+       "selected_support_membership_and_tie_order_are_deterministic",
+       "warm_cache_cost_and_warmup_are_disclosed_in_total_resource_clock"
       ]
      },
      "jope-learning::schema_agreement": {
@@ -5051,6 +5477,18 @@
        "an_append_without_store_reports_no_mirror",
        "an_archive_path_through_a_symlink_is_refused_before_anything_is_created",
        "one_unsafe_version_refuses_the_whole_import"
+      ]
+     },
+     "jope-learning::search_event_ingest": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "actual_progress_bridge_keeps_failure_retry_costs_and_one_logical_result",
+       "duplicate_delivery_is_idempotent_and_conflicting_terminal_refuses",
+       "missing_or_altered_event_cost_result_and_original_run_refuse",
+       "produced_search_sidecar_and_original_observation_reach_progress_census",
+       "unknown_exposure_is_retained_without_replay_authority"
       ]
      },
      "jope-learning::selfplay_round_qual": {
@@ -5130,6 +5568,52 @@
        "non_train_and_overlength_leaves_are_retained_as_refused_observations",
        "train_verified_leaf_creates_immutable_successor_and_two_novel_actions"
       ]
+     },
+     "jope-learning::teacher_qualification": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "missing_cost_or_changed_support_invalidates_the_frozen_contrast",
+       "selected_root_wins_do_not_substitute_for_expected_policy_improvement",
+       "supported_measured_teacher_with_frozen_equal_cost_contrast_is_admitted",
+       "unsupported_or_unmeasured_targets_are_not_policy_targets",
+       "weak_teacher_cannot_create_policy_ce_authority_but_keeps_supervised_rows"
+      ]
+     },
+     "jope-learning::verified_assessment": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "altered_raw_closure_roster_alpha_and_use_are_refused",
+       "complete_authenticated_fixture_yields_only_report_permission_and_recomputed_scores",
+       "forged_issuer_is_refused_even_with_nonempty_identity_and_signature",
+       "unallocated_and_replayed_look_are_refused_across_host_clients"
+      ]
+     },
+     "jope-learning::wave_archive": {
+      "kind": "test",
+      "count": 16,
+      "ignored": 0,
+      "tests": [
+       "a_zero_event_new_wave_is_not_silent_success",
+       "duplicate_event_identity_is_rejected",
+       "every_terminal_disposition_is_archivable_without_claim_upgrade",
+       "historical_missing_data_is_retained_as_partial",
+       "manifest_mutation_is_detected",
+       "missing_blob_or_corrupted_bytes_are_detected",
+       "missing_new_wave_identity_is_rejected",
+       "nan_metric_is_rejected",
+       "new_wave_missing_measurement_is_archived_but_blocked_from_admission",
+       "new_wave_requires_computed_applied_committed_counters",
+       "null_metric_requires_explicit_missing_reason",
+       "oversized_decoded_shard_is_rejected_before_serialization",
+       "publication_state_stays_local_pending_and_retry_does_not_train",
+       "repeated_archive_is_content_addressed_and_idempotent",
+       "shards_are_bounded_and_complete",
+       "shuffled_events_reconstruct_in_canonical_order"
+      ]
      }
     }
    },
@@ -5178,7 +5662,7 @@
     }
    },
    "jope-motifs": {
-    "count": 101,
+    "count": 107,
     "ignored": 0,
     "binaries": {
      "jope-motifs": {
@@ -5288,16 +5772,29 @@
        "validate::tests::unexpanded_reference_is_refused_by_slots_grammar_and_fit",
        "validate::tests::validation_is_deterministic"
       ]
+     },
+     "jope-motifs::motif_admission": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "exact_expansion_witness_round_trips_the_host_and_enforces_nested_limits",
+       "finite_probe_similarity_does_not_authorize_a_macro_with_no_useful_contrast",
+       "judge_and_protected_family_rows_are_refused_before_contrast_scoring",
+       "profile_contrast_requires_distinct_datasets_and_families_and_finite_scores",
+       "source_validation_and_profile_migration_are_mandatory",
+       "synthetic_gate_accepts_positive_preregistered_cross_family_contrast"
+      ]
      }
     }
    },
    "jope-parallel": {
-    "count": 810,
+    "count": 843,
     "ignored": 15,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 458,
+      "count": 461,
       "ignored": 8,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -5478,10 +5975,13 @@
        "eval_registry::service::tests::socket_loss_during_worker_readiness_fences_authorization_and_restart",
        "eval_registry::service::tests::synthetic_query_worker",
        "eval_registry::service::tests::synthetic_worker",
+       "eval_registry::witness::epochs::tests::descendant_verifier_requires_both_committed_blocks_and_scoped_opt_in",
+       "eval_registry::witness::epochs::tests::forged_or_stripped_opt_in_projection_breaks_the_transition_signature",
        "eval_registry::witness::epochs::tests::initial_bootstrap_preserves_original_static_budget_and_unknown_identities",
        "eval_registry::witness::epochs::tests::same_window_cannot_extend_budget_deadline_or_relabel_initial_optimizer",
        "eval_registry::witness::epochs::tests::signed_original_transition_ack_binds_head_budget_policy_and_offline_time",
        "eval_registry::witness::epochs::tests::successor_requires_separate_completion_and_exact6000_window",
+       "eval_registry::witness::epochs::tests::validly_signed_current_digest_rotation_without_opt_in_keeps_legacy_window",
        "eval_registry::witness::funding_tests::funding_lock_contention_expires_before_consumption_or_journal",
        "eval_registry::witness::funding_tests::lost_ack_preserves_original_witness_and_blocks_replay_or_rank_release",
        "eval_registry::witness::funding_tests::metadata_funding_operations_obey_transport_deadline_without_journaling",
@@ -6351,13 +6851,28 @@
      },
      "jope-parallel::native_loop_continuation": {
       "kind": "test",
-      "count": 4,
+      "count": 5,
       "ignored": 0,
       "tests": [
        "a_new_request_is_frozen_as_v2_with_its_declaration_and_stays_stable",
        "a_request_frozen_as_v1_re_materializes_byte_for_byte",
        "declaring_refuses_anything_but_an_undeclared_training_input_and_a_known_version",
-       "only_v2_declares_and_v2_always_declares_a_lineage_mode"
+       "only_v2_declares_and_v2_always_declares_a_lineage_mode",
+       "v3_uses_the_descendant_epoch_without_changing_the_four_mode_strings"
+      ]
+     },
+     "jope-parallel::native_loop_v3": {
+      "kind": "test",
+      "count": 7,
+      "ignored": 0,
+      "tests": [
+       "every_committed_round_boundary_recovers_without_recharging",
+       "exact_replay_is_idempotent_and_conflicting_replay_is_rejected",
+       "lineage_and_deadline_fail_closed_with_terminal_capsules",
+       "mismatched_or_incompatible_assessment_cannot_advance_parent",
+       "physical_retries_are_aggregated_and_over_cap_work_is_charged",
+       "rejected_child_is_recorded_but_never_becomes_next_parent",
+       "resume_cannot_reset_deadline_effort_retries_or_round_cap"
       ]
      },
      "jope-parallel::objective_fixtures": {
@@ -6365,6 +6880,19 @@
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "jope-parallel::optimizer_recipes": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "accepted_control_and_continuations_are_recipe_and_state_bound",
+       "awr_requires_role_exact_behavior_support_and_positive_scale",
+       "pkpo_matches_independent_subset_fixture_including_ties",
+       "rloo_singleton_zero_ties_and_nonfinite_are_explicit",
+       "sticky_kl_distinguishes_alarm_from_hold_and_binds_identity",
+       "update_accounting_separates_counts_gradients_and_parameter_change"
+      ]
      },
      "jope-parallel::outer_release_cli": {
       "kind": "test",
@@ -6385,6 +6913,29 @@
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "jope-parallel::policy_lineage": {
+      "kind": "test",
+      "count": 16,
+      "ignored": 0,
+      "tests": [
+       "accepted60000_reset3000_then6000_is_a_native_v3_successor",
+       "actual_checkpoint_bindings_cannot_be_replaced_by_lineage_labels",
+       "duplicate_delivery_adds_no_credit_and_forked_commit_cannot_be_reused",
+       "empty_reused_and_incomplete_rank_credit_is_refused",
+       "legacy_exposure_cannot_be_certified_by_relabeling_the_anchor",
+       "legacy_v1_still_refuses_the_same_reset_epoch_completion",
+       "missing_altered_forked_and_cyclic_edges_are_refused",
+       "objective_recipe_architecture_vocabulary_and_support_mismatches_are_refused",
+       "overflow_depth_and_byte_limits_are_enforced",
+       "random70000_and_relabelled3000_cannot_impersonate_a_successor",
+       "reset_carry_and_exact_resume_are_distinct",
+       "stale_intent_and_evaluation_role_evidence_are_refused",
+       "subsequent_v3_successor_preserves_the_verified_prefix",
+       "the_explicit_sixty_four_edge_boundary_is_accepted",
+       "three_thousand_is_a_descendant_but_not_a_completed_two_block_run",
+       "versioned_bytes_roundtrip_and_identity_domains_are_distinct"
+      ]
      },
      "jope-parallel::preparation_semantics": {
       "kind": "test",
@@ -6455,6 +7006,12 @@
        "an_existing_recorded_backing_path_is_read_as_recorded",
        "the_frozen_family_partition_is_never_decided_by_the_environment"
       ]
+     },
+     "jope-parallel::replay_bridge": {
+      "kind": "test",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
      },
      "jope-parallel::replay_training": {
       "kind": "test",
@@ -6579,6 +7136,12 @@
        "missing_or_invalid_runtime_refuses_the_corpus_instead_of_becoming_zero"
       ]
      },
+     "jope-parallel::training_intent": {
+      "kind": "test",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
      "jope-parallel::view_contracts": {
       "kind": "test",
       "count": 17,
@@ -6637,12 +7200,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 376,
+    "count": 419,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 333,
+      "count": 338,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -6689,6 +7252,7 @@
        "execution::tests::pre_gate_setup_cancellation_does_not_reset_or_override_expired_cutoff",
        "execution::tests::real_supervisor_resources_and_descendant_cleanup",
        "execution::tests::refuses_output_escape_and_thread_override",
+       "execution::tests::resource_accounting_requires_original_admission_and_restores_durable_spend",
        "execution::tests::resumed_prior_unit_is_unknown_and_foreign_live_group_is_not_drained",
        "execution::tests::unavailable_inventory_does_not_start_the_clock",
        "experiment::tests::budgets_fail_closed_and_resume_keeps_original_deadline",
@@ -6935,11 +7499,15 @@
        "search::tests::a_single_parent_still_produces_a_child",
        "search::tests::an_empty_parent_set_draws_a_fresh_candidate_instead_of_panicking",
        "search::tests::budgets_parse_and_are_bounded",
+       "search::tests::comparison_event_joins_preserve_frozen_numerical_results",
        "search::tests::comparison_failures_spend_budget_and_are_not_retried",
        "search::tests::comparison_never_admits_a_fit_after_the_total_evaluation_limit",
        "search::tests::comparison_never_admits_a_fit_after_the_total_seconds_limit",
        "search::tests::comparison_stays_within_total_budget_and_keeps_a_common_pool",
        "search::tests::eight_threads_publish_exactly_what_one_thread_publishes",
+       "search::tests::event_logging_preserves_frozen_choices_observations_and_migration",
+       "search::tests::event_logging_preserves_retry_streams_duplicates_and_random_fallback",
+       "search::tests::event_persistence_failure_refuses_success_publication",
        "search::tests::islands_migrate_record_and_replay_on_any_worker_count",
        "search::tests::no_candidate_is_fitted_twice_on_one_cut",
        "search::tests::one_island_is_the_plain_search",
@@ -7020,6 +7588,17 @@
        "jope_pipeline_resolves_neither_the_learning_store_nor_the_engine_under_any_of_its_features"
       ]
      },
+     "jope-pipeline::fingerprint_false_hits": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "byte_and_canonical_identity_are_distinct_domains",
+       "fingerprints_are_bound_to_exact_probe_set_and_rounding",
+       "finite_probe_collision_is_only_advisory_and_does_not_prove_equal_behavior",
+       "probe_builder_rejects_outer_sealed_unknown_and_tainted_ancestry"
+      ]
+     },
      "jope-pipeline::modern_gp_candidate": {
       "kind": "test",
       "count": 5,
@@ -7032,6 +7611,17 @@
        "migration_admission_uses_sequence_order_and_resource_caps"
       ]
      },
+     "jope-pipeline::numeric_profile_routing": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "actual_recipe_options_preserve_default_and_route_quantile_opt_in",
+       "fitted_product_emit_reload_and_execute",
+       "near_tie_fitted_quantiles_use_independent_oracle_through_product_route",
+       "unsupported_options_and_heads_fail_before_export"
+      ]
+     },
      "jope-pipeline::residual_closure": {
       "kind": "test",
       "count": 3,
@@ -7040,6 +7630,29 @@
        "heavy_diagnostics_are_charged_before_work_and_overrun_refuses",
        "held_labels_are_outside_the_proposal_input_and_cannot_change_it",
        "ordered_rows_need_a_nonempty_declared_semantics"
+      ]
+     },
+     "jope-pipeline::resource_accounting": {
+      "kind": "test",
+      "count": 16,
+      "ignored": 0,
+      "tests": [
+       "bounded_trusted_cpu_children_record_actual_compile_failure_sigkill_and_retry",
+       "cache_warm_reuse_preserves_cold_lifetime_cost_and_stage_dimensions",
+       "concurrent_reservations_cannot_overbook_memory_or_cpu",
+       "duplicates_do_not_reserve_or_charge_twice_and_reordered_or_conflicting_receipts_refuse",
+       "failed_compile_killed_fit_and_real_retry_keep_every_physical_charge",
+       "inclusive_parent_and_child_counter_overlap_is_rejected",
+       "independent_cost_arrival_order_and_cpu_overbooking_do_not_change_totals",
+       "integer_overflow_nonfinite_negative_and_unlisted_dimensions_refuse",
+       "journal_failure_cannot_authorize_work_or_release_resources",
+       "missing_final_telemetry_keeps_full_allowance_and_unstarted_zero_needs_proof",
+       "mixed_cpu_gpu_units_require_prospective_conversion_and_exact_device",
+       "original_deadline_cap_and_terminal_headroom_cannot_restart_on_retry",
+       "overrun_is_retained_then_blocks_more_work_and_uncertainty_is_not_released",
+       "reservation_identity_uses_i02_canonical_payload_and_domain_separation",
+       "search_adapters_preserve_legacy_budget_and_explicit_unknowns",
+       "worker_missing_telemetry_and_unopened_gate_are_distinct"
       ]
      },
      "jope-pipeline::schema_agreement": {
@@ -7062,6 +7675,32 @@
        "v3_seeding_records_are_checked_against_digests_cap_and_coverage"
       ]
      },
+     "jope-pipeline::search_events": {
+      "kind": "test",
+      "count": 7,
+      "ignored": 0,
+      "tests": [
+       "explicit_failed_attempt_states_retain_unknown_costs_and_empty_closure_refuses",
+       "four_draws_duplicate_and_retry_reconcile_every_physical_cost",
+       "gp_child_cannot_inherit_seed_density_or_posterior_sample",
+       "missing_altered_or_orphan_events_never_close_as_complete",
+       "reordered_and_duplicate_deliveries_keep_original_counts_and_ids",
+       "strict_new_version_dispatch_rejects_duplicate_keys_and_unknown_fields",
+       "unknown_cost_is_retained_and_context_changes_request_identity"
+      ]
+     },
+     "jope-pipeline::seed_set_v2": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "legacy_v1_cap_remains_four_and_schema_identity_is_unchanged",
+       "transfer_draws_require_complete_ancestry_and_a_declared_source_mixture",
+       "v2_cap_is_explicit_and_source_denominators_survive_dedup",
+       "v2_json_round_trip_preserves_origin_and_ancestry",
+       "v2_refuses_missing_explicit_cap_bad_digest_and_duplicate_draw_identity"
+      ]
+     },
      "jope-pipeline::stage_cache_identity": {
       "kind": "test",
       "count": 2,
@@ -7070,16 +7709,25 @@
        "cached_uncached_and_evicted_fits_preserve_predictions_and_champion",
        "full_context_separates_order_rows_seed_fold_and_profile"
       ]
+     },
+     "jope-pipeline::strategy_controls": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "legacy_control_matches_frozen_loop_draw_order_and_champions",
+       "lite_race_control_preserves_same_cut_rungs_and_champions"
+      ]
      }
     }
    },
    "jope-policy": {
-    "count": 86,
+    "count": 99,
     "ignored": 3,
     "binaries": {
      "jope-policy": {
       "kind": "lib",
-      "count": 71,
+      "count": 72,
       "ignored": 3,
       "tests": [
        "challenger_tests::challenger_identity_refuses_accepted_rejected_and_malformed_pins",
@@ -7150,6 +7798,7 @@
        "producer::tests::recorded_outcomes_are_rederived_from_tokens",
        "producer::tests::seed_slots_name_their_proposal_records",
        "producer::tests::tampered_proposal_ledgers_are_refused",
+       "proposal_ledger::decision_link_tests::companion_retains_every_draw_without_changing_legacy_ledger",
        "semantic::tests::every_compiled_identity_is_the_manifests",
        "semantic::tests::only_the_accepted_manifest_bytes_are_the_release_decision",
        "semantic::tests::the_encoder_release_identity_is_the_manifests"
@@ -7209,16 +7858,35 @@
        "native_sampler_and_scorer_share_masked_law_and_seeded_frequency",
        "unknown_selection_propensity_cannot_claim_unbiasedness"
       ]
+     },
+     "jope-policy::typed_edit_policy": {
+      "kind": "test",
+      "count": 12,
+      "ignored": 0,
+      "tests": [
+       "native_adapter_exports_the_same_versioned_abi",
+       "native_edit_policy::shared::tests::columns_17_and_63_remap_equivariantly_under_schema_permutation",
+       "native_edit_policy::shared::tests::eos_mass_and_continuous_density_match_sampler_and_scorer",
+       "native_edit_policy::shared::tests::illegal_or_zero_support_actions_and_undeclared_time_edits_refuse",
+       "native_edit_policy::shared::tests::unsupported_backend_length_and_schema_are_rejected_before_policy_use",
+       "native_edit_policy::tests::column_17_and_63_addresses_survive_native_schema_permutation",
+       "native_edit_policy::tests::native_abi_refuses_wrong_backend_length_and_schema",
+       "native_edit_policy::tests::native_sampler_and_scorer_agree_for_eos_mass_and_parameter_density",
+       "policy_edit_policy::tests::columns_17_and_63_remap_equivariantly_under_schema_permutation",
+       "policy_edit_policy::tests::eos_mass_and_continuous_density_match_sampler_and_scorer",
+       "policy_edit_policy::tests::illegal_or_zero_support_actions_and_undeclared_time_edits_refuse",
+       "policy_edit_policy::tests::unsupported_backend_length_and_schema_are_rejected_before_policy_use"
+      ]
      }
     }
    },
    "jope-records": {
-    "count": 208,
+    "count": 236,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 89,
+      "count": 90,
       "ignored": 0,
       "tests": [
        "coverage::tests::changed_target_requirements_fail",
@@ -7301,10 +7969,11 @@
        "repo_layout::tests::package_name_refuses_what_cargo_cannot_read",
        "repo_layout::tests::package_name_says_toml_1_0_for_toml_1_1_only_syntax",
        "repo_layout::tests::test_code_is_whole_test_files_and_cfg_test_modules",
-       "research::tests::brief_is_deterministic_linked_and_capped_without_truncation",
-       "research::tests::exact_repeat_warns_but_explicit_preregistered_replication_is_preserved",
-       "research::tests::pooled_descriptive_summary_excludes_unresolved_correlated_and_incompatible_records",
-       "research::tests::unresolved_or_stale_source_and_ci_never_render_current_green",
+       "research::state::tests::brief_is_deterministic_linked_and_capped_without_truncation",
+       "research::state::tests::exact_repeat_warns_but_explicit_preregistered_replication_is_preserved",
+       "research::state::tests::pooled_descriptive_summary_excludes_unresolved_correlated_and_incompatible_records",
+       "research::state::tests::unresolved_or_stale_source_and_ci_never_render_current_green",
+       "research::wave_git::tests::stage_names_are_stable",
        "scope_check::tests::declared_reads_the_first_assignment",
        "selfplay_baseline::tests::distinguish_current_ci_historical_runs_and_proposed_protocols",
        "selfplay_baseline::tests::reconcile_benchmark_and_product_profile_identities",
@@ -7439,6 +8108,25 @@
        "test_inventory::mutations_are_rejected"
       ]
      },
+     "jope-records::research_capsule": {
+      "kind": "test",
+      "count": 12,
+      "ignored": 0,
+      "tests": [
+       "compile_is_read_only_and_keeps_aborted_round_outcome",
+       "confidence_interval_containing_zero_is_inconclusive",
+       "derived_text_does_not_upgrade_shadow_stage_or_failure_denominators",
+       "deterministic_compilation_and_rendering",
+       "disclosure_filter_removes_protected_ids_counts_and_prose",
+       "malformed_locator_fails_closed_before_lookup",
+       "mismatched_evidence_locator_is_limitation_only",
+       "renderer_emits_stable_hash_and_unknown_source_commit",
+       "renderer_enforces_size_limit_without_truncating_limitations",
+       "revoked_or_missing_evidence_cannot_support_assertion",
+       "shuffled_evidence_and_prose_have_identical_bytes",
+       "zero_denominator_evidence_is_excluded"
+      ]
+     },
      "jope-records::research_state": {
       "kind": "test",
       "count": 4,
@@ -7448,6 +8136,28 @@
        "descriptive_pool_excludes_unresolved_correlated_and_incompatible_evidence",
        "repeat_warning_keeps_explicit_preregistered_replication_available",
        "unresolved_or_stale_source_and_ci_cannot_be_current_green"
+      ]
+     },
+     "jope-records::wave_git": {
+      "kind": "test",
+      "count": 15,
+      "ignored": 0,
+      "tests": [
+       "each_file_and_total_bytes_are_measured",
+       "evidence_roots_are_stable_under_input_order",
+       "index_accepts_sorted_multiple_versions_for_one_wave",
+       "index_rejects_unsorted_or_duplicate_wave_versions",
+       "malformed_numeric_assertion_is_rejected",
+       "numeric_facts_bind_value_unit_denominator_source_and_version",
+       "numeric_prose_is_rejected_instead_of_laundered",
+       "only_allowlisted_disclosure_is_rendered",
+       "over_budget_requires_reviewed_reason_and_preserves_all_bytes",
+       "private_role_cannot_compile_public_projection",
+       "repeated_generation_is_byte_identical",
+       "small_projection_fixture_matches_all_emitted_files",
+       "stage_and_disposition_are_never_upgraded_by_summary",
+       "traversal_wave_ids_are_refused",
+       "unknown_source_commit_remains_null_and_future_git_hash_is_absent"
       ]
      },
      "jope-records::wire_contract": {
@@ -7949,7 +8659,7 @@
   }
  },
  "totals": {
-  "rust": 5193,
+  "rust": 5569,
   "python": 182
  }
 }
