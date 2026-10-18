@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Scaled regression for deploy/ci/dl-offline-group.sh: the strict DL offline shard group (3 shards + --combine) shares ONE
-deadline. A fake runner (DL_OFFLINE_RUNNER) sleeps per step, with seconds standing in for the real 900 s budget:
-  - each step fits the budget on its own but the group total does not  -> rejected (exit 124), later steps never start;
-  - the shards fit but combine pushes the total past the deadline       -> rejected while combine runs;
-  - the whole group fits                                                 -> passes, steps in order with the pinned outputs."""
+"""Scaled regression: DL offline shards run concurrently and share one deadline with --combine."""
 import os
 from pathlib import Path
 import subprocess
@@ -46,29 +42,22 @@ class CommonDeadline(unittest.TestCase):
         steps = log.read_text().splitlines() if log.exists() else []
         return r, steps, tmp / "out"
 
-    def test_each_step_fits_but_the_total_exceeds_the_deadline(self):
-        # 3 s fits in the 8 s budget. Two shards leave 2 s, so shard 3 starts and the deadline fires during it.
-        r, steps, _ = self.run_group(8, 3.0, 0.1)
-        self.assertEqual(r.returncode, 124, r.stderr)
-        self.assertIn("common 8s deadline expired during: --shard 3/3", r.stderr)
-        self.assertIn("start shard 3/3", " ".join(steps))
-        self.assertNotIn("end shard 3/3", steps)
-        self.assertFalse(any(s.startswith("start combine") for s in steps), steps)
-
-    def test_combine_runs_inside_the_same_deadline(self):
-        # three 1.5 s shards fit in 8 s; combine at 4 s starts with time left and is killed during it.
-        r, steps, _ = self.run_group(8, 1.5, 4.0)
-        self.assertEqual(r.returncode, 124, r.stderr)
-        self.assertIn("common 8s deadline expired during: --combine", r.stderr)
-        self.assertIn("end shard 3/3", steps)
-        self.assertNotIn("end combine", steps)
-
-    def test_the_group_within_the_deadline_passes_in_order(self):
-        r, steps, out = self.run_group(3, 0.1, 0.1)
+    def test_parallel_shards_fit_when_their_serial_sum_does_not(self):
+        r, steps, out = self.run_group(5, 2.0, 0.1)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual([s for s in steps if s.startswith("start")],
-                         [f"start shard {i}/3 {out}/shard-{i}" for i in (1, 2, 3)] + [f"start combine {out}"])
-        self.assertIn("finished within the common 3s deadline", r.stdout)
+        starts = [s for s in steps if s.startswith("start")]
+        self.assertEqual(3, sum(s.startswith("start shard") for s in starts), steps)
+        self.assertEqual(3, sum(s.startswith("end shard") for s in steps), steps)
+        self.assertEqual({f"start shard {i}/3 {out}/shard-{i}" for i in (1, 2, 3)}, set(starts[:3]))
+        self.assertTrue(starts[3].startswith(f"start combine {out}"), starts)
+
+    def test_combine_uses_only_the_remaining_common_deadline(self):
+        # Parallel shards take 2 s; combine starts with 2 s left and is killed at the deadline.
+        r, steps, _ = self.run_group(4, 2.0, 3.0)
+        self.assertEqual(r.returncode, 124, r.stderr)
+        self.assertIn("common 4s deadline expired during --combine", r.stderr)
+        self.assertEqual(3, sum(s.startswith("end shard") for s in steps), steps)
+        self.assertNotIn("end combine", steps)
 
     def test_a_bad_budget_is_refused(self):
         r, steps, _ = self.run_group("0", 0.1, 0.1)

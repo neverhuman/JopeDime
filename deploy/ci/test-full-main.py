@@ -21,12 +21,19 @@ ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('full_main', ROOT / 'deploy/ci/full-main.py')
 full = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(full)
+partition_spec = importlib.util.spec_from_file_location('check_test_partition', ROOT / 'deploy/ci/check_test_partition.py')
+partition = importlib.util.module_from_spec(partition_spec)
+partition_spec.loader.exec_module(partition)
 
 
 class FullMainTests(unittest.TestCase):
     def setUp(self):
         self.mapping = {'lanes': {'full-one': {'command':['fixture'], 'requires_nonzero_tests':False, 'result_backend':'none'}}, 'dispositions':{}}
         self.expected = dict(source_sha='a'*40, checkout_sha='a'*40, run_id='123', attempt=1, event='push')
+
+    def test_static_partition_uses_main_for_zero_push_base(self):
+        self.assertEqual('origin/main', partition.static_base('0' * 40))
+        self.assertEqual('a' * 40, partition.static_base('a' * 40))
 
     def fixture(self, root):
         folder = root / 'full-one'
