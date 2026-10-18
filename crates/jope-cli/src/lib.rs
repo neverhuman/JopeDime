@@ -17,8 +17,8 @@ pub use champions::{
 pub use encode::{encode_dataset, EncodeReport};
 pub use generator::generate_fixtures;
 pub use kernel::{
-    emit_genome, emit_genome_with_train, fit_dataset, search_dataset, EmitReport, FitReport,
-    SearchReport, DEFAULT_GENOME,
+    emit_genome, emit_genome_with_options, emit_genome_with_train, emit_numeric_v2, fit_dataset,
+    search_dataset, EmitReport, FitReport, SearchReport, DEFAULT_GENOME,
 };
 pub use router::{load_router, route_dataset, RouteReport};
 pub use storage::resolve_root;

@@ -484,6 +484,11 @@ impl RidgeModel {
             .collect()
     }
 
+    /// Explicit successor caller; retains legacy standardized-feature safety bounds.
+    pub(crate) fn predict_numeric_v2(&self, x: &Rows) -> Vec<f64> {
+        self.predict_unclamped(x)
+    }
+
     /// Raw ridge prediction for scale-equivariant composite heads. The public
     /// legacy ridge path retains its historical absolute safety clamp.
     fn predict_unclamped(&self, x: &Rows) -> Vec<f64> {

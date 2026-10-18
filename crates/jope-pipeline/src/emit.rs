@@ -3,8 +3,9 @@
 //! This reproduces `crates/feat-math/examples/emit.rs`: `transpile::emit` for the
 //! bit-identical Python/Rust pair plus the `battle-artifact-v1` manifest,
 //! `emit_cpp17` and `emit_javascript` behind their own coverage gates, and a
-//! `targets.txt` naming what was emitted. `EmitOptions::default()` is used and
-//! never varied — the title, feature names, context and `fast_runtime` flag all
+//! `targets.txt` naming what was emitted. The legacy entrypoint uses
+//! `EmitOptions::default()`; the explicit option entrypoint binds opt-in changes.
+//! The title, feature names, context and `fast_runtime` flag all
 //! change the Python and Rust bytes, and those bytes are what
 //! `deploy/ci/emitters.sh` pins.
 //!
@@ -123,13 +124,22 @@ pub struct Emitted {
 
 /// Emit `genome` into `directory`, one file per covered language.
 pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Emitted> {
+    emit_with_options(genome, languages, directory, &EmitOptions::default())
+}
+
+/// Explicit recipe-option route; legacy emit continues selecting frozen defaults.
+pub fn emit_with_options(
+    genome: &str,
+    languages: &[Language],
+    directory: &Path,
+    options: &EmitOptions,
+) -> Result<Emitted> {
     ensure!(
         !languages.contains(&Language::Cpp17Fitted),
         "cpp17-fitted requires training rows; use emit_with_training"
     );
     let parsed =
         GenomeIr::parse(genome.trim()).with_context(|| format!("parse genome {genome}"))?;
-    let options = EmitOptions::default();
     std::fs::create_dir_all(directory)?;
 
     let mut artifacts = Vec::new();
@@ -149,7 +159,7 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
     let render_target = swapped.as_ref().unwrap_or(&parsed);
     #[cfg(not(test))]
     let render_target = &parsed;
-    let emitted = transpile::emit(render_target, &options)?;
+    let emitted = transpile::emit(render_target, options)?;
     write(directory, "manifest.json", &emitted.manifest)?;
     if languages.contains(&Language::Python) {
         artifacts.push(Artifact {
@@ -168,7 +178,7 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
 
     let wants_cpp = languages.contains(&Language::Cpp17) || languages.contains(&Language::Cpp20);
     if wants_cpp {
-        match cpp_source(&parsed)? {
+        match cpp_source_with_options(&parsed, options)? {
             Ok(source) => {
                 let artifact = write(directory, "model.cpp", &source)?;
                 for (language, standard) in [
@@ -201,7 +211,7 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
     if languages.contains(&Language::JavaScript) {
         match transpile::supports_javascript(&parsed) {
             Ok(()) => {
-                let source = transpile::emit_javascript(&parsed, &options)?;
+                let source = transpile::emit_javascript(&parsed, options)?;
                 artifacts.push(Artifact {
                     language: Language::JavaScript.as_str(),
                     ..write(directory, "model.js", &source)?
@@ -259,8 +269,15 @@ pub fn emit_with_training(
 /// and `cpp20`, and `jope emit --lang cpp20` takes its bytes from here too. The inner `Err` is
 /// the exclusion reason when the C++ emitter does not cover every element of the program.
 pub fn cpp_source(parsed: &GenomeIr) -> Result<std::result::Result<String, String>> {
+    cpp_source_with_options(parsed, &EmitOptions::default())
+}
+
+fn cpp_source_with_options(
+    parsed: &GenomeIr,
+    options: &EmitOptions,
+) -> Result<std::result::Result<String, String>> {
     Ok(match transpile::supports_cpp17(parsed) {
-        Ok(()) => Ok(transpile::emit_cpp17(parsed, &EmitOptions::default())?),
+        Ok(()) => Ok(transpile::emit_cpp17(parsed, options)?),
         Err(unsupported) => Err(format!(
             "the C++17 emitter does not cover {}",
             unsupported.join(", ")
@@ -527,7 +544,6 @@ mod tests {
 
 #[cfg(test)]
 mod fitted_tests;
-
 /// Explicit opt-in publication result. `expected` must be retained in the selected
 /// program/run receipt; reacquiring it from mutable files loses the trust anchor.
 pub struct EmittedV3 {
@@ -625,4 +641,61 @@ pub fn read_identity_v3(
     expected: &feat_math::artifact_manifest::ExpectedArtifactV3,
 ) -> Result<feat_math::artifact_manifest::ArtifactManifestV3> {
     feat_math::artifact_manifest::verify_directory(directory, "manifest.json", expected)
+    }
+}
+
+/// Task-local I09 adapter: fitted predictor with explicit requested target and profile.
+/// Writes exact source, fitted codec and manifest; no native policy export is implied.
+pub fn emit_numeric_v2(
+    genome: &str,
+    profile: feat_math::numeric_v2::NumericProfileV2,
+    x: &feat_math::Rows,
+    y: &[f64],
+    options: feat_math::numeric_v2_emit::OptionsV2,
+    directory: &Path,
+) -> Result<feat_math::numeric_v2_emit::FittedArtifactV2> {
+    use feat_math::{
+        numeric_v2::NumericModelV2,
+        numeric_v2_emit::{self, TargetV2},
+    };
+    let parsed = GenomeIr::parse(genome)?;
+    let model = NumericModelV2::fit(profile, &parsed, x, y)?;
+    let artifact = numeric_v2_emit::emit(&model, options)?;
+    let filename = match artifact.options.target {
+        TargetV2::Python => "model.py",
+        TargetV2::Rust => "model.rs",
+    };
+    std::fs::create_dir_all(directory)?;
+    std::fs::write(directory.join(filename), &artifact.source)?;
+    std::fs::write(directory.join("model.codec.json"), &artifact.codec)?;
+    std::fs::write(
+        directory.join("numeric-manifest.json"),
+        serde_json::to_vec_pretty(&artifact)?,
+    )?;
+    Ok(artifact)
+}
+
+/// Reload and verify exactly the persisted source and fitted codec before use.
+pub fn reload_numeric_v2(
+    directory: &Path,
+    expected: &feat_math::numeric_v2_emit::OptionsV2,
+    model_digest: &str,
+) -> Result<feat_math::numeric_v2::NumericModelV2> {
+    use feat_math::numeric_v2_emit::{FittedArtifactV2, TargetV2};
+    let artifact: FittedArtifactV2 =
+        serde_json::from_slice(&std::fs::read(directory.join("numeric-manifest.json"))?)?;
+    let filename = match expected.target {
+        TargetV2::Python => "model.py",
+        TargetV2::Rust => "model.rs",
+    };
+    ensure!(
+        std::fs::read(directory.join(filename))? == artifact.source.as_bytes(),
+        "shipped source mismatch"
+    );
+    ensure!(
+        std::fs::read(directory.join("model.codec.json"))? == artifact.codec.as_bytes(),
+        "shipped codec mismatch"
+    );
+    artifact.reload(expected, model_digest)
+    }
 }

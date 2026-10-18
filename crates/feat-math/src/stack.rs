@@ -177,6 +177,23 @@ impl StackModel {
     }
 }
 
+/// Explicit successor split contract. Legacy StackModel continues to use its
+/// historical contiguous folds; grouped/temporal callers must provide their own splits.
+pub fn numeric_v2_iid_folds(n: usize, folds: usize, seed: u64) -> anyhow::Result<Vec<usize>> {
+    anyhow::ensure!(folds >= 2 && n >= folds, "invalid IID fold shape");
+    let mut order: Vec<usize> = (0..n).collect();
+    let mut rng = crate::Pcg32::new(seed, 0x6e756d6572696332);
+    for i in (1..n).rev() {
+        let j = rng.next_u32() as usize % (i + 1);
+        order.swap(i, j);
+    }
+    let mut result = vec![0; n];
+    for (position, index) in order.into_iter().enumerate() {
+        result[index] = position % folds;
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -146,8 +146,44 @@ pub fn emit_genome_with_train(
             artifacts,
         });
     }
+    emit_genome_with_options_impl(
+        genome,
+        lang,
+        train,
+        output,
+        &EmitOptions {
+            title: Some("jope emit".into()),
+            ..EmitOptions::default()
+        },
+        true,
+    )
+}
+
+/// Explicit opt-in recipe options; root CLI flag allocation belongs to the integrator.
+pub fn emit_genome_with_options(
+    genome: &str,
+    lang: &str,
+    train: Option<&Path>,
+    output: Option<&Path>,
+    opts: &EmitOptions,
+) -> Result<EmitReport> {
+    emit_genome_with_options_impl(genome, lang, train, output, opts, false)
+}
+
+fn emit_genome_with_options_impl(
+    genome: &str,
+    lang: &str,
+    train: Option<&Path>,
+    output: Option<&Path>,
+    opts: &EmitOptions,
+    legacy_cpp20: bool,
+) -> Result<EmitReport> {
     let parsed = GenomeIr::parse(genome).context("parse genome")?;
     if lang == "cpp17-fitted" {
+        anyhow::ensure!(
+            !opts.partition_point_quantile_bounds,
+            "fitted C++ profile options unsupported"
+        );
         let train = train.context("cpp17-fitted requires --train <numeric.csv>")?;
         let (x, y) = read_numeric_training_csv(train)?;
         let model = fit_legacy_numeric_bound(&parsed, &x, &y).context("fit C++17 model")?;
@@ -192,34 +228,35 @@ pub fn emit_genome_with_train(
         train.is_none(),
         "--train is only valid with --lang cpp17-fitted"
     );
-    let opts = EmitOptions {
-        title: Some("jope emit".into()),
-        ..EmitOptions::default()
-    };
     let mut artifacts = Vec::new();
     for name in languages(lang)? {
         let source = match name {
             "python" | "rust" => {
-                let emitted = emit(&parsed, &opts).context("emit rust/python")?;
+                let emitted = emit(&parsed, opts).context("emit rust/python")?;
                 if name == "python" {
                     emitted.python
                 } else {
                     emitted.rust
                 }
             }
-            "cpp17" => emit_cpp17(&parsed, &opts).context("emit C++17")?,
+            "cpp17" => emit_cpp17(&parsed, opts).context("emit C++17")?,
             "cpp17-recipe-v2" => {
-                feat_math::kernel::expression_recipe::emit_cpp17(&parsed, &opts)
+                feat_math::kernel::expression_recipe::emit_cpp17(&parsed, opts)
                     .context("emit C++17 expression recipe")?
                     .source
             }
-            // C++20 compiles the one C++ source; take it from the pipeline's own call so
-            // `jope emit` and `jope pipeline run` write the same `model.cpp` bytes.
-            "cpp20" => match jope_pipeline::emit::cpp_source(&parsed).context("emit C++20")? {
-                Ok(source) => source,
-                Err(reason) => bail!("{reason}"),
-            },
-            "javascript" => emit_javascript(&parsed, &opts).context("emit javascript")?,
+            // C++20 uses the same source and explicit options as C++17.
+            "cpp20" => {
+                if legacy_cpp20 {
+                    match jope_pipeline::emit::cpp_source(&parsed).context("emit C++20")? {
+                        Ok(source) => source,
+                        Err(reason) => bail!("{reason}"),
+                    }
+                } else {
+                    emit_cpp17(&parsed, opts).context("emit C++20")?
+                }
+            }
+            "javascript" => emit_javascript(&parsed, opts).context("emit javascript")?,
             _ => unreachable!(),
         };
         let mut path = None;
@@ -432,7 +469,6 @@ fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64> {
 fn digest(source: &str) -> String {
     format!("{:x}", Sha256::digest(source.as_bytes()))
 }
-
 /// Emit-only v3 adapter, selected with the existing `--lang v3:<targets>` string.
 /// Existing language aliases, report schema and default emission stay compatible.
 pub fn emit_genome_v3(
@@ -499,5 +535,77 @@ mod artifact_v3_tests {
         jope_pipeline::emit::read_identity_v3(&new, &out.expected).unwrap();
         fs::write(new.join("cpp17-fitted/model.codec.json"), "{}").unwrap();
         assert!(jope_pipeline::emit::read_identity_v3(&new, &out.expected).is_err());
+    }
+}
+
+/// Explicit fitted numeric profile route; does not change legacy emit defaults.
+pub fn emit_numeric_v2(
+    genome: &str,
+    train: &Path,
+    profile: feat_math::numeric_v2::NumericProfileV2,
+    options: feat_math::numeric_v2_emit::OptionsV2,
+    output: &Path,
+) -> Result<feat_math::numeric_v2_emit::FittedArtifactV2> {
+    let (x, y) = read_numeric_training_csv(train)?;
+    jope_pipeline::emit::emit_numeric_v2(genome, profile, &x, &y, options, output)
+}
+
+#[cfg(test)]
+mod numeric_v2_tests {
+    use super::*;
+    #[test]
+    fn numeric_v2_kernel_export_and_option_selection() {
+        let root =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/task-evidence/I10/cli-tests");
+        fs::create_dir_all(&root).unwrap();
+        let dir = tempfile::tempdir_in(root).unwrap();
+        let csv = dir.path().join("train.csv");
+        fs::write(&csv, "a,target\n0,-200\n1,0\n2,200\n").unwrap();
+        let options = feat_math::numeric_v2_emit::OptionsV2::new(
+            feat_math::numeric_v2_emit::TargetV2::Python,
+        );
+        let artifact = emit_numeric_v2(
+            "(pipe X (ridge))",
+            &csv,
+            feat_math::numeric_v2::NumericProfileV2::new(vec!["a".into()]),
+            options.clone(),
+            dir.path(),
+        )
+        .unwrap();
+        let model =
+            jope_pipeline::emit::reload_numeric_v2(dir.path(), &options, &artifact.model_sha256)
+                .unwrap();
+        assert!(model.predict(&["a".into()], &vec![vec![2.]]).unwrap()[0] > 60.);
+        let recipe = "(pipe X (quantile_bins bins=4) (ridge))";
+        let old = emit_genome(recipe, "python", None).unwrap();
+        let explicit = emit_genome_with_options(
+            recipe,
+            "python",
+            None,
+            None,
+            &EmitOptions {
+                title: Some("jope emit".into()),
+                ..EmitOptions::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(old.artifacts[0].sha256, explicit.artifacts[0].sha256);
+        let new = emit_genome_with_options(
+            recipe,
+            "python",
+            None,
+            None,
+            &EmitOptions {
+                title: Some("jope emit".into()),
+                partition_point_quantile_bounds: true,
+                ..EmitOptions::default()
+            },
+        )
+        .unwrap();
+        assert_ne!(old.artifacts[0].sha256, new.artifacts[0].sha256);
+        let cpp20 = emit_genome(recipe, "cpp20", None).unwrap();
+        let parsed = GenomeIr::parse(recipe).unwrap();
+        let historical = jope_pipeline::emit::cpp_source(&parsed).unwrap().unwrap();
+        assert_eq!(cpp20.artifacts[0].sha256, digest(&historical));
     }
 }
