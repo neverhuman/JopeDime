@@ -5,7 +5,7 @@
 - **Reconciled Source Specifications:**
   1. `SPEC_A` (`SPEC_A_final_engineering_spec_gated_plan.md` — selects Candidate F/C06 `93.8/100`, 20 work packets `P00..P19`, Releases `R0..R4`, Gates `G0..G10`)
   2. `SPEC_B` (`SPEC_B_language_for_learning_algorithms.md` — selects Candidate P4/C03 `95.2/100`, 26 work packets `GP-00..GP-25`, Milestones `M0..M6`, Gates `G00..G20`)
-  3. `SPEC_C` (`SPEC_C_proposal_review_eng_spec_gated_plan.md` — selects Candidate C04 `93.44/100`, 23 work packets `WP00..WP12`, `WP13A`, `WP13B`, `WP14..WP21`, Releases `R0..R7`, Gates `G00..G14`)
+  3. `SPEC_C` (`SPEC_C_proposal_review_eng_spec_gated_plan.md` — selects Candidate C04 `93.44/100`, 23 work packets `WP00..WP21` incl. `WP13A`/`WP13B`, Releases `R0..R7`, Gates `G00..G14`)
 - **Additional Mandatory Scope (per `ORDER_from_jepson_1014.md`):**
   - Unfinished/weak/prototype items from the prior 66-item packet (`I53`, `I62` doc-only receipts; `I07/I08/I09/I47/I54/I55/I56` prototype integration seams; `I65` scientific qualification)
   - Root GPU & corpus authority gates (`AUTH-GAP-01` native GPU grant verification & caller bridge; `AUTH-GAP-02` `parallel.label_admission.v2` teaching-store publication gate)
@@ -53,7 +53,7 @@ Where `SPEC_A`, `SPEC_B`, and `SPEC_C` differ, this unified plan resolves each c
 ### 2.2 Dual Artifact Emission Contract (`G08`)
 Every admitted program supports two distinct, deterministic exports:
 1. **Standalone Fitted Predictor Artifact (`.rs` + `.py`):** Contains frozen fitted parameters/stats/support sets, executes in a fresh process with zero training data and zero `JopeDime` runtime dependencies, and matches in-process predictions within $\le 10^{-12}$ (CPU `f64`).
-2. **Standalone Training Recipe Artifact (`.rs`):** Contains the full `initialize`/`update`/`finalize`/`predict` training algorithm, retrains from scratch on fresh synthetic/held-out data in a fresh process, and matches in-process training loss and predictions within $\le 10^{-10}$.
+2. **Standalone Training Recipe Artifact (`.rs` + `.py` + C++17 subset per `SPEC_C WP15`):** Contains the full `initialize`/`update`/`finalize`/`predict` training algorithm, retrains from scratch on fresh synthetic/held-out data in a fresh process across Rust, Python, and the C++17 subset, and matches in-process training loss and predictions within $\le 10^{-10}$.
 
 ---
 
@@ -84,86 +84,54 @@ Every admitted program supports two distinct, deterministic exports:
 
 ---
 
-## 4. Source-accurate GP scope and cross-reference matrix
+## 4. Complete Cross-Reference Matrix (`MR01..MR46`, `MRFV` <-> `SPEC_A` / `SPEC_B` / `SPEC_C` / Legacy & Root Gates)
 
-The original MR40 synthesis omitted SPEC_B `GP-08`, substituted discrete learners for `GP-11`, misnumbered several SPEC_C packets, and did not separately own SPEC_C `WP13B` or SPEC_A `P03` route closure. This revision retains all 40 tasks and adds four explicit obligations: `MR41` (small tensor/solve reference), `MR42` (full real-consumer tiny-learner slice), `MR43` (state/update genetic edits), and `MR44` (numeric-v2 actual caller/target closure).
-
-The exact source identities, packet text and all mappings are in [GP_SPEC_COVERAGE.json](GP_SPEC_COVERAGE.json). SPEC_C has **23**, not 21, packet IDs: `WP00..WP12`, `WP13A`, `WP13B`, `WP14..WP21`. Source gate numbers are namespaced; SPEC_C `G14` means release/rollback, whereas SPEC_B `G14` means real neural wiring. Unified gates in section 3 retain their own names; equal numbers are never silently equated.
-
-`GP-08`'s complete analytical ridge reference follows the bounded learner state in `MR28`. Earlier `MR25`/`MR26` numerical work continues to use qualified existing solver references; it cannot claim GP-08 closed. `MR42` initially needs lawful feature edits and crossover on the analytical tiny learner, without depending on general AD or transferring fitted state. `MR43` later adds full state/update/scan edits after AD. `MR33` cannot enable state actions before that gate. `MR44` closes real numeric-v2 consumers before `MR21` claims portable export of that supported route. Preliminary historical replay under `MR13` does not close the full successor legacy bridge until `MR16`'s strict reader also passes.
-
-No source work package disappears because its candidate lost a ranking. Optional packs remain named, task-gated research obligations; they are not compulsory default generation. Existing 401-token actor, accepted evaluators, scientific family boundaries, authority gates and active jobs retain their identities. Default-search adoption still requires prospective matched-resource evidence; a negative or inconclusive experiment remains a valid recorded outcome.
-
-Read [GP_UPGRADE_WORKPLAN.md](GP_UPGRADE_WORKPLAN.md) for exact new file/symbol scopes, edge cases, stop conditions, validation and handoff rules. All proposed new tests must be implemented and collect real cases before any receipt can pass.
-
-| Source packet | Required MR tasks (all) | Source lines |
-|---|---|---|
-| `spec_a:P00` | `MR11,MR12` | `1160..1160` |
-| `spec_a:P01` | `MR13` | `1161..1161` |
-| `spec_a:P02` | `MR13,MR16` | `1162..1162` |
-| `spec_a:P03` | `MR15,MR44` | `1163..1163` |
-| `spec_a:P04` | `MR17` | `1164..1164` |
-| `spec_a:P05` | `MR18,MR19` | `1165..1165` |
-| `spec_a:P06` | `MR20,MR43` | `1166..1166` |
-| `spec_a:P07` | `MR21,MR42` | `1167..1167` |
-| `spec_a:P08` | `MR22,MR23,MR24` | `1168..1168` |
-| `spec_a:P09` | `MR26,MR27,MR41` | `1169..1169` |
-| `spec_a:P10` | `MR25` | `1170..1170` |
-| `spec_a:P11` | `MR28,MR32,MR41,MR42,MR43` | `1171..1171` |
-| `spec_a:P12` | `MR29` | `1172..1172` |
-| `spec_a:P13` | `MR30,MR31,MR43` | `1173..1173` |
-| `spec_a:P14` | `MR33,MR34` | `1174..1174` |
-| `spec_a:P15` | `MR35` | `1175..1175` |
-| `spec_a:P16` | `MR36` | `1176..1176` |
-| `spec_a:P17` | `MR37` | `1177..1177` |
-| `spec_a:P18` | `MR38` | `1178..1178` |
-| `spec_a:P19` | `MR39,MR40` | `1179..1179` |
-| `spec_b:GP-00` | `MR11` | `1034..1034` |
-| `spec_b:GP-01` | `MR12` | `1035..1035` |
-| `spec_b:GP-02` | `MR14,MR16` | `1036..1036` |
-| `spec_b:GP-03` | `MR15,MR17,MR44` | `1037..1037` |
-| `spec_b:GP-04` | `MR13,MR16` | `1038..1038` |
-| `spec_b:GP-05` | `MR17,MR18,MR19` | `1039..1039` |
-| `spec_b:GP-06` | `MR22,MR23,MR24` | `1040..1040` |
-| `spec_b:GP-07` | `MR28` | `1041..1041` |
-| `spec_b:GP-08` | `MR41` | `1042..1042` |
-| `spec_b:GP-09` | `MR20,MR43` | `1043..1043` |
-| `spec_b:GP-10` | `MR21,MR42` | `1044..1044` |
-| `spec_b:GP-11` | `MR42` | `1045..1045` |
-| `spec_b:GP-12` | `MR30` | `1046..1046` |
-| `spec_b:GP-13` | `MR31` | `1047..1047` |
-| `spec_b:GP-14` | `MR25` | `1048..1048` |
-| `spec_b:GP-15` | `MR26,MR27` | `1049..1049` |
-| `spec_b:GP-16` | `MR29` | `1050..1050` |
-| `spec_b:GP-17` | `MR33` | `1051..1051` |
-| `spec_b:GP-18` | `MR34` | `1052..1052` |
-| `spec_b:GP-19` | `MR35` | `1053..1053` |
-| `spec_b:GP-20` | `MR36,MR37` | `1054..1054` |
-| `spec_b:GP-21` | `MR36` | `1055..1055` |
-| `spec_b:GP-22` | `MR37` | `1056..1056` |
-| `spec_b:GP-23` | `MR38` | `1057..1057` |
-| `spec_b:GP-24` | `MR29,MR39` | `1058..1058` |
-| `spec_b:GP-25` | `MR40` | `1059..1059` |
-| `spec_c:WP00` | `MR11` | `1430..1437` |
-| `spec_c:WP01` | `MR12` | `1438..1445` |
-| `spec_c:WP02` | `MR14,MR15,MR44` | `1446..1453` |
-| `spec_c:WP03` | `MR16` | `1454..1461` |
-| `spec_c:WP04` | `MR13,MR16` | `1462..1469` |
-| `spec_c:WP05` | `MR17` | `1470..1477` |
-| `spec_c:WP06` | `MR18,MR19,MR21` | `1478..1485` |
-| `spec_c:WP07` | `MR22` | `1486..1493` |
-| `spec_c:WP08` | `MR23,MR24` | `1494..1501` |
-| `spec_c:WP09` | `MR25` | `1502..1509` |
-| `spec_c:WP10` | `MR26,MR27,MR41` | `1510..1517` |
-| `spec_c:WP11` | `MR28,MR32,MR41,MR42` | `1518..1525` |
-| `spec_c:WP12` | `MR30` | `1526..1533` |
-| `spec_c:WP13A` | `MR20` | `1534..1541` |
-| `spec_c:WP13B` | `MR43` | `1542..1548` |
-| `spec_c:WP14` | `MR33,MR34` | `1549..1555` |
-| `spec_c:WP15` | `MR31,MR32,MR42` | `1556..1562` |
-| `spec_c:WP16` | `MR29,MR39` | `1563..1569` |
-| `spec_c:WP17` | `MR35` | `1570..1576` |
-| `spec_c:WP18` | `MR36` | `1577..1583` |
-| `spec_c:WP19` | `MR37` | `1584..1590` |
-| `spec_c:WP20` | `MR38` | `1591..1597` |
-| `spec_c:WP21` | `MR40` | `1598..1604` |
+| Task ID | Wave / Release | Owner Screen | Reviewer Screen | `SPEC_A` | `SPEC_B` | `SPEC_C` | Legacy / Root / Flywheel Scope | Gate |
+|---|---|---|---|---|---|---|---|---|
+| `MR01` | `W0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | — | — | — | Harden I53 & I62 doc-only receipts into executable cargo test --exact checks with SHA-256 log verification | `G00` |
+| `MR02` | `W0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | — | — | `Sec-3.2` | Audit and wire prototype seams (I07/I08/I09 typed_graph/effects, I47 measurement, I54/I55/I56 combinators/jope-motifs) into executable regression harness | `G00` |
+| `MR03` | `W0` | `2724936.captain_jopedime` | `487851.jope_review_claude` | — | — | — | Publish 3-arm prospective full-qhat CPU cohort compact roots (1136/1136 contexts) and ROOT_TRAINING_ARTIFACT_LOCATION_GUIDE.md + registry on main | `G00` |
+| `MR04` | `W0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | — | — | — | Implement positive/negative native GPU grant verifier (jope.smartcluster_fit_policy.v1 + SignedNativeGrant), controller verify_gpu_task_grant caller, and per-rank participant verification | `G-AUTH-01` |
+| `MR05` | `W0` | `2724936.captain_jopedime` | `487851.jope_review_claude` | — | — | — | Bind owner/Root-issued jope.smartcluster_fit_policy.v1 (uid 0, mode & 0o022 == 0) and SignedNativeGrant witness trust for xbabe1-3 GPU admission | `G-AUTH-01` |
+| `MR06` | `W0` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | — | — | — | Implement strict parallel.label_admission.v2 & native_fit_policy_binding preflight validator and historical 7,877-shard (23,631-key) payload hash verifier | `G-AUTH-02` |
+| `MR07` | `W0` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | — | — | — | Close AUTH-GAP-02 teaching-store publication gate (dataset license/sealed-boundary check, approved evaluator witness, clean_completion.v3 -> build-corpus -> project-corpus -> read_index) | `G-AUTH-02` |
+| `MR08` | `W0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | — | — | — | Author canonical cases.json and deterministic benchmark harness for gpr_cuda_bench (N in {1024,4096,16384}, D in {16,64,256}, CPU vs CUDA accuracy/timing envelope) | `G-GPU-E1` |
+| `MR09` | `W0` | `2724936.captain_jopedime` | `487851.jope_review_claude` | — | — | — | Execute GPU-E1 gpr_cuda_bench benchmark suite across xbabe1 (RTX 4090), xbabe2 (RTX 3090), and xbabe3 (RTX 3090) and commit hardware receipts | `G-GPU-E1` |
+| `MR10` | `W0` | `2724936.captain_jopedime` | `487851.jope_review_claude` | — | — | — | Execute GPU-E2 multi-host GPU solver/challenger qualification across xbabe1-3 GPUs and upgrade I65 from mechanics-only to full scientific qualification | `G-GPU-E2` |
+| `MR11` | `R0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P00` | `GP-00` | `WP00` | Freeze baseline commit/environment manifest, route inventory (Routes 1-7), and 64-fixture deterministic golden bank | `G00` |
+| `MR12` | `R0` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P00` | `GP-01` | `WP01` | Build generated capability join across registry_v2, OperationProfile, native/challenger policy masks, evaluators, and Rust/Python emitters | `G00` |
+| `MR13` | `R0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P01` | `GP-04` | `WP04` | Implement LegacyBridge and historical compatibility corpus harness (exact translation <= 1e-12 or explicit OpaqueLegacyNode, 0 silent drops) | `G01` |
+| `MR14` | `R0` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P02` | `GP-02` | `WP02` | Repair l1_ratio parameter-domain bug (A01/A13, ParamDomain::UnitInterval) and enforce existential parameter-effect witness tests across all parameterized ops | `G02` |
+| `MR15` | `R0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P02` | `GP-03` | `WP02` | Fix NaN -> 0.0 conflation (A02/A12), remove silent +-60 linear clamp (A04/A14), enforce exact width check, and ensure mask/clamp semantics propagate identically across Rust, Python, and C++17 recipe export subset (WP15). | `G01` |
+| `MR16` | `R0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P02` | `GP-04` | `WP03` | Land jope.learning-program/v1 wire envelope, strict fail-closed reader (A11/A15), and 4-digest canonical identity codec | `G02` |
+| `MR17` | `R1` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P04` | `GP-05` | `WP05` | Decouple semantic SchemaId from physical LayoutId, lift 8-slot/64-column ceiling (columns 0,7,8,17,63,511), and preserve exact IEEE-754 f64 literals alongside quantized bins | `G03` |
+| `MR18` | `R1` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P05` | `GP-05` | `WP06` | Implement region-based lazy scalar conditional (LazyIf) and partitioned batch routing (RouteMask/Partition/Merge) with poison-branch non-execution proof | `G05` |
+| `MR19` | `R1` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P05` | `GP-05` | `WP06` | Implement pure shared feature DAG (Let, multi-consumer CSE, ConcatFeatures, SelectFeature) with single evaluation counter proof | `G05` |
+| `MR20` | `R1` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P06` | `GP-09` | `WP13A` | Constructive GP generation, typed mutation & two-parent crossover: 100,000 random edits with 0 panics/unbound pointers/invalid survivors (G09), plus SPEC_B G11 genetic usefulness (changed/no-op/rejection yields reported on fixed parent cohort; nontrivial executable children per edit family) and SPEC_A G3 pilot (>= 80% admitted changed children). | `G09` |
+| `MR21` | `R1` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P07` | `GP-10` | `WP06` | Implement standalone Rust and portable Python fitted predictor emission and fresh-process verification for R1 programs (<= 1e-12 parity) | `G08` |
+| `MR22` | `R2` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P08` | `GP-06` | `WP07` | Implement NestedFitScope capability (preserving RowClosure::narrow), runtime-projected DataView, and full selection/tuning ancestry cache keys | `G04` |
+| `MR23` | `R2` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P08` | `GP-06` | `WP08` | Implement two-level OOF stacking (CrossFitMap + FitPredict), cross-fitted residual correction vs ordinary boosting, and cross-fitted smoothed target encoding | `G04` |
+| `MR24` | `R2` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P08` | `GP-06` | `WP08` | Implement standalone Rust & Python fitted export for nested OOF stacks plus adversarial label-poisoning (1e9/-1e9/NaN) and cross-cache isolation suite | `G08` |
+| `MR25` | `R3` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P10` | `GP-14` | `WP09` | Implement multi-feature variable projection via augmented QR solve, scale-escape normalization, and envelope vs validation-through-fit derivatives | `G07` |
+| `MR26` | `R3` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P09` | `GP-15` | `WP10` | Implement constructive PSD kernel AST (Sum, Product, PositiveScale, FeaturePullback, GatedKernel, LinearMapDot) and LinearOperator KRR solver | `G06` |
+| `MR27` | `R3` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P09` | `GP-15` | `WP10` | Implement explicit whitened Nystrom and RFF kernel approximations (with distinct semantic IDs and frozen landmark/frequency state) plus Rust/Python fitted export | `G08` |
+| `MR28` | `R4` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P11` | `GP-07` | `WP11` | Implement explicit TrainState, ParameterSpec (TieId), bounded Scan, initialize/update/finalize/predict lifecycle, and analytical-gradient sparse linear learner | `G05` |
+| `MR29` | `R4` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P12` | `GP-16` | `WP16` | Implement elementary loss and proximal library (Squared, Huber, Logistic, SoftThreshold, L2Shrink, ProjectBox, ProjectL2Ball, ProjectSimplex, SPD metric M) | `G06` |
+| `MR30` | `R4` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P13` | `GP-12` | `WP12` | Implement first-order tensor JVP/VJP and bounded-scan AD with tied-parameter accumulation, implicit linear solve adjoint (A^T bar_b = bar_x), and FD/adjoint gates | `G07` |
+| `MR31` | `R4` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P13` | `GP-13` | `WP15` | Tiny MLP & SGD/Momentum/Adam learners + standalone training recipe export qualifying Rust, Python, and C++17 subset (SPEC_C WP15, W08/W10/W11) retraining from scratch in a fresh process within <= 1e-10. | `G08` |
+| `MR32` | `R4` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P11` | — | — | Implement non-AD discrete and support-set learners (W12 bounded tree stump split search, W13 kNN/support learner, weighted PAVA isotonic with tie multiplicities) | `G08` |
+| `MR33` | `R5` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P14` | `GP-17` | `WP14` | Factored grammar-masked typed-edit action space: ZERO silently truncated/misbound accepted children over >= 10,000 free-running attempts, legacy-mode legal sets/decode traces byte-identical to old route (SPEC_A G7), off-bin descendants never inherit projected scores and unsupported records counted (SPEC_B G12), enumerated action laws normalize with no minted propensity (SPEC_B G13), and 100% all-attempt trajectory logging (G10). | `G10` |
+| `MR34` | `R5` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P14` | `GP-18` | `WP14` | Wire challenger typed-edit policy training, checkpoint export/reload, and proposal execution (preserving frozen 401-token native actor) plus equal-compute ablation | `G14` |
+| `MR35` | `R5` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P15` | `GP-19` | `WP17` | Upgrade jope-motifs to hygienic typed parameterized library learning (delta-MDL > 0, expanded-cost accounting, 4-arm held-family discovery study E06) | `G15` |
+| `MR36` | `R6` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P16` | `GP-20,GP-21` | `WP18` | 3-tier resource profiles (compose-small, learner-tiny, learner-small), pre-allocation checked bounds (<50ms bomb catch), default-off overhead mean ratio UCB <= 1.02 AND p95 ratio <= 1.05 across >= 30 blocked process-level replications (SPEC_A G8), and 10% randomized pruned-candidate high-fidelity audit (E08). | `G17` |
+| `MR37` | `R6` | `2724936.captain_jopedime` | `487851.jope_review_claude` | `P17` | `GP-22` | `WP19` | Execute prospective family-weighted paired confirmation study (one-sided 97.5% UCB on log RMSE ratio, 6 ablation arms, failure-rate delta <= 0.005) | `G19` |
+| `MR38` | `R6` | `2724936.captain_jopedime` | `487851.jope_review_claude` | `P18` | `GP-23` | `WP20` | Atomic compare-and-swap bundle activation, pinned in-flight jobs, rehearsed <60s rollback drill (G20), and SPEC_A G10 exact-head CI + independent review gate wired into mandatory final validation task MRFV. | `G20` |
+| `MR39` | `R6` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P19` | `GP-24` | `WP16` | Implement convex output potential layer (Omega_alpha(p) = alpha * ||p||_2^2 / 2) with learned alpha > 0 derivative witness (W17/E05) | `G07` |
+| `MR40` | `R6` | `2724936.captain_jopedime` | `487851.jope_review_claude` | `P19` | `GP-25` | `WP21` | Implement task-gated domain extension packs (M10 implicit inference, M11 calibration, M12 semirings/graphs, M13 symmetry/dynamics/OT) behind feature flags | `G20` |
+| `MR41` | `R4` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P11` | `GP-08,W01` | `WP11,W06` | SPEC_B GP-08: small tensor/linear-solve reference subset + ridge witness (independent solve/centering/intercept/state refs, failed solve explicit). Also closes SPEC_C W06 Ridge/OLS and SPEC_B W01. | `G05,G06` |
+| `MR42` | `R4` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P11` | `GP-11` | `WP11` | SPEC_B GP-11: complete vertical-slice pipeline integration: fit -> mutate -> crossover -> refit -> freeze -> emit -> fresh-process replay, every op charged, old route unchanged. | `G08,G09` |
+| `MR43` | `R4` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P13` | `GP-09,GP-12` | `WP13B` | SPEC_C WP13B: state/update genetic edits (param ties, state fields, scan bodies, update equations); GP changes a learning procedure, refits, emits valid artifact; no donated fitted state. | `G09,G08` |
+| `MR44` | `R0` | `2830191.jopedime_agy` | `487851.jope_review_claude` | `P03` | `GP-03` | `WP03` | SPEC_A P03: numeric-v2 route completion (numeric_v2, numeric_v2_emit, pipeline/CLI kernel adapters; supported caller/target subset executes with old default unchanged). | `G01,G02` |
+| `MR45` | `R4` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P11` | `W08` | `W15,W16` | Witnesses not previously covered: SPEC_C W15 GAM/basis, W16 PCA/low-rank (train-only centering/factorization), and SPEC_B W08 stateful centroid learner. | `G06,G08` |
+| `MR46` | `R0` | `1061448.jopedime_flywheel` | `487851.jope_review_claude` | `P02` | `E01` | `WP02` | SPEC_B E01 closure-repairs experiment (old route vs repaired profile on same downstream search; keep defaults if no value). | `G01,G02` |
+| `MRFV` | `R7` | `2724936.captain_jopedime` | `487851.jope_review_claude` | `G10` | `G20` | `G14` | FINAL VALIDATION (Jepson 10:58 ruling #4, mandatory): full CI (GitHub or self-hosted) on final main SHA, re-verify ALL MR01..MR46 and I01..I66 receipts on that exact SHA, re-run every 'local-CI only' merge's tests, and obtain independent red-team signoff from 487851.jope_review_claude; release is not done until PASS. | `G-FINAL` |
