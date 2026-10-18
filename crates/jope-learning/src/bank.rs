@@ -277,6 +277,60 @@ pub struct ExportReport {
     pub bank_head_sha256: Option<String>,
 }
 
+/// This wrapper has no Deserialize implementation. A diagnostic `SeedsFile` or copied role
+/// string cannot be presented as a global export. Serialize only after filtering, before ranking.
+#[derive(Debug, Serialize)]
+pub struct GlobalBankExport {
+    purpose: crate::replay::admission::Purpose,
+    entries: Vec<(BankEntry, crate::replay::admission::ReplayAdmission)>,
+}
+impl GlobalBankExport {
+    pub fn purpose(&self) -> crate::replay::admission::Purpose {
+        self.purpose
+    }
+    pub fn entries(&self) -> &[(BankEntry, crate::replay::admission::ReplayAdmission)] {
+        &self.entries
+    }
+}
+
+/// Global learning/retrieval companion to the legacy search-seed export. Fail atomically on
+/// any missing/restricted proof; never rank protected entries or silently discard refusals.
+pub fn export_for(
+    state: &State,
+    verifier: &crate::replay::admission::AdmissionVerifier<'_>,
+    purpose: crate::replay::admission::Purpose,
+    proofs: &std::collections::BTreeMap<String, String>,
+    at_ms: u64,
+) -> Result<GlobalBankExport> {
+    ensure!(
+        purpose.is_global(),
+        "bank global export requires a global purpose"
+    );
+    verifier.require_state(state)?;
+    let mut entries = Vec::new();
+    for event in list(state)? {
+        let subject = canonical_sha256(&event.entry)?;
+        let proof = proofs
+            .get(&subject)
+            .context("HELD: bank entry lacks exposure proof")?;
+        let admission = verifier.admit(&subject, proof, purpose, None, at_ms)?;
+        let quality = admission
+            .labels()
+            .quality
+            .value()
+            .context("HELD: bank score is not measured")?;
+        ensure!(
+            quality.metric == "rmse"
+                && quality.value.f64_bits
+                    == format!("{:016x}", event.entry.validation_rmse.to_bits()),
+            "HELD: bank score disagrees with admitted measurement"
+        );
+        entries.push((event.entry, admission));
+    }
+    ensure!(!entries.is_empty(), "HELD: empty global bank export");
+    Ok(GlobalBankExport { purpose, entries })
+}
+
 /// Write the best `top` distinct banked genomes of `dataset_hash` (optionally one task) under
 /// one HWM comparison identity as a `jope.pipeline-seeds/v1` file that does not exist yet.
 ///

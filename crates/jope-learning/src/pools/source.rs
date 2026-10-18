@@ -154,6 +154,67 @@ pub fn coverage_rows(
     Ok((rows, report))
 }
 
+/// Descriptor projection for global representation/retrieval. No legacy quality, incumbent,
+/// runtime or failure label can escape through this versioned adapter.
+#[derive(Debug, Serialize)]
+pub struct CoverageDescriptor {
+    pub context_id: String,
+    pub parent_id: String,
+    pub program_sha256: String,
+    pub tokens: Option<Vec<u32>>,
+}
+
+/// Versioned global ingress companion. The entire legacy document is bound to a verified
+/// exposure receipt, so changing partition, `eligible`, scores, tokens, or incumbent changes
+/// the subject identity. V1 `coverage_rows` remains a diagnostic shadow-pool adapter.
+pub fn coverage_rows_for(
+    doc: &Value,
+    protocol_sha256: &str,
+    verifier: &crate::replay::admission::AdmissionVerifier<'_>,
+    receipt_sha256: &str,
+    purpose: crate::replay::admission::Purpose,
+    at_ms: u64,
+) -> Result<(
+    Vec<CoverageDescriptor>,
+    CoverageReport,
+    crate::replay::admission::ReplayAdmission,
+)> {
+    ensure!(
+        purpose.is_global(),
+        "coverage global ingress requires a global purpose"
+    );
+    let subject = crate::canon::canonical_sha256(doc)?;
+    let admission = verifier.admit(&subject, receipt_sha256, purpose, None, at_ms)?;
+    let (rows, report) = coverage_rows(
+        doc,
+        "train",
+        &BTreeSet::new(),
+        &BTreeSet::new(),
+        protocol_sha256,
+    )?;
+    // A legacy aggregate cannot authenticate per-attempt labels or policy targets. This
+    // companion admits descriptors for representation/retrieval only; measured global labels
+    // must enter individually through ExposureReceipt/Observation.
+    ensure!(
+        matches!(
+            purpose,
+            crate::replay::admission::Purpose::RepresentationLearning
+                | crate::replay::admission::Purpose::RetrievalIndexUpdate
+        ),
+        "HELD: v1 coverage cannot supply global per-label supervision"
+    );
+    let descriptors = rows
+        .into_iter()
+        .map(|row| CoverageDescriptor {
+            context_id: row.context_id,
+            parent_id: row.parent_id,
+            program_sha256: row.program_sha256,
+            tokens: row.tokens,
+        })
+        .collect();
+    Ok((descriptors, report, admission))
+}
+
 #[derive(Deserialize)]
 struct RosterFeatures {
     bytes: usize,
