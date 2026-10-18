@@ -50,6 +50,9 @@ pub struct RoundEvidence {
     pub intent_id: String,
     pub committed_child_id: String,
     pub assessment_id: String,
+    pub assessment_intent_id: String,
+    pub assessment_child_id: String,
+    pub compatible: bool,
 }
 
 impl RoundEvidence {
@@ -57,9 +60,18 @@ impl RoundEvidence {
         if self.intent_id.is_empty()
             || self.committed_child_id.is_empty()
             || self.assessment_id.is_empty()
+            || self.assessment_intent_id.is_empty()
+            || self.assessment_child_id.is_empty()
         {
             return Err(Error::Invalid(
                 "intent, committed child, and assessment are required",
+            ));
+        }
+        if self.assessment_intent_id != self.intent_id
+            || self.assessment_child_id != self.committed_child_id
+        {
+            return Err(Error::Conflict(
+                "assessment must bind the exact intent and committed child",
             ));
         }
         Ok(())
@@ -184,6 +196,11 @@ impl Campaign {
         let event_id = event.id.clone();
         let mut round = event.round.clone();
         round.evidence.validate()?;
+        if round.decision == Decision::Accepted && !round.evidence.compatible {
+            return Err(Error::Conflict(
+                "an incompatible assessment cannot advance the research parent",
+            ));
+        }
         if round.number != self.rounds.len() as u32 + 1 {
             return Err(Error::Conflict("round numbers must be contiguous"));
         }
