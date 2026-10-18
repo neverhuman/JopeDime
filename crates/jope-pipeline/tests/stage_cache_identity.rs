@@ -114,6 +114,37 @@ fn cached_uncached_and_evicted_fits_preserve_predictions_and_champion() {
         .unwrap();
     assert_eq!(cached_champion, uncached_champion);
 
+    // Simulate a generation interrupted after one candidate fit, then discarded before the
+    // remaining candidates run. A fresh generation must still reproduce uncached results.
+    let interrupted = LaneStageCache::default_lane();
+    interrupted.begin_generation(1);
+    let partial = fit_cached(&genomes[0], &x, &y, &identity, &interrupted)
+        .unwrap()
+        .predict(&hold_x)
+        .unwrap();
+    assert_eq!(partial, uncached_predictions[0]);
+    drop(interrupted);
+
+    let resumed = LaneStageCache::default_lane();
+    resumed.begin_generation(2);
+    let resumed_predictions: Vec<_> = genomes
+        .iter()
+        .map(|genome| {
+            fit_cached(genome, &x, &y, &identity, &resumed)
+                .unwrap()
+                .predict(&hold_x)
+                .unwrap()
+        })
+        .collect();
+    assert_eq!(resumed_predictions, uncached_predictions);
+    let resumed_champion = resumed_predictions
+        .iter()
+        .enumerate()
+        .min_by(|(_, a), (_, b)| rmse(&hold_y, a).total_cmp(&rmse(&hold_y, b)))
+        .map(|(index, _)| genomes[index].canonical())
+        .unwrap();
+    assert_eq!(resumed_champion, uncached_champion);
+
     let warm = fit_cached(&genomes[0], &x, &y, &identity, &cache)
         .unwrap()
         .predict(&hold_x)

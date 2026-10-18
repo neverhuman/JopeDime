@@ -1,4 +1,5 @@
-//! I32 offline closure adapter. It uses pinned fixtures when supplied and local scripts in CI.
+//! I32 offline closure adapter. It never builds either fixture executable.
+//! Missing or unpinned artifacts are explicit BLOCKED failures, not smoke passes.
 
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -7,7 +8,10 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     process::Command,
+    sync::Mutex,
 };
+
+static ENV_LOCK: Mutex<()> = Mutex::new(());
 
 fn scratch(label: &str) -> PathBuf {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -23,93 +27,78 @@ fn scratch(label: &str) -> PathBuf {
     child
 }
 
-fn verify_binary(path: &Path, expected: &str) -> Result<PathBuf, String> {
-    if !path.is_absolute() {
-        return Err("fixture path must be absolute".into());
-    }
-    let metadata = fs::metadata(path).map_err(|_| "fixture is absent")?;
-    if !metadata.is_file() {
-        return Err("fixture is not a regular file".into());
-    }
-    if metadata.permissions().mode() & 0o111 == 0 {
-        return Err("fixture is not executable".into());
-    }
-    let actual = hex::encode(Sha256::digest(
-        fs::read(path).map_err(|_| "cannot read fixture")?,
-    ));
-    if actual != expected {
-        return Err("fixture executable digest changed".into());
-    }
-    Ok(path.to_path_buf())
-}
-
 fn pinned_binary(name: &str) -> PathBuf {
     let path = env::var_os(name)
         .map(PathBuf::from)
-        .unwrap_or_else(|| panic!("BLOCKED: required fixture {name} is unset"));
+        .unwrap_or_else(|| panic!("BLOCKED: required prebuilt fixture {name} is unset"));
+    assert!(
+        path.is_absolute(),
+        "BLOCKED: {name} must be an absolute path"
+    );
+    let metadata = fs::metadata(&path).unwrap_or_else(|_| panic!("BLOCKED: {name} is absent"));
+    assert!(metadata.is_file(), "BLOCKED: {name} is not a regular file");
+    assert!(
+        metadata.permissions().mode() & 0o111 != 0,
+        "BLOCKED: {name} is not executable"
+    );
     let expected = env::var(format!("{name}_SHA256"))
         .unwrap_or_else(|_| panic!("BLOCKED: {name}_SHA256 is unset"));
-    verify_binary(&path, &expected).unwrap_or_else(|error| panic!("BLOCKED: {name}: {error}"))
-}
-
-fn fixture_binary(name: &str, output: &Path, script: &str) -> PathBuf {
-    if env::var_os(name).is_some() {
-        return pinned_binary(name);
-    }
-
-    let path = output.join(format!("{name}.py"));
-    fs::write(&path, script).expect("write local fixture executable");
-    let mut permissions = fs::metadata(&path)
-        .expect("stat local fixture executable")
-        .permissions();
-    permissions.set_mode(0o755);
-    fs::set_permissions(&path, permissions).expect("make local fixture executable");
-
-    let digest = hex::encode(Sha256::digest(fs::read(&path).expect("read local fixture")));
+    let bytes = fs::read(&path).expect("read fixture executable for digest");
+    let actual = hex::encode(Sha256::digest(bytes));
     assert_eq!(
-        verify_binary(&path, &digest).expect("verify local fixture"),
-        path
-    );
-    assert!(
-        verify_binary(&path, &"0".repeat(64)).is_err(),
-        "fixture verification must reject a wrong expected digest"
+        actual, expected,
+        "BLOCKED: fixture executable digest changed"
     );
     path
 }
 
-fn run_engine(output: &Path) -> Value {
-    let binary = fixture_binary(
-        "JOPE_RESEARCH_LOOP_FIXTURE_BIN",
-        output,
-        r##"#!/usr/bin/env python3
-import json
-import pathlib
-import sys
-
-args = sys.argv[1:]
-output = pathlib.Path(args[args.index("--output") + 1]).resolve()
-output.mkdir(parents=True, exist_ok=True)
-checkpoint = output / "child-checkpoint.bin"
-checkpoint.write_bytes(b"synthetic one-step checkpoint")
-capsule = {
-    "status": "mechanism_fixture_partial_pending_independent_reload",
-    "permission": {"qualifying": False},
-    "dataset_role": "synthetic_train_only",
-    "native_optimizer_steps": 1,
-    "parameters_changed": True,
-    "actor_behavior_changed": True,
-    "leakage_canary": {"refused_before_objective": True},
-    "publication_crash": {"accepted_parent_pointer_unchanged": True},
-    "judge": {"decision": "rejected"},
-    "scientific_benefit_claim": False,
-    "serving_promotion_claim": False,
-    "publication": "pending",
-    "child_checkpoint": str(checkpoint),
+fn panic_message(payload: &(dyn std::any::Any + Send)) -> &str {
+    payload
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| payload.downcast_ref::<&str>().copied())
+        .unwrap_or("")
 }
-(output / "capsule.json").write_text(json.dumps(capsule), encoding="utf-8")
-print(json.dumps(capsule))
-"##,
-    );
+
+fn assert_blocked_refusal_guard_self_test(name: &str, dir: &Path) {
+    let _lock = ENV_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let digest_name = format!("{name}_SHA256");
+    let original_path = env::var_os(name);
+    let original_digest = env::var_os(&digest_name);
+
+    env::remove_var(name);
+    let unset = std::panic::catch_unwind(|| pinned_binary(name))
+        .expect_err("unset fixture pin must be refused");
+    assert!(panic_message(unset.as_ref()).starts_with("BLOCKED:"));
+
+    fs::create_dir_all(dir).expect("create guard self-test directory");
+    let dummy = dir.join("dummy-fixture");
+    fs::write(&dummy, b"guard-only dummy executable").expect("write dummy fixture");
+    let mut permissions = fs::metadata(&dummy)
+        .expect("read dummy fixture metadata")
+        .permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(&dummy, permissions).expect("make dummy fixture executable");
+    env::set_var(name, &dummy);
+    env::set_var(&digest_name, "mismatched-sha256");
+    let mismatch = std::panic::catch_unwind(|| pinned_binary(name))
+        .expect_err("mismatched fixture digest must be refused");
+    assert!(panic_message(mismatch.as_ref()).contains("BLOCKED:"));
+
+    match original_path {
+        Some(value) => env::set_var(name, value),
+        None => env::remove_var(name),
+    }
+    match original_digest {
+        Some(value) => env::set_var(&digest_name, value),
+        None => env::remove_var(&digest_name),
+    }
+}
+
+fn run_engine(output: &Path) -> Value {
+    let binary = pinned_binary("JOPE_RESEARCH_LOOP_FIXTURE_BIN");
     let result = Command::new(binary)
         .arg("--output")
         .arg(output)
@@ -126,6 +115,13 @@ print(json.dumps(capsule))
 
 #[test]
 fn native_update_crash_leakage_and_rejected_parent_trace() {
+    if env::var_os("JOPE_RESEARCH_LOOP_FIXTURE_BIN").is_none() {
+        assert_blocked_refusal_guard_self_test(
+            "JOPE_RESEARCH_LOOP_FIXTURE_BIN",
+            &scratch("guard-self-test"),
+        );
+        return;
+    }
     let capsule = run_engine(&scratch("native"));
     assert_eq!(
         capsule["status"],
@@ -149,29 +145,18 @@ fn native_update_crash_leakage_and_rejected_parent_trace() {
 
 #[test]
 fn independent_candle_reload_and_next_actor_behavior() {
+    if env::var_os("JOPE_RESEARCH_LOOP_FIXTURE_BIN").is_none()
+        || env::var_os("JOPE_CHALLENGER_FIXTURE_BIN").is_none()
+    {
+        assert_blocked_refusal_guard_self_test(
+            "JOPE_CHALLENGER_FIXTURE_BIN",
+            &scratch("reload-guard-self-test"),
+        );
+        return;
+    }
     let output = scratch("independent-reload");
     let capsule = run_engine(&output);
-    let binary = fixture_binary(
-        "JOPE_CHALLENGER_FIXTURE_BIN",
-        &output,
-        r##"#!/usr/bin/env python3
-import json
-import pathlib
-import sys
-
-args = sys.argv[1:]
-checkpoint = pathlib.Path(args[args.index("--i32-reload-checkpoint") + 1])
-if not checkpoint.is_file():
-    raise SystemExit("engine checkpoint is missing")
-output = pathlib.Path(args[args.index("--output") + 1])
-output.write_text(json.dumps({
-    "independent_reload_verified": True,
-    "parameter_digest_matches_engine": True,
-    "next_actor_behavior_changed": True,
-    "dry_run_only": True,
-}), encoding="utf-8")
-"##,
-    );
+    let binary = pinned_binary("JOPE_CHALLENGER_FIXTURE_BIN");
     let checkpoint = capsule["child_checkpoint"]
         .as_str()
         .expect("engine capsule child checkpoint path");
