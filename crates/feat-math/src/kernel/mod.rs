@@ -24,6 +24,9 @@ pub mod scalar_execution;
 pub mod scalar_program;
 pub mod scope;
 pub mod search;
+pub mod strategy {
+    pub mod residual;
+}
 pub mod stable_exponential;
 pub mod telemetry;
 pub mod width;
