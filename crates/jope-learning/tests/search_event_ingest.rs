@@ -282,6 +282,32 @@ fn missing_or_altered_event_cost_result_and_original_run_refuse() {
         &observations
     )
     .is_err());
+    let mut underreported = log.clone();
+    let terminal = underreported
+        .events
+        .iter()
+        .position(
+            |r| matches!(&r.event, SearchEvent::Finished { status, .. } if status == "measured"),
+        )
+        .unwrap();
+    let removed = underreported.events.remove(terminal);
+    underreported
+        .captured_event_ids
+        .retain(|id| id != &removed.event_id);
+    let mut event = removed.event;
+    if let SearchEvent::Finished { cost, .. } = &mut event {
+        *cost = Effort::wall(0.).unwrap();
+    }
+    underreported.append(event).unwrap();
+    let underreported_bytes = canonical_bytes(&underreported).unwrap();
+    assert!(engine::search_events(
+        &manifest,
+        &underreported_bytes,
+        &sha256_hex(&underreported_bytes),
+        &bindings,
+        &observations
+    )
+    .is_err());
     let mut wrong_run = manifest.value().clone();
     wrong_run.run_id = "another-run".into();
     // A valid new run with its own original plan is still not this event stream's run.
