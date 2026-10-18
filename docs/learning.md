@@ -92,6 +92,10 @@ metadata inventory of `s3://veox-jopedime-learning-use2` found **only
 `hwm/` or `scores/` objects in that snapshot. This does not establish historical absence or
 payload recovery. `staging/` is not part of this layout and must not be promoted as canonical;
 [`catalogs/s3.json`](../catalogs/s3.json) records the inventoried prefixes and their status.
+For the 2026-10-18 targeted training-artifact location registry and recovery-gate runbook
+(which supersede flat-object shard lookup while keeping the 2026-09-23 snapshot above as
+historical context), see [`catalogs/training-artifacts.json`](../catalogs/training-artifacts.json)
+and [`docs/runbooks/training-artifact-locations.md`](runbooks/training-artifact-locations.md).
 
 ### Sealed, hash-chained batches
 

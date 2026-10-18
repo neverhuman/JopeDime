@@ -384,6 +384,8 @@ it to a CI job.
 given to one. Corpus-dependent work runs on the host until a scoped read-only role exists.
 
 See [`docs/datasets.md`](docs/datasets.md), [`docs/learning.md`](docs/learning.md),
+[`catalogs/training-artifacts.json`](catalogs/training-artifacts.json),
+[`docs/runbooks/training-artifact-locations.md`](docs/runbooks/training-artifact-locations.md),
 [`docs/runbooks/ingest-winners.md`](docs/runbooks/ingest-winners.md) and
 [`docs/runbooks/rotate-credentials.md`](docs/runbooks/rotate-credentials.md) for the details;
 they are not repeated here.

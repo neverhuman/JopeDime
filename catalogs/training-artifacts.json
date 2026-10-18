@@ -1,0 +1,169 @@
+{
+  "artifacts": [
+    {
+      "all_shard_members_bytes": 8691019699,
+      "all_shard_payload_hashes_verified": false,
+      "bytes": 60589288,
+      "current_training_usable": false,
+      "declared_contexts": 8894,
+      "declared_records": 10214332,
+      "declared_shards": 7877,
+      "evidence_level": "EXACT_VERSION_RAW_SHA256_VERIFIED_HISTORICAL_QUALIFICATION_ONLY",
+      "id": "historical-accepted60000-corpus-index",
+      "label_policy": "reference_v1",
+      "private_gzip_bytes": 5626110,
+      "private_gzip_sha256": "6dbbbbc7eead6878c28b382d025939d62164d91100ed584e5b896e5ed55a8299",
+      "private_recovered_index_gzip": "/home/ubuntu/jope-evidence/fleet-rnd-20261018T1140Z/s3-training-discovery-20261018T1550Z/metadata/HISTORICAL_ACCEPTED60000_CORPUS_INDEX.json.gz",
+      "qualification": true,
+      "reason": "Qualification/reference labels; no current strict admission policy or new run approval; full shard/evaluator/terminal/witness verification remains incomplete.",
+      "records_bin_bytes": 5434024624,
+      "records_bin_length_mismatches": 0,
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/lineage-b/accepted60000-restored/parallel/runs/eight-a100-recovery-20260912/learning/snapshot-000097/corpus/index.json",
+      "schema_observed": "parallel.teaching_shards.v1",
+      "sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+      "shard_member_keys_expected": 23631,
+      "shard_member_keys_located": 23631,
+      "shard_payload_closure": "All 7877 indexed shard DIRECTORIES have all 23631 expected current member keys. All records.bin lengths match records*532. Fixed first meta_train shard and root index/vocabulary/groups/provenance exact-version hashes verified; complete payload hashes remain pending.",
+      "version_id": "mH0mMu2Q3xrAk.LjmJC_S.0hNOjt2AJB"
+    },
+    {
+      "binding": "Matches the historical corpus index vocabulary_sha256; does not upgrade label policy.",
+      "bytes": 74785,
+      "evidence_level": "EXACT_VERSION_RAW_SHA256_VERIFIED",
+      "id": "historical-accepted60000-vocabulary",
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/lineage-b/accepted60000-restored/parallel/runs/eight-a100-recovery-20260912/learning/snapshot-000097/corpus/vocabulary.json",
+      "sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "version_id": "ybemOCwSNfRJHczDRzC8PEY5exfC4IDB"
+    },
+    {
+      "authority_instance": "e7610d3b24763cc94de40d73ae96c1425e2e9de9112d91188329ed278a1c2ed4",
+      "bytes": 501,
+      "evidence_level": "EXACT_VERSION_RAW_SHA256_VERIFIED_PUBLIC_MANIFEST_ONLY",
+      "id": "historical-native-fit-authority-manifest",
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/lineage-b/accepted60000-restored/parallel/runs/xbabe2-native-20260914-60000/authority/authority.json",
+      "schema_observed": "parallel.fit_authority.v6",
+      "scope": "Manifest byte custody only; original registry/terminal journal/runtime/evaluator/native grant closure not verified.",
+      "sha256": "f75060912598c8e223cecf65f9f161f02bce20a09a54c7b4b8e7a6f73c6ab0d9",
+      "version_id": "yXyQaad53jcbE0BxB.G0TMjHwMHhJex9"
+    },
+    {
+      "authority_instance": "e7610d3b24763cc94de40d73ae96c1425e2e9de9112d91188329ed278a1c2ed4",
+      "bytes": 178,
+      "evidence_level": "LOCAL_ORIGINAL_BYTES_PRESERVED_INSTANCE_MATCH_ONLY",
+      "id": "original-native-authority-witness",
+      "original_local_path": "/home/ubuntu/jain-split/jope-dime/parallel/runs/native-fit-qualification-20260914/authority-witness-v5",
+      "private_copy": "/home/ubuntu/jope-evidence/fleet-rnd-20261018T1140Z/s3-training-discovery-20261018T1550Z/metadata/original-witness-d011cac3c1e9bb74ec3778f2e8e21e87f3914ba961d61276273f778336ed7dae.json",
+      "scope": "Matching instance is not independent high-water/terminal-membership verification. No witness reinstallation, reconstruction or refresh.",
+      "sequence_observed": 95,
+      "sha256": "d011cac3c1e9bb74ec3778f2e8e21e87f3914ba961d61276273f778336ed7dae"
+    },
+    {
+      "bytes": 329860,
+      "current_local_exists": false,
+      "evidence_level": "GIT_PIN_FOUND_LOCAL_FILE_MISSING",
+      "historical_local_path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
+      "id": "historical-20261009-neural-snapshot-pin",
+      "scope": "Historical bounded research approval expires with its original run; not current production or GPU dispatch approval.",
+      "sha256": "05dc9558e36461068832b449cedff46123376e3567b9c011e7d74f9b8a8018ee",
+      "source_file": "deploy/dl-flywheel/docs/native-runtime-pins-20261009.json"
+    },
+    {
+      "bytes": 464167,
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_TWO_HOST_DECODE_VERIFIED",
+      "id": "development-full1136-inputs",
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/b061d6274be1f7b024896f8e9ac32fe8bb83aec614605c147b2d25c0e9e016ea",
+      "scope": "CPU shadow development pools/context features, not a production teaching corpus.",
+      "sha256": "b061d6274be1f7b024896f8e9ac32fe8bb83aec614605c147b2d25c0e9e016ea",
+      "version_id": "wpQ5E0gbZY3ofgQYZipwIpuVJECX1bZV"
+    },
+    {
+      "bytes": 4212172,
+      "decoded_tar_sha256": "4a01417a9a460644d8c67f8f5d34cade6fb799ea8ca35d70a1e6dc87320cdf58",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_TWO_HOST_ALL_MEMBER_VERIFIED",
+      "id": "prospective-full-qhat-cpu-results",
+      "index_sha256": "76be65856630031714f10de9abc88183fab055baeff84a37228ceb910bd85cc7",
+      "payload_bytes": 20162797,
+      "payload_files": 42,
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/f1457513f3406f0701745a1855e2a4c9dcdb2250c03dcd405c608b18329d3199",
+      "scope": "All three full evaluation outputs, executable, receipts and plan errors. Shadow R&D, no promotion.",
+      "sha256": "f1457513f3406f0701745a1855e2a4c9dcdb2250c03dcd405c608b18329d3199",
+      "version_id": "TPQ20h7N_ObtMLI4vSkXBwHY1RRb6Ew."
+    },
+    {
+      "bytes": 5655469,
+      "decoded_tar_sha256": "97d7c68bd2e226aba828ccce6a15c3995fcebac35574e215926135b592becd91",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_TWO_HOST_ALL_MEMBER_VERIFIED",
+      "id": "artifact-discovery-context",
+      "index_sha256": "7ea683678c41f7eb299f49fecd840f3213d2def76a2c53da71bd5929a425f428",
+      "payload_bytes": 70724504,
+      "payload_files": 41,
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/b7d9e669b7be6259aa5e63d7ec1a54b6341e2bc7d5667b283a9903d2c4b82175",
+      "scope": "Private compressed discovery context, not production corpus or authority approval. Full shard payloads are referenced at original S3 and are not included. Bulk key inventories remain on xbabe2 with hashes in the index.",
+      "sha256": "b7d9e669b7be6259aa5e63d7ec1a54b6341e2bc7d5667b283a9903d2c4b82175",
+      "version_id": "H_UgBwgQ1oWvYPK6GI_W2Nk0duKr9R7q"
+    }
+  ],
+  "corrections": [
+    "Prior Root shard census compared directory paths to object keys. The zero count is invalid as missing-data evidence; original retained and corrected directory-member census is authoritative."
+  ],
+  "current_production_training": {
+    "authority_issuer": "Original installed-policy/trust authority; the assistant named Root is not an issuer.",
+    "automatic_chat_followups": "OFF",
+    "current_signed_native_gpu_grant": null,
+    "parallel_label_admission_v2_manifest": null,
+    "required_label_policy": "strict_midrank_v4",
+    "required_original_completion_schema": "parallel.clean_completion.v3",
+    "required_policy_schema": "parallel.label_admission.v2",
+    "status": "BLOCKED_PACKAGE_NOT_VERIFIED",
+    "strict_corpus_manifest": null
+  },
+  "git_home": "catalogs/training-artifacts.json",
+  "purpose": "Exact locators and evidence levels, not an admission manifest or authority issuer. Null means not located/verified, never fabricated.",
+  "read_first": [
+    "AGENTS.md",
+    "catalogs/training-artifacts.json",
+    "docs/runbooks/training-artifact-locations.md",
+    "crates/jope-engine/src/main.rs",
+    "crates/jope-engine/src/teaching_store.rs",
+    "crates/jope-engine/src/label_admission.rs",
+    "crates/jope-engine/src/eval_registry/native_scq/policy.rs",
+    "crates/jope-engine/src/task_contract.rs"
+  ],
+  "recommended_recovery_cache": {
+    "rules": [
+      "Registry contains exact actual path once populated. Preserve original relative paths and original bytes.",
+      "Check every ancestor with lstat; never replace or remove a symlink. Refuse overwrite.",
+      "Authority packages retain original signed/bound root semantics; corpus cache conventions never relocate or reissue authority."
+    ],
+    "status": "CONVENTION_PROPOSED_FOR_VERIFIED_RECOVERY; no complete corpus materialized here by this audit",
+    "xbabe2": "/home/ubuntu/jope-evidence/corpus-cache/sha256/<original-manifest-sha256>/",
+    "xbabe3": "/mnt/xbabe3-external/jope-evidence/corpus-cache/sha256/<original-manifest-sha256>/"
+  },
+  "recorded_at_utc": "2026-10-18T16:12:37.393375+00:00",
+  "runbook": "docs/runbooks/training-artifact-locations.md",
+  "s3_access": {
+    "cli": "/home/ubuntu/.local/bin/aws",
+    "credential_material": "Never store in Git. Verify STS identity at use; do not switch identities to bypass resource-policy denies.",
+    "host": "xbabe2",
+    "profile": "veox-jepson-prod",
+    "region": "us-east-2",
+    "verified_account": "714044927654"
+  },
+  "schema": "jope.training-artifact-location-registry/v1",
+  "search_coverage": {
+    "buckets": 9,
+    "complete_bucket_current_key_inventories": 8,
+    "current_key_rows_examined": 3085725,
+    "learning_experiments_complete": false,
+    "learning_experiments_rows": 1567000,
+    "learning_staging_complete": true,
+    "learning_staging_rows": 645326,
+    "limits": [
+      "Current keys, selected exact-version metadata payloads and reachable local Git refs; historical versions and opaque archive members not exhaustive.",
+      "220 of 225 eligible prod custody catalog metadata GETs completed; at least one explicit resource-policy deny; no credential or policy bypass. Per-GET versions lost for that partial catalog pass, so no exact-version claim.",
+      "Sealed-bucket keys were inventoried; sealed payloads were not opened.",
+      "No complete currently production-admitted package was verified; absence across all S3/history is not claimed."
+    ]
+  },
+  "source_commit": "a2759e9d375d0697ed40a32c23ac297b5de42347"
+}
