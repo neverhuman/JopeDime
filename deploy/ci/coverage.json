@@ -7811,13 +7811,15 @@
         "source": "crates/jope-learning/tests/research_loop_smoke.rs",
         "test": true
       },
-      "dispositions": [],
+      "dispositions": [
+        "runtime-tools"
+      ],
       "lanes": [
         "rust-check",
         "rust-test",
         "full-default"
       ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Default-feature build/check and BLOCKED refusal guard self-test (blocked_refusal_guard_self_test) under PR/main selection; the two engine/challenger closure tests (native_update_crash_leakage_and_rejected_parent_trace, independent_candle_reload_and_next_actor_behavior) are #[ignore]d and BLOCKED without prebuilt JOPE_RESEARCH_LOOP_FIXTURE_BIN and JOPE_CHALLENGER_FIXTURE_BIN binaries and digests."
     },
     "target:jope-learning/test/research_roles": {
       "discovery": {

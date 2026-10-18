@@ -114,14 +114,8 @@ fn run_engine(output: &Path) -> Value {
 }
 
 #[test]
+#[ignore = "BLOCKED without prebuilt JOPE_RESEARCH_LOOP_FIXTURE_BIN and JOPE_CHALLENGER_FIXTURE_BIN (--features neural); run with --ignored"]
 fn native_update_crash_leakage_and_rejected_parent_trace() {
-    if env::var_os("JOPE_RESEARCH_LOOP_FIXTURE_BIN").is_none() {
-        assert_blocked_refusal_guard_self_test(
-            "JOPE_RESEARCH_LOOP_FIXTURE_BIN",
-            &scratch("guard-self-test"),
-        );
-        return;
-    }
     let capsule = run_engine(&scratch("native"));
     assert_eq!(
         capsule["status"],
@@ -144,16 +138,8 @@ fn native_update_crash_leakage_and_rejected_parent_trace() {
 }
 
 #[test]
+#[ignore = "BLOCKED without prebuilt JOPE_RESEARCH_LOOP_FIXTURE_BIN and JOPE_CHALLENGER_FIXTURE_BIN (--features neural); run with --ignored"]
 fn independent_candle_reload_and_next_actor_behavior() {
-    if env::var_os("JOPE_RESEARCH_LOOP_FIXTURE_BIN").is_none()
-        || env::var_os("JOPE_CHALLENGER_FIXTURE_BIN").is_none()
-    {
-        assert_blocked_refusal_guard_self_test(
-            "JOPE_CHALLENGER_FIXTURE_BIN",
-            &scratch("reload-guard-self-test"),
-        );
-        return;
-    }
     let output = scratch("independent-reload");
     let capsule = run_engine(&output);
     let binary = pinned_binary("JOPE_CHALLENGER_FIXTURE_BIN");
@@ -184,4 +170,16 @@ fn independent_candle_reload_and_next_actor_behavior() {
     assert_eq!(reload["parameter_digest_matches_engine"], true);
     assert_eq!(reload["next_actor_behavior_changed"], true);
     assert_eq!(reload["dry_run_only"], true);
+}
+
+#[test]
+fn blocked_refusal_guard_self_test() {
+    assert_blocked_refusal_guard_self_test(
+        "JOPE_RESEARCH_LOOP_FIXTURE_BIN",
+        &scratch("guard-self-test"),
+    );
+    assert_blocked_refusal_guard_self_test(
+        "JOPE_CHALLENGER_FIXTURE_BIN",
+        &scratch("reload-guard-self-test"),
+    );
 }
