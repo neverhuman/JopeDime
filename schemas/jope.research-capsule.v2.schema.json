@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jopedime.dev/schemas/jope.research-capsule.v2.schema.json",
+  "title": "JOPE research capsule v2",
+  "type": "object",
+  "required": ["schema_version", "round_id", "source_commit", "stage", "outcome", "assertion_supported", "denominator", "facts", "inference", "limitations", "evidence"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "round_id": {"type": "string", "minLength": 1},
+    "source_commit": {"type": ["string", "null"]},
+    "stage": {"enum": ["synthetic", "shadow", "adaptive", "confirmatory"]},
+    "outcome": {"type": "string"},
+    "assertion_supported": {"type": "boolean"},
+    "denominator": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "facts": {"type": "array", "items": {"type": "string"}},
+    "inference": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "evidence": {"type": "array", "items": {"type": "object", "required": ["uri", "sha256", "version", "unit", "numerator", "denominator", "estimate", "ci_low", "ci_high", "status", "estimator", "protocol"], "properties": {"uri": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "version": {"type": "string"}, "unit": {"type": "string"}, "numerator": {"type": "integer", "minimum": 0}, "denominator": {"type": "integer", "minimum": 1}, "estimate": {"type": ["number", "null"]}, "ci_low": {"type": ["number", "null"]}, "ci_high": {"type": ["number", "null"]}, "status": {"type": "string"}, "estimator": {"type": "string"}, "protocol": {"type": "string"}}, "additionalProperties": false}}
+  },
+  "additionalProperties": false
+}

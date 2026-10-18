@@ -42,6 +42,7 @@ pub mod progress;
 pub mod qualify;
 pub mod record;
 pub mod replay;
+pub mod research;
 pub mod retention;
 pub mod revocation;
 pub mod retrieval;
