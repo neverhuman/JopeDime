@@ -5,7 +5,7 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json",
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 2",
   "count": 5570,
   "ignored": 74,
   "packages": {
