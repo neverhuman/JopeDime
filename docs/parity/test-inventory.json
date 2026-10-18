@@ -5,9 +5,9 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 2",
-  "count": 5569,
-  "ignored": 72,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json",
+  "count": 5570,
+  "ignored": 74,
   "packages": {
    "battle-gpu": {
     "count": 17,
@@ -4581,8 +4581,8 @@
     }
    },
    "jope-learning": {
-    "count": 658,
-    "ignored": 0,
+    "count": 659,
+    "ignored": 2,
     "binaries": {
      "jope-learning": {
       "kind": "lib",
@@ -5344,9 +5344,10 @@
      },
      "jope-learning::research_loop_smoke": {
       "kind": "test",
-      "count": 2,
-      "ignored": 0,
+      "count": 3,
+      "ignored": 2,
       "tests": [
+       "blocked_refusal_guard_self_test",
        "independent_candle_reload_and_next_actor_behavior",
        "native_update_crash_leakage_and_rejected_parent_trace"
       ]
@@ -8659,7 +8660,7 @@
   }
  },
  "totals": {
-  "rust": 5569,
+  "rust": 5570,
   "python": 182
  }
 }
