@@ -543,6 +543,10 @@ impl ThreeRank {
                 world: Some(3),
                 global_batch: Some(2048),
                 require_complete: true,
+                lineage_sha256: None,
+                intent_sha256: None,
+                attempt_id: None,
+                window_id: None,
             },
         )
     }

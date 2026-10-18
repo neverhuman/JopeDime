@@ -241,6 +241,10 @@ impl Fixture {
                 world: Some(1),
                 global_batch: Some(MICRO),
                 require_complete: true,
+                lineage_sha256: None,
+                intent_sha256: None,
+                attempt_id: None,
+                window_id: None,
             },
         )
     }
