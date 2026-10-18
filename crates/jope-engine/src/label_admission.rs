@@ -618,3 +618,129 @@ mod native_path_tests {
         );
     }
 }
+
+/// Pure preflight of a frozen `parallel.label_admission.v2` policy. It inspects only the
+/// policy fields, before any evaluator, witness or authority file is opened.
+pub fn preflight_policy(expected: &Value) -> Result<()> {
+    ensure!(
+        expected["schema"] == POLICY_SCHEMA,
+        "unknown admission policy schema"
+    );
+    ensure!(
+        expected["evaluator_protocol"] == PROTOCOL,
+        "admission evaluator protocol differs"
+    );
+    for key in [
+        "authority_instance",
+        "runtime_sha256",
+        "numerical_contract_sha256",
+        "evaluator_sha256",
+    ] {
+        ensure!(is_sha256(&expected[key]), "admission identity malformed: {key}");
+    }
+    for key in ["evaluator", "authority_root", "authority_witness"] {
+        ensure!(
+            expected[key].as_str().is_some_and(|s| !s.trim().is_empty()),
+            "admission path absent: {key}"
+        );
+    }
+    if let Some(binding) = expected.get("native_fit_policy").filter(|v| !v.is_null()) {
+        ensure!(
+            binding["path"].as_str().is_some_and(|s| !s.trim().is_empty()),
+            "native fit policy path absent"
+        );
+        ensure!(
+            is_sha256(&binding["sha256"]),
+            "native fit policy sha256 malformed"
+        );
+    }
+    Ok(())
+}
+
+/// Key and length closure of the historical shard census. It deliberately does not claim
+/// payload hashes: a census with `all_7877_payload_hashes_verified: false` stays unverified.
+pub fn census_closure(census: &Value) -> Result<()> {
+    ensure!(
+        census["directories_declared"] == 7877,
+        "shard directory count differs"
+    );
+    ensure!(
+        census["expected_member_keys"] == 23631,
+        "member key count differs"
+    );
+    ensure!(
+        census["located_member_keys"] == census["expected_member_keys"],
+        "member keys are missing"
+    );
+    ensure!(
+        census["missing_member_keys"] == 0,
+        "missing member keys present"
+    );
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sha(c: char) -> String {
+        c.to_string().repeat(64)
+    }
+
+    fn policy() -> Value {
+        json!({
+            "schema": POLICY_SCHEMA,
+            "evaluator_protocol": PROTOCOL,
+            "authority_instance": sha('a'),
+            "runtime_sha256": sha('b'),
+            "numerical_contract_sha256": sha('c'),
+            "evaluator_sha256": sha('d'),
+            "evaluator": "evaluator/bin",
+            "authority_root": "authority",
+            "authority_witness": "witness.json",
+            "native_fit_policy": {"path": "native.json", "sha256": sha('e')}
+        })
+    }
+
+    #[test]
+    fn strict_v2_and_native_fit_binding_preflight() {
+        preflight_policy(&policy()).unwrap();
+        let mut without_native = policy();
+        without_native["native_fit_policy"] = Value::Null;
+        preflight_policy(&without_native).unwrap();
+
+        let negatives: &[(&str, fn(&mut Value))] = &[
+            ("schema", |p| p["schema"] = json!("parallel.label_admission.v1")),
+            ("protocol", |p| p["evaluator_protocol"] = json!("other")),
+            ("instance", |p| p["authority_instance"] = json!("xyz")),
+            ("evaluator_sha", |p| p["evaluator_sha256"] = json!(sha('D').to_uppercase())),
+            ("witness", |p| p["authority_witness"] = json!("  ")),
+            ("native_path", |p| p["native_fit_policy"]["path"] = json!("")),
+            ("native_sha", |p| p["native_fit_policy"]["sha256"] = json!("short")),
+        ];
+        for (name, mutate) in negatives {
+            let mut p = policy();
+            mutate(&mut p);
+            assert!(preflight_policy(&p).is_err(), "negative case {name} accepted");
+        }
+    }
+
+    #[test]
+    fn historical_census_closure_verified() {
+        let closed = json!({
+            "directories_declared": 7877,
+            "expected_member_keys": 23631,
+            "located_member_keys": 23631,
+            "missing_member_keys": 0,
+            "all_7877_payload_hashes_verified": false
+        });
+        census_closure(&closed).unwrap();
+        let mut missing = closed.clone();
+        missing["located_member_keys"] = json!(23630);
+        missing["missing_member_keys"] = json!(1);
+        assert!(census_closure(&missing).is_err());
+        let mut short = closed.clone();
+        short["directories_declared"] = json!(7876);
+        assert!(census_closure(&short).is_err());
+    }
+}
