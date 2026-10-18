@@ -392,6 +392,7 @@ pub fn require_unburned_test_partition(state: &State, dataset: &str, cut: &str) 
     Ok(())
 }
 
+/// Historical label/burn classification only. This helper never issues v2 global authority.
 pub fn effective_label_role(original: &str, optimization_visible: bool) -> Result<&'static str> {
     match (original, optimization_visible) {
         ("sealed" | "meta_test", _) => bail!("sealed labels cannot enter optimization or teaching"),
@@ -400,6 +401,77 @@ pub fn effective_label_role(original: &str, optimization_visible: bool) -> Resul
         ("test", false) => Ok("test"),
         _ => bail!("unknown label role"),
     }
+}
+
+/// Purpose-bound companion to historical replay revalidation. A Qualification's role strings
+/// and accepted HWM decision do not constitute exposure proof. Every subject and its context
+/// are revalidated before this companion returns anything to a global consumer.
+pub fn qualify_for(
+    state: &State,
+    record: &HwmRecord,
+    evidence: &OofEvidence,
+    verifier: &crate::replay::admission::AdmissionVerifier<'_>,
+    proofs: &BTreeMap<String, String>,
+    at_ms: u64,
+) -> Result<(Qualification, crate::replay::admission::ReplayAdmission)> {
+    use crate::replay::admission::Purpose;
+    verifier.require_state(state)?;
+    let qualified = qualify(state, record, evidence)?;
+    let subject = canonical_sha256(&qualified)?;
+    let proof = proofs
+        .get(&subject)
+        .context("HELD: qualification lacks exposure proof")?;
+    let admission = verifier.admit(&subject, proof, Purpose::GlobalPolicyTraining, None, at_ms)?;
+    context::verify_global_exposure(
+        state,
+        &qualified,
+        verifier,
+        Purpose::GlobalPolicyTraining,
+        proofs,
+        at_ms,
+    )?;
+    Ok((qualified, admission))
+}
+
+/// Revalidate an accepted historical set and its independently admitted exposure closure.
+pub fn revalidate_replay_for(
+    state: &State,
+    entries: &[Qualification],
+    verifier: &crate::replay::admission::AdmissionVerifier<'_>,
+    purpose: crate::replay::admission::Purpose,
+    proofs: &BTreeMap<String, String>,
+    at_ms: u64,
+) -> Result<Vec<crate::replay::admission::ReplayAdmission>> {
+    ensure!(
+        purpose.is_global(),
+        "global replay requires an explicit global purpose"
+    );
+    verifier.require_state(state)?;
+    // Historical guards remain necessary, independently of the new role/exposure boundary.
+    revalidate_replay(state, entries)?;
+    let mut admitted = Vec::new();
+    for entry in entries {
+        let subject = canonical_sha256(entry)?;
+        let proof = proofs
+            .get(&subject)
+            .context("HELD: qualification lacks exposure proof")?;
+        let admission = verifier.admit(&subject, proof, purpose, None, at_ms)?;
+        context::verify_global_exposure(state, entry, verifier, purpose, proofs, at_ms)?;
+        admitted.push(admission);
+    }
+    Ok(admitted)
+}
+
+/// Current-pointer companion; legacy manifests remain historical compatibility records.
+pub fn freeze_teaching_for(
+    state: &State,
+    verifier: &crate::replay::admission::AdmissionVerifier<'_>,
+    purpose: crate::replay::admission::Purpose,
+    proofs: &BTreeMap<String, String>,
+    at_ms: u64,
+) -> Result<Vec<crate::replay::admission::ReplayAdmission>> {
+    let manifest = freeze_teaching(state)?;
+    revalidate_replay_for(state, &manifest.entries, verifier, purpose, proofs, at_ms)
 }
 
 fn task(identity: &HwmIdentity) -> Result<Task> {
@@ -2482,6 +2554,139 @@ mod tests {
         } else {
             format!("synthetic candidate {tag}").into_bytes()
         }
+    }
+
+    #[test]
+    fn global_companions_require_qualification_and_context_exposure_proofs() {
+        use crate::replay::admission::*;
+        use jope_records::wire_contract::CanonicalPayload;
+        let f = fixture(Task::Regression, 5);
+        let qualified = qualify(&f.state, &f.record, &f.evidence).unwrap();
+        hwm::ingest(
+            &f.state,
+            None,
+            vec![Candidate {
+                record: f.record.clone(),
+                blob: b"synthetic candidate".to_vec(),
+                chain_from_source: false,
+            }],
+            json!({"kind":"v2-fixture"}),
+        )
+        .unwrap();
+        let retain = |value: serde_json::Value| {
+            let canonical =
+                CanonicalPayload::parse_and_canonicalize(&serde_json::to_vec(&value).unwrap())
+                    .unwrap();
+            f.state.put_blob(canonical.as_bytes()).unwrap()
+        };
+        let qualification = f
+            .state
+            .put_blob(&canonical_json(&qualified).unwrap())
+            .unwrap();
+        let mut subjects = BTreeSet::from([
+            qualification.clone(),
+            qualified.context_handoff_sha256.clone().unwrap(),
+        ]);
+        let mut pending = vec![qualified.context_receipt_sha256.clone().unwrap()];
+        while let Some(sha) = pending.pop() {
+            if !subjects.insert(sha.clone()) {
+                continue;
+            }
+            let receipt: crate::encoder_receipt::EncoderReceipt = blob(&f.state, &sha).unwrap();
+            subjects.insert(receipt.fitted_state_sha256);
+            subjects.insert(receipt.output_sha256);
+            pending.extend(receipt.inputs.parent_receipts);
+        }
+        let mut proofs = BTreeMap::new();
+        for subject in &subjects {
+            let receipt = ExposureReceipt {
+                schema: EXPOSURE_SCHEMA.into(),
+                subject_sha256: subject.clone(),
+                family: "fixture".into(),
+                meta_partition: "train_search".into(),
+                original_role: "train".into(),
+                within_task_view: "training".into(),
+                fidelity: "measured_cpu_cv".into(),
+                producer: "fixture".into(),
+                policy_epoch: 1,
+                observed_at_ms: 100,
+                episode: None,
+                purposes: BTreeSet::from([Purpose::GlobalPolicyTraining]),
+                prior_exposure: Some(vec![]),
+                parents: vec![],
+                observation: Observation::Proposed,
+            };
+            proofs.insert(
+                subject.clone(),
+                retain(serde_json::to_value(receipt).unwrap()),
+            );
+        }
+        let policy = AdmissionPolicy {
+            schema: POLICY_SCHEMA.into(),
+            issuer: "fixture-controller".into(),
+            epoch: 1,
+            effective_from_ms: 0,
+            effective_until_ms: 1000,
+            evaluation_boundary_sha256: f.state.put_blob(b"future evaluation boundary").unwrap(),
+            purposes: BTreeSet::from([Purpose::GlobalPolicyTraining]),
+            receipts: proofs.values().cloned().collect(),
+            supersedes: None,
+        };
+        let pin = PolicyPin {
+            schema: ADOPTION_SCHEMA.into(),
+            policy_sha256: retain(serde_json::to_value(policy).unwrap()),
+            issuer: "fixture-controller".into(),
+            epoch: 1,
+        };
+        let adoption =
+            CanonicalPayload::parse_and_canonicalize(&serde_json::to_vec(&pin).unwrap()).unwrap();
+        let path = f.state.root().join(ADOPTION_PATH);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, adoption.as_bytes()).unwrap();
+        let verifier = AdmissionVerifier::from_adopted_policy(&f.state).unwrap();
+        assert_eq!(
+            qualify_for(&f.state, &f.record, &f.evidence, &verifier, &proofs, 500)
+                .unwrap()
+                .0,
+            qualified
+        );
+        assert_eq!(
+            freeze_teaching_for(
+                &f.state,
+                &verifier,
+                Purpose::GlobalPolicyTraining,
+                &proofs,
+                500
+            )
+            .unwrap()
+            .len(),
+            1
+        );
+        let mut missing = proofs.clone();
+        missing.remove(qualified.context_handoff_sha256.as_ref().unwrap());
+        assert!(freeze_teaching_for(
+            &f.state,
+            &verifier,
+            Purpose::GlobalPolicyTraining,
+            &missing,
+            500
+        )
+        .unwrap_err()
+        .to_string()
+        .contains("context lacks global exposure proof"));
+        assert!(revalidate_replay_for(
+            &f.state,
+            &[qualified],
+            &verifier,
+            Purpose::GlobalPolicyTraining,
+            &BTreeMap::new(),
+            500
+        )
+        .is_err());
+        // Retain this new v2 proof fixture with the lane evidence instead of losing the
+        // authenticated context/qualification closure when the test returns.
+        let retained = f._directory.keep();
+        println!("retained v2 teaching fixture: {}", retained.display());
     }
 
     #[test]

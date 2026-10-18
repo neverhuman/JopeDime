@@ -1,0 +1,20 @@
+{
+  "schema": "jope.pipeline-bank-entry/v1",
+  "task": "regression",
+  "dataset_hash": "fixture-dataset",
+  "identity_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "cut_id": "cut-0",
+  "genome": "(input)",
+  "program_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "validation_rmse": 0.5,
+  "receipt_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "lineage_sha256": null,
+  "hwm": {
+    "batch": "fixture-batch",
+    "seq": 0,
+    "event_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "transition": "improved",
+    "pointer": "fixture-pointer",
+    "displaced_record_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  }
+}

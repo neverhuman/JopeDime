@@ -1,3 +1,4 @@
-//! Additive observation archive; admission and event producers are integrated separately.
+//! Replay archive and purpose-bound admission modules.
+pub mod admission;
 pub mod index_producer;
 pub mod observation;

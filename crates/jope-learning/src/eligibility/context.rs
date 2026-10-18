@@ -20,6 +20,52 @@ use crate::revocation::Revocations;
 const MAX_PARENT_DEPTH: usize = 8;
 const MAX_PARENTS: usize = 64;
 
+/// Global use must prove every retained context receipt, state, output, and handoff separately.
+/// Existing producer/handoff/scope checks are performed by historical revalidation first.
+pub(super) fn verify_global_exposure(
+    state: &State,
+    qualification: &Qualification,
+    verifier: &crate::replay::admission::AdmissionVerifier<'_>,
+    purpose: crate::replay::admission::Purpose,
+    proofs: &BTreeMap<String, String>,
+    at_ms: u64,
+) -> Result<()> {
+    verifier.require_state(state)?;
+    let root = qualification
+        .context_receipt_sha256
+        .as_ref()
+        .context("HELD: missing global context provenance")?;
+    let handoff = qualification
+        .context_handoff_sha256
+        .as_ref()
+        .context("HELD: missing global context handoff")?;
+    let mut pending = vec![root.clone()];
+    let mut seen = BTreeSet::new();
+    while let Some(sha) = pending.pop() {
+        if !seen.insert(sha.clone()) {
+            continue;
+        }
+        ensure!(
+            seen.len() <= MAX_PARENTS,
+            "HELD: context ancestry exceeds its bound"
+        );
+        let context = receipt(state, &sha)?;
+        for subject in [
+            &sha,
+            &context.fitted_state_sha256,
+            &context.output_sha256,
+            handoff,
+        ] {
+            let proof = proofs
+                .get(subject)
+                .context("HELD: context lacks global exposure proof")?;
+            verifier.admit(subject, proof, purpose, None, at_ms)?;
+        }
+        pending.extend(context.inputs.parent_receipts);
+    }
+    Ok(())
+}
+
 /// Preregistered with the freeze, before any candidate or context exists.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
