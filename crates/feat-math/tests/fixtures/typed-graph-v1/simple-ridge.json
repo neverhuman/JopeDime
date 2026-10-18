@@ -1,0 +1,6 @@
+{
+  "schema": "jope.selfplay.typed-graph-golden/v1",
+  "payload": "{\"input_schema\":{\"columns\":[\"column_0\",\"column_1\"],\"rows\":\"iid\"},\"nodes\":[{\"kind\":\"input\"},{\"input\":0,\"kind\":\"operator\",\"operator\":{\"dialect\":\"legacy_recipe\",\"name\":\"standardize\",\"registry_sha256\":\"4b674c994a6cbeb9dcf5c4bf80ad63efe8bc1fc2dacb54de19e56e3ce82f4f7d\",\"semantic_version\":\"1\",\"stable_identity\":\"wire:2\"},\"parameters\":{}},{\"input\":1,\"kind\":\"operator\",\"operator\":{\"dialect\":\"legacy_recipe\",\"name\":\"ridge\",\"registry_sha256\":\"4b674c994a6cbeb9dcf5c4bf80ad63efe8bc1fc2dacb54de19e56e3ce82f4f7d\",\"semantic_version\":\"1\",\"stable_identity\":\"wire:35\"},\"parameters\":{\"lambda_frac\":{\"f64_bits\":\"3f947ae147ae147b\"}}}],\"output\":2,\"profile_id\":\"operator-registry-v2\",\"profile_revision\":2,\"registry_sha256\":\"4b674c994a6cbeb9dcf5c4bf80ad63efe8bc1fc2dacb54de19e56e3ce82f4f7d\",\"schema\":\"jope.selfplay.graph-effects/v1\",\"version\":1}",
+  "program_id": "c98a560f39609dbe06b4787d43f9041da461b9412197be5c111f66aaf67b7dbe",
+  "independent_digest_method": "Python hashlib with adopted I02 schema/null/u64_be(length)/payload framing"
+}
