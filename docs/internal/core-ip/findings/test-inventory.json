@@ -2112,6 +2112,14 @@
         "export"
       ]
     },
+    "target:feat-math/test/registry_agreement": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "policy"
+      ],
+      "source": "crates/feat-math/tests/registry_agreement.rs"
+    },
     "target:feat-math/test/registry_vocabulary": {
       "role": "regression",
       "subsystems": [
@@ -2189,6 +2197,14 @@
         "gp",
         "policy"
       ]
+    },
+    "target:feat-math/test/typed_graph": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "policy"
+      ],
+      "source": "crates/feat-math/tests/typed_graph.rs"
     },
     "target:feat-math/test/versioned_conversion": {
       "role": "regression",
