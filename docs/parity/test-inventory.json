@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5058,
+  "count": 5078,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -40,7 +40,7 @@
     }
    },
    "feat-math": {
-    "count": 1209,
+    "count": 1210,
     "ignored": 12,
     "binaries": {
      "feat-math": {
@@ -1014,10 +1014,11 @@
      },
      "feat-math::inner_fold_leakage": {
       "kind": "test",
-      "count": 1,
+      "count": 2,
       "ignored": 0,
       "tests": [
-       "inner_fold_learned_stages_fit_only_on_fitting_rows"
+       "inner_fold_learned_stages_fit_only_on_fitting_rows",
+       "public_cv_r2_matches_independent_oof_oracle_and_held_label_poison"
       ]
      },
      "feat-math::inverse_links_ingress_v2": {
@@ -4399,7 +4400,7 @@
     }
    },
    "jope-learning": {
-    "count": 411,
+    "count": 428,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
@@ -4822,6 +4823,30 @@
        "reloaded_valid_pools_pass_and_rehashed_invalid_pools_are_refused",
        "tampered_pool_fails_verification",
        "unknown_and_conflicting_contexts_are_excluded_not_imputed"
+      ]
+     },
+     "jope-learning::pools_cv_unavailable": {
+      "kind": "test",
+      "count": 17,
+      "ignored": 0,
+      "tests": [
+       "colliding_parent_folds_are_unavailable",
+       "cut_zero_and_unknown_context_vectors_are_refused_but_target_free_rows_are_accepted",
+       "duplicated_design_is_supported_when_regularization_makes_it_solvable",
+       "empty_member_folds_are_unavailable",
+       "finite_inputs_that_overflow_normal_equations_are_typed_nonfinite_failure",
+       "held_label_poison_preserves_all_fold_fitted_components_and_prescore_predictions",
+       "malformed_features_are_typed_shape_failures",
+       "measured_zero_loss_is_distinct_from_unavailable",
+       "missing_component_fit_is_not_silently_replaced_by_in_sample_ridge",
+       "no_finite_penalty_candidate_is_unavailable_without_a_zero_loss",
+       "nonfinite_features_never_enter_a_score",
+       "numerically_singular_fit_is_typed_instead_of_silently_dropped",
+       "partial_outer_support_is_removed_from_every_comparison_with_reconciled_counts",
+       "single_parent_cannot_claim_an_oof_estimate",
+       "supported_oof_has_finite_predictions_and_independently_recomputed_loss",
+       "unattributed_external_prior_is_unavailable",
+       "wholly_failed_and_single_member_pools_have_no_supported_ranking_loss"
       ]
      },
      "jope-learning::progress_cli": {
@@ -6485,7 +6510,7 @@
     }
    },
    "jope-pipeline": {
-    "count": 348,
+    "count": 350,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
@@ -6861,6 +6886,15 @@
        "v2_rejects_overspending_missing_accounting_and_incomparable_cut_sets",
        "v3_islands_records_are_checked",
        "v3_seeding_records_are_checked_against_digests_cap_and_coverage"
+      ]
+     },
+     "jope-pipeline::stage_cache_identity": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "cached_uncached_and_evicted_fits_preserve_predictions_and_champion",
+       "full_context_separates_order_rows_seed_fold_and_profile"
       ]
      }
     }
@@ -7698,7 +7732,7 @@
   }
  },
  "totals": {
-  "rust": 5058,
+  "rust": 5078,
   "python": 182
  }
 }

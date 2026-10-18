@@ -2915,6 +2915,11 @@
       "reason": "J9 shadow-only research fixtures (frozen candidate pools, selector evaluation, parent-cluster statistics). Synthetic inputs only; no live selection, qualification, promotion or L6 claim.",
       "role": "research"
     },
+    "target:jope-learning/test/pools_cv_unavailable": {
+      "reason": "J9 shadow-only research fixtures (frozen candidate pools, selector evaluation, parent-cluster statistics). Synthetic inputs only; no live selection, qualification, promotion or L6 claim.",
+      "role": "research",
+      "source": "crates/jope-learning/tests/pools_cv_unavailable.rs"
+    },
     "target:jope-learning/test/progress_cli": {
       "role": "regression",
       "subsystems": [
@@ -3618,6 +3623,14 @@
         "encoders",
         "policy"
       ]
+    },
+    "target:jope-pipeline/test/stage_cache_identity": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ],
+      "source": "crates/jope-pipeline/tests/stage_cache_identity.rs"
     },
     "target:jope-policy/bin/jope-context-worker": {
       "role": "regression",
