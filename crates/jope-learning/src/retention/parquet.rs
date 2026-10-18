@@ -73,6 +73,155 @@ pub struct Table {
     pub metadata: Vec<(String, String)>,
 }
 
+/// Footer values use physical types; BYTE_ARRAY order is unsigned lexicographic bytes.
+#[derive(Clone, Debug, PartialEq)]
+pub enum StatisticValue {
+    Bool(bool),
+    I64(i64),
+    F64(f64),
+    Bytes(Vec<u8>),
+}
+
+impl StatisticValue {
+    fn encode(&self) -> Vec<u8> {
+        match self {
+            Self::Bool(v) => vec![u8::from(*v)],
+            Self::I64(v) => v.to_le_bytes().to_vec(),
+            Self::F64(v) => v.to_le_bytes().to_vec(),
+            Self::Bytes(v) => v.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct ColumnStatistics {
+    /// Number of occurrences, including nulls (ColumnMetaData.num_values).
+    pub value_count: u64,
+    /// Absent in a legacy/external footer means unknown, not zero.
+    pub null_count: Option<u64>,
+    pub nan_count: Option<u64>,
+    pub min: Option<StatisticValue>,
+    pub max: Option<StatisticValue>,
+    pub min_is_exact: Option<bool>,
+    pub max_is_exact: Option<bool>,
+}
+
+fn column_statistics(ty: ColumnType, cells: &[&Cell]) -> Result<ColumnStatistics> {
+    let mut present: Vec<&Cell> = cells
+        .iter()
+        .copied()
+        .filter(|c| !matches!(c, Cell::Null))
+        .collect();
+    // Validate even all-null/type-mismatched chunks via the existing physical encoder.
+    plain(ty, &present)?;
+    let nulls = (cells.len() - present.len()) as u64;
+    // Retain nonfinite values in the pages. Omit bounds for their chunk so pruning cannot
+    // silently discard them. Null count counts actual nulls only.
+    let has_nonfinite = present
+        .iter()
+        .any(|c| matches!(c, Cell::F64(v) if !v.is_finite()));
+    present.sort_by(|a, b| match (a, b) {
+        (Cell::Bool(a), Cell::Bool(b)) => a.cmp(b),
+        (Cell::I64(a), Cell::I64(b)) => a.cmp(b),
+        (Cell::F64(a), Cell::F64(b)) => a.total_cmp(b),
+        (Cell::Str(a), Cell::Str(b)) => a.as_bytes().cmp(b.as_bytes()),
+        _ => std::cmp::Ordering::Equal,
+    });
+    let value = |c: &&Cell| match c {
+        Cell::Bool(v) => StatisticValue::Bool(*v),
+        Cell::I64(v) => StatisticValue::I64(*v),
+        Cell::F64(v) => StatisticValue::F64(*v),
+        Cell::Str(v) => StatisticValue::Bytes(v.as_bytes().to_vec()),
+        Cell::Null => unreachable!("present cells"),
+    };
+    let actual_min = if has_nonfinite {
+        None
+    } else {
+        present.first().map(value)
+    };
+    let actual_max = if has_nonfinite {
+        None
+    } else {
+        present.last().map(value)
+    };
+    // TYPE_ORDER requires outward zero bounds. Values in pages retain their exact bits.
+    let min = actual_min.as_ref().map(|v| match v {
+        StatisticValue::F64(v) if *v == 0.0 => StatisticValue::F64(-0.0),
+        other => other.clone(),
+    });
+    let max = actual_max.as_ref().map(|v| match v {
+        StatisticValue::F64(v) if *v == 0.0 => StatisticValue::F64(0.0),
+        other => other.clone(),
+    });
+    Ok(ColumnStatistics {
+        value_count: cells.len() as u64,
+        null_count: Some(nulls),
+        nan_count: (ty == ColumnType::Double).then(|| {
+            present
+                .iter()
+                .filter(|c| matches!(c, Cell::F64(v) if v.is_nan()))
+                .count() as u64
+        }),
+        min_is_exact: min
+            .as_ref()
+            .zip(actual_min.as_ref())
+            .map(|(a, b)| a.encode() == b.encode()),
+        max_is_exact: max
+            .as_ref()
+            .zip(actual_max.as_ref())
+            .map(|(a, b)| a.encode() == b.encode()),
+        min,
+        max,
+    })
+}
+
+fn decode_statistics(
+    m: &BTreeMap<i16, Tv>,
+    physical: i64,
+    rows: u64,
+    ordered: bool,
+) -> Result<ColumnStatistics> {
+    let null_count = int(m, 3).map(u64::try_from).transpose()?;
+    let nan_count = int(m, 9).map(u64::try_from).transpose()?;
+    ensure!(
+        null_count.is_none_or(|n| n <= rows),
+        "parquet: null count exceeds rows"
+    );
+    let decode = |b: &[u8]| -> Result<StatisticValue> {
+        Ok(match physical {
+            0 => {
+                ensure!(
+                    b.len() == 1 && b[0] <= 1,
+                    "parquet: invalid boolean statistic"
+                );
+                StatisticValue::Bool(b[0] == 1)
+            }
+            1 => StatisticValue::I64(i32::from_le_bytes(b.try_into()?) as i64),
+            2 => StatisticValue::I64(i64::from_le_bytes(b.try_into()?)),
+            4 => StatisticValue::F64(f32::from_le_bytes(b.try_into()?) as f64),
+            5 => StatisticValue::F64(f64::from_le_bytes(b.try_into()?)),
+            6 => StatisticValue::Bytes(b.to_vec()),
+            _ => bail!("parquet: unsupported statistics physical type {physical}"),
+        })
+    };
+    // Use modern min_value/max_value; deprecated signed BYTE_ARRAY bounds are ambiguous.
+    Ok(ColumnStatistics {
+        value_count: rows,
+        null_count,
+        nan_count,
+        min: bin(m, 6).filter(|_| ordered).map(decode).transpose()?,
+        max: bin(m, 5).filter(|_| ordered).map(decode).transpose()?,
+        min_is_exact: match m.get(&8) {
+            Some(Tv::Bool(v)) => Some(*v),
+            _ => None,
+        },
+        max_is_exact: match m.get(&7) {
+            Some(Tv::Bool(v)) => Some(*v),
+            _ => None,
+        },
+    })
+}
+
 // ---- Thrift compact protocol: writer ----
 
 #[derive(Default)]
@@ -314,6 +463,7 @@ struct ChunkOut {
     uncompressed: i64,
     compressed: i64,
     dictionary: bool,
+    statistics: Option<ColumnStatistics>,
 }
 
 /// Appends one page (header + body) and returns (uncompressed, compressed) sizes incl. header.
@@ -359,6 +509,24 @@ pub fn write(table: &Table, zstd: bool, created_by: &str) -> Result<Vec<u8>> {
 }
 
 pub fn write_with(table: &Table, opts: &WriteOptions, created_by: &str) -> Result<Vec<u8>> {
+    write_table(table, opts, created_by, false)
+}
+
+/// Additive statistics footer; legacy write/write_with bytes remain unchanged.
+pub fn write_with_statistics(
+    table: &Table,
+    opts: &WriteOptions,
+    created_by: &str,
+) -> Result<Vec<u8>> {
+    write_table(table, opts, created_by, true)
+}
+
+fn write_table(
+    table: &Table,
+    opts: &WriteOptions,
+    created_by: &str,
+    statistics: bool,
+) -> Result<Vec<u8>> {
     let ncol = table.columns.len();
     ensure!(ncol > 0, "a table needs at least one column");
     for (r, row) in table.rows.iter().enumerate() {
@@ -489,6 +657,9 @@ pub fn write_with(table: &Table, opts: &WriteOptions, created_by: &str) -> Resul
                 uncompressed: unc,
                 compressed: comp,
                 dictionary: use_dict,
+                statistics: statistics
+                    .then(|| column_statistics(col.ty, &cells))
+                    .transpose()?,
             });
         }
         groups.push((rows.len(), chunks));
@@ -546,6 +717,29 @@ pub fn write_with(table: &Table, opts: &WriteOptions, created_by: &str) -> Resul
             if let Some(d) = m.dict_offset {
                 f.i64f(11, d);
             }
+            if let Some(stats) = &m.statistics {
+                f.struct_begin(12);
+                f.i64f(
+                    3,
+                    i64::try_from(stats.null_count.context("statistics null count")?)?,
+                );
+                if let Some(value) = &stats.max {
+                    f.binf(5, &value.encode());
+                }
+                if let Some(value) = &stats.min {
+                    f.binf(6, &value.encode());
+                }
+                if let Some(exact) = stats.max_is_exact {
+                    f.field(7, if exact { 1 } else { 2 });
+                }
+                if let Some(exact) = stats.min_is_exact {
+                    f.field(8, if exact { 1 } else { 2 });
+                }
+                if let Some(count) = stats.nan_count {
+                    f.i64f(9, i64::try_from(count)?);
+                }
+                f.struct_end();
+            }
             f.struct_end();
             f.struct_end();
         }
@@ -561,6 +755,17 @@ pub fn write_with(table: &Table, opts: &WriteOptions, created_by: &str) -> Resul
         f.struct_end();
     }
     f.binf(6, created_by.as_bytes());
+    if statistics {
+        // Modern bounds have meaning only under an explicit ColumnOrder. TYPE_ORDER uses
+        // signed numeric/Boolean order and unsigned lexicographic UTF8 bytes.
+        f.list_begin(7, 12, ncol);
+        for _ in &table.columns {
+            f.elem_struct_begin();
+            f.struct_begin(1); // ColumnOrder.TYPE_ORDER: empty TypeDefinedOrder
+            f.struct_end();
+            f.struct_end();
+        }
+    }
     let footer = f.finish();
     out.extend(&footer);
     out.extend((u32::try_from(footer.len())?).to_le_bytes());
@@ -999,6 +1204,7 @@ struct ChunkMeta {
     num_values: u64,
     start: usize,
     end: usize,
+    statistics: Option<ColumnStatistics>,
 }
 
 #[derive(Clone, Debug)]
@@ -1267,6 +1473,11 @@ impl<'a> FileReader<'a> {
                 timestamp_ms_divisor,
             });
         }
+        let orders = list(&meta, 7);
+        ensure!(
+            orders.is_empty() || orders.len() == columns.len(),
+            "parquet: column order count mismatch"
+        );
         let mut row_groups = Vec::new();
         let mut total = 0u64;
         for g in list(&meta, 4) {
@@ -1281,7 +1492,7 @@ impl<'a> FileReader<'a> {
                 columns.len()
             );
             let mut metas = Vec::new();
-            for (col, chunk) in columns.iter().zip(chunks) {
+            for (ci, (col, chunk)) in columns.iter().zip(chunks).enumerate() {
                 let cm = strukt(
                     strukt(chunk)?
                         .get(&3)
@@ -1322,6 +1533,20 @@ impl<'a> FileReader<'a> {
                     num_values,
                     start,
                     end,
+                    statistics: cm
+                        .get(&12)
+                        .map(|s| {
+                            decode_statistics(
+                                strukt(s)?,
+                                col.physical,
+                                rows,
+                                orders
+                                    .get(ci)
+                                    .and_then(|o| strukt(o).ok())
+                                    .is_some_and(|m| m.contains_key(&1)),
+                            )
+                        })
+                        .transpose()?,
                 });
             }
             row_groups.push(RowGroupMeta {
@@ -1345,6 +1570,18 @@ impl<'a> FileReader<'a> {
 
     pub fn column_index(&self, name: &str) -> Option<usize> {
         self.columns.iter().position(|c| c.name == name)
+    }
+
+    /// Footer statistics as typed values. None means absent, never a fabricated zero.
+    pub fn statistics(&self, group: usize, col: usize) -> Result<Option<&ColumnStatistics>> {
+        let chunk = self
+            .row_groups
+            .get(group)
+            .context("parquet: no such row group")?
+            .chunks
+            .get(col)
+            .context("parquet: no such column")?;
+        Ok(chunk.statistics.as_ref())
     }
 
     /// Decodes column `col` of row group `group`: every page, with its dictionary.

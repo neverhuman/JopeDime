@@ -1,0 +1,20 @@
+{
+  "source_commit": "85d7304a11462bb782607cbc780108408a930777",
+  "code_version": "tiny-fixture-producer/v2",
+  "command": [
+    "fixture-producer",
+    "--input",
+    "index.json"
+  ],
+  "collection_cut": "fixture-cut-20261018",
+  "collected_at": "2026-10-18T00:00:00Z",
+  "input_uri": "fixture:index.json",
+  "input_version_id": "fixture-v1",
+  "input_roots": [
+    {
+      "uri": "fixture:producer-source.txt",
+      "version_id": null,
+      "sha256": "1f38def1e4af5feea36362b8ccaf84db912695a7689b6a9aac1220faa87897df"
+    }
+  ]
+}
