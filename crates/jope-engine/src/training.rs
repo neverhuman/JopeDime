@@ -21,6 +21,7 @@ pub mod checkpoint_commit;
 pub mod consumption;
 pub mod continuation;
 pub mod inputs;
+pub mod intent;
 pub mod objective;
 pub mod partition;
 pub mod topology;

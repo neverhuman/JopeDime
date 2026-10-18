@@ -1,0 +1,17 @@
+{
+  "schema": "jope.training-intent/v1",
+  "parent_checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "protocol": {
+    "objective_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "recipe_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "architecture_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "vocabulary_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "support_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "corpus_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "optimizer_epoch_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "initial_step": 12,
+  "target_step": 20,
+  "execution_partition_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+  "sampler_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+}

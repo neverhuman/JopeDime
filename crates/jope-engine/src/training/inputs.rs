@@ -261,3 +261,71 @@ pub fn freeze(
 pub fn digest(frozen: &Value) -> Result<String> {
     Ok(hash(&serde_json::to_vec(frozen)?))
 }
+
+/// Freeze the per-head eligibility projection and sampled occurrence identities
+/// alongside the already frozen corpus inputs. This is additive: legacy input
+/// manifests and their digests are left byte-for-byte unchanged.
+pub fn freeze_intent_closure(
+    frozen_inputs: &Value,
+    per_head_eligibility: &Value,
+    fresh_occurrences: &[String],
+    replay_occurrences: &[String],
+) -> Result<Value> {
+    use anyhow::ensure;
+    ensure!(
+        frozen_inputs["schema"].as_str() == Some(SCHEMA),
+        "intent closure requires jope.training_inputs.v1"
+    );
+    ensure!(
+        per_head_eligibility.is_object(),
+        "per-head eligibility must be an object"
+    );
+    ensure!(
+        !per_head_eligibility.as_object().unwrap().is_empty(),
+        "per-head eligibility is empty"
+    );
+    for (head, proof) in per_head_eligibility.as_object().unwrap() {
+        ensure!(!head.is_empty(), "eligibility head identity is empty");
+        ensure!(
+            proof.as_str().is_some_and(valid_sha256),
+            "eligibility proof for {head} is not a SHA256 digest"
+        );
+    }
+    validate_occurrences("fresh", fresh_occurrences)?;
+    validate_occurrences("replay", replay_occurrences)?;
+    let fresh = fresh_occurrences.iter().collect::<BTreeSet<_>>();
+    ensure!(
+        replay_occurrences.iter().all(|id| !fresh.contains(id)),
+        "an occurrence cannot be both fresh and replay"
+    );
+    Ok(json!({
+        "schema": "jope.training_intent_inputs/v1",
+        "base_inputs": frozen_inputs,
+        "base_inputs_sha256": digest(frozen_inputs)?,
+        "per_head_eligibility": per_head_eligibility,
+        "fresh_occurrences": fresh_occurrences,
+        "replay_occurrences": replay_occurrences,
+    }))
+}
+
+fn validate_occurrences(kind: &str, occurrences: &[String]) -> Result<()> {
+    use anyhow::ensure;
+    ensure!(
+        !occurrences.is_empty(),
+        "{kind} occurrence identity is empty"
+    );
+    let unique = occurrences.iter().collect::<BTreeSet<_>>();
+    ensure!(
+        unique.len() == occurrences.len(),
+        "duplicate {kind} occurrence identity"
+    );
+    ensure!(
+        occurrences.iter().all(|id| !id.trim().is_empty()),
+        "empty {kind} occurrence identity"
+    );
+    Ok(())
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|b| b.is_ascii_hexdigit())
+}
