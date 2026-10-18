@@ -1,4 +1,4 @@
-#[path = "../../jope-engine/src/gpr_cuda_bench_args.rs"]
+#[path = "../../jope-engine/src/gpr_cuda_args.rs"]
 mod bench_args;
 
 use feat_math::{
