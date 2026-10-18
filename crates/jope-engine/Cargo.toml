@@ -56,3 +56,7 @@ path = "tests/support/native_loop_fixture.rs"
 
 [dev-dependencies]
 nix = { version = "0.29", features = ["socket", "uio"] }
+
+[[example]]
+name = "research_loop_fixture"
+required-features = ["neural"]
