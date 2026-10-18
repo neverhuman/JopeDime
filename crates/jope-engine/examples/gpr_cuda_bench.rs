@@ -1,4 +1,4 @@
-#[path = "../src/gpr_cuda_bench_args.rs"]
+#[path = "../src/gpr_cuda_args.rs"]
 mod bench_args;
 
 #[cfg(feature = "neural")]

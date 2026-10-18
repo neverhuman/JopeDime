@@ -24,7 +24,7 @@
     {
       "id": "case_00_n1024_d16_rbf",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 1024,
       "feature_columns": 16,
@@ -34,7 +34,7 @@
     {
       "id": "case_01_n1024_d64_rq",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 1024,
       "feature_columns": 64,
@@ -44,17 +44,17 @@
     {
       "id": "case_02_n1024_d256_periodic",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 1024,
       "feature_columns": 256,
-      "genome": "(pipe X (gpr kernel=periodic m=800 steps=80))",
-      "program_sha256": "5cf8c5c72a484d2ce680f066ebdf8e571e4b81bb2bc4d02460d3647e70a83ee4"
+      "genome": "(pipe X (gpr kernel=periodic m=400 steps=80))",
+      "program_sha256": "b9c7aa1d05fc05d51aaee64591fbb2170f35c34cd91088aa3bbbd9e1126ace22"
     },
     {
       "id": "case_03_n4096_d16_linear",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 4096,
       "feature_columns": 16,
@@ -64,7 +64,7 @@
     {
       "id": "case_04_n4096_d64_rbf_plus_linear",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 4096,
       "feature_columns": 64,
@@ -74,42 +74,42 @@
     {
       "id": "case_05_n4096_d256_rbf_plus_rq",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 4096,
       "feature_columns": 256,
-      "genome": "(pipe X (gpr kernel=rbf+rq m=800 steps=80))",
-      "program_sha256": "a1010b3ddb66fb2aacf63534d73cf040a6851f56673b5e1c70452318accce6ef"
+      "genome": "(pipe X (gpr kernel=rbf+rq m=400 steps=80))",
+      "program_sha256": "c3ab031957d3a61f671ae83c365be37535f907a65dbf4524da04ae641620a9c5"
     },
     {
       "id": "case_06_n16384_d16_rbf_mul_periodic",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 16384,
       "feature_columns": 16,
-      "genome": "(pipe X (gpr kernel=rbf*periodic m=800 steps=80))",
-      "program_sha256": "00b2306cabc6a81dfb45b4805efaa911f1819fb05ec6dd739002f97264d33778"
+      "genome": "(pipe X (gpr kernel=rbf*periodic m=1200 steps=120))",
+      "program_sha256": "a5908989b20b14de85fec6d476785b8b89394dc1ac9987661e50477eac201999"
     },
     {
-      "id": "case_07_n16384_d64_rbf_m1200",
+      "id": "case_07_n16384_d64_rbf_m800",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 16384,
       "feature_columns": 64,
-      "genome": "(pipe X (gpr kernel=rbf m=1200 steps=120))",
-      "program_sha256": "b71cb339f6fcf24838a538f1bf206c7b5a0b5d27ba15d0bdea402781b98608e1"
+      "genome": "(pipe X (gpr kernel=rbf m=800 steps=80))",
+      "program_sha256": "dda18e690861d6146c42a249d77d82c8706767730e64d43b5cb5d82e8d58b2fe"
     },
     {
-      "id": "case_08_n16384_d256_rbf_plus_rq_m1200",
+      "id": "case_08_n16384_d256_rbf_plus_rq_m400",
       "prepared": "prepared_s3_sberbank_housing_market_forecasting",
-      "prepared_sha256": "25d6c894c04fbb8dce4e4615e5fb2c086d6421c3788396fb828eb3a9aa2006d1",
+      "prepared_sha256": "8db20a2e81cf105ffc0da4e3d1d9b8e504f8c77130229dda9e4182036d1e43bd",
       "cut": 0,
       "train_rows": 16384,
       "feature_columns": 256,
-      "genome": "(pipe X (gpr kernel=rbf+rq m=1200 steps=120))",
-      "program_sha256": "ff86e2eb01e8f927be908bf6752c72672fdc0a3d26b03186def41e2359bc78f5"
+      "genome": "(pipe X (gpr kernel=rbf+rq m=400 steps=80))",
+      "program_sha256": "c3ab031957d3a61f671ae83c365be37535f907a65dbf4524da04ae641620a9c5"
     }
   ]
 }
