@@ -32,6 +32,8 @@ pub mod math_expr;
 pub mod members;
 pub mod metrics;
 pub mod model;
+pub mod numeric_v2;
+pub mod numeric_v2_emit;
 pub mod ops;
 pub mod portable_math;
 pub mod portfolio;

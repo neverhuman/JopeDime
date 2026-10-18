@@ -1545,3 +1545,34 @@ fn exp_next_04_exp008_champion_parity_replay_matches_native_partition_point() {
         }
     }
 }
+
+#[test]
+fn numeric_v2_near_tie_edges_are_monotone_and_use_first_equal() {
+    use feat_math::numeric_v2::{NumericModelV2, NumericProfileV2, TransformV2};
+    let a = 0.10000000000000002_f64;
+    let b = f64::from_bits(a.to_bits() + 1);
+    let x = vec![vec![a], vec![a], vec![a], vec![b], vec![b]];
+    let m = NumericModelV2::fit(
+        NumericProfileV2::new(vec!["value".into()]),
+        &GenomeIr::parse("(pipe X (quantile_bins bins=13) (ridge))").unwrap(),
+        &x,
+        &[0., 1., 2., 3., 4.],
+    )
+    .unwrap();
+    let TransformV2::Quantile { edges, bins, .. } = &m.transforms[0] else {
+        panic!()
+    };
+    assert!(edges[0].windows(2).all(|w| w[0] <= w[1]));
+    let p = vec![
+        vec![f64::from_bits(a.to_bits() - 1)],
+        vec![a],
+        vec![b],
+        vec![f64::from_bits(b.to_bits() + 1)],
+    ];
+    let out = m.transforms[0].apply(&p).unwrap();
+    for (row, probe) in out.iter().zip(&p) {
+        // Independent linear count is valid because v2 fits a monotone edge sequence.
+        let k = edges[0].iter().filter(|v| **v < probe[0]).count();
+        assert_eq!(row[0], k as f64 / (*bins - 1) as f64);
+    }
+}

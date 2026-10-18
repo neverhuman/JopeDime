@@ -1,6 +1,7 @@
 use anyhow::{bail, Context, Result};
 mod compiled;
 mod evolution;
+pub use evolution::numeric_v2 as numeric_v2_scope;
 mod exact;
 mod fault;
 pub use compiled::CompiledMathExpr;

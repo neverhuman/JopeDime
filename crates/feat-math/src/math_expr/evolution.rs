@@ -300,3 +300,6 @@ fn replace(root: &mut Expr, path: &[usize], replacement: Expr) {
 }
 
 mod v2;
+
+// I10 local module hook; integrator owns shared export reconciliation.
+pub mod numeric_v2;
