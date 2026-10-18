@@ -402,6 +402,7 @@
         "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
         "vocabulary_constant_witness": "crates/jope-policy/src/lib.rs:162,175-181",
         "context_length": 2048,
+        "context_abi_values": 2048,
         "context_witness_path": "crates/jope-policy/src/context.rs",
         "accepted_step": 60000,
         "accepted_step_witness": "crates/jope-policy/src/lib.rs:153",
@@ -430,10 +431,12 @@
         "vocabulary_tokens": 282,
         "vocabulary_witness_path": "crates/jope-learning/src/support/tokenizer.rs",
         "logit_geometry_witness": "crates/jope-learning/src/support/probability.rs:38",
+        "context_width": 2051,
+        "context_width_witness": "crates/jope-learning/src/clover/expansion.rs:154-155",
         "trie_schema": "jope.flywheel-full-catalog-trie/v1",
         "trie_schema_witness": "crates/jope-learning/src/support/version.rs:88",
         "trie_nodes": "unknown",
-        "trie_nodes_note": "Trie<'a> in crates/jope-learning/src/support/trie.rs:6 is constructed dynamically from a loaded catalog artifact; no compiled node-count constant exists in crates/ at 22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d (2051 in decisions.json:147 is the proposal label Kumo2051).",
+        "trie_nodes_note": "Trie<'a> in crates/jope-learning/src/support/trie.rs:6 is constructed dynamically from a loaded catalog artifact so trie_nodes has no compiled node-count constant; 2051 is a compiled source fact for the CLOVER PolicyLM context width (context_width == 2051 / PolicyLM/Kumo-2051 at crates/jope-learning/src/clover/expansion.rs:154-155 and ctx_dim2051, vocab282, max_seq640, d_model128 at crates/jope-learning/src/support/README.md:59), not a trie node count.",
         "defining_path": "crates/jope-learning/src/support/tokenizer.rs",
         "defining_file_sha256": "564dcc76518f69580750b733245767141ef25d021bea8db3677121c05725db3c",
         "status": "CONFIRMED_RESEARCH_SHADOW_NON_SERVING",
@@ -464,7 +467,8 @@
       "category": "current_ci",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v4.json",
-      "witness_line": 1,
+      "witness_line": 2,
+      "witness_substring": "jope.planning-packet-manifest/v1",
       "evidence_sha256": "921643bc3ae0b7d75bbab13434f4d8211bc3c8638154c45ac00fc7df184750d5",
       "live_qualification_active": false
     },
@@ -476,6 +480,7 @@
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "crates/jope-engine/src/native_loop.rs",
       "witness_line": 82,
+      "witness_substring": "fn verify_successor(",
       "evidence_sha256": "5185693d9b52a411e14daa1c7a5f01f571dba72e4c06227751ae81b2e9e27bd3",
       "live_qualification_active": false
     },
@@ -487,6 +492,7 @@
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "crates/jope-policy/src/config.rs",
       "witness_line": 584,
+      "witness_substring": "pub fn require_challenger_identity(",
       "evidence_sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
       "live_qualification_active": false
     },
@@ -498,6 +504,7 @@
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "crates/jope-engine/src/task_contract.rs",
       "witness_line": 313,
+      "witness_substring": "pub fn require_original_gpu_grant(",
       "evidence_sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d",
       "live_qualification_active": false
     },
@@ -509,6 +516,7 @@
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "crates/jope-learning/src/clover/round_qual.rs",
       "witness_line": 537,
+      "witness_substring": "pub struct RoundQualReport",
       "evidence_sha256": "2c9280146786979fef1cfaa4087f26137fbefa042580939c8eeaabaa2bf8c6a5",
       "live_qualification_active": false
     },
@@ -519,7 +527,8 @@
       "category": "historical_run",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "docs/adr/ADR-0005-canonical-learning-loop.md",
-      "witness_line": 1,
+      "witness_line": 33,
+      "witness_substring": "step-60100",
       "evidence_sha256": "5dc627eeb0ea602b9808aa960d9e46e8ebd42aefe1903f607fa59303dca7b6d4",
       "live_qualification_active": false
     },
@@ -530,7 +539,8 @@
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "docs/plans/algorithmic-selfplay-20261017/WORKPLAN.md",
-      "witness_line": 1,
+      "witness_line": 51,
+      "witness_substring": "D03",
       "evidence_sha256": "45862904a0404f4ba83f58f7bfb9d424322a4a5dbe238783847dbcf2726adbc9",
       "rejection_reason": "D03 confirms historical neural checkpoints executed real optimizer updates; D01/D24 confirm PR #356 is planning-only.",
       "live_qualification_active": false
@@ -542,7 +552,8 @@
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "docs/plans/algorithmic-selfplay-20261017/decisions.json",
-      "witness_line": 1,
+      "witness_line": 165,
+      "witness_substring": "\"D16\"",
       "evidence_sha256": "e7bf91b12b96413328789bf1636b834b0e4e22e6ae10bba2ac47b316aaee25ac",
       "rejection_reason": "Rejected by D16 (zero test_adaptive leakage), D12 (exact bandit propensity integral/MC required), and D20 (no automatic 30-day S3 expiry).",
       "live_qualification_active": false
@@ -554,7 +565,8 @@
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "docs/internal/clover/selfplay-round1-prereg.v1.json",
-      "witness_line": 1,
+      "witness_line": 4,
+      "witness_substring": "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT",
       "evidence_sha256": "83600d4c12467ddc3ffc9977cd5d073ef166e080f3ff69adc90447818e31d34a",
       "resolution_gate": "Requires prospective preregistration and owner/G-JUDGE sign-off under I41-I43 and I65 before any round-qualification claim.",
       "live_qualification_active": false
@@ -566,7 +578,8 @@
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "AGENTS.md",
-      "witness_line": 1,
+      "witness_line": 308,
+      "witness_substring": "not provisioned",
       "evidence_sha256": "df66cbdccad23c9c19965e38f9984b04b711fdbcf1ed4db9b1d54853afb3a097",
       "resolution_gate": "Requires external AWS IAM provisioning (I49) and independent full-filesystem restore + zero-consumer verification (I53).",
       "live_qualification_active": false
@@ -851,7 +864,7 @@
     },
     {
       "id": "RT05",
-      "combination": "22 non-default workspace Cargo features catalogued in deploy/ci/coverage.json (7 GPU-only features with lanes=[], 1 benchmark-only timing-study feature with lanes=[], 6 full-suite-only CPU features in full-neural/full-policy/full-scratch/full-s3-offline, and 8 explicit opt-in CPU features in rust-test/rust-check) plus 3 required-features binary targets",
+      "combination": "22 named workspace Cargo features catalogued in deploy/ci/coverage.json (19 non-default features + 3 crate-default-enabled features: hyperion/hyperion-cpu, jope-bench/asm, jope-cli/asm; spanning 7 GPU-only features with lanes=[], 1 benchmark-only timing-study feature with lanes=[], 6 full-suite-only CPU features in full-neural/full-policy/full-scratch/full-s3-offline, and 8 CPU features in rust-test/rust-check) plus 3 required-features binary targets",
       "status": "FEATURE_GATED_NON_DEFAULT_COMBINATIONS",
       "package_name": "workspace",
       "required_flag": "Explicit --features flag and corresponding lane/hardware (full-neural, full-policy, full-scratch, full-s3-offline, or GPU builder)",

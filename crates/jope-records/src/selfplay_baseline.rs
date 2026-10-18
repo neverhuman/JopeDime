@@ -163,9 +163,11 @@ impl<'a> BaselineSnapshot<'a> {
             }
             format!("VERIFIED_GIT_OBJECT_STORE:{source_sha}")
         } else {
-            format!(
+            let msg = format!(
                 "BLOCKED: git object {source_sha} unavailable in shallow checkout; skipping blob-level git-object comparison after structural/cross-document verification"
-            )
+            );
+            eprintln!("{msg}");
+            msg
         };
 
         Ok(Self {
@@ -331,7 +333,14 @@ impl<'a> BaselineSnapshot<'a> {
             is_lower_hex_sha40(expected_parent),
             "{ctx}: invalid 40-hex parent SHA `{expected_parent}`"
         );
-        if !self.has_git_commit {
+        if !self.has_git_commit || !has_commit_object(self.repo, commit_sha) {
+            require!(
+                commit_sha != self.source_sha || !self.has_git_commit,
+                "{ctx}: source_sha `{commit_sha}` was marked present in git store but is missing"
+            );
+            eprintln!(
+                "BLOCKED: git commit object {commit_sha} unavailable in shallow checkout ({ctx})"
+            );
             return Ok(());
         }
         let output = Command::new("git")
@@ -342,9 +351,10 @@ impl<'a> BaselineSnapshot<'a> {
             .arg(commit_sha)
             .output()
             .map_err(|e| Error::io(self.repo, e))?;
-        if !output.status.success() {
-            return Ok(());
-        }
+        require!(
+            output.status.success(),
+            "{ctx}: git cat-file -p {commit_sha} failed"
+        );
         let text =
             String::from_utf8(output.stdout).map_err(|e| Error::parse(self.repo, e.to_string()))?;
         let actual_tree = text
@@ -859,6 +869,7 @@ fn verify_profile_identity_reconciliation_with_snapshot(
             }
             "clover_rlfw_prefix_trie_282" => {
                 let vocab_tokens = req_u64(lin, "vocabulary_tokens", &lctx)?;
+                let context_width = req_u64(lin, "context_width", &lctx)?;
                 let trie_schema = req_str(lin, "trie_schema", &lctx)?;
                 let trie_nodes = req_str(lin, "trie_nodes", &lctx)?;
                 let status = req_str(lin, "status", &lctx)?;
@@ -866,12 +877,23 @@ fn verify_profile_identity_reconciliation_with_snapshot(
                     vocab_tokens == 282,
                     "CLOVER prefix-trie vocabulary_tokens must be 282, got {vocab_tokens}"
                 );
+                require!(
+                    context_width == 2051,
+                    "CLOVER PolicyLM context_width must be 2051, got {context_width}"
+                );
                 if snapshot.has_git_commit() {
                     let tok_src =
                         snapshot.blob_utf8("crates/jope-learning/src/support/tokenizer.rs")?;
                     require!(
                         tok_src.contains("282"),
                         "crates/jope-learning/src/support/tokenizer.rs must witness 282"
+                    );
+                    let exp_src =
+                        snapshot.blob_utf8("crates/jope-learning/src/clover/expansion.rs")?;
+                    require!(
+                        exp_src.contains("self.context_width == 2051")
+                            && exp_src.contains("PolicyLM/Kumo-2051"),
+                        "crates/jope-learning/src/clover/expansion.rs must witness context_width == 2051 and PolicyLM/Kumo-2051"
                     );
                 }
                 require!(
@@ -999,6 +1021,11 @@ fn verify_finding_classifications_with_snapshot(
             witness_line >= 1,
             "{ectx} (`{fid}`): witness_line must be >= 1"
         );
+        let witness_sub = req_str(entry, "witness_substring", &ectx)?;
+        require!(
+            !witness_sub.trim().is_empty(),
+            "{ectx} (`{fid}`): witness_substring must not be empty"
+        );
         let evidence_sha = req_str(entry, "evidence_sha256", &ectx)?;
         require!(
             is_lower_hex_sha64(evidence_sha),
@@ -1012,10 +1039,16 @@ fn verify_finding_classifications_with_snapshot(
             let file_bytes = snapshot.blob_bytes(path)?;
             let file_text = String::from_utf8(file_bytes.clone())
                 .map_err(|e| Error::Invalid(format!("{ectx}: non-UTF-8 `{path}`: {e}")))?;
-            let line_count = file_text.lines().count().max(1);
+            let lines: Vec<&str> = file_text.lines().collect();
+            let line_count = lines.len().max(1);
             require!(
                 witness_line <= line_count,
                 "{ectx} (`{fid}`): witness_line {witness_line} out of range (1..={line_count}) for `{path}`"
+            );
+            let actual_line = lines.get(witness_line - 1).copied().unwrap_or("");
+            require!(
+                actual_line.contains(witness_sub),
+                "{ectx} (`{fid}`): `{path}:{witness_line}` does not contain witness_substring `{witness_sub}` (found `{actual_line}`)"
             );
             let actual_sha = sha256_hex(&file_bytes);
             require!(
@@ -1688,58 +1721,86 @@ fn verify_workspace_and_schemas_with_snapshot(
         }
 
         let neural_tests = req_list(m, "neural_gated_integration_tests", &mctx)?;
+        let mut recorded_whole_neural = BTreeSet::new();
         for nt_val in neural_tests {
             let nt_name = nt_val.as_str().ok_or_else(|| {
                 Error::Invalid(format!(
                     "{mctx}: neural_gated_integration_tests entry must be string"
                 ))
             })?;
-            if snapshot.has_git_commit() {
-                let test_rel = format!("{member_dir}/tests/{nt_name}.rs");
-                let test_src = snapshot.blob_utf8(&test_rel)?;
-                require!(
-                    test_src.contains("#![cfg(feature = \"neural\")]"),
-                    "`{test_rel}` must contain `#![cfg(feature = \"neural\")]`"
-                );
-            }
+            recorded_whole_neural.insert(nt_name.to_owned());
             total_neural_gated += 1;
         }
 
         let partial_neural = req_list(m, "partially_neural_gated_integration_tests", &mctx)?;
+        let mut recorded_partial_neural = BTreeSet::new();
         for pnt_val in partial_neural {
             let pnt_name = pnt_val.as_str().ok_or_else(|| {
                 Error::Invalid(format!(
                     "{mctx}: partially_neural_gated_integration_tests entry must be string"
                 ))
             })?;
-            if snapshot.has_git_commit() {
-                let test_rel = format!("{member_dir}/tests/{pnt_name}.rs");
-                let test_src = snapshot.blob_utf8(&test_rel)?;
-                require!(
-                    !test_src.contains("#![cfg(feature = \"neural\")]")
-                        && (test_src.contains("#[cfg(feature = \"neural\")]")
-                            || test_src.contains("#[cfg(not(feature = \"neural\"))]")),
-                    "`{test_rel}` must be partially/negated gated with `#[cfg(feature = \"neural\")]` or `#[cfg(not(feature = \"neural\"))]` (not whole-file `#![cfg]`)"
-                );
-            }
+            recorded_partial_neural.insert(pnt_name.to_owned());
             total_partial_neural_gated += 1;
         }
 
         let testing_gated = req_list(m, "testing_gated_integration_tests", &mctx)?;
+        let mut recorded_testing_gated = BTreeSet::new();
         for tg_val in testing_gated {
             let tg_name = tg_val.as_str().ok_or_else(|| {
                 Error::Invalid(format!(
                     "{mctx}: testing_gated_integration_tests entry must be string"
                 ))
             })?;
-            if snapshot.has_git_commit() {
-                let test_rel = format!("{member_dir}/tests/{tg_name}.rs");
+            recorded_testing_gated.insert(tg_name.to_owned());
+        }
+
+        if snapshot.has_git_commit() {
+            let recorded_tests: Vec<String> = req_list(m, "integration_tests", &mctx)?
+                .iter()
+                .filter_map(|v| v.as_str().map(str::to_owned))
+                .collect();
+            let mut actual_whole_neural = BTreeSet::new();
+            let mut actual_partial_neural = BTreeSet::new();
+            let mut actual_testing_gated = BTreeSet::new();
+            for t_name in &recorded_tests {
+                let direct_rel = format!("{member_dir}/tests/{t_name}.rs");
+                let main_rel = format!("{member_dir}/tests/{t_name}/main.rs");
+                let test_rel = if snapshot.file_exists(&direct_rel) {
+                    direct_rel
+                } else {
+                    main_rel
+                };
                 let test_src = snapshot.blob_utf8(&test_rel)?;
-                require!(
-                    test_src.contains("#![cfg(feature = \"testing\")]"),
-                    "`{test_rel}` must contain `#![cfg(feature = \"testing\")]`"
-                );
+                if test_src.contains("#![cfg(feature = \"neural\")]") {
+                    actual_whole_neural.insert(t_name.clone());
+                } else if test_src.contains("#[cfg(feature = \"neural\")]")
+                    || test_src.contains("#[cfg(not(feature = \"neural\"))]")
+                {
+                    actual_partial_neural.insert(t_name.clone());
+                }
+                if test_src.contains("#![cfg(feature = \"testing\")]") {
+                    actual_testing_gated.insert(t_name.clone());
+                }
             }
+            require!(
+                recorded_whole_neural == actual_whole_neural,
+                "{mctx} (`{pkg_name}`): neural_gated_integration_tests completeness mismatch: recorded {:?} vs actual {:?}",
+                recorded_whole_neural,
+                actual_whole_neural
+            );
+            require!(
+                recorded_partial_neural == actual_partial_neural,
+                "{mctx} (`{pkg_name}`): partially_neural_gated_integration_tests completeness mismatch: recorded {:?} vs actual {:?}",
+                recorded_partial_neural,
+                actual_partial_neural
+            );
+            require!(
+                recorded_testing_gated == actual_testing_gated,
+                "{mctx} (`{pkg_name}`): testing_gated_integration_tests completeness mismatch: recorded {:?} vs actual {:?}",
+                recorded_testing_gated,
+                actual_testing_gated
+            );
         }
     }
 
@@ -1886,6 +1947,20 @@ fn verify_file_inventories_and_pins(
         write_path_count == EXPECTED_WRITE_PATH_COUNT,
         "proposed_task_write_paths must list all {EXPECTED_WRITE_PATH_COUNT} unique task write-path mappings, got {write_path_count}"
     );
+    if snapshot.has_git_commit() {
+        let existing_write_paths: Vec<String> = write_paths
+            .iter()
+            .filter_map(|v| {
+                let d = v.as_dict()?;
+                if d.get("exists_at_receiving_main") == Some(&Value::Bool(true)) {
+                    d.get("path")?.as_str().map(str::to_owned)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        snapshot.preload_paths(&existing_write_paths)?;
+    }
     let mut covered_tasks = BTreeSet::new();
     for (idx, wp_val) in write_paths.iter().enumerate() {
         let wctx = format!("proposed_task_write_paths[{idx}]");
@@ -1904,12 +1979,27 @@ fn verify_file_inventories_and_pins(
                 .ok_or_else(|| Error::Invalid(format!("{wctx}: task ID must be string")))?;
             covered_tasks.insert(tid.to_owned());
         }
+        if snapshot.has_git_commit() {
+            let actual_exists = snapshot.file_exists(path);
+            require!(
+                actual_exists == exists,
+                "{wctx} (`{path}`): exists_at_receiving_main={exists} does not match baseline commit (actual_exists={actual_exists})"
+            );
+        }
         if exists {
             let sha = req_str(wp, "sha256_at_receiving_main", &wctx)?;
             require!(
                 is_lower_hex_sha64(sha),
                 "{wctx} (`{path}`): expected 64-hex sha256_at_receiving_main"
             );
+            if snapshot.has_git_commit() {
+                let data = snapshot.blob_bytes(path)?;
+                let actual_sha = sha256_hex(&data);
+                require!(
+                    actual_sha == sha,
+                    "{wctx} (`{path}`): sha256_at_receiving_main mismatch: expected {actual_sha}, got {sha}"
+                );
+            }
         }
     }
     let covered_task_count = covered_tasks.len();
