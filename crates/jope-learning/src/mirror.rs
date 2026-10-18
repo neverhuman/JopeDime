@@ -24,7 +24,7 @@
 //! winner's update. This protects individual pointers, not a transaction across the
 //! ledger head and every derived index. Live S3 qualification remains separate.
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use jope_datasets::store::{ObservedObject, PutOutcome, Store};
 use serde::Serialize;
 
@@ -76,18 +76,29 @@ impl Mirror {
         })
     }
 
-    /// Create-only write; an existing object must already hold the same bytes.
+    /// Create-only write verified by full SHA-256 content and byte length on readback;
+    /// an existing object must already hold the exact same bytes.
     pub fn put_immutable(&self, rel: &str, bytes: &[u8]) -> Result<PutOutcome> {
-        let outcome = self
-            .rt
-            .block_on(self.store.put_if_absent(rel, bytes.to_vec()))?;
-        if outcome == PutOutcome::Exists {
-            let existing = self.rt.block_on(self.store.get_bytes(rel))?;
-            if existing.as_deref() != Some(bytes) {
-                bail!("{rel}: exists in {} with different bytes", self.url);
-            }
-        }
-        Ok(outcome)
+        Ok(self.put_immutable_verified(rel, bytes)?.put_outcome())
+    }
+
+    /// Create-only write returning the full [`jope_datasets::verified_object::VerifiedObject`]
+    /// witness after readback verification.
+    pub fn put_immutable_verified(
+        &self,
+        rel: &str,
+        bytes: &[u8],
+    ) -> Result<jope_datasets::verified_object::VerifiedObject> {
+        let expected_sha256 = jope_datasets::hash::sha256_hex(bytes);
+        let expected_bytes = bytes.len() as u64;
+        self.rt
+            .block_on(jope_datasets::verified_object::publish_verified_object(
+                &self.store,
+                rel,
+                bytes,
+                &expected_sha256,
+                expected_bytes,
+            ))
     }
 
     /// Replace only the version whose bytes the caller checked against its history.

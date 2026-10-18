@@ -3,21 +3,58 @@
 
 use anyhow::{anyhow, ensure, Context, Result};
 use futures_util::StreamExt;
-use object_store::path::Path as ObjPath;
 use object_store::{
     GetOptions, GetRange, ObjectStore, ObjectStoreExt, PutMode, PutOptions, PutPayload,
-    UpdateVersion,
 };
 use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
 use std::path::Path;
 use url::Url;
 
+pub use object_store::path::Path as ObjPath;
+pub use object_store::{ObjectStoreScheme, UpdateVersion};
+
+/// Deterministic injected backend seam for testing versioned object stores (`VersionId` vs `ETag`),
+/// concurrent create races, readback corruption, and lost-response reconciliation without live
+/// remote network calls.
+pub trait InjectedBackend: Send + Sync {
+    /// Read the latest version (`required_version == None`) or a specific physical `VersionId`
+    /// (`required_version == Some(v)`), returning `(bytes, UpdateVersion)` from one atomic read.
+    fn get_versioned(
+        &self,
+        key: &ObjPath,
+        required_version: Option<&str>,
+    ) -> Result<Option<(Vec<u8>, UpdateVersion)>>;
+
+    /// Create-only put (`If-None-Match: *`).
+    fn put_create(
+        &self,
+        key: &ObjPath,
+        bytes: Vec<u8>,
+    ) -> Result<(PutOutcome, Option<UpdateVersion>)>;
+
+    /// Unconditional overwrite (used by tests to simulate adversarial version replacement or
+    /// local pointer updates).
+    fn put_overwrite(&self, key: &ObjPath, bytes: Vec<u8>) -> Result<UpdateVersion>;
+
+    /// List all object keys under `prefix`.
+    fn list_keys(&self, prefix: &ObjPath) -> Result<Vec<ObjPath>>;
+}
+
 pub struct Store {
     inner: Box<dyn ObjectStore>,
     prefix: ObjPath,
     pub url: String,
     local_root: Option<std::path::PathBuf>,
+}
+
+type InjectedRegistry =
+    std::collections::BTreeMap<usize, (ObjectStoreScheme, std::sync::Arc<dyn InjectedBackend>)>;
+
+fn injected_registry() -> &'static std::sync::Mutex<InjectedRegistry> {
+    static REGISTRY: std::sync::OnceLock<std::sync::Mutex<InjectedRegistry>> =
+        std::sync::OnceLock::new();
+    REGISTRY.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeMap::new()))
 }
 
 /// Bytes and their precondition from the same GET. Keep this observation until
@@ -29,14 +66,28 @@ pub struct ObservedObject {
     key: ObjPath,
 }
 
+impl ObservedObject {
+    /// Opaque concurrency token (`ETag`) returned with `bytes` in the same GET.
+    pub fn e_tag(&self) -> Option<&str> {
+        self.version.e_tag.as_deref()
+    }
+
+    /// Physical backend object version (`VersionId`) returned with `bytes` in the same GET.
+    pub fn version(&self) -> Option<&str> {
+        self.version.version.as_deref()
+    }
+
+    /// Full resolved object-store key (`ObjPath`) for this observation.
+    pub fn key_str(&self) -> &str {
+        self.key.as_ref()
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PutOutcome {
     Created,
     Exists,
 }
-
-/// The backends `object_store` classifies a URL into ([`StoreLocation::backend`]).
-pub use object_store::ObjectStoreScheme;
 
 /// How [`Store::open_with`] builds the store for a [`StoreLocation`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -235,6 +286,67 @@ impl Store {
         })
     }
 
+    fn inner_id(&self) -> usize {
+        (&*self.inner as *const dyn ObjectStore).cast::<()>() as usize
+    }
+
+    fn injected_backend(&self) -> Option<std::sync::Arc<dyn InjectedBackend>> {
+        injected_registry()
+            .lock()
+            .unwrap()
+            .get(&self.inner_id())
+            .map(|(_, b)| b.clone())
+    }
+
+    /// Construct a [`Store`] with an explicitly injected [`ObjectStore`] backend (for deterministic
+    /// versioned/fault-injecting tests without live remote network access).
+    pub fn from_object_store(
+        url: impl Into<String>,
+        prefix: ObjPath,
+        _backend: ObjectStoreScheme,
+        inner: Box<dyn ObjectStore>,
+    ) -> Store {
+        Store {
+            inner,
+            prefix,
+            url: url.into(),
+            local_root: None,
+        }
+    }
+
+    /// Construct a [`Store`] backed by a deterministic [`InjectedBackend`] implementation (for
+    /// testing versioned stores, create races, and lost-response reconciliation without live
+    /// remote network calls).
+    pub fn from_injected_backend(
+        url: impl Into<String>,
+        prefix: ObjPath,
+        backend: ObjectStoreScheme,
+        injected: std::sync::Arc<dyn InjectedBackend>,
+    ) -> Store {
+        let inner: Box<dyn ObjectStore> = Box::new(object_store::memory::InMemory::new());
+        let id = (&*inner as *const dyn ObjectStore).cast::<()>() as usize;
+        injected_registry()
+            .lock()
+            .unwrap()
+            .insert(id, (backend, injected));
+        Store {
+            inner,
+            prefix,
+            url: url.into(),
+            local_root: None,
+        }
+    }
+
+    /// The classified [`ObjectStoreScheme`] for this store.
+    pub fn backend(&self) -> ObjectStoreScheme {
+        if let Some((scheme, _)) = injected_registry().lock().unwrap().get(&self.inner_id()) {
+            return scheme.clone();
+        }
+        StoreLocation::parse(&self.url)
+            .map(|l| l.backend)
+            .unwrap_or(ObjectStoreScheme::Local)
+    }
+
     pub fn key(&self, rel: &str) -> ObjPath {
         if self.prefix.as_ref().is_empty() {
             ObjPath::from(rel)
@@ -250,7 +362,32 @@ impl Store {
 
     /// Read a pointer and the version belonging to those exact bytes.
     pub async fn get_observed(&self, rel: &str) -> Result<Option<ObservedObject>> {
-        match self.inner.get(&self.key(rel)).await {
+        self.get_observed_version(rel, None).await
+    }
+
+    /// Read an object (optionally pinned to a specific backend physical `version`) and capture the
+    /// [`UpdateVersion`] (`e_tag` and physical `version`) returned with those exact bytes in one GET.
+    pub async fn get_observed_version(
+        &self,
+        rel: &str,
+        required_version: Option<&str>,
+    ) -> Result<Option<ObservedObject>> {
+        let key = self.key(rel);
+        if let Some(injected) = self.injected_backend() {
+            let Some((bytes, version)) = injected.get_versioned(&key, required_version)? else {
+                return Ok(None);
+            };
+            return Ok(Some(ObservedObject {
+                bytes,
+                version,
+                key,
+            }));
+        }
+        let opts = GetOptions {
+            version: required_version.map(str::to_owned),
+            ..Default::default()
+        };
+        match self.inner.get_opts(&key, opts).await {
             Ok(r) => {
                 let version = UpdateVersion {
                     e_tag: r.meta.e_tag.clone(),
@@ -264,7 +401,7 @@ impl Store {
                 Ok(Some(ObservedObject {
                     bytes,
                     version,
-                    key: self.key(rel),
+                    key,
                 }))
             }
             Err(object_store::Error::NotFound { .. }) => Ok(None),
@@ -280,6 +417,11 @@ impl Store {
     }
 
     pub async fn size(&self, rel: &str) -> Result<Option<u64>> {
+        if let Some(injected) = self.injected_backend() {
+            return Ok(injected
+                .get_versioned(&self.key(rel), None)?
+                .map(|(b, _)| b.len() as u64));
+        }
         match self.inner.head(&self.key(rel)).await {
             Ok(m) => Ok(Some(m.size)),
             Err(object_store::Error::NotFound { .. }) => Ok(None),
@@ -287,8 +429,18 @@ impl Store {
         }
     }
 
-    /// Create-only put (`If-None-Match: *`): an existing key is never rewritten.
-    pub async fn put_if_absent(&self, rel: &str, bytes: Vec<u8>) -> Result<PutOutcome> {
+    /// Create-only put (`If-None-Match: *`) returning the [`UpdateVersion`] (`e_tag` and physical
+    /// `version`) reported by the backend when created. A raw [`PutOutcome`] alone is not a
+    /// content-verified receipt; callers requiring content/version verification use
+    /// [`crate::verified_object`].
+    pub async fn put_if_absent_with_result(
+        &self,
+        rel: &str,
+        bytes: Vec<u8>,
+    ) -> Result<(PutOutcome, Option<UpdateVersion>)> {
+        if let Some(injected) = self.injected_backend() {
+            return injected.put_create(&self.key(rel), bytes);
+        }
         let opts = PutOptions {
             mode: PutMode::Create,
             ..Default::default()
@@ -298,13 +450,28 @@ impl Store {
             .put_opts(&self.key(rel), PutPayload::from(bytes), opts)
             .await
         {
-            Ok(_) => Ok(PutOutcome::Created),
-            Err(object_store::Error::AlreadyExists { .. }) => Ok(PutOutcome::Exists),
+            Ok(res) => Ok((
+                PutOutcome::Created,
+                Some(UpdateVersion {
+                    e_tag: res.e_tag,
+                    version: res.version,
+                }),
+            )),
+            Err(object_store::Error::AlreadyExists { .. }) => Ok((PutOutcome::Exists, None)),
             Err(e) => Err(anyhow!("put {rel}: {e}")),
         }
     }
 
+    /// Create-only put (`If-None-Match: *`): an existing key is never rewritten.
+    pub async fn put_if_absent(&self, rel: &str, bytes: Vec<u8>) -> Result<PutOutcome> {
+        Ok(self.put_if_absent_with_result(rel, bytes).await?.0)
+    }
+
     pub async fn put(&self, rel: &str, bytes: Vec<u8>) -> Result<()> {
+        if let Some(injected) = self.injected_backend() {
+            injected.put_overwrite(&self.key(rel), bytes)?;
+            return Ok(());
+        }
         self.inner
             .put(&self.key(rel), PutPayload::from(bytes))
             .await
@@ -373,6 +540,22 @@ impl Store {
 
     pub async fn list(&self, rel_prefix: &str) -> Result<Vec<String>> {
         let prefix = self.key(rel_prefix);
+        if let Some(injected) = self.injected_backend() {
+            let mut out = Vec::new();
+            for location in injected.list_keys(&prefix)? {
+                let full = location.as_ref().to_string();
+                let rel = if self.prefix.as_ref().is_empty() {
+                    full
+                } else {
+                    full.strip_prefix(&format!("{}/", self.prefix.as_ref()))
+                        .unwrap_or(&full)
+                        .to_string()
+                };
+                out.push(rel);
+            }
+            out.sort();
+            return Ok(out);
+        }
         let mut stream = self.inner.list(Some(&prefix));
         let mut out = Vec::new();
         while let Some(item) = stream.next().await {

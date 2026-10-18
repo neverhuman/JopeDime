@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5021,
+  "count": 5031,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -2714,7 +2714,7 @@
     }
    },
    "jope-datasets": {
-    "count": 73,
+    "count": 79,
     "ignored": 0,
     "binaries": {
      "jope-datasets": {
@@ -2857,6 +2857,19 @@
        "the_embedded_pair_is_the_committed_release_and_refuses_only_staging_products",
        "the_producer_attests_exactly_its_fitting_only_closure",
        "the_replay_verifier_rejects_the_historical_input_closure"
+      ]
+     },
+     "jope-datasets::verified_object": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "existing_same_size_wrong_content_and_create_race_refuse_without_overwriting",
+       "fresh_and_existing_verified_objects_report_truthful_backend_and_version_status",
+       "lost_put_response_reconciles_only_on_exact_content_and_version_while_denial_never_reconciles",
+       "malformed_keys_hash_mismatches_and_readback_size_bounds_refuse",
+       "physical_version_id_binds_exact_version_across_replacements_and_rejects_etag_only_s3",
+       "readback_corruption_missing_object_and_version_mismatch_refuse"
       ]
      }
     }
@@ -4946,7 +4959,7 @@
     }
    },
    "jope-models": {
-    "count": 7,
+    "count": 11,
     "ignored": 0,
     "binaries": {
      "jope-models": {
@@ -4964,6 +4977,17 @@
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "jope-models::publication_integrity": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "create_race_and_second_blob_failure_block_manifest_publication",
+       "preexisting_same_size_wrong_blob_refuses_publish_and_leaves_corrupt_object_untouched",
+       "source_mutation_before_snapshot_refuses_and_mutation_after_snapshot_preserves_verified_upload",
+       "versioned_publish_report_and_cli_receipt_out_bind_content_and_versions"
+      ]
      },
      "jope-models::roundtrip": {
       "kind": "test",

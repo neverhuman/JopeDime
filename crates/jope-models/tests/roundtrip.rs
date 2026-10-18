@@ -100,6 +100,8 @@ fn publish_fetch_verify_roundtrip() {
         (r.blobs_created, r.blobs_existing, r.manifest.as_str()),
         (3, 0, "created")
     );
+    assert_eq!(r.verified_blobs.len(), 3);
+    assert!(r.verified_manifest.is_some());
     let keys = rt().block_on(store.list("")).unwrap();
     assert_eq!(
         keys.iter()
@@ -108,7 +110,7 @@ fn publish_fetch_verify_roundtrip() {
         3
     );
     assert!(keys.contains(&format!("bundles/{ID}/manifest.json")));
-    // Publishing again rewrites nothing.
+    // Publishing again rewrites nothing and verifies all existing blobs by content.
     let r = rt()
         .block_on(publish(&store, &manifest_path, &from))
         .unwrap();
@@ -116,6 +118,8 @@ fn publish_fetch_verify_roundtrip() {
         (r.blobs_created, r.blobs_existing, r.manifest.as_str()),
         (0, 3, "identical")
     );
+    assert_eq!(r.verified_blobs.len(), 3);
+    assert!(r.verified_manifest.is_some());
     // A manifest that differs under the same id is refused.
     let mut altered: Value = serde_json::from_slice(&manifest_bytes).unwrap();
     altered["published_at"] = Value::String("2026-09-19T00:00:00Z".into());
