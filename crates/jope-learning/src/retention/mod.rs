@@ -40,6 +40,7 @@ pub mod policy;
 pub mod refs;
 pub mod snappy;
 pub mod tags;
+pub mod value;
 
 use serde::Serialize;
 
