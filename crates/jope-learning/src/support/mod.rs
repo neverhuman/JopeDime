@@ -7,15 +7,20 @@
 mod mismatch;
 mod probability;
 mod tokenizer;
+mod transition;
 mod trie;
 mod version;
 
 pub use mismatch::{require_same_support_reference, MismatchReport, MismatchRow};
 pub use probability::{
-    decomposed_support_kl, weighted_archive_ce, DecomposedSupportKl, Distribution, Likelihood,
-    LogitsRow,
+    decomposed_support_kl, weighted_archive_ce, CloverBehaviorLaw, DecomposedSupportKl,
+    Distribution, Likelihood, LogitsRow,
 };
 pub use tokenizer::{fixed_vocabulary_sha256, Vocabulary};
+pub use transition::{
+    admit_novel_leaf, AdmissionDecision, AdmissionRefusal, AdmissionVerifier, SupportTransition,
+    TrainEvidence,
+};
 pub use trie::Trie;
 pub use version::{
     Candidate, Catalog, FreezeRequest, FrozenSupport, Program, Role, V1_TRIE_SHA256,

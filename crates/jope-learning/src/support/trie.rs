@@ -5,6 +5,7 @@ use anyhow::{ensure, Result};
 /// skip subtrees by binary search, with no eager node cap or cross-context KV.
 pub struct Trie<'a> {
     pub support_sha256: &'a str,
+    pub vocabulary_sha256: &'a str,
     pub max_seq: usize,
     leaves: Vec<&'a Program>,
 }
@@ -20,9 +21,27 @@ impl<'a> Trie<'a> {
         );
         Ok(Self {
             support_sha256: &support.support_sha256,
+            vocabulary_sha256: &support.vocabulary.sha256,
             max_seq: support.vocabulary.max_seq,
             leaves,
         })
+    }
+
+    /// Validate exact complete-leaf identity, including BOS/EOS and the deployed length bound.
+    pub fn validate_leaf(&self, tokens: &[u16]) -> Result<()> {
+        ensure!(
+            tokens.len() >= 3
+                && tokens.len() <= self.max_seq
+                && tokens.first() == Some(&1)
+                && tokens.last() == Some(&2)
+                && self.contains(tokens),
+            "complete registered BOS/EOS leaf within the frozen sequence cap required"
+        );
+        Ok(())
+    }
+
+    pub fn leaf_count(&self) -> usize {
+        self.leaves.len()
     }
 
     pub fn contains(&self, tokens: &[u16]) -> bool {

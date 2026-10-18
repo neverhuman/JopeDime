@@ -907,6 +907,24 @@ impl BoundVocabulary {
         &self.identity
     }
 
+    /// Encode a canonical program only when it round-trips through this byte-bound native
+    /// vocabulary and stays inside the native policy sequence cap.
+    pub fn representable_tokens(&self, program: &str) -> Result<Vec<usize>> {
+        let tokens = self.vocab.encode(program)?;
+        ensure!(
+            tokens.len() <= MAX_PROGRAM_TOKENS
+                && tokens.first() == Some(&BOS)
+                && tokens.last() == Some(&EOS),
+            "program exceeds native cap or lacks BOS/EOS"
+        );
+        self.vocab.replay(&tokens)?;
+        ensure!(
+            self.vocab.decode(&tokens)? == program,
+            "native program round-trip mismatch"
+        );
+        Ok(tokens)
+    }
+
     pub(crate) fn shared_vocab(&self) -> Arc<Vocab> {
         Arc::clone(&self.vocab)
     }

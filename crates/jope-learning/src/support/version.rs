@@ -78,6 +78,13 @@ pub struct FrozenSupport {
 }
 
 impl FrozenSupport {
+    /// Whether the immutable support already contains this canonical program identity.
+    pub fn contains_program(&self, program: &Program) -> bool {
+        self.programs
+            .iter()
+            .any(|existing| existing.program_sha256 == program.program_sha256)
+    }
+
     pub fn freeze(request: FreezeRequest) -> Result<Self> {
         let hash = canonical_sha256(&request.catalog)?;
         ensure!(

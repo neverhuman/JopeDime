@@ -174,6 +174,39 @@ fn request() -> FreezeRequest {
         candidates: vec![],
     }
 }
+
+#[test]
+fn transition_law_adapter_preserves_v1_leaf_bytes_and_g12_refusal() {
+    let support = FrozenSupport::freeze(request()).unwrap();
+    let original_bytes = serde_json::to_vec(&support).unwrap();
+    let original_programs = support.programs.clone();
+    let trie = Trie::new(&support).unwrap();
+    let law = CloverBehaviorLaw::new(&trie, &support.vocabulary.sha256, 1.0).unwrap();
+
+    assert_eq!(trie.leaf_count(), original_programs.len());
+    assert!(!support.qualified);
+    assert_eq!(support.qualified_use, "BLOCKED_JEPSON_G12");
+    assert!(!support.availability_grants_context_outcome_eligibility);
+    let mut total_mass = 0.0;
+    for program in &original_programs {
+        trie.validate_leaf(&program.tokens).unwrap();
+        let rows: Vec<_> = (1..program.tokens.len())
+            .map(|position| LogitsRow {
+                prefix: program.tokens[..position].to_vec(),
+                logits: vec![0.0; 282],
+            })
+            .collect();
+        total_mass += law
+            .teacher_forced(&trie, &program.tokens, &rows)
+            .unwrap()
+            .log_probability
+            .exp();
+    }
+    assert!((total_mass - 1.0).abs() < 1e-12);
+    assert_eq!(support.programs, original_programs);
+    assert_eq!(serde_json::to_vec(&support).unwrap(), original_bytes);
+}
+
 fn logits(trie: &Trie<'_>, tokens: &[u16]) -> Vec<LogitsRow> {
     (1..tokens.len())
         .map(|pos| {

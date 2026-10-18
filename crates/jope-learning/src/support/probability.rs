@@ -1,4 +1,5 @@
 use super::Trie;
+use crate::canon::is_hex64;
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 
@@ -22,6 +23,63 @@ pub struct Likelihood {
     pub aggregation: &'static str,
     pub log_probability: f64,
     pub per_token: Vec<f64>,
+}
+
+/// Immutable CLOVER sampler/scorer settings pinned to the exact support and vocabulary lineage.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CloverBehaviorLaw {
+    support_sha256: String,
+    vocabulary_sha256: String,
+    temperature: f64,
+}
+
+impl CloverBehaviorLaw {
+    pub fn new(trie: &Trie<'_>, vocabulary_sha256: &str, temperature: f64) -> Result<Self> {
+        ensure!(
+            is_hex64(trie.support_sha256)
+                && is_hex64(vocabulary_sha256)
+                && trie.vocabulary_sha256 == vocabulary_sha256,
+            "CLOVER support/vocabulary identity binding required"
+        );
+        ensure!(
+            temperature.is_finite() && (0.1..=2.0).contains(&temperature),
+            "CLOVER decoder temperature outside .1..2"
+        );
+        Ok(Self {
+            support_sha256: trie.support_sha256.to_owned(),
+            vocabulary_sha256: vocabulary_sha256.to_owned(),
+            temperature,
+        })
+    }
+
+    pub fn distribution(
+        &self,
+        trie: &Trie<'_>,
+        prefix: &[u16],
+        logits: &[f64],
+    ) -> Result<Distribution> {
+        self.bind_trie(trie)?;
+        Distribution::from_logits(trie, prefix, logits, self.temperature)
+    }
+
+    pub fn teacher_forced(
+        &self,
+        trie: &Trie<'_>,
+        tokens: &[u16],
+        logits: &[LogitsRow],
+    ) -> Result<Likelihood> {
+        self.bind_trie(trie)?;
+        Likelihood::teacher_forced(trie, tokens, logits, self.temperature)
+    }
+
+    fn bind_trie(&self, trie: &Trie<'_>) -> Result<()> {
+        ensure!(
+            trie.support_sha256 == self.support_sha256
+                && trie.vocabulary_sha256 == self.vocabulary_sha256,
+            "CLOVER behavior law support/vocabulary changed"
+        );
+        Ok(())
+    }
 }
 
 impl Distribution {
@@ -89,10 +147,7 @@ impl Likelihood {
         logits: &[LogitsRow],
         temperature: f64,
     ) -> Result<Self> {
-        ensure!(
-            trie.contains(tokens) && tokens.last() == Some(&2),
-            "complete registered EOS leaf required"
-        );
+        trie.validate_leaf(tokens)?;
         ensure!(
             logits.len() == tokens.len() - 1,
             "one logit row per predicted token required"
