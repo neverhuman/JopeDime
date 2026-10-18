@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veox.ai/schemas/jope.policy-arena.v2.schema.json",
+  "title": "JopeDime prospective policy discovery arena proposal",
+  "description": "A preregistration proposal only. It grants no execution, sealing, promotion, or serving authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "arena_id",
+    "status",
+    "execution_authorized",
+    "authority",
+    "estimand",
+    "comparison",
+    "controls",
+    "roster",
+    "missingness",
+    "multiplicity",
+    "uncertainty",
+    "evidence_bindings"
+  ],
+  "properties": {
+    "schema": { "const": "jope.policy-arena/v2" },
+    "arena_id": { "$ref": "#/$defs/id" },
+    "status": { "const": "proposal_unadopted" },
+    "execution_authorized": { "const": false },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adoption_status", "issuer_status", "adopted_adr", "roster_status"],
+      "properties": {
+        "adoption_status": { "const": "held" },
+        "issuer_status": { "enum": ["unknown", "identified_unverified", "verified"] },
+        "issuer_id": { "$ref": "#/$defs/id" },
+        "issuer_key_id": { "$ref": "#/$defs/id" },
+        "signature": { "type": "string", "minLength": 1 },
+        "signed_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "adopted_adr": { "type": ["string", "null"] },
+        "roster_status": { "enum": ["unknown", "proposed", "adopted"] },
+        "execution_grant_id": { "type": ["string", "null"] }
+      }
+    },
+    "estimand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "primary", "metric", "clock", "aggregation", "direction", "practical_margin", "nonprimary_diagnostics"],
+      "properties": {
+        "id": { "const": "policy_discovery_linear_budget_q_auc_difference_v1" },
+        "primary": { "const": "equal_family_mean_paired_q_auc_difference" },
+        "metric": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version", "units", "higher_is_better", "definition_sha256"],
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "version": { "type": "string", "minLength": 1 },
+            "units": { "type": "string", "minLength": 1 },
+            "higher_is_better": { "const": true },
+            "definition_sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "clock": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "units", "horizon", "normalization", "integration"],
+          "properties": {
+            "id": { "const": "cumulative_cpu_seconds" },
+            "units": { "const": "cpu_seconds" },
+            "horizon": { "type": "number", "exclusiveMinimum": 0 },
+            "normalization": { "const": "divide_by_common_horizon_clamp_0_1" },
+            "integration": { "const": "trapezoidal_include_baseline_at_zero_and_horizon" }
+          }
+        },
+        "aggregation": { "const": "equal_context_seed_within_family_then_equal_family" },
+        "direction": { "const": "positive_challenger_minus_incumbent" },
+        "practical_margin": { "type": "number", "exclusiveMinimum": 0 },
+        "nonprimary_diagnostics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["terminal_regularized_log_mse", "selected_artifact_log_rmse_auc_log_budget", "best_of_b"] }
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_parent", "incumbent_actor", "challenger_actor", "candidate_selection", "program_delta", "critic_allocation", "actor_policy_delta", "fresh_feedback_contrast"],
+      "properties": {
+        "accepted_parent": { "$ref": "#/$defs/artifact" },
+        "incumbent_actor": { "$ref": "#/$defs/artifact" },
+        "challenger_actor": { "$ref": "#/$defs/artifact" },
+        "candidate_selection": { "enum": ["single_candidate_frozen_before_outer_access", "development_selected_outer_holdout_untouched"] },
+        "program_delta": { "$ref": "#/$defs/contrast" },
+        "critic_allocation": { "$ref": "#/$defs/contrast" },
+        "actor_policy_delta": { "$ref": "#/$defs/contrast" },
+        "fresh_feedback_contrast": { "$ref": "#/$defs/contrast" }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strongest_simple_baseline", "shuffled_context", "matched_update_no_fresh_feedback", "matching_fields"],
+      "properties": {
+        "strongest_simple_baseline": { "type": "boolean" },
+        "shuffled_context": { "type": "boolean" },
+        "matched_update_no_fresh_feedback": { "const": true },
+        "matching_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 5,
+          "items": { "enum": ["update_count", "compute", "task_context_support", "initialization", "ancestry", "resource_clock"] }
+        }
+      }
+    },
+    "roster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "family_ids", "minimum_families", "contexts_by_family", "seeds_by_family", "outer_holdout", "exposure_audit_sha256"],
+      "properties": {
+        "role": { "enum": ["proposed_outer_confirmation", "development_only"] },
+        "family_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "minimum_families": { "type": "integer", "minimum": 2 },
+        "contexts_by_family": {
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+        },
+        "seeds_by_family": {
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "integer", "minimum": 0 } }
+        },
+        "outer_holdout": { "type": "boolean" },
+        "exposure_audit_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "missingness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_cell_dispositions", "failed_or_missing_rule", "retain_denominator", "imputation", "family_deletion"],
+      "properties": {
+        "expected_cell_dispositions": { "const": ["observed", "failed", "missing"] },
+        "failed_or_missing_rule": { "const": "retain_all_expected_cells_and_mark_primary_inconclusive" },
+        "retain_denominator": { "const": true },
+        "imputation": { "const": "none" },
+        "family_deletion": { "const": "none" }
+      }
+    },
+    "multiplicity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_endpoint_count", "primary_contrast_count", "efficacy_looks", "selection_method", "candidate_budget_hyperparameter_selection", "alpha_total", "alpha_plan", "outer_roster_sha256", "outer_reuse"],
+      "properties": {
+        "primary_endpoint_count": { "const": 1 },
+        "primary_contrast_count": { "const": 1 },
+        "efficacy_looks": { "const": 1 },
+        "selection_method": { "enum": ["single_preregistered_candidate", "alpha_spending", "untouched_outer_family_holdout"] },
+        "candidate_budget_hyperparameter_selection": { "type": "string", "minLength": 1 },
+        "alpha_total": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "alpha_plan": { "type": "string", "minLength": 1 },
+        "outer_roster_sha256": { "$ref": "#/$defs/sha256" },
+        "outer_reuse": { "const": "prohibited_after_confirmation" }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family_level_method", "resamples", "seed", "confidence_level", "minimum_detectable_effect", "power_target", "status"],
+      "properties": {
+        "family_level_method": { "type": "string", "minLength": 1 },
+        "resamples": { "type": "integer", "minimum": 1 },
+        "seed": { "type": "integer", "minimum": 0 },
+        "confidence_level": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "minimum_detectable_effect": { "type": "number", "exclusiveMinimum": 0 },
+        "power_target": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "status": { "enum": ["proposed_unvalidated", "independently_validated"] }
+      }
+    },
+    "evidence_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parent_sha256", "candidate_sha256", "source_sha256", "build_sha256", "evaluator_sha256", "resource_ledger_sha256", "analysis_sha256", "raw_results_sha256"],
+      "properties": {
+        "parent_sha256": { "$ref": "#/$defs/sha256" },
+        "candidate_sha256": { "$ref": "#/$defs/sha256" },
+        "source_sha256": { "$ref": "#/$defs/sha256" },
+        "build_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluator_sha256": { "$ref": "#/$defs/sha256" },
+        "resource_ledger_sha256": { "$ref": "#/$defs/sha256" },
+        "analysis_sha256": { "$ref": "#/$defs/sha256" },
+        "raw_results_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "authority": { "properties": { "issuer_status": { "const": "verified" } } } }
+      },
+      "then": {
+        "properties": {
+          "authority": {
+            "required": ["issuer_id", "issuer_key_id", "signature", "signed_manifest_sha256"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "multiplicity": { "properties": { "selection_method": { "const": "untouched_outer_family_holdout" } } } }
+      },
+      "then": {
+        "properties": {
+          "roster": {
+            "properties": {
+              "role": { "const": "proposed_outer_confirmation" },
+              "outer_holdout": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/+-]*$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "artifact_sha256", "source_sha256", "build_sha256", "initialization_id", "ancestry_id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "artifact_sha256": { "$ref": "#/$defs/sha256" },
+        "source_sha256": { "$ref": "#/$defs/sha256" },
+        "build_sha256": { "$ref": "#/$defs/sha256" },
+        "initialization_id": { "$ref": "#/$defs/id" },
+        "ancestry_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "contrast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "status", "matching_rule_sha256"],
+      "properties": {
+        "control_id": { "$ref": "#/$defs/id" },
+        "status": { "enum": ["required", "supported", "unsupported", "inconclusive"] },
+        "matching_rule_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}
