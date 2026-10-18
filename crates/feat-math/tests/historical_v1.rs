@@ -456,8 +456,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         changed_fixtures[0]
     );
     // Batch 4 algorithmic self-play additive feat-math modules: evaluator identity only.
-    let batch4_selfplay =
-        old_fixture("transitions/batch4_selfplay_identity_rebaseline.v1.json");
+    let batch4_selfplay = old_fixture("transitions/batch4_selfplay_identity_rebaseline.v1.json");
     assert_eq!(batch4_selfplay["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(batch4_selfplay["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
