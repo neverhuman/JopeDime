@@ -305,6 +305,21 @@ pub fn sample_legal<R: Rng>(
     Ok(draw_legal(logits, legal, temperature, rng)?)
 }
 
+/// Exact conditional token probabilities under the same legal mask, temperature conversion,
+/// and stable softmax weights consumed by [`sample_legal`]. This reads no RNG state.
+pub fn score_legal(logits: &[f32], legal: &[usize], temperature: f32) -> Result<Vec<(usize, f64)>> {
+    let weights = legal_weights(logits, legal, temperature)?;
+    let total: f64 = weights.iter().sum();
+    if !total.is_finite() || total <= 0.0 {
+        anyhow::bail!("empty legal token probability mass");
+    }
+    Ok(legal
+        .iter()
+        .copied()
+        .zip(weights.into_iter().map(|weight| weight / total))
+        .collect())
+}
+
 /// [`sample_legal`] with the failure kind; consumes one random draw only when it returns a
 /// token. NaN and +Inf legal logits fail; -Inf legal tokens have zero probability, like the
 /// reference `masked_fill(-inf)` softmax; logits of illegal tokens are never read.
