@@ -9,7 +9,8 @@ terminal time headroom, physical caps and withheld terminal capacity. Retrying,
 restoring or repeating a reservation cannot refresh that window. Work reserves
 capacity before preparation, encoding, compilation or fitting. Checkpoint,
 publication and custody stages can consume the terminal reserve, within the same
-original deadline. Reserved completion capacity is not a new execution grant.
+original deadline. Nonzero CPU and wall caps require positive withheld terminal
+capacity in those same units. Reserved completion capacity is not a new execution grant.
 
 ## Units and provenance
 

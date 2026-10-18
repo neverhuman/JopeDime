@@ -23,7 +23,11 @@ fn policy() -> Policy {
             (Unit::StorageOperations, 10),
             (Unit::MemoryByteSeconds, 1000),
         ]),
-        terminal_reserve: Amounts::new([(Unit::CpuCoreMicros, 100), (Unit::PeakMemoryBytes, 100)]),
+        terminal_reserve: Amounts::new([
+            (Unit::CpuCoreMicros, 100),
+            (Unit::AttemptWallMicros, 100),
+            (Unit::PeakMemoryBytes, 100),
+        ]),
         gpu_allocation: None,
         conversion: None,
     }
@@ -185,6 +189,11 @@ fn failed_compile_killed_fit_and_real_retry_keep_every_physical_charge() {
 
 #[test]
 fn original_deadline_cap_and_terminal_headroom_cannot_restart_on_retry() {
+    for unit in [Unit::CpuCoreMicros, Unit::AttemptWallMicros] {
+        let mut invalid = policy();
+        invalid.terminal_reserve.0.remove(&unit);
+        assert!(ResourceLedger::new(invalid).is_err());
+    }
     let mut ledger = ResourceLedger::new(policy()).unwrap();
     assert!(ledger
         .reserve(request("late", Stage::Fit), 8900, |_| Ok(()))
