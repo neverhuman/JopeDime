@@ -5,22 +5,34 @@
   "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
   "source_tree": "885189fe077e4a23acd7333370c1e95b57193bc4",
   "parent_sha": "0e063f4ce110dd142f18f8482867c2d3d237598c",
+  "write_scope_note": "Strictly scoped to I01.proposed_write_paths (docs/plans/algorithmic-selfplay-20261017/BASELINE.md, docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json as the versioned successor to immutable FILE_MAP.json, and crates/jope-records). docs/parity/test-inventory.json and README.md are intentionally left untouched because they are outside I01.proposed_write_paths, paper-trace couples them to docs/paper/NUMBERS_TRACE.md, and deploy/ci/test-inventory.sh:185-186 allows adding unit tests inside an existing target (jope-records/lib) without rewriting the committed floor inventory.",
   "historical_baseline_pins": [
     {
       "role": "initial_workplan_symbol_and_spec_pin",
       "source_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+      "tree_sha": "d12d9ea68f755c73abf0e0d1d13dbfed5e69b004",
+      "parent_sha": "5b8b8d56b4ff2458c97486c2ba6f1ebcd9a887bc",
       "note": "Initial planning source pin recorded in WORKPLAN.md, tasks.json, and SOURCE_SYMBOLS.json after PR #354."
     },
     {
       "role": "post_pr355_receiving_main_pin",
       "source_sha": "0b7eb89075b8186f1aacf1643725432e75e8fe56",
       "tree_sha": "1244b1bf83141c3f6a456107c788cfc7a17ef7dc",
+      "parent_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
       "note": "Receiving main after PR #355 merge (2026-10-17T17:35:17Z), verified in BASELINE_CURRENT.md and FILE_MAP.json with receiving runs 39054417420 and 39054417434 green."
+    },
+    {
+      "role": "reviewed_pr356_v4_source_head_pin",
+      "source_sha": "e127b5f01cacf0d98717241fcfdb0101d61a11d1",
+      "tree_sha": "885189fe077e4a23acd7333370c1e95b57193bc4",
+      "parent_sha": "3f9b8200f5b79d0fcb3a5ff5ab25cc695b918322",
+      "note": "Frozen v4 source head on PR #356: pull_request CI 39072349520, full 3-host workflow_dispatch CI 39072345903 (10/10 PASS), and independent Claude CLI APPROVED review 5560377959."
     },
     {
       "role": "post_pr356_receiving_main_pin",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "tree_sha": "885189fe077e4a23acd7333370c1e95b57193bc4",
+      "parent_sha": "0e063f4ce110dd142f18f8482867c2d3d237598c",
       "reviewed_pr_head_sha": "e127b5f01cacf0d98717241fcfdb0101d61a11d1",
       "note": "Receiving main after PR #356 rebase merge (2026-10-17T22:30:53Z), publishing docs/plans/algorithmic-selfplay-20261017/ (PACKET_MANIFEST.v4.json sha256 921643bc3ae0b7d75bbab13434f4d8211bc3c8638154c45ac00fc7df184750d5) with receiving main-guard 39075385530 and full-main-cpu 39075385526 green."
     }
@@ -38,14 +50,15 @@
       "symbol": "native_loop::verify_successor",
       "defining_path": "crates/jope-engine/src/native_loop.rs",
       "defining_line": 82,
+      "defining_signature": "fn verify_successor(next: &Config, previous: &Config, completion: &RunCompletion) -> Result<()>",
       "defining_file_sha256": "5185693d9b52a411e14daa1c7a5f01f571dba72e4c06227751ae81b2e9e27bd3",
       "package_name": "jope-parallel",
       "callers": [
-        "crates/jope-engine/src/native_loop.rs:1435",
-        "crates/jope-engine/src/native_loop.rs:2263",
-        "crates/jope-engine/src/native_loop.rs:2266",
-        "crates/jope-engine/src/native_loop.rs:2269",
-        "crates/jope-engine/src/native_loop.rs:2314"
+        "crates/jope-engine/src/native_loop.rs:1435 (Loop::preflight)",
+        "crates/jope-engine/src/native_loop.rs:2263 (tests)",
+        "crates/jope-engine/src/native_loop.rs:2266 (tests)",
+        "crates/jope-engine/src/native_loop.rs:2269 (tests)",
+        "crates/jope-engine/src/native_loop.rs:2314 (tests)"
       ],
       "related_witness_constraint": {
         "path": "crates/jope-engine/src/eval_registry/witness/epochs.rs",
@@ -61,56 +74,213 @@
       "symbol": "CheckpointBinding::require_challenger_identity",
       "defining_path": "crates/jope-policy/src/config.rs",
       "defining_line": 584,
+      "defining_signature": "pub fn require_challenger_identity(&self, expected: &ChallengerIdentity) -> Result<()>",
       "defining_file_sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
       "package_name": "jope-policy",
       "callers": [
-        "crates/jope-policy/src/config.rs:576",
-        "crates/jope-policy/src/seeds.rs:542",
-        "crates/jope-policy/src/challenger_tests.rs:287",
-        "crates/jope-policy/src/challenger_tests.rs:291"
+        "crates/jope-policy/src/config.rs:576 (CheckpointBinding::parse at crates/jope-policy/src/config.rs:468)",
+        "crates/jope-policy/src/seeds.rs:542 (seeds::propose_challenger)",
+        "crates/jope-policy/src/challenger_tests.rs:287 (tests)",
+        "crates/jope-policy/src/challenger_tests.rs:291 (tests)"
       ],
-      "current_behavior": "Refuses rejected checkpoints, requires self.step > ACCEPTED_STEP (60000) && self.step != REJECTED_STEP (60100), self.model_sha256 != ACCEPTED_MODEL_SHA256, exact state/parameter/config/policy_safetensors SHA-256 matches, and self.vocabulary_sha256 == CHECKPOINT_VOCABULARY_SHA256.",
+      "current_behavior": "Refuses REJECTED_STEP (69000, crates/jope-policy/src/lib.rs:173) and REJECTED_STATE_SHA256 / REJECTED_MODEL_SHA256, requires self.step > ACCEPTED_STEP (60000, crates/jope-policy/src/lib.rs:153), self.model_sha256 != ACCEPTED_MODEL_SHA256, exact state/parameter/config/policy_safetensors SHA-256 matches, and self.vocabulary_sha256 == CHECKPOINT_VOCABULARY_SHA256.",
       "capability_gap": "Numeric step check self.step > 60000 rejects legitimate low-step warm-start descendants (e.g. 3000-step optimizer-reset epochs) while numeric step alone would not prove ancestry without state/parent chain; addressed by I11 and I14 while keeping accepted serving checks strict."
     },
     {
       "symbol": "require_original_gpu_grant",
       "defining_path": "crates/jope-engine/src/task_contract.rs",
       "defining_line": 313,
+      "defining_signature": "pub fn require_original_gpu_grant(route: &str) -> Result<()>",
       "defining_file_sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d",
       "package_name": "jope-parallel",
+      "wrapper_symbol": {
+        "symbol": "require_qualified_gpu_experiment",
+        "defining_path": "crates/jope-engine/src/task_contract.rs",
+        "defining_line": 307,
+        "defining_signature": "pub fn require_qualified_gpu_experiment(route: &str) -> Result<()>"
+      },
+      "direct_routes": [
+        {
+          "path": "crates/jope-engine/src/campaign.rs",
+          "line": 192,
+          "route": "learning-campaign",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/components.rs",
+          "line": 163,
+          "route": "target-rank",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/components.rs",
+          "line": 274,
+          "route": "component-service",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/components.rs",
+          "line": 492,
+          "route": "foundation-rank",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/contexts.rs",
+          "line": 131,
+          "route": "assemble-contexts",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/contexts.rs",
+          "line": 686,
+          "route": "apply-contexts",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/contexts.rs",
+          "line": 737,
+          "route": "apply-contexts-numerical",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/controller.rs",
+          "line": 185,
+          "route": "proposal-controller",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/controller.rs",
+          "line": 612,
+          "route": "training-controller",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/encoding.rs",
+          "line": 83,
+          "route": "encode-cut",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/gpu_worker.rs",
+          "line": 276,
+          "route": "native-gpu-rank",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/gpu_worker.rs",
+          "line": 337,
+          "route": "resident-submit",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/gpu_worker.rs",
+          "line": 476,
+          "route": "resident-dispatch",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/monitoring.rs",
+          "line": 20,
+          "route": "monitor-checkpoint",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/pipeline.rs",
+          "line": 360,
+          "route": "learning-cycle",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/proposals.rs",
+          "line": 33,
+          "route": "proposal-rank",
+          "gate_fn": "require_original_gpu_grant"
+        },
+        {
+          "path": "crates/jope-engine/src/training.rs",
+          "line": 491,
+          "route": "train-rank",
+          "gate_fn": "require_original_gpu_grant"
+        }
+      ],
+      "indirect_routes_via_require_qualified_gpu_experiment": [
+        {
+          "path": "crates/jope-engine/src/ranked_proposals.rs",
+          "line": 739,
+          "route": "propose-ranked",
+          "gate_fn": "require_qualified_gpu_experiment"
+        },
+        {
+          "path": "crates/jope-engine/src/neural.rs",
+          "line": 1262,
+          "route": "nccl-probe",
+          "gate_fn": "require_qualified_gpu_experiment"
+        },
+        {
+          "path": "crates/jope-engine/src/neural.rs",
+          "line": 1392,
+          "route": "training-probe-rank",
+          "gate_fn": "require_qualified_gpu_experiment"
+        },
+        {
+          "path": "crates/jope-engine/src/controller.rs",
+          "line": 913,
+          "route": "probe-controller",
+          "gate_fn": "require_qualified_gpu_experiment"
+        },
+        {
+          "path": "crates/jope-engine/src/controller.rs",
+          "line": 1045,
+          "route": "training-probe-controller",
+          "gate_fn": "require_qualified_gpu_experiment"
+        },
+        {
+          "path": "crates/jope-engine/src/training.rs",
+          "line": 600,
+          "route": "qualify-batch-rank",
+          "gate_fn": "require_qualified_gpu_experiment"
+        }
+      ],
       "callers": [
         "crates/jope-engine/src/task_contract.rs:308 (require_qualified_gpu_experiment)",
-        "crates/jope-engine/src/campaign.rs:192 (learning-campaign)",
-        "crates/jope-engine/src/components.rs:163 (target-rank)",
-        "crates/jope-engine/src/components.rs:274 (component-service)",
-        "crates/jope-engine/src/components.rs:492 (foundation-rank)",
-        "crates/jope-engine/src/contexts.rs:131 (assemble-contexts)",
-        "crates/jope-engine/src/contexts.rs:686 (apply-contexts)",
-        "crates/jope-engine/src/contexts.rs:737 (apply-contexts-numerical)",
-        "crates/jope-engine/src/controller.rs:185 (proposal-controller)",
-        "crates/jope-engine/src/controller.rs:612 (training-controller)",
-        "crates/jope-engine/src/encoding.rs:83 (encode-cut)",
-        "crates/jope-engine/src/gpu_worker.rs:276 (native-gpu-rank)",
-        "crates/jope-engine/src/gpu_worker.rs:337 (resident-submit)",
-        "crates/jope-engine/src/gpu_worker.rs:476 (resident-dispatch)",
-        "crates/jope-engine/src/monitoring.rs:20 (monitor-checkpoint)",
-        "crates/jope-engine/src/pipeline.rs:360 (learning-cycle)",
-        "crates/jope-engine/src/proposals.rs:33 (proposal-rank)",
-        "crates/jope-engine/src/training.rs:491 (train-rank)"
+        "crates/jope-engine/src/campaign.rs:192 (learning-campaign, via require_original_gpu_grant)",
+        "crates/jope-engine/src/components.rs:163 (target-rank, via require_original_gpu_grant)",
+        "crates/jope-engine/src/components.rs:274 (component-service, via require_original_gpu_grant)",
+        "crates/jope-engine/src/components.rs:492 (foundation-rank, via require_original_gpu_grant)",
+        "crates/jope-engine/src/contexts.rs:131 (assemble-contexts, via require_original_gpu_grant)",
+        "crates/jope-engine/src/contexts.rs:686 (apply-contexts, via require_original_gpu_grant)",
+        "crates/jope-engine/src/contexts.rs:737 (apply-contexts-numerical, via require_original_gpu_grant)",
+        "crates/jope-engine/src/controller.rs:185 (proposal-controller, via require_original_gpu_grant)",
+        "crates/jope-engine/src/controller.rs:612 (training-controller, via require_original_gpu_grant)",
+        "crates/jope-engine/src/encoding.rs:83 (encode-cut, via require_original_gpu_grant)",
+        "crates/jope-engine/src/gpu_worker.rs:276 (native-gpu-rank, via require_original_gpu_grant)",
+        "crates/jope-engine/src/gpu_worker.rs:337 (resident-submit, via require_original_gpu_grant)",
+        "crates/jope-engine/src/gpu_worker.rs:476 (resident-dispatch, via require_original_gpu_grant)",
+        "crates/jope-engine/src/monitoring.rs:20 (monitor-checkpoint, via require_original_gpu_grant)",
+        "crates/jope-engine/src/pipeline.rs:360 (learning-cycle, via require_original_gpu_grant)",
+        "crates/jope-engine/src/proposals.rs:33 (proposal-rank, via require_original_gpu_grant)",
+        "crates/jope-engine/src/training.rs:491 (train-rank, via require_original_gpu_grant)",
+        "crates/jope-engine/src/ranked_proposals.rs:739 (propose-ranked, via require_qualified_gpu_experiment)",
+        "crates/jope-engine/src/neural.rs:1262 (nccl-probe, via require_qualified_gpu_experiment)",
+        "crates/jope-engine/src/neural.rs:1392 (training-probe-rank, via require_qualified_gpu_experiment)",
+        "crates/jope-engine/src/controller.rs:913 (probe-controller, via require_qualified_gpu_experiment)",
+        "crates/jope-engine/src/controller.rs:1045 (training-probe-controller, via require_qualified_gpu_experiment)",
+        "crates/jope-engine/src/training.rs:600 (qualify-batch-rank, via require_qualified_gpu_experiment)"
       ],
-      "current_behavior": "Shared dispatch hold across 17 native GPU routes; unconditionally returns Err(\"{route}: original native GPU grant verifier unavailable; numerical dispatch is held\").",
+      "current_behavior": "Shared dispatch hold across 23 native GPU routes (17 direct require_original_gpu_grant call sites + 6 call sites via require_qualified_gpu_experiment); unconditionally returns Err(\"{route}: original native GPU grant verifier unavailable; numerical dispatch is held\").",
       "capability_gap": "Intentional fail-closed hold; requires genuine issuer/verifier contract and explicit human/resource admission (I12, I65) before any live native GPU dispatch."
     },
     {
       "symbol": "RoundQualReport",
       "defining_path": "crates/jope-learning/src/clover/round_qual.rs",
       "defining_line": 537,
+      "defining_signature": "pub struct RoundQualReport",
       "defining_file_sha256": "2c9280146786979fef1cfaa4087f26137fbefa042580939c8eeaabaa2bf8c6a5",
       "package_name": "jope-learning",
       "callers": [
         "crates/jope-learning/src/clover/round_qual.rs:1359 (qualify_rounds)",
         "crates/jope-learning/src/clover/round_qual.rs:1364 (qualify_rounds_with_prereg)",
-        "crates/jope-learning/src/bin/jope_pools.rs (jope_pools qualify-rounds)"
+        "crates/jope-learning/src/bin/jope_pools.rs:197,709,741 (jope_pools qualify-rounds)"
       ],
       "current_behavior": "Offline diagnostic verifier (jope.selfplay-round-qualification/v1) that unconditionally sets qualified_claim: false, promotion: false, and l6_claim: false, checking either unpinned/no-grant prereg contracts or caller-asserted receipts with create-only O_EXCL output.",
       "capability_gap": "Offline verifier does not re-hash raw search/observation payloads or authenticate external execution grants; prospective estimand/roster/exposure/authority authentication is scheduled in I41-I43."
@@ -120,47 +290,161 @@
     "search_vocabulary_vs_strategy": {
       "vocabulary_symbol": "SearchProfile",
       "vocabulary_path": "crates/feat-math/src/kernel/profile.rs",
+      "vocabulary_line": 238,
       "vocabulary_file_sha256": "b6da43c9990e80fde3f4dea5f00c662379b53e201aeb72e64faffa5db911f756",
-      "shipped_profile_factories": [
-        "legacy(false) -> legacy_v1",
-        "legacy(true) -> legacy_v2",
-        "kernel2(\"kernel2_default\")",
-        "kernel2(\"kernel2_conservative\")",
-        "kernel2(\"kernel2_wide\")",
-        "expression_operators",
-        "pipeline_operators"
+      "registry_function": "profiles",
+      "registry_lines": "727-738",
+      "shipped_kernel2_function": "shipped_kernel2_profiles",
+      "shipped_kernel2_lines": "748-753",
+      "registered_profiles": [
+        {
+          "id": "legacy-wrappers-v1",
+          "revision": 1,
+          "builder": "legacy(false)",
+          "line": 729,
+          "in_shipped_kernel2_profiles": false
+        },
+        {
+          "id": "legacy-wrappers-v2",
+          "revision": 1,
+          "builder": "legacy(true)",
+          "line": 730,
+          "in_shipped_kernel2_profiles": false
+        },
+        {
+          "id": "kernel2-baseline",
+          "revision": 1,
+          "builder": "kernel2(\"kernel2-baseline\")",
+          "line": 731,
+          "in_shipped_kernel2_profiles": false
+        },
+        {
+          "id": "kernel2-experimental",
+          "revision": 1,
+          "builder": "kernel2(\"kernel2-experimental\")",
+          "line": 732,
+          "in_shipped_kernel2_profiles": false
+        },
+        {
+          "id": "kernel2-baseline",
+          "revision": 2,
+          "builder": "expression_operators(\"kernel2-baseline\")",
+          "line": 733,
+          "in_shipped_kernel2_profiles": false
+        },
+        {
+          "id": "kernel2-experimental",
+          "revision": 2,
+          "builder": "expression_operators(\"kernel2-experimental\")",
+          "line": 734,
+          "in_shipped_kernel2_profiles": false
+        },
+        {
+          "id": "kernel2-baseline",
+          "revision": 3,
+          "builder": "pipeline_operators(\"kernel2-baseline\")",
+          "line": 735,
+          "in_shipped_kernel2_profiles": true
+        },
+        {
+          "id": "kernel2-experimental",
+          "revision": 3,
+          "builder": "pipeline_operators(\"kernel2-experimental\")",
+          "line": 736,
+          "in_shipped_kernel2_profiles": true
+        }
       ],
-      "strategy_axis_status": "PROPOSED_SEPARATE_AXIS_I17_D08",
-      "reconciliation_rule": "SearchProfile defines operator vocabulary, expression pools, and complexity limits; SearchStrategy (I17-I19, D08) defines the search algorithm (frozen legacy, lite-race, candidate modern GP) and must never be conflated with SearchProfile."
+      "product_and_benchmark_profile_mapping": [
+        {
+          "cli_and_bench_id": "legacy",
+          "product_path": "crates/jope-pipeline/src/kernel2/messages.rs:4",
+          "product_cli_gate": "crates/jope-pipeline/src/kernel2/cli.rs:79-94 (DEFAULT_SEARCH_PROFILE = \"legacy\" -> Ok(None), routes to run_cuts_with with feat_math::evolve v1 canonical-pipeline wrappers)",
+          "benchmark_path": "crates/jope-bench/src/ablation.rs:109-112,133,156-157 (Profile::Legacy::id() == \"legacy\" -> Ok(None), routes to run_cuts_with with SearchOptions::new and feat_math::evolve v1 canonical-pipeline wrappers)",
+          "resolved_registry_id": "legacy-wrappers-v1",
+          "resolved_registry_revision": 1,
+          "resolution_mechanism": "semantic_v1_wrapper_equivalence_not_direct_profile_lookup (ablation.rs:110-111 documents v1 canonical-pipeline wrappers; neither product nor benchmark calls feat_math::kernel::profile::profile(\"legacy-wrappers-v1\", 1) directly)"
+        },
+        {
+          "cli_and_bench_id": "kernel2-baseline",
+          "product_path": "crates/jope-pipeline/src/kernel2/cli.rs:96",
+          "product_cli_gate": "crates/jope-pipeline/src/kernel2/search.rs:48-51 (shipped_kernel2_profiles().into_iter().find(|p| p.id == profile))",
+          "benchmark_path": "crates/jope-bench/src/ablation.rs:113-117,134,150-175 (Profile::Kernel2Baseline::id() == \"kernel2-baseline\" -> kernel2::search::Options::new)",
+          "resolved_registry_id": "kernel2-baseline",
+          "resolved_registry_revision": 3,
+          "resolution_mechanism": "shipped_kernel2_profiles (crates/feat-math/src/kernel/profile.rs:750)"
+        },
+        {
+          "cli_and_bench_id": "kernel2-experimental",
+          "product_path": "crates/jope-pipeline/src/kernel2/cli.rs:96",
+          "product_cli_gate": "crates/jope-pipeline/src/kernel2/search.rs:48-51 (shipped_kernel2_profiles().into_iter().find(|p| p.id == profile))",
+          "benchmark_path": "crates/jope-bench/src/ablation.rs:118-119,135,150-175 (Profile::Kernel2Experimental::id() == \"kernel2-experimental\" -> kernel2::search::Options::new)",
+          "resolved_registry_id": "kernel2-experimental",
+          "resolved_registry_revision": 3,
+          "resolution_mechanism": "shipped_kernel2_profiles (crates/feat-math/src/kernel/profile.rs:751)"
+        }
+      ],
+      "strategy_axis_symbol": "SearchStrategy",
+      "strategy_axis_status": "planned_not_in_source_at_22939ca1 (PROPOSED_SEPARATE_AXIS_I17_D08)",
+      "reconciliation_rule": "SearchProfile (crates/feat-math/src/kernel/profile.rs:238) defines operator vocabulary, expression pools, and complexity limits across 8 registered (id, revision) entries (of which legacy->v1 wrapper, kernel2-baseline rev 3, and kernel2-experimental rev 3 are wired in jope-pipeline and jope-bench); SearchStrategy (I17-I19, D08) is a planned orthogonal algorithm axis that does not exist in crates/ at 22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d and must never be conflated with SearchProfile."
     },
     "model_lineages": [
       {
         "lineage_id": "lineage_b_native_accepted_step60000",
-        "architecture": "512x6 PolicyLM (native tch / Candle)",
+        "architecture": "512x6 PolicyLM (native tch / Candle; PolicyConfig::regression(401) at crates/jope-policy/src/config.rs:39-55 and neural::Config::regression at crates/jope-engine/src/neural.rs:45-60)",
+        "width": 512,
+        "layers": 6,
+        "heads": 4,
+        "ffn": 2048,
+        "max_seq": 128,
+        "architecture_witness_path": "crates/jope-policy/src/config.rs",
+        "architecture_witness_line": 39,
         "vocabulary_tokens": 401,
+        "vocabulary_witness_path": "crates/jope-engine/assets/grammar/featmath.json",
+        "vocabulary_witness_line": 1,
+        "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+        "vocabulary_constant_witness": "crates/jope-policy/src/lib.rs:162,175-181",
         "context_length": 2048,
+        "context_witness_path": "crates/jope-policy/src/context.rs",
+        "context_witness_line": 53,
         "accepted_step": 60000,
-        "rejected_continuation_step": 60100,
-        "state_sha256": "8ac80c26856734696935852f29500263a9703802505966a58e13a9769699e083",
-        "defining_path": "crates/jope-policy/src/config.rs",
-        "defining_file_sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
+        "accepted_step_witness": "crates/jope-policy/src/lib.rs:153",
+        "rejected_checkpoint_step": 69000,
+        "rejected_checkpoint_witness": "crates/jope-policy/src/lib.rs:173",
+        "historical_rtx3090_continuation_step": 60100,
+        "historical_rtx3090_witness": "docs/adr/ADR-0005-canonical-learning-loop.md:53",
+        "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+        "state_sha256_witness": "crates/jope-policy/src/lib.rs:147-148",
+        "defining_path": "crates/jope-policy/src/lib.rs",
+        "defining_file_sha256": "afc93bdf7f30363abef49ae087e2ce5ca6e9604447c4d523be42d324d19bce29",
         "status": "CONFIRMED_ACCEPTED_SERVING_BASELINE"
       },
       {
         "lineage_id": "clover_rlfw_prefix_trie_282",
-        "architecture": "CLOVER / RLFW prefix-trie policy (282 tokens, 2051 trie nodes)",
+        "architecture": "CLOVER / RLFW byte-piece prefix-trie policy (282-token vocabulary; dynamic jope.flywheel-full-catalog-trie/v1 trie)",
         "vocabulary_tokens": 282,
-        "trie_nodes": 2051,
-        "defining_path": "crates/jope-learning/src/support/mod.rs",
-        "defining_file_sha256": "fa138dd6203b7bed0cc296193fdefaced2b66293b462c2ba56ed3d6bc12160bb",
+        "vocabulary_witness_path": "crates/jope-learning/src/support/tokenizer.rs",
+        "vocabulary_witness_line": 64,
+        "logit_geometry_witness": "crates/jope-learning/src/support/probability.rs:38",
+        "trie_schema": "jope.flywheel-full-catalog-trie/v1",
+        "trie_schema_witness": "crates/jope-learning/src/support/version.rs:88",
+        "trie_nodes": "unknown",
+        "trie_nodes_note": "Trie<'a> in crates/jope-learning/src/support/trie.rs:6 is constructed dynamically from a loaded catalog artifact; no compiled node-count constant exists in crates/ at 22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d (2051 in decisions.json:147 is the proposal label Kumo2051).",
+        "defining_path": "crates/jope-learning/src/support/tokenizer.rs",
+        "defining_file_sha256": "564dcc76518f69580750b733245767141ef25d021bea8db3677121c05725db3c",
         "status": "CONFIRMED_RESEARCH_SHADOW_NON_SERVING"
       },
       {
         "lineage_id": "native_loop_v2_weight_warm_start",
-        "architecture": "Experimental 256x2 / weight-warm-start native loop (jope.native_loop.v2)",
-        "vocabulary_tokens": 401,
-        "context_length": 2048,
+        "architecture": "Weight-warm-start native loop protocol (jope.native_loop.v2, fresh FP32 AdamW, 3000-step block windows)",
+        "loop_v1_schema": "jope.native_loop.v1",
+        "loop_v2_schema": "jope.native_loop.v2",
+        "warm_start_schema": "jope.native_weight_warm_start.v1",
+        "completion_v2_schema": "jope.native_loop_completion.v2",
+        "block_updates": 3000,
+        "warm_start_override_width_layers": "unknown",
+        "warm_start_override_note": "crates/jope-engine/src/native_loop/warm_start.rs:24-83 binds parent checkpoint weights and optimizer reset windows (0->3000->6000) without overriding model width/layers; 256x2 appears only in planning docs (WORKPLAN.md / decisions.json D07) for prospective warm-start sizing, while neural::Config::regression in crates/jope-engine/src/neural.rs:45-60 defaults to width=512, layers=6.",
         "defining_path": "crates/jope-engine/src/native_loop/warm_start.rs",
+        "defining_line": 24,
         "defining_file_sha256": "a833660625ccedd7b592192d8b918b85ff8576fb3a328467a4898308d07f6025",
         "status": "CONFIRMED_EXPERIMENTAL_NO_SUCCESSOR_PROTOCOL"
       }
@@ -173,7 +457,10 @@
       "classification": "confirmed",
       "category": "current_ci",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v4.json"
+      "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v4.json",
+      "witness_line": 1,
+      "evidence_sha256": "921643bc3ae0b7d75bbab13434f4d8211bc3c8638154c45ac00fc7df184750d5",
+      "live_qualification_active": false
     },
     {
       "id": "SF02",
@@ -181,23 +468,32 @@
       "classification": "confirmed",
       "category": "current_ci",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "crates/jope-engine/src/native_loop.rs"
+      "path": "crates/jope-engine/src/native_loop.rs",
+      "witness_line": 82,
+      "evidence_sha256": "5185693d9b52a411e14daa1c7a5f01f571dba72e4c06227751ae81b2e9e27bd3",
+      "live_qualification_active": false
     },
     {
       "id": "SF03",
-      "statement": "CheckpointBinding::require_challenger_identity requires step > 60000, step != 60100, and exact state/parameter/config/safetensors/vocabulary SHA-256 matches.",
+      "statement": "CheckpointBinding::require_challenger_identity (called by CheckpointBinding::parse) requires step > ACCEPTED_STEP (60000), step != REJECTED_STEP (69000), and exact state/parameter/config/safetensors/vocabulary SHA-256 matches.",
       "classification": "confirmed",
       "category": "current_ci",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "crates/jope-policy/src/config.rs"
+      "path": "crates/jope-policy/src/config.rs",
+      "witness_line": 584,
+      "evidence_sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
+      "live_qualification_active": false
     },
     {
       "id": "SF04",
-      "statement": "require_original_gpu_grant is an unconditional fail-closed hold across 17 routes in crates/jope-engine/src/.",
+      "statement": "require_original_gpu_grant (and its wrapper require_qualified_gpu_experiment) is an unconditional fail-closed hold across 23 routes (17 direct + 6 via require_qualified_gpu_experiment) in crates/jope-engine/src/.",
       "classification": "confirmed",
       "category": "current_ci",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "crates/jope-engine/src/task_contract.rs"
+      "path": "crates/jope-engine/src/task_contract.rs",
+      "witness_line": 313,
+      "evidence_sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d",
+      "live_qualification_active": false
     },
     {
       "id": "SF05",
@@ -205,15 +501,21 @@
       "classification": "confirmed",
       "category": "current_ci",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "crates/jope-learning/src/clover/round_qual.rs"
+      "path": "crates/jope-learning/src/clover/round_qual.rs",
+      "witness_line": 537,
+      "evidence_sha256": "2c9280146786979fef1cfaa4087f26137fbefa042580939c8eeaabaa2bf8c6a5",
+      "live_qualification_active": false
     },
     {
       "id": "SF06",
-      "statement": "Lineage B step-60000 (8ac80c26...) is the accepted serving policy; step-60100 is a historical unchanged-corpus RTX 3090 continuation (REJECTED_STEP) and not a serving promotion.",
+      "statement": "Lineage B step-60000 (ACCEPTED_STATE_SHA256 = 8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6) is the accepted serving policy; step-69000 (REJECTED_STEP in crates/jope-policy/src/lib.rs:173) and step-60100 (historical RTX 3090 continuation in ADR-0005) are not serving promotions.",
       "classification": "confirmed",
       "category": "historical_run",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "docs/adr/ADR-0005-canonical-learning-loop.md"
+      "path": "docs/adr/ADR-0005-canonical-learning-loop.md",
+      "witness_line": 1,
+      "evidence_sha256": "5dc627eeb0ea602b9808aa960d9e46e8ebd42aefe1903f607fa59303dca7b6d4",
+      "live_qualification_active": false
     },
     {
       "id": "SF07",
@@ -221,7 +523,11 @@
       "classification": "rejected",
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "docs/plans/algorithmic-selfplay-20261017/WORKPLAN.md"
+      "path": "docs/plans/algorithmic-selfplay-20261017/WORKPLAN.md",
+      "witness_line": 1,
+      "evidence_sha256": "45862904a0404f4ba83f58f7bfb9d424322a4a5dbe238783847dbcf2726adbc9",
+      "rejection_reason": "D03 confirms historical neural checkpoints executed real optimizer updates; D01/D24 confirm PR #356 is planning-only.",
+      "live_qualification_active": false
     },
     {
       "id": "SF08",
@@ -229,7 +535,11 @@
       "classification": "rejected",
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "docs/plans/algorithmic-selfplay-20261017/decisions.json"
+      "path": "docs/plans/algorithmic-selfplay-20261017/decisions.json",
+      "witness_line": 1,
+      "evidence_sha256": "e7bf91b12b96413328789bf1636b834b0e4e22e6ae10bba2ac47b316aaee25ac",
+      "rejection_reason": "Rejected by D16 (zero test_adaptive leakage), D12 (exact bandit propensity integral/MC required), and D20 (no automatic 30-day S3 expiry).",
+      "live_qualification_active": false
     },
     {
       "id": "SF09",
@@ -237,7 +547,11 @@
       "classification": "unknown",
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "docs/internal/clover/selfplay-round1-prereg.v1.json"
+      "path": "docs/internal/clover/selfplay-round1-prereg.v1.json",
+      "witness_line": 1,
+      "evidence_sha256": "unknown",
+      "resolution_gate": "Requires prospective preregistration and owner/G-JUDGE sign-off under I41-I43 and I65 before any round-qualification claim.",
+      "live_qualification_active": false
     },
     {
       "id": "SF10",
@@ -245,17 +559,21 @@
       "classification": "unknown",
       "category": "proposed_protocol",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
-      "path": "AGENTS.md"
+      "path": "AGENTS.md",
+      "witness_line": 1,
+      "evidence_sha256": "unknown",
+      "resolution_gate": "Requires external AWS IAM provisioning (I49) and independent full-filesystem restore + zero-consumer verification (I53).",
+      "live_qualification_active": false
     }
   ],
   "skipped_and_unavailable_runtimes": [
     {
       "id": "RT01",
-      "combination": "jope-parallel integration tests with crate-level #![cfg(feature = \"neural\")] run without --features neural",
+      "combination": "jope-parallel integration tests gated by feature = \"neural\" (18 whole-file #![cfg(feature = \"neural\")] test targets + 3 partially #[cfg(feature = \"neural\")] gated test targets) run without --features neural",
       "status": "SKIPPED_ZERO_TESTS_WITHOUT_FEATURE",
       "package_name": "jope-parallel",
-      "required_flag": "--features neural",
-      "affected_targets": [
+      "required_flag": "--features neural (executed in full-neural lane; 0-collected test filter is never counted as PASS)",
+      "whole_file_gated_targets": [
         "ablation_ranking",
         "bounded_assignment",
         "checkpoint_commit",
@@ -275,28 +593,58 @@
         "training",
         "training_ancestry"
       ],
+      "partially_gated_targets": [
+        "crates/jope-engine/tests/corpus.rs:29",
+        "crates/jope-engine/tests/request_integrity.rs:204",
+        "crates/jope-engine/tests/training_inputs.rs:184"
+      ],
+      "affected_targets": [
+        "ablation_ranking",
+        "bounded_assignment",
+        "checkpoint_commit",
+        "committed_updates",
+        "continuation_modes",
+        "frozen_inputs",
+        "gpu_entry_guards",
+        "lossless_partition",
+        "objective_fixtures",
+        "partition_wiring",
+        "proposal_ranking",
+        "ranked_proposals",
+        "replay_training",
+        "resident_worker",
+        "reward_sequence",
+        "trainer_topology",
+        "training",
+        "training_ancestry",
+        "corpus",
+        "request_integrity",
+        "training_inputs"
+      ],
       "source_path": "crates/jope-engine/Cargo.toml",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
     },
     {
       "id": "RT02",
-      "combination": "jope-policy challenger_tests filter run as external integration filter without --features testing",
+      "combination": "jope-policy integration test targets jope_dime and decode_outcomes with required-features = [\"testing\"] and #![cfg(feature = \"testing\")] run without --features testing (note: src/challenger_tests.rs is #[cfg(test)] in src/lib.rs:114-115 and runs in default rust-test)",
       "status": "GATED_BY_TESTING_FEATURE",
       "package_name": "jope-policy",
-      "required_flag": "--features testing",
+      "required_flag": "--features testing (executed in full-policy lane; crates/jope-policy/Cargo.toml:39-45)",
       "affected_targets": [
-        "challenger_tests"
+        "jope_dime (crates/jope-policy/tests/jope_dime.rs:18)",
+        "decode_outcomes (crates/jope-policy/tests/decode_outcomes.rs:15)"
       ],
+      "default_lane_note": "crates/jope-policy/src/challenger_tests.rs (6 tests) is #[cfg(test)] mod challenger_tests in crates/jope-policy/src/lib.rs:114-115 and executes in default rust-test.",
       "source_path": "crates/jope-policy/Cargo.toml",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
     },
     {
       "id": "RT03",
-      "combination": "Live native GPU dispatch across 17 jope-parallel routes guarded by require_original_gpu_grant",
+      "combination": "Live native GPU dispatch across all 23 jope-parallel routes held by require_original_gpu_grant (17 direct call sites + 6 call sites via require_qualified_gpu_experiment at crates/jope-engine/src/task_contract.rs:307-316)",
       "status": "HELD_ORIGINAL_GPU_GRANT_UNAVAILABLE",
       "package_name": "jope-parallel",
-      "required_flag": "genuine VerifiedFundingAdmission + human/resource admission (training_authorized=false)",
-      "affected_targets": [
+      "required_flag": "genuine VerifiedFundingAdmission + prospective human/resource admission (training_authorized=false; I12, I65)",
+      "direct_routes": [
         "learning-campaign",
         "target-rank",
         "component-service",
@@ -315,11 +663,461 @@
         "proposal-rank",
         "train-rank"
       ],
+      "indirect_routes_via_require_qualified_gpu_experiment": [
+        "propose-ranked",
+        "nccl-probe",
+        "training-probe-rank",
+        "probe-controller",
+        "training-probe-controller",
+        "qualify-batch-rank"
+      ],
+      "affected_targets": [
+        "learning-campaign",
+        "target-rank",
+        "component-service",
+        "foundation-rank",
+        "assemble-contexts",
+        "apply-contexts",
+        "apply-contexts-numerical",
+        "proposal-controller",
+        "training-controller",
+        "encode-cut",
+        "native-gpu-rank",
+        "resident-submit",
+        "resident-dispatch",
+        "monitor-checkpoint",
+        "learning-cycle",
+        "proposal-rank",
+        "train-rank",
+        "propose-ranked",
+        "nccl-probe",
+        "training-probe-rank",
+        "probe-controller",
+        "training-probe-controller",
+        "qualify-batch-rank"
+      ],
       "source_path": "crates/jope-engine/src/task_contract.rs",
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
     },
     {
       "id": "RT04",
+      "combination": "72 #[ignore] Rust tests across 12 workspace packages (28 test binaries) recorded in docs/parity/test-inventory.json (including jope-records::python_parity capture_parity_tree)",
+      "status": "IGNORED_BY_DEFAULT_TEST_HARNESS",
+      "package_name": "workspace",
+      "required_flag": "--ignored / explicit fixture or hardware environment (e.g. JOPE_PARITY_PIN_ROOT for capture_parity_tree)",
+      "total_ignored_count": 72,
+      "ignored_by_package": [
+        {
+          "package_name": "feat-math",
+          "ignored_count": 12,
+          "binaries": {
+            "feat-math": 6,
+            "feat-math::bench": 1,
+            "feat-math::fault_trace": 2,
+            "feat-math::gp_emitter_determinism": 1,
+            "feat-math::legacy_v2_freeze": 1,
+            "feat-math::search_admission": 1
+          }
+        },
+        {
+          "package_name": "hyperion",
+          "ignored_count": 1,
+          "binaries": {
+            "hyperion::weights_smoke": 1
+          }
+        },
+        {
+          "package_name": "jain-smartcluster-daemon",
+          "ignored_count": 16,
+          "binaries": {
+            "jain-smartcluster-daemon": 1,
+            "jain-smartcluster-daemon::gpu_host": 2,
+            "jain-smartcluster-daemon::linux_cgroup": 2,
+            "jain-smartcluster-daemon::performance": 1,
+            "jain-smartcluster-daemon::resident_kernel": 9,
+            "jain-smartcluster-daemon::soak": 1
+          }
+        },
+        {
+          "package_name": "jope-bench",
+          "ignored_count": 1,
+          "binaries": {
+            "jope-bench": 1
+          }
+        },
+        {
+          "package_name": "jope-ci",
+          "ignored_count": 8,
+          "binaries": {
+            "jope-ci::build_report": 2,
+            "jope-ci::build_report_python_parity": 6
+          }
+        },
+        {
+          "package_name": "jope-dime-regressor",
+          "ignored_count": 11,
+          "binaries": {
+            "jope-dime-regressor::bin/jope-dime-regressor": 9,
+            "jope-dime-regressor::dlgp_best5": 2
+          }
+        },
+        {
+          "package_name": "jope-parallel",
+          "ignored_count": 15,
+          "binaries": {
+            "jope-parallel": 8,
+            "jope-parallel::corpus_incremental": 3,
+            "jope-parallel::dashboard": 1,
+            "jope-parallel::families": 2,
+            "jope-parallel::sealed_storage": 1
+          }
+        },
+        {
+          "package_name": "jope-pipeline",
+          "ignored_count": 2,
+          "binaries": {
+            "jope-pipeline": 2
+          }
+        },
+        {
+          "package_name": "jope-policy",
+          "ignored_count": 3,
+          "binaries": {
+            "jope-policy": 3
+          }
+        },
+        {
+          "package_name": "jope-records",
+          "ignored_count": 1,
+          "binaries": {
+            "jope-records::python_parity": 1
+          }
+        },
+        {
+          "package_name": "numpy-pcg64",
+          "ignored_count": 1,
+          "binaries": {
+            "numpy-pcg64::sampling_golden": 1
+          }
+        },
+        {
+          "package_name": "starforge",
+          "ignored_count": 1,
+          "binaries": {
+            "starforge": 1
+          }
+        }
+      ],
+      "affected_targets": [
+        "feat-math (6 ignored)",
+        "feat-math::bench (1 ignored)",
+        "feat-math::fault_trace (2 ignored)",
+        "feat-math::gp_emitter_determinism (1 ignored)",
+        "feat-math::legacy_v2_freeze (1 ignored)",
+        "feat-math::search_admission (1 ignored)",
+        "hyperion::weights_smoke (1 ignored)",
+        "jain-smartcluster-daemon (1 ignored)",
+        "jain-smartcluster-daemon::gpu_host (2 ignored)",
+        "jain-smartcluster-daemon::linux_cgroup (2 ignored)",
+        "jain-smartcluster-daemon::performance (1 ignored)",
+        "jain-smartcluster-daemon::resident_kernel (9 ignored)",
+        "jain-smartcluster-daemon::soak (1 ignored)",
+        "jope-bench (1 ignored)",
+        "jope-ci::build_report (2 ignored)",
+        "jope-ci::build_report_python_parity (6 ignored)",
+        "jope-dime-regressor::bin/jope-dime-regressor (9 ignored)",
+        "jope-dime-regressor::dlgp_best5 (2 ignored)",
+        "jope-parallel (8 ignored)",
+        "jope-parallel::corpus_incremental (3 ignored)",
+        "jope-parallel::dashboard (1 ignored)",
+        "jope-parallel::families (2 ignored)",
+        "jope-parallel::sealed_storage (1 ignored)",
+        "jope-pipeline (2 ignored)",
+        "jope-policy (3 ignored)",
+        "jope-records::python_parity (1 ignored)",
+        "numpy-pcg64::sampling_golden (1 ignored)",
+        "starforge (1 ignored)"
+      ],
+      "source_path": "docs/parity/test-inventory.json",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
+    },
+    {
+      "id": "RT05",
+      "combination": "22 non-default workspace Cargo features catalogued in deploy/ci/coverage.json (7 GPU-only features with lanes=[], 1 benchmark-only timing-study feature with lanes=[], 6 full-suite-only CPU features in full-neural/full-policy/full-scratch/full-s3-offline, and 8 explicit opt-in CPU features in rust-test/rust-check) plus 3 required-features binary targets",
+      "status": "FEATURE_GATED_NON_DEFAULT_COMBINATIONS",
+      "package_name": "workspace",
+      "required_flag": "Explicit --features flag and corresponding lane/hardware (full-neural, full-policy, full-scratch, full-s3-offline, or GPU builder)",
+      "non_default_features": [
+        {
+          "feature_id": "feat-math/gpr-scratch-reuse",
+          "package_name": "feat-math",
+          "feature_name": "gpr-scratch-reuse",
+          "lanes": [
+            "full-scratch"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "hyperion/batch-worker",
+          "package_name": "hyperion",
+          "feature_name": "batch-worker",
+          "lanes": [
+            "rust-check",
+            "rust-test",
+            "full-default"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "hyperion/hyperion-cpu",
+          "package_name": "hyperion",
+          "feature_name": "hyperion-cpu",
+          "lanes": [
+            "rust-check",
+            "rust-test",
+            "full-default"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "hyperion/hyperion-cuda",
+          "package_name": "hyperion",
+          "feature_name": "hyperion-cuda",
+          "lanes": [],
+          "dispositions": [
+            "gpu"
+          ],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-arena/s3",
+          "package_name": "jope-arena",
+          "feature_name": "s3",
+          "lanes": [
+            "full-s3-offline"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-bench/asm",
+          "package_name": "jope-bench",
+          "feature_name": "asm",
+          "lanes": [
+            "rust-test",
+            "full-default"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "jope-bench/inference-cuda",
+          "package_name": "jope-bench",
+          "feature_name": "inference-cuda",
+          "lanes": [],
+          "dispositions": [
+            "gpu"
+          ],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-cli/asm",
+          "package_name": "jope-cli",
+          "feature_name": "asm",
+          "lanes": [
+            "rust-test",
+            "full-default"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "jope-cli/inference-cuda",
+          "package_name": "jope-cli",
+          "feature_name": "inference-cuda",
+          "lanes": [],
+          "dispositions": [
+            "gpu"
+          ],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-cli/qualified-training-context",
+          "package_name": "jope-cli",
+          "feature_name": "qualified-training-context",
+          "lanes": [
+            "rust-check",
+            "rust-test",
+            "inputs",
+            "full-default"
+          ],
+          "dispositions": [
+            "runtime-tools"
+          ],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "jope-dime-regressor/gpr-scratch-reuse",
+          "package_name": "jope-dime-regressor",
+          "feature_name": "gpr-scratch-reuse",
+          "lanes": [
+            "full-scratch"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-dime-regressor/gpu",
+          "package_name": "jope-dime-regressor",
+          "feature_name": "gpu",
+          "lanes": [],
+          "dispositions": [
+            "gpu"
+          ],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-parallel/gpr-scratch-reuse",
+          "package_name": "jope-parallel",
+          "feature_name": "gpr-scratch-reuse",
+          "lanes": [
+            "full-scratch"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-parallel/neural",
+          "package_name": "jope-parallel",
+          "feature_name": "neural",
+          "lanes": [
+            "full-neural"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-pipeline/neural-search",
+          "package_name": "jope-pipeline",
+          "feature_name": "neural-search",
+          "lanes": [
+            "rust-test",
+            "full-default"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "jope-pipeline/qualified-context",
+          "package_name": "jope-pipeline",
+          "feature_name": "qualified-context",
+          "lanes": [
+            "rust-test",
+            "full-default"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "jope-pipeline/timing-study",
+          "package_name": "jope-pipeline",
+          "feature_name": "timing-study",
+          "lanes": [],
+          "dispositions": [
+            "benchmark"
+          ],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-policy/context-producer",
+          "package_name": "jope-policy",
+          "feature_name": "context-producer",
+          "lanes": [
+            "rust-test",
+            "full-default",
+            "full-policy"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": true
+        },
+        {
+          "feature_id": "jope-policy/cuda",
+          "package_name": "jope-policy",
+          "feature_name": "cuda",
+          "lanes": [],
+          "dispositions": [
+            "gpu"
+          ],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-policy/inference-cuda",
+          "package_name": "jope-policy",
+          "feature_name": "inference-cuda",
+          "lanes": [],
+          "dispositions": [
+            "gpu"
+          ],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "jope-policy/testing",
+          "package_name": "jope-policy",
+          "feature_name": "testing",
+          "lanes": [
+            "full-policy"
+          ],
+          "dispositions": [],
+          "in_default_pr_rust_test": false
+        },
+        {
+          "feature_id": "starforge/cuda",
+          "package_name": "starforge",
+          "feature_name": "cuda",
+          "lanes": [],
+          "dispositions": [
+            "gpu"
+          ],
+          "in_default_pr_rust_test": false
+        }
+      ],
+      "required_feature_binaries": [
+        "hyperion::bin:hyperion-batch-worker (required-features = [\"hyperion-cpu\", \"batch-worker\"], crates/hyperion/Cargo.toml:39)",
+        "jope-pipeline::bin:jope-context-proof (required-features = [\"qualified-context\"], crates/jope-pipeline/Cargo.toml:40)",
+        "jope-policy::bin:jope-context-worker (required-features = [\"context-producer\"], crates/jope-policy/Cargo.toml:50)"
+      ],
+      "affected_targets": [
+        "feat-math/gpr-scratch-reuse",
+        "hyperion/batch-worker",
+        "hyperion/hyperion-cpu",
+        "hyperion/hyperion-cuda",
+        "jope-arena/s3",
+        "jope-bench/asm",
+        "jope-bench/inference-cuda",
+        "jope-cli/asm",
+        "jope-cli/inference-cuda",
+        "jope-cli/qualified-training-context",
+        "jope-dime-regressor/gpr-scratch-reuse",
+        "jope-dime-regressor/gpu",
+        "jope-parallel/gpr-scratch-reuse",
+        "jope-parallel/neural",
+        "jope-pipeline/neural-search",
+        "jope-pipeline/qualified-context",
+        "jope-pipeline/timing-study",
+        "jope-policy/context-producer",
+        "jope-policy/cuda",
+        "jope-policy/inference-cuda",
+        "jope-policy/testing",
+        "starforge/cuda"
+      ],
+      "source_path": "deploy/ci/coverage.json",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
+    },
+    {
+      "id": "RT06",
       "combination": "Docs-only pull_request CI path filter exclusions (inputs, e2e-smoke, python, rust-check, emitters, rust-test)",
       "status": "SKIPPED_BY_PATH_NOT_EXECUTED_COVERAGE",
       "package_name": "workspace",
@@ -336,7 +1134,7 @@
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
     },
     {
-      "id": "RT05",
+      "id": "RT07",
       "combination": "Native Grok provider screen 1061374.rlfw_g_judge",
       "status": "BLOCKED_PROVIDER_CREDITS_HTTP_402",
       "package_name": "external-provider",
@@ -363,6 +1161,7 @@
         "default",
         "gpr-scratch-reuse"
       ],
+      "required_feature_targets": {},
       "bins": [],
       "integration_tests": [
         "advanced_v3_conformance",
@@ -427,7 +1226,9 @@
         "tokens",
         "versioned_conversion"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/hyperion",
@@ -445,6 +1246,12 @@
         "hyperion-cpu",
         "hyperion-cuda"
       ],
+      "required_feature_targets": {
+        "bin:hyperion-batch-worker": [
+          "batch-worker",
+          "hyperion-cpu"
+        ]
+      },
       "bins": [
         "hyperion-batch-worker",
         "hyperion-v5-reference"
@@ -452,7 +1259,9 @@
       "integration_tests": [
         "weights_smoke"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-policy",
@@ -471,9 +1280,19 @@
         "inference-cuda",
         "testing"
       ],
+      "required_feature_targets": {
+        "bin:jope-context-worker": [
+          "context-producer"
+        ],
+        "test:jope_dime": [
+          "testing"
+        ],
+        "test:decode_outcomes": [
+          "testing"
+        ]
+      },
       "bins": [
-        "jope-context-worker",
-        "jope-policy-producer"
+        "jope-context-worker"
       ],
       "integration_tests": [
         "decode_outcomes",
@@ -481,7 +1300,12 @@
         "jope_dime",
         "scorer_dependencies"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": [
+        "decode_outcomes",
+        "jope_dime"
+      ]
     },
     {
       "member_dir": "crates/battle-gpu",
@@ -494,9 +1318,12 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [],
       "integration_tests": [],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-arena",
@@ -512,13 +1339,16 @@
         "default",
         "s3"
       ],
+      "required_feature_targets": {},
       "bins": [
         "jope-arena"
       ],
       "integration_tests": [
         "elo_regression"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-bench",
@@ -535,6 +1365,7 @@
         "default",
         "inference-cuda"
       ],
+      "required_feature_targets": {},
       "bins": [
         "jope-bench"
       ],
@@ -545,7 +1376,9 @@
         "pwlinear",
         "transfer_independent"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-engine",
@@ -560,21 +1393,8 @@
         "gpr-scratch-reuse",
         "neural"
       ],
-      "bins": [
-        "jope-build-receipt",
-        "jope-continuation-corpus",
-        "jope-gp-population",
-        "jope-gp-selection-replay",
-        "jope-native-graph",
-        "jope-native-loop",
-        "jope-native-observer",
-        "jope-native-provisioner",
-        "jope-native-recovery",
-        "jope-parallel",
-        "jope-prove-native-grant-request",
-        "jope-smartcluster-worker",
-        "jope-witness-ssh"
-      ],
+      "required_feature_targets": {},
+      "bins": [],
       "integration_tests": [
         "ablation_ranking",
         "atomic_write",
@@ -655,7 +1475,13 @@
         "trainer_topology",
         "training",
         "training_ancestry"
-      ]
+      ],
+      "partially_neural_gated_integration_tests": [
+        "corpus",
+        "request_integrity",
+        "training_inputs"
+      ],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-campaigns",
@@ -669,64 +1495,8 @@
         "gpr-scratch-reuse",
         "gpu"
       ],
-      "bins": [
-        "aspfm_recovery_evolve",
-        "corpus_eval",
-        "jope-dime-regressor",
-        "jope_canary_executor",
-        "jope_capacity",
-        "jope_causal_evidence",
-        "jope_causal_pair_repair",
-        "jope_compile_cache",
-        "jope_dlgp_best5",
-        "jope_dlgp_best5_worker",
-        "jope_dlgp_budget_supervisor",
-        "jope_effective_unit_audit",
-        "jope_encoder_supervisor",
-        "jope_encoder_v2_capacity",
-        "jope_encoder_v2_import",
-        "jope_expanded_catalog",
-        "jope_flywheel_liveness",
-        "jope_generalized_gp",
-        "jope_gp_bridge",
-        "jope_gpu_lane_admission",
-        "jope_hyperion_cache",
-        "jope_hyperion_gate",
-        "jope_ledger_reconciler",
-        "jope_ops_health_check",
-        "jope_queue_control",
-        "jope_reporting",
-        "jope_sealed_zeroshot",
-        "jope_selfplay_alarms",
-        "jope_selfplay_bundle",
-        "jope_selfplay_corpus_freezer",
-        "jope_selfplay_expansion_driver",
-        "jope_selfplay_freshness",
-        "jope_selfplay_gc",
-        "jope_selfplay_mcp",
-        "jope_selfplay_promotion",
-        "jope_selfplay_propose_driver",
-        "jope_selfplay_queue",
-        "jope_selfplay_shadow",
-        "jope_selfplay_status",
-        "jope_selfplay_supply",
-        "jope_selfplay_trainer_watchdog",
-        "jope_selfplay_tui",
-        "jope_selfplay_wave",
-        "jope_spec_drift",
-        "jope_strategy_screen",
-        "jope_task_elo",
-        "jope_task_learning_controller",
-        "jope_task_rating",
-        "jope_timeseries_export",
-        "jope_training_archive",
-        "jope_training_history",
-        "jope_training_replica",
-        "jope_utilization_supervisor",
-        "jope_v3_control",
-        "scq_runs_gc",
-        "search-v3"
-      ],
+      "required_feature_targets": {},
+      "bins": [],
       "integration_tests": [
         "dlgp_best5",
         "dlgp_budget_campaign",
@@ -740,7 +1510,9 @@
         "selfplay_shadow_integration",
         "systemd_unit_paths"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-ci",
@@ -753,6 +1525,7 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
         "jope-ci"
       ],
@@ -762,7 +1535,9 @@
         "cargo_artifact",
         "cargo_artifact_python_parity"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-cli",
@@ -780,16 +1555,18 @@
         "inference-cuda",
         "qualified-training-context"
       ],
+      "required_feature_targets": {},
       "bins": [
-        "jope",
-        "jope-cli"
+        "jope"
       ],
       "integration_tests": [
         "fitted_cpp_cli",
         "offline_cli",
         "pipeline_cli"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-datasets",
@@ -802,6 +1579,7 @@
       "in_default_members": true,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
         "jope-datasets"
       ],
@@ -815,7 +1593,9 @@
         "schema_agreement",
         "staging_disposition"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-encoders",
@@ -831,8 +1611,8 @@
         "cuda",
         "default"
       ],
+      "required_feature_targets": {},
       "bins": [
-        "model_bundle_pack",
         "starforge"
       ],
       "integration_tests": [
@@ -842,7 +1622,9 @@
         "novel_input_differential",
         "target_encoder_parity"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-models",
@@ -855,13 +1637,16 @@
       "in_default_members": true,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
         "jope-models"
       ],
       "integration_tests": [
         "roundtrip"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-learning",
@@ -874,12 +1659,9 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
-        "jope-learning",
-        "jope_custody",
-        "jope_pools",
-        "jope_retention",
-        "jope_support"
+        "jope-learning"
       ],
       "integration_tests": [
         "champions_fixture",
@@ -904,7 +1686,9 @@
         "state_resolve",
         "support"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-motifs",
@@ -917,9 +1701,12 @@
       "in_default_members": true,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [],
       "integration_tests": [],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-paths",
@@ -932,11 +1719,12 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
-      "bins": [
-        "jope-units-render"
-      ],
+      "required_feature_targets": {},
+      "bins": [],
       "integration_tests": [],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-pipeline",
@@ -954,6 +1742,11 @@
         "qualified-context",
         "timing-study"
       ],
+      "required_feature_targets": {
+        "bin:jope-context-proof": [
+          "qualified-context"
+        ]
+      },
       "bins": [
         "jope-context-proof"
       ],
@@ -961,7 +1754,9 @@
         "dependency_fence",
         "schema_agreement"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/jope-records",
@@ -974,13 +1769,17 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
         "jope-records"
       ],
       "integration_tests": [
-        "python_parity"
+        "python_parity",
+        "records"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/numpy-pcg64",
@@ -993,12 +1792,15 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [],
       "integration_tests": [
         "first_outputs",
         "sampling_golden"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/smartcluster/jain-smartcluster-core",
@@ -1009,9 +1811,12 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [],
       "integration_tests": [],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/smartcluster/jain-smartcluster",
@@ -1022,12 +1827,15 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [],
       "integration_tests": [
         "native_fit_protocol",
         "wire_contract"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/smartcluster/jain-smartcluster-fabric",
@@ -1038,9 +1846,12 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [],
       "integration_tests": [],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/smartcluster/jain-smartcluster-daemon",
@@ -1051,6 +1862,7 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
         "scqd"
       ],
@@ -1063,7 +1875,9 @@
         "restart_chaos",
         "soak"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/smartcluster/jain-worker",
@@ -1074,11 +1888,14 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
         "jain-worker"
       ],
       "integration_tests": [],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/smartcluster/jainnode",
@@ -1089,13 +1906,14 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
-      "bins": [
-        "jainnode"
-      ],
+      "required_feature_targets": {},
+      "bins": [],
       "integration_tests": [
         "rustls_provider"
       ],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     },
     {
       "member_dir": "crates/smartcluster/scq",
@@ -1106,16 +1924,140 @@
       "in_default_members": false,
       "directory_matches_package_name": true,
       "features": [],
+      "required_feature_targets": {},
       "bins": [
         "scq"
       ],
       "integration_tests": [],
-      "neural_gated_integration_tests": []
+      "neural_gated_integration_tests": [],
+      "partially_neural_gated_integration_tests": [],
+      "testing_gated_integration_tests": []
     }
   ],
   "schemas": [
     {
+      "path": "crates/smartcluster/schemas/jain.appliance-role-v2.schema.json",
+      "scope": "smartcluster",
+      "bytes": 4074,
+      "sha256": "c3439ddfc4a1875bca7e525e3c43cd591881be9a8cdc842f723271ced73f22a4",
+      "schema_id": "jain.appliance-role/v2",
+      "title": "Signed Jain appliance role v2"
+    },
+    {
+      "path": "crates/smartcluster/schemas/jain.node.storage-config-v1.schema.json",
+      "scope": "smartcluster",
+      "bytes": 2267,
+      "sha256": "7592184b9f9334f2861f45820d859a1d88559275420c3aa63a39cc7fe98212cb",
+      "schema_id": "jain.node.storage-config/v1",
+      "title": "JainNode storage configuration v1"
+    },
+    {
+      "path": "crates/smartcluster/schemas/jain.node.storage-control-v1.schema.json",
+      "scope": "smartcluster",
+      "bytes": 5313,
+      "sha256": "ec361ad1e8208d1110fe6c51305928d66b51e8c8f931d7259926924e29a9d337",
+      "schema_id": "jain.node.storage-control/v1",
+      "title": "Signed JainNode closed storage control request v1"
+    },
+    {
+      "path": "crates/smartcluster/schemas/jain.node.storage-telemetry-v1.schema.json",
+      "scope": "smartcluster",
+      "bytes": 4621,
+      "sha256": "220984a1cdc1f8b5c44557fce6251ca4c81cf2f7761c382c63aa726ebb18a255",
+      "schema_id": "jain.node.storage-telemetry/v1",
+      "title": "Signed JainNode storage telemetry v1"
+    },
+    {
+      "path": "crates/smartcluster/schemas/jain.storage-fragment-receipt-v1.schema.json",
+      "scope": "smartcluster",
+      "bytes": 2738,
+      "sha256": "bd658840555f80d2f22a76eb5337faf4900dd932d73d59cf6d344f54802279c3",
+      "schema_id": "jain.storage-fragment-receipt/v1",
+      "title": "Signed JainNode storage fragment receipt v1"
+    },
+    {
+      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/schemas/jope.dl-gp-exposed-record.schema.json",
+      "scope": "dl_trainonly",
+      "bytes": 6296,
+      "sha256": "919dc3b7b5315c04f0c468861df680f4388727d4a91d6e9175774c53ddcf9a7b",
+      "schema_id": "jope.dl-gp-exposed-record/v1",
+      "title": "jope.dl-gp-exposed-record/v1"
+    },
+    {
+      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/schemas/jope.dl-gp-lineage-record.schema.json",
+      "scope": "dl_trainonly",
+      "bytes": 2889,
+      "sha256": "e6000473cd6e3fac550353368963008cc812e0140543daaa365ec560f1a52e11",
+      "schema_id": "jope.dl-gp-lineage-record/v1",
+      "title": "jope.dl-gp-lineage-record/v1"
+    },
+    {
+      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/schemas/jope.dl-gp-refused-record.schema.json",
+      "scope": "dl_trainonly",
+      "bytes": 786,
+      "sha256": "49f2ddf2733344e79c4a5fe156a0342dc940ff7a9359b3116e7535d83487c459",
+      "schema_id": "jope.dl-gp-refused-record/v1",
+      "title": "jope.dl-gp-refused-record/v1"
+    },
+    {
+      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/schemas/jope.dl-gp-train-context.schema.json",
+      "scope": "dl_trainonly",
+      "bytes": 1841,
+      "sha256": "c0b57a0d112447f3e77c4af9812f6c16a84c2805a4d223cb6a448ef44c328898",
+      "schema_id": "jope.dl-gp-train-context/v1",
+      "title": "jope.dl-gp-train-context/v1"
+    },
+    {
+      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/schemas/jope.dl-gp-train-record.schema.json",
+      "scope": "dl_trainonly",
+      "bytes": 1962,
+      "sha256": "783473e4f2302a8917fd0212dc7f1e14bd8816467add8d98de28a5c80d4442af",
+      "schema_id": "jope.dl-gp-train-record/v1",
+      "title": "jope.dl-gp-train-record/v1"
+    },
+    {
+      "path": "deploy/lambda/regression/schemas/jope.gp-context-event.v1.schema.json",
+      "scope": "lambda_regression",
+      "bytes": 870,
+      "sha256": "512fc5582b8eed3f7e80dafc28f166a4e165964170d3afd18e25e06616759d23",
+      "schema_id": "urn:jope.gp-context-event/v1",
+      "title": "jope.gp-context-event/v1"
+    },
+    {
+      "path": "deploy/lambda/regression/schemas/jope.gp-context-head.v1.schema.json",
+      "scope": "lambda_regression",
+      "bytes": 750,
+      "sha256": "716ca69694525af9d946b4f98fdf40b8426160864041452d30bfc05b2b326e0b",
+      "schema_id": "urn:jope.gp-context-head/v1",
+      "title": "jope.gp-context-head/v1"
+    },
+    {
+      "path": "deploy/lambda/regression/schemas/jope.gp-evaluation.v1.schema.json",
+      "scope": "lambda_regression",
+      "bytes": 1030,
+      "sha256": "db7db63bcb237057f1ac230bd56480c174b569e0f7a8b0d6f99a6bed0400bba6",
+      "schema_id": "urn:jope.gp-evaluation/v1",
+      "title": "jope.gp-evaluation/v1"
+    },
+    {
+      "path": "deploy/lambda/regression/schemas/jope.regression-fit.v1.schema.json",
+      "scope": "lambda_regression",
+      "bytes": 1513,
+      "sha256": "96ca44fa8176094cab43d3c7d48743561eb877fe6cf753f5cbbe60b760c8163a",
+      "schema_id": "urn:jope.regression-fit/v1",
+      "title": "jope.regression-fit/v1"
+    },
+    {
+      "path": "deploy/lambda/regression/schemas/jope.regression-invocation.v1.schema.json",
+      "scope": "lambda_regression",
+      "bytes": 1687,
+      "sha256": "be132a986c4f24913fbe424788c394c598a0d9e54c1b42dd9ec0193dff2ca1a3",
+      "schema_id": "urn:jope.regression-invocation/v1",
+      "title": "jope.regression-invocation/v1"
+    },
+    {
       "path": "schemas/jope.benchmark-panel.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 5134,
       "sha256": "bb641dfb8190053c10dcc5484bcc58b484048a2b5178ea0163fb152f010d5369",
       "schema_id": "Panel",
@@ -1123,6 +2065,7 @@
     },
     {
       "path": "schemas/jope.dataset-catalog.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 7490,
       "sha256": "6a226b627c9d28fb04b7ca520d37ec3c8def6ac6a2d14d6b131b0a8ed08aa563",
       "schema_id": "https://veox.ai/schemas/jope.dataset-catalog.v1.schema.json",
@@ -1130,6 +2073,7 @@
     },
     {
       "path": "schemas/jope.dataset-collection.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 1857,
       "sha256": "34f85f5a076beb7f0daaaad25ba9e63c905e3d062538adabfba4bed8efb75b29",
       "schema_id": "https://veox.ai/schemas/jope.dataset-collection.v1.schema.json",
@@ -1137,6 +2081,7 @@
     },
     {
       "path": "schemas/jope.evaluation-request.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 2402,
       "sha256": "7f2fbb3c8a1e55a405690fda421836be499c0e7388759fb96a163de0c70556b1",
       "schema_id": "EvaluationRequest",
@@ -1144,6 +2089,7 @@
     },
     {
       "path": "schemas/jope.evaluation-result.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 2049,
       "sha256": "b539f787dd163267c09b0edd2c7988af63ae7b88018b4739eac39dfe17346858",
       "schema_id": "EvaluationResult",
@@ -1151,6 +2097,7 @@
     },
     {
       "path": "schemas/jope.evaluation-result.v2.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 2942,
       "sha256": "c29d719be53781abad28b046298ea9c7046584434f56aa75f492116159387925",
       "schema_id": "EvaluationResult",
@@ -1158,6 +2105,7 @@
     },
     {
       "path": "schemas/jope.experiment.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 2608,
       "sha256": "84c3309caeca4226bcb1a0aa16ca194b1194a3e114efbf958bc153c6af604f62",
       "schema_id": "Experiment",
@@ -1165,6 +2113,7 @@
     },
     {
       "path": "schemas/jope.hwm.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 9917,
       "sha256": "65a11eafdca127d5c6d14dc4a041f135a155526fb051b91df205457985267f30",
       "schema_id": "https://veox.ai/schemas/jope.hwm.v1.schema.json",
@@ -1172,6 +2121,7 @@
     },
     {
       "path": "schemas/jope.model-bundle.v2.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 2799,
       "sha256": "886f20d17290c9c31b163785543a240c6befd71d144a0fc5e48ab5c899032a75",
       "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.model-bundle.v2.schema.json",
@@ -1179,6 +2129,7 @@
     },
     {
       "path": "schemas/jope.pipeline-receipt.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 13547,
       "sha256": "d7e34e5835f87ff7203f9818d1c91c162b7741896f730c7b90945f50febb35a2",
       "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v1.schema.json",
@@ -1186,6 +2137,7 @@
     },
     {
       "path": "schemas/jope.pipeline-receipt.v2.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 16938,
       "sha256": "830f424e09ec8ea13f2506cd47fc9773ac1a85e028b14b01f22f1ff6611d98b4",
       "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v2.schema.json",
@@ -1193,6 +2145,7 @@
     },
     {
       "path": "schemas/jope.pipeline-receipt.v3.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 21750,
       "sha256": "1f5909a1ed5ff9f92e24ef7644f014104b9ec6a260406484d4a104ea70dfa19f",
       "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v3.schema.json",
@@ -1200,6 +2153,7 @@
     },
     {
       "path": "schemas/jope.pipeline-receipt.v4.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 21783,
       "sha256": "d71906664e8e0818831af228416dbd763350d670b68092b4f2c9aa3547c3501b",
       "schema_id": "https://github.com/neverhuman/JopeDime/schemas/jope.pipeline-receipt.v4.schema.json",
@@ -1207,6 +2161,7 @@
     },
     {
       "path": "schemas/jope.score.v1.schema.json",
+      "scope": "top_level_schemas",
       "bytes": 4602,
       "sha256": "4d897333f6cd85348a1f062cddde8c1a7efc99c45a36145739019bac949632b4",
       "schema_id": "https://veox.ai/schemas/jope.score.v1.schema.json",
