@@ -1314,6 +1314,7 @@ fn rank_impl(
         if resume {
             // W6-T05: exact resume loads only a complete, internally
             // consistent checkpoint of this corpus and topology.
+            let resume_input = resume_selection.as_ref();
             let verified_checkpoint = checkpoint_commit::verify_dir(
                 root,
                 cp,
@@ -1324,6 +1325,18 @@ fn rank_impl(
                     world: Some(world),
                     global_batch: Some(global_batch),
                     require_complete: false,
+                    lineage_sha256: resume_input
+                        .and_then(|r| r["lineage_sha256"].as_str())
+                        .or_else(|| state["lineage"]["sha256"].as_str()),
+                    intent_sha256: resume_input
+                        .and_then(|r| r["intent_sha256"].as_str())
+                        .or_else(|| state["intent"]["sha256"].as_str()),
+                    attempt_id: resume_input
+                        .and_then(|r| r["attempt_id"].as_str())
+                        .or_else(|| state["attempt_id"].as_str()),
+                    window_id: resume_input
+                        .and_then(|r| r["window_id"].as_str())
+                        .or_else(|| state["window_id"].as_str()),
                 },
             )?;
             ensure!(
