@@ -2848,7 +2848,10 @@ mod tests {
                 (Unit::AttemptWallMicros, 2_000_000),
                 (Unit::Evaluations, 1),
             ]),
-            terminal_reserve: Amounts::default(),
+            terminal_reserve: Amounts::new([
+                (Unit::CpuCoreMicros, 1),
+                (Unit::AttemptWallMicros, 1),
+            ]),
             gpu_allocation: None,
             conversion: None,
         };
@@ -2863,7 +2866,11 @@ mod tests {
                 logical_id: "3".repeat(64),
             },
             stage: Stage::Fit,
-            requested: policy.cap.clone(),
+            requested: Amounts::new([
+                (Unit::CpuCoreMicros, 1_000_000),
+                (Unit::AttemptWallMicros, 1_000_000),
+                (Unit::Evaluations, 1),
+            ]),
             retry_of: None,
             cache: CacheState::Unavailable {
                 reason: "fixture".into(),
@@ -2887,7 +2894,7 @@ mod tests {
                 .unwrap()
                 .active_reserved
                 .get(Unit::CpuCoreMicros),
-            2_000_000
+            1_000_000
         );
         let mut changed = policy;
         changed.deadline_unix_us += 1;

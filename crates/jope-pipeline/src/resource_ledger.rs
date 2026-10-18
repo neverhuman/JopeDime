@@ -204,6 +204,12 @@ impl Policy {
                 "terminal reserve exceeds cap"
             );
         }
+        for unit in [Unit::CpuCoreMicros, Unit::AttemptWallMicros] {
+            ensure!(
+                self.cap.get(unit) == 0 || self.terminal_reserve.get(unit) > 0,
+                "nonzero CPU/wall cap requires terminal capacity headroom"
+            );
+        }
         if self.cap.0.contains_key(&Unit::GpuDeviceMicros) {
             ensure!(
                 self.gpu_allocation
