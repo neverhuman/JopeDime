@@ -2522,6 +2522,13 @@
         "evidence"
       ]
     },
+    "target:jope-datasets/test/verified_object": {
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "preparation"
+      ]
+    },
     "target:jope-dime-regressor/bin/aspfm_recovery_evolve": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
@@ -2977,6 +2984,12 @@
       "subsystems": [
         "storage",
         "encoders"
+      ]
+    },
+    "target:jope-models/test/publication_integrity": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
       ]
     },
     "target:jope-models/test/roundtrip": {

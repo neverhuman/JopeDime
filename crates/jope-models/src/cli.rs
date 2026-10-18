@@ -70,6 +70,12 @@ pub enum Cmd {
         /// Store URL (default JOPE_MODELS_URL).
         #[arg(long)]
         store: Option<String>,
+        /// Write the machine-readable verified publication receipt JSON to this path (create-only).
+        #[arg(long)]
+        receipt_out: Option<PathBuf>,
+        /// Require a backend physical VersionId on every published object.
+        #[arg(long)]
+        require_version_id: bool,
     },
     /// Print the cache path of a bundle (or of one file in it); fails when it is not fetched.
     Path {
@@ -237,10 +243,34 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             manifest,
             from,
             store,
+            receipt_out,
+            require_version_id,
         } => {
             let store = crate::open_store(store.as_deref())?;
             let rt = runtime()?;
-            let r = rt.block_on(crate::publish::publish(&store, &manifest, &from))?;
+            let opts = if require_version_id {
+                jope_datasets::verified_object::VerificationOptions::require_physical_version_id()
+            } else {
+                jope_datasets::verified_object::VerificationOptions::default()
+            };
+            let r = rt.block_on(crate::publish::publish_with_options(
+                &store, &manifest, &from, opts,
+            ))?;
+            if let Some(out_path) = receipt_out {
+                if let Some(parent) = out_path.parent() {
+                    if !parent.as_os_str().is_empty() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                }
+                let mut file = std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&out_path)
+                    .map_err(|e| anyhow!("create receipt {}: {e}", out_path.display()))?;
+                let mut bytes = serde_json::to_vec_pretty(&r)?;
+                bytes.push(b'\n');
+                std::io::Write::write_all(&mut file, &bytes)?;
+            }
             println!(
                 "published {} to {}: {} blobs uploaded ({} bytes), {} already present, manifest {}",
                 r.bundle_id,

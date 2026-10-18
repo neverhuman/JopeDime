@@ -1,0 +1,11 @@
+{
+  "schema": "jope.publication-integrity-fixture/v1",
+  "bundle_id": "i46-fixture-v1",
+  "weights_one_utf8": "one: permitted weights",
+  "weights_one_sha256": "c01b7c245ea8259fe475d4b99b7813d4100c9339e0e2935420d2b4d11e4ff49b",
+  "weights_one_bytes": 22,
+  "corrupt_same_size_utf8": "one: corrupted weights",
+  "corrupt_same_size_sha256": "9fa7846a51290459669662ff113e231fa45e38cab58f8ea4310d40402876ef97",
+  "corrupt_same_size_bytes": 22,
+  "metadata_two_utf8": "{\"kind\":\"metadata\"}"
+}
