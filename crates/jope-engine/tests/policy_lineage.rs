@@ -504,7 +504,7 @@ fn neural_continuation_and_retained_ancestry_bridges_require_the_actual_epoch() 
         },
     };
     use serde_json::json;
-    let config = serde_json::to_value(neural::Config::default()).unwrap();
+    let config = serde_json::to_value(neural::Config::regression(401)).unwrap();
     let mut b = fixture();
     b.lineage.edges.clear();
     b.evidence.clear();
