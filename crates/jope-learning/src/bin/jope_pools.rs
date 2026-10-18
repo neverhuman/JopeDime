@@ -98,6 +98,7 @@ enum Command {
         #[arg(long, value_enum)]
         reference: Reference,
         #[arg(long)]
+        /// nested/v3 accepts context-id-bytes/v1 descriptors; unbound vectors are unavailable.
         context_features: Option<PathBuf>,
         #[arg(long)]
         program_features: Option<PathBuf>,
@@ -145,6 +146,7 @@ enum Command {
         #[arg(long, value_enum, default_value = "pool-floor")]
         reference: Reference,
         #[arg(long)]
+        /// Verified context-id-bytes/v1 descriptors; unbound vectors refuse before archive writes.
         context_features: PathBuf,
         #[arg(long)]
         program_features: Option<PathBuf>,

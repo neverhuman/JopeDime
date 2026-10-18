@@ -10,8 +10,9 @@ use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, Verdict};
 use super::metrics::{score_context, uniform_context, ContextMetrics};
 use super::pool::{verify, Manifest, Pool, Reference};
 use super::selectors::{
-    token_bag_features, Class, ContextualSurrogateQHat, ExternalProgramPrior, Features,
-    ProgramPrior, RetrievalKnn, RidgeProgram, Selector, MAX_SURROGATE_DESIGN_DIM,
+    token_bag_features, Class, ContextualSurrogateQHat, CvEstimate, CvUnavailable,
+    ExternalProgramPrior, Features, ProgramPrior, RetrievalKnn, RidgeProgram, Selector,
+    MAX_SURROGATE_DESIGN_DIM,
 };
 use crate::canon::canonical_sha256;
 use anyhow::{ensure, Result};
@@ -19,8 +20,9 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
-/// v2: `beats_reference` is a probability (uniform: exact draw probability), not a v1 flag.
-pub const RECEIPT_SCHEMA: &str = "jope.j9-selection-receipt/v2";
+/// v3 uses strict nested/v3 fitting and records unavailable CV without a numeric substitute.
+/// Historical v1/v2 receipts retain their recorded procedure and probability semantics.
+pub const RECEIPT_SCHEMA: &str = "jope.j9-selection-receipt/v3";
 pub const UNIFORM: &str = "uniform_exact";
 
 #[derive(Clone, Debug, Serialize)]
@@ -104,6 +106,22 @@ pub struct Comparison {
 }
 
 #[derive(Clone, Debug, Serialize)]
+pub struct FoldCvRecord {
+    pub fold: usize,
+    pub estimate: CvEstimate,
+    pub fits: Vec<super::selectors::InnerFoldFit>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct SelectorCoverage {
+    /// Unit: frozen outer contexts. Whole-selector refusal removes every partial score.
+    pub attempted: usize,
+    pub scored: usize,
+    pub excluded: usize,
+    pub failed: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
 pub struct Receipt {
     pub schema: &'static str,
     pub shadow_only: bool,
@@ -113,6 +131,8 @@ pub struct Receipt {
     pub config: Config,
     pub selectors: Vec<SelectorRecord>,
     pub unavailable_selectors: Vec<Unavailable>,
+    pub surrogate_cv: Vec<FoldCvRecord>,
+    pub selector_coverage: BTreeMap<String, SelectorCoverage>,
     pub program_features: String,
     pub fold_training_pools: Vec<usize>,
     pub summaries: BTreeMap<String, Summary>,
@@ -256,6 +276,12 @@ pub fn evaluate_with_fold_train_pools_and_priors(
     };
     let program_features = inputs.program_features.or(derived.as_ref());
     let mut unavailable_selectors = inputs.unavailable.clone();
+    let context_verified = inputs
+        .context_features
+        .is_some_and(|cf| cf.verify_context_descriptor().is_ok());
+    if inputs.context_features.is_some() && !context_verified {
+        unavailable_selectors.push(Unavailable { name: "retrieval_knn".into(), reason: "nested/v3 requires verified target-free context descriptors; unbound context provenance".into() });
+    }
     let already_marked_unavailable = unavailable_selectors
         .iter()
         .any(|u| u.name == "contextual_surrogate_qhat");
@@ -381,6 +407,8 @@ pub fn evaluate_with_fold_train_pools_and_priors(
         };
     let mut fold_training_pools = Vec::with_capacity(cfg.folds);
     let mut surrogate_fold_cv = Vec::with_capacity(cfg.folds);
+    let mut surrogate_failed = false;
+    let mut surrogate_failed_contexts = 0;
     for k in 0..cfg.folds {
         let held: Vec<usize> = (0..pools.len()).filter(|&i| folds[i] == k).collect();
         let train: Vec<&Pool> = match fold_train_pools {
@@ -397,7 +425,7 @@ pub fn evaluate_with_fold_train_pools_and_priors(
         ensure!(!train.is_empty(), "fold {k} has no training pools");
         let prior = ProgramPrior::fit(&train, cfg.prior_weight);
         score_with(&prior, &held, &mut contexts)?;
-        if let Some(cf) = inputs.context_features {
+        if let Some(cf) = inputs.context_features.filter(|_| context_verified) {
             let knn = RetrievalKnn::fit(&train, cf, cfg.knn_k, cfg.prior_weight)?;
             score_with(&knn, &held, &mut contexts)?;
         }
@@ -408,7 +436,7 @@ pub fn evaluate_with_fold_train_pools_and_priors(
         if can_fit_surrogate {
             if let (Some(cf), Some(pf)) = (inputs.context_features, program_features) {
                 let ext_prior = fold_external_priors.map(|ps| &ps[k]);
-                let surrogate = ContextualSurrogateQHat::fit_with_prior(
+                match ContextualSurrogateQHat::fit_with_prior(
                     &train,
                     cf,
                     pf,
@@ -416,11 +444,38 @@ pub fn evaluate_with_fold_train_pools_and_priors(
                     cfg.prior_weight,
                     cfg.ridge_lambda,
                     ext_prior,
-                )?;
-                let (bm, pm) = surrogate.selected_multipliers();
-                surrogate_fold_cv
-                    .push(format!("f{k}=({bm},{pm},{:.6})", surrogate.inner_cv_loss()));
-                score_with(&surrogate, &held, &mut contexts)?;
+                ) {
+                    Ok(surrogate) => {
+                        surrogate_fold_cv.push(FoldCvRecord {
+                            fold: k,
+                            estimate: surrogate.inner_cv_estimate().clone(),
+                            fits: surrogate.inner_fold_fits().to_vec(),
+                        });
+                        if let Err(error) = score_with(&surrogate, &held, &mut contexts) {
+                            surrogate_failed = true;
+                            surrogate_failed_contexts += held.len();
+                            unavailable_selectors.push(Unavailable {
+                                name: "contextual_surrogate_qhat".into(),
+                                reason: format!("outer fold {k} scoring failed: {error}"),
+                            });
+                        }
+                    }
+                    Err(error) => {
+                        surrogate_failed = true;
+                        surrogate_failed_contexts += held.len();
+                        if let Some(cv) = error.downcast_ref::<CvUnavailable>() {
+                            surrogate_fold_cv.push(FoldCvRecord {
+                                fold: k,
+                                estimate: cv.0.clone(),
+                                fits: Vec::new(),
+                            });
+                        }
+                        unavailable_selectors.push(Unavailable {
+                            name: "contextual_surrogate_qhat".into(),
+                            reason: format!("outer fold {k}: {error}"),
+                        });
+                    }
+                }
             }
         }
     }
@@ -428,13 +483,43 @@ pub fn evaluate_with_fold_train_pools_and_priors(
     for sel in &inputs.external {
         score_with(*sel, &all, &mut contexts)?;
     }
-    if !surrogate_fold_cv.is_empty() {
-        if let Some(rec) = records.get_mut("contextual_surrogate_qhat") {
-            rec.rule.push_str(&format!(
-                "; fold_inner_cv=[{}]",
-                surrogate_fold_cv.join(", ")
-            ));
+    if surrogate_failed {
+        records.remove("contextual_surrogate_qhat");
+        for context in &mut contexts {
+            context.metrics.remove("contextual_surrogate_qhat");
         }
+    }
+    let mut selector_coverage: BTreeMap<String, SelectorCoverage> = records
+        .keys()
+        .map(|name| {
+            (
+                name.clone(),
+                SelectorCoverage {
+                    attempted: pools.len(),
+                    scored: pools.len(),
+                    excluded: 0,
+                    failed: 0,
+                },
+            )
+        })
+        .collect();
+    for missing in &unavailable_selectors {
+        selector_coverage
+            .entry(missing.name.clone())
+            .or_insert(SelectorCoverage {
+                attempted: pools.len(),
+                scored: 0,
+                excluded: if surrogate_failed && missing.name == "contextual_surrogate_qhat" {
+                    pools.len() - surrogate_failed_contexts
+                } else {
+                    pools.len()
+                },
+                failed: if surrogate_failed && missing.name == "contextual_surrogate_qhat" {
+                    surrogate_failed_contexts
+                } else {
+                    0
+                },
+            });
     }
     let selectors: Vec<SelectorRecord> = records.into_values().collect();
     for c in &contexts {
@@ -500,6 +585,8 @@ pub fn evaluate_with_fold_train_pools_and_priors(
         config: cfg.clone(),
         selectors,
         unavailable_selectors,
+        surrogate_cv: surrogate_fold_cv,
+        selector_coverage,
         program_features: match (inputs.program_features, &derived) {
             (Some(f), _) => format!("supplied: {} dimensions", f.dim),
             (None, Some(f)) => format!(

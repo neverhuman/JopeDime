@@ -718,18 +718,11 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
         mk_train_pool(3, false),
     ];
     let prog_feats = token_bag_features(&train_pools).unwrap();
-    let mut cf_rows = std::collections::BTreeMap::new();
-    for (idx, p) in train_pools.iter().enumerate() {
-        cf_rows.insert(
-            p.context_id.clone(),
-            vec![if idx % 2 == 0 { 1.0 } else { -1.0 }],
-        );
-    }
-    cf_rows.insert(target_ctx.context_sha256.clone(), vec![1.0]);
-    let ctx_feats = Features {
-        dim: 1,
-        rows: cf_rows,
-    };
+    let mut ctx_feats = Features::context_id_descriptors(&train_pools, 1).unwrap();
+    ctx_feats.rows.insert(
+        target_ctx.context_sha256.clone(),
+        Features::context_id_vector(&target_ctx.context_sha256, 1).unwrap(),
+    );
     let train_refs: Vec<&Pool> = train_pools.iter().collect();
     let qhat =
         ContextualSurrogateQHat::fit(&train_refs, &ctx_feats, &prog_feats, 2, 2.0, 1e-2).unwrap();

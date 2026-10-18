@@ -324,18 +324,7 @@ fn folds_keep_whole_parents_together_and_every_selector_scores_every_context() {
     let spy = Spy {
         seen: RefCell::new(Vec::new()),
     };
-    let cf = Features {
-        dim: 2,
-        rows: pools
-            .iter()
-            .map(|p| {
-                (
-                    p.context_id.clone(),
-                    vec![u(&p.context_id), u(&p.parent_id)],
-                )
-            })
-            .collect(),
-    };
+    let cf = Features::context_id_descriptors(&pools, 2).unwrap();
     let pf = Features {
         dim: 1,
         rows: (0..12)
@@ -396,9 +385,13 @@ fn contextual_surrogate_qhat_establishes_h2_on_interaction_pools() {
     }
     for c in 0..32 {
         let parent = format!("inter-parent-{}", c / 2);
-        let ctx_sha = h(&format!("inter-ctx-{c}"));
+        let mut ctx_sha = h(&format!("inter-ctx-{c}"));
         let z = if (c / 2) % 2 == 0 { 1.0 } else { -1.0 };
-        cf_rows.insert(ctx_sha.clone(), vec![z]);
+        ctx_sha.replace_range(..2, if z > 0.0 { "ff" } else { "00" });
+        cf_rows.insert(
+            ctx_sha.clone(),
+            Features::context_id_vector(&ctx_sha, 1).unwrap(),
+        );
         // Alternate cohort (0..10 vs 10..20) by context parity within parent so nearest-z
         // neighbours in other parents include disjoint program IDs.
         let cohort_start = if c % 2 == 0 { 0 } else { 10 };
@@ -685,18 +678,20 @@ fn high_dim_surrogate_and_distilled_flywheel_establish_multi_round_lift() {
     let mut pf_rows = std::collections::BTreeMap::new();
     for c in 0..40usize {
         let parent = format!("fw-parent-{}", c / 2);
-        let ctx_sha = h(&format!("fw-ctx-{c}"));
+        let mut ctx_sha = "80".repeat(32);
+        ctx_sha.replace_range(62..64, &format!("{c:02x}"));
         let cohort = c / 2;
-        let z0 = if cohort % 2 == 0 { 1.6 } else { -1.6 };
-        let z1 = if (cohort / 2) % 2 == 0 { 1.4 } else { -1.4 };
-        let z2 = if (cohort / 4) % 2 == 0 { 1.2 } else { -1.2 };
+        let z0 = if cohort % 2 == 0 { 1.0 } else { -1.0 };
+        let z1 = if (cohort / 2) % 2 == 0 { 1.0 } else { -1.0 };
+        let z2 = if (cohort / 4) % 2 == 0 { 1.0 } else { -1.0 };
         let z3 = if (c % 2) == 0 { 1.0 } else { -1.0 };
-        let mut vec_z = vec![0.0; 2051];
-        vec_z[0] = z0;
-        vec_z[1] = z1;
-        vec_z[2] = z2;
-        vec_z[3] = z3;
-        cf_rows.insert(ctx_sha.clone(), vec_z);
+        for (j, z) in [z0, z1, z2, z3].iter().enumerate() {
+            ctx_sha.replace_range(2 * j..2 * j + 2, if *z > 0.0 { "ff" } else { "00" });
+        }
+        cf_rows.insert(
+            ctx_sha.clone(),
+            Features::context_id_vector(&ctx_sha, 2051).unwrap(),
+        );
         for p in 0..16usize {
             let prog_sha = h(&format!("fw-prog-{cohort}-{p}"));
             let phi0 = if (p & 1) == 0 { 1.5 } else { -1.5 };
@@ -784,6 +779,32 @@ fn high_dim_surrogate_and_distilled_flywheel_establish_multi_round_lift() {
     )
     .unwrap();
 
+    if let Some(path) = std::env::var_os("I03_EVIDENCE_DIR") {
+        let path = std::path::PathBuf::from(path);
+        std::fs::create_dir_all(&path).unwrap();
+        std::fs::write(
+            path.join("high-dimensional-flywheel.json"),
+            serde_json::to_vec_pretty(&receipt).unwrap(),
+        )
+        .unwrap();
+    }
+    // An unbound cut-0 vector refuses before any shard directory is created.
+    let mut unbound = cf.clone();
+    unbound.rows.values_mut().next().unwrap()[0] = 0.75;
+    let rejected = temp.path().join("unbound-shards");
+    let error = run_distilled_flywheel(
+        &pools,
+        &manifest,
+        &unbound,
+        Some(&pf),
+        &[],
+        &fw_cfg,
+        Some(&rejected),
+    )
+    .err()
+    .unwrap();
+    assert!(format!("{error:#}").contains("provenance"));
+    assert!(!rejected.exists());
     assert_eq!(receipt.schema, FLYWHEEL_RECEIPT_SCHEMA);
     assert!(receipt.shadow_only && !receipt.qualified_claim && !receipt.l6_claim);
     assert_eq!(receipt.rounds.len(), 4);
@@ -829,11 +850,13 @@ fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior() {
     let mut pf_rows = std::collections::BTreeMap::new();
     for c in 0..20usize {
         let parent = format!("iso-parent-{}", c / 2);
-        let ctx_sha = h(&format!("iso-ctx-{c}"));
-        let z0 = if (c / 2) % 2 == 0 { 1.4 } else { -1.4 };
-        let mut vec_z = vec![0.0; 16];
-        vec_z[0] = z0;
-        cf_rows.insert(ctx_sha.clone(), vec_z);
+        let mut ctx_sha = h(&format!("iso-ctx-{c}"));
+        let z0 = if (c / 2) % 2 == 0 { 1.0 } else { -1.0 };
+        ctx_sha.replace_range(..2, if z0 > 0.0 { "ff" } else { "00" });
+        cf_rows.insert(
+            ctx_sha.clone(),
+            Features::context_id_vector(&ctx_sha, 16).unwrap(),
+        );
         let cohort = c / 2;
         for p in 0..10usize {
             let prog_sha = h(&format!("iso-prog-{cohort}-{p}"));
