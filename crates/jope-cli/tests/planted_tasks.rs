@@ -43,6 +43,8 @@ fn noise_floor_and_each_oracle_refit_are_charged() {
     assert!(guard.accepted, "{guard:?}");
     let refit = task.oracle_refit(3).unwrap();
     assert_eq!(refit.repeats, 3);
+    assert_eq!(refit.fit_elapsed_ns.len(), 3);
+    assert!(refit.fit_elapsed_ns.iter().all(|elapsed| *elapsed > 0));
     assert!(refit.charged_elapsed_ns > 0);
     assert!(refit.rmse.is_finite());
     assert_eq!(refit.noise_floor_rmse, 0.08);
