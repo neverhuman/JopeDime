@@ -784,7 +784,7 @@ pub fn recover_published_ack(
         "cannot append a publication acknowledgement after a torn journal tail"
     );
     let mut matching_ack = false;
-    for line in lines {
+    for line in &lines {
         let event: Event = serde_json::from_slice(line)?;
         if let Event::Commit {
             step,
