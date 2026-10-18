@@ -354,6 +354,123 @@ pub struct WorkerOutcome {
     pub consumption: ObservedConsumption,
 }
 impl WorkerOutcome {
+    /// Join the existing qualified child receipt to an I16 reservation. Missing
+    /// final counters stay unknown even for killed/failed commands. Only an
+    /// explicitly proven unopened gate has local child cost zero.
+    pub fn resource_cost_v1(
+        &self,
+        reservation: &crate::resource_ledger::Reservation,
+        ended_unix_us: u64,
+    ) -> Result<crate::resource_ledger::AttemptCost> {
+        use crate::resource_ledger::{
+            AttemptCost, Disposition, Measurement, Reading, Unit, SCHEMA,
+        };
+        ensure!(
+            self.schema == EXECUTION_SCHEMA
+                && self.request_sha256 == reservation.request.ids.request_id,
+            "worker/resource request mismatch"
+        );
+        let unstarted = self
+            .consumption
+            .accounting_reason
+            .starts_with("not_started: gate never released")
+            && self.consumption.gate_released_unix_ms.is_none()
+            && self.consumption.cpu_seconds == Some(0.)
+            && self.consumption.wall_seconds == Some(0.);
+        let mut measurements = BTreeMap::new();
+        for &unit in reservation.request.requested.0.keys() {
+            let reading = if unstarted {
+                Reading::exact(0)
+            } else {
+                let value = match unit {
+                    Unit::CpuCoreMicros => self
+                        .consumption
+                        .cpu_seconds
+                        .map(crate::resource_ledger::seconds_to_micros)
+                        .transpose()?,
+                    Unit::AttemptWallMicros => self
+                        .consumption
+                        .wall_seconds
+                        .map(crate::resource_ledger::seconds_to_micros)
+                        .transpose()?,
+                    Unit::PeakMemoryBytes => self.consumption.cgroup_peak_memory_bytes,
+                    Unit::Evaluations | Unit::Compilations | Unit::CustodyOperations => {
+                        self.consumption.gate_released_unix_ms.map(|_| 1)
+                    }
+                    Unit::Retries => self
+                        .consumption
+                        .gate_released_unix_ms
+                        .map(|_| u64::from(reservation.request.retry_of.is_some())),
+                    _ => None,
+                };
+                value.map(Reading::exact).unwrap_or_else(|| {
+                    Reading::unknown(format!(
+                        "{}; {unit:?} unavailable",
+                        self.consumption.accounting_reason
+                    ))
+                })
+            };
+            measurements.insert(
+                unit,
+                Measurement {
+                    reading,
+                    collector: "worker-execution/v2:final-cgroup".into(),
+                    clock: "worker-monotonic-duration/unix-window".into(),
+                    allocation: reservation.request.ids.experiment_sha256.clone(),
+                    scope: vec!["experiment".into(), self.job_sha256.clone()],
+                    from_unix_us: reservation.reserved_unix_us,
+                    to_unix_us: ended_unix_us,
+                },
+            );
+        }
+        let disposition = if unstarted {
+            Disposition::ProvenNotStarted
+        } else if self.signal.is_some() {
+            Disposition::Killed
+        } else {
+            match self.command_status {
+                EvaluationStatus::Completed => Disposition::Completed,
+                EvaluationStatus::Cancelled => Disposition::Cancelled,
+                EvaluationStatus::TimedOut => Disposition::Killed,
+                _ => Disposition::Failed,
+            }
+        };
+        let mut evidence: BTreeSet<_> = self.outputs.iter().map(|a| a.sha256.clone()).collect();
+        evidence.insert(crate::sha256_hex(&serde_json::to_vec(self)?));
+        evidence.extend(
+            self.stdout
+                .iter()
+                .chain(&self.stderr)
+                .map(|a| a.sha256.clone()),
+        );
+        Ok(AttemptCost {
+            schema: SCHEMA.into(),
+            reservation_sha256: reservation.identity()?,
+            ids: reservation.request.ids.clone(),
+            disposition,
+            ended_unix_us,
+            exit_code: self.exit_code,
+            signal: self.signal,
+            measurements,
+            retained_sha256: if disposition == Disposition::Completed {
+                self.outputs.iter().map(|a| a.sha256.clone()).collect()
+            } else {
+                BTreeSet::new()
+            },
+            evidence_sha256: evidence,
+            retained_bytes: Reading::unknown(
+                "worker receipt binds artifact digests, not retained physical storage bytes",
+            ),
+            reason: if unstarted {
+                self.consumption.accounting_reason.clone()
+            } else {
+                self.reason
+                    .clone()
+                    .unwrap_or_else(|| self.consumption.accounting_reason.clone())
+            },
+        })
+    }
+
     fn unstarted(job: &WorkerJob, status: EvaluationStatus, reason: String) -> Result<Self> {
         Ok(Self {
             schema: EXECUTION_SCHEMA.into(),
@@ -561,6 +678,160 @@ pub struct ExecutionPool {
     window: Option<ExecutionWindow>,
 }
 impl ExecutionPool {
+    /// Restore the original policy and complete resource history under the
+    /// existing execution journal lock. This never opens a new execution window.
+    pub fn resource_ledger_v1(
+        &mut self,
+        policy: crate::resource_ledger::Policy,
+    ) -> Result<crate::resource_ledger::ResourceLedger> {
+        let ledger = crate::resource_ledger::ResourceLedger::new(policy.clone())?;
+        immutable(&self.directory.join("resource-policy-v1.json"), &policy)?;
+        let path = self.directory.join("resource-events-v1.json");
+        if path.exists() {
+            crate::resource_ledger::ResourceLedger::restore(
+                policy,
+                &read_json::<Vec<crate::resource_ledger::Event>>(&path)?,
+            )
+        } else {
+            Ok(ledger)
+        }
+    }
+
+    /// Persist upstream stage transitions in the same bounded experiment's
+    /// journal. Validation replays the actual history before appending the event.
+    pub fn persist_resource_event_v1(
+        &mut self,
+        event: &crate::resource_ledger::Event,
+    ) -> Result<()> {
+        let policy = read_json(&self.directory.join("resource-policy-v1.json"))?;
+        let path = self.directory.join("resource-events-v1.json");
+        let mut events: Vec<crate::resource_ledger::Event> = if path.exists() {
+            read_json(&path)?
+        } else {
+            Vec::new()
+        };
+        events.push(event.clone());
+        crate::resource_ledger::ResourceLedger::restore(policy, &events)?;
+        atomic_json(&path, &events)
+    }
+
+    /// Opt-in accounting boundary. The caller admits the original window before
+    /// encoding/compilation and supplies separately accounted controller stages.
+    /// This method reserves a bounded batch before input hashing or child release,
+    /// using this pool's existing journal lock, supervisor and descendant cleanup.
+    /// No new scheduler or host qualification is introduced.
+    pub fn run_accounted_v1(
+        &mut self,
+        jobs: Vec<WorkerJob>,
+        cancellation: &AtomicBool,
+        ledger: &mut crate::resource_ledger::ResourceLedger,
+        requests: BTreeMap<String, crate::resource_ledger::ReservationRequest>,
+    ) -> Result<Vec<WorkerOutcome>> {
+        use crate::resource_ledger::{Disposition, Event, Unit};
+        ensure!(
+            !jobs.is_empty() && requests.len() == jobs.len(),
+            "accounted batch requires exact nonempty request census"
+        );
+        let window = self
+            .window
+            .as_ref()
+            .context("admit original window before resource accounting")?;
+        let policy = ledger.policy();
+        ensure!(
+            policy.experiment_sha256 == self.experiment.identity()?
+                && policy.opened_unix_us
+                    == window
+                        .started_unix_ms
+                        .checked_mul(1000)
+                        .context("window overflow")?
+                && policy.deadline_unix_us
+                    == window
+                        .deadline_unix_ms
+                        .checked_mul(1000)
+                        .context("window overflow")?
+                && policy.terminal_headroom_us
+                    >= self.experiment.resources.reporting_seconds * 1_000_000,
+            "resource policy changed original window/reporting headroom"
+        );
+        let memory = fit_memory_allocation(&self.experiment)?;
+        ensure!(
+            policy.cap.get(Unit::PeakMemoryBytes) <= memory.total_bytes
+                && policy.terminal_reserve.get(Unit::PeakMemoryBytes)
+                    >= memory.controller_reserve_bytes,
+            "resource policy must preserve fixed controller/fit memory policy"
+        );
+        immutable(&self.directory.join("resource-policy-v1.json"), policy)?;
+        let journal = self.directory.join("resource-events-v1.json");
+        let mut events: Vec<Event> = if journal.exists() {
+            read_json(&journal)?
+        } else {
+            Vec::new()
+        };
+        ensure!(
+            crate::resource_ledger::ResourceLedger::restore(policy.clone(), &events)? == *ledger,
+            "resource ledger does not match durable original history"
+        );
+        let mut persist = |event: &Event| -> Result<()> {
+            events.push(event.clone());
+            if let Err(error) = atomic_json(&journal, &events) {
+                events.pop();
+                return Err(error);
+            }
+            Ok(())
+        };
+        let now = now_ms()?
+            .checked_mul(1000)
+            .context("resource clock overflow")?;
+        let mut joins = BTreeMap::new();
+        for job in &jobs {
+            let id = job.identity()?;
+            let request = requests.get(&id).context("missing job reservation")?;
+            ensure!(
+                request.ids.request_id == job.request.identity()?
+                    && request.requested.get(Unit::PeakMemoryBytes) == memory.per_fit_bytes
+                    && request.stage == crate::resource_ledger::Stage::Fit
+                    && request.requested.get(Unit::CpuCoreMicros)
+                        == request.requested.get(Unit::AttemptWallMicros)
+                    && request.requested.get(Unit::AttemptWallMicros)
+                        == self.experiment.resources.per_fit_seconds * 1_000_000
+                    && !request.requested.0.contains_key(&Unit::GpuDeviceMicros),
+                "reservation does not match fixed one-CPU fit boundary"
+            );
+            let reservation = ledger.reserve(request.clone(), now, &mut persist)?;
+            ensure!(
+                joins.insert(id, reservation).is_none(),
+                "duplicate accounted job"
+            );
+        }
+        // A controller error leaves durable unresolved reservations, fully held.
+        // Recovery must reconcile the existing started/finished child journals;
+        // it cannot infer zero or open a fresh original window.
+        let outcomes = self.run(jobs, cancellation)?;
+        for outcome in &outcomes {
+            let reservation = &joins[&outcome.job_sha256];
+            if ledger.cost(&reservation.request.ids.attempt_id).is_some() {
+                continue;
+            }
+            let ended = now_ms()?
+                .checked_mul(1000)
+                .context("resource clock overflow")?;
+            let cost = outcome.resource_cost_v1(reservation, ended)?;
+            if cost.disposition != Disposition::ProvenNotStarted
+                && ledger.started_at(&cost.ids.attempt_id).is_none()
+            {
+                // The original child journal is the durable pre-release start
+                // authority. This is its after-completion physical-cost join.
+                ledger.start(
+                    &cost.ids.attempt_id,
+                    reservation.reserved_unix_us,
+                    &mut persist,
+                )?;
+            }
+            ledger.finish(cost, &mut persist)?;
+        }
+        Ok(outcomes)
+    }
+
     pub fn open(experiment: &Experiment, directory: &Path, supervisor: Supervisor) -> Result<Self> {
         experiment.validate()?;
         ensure!(
@@ -731,8 +1002,10 @@ impl ExecutionPool {
                 .join("requests")
                 .join(format!("{request_id}.json"));
             if ownership.exists() {
-                ensure!(read_json::<String>(&ownership)? == id,
-                    "request identity already belongs to another arm/command; derive distinct request recipe/seed binding");
+                ensure!(
+                    read_json::<String>(&ownership)? == id,
+                    "request identity already belongs to another arm/command; derive distinct request recipe/seed binding"
+                );
             }
             ensure!(
                 requests.insert(request_id.clone()),
@@ -812,7 +1085,9 @@ impl ExecutionPool {
                 if self.started_path(&id).exists() {
                     outcome = self.interrupted(&job, false)?;
                     outcome.command_status = EvaluationStatus::Unavailable;
-                    outcome.reason = Some(format!("original attempt unknown; current execution admission unavailable: {error:#}"));
+                    outcome.reason = Some(format!(
+                        "original attempt unknown; current execution admission unavailable: {error:#}"
+                    ));
                 }
                 outcomes.push(outcome);
             }
@@ -2544,6 +2819,79 @@ mod tests {
         assert_eq!(outcomes[0].command_status, EvaluationStatus::Unavailable);
         assert!(pool.window().is_none());
         assert!(!pool.directory.join("window.json").exists());
+    }
+    #[test]
+    fn resource_accounting_requires_original_admission_and_restores_durable_spend() {
+        use crate::resource_ledger::{
+            Amounts, CacheState, JoinIds, Policy, ReservationRequest, Stage, Unit, SCHEMA,
+        };
+        let scratch = scratch();
+        let root = fs::canonicalize(scratch.path()).unwrap();
+        let experiment = fixture_experiment();
+        let mut pool = ExecutionPool::open(
+            &experiment,
+            &root.join("journal"),
+            Supervisor {
+                unit: "unqualified-fixture".into(),
+                cgroup_root: "/not-a-cgroup".into(),
+            },
+        )
+        .unwrap();
+        let policy = Policy {
+            schema: SCHEMA.into(),
+            experiment_sha256: experiment.identity().unwrap(),
+            opened_unix_us: 100,
+            deadline_unix_us: 120_000_100,
+            terminal_headroom_us: 10_000_000,
+            cap: Amounts::new([
+                (Unit::CpuCoreMicros, 2_000_000),
+                (Unit::AttemptWallMicros, 2_000_000),
+                (Unit::Evaluations, 1),
+            ]),
+            terminal_reserve: Amounts::default(),
+            gpu_allocation: None,
+            conversion: None,
+        };
+        let mut ledger = pool.resource_ledger_v1(policy.clone()).unwrap();
+        let job = fixture_job('a', 'a');
+        let req = ReservationRequest {
+            ids: JoinIds {
+                experiment_sha256: experiment.identity().unwrap(),
+                draw_id: "1".repeat(64),
+                request_id: job.request.identity().unwrap(),
+                attempt_id: "2".repeat(64),
+                logical_id: "3".repeat(64),
+            },
+            stage: Stage::Fit,
+            requested: policy.cap.clone(),
+            retry_of: None,
+            cache: CacheState::Unavailable {
+                reason: "fixture".into(),
+            },
+        };
+        let requests = [(job.identity().unwrap(), req.clone())].into();
+        let error = pool
+            .run_accounted_v1(vec![job], &AtomicBool::new(false), &mut ledger, requests)
+            .unwrap_err();
+        assert!(error.to_string().contains("admit original window"));
+        assert!(pool.window.is_none());
+        assert!(!pool.directory.join("resource-events-v1.json").exists());
+        ledger
+            .reserve(req, 100, |event| pool.persist_resource_event_v1(event))
+            .unwrap();
+        let restored = pool.resource_ledger_v1(policy.clone()).unwrap();
+        assert_eq!(restored, ledger);
+        assert_eq!(
+            restored
+                .reconcile()
+                .unwrap()
+                .active_reserved
+                .get(Unit::CpuCoreMicros),
+            2_000_000
+        );
+        let mut changed = policy;
+        changed.deadline_unix_us += 1;
+        assert!(pool.resource_ledger_v1(changed).is_err());
     }
     #[test]
     fn cancelled_and_missing_dependency_inventory_does_not_poison_resume() {
