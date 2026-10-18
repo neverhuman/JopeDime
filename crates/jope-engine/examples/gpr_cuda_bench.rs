@@ -1,3 +1,6 @@
+#[path = "gpr_cuda_bench_args.rs"]
+mod bench_args;
+
 #[cfg(feature = "neural")]
 #[path = "../src/experimental_gpr.rs"]
 mod experimental_gpr;
@@ -171,6 +174,8 @@ mod qualification {
 
     pub fn run() -> Result<()> {
         let a = Args::parse();
+        super::bench_args::require_reference_for_benchmark(a.reference_only, a.reference.as_deref())
+            .map_err(anyhow::Error::msg)?;
         ensure!(
             a.world_size > 0 && a.rank < a.world_size && a.batch_size > 0,
             "invalid rank/batch"
