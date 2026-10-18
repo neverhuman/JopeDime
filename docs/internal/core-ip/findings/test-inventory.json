@@ -1825,6 +1825,15 @@
         "performance"
       ]
     },
+    "target:feat-math/test/capability_join_audit": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/capability_join_audit.rs",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "policy"
+      ]
+    },
     "target:feat-math/test/capability_manifest": {
       "role": "regression",
       "subsystems": [
@@ -2150,6 +2159,15 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/operation_profile": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/operation_profile.rs",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "policy"
+      ]
+    },
     "target:feat-math/test/operator_bandit": {
       "role": "regression",
       "source": "crates/feat-math/tests/operator_bandit.rs",
@@ -2162,6 +2180,15 @@
       "role": "regression",
       "subsystems": [
         "fitting"
+      ]
+    },
+    "target:feat-math/test/parameter_domain_and_effect_witness": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/parameter_domain_and_effect_witness.rs",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "policy"
       ]
     },
     "target:feat-math/test/parity_bits": {

@@ -459,6 +459,17 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let batch4_selfplay = old_fixture("transitions/batch4_selfplay_identity_rebaseline.v1.json");
     assert_eq!(batch4_selfplay["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(batch4_selfplay["fixtures"][0]["path"], changed_fixtures[0]);
+    // MR06 shard directory payload closure verifiers in label_admission.rs: teaching-store lineage source identity only.
+    let mr06_label_admission =
+        old_fixture("transitions/mr06_label_admission_identity_rebaseline.v1.json");
+    assert_eq!(
+        mr06_label_admission["fixtures"].as_array().unwrap().len(),
+        1
+    );
+    assert_eq!(
+        mr06_label_admission["fixtures"][0]["path"],
+        changed_fixtures[1]
+    );
     let identity_chain = [
         transition,
         successor,
@@ -478,6 +489,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         exp_next_04,
         i09_artifact_target_binding,
         batch4_selfplay,
+        mr06_label_admission,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

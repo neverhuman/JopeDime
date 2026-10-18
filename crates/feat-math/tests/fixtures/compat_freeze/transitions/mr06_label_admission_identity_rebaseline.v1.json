@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for MR06 shard directory payload closure verifiers in crates/jope-engine/src/label_admission.rs. Adding verify_shard_directory_payload_hashes, verify_census_sample_payload_hashes, and require_full_payload_closure_for_promotion updates label_admission.rs, whose source hash the teaching-store semantic dependencies include. Evaluator and behavioral fixtures and every earlier transition remain unchanged.",
+  "plan_reference": "MR06 / PR #370: label_admission.rs shard directory payload closure verifiers",
+  "pr_reference": "feat/mr07-mr14-operation-profile",
+  "source_commit": "624f46b61dd0d509bd2ec9979c85b791354753d6",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "0333a90e244ebe43d97d14d8d923b18b5fe475e1a327751b095c9bac1ffe6ba4",
+      "after": "b77a6714ec8b21e87ee6343d359e98ccdd6f20d53af13141ac658c610aac0da1"
+    }
+  ]
+}
