@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5108,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 2",
+  "count": 5193,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -40,7 +40,7 @@
     }
    },
    "feat-math": {
-    "count": 1210,
+    "count": 1231,
     "ignored": 12,
     "binaries": {
      "feat-math": {
@@ -635,6 +635,34 @@
       "tests": [
        "public_fit_predict_and_emission_are_deterministic",
        "public_fold_assignments_are_repeatable_bounded_and_balanced"
+      ]
+     },
+     "feat-math::artifact_target_binding": {
+      "kind": "test",
+      "count": 21,
+      "ignored": 0,
+      "tests": [
+       "all_requested_recipe_targets_bind_exact_source_bytes",
+       "bound_adapter_preserves_v2_sources_and_binds_fitted_state",
+       "cpp17_and_cpp20_share_source_with_distinct_build_identities",
+       "cpp17_substitution_refused",
+       "cpp20_substitution_refused",
+       "duplicate_keys_noncanonical_and_unknown_envelope_fields_refused",
+       "duplicate_records_incomplete_closures_and_build_standard_mismatch_refused",
+       "empty_duplicate_alias_and_unknown_requests_refused",
+       "expected_manifest_pin_refuses_rehashed_substitution",
+       "javascript_substitution_refused",
+       "legacy_readers_cannot_be_upgraded_by_reserializing_old_data",
+       "missing_requested_file_refused",
+       "native_inference_and_storage_envelopes_verify_without_execution_authority",
+       "python_substitution_refused",
+       "recipe_v2_is_separate_from_historical_recipe",
+       "rust_substitution_refused",
+       "schema_options_and_selected_program_changes_refused",
+       "symlink_source_is_refused",
+       "traversal_and_product_confusion_refused_before_reading",
+       "unsupported_targets_retain_reason_and_registry_evidence",
+       "wire_fixture_matches_i02_domain_separated_identity_and_target_spellings"
       ]
      },
      "feat-math::bench": {
@@ -2646,16 +2674,18 @@
     }
    },
    "jope-cli": {
-    "count": 69,
+    "count": 71,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
       "kind": "lib",
-      "count": 23,
+      "count": 25,
       "ignored": 0,
       "tests": [
        "champions::tests::champions_and_training_keep_the_admitted_snapshot_after_paths_change",
        "champions::tests::supported_evaluation_failure_aborts_champions_and_training",
+       "kernel::artifact_v3_tests::emit_adapter_preserves_default_route_and_binds_opt_in_outputs",
+       "kernel::artifact_v3_tests::fitted_emit_adapter_binds_validated_training_rows",
        "router::tests::routing_embeds_and_fits_the_same_snapshot_after_input_is_replaced",
        "router::tests::routing_features_and_fit_do_not_depend_on_test_features_or_targets",
        "tests::a_fifo_is_rejected_without_waiting_for_a_writer",
@@ -4400,7 +4430,7 @@
     }
    },
    "jope-learning": {
-    "count": 445,
+    "count": 472,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
@@ -4726,6 +4756,49 @@
        "valid_pax_compatibility_and_entire_gzip_tar_tails_are_checked"
       ]
      },
+     "jope-learning::executable_cache": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "all_executable_identity_fields_change_the_cache_key",
+       "cache_requires_reproducible_bytes_and_refuses_same_key_new_version",
+       "exact_ranges_and_member_versions_are_accepted",
+       "immutable_pack_retry_is_idempotent_and_same_key_new_version_is_refused",
+       "keeper_evidence_requires_declared_permissions_before_omission",
+       "malformed_overlapping_and_out_of_bounds_ranges_are_rejected"
+      ]
+     },
+     "jope-learning::lake_views": {
+      "kind": "test",
+      "count": 10,
+      "ignored": 0,
+      "tests": [
+       "commit_rejects_unaccounted_rows",
+       "denied_role_fails_before_materializing_source_bytes",
+       "failed_and_unknown_observations_are_preserved",
+       "forged_manifest_role_and_unpinned_manifest_fail_closed",
+       "missing_corrupt_and_wrong_version_objects_are_excluded_with_denominators",
+       "publication_writes_immutable_objects_before_observed_head_cas",
+       "role_purpose_matrix_allows_only_matching_rows",
+       "stale_listing_is_not_an_authority_and_head_race_does_not_commit",
+       "unsafe_keys_and_duplicate_object_versions_are_rejected",
+       "verified_source_manifest_reads_the_exact_version_and_preserves_locators"
+      ]
+     },
+     "jope-learning::learning_snapshot": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "artifact_chain_refuses_cycles_and_repeated_objects",
+       "denied_remote_upload_keeps_truthful_pending_state_and_can_retry",
+       "mixed_vocabulary_and_retired_live_version_are_refused",
+       "snapshot_codec_refuses_noncanonical_bytes_and_has_no_filename_authority",
+       "successful_remote_publication_uses_the_conditional_root_pointer",
+       "two_eligible_children_cas_one_winner_and_preserve_loser"
+      ]
+     },
      "jope-learning::ledger_tamper": {
       "kind": "test",
       "count": 4,
@@ -5024,7 +5097,7 @@
      },
      "jope-learning::support": {
       "kind": "test",
-      "count": 17,
+      "count": 18,
       "ignored": 0,
       "tests": [
        "actual_v1_policy_golden_matches_sampling_and_eos_likelihood",
@@ -5042,8 +5115,20 @@
        "kl_requires_same_support_and_frozen_parameter_identity",
        "mismatch_keeps_sign_sequence_units_and_missing_outcomes_unknown",
        "nonfinite_evidence_cannot_become_availability_or_zero_reward",
+       "transition_law_adapter_preserves_v1_leaf_bytes_and_g12_refusal",
        "unknown_or_partial_actions_and_nonfinite_supported_logits_refused",
        "weighted_ce_is_sequence_sum_not_length_mean_and_bad_targets_refused"
+      ]
+     },
+     "jope-learning::support_transition": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "exact_tiny_distribution_normalizes_and_fixed_seed_frequencies_conform",
+       "missing_or_forged_train_proof_is_refused_without_support_mutation",
+       "non_train_and_overlength_leaves_are_retained_as_refused_observations",
+       "train_verified_leaf_creates_immutable_successor_and_two_novel_actions"
       ]
      }
     }
@@ -6252,6 +6337,12 @@
        "unrelated_or_indirect_metrics_do_not_become_production_learning"
       ]
      },
+     "jope-parallel::lineage_checkpoint_recovery": {
+      "kind": "test",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
      "jope-parallel::lossless_partition": {
       "kind": "test",
       "count": 0,
@@ -6443,6 +6534,12 @@
        "missing_strict_census_withholds_healthy_service_before_worker_launch"
       ]
      },
+     "jope-parallel::structured_critic": {
+      "kind": "test",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
      "jope-parallel::teacher_counterfactuals": {
       "kind": "test",
       "count": 4,
@@ -6540,7 +6637,7 @@
     }
    },
    "jope-pipeline": {
-    "count": 350,
+    "count": 376,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
@@ -6883,6 +6980,31 @@
        "test_score::tests::the_test_split_is_scored_once_per_dataset_and_genome"
       ]
      },
+     "jope-pipeline::artifact_target_binding": {
+      "kind": "test",
+      "count": 18,
+      "ignored": 0,
+      "tests": [
+       "artifact_runtime_fixture_executes_every_supported_product",
+       "fitted_codec_and_standalone_deletion_or_substitution_refused",
+       "fitted_rows_are_required_and_invalid_rows_are_hard_errors",
+       "fitted_source_cannot_be_replaced_by_recipe",
+       "legacy_cpp_js_rehash_reproduces_the_documented_binding_gap",
+       "native_publication_accepts_supported_pinned_v3_run",
+       "native_publication_refuses_cpp17_substitution_even_with_loose_hash_updated",
+       "native_publication_refuses_cpp20_substitution_even_with_loose_hash_updated",
+       "native_publication_refuses_javascript_substitution_even_with_loose_hash_updated",
+       "native_publication_refuses_manifest_and_receipt_rehash_under_external_pin",
+       "native_publication_refuses_omitted_request_and_deleted_file",
+       "native_publication_refuses_python_substitution_even_with_loose_hash_updated",
+       "native_publication_refuses_rust_substitution_even_with_loose_hash_updated",
+       "native_publication_requires_explicit_unsupported_accounting",
+       "native_publication_verifies_fitted_closure_and_refuses_codec_deletion",
+       "unsupported_writer_result_never_claims_all_targets_supported",
+       "writer_reader_accounts_for_all_recipe_and_fitted_components",
+       "writer_refuses_missing_or_extra_sources_before_publication"
+      ]
+     },
      "jope-pipeline::bin/jope-context-proof": {
       "kind": "bin",
       "count": 0,
@@ -6896,6 +7018,28 @@
       "tests": [
        "jope_pipeline_declares_no_dependency_on_the_learning_store_or_the_engine",
        "jope_pipeline_resolves_neither_the_learning_store_nor_the_engine_under_any_of_its_features"
+      ]
+     },
+     "jope-pipeline::modern_gp_candidate": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "absent_source_mass_and_deduplicated_realized_mixture_are_recorded",
+       "candidate_profiles_remain_distinct_and_bounded",
+       "cheap_rung_reversal_cannot_name_final_champion",
+       "exhaustion_returns_verified_incumbent_or_explicit_unavailable",
+       "migration_admission_uses_sequence_order_and_resource_caps"
+      ]
+     },
+     "jope-pipeline::residual_closure": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "heavy_diagnostics_are_charged_before_work_and_overrun_refuses",
+       "held_labels_are_outside_the_proposal_input_and_cannot_change_it",
+       "ordered_rows_need_a_nonempty_declared_semantics"
       ]
      },
      "jope-pipeline::schema_agreement": {
@@ -6930,12 +7074,12 @@
     }
    },
    "jope-policy": {
-    "count": 77,
+    "count": 86,
     "ignored": 3,
     "binaries": {
      "jope-policy": {
       "kind": "lib",
-      "count": 65,
+      "count": 71,
       "ignored": 3,
       "tests": [
        "challenger_tests::challenger_identity_refuses_accepted_rejected_and_malformed_pins",
@@ -6988,6 +7132,12 @@
        "model::cached::tests::cached_decoder_matches_full_prefix_across_positions_and_pad_history",
        "model::cached::tests::cached_step_linear_and_tied_projection_match_full_for_active_batch_shapes",
        "model::identity_tests::accepted_policy_requires_the_released_weights_file",
+       "model::structured_critic::tests::acquisition_ranking_uses_the_frozen_pool_and_preserves_actor_scores",
+       "model::structured_critic::tests::calibration_requires_a_real_heldout_pool_and_finite_error",
+       "model::structured_critic::tests::overlength_input_is_refused_without_truncation",
+       "model::structured_critic::tests::same_token_multiset_in_different_order_has_distinct_semantics",
+       "model::structured_critic::tests::uncertainty_is_absent_without_heldout_calibration",
+       "model::structured_critic::tests::unknown_manifest_fields_and_bad_shapes_are_refused",
        "producer::bundle_tests::worker_admission_requires_the_request_issued_pins",
        "producer::tests::challenger_request_is_optional_and_bound",
        "producer::tests::context_admission_pin_is_optional_and_bound",
@@ -7048,6 +7198,16 @@
        "padding_is_excluded_from_the_program_mean",
        "perturbing_each_stored_head_moves_only_its_declared_consumers",
        "reward_readout_is_order_blind_but_program_sensitive"
+      ]
+     },
+     "jope-policy::support_transition": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "native_round_trip_preserves_401_vocabulary_and_refuses_overlength",
+       "native_sampler_and_scorer_share_masked_law_and_seeded_frequency",
+       "unknown_selection_propensity_cannot_claim_unbiasedness"
       ]
      }
     }
@@ -7789,7 +7949,7 @@
   }
  },
  "totals": {
-  "rust": 5108,
+  "rust": 5193,
   "python": 182
  }
 }

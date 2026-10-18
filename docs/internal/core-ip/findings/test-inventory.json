@@ -1811,6 +1811,14 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/artifact_target_binding": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "policy"
+      ],
+      "source": "crates/feat-math/tests/artifact_target_binding.rs"
+    },
     "target:feat-math/test/bench": {
       "role": "regression",
       "subsystems": [
@@ -2872,6 +2880,33 @@
       "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority.",
       "role": "research"
     },
+    "target:jope-learning/test/executable_cache": {
+      "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ],
+      "source": "crates/jope-learning/tests/executable_cache.rs"
+    },
+    "target:jope-learning/test/lake_views": {
+      "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ],
+      "source": "crates/jope-learning/tests/lake_views.rs"
+    },
+    "target:jope-learning/test/learning_snapshot": {
+      "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ],
+      "source": "crates/jope-learning/tests/learning_snapshot.rs"
+    },
     "target:jope-learning/test/ledger_tamper": {
       "role": "regression",
       "subsystems": [
@@ -3001,6 +3036,11 @@
     "target:jope-learning/test/support": {
       "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
       "role": "research"
+    },
+    "target:jope-learning/test/support_transition": {
+      "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
+      "role": "research",
+      "source": "crates/jope-learning/tests/support_transition.rs"
     },
     "target:jope-models/bin/jope-models": {
       "role": "regression",
@@ -3440,6 +3480,14 @@
         "teaching"
       ]
     },
+    "target:jope-parallel/test/lineage_checkpoint_recovery": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "storage"
+      ],
+      "source": "crates/jope-engine/tests/lineage_checkpoint_recovery.rs"
+    },
     "target:jope-parallel/test/lossless_partition": {
       "role": "regression",
       "subsystems": [
@@ -3561,6 +3609,14 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/structured_critic": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "storage"
+      ],
+      "source": "crates/jope-engine/tests/structured_critic.rs"
+    },
     "target:jope-parallel/test/teacher_counterfactuals": {
       "role": "regression",
       "subsystems": [
@@ -3627,12 +3683,36 @@
         "policy"
       ]
     },
+    "target:jope-pipeline/test/artifact_target_binding": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ],
+      "source": "crates/jope-pipeline/tests/artifact_target_binding.rs"
+    },
     "target:jope-pipeline/test/dependency_fence": {
       "role": "regression",
       "subsystems": [
         "gp",
         "orchestration"
       ]
+    },
+    "target:jope-pipeline/test/modern_gp_candidate": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ],
+      "source": "crates/jope-pipeline/tests/modern_gp_candidate.rs"
+    },
+    "target:jope-pipeline/test/residual_closure": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ],
+      "source": "crates/jope-pipeline/tests/residual_closure.rs"
     },
     "target:jope-pipeline/test/schema_agreement": {
       "role": "regression",
@@ -3703,6 +3783,13 @@
         "policy",
         "encoders"
       ]
+    },
+    "target:jope-policy/test/support_transition": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ],
+      "source": "crates/jope-policy/tests/support_transition.rs"
     },
     "target:jope-records/bin/jope-records": {
       "role": "regression",

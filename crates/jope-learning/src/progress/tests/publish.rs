@@ -131,7 +131,9 @@ fn a_missing_or_corrupt_dependency_blocks_the_pointer() {
     // Another writer's partial upload already sits under a dependency's immutable key.
     let e = env();
     let result_key = items[3].key();
-    e.remote.put_immutable(&result_key, b"partial").unwrap();
+    let partial_path = e.remote_dir.join(&result_key);
+    fs::create_dir_all(partial_path.parent().unwrap()).unwrap();
+    fs::write(&partial_path, b"partial").unwrap();
     let mut o = Outbox::open(&e.state, BIG).unwrap();
     let objects = append(&mut o, &items[..5]);
     let c0 = commit(&r, None, &objects[1..].iter().collect::<Vec<_>>());
