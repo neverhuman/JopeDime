@@ -57,6 +57,7 @@ pub mod search;
 pub mod search_cache;
 #[cfg(feature = "neural-search")]
 pub mod search_context;
+pub mod search_events;
 pub mod search_plan;
 pub mod seeds;
 pub mod select;
