@@ -1178,14 +1178,20 @@ mod tests {
         // `check` refuses such a root before anything is read.
         let temp = tempfile::tempdir().unwrap();
         let real = temp.path().join(OsStr::from_bytes(b"\xff"));
-        std::fs::create_dir(&real).unwrap();
-        let refused = check(&real.join("missing-matrix.md"), &real, None)
-            .unwrap_err()
-            .to_string();
-        assert!(
-            refused.starts_with("parity-check root '") && refused.contains(r"\udcff'"),
-            "{refused}"
-        );
+        match std::fs::create_dir(&real) {
+            Ok(()) => {
+                let refused = check(&real.join("missing-matrix.md"), &real, None)
+                    .unwrap_err()
+                    .to_string();
+                assert!(
+                    refused.starts_with("parity-check root '") && refused.contains(r"\udcff'"),
+                    "{refused}"
+                );
+            }
+            // APFS on macOS rejects non-UTF-8 directory creation with EILSEQ (92).
+            Err(e) if cfg!(target_os = "macos") && e.raw_os_error() == Some(92) => {}
+            Err(e) => panic!("unexpected create_dir error: {e:?}"),
+        }
     }
 
     /// The tree walks list what pathlib's globs listed and refuse where its predicates raised:
