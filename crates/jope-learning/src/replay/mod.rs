@@ -2,3 +2,4 @@
 pub mod admission;
 pub mod index_producer;
 pub mod observation;
+pub mod sample;
