@@ -1,0 +1,462 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.canonical-json.v1.schema.json",
+  "title": "JopeDime Canonical JSON Envelope (v1)",
+  "description": "Additive wire-contract envelope for algorithmic self-play records (I02). Enforces payload/ID/signature separation, length-prefixed domain-separated SHA-256 identity, IEEE-754 exact bit-pattern floats, safe integers in [-(2^53-1), +(2^53-1)], and outcome authority separation (verified_measured vs predicted vs synthetic vs missing). Lexical duplicate-key and canonical byte-spelling rules are enforced by crates/jope-records/src/wire_contract.rs before Value conversion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "envelope_schema",
+    "domain",
+    "schema_id",
+    "own_id",
+    "payload"
+  ],
+  "properties": {
+    "envelope_schema": {
+      "description": "Always `jope.canonical-json/v1`.",
+      "type": "string",
+      "const": "jope.canonical-json/v1"
+    },
+    "domain": {
+      "description": "Adapter surface that emitted or verified the envelope.",
+      "type": "string",
+      "enum": [
+        "native",
+        "inference",
+        "storage"
+      ]
+    },
+    "schema_id": {
+      "description": "Logical payload contract identifier (no NUL bytes; must match payload.schema).",
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^jope\\.[a-z0-9._-]+/v[1-9][0-9]*$"
+    },
+    "own_id": {
+      "$ref": "#/$defs/domain_separated_id"
+    },
+    "payload": {
+      "$ref": "#/$defs/canonical_payload_object"
+    },
+    "signature": {
+      "$ref": "#/$defs/signature_envelope"
+    },
+    "display": {
+      "$ref": "#/$defs/display_annotation"
+    }
+  },
+  "$defs": {
+    "sha256_hex": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "hex_u64": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 16,
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "safe_int": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "exact_f32": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "f32_bits"
+      ],
+      "properties": {
+        "f32_bits": {
+          "description": "Lowercase 8-hex-digit IEEE-754 binary32 bit pattern (finite only; NaN/Inf rejected by codec).",
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8,
+          "pattern": "^[0-9a-f]{8}$"
+        },
+        "display_f64": {
+          "description": "Optional non-authoritative human display number; excluded from identity projection.",
+          "type": "number"
+        }
+      }
+    },
+    "exact_f64": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "f64_bits"
+      ],
+      "properties": {
+        "f64_bits": {
+          "description": "Lowercase 16-hex-digit IEEE-754 binary64 bit pattern (finite only; NaN/Inf rejected by codec).",
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 16,
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "display_f64": {
+          "description": "Optional non-authoritative human display number; excluded from identity projection.",
+          "type": "number"
+        }
+      }
+    },
+    "domain_separated_id": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formula",
+        "schema_id",
+        "payload_byte_len",
+        "sha256"
+      ],
+      "properties": {
+        "formula": {
+          "type": "string",
+          "const": "sha256(schema_utf8||0x00||u64_be(len)||canonical_payload_bytes)"
+        },
+        "schema_id": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^jope\\.[a-z0-9._-]+/v[1-9][0-9]*$"
+        },
+        "payload_byte_len": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256_hex"
+        }
+      }
+    },
+    "signature_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signer_role",
+        "signed_own_id_sha256",
+        "signature_hex"
+      ],
+      "properties": {
+        "signer_role": {
+          "type": "string",
+          "enum": [
+            "native_worker",
+            "inference_worker",
+            "storage_committer",
+            "offline_verifier"
+          ]
+        },
+        "signed_own_id_sha256": {
+          "$ref": "#/$defs/sha256_hex"
+        },
+        "signature_hex": {
+          "$ref": "#/$defs/sha256_hex"
+        }
+      }
+    },
+    "display_annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "note": {
+          "type": "string"
+        },
+        "display_f64": {
+          "type": "number"
+        }
+      }
+    },
+    "authority_kind": {
+      "type": "string",
+      "enum": [
+        "verified_measured",
+        "predicted",
+        "synthetic",
+        "missing"
+      ]
+    },
+    "missing_reason": {
+      "type": "string",
+      "enum": [
+        "not_applicable",
+        "unscheduled",
+        "budget_exhausted",
+        "failed_closed",
+        "sealed_holdout"
+      ]
+    },
+    "outcome_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority",
+        "metric_name"
+      ],
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/authority_kind"
+        },
+        "metric_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "metric": {
+          "$ref": "#/$defs/exact_f64"
+        },
+        "evidence_receipt_sha256": {
+          "$ref": "#/$defs/sha256_hex"
+        },
+        "evidence_kind": {
+          "type": "string",
+          "enum": [
+            "measured_cpu_cv",
+            "measured_holdout_eval",
+            "measured_benchmark_run"
+          ]
+        },
+        "model_bundle_sha256": {
+          "$ref": "#/$defs/sha256_hex"
+        },
+        "synthetic_fixture_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "missing_reason": {
+          "$ref": "#/$defs/missing_reason"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authority": {
+                "const": "verified_measured"
+              }
+            },
+            "required": [
+              "authority"
+            ]
+          },
+          "then": {
+            "required": [
+              "metric",
+              "evidence_receipt_sha256",
+              "evidence_kind"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "model_bundle_sha256"
+                  ]
+                },
+                {
+                  "required": [
+                    "synthetic_fixture_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "missing_reason"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authority": {
+                "const": "predicted"
+              }
+            },
+            "required": [
+              "authority"
+            ]
+          },
+          "then": {
+            "required": [
+              "metric",
+              "model_bundle_sha256"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "evidence_receipt_sha256"
+                  ]
+                },
+                {
+                  "required": [
+                    "evidence_kind"
+                  ]
+                },
+                {
+                  "required": [
+                    "synthetic_fixture_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "missing_reason"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authority": {
+                "const": "synthetic"
+              }
+            },
+            "required": [
+              "authority"
+            ]
+          },
+          "then": {
+            "required": [
+              "metric",
+              "synthetic_fixture_id"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "evidence_receipt_sha256"
+                  ]
+                },
+                {
+                  "required": [
+                    "evidence_kind"
+                  ]
+                },
+                {
+                  "required": [
+                    "model_bundle_sha256"
+                  ]
+                },
+                {
+                  "required": [
+                    "missing_reason"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authority": {
+                "const": "missing"
+              }
+            },
+            "required": [
+              "authority"
+            ]
+          },
+          "then": {
+            "required": [
+              "missing_reason"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "metric"
+                  ]
+                },
+                {
+                  "required": [
+                    "evidence_receipt_sha256"
+                  ]
+                },
+                {
+                  "required": [
+                    "evidence_kind"
+                  ]
+                },
+                {
+                  "required": [
+                    "model_bundle_sha256"
+                  ]
+                },
+                {
+                  "required": [
+                    "synthetic_fixture_id"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "canonical_payload_object": {
+      "type": "object",
+      "required": [
+        "schema"
+      ],
+      "properties": {
+        "schema": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^jope\\.[a-z0-9._-]+/v[1-9][0-9]*$"
+        },
+        "seed_u64_hex": {
+          "$ref": "#/$defs/hex_u64"
+        },
+        "step_index": {
+          "$ref": "#/$defs/safe_int"
+        },
+        "weight_f32": {
+          "$ref": "#/$defs/exact_f32"
+        },
+        "score_f64": {
+          "$ref": "#/$defs/exact_f64"
+        },
+        "outcome": {
+          "$ref": "#/$defs/outcome_record"
+        }
+      },
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "own_id"
+            ]
+          },
+          {
+            "required": [
+              "signature"
+            ]
+          },
+          {
+            "required": [
+              "later_git_commit"
+            ]
+          },
+          {
+            "required": [
+              "later_assessment_id"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
