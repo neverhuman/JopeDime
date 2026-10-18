@@ -33,6 +33,7 @@ pub mod inputs;
 pub mod inventory;
 pub mod lifecycle;
 pub mod md5;
+pub mod obligations;
 pub mod pack;
 pub mod parquet;
 pub mod plan;
