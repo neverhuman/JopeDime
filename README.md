@@ -34,7 +34,7 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 | Coverage map | 751 items over 24 lanes <sup>7</sup> |
 | Capability matrix | 826 rows: 353 moved, 63 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,184 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
