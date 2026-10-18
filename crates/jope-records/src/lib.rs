@@ -56,6 +56,8 @@ pub mod pycsv;
 pub mod pyjson;
 pub mod readme;
 pub mod repo_layout;
+#[path = "research/state.rs"]
+pub mod research;
 pub mod scope_check;
 pub mod selfplay_baseline;
 pub mod synthetic;
