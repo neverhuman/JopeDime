@@ -22,6 +22,34 @@ use jope_parallel::{
 use serde_json::json;
 use std::collections::BTreeMap;
 
+#[test]
+fn v3_uses_the_descendant_epoch_without_changing_the_four_mode_strings() {
+    use jope_parallel::native_loop::warm_start::{self, LOOP_V1, LOOP_V2, LOOP_V3};
+    for (schema, base, expected) in [
+        (LOOP_V1, 60000, (60000, 63000, None)),
+        (LOOP_V2, 60000, (0, 3000, Some(60000))),
+        (LOOP_V3, 6000, (6000, 9000, None)),
+    ] {
+        let window = warm_start::window(schema, base, 0).unwrap();
+        assert_eq!(
+            (window.initial, window.target, window.warm_start_parent_step),
+            expected
+        );
+    }
+    for (mode, name) in [
+        (ContinuationMode::ColdInitialization, "cold_initialization"),
+        (ContinuationMode::WeightWarmStart, "weight_warm_start"),
+        (
+            ContinuationMode::NewCorpusTransition,
+            "new_corpus_transition",
+        ),
+        (ContinuationMode::ExactResume, "exact_resume"),
+    ] {
+        assert_eq!(serde_json::to_string(&mode).unwrap(), format!("\"{name}\""));
+        assert_eq!(ContinuationMode::parse(name).unwrap(), mode);
+    }
+}
+
 fn input(schema: &str, mode: Option<ContinuationMode>) -> InputManifest {
     InputManifest {
         schema: schema.into(),

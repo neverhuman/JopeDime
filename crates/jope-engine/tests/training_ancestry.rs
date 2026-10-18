@@ -388,6 +388,26 @@ fn manual(root: &Path, name: &str, state: Value) -> PathBuf {
 }
 
 #[test]
+fn retained_numeric_steps_do_not_supply_versioned_committed_credit() {
+    use jope_parallel::native_loop::lineage::{LineageBundle, LINEAGE_SCHEMA};
+    let s = scenario();
+    let g = s.genealogy();
+    let anchor = &g.nodes[&digest(&s.a2)];
+    let bundle: LineageBundle = serde_json::from_value(json!({"lineage":{
+        "schema":LINEAGE_SCHEMA,"anchor":{"checkpoint_sha256":anchor.digest,
+        "weights_sha256":anchor.state["model_sha256"],"optimizer_step":anchor.step,
+        "objective_sha256":null,"committed_updates":null,
+        "architecture_sha256":"a".repeat(64),"vocabulary_sha256":"b".repeat(64),"support_sha256":"c".repeat(64)},
+        "protocol":{"objective_sha256":"d".repeat(64),"recipe_sha256":"e".repeat(64),
+        "architecture_sha256":"a".repeat(64),"vocabulary_sha256":"b".repeat(64),"support_sha256":"c".repeat(64)},
+        "edges":["f".repeat(64)]},"evidence":{}})).unwrap();
+    let error = ancestry::verified_lineage_exposure(&g, &bundle).unwrap_err();
+    assert!(error.to_string().contains("missing lineage evidence"));
+    // The retained genealogy still reports its original step independently.
+    assert_eq!(g.nodes[&anchor.digest].step, anchor.step);
+}
+
+#[test]
 fn the_genealogy_resolves_retained_edges_and_checks_independently() {
     let s = scenario();
     let g = s.genealogy();

@@ -24,6 +24,9 @@ use serde_json::{json, Value};
 pub const LOOP_V1: &str = "jope.native_loop.v1";
 /// The legacy-parent weight-warm-start protocol.
 pub const LOOP_V2: &str = "jope.native_loop.v2";
+/// An explicitly verified descendant carries its own optimizer epoch.
+pub const LOOP_V3: &str = "jope.native_loop.v3";
+pub const COMPLETION_V3: &str = "jope.native_loop_completion.v3";
 /// The binding a warm start's replay policy, trained checkpoint and completion receipt name.
 pub const WARM_START_SCHEMA: &str = "jope.native_weight_warm_start.v1";
 /// A v2 run's completion: its optimizer window is the fresh optimizer's.
@@ -50,7 +53,7 @@ pub fn window(schema: &str, base: u64, generation: u64) -> Result<Window> {
         .checked_mul(BLOCK_UPDATES)
         .context("optimizer window overflow")?;
     let (initial, warm_start_parent_step) = match schema {
-        LOOP_V1 => (
+        LOOP_V1 | LOOP_V3 => (
             base.checked_add(offset)
                 .context("optimizer window overflow")?,
             None,
@@ -269,7 +272,7 @@ mod tests {
             );
             assert_eq!(request_mode(&now, &json!({"step":initial})).unwrap(), None);
         }
-        assert!(window("jope.native_loop.v3", 60000, 0).is_err());
+        assert!(window("jope.native_loop.v4", 60000, 0).is_err());
     }
 
     #[test]
