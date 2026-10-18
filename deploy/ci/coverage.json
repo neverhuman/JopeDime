@@ -214,6 +214,18 @@
       "lanes": [],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
     },
+    "benchmark:crates/jope-engine/src/gpr_cuda_bench_args.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [
+        "rust-test"
+      ],
+      "scope": "LibTorch-free argument and envelope validation helpers for gpr_cuda_bench, exercised by crates/feat-math/tests/gpr_cuda_bench_cases.rs."
+    },
     "benchmark:deploy/dl-flywheel/pipelines/rlfw/bench_cli.py": {
       "discovery": {
         "kind": "benchmark-source"
