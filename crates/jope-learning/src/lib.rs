@@ -48,6 +48,8 @@ pub mod scores;
 pub mod selfplay;
 pub mod sources;
 pub mod state;
+#[path = "selfplay/promote.rs"]
+pub mod promote;
 pub mod support;
 pub mod sync;
 
