@@ -418,9 +418,13 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
     let mut pf_rows = std::collections::BTreeMap::new();
     for c in 0..32usize {
         let parent = format!("dataset-parent-{}", c / 2);
-        let ctx_sha = sha256_hex(format!("selfplay-ctx-{c}").as_bytes());
+        let mut ctx_sha = sha256_hex(format!("selfplay-ctx-{c}").as_bytes());
         let z = if (c / 2) % 2 == 0 { 1.0 } else { -1.0 };
-        cf_rows.insert(ctx_sha.clone(), vec![z]);
+        ctx_sha.replace_range(..2, if z > 0.0 { "ff" } else { "00" });
+        cf_rows.insert(
+            ctx_sha.clone(),
+            Features::context_id_vector(&ctx_sha, 1).unwrap(),
+        );
         let spec = SelfPlayDistillSpec {
             dataset: parent,
             context_sha256: ctx_sha.clone(),

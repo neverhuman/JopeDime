@@ -37,8 +37,8 @@ use super::evaluate::{
 use super::metrics::{score_context, ContextMetrics};
 use super::pool::{verify, Manifest, Member, Pool, PoolView, Status, POOL_SCHEMA};
 use super::selectors::{
-    pre_screen_funnel, token_bag_features, ContextualSurrogateQHat, ExternalProgramPrior, Features,
-    Selector,
+    pre_screen_funnel, token_bag_features, ContextualSurrogateQHat, CvEstimate,
+    ExternalProgramPrior, Features, Selector,
 };
 use crate::canon::{canonical_sha256, sha256_hex};
 use crate::clover::expansion::{measured_tilt_leaf_log_probs, MeasuredTiltPolicyConfig};
@@ -54,7 +54,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 
-pub const FLYWHEEL_RECEIPT_SCHEMA: &str = "jope.j9-distilled-flywheel-receipt/v1";
+pub const FLYWHEEL_RECEIPT_SCHEMA: &str = "jope.j9-distilled-flywheel-receipt/v2";
 
 #[derive(Clone, Debug, Serialize)]
 pub struct FlywheelConfig {
@@ -101,6 +101,14 @@ pub struct RoundLiftComparison {
 }
 
 #[derive(Clone, Debug, Serialize)]
+pub struct FlywheelFoldCv {
+    pub round: usize,
+    pub fold: usize,
+    pub active: CvEstimate,
+    pub passive: CvEstimate,
+}
+
+#[derive(Clone, Debug, Serialize)]
 pub struct FlywheelReceipt {
     pub schema: &'static str,
     pub shadow_only: bool,
@@ -110,6 +118,7 @@ pub struct FlywheelReceipt {
     pub s3_prior_rows_by_fold: Vec<usize>,
     pub config: FlywheelConfig,
     pub rounds: Vec<FlywheelRoundSummary>,
+    pub surrogate_cv: Vec<FlywheelFoldCv>,
     pub monotonic_train_hwm_gain: bool,
     pub monotonic_heldout_pairwise_accuracy: bool,
     pub all_rounds_kl_admissible: bool,
@@ -348,6 +357,9 @@ pub fn run_distilled_flywheel_with_s3_prior(
     parquet_dir: Option<&Path>,
 ) -> Result<FlywheelReceipt> {
     verify(pools, manifest)?;
+    context_features
+        .verify_context_descriptor()
+        .context("flywheel nested/v3 context provenance unavailable")?;
     ensure!(!pools.is_empty(), "no frozen pools");
     ensure!(cfg.rounds >= 2, "flywheel requires at least 2 rounds");
     ensure!(
@@ -487,7 +499,7 @@ pub fn run_distilled_flywheel_with_s3_prior(
     let mut final_passive_discovery_hwm = vec![0.0; pools.len()];
     let mut all_rounds_kl_admissible = true;
     let mut final_train_sub_pools: Vec<Vec<Pool>> = Vec::new();
-    let mut round_cv_trace: Vec<String> = Vec::with_capacity(cfg.rounds * cfg.eval.folds);
+    let mut round_cv_trace: Vec<FlywheelFoldCv> = Vec::with_capacity(cfg.rounds * cfg.eval.folds);
 
     for r in 0..cfg.rounds {
         // 1. Distill each outer fold's currently acquired training observations into gp_distilled/v1 Parquet and read back.
@@ -808,13 +820,12 @@ pub fn run_distilled_flywheel_with_s3_prior(
                 cfg.eval.ridge_lambda,
                 ext_prior,
             )?;
-            let (abm, apm) = surrogate.selected_multipliers();
-            let (pbm, ppm) = passive_surrogate.selected_multipliers();
-            round_cv_trace.push(format!(
-                "r{r}:f{k}=act({abm},{apm},{:.6})/pas({pbm},{ppm},{:.6})",
-                surrogate.inner_cv_loss(),
-                passive_surrogate.inner_cv_loss()
-            ));
+            round_cv_trace.push(FlywheelFoldCv {
+                round: r,
+                fold: k,
+                active: surrogate.inner_cv_estimate().clone(),
+                passive: passive_surrogate.inner_cv_estimate().clone(),
+            });
 
             // Evaluate held-out fold `k` on full pools (never used for training or training-split acquisitions).
             for &i in &held {
@@ -1101,8 +1112,8 @@ pub fn run_distilled_flywheel_with_s3_prior(
             .find(|s| s.name == "contextual_surrogate_qhat")
         {
             sel_rec.rule.push_str(&format!(
-                "; flywheel_round_cv=[{}]",
-                round_cv_trace.join(", ")
+                "; flywheel nested/v3 fits={}; see typed surrogate_cv",
+                round_cv_trace.len()
             ));
         }
     }
@@ -1140,6 +1151,7 @@ pub fn run_distilled_flywheel_with_s3_prior(
         s3_prior_rows_by_fold,
         config: cfg.clone(),
         rounds: round_summaries,
+        surrogate_cv: round_cv_trace,
         monotonic_train_hwm_gain,
         monotonic_heldout_pairwise_accuracy,
         all_rounds_kl_admissible,
