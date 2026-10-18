@@ -80,6 +80,12 @@ fn committed_progress_requires_source_proof_and_duplicate_ack_does_not_count_twi
             Ok(true)
         }
     }
+    struct Reject;
+    impl CommittedUpdateVerifier for Reject {
+        fn verify_committed_update(&self, _: &CommittedUpdate) -> Result<bool> {
+            Ok(false)
+        }
+    }
     let r = |kind: &str, key: &str| ProofReference {
         kind: kind.into(),
         key: key.into(),
@@ -108,9 +114,15 @@ fn committed_progress_requires_source_proof_and_duplicate_ack_does_not_count_twi
         vec![committed.clone(), unknown],
     )?;
     let replay = SegmentCheckpoint::new(2, "commit-2".into(), "d".repeat(64), vec![committed])?;
-    let rebuilt = rebuild(&[first, replay], &Accept)?;
+    let rebuilt = rebuild(&[first.clone(), replay.clone()], &Accept)?;
     assert_eq!(rebuilt.committed_updates, 1);
+    assert_eq!(rebuilt.held_committed, 0);
     assert_eq!(rebuilt.unknown, 1);
+
+    let unverified = rebuild(&[first, replay], &Reject)?;
+    assert_eq!(unverified.committed_updates, 0);
+    assert_eq!(unverified.held_committed, 1);
+    assert_eq!(unverified.unknown, 1);
     Ok(())
 }
 

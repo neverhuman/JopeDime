@@ -978,24 +978,17 @@ mod tests {
             committed_update_key: None,
         }
     }
-    fn scratch() -> Result<PathBuf> {
-        let path = std::env::current_dir()?
-            .join("target/task-evidence/I48/unit-segment")
-            .join(format!(
-                "{}-{}",
-                std::process::id(),
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)?
-                    .as_nanos()
-            ));
-        fs::create_dir_all(&path)?;
-        Ok(path)
+    fn scratch() -> Result<tempfile::TempDir> {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../target/task-evidence/I48/unit-segment");
+        fs::create_dir_all(&root)?;
+        Ok(tempfile::tempdir_in(root)?)
     }
 
     #[test]
     fn append_lookup_reopen_are_hash_bound_and_bounded() -> Result<()> {
-        let path = scratch()?;
-        let mut store = SegmentStore::open(&path, limits())?;
+        let dir = scratch()?;
+        let mut store = SegmentStore::open(dir.path(), limits())?;
         let record = record("attempt/1");
         store.append(vec![record.clone()])?;
         assert_eq!(store.lookup("attempt/1")?, Some(record.clone()));
@@ -1004,7 +997,7 @@ mod tests {
         assert!(usage.startup_bytes_read <= limits().max_startup_bytes);
         assert!(usage.total_disk_bytes <= limits().max_total_disk_bytes);
         drop(store);
-        let mut reopened = SegmentStore::open(&path, limits())?;
+        let mut reopened = SegmentStore::open(dir.path(), limits())?;
         assert_eq!(reopened.lookup("attempt/1")?, Some(record));
         Ok(())
     }
@@ -1012,12 +1005,12 @@ mod tests {
     #[test]
     fn every_root_publish_boundary_reopens_as_old_or_new_complete_state() -> Result<()> {
         for boundary in 1..=4 {
-            let path = scratch()?;
-            let mut store = SegmentStore::open(&path, limits())?;
+            let dir = scratch()?;
+            let mut store = SegmentStore::open(dir.path(), limits())?;
             let item = record(&format!("crash/{boundary}"));
             assert!(store.append_crash_at(vec![item.clone()], boundary).is_err());
             drop(store);
-            let mut recovered = SegmentStore::open(&path, limits())?;
+            let mut recovered = SegmentStore::open(dir.path(), limits())?;
             if boundary < 4 {
                 assert_eq!(recovered.usage().generation, 0, "boundary {boundary}");
                 assert_eq!(recovered.lookup(&item.key)?, None, "boundary {boundary}");
@@ -1035,8 +1028,11 @@ mod tests {
 
     #[test]
     fn conflicting_key_and_caps_refuse_without_moving_root() -> Result<()> {
-        let path = scratch()?;
-        let mut store = SegmentStore::open(&path, limits())?;
+        let dir = scratch()?;
+        let mut caps = limits();
+        caps.max_entries = 1;
+        caps.max_segments = 1;
+        let mut store = SegmentStore::open(dir.path(), caps)?;
         let one = record("attempt/one");
         store.append(vec![one.clone()])?;
         let root = store.root_digest().to_owned();
@@ -1045,6 +1041,8 @@ mod tests {
         changed.proof_bytes.push(b'!');
         changed.source_sha256 = sha256_hex(&changed.proof_bytes);
         assert!(store.append(vec![changed]).is_err());
+        assert_eq!(store.root_digest(), root);
+        assert!(store.append(vec![record("attempt/two")]).is_err());
         assert_eq!(store.root_digest(), root);
         Ok(())
     }
