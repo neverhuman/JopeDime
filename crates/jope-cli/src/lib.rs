@@ -5,6 +5,7 @@ mod champions;
 mod encode;
 mod generator;
 mod kernel;
+pub mod research_view;
 mod router;
 mod schema;
 mod storage;

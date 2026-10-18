@@ -1725,3 +1725,15 @@ Timestamp correction: the preceding gate-result entry was labeled 05:06Z; the ob
 
 ## 2026-10-18T05:10:00Z — Codex stage batch4 I61/I32 follow-up claim
 Owner: Codex /root; explicit user assignment. Checkout /home/ubuntu/JopeDime/.agent/worktrees/lane-i14-20261018, branch stage/super-merge-batch4, starting HEAD 6ee69f4225ee193a93682f8143d95b0a991215ca, clean; remote stage readback previously matched. Open PR #358 is on a different branch. Paths: source/docs/tests named in commits 7baf0f5999429e3fda73e3ce704b665af64e9467 and 35e16c9ab6d06de902864e220e2656cea2669645 plus this ledger if conflicts require recording. Plan: cherry-pick both in order, preserve additive exports, run requested taskset workspace check, then push stage branch and verify remote head.
+
+## 2026-10-18T04:55:00Z — Codex I61 source lease rebind
+
+Owner: Codex /root in `/home/ubuntu/JopeDime/.agent/worktrees/lane-i05-20261018`, branch `lane/I61`, stopped HEAD `4b3af5291547499c605ad6a4180dcbb1b8f29923`, clean. User explicitly assigns execution now on CPUs 26,27, overriding the staged-docs/20,21 placement in the older assignment. Open queue inspected: PR #358 remains open. Registered worktrees inspected. Worker paths: `docs/runbooks/research-workflow.md`, `crates/jope-cli/src/research_view.rs`, `crates/jope-cli/tests/research_workflow.rs`, plus `.agent/CHANGELOG.md`, `.agent/handoffs/I61.md`, and external I61 receipt. Verification: bounded jope-cli research_workflow list and serial tests, CPU 26,27 only; no `just required`, no load1 wait. Commit on `lane/I61` and push only through the specified git-push-jepson.sh. Draft dependency assumptions and limits recorded in receipt. A malformed initial claim attempt invoked `just required` through shell backtick expansion; it was terminated before completion, and its child process exited. Do not count any resulting output as verification.
+
+## I61 claim timestamp correction
+
+The preceding I61 rebind heading used 04:55:00Z, while the host clock at append time reported 04:45:09Z. Treat the heading as a malformed timestamp; the claim itself was appended at 2026-10-18T04:45:09Z. No claim content changed.
+
+## 2026-10-18T04:55:13Z — I61 verification scope correction
+
+The rebind claim's phrase “no just required” described the requested verification scope, not what happened during the initial malformed shell command. Shell backtick expansion accidentally started `just required`; the process was terminated before completion. No result from it is counted. The only credited verification is the bounded formatting and test commands listed in the final I61 receipt. No wait on load1 occurred.
