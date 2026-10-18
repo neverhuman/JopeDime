@@ -26,6 +26,9 @@ use super::config::{CheckpointBinding, PolicyConfig, TensorEntry};
 use super::grammar::PAD;
 use super::sha256_hex;
 
+/// Separate, default-off structural critic candidate. It cannot alter policy actor weights.
+pub mod structured_critic;
+
 const LAYER_NORM_EPS: f64 = 1e-5;
 pub(crate) mod cached;
 const LOSS_LOG_VARS: [&str; 7] = [
