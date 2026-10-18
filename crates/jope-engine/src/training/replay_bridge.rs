@@ -296,6 +296,38 @@ impl ReplayBundle {
             );
             validate_sha(&occurrence.evidence_sha256, "measurement evidence")?;
         }
+        let mut grouped = BTreeMap::<&str, Vec<&FreshOccurrence>>::new();
+        for occurrence in &self.occurrences {
+            grouped
+                .entry(&occurrence.comparison_id)
+                .or_default()
+                .push(occurrence);
+        }
+        for (comparison_id, group) in grouped {
+            let labels = group
+                .iter()
+                .map(|item| item.row_label())
+                .collect::<Vec<_>>();
+            ensure!(
+                labels.len() == COMPARISON_ROWS,
+                "comparison {comparison_id} is incomplete"
+            );
+            objective::validate_rows(&labels)?;
+            ensure!(
+                group
+                    .iter()
+                    .filter(|item| item.disposition == Disposition::Chosen)
+                    .count()
+                    == 1,
+                "comparison {comparison_id} must retain one chosen occurrence"
+            );
+            ensure!(
+                group
+                    .iter()
+                    .all(|item| (2..=crate::corpus::SEQUENCE).contains(&item.token_length)),
+                "comparison {comparison_id} has an invalid token length"
+            );
+        }
         Ok(())
     }
 
