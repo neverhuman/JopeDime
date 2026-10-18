@@ -60,6 +60,7 @@
 
 pub mod cadence;
 pub mod census;
+pub mod checkpoint;
 pub mod engine;
 pub mod inventory;
 pub mod outbox;
@@ -68,6 +69,7 @@ pub mod publish;
 pub mod rebuild;
 pub mod reconcile;
 pub mod remote;
+pub mod segment;
 
 #[cfg(test)]
 mod tests {
