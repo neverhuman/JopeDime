@@ -1,0 +1,113 @@
+{
+  "schema": "jope.wire-contract-negative-vectors/v1",
+  "vectors": [
+    {
+      "id": "N01_DUPLICATE_TOP_LEVEL_KEY",
+      "category": "duplicate_key",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"step_index\":1,\"step_index\":2}",
+      "expected_error_kind": "DuplicateObjectKey"
+    },
+    {
+      "id": "N02_DUPLICATE_NESTED_KEY",
+      "category": "duplicate_key",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"nested\":{\"k\":1,\"k\":1}}",
+      "expected_error_kind": "DuplicateObjectKey"
+    },
+    {
+      "id": "N03_UNPAIRED_HIGH_SURROGATE",
+      "category": "unicode_surrogate",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"label\":\"bad \\ud800 high\"}",
+      "expected_error_kind": "UnpairedSurrogate"
+    },
+    {
+      "id": "N04_UNPAIRED_LOW_SURROGATE",
+      "category": "unicode_surrogate",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"label\":\"bad \\udfff low\"}",
+      "expected_error_kind": "UnpairedSurrogate"
+    },
+    {
+      "id": "N05_NEGATIVE_ZERO_INTEGER",
+      "category": "numeric_integer",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"step_index\":-0}",
+      "expected_error_kind": "NegativeZeroInteger"
+    },
+    {
+      "id": "N06_LEADING_ZERO_INTEGER",
+      "category": "numeric_integer",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"step_index\":01}",
+      "expected_error_kind": "LeadingZeroNumber"
+    },
+    {
+      "id": "N07_INTEGER_OVERFLOW_ABOVE_MAX_SAFE",
+      "category": "numeric_integer",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"step_index\":9007199254740992}",
+      "expected_error_kind": "IntegerOverflow"
+    },
+    {
+      "id": "N08_INTEGER_OVERFLOW_BELOW_MIN_SAFE",
+      "category": "numeric_integer",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"step_index\":-9007199254740992}",
+      "expected_error_kind": "IntegerOverflow"
+    },
+    {
+      "id": "N09_RAW_FLOAT_IN_IDENTITY_PAYLOAD",
+      "category": "numeric_float",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"raw_score\":0.875}",
+      "expected_error_kind": "RawFloatInIdentityPayload"
+    },
+    {
+      "id": "N10_NONFINITE_F64_NAN_BITS",
+      "category": "numeric_float",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"score_f64\":{\"f64_bits\":\"7ff8000000000000\"}}",
+      "expected_error_kind": "NonFiniteFloatBits"
+    },
+    {
+      "id": "N11_NONFINITE_F64_POS_INF_BITS",
+      "category": "numeric_float",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"score_f64\":{\"f64_bits\":\"7ff0000000000000\"}}",
+      "expected_error_kind": "NonFiniteFloatBits"
+    },
+    {
+      "id": "N12_NONFINITE_F32_NEG_INF_BITS",
+      "category": "numeric_float",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"weight_f32\":{\"f32_bits\":\"ff800000\"}}",
+      "expected_error_kind": "NonFiniteFloatBits"
+    },
+    {
+      "id": "N13_UPPERCASE_HEX_IN_F64_BITS",
+      "category": "hex_encoding",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"score_f64\":{\"f64_bits\":\"3FEC000000000000\"}}",
+      "expected_error_kind": "InvalidHexEncoding"
+    },
+    {
+      "id": "N14_FORBIDDEN_CYCLE_OWN_ID_IN_PAYLOAD",
+      "category": "envelope_cycle",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"own_id\":\"deadbeef\"}",
+      "expected_error_kind": "ForbiddenCycleField"
+    },
+    {
+      "id": "N15_FORBIDDEN_CYCLE_LATER_ASSESSMENT_IN_PAYLOAD",
+      "category": "envelope_cycle",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"nested\":{\"later_assessment_id\":\"abc\"}}",
+      "expected_error_kind": "ForbiddenCycleField"
+    },
+    {
+      "id": "N16_UNKNOWN_OUTCOME_AUTHORITY_ENUM",
+      "category": "unknown_enum",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"outcome\":{\"authority\":\"guessed\",\"metric_name\":\"cv_r2\"}}",
+      "expected_error_kind": "UnknownEnumVariant"
+    },
+    {
+      "id": "N17_UNKNOWN_OUTCOME_FIELD",
+      "category": "unknown_field",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"outcome\":{\"authority\":\"missing\",\"metric_name\":\"cv_r2\",\"missing_reason\":\"unscheduled\",\"unexpected_extra\":true}}",
+      "expected_error_kind": "UnknownField"
+    },
+    {
+      "id": "N18_MISSING_OUTCOME_WITH_NUMERIC_METRIC_COERCION",
+      "category": "authority_violation",
+      "raw_input_json": "{\"schema\":\"jope.selfplay.test/v1\",\"outcome\":{\"authority\":\"missing\",\"metric_name\":\"cv_r2\",\"missing_reason\":\"unscheduled\",\"metric\":{\"f64_bits\":\"0000000000000000\"}}}",
+      "expected_error_kind": "InvalidOutcomeAuthority"
+    }
+  ]
+}

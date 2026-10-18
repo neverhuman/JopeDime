@@ -61,6 +61,7 @@ pub mod selfplay_baseline;
 pub mod synthetic;
 pub mod task_status;
 pub mod test_inventory;
+pub mod wire_contract;
 pub mod zstd_frame;
 
 pub use error::{Error, Result};

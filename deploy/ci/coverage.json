@@ -9120,6 +9120,22 @@
       ],
       "scope": "Core-IP record verifiers and STATUS/PROGRESS renderers against the committed records and adversarial fixtures: findings inventory integrity, disposition evidence binding, claim-to-evidence binding and revocation closure (synthetic evidence never backs live, measurement or promotion claims), test-inventory completeness against this map, task-state evidence rules, and byte-identical STATUS.md/PROGRESS.md renders with stale-view detection; the accepted tensor-inventory verifier on synthetic safetensors fixtures (layout, per-tensor digests, dtype/field closure, role accounting, Candle forward references, optimizer moments; the real asset is verified on the host) and tensors.json against the documented geometry; and the independent replay of every retained reproducible Elo ladder (Golden45 included, zstd decoded in process) with substitution, duplicate-delivery and disposition-upgrade refusals, historical-ranking-only consumers, lineage continuity/exposure refusals and derived plot-table consistency. Records status only; it qualifies nothing."
     },
+    "target:jope-records/test/wire_contract": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-records/tests/wire_contract.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Additive jope.canonical-json/v1 wire-contract conformance suite (I02): positive canonical payload byte and length-prefixed domain-separated SHA-256 vectors (reordered nested keys, Unicode precomposed vs combining preservation, array order, ExactF32/ExactF64 +0/-0/subnormal bit tags, display_f64 stripping), negative lexical/numeric/cycle/authority refusals (duplicate keys at all depths, unpaired surrogates, -0/leading-zero/overflow integers, raw floats, NaN/Inf bits, self-referential own_id/signature/later_assessment_id cycles, unknown fields/enums), native/inference/storage adapter golden-byte equality, VerifiedMeasuredOutcome proof verification, independent Node.js cross-language vector verification, and 29 legacy schema + historical hash preservation."
+    },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {
         "doctest": true,

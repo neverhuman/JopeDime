@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5013,
+  "count": 5021,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -6912,7 +6912,7 @@
     }
    },
    "jope-records": {
-    "count": 192,
+    "count": 200,
     "ignored": 1,
     "binaries": {
      "jope-records": {
@@ -7132,6 +7132,21 @@
        "test_inventory::committed_inventory",
        "test_inventory::messages_name_the_python_identities",
        "test_inventory::mutations_are_rejected"
+      ]
+     },
+     "jope-records::wire_contract": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "envelope_separation_and_no_self_referential_cycle",
+       "exact_ieee754_float_bits_and_safe_integer_boundaries",
+       "independent_node_conformance_harness_agrees_on_all_vectors",
+       "legacy_schemas_and_historical_hash_schemes_remain_intact",
+       "measured_authority_boundary_rejects_predicted_synthetic_missing_and_unverified_claims",
+       "native_inference_and_storage_adapters_emit_same_golden_payload_bytes_and_ids",
+       "negative_vectors_lexical_numeric_cycle_and_authority_refusals",
+       "positive_vectors_canonical_bytes_and_domain_separated_ids_match"
       ]
      }
     }
