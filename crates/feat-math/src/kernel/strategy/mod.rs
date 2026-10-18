@@ -3,6 +3,7 @@
 pub mod gumbel_root;
 pub mod migration;
 pub mod modern_gp;
+pub mod qd;
 pub mod race;
 pub mod residual;
 pub mod selection;
