@@ -120,24 +120,10 @@ pub struct BaselineSnapshot<'a> {
 
 impl<'a> BaselineSnapshot<'a> {
     /// Construct a snapshot bound to `repo` and `source_sha`, pre-loading `ls-tree` when
-    /// `source_sha` is present in the local Git object database (or after a shallow fetch).
+    /// `source_sha` is present in the local Git object database (read-only; never runs `git fetch`
+    /// or mutates the repository object store).
     pub fn new(repo: &'a Path, source_sha: &str) -> Result<Self> {
-        let mut has_git_commit = has_commit_object(repo, source_sha);
-        if !has_git_commit {
-            let _ = Command::new("git")
-                .arg("-C")
-                .arg(repo)
-                .arg("fetch")
-                .arg("--quiet")
-                .arg("--no-tags")
-                .arg("--depth=1")
-                .arg("origin")
-                .arg(source_sha)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .status();
-            has_git_commit = has_commit_object(repo, source_sha);
-        }
+        let has_git_commit = has_commit_object(repo, source_sha);
 
         let mut tree_files = BTreeSet::new();
         let status_label = if has_git_commit {
@@ -818,10 +804,10 @@ fn verify_profile_identity_reconciliation_with_snapshot(
                     is_lower_hex_sha64(vocab_wsha),
                     "native PolicyLM vocabulary_sha256 must be 64-hex"
                 );
-                let context_len = req_u64(lin, "context_length", &lctx)?;
+                let context_abi = req_u64(lin, "context_abi_values", &lctx)?;
                 require!(
-                    context_len == 2048,
-                    "native PolicyLM context_length must be 2048, got {context_len}"
+                    context_abi == 2048,
+                    "native PolicyLM context_abi_values must be 2048, got {context_abi}"
                 );
                 let ctx_wpath = req_str(lin, "context_witness_path", &lctx)?;
                 let accepted_step = req_u64(lin, "accepted_step", &lctx)?;
@@ -1389,6 +1375,14 @@ fn verify_runtime_combinations_with_snapshot(
                 }
             }
             "RT05" => {
+                let comb = req_str(entry, "combination", &rctx)?;
+                require!(
+                    comb.contains("hyperion/batch-worker")
+                        && comb.contains("hyperion/hyperion-cpu")
+                        && comb.contains("jope-cli/qualified-training-context")
+                        && !comb.contains("jope-bench/asm"),
+                    "RT05 combination must name the 3 crate-default-enabled features (hyperion/batch-worker, hyperion/hyperion-cpu, jope-cli/qualified-training-context)"
+                );
                 let nd_feats = req_list(entry, "non_default_features", &rctx)?;
                 let nd_len = nd_feats.len();
                 let target_len = targets.len();

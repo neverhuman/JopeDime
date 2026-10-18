@@ -401,7 +401,6 @@
         "vocabulary_witness_path": "crates/jope-engine/assets/grammar/featmath.json",
         "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
         "vocabulary_constant_witness": "crates/jope-policy/src/lib.rs:162,175-181",
-        "context_length": 2048,
         "context_abi_values": 2048,
         "context_witness_path": "crates/jope-policy/src/context.rs",
         "accepted_step": 60000,
@@ -864,7 +863,7 @@
     },
     {
       "id": "RT05",
-      "combination": "22 named workspace Cargo features catalogued in deploy/ci/coverage.json (19 non-default features + 3 crate-default-enabled features: hyperion/hyperion-cpu, jope-bench/asm, jope-cli/asm; spanning 7 GPU-only features with lanes=[], 1 benchmark-only timing-study feature with lanes=[], 6 full-suite-only CPU features in full-neural/full-policy/full-scratch/full-s3-offline, and 8 CPU features in rust-test/rust-check) plus 3 required-features binary targets",
+      "combination": "22 named workspace Cargo features catalogued in deploy/ci/coverage.json (19 non-default features + 3 crate-default-enabled features: hyperion/batch-worker, hyperion/hyperion-cpu, jope-cli/qualified-training-context; spanning 7 GPU-only features with lanes=[], 1 benchmark-only timing-study feature with lanes=[], 6 full-suite-only CPU features in full-neural/full-policy/full-scratch/full-s3-offline, and 8 CPU features in rust-test/rust-check) plus 3 required-features binary targets",
       "status": "FEATURE_GATED_NON_DEFAULT_COMBINATIONS",
       "package_name": "workspace",
       "required_flag": "Explicit --features flag and corresponding lane/hardware (full-neural, full-policy, full-scratch, full-s3-offline, or GPU builder)",
