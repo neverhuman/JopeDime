@@ -1,7 +1,7 @@
 # JopeDime Major Release (2026-10-18) — Unified Reconciled Engineering Specification & Gated Delivery Plan
 
 - **Repository:** `neverhuman/JopeDime`
-- **Pinned Baseline Commit (`origin/main`):** `a2759e9d375d0697ed40a32c23ac297b5de42347` (proposal review baseline `296d07e1cacc7188b240985e1a52c88676b061e7`)
+- **Pinned Baseline Commit (`origin/main`):** `e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2` (proposal review baseline `296d07e1cacc7188b240985e1a52c88676b061e7`)
 - **Reconciled Source Specifications:**
   1. `SPEC_A` (`SPEC_A_final_engineering_spec_gated_plan.md` — selects Candidate F/C06 `93.8/100`, 20 work packets `P00..P19`, Releases `R0..R4`, Gates `G0..G10`)
   2. `SPEC_B` (`SPEC_B_language_for_learning_algorithms.md` — selects Candidate P4/C03 `95.2/100`, 26 work packets `GP-00..GP-25`, Milestones `M0..M6`, Gates `G00..G20`)
