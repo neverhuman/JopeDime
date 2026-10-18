@@ -46,8 +46,9 @@ that policy. Terminal records preserve measured, parse/fit/score failure, panic,
 interruption statuses, original result references and stage costs. A missing terminal is pending;
 `require_complete` refuses it. Proposal effort is separate from physical evaluation effort. A
 proposal that starts no fit has no fabricated fit cost. Unknown wall/CPU/GPU/memory telemetry has
-an explicit reason and never becomes zero. Existing observation wall time supplies the known
-physical evaluation measurement; proposal timing is currently unavailable.
+an explicit reason and never becomes zero. A separate observational timer measures the full parse/fit/predict/score wall span.
+Legacy observation.seconds stops before final scoring and remains byte-compatible. CPU/GPU/memory,
+proposal timing and observer publication effort remain unavailable; none is fabricated as zero.
 
 `EditTransition` links the draw to ordered parent program/canonical hashes, the crossover donor,
 sibling group, operator, stream seed, transform bound, post-canonical hash and legality/refusal.
@@ -75,7 +76,7 @@ authority. Re-derivation against the original ledger detects omissions and alter
 
 `jope_learning::progress::engine::search_events` verifies the sidecar digest and complete joins,
 requires an explicit request-to-planned-work map and the same original run, verifies original
-observation bytes/status/subject/known wall cost, and returns existing W8 events and retained blobs.
+observation bytes/status/subject/known wall cost (at least the original observation span), and returns existing W8 events and retained blobs.
 Each physical attempt maps to its original ordinal, preserving failed predecessors and one logical
 completion through the production census. The full sidecar, costs and failed result bytes remain
 in the blob set; no winner-only export or checkpoint rewrite occurs. Logical event identities are
