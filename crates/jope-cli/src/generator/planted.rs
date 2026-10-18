@@ -150,9 +150,12 @@ impl PlantedTask {
         let start = Instant::now();
         let mut squared_error = 0.0;
         let mut fit_count = 0u32;
+        let mut fit_elapsed_ns = Vec::with_capacity(repeats);
         for _ in 0..repeats {
+            let fit_start = Instant::now();
             let fitted = model::fit(&genome, &self.solver.x_train, &self.solver.y_train)?;
             let predictions = fitted.predict(&self.solver.x_train)?;
+            fit_elapsed_ns.push(fit_start.elapsed().as_nanos());
             squared_error = predictions
                 .iter()
                 .zip(&self.solver.y_train)
@@ -166,6 +169,7 @@ impl PlantedTask {
             rmse: squared_error.sqrt(),
             noise_floor_rmse: self.solver.noise.sigma,
             repeats: fit_count,
+            fit_elapsed_ns,
             charged_elapsed_ns: elapsed_ns,
             claim: "attainable_reference_not_global_optimum".into(),
         })
@@ -184,6 +188,8 @@ pub struct OracleRefit {
     pub rmse: f64,
     pub noise_floor_rmse: f64,
     pub repeats: u32,
+    /// Wall time per fit, including prediction for its RMSE measurement.
+    pub fit_elapsed_ns: Vec<u128>,
     pub charged_elapsed_ns: u128,
     pub claim: String,
 }
@@ -218,10 +224,11 @@ impl SolvabilityGuard {
             "target contains non-finite values"
         );
         let mean = task.y_train.iter().sum::<f64>() / task.y_train.len() as f64;
-        let signal_variance = task.y_train.iter().map(|y| (y - mean).powi(2)).sum::<f64>()
+        let observed_variance = task.y_train.iter().map(|y| (y - mean).powi(2)).sum::<f64>()
             / task.y_train.len() as f64;
         let noise_variance = task.noise.sigma.powi(2);
-        let accepted = task.y_train.len() >= 8 && signal_variance > noise_variance * 1.05;
+        let signal_variance = (observed_variance - noise_variance).max(0.0);
+        let accepted = task.y_train.len() >= 8 && signal_variance > noise_variance * 0.05;
         Ok(Self {
             accepted,
             reason: if accepted {
