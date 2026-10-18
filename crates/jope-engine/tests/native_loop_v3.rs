@@ -29,6 +29,9 @@ fn event(number: u32, parent: &str, child: &str, decision: Decision, effort: u64
                 intent_id: format!("intent-{number}"),
                 committed_child_id: child.into(),
                 assessment_id: format!("assessment-{number}"),
+                assessment_intent_id: format!("intent-{number}"),
+                assessment_child_id: child.into(),
+                compatible: decision == Decision::Accepted,
             },
             decision,
             effort,
@@ -54,6 +57,20 @@ fn rejected_child_is_recorded_but_never_becomes_next_parent() {
         .is_err());
     assert_eq!(state.accepted_parent, "child-1");
     assert_eq!(state.rounds.len(), 2);
+}
+
+#[test]
+fn mismatched_or_incompatible_assessment_cannot_advance_parent() {
+    let mut state = Campaign::start(grant(), "parent").unwrap();
+    let mut mismatched = event(1, "parent", "child", Decision::Accepted, 1);
+    mismatched.round.evidence.assessment_child_id = "other-child".into();
+    assert!(state.apply(mismatched).is_err());
+
+    let mut incompatible = event(1, "parent", "child", Decision::Accepted, 1);
+    incompatible.round.evidence.compatible = false;
+    assert!(state.apply(incompatible).is_err());
+    assert_eq!(state.accepted_parent, "parent");
+    assert!(state.rounds.is_empty());
 }
 
 #[test]
