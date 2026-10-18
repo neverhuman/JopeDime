@@ -10,9 +10,9 @@ use std::process::ExitCode;
 use clap::{Parser, Subcommand, ValueEnum};
 use jope_records::pyjson::{self, Value};
 use jope_records::{
-    claim_inventory, claims, conformance, coverage, dispositions, elo_history, findings, inventory,
-    layout, paper_trace, parity, progress_view, py, readme, repo_layout, scope_check, task_status,
-    test_inventory,
+    ci_plan, ci_results, claim_inventory, claims, compare_bits, conformance, coverage,
+    dispositions, elo_history, findings, inventory, layout, paper_trace, parity, progress_view, py,
+    readme, repo_layout, scope_check, source_inventory, task_status, test_inventory,
 };
 
 #[derive(Parser)]
@@ -174,6 +174,35 @@ enum Command {
         /// Rewrite the blocks in place.
         #[arg(long)]
         write: bool,
+    },
+    /// Check static test-bearing keys and non-test research-source SHA-256 inventory
+    /// (ported from deploy/dl-flywheel/verify_source_inventory.py; PORT-RUST-03).
+    VerifySourceInventory,
+    /// Compare every `pred-*.txt` in a directory as IEEE-754 f64 bit patterns
+    /// (ported from deploy/ci/emitters/compare-bits.py; PORT-RUST-03).
+    CompareBits {
+        /// Directory containing `pred-*.txt` files.
+        dir: PathBuf,
+    },
+    /// Declare every fast CI lane's applicability before execution
+    /// (ported from deploy/ci/ci-plan.py; PORT-RUST-03).
+    CiPlan {
+        /// Output path for the `jope.ci-plan/v1` JSON (create-only).
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Reconcile runner execution summaries with JUnit XML without inventing omitted skip counts
+    /// (ported from deploy/ci/results.py; PORT-RUST-03).
+    CiResults {
+        /// Runner result backend (`none`, `nextest`, `pytest`, `rust`, `unittest`).
+        #[arg(long)]
+        backend: String,
+        /// Path to the execution log file.
+        #[arg(long)]
+        log: PathBuf,
+        /// Optional JUnit XML path to reconcile against.
+        #[arg(long)]
+        junit: Option<PathBuf>,
     },
 }
 
@@ -370,6 +399,22 @@ fn run(cli: Cli) -> jope_records::Result<Output> {
                     ok: false,
                 }
             });
+        }
+        Command::VerifySourceInventory => source_inventory::verify(&repo()?)?.to_json(),
+        Command::CompareBits { dir } => {
+            let (out, err, ok) = compare_bits::compare_dir(&dir)?;
+            return Ok(Output::Report { out, err, ok });
+        }
+        Command::CiPlan { output } => {
+            return Ok(report(ci_plan::run_from_env(&repo()?, &output)?));
+        }
+        Command::CiResults {
+            backend,
+            log,
+            junit,
+        } => {
+            let log_text = py::read_text(&log)?;
+            ci_results::summarize(&log_text, &backend, junit.as_deref())?.to_json()
         }
     }))
 }

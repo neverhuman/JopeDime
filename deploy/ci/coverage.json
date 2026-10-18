@@ -4659,6 +4659,40 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/lazy_if_and_partition_routing": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/lazy_if_and_partition_routing.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/learning_program_v1_wire_and_digests": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/learning_program_v1_wire_and_digests.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/legacy_bridge_compatibility": {
       "discovery": {
         "doctest": false,
@@ -4753,6 +4787,23 @@
       "lanes": [
         "rust-check",
         "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/missingness_mask_and_output_policy": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/missingness_mask_and_output_policy.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
@@ -5052,6 +5103,23 @@
         "full-default"
       ],
       "scope": "Roll width refusal on public Rust entry points, versioned Rust/Python recipes, and C++17 recipe refusal; the frozen default artifact bytes stay pinned."
+    },
+    "target:feat-math/test/schema_pointers_and_exact_literals": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/schema_pointers_and_exact_literals.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:feat-math/test/scope_validation": {
       "discovery": {
@@ -10037,6 +10105,22 @@
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-pipeline/tests/numeric_profile_routing.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/p03_numeric_v2_route_and_emit": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/p03_numeric_v2_route_and_emit.rs",
         "test": true
       },
       "dispositions": [],
