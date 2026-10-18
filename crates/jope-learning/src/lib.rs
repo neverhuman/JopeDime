@@ -26,6 +26,14 @@ pub mod encoder_receipt;
 pub mod exe_cache;
 pub mod hwm;
 pub mod ledger;
+pub mod lake {
+    #[path = "reader.rs"]
+    pub mod reader;
+    #[path = "roles.rs"]
+    pub mod roles;
+    #[path = "writer.rs"]
+    pub mod writer;
+}
 pub mod metric;
 pub mod mirror;
 pub mod pools;
