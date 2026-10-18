@@ -4,7 +4,7 @@
 //! atomic checkpoint writer. It is a mechanism exercise only: its data is
 //! synthetic TRAIN data and its permission never qualifies science or serving.
 
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use jope_parallel::{
     neural::{AdamW, Config, Policy},
     training::{
@@ -171,8 +171,63 @@ fn actor_behavior(
     Ok((hash(&bytes), proposals))
 }
 
+fn verify_independent_reload(checkpoint: &Path, output: &Path) -> Result<()> {
+    let root = checkpoint
+        .parent()
+        .and_then(Path::parent)
+        .and_then(Path::parent)
+        .context("checkpoint must be under RUN/checkpoints/step-N")?;
+    let state: Value = serde_json::from_slice(&fs::read(checkpoint.join("state.json"))?)?;
+    let step = state["step"]
+        .as_u64()
+        .context("checkpoint step is absent")?;
+    checkpoint_commit::verify_dir(root, checkpoint, step, &Expectation::default())?;
+
+    let config: Config = serde_json::from_slice(&fs::read(checkpoint.join("config.json"))?)?;
+    let mut store = nn::VarStore::new(Device::Cpu);
+    let policy = Policy::new(store.root(), config)?;
+    store.load(checkpoint.join("model.ot"))?;
+    let reloaded_parameters_sha256 = parameters_sha256(&store)?;
+    let (dataset, target, tokens, pad, _, _) = fixture_inputs();
+    let (child_actor_sha256, _) = actor_behavior(&policy, &dataset, &target, &tokens, &pad)?;
+
+    let capsule: Value = serde_json::from_slice(&fs::read(root.join("capsule.json"))?)?;
+    ensure!(
+        capsule["child_parameters_sha256"] == reloaded_parameters_sha256,
+        "reloaded parameters differ from the engine capsule"
+    );
+    ensure!(
+        capsule["parent_actor_logits_sha256"] != child_actor_sha256,
+        "next actor behavior did not change from the parent"
+    );
+    let receipt = json!({
+        "independent_reload_verified": true,
+        "parameter_digest_matches_engine": true,
+        "next_actor_behavior_changed": true,
+        "dry_run_only": true,
+        "reloaded_parameters_sha256": reloaded_parameters_sha256,
+        "next_actor_logits_sha256": child_actor_sha256
+    });
+    if let Some(parent) = output.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(output, serde_json::to_vec_pretty(&receipt)?)?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let args: Vec<_> = env::args_os().collect();
+    if args
+        .get(1)
+        .is_some_and(|arg| arg == "--i32-reload-checkpoint")
+    {
+        ensure!(
+            args.len() == 7 && args[3] == "--output" && args[5] == "--cpu"
+                && args[6] == "--dry-run-next-actor",
+            "usage: research_loop_fixture --i32-reload-checkpoint CHECKPOINT --output RELOAD.json --cpu --dry-run-next-actor"
+        );
+        return verify_independent_reload(&PathBuf::from(&args[2]), &PathBuf::from(&args[4]));
+    }
     ensure!(
         args.len() == 3 && args[1] == "--output",
         "usage: research_loop_fixture --output DIR"
