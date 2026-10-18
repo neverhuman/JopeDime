@@ -54,6 +54,7 @@ pub mod prepared_data;
 pub mod receipt;
 pub mod run;
 pub mod search;
+pub mod search_cache;
 #[cfg(feature = "neural-search")]
 pub mod search_context;
 pub mod search_plan;
