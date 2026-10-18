@@ -209,7 +209,7 @@ impl Effort {
     pub fn wall(seconds: f64) -> Result<Self> {
         Ok(Self {
             wall_seconds: Some(FloatBits::new(seconds)?),
-            ..Self::unknown("observation wall clock; CPU/GPU/memory not instrumented")
+            ..Self::unknown("caller-measured wall span; CPU/GPU/memory not instrumented")
         })
     }
     fn check(&self) -> Result<()> {

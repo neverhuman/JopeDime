@@ -691,8 +691,8 @@ pub fn search_events(
             );
             if let Some(wall) = &cost.wall_seconds {
                 ensure!(
-                    wall.value()?.to_bits() == observation.seconds.to_bits(),
-                    "cost differs from original observation clock"
+                    wall.value()? >= observation.seconds,
+                    "attempt wall cost is smaller than its original observation span"
                 );
             }
             let SearchEvent::Started { draw_id, .. } = start else {

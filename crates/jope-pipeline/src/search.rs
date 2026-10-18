@@ -778,21 +778,26 @@ fn admission(recorder: Option<&Recorder>, draw: &Option<String>, disposition: &s
 fn record_evaluation(
     recorder: Option<&Recorder>,
     draw: &Option<String>,
+    clock: Clock,
     evaluate: impl FnOnce() -> Observation,
 ) -> Observation {
     let attempt = recorder.and_then(|r| {
         draw.as_ref()
             .and_then(|d| r.update(|log| log.start(d, 1, None)))
     });
+    let started = recorder.map(|_| clock.start());
     let observation = evaluate();
+    let elapsed = started.map(|s| s.secs());
     if let (Some(recorder), Some(attempt_id)) = (recorder, attempt) {
         recorder.update(|log| {
+            let mut cost = Effort::wall(elapsed.context("missing attempt clock")?)?;
+            cost.reason = "full parse/fit/predict/score wall span; observer publication, CPU/GPU/memory not instrumented".into();
             log.append(SearchEvent::Finished {
                 attempt_id,
                 status: observation.status.into(),
                 reason: observation.failure.clone(),
                 observation_sha256: Some(sha256_hex(&serde_json::to_vec(&observation)?)),
-                cost: Effort::wall(observation.seconds)?,
+                cost,
             })
         });
     }
@@ -921,7 +926,7 @@ fn evaluate_admitted(
                 if !may_start(origin) {
                     break;
                 }
-                results.push(Some(record_evaluation(recorder, draw, || {
+                results.push(Some(record_evaluation(recorder, draw, clock, || {
                     let mut observation = evaluate(genome, cut, generation, origin, clock);
                     observation.island = (options.islands > 1).then_some(*island);
                     observation
@@ -935,7 +940,7 @@ fn evaluate_admitted(
                 .par_iter()
                 .map(|(island, genome, origin, draw)| {
                     may_start(origin).then(|| {
-                        record_evaluation(recorder, draw, || {
+                        record_evaluation(recorder, draw, clock, || {
                             let mut observation = evaluate(genome, cut, generation, origin, clock);
                             observation.island = (options.islands > 1).then_some(*island);
                             observation
@@ -1470,7 +1475,7 @@ fn remeasure_cut(
             && search.completed_evaluations < search.budget.evaluations as u64
             && elapsed < search.budget.seconds as f64
         {
-            let observation = record_evaluation(recorder, &draw, || {
+            let observation = record_evaluation(recorder, &draw, clock, || {
                 evaluate_candidate(genome, cut, search.generations as usize, REMEASURE)
             });
             search.completed_evaluations += 1;
