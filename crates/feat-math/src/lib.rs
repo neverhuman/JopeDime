@@ -20,6 +20,7 @@ pub mod boost2;
 pub mod cxx;
 pub mod dsl;
 pub mod feasibility;
+pub mod fm_oof;
 pub mod folds;
 pub mod full_rust;
 pub mod genome;
