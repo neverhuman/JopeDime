@@ -81,3 +81,5 @@ temp-dir crates/jope-engine/src/runtime_custody.rs 1 -- test scratch in the proc
 temp-dir crates/jope-paths/src/lib.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-paths/src/systemd.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-policy/tests/jope_dime.rs 2 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+root-md PYTHON_EXCEPTIONS.md -- per-file 1-line justification register for authorized Python exceptions (2026-10-18 stack ruling)
+root-md PY_TO_RUST_PLAN.md -- full tracked Python and shell inventory and spare-worker Rust migration plan (2026-10-18 stack ruling)

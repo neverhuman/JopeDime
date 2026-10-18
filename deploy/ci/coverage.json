@@ -796,6 +796,16 @@
       ],
       "scope": "Push/main-manual diagnostic CPU families in independent matrix groups (deploy/ci/full-main.py GROUPS), independent outcomes within120minutes; no merge gate or qualification claim."
     },
+    "job:.github/workflows/jankurai.yml/jankurai-audit": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Jankurai v1.7.1 repository audit job on pull requests and main."
+    },
     "job:.github/workflows/main-guard.yml/guard": {
       "discovery": {
         "kind": "workflow-job"
@@ -10732,6 +10742,16 @@
         "cpu-aggregate"
       ],
       "scope": "Push/main-manual diagnostic CPU families, independent outcomes within120minutes; no merge gate or qualification claim."
+    },
+    "workflow:.github/workflows/jankurai.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Jankurai v1.7.1 repository audit workflow on pull requests and main."
     },
     "workflow:.github/workflows/main-guard.yml": {
       "discovery": {
