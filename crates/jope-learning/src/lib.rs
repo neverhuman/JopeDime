@@ -52,6 +52,7 @@ pub mod state;
 pub mod promote;
 pub mod support;
 pub mod sync;
+pub mod universe;
 
 /// Version stamped into ledger seals.
 pub const TOOL_VERSION: &str = concat!("jope-learning/", env!("CARGO_PKG_VERSION"));
