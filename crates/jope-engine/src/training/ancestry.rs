@@ -43,6 +43,45 @@ use std::{
 
 pub const SCHEMA: &str = "jope.training_ancestry.v1";
 
+/// Reconcile versioned credit with retained manifests without upgrading legacy
+/// history. I13's checkpoint binding is required before this report can succeed.
+pub fn verified_lineage_exposure(
+    genealogy: &Genealogy,
+    bundle: &crate::native_loop::lineage::LineageBundle,
+) -> Result<Value> {
+    let verified = bundle.verify()?;
+    let anchor = &verified.lineage().anchor;
+    let retained = genealogy
+        .nodes
+        .get(&anchor.checkpoint_sha256)
+        .context("lineage anchor not retained")?;
+    ensure!(
+        retained.step == anchor.optimizer_step
+            && retained.weights_retained
+            && retained.state["model_sha256"] == anchor.weights_sha256,
+        "retained lineage anchor differs from verified weights"
+    );
+    for edge in verified.edges() {
+        let node = genealogy
+            .nodes
+            .get(&edge.checkpoint_sha256)
+            .context("committed lineage checkpoint not retained")?;
+        ensure!(
+            node.weights_retained
+                && node.optimizer_retained
+                && node.step == edge.intent.target_step,
+            "committed lineage weights/optimizer are not retained"
+        );
+        crate::native_loop::lineage::check_checkpoint(&node.state, edge)?;
+    }
+    Ok(
+        json!({"schema": "jope.verified-lineage-exposure/v1", "anchor": anchor.checkpoint_sha256,
+        "local_step": verified.local_step(), "committed_additional_updates": verified.committed_updates(),
+        "cumulative_committed_updates": verified.cumulative_updates(),
+        "anchor_committed_updates": anchor.committed_updates}),
+    )
+}
+
 #[derive(Clone, Debug)]
 pub struct Node {
     pub digest: String,

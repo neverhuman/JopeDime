@@ -26,6 +26,77 @@ pub use crate::task_contract::{classify_continuation as classify, ContinuationMo
 
 pub const SCHEMA: &str = "jope.continuation.v1";
 
+/// Additive bridge for a verified completed edge, or an exact attempt resume at
+/// its tip. The original mode/objective/topology guards execute before this bridge.
+pub fn check_versioned_parent(
+    mode: Mode,
+    state: &Value,
+    config: &Value,
+    current: &Current,
+    policy: Option<&Value>,
+    parent_checkpoint_sha256: &str,
+    lineage: &crate::native_loop::lineage::VerifiedLineage,
+) -> Result<Value> {
+    let mut report = check_parent(mode, state, config, current, policy)?;
+    let edge = lineage.tip();
+    let partition = crate::task_contract::training_partition(
+        current.world,
+        current.microbatch,
+        current.global_batch,
+    )?;
+    ensure!(
+        current.objective_sha256 == edge.intent.protocol.objective_sha256
+            && current.vocabulary_sha256 == edge.intent.protocol.vocabulary_sha256
+            && current.corpus_sha256 == edge.intent.corpus_sha256
+            && identity_digest(current.config) == edge.intent.protocol.architecture_sha256
+            && identity_digest(&partition) == edge.intent.execution_partition_sha256
+            && crate::manifest::hash(current.sampler_id.as_bytes()) == edge.intent.sampler_sha256,
+        "versioned continuation differs from verified intent"
+    );
+    if mode == Mode::ExactResume {
+        ensure!(
+            parent_checkpoint_sha256 == edge.checkpoint_sha256
+                && state["step"].as_u64() == Some(lineage.local_step())
+                && state["model_sha256"] == edge.weights_sha256
+                && state["optimizer_sha256"] == edge.optimizer_sha256
+                && state["optimizer_recipe_sha256"] == edge.epoch.recipe_sha256
+                && state["optimizer_epoch_sha256"] == edge.intent.optimizer_epoch_sha256,
+            "exact resume differs from verified checkpoint/optimizer epoch"
+        );
+    } else {
+        ensure!(
+            mode == edge.mode && parent_checkpoint_sha256 == edge.parent_checkpoint_sha256,
+            "continuation mode/parent differs from verified ancestry edge"
+        );
+        let prior = lineage.edges().iter().rev().nth(1);
+        let (step, weights) = prior.map_or(
+            (
+                lineage.lineage().anchor.optimizer_step,
+                &lineage.lineage().anchor.weights_sha256,
+            ),
+            |p| (p.intent.target_step, &p.weights_sha256),
+        );
+        ensure!(
+            state["step"].as_u64() == Some(step) && state["model_sha256"] == *weights,
+            "continuation parent weights/step differ from verified ancestry"
+        );
+        if mode == Mode::NewCorpusTransition {
+            ensure!(
+                prior.is_some_and(|p| state["optimizer_sha256"] == p.optimizer_sha256
+                    && state["optimizer_recipe_sha256"] == p.epoch.recipe_sha256
+                    && state["optimizer_epoch_sha256"] == p.intent.optimizer_epoch_sha256),
+                "optimizer carry requires actual verified parent epoch/state"
+            );
+        }
+    }
+    report["policy_lineage"] = json!({"schema": crate::native_loop::lineage::LINEAGE_SCHEMA,
+        "anchor_checkpoint_sha256": lineage.lineage().anchor.checkpoint_sha256,
+        "optimizer_epoch_sha256": edge.intent.optimizer_epoch_sha256,
+        "local_step": lineage.local_step(), "committed_additional_updates": lineage.committed_updates(),
+        "cumulative_committed_updates": lineage.cumulative_updates()});
+    Ok(report)
+}
+
 /// Validate a request's optional lineage-mode declaration.
 ///
 /// The lineage mode is how the run's lineage started: cold, warm or

@@ -3,6 +3,7 @@
 pub mod bounded;
 pub mod cli;
 mod grant_proof;
+pub mod lineage;
 pub(crate) mod materialize;
 mod run_approval;
 pub mod warm_start;
@@ -82,6 +83,10 @@ pub struct RunCompletion {
 fn verify_successor(next: &Config, previous: &Config, completion: &RunCompletion) -> Result<()> {
     previous.validate()?;
     ensure!(
+        next.schema == warm_start::LOOP_V1,
+        "successor version requires explicit lineage evidence"
+    );
+    ensure!(
         previous.schema == warm_start::LOOP_V1,
         "a {} weight-warm-start run has no successor protocol",
         warm_start::LOOP_V2
@@ -94,6 +99,9 @@ fn verify_successor(next: &Config, previous: &Config, completion: &RunCompletion
         && next.accepted_checkpoint == completion.checkpoint && next.initial_corpus == completion.corpus
         && completion.final_proposals.keys().copied().collect::<BTreeSet<_>>() == BTreeSet::from([Arm::Model, Arm::Shuffled]),
         "successor must preserve a different completed run and its exact accepted optimizer/corpus window");
+    verify_scientific_successor(next, previous)
+}
+fn verify_scientific_successor(next: &Config, previous: &Config) -> Result<()> {
     ensure!(
         next.scientific_policy == previous.scientific_policy
             && next.label_admission_policy == previous.label_admission_policy
@@ -106,6 +114,97 @@ fn verify_successor(next: &Config, previous: &Config, completion: &RunCompletion
         "successor cannot silently change scientific protocol, partition or numerical budgets"
     );
     Ok(())
+}
+
+/// Native entrypoint shared with the controller. A v3 successor never obtains
+/// continuity from its numeric step alone. I13 supplies committed receipt bindings.
+pub fn verify_versioned_successor(
+    next: &Config,
+    previous: &Config,
+    completion: &RunCompletion,
+    bundle: Option<&lineage::LineageBundle>,
+    prior_lineage: Option<&lineage::VerifiedLineage>,
+) -> Result<Option<lineage::VerifiedLineage>> {
+    next.validate()?;
+    if next.schema != warm_start::LOOP_V3 {
+        ensure!(
+            bundle.is_none() && prior_lineage.is_none(),
+            "legacy successor cannot carry lineage reinterpretation"
+        );
+        verify_successor(next, previous, completion)?;
+        return Ok(None);
+    }
+    previous.validate()?;
+    let expected_schema = match previous.schema.as_str() {
+        warm_start::LOOP_V2 => warm_start::COMPLETION_V2,
+        warm_start::LOOP_V3 => warm_start::COMPLETION_V3,
+        _ => anyhow::bail!("v3 requires a completed reset-epoch descendant"),
+    };
+    ensure!(
+        completion.schema == expected_schema
+            && completion.run == previous.run
+            && next.run != previous.run
+            && completion.initial_optimizer_step == previous.train_window(0)?.initial
+            && completion.target_optimizer_step == previous.train_window(1)?.target
+            && next.initial_optimizer_step == completion.target_optimizer_step
+            && next.accepted_checkpoint == completion.checkpoint
+            && next.initial_corpus == completion.corpus
+            && completion
+                .final_proposals
+                .keys()
+                .copied()
+                .collect::<BTreeSet<_>>()
+                == BTreeSet::from([Arm::Model, Arm::Shuffled]),
+        "v3 successor requires a separate exact two-block completion"
+    );
+    verify_scientific_successor(next, previous)?;
+    let verified = bundle
+        .context("v3 committed lineage evidence absent")?
+        .verify()?;
+    let history = verified.lineage();
+    let prefix = if previous.schema == warm_start::LOOP_V2 {
+        ensure!(
+            prior_lineage.is_none()
+                && history.anchor.checkpoint_sha256 == previous.accepted_checkpoint.sha256
+                && history.anchor.optimizer_step == previous.initial_optimizer_step,
+            "v3 reset anchor differs from accepted parent"
+        );
+        0
+    } else {
+        let verified_prior = prior_lineage.context("previous v3 lineage identity absent")?;
+        ensure!(
+            verified_prior.tip().checkpoint_sha256 == previous.accepted_checkpoint.sha256
+                && verified_prior.local_step() == previous.initial_optimizer_step,
+            "previous v3 lineage does not bind accepted checkpoint/epoch"
+        );
+        let prior = verified_prior.lineage();
+        ensure!(
+            history.anchor == prior.anchor
+                && history.protocol == prior.protocol
+                && history.edges.starts_with(&prior.edges),
+            "v3 successor changed immutable ancestry"
+        );
+        prior.edges.len()
+    };
+    let suffix = verified
+        .edges()
+        .get(prefix..)
+        .context("missing successor ancestry")?;
+    ensure!(
+        suffix.len() == 2
+            && suffix[0].parent_checkpoint_sha256 == previous.accepted_checkpoint.sha256
+            && suffix[0].intent.initial_step == completion.initial_optimizer_step
+            && suffix[0].intent.target_step == suffix[1].intent.initial_step
+            && suffix
+                .iter()
+                .all(|e| e.intent.target_step.checked_sub(e.intent.initial_step)
+                    == Some(warm_start::BLOCK_UPDATES))
+            && verified.local_step() == completion.target_optimizer_step
+            && verified.tip().checkpoint_sha256 == completion.checkpoint.sha256
+            && verified.tip().intent.corpus_sha256 == completion.corpus.sha256,
+        "v3 completion lacks both committed block edges"
+    );
+    Ok(Some(verified))
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -289,6 +388,9 @@ impl Config {
             }
             warm_start::LOOP_V2 => {
                 self.predecessor_run.is_none() && self.initial_optimizer_step == 60000
+            }
+            warm_start::LOOP_V3 => {
+                self.predecessor_run.is_some() && self.initial_optimizer_step > 0
             }
             _ => false,
         };
@@ -1283,6 +1385,7 @@ impl Loop {
         graph: &Graph,
         client: &Client,
         completed: &RunCompletion,
+        lineage: Option<&lineage::VerifiedLineage>,
     ) -> Result<()> {
         let old_state = self.root.join(
             completed
@@ -1299,6 +1402,21 @@ impl Loop {
             true,
         )?;
         let mut parent = previous.config.accepted_checkpoint.clone();
+        if let Some(lineage) = lineage {
+            if previous.config.schema == warm_start::LOOP_V2 {
+                let state: Value = native_genome::load(&self.root, &parent)?;
+                let anchor = &lineage.lineage().anchor;
+                ensure!(
+                    state["model_sha256"] == anchor.weights_sha256
+                        && state["step"].as_u64() == Some(anchor.optimizer_step)
+                        && anchor
+                            .objective_sha256
+                            .as_ref()
+                            .is_none_or(|d| state["objective_sha256"] == *d),
+                    "native lineage anchor differs from actual accepted manifest"
+                );
+            }
+        }
         let mut corpus = previous.config.initial_corpus.clone();
         let mut acceptance = previous.config.accepted_decision.clone();
         for generation in 0..2 {
@@ -1322,7 +1440,8 @@ impl Loop {
             );
             let next_corpus: Artifact = serde_json::from_value(published["corpus_index"].clone())?;
             let train = previous.original_request(generation, &format!("g{generation}-train"))?;
-            let initial = previous.config.initial_optimizer_step + generation * 3000;
+            let window = previous.config.train_window(generation)?;
+            let initial = window.initial;
             ensure!(
                 train.role == Role::Train
                     && train.parameters["checkpoint"] == serde_json::to_value(&parent)?
@@ -1331,6 +1450,8 @@ impl Loop {
                     && train.parameters["requested_increment"] == 3000
                     && train.parameters["target_step"] == initial + 3000
                     && train.parameters["global_batch"] == 2048
+                    && train.parameters
+                        == warm_start::train_parameters(&parent, &next_corpus, &window)?
                     && train.predecessors == BTreeMap::from([(packed.task_id, pack_ref)]),
                 "predecessor original optimizer/publication edge differs"
             );
@@ -1372,6 +1493,20 @@ impl Loop {
             )?;
             ensure!(decision.accepted, "predecessor checkpoint was not accepted");
             let state: Value = native_genome::load(&self.root, &next_parent)?;
+            if let Some(lineage) = lineage {
+                let edges = lineage.edges();
+                let index = edges
+                    .len()
+                    .checked_sub(2)
+                    .context("missing native lineage block edges")?
+                    + generation as usize;
+                lineage::check_checkpoint(
+                    &state,
+                    edges
+                        .get(index)
+                        .context("missing native lineage block edge")?,
+                )?;
+            }
             ensure!(
                 state["step"] == initial + 3000 && state["corpus_sha256"] == next_corpus.sha256,
                 "predecessor final optimizer/corpus bytes differ"
@@ -1430,10 +1565,49 @@ impl Loop {
             "original loop deadline elapsed"
         );
         if let Some(previous) = &self.config.predecessor_run {
-            let completed: RunCompletion = native_genome::load(&self.root, previous)?;
+            let proof: Option<lineage::LineageSuccessorEvidence> =
+                if self.config.schema == warm_start::LOOP_V3 {
+                    let proof: lineage::LineageSuccessorEvidence =
+                        native_genome::load(&self.root, previous)?;
+                    ensure!(
+                        proof.schema == lineage::SUCCESSOR_EVIDENCE_SCHEMA,
+                        "unknown lineage successor adapter"
+                    );
+                    Some(proof)
+                } else {
+                    None
+                };
+            let completed: RunCompletion = native_genome::load(
+                &self.root,
+                proof.as_ref().map_or(previous, |p| &p.completion),
+            )?;
             let previous_config: Config = native_genome::load(&self.root, &completed.config)?;
-            verify_successor(&self.config, &previous_config, &completed)?;
-            self.verify_completed_predecessor(graph, client, &completed)
+            let prior: Option<lineage::LineageSuccessorEvidence> =
+                if previous_config.schema == warm_start::LOOP_V3 {
+                    let p: lineage::LineageSuccessorEvidence = native_genome::load(
+                        &self.root,
+                        previous_config
+                            .predecessor_run
+                            .as_ref()
+                            .context("previous lineage adapter absent")?,
+                    )?;
+                    ensure!(
+                        p.schema == lineage::SUCCESSOR_EVIDENCE_SCHEMA,
+                        "unknown prior lineage adapter"
+                    );
+                    Some(p)
+                } else {
+                    None
+                };
+            let prior_verified = prior.as_ref().map(|p| p.bundle.verify()).transpose()?;
+            let verified_lineage = verify_versioned_successor(
+                &self.config,
+                &previous_config,
+                &completed,
+                proof.as_ref().map(|p| &p.bundle),
+                prior_verified.as_ref(),
+            )?;
+            self.verify_completed_predecessor(graph, client, &completed, verified_lineage.as_ref())
                 .await?;
         }
         let mut p = Progress::default();
@@ -1472,10 +1646,10 @@ impl Loop {
                 // A v2 run's window is its fresh optimizer's (`warm_start`), under its own
                 // completion schema, which no successor accepts.
                 let completed = RunCompletion {
-                    schema: if self.config.schema == warm_start::LOOP_V2 {
-                        warm_start::COMPLETION_V2
-                    } else {
-                        "jope.native_loop_completion.v1"
+                    schema: match self.config.schema.as_str() {
+                        warm_start::LOOP_V2 => warm_start::COMPLETION_V2,
+                        warm_start::LOOP_V3 => warm_start::COMPLETION_V3,
+                        _ => "jope.native_loop_completion.v1",
                     }
                     .into(),
                     run: self.config.run.clone(),
@@ -2316,7 +2490,7 @@ mod tests {
             error.to_string().contains("no successor protocol"),
             "{error}"
         );
-        for schema in ["jope.native_loop.v3", ""] {
+        for schema in ["jope.native_loop.v4", ""] {
             let mut unknown = previous.clone();
             unknown.schema = schema.into();
             assert!(unknown.validate().is_err());

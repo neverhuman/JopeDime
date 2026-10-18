@@ -57,6 +57,22 @@ fn legacy(state: &mut Value) {
     fields.remove("objective_sha256");
 }
 
+#[test]
+fn an_epoch_label_cannot_upgrade_unknown_legacy_objective_or_exact_resume() {
+    let request = Request::same();
+    let mut state = parent();
+    legacy(&mut state);
+    state["optimizer_epoch_sha256"] = json!("a".repeat(64));
+    state["policy_lineage_sha256"] = json!("b".repeat(64));
+    for mode in [Mode::ExactResume, Mode::NewCorpusTransition] {
+        let error = request.check(mode, &state, None).unwrap_err();
+        assert!(error.to_string().contains(LEGACY_REFUSAL));
+    }
+    let report = request.check(Mode::WeightWarmStart, &state, None).unwrap();
+    assert_eq!(report["optimizer"], "reset");
+    assert_eq!(report["objective"]["continuity"], "legacy_ids_only");
+}
+
 struct Request {
     corpus: &'static str,
     vocabulary: &'static str,

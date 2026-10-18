@@ -1,5 +1,6 @@
 //! Root-reviewed transitions in the original witness journal. No ledger reset.
 use super::*;
+use crate::native_loop::lineage::{DescendantLineagePolicy, DESCENDANT_POLICY_SCHEMA};
 const TRANSITION_DOMAIN: &str = "parallel.witness_epoch_transition.v1";
 const TRANSITION_ACK_DOMAIN: &str = "parallel.witness_epoch_transition_ack.v1";
 pub const MAX_EPOCH_TRANSITIONS: usize = 64;
@@ -85,13 +86,107 @@ pub struct WitnessEpochProof {
 pub(super) fn validate_effective_shape(policy: &WitnessPolicy) -> Result<()> {
     let mut normalized = policy.clone();
     if let Some(d) = &mut normalized.native_grant_delegation {
-        ensure!(
-            d.initial_optimizer_step >= 60000 && (d.initial_optimizer_step - 60000) % 6000 == 0,
-            "invalid reviewed successor optimizer window"
-        );
+        if let Some(lineage) = descendant_policy(policy)? {
+            validate_descendant_window(&lineage, d)?;
+        } else {
+            ensure!(
+                d.initial_optimizer_step >= 60000 && (d.initial_optimizer_step - 60000) % 6000 == 0,
+                "invalid reviewed successor optimizer window"
+            );
+        }
         d.initial_optimizer_step = 60000;
+    } else {
+        ensure!(
+            descendant_policy(policy)?.is_none(),
+            "lineage opt-in requires a finite delegation"
+        );
     }
     normalized.validate()
+}
+
+// Coordinator adds ONLY this optional field to the signed WitnessPolicy DTO.
+// Until that hunk is integrated, its strict reader refuses opt-ins and this
+// adapter always returns None. Source/executable rotation cannot enable it.
+fn descendant_policy(policy: &WitnessPolicy) -> Result<Option<DescendantLineagePolicy>> {
+    serde_json::to_value(policy)?
+        .get("descendant_lineage_policy")
+        .filter(|v| !v.is_null())
+        .cloned()
+        .map(serde_json::from_value)
+        .transpose()
+        .map_err(Into::into)
+}
+
+fn validate_descendant_window(
+    policy: &DescendantLineagePolicy,
+    delegation: &NativeGrantDelegation,
+) -> Result<crate::native_loop::lineage::VerifiedLineage> {
+    ensure!(
+        policy.schema == DESCENDANT_POLICY_SCHEMA
+            && policy.run == delegation.run
+            && policy.scientific_policy_sha256 == delegation.scientific_policy_sha256
+            && valid_hash(&policy.previous_completion_sha256),
+        "lineage opt-in differs from signed run/science/completion scope"
+    );
+    let verified = policy.bundle.verify()?;
+    ensure!(
+        verified.lineage().anchor.optimizer_step == 60000
+            && verified.local_step() == delegation.initial_optimizer_step,
+        "reviewed descendant optimizer window differs from committed lineage"
+    );
+    Ok(verified)
+}
+
+fn validate_descendant_transition(
+    next: &DescendantLineagePolicy,
+    prior: Option<&DescendantLineagePolicy>,
+    d: &NativeGrantDelegation,
+    p: &NativeGrantDelegation,
+    completion: Option<&NativeGrantArtifact>,
+) -> Result<()> {
+    let verified = validate_descendant_window(next, d)?;
+    ensure!(
+        completion.is_some_and(|c| c.sha256 == next.previous_completion_sha256),
+        "descendant successor lacks exact separate completion"
+    );
+    let prefix = if let Some(prior) = prior {
+        let previous = validate_descendant_window(prior, p)?;
+        ensure!(
+            verified.lineage().anchor == previous.lineage().anchor
+                && verified.lineage().protocol == previous.lineage().protocol
+                && verified
+                    .lineage()
+                    .edges
+                    .starts_with(&previous.lineage().edges),
+            "descendant transition changes immutable ancestry"
+        );
+        previous.edges().len()
+    } else {
+        ensure!(
+            p.initial_optimizer_step == 60000,
+            "first descendant must bind original anchor window"
+        );
+        0
+    };
+    let added = verified
+        .edges()
+        .get(prefix..)
+        .context("missing descendant successor edges")?;
+    let initial = if prior.is_some() {
+        p.initial_optimizer_step
+    } else {
+        0
+    };
+    ensure!(
+        added.len() == 2
+            && added[0].intent.initial_step == initial
+            && added
+                .iter()
+                .all(|e| e.intent.target_step.checked_sub(e.intent.initial_step) == Some(3000))
+            && added[0].intent.target_step == added[1].intent.initial_step,
+        "descendant successor requires both committed 3000-update blocks"
+    );
+    Ok(())
 }
 fn artifact(a: &NativeGrantArtifact) -> Result<()> {
     ensure!(
@@ -148,6 +243,12 @@ fn validate_transition_with_key(
     }
     let n = &b.next_policy;
     validate_effective_shape(n)?;
+    let next_lineage = descendant_policy(n)?;
+    let prior_lineage = descendant_policy(previous)?;
+    ensure!(
+        prior_lineage.is_none() || next_lineage.is_some(),
+        "signed lineage opt-in cannot be stripped"
+    );
     ensure!(
         n.witness_instance == base.witness_instance
             && n.authority_instance == base.authority_instance
@@ -195,6 +296,7 @@ fn validate_transition_with_key(
                 && b.previous_transition_sha256 == ZERO
                 && b.previous_run_completion.is_none()
                 && b.original_reserved_evaluations == 0
+                && next_lineage.is_none()
                 && d.initial_optimizer_step == 60000,
             "bootstrap must be first separately reviewed production window on original static ledger"
         );
@@ -257,17 +359,39 @@ fn validate_transition_with_key(
                 && b.cumulative_evaluation_limit == p.total_evaluation_budget,
             "same-window recovery extends original science/window/budget"
         ),
-        EpochTransitionMode::ReviewedNewRunSuccessor => ensure!(
-            b.previous_run_completion.is_some()
-                && d.run != p.run
-                && d.initial_optimizer_step
-                    == p.initial_optimizer_step
-                        .checked_add(6000)
-                        .context("optimizer overflow")?
-                && d.grant_template.period_start_unix_ms >= p.grant_template.period_start_unix_ms
-                && b.cumulative_evaluation_limit >= p.total_evaluation_budget,
-            "new run lacks exact finite successor identity/cumulative accounting"
-        ),
+        EpochTransitionMode::ReviewedNewRunSuccessor => {
+            if let Some(lineage) = &next_lineage {
+                validate_descendant_transition(
+                    lineage,
+                    prior_lineage.as_ref(),
+                    d,
+                    p,
+                    b.previous_run_completion.as_ref(),
+                )?;
+            } else {
+                ensure!(
+                    d.initial_optimizer_step
+                        == p.initial_optimizer_step
+                            .checked_add(6000)
+                            .context("optimizer overflow")?,
+                    "new run lacks exact finite successor optimizer window"
+                );
+            }
+            ensure!(
+                b.previous_run_completion.is_some()
+                    && d.run != p.run
+                    && d.grant_template.period_start_unix_ms
+                        >= p.grant_template.period_start_unix_ms
+                    && b.cumulative_evaluation_limit >= p.total_evaluation_budget,
+                "new run lacks exact finite successor identity/cumulative accounting"
+            );
+        }
+    }
+    if b.mode == EpochTransitionMode::SameWindowRecovery {
+        ensure!(
+            next_lineage == prior_lineage,
+            "same-window recovery changes signed lineage scope"
+        );
     }
     Ok(())
 }
@@ -546,6 +670,168 @@ pub fn validate_native_grant_request_for_epoch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn lineage_fixture() -> DescendantLineagePolicy {
+        use crate::native_loop::lineage::*;
+        fn put(b: &mut LineageBundle, schema: &str, value: &Value) -> String {
+            let bytes = canonical_bytes(value).unwrap();
+            let id = object_id(schema, &bytes).unwrap();
+            b.evidence
+                .insert(id.clone(), String::from_utf8(bytes).unwrap());
+            id
+        }
+        let h = |s: &str| sha(s.as_bytes());
+        let protocol = serde_json::json!({"objective_sha256":h("objective"),"recipe_sha256":h("recipe"),"architecture_sha256":h("architecture"),"vocabulary_sha256":h("vocabulary"),"support_sha256":h("support")});
+        let mut bundle: LineageBundle = serde_json::from_value(serde_json::json!({
+            "lineage":{"schema":LINEAGE_SCHEMA,"anchor":{"checkpoint_sha256":h("anchor"),"weights_sha256":h("anchor weights"),"optimizer_step":60000,"objective_sha256":null,"committed_updates":null,"architecture_sha256":h("architecture"),"vocabulary_sha256":h("vocabulary"),"support_sha256":h("support")},"protocol":protocol,"edges":[]},"evidence":{}})).unwrap();
+        let epoch = OptimizerEpoch {
+            schema: EPOCH_SCHEMA.into(),
+            origin_checkpoint_sha256: h("anchor"),
+            reset_nonce_sha256: h("reset"),
+            recipe_sha256: h("recipe"),
+        };
+        for i in 0..2 {
+            let parent = if i == 0 {
+                h("anchor")
+            } else {
+                h("checkpoint0")
+            };
+            let child = h(&format!("checkpoint{i}"));
+            let intent = serde_json::json!({"schema":INTENT_SCHEMA,"parent_checkpoint_sha256":parent,"protocol":protocol,"corpus_sha256":h("corpus"),"optimizer_epoch_sha256":epoch.sha256().unwrap(),"initial_step":i*3000,"target_step":(i+1)*3000,"execution_partition_sha256":h("partition"),"sampler_sha256":h("sampler")});
+            let intent_id = object_id(INTENT_SCHEMA, &canonical_bytes(&intent).unwrap()).unwrap();
+            let eligible = put(
+                &mut bundle,
+                ELIGIBILITY_SCHEMA,
+                &serde_json::json!({"schema":ELIGIBILITY_SCHEMA,"purpose":"training","intent_sha256":intent_id,"corpus_sha256":h("corpus"),"role_exposure_closure_sha256":h("fixture role closure"),"source_roles":["train"]}),
+            );
+            let credit = put(
+                &mut bundle,
+                CREDIT_SCHEMA,
+                &serde_json::json!({"schema":CREDIT_SCHEMA,"commit_sha256":h(&format!("commit{i}")),"parent_checkpoint_sha256":parent,"checkpoint_sha256":child,"optimizer_epoch_sha256":epoch.sha256().unwrap(),"intent_sha256":intent_id,"eligibility_sha256":eligible,"rank":0,"world":1,"initial_update":i*3000,"target_update":(i+1)*3000}),
+            );
+            let edge = serde_json::json!({"schema":EDGE_SCHEMA,"previous_edge_sha256":bundle.lineage.edges.last(),"parent_checkpoint_sha256":parent,"checkpoint_sha256":child,"weights_sha256":h(&format!("weights{i}")),"optimizer_sha256":h(&format!("optimizer{i}")),"mode":if i==0 {"weight_warm_start"} else {"new_corpus_transition"},"epoch":epoch,"intent":intent,"committed_credit_sha256":[credit]});
+            let id = put(&mut bundle, EDGE_SCHEMA, &edge);
+            bundle.lineage.edges.push(id);
+        }
+        DescendantLineagePolicy {
+            schema: DESCENDANT_POLICY_SCHEMA.into(),
+            run: "descendant run".into(),
+            scientific_policy_sha256: h("science"),
+            previous_completion_sha256: h("completion"),
+            bundle,
+        }
+    }
+
+    #[test]
+    fn descendant_verifier_requires_both_committed_blocks_and_scoped_opt_in() {
+        let (_t, _root, _key, base, _provisioner) = native_grants::tests::fixture();
+        let prior = base.native_grant_delegation.as_ref().unwrap();
+        let mut next = prior.clone();
+        let policy = lineage_fixture();
+        next.run = policy.run.clone();
+        next.scientific_policy_sha256 = policy.scientific_policy_sha256.clone();
+        next.initial_optimizer_step = 6000;
+        let completion = NativeGrantArtifact {
+            path: "/data/completion.json".into(),
+            sha256: policy.previous_completion_sha256.clone(),
+        };
+        let v = validate_descendant_window(&policy, &next).unwrap();
+        assert_eq!(
+            (
+                v.local_step(),
+                v.committed_updates(),
+                v.cumulative_updates()
+            ),
+            (6000, 6000, None)
+        );
+        validate_descendant_transition(&policy, None, &next, prior, Some(&completion)).unwrap();
+        assert!(validate_descendant_transition(&policy, None, &next, prior, None).is_err());
+        let mut short = policy.clone();
+        short.bundle.lineage.edges.truncate(1);
+        next.initial_optimizer_step = 3000;
+        validate_descendant_window(&short, &next).unwrap();
+        assert!(
+            validate_descendant_transition(&short, None, &next, prior, Some(&completion)).is_err()
+        );
+        next.run = "wrong scope".into();
+        assert!(validate_descendant_window(&short, &next).is_err());
+        next.run = policy.run.clone();
+        next.initial_optimizer_step = 70000;
+        assert!(validate_descendant_window(&policy, &next).is_err());
+    }
+
+    #[test]
+    fn validly_signed_current_digest_rotation_without_opt_in_keeps_legacy_window() {
+        let (_t, _root, _key, base, _provisioner) = native_grants::tests::fixture();
+        let reviewer = SigningKey::from_bytes(&[81; 32]);
+        let pk = hex::encode(reviewer.verifying_key().to_bytes());
+        let mut r = transition(
+            &base,
+            &reviewer,
+            EpochTransitionMode::ReviewedNewRunSuccessor,
+        );
+        assert_eq!(r.body.next_policy.witness_source_sha256, source_sha256());
+        assert_eq!(
+            r.body.next_policy.authority_source_sha256,
+            authority_source_sha256()
+        );
+        assert!(descendant_policy(&r.body.next_policy).unwrap().is_none());
+        r.body
+            .next_policy
+            .native_grant_delegation
+            .as_mut()
+            .unwrap()
+            .initial_optimizer_step = 3000;
+        r.signature = sign(&reviewer, TRANSITION_DOMAIN, &r.body).unwrap();
+        verify(&pk, TRANSITION_DOMAIN, &r.body, &r.signature).unwrap();
+        let error = validate_transition_with_key(&base, &base, &r, 50, &pk).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("invalid reviewed successor optimizer window"),
+            "{error}"
+        );
+        // Neither a forged body nor an expired/foreign issuer obtains a new window.
+        r.body
+            .next_policy
+            .native_grant_delegation
+            .as_mut()
+            .unwrap()
+            .initial_optimizer_step = 66000;
+        assert!(validate_transition_with_key(&base, &base, &r, 50, &pk).is_err());
+        r.signature = sign(&reviewer, TRANSITION_DOMAIN, &r.body).unwrap();
+        assert!(validate_transition_with_key(&base, &base, &r, 100, &pk).is_err());
+        assert!(
+            validate_transition_with_key(&base, &base, &r, 50, &base.authority_public_key).is_err()
+        );
+    }
+
+    #[test]
+    fn forged_or_stripped_opt_in_projection_breaks_the_transition_signature() {
+        let (_t, _root, _key, base, _provisioner) = native_grants::tests::fixture();
+        let reviewer = SigningKey::from_bytes(&[81; 32]);
+        let pk = hex::encode(reviewer.verifying_key().to_bytes());
+        let r = transition(
+            &base,
+            &reviewer,
+            EpochTransitionMode::ReviewedNewRunSuccessor,
+        );
+        // The coordinator's future field is signed inside next_policy. This
+        // projection test does not claim the absent DTO hunk is integrated.
+        let mut body = serde_json::to_value(&r.body).unwrap();
+        body["next_policy"]["descendant_lineage_policy"] =
+            serde_json::to_value(lineage_fixture()).unwrap();
+        let signature = sign(&reviewer, TRANSITION_DOMAIN, &body).unwrap();
+        verify(&pk, TRANSITION_DOMAIN, &body, &signature).unwrap();
+        let mut forged = body.clone();
+        forged["next_policy"]["descendant_lineage_policy"]["run"] =
+            Value::String("foreign scope".into());
+        assert!(verify(&pk, TRANSITION_DOMAIN, &forged, &signature).is_err());
+        body["next_policy"]
+            .as_object_mut()
+            .unwrap()
+            .remove("descendant_lineage_policy");
+        assert!(verify(&pk, TRANSITION_DOMAIN, &body, &signature).is_err());
+    }
     fn transition(
         base: &WitnessPolicy,
         reviewer: &SigningKey,
