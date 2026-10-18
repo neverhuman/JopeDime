@@ -24,6 +24,7 @@ pub mod inputs;
 pub mod intent;
 pub mod objective;
 pub mod partition;
+pub mod replay_bridge;
 pub mod topology;
 
 pub const SAMPLER_ID: &str = "family_uniform_champion_plus_seven_quantiles_v2";
