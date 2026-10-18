@@ -24,6 +24,9 @@ pub mod scalar_execution;
 pub mod scalar_program;
 pub mod scope;
 pub mod search;
+pub mod strategy {
+    pub mod qd;
+}
 pub mod stable_exponential;
 /// Explicit, versioned experimental search strategies. Not selected by defaults.
 pub mod strategy;
