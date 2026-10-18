@@ -36,8 +36,11 @@
 //! These verifiers check record structure and evidence binding; they qualify no product
 //! behaviour and close no finding by themselves.
 
+pub mod ci_plan;
+pub mod ci_results;
 pub mod claim_inventory;
 pub mod claims;
+pub mod compare_bits;
 pub mod conformance;
 pub mod coverage;
 pub mod custody_archive;
@@ -59,6 +62,7 @@ pub mod repo_layout;
 pub mod research;
 pub mod scope_check;
 pub mod selfplay_baseline;
+pub mod source_inventory;
 pub mod synthetic;
 pub mod task_status;
 pub mod test_inventory;

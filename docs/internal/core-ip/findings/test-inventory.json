@@ -2080,6 +2080,22 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/lazy_if_and_partition_routing": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/lazy_if_and_partition_routing.rs",
+      "subsystems": [
+        "gp",
+        "evaluation"
+      ]
+    },
+    "target:feat-math/test/learning_program_v1_wire_and_digests": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/learning_program_v1_wire_and_digests.rs",
+      "subsystems": [
+        "gp",
+        "policy"
+      ]
+    },
     "target:feat-math/test/legacy_bridge_compatibility": {
       "role": "regression",
       "source": "crates/feat-math/tests/legacy_bridge_compatibility.rs",
@@ -2120,6 +2136,15 @@
       "subsystems": [
         "fitting",
         "gp"
+      ]
+    },
+    "target:feat-math/test/missingness_mask_and_output_policy": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/missingness_mask_and_output_policy.rs",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
       ]
     },
     "target:feat-math/test/numeric_profile_v2": {
@@ -2255,6 +2280,14 @@
         "fitting",
         "gp",
         "export"
+      ]
+    },
+    "target:feat-math/test/schema_pointers_and_exact_literals": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/schema_pointers_and_exact_literals.rs",
+      "subsystems": [
+        "gp",
+        "preparation"
       ]
     },
     "target:feat-math/test/scope_validation": {
@@ -4101,6 +4134,15 @@
       "subsystems": [
         "gp",
         "orchestration"
+      ]
+    },
+    "target:jope-pipeline/test/p03_numeric_v2_route_and_emit": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/p03_numeric_v2_route_and_emit.rs",
+      "subsystems": [
+        "gp",
+        "orchestration",
+        "export"
       ]
     },
     "target:jope-pipeline/test/residual_closure": {
