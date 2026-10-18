@@ -1068,7 +1068,7 @@ fn run_cut_allocated(
         let mut shared: Vec<(usize, String)> = Vec::new();
         let mut bound = None;
         let mut candidates = candidates.into_iter();
-        while let Some((island, genome, origin, draw)) = candidates.next() {
+        for (island, genome, origin, draw) in candidates.by_ref() {
             if evaluations + admitted.len() >= evaluation_limit {
                 bound = Some(STOPPED_BY_EVALUATIONS);
                 admission(recorder, &draw, STOPPED_BY_EVALUATIONS);

@@ -686,6 +686,10 @@ pub fn search_events(
                 serde_json::from_slice(original)?;
             let observation = observation.into_observation()?;
             ensure!(
+                observation.seconds.is_finite() && observation.seconds >= 0.,
+                "invalid original observation clock"
+            );
+            ensure!(
                 observation.status == *status && observation.failure == *reason,
                 "terminal status differs from original observation"
             );

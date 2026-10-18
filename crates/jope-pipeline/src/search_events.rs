@@ -11,7 +11,8 @@ use std::sync::Mutex;
 // Extract I02's jope_records-importing doctests only in their owning crate. Runtime
 // codec checks remain compiled here; I05's nonzero integration fixtures exercise this adapter.
 #[cfg(not(doctest))]
-#[allow(dead_code)]
+// The adopted I02 Measured* enum names remain unchanged in this read-only source import.
+#[allow(dead_code, clippy::enum_variant_names)]
 #[path = "../../jope-records/src/wire_contract.rs"]
 mod wire;
 
