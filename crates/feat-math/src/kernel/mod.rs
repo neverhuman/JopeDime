@@ -14,6 +14,7 @@ pub mod ir;
 pub mod lexicase;
 pub mod linear_scaling;
 pub mod numerical_policy;
+pub mod operation_profile;
 pub mod ordered_axis;
 pub mod pipeline;
 pub mod profile;
