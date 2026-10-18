@@ -1,4 +1,4 @@
-#[path = "gpr_cuda_bench_args.rs"]
+#[path = "../src/gpr_cuda_bench_args.rs"]
 mod bench_args;
 
 #[cfg(feature = "neural")]
@@ -43,6 +43,8 @@ mod qualification {
         reference: Option<PathBuf>,
         #[arg(long)]
         reference_only: bool,
+        #[arg(long)]
+        verify_envelope: bool,
         #[arg(long, default_value = "cpu")]
         device: String,
         #[arg(long, default_value_t = 0)]
@@ -64,6 +66,10 @@ mod qualification {
         cut: usize,
         genome: String,
         program_sha256: String,
+        #[serde(default)]
+        train_rows: Option<usize>,
+        #[serde(default)]
+        feature_columns: Option<usize>,
     }
     #[derive(Deserialize)]
     struct Cases {
@@ -107,8 +113,31 @@ mod qualification {
                 })
                 .unzip()
         };
-        let (mut x, y) = split(train);
+        let (mut x, mut y) = split(train);
         let (mut valid, actual) = split(heldout);
+        if let Some(n) = case.train_rows {
+            ensure!(
+                n > 0 && x.len() >= n && y.len() >= n,
+                "case {} requested train_rows={n} exceeding prepared cut len={}",
+                case.id,
+                x.len()
+            );
+            x.truncate(n);
+            y.truncate(n);
+        }
+        if let Some(d) = case.feature_columns {
+            ensure!(
+                d > 0 && x.iter().all(|r| r.len() >= d) && valid.iter().all(|r| r.len() >= d),
+                "case {} requested feature_columns={d} exceeding prepared width",
+                case.id
+            );
+            for r in &mut x {
+                r.truncate(d);
+            }
+            for r in &mut valid {
+                r.truncate(d);
+            }
+        }
         let GenomeIr::Pipeline(dsl) = GenomeIr::parse(&case.genome)? else {
             anyhow::bail!("prototype requires a pipeline")
         };
@@ -180,6 +209,10 @@ mod qualification {
         )
         .map_err(anyhow::Error::msg)?;
         ensure!(
+            !(a.verify_envelope && a.reference_only),
+            "--verify-envelope cannot be combined with --reference-only"
+        );
+        ensure!(
             a.world_size > 0 && a.rank < a.world_size && a.batch_size > 0,
             "invalid rank/batch"
         );
@@ -219,10 +252,12 @@ mod qualification {
         let device_initialization_seconds = initialization.elapsed().as_secs_f64();
         let mut rows = Vec::new();
         let mut groups: BTreeMap<String, Vec<Ready>> = BTreeMap::new();
+        let mut expected_cases = 0usize;
         for (i, case) in inputs.cases.into_iter().enumerate() {
             if i % a.world_size != a.rank {
                 continue;
             }
+            expected_cases += 1;
             let id = case.id.clone();
             match prepare(&a.root, case) {
                 Ok(case) => {
@@ -315,9 +350,28 @@ mod qualification {
                 }
             }
         }
-        let report = json!({"schema":"parallel.experimental_gpr_qualification.v1","production_enabled":false,"reward_admission":false,"evaluation_bias":"adaptive_cut_heldout_teacher","final_tests_opened":false,"device":a.device,"rank":a.rank,"world_size":a.world_size,"cases_sha256":manifest_sha,"executable_sha256":executable_sha,"reference_sha256":a.reference.as_ref().map(|p|file_hash(p)).transpose()?,"absolute_tolerance":a.absolute_tolerance,"relative_tolerance":a.relative_tolerance,"device_initialization_seconds":device_initialization_seconds,"elapsed_seconds":begun.elapsed().as_secs_f64(),"batch_timings":batch_timings,"rows":rows});
+        let summaries: Vec<super::bench_args::BenchmarkRowSummary> = rows
+            .iter()
+            .map(|r| super::bench_args::BenchmarkRowSummary {
+                id: r["id"].as_str().unwrap_or_default().to_string(),
+                status: r["status"].as_str().unwrap_or_default().to_string(),
+                max_absolute_prediction_error: r["max_absolute_prediction_error"].as_f64(),
+                prediction_rmse_error: r["prediction_rmse_error"].as_f64(),
+                amortized_backend_seconds: r["amortized_backend_seconds"].as_f64(),
+                end_to_end_seconds: r["end_to_end_seconds"].as_f64(),
+            })
+            .collect();
+        let envelope_check = super::bench_args::verify_benchmark_envelope(
+            a.verify_envelope,
+            a.reference_only,
+            expected_cases,
+            &summaries,
+            a.absolute_tolerance + a.relative_tolerance * 100.0,
+        );
+        let report = json!({"schema":"parallel.experimental_gpr_qualification.v1","production_enabled":false,"reward_admission":false,"evaluation_bias":"adaptive_cut_heldout_teacher","final_tests_opened":false,"device":a.device,"rank":a.rank,"world_size":a.world_size,"cases_sha256":manifest_sha,"executable_sha256":executable_sha,"reference_sha256":a.reference.as_ref().map(|p|file_hash(p)).transpose()?,"absolute_tolerance":a.absolute_tolerance,"relative_tolerance":a.relative_tolerance,"verify_envelope":a.verify_envelope,"envelope_verified":a.verify_envelope && envelope_check.is_ok(),"device_initialization_seconds":device_initialization_seconds,"elapsed_seconds":begun.elapsed().as_secs_f64(),"batch_timings":batch_timings,"rows":rows});
         fs::create_dir_all(a.output.parent().context("output parent")?)?;
         write_json(&a.output, &report)?;
+        envelope_check.map_err(anyhow::Error::msg)?;
         println!(
             "{}",
             json!({"output":a.output,"rows":report["rows"].as_array().unwrap().len(),"elapsed_seconds":report["elapsed_seconds"]})

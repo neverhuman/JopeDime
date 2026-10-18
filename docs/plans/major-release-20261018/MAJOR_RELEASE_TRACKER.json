@@ -454,7 +454,7 @@
         "legacy_or_gate": "GPU-E1-XBABE123"
       },
       "completion_criterion": "Execute GPU-E1 gpr_cuda_bench benchmark suite across xbabe1 (RTX 4090), xbabe2 (RTX 3090), and xbabe3 (RTX 3090) and commit hardware receipts",
-      "exact_acceptance_test": "cargo run --release -p feat-math --bin gpr_cuda_bench -- --cases benchmarks/gpr_cuda_bench/cases.json --verify-envelope",
+      "exact_acceptance_test": "cargo run --release -p jope-parallel --features neural --example gpr_cuda_bench -- --cases benchmarks/gpr_cuda_bench/cases.json --verify-envelope",
       "acceptance_cases": [
         "xbabe1_rtx4090_gpr_cuda_bench_pass",
         "xbabe2_rtx3090_gpr_cuda_bench_pass",
