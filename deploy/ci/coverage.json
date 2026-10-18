@@ -10185,6 +10185,22 @@
       ],
       "scope": "Explicit jope-policy --features testing under the main nextest profile: CPU fixed-logit and untrained-weight decode outcome fixtures; no accepted checkpoint, CUDA or LibTorch parity implied."
     },
+    "target:jope-policy/test/factored_edit_policy_and_trace_accounting": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-policy/tests/factored_edit_policy_and_trace_accounting.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-policy/test/grammar_differential": {
       "discovery": {
         "doctest": false,

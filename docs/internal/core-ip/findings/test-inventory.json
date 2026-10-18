@@ -4165,6 +4165,13 @@
         "policy"
       ]
     },
+    "target:jope-policy/test/factored_edit_policy_and_trace_accounting": {
+      "role": "regression",
+      "source": "crates/jope-policy/tests/factored_edit_policy_and_trace_accounting.rs",
+      "subsystems": [
+        "policy"
+      ]
+    },
     "target:jope-policy/test/grammar_differential": {
       "role": "regression",
       "subsystems": [
