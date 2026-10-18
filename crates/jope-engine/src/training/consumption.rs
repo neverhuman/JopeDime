@@ -428,8 +428,8 @@ impl Tracker {
                     "commit inside an unfinished update"
                 );
                 ensure!(
-                    *step == self.applied_through && *step > self.committed_through,
-                    "commit at step {step} must cover exactly the applied updates and advance"
+                    *step <= self.applied_through && *step > self.committed_through,
+                    "commit at step {step} must cover applied updates and advance"
                 );
                 ensure!(is_sha256(state_sha256), "commit state digest is malformed");
                 self.commit_through(*step)?;
@@ -749,6 +749,111 @@ pub fn verify_binding(bytes: &[u8], binding: &Binding) -> Result<()> {
         "consumption journal no longer contains its committed prefix"
     );
     Ok(())
+}
+
+/// Result of reconciling a checkpoint that became durable before its journal
+/// commit acknowledgement. `acknowledged` is false only when later applied
+/// work exists beyond the durable checkpoint; that work remains visible and
+/// uncommitted for the next attempt.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct PublicationAckRecovery {
+    pub binding: Binding,
+    pub reconciliation: Reconciliation,
+    pub appended: bool,
+    pub acknowledged: bool,
+}
+
+/// Idempotently append the logical commit acknowledgement after a published
+/// checkpoint. Physical retries remain represented by their attempt events;
+/// this function never adds exposure or update events. It refuses torn tails,
+/// conflicting acknowledgements, and checkpoints ahead of applied work.
+pub fn recover_published_ack(
+    path: &Path,
+    durable_step: u64,
+    state_sha256: &str,
+) -> Result<PublicationAckRecovery> {
+    ensure!(
+        is_sha256(state_sha256),
+        "published state digest is malformed"
+    );
+    let bytes = fs::read(path)?;
+    let mut reconciliation = reconcile(&bytes, Some(durable_step))?;
+    let (lines, torn) = complete_lines(&bytes);
+    ensure!(
+        !torn,
+        "cannot append a publication acknowledgement after a torn journal tail"
+    );
+    let mut matching_ack = false;
+    for line in lines {
+        let event: Event = serde_json::from_slice(line)?;
+        if let Event::Commit {
+            step,
+            state_sha256: ack_sha,
+        } = event
+        {
+            if step == durable_step {
+                ensure!(
+                    ack_sha == state_sha256,
+                    "conflicting publication acknowledgement digest"
+                );
+                matching_ack = true;
+            }
+        }
+    }
+    let mut appended = false;
+    let mut acknowledged = matching_ack;
+    if reconciliation.commit_event_missing {
+        ensure!(
+            reconciliation.applied_through >= durable_step,
+            "published checkpoint is ahead of journal-applied work"
+        );
+        if reconciliation.applied_through >= durable_step {
+            let event = Event::Commit {
+                step: durable_step,
+                state_sha256: state_sha256.into(),
+            };
+            let mut next = Tracker {
+                track_records: true,
+                ..Tracker::default()
+            };
+            let mut seen = BTreeMap::<String, &[u8]>::new();
+            for line in &lines {
+                let event: Event = serde_json::from_slice(line)?;
+                let key = event.key();
+                if let Some(previous) = seen.get(&key) {
+                    ensure!(
+                        *previous == *line,
+                        "conflicting duplicate consumption event {key}"
+                    );
+                    continue;
+                }
+                seen.insert(key, line);
+                next.accept(&event)?;
+            }
+            next.accept(&event)?;
+            let mut encoded = serde_json::to_vec(&event)?;
+            encoded.push(b'\n');
+            let mut file = fs::OpenOptions::new().append(true).open(path)?;
+            file.write_all(&encoded)?;
+            file.sync_all()?;
+            appended = true;
+            acknowledged = true;
+            let updated = fs::read(path)?;
+            reconciliation = reconcile(&updated, Some(durable_step))?;
+        }
+    }
+    let updated = fs::read(path)?;
+    let binding = Binding {
+        schema: SCHEMA.into(),
+        bytes: updated.len() as u64,
+        sha256: hex::encode(Sha256::digest(&updated)),
+    };
+    Ok(PublicationAckRecovery {
+        binding,
+        reconciliation,
+        appended,
+        acknowledged,
+    })
 }
 
 /// Re-derive every journaled microbatch from its cursor with the frozen

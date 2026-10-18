@@ -293,7 +293,9 @@ pub fn verify_continuation_partition(
     )
 }
 
-fn validate_checkpoint(path: &Path, step: u64) -> Result<String> {
+fn validate_checkpoint(root: &Path, path: &Path, step: u64) -> Result<String> {
+    #[cfg(not(feature = "neural"))]
+    let _ = root;
     let state_path = path.join("state.json");
     ensure!(
         !fs::symlink_metadata(&state_path)?.file_type().is_symlink(),
@@ -305,6 +307,26 @@ fn validate_checkpoint(path: &Path, step: u64) -> Result<String> {
         "checkpoint step or schema changed: {}",
         path.display()
     );
+    if state["checkpoint_format"] == "parallel.checkpoint_commit.v3" {
+        #[cfg(feature = "neural")]
+        {
+            let loaded = crate::training::checkpoint_commit::verify_dir(
+                root,
+                path,
+                step,
+                &crate::training::checkpoint_commit::Expectation {
+                    require_complete: true,
+                    ..Default::default()
+                },
+            )?;
+            ensure!(
+                loaded.format == crate::training::checkpoint_commit::Format::Successor,
+                "successor checkpoint did not load as its declared format"
+            );
+        }
+        #[cfg(not(feature = "neural"))]
+        anyhow::bail!("successor checkpoint recovery requires the neural checkpoint verifier");
+    }
     for (name, key) in [
         ("model.ot", "model_sha256"),
         ("optimizer.ot", "optimizer_sha256"),
@@ -362,7 +384,7 @@ pub fn reconcile(root: &Path, run: &Path) -> Result<()> {
             "latest checkpoint is outside this run or has a mismatched step"
         );
         ensure!(
-            validate_checkpoint(&path, step)? == latest["state_sha256"],
+            validate_checkpoint(&root, &path, step)? == latest["state_sha256"],
             "published checkpoint state changed"
         );
         Some(step)
@@ -406,7 +428,7 @@ pub fn reconcile(root: &Path, run: &Path) -> Result<()> {
             entry.path().display()
         );
         let state_sha = if kind == "unpublished_complete_checkpoint" {
-            Some(validate_checkpoint(&entry.path(), step)?)
+            Some(validate_checkpoint(&root, &entry.path(), step)?)
         } else if entry.path().join("state.json").is_file() {
             Some(file_hash(&entry.path().join("state.json"))?)
         } else {

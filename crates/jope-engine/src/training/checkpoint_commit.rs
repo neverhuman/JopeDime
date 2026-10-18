@@ -30,6 +30,9 @@ pub const SCHEMA: &str = "parallel.checkpoint.v1";
 /// Complete-commit format: the manifest also binds rank receipts, the
 /// per-rank consumption journals and the list of required objects.
 pub const FORMAT: &str = "parallel.checkpoint_commit.v2";
+/// Successor format binding immutable lineage and intent identities and each
+/// rank's exact durable journal prefix. Legacy and v2 readers remain intact.
+pub const SUCCESSOR_FORMAT: &str = "parallel.checkpoint_commit.v3";
 /// Objects every checkpoint must contain, with their manifest digest field.
 pub const REQUIRED_OBJECTS: [(&str, &str); 4] = [
     ("model.ot", "model_sha256"),
@@ -152,6 +155,29 @@ pub fn commit(
     manifest: impl FnOnce(&Path) -> Result<Value>,
     stop: &mut dyn FnMut(Phase) -> Result<()>,
 ) -> Result<Value> {
+    commit_fenced(
+        root,
+        run,
+        step,
+        write_artifacts,
+        manifest,
+        &mut || Ok(()),
+        stop,
+    )
+}
+
+/// Commit with a fresh lease check before checkpoint rename and latest
+/// publication. The caller must query the active attempt/lease in the callback;
+/// a token captured before the write is not a publication fence.
+pub fn commit_fenced(
+    root: &Path,
+    run: &Path,
+    step: u64,
+    write_artifacts: impl FnOnce(&Path) -> Result<()>,
+    manifest: impl FnOnce(&Path) -> Result<Value>,
+    fence: &mut dyn FnMut() -> Result<()>,
+    stop: &mut dyn FnMut(Phase) -> Result<()>,
+) -> Result<Value> {
     let checkpoints = run.join("checkpoints");
     fs::create_dir_all(&checkpoints)?;
     let dest = checkpoints.join(format!("step-{step}"));
@@ -172,11 +198,16 @@ pub fn commit(
     stop(Phase::ManifestWritten)?;
     // Never expose a checkpoint a loader would refuse.
     verify_dir(root, &staging, step, &Expectation::default())?;
+    let staged_manifest: Value = read_json(&staging.join("state.json"))?;
+    if staged_manifest["checkpoint_format"] == SUCCESSOR_FORMAT {
+        sync_successor_closure(root, &staging)?;
+    }
     for name in required_object_names().into_iter().chain(["state.json"]) {
         fs::File::open(staging.join(name))?.sync_all()?;
     }
     sync_dir(&staging)?;
     stop(Phase::StagingSynced)?;
+    fence().context("writer fence refused checkpoint rename")?;
     fs::rename(&staging, &dest)?;
     sync_dir(&checkpoints)?;
     stop(Phase::Renamed)?;
@@ -185,6 +216,7 @@ pub fn commit(
     let temporary = run.join(format!(".latest.json.tmp-{}", unique_suffix()?));
     write_new(&temporary, &serde_json::to_vec_pretty(&latest)?)?;
     stop(Phase::LatestStaged)?;
+    fence().context("writer fence refused latest publication")?;
     fs::rename(&temporary, run.join("latest.json"))?;
     sync_dir(run)?;
     stop(Phase::LatestPublished)?;
@@ -200,6 +232,11 @@ pub struct Expectation<'a> {
     pub global_batch: Option<usize>,
     /// Refuse checkpoints written before the complete commit format.
     pub require_complete: bool,
+    /// Optional caller-pinned successor lineage and intent identities.
+    pub lineage_sha256: Option<&'a str>,
+    pub intent_sha256: Option<&'a str>,
+    pub attempt_id: Option<&'a str>,
+    pub window_id: Option<&'a str>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -208,6 +245,8 @@ pub enum Format {
     /// receipts and consumption journals are not bound.
     Legacy,
     Complete,
+    /// Successor manifest with lineage, intent and immutable journal closure.
+    Successor,
 }
 
 #[derive(Clone, Debug)]
@@ -374,11 +413,36 @@ pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> R
     };
     let format = if field_present(&state, "checkpoint_format") {
         ensure!(
-            state["checkpoint_format"] == FORMAT,
+            state["checkpoint_format"] == FORMAT || state["checkpoint_format"] == SUCCESSOR_FORMAT,
             "unknown checkpoint format"
         );
         verify_complete(root, &state, step, world, global, plan.as_ref())?;
-        Format::Complete
+        if state["checkpoint_format"] == SUCCESSOR_FORMAT {
+            verify_successor(root, &state, step, world)?;
+            ensure!(
+                expect
+                    .lineage_sha256
+                    .is_none_or(|sha| state["lineage"]["sha256"] == sha),
+                "checkpoint lineage differs from the expected identity"
+            );
+            ensure!(
+                expect
+                    .intent_sha256
+                    .is_none_or(|sha| state["intent"]["sha256"] == sha),
+                "checkpoint intent differs from the expected identity"
+            );
+            ensure!(
+                expect.attempt_id.is_none_or(|id| state["attempt_id"] == id),
+                "checkpoint belongs to another writer attempt"
+            );
+            ensure!(
+                expect.window_id.is_none_or(|id| state["window_id"] == id),
+                "checkpoint belongs to another training window"
+            );
+            Format::Successor
+        } else {
+            Format::Complete
+        }
     } else {
         ensure!(
             !v2,
@@ -397,6 +461,158 @@ pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> R
         state,
         format,
     })
+}
+
+/// Successor-only immutable identity and per-rank closure checks. The shapes
+/// are intentionally generic JSON bindings so I11/I12 can supply their
+/// versioned payloads without changing legacy checkpoint bytes.
+fn verify_successor(root: &Path, state: &Value, step: u64, world: usize) -> Result<()> {
+    for field in ["lineage", "intent"] {
+        let binding = state
+            .get(field)
+            .context(format!("successor lacks {field}"))?;
+        let schema = binding["schema"]
+            .as_str()
+            .context(format!("{field} schema absent"))?;
+        let digest = binding["sha256"]
+            .as_str()
+            .context(format!("{field} digest absent"))?;
+        let value = binding
+            .get("value")
+            .context(format!("{field} value absent"))?;
+        ensure!(
+            schema.starts_with("jope.")
+                && digest == crate::manifest::hash(&serde_json::to_vec(value)?),
+            "successor {field} binding malformed"
+        );
+        ensure!(
+            value["schema"] == schema,
+            "successor {field} payload schema mismatch"
+        );
+    }
+    let attempt = state["attempt_id"]
+        .as_str()
+        .context("successor attempt identity absent")?;
+    let window = state["window_id"]
+        .as_str()
+        .context("successor window identity absent")?;
+    ensure!(
+        !attempt.is_empty() && !window.is_empty(),
+        "successor attempt/window identity empty"
+    );
+    ensure!(
+        state["applied_boundary"].as_u64() == Some(step),
+        "successor applied boundary differs from checkpoint step"
+    );
+    let prefixes = state["journal_prefixes"]
+        .as_array()
+        .context("successor journal prefixes absent")?;
+    ensure!(
+        prefixes.len() == world,
+        "successor must bind every rank journal prefix"
+    );
+    for (rank, entry) in prefixes.iter().enumerate() {
+        ensure!(
+            entry["rank"].as_u64() == Some(rank as u64),
+            "successor journal prefix rank order differs"
+        );
+        ensure!(
+            entry["attempt_id"] == attempt && entry["window_id"] == window,
+            "rank journal prefix belongs to another attempt/window"
+        );
+        let path = resolve(
+            root,
+            Path::new(
+                entry["path"]
+                    .as_str()
+                    .context("journal prefix path absent")?,
+            ),
+        )?;
+        plain_file(&path)?;
+        let bytes = fs::read(path)?;
+        let binding: super::consumption::Binding =
+            serde_json::from_value(entry["binding"].clone())?;
+        super::consumption::verify_binding(&bytes, &binding)?;
+        let reconciled =
+            super::consumption::reconcile(&bytes[..binding.bytes as usize], Some(step))?;
+        ensure!(
+            reconciled.header.rank == rank
+                && reconciled.header.world == world
+                && reconciled.committed_through == step
+                && reconciled.applied_through == step,
+            "successor rank {rank} prefix does not prove the common applied boundary"
+        );
+        ensure!(
+            entry["applied_through"].as_u64() == Some(reconciled.applied_through),
+            "successor rank applied boundary differs from journal"
+        );
+    }
+    let objects = state["closure_objects"]
+        .as_array()
+        .context("successor closure objects absent")?;
+    ensure!(
+        !objects.is_empty(),
+        "successor closure object list is empty"
+    );
+    for object in objects {
+        let path = resolve(
+            root,
+            Path::new(
+                object["path"]
+                    .as_str()
+                    .context("closure object path absent")?,
+            ),
+        )?;
+        plain_file(&path)?;
+        ensure!(
+            file_hash(&path)? == object["sha256"],
+            "successor closure object changed: {}",
+            path.display()
+        );
+    }
+    Ok(())
+}
+
+/// Make external objects referenced by the successor manifest durable before
+/// publishing latest. The journal writer normally synced these already; doing
+/// it here closes the manifest's durability contract at the commit boundary.
+fn sync_successor_closure(root: &Path, staging: &Path) -> Result<()> {
+    let state: Value = read_json(&staging.join("state.json"))?;
+    for entry in state["journal_prefixes"]
+        .as_array()
+        .context("successor journal prefixes absent")?
+    {
+        let path = resolve(
+            root,
+            Path::new(
+                entry["path"]
+                    .as_str()
+                    .context("journal prefix path absent")?,
+            ),
+        )?;
+        fs::File::open(&path)?.sync_all()?;
+        if let Some(parent) = path.parent() {
+            sync_dir(parent)?;
+        }
+    }
+    for entry in state["closure_objects"]
+        .as_array()
+        .context("successor closure objects absent")?
+    {
+        let path = resolve(
+            root,
+            Path::new(
+                entry["path"]
+                    .as_str()
+                    .context("closure object path absent")?,
+            ),
+        )?;
+        fs::File::open(&path)?.sync_all()?;
+        if let Some(parent) = path.parent() {
+            sync_dir(parent)?;
+        }
+    }
+    Ok(())
 }
 
 /// A partition-v2 checkpoint binds the v2 objective and its persisted

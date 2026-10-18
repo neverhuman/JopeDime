@@ -12,9 +12,7 @@ use jope_parallel::{
     neural::{AdamW, Config},
     task_contract::training_partition,
     training::{
-        checkpoint_commit::{
-            self, commit, load_latest, replace_json, Expectation, Format, Phase, PHASES,
-        },
+        checkpoint_commit::{self, load_latest, replace_json, Expectation, Format, Phase, PHASES},
         consumption::{self, Header, Journal},
         objective::{self, RowLabels},
     },
@@ -149,6 +147,16 @@ impl Fixture {
         omit_optimizer: bool,
         stop: &mut dyn FnMut(Phase) -> anyhow::Result<()>,
     ) -> anyhow::Result<Value> {
+        self.commit_with_fence(edit, omit_optimizer, &mut || Ok(()), stop)
+    }
+
+    fn commit_with_fence(
+        &mut self,
+        edit: &dyn Fn(&mut Value),
+        omit_optimizer: bool,
+        fence: &mut dyn FnMut() -> anyhow::Result<()>,
+        stop: &mut dyn FnMut(Phase) -> anyhow::Result<()>,
+    ) -> anyhow::Result<Value> {
         let step = self.optimizer.step;
         let binding = self.journal.sync()?;
         let journal_path = self.journal.path().strip_prefix(&self.root)?.to_path_buf();
@@ -163,7 +171,7 @@ impl Fixture {
             "sha256":file_hash(&receipt)?}]);
         let parameter = self.parameter_sha256();
         let (vs, optimizer) = (&self.vs, &self.optimizer);
-        let latest = commit(
+        let latest = checkpoint_commit::commit_fenced(
             &self.root,
             &self.run,
             step,
@@ -211,6 +219,7 @@ impl Fixture {
                 edit(&mut state);
                 Ok(state)
             },
+            fence,
             stop,
         )?;
         self.journal
@@ -602,4 +611,95 @@ fn a_complete_checkpoint_reloads_the_committed_state() {
     assert!(w.equal(&f.w));
     assert_eq!(optimizer.step, f.optimizer.step);
     let _: &Path = &loaded.dir;
+}
+
+#[test]
+fn v3_loader_requires_all_rank_prefixes_and_bound_lineage_and_intent() {
+    let good = committed_fixture();
+    rewrite_state(&good, |state| {
+        let lineage = json!({"schema":"jope.policy-lineage.v1","id":"fixture-lineage"});
+        let intent = json!({"schema":"jope.training-intent.v1","id":"fixture-intent"});
+        let journal = state["committed_exposure_by_rank"][0]["consumption_journal"].clone();
+        state["checkpoint_format"] = json!(checkpoint_commit::SUCCESSOR_FORMAT);
+        state["lineage"] = json!({"schema":lineage["schema"],"value":lineage,"sha256":hash(&serde_json::to_vec(&lineage).unwrap())});
+        state["intent"] = json!({"schema":intent["schema"],"value":intent,"sha256":hash(&serde_json::to_vec(&intent).unwrap())});
+        state["attempt_id"] = json!("attempt-0");
+        state["window_id"] = json!("window-0");
+        state["applied_boundary"] = state["step"].clone();
+        state["journal_prefixes"] = json!([{"rank":0,"attempt_id":"attempt-0","window_id":"window-0",
+            "applied_through":state["step"],"path":journal["path"],"binding":journal["binding"]}]);
+        state["closure_objects"] = json!([{"path":journal["path"],"sha256":file_hash(&good.root.join(journal["path"].as_str().unwrap())).unwrap()}]);
+    });
+    let loaded = good.load().unwrap();
+    assert_eq!(loaded.format, Format::Successor);
+    assert!(
+        load_latest(
+            &good.root,
+            &good.run,
+            &Expectation {
+                intent_sha256: Some(&"f".repeat(64)),
+                ..Expectation::default()
+            }
+        )
+        .is_err(),
+        "caller-pinned intent mismatch must refuse exact resume"
+    );
+
+    let missing_rank = committed_fixture();
+    rewrite_state(&missing_rank, |state| {
+        state["checkpoint_format"] = json!(checkpoint_commit::SUCCESSOR_FORMAT);
+        state["lineage"] = json!({"schema":"jope.policy-lineage.v1","value":{"schema":"jope.policy-lineage.v1"},"sha256":hash(br#"{"schema":"jope.policy-lineage.v1"}"#)});
+        state["intent"] = json!({"schema":"jope.training-intent.v1","value":{"schema":"jope.training-intent.v1"},"sha256":hash(br#"{"schema":"jope.training-intent.v1"}"#)});
+        state["attempt_id"] = json!("attempt-0");
+        state["window_id"] = json!("window-0");
+        state["applied_boundary"] = state["step"].clone();
+        state["journal_prefixes"] = json!([]);
+        state["closure_objects"] = json!([{"path":"unused","sha256":"0".repeat(64)}]);
+    });
+    assert!(missing_rank.load().is_err(), "missing rank must not load");
+}
+
+#[test]
+fn a_stale_writer_fence_cannot_publish_latest() {
+    let mut f = fixture();
+    f.train_to(2);
+    let mut stale = || anyhow::bail!("stale attempt");
+    assert!(f
+        .commit_with_fence(&|_| {}, false, &mut stale, &mut checkpoint_commit::no_stop)
+        .is_err());
+    assert!(!f.checkpoint_dir(2).exists());
+    assert!(!f.run.join("latest.json").exists());
+
+    let mut f = fixture();
+    f.train_to(2);
+    let mut checks = 0;
+    let mut superseded = || {
+        checks += 1;
+        if checks == 1 {
+            Ok(())
+        } else {
+            anyhow::bail!("stale attempt")
+        }
+    };
+    assert!(f
+        .commit_with_fence(
+            &|_| {},
+            false,
+            &mut superseded,
+            &mut checkpoint_commit::no_stop
+        )
+        .is_err());
+    assert!(
+        f.checkpoint_dir(2).exists(),
+        "rename completed before the fence changed"
+    );
+    assert!(
+        !f.run.join("latest.json").exists(),
+        "stale writer advanced latest"
+    );
+    checkpoint_recovery::reconcile(&f.root, &f.run).unwrap();
+    assert!(
+        !f.checkpoint_dir(2).exists(),
+        "unpublished state was not quarantined"
+    );
 }
