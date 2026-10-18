@@ -891,6 +891,15 @@ fn record_evaluation(
     let started = recorder.map(|_| clock.start());
     let observation = evaluate();
     let elapsed = started.map(|s| s.secs());
+    record_evaluation_result(recorder, attempt, observation, elapsed)
+}
+
+fn record_evaluation_result(
+    recorder: Option<&Recorder>,
+    attempt: Option<String>,
+    observation: Observation,
+    elapsed: Option<f64>,
+) -> Observation {
     if let (Some(recorder), Some(attempt_id)) = (recorder, attempt) {
         recorder.update(|log| {
             let mut cost = Effort::wall(elapsed.context("missing attempt clock")?)?;
@@ -907,13 +916,15 @@ fn record_evaluation(
     observation
 }
 
-fn search_recorder(cut: &Cut, options: &SearchOptions, output: &Path) -> Result<Option<Recorder>> {
+fn search_recorder(cut: &Cut, options: &SearchOptions) -> Result<Option<Recorder>> {
     if !options.record_events {
         return Ok(None);
     }
     let context = search_events::cut_context_sha256(cut)?;
     let binding = options.event_binding.clone().unwrap_or_else(|| SearchBinding {
-        run_id: sha256_hex(output.to_string_lossy().as_bytes()), task: "regression".into(),
+        run_id: sha256_hex(
+            format!("cut:{}:seed:{}:context:{context}", cut.index, options.rng_seed).as_bytes(),
+        ), task: "regression".into(),
         experiment: EvidenceRef::unknown("legacy search caller supplied no experiment manifest"),
         role_exposure: EvidenceRef::unknown("legacy search caller supplied no authenticated I04 exposure receipt; observation grants no replay eligibility"),
         context_sha256: context.clone(), source_sha256: search_events::source_sha256(),
@@ -1038,20 +1049,35 @@ fn evaluate_admitted(
             results.resize(admitted.len(), None);
             results
         }
-        Some(pool) => pool.install(|| {
-            admitted
-                .par_iter()
-                .map(|(island, genome, origin, draw)| {
-                    may_start(origin).then(|| {
-                        record_evaluation(recorder, draw, clock, || {
+        Some(pool) => {
+            let evaluated: Vec<Option<(Observation, Option<f64>)>> = pool.install(|| {
+                admitted
+                    .par_iter()
+                    .map(|(island, genome, origin, _)| {
+                        may_start(origin).then(|| {
+                            let started = recorder.map(|_| clock.start());
                             let mut observation = evaluate(genome, cut, generation, origin, clock);
                             observation.island = (options.islands > 1).then_some(*island);
-                            observation
+                            let elapsed = started.map(|stamp| stamp.secs());
+                            (observation, elapsed)
                         })
+                    })
+                    .collect()
+            });
+            evaluated
+                .into_iter()
+                .zip(admitted)
+                .map(|(result, (_, _, _, draw))| {
+                    result.map(|(observation, elapsed)| {
+                        let attempt = recorder.and_then(|recorder| {
+                            draw.as_ref()
+                                .and_then(|draw| recorder.update(|log| log.start(draw, 1, None)))
+                        });
+                        record_evaluation_result(recorder, attempt, observation, elapsed)
                     })
                 })
                 .collect()
-        }),
+        }
     }
 }
 
@@ -1070,7 +1096,7 @@ fn run_cut_allocated(
         output.display()
     );
     ensure!(!output.join("search-events.json").exists(), "{}: previous search-event evidence already exists; preserve it and use a new run destination", output.display());
-    let recorder = search_recorder(cut, options, output)?;
+    let recorder = search_recorder(cut, options)?;
     let recorder = recorder.as_ref();
     let started = clock.start();
     let evaluation_limit = exploration_limit(budget, if reserve { 2 } else { 1 });
@@ -2587,9 +2613,7 @@ mod tests {
             },
             7,
         );
-        let recorder = search_recorder(&cut, &options, temp.path())
-            .unwrap()
-            .unwrap();
+        let recorder = search_recorder(&cut, &options).unwrap().unwrap();
         let parents = vec![Scored {
             genome: BOOTSTRAP_GENOME.into(),
             rmse: 1.,
@@ -2622,9 +2646,7 @@ mod tests {
             genome: "invalid-parent".into(),
             rmse: 1.,
         }];
-        let recorder = search_recorder(&cut, &options, &temp.path().join("invalid"))
-            .unwrap()
-            .unwrap();
+        let recorder = search_recorder(&cut, &options).unwrap().unwrap();
         let expected = offspring(&invalid, &seen, 7, cut.index, 2, 1);
         let (genome, origin, _) =
             offspring_recorded(&invalid, &seen, 7, cut.index, 2, 1, 0, Some(&recorder));

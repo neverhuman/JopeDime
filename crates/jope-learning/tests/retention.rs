@@ -891,6 +891,10 @@ fn retention_sources_have_no_s3_write_or_delete_path() {
             "distilled.rs",
             include_str!("../src/retention/distilled.rs"),
         ),
+        (
+            "executor_candidate.rs",
+            include_str!("../src/retention/executor_candidate.rs"),
+        ),
         ("groups.rs", include_str!("../src/retention/groups.rs")),
         ("index.rs", include_str!("../src/retention/index.rs")),
         ("inputs.rs", include_str!("../src/retention/inputs.rs")),
@@ -903,6 +907,10 @@ fn retention_sources_have_no_s3_write_or_delete_path() {
             include_str!("../src/retention/lifecycle.rs"),
         ),
         ("md5.rs", include_str!("../src/retention/md5.rs")),
+        (
+            "obligations.rs",
+            include_str!("../src/retention/obligations.rs"),
+        ),
         ("pack.rs", include_str!("../src/retention/pack.rs")),
         ("parquet.rs", include_str!("../src/retention/parquet.rs")),
         ("plan.rs", include_str!("../src/retention/plan.rs")),
@@ -910,6 +918,7 @@ fn retention_sources_have_no_s3_write_or_delete_path() {
         ("refs.rs", include_str!("../src/retention/refs.rs")),
         ("snappy.rs", include_str!("../src/retention/snappy.rs")),
         ("tags.rs", include_str!("../src/retention/tags.rs")),
+        ("value.rs", include_str!("../src/retention/value.rs")),
         (
             "bin/jope_retention.rs",
             include_str!("../src/bin/jope_retention.rs"),
