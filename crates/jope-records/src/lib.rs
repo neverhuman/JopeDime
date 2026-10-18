@@ -57,6 +57,7 @@ pub mod pyjson;
 pub mod readme;
 pub mod repo_layout;
 pub mod scope_check;
+pub mod selfplay_baseline;
 pub mod synthetic;
 pub mod task_status;
 pub mod test_inventory;
