@@ -1,0 +1,1 @@
+{"assertions":[{"denominator":8,"evidence_sha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","evidence_version":"local-v1","expression":"mean(loss)","id":"loss","numerator":2,"source_field":"training.loss","status":"inconclusive","unit":"loss/example","value":0.25}],"schema_version":1}
