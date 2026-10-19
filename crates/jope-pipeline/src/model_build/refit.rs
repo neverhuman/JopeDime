@@ -34,7 +34,11 @@ pub struct MemberRefit {
     report_sha256: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// The outer-refit record. Its fields are private, and its only constructor is `refit_members`,
+/// which sets `verified_in_process`. The flag is `#[serde(skip)]`: a record read from JSON starts with
+/// it `false`. Admission refuses such a record, so a deserialised record can be checked for disk
+/// reload but cannot produce an ensemble.
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OuterRefitRecord {
     schema: String,
@@ -45,7 +49,23 @@ pub struct OuterRefitRecord {
     /// Digest of the report-side row identifiers every refit predicted.
     predict_rows_sha256: String,
     members: BTreeMap<String, MemberRefit>,
+    #[serde(skip)]
+    verified_in_process: bool,
 }
+
+impl PartialEq for OuterRefitRecord {
+    /// Compares the record's content. Provenance is not content.
+    fn eq(&self, other: &Self) -> bool {
+        self.schema == other.schema
+            && self.request_sha256 == other.request_sha256
+            && self.plan_sha256 == other.plan_sha256
+            && self.train_rows_sha256 == other.train_rows_sha256
+            && self.predict_rows_sha256 == other.predict_rows_sha256
+            && self.members == other.members
+    }
+}
+
+impl Eq for OuterRefitRecord {}
 
 /// Digest of a prediction set's exact bits, including its class order.
 pub(super) fn predictions_digest(predictions: &Predictions) -> String {
@@ -89,6 +109,7 @@ impl OuterRefitRecord {
             train_rows_sha256: digest_ids(train_rows),
             predict_rows_sha256: digest_ids(predict_rows),
             members,
+            verified_in_process: true,
         }
     }
 
@@ -110,6 +131,11 @@ impl OuterRefitRecord {
 
     pub(super) fn predict_rows_sha256(&self) -> &str {
         &self.predict_rows_sha256
+    }
+
+    /// True only for a record that `refit_members` produced in this process.
+    pub(super) fn verified_in_process(&self) -> bool {
+        self.verified_in_process
     }
 
     /// The members the record covers, by candidate id.

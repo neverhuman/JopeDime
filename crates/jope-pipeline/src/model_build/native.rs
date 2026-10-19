@@ -164,6 +164,37 @@ impl NativeFitter {
             label_strings(plan.task, &plan.classes, &data.targets[..selection_len])? == plan.labels,
             "plan labels differ from the targets the fitter trains on"
         );
+        // Explicit fold comparison (SC-DEC-184W): every fold's train and predict rows are disjoint
+        // and together cover the selection side, so no fold trains on its own scoring rows.
+        ensure!(
+            plan.folds.len() == plan.row_ids.len() && !plan.folds.is_empty(),
+            "the plan has no fold assignment for each of its rows"
+        );
+        let selection: BTreeSet<&str> = plan.row_ids.iter().map(String::as_str).collect();
+        for fold in plan.folds.iter().copied().collect::<BTreeSet<u32>>() {
+            let predict: BTreeSet<&str> = plan
+                .row_ids
+                .iter()
+                .zip(&plan.folds)
+                .filter(|(_, f)| **f == fold)
+                .map(|(id, _)| id.as_str())
+                .collect();
+            let train: BTreeSet<&str> = plan
+                .row_ids
+                .iter()
+                .zip(&plan.folds)
+                .filter(|(_, f)| **f != fold)
+                .map(|(id, _)| id.as_str())
+                .collect();
+            ensure!(
+                predict.is_disjoint(&train),
+                "fold {fold} trains and predicts on the same rows"
+            );
+            ensure!(
+                predict.union(&train).copied().collect::<BTreeSet<_>>() == selection,
+                "fold {fold} does not cover the selection side"
+            );
+        }
         ensure!(
             digest_ids(&plan.group_ids) == identity.group_sha256,
             "plan groups differ from the identity"

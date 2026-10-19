@@ -52,17 +52,90 @@ pub enum FoldStatus {
     Unknown,
 }
 
-/// One fold's verified record: the request it ran under, its artifact, and exactly which rows it
-/// fitted on and which it scored.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// One fold's record: the request it ran under, its artifact, and exactly which rows it fitted on
+/// and which it scored.
+///
+/// The fields are private. `verified_in_process` is set only by `FoldRecord::verified`, which the
+/// bake-off calls with the evidence of a fit that ran. It is `#[serde(skip)]`, so a record read
+/// from JSON starts with it `false`, and `AdmittedBundle::admit` refuses such a record.
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FoldRecord {
-    pub fold: u32,
-    pub request_sha256: String,
-    pub fitted_artifact_sha256: String,
-    pub fitting_row_ids: Vec<String>,
-    pub scoring_row_ids: Vec<String>,
-    pub status: FoldStatus,
+    fold: u32,
+    request_sha256: String,
+    fitted_artifact_sha256: String,
+    fitting_row_ids: Vec<String>,
+    scoring_row_ids: Vec<String>,
+    status: FoldStatus,
+    #[serde(skip)]
+    verified_in_process: bool,
+}
+
+impl PartialEq for FoldRecord {
+    /// Compares the record's content. Provenance is not content, so a record and its serialised
+    /// round trip compare equal even though only the first is verified in process.
+    fn eq(&self, other: &Self) -> bool {
+        self.fold == other.fold
+            && self.request_sha256 == other.request_sha256
+            && self.fitted_artifact_sha256 == other.fitted_artifact_sha256
+            && self.fitting_row_ids == other.fitting_row_ids
+            && self.scoring_row_ids == other.scoring_row_ids
+            && self.status == other.status
+    }
+}
+
+impl Eq for FoldRecord {}
+
+impl FoldRecord {
+    /// Built only by the bake-off, from the evidence of a fit that ran. It is verified in process
+    /// only when the status is `Verified`.
+    pub(crate) fn verified(
+        fold: u32,
+        request_sha256: String,
+        fitted_artifact_sha256: String,
+        fitting_row_ids: Vec<String>,
+        scoring_row_ids: Vec<String>,
+        status: FoldStatus,
+    ) -> Self {
+        Self {
+            fold,
+            request_sha256,
+            fitted_artifact_sha256,
+            fitting_row_ids,
+            scoring_row_ids,
+            verified_in_process: status == FoldStatus::Verified,
+            status,
+        }
+    }
+
+    pub fn fold(&self) -> u32 {
+        self.fold
+    }
+
+    pub fn request_sha256(&self) -> &str {
+        &self.request_sha256
+    }
+
+    pub fn fitted_artifact_sha256(&self) -> &str {
+        &self.fitted_artifact_sha256
+    }
+
+    pub fn fitting_row_ids(&self) -> &[String] {
+        &self.fitting_row_ids
+    }
+
+    pub fn scoring_row_ids(&self) -> &[String] {
+        &self.scoring_row_ids
+    }
+
+    pub fn status(&self) -> FoldStatus {
+        self.status
+    }
+
+    /// True only for a record that a fit produced in this process.
+    pub fn verified_in_process(&self) -> bool {
+        self.verified_in_process
+    }
 }
 
 /// The admitted plan that a bundle must reproduce exactly.
@@ -260,6 +333,10 @@ impl AdmittedBundle {
         plan: &ExpectedPlan,
         records: &[FoldRecord],
     ) -> Result<Self> {
+        ensure!(
+            records.iter().all(FoldRecord::verified_in_process),
+            "a fold record was not produced by a verified fit in this process"
+        );
         bundle.validate_against(plan, records)?;
         Ok(Self { bundle })
     }
@@ -302,6 +379,7 @@ pub(crate) fn admit_for_test(bundle: OofPredictionBundle) -> Result<AdmittedBund
                 .map(|(id, _)| id.clone())
                 .collect(),
             status: FoldStatus::Verified,
+            verified_in_process: true,
         })
         .collect();
     let plan = ExpectedPlan {
@@ -435,6 +513,7 @@ mod tests {
                 fitting_row_ids: vec!["row-1".into(), "row-3".into()],
                 scoring_row_ids: vec!["row-0".into(), "row-2".into()],
                 status: FoldStatus::Verified,
+                verified_in_process: true,
             },
             FoldRecord {
                 fold: 1,
@@ -443,6 +522,7 @@ mod tests {
                 fitting_row_ids: vec!["row-0".into(), "row-2".into()],
                 scoring_row_ids: vec!["row-1".into(), "row-3".into()],
                 status: FoldStatus::Verified,
+                verified_in_process: true,
             },
         ];
         (b, expected, records)

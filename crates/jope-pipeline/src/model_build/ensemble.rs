@@ -149,6 +149,37 @@ pub fn admit_winner_ensemble(
     budget: &mut EvaluationBudget,
 ) -> Result<WinnerEnsemble> {
     ensure!(
+        refit.verified_in_process(),
+        "the outer refit record was not produced by refit_members in this process"
+    );
+    check_refit(identity, report, refit)?;
+    build_winner_ensemble(admitted, selection_labels, identity, report, budget)
+}
+
+/// Reloads a persisted ensemble from disk. The record's content is checked as in admission, but
+/// provenance is not required: a record read back from the artifact is a claim about the
+/// artifact, and the caller verifies it by restoring its states and comparing predictions. This
+/// function never grants a record admission.
+pub(super) fn reload_winner_ensemble(
+    admitted: &[AdmittedBundle],
+    selection_labels: &[String],
+    identity: &ExecutionIdentity,
+    report: &ReportPredictions,
+    refit: &OuterRefitRecord,
+    budget: &mut EvaluationBudget,
+) -> Result<WinnerEnsemble> {
+    check_refit(identity, report, refit)?;
+    build_winner_ensemble(admitted, selection_labels, identity, report, budget)
+}
+
+/// The record's content must agree with the identity, the report side and the member set, and each
+/// member's report predictions must reproduce the bits the refit recorded.
+fn check_refit(
+    identity: &ExecutionIdentity,
+    report: &ReportPredictions,
+    refit: &OuterRefitRecord,
+) -> Result<()> {
+    ensure!(
         report.ids.len() == report.labels.len(),
         "report ids and labels are not aligned"
     );
@@ -182,7 +213,7 @@ pub fn admit_winner_ensemble(
             "the report predictions for {id} are not the ones the outer refit produced"
         );
     }
-    build_winner_ensemble(admitted, selection_labels, identity, report, budget)
+    Ok(())
 }
 
 /// The winner-ensemble core. Private: production code reaches it only through

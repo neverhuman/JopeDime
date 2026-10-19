@@ -10,7 +10,7 @@
 //! `write_new` and `read` make the record a product artifact on disk. `write_new` refuses to
 //! overwrite an existing file. This is an in-process check of the bytes; the fresh-process check
 //! is in the `model_build_persistence` integration test.
-use super::ensemble::{admit_winner_ensemble, ReportPredictions, WinnerEnsemble};
+use super::ensemble::{reload_winner_ensemble, ReportPredictions, WinnerEnsemble};
 use super::identity::ExecutionIdentity;
 use super::oof::AdmittedBundle;
 use super::refit::OuterRefitRecord;
@@ -121,7 +121,7 @@ pub fn verify_reload(
             "restored state for {id} does not reproduce its report predictions bit for bit"
         );
     }
-    let recomputed = admit_winner_ensemble(
+    let recomputed = reload_winner_ensemble(
         admitted,
         selection_labels,
         identity,

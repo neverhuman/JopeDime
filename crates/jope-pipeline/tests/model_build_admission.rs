@@ -1,9 +1,11 @@
 //! Admission, binding, budget and route refusals for the model-build path (SC-DEC-184R JA-F1,
 //! JA-F2, JA-F3, SC-DEC-184T).
 //!
-//! The outer-refit record's fields are private, and its only constructor is `refit_members`. Tests
-//! that need a tampered record therefore edit its serialised form and deserialise it. That is the
-//! same route a tampered persisted artifact would take, so the checks run on real data.
+//! The outer-refit and fold records are sealed: their fields are private, and a record read from JSON
+//! carries no provenance, so admission refuses it. The tests that edit a serialised record
+//! therefore reach the provenance refusal, not the digest checks behind it. The digest refusals are
+//! reached by the genuine-record path that alters report predictions. Records that come back from disk
+//! reload through `artifact::verify_reload`, which does not grant admission.
 //!
 //! Authored for `cargo check --tests`. Execution is deferred to JA-06 / C14.
 mod model_build_support;
@@ -726,4 +728,112 @@ fn a_fold_start_is_measured_once_and_a_repeat_start_is_refused() {
         }
     ));
     assert!(fitter.fit_predict(&spec, &train, &predict).is_err());
+}
+
+/// SC-DEC-184W seal: a genuine outer-refit record, after a serde round trip, has the same content
+/// but no provenance, and admission refuses it.
+#[test]
+fn a_deserialised_outer_refit_record_is_refused_by_admission() {
+    let u = regression_union();
+    let id = identity(&u);
+    let admitted = admitted_ridge(&u, &id);
+    let genuine = refit_ridge(&u, &id);
+    let json = serde_json::to_string(&genuine.record).unwrap();
+    let decoded: OuterRefitRecord = serde_json::from_str(&json).unwrap();
+    assert_eq!(decoded, genuine.record, "the round trip keeps the content");
+    let refused = admit_winner_ensemble(
+        &admitted,
+        &u.selection_labels,
+        &id,
+        &genuine.report,
+        &decoded,
+        &mut EvaluationBudget::new(10),
+    );
+    let message = refused
+        .expect_err("a deserialised record must not be admitted")
+        .to_string();
+    assert!(message.contains("refit_members"), "{message}");
+    assert!(admit_winner_ensemble(
+        &admitted,
+        &u.selection_labels,
+        &id,
+        &genuine.report,
+        &genuine.record,
+        &mut EvaluationBudget::new(10),
+    )
+    .is_ok());
+}
+
+/// SC-DEC-184W seal: a fold record read from JSON cannot be used to admit a bundle.
+#[test]
+fn a_deserialised_fold_record_is_refused_by_bundle_admission() {
+    use jope_pipeline::model_build::FoldRecord;
+    let u = regression_union();
+    let id = identity(&u);
+    let expected = expected_plan(&plan(Task::Regression, &u));
+    let verified = ridge_bakeoff(&u, &id).remove(0);
+    let decoded: Vec<FoldRecord> = verified
+        .records
+        .iter()
+        .map(|r| serde_json::from_str(&serde_json::to_string(r).unwrap()).unwrap())
+        .collect();
+    assert_eq!(
+        decoded, verified.records,
+        "the round trip keeps the content"
+    );
+    assert!(AdmittedBundle::admit(verified.bundle.clone(), &expected, &decoded).is_err());
+    assert!(AdmittedBundle::admit(verified.bundle.clone(), &expected, &verified.records).is_ok());
+}
+
+/// A record read back from disk reloads and verifies against its persisted states, but it still
+/// cannot be admitted to a new ensemble.
+#[test]
+fn a_record_read_back_from_disk_reloads_but_is_not_admitted() {
+    let u = regression_union();
+    let id = identity(&u);
+    let fitter = split_fitter(Task::Regression, &u, &id);
+    let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("model-build-reload");
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("reload.json");
+    let _ = std::fs::remove_file(&path);
+    let out = run_automl(
+        &plan(Task::Regression, &u),
+        &roster_of(Task::Regression, &["rust.ridge"]),
+        &fitter,
+        &id,
+        &report_ids(&u),
+        &u.report_labels,
+        &mut EvaluationBudget::new(20),
+        Some(&path),
+    )
+    .unwrap();
+    let report = out.report.clone().unwrap();
+    let read_back = artifact::read(&path).unwrap();
+    assert_eq!(read_back, out.persisted.clone().unwrap());
+    let admitted = admitted_ridge(&u, &id);
+    let restore = |_: &str, bytes: &[u8]| -> anyhow::Result<Predictions> {
+        let model = NativeFitter::restore_state(bytes)?;
+        Ok(Predictions::Values(
+            fitter.predict_rows(&model, &report_rows())?,
+        ))
+    };
+    artifact::verify_reload(
+        &read_back,
+        &id,
+        &admitted,
+        &u.selection_labels,
+        &report,
+        &mut EvaluationBudget::new(20),
+        &restore,
+    )
+    .unwrap();
+    assert!(admit_winner_ensemble(
+        &admitted,
+        &u.selection_labels,
+        &id,
+        &report,
+        &read_back.refit,
+        &mut EvaluationBudget::new(20),
+    )
+    .is_err());
 }

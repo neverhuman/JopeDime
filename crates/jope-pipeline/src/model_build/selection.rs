@@ -577,14 +577,14 @@ fn evaluate(
             }
         };
         fold_losses.push(loss);
-        records.push(FoldRecord {
+        records.push(FoldRecord::verified(
             fold,
-            request_sha256: request,
-            fitted_artifact_sha256: fit.fitted_artifact_sha256,
-            fitting_row_ids: train.iter().map(|&i| plan.row_ids[i].clone()).collect(),
-            scoring_row_ids: predict.iter().map(|&i| plan.row_ids[i].clone()).collect(),
+            request,
+            fit.fitted_artifact_sha256,
+            train.iter().map(|&i| plan.row_ids[i].clone()).collect(),
+            predict.iter().map(|&i| plan.row_ids[i].clone()).collect(),
             status,
-        });
+        ));
         parts.push((predict, fit.predictions));
     }
     let predictions = assemble(plan, &parts)?;
@@ -606,7 +606,7 @@ fn evaluate(
         request_sha256: plan.request_sha256.clone(),
         fitted_artifact_sha256: records
             .iter()
-            .map(|r| r.fitted_artifact_sha256.clone())
+            .map(|r| r.fitted_artifact_sha256().to_string())
             .collect(),
         row_ids: plan.row_ids.clone(),
         folds: plan.folds.clone(),
