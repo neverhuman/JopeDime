@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.16s
+     Running unittests src/lib.rs (/home/ubuntu/target/pr372-test/debug/deps/jope_parallel-60df446f9565d7ef)
+
+running 1 test
+test shard_index::tests::shard_index_payload_closure_verified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 469 filtered out; finished in 0.05s
+
+EXIT=0
