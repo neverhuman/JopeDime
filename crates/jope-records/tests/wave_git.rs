@@ -274,4 +274,3 @@ fn track_c_sberbank_s3_wave_and_index_validate() {
     assert!(last_line.contains(&format!("\"context_sha256\":\"{}\"", hex(context))));
     assert!(last_line.contains(&format!("\"metrics_sha256\":\"{}\"", hex(metrics))));
 }
-
