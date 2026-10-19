@@ -6,6 +6,8 @@
 //! tested before any run exists.
 use anyhow::{bail, ensure, Result};
 
+pub mod adapters;
+
 /// A measured value that is either recorded or explicitly unknown. An unknown value is never zero.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Measured<T> {
