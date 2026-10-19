@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.model-release.v1.schema.json",
+  "title": "jope.model-release/v1 (metadata only; no execution admission)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "release_id",
+    "source_commit",
+    "channel",
+    "parameter_sha256",
+    "training_config_sha256",
+    "dataset_snapshot_sha256",
+    "protocol_sha256",
+    "seed",
+    "compatibility",
+    "components"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.model-release/v1"
+    },
+    "release_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]{1,63}$"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "channel": {
+      "enum": [
+        "research",
+        "serving_candidate"
+      ]
+    },
+    "parameter_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "training_config_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "dataset_snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "protocol_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_family",
+        "vocabulary_sha256",
+        "vocabulary_size",
+        "context_dim",
+        "dsl_sha256",
+        "evaluator_sha256"
+      ],
+      "properties": {
+        "model_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vocabulary_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "vocabulary_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "context_dim": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "dsl_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evaluator_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "role",
+          "bundle_id",
+          "bundle_manifest_sha256",
+          "bundle_manifest_version_id",
+          "path",
+          "sha256",
+          "bytes",
+          "object_version_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9.-]{1,63}$"
+          },
+          "role": {
+            "enum": [
+              "encoder",
+              "policy",
+              "model_config",
+              "tokenizer",
+              "preprocessing",
+              "runtime"
+            ]
+          },
+          "bundle_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9.-]{1,63}$"
+          },
+          "bundle_manifest_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bundle_manifest_version_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "object_version_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
+          }
+        }
+      }
+    }
+  }
+}

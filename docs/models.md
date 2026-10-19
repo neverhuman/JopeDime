@@ -189,3 +189,19 @@ This writes verified blobs create-only and the manifest last, refusing a backend
 return physical VersionIds. Bind that receipt and independent cold readback to the compact Git
 release record. Do not copy host writer credentials into CI or treat a file-store plumbing test
 as evidence of an actual S3 publication.
+
+### Source-only release metadata verifier
+
+`jope_models::release` now defines `jope.model-release/v1`, component roles, compatibility
+identities and `VerifiedReleaseManifest`. It verifies a manifest against the immutable
+`models/releases/INDEX.json` registry compiled into the binary. An operator-supplied manifest,
+source flag or checkpoint hash cannot register its own trusted version. The registry currently
+contains no published release sets, so all real release-set requests refuse. Existing bundle
+commands above are unchanged.
+
+This first source slice verifies pinned metadata and referenced bundle declarations. It does
+not download or hash component payloads, prove their S3 VersionIds, load an encoder/policy,
+resolve licenses for a requested use, grant training/serving admission or qualify a runtime.
+Those remaining C03 integrations must complete before the pipeline can consume a verified
+release closure. A `serving_candidate` channel is a declaration, not a promotion. Six fixture
+tests are authored for final integration validation; compile checks are recorded separately.

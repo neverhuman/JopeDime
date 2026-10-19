@@ -13,6 +13,7 @@ pub mod fetch;
 pub mod index;
 pub mod manifest;
 pub mod publish;
+pub mod release;
 pub mod repo;
 
 use anyhow::Result;
