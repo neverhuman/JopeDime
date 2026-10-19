@@ -1,0 +1,181 @@
+{
+  "schema": "jope.major_release_receipt.v1",
+  "id": "MR19",
+  "status": "PARTIAL",
+  "verdict": "PARTIAL",
+  "on_main": false,
+  "pr_number": 381,
+  "branch": "feat/mr19-shared-dag-eval-count",
+  "base_main_sha": "e237fb255e9f090a9879062ed33a3c1c72780ddf",
+  "source_commit_sha": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+  "source_tree_sha": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
+  "feat_math_subtree_sha": "574982295b153aedcc75d42de61386e26ca622a5",
+  "verified_at_utc": "2026-10-19T10:17:56Z",
+  "owner_screen": "1061448.jopedime_flywheel",
+  "integrated_by": "2724936.captain_jopedime",
+  "reviewer_screen": "487851.jope_review_claude",
+  "gate": "G03",
+  "completion_criterion": "Replace linear-only Stage chain with bounded pure-feature DAG (Let, SelectFeature, ConcatFeatures, Affine) with invocation-local CSE evaluation counts, validated Iid semantic-key schema bridge, and public admitted ProgramGraph pure-feature DAG construction/canonical-bytes/identity",
+  "scope_disposition": {
+    "verdict": "PARTIAL",
+    "delivered_in_pr381": [
+      "crates/feat-math/src/combinators/union.rs: self-contained ExactScalar (u64 IEEE-754 bits with Clone, Copy, Debug, PartialEq, Eq and finite validation), Action::{Let, SelectFeature, ConcatFeatures, Affine}, Program::evaluate_counted with invocation-local node cache and per-node evaluation counter, and explicit refusal of fit_effect nodes.",
+      "crates/feat-math/src/kernel/ir/graph.rs: opt-in InputSchema::semantic_key_schema and InputSchema::bind_semantic_column validating InputSchema and requiring RowSemantics::Iid while keeping legacy v1 InputSchema::identity() order-sensitive and byte-identical.",
+      "crates/feat-math/src/kernel/ir/graph.rs: PURE_FEATURE_DAG_SCHEMA (\"jope.selfplay.pure-feature-dag/v1\") and opt-in ProgramGraph::{new_pure_feature_dag, to_pure_feature_dag_bytes, from_pure_feature_dag_bytes, pure_feature_dag_identity, lower_pure_feature_dag, evaluate_pure_feature_dag_counted} enforcing Constraints::validate, node/edge/depth/width/canonical-byte bounds, reachability, semantic-key column interning across consumers, and lowered union::Program validation while keeping legacy v1 ProgramGraph::{new, validate, to_bytes, from_bytes, identity, lower} untouched."
+    ],
+    "deferred_next_deliverables": [
+      "Scoped target-aware fit/predict/operator/residual DAG execution (FitPlan / FittedGraph / GenomeIr adapter with fold-isolated fit effects).",
+      "Full arithmetic/call Expression lowering for Node::Scalar (beyond bare column projection) and affine-fitted Scalar stages."
+    ],
+    "non_claims": [
+      "No fit/predict/GenomeIr execution or live self-play capability is claimed from this pure-feature DAG slice.",
+      "native_execution_qualified remains false; GPU hold remains in force (0 GPU seconds used)."
+    ]
+  },
+  "clean_tree_proof": {
+    "worktree": "/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate",
+    "head_before": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+    "tree_before": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
+    "feat_math_subtree_before": "574982295b153aedcc75d42de61386e26ca622a5",
+    "git_status_porcelain_before": "",
+    "head_after": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+    "tree_after": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
+    "feat_math_subtree_after": "574982295b153aedcc75d42de61386e26ca622a5",
+    "git_status_porcelain_after": "",
+    "note": "All focused verification commands below executed on the clean, frozen working tree at bca07ff6e8b632674d7bf74ae3d552c0403e5360 while 1061448.jopedime_flywheel was idle. Committing this receipt under docs/plans/major-release-20261018/receipts/ leaves the crates/feat-math subtree SHA (574982295b153aedcc75d42de61386e26ca622a5) byte-for-byte identical."
+  },
+  "toolchain": {
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "rustc_commit_hash": "8bab26f4f68e0e26f0bb7960be334d5b520ea452",
+    "rustc_commit_date": "2026-07-14",
+    "llvm_version": "22.1.6",
+    "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+    "host": "x86_64-unknown-linux-gnu"
+  },
+  "budget": {
+    "cpu_only": true,
+    "gpu_seconds": 0,
+    "gpu_hold_enforced": true,
+    "focused_verification_wall_seconds": 1.446
+  },
+  "exact_acceptance_test": {
+    "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -p feat-math --test shared_feature_dag_cse --test schema_pointers_and_exact_literals --test lazy_if_and_partition_routing --test dag_composition",
+    "target": "crates/feat-math/tests/shared_feature_dag_cse.rs::{w04_shared_subexpression_evaluates_once,invocation_local_cache_resets_across_inputs_and_permuted_schemas,rejects_cycles_invalid_refs_oob_select_overflow_and_fit_effects,legacy_v1_input_schema_identity_and_graph_lower_unchanged,program_graph_pure_feature_dag_public_roundtrip_and_bounds}",
+    "exit_code": 0,
+    "passed": true,
+    "unique_tests_executed": 16,
+    "breakdown_by_binary": {
+      "dag_composition": 4,
+      "lazy_if_and_partition_routing": 3,
+      "schema_pointers_and_exact_literals": 4,
+      "shared_feature_dag_cse": 5
+    },
+    "started_at_utc": "2026-10-19T10:17:55.192616239Z",
+    "completed_at_utc": "2026-10-19T10:17:55.538185240Z",
+    "elapsed_seconds": 0.346,
+    "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_focused_integration_bca07ff6e_clean.log",
+    "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_focused_integration_bca07ff6e_clean.log.txt",
+    "log_bytes": 3328,
+    "log_sha256": "d5620a0c48586d84d0d600b385bf96c9271c66d4f776e840341da2ba4ae3f391"
+  },
+  "supporting_test_suites": [
+    {
+      "suite": "feat_math_lib_pure_dag_tests",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -p feat-math --lib pure_dag_tests",
+      "test_or_code": "crates/feat-math/src/kernel/ir/graph.rs::pure_dag_tests::{lowered_stack_evaluates_each_shared_column_once,operator_node_is_refused_at_the_pure_entry,ordered_row_semantics_are_refused,unreachable_node_is_refused}",
+      "exit_code": 0,
+      "passed": true,
+      "unique_tests_executed": 4,
+      "started_at_utc": "2026-10-19T10:17:55.538185240Z",
+      "completed_at_utc": "2026-10-19T10:17:55.730015589Z",
+      "elapsed_seconds": 0.192,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_pure_dag_tests_bca07ff6e_clean.log",
+      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_pure_dag_tests_bca07ff6e_clean.log.txt",
+      "log_bytes": 638,
+      "log_sha256": "c3fdc1b67b1f7421f93e179c387c4ccfc2496fd9de65ae9a1e6fa03fffe4a0d6"
+    },
+    {
+      "suite": "jope_records_verify_test_inventory",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo run -q --locked -p jope-records -- verify-test-inventory",
+      "exit_code": 0,
+      "passed": true,
+      "started_at_utc": "2026-10-19T10:17:55.730015589Z",
+      "completed_at_utc": "2026-10-19T10:17:56.194878921Z",
+      "elapsed_seconds": 0.465,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_verify_test_inventory_bca07ff6e_clean.log",
+      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_verify_test_inventory_bca07ff6e_clean.log.txt",
+      "log_bytes": 579,
+      "log_sha256": "c0fef40f31f70524b935cf198c259dd7a4468f14dbe3f0f427adad6d5627c8cc"
+    },
+    {
+      "suite": "jope_records_hygiene_lib_tests",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::",
+      "exit_code": 0,
+      "passed": true,
+      "unique_tests_executed": 22,
+      "started_at_utc": "2026-10-19T10:17:56.194878921Z",
+      "completed_at_utc": "2026-10-19T10:17:56.638379805Z",
+      "elapsed_seconds": 0.444,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_jope_records_hygiene_bca07ff6e_clean.log",
+      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_jope_records_hygiene_bca07ff6e_clean.log.txt",
+      "log_bytes": 140,
+      "log_sha256": "a5ca562e568569a140eaa12c8c9c80e30ab475b1a8d8040b2e6865071cf32c96"
+    }
+  ],
+  "preserved_predecessor_observations_and_failures": {
+    "slice1_harvest_receipt": {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR19_SLICE1_4935ABBA4_HARVEST_20261019T0941Z.json",
+      "sha256": "62602609ed80bbfeedb57da2bc4275475d49126447daa57d3fcee5cba98c32ef",
+      "slice1_logs": [
+        {
+          "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_w04_shared_subexpression_evaluates_once.slice1_2b800e431_dirty.log",
+          "bytes": 473,
+          "sha256": "9b073dc826ea554f2d777c86bfb5663e658eb94b260365f6392db2fa1b60ea91",
+          "mtime_utc": "2026-10-19T09:14:45.359922688Z",
+          "binding_caveat": "Inferred pre-commit dirty working-tree run ~9s before commit 2b800e4318f9b1df12aef05bf01364a9139a7946 (09:14:54Z)."
+        },
+        {
+          "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_verify_test_inventory.slice1_169cea1be.log",
+          "bytes": 586,
+          "sha256": "59e3be45a325da663ae41e953989b1333ebadc02812e17cfbd7375eab805df52",
+          "mtime_utc": "2026-10-19T09:33:38.418928438Z",
+          "binding_caveat": "Inferred pre-commit dirty working-tree run ~15s before commit 169cea1bede8406c7ad68c9900a74270eacbe04e (09:33:53Z)."
+        },
+        {
+          "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_baseline_schema_pointers.slice1_4935abba4.log",
+          "bytes": 642,
+          "sha256": "606fe538d7cc611ffff5fa6593ad1fd50abd23f792a21694f3a56e401a6833bd",
+          "mtime_utc": "2026-10-19T09:37:33.798056959Z",
+          "binding_caveat": "Clean regression run of schema_pointers_and_exact_literals (4/4)."
+        }
+      ]
+    },
+    "v1_bridge_decision_gate": {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR19_V1_BRIDGE_DECISION_GATE_20261019T0941Z.json",
+      "sha256": "b6b4edf954d6a8211d04148828e565ce4109507f424f4a117ec98f92b3c48d50"
+    },
+    "precision_addendum": {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR19_DECISION_AND_HARVEST_PRECISION_ADDENDUM_20261019T0945Z.json",
+      "sha256": "173f3c670698e9bdee2a9ba515e2f1ed110148dec4f73012f49d9b9e6dd47f90"
+    },
+    "b96e4196a_ci_compile_failure": {
+      "head_sha": "b96e4196a994073d2dc51b20b92a1c8a396fa98b",
+      "ci_run_id": 39233493386,
+      "attempt": 1,
+      "job_id": 117997819015,
+      "job_name": "rust-test (1)",
+      "synthetic_checkout_sha": "60663269a0765429e292177f543749e2baceaea0",
+      "exit_code": 101,
+      "failure_reason": "E0433 cannot find module or crate kernel in crate root when compiling path-included crates/feat-math/src/combinators/union.rs from crates/feat-math/tests/lazy_if_and_partition_routing.rs; nextest never ran.",
+      "remote_log_artifact": "CODEX_MONITOR_PR381_RUST_TEST1_117997819015.txt",
+      "remote_log_bytes": 41548,
+      "remote_log_sha256": "648d7dc04d02d3ca35bae970e0ffb6ee9de05ee5f5f281b2d4d63e7bc43205ea",
+      "reviewer_hold_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR381_review_b96e4196.json",
+      "resolution": "Resolved in d9be61c9fb0dc11808f1d993ce92d109c67e16b2 and bca07ff6e8b632674d7bf74ae3d552c0403e5360 by replacing crate::kernel::ir::canon::ExactF64 in union.rs with union-local ExactScalar (u64 IEEE-754 bits with Eq and finite check) and reverting schema_pointers_and_exact_literals.rs to zero edits."
+    },
+    "b96e4196a_dirty_tree_local_observation_caveat": {
+      "observed_at_utc": "2026-10-19T09:57:59Z..2026-10-19T09:58:53Z",
+      "note": "Local cargo test run around 09:58Z-10:04Z overlapped writer edits in crates/feat-math/src/combinators/union.rs and is recorded strictly as a dirty-tree observation; superseded by the clean-tree verification runs at bca07ff6e8b632674d7bf74ae3d552c0403e5360 above."
+    }
+  }
+}

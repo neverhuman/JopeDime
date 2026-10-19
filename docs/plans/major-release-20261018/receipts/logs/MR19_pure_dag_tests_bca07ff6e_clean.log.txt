@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running unittests src/lib.rs (.agent/worktrees/pr371-gate/target/debug/deps/feat_math-c8f5f4e662153737)
+
+running 4 tests
+test kernel::ir::graph::pure_dag_tests::ordered_row_semantics_are_refused ... ok
+test kernel::ir::graph::pure_dag_tests::unreachable_node_is_refused ... ok
+test kernel::ir::graph::pure_dag_tests::operator_node_is_refused_at_the_pure_entry ... ok
+test kernel::ir::graph::pure_dag_tests::lowered_stack_evaluates_each_shared_column_once ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 521 filtered out; finished in 0.00s
+
