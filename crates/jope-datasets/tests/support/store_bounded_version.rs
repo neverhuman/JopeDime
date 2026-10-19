@@ -403,3 +403,24 @@ fn dropping_one_store_does_not_remove_another_stores_backend() {
     assert_eq!(object.bytes, [2]);
     assert_eq!(backend.calls.load(Ordering::SeqCst), 1);
 }
+
+#[test]
+fn unknown_pinned_versions_are_absence_or_errors_without_fallback() {
+    for (status, code, absent) in [
+        ("404 Not Found", "NoSuchVersion", true),
+        ("400 Bad Request", "InvalidArgument", false),
+    ] {
+        let body =
+            format!("<Error><Code>{code}</Code><Message>unknown pinned version</Message></Error>");
+        let (store, server) = http_fixture(status, None, body.len(), body.as_bytes());
+        let result =
+            runtime().block_on(store.get_observed_version_bounded("blob", "version-a", 4, None));
+        if absent {
+            // None is missing pinned content, never a successful or substituted release.
+            assert!(result.unwrap().is_none());
+        } else {
+            assert!(result.is_err());
+        }
+        server.assert_exact_request();
+    }
+}

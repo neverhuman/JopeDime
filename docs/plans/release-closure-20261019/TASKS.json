@@ -100,6 +100,11 @@
           "sha256": "00c27a99c1c3f4d12937ce55a3883ab55d5d40b364ea64e6997c2450e3c0ebca",
           "qualification": "SC184AD source f54430f73 pushed; 48 dataset library tests (including18 bounded/lifecycle fixtures) and11 model-release tests pass locally, scoped all-target clippy clean. Original15/16 and deterministic retention failure preserved. Tested file hashes match commit blobs; no model downloads/cache/CLI/real pins/runtime or serving admission.",
           "commit_sha": "f54430f73a1ad052a01476e8a4f3f0d5692251f6"
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1850/c03-unknown-version/LOCAL_TEST_RECEIPT.json",
+          "sha256": "a24ea44dfe489991decd57061b67d1dac9fc8581a63d09487dcf582af11a6a05",
+          "qualification": "Actual unknown-version NoSuchVersion404->pinnedabsenceNone/callerrefusal and InvalidArgument400->Err exercised, no retries/fallback.49datasetlibrarytests/19boundedfixtures pass locally; productionStore bytes unchanged from f544 and11modelrelease tests remain valid at identical source. ScopedclippyPASS. Reviewf544 prompt invented fixture/receipt names are retracted rather than fabricated."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
@@ -483,5 +488,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T19:37:01.457486+00:00"
+  "last_evidence_update_utc": "2026-10-19T19:40:19.801146+00:00"
 }
