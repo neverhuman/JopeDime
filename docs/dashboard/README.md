@@ -98,6 +98,7 @@ and writes atomically. No object payloads, sealed data, credentials, configurati
 or alternate-profile retries. CloudWatch publication is normally daily: this cannot promise
 second-by-second S3 bytes. Physical storage may include versions, storage overhead and replicas;
 it differs from the dated catalog's current-key payload-byte inventory. Never add those totals.
+CloudWatch object counts include versions, delete markers and incomplete-upload parts; see [AWS metric definitions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/metrics-dimensions.html).
 Missing common timestamps/incomplete metrics are unavailable, not zero. A partial estate total
 is labeled partial. Coordinate refresh scheduling with the existing fleet owner; no timer is
 installed by this package. Do not run an unbounded object inventory every UI poll.

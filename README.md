@@ -20,19 +20,22 @@ record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 
 Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this repository.
 
+The [training observatory](docs/dashboard/README.md) provides live loss, fleet, storage, dataset,
+program-library and checkpoint views with source identities, observation age and qualification scope.
+
 ## At a glance
 
 | What | 0.3.0 |
 | --- | --- |
 | `jope` with no arguments | prints `jope 0.3.0` <sup>1</sup> |
-| Workspace | 26 members: 19 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| Workspace | 27 members: 20 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
 | Rust tests | 5,570 listed in 26 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 773 items over 24 lanes <sup>7</sup> |
-| Capability matrix | 827 rows: 353 moved, 64 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Coverage map | 781 items over 25 lanes <sup>7</sup> |
+| Capability matrix | 831 rows: 353 moved, 68 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
@@ -293,7 +296,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Layout (this SHA)
 
-The 26 workspace members, by directory under `crates/`; the package name follows where it differs.
+The 27 workspace members, by directory under `crates/`; the package name follows where it differs.
 [docs/architecture.md](docs/architecture.md#crate-graph) describes each crate.
 
 | Group | Crates | Role |
