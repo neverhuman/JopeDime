@@ -1,0 +1,25 @@
+{
+  "repo_root": "/home/ubuntu/JopeDime/.agent/worktrees/fleet-main-296d07e1",
+  "campaign_roots": [
+    "/home/ubuntu/jope-evidence/campaigns/flywheel_native_derived_20261019T1303Z"
+  ],
+  "gp_catalogs": [
+    {
+      "path": "/home/ubuntu/jope-evidence/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/inputs/bundle/hwm_programs.json",
+      "sha256": "48fa43eb7fd22260b48cb3800718a3047c1b026d3998cf1dcacb448fa2dc0d5f",
+      "label": "Recovered native research teacher snapshot",
+      "scope": "Dated research library; not the complete fleet GP estate or current production admission"
+    }
+  ],
+  "storage_snapshot": "/home/ubuntu/jope-evidence/observatory/storage.json",
+  "code_identity": "/home/ubuntu/jope-evidence/observatory/code-identity.json",
+  "fleet_snapshots": [
+    "/home/ubuntu/jope-evidence/observatory/fleet/xbabe1.json",
+    "/home/ubuntu/jope-evidence/observatory/fleet/xbabe2.json",
+    "/home/ubuntu/jope-evidence/observatory/fleet/xbabe3.json",
+    "/home/ubuntu/jope-evidence/observatory/fleet/xbabe4.json"
+  ],
+  "static_dir": "/home/ubuntu/JopeDime/.agent/worktrees/fleet-main-296d07e1/web/training-dashboard/dist",
+  "listen": "127.0.0.1:18894",
+  "dataset_snapshot": "/home/ubuntu/jope-evidence/observatory/datasets.json"
+}

@@ -29,3 +29,8 @@ check-*.log
 
 # deploy/ci/lambda.sh inflates train-jobs.json.gz here before building (deploy/lambda/SNAPSHOT.json).
 /deploy/lambda/csv/gp/corpus/train-jobs.json
+
+# JopeDime training observatory
+/web/training-dashboard/node_modules/
+/web/training-dashboard/dist/
+/web/training-dashboard/coverage/

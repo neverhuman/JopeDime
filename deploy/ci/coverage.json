@@ -846,6 +846,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "job:.github/workflows/training-dashboard.yml/observatory-ui": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "observatory-ui"
+      ],
+      "scope": "Standalone exact-head Node26 typecheck, nonzero Vitest JSON fixtures and Vite build. Actual GitHub workflow status and retained source-bound receipt; no live training qualification."
+    },
     "job:.github/workflows/weekly.yml/regression-suite": {
       "discovery": {
         "kind": "workflow-job"
@@ -1113,6 +1123,20 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-observatory": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-observatory/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature product check and deterministic offline tests in hosted product selection. Operational AWS/SSH behavior requires separate observer proof; no training or promotion authority inferred."
     },
     "package:jope-parallel": {
       "discovery": {
@@ -4890,22 +4914,6 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
-    "target:feat-math/test/shared_feature_dag_cse": {
-      "discovery": {
-        "doctest": false,
-        "kind": "target",
-        "required_features": [],
-        "source": "crates/feat-math/tests/shared_feature_dag_cse.rs",
-        "test": true
-      },
-      "dispositions": [],
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default"
-      ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
-    },
     "target:feat-math/test/operation_profile": {
       "discovery": {
         "doctest": false,
@@ -5182,6 +5190,22 @@
         "rust-check",
         "rust-test",
         "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/shared_feature_dag_cse": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/shared_feature_dag_cse.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
@@ -8446,6 +8470,95 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-observatory/bin/collect-datasets": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-observatory/src/bin/collect-datasets.rs",
+        "test": true
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature product check and deterministic offline tests in hosted product selection. Operational AWS/SSH behavior requires separate observer proof; no training or promotion authority inferred."
+    },
+    "target:jope-observatory/bin/collect-fleet": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-observatory/src/bin/collect-fleet.rs",
+        "test": true
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature product check and deterministic offline tests in hosted product selection. Operational AWS/SSH behavior requires separate observer proof; no training or promotion authority inferred."
+    },
+    "target:jope-observatory/bin/collect-storage": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-observatory/src/bin/collect-storage.rs",
+        "test": true
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature product check and deterministic offline tests in hosted product selection. Operational AWS/SSH behavior requires separate observer proof; no training or promotion authority inferred."
+    },
+    "target:jope-observatory/bin/jope-observatory": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-observatory/src/main.rs",
+        "test": true
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature product check and deterministic offline tests in hosted product selection. Operational AWS/SSH behavior requires separate observer proof; no training or promotion authority inferred."
+    },
+    "target:jope-observatory/lib/jope_observatory": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-observatory/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature product check and deterministic offline tests in hosted product selection. Operational AWS/SSH behavior requires separate observer proof; no training or promotion authority inferred."
+    },
     "target:jope-parallel/bin/jope-build-receipt": {
       "discovery": {
         "doctest": false,
@@ -10915,6 +11028,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "workflow:.github/workflows/training-dashboard.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "observatory-ui"
+      ],
+      "scope": "Standalone exact-head Node26 typecheck, nonzero Vitest JSON fixtures and Vite build. Actual GitHub workflow status and retained source-bound receipt; no live training qualification."
+    },
     "workflow:.github/workflows/weekly.yml": {
       "discovery": {
         "kind": "workflow"
@@ -11706,6 +11829,40 @@
       ],
       "path_applicability": "every push to main",
       "requires_nonzero_tests": false,
+      "result_backend": "none",
+      "stage": "execution"
+    },
+    "observatory-ui": {
+      "checks": [
+        "npm ci --no-audit --no-fund",
+        "npm run typecheck",
+        "npm test -- --reporter=json --outputFile=tests.json; assert nonzero passing JSON counts",
+        "npm run build"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/training-dashboard.yml",
+        "observatory-ui"
+      ],
+      "environment": {
+        "Node": "26.1.0",
+        "npm": "package-lock.json",
+        "source": "exact full head SHA"
+      },
+      "evidence": [
+        "exact source SHA/run/attempt receipt",
+        "nonzero Vitest JSON counts",
+        "built asset SHA256 inventory",
+        "runner provenance"
+      ],
+      "feature_selection": "not-applicable",
+      "inputs": [
+        "source SHA",
+        "web/training-dashboard/package-lock.json",
+        "committed frontend fixtures"
+      ],
+      "path_applicability": "training-dashboard.yml path selection or workflow_dispatch",
+      "requires_nonzero_tests": true,
       "result_backend": "none",
       "stage": "execution"
     },
