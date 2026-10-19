@@ -724,23 +724,17 @@ impl<'a> RidgeFoldEvaluator<'a> {
 
     /// Ridge coefficients fitted on the `A` rows alone. The intercept is not penalised.
     fn fit_on_a(&self, subset: &[usize]) -> Result<Vec<f64>, AdapterError> {
-        let dim = subset.len() + 1;
-        let mut gram = vec![vec![0.0; dim]; dim];
-        let mut rhs = vec![0.0; dim];
-        for &row in self.a_rows {
-            let x = self.design(row, subset);
-            let y = self.targets[row as usize];
-            for (i, (r, xi)) in rhs.iter_mut().zip(&x).enumerate() {
-                *r += xi * y;
-                for (g, xj) in gram[i].iter_mut().zip(&x) {
-                    *g += xi * xj;
-                }
-            }
-        }
-        for (i, row) in gram.iter_mut().enumerate().skip(1) {
-            row[i] += self.ridge_lambda;
-        }
-        solve_linear(gram, rhs)
+        let design: Vec<Vec<f64>> = self
+            .a_rows
+            .iter()
+            .map(|&row| self.design(row, subset))
+            .collect();
+        let targets: Vec<f64> = self
+            .a_rows
+            .iter()
+            .map(|&row| self.targets[row as usize])
+            .collect();
+        fit_ridge(&design, &targets, self.ridge_lambda)
     }
 
     fn rmse(&self, beta: &[f64], subset: &[usize], rows: &[u32]) -> f64 {
@@ -805,6 +799,337 @@ impl FoldEvaluator for RidgeFoldEvaluator<'_> {
         let beta = self.fit_on_a(&subset)?;
         Ok(self.rmse(&beta, &subset, self.o_rows))
     }
+}
+
+/// Ridge least squares. `design` rows carry the intercept as their first column, which is not
+/// penalised. Shared by the diagnostic ridge evaluator and the GP program evaluator.
+fn fit_ridge(
+    design: &[Vec<f64>],
+    targets: &[f64],
+    ridge_lambda: f64,
+) -> Result<Vec<f64>, AdapterError> {
+    let dim = design.first().map_or(0, Vec::len);
+    let mut gram = vec![vec![0.0; dim]; dim];
+    let mut rhs = vec![0.0; dim];
+    for (x, &y) in design.iter().zip(targets) {
+        for (i, (r, xi)) in rhs.iter_mut().zip(x).enumerate() {
+            *r += xi * y;
+            for (g, xj) in gram[i].iter_mut().zip(x) {
+                *g += xi * xj;
+            }
+        }
+    }
+    for (i, row) in gram.iter_mut().enumerate().skip(1) {
+        row[i] += ridge_lambda;
+    }
+    solve_linear(gram, rhs)
+}
+
+/// Deepest GP program accepted. Matches the authoritative grammar's `sym_depth` cap.
+pub const GP_MAX_DEPTH: usize = 16;
+/// Most nodes in one GP program. Matches the authoritative grammar's `sym_nodes` cap.
+pub const GP_MAX_NODES: usize = GRAMMAR_SYM_NODES;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GpOp {
+    Add,
+    Sub,
+    Mul,
+    /// Protected division: a denominator with magnitude below `1e-12` yields `1`.
+    Div,
+}
+
+impl GpOp {
+    fn name(self) -> &'static str {
+        match self {
+            GpOp::Add => "add",
+            GpOp::Sub => "sub",
+            GpOp::Mul => "mul",
+            GpOp::Div => "div",
+        }
+    }
+}
+
+/// A GP program: a tree whose leaves are feature columns `f<j>` and whose inner nodes combine two
+/// subtrees with [`GpOp`]. Its output is one feature column per row.
+#[derive(Clone, Debug, PartialEq)]
+pub enum GpProgram {
+    Feature(usize),
+    Op(GpOp, Box<GpProgram>, Box<GpProgram>),
+}
+
+impl GpProgram {
+    /// Parses the canonical text form, for example `add(f0,f1)` or `mul(f0,sub(f2,f1))`.
+    /// Refuses anything else, and any program past [`GP_MAX_DEPTH`] or [`GP_MAX_NODES`].
+    pub fn parse(text: &str) -> Result<GpProgram, AdapterError> {
+        let mut pos = 0;
+        let mut nodes = 0;
+        let program = parse_gp_node(text, &mut pos, 1, &mut nodes)?;
+        if pos != text.len() {
+            return Err(AdapterError::Malformed(format!(
+                "trailing text after GP program: {text:?}"
+            )));
+        }
+        Ok(program)
+    }
+
+    /// Evaluates the program on one row of feature values.
+    pub fn eval(&self, row: &[f64]) -> f64 {
+        match self {
+            GpProgram::Feature(j) => row[*j],
+            GpProgram::Op(op, a, b) => {
+                let (x, y) = (a.eval(row), b.eval(row));
+                match op {
+                    GpOp::Add => x + y,
+                    GpOp::Sub => x - y,
+                    GpOp::Mul => x * y,
+                    GpOp::Div => {
+                        if y.abs() < 1e-12 {
+                            1.0
+                        } else {
+                            x / y
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// The largest feature index the program reads.
+    pub fn max_feature(&self) -> usize {
+        match self {
+            GpProgram::Feature(j) => *j,
+            GpProgram::Op(_, a, b) => a.max_feature().max(b.max_feature()),
+        }
+    }
+}
+
+impl std::fmt::Display for GpProgram {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GpProgram::Feature(j) => write!(f, "f{j}"),
+            GpProgram::Op(op, a, b) => write!(f, "{}({a},{b})", op.name()),
+        }
+    }
+}
+
+fn parse_gp_node(
+    text: &str,
+    pos: &mut usize,
+    depth: usize,
+    nodes: &mut usize,
+) -> Result<GpProgram, AdapterError> {
+    let refuse = |why: &str| AdapterError::Malformed(format!("GP program {text:?}: {why}"));
+    if depth > GP_MAX_DEPTH {
+        return Err(refuse("exceeds the depth cap"));
+    }
+    *nodes += 1;
+    if *nodes > GP_MAX_NODES {
+        return Err(refuse("exceeds the node cap"));
+    }
+    let rest = &text[*pos..];
+    if let Some(after) = rest.strip_prefix('f') {
+        let digits: String = after.chars().take_while(char::is_ascii_digit).collect();
+        if digits.is_empty() || (digits.len() > 1 && digits.starts_with('0')) {
+            return Err(refuse("a feature must be f followed by a canonical index"));
+        }
+        let index: usize = digits
+            .parse()
+            .map_err(|_| refuse("feature index out of range"))?;
+        *pos += 1 + digits.len();
+        return Ok(GpProgram::Feature(index));
+    }
+    for op in [GpOp::Add, GpOp::Sub, GpOp::Mul, GpOp::Div] {
+        let head = format!("{}(", op.name());
+        if rest.starts_with(&head) {
+            *pos += head.len();
+            let a = parse_gp_node(text, pos, depth + 1, nodes)?;
+            if text.as_bytes().get(*pos) != Some(&b',') {
+                return Err(refuse("expected ',' between the operands"));
+            }
+            *pos += 1;
+            let b = parse_gp_node(text, pos, depth + 1, nodes)?;
+            if text.as_bytes().get(*pos) != Some(&b')') {
+                return Err(refuse("expected ')' after the operands"));
+            }
+            *pos += 1;
+            return Ok(GpProgram::Op(op, Box::new(a), Box::new(b)));
+        }
+    }
+    Err(refuse("unknown operator or leaf"))
+}
+
+/// A5, real program semantics. The candidate's own GP program (see [`GpProgram`]) produces the
+/// feature column, and ridge is fitted on that column over the `A` rows alone (intercept
+/// unpenalised, lambda `1e-3`). Selection scores the `B` rows. `O` is read only by
+/// `score_assessment`, after the selection is frozen. This is the scored path for the GP claim.
+/// [`RidgeFoldEvaluator`] stays a diagnostic fixture.
+pub struct GpProgramFoldEvaluator<'a> {
+    features: &'a [Vec<f64>],
+    targets: &'a [f64],
+    a_rows: &'a [u32],
+    b_rows: &'a [u32],
+    o_rows: &'a [u32],
+    ridge_lambda: f64,
+    o_reads: std::cell::Cell<u64>,
+}
+
+impl<'a> GpProgramFoldEvaluator<'a> {
+    pub fn new(
+        features: &'a [Vec<f64>],
+        targets: &'a [f64],
+        a_rows: &'a [u32],
+        b_rows: &'a [u32],
+        o_rows: &'a [u32],
+        ridge_lambda: f64,
+    ) -> Result<Self, AdapterError> {
+        // The same table and partition checks as the ridge evaluator, applied to the same inputs.
+        RidgeFoldEvaluator::new(features, targets, a_rows, b_rows, o_rows, ridge_lambda)?;
+        Ok(Self {
+            features,
+            targets,
+            a_rows,
+            b_rows,
+            o_rows,
+            ridge_lambda,
+            o_reads: std::cell::Cell::new(0),
+        })
+    }
+
+    /// Number of feature columns a program may read.
+    pub fn width(&self) -> usize {
+        self.features[0].len()
+    }
+
+    /// How many times the `O` rows have been read. Selection never reads them.
+    pub fn o_reads(&self) -> u64 {
+        self.o_reads.get()
+    }
+
+    /// Fits ridge for `program` on `A` and returns its RMSE on `rows`. A program whose output is
+    /// non-finite on any `A` or scored row scores `NaN`, which the episode records as non-finite.
+    fn fit_and_score(&self, program: &GpProgram, rows: &[u32]) -> Result<f64, AdapterError> {
+        let column = |row: u32| {
+            let value = program.eval(&self.features[row as usize]);
+            value.is_finite().then(|| vec![1.0, value])
+        };
+        let Some(train) = self
+            .a_rows
+            .iter()
+            .map(|&row| column(row))
+            .collect::<Option<Vec<_>>>()
+        else {
+            return Ok(f64::NAN);
+        };
+        let Some(test) = rows.iter().map(|&row| column(row)).collect::<Option<Vec<_>>>() else {
+            return Ok(f64::NAN);
+        };
+        let y_a: Vec<f64> = self
+            .a_rows
+            .iter()
+            .map(|&row| self.targets[row as usize])
+            .collect();
+        let beta = fit_ridge(&train, &y_a, self.ridge_lambda)?;
+        let sse: f64 = test
+            .iter()
+            .zip(rows)
+            .map(|(x, &row)| {
+                let pred = beta[0] * x[0] + beta[1] * x[1];
+                let err = pred - self.targets[row as usize];
+                err * err
+            })
+            .sum();
+        Ok((sse / rows.len() as f64).sqrt())
+    }
+}
+
+impl FoldEvaluator for GpProgramFoldEvaluator<'_> {
+    fn score_selection(&self, serialized: &str) -> Result<(f64, u64), AdapterError> {
+        let program = GpProgram::parse(serialized)?;
+        Ok((self.fit_and_score(&program, self.b_rows)?, 1))
+    }
+
+    fn score_assessment(&self, serialized: &str) -> Result<f64, AdapterError> {
+        self.o_reads.set(self.o_reads.get() + 1);
+        let program = GpProgram::parse(serialized)?;
+        self.fit_and_score(&program, self.o_rows)
+    }
+}
+
+/// The disjoint episode for GP programs. Each program text is one slot, charged before it is
+/// parsed. A parse failure, a program reading a feature the table does not have, or a duplicate
+/// closes its slot without evaluation. Selection uses `B` only. `O` is scored once, after the
+/// selection is frozen. The fallback applies only when no program was credited.
+#[allow(clippy::too_many_arguments)]
+pub fn evaluate_program_episode(
+    a_rows: &[u32],
+    b_rows: &[u32],
+    o_rows: &[u32],
+    y_a: &[f64],
+    programs: &[&str],
+    journal: &mut Journal,
+    cfg: &SeedBudgetConfig,
+    evaluator: &GpProgramFoldEvaluator,
+    o_fallback: f64,
+) -> Result<DisjointEpisode, AdapterError> {
+    check_disjoint(a_rows, b_rows, o_rows)?;
+    let epsilon_f = compute_epsilon_f(y_a)?;
+    validate_seed_and_bootstrap_budget(
+        &cfg.route,
+        cfg.initial_population,
+        cfg.seed_genomes,
+        cfg.low_budget_cap,
+    )?;
+    let mut best: Option<(String, f64)> = None;
+    let mut credited = 0usize;
+    for (index, raw) in programs.iter().enumerate() {
+        journal.begin_slot(&format!("slot-{index}"))?;
+        let program = match GpProgram::parse(raw) {
+            Ok(program) if program.max_feature() < evaluator.width() => program,
+            _ => {
+                journal.close_slot(raw, SlotOutcome::Malformed, 0)?;
+                continue;
+            }
+        };
+        let canonical = program.to_string();
+        if journal.is_seen(&canonical) {
+            journal.close_slot(&canonical, SlotOutcome::Duplicate, 0)?;
+            continue;
+        }
+        journal.charge_fits(cfg.fits_per_candidate)?;
+        let rmse_b = evaluator.score_selection(&canonical)?.0;
+        if !rmse_b.is_finite() {
+            journal.close_slot(&canonical, SlotOutcome::NonFinite, 1)?;
+            continue;
+        }
+        journal.close_slot(&canonical, SlotOutcome::Ok, 1)?;
+        credited += 1;
+        if best.as_ref().is_none_or(|(_, b)| rmse_b < *b) {
+            best = Some((canonical, rmse_b));
+        }
+    }
+    if credited == 0 {
+        if !o_fallback.is_finite() {
+            return Err(AdapterError::NonFiniteScore);
+        }
+        return Ok(DisjointEpisode {
+            epsilon_f,
+            selected: None,
+            o_score: o_fallback,
+            episode_failed: true,
+        });
+    }
+    let (selected, _) = best.ok_or(AdapterError::NoEligibleCandidate)?;
+    let o_score = evaluator.score_assessment(&selected)?;
+    if !o_score.is_finite() {
+        return Err(AdapterError::NonFiniteScore);
+    }
+    Ok(DisjointEpisode {
+        epsilon_f,
+        selected: Some(selected),
+        o_score,
+        episode_failed: false,
+    })
 }
 
 #[cfg(test)]
@@ -1299,6 +1624,118 @@ mod tests {
         let (a, b, o) = ridge_partitions();
         assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 0.0).is_err());
         assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, f64::NAN).is_err());
+    }
+
+    /// Targets are the true product of the first two features, so `mul(f0,f1)` is the right program.
+    fn product_table() -> (Vec<Vec<f64>>, Vec<f64>) {
+        let (features, _) = ridge_table();
+        let targets = features.iter().map(|x| x[0] * x[1]).collect();
+        (features, targets)
+    }
+
+    /// Two distinct GP programs produce two distinct feature columns and two distinct fits. The
+    /// columns come from the programs themselves, not from a hash of the text.
+    #[test]
+    fn distinct_gp_programs_build_distinct_columns_and_distinct_fits() {
+        let (features, targets) = product_table();
+        let (a, b, o) = ridge_partitions();
+        let add = GpProgram::parse("add(f0,f1)").unwrap();
+        let mul = GpProgram::parse("mul(f0,f1)").unwrap();
+        let column = |p: &GpProgram| -> Vec<f64> {
+            features.iter().map(|row| p.eval(row)).collect()
+        };
+        assert_ne!(column(&add), column(&mul), "the two programs built the same column");
+        let eval = GpProgramFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3).unwrap();
+        let add_b = eval.score_selection("add(f0,f1)").unwrap().0;
+        let mul_b = eval.score_selection("mul(f0,f1)").unwrap().0;
+        let add_o = eval.score_assessment("add(f0,f1)").unwrap();
+        let mul_o = eval.score_assessment("mul(f0,f1)").unwrap();
+        assert!(mul_b < 0.01 && mul_o < 0.01, "the true product must fit: B {mul_b} O {mul_o}");
+        assert!(add_b > 10.0 * mul_b, "B fits did not separate: add {add_b} mul {mul_b}");
+        assert!(add_o > 10.0 * mul_o, "O fits did not separate: add {add_o} mul {mul_o}");
+    }
+
+    /// Selection with `O` poisoned still credits both programs and reads `O` only once, at the
+    /// assessment. With clean targets the episode selects the true product and scores `O` once.
+    #[test]
+    fn gp_selection_reads_b_only_and_o_is_scored_once_after_selection() {
+        let (features, clean) = product_table();
+        let (a, b, o) = ridge_partitions();
+        let programs = ["add(f0,f1)", "mul(f0,f1)"];
+        let y_a: Vec<f64> = a.iter().map(|&row| clean[row as usize]).collect();
+        let mut poisoned = clean.clone();
+        for &row in &o {
+            poisoned[row as usize] = f64::NAN;
+        }
+        let eval = GpProgramFoldEvaluator::new(&features, &poisoned, &a, &b, &o, 1e-3).unwrap();
+        let mut journal = Journal::new(10, 100);
+        let refused = evaluate_program_episode(
+            &a, &b, &o, &y_a, &programs, &mut journal, &ridge_cfg(), &eval, 9.9,
+        );
+        assert!(matches!(refused, Err(AdapterError::NonFiniteScore)));
+        assert_eq!(
+            journal.entries().iter().filter(|e| matches!(e.outcome, SlotOutcome::Ok)).count(),
+            2,
+            "selection must credit both programs before O is read"
+        );
+        assert_eq!(eval.o_reads(), 1, "O was read by selection, or more than once");
+
+        let eval = GpProgramFoldEvaluator::new(&features, &clean, &a, &b, &o, 1e-3).unwrap();
+        let mut journal = Journal::new(10, 100);
+        let episode = evaluate_program_episode(
+            &a, &b, &o, &y_a, &programs, &mut journal, &ridge_cfg(), &eval, 9.9,
+        )
+        .unwrap();
+        assert_eq!(episode.selected.as_deref(), Some("mul(f0,f1)"));
+        assert!(!episode.episode_failed);
+        assert_eq!(eval.o_reads(), 1);
+    }
+
+    /// The program language is closed: other operators, malformed text, out-of-range features,
+    /// and programs past the depth or node caps are refused. An out-of-range program closes its
+    /// slot as malformed and is never evaluated.
+    #[test]
+    fn gp_parser_refuses_anything_outside_the_program_language() {
+        for bad in ["add(f0)", "f01", "f", "foo(f0,f1)", "add(f0,f1)x", "add(f0 ,f1)", "add(f0,f1"] {
+            assert!(GpProgram::parse(bad).is_err(), "accepted {bad:?}");
+        }
+        fn chain(depth_wraps: usize) -> String {
+            (0..depth_wraps).fold("f0".to_string(), |acc, _| format!("add({acc},f0)"))
+        }
+        fn balanced(leaves: usize) -> String {
+            if leaves == 1 {
+                "f0".to_string()
+            } else {
+                let left = leaves / 2;
+                format!("add({},{})", balanced(left), balanced(leaves - left))
+            }
+        }
+        assert!(GpProgram::parse(&chain(GP_MAX_DEPTH - 1)).is_ok(), "depth cap is too tight");
+        assert!(GpProgram::parse(&chain(GP_MAX_DEPTH)).is_err(), "depth cap not enforced");
+        // A balanced tree of n leaves has 2n-1 nodes: 32 leaves is 63 nodes, 33 leaves is 65.
+        assert!(GpProgram::parse(&balanced(GP_MAX_NODES / 2)).is_ok(), "node cap too tight");
+        assert!(GpProgram::parse(&balanced(GP_MAX_NODES / 2 + 1)).is_err(), "node cap not enforced");
+
+        let (features, targets) = product_table();
+        let (a, b, o) = ridge_partitions();
+        let y_a: Vec<f64> = a.iter().map(|&row| targets[row as usize]).collect();
+        let eval = GpProgramFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3).unwrap();
+        let mut journal = Journal::new(10, 100);
+        let episode = evaluate_program_episode(
+            &a,
+            &b,
+            &o,
+            &y_a,
+            &["add(f0,f9)", "mul(f0,f1)"],
+            &mut journal,
+            &ridge_cfg(),
+            &eval,
+            9.9,
+        )
+        .unwrap();
+        assert_eq!(episode.selected.as_deref(), Some("mul(f0,f1)"));
+        assert!(matches!(journal.entries()[0].outcome, SlotOutcome::Malformed));
+        assert_eq!(eval.o_reads(), 1);
     }
 
     #[test]

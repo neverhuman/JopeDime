@@ -889,6 +889,17 @@ pub(crate) mod tests {
         let teacher_out = temp.path().join("teacher");
         let teacher = run_no_time_limit(&arm(&teacher_out)).unwrap();
         let baseline = run_no_time_limit(&arm(&temp.path().join("baseline"))).unwrap();
+        // The teacher and matched baseline arms share one temporal policy, field for field.
+        assert_eq!(teacher.search.seconds, baseline.search.seconds);
+        assert_eq!(
+            teacher.search.temporal_limits_enabled,
+            baseline.search.temporal_limits_enabled
+        );
+        for (t, b) in teacher.search.cuts.iter().zip(&baseline.search.cuts) {
+            let (ta, ba) = (t.accounting.as_ref().unwrap(), b.accounting.as_ref().unwrap());
+            assert_eq!(ta.exploration.seconds_limit, ba.exploration.seconds_limit);
+            assert_eq!(ta.comparison.seconds_limit, ba.comparison.seconds_limit);
+        }
         for receipt in [&teacher, &baseline] {
             assert_eq!(receipt.search.seconds, None);
             assert_eq!(receipt.search.temporal_limits_enabled, Some(false));
