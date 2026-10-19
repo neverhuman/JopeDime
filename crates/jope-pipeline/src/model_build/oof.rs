@@ -98,7 +98,7 @@ pub struct VerifiedFold {
 
 impl VerifiedFold {
     /// Wraps a record only when its status is `Verified`. Every other status is refused here.
-    pub(crate) fn from_verified(record: FoldRecord) -> Option<Self> {
+    pub(super) fn from_verified(record: FoldRecord) -> Option<Self> {
         (record.status == FoldStatus::Verified).then_some(Self { record })
     }
 

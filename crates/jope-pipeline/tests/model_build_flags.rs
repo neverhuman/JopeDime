@@ -233,6 +233,9 @@ fn a_file_claim_cannot_bypass_the_closure_on_the_public_command() {
         path.to_str().unwrap(),
     ]);
     let err = run(cli).unwrap_err().to_string();
-    assert!(err.contains("no verified P02 release closure"), "{err}");
+    assert!(
+        err.contains("no independently trusted source expectation"),
+        "{err}"
+    );
     let _ = std::fs::remove_dir_all(&dir);
 }

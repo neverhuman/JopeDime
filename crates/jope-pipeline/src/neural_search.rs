@@ -25,8 +25,9 @@ use crate::{
 };
 
 pub const PROTOCOL: &str = "asm.bounded-neural-search/v1";
-pub const INITIAL_SIZE: usize = 80;
-pub const NEURAL_SLOTS: usize = 64;
+/// Linked to the model-build constant, which is unconditionally compiled, so the two cannot drift.
+pub const INITIAL_SIZE: usize = crate::model_build::executor::NEURAL_INITIAL_POPULATION as usize;
+pub const NEURAL_SLOTS: usize = crate::model_build::executor::NEURAL_SLOTS as usize;
 /// Incumbents occupy the final generation-zero slots of their own arm. In the
 /// neural arm this is the exploration tail, so all 64 policy slots remain.
 pub const MAX_INCUMBENTS: usize = INITIAL_SIZE - NEURAL_SLOTS;

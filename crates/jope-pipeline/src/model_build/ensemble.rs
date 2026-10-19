@@ -434,11 +434,12 @@ mod tests {
 
     /// Report side: four rows that are not in the selection side.
     fn report_fixture(
+        members: &[&str],
         values: &dyn Fn(&str) -> Vec<f64>,
     ) -> (Vec<String>, Vec<String>, ReportPredictions) {
         let ids: Vec<String> = (0..4).map(|i| format!("q{i}")).collect();
         let report_labels: Vec<String> = (0..4).map(|i| format!("{}", i as f64 * 0.5)).collect();
-        let per_member = ["rust.a", "rust.b"]
+        let per_member = members
             .iter()
             .map(|id| (id.to_string(), Predictions::Values(values(id))))
             .collect();
@@ -481,7 +482,7 @@ mod tests {
     }
 
     fn report_for_complementary() -> (ExecutionIdentity, ReportPredictions) {
-        let (ids, rlabels, report) = report_fixture(&|id| {
+        let (ids, rlabels, report) = report_fixture(&["rust.a", "rust.b"], &|id| {
             if id == "rust.a" {
                 vec![1.0, -1.0, 1.0, -1.0]
                     .into_iter()
@@ -557,7 +558,7 @@ mod tests {
             bundle("rust.good", t.clone()),
             bundle("rust.bad", t.iter().map(|v| v + 100.0).collect()),
         ];
-        let (ids, rlabels, report) = report_fixture(&|id| {
+        let (ids, rlabels, report) = report_fixture(&["rust.good", "rust.bad"], &|id| {
             if id == "rust.good" {
                 vec![0.0, 0.5, 1.0, 1.5]
             } else {
@@ -582,9 +583,9 @@ mod tests {
     #[test]
     fn a_lone_member_is_not_attempted() {
         let members = vec![bundle("rust.only", truth())];
-        let (ids, rlabels, report) = report_fixture(&|_| vec![0.0, 0.5, 1.0, 1.5]);
+        let (ids, rlabels, report) = report_fixture(&["rust.only"], &|_| vec![0.0, 0.5, 1.0, 1.5]);
         let mut only = report.clone();
-        only.per_member.retain(|k, _| k == "rust.a");
+        only.per_member.clear();
         let out = build_winner_ensemble(
             &admitted(members),
             &labels(),
@@ -676,7 +677,10 @@ mod tests {
     #[test]
     fn the_ensemble_attempt_is_charged_against_the_request_budget() {
         let (id, report) = report_for_complementary();
-        let mut budget = EvaluationBudget::new(0);
+        let mut budget = EvaluationBudget::with_limits(super::super::selection::BudgetCounters {
+            ensemble_attempts: 0,
+            ..super::super::selection::BudgetCounters::UNLIMITED
+        });
         assert!(build_winner_ensemble(
             &admitted(complementary()),
             &labels(),

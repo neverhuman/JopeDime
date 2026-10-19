@@ -212,30 +212,21 @@ fn a_genuine_refit_record_with_altered_report_predictions_is_refused() {
     assert!(genuine.is_ok());
 }
 
+/// A bundle whose rows are renamed, admitted against a plan with the same renamed rows, is still
+/// refused: the genuine verified fold records name the original rows, and a `VerifiedFold` cannot
+/// be rebuilt with new rows from outside the crate.
 #[test]
-fn a_member_whose_rows_differ_from_the_identity_is_refused() {
+fn a_member_whose_rows_differ_from_its_verified_records_is_refused() {
     let u = regression_union();
     let id = identity(&u);
-    let outcome = refit_ridge(&u, &id);
-    // The member and its plan both name a different first row. Admission against that plan
-    // succeeds, so only the shared identity can refuse the member.
     let mut altered_plan = plan(Task::Regression, &u);
     altered_plan.row_ids[0] = "row-elsewhere".into();
     let mut verified = ridge_bakeoff(&u, &id).remove(0);
     verified.bundle.row_ids[0] = "row-elsewhere".into();
-    let member = AdmittedBundle::admit(
+    let result = AdmittedBundle::admit(
         verified.bundle,
         &expected_plan(&altered_plan),
         &verified.records,
-    )
-    .unwrap();
-    let result = admit_winner_ensemble(
-        &[member],
-        &u.selection_labels,
-        &id,
-        &outcome.report,
-        &outcome.verified,
-        &mut EvaluationBudget::new(10),
     );
     assert!(result.is_err());
 }
