@@ -26,6 +26,7 @@ pub mod full_rust;
 pub mod genome;
 pub mod gpr;
 pub mod heads;
+pub mod combinators;
 pub mod kernel;
 pub mod krr;
 pub mod ksmooth;

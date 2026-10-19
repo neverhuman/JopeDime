@@ -433,6 +433,16 @@ impl Program {
     }
 
     pub fn evaluate(&self, input: &DenseInput) -> Result<(Matrix, Validation), GraphError> {
+        let (output, validation, _counts) = self.evaluate_counted(input)?;
+        Ok((output, validation))
+    }
+
+    /// Evaluate and report how many times each node was computed. A node shared by several
+    /// consumers is cached after its first computation, so its count is 1.
+    pub fn evaluate_counted(
+        &self,
+        input: &DenseInput,
+    ) -> Result<(Matrix, Validation, Vec<usize>), GraphError> {
         let validation = self.validate(&input.schema, input.values.len())?;
         if input.values.iter().any(|row| {
             row.len() != input.schema.columns.len() || row.iter().any(|value| !value.is_finite())
@@ -442,8 +452,10 @@ impl Program {
             ));
         }
         let mut cache = vec![None; self.nodes.len()];
-        let output = self.evaluate_node(self.output, input, &validation, &mut cache)?;
-        Ok((output, validation))
+        let mut counts = vec![0usize; self.nodes.len()];
+        let output =
+            self.evaluate_node(self.output, input, &validation, &mut cache, &mut counts)?;
+        Ok((output, validation, counts))
     }
 
     fn evaluate_node(
@@ -452,10 +464,12 @@ impl Program {
         input: &DenseInput,
         validation: &Validation,
         cache: &mut [Option<Matrix>],
+        counts: &mut [usize],
     ) -> Result<Matrix, GraphError> {
         if let Some(matrix) = &cache[id] {
             return Ok(matrix.clone());
         }
+        counts[id] += 1;
         let node = &self.nodes[id];
         let rows = input.values.len();
         let matrix = match &node.action {
@@ -476,7 +490,7 @@ impl Program {
             Action::Union(children) => {
                 let matrices = children
                     .iter()
-                    .map(|child| self.evaluate_node(*child, input, validation, cache))
+                    .map(|child| self.evaluate_node(*child, input, validation, cache, counts))
                     .collect::<Result<Vec<_>, _>>()?;
                 let width = validation.node_widths[id];
                 let mut values = Vec::with_capacity(rows * width);
@@ -499,9 +513,9 @@ impl Program {
             } => {
                 // Both branches are deliberately evaluated; validation charged the
                 // complete eager branch DAG before any output allocation.
-                let predicate = self.evaluate_node(*predicate, input, validation, cache)?;
-                let yes = self.evaluate_node(*when_true, input, validation, cache)?;
-                let no = self.evaluate_node(*when_false, input, validation, cache)?;
+                let predicate = self.evaluate_node(*predicate, input, validation, cache, counts)?;
+                let yes = self.evaluate_node(*when_true, input, validation, cache, counts)?;
+                let no = self.evaluate_node(*when_false, input, validation, cache, counts)?;
                 route_rows(&predicate, &yes, &no)?
             }
         };
