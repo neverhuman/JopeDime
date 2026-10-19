@@ -6,6 +6,7 @@
 //! not yet implemented is reported as `Pending`, never as completed.
 pub mod artifact;
 pub mod candidates;
+pub mod catalog;
 pub mod config;
 pub mod ensemble;
 pub mod native;
