@@ -199,30 +199,35 @@ source flag or checkpoint hash cannot register its own trusted version. The regi
 contains no published release sets, so all real release-set requests refuse. Existing bundle
 commands above are unchanged.
 
-This first source slice verifies pinned metadata and referenced bundle declarations. It does
-not download or hash component payloads, prove their S3 VersionIds, load an encoder/policy,
-resolve licenses for a requested use, grant training/serving admission or qualify a runtime.
-Those remaining C03 integrations must complete before the pipeline can consume a verified
-release closure. A `serving_candidate` channel is a declaration, not a promotion. Six fixture
-tests are authored for final integration validation; compile checks are recorded separately.
-
+The metadata witness verifies pinned declarations. The complete payload APIs below separately
+verify supplied bytes or download exact pinned versions. Runtime loading, licence admission,
+atomic version-directory cache/CLI integration and real publication pins remain C03 work.
+A `serving_candidate` channel is a declaration, not a promotion.
 
 ### Complete payload snapshot verification (source API)
 
 `VerifiedReleaseManifest::verify_payloads` now checks all required bundle manifests and the entire declared byte budget before opening any component reader. It rejects missing or extra bundle manifests, truncation, trailing bytes, same-length corruption and I/O failure. Every component must match its pinned byte length and SHA256. A failed set yields no release witness or cache writes.
 
-The returned `VerifiedReleasePayloads` owns private immutable buffers; callers borrow those exact verified bytes with `payload(component_id)`. Later changes to an input file cannot change the checked snapshot. This witness cannot be deserialized from a receipt. Diagnostics print only the release ID, component count and total byte count. Default limits are256MiB per component and1GiB per release; callers must choose limits and I/O deadlines within their resource lease.
+The returned `VerifiedReleasePayloads` owns private immutable buffers; callers borrow those exact verified bytes with `payload(component_id)`. Later changes to an input file cannot change the checked snapshot. This witness cannot be deserialized from a receipt. Diagnostics print only the release ID, component count and total byte count. Default limits are 256 MiB per component and 1 GiB per release; callers must choose limits and I/O deadlines within their resource lease.
 
-This source API verifies supplied bytes. It does not establish a remote object's VersionId, accept a license for a requested use, install a safe version directory, load an encoder/policy runtime, qualify training/serving, or add a real release pin. The compiled registry remains empty. Exact-version self-hosted transport, atomic cache/CLI integration and actual runtime compatibility remain release work. Existing bundle commands retain their current behavior. The new tiny byte-stream and file-backed fixtures are authored and compile-checked; execution is held for finalC14 validation.
+This source API verifies supplied bytes. It does not establish a remote object's VersionId, accept a license for a requested use, install a safe version directory, load an encoder/policy runtime, qualify training/serving, or add a real release pin. The compiled registry remains empty. The bounded exact-version download caller below supplies transport verification; atomic cache/CLI integration and actual runtime compatibility remain release work. Existing bundle commands retain their current behavior. Local fixture execution is recorded separately from final integration qualification.
 
 ## Bounded exact-version transport primitive
 
 `jope_datasets::store::Store::get_observed_version_bounded(rel, version, max_bytes, expected_bytes)` is the lower-level source primitive for release downloads. It requires a concrete returned physical VersionId, checks response metadata before retaining the body, and rejects short/long streams and a different expected length. Known components supply `Some(bytes)`; a pinned manifest with unknown length can supply `None` with a strict byte ceiling. Empty/unversioned identities and invalid bounds refuse before the backend call. It has no ETag/latest fallback.
 
-The retained output buffer is bounded; allocation inside a backend transport chunk or the injected, already-buffered fixture seam is outside that claim. Content hashes, complete-release budgets and trusted registry checks remain required at the model layer. Existing bundle transport behavior is unchanged. This primitive does not yet wire the release fetch/cache/CLI, publish a real release pin, load weights or grant training/serving admission. Its fault fixtures are authored for the final integration gate.
+The retained output buffer is bounded; allocation inside a backend transport chunk or the injected, already-buffered fixture seam is outside that claim. Content hashes, complete-release budgets and trusted registry checks remain required at the model layer. Existing bundle transport behavior is unchanged. The model-layer download caller below uses this primitive. It does not publish a real release pin, install a version directory, wire the CLI, load weights or grant training/serving admission. Its response-path fault fixtures have local execution receipts; final integration qualification remains open.
 
-A missing pinned object (`Ok(None)`) is a failed release fetch: callers must refuse it and never substitute another version. The model layer must also enforce licence/rights and runtime compatibility, an I/O deadline within its resource lease, and final native approval at the frozen integration PR head. The transport primitive supplies none of those authorities. The response-path fixtures use an unsigned loopback HTTP endpoint with retries disabled; they need no cloud credentials or model data and remain unexecuted under the final integration hold.
+A missing pinned object (`Ok(None)`) is a failed release fetch: callers must refuse it and never substitute another version. The model layer must also enforce licence/rights and runtime compatibility, an I/O deadline within its resource lease, and final native approval at the frozen integration PR head. The transport primitive supplies none of those authorities. The response-path fixtures use an unsigned loopback HTTP endpoint with retries disabled; they need no cloud credentials or model data and have local execution receipts under the authorized mechanical CI lane.
 
 Injected fixture registrations are retired when their owning store drops, before its backend address can be reused. Cleanup removes only that store entry and releases the removed backend outside the registry mutex. This prevents stale fixture state from being mistaken for a later transport response.
 
 For pinned reads, an S3 `NoSuchVersion` response with HTTP404 follows the absent-object `Ok(None)` contract and must fail the release fetch. An `InvalidArgument` response with HTTP400 propagates as an error. Neither outcome permits another version or an ETag substitute. Real response-path fixtures cover both wire responses.
+
+### Complete pinned downloads (source API)
+
+`VerifiedReleaseManifest::download_payloads(&store, DownloadLimits, wall_budget)` fetches every required bundle manifest and component at its exact physical VersionId. It preflights the complete payload budget before any GET, deduplicates bundle-manifest requests, verifies all manifest bindings before fetching any payload, and verifies each payload length and SHA256. Missing versions, metadata, corruption, transport errors and exhausted budgets return an error without a partial witness or cache writes. The returned private `VerifiedReleasePayloads` owns the verified bytes.
+
+`DownloadLimits` independently bounds each bundle manifest (default 1 MiB), all retained bundle metadata (default 4 MiB), each component (default 256 MiB) and the complete release payload (default 1 GiB). The positive wall budget covers the entire operation and is never renewed per component. Async I/O is cancelled at its deadline. Non-yielding synchronous backend code cannot be preempted; elapsed-time checks refuse its late result before starting another request or returning a witness. These are retained-buffer bounds; transport chunk allocation and already-buffered injected fixtures remain outside that claim.
+
+This is a source API with deterministic, credential-free fixtures. It does not add a public release pin, cache/CLI installation, rights admission or a runnable encoder/policy. The compiled release registry remains empty. Final native approval and a qualified runtime/caller are still required before release consumption or training.

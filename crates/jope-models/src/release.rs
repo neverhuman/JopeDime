@@ -122,6 +122,25 @@ impl Default for PayloadLimits {
     }
 }
 
+/// Whole-release payload and retained bundle-metadata ceilings for pinned downloads.
+/// A byte limit is not a licence, runtime-compatibility or execution admission grant.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DownloadLimits {
+    pub payloads: PayloadLimits,
+    pub max_bundle_manifest_bytes: u64,
+    pub max_total_manifest_bytes: u64,
+}
+
+impl Default for DownloadLimits {
+    fn default() -> Self {
+        Self {
+            payloads: PayloadLimits::default(),
+            max_bundle_manifest_bytes: MAX_MANIFEST_BYTES as u64,
+            max_total_manifest_bytes: 4 * MAX_MANIFEST_BYTES as u64,
+        }
+    }
+}
+
 /// Exact component bytes read and hashed against an independently pinned release.
 ///
 /// Private immutable buffers close the verification-to-use file-mutation gap: consumers borrow
@@ -352,6 +371,148 @@ impl VerifiedReleaseManifest {
     }
     pub fn manifest_sha256(&self) -> &str {
         &self.manifest_sha256
+    }
+
+    /// Fetch every bundle manifest and payload at its pinned physical VersionId.
+    ///
+    /// Payload limits are preflighted before any GET. All bundle manifests must verify
+    /// before any payload GET; metadata has a separate aggregate retained-byte ceiling.
+    /// Missing objects, mismatched versions, lengths or hashes refuse the entire result.
+    /// This returns the same private immutable byte witness as `verify_payloads`, without
+    /// cache writes, a mutable `latest` lookup or an execution/rights/runtime grant.
+    ///
+    /// One deadline covers the complete operation and is never renewed per component.
+    /// Async I/O is cancelled at the deadline. Non-yielding synchronous backend code cannot
+    /// be preempted; elapsed-time checks still refuse a late successful result.
+    pub async fn download_payloads(
+        &self,
+        store: &jope_datasets::store::Store,
+        limits: DownloadLimits,
+        wall_budget: std::time::Duration,
+    ) -> Result<VerifiedReleasePayloads> {
+        ensure!(
+            !wall_budget.is_zero(),
+            "release download needs a positive wall budget"
+        );
+        let deadline = tokio::time::Instant::now()
+            .checked_add(wall_budget)
+            .context("release download deadline out of range")?;
+        tokio::time::timeout_at(
+            deadline,
+            self.download_payloads_before(store, limits, deadline),
+        )
+        .await
+        .context("release download deadline exceeded")?
+    }
+
+    async fn download_payloads_before(
+        &self,
+        store: &jope_datasets::store::Store,
+        limits: DownloadLimits,
+        deadline: tokio::time::Instant,
+    ) -> Result<VerifiedReleasePayloads> {
+        ensure!(
+            limits.payloads.max_component_bytes > 0
+                && limits.payloads.max_release_bytes > 0
+                && limits.payloads.max_release_bytes <= isize::MAX as u64,
+            "invalid download payload byte limits"
+        );
+        ensure!(
+            limits.max_bundle_manifest_bytes > 0
+                && limits.max_bundle_manifest_bytes <= MAX_MANIFEST_BYTES as u64
+                && limits.max_total_manifest_bytes > 0
+                && limits.max_total_manifest_bytes <= isize::MAX as u64,
+            "invalid download metadata byte limits"
+        );
+        let mut total = 0_u64;
+        let mut bundles = BTreeMap::new();
+        for c in &self.manifest.components {
+            ensure!(
+                c.bytes <= limits.payloads.max_component_bytes && c.bytes <= isize::MAX as u64,
+                "component {} exceeds the payload byte limit",
+                c.id
+            );
+            total = total
+                .checked_add(c.bytes)
+                .context("release byte overflow")?;
+            ensure!(
+                total <= limits.payloads.max_release_bytes,
+                "release exceeds the total payload byte limit"
+            );
+            bundles.entry(c.bundle_id.as_str()).or_insert(c);
+        }
+
+        let mut bundle_bytes = BTreeMap::new();
+        let mut metadata_bytes = 0_u64;
+        for (id, c) in bundles {
+            ensure!(
+                tokio::time::Instant::now() < deadline,
+                "release download deadline exceeded"
+            );
+            let remaining = limits
+                .max_total_manifest_bytes
+                .checked_sub(metadata_bytes)
+                .context("download metadata byte overflow")?;
+            let maximum = remaining.min(limits.max_bundle_manifest_bytes);
+            ensure!(
+                maximum > 0,
+                "release bundle metadata exceeds total byte limit"
+            );
+            let object = store
+                .get_observed_version_bounded(
+                    &crate::manifest_key(id),
+                    &c.bundle_manifest_version_id,
+                    maximum,
+                    None,
+                )
+                .await
+                .with_context(|| format!("fetch bundle manifest {id}"))?
+                .with_context(|| format!("bundle manifest {id} absent at pinned version"))?;
+            metadata_bytes = metadata_bytes
+                .checked_add(object.bytes.len() as u64)
+                .context("download metadata byte overflow")?;
+            bundle_bytes.insert(id.to_owned(), object.bytes);
+        }
+        // Verify every component's membership/hash/length binding before fetching any weights.
+        for c in &self.manifest.components {
+            ensure!(
+                tokio::time::Instant::now() < deadline,
+                "release download deadline exceeded"
+            );
+            self.verify_component_manifest(&c.id, &bundle_bytes[&c.bundle_id])?;
+        }
+        let mut payloads = BTreeMap::new();
+        for c in &self.manifest.components {
+            ensure!(
+                tokio::time::Instant::now() < deadline,
+                "release download deadline exceeded"
+            );
+            let object = store
+                .get_observed_version_bounded(
+                    &format!("blobs/sha256/{}", c.sha256),
+                    &c.object_version_id,
+                    c.bytes,
+                    Some(c.bytes),
+                )
+                .await
+                .with_context(|| format!("fetch component {}", c.id))?
+                .with_context(|| format!("component {} absent at pinned version", c.id))?;
+            ensure!(
+                object.bytes.len() as u64 == c.bytes && sha256_hex(&object.bytes) == c.sha256,
+                "component {} payload length/SHA256 differs from release pin",
+                c.id
+            );
+            payloads.insert(c.id.clone(), object.bytes);
+        }
+        ensure!(
+            tokio::time::Instant::now() < deadline,
+            "release download deadline exceeded"
+        );
+        Ok(VerifiedReleasePayloads {
+            metadata: self.clone(),
+            payloads,
+            verified_bytes: total,
+        })
     }
 
     /// Verify the whole pinned release into immutable, bounded payload snapshots.
@@ -776,4 +937,5 @@ mod tests {
             })
             .is_err());
     }
+    include!("../tests/support/release_download.rs");
 }
