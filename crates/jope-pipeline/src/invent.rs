@@ -279,9 +279,35 @@ pub fn preflight(options: &InventOptions) -> Result<usize> {
     )
 }
 
+/// `--work-dir` must be new or an empty directory: nothing under it is overwritten, so a second
+/// run cannot mix its evidence with an earlier one's (`prepared/` would otherwise be rewritten in
+/// place). Checked before anything is read or written.
+fn ensure_fresh_work_dir(work_dir: &Path) -> Result<()> {
+    match std::fs::symlink_metadata(work_dir) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error).with_context(|| format!("inspect {}", work_dir.display())),
+        Ok(meta) => {
+            ensure!(
+                meta.is_dir(),
+                "{}: --work-dir exists and is not a directory; choose a new or empty directory",
+                work_dir.display()
+            );
+            let mut entries = std::fs::read_dir(work_dir)
+                .with_context(|| format!("read {}", work_dir.display()))?;
+            ensure!(
+                entries.next().is_none(),
+                "{}: --work-dir is not empty; choose a new or empty directory",
+                work_dir.display()
+            );
+            Ok(())
+        }
+    }
+}
+
 /// Search the CSV and return the ranked genomes jain-math can execute.
 pub fn invent(options: &InventOptions) -> Result<Candidates> {
     preflight(options)?;
+    ensure_fresh_work_dir(&options.work_dir)?;
     let executable = Executable::load()?;
     let started = options.clock.start();
 
@@ -289,12 +315,6 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
     // Refusals (too few rows in a cut, a constant held-out target) come before anything is written.
     let partition = prepare::partition(&rows, &dataset_sha256, options.seed, options.cuts)?;
 
-    let search_root = options.work_dir.join("search");
-    ensure!(
-        std::fs::symlink_metadata(&search_root).is_err(),
-        "{}: already holds a search; choose a new --work-dir",
-        options.work_dir.display()
-    );
     std::fs::create_dir_all(&options.work_dir)
         .with_context(|| format!("create {}", options.work_dir.display()))?;
     // The search rejects traversal and symlink components beneath this root.
@@ -451,6 +471,37 @@ mod tests {
             let error = format!("{:#}", load_csv(&bad, "y").unwrap_err());
             assert!(error.contains(needle), "{body:?}: {error}");
         }
+    }
+
+    #[test]
+    fn work_dir_must_be_new_or_empty_and_is_checked_before_anything_is_written() {
+        let dir = tempfile::tempdir().unwrap();
+        ensure_fresh_work_dir(&dir.path().join("new")).unwrap();
+        let empty = dir.path().join("empty");
+        std::fs::create_dir(&empty).unwrap();
+        ensure_fresh_work_dir(&empty).unwrap();
+
+        let used = dir.path().join("used");
+        std::fs::create_dir_all(used.join("prepared")).unwrap();
+        std::fs::write(used.join("prepared").join("prepared.json"), "{}").unwrap();
+        let error = ensure_fresh_work_dir(&used).unwrap_err().to_string();
+        assert!(error.contains("not empty"), "{error}");
+
+        let file = dir.path().join("file");
+        std::fs::write(&file, "x").unwrap();
+        let error = ensure_fresh_work_dir(&file).unwrap_err().to_string();
+        assert!(error.contains("not a directory"), "{error}");
+
+        // `invent` refuses the used directory and leaves what was there untouched.
+        let train = write_csv(dir.path(), 60);
+        let options = InventOptions::new(train, "y", &used);
+        let error = format!("{:#}", invent(&options).unwrap_err());
+        assert!(error.contains("not empty"), "{error}");
+        assert_eq!(
+            std::fs::read_to_string(used.join("prepared").join("prepared.json")).unwrap(),
+            "{}"
+        );
+        assert_eq!(std::fs::read_dir(&used).unwrap().count(), 1);
     }
 
     #[test]

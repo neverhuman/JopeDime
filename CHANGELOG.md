@@ -5,17 +5,9 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-10-19
-
-Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then
-curated by pull request: #126 to #336.
-
-Also folds in the entries curated as `[Unreleased]` after 2026-10-15 (#337 to #354) and #385; the
-release is cut from `main` after #385.
-
 ### Pipeline
 
-- pipeline: `jope pipeline invent` prints ranked candidates for jain-core's `Jope` invention engine as `jope.candidates.v1` -- header CSV in (numeric, finite, regression), programs whose every op jain-math 9fa594e executes, hold RMSE and R2 per candidate, exit codes 0/2/3/143 (#385)
+- pipeline: `jope pipeline invent` prints ranked candidates for jain-core's `Jope` invention engine as `jope.candidates.v1`: a header CSV in (numeric, finite, regression), programs whose every op jain-math 9fa594e executes, hold RMSE and R2 per candidate, exit codes 0/2/3/143, and a `--work-dir` that must be new or empty (#385)
 
 ### Campaigns, self-play and learning
 
@@ -28,6 +20,10 @@ release is cut from `main` after #385.
 - ci: keep CI evidence on runner local disk without GitHub Actions artifact uploads (#341), and report aged evidence in `retention.py` without deleting retained records (#342)
 - records(paper-trace): enforce claim-level TeX statement/value parity and numeric drift checks in CI (#340, #347, #350), sync `C191`–`C192` across `docs/paper/` and `docs/experiments/` for `#346`/`#349`/`#351` (#352), add deterministic `README.md` and Section 10.3.2 `docs/paper/figures/` overview SVGs built from committed evidence (#353), enforce `NUMBERS_TRACE.md` `## Committed SVG figures` SHA-256/link/metric parity and `docs/experiments/{experiments.jsonl,README.md,SYNTHESIS_AND_NEXT_EXPERIMENTS.md}` schema/matrix/card/claim/anchor invariants in `jope-records paper-trace` (#354), and reject `..` (`ParentDir`), root, and absolute paths in `sources` `source_file` entries before filesystem resolution
 
+## [0.3.0] - 2026-10-15
+
+Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then
+curated by pull request: #126 to #336.
 
 ### feat-math and emitters
 
