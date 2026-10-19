@@ -1,0 +1,10 @@
+question: Do the fleet GPU hosts complete the full finite object-storage Gaussian process evaluation schedule with strict numerical parity against the CPU reference?
+hypothesis: Executing the finite multi-host Gaussian process benchmark schedule under bounded workspace ceilings preserves floating-point numerical parity while quantifying steady-state post-warmup tail latency across all fleet GPU nodes.
+controls: Pinned execution source commit, post-warmup steady-state tail latency separation, explicit kernel-family and gate exclusions recorded in the closure receipt, and no neural learning or promotion claims attached.
+execution: Completed the full scheduled replicate sequence on each fleet GPU host, synchronized terminal host manifests and progress receipts, and archived the complete bundle and member index to object storage.
+effect: Every evaluated host completed its full replicate target within the numerical error ceiling and recorded substantial speedup over CPU reference across all fleet GPU nodes.
+stage: Shadow finite GPU kernel latency and numerical parity benchmark only; establishes no neural optimizer progress, program selection gain, or promotion authority.
+changed: Packaged and uploaded the compressed benchmark archive, member index, and standalone independent restoration receipt to object storage with exact version identifiers and emitted this public wave projection.
+counterevidence: Steady-state tail latency ratios on the workstation GPU nodes exceeded the strictest tail threshold under host thermal and bus variance, and full current-head kernel family coverage remains open.
+falsifier: Any mismatch between the object-storage versioned archive pack or index digests, the restored member digests, or the host numerical error bounds invalidates this benchmark record.
+reconstruction: Resolve the compressed archive pack and index blobs by exact version in the staging bucket and catalog, locate the closure receipt member by relative path in the archive index, and verify the standalone restoration receipt blob by its own version.

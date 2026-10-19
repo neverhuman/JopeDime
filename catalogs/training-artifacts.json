@@ -170,6 +170,108 @@
       "sha256": "c00d4298f18ce1912333208620adf92c4a4ea16cf0b98e45548c7ca1d558b5f3",
       "validation_epoch_0001_sha256": "9733a1d64745a74a7a976c0991de4ab833c9cb52d88adee243a9f5e1bdc2ef92",
       "version_id": "kT75BjrKunTtldV5e_dwm50_zCns5sNZ"
+    },
+    {
+      "actual_run_source_commit": "14e11bb09dfd98b1058a135265b7984bdb8583b3",
+      "bytes": 1512406,
+      "codec": "tar+zstd",
+      "decoded_tar_bytes": 142888960,
+      "decoded_tar_sha256": "5e0b7fd6916d38987e881979eb47acdf99ae88681505742875806a27f1854547",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_INDEPENDENT_ALL_MEMBER_RESTORE_VERIFIED",
+      "git_publication_status": "GIT_PUBLICATION_PENDING",
+      "id": "honest-gpu-parity-180reps-20261019T1443Z-archive",
+      "independent_restore_receipt": {
+        "bytes": 1046,
+        "codec": "json+utf8",
+        "local_path": "/home/ubuntu/jope-evidence/storage-audit-20261019T1455Z/monitor-1630-archive-verification/independent-restore-receipt.json",
+        "members_verified": 2174,
+        "resolution": "standalone_create_only_s3_blob (produced after pack bRcGSbfZtk0rtG3q04WLWjLTfwvHuJan; NOT one of the 2,174 pack members)",
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/2365a1e8aab511ed642a9bce2dcf4332f95ccd55c5fc7924de939dd542a3a7d0",
+        "sha256": "2365a1e8aab511ed642a9bce2dcf4332f95ccd55c5fc7924de939dd542a3a7d0",
+        "version_id": "EXjgYyMrcP7DLJuKolWPTGPOAdRxk4N."
+      },
+      "index_bytes": 421874,
+      "index_s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/2d6f64e6d511527eef0d3d7483fb10bc7bbfc0aabf5287ba99db2b376be01968",
+      "index_sha256": "2d6f64e6d511527eef0d3d7483fb10bc7bbfc0aabf5287ba99db2b376be01968",
+      "index_version_id": "k3naEzmBnwN_wx7O5Hoz9xM9Q7qROqVS",
+      "member_locators": [
+        {
+          "bytes": 3832,
+          "codec": "json+utf8",
+          "enclosing_index_sha256": "2d6f64e6d511527eef0d3d7483fb10bc7bbfc0aabf5287ba99db2b376be01968",
+          "enclosing_index_version_id": "k3naEzmBnwN_wx7O5Hoz9xM9Q7qROqVS",
+          "enclosing_pack_sha256": "9a8751a6bf568bf9f759e9bb62567ce0b24c723d9495cdf459040cd8897bb567",
+          "enclosing_pack_version_id": "bRcGSbfZtk0rtG3q04WLWjLTfwvHuJan",
+          "member_relative_path": "HONEST_GPU_PARITY_180REPS_3HOST_CLOSURE_RECEIPT_20261019T1547Z.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "330feac44c953faafcc5a93c5d4cee9fca36a6e92f09e663d38ed88b87e42ed6"
+        }
+      ],
+      "payload_bytes": 140859489,
+      "payload_files": 2174,
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/9a8751a6bf568bf9f759e9bb62567ce0b24c723d9495cdf459040cd8897bb567",
+      "scope": "Completed 180/180 finite GPU/CPU kernel parity and latency benchmark across xbabe1, xbabe2, and xbabe3 (540 total replicates across 3 hosts, 537 uncontended post-warmup replicates, 2,174 archived members). Finite kernel benchmark only; zero neural weight updates or self-play feedback labels.",
+      "sha256": "9a8751a6bf568bf9f759e9bb62567ce0b24c723d9495cdf459040cd8897bb567",
+      "version_id": "bRcGSbfZtk0rtG3q04WLWjLTfwvHuJan"
+    },
+    {
+      "actual_run_source_commit": null,
+      "bytes": 103757,
+      "codec": "tar+zstd",
+      "decoded_tar_bytes": 163840,
+      "decoded_tar_sha256": "9d036c4d41d400e8ed69463fd77c33e381b2298740bb976af76896dca17d062f",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_INDEPENDENT_ALL_MEMBER_RESTORE_VERIFIED",
+      "git_publication_status": "GIT_PUBLICATION_PENDING",
+      "id": "p01-same-input-parent-replay-20261019T1558Z-archive",
+      "independent_restore_receipt": {
+        "bytes": 1172,
+        "codec": "json+utf8",
+        "local_path": "/home/ubuntu/jope-evidence/release-closure-20261019/independent-p01-restore/independent-restore-receipt.json",
+        "members_verified": 7,
+        "nested_jsonl_rows_verified": 263,
+        "resolution": "standalone_create_only_s3_blob (produced after child pack NO7sLton___HoBuEu1.5tqAPwOYpcoyV; NOT one of the 7 pack members)",
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/cc19ae2430c0ece85bd488c7f74e9f71d6d7353c4c7c450d62b486a290c1b6fd",
+        "sha256": "cc19ae2430c0ece85bd488c7f74e9f71d6d7353c4c7c450d62b486a290c1b6fd",
+        "version_id": "yH6larj6RjFlHTiYclPultKQ0O8lNi2O"
+      },
+      "index_bytes": 1959,
+      "index_s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/eeaca6ba46c0516d5bb2918185cc9238c7837c7852c0ba8d502cc7d193ace55a",
+      "index_sha256": "eeaca6ba46c0516d5bb2918185cc9238c7837c7852c0ba8d502cc7d193ace55a",
+      "index_version_id": "bdt6WVch6VkNSyNp1Tf5QaTRIvGO3Z7v",
+      "member_locators": [
+        {
+          "bytes": 24811,
+          "codec": "json+utf8",
+          "enclosing_index_sha256": "eeaca6ba46c0516d5bb2918185cc9238c7837c7852c0ba8d502cc7d193ace55a",
+          "enclosing_index_version_id": "bdt6WVch6VkNSyNp1Tf5QaTRIvGO3Z7v",
+          "enclosing_pack_sha256": "dca2121c902b6227aec9a3cafffdbf674b2bb1a8d19956b2aaf79395267f5416",
+          "enclosing_pack_version_id": "NO7sLton___HoBuEu1.5tqAPwOYpcoyV",
+          "member_relative_path": "P01_SAME_INPUT_PARENT_REPLAY_QUALIFICATION_20261019.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "f2dc9d1e2963d7038f882be8881399f23ac754b1a00bf1a8395ea827aee3a079"
+        },
+        {
+          "bytes": 82878,
+          "codec": "jsonl+gzip",
+          "decoded_bytes": 399423,
+          "decoded_rows": 263,
+          "decoded_sha256": "e3818726581992cb5ac7d3f8c6d320b074ac32d1e9e8909e1c9b05cbc5330eb1",
+          "enclosing_index_sha256": "eeaca6ba46c0516d5bb2918185cc9238c7837c7852c0ba8d502cc7d193ace55a",
+          "enclosing_index_version_id": "bdt6WVch6VkNSyNp1Tf5QaTRIvGO3Z7v",
+          "enclosing_pack_sha256": "dca2121c902b6227aec9a3cafffdbf674b2bb1a8d19956b2aaf79395267f5416",
+          "enclosing_pack_version_id": "NO7sLton___HoBuEu1.5tqAPwOYpcoyV",
+          "member_relative_path": "P01_SAME_INPUT_PARENT_REPLAY_PER_CONTEXT_20261019.jsonl.gz",
+          "resolution": "pack_member_via_index",
+          "sha256": "11b167df72e579a8a29c7987aac7c020580dffcbccf95db59532aa67920267e1"
+        }
+      ],
+      "payload_bytes": 150057,
+      "payload_files": 7,
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/dca2121c902b6227aec9a3cafffdbf674b2bb1a8d19956b2aaf79395267f5416",
+      "scope": "Distinct P01 same-input parent replay diagnostic wave (7 members, 263 reused development contexts from derived spec 8748aad6140015d911438ebe0c48edc3c3adcdb6cbd62fb2b1387761c4801b8d and preprocessing d42a9037abc812b328f54a6a374eeebdffa06f71c0dee702b63b078eb5f6810e) comparing historical 41-epoch v1-rolling-000017773 (state 3cdd73d8cef758e4c1895fc2ab7ea811c0c5c69b05709aca012eafc8e3492b19, parameter ea078456690b0665592652b2ed5b04a0deb39b9e604de97a513dc885e467f9fb, cohort validation loss 0.8973272328043939) vs 1-epoch cold-epoch1-000429-20261019T1303Z (state d412f7b67e2130dc95a63021c6894940b3f081f0021aa3e4c564aa90e400e5b3, parameter b888b5d66fda926c3609fa068a42a022a079e2d4bbc8db3b5badec8f51acaf20, cohort validation loss 1.3437907446228454; paired l6_loss and ce_loss lower on 263/263 contexts under v1-rolling-000017773), fresh-init-000000-20261019T1303Z (cohort validation loss 4.381231680184491), and non-learning empirical/uniform baselines. Reused development teacher-loss diagnostic only with unknown Git source commit; NOT an unseen outer-test result, NOT continuation convergence proof or execution approval, and original 429-step checkpoint archive gap remains explicitly held.",
+      "sha256": "dca2121c902b6227aec9a3cafffdbf674b2bb1a8d19956b2aaf79395267f5416",
+      "source_commit_limitation": "Standalone evaluation script run_p01_same_input_parent_replay.py (sha256: b36d1a81f7cce7f62adb1901b4f3aac38f5b7fe7f3e1fd30aca418b9f902a8a4) lacks a verified runtime-to-Git commit binding; earlier proposed string 28005df708bd8cf73068eb6ba29b621652216470 is not a Git commit object in this repository (canonical 28005df700d81f39ab51d796ea3a4f77db9277b5 is a different SHA) and is preserved only as a withdrawn historical draft claim.",
+      "version_id": "NO7sLton___HoBuEu1.5tqAPwOYpcoyV"
     }
   ],
   "corrections": [
