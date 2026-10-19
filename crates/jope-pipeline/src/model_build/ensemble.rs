@@ -219,7 +219,7 @@ pub fn build_winner_ensemble(
             counts[i] += 1;
             let loss = sel_loss(&counts)?;
             counts[i] -= 1;
-            if step.map_or(true, |(_, best_so_far)| loss < best_so_far) {
+            if step.is_none_or(|(_, best_so_far)| loss < best_so_far) {
                 step = Some((i, loss));
             }
         }
@@ -237,7 +237,7 @@ pub fn build_winner_ensemble(
         let mut solo = vec![0u32; sorted.len()];
         solo[i] = 1;
         let loss = sel_loss(&solo)?;
-        if best_single.map_or(true, |(best_loss, _)| loss < best_loss) {
+        if best_single.is_none_or(|(best_loss, _)| loss < best_loss) {
             best_single = Some((loss, i));
         }
     }

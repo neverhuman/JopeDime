@@ -5,6 +5,7 @@
 //! the reason, and no generic CPU GP or ridge fallback is substituted. A route whose stages are
 //! not yet implemented is reported as `Pending`, never as completed.
 pub mod artifact;
+pub mod automl;
 pub mod candidates;
 pub mod catalog;
 pub mod config;
@@ -12,13 +13,16 @@ pub mod ensemble;
 pub mod identity;
 pub mod native;
 pub mod oof;
+pub mod refit;
 pub mod selection;
 pub mod test_look;
 
+pub use automl::{run_automl, AutomlOutput};
 pub use ensemble::{
     build_winner_ensemble, EnsembleDisposition, ReportPredictions, WinnerEnsemble, ENSEMBLE_SCHEMA,
 };
 pub use identity::ExecutionIdentity;
+pub use refit::{refit_members, RefitOutcome};
 
 pub use candidates::{
     bakeoff_roster, Admission, CandidateSpec, CatalogBinding, RuntimeCapability, CATALOG_BINDING,

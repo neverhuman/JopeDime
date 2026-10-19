@@ -11,7 +11,7 @@
 //! bytes must reproduce the identity's data digest, and every row index is checked against the
 //! data before a fit starts. An out-of-range index is a typed refusal, never a panic.
 use super::candidates::CandidateSpec;
-use super::identity::{digest_ids, ExecutionIdentity};
+use super::identity::{digest_ids, digest_pairs, ExecutionIdentity};
 use super::selection::{CandidateFitter, FitEvidence, FoldFit, NotStarted};
 use crate::evaluation_score::Predictions;
 use anyhow::{ensure, Context, Result};
@@ -56,6 +56,21 @@ pub struct NativeFitter {
     schema: DataSchema,
     request_sha256: String,
     classes: Vec<String>,
+    /// Rows `0..selection_len` are the selection side. Rows after them are the report side, which
+    /// a fit may never train on (SC-DEC-184M C05).
+    selection_len: usize,
+}
+
+/// Wraps raw model output in the frozen prediction form for the task.
+pub fn to_predictions(task: Task, classes: &[String], raw: Vec<f64>) -> Result<Predictions> {
+    match task {
+        Task::Regression => Ok(Predictions::Values(raw)),
+        Task::Binary => Ok(Predictions::Probabilities {
+            classes: classes.to_vec(),
+            values: raw.iter().map(|p| vec![1.0 - p, *p]).collect(),
+        }),
+        other => anyhow::bail!("native fitter does not cover task {other:?}"),
+    }
 }
 
 /// The genome each supported candidate fits. Candidates absent from this table are refused.
@@ -68,7 +83,8 @@ pub fn genome_for(candidate_id: &str, task: Task) -> Option<&'static str> {
 }
 
 impl NativeFitter {
-    /// `classes` is the plan's frozen class order. It is empty for regression.
+    /// `classes` is the plan's frozen class order. It is empty for regression. The data is the
+    /// selection side only.
     pub fn new(
         task: Task,
         classes: Vec<String>,
@@ -83,6 +99,52 @@ impl NativeFitter {
             digest_ids(&data.row_ids) == identity.row_sha256,
             "native row ids do not reproduce the admitted row identity"
         );
+        let selection_len = data.row_ids.len();
+        Self::build(task, classes, data, selection_len, &identity.request_sha256)
+    }
+
+    /// Binds one union of selection rows followed by report rows. The identity must reproduce the
+    /// union bytes, the selection rows and labels, and the report rows and labels.
+    pub fn new_split(
+        task: Task,
+        classes: Vec<String>,
+        data: NativeData,
+        selection_len: usize,
+        selection_labels: &[String],
+        report_labels: &[String],
+        identity: &ExecutionIdentity,
+    ) -> Result<Self> {
+        ensure!(
+            data_digest(&data) == identity.data_sha256,
+            "native union bytes do not reproduce the admitted data identity"
+        );
+        ensure!(
+            selection_len > 0 && selection_len < data.row_ids.len(),
+            "a split needs rows on both the selection and the report side"
+        );
+        let (selection_ids, report_ids) = data.row_ids.split_at(selection_len);
+        ensure!(
+            digest_ids(selection_ids) == identity.row_sha256,
+            "selection rows do not reproduce the admitted row identity"
+        );
+        ensure!(
+            digest_pairs(selection_ids, selection_labels) == identity.cohort_sha256,
+            "selection labels do not reproduce the cohort identity"
+        );
+        ensure!(
+            digest_pairs(report_ids, report_labels) == identity.report_sha256,
+            "report labels do not reproduce the report identity"
+        );
+        Self::build(task, classes, data, selection_len, &identity.request_sha256)
+    }
+
+    fn build(
+        task: Task,
+        classes: Vec<String>,
+        data: NativeData,
+        selection_len: usize,
+        request_sha256: &str,
+    ) -> Result<Self> {
         ensure!(
             data.features.len() == data.targets.len() && data.row_ids.len() == data.targets.len(),
             "features, targets and row ids are not row-aligned"
@@ -119,9 +181,26 @@ impl NativeFitter {
             task,
             data,
             schema,
-            request_sha256: identity.request_sha256.clone(),
+            request_sha256: request_sha256.to_owned(),
             classes,
+            selection_len,
         })
+    }
+
+    pub fn task(&self) -> Task {
+        self.task
+    }
+
+    pub fn classes(&self) -> &[String] {
+        &self.classes
+    }
+
+    pub fn row_ids(&self) -> &[String] {
+        &self.data.row_ids
+    }
+
+    pub fn selection_len(&self) -> usize {
+        self.selection_len
     }
 
     /// Refuses any index outside the data before a fit starts. Not a panic: a typed refusal.
@@ -175,6 +254,12 @@ impl NativeFitter {
             .into());
         };
         self.check_indices(train)?;
+        if let Some(&row) = train.iter().find(|&&row| row >= self.selection_len) {
+            return Err(NotStarted(format!(
+                "training row {row} lies on the report side; fits train on the selection side only"
+            ))
+            .into());
+        }
         ensure!(!train.is_empty(), "fold has an empty training side");
         let genome = GenomeIr::parse(text)?;
         let task = self.task_spec()?;
@@ -215,14 +300,7 @@ impl CandidateFitter for NativeFitter {
         ensure!(!predict.is_empty(), "fold has an empty prediction side");
         let (model, state) = self.fit_state(candidate, train)?;
         let raw = self.predict_rows(&model, predict)?;
-        let predictions = match self.task {
-            Task::Regression => Predictions::Values(raw),
-            Task::Binary => Predictions::Probabilities {
-                classes: self.classes.clone(),
-                values: raw.iter().map(|p| vec![1.0 - p, *p]).collect(),
-            },
-            other => anyhow::bail!("native fitter does not cover task {other:?}"),
-        };
+        let predictions = to_predictions(self.task, &self.classes, raw)?;
         Ok(FoldFit {
             predictions,
             fitted_artifact_sha256: format!("{:x}", Sha256::digest(&state)),
