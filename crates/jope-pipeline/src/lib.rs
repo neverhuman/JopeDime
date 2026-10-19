@@ -51,6 +51,7 @@ pub mod model_build;
 pub mod neural_search;
 pub mod parallel;
 pub mod pathway;
+pub mod reasoner_pilot;
 pub mod prepare;
 pub mod prepared_data;
 pub mod receipt;

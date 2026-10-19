@@ -148,7 +148,38 @@ fn reload_refuses_a_record_missing_a_member_state() {
         &mut budget,
         &restorer(&fitter),
     );
-    assert!(result.is_err());
+    let message = result
+        .expect_err("a record without its member state must not reload")
+        .to_string();
+    assert!(message.contains("do not cover exactly"), "{message}");
+}
+
+/// The reload's member-set check runs on the states the record carries. A state for a member the
+/// refit never recorded must be refused by the same check, in the other direction.
+#[test]
+fn reload_refuses_a_state_for_a_member_the_refit_never_recorded() {
+    let (u, out) = regression_run();
+    let id = identity(&u);
+    let fitter = split_fitter(Task::Regression, &u, &id);
+    let mut persisted = out.persisted.clone().unwrap();
+    let extra = persisted.member_states["rust.ridge"].clone();
+    persisted
+        .member_states
+        .insert("rust.extra".to_string(), extra);
+    let mut budget = EvaluationBudget::new(100);
+    let result = verify_reload(
+        &persisted,
+        &id,
+        &admitted_for(&persisted, &u),
+        &u.selection_labels,
+        &out.report.clone().unwrap(),
+        &mut budget,
+        &restorer(&fitter),
+    );
+    let message = result
+        .expect_err("a state for an unrecorded member must not reload")
+        .to_string();
+    assert!(message.contains("do not cover exactly"), "{message}");
 }
 
 #[test]
