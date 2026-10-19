@@ -202,6 +202,55 @@
       "log_sha256": "a5ca562e568569a140eaa12c8c9c80e30ab475b1a8d8040b2e6865071cf32c96"
     }
   ],
+  "compat_freeze_identity_rebaseline": {
+    "decision_ledger": "crates/feat-math/tests/fixtures/compat_freeze/transitions/mr19_shared_dag_identity_rebaseline.v1.json",
+    "fixture": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+    "fixture_before_sha256": "2f1d48fee631f57123b1f458ede91a4817a0f6c094beb8110aa4b8c4d71e2a36",
+    "fixture_after_sha256": "4cab1887f4e4558a5173a61c3a7a38282cda945a2d016d0fa7d6b7704abbf7a1",
+    "regeneration_command": "JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12 cargo test --locked -p feat-math --test compat_freeze evaluator_identity_inputs_match_the_recorded_identity",
+    "lineage_sources_fixture_modified": false,
+    "announced_identity_moves": {
+      "crates/feat-math/src/lib.rs": {
+        "before_sha256": "dd6b753ef5e9315458480c52afe6c1d6c0b9b2c3cdb7bc05e99c708eb0b2491b",
+        "after_sha256": "0e1e35f703dcfcc371f5ba6d2d5f167dde219d1c9ded86e42547c1cd642e1701"
+      },
+      "implementation_sha256": {
+        "before": "bf6d4345fc5edc3e617afccc6dfbf1fc55737cc80a1ad3b364c08c83bff10136",
+        "after": "96e02aef28d7ace187075181f0bd0b8e912aca50a5a52c00a3eead4e93db61d7"
+      },
+      "identity_digest": {
+        "before": "16f9085d3fe4f3e18d25e2eb5fbc04f990f1d65d8be98d46a0113deb44176344",
+        "after": "b21ec9f74b0b91285c7fc69ce80354ce36f05529c0f4a949fb2991cdc4ed575d"
+      }
+    },
+    "compare_mode_verification": {
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked -p feat-math --test compat_freeze --test historical_v1",
+      "exit_code": 0,
+      "tests": {"compat_freeze": 13, "historical_v1": 3},
+      "source_tree_commit": "7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12",
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_compat_freeze_historical_v1_7dd3fbb90_20261019T111936Z.log",
+      "log_bytes": 1535,
+      "log_sha256": "34ba714037fae54598a5aad013a1fa22054d67bc87de642ab81ce1403c7e91db"
+    },
+    "hygiene_verification": {
+      "whitespace": "git diff --check exit 0",
+      "test_inventory": "cargo run -q --locked -p jope-records -- verify-test-inventory exit 0 (scripts/verify_test_inventory.py and hygiene_contracts do not exist in this repository)",
+      "hygiene_script": "bash deploy/ci/check.sh exit 0",
+      "hygiene_log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_hygiene_check_7dd3fbb90.log"
+    }
+  },
+  "ci_predecessor_failure": {
+    "run_id": 39239275590,
+    "head_sha": "7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12",
+    "job_name": "rust-test (2)",
+    "job_id": 118016798483,
+    "conclusion": "failure",
+    "failing_test": "feat-math::compat_freeze evaluator_identity_inputs_match_the_recorded_identity",
+    "result": "1752 of 1753 tests passed",
+    "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/PR381_rust_test2_118016798483.log",
+    "log_bytes": 315967,
+    "log_sha256": "7d0fd23278c53158730c8348c26137be782bf523dfd900483e8b10988ce57e91"
+  },
   "preserved_predecessor_observations_and_failures": {
     "slice1_harvest_receipt": {
       "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR19_SLICE1_4935ABBA4_HARVEST_20261019T0941Z.json",

@@ -470,6 +470,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         mr06_label_admission["fixtures"][0]["path"],
         changed_fixtures[1]
     );
+    // MR19 shared-node feature DAG: exporting `combinators` moves the evaluator identity only.
+    let mr19_shared_dag = old_fixture("transitions/mr19_shared_dag_identity_rebaseline.v1.json");
+    assert_eq!(mr19_shared_dag["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(mr19_shared_dag["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,
@@ -490,6 +494,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         i09_artifact_target_binding,
         batch4_selfplay,
         mr06_label_admission,
+        mr19_shared_dag,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
