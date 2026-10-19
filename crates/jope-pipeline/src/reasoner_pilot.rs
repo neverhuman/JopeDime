@@ -8,6 +8,13 @@ use anyhow::{bail, ensure, Result};
 
 pub mod adapters;
 
+/// Runs one arm of the named reasoner study under the no-time-limit policy
+/// (`NO_TIME_LIMIT_POLICY_20261019`). The teacher arm and every matched baseline arm must go through
+/// this function, so the policy is identical for each by construction.
+pub fn run_study_arm(options: &crate::run::RunOptions) -> Result<crate::receipt::Receipt> {
+    crate::run::run_no_time_limit(options)
+}
+
 /// A measured value that is either recorded or explicitly unknown. An unknown value is never zero.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Measured<T> {

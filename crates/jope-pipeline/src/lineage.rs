@@ -478,6 +478,11 @@ pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
         let receipt_path = root.join("receipt.json");
         let verified = evidence::verify_champion_run(&receipt_path)?;
         let record = round_record(round, kind, &directory, origin, &verified)?;
+        let seconds = verified
+            .receipt
+            .search
+            .seconds
+            .context("lineage requires a receipt with a bounded seconds budget")?;
         let lineage = lineage.get_or_insert_with(|| Lineage {
             schema: LINEAGE_SCHEMA_ID.to_owned(),
             tool_version: TOOL_VERSION.to_owned(),
@@ -489,7 +494,7 @@ pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
             fold_seed: verified.receipt.prepared.seed,
             cuts: verified.receipt.prepared.cuts.clone(),
             evaluations: verified.receipt.search.evaluations,
-            seconds: verified.receipt.search.seconds,
+            seconds,
             rng_seed: options.run.rng_seed,
             islands: options.run.islands as u64,
             migration_interval: options.run.migration_interval as u64,
@@ -765,7 +770,7 @@ fn check_common(lineage: &Lineage, run: &VerifiedRun, label: &str) -> Result<()>
     );
     ensure!(
         receipt.search.evaluations == lineage.evaluations
-            && receipt.search.seconds == lineage.seconds,
+            && receipt.search.seconds == Some(lineage.seconds),
         "{label}: another budget than the lineage's"
     );
     if receipt.schema != crate::receipt::RECEIPT_SCHEMA_ID {

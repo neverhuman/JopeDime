@@ -179,6 +179,9 @@ pub struct SearchOptions {
     pub record_events: bool,
     /// Original run/role/profile bindings, when supplied by the admitted caller.
     pub event_binding: Option<SearchBinding>,
+    /// The reasoner no-time-limit policy (`NO_TIME_LIMIT_POLICY_20261019`). `false` keeps the
+    /// legacy temporal bound `Budget.seconds`; `true` removes it. See [`SearchOptions::time_limit`].
+    pub unbounded_time: bool,
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -197,12 +200,28 @@ impl SearchOptions {
             cancel: None,
             record_events: true,
             event_binding: None,
+            unbounded_time: false,
         }
     }
 
     /// `islands x threads`: the evaluation pool's size.
     pub fn workers(&self) -> usize {
         self.threads.max(1).saturating_mul(self.islands.max(1))
+    }
+
+    /// The temporal bound on this search. `Some` is the legacy bound `Budget.seconds`. `None` is the
+    /// reasoner no-time-limit policy: no seconds stop, no per-fit timeout, and no synthesized timeout
+    /// failure. Unlimited is never encoded as a number. Evaluations, cancellation and every other
+    /// bound still apply.
+    pub fn time_limit(&self) -> Option<Duration> {
+        (!self.unbounded_time).then(|| Duration::from_secs(self.budget.seconds))
+    }
+
+    /// Applies the reasoner no-time-limit policy. Both teacher and matched baseline arms must call
+    /// this through the same entry point, so they share one policy.
+    pub fn without_time_limit(mut self) -> Self {
+        self.unbounded_time = true;
+        self
     }
 
     pub fn cancelled(&self) -> bool {
@@ -315,15 +334,22 @@ impl Budget {
     }
 
     pub fn check(&self) -> Result<()> {
-        ensure!(
-            self.evaluations > 0 && self.evaluations <= MAX_EVALUATIONS,
-            "budget evaluations must be 1..={MAX_EVALUATIONS}, got {}",
-            self.evaluations
-        );
+        self.check_evaluations()?;
         ensure!(
             self.seconds > 0 && self.seconds <= MAX_SECONDS,
             "budget seconds must be 1..={MAX_SECONDS}, got {}",
             self.seconds
+        );
+        Ok(())
+    }
+
+    /// The evaluation bound alone. The reasoner no-time-limit path validates only this, because its
+    /// temporal bound is `None` and `seconds` is never read.
+    pub fn check_evaluations(&self) -> Result<()> {
+        ensure!(
+            self.evaluations > 0 && self.evaluations <= MAX_EVALUATIONS,
+            "budget evaluations must be 1..={MAX_EVALUATIONS}, got {}",
+            self.evaluations
         );
         Ok(())
     }
@@ -544,6 +570,9 @@ pub struct CutSearch {
     pub rng_seed: u64,
     #[serde(skip)]
     pub budget: Budget,
+    /// The temporal bound this cut ran under, in seconds (`None` under the no-time-limit policy).
+    #[serde(skip)]
+    pub time_limit: Option<f64>,
 }
 
 /// A scored survivor carried between generations.
@@ -1025,13 +1054,16 @@ fn evaluate_admitted(
     options: &SearchOptions,
     pool: Option<&rayon::ThreadPool>,
     started: Stamp,
-    deadline: Duration,
+    deadline: Option<Duration>,
     recorder: Option<&Recorder>,
 ) -> Vec<Option<Observation>> {
     let clock = options.clock;
-    // A stop request is honoured exactly where the seconds bound is: before a fit starts.
+    // A stop request is honoured exactly where the seconds bound is: before a fit starts. Without a
+    // time bound (`None`) only the stop request stops a fit here.
     let may_start = |origin: &str| {
-        !options.cancelled() && (seconds_exempt(generation, origin) || started.elapsed() < deadline)
+        !options.cancelled()
+            && (seconds_exempt(generation, origin)
+                || deadline.is_none_or(|limit| started.elapsed() < limit))
     };
     match pool {
         None => {
@@ -1089,7 +1121,11 @@ fn run_cut_allocated(
     reserve: bool,
 ) -> Result<CutSearch> {
     let (budget, rng_seed, clock) = (options.budget, options.rng_seed, options.clock);
-    budget.check()?;
+    if options.unbounded_time {
+        budget.check_evaluations()?;
+    } else {
+        budget.check()?;
+    }
     ensure!(
         !output.join("search.json").exists(),
         "{}: a completed search is already published here",
@@ -1100,8 +1136,10 @@ fn run_cut_allocated(
     let recorder = recorder.as_ref();
     let started = clock.start();
     let evaluation_limit = exploration_limit(budget, if reserve { 2 } else { 1 });
-    let seconds_limit = budget.seconds as f64 / if reserve { 2.0 } else { 1.0 };
-    let deadline = Duration::from_secs_f64(seconds_limit);
+    let deadline = options
+        .time_limit()
+        .map(|limit| limit.div_f64(if reserve { 2.0 } else { 1.0 }));
+    let seconds_limit = deadline.map(|d| d.as_secs_f64());
 
     let mut observations: Vec<Observation> = Vec::new();
     let mut seen: BTreeSet<String> = BTreeSet::new();
@@ -1203,7 +1241,9 @@ fn run_cut_allocated(
                 admission(recorder, &draw, STOPPED_BY_EVALUATIONS);
                 break;
             }
-            if !seconds_exempt(generation, origin) && started.elapsed() >= deadline {
+            if !seconds_exempt(generation, origin)
+                && deadline.is_some_and(|limit| started.elapsed() >= limit)
+            {
                 bound = Some(STOPPED_BY_SECONDS);
                 admission(recorder, &draw, STOPPED_BY_SECONDS);
                 break;
@@ -1364,7 +1404,7 @@ fn run_cut_allocated(
             seconds,
             stopped_by: stopped_by.to_owned(),
         },
-        comparison: Phase::not_requested(),
+        comparison: Phase::not_requested_under(options.time_limit().is_some()),
         best_validation_rmse: best.rmse,
         best_validation_r2: best.hold_r2,
         best_program: Some(best.genome.clone()),
@@ -1374,6 +1414,7 @@ fn run_cut_allocated(
         observations_sha256: String::new(),
         rng_seed,
         budget,
+        time_limit: options.time_limit().map(|t| t.as_secs_f64()),
     };
     publish_cut_search(&mut search)?;
     Ok(search)
@@ -1537,7 +1578,7 @@ fn open_comparison(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<Option<Ve
         search.comparison = Phase {
             evaluation_limit: (search.budget.evaluations as u64)
                 .saturating_sub(search.completed_evaluations),
-            seconds_limit: (search.budget.seconds as f64 - search.seconds).max(0.0),
+            seconds_limit: search.time_limit.map(|limit| (limit - search.seconds).max(0.0)),
             stopped_by: STOPPED_BY_POOL.to_owned(),
             ..Phase::not_requested()
         };
@@ -1594,7 +1635,7 @@ fn remeasure_cut(
             "duplicate"
         } else if search.completed_evaluations >= search.budget.evaluations as u64 {
             STOPPED_BY_EVALUATIONS
-        } else if elapsed >= search.budget.seconds as f64 {
+        } else if search.time_limit.is_some_and(|limit| elapsed >= limit) {
             STOPPED_BY_SECONDS
         } else {
             "admitted"
@@ -1602,7 +1643,7 @@ fn remeasure_cut(
         admission(recorder, &draw, disposition);
         if !already
             && search.completed_evaluations < search.budget.evaluations as u64
-            && elapsed < search.budget.seconds as f64
+            && search.time_limit.is_none_or(|limit| elapsed < limit)
         {
             let observation = record_evaluation(recorder, &draw, clock, || {
                 evaluate_candidate(genome, cut, search.generations as usize, REMEASURE)
@@ -1627,7 +1668,7 @@ fn remeasure_cut(
 /// Record each cut's comparison outcome and best, and publish it.
 fn close_comparison(searches: &mut [CutSearch]) -> Result<()> {
     for search in searches.iter_mut() {
-        search.stopped_by = if search.seconds >= search.budget.seconds as f64 {
+        search.stopped_by = if search.time_limit.is_some_and(|limit| search.seconds >= limit) {
             STOPPED_BY_SECONDS
         } else if search.completed_evaluations >= search.budget.evaluations as u64 {
             STOPPED_BY_EVALUATIONS
@@ -1670,10 +1711,17 @@ fn publish_cut_search(search: &mut CutSearch) -> Result<()> {
     summary["schema"] = "jope.pipeline-search/v2".into();
     summary["engine"] = SEARCH_ENGINE.into();
     summary["budget_policy"] = BUDGET_POLICY.into();
-    summary["deadline_overrun"] = (search.seconds > search.budget.seconds as f64).into();
+    summary["deadline_overrun"] = search
+        .time_limit
+        .is_some_and(|limit| search.seconds > limit)
+        .into();
     summary["rng_seed"] = search.rng_seed.into();
     summary["budget_evaluations"] = search.budget.evaluations.into();
-    summary["budget_seconds"] = search.budget.seconds.into();
+    summary["budget_seconds"] = match search.time_limit {
+        Some(_) => search.budget.seconds.into(),
+        None => serde_json::Value::Null,
+    };
+    summary["temporal_limits_enabled"] = search.time_limit.is_some().into();
     summary["observations_sha256"] = search.observations_sha256.clone().into();
     let summary_bytes = serde_json::to_vec_pretty(&summary)?;
     let search_path = output.join("search.json");
@@ -1910,6 +1958,25 @@ mod tests {
                 .all(|s| s.stopped_by == STOPPED_BY_SECONDS
                     && s.comparison.completed_evaluations == 0)
         );
+    }
+
+    /// `Some` is the legacy bound, and `without_time_limit` yields `None`. Unlimited is never a
+    /// number, so the bound cannot be confused with a finite deadline.
+    #[test]
+    fn the_time_bound_is_optional_and_unlimited_is_never_a_number() {
+        let budget = Budget {
+            evaluations: 8,
+            seconds: 300,
+        };
+        let legacy = SearchOptions::new(budget, 1);
+        assert_eq!(legacy.time_limit(), Some(Duration::from_secs(300)));
+        assert_eq!(legacy.without_time_limit().time_limit(), None);
+        assert!(Budget {
+            evaluations: 0,
+            seconds: 300
+        }
+        .check_evaluations()
+        .is_err());
     }
 
     #[test]

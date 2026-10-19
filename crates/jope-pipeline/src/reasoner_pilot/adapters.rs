@@ -646,6 +646,167 @@ pub fn evaluate_episode_on_disjoint_folds(
         episode_failed: false,
     })
 }
+/// A5: a deterministic ridge fold fit over the `A` (fitting) rows. A candidate's canonical edit names
+/// its feature subset (column `j` is used when bit `j` of its `dup_key` is set), and the parameters are
+/// fitted on `A` alone. Selection scores `B`. `O` is read only by `score_assessment`, after the
+/// selection is frozen, so `o_reads` stays at zero during selection and reaches one at closure.
+pub struct RidgeFoldEvaluator<'a> {
+    features: &'a [Vec<f64>],
+    targets: &'a [f64],
+    a_rows: &'a [u32],
+    b_rows: &'a [u32],
+    o_rows: &'a [u32],
+    ridge_lambda: f64,
+    o_reads: std::cell::Cell<u64>,
+}
+
+impl<'a> RidgeFoldEvaluator<'a> {
+    pub fn new(
+        features: &'a [Vec<f64>],
+        targets: &'a [f64],
+        a_rows: &'a [u32],
+        b_rows: &'a [u32],
+        o_rows: &'a [u32],
+        ridge_lambda: f64,
+    ) -> Result<Self, AdapterError> {
+        check_disjoint(a_rows, b_rows, o_rows)?;
+        if !(ridge_lambda.is_finite() && ridge_lambda > 0.0) {
+            return Err(AdapterError::EvaluatorFailed(
+                "ridge lambda must be finite and positive".into(),
+            ));
+        }
+        let width = features.first().map_or(0, Vec::len);
+        if features.len() != targets.len()
+            || width == 0
+            || width > 64
+            || features.iter().any(|row| row.len() != width)
+        {
+            return Err(AdapterError::EvaluatorFailed(
+                "features must be a rectangular table of 1..=64 columns, one target per row".into(),
+            ));
+        }
+        for &row in a_rows.iter().chain(b_rows).chain(o_rows) {
+            if row as usize >= features.len() {
+                return Err(AdapterError::EvaluatorFailed(format!(
+                    "row {row} is outside the table"
+                )));
+            }
+        }
+        Ok(Self {
+            features,
+            targets,
+            a_rows,
+            b_rows,
+            o_rows,
+            ridge_lambda,
+            o_reads: std::cell::Cell::new(0),
+        })
+    }
+
+    /// How many times the `O` rows have been read. Selection never reads them.
+    pub fn o_reads(&self) -> u64 {
+        self.o_reads.get()
+    }
+
+    fn subset(&self, serialized: &str) -> Vec<usize> {
+        let mask = dup_key(serialized);
+        (0..self.features[0].len())
+            .filter(|&j| (mask >> j) & 1 == 1)
+            .collect()
+    }
+
+    fn design(&self, row: u32, subset: &[usize]) -> Vec<f64> {
+        let r = &self.features[row as usize];
+        std::iter::once(1.0)
+            .chain(subset.iter().map(|&j| r[j]))
+            .collect()
+    }
+
+    /// Ridge coefficients fitted on the `A` rows alone. The intercept is not penalised.
+    fn fit_on_a(&self, subset: &[usize]) -> Result<Vec<f64>, AdapterError> {
+        let dim = subset.len() + 1;
+        let mut gram = vec![vec![0.0; dim]; dim];
+        let mut rhs = vec![0.0; dim];
+        for &row in self.a_rows {
+            let x = self.design(row, subset);
+            let y = self.targets[row as usize];
+            for (i, (r, xi)) in rhs.iter_mut().zip(&x).enumerate() {
+                *r += xi * y;
+                for (g, xj) in gram[i].iter_mut().zip(&x) {
+                    *g += xi * xj;
+                }
+            }
+        }
+        for (i, row) in gram.iter_mut().enumerate().skip(1) {
+            row[i] += self.ridge_lambda;
+        }
+        solve_linear(gram, rhs)
+    }
+
+    fn rmse(&self, beta: &[f64], subset: &[usize], rows: &[u32]) -> f64 {
+        let sse: f64 = rows
+            .iter()
+            .map(|&row| {
+                let pred: f64 = beta
+                    .iter()
+                    .zip(self.design(row, subset))
+                    .map(|(b, x)| b * x)
+                    .sum();
+                let err = pred - self.targets[row as usize];
+                err * err
+            })
+            .sum();
+        (sse / rows.len() as f64).sqrt()
+    }
+}
+
+/// Gaussian elimination with partial pivoting. A pivot below `1e-12` refuses the fit rather than
+/// returning coefficients from a singular system.
+fn solve_linear(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Result<Vec<f64>, AdapterError> {
+    let n = b.len();
+    for col in 0..n {
+        let pivot = (col..n)
+            .max_by(|&i, &j| a[i][col].abs().total_cmp(&a[j][col].abs()))
+            .unwrap_or(col);
+        if a[pivot][col].abs() < 1e-12 {
+            return Err(AdapterError::EvaluatorFailed(
+                "singular normal equations on the fitting rows".into(),
+            ));
+        }
+        a.swap(col, pivot);
+        b.swap(col, pivot);
+        for row in col + 1..n {
+            let factor = a[row][col] / a[col][col];
+            let (upper, lower) = a.split_at_mut(row);
+            for (dst, src) in lower[0][col..].iter_mut().zip(&upper[col][col..]) {
+                *dst -= factor * src;
+            }
+            b[row] -= factor * b[col];
+        }
+    }
+    let mut x = vec![0.0; n];
+    for row in (0..n).rev() {
+        let tail: f64 = (row + 1..n).map(|k| a[row][k] * x[k]).sum();
+        x[row] = (b[row] - tail) / a[row][row];
+    }
+    Ok(x)
+}
+
+impl FoldEvaluator for RidgeFoldEvaluator<'_> {
+    fn score_selection(&self, serialized: &str) -> Result<(f64, u64), AdapterError> {
+        let subset = self.subset(serialized);
+        let beta = self.fit_on_a(&subset)?;
+        Ok((self.rmse(&beta, &subset, self.b_rows), 1))
+    }
+
+    fn score_assessment(&self, serialized: &str) -> Result<f64, AdapterError> {
+        self.o_reads.set(self.o_reads.get() + 1);
+        let subset = self.subset(serialized);
+        let beta = self.fit_on_a(&subset)?;
+        Ok(self.rmse(&beta, &subset, self.o_rows))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1021,6 +1182,123 @@ mod tests {
             ["WrapCombinator rank"]
         );
         assert!(out.epsilon_f > 0.0);
+    }
+
+    /// A5 fixture: 40 rows, 3 features, targets with a known linear signal and a small nonlinear term.
+    fn ridge_table() -> (Vec<Vec<f64>>, Vec<f64>) {
+        let features: Vec<Vec<f64>> = (0..40)
+            .map(|i| {
+                let t = i as f64;
+                vec![(t * 0.37).sin(), (t * 0.11).cos(), t / 40.0]
+            })
+            .collect();
+        let targets = features
+            .iter()
+            .map(|x| 2.0 * x[0] - x[2] + 0.1 * (7.0 * x[1]).sin())
+            .collect();
+        (features, targets)
+    }
+
+    fn ridge_cfg() -> SeedBudgetConfig {
+        SeedBudgetConfig {
+            route: "low64".into(),
+            initial_population: 64,
+            seed_genomes: 4,
+            low_budget_cap: 64,
+            fits_per_candidate: 1,
+        }
+    }
+
+    fn ridge_partitions() -> (Vec<u32>, Vec<u32>, Vec<u32>) {
+        ((0..20).collect(), (20..30).collect(), (30..40).collect())
+    }
+
+    /// The fit is strictly on `A`: moving the `B` and `O` targets leaves the coefficients unchanged.
+    /// On an exactly linear target the solver recovers the generating coefficients.
+    #[test]
+    fn ridge_fits_its_parameters_on_the_a_rows_alone() {
+        let (features, _) = ridge_table();
+        let targets: Vec<f64> = features
+            .iter()
+            .map(|x| 2.0 * x[0] - x[2] + 0.5)
+            .collect();
+        let (a, b, o) = ridge_partitions();
+        let fitted = RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3)
+            .unwrap()
+            .fit_on_a(&[0, 1, 2])
+            .unwrap();
+        let mut moved = targets.clone();
+        for &row in b.iter().chain(&o) {
+            moved[row as usize] = 1.0e6;
+        }
+        let refit = RidgeFoldEvaluator::new(&features, &moved, &a, &b, &o, 1e-3)
+            .unwrap()
+            .fit_on_a(&[0, 1, 2])
+            .unwrap();
+        assert_eq!(fitted, refit, "B or O targets moved the fitting-side coefficients");
+        let expected = [0.5, 2.0, 0.0, -1.0];
+        // The solver is exact: with the penalty at 1e-9 the generating coefficients come back to 1e-6.
+        // The 1e-3 fit above is a penalised fit, so its coefficients sit within the ridge bias.
+        let exact = RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-9)
+            .unwrap()
+            .fit_on_a(&[0, 1, 2])
+            .unwrap();
+        for (got, want) in exact.iter().zip(expected) {
+            assert!((got - want).abs() < 1e-6, "exact fit {exact:?} != {expected:?}");
+        }
+        for (got, want) in fitted.iter().zip(expected) {
+            assert!((got - want).abs() < 0.2, "penalised fit {fitted:?} strays from {expected:?}");
+        }
+    }
+
+    /// Selection runs with the `O` targets poisoned to NaN. It must still credit both candidates
+    /// and must never read a row of `O`. Only the closing assessment reads `O`, once.
+    #[test]
+    fn selection_never_reads_o_and_the_assessment_reads_it_once() {
+        let (features, clean) = ridge_table();
+        let (a, b, o) = ridge_partitions();
+        let script = ["WrapCombinator rank", "WrapCombinator ridge"];
+        let mut poisoned = clean.clone();
+        for &row in &o {
+            poisoned[row as usize] = f64::NAN;
+        }
+        let eval = RidgeFoldEvaluator::new(&features, &poisoned, &a, &b, &o, 1e-3).unwrap();
+        let mut journal = Journal::new(10, 100);
+        let selection =
+            run_fake_proposer_episode(&script, &mut journal, &ridge_cfg(), &eval).unwrap();
+        assert_eq!(selection.credited, 2);
+        assert_eq!(eval.o_reads(), 0, "selection read the O rows");
+
+        let y_a: Vec<f64> = a.iter().map(|&row| clean[row as usize]).collect();
+        let eval = RidgeFoldEvaluator::new(&features, &clean, &a, &b, &o, 1e-3).unwrap();
+        let mut journal = Journal::new(10, 100);
+        let episode = evaluate_episode_on_disjoint_folds(
+            &a,
+            &b,
+            &o,
+            &y_a,
+            &script,
+            &mut journal,
+            &ridge_cfg(),
+            &eval,
+            9.9,
+        )
+        .unwrap();
+        assert!(episode.selected.is_some());
+        assert!(episode.o_score.is_finite() && !episode.episode_failed);
+        assert_eq!(eval.o_reads(), 1, "O must be scored exactly once, after selection");
+    }
+
+    /// Overlapping partitions and non-finite lambda are refused before any fit runs.
+    #[test]
+    fn ridge_refuses_overlapping_partitions_and_a_bad_lambda() {
+        let (features, targets) = ridge_table();
+        let (a, b, _) = ridge_partitions();
+        let overlapping_o = vec![a[0], 35];
+        assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &overlapping_o, 1e-3).is_err());
+        let (a, b, o) = ridge_partitions();
+        assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 0.0).is_err());
+        assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, f64::NAN).is_err());
     }
 
     #[test]

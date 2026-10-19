@@ -224,6 +224,7 @@ mod tests {
                 .count() as u64,
             stopped_by: crate::search::STOPPED_BY_EVALUATIONS,
             seconds: 1.0,
+            time_limit: Some(600.0),
             exploration: crate::receipt::Phase::not_requested(),
             comparison: crate::receipt::Phase::not_requested(),
             best_validation_rmse: None,

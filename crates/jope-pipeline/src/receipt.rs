@@ -96,7 +96,8 @@ pub struct Seeding {
 #[serde(deny_unknown_fields)]
 pub struct Phase {
     pub evaluation_limit: u64,
-    pub seconds_limit: f64,
+    /// `null` only under the reasoner no-time-limit policy (`temporal_limits_enabled: false`).
+    pub seconds_limit: Option<f64>,
     pub completed_evaluations: u64,
     pub successful_measurements: u64,
     pub failed_measurements: u64,
@@ -106,15 +107,29 @@ pub struct Phase {
 
 impl Phase {
     pub fn not_requested() -> Self {
+        Self::not_requested_under(true)
+    }
+
+    /// A phase that was not requested. Its `seconds_limit` is `null` when temporal limits are disabled.
+    pub fn not_requested_under(temporal_enabled: bool) -> Self {
         Self {
             evaluation_limit: 0,
-            seconds_limit: 0.0,
+            seconds_limit: temporal_enabled.then_some(0.0),
             completed_evaluations: 0,
             successful_measurements: 0,
             failed_measurements: 0,
             seconds: 0.0,
             stopped_by: crate::search::NOT_REQUESTED.to_owned(),
         }
+    }
+}
+
+/// Equal when both are absent (the no-time-limit policy) or both are present and within 1e-9 s.
+fn same_seconds(recorded: Option<f64>, expected: Option<f64>) -> bool {
+    match (recorded, expected) {
+        (Some(r), Some(e)) => (r - e).abs() <= 1e-9,
+        (None, None) => true,
+        _ => false,
     }
 }
 
@@ -249,7 +264,12 @@ pub struct Search {
     pub rng_seed: u64,
     /// The `--budget` bounds, per cut.
     pub evaluations: u64,
-    pub seconds: u64,
+    /// `null` only under the reasoner no-time-limit policy (`temporal_limits_enabled: false`).
+    pub seconds: Option<u64>,
+    /// Recorded as `false` only under the reasoner no-time-limit policy. Absent means enabled, so
+    /// every historical receipt keeps its bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub temporal_limits_enabled: Option<bool>,
     /// Candidates alive per generation, and the transform depth they may reach.
     pub population: u64,
     pub max_transforms: u64,
@@ -535,11 +555,18 @@ impl Receipt {
         {
             errors.push("cut identities must match the distinct prepared cuts".into());
         }
+        // A bounded receipt carries seconds in 1..=MAX_SECONDS; an unbounded one carries none.
+        let budget_seconds_valid = match search.seconds {
+            Some(seconds) => {
+                search.temporal_limits_enabled.unwrap_or(true)
+                    && (1..=crate::search::MAX_SECONDS).contains(&seconds)
+            }
+            None => search.temporal_limits_enabled == Some(false),
+        };
         if search.budget_policy.as_deref() != Some(crate::search::BUDGET_POLICY)
             || search.evaluations == 0
             || search.evaluations > crate::search::MAX_EVALUATIONS as u64
-            || search.seconds == 0
-            || search.seconds > crate::search::MAX_SECONDS
+            || !budget_seconds_valid
         {
             errors.push("invalid v2 total budget or missing budget policy".into());
         }
@@ -575,6 +602,15 @@ impl Receipt {
                 errors.push(format!("cut {}: v2 requires phase accounting", cut.cut));
                 continue;
             };
+            // `seconds` is absent exactly when temporal limits are disabled; `seconds_limit` follows it.
+            let temporal_enabled = search.temporal_limits_enabled.unwrap_or(true);
+            if search.seconds.is_some() != temporal_enabled {
+                errors.push(format!(
+                    "cut {}: seconds must be null exactly when temporal_limits_enabled is false",
+                    cut.cut
+                ));
+            }
+            let limit = search.seconds.map(|s| s as f64);
             let (x, y) = (&a.exploration, &a.comparison);
             for phase in [x, y] {
                 if phase
@@ -584,8 +620,8 @@ impl Receipt {
                     || phase.completed_evaluations > phase.evaluation_limit
                     || !phase.seconds.is_finite()
                     || phase.seconds < 0.0
-                    || !phase.seconds_limit.is_finite()
-                    || phase.seconds_limit < 0.0
+                    || phase.seconds_limit.is_some() != temporal_enabled
+                    || phase.seconds_limit.is_some_and(|l| !l.is_finite() || l < 0.0)
                 {
                     errors.push(format!(
                         "cut {}: invalid phase outcomes or admission limit",
@@ -599,21 +635,21 @@ impl Receipt {
             } else {
                 search.evaluations
             };
-            let exploration_seconds = search.seconds as f64 / if reserve { 2.0 } else { 1.0 };
+            let exploration_seconds = limit.map(|s| s / if reserve { 2.0 } else { 1.0 });
             let comparison_limit = if reserve {
                 search.evaluations.saturating_sub(x.completed_evaluations)
             } else {
                 0
             };
             let comparison_seconds = if reserve {
-                (search.seconds as f64 - x.seconds).max(0.0)
+                limit.map(|s| (s - x.seconds).max(0.0))
             } else {
-                0.0
+                temporal_enabled.then_some(0.0)
             };
             if x.evaluation_limit != exploration_limit
                 || x.seconds_limit != exploration_seconds
                 || y.evaluation_limit != comparison_limit
-                || (y.seconds_limit - comparison_seconds).abs() > 1e-9
+                || !same_seconds(y.seconds_limit, comparison_seconds)
                 || cut.completed_evaluations > search.evaluations
                 || x.completed_evaluations.checked_add(y.completed_evaluations)
                     != Some(cut.completed_evaluations)
@@ -625,7 +661,7 @@ impl Receipt {
                 || !a.active_seconds.is_finite()
                 || a.active_seconds < 0.0
                 || (a.active_seconds - x.seconds - y.seconds).abs() > 1e-9
-                || a.deadline_overrun != (a.active_seconds > search.seconds as f64)
+                || a.deadline_overrun != limit.is_some_and(|s| a.active_seconds > s)
             {
                 errors.push(format!(
                     "cut {}: total budget/phase accounting mismatch",
@@ -637,7 +673,8 @@ impl Receipt {
                     x.completed_evaluations == x.evaluation_limit
                 }
                 crate::search::STOPPED_BY_SECONDS => {
-                    x.seconds >= x.seconds_limit && x.completed_evaluations < x.evaluation_limit
+                    x.seconds_limit.is_some_and(|l| x.seconds >= l)
+                        && x.completed_evaluations < x.evaluation_limit
                 }
                 crate::search::STOPPED_BY_EXHAUSTED => x.completed_evaluations < x.evaluation_limit,
                 _ => false,
@@ -647,7 +684,7 @@ impl Receipt {
             }
             let expected_stop = if !reserve {
                 x.stopped_by.as_str()
-            } else if a.active_seconds >= search.seconds as f64 {
+            } else if limit.is_some_and(|s| a.active_seconds >= s) {
                 crate::search::STOPPED_BY_SECONDS
             } else if cut.completed_evaluations >= search.evaluations {
                 crate::search::STOPPED_BY_EVALUATIONS
@@ -656,7 +693,7 @@ impl Receipt {
             };
             if cut.stopped_by != expected_stop
                 || (reserve && y.stopped_by != cut.stopped_by)
-                || (!reserve && *y != Phase::not_requested())
+                || (!reserve && *y != Phase::not_requested_under(temporal_enabled))
             {
                 errors.push(format!("cut {}: phase stop reason mismatch", cut.cut));
             }
