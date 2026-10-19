@@ -33,8 +33,8 @@ program-library and checkpoint views with source identities, observation age and
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
 | Rust tests | 5,570 listed in 26 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
-| CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 781 items over 25 lanes <sup>7</sup> |
+| CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
+| Coverage map | 780 items over 25 lanes <sup>7</sup> |
 | Capability matrix | 831 rows: 353 moved, 68 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
@@ -227,7 +227,7 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-Pull-request CI is `.github/workflows/ci.yml`: nine jobs on the self-hosted `jope-ci` runners.
+Pull-request CI is `.github/workflows/ci.yml`: ten jobs on the self-hosted `jope-ci` runners.
 Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated

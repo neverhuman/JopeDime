@@ -257,8 +257,54 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
+  observatory-ui:
+    needs: changes
+    runs-on: [self-hosted, linux, x64, jope-ci]
+    timeout-minutes: 15
+    env:
+      JOPE_UI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Node 26
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26.1.0'
+      - name: Typecheck, nonzero tests and production build
+        working-directory: web/training-dashboard
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JOPE_UI_EVIDENCE="$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$JOPE_UI_EVIDENCE"
+          test "$(git rev-parse HEAD)" = "$JOPE_UI_SOURCE_SHA"
+          node --version
+          npm --version
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm test -- --reporter=json --outputFile="$JOPE_UI_EVIDENCE/tests.json"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const r = JSON.parse(fs.readFileSync(`${process.env.JOPE_UI_EVIDENCE}/tests.json`, 'utf8'));
+          if (!(r.numTotalTests > 0) || r.numFailedTests !== 0 || !r.success) throw new Error('Nonzero passing frontend tests required');
+          fs.writeFileSync(`${process.env.JOPE_UI_EVIDENCE}/receipt.json`, JSON.stringify({schema:'jope.observatory-ui-ci/v1', source_sha:process.env.JOPE_UI_SOURCE_SHA, run_id:process.env.GITHUB_RUN_ID, attempt:process.env.GITHUB_RUN_ATTEMPT, node:process.version, executed:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, scope:'frontend fixtures; not live training qualification'}, null, 2));
+          JS
+          npm run build
+          sha256sum package-lock.json dist/index.html dist/assets/* > "$JOPE_UI_EVIDENCE/build-sha256.txt"
+      - name: Retain exact-head frontend evidence
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: observatory-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/observatory-ui/${{ github.run_id }}/${{ github.run_attempt }}/
+
   aggregate:
-    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke]
+    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui]
     if: always()
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 20
@@ -326,6 +372,31 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-e2e-smoke
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/e2e-smoke/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Collect frontend evidence
+        uses: ./.github/actions/download-ci-evidence
+        with:
+          name: observatory-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/observatory-ui/${{ github.run_id }}/${{ github.run_attempt }}/
+          into: target/ci-ui-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Require exact-head nonzero frontend tests
+        if: always()
+        env:
+          UI_RESULT: ${{ needs.observatory-ui.result }}
+        run: |
+          set -euo pipefail
+          test "$UI_RESULT" = success
+          python3 - <<'PY'
+          import json, os, pathlib
+          root = pathlib.Path('target/ci-ui-download') / os.environ['GITHUB_RUN_ID'] / os.environ['GITHUB_RUN_ATTEMPT']
+          receipts = list(root.rglob('receipt.json'))
+          assert len(receipts) == 1, 'one retained frontend receipt required'
+          r = json.loads(receipts[0].read_text())
+          assert r['schema'] == 'jope.observatory-ui-ci/v1'
+          assert r['source_sha'] == os.environ['JOPE_SOURCE_SHA']
+          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and r['attempt'] == os.environ['GITHUB_RUN_ATTEMPT']
+          assert r['executed'] > 0 and r['passed'] == r['executed'] and r['failed'] == 0
+          print('Exact-head frontend tests:', r['executed'], 'passed')
+          PY
       - name: Validate every required result
         if: always()
         env:
@@ -334,7 +405,9 @@ jobs:
           set -euo pipefail
           output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           mkdir -p "$output"
-          printf '%s\n' "$NEEDS_JSON" > "$output/needs.json"
+          printf '%s\n' "$NEEDS_JSON" > "$output/all-needs.json"
+          # UI is independently verified above; preserve the strict existing eight-lane set.
+          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); print(json.dumps(n))' > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once
