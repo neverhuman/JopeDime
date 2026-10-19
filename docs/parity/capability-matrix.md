@@ -25,7 +25,7 @@ you saw.
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-example | 6 | 0 | 6 | 0 | 0 | 0 |
+| new-example | 7 | 0 | 7 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **826** | **353** | **63** | **1** | **402** | **7** |
+| **total** | **827** | **353** | **64** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
@@ -879,3 +879,4 @@ you saw.
 | new-bin | (new) jope_support | crates/jope-learning/src/bin/jope_support.rs (jope_support) | jope-learning::support external_winner_freezes_version_with_finite_added_leaf; jope-learning::support actual_v1_policy_golden_matches_sampling_and_eos_likelihood | new | GB05/J13: local create-only versioned action support/import/verify/index/score and mismatch readout. Fixed deployed vocabulary, TRAIN provenance and caller-pinned support. All qualified=false until G12; no program execution or live objective change. |
 
 | new-bin | (new) local custody v2 | crates/jope-learning/src/bin/jope_custody.rs (jope_custody) | jope-learning::custody dry_run_and_fresh_process_completion_authenticate_all_files; jope-learning::custody all_publication_write_and_sync_failures_refuse_completed_readers | new | GB02: local pinned-input pack/readback/SHA, conservative keeper and25GB-day guard reports, bounded v2 archive verification and completion receipts. Research/source-only, qualified=false; no live S3 adapter, remote mutation, retention application or scoring/training authority. |
+| new-example | (new) shard index payload verifier | crates/jope-engine/examples/verify_shard_index.rs (verify_shard_index) | jope-parallel shard_index::tests::shard_index_payload_closure_verified | new | MR06: read-only payload digest verifier for historical shard-index directories (`shard.json`, `records.bin`, `labels.jsonl`) against recorded SHA-256 digests (`reference_v1` scope); qualifies nothing. |
