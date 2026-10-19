@@ -1,0 +1,10 @@
+question: Does the bounded Gaussian process CUDA kernel path maintain strict numerical envelope parity across extended multi-host rounds on the audited raw object-storage housing dataset slice?
+hypothesis: Executing repeated rounds across fleet GPU hosts under the bounded batch pair workspace ceiling preserves numerical parity and envelope verification on every evaluated case and host.
+controls: Pinned execution source commit, identical release binary and case matrix digests matching the prior hardware wave, exact object-storage dataset version and digest verification, and CPU reference comparison.
+execution: Executed the Gaussian process CUDA benchmark binary with explicit envelope verification across the synthetic grid and the prepared housing dataset slice over extended rounds on each fleet GPU host.
+effect: Every archived round output and evaluated case row satisfied strict numerical parity and envelope verification across all fleet GPU hosts on the housing dataset context without claiming solver-challenger superiority.
+stage: Shadow hardware kernel parity benchmark wave only; benchmark repetitions, seed labels, and numerical parity do not complete full scientific solver-challenger qualification.
+changed: Published the content-addressed archive bundle, independent restore and output-binding locators, row-selector summary trace, artifact registry entry, and public wave projection.
+counterevidence: The harvest script summary selector queried a missing case-identifier key and emitted null summary fields even though every underlying output row carried the housing dataset context; source-build attestation and full solver-challenger qualification remain open.
+falsifier: Any future parity divergence, envelope violation, or missing dataset context binding in the archived round outputs invalidates this hardware parity wave.
+reconstruction: Fetch the content-addressed archive bundle by exact object version, verify the compressed and decoded tar digests against the independent restore inventory, and check every round output digest and row status.
