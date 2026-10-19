@@ -59,8 +59,10 @@
     },
     {
       "bytes": 329860,
-      "current_local_exists": false,
-      "evidence_level": "GIT_PIN_FOUND_LOCAL_FILE_MISSING",
+      "current_local_exists": true,
+      "current_local_path": "/home/ubuntu/jope-evidence/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
+      "current_local_verified_utc": "2026-10-19T12:56:28Z",
+      "evidence_level": "GIT_PIN_FOUND_LOCAL_RECOVERED_SHA_VERIFIED",
       "historical_local_path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
       "id": "historical-20261009-neural-snapshot-pin",
       "scope": "Historical bounded research approval expires with its original run; not current production or GPU dispatch approval.",
