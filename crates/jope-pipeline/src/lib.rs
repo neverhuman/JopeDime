@@ -46,6 +46,7 @@ pub mod front_door;
 pub mod islands;
 pub mod kernel2;
 pub mod lineage;
+pub mod model_build;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;
 pub mod parallel;
