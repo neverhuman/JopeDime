@@ -202,6 +202,14 @@
       "log_sha256": "a5ca562e568569a140eaa12c8c9c80e30ab475b1a8d8040b2e6865071cf32c96"
     }
   ],
+  "candidate_source_scope": {
+    "focused_feature_test_commit_sha": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+    "focused_feature_test_feat_math_subtree_sha": "574982295b153aedcc75d42de61386e26ca622a5",
+    "identity_rebaseline_candidate_sha": "896e3740a5ce5b12c60284eb7d98945c4077fe99",
+    "identity_rebaseline_feat_math_subtree_sha": "1c521400e901035e2344289d1ab3c1a50ae1df74",
+    "feat_math_src_subtree_sha": "86f239e5fad6af4870576144ab0dfd09c7900893",
+    "implementation_src_unchanged_from_bca07ff6e_and_7dd3fbb90": true
+  },
   "compat_freeze_identity_rebaseline": {
     "decision_ledger": "crates/feat-math/tests/fixtures/compat_freeze/transitions/mr19_shared_dag_identity_rebaseline.v1.json",
     "fixture": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
@@ -209,6 +217,16 @@
     "fixture_after_sha256": "4cab1887f4e4558a5173a61c3a7a38282cda945a2d016d0fa7d6b7704abbf7a1",
     "regeneration_command": "JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12 cargo test --locked -p feat-math --test compat_freeze evaluator_identity_inputs_match_the_recorded_identity",
     "lineage_sources_fixture_modified": false,
+    "exact_head_ci": {
+      "run_id": 39244034738,
+      "head_sha": "896e3740a5ce5b12c60284eb7d98945c4077fe99",
+      "attempt": 1,
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at_utc": "2026-10-19T11:21:22Z",
+      "updated_at_utc": "2026-10-19T11:44:53Z"
+    },
     "announced_identity_moves": {
       "crates/feat-math/src/lib.rs": {
         "before_sha256": "dd6b753ef5e9315458480c52afe6c1d6c0b9b2c3cdb7bc05e99c708eb0b2491b",
@@ -227,7 +245,14 @@
       "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked -p feat-math --test compat_freeze --test historical_v1",
       "exit_code": 0,
       "tests": {"compat_freeze": 13, "historical_v1": 3},
-      "source_tree_commit": "7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12",
+      "parent_checkout_head_at_execution": "7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12",
+      "working_tree_state": "pre_commit_dirty_working_tree",
+      "log_mtime_utc": "2026-10-19T11:19:47.303138059Z",
+      "log_mtime_ns": 1792408787303138059,
+      "scope_caveat": "Pre-commit dirty working-tree observation based on 7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12 (log mtime 2026-10-19T11:19:47.303138059Z precedes commit 896e3740a5ce5b12c60284eb7d98945c4077fe99 at 2026-10-19T11:21:15Z while evaluator_identity.v1.json, transitions/mr19_shared_dag_identity_rebaseline.v1.json, and historical_v1.rs edits were uncommitted; exact full execution-tree digest was not contemporaneously captured). Not a clean 7dd3fbb90 or clean 896e3740a run; exact-head CI provides clean-source qualification.",
+      "git_archive_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS.tar.gz",
+      "git_archive_manifest_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS_MANIFEST.json",
+      "git_archive_member": "MR19_compat_freeze_historical_v1_7dd3fbb90_20261019T111936Z.log",
       "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_compat_freeze_historical_v1_7dd3fbb90_20261019T111936Z.log",
       "log_bytes": 1535,
       "log_sha256": "34ba714037fae54598a5aad013a1fa22054d67bc87de642ab81ce1403c7e91db"
@@ -236,7 +261,13 @@
       "whitespace": "git diff --check exit 0",
       "test_inventory": "cargo run -q --locked -p jope-records -- verify-test-inventory exit 0 (scripts/verify_test_inventory.py and hygiene_contracts do not exist in this repository)",
       "hygiene_script": "bash deploy/ci/check.sh exit 0",
-      "hygiene_log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_hygiene_check_7dd3fbb90.log"
+      "hygiene_log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_hygiene_check_7dd3fbb90.log",
+      "hygiene_log_bytes": 11259,
+      "hygiene_log_sha256": "385624d2c0a5923a4f72e998b4871740fb1c74f46836a716997492dcf50ce097",
+      "hygiene_log_mtime_ns": 1792408857666358727,
+      "git_archive_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS.tar.gz",
+      "git_archive_manifest_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS_MANIFEST.json",
+      "git_archive_member": "MR19_hygiene_check_7dd3fbb90.log"
     }
   },
   "ci_predecessor_failure": {
@@ -249,7 +280,26 @@
     "result": "1752 of 1753 tests passed",
     "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/PR381_rust_test2_118016798483.log",
     "log_bytes": 315967,
-    "log_sha256": "7d0fd23278c53158730c8348c26137be782bf523dfd900483e8b10988ce57e91"
+    "log_sha256": "7d0fd23278c53158730c8348c26137be782bf523dfd900483e8b10988ce57e91",
+    "log_mtime_ns": 1792408407340549739,
+    "git_archive_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS.tar.gz",
+    "git_archive_manifest_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS_MANIFEST.json",
+    "git_archive_member": "PR381_rust_test2_118016798483.log"
+  },
+  "compat_logs_git_capsule": {
+    "archive_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS.tar.gz",
+    "compressed_bytes": 78880,
+    "compressed_sha256": "9f0ce04eb7bd659c41089188cf49cae691bade68cb823281aa7b6f1ddb5b027a",
+    "decoded_tar_bytes": 337920,
+    "decoded_tar_sha256": "743b98d27e3a27f550c1d5b4c9b1051e3a4bb5a7d3ba872e7fac3ea2ba12e6c1",
+    "manifest_path": "docs/plans/major-release-20261018/receipts/artifacts/MR19_COMPAT_896E3740_LOGS_MANIFEST.json",
+    "manifest_bytes": 3114,
+    "manifest_sha256": "7261cd1ba51f5d50b795610c3c0546c6e19769e3e6c8d2fd8f8c84a56c8c702b",
+    "members": [
+      {"member": "PR381_rust_test2_118016798483.log", "bytes": 315967, "sha256": "7d0fd23278c53158730c8348c26137be782bf523dfd900483e8b10988ce57e91"},
+      {"member": "MR19_compat_freeze_historical_v1_7dd3fbb90_20261019T111936Z.log", "bytes": 1535, "sha256": "34ba714037fae54598a5aad013a1fa22054d67bc87de642ab81ce1403c7e91db"},
+      {"member": "MR19_hygiene_check_7dd3fbb90.log", "bytes": 11259, "sha256": "385624d2c0a5923a4f72e998b4871740fb1c74f46836a716997492dcf50ce097"}
+    ]
   },
   "preserved_predecessor_observations_and_failures": {
     "slice1_harvest_receipt": {

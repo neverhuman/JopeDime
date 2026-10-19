@@ -1,7 +1,7 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Announced identity-only successor for MR19 shared-node feature DAG evaluation count and invocation-local CSE cache. Exporting pub mod combinators in crates/feat-math/src/lib.rs moves the ADR-0004 evaluator identity. All default v1/v2 emitted bytes, behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
-  "plan_reference": "docs/plans/major-release-20261018/WORKPLAN.md §MR19",
+  "plan_reference": "docs/plans/major-release-20261018/GP_UPGRADE_WORKPLAN.md (docs/plans/major-release-20261018/MAJOR_RELEASE_TRACKER.json#MR19)",
   "pr_reference": "PR #381: feat(feat-math): MR19 shared-node feature DAG evaluation count & invocation-local CSE",
   "source_commit": "7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12",
   "fixtures": [
