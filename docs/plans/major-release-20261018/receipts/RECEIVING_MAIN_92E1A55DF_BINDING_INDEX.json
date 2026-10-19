@@ -1,0 +1,229 @@
+{
+  "schema": "jope.receiving-main-binding-index/v1",
+  "recorded_at_utc": "2026-10-19T08:52:30Z",
+  "owner": "2724936.captain_jopedime",
+  "coordinated_with": "1061448.jopedime_flywheel",
+  "independent_reviewer": "487851.jope_review_claude",
+  "receiving_main_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "receiving_main_tree": "21260d88039712669de215355944b366bb7d20ff",
+  "preserved_unmodified_private_artifacts": [
+    {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR06.json",
+      "git_path": "docs/plans/major-release-20261018/receipts/MR06.json",
+      "bytes": 6883,
+      "sha256": "f7c6f9ab8ef946de3abc2f6f48ebecc5069920621f49e36c7979d225097d0239",
+      "note": "Historical 9569bb60 MR06 receipt from PR #379; untouched."
+    },
+    {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12.json",
+      "git_path": "docs/plans/major-release-20261018/receipts/MR12.historical_9569bb60.json",
+      "bytes": 3205,
+      "sha256": "529d6ccc25e4be31490b0b63c1ea9048792780dbd14ebdd8aaf9a404223990b7",
+      "note": "Historical 9569bb60 MR12 receipt; untouched in private custody and archived by exact hash in git."
+    },
+    {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/REVERIFY_MR12_92e1a55df_20261019T0836Z.json",
+      "bytes": 2355,
+      "sha256": "51252b816f3eade107530d3199f0a615edfbc2857789f5444ab95ed5aff4a07c",
+      "note": "Flywheel PROPOSED draft with 9-char SHAs and case[2]->operation_profile mismatch; preserved unmodified in private custody and superseded by MR12_92e1a55df_qualification_20261019T0841Z.json."
+    }
+  ],
+  "receipts": [
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/MR03.json",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR03.json",
+      "bytes": 4848,
+      "sha256": "c48d53bf0b3bf6d509f0e775f30822a0f8e82159d1535f1405aa296e50e6dcad",
+      "original_sha256": "c48d53bf0b3bf6d509f0e775f30822a0f8e82159d1535f1405aa296e50e6dcad",
+      "copy_equals_original": true,
+      "note": "Receiving-main 92e1a55df284fe48643df266dcb29442aaea925e PASS receipt for MR03 (3/3 spq1_prereg_provenance)"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/MR06_92e1a55df_qualification_20261019T0821Z.json",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR06_92e1a55df_qualification_20261019T0821Z.json",
+      "bytes": 3337,
+      "sha256": "d7c6d55405de5d4d3735371f142deff758a760d0c99bbbeb15b2c584ceffdd24",
+      "original_sha256": "d7c6d55405de5d4d3735371f142deff758a760d0c99bbbeb15b2c584ceffdd24",
+      "copy_equals_original": true,
+      "note": "Receiving-main 92e1a55df284fe48643df266dcb29442aaea925e PARTIAL qualification receipt for MR06 (4/4 label_admission + 1/1 shard_index_payload_closure_verified; preserves historical MR06.json f7c6f9ab...)"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/MR12.historical_9569bb60.json",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12.json",
+      "bytes": 3205,
+      "sha256": "529d6ccc25e4be31490b0b63c1ea9048792780dbd14ebdd8aaf9a404223990b7",
+      "original_sha256": "529d6ccc25e4be31490b0b63c1ea9048792780dbd14ebdd8aaf9a404223990b7",
+      "copy_equals_original": true,
+      "note": "Historical 9569bb6076059ff66137a2a88b744b387cf07925 MR12 receipt archived unmodified by exact hash"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/MR12_71f33add4_harvest_20261019T0810Z.json",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12_71f33add4_harvest_20261019T0810Z.json",
+      "bytes": 3329,
+      "sha256": "5199ad733f6f644f6c080255be530e98874654eae09ba9d1cd7f22b3779a2bb7",
+      "original_sha256": "5199ad733f6f644f6c080255be530e98874654eae09ba9d1cd7f22b3779a2bb7",
+      "copy_equals_original": true,
+      "note": "Historical 71f33add4b59b89b589e939a8f0652e87d9b893b MR12 component harvest receipt preserved unmodified by exact hash"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/MR12_92e1a55df_qualification_20261019T0841Z.json",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12_92e1a55df_qualification_20261019T0841Z.json",
+      "bytes": 8969,
+      "sha256": "757a8d0e5bc3160e6ca5811167b266a06286c15704e867d1379d4bd0cbc16d04",
+      "original_sha256": "757a8d0e5bc3160e6ca5811167b266a06286c15704e867d1379d4bd0cbc16d04",
+      "copy_equals_original": true,
+      "note": "Receiving-main 92e1a55df284fe48643df266dcb29442aaea925e full jope.major_release_receipt.v1 PASS receipt for MR12 (7 unique tests across capability_join_audit and operation_profile)"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/MR12.json",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12_92e1a55df_qualification_20261019T0841Z.json",
+      "bytes": 8969,
+      "sha256": "757a8d0e5bc3160e6ca5811167b266a06286c15704e867d1379d4bd0cbc16d04",
+      "original_sha256": "757a8d0e5bc3160e6ca5811167b266a06286c15704e867d1379d4bd0cbc16d04",
+      "copy_equals_original": true,
+      "note": "Canonical git receipt slot for MR12 bound to receiving-main 92e1a55df284fe48643df266dcb29442aaea925e"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/MR17_MR19_PRODUCTION_READINESS_AUDIT_20261019T0841Z.json",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR17_MR19_PRODUCTION_READINESS_AUDIT_20261019T0841Z.json",
+      "bytes": 3475,
+      "sha256": "fd55f684dfe8ee7c5e224418bea35719d4545a7257cefbdd3d69957085424fe4",
+      "original_sha256": "fd55f684dfe8ee7c5e224418bea35719d4545a7257cefbdd3d69957085424fe4",
+      "copy_equals_original": true,
+      "note": "Bounded read-first production readiness audit of MR17 schema-key bridge and MR19 shared_feature_dag_cse prerequisites on 92e1a55df284fe48643df266dcb29442aaea925e"
+    }
+  ],
+  "logs": [
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/RECEIVING_MAIN_92E1A55DF_BINDING_INDEX.json#logs",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR03_spq1_prereg_provenance.f427d95e4.log",
+      "scope_commit": "f427d95e4b4a01f6faa4adfa442ac20cc17fa210",
+      "case": "MR03::spq1_prereg_provenance (PR #378 receiving main)",
+      "note": "3 passed; 0 failed; exit 0",
+      "bytes": 474,
+      "sha256": "ef8317081ffec82ff8c5a6f13bfc386d7ad9b66c6c35ffc2887186b47da6f604",
+      "original_sha256": "ef8317081ffec82ff8c5a6f13bfc386d7ad9b66c6c35ffc2887186b47da6f604",
+      "copy_equals_original": true,
+      "content_utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.04s\n     Running tests/spq1_prereg_provenance.rs (.agent/worktrees/fleet-main-296d07e1/target/debug/deps/spq1_prereg_provenance-505f106629fdbc07)\n\nrunning 3 tests\ntest verify_3arm_cohort_and_artifact_registry_roots ... ok\ntest artifact_location_registry_verified ... ok\ntest cohort_3arm_roots_verified ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n\n",
+      "storage_mode": "embedded_utf8_in_binding_index_preserves_trailing_blank_line_eof_bytes"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/RECEIVING_MAIN_92E1A55DF_BINDING_INDEX.json#logs",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR03_spq1_prereg_provenance.92e1a55df.log",
+      "scope_commit": "92e1a55df284fe48643df266dcb29442aaea925e",
+      "case": "MR03::spq1_prereg_provenance (PR #379 receiving main)",
+      "note": "3 passed; 0 failed; exit 0",
+      "bytes": 474,
+      "sha256": "a3a5fee58059b6143fdeb878492835b0357aa9267416b9ef84899df5afbb3200",
+      "original_sha256": "a3a5fee58059b6143fdeb878492835b0357aa9267416b9ef84899df5afbb3200",
+      "copy_equals_original": true,
+      "content_utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.97s\n     Running tests/spq1_prereg_provenance.rs (.agent/worktrees/fleet-main-296d07e1/target/debug/deps/spq1_prereg_provenance-505f106629fdbc07)\n\nrunning 3 tests\ntest verify_3arm_cohort_and_artifact_registry_roots ... ok\ntest artifact_location_registry_verified ... ok\ntest cohort_3arm_roots_verified ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s\n\n",
+      "storage_mode": "embedded_utf8_in_binding_index_preserves_trailing_blank_line_eof_bytes"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/RECEIVING_MAIN_92E1A55DF_BINDING_INDEX.json#logs",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_label_admission_v2_preflight_verified.92e1a55df.log",
+      "scope_commit": "92e1a55df284fe48643df266dcb29442aaea925e",
+      "case": "MR06::label_admission_v2_preflight_verified (4 unit tests)",
+      "note": "4 passed; 0 failed; exit 0",
+      "bytes": 614,
+      "sha256": "b4f740b22d665fd3df514c7b0bc4cefbed9572ef96052d47e42f6c89efafb8a8",
+      "original_sha256": "b4f740b22d665fd3df514c7b0bc4cefbed9572ef96052d47e42f6c89efafb8a8",
+      "copy_equals_original": true,
+      "content_utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s\n     Running unittests src/lib.rs (.agent/worktrees/fleet-main-296d07e1/target/debug/deps/jope_parallel-60df446f9565d7ef)\n\nrunning 4 tests\ntest label_admission::tests::historical_census_closure_verified ... ok\ntest label_admission::tests::census_payload_samples_and_promotion_gate ... ok\ntest label_admission::tests::shard_directory_payload_hashes_verified ... ok\ntest label_admission::tests::strict_v2_and_native_fit_binding_preflight ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 466 filtered out; finished in 0.03s\n\n",
+      "storage_mode": "embedded_utf8_in_binding_index_preserves_trailing_blank_line_eof_bytes"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/RECEIVING_MAIN_92E1A55DF_BINDING_INDEX.json#logs",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_shard_index_payload_closure_verified.92e1a55df.log",
+      "scope_commit": "92e1a55df284fe48643df266dcb29442aaea925e",
+      "case": "MR06::shard_index_payload_closure_verified (1 unit test)",
+      "note": "1 passed; 0 failed; exit 0",
+      "bytes": 378,
+      "sha256": "d2c93b245114f1e02d29cbc9ac78ac7b241d5259baca3e55946507b7f1dfdf93",
+      "original_sha256": "d2c93b245114f1e02d29cbc9ac78ac7b241d5259baca3e55946507b7f1dfdf93",
+      "copy_equals_original": true,
+      "content_utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.64s\n     Running unittests src/lib.rs (.agent/worktrees/fleet-main-296d07e1/target/debug/deps/jope_parallel-60df446f9565d7ef)\n\nrunning 1 test\ntest shard_index::tests::shard_index_payload_closure_verified ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 469 filtered out; finished in 0.10s\n\n",
+      "storage_mode": "embedded_utf8_in_binding_index_preserves_trailing_blank_line_eof_bytes"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/RECEIVING_MAIN_92E1A55DF_BINDING_INDEX.json#logs",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_capability_join_table_complete.fd1c0f065.log",
+      "scope_commit": "fd1c0f065138bb68f6786aa77494890f05dbe5d2",
+      "case": "MR12::capability_join_table_complete (historical fd1c0f065 log)",
+      "note": "1 passed; 0 failed; exit 0",
+      "bytes": 448,
+      "sha256": "d08d5e4358c85d0593a307c2e8aefb66cded85e36c34d123bacd72703a3f3c64",
+      "original_sha256": "d08d5e4358c85d0593a307c2e8aefb66cded85e36c34d123bacd72703a3f3c64",
+      "copy_equals_original": true,
+      "content_utf8": "   Compiling feat-math v0.3.0 (/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate/crates/feat-math)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.86s\n     Running tests/capability_join_audit.rs (target/debug/deps/capability_join_audit-34b06ea92d76dec5)\n\nrunning 1 test\ntest zero_unclassified_primitives_across_all_surfaces ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.45s\n\n",
+      "storage_mode": "embedded_utf8_in_binding_index_preserves_trailing_blank_line_eof_bytes"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/RECEIVING_MAIN_92E1A55DF_BINDING_INDEX.json#logs",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_roundtrip_and_differential_join_zero_drift.fd1c0f065.log",
+      "scope_commit": "fd1c0f065138bb68f6786aa77494890f05dbe5d2",
+      "case": "MR12::roundtrip_and_differential_join_zero_drift (historical fd1c0f065 log)",
+      "note": "1 passed; 0 failed; exit 0",
+      "bytes": 343,
+      "sha256": "fe4d7373de5882a6ec63b4070aca90aaa3807865af27e691bd56c7e394b4b801",
+      "original_sha256": "fe4d7373de5882a6ec63b4070aca90aaa3807865af27e691bd56c7e394b4b801",
+      "copy_equals_original": true,
+      "content_utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s\n     Running tests/capability_join_audit.rs (target/debug/deps/capability_join_audit-34b06ea92d76dec5)\n\nrunning 1 test\ntest roundtrip_and_differential_join_zero_drift ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.20s\n\n",
+      "storage_mode": "embedded_utf8_in_binding_index_preserves_trailing_blank_line_eof_bytes"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/mr12_main_rerun.71f33add4.log.txt",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/mr12_main_rerun.71f33add4.log",
+      "scope_commit": "71f33add4b59b89b589e939a8f0652e87d9b893b",
+      "case": "MR12::71f33add4 component harvest combined log (3 + 4 tests)",
+      "note": "7 unique tests passed; literal HEAD echo limitation noted",
+      "bytes": 1230,
+      "sha256": "db7482df525c7badb1d0d8c32f4aa0557f20723f30c311a1ba6693c6ee4a9225",
+      "original_sha256": "db7482df525c7badb1d0d8c32f4aa0557f20723f30c311a1ba6693c6ee4a9225",
+      "copy_equals_original": true,
+      "content_utf8": "HEAD=71f33add4b59b89b589e939a8f0652e87d9b893b\n   Compiling feat-math v0.3.0 (/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate/crates/feat-math)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.46s\n     Running tests/capability_join_audit.rs (/home/ubuntu/target/pr372-test/debug/deps/capability_join_audit-34b06ea92d76dec5)\n\nrunning 3 tests\ntest capability_join_table_complete ... ok\ntest roundtrip_and_differential_join_zero_drift ... ok\ntest zero_unclassified_primitives_across_all_surfaces ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s\n\nEXIT=0\n   Compiling feat-math v0.3.0 (/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate/crates/feat-math)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s\n     Running tests/operation_profile.rs (/home/ubuntu/target/pr372-test/debug/deps/operation_profile-96b473158f734415)\n\nrunning 4 tests\ntest elasticnet_profile_carries_l1_ratio_bound ... ok\ntest join_covers_every_registry_entry ... ok\ntest l1_ratio_unit_interval_is_enforced ... ok\ntest registry_identity_is_unchanged ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s\n\nEXIT2=0\nDONE\n",
+      "storage_mode": "standalone_file_and_embedded_utf8"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/mr12_main_rerun.71f33add4.sh.txt",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/mr12_main_rerun.71f33add4.sh",
+      "scope_commit": "71f33add4b59b89b589e939a8f0652e87d9b893b",
+      "case": "MR12::71f33add4 component harvest runner script",
+      "note": "literal HEAD=71f33add4b59b89b589e939a8f0652e87d9b893b echo script preserved",
+      "bytes": 463,
+      "sha256": "6ad9f4796b73c9d01bdf8b34483589acd37bf6638f97cdb61734acf36c404806",
+      "original_sha256": "6ad9f4796b73c9d01bdf8b34483589acd37bf6638f97cdb61734acf36c404806",
+      "copy_equals_original": true,
+      "content_utf8": "#!/usr/bin/env bash\ncd /home/ubuntu/JopeDime/.agent/worktrees/pr371-gate || exit 1\nexport CARGO_TARGET_DIR=/home/ubuntu/target/pr372-test CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only\necho \"HEAD=71f33add4b59b89b589e939a8f0652e87d9b893b\"\ncargo test --locked -p feat-math --test capability_join_audit -- --test-threads=1 2>&1\necho \"EXIT=$?\"\ncargo test --locked -p feat-math --test operation_profile -- --test-threads=1 2>&1\necho \"EXIT2=$?\"\necho DONE\n",
+      "storage_mode": "standalone_file_and_embedded_utf8"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/MR12_capability_join_audit_92e1a55df.log.txt",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_capability_join_audit_92e1a55df.log",
+      "scope_commit": "92e1a55df284fe48643df266dcb29442aaea925e",
+      "case": "MR12::capability_join_audit (3 unique tests on 92e1a55df)",
+      "note": "3 passed; 0 failed; exit 0",
+      "bytes": 479,
+      "sha256": "e0bcaeaddaa60f6220d7ebcdb395af224927bad11bccc691fb8e890006559d69",
+      "original_sha256": "e0bcaeaddaa60f6220d7ebcdb395af224927bad11bccc691fb8e890006559d69",
+      "copy_equals_original": true,
+      "content_utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.98s\n     Running tests/capability_join_audit.rs (/home/ubuntu/target/pr372-test/debug/deps/capability_join_audit-34b06ea92d76dec5)\n\nrunning 3 tests\ntest capability_join_table_complete ... ok\ntest roundtrip_and_differential_join_zero_drift ... ok\ntest zero_unclassified_primitives_across_all_surfaces ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s\n\nEXIT=0\n",
+      "storage_mode": "standalone_file_and_embedded_utf8"
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/MR12_operation_profile_92e1a55df.log.txt",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_operation_profile_92e1a55df.log",
+      "scope_commit": "92e1a55df284fe48643df266dcb29442aaea925e",
+      "case": "MR12::operation_profile (4 unique supporting tests on 92e1a55df)",
+      "note": "4 passed; 0 failed; exit 0",
+      "bytes": 501,
+      "sha256": "be0067418e151dcd0273fe92be3d4b76e2c1fa44d83bc36bc4cc007aeac2e541",
+      "original_sha256": "be0067418e151dcd0273fe92be3d4b76e2c1fa44d83bc36bc4cc007aeac2e541",
+      "copy_equals_original": true,
+      "content_utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s\n     Running tests/operation_profile.rs (/home/ubuntu/target/pr372-test/debug/deps/operation_profile-96b473158f734415)\n\nrunning 4 tests\ntest elasticnet_profile_carries_l1_ratio_bound ... ok\ntest join_covers_every_registry_entry ... ok\ntest l1_ratio_unit_interval_is_enforced ... ok\ntest registry_identity_is_unchanged ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s\n\nEXIT=0\n",
+      "storage_mode": "standalone_file_and_embedded_utf8"
+    }
+  ],
+  "all_copies_equal_originals": true
+}

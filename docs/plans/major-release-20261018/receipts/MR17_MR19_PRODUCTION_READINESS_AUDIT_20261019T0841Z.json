@@ -1,0 +1,43 @@
+{
+  "schema": "jope.mr17_mr19_production_readiness_audit.v1",
+  "recorded_at_utc": "2026-10-19T08:42:00Z",
+  "audited_main_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "audited_main_tree": "21260d88039712669de215355944b366bb7d20ff",
+  "auditor": "2724936.captain_jopedime",
+  "modules_inspected": [
+    "crates/feat-math/src/kernel/ir/graph.rs",
+    "crates/feat-math/src/kernel/ir/effects.rs",
+    "crates/feat-math/src/kernel/ir/canon.rs",
+    "crates/feat-math/src/kernel/ir/edit.rs",
+    "crates/feat-math/src/combinators/union.rs",
+    "crates/feat-math/src/combinators/route.rs",
+    "crates/feat-math/src/combinators/residual.rs"
+  ],
+  "findings": {
+    "mr17_schema_permutation_gap": {
+      "status": "PARTIAL_DISCONNECTED_SEAM",
+      "kernel_ir_graph_input_schema": "crates/feat-math/src/kernel/ir/graph.rs::InputSchema::identity() (lines 51-57) hashes columns in physical Vec<String> order, and ColumnRef (lines 67-79) binds both physical index: usize and key: String.",
+      "combinators_union_schema": "crates/feat-math/src/combinators/union.rs::Schema::new() (lines 35-55) sorts keys canonically (schema-v1:<sha256>) so shuffled columns share the same Schema::id(), and ColumnRef binds schema_id + key without physical index.",
+      "missing_seam": "combinators::union::Program is a standalone evaluator disconnected from kernel::ir::graph::Graph and GenomeIr. Unifying key-set canonical schema identity and key-resolved column projection into kernel::ir::graph::InputSchema/ColumnRef (or bridging combinators::union into kernel::ir::graph) is required before MR17/MR19 share one production semantic core."
+    },
+    "mr19_shared_feature_dag_cse_gap": {
+      "status": "TODO_PREREQ_SEAM_IDENTIFIED",
+      "kernel_ir_graph_lower": "crates/feat-math/src/kernel/ir/graph.rs::Graph::lower() (line 369) enforces a strictly linear stage chain (`if *input != index - 1 { return Err(\"executable adapter requires a linear stage chain\".into()); }`) and rejects Stack/Residual nodes.",
+      "combinators_union_evaluate": "crates/feat-math/src/combinators/union.rs::Program::evaluate() caches node outputs in `cache: Vec<Option<Matrix>>` across `Action::{Column,Union,Route}`, but lacks: (1) explicit `Let` bindings and `SelectFeature { input, column_index }` projection from multi-column intermediate nodes, (2) per-node evaluation counter (`eval_counts: Vec<usize>`) proving single evaluation under multi-consumer CSE fan-out, (3) transform/operator node execution within the bounded DAG evaluator while preserving unchanged legacy linear GenomeIr defaults, and (4) acceptance test target `crates/feat-math/tests/shared_feature_dag_cse.rs`."
+    }
+  },
+  "next_production_task_disposition": {
+    "selected_next_task": "MR19 (with MR17 schema-key bridge seam in crates/feat-math/src/kernel/ir/graph.rs + crates/feat-math/src/combinators/union.rs)",
+    "designated_owner": "1061448.jopedime_flywheel (subject to fresh path/checkout lease on .agent/worktrees/pr371-gate after the current receipts/tracker publication PR merges)",
+    "sole_integrator": "2724936.captain_jopedime",
+    "independent_reviewer": "487851.jope_review_claude",
+    "required_next_source_slice": [
+      "crates/feat-math/src/combinators/union.rs",
+      "crates/feat-math/src/kernel/ir/graph.rs",
+      "crates/feat-math/tests/shared_feature_dag_cse.rs",
+      "deploy/ci/coverage.json",
+      "docs/internal/core-ip/findings/test-inventory.json",
+      "README.md"
+    ]
+  }
+}

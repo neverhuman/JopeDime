@@ -1,0 +1,83 @@
+{
+  "schema": "jope.major_release_receipt.v1",
+  "id": "MR03",
+  "status": "PASS",
+  "sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "checkout_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "commit_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "tree_sha": "21260d88039712669de215355944b366bb7d20ff",
+  "reviewed_pr_head_sha": "27ad0b31bf6f05bd99e6cf5a9b60023073cb2ecb",
+  "pr_number": 378,
+  "pr_url": "https://github.com/neverhuman/JopeDime/pull/378",
+  "merged_at_utc": "2026-10-19T08:10:45Z",
+  "verified_at_utc": "2026-10-19T08:19:15Z",
+  "reverified_at": "2026-10-19T08:19:15Z",
+  "owner_screen": "2724936.captain_jopedime",
+  "reviewer_screen": "487851.jope_review_claude",
+  "gate": "G00",
+  "on_main": true,
+  "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+  "completion_criterion": "Publish 3-arm prospective full-qhat CPU cohort compact roots (1136/1136 contexts) and ROOT_TRAINING_ARTIFACT_LOCATION_GUIDE.md + registry on main",
+  "completion_criterion_proof": {
+    "production_verifier_module": "crates/jope-learning/src/research/root_verifier.rs",
+    "acceptance_test_suite": "crates/jope-learning/tests/spq1_prereg_provenance.rs",
+    "pr378_ci_run_id": 39213352624,
+    "pr378_aggregate_job_id": 117948457474,
+    "pr378_independent_review_id": 5568617718,
+    "pr378_independent_reviewer": "neverhumanbot",
+    "pr378_merge_commit": "f427d95e4b4a01f6faa4adfa442ac20cc17fa210",
+    "pr378_pre_merge_readback": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR378_pre_merge_readback.json",
+    "prior_pr363_publication": {
+      "pr_number": 363,
+      "reviewed_pr_head_sha": "47f61d8a1e500020ca99fe382100f03dc11083f9",
+      "merged_at_utc": "2026-10-18T16:48:03Z",
+      "wave_manifest_sha256": "e393e6d9e19fe5019885f0035b4cf9049ee52dea9327b91f1269eb8bdd81ab2b",
+      "wave_card_sha256": "8e804b497cc72bca49767b666dd3a790498b290cd3cb0949c109eb8277d0cd12",
+      "wave_context_sha256": "921c94d299db320e9a841fd9101071419f799c09b571718c5e418c5d8291f533",
+      "wave_metrics_sha256": "97b1d30183370220a50335875037cb9f3d6c1352e2a5299eea72482387ea8120"
+    }
+  },
+  "case_to_test_map": [
+    {
+      "acceptance_case": "cohort_3arm_roots_verified",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked -p jope-learning --test spq1_prereg_provenance -- --nocapture",
+      "test_or_code": "crates/jope-learning/tests/spq1_prereg_provenance.rs::cohort_3arm_roots_verified + verify_3arm_cohort_and_artifact_registry_roots",
+      "exit_code": 0,
+      "passed": true,
+      "tests_collected": 3,
+      "tests_passed": 3,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR03_spq1_prereg_provenance.92e1a55df.log",
+      "log_sha256": "a3a5fee58059b6143fdeb878492835b0357aa9267416b9ef84899df5afbb3200",
+      "f427d95e4_log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR03_spq1_prereg_provenance.f427d95e4.log",
+      "f427d95e4_log_sha256": "ef8317081ffec82ff8c5a6f13bfc386d7ad9b66c6c35ffc2887186b47da6f604",
+      "started_at_utc": "2026-10-19T08:19:10Z",
+      "completed_at_utc": "2026-10-19T08:19:13Z"
+    },
+    {
+      "acceptance_case": "artifact_location_registry_verified",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked -p jope-learning --test spq1_prereg_provenance -- --nocapture",
+      "test_or_code": "crates/jope-learning/tests/spq1_prereg_provenance.rs::artifact_location_registry_verified + verify_3arm_cohort_and_artifact_registry_roots",
+      "exit_code": 0,
+      "passed": true,
+      "tests_collected": 3,
+      "tests_passed": 3,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR03_spq1_prereg_provenance.92e1a55df.log",
+      "log_sha256": "a3a5fee58059b6143fdeb878492835b0357aa9267416b9ef84899df5afbb3200",
+      "f427d95e4_log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR03_spq1_prereg_provenance.f427d95e4.log",
+      "f427d95e4_log_sha256": "ef8317081ffec82ff8c5a6f13bfc386d7ad9b66c6c35ffc2887186b47da6f604",
+      "started_at_utc": "2026-10-19T08:19:10Z",
+      "completed_at_utc": "2026-10-19T08:19:13Z"
+    }
+  ],
+  "prior_evidence_sha": [
+    "14e11bb09dfd98b1058a135265b7984bdb8583b3",
+    "4b46c7c0f07278254b3fc7d409ad872211fbcb0b",
+    "d4218f1a4f55d49ce12ba5ecbe37fe072f777f25",
+    "fd1c0f065138bb68f6786aa77494890f05dbe5d2",
+    "9569bb6076059ff66137a2a88b744b387cf07925",
+    "71f33add4b59b89b589e939a8f0652e87d9b893b",
+    "f427d95e4b4a01f6faa4adfa442ac20cc17fa210"
+  ],
+  "historical_receipt_preserved": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/MR03.historical_pass_20261018T2346Z.json",
+  "reviewer_verdict_ref": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR378_review_27ad0b31.json"
+}

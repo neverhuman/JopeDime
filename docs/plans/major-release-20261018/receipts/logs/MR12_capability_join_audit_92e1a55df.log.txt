@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.98s
+     Running tests/capability_join_audit.rs (/home/ubuntu/target/pr372-test/debug/deps/capability_join_audit-34b06ea92d76dec5)
+
+running 3 tests
+test capability_join_table_complete ... ok
+test roundtrip_and_differential_join_zero_drift ... ok
+test zero_unclassified_primitives_across_all_surfaces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s
+
+EXIT=0

@@ -1,0 +1,66 @@
+{
+  "schema": "jope.mr12_component_harvest_receipt.v1",
+  "id": "MR12",
+  "recorded_at_utc": "2026-10-19T08:11:30Z",
+  "owner_screen": "1061448.jopedime_flywheel",
+  "packaged_by": "2724936.captain_jopedime",
+  "worktree": "/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate",
+  "source_claim": {
+    "script_printed_literal_head": "71f33add4b59b89b589e939a8f0652e87d9b893b",
+    "attestation_type": "owner_pinned_literal_echo_in_script",
+    "monitor_observed_worktree_state": "detached HEAD 71f33add4b59b89b589e939a8f0652e87d9b893b during run window",
+    "limitation": "The runner script echoes literal HEAD=71f33add4b59b89b589e939a8f0652e87d9b893b rather than dynamically invoking git rev-parse HEAD at execution time; no retroactive dynamic runtime attestation is manufactured. Historical MR12.json and fd1c0f065 logs remain untouched."
+  },
+  "preserved_artifacts": {
+    "log": {
+      "original_path": "/home/ubuntu/target/mr12_main_rerun.log",
+      "durable_evidence_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/mr12_main_rerun.71f33add4.log",
+      "bytes": 1230,
+      "sha256": "db7482df525c7badb1d0d8c32f4aa0557f20723f30c311a1ba6693c6ee4a9225",
+      "original_mtime_utc": "2026-10-19T07:27:21.724623526Z"
+    },
+    "script": {
+      "original_path": "/home/ubuntu/target/mr12_main_rerun.sh",
+      "durable_evidence_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/mr12_main_rerun.71f33add4.sh",
+      "bytes": 463,
+      "sha256": "6ad9f4796b73c9d01bdf8b34483589acd37bf6638f97cdb61734acf36c404806",
+      "original_mtime_utc": "2026-10-19T07:27:11.758439149Z"
+    },
+    "owner_summary_ref": {
+      "path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/REVERIFY_OWNER_71f33add4_20261019T0755Z.json",
+      "sha256": "4857207bba8170538d1186f7dc1df61d0d9c445c8f17e1c693031dbde3b31e3e"
+    }
+  },
+  "executed_suites": [
+    {
+      "command": "cargo test --locked -p feat-math --test capability_join_audit -- --test-threads=1",
+      "binary": "/home/ubuntu/target/pr372-test/debug/deps/capability_join_audit-34b06ea92d76dec5",
+      "exit_code": 0,
+      "tests_collected": 3,
+      "tests_passed": 3,
+      "cases": [
+        "capability_join_table_complete",
+        "roundtrip_and_differential_join_zero_drift",
+        "zero_unclassified_primitives_across_all_surfaces"
+      ]
+    },
+    {
+      "command": "cargo test --locked -p feat-math --test operation_profile -- --test-threads=1",
+      "binary": "/home/ubuntu/target/pr372-test/debug/deps/operation_profile-96b473158f734415",
+      "exit_code": 0,
+      "tests_collected": 4,
+      "tests_passed": 4,
+      "cases": [
+        "elasticnet_profile_carries_l1_ratio_bound",
+        "join_covers_every_registry_entry",
+        "l1_ratio_unit_interval_is_enforced",
+        "registry_identity_is_unchanged"
+      ]
+    }
+  ],
+  "dependencies_and_publication_disposition": {
+    "mr11_dependency_status": "PASS on main (crates/feat-math/tests/registry_v2_90_primitives.rs)",
+    "publication_owner": "2724936.captain_jopedime",
+    "next_gate": "Bind Git publication/context to actual receiving-main integration after PR #378 (merged f427d95e4b4a01f6faa4adfa442ac20cc17fa210) and PR #379 (60308c2e06214ce057738b1a17d35eb36e964aa0) complete without altering frozen PR #379 for this packaging."
+  }
+}

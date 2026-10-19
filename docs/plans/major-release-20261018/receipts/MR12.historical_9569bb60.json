@@ -1,0 +1,52 @@
+{
+  "schema": "jope.major_release_receipt.v1",
+  "id": "MR12",
+  "status": "PASS",
+  "on_main": true,
+  "sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+  "checkout_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+  "verified_at_utc": "2026-10-19T04:23:32Z",
+  "reverified_at": "2026-10-19T04:23:32Z",
+  "owner_screen": "1061448.jopedime_flywheel",
+  "reviewer_screen": "487851.jope_review_claude",
+  "gate": "G00",
+  "pinned_baseline_main_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+  "pr_number": 370,
+  "review_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR370_review_5f627c2e.json",
+  "ci_run_id": 39163464903,
+  "completion_criterion": "Build generated capability join across registry_v2, OperationProfile, native/challenger policy masks, evaluators, and Rust/Python emitters",
+  "completion_criterion_proof": "OperationProfile (crates/feat-math/src/kernel/operation_profile.rs) and 5-surface capability join audit (crates/feat-math/tests/capability_join_audit.rs) merged on origin/main via PR #370 (14e11bb09dfd98b1058a135265b7984bdb8583b3); zero unclassified primitives and zero roundtrip/differential drift across all 90 registry_v2 primitives. Re-verified on origin/main 4b46c7c0f07278254b3fc7d409ad872211fbcb0b at 2026-10-19T02:27:10Z (zero crates/ diff from fd1c0f065138bb68f6786aa77494890f05dbe5d2).",
+  "case_to_test_map": [
+    {
+      "acceptance_case": "capability_join_table_complete",
+      "command": "cargo test -p feat-math --test capability_join_audit -- --exact zero_unclassified_primitives_across_all_surfaces",
+      "test_or_code": "crates/feat-math/tests/capability_join_audit.rs::zero_unclassified_primitives_across_all_surfaces",
+      "exit_code": 0,
+      "passed": true,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_capability_join_table_complete.fd1c0f065.log",
+      "log_sha256": "d08d5e4358c85d0593a307c2e8aefb66cded85e36c34d123bacd72703a3f3c64",
+      "started_at_utc": "2026-10-18T23:48:54.969599+00:00",
+      "completed_at_utc": "2026-10-18T23:48:56.362289+00:00"
+    },
+    {
+      "acceptance_case": "roundtrip_and_differential_join_zero_drift",
+      "command": "cargo test -p feat-math --test capability_join_audit -- --exact roundtrip_and_differential_join_zero_drift",
+      "test_or_code": "crates/feat-math/tests/capability_join_audit.rs::roundtrip_and_differential_join_zero_drift",
+      "exit_code": 0,
+      "passed": true,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_roundtrip_and_differential_join_zero_drift.fd1c0f065.log",
+      "log_sha256": "fe4d7373de5882a6ec63b4070aca90aaa3807865af27e691bd56c7e394b4b801",
+      "started_at_utc": "2026-10-18T23:48:56.368415+00:00",
+      "completed_at_utc": "2026-10-18T23:48:56.993881+00:00"
+    }
+  ],
+  "tree_sha": "30efa6648141aa6cb3d5c6aabe4ecce378b8af83",
+  "prior_evidence_sha": [
+    "14e11bb09dfd98b1058a135265b7984bdb8583b3",
+    "4b46c7c0f07278254b3fc7d409ad872211fbcb0b",
+    "d4218f1a4f55d49ce12ba5ecbe37fe072f777f25",
+    "fd1c0f065138bb68f6786aa77494890f05dbe5d2",
+    "ff784ec6bf8566a326c1ae16e38abafa4b450a6f"
+  ],
+  "commit_sha": "9569bb6076059ff66137a2a88b744b387cf07925"
+}

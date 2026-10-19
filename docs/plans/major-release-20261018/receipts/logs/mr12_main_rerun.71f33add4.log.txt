@@ -1,0 +1,27 @@
+HEAD=71f33add4b59b89b589e939a8f0652e87d9b893b
+   Compiling feat-math v0.3.0 (/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate/crates/feat-math)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.46s
+     Running tests/capability_join_audit.rs (/home/ubuntu/target/pr372-test/debug/deps/capability_join_audit-34b06ea92d76dec5)
+
+running 3 tests
+test capability_join_table_complete ... ok
+test roundtrip_and_differential_join_zero_drift ... ok
+test zero_unclassified_primitives_across_all_surfaces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s
+
+EXIT=0
+   Compiling feat-math v0.3.0 (/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate/crates/feat-math)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s
+     Running tests/operation_profile.rs (/home/ubuntu/target/pr372-test/debug/deps/operation_profile-96b473158f734415)
+
+running 4 tests
+test elasticnet_profile_carries_l1_ratio_bound ... ok
+test join_covers_every_registry_entry ... ok
+test l1_ratio_unit_interval_is_enforced ... ok
+test registry_identity_is_unchanged ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+EXIT2=0
+DONE
