@@ -34,7 +34,23 @@ for before in old['tasks']:
     assert set(before['acceptance_cases']) <= set(after['acceptance_cases']), before['id']
     assert after['completion_criterion'] == before['completion_criterion'], before['id']
     if after['exact_acceptance_test'] != before['exact_acceptance_test']:
-        assert after['exact_acceptance_test'] == before['exact_acceptance_test'].replace('-p jope-engine ','-p jope-parallel '), before['id']
+        if before['id'] == 'MR09':
+            # SC-DEC-184Q: preserve the old blueprint and accept exactly this reviewed
+            # real example route. This is not permission for arbitrary command changes.
+            assert before['exact_acceptance_test'] == 'cargo run --release -p feat-math --bin gpr_cuda_bench -- --cases benchmarks/gpr_cuda_bench/cases.json --verify-envelope', 'MR09_before'
+            assert after.get('baseline_blueprint_acceptance_test') == before['exact_acceptance_test'], 'MR09_blueprint_retained'
+            assert after['exact_acceptance_test'] == 'cargo run --release -p jope-parallel --features neural --example gpr_cuda_bench -- --root "${JOPE_GPR_BENCH_ROOT:?set the admitted prepared-data root}" --cases benchmarks/gpr_cuda_bench/cases.json --output "${JOPE_GPR_BENCH_OUTPUT:?set a fresh receipt output path}" --device cuda:0 --verify-envelope', 'MR09_runtime_command'
+            transition = after.get('acceptance_command_transition', {})
+            assert transition.get('schema') == 'jope.acceptance-command-transition/v1', 'MR09_transition_schema'
+            assert transition.get('decision') == 'SC-DEC-184Q', 'MR09_transition_authority'
+            assert transition.get('decision_sha256') == '50ec2257659f1d1d03abc6da69956eb2b18596923d1bcba2b08fd36244279d9a', 'MR09_transition_authority_digest'
+            assert transition.get('baseline_ref') == '118f25cbdf3e148dc96abbaa2cbd5fb5c46090b6', 'MR09_transition_baseline'
+            runtime = 'crates/jope-engine/examples/gpr_cuda_bench.rs'
+            assert transition.get('runtime_source') == runtime, 'MR09_runtime_path'
+            assert transition.get('runtime_source_sha256') == hashlib.sha256((here.parents[2]/runtime).read_bytes()).hexdigest(), 'MR09_runtime_source_identity'
+            assert after['status'] == 'partial', 'MR09_status_requires_new_qualification'
+        else:
+            assert after['exact_acceptance_test'] == before['exact_acceptance_test'].replace('-p jope-engine ','-p jope-parallel '), before['id']
     assert set(before['deps']) <= set(after['deps']), before['id']
 
 visiting, visited = set(), set()

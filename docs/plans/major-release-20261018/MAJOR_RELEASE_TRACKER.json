@@ -454,7 +454,7 @@
         "legacy_or_gate": "GPU-E1-XBABE123"
       },
       "completion_criterion": "Execute GPU-E1 gpr_cuda_bench benchmark suite across xbabe1 (RTX 4090), xbabe2 (RTX 3090), and xbabe3 (RTX 3090) and commit hardware receipts",
-      "exact_acceptance_test": "cargo run --release -p jope-parallel --features neural --example gpr_cuda_bench -- --cases benchmarks/gpr_cuda_bench/cases.json --verify-envelope",
+      "exact_acceptance_test": "cargo run --release -p jope-parallel --features neural --example gpr_cuda_bench -- --root \"${JOPE_GPR_BENCH_ROOT:?set the admitted prepared-data root}\" --cases benchmarks/gpr_cuda_bench/cases.json --output \"${JOPE_GPR_BENCH_OUTPUT:?set a fresh receipt output path}\" --device cuda:0 --verify-envelope",
       "acceptance_cases": [
         "xbabe1_rtx4090_gpr_cuda_bench_pass",
         "xbabe2_rtx3090_gpr_cuda_bench_pass",
@@ -489,9 +489,20 @@
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR09.json"
       },
       "reviewer_screen": "487851.jope_review_claude",
-      "status": "pass",
+      "status": "partial",
       "evidence_completed": "/home/ubuntu/jope-evidence/major-release-20261018/MR09/bench_xbabe1_cuda0.json,bench_xbabe2_cuda0.json,bench_xbabe3_cuda0.json",
-      "source_coverage_path": "docs/plans/major-release-20261018/GP_SPEC_COVERAGE.json"
+      "source_coverage_path": "docs/plans/major-release-20261018/GP_SPEC_COVERAGE.json",
+      "baseline_blueprint_acceptance_test": "cargo run --release -p feat-math --bin gpr_cuda_bench -- --cases benchmarks/gpr_cuda_bench/cases.json --verify-envelope",
+      "status_rationale": "PARTIAL (matching /home/ubuntu/jope-evidence/major-release-20261018/verify/MR09.json at 9569bb6076059ff66137a2a88b744b387cf07925 / 2026-10-19T04:23:32Z and 180/180 archive 9a8751a6... at 14e11bb09dfd98b1058a135265b7984bdb8583b3): finite parity/latency subsets completed across xbabe1/2/3 with Matern kernel dropped; three case commands in verify/MR09.json verify historical 35-rep summary JSON and hashes, not a full current-head GPU-E1 execution with Matern and source-build attestation.",
+      "acceptance_command_transition": {
+        "schema": "jope.acceptance-command-transition/v1",
+        "decision": "SC-DEC-184Q",
+        "decision_sha256": "50ec2257659f1d1d03abc6da69956eb2b18596923d1bcba2b08fd36244279d9a",
+        "baseline_ref": "118f25cbdf3e148dc96abbaa2cbd5fb5c46090b6",
+        "runtime_source": "crates/jope-engine/examples/gpr_cuda_bench.rs",
+        "runtime_source_sha256": "93359a1d2c4b165c0a9dbb4b7c7a22d5b26eccb4a87a5bfb5ddc8dd8099bfa54",
+        "qualification": "historical finite kernel benchmark evidence remains partial; no new execution or serving/scientific admission"
+      }
     },
     {
       "id": "MR10",
@@ -1718,7 +1729,10 @@
       "owner_screen": "2830191.jopedime_agy",
       "deps": [
         "MR01",
-        "MR03"
+        "MR03",
+        "MR20",
+        "MR30",
+        "MR43"
       ],
       "gate": "G10",
       "spec_mapping": {
@@ -2576,12 +2590,12 @@
       "source_coverage_path": "docs/plans/major-release-20261018/GP_SPEC_COVERAGE.json"
     }
   ],
-  "updated_utc": "2026-10-19T08:52:30Z",
+  "updated_utc": "2026-10-19T17:36:59.718537+00:00",
   "status_counts": {
     "todo": 41,
-    "pass": 4,
+    "pass": 3,
     "in_progress": 1,
-    "partial": 1
+    "partial": 2
   },
   "owner_counts": {
     "2830191.jopedime_agy": 21,
