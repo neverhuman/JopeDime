@@ -114,7 +114,7 @@
       "deps": [
         "C01"
       ],
-      "state": "in_progress_uncommitted_owner_source",
+      "state": "source_committed_under_owner_review_corrections",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C05 \u2014 Concrete AutoML roster and leak-free CV"
@@ -124,6 +124,12 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1720-pipeline-source-progress-correction.json",
           "sha256": "1c75b5472de5745c8d0b943921495a6c9d39d43573f27fe2451cd05e587020f8",
           "qualification": "Source progress only; uncommitted, not reviewed or integration-ready. Earlier idle inference from stale/incomplete hardcopy withdrawn. No causality claim that this packet resumed the work."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w2_b3385995e_20261019T1823Z.json",
+          "sha256": "9c42fb5efc66d696e39aa7ef0d52c883b865ea815334e70849b1bac7d0e82e48",
+          "commit_sha": "b3385995e49df1d7464683c60271f0478ca45905",
+          "qualification": "Independentread-onlysourceverdictNOTREADY: productioncaller andmeasuredphysicalstarts pending; authoredfixturesunexecuted; localcommitonlySC184T/V. NotnativeGitHubapproval."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C05"
@@ -137,7 +143,7 @@
         "C04",
         "C05"
       ],
-      "state": "in_progress_uncommitted_owner_source",
+      "state": "source_committed_under_owner_review_corrections",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C06 \u2014 Ensemble, refit, persistence, fresh-process test score"
@@ -147,6 +153,12 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1720-pipeline-source-progress-correction.json",
           "sha256": "1c75b5472de5745c8d0b943921495a6c9d39d43573f27fe2451cd05e587020f8",
           "qualification": "Source progress only; uncommitted, not reviewed or integration-ready. Earlier idle inference from stale/incomplete hardcopy withdrawn. No causality claim that this packet resumed the work."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w2_b3385995e_20261019T1823Z.json",
+          "sha256": "9c42fb5efc66d696e39aa7ef0d52c883b865ea815334e70849b1bac7d0e82e48",
+          "commit_sha": "b3385995e49df1d7464683c60271f0478ca45905",
+          "qualification": "Independentread-onlysourceverdictNOTREADY: productioncaller andmeasuredphysicalstarts pending; authoredfixturesunexecuted; localcommitonlySC184T/V. NotnativeGitHubapproval."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C06"
@@ -223,7 +235,7 @@
       "deps": [
         "C01"
       ],
-      "state": "blocked_projection_source_and_metric_corrections",
+      "state": "published_integration_branch_pending_ci_review_main",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C11 \u2014 Preserve completed research and publish compact Git waves now"
@@ -243,6 +255,17 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1750-c11-source-index-audit.json",
           "sha256": "cf630e2e1d09967523aaed3f3c3e96853f6255b99e64a1396de2893221ca8cdd",
           "qualification": "Independentpackpreservation holds; pendingcards have absentP01Gitobject and wrongmemberpaths/claims/pointers/numericcontext. Exactcorrectivepacket44390cf4 deliveredtocaptain/Admiral; nomainpublicationclaim."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1820-c11/STATIC_AUDIT.json",
+          "sha256": "e53fcfde0d4f3c0174cd783e2199b12c52d01ba4714831453c35220241537c45",
+          "qualification": "Static18assertion/pointer/member/index/budget audit; previousfullrestore proofs retained. Correctedcatalogpayloadtotals; no Rust test execution."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1820-c11/GIT_PUBLICATION_RECEIPT.json",
+          "sha256": "9665d7e67ba4f1855c846c6bfdf840800412537fddc661f9b82a90a2b4ef43a3",
+          "commit_sha": "6995a2672347fb3fc89d3e00103a78a18747cff4",
+          "qualification": "Pushedcompactwavecards/catalog/runbook on soleintegrationbranch; not main or wholeC11complete."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C11"
@@ -400,5 +423,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T18:06:43.498532+00:00"
+  "last_evidence_update_utc": "2026-10-19T18:33:27.144532+00:00"
 }
