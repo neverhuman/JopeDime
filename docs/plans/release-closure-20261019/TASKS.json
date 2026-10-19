@@ -103,12 +103,18 @@
       "deps": [
         "C01"
       ],
-      "state": "in_progress",
+      "state": "in_progress_uncommitted_owner_source",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C05 \u2014 Concrete AutoML roster and leak-free CV"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1720-pipeline-source-progress-correction.json",
+          "sha256": "1c75b5472de5745c8d0b943921495a6c9d39d43573f27fe2451cd05e587020f8",
+          "qualification": "Source progress only; uncommitted, not reviewed or integration-ready. Earlier idle inference from stale/incomplete hardcopy withdrawn. No causality claim that this packet resumed the work."
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C05"
     },
     {
@@ -120,12 +126,18 @@
         "C04",
         "C05"
       ],
-      "state": "in_progress",
+      "state": "in_progress_uncommitted_owner_source",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C06 \u2014 Ensemble, refit, persistence, fresh-process test score"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1720-pipeline-source-progress-correction.json",
+          "sha256": "1c75b5472de5745c8d0b943921495a6c9d39d43573f27fe2451cd05e587020f8",
+          "qualification": "Source progress only; uncommitted, not reviewed or integration-ready. Earlier idle inference from stale/incomplete hardcopy withdrawn. No causality claim that this packet resumed the work."
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C06"
     },
     {
@@ -372,5 +384,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T17:44:54.753068+00:00"
+  "last_evidence_update_utc": "2026-10-19T17:47:40.672221+00:00"
 }

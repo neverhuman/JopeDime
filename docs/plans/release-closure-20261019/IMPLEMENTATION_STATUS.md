@@ -19,7 +19,7 @@ The full C00–C19 workplan, README and agent entry guide were committed at `aca
 ## Next owner actions
 
 - Main `9f8d1a74ab08fc200214a82beaf2ee96e316061a`: PR384 ordinarily merged after exact-head CI and independent approval. At17:42Z no open Jope PRs; main-guard and full-main cpu-2 pass, cpu-1 still executing. No claim that all receiving-main CI passes.
-- W2 remains at `3b48922bc0e8bc7afdfd4a724cda4cc52ae41a32`. Actual screen inspection shows a stopped completion and an incomplete pending continuation prompt; captain must preserve input and deliver/verify the C05/C06 continuation. Outer refit, fresh-process reload, real neural executor and registry publication remain open.
+- W2 remains at `3b48922bc0e8bc7afdfd4a724cda4cc52ae41a32`. An earlier screen snapshot appeared stopped with pending input; that idle inference is withdrawn. A subsequent17:46 refresh verified uncommitted refit/AutoML/persistence/ensemble source and an active compiler check in the same owner lane (screen reports14.96s success). This is real source progress, not a stopped/reviewed integration handoff or executed test evidence. Real neural execution and registry publication remain open.
 - W integration owner retains the existing checkout. Next PR waits for receiving-main validation and stopped disjoint source/publication packets, then final exact-head CI/review, ordinary protected merge and receiving-main validation.
 - xbabe3 root98% and xbabe2 root96%: captain owns ranked scratch inventory plus restoration/consumer closure. No symlink, linked-containing folder, unique/ignored data, active checkout or uncertified S3 version is eligible for deletion.
 
