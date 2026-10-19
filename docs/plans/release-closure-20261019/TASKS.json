@@ -72,7 +72,7 @@
       "deps": [
         "C01"
       ],
-      "state": "in_progress_complete_pinned_download_locally_tested_runtime_publication_pending",
+      "state": "in_progress_atomic_version_cache_locally_tested_cli_runtime_publication_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C03 \u2014 P02 immutable encoder/policy release set"
@@ -116,6 +116,17 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_e6f02c3b_c03_download_and_v3_manifest_v4_20261019.json",
           "sha256": "46a3208a3e2cbc82f8df5c46e811f92934a3cf05ebdbb6825c2e720082f7b60e",
           "qualification": "Independent read-only review e6f/7d7: no blocking findings; actual17release tests/cited logs verified. Byte closure only; no nativeapproval/cacheCLI/licence/runtime/realpins/neuralexecutor/pilotadmission. Requiredfixtureexecutions alreadyhave49dataset/17release receipts; docs now explicitlyrecord modelinjected caller vs lowerlayerrealHTTP limitation."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-2054/cache/SOURCE_DELIVERY.json",
+          "sha256": "480dca3a504a5f848916ce12b24c8c8d4e9963236478b7e9d4241c6832897390",
+          "commit_sha": "e45b2f639a9cd735879309ff0f0bcc81496dea3e",
+          "qualification": "Atomic descriptor-relative Linux cache source: native NOREPLACE, exact pinned manifest/bundle/payload reread, offline frozen reload, no symlink following, no overwrite/repair/automatic deletion.28 release cases PASS including11 cache faults/concurrency;0failed/ignored,3unrelatedfiltered; scoped models/datasets all-target clippy-Dwarnings/fmt/prose/diff PASS. New deterministic staging-name substitution failure preserved then fixed by NOFOLLOW inode/device identity check. Minimal direct already-locked rustix1.1.4 fs edge. macOS source only; no real pins/CLI/licence/runtime/training/serving qualification; final exact-head review pending."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_f573fb07_residual_warning_and_docs_delta_20261019.json",
+          "sha256": "d0c661698e84bc2b1ad7f078009ead4f5b5d766f406c96b17434634977898a24",
+          "qualification": "Independent read-only f573/a3 delta review PASS on inspected residual initializer semantics/docs/ledger and existing exact logs; no blocking items; no unchanged test reruns; not native approval or review of later e45 atomic-cache source. SC184AN additive erratum preserves historical source/time/failure identities."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
@@ -535,5 +546,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T20:45:34.938797+00:00"
+  "last_evidence_update_utc": "2026-10-19T21:12:52.196420+00:00"
 }
