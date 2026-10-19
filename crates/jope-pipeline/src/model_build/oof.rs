@@ -80,6 +80,12 @@ pub struct FoldRecord {
 /// use jope_pipeline::model_build::VerifiedFold;
 /// let _ = VerifiedFold { record: unimplemented!() };
 /// ```
+///
+/// ```compile_fail
+/// use jope_pipeline::model_build::VerifiedFold;
+/// fn needs_serialize<T: serde::Serialize>() {}
+/// needs_serialize::<VerifiedFold>();
+/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VerifiedFold {
     record: FoldRecord,

@@ -829,3 +829,58 @@ fn a_record_read_back_from_disk_reloads() {
     )
     .unwrap();
 }
+
+/// A fold record edited in serialised form is refused by the bundle it claims to belong to. The
+/// edit is made to the JSON, the record is read back, and validation runs against the bundle.
+#[test]
+fn a_tampered_serialised_fold_record_is_refused_by_validation() {
+    let u = regression_union();
+    let id = identity(&u);
+    let expected = expected_plan(&plan(Task::Regression, &u));
+    let verified = ridge_bakeoff(&u, &id).remove(0);
+    let edits: Vec<fn(&mut serde_json::Value)> = vec![
+        // A row that was scored moves into the fitting side: the fold would train on its own rows.
+        |v| {
+            let scored = v["scoring_row_ids"][0].clone();
+            v["fitting_row_ids"].as_array_mut().unwrap().push(scored);
+        },
+        // The recorded artifact no longer matches the bundle's artifact for that fold.
+        |v| v["fitted_artifact_sha256"] = "f".repeat(64).into(),
+        // The record claims a different request.
+        |v| v["request_sha256"] = "e".repeat(64).into(),
+        // The record claims a status that is not verified.
+        |v| v["status"] = serde_json::json!("unknown"),
+    ];
+    for (index, edit) in edits.into_iter().enumerate() {
+        let tampered: Vec<FoldRecord> = verified
+            .records
+            .iter()
+            .enumerate()
+            .map(|(i, v)| {
+                let mut value = serde_json::to_value(v.record()).unwrap();
+                if i == 0 {
+                    edit(&mut value);
+                }
+                serde_json::from_value(value).unwrap()
+            })
+            .collect();
+        assert!(
+            verified
+                .bundle
+                .validate_against(&expected, &tampered)
+                .is_err(),
+            "tampering {index} was not refused"
+        );
+    }
+    assert!(verified
+        .bundle
+        .validate_against(
+            &expected,
+            &verified
+                .records
+                .iter()
+                .map(|v| v.record().clone())
+                .collect::<Vec<_>>()
+        )
+        .is_ok());
+}
