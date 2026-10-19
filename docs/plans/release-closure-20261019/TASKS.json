@@ -400,6 +400,12 @@
           "order_sha256": "189fdbde55ff8e5408ae8d775c31f55f40ad50909a0c797e71f5670210b7d4c6",
           "hold_clarification_sha256": "4d6bfe0784d18f0ed225c7e49d1ed0a3e089da6fa2b5a32b49bf9ed3621561cf",
           "qualification": "Human local-CI direction independently read in chat01a1559b; compile-only hold superseded for mechanical local cargo tests. No remote CI dispatch; independent review and ordinary protected merge retained. Training/refit/self-play execution remains held."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1850/flywheel-local/CALLER_RUNTIME_RECEIPT.json",
+          "sha256": "a04efa06514079386097a24f33813e580b28b69ff75dd0b024085e8cb7f60c44",
+          "commit_sha": "24ac3bf8775ac8025496193e19e7381409a913ea",
+          "qualification": "Newpacket-v2 actualmodel-storecaller qualified locally atcleanpinnedhead:19executed/passed,0failed/skipped,30explicitlyexcluded; eventlocal-proof,notfullrust-testlaneorhostedCI. Full49datasetlibrary/11modelreleaseprevioussourceproofretained."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C14",
@@ -512,5 +518,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T19:43:09.516591+00:00"
+  "last_evidence_update_utc": "2026-10-19T19:45:40.962502+00:00"
 }
