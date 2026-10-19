@@ -375,6 +375,11 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-2154/C12_REVIEW_LOCATOR_ERRATUM.json",
           "sha256": "28236f791e11ba4aa8871820595db19de3f2f454c5271976d81753abcf12c018",
           "qualification": "Additive answer to review7ed499ee provenancegap: exactv3correctionreceiptdb7e8518 plus existingv2packetdirectory, no inventedv3directory. Exact d0b9 restoration.json /decoded_tar_bytes19097600 and /decoded_tar_sha2565ee8b746 located inGitblobcae27529 and independentfull163receipt37376226. Peerreview7ed scope/pinsPASS remains preserved; erratum notyetre-reviewed. No newS3GET/test/run."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_5619dfe0_ci_scratch_and_provenance_20261019.json",
+          "sha256": "cf23e225242cac02ce1fd9a039618ad7759fe1eebf5b9dacc5b729fe31968241",
+          "qualification": "Reviewerlocatesdb7e8518 v3correctionreceiptthroughadditive28236f79erratum andcloses prior7ed499ee missing-v3-packet locatorgap. No archive rerun/mainmerge/scientificgain claim."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C11"
@@ -474,6 +479,11 @@
           "sha256": "1729e62c4fb07e28ac09cc0bda30cae6121f01382be0fa016315f668e5705506",
           "commit_sha": "587bae4bba340454ca062eae30d5bbf849737620",
           "qualification": "Captainfrozen89e3patch handedsoleWroot by8d299185. Fix passingGPtestscratchgrowth, keepassertion/child/compilerfailureevidence. OriginalsuccesscleanupreproFAILac8026d2 retained;3newlifecyclecases+repeatedemission+strictSymbolicC++ actual5top-levelPASS,2childentrypoints executedbyparent. Targetedclippy-Dwarnings/fmt/prose/diffPASS;5newsuccessdirs absent,originalfailure15B sentinel retained/copied. Full336compile/run gate notrerun; finalfrozenheadCI/independentreview/protectedmerge pending. No historicalvolume/worktree/S3/modelcachecleanup or newlane."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_5619dfe0_ci_scratch_and_provenance_20261019.json",
+          "sha256": "cf23e225242cac02ce1fd9a039618ad7759fe1eebf5b9dacc5b729fe31968241",
+          "qualification": "Independentread-onlysource587/head5619 reviewPASS,no blocking source/fixturedefect. Exactdd95diff/blob/logs/inventoryverified; macro-generatedtestcountcorrected; actual5selectedtop-leveltests,14normalinventory/1ignoredentrypoint. Source-scope only, notnativeGitHubapproval/full336gate/mainmerge or hostcleanup. Captainimplementationadoption9106c204 existsatCI/CAPTAIN_IMPLEMENTATION_DIFF_ADOPTION_587BAE_20261019.json observed22:20; source587/head5619/dd95sectionsmatchGit. Secondaryhistoricalmanifestfieldsnotadoptedasnewscientificauthority."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C14",
@@ -586,5 +596,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T22:09:19.596250+00:00"
+  "last_evidence_update_utc": "2026-10-19T22:21:19.241303+00:00"
 }
