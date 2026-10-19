@@ -1,0 +1,108 @@
+{
+  "schema": "jope.major_release_receipt.v1",
+  "id": "MR06",
+  "status": "PARTIAL",
+  "on_main": true,
+  "sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+  "checkout_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+  "verified_at_utc": "2026-10-19T06:02:36Z",
+  "reverified_at": "2026-10-19T04:23:32Z",
+  "owner_screen": "1061448.jopedime_flywheel",
+  "reviewer_screen": "487851.jope_review_claude",
+  "gate": "G-AUTH-02",
+  "pinned_baseline_main_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+  "pr_number": 376,
+  "review_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR376_pre_merge_readback.json",
+  "ci_run_id": 39194967191,
+  "completion_criterion": "Implement strict parallel.label_admission.v2 & native_fit_policy_binding preflight validator and historical 7,877-shard (23,631-key) payload hash verifier",
+  "completion_criterion_proof": "PARTIAL: Strict parallel.label_admission.v2 preflight validator and 5 fail-closed shard directory payload hash verifier functions merged on origin/main via PR #370 (14e11bb09dfd98b1058a135265b7984bdb8583b3). Per partial-source rule, MR06 remains PARTIAL until all 7,877 historical S3 shard directories (23,631 objects) have body SHA-256 digests verified.",
+  "case_to_test_map": [
+    {
+      "acceptance_case": "label_admission_v2_preflight_verified",
+      "command": "cargo test -p jope-parallel --lib label_admission::tests::strict_v2_and_native_fit_binding_preflight -- --exact",
+      "test_or_code": "crates/jope-engine/src/label_admission.rs::tests::strict_v2_and_native_fit_binding_preflight",
+      "exit_code": 0,
+      "passed": true,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_label_admission_v2_preflight_verified.9569bb607.log",
+      "log_sha256": "5201ecb3436d8f77d6d7ea6c4aba88c92201da6224440ed1ee5ccb63b53c6a0a",
+      "verified_at_utc": "2026-10-19T04:19:29Z"
+    },
+    {
+      "acceptance_case": "historical_7877_shard_directory_hashes_verified",
+      "command": "cargo test --locked -p jope-parallel --lib shard_index::tests::shard_index_payload_closure_verified -- --exact --nocapture",
+      "test_or_code": "crates/jope-engine/src/shard_index.rs::tests::shard_index_payload_closure_verified",
+      "exit_code": 0,
+      "passed": true,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_historical_7877_shard_directory_hashes_verified.9569bb607.rerun.log",
+      "log_sha256": "d2627e30e5a46d58ff4dd5b0019a7ba8dcedcd4eeaad802af50b1d467b42744f",
+      "closure_log_path": "/home/ubuntu/jope-evidence/major-release-20261018/MR06_7877_verify_run_main_9569bb60.log",
+      "closure_log_sha256": "0a285aade5a593850a905d490fa691fe1b496296f00c346ef6e1c8ab97b727d1",
+      "verified_at_utc": "2026-10-19T04:19:29Z",
+      "tests_run": 1,
+      "checkout_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+      "correction": "Previous case 1 named shard_index_payload_hashes_verified, which does not exist on main; its log ran zero tests. Corrected to the real test and rerun CPU-only on 9569bb60 with 1 test run."
+    }
+  ],
+  "tree_sha": "30efa6648141aa6cb3d5c6aabe4ecce378b8af83",
+  "prior_evidence_sha": [
+    "14e11bb09dfd98b1058a135265b7984bdb8583b3",
+    "4b46c7c0f07278254b3fc7d409ad872211fbcb0b",
+    "d4218f1a4f55d49ce12ba5ecbe37fe072f777f25",
+    "fd1c0f065138bb68f6786aa77494890f05dbe5d2"
+  ],
+  "commit_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+  "main_guard_run_39188989744": "PASS",
+  "mr06_pr376_merged_on_main": {
+    "pr_number": 376,
+    "head_sha": "c9f1fbc95eb61e9e86fa48fc86ff0d72b4bb55d7",
+    "merge_commit": "9569bb6076059ff66137a2a88b744b387cf07925",
+    "merged_at": "2026-10-19T04:07:49Z",
+    "review_id": 5566718304,
+    "reviewer": "neverhumanbot",
+    "ci_run_id": 39194967191,
+    "unit_test": "jope-parallel shard_index::tests::shard_index_payload_closure_verified (1 passed; 0 failed)",
+    "live_7877_shard_closure": "verified_shards=7877 (exit 0 on 9569bb6076059ff66137a2a88b744b387cf07925)"
+  },
+  "main_reverification_log": "/home/ubuntu/jope-evidence/major-release-20261018/MR06_7877_verify_run_main_9569bb60.log",
+  "reviewed_pr_head_sha": "c9f1fbc95eb61e9e86fa48fc86ff0d72b4bb55d7",
+  "review_id": 5566718304,
+  "historical_7877_shard_closure_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR06_7877_shard_closure_receipt.json",
+  "corrections": [
+    {
+      "at_utc": "2026-10-19T06:02:36Z",
+      "note": "Case 1 test name corrected; case 2 test name corrected in the same way; case 2 example run (7877 verified) remains the one recorded on 28005df70."
+    }
+  ],
+  "prior_failed_or_zero_test_runs": [
+    {
+      "acceptance_case": "historical_7877_shard_directory_hashes_verified",
+      "wrong_test_name": "shard_index::tests::shard_index_payload_hashes_verified",
+      "tests_run": 0,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_historical_7877_shard_directory_hashes_verified.9569bb607.log",
+      "log_sha256": "1769bac7945add53d125adf9de6d2b61c0c3449c2be87be51808f0403fa5a571",
+      "reason": "Retained as historical zero-test failure before 2026-10-19T06:02:36Z test-name fix to shard_index::tests::shard_index_payload_closure_verified."
+    }
+  ],
+  "historical_7877_closure_reconciliation": {
+    "checkout_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+    "tree_sha": "30efa6648141aa6cb3d5c6aabe4ecce378b8af83",
+    "command": "cargo run -q --locked -p jope-parallel --example verify_shard_index -- /home/ubuntu/target/historical_index.json /home/ubuntu/jope-evidence/xbabe2-migration-20260914/accepted60000-restored/parallel 7877",
+    "verified_shards": 7877,
+    "expected_shards": 7877,
+    "exit_code": 0,
+    "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/MR06_7877_verify_run_main_9569bb60.log",
+    "log_sha256": "0a285aade5a593850a905d490fa691fe1b496296f00c346ef6e1c8ab97b727d1",
+    "verifier_code_comparison": {
+      "28005df70_example_sha256": "aedd5f3404f85a1959dbed1094ec5c9da8da15ed23dbb915dcb8b1bc7adbad52",
+      "9569bb6076_example_sha256": "b6532817e2046d8fb92f62e011de8d37024debef2c6a52249dbd78f29e5d728c",
+      "9569bb6076_shard_index_rs_sha256": "0f7809df973335cca797653208bbf1c520225cab93a2c7c6e045b68673581ba6",
+      "equivalence_note": "verify_shard_index function body and verify_shard_directory_payload_hashes call are identical; PR #376 moved verify_shard_index from jope_parallel::label_admission to jope_parallel::shard_index to preserve label_admission.rs compat-freeze lineage."
+    }
+  },
+  "original_28005df70_closure_log": {
+    "checkout_sha": "28005df700d81f39ab51d796ea3a4f77db9277b5",
+    "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/MR06_7877_verify_run.log",
+    "log_sha256": "4c2486e02ea868fda5271928fd3e007a8f21f179b4bd2c06c919eea4a5756280"
+  },
+  "reconciled_at_utc": "2026-10-19T06:16:33Z"
+}
