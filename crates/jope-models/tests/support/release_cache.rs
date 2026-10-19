@@ -292,4 +292,72 @@ mod cache_tests {
         m.load_cache(&cache, PayloadLimits::default()).unwrap();
         assert!(!format!("{m:?}").contains("manifest_bytes"));
     }
+
+    #[test]
+    fn unexpected_cached_entries_refuse_reload_and_reuse_without_repair() {
+        for subdir in ["", "bundles", "payloads"] {
+            let scratch = tempfile::tempdir().unwrap();
+            let cache = ModelsCache::at(scratch.path().join("models"));
+            let release = snapshot();
+            let dir = release.install_cache(&cache).unwrap();
+            let extra = dir.join(subdir).join("unexpected");
+            fs::write(&extra, b"preserve unexpected bytes").unwrap();
+            assert!(release
+                .metadata()
+                .load_cache(&cache, PayloadLimits::default())
+                .is_err());
+            assert!(release.install_cache(&cache).is_err());
+            assert_eq!(fs::read(extra).unwrap(), b"preserve unexpected bytes");
+        }
+    }
+
+    #[test]
+    fn unexpected_staged_files_directories_and_symlinks_never_publish() {
+        for subdir in ["", "bundles", "payloads"] {
+            for kind in 0..3 {
+                let scratch = tempfile::tempdir().unwrap();
+                let cache = ModelsCache::at(scratch.path().join("models"));
+                let release = snapshot();
+                let outside = scratch.path().join("outside");
+                fs::write(&outside, b"keep").unwrap();
+                let result = release.install_cache_with_hook(&cache, |stage| {
+                    let extra = stage.join(subdir).join("unexpected");
+                    match kind {
+                        0 => fs::write(extra, b"extra")?,
+                        1 => fs::create_dir(extra)?,
+                        _ => symlink(&outside, extra)?,
+                    }
+                    Ok(())
+                });
+                assert!(result.is_err());
+                assert!(!target(&cache, release.metadata()).exists());
+                assert_eq!(fs::read(&outside).unwrap(), b"keep");
+                assert_eq!(
+                    fs::read_dir(cache.root.join("releases")).unwrap().count(),
+                    1
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn unexpected_non_utf8_cached_names_are_refused() {
+        use std::os::unix::ffi::OsStringExt;
+        for subdir in ["", "bundles", "payloads"] {
+            let scratch = tempfile::tempdir().unwrap();
+            let cache = ModelsCache::at(scratch.path().join("models"));
+            let release = snapshot();
+            let dir = release.install_cache(&cache).unwrap();
+            let extra = dir
+                .join(subdir)
+                .join(std::ffi::OsString::from_vec(vec![0xff]));
+            fs::write(&extra, b"keep").unwrap();
+            assert!(release
+                .metadata()
+                .load_cache(&cache, PayloadLimits::default())
+                .is_err());
+            assert!(release.install_cache(&cache).is_err());
+            assert_eq!(fs::read(extra).unwrap(), b"keep");
+        }
+    }
 }

@@ -51,7 +51,7 @@ impl VerifiedReleaseManifest {
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(super) mod disk {
     use super::*;
-    use rustix::fs::{mkdirat, open, openat, renameat_with, Mode, OFlags, RenameFlags};
+    use rustix::fs::{mkdirat, open, openat, renameat_with, Dir, Mode, OFlags, RenameFlags};
     use rustix::io::Errno;
     use std::ffi::OsStr;
     use std::fs::File;
@@ -152,17 +152,56 @@ pub(super) mod disk {
         Ok(())
     }
 
+    // Enumerate through the held descriptor, never a mutable ancestor pathname.
+    // Removing known names bounds memory/work to the declared closure and refuses
+    // the first unexpected, duplicate or non-UTF8 entry without opening its target.
+    fn exact_entries(dir: &File, mut expected: BTreeSet<String>) -> Result<()> {
+        for entry in Dir::read_from(dir)? {
+            let entry = entry?;
+            let bytes = entry.file_name().to_bytes();
+            if bytes == b"." || bytes == b".." {
+                continue;
+            }
+            let name = std::str::from_utf8(bytes).context("non-UTF8 release cache entry")?;
+            ensure!(
+                expected.remove(name),
+                "unexpected release cache entry {name:?}"
+            );
+        }
+        ensure!(
+            expected.is_empty(),
+            "missing declared release cache entries"
+        );
+        Ok(())
+    }
+
     fn verify_directory(
         manifest: &VerifiedReleaseManifest,
         dir: &File,
         limits: PayloadLimits,
     ) -> Result<VerifiedReleasePayloads> {
+        exact_entries(
+            dir,
+            ["manifest.json", "bundles", "payloads"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        )?;
         let bytes = read_regular(dir, "manifest.json", MAX_MANIFEST_BYTES as u64, None)?;
         ensure!(
             sha256_hex(&bytes) == manifest.manifest_sha256,
             "cached release manifest differs from compiled pin"
         );
         let bundles_dir = directory(dir, OsStr::new("bundles"), false)?;
+        exact_entries(
+            &bundles_dir,
+            manifest
+                .manifest
+                .components
+                .iter()
+                .map(|c| format!("{}.json", c.bundle_id))
+                .collect(),
+        )?;
         let mut bundles = BTreeMap::new();
         for c in &manifest.manifest.components {
             if !bundles.contains_key(&c.bundle_id) {
@@ -178,6 +217,15 @@ pub(super) mod disk {
             }
         }
         let payload_dir = directory(dir, OsStr::new("payloads"), false)?;
+        exact_entries(
+            &payload_dir,
+            manifest
+                .manifest
+                .components
+                .iter()
+                .map(|c| c.id.clone())
+                .collect(),
+        )?;
         manifest.verify_payloads(&bundles, limits, |c| {
             open_regular(&payload_dir, &c.id, c.bytes, Some(c.bytes))
         })
