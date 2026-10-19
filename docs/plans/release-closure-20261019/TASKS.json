@@ -10,12 +10,18 @@
       "title": "Receiving-main PR384 validation",
       "owner_role": "Codex",
       "deps": [],
-      "state": "in_progress",
+      "state": "complete_receiving_main_validation",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C00 \u2014 Finish PR384 receiving-main validation (P00)"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1750-main-logs/NONZERO_LOG_RECEIPT.json",
+          "sha256": "0c989ae5bb52d24445841f3878a298446ac55cee6dc0daf1086abdb698d55a4c",
+          "qualification": "Native main-guard and full-main39289511196 alljobs success at actual9f8; bothCPUjoblogs complete/hash-bound with nonzero nextest execution. No newcode/scientificqualification."
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C00"
     },
     {
@@ -66,7 +72,7 @@
       "deps": [
         "C01"
       ],
-      "state": "in_progress_compiled_metadata_verifier",
+      "state": "in_progress_metadata_and_payload_snapshots",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C03 \u2014 P02 immutable encoder/policy release set"
@@ -77,6 +83,11 @@
           "sha256": "94a908c5eb070bc6917013cfdbb9e7b3a372b41c4c96b3b946782341132b16e0",
           "qualification": "Compile/clippy pass;6authored tests unexecuted untilC14. Empty compiled registry; component metadata only. Payload verification, downloads, license/runtime and publication pending",
           "commit_sha": "1c1b3bf5290131c5a6f2ed2699cfa0edc34805c7"
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/c03-source-slice2/SOURCE_DELIVERY.json",
+          "sha256": "7da97f71ead32dbd60cbb99526abb752a70fa068bc45c276d840f89a6448a1f1",
+          "qualification": "Source6b609457 compiles/clippyalltargetsPASS;5new/11totalfixturesauthored,0executed. Remoteversiontransport/cache/CLI/rights/runtime/realpins stillpending."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
@@ -212,7 +223,7 @@
       "deps": [
         "C01"
       ],
-      "state": "archives_and_standalone_receipts_verified_git_publication_pending",
+      "state": "blocked_projection_source_and_metric_corrections",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C11 \u2014 Preserve completed research and publish compact Git waves now"
@@ -227,6 +238,11 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1720-standalone-receipt-readback.json",
           "sha256": "f9b37dac24efedeb8f9bc1d7063bb403dcb7f6b28df3fd05f1942371c5a451e9",
           "qualification": "Both standalone restoration receipts verified via exactVersionId GET/bodySHA/length. Corrected wave metadata staged; no Git/main publication claim"
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1750-c11-source-index-audit.json",
+          "sha256": "cf630e2e1d09967523aaed3f3c3e96853f6255b99e64a1396de2893221ca8cdd",
+          "qualification": "Independentpackpreservation holds; pendingcards have absentP01Gitobject and wrongmemberpaths/claims/pointers/numericcontext. Exactcorrectivepacket44390cf4 deliveredtocaptain/Admiral; nomainpublicationclaim."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C11"
@@ -384,5 +400,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T17:47:40.672221+00:00"
+  "last_evidence_update_utc": "2026-10-19T18:06:43.498532+00:00"
 }
