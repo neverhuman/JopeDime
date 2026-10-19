@@ -127,6 +127,17 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_f573fb07_residual_warning_and_docs_delta_20261019.json",
           "sha256": "d0c661698e84bc2b1ad7f078009ead4f5b5d766f406c96b17434634977898a24",
           "qualification": "Independent read-only f573/a3 delta review PASS on inspected residual initializer semantics/docs/ledger and existing exact logs; no blocking items; no unchanged test reruns; not native approval or review of later e45 atomic-cache source. SC184AN additive erratum preserves historical source/time/failure identities."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_1d015669_c03_atomic_cache_20261019.json",
+          "sha256": "96065e9e7e2808d2d7514583b71d0b789716e246e81b7679655fd4f96aa13d10",
+          "qualification": "Independent1d015 review accepts cache design/logs but BLOCKS B1 unexpected directory entries. Preserved unchanged. Source-only; no nativeapproval."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-2124/cache-extra-entries/SOURCE_DELIVERY.json",
+          "sha256": "c9e2898542f4715999e93f958ed89b376d4f4d07b84d34a6911c856b1e518131",
+          "commit_sha": "7788e887ef5ee22c121ec675752b5680c85a2660",
+          "qualification": "B1 localfix: descriptor-relative exact entrysets for version/bundles/payloads; refuses extras without following/deleting/repair.31releasePASS incl14cache/3newB1cases;0failed/ignored,3unrelatedexcluded; scopedmodels/datasetsalltargetclippy-Dwarnings/fmt/prose/diffPASS. Originalunexpectedentryfailure2c02765e retained at exactcommittedpre-fixsource. Oldstaginge739 module reconstructed from e45inversepatch with exact digest; additive proof, no invented historicalcommit/time. N1/N2/N4 reviewprompt errors corrected usingactualAPI/masterplanunchanged/realpriorreview. Final successor independentreview pending."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
@@ -546,5 +557,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T21:12:52.196420+00:00"
+  "last_evidence_update_utc": "2026-10-19T21:30:48.914065+00:00"
 }
