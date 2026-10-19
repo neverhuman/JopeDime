@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 pub const GRAPH_SCHEMA: &str = "jope.selfplay.graph-effects/v1";
+/// Domain-separated schema for the opt-in pure feature DAG. Its bytes never parse as v1 graphs.
+pub const PURE_FEATURE_DAG_SCHEMA: &str = "jope.selfplay.pure-feature-dag/v1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -535,8 +537,78 @@ impl InputSchema {
 }
 
 impl ProgramGraph {
+    /// Opt-in admitted construction for the pure feature DAG. Refuses any graph that
+    /// `lower_pure_feature_dag` refuses. `new` and the v1 identity are unchanged.
+    pub fn new_pure_feature_dag(
+        input_schema: InputSchema,
+        nodes: Vec<Node>,
+        output: usize,
+        limits: &Constraints,
+        dag_limits: crate::combinators::union::Limits,
+    ) -> Result<Self> {
+        let graph = Self {
+            schema: PURE_FEATURE_DAG_SCHEMA.into(),
+            version: 1,
+            input_schema,
+            profile_id: registry_v2::PROFILE_ID.into(),
+            profile_revision: registry_v2::REVISION,
+            registry_sha256: registry_v2::source_sha256(),
+            nodes,
+            output,
+        };
+        graph.lower_pure_feature_dag(limits, dag_limits)?;
+        Ok(graph)
+    }
+
+    /// Canonical bytes of an admitted pure feature DAG, bounded by `limits.max_bytes`.
+    pub fn to_pure_feature_dag_bytes(
+        &self,
+        limits: &Constraints,
+        dag_limits: crate::combinators::union::Limits,
+    ) -> Result<Vec<u8>> {
+        self.lower_pure_feature_dag(limits, dag_limits)?;
+        let bytes = canon::encode(self)?;
+        if bytes.len() > limits.max_bytes {
+            return Err("pure feature DAG: graph byte bound".into());
+        }
+        Ok(bytes)
+    }
+
+    /// Parses only canonical pure feature DAG bytes. Legacy v1 graph bytes are refused.
+    pub fn from_pure_feature_dag_bytes(
+        bytes: &[u8],
+        limits: &Constraints,
+        dag_limits: crate::combinators::union::Limits,
+    ) -> Result<Self> {
+        limits.validate()?;
+        if bytes.len() > limits.max_bytes {
+            return Err("pure feature DAG: graph byte bound".into());
+        }
+        let graph: Self = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
+        if graph.to_pure_feature_dag_bytes(limits, dag_limits)? != bytes {
+            return Err(
+                "noncanonical pure feature DAG bytes, duplicate key or unknown representation"
+                    .into(),
+            );
+        }
+        Ok(graph)
+    }
+
+    /// Identity under the pure feature DAG domain, separate from the v1 `identity`.
+    pub fn pure_feature_dag_identity(
+        &self,
+        limits: &Constraints,
+        dag_limits: crate::combinators::union::Limits,
+    ) -> Result<canon::ProgramIdV2> {
+        canon::ProgramIdV2::compute(
+            PURE_FEATURE_DAG_SCHEMA,
+            &self.to_pure_feature_dag_bytes(limits, dag_limits)?,
+        )
+    }
+
     /// Opt-in pure-feature route. Lowers the supported subset of `nodes` into a bounded
-    /// `combinators::union::Program`. `lower()` and the default identity are unchanged.
+    /// `combinators::union::Program`, which is validated before it is returned. `lower()` and
+    /// the default identity are unchanged.
     ///
     /// Supported: `Input` (raw, not lowered on its own), `Columns` and single-column
     /// `Scalar` over a raw `Input`, and `Stack` over lowered members. Refused: `Operator`,
@@ -548,7 +620,12 @@ impl ProgramGraph {
         dag_limits: crate::combinators::union::Limits,
     ) -> Result<crate::combinators::union::Program> {
         use crate::combinators::union::{Action, Node as UNode, Program};
-        if self.schema != GRAPH_SCHEMA || self.version != 1 {
+        limits.validate()?;
+        self.input_schema.validate()?;
+        if self.input_schema.rows != RowSemantics::Iid {
+            return Err("pure feature DAG requires Iid row semantics".into());
+        }
+        if self.schema != PURE_FEATURE_DAG_SCHEMA || self.version != 1 {
             return Err("pure feature DAG: graph schema or version differs".into());
         }
         if self.profile_id != registry_v2::PROFILE_ID
@@ -557,17 +634,24 @@ impl ProgramGraph {
         {
             return Err("pure feature DAG: profile or registry identity differs".into());
         }
-        self.input_schema.validate()?;
-        if self.input_schema.rows != RowSemantics::Iid {
-            return Err("pure feature DAG requires Iid row semantics".into());
-        }
         let n = self.nodes.len();
-        if n == 0 || n > limits.max_nodes || self.output >= n {
-            return Err("pure feature DAG: node bound or output out of range".into());
+        if n < 2
+            || n > limits.max_nodes
+            || self.output >= n
+            || !matches!(self.nodes.first(), Some(Node::Input))
+        {
+            return Err(
+                "pure feature DAG: node bound, output, or leading input out of range".into(),
+            );
         }
         let mut edges = 0usize;
+        let mut depths: Vec<usize> = Vec::with_capacity(n);
+        let mut widths: Vec<usize> = Vec::with_capacity(n);
         for (index, node) in self.nodes.iter().enumerate() {
             let deps = match node {
+                Node::Input if index != 0 => {
+                    return Err("pure feature DAG: multiple graph inputs".into());
+                }
                 Node::Input => Vec::new(),
                 Node::Columns { input, .. } | Node::Scalar { input, .. } => vec![*input],
                 Node::Stack { members } => members.clone(),
@@ -584,10 +668,39 @@ impl ProgramGraph {
                     ));
                 }
             }
-            edges = edges.saturating_add(deps.len());
-        }
-        if edges > limits.max_edges {
-            return Err("pure feature DAG: edge bound".into());
+            edges = edges
+                .checked_add(deps.len())
+                .ok_or("pure feature DAG: edge overflow")?;
+            if edges > limits.max_edges {
+                return Err("pure feature DAG: edge bound".into());
+            }
+            let depth = deps
+                .iter()
+                .map(|dep| depths[*dep])
+                .max()
+                .unwrap_or(0)
+                .checked_add(1)
+                .ok_or("pure feature DAG: depth overflow")?;
+            if depth > limits.max_depth {
+                return Err(format!("pure feature DAG: node {index} exceeds max_depth"));
+            }
+            let width = match node {
+                Node::Input => self.input_schema.columns.len(),
+                Node::Columns { columns, .. } => columns.len(),
+                Node::Scalar { .. } => 1,
+                Node::Stack { members } => members.iter().try_fold(0usize, |acc, member| {
+                    acc.checked_add(widths[*member])
+                        .ok_or("pure feature DAG: width overflow")
+                })?,
+                Node::Operator { .. } | Node::Residual { .. } => unreachable!("refused above"),
+            };
+            if width == 0 || width > limits.max_width {
+                return Err(format!(
+                    "pure feature DAG: node {index} width outside bounds"
+                ));
+            }
+            depths.push(depth);
+            widths.push(width);
         }
         // Full reachability from the output, so no node is silently dropped.
         let mut reachable = vec![false; n];
@@ -606,6 +719,9 @@ impl ProgramGraph {
         }
         if reachable.iter().any(|seen| !seen) {
             return Err("pure feature DAG: every node must be reachable from the output".into());
+        }
+        if canon::encode(self)?.len() > limits.max_bytes {
+            return Err("pure feature DAG: graph byte bound".into());
         }
 
         let mut out: Vec<UNode> = Vec::new();
@@ -682,12 +798,25 @@ impl ProgramGraph {
         let output = map[self.output].ok_or_else(|| {
             "pure feature DAG: output must be a feature node, not the raw input".to_string()
         })?;
-        Ok(Program {
+        if out.len() > limits.max_nodes {
+            return Err(
+                "pure feature DAG: expanded union node count exceeds graph max_nodes".into(),
+            );
+        }
+        let program = Program {
             abi: Program::ABI,
             nodes: out,
             output,
             limits: dag_limits,
-        })
+        };
+        let semantic_schema = self
+            .input_schema
+            .semantic_key_schema()
+            .map_err(|e| e.to_string())?;
+        program
+            .validate(&semantic_schema, 1)
+            .map_err(|e| e.to_string())?;
+        Ok(program)
     }
 
     fn intern_column(
@@ -734,16 +863,6 @@ mod pure_dag_tests {
     use super::*;
     use crate::combinators::union::{DenseInput, Limits};
 
-    fn constraints() -> Constraints {
-        Constraints {
-            max_nodes: 64,
-            max_edges: 256,
-            max_depth: 64,
-            max_width: 64,
-            max_bytes: 1 << 20,
-        }
-    }
-
     fn dag_limits() -> Limits {
         Limits {
             max_nodes: 64,
@@ -764,7 +883,7 @@ mod pure_dag_tests {
 
     fn graph(schema: InputSchema, nodes: Vec<Node>, output: usize) -> ProgramGraph {
         ProgramGraph {
-            schema: GRAPH_SCHEMA.into(),
+            schema: PURE_FEATURE_DAG_SCHEMA.into(),
             version: 1,
             input_schema: schema,
             profile_id: registry_v2::PROFILE_ID.into(),
@@ -780,7 +899,7 @@ mod pure_dag_tests {
     #[test]
     fn lowered_stack_evaluates_each_shared_column_once() {
         let schema = InputSchema::new(vec!["a".into(), "b".into()], RowSemantics::Iid).unwrap();
-        let g = graph(
+        let g = ProgramGraph::new_pure_feature_dag(
             schema.clone(),
             vec![
                 Node::Input,
@@ -803,8 +922,11 @@ mod pure_dag_tests {
                 },
             ],
             4,
-        );
-        let limits = constraints();
+            &Constraints::default(),
+            dag_limits(),
+        )
+        .unwrap();
+        let limits = Constraints::default();
         let program = g.lower_pure_feature_dag(&limits, dag_limits()).unwrap();
         let columns = program
             .nodes
@@ -848,7 +970,7 @@ mod pure_dag_tests {
             1,
         );
         let err = g
-            .lower_pure_feature_dag(&constraints(), dag_limits())
+            .lower_pure_feature_dag(&Constraints::default(), dag_limits())
             .unwrap_err();
         assert!(err.contains("refuses node 1"), "{err}");
     }
@@ -868,7 +990,7 @@ mod pure_dag_tests {
             1,
         );
         let err = g
-            .lower_pure_feature_dag(&constraints(), dag_limits())
+            .lower_pure_feature_dag(&Constraints::default(), dag_limits())
             .unwrap_err();
         assert!(err.contains("Iid"), "{err}");
     }
@@ -892,7 +1014,7 @@ mod pure_dag_tests {
             1,
         );
         let err = g
-            .lower_pure_feature_dag(&constraints(), dag_limits())
+            .lower_pure_feature_dag(&Constraints::default(), dag_limits())
             .unwrap_err();
         assert!(err.contains("reachable"), "{err}");
     }

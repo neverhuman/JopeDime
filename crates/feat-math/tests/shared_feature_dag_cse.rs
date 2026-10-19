@@ -2,7 +2,10 @@ use feat_math::combinators::residual::FitRole;
 use feat_math::combinators::union::{
     Action, ColumnRef, DenseInput, ExactScalar, FitEffect, GraphError, Limits, Node, Program,
 };
-use feat_math::kernel::ir::graph::{InputSchema, RowSemantics};
+use feat_math::kernel::ir::graph::{
+    Constraints, Expression, InputSchema, Node as GraphNode, ProgramGraph, RowSemantics,
+    PURE_FEATURE_DAG_SCHEMA,
+};
 
 fn exact(value: f64) -> ExactScalar {
     ExactScalar::new(value).unwrap()
@@ -117,6 +120,18 @@ fn invocation_local_cache_resets_across_inputs_and_permuted_schemas() {
     assert_eq!(counts2, counts1, "counts leaked across invocations");
     assert_eq!(counts3, counts1);
     assert_eq!(out1.values, vec![3.0, 3.0, 6.0, 6.0]);
+
+    // Same program, changed `a` values and a different row count: no cached rows leak in.
+    let in_changed = DenseInput::new(
+        vec!["a".into(), "b".into()],
+        vec![vec![10.0, 9.0], vec![20.0, 9.0], vec![-5.0, 9.0]],
+    )
+    .unwrap();
+    let (out4, _, counts4) = p.evaluate_counted(&in_changed).unwrap();
+    assert_eq!(out4.rows, 3);
+    assert_eq!(out4.values, vec![30.0, 30.0, 60.0, 60.0, -15.0, -15.0]);
+    assert_ne!(out4.values, out1.values);
+    assert_eq!(counts4, vec![1, 1, 1], "counts leaked across invocations");
 }
 
 /// Refusals, each returned as a typed error.
@@ -257,4 +272,165 @@ fn legacy_v1_input_schema_identity_and_graph_lower_unchanged() {
         ba.semantic_key_schema().unwrap().id(),
         "semantic schema must be permutation-invariant"
     );
+}
+
+/// The pure feature DAG through public APIs only: admitted construction, canonical bytes and
+/// identity, legacy rejection, repeated evaluation, and bound refusals.
+#[test]
+fn program_graph_pure_feature_dag_public_roundtrip_and_bounds() {
+    let schema = InputSchema::new(vec!["a".into(), "b".into()], RowSemantics::Iid).unwrap();
+    let a = schema.column(0).unwrap();
+    let b = schema.column(1).unwrap();
+    let constraints = Constraints::default();
+    // Node 1 = Columns(a, b), node 2 = Scalar(a), node 3 = Stack[1, 2], node 4 = Stack[1, 3].
+    let graph = ProgramGraph::new_pure_feature_dag(
+        schema.clone(),
+        vec![
+            GraphNode::Input,
+            GraphNode::Columns {
+                input: 0,
+                columns: vec![a.clone(), b],
+            },
+            GraphNode::Scalar {
+                input: 0,
+                expression: Expression::Column { column: a },
+                affine: false,
+            },
+            GraphNode::Stack {
+                members: vec![1, 2],
+            },
+            GraphNode::Stack {
+                members: vec![1, 3],
+            },
+        ],
+        4,
+        &constraints,
+        limits(),
+    )
+    .unwrap();
+    let program = graph
+        .lower_pure_feature_dag(&constraints, limits())
+        .unwrap();
+
+    // Column "a" is one shared union node, and both Columns(a, b) and column "a" have several
+    // consumers in the lowered program.
+    let a_nodes: Vec<usize> = program
+        .nodes
+        .iter()
+        .enumerate()
+        .filter(|(_, node)| matches!(&node.action, Action::Column(c) if c.key() == "a"))
+        .map(|(index, _)| index)
+        .collect();
+    assert_eq!(a_nodes.len(), 1, "column 'a' must be a single union node");
+    let concat_ab = program
+        .nodes
+        .iter()
+        .position(|node| matches!(&node.action, Action::ConcatFeatures(_)))
+        .unwrap();
+    let consumers = |target: usize| {
+        program
+            .nodes
+            .iter()
+            .filter(|node| {
+                matches!(&node.action, Action::ConcatFeatures(members) if members.contains(&target))
+            })
+            .count()
+    };
+    assert!(consumers(a_nodes[0]) > 1, "column 'a' has one consumer");
+    assert!(consumers(concat_ab) > 1, "Columns(a, b) has one consumer");
+
+    // Canonical roundtrip and domain-separated identity.
+    let bytes = graph
+        .to_pure_feature_dag_bytes(&constraints, limits())
+        .unwrap();
+    let restored =
+        ProgramGraph::from_pure_feature_dag_bytes(&bytes, &constraints, limits()).unwrap();
+    assert_eq!(restored, graph);
+    let id = graph
+        .pure_feature_dag_identity(&constraints, limits())
+        .unwrap();
+    assert_eq!(id.schema_id, PURE_FEATURE_DAG_SCHEMA);
+    assert_eq!(
+        restored
+            .pure_feature_dag_identity(&constraints, limits())
+            .unwrap(),
+        id
+    );
+    assert!(
+        ProgramGraph::from_bytes(&bytes, &constraints).is_err(),
+        "legacy v1 parser accepted pure-DAG bytes"
+    );
+
+    // Two evaluations with different column orders and row counts, each computing every node once.
+    let first = DenseInput::new(
+        vec!["a".into(), "b".into()],
+        vec![vec![1.0, 2.0], vec![3.0, 4.0]],
+    )
+    .unwrap();
+    let (out1, _, counts1) = graph
+        .evaluate_pure_feature_dag_counted(&first, &constraints, limits())
+        .unwrap();
+    assert_eq!(out1.rows, 2);
+    assert_eq!(
+        out1.values,
+        vec![1.0, 2.0, 1.0, 2.0, 1.0, 3.0, 4.0, 3.0, 4.0, 3.0]
+    );
+    assert_eq!(counts1, vec![1; program.nodes.len()]);
+    let second = DenseInput::new(vec!["b".into(), "a".into()], vec![vec![9.0, 5.0]]).unwrap();
+    let (out2, _, counts2) = graph
+        .evaluate_pure_feature_dag_counted(&second, &constraints, limits())
+        .unwrap();
+    assert_eq!(out2.rows, 1);
+    assert_eq!(out2.values, vec![5.0, 9.0, 5.0, 9.0, 5.0]);
+    assert_eq!(counts2, vec![1; program.nodes.len()]);
+
+    // Invalid graph Constraints: edges above the ABI bound, zero depth, and bytes one above
+    // canon::MAX_BYTES. The exact MAX_BYTES value is valid, so it is not a refusal witness.
+    let invalid = [
+        Constraints {
+            max_edges: 256,
+            ..constraints
+        },
+        Constraints {
+            max_depth: 0,
+            ..constraints
+        },
+        Constraints {
+            max_bytes: 1_048_577,
+            ..constraints
+        },
+    ];
+    for bad in invalid {
+        assert!(
+            graph.lower_pure_feature_dag(&bad, limits()).is_err(),
+            "{bad:?}"
+        );
+        assert!(
+            graph.to_pure_feature_dag_bytes(&bad, limits()).is_err(),
+            "{bad:?}"
+        );
+    }
+
+    // Stricter graph Constraints than the dag limits: depth 3 and width 3 nodes, and a graph
+    // larger than 64 bytes, each refused against loose dag limits.
+    let stricter = [
+        Constraints {
+            max_depth: 2,
+            ..constraints
+        },
+        Constraints {
+            max_width: 2,
+            ..constraints
+        },
+        Constraints {
+            max_bytes: 64,
+            ..constraints
+        },
+    ];
+    for tight in stricter {
+        assert!(
+            graph.lower_pure_feature_dag(&tight, limits()).is_err(),
+            "{tight:?}"
+        );
+    }
 }
