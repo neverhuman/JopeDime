@@ -1,0 +1,31 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for PR384 observatory workspace dependencies. Only Cargo.lock changes among evaluator inputs; numerical sources, DSL ABI, default emitted bytes, behavioral fixtures, historical-v1 objects and all previous transition ledgers remain byte-identical. Lineage fixture changes its generation header only.",
+  "plan_reference": "compat_freeze.rs documented identity-only mode; SC-DEC-184D and SC-DEC-184F",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/384",
+  "source_commit": "4f1bf277dda38c6abed3863a4c31b1ec5dfa9b64",
+  "old_identity": {
+    "implementation_sha256": "96e02aef28d7ace187075181f0bd0b8e912aca50a5a52c00a3eead4e93db61d7",
+    "cargo_lock_sha256": "b4dbf8bd5b4d121e315489ad01bd7912fa8f3a6be42eeb04254bcbccd980f11c",
+    "identity_digest": "b21ec9f74b0b91285c7fc69ce80354ce36f05529c0f4a949fb2991cdc4ed575d",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "new_identity": {
+    "implementation_sha256": "15402c880c81b39acfc4f7cf95a794a8f22e5e6df3e9a8683c9a8e863be8fb22",
+    "cargo_lock_sha256": "8def8544c114029ee1ae8d72fb71141c5a90fe55fec46818891a9abe7738bf5a",
+    "identity_digest": "3aaea86da467719a3a3cb6200798b3f2aa7e18f7a95125191e44c4a1634b6d65",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "4cab1887f4e4558a5173a61c3a7a38282cda945a2d016d0fa7d6b7704abbf7a1",
+      "after": "8716cebbe8716a79ed3210e13374ae83e650072d785c40a50d62cc57b09404d6"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "b77a6714ec8b21e87ee6343d359e98ccdd6f20d53af13141ac658c610aac0da1",
+      "after": "849f2faf8d414011e8e0b97e3901d16da202f2209c5cfd1898b9f7e911696b7d"
+    }
+  ]
+}
