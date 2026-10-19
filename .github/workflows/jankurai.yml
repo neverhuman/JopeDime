@@ -16,7 +16,11 @@ concurrency:
 
 jobs:
   jankurai-audit:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Hosted ubuntu-24.04 runners do not schedule on this private repository, and
+    # self-hosted runner admission (deploy/runner/job-policy.py) admits only
+    # ci.yml, full-main.yml, and main-guard.yml. Gate hosted execution behind
+    # vars.JANKURAI_HOSTED_RUNNER until a self-hosted jankurai lane is admitted.
+    if: vars.JANKURAI_HOSTED_RUNNER == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:

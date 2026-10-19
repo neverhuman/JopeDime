@@ -101,6 +101,19 @@
       "scope": "Private compressed discovery context, not production corpus or authority approval. Full shard payloads are referenced at original S3 and are not included. Bulk key inventories remain on xbabe2 with hashes in the index.",
       "sha256": "b7d9e669b7be6259aa5e63d7ec1a54b6341e2bc7d5667b283a9903d2c4b82175",
       "version_id": "H_UgBwgQ1oWvYPK6GI_W2Nk0duKr9R7q"
+    },
+    {
+      "bytes": 223684,
+      "decoded_tar_sha256": "e62bba3e0cdb9d62ebe5b6352a10b8651dbc11f6d812920de1bd35be90206e0d",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_TWO_HOST_ALL_MEMBER_VERIFIED",
+      "id": "track-c-gpr-cuda-sberbank-s3-35reps-results",
+      "index_sha256": "eeb063d97f0cffd306c6d08b834c21180bcbf46d5a8ebf8b8accbc68a0814704",
+      "payload_bytes": 15678234,
+      "payload_files": 124,
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/b0f8af43c338ec6cfbb19be6f3ad0409e8d8ca6b0d8ac01745ff222e27e08d66",
+      "scope": "Bounded 35-rep per GPU (xbabe1 RTX 4090, xbabe2 RTX 3090, xbabe3 RTX 3090; 105 total reps, 945 case evaluations) gpr_cuda_bench --verify-envelope parity and latency study over the 8-case synthetic grid plus audited S3 Sberbank cut-0 slice (dataset.parquet VersionId 700u27HTJgxZwidGhVh3k98Q4bBEW35D). Source-build attestation and strict uncontended timing qualification remain unverified; shadow hardware benchmark only, no neural checkpoint or self-play promotion.",
+      "sha256": "b0f8af43c338ec6cfbb19be6f3ad0409e8d8ca6b0d8ac01745ff222e27e08d66",
+      "version_id": "Lmaq0HCXEPM7hKWne0JIJqsYh3NEtWjI"
     }
   ],
   "corrections": [
@@ -165,5 +178,5 @@
       "No complete currently production-admitted package was verified; absence across all S3/history is not claimed."
     ]
   },
-  "source_commit": "a2759e9d375d0697ed40a32c23ac297b5de42347"
+  "source_commit": "fd1c0f065138bb68f6786aa77494890f05dbe5d2"
 }

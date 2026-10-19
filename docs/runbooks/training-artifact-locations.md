@@ -80,3 +80,15 @@ A private custom tar/zstd archive preserves 41 curated source/metadata/correctio
 - `DETAIL_INDEX.json` SHA-256: `7ea683678c41f7eb299f49fecd840f3213d2def76a2c53da71bd5929a425f428`
 
 xbabe2 verified exact-version S3 GET bytes; the Mac controller independently decoded the archive and checked every indexed file hash and length. This is preserved context, not an installable authority or currently admitted production corpus.
+
+## Track C S3 GPU parity and latency study archive (`track-c-gpr-cuda-sberbank-s3-20261019T0034Z`)
+
+A private custom tar/zstd archive preserves all 124 member files (15,678,234 B across 35 repetitions per GPU host on `xbabe1`, `xbabe2`, and `xbabe3`, plus S3 provenance, `jope-parallel` audit/prepare manifests, and both original and final 35/35 receipts) in 223,684 B for wave `track-c-gpr-cuda-sberbank-s3-20261019T0034Z` on `fd1c0f065138bb68f6786aa77494890f05dbe5d2`.
+
+- URI: `s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/b0f8af43c338ec6cfbb19be6f3ad0409e8d8ca6b0d8ac01745ff222e27e08d66`
+- VersionId: `Lmaq0HCXEPM7hKWne0JIJqsYh3NEtWjI`
+- Compressed SHA-256: `b0f8af43c338ec6cfbb19be6f3ad0409e8d8ca6b0d8ac01745ff222e27e08d66`
+- Decoded tar SHA-256: `e62bba3e0cdb9d62ebe5b6352a10b8651dbc11f6d812920de1bd35be90206e0d`
+- `index.json` SHA-256: `eeb063d97f0cffd306c6d08b834c21180bcbf46d5a8ebf8b8accbc68a0814704`
+- Input S3 Parquet: `s3://veox-jopedime-datasets-use2/raw/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sberbank_housing_market_forecasting/019d9279-a91a-73ac-a221-72a6aab17df0/dataset.parquet` (`VersionId: 700u27HTJgxZwidGhVh3k98Q4bBEW35D`, `sha256: 95d4d4de028b996669a520a0585257a03987ce3a4face3d65a750434c87859fa`)
+- Admission & scope limits: `HONEST_GPU_PARITY_LATENCY_BENCHMARK` (`NO_SELFPLAY_PROMOTION`). Source-build attestation and strict uncontended timing qualification remain unverified; this wave establishes numerical kernel envelope parity (`945/945` case rows `parity_pass`) and descriptive latency distributions only, not neural checkpoint or self-play superiority.
