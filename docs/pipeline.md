@@ -130,7 +130,8 @@ it here cross the boundary, not predictions.
   calling. The task is regression. No catalog row, receipt or emitted source is involved.
 - **Search.** The same five-fold partition (keyed on the CSV's sha256 and `--seed`), budget,
   islands and threads as `jope pipeline run`. `--cuts` defaults to 3. The per-cut evidence is
-  written under `--work-dir`, which must not already hold a search.
+  written under `--work-dir`, which must be new or an empty directory; anything else is refused
+  before the CSV is read.
 - **Restriction.** A program is offered only when every stage op is executable in jain-math
   `9fa594e` (`crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json`). The search
   grammar is wider (`ridge_gcv`, for one), so `ranked` counts every fully measured program and
