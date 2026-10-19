@@ -242,3 +242,36 @@ fn small_projection_fixture_matches_all_emitted_files() {
             .as_bytes()
     );
 }
+
+#[test]
+fn track_c_sberbank_s3_wave_and_index_validate() {
+    use sha2::{Digest, Sha256};
+    let index_str = include_str!("../../../docs/research/waves/INDEX.jsonl");
+    let rows: Vec<Vec<u8>> = index_str
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| format!("{l}\n").into_bytes())
+        .collect();
+    assert_eq!(rows.len(), 3);
+    assert!(validate_index_rows(&rows).is_ok());
+
+    let manifest = include_bytes!(
+        "../../../docs/research/waves/track-c-gpr-cuda-sberbank-s3-20261019T0034Z/wave.manifest.json"
+    );
+    let card = include_bytes!(
+        "../../../docs/research/waves/track-c-gpr-cuda-sberbank-s3-20261019T0034Z/card.json"
+    );
+    let context = include_bytes!(
+        "../../../docs/research/waves/track-c-gpr-cuda-sberbank-s3-20261019T0034Z/context.md"
+    );
+    let metrics = include_bytes!(
+        "../../../docs/research/waves/track-c-gpr-cuda-sberbank-s3-20261019T0034Z/metrics.json"
+    );
+    let last_line = std::str::from_utf8(&rows[2]).unwrap();
+    let hex = |b: &[u8]| format!("{:x}", Sha256::digest(b));
+    assert!(last_line.contains(&format!("\"manifest_sha256\":\"{}\"", hex(manifest))));
+    assert!(last_line.contains(&format!("\"card_sha256\":\"{}\"", hex(card))));
+    assert!(last_line.contains(&format!("\"context_sha256\":\"{}\"", hex(context))));
+    assert!(last_line.contains(&format!("\"metrics_sha256\":\"{}\"", hex(metrics))));
+}
+
