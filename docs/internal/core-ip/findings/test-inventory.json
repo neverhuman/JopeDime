@@ -2184,6 +2184,14 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/shared_feature_dag_cse": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/shared_feature_dag_cse.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
     "target:feat-math/test/operation_profile": {
       "role": "regression",
       "source": "crates/feat-math/tests/operation_profile.rs",

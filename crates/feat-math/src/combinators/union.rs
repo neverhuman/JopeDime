@@ -108,6 +108,42 @@ pub struct FitEffect {
     pub fuel: u64,
 }
 
+/// An exact, `Eq` finite scalar for affine parameters. It stores the IEEE-754 bit pattern, so
+/// equality is exact and no value is quantized. Non-finite values are refused.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExactScalar {
+    bits: u64,
+}
+
+impl ExactScalar {
+    pub fn new(value: f64) -> Result<Self, GraphError> {
+        if !value.is_finite() {
+            return Err(GraphError::InvalidGraph(
+                "affine parameter must be finite".into(),
+            ));
+        }
+        Ok(Self {
+            bits: value.to_bits(),
+        })
+    }
+
+    /// Build from raw bits without checking. The value is validated when the node is measured.
+    pub fn from_bits(bits: u64) -> Self {
+        Self { bits }
+    }
+
+    pub fn value(&self) -> Result<f64, GraphError> {
+        let value = f64::from_bits(self.bits);
+        if value.is_finite() {
+            Ok(value)
+        } else {
+            Err(GraphError::InvalidGraph(
+                "affine parameter must be finite".into(),
+            ))
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Action {
     Column(ColumnRef),
@@ -117,6 +153,36 @@ pub enum Action {
         when_true: usize,
         when_false: usize,
     },
+    /// Binds an upstream node. Consumers share the bound node, which is computed once.
+    Let(usize),
+    /// Projects one column from a multi-column input (width 1).
+    SelectFeature {
+        input: usize,
+        column_index: usize,
+    },
+    /// Concatenates feature matrices in the given order.
+    ConcatFeatures(Vec<usize>),
+    /// Row-wise finite affine transform of every value in the input.
+    Affine {
+        input: usize,
+        scale: ExactScalar,
+        offset: ExactScalar,
+    },
+}
+
+/// Decode the exact affine parameters. A malformed or non-finite value is refused.
+fn affine_parameters(
+    id: usize,
+    scale: &ExactScalar,
+    offset: &ExactScalar,
+) -> Result<(f64, f64), GraphError> {
+    let scale = scale
+        .value()
+        .map_err(|e| GraphError::InvalidGraph(format!("node {id} affine scale: {e}")))?;
+    let offset = offset
+        .value()
+        .map_err(|e| GraphError::InvalidGraph(format!("node {id} affine offset: {e}")))?;
+    Ok((scale, offset))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -145,6 +211,10 @@ impl Node {
                 when_true,
                 when_false,
             } => vec![*predicate, *when_true, *when_false],
+            Action::Let(input)
+            | Action::SelectFeature { input, .. }
+            | Action::Affine { input, .. } => vec![*input],
+            Action::ConcatFeatures(inputs) => inputs.clone(),
         }
     }
 }
@@ -356,6 +426,34 @@ impl Program {
                 }
                 child_widths[1]
             }
+            Action::Let(_) => child_widths[0],
+            Action::SelectFeature {
+                column_index,
+                input: _,
+            } => {
+                if *column_index >= child_widths[0] {
+                    return Err(GraphError::InvalidGraph(format!(
+                        "node {id} selects column {column_index} of width {}",
+                        child_widths[0]
+                    )));
+                }
+                1
+            }
+            Action::ConcatFeatures(inputs) => {
+                if inputs.is_empty() {
+                    return Err(GraphError::InvalidGraph(
+                        "concatenation must have inputs".into(),
+                    ));
+                }
+                child_widths.iter().try_fold(0usize, |sum, next| {
+                    sum.checked_add(*next)
+                        .ok_or_else(|| GraphError::Limit("concatenation width overflow".into()))
+                })?
+            }
+            Action::Affine { scale, offset, .. } => {
+                affine_parameters(id, scale, offset)?;
+                child_widths[0]
+            }
         };
         if width == 0 || width > self.limits.max_width {
             return Err(GraphError::Limit(format!(
@@ -433,6 +531,22 @@ impl Program {
     }
 
     pub fn evaluate(&self, input: &DenseInput) -> Result<(Matrix, Validation), GraphError> {
+        let (output, validation, _counts) = self.evaluate_counted(input)?;
+        Ok((output, validation))
+    }
+
+    /// Evaluate and report how many times each node was computed. A node shared by several
+    /// consumers is cached after its first computation, so its count is 1.
+    pub fn evaluate_counted(
+        &self,
+        input: &DenseInput,
+    ) -> Result<(Matrix, Validation, Vec<usize>), GraphError> {
+        if self.nodes.iter().any(|node| node.fit_effect.is_some()) {
+            return Err(GraphError::InvalidGraph(
+                "pure feature DAG evaluation refuses fit_effect nodes; fit/label capabilities require scoped fit execution"
+                    .into(),
+            ));
+        }
         let validation = self.validate(&input.schema, input.values.len())?;
         if input.values.iter().any(|row| {
             row.len() != input.schema.columns.len() || row.iter().any(|value| !value.is_finite())
@@ -442,8 +556,10 @@ impl Program {
             ));
         }
         let mut cache = vec![None; self.nodes.len()];
-        let output = self.evaluate_node(self.output, input, &validation, &mut cache)?;
-        Ok((output, validation))
+        let mut counts = vec![0usize; self.nodes.len()];
+        let output =
+            self.evaluate_node(self.output, input, &validation, &mut cache, &mut counts)?;
+        Ok((output, validation, counts))
     }
 
     fn evaluate_node(
@@ -452,10 +568,12 @@ impl Program {
         input: &DenseInput,
         validation: &Validation,
         cache: &mut [Option<Matrix>],
+        counts: &mut [usize],
     ) -> Result<Matrix, GraphError> {
         if let Some(matrix) = &cache[id] {
             return Ok(matrix.clone());
         }
+        counts[id] += 1;
         let node = &self.nodes[id];
         let rows = input.values.len();
         let matrix = match &node.action {
@@ -476,7 +594,7 @@ impl Program {
             Action::Union(children) => {
                 let matrices = children
                     .iter()
-                    .map(|child| self.evaluate_node(*child, input, validation, cache))
+                    .map(|child| self.evaluate_node(*child, input, validation, cache, counts))
                     .collect::<Result<Vec<_>, _>>()?;
                 let width = validation.node_widths[id];
                 let mut values = Vec::with_capacity(rows * width);
@@ -499,10 +617,56 @@ impl Program {
             } => {
                 // Both branches are deliberately evaluated; validation charged the
                 // complete eager branch DAG before any output allocation.
-                let predicate = self.evaluate_node(*predicate, input, validation, cache)?;
-                let yes = self.evaluate_node(*when_true, input, validation, cache)?;
-                let no = self.evaluate_node(*when_false, input, validation, cache)?;
+                let predicate = self.evaluate_node(*predicate, input, validation, cache, counts)?;
+                let yes = self.evaluate_node(*when_true, input, validation, cache, counts)?;
+                let no = self.evaluate_node(*when_false, input, validation, cache, counts)?;
                 route_rows(&predicate, &yes, &no)?
+            }
+            Action::Let(bound) => self.evaluate_node(*bound, input, validation, cache, counts)?,
+            Action::SelectFeature {
+                input: source,
+                column_index,
+            } => {
+                let source = self.evaluate_node(*source, input, validation, cache, counts)?;
+                Matrix {
+                    rows,
+                    width: 1,
+                    values: (0..rows)
+                        .map(|row| source.values[row * source.width + column_index])
+                        .collect(),
+                }
+            }
+            Action::ConcatFeatures(children) => {
+                let matrices = children
+                    .iter()
+                    .map(|child| self.evaluate_node(*child, input, validation, cache, counts))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let width = validation.node_widths[id];
+                let mut values = Vec::with_capacity(rows * width);
+                for row in 0..rows {
+                    for matrix in &matrices {
+                        let start = row * matrix.width;
+                        values.extend_from_slice(&matrix.values[start..start + matrix.width]);
+                    }
+                }
+                Matrix {
+                    rows,
+                    width,
+                    values,
+                }
+            }
+            Action::Affine {
+                input: source,
+                scale,
+                offset,
+            } => {
+                let (scale, offset) = affine_parameters(id, scale, offset)?;
+                let source = self.evaluate_node(*source, input, validation, cache, counts)?;
+                Matrix {
+                    rows: source.rows,
+                    width: source.width,
+                    values: source.values.iter().map(|v| v * scale + offset).collect(),
+                }
             }
         };
         if matrix.width != validation.node_widths[id]

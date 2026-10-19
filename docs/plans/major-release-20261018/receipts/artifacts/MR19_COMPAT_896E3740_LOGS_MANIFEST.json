@@ -1,0 +1,43 @@
+{
+  "schema": "codex.mr19.compat_failure_and_repair_log_capsule.v1",
+  "observed_utc": "2026-10-19T11:36:54.418604+00:00",
+  "candidate_head_at_capture": "896e3740a5ce5b12c60284eb7d98945c4077fe99",
+  "parent_checkout_head_recorded_in_new_compare_log_receipt": "7dd3fbb9003b1c6d77a102115cdd1972fe1d3e12",
+  "scope_caveat": "The1535B compare log predates commit896. Identity fixture and historical_v1 edits were uncommitted; this is a dirty-working-tree observation based on7dd, not a clean7dd execution. Exact full execution-tree digest was not contemporaneously captured. Do not relabel as a clean896 run; current successor CI supplies separate exact-head qualification.",
+  "original_bca_feature_receipt_retained": true,
+  "implementation_src_tree_unchanged": "86f239e5fad6af4870576144ab0dfd09c7900893",
+  "original_feat_math_subtree": "574982295b153aedcc75d42de61386e26ca622a5",
+  "candidate_feat_math_subtree": "1c521400e901035e2344289d1ab3c1a50ae1df74",
+  "archive_remote_path": "/home/ubuntu/xbabe2_kicker/captains-20261017/CODEX_MONITOR_PR381_COMPAT_LOGS_20261019T1133Z.tar.gz",
+  "compressed_bytes": 78880,
+  "compressed_sha256": "9f0ce04eb7bd659c41089188cf49cae691bade68cb823281aa7b6f1ddb5b027a",
+  "decoded_tar_bytes": 337920,
+  "decoded_tar_sha256": "743b98d27e3a27f550c1d5b4c9b1051e3a4bb5a7d3ba872e7fac3ea2ba12e6c1",
+  "members": [
+    {
+      "member": "PR381_rust_test2_118016798483.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/PR381_rust_test2_118016798483.log",
+      "original_mtime_ns": 1792408407340549739,
+      "bytes": 315967,
+      "sha256": "7d0fd23278c53158730c8348c26137be782bf523dfd900483e8b10988ce57e91"
+    },
+    {
+      "member": "MR19_compat_freeze_historical_v1_7dd3fbb90_20261019T111936Z.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_compat_freeze_historical_v1_7dd3fbb90_20261019T111936Z.log",
+      "original_mtime_ns": 1792408787303138059,
+      "bytes": 1535,
+      "sha256": "34ba714037fae54598a5aad013a1fa22054d67bc87de642ab81ce1403c7e91db"
+    },
+    {
+      "member": "MR19_hygiene_check_7dd3fbb90.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_hygiene_check_7dd3fbb90.log",
+      "original_mtime_ns": 1792408857666358727,
+      "bytes": 11259,
+      "sha256": "385624d2c0a5923a4f72e998b4871740fb1c74f46836a716997492dcf50ce097"
+    }
+  ],
+  "all_members_independently_restored_and_private_byte_compared": true,
+  "credential_signature_scan": "No GitHub token/AWS key/private-key signature matched these3logs; existing owner reviews before Git publication. No credentials/env/authfiles read.",
+  "interpretation": "CI7dd failure:1752/1753 pass, identity inputs mismatch; local dirty-tree compare13+3pass, hygieneexit0. No learning gain and no relabelling of evaluator or historical research results.",
+  "restoration": "Decode gzip into a scratch byte stream and inspect tar members without extracting paths; verify compressed, tar and each member SHA/length before use. Originals remain unchanged."
+}

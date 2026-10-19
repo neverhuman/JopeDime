@@ -17,6 +17,7 @@
 pub mod advanced_v3;
 pub mod artifact_manifest;
 pub mod boost2;
+pub mod combinators;
 pub mod cxx;
 pub mod dsl;
 pub mod feasibility;
