@@ -175,16 +175,95 @@ fn emit_child() {
     }
 }
 
-fn evidence_directory(label: &str) -> std::path::PathBuf {
+// Keep full generated artifacts when an assertion unwinds or a child/tool fails.
+// Successful runs use Cargo's durable receipt as their evidence and clean scratch on drop.
+struct EvidenceDirectory(Option<tempfile::TempDir>);
+
+impl std::ops::Deref for EvidenceDirectory {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+            .as_ref()
+            .expect("evidence directory still open")
+            .path()
+    }
+}
+
+impl Drop for EvidenceDirectory {
+    fn drop(&mut self) {
+        if std::thread::panicking() {
+            if let Some(directory) = self.0.take() {
+                let path = directory.keep();
+                eprintln!("GP emitter failure evidence retained: {}", path.display());
+            }
+        }
+    }
+}
+
+fn evidence_directory(label: &str) -> EvidenceDirectory {
     let root = Path::new(env!("CARGO_TARGET_TMPDIR")).join("gp-emitter-determinism");
     fs::create_dir_all(&root).unwrap();
-    let path = tempfile::Builder::new()
+    let directory = tempfile::Builder::new()
         .prefix(label)
         .tempdir_in(root)
-        .unwrap()
-        .keep();
-    println!("GP emitter evidence: {}", path.display());
-    path
+        .unwrap();
+    println!(
+        "GP emitter scratch (retained on failure): {}",
+        directory.path().display()
+    );
+    EvidenceDirectory(Some(directory))
+}
+
+#[test]
+fn evidence_directory_cleans_scratch_after_success() {
+    let directory = evidence_directory("cleanup-success-");
+    let path = directory.to_path_buf();
+    fs::write(path.join("sentinel"), b"success scratch").unwrap();
+    drop(directory);
+    assert!(!path.exists(), "successful test scratch should be removed");
+}
+
+#[test]
+fn evidence_directory_retains_scratch_during_unwind() {
+    let mut path = None;
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let directory = evidence_directory("cleanup-panic-");
+        let retained_path = directory.to_path_buf();
+        fs::write(retained_path.join("sentinel"), b"failure evidence").unwrap();
+        path = Some(retained_path);
+        panic!("exercise failure evidence retention");
+    }));
+    assert!(result.is_err());
+    let path = path.expect("panic fixture path");
+    assert!(
+        path.join("sentinel").is_file(),
+        "failure output should remain recoverable"
+    );
+    fs::remove_dir_all(path).unwrap();
+}
+
+#[test]
+fn evidence_directory_retains_scratch_when_child_fails() {
+    let mut path = None;
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let directory = evidence_directory("cleanup-child-failure-");
+        path = Some(directory.to_path_buf());
+        run(Command::new("python3")
+            .args(["-c", "from pathlib import Path; import sys; Path(sys.argv[1]).write_bytes(b'child failure evidence'); raise SystemExit(17)"])
+            .arg(directory.join("sentinel")));
+    }));
+    assert!(
+        result.is_err(),
+        "the real child failure must reach the parent"
+    );
+    let path = path.expect("child failure fixture path");
+    assert_eq!(
+        fs::read(path.join("sentinel")).unwrap(),
+        b"child failure evidence"
+    );
+    // Only this newly-created, tiny fixture is cleaned after its retention proof.
+    fs::remove_dir_all(path).unwrap();
 }
 
 #[test]
