@@ -131,6 +131,29 @@ pub enum Cmd {
         /// Print the receipt as one JSON document.
         #[arg(long)]
         json: bool,
+        /// Model-build switches (`--automl`, `--ensemble`, `--thinking`) and options file.
+        #[command(flatten)]
+        model: crate::model_build::ModelBuildArgs,
+    },
+    /// Explicit legacy generic GP search: no neural input and no model-build route. Its receipts
+    /// are unchanged and remain verifiable. It is never a fallback for `run`.
+    RunLegacyGp {
+        #[command(flatten)]
+        search: SearchArgs,
+        #[command(flatten)]
+        profile: crate::kernel2::cli::ProfileArgs,
+        /// Where the preparation, searches, emitted sources and receipt are written.
+        #[arg(long)]
+        output: PathBuf,
+        /// A jope.pipeline-seeds/v1 file: its genomes enter generation 0 after the bootstrap.
+        #[arg(long)]
+        seed_genomes: Option<PathBuf>,
+        /// A parent receipt: verified against its run's evidence before it is seeded.
+        #[arg(long)]
+        incumbent: Option<PathBuf>,
+        /// Print the receipt as one JSON document.
+        #[arg(long)]
+        json: bool,
     },
     /// Validate a receipt against the committed jope.pipeline-receipt/v1, v2 or v3 schema.
     VerifyReceipt {
@@ -230,7 +253,34 @@ pub fn exec(cli: Cli) -> ExitCode {
 
 pub fn run(cli: Cli) -> Result<ExitCode> {
     match cli.cmd {
-        Cmd::Run {
+        Cmd::Run { model, .. } => {
+            // Every route needs a verified checkpoint. Until P02 supplies a release closure, each
+            // route is refused here with its reason. Nothing falls back to the generic GP search.
+            let file = match &model.model_build_config {
+                Some(path) => Some(crate::model_build::config::load_file(path)?),
+                None => None,
+            };
+            let resolved = crate::model_build::resolve(file.as_ref(), model.flags()?)?;
+            let checkpoint = match file.as_ref().and_then(|f| f.neural_checkpoint.as_ref()) {
+                Some(claim) => crate::model_build::NeuralCheckpoint::Refused(
+                    crate::model_build::verify_checkpoint(claim, None, &claim.source_commit)
+                        .err()
+                        .unwrap_or(crate::model_build::CheckpointRefusal::Absent),
+                ),
+                None => crate::model_build::NeuralCheckpoint::Refused(
+                    crate::model_build::CheckpointRefusal::Absent,
+                ),
+            };
+            let route = crate::model_build::route(&resolved);
+            match crate::model_build::disposition(route, &checkpoint) {
+                crate::model_build::Disposition::Refused { reason, .. } => anyhow::bail!(reason),
+                crate::model_build::Disposition::Pending { missing, .. } => anyhow::bail!(
+                    "{route:?} is not executable yet; missing: {}",
+                    missing.join(", ")
+                ),
+            }
+        }
+        Cmd::RunLegacyGp {
             search,
             profile,
             output,
