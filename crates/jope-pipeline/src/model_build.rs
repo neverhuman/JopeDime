@@ -8,6 +8,7 @@ pub mod artifact;
 pub mod candidates;
 pub mod config;
 pub mod ensemble;
+pub mod native;
 pub mod oof;
 pub mod selection;
 
