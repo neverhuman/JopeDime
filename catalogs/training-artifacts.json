@@ -62,6 +62,14 @@
       "current_local_exists": true,
       "current_local_path": "/home/ubuntu/jope-evidence/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
       "current_local_verified_utc": "2026-10-19T12:56:28Z",
+      "derived_relocated_spec": {
+        "bytes": 329986,
+        "campaign_copy_path": "/home/ubuntu/jope-evidence/campaigns/flywheel_native_derived_20261019T1301Z/derived_spec.json",
+        "parent_sha256": "05dc9558e36461068832b449cedff46123376e3567b9c011e7d74f9b8a8018ee",
+        "proof_sha256": "a7e23b74a9fe6ad129cd3b76c57f9ee83e2e0cf8b62d60a66c3e3b2cc68d2ffc",
+        "scope": "Only the 9 payload locators changed from /home/ubuntu/jopedime_probe_exp to /home/ubuntu/jope-evidence/jopedime_probe_exp. Authority pins, roles, splits, 7,120 context membership (3c42b763...) and 6,899 teacher programs (5818302f...) are unchanged. Never label this spec as 05dc9558....",
+        "sha256": "8748aad6140015d911438ebe0c48edc3c3adcdb6cbd62fb2b1387761c4801b8d"
+      },
       "evidence_level": "GIT_PIN_FOUND_LOCAL_RECOVERED_SHA_VERIFIED",
       "historical_local_path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
       "id": "historical-20261009-neural-snapshot-pin",
