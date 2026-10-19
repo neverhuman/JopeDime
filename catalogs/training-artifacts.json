@@ -343,6 +343,47 @@
       "scope": "Fresh receiving-main (9f8d1a74ab08fc200214a82beaf2ee96e316061a, Cargo.lock 8def8544...) locked release build of gpr_cuda_bench (e39bca19..., 2,818,160 B) and single bounded --verify-envelope CUDA pass (122f5383..., 9/9 parity_pass, max_abs_err 4.463253318931493e-6, elapsed 11.02132265s) on xbabe1 RTX 4090, archived with 1843/1846 initial build failure logs and 1847 success log. Matern omitted / MR09 remains PARTIAL; zero neural updates and zero self-play gain.",
       "sha256": "0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
       "version_id": "CCdA4QL1zQqspQyblWJH0_YbqfI3V91S"
+    },
+    {
+      "actual_run_source_commit": null,
+      "bytes": 231127,
+      "codec": "tar+zstd",
+      "counts_by_executable_sha256": {
+        "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da": 129,
+        "e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490": 25
+      },
+      "decoded_tar_bytes": 19097600,
+      "decoded_tar_sha256": "5ee8b74612dce9ee4d80ff3f669646dfde3577dd9ba455fc0f0313fd9ae5ca28",
+      "deduplicated_binary_and_input_archive": {
+        "bytes": 1002870,
+        "cases_json_sha256": "88f7151cd95af850215b82f8d0de26eae0fdcaaa003cbbebde5958d4bd620e38",
+        "gpr_cuda_bench_sha256": "e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490",
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
+        "sha256": "0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
+        "version_id": "CCdA4QL1zQqspQyblWJH0_YbqfI3V91S"
+      },
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_INDEPENDENT_ALL_MEMBER_RESTORE_VERIFIED",
+      "git_publication_status": "BRANCH_COMMIT_RECEIPT_REQUIRED_MAIN_PENDING",
+      "id": "p1-gpu-sweep-main-9f8d1a74-20261019T1920Z-unique-measurements-archive",
+      "independent_restore_receipt": {
+        "bytes": 24378,
+        "codec": "json+utf8",
+        "git_path": "docs/research/waves/p1-gpu-sweep-main-9f8d1a74-20261019T1920Z/restoration.json",
+        "members_verified": 163,
+        "pass_documents_verified": 154,
+        "sha256": "cae275293d384cd7bf6fa3f88b6408e43058f2276d0b82f6860cbeae3c42146b"
+      },
+      "payload_bytes": 18991580,
+      "payload_files": 163,
+      "s3_etag": "\"76e16e80677de69616f707c696a0d01b\"",
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "scope": "Unique measurement JSONs and logs (163 files, 154 nine-row envelope_verified=true pass documents) from the 2026-10-19T19:20Z 3-host CUDA benchmark sweep and stopped rolling queue. Mixed binary provenance disclosed: 25 xbabe1 pass documents bind main 9f8d1a74 binary e39bca19..., while 129 pass documents (49 xbabe1, 6 xbabe2, 74 xbabe3) declare executable_sha256 c20a2dc8... whose source qualification remains unproven. Non-neural CUDA kernel benchmark only; zero neural updates or self-play gain.",
+      "sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "version_id": "0r8bziZHXOZXBQ0mE7SGUr6a5gFZtJxs",
+      "source_commits_by_executable_sha256": {
+        "e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490": "9f8d1a74ab08fc200214a82beaf2ee96e316061a",
+        "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da": null
+      }
     }
   ],
   "corrections": [

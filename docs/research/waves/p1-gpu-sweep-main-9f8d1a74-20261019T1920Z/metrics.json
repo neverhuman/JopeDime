@@ -1,0 +1,77 @@
+{
+  "assertions": [
+    {
+      "denominator": 163,
+      "evidence_sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "evidence_version": "v1",
+      "expression": "/verified_regular_members",
+      "id": "s3_archive_member_restore_verification",
+      "numerator": 163,
+      "source_field": "/new_unique_measurements_s3_cas_archive/total_archive_members",
+      "status": "verified",
+      "unit": "members",
+      "value": 163
+    },
+    {
+      "denominator": 154,
+      "evidence_sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "evidence_version": "v1",
+      "expression": "/classifier_correction/nine_row_envelope_verified_true_count",
+      "id": "nine_row_envelope_verified_pass_documents",
+      "numerator": 154,
+      "source_field": "/rows;/envelope_verified",
+      "status": "verified",
+      "unit": "documents",
+      "value": 154
+    },
+    {
+      "denominator": 154,
+      "evidence_sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "evidence_version": "v1",
+      "expression": "/counts_by_executable_sha256/e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490",
+      "id": "xbabe1_main_9f8d1a74_e39bca19_verified_passes",
+      "numerator": 25,
+      "source_field": "/executable_sha256",
+      "status": "verified",
+      "unit": "documents",
+      "value": 25
+    },
+    {
+      "denominator": 154,
+      "evidence_sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "evidence_version": "v1",
+      "expression": "/counts_by_executable_sha256/c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da",
+      "id": "mixed_c20a2dc8_unproven_source_passes",
+      "numerator": 129,
+      "source_field": "/executable_sha256",
+      "status": "unqualified_source_provenance",
+      "unit": "documents",
+      "value": 129
+    },
+    {
+      "evidence_sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "evidence_version": "v1",
+      "expression": "max over all 225 rows in the 25 documents whose executable_sha256 is e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490",
+      "id": "xbabe1_e39bca19_max_abs_err",
+      "source_field": "/rows/*/max_absolute_prediction_error",
+      "status": "verified",
+      "unit": "abs_err",
+      "value": 4.463253318931493e-06,
+      "measured_documents": 25,
+      "measured_rows": 225
+    },
+    {
+      "denominator": 154,
+      "evidence_sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
+      "evidence_version": "v1",
+      "expression": "neural_optimizer_steps",
+      "id": "neural_optimizer_updates",
+      "numerator": 0,
+      "source_field": "non_neural_cuda_kernel_benchmark",
+      "status": "verified",
+      "unit": "steps",
+      "value": 0
+    }
+  ],
+  "schema_version": 1
+}
