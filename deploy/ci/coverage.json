@@ -734,6 +734,16 @@
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
+    "job:.github/workflows/ci.yml/observatory-ui": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "observatory-ui"
+      ],
+      "scope": "Exact-head Node26 typecheck, nonzero Vitest JSON fixtures and Vite build in the admitted ci.yml workflow. Aggregate requires successful job plus retained source/run/attempt-bound nonzero receipt. No live training qualification."
+    },
     "job:.github/workflows/ci.yml/python": {
       "discovery": {
         "kind": "workflow-job"
@@ -845,16 +855,6 @@
         "runner-admission-probe"
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
-    },
-    "job:.github/workflows/training-dashboard.yml/observatory-ui": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [],
-      "lanes": [
-        "observatory-ui"
-      ],
-      "scope": "Standalone exact-head Node26 typecheck, nonzero Vitest JSON fixtures and Vite build. Actual GitHub workflow status and retained source-bound receipt; no live training qualification."
     },
     "job:.github/workflows/weekly.yml/regression-suite": {
       "discovery": {
@@ -11028,16 +11028,6 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
-    "workflow:.github/workflows/training-dashboard.yml": {
-      "discovery": {
-        "kind": "workflow"
-      },
-      "dispositions": [],
-      "lanes": [
-        "observatory-ui"
-      ],
-      "scope": "Standalone exact-head Node26 typecheck, nonzero Vitest JSON fixtures and Vite build. Actual GitHub workflow status and retained source-bound receipt; no live training qualification."
-    },
     "workflow:.github/workflows/weekly.yml": {
       "discovery": {
         "kind": "workflow"
@@ -11841,7 +11831,7 @@
       ],
       "command": [
         "GitHub Actions",
-        ".github/workflows/training-dashboard.yml",
+        ".github/workflows/ci.yml",
         "observatory-ui"
       ],
       "environment": {
@@ -11861,7 +11851,7 @@
         "web/training-dashboard/package-lock.json",
         "committed frontend fixtures"
       ],
-      "path_applicability": "training-dashboard.yml path selection or workflow_dispatch",
+      "path_applicability": "Every admitted ci.yml PR/manual run; required frontend job and exact-head receipt before aggregate passes.",
       "requires_nonzero_tests": true,
       "result_backend": "none",
       "stage": "execution"
