@@ -6,7 +6,7 @@
 //! reported loss is not the loss the weights were fitted to. An attempt is accepted only when the
 //! blend beats the best single member on the selection half and at least two distinct members
 //! carry weight. Otherwise the disposition is an explicit best-single fallback, or not attempted.
-use super::oof::OofPredictionBundle;
+use super::oof::{AdmittedBundle, OofPredictionBundle};
 use crate::evaluation_score::{score_predictions, validate_probabilities, Predictions};
 use anyhow::{bail, ensure, Result};
 use jope_datasets::catalog::Task;
@@ -135,7 +135,18 @@ fn rows_in(folds: &[u32], wanted: &[u32]) -> Vec<usize> {
 
 /// Builds the winner ensemble from bundles that already share one row set, fold assignment,
 /// task and class order. `labels` are aligned with those rows.
+/// Builds the winner ensemble from admitted bundles only. Admission (`AdmittedBundle::admit`)
+/// has already bound each bundle to its plan and verified fold records.
 pub fn build_winner_ensemble(
+    admitted: &[AdmittedBundle],
+    labels: &[String],
+) -> Result<WinnerEnsemble> {
+    let members: Vec<OofPredictionBundle> = admitted.iter().map(|a| a.bundle().clone()).collect();
+    build_from_members(&members, labels)
+}
+
+/// The unwrapped builder. Private: reachable only from this module's public wrapper and tests.
+fn build_from_members(
     members: &[OofPredictionBundle],
     labels: &[String],
 ) -> Result<WinnerEnsemble> {
@@ -322,7 +333,7 @@ mod tests {
             .map(|(i, t)| t + if i % 2 == 0 { -1.0 } else { 1.0 })
             .collect();
         let members = vec![bundle("rust.a", a), bundle("rust.b", b)];
-        let ensemble = build_winner_ensemble(&members, &labels).unwrap();
+        let ensemble = build_from_members(&members, &labels).unwrap();
         assert_eq!(ensemble.disposition, EnsembleDisposition::Blend);
         assert!(
             ensemble.report_loss < 1e-9,
@@ -342,7 +353,7 @@ mod tests {
         let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
         let good = bundle("rust.good", truth.clone());
         let bad = bundle("rust.bad", truth.iter().map(|t| t + 100.0).collect());
-        let ensemble = build_winner_ensemble(&[good, bad], &labels).unwrap();
+        let ensemble = build_from_members(&[good, bad], &labels).unwrap();
         assert!(matches!(
             ensemble.disposition,
             EnsembleDisposition::BestSingleFallback { .. }
@@ -356,7 +367,7 @@ mod tests {
         let n = 8;
         let labels = labels_for(n);
         let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
-        let ensemble = build_winner_ensemble(&[bundle("rust.only", truth)], &labels).unwrap();
+        let ensemble = build_from_members(&[bundle("rust.only", truth)], &labels).unwrap();
         assert!(matches!(
             ensemble.disposition,
             EnsembleDisposition::NotAttempted { .. }
@@ -369,7 +380,7 @@ mod tests {
         let a = bundle("rust.a", vec![0.0, 0.5, 1.0, 1.5]);
         let mut b = bundle("rust.b", vec![0.0, 0.5, 1.0, 1.5]);
         b.row_ids[0] = "other".into();
-        assert!(build_winner_ensemble(&[a, b], &labels).is_err());
+        assert!(build_from_members(&[a, b], &labels).is_err());
     }
 
     #[test]
@@ -378,8 +389,8 @@ mod tests {
         let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
         let a = bundle("rust.a", truth.iter().map(|t| t + 0.3).collect());
         let b = bundle("rust.b", truth.iter().map(|t| t - 0.2).collect());
-        let first = build_winner_ensemble(&[a.clone(), b.clone()], &labels).unwrap();
-        let second = build_winner_ensemble(&[b, a], &labels).unwrap();
+        let first = build_from_members(&[a.clone(), b.clone()], &labels).unwrap();
+        let second = build_from_members(&[b, a], &labels).unwrap();
         assert_eq!(first, second);
     }
 }

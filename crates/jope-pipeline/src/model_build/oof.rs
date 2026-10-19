@@ -247,6 +247,73 @@ impl OofPredictionBundle {
     }
 }
 
+/// A bundle that passed `validate_against` its admitted plan and verified fold records. The only
+/// production constructor is `admit`, so downstream code cannot consume an unadmitted bundle.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AdmittedBundle {
+    bundle: OofPredictionBundle,
+}
+
+impl AdmittedBundle {
+    pub fn admit(
+        bundle: OofPredictionBundle,
+        plan: &ExpectedPlan,
+        records: &[FoldRecord],
+    ) -> Result<Self> {
+        bundle.validate_against(plan, records)?;
+        Ok(Self { bundle })
+    }
+
+    pub fn bundle(&self) -> &OofPredictionBundle {
+        &self.bundle
+    }
+}
+
+/// Test-only admission from the bundle's own fold structure. Production admission must use
+/// records produced by verified fits; this helper exists so unit tests can exercise consumers.
+#[cfg(test)]
+pub(crate) fn admit_for_test(bundle: OofPredictionBundle) -> Result<AdmittedBundle> {
+    let folds: Vec<u32> = bundle
+        .folds
+        .iter()
+        .copied()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let records: Vec<FoldRecord> = folds
+        .iter()
+        .enumerate()
+        .map(|(index, &fold)| FoldRecord {
+            fold,
+            request_sha256: bundle.request_sha256.clone(),
+            fitted_artifact_sha256: bundle.fitted_artifact_sha256[index].clone(),
+            fitting_row_ids: bundle
+                .row_ids
+                .iter()
+                .zip(&bundle.folds)
+                .filter(|(_, f)| **f != fold)
+                .map(|(id, _)| id.clone())
+                .collect(),
+            scoring_row_ids: bundle
+                .row_ids
+                .iter()
+                .zip(&bundle.folds)
+                .filter(|(_, f)| **f == fold)
+                .map(|(id, _)| id.clone())
+                .collect(),
+            status: FoldStatus::Verified,
+        })
+        .collect();
+    let plan = ExpectedPlan {
+        request_sha256: bundle.request_sha256.clone(),
+        row_ids: bundle.row_ids.clone(),
+        folds: bundle.folds.clone(),
+        group_ids: bundle.group_ids.clone(),
+        classes: bundle.classes.clone(),
+    };
+    AdmittedBundle::admit(bundle, &plan, &records)
+}
+
 fn is_sha256(text: &str) -> bool {
     text.len() == 64
         && text
