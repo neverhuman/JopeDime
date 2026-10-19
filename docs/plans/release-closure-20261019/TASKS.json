@@ -72,7 +72,7 @@
       "deps": [
         "C01"
       ],
-      "state": "in_progress_metadata_and_payload_snapshots",
+      "state": "in_progress_bounded_transport_locally_tested_runtime_publication_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C03 \u2014 P02 immutable encoder/policy release set"
@@ -88,6 +88,18 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/c03-source-slice2/SOURCE_DELIVERY.json",
           "sha256": "7da97f71ead32dbd60cbb99526abb752a70fa068bc45c276d840f89a6448a1f1",
           "qualification": "Source6b609457 compiles/clippyalltargetsPASS;5new/11totalfixturesauthored,0executed. Remoteversiontransport/cache/CLI/rights/runtime/realpins stillpending."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1850/c03-bounded-store/SOURCE_DELIVERY_FINAL.json",
+          "sha256": "46a27aa2bc78f71021cbc7c3264cf3116efc2631a9161ea68ea67971374c65ca",
+          "qualification": "Exact-version bounded transport source at bc793; fixture moved unchanged to tests/support. Earlier compile-only receipt, superseded by executed local tests below.",
+          "commit_sha": "bc7930213bf2e116e87a4f23866928afb88bdd56"
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1850/c03-lifecycle/SOURCE_DELIVERY.json",
+          "sha256": "00c27a99c1c3f4d12937ce55a3883ab55d5d40b364ea64e6997c2450e3c0ebca",
+          "qualification": "SC184AD source f54430f73 pushed; 48 dataset library tests (including18 bounded/lifecycle fixtures) and11 model-release tests pass locally, scoped all-target clippy clean. Original15/16 and deterministic retention failure preserved. Tested file hashes match commit blobs; no model downloads/cache/CLI/real pins/runtime or serving admission.",
+          "commit_sha": "f54430f73a1ad052a01476e8a4f3f0d5692251f6"
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
@@ -130,6 +142,18 @@
           "sha256": "9c42fb5efc66d696e39aa7ef0d52c883b865ea815334e70849b1bac7d0e82e48",
           "commit_sha": "b3385995e49df1d7464683c60271f0478ca45905",
           "qualification": "Independentread-onlysourceverdictNOTREADY: productioncaller andmeasuredphysicalstarts pending; authoredfixturesunexecuted; localcommitonlySC184T/V. NotnativeGitHubapproval."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w2_dd1668ba_20261019T1857Z.json",
+          "sha256": "9ae8fe9c8da97fef596e7bbebab4423916c6e53538d378b6129dc709cf92b30d",
+          "qualification": "Independent source review: token design recognized; required_before_pickup included fold tampering and symmetric/private-constructor coverage. Not exact-head native approval or a passing execution receipt.",
+          "commit_sha": "dd1668baafdaac92efd35dfdf0f488a3534e63d3"
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/w2_dd1668ba_coverage_followup_receipt_20261019.json",
+          "sha256": "b5d875a2245b89161d3f5337f06f719c45b73b75987ae90ed14203fc5cf71289",
+          "qualification": "Local a297/944 coverage followups source only. At19:34 actual W2=944d0f8c with four dirty files owned by flywheel; final local test/review receipts and physical worker evidence remain open. Remote e83 intentionally held.",
+          "commit_sha": "944d0f8c6a5bb72039d122d8c9e69fe8d9754a15"
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C05"
@@ -159,6 +183,18 @@
           "sha256": "9c42fb5efc66d696e39aa7ef0d52c883b865ea815334e70849b1bac7d0e82e48",
           "commit_sha": "b3385995e49df1d7464683c60271f0478ca45905",
           "qualification": "Independentread-onlysourceverdictNOTREADY: productioncaller andmeasuredphysicalstarts pending; authoredfixturesunexecuted; localcommitonlySC184T/V. NotnativeGitHubapproval."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w2_dd1668ba_20261019T1857Z.json",
+          "sha256": "9ae8fe9c8da97fef596e7bbebab4423916c6e53538d378b6129dc709cf92b30d",
+          "qualification": "Independent source review: token design recognized; required_before_pickup included fold tampering and symmetric/private-constructor coverage. Not exact-head native approval or a passing execution receipt.",
+          "commit_sha": "dd1668baafdaac92efd35dfdf0f488a3534e63d3"
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/w2_dd1668ba_coverage_followup_receipt_20261019.json",
+          "sha256": "b5d875a2245b89161d3f5337f06f719c45b73b75987ae90ed14203fc5cf71289",
+          "qualification": "Local a297/944 coverage followups source only. At19:34 actual W2=944d0f8c with four dirty files owned by flywheel; final local test/review receipts and physical worker evidence remain open. Remote e83 intentionally held.",
+          "commit_sha": "944d0f8c6a5bb72039d122d8c9e69fe8d9754a15"
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C06"
@@ -266,6 +302,17 @@
           "sha256": "9665d7e67ba4f1855c846c6bfdf840800412537fddc661f9b82a90a2b4ef43a3",
           "commit_sha": "6995a2672347fb3fc89d3e00103a78a18747cff4",
           "qualification": "Pushedcompactwavecards/catalog/runbook on soleintegrationbranch; not main or wholeC11complete."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1850/fresh-main-restore/INDEPENDENT_RESTORE.json",
+          "sha256": "5127cced3d6e56d03f49be4a243c02e8244a9c034857844ccd4070410390b301",
+          "qualification": "Root independently GET-restored exact-version pack/index/producer receipt and verified compressed/decoded/all13 regular member hashes. Current-main GPU benchmark preservation only; no neural/self-play gain."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1850/fresh-wave-publication/GIT_PUBLICATION_RECEIPT.json",
+          "sha256": "4f2a7071dfd1f91bf7ae9c01ec40c4d2b4c8e516c0e0a1bbddf96809c510fb49",
+          "qualification": "Fresh-main CUDA wave source5e0160018 pushed on same integration branch:10 pointer-bound assertions,12509 compact wave bytes including independent restoration/index, all7 prior index rows and catalog entries preserved. Main publication/final integration review pending.",
+          "commit_sha": "5e01600180bc166c83c4d2a3c1718e79e6b2d32e"
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C11"
@@ -321,12 +368,19 @@
         "C11",
         "C13"
       ],
-      "state": "blocked_dependency",
+      "state": "local_ci_authorized_source_dependencies_and_frozen_head_review_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C14 \u2014 Integrate once, finish JA06 and final CI on frozen head"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "decision": "SC-DEC-184AC / SC-DEC-184AD",
+          "order_sha256": "189fdbde55ff8e5408ae8d775c31f55f40ad50909a0c797e71f5670210b7d4c6",
+          "hold_clarification_sha256": "4d6bfe0784d18f0ed225c7e49d1ed0a3e089da6fa2b5a32b49bf9ed3621561cf",
+          "qualification": "Human local-CI direction independently read in chat01a1559b; compile-only hold superseded for mechanical local cargo tests. No remote CI dispatch; independent review and ordinary protected merge retained. Training/refit/self-play execution remains held."
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C14"
     },
     {
@@ -388,7 +442,13 @@
         "file": "WORKPLAN.md",
         "section": "C18 \u2014 Dashboard and operational handoff"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "observed_at_utc": "2026-10-19T19:34:05.120484+00:00",
+          "health_sha256": "d07f5621aa0a3e34b101c6862dff8614f5293cbdb84d1d4209101db452d5320f",
+          "qualification": "Live native health responds but native_execution_qualified remains false. Existing Commodore/native integration owners retained; no competing deployment."
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C18"
     },
     {
@@ -423,5 +483,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T18:33:27.144532+00:00"
+  "last_evidence_update_utc": "2026-10-19T19:37:01.457486+00:00"
 }
