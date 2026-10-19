@@ -1,6 +1,6 @@
 [package]
 name = "jope-observatory"
-version = "0.3.0"
+version.workspace = true
 edition = "2021"
 rust-version = "1.90"
 publish = false
