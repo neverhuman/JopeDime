@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+cd /home/ubuntu/JopeDime/.agent/worktrees/pr371-gate || exit 1
+export CARGO_TARGET_DIR=/home/ubuntu/target/pr372-test CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
+echo "HEAD=71f33add4b59b89b589e939a8f0652e87d9b893b"
+cargo test --locked -p feat-math --test capability_join_audit -- --test-threads=1 2>&1
+echo "EXIT=$?"
+cargo test --locked -p feat-math --test operation_profile -- --test-threads=1 2>&1
+echo "EXIT2=$?"
+echo DONE

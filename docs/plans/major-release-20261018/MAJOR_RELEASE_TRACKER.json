@@ -646,7 +646,7 @@
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12.json"
       },
       "reviewer_screen": "487851.jope_review_claude",
-      "status": "in_progress",
+      "status": "pass",
       "source_coverage_path": "docs/plans/major-release-20261018/GP_SPEC_COVERAGE.json"
     },
     {
@@ -2576,11 +2576,11 @@
       "source_coverage_path": "docs/plans/major-release-20261018/GP_SPEC_COVERAGE.json"
     }
   ],
-  "updated_utc": "2026-10-18T17:20:00Z",
+  "updated_utc": "2026-10-19T08:52:30Z",
   "status_counts": {
     "todo": 41,
-    "pass": 1,
-    "in_progress": 4,
+    "pass": 4,
+    "in_progress": 1,
     "partial": 1
   },
   "owner_counts": {

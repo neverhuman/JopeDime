@@ -1,0 +1,54 @@
+{
+  "schema": "jope.mr06_receiving_main_qualification_receipt.v1",
+  "id": "MR06",
+  "status": "PARTIAL",
+  "recorded_at_utc": "2026-10-19T08:21:00Z",
+  "owner_screen": "1061448.jopedime_flywheel",
+  "integrated_by": "2724936.captain_jopedime",
+  "reviewer_screen": "487851.jope_review_claude",
+  "receiving_main_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "receiving_main_tree": "21260d88039712669de215355944b366bb7d20ff",
+  "pr379": {
+    "pr_number": 379,
+    "reviewed_head_sha": "60308c2e06214ce057738b1a17d35eb36e964aa0",
+    "merge_commit_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+    "merged_at_utc": "2026-10-19T08:18:36Z",
+    "ci_run_id": 39217643944,
+    "aggregate_job_id": 117957312825,
+    "independent_review_id": 5568678155,
+    "independent_reviewer": "neverhumanbot",
+    "pre_merge_readback": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR379_pre_merge_readback.json",
+    "diff_review_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR379_diff_review_46b7_20261019T0733Z.json"
+  },
+  "historical_receipt_preserved_unchanged": {
+    "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR06.json",
+    "git_path": "docs/plans/major-release-20261018/receipts/MR06.json",
+    "sha256": "f7c6f9ab8ef946de3abc2f6f48ebecc5069920621f49e36c7979d225097d0239",
+    "bytes": 6883,
+    "binding_manifest_git_path": "docs/plans/major-release-20261018/receipts/MR06_BINDING_MANIFEST.json",
+    "addendum_git_path": "docs/plans/major-release-20261018/receipts/MR06_ADDENDUM.md"
+  },
+  "receiving_main_executed_cases": [
+    {
+      "acceptance_case": "label_admission_v2_preflight_verified",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked -p jope-parallel --lib label_admission::tests:: -- --nocapture",
+      "test_or_code": "crates/jope-engine/src/label_admission.rs::tests::{strict_v2_and_native_fit_binding_preflight,historical_census_closure_verified,census_payload_samples_and_promotion_gate,shard_directory_payload_hashes_verified}",
+      "exit_code": 0,
+      "tests_collected": 4,
+      "tests_passed": 4,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_label_admission_v2_preflight_verified.92e1a55df.log",
+      "log_sha256": "b4f740b22d665fd3df514c7b0bc4cefbed9572ef96052d47e42f6c89efafb8a8"
+    },
+    {
+      "acceptance_case": "historical_7877_shard_directory_hashes_verified",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked -p jope-parallel --lib shard_index::tests::shard_index_payload_closure_verified -- --exact --nocapture",
+      "test_or_code": "crates/jope-engine/src/shard_index.rs::tests::shard_index_payload_closure_verified",
+      "exit_code": 0,
+      "tests_collected": 1,
+      "tests_passed": 1,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_shard_index_payload_closure_verified.92e1a55df.log",
+      "log_sha256": "d2c93b245114f1e02d29cbc9ac78ac7b241d5259baca3e55946507b7f1dfdf93"
+    }
+  ],
+  "scope_note": "Full 7,877-shard directory hash closure has recorded evidence on 28005df70 and 9569bb60 (published under docs/plans/major-release-20261018/receipts/logs/), while current teaching-store/evaluator admission (MR07) remains separate."
+}

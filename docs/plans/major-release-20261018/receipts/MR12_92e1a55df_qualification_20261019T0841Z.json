@@ -1,0 +1,138 @@
+{
+  "schema": "jope.major_release_receipt.v1",
+  "id": "MR12",
+  "status": "PASS",
+  "on_main": true,
+  "sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "checkout_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "commit_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+  "tree_sha": "21260d88039712669de215355944b366bb7d20ff",
+  "verified_at_utc": "2026-10-19T08:36:00Z",
+  "reverified_at": "2026-10-19T08:41:00Z",
+  "owner_screen": "1061448.jopedime_flywheel",
+  "integrated_by": "2724936.captain_jopedime",
+  "reviewer_screen": "487851.jope_review_claude",
+  "reviewer_disposition": {
+    "source_implementation_pr": 370,
+    "source_implementation_review_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR370_review_5f627c2e.json",
+    "source_implementation_ci_run_id": 39163464903,
+    "historical_review_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/verify/REVIEW_MR12.json",
+    "historical_review_sha256": "ca6cac9030b1db3552898ab95b29d4f3e9e818f9d08252becc927089c4393f60",
+    "receiving_main_publication_reviewer": "487851.jope_review_claude (neverhumanbot exact-head native GitHub review on the publication PR from 92e1a55df284fe48643df266dcb29442aaea925e)"
+  },
+  "gate": "G00",
+  "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+  "pr_number": 370,
+  "review_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR370_review_5f627c2e.json",
+  "ci_run_id": 39163464903,
+  "completion_criterion": "Build generated capability join across registry_v2, OperationProfile, native/challenger policy masks, evaluators, and Rust/Python emitters",
+  "completion_criterion_proof": {
+    "operation_profile_module": "crates/feat-math/src/kernel/operation_profile.rs",
+    "capability_join_audit_suite": "crates/feat-math/tests/capability_join_audit.rs",
+    "operation_profile_suite": "crates/feat-math/tests/operation_profile.rs",
+    "execution_provenance": {
+      "worktree": "/home/ubuntu/JopeDime/.agent/worktrees/pr371-gate",
+      "reflog_entry": "92e1a55df (HEAD, origin/main, main) HEAD@{2026-10-19T08:35:57+00:00}: checkout: moving from 71f33add4b59b89b589e939a8f0652e87d9b893b to origin/main",
+      "resolved_full_sha": "92e1a55df284fe48643df266dcb29442aaea925e",
+      "resolved_tree_sha": "21260d88039712669de215355944b366bb7d20ff",
+      "capability_join_audit_log_mtime_utc": "2026-10-19T08:36:00.131259273Z",
+      "operation_profile_log_mtime_utc": "2026-10-19T08:36:00.718270643Z",
+      "limitation": "The two cargo test log files do not print git rev-parse HEAD inline; checkout of 92e1a55df284fe48643df266dcb29442aaea925e three seconds before test execution is established by the worktree git reflog and file mtimes."
+    },
+    "unique_test_census": {
+      "total_unique_tests_executed": 7,
+      "capability_join_audit_unique_tests": 3,
+      "operation_profile_unique_tests": 4,
+      "double_counting_prevented": "The 3 tests in capability_join_audit (capability_join_table_complete, roundtrip_and_differential_join_zero_drift, zero_unclassified_primitives_across_all_surfaces) share one 479-byte target invocation log and are counted as 3 unique tests total, plus 4 unique tests in the separate 501-byte operation_profile log."
+    }
+  },
+  "exact_acceptance_test": {
+    "command": "cargo test --locked -p feat-math --test capability_join_audit -- --test-threads=1",
+    "target": "crates/feat-math/tests/capability_join_audit.rs::zero_unclassified_primitives_across_all_surfaces",
+    "exit_code": 0,
+    "passed": true,
+    "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_capability_join_audit_92e1a55df.log",
+    "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR12_capability_join_audit_92e1a55df.log.txt",
+    "log_bytes": 479,
+    "log_sha256": "e0bcaeaddaa60f6220d7ebcdb395af224927bad11bccc691fb8e890006559d69"
+  },
+  "case_to_test_map": [
+    {
+      "acceptance_case": "capability_join_table_complete",
+      "command": "cargo test --locked -p feat-math --test capability_join_audit -- --test-threads=1",
+      "test_or_code": "crates/feat-math/tests/capability_join_audit.rs::capability_join_table_complete (executed in 3-test capability_join_audit binary alongside zero_unclassified_primitives_across_all_surfaces and roundtrip_and_differential_join_zero_drift)",
+      "exit_code": 0,
+      "passed": true,
+      "case_tests_counted": 1,
+      "suite_tests_in_shared_log": 3,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_capability_join_audit_92e1a55df.log",
+      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR12_capability_join_audit_92e1a55df.log.txt",
+      "log_bytes": 479,
+      "log_sha256": "e0bcaeaddaa60f6220d7ebcdb395af224927bad11bccc691fb8e890006559d69",
+      "completed_at_utc": "2026-10-19T08:36:00.131259273Z"
+    },
+    {
+      "acceptance_case": "roundtrip_and_differential_join_zero_drift",
+      "command": "cargo test --locked -p feat-math --test capability_join_audit -- --test-threads=1",
+      "test_or_code": "crates/feat-math/tests/capability_join_audit.rs::roundtrip_and_differential_join_zero_drift (executed in the same 3-test capability_join_audit run; not double-counted in unique_test_census)",
+      "exit_code": 0,
+      "passed": true,
+      "case_tests_counted": 1,
+      "suite_tests_in_shared_log": 3,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_capability_join_audit_92e1a55df.log",
+      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR12_capability_join_audit_92e1a55df.log.txt",
+      "log_bytes": 479,
+      "log_sha256": "e0bcaeaddaa60f6220d7ebcdb395af224927bad11bccc691fb8e890006559d69",
+      "completed_at_utc": "2026-10-19T08:36:00.131259273Z"
+    }
+  ],
+  "supporting_test_suites": [
+    {
+      "suite": "operation_profile",
+      "command": "cargo test --locked -p feat-math --test operation_profile -- --test-threads=1",
+      "test_or_code": "crates/feat-math/tests/operation_profile.rs::{elasticnet_profile_carries_l1_ratio_bound,join_covers_every_registry_entry,l1_ratio_unit_interval_is_enforced,registry_identity_is_unchanged}",
+      "exit_code": 0,
+      "passed": true,
+      "unique_tests_executed": 4,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR12_operation_profile_92e1a55df.log",
+      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR12_operation_profile_92e1a55df.log.txt",
+      "log_bytes": 501,
+      "log_sha256": "be0067418e151dcd0273fe92be3d4b76e2c1fa44d83bc36bc4cc007aeac2e541",
+      "completed_at_utc": "2026-10-19T08:36:00.718270643Z"
+    }
+  ],
+  "preserved_prior_receipts_and_drafts": {
+    "historical_mr12_json": {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12.json",
+      "git_archive_path": "docs/plans/major-release-20261018/receipts/MR12.historical_9569bb60.json",
+      "sha256": "529d6ccc25e4be31490b0b63c1ea9048792780dbd14ebdd8aaf9a404223990b7",
+      "bound_sha": "9569bb6076059ff66137a2a88b744b387cf07925",
+      "note": "Preserved unmodified with original fd1c0f065 logs."
+    },
+    "harvest_71f33add4_receipt": {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12_71f33add4_harvest_20261019T0810Z.json",
+      "git_path": "docs/plans/major-release-20261018/receipts/MR12_71f33add4_harvest_20261019T0810Z.json",
+      "sha256": "5199ad733f6f644f6c080255be530e98874654eae09ba9d1cd7f22b3779a2bb7",
+      "note": "Historical component harvest on 71f33add4b59b89b589e939a8f0652e87d9b893b; preserved unmodified."
+    },
+    "flywheel_proposed_draft": {
+      "private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/REVERIFY_MR12_92e1a55df_20261019T0836Z.json",
+      "sha256": "51252b816f3eade107530d3199f0a615edfbc2857789f5444ab95ed5aff4a07c",
+      "bytes": 2355,
+      "note": "Preserved unmodified; superseded by this full jope.major_release_receipt.v1 receipt resolving full 40-char SHA and correcting the case[2] -> operation_profile mapping."
+    }
+  },
+  "prior_evidence_sha": [
+    "14e11bb09dfd98b1058a135265b7984bdb8583b3",
+    "4b46c7c0f07278254b3fc7d409ad872211fbcb0b",
+    "d4218f1a4f55d49ce12ba5ecbe37fe072f777f25",
+    "fd1c0f065138bb68f6786aa77494890f05dbe5d2",
+    "9569bb6076059ff66137a2a88b744b387cf07925",
+    "71f33add4b59b89b589e939a8f0652e87d9b893b"
+  ],
+  "limits": [
+    "OperationProfile covers native_policy_mask, challenger_policy_mask, evaluator_surface, rust_emitter, and python_emitter as specified by the MR12 completion criterion (no C++ emitter flag).",
+    "MR11 dependency (crates/feat-math/tests/r0_baseline_golden_bank.rs, PR #368) has a PASS receipt at /home/ubuntu/jope-evidence/major-release-20261018/verify/MR11.json on 9569bb6076059ff66137a2a88b744b387cf07925 and remains tracked separately under its owner 2830191.jopedime_agy.",
+    "CPU-only qualification; no GPU or S3 execution."
+  ]
+}

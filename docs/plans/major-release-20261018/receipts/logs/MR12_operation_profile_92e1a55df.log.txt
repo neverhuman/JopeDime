@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running tests/operation_profile.rs (/home/ubuntu/target/pr372-test/debug/deps/operation_profile-96b473158f734415)
+
+running 4 tests
+test elasticnet_profile_carries_l1_ratio_bound ... ok
+test join_covers_every_registry_entry ... ok
+test l1_ratio_unit_interval_is_enforced ... ok
+test registry_identity_is_unchanged ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+EXIT=0
