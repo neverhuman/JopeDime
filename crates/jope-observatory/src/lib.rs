@@ -197,7 +197,7 @@ pub fn campaign(root: &Path) -> Value {
     let count = checkpoint_names.len();
     let checkpoints: Vec<_> = checkpoint_names.iter().rev().take(24).map(|name| {
         let manifest = observe(&root.join("training/checkpoints").join(name).join("manifest.json"));
-        json!({"id":name,"evidence": {"source":manifest.source,"sha256":manifest.sha256,"status":manifest.status},"identity_matches":manifest.value["config_sha256"] == p["config_sha256"],"manifest":selected(&manifest.value,&["schema","step","state_bytes","state_sha256","parameter_sha256","parameters","model_config","optimizer","learning_rate","weight_decay","config_sha256"]),"verification":"manifest observed; weights not rehashed by the dashboard"})
+        json!({"id":name,"evidence": {"source":manifest.source,"sha256":manifest.sha256,"status":manifest.status},"identity_matches":cfg.sha256.as_deref().is_some_and(|sha|manifest.value["config_sha256"].as_str()==Some(sha)),"manifest":selected(&manifest.value,&["schema","step","state_bytes","state_sha256","parameter_sha256","parameters","model_config","optimizer","learning_rate","weight_decay","config_sha256"]),"verification":"manifest observed; weights not rehashed by the dashboard"})
     }).collect();
     let mut cfg_public = selected(
         &cfg.value,
@@ -300,7 +300,17 @@ pub fn storage(c: &Config) -> Value {
     let catalog = observe(&c.repo_root.join("catalogs/s3.json"));
     if let Some(path) = &c.storage_snapshot {
         let live = observe(path);
-        if live.value["schema"] == "jope.storage-observation/v1" {
+        if live.value["schema"] == "jope.storage-observation/v1"
+            && live.value["buckets"].as_array().is_some_and(|rows| {
+                rows.iter().all(|b| {
+                    b["bucket"].is_string() && b["region"].is_string() && b["status"].is_string()
+                })
+            })
+            && (live.value["errors"].is_null()
+                || live.value["errors"]
+                    .as_array()
+                    .is_some_and(|rows| rows.iter().all(Value::is_string)))
+        {
             return json!({"evidence":live,"catalog_fallback":false});
         }
     }
@@ -427,7 +437,7 @@ pub fn waves(repo: &Path) -> Value {
                 value
             })
             .collect();
-        result.push(json!({"id":name,"card":selected(&card.value,&["wave_id","version","stage","capture_status","archive_status","disposition","interpretation"]),"assertions":assertions,"manifest_sha256":manifest.sha256,"metrics_sha256":metrics.sha256,"source_commit":manifest.value["source_commit"],"training_identity_sha256":manifest.value["training_identity_sha256"],"archive_manifest_sha256":manifest.value["archive_manifest_sha256"],"archive_roots":archive_roots,"publication":"files observed in configured checkout; Git publication requires commit receipt","archive":"producer claim; dashboard does not independently restore bulk payloads"}));
+        result.push(json!({"id":name,"card":selected(&card.value,&["wave_id","version","stage","capture_status","archive_status","disposition","interpretation"]),"assertions":assertions,"manifest_sha256":manifest.sha256,"metrics_sha256":metrics.sha256,"source_commit":manifest.value["source_commit"],"training_identity_sha256":manifest.value["training_identity_sha256"],"archive_manifest_sha256":manifest.value["archive_manifest_sha256"],"archive_roots":archive_roots,"publication":"files observed in configured repository snapshot; Git publication requires commit receipt","archive":"producer claim; dashboard does not independently restore bulk payloads"}));
     }
     json!({"waves":result,"scope":"compact recorded assertions, not raw result rows or verified scientific wins"})
 }
@@ -560,7 +570,14 @@ mod tests {
         fs::create_dir(t.path().join("training")).unwrap();
         fs::write(t.path().join("config.json"), b"{}").unwrap();
         fs::write(t.path().join("training/progress.json"),br#"{"schema":"jope.flywheel-neural-progress/v1","config_sha256":"wrong","optimizer_steps":100,"state":"running"}"#).unwrap();
+        fs::create_dir_all(t.path().join("training/checkpoints/000000")).unwrap();
+        fs::write(
+            t.path().join("training/checkpoints/000000/manifest.json"),
+            b"{}",
+        )
+        .unwrap();
         let v = campaign(t.path());
+        assert_eq!(v["checkpoints"][0]["identity_matches"], false);
         assert_eq!(v["progress"]["status"], "unqualified");
         assert!(v["progress"]["value"].is_null());
     }

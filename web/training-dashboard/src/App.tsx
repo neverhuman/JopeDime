@@ -273,7 +273,9 @@ function Training({
         </div>
         <div className="status-stack">
           <Badge tone={run.progress.status === "observed" ? "green" : "amber"}>
-            {p?.state.replaceAll("_", " ") ?? run.progress.status}
+            {run.progress.status === "stale"
+              ? `Stale · ${p?.state ?? "unknown"}`
+              : (p?.state.replaceAll("_", " ") ?? run.progress.status)}
           </Badge>
           <small>{when(run.progress.observed_at)}</small>
         </div>
@@ -317,7 +319,7 @@ function Training({
               </dd>
             </div>
             <div>
-              <dt>Step throughput</dt>
+              <dt>Run-average throughput</dt>
               <dd>
                 {number(
                   p?.performance.optimizer_steps_per_wall_second,
@@ -1095,7 +1097,7 @@ export default function App() {
   const disconnected = !!error || (age !== null && age > 20);
   const s = snapshot;
   const storage = s?.storage.evidence.value;
-  const datasets = s?.datasets.reduce((n, d) => n + d.count, 0);
+  const datasets = s?.datasets.length === 1 ? s.datasets[0].count : null;
   const assertions = s?.research.waves.reduce(
     (n, w) => n + w.assertions.length,
     0,
@@ -1196,7 +1198,11 @@ export default function App() {
               {(tab === "Overview" || tab === "Storage & datasets") && (
                 <div className="metrics">
                   <Metric
-                    label={s.storage.catalog_fallback ? "S3 cataloged payload" : "S3 physical storage"}
+                    label={
+                      s.storage.catalog_fallback
+                        ? "S3 cataloged payload"
+                        : "S3 physical storage"
+                    }
                     value={bytes(storage?.observed_bytes)}
                     detail={`${storage?.complete ? "Configured buckets covered" : "Partial / dated coverage"} · ${count(storage?.observed_objects)} objects`}
                   />
@@ -1215,9 +1221,9 @@ export default function App() {
                     detail="Unique IDs in pinned snapshots · drill down"
                   />
                   <Metric
-                    label="Published GP results"
-                    value={count(p?.published_results)}
-                    detail={`${count(assertions)} research assertions in ${s.research.waves.length} waves`}
+                    label="Research waves"
+                    value={count(s.research.waves.length)}
+                    detail={`${count(assertions)} recorded result metrics · inspect lineage`}
                   />
                 </div>
               )}
