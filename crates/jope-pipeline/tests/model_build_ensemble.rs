@@ -12,8 +12,9 @@ use jope_pipeline::evaluation_score::Predictions;
 use jope_pipeline::model_build::automl::{expected_plan, fold_records};
 use jope_pipeline::model_build::oof::{AdmittedBundle, OofPredictionBundle};
 use jope_pipeline::model_build::{
-    build_winner_ensemble, EnsembleDisposition, EvaluationBudget, ExecutionIdentity, FoldStatus,
-    ReportPredictions, WinnerEnsemble, APPROVED_FOLD_COUNT, OOF_SCHEMA,
+    admit_winner_ensemble, BudgetCounters, EnsembleDisposition, EvaluationBudget,
+    ExecutionIdentity, FoldStatus, MemberRefit, OuterRefitRecord, ReportPredictions,
+    WinnerEnsemble, APPROVED_FOLD_COUNT, OOF_SCHEMA,
 };
 use model_build_support::*;
 use sha2::{Digest, Sha256};
@@ -98,6 +99,29 @@ fn report_targets(u: &Union) -> Vec<f64> {
     u.data.targets[SELECTION..].to_vec()
 }
 
+/// The outer refit record a real refit would produce for these members: each member hashed to a
+/// placeholder state, trained on the selection side and predicting the report side.
+fn refit_for(
+    identity: &ExecutionIdentity,
+    u: &Union,
+    report: &ReportPredictions,
+) -> OuterRefitRecord {
+    let members = report
+        .per_member
+        .keys()
+        .map(|id| {
+            (
+                id.clone(),
+                MemberRefit {
+                    state_sha256: sha(id),
+                    train_rows: SELECTION,
+                },
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
+    OuterRefitRecord::new(identity, &u.data.row_ids[..SELECTION], &report.ids, members)
+}
+
 fn build(
     admitted: &[AdmittedBundle],
     u: &Union,
@@ -105,12 +129,16 @@ fn build(
     report: &ReportPredictions,
     budget_cap: u64,
 ) -> anyhow::Result<WinnerEnsemble> {
-    build_winner_ensemble(
+    admit_winner_ensemble(
         admitted,
         &u.selection_labels,
         identity,
         report,
-        &mut EvaluationBudget::new(budget_cap),
+        &refit_for(identity, u, report),
+        &mut EvaluationBudget::with_limits(BudgetCounters {
+            ensemble_attempts: budget_cap,
+            ..BudgetCounters::UNLIMITED
+        }),
     )
 }
 
@@ -260,11 +288,12 @@ fn selection_labels_that_do_not_reproduce_the_cohort_are_refused() {
     let report = report_for(&u, &[("a", report_targets(&u)), ("b", report_targets(&u))]);
     let mut labels = u.selection_labels.clone();
     labels[0] = "999".into();
-    let result = build_winner_ensemble(
+    let result = admit_winner_ensemble(
         &admitted,
         &labels,
         &id,
         &report,
+        &refit_for(&id, &u, &report),
         &mut EvaluationBudget::new(10),
     );
     assert!(result.is_err());

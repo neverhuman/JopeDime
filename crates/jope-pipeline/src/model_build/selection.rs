@@ -16,6 +16,7 @@ use crate::experiment::Metric;
 use anyhow::{bail, ensure, Result};
 use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const BAKEOFF_SCHEMA: &str = "jope.cv-bakeoff-receipt/v1";
@@ -56,6 +57,11 @@ pub enum FitEvidence {
 /// context construction, transforms and the head must all be fitted inside `fit_predict`, using
 /// `train` only.
 pub trait CandidateFitter {
+    /// The digest of the bake-off plan this fitter is bound to. `run_bakeoff` refuses an unbound
+    /// fitter and a fitter bound to another plan, so row order, labels, class order, folds and
+    /// groups are fixed before any fit starts (SC-DEC-184R JA-F2).
+    fn bound_plan_sha256(&self) -> Option<&str>;
+
     fn fit_predict(
         &self,
         candidate: &CandidateSpec,
@@ -88,6 +94,22 @@ pub struct BakeoffPlan {
 }
 
 impl BakeoffPlan {
+    /// Digest of the whole plan: task, class order, rows, labels, folds, groups and request.
+    pub fn digest(&self) -> String {
+        let value = serde_json::json!({
+            "schema": "jope.bakeoff-plan/v1",
+            "task": self.task,
+            "classes": self.classes,
+            "row_ids": self.row_ids,
+            "labels": self.labels,
+            "folds": self.folds,
+            "group_ids": self.group_ids,
+            "request_sha256": self.request_sha256,
+        });
+        let bytes = serde_json::to_vec(&value).expect("plain values serialise");
+        format!("{:x}", Sha256::digest(bytes))
+    }
+
     /// Refuses misaligned or invalid input before any candidate is attempted. Returns the sorted
     /// distinct fold ids, which must number exactly `APPROVED_FOLD_COUNT`.
     pub fn validate(&self) -> Result<Vec<u32>> {
@@ -155,39 +177,126 @@ impl BakeoffPlan {
     }
 }
 
-/// Whole-request budget, charged before each attempt.
+/// The kinds of work the request budget counts separately (SC-DEC-184R JA-F3).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BudgetKind {
+    /// One whole candidate attempted in the bake-off.
+    CandidateEvaluation,
+    /// One fold fit attempted, charged before the fit starts.
+    FoldFit,
+    /// One member refitted on the whole selection side for the report.
+    OuterRefit,
+    /// One winner-ensemble attempt.
+    EnsembleAttempt,
+}
+
+/// Per-kind counts. Each field is a limit when used as a cap and a count when used as a total.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BudgetCounters {
+    pub candidate_evaluations: u64,
+    pub fold_fits: u64,
+    pub outer_refits: u64,
+    pub ensemble_attempts: u64,
+}
+
+impl BudgetCounters {
+    pub const UNLIMITED: Self = Self {
+        candidate_evaluations: u64::MAX,
+        fold_fits: u64::MAX,
+        outer_refits: u64::MAX,
+        ensemble_attempts: u64::MAX,
+    };
+
+    fn get(&self, kind: BudgetKind) -> u64 {
+        match kind {
+            BudgetKind::CandidateEvaluation => self.candidate_evaluations,
+            BudgetKind::FoldFit => self.fold_fits,
+            BudgetKind::OuterRefit => self.outer_refits,
+            BudgetKind::EnsembleAttempt => self.ensemble_attempts,
+        }
+    }
+
+    fn get_mut(&mut self, kind: BudgetKind) -> &mut u64 {
+        match kind {
+            BudgetKind::CandidateEvaluation => &mut self.candidate_evaluations,
+            BudgetKind::FoldFit => &mut self.fold_fits,
+            BudgetKind::OuterRefit => &mut self.outer_refits,
+            BudgetKind::EnsembleAttempt => &mut self.ensemble_attempts,
+        }
+    }
+}
+
+/// Request-wide budget. Each kind of work has its own limit and counter, and a charge is made
+/// before the attempt it pays for.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EvaluationBudget {
-    cap: u64,
-    charged: u64,
+    limits: BudgetCounters,
+    charged: BudgetCounters,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BudgetExhausted {
+    pub kind: BudgetKind,
     pub requested: u64,
     pub remaining: u64,
 }
 
 impl EvaluationBudget {
-    pub fn new(cap: u64) -> Self {
-        Self { cap, charged: 0 }
+    /// A budget whose only limit is the candidate-evaluation cap. Every other kind is unlimited.
+    pub fn new(candidate_cap: u64) -> Self {
+        Self::with_limits(BudgetCounters {
+            candidate_evaluations: candidate_cap,
+            ..BudgetCounters::UNLIMITED
+        })
     }
-    pub fn charge(&mut self, units: u64) -> std::result::Result<(), BudgetExhausted> {
-        let remaining = self.cap - self.charged;
+
+    pub fn with_limits(limits: BudgetCounters) -> Self {
+        Self {
+            limits,
+            charged: BudgetCounters {
+                candidate_evaluations: 0,
+                fold_fits: 0,
+                outer_refits: 0,
+                ensemble_attempts: 0,
+            },
+        }
+    }
+
+    pub fn charge(
+        &mut self,
+        kind: BudgetKind,
+        units: u64,
+    ) -> std::result::Result<(), BudgetExhausted> {
+        let remaining = self.limits.get(kind).saturating_sub(self.charged.get(kind));
         if units > remaining {
             return Err(BudgetExhausted {
+                kind,
                 requested: units,
                 remaining,
             });
         }
-        self.charged += units;
+        *self.charged.get_mut(kind) += units;
         Ok(())
     }
+
+    /// Candidate evaluations charged so far.
     pub fn charged(&self) -> u64 {
+        self.charged.candidate_evaluations
+    }
+
+    /// The candidate-evaluation cap.
+    pub fn cap(&self) -> u64 {
+        self.limits.candidate_evaluations
+    }
+
+    pub fn counters(&self) -> BudgetCounters {
         self.charged
     }
-    pub fn cap(&self) -> u64 {
-        self.cap
+
+    pub fn limits(&self) -> BudgetCounters {
+        self.limits
     }
 }
 
@@ -340,6 +449,7 @@ fn evaluate(
     candidate: &CandidateSpec,
     fitter: &dyn CandidateFitter,
     fold_attempts: &mut u64,
+    budget: &mut EvaluationBudget,
 ) -> Result<Outcome> {
     let n = plan.row_ids.len();
     let mut fold_losses = Vec::with_capacity(folds.len());
@@ -351,6 +461,13 @@ fn evaluate(
         let predict: Vec<usize> = (0..n).filter(|&i| plan.folds[i] == fold).collect();
         let train: Vec<usize> = (0..n).filter(|&i| plan.folds[i] != fold).collect();
         *fold_attempts += 1;
+        if let Err(error) = budget.charge(BudgetKind::FoldFit, 1) {
+            return Ok(Outcome::FoldFailed {
+                fold,
+                reason: format!("fold fit refused by the request budget: {error:?}"),
+                physical_starts: starts,
+            });
+        }
         let fit = match fitter.fit_predict(candidate, &train, &predict) {
             Ok(fit) => fit,
             Err(error) => {
@@ -486,6 +603,13 @@ pub fn run_bakeoff(
     budget: &mut EvaluationBudget,
 ) -> Result<BakeoffOutput> {
     let folds = plan.validate()?;
+    match fitter.bound_plan_sha256() {
+        Some(bound) => ensure!(
+            bound == plan.digest(),
+            "fitter is bound to a different bake-off plan"
+        ),
+        None => bail!("fitter is not bound to a bake-off plan"),
+    }
     let metric = Metric::for_task(plan.task)?;
     let mut reports = Vec::with_capacity(candidates.len());
     let mut bundles = Vec::new();
@@ -519,7 +643,7 @@ pub fn run_bakeoff(
             ));
             continue;
         }
-        if budget.charge(1).is_err() {
+        if budget.charge(BudgetKind::CandidateEvaluation, 1).is_err() {
             reports.push(report(
                 candidate,
                 CandidateStatus::BudgetLimited,
@@ -531,7 +655,7 @@ pub fn run_bakeoff(
             continue;
         }
         let mut fold_attempts = 0;
-        let outcome = evaluate(plan, &folds, candidate, fitter, &mut fold_attempts)?;
+        let outcome = evaluate(plan, &folds, candidate, fitter, &mut fold_attempts, budget)?;
         let entry = match outcome {
             Outcome::Scored {
                 fold_losses,
@@ -622,15 +746,17 @@ mod tests {
     /// Predicts the mean training label for every held-out row, and records every training set.
     struct MeanFitter {
         labels: Vec<f64>,
+        bound: String,
         seen_train: RefCell<Vec<Vec<usize>>>,
         fail_fold: Option<usize>,
         evidence: FitEvidence,
     }
 
     impl MeanFitter {
-        fn verified(labels: Vec<f64>) -> Self {
+        fn verified(labels: Vec<f64>, plan: &BakeoffPlan) -> Self {
             Self {
                 labels,
+                bound: plan.digest(),
                 seen_train: RefCell::new(vec![]),
                 fail_fold: None,
                 evidence: FitEvidence::Verified {
@@ -642,6 +768,10 @@ mod tests {
     }
 
     impl CandidateFitter for MeanFitter {
+        fn bound_plan_sha256(&self) -> Option<&str> {
+            Some(&self.bound)
+        }
+
         fn fit_predict(
             &self,
             _: &CandidateSpec,
@@ -690,7 +820,7 @@ mod tests {
     #[test]
     fn every_fold_trains_on_the_other_folds_only_and_covers_all_rows() {
         let (plan, labels) = plan(10);
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         let mut budget = EvaluationBudget::new(10);
         run_bakeoff(&plan, &[spec("rust.ridge")], &fitter, &mut budget).unwrap();
         let seen = fitter.seen_train.borrow();
@@ -708,7 +838,7 @@ mod tests {
     fn a_partition_that_is_not_five_folds_is_refused_before_any_fit() {
         let (mut plan, labels) = plan(9);
         plan.folds = (0..9).map(|i| (i % 3) as u32).collect();
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         assert!(run_bakeoff(
             &plan,
             &[spec("rust.ridge")],
@@ -732,7 +862,7 @@ mod tests {
                 }
             })
             .collect();
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         assert!(run_bakeoff(
             &plan,
             &[spec("rust.ridge")],
@@ -746,7 +876,7 @@ mod tests {
     #[test]
     fn a_scored_candidate_has_a_bundle_bound_to_verified_fold_records() {
         let (plan, labels) = plan(10);
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         let out = run_bakeoff(
             &plan,
             &[spec("rust.ridge")],
@@ -778,7 +908,7 @@ mod tests {
     #[test]
     fn internal_multiple_fits_are_counted_from_verified_evidence_not_from_callbacks() {
         let (plan, labels) = plan(10);
-        let mut fitter = MeanFitter::verified(labels);
+        let mut fitter = MeanFitter::verified(labels, &plan);
         fitter.evidence = FitEvidence::Verified {
             request_sha256: "a".repeat(64),
             physical_starts: 3,
@@ -797,7 +927,7 @@ mod tests {
     #[test]
     fn a_refusal_before_start_counts_zero_physical_starts() {
         let (plan, labels) = plan(10);
-        let mut fitter = MeanFitter::verified(labels);
+        let mut fitter = MeanFitter::verified(labels, &plan);
         fitter.fail_fold = Some(0);
         let out = run_bakeoff(
             &plan,
@@ -818,7 +948,7 @@ mod tests {
     #[test]
     fn unknown_fit_evidence_leaves_the_count_unknown_and_the_candidate_unselectable() {
         let (plan, labels) = plan(10);
-        let mut fitter = MeanFitter::verified(labels);
+        let mut fitter = MeanFitter::verified(labels, &plan);
         fitter.evidence = FitEvidence::Unknown;
         let out = run_bakeoff(
             &plan,
@@ -839,7 +969,7 @@ mod tests {
     #[test]
     fn a_failed_fold_excludes_the_candidate_and_it_is_never_selected() {
         let (plan, labels) = plan(10);
-        let mut fitter = MeanFitter::verified(labels);
+        let mut fitter = MeanFitter::verified(labels, &plan);
         fitter.fail_fold = Some(1);
         let out = run_bakeoff(
             &plan,
@@ -859,7 +989,7 @@ mod tests {
     #[test]
     fn the_budget_is_charged_before_each_attempt_and_the_rest_are_budget_limited() {
         let (plan, labels) = plan(10);
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         let mut budget = EvaluationBudget::new(1);
         let out = run_bakeoff(
             &plan,
@@ -883,7 +1013,7 @@ mod tests {
     #[test]
     fn a_candidate_that_is_not_enabled_is_refused_without_charge() {
         let (plan, labels) = plan(10);
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         let mut gated = spec("rust.tab_boost");
         gated.admission = Admission::ReceiptRequired;
         let mut budget = EvaluationBudget::new(5);
@@ -898,7 +1028,7 @@ mod tests {
     #[test]
     fn selection_is_deterministic_and_ties_break_by_candidate_id() {
         let (plan, labels) = plan(10);
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         let roster = [spec("rust.zeta"), spec("rust.alpha")];
         let first = run_bakeoff(&plan, &roster, &fitter, &mut EvaluationBudget::new(10)).unwrap();
         let second = run_bakeoff(&plan, &roster, &fitter, &mut EvaluationBudget::new(10)).unwrap();
@@ -910,7 +1040,7 @@ mod tests {
     fn invalid_regression_labels_are_refused_before_any_fit() {
         let (mut plan, labels) = plan(10);
         plan.labels[0] = "not-a-number".into();
-        let fitter = MeanFitter::verified(labels);
+        let fitter = MeanFitter::verified(labels, &plan);
         assert!(run_bakeoff(
             &plan,
             &[spec("rust.ridge")],

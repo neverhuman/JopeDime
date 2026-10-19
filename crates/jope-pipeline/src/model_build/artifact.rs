@@ -1,26 +1,34 @@
-//! Persistence and reload verification for the winner ensemble (SC-DEC-184 JA-04, JA-R4).
+//! Persistence and reload verification for the winner ensemble (SC-DEC-184 JA-04, JA-R4,
+//! SC-DEC-184R JA-F1, JA-F3).
 //!
-//! The persisted record holds the ensemble and the fitted state bytes of every member. Its
-//! identity is the sha256 of its canonical JSON. A reload restores each member's state through a
-//! caller-supplied function (in production, the native fitter's restore), checks that the restored
-//! model reproduces the report predictions bit for bit, and recomputes the ensemble from the
-//! admitted bundles, which must equal the stored record exactly.
+//! The persisted record holds the ensemble, the outer refit record and the fitted state bytes of
+//! every member. Its identity is the sha256 of its canonical JSON. A reload checks four things:
+//! the stored identity equals the caller's independently built identity; every state hashes to
+//! the digest the refit recorded; each restored member reproduces its report predictions bit for
+//! bit; and the ensemble recomputed from the admitted bundles equals the stored record exactly.
 //!
-//! This is an in-process reload of persisted bytes. It is not a fresh-process reload, and it does
-//! not claim a registry publication.
-use super::ensemble::{build_winner_ensemble, ReportPredictions, WinnerEnsemble};
+//! `write_new` and `read` make the record a product artifact on disk. `write_new` refuses to
+//! overwrite an existing file. This is an in-process check of the bytes; the fresh-process check
+//! is in the `model_build_persistence` integration test.
+use super::ensemble::{admit_winner_ensemble, ReportPredictions, WinnerEnsemble};
+use super::identity::ExecutionIdentity;
 use super::oof::AdmittedBundle;
+use super::refit::OuterRefitRecord;
 use super::selection::EvaluationBudget;
 use crate::evaluation_score::Predictions;
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+use std::io::Write;
+use std::path::Path;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PersistedEnsemble {
     pub ensemble: WinnerEnsemble,
+    /// The outer refit that produced the report predictions and the member states.
+    pub refit: OuterRefitRecord,
     /// Fitted state bytes per member candidate, exactly as the fitter produced them.
     pub member_states: BTreeMap<String, Vec<u8>>,
 }
@@ -42,6 +50,23 @@ pub fn decode(bytes: &[u8]) -> Result<PersistedEnsemble> {
         "persisted winner ensemble is not in canonical encoding"
     );
     Ok(persisted)
+}
+
+/// Writes a new artifact. An existing file is an error, never an overwrite.
+pub fn write_new(path: &Path, persisted: &PersistedEnsemble) -> Result<()> {
+    let bytes = encode(persisted)?;
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .with_context(|| format!("creating {}", path.display()))?;
+    file.write_all(&bytes)?;
+    file.sync_all()?;
+    Ok(())
+}
+
+pub fn read(path: &Path) -> Result<PersistedEnsemble> {
+    decode(&std::fs::read(path).with_context(|| format!("reading {}", path.display()))?)
 }
 
 fn bits_equal(a: &Predictions, b: &Predictions) -> bool {
@@ -69,32 +94,22 @@ fn bits_equal(a: &Predictions, b: &Predictions) -> bool {
     }
 }
 
-/// Reloads a persisted ensemble. `restore` maps a member's id and state bytes to its restored
-/// report-side predictions.
+/// Reloads a persisted ensemble against the caller's independently built identity. `restore` maps
+/// a member's id and state bytes to its restored report-side predictions.
 pub fn verify_reload(
     persisted: &PersistedEnsemble,
+    identity: &ExecutionIdentity,
     admitted: &[AdmittedBundle],
     selection_labels: &[String],
     report: &ReportPredictions,
     budget: &mut EvaluationBudget,
     restore: &dyn Fn(&str, &[u8]) -> Result<Predictions>,
 ) -> Result<()> {
-    let member_ids: Vec<&str> = admitted
-        .iter()
-        .map(|m| m.bundle().candidate_id.as_str())
-        .collect();
     ensure!(
-        persisted
-            .member_states
-            .keys()
-            .map(String::as_str)
-            .eq(member_ids
-                .iter()
-                .copied()
-                .collect::<std::collections::BTreeSet<_>>()
-                .into_iter()),
-        "persisted states do not cover exactly the admitted members"
+        persisted.ensemble.identity == *identity,
+        "the persisted ensemble was built under a different identity"
     );
+    persisted.refit.verify_states(&persisted.member_states)?;
     for (id, bytes) in &persisted.member_states {
         let restored = restore(id, bytes)?;
         let expected = report
@@ -106,11 +121,12 @@ pub fn verify_reload(
             "restored state for {id} does not reproduce its report predictions bit for bit"
         );
     }
-    let recomputed = build_winner_ensemble(
+    let recomputed = admit_winner_ensemble(
         admitted,
         selection_labels,
-        &persisted.ensemble.identity,
+        identity,
         report,
+        &persisted.refit,
         budget,
     )?;
     ensure!(

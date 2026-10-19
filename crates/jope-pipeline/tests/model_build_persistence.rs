@@ -120,6 +120,7 @@ fn reload_refuses_a_member_state_that_does_not_reproduce_its_report_predictions(
     let mut budget = EvaluationBudget::new(100);
     let result = verify_reload(
         &persisted,
+        &id,
         &admitted_for(&persisted, &u),
         &u.selection_labels,
         &report,
@@ -139,6 +140,7 @@ fn reload_refuses_a_record_missing_a_member_state() {
     let mut budget = EvaluationBudget::new(100);
     let result = verify_reload(
         &persisted,
+        &id,
         &admitted_for(&persisted, &u),
         &u.selection_labels,
         &out.report.clone().unwrap(),
@@ -167,6 +169,7 @@ fn in_process_reload_reproduces_the_report_predictions_bit_for_bit() {
     let mut budget = EvaluationBudget::new(100);
     verify_reload(
         &persisted,
+        &id,
         &admitted_for(&persisted, &u),
         &u.selection_labels,
         &report,

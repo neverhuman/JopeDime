@@ -15,9 +15,10 @@
 //!
 //! Acceptance is decided on selection-side out-of-fold loss only. The report loss is recorded and
 //! labelled with its basis; it never changes the weights or the disposition.
-use super::identity::ExecutionIdentity;
+use super::identity::{digest_ids, ExecutionIdentity};
 use super::oof::AdmittedBundle;
-use super::selection::EvaluationBudget;
+use super::refit::{OuterRefitRecord, REFIT_RECORD_SCHEMA};
+use super::selection::{BudgetKind, EvaluationBudget};
 use crate::evaluation_score::{score_predictions, validate_probabilities, Predictions};
 use anyhow::{bail, ensure, Result};
 use jope_datasets::catalog::Task;
@@ -136,9 +137,51 @@ fn blend(members: &[&Predictions], counts: &[u32]) -> Result<Predictions> {
     }
 }
 
-/// Builds the winner ensemble from admitted selection-side bundles, a shared identity, the
-/// report-side predictions and a whole-request budget.
-pub fn build_winner_ensemble(
+/// Production entry point for a winner ensemble. Report losses are granted only when the outer refit
+/// record agrees with the identity, the report side and the member set (SC-DEC-184R JA-F1). A
+/// report loss cannot be presented without its record, because the call is refused without one.
+pub fn admit_winner_ensemble(
+    admitted: &[AdmittedBundle],
+    selection_labels: &[String],
+    identity: &ExecutionIdentity,
+    report: &ReportPredictions,
+    refit: &OuterRefitRecord,
+    budget: &mut EvaluationBudget,
+) -> Result<WinnerEnsemble> {
+    ensure!(
+        report.ids.len() == report.labels.len(),
+        "report ids and labels are not aligned"
+    );
+    ensure!(
+        refit.schema == REFIT_RECORD_SCHEMA,
+        "unknown outer refit record schema"
+    );
+    ensure!(
+        refit.request_sha256 == identity.request_sha256,
+        "the outer refit ran under a different request"
+    );
+    ensure!(
+        refit.plan_sha256 == identity.plan_sha256,
+        "the outer refit ran under a different plan"
+    );
+    ensure!(
+        refit.train_rows_sha256 == identity.row_sha256,
+        "the outer refit trained on rows other than the selection side"
+    );
+    ensure!(
+        refit.predict_rows_sha256 == digest_ids(&report.ids),
+        "the outer refit predicted rows other than the report side"
+    );
+    ensure!(
+        refit.members.keys().eq(report.per_member.keys()),
+        "the outer refit does not cover exactly the report predictions"
+    );
+    build_winner_ensemble(admitted, selection_labels, identity, report, budget)
+}
+
+/// The winner-ensemble core. Private: production code reaches it only through
+/// `admit_winner_ensemble`, which checks the outer refit record first.
+fn build_winner_ensemble(
     admitted: &[AdmittedBundle],
     selection_labels: &[String],
     identity: &ExecutionIdentity,
@@ -194,7 +237,7 @@ pub fn build_winner_ensemble(
     }
 
     budget
-        .charge(1)
+        .charge(BudgetKind::EnsembleAttempt, 1)
         .map_err(|e| anyhow::anyhow!("ensemble attempt over the request budget: {e:?}"))?;
 
     let mut sorted: Vec<&AdmittedBundle> = admitted.iter().collect();
@@ -343,6 +386,7 @@ mod tests {
         let rows: Vec<String> = (0..N).map(|i| format!("r{i}")).collect();
         ExecutionIdentity::new(
             REQUEST,
+            &"d".repeat(64),
             &"c".repeat(64),
             &rows,
             &labels(),

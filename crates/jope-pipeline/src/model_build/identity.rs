@@ -1,13 +1,17 @@
-//! One execution identity shared by every member of a winner ensemble (SC-DEC-184M JA-R2).
+//! One execution identity shared by every member of a winner ensemble (SC-DEC-184M JA-R2, JA-F1,
+//! JA-F2).
 //!
-//! The identity binds the request, the selection-side rows and labels, the report-side rows and
-//! labels, the groups, the protocol and the data bytes. Every admitted member must carry the same
-//! request and group identity, and the labels supplied to the ensemble must hash to the same
-//! cohort. A reloaded ensemble must reproduce the identity it was built under.
+//! The identity binds the request, the validated bake-off plan, the data bytes, the selection-side
+//! rows and labels, the report-side rows and labels, the groups and the protocol. Admission
+//! refuses duplicate row identifiers within a side and any identifier shared by the selection and
+//! report sides, since a shared row would let the report side leak into the selection side.
+//! Every admitted member must carry the same request and group identity, and the selection labels
+//! must reproduce the cohort digest.
 use super::oof::AdmittedBundle;
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeSet;
 
 pub const PROTOCOL: &str = "outer-selection-refit-report/v1";
 
@@ -16,6 +20,9 @@ pub const PROTOCOL: &str = "outer-selection-refit-report/v1";
 pub struct ExecutionIdentity {
     pub protocol: String,
     pub request_sha256: String,
+    /// Digest of the validated bake-off plan: task, class order, rows, labels, folds, groups and
+    /// request. A fitter must be bound to this exact plan before any fit starts.
+    pub plan_sha256: String,
     /// Digest of the feature and target bytes the fitters were given.
     pub data_sha256: String,
     /// Digest of the selection-side row identifiers.
@@ -54,9 +61,19 @@ pub fn digest_pairs(ids: &[String], labels: &[String]) -> String {
     hex(buffer)
 }
 
+fn is_sha256(text: &str) -> bool {
+    text.len() == 64
+        && text
+            .bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+}
+
 impl ExecutionIdentity {
+    /// One argument per identity input, so each binding stays named at the call site.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         request_sha256: &str,
+        plan_sha256: &str,
         data_sha256: &str,
         selection_ids: &[String],
         selection_labels: &[String],
@@ -65,6 +82,15 @@ impl ExecutionIdentity {
         report_labels: &[String],
     ) -> Result<Self> {
         ensure!(
+            is_sha256(request_sha256),
+            "request identity is not a sha256"
+        );
+        ensure!(is_sha256(plan_sha256), "plan identity is not a sha256");
+        ensure!(
+            !selection_ids.is_empty() && !report_ids.is_empty(),
+            "both the selection and the report side need rows"
+        );
+        ensure!(
             selection_ids.len() == selection_labels.len(),
             "selection ids and labels are not aligned"
         );
@@ -72,9 +98,28 @@ impl ExecutionIdentity {
             report_ids.len() == report_labels.len(),
             "report ids and labels are not aligned"
         );
+        ensure!(
+            selection_groups.is_empty() || selection_groups.len() == selection_ids.len(),
+            "selection groups are not row-aligned"
+        );
+        let selection_set: BTreeSet<&str> = selection_ids.iter().map(String::as_str).collect();
+        let report_set: BTreeSet<&str> = report_ids.iter().map(String::as_str).collect();
+        ensure!(
+            selection_set.len() == selection_ids.len(),
+            "selection side repeats a row id"
+        );
+        ensure!(
+            report_set.len() == report_ids.len(),
+            "report side repeats a row id"
+        );
+        ensure!(
+            selection_set.is_disjoint(&report_set),
+            "a row appears on both the selection and the report side"
+        );
         Ok(Self {
             protocol: PROTOCOL.into(),
             request_sha256: request_sha256.into(),
+            plan_sha256: plan_sha256.into(),
             data_sha256: data_sha256.into(),
             row_sha256: digest_ids(selection_ids),
             cohort_sha256: digest_pairs(selection_ids, selection_labels),
@@ -83,8 +128,8 @@ impl ExecutionIdentity {
         })
     }
 
-    /// Refuses any admitted member whose request or group identity differs from this identity,
-    /// and any selection-side labels that do not reproduce the cohort digest.
+    /// Refuses any admitted member whose request, plan or group identity differs from this
+    /// identity, and any selection-side labels that do not reproduce the cohort digest.
     pub fn verify_members(
         &self,
         admitted: &[AdmittedBundle],
@@ -125,47 +170,36 @@ impl ExecutionIdentity {
 mod tests {
     use super::*;
 
-    fn ids(n: usize) -> Vec<String> {
-        (0..n).map(|i| format!("row-{i}")).collect()
+    const SHA: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    fn ids(prefix: &str, n: usize) -> Vec<String> {
+        (0..n).map(|i| format!("{prefix}-{i}")).collect()
     }
 
-    fn base() -> ExecutionIdentity {
-        let rows = ids(4);
-        let labels: Vec<String> = (0..4).map(|i| i.to_string()).collect();
-        let groups: Vec<String> = (0..4).map(|i| format!("g{i}")).collect();
-        ExecutionIdentity::new(
-            &"a".repeat(64),
-            &"b".repeat(64),
-            &rows,
-            &labels,
-            &groups,
-            &ids(2),
-            &labels[..2],
-        )
-        .unwrap()
+    fn build(sel: &[String], rep: &[String]) -> Result<ExecutionIdentity> {
+        let sel_labels: Vec<String> = sel.iter().map(|_| "0".into()).collect();
+        let rep_labels: Vec<String> = rep.iter().map(|_| "0".into()).collect();
+        ExecutionIdentity::new(SHA, SHA, SHA, sel, &sel_labels, &[], rep, &rep_labels)
     }
 
     #[test]
     fn identical_inputs_give_identical_identities() {
-        assert_eq!(base(), base());
+        let sel = ids("s", 4);
+        let rep = ids("r", 2);
+        assert_eq!(build(&sel, &rep).unwrap(), build(&sel, &rep).unwrap());
     }
 
     #[test]
     fn a_changed_label_changes_the_cohort_digest() {
-        let rows = ids(4);
-        let groups: Vec<String> = (0..4).map(|i| format!("g{i}")).collect();
-        let a = base();
-        let changed = ExecutionIdentity::new(
-            &"a".repeat(64),
-            &"b".repeat(64),
-            &rows,
-            &["0".into(), "1".into(), "2".into(), "9".into()],
-            &groups,
-            &ids(2),
-            &["0".to_string(), "1".to_string()],
-        )
-        .unwrap();
-        assert_ne!(a.cohort_sha256, changed.cohort_sha256);
+        let sel = ids("s", 4);
+        let rep = ids("r", 2);
+        let a = build(&sel, &rep).unwrap();
+        let mut labels: Vec<String> = sel.iter().map(|_| "0".into()).collect();
+        labels[3] = "9".into();
+        let rep_labels: Vec<String> = rep.iter().map(|_| "0".into()).collect();
+        let b =
+            ExecutionIdentity::new(SHA, SHA, SHA, &sel, &labels, &[], &rep, &rep_labels).unwrap();
+        assert_ne!(a.cohort_sha256, b.cohort_sha256);
     }
 
     #[test]
@@ -173,6 +207,40 @@ mod tests {
         assert_ne!(
             digest_ids(&["ab".into(), "c".into()]),
             digest_ids(&["a".into(), "bc".into()])
+        );
+    }
+
+    #[test]
+    fn a_repeated_selection_row_is_refused() {
+        let mut sel = ids("s", 4);
+        sel[3] = sel[0].clone();
+        assert!(build(&sel, &ids("r", 2)).is_err());
+    }
+
+    #[test]
+    fn a_repeated_report_row_is_refused() {
+        let mut rep = ids("r", 2);
+        rep[1] = rep[0].clone();
+        assert!(build(&ids("s", 4), &rep).is_err());
+    }
+
+    #[test]
+    fn a_row_shared_by_both_sides_is_refused() {
+        let sel = ids("s", 4);
+        let mut rep = ids("r", 2);
+        rep[0] = sel[2].clone();
+        assert!(build(&sel, &rep).is_err());
+    }
+
+    #[test]
+    fn a_plan_identity_that_is_not_a_sha256_is_refused() {
+        let sel = ids("s", 4);
+        let rep = ids("r", 2);
+        let labels: Vec<String> = sel.iter().map(|_| "0".into()).collect();
+        let rep_labels: Vec<String> = rep.iter().map(|_| "0".into()).collect();
+        assert!(
+            ExecutionIdentity::new(SHA, "plan", SHA, &sel, &labels, &[], &rep, &rep_labels)
+                .is_err()
         );
     }
 }

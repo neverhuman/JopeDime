@@ -8,8 +8,8 @@ use jope_pipeline::evaluation_score::Predictions;
 use jope_pipeline::model_build::native::{data_digest, NativeFitter};
 use jope_pipeline::model_build::selection::NotStarted;
 use jope_pipeline::model_build::{
-    refit_members, run_automl, BakeoffPlan, CandidateFitter, CandidateStatus, EvaluationBudget,
-    ExecutionIdentity,
+    refit_members, run_automl, BakeoffPlan, BudgetCounters, CandidateFitter, CandidateStatus,
+    EvaluationBudget, ExecutionIdentity,
 };
 use model_build_support::*;
 
@@ -55,8 +55,16 @@ fn regression_request_admits_the_bound_head_and_refuses_the_unbound_one() {
         CandidateStatus::FoldFailed { fold: 0, .. }
     ));
     assert_eq!(gpr.physical_starts, Some(0));
-    // Two bake-off attempts, one refit and one ensemble attempt.
-    assert_eq!(budget.charged(), 4);
+    // Two candidates, six fold fits (five for ridge, one refused for gpr), one refit, one ensemble.
+    assert_eq!(
+        budget.counters(),
+        BudgetCounters {
+            candidate_evaluations: 2,
+            fold_fits: 6,
+            outer_refits: 1,
+            ensemble_attempts: 1,
+        }
+    );
     let persisted = out.persisted.expect("the bound head is admitted");
     assert_eq!(
         persisted.member_states.keys().collect::<Vec<_>>(),
@@ -195,6 +203,7 @@ fn the_outer_refit_refuses_report_ids_the_fitter_was_not_bound_to() {
     wrong.reverse();
     let result = refit_members(
         &fitter,
+        &id,
         &members,
         &wrong,
         &u.report_labels,
@@ -211,10 +220,14 @@ fn the_outer_refit_is_charged_to_the_budget_and_refuses_when_exhausted() {
     let members = roster_of(Task::Regression, &["rust.ridge"]);
     let result = refit_members(
         &fitter,
+        &id,
         &members,
         &report_ids(&u),
         &u.report_labels,
-        &mut EvaluationBudget::new(0),
+        &mut EvaluationBudget::with_limits(BudgetCounters {
+            outer_refits: 0,
+            ..BudgetCounters::UNLIMITED
+        }),
     );
     assert!(result.is_err());
 }

@@ -17,7 +17,7 @@
 //! admitted there is no ensemble, and the output says so rather than substituting a fallback.
 use super::artifact::PersistedEnsemble;
 use super::candidates::CandidateSpec;
-use super::ensemble::{build_winner_ensemble, ReportPredictions};
+use super::ensemble::{admit_winner_ensemble, ReportPredictions};
 use super::identity::ExecutionIdentity;
 use super::native::NativeFitter;
 use super::oof::{AdmittedBundle, ExpectedPlan, FoldRecord, FoldStatus, OofPredictionBundle};
@@ -98,6 +98,10 @@ pub fn run_automl(
     budget: &mut EvaluationBudget,
 ) -> Result<AutomlOutput> {
     ensure!(
+        identity.plan_sha256 == plan.digest(),
+        "the identity was not built for this plan"
+    );
+    ensure!(
         fitter.selection_len() == plan.row_ids.len()
             && fitter.row_ids()[..plan.row_ids.len()] == plan.row_ids[..],
         "the fitter's selection rows are not the plan's rows"
@@ -121,12 +125,27 @@ pub fn run_automl(
         .filter(|spec| admitted.iter().any(|m| m.bundle().candidate_id == spec.id))
         .cloned()
         .collect();
-    let refit = refit_members(fitter, &members, report_ids, report_labels, budget)?;
-    let ensemble = build_winner_ensemble(&admitted, &plan.labels, identity, &refit.report, budget)?;
+    let refit = refit_members(
+        fitter,
+        identity,
+        &members,
+        report_ids,
+        report_labels,
+        budget,
+    )?;
+    let ensemble = admit_winner_ensemble(
+        &admitted,
+        &plan.labels,
+        identity,
+        &refit.report,
+        &refit.record,
+        budget,
+    )?;
     Ok(AutomlOutput {
         receipt: outcome.receipt,
         persisted: Some(PersistedEnsemble {
             ensemble,
+            refit: refit.record,
             member_states: refit.member_states,
         }),
         report: Some(refit.report),

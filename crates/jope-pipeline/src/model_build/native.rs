@@ -55,10 +55,32 @@ pub struct NativeFitter {
     data: NativeData,
     schema: DataSchema,
     request_sha256: String,
+    /// The validated bake-off plan this fitter is bound to (SC-DEC-184R JA-F2).
+    plan_sha256: String,
     classes: Vec<String>,
     /// Rows `0..selection_len` are the selection side. Rows after them are the report side, which
     /// a fit may never train on (SC-DEC-184M C05).
     selection_len: usize,
+}
+
+/// The label strings the identity's cohort digests are computed over, derived from the targets
+/// themselves: regression labels are the numbers, binary labels are the frozen class names. A
+/// caller cannot attach labels that differ from the targets the fitter will train on.
+pub fn label_strings(task: Task, classes: &[String], targets: &[f64]) -> Result<Vec<String>> {
+    match task {
+        Task::Regression => Ok(targets.iter().map(|t| t.to_string()).collect()),
+        Task::Binary => {
+            ensure!(classes.len() == 2, "binary labels need two frozen classes");
+            targets
+                .iter()
+                .map(|t| {
+                    ensure!(*t == 0.0 || *t == 1.0, "binary target {t} is not 0 or 1");
+                    Ok(classes[*t as usize].clone())
+                })
+                .collect()
+        }
+        other => anyhow::bail!("native labels do not cover task {other:?}"),
+    }
 }
 
 /// Wraps raw model output in the frozen prediction form for the task.
@@ -99,8 +121,15 @@ impl NativeFitter {
             digest_ids(&data.row_ids) == identity.row_sha256,
             "native row ids do not reproduce the admitted row identity"
         );
+        ensure!(
+            digest_pairs(
+                &data.row_ids,
+                &label_strings(task, &classes, &data.targets)?
+            ) == identity.cohort_sha256,
+            "native targets do not reproduce the admitted cohort labels"
+        );
         let selection_len = data.row_ids.len();
-        Self::build(task, classes, data, selection_len, &identity.request_sha256)
+        Self::build(task, classes, data, selection_len, identity)
     }
 
     /// Binds one union of selection rows followed by report rows. The identity must reproduce the
@@ -135,7 +164,15 @@ impl NativeFitter {
             digest_pairs(report_ids, report_labels) == identity.report_sha256,
             "report labels do not reproduce the report identity"
         );
-        Self::build(task, classes, data, selection_len, &identity.request_sha256)
+        ensure!(
+            label_strings(task, &classes, &data.targets[..selection_len])? == selection_labels,
+            "selection labels differ from the targets the fitter trains on"
+        );
+        ensure!(
+            label_strings(task, &classes, &data.targets[selection_len..])? == report_labels,
+            "report labels differ from the targets the fitter predicts"
+        );
+        Self::build(task, classes, data, selection_len, identity)
     }
 
     fn build(
@@ -143,7 +180,7 @@ impl NativeFitter {
         classes: Vec<String>,
         data: NativeData,
         selection_len: usize,
-        request_sha256: &str,
+        identity: &ExecutionIdentity,
     ) -> Result<Self> {
         ensure!(
             data.features.len() == data.targets.len() && data.row_ids.len() == data.targets.len(),
@@ -181,7 +218,8 @@ impl NativeFitter {
             task,
             data,
             schema,
-            request_sha256: request_sha256.to_owned(),
+            request_sha256: identity.request_sha256.clone(),
+            plan_sha256: identity.plan_sha256.clone(),
             classes,
             selection_len,
         })
@@ -290,6 +328,10 @@ impl NativeFitter {
 }
 
 impl CandidateFitter for NativeFitter {
+    fn bound_plan_sha256(&self) -> Option<&str> {
+        Some(&self.plan_sha256)
+    }
+
     fn fit_predict(
         &self,
         candidate: &CandidateSpec,
@@ -334,16 +376,22 @@ mod tests {
         }
     }
 
-    fn identity_for(data: &NativeData, labels: &[String]) -> ExecutionIdentity {
-        let groups: Vec<String> = (0..data.row_ids.len()).map(|i| format!("g{i}")).collect();
+    fn identity_for(
+        task: Task,
+        data: &NativeData,
+        labels: &[String],
+        classes: &[String],
+    ) -> ExecutionIdentity {
+        let plan_digest = plan(task, data, labels.to_vec(), classes.to_vec()).digest();
         ExecutionIdentity::new(
             REQUEST,
+            &plan_digest,
             &data_digest(data),
             &data.row_ids,
             labels,
-            &groups,
             &[],
-            &[],
+            &["report-0".to_string()],
+            &["0".to_string()],
         )
         .unwrap()
     }
@@ -391,7 +439,7 @@ mod tests {
     fn a_regression_bake_off_on_native_ridge_scores_every_fold_from_verified_fits() {
         let data = regression_data(20);
         let labels = regression_labels(&data);
-        let identity = identity_for(&data, &labels);
+        let identity = identity_for(Task::Regression, &data, &labels, &[]);
         let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
         let out = run_bakeoff(
             &plan(Task::Regression, &data, labels, vec![]),
@@ -417,7 +465,7 @@ mod tests {
     fn an_unbound_candidate_is_refused_before_start_with_zero_starts() {
         let data = regression_data(20);
         let labels = regression_labels(&data);
-        let identity = identity_for(&data, &labels);
+        let identity = identity_for(Task::Regression, &data, &labels, &[]);
         let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
         let out = run_bakeoff(
             &plan(Task::Regression, &data, labels, vec![]),
@@ -450,7 +498,7 @@ mod tests {
             .iter()
             .map(|t| if *t == 1.0 { "yes" } else { "no" }.to_string())
             .collect();
-        let identity = identity_for(&data, &labels);
+        let identity = identity_for(Task::Binary, &data, &labels, &classes);
         let fitter =
             NativeFitter::new(Task::Binary, classes.clone(), data.clone(), &identity).unwrap();
         let out = run_bakeoff(
@@ -469,7 +517,7 @@ mod tests {
     fn data_that_does_not_reproduce_the_admitted_identity_is_refused_at_construction() {
         let data = regression_data(10);
         let labels = regression_labels(&data);
-        let identity = identity_for(&data, &labels);
+        let identity = identity_for(Task::Regression, &data, &labels, &[]);
         let mut altered = data.clone();
         altered.features[3][0] += 1e-9;
         assert!(NativeFitter::new(Task::Regression, vec![], altered, &identity).is_err());
@@ -482,7 +530,7 @@ mod tests {
     fn an_out_of_range_index_is_a_typed_refusal_not_a_panic() {
         let data = regression_data(10);
         let labels = regression_labels(&data);
-        let identity = identity_for(&data, &labels);
+        let identity = identity_for(Task::Regression, &data, &labels, &[]);
         let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
         let err = fitter
             .fit_predict(
@@ -502,7 +550,7 @@ mod tests {
     fn persisted_fitted_state_restores_to_bitwise_identical_predictions() {
         let data = regression_data(12);
         let labels = regression_labels(&data);
-        let identity = identity_for(&data, &labels);
+        let identity = identity_for(Task::Regression, &data, &labels, &[]);
         let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
         let train: Vec<usize> = (0..8).collect();
         let predict: Vec<usize> = (8..12).collect();

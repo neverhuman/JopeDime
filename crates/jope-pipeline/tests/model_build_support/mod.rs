@@ -81,10 +81,19 @@ pub fn binary_union() -> Union {
 }
 
 /// The identity over the whole union: request, union bytes, both sides' rows and labels.
+pub fn task_of(u: &Union) -> Task {
+    if u.classes.is_empty() {
+        Task::Regression
+    } else {
+        Task::Binary
+    }
+}
+
 pub fn identity(u: &Union) -> ExecutionIdentity {
     let (selection_ids, report_ids) = u.data.row_ids.split_at(SELECTION);
     ExecutionIdentity::new(
         REQUEST,
+        &plan(task_of(u), u).digest(),
         &data_digest(&u.data),
         selection_ids,
         &u.selection_labels,
@@ -100,6 +109,7 @@ pub fn identity_with_report_labels(u: &Union, report_labels: &[String]) -> Execu
     let (selection_ids, report_ids) = u.data.row_ids.split_at(SELECTION);
     ExecutionIdentity::new(
         REQUEST,
+        &plan(task_of(u), u).digest(),
         &data_digest(&u.data),
         selection_ids,
         &u.selection_labels,

@@ -19,18 +19,19 @@ pub mod test_look;
 
 pub use automl::{run_automl, AutomlOutput};
 pub use ensemble::{
-    build_winner_ensemble, EnsembleDisposition, ReportPredictions, WinnerEnsemble, ENSEMBLE_SCHEMA,
+    admit_winner_ensemble, EnsembleDisposition, ReportPredictions, WinnerEnsemble, ENSEMBLE_SCHEMA,
 };
 pub use identity::ExecutionIdentity;
-pub use refit::{refit_members, RefitOutcome};
+pub use refit::{refit_members, MemberRefit, OuterRefitRecord, RefitOutcome, REFIT_RECORD_SCHEMA};
 
 pub use candidates::{
     bakeoff_roster, Admission, CandidateSpec, CatalogBinding, RuntimeCapability, CATALOG_BINDING,
 };
 pub use oof::{ExpectedPlan, FoldRecord, FoldStatus, OofPredictionBundle, OOF_SCHEMA};
 pub use selection::{
-    run_bakeoff, BakeoffPlan, BakeoffReceipt, BudgetExhausted, CandidateFitter, CandidateReport,
-    CandidateStatus, EvaluationBudget, FitEvidence, FoldFit, NotStarted, APPROVED_FOLD_COUNT,
+    run_bakeoff, BakeoffPlan, BakeoffReceipt, BudgetCounters, BudgetExhausted, BudgetKind,
+    CandidateFitter, CandidateReport, CandidateStatus, EvaluationBudget, FitEvidence, FoldFit,
+    NotStarted, APPROVED_FOLD_COUNT,
 };
 
 pub use config::{
