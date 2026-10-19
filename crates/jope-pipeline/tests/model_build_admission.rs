@@ -883,4 +883,7 @@ fn a_tampered_serialised_fold_record_is_refused_by_validation() {
                 .collect::<Vec<_>>()
         )
         .is_ok());
+    // The genuine VerifiedFold records reach admission. The deserialised FoldRecords above never
+    // became VerifiedFold values, so they had no route to AdmittedBundle::admit.
+    assert!(AdmittedBundle::admit(verified.bundle.clone(), &expected, &verified.records).is_ok());
 }

@@ -68,6 +68,11 @@ pub struct OuterRefitRecord {
 ///
 /// ```compile_fail
 /// use jope_pipeline::model_build::VerifiedRefit;
+/// let _ = VerifiedRefit::new(unimplemented!());
+/// ```
+///
+/// ```compile_fail
+/// use jope_pipeline::model_build::VerifiedRefit;
 /// fn needs_deserialize<'de, T: serde::Deserialize<'de>>() {}
 /// needs_deserialize::<VerifiedRefit>();
 /// ```

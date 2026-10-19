@@ -83,6 +83,11 @@ pub struct FoldRecord {
 ///
 /// ```compile_fail
 /// use jope_pipeline::model_build::VerifiedFold;
+/// let _ = VerifiedFold::from_verified(unimplemented!());
+/// ```
+///
+/// ```compile_fail
+/// use jope_pipeline::model_build::VerifiedFold;
 /// fn needs_serialize<T: serde::Serialize>() {}
 /// needs_serialize::<VerifiedFold>();
 /// ```
