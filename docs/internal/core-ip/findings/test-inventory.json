@@ -3349,6 +3349,14 @@
         "storage"
       ]
     },
+    "target:jope-learning/test/spq1_prereg_provenance": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/spq1_prereg_provenance.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
     "target:jope-learning/test/state_resolve": {
       "role": "regression",
       "subsystems": [
