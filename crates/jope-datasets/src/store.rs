@@ -835,4 +835,5 @@ where
 mod tests;
 
 #[cfg(test)]
+#[path = "../tests/support/store_bounded_version.rs"]
 mod bounded_version_tests;
