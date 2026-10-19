@@ -1,0 +1,10 @@
+
+running 1 test
+test label_admission::tests::strict_v2_and_native_fit_binding_preflight ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 469 filtered out; finished in 0.00s
+
+
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 39.04s
+     Running unittests src/lib.rs (target/debug/deps/jope_parallel-60df446f9565d7ef)

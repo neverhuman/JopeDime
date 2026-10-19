@@ -1,0 +1,69 @@
+{
+  "schema": "jope.mr06-binding-manifest/v1",
+  "recorded_at_utc": "2026-10-19T07:09:44Z",
+  "owner": "1061448.jopedime_flywheel",
+  "pr": 379,
+  "receipt": {
+    "git_path": "receipts/MR06.json",
+    "sha256": "f7c6f9ab8ef946de3abc2f6f48ebecc5069920621f49e36c7979d225097d0239",
+    "note": "historical 9569bb60 snapshot, not modified by this manifest"
+  },
+  "logs": [
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/MR06_label_admission_v2_preflight_verified.9569bb607.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_label_admission_v2_preflight_verified.9569bb607.log",
+      "scope_commit": "9569bb607",
+      "case": "label_admission_v2_preflight_verified",
+      "note": "passed: 1 test run, exit 0",
+      "bytes": 407,
+      "sha256": "5201ecb3436d8f77d6d7ea6c4aba88c92201da6224440ed1ee5ccb63b53c6a0a",
+      "original_sha256": "5201ecb3436d8f77d6d7ea6c4aba88c92201da6224440ed1ee5ccb63b53c6a0a",
+      "copy_equals_original": true
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/MR06_historical_7877_shard_directory_hashes_verified.9569bb607.rerun.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_historical_7877_shard_directory_hashes_verified.9569bb607.rerun.log",
+      "scope_commit": "9569bb607",
+      "case": "historical_7877_shard_directory_hashes_verified (corrected test)",
+      "note": "1 test run, passed, exit 0",
+      "bytes": 372,
+      "sha256": "d2627e30e5a46d58ff4dd5b0019a7ba8dcedcd4eeaad802af50b1d467b42744f",
+      "original_sha256": "d2627e30e5a46d58ff4dd5b0019a7ba8dcedcd4eeaad802af50b1d467b42744f",
+      "copy_equals_original": true
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/MR06_historical_7877_shard_directory_hashes_verified.9569bb607.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR06_historical_7877_shard_directory_hashes_verified.9569bb607.log",
+      "scope_commit": "9569bb607",
+      "case": "ORIGINAL attempt, retained",
+      "note": "0 tests run (wrong test name); NOT evidence of pass",
+      "bytes": 274,
+      "sha256": "1769bac7945add53d125adf9de6d2b61c0c3449c2be87be51808f0403fa5a571",
+      "original_sha256": "1769bac7945add53d125adf9de6d2b61c0c3449c2be87be51808f0403fa5a571",
+      "copy_equals_original": true
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/MR06_7877_verify_run_main_9569bb60.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/MR06_7877_verify_run_main_9569bb60.log",
+      "scope_commit": "9569bb60",
+      "case": "7877 verifier run on main (historical snapshot)",
+      "note": "verifier summary, see file",
+      "bytes": 35,
+      "sha256": "0a285aade5a593850a905d490fa691fe1b496296f00c346ef6e1c8ab97b727d1",
+      "original_sha256": "0a285aade5a593850a905d490fa691fe1b496296f00c346ef6e1c8ab97b727d1",
+      "copy_equals_original": true
+    },
+    {
+      "git_path": "docs/plans/major-release-20261018/receipts/logs/MR06_7877_verify_run.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/MR06_7877_verify_run.log",
+      "scope_commit": "28005df70",
+      "case": "7877 closure run (original)",
+      "note": "verified_shards=7877 expected=7877, EXIT=0",
+      "bytes": 42,
+      "sha256": "4c2486e02ea868fda5271928fd3e007a8f21f179b4bd2c06c919eea4a5756280",
+      "original_sha256": "4c2486e02ea868fda5271928fd3e007a8f21f179b4bd2c06c919eea4a5756280",
+      "copy_equals_original": true
+    }
+  ],
+  "all_copies_equal_originals": true
+}
