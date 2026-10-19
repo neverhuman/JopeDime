@@ -261,13 +261,21 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 None => None,
             };
             let resolved = crate::model_build::resolve(file.as_ref(), model.flags()?)?;
-            let checkpoint = match file.as_ref().and_then(|f| f.neural_checkpoint.as_ref()) {
-                Some(claim) => crate::model_build::NeuralCheckpoint::Refused(
-                    crate::model_build::verify_checkpoint(claim, None, &claim.source_commit)
+            // The source expectation comes from the operator, never from the claim. No P02 release
+            // closure provider exists yet, so a verified checkpoint cannot be produced here.
+            let checkpoint = match (
+                file.as_ref().and_then(|f| f.neural_checkpoint.as_ref()),
+                model.expected_source_commit.as_deref(),
+            ) {
+                (Some(claim), Some(expected)) => crate::model_build::NeuralCheckpoint::Refused(
+                    crate::model_build::verify_checkpoint(claim, None, expected)
                         .err()
                         .unwrap_or(crate::model_build::CheckpointRefusal::Absent),
                 ),
-                None => crate::model_build::NeuralCheckpoint::Refused(
+                (Some(_), None) => crate::model_build::NeuralCheckpoint::Refused(
+                    crate::model_build::CheckpointRefusal::NoSourceExpectation,
+                ),
+                (None, _) => crate::model_build::NeuralCheckpoint::Refused(
                     crate::model_build::CheckpointRefusal::Absent,
                 ),
             };

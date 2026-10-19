@@ -68,6 +68,10 @@ pub struct ModelBuildArgs {
     /// Model-build options file (`jope.model-build-options/v1`).
     #[arg(long)]
     pub model_build_config: Option<PathBuf>,
+    /// Independently trusted source commit that a checkpoint claim must name. It comes from the
+    /// operator, never from the claim itself.
+    #[arg(long)]
+    pub expected_source_commit: Option<String>,
     /// Whole-request Thinking level: low (64), med or medium (256), high (1024), ultra (4096).
     #[arg(long, value_parser = parse_thinking)]
     pub thinking: Option<String>,
@@ -232,6 +236,8 @@ impl VerifiedNeuralCheckpoint {
 pub enum CheckpointRefusal {
     /// No P02 release closure is available to verify against.
     Absent,
+    /// A claim was given without an independently trusted source expectation.
+    NoSourceExpectation,
     Malformed(String),
     WrongSource {
         expected: String,
@@ -244,6 +250,10 @@ impl std::fmt::Display for CheckpointRefusal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Absent => write!(f, "no verified P02 release closure is present"),
+            Self::NoSourceExpectation => write!(
+                f,
+                "no independently trusted source expectation was supplied"
+            ),
             Self::Malformed(reason) => write!(f, "checkpoint claim is malformed: {reason}"),
             Self::WrongSource { expected, found } => {
                 write!(
