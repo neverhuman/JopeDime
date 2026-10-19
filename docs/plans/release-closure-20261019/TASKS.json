@@ -44,12 +44,19 @@
       "deps": [
         "C01"
       ],
-      "state": "ready",
+      "state": "in_progress_tracker_scope_reconciled",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C02 \u2014 Source/tracker reconciliation and integration manifest"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/mr09-validation/DELIVERY.json",
+          "sha256": "b0a0e26654fc09a1e25a7060f08a74e57df3a0740d3745d01925d689327e0c44",
+          "qualification": "SC184Q MR09 partial/correct runnable command; all47tasks/69sourcepackets and6negative refusals verified; broader source integration pending",
+          "commit_sha": "8a6620f96e93c5b266e8293a6fd52fd0085310e2"
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C02"
     },
     {
@@ -59,12 +66,19 @@
       "deps": [
         "C01"
       ],
-      "state": "ready",
+      "state": "in_progress_compiled_metadata_verifier",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C03 \u2014 P02 immutable encoder/policy release set"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/c03-source-slice1/SOURCE_DELIVERY.json",
+          "sha256": "94a908c5eb070bc6917013cfdbb9e7b3a372b41c4c96b3b946782341132b16e0",
+          "qualification": "Compile/clippy pass;6authored tests unexecuted untilC14. Empty compiled registry; component metadata only. Payload verification, downloads, license/runtime and publication pending",
+          "commit_sha": "1c1b3bf5290131c5a6f2ed2699cfa0edc34805c7"
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
     },
     {
@@ -186,7 +200,7 @@
       "deps": [
         "C01"
       ],
-      "state": "independent_archives_verified_publication_metadata_pending",
+      "state": "archives_and_standalone_receipts_verified_git_publication_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C11 \u2014 Preserve completed research and publish compact Git waves now"
@@ -196,6 +210,11 @@
           "p01_independent_restore_sha256": "cc19ae2430c0ece85bd488c7f74e9f71d6d7353c4c7c450d62b486a290c1b6fd",
           "benchmark_independent_restore_sha256": "2365a1e8aab511ed642a9bce2dcf4332f95ccd55c5fc7924de939dd542a3a7d0",
           "qualification": "Preservation only; staged card corrections and Git publication still pending"
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1720-standalone-receipt-readback.json",
+          "sha256": "f9b37dac24efedeb8f9bc1d7063bb403dcb7f6b28df3fd05f1942371c5a451e9",
+          "qualification": "Both standalone restoration receipts verified via exactVersionId GET/bodySHA/length. Corrected wave metadata staged; no Git/main publication claim"
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C11"
@@ -353,5 +372,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T17:18:21.280962+00:00"
+  "last_evidence_update_utc": "2026-10-19T17:44:54.753068+00:00"
 }
