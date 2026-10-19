@@ -17,6 +17,7 @@
 pub mod advanced_v3;
 pub mod artifact_manifest;
 pub mod boost2;
+pub mod combinators;
 pub mod cxx;
 pub mod dsl;
 pub mod feasibility;
@@ -26,7 +27,6 @@ pub mod full_rust;
 pub mod genome;
 pub mod gpr;
 pub mod heads;
-pub mod combinators;
 pub mod kernel;
 pub mod krr;
 pub mod ksmooth;
