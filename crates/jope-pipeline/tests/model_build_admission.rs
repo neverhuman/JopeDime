@@ -13,7 +13,7 @@ use jope_pipeline::evaluation_score::Predictions;
 use jope_pipeline::model_build::automl::expected_plan;
 use jope_pipeline::model_build::config::{verify_checkpoint, CheckpointClaim, ReleaseClosure};
 use jope_pipeline::model_build::executor::{admit_route, RouteAdmission, RouteBoundary};
-use jope_pipeline::model_build::identity::digest_ids;
+use jope_pipeline::model_build::identity::{digest_ids, AdmittedIdentity};
 use jope_pipeline::model_build::native::{data_digest, NativeData, NativeFitter};
 use jope_pipeline::model_build::oof::AdmittedBundle;
 use jope_pipeline::model_build::{
@@ -416,12 +416,12 @@ fn a_state_that_does_not_hash_to_its_refit_record_is_refused() {
 fn the_production_driver_writes_the_artifact_once_and_never_overwrites_it() {
     let u = regression_union();
     let id = identity(&u);
-    let fitter = split_fitter(Task::Regression, &u, &id);
     let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("model-build-artifacts");
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("write-once.json");
     let _ = std::fs::remove_file(&path);
     let run = |output: Option<&std::path::Path>| {
+        let fitter = split_fitter(Task::Regression, &u, &id);
         run_automl(
             &plan(Task::Regression, &u),
             &roster_of(Task::Regression, &["rust.ridge"]),
@@ -451,7 +451,7 @@ fn a_low_thinking_level_cannot_run_the_neural_population() {
         route: Route::FastNeuralGp,
         level: ThinkingLevel::Low,
         checkpoint: &checkpoint,
-        identity: &id,
+        identity: &admitted_identity(&u, &id),
         budget: &mut budget,
     });
     assert!(result.is_err());
@@ -472,7 +472,7 @@ fn an_admitted_route_charges_the_neural_population_and_stays_pending_without_a_r
         route: Route::CombinedRosterWinnerEnsemble,
         level: ThinkingLevel::Medium,
         checkpoint: &checkpoint,
-        identity: &id,
+        identity: &admitted_identity(&u, &id),
         budget: &mut budget,
     })
     .unwrap();
@@ -664,7 +664,7 @@ fn all_four_automl_ensemble_combinations_pass_the_boundary() {
             ensemble,
             ThinkingLevel::Medium,
             &checkpoint,
-            &id,
+            &admitted_identity(&u, &id),
             &mut Budget::with_limits(BudgetCounters {
                 neural_gp_work_units: 80,
                 ..BudgetCounters::UNLIMITED
@@ -680,7 +680,7 @@ fn all_four_automl_ensemble_combinations_pass_the_boundary() {
             ensemble,
             ThinkingLevel::Low,
             &checkpoint,
-            &id,
+            &admitted_identity(&u, &id),
             &mut Budget::new(1000),
         )
         .is_err());
@@ -692,4 +692,38 @@ fn all_four_automl_ensemble_combinations_pass_the_boundary() {
         4,
         "the four combinations must map to four routes"
     );
+}
+
+/// The identity checked against the regression plan and data, as the route boundary requires.
+fn admitted_identity(u: &Union, id: &ExecutionIdentity) -> AdmittedIdentity {
+    AdmittedIdentity::admit(
+        id.clone(),
+        &plan(Task::Regression, u),
+        &u.data,
+        SELECTION,
+        &u.report_labels,
+    )
+    .unwrap()
+}
+
+/// C05 physical starts: every fold start is measured from the fit that ran, and a second start on
+/// the same fold is refused.
+#[test]
+fn a_fold_start_is_measured_once_and_a_repeat_start_is_refused() {
+    use jope_pipeline::model_build::{CandidateFitter, FitEvidence};
+    let u = regression_union();
+    let id = identity(&u);
+    let fitter = split_fitter(Task::Regression, &u, &id);
+    let spec = roster_of(Task::Regression, &["rust.ridge"]).remove(0);
+    let train: Vec<usize> = (0..SELECTION).filter(|i| i % 5 != 0).collect();
+    let predict: Vec<usize> = (0..SELECTION).filter(|i| i % 5 == 0).collect();
+    let first = fitter.fit_predict(&spec, &train, &predict).unwrap();
+    assert!(matches!(
+        first.evidence,
+        FitEvidence::Verified {
+            physical_starts: 1,
+            ..
+        }
+    ));
+    assert!(fitter.fit_predict(&spec, &train, &predict).is_err());
 }

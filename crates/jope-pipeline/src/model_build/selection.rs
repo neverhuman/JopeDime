@@ -80,7 +80,8 @@ pub struct FoldFit {
 }
 
 /// The fixed evaluation population, shared by every candidate.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct BakeoffPlan {
     pub task: Task,
     /// Frozen class order. Empty for regression.

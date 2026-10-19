@@ -135,6 +135,17 @@ pub enum Cmd {
         #[command(flatten)]
         model: crate::model_build::ModelBuildArgs,
     },
+    /// Run the native AutoML bake-off and outer refit from a request file. Native heads only: no
+    /// neural route is involved. With `--output`, the admitted ensemble record is written as a new
+    /// file and an existing file is refused.
+    ModelBuildNative {
+        /// A jope.model-build-native-request/v1 JSON file.
+        #[arg(long)]
+        request: PathBuf,
+        /// Where the persisted ensemble record is written. Refused when the file exists.
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
     /// Explicit legacy generic GP search: no neural input and no model-build route. Its receipts
     /// are unchanged and remain verifiable. It is never a fallback for `run`.
     RunLegacyGp {
@@ -287,6 +298,18 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     missing.join(", ")
                 ),
             }
+        }
+        Cmd::ModelBuildNative { request, output } => {
+            let request = crate::model_build::driver::read_native_request(&request)?;
+            let outcome =
+                crate::model_build::driver::run_native_request(&request, output.as_deref())?;
+            let summary = serde_json::json!({
+                "selected": outcome.receipt.selected,
+                "persisted": outcome.persisted.is_some(),
+                "output": output.as_ref().map(|path| path.display().to_string()),
+            });
+            println!("{}", serde_json::to_string_pretty(&summary)?);
+            Ok(ExitCode::SUCCESS)
         }
         Cmd::RunLegacyGp {
             search,

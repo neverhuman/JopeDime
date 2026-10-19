@@ -9,6 +9,7 @@ pub mod automl;
 pub mod candidates;
 pub mod catalog;
 pub mod config;
+pub mod driver;
 pub mod ensemble;
 pub mod executor;
 pub mod identity;

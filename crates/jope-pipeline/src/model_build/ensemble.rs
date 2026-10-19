@@ -153,32 +153,32 @@ pub fn admit_winner_ensemble(
         "report ids and labels are not aligned"
     );
     ensure!(
-        refit.schema == REFIT_RECORD_SCHEMA,
+        refit.schema() == REFIT_RECORD_SCHEMA,
         "unknown outer refit record schema"
     );
     ensure!(
-        refit.request_sha256 == identity.request_sha256,
+        refit.request_sha256() == identity.request_sha256,
         "the outer refit ran under a different request"
     );
     ensure!(
-        refit.plan_sha256 == identity.plan_sha256,
+        refit.plan_sha256() == identity.plan_sha256,
         "the outer refit ran under a different plan"
     );
     ensure!(
-        refit.train_rows_sha256 == identity.row_sha256,
+        refit.train_rows_sha256() == identity.row_sha256,
         "the outer refit trained on rows other than the selection side"
     );
     ensure!(
-        refit.predict_rows_sha256 == digest_ids(&report.ids),
+        refit.predict_rows_sha256() == digest_ids(&report.ids),
         "the outer refit predicted rows other than the report side"
     );
     ensure!(
-        refit.members.keys().eq(report.per_member.keys()),
+        refit.member_ids().eq(report.per_member.keys()),
         "the outer refit does not cover exactly the report predictions"
     );
     for (id, predictions) in &report.per_member {
         ensure!(
-            refit.members[id].report_sha256 == predictions_digest(predictions),
+            refit.member_report_sha256(id) == Some(predictions_digest(predictions).as_str()),
             "the report predictions for {id} are not the ones the outer refit produced"
         );
     }

@@ -22,9 +22,12 @@ use feat_math::advanced_v3::{
 use feat_math::GenomeIr;
 use jope_datasets::catalog::Task;
 use sha2::{Digest, Sha256};
+use std::cell::{Cell, RefCell};
+use std::collections::BTreeSet;
 
 /// The numeric dataset behind a bake-off. Rows align with `row_ids`.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NativeData {
     pub row_ids: Vec<String>,
     pub feature_names: Vec<String>,
@@ -61,6 +64,11 @@ pub struct NativeFitter {
     /// Rows `0..selection_len` are the selection side. Rows after them are the report side, which
     /// a fit may never train on (SC-DEC-184M C05).
     selection_len: usize,
+    /// Physical fit invocations performed by this fitter, counted where the fit actually runs.
+    fit_starts: Cell<u64>,
+    /// Folds already started, keyed by candidate and prediction rows. A second start for the same
+    /// fold is refused (SC-DEC-184W item 2).
+    fold_starts: RefCell<BTreeSet<String>>,
 }
 
 /// Validates every array length before any slice is taken (SC-DEC-184V JA-N2). A short target
@@ -299,6 +307,8 @@ impl NativeFitter {
             plan_sha256: identity.plan_sha256.clone(),
             classes,
             selection_len,
+            fit_starts: Cell::new(0),
+            fold_starts: RefCell::new(BTreeSet::new()),
         })
     }
 
@@ -380,6 +390,7 @@ impl NativeFitter {
         let task = self.task_spec()?;
         let train_table = self.table(train)?;
         let train_y: Vec<f64> = train.iter().map(|&i| self.data.targets[i]).collect();
+        self.fit_starts.set(self.fit_starts.get() + 1);
         let model = fit_table(&genome, &task, &self.schema, &train_table, &train_y)
             .context("native fit failed on the training rows")?;
         let bytes = serde_json::to_vec(&model).context("serialising the fitted state")?;
@@ -417,7 +428,30 @@ impl CandidateFitter for NativeFitter {
     ) -> Result<FoldFit> {
         self.check_indices(predict)?;
         ensure!(!predict.is_empty(), "fold has an empty prediction side");
+        let fold_key = format!(
+            "{}|{}",
+            candidate.id,
+            digest_ids(
+                &predict
+                    .iter()
+                    .map(|&i| self.data.row_ids[i].clone())
+                    .collect::<Vec<_>>()
+            )
+        );
+        ensure!(
+            !self.fold_starts.borrow().contains(&fold_key),
+            "duplicate physical fit start for {} on a fold that already started",
+            candidate.id
+        );
+        let before = self.fit_starts.get();
         let (model, state) = self.fit_state(candidate, train)?;
+        let physical_starts = self.fit_starts.get() - before;
+        ensure!(
+            physical_starts == 1,
+            "expected exactly one physical fit start for {} on this fold, measured {physical_starts}",
+            candidate.id
+        );
+        self.fold_starts.borrow_mut().insert(fold_key);
         let raw = self.predict_rows(&model, predict)?;
         let predictions = to_predictions(self.task, &self.classes, raw)?;
         Ok(FoldFit {
@@ -425,7 +459,7 @@ impl CandidateFitter for NativeFitter {
             fitted_artifact_sha256: format!("{:x}", Sha256::digest(&state)),
             evidence: FitEvidence::Verified {
                 request_sha256: self.request_sha256.clone(),
-                physical_starts: 1,
+                physical_starts,
             },
         })
     }

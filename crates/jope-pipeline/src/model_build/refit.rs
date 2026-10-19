@@ -27,24 +27,24 @@ pub const REFIT_RECORD_SCHEMA: &str = "jope.outer-refit-record/v1";
 #[serde(deny_unknown_fields)]
 pub struct MemberRefit {
     /// sha256 of the member's fitted state bytes.
-    pub(super) state_sha256: String,
+    state_sha256: String,
     /// Selection-side rows the member was refitted on.
-    pub(super) train_rows: usize,
+    train_rows: usize,
     /// sha256 of the member's exact report-side prediction bits.
-    pub(super) report_sha256: String,
+    report_sha256: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OuterRefitRecord {
-    pub(super) schema: String,
-    pub(super) request_sha256: String,
-    pub(super) plan_sha256: String,
+    schema: String,
+    request_sha256: String,
+    plan_sha256: String,
     /// Digest of the selection-side row identifiers every refit trained on.
-    pub(super) train_rows_sha256: String,
+    train_rows_sha256: String,
     /// Digest of the report-side row identifiers every refit predicted.
-    pub(super) predict_rows_sha256: String,
-    pub(super) members: BTreeMap<String, MemberRefit>,
+    predict_rows_sha256: String,
+    members: BTreeMap<String, MemberRefit>,
 }
 
 /// Digest of a prediction set's exact bits, including its class order.
@@ -76,7 +76,7 @@ pub(super) fn predictions_digest(predictions: &Predictions) -> String {
 impl OuterRefitRecord {
     /// Only `refit_members` calls this. The record is a statement about fits that ran, and the
     /// digests it carries are checked against the report predictions and the states.
-    pub(super) fn new(
+    fn new(
         identity: &ExecutionIdentity,
         train_rows: &[String],
         predict_rows: &[String],
@@ -90,6 +90,38 @@ impl OuterRefitRecord {
             predict_rows_sha256: digest_ids(predict_rows),
             members,
         }
+    }
+
+    pub(super) fn schema(&self) -> &str {
+        &self.schema
+    }
+
+    pub(super) fn request_sha256(&self) -> &str {
+        &self.request_sha256
+    }
+
+    pub(super) fn plan_sha256(&self) -> &str {
+        &self.plan_sha256
+    }
+
+    pub(super) fn train_rows_sha256(&self) -> &str {
+        &self.train_rows_sha256
+    }
+
+    pub(super) fn predict_rows_sha256(&self) -> &str {
+        &self.predict_rows_sha256
+    }
+
+    /// The members the record covers, by candidate id.
+    pub(super) fn member_ids(&self) -> impl Iterator<Item = &String> {
+        self.members.keys()
+    }
+
+    /// The report-prediction digest the refit recorded for one member.
+    pub(super) fn member_report_sha256(&self, id: &str) -> Option<&str> {
+        self.members
+            .get(id)
+            .map(|member| member.report_sha256.as_str())
     }
 
     /// Refuses unless the states cover exactly the recorded members and each state hashes to the

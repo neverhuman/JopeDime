@@ -7,7 +7,9 @@
 //! report sides, since a shared row would let the report side leak into the selection side.
 //! Every admitted member must carry the same request and group identity, and the selection labels
 //! must reproduce the cohort digest.
+use super::native::{data_digest, NativeData};
 use super::oof::AdmittedBundle;
+use super::selection::BakeoffPlan;
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -185,6 +187,69 @@ impl ExecutionIdentity {
             "selection labels do not reproduce the cohort identity"
         );
         Ok(())
+    }
+}
+
+/// An identity checked against the validated plan and the data it describes (SC-DEC-184W item 1).
+/// Its only constructor is `admit`, so code that takes an `AdmittedIdentity` cannot receive an
+/// identity that was never compared with its plan, rows, labels, groups and data bytes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AdmittedIdentity {
+    identity: ExecutionIdentity,
+}
+
+impl AdmittedIdentity {
+    pub fn admit(
+        identity: ExecutionIdentity,
+        plan: &BakeoffPlan,
+        data: &NativeData,
+        selection_len: usize,
+        report_labels: &[String],
+    ) -> Result<Self> {
+        plan.validate()?;
+        ensure!(
+            identity.protocol == PROTOCOL,
+            "protocol differs from {PROTOCOL}"
+        );
+        ensure!(
+            identity.request_sha256 == plan.request_sha256,
+            "identity request differs from the plan"
+        );
+        ensure!(
+            identity.plan_sha256 == plan.digest(),
+            "identity was not derived from this plan"
+        );
+        ensure!(
+            identity.data_sha256 == data_digest(data),
+            "identity was not derived from this data"
+        );
+        ensure!(
+            selection_len == plan.row_ids.len()
+                && selection_len < data.row_ids.len()
+                && data.row_ids[..selection_len] == plan.row_ids[..],
+            "data rows differ from the plan's selection rows"
+        );
+        ensure!(
+            identity.row_sha256 == digest_ids(&plan.row_ids),
+            "identity rows differ from the plan"
+        );
+        ensure!(
+            identity.cohort_sha256 == digest_pairs(&plan.row_ids, &plan.labels),
+            "identity labels differ from the plan"
+        );
+        ensure!(
+            identity.group_sha256 == digest_ids(&plan.group_ids),
+            "identity groups differ from the plan"
+        );
+        ensure!(
+            identity.report_sha256 == digest_pairs(&data.row_ids[selection_len..], report_labels),
+            "identity report side differs from the data"
+        );
+        Ok(Self { identity })
+    }
+
+    pub fn identity(&self) -> &ExecutionIdentity {
+        &self.identity
     }
 }
 

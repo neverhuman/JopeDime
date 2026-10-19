@@ -14,7 +14,7 @@
 //!   slots, so a `low` request whose evaluation cap is 64 cannot run it and is refused at
 //!   admission, before any stage starts.
 use super::config::{route_of, Route, VerifiedNeuralCheckpoint};
-use super::identity::ExecutionIdentity;
+use super::identity::AdmittedIdentity;
 use super::selection::{BudgetKind, EvaluationBudget};
 use crate::pathway::ThinkingLevel;
 use anyhow::{ensure, Result};
@@ -52,7 +52,7 @@ pub struct RouteBoundary<'a> {
     pub route: Route,
     pub level: ThinkingLevel,
     pub checkpoint: &'a VerifiedNeuralCheckpoint,
-    pub identity: &'a ExecutionIdentity,
+    pub identity: &'a AdmittedIdentity,
     pub budget: &'a mut EvaluationBudget,
 }
 
@@ -100,7 +100,7 @@ pub fn admit_route(boundary: RouteBoundary<'_>) -> Result<RouteAdmission> {
     // cannot run, whatever the route.
     Ok(RouteAdmission::Pending {
         stages,
-        plan_sha256: identity.plan_sha256.clone(),
+        plan_sha256: identity.identity().plan_sha256.clone(),
         checkpoint_sha256: checkpoint.checkpoint_sha256().into(),
         missing: vec![
             "loaded neural checkpoint runtime",
@@ -116,7 +116,7 @@ pub fn admit_combination(
     ensemble: bool,
     level: ThinkingLevel,
     checkpoint: &VerifiedNeuralCheckpoint,
-    identity: &ExecutionIdentity,
+    identity: &AdmittedIdentity,
     budget: &mut EvaluationBudget,
 ) -> Result<RouteAdmission> {
     admit_route(RouteBoundary {
