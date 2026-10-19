@@ -146,3 +146,46 @@ files as `artifacts/<path>` while the v2 bundle stores them at `<path>`, so the 
 5. Read it back: `jope models fetch <new-id> [--accept-restricted] && jope models verify <new-id>`.
 6. Add the id to `models/PINNED` if the main lane must have it; commit the manifests through the
    reviewed lifecycle. Never edit a published manifest — publish `<id>-vN+1`.
+
+## Native release sets and research checkpoints
+
+The existing bundles above remain the published download contract. A future release-set manifest
+under `models/releases/<immutable-version>/manifest.json` must bind compatible encoder, tokenizer,
+preprocessing, policy checkpoint, runtime and source identities, using those content-addressed
+bundles. This release-set layer is tracked in
+[the closure workplan, C03](plans/release-closure-20261019/WORKPLAN.md). Its CLI and serving
+qualification are not available merely because an individual checkpoint can be restored.
+
+Keep separate version folders and model families: `hyperion-v7` / `policy-step-60000` are existing
+product bundles; the native Kumo Small / 282-token PolicyLM research checkpoints are not drop-in
+replacements. Research, restored, tested and serving-qualified are distinct states. Do not publish
+a mutable `latest` alias as a substitute for a trusted compatible release manifest.
+
+For the existing bundles, download and verify from a built checkout with approved S3 read access:
+
+```sh
+jope models verify --manifests-only
+jope models fetch hyperion-v7
+jope models verify hyperion-v7
+jope models path hyperion-v7
+jope models fetch policy-step-60000
+jope models verify policy-step-60000
+jope models path policy-step-60000
+```
+
+An offline populated cache can be used with `jope models fetch hyperion-v7 --offline`; a missing
+required blob must refuse. Fetching a bundle is not permission to redistribute its weights or
+run training. See [the agent guide](AGENT_START_HERE.md) and the
+[artifact-location runbook](runbooks/training-artifact-locations.md) for research history and
+current durable locators. The bulk research archives are not the product model-bundle bucket.
+
+Maintainer publication also supports `--receipt-out <new-path> --require-version-id`:
+
+```text
+jope models publish models/bundles/<new-id>.json --from <staged-dir> --receipt-out <new-publication-receipt.json> --require-version-id
+```
+
+This writes verified blobs create-only and the manifest last, refusing a backend that does not
+return physical VersionIds. Bind that receipt and independent cold readback to the compact Git
+release record. Do not copy host writer credentials into CI or treat a file-store plumbing test
+as evidence of an actual S3 publication.

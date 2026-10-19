@@ -18,7 +18,8 @@ What changed in 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The curren
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 [`docs/release/README.md`](docs/release/README.md).
 
-Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this repository.
+Contributors and agents should read [AGENTS.md](AGENTS.md), then
+[the agent entry guide](docs/AGENT_START_HERE.md) before changing this repository.
 
 The [training observatory](docs/dashboard/README.md) provides live loss, fleet, storage, dataset,
 program-library and checkpoint views with source identities, observation age and qualification scope.
@@ -59,10 +60,117 @@ program-library and checkpoint views with source identities, observation age and
 | `jope pipeline run` | CPU spine only: dataset -> folds -> program search -> select -> emit -> `jope.pipeline-receipt/v3`, optionally seeded from a `jope.pipeline-seeds/v1` file (`--seed-genomes`) or a verified parent receipt (`--incumbent`); seeds are re-measured, never trusted. Every candidate is fitted with `feat_math::fit` on a cut's training rows and scored on that cut's held-out rows, and selection requires measurements on every requested cut before comparing mean held-out RMSE. Exploration and cross-cut comparison share the [total per-cut budget](docs/pipeline.md). `--threads` and `--islands` (parallel search groups over the same cuts that pass their best program to each other at a fixed interval) set the workers, which must fit the CPUs the process may use and `--cpu-ceiling`. It does **not** use the engine's own search, which cannot measure in a shipped binary (`eval_registry/authority.rs` blocks every capability outside `cfg(test)` and `fit_boundary.rs` fences fitting behind a service socket). The encode/propose stage is **skipped** and recorded (`--policy require` fails closed); nothing in it publishes to S3 or trains the router. |
 | Targeted single-dataset search | `jope pipeline evolve` runs rounds of `run` on one dataset's fixed cuts, each seeded from the previous round's champion and runners-up, chained in a `lineage.json` that `jope pipeline lineage verify` re-derives; `--control` adds one unseeded run. `jope pipeline score --split test` scores a selected program on the sealed test split at most once per dataset and program in its registry (a local record, not access control), and lists every earlier look. High-water-mark ingest (`jope-learning hwm ingest --source pipeline`) and the append-only local champion bank (`jope-learning bank add`, `list`, `export`; an export seeds the next round) are separate steps. The rounds select on reused folds, so only the test split speaks to generalisation. |
 | W7 native loop | `jope-native-loop`, a `jope-engine` binary: host census, run plans, signed participant grants, authenticated cross-host transport with pinned certificates and an absolute deadline on every read and write, controller recovery, and SmartCluster dispatch of bounded ranks that prove their job before any work. It is qualified on source and fixtures only: a same-host fixture with hermetic host identities, and a local one-rank dry run. The three-host proof ([runbook](docs/runbooks/w7-three-host-cpu-proof.md)) has **not** run and needs its own admission; live cross-host checkpoint exchange and continuation routing are deferred. |
-| S3 | `jope datasets` and `jope models` read and write `s3://` stores through `object_store`, resolving `credential_process` profiles themselves; `jope-learning` mirrors its store and publishes W8 progress when `--store` or `JOPE_LEARNING_URL` names one. `champions --pull/--push` has no live route (issue #62). The CLOVER tools `jope_pools` and `jope_retention` read local files (frozen pools, a `GP_RESULTS_INDEX.json` built from the S3 results tree) and write local receipts; they fit offline shadow selectors and train no policy. No live S3 training run has been made, and the bound `jope-policy` checkpoint weights are **not** updated. |
-| Encoders and policy | CPU Hyperion on Candle (`hyperion-cpu`) is the default; a CUDA feature exists but is not the CI default. `jope-policy` needs the bound step-60000 checkpoint to propose. |
+| S3 | `jope datasets` and `jope models` read and write `s3://` stores through `object_store`, resolving `credential_process` profiles themselves; `jope-learning` mirrors its store and publishes W8 progress when `--store` or `JOPE_LEARNING_URL` names one. `champions --pull/--push` has no live route (issue #62). The CLOVER tools `jope_pools` and `jope_retention` read local files (frozen pools, a `GP_RESULTS_INDEX.json` built from the S3 results tree) and write local receipts; they fit offline shadow selectors and train no policy. A separate S3-derived native PolicyLM research run completed 429 optimizer updates; its [committed wave](docs/research/waves/native-neural-kumos-derived-20261019T1303Z/context.md) records its scope. It does not update the bound step-60000 `jope-policy` checkpoint or establish a qualified self-play improvement. |
+| Encoders and policy | CPU Hyperion on Candle (`hyperion-cpu`) is the product default; a CUDA feature exists but is not the CI default. `jope-policy` needs the bound step-60000 checkpoint to propose. The native research lane uses Kumo Small with a 282-token PolicyLM; it is a separate model family and cannot replace the legacy policy by renaming a checkpoint. |
 | Git datasets | Forty synthetic fixtures in `datasets/synthetic/`, which CI regenerates and compares (`jope generate-fixtures --check`) and verifies (`jope verify-inputs`), and the ten licensed test datasets (`test-10`) in `datasets/test/`. Real tables stay in S3. |
 | Release | A signed host release from `deploy/release/release.sh`, with no Python wheel; see [Releases](#releases). |
+
+## Direct, Thinking, AutoML and ensembles
+
+The next major release has two model pathways:
+
+1. **Direct:** dataset encoding → deep learning inference → typed GP program → standalone
+   Rust, Python or C++17 predictor, within each emitter's supported subset.
+2. **Thinking:** the same neural GP proposal seeds generation 0, then bounded genetic
+   programming evolution improves it before export. `low`, `med` (`medium` alias), `high`
+   and `ultra` request evaluation caps of 64, 256, 1,024 and 4,096 respectively. The request's
+   admitted time, memory, CPU and total evaluation budget can impose a smaller bound;
+   rejected attempts and failed fits remain charged.
+
+AutoML and winner ensembles are independent opt-ins. Thinking is independent of both.
+The default fast path is deep learning → GP, with no broad estimator bake-off.
+
+| AutoML | Ensemble | Requested work |
+| --- | --- | --- |
+| off | off | Neural GP only |
+| on | off | Neural GP plus admitted estimator candidates; select by train-side CV |
+| off | on | Ensemble eligible winners from the existing neural/GP roster |
+| on | on | Bake off the combined roster, then attempt an ensemble of eligible winners |
+
+The AutoML selection contract uses the same five train-side folds, with groups kept disjoint,
+fold-local preprocessing, out-of-fold predictions, explicit metric direction and measured fit
+cost. The outer test split stays outside model selection. An ensemble may fall back to the
+best single model with an explicit reason; enabling it does not promise improvement. A catalog
+entry or XGBoost preset is eligible only after its actual implementation, runtime, license,
+persistence and prediction behavior are verified. A C API binding must be identified as such.
+
+**Availability:** these are release requirements, not capabilities of the current main CLI.
+The implementation branch has flag/configuration resolution, CV/OOF and ensemble source;
+verified encoder/policy release closure, real neural execution, complete estimator bindings,
+full-train refit and fresh-process reload/export still require acceptance evidence. Until those
+are connected, the new routes refuse. The current main `pipeline run` CPU behavior is described
+above. Its explicit successor name, `run-legacy-gp`, is part of the implementation branch.
+
+Examples of the **planned interface** (run only after the release plan qualifies it):
+
+```text
+jope pipeline run --dataset <dataset> --output <run-dir>
+jope pipeline run --dataset <dataset> --output <run-dir> --thinking high
+jope pipeline run --dataset <dataset> --output <run-dir> --automl
+jope pipeline run --dataset <dataset> --output <run-dir> --ensemble
+jope pipeline run --dataset <dataset> --output <run-dir> --automl --ensemble --thinking ultra
+jope pipeline run --dataset <dataset> --output <run-dir> --model-build-config <options.json>
+```
+
+The proposed `jope.model-build-options/v1` file carries `automl`, `ensemble`, `thinking` and
+an explicit checkpoint claim. Flags override file settings, then defaults; `--no-automl` and
+`--no-ensemble` disable inherited options. A caller-supplied checkpoint hash or source flag
+is insufficient: the runtime must verify it against a trusted release manifest. See the
+[closure workplan](docs/plans/release-closure-20261019/WORKPLAN.md) for the remaining steps
+and the [47-task GP workplan](docs/plans/major-release-20261018/GP_UPGRADE_WORKPLAN.md)
+for the complete engineering scope.
+
+## Download encoders and model checkpoints
+
+Existing versioned bundles are self-hosted at `s3://veox-jopedime-models-use2`.
+Git commits their index and manifests; downloads are verified and materialized in separate
+`$JOPE_HOME/models/bundles/<bundle-id>/` directories. Credentials and access are required;
+weights are not committed to Git. From a built checkout, the current CLI supports:
+
+```sh
+cargo run --locked --bin jope -- models verify --manifests-only
+cargo run --locked --bin jope -- models fetch hyperion-v7
+cargo run --locked --bin jope -- models verify hyperion-v7
+cargo run --locked --bin jope -- models path hyperion-v7
+cargo run --locked --bin jope -- models fetch policy-step-60000
+cargo run --locked --bin jope -- models verify policy-step-60000
+cargo run --locked --bin jope -- models path policy-step-60000
+```
+
+`hyperion-v7` and `policy-step-60000` identify existing product bundles. The native Kumo/282-token
+research checkpoint is **not** an interchangeable successor and has no qualified release-set
+alias yet. The next release must publish an immutable version folder/manifest binding all
+encoder, tokenizer, preprocessing, policy, runtime and source identities, with distinct research
+and serving qualification. Do not infer that the newest file is a promoted model. The exact
+cache layout, licenses, offline use, existing bundle IDs and maintainer publication procedure
+are in [Models and weights](docs/models.md).
+
+## Research progress, storage and result preservation
+
+The [native research wave](docs/research/waves/native-neural-kumos-derived-20261019T1303Z/context.md)
+records 6,857 training contexts, 263 reused development contexts and one epoch of 429 updates.
+That is a finite run length, not evidence of loss convergence. Generated proposals, newly
+measured programs, newly published labels and optimizer updates from fresh feedback must be
+reported separately. Training loss or GPU utilization alone does not establish flywheel gains.
+
+The global [training observatory](docs/dashboard/README.md) shows observation freshness, code/build
+and checkpoint identities, loss curves, fleet use, dataset/result/library counts and storage
+scope. Unknown values stay unknown. S3 object counts include program/context metadata, historical
+attempts, checkpoints and archives; they are not counts of distinct datasets or trainable examples.
+Dataset rights, joins, evaluator identity, split and admission still determine training eligibility.
+
+Every research wave keeps a compact Git manifest, card, metrics and context under
+[`docs/research/waves/`](docs/research/waves/INDEX.jsonl). Bulk outputs and checkpoints stay in
+immutable compressed storage, referenced by exact locations, S3 VersionIds and compressed,
+decoded and member hashes with restoration receipts. Keep failures and limitations, deduplicate
+repeated payloads and exclude raw bulk logs, weights and secrets from Git. The canonical lookup
+contract is [training artifact locations](docs/runbooks/training-artifact-locations.md) and
+[`catalogs/training-artifacts.json`](catalogs/training-artifacts.json).
+
+Storage reclamation follows the [closure workplan](docs/plans/release-closure-20261019/WORKPLAN.md):
+inventory → consumer/retention checks → independently restored archive → explicit eligible
+object/path list → logged retirement. Being merged or having a matching checksum alone does
+not make a folder or S3 object disposable. Preserve symlinks and all unique or unknown assets.
 
 ## Measured results
 
@@ -228,8 +336,10 @@ JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
 Pull-request CI is `.github/workflows/ci.yml`: ten jobs on the self-hosted `jope-ci` runners.
-Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
-(`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
+The ten top-level job definitions expand to eleven executions with the two `rust-test` shards.
+Eight executions each run one lane of `deploy/ci/fast-lane.sh`; the separate `observatory-ui` job
+checks the TypeScript/React dashboard. `aggregate` requires its successful result and nonzero
+evidence, then validates the eight fast-lane receipts (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated
 blocks, and `jope-records paper-trace`, which checks the white paper's printed numbers against its
 claim ledger and this README's version and "At a glance" counts against their files) and builds
@@ -305,6 +415,7 @@ The 27 workspace members, by directory under `crates/`; the package name follows
 | Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders, Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
+| Observatory | `jope-observatory` | Rust observation API and collectors; the React/Vite/TypeScript UI is under `web/training-dashboard`. Read-only evidence views, not a training admission or execution controller. |
 | Vendored | `smartcluster/*` (7 crates) | The jain-smartcluster scheduler, at its own version 8.0.0. |
 
 | Path | Role |
@@ -312,6 +423,8 @@ The 27 workspace members, by directory under `crates/`; the package name follows
 | `datasets/synthetic` | The forty generated fixtures and `catalog.json` |
 | `datasets/test` | The ten licensed test datasets (`test-10`) |
 | `python/` | The Python that remains after [ADR-0006](docs/adr/ADR-0006-rust-only-stack.md) phase P1 (#117): the training stack (`policy`, `encoders`, `target_maker`, `data`, `dime_score`, `broad_shadow`), the research helpers that kept tests use, and the sha-pinned grammar sources; package `jope` 0.1.0, never released. Phases P2 and P3 port or retire it, with the CI helpers in `deploy/ci/*.py`. No new Python except the emitted model code and its harness. |
+| `deploy/dl-flywheel` | Imported native/continuous Python training and research pipeline, source inventories, admission and offline tests. Read its source-custody and current qualification records before use. |
+| `docs/research/waves`, `catalogs/training-artifacts.json` | Compact research history and durable artifact locators |
 | `deploy/ci`, `deploy/release` | CI lane scripts and the coverage map (`check.sh` is the hygiene lane); the release script and its tests |
 | `deploy/lambda` | Standalone AWS Lambda workers, an offline assessment tool for the regression worker's stored models, the host-side search engine of the teacher campaign and a terminal monitor, each its own Cargo workspace with its own lock; not part of the `jope` binary or its build. `SNAPSHOT.json` records every imported file's hash ([README](deploy/lambda/README.md)) |
 
@@ -319,6 +432,10 @@ The 27 workspace members, by directory under `crates/`; the package name follows
 
 - [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.3.0 and 0.2.0
 - [`MASTER_PLAN.md`](MASTER_PLAN.md) — current direction and the landing record
+- [`docs/AGENT_START_HERE.md`](docs/AGENT_START_HERE.md) — agent onboarding, checkpoints, ownership and evidence
+- [`docs/plans/release-closure-20261019/WORKPLAN.md`](docs/plans/release-closure-20261019/WORKPLAN.md) — ordered integration, CI, README, training and major-release closure
+- [`docs/plans/major-release-20261018/MAJOR_RELEASE_TRACKER.md`](docs/plans/major-release-20261018/MAJOR_RELEASE_TRACKER.md) — all 47 GP release tasks and acceptance scope
+- [`docs/models.md`](docs/models.md) — self-hosted versioned model bundles and download verification
 - [`docs/release/README.md`](docs/release/README.md) — how a release is cut, signed and verified
 - [`docs/pipeline.md`](docs/pipeline.md) — the pipeline's budget, selection, seeding, parallelism and test-split contracts
 - [`docs/architecture.md`](docs/architecture.md) — crates, contracts and the intended pipeline

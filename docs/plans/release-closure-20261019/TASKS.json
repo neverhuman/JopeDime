@@ -1,0 +1,357 @@
+{
+  "schema": "jope.release-closure-task-overlay/v1",
+  "created_utc": "2026-10-19T17:05:00Z",
+  "baseline_main": "9f8d1a74ab08fc200214a82beaf2ee96e316061a",
+  "authority": "SC-DEC-184L; direct human workplan/README/Admiral request",
+  "state_policy": "No task is complete without acceptance evidence. States are planning snapshot, not live telemetry. Original MR47 and I66 ledgers remain authoritative.",
+  "tasks": [
+    {
+      "id": "C00",
+      "title": "Receiving-main PR384 validation",
+      "owner_role": "Codex",
+      "deps": [],
+      "state": "in_progress",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C00 \u2014 Finish PR384 receiving-main validation (P00)"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C00"
+    },
+    {
+      "id": "C01",
+      "title": "Admiralty adoption and ownership",
+      "owner_role": "Admiral",
+      "deps": [],
+      "state": "adopted_manual_coordination_native_execution_pending",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C01 \u2014 Freeze ownership and adopt the plan in Admiralty"
+      },
+      "acceptance_evidence": [
+        {
+          "decision": "SC-DEC-184M",
+          "sha256": "a2da3837c72fc5d067879720b84f9e59eb83a94c4d668cad178f94a4df47bb25",
+          "qualification": "Formal Admiral adoption,20 assigned coordination IDs; native execution remains unqualified"
+        }
+      ],
+      "admiralty_task_id": "ADM-JOPE-RC-C01"
+    },
+    {
+      "id": "C02",
+      "title": "Source and tracker reconciliation",
+      "owner_role": "Codex",
+      "deps": [
+        "C01"
+      ],
+      "state": "ready",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C02 \u2014 Source/tracker reconciliation and integration manifest"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C02"
+    },
+    {
+      "id": "C03",
+      "title": "Versioned encoder/policy release set",
+      "owner_role": "Codex",
+      "deps": [
+        "C01"
+      ],
+      "state": "ready",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C03 \u2014 P02 immutable encoder/policy release set"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C03"
+    },
+    {
+      "id": "C04",
+      "title": "Direct and Thinking actual execution",
+      "owner_role": "flywheel",
+      "deps": [
+        "C03"
+      ],
+      "state": "blocked_dependency",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C04 \u2014 Real Direct and Thinking execution"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C04"
+    },
+    {
+      "id": "C05",
+      "title": "Concrete AutoML and leak-free CV",
+      "owner_role": "flywheel",
+      "deps": [
+        "C01"
+      ],
+      "state": "in_progress",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C05 \u2014 Concrete AutoML roster and leak-free CV"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C05"
+    },
+    {
+      "id": "C06",
+      "title": "Ensemble refit persistence test score",
+      "owner_role": "flywheel",
+      "deps": [
+        "C03",
+        "C04",
+        "C05"
+      ],
+      "state": "in_progress",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C06 \u2014 Ensemble, refit, persistence, fresh-process test score"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C06"
+    },
+    {
+      "id": "C07",
+      "title": "Native warm-resume qualification",
+      "owner_role": "captain",
+      "deps": [
+        "C01"
+      ],
+      "state": "source_partial",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C07 \u2014 Native warm-resume source and independent qualification"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C07"
+    },
+    {
+      "id": "C08",
+      "title": "Admit and run finite neural continuation",
+      "owner_role": "captain",
+      "deps": [
+        "C00",
+        "C03",
+        "C07",
+        "C15"
+      ],
+      "state": "blocked_execution_admission",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C08 \u2014 Admit the next finite neural run, then train to a reasoned stopping rule"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C08"
+    },
+    {
+      "id": "C09",
+      "title": "Measured fresh-feedback flywheel pilot",
+      "owner_role": "captain",
+      "deps": [
+        "C04",
+        "C07",
+        "C08"
+      ],
+      "state": "blocked_dependency",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C09 \u2014 Close the real fresh-feedback loop before scaling"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C09"
+    },
+    {
+      "id": "C10",
+      "title": "All47 GP engineering and experiment cases",
+      "owner_role": "Admiral",
+      "deps": [
+        "C02"
+      ],
+      "state": "in_progress",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C10 \u2014 Remaining 47-task GP scope, in dependency order"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C10"
+    },
+    {
+      "id": "C11",
+      "title": "Finished research Git publication",
+      "owner_role": "captain",
+      "deps": [
+        "C01"
+      ],
+      "state": "independent_archives_verified_publication_metadata_pending",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C11 \u2014 Preserve completed research and publish compact Git waves now"
+      },
+      "acceptance_evidence": [
+        {
+          "p01_independent_restore_sha256": "cc19ae2430c0ece85bd488c7f74e9f71d6d7353c4c7c450d62b486a290c1b6fd",
+          "benchmark_independent_restore_sha256": "2365a1e8aab511ed642a9bce2dcf4332f95ccd55c5fc7924de939dd542a3a7d0",
+          "qualification": "Preservation only; staged card corrections and Git publication still pending"
+        }
+      ],
+      "admiralty_task_id": "ADM-JOPE-RC-C11"
+    },
+    {
+      "id": "C12",
+      "title": "Storage eligibility and safe retention",
+      "owner_role": "captain",
+      "deps": [
+        "C11"
+      ],
+      "state": "audit_partial_zero_deletion_certified",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C12 \u2014 Storage audit, high-information retention, safe reclamation"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C12"
+    },
+    {
+      "id": "C13",
+      "title": "README and agent onboarding",
+      "owner_role": "Codex",
+      "deps": [
+        "C01"
+      ],
+      "state": "documentation_validated_pending_integration_ci",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C13 \u2014 README and agent onboarding complete for actual state"
+      },
+      "acceptance_evidence": [
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/docs-validation-final/receipt.json",
+          "sha256": "466a0f419bb4016bc8d49bad360b7a3c7c92761ffb87dce94bb1cd7b97429505",
+          "qualification": "Docs/prose/layout/paper-trace/links/MR47 roundtrip/generated blocks; exact-head integration CI/review/merge pending"
+        }
+      ],
+      "admiralty_task_id": "ADM-JOPE-RC-C13"
+    },
+    {
+      "id": "C14",
+      "title": "One integration PR and frozen-head final CI",
+      "owner_role": "Codex",
+      "deps": [
+        "C00",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C11",
+        "C13"
+      ],
+      "state": "blocked_dependency",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C14 \u2014 Integrate once, finish JA06 and final CI on frozen head"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C14"
+    },
+    {
+      "id": "C15",
+      "title": "Independent review merge main validation",
+      "owner_role": "Codex",
+      "deps": [
+        "C14"
+      ],
+      "state": "blocked_dependency",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C15 \u2014 Independent exact-head review, ordinary merge and main readback"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C15"
+    },
+    {
+      "id": "C16",
+      "title": "Qualified major release and rollback",
+      "owner_role": "release-owner",
+      "deps": [
+        "C09",
+        "C10",
+        "C15"
+      ],
+      "state": "blocked_dependency",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C16 \u2014 Major release, delivery and rollback"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C16"
+    },
+    {
+      "id": "C17",
+      "title": "Safe worktree/folder retirement",
+      "owner_role": "captain",
+      "deps": [
+        "C15"
+      ],
+      "state": "held_preservation_consumer_closure",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C17 \u2014 Local Git/worktree and folder retirement"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C17"
+    },
+    {
+      "id": "C18",
+      "title": "Dashboard and Admiralty execution handoff",
+      "owner_role": "platform-owners",
+      "deps": [
+        "C01"
+      ],
+      "state": "execution_qualification_pending",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C18 \u2014 Dashboard and operational handoff"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C18"
+    },
+    {
+      "id": "C19",
+      "title": "Final closeout receipt",
+      "owner_role": "Codex",
+      "deps": [
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C15",
+        "C16",
+        "C17",
+        "C18"
+      ],
+      "state": "blocked_dependency",
+      "instructions": {
+        "file": "WORKPLAN.md",
+        "section": "C19 \u2014 Final closeout receipt"
+      },
+      "acceptance_evidence": [],
+      "admiralty_task_id": "ADM-JOPE-RC-C19"
+    }
+  ],
+  "admiral_adoption": {
+    "decision": "SC-DEC-184M",
+    "order_sha256": "a2da3837c72fc5d067879720b84f9e59eb83a94c4d668cad178f94a4df47bb25",
+    "adopted_overlay_sha256": "707d94a29332b945040124292b6ef916273a3d90a822c7875b00a56a334802e6",
+    "coordination_mode": "manual-coordination-active / native-execution-unqualified",
+    "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
+    "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
+  },
+  "last_evidence_update_utc": "2026-10-19T17:18:21.280962+00:00"
+}

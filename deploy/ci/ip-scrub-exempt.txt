@@ -3,3 +3,5 @@
 docs/asm.md owned by the contract lane; renamed and reworded with the pipeline/CLI follow-up
 crates/jope-pipeline/Cargo.toml pipeline description reworded with the receipt/manifest follow-up
 crates/jope-cli/Cargo.toml CLI description reworded with the help-string follow-up
+README.md direct human 2026-10-19 requires explicit GP, Thinking and AutoML architecture documentation; technical explanation approved, other shipped-text contracts retained
+docs/AGENT_START_HERE.md direct human 2026-10-19 requires technical agent onboarding for GP pathways and release work; other shipped-text contracts retained

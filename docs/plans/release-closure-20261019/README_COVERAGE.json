@@ -1,0 +1,144 @@
+{
+  "schema": "jope.readme-coverage/v1",
+  "generated_benchmark_blocks": "preserved byte-for-byte",
+  "requests": [
+    {
+      "requirement": "Direct encoding\u2192DL\u2192GP\u2192code",
+      "readme_section": "Direct, Thinking, AutoML and ensembles",
+      "dependencies": [
+        "C03",
+        "C04"
+      ],
+      "acceptance": "real inference + fitted supported emitted predictor parity",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Thinking low/med/high/ultra independent",
+      "readme_section": "Direct, Thinking, AutoML and ensembles",
+      "dependencies": [
+        "C04"
+      ],
+      "acceptance": "seed generation0 + whole-request caps + changed-child execution",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "AutoML optional broad estimator CV",
+      "readme_section": "Direct, Thinking, AutoML and ensembles",
+      "dependencies": [
+        "C05"
+      ],
+      "acceptance": "per-entry real fitter + group-disjoint5fold + trained winner",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Ensemble independently optional",
+      "readme_section": "Direct, Thinking, AutoML and ensembles",
+      "dependencies": [
+        "C06"
+      ],
+      "acceptance": "OOF selection + refit persisted fresh-process prediction",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Self-hosted simple versioned model and encoder downloads",
+      "readme_section": "Download encoders and model checkpoints",
+      "dependencies": [
+        "C03"
+      ],
+      "acceptance": "existing bundle verification + new release-set cold readback",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Training progress, 429 updates and loss",
+      "readme_section": "Research progress, storage and result preservation",
+      "dependencies": [
+        "C07",
+        "C08",
+        "C09"
+      ],
+      "acceptance": "actual finite training and measured new-feedback receipts",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Storage findings and safe cleanup",
+      "readme_section": "Research progress, storage and result preservation",
+      "dependencies": [
+        "C12",
+        "C17"
+      ],
+      "acceptance": "inventory scope + exact retirement manifest/restore/consumer proof",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Compact research evidence in Git",
+      "readme_section": "Research progress, storage and result preservation",
+      "dependencies": [
+        "C11"
+      ],
+      "acceptance": "wave schema+immutable archive+Git publication/main receipt",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Updated live dashboard and KPIs",
+      "readme_section": "Research progress, storage and result preservation",
+      "dependencies": [
+        "C18"
+      ],
+      "acceptance": "source-bound observed feed + freshness + execution separate",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Agent onboarding",
+      "readme_section": "Further reading",
+      "dependencies": [
+        "C13"
+      ],
+      "acceptance": "docs/AGENT_START_HERE.md resolves local links",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Current exact CI and merge gates",
+      "readme_section": "Install and check",
+      "dependencies": [
+        "C00",
+        "C14",
+        "C15"
+      ],
+      "acceptance": "paper-trace definitions count + hosted exact-head and receiving-main green",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "All GP upgrade MD scope, not old milestone",
+      "readme_section": "Further reading",
+      "dependencies": [
+        "C02",
+        "C10"
+      ],
+      "acceptance": "47 stable IDs and every original acceptance case retained",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    },
+    {
+      "requirement": "Major release",
+      "readme_section": "Releases",
+      "dependencies": [
+        "C16",
+        "C19"
+      ],
+      "acceptance": "signed artifact/tag/main/release-set/rollback after required gates",
+      "documentation_state": "covered",
+      "implementation_state": "see TASKS.json; not inferred from documentation"
+    }
+  ]
+}
