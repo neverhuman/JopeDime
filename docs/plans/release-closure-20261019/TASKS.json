@@ -111,6 +111,11 @@
           "sha256": "79338bf71c4b72a0c9da5a003d2173c36fde8c3bea8fd35b38f39fa4e9281127",
           "commit_sha": "7d7e8aa7dd49d743e43f30150173fab05c1ea95f",
           "qualification": "Complete exact-VersionId model-layer download API with shared deadline and preflighted metadata/payload budgets.17release tests pass including6newcaller cases,0failed/skipped/3unrelatedexcluded; scoped datasets/models clippy-Dwarnings/fmt/prose/diff PASS. Earlier49dataset library cases at unchangedsource are retained, not rerun. Emptyrealregistry/cacheCLI/licence/runtime/neuralexecutor/finalreview stillOPEN."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_e6f02c3b_c03_download_and_v3_manifest_v4_20261019.json",
+          "sha256": "46a3208a3e2cbc82f8df5c46e811f92934a3cf05ebdbb6825c2e720082f7b60e",
+          "qualification": "Independent read-only review e6f/7d7: no blocking findings; actual17release tests/cited logs verified. Byte closure only; no nativeapproval/cacheCLI/licence/runtime/realpins/neuralexecutor/pilotadmission. Requiredfixtureexecutions alreadyhave49dataset/17release receipts; docs now explicitlyrecord modelinjected caller vs lowerlayerrealHTTP limitation."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
@@ -412,6 +417,12 @@
           "sha256": "a04efa06514079386097a24f33813e580b28b69ff75dd0b024085e8cb7f60c44",
           "commit_sha": "24ac3bf8775ac8025496193e19e7381409a913ea",
           "qualification": "Newpacket-v2 actualmodel-storecaller qualified locally atcleanpinnedhead:19executed/passed,0failed/skipped,30explicitlyexcluded; eventlocal-proof,notfullrust-testlaneorhostedCI. Full49datasetlibrary/11modelreleaseprevioussourceproofretained."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1949/residual-warning/SOURCE_DELIVERY.json",
+          "sha256": "99465d529cccfd39a7718ee89b059b4ec4c23f8cac5456b3af96dc9ed78da354",
+          "commit_sha": "a3a261985dfcc96b347c8f7ea9a4ec11d145471b",
+          "qualification": "SC184AK/AL actualresidual singlebinding match warning reproducedexit101 thenfixedwithoutallow/algorithmchange. Scopedfeat-mathlib+oof_composition clippy-DwarningsPASS and4existingOOFcontractsPASS; fmt/prose/diffPASS. SSHfailureoccurredafterremotechecksfinished; actualreceiptsrecovered/no repeat. DoesnotqualifyfullW2/workspace/mainmerge."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C14",
@@ -524,5 +535,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T20:01:39.095678+00:00"
+  "last_evidence_update_utc": "2026-10-19T20:45:34.938797+00:00"
 }
