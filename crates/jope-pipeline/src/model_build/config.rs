@@ -196,13 +196,18 @@ pub enum Route {
     CombinedRosterWinnerEnsemble,
 }
 
-pub fn route(options: &ResolvedModelBuild) -> Route {
-    match (options.automl, options.ensemble) {
+/// The route for one of the four independent `(automl, ensemble)` Boolean combinations.
+pub fn route_of(automl: bool, ensemble: bool) -> Route {
+    match (automl, ensemble) {
         (false, false) => Route::FastNeuralGp,
         (true, false) => Route::NeuralGpAutomlBakeoff,
         (false, true) => Route::NeuralGpWinnerEnsemble,
         (true, true) => Route::CombinedRosterWinnerEnsemble,
     }
+}
+
+pub fn route(options: &ResolvedModelBuild) -> Route {
+    route_of(options.automl, options.ensemble)
 }
 
 /// The P02 release closure a checkpoint must match. Produced by the P02 verifier; this module

@@ -12,7 +12,7 @@
 //! data before a fit starts. An out-of-range index is a typed refusal, never a panic.
 use super::candidates::CandidateSpec;
 use super::identity::{digest_ids, digest_pairs, ExecutionIdentity};
-use super::selection::{CandidateFitter, FitEvidence, FoldFit, NotStarted};
+use super::selection::{BakeoffPlan, CandidateFitter, FitEvidence, FoldFit, NotStarted};
 use crate::evaluation_score::Predictions;
 use anyhow::{ensure, Context, Result};
 use feat_math::advanced_v3::{
@@ -63,6 +63,30 @@ pub struct NativeFitter {
     selection_len: usize,
 }
 
+/// Validates every array length before any slice is taken (SC-DEC-184V JA-N2). A short target
+/// array, a short feature array or a ragged feature row is a typed refusal, never a panic.
+fn check_shape(data: &NativeData) -> Result<()> {
+    let rows = data.row_ids.len();
+    ensure!(rows > 0, "native data has no rows");
+    ensure!(
+        data.targets.len() == rows,
+        "targets are not row-aligned: {} targets for {rows} rows",
+        data.targets.len()
+    );
+    ensure!(
+        data.features.len() == rows,
+        "features are not row-aligned: {} feature rows for {rows} rows",
+        data.features.len()
+    );
+    let width = data.feature_names.len();
+    ensure!(width > 0, "native data has no feature columns");
+    ensure!(
+        data.features.iter().all(|row| row.len() == width),
+        "native feature rows are ragged or do not match the feature names"
+    );
+    Ok(())
+}
+
 /// The label strings the identity's cohort digests are computed over, derived from the targets
 /// themselves: regression labels are the numbers, binary labels are the frozen class names. A
 /// caller cannot attach labels that differ from the targets the fitter will train on.
@@ -105,14 +129,66 @@ pub fn genome_for(candidate_id: &str, task: Task) -> Option<&'static str> {
 }
 
 impl NativeFitter {
+    /// The only public constructor (SC-DEC-184V JA-N1). It takes the validated bake-off plan and the
+    /// data together, and derives every binding from them: row order, folds, groups, labels and
+    /// class order, then the plan digest. A fitter built from a plan whose digest is not the
+    /// identity's, or whose labels are not the targets' labels, is refused before any fit starts.
+    pub fn for_plan(
+        plan: &BakeoffPlan,
+        data: NativeData,
+        selection_len: usize,
+        report_labels: &[String],
+        identity: &ExecutionIdentity,
+    ) -> Result<Self> {
+        check_shape(&data)?;
+        plan.validate()?;
+        ensure!(
+            selection_len == plan.row_ids.len() && selection_len < data.row_ids.len(),
+            "the selection side is {} rows but the plan has {}",
+            selection_len,
+            plan.row_ids.len()
+        );
+        ensure!(
+            data.row_ids[..selection_len] == plan.row_ids[..],
+            "data row order differs from the plan"
+        );
+        ensure!(
+            label_strings(plan.task, &plan.classes, &data.targets[..selection_len])? == plan.labels,
+            "plan labels differ from the targets the fitter trains on"
+        );
+        ensure!(
+            digest_ids(&plan.group_ids) == identity.group_sha256,
+            "plan groups differ from the identity"
+        );
+        ensure!(
+            plan.request_sha256 == identity.request_sha256,
+            "plan request differs from the identity"
+        );
+        ensure!(
+            plan.digest() == identity.plan_sha256,
+            "the identity was not derived from this plan"
+        );
+        Self::new_split(
+            plan.task,
+            plan.classes.clone(),
+            data,
+            selection_len,
+            &plan.labels,
+            report_labels,
+            identity,
+        )
+    }
+
     /// `classes` is the plan's frozen class order. It is empty for regression. The data is the
     /// selection side only.
-    pub fn new(
+    #[cfg(test)]
+    pub(crate) fn new(
         task: Task,
         classes: Vec<String>,
         data: NativeData,
         identity: &ExecutionIdentity,
     ) -> Result<Self> {
+        check_shape(&data)?;
         ensure!(
             data_digest(&data) == identity.data_sha256,
             "native data bytes do not reproduce the admitted data identity"
@@ -134,7 +210,7 @@ impl NativeFitter {
 
     /// Binds one union of selection rows followed by report rows. The identity must reproduce the
     /// union bytes, the selection rows and labels, and the report rows and labels.
-    pub fn new_split(
+    pub(crate) fn new_split(
         task: Task,
         classes: Vec<String>,
         data: NativeData,
@@ -143,6 +219,7 @@ impl NativeFitter {
         report_labels: &[String],
         identity: &ExecutionIdentity,
     ) -> Result<Self> {
+        check_shape(&data)?;
         ensure!(
             data_digest(&data) == identity.data_sha256,
             "native union bytes do not reproduce the admitted data identity"

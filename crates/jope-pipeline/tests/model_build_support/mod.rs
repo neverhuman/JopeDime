@@ -123,12 +123,10 @@ pub fn identity_with_report_labels(u: &Union, report_labels: &[String]) -> Execu
 }
 
 pub fn split_fitter(task: Task, u: &Union, identity: &ExecutionIdentity) -> NativeFitter {
-    NativeFitter::new_split(
-        task,
-        u.classes.clone(),
+    NativeFitter::for_plan(
+        &plan(task, u),
         u.data.clone(),
         SELECTION,
-        &u.selection_labels,
         &u.report_labels,
         identity,
     )

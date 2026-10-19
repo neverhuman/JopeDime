@@ -165,12 +165,10 @@ fn a_split_fitter_refuses_report_labels_that_do_not_reproduce_the_identity() {
     let id = identity(&u);
     let mut labels = u.report_labels.clone();
     labels[0] = "999".into();
-    let result = NativeFitter::new_split(
-        Task::Regression,
-        vec![],
+    let result = NativeFitter::for_plan(
+        &plan(Task::Regression, &u),
         u.data.clone(),
         SELECTION,
-        &u.selection_labels,
         &labels,
         &id,
     );
@@ -184,12 +182,10 @@ fn a_split_fitter_refuses_union_bytes_that_do_not_reproduce_the_identity() {
     let mut altered = u.data.clone();
     altered.features[SELECTION][0] += 1e-9;
     assert_ne!(data_digest(&altered), id.data_sha256);
-    let result = NativeFitter::new_split(
-        Task::Regression,
-        vec![],
+    let result = NativeFitter::for_plan(
+        &plan(Task::Regression, &u),
         altered,
         SELECTION,
-        &u.selection_labels,
         &u.report_labels,
         &id,
     );

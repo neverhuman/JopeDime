@@ -320,61 +320,6 @@ fn a_member_whose_rows_differ_from_the_identity_is_refused() {
 }
 
 #[test]
-fn a_row_permutation_is_refused_by_the_native_fitter() {
-    let u = regression_union();
-    let id = identity(&u);
-    let mut swapped: NativeData = u.data.clone();
-    swapped.row_ids.swap(0, 1);
-    swapped.features.swap(0, 1);
-    swapped.targets.swap(0, 1);
-    let result = NativeFitter::new_split(
-        Task::Regression,
-        vec![],
-        swapped,
-        SELECTION,
-        &u.selection_labels,
-        &u.report_labels,
-        &id,
-    );
-    assert!(result.is_err());
-}
-
-#[test]
-fn a_changed_selection_label_is_refused_by_the_native_fitter() {
-    let u = regression_union();
-    let id = identity(&u);
-    let mut labels = u.selection_labels.clone();
-    labels[4] = "12345".into();
-    let result = NativeFitter::new_split(
-        Task::Regression,
-        vec![],
-        u.data.clone(),
-        SELECTION,
-        &labels,
-        &u.report_labels,
-        &id,
-    );
-    assert!(result.is_err());
-}
-
-#[test]
-fn swapped_class_order_is_refused_by_the_native_fitter() {
-    let u = binary_union();
-    let id = identity(&u);
-    let swapped_classes = vec!["yes".to_string(), "no".to_string()];
-    let result = NativeFitter::new_split(
-        Task::Binary,
-        swapped_classes,
-        u.data.clone(),
-        SELECTION,
-        &u.selection_labels,
-        &u.report_labels,
-        &id,
-    );
-    assert!(result.is_err());
-}
-
-#[test]
 fn a_fitter_bound_to_another_plan_is_refused_by_the_bake_off() {
     let u = regression_union();
     let id = identity(&u);
@@ -555,4 +500,196 @@ fn verified_checkpoint() -> jope_pipeline::model_build::config::VerifiedNeuralCh
         runtime_sha256: claim.runtime_sha256.clone(),
     };
     verify_checkpoint(&claim, Some(&closure), SOURCE).unwrap()
+}
+
+/// The selection-side fitter for a plan, built only through the plan-derived factory.
+fn fitter_for(
+    u: &Union,
+    plan: &jope_pipeline::model_build::BakeoffPlan,
+    data: NativeData,
+    id: &ExecutionIdentity,
+) -> anyhow::Result<NativeFitter> {
+    NativeFitter::for_plan(plan, data, SELECTION, &u.report_labels, id)
+}
+
+#[test]
+fn a_row_permutation_is_refused_by_the_plan_factory() {
+    let u = regression_union();
+    let id = identity(&u);
+    let mut swapped: NativeData = u.data.clone();
+    swapped.row_ids.swap(0, 1);
+    swapped.features.swap(0, 1);
+    swapped.targets.swap(0, 1);
+    assert!(fitter_for(&u, &plan(Task::Regression, &u), swapped, &id).is_err());
+}
+
+#[test]
+fn a_changed_selection_label_is_refused_by_the_plan_factory() {
+    let u = regression_union();
+    let id = identity(&u);
+    let mut altered = plan(Task::Regression, &u);
+    altered.labels[4] = "12345".into();
+    assert!(fitter_for(&u, &altered, u.data.clone(), &id).is_err());
+}
+
+#[test]
+fn swapped_class_order_is_refused_by_the_plan_factory() {
+    let u = binary_union();
+    let id = identity(&u);
+    let mut swapped = plan(Task::Binary, &u);
+    swapped.classes = vec!["yes".to_string(), "no".to_string()];
+    assert!(fitter_for(&u, &swapped, u.data.clone(), &id).is_err());
+}
+
+/// JA-N1: the identity carries plan B's digest, while the data and labels are plan A's. Construction
+/// must refuse it, because the digest was not derived from the data it would fit.
+#[test]
+fn a_plan_digest_from_another_plan_is_refused_at_construction() {
+    let u = regression_union();
+    let plan_a = plan(Task::Regression, &u);
+    let mut plan_b = plan_a.clone();
+    plan_b.folds = plan_b.folds.iter().map(|f| (f + 1) % 5).collect();
+    let (selection_ids, report_ids) = u.data.row_ids.split_at(SELECTION);
+    let identity_b = ExecutionIdentity::new(
+        REQUEST,
+        &plan_b.digest(),
+        &data_digest(&u.data),
+        selection_ids,
+        &u.selection_labels,
+        &[],
+        report_ids,
+        &u.report_labels,
+        &[],
+    )
+    .unwrap();
+    assert!(fitter_for(&u, &plan_a, u.data.clone(), &identity_b).is_err());
+}
+
+/// JA-N1: the plan's labels disagree with the targets they claim to describe.
+#[test]
+fn plan_labels_that_differ_from_the_targets_are_refused_at_construction() {
+    let u = regression_union();
+    let mut plan_b = plan(Task::Regression, &u);
+    plan_b.labels[0] = "999".into();
+    let (selection_ids, report_ids) = u.data.row_ids.split_at(SELECTION);
+    let identity_b = ExecutionIdentity::new(
+        REQUEST,
+        &plan_b.digest(),
+        &data_digest(&u.data),
+        selection_ids,
+        &plan_b.labels,
+        &[],
+        report_ids,
+        &u.report_labels,
+        &[],
+    )
+    .unwrap();
+    assert!(fitter_for(&u, &plan_b, u.data.clone(), &identity_b).is_err());
+}
+
+/// JA-N2: every short or ragged array is a typed refusal, not a slice panic.
+#[test]
+fn a_short_target_array_is_a_typed_refusal() {
+    let u = regression_union();
+    let id = identity(&u);
+    let mut data = u.data.clone();
+    data.targets.pop();
+    assert!(fitter_for(&u, &plan(Task::Regression, &u), data, &id).is_err());
+}
+
+#[test]
+fn a_short_feature_array_is_a_typed_refusal() {
+    let u = regression_union();
+    let id = identity(&u);
+    let mut data = u.data.clone();
+    data.features.pop();
+    assert!(fitter_for(&u, &plan(Task::Regression, &u), data, &id).is_err());
+}
+
+#[test]
+fn a_ragged_feature_row_is_a_typed_refusal() {
+    let u = regression_union();
+    let id = identity(&u);
+    let mut data = u.data.clone();
+    data.features[3].push(1.0);
+    assert!(fitter_for(&u, &plan(Task::Regression, &u), data, &id).is_err());
+}
+
+#[test]
+fn split_boundaries_at_zero_and_at_the_full_length_are_refused() {
+    let u = regression_union();
+    let id = identity(&u);
+    let p = plan(Task::Regression, &u);
+    let at_zero = NativeFitter::for_plan(&p, u.data.clone(), 0, &u.report_labels, &id);
+    assert!(at_zero.is_err());
+    let at_full = NativeFitter::for_plan(
+        &p,
+        u.data.clone(),
+        u.data.row_ids.len(),
+        &u.report_labels,
+        &id,
+    );
+    assert!(at_full.is_err());
+}
+
+/// SC-DEC-184V item 3: each of the four independent (automl, ensemble) combinations is admitted
+/// through the boundary, maps to its own route and stage list, and stays pending on the neural
+/// stage. Low thinking refuses all four.
+#[test]
+fn all_four_automl_ensemble_combinations_pass_the_boundary() {
+    use jope_pipeline::model_build::executor::{admit_combination, RouteAdmission, Stage};
+    use jope_pipeline::model_build::{route_of, EvaluationBudget as Budget};
+    let u = regression_union();
+    let id = identity(&u);
+    let checkpoint = verified_checkpoint();
+    let cases = [
+        (false, false, vec![Stage::NeuralToGp]),
+        (true, false, vec![Stage::NeuralToGp, Stage::NativeBakeoff]),
+        (false, true, vec![Stage::NeuralToGp, Stage::WinnerEnsemble]),
+        (
+            true,
+            true,
+            vec![
+                Stage::NeuralToGp,
+                Stage::NativeBakeoff,
+                Stage::WinnerEnsemble,
+            ],
+        ),
+    ];
+    let mut routes = Vec::new();
+    for (automl, ensemble, expected) in cases {
+        routes.push(route_of(automl, ensemble));
+        let admission = admit_combination(
+            automl,
+            ensemble,
+            ThinkingLevel::Medium,
+            &checkpoint,
+            &id,
+            &mut Budget::with_limits(BudgetCounters {
+                neural_gp_work_units: 80,
+                ..BudgetCounters::UNLIMITED
+            }),
+        )
+        .unwrap();
+        match admission {
+            RouteAdmission::Pending { stages, .. } => assert_eq!(stages, expected),
+            other => panic!("({automl}, {ensemble}) must stay pending, got {other:?}"),
+        }
+        assert!(admit_combination(
+            automl,
+            ensemble,
+            ThinkingLevel::Low,
+            &checkpoint,
+            &id,
+            &mut Budget::new(1000),
+        )
+        .is_err());
+    }
+    routes.sort_by_key(|r| format!("{r:?}"));
+    routes.dedup();
+    assert_eq!(
+        routes.len(),
+        4,
+        "the four combinations must map to four routes"
+    );
 }

@@ -36,7 +36,7 @@ pub use selection::{
 };
 
 pub use config::{
-    disposition, resolve, route, verify_checkpoint, CheckpointClaim, CheckpointRefusal,
+    disposition, resolve, route, route_of, verify_checkpoint, CheckpointClaim, CheckpointRefusal,
     Disposition, ModelBuildArgs, ModelBuildFile, ModelBuildFlags, NeuralCheckpoint, ReleaseClosure,
     ResolvedModelBuild, Route, Source, VerifiedNeuralCheckpoint, OPTIONS_SCHEMA,
 };

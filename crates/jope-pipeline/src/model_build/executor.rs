@@ -13,7 +13,7 @@
 //! - The 80-versus-64 conflict is resolved by refusing: the neural initial population has 80
 //!   slots, so a `low` request whose evaluation cap is 64 cannot run it and is refused at
 //!   admission, before any stage starts.
-use super::config::{Route, VerifiedNeuralCheckpoint};
+use super::config::{route_of, Route, VerifiedNeuralCheckpoint};
 use super::identity::ExecutionIdentity;
 use super::selection::{BudgetKind, EvaluationBudget};
 use crate::pathway::ThinkingLevel;
@@ -106,6 +106,25 @@ pub fn admit_route(boundary: RouteBoundary<'_>) -> Result<RouteAdmission> {
             "loaded neural checkpoint runtime",
             "final neural-to-GP executor",
         ],
+    })
+}
+
+/// The four independent `(automl, ensemble)` Boolean combinations, each admitted through the same
+/// boundary as `admit_route` (SC-DEC-184V item 3).
+pub fn admit_combination(
+    automl: bool,
+    ensemble: bool,
+    level: ThinkingLevel,
+    checkpoint: &VerifiedNeuralCheckpoint,
+    identity: &ExecutionIdentity,
+    budget: &mut EvaluationBudget,
+) -> Result<RouteAdmission> {
+    admit_route(RouteBoundary {
+        route: route_of(automl, ensemble),
+        level,
+        checkpoint,
+        identity,
+        budget,
     })
 }
 
