@@ -1,6 +1,6 @@
 //! Immutable release manifests pinned by the reviewed source that built this binary.
 //!
-//! This is metadata verification, not weight loading, runtime qualification, training
+//! This verifies metadata and frozen payload snapshots, not weight loading, runtime qualification, training
 //! admission or serving promotion. The compiled registry is deliberately empty until an
 //! independently reviewed publication supplies real compatible artifacts. Caller checkpoint
 //! claims and arbitrary manifest files cannot add registry pins.
@@ -10,6 +10,7 @@ use anyhow::{bail, ensure, Context, Result};
 use jope_datasets::hash::sha256_hex;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Read;
 
 pub const SCHEMA_ID: &str = "jope.model-release/v1";
 pub const INDEX_SCHEMA_ID: &str = "jope.model-release-index/v1";
@@ -102,6 +103,61 @@ struct ReleaseIndex {
 pub struct VerifiedReleaseManifest {
     manifest: ReleaseManifest,
     manifest_sha256: String,
+}
+
+/// Explicit in-memory limits, checked for the complete release before opening any payload.
+/// Callers remain responsible for I/O deadlines and the surrounding fleet resource lease.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PayloadLimits {
+    pub max_component_bytes: u64,
+    pub max_release_bytes: u64,
+}
+
+impl Default for PayloadLimits {
+    fn default() -> Self {
+        Self {
+            max_component_bytes: 256 * 1024 * 1024,
+            max_release_bytes: 1024 * 1024 * 1024,
+        }
+    }
+}
+
+/// Exact component bytes read and hashed against an independently pinned release.
+///
+/// Private immutable buffers close the verification-to-use file-mutation gap: consumers borrow
+/// the checked bytes, not a path that could change after verification. This witness cannot be
+/// deserialized or constructed from a caller's success receipt. It makes NO claim about remote
+/// VersionId provenance, rights for a requested use, loader compatibility, or execution admission.
+pub struct VerifiedReleasePayloads {
+    metadata: VerifiedReleaseManifest,
+    payloads: BTreeMap<String, Vec<u8>>,
+    verified_bytes: u64,
+}
+
+impl std::fmt::Debug for VerifiedReleasePayloads {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Never dump model buffers into diagnostic logs.
+        f.debug_struct("VerifiedReleasePayloads")
+            .field("release_id", &self.metadata.manifest.release_id)
+            .field("components", &self.payloads.len())
+            .field("verified_bytes", &self.verified_bytes)
+            .finish()
+    }
+}
+
+impl VerifiedReleasePayloads {
+    pub fn metadata(&self) -> &VerifiedReleaseManifest {
+        &self.metadata
+    }
+
+    /// Borrow the exact verified snapshot; unknown IDs return None.
+    pub fn payload(&self, component_id: &str) -> Option<&[u8]> {
+        self.payloads.get(component_id).map(Vec::as_slice)
+    }
+
+    pub fn verified_bytes(&self) -> u64 {
+        self.verified_bytes
+    }
 }
 
 fn valid_id(s: &str) -> bool {
@@ -296,6 +352,79 @@ impl VerifiedReleaseManifest {
     }
     pub fn manifest_sha256(&self) -> &str {
         &self.manifest_sha256
+    }
+
+    /// Verify the whole pinned release into immutable, bounded payload snapshots.
+    ///
+    /// All bundle manifests and the complete byte budget are checked before calling `open`.
+    /// Each reader is consumed at most through the declared length plus one byte, so truncation,
+    /// trailing data and same-length corruption refuse. Partial buffers are dropped on failure;
+    /// this function neither writes a cache nor publishes a partially verified release.
+    ///
+    /// The caller supplies readers, not evidence of their remote provenance. Exact-version
+    /// transport, safe cache installation, license acceptance, runtime loading and admission
+    /// remain separate requirements. This method never turns a path or VersionId claim into
+    /// remote-store verification.
+    pub fn verify_payloads<R, F>(
+        &self,
+        bundle_manifests: &BTreeMap<String, Vec<u8>>,
+        limits: PayloadLimits,
+        mut open: F,
+    ) -> Result<VerifiedReleasePayloads>
+    where
+        R: Read,
+        F: FnMut(&ReleaseComponent) -> Result<R>,
+    {
+        ensure!(
+            limits.max_component_bytes > 0 && limits.max_release_bytes > 0,
+            "payload byte limits must be positive"
+        );
+        let required_bundles: BTreeSet<&str> = self
+            .manifest
+            .components
+            .iter()
+            .map(|c| c.bundle_id.as_str())
+            .collect();
+        ensure!(
+            required_bundles == bundle_manifests.keys().map(String::as_str).collect(),
+            "bundle manifests must match the complete release exactly"
+        );
+        let mut total = 0_u64;
+        for c in &self.manifest.components {
+            ensure!(
+                c.bytes <= limits.max_component_bytes && c.bytes < u64::MAX,
+                "component {} exceeds the payload byte limit",
+                c.id
+            );
+            total = total
+                .checked_add(c.bytes)
+                .context("release byte overflow")?;
+            ensure!(
+                total <= limits.max_release_bytes,
+                "release exceeds the total payload byte limit"
+            );
+            self.verify_component_manifest(&c.id, &bundle_manifests[&c.bundle_id])?;
+        }
+        let mut payloads = BTreeMap::new();
+        for c in &self.manifest.components {
+            let reader = open(c).with_context(|| format!("open component {}", c.id))?;
+            let mut bytes = Vec::new();
+            reader
+                .take(c.bytes + 1)
+                .read_to_end(&mut bytes)
+                .with_context(|| format!("read component {}", c.id))?;
+            ensure!(
+                bytes.len() as u64 == c.bytes && sha256_hex(&bytes) == c.sha256,
+                "component {} payload length/SHA256 differs from release pin",
+                c.id
+            );
+            payloads.insert(c.id.clone(), bytes);
+        }
+        Ok(VerifiedReleasePayloads {
+            metadata: self.clone(),
+            payloads,
+            verified_bytes: total,
+        })
     }
 
     /// Declaration equality only; the runtime owner must separately verify the real loader.
@@ -511,5 +640,140 @@ mod tests {
         m.channel = DeclaredChannel::ServingCandidate;
         let (_, bytes) = pinned(&m);
         assert!(verify_manifest(&m.release_id, &bytes).is_err());
+    }
+
+    type PayloadFixture = (
+        VerifiedReleaseManifest,
+        BTreeMap<String, Vec<u8>>,
+        BTreeMap<String, Vec<u8>>,
+    );
+
+    fn payload_fixture() -> PayloadFixture {
+        let mut m = fixture();
+        let mut bundles = BTreeMap::new();
+        let mut payloads = BTreeMap::new();
+        for (i, c) in m.components.iter_mut().enumerate() {
+            let data = vec![i as u8 + 1; i + 3];
+            c.sha256 = sha256_hex(&data);
+            c.bytes = data.len() as u64;
+            let bundle = json!({"schema":"jope.model-bundle/v2","bundle_id":c.bundle_id,"bucket":"fixture","published_at":"2026-10-19T00:00:00Z","notices":[],"files":[{"path":c.path,"sha256":c.sha256,"bytes":c.bytes,"blob":format!("blobs/sha256/{}",c.sha256),"kind":"model","license":null}]});
+            let bytes = serde_json::to_vec(&bundle).unwrap();
+            c.bundle_manifest_sha256 = sha256_hex(&bytes);
+            bundles.insert(c.bundle_id.clone(), bytes);
+            payloads.insert(c.id.clone(), data);
+        }
+        let (pin, bytes) = pinned(&m);
+        (verify_against_pin(&pin, &bytes).unwrap(), bundles, payloads)
+    }
+
+    #[test]
+    fn complete_payload_set_is_frozen_and_bounded() {
+        let (m, bundles, mut payloads) = payload_fixture();
+        let verified = m
+            .verify_payloads(&bundles, PayloadLimits::default(), |c| {
+                Ok(std::io::Cursor::new(payloads[&c.id].clone()))
+            })
+            .unwrap();
+        let expected = payloads["component-0"].clone();
+        payloads.get_mut("component-0").unwrap()[0] ^= 1;
+        assert_eq!(verified.payload("component-0"), Some(expected.as_slice()));
+        assert_eq!(verified.payload("absent"), None);
+        assert_eq!(verified.verified_bytes(), 33);
+        assert_eq!(verified.metadata().manifest_sha256(), m.manifest_sha256());
+        assert!(!format!("{verified:?}").contains("payloads:"));
+    }
+
+    #[test]
+    fn truncated_corrupt_and_trailing_payloads_refuse() {
+        let (m, bundles, payloads) = payload_fixture();
+        for mode in 0..3 {
+            let mut changed = payloads.clone();
+            let data = changed.get_mut("component-0").unwrap();
+            match mode {
+                0 => {
+                    data.pop();
+                }
+                1 => data[0] ^= 1,
+                _ => data.push(0),
+            }
+            assert!(m
+                .verify_payloads(&bundles, PayloadLimits::default(), |c| {
+                    Ok(std::io::Cursor::new(changed[&c.id].clone()))
+                })
+                .is_err());
+        }
+    }
+
+    #[test]
+    fn manifests_and_whole_release_limits_precede_payload_reads() {
+        let (m, bundles, payloads) = payload_fixture();
+        let calls = std::cell::Cell::new(0);
+        for mode in 0..5 {
+            let mut changed = bundles.clone();
+            let mut limits = PayloadLimits::default();
+            match mode {
+                0 => {
+                    changed.remove("bundle-0");
+                }
+                1 => {
+                    changed.insert("unneeded-bundle".into(), Vec::new());
+                }
+                2 => changed.get_mut("bundle-0").unwrap().push(b' '),
+                3 => limits.max_component_bytes = 7,
+                _ => limits.max_release_bytes = 32,
+            }
+            assert!(m
+                .verify_payloads(&changed, limits, |c| {
+                    calls.set(calls.get() + 1);
+                    Ok(std::io::Cursor::new(payloads[&c.id].clone()))
+                })
+                .is_err());
+            assert_eq!(calls.get(), 0);
+        }
+    }
+
+    #[test]
+    fn reader_failures_propagate_and_unending_readers_are_bounded() {
+        struct Broken;
+        impl Read for Broken {
+            fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::other("fixture read failure"))
+            }
+        }
+        let (m, bundles, _) = payload_fixture();
+        let err = m
+            .verify_payloads(&bundles, PayloadLimits::default(), |_| Ok(Broken))
+            .unwrap_err();
+        assert!(format!("{err:#}").contains("fixture read failure"));
+        // `repeat` has no EOF. The verifier must stop after expected bytes plus one.
+        assert!(m
+            .verify_payloads(&bundles, PayloadLimits::default(), |_| {
+                Ok(std::io::repeat(1))
+            })
+            .is_err());
+    }
+
+    #[test]
+    fn file_backed_payloads_are_rehashed_and_not_reopened_on_use() {
+        let (m, bundles, payloads) = payload_fixture();
+        let root = tempfile::tempdir().unwrap();
+        for (id, bytes) in &payloads {
+            std::fs::write(root.path().join(id), bytes).unwrap();
+        }
+        let verified = m
+            .verify_payloads(&bundles, PayloadLimits::default(), |c| {
+                Ok(std::fs::File::open(root.path().join(&c.id))?)
+            })
+            .unwrap();
+        std::fs::write(root.path().join("component-0"), b"changed").unwrap();
+        assert_eq!(
+            verified.payload("component-0"),
+            Some(payloads["component-0"].as_slice())
+        );
+        assert!(m
+            .verify_payloads(&bundles, PayloadLimits::default(), |c| {
+                Ok(std::fs::File::open(root.path().join(&c.id))?)
+            })
+            .is_err());
     }
 }

@@ -205,3 +205,12 @@ resolve licenses for a requested use, grant training/serving admission or qualif
 Those remaining C03 integrations must complete before the pipeline can consume a verified
 release closure. A `serving_candidate` channel is a declaration, not a promotion. Six fixture
 tests are authored for final integration validation; compile checks are recorded separately.
+
+
+### Complete payload snapshot verification (source API)
+
+`VerifiedReleaseManifest::verify_payloads` now checks all required bundle manifests and the entire declared byte budget before opening any component reader. It rejects missing or extra bundle manifests, truncation, trailing bytes, same-length corruption and I/O failure. Every component must match its pinned byte length and SHA256. A failed set yields no release witness or cache writes.
+
+The returned `VerifiedReleasePayloads` owns private immutable buffers; callers borrow those exact verified bytes with `payload(component_id)`. Later changes to an input file cannot change the checked snapshot. This witness cannot be deserialized from a receipt. Diagnostics print only the release ID, component count and total byte count. Default limits are256MiB per component and1GiB per release; callers must choose limits and I/O deadlines within their resource lease.
+
+This source API verifies supplied bytes. It does not establish a remote object's VersionId, accept a license for a requested use, install a safe version directory, load an encoder/policy runtime, qualify training/serving, or add a real release pin. The compiled registry remains empty. Exact-version self-hosted transport, atomic cache/CLI integration and actual runtime compatibility remain release work. Existing bundle commands retain their current behavior. The new tiny byte-stream and file-backed fixtures are authored and compile-checked; execution is held for finalC14 validation.
