@@ -48,6 +48,19 @@ pub struct Store {
     local_root: Option<std::path::PathBuf>,
 }
 
+impl Drop for Store {
+    fn drop(&mut self) {
+        // Retire the address key before the box can be reused by another backend.
+        // Drop the removed backend outside the mutex; its destructor may own stores.
+        let _released_backend = {
+            let mut registry = injected_registry()
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            registry.remove(&self.inner_id())
+        };
+    }
+}
+
 type InjectedRegistry =
     std::collections::BTreeMap<usize, (ObjectStoreScheme, std::sync::Arc<dyn InjectedBackend>)>;
 

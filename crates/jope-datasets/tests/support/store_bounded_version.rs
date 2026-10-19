@@ -378,3 +378,28 @@ fn excessive_version_and_nonempty_expected_zero_refuse() {
         .block_on(store.get_observed_version_bounded("blob", "version-a", 1, Some(0)))
         .is_err());
 }
+
+#[test]
+fn dropping_an_injected_store_releases_its_registered_backend() {
+    let (store, backend) = fixture(Some("version-a"), Some(vec![1]), false);
+    let weak = Arc::downgrade(&backend);
+    drop(backend);
+    assert!(weak.upgrade().is_some());
+    drop(store);
+    assert!(
+        weak.upgrade().is_none(),
+        "registry retained a backend after its Store was dropped"
+    );
+}
+#[test]
+fn dropping_one_store_does_not_remove_another_stores_backend() {
+    let (first, _) = fixture(Some("version-a"), Some(vec![1]), false);
+    let (second, backend) = fixture(Some("version-a"), Some(vec![2]), false);
+    drop(first);
+    let object = runtime()
+        .block_on(second.get_observed_version_bounded("blob", "version-a", 1, Some(1)))
+        .unwrap()
+        .unwrap();
+    assert_eq!(object.bytes, [2]);
+    assert_eq!(backend.calls.load(Ordering::SeqCst), 1);
+}
