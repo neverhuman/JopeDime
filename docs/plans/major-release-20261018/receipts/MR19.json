@@ -6,6 +6,11 @@
   "on_main": false,
   "pr_number": 381,
   "branch": "feat/mr19-shared-dag-eval-count",
+  "sha": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+  "checkout_sha": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+  "commit_sha": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+  "tree_sha": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
+  "bound_main_sha": "e237fb255e9f090a9879062ed33a3c1c72780ddf",
   "base_main_sha": "e237fb255e9f090a9879062ed33a3c1c72780ddf",
   "source_commit_sha": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
   "source_tree_sha": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
@@ -42,7 +47,7 @@
     "tree_after": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
     "feat_math_subtree_after": "574982295b153aedcc75d42de61386e26ca622a5",
     "git_status_porcelain_after": "",
-    "note": "All focused verification commands below executed on the clean, frozen working tree at bca07ff6e8b632674d7bf74ae3d552c0403e5360 while 1061448.jopedime_flywheel was idle. Committing this receipt under docs/plans/major-release-20261018/receipts/ leaves the crates/feat-math subtree SHA (574982295b153aedcc75d42de61386e26ca622a5) byte-for-byte identical."
+    "note": "All focused verification commands below executed on the clean, frozen working tree at bca07ff6e8b632674d7bf74ae3d552c0403e5360 while 1061448.jopedime_flywheel was idle. Committing this receipt under docs/plans/major-release-20261018/receipts/ leaves the crates/feat-math subtree SHA (574982295b153aedcc75d42de61386e26ca622a5) byte-for-byte identical. Per CODEX_MONITOR_ACTION_jopedime_20261019T1007Z.md item 4, the raw MR19 logs, decision gate, and addendum remain private in /home/ubuntu/jope-evidence/major-release-20261018/verify/."
   },
   "toolchain": {
     "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
@@ -74,7 +79,6 @@
     "completed_at_utc": "2026-10-19T10:17:55.538185240Z",
     "elapsed_seconds": 0.346,
     "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_focused_integration_bca07ff6e_clean.log",
-    "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_focused_integration_bca07ff6e_clean.log.txt",
     "log_bytes": 3328,
     "log_sha256": "d5620a0c48586d84d0d600b385bf96c9271c66d4f776e840341da2ba4ae3f391"
   },
@@ -90,7 +94,6 @@
       "completed_at_utc": "2026-10-19T10:17:55.730015589Z",
       "elapsed_seconds": 0.192,
       "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_pure_dag_tests_bca07ff6e_clean.log",
-      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_pure_dag_tests_bca07ff6e_clean.log.txt",
       "log_bytes": 638,
       "log_sha256": "c3fdc1b67b1f7421f93e179c387c4ccfc2496fd9de65ae9a1e6fa03fffe4a0d6"
     },
@@ -103,7 +106,6 @@
       "completed_at_utc": "2026-10-19T10:17:56.194878921Z",
       "elapsed_seconds": 0.465,
       "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_verify_test_inventory_bca07ff6e_clean.log",
-      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_verify_test_inventory_bca07ff6e_clean.log.txt",
       "log_bytes": 579,
       "log_sha256": "c0fef40f31f70524b935cf198c259dd7a4468f14dbe3f0f427adad6d5627c8cc"
     },
@@ -117,7 +119,6 @@
       "completed_at_utc": "2026-10-19T10:17:56.638379805Z",
       "elapsed_seconds": 0.444,
       "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_jope_records_hygiene_bca07ff6e_clean.log",
-      "git_log_path": "docs/plans/major-release-20261018/receipts/logs/MR19_jope_records_hygiene_bca07ff6e_clean.log.txt",
       "log_bytes": 140,
       "log_sha256": "a5ca562e568569a140eaa12c8c9c80e30ab475b1a8d8040b2e6865071cf32c96"
     }
