@@ -611,6 +611,8 @@ impl ProgramGraph {
         let mut out: Vec<UNode> = Vec::new();
         // For each graph node: the union node that carries it, or None for the raw input.
         let mut map: Vec<Option<usize>> = vec![None; n];
+        // One union `Column` node per semantic key, shared by every consumer.
+        let mut column_nodes: BTreeMap<String, usize> = BTreeMap::new();
         for (index, node) in self.nodes.iter().enumerate() {
             match node {
                 Node::Input => {}
@@ -626,12 +628,8 @@ impl ProgramGraph {
                     let mut members = Vec::with_capacity(columns.len());
                     for column in columns {
                         column.validate(&self.input_schema)?;
-                        let bound = self
-                            .input_schema
-                            .bind_semantic_column(&column.key)
-                            .map_err(|e| e.to_string())?;
-                        out.push(UNode::new(Action::Column(bound)));
-                        members.push(out.len() - 1);
+                        let shared = self.intern_column(&mut column_nodes, &mut out, column)?;
+                        members.push(shared);
                     }
                     out.push(UNode::new(Action::ConcatFeatures(members)));
                     map[index] = Some(out.len() - 1);
@@ -657,12 +655,8 @@ impl ProgramGraph {
                         ));
                     };
                     column.validate(&self.input_schema)?;
-                    let bound = self
-                        .input_schema
-                        .bind_semantic_column(&column.key)
-                        .map_err(|e| e.to_string())?;
-                    out.push(UNode::new(Action::Column(bound)));
-                    map[index] = Some(out.len() - 1);
+                    let shared = self.intern_column(&mut column_nodes, &mut out, column)?;
+                    map[index] = Some(shared);
                 }
                 Node::Stack { members } => {
                     let mut lowered = Vec::with_capacity(members.len());
@@ -694,6 +688,27 @@ impl ProgramGraph {
             output,
             limits: dag_limits,
         })
+    }
+
+    fn intern_column(
+        &self,
+        column_nodes: &mut BTreeMap<String, usize>,
+        out: &mut Vec<crate::combinators::union::Node>,
+        column: &ColumnRef,
+    ) -> Result<usize> {
+        if let Some(index) = column_nodes.get(&column.key) {
+            return Ok(*index);
+        }
+        let bound = self
+            .input_schema
+            .bind_semantic_column(&column.key)
+            .map_err(|e| e.to_string())?;
+        out.push(crate::combinators::union::Node::new(
+            crate::combinators::union::Action::Column(bound),
+        ));
+        let index = out.len() - 1;
+        column_nodes.insert(column.key.clone(), index);
+        Ok(index)
     }
 
     /// Lower and evaluate in one step. Every node is counted, and the cache is invocation-local.
@@ -760,8 +775,8 @@ mod pure_dag_tests {
         }
     }
 
-    /// Node 1 is `Columns(a,b)`, node 2 is a bare-column scalar over `a`, and node 3 stacks
-    /// both. Column `a` is therefore read through two consumers.
+    /// Node 1 is `Columns(a,b)`, node 2 is a bare-column scalar over `a`, node 3 stacks 1 and 2,
+    /// and node 4 stacks 1 and 3. Column `a` and nodes 1 and 3 each have several consumers.
     #[test]
     fn lowered_stack_evaluates_each_shared_column_once() {
         let schema = InputSchema::new(vec!["a".into(), "b".into()], RowSemantics::Iid).unwrap();
@@ -783,23 +798,37 @@ mod pure_dag_tests {
                 Node::Stack {
                     members: vec![1, 2],
                 },
+                Node::Stack {
+                    members: vec![1, 3],
+                },
             ],
-            3,
+            4,
         );
+        let limits = constraints();
+        let program = g.lower_pure_feature_dag(&limits, dag_limits()).unwrap();
+        let columns = program
+            .nodes
+            .iter()
+            .filter(|node| matches!(node.action, crate::combinators::union::Action::Column(_)))
+            .count();
+        assert_eq!(columns, 2, "shared column 'a' must be one union node");
         let input = DenseInput::new(
             vec!["a".into(), "b".into()],
             vec![vec![1.0, 2.0], vec![3.0, 4.0]],
         )
         .unwrap();
         let (output, _validation, counts) = g
-            .evaluate_pure_feature_dag_counted(&input, &constraints(), dag_limits())
+            .evaluate_pure_feature_dag_counted(&input, &limits, dag_limits())
             .unwrap();
-        assert_eq!(output.width, 3);
-        assert_eq!(output.values, vec![1.0, 2.0, 1.0, 3.0, 4.0, 3.0]);
         assert_eq!(
-            counts.iter().sum::<usize>(),
-            counts.len(),
-            "each lowered node computed once"
+            counts,
+            vec![1; program.nodes.len()],
+            "every lowered node computed once"
+        );
+        assert_eq!(output.width, 5);
+        assert_eq!(
+            output.values,
+            vec![1.0, 2.0, 1.0, 2.0, 1.0, 3.0, 4.0, 3.0, 4.0, 3.0]
         );
     }
 

@@ -1,19 +1,16 @@
 use feat_math::combinators::residual::FitRole;
 use feat_math::combinators::union::{
-    Action, ColumnRef, DenseInput, FitEffect, GraphError, Limits, Node, Program,
+    Action, ColumnRef, DenseInput, ExactScalar, FitEffect, GraphError, Limits, Node, Program,
 };
-use feat_math::kernel::ir::canon::ExactF64;
 use feat_math::kernel::ir::graph::{InputSchema, RowSemantics};
 
-fn exact(value: f64) -> ExactF64 {
-    ExactF64::new(value).unwrap()
+fn exact(value: f64) -> ExactScalar {
+    ExactScalar::new(value).unwrap()
 }
 
-/// A NaN payload written directly, since `ExactF64::new` refuses non-finite values.
-fn nonfinite_bits() -> ExactF64 {
-    ExactF64 {
-        f64_bits: format!("{:016x}", f64::NAN.to_bits()),
-    }
+/// A NaN payload written directly, since `ExactScalar::new` refuses non-finite values.
+fn nonfinite_bits() -> ExactScalar {
+    ExactScalar::from_bits(f64::NAN.to_bits())
 }
 
 fn limits() -> Limits {

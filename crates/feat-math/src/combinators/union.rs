@@ -108,6 +108,42 @@ pub struct FitEffect {
     pub fuel: u64,
 }
 
+/// An exact, `Eq` finite scalar for affine parameters. It stores the IEEE-754 bit pattern, so
+/// equality is exact and no value is quantized. Non-finite values are refused.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExactScalar {
+    bits: u64,
+}
+
+impl ExactScalar {
+    pub fn new(value: f64) -> Result<Self, GraphError> {
+        if !value.is_finite() {
+            return Err(GraphError::InvalidGraph(
+                "affine parameter must be finite".into(),
+            ));
+        }
+        Ok(Self {
+            bits: value.to_bits(),
+        })
+    }
+
+    /// Build from raw bits without checking. The value is validated when the node is measured.
+    pub fn from_bits(bits: u64) -> Self {
+        Self { bits }
+    }
+
+    pub fn value(&self) -> Result<f64, GraphError> {
+        let value = f64::from_bits(self.bits);
+        if value.is_finite() {
+            Ok(value)
+        } else {
+            Err(GraphError::InvalidGraph(
+                "affine parameter must be finite".into(),
+            ))
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Action {
     Column(ColumnRef),
@@ -129,16 +165,16 @@ pub enum Action {
     /// Row-wise finite affine transform of every value in the input.
     Affine {
         input: usize,
-        scale: crate::kernel::ir::canon::ExactF64,
-        offset: crate::kernel::ir::canon::ExactF64,
+        scale: ExactScalar,
+        offset: ExactScalar,
     },
 }
 
 /// Decode the exact affine parameters. A malformed or non-finite value is refused.
 fn affine_parameters(
     id: usize,
-    scale: &crate::kernel::ir::canon::ExactF64,
-    offset: &crate::kernel::ir::canon::ExactF64,
+    scale: &ExactScalar,
+    offset: &ExactScalar,
 ) -> Result<(f64, f64), GraphError> {
     let scale = scale
         .value()

@@ -12,16 +12,6 @@ mod route;
 #[allow(dead_code)]
 mod union;
 
-// Test-only path shim: the path-included union module names `crate::kernel::ir::canon`.
-#[allow(dead_code)]
-mod kernel {
-    pub mod ir {
-        pub mod canon {
-            pub use feat_math::kernel::ir::canon::*;
-        }
-    }
-}
-
 use feat_math::kernel::ir::{
     canon, Constraints, Dataset, ExactF64, ExecutionStats, Expression, FitPlan, InputIdentity,
     InputSchema, Node as IrNode, OperatorRef, ProgramGraph, RowClosure, RowSemantics,
