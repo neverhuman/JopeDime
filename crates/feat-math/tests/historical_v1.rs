@@ -474,6 +474,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let mr19_shared_dag = old_fixture("transitions/mr19_shared_dag_identity_rebaseline.v1.json");
     assert_eq!(mr19_shared_dag["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(mr19_shared_dag["fixtures"][0]["path"], changed_fixtures[0]);
+    // PR384 observatory workspace lock change: announced identity only.
+    let observatory_workspace_lock =
+        old_fixture("transitions/observatory_workspace_lock_identity_rebaseline.v1.json");
+    let observatory_fixtures = observatory_workspace_lock["fixtures"].as_array().unwrap();
+    assert_eq!(observatory_fixtures.len(), 2);
+    for (entry, path) in observatory_fixtures.iter().zip(changed_fixtures) {
+        assert_eq!(entry["path"], path);
+    }
     let identity_chain = [
         transition,
         successor,
@@ -495,6 +503,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         batch4_selfplay,
         mr06_label_admission,
         mr19_shared_dag,
+        observatory_workspace_lock,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

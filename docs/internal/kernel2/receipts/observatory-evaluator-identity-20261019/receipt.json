@@ -1,0 +1,118 @@
+{
+  "schema": "jope.identity-only-transition-observation/v1",
+  "observed_at_utc": "2026-10-19T15:48:23.355808+00:00",
+  "source_commit": "4f1bf277dda38c6abed3863a4c31b1ec5dfa9b64",
+  "authority": "SC-DEC-184D and SC-DEC-184F; documented planned identity-only mode and append-only historical transition registration",
+  "reason": "Adding the observatory updates workspace Cargo.lock; every other recorded evaluator input and DSL ABI is unchanged.",
+  "is_runtime_evaluator_receipt": false,
+  "old": {
+    "implementation_sha256": "96e02aef28d7ace187075181f0bd0b8e912aca50a5a52c00a3eead4e93db61d7",
+    "cargo_lock_sha256": "b4dbf8bd5b4d121e315489ad01bd7912fa8f3a6be42eeb04254bcbccd980f11c",
+    "identity_digest": "b21ec9f74b0b91285c7fc69ce80354ce36f05529c0f4a949fb2991cdc4ed575d",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "new": {
+    "implementation_sha256": "15402c880c81b39acfc4f7cf95a794a8f22e5e6df3e9a8683c9a8e863be8fb22",
+    "cargo_lock_sha256": "8def8544c114029ee1ae8d72fb71141c5a90fe55fec46818891a9abe7738bf5a",
+    "identity_digest": "3aaea86da467719a3a3cb6200798b3f2aa7e18f7a95125191e44c4a1634b6d65",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "changed_identity_inputs": [
+    {
+      "path": "Cargo.lock",
+      "old": "b4dbf8bd5b4d121e315489ad01bd7912fa8f3a6be42eeb04254bcbccd980f11c",
+      "new": "8def8544c114029ee1ae8d72fb71141c5a90fe55fec46818891a9abe7738bf5a"
+    }
+  ],
+  "fixture_hashes_before": {
+    "crates/feat-math/tests/fixtures/compat_freeze/meta.json": "45834e08a447bb41b5112119388890bce26580768dca538035506343d3fc492b",
+    "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+    "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+    "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+    "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+    "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json": "b77a6714ec8b21e87ee6343d359e98ccdd6f20d53af13141ac658c610aac0da1",
+    "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+    "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json": "4cab1887f4e4558a5173a61c3a7a38282cda945a2d016d0fa7d6b7704abbf7a1",
+    "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+    "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3"
+  },
+  "fixture_hashes_after": {
+    "crates/feat-math/tests/fixtures/compat_freeze/meta.json": "45834e08a447bb41b5112119388890bce26580768dca538035506343d3fc492b",
+    "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+    "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+    "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+    "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+    "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json": "849f2faf8d414011e8e0b97e3901d16da202f2209c5cfd1898b9f7e911696b7d",
+    "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+    "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json": "8716cebbe8716a79ed3210e13374ae83e650072d785c40a50d62cc57b09404d6",
+    "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+    "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3"
+  },
+  "changed_fixtures": [
+    "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+    "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+  ],
+  "lineage_change": "generated_at_sha header only; lineage source values unchanged",
+  "behavioral_rebaseline": false,
+  "known_historical_table": {
+    "changed": false,
+    "rows": 2,
+    "reason": "No new historical runtime receipt was captured; no table row is fabricated or appended. Existing rows remain byte-identical."
+  },
+  "checks": [
+    {
+      "mode": "regenerate",
+      "command": "JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=4f1bf277dda38c6abed3863a4c31b1ec5dfa9b64 cargo nextest run --locked -P pr -p feat-math --test compat_freeze -j4",
+      "exit_code": 0,
+      "executed": 13,
+      "passed": 13,
+      "skipped": 0,
+      "failed": 0,
+      "log": "regenerate.log.gz",
+      "compressed_bytes": 711,
+      "compressed_sha256": "0c51ae74735b43162223e5279c2e300cbb4e6b55dfd78ba6b12efa3b6b57f1d1",
+      "decoded_bytes": 1857,
+      "decoded_sha256": "a2296448e2c280f85cb234f3685077d7dec4d01c912e0d79b229df85e4ce5596"
+    },
+    {
+      "mode": "compare",
+      "command": "JOPE_COMPAT_FREEZE_REGENERATE and JOPE_COMPAT_FREEZE_SHA unset; cargo nextest run --locked -P pr -p feat-math --test compat_freeze -j4",
+      "exit_code": 0,
+      "executed": 13,
+      "passed": 13,
+      "skipped": 0,
+      "failed": 0,
+      "log": "compare.log.gz",
+      "compressed_bytes": 657,
+      "compressed_sha256": "403e3f555f4078ad0544d20cd452a88d0a5e50ceca2d16bb874addde6f1a393b",
+      "decoded_bytes": 1874,
+      "decoded_sha256": "b272979817b167b88ed4526c88bf954a65f4d000c9614fe032f46a9bcdf84ef6"
+    },
+    {
+      "mode": "final_compare_and_historical",
+      "command": "cargo nextest run --locked -P pr -p feat-math --test compat_freeze --test historical_v1 -j4",
+      "exit_code": 0,
+      "executed": 16,
+      "passed": 16,
+      "skipped": 0,
+      "failed": 0,
+      "log": "final-compare-and-history.log.gz",
+      "compressed_bytes": 781,
+      "compressed_sha256": "a7cdf9d26751f006c993d55b82fa344140ce8b369f58a78a2f2ee088838cf8e1",
+      "decoded_bytes": 2130,
+      "decoded_sha256": "3ce9d0eab52c12797570d8aa4902507e3ec02ca91da7fdc35edc74a529720622"
+    }
+  ],
+  "interpretation": "Test execution proves announced identity values and frozen compatibility surfaces; this is not a scientific gain, training admission, or historical evaluator runtime receipt.",
+  "reproduced_failures": [
+    {
+      "test": "historical_source_manifest_and_old_fixtures_are_pinned",
+      "outcome": "2/3 passed; unledgered announced fixture transition",
+      "exit_code": 100,
+      "log": "historical-before-transition.log.gz",
+      "compressed_sha256": "9f17cd047cdb453ae4c442056320557cd196142994077abf2b4790d6a500489b",
+      "decoded_sha256": "f6dc6a05847617b31b503d15ea19cbf4b386ccba6324a6662f901592ea8ee355"
+    }
+  ],
+  "historical_transition": "crates/feat-math/tests/fixtures/compat_freeze/transitions/observatory_workspace_lock_identity_rebaseline.v1.json"
+}
