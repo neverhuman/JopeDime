@@ -409,6 +409,94 @@ impl Store {
         }
     }
 
+    /// Read an exact physical version with bounded retained bytes and no latest/ETag fallback.
+    ///
+    /// `expected_bytes` is optional for pinned manifests whose length is not known in advance;
+    /// `max_bytes` is always required. The same GET must report the requested physical version.
+    /// The header length is checked before buffering, and the stream must match that length.
+    /// Hash verification and whole-release budgets remain the caller's responsibility.
+    /// Injected backends already buffer fixture bytes; this method cannot bound that allocation.
+    pub async fn get_observed_version_bounded(
+        &self,
+        rel: &str,
+        required_version: &str,
+        max_bytes: u64,
+        expected_bytes: Option<u64>,
+    ) -> Result<Option<ObservedObject>> {
+        ensure!(
+            !required_version.is_empty()
+                && required_version.len() <= 1024
+                && required_version != "null"
+                && required_version != "UNPINNED"
+                && !required_version
+                    .chars()
+                    .any(|c| c.is_whitespace() || c.is_control()),
+            "a concrete physical VersionId is required"
+        );
+        ensure!(
+            max_bytes > 0 && max_bytes <= isize::MAX as u64,
+            "response byte bound must be positive and fit the address space"
+        );
+        ensure!(
+            expected_bytes.is_none_or(|n| n <= max_bytes),
+            "expected size exceeds byte bound"
+        );
+        let key = self.key(rel);
+        if let Some(injected) = self.injected_backend() {
+            let Some((bytes, version)) = injected.get_versioned(&key, Some(required_version))?
+            else {
+                return Ok(None);
+            };
+            ensure!(
+                version.version.as_deref() == Some(required_version),
+                "physical VersionId mismatch"
+            );
+            ensure!(
+                bytes.len() as u64 <= max_bytes,
+                "response body exceeds byte bound"
+            );
+            ensure!(
+                expected_bytes.is_none_or(|n| n == bytes.len() as u64),
+                "response size differs from expected length"
+            );
+            return Ok(Some(ObservedObject {
+                bytes,
+                version,
+                key,
+            }));
+        }
+        let opts = GetOptions {
+            version: Some(required_version.to_owned()),
+            ..Default::default()
+        };
+        let response = match self.inner.get_opts(&key, opts).await {
+            Ok(response) => response,
+            Err(object_store::Error::NotFound { .. }) => return Ok(None),
+            Err(error) => return Err(anyhow!("get {rel}: {error}")),
+        };
+        let version = UpdateVersion {
+            e_tag: response.meta.e_tag.clone(),
+            version: response.meta.version.clone(),
+        };
+        ensure!(
+            version.version.as_deref() == Some(required_version),
+            "physical VersionId mismatch"
+        );
+        let declared = response.meta.size;
+        ensure!(
+            expected_bytes.is_none_or(|n| n == declared),
+            "declared response size differs from expected length"
+        );
+        let bytes = collect_bounded_response(response.into_stream(), declared, max_bytes)
+            .await
+            .with_context(|| format!("read {rel}"))?;
+        Ok(Some(ObservedObject {
+            bytes,
+            version,
+            key,
+        }))
+    }
+
     pub async fn get_string(&self, rel: &str) -> Result<Option<String>> {
         Ok(self
             .get_bytes(rel)
@@ -701,5 +789,50 @@ fn digest_file_hex(path: &Path) -> Result<String> {
     Ok(hex::encode(hasher.finalize()))
 }
 
+// Check declared sizes before polling the body; no partial result escapes on any failure.
+async fn collect_bounded_response<S, C, E>(
+    stream: S,
+    expected: u64,
+    maximum: u64,
+) -> Result<Vec<u8>>
+where
+    S: futures_util::Stream<Item = std::result::Result<C, E>>,
+    C: AsRef<[u8]>,
+    E: std::error::Error + Send + Sync + 'static,
+{
+    ensure!(
+        maximum > 0 && maximum <= isize::MAX as u64,
+        "invalid response byte bound"
+    );
+    ensure!(
+        expected <= maximum,
+        "declared response size exceeds byte bound"
+    );
+    let expected = usize::try_from(expected).context("response exceeds address space")?;
+    let mut bytes = Vec::new();
+    bytes
+        .try_reserve_exact(expected)
+        .context("reserve bounded response")?;
+    futures_util::pin_mut!(stream);
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(anyhow::Error::new)?;
+        let chunk = chunk.as_ref();
+        let next = bytes
+            .len()
+            .checked_add(chunk.len())
+            .context("response length overflow")?;
+        ensure!(next <= expected, "streamed response exceeds declared size");
+        bytes.extend_from_slice(chunk);
+    }
+    ensure!(
+        bytes.len() == expected,
+        "response ended before declared size"
+    );
+    Ok(bytes)
+}
+
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod bounded_version_tests;
