@@ -272,6 +272,77 @@
       "sha256": "dca2121c902b6227aec9a3cafffdbf674b2bb1a8d19956b2aaf79395267f5416",
       "source_commit_limitation": "Standalone evaluation script run_p01_same_input_parent_replay.py (sha256: b36d1a81f7cce7f62adb1901b4f3aac38f5b7fe7f3e1fd30aca418b9f902a8a4) lacks a verified runtime-to-Git commit binding; earlier proposed string 28005df708bd8cf73068eb6ba29b621652216470 is not a Git commit object in this repository (canonical 28005df700d81f39ab51d796ea3a4f77db9277b5 is a different SHA) and is preserved only as a withdrawn historical draft claim.",
       "version_id": "NO7sLton___HoBuEu1.5tqAPwOYpcoyV"
+    },
+    {
+      "actual_run_source_commit": "9f8d1a74ab08fc200214a82beaf2ee96e316061a",
+      "bytes": 1002870,
+      "codec": "tar+zstd",
+      "decoded_tar_bytes": 3645440,
+      "decoded_tar_sha256": "df202e320f6f5efee3d28670dfa6bc70e8ab88092a0ed054e4d0243607e93d89",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_INDEPENDENT_ALL_MEMBER_RESTORE_VERIFIED",
+      "git_publication_status": "GIT_PUBLICATION_PENDING",
+      "id": "fresh-main-9f8d1a74-gpr-cuda-envelope-20261019T1851Z-archive",
+      "independent_restore_receipt": {
+        "bytes": 1222,
+        "codec": "json+utf8",
+        "local_path": "/home/ubuntu/jope-evidence/release-closure-20261019/independent-fresh-main-9f8d1a74-restore/independent_restore_receipt_fresh_main_9f8d1a74_20261019.json",
+        "members_verified": 13,
+        "resolution": "standalone_create_only_s3_blob (produced after pack CCdA4QL1zQqspQyblWJH0_YbqfI3V91S; NOT one of the 13 pack members)",
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/4dd9ea90bd378acb0a870e1543f297ba8bdd3e3f3dd3d92fef586645bfb76f5a",
+        "sha256": "4dd9ea90bd378acb0a870e1543f297ba8bdd3e3f3dd3d92fef586645bfb76f5a",
+        "version_id": "a5x9T1RCpJN5K.9slxoqJ_slsLLLl9OO"
+      },
+      "index_bytes": 2959,
+      "index_s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/62d284f46a145daaccb016a1d5df28135d41e67db7b0e94b11e67bb49e2381d6",
+      "index_sha256": "62d284f46a145daaccb016a1d5df28135d41e67db7b0e94b11e67bb49e2381d6",
+      "index_version_id": "sIlDt9nSYKJ7pkwR32h0jXGstOiwFgnp",
+      "member_locators": [
+        {
+          "bytes": 122307,
+          "codec": "json+utf8",
+          "enclosing_index_sha256": "62d284f46a145daaccb016a1d5df28135d41e67db7b0e94b11e67bb49e2381d6",
+          "enclosing_index_version_id": "sIlDt9nSYKJ7pkwR32h0jXGstOiwFgnp",
+          "enclosing_pack_sha256": "0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
+          "enclosing_pack_version_id": "CCdA4QL1zQqspQyblWJH0_YbqfI3V91S",
+          "member_relative_path": "fresh_main_9f8d1a74_xbabe1_cuda0_verify_envelope_20261019T1847Z.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "122f53838f506d6439c3a2180640e156306d129d9fdd5ffdcd6c4e046b4cc4c1"
+        },
+        {
+          "bytes": 2818160,
+          "codec": "elf64-x86-64",
+          "enclosing_index_sha256": "62d284f46a145daaccb016a1d5df28135d41e67db7b0e94b11e67bb49e2381d6",
+          "enclosing_index_version_id": "sIlDt9nSYKJ7pkwR32h0jXGstOiwFgnp",
+          "enclosing_pack_sha256": "0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
+          "enclosing_pack_version_id": "CCdA4QL1zQqspQyblWJH0_YbqfI3V91S",
+          "member_relative_path": "gpr_cuda_bench",
+          "resolution": "pack_member_via_index",
+          "sha256": "e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490"
+        },
+        {
+          "bytes": 4533,
+          "codec": "json+utf8",
+          "enclosing_index_sha256": "62d284f46a145daaccb016a1d5df28135d41e67db7b0e94b11e67bb49e2381d6",
+          "enclosing_index_version_id": "sIlDt9nSYKJ7pkwR32h0jXGstOiwFgnp",
+          "enclosing_pack_sha256": "0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
+          "enclosing_pack_version_id": "CCdA4QL1zQqspQyblWJH0_YbqfI3V91S",
+          "member_relative_path": "manifest_xbabe1_sc184x_v3_fresh_main_9f8d1a74_build_and_envelope_receipt_20261019T1852Z.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "75d96b8efcced48e83dba0fea91903f494404bc698e913a0aad8b9dbe4f136ee"
+        }
+      ],
+      "payload_bytes": 3633157,
+      "payload_files": 13,
+      "root_independent_restore": {
+        "bytes": 4329,
+        "git_path": "docs/research/waves/fresh-main-9f8d1a74-gpr-cuda-envelope-20261019T1851Z/v1/restoration.json",
+        "qualification": "Independent exact-VersionId GET, compressed/decoded and all-member hashes verified by Codex01a13a98; no benchmark rerun.",
+        "sha256": "4c9bba1356e42f63f4e073cadce14b065647aebe31d843514f410271df6119cd"
+      },
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
+      "scope": "Fresh receiving-main (9f8d1a74ab08fc200214a82beaf2ee96e316061a, Cargo.lock 8def8544...) locked release build of gpr_cuda_bench (e39bca19..., 2,818,160 B) and single bounded --verify-envelope CUDA pass (122f5383..., 9/9 parity_pass, max_abs_err 4.463253318931493e-6, elapsed 11.02132265s) on xbabe1 RTX 4090, archived with 1843/1846 initial build failure logs and 1847 success log. Matern omitted / MR09 remains PARTIAL; zero neural updates and zero self-play gain.",
+      "sha256": "0d91b397ea6912e879d7ae04a135c2f30781c478e38c9cac2c380d4aa4e37df4",
+      "version_id": "CCdA4QL1zQqspQyblWJH0_YbqfI3V91S"
     }
   ],
   "corrections": [
