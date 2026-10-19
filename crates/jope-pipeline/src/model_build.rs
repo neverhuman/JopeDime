@@ -12,6 +12,7 @@ pub mod ensemble;
 pub mod native;
 pub mod oof;
 pub mod selection;
+pub mod test_look;
 
 pub use ensemble::{build_winner_ensemble, EnsembleDisposition, WinnerEnsemble, ENSEMBLE_SCHEMA};
 
