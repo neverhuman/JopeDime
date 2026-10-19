@@ -6,25 +6,48 @@
 //! `rust.logit_ridge` for binary. Every other candidate is refused before any fit starts, with
 //! zero physical starts. Multiclass is refused too: its predictor returns integer class codes,
 //! and mapping them to the plan's class names is not implemented.
+//!
+//! The fitter is bound to an `ExecutionIdentity` (SC-DEC-184M JA-R3). The feature and target
+//! bytes must reproduce the identity's data digest, and every row index is checked against the
+//! data before a fit starts. An out-of-range index is a typed refusal, never a panic.
 use super::candidates::CandidateSpec;
+use super::identity::{digest_ids, ExecutionIdentity};
 use super::selection::{CandidateFitter, FitEvidence, FoldFit, NotStarted};
 use crate::evaluation_score::Predictions;
 use anyhow::{ensure, Context, Result};
 use feat_math::advanced_v3::{
-    fit_table, predict_table, ColumnSpec, DataSchema, Objective, RawTable, RowSemantics, TaskSpec,
+    fit_table, predict_table, BoundModel, ColumnSpec, DataSchema, Objective, RawTable,
+    RowSemantics, TaskSpec,
 };
 use feat_math::GenomeIr;
 use jope_datasets::catalog::Task;
 use sha2::{Digest, Sha256};
 
-/// The numeric dataset behind a bake-off. Rows align with the plan's `row_ids`.
+/// The numeric dataset behind a bake-off. Rows align with `row_ids`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NativeData {
+    pub row_ids: Vec<String>,
     pub feature_names: Vec<String>,
     /// Feature values per row, aligned with `feature_names`.
     pub features: Vec<Vec<f64>>,
     /// Numeric target per row. For binary, 0 and 1 for the two frozen classes in order.
     pub targets: Vec<f64>,
+}
+
+/// Digest of the exact bytes the fitter reads: row ids, names, feature bits and target bits.
+pub fn data_digest(data: &NativeData) -> String {
+    let mut buffer = Vec::new();
+    buffer.extend_from_slice(digest_ids(&data.row_ids).as_bytes());
+    buffer.extend_from_slice(digest_ids(&data.feature_names).as_bytes());
+    for row in &data.features {
+        for value in row {
+            buffer.extend_from_slice(&value.to_bits().to_le_bytes());
+        }
+    }
+    for target in &data.targets {
+        buffer.extend_from_slice(&target.to_bits().to_le_bytes());
+    }
+    format!("{:x}", Sha256::digest(buffer))
 }
 
 pub struct NativeFitter {
@@ -50,11 +73,19 @@ impl NativeFitter {
         task: Task,
         classes: Vec<String>,
         data: NativeData,
-        request_sha256: String,
+        identity: &ExecutionIdentity,
     ) -> Result<Self> {
         ensure!(
-            data.features.len() == data.targets.len(),
-            "features and targets are not row-aligned"
+            data_digest(&data) == identity.data_sha256,
+            "native data bytes do not reproduce the admitted data identity"
+        );
+        ensure!(
+            digest_ids(&data.row_ids) == identity.row_sha256,
+            "native row ids do not reproduce the admitted row identity"
+        );
+        ensure!(
+            data.features.len() == data.targets.len() && data.row_ids.len() == data.targets.len(),
+            "features, targets and row ids are not row-aligned"
         );
         ensure!(!data.features.is_empty(), "native data has no rows");
         let width = data.feature_names.len();
@@ -88,9 +119,23 @@ impl NativeFitter {
             task,
             data,
             schema,
-            request_sha256,
+            request_sha256: identity.request_sha256.clone(),
             classes,
         })
+    }
+
+    /// Refuses any index outside the data before a fit starts. Not a panic: a typed refusal.
+    fn check_indices(&self, rows: &[usize]) -> Result<()> {
+        for &row in rows {
+            if row >= self.data.targets.len() {
+                return Err(NotStarted(format!(
+                    "row index {row} is outside the {} admitted rows",
+                    self.data.targets.len()
+                ))
+                .into());
+            }
+        }
+        Ok(())
     }
 
     fn table(&self, rows: &[usize]) -> Result<RawTable> {
@@ -114,6 +159,49 @@ impl NativeFitter {
             other => anyhow::bail!("native fitter does not cover task {other:?}"),
         }
     }
+
+    /// Fits `candidate` on `train` rows only. Returns the fitted model and its state bytes; the
+    /// state bytes are the persisted artifact, and their digest is the fold's artifact identity.
+    pub fn fit_state(
+        &self,
+        candidate: &CandidateSpec,
+        train: &[usize],
+    ) -> Result<(BoundModel, Vec<u8>)> {
+        let Some(text) = genome_for(candidate.id, self.task) else {
+            return Err(NotStarted(format!(
+                "no native binding for {} on {:?}",
+                candidate.id, self.task
+            ))
+            .into());
+        };
+        self.check_indices(train)?;
+        ensure!(!train.is_empty(), "fold has an empty training side");
+        let genome = GenomeIr::parse(text)?;
+        let task = self.task_spec()?;
+        let train_table = self.table(train)?;
+        let train_y: Vec<f64> = train.iter().map(|&i| self.data.targets[i]).collect();
+        let model = fit_table(&genome, &task, &self.schema, &train_table, &train_y)
+            .context("native fit failed on the training rows")?;
+        let bytes = serde_json::to_vec(&model).context("serialising the fitted state")?;
+        Ok((model, bytes))
+    }
+
+    /// Restores a fitted model from its persisted state bytes.
+    pub fn restore_state(bytes: &[u8]) -> Result<BoundModel> {
+        serde_json::from_slice(bytes).context("restoring the fitted state")
+    }
+
+    /// Predicts `rows` with an already fitted model. Refuses out-of-range rows.
+    pub fn predict_rows(&self, model: &BoundModel, rows: &[usize]) -> Result<Vec<f64>> {
+        self.check_indices(rows)?;
+        let table = self.table(rows)?;
+        let raw = predict_table(model, &table)?;
+        ensure!(
+            raw.len() == rows.len() && raw.iter().all(|v| v.is_finite()),
+            "native predictions are not row-aligned or are nonfinite"
+        );
+        Ok(raw)
+    }
 }
 
 impl CandidateFitter for NativeFitter {
@@ -123,29 +211,10 @@ impl CandidateFitter for NativeFitter {
         train: &[usize],
         predict: &[usize],
     ) -> Result<FoldFit> {
-        let Some(text) = genome_for(candidate.id, self.task) else {
-            return Err(NotStarted(format!(
-                "no native binding for {} on {:?}",
-                candidate.id, self.task
-            ))
-            .into());
-        };
-        ensure!(
-            !train.is_empty() && !predict.is_empty(),
-            "fold has an empty side"
-        );
-        let genome = GenomeIr::parse(text)?;
-        let task = self.task_spec()?;
-        let train_table = self.table(train)?;
-        let predict_table_rows = self.table(predict)?;
-        let train_y: Vec<f64> = train.iter().map(|&i| self.data.targets[i]).collect();
-        let model = fit_table(&genome, &task, &self.schema, &train_table, &train_y)
-            .context("native fit failed on the training rows")?;
-        let raw = predict_table(&model, &predict_table_rows)?;
-        ensure!(
-            raw.len() == predict.len() && raw.iter().all(|v| v.is_finite()),
-            "native predictions are not row-aligned or are nonfinite"
-        );
+        self.check_indices(predict)?;
+        ensure!(!predict.is_empty(), "fold has an empty prediction side");
+        let (model, state) = self.fit_state(candidate, train)?;
+        let raw = self.predict_rows(&model, predict)?;
         let predictions = match self.task {
             Task::Regression => Predictions::Values(raw),
             Task::Binary => Predictions::Probabilities {
@@ -154,13 +223,9 @@ impl CandidateFitter for NativeFitter {
             },
             other => anyhow::bail!("native fitter does not cover task {other:?}"),
         };
-        let artifact = format!(
-            "{:x}",
-            Sha256::digest(serde_json::to_vec(&model).context("serialising the fitted model")?)
-        );
         Ok(FoldFit {
             predictions,
-            fitted_artifact_sha256: artifact,
+            fitted_artifact_sha256: format!("{:x}", Sha256::digest(&state)),
             evidence: FitEvidence::Verified {
                 request_sha256: self.request_sha256.clone(),
                 physical_starts: 1,
@@ -184,17 +249,38 @@ mod tests {
             .map(|r| 2.0 * r[0] + 1.0 + 0.5 * r[1])
             .collect();
         NativeData {
+            row_ids: (0..n).map(|i| format!("row-{i}")).collect(),
             feature_names: vec!["x0".into(), "x1".into()],
             features,
             targets,
         }
     }
 
-    fn plan(task: Task, n: usize, labels: Vec<String>, classes: Vec<String>) -> BakeoffPlan {
+    fn identity_for(data: &NativeData, labels: &[String]) -> ExecutionIdentity {
+        let groups: Vec<String> = (0..data.row_ids.len()).map(|i| format!("g{i}")).collect();
+        ExecutionIdentity::new(
+            REQUEST,
+            &data_digest(data),
+            &data.row_ids,
+            labels,
+            &groups,
+            &[],
+            &[],
+        )
+        .unwrap()
+    }
+
+    fn plan(
+        task: Task,
+        data: &NativeData,
+        labels: Vec<String>,
+        classes: Vec<String>,
+    ) -> BakeoffPlan {
+        let n = data.row_ids.len();
         BakeoffPlan {
             task,
             classes,
-            row_ids: (0..n).map(|i| format!("row-{i}")).collect(),
+            row_ids: data.row_ids.clone(),
             labels,
             folds: (0..n).map(|i| (i % 5) as u32).collect(),
             group_ids: vec![],
@@ -211,6 +297,10 @@ mod tests {
         }
     }
 
+    fn regression_labels(data: &NativeData) -> Vec<String> {
+        data.targets.iter().map(|t| t.to_string()).collect()
+    }
+
     #[test]
     fn only_the_bound_heads_have_a_genome() {
         assert!(genome_for("rust.ridge", Task::Regression).is_some());
@@ -221,17 +311,12 @@ mod tests {
 
     #[test]
     fn a_regression_bake_off_on_native_ridge_scores_every_fold_from_verified_fits() {
-        let n = 20;
-        let labels: Vec<String> = regression_data(n)
-            .targets
-            .iter()
-            .map(|t| t.to_string())
-            .collect();
-        let fitter =
-            NativeFitter::new(Task::Regression, vec![], regression_data(n), REQUEST.into())
-                .unwrap();
+        let data = regression_data(20);
+        let labels = regression_labels(&data);
+        let identity = identity_for(&data, &labels);
+        let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
         let out = run_bakeoff(
-            &plan(Task::Regression, n, labels, vec![]),
+            &plan(Task::Regression, &data, labels, vec![]),
             &[spec("rust.ridge", Task::Regression)],
             &fitter,
             &mut EvaluationBudget::new(5),
@@ -252,17 +337,12 @@ mod tests {
 
     #[test]
     fn an_unbound_candidate_is_refused_before_start_with_zero_starts() {
-        let n = 20;
-        let labels: Vec<String> = regression_data(n)
-            .targets
-            .iter()
-            .map(|t| t.to_string())
-            .collect();
-        let fitter =
-            NativeFitter::new(Task::Regression, vec![], regression_data(n), REQUEST.into())
-                .unwrap();
+        let data = regression_data(20);
+        let labels = regression_labels(&data);
+        let identity = identity_for(&data, &labels);
+        let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
         let out = run_bakeoff(
-            &plan(Task::Regression, n, labels, vec![]),
+            &plan(Task::Regression, &data, labels, vec![]),
             &[spec("rust.gpr", Task::Regression)],
             &fitter,
             &mut EvaluationBudget::new(5),
@@ -282,6 +362,7 @@ mod tests {
         let features: Vec<Vec<f64>> = (0..n).map(|i| vec![i as f64]).collect();
         let targets: Vec<f64> = (0..n).map(|i| if i >= n / 2 { 1.0 } else { 0.0 }).collect();
         let data = NativeData {
+            row_ids: (0..n).map(|i| format!("row-{i}")).collect(),
             feature_names: vec!["x0".into()],
             features,
             targets: targets.clone(),
@@ -291,10 +372,11 @@ mod tests {
             .iter()
             .map(|t| if *t == 1.0 { "yes" } else { "no" }.to_string())
             .collect();
+        let identity = identity_for(&data, &labels);
         let fitter =
-            NativeFitter::new(Task::Binary, classes.clone(), data, REQUEST.into()).unwrap();
+            NativeFitter::new(Task::Binary, classes.clone(), data.clone(), &identity).unwrap();
         let out = run_bakeoff(
-            &plan(Task::Binary, n, labels, classes),
+            &plan(Task::Binary, &data, labels, classes),
             &[spec("rust.logit_ridge", Task::Binary)],
             &fitter,
             &mut EvaluationBudget::new(5),
@@ -306,12 +388,53 @@ mod tests {
     }
 
     #[test]
-    fn non_finite_or_ragged_native_data_is_refused_before_any_fit() {
-        let mut data = regression_data(10);
-        data.features[3][0] = f64::NAN;
-        assert!(NativeFitter::new(Task::Regression, vec![], data, REQUEST.into()).is_err());
-        let mut ragged = regression_data(10);
-        ragged.features[2].pop();
-        assert!(NativeFitter::new(Task::Regression, vec![], ragged, REQUEST.into()).is_err());
+    fn data_that_does_not_reproduce_the_admitted_identity_is_refused_at_construction() {
+        let data = regression_data(10);
+        let labels = regression_labels(&data);
+        let identity = identity_for(&data, &labels);
+        let mut altered = data.clone();
+        altered.features[3][0] += 1e-9;
+        assert!(NativeFitter::new(Task::Regression, vec![], altered, &identity).is_err());
+        let mut reordered = data.clone();
+        reordered.row_ids.swap(0, 1);
+        assert!(NativeFitter::new(Task::Regression, vec![], reordered, &identity).is_err());
+    }
+
+    #[test]
+    fn an_out_of_range_index_is_a_typed_refusal_not_a_panic() {
+        let data = regression_data(10);
+        let labels = regression_labels(&data);
+        let identity = identity_for(&data, &labels);
+        let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
+        let err = fitter
+            .fit_predict(
+                &spec("rust.ridge", Task::Regression),
+                &[0, 1, 2, 3, 99],
+                &[4],
+            )
+            .unwrap_err();
+        assert!(err.downcast_ref::<NotStarted>().is_some(), "{err:#}");
+        let err = fitter
+            .fit_predict(&spec("rust.ridge", Task::Regression), &[0, 1, 2, 3], &[50])
+            .unwrap_err();
+        assert!(err.downcast_ref::<NotStarted>().is_some(), "{err:#}");
+    }
+
+    #[test]
+    fn persisted_fitted_state_restores_to_bitwise_identical_predictions() {
+        let data = regression_data(12);
+        let labels = regression_labels(&data);
+        let identity = identity_for(&data, &labels);
+        let fitter = NativeFitter::new(Task::Regression, vec![], data.clone(), &identity).unwrap();
+        let train: Vec<usize> = (0..8).collect();
+        let predict: Vec<usize> = (8..12).collect();
+        let (model, bytes) = fitter
+            .fit_state(&spec("rust.ridge", Task::Regression), &train)
+            .unwrap();
+        let original = fitter.predict_rows(&model, &predict).unwrap();
+        let restored = NativeFitter::restore_state(&bytes).unwrap();
+        let reloaded = fitter.predict_rows(&restored, &predict).unwrap();
+        let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+        assert_eq!(bits(&original), bits(&reloaded));
     }
 }

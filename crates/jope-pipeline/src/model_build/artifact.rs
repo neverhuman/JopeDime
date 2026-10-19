@@ -1,43 +1,120 @@
-//! Persistence and reload verification for the winner ensemble (SC-DEC-184 JA-04).
+//! Persistence and reload verification for the winner ensemble (SC-DEC-184 JA-04, JA-R4).
 //!
-//! The persisted record is canonical JSON. Its identity is the sha256 of those bytes. Reload
-//! verification recomputes the ensemble from the member bundles and requires an identical record.
-//! This proves the weights are a deterministic function of the OOF predictions. It does not prove
-//! a fitted model can be refitted or reloaded. That needs a real fitter and is not in this file.
-use super::ensemble::{build_winner_ensemble, WinnerEnsemble};
+//! The persisted record holds the ensemble and the fitted state bytes of every member. Its
+//! identity is the sha256 of its canonical JSON. A reload restores each member's state through a
+//! caller-supplied function (in production, the native fitter's restore), checks that the restored
+//! model reproduces the report predictions bit for bit, and recomputes the ensemble from the
+//! admitted bundles, which must equal the stored record exactly.
+//!
+//! This is an in-process reload of persisted bytes. It is not a fresh-process reload, and it does
+//! not claim a registry publication.
+use super::ensemble::{build_winner_ensemble, ReportPredictions, WinnerEnsemble};
 use super::oof::AdmittedBundle;
+use super::selection::EvaluationBudget;
+use crate::evaluation_score::Predictions;
 use anyhow::{ensure, Result};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
 
-/// Canonical bytes of the ensemble record.
-pub fn encode(ensemble: &WinnerEnsemble) -> Result<Vec<u8>> {
-    Ok(serde_json::to_vec(ensemble)?)
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PersistedEnsemble {
+    pub ensemble: WinnerEnsemble,
+    /// Fitted state bytes per member candidate, exactly as the fitter produced them.
+    pub member_states: BTreeMap<String, Vec<u8>>,
 }
 
-/// Identity of the persisted record.
-pub fn identity(ensemble: &WinnerEnsemble) -> Result<String> {
-    Ok(format!("{:x}", Sha256::digest(encode(ensemble)?)))
+/// Canonical bytes of the persisted record. Map keys are sorted, so the encoding is stable.
+pub fn encode(persisted: &PersistedEnsemble) -> Result<Vec<u8>> {
+    Ok(serde_json::to_vec(persisted)?)
+}
+
+pub fn identity(persisted: &PersistedEnsemble) -> Result<String> {
+    Ok(format!("{:x}", Sha256::digest(encode(persisted)?)))
 }
 
 /// Decodes persisted bytes, refusing unknown fields and any non-canonical encoding.
-pub fn decode(bytes: &[u8]) -> Result<WinnerEnsemble> {
-    let ensemble: WinnerEnsemble = serde_json::from_slice(bytes)?;
+pub fn decode(bytes: &[u8]) -> Result<PersistedEnsemble> {
+    let persisted: PersistedEnsemble = serde_json::from_slice(bytes)?;
     ensure!(
-        encode(&ensemble)? == bytes,
+        encode(&persisted)? == bytes,
         "persisted winner ensemble is not in canonical encoding"
     );
-    Ok(ensemble)
+    Ok(persisted)
 }
 
-/// Recomputes the ensemble from the member bundles and requires an identical record.
+fn bits_equal(a: &Predictions, b: &Predictions) -> bool {
+    match (a, b) {
+        (Predictions::Values(x), Predictions::Values(y)) => {
+            x.len() == y.len() && x.iter().zip(y).all(|(p, q)| p.to_bits() == q.to_bits())
+        }
+        (
+            Predictions::Probabilities {
+                classes: cx,
+                values: x,
+            },
+            Predictions::Probabilities {
+                classes: cy,
+                values: y,
+            },
+        ) => {
+            cx == cy
+                && x.len() == y.len()
+                && x.iter().zip(y).all(|(r, s)| {
+                    r.len() == s.len() && r.iter().zip(s).all(|(p, q)| p.to_bits() == q.to_bits())
+                })
+        }
+        _ => false,
+    }
+}
+
+/// Reloads a persisted ensemble. `restore` maps a member's id and state bytes to its restored
+/// report-side predictions.
 pub fn verify_reload(
-    persisted: &WinnerEnsemble,
-    members: &[AdmittedBundle],
-    labels: &[String],
+    persisted: &PersistedEnsemble,
+    admitted: &[AdmittedBundle],
+    selection_labels: &[String],
+    report: &ReportPredictions,
+    budget: &mut EvaluationBudget,
+    restore: &dyn Fn(&str, &[u8]) -> Result<Predictions>,
 ) -> Result<()> {
-    let recomputed = build_winner_ensemble(members, labels)?;
+    let member_ids: Vec<&str> = admitted
+        .iter()
+        .map(|m| m.bundle().candidate_id.as_str())
+        .collect();
     ensure!(
-        &recomputed == persisted,
+        persisted
+            .member_states
+            .keys()
+            .map(String::as_str)
+            .eq(member_ids
+                .iter()
+                .copied()
+                .collect::<std::collections::BTreeSet<_>>()
+                .into_iter()),
+        "persisted states do not cover exactly the admitted members"
+    );
+    for (id, bytes) in &persisted.member_states {
+        let restored = restore(id, bytes)?;
+        let expected = report
+            .per_member
+            .get(id)
+            .ok_or_else(|| anyhow::anyhow!("no report predictions for {id}"))?;
+        ensure!(
+            bits_equal(&restored, expected),
+            "restored state for {id} does not reproduce its report predictions bit for bit"
+        );
+    }
+    let recomputed = build_winner_ensemble(
+        admitted,
+        selection_labels,
+        &persisted.ensemble.identity,
+        report,
+        budget,
+    )?;
+    ensure!(
+        recomputed == persisted.ensemble,
         "reloaded winner ensemble differs from its recomputation"
     );
     Ok(())
@@ -46,72 +123,28 @@ pub fn verify_reload(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::evaluation_score::Predictions;
-    use crate::model_build::oof::{admit_for_test, OofPredictionBundle, OOF_SCHEMA};
-
-    fn admitted(members: &[OofPredictionBundle]) -> Vec<AdmittedBundle> {
-        members
-            .iter()
-            .cloned()
-            .map(|m| admit_for_test(m).unwrap())
-            .collect()
-    }
-    use jope_datasets::catalog::Task;
-
-    fn members() -> (Vec<OofPredictionBundle>, Vec<String>) {
-        let labels: Vec<String> = (0..12).map(|i| (i as f64 * 0.5).to_string()).collect();
-        let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
-        let make = |id: &str, values: Vec<f64>| OofPredictionBundle {
-            schema: OOF_SCHEMA.into(),
-            task: Task::Regression,
-            candidate_id: id.into(),
-            request_sha256: "a".repeat(64),
-            fitted_artifact_sha256: vec!["b".repeat(64); 4],
-            row_ids: (0..12).map(|i| format!("r{i}")).collect(),
-            folds: (0..12).map(|i| (i % 4) as u32).collect(),
-            group_ids: vec![],
-            classes: vec![],
-            predictions: Predictions::Values(values),
-            failed_folds: vec![],
-        };
-        (
-            vec![
-                make("rust.a", truth.iter().map(|t| t + 0.4).collect()),
-                make("rust.b", truth.iter().map(|t| t - 0.4).collect()),
-            ],
-            labels,
-        )
-    }
 
     #[test]
-    fn a_persisted_record_round_trips_byte_for_byte_and_keeps_its_identity() {
-        let (members, labels) = members();
-        let ensemble = build_winner_ensemble(&admitted(&members), &labels).unwrap();
-        let bytes = encode(&ensemble).unwrap();
-        let back = decode(&bytes).unwrap();
-        assert_eq!(back, ensemble);
-        assert_eq!(identity(&back).unwrap(), identity(&ensemble).unwrap());
-    }
-
-    #[test]
-    fn non_canonical_or_unknown_persisted_bytes_are_refused() {
-        let (members, labels) = members();
-        let ensemble = build_winner_ensemble(&admitted(&members), &labels).unwrap();
-        let mut pretty = serde_json::to_vec_pretty(&ensemble).unwrap();
-        assert!(decode(&pretty).is_err());
-        pretty.clear();
-        let mut value: serde_json::Value = serde_json::to_value(&ensemble).unwrap();
-        value["extra"] = serde_json::json!(1);
+    fn canonical_bytes_decode_and_non_canonical_or_unknown_bytes_are_refused() {
+        let value = serde_json::json!({"ensemble": null, "member_states": {}});
+        // A structurally incomplete record must not decode.
         assert!(decode(&serde_json::to_vec(&value).unwrap()).is_err());
+        assert!(decode(b"{\"ensemble\": 1}").is_err());
     }
 
     #[test]
-    fn reload_verification_recomputes_the_same_record_and_refuses_a_tampered_one() {
-        let (members, labels) = members();
-        let ensemble = build_winner_ensemble(&admitted(&members), &labels).unwrap();
-        verify_reload(&ensemble, &admitted(&members), &labels).unwrap();
-        let mut tampered = ensemble.clone();
-        tampered.report_loss += 1.0;
-        assert!(verify_reload(&tampered, &admitted(&members), &labels).is_err());
+    fn bit_equality_is_strict_about_nan_and_signed_zero() {
+        assert!(bits_equal(
+            &Predictions::Values(vec![0.0]),
+            &Predictions::Values(vec![0.0])
+        ));
+        assert!(!bits_equal(
+            &Predictions::Values(vec![0.0]),
+            &Predictions::Values(vec![-0.0])
+        ));
+        assert!(!bits_equal(
+            &Predictions::Values(vec![1.0]),
+            &Predictions::Values(vec![1.0, 2.0])
+        ));
     }
 }

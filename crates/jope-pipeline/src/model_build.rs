@@ -9,12 +9,16 @@ pub mod candidates;
 pub mod catalog;
 pub mod config;
 pub mod ensemble;
+pub mod identity;
 pub mod native;
 pub mod oof;
 pub mod selection;
 pub mod test_look;
 
-pub use ensemble::{build_winner_ensemble, EnsembleDisposition, WinnerEnsemble, ENSEMBLE_SCHEMA};
+pub use ensemble::{
+    build_winner_ensemble, EnsembleDisposition, ReportPredictions, WinnerEnsemble, ENSEMBLE_SCHEMA,
+};
+pub use identity::ExecutionIdentity;
 
 pub use candidates::{
     bakeoff_roster, Admission, CandidateSpec, CatalogBinding, RuntimeCapability, CATALOG_BINDING,

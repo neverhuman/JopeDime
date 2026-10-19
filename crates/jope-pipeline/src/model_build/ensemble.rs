@@ -1,20 +1,33 @@
-//! Post-search winner ensemble from out-of-fold predictions (SC-DEC-184 JA-04).
+//! Post-search winner ensemble (SC-DEC-184 JA-04, revised under SC-DEC-184M JA-R1, JA-R2, JA-R4).
 //!
-//! The blend is a bounded, deterministic, non-negative weighted average of member predictions.
-//! Its weights are chosen by greedy forward selection with replacement, scored only on the
-//! selection half of the folds. The report half is never used to choose weights, so the
-//! reported loss is not the loss the weights were fitted to. An attempt is accepted only when the
-//! blend beats the best single member on the selection half and at least two distinct members
-//! carry weight. Otherwise the disposition is an explicit best-single fallback, or not attempted.
-use super::oof::{AdmittedBundle, OofPredictionBundle};
+//! Isolation (JA-R1). The blend weights are chosen by greedy forward selection with replacement,
+//! scored only on the selection side: the out-of-fold predictions of models that were fitted on
+//! selection rows alone. The report side is never used to choose anything. Its scores come from
+//! report predictions that the caller supplies, produced by refitting each member on the whole
+//! selection side. The earlier 3-fold/2-fold split of one shared table is gone: base models there
+//! had been trained on the report folds, so its report loss was dependent.
+//!
+//! Identity (JA-R2). Every member and every label set must reproduce one `ExecutionIdentity`, which
+//! is stored in the ensemble and checked on reload.
+//!
+//! Budget (JA-R4). An ensemble attempt is charged against the caller's whole-request budget, so it
+//! shares one cap with the candidate evaluations that produced its members.
+//!
+//! Acceptance is decided on selection-side out-of-fold loss only. The report loss is recorded and
+//! labelled with its basis; it never changes the weights or the disposition.
+use super::identity::ExecutionIdentity;
+use super::oof::AdmittedBundle;
+use super::selection::EvaluationBudget;
 use crate::evaluation_score::{score_predictions, validate_probabilities, Predictions};
 use anyhow::{bail, ensure, Result};
 use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
-pub const ENSEMBLE_SCHEMA: &str = "jope.winner-ensemble/v1";
-pub const SELECTION_RULE: &str = "greedy forward selection with replacement over non-negative counts, scored on the selection half of the folds only; accepted when the blend beats the best single member on that half and at least two distinct members carry weight; otherwise best-single fallback or not attempted";
+pub const ENSEMBLE_SCHEMA: &str = "jope.winner-ensemble/v2";
+pub const SELECTION_RULE: &str = "greedy forward selection with replacement over non-negative counts, scored on selection-side out-of-fold predictions only; accepted when the blend beats the best single member and at least two distinct members carry weight; otherwise best-single fallback or not attempted";
+/// The report loss is computed from members refitted on the whole selection side.
+pub const REPORT_BASIS: &str = "outer_refit_predictions";
 /// Upper bound on greedy steps. Each step adds one unit of weight.
 pub const MAX_ITERATIONS: u32 = 25;
 
@@ -26,22 +39,31 @@ pub enum EnsembleDisposition {
     NotAttempted { reason: String },
 }
 
+/// Report-side predictions for each member, refitted on the whole selection side.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ReportPredictions {
+    pub ids: Vec<String>,
+    pub labels: Vec<String>,
+    /// Predictions per member candidate id, aligned with `ids`.
+    pub per_member: BTreeMap<String, Predictions>,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WinnerEnsemble {
     pub schema: String,
     pub task: Task,
     pub selection_rule: String,
-    pub selection_folds: Vec<u32>,
-    pub report_folds: Vec<u32>,
+    pub identity: ExecutionIdentity,
     /// Integer weight per member candidate. Weights are counts divided by their total.
     pub counts: BTreeMap<String, u32>,
     pub disposition: EnsembleDisposition,
     pub best_single: Option<String>,
-    /// Loss of the final weights on the selection half. Used for acceptance.
+    /// Loss of the final weights on selection-side out-of-fold predictions. Used for acceptance.
     pub selection_loss: f64,
-    /// Loss of the final weights on the report half. Not used to choose weights.
+    /// Loss of the final weights on the report side. Never used to choose weights.
     pub report_loss: f64,
+    pub report_loss_basis: String,
     /// Identity of each member bundle the weights were chosen from.
     pub member_bundle_sha256: BTreeMap<String, String>,
 }
@@ -114,84 +136,81 @@ fn blend(members: &[&Predictions], counts: &[u32]) -> Result<Predictions> {
     }
 }
 
-/// Splits the sorted distinct folds into a selection half and a report half. Both are non-empty.
-pub fn split_folds(folds: &[u32]) -> Result<(Vec<u32>, Vec<u32>)> {
-    let mut distinct: Vec<u32> = folds.to_vec();
-    distinct.sort_unstable();
-    distinct.dedup();
-    ensure!(
-        distinct.len() >= 2,
-        "winner ensemble needs at least two folds"
-    );
-    let split = distinct.len().div_ceil(2);
-    Ok((distinct[..split].to_vec(), distinct[split..].to_vec()))
-}
-
-fn rows_in(folds: &[u32], wanted: &[u32]) -> Vec<usize> {
-    (0..folds.len())
-        .filter(|&i| wanted.contains(&folds[i]))
-        .collect()
-}
-
-/// Builds the winner ensemble from bundles that already share one row set, fold assignment,
-/// task and class order. `labels` are aligned with those rows.
-/// Builds the winner ensemble from admitted bundles only. Admission (`AdmittedBundle::admit`)
-/// has already bound each bundle to its plan and verified fold records.
+/// Builds the winner ensemble from admitted selection-side bundles, a shared identity, the
+/// report-side predictions and a whole-request budget.
 pub fn build_winner_ensemble(
     admitted: &[AdmittedBundle],
-    labels: &[String],
+    selection_labels: &[String],
+    identity: &ExecutionIdentity,
+    report: &ReportPredictions,
+    budget: &mut EvaluationBudget,
 ) -> Result<WinnerEnsemble> {
-    let members: Vec<OofPredictionBundle> = admitted.iter().map(|a| a.bundle().clone()).collect();
-    build_from_members(&members, labels)
-}
-
-/// The unwrapped builder. Private: reachable only from this module's public wrapper and tests.
-fn build_from_members(
-    members: &[OofPredictionBundle],
-    labels: &[String],
-) -> Result<WinnerEnsemble> {
-    ensure!(!members.is_empty(), "no member bundles");
-    let first = &members[0];
-    for member in members {
-        member.validate()?;
-        ensure!(member.task == first.task, "member tasks differ");
-        ensure!(member.row_ids == first.row_ids, "member rows differ");
-        ensure!(member.folds == first.folds, "member folds differ");
+    ensure!(!admitted.is_empty(), "no member bundles");
+    identity.verify_members(admitted, selection_labels)?;
+    let first = admitted[0].bundle();
+    for member in admitted {
+        let bundle = member.bundle();
+        ensure!(bundle.task == first.task, "member tasks differ");
+        ensure!(bundle.row_ids == first.row_ids, "member rows differ");
+        ensure!(bundle.folds == first.folds, "member folds differ");
         ensure!(
-            member.classes == first.classes,
+            bundle.classes == first.classes,
             "member class orders differ"
         );
     }
     ensure!(
-        labels.len() == first.row_ids.len(),
-        "labels are not row-aligned"
+        selection_labels.len() == first.row_ids.len(),
+        "selection labels are not row-aligned"
     );
-    let mut sorted: Vec<&OofPredictionBundle> = members.iter().collect();
-    sorted.sort_by(|a, b| a.candidate_id.cmp(&b.candidate_id));
-    for pair in sorted.windows(2) {
-        ensure!(
-            pair[0].candidate_id != pair[1].candidate_id,
-            "duplicate member candidate"
-        );
-    }
-    let (selection_folds, report_folds) = split_folds(&first.folds)?;
-    let sel_rows = rows_in(&first.folds, &selection_folds);
-    let rep_rows = rows_in(&first.folds, &report_folds);
-    let sel_labels: Vec<String> = sel_rows.iter().map(|&i| labels[i].clone()).collect();
-    let rep_labels: Vec<String> = rep_rows.iter().map(|&i| labels[i].clone()).collect();
     let task = first.task;
     let classes = first.classes.clone();
+
+    ensure!(
+        super::identity::digest_pairs(&report.ids, &report.labels) == identity.report_sha256,
+        "report rows and labels do not reproduce the report identity"
+    );
+    let member_ids: BTreeSet<&str> = admitted
+        .iter()
+        .map(|m| m.bundle().candidate_id.as_str())
+        .collect();
+    ensure!(
+        member_ids.len() == admitted.len(),
+        "duplicate member candidate"
+    );
+    let report_keys: BTreeSet<&str> = report.per_member.keys().map(String::as_str).collect();
+    ensure!(
+        report_keys == member_ids,
+        "report predictions do not cover exactly the members"
+    );
+    for (id, prediction) in &report.per_member {
+        let rows = match prediction {
+            Predictions::Values(v) => v.len(),
+            Predictions::Probabilities { values, .. } => values.len(),
+        };
+        ensure!(
+            rows == report.labels.len(),
+            "report predictions for {id} are not row-aligned"
+        );
+    }
+
+    budget
+        .charge(1)
+        .map_err(|e| anyhow::anyhow!("ensemble attempt over the request budget: {e:?}"))?;
+
+    let mut sorted: Vec<&AdmittedBundle> = admitted.iter().collect();
+    sorted.sort_by(|a, b| a.bundle().candidate_id.cmp(&b.bundle().candidate_id));
+    let all_rows: Vec<usize> = (0..first.row_ids.len()).collect();
     let sel_members: Vec<Predictions> = sorted
         .iter()
-        .map(|m| subset(&m.predictions, &sel_rows))
+        .map(|m| subset(&m.bundle().predictions, &all_rows))
         .collect::<Result<_>>()?;
     let sel_loss = |counts: &[u32]| -> Result<f64> {
         let refs: Vec<&Predictions> = sel_members.iter().collect();
         let predicted = blend(&refs, counts)?;
-        Ok(score_predictions(task, &classes, &sel_labels, &predicted)?.loss)
+        Ok(score_predictions(task, &classes, selection_labels, &predicted)?.loss)
     };
 
-    // Greedy forward selection with replacement over the selection half.
+    // Greedy forward selection with replacement over the selection side.
     let mut counts = vec![0u32; sorted.len()];
     let mut best = f64::INFINITY;
     for _ in 0..MAX_ITERATIONS {
@@ -213,7 +232,6 @@ fn build_from_members(
         }
     }
 
-    // Best single member on the selection half, for acceptance and fallback.
     let mut best_single: Option<(f64, usize)> = None;
     for i in 0..sorted.len() {
         let mut solo = vec![0u32; sorted.len()];
@@ -241,7 +259,7 @@ fn build_from_members(
         final_counts = solo;
     } else if best >= single_loss {
         disposition = EnsembleDisposition::BestSingleFallback {
-            reason: "blend did not beat the best single member on the selection half".into(),
+            reason: "blend did not beat the best single member on the selection side".into(),
         };
         let mut solo = vec![0u32; sorted.len()];
         solo[single_index] = 1;
@@ -252,51 +270,68 @@ fn build_from_members(
     }
 
     let selection_loss = sel_loss(&final_counts)?;
-    let rep_members: Vec<Predictions> = sorted
+    let report_members: Vec<&Predictions> = sorted
         .iter()
-        .map(|m| subset(&m.predictions, &rep_rows))
+        .map(|m| {
+            report
+                .per_member
+                .get(&m.bundle().candidate_id)
+                .ok_or_else(|| anyhow::anyhow!("missing report predictions"))
+        })
         .collect::<Result<_>>()?;
-    let refs: Vec<&Predictions> = rep_members.iter().collect();
-    let report_predicted = blend(&refs, &final_counts)?;
-    let report_loss = score_predictions(task, &classes, &rep_labels, &report_predicted)?.loss;
+    let report_predicted = blend(&report_members, &final_counts)?;
+    let report_loss = score_predictions(task, &classes, &report.labels, &report_predicted)?.loss;
 
     let mut weighted = BTreeMap::new();
     let mut shas = BTreeMap::new();
     for (member, count) in sorted.iter().zip(&final_counts) {
-        shas.insert(member.candidate_id.clone(), member.identity()?);
-        weighted.insert(member.candidate_id.clone(), *count);
+        shas.insert(
+            member.bundle().candidate_id.clone(),
+            member.bundle().identity()?,
+        );
+        weighted.insert(member.bundle().candidate_id.clone(), *count);
     }
-    let best_single_id = sorted[single_index].candidate_id.clone();
     Ok(WinnerEnsemble {
         schema: ENSEMBLE_SCHEMA.into(),
         task,
         selection_rule: SELECTION_RULE.into(),
-        selection_folds,
-        report_folds,
+        identity: identity.clone(),
         counts: weighted,
         disposition,
-        best_single: Some(best_single_id),
+        best_single: Some(sorted[single_index].bundle().candidate_id.clone()),
         selection_loss,
         report_loss,
+        report_loss_basis: REPORT_BASIS.into(),
         member_bundle_sha256: shas,
     })
 }
 
 #[cfg(test)]
 mod tests {
+    use super::super::identity::{digest_ids, digest_pairs, ExecutionIdentity};
+    use super::super::oof::{admit_for_test, OofPredictionBundle, OOF_SCHEMA};
     use super::*;
-    use crate::model_build::oof::OOF_SCHEMA;
+
+    const REQUEST: &str = "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1";
+    const N: usize = 10;
+
+    fn truth() -> Vec<f64> {
+        (0..N).map(|i| i as f64 * 0.5).collect()
+    }
+
+    fn labels() -> Vec<String> {
+        truth().iter().map(|t| t.to_string()).collect()
+    }
 
     fn bundle(id: &str, values: Vec<f64>) -> OofPredictionBundle {
-        let n = values.len();
         OofPredictionBundle {
             schema: OOF_SCHEMA.into(),
             task: Task::Regression,
             candidate_id: id.into(),
-            request_sha256: "a".repeat(64),
-            fitted_artifact_sha256: vec!["b".repeat(64); 4],
-            row_ids: (0..n).map(|i| format!("r{i}")).collect(),
-            folds: (0..n).map(|i| (i % 4) as u32).collect(),
+            request_sha256: REQUEST.into(),
+            fitted_artifact_sha256: vec!["b".repeat(64); 5],
+            row_ids: (0..N).map(|i| format!("r{i}")).collect(),
+            folds: (0..N).map(|i| (i % 5) as u32).collect(),
             group_ids: vec![],
             classes: vec![],
             predictions: Predictions::Values(values),
@@ -304,93 +339,299 @@ mod tests {
         }
     }
 
-    fn labels_for(n: usize) -> Vec<String> {
-        (0..n).map(|i| (i as f64 * 0.5).to_string()).collect()
+    fn identity(report_ids: &[String], report_labels: &[String]) -> ExecutionIdentity {
+        let rows: Vec<String> = (0..N).map(|i| format!("r{i}")).collect();
+        ExecutionIdentity::new(
+            REQUEST,
+            &"c".repeat(64),
+            &rows,
+            &labels(),
+            &[],
+            report_ids,
+            report_labels,
+        )
+        .unwrap()
+    }
+
+    /// Report side: four rows that are not in the selection side.
+    fn report_fixture(
+        values: &dyn Fn(&str) -> Vec<f64>,
+    ) -> (Vec<String>, Vec<String>, ReportPredictions) {
+        let ids: Vec<String> = (0..4).map(|i| format!("q{i}")).collect();
+        let report_labels: Vec<String> = (0..4).map(|i| format!("{}", i as f64 * 0.5)).collect();
+        let per_member = ["rust.a", "rust.b"]
+            .iter()
+            .map(|id| (id.to_string(), Predictions::Values(values(id))))
+            .collect();
+        (
+            ids.clone(),
+            report_labels.clone(),
+            ReportPredictions {
+                ids,
+                labels: report_labels,
+                per_member,
+            },
+        )
+    }
+
+    fn admitted(members: Vec<OofPredictionBundle>) -> Vec<AdmittedBundle> {
+        members
+            .into_iter()
+            .map(|m| admit_for_test(m).unwrap())
+            .collect()
+    }
+
+    fn complementary() -> Vec<OofPredictionBundle> {
+        let t = truth();
+        vec![
+            bundle(
+                "rust.a",
+                t.iter()
+                    .enumerate()
+                    .map(|(i, v)| v + if i % 2 == 0 { 1.0 } else { -1.0 })
+                    .collect(),
+            ),
+            bundle(
+                "rust.b",
+                t.iter()
+                    .enumerate()
+                    .map(|(i, v)| v + if i % 2 == 0 { -1.0 } else { 1.0 })
+                    .collect(),
+            ),
+        ]
+    }
+
+    fn report_for_complementary() -> (ExecutionIdentity, ReportPredictions) {
+        let (ids, rlabels, report) = report_fixture(&|id| {
+            if id == "rust.a" {
+                vec![1.0, -1.0, 1.0, -1.0]
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, d)| i as f64 * 0.5 + d)
+                    .collect()
+            } else {
+                vec![1.0, -1.0, 1.0, -1.0]
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, d)| i as f64 * 0.5 - d)
+                    .collect()
+            }
+        });
+        (identity(&ids, &rlabels), report)
     }
 
     #[test]
-    fn folds_split_into_two_non_empty_halves() {
-        let (sel, rep) = split_folds(&[0, 1, 2, 3, 0, 1]).unwrap();
-        assert_eq!(sel, vec![0, 1]);
-        assert_eq!(rep, vec![2, 3]);
-        assert!(split_folds(&[0, 0, 0]).is_err());
+    fn a_useful_blend_is_accepted_and_the_report_loss_is_on_the_report_side() {
+        let (id, report) = report_for_complementary();
+        let out = build_winner_ensemble(
+            &admitted(complementary()),
+            &labels(),
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3),
+        )
+        .unwrap();
+        assert_eq!(out.disposition, EnsembleDisposition::Blend);
+        assert!(out.selection_loss < 1e-9);
+        assert!(out.report_loss < 1e-9, "report loss {}", out.report_loss);
+        assert_eq!(out.report_loss_basis, REPORT_BASIS);
     }
 
     #[test]
-    fn a_useful_blend_is_accepted_with_non_negative_counts_summing_to_the_total() {
-        let n = 16;
-        let labels = labels_for(n);
-        let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
-        // Two complementary errors: their average is exact, so the blend must win.
-        let a: Vec<f64> = truth
-            .iter()
-            .enumerate()
-            .map(|(i, t)| t + if i % 2 == 0 { 1.0 } else { -1.0 })
-            .collect();
-        let b: Vec<f64> = truth
-            .iter()
-            .enumerate()
-            .map(|(i, t)| t + if i % 2 == 0 { -1.0 } else { 1.0 })
-            .collect();
-        let members = vec![bundle("rust.a", a), bundle("rust.b", b)];
-        let ensemble = build_from_members(&members, &labels).unwrap();
-        assert_eq!(ensemble.disposition, EnsembleDisposition::Blend);
-        assert!(
-            ensemble.report_loss < 1e-9,
-            "report loss {}",
-            ensemble.report_loss
-        );
+    fn outer_label_poison_changes_only_the_report_loss() {
+        let (id, report) = report_for_complementary();
+        let clean = build_winner_ensemble(
+            &admitted(complementary()),
+            &labels(),
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3),
+        )
+        .unwrap();
+        let poisoned_labels: Vec<String> = vec!["90".into(), "-40".into(), "7".into(), "3".into()];
+        let poisoned_id = identity(&report.ids, &poisoned_labels);
+        let poisoned_report = ReportPredictions {
+            labels: poisoned_labels,
+            ..report.clone()
+        };
+        let poisoned = build_winner_ensemble(
+            &admitted(complementary()),
+            &labels(),
+            &poisoned_id,
+            &poisoned_report,
+            &mut EvaluationBudget::new(3),
+        )
+        .unwrap();
         assert_eq!(
-            ensemble.counts.values().map(|c| *c as u64).sum::<u64>() > 0,
-            true
+            clean.counts, poisoned.counts,
+            "report labels must not move the weights"
         );
+        assert_eq!(clean.disposition, poisoned.disposition);
+        assert_eq!(clean.selection_loss, poisoned.selection_loss);
+        assert_ne!(clean.report_loss, poisoned.report_loss);
     }
 
     #[test]
     fn a_single_useful_member_falls_back_explicitly() {
-        let n = 16;
-        let labels = labels_for(n);
-        let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
-        let good = bundle("rust.good", truth.clone());
-        let bad = bundle("rust.bad", truth.iter().map(|t| t + 100.0).collect());
-        let ensemble = build_from_members(&[good, bad], &labels).unwrap();
+        let t = truth();
+        let members = vec![
+            bundle("rust.good", t.clone()),
+            bundle("rust.bad", t.iter().map(|v| v + 100.0).collect()),
+        ];
+        let (ids, rlabels, report) = report_fixture(&|id| {
+            if id == "rust.good" {
+                vec![0.0, 0.5, 1.0, 1.5]
+            } else {
+                vec![100.0; 4]
+            }
+        });
+        let out = build_winner_ensemble(
+            &admitted(members),
+            &labels(),
+            &identity(&ids, &rlabels),
+            &report,
+            &mut EvaluationBudget::new(3),
+        )
+        .unwrap();
         assert!(matches!(
-            ensemble.disposition,
+            out.disposition,
             EnsembleDisposition::BestSingleFallback { .. }
         ));
-        assert_eq!(ensemble.counts.get("rust.good"), Some(&1));
-        assert_eq!(ensemble.counts.get("rust.bad"), Some(&0));
+        assert_eq!(out.counts.get("rust.good"), Some(&1));
     }
 
     #[test]
-    fn a_lone_member_is_not_attempted_and_nothing_is_substituted() {
-        let n = 8;
-        let labels = labels_for(n);
-        let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
-        let ensemble = build_from_members(&[bundle("rust.only", truth)], &labels).unwrap();
+    fn a_lone_member_is_not_attempted() {
+        let members = vec![bundle("rust.only", truth())];
+        let (ids, rlabels, report) = report_fixture(&|_| vec![0.0, 0.5, 1.0, 1.5]);
+        let mut only = report.clone();
+        only.per_member.retain(|k, _| k == "rust.a");
+        let out = build_winner_ensemble(
+            &admitted(members),
+            &labels(),
+            &identity(&ids, &rlabels),
+            &only,
+            &mut EvaluationBudget::new(3),
+        );
+        // The report predictions must cover exactly the members, so the lone member is keyed rust.only.
+        assert!(out.is_err());
+        let mut lone = report.clone();
+        lone.per_member.clear();
+        lone.per_member.insert(
+            "rust.only".into(),
+            Predictions::Values(vec![0.0, 0.5, 1.0, 1.5]),
+        );
+        let out = build_winner_ensemble(
+            &admitted(vec![bundle("rust.only", truth())]),
+            &labels(),
+            &identity(&ids, &rlabels),
+            &lone,
+            &mut EvaluationBudget::new(3),
+        )
+        .unwrap();
         assert!(matches!(
-            ensemble.disposition,
+            out.disposition,
             EnsembleDisposition::NotAttempted { .. }
         ));
     }
 
     #[test]
-    fn misaligned_member_rows_are_refused() {
-        let labels = labels_for(4);
-        let a = bundle("rust.a", vec![0.0, 0.5, 1.0, 1.5]);
-        let mut b = bundle("rust.b", vec![0.0, 0.5, 1.0, 1.5]);
-        b.row_ids[0] = "other".into();
-        assert!(build_from_members(&[a, b], &labels).is_err());
+    fn a_different_request_is_refused_by_the_shared_identity() {
+        let (id, report) = report_for_complementary();
+        let mut members = complementary();
+        members[1].request_sha256 = "d".repeat(64);
+        assert!(build_winner_ensemble(
+            &admitted(members),
+            &labels(),
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3)
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn a_different_group_identity_is_refused_by_the_shared_identity() {
+        let (id, report) = report_for_complementary();
+        let mut members = complementary();
+        members[0].group_ids = (0..N).map(|i| format!("g{i}")).collect();
+        assert!(build_winner_ensemble(
+            &admitted(members),
+            &labels(),
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3)
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn changed_selection_labels_are_refused_by_the_cohort_identity() {
+        let (id, report) = report_for_complementary();
+        let mut changed = labels();
+        changed[4] = "999".into();
+        assert!(build_winner_ensemble(
+            &admitted(complementary()),
+            &changed,
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3)
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn report_rows_that_do_not_match_the_identity_are_refused() {
+        let (id, mut report) = report_for_complementary();
+        report.ids[0] = "other".into();
+        assert!(build_winner_ensemble(
+            &admitted(complementary()),
+            &labels(),
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3)
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn the_ensemble_attempt_is_charged_against_the_request_budget() {
+        let (id, report) = report_for_complementary();
+        let mut budget = EvaluationBudget::new(0);
+        assert!(build_winner_ensemble(
+            &admitted(complementary()),
+            &labels(),
+            &id,
+            &report,
+            &mut budget
+        )
+        .is_err());
+        assert_eq!(budget.charged(), 0);
     }
 
     #[test]
     fn the_ensemble_is_deterministic_and_member_order_does_not_matter() {
-        let labels = labels_for(12);
-        let truth: Vec<f64> = labels.iter().map(|l| l.parse().unwrap()).collect();
-        let a = bundle("rust.a", truth.iter().map(|t| t + 0.3).collect());
-        let b = bundle("rust.b", truth.iter().map(|t| t - 0.2).collect());
-        let first = build_from_members(&[a.clone(), b.clone()], &labels).unwrap();
-        let second = build_from_members(&[b, a], &labels).unwrap();
+        let (id, report) = report_for_complementary();
+        let mut reversed = complementary();
+        reversed.reverse();
+        let first = build_winner_ensemble(
+            &admitted(complementary()),
+            &labels(),
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3),
+        )
+        .unwrap();
+        let second = build_winner_ensemble(
+            &admitted(reversed),
+            &labels(),
+            &id,
+            &report,
+            &mut EvaluationBudget::new(3),
+        )
+        .unwrap();
         assert_eq!(first, second);
+        assert_eq!(digest_ids(&[]), digest_ids(&[]));
+        assert_eq!(digest_pairs(&[], &[]), digest_pairs(&[], &[]));
     }
 }
