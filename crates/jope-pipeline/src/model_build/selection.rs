@@ -18,6 +18,7 @@ use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
+use std::time::{Duration, Instant};
 
 pub const BAKEOFF_SCHEMA: &str = "jope.cv-bakeoff-receipt/v1";
 /// The approved selection protocol: five folds. A different count needs its own versioned
@@ -189,6 +190,10 @@ pub enum BudgetKind {
     OuterRefit,
     /// One winner-ensemble attempt.
     EnsembleAttempt,
+    /// One unit of neural or GP work, such as one slot of the neural initial population.
+    NeuralGpWork,
+    /// Wall-clock time in milliseconds. Not charged: checked against the limit instead.
+    WallClock,
 }
 
 /// Per-kind counts. Each field is a limit when used as a cap and a count when used as a total.
@@ -199,6 +204,7 @@ pub struct BudgetCounters {
     pub fold_fits: u64,
     pub outer_refits: u64,
     pub ensemble_attempts: u64,
+    pub neural_gp_work_units: u64,
 }
 
 impl BudgetCounters {
@@ -207,6 +213,15 @@ impl BudgetCounters {
         fold_fits: u64::MAX,
         outer_refits: u64::MAX,
         ensemble_attempts: u64::MAX,
+        neural_gp_work_units: u64::MAX,
+    };
+
+    pub const ZERO: Self = Self {
+        candidate_evaluations: 0,
+        fold_fits: 0,
+        outer_refits: 0,
+        ensemble_attempts: 0,
+        neural_gp_work_units: 0,
     };
 
     fn get(&self, kind: BudgetKind) -> u64 {
@@ -215,6 +230,8 @@ impl BudgetCounters {
             BudgetKind::FoldFit => self.fold_fits,
             BudgetKind::OuterRefit => self.outer_refits,
             BudgetKind::EnsembleAttempt => self.ensemble_attempts,
+            BudgetKind::NeuralGpWork => self.neural_gp_work_units,
+            BudgetKind::WallClock => u64::MAX,
         }
     }
 
@@ -224,22 +241,28 @@ impl BudgetCounters {
             BudgetKind::FoldFit => &mut self.fold_fits,
             BudgetKind::OuterRefit => &mut self.outer_refits,
             BudgetKind::EnsembleAttempt => &mut self.ensemble_attempts,
+            BudgetKind::NeuralGpWork => &mut self.neural_gp_work_units,
+            BudgetKind::WallClock => panic!("wall-clock time is checked, not charged"),
         }
     }
 }
 
 /// Request-wide budget. Each kind of work has its own limit and counter, and a charge is made
-/// before the attempt it pays for.
+/// before the attempt it pays for. A wall-clock limit, when set, is checked before each attempt.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EvaluationBudget {
     limits: BudgetCounters,
     charged: BudgetCounters,
+    wall_limit: Option<Duration>,
+    started: Instant,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BudgetExhausted {
     pub kind: BudgetKind,
+    /// Units requested. For `WallClock`, the elapsed milliseconds.
     pub requested: u64,
+    /// Units left. For `WallClock`, the limit in milliseconds.
     pub remaining: u64,
 }
 
@@ -255,13 +278,17 @@ impl EvaluationBudget {
     pub fn with_limits(limits: BudgetCounters) -> Self {
         Self {
             limits,
-            charged: BudgetCounters {
-                candidate_evaluations: 0,
-                fold_fits: 0,
-                outer_refits: 0,
-                ensemble_attempts: 0,
-            },
+            charged: BudgetCounters::ZERO,
+            wall_limit: None,
+            started: Instant::now(),
         }
+    }
+
+    /// Sets the request's wall-clock limit, counted from this call.
+    pub fn with_wall_limit(mut self, limit: Duration) -> Self {
+        self.wall_limit = Some(limit);
+        self.started = Instant::now();
+        self
     }
 
     pub fn charge(
@@ -269,6 +296,9 @@ impl EvaluationBudget {
         kind: BudgetKind,
         units: u64,
     ) -> std::result::Result<(), BudgetExhausted> {
+        if kind == BudgetKind::WallClock {
+            return self.check_wall_clock();
+        }
         let remaining = self.limits.get(kind).saturating_sub(self.charged.get(kind));
         if units > remaining {
             return Err(BudgetExhausted {
@@ -279,6 +309,18 @@ impl EvaluationBudget {
         }
         *self.charged.get_mut(kind) += units;
         Ok(())
+    }
+
+    /// Refuses once the elapsed time reaches the wall-clock limit. A zero limit refuses at once.
+    pub fn check_wall_clock(&self) -> std::result::Result<(), BudgetExhausted> {
+        match self.wall_limit {
+            Some(limit) if self.started.elapsed() >= limit => Err(BudgetExhausted {
+                kind: BudgetKind::WallClock,
+                requested: self.started.elapsed().as_millis() as u64,
+                remaining: limit.as_millis() as u64,
+            }),
+            _ => Ok(()),
+        }
     }
 
     /// Candidate evaluations charged so far.
@@ -360,6 +402,16 @@ pub struct BakeoffOutput {
     pub receipt: BakeoffReceipt,
     /// One bundle per `Scored` candidate, in roster order.
     pub bundles: Vec<OofPredictionBundle>,
+    /// The same bundles with the fold records their verified fits produced. Admission must use these,
+    /// never records derived from the bundle itself.
+    pub verified: Vec<VerifiedBundle>,
+}
+
+/// A bundle with the fold records produced by its own verified fits (SC-DEC-184R JA-F1).
+#[derive(Clone, Debug, PartialEq)]
+pub struct VerifiedBundle {
+    pub bundle: OofPredictionBundle,
+    pub records: Vec<FoldRecord>,
 }
 
 enum Outcome {
@@ -368,6 +420,7 @@ enum Outcome {
         mean_fold_loss: f64,
         pooled_oof_loss: f64,
         bundle: Box<OofPredictionBundle>,
+        records: Vec<FoldRecord>,
         physical_starts: u64,
     },
     Unverified {
@@ -461,7 +514,10 @@ fn evaluate(
         let predict: Vec<usize> = (0..n).filter(|&i| plan.folds[i] == fold).collect();
         let train: Vec<usize> = (0..n).filter(|&i| plan.folds[i] != fold).collect();
         *fold_attempts += 1;
-        if let Err(error) = budget.charge(BudgetKind::FoldFit, 1) {
+        if let Err(error) = budget
+            .check_wall_clock()
+            .and_then(|()| budget.charge(BudgetKind::FoldFit, 1))
+        {
             return Ok(Outcome::FoldFailed {
                 fold,
                 reason: format!("fold fit refused by the request budget: {error:?}"),
@@ -571,6 +627,7 @@ fn evaluate(
         mean_fold_loss,
         pooled_oof_loss,
         bundle: Box::new(bundle),
+        records,
         physical_starts: starts.unwrap_or(0),
     })
 }
@@ -613,6 +670,7 @@ pub fn run_bakeoff(
     let metric = Metric::for_task(plan.task)?;
     let mut reports = Vec::with_capacity(candidates.len());
     let mut bundles = Vec::new();
+    let mut verified = Vec::new();
     for candidate in candidates {
         if candidate.task != plan.task {
             reports.push(report(
@@ -643,7 +701,9 @@ pub fn run_bakeoff(
             ));
             continue;
         }
-        if budget.charge(BudgetKind::CandidateEvaluation, 1).is_err() {
+        if budget.check_wall_clock().is_err()
+            || budget.charge(BudgetKind::CandidateEvaluation, 1).is_err()
+        {
             reports.push(report(
                 candidate,
                 CandidateStatus::BudgetLimited,
@@ -662,10 +722,16 @@ pub fn run_bakeoff(
                 mean_fold_loss,
                 pooled_oof_loss,
                 bundle,
+                records,
                 physical_starts,
             } => {
                 let sha = bundle.identity()?;
-                bundles.push(*bundle);
+                let bundle = *bundle;
+                verified.push(VerifiedBundle {
+                    bundle: bundle.clone(),
+                    records,
+                });
+                bundles.push(bundle);
                 report(
                     candidate,
                     CandidateStatus::Scored {
@@ -735,6 +801,7 @@ pub fn run_bakeoff(
             selected,
         },
         bundles,
+        verified,
     })
 }
 

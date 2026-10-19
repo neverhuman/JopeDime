@@ -10,6 +10,7 @@ pub mod candidates;
 pub mod catalog;
 pub mod config;
 pub mod ensemble;
+pub mod executor;
 pub mod identity;
 pub mod native;
 pub mod oof;
@@ -31,7 +32,7 @@ pub use oof::{ExpectedPlan, FoldRecord, FoldStatus, OofPredictionBundle, OOF_SCH
 pub use selection::{
     run_bakeoff, BakeoffPlan, BakeoffReceipt, BudgetCounters, BudgetExhausted, BudgetKind,
     CandidateFitter, CandidateReport, CandidateStatus, EvaluationBudget, FitEvidence, FoldFit,
-    NotStarted, APPROVED_FOLD_COUNT,
+    NotStarted, VerifiedBundle, APPROVED_FOLD_COUNT,
 };
 
 pub use config::{

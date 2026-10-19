@@ -29,6 +29,7 @@ fn run(
         &report_ids(u),
         &u.report_labels,
         budget,
+        None,
     )
     .unwrap()
 }
@@ -63,6 +64,7 @@ fn regression_request_admits_the_bound_head_and_refuses_the_unbound_one() {
             fold_fits: 6,
             outer_refits: 1,
             ensemble_attempts: 1,
+            neural_gp_work_units: 0,
         }
     );
     let persisted = out.persisted.expect("the bound head is admitted");
@@ -128,6 +130,7 @@ fn a_plan_whose_rows_differ_from_the_fitter_rows_is_refused_before_any_fit() {
         &report_ids(&u),
         &u.report_labels,
         &mut EvaluationBudget::new(20),
+        None,
     );
     assert!(result.is_err());
 }

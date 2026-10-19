@@ -33,6 +33,9 @@ pub struct ExecutionIdentity {
     pub report_sha256: String,
     /// Digest of the group identifier of every selection-side row, in row order.
     pub group_sha256: String,
+    /// Digest of the group identifier of every report-side row, in row order. Empty when grouping
+    /// does not apply.
+    pub report_group_sha256: String,
 }
 
 fn hex(bytes: impl AsRef<[u8]>) -> String {
@@ -80,6 +83,7 @@ impl ExecutionIdentity {
         selection_groups: &[String],
         report_ids: &[String],
         report_labels: &[String],
+        report_groups: &[String],
     ) -> Result<Self> {
         ensure!(
             is_sha256(request_sha256),
@@ -116,6 +120,23 @@ impl ExecutionIdentity {
             selection_set.is_disjoint(&report_set),
             "a row appears on both the selection and the report side"
         );
+        // Grouped CV: a group that spans both sides would let the report side leak into selection,
+        // so grouping must cover both sides or neither, and the group sets must be disjoint.
+        ensure!(
+            report_groups.is_empty() || report_groups.len() == report_ids.len(),
+            "report groups are not row-aligned"
+        );
+        ensure!(
+            selection_groups.is_empty() == report_groups.is_empty(),
+            "grouping must cover both the selection and the report side, or neither"
+        );
+        let selection_groups_set: BTreeSet<&str> =
+            selection_groups.iter().map(String::as_str).collect();
+        let report_groups_set: BTreeSet<&str> = report_groups.iter().map(String::as_str).collect();
+        ensure!(
+            selection_groups_set.is_disjoint(&report_groups_set),
+            "a group appears on both the selection and the report side"
+        );
         Ok(Self {
             protocol: PROTOCOL.into(),
             request_sha256: request_sha256.into(),
@@ -125,6 +146,7 @@ impl ExecutionIdentity {
             cohort_sha256: digest_pairs(selection_ids, selection_labels),
             report_sha256: digest_pairs(report_ids, report_labels),
             group_sha256: digest_ids(selection_groups),
+            report_group_sha256: digest_ids(report_groups),
         })
     }
 
@@ -179,7 +201,7 @@ mod tests {
     fn build(sel: &[String], rep: &[String]) -> Result<ExecutionIdentity> {
         let sel_labels: Vec<String> = sel.iter().map(|_| "0".into()).collect();
         let rep_labels: Vec<String> = rep.iter().map(|_| "0".into()).collect();
-        ExecutionIdentity::new(SHA, SHA, SHA, sel, &sel_labels, &[], rep, &rep_labels)
+        ExecutionIdentity::new(SHA, SHA, SHA, sel, &sel_labels, &[], rep, &rep_labels, &[])
     }
 
     #[test]
@@ -197,8 +219,8 @@ mod tests {
         let mut labels: Vec<String> = sel.iter().map(|_| "0".into()).collect();
         labels[3] = "9".into();
         let rep_labels: Vec<String> = rep.iter().map(|_| "0".into()).collect();
-        let b =
-            ExecutionIdentity::new(SHA, SHA, SHA, &sel, &labels, &[], &rep, &rep_labels).unwrap();
+        let b = ExecutionIdentity::new(SHA, SHA, SHA, &sel, &labels, &[], &rep, &rep_labels, &[])
+            .unwrap();
         assert_ne!(a.cohort_sha256, b.cohort_sha256);
     }
 
@@ -238,9 +260,17 @@ mod tests {
         let rep = ids("r", 2);
         let labels: Vec<String> = sel.iter().map(|_| "0".into()).collect();
         let rep_labels: Vec<String> = rep.iter().map(|_| "0".into()).collect();
-        assert!(
-            ExecutionIdentity::new(SHA, "plan", SHA, &sel, &labels, &[], &rep, &rep_labels)
-                .is_err()
-        );
+        assert!(ExecutionIdentity::new(
+            SHA,
+            "plan",
+            SHA,
+            &sel,
+            &labels,
+            &[],
+            &rep,
+            &rep_labels,
+            &[]
+        )
+        .is_err());
     }
 }

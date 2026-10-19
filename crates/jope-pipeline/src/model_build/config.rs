@@ -72,7 +72,9 @@ pub struct ModelBuildArgs {
     /// operator, never from the claim itself.
     #[arg(long)]
     pub expected_source_commit: Option<String>,
-    /// Whole-request Thinking level: low (64), med or medium (256), high (1024), ultra (4096).
+    /// Whole-request Thinking level: low (64), med or medium (256), high (1024), ultra (4096). The
+    /// neural initial population has 80 slots, so `low` cannot run a neural route; see
+    /// `executor::admit_route`, which refuses it before any stage starts.
     #[arg(long, value_parser = parse_thinking)]
     pub thinking: Option<String>,
 }

@@ -100,6 +100,7 @@ pub fn identity(u: &Union) -> ExecutionIdentity {
         &[],
         report_ids,
         &u.report_labels,
+        &[],
     )
     .unwrap()
 }
@@ -116,6 +117,7 @@ pub fn identity_with_report_labels(u: &Union, report_labels: &[String]) -> Execu
         &[],
         report_ids,
         report_labels,
+        &[],
     )
     .unwrap()
 }

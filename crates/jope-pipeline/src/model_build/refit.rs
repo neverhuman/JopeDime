@@ -5,14 +5,17 @@
 //! and the ensemble weights are chosen before this module runs.
 //!
 //! The refit produces an `OuterRefitRecord`: the request, the plan, the selection rows each refit
-//! trained on, the report rows each refit predicted, and the sha256 of every member's fitted
-//! state. The ensemble accepts report losses only together with this record, and the record is
-//! checked against the identity and, at reload, against the persisted state bytes.
+//! trained on, the report rows each refit predicted, and per member the sha256 of its fitted
+//! state and of its exact report prediction bits. The record's fields are private to the
+//! `model_build` module and its only constructor is `refit_members`. Admission compares the
+//! record with the identity, the report predictions and, at reload, the persisted state bytes.
+//! A record that was not produced by a refit cannot match the report predictions bit for bit.
 use super::candidates::CandidateSpec;
 use super::ensemble::ReportPredictions;
 use super::identity::{digest_ids, ExecutionIdentity};
 use super::native::{to_predictions, NativeFitter};
 use super::selection::{BudgetKind, EvaluationBudget};
+use crate::evaluation_score::Predictions;
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -24,28 +27,56 @@ pub const REFIT_RECORD_SCHEMA: &str = "jope.outer-refit-record/v1";
 #[serde(deny_unknown_fields)]
 pub struct MemberRefit {
     /// sha256 of the member's fitted state bytes.
-    pub state_sha256: String,
+    pub(super) state_sha256: String,
     /// Selection-side rows the member was refitted on.
-    pub train_rows: usize,
+    pub(super) train_rows: usize,
+    /// sha256 of the member's exact report-side prediction bits.
+    pub(super) report_sha256: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OuterRefitRecord {
-    pub schema: String,
-    pub request_sha256: String,
-    pub plan_sha256: String,
+    pub(super) schema: String,
+    pub(super) request_sha256: String,
+    pub(super) plan_sha256: String,
     /// Digest of the selection-side row identifiers every refit trained on.
-    pub train_rows_sha256: String,
+    pub(super) train_rows_sha256: String,
     /// Digest of the report-side row identifiers every refit predicted.
-    pub predict_rows_sha256: String,
-    pub members: BTreeMap<String, MemberRefit>,
+    pub(super) predict_rows_sha256: String,
+    pub(super) members: BTreeMap<String, MemberRefit>,
+}
+
+/// Digest of a prediction set's exact bits, including its class order.
+pub(super) fn predictions_digest(predictions: &Predictions) -> String {
+    let mut hasher = Sha256::new();
+    match predictions {
+        Predictions::Values(values) => {
+            hasher.update(b"values");
+            for value in values {
+                hasher.update(value.to_bits().to_le_bytes());
+            }
+        }
+        Predictions::Probabilities { classes, values } => {
+            hasher.update(b"probabilities");
+            for class in classes {
+                hasher.update(class.as_bytes());
+                hasher.update([0u8]);
+            }
+            for row in values {
+                for value in row {
+                    hasher.update(value.to_bits().to_le_bytes());
+                }
+            }
+        }
+    }
+    format!("{:x}", hasher.finalize())
 }
 
 impl OuterRefitRecord {
-    /// Builds the record from the identity and the refits that were actually performed. Callers
-    /// in production obtain it from `refit_members`. Tests may build one to exercise refusals.
-    pub fn new(
+    /// Only `refit_members` calls this. The record is a statement about fits that ran, and the
+    /// digests it carries are checked against the report predictions and the states.
+    pub(super) fn new(
         identity: &ExecutionIdentity,
         train_rows: &[String],
         predict_rows: &[String],
@@ -133,19 +164,20 @@ pub fn refit_members(
             spec.id
         );
         budget
-            .charge(BudgetKind::OuterRefit, 1)
+            .check_wall_clock()
+            .and_then(|()| budget.charge(BudgetKind::OuterRefit, 1))
             .map_err(|e| anyhow::anyhow!("refit of {} over the request budget: {e:?}", spec.id))?;
         let (model, state) = fitter.fit_state(spec, &selection_rows)?;
         let raw = fitter.predict_rows(&model, &report_rows)?;
-        per_member.insert(
-            spec.id.to_owned(),
-            to_predictions(fitter.task(), fitter.classes(), raw)?,
-        );
+        let predicted = to_predictions(fitter.task(), fitter.classes(), raw)?;
+        let report_sha256 = predictions_digest(&predicted);
+        per_member.insert(spec.id.to_owned(), predicted);
         records.insert(
             spec.id.to_owned(),
             MemberRefit {
                 state_sha256: format!("{:x}", Sha256::digest(&state)),
                 train_rows: selection_rows.len(),
+                report_sha256,
             },
         );
         member_states.insert(spec.id.to_owned(), state);

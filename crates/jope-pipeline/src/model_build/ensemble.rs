@@ -17,7 +17,7 @@
 //! labelled with its basis; it never changes the weights or the disposition.
 use super::identity::{digest_ids, ExecutionIdentity};
 use super::oof::AdmittedBundle;
-use super::refit::{OuterRefitRecord, REFIT_RECORD_SCHEMA};
+use super::refit::{predictions_digest, OuterRefitRecord, REFIT_RECORD_SCHEMA};
 use super::selection::{BudgetKind, EvaluationBudget};
 use crate::evaluation_score::{score_predictions, validate_probabilities, Predictions};
 use anyhow::{bail, ensure, Result};
@@ -176,6 +176,12 @@ pub fn admit_winner_ensemble(
         refit.members.keys().eq(report.per_member.keys()),
         "the outer refit does not cover exactly the report predictions"
     );
+    for (id, predictions) in &report.per_member {
+        ensure!(
+            refit.members[id].report_sha256 == predictions_digest(predictions),
+            "the report predictions for {id} are not the ones the outer refit produced"
+        );
+    }
     build_winner_ensemble(admitted, selection_labels, identity, report, budget)
 }
 
@@ -237,7 +243,8 @@ fn build_winner_ensemble(
     }
 
     budget
-        .charge(BudgetKind::EnsembleAttempt, 1)
+        .check_wall_clock()
+        .and_then(|()| budget.charge(BudgetKind::EnsembleAttempt, 1))
         .map_err(|e| anyhow::anyhow!("ensemble attempt over the request budget: {e:?}"))?;
 
     let mut sorted: Vec<&AdmittedBundle> = admitted.iter().collect();
@@ -393,6 +400,7 @@ mod tests {
             &[],
             report_ids,
             report_labels,
+            &[],
         )
         .unwrap()
     }

@@ -33,6 +33,7 @@ fn regression_run() -> (Union, AutomlOutput) {
         &report_ids(&u),
         &u.report_labels,
         &mut budget,
+        None,
     )
     .unwrap();
     (u, out)
@@ -195,11 +196,11 @@ fn admitted_for(
             .unwrap();
     let expected = jope_pipeline::model_build::automl::expected_plan(&plan);
     let admitted: Vec<_> = outcome
-        .bundles
+        .verified
         .into_iter()
-        .map(|b| {
-            let records = jope_pipeline::model_build::automl::fold_records(&b);
-            jope_pipeline::model_build::oof::AdmittedBundle::admit(b, &expected, &records).unwrap()
+        .map(|v| {
+            jope_pipeline::model_build::oof::AdmittedBundle::admit(v.bundle, &expected, &v.records)
+                .unwrap()
         })
         .collect();
     assert_eq!(

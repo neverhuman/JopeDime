@@ -392,6 +392,7 @@ mod tests {
             &[],
             &["report-0".to_string()],
             &["0".to_string()],
+            &[],
         )
         .unwrap()
     }
