@@ -201,7 +201,7 @@ commands above are unchanged.
 
 The metadata witness verifies pinned declarations. The complete payload APIs below separately
 verify supplied bytes or download exact pinned versions. Runtime loading, licence admission,
-atomic version-directory cache/CLI integration and real publication pins remain C03 work.
+release-cache CLI integration and real publication pins remain C03 work; the source-only atomic cache is described below.
 A `serving_candidate` channel is a declaration, not a promotion.
 
 ### Complete payload snapshot verification (source API)
@@ -233,3 +233,11 @@ For pinned reads, an S3 `NoSuchVersion` response with HTTP404 follows the absent
 This is a source API with deterministic, credential-free fixtures. It does not add a public release pin, cache/CLI installation, rights admission or a runnable encoder/policy. The compiled release registry remains empty. Final native approval and a qualified runtime/caller are still required before release consumption or training.
 
 The complete-download orchestration fixtures use an injected synchronous backend; they do not exercise an end-to-end release download over HTTP. The real AmazonS3/HTTP response path is covered separately by the dataset-store fixtures, including exact-version requests, missing versions and stream/response bounds. This distinction remains part of final integration coverage. Downloads deliberately issue sequential GETs to keep retained bytes and request ownership simple; future concurrency must preserve the same whole-operation budget and deadline. Release manifests exclude zero-byte components before download.
+
+### Atomic release cache (source API)
+
+`VerifiedReleasePayloads::install_cache(&ModelsCache)` stages the complete byte closure, writes and syncs component/bundle bytes and the exact original pinned manifest, rereads and rehashes the staged closure, then publishes `models/releases/<release_id>/` with a native no-replace directory rename. Its `manifest.json`, `bundles/<bundle_id>.json` and `payloads/<component_id>` layout is versioned; original bundle paths/roles remain in the manifest. An existing complete version is reverified and reused. An existing partial/corrupt/unsafe version refuses without repair or overwrite. Failed `.partial-...` staging remains for explicit owner inspection and recovery; no production cleanup is automatic.
+
+`VerifiedReleaseManifest::load_cache(&ModelsCache, PayloadLimits)` needs no network and returns new private immutable verified buffers. It requires the same independently pinned metadata and complete bundle/payload hashes; it refuses missing, corrupt, truncated, nonregular or symlink entries. Absolute cache roots are walked through directory descriptors with no symlink following, and files are read/written relative to those held descriptors. Native no-replace publication is supported in source on Linux/macOS; only Linux execution is currently qualified. Unsupported platforms/filesystems refuse rather than falling back to an overwriting rename. Legacy bundle cache/commands are unchanged.
+
+This is a synchronous source API; callers own disk-I/O deadlines, leases and peak memory. Staging verification and reuse can temporarily hold a second bounded payload snapshot alongside the caller's snapshot. Each metadata closure is bounded to the pinned manifest and at most 32 one-MiB bundle manifests; verification can temporarily retain multiple bounded metadata copies. A parent-directory sync failure after publication can leave a complete version visible; retry must reverify, never delete it. Returned paths are locators, not execution authority: consumers must load and borrow verified buffers before use. The cache remains writable by its owner; it is not a security boundary against a malicious process running as that same owner. Local bytes do not establish a fresh remote VersionId, licence/runtime compatibility, real publication, training or serving admission. The compiled registry remains empty; no release-cache CLI is claimed yet.

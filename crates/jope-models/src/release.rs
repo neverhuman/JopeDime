@@ -18,6 +18,9 @@ pub const SCHEMA_JSON: &str = include_str!("../../../schemas/jope.model-release.
 const COMPILED_INDEX: &str = include_str!("../../../models/releases/INDEX.json");
 const MAX_MANIFEST_BYTES: usize = 1024 * 1024;
 
+#[path = "release_cache.rs"]
+mod cache_io;
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum ComponentRole {
@@ -99,10 +102,22 @@ struct ReleaseIndex {
 /// Fields are private and this type cannot be deserialized. It does NOT assert that
 /// artifacts are downloaded, hash-verified, licensed for a requested use, executable,
 /// compatible with a real runtime, scientifically qualified, or admitted for serving.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct VerifiedReleaseManifest {
     manifest: ReleaseManifest,
     manifest_sha256: String,
+    manifest_bytes: Vec<u8>,
+}
+
+impl std::fmt::Debug for VerifiedReleaseManifest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VerifiedReleaseManifest")
+            .field("release_id", &self.manifest.release_id)
+            .field("source_commit", &self.manifest.source_commit)
+            .field("manifest_sha256", &self.manifest_sha256)
+            .field("components", &self.manifest.components.len())
+            .finish()
+    }
 }
 
 /// Explicit in-memory limits, checked for the complete release before opening any payload.
@@ -150,6 +165,7 @@ impl Default for DownloadLimits {
 pub struct VerifiedReleasePayloads {
     metadata: VerifiedReleaseManifest,
     payloads: BTreeMap<String, Vec<u8>>,
+    bundle_manifests: BTreeMap<String, Vec<u8>>,
     verified_bytes: u64,
 }
 
@@ -362,6 +378,7 @@ fn verify_against_pin(pin: &ReleasePin, bytes: &[u8]) -> Result<VerifiedReleaseM
     Ok(VerifiedReleaseManifest {
         manifest,
         manifest_sha256: digest,
+        manifest_bytes: bytes.to_vec(),
     })
 }
 
@@ -511,6 +528,7 @@ impl VerifiedReleaseManifest {
         Ok(VerifiedReleasePayloads {
             metadata: self.clone(),
             payloads,
+            bundle_manifests: bundle_bytes,
             verified_bytes: total,
         })
     }
@@ -584,6 +602,7 @@ impl VerifiedReleaseManifest {
         Ok(VerifiedReleasePayloads {
             metadata: self.clone(),
             payloads,
+            bundle_manifests: bundle_manifests.clone(),
             verified_bytes: total,
         })
     }
@@ -938,4 +957,5 @@ mod tests {
             .is_err());
     }
     include!("../tests/support/release_download.rs");
+    include!("../tests/support/release_cache.rs");
 }
