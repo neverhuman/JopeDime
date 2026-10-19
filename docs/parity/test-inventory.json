@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 2",
-  "count": 5570,
+  "count": 5571,
   "ignored": 74,
   "packages": {
    "battle-gpu": {
@@ -2803,7 +2803,7 @@
     }
    },
    "jope-cli": {
-    "count": 79,
+    "count": 80,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -2899,12 +2899,13 @@
      },
      "jope-cli::pipeline_cli": {
       "kind": "test",
-      "count": 9,
+      "count": 10,
       "ignored": 0,
       "tests": [
        "a_given_source_commit_is_recorded_and_git_is_never_spawned",
        "a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs",
        "evolve_into_a_non_empty_output_exits_2_first_and_runs_once_it_is_emptied",
+       "invent_prints_candidates_and_refuses_bad_input_as_json",
        "kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds",
        "kernel2_lm_refinement_records_its_selection_and_verifies_evidence",
        "kernel2_profile_cli_publishes_v4_verifies_evidence_and_defaults_to_fitted_cpp",
