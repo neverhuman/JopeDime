@@ -415,6 +415,8 @@ impl Store {
     /// `max_bytes` is always required. The same GET must report the requested physical version.
     /// The header length is checked before buffering, and the stream must match that length.
     /// Hash verification and whole-release budgets remain the caller's responsibility.
+    /// `Ok(None)` means the pinned object is absent; callers must refuse the release rather
+    /// than fall back to another version. Callers also own I/O deadlines and admission checks.
     /// Injected backends already buffer fixture bytes; this method cannot bound that allocation.
     pub async fn get_observed_version_bounded(
         &self,

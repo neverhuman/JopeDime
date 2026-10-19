@@ -189,3 +189,192 @@ fn a_declared_empty_body_is_supported_with_a_positive_bound() {
         .unwrap()
         .is_empty());
 }
+
+// Exercise the actual AmazonS3 -> get_opts -> GetResult path against a local,
+// unsigned HTTP fixture. No credentials, remote service or model data is used.
+struct HttpFixture {
+    stop: Arc<std::sync::atomic::AtomicBool>,
+    requests: Arc<std::sync::Mutex<Vec<String>>>,
+    worker: Option<std::thread::JoinHandle<()>>,
+}
+impl HttpFixture {
+    fn assert_exact_request(&self) {
+        let requests = self.requests.lock().unwrap();
+        assert_eq!(requests.len(), 1, "no retries or latest fallback");
+        assert!(
+            requests[0].starts_with("GET /fixture/release/blob?versionId=version-a HTTP/1.1\r\n"),
+            "{}",
+            requests[0]
+        );
+        assert!(!requests[0].to_ascii_lowercase().contains("authorization:"));
+    }
+}
+impl Drop for HttpFixture {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::SeqCst);
+        if let Some(worker) = self.worker.take() {
+            let _ = worker.join();
+        }
+    }
+}
+fn http_fixture(
+    status: &str,
+    version: Option<&str>,
+    declared: usize,
+    body: &[u8],
+) -> (Store, HttpFixture) {
+    use std::io::{Read as _, Write as _};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let address = listener.local_addr().unwrap();
+    let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let requests = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let thread_stop = stop.clone();
+    let thread_requests = requests.clone();
+    let version_header = version
+        .map(|v| format!("x-amz-version-id: {v}\r\n"))
+        .unwrap_or_default();
+    let mut response = format!("HTTP/1.1 {status}\r\nContent-Length: {declared}\r\nETag: \"version-a\"\r\nLast-Modified: Mon, 19 Oct 2026 00:00:00 GMT\r\n{version_header}Connection: close\r\n\r\n").into_bytes();
+    response.extend_from_slice(body);
+    let worker = std::thread::spawn(move || {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while !thread_stop.load(Ordering::SeqCst) && std::time::Instant::now() < deadline {
+            match listener.accept() {
+                Ok((mut socket, _)) => {
+                    socket
+                        .set_read_timeout(Some(std::time::Duration::from_millis(200)))
+                        .unwrap();
+                    socket
+                        .set_write_timeout(Some(std::time::Duration::from_millis(200)))
+                        .unwrap();
+                    let mut request = Vec::new();
+                    let mut chunk = [0; 1024];
+                    while request.len() < 16 * 1024 && !request.ends_with(b"\r\n\r\n") {
+                        match socket.read(&mut chunk) {
+                            Ok(0) | Err(_) => break,
+                            Ok(n) => request.extend_from_slice(&chunk[..n]),
+                        }
+                    }
+                    thread_requests
+                        .lock()
+                        .unwrap()
+                        .push(String::from_utf8(request).unwrap());
+                    let _ = socket.write_all(&response);
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    std::thread::sleep(std::time::Duration::from_millis(2))
+                }
+                Err(_) => break,
+            }
+        }
+    });
+    let backend = object_store::aws::AmazonS3Builder::new()
+        .with_bucket_name("fixture")
+        .with_region("us-east-2")
+        .with_endpoint(format!("http://{address}"))
+        .with_allow_http(true)
+        .with_skip_signature(true)
+        .with_retry(object_store::RetryConfig {
+            max_retries: 0,
+            ..Default::default()
+        })
+        .with_client_options(
+            object_store::ClientOptions::new()
+                .with_allow_http(true)
+                .with_timeout(std::time::Duration::from_secs(2)),
+        )
+        .build()
+        .unwrap();
+    let store = Store {
+        inner: Box::new(backend),
+        prefix: ObjPath::from("release"),
+        url: format!("http://{address}/fixture"),
+        local_root: None,
+    };
+    (
+        store,
+        HttpFixture {
+            stop,
+            requests,
+            worker: Some(worker),
+        },
+    )
+}
+
+#[test]
+fn real_get_opts_sends_the_pinned_query_and_returns_the_same_metadata_and_bytes() {
+    let (store, server) = http_fixture("200 OK", Some("version-a"), 3, b"abc");
+    let object = runtime()
+        .block_on(store.get_observed_version_bounded("blob", "version-a", 4, Some(3)))
+        .unwrap()
+        .unwrap();
+    assert_eq!(object.bytes, b"abc");
+    assert_eq!(object.version(), Some("version-a"));
+    assert_eq!(object.key_str(), "release/blob");
+    server.assert_exact_request();
+}
+
+#[test]
+fn real_get_opts_refuses_missing_and_wrong_version_even_with_the_matching_etag() {
+    for version in [None, Some("version-b")] {
+        let (store, server) = http_fixture("200 OK", version, 3, b"abc");
+        let error = runtime()
+            .block_on(store.get_observed_version_bounded("blob", "version-a", 4, Some(3)))
+            .unwrap_err();
+        assert!(format!("{error:#}").contains("VersionId mismatch"));
+        server.assert_exact_request();
+    }
+}
+
+#[test]
+fn real_get_opts_refuses_bad_declared_or_expected_lengths() {
+    for (maximum, expected, message) in [
+        (4, Some(2), "differs from expected length"),
+        (2, None, "exceeds"),
+    ] {
+        let (store, server) = http_fixture("200 OK", Some("version-a"), 3, b"abc");
+        let error = runtime()
+            .block_on(store.get_observed_version_bounded("blob", "version-a", maximum, expected))
+            .unwrap_err();
+        assert!(format!("{error:#}").contains(message), "{error:#}");
+        server.assert_exact_request();
+    }
+}
+
+#[test]
+fn real_get_opts_distinguishes_missing_from_access_denied_without_retry() {
+    let missing = b"<Error><Code>NoSuchKey</Code><Message>missing</Message></Error>";
+    let (store, server) = http_fixture("404 Not Found", None, missing.len(), missing);
+    assert!(runtime()
+        .block_on(store.get_observed_version_bounded("blob", "version-a", 4, None))
+        .unwrap()
+        .is_none());
+    server.assert_exact_request();
+    let denied = b"<Error><Code>AccessDenied</Code><Message>denied</Message></Error>";
+    let (store, server) = http_fixture("403 Forbidden", None, denied.len(), denied);
+    assert!(runtime()
+        .block_on(store.get_observed_version_bounded("blob", "version-a", 4, None))
+        .is_err());
+    server.assert_exact_request();
+}
+
+#[test]
+fn real_get_opts_stream_truncation_never_returns_partial_bytes() {
+    let (store, server) = http_fixture("200 OK", Some("version-a"), 4, b"ab");
+    assert!(runtime()
+        .block_on(store.get_observed_version_bounded("blob", "version-a", 4, Some(4)))
+        .is_err());
+    server.assert_exact_request();
+}
+
+#[test]
+fn excessive_version_and_nonempty_expected_zero_refuse() {
+    let (store, backend) = fixture(Some("version-a"), Some(vec![1]), false);
+    assert!(runtime()
+        .block_on(store.get_observed_version_bounded("blob", &"v".repeat(1025), 1, None))
+        .is_err());
+    assert_eq!(backend.calls.load(Ordering::SeqCst), 0);
+    assert!(runtime()
+        .block_on(store.get_observed_version_bounded("blob", "version-a", 1, Some(0)))
+        .is_err());
+}
