@@ -252,7 +252,15 @@
         "section": "C09 \u2014 Close the real fresh-feedback loop before scaling"
       },
       "acceptance_evidence": [],
-      "admiralty_task_id": "ADM-JOPE-RC-C09"
+      "admiralty_task_id": "ADM-JOPE-RC-C09",
+      "supplementary_plan_refs": [
+        {
+          "file": "FLYWHEEL_VALUE_WORKPLAN.md",
+          "packet_version": 2,
+          "manifest_sha256": "dcdf6f42c11e1bc777a000f95da5ca0242833270b0c5f32dd18cb4f5a305a92c",
+          "qualification": "SameexistingC/MRledgers; priority substeps only; not a launch or deletion grant."
+        }
+      ]
     },
     {
       "id": "C10",
@@ -335,7 +343,15 @@
         "section": "C12 \u2014 Storage audit, high-information retention, safe reclamation"
       },
       "acceptance_evidence": [],
-      "admiralty_task_id": "ADM-JOPE-RC-C12"
+      "admiralty_task_id": "ADM-JOPE-RC-C12",
+      "supplementary_plan_refs": [
+        {
+          "file": "FLYWHEEL_VALUE_WORKPLAN.md",
+          "packet_version": 2,
+          "manifest_sha256": "dcdf6f42c11e1bc777a000f95da5ca0242833270b0c5f32dd18cb4f5a305a92c",
+          "qualification": "SameexistingC/MRledgers; priority substeps only; not a launch or deletion grant."
+        }
+      ]
     },
     {
       "id": "C13",
@@ -386,7 +402,15 @@
           "qualification": "Human local-CI direction independently read in chat01a1559b; compile-only hold superseded for mechanical local cargo tests. No remote CI dispatch; independent review and ordinary protected merge retained. Training/refit/self-play execution remains held."
         }
       ],
-      "admiralty_task_id": "ADM-JOPE-RC-C14"
+      "admiralty_task_id": "ADM-JOPE-RC-C14",
+      "supplementary_plan_refs": [
+        {
+          "file": "FLYWHEEL_VALUE_WORKPLAN.md",
+          "packet_version": 2,
+          "manifest_sha256": "dcdf6f42c11e1bc777a000f95da5ca0242833270b0c5f32dd18cb4f5a305a92c",
+          "qualification": "SameexistingC/MRledgers; priority substeps only; not a launch or deletion grant."
+        }
+      ]
     },
     {
       "id": "C15",
@@ -488,5 +512,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T19:40:19.801146+00:00"
+  "last_evidence_update_utc": "2026-10-19T19:43:09.516591+00:00"
 }

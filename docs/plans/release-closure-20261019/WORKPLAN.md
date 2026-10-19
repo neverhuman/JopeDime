@@ -12,6 +12,8 @@ The binding ENG:watcher clarification (sha256 `4d6bfe0784d18f0ed225c7e49d1ed0a3e
 
 This is an additive policy correction; preserve the original master/47-task/66-task ledgers and execution receipts. The separate authorized flywheel/storage plan packet is being prepared outside active source trees for integration by the same owners. Current deliverables and remaining gates are in IMPLEMENTATION_STATUS.md and TASKS.json.
 
+The adopted priority detail is [storage value and feedback proof](FLYWHEEL_VALUE_WORKPLAN.md), prepared from the three latest human-supplied audits. Use its existing C09/C12/C14 mappings and the [focused local CI guide](../../../deploy/ci/flywheel-local.md). Packet-v2 supersedes the earlier stopped packet; the binding training hold above still controls every numerical pilot. A manifest missing source/data/adapters remains incomplete even if its status says ready.
+
 ## Objective and finish line
 
 Deliver one reviewed integration PR onto current GitHub `main`, with an accurate README and agent entry guide, passing exact-head and receiving-main CI, usable versioned encoder/policy downloads, implemented Direct/Thinking and independent AutoML/ensemble options, durable research records, and explicit remaining scientific/release gates. Complete the declared major-release engineering scope and actual flywheel qualification before publishing its major release or claiming DONE.
