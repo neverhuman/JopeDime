@@ -502,3 +502,26 @@ impl ProgramGraph {
         })
     }
 }
+
+impl InputSchema {
+    /// Opt-in semantic-key schema. The union schema sorts keys canonically, so its id is
+    /// permutation-invariant. `identity()` above is unchanged and stays order-sensitive.
+    pub fn semantic_key_schema(
+        &self,
+    ) -> std::result::Result<crate::combinators::union::Schema, crate::combinators::union::GraphError>
+    {
+        crate::combinators::union::Schema::new(self.columns.clone())
+    }
+
+    /// Opt-in binding by semantic key, for use with `combinators::union::Program`.
+    pub fn bind_semantic_column(
+        &self,
+        key: &str,
+    ) -> std::result::Result<
+        crate::combinators::union::ColumnRef,
+        crate::combinators::union::GraphError,
+    > {
+        let schema = self.semantic_key_schema()?;
+        crate::combinators::union::ColumnRef::bind(&schema, key)
+    }
+}
