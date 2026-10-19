@@ -2184,14 +2184,6 @@
         "fitting"
       ]
     },
-    "target:feat-math/test/shared_feature_dag_cse": {
-      "role": "regression",
-      "source": "crates/feat-math/tests/shared_feature_dag_cse.rs",
-      "subsystems": [
-        "gp",
-        "fitting"
-      ]
-    },
     "target:feat-math/test/operation_profile": {
       "role": "regression",
       "source": "crates/feat-math/tests/operation_profile.rs",
@@ -2314,6 +2306,14 @@
     "target:feat-math/test/search_strategy": {
       "role": "regression",
       "source": "crates/feat-math/tests/search_strategy.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
+    "target:feat-math/test/shared_feature_dag_cse": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/shared_feature_dag_cse.rs",
       "subsystems": [
         "gp",
         "fitting"
@@ -3448,6 +3448,35 @@
       "source": "crates/jope-motifs/tests/motif_admission.rs",
       "subsystems": [
         "gp"
+      ]
+    },
+    "target:jope-observatory/bin/collect-datasets": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "storage"
+      ]
+    },
+    "target:jope-observatory/bin/collect-fleet": {
+      "reason": "No unit cases in this CLI harness; bounded metadata collector behavior requires its own observer receipt, never inferred from compilation.",
+      "role": "infrastructure"
+    },
+    "target:jope-observatory/bin/collect-storage": {
+      "reason": "No unit cases in this CLI harness; bounded metadata collector behavior requires its own observer receipt, never inferred from compilation.",
+      "role": "infrastructure"
+    },
+    "target:jope-observatory/bin/jope-observatory": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "storage"
+      ]
+    },
+    "target:jope-observatory/lib/jope_observatory": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "storage"
       ]
     },
     "target:jope-parallel/bin/jope-build-receipt": {
