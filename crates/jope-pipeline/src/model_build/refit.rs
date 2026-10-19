@@ -34,11 +34,11 @@ pub struct MemberRefit {
     report_sha256: String,
 }
 
-/// The outer-refit record. Its fields are private, and its only constructor is `refit_members`,
-/// which sets `verified_in_process`. The flag is `#[serde(skip)]`: a record read from JSON starts with
-/// it `false`. Admission refuses such a record, so a deserialised record can be checked for disk
-/// reload but cannot produce an ensemble.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+/// The outer-refit record: the content a refit produced. Its fields are private, and it has no
+/// public constructor. Reading one from JSON is possible, for disk reload. Admission does not take
+/// it, because a deserialised record carries no proof that a refit ran. Admission takes a
+/// `VerifiedRefit`, which only `refit_members` can make.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OuterRefitRecord {
     schema: String,
@@ -49,23 +49,36 @@ pub struct OuterRefitRecord {
     /// Digest of the report-side row identifiers every refit predicted.
     predict_rows_sha256: String,
     members: BTreeMap<String, MemberRefit>,
-    #[serde(skip)]
-    verified_in_process: bool,
 }
 
-impl PartialEq for OuterRefitRecord {
-    /// Compares the record's content. Provenance is not content.
-    fn eq(&self, other: &Self) -> bool {
-        self.schema == other.schema
-            && self.request_sha256 == other.request_sha256
-            && self.plan_sha256 == other.plan_sha256
-            && self.train_rows_sha256 == other.train_rows_sha256
-            && self.predict_rows_sha256 == other.predict_rows_sha256
-            && self.members == other.members
+/// An outer-refit record that a refit produced in this process. It has no serde implementation,
+/// so it cannot be written from JSON or read from one, and it has no public constructor, so code
+/// outside this module cannot make one. Admission accepts only this type.
+///
+/// ```compile_fail
+/// use jope_pipeline::model_build::VerifiedRefit;
+/// fn needs_serialize<T: serde::Serialize>() {}
+/// needs_serialize::<VerifiedRefit>();
+/// ```
+///
+/// ```compile_fail
+/// use jope_pipeline::model_build::VerifiedRefit;
+/// let _ = VerifiedRefit { record: unimplemented!() };
+/// ```
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct VerifiedRefit {
+    record: OuterRefitRecord,
+}
+
+impl VerifiedRefit {
+    fn new(record: OuterRefitRecord) -> Self {
+        Self { record }
+    }
+
+    pub(super) fn record(&self) -> &OuterRefitRecord {
+        &self.record
     }
 }
-
-impl Eq for OuterRefitRecord {}
 
 /// Digest of a prediction set's exact bits, including its class order.
 pub(super) fn predictions_digest(predictions: &Predictions) -> String {
@@ -109,7 +122,6 @@ impl OuterRefitRecord {
             train_rows_sha256: digest_ids(train_rows),
             predict_rows_sha256: digest_ids(predict_rows),
             members,
-            verified_in_process: true,
         }
     }
 
@@ -134,10 +146,6 @@ impl OuterRefitRecord {
     }
 
     /// True only for a record that `refit_members` produced in this process.
-    pub(super) fn verified_in_process(&self) -> bool {
-        self.verified_in_process
-    }
-
     /// The members the record covers, by candidate id.
     pub(super) fn member_ids(&self) -> impl Iterator<Item = &String> {
         self.members.keys()
@@ -173,7 +181,7 @@ pub struct RefitOutcome {
     pub report: ReportPredictions,
     /// Fitted state bytes per member, exactly as the fitter produced them.
     pub member_states: BTreeMap<String, Vec<u8>>,
-    pub record: OuterRefitRecord,
+    pub verified: VerifiedRefit,
 }
 
 /// Refits every member on the selection side of `fitter` and predicts its report side.
@@ -248,6 +256,6 @@ pub fn refit_members(
             per_member,
         },
         member_states,
-        record,
+        verified: VerifiedRefit::new(record),
     })
 }

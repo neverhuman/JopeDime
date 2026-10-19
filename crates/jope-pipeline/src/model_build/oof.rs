@@ -53,12 +53,9 @@ pub enum FoldStatus {
 }
 
 /// One fold's record: the request it ran under, its artifact, and exactly which rows it fitted on
-/// and which it scored.
-///
-/// The fields are private. `verified_in_process` is set only by `FoldRecord::verified`, which the
-/// bake-off calls with the evidence of a fit that ran. It is `#[serde(skip)]`, so a record read
-/// from JSON starts with it `false`, and `AdmittedBundle::admit` refuses such a record.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+/// and which it scored. Its fields are private, and it has no public constructor. Admission does
+/// not take it directly. It takes a `VerifiedFold`, which only a verified fit can produce.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FoldRecord {
     fold: u32,
@@ -67,29 +64,40 @@ pub struct FoldRecord {
     fitting_row_ids: Vec<String>,
     scoring_row_ids: Vec<String>,
     status: FoldStatus,
-    #[serde(skip)]
-    verified_in_process: bool,
 }
 
-impl PartialEq for FoldRecord {
-    /// Compares the record's content. Provenance is not content, so a record and its serialised
-    /// round trip compare equal even though only the first is verified in process.
-    fn eq(&self, other: &Self) -> bool {
-        self.fold == other.fold
-            && self.request_sha256 == other.request_sha256
-            && self.fitted_artifact_sha256 == other.fitted_artifact_sha256
-            && self.fitting_row_ids == other.fitting_row_ids
-            && self.scoring_row_ids == other.scoring_row_ids
-            && self.status == other.status
+/// A fold record from a fit that returned verified evidence. It has no serde implementation and no
+/// public constructor, so an externally read record cannot be turned into one. `AdmittedBundle`
+/// admits only these.
+///
+/// ```compile_fail
+/// use jope_pipeline::model_build::VerifiedFold;
+/// fn needs_deserialize<'de, T: serde::Deserialize<'de>>() {}
+/// needs_deserialize::<VerifiedFold>();
+/// ```
+///
+/// ```compile_fail
+/// use jope_pipeline::model_build::VerifiedFold;
+/// let _ = VerifiedFold { record: unimplemented!() };
+/// ```
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct VerifiedFold {
+    record: FoldRecord,
+}
+
+impl VerifiedFold {
+    /// Wraps a record only when its status is `Verified`. Every other status is refused here.
+    pub(crate) fn from_verified(record: FoldRecord) -> Option<Self> {
+        (record.status == FoldStatus::Verified).then_some(Self { record })
+    }
+
+    pub fn record(&self) -> &FoldRecord {
+        &self.record
     }
 }
 
-impl Eq for FoldRecord {}
-
 impl FoldRecord {
-    /// Built only by the bake-off, from the evidence of a fit that ran. It is verified in process
-    /// only when the status is `Verified`.
-    pub(crate) fn verified(
+    pub(crate) fn new(
         fold: u32,
         request_sha256: String,
         fitted_artifact_sha256: String,
@@ -103,7 +111,6 @@ impl FoldRecord {
             fitted_artifact_sha256,
             fitting_row_ids,
             scoring_row_ids,
-            verified_in_process: status == FoldStatus::Verified,
             status,
         }
     }
@@ -130,11 +137,6 @@ impl FoldRecord {
 
     pub fn status(&self) -> FoldStatus {
         self.status
-    }
-
-    /// True only for a record that a fit produced in this process.
-    pub fn verified_in_process(&self) -> bool {
-        self.verified_in_process
     }
 }
 
@@ -331,13 +333,10 @@ impl AdmittedBundle {
     pub fn admit(
         bundle: OofPredictionBundle,
         plan: &ExpectedPlan,
-        records: &[FoldRecord],
+        records: &[VerifiedFold],
     ) -> Result<Self> {
-        ensure!(
-            records.iter().all(FoldRecord::verified_in_process),
-            "a fold record was not produced by a verified fit in this process"
-        );
-        bundle.validate_against(plan, records)?;
+        let plain: Vec<FoldRecord> = records.iter().map(|v| v.record().clone()).collect();
+        bundle.validate_against(plan, &plain)?;
         Ok(Self { bundle })
     }
 
@@ -379,7 +378,6 @@ pub(crate) fn admit_for_test(bundle: OofPredictionBundle) -> Result<AdmittedBund
                 .map(|(id, _)| id.clone())
                 .collect(),
             status: FoldStatus::Verified,
-            verified_in_process: true,
         })
         .collect();
     let plan = ExpectedPlan {
@@ -389,7 +387,11 @@ pub(crate) fn admit_for_test(bundle: OofPredictionBundle) -> Result<AdmittedBund
         group_ids: bundle.group_ids.clone(),
         classes: bundle.classes.clone(),
     };
-    AdmittedBundle::admit(bundle, &plan, &records)
+    let verified: Vec<VerifiedFold> = records
+        .into_iter()
+        .map(|record| VerifiedFold::from_verified(record).expect("test records are verified"))
+        .collect();
+    AdmittedBundle::admit(bundle, &plan, &verified)
 }
 
 fn is_sha256(text: &str) -> bool {
@@ -513,7 +515,6 @@ mod tests {
                 fitting_row_ids: vec!["row-1".into(), "row-3".into()],
                 scoring_row_ids: vec!["row-0".into(), "row-2".into()],
                 status: FoldStatus::Verified,
-                verified_in_process: true,
             },
             FoldRecord {
                 fold: 1,
@@ -522,7 +523,6 @@ mod tests {
                 fitting_row_ids: vec!["row-0".into(), "row-2".into()],
                 scoring_row_ids: vec!["row-1".into(), "row-3".into()],
                 status: FoldStatus::Verified,
-                verified_in_process: true,
             },
         ];
         (b, expected, records)

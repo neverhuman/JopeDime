@@ -104,12 +104,12 @@ pub fn run_automl(
         &plan.labels,
         identity,
         &refit.report,
-        &refit.record,
+        &refit.verified,
         budget,
     )?;
     let persisted = PersistedEnsemble {
         ensemble,
-        refit: refit.record,
+        refit: refit.verified.record().clone(),
         member_states: refit.member_states,
     };
     if let Some(path) = output {

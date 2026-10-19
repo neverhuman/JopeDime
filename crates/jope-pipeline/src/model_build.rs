@@ -24,12 +24,16 @@ pub use ensemble::{
     admit_winner_ensemble, EnsembleDisposition, ReportPredictions, WinnerEnsemble, ENSEMBLE_SCHEMA,
 };
 pub use identity::ExecutionIdentity;
-pub use refit::{refit_members, MemberRefit, OuterRefitRecord, RefitOutcome, REFIT_RECORD_SCHEMA};
+pub use refit::{
+    refit_members, MemberRefit, OuterRefitRecord, RefitOutcome, VerifiedRefit, REFIT_RECORD_SCHEMA,
+};
 
 pub use candidates::{
     bakeoff_roster, Admission, CandidateSpec, CatalogBinding, RuntimeCapability, CATALOG_BINDING,
 };
-pub use oof::{ExpectedPlan, FoldRecord, FoldStatus, OofPredictionBundle, OOF_SCHEMA};
+pub use oof::{
+    ExpectedPlan, FoldRecord, FoldStatus, OofPredictionBundle, VerifiedFold, OOF_SCHEMA,
+};
 pub use selection::{
     run_bakeoff, BakeoffPlan, BakeoffReceipt, BudgetCounters, BudgetExhausted, BudgetKind,
     CandidateFitter, CandidateReport, CandidateStatus, EvaluationBudget, FitEvidence, FoldFit,

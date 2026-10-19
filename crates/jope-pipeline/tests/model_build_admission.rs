@@ -23,6 +23,7 @@ use jope_pipeline::model_build::{
     CandidateStatus, EvaluationBudget, ExecutionIdentity, OuterRefitRecord, RefitOutcome,
     ReportPredictions, Route, VerifiedBundle,
 };
+use jope_pipeline::model_build::{AutomlOutput, FoldRecord};
 use jope_pipeline::pathway::ThinkingLevel;
 use model_build_support::*;
 use std::path::PathBuf;
@@ -174,89 +175,7 @@ fn report_ids_and_labels_of_different_lengths_are_refused_at_ensemble_admission(
         &u.selection_labels,
         &id,
         &report,
-        &outcome.record,
-        &mut EvaluationBudget::new(10),
-    );
-    assert!(result.is_err());
-}
-
-#[test]
-fn an_outer_refit_trained_on_other_selection_rows_is_refused() {
-    let u = regression_union();
-    let id = identity(&u);
-    let admitted = admitted_ridge(&u, &id);
-    let outcome = refit_ridge(&u, &id);
-    let record = forged(&outcome.record, |v| {
-        v["train_rows_sha256"] = digest_ids(&u.data.row_ids[..SELECTION - 1]).into();
-    });
-    let result = admit_winner_ensemble(
-        &admitted,
-        &u.selection_labels,
-        &id,
-        &outcome.report,
-        &record,
-        &mut EvaluationBudget::new(10),
-    );
-    assert!(result.is_err());
-}
-
-#[test]
-fn an_outer_refit_that_predicted_other_report_rows_is_refused() {
-    let u = regression_union();
-    let id = identity(&u);
-    let admitted = admitted_ridge(&u, &id);
-    let outcome = refit_ridge(&u, &id);
-    let mut shuffled = report_ids(&u);
-    shuffled.reverse();
-    let record = forged(&outcome.record, |v| {
-        v["predict_rows_sha256"] = digest_ids(&shuffled).into();
-    });
-    let result = admit_winner_ensemble(
-        &admitted,
-        &u.selection_labels,
-        &id,
-        &outcome.report,
-        &record,
-        &mut EvaluationBudget::new(10),
-    );
-    assert!(result.is_err());
-}
-
-#[test]
-fn an_outer_refit_under_another_plan_is_refused() {
-    let u = regression_union();
-    let id = identity(&u);
-    let admitted = admitted_ridge(&u, &id);
-    let outcome = refit_ridge(&u, &id);
-    let record = forged(&outcome.record, |v| {
-        v["plan_sha256"] = "4".repeat(64).into();
-    });
-    let result = admit_winner_ensemble(
-        &admitted,
-        &u.selection_labels,
-        &id,
-        &outcome.report,
-        &record,
-        &mut EvaluationBudget::new(10),
-    );
-    assert!(result.is_err());
-}
-
-#[test]
-fn an_outer_refit_that_does_not_cover_the_report_members_is_refused() {
-    let u = regression_union();
-    let id = identity(&u);
-    let admitted = admitted_ridge(&u, &id);
-    let outcome = refit_ridge(&u, &id);
-    let record = forged(&outcome.record, |v| {
-        v["members"] = serde_json::json!({});
-    });
-    let result = admit_winner_ensemble(
-        &admitted,
-        &u.selection_labels,
-        &id,
-        &outcome.report,
-        &record,
+        &outcome.verified,
         &mut EvaluationBudget::new(10),
     );
     assert!(result.is_err());
@@ -278,7 +197,7 @@ fn a_genuine_refit_record_with_altered_report_predictions_is_refused() {
         &u.selection_labels,
         &id,
         &altered,
-        &outcome.record,
+        &outcome.verified,
         &mut EvaluationBudget::new(10),
     );
     assert!(refused.is_err());
@@ -287,7 +206,7 @@ fn a_genuine_refit_record_with_altered_report_predictions_is_refused() {
         &u.selection_labels,
         &id,
         &outcome.report,
-        &outcome.record,
+        &outcome.verified,
         &mut EvaluationBudget::new(10),
     );
     assert!(genuine.is_ok());
@@ -315,7 +234,7 @@ fn a_member_whose_rows_differ_from_the_identity_is_refused() {
         &u.selection_labels,
         &id,
         &outcome.report,
-        &outcome.record,
+        &outcome.verified,
         &mut EvaluationBudget::new(10),
     );
     assert!(result.is_err());
@@ -401,17 +320,6 @@ fn the_outer_refit_budget_refuses_before_any_refit_starts() {
     );
     assert!(result.is_err());
     assert_eq!(budget.counters().outer_refits, 0);
-}
-
-#[test]
-fn a_state_that_does_not_hash_to_its_refit_record_is_refused() {
-    let u = regression_union();
-    let id = identity(&u);
-    let outcome = refit_ridge(&u, &id);
-    let mut states = outcome.member_states.clone();
-    states.get_mut("rust.ridge").unwrap().push(b' ');
-    assert!(outcome.record.verify_states(&states).is_err());
-    assert!(outcome.record.verify_states(&outcome.member_states).is_ok());
 }
 
 #[test]
@@ -730,44 +638,145 @@ fn a_fold_start_is_measured_once_and_a_repeat_start_is_refused() {
     assert!(fitter.fit_predict(&spec, &train, &predict).is_err());
 }
 
-/// SC-DEC-184W seal: a genuine outer-refit record, after a serde round trip, has the same content
-/// but no provenance, and admission refuses it.
-#[test]
-fn a_deserialised_outer_refit_record_is_refused_by_admission() {
-    let u = regression_union();
-    let id = identity(&u);
-    let admitted = admitted_ridge(&u, &id);
-    let genuine = refit_ridge(&u, &id);
-    let json = serde_json::to_string(&genuine.record).unwrap();
-    let decoded: OuterRefitRecord = serde_json::from_str(&json).unwrap();
-    assert_eq!(decoded, genuine.record, "the round trip keeps the content");
-    let refused = admit_winner_ensemble(
-        &admitted,
-        &u.selection_labels,
-        &id,
-        &genuine.report,
-        &decoded,
-        &mut EvaluationBudget::new(10),
-    );
-    let message = refused
-        .expect_err("a deserialised record must not be admitted")
-        .to_string();
-    assert!(message.contains("refit_members"), "{message}");
-    assert!(admit_winner_ensemble(
-        &admitted,
-        &u.selection_labels,
-        &id,
-        &genuine.report,
-        &genuine.record,
-        &mut EvaluationBudget::new(10),
+/// The genuine run over the regression union, without an output path.
+fn genuine_run(u: &Union, id: &ExecutionIdentity, fitter: &NativeFitter) -> AutomlOutput {
+    run_automl(
+        &plan(Task::Regression, u),
+        &roster_of(Task::Regression, &["rust.ridge"]),
+        fitter,
+        id,
+        &report_ids(u),
+        &u.report_labels,
+        &mut EvaluationBudget::new(20),
+        None,
     )
-    .is_ok());
+    .unwrap()
 }
 
-/// SC-DEC-184W seal: a fold record read from JSON cannot be used to admit a bundle.
+/// Restores each member from its state bytes and predicts the report rows.
+fn restorer(fitter: &NativeFitter) -> impl Fn(&str, &[u8]) -> anyhow::Result<Predictions> + '_ {
+    move |_id, bytes| {
+        let model = NativeFitter::restore_state(bytes)?;
+        Ok(Predictions::Values(
+            fitter.predict_rows(&model, &report_rows())?,
+        ))
+    }
+}
+
+/// Reloads the genuine persisted ensemble after editing its refit record's serialised form. The
+/// reload runs the content checks, so each forgery must be refused by them. Returns the refusal.
+fn reload_after_edit(
+    u: &Union,
+    id: &ExecutionIdentity,
+    edit: impl FnOnce(&mut serde_json::Value),
+) -> String {
+    let fitter = split_fitter(Task::Regression, u, id);
+    let out = genuine_run(u, id, &fitter);
+    let mut persisted = out.persisted.clone().unwrap();
+    persisted.refit = forged(&persisted.refit, edit);
+    let report = out.report.clone().unwrap();
+    let result = artifact::verify_reload(
+        &persisted,
+        id,
+        &admitted_ridge(u, id),
+        &u.selection_labels,
+        &report,
+        &mut EvaluationBudget::new(20),
+        &restorer(&fitter),
+    );
+    let refusal = result.expect_err("a forged refit record must not reload");
+    refusal.to_string()
+}
+
 #[test]
-fn a_deserialised_fold_record_is_refused_by_bundle_admission() {
-    use jope_pipeline::model_build::FoldRecord;
+fn an_outer_refit_trained_on_other_selection_rows_is_refused() {
+    let u = regression_union();
+    let id = identity(&u);
+    let message = reload_after_edit(&u, &id, |v| {
+        v["train_rows_sha256"] = digest_ids(&u.data.row_ids[..SELECTION - 1]).into();
+    });
+    assert!(message.contains("trained on rows"), "{message}");
+}
+
+#[test]
+fn an_outer_refit_that_predicted_other_report_rows_is_refused() {
+    let u = regression_union();
+    let id = identity(&u);
+    let mut shuffled = report_ids(&u);
+    shuffled.reverse();
+    let message = reload_after_edit(&u, &id, |v| {
+        v["predict_rows_sha256"] = digest_ids(&shuffled).into();
+    });
+    assert!(message.contains("predicted rows"), "{message}");
+}
+
+#[test]
+fn an_outer_refit_under_another_plan_is_refused() {
+    let u = regression_union();
+    let id = identity(&u);
+    let message = reload_after_edit(&u, &id, |v| {
+        v["plan_sha256"] = "4".repeat(64).into();
+    });
+    assert!(message.contains("different plan"), "{message}");
+}
+
+#[test]
+fn an_outer_refit_that_does_not_cover_the_report_members_is_refused() {
+    let u = regression_union();
+    let id = identity(&u);
+    let message = reload_after_edit(&u, &id, |v| {
+        v["members"] = serde_json::json!({});
+    });
+    assert!(message.contains("cover"), "{message}");
+}
+
+#[test]
+fn a_state_that_does_not_hash_to_its_refit_record_is_refused() {
+    let u = regression_union();
+    let id = identity(&u);
+    let fitter = split_fitter(Task::Regression, &u, &id);
+    let persisted = genuine_run(&u, &id, &fitter).persisted.unwrap();
+    let mut states = persisted.member_states.clone();
+    states.get_mut("rust.ridge").unwrap().push(b' ');
+    assert!(persisted.refit.verify_states(&states).is_err());
+    assert!(persisted
+        .refit
+        .verify_states(&persisted.member_states)
+        .is_ok());
+}
+
+/// A serialised outer-refit record reloads, and its content is unchanged. Admission takes a
+/// `VerifiedRefit`, which only `refit_members` produces, so a deserialised record has no path to
+/// admission. That is a compile-time guarantee, checked by the `compile_fail` examples on
+/// `VerifiedRefit`.
+#[test]
+fn a_serialised_outer_refit_record_reloads_without_gaining_admission() {
+    let u = regression_union();
+    let id = identity(&u);
+    let fitter = split_fitter(Task::Regression, &u, &id);
+    let out = genuine_run(&u, &id, &fitter);
+    let mut persisted = out.persisted.clone().unwrap();
+    let json = serde_json::to_string(&persisted.refit).unwrap();
+    let decoded: OuterRefitRecord = serde_json::from_str(&json).unwrap();
+    assert_eq!(decoded, persisted.refit, "the round trip keeps the content");
+    persisted.refit = decoded;
+    artifact::verify_reload(
+        &persisted,
+        &id,
+        &admitted_ridge(&u, &id),
+        &u.selection_labels,
+        out.report.as_ref().unwrap(),
+        &mut EvaluationBudget::new(20),
+        &restorer(&fitter),
+    )
+    .unwrap();
+}
+
+/// A serialised fold record keeps its content. Bundle admission takes a `VerifiedFold`, which only
+/// a verified fit produces, so a deserialised record has no path to admission. The
+/// `compile_fail` examples on `VerifiedFold` check that at compile time.
+#[test]
+fn a_serialised_fold_record_keeps_its_content_and_has_no_admission_path() {
     let u = regression_union();
     let id = identity(&u);
     let expected = expected_plan(&plan(Task::Regression, &u));
@@ -775,20 +784,20 @@ fn a_deserialised_fold_record_is_refused_by_bundle_admission() {
     let decoded: Vec<FoldRecord> = verified
         .records
         .iter()
-        .map(|r| serde_json::from_str(&serde_json::to_string(r).unwrap()).unwrap())
+        .map(|v| serde_json::from_str(&serde_json::to_string(v.record()).unwrap()).unwrap())
         .collect();
-    assert_eq!(
-        decoded, verified.records,
-        "the round trip keeps the content"
-    );
-    assert!(AdmittedBundle::admit(verified.bundle.clone(), &expected, &decoded).is_err());
+    let original: Vec<FoldRecord> = verified
+        .records
+        .iter()
+        .map(|v| v.record().clone())
+        .collect();
+    assert_eq!(decoded, original, "the round trip keeps the content");
     assert!(AdmittedBundle::admit(verified.bundle.clone(), &expected, &verified.records).is_ok());
 }
 
-/// A record read back from disk reloads and verifies against its persisted states, but it still
-/// cannot be admitted to a new ensemble.
+/// A record read back from disk reloads and verifies against its persisted states.
 #[test]
-fn a_record_read_back_from_disk_reloads_but_is_not_admitted() {
+fn a_record_read_back_from_disk_reloads() {
     let u = regression_union();
     let id = identity(&u);
     let fitter = split_fitter(Task::Regression, &u, &id);
@@ -807,33 +816,16 @@ fn a_record_read_back_from_disk_reloads_but_is_not_admitted() {
         Some(&path),
     )
     .unwrap();
-    let report = out.report.clone().unwrap();
     let read_back = artifact::read(&path).unwrap();
     assert_eq!(read_back, out.persisted.clone().unwrap());
-    let admitted = admitted_ridge(&u, &id);
-    let restore = |_: &str, bytes: &[u8]| -> anyhow::Result<Predictions> {
-        let model = NativeFitter::restore_state(bytes)?;
-        Ok(Predictions::Values(
-            fitter.predict_rows(&model, &report_rows())?,
-        ))
-    };
     artifact::verify_reload(
         &read_back,
         &id,
-        &admitted,
+        &admitted_ridge(&u, &id),
         &u.selection_labels,
-        &report,
+        out.report.as_ref().unwrap(),
         &mut EvaluationBudget::new(20),
-        &restore,
+        &restorer(&fitter),
     )
     .unwrap();
-    assert!(admit_winner_ensemble(
-        &admitted,
-        &u.selection_labels,
-        &id,
-        &report,
-        &read_back.refit,
-        &mut EvaluationBudget::new(20),
-    )
-    .is_err());
 }

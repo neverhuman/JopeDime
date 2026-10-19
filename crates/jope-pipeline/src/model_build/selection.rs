@@ -10,7 +10,9 @@
 //! only from verified fit evidence: a refusal before start counts zero, and any unknown
 //! evidence makes the total unknown rather than zero.
 use super::candidates::{Admission, CandidateSpec, RuntimeCapability};
-use super::oof::{ExpectedPlan, FoldRecord, FoldStatus, OofPredictionBundle, OOF_SCHEMA};
+use super::oof::{
+    ExpectedPlan, FoldRecord, FoldStatus, OofPredictionBundle, VerifiedFold, OOF_SCHEMA,
+};
 use crate::evaluation_score::{score_predictions, Predictions};
 use crate::experiment::Metric;
 use anyhow::{bail, ensure, Result};
@@ -412,7 +414,7 @@ pub struct BakeoffOutput {
 #[derive(Clone, Debug, PartialEq)]
 pub struct VerifiedBundle {
     pub bundle: OofPredictionBundle,
-    pub records: Vec<FoldRecord>,
+    pub records: Vec<VerifiedFold>,
 }
 
 enum Outcome {
@@ -421,7 +423,7 @@ enum Outcome {
         mean_fold_loss: f64,
         pooled_oof_loss: f64,
         bundle: Box<OofPredictionBundle>,
-        records: Vec<FoldRecord>,
+        records: Vec<VerifiedFold>,
         physical_starts: u64,
     },
     Unverified {
@@ -577,7 +579,7 @@ fn evaluate(
             }
         };
         fold_losses.push(loss);
-        records.push(FoldRecord::verified(
+        records.push(FoldRecord::new(
             fold,
             request,
             fit.fitted_artifact_sha256,
@@ -623,12 +625,18 @@ fn evaluate(
         classes: plan.classes.clone(),
     };
     bundle.validate_against(&expected, &records)?;
+    let verified: Vec<VerifiedFold> = records
+        .iter()
+        .cloned()
+        .map(VerifiedFold::from_verified)
+        .collect::<Option<_>>()
+        .ok_or_else(|| anyhow::anyhow!("a scored candidate carries an unverified fold record"))?;
     Ok(Outcome::Scored {
         fold_losses,
         mean_fold_loss,
         pooled_oof_loss,
         bundle: Box::new(bundle),
-        records,
+        records: verified,
         physical_starts: starts.unwrap_or(0),
     })
 }

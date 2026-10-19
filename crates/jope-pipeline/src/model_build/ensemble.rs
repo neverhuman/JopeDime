@@ -17,7 +17,7 @@
 //! labelled with its basis; it never changes the weights or the disposition.
 use super::identity::{digest_ids, ExecutionIdentity};
 use super::oof::AdmittedBundle;
-use super::refit::{predictions_digest, OuterRefitRecord, REFIT_RECORD_SCHEMA};
+use super::refit::{predictions_digest, OuterRefitRecord, VerifiedRefit, REFIT_RECORD_SCHEMA};
 use super::selection::{BudgetKind, EvaluationBudget};
 use crate::evaluation_score::{score_predictions, validate_probabilities, Predictions};
 use anyhow::{bail, ensure, Result};
@@ -145,14 +145,10 @@ pub fn admit_winner_ensemble(
     selection_labels: &[String],
     identity: &ExecutionIdentity,
     report: &ReportPredictions,
-    refit: &OuterRefitRecord,
+    refit: &VerifiedRefit,
     budget: &mut EvaluationBudget,
 ) -> Result<WinnerEnsemble> {
-    ensure!(
-        refit.verified_in_process(),
-        "the outer refit record was not produced by refit_members in this process"
-    );
-    check_refit(identity, report, refit)?;
+    check_refit(identity, report, refit.record())?;
     build_winner_ensemble(admitted, selection_labels, identity, report, budget)
 }
 

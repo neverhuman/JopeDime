@@ -63,7 +63,7 @@ fn a_single_admitted_member_is_not_an_ensemble() {
         &u.selection_labels,
         &id,
         &refit.report,
-        &refit.record,
+        &refit.verified,
         &mut EvaluationBudget::new(10),
     )
     .unwrap();
@@ -84,7 +84,7 @@ fn an_exhausted_ensemble_budget_refuses_the_attempt() {
         &u.selection_labels,
         &id,
         &refit.report,
-        &refit.record,
+        &refit.verified,
         &mut EvaluationBudget::with_limits(BudgetCounters {
             ensemble_attempts: 0,
             ..BudgetCounters::UNLIMITED
