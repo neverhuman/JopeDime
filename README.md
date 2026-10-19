@@ -31,7 +31,7 @@ program-library and checkpoint views with source identities, observation age and
 | Workspace | 27 members: 20 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,570 listed in 26 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,571 listed in 26 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
 | Coverage map | 780 items over 25 lanes <sup>7</sup> |
