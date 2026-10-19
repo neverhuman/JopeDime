@@ -72,7 +72,7 @@
       "deps": [
         "C01"
       ],
-      "state": "in_progress_bounded_transport_locally_tested_runtime_publication_pending",
+      "state": "in_progress_complete_pinned_download_locally_tested_runtime_publication_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C03 \u2014 P02 immutable encoder/policy release set"
@@ -105,6 +105,12 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1850/c03-unknown-version/LOCAL_TEST_RECEIPT.json",
           "sha256": "a24ea44dfe489991decd57061b67d1dac9fc8581a63d09487dcf582af11a6a05",
           "qualification": "Actual unknown-version NoSuchVersion404->pinnedabsenceNone/callerrefusal and InvalidArgument400->Err exercised, no retries/fallback.49datasetlibrarytests/19boundedfixtures pass locally; productionStore bytes unchanged from f544 and11modelrelease tests remain valid at identical source. ScopedclippyPASS. Reviewf544 prompt invented fixture/receipt names are retracted rather than fabricated."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-1949/c03-download/SOURCE_DELIVERY.json",
+          "sha256": "79338bf71c4b72a0c9da5a003d2173c36fde8c3bea8fd35b38f39fa4e9281127",
+          "commit_sha": "7d7e8aa7dd49d743e43f30150173fab05c1ea95f",
+          "qualification": "Complete exact-VersionId model-layer download API with shared deadline and preflighted metadata/payload budgets.17release tests pass including6newcaller cases,0failed/skipped/3unrelatedexcluded; scoped datasets/models clippy-Dwarnings/fmt/prose/diff PASS. Earlier49dataset library cases at unchangedsource are retained, not rerun. Emptyrealregistry/cacheCLI/licence/runtime/neuralexecutor/finalreview stillOPEN."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C03"
@@ -518,5 +524,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T19:45:40.962502+00:00"
+  "last_evidence_update_utc": "2026-10-19T20:01:39.095678+00:00"
 }
