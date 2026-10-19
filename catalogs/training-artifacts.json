@@ -59,8 +59,18 @@
     },
     {
       "bytes": 329860,
-      "current_local_exists": false,
-      "evidence_level": "GIT_PIN_FOUND_LOCAL_FILE_MISSING",
+      "current_local_exists": true,
+      "current_local_path": "/home/ubuntu/jope-evidence/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
+      "current_local_verified_utc": "2026-10-19T12:56:28Z",
+      "derived_relocated_spec": {
+        "bytes": 329986,
+        "campaign_copy_path": "/home/ubuntu/jope-evidence/campaigns/flywheel_native_derived_20261019T1301Z/derived_spec.json",
+        "parent_sha256": "05dc9558e36461068832b449cedff46123376e3567b9c011e7d74f9b8a8018ee",
+        "proof_sha256": "a7e23b74a9fe6ad129cd3b76c57f9ee83e2e0cf8b62d60a66c3e3b2cc68d2ffc",
+        "scope": "Only the 9 payload locators changed from /home/ubuntu/jopedime_probe_exp to /home/ubuntu/jope-evidence/jopedime_probe_exp. Authority pins, roles, splits, 7,120 context membership (3c42b763...) and 6,899 teacher programs (5818302f...) are unchanged. Never label this spec as 05dc9558....",
+        "sha256": "8748aad6140015d911438ebe0c48edc3c3adcdb6cbd62fb2b1387761c4801b8d"
+      },
+      "evidence_level": "GIT_PIN_FOUND_LOCAL_RECOVERED_SHA_VERIFIED",
       "historical_local_path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
       "id": "historical-20261009-neural-snapshot-pin",
       "scope": "Historical bounded research approval expires with its original run; not current production or GPU dispatch approval.",
@@ -135,6 +145,31 @@
       "scope": "Bounded 300-round per GPU (xbabe1 seed 105, xbabe2 seed 205, xbabe3 seed 315; 900 total rounds, 8,100 case evaluations) gpr_cuda_bench --verify-envelope wave on Sberbank S3 cut-0 (dataset.parquet VersionId 700u27HTJgxZwidGhVh3k98Q4bBEW35D) executed at source fd1c0f065138bb68f6786aa77494890f05dbe5d2 with binary 14418e6e... and cases 88f7151c... matching Track C. All 900 round output hashes and 8,100 rows verified parity_pass on beyondarena:sberbank_housing_market_forecasting; the 900 null s3_sberbank_row summary fields come from run_mr10_gpu_e2_s3.py:73 querying case_id instead of id/context and are retained as history. Benchmark repetitions/seed labels and numerical parity are not MR10's full scientific solver/challenger/I65 qualification; MR10 gate remains PARTIAL.",
       "sha256": "53a5bba05bc7d16e9788fc67a7060bfc36b11aadbca900f2e7d6b270617b3976",
       "version_id": "mfMvFeDeaxhVi0aQMYO9E_qo3X2q2xfo"
+    },
+    {
+      "actual_run_source_commit": "c956b163105f93cb8a2f589e402ed6655e1a1906",
+      "bytes": 37872544,
+      "config_sha256": "9a61ed7c1e26564d52335864ce800159d78e2b12af932b7a91de8df7967c16d5",
+      "decoded_tar_bytes": 113356800,
+      "decoded_tar_sha256": "3d580dd25b26aa59f9e44b74f15f145ee07b273a9cd723f380c8ea8353c26c2f",
+      "derived_spec_sha256": "8748aad6140015d911438ebe0c48edc3c3adcdb6cbd62fb2b1387761c4801b8d",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_INDEPENDENT_ALL_MEMBER_RESTORE_VERIFIED",
+      "final_checkpoint_state_sha256": "d412f7b67e2130dc95a63021c6894940b3f081f0021aa3e4c564aa90e400e5b3",
+      "final_parameter_sha256": "b888b5d66fda926c3609fa068a42a022a079e2d4bbc8db3b5badec8f51acaf20",
+      "id": "native-neural-kumos-derived-20261019T1303Z-results",
+      "index_bytes": 329644,
+      "index_s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/caa403e30b375523eabee53a3364a278e81e49d0199d9b7ee28984f7cd1b7033",
+      "index_sha256": "caa403e30b375523eabee53a3364a278e81e49d0199d9b7ee28984f7cd1b7033",
+      "index_version_id": "k6MsuXqpWU8IkpcLa6YeJ_E_8TIgf6tc",
+      "initial_parameter_sha256": "dfc7e3b33a6e3ae8fdd957e819cf487925b56c756a8d99c96f462b56d250aaae",
+      "parent_spec_sha256": "05dc9558e36461068832b449cedff46123376e3567b9c011e7d74f9b8a8018ee",
+      "payload_bytes": 111977435,
+      "payload_files": 1769,
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/c00d4298f18ce1912333208620adf92c4a4ea16cf0b98e45548c7ca1d558b5f3",
+      "scope": "Completed 1-epoch (429 optimizer steps, 6,857/6,857 eligible train contexts, 263/263 validation contexts, 858 durable outbox proposals with 0 synthesized rewards) bounded native neural campaign on xbabe2 cuda:0 at source c956b163105f93cb8a2f589e402ed6655e1a1906 using derived spec 8748aad6... (parent 05dc9558...). Fixed-panel train_loss 4.453104 -> 1.427419, validation_loss 4.394558 -> 1.381380; full 263-context validation loss 1.343791. Retained initial 1301Z failed launch (fatal.json ModuleNotFoundError safetensors due to inner sudo systemd-run HOME=/root reset) in archive under retained_failed_1301Z/.",
+      "sha256": "c00d4298f18ce1912333208620adf92c4a4ea16cf0b98e45548c7ca1d558b5f3",
+      "validation_epoch_0001_sha256": "9733a1d64745a74a7a976c0991de4ab833c9cb52d88adee243a9f5e1bdc2ef92",
+      "version_id": "kT75BjrKunTtldV5e_dwm50_zCns5sNZ"
     }
   ],
   "corrections": [
