@@ -280,6 +280,11 @@ impl Budget {
     /// Opt-in I16 resource vector. This does not change legacy search admission
     /// or make an in-process fit preemptible. Callers reserve all other stages
     /// and terminal headroom separately in the original experiment window.
+    ///
+    /// This is the finite legacy cap: `AttemptWallMicros` is `seconds` (300 by default) and
+    /// `CpuCoreMicros` is that wall times the CPU slots. A caller on the reasoner no-time-limit
+    /// path must use [`Budget::resource_cap_no_time_limit_v1`] instead, which never produces
+    /// these two units. See `the_no_time_limit_cap_never_carries_the_legacy_300s_wall`.
     pub fn resource_cap_v1(
         &self,
         cpu_slots: u64,
@@ -301,6 +306,24 @@ impl Budget {
                 Unit::CpuCoreMicros,
                 wall.checked_mul(cpu_slots).context("CPU cap overflow")?,
             ),
+            (Unit::PeakMemoryBytes, memory_bytes),
+            (Unit::Evaluations, u64::try_from(self.evaluations)?),
+        ]))
+    }
+
+    /// The cap for the reasoner no-time-limit policy. It carries the evaluation and memory bounds
+    /// only. `AttemptWallMicros` and `CpuCoreMicros` are not produced, so no finite wall or CPU
+    /// limit is encoded. The ledger refuses reservations of units a cap does not name, so a caller
+    /// on this path must not reserve those two units. Measured wall time is still recorded by
+    /// `Observation::resource_cost_v1`.
+    pub fn resource_cap_no_time_limit_v1(
+        &self,
+        memory_bytes: u64,
+    ) -> Result<crate::resource_ledger::Amounts> {
+        use crate::resource_ledger::{Amounts, Unit};
+        self.check_evaluations()?;
+        ensure!(memory_bytes > 0, "empty resource allocation");
+        Ok(Amounts::new([
             (Unit::PeakMemoryBytes, memory_bytes),
             (Unit::Evaluations, u64::try_from(self.evaluations)?),
         ]))
@@ -1958,6 +1981,37 @@ mod tests {
                 .all(|s| s.stopped_by == STOPPED_BY_SECONDS
                     && s.comparison.completed_evaluations == 0)
         );
+    }
+
+    /// Guard for the no-time-limit cap. It must not carry the legacy 300 s wall, the 600 s
+    /// maximum, `u64::MAX`, or any wall or CPU unit. The legacy `resource_cap_v1` still produces
+    /// the finite 300 s wall, pinned here so the two stay distinct.
+    #[test]
+    fn the_no_time_limit_cap_never_carries_the_legacy_300s_wall() {
+        use crate::resource_ledger::Unit;
+        let budget = Budget {
+            evaluations: 64,
+            seconds: 300,
+        };
+        let cap = budget.resource_cap_no_time_limit_v1(1 << 30).unwrap();
+        assert_eq!(cap.0.get(&Unit::AttemptWallMicros), None);
+        assert_eq!(cap.0.get(&Unit::CpuCoreMicros), None);
+        assert!(
+            cap.0
+                .values()
+                .all(|&v| v != 300_000_000 && v != 600_000_000 && v != u64::MAX),
+            "a finite wall-like value leaked into the no-time-limit cap: {:?}",
+            cap.0
+        );
+        assert_eq!(cap.0.get(&Unit::Evaluations), Some(&64));
+        assert_eq!(cap.0.get(&Unit::PeakMemoryBytes), Some(&(1 << 30)));
+        assert!(budget.resource_cap_no_time_limit_v1(0).is_err());
+        assert!(Budget { evaluations: 0, seconds: 300 }
+            .resource_cap_no_time_limit_v1(1)
+            .is_err());
+        let legacy = budget.resource_cap_v1(2, 1 << 30).unwrap();
+        assert_eq!(legacy.get(Unit::AttemptWallMicros), 300_000_000);
+        assert_eq!(legacy.get(Unit::CpuCoreMicros), 600_000_000);
     }
 
     /// `Some` is the legacy bound, and `without_time_limit` yields `None`. Unlimited is never a
