@@ -108,7 +108,7 @@ pub struct FitEffect {
     pub fuel: u64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Action {
     Column(ColumnRef),
     Union(Vec<usize>),
@@ -129,12 +129,27 @@ pub enum Action {
     /// Row-wise finite affine transform of every value in the input.
     Affine {
         input: usize,
-        scale: f64,
-        offset: f64,
+        scale: crate::kernel::ir::canon::ExactF64,
+        offset: crate::kernel::ir::canon::ExactF64,
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+/// Decode the exact affine parameters. A malformed or non-finite value is refused.
+fn affine_parameters(
+    id: usize,
+    scale: &crate::kernel::ir::canon::ExactF64,
+    offset: &crate::kernel::ir::canon::ExactF64,
+) -> Result<(f64, f64), GraphError> {
+    let scale = scale
+        .value()
+        .map_err(|e| GraphError::InvalidGraph(format!("node {id} affine scale: {e}")))?;
+    let offset = offset
+        .value()
+        .map_err(|e| GraphError::InvalidGraph(format!("node {id} affine offset: {e}")))?;
+    Ok((scale, offset))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Node {
     pub action: Action,
     pub fit_effect: Option<FitEffect>,
@@ -221,7 +236,7 @@ pub struct Validation {
     pub shared_fit_ids: Vec<String>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Program {
     pub abi: u16,
     pub nodes: Vec<Node>,
@@ -400,11 +415,7 @@ impl Program {
                 })?
             }
             Action::Affine { scale, offset, .. } => {
-                if !scale.is_finite() || !offset.is_finite() {
-                    return Err(GraphError::InvalidGraph(format!(
-                        "node {id} affine parameters must be finite"
-                    )));
-                }
+                affine_parameters(id, scale, offset)?;
                 child_widths[0]
             }
         };
@@ -613,6 +624,7 @@ impl Program {
                 scale,
                 offset,
             } => {
+                let (scale, offset) = affine_parameters(id, scale, offset)?;
                 let source = self.evaluate_node(*source, input, validation, cache, counts)?;
                 Matrix {
                     rows: source.rows,

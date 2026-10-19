@@ -510,6 +510,14 @@ impl InputSchema {
         &self,
     ) -> std::result::Result<crate::combinators::union::Schema, crate::combinators::union::GraphError>
     {
+        self.validate()
+            .map_err(|e| crate::combinators::union::GraphError::InvalidSchema(e.to_string()))?;
+        if self.rows != RowSemantics::Iid {
+            return Err(crate::combinators::union::GraphError::InvalidSchema(
+                "pure-feature semantic-key schema requires Iid row semantics; Ordered requires ordered-row execution"
+                    .into(),
+            ));
+        }
         crate::combinators::union::Schema::new(self.columns.clone())
     }
 
@@ -523,5 +531,340 @@ impl InputSchema {
     > {
         let schema = self.semantic_key_schema()?;
         crate::combinators::union::ColumnRef::bind(&schema, key)
+    }
+}
+
+impl ProgramGraph {
+    /// Opt-in pure-feature route. Lowers the supported subset of `nodes` into a bounded
+    /// `combinators::union::Program`. `lower()` and the default identity are unchanged.
+    ///
+    /// Supported: `Input` (raw, not lowered on its own), `Columns` and single-column
+    /// `Scalar` over a raw `Input`, and `Stack` over lowered members. Refused: `Operator`,
+    /// `Residual`, affine `Scalar`, non-column `Scalar` expressions, and any node that is not
+    /// reachable from the output.
+    pub fn lower_pure_feature_dag(
+        &self,
+        limits: &Constraints,
+        dag_limits: crate::combinators::union::Limits,
+    ) -> Result<crate::combinators::union::Program> {
+        use crate::combinators::union::{Action, Node as UNode, Program};
+        if self.schema != GRAPH_SCHEMA || self.version != 1 {
+            return Err("pure feature DAG: graph schema or version differs".into());
+        }
+        if self.profile_id != registry_v2::PROFILE_ID
+            || self.profile_revision != registry_v2::REVISION
+            || self.registry_sha256 != registry_v2::source_sha256()
+        {
+            return Err("pure feature DAG: profile or registry identity differs".into());
+        }
+        self.input_schema.validate()?;
+        if self.input_schema.rows != RowSemantics::Iid {
+            return Err("pure feature DAG requires Iid row semantics".into());
+        }
+        let n = self.nodes.len();
+        if n == 0 || n > limits.max_nodes || self.output >= n {
+            return Err("pure feature DAG: node bound or output out of range".into());
+        }
+        let mut edges = 0usize;
+        for (index, node) in self.nodes.iter().enumerate() {
+            let deps = match node {
+                Node::Input => Vec::new(),
+                Node::Columns { input, .. } | Node::Scalar { input, .. } => vec![*input],
+                Node::Stack { members } => members.clone(),
+                Node::Operator { .. } | Node::Residual { .. } => {
+                    return Err(format!(
+                        "pure feature DAG refuses node {index}: operator and residual nodes need fit or label scope"
+                    ));
+                }
+            };
+            for dep in &deps {
+                if *dep >= index {
+                    return Err(format!(
+                        "pure feature DAG: node {index} depends on {dep}, not earlier"
+                    ));
+                }
+            }
+            edges = edges.saturating_add(deps.len());
+        }
+        if edges > limits.max_edges {
+            return Err("pure feature DAG: edge bound".into());
+        }
+        // Full reachability from the output, so no node is silently dropped.
+        let mut reachable = vec![false; n];
+        let mut stack = vec![self.output];
+        while let Some(index) = stack.pop() {
+            if reachable[index] {
+                continue;
+            }
+            reachable[index] = true;
+            match &self.nodes[index] {
+                Node::Input => {}
+                Node::Columns { input, .. } | Node::Scalar { input, .. } => stack.push(*input),
+                Node::Stack { members } => stack.extend(members.iter().copied()),
+                Node::Operator { .. } | Node::Residual { .. } => unreachable!("refused above"),
+            }
+        }
+        if reachable.iter().any(|seen| !seen) {
+            return Err("pure feature DAG: every node must be reachable from the output".into());
+        }
+
+        let mut out: Vec<UNode> = Vec::new();
+        // For each graph node: the union node that carries it, or None for the raw input.
+        let mut map: Vec<Option<usize>> = vec![None; n];
+        for (index, node) in self.nodes.iter().enumerate() {
+            match node {
+                Node::Input => {}
+                Node::Columns { input, columns } => {
+                    if !matches!(self.nodes[*input], Node::Input) {
+                        return Err(format!(
+                            "pure feature DAG: Columns node {index} must read the raw input"
+                        ));
+                    }
+                    if columns.is_empty() {
+                        return Err(format!("pure feature DAG: Columns node {index} is empty"));
+                    }
+                    let mut members = Vec::with_capacity(columns.len());
+                    for column in columns {
+                        column.validate(&self.input_schema)?;
+                        let bound = self
+                            .input_schema
+                            .bind_semantic_column(&column.key)
+                            .map_err(|e| e.to_string())?;
+                        out.push(UNode::new(Action::Column(bound)));
+                        members.push(out.len() - 1);
+                    }
+                    out.push(UNode::new(Action::ConcatFeatures(members)));
+                    map[index] = Some(out.len() - 1);
+                }
+                Node::Scalar {
+                    input,
+                    expression,
+                    affine,
+                } => {
+                    if *affine {
+                        return Err(format!(
+                            "pure feature DAG refuses affine Scalar node {index}: needs the scalar expression scope"
+                        ));
+                    }
+                    if !matches!(self.nodes[*input], Node::Input) {
+                        return Err(format!(
+                            "pure feature DAG: Scalar node {index} must read the raw input"
+                        ));
+                    }
+                    let crate::kernel::ir::graph::Expression::Column { column } = expression else {
+                        return Err(format!(
+                            "pure feature DAG refuses Scalar node {index}: only a bare column expression is lowered"
+                        ));
+                    };
+                    column.validate(&self.input_schema)?;
+                    let bound = self
+                        .input_schema
+                        .bind_semantic_column(&column.key)
+                        .map_err(|e| e.to_string())?;
+                    out.push(UNode::new(Action::Column(bound)));
+                    map[index] = Some(out.len() - 1);
+                }
+                Node::Stack { members } => {
+                    let mut lowered = Vec::with_capacity(members.len());
+                    for member in members {
+                        match map[*member] {
+                            Some(union_index) => lowered.push(union_index),
+                            None => {
+                                return Err(format!(
+                                    "pure feature DAG: Stack node {index} member {member} is the raw input"
+                                ))
+                            }
+                        }
+                    }
+                    if lowered.is_empty() {
+                        return Err(format!("pure feature DAG: Stack node {index} is empty"));
+                    }
+                    out.push(UNode::new(Action::ConcatFeatures(lowered)));
+                    map[index] = Some(out.len() - 1);
+                }
+                Node::Operator { .. } | Node::Residual { .. } => unreachable!("refused above"),
+            }
+        }
+        let output = map[self.output].ok_or_else(|| {
+            "pure feature DAG: output must be a feature node, not the raw input".to_string()
+        })?;
+        Ok(Program {
+            abi: Program::ABI,
+            nodes: out,
+            output,
+            limits: dag_limits,
+        })
+    }
+
+    /// Lower and evaluate in one step. Every node is counted, and the cache is invocation-local.
+    pub fn evaluate_pure_feature_dag_counted(
+        &self,
+        input: &crate::combinators::union::DenseInput,
+        limits: &Constraints,
+        dag_limits: crate::combinators::union::Limits,
+    ) -> Result<(
+        crate::combinators::union::Matrix,
+        crate::combinators::union::Validation,
+        Vec<usize>,
+    )> {
+        let program = self.lower_pure_feature_dag(limits, dag_limits)?;
+        program
+            .evaluate_counted(input)
+            .map_err(|error| error.to_string())
+    }
+}
+
+#[cfg(test)]
+mod pure_dag_tests {
+    use super::*;
+    use crate::combinators::union::{DenseInput, Limits};
+
+    fn constraints() -> Constraints {
+        Constraints {
+            max_nodes: 64,
+            max_edges: 256,
+            max_depth: 64,
+            max_width: 64,
+            max_bytes: 1 << 20,
+        }
+    }
+
+    fn dag_limits() -> Limits {
+        Limits {
+            max_nodes: 64,
+            max_width: 64,
+            max_depth: 64,
+            max_rows: 1000,
+            max_fuel: 1_000_000,
+        }
+    }
+
+    fn column(schema: &InputSchema, index: usize) -> ColumnRef {
+        ColumnRef {
+            schema_id: schema.identity().unwrap(),
+            index,
+            key: schema.columns[index].clone(),
+        }
+    }
+
+    fn graph(schema: InputSchema, nodes: Vec<Node>, output: usize) -> ProgramGraph {
+        ProgramGraph {
+            schema: GRAPH_SCHEMA.into(),
+            version: 1,
+            input_schema: schema,
+            profile_id: registry_v2::PROFILE_ID.into(),
+            profile_revision: registry_v2::REVISION,
+            registry_sha256: registry_v2::source_sha256(),
+            nodes,
+            output,
+        }
+    }
+
+    /// Node 1 is `Columns(a,b)`, node 2 is a bare-column scalar over `a`, and node 3 stacks
+    /// both. Column `a` is therefore read through two consumers.
+    #[test]
+    fn lowered_stack_evaluates_each_shared_column_once() {
+        let schema = InputSchema::new(vec!["a".into(), "b".into()], RowSemantics::Iid).unwrap();
+        let g = graph(
+            schema.clone(),
+            vec![
+                Node::Input,
+                Node::Columns {
+                    input: 0,
+                    columns: vec![column(&schema, 0), column(&schema, 1)],
+                },
+                Node::Scalar {
+                    input: 0,
+                    expression: Expression::Column {
+                        column: column(&schema, 0),
+                    },
+                    affine: false,
+                },
+                Node::Stack {
+                    members: vec![1, 2],
+                },
+            ],
+            3,
+        );
+        let input = DenseInput::new(
+            vec!["a".into(), "b".into()],
+            vec![vec![1.0, 2.0], vec![3.0, 4.0]],
+        )
+        .unwrap();
+        let (output, _validation, counts) = g
+            .evaluate_pure_feature_dag_counted(&input, &constraints(), dag_limits())
+            .unwrap();
+        assert_eq!(output.width, 3);
+        assert_eq!(output.values, vec![1.0, 2.0, 1.0, 3.0, 4.0, 3.0]);
+        assert_eq!(
+            counts.iter().sum::<usize>(),
+            counts.len(),
+            "each lowered node computed once"
+        );
+    }
+
+    #[test]
+    fn operator_node_is_refused_at_the_pure_entry() {
+        let schema = InputSchema::new(vec!["a".into()], RowSemantics::Iid).unwrap();
+        let g = graph(
+            schema.clone(),
+            vec![
+                Node::Input,
+                Node::Operator {
+                    input: 0,
+                    operator: OperatorRef::new("legacy_recipe", "ridge").unwrap(),
+                    parameters: BTreeMap::new(),
+                },
+            ],
+            1,
+        );
+        let err = g
+            .lower_pure_feature_dag(&constraints(), dag_limits())
+            .unwrap_err();
+        assert!(err.contains("refuses node 1"), "{err}");
+    }
+
+    #[test]
+    fn ordered_row_semantics_are_refused() {
+        let schema = InputSchema::new(vec!["a".into()], RowSemantics::Ordered).unwrap();
+        let g = graph(
+            schema.clone(),
+            vec![
+                Node::Input,
+                Node::Columns {
+                    input: 0,
+                    columns: vec![column(&schema, 0)],
+                },
+            ],
+            1,
+        );
+        let err = g
+            .lower_pure_feature_dag(&constraints(), dag_limits())
+            .unwrap_err();
+        assert!(err.contains("Iid"), "{err}");
+    }
+
+    #[test]
+    fn unreachable_node_is_refused() {
+        let schema = InputSchema::new(vec!["a".into()], RowSemantics::Iid).unwrap();
+        let g = graph(
+            schema.clone(),
+            vec![
+                Node::Input,
+                Node::Columns {
+                    input: 0,
+                    columns: vec![column(&schema, 0)],
+                },
+                Node::Columns {
+                    input: 0,
+                    columns: vec![column(&schema, 0)],
+                },
+            ],
+            1,
+        );
+        let err = g
+            .lower_pure_feature_dag(&constraints(), dag_limits())
+            .unwrap_err();
+        assert!(err.contains("reachable"), "{err}");
     }
 }

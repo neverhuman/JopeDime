@@ -2,7 +2,19 @@ use feat_math::combinators::residual::FitRole;
 use feat_math::combinators::union::{
     Action, ColumnRef, DenseInput, FitEffect, GraphError, Limits, Node, Program,
 };
+use feat_math::kernel::ir::canon::ExactF64;
 use feat_math::kernel::ir::graph::{InputSchema, RowSemantics};
+
+fn exact(value: f64) -> ExactF64 {
+    ExactF64::new(value).unwrap()
+}
+
+/// A NaN payload written directly, since `ExactF64::new` refuses non-finite values.
+fn nonfinite_bits() -> ExactF64 {
+    ExactF64 {
+        f64_bits: format!("{:016x}", f64::NAN.to_bits()),
+    }
+}
 
 fn limits() -> Limits {
     Limits {
@@ -40,8 +52,8 @@ fn w04_shared_subexpression_evaluates_once() {
             Node::new(Action::Column(b)), // 1: b
             Node::new(Action::Affine {
                 input: 0,
-                scale: 2.0,
-                offset: 1.0,
+                scale: exact(2.0),
+                offset: exact(1.0),
             }), // 2: 2a+1 (shared)
             Node::new(Action::Let(2)),    // 3: bind 2
             Node::new(Action::ConcatFeatures(vec![3, 1])), // 4: [2a+1, b]
@@ -79,8 +91,8 @@ fn invocation_local_cache_resets_across_inputs_and_permuted_schemas() {
             Node::new(Action::Column(a)),
             Node::new(Action::Affine {
                 input: 0,
-                scale: 3.0,
-                offset: 0.0,
+                scale: exact(3.0),
+                offset: exact(0.0),
             }),
             Node::new(Action::ConcatFeatures(vec![1, 1])),
         ],
@@ -176,8 +188,8 @@ fn rejects_cycles_invalid_refs_oob_select_overflow_and_fit_effects() {
             a(),
             Node::new(Action::Affine {
                 input: 0,
-                scale: f64::NAN,
-                offset: 0.0,
+                scale: nonfinite_bits(),
+                offset: exact(0.0),
             }),
         ],
         1,
@@ -196,8 +208,8 @@ fn rejects_cycles_invalid_refs_oob_select_overflow_and_fit_effects() {
             a(),
             Node::new(Action::Affine {
                 input: 0,
-                scale: 10.0,
-                offset: 0.0,
+                scale: exact(10.0),
+                offset: exact(0.0),
             }),
         ],
         1,
