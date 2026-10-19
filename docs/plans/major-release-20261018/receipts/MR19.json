@@ -112,7 +112,7 @@
       "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::",
       "exit_code": 0,
       "passed": true,
-      "unique_tests_executed": 22,
+      "unique_tests_executed": 24,
       "started_at_utc": "2026-10-19T10:17:56.194878921Z",
       "completed_at_utc": "2026-10-19T10:17:56.638379805Z",
       "elapsed_seconds": 0.444,
