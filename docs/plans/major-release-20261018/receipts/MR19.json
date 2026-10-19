@@ -12,6 +12,7 @@
   "tree_sha": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
   "bound_main_sha": "e237fb255e9f090a9879062ed33a3c1c72780ddf",
   "base_main_sha": "e237fb255e9f090a9879062ed33a3c1c72780ddf",
+  "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
   "source_commit_sha": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
   "source_tree_sha": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
   "feat_math_subtree_sha": "574982295b153aedcc75d42de61386e26ca622a5",
@@ -19,8 +20,44 @@
   "owner_screen": "1061448.jopedime_flywheel",
   "integrated_by": "2724936.captain_jopedime",
   "reviewer_screen": "487851.jope_review_claude",
-  "gate": "G03",
-  "completion_criterion": "Replace linear-only Stage chain with bounded pure-feature DAG (Let, SelectFeature, ConcatFeatures, Affine) with invocation-local CSE evaluation counts, validated Iid semantic-key schema bridge, and public admitted ProgramGraph pure-feature DAG construction/canonical-bytes/identity",
+  "gate": "G05",
+  "supporting_schema_gate": "G03",
+  "spec_mapping": {
+    "spec_a": "P05",
+    "spec_b": "GP-05",
+    "spec_c": "WP06",
+    "legacy_or_gate": "W04,G05"
+  },
+  "completion_criterion": "Implement pure shared feature DAG (Let, multi-consumer CSE, ConcatFeatures, SelectFeature) with single evaluation counter proof",
+  "git_log_binding_path": "docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json",
+  "git_log_binding_sha256": "eab41117c40fa3bd5793215766d1155c91421d89f3415c30ba0580f06176d08a",
+  "git_log_binding_bytes": 8202,
+  "completion_criterion_proof": {
+    "verdict": "PARTIAL",
+    "union_dag_module": "crates/feat-math/src/combinators/union.rs",
+    "program_graph_bridge_module": "crates/feat-math/src/kernel/ir/graph.rs",
+    "integration_suite": "crates/feat-math/tests/shared_feature_dag_cse.rs",
+    "delivered_in_pr381": [
+      "crates/feat-math/src/combinators/union.rs: self-contained ExactScalar (u64 IEEE-754 bits with Clone, Copy, Debug, PartialEq, Eq and finite validation), Action::{Let, SelectFeature, ConcatFeatures, Affine}, Program::evaluate_counted with invocation-local node cache and per-node evaluation counter, and explicit refusal of fit_effect nodes.",
+      "crates/feat-math/src/kernel/ir/graph.rs: opt-in InputSchema::semantic_key_schema and InputSchema::bind_semantic_column validating InputSchema and requiring RowSemantics::Iid while keeping legacy v1 InputSchema::identity() order-sensitive and byte-identical.",
+      "crates/feat-math/src/kernel/ir/graph.rs: PURE_FEATURE_DAG_SCHEMA (\"jope.selfplay.pure-feature-dag/v1\") and opt-in ProgramGraph::{new_pure_feature_dag, to_pure_feature_dag_bytes, from_pure_feature_dag_bytes, pure_feature_dag_identity, lower_pure_feature_dag, evaluate_pure_feature_dag_counted} enforcing Constraints::validate, node/edge/depth/width/canonical-byte bounds, reachability, semantic-key column interning across consumers, and lowered union::Program validation while keeping legacy v1 ProgramGraph::{new, validate, to_bytes, from_bytes, identity, lower} untouched."
+    ],
+    "deferred_next_deliverables": [
+      "Scoped target-aware fit/predict/operator/residual DAG execution (FitPlan / FittedGraph / GenomeIr adapter with fold-isolated fit effects).",
+      "Full arithmetic/call Expression lowering for Node::Scalar (beyond bare column projection) and affine-fitted Scalar stages."
+    ],
+    "non_claims": [
+      "No fit/predict/GenomeIr execution or live self-play capability is claimed from this pure-feature DAG slice.",
+      "native_execution_qualified remains false; GPU hold remains in force (0 GPU seconds used)."
+    ],
+    "unique_test_census": {
+      "focused_integration_unique_tests": 16,
+      "pure_library_unit_unique_tests": 4,
+      "jope_records_hygiene_unique_tests": 24,
+      "verify_test_inventory_executed_tests": 0,
+      "note": "16 integration (4 dag_composition + 3 lazy_if_and_partition_routing + 4 schema_pointers_and_exact_literals + 5 shared_feature_dag_cse), 4 pure_dag_tests library unit tests, and 24 jope-records hygiene unit tests are distinct executed test counts. verify-test-inventory is static classification only, not executed tests."
+    }
+  },
   "scope_disposition": {
     "verdict": "PARTIAL",
     "delivered_in_pr381": [
@@ -47,7 +84,7 @@
     "tree_after": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
     "feat_math_subtree_after": "574982295b153aedcc75d42de61386e26ca622a5",
     "git_status_porcelain_after": "",
-    "note": "All focused verification commands below executed on the clean, frozen working tree at bca07ff6e8b632674d7bf74ae3d552c0403e5360 while 1061448.jopedime_flywheel was idle. Committing this receipt under docs/plans/major-release-20261018/receipts/ leaves the crates/feat-math subtree SHA (574982295b153aedcc75d42de61386e26ca622a5) byte-for-byte identical. Per CODEX_MONITOR_ACTION_jopedime_20261019T1007Z.md item 4, the raw MR19 logs, decision gate, and addendum remain private in /home/ubuntu/jope-evidence/major-release-20261018/verify/."
+    "note": "All focused verification commands below executed on the clean, frozen working tree at bca07ff6e8b632674d7bf74ae3d552c0403e5360 while 1061448.jopedime_flywheel was idle. Committing this receipt and docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json leaves the crates/feat-math subtree SHA (574982295b153aedcc75d42de61386e26ca622a5) byte-for-byte identical. All four original UTF-8 logs (including trailing newlines) are embedded byte-for-byte in docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json (sha256: eab41117c40fa3bd5793215766d1155c91421d89f3415c30ba0580f06176d08a) and retained at their original paths in /home/ubuntu/jope-evidence/major-release-20261018/verify/logs/."
   },
   "toolchain": {
     "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
@@ -79,9 +116,43 @@
     "completed_at_utc": "2026-10-19T10:17:55.538185240Z",
     "elapsed_seconds": 0.346,
     "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_focused_integration_bca07ff6e_clean.log",
+    "git_log_binding_path": "docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json",
+    "git_log_id": "MR19_focused_integration_bca07ff6e_clean.log",
     "log_bytes": 3328,
     "log_sha256": "d5620a0c48586d84d0d600b385bf96c9271c66d4f776e840341da2ba4ae3f391"
   },
+  "case_to_test_map": [
+    {
+      "acceptance_case": "shared_let_node_single_evaluation",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -p feat-math --test shared_feature_dag_cse --test schema_pointers_and_exact_literals --test lazy_if_and_partition_routing --test dag_composition",
+      "test_or_code": "crates/feat-math/tests/shared_feature_dag_cse.rs::{w04_shared_subexpression_evaluates_once,invocation_local_cache_resets_across_inputs_and_permuted_schemas,program_graph_pure_feature_dag_public_roundtrip_and_bounds} (executed in 16-test focused integration run alongside crates/feat-math/src/kernel/ir/graph.rs::pure_dag_tests::lowered_stack_evaluates_each_shared_column_once)",
+      "exit_code": 0,
+      "passed": true,
+      "case_tests_counted": 3,
+      "suite_tests_in_shared_log": 16,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_focused_integration_bca07ff6e_clean.log",
+      "git_log_binding_path": "docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json",
+      "git_log_id": "MR19_focused_integration_bca07ff6e_clean.log",
+      "log_bytes": 3328,
+      "log_sha256": "d5620a0c48586d84d0d600b385bf96c9271c66d4f776e840341da2ba4ae3f391",
+      "completed_at_utc": "2026-10-19T10:17:55.538185240Z"
+    },
+    {
+      "acceptance_case": "concat_and_select_feature_vector_dag",
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -p feat-math --test shared_feature_dag_cse --test schema_pointers_and_exact_literals --test lazy_if_and_partition_routing --test dag_composition",
+      "test_or_code": "crates/feat-math/tests/shared_feature_dag_cse.rs::{w04_shared_subexpression_evaluates_once,rejects_cycles_invalid_refs_oob_select_overflow_and_fit_effects,program_graph_pure_feature_dag_public_roundtrip_and_bounds} (executed in the same 16-test focused integration run; not double-counted in unique_test_census)",
+      "exit_code": 0,
+      "passed": true,
+      "case_tests_counted": 3,
+      "suite_tests_in_shared_log": 16,
+      "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_focused_integration_bca07ff6e_clean.log",
+      "git_log_binding_path": "docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json",
+      "git_log_id": "MR19_focused_integration_bca07ff6e_clean.log",
+      "log_bytes": 3328,
+      "log_sha256": "d5620a0c48586d84d0d600b385bf96c9271c66d4f776e840341da2ba4ae3f391",
+      "completed_at_utc": "2026-10-19T10:17:55.538185240Z"
+    }
+  ],
   "supporting_test_suites": [
     {
       "suite": "feat_math_lib_pure_dag_tests",
@@ -94,6 +165,8 @@
       "completed_at_utc": "2026-10-19T10:17:55.730015589Z",
       "elapsed_seconds": 0.192,
       "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_pure_dag_tests_bca07ff6e_clean.log",
+      "git_log_binding_path": "docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json",
+      "git_log_id": "MR19_pure_dag_tests_bca07ff6e_clean.log",
       "log_bytes": 638,
       "log_sha256": "c3fdc1b67b1f7421f93e179c387c4ccfc2496fd9de65ae9a1e6fa03fffe4a0d6"
     },
@@ -102,10 +175,14 @@
       "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo run -q --locked -p jope-records -- verify-test-inventory",
       "exit_code": 0,
       "passed": true,
+      "unique_tests_executed": null,
+      "scope_note": "Static classification only; not executed tests.",
       "started_at_utc": "2026-10-19T10:17:55.730015589Z",
       "completed_at_utc": "2026-10-19T10:17:56.194878921Z",
       "elapsed_seconds": 0.465,
       "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_verify_test_inventory_bca07ff6e_clean.log",
+      "git_log_binding_path": "docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json",
+      "git_log_id": "MR19_verify_test_inventory_bca07ff6e_clean.log",
       "log_bytes": 579,
       "log_sha256": "c0fef40f31f70524b935cf198c259dd7a4468f14dbe3f0f427adad6d5627c8cc"
     },
@@ -119,6 +196,8 @@
       "completed_at_utc": "2026-10-19T10:17:56.638379805Z",
       "elapsed_seconds": 0.444,
       "log_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_jope_records_hygiene_bca07ff6e_clean.log",
+      "git_log_binding_path": "docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json",
+      "git_log_id": "MR19_jope_records_hygiene_bca07ff6e_clean.log",
       "log_bytes": 140,
       "log_sha256": "a5ca562e568569a140eaa12c8c9c80e30ab475b1a8d8040b2e6865071cf32c96"
     }
@@ -177,6 +256,17 @@
     "b96e4196a_dirty_tree_local_observation_caveat": {
       "observed_at_utc": "2026-10-19T09:57:59Z..2026-10-19T09:58:53Z",
       "note": "Local cargo test run around 09:58Z-10:04Z overlapped writer edits in crates/feat-math/src/combinators/union.rs and is recorded strictly as a dirty-tree observation; superseded by the clean-tree verification runs at bca07ff6e8b632674d7bf74ae3d552c0403e5360 above."
+    },
+    "review_34cc378b6_changes_requested": {
+      "head_sha": "34cc378b6bb16d5c60c1f0be7ca93e235cf3463a",
+      "review_id": 5570166796,
+      "reviewer": "neverhumanbot",
+      "review_receipt": "/home/ubuntu/jope-evidence/major-release-20261018/reviews/PR381_review_34cc378b6.json",
+      "findings": [
+        "receipts/MR19.json sha, checkout_sha and bound_main_sha were missing/null",
+        "git diff --check flagged trailing blank lines at EOF in three raw .log.txt files"
+      ],
+      "resolution": "Populated sha, checkout_sha, commit_sha, tree_sha, and bound_main_sha with 40-hex SHAs in MR19.json, and embedded all four original UTF-8 logs (preserving trailing newlines) in docs/plans/major-release-20261018/receipts/MR19_BCA07FF6E_LOG_BINDINGS.json (sha256: eab41117c40fa3bd5793215766d1155c91421d89f3415c30ba0580f06176d08a) so git diff --check is 0 while all four logs are 100% restorable from Git."
     }
   }
 }

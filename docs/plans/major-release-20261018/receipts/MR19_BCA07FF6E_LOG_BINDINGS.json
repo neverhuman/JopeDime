@@ -1,0 +1,57 @@
+{
+  "schema": "jope.mr19.compact_log_bindings.v1",
+  "execution_source_commit": "bca07ff6e8b632674d7bf74ae3d552c0403e5360",
+  "execution_source_tree": "6f8431ef03a72d32183e7e829358bd23a5c5e751",
+  "feat_math_subtree": "574982295b153aedcc75d42de61386e26ca622a5",
+  "base_main": "e237fb255e9f090a9879062ed33a3c1c72780ddf",
+  "observed_publication_head": "2bbbf4d5198d8b15acf2d2466bfedca6322c8b8e",
+  "receipt_sha256_at_capture": "914b7b7d6c00256ee1acc716bd975e8c8ef0c443f4ef3ad6ca9f70380c30519f",
+  "scope": "PARTIAL pure-feature engineering qualification; no neural learning or self-play gain. Original execution timestamps and raw bytes retained; no validation rerun.",
+  "logs": [
+    {
+      "id": "MR19_focused_integration_bca07ff6e_clean.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_focused_integration_bca07ff6e_clean.log",
+      "bytes": 3328,
+      "sha256": "d5620a0c48586d84d0d600b385bf96c9271c66d4f776e840341da2ba4ae3f391",
+      "original_mtime_ns": 1792405075522092455,
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -p feat-math --test shared_feature_dag_cse --test schema_pointers_and_exact_literals --test lazy_if_and_partition_routing --test dag_composition",
+      "exit_code": 0,
+      "unique_tests_executed": 16,
+      "utf8": "warning: associated functions `new` and `from_bits` are never used\n   --> crates/feat-math/tests/../src/combinators/union.rs:119:12\n    |\n118 | impl ExactScalar {\n    | ---------------- associated functions in this implementation\n119 |     pub fn new(value: f64) -> Result<Self, GraphError> {\n    |            ^^^\n...\n131 |     pub fn from_bits(bits: u64) -> Self {\n    |            ^^^^^^^^^\n    |\n    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\nwarning: variants `Let`, `SelectFeature`, `ConcatFeatures`, and `Affine` are never constructed\n   --> crates/feat-math/tests/../src/combinators/union.rs:157:5\n    |\n148 | pub enum Action {\n    |          ------ variants in this enum\n...\n157 |     Let(usize),\n    |     ^^^\n158 |     /// Projects one column from a multi-column input (width 1).\n159 |     SelectFeature {\n    |     ^^^^^^^^^^^^^\n...\n164 |     ConcatFeatures(Vec<usize>),\n    |     ^^^^^^^^^^^^^^\n165 |     /// Row-wise finite affine transform of every value in the input.\n166 |     Affine {\n    |     ^^^^^^\n    |\n    = note: `Action` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis\n\nwarning: `feat-math` (test \"dag_composition\") generated 2 warnings\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s\n     Running tests/dag_composition.rs (.agent/worktrees/pr371-gate/target/debug/deps/dag_composition-177454ac35fb9844)\n\nrunning 4 tests\ntest cycles_and_incompatible_shared_target_fits_are_refused ... ok\ntest invalid_predicate_and_unavailable_emitter_fail_explicitly ... ok\ntest width_and_eager_route_fuel_are_bounded_before_evaluation ... ok\ntest columns_17_and_63_keep_semantic_identity_under_schema_shuffle ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/lazy_if_and_partition_routing.rs (.agent/worktrees/pr371-gate/target/debug/deps/lazy_if_and_partition_routing-66ad3bfcbc23ef46)\n\nrunning 3 tests\ntest lazy_if_poison_branch_never_evaluated ... ok\ntest partitioned_batch_routing_exact_merge ... ok\ntest w03_unselected_branch_zero_invocations_on_poison_trap ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/schema_pointers_and_exact_literals.rs (.agent/worktrees/pr371-gate/target/debug/deps/schema_pointers_and_exact_literals-00712cbaec6f0521)\n\nrunning 4 tests\ntest schema_vs_layout_permutation_invariance ... ok\ntest exact_f64_literal_preserved ... ok\ntest columns_up_to_511_lossless ... ok\ntest w02_wide_columns_permutation_invariant_and_exact_f64 ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s\n\n     Running tests/shared_feature_dag_cse.rs (.agent/worktrees/pr371-gate/target/debug/deps/shared_feature_dag_cse-4d3e1fe2cc7650a0)\n\nrunning 5 tests\ntest legacy_v1_input_schema_identity_and_graph_lower_unchanged ... ok\ntest invocation_local_cache_resets_across_inputs_and_permuted_schemas ... ok\ntest rejects_cycles_invalid_refs_oob_select_overflow_and_fit_effects ... ok\ntest w04_shared_subexpression_evaluates_once ... ok\ntest program_graph_pure_feature_dag_public_roundtrip_and_bounds ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+    },
+    {
+      "id": "MR19_pure_dag_tests_bca07ff6e_clean.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_pure_dag_tests_bca07ff6e_clean.log",
+      "bytes": 638,
+      "sha256": "c3fdc1b67b1f7421f93e179c387c4ccfc2496fd9de65ae9a1e6fa03fffe4a0d6",
+      "original_mtime_ns": 1792405075717095929,
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -p feat-math --lib pure_dag_tests",
+      "exit_code": 0,
+      "unique_tests_executed": 4,
+      "utf8": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s\n     Running unittests src/lib.rs (.agent/worktrees/pr371-gate/target/debug/deps/feat_math-c8f5f4e662153737)\n\nrunning 4 tests\ntest kernel::ir::graph::pure_dag_tests::ordered_row_semantics_are_refused ... ok\ntest kernel::ir::graph::pure_dag_tests::unreachable_node_is_refused ... ok\ntest kernel::ir::graph::pure_dag_tests::operator_node_is_refused_at_the_pure_entry ... ok\ntest kernel::ir::graph::pure_dag_tests::lowered_stack_evaluates_each_shared_column_once ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 521 filtered out; finished in 0.00s\n\n"
+    },
+    {
+      "id": "MR19_verify_test_inventory_bca07ff6e_clean.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_verify_test_inventory_bca07ff6e_clean.log",
+      "bytes": 579,
+      "sha256": "c0fef40f31f70524b935cf198c259dd7a4468f14dbe3f0f427adad6d5627c8cc",
+      "original_mtime_ns": 1792405076189104339,
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo run -q --locked -p jope-records -- verify-test-inventory",
+      "exit_code": 0,
+      "unique_tests_executed": null,
+      "utf8": "{\"baseline_failures\": 33, \"executing_regression_subsystems\": {\"encoders\": 54, \"evaluation\": 35, \"evidence\": 70, \"export\": 60, \"fitting\": 61, \"gp\": 111, \"orchestration\": 82, \"performance\": 7, \"policy\": 51, \"preparation\": 80, \"storage\": 117, \"teaching\": 66, \"training\": 63}, \"items\": 655, \"roles\": {\"deferred-classification\": 3, \"historical\": 73, \"infrastructure\": 27, \"regression\": 392, \"regression-real-corpus\": 1, \"research\": 159}, \"scope\": \"static classification only; no collection, execution or qualification\", \"triage_status\": {\"fixed-locally\": 5, \"moved\": 12, \"open\": 16}}\n"
+    },
+    {
+      "id": "MR19_jope_records_hygiene_bca07ff6e_clean.log",
+      "original_private_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/logs/MR19_jope_records_hygiene_bca07ff6e_clean.log",
+      "bytes": 140,
+      "sha256": "a5ca562e568569a140eaa12c8c9c80e30ab475b1a8d8040b2e6865071cf32c96",
+      "original_mtime_ns": 1792405076623112072,
+      "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::",
+      "exit_code": 0,
+      "unique_tests_executed": 24,
+      "utf8": "\nrunning 24 tests\n........................\ntest result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 78 filtered out; finished in 0.20s\n\n"
+    }
+  ],
+  "restoration": "Encode each logs[i].utf8 as UTF-8, preserving all trailing newlines; verify bytes and SHA-256 before use. This file embeds all small logs; bulk logs/checkpoints continue to use immutable compressed storage and manifests."
+}
