@@ -53,7 +53,6 @@ pub mod gpu_worker;
 pub mod grammar;
 pub mod jain_vocabulary;
 pub mod label_admission;
-pub mod shard_index;
 #[cfg(feature = "neural")]
 pub mod pipeline;
 #[cfg(feature = "neural")]
@@ -62,6 +61,7 @@ pub mod proposal_ranking;
 pub mod proposals;
 #[cfg(feature = "neural")]
 pub mod ranked_proposals;
+pub mod shard_index;
 pub mod task_contract;
 pub mod teaching_store;
 #[cfg(feature = "neural")]

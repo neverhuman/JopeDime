@@ -31,8 +31,8 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 | Rust tests | 5,570 listed in 26 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 770 items over 24 lanes <sup>7</sup> |
-| Capability matrix | 826 rows: 353 moved, 63 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Coverage map | 771 items over 24 lanes <sup>7</sup> |
+| Capability matrix | 827 rows: 353 moved, 64 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
