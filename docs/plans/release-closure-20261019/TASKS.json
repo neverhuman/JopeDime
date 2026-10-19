@@ -375,7 +375,14 @@
         "file": "WORKPLAN.md",
         "section": "C12 \u2014 Storage audit, high-information retention, safe reclamation"
       },
-      "acceptance_evidence": [],
+      "acceptance_evidence": [
+        {
+          "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-2124/CAPSULE_SOURCE_DELIVERY.json",
+          "sha256": "e73b7e71d94ab75fd8fabce4dd72c9fb1837a7f238b185195f19000485aa95ab",
+          "commit_sha": "d0b9b2906c5945ee5afda397a761e068439e7a85",
+          "qualification": "Later1920measurements capsule committed:163memberhashes/231127compressedB/19097600decodedB independentlychecked from existingexactrestore,154nine-rowenvelope docs, mixed25knownmain-e39/129unknownsource-c20 explicit. Six compact assertions;31.6KBnewwave, all8indexrows/14catalogentries retained. No rawlogs/weights/newGPU or S3GET; actual metric JSONpointer and aggregateevidence corrected. Whole-sourceidentity null, perbinarymap exact. Branchpublication/mainreviewmergepending; historicalbadlocatorreceiptsimmutable."
+        }
+      ],
       "admiralty_task_id": "ADM-JOPE-RC-C12",
       "supplementary_plan_refs": [
         {
@@ -557,5 +564,5 @@
     "platform_recovery_owner": "2062267.agy_captain_admiralty:0",
     "note": "These are Admiral-assigned coordination IDs, not proof of native daemon task registration or worker execution. Original outside-checkout packet and adoption remain preserved."
   },
-  "last_evidence_update_utc": "2026-10-19T21:30:48.914065+00:00"
+  "last_evidence_update_utc": "2026-10-19T21:38:34.783394+00:00"
 }
