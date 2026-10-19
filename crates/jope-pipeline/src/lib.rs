@@ -49,6 +49,7 @@ pub mod lineage;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;
 pub mod parallel;
+pub mod pathway;
 pub mod prepare;
 pub mod prepared_data;
 pub mod receipt;
