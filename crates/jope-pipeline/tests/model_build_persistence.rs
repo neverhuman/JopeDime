@@ -203,13 +203,9 @@ fn admitted_for(
                 .unwrap()
         })
         .collect();
-    assert_eq!(
-        admitted
-            .iter()
-            .map(|m| m.bundle().candidate_id.clone())
-            .collect::<Vec<_>>(),
-        persisted.member_states.keys().cloned().collect::<Vec<_>>()
-    );
+    // The member set is checked by the reload itself, against the refit record. The helper does not
+    // assert it, so a test that edits the persisted states reaches the refusal it is testing.
+    let _ = persisted;
     admitted
 }
 
