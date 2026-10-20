@@ -49,7 +49,7 @@ fn workdir(name: &str) -> tempfile::TempDir {
 }
 
 fn write_request(dir: &std::path::Path, request: &NativeRequest) -> PathBuf {
-    let path = dir.path().join("request.json");
+    let path = dir.join("request.json");
     std::fs::write(&path, serde_json::to_vec(request).unwrap()).unwrap();
     path
 }
