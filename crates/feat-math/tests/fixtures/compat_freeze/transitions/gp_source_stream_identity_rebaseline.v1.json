@@ -1,0 +1,91 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Human-requested all-GP complete-source streaming; announced source/lock identity successor only. Numerical/emitted/generator/search fixtures and accepted historical identities remain fixed.",
+  "plan_reference": "MASTER_PLAN.md GP source-stream feature, 2026-10-20",
+  "pr_reference": "Stream every GP evolution as complete source and account for compilation-qualified tokens",
+  "source_commit": "c6a95ea658e24fc37989bee8c34001511bfd384b",
+  "base_commit": "bccbb55d3fff0c03f4e90df48862273338d8c679",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "8716cebbe8716a79ed3210e13374ae83e650072d785c40a50d62cc57b09404d6",
+      "after": "7e1b8896df62ef84486702cfbec485d41fe16bbce86e260a47cb7aa571448c9d"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "849f2faf8d414011e8e0b97e3901d16da202f2209c5cfd1898b9f7e911696b7d",
+      "after": "064b3f1177a7db4ff71723fd5c773317ed2e10a62d39abc6d4297a82f621c69f"
+    }
+  ],
+  "changed_evaluator_inputs": [
+    {
+      "path": "Cargo.lock",
+      "before": "8def8544c114029ee1ae8d72fb71141c5a90fe55fec46818891a9abe7738bf5a",
+      "after": "cf70ae86a4f0605f796603386e214bc1b6c0dde71e8b502263245a79dcc7c6c6"
+    },
+    {
+      "path": "crates/feat-math/src/evolve.rs",
+      "before": "680cbfa420a12c9e5ebbbd738fbe61aa6be6b9048c9df2f727ff8f18b4ad580e",
+      "after": "aaa60509ffc692c11e604044d674e661240c5b6205ab35d8e97588b64fdb1a89"
+    },
+    {
+      "path": "crates/feat-math/src/full_rust.rs",
+      "before": "4e78d0ce457fb5d1f68e7b7323cb5c72d451eb6be58856872bf2b1c86dadeb23",
+      "after": "81b7150ec2092265934ca83fe71ac1781242954bedce03aad957a493cbac8c03"
+    },
+    {
+      "path": "crates/feat-math/src/lib.rs",
+      "before": "0e1e35f703dcfcc371f5ba6d2d5f167dde219d1c9ded86e42547c1cd642e1701",
+      "after": "4f2ef27ba1b3e5f7cc5147585e02fa5fa8b842d0e933c3f9960ecb42a2bc63de"
+    },
+    {
+      "path": "crates/feat-math/src/tokens.rs",
+      "before": "f57bdadb07f5396263eb11a80048e9ba1c73333531742a253aeb5426602b59e2",
+      "after": "25a4bb8035cadb772b853b6379eaa943949fe9d73f6b07d39adf31d7c9784802"
+    }
+  ],
+  "before_identity_digest": "3aaea86da467719a3a3cb6200798b3f2aa7e18f7a95125191e44c4a1634b6d65",
+  "after_identity_digest": "8fa9442e06825bd4211ac0b9c64e8e9b4a56c4865a8b1dd4f02d8663e114780f",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
+  "behavioral_fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+      "sha256": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+      "sha256": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
+      "sha256": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json",
+      "sha256": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json",
+      "sha256": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json",
+      "sha256": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json",
+      "sha256": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+      "unchanged": true
+    }
+  ],
+  "verification": [
+    "cargo test --locked -p feat-math --test compat_freeze (identity mode): 13 passed",
+    "cargo test --locked -p feat-math --test compat_freeze (comparison): 13 passed"
+  ]
+}
