@@ -384,6 +384,45 @@ fn sync_containing_dir(dir: &std::path::Path) -> Result<()> {
         .with_context(|| format!("cannot sync directory {}", dir.display()))
 }
 
+/// Creates `path` and each missing directory between it and `boundary`, shallowest first. After each
+/// directory is created, its parent is synced, so each new entry is durable before the function
+/// returns. Nothing above `boundary` is touched. `boundary` must already exist, and `path` must be under
+/// it. Any sync error propagates.
+fn create_dir_durably(path: &std::path::Path, boundary: &std::path::Path) -> Result<()> {
+    ensure!(
+        boundary.is_dir(),
+        "the boundary {} does not exist",
+        boundary.display()
+    );
+    ensure!(
+        path.starts_with(boundary),
+        "{} is not under the boundary {}",
+        path.display(),
+        boundary.display()
+    );
+    let mut missing = Vec::new();
+    let mut current = path;
+    while current != boundary && !current.exists() {
+        missing.push(current);
+        current = current
+            .parent()
+            .ok_or_else(|| anyhow!("{} has no parent under the boundary", current.display()))?;
+    }
+    for dir in missing.iter().rev() {
+        match std::fs::create_dir(dir) {
+            Ok(()) => trace("dir_created"),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error.into()),
+        }
+        let parent = dir
+            .parent()
+            .ok_or_else(|| anyhow!("{} has no parent", dir.display()))?;
+        sync_containing_dir(parent)?;
+        trace("parent_synced");
+    }
+    Ok(())
+}
+
 /// The named native study's search arm. It runs `search::run_cuts_with` on the materialised A/B cut
 /// under `without_time_limit()`, with the caller's counters shared into the search. It then writes
 /// the frozen winner create-only, and returns. O is not opened here.
@@ -403,7 +442,12 @@ pub fn run_native_search_study_arm(
     let mut options = crate::search::SearchOptions::new(budget, seed).without_time_limit();
     options.fit_counters = Some(std::sync::Arc::clone(&counters));
     ensure!(options.time_limit().is_none(), "the named native study must run without a time limit");
-    std::fs::create_dir_all(output)?;
+    // The arm directory's own entry must be durable before the search writes into it. Its parent is
+    // the boundary: nothing above that is created or synced here.
+    let parent = output
+        .parent()
+        .ok_or_else(|| anyhow!("the arm output {} has no parent", output.display()))?;
+    create_dir_durably(output, parent)?;
     let search = crate::search::run_cuts_with(std::slice::from_ref(&cut), &options, output)?
         .into_iter()
         .next()
@@ -644,8 +688,11 @@ fn acquire_study_lock(dir: &std::path::Path) -> Result<std::fs::File> {
 /// model calls are charged to the same counters and persisted before they may generate.
 ///
 /// The object holds an exclusive lock on the study directory for its whole lifetime. A second open
-/// on the same directory is refused. Each durable write goes through a temporary file, `sync_all`,
-/// a rename, and a `sync_all` of the directory.
+/// on the same directory is refused. Each ledger write goes through a temporary file, `sync_all`, a
+/// rename, and a `sync_all` of the directory. The create-only `frozen-winner.json` and
+/// `assessment-claim.json` are each file-synced and then followed by a sync of their arm directory,
+/// before the freeze is acknowledged or O is read. Each new arm directory is synced in its parent
+/// `arms/` directory, and `arms/` in the study directory.
 pub struct NativeStudyLedger {
     dir: std::path::PathBuf,
     _lock: std::fs::File,
@@ -720,17 +767,35 @@ impl NativeStudyLedger {
             file.schema
         );
         for record in &file.arms {
+            let arm_dir = dir.join("arms").join(&record.name);
             match record.state {
                 ArmState::Admitted => bail!(
                     "arm {:?} was admitted but never froze; its fit consumption is unknown and the study is halted",
                     record.name
                 ),
-                ArmState::Frozen => ensure!(
-                    !dir.join("arms").join(&record.name).join(ASSESSMENT_CLAIM_FILE).exists(),
-                    "arm {:?} has an assessment claim with no completed record; its fits are unknown and the study is halted",
-                    record.name
-                ),
-                ArmState::Assessed => {}
+                // A Frozen or Assessed arm must still hold the winner it froze. A missing or
+                // mismatched winner halts the study. It is never rebuilt, and no fit is rerun.
+                ArmState::Frozen => {
+                    check_frozen_against_record(&arm_dir, record).with_context(|| {
+                        format!(
+                            "arm {:?} is frozen but its frozen winner is missing or does not match; the study is halted",
+                            record.name
+                        )
+                    })?;
+                    ensure!(
+                        !arm_dir.join(ASSESSMENT_CLAIM_FILE).exists(),
+                        "arm {:?} has an assessment claim with no completed record; its fits are unknown and the study is halted",
+                        record.name
+                    );
+                }
+                ArmState::Assessed => {
+                    check_frozen_against_record(&arm_dir, record).with_context(|| {
+                        format!(
+                            "arm {:?} is assessed but its frozen winner is missing or does not match; the study is halted",
+                            record.name
+                        )
+                    })?;
+                }
             }
         }
         for call in &file.external_calls {
@@ -801,6 +866,8 @@ impl NativeStudyLedger {
             attestation: Some(bindings.role_attestation_sha256),
         });
         self.persist()?;
+        // The study's own arms root is created durably inside the study directory before the arm's.
+        create_dir_durably(&self.dir.join("arms"), &self.dir)?;
         let run = match run_native_search_study_arm(
             source,
             budget,
@@ -2077,5 +2144,133 @@ mod native_study_tests {
         drop(ledger);
         let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
         assert!(error.contains("assessment claim"), "{error}");
+    }
+
+    // R1. These are ordering, injected-failure and reopen fixtures in temporary directories. They
+    // are not power-loss tests, and they do not measure durability on disk.
+
+    #[test]
+    fn the_arm_directory_entry_is_synced_in_its_parent_before_the_search() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let root = tempfile::tempdir().unwrap();
+        let arms = root.path().join("arms");
+        std::fs::create_dir(&arms).unwrap();
+        durability_hooks::clear();
+        run_native_search_study_arm(
+            source(&x, &y, &a, &b, &o, &proof, &admissions),
+            budget(),
+            5,
+            natural_counters(),
+            &arms.join("arm-x"),
+        )
+        .unwrap();
+        assert_eq!(
+            durability_hooks::events(),
+            vec![
+                "dir_created",
+                "parent_synced",
+                "frozen_created",
+                "frozen_file_synced",
+                "frozen_dir_synced"
+            ],
+            "the arm directory entry was not synced in arms/ before the search and freeze"
+        );
+    }
+
+    #[test]
+    fn an_injected_arm_parent_sync_failure_propagates_before_any_search() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let root = tempfile::tempdir().unwrap();
+        let arms = root.path().join("arms");
+        std::fs::create_dir(&arms).unwrap();
+        let counters = natural_counters();
+        durability_hooks::clear();
+        durability_hooks::fail_next_dir_sync();
+        let error = run_native_search_study_arm(
+            source(&x, &y, &a, &b, &o, &proof, &admissions),
+            budget(),
+            5,
+            counters.clone(),
+            &arms.join("arm-x"),
+        )
+        .err()
+        .unwrap()
+        .to_string();
+        assert!(error.contains("injected directory sync failure"), "{error}");
+        assert_eq!(durability_hooks::events(), vec!["dir_created"], "the search ran past the failed sync");
+        assert_eq!(counters.physical_fits(), 0, "a fit ran past the failed arm sync");
+        assert!(!arms.join("arm-x").join(FROZEN_WINNER_FILE).exists());
+    }
+
+    #[test]
+    fn a_frozen_or_assessed_arm_reopens_when_its_winner_is_present() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
+            .unwrap();
+        drop(ledger);
+        let mut frozen = NativeStudyLedger::open(dir.path()).unwrap();
+        frozen
+            .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions))
+            .unwrap();
+        drop(frozen);
+        NativeStudyLedger::open(dir.path()).expect("an assessed arm with its winner present was refused");
+    }
+
+    #[test]
+    fn a_frozen_arm_whose_winner_is_missing_halts_the_reopen() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
+            .unwrap();
+        drop(ledger);
+        std::fs::remove_file(dir.path().join("arms/arm-a").join(FROZEN_WINNER_FILE)).unwrap();
+        let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
+        assert!(error.contains("frozen winner is missing"), "{error}");
+
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
+            .unwrap();
+        drop(ledger);
+        std::fs::remove_dir_all(dir.path().join("arms/arm-a")).unwrap();
+        let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
+        assert!(error.contains("frozen winner is missing"), "{error}");
     }
 }
