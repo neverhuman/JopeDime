@@ -2484,7 +2484,10 @@ mod native_study_tests {
 
     /// A generated owner manifest with one entry per (family, rows, role). Every entry uses the fixed
     /// partitions. The root is the manifest's own hash, computed here.
-    fn admit_families(families: &[(&str, &[Vec<f64>], &[f64], &str)]) -> TrustedAdmissions {
+    /// One entry for `admit_families`: the family id, its features and targets, and its role.
+    type FamilyEntry<'a> = (&'a str, &'a [Vec<f64>], &'a [f64], &'a str);
+
+    fn admit_families(families: &[FamilyEntry<'_>]) -> TrustedAdmissions {
         let (a, b, _) = partitions();
         let admissions: Vec<NativeStudyAdmission> = families
             .iter()
@@ -2788,7 +2791,7 @@ mod native_study_tests {
             "a search with no spendable fit reached a winner"
         );
         assert!(
-            !durability_hooks::events().iter().any(|e| *e == "claim_created"),
+            !durability_hooks::events().contains(&"claim_created"),
             "an assessment ran after a failed arm"
         );
         assert!(study.join(FAILURE_RECEIPTS_FILE).exists(), "the failure was not receipted");
