@@ -1071,7 +1071,7 @@ objdump() {
 build_jope
 check_binary
 make_receipt
-ctmp=$run_dir/tmp/container runs=0 carried=0
+ctmp=$run_dir/tmp/container runs=0 carried=0 bounded=0 attributed=0
 while IFS= read -r line; do
   [[ $line == run$'\x1f'* ]] || continue
   runs=$((runs + 1))
@@ -1080,12 +1080,20 @@ while IFS= read -r line; do
         && $s == *$'\x1f-e\x1fTMPDIR=/release-tmp\x1f'* ]]; then
     carried=$((carried + 1))
   fi
+  if [[ $s == *$'\x1f--cpus\x1f4\x1f'* && $s == *$'\x1f--memory\x1f20g\x1f'* \
+        && $s == *$'\x1f--memory-swap\x1f20g\x1f'* && $s == *$'\x1f-e\x1fCARGO_BUILD_JOBS=4\x1f'* ]]; then
+    bounded=$((bounded + 1))
+  fi
+  if [[ $s == *$'\x1f--label\x1f'"ai.jopedime.release.run=$run_dir"$'\x1f'* \
+        && $s == *$'\x1f--label\x1fai.jopedime.release.tag=v0.2.0\x1f'* ]]; then
+    attributed=$((attributed + 1))
+  fi
 done < "$log"
-printf 'runs=%s;carrying_tmp=%s;container_tmp_mode=%s\n' "$runs" "$carried" "$(stat -c %a "$ctmp" 2>/dev/null || echo missing)"
+printf 'runs=%s;carrying_tmp=%s;container_tmp_mode=%s;bounded=%s;attributed=%s\n' "$runs" "$carried" "$(stat -c %a "$ctmp" 2>/dev/null || echo missing)" "$bounded" "$attributed"
 EOF
 )
-expect "every docker run of the build, the binary check and the receipt mounts the run's tmp/container at /release-tmp and /tmp, with TMPDIR set" ok \
-  '^runs=7;carrying_tmp=7;container_tmp_mode=700$' \
+expect "every build/check/receipt container carries private TMPDIR, fixed CPU/RAM/Cargo limits and run attribution" ok \
+  '^runs=7;carrying_tmp=7;container_tmp_mode=700;bounded=7;attributed=7$' \
   unit "$CONTAINERS" "$scratch/containers" "$c1" "$work/meta-ok.json" "$scratch/dk-build.jsonl" "$scratch/dk-receipt-tool.jsonl"
 # The same rule, read from the source, so that a new docker run cannot bypass builder_container.
 expect "static: every docker run in release.sh is in builder_container" ok '^sites=builder_container\(\)$' \

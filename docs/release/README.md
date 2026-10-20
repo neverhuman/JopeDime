@@ -27,7 +27,7 @@ You need `gh` (or the web UI), cosign 2.x (releases are made with v2.4.3), coreu
 1. Download the release into a directory you own. On shared hosts, do not use `/tmp`.
 
    ```sh
-   TAG=v0.2.0
+   TAG=v0.3.0
    D=$HOME/jope-release-$TAG
    gh release download "$TAG" -R neverhuman/JopeDime -D "$D"
    cd "$D"
@@ -187,6 +187,14 @@ The script refuses to run, and exits non-zero with a message, if any of these ho
 All of these are checked before anything is exported, built or signed.
 
 ### What is built
+
+Every release build, binary-check and receipt container has a fixed **4 CPU**, **20 GiB RAM**
+budget, no additional swap allowance, and `CARGO_BUILD_JOBS=4`. These bounds apply inside Docker,
+so the daemon cannot turn a capped host launcher into an unrestricted Cargo build. Containers
+carry `ai.jopedime.release.tag` and `ai.jopedime.release.run` labels; operators can inspect the
+actual limits and monitor only this run without interfering with other fleet jobs. Admit the run
+under the current fleet CPU/RAM controls and pause only its labelled containers if host pressure
+exceeds those controls.
 
 The build never reads the working tree:
 
