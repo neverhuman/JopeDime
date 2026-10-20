@@ -785,11 +785,13 @@ impl Kernel2Evaluator {
         let width = rows.first().map_or(0, Vec::len);
         let mut candidate = pipe.clone();
         set_expression(&mut candidate, index, expression)?;
-        let genome = admit_child(
-            &GenomeIr::Pipeline(candidate).canonical(),
-            self.profile(),
-            width,
-        )?;
+        let program = GenomeIr::Pipeline(candidate).canonical();
+        feat_math::capture_gp_source!(
+            "kernel2-refinement",
+            &format!("lm-whole-pipeline/stage/{index}"),
+            &program
+        );
+        let genome = admit_child(&program, self.profile(), width)?;
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             training_loss(&genome, rows, targets)
         }))

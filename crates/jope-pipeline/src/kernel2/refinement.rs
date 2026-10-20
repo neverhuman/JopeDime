@@ -136,6 +136,11 @@ impl Kernel2Evaluator {
             let mut candidate = pipe.clone();
             set_expression(&mut candidate, index, expr)?;
             let text = GenomeIr::Pipeline(candidate).canonical();
+            feat_math::capture_gp_source!(
+                "kernel2-refinement",
+                &format!("coordinate/stage/{index}"),
+                &text
+            );
             let genome = admit_child(&text, &self.profile, width)?;
             std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 training_loss(&genome, rows, targets)

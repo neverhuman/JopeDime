@@ -199,12 +199,14 @@ fn router(app: App) -> Router {
         .with_state(app)
 }
 
+const JOURNAL_BATCH_RECORDS: usize = 8;
+
 fn collect(
     root: &Path,
     offsets: &mut BTreeMap<PathBuf, u64>,
     store: &Arc<Mutex<Store>>,
     limit: usize,
-) -> Result<()> {
+) -> Result<usize> {
     let mut paths = Vec::new();
     for entry in fs::read_dir(root)? {
         let entry = entry?;
@@ -222,20 +224,35 @@ fn collect(
     );
     paths.sort();
     let mut partial = Vec::new();
+    let mut backlog = Vec::new();
+    let mut consumed = 0;
     for path in paths {
         let offset = offsets.get(&path).copied().unwrap_or(0);
         let metadata = fs::metadata(&path)?;
         if metadata.len() == offset {
             continue;
         }
-        let file = File::open(&path)?;
         ensure!(
             metadata.len() >= offset,
             "producer journal truncated; preserve it"
         );
+        let file = File::open(&path)?;
         let mut reader = BufReader::new(file);
         reader.seek(SeekFrom::Start(offset))?;
-        while let Some(bytes) = complete_line(&mut reader, true)? {
+        // A live producer may append faster than we emit. Bound its turn so every
+        // other producer is visited even when this file never reaches EOF.
+        for _ in 0..JOURNAL_BATCH_RECORDS {
+            let Some(bytes) = complete_line(&mut reader, true)? else {
+                if reader.get_ref().metadata()?.len() > reader.stream_position()? {
+                    partial.push(
+                        path.file_name()
+                            .context("journal file name")?
+                            .to_string_lossy()
+                            .into_owned(),
+                    );
+                }
+                break;
+            };
             let occurrence: Occurrence =
                 serde_json::from_slice(&bytes).context("invalid complete producer record")?;
             let known = store
@@ -247,10 +264,8 @@ fn collect(
                     store
                         .lock()
                         .map_err(|_| anyhow::anyhow!("store poisoned"))?
-                        .snapshot()["occurrences"]
-                        .as_u64()
-                        .unwrap_or(u64::MAX)
-                        < limit as u64,
+                        .occurrence_count()
+                        < limit,
                     "occurrence storage limit reached; producer journals remain retained"
                 );
                 let (artifacts, elapsed) = gp_source::emit(&occurrence)?;
@@ -260,9 +275,16 @@ fn collect(
                     .publish(occurrence, artifacts, elapsed)?;
             }
             offsets.insert(path.clone(), reader.stream_position()?);
+            consumed += 1;
         }
-        if reader.get_ref().metadata()?.len() > reader.stream_position()? {
-            partial.push(
+        let position = reader.stream_position()?;
+        let length = reader.get_ref().metadata()?.len();
+        ensure!(
+            length >= position,
+            "producer journal truncated during collection; preserve it"
+        );
+        if length > position {
+            backlog.push(
                 path.file_name()
                     .context("journal file name")?
                     .to_string_lossy()
@@ -273,8 +295,8 @@ fn collect(
     store
         .lock()
         .map_err(|_| anyhow::anyhow!("store poisoned"))?
-        .observed_ingress(partial);
-    Ok(())
+        .observed_ingress(partial, backlog);
+    Ok(consumed)
 }
 fn check_one(
     store: &Arc<Mutex<Store>>,
@@ -328,15 +350,21 @@ async fn main() -> Result<()> {
         "invalid compiler/storage bounds"
     );
     fs::create_dir_all(&args.journal_dir)?;
+    fs::create_dir_all(&args.state_dir)?;
+    ensure!(
+        fs::canonicalize(&args.journal_dir)? != fs::canonicalize(&args.state_dir)?,
+        "journal-dir and state-dir must differ"
+    );
     let store = Arc::new(Mutex::new(Store::open(&args.state_dir)?));
     let mut offsets = BTreeMap::new();
     if args.once {
-        collect(
+        while collect(
             &args.journal_dir,
             &mut offsets,
             &store,
             args.max_occurrences,
-        )?;
+        )? > 0
+        {}
         let mut cache = BTreeMap::new();
         while check_one(&store, args.compile_timeout_seconds, &mut cache)? {}
         println!(
@@ -363,16 +391,19 @@ async fn main() -> Result<()> {
     let producer_tx = fatal_tx.clone();
     let collector = std::thread::spawn(move || {
         while !producer_stop.load(Ordering::Relaxed) {
-            if let Err(error) = collect(
+            match collect(
                 &args.journal_dir,
                 &mut offsets,
                 &producer,
                 args.max_occurrences,
             ) {
-                let _ = producer_tx.send(format!("source collector stopped: {error:#}"));
-                return;
+                Ok(0) => std::thread::sleep(Duration::from_millis(100)),
+                Ok(_) => {} // Process a backlog immediately, one bounded turn per journal.
+                Err(error) => {
+                    let _ = producer_tx.send(format!("source collector stopped: {error:#}"));
+                    return;
+                }
             }
-            std::thread::sleep(Duration::from_millis(100));
         }
     });
     let compiler = store.clone();

@@ -33,8 +33,12 @@ are not fsynced per candidate, so they do not promise recovery from host power l
 fsyncs its emitted event log and source files before publication completes. Keep both directories
 on durable storage and preserve them after failures. Do not put bulk output in the Git tree.
 
-The collector and compiler use separate workers. Source is published before compiler checks,
-so a compiler backlog does not throttle source mapping. Journal/event limits stop the service
+The collector and compiler use separate workers. Source is published before compiler checks.
+Mapping does not wait for compiler processes; both workers serialize durable event publication,
+so disk I/O and validation-record publication can still limit throughput. Each scan processes
+a bounded turn of eight records per producer and immediately continues a backlog. A hot or
+large old journal cannot monopolize the collector. Compiler work follows source arrival in
+FIFO order, including after restart; lexical IDs cannot move future work ahead of older work. Journal/event limits stop the service
 visibly; producer journals remain intact. No bounded broadcast queue discards a slow client's
 messages: each WebSocket reads the durable event log at its own cursor. A client that cannot
 accept a write within 10 seconds disconnects and can resume. Each source hash is checked before
@@ -42,6 +46,38 @@ compilation; identical sources reuse the same successful compiler result within 
 every emitted occurrence still contributes its actual token count. Failed, missing-tool and timed-out checks are retried for later occurrences rather than cached.
 Restart rebuilds metrics and
 pending checks from the log; replay and a re-read journal never create new token credit.
+
+## Engine and language coverage
+
+Coverage is complete for the materialized full-program capture points below when the process
+starts with capture enabled. Parser fixtures check the actual captured strings; backend
+refusals remain in the four-target denominator. This is not a claim that every vocabulary
+operation has a standalone emitter in every language.
+
+| Producer | Capture point | Evidence / limit |
+| --- | --- | --- |
+| Surrogate and lite-race GP | Every population slot before filtering; private random/mutation/crossover construction also captures children never reached before stopping | `feat-math --test source_capture`; frozen seeded search/generator corpus remains unchanged. Population/operator/elite repeats are separate emitted occurrences. |
+| Legacy canonical mutation APIs | Shared random, mutation, crossover and explicit-arm output construction | Same typed `DslExpr`/canonical program path; source fixtures and generalized offspring exercise it. |
+| FullRust GP | Shared `From<CanonicalGenome>` for random/mutation/expanded mutation/crossover outputs | Actual random-construction parser fixture plus the shared constructor; no refit solely to emit source. |
+| Advanced V3 GP | Validated `make_candidate` for seeds/new candidates, including descendant construction | Actual initial population strings parse; all callers share the same canonicalizing constructor. Existing V3 controls retain their own scope. |
+| Legacy product pipeline | Every draw that actually produced program text, before score/budget/dedup filtering and independently of `record_events` | Actual CLI comparison and pipeline fixture with search-event recording disabled. Failed operators producing no program retain their native draw errors and are not invented empty-program emissions. |
+| Kernel2 and shared strategy | Operator proposals, population slots, evaluation attempts and shared-strategy proposals | Actual kernel2/shared-strategy capture child; every captured full program parses. Overlapping capture points remain labeled. |
+| Kernel2 complete refinement trials | Coordinate/guarded and LM whole-pipeline objective construction, before admission and numerical catch boundaries; final child evaluation also captures | Coordinate/guarded synthetic training fixtures parse captured programs. LM uses the same canonical full-program construction; existing LM controls retain numerical scope. Bare solver AST steps enter only when a complete pipeline materializes. |
+| Generalized GP | Generation zero and successor populations, including preserved elites | Actual generation-zero plus two successor constructions: 240 materialized rows parse. This is a synthetic source fixture, not a benchmark campaign. |
+| External/custom or already-running producers | Explicit `Journal::append`; updated binaries/settings required for automatic hooks | No automatic historical archive backfill, unknown-engine discovery or mutation of frozen/running jobs is claimed. |
+
+| Language row | Existing emitter | Actual check | Failure class |
+| --- | --- | --- | --- |
+| `rust` | `transpile::emit` Rust source | `rustc --crate-type=lib --emit=metadata` | Emitter refusal or compiler/launch/timeout failure |
+| `python` | `transpile::emit` Python source | Python built-in `compile` | Emitter refusal or parse/launch/timeout failure |
+| `cpp17` | `transpile::emit_cpp17` | `g++ -std=c++17 -fsyntax-only` | Narrower certified coverage is an explicit emission error; compiler failures lose emitted tokens |
+| `javascript` | `transpile::emit_javascript` | `node --check` | Narrower certified coverage is an explicit emission error; check failures lose emitted tokens |
+
+All four rows are emitted for every captured occurrence, including failures. Source begins
+pending; only successful checks qualify its tokens. No unsupported operation is replaced with
+another program to improve yield. C++20 compilation is a mode over C++17 source, not another
+emitted language. Use release builds for production throughput; test/debug timing is not a
+production throughput claim.
 
 ## Protocol
 
@@ -105,7 +141,8 @@ null token yield and zero artifact yield, never 100%.
 persisted source event, including service downtime. `assembly_tokens_per_second` divides
 cumulative actual emitted tokens by measured emitter/token-counting time. They measure different
 spans; neither is model inference token throughput, network retransmission throughput or fit
-speed. The older GP observer's dual-language credit/estimator is separate legacy telemetry;
+speed. `unique_programs` counts distinct captured program bytes, not semantic novelty or independent fits.
+The older GP observer's dual-language credit/estimator is separate legacy telemetry;
 use this endpoint for the complete source-output ledger.
 
 Compiler checks do not run generated programs: Rust uses `--crate-type=lib --emit=metadata`,
@@ -126,7 +163,7 @@ one service via a file lock. Default storage admission is one million occurrence
 4096 producer journals per run. A source program is at most 4 MiB and a complete event at most
 32 MiB. Size/storage/corrupt-complete-record failures stop visibly; a partial final producer line
 waits for completion. Partial producer tails are listed in `ingress.partial_journal_tails`; `observed_backlog_clear`
-stays false while a tail or validation/error backlog exists. This is an observation of current
+stays false while a tail, `ingress.backlogged_journals`, or validation/error backlog exists. This is an observation of current
 queues, not proof that every producer has finished. A partial/corrupt service log is refused on restart: preserve the original
 before recovery rather than silently trimming evidence. Journals/sources/check diagnostics/logs
 are retained; plan storage and use a new declared run directory when archiving old output.
@@ -142,6 +179,7 @@ cargo run --locked -p jope-observatory --bin gp-source-stream -- \
   --journal-dir /absolute/journals --state-dir /absolute/state --once
 ```
 
+Use `--once` with quiescent journals to obtain a finite drain; it visits every bounded turn.
 `--once` reports artifact failures in metrics and exits successfully if ingestion/validation
 itself completed. It fails on service/journal/storage corruption. Do not interpret process exit
 zero alone as 100% compilation yield; inspect counters/status. CI checks actual source/status

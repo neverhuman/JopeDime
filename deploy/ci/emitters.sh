@@ -56,7 +56,7 @@ source_contract() { # <label> <expected-passes> <filtered-count-pattern> <cargo 
     exit 1
   fi
 }
-source_contract gp-source-stream 11 0 -p jope-observatory --test gp_source
+source_contract gp-source-stream 13 0 -p jope-observatory --test gp_source
 source_contract gp-source-capture 1 0 -p feat-math --test source_capture
 source_contract gp-source-cli 2 0 -p jope-cli --test gp_source_capture
 source_contract gp-source-kernel2 1 0 -p jope-pipeline --test gp_source_capture

@@ -8578,7 +8578,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Build/check the runtime binary; eleven integration contracts in target:jope-observatory/test/gp_source launch it for actual WebSocket, replay, restart and error accounting. This bin target itself has no standalone unit tests."
+      "scope": "Build/check the runtime binary; thirteen integration contracts in target:jope-observatory/test/gp_source launch it for actual WebSocket, replay, restart and error accounting. This bin target itself has no standalone unit tests."
     },
     "target:jope-observatory/bin/jope-observatory": {
       "discovery": {
