@@ -701,7 +701,9 @@ impl<'a> RidgeFoldEvaluator<'a> {
             o_rows,
             ridge_lambda,
             o_reads: std::cell::Cell::new(0),
-            counters: crate::search::ExecutionBoundaryCounters::new(crate::search::ExecutionBoundaryCaps::default()),
+            counters: crate::search::ExecutionBoundaryCounters::new(
+                crate::search::ExecutionBoundaryCaps::default(),
+            ),
         })
     }
 
@@ -736,7 +738,9 @@ impl<'a> RidgeFoldEvaluator<'a> {
             .iter()
             .map(|&row| self.targets[row as usize])
             .collect();
-        self.counters.charge_physical_fit().map_err(AdapterError::BudgetExhausted)?;
+        self.counters
+            .charge_physical_fit()
+            .map_err(AdapterError::BudgetExhausted)?;
         fit_ridge(&design, &targets, self.ridge_lambda)
     }
 
@@ -997,7 +1001,9 @@ impl<'a> GpProgramFoldEvaluator<'a> {
             o_rows,
             ridge_lambda,
             o_reads: std::cell::Cell::new(0),
-            counters: crate::search::ExecutionBoundaryCounters::new(crate::search::ExecutionBoundaryCaps::default()),
+            counters: crate::search::ExecutionBoundaryCounters::new(
+                crate::search::ExecutionBoundaryCaps::default(),
+            ),
         })
     }
 
@@ -1026,7 +1032,11 @@ impl<'a> GpProgramFoldEvaluator<'a> {
         else {
             return Ok(f64::NAN);
         };
-        let Some(test) = rows.iter().map(|&row| column(row)).collect::<Option<Vec<_>>>() else {
+        let Some(test) = rows
+            .iter()
+            .map(|&row| column(row))
+            .collect::<Option<Vec<_>>>()
+        else {
             return Ok(f64::NAN);
         };
         let y_a: Vec<f64> = self
@@ -1034,7 +1044,9 @@ impl<'a> GpProgramFoldEvaluator<'a> {
             .iter()
             .map(|&row| self.targets[row as usize])
             .collect();
-        self.counters.charge_physical_fit().map_err(AdapterError::BudgetExhausted)?;
+        self.counters
+            .charge_physical_fit()
+            .map_err(AdapterError::BudgetExhausted)?;
         let beta = fit_ridge(&train, &y_a, self.ridge_lambda)?;
         let sse: f64 = test
             .iter()
@@ -1311,9 +1323,7 @@ pub fn propose_native_teacher_candidates(seed: u64, count: usize) -> Vec<String>
     out.push(bootstrap);
     let mut draw: u64 = 0;
     while out.len() < count && draw < (count as u64) * 64 {
-        let s = seed
-            .wrapping_mul(0x9E37_79B9_7F4A_7C15)
-            .wrapping_add(draw);
+        let s = seed.wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(draw);
         let candidate = match draw % 3 {
             0 => feat_math::evolve::random_canonical_pipeline(s, max),
             1 => {
@@ -1820,10 +1830,7 @@ mod tests {
     #[test]
     fn ridge_fits_its_parameters_on_the_a_rows_alone() {
         let (features, _) = ridge_table();
-        let targets: Vec<f64> = features
-            .iter()
-            .map(|x| 2.0 * x[0] - x[2] + 0.5)
-            .collect();
+        let targets: Vec<f64> = features.iter().map(|x| 2.0 * x[0] - x[2] + 0.5).collect();
         let (a, b, o) = ridge_partitions();
         let fitted = RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3)
             .unwrap()
@@ -1837,7 +1844,10 @@ mod tests {
             .unwrap()
             .fit_on_a(&[0, 1, 2])
             .unwrap();
-        assert_eq!(fitted, refit, "B or O targets moved the fitting-side coefficients");
+        assert_eq!(
+            fitted, refit,
+            "B or O targets moved the fitting-side coefficients"
+        );
         let expected = [0.5, 2.0, 0.0, -1.0];
         // The solver is exact: with the penalty at 1e-9 the generating coefficients come back to 1e-6.
         // The 1e-3 fit above is a penalised fit, so its coefficients sit within the ridge bias.
@@ -1846,10 +1856,16 @@ mod tests {
             .fit_on_a(&[0, 1, 2])
             .unwrap();
         for (got, want) in exact.iter().zip(expected) {
-            assert!((got - want).abs() < 1e-6, "exact fit {exact:?} != {expected:?}");
+            assert!(
+                (got - want).abs() < 1e-6,
+                "exact fit {exact:?} != {expected:?}"
+            );
         }
         for (got, want) in fitted.iter().zip(expected) {
-            assert!((got - want).abs() < 0.2, "penalised fit {fitted:?} strays from {expected:?}");
+            assert!(
+                (got - want).abs() < 0.2,
+                "penalised fit {fitted:?} strays from {expected:?}"
+            );
         }
     }
 
@@ -1888,7 +1904,11 @@ mod tests {
         .unwrap();
         assert!(episode.selected.is_some());
         assert!(episode.o_score.is_finite() && !episode.episode_failed);
-        assert_eq!(eval.o_reads(), 1, "O must be scored exactly once, after selection");
+        assert_eq!(
+            eval.o_reads(),
+            1,
+            "O must be scored exactly once, after selection"
+        );
     }
 
     /// Overlapping partitions and non-finite lambda are refused before any fit runs.
@@ -1897,7 +1917,9 @@ mod tests {
         let (features, targets) = ridge_table();
         let (a, b, _) = ridge_partitions();
         let overlapping_o = vec![a[0], 35];
-        assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &overlapping_o, 1e-3).is_err());
+        assert!(
+            RidgeFoldEvaluator::new(&features, &targets, &a, &b, &overlapping_o, 1e-3).is_err()
+        );
         let (a, b, o) = ridge_partitions();
         assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 0.0).is_err());
         assert!(RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, f64::NAN).is_err());
@@ -1918,18 +1940,30 @@ mod tests {
         let (a, b, o) = ridge_partitions();
         let add = GpProgram::parse("add(f0,f1)").unwrap();
         let mul = GpProgram::parse("mul(f0,f1)").unwrap();
-        let column = |p: &GpProgram| -> Vec<f64> {
-            features.iter().map(|row| p.eval(row)).collect()
-        };
-        assert_ne!(column(&add), column(&mul), "the two programs built the same column");
+        let column =
+            |p: &GpProgram| -> Vec<f64> { features.iter().map(|row| p.eval(row)).collect() };
+        assert_ne!(
+            column(&add),
+            column(&mul),
+            "the two programs built the same column"
+        );
         let eval = GpProgramFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3).unwrap();
         let add_b = eval.score_selection("add(f0,f1)").unwrap().0;
         let mul_b = eval.score_selection("mul(f0,f1)").unwrap().0;
         let add_o = eval.score_assessment("add(f0,f1)").unwrap();
         let mul_o = eval.score_assessment("mul(f0,f1)").unwrap();
-        assert!(mul_b < 0.01 && mul_o < 0.01, "the true product must fit: B {mul_b} O {mul_o}");
-        assert!(add_b > 10.0 * mul_b, "B fits did not separate: add {add_b} mul {mul_b}");
-        assert!(add_o > 10.0 * mul_o, "O fits did not separate: add {add_o} mul {mul_o}");
+        assert!(
+            mul_b < 0.01 && mul_o < 0.01,
+            "the true product must fit: B {mul_b} O {mul_o}"
+        );
+        assert!(
+            add_b > 10.0 * mul_b,
+            "B fits did not separate: add {add_b} mul {mul_b}"
+        );
+        assert!(
+            add_o > 10.0 * mul_o,
+            "O fits did not separate: add {add_o} mul {mul_o}"
+        );
     }
 
     /// Selection with `O` poisoned still credits both programs and reads `O` only once, at the
@@ -1947,20 +1981,44 @@ mod tests {
         let eval = GpProgramFoldEvaluator::new(&features, &poisoned, &a, &b, &o, 1e-3).unwrap();
         let mut journal = Journal::new(10, 100);
         let refused = evaluate_program_episode(
-            &a, &b, &o, &y_a, &programs, &mut journal, &ridge_cfg(), &eval, 9.9,
+            &a,
+            &b,
+            &o,
+            &y_a,
+            &programs,
+            &mut journal,
+            &ridge_cfg(),
+            &eval,
+            9.9,
         );
         assert!(matches!(refused, Err(AdapterError::NonFiniteScore)));
         assert_eq!(
-            journal.entries().iter().filter(|e| matches!(e.outcome, SlotOutcome::Ok)).count(),
+            journal
+                .entries()
+                .iter()
+                .filter(|e| matches!(e.outcome, SlotOutcome::Ok))
+                .count(),
             2,
             "selection must credit both programs before O is read"
         );
-        assert_eq!(eval.o_reads(), 1, "O was read by selection, or more than once");
+        assert_eq!(
+            eval.o_reads(),
+            1,
+            "O was read by selection, or more than once"
+        );
 
         let eval = GpProgramFoldEvaluator::new(&features, &clean, &a, &b, &o, 1e-3).unwrap();
         let mut journal = Journal::new(10, 100);
         let episode = evaluate_program_episode(
-            &a, &b, &o, &y_a, &programs, &mut journal, &ridge_cfg(), &eval, 9.9,
+            &a,
+            &b,
+            &o,
+            &y_a,
+            &programs,
+            &mut journal,
+            &ridge_cfg(),
+            &eval,
+            9.9,
         )
         .unwrap();
         assert_eq!(episode.selected.as_deref(), Some("mul(f0,f1)"));
@@ -1973,7 +2031,15 @@ mod tests {
     /// slot as malformed and is never evaluated.
     #[test]
     fn gp_parser_refuses_anything_outside_the_program_language() {
-        for bad in ["add(f0)", "f01", "f", "foo(f0,f1)", "add(f0,f1)x", "add(f0 ,f1)", "add(f0,f1"] {
+        for bad in [
+            "add(f0)",
+            "f01",
+            "f",
+            "foo(f0,f1)",
+            "add(f0,f1)x",
+            "add(f0 ,f1)",
+            "add(f0,f1",
+        ] {
             assert!(GpProgram::parse(bad).is_err(), "accepted {bad:?}");
         }
         fn chain(depth_wraps: usize) -> String {
@@ -1987,11 +2053,23 @@ mod tests {
                 format!("add({},{})", balanced(left), balanced(leaves - left))
             }
         }
-        assert!(GpProgram::parse(&chain(GP_MAX_DEPTH - 1)).is_ok(), "depth cap is too tight");
-        assert!(GpProgram::parse(&chain(GP_MAX_DEPTH)).is_err(), "depth cap not enforced");
+        assert!(
+            GpProgram::parse(&chain(GP_MAX_DEPTH - 1)).is_ok(),
+            "depth cap is too tight"
+        );
+        assert!(
+            GpProgram::parse(&chain(GP_MAX_DEPTH)).is_err(),
+            "depth cap not enforced"
+        );
         // A balanced tree of n leaves has 2n-1 nodes: 32 leaves is 63 nodes, 33 leaves is 65.
-        assert!(GpProgram::parse(&balanced(GP_MAX_NODES / 2)).is_ok(), "node cap too tight");
-        assert!(GpProgram::parse(&balanced(GP_MAX_NODES / 2 + 1)).is_err(), "node cap not enforced");
+        assert!(
+            GpProgram::parse(&balanced(GP_MAX_NODES / 2)).is_ok(),
+            "node cap too tight"
+        );
+        assert!(
+            GpProgram::parse(&balanced(GP_MAX_NODES / 2 + 1)).is_err(),
+            "node cap not enforced"
+        );
 
         let (features, targets) = product_table();
         let (a, b, o) = ridge_partitions();
@@ -2011,7 +2089,10 @@ mod tests {
         )
         .unwrap();
         assert_eq!(episode.selected.as_deref(), Some("mul(f0,f1)"));
-        assert!(matches!(journal.entries()[0].outcome, SlotOutcome::Malformed));
+        assert!(matches!(
+            journal.entries()[0].outcome,
+            SlotOutcome::Malformed
+        ));
         assert_eq!(eval.o_reads(), 1);
     }
 
@@ -2096,7 +2177,8 @@ mod tests {
         let caps = ExecutionBoundaryCaps {
             max_physical_fits: 2,
             max_model_calls: 2,
-            max_reasoning_tokens_per_call: 8_192,
+            max_reasoning_tokens_per_call: Some(8_192),
+            max_generated_tokens_total: None,
         };
         let (features, targets) = ridge_table();
         let (a, b, o) = ridge_partitions();
@@ -2107,10 +2189,17 @@ mod tests {
         native.score_selection("(pipe X (ridge))").unwrap();
         let refused = native.score_selection("(pipe X (ridge))");
         assert!(
-            matches!(refused, Err(AdapterError::BudgetExhausted("physical fold fits"))),
+            matches!(
+                refused,
+                Err(AdapterError::BudgetExhausted("physical fold fits"))
+            ),
             "{refused:?}"
         );
-        assert_eq!(native.counters().physical_fits(), 2, "a refused fit was counted as run");
+        assert_eq!(
+            native.counters().physical_fits(),
+            2,
+            "a refused fit was counted as run"
+        );
 
         let ridge = RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3)
             .unwrap()
@@ -2141,7 +2230,8 @@ mod tests {
         let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
             max_physical_fits: 20_000,
             max_model_calls: 2,
-            max_reasoning_tokens_per_call: 8_192,
+            max_reasoning_tokens_per_call: Some(8_192),
+            max_generated_tokens_total: None,
         });
         assert_eq!(counters.record_model_call(100), Ok(()));
         assert_eq!(counters.record_model_call(8_192), Ok(()));

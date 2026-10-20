@@ -188,21 +188,50 @@ pub struct SearchOptions {
 }
 
 /// Ceilings enforced at the executing boundaries: each physical fit and each model call.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// A token ceiling of `None` means no explicit cap: natural EOS, bounded only by the model's
+/// context window and the runtime health guards. It is never encoded as `u64::MAX`. Generated
+/// tokens are counted whether or not a ceiling is set.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ExecutionBoundaryCaps {
     pub max_physical_fits: u64,
     pub max_model_calls: u64,
-    pub max_reasoning_tokens_per_call: u64,
+    /// Per-call reasoning-token ceiling. A JSON document without this field reads as the legacy
+    /// 8 192-token cap, not as no cap.
+    #[serde(default = "legacy_reasoning_tokens_per_call")]
+    pub max_reasoning_tokens_per_call: Option<u64>,
+    /// Aggregate generated-token ceiling across every call. `None` imposes none.
+    #[serde(default)]
+    pub max_generated_tokens_total: Option<u64>,
+}
+
+fn legacy_reasoning_tokens_per_call() -> Option<u64> {
+    Some(8_192)
 }
 
 impl Default for ExecutionBoundaryCaps {
     /// The ceilings of the reasoner pilot: 20 000 physical fits, 2 048 model calls and 8 192
-    /// reasoning tokens per call.
+    /// reasoning tokens per call, with no aggregate generated-token ceiling.
     fn default() -> Self {
         ExecutionBoundaryCaps {
             max_physical_fits: 20_000,
             max_model_calls: 2_048,
-            max_reasoning_tokens_per_call: 8_192,
+            max_reasoning_tokens_per_call: Some(8_192),
+            max_generated_tokens_total: None,
+        }
+    }
+}
+
+impl ExecutionBoundaryCaps {
+    /// The natural-EOS policy of the reasoner study (`NATURAL_EOS_TOKEN_POLICY_20261020`). The
+    /// fit and model-call ceilings stay finite. Neither token ceiling is set, so a call runs to
+    /// its natural end and every generated token is still counted.
+    pub fn reasoner_natural_eos() -> Self {
+        ExecutionBoundaryCaps {
+            max_physical_fits: 20_000,
+            max_model_calls: 2_048,
+            max_reasoning_tokens_per_call: None,
+            max_generated_tokens_total: None,
         }
     }
 }
@@ -217,6 +246,9 @@ pub struct ExecutionBoundaryCounters {
     model_calls: std::sync::atomic::AtomicU64,
     reasoning_tokens_total: std::sync::atomic::AtomicU64,
     max_call_tokens_observed: std::sync::atomic::AtomicU64,
+    /// Serialises the model-call checks with their increments, so two threads cannot both pass a
+    /// ceiling that only one of them may reach.
+    model_gate: std::sync::Mutex<()>,
 }
 
 impl ExecutionBoundaryCounters {
@@ -227,6 +259,7 @@ impl ExecutionBoundaryCounters {
             model_calls: Default::default(),
             reasoning_tokens_total: Default::default(),
             max_call_tokens_observed: Default::default(),
+            model_gate: Default::default(),
         }
     }
 
@@ -247,6 +280,11 @@ impl ExecutionBoundaryCounters {
             .load(std::sync::atomic::Ordering::SeqCst)
     }
 
+    /// Every generated token across the admitted calls. Counted whether or not a token ceiling is set.
+    pub fn generated_tokens_total(&self) -> u64 {
+        self.reasoning_tokens_total()
+    }
+
     pub fn max_call_tokens_observed(&self) -> u64 {
         self.max_call_tokens_observed
             .load(std::sync::atomic::Ordering::SeqCst)
@@ -262,18 +300,38 @@ impl ExecutionBoundaryCounters {
         )
     }
 
-    /// Counts one model call before it runs. A call whose reasoning tokens exceed the per-call cap
-    /// is refused without being counted, with the reason `"reasoning tokens per call"`. A call past
-    /// the call ceiling is refused with the reason `"model calls"`.
+    /// Counts one model call before it runs. The call ceiling is checked first, then the per-call
+    /// ceiling (when set), then the aggregate generated-token ceiling (when set). A refused call is
+    /// not counted and changes no total. Reasons: `"model calls"`, `"reasoning tokens per call"`,
+    /// `"generated tokens total"`.
     pub fn record_model_call(&self, reasoning_tokens: u64) -> Result<(), &'static str> {
-        if reasoning_tokens > self.caps.max_reasoning_tokens_per_call {
-            return Err("reasoning tokens per call");
+        use std::sync::atomic::Ordering::SeqCst;
+        let _gate = self
+            .model_gate
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        if self.model_calls.load(SeqCst) >= self.caps.max_model_calls {
+            return Err("model calls");
         }
-        take_one(&self.model_calls, self.caps.max_model_calls, "model calls")?;
+        if let Some(max_per_call) = self.caps.max_reasoning_tokens_per_call {
+            if reasoning_tokens > max_per_call {
+                return Err("reasoning tokens per call");
+            }
+        }
+        if let Some(max_total) = self.caps.max_generated_tokens_total {
+            let next_total = self
+                .reasoning_tokens_total
+                .load(SeqCst)
+                .saturating_add(reasoning_tokens);
+            if next_total > max_total {
+                return Err("generated tokens total");
+            }
+        }
+        self.model_calls.fetch_add(1, SeqCst);
         self.reasoning_tokens_total
-            .fetch_add(reasoning_tokens, std::sync::atomic::Ordering::SeqCst);
+            .fetch_add(reasoning_tokens, SeqCst);
         self.max_call_tokens_observed
-            .fetch_max(reasoning_tokens, std::sync::atomic::Ordering::SeqCst);
+            .fetch_max(reasoning_tokens, SeqCst);
         Ok(())
     }
 }
@@ -292,6 +350,58 @@ fn take_one(
         )
         .map(|_| ())
         .map_err(|_| reason)
+}
+
+/// The role a fold plays in the reasoner split: `FitA` fits a candidate, `SelectB` ranks it, and
+/// `EvalO` is the one held-out read.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReasonerSplitRole {
+    FitA,
+    SelectB,
+    EvalO,
+}
+
+/// Opt-in ledger for the reasoner split. `FitA` and `SelectB` are charged only before the selection
+/// freeze, and `EvalO` only after it, at most once. A refused charge is not counted. A search with
+/// no ledger keeps the legacy cut folds.
+#[derive(Debug, Default)]
+pub struct ReasonerSplitLedger {
+    frozen: std::sync::atomic::AtomicBool,
+    o_reads: std::sync::atomic::AtomicU64,
+}
+
+impl ReasonerSplitLedger {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Closes selection: the B-rank freeze. Afterwards no candidate is fitted or ranked, and O may
+    /// be read once.
+    pub fn freeze_selection(&self) {
+        self.frozen.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn o_reads(&self) -> u64 {
+        self.o_reads.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Charges one use of `role`. Reasons: `"selection frozen"`, `"O read before the selection
+    /// freeze"`, `"O read more than once"`.
+    pub fn charge(&self, role: ReasonerSplitRole) -> Result<(), &'static str> {
+        let frozen = self.is_frozen();
+        match role {
+            ReasonerSplitRole::FitA | ReasonerSplitRole::SelectB if frozen => {
+                Err("selection frozen")
+            }
+            ReasonerSplitRole::FitA | ReasonerSplitRole::SelectB => Ok(()),
+            ReasonerSplitRole::EvalO if !frozen => Err("O read before the selection freeze"),
+            ReasonerSplitRole::EvalO => take_one(&self.o_reads, 1, "O read more than once"),
+        }
+    }
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -1232,7 +1342,14 @@ fn evaluate_admitted(
                     break;
                 }
                 results.push(Some(record_evaluation(recorder, draw, clock, || {
-                    let mut observation = evaluate_counted(genome, cut, generation, origin, clock, options.fit_counters.as_deref());
+                    let mut observation = evaluate_counted(
+                        genome,
+                        cut,
+                        generation,
+                        origin,
+                        clock,
+                        options.fit_counters.as_deref(),
+                    );
                     observation.island = (options.islands > 1).then_some(*island);
                     observation
                 })));
@@ -1247,7 +1364,14 @@ fn evaluate_admitted(
                     .map(|(island, genome, origin, _)| {
                         may_start(origin).then(|| {
                             let started = recorder.map(|_| clock.start());
-                            let mut observation = evaluate_counted(genome, cut, generation, origin, clock, options.fit_counters.as_deref());
+                            let mut observation = evaluate_counted(
+                                genome,
+                                cut,
+                                generation,
+                                origin,
+                                clock,
+                                options.fit_counters.as_deref(),
+                            );
                             observation.island = (options.islands > 1).then_some(*island);
                             let elapsed = started.map(|stamp| stamp.secs());
                             (observation, elapsed)
@@ -1623,7 +1747,9 @@ fn remeasure_in(
                     clock,
                     &stop,
                     recorder.as_ref(),
-                    &mut |g, c, n, o| evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref()),
+                    &mut |g, c, n, o| {
+                        evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref())
+                    },
                 );
             }
         }
@@ -1639,7 +1765,9 @@ fn remeasure_in(
                         clock,
                         &stop,
                         recorder.as_ref(),
-                        &mut |g, c, n, o| evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref()),
+                        &mut |g, c, n, o| {
+                            evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref())
+                        },
                     )
                 })
         }),
@@ -1737,7 +1865,9 @@ fn open_comparison(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<Option<Ve
         search.comparison = Phase {
             evaluation_limit: (search.budget.evaluations as u64)
                 .saturating_sub(search.completed_evaluations),
-            seconds_limit: search.time_limit.map(|limit| (limit - search.seconds).max(0.0)),
+            seconds_limit: search
+                .time_limit
+                .map(|limit| (limit - search.seconds).max(0.0)),
             stopped_by: STOPPED_BY_POOL.to_owned(),
             ..Phase::not_requested()
         };
@@ -1827,7 +1957,10 @@ fn remeasure_cut(
 /// Record each cut's comparison outcome and best, and publish it.
 fn close_comparison(searches: &mut [CutSearch]) -> Result<()> {
     for search in searches.iter_mut() {
-        search.stopped_by = if search.time_limit.is_some_and(|limit| search.seconds >= limit) {
+        search.stopped_by = if search
+            .time_limit
+            .is_some_and(|limit| search.seconds >= limit)
+        {
             STOPPED_BY_SECONDS
         } else if search.completed_evaluations >= search.budget.evaluations as u64 {
             STOPPED_BY_EVALUATIONS
@@ -2142,9 +2275,12 @@ mod tests {
         assert_eq!(cap.0.get(&Unit::Evaluations), Some(&64));
         assert_eq!(cap.0.get(&Unit::PeakMemoryBytes), Some(&(1 << 30)));
         assert!(budget.resource_cap_no_time_limit_v1(0).is_err());
-        assert!(Budget { evaluations: 0, seconds: 300 }
-            .resource_cap_no_time_limit_v1(1)
-            .is_err());
+        assert!(Budget {
+            evaluations: 0,
+            seconds: 300
+        }
+        .resource_cap_no_time_limit_v1(1)
+        .is_err());
         let legacy = budget.resource_cap_v1(2, 1 << 30).unwrap();
         assert_eq!(legacy.get(Unit::AttemptWallMicros), 300_000_000);
         assert_eq!(legacy.get(Unit::CpuCoreMicros), 600_000_000);
@@ -2167,6 +2303,115 @@ mod tests {
         }
         .check_evaluations()
         .is_err());
+    }
+
+    /// V10. Under natural EOS a call past 8 192 tokens is accepted and charged, and the caps survive
+    /// a JSON round trip as `null`.
+    #[test]
+    fn reasoner_natural_eos_accepts_and_charges_beyond_8192_and_roundtrips_none() {
+        let caps = ExecutionBoundaryCaps::reasoner_natural_eos();
+        let counters = ExecutionBoundaryCounters::new(caps);
+        assert_eq!(counters.record_model_call(8_193), Ok(()));
+        assert_eq!(counters.record_model_call(24_000), Ok(()));
+        assert_eq!(counters.generated_tokens_total(), 32_193);
+        assert_eq!(counters.model_calls(), 2);
+        assert_eq!(counters.max_call_tokens_observed(), 24_000);
+
+        let json = serde_json::to_string(&caps).unwrap();
+        assert!(
+            json.contains("\"max_reasoning_tokens_per_call\":null"),
+            "{json}"
+        );
+        assert!(
+            json.contains("\"max_generated_tokens_total\":null"),
+            "{json}"
+        );
+        let back: ExecutionBoundaryCaps = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, caps);
+        assert_eq!(back.max_reasoning_tokens_per_call, None);
+        assert_eq!(back.max_generated_tokens_total, None);
+    }
+
+    /// V10. Natural EOS removes the token ceilings only. The call and fit ceilings still refuse.
+    #[test]
+    fn natural_eos_keeps_the_call_and_fit_ceilings_fail_closed() {
+        let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_model_calls: 1,
+            ..ExecutionBoundaryCaps::reasoner_natural_eos()
+        });
+        assert_eq!(counters.record_model_call(9_000), Ok(()));
+        assert_eq!(counters.record_model_call(9_000), Err("model calls"));
+        assert_eq!(counters.model_calls(), 1);
+        assert_eq!(counters.generated_tokens_total(), 9_000);
+
+        let fits = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_physical_fits: 1,
+            ..ExecutionBoundaryCaps::reasoner_natural_eos()
+        });
+        assert_eq!(fits.charge_physical_fit(), Ok(()));
+        assert_eq!(fits.charge_physical_fit(), Err("physical fold fits"));
+        assert_eq!(fits.physical_fits(), 1);
+    }
+
+    /// V10. An explicit aggregate ceiling refuses the call that would cross it, and the refused
+    /// call changes no counter.
+    #[test]
+    fn generated_tokens_total_cap_refuses_without_mutating_counters() {
+        let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_reasoning_tokens_per_call: None,
+            max_generated_tokens_total: Some(100),
+            ..ExecutionBoundaryCaps::reasoner_natural_eos()
+        });
+        assert_eq!(counters.record_model_call(60), Ok(()));
+        assert_eq!(
+            counters.record_model_call(50),
+            Err("generated tokens total")
+        );
+        assert_eq!(counters.generated_tokens_total(), 60);
+        assert_eq!(counters.model_calls(), 1);
+        assert_eq!(counters.max_call_tokens_observed(), 60);
+        assert_eq!(counters.record_model_call(40), Ok(()));
+        assert_eq!(counters.generated_tokens_total(), 100);
+    }
+
+    /// V10. The legacy default still refuses 8 193 tokens in one call, and a JSON document written
+    /// without the token fields reads back as that legacy cap, not as no cap.
+    #[test]
+    fn default_caps_still_refuse_a_call_past_8192_tokens() {
+        let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps::default());
+        assert_eq!(
+            counters.record_model_call(8_193),
+            Err("reasoning tokens per call")
+        );
+        assert_eq!(counters.model_calls(), 0);
+        assert_eq!(counters.record_model_call(8_192), Ok(()));
+
+        let legacy: ExecutionBoundaryCaps =
+            serde_json::from_str(r#"{"max_physical_fits":20000,"max_model_calls":2048}"#).unwrap();
+        assert_eq!(legacy.max_reasoning_tokens_per_call, Some(8_192));
+        assert_eq!(legacy.max_generated_tokens_total, None);
+    }
+
+    /// GATE 1 at the reasoner split. `EvalO` is read at most once and only after the selection
+    /// freeze. A fit or a rank after the freeze is refused.
+    #[test]
+    fn reasoner_split_reads_o_at_most_once_after_the_selection_freeze() {
+        use super::ReasonerSplitRole::{EvalO, FitA, SelectB};
+        let ledger = super::ReasonerSplitLedger::new();
+        assert_eq!(ledger.charge(FitA), Ok(()));
+        assert_eq!(ledger.charge(SelectB), Ok(()));
+        assert_eq!(
+            ledger.charge(EvalO),
+            Err("O read before the selection freeze")
+        );
+        assert_eq!(ledger.o_reads(), 0, "a refused O read was counted");
+
+        ledger.freeze_selection();
+        assert_eq!(ledger.charge(SelectB), Err("selection frozen"));
+        assert_eq!(ledger.charge(FitA), Err("selection frozen"));
+        assert_eq!(ledger.charge(EvalO), Ok(()));
+        assert_eq!(ledger.charge(EvalO), Err("O read more than once"));
+        assert_eq!(ledger.o_reads(), 1);
     }
 
     /// GATE 3 at the production boundary. A search whose fit counter has a small ceiling runs no
@@ -2206,7 +2451,11 @@ mod tests {
             error.contains("execution-boundary cap refused the fit: physical fold fits"),
             "{error}"
         );
-        assert_eq!(counters.physical_fits(), 3, "the counter must stop at its ceiling");
+        assert_eq!(
+            counters.physical_fits(),
+            3,
+            "the counter must stop at its ceiling"
+        );
     }
 
     #[test]
