@@ -297,6 +297,12 @@
           "packet_version": 2,
           "manifest_sha256": "dcdf6f42c11e1bc777a000f95da5ca0242833270b0c5f32dd18cb4f5a305a92c",
           "qualification": "SameexistingC/MRledgers; priority substeps only; not a launch or deletion grant."
+        },
+        {
+          "file": "CONTROLLED_FEEDBACK_RESEARCH_PLAN.md",
+          "revision": 2,
+          "sha256": "8690c912ad6e8f72cdedb6d1f4e65f911c7dc95b066acc9caf005edbf78617d0",
+          "qualification": "Direct human external-review/fullGPandS3 request; proposed controls, not admission or completion."
         }
       ]
     },
@@ -417,6 +423,12 @@
           "packet_version": 2,
           "manifest_sha256": "dcdf6f42c11e1bc777a000f95da5ca0242833270b0c5f32dd18cb4f5a305a92c",
           "qualification": "SameexistingC/MRledgers; priority substeps only; not a launch or deletion grant."
+        },
+        {
+          "file": "CONTROLLED_FEEDBACK_RESEARCH_PLAN.md",
+          "revision": 2,
+          "sha256": "8690c912ad6e8f72cdedb6d1f4e65f911c7dc95b066acc9caf005edbf78617d0",
+          "qualification": "Direct human external-review/fullGPandS3 request; proposed controls, not admission or completion."
         }
       ]
     },
@@ -456,7 +468,7 @@
         "C11",
         "C13"
       ],
-      "state": "integration_pr_open_focused_repairs_pass_current_ci_independent_review_and_runtime_qualification_pending",
+      "state": "integration_pr_open_source_review_repairs_locally_qualified_current_head_ci_independent_review_runtime_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C14 \u2014 Integrate once, finish JA06 and final CI on frozen head"
@@ -502,6 +514,12 @@
           "sha256": "98e7a5b575b621a62135ffa49e806473df0ddb772be8198411ba9b7e5c8ed528",
           "component_head": "8436383544a8acff9ee006c52454d80408536cb0",
           "qualification": "Focused source repairs26tests/strict scopedclippy/e2e/inventory/layoutPASS;16compat-historyPASS at780; currentCI/review/runtime/receivingmain remainpending. Source-only evidence, not final acceptance."
+        },
+        {
+          "path": "docs/plans/release-closure-20261019/SOURCE_REVIEW_CORRECTIONS_20261020.json",
+          "sha256": "972e62dfdc9684fcc39874b3e77f91cd40443a6720c7a0ab339e40550cbb52e7",
+          "component_head": "7a09d43c0d8bccbc905a98c669ed3d80038970c5",
+          "qualification": "Targeted85unit atsourceequivalent9ef +69integration/8compile_fail at7a09, separate1childreplay; scopedclippy/metadataPASS; original failures preserved. Parentac01CI11SUCCESS only; correctedheadCI/fullreview/runtimepending."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C14",
@@ -511,6 +529,12 @@
           "packet_version": 2,
           "manifest_sha256": "dcdf6f42c11e1bc777a000f95da5ca0242833270b0c5f32dd18cb4f5a305a92c",
           "qualification": "SameexistingC/MRledgers; priority substeps only; not a launch or deletion grant."
+        },
+        {
+          "file": "CONTROLLED_FEEDBACK_RESEARCH_PLAN.md",
+          "revision": 2,
+          "sha256": "8690c912ad6e8f72cdedb6d1f4e65f911c7dc95b066acc9caf005edbf78617d0",
+          "qualification": "Direct human external-review/fullGPandS3 request; proposed controls, not admission or completion."
         }
       ]
     },

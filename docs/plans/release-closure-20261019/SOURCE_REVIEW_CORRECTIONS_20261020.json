@@ -1,0 +1,354 @@
+{
+  "schema": "jope.pr387-source-review-corrections/v1",
+  "observed_utc": "2026-10-20T06:24:24.764580+00:00",
+  "writer_session": "01a13a98-d6d0-7903-91a0-4a66046deff6",
+  "source_head": "7a09d43c0d8bccbc905a98c669ed3d80038970c5",
+  "source_tree": "485e6bc025a8ad22432b9d242ef46c859dddd2fb",
+  "production_fix_head": "9ef4b9ab79959aab44559eebd12884c77e5cc868",
+  "initial_failure_receipt": {
+    "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/old-source-repro/REPRODUCTION_RECEIPT.json",
+    "sha256": "c18637c774a25d73a7e1da5d3c28a4087ac9568180870aabb9801f213cf159ec",
+    "actual": "4 identity regressions FAIL; 3 request-admission regressions FAIL; finite-without-wall positive PASS against unchanged production ac01 plus new tests."
+  },
+  "intermediate_compile_failure": {
+    "head": "9ef4b9ab79959aab44559eebd12884c77e5cc868",
+    "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-9ef4b9ab7/model-build-integration.log",
+    "sha256": "c4a85d8b3ef38f160879f8651bb478ec058b748627540437c93b1e7ad84bc27c",
+    "executed_cases": 0,
+    "cause": "Test-only TempDir helper called path() on &Path; corrected in 7a09, production source unchanged."
+  },
+  "review": {
+    "head": "ac01b739215ef838b6773488d5b8a65d37bfc7cd",
+    "sha256": "84569e572a112ca7d40722e92370eeb39063e2b6b39789d65921d3dc93ba23a7",
+    "coverage_sha256": "163496e09866f64742b7dc1e2322be86d387965d4a1189294d2a906b13ece286",
+    "source_coverage_complete": false,
+    "native_approval": false
+  },
+  "repairs": {
+    "A1": "Versioned length/count/domain-framed identifier/label digest, protocolv2; v1 refused; no numerical evaluator rebaseline.",
+    "B1": "Duplicate roster refusal before budget/fitter work.",
+    "C1": "Finite native per-kind counters; supplied maximum wall sentinel refused. Finite count-bounded work without temporal cap passes. Global legacy UNLIMITED unchanged.",
+    "D1": "Refit member_ids documentation describes enumeration; provenance binding belongs to VerifiedRefit."
+  },
+  "nine_new_test_functions": 9,
+  "parent_unit_proof": {
+    "head": "9ef4b9ab79959aab44559eebd12884c77e5cc868",
+    "argv": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-j2",
+      "-p",
+      "jope-pipeline",
+      "--lib",
+      "model_build::"
+    ],
+    "passed": 85,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 374,
+    "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-9ef4b9ab7/model-build-unit.log",
+    "sha256": "829d34dd03546981191bb0b1afe43e27d79184922de56d6c86c0049fa6ce9666",
+    "applicability": "git diff 9ef..7a09 -- crates/jope-pipeline/src is empty; original execution identity retained, no rerun claim."
+  },
+  "execution_prefix": [
+    "/home/ubuntu/xbabe2_kicker/fleetcap/run-capped",
+    "--name",
+    "jope-c14-source-review-fix",
+    "--",
+    "taskset",
+    "-c",
+    "4,5",
+    "nice",
+    "-n",
+    "10",
+    "env",
+    "PATH=/home/ubuntu/.cargo/bin:/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=line-tables-only",
+    "CARGO_BUILD_JOBS=2",
+    "RUST_TEST_THREADS=2",
+    "OMP_NUM_THREADS=2",
+    "OPENBLAS_NUM_THREADS=2",
+    "MKL_NUM_THREADS=2",
+    "RAYON_NUM_THREADS=2",
+    "CARGO_NET_OFFLINE=true",
+    "CUDA_VISIBLE_DEVICES="
+  ],
+  "commands": [
+    {
+      "name": "model-build-integration",
+      "start_utc": "2026-10-20T06:11:48.795569+00:00",
+      "end_utc": "2026-10-20T06:11:53.649111+00:00",
+      "exit": 0,
+      "sha256": "8e6c5a685450d484390c51a9f746fb253186f402604e801b08b2022634ca731e",
+      "bytes": 6354,
+      "argv": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-j2",
+        "-p",
+        "jope-pipeline",
+        "--test",
+        "model_build_driver",
+        "--test",
+        "model_build_admission",
+        "--test",
+        "model_build_automl",
+        "--test",
+        "model_build_ensemble",
+        "--test",
+        "model_build_persistence"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/model-build-integration.log",
+      "counts": {
+        "passed": 69,
+        "failed": 0,
+        "ignored": 1
+      },
+      "separate_child_replay_passes": 1
+    },
+    {
+      "name": "compile-fail-api",
+      "start_utc": "2026-10-20T06:11:53.678103+00:00",
+      "end_utc": "2026-10-20T06:11:57.345636+00:00",
+      "exit": 0,
+      "sha256": "5b2e88fbc1f9f231f3aec9dfa999989e12226cef91f370f266776e81905c5512",
+      "bytes": 1145,
+      "argv": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-j2",
+        "-p",
+        "jope-pipeline",
+        "--doc",
+        "model_build::"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/compile-fail-api.log",
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "start_utc": "2026-10-20T06:11:57.374522+00:00",
+      "end_utc": "2026-10-20T06:12:23.935948+00:00",
+      "exit": 0,
+      "sha256": "c752a23f07aad834e0de824b4844419a72076afea452d5dd94af27fdef324618",
+      "bytes": 502,
+      "argv": [
+        "cargo",
+        "clippy",
+        "--no-deps",
+        "--offline",
+        "--locked",
+        "-j2",
+        "-p",
+        "jope-pipeline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/clippy.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "coverage",
+      "start_utc": "2026-10-20T06:12:23.963963+00:00",
+      "end_utc": "2026-10-20T06:12:24.433909+00:00",
+      "exit": 0,
+      "sha256": "cf20eef01367c91178c46077a411b0b268cfc27e5a50edfe96acf52bdcce97f0",
+      "bytes": 185,
+      "argv": [
+        "/home/ubuntu/JopeDime/.agent/worktrees/fleet-main-296d07e1/target/debug/jope-records",
+        "coverage",
+        "validate"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/coverage.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "source-classification",
+      "start_utc": "2026-10-20T06:12:24.466660+00:00",
+      "end_utc": "2026-10-20T06:12:24.681408+00:00",
+      "exit": 0,
+      "sha256": "810347fa09d581179897ec0533e502f404f219a756daf093c063ca62a28530c5",
+      "bytes": 263,
+      "argv": [
+        "/home/ubuntu/JopeDime/.agent/worktrees/fleet-main-296d07e1/target/debug/jope-records",
+        "verify-source-inventory"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/source-classification.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "test-classification",
+      "start_utc": "2026-10-20T06:12:24.710460+00:00",
+      "end_utc": "2026-10-20T06:12:24.825000+00:00",
+      "exit": 0,
+      "sha256": "6de32bf22adb264def1a700bc7c8007a4e1b3ccd65e8a28b776b35839232b5c3",
+      "bytes": 579,
+      "argv": [
+        "/home/ubuntu/JopeDime/.agent/worktrees/fleet-main-296d07e1/target/debug/jope-records",
+        "verify-test-inventory"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/test-classification.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "layout",
+      "start_utc": "2026-10-20T06:12:24.851841+00:00",
+      "end_utc": "2026-10-20T06:12:25.317381+00:00",
+      "exit": 0,
+      "sha256": "1c6c7fb0961d68de19cd5c2c49a526ec517b004e9c55d190e3be583e6a0a8c25",
+      "bytes": 98,
+      "argv": [
+        "/home/ubuntu/JopeDime/.agent/worktrees/fleet-main-296d07e1/target/debug/jope-records",
+        "repo-layout"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/layout.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "readme",
+      "start_utc": "2026-10-20T06:12:25.347341+00:00",
+      "end_utc": "2026-10-20T06:12:25.512131+00:00",
+      "exit": 0,
+      "sha256": "f64e3cb7dec67d4ccd6af9007850586332b431d3c534fa3319c92517bc660e85",
+      "bytes": 39,
+      "argv": [
+        "/home/ubuntu/JopeDime/.agent/worktrees/fleet-main-296d07e1/target/debug/jope-records",
+        "readme-benchmarks",
+        "--check"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/readme.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "prose",
+      "start_utc": "2026-10-20T06:12:25.542021+00:00",
+      "end_utc": "2026-10-20T06:12:27.432120+00:00",
+      "exit": 0,
+      "sha256": "47432ab9fe0c43f7f4d07cfd5b1f2d95ff717a76628492ac0cf4d5abd9df19be",
+      "bytes": 25,
+      "argv": [
+        "bash",
+        "deploy/ci/ip-scrub.sh"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/prose.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "fmt",
+      "start_utc": "2026-10-20T06:12:27.460142+00:00",
+      "end_utc": "2026-10-20T06:12:37.082824+00:00",
+      "exit": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/fmt.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "diff",
+      "start_utc": "2026-10-20T06:12:37.111542+00:00",
+      "end_utc": "2026-10-20T06:12:37.226622+00:00",
+      "exit": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/qualified-7a09d43c0/diff.log",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    }
+  ],
+  "top_level_tests_passed_across_source_equivalent_heads": 162,
+  "top_level_ignored": 1,
+  "separate_fresh_process_replay_passes": 1,
+  "count_policy": "85 unit +69 top-level integration +8compile_fail. Ignored child entrypoint executed once by parent; child is never a top-level pass. Targeted suite, not workspace qualification.",
+  "numerical_identity": {
+    "inputs": 38,
+    "mismatches": [],
+    "fixture_sha256": "514ec62ebefc8eade9eea8f44c74f95c7ad9a84e7d24f808921cf611f500f15e",
+    "regenerated": false
+  },
+  "published_parent_ci": {
+    "head": "ac01b739215ef838b6773488d5b8a65d37bfc7cd",
+    "run_id": 39375890804,
+    "attempt": 1,
+    "all_jobs": 11,
+    "conclusion": "success",
+    "completed_utc": "2026-10-20T06:05:54Z",
+    "applies_to_corrected_head": false
+  },
+  "archive": {
+    "format": "tar+gzip/source-evidence-v1",
+    "compressed_sha256": "d2de5d4b8c0003a207d63f379f108a216e2a92f8360e6a3d162e40aee8a5e90c",
+    "compressed_bytes": 21239,
+    "decoded_sha256": "76d7b68c7d661a60feda01bfe8e6d142d6075d89e610f25a84fa73258721544b",
+    "members": 25,
+    "member_index_sha256": "764e42099e0195c87a8f5fc8754f96400f199dbb673c1b630f4ebba8aef31505",
+    "local": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/source-review-evidence-d2de5d4b8c0003a207d63f379f108a216e2a92f8360e6a3d162e40aee8a5e90c.tar.gz",
+    "second_host": "xbabe3",
+    "second_path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0556-20261020/source-review-evidence-d2de5d4b8c0003a207d63f379f108a216e2a92f8360e6a3d162e40aee8a5e90c.tar.gz",
+    "all_members_match": true,
+    "s3_version_id": null,
+    "limit": "Source qualification capsule; two-host full decode/member verification. No S3 restoration or scientific-wave archival claim."
+  },
+  "current_head_ci": "pending after ordinary push",
+  "independent_final_review": "pending same reviewer after I03/I04 main receipts; remaining45Rustfiles and partialranges plus fixes",
+  "release_qualified": false,
+  "scientific_gain": false
+}

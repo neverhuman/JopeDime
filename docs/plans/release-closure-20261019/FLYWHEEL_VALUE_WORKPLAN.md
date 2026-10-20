@@ -1,3 +1,7 @@
+# Research priority amendment — 2026-10-20
+
+The direct human external review and full-GP/S3-diversity request are reconciled in [controlled feedback revision2](CONTROLLED_FEEDBACK_RESEARCH_PLAN.md) and its [GP/data baseline](GP_AND_DATA_REUSE_BASELINE.json). Use the five causal controls, explicit measured-outcome to CE/ranking target rule, verified constant-LR/source-normalization findings, fixed-support boundary, family-level analysis and distinct logical/physical cost ledgers for the next admitted pilot. R3 stays frozen with its existing owner. This refines C09/C12/C14 without replacing the47/66task ledgers or granting compute/deletion. Dated packets below retain their original scope; the revised research detail governs the next proposed scientific comparison.
+
 # JopeDime: storage value and feedback proof — execution update, 2026-10-19
 
 This is an additive priority update to `/home/ubuntu/JopeDime/MASTER_PLAN.md` and `docs/plans/release-closure-20261019/WORKPLAN.md`. It preserves C00–C19, the 47-item MR ledger and the separate older 66-item ledger. Adopt this document as `docs/plans/release-closure-20261019/FLYWHEEL_VALUE_WORKPLAN.md`; link it from the existing workplan and existing C09/C12/C14 task entries. The existing ledgers remain authoritative.

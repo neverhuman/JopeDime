@@ -88,5 +88,26 @@
       "sha256": "33611d424ab84259641e0dd68d1397a2e78f886f16f399b1dd7492ed930212f0",
       "cause": "Capped child lacked Cargo PATH for read-only cargo metadata. Explicit child PATH corrected; no source/test change."
     }
-  }
+  },
+  "subsequent_source_reviews": [
+    {
+      "reviewed_head": "ac01b739215ef838b6773488d5b8a65d37bfc7cd",
+      "receipt_sha256": "84569e572a112ca7d40722e92370eeb39063e2b6b39789d65921d3dc93ba23a7",
+      "coverage_sha256": "163496e09866f64742b7dc1e2322be86d387965d4a1189294d2a906b13ece286",
+      "reviewer_authenticated_plain_login": "jepsontaylor",
+      "native_approval": false,
+      "coverage_complete": false,
+      "unread_rust_files": 45,
+      "findings": {
+        "A1": "Versioned length/count/domain-framed identifier/label digest, protocolv2; v1 refused; no numerical evaluator rebaseline.",
+        "B1": "Duplicate roster refusal before budget/fitter work.",
+        "C1": "Finite native per-kind counters; supplied maximum wall sentinel refused. Finite count-bounded work without temporal cap passes. Global legacy UNLIMITED unchanged.",
+        "D1": "Refit member_ids documentation describes enumeration; provenance binding belongs to VerifiedRefit."
+      },
+      "E1": "In-process OOF relation accepted for current path; disk admission would need explicit binding.",
+      "corrected_head": "7a09d43c0d8bccbc905a98c669ed3d80038970c5",
+      "local_proof": "docs/plans/release-closure-20261019/SOURCE_REVIEW_CORRECTIONS_20261020.json",
+      "final_exact_head_review": "pending same reviewer after main I03/I04 receipts"
+    }
+  ]
 }
