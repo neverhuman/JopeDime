@@ -1,0 +1,105 @@
+{
+  "schema": "jope.f0.metadata-census-summary/v1",
+  "observed_utc": "2026-10-20T06:49:17.697987Z",
+  "source_head": "4c40dbd5cb70fc1aea89b71b9347b0aa05cd027a",
+  "source_tree": "101a326a648c79e0f203505b2a4cf14b333877f5",
+  "admiral_disposition_sha256": "6192cdab41b42624b5733e1134c1c328e80487297484748c84cf14f26b4ca4c4",
+  "status": "PARTIAL_METADATA_CENSUS_DELIVERED",
+  "metadata_only": true,
+  "execution_admitted": false,
+  "counts": {
+    "loaded_train_contexts": 6857,
+    "loaded_validation_contexts": 263,
+    "train_parent_families": 1014,
+    "validation_parent_families": 54,
+    "train_validation_parent_overlap": 0,
+    "pending_train_proposals": 429,
+    "pending_train_parents": 299,
+    "pending_train_unique_programs": 374,
+    "pending_validation_proposals_excluded_from_feedback": 429,
+    "all_pending_train_crosswalk_verified": true,
+    "eligible_views": 12581,
+    "loaded_views": 7120,
+    "bundle_join_pending_views": 5461,
+    "proposed_plumbing_cohort_rows": 16,
+    "proposed_plumbing_cohort_parents": 16,
+    "proposed_cohort_admitted": false
+  },
+  "gp_units": {
+    "additive_registry_rows": 90,
+    "additive_row_states": {
+      "enabled": 57,
+      "compatibility": 11,
+      "quarantined": 7,
+      "receipt": 11,
+      "disabled": 4
+    },
+    "historical_projection_expression_elements": 35,
+    "historical_projection_operations": 76,
+    "production_grammar_tokens": 401,
+    "production_grammar_OP_tokens": 53,
+    "native_research_tokens": 282,
+    "native_research_teacher_program_trie": 6640,
+    "full_semantic_union_count": null,
+    "qualified_executable_union_count": null,
+    "checkpoint_reachable_union_count": null,
+    "note": "Different layers/units and overlapping projections, never sum them. Declared metadata is not executable or reachable qualification."
+  },
+  "reuse_limits": [
+    "No S3 refresh or payload read in this census; catalog history retains its original observation date.",
+    "Physical object totals, result rows, known programs and qualified TRAIN outcomes have different units.",
+    "All-S3 unique qualified training score count remains unknown.",
+    "Proposed cohort is pre-outcome metadata selection, not numerical/evaluator/optimizer admission.",
+    "Original9row/8parent cohort artifact is immutable; additivev2 takes one proposal from each of16hash-ordered parents."
+  ],
+  "not_read": [
+    "S3 bodies/listings",
+    "dataset/encoding/shard payloads",
+    "checkpoint/model tensor bodies",
+    "O payloads/scores",
+    "unique historical attempt outcome bodies"
+  ],
+  "artifacts": {
+    "f0-local-metadata/blockers.json": {
+      "sha256": "b7844e2ea7daef566076ce68261978de47dd1cdf0cc463d21815f232e4f56292",
+      "bytes": 1158
+    },
+    "f0-local-metadata/coverage.json": {
+      "sha256": "9c9b9c7d5d11b282ac996269d28cf9c656c8f2e11484e73df5925934de9404ff",
+      "bytes": 1017
+    },
+    "f0-local-metadata/gp-surface-map.json": {
+      "sha256": "719ccf8856101ed6180309dbedf6a2d1aca4bafa3bf717ddecb7c541512b33b3",
+      "bytes": 33087
+    },
+    "f0-local-metadata/historical-score-reuse.json": {
+      "sha256": "f02954390274a1e93b3b30d041b9ed2b48888a4ef9d2d2fcf55820beb8ba898f",
+      "bytes": 185646
+    },
+    "f0-local-metadata/inputs.lock.json": {
+      "sha256": "235aa14702c29b4e82fca008f85af482f0a6d33318ebb88551c66ce34b108987",
+      "bytes": 6532
+    },
+    "F0_PROPOSED_COHORT_V2.json": {
+      "sha256": "80eec31a63d877cf248c72b9761d25f2e3eb156a1d710b8ff0d6fb5636a22009",
+      "bytes": 10365
+    }
+  },
+  "archive": {
+    "name": "f0-metadata-c407e2eaeec2ed945ad7fce8ebf19ae0ed7d58ac7eff41973c16c56b97c2b886.tar.gz",
+    "compressed_sha256": "c407e2eaeec2ed945ad7fce8ebf19ae0ed7d58ac7eff41973c16c56b97c2b886",
+    "compressed_bytes": 105216,
+    "decoded_sha256": "2f1b1f84914633ab4da16e71662f31dcc19dbbd26dd42c9449812c69463fcd53",
+    "decoded_bytes": 245760,
+    "member_index_sha256": "3c219ac65f576a66d2898f146008722c02504ee8d454dd3c8739bdd84f5ffc32",
+    "member_count": 7,
+    "local_path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/fleet-check-20261020T063806Z/f0-metadata-c407e2eaeec2ed945ad7fce8ebf19ae0ed7d58ac7eff41973c16c56b97c2b886.tar.gz",
+    "xbabe2_path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0638-20261020/f0-metadata-c407e2eaeec2ed945ad7fce8ebf19ae0ed7d58ac7eff41973c16c56b97c2b886.tar.gz",
+    "local_all_member_restore_verified": true,
+    "xbabe2_all_member_restore_verified": true,
+    "s3_uri": null,
+    "s3_version_id": null,
+    "limit": "Local metadata evidence capsule, not a complete scientific-wave archive or remote publication.",
+    "verification_utc": "2026-10-20T07:03:31.621542+00:00"
+  }
+}

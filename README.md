@@ -135,6 +135,12 @@ The [controlled feedback research plan](docs/plans/release-closure-20261019/CONT
 defines the next proposed learning comparison and its data/evidence requirements.
 It records current limits and does not claim demonstrated self-play gains.
 
+The current deep learning model remains the baseline; a replacement has not been
+decided. Qwen and other replacement candidates stay on a claimed research branch.
+They must show end-to-end promise against the pinned incumbent under matched
+evaluation budgets before a separate promotion decision. A research loss curve
+or checkpoint cannot change production defaults, bundles or latest aliases.
+
 The native-study library separately provides whole-plan admission checks, one shared fit
 counter and a barrier that freezes all families and arms before held-out assessment. Its
 synthetic tests do not qualify real datasets, a production study CLI or the physical

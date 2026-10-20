@@ -22,6 +22,19 @@ acting; stale plans or historical PASS entries do not establish current capabili
 explicit user direction controls scope and budgets. A configured command or workflow, a merged
 implementation, and a qualified live learning loop are separate milestones.
 
+## Model research and promotion
+
+The human has not decided to replace the current deep learning model. Keep replacement
+architecture, candidate weights and experiments on a claimed research branch. Pin the
+actual incumbent and compare end-to-end quality, failures and cost under controlled,
+family-separated evaluation before reporting promise. Serving defaults, encoder/model
+bundles and latest aliases stay unchanged until a separate explicit promotion decision
+and the normal independent review, checks, merge and receiving-main validation.
+The native282-token learner, production401-action actor and Qwen research models are
+distinct lineages; a newer checkpoint or lower loss is not a promotion receipt. Read the
+[controlled feedback plan](docs/plans/release-closure-20261019/CONTROLLED_FEEDBACK_RESEARCH_PLAN.md)
+for the current boundary and owner handoff.
+
 ## Which checkout
 
 **The canonical local checkout is `/home/ubuntu/JopeDime`**. Work on its claimed PR branch;

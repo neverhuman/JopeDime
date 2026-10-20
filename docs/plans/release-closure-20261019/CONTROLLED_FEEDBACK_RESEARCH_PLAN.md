@@ -1,3 +1,64 @@
+# Research plan revision 2.2 — retain the current model; isolate replacement research
+
+Human clarification received 2026-10-20: a decision to replace the current deep learning model has **not** been made. This instruction supersedes any plan language that implies a model swap is part of the major release, or that Qwen/another candidate becomes the default after a pilot. It does not authorize a new experiment, provider or worker.
+
+## Ownership and branch boundary
+
+The current production model and its inference pathway remain the incumbent. The 893,957-parameter/282-token native experimental learner, the 401-action production actor, the historical 17,773-update checkpoint and Qwen 4–9B research candidates are distinct identities. Do not call whichever is newest the production baseline. Before a comparison, resolve and freeze the actual deployed incumbent's code, model/encoder/checkpoint hashes, grammar/vocabulary, preprocessing and download manifest; if that identity cannot be resolved, record the gap and do not claim superiority.
+
+Model-replacement code, architecture/configuration changes, weights and experiment results belong on a **claimed research branch**, outside the release integration branch. The existing research Root `01a155bf-9fcd-7501-a15a-495c9435725b` owns R4 and related candidates; coordinate its current branch/lease before a source change. Require a recorded branch, base commit and exact experiment source identity before the next candidate implementation. Do not create another checkout, worker or PR merely to satisfy this instruction. If the current frozen experiment sources exist only in an evidence directory, preserve them and have their owner record a recoverable research-branch commit without altering the frozen run or its hashes. This plan is an instruction to establish that source lineage, not evidence that it already exists.
+
+The existing integration writer retains PR387 for generic pipeline plumbing, tests, documentation and supported existing product routes. Do not merge a replacement architecture/weight set/default switch into that PR. Candidate support or opt-in research adapters must not select themselves for the normal Direct path, alter existing model bundles, or rewrite production/latest aliases. Same-architecture feedback/continuation experiments may proceed through their existing admissions, but their child checkpoints also remain unpromoted until evaluated. Research results and manifests can be published without promoting a candidate.
+
+## Ordered comparison and promotion packet
+
+1. Read `AGENTS.md`, `MASTER_PLAN.md`, the release-closure workplan and this revision, then the actual serving/download configuration and research owner's source claim. Write `incumbent.lock.json` and `candidate.lock.json` with exact code/encoder/model/checkpoint/tokenizer/grammar/preprocessing identities and the claimed research branch/base/head. Hash metadata and keep bulk weights outside Git.
+2. Run engineering parity before scientific evaluation: encoding and input shape, GP AST/grammar and native transport, code generation and execution in supported targets, output schema, deterministic replay where promised, and checkpoint download/hash/restore plumbing. A parser repair or better raw text validity is not a model-quality win.
+3. Freeze TRAIN/development/untouched family membership, seeds, evaluator and objective, direction of benefit, practical minimum effect, confidence procedure, resource limits and failure treatment before accessing outcomes. Match logical GP opportunities and optimizer exposure where relevant; report cold/warm latency, inference tokens, GPU/CPU seconds, memory and actual numerical fits separately. No validation/O-derived training targets and no post-hoc family deletion. Retain current-model, random/GP-only and other applicable frozen controls; the five-arm feedback test keeps architecture fixed and remains a different hypothesis from replacing the architecture.
+4. Compare **end-to-end held-out quality and family-level uncertainty** against the pinned incumbent, including failures, GP validity/executability, diversity, latency, memory and cost. Training loss alone and more successful fits alone cannot establish superiority, especially with different tokenizers or objectives. A better result on a small development pilot is promising research; it is not confirmed generalization or serving approval. Freeze decisions and use a separately admitted untouched cohort for confirmation.
+5. Produce `comparison.json`, compact per-family metrics, a short failure-aware interpretation card, exact source/config/input identities and immutable compressed raw/checkpoint references with object VersionIds, compressed/decoded/member hashes and restore receipts. Present the packet to the same Admiral and the human. **No automatic promotion:** keep the incumbent and production aliases until a separate explicit promotion decision, independent review, required checks, ordinary protected merge and receiving-main/runtime validation are complete. Preserve a rollback identity.
+
+## Planned implementation and validation boundaries
+
+Use the existing model-build config/selection code, `crates/jope-models/src/{release.rs,cache.rs}`, download contracts, README and native pipeline tests as the read-first authority. Before editing, resolve their actual paths/functions at the claimed head and write a disjoint path lease. Proposed tests must prove: default configuration selects the incumbent; a research opt-in requires explicit candidate identity and separate output prefix; a candidate cannot update production/latest aliases through the research path; download manifests bind every encoder and the model; and comparison reports preserve failed arms and exact resource denominators. These are planned acceptance cases, not tests claimed to have run in this documentation update.
+
+Stop or hand off on missing source/ownership/resource admission, unresolved incumbent identity, test leakage, parser mismatch, an identity-changing source update after freeze, or a required review/check failure. Do not change the current model to work around any blocker. Report promising, inconclusive, adverse and confirmed outcomes distinctly. Keep the original failures, costs and timestamps.
+
+## Current disposition
+
+The Admiral adopted bounded local F0 metadata work and F1/F2 design packets at06:36:54Z. F3 numerical execution and model promotion remain unadmitted. The F0 metadata census is a partial inventory, not a training grant or a complete GP semantic union. Revision2.1's R3 engineering-inconclusive record remains below. R4 belongs to the existing research owner; this clarification does not restart or modify it. PR387's 4c40 head completed all11 current CI jobs successfully at06:49:22Z; a subsequent documentation commit must receive its own exact-head checks and review.
+
+
+---
+
+# Research plan revision 2.1 — R3 parser-interface finding
+
+Observed 2026-10-20T06:35:57.730903+00:00. This addendum supersedes the earlier instruction to let R3 finish. The earlier plan's 06:12 running observation remains dated evidence; its source in PR387 at 4c40dbd5 is preserved.
+
+The existing research Root, chat `01a155bf-9fcd-7501-a15a-495c9435725b`, classified R3 **INCONCLUSIVE_PARSER_INTERFACE_CONFOUND** and stopped its own controller at 06:20:11 UTC. The current response finished at natural EOS; the worker exited 0 and released the GPU at 06:26:46 UTC. This is an owned engineering-integrity stop, not an unverified SSH-key incident, training convergence or a scientific negative. The controller's last counters are 414 successful numerical fits, 440 charged slots, 13/20 frozen ranks and zero O assessments. Worker terminal counters include 11 new completed calls and 103,638 generated tokens; the last completed response was not incorporated into the controller's terminal counters. Preserve both counters and their timestamps instead of silently reconciling them.
+
+Independent audit `new-control-round-audit-0611/AUDIT.json`, SHA256 `0a25f4c687c49d44baead103547c98e7ee916fe666fb9aba4346485174b947e3`, found all eight family09 shuffled-round3 strings had internal spaces. Python's validator removed whitespace, while the driver sent the original text to a native parser that does not skip it. All eight were rejected before numeric fitting: eight logical opportunities, zero physical fits, 8,468 inference tokens plus parsing/driver cost. The family retained 14/24 usable model proposals, so this did not trigger a nonexistent per-batch usability minimum or the actual zero-usable-family threshold. The design-level interface confound, rather than a new threshold, motivated the owner's stop.
+
+Read the immutable audit, `INTERFACE_DESIGN_AND_REUSE_ADDENDUM.json` SHA256 `1f9ddceff770e00cbffd8c062a51ed2ae23165a3a965082bf3b34b5a32fc00df`, and `engineering-parser-interface-20261020T0611Z/{INTENT.json,ACTION_RECEIPT.json}` under `/home/ubuntu/jope-evidence/reasoner-eos-9b-20261020/recovery-r3/` on xbabe1. The same research Root retains the next revision and experiment; do not restart R3, alter its sources or rerun its rejected slots under old receipts.
+
+## New first packet: parser and transport parity
+
+Before another model/GP evaluation, the existing owner prepares a separately frozen prospective interface revision and exact source/test path lease. Read the frozen `v3_support.py::canonical`, `driver_v3.py` native `inspect` call and native `GpProgram::parse`/`parse_gp_node` source copies identified in the audit. Preserve the current four arithmetic operations, node/depth/leaf rules and evaluator semantics. No architecture change or operator expansion follows from a serialization disagreement.
+
+1. Define one accepted wire grammar and a versioned canonical serialization. Validate a parsed AST against the allowed grammar, then produce the native representation. Keep raw output plus canonical form and an explicit transformation receipt. Do not globally remove whitespace: other supported GP dialects can contain quoted names or literals whose internal spaces matter.
+2. Add differential positive/negative fixtures through **both the actual validator and actual native inspection boundary**: nested spaces, tabs/newlines, canonical text, nested operators/leaves, arity, node/depth limits, unknown leaves/operators, forbidden constants, malformed/trailing input and quoted/literal behavior for the relevant full-library dialect. Check identical AST/semantic identity where accepted, matched refusals and zero numerical-fit claims from parser-only tests. Pin actual binaries and source identities. A Python-only fixture cannot qualify this boundary.
+3. Freeze the new interface/protocol before new outcomes. Recompute requests and cache eligibility against exact prompt bytes, request ID, seed, tokenizer/model/revision/precision, decoding and source policy. Keep every old slot, failure and cost. A change before a later adaptive prompt requires recomputing that prompt; stop cache reuse from the first divergence unless exact equality is independently proven. No fuzzy/quality-selected reuse, retroactive slot repair or cost reset.
+4. Independently review the new revision and obtain current resource/evaluator admission through the existing owner. Archive R3's stopped source, responses, rejected strings, terminal ledgers and interpretation in compact Git wave records with immutable compressed bulk references and restoration evidence. Run the new revision only after its qualified source/input/ownership boundary is explicit.
+
+After that packet, the five-arm feedback plan, full GP/S3 score-reuse census, explicit CE-target changes, exact checkpoint recovery and family-level cost-controlled comparisons remain the next phases. Parser parity also becomes a prerequisite for F0's claimed executable/reachable surface and F1's real outcome path. The native learner still has 429 completed updates; this incident does not supply new loss evidence.
+
+## Integration and owner handoff
+
+The published plan/proof at PR387 head 4c40dbd5 remains clean and its current CI is running. This dated addendum is delivered outside the source tree and in the PR description so it does not cancel working CI. Fold it into the same repository workplan in the next ordinary documentation update after that run reaches a terminal state; preserve the original dated observations. No extra PR or training launch is authorized. The Admiral is asked to acknowledge the new prerequisite and the existing research owner, rather than dispatch a competing parser fix or restart.
+
+
+---
+
 # Controlled feedback research plan — revision 2, 2026-10-20
 
 Status: proposed priorities for the existing Admiral and owners; no new experiment is admitted by this document. This revision incorporates the human-supplied external review and the request to use the full GP library and historical S3 measurements. It refines existing C09/C12/C14 work and the separate MR47/I66 ledgers; it creates no replacement task count.
@@ -162,3 +223,10 @@ Admiral handoff must return the same owner per packet, admitted versus pending p
 ## Research basis and limits
 
 [Expert Iteration](https://arxiv.org/abs/1705.08439) motivates improving search targets and then improving search with learned guidance. [DAgger](https://arxiv.org/abs/1011.0686) motivates supervision on learner-induced cases under its reduction assumptions. These motivate this design; neither establishes a guarantee or measured JopeDime gain. [Cawley and Talbot](https://www.jmlr.org/papers/v11/cawley10a.html) explain why repeated model selection can bias a finite evaluation set; development checkpoint selection and sealed confirmation therefore remain separate. The control choices, acquisition mixture and proposed pilot sizes above are this plan's engineering proposals, not claims established by those papers.
+
+
+## F0 delivery and F1/F2 implementation handoff
+
+The [compact local metadata census](F0_METADATA_CENSUS_20261020.json) records actual counts, source/input hashes and a compressed metadata capsule with local and xbabe2 full-member restoration. It is partial: no S3 refresh, numerical evaluator, checkpoint load or training occurred. The proposed plumbing cohort contains16TRAIN contexts from16parents, selected before new outcomes; it is not admitted. The original9row/8parent selector remains immutable in the archive.
+
+The ordered F1/F2 source/state packet is `/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0638-20261020/F1_F2_DESIGN_AND_GAPS_20261020.json`, SHA256 `45bf641ccae68c62330adc13f6c3232de9d5e118d8a5a66b147cd4f305a1ce62`. It names actual source functions, proposed files, edge cases, validation and remaining source/data/evaluator/runtime grants. This is design delivery, not implemented feedback or resume. Existing owners serialize source work after exact-head handoff; candidate replacement remains on the claimed research branch.

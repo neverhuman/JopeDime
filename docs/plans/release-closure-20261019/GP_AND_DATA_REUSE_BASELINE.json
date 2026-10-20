@@ -1196,5 +1196,32 @@
     "sept23_s3_catalog_sha256": "b5d0b6d5888f4c30709d4a6bc25d476908d634e9679ffb50eaf3f644b0c541ee",
     "total_trainable_unique_outcomes_all_s3": null,
     "blocker": "Full per-purpose role/evaluator/context/baseline/attempt and payload closure not established. F0 joins known metadata families before selecting an admitted cohort."
+  },
+  "subsequent_local_metadata_census": {
+    "file": "F0_METADATA_CENSUS_20261020.json",
+    "sha256": "560827a1a4a616921839d95590a99d60a043ebeb4aa7544f2e7afaa48665e3cc",
+    "observed_utc": "2026-10-20T06:49:17.697987Z",
+    "status": "PARTIAL_METADATA_CENSUS_DELIVERED",
+    "counts": {
+      "loaded_train_contexts": 6857,
+      "loaded_validation_contexts": 263,
+      "train_parent_families": 1014,
+      "validation_parent_families": 54,
+      "train_validation_parent_overlap": 0,
+      "pending_train_proposals": 429,
+      "pending_train_parents": 299,
+      "pending_train_unique_programs": 374,
+      "pending_validation_proposals_excluded_from_feedback": 429,
+      "all_pending_train_crosswalk_verified": true,
+      "eligible_views": 12581,
+      "loaded_views": 7120,
+      "bundle_join_pending_views": 5461,
+      "proposed_plumbing_cohort_rows": 16,
+      "proposed_plumbing_cohort_parents": 16,
+      "proposed_cohort_admitted": false
+    },
+    "qualified_all_s3_unique_train_scores": null,
+    "full_GP_semantic_union": null,
+    "execution_admitted": false
   }
 }

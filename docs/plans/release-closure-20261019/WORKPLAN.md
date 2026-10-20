@@ -1,3 +1,18 @@
+# Human research boundary and parser finding — 2026-10-20
+
+The current deep learning model remains the incumbent. A replacement has not been decided.
+Candidate model work belongs on a claimed research branch until a controlled comparison
+shows promise against the pinned incumbent. Production model bundles, encoders, defaults
+and latest aliases require a separate promotion decision. See [research revision2.2](CONTROLLED_FEEDBACK_RESEARCH_PLAN.md)
+for that boundary, the stopped R3 parser confound and the prospective existing-owner R4 path.
+
+The [F0 census](F0_METADATA_CENSUS_20261020.json) is partial local metadata evidence:
+429 pending TRAIN proposals span299parents; a proposed16parent cohort remains unadmitted.
+F1/F2 source/state designs were delivered; no new outcome, optimizer update or model swap
+is claimed. Full GP semantic/reachable coverage and all-S3 qualified-score totals remain unknown.
+
+Dated plans below retain their original observations.
+
 # JopeDime release closure workplan — 2026-10-19
 
 Status: **active implementation plan; release NOT qualified**. Admiral adoption: SC184M assigns `ADM-JOPE-RC-C00` through `C19` to the existing owners. Coordination is manual while native execution is unqualified; see [delivery status](IMPLEMENTATION_STATUS.md). This is an additive execution overlay on `MASTER_PLAN.md`, the 47-task `major-release-20261018` ledger and the separate older 66-item milestone. It does not replace, renumber or silently waive any of them.

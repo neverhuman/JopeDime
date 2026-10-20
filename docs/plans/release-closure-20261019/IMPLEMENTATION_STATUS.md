@@ -1,3 +1,20 @@
+# Human research boundary and parser finding — 2026-10-20
+
+The current deep learning model remains the incumbent. A replacement has not been decided.
+Candidate model work belongs on a claimed research branch until a controlled comparison
+shows promise against the pinned incumbent. Production model bundles, encoders, defaults
+and latest aliases require a separate promotion decision. See [research revision2.2](CONTROLLED_FEEDBACK_RESEARCH_PLAN.md)
+for that boundary, the stopped R3 parser confound and the prospective existing-owner R4 path.
+
+The [F0 census](F0_METADATA_CENSUS_20261020.json) is partial local metadata evidence:
+429 pending TRAIN proposals span299parents; a proposed16parent cohort remains unadmitted.
+F1/F2 source/state designs were delivered; no new outcome, optimizer update or model swap
+is claimed. Full GP semantic/reachable coverage and all-S3 qualified-score totals remain unknown.
+
+PR387 head4c40 completed all11 current CI jobs successfully at06:49:22Z. This documentation successor needs its own exact-head checks and full independent review. The reviewer's4c40 pass remains partial; confirmed repair deltas do not close the remaining source coverage. The separate47-task release and older66-task milestone are unchanged by this documentation update.
+
+Dated implementation records follow.
+
 # Current source-review correction — local qualification complete
 
 At source7a09d43c0, identity/admission fixes pass69top-level integration tests and8compile-fail checks, with one separate fresh-process child replay. The unchanged production source has85unit passes at parent9ef; that receipt retains its original head. Strict scoped all-target clippy, coverage/source/test classification, layout, README/prose, format and diff checks pass. [The compact correction receipt](SOURCE_REVIEW_CORRECTIONS_20261020.json) preserves old regression failures, the intermediate test-helper compile failure and exact two-host compressed source evidence. All38frozen numerical-evaluator inputs match without regeneration. This is targeted local qualification, not workspace or final release acceptance.

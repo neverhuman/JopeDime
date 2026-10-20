@@ -303,6 +303,12 @@
           "revision": 2,
           "sha256": "8690c912ad6e8f72cdedb6d1f4e65f911c7dc95b066acc9caf005edbf78617d0",
           "qualification": "Direct human external-review/fullGPandS3 request; proposed controls, not admission or completion."
+        },
+        {
+          "file": "CONTROLLED_FEEDBACK_RESEARCH_PLAN.md",
+          "revision": "2.2",
+          "sha256": "26ba07f97bbe1cb2b3ff2d352ebad2dd135e20659864fb988ef67aa55f468ea0",
+          "qualification": "Direct human no-model-swap/research-branch boundary, R3 parser confound and local F0/F1/F2 design evidence; no execution or completion grant."
         }
       ]
     },
@@ -429,6 +435,12 @@
           "revision": 2,
           "sha256": "8690c912ad6e8f72cdedb6d1f4e65f911c7dc95b066acc9caf005edbf78617d0",
           "qualification": "Direct human external-review/fullGPandS3 request; proposed controls, not admission or completion."
+        },
+        {
+          "file": "CONTROLLED_FEEDBACK_RESEARCH_PLAN.md",
+          "revision": "2.2",
+          "sha256": "26ba07f97bbe1cb2b3ff2d352ebad2dd135e20659864fb988ef67aa55f468ea0",
+          "qualification": "Direct human no-model-swap/research-branch boundary, R3 parser confound and local F0/F1/F2 design evidence; no execution or completion grant."
         }
       ]
     },
@@ -535,6 +547,12 @@
           "revision": 2,
           "sha256": "8690c912ad6e8f72cdedb6d1f4e65f911c7dc95b066acc9caf005edbf78617d0",
           "qualification": "Direct human external-review/fullGPandS3 request; proposed controls, not admission or completion."
+        },
+        {
+          "file": "CONTROLLED_FEEDBACK_RESEARCH_PLAN.md",
+          "revision": "2.2",
+          "sha256": "26ba07f97bbe1cb2b3ff2d352ebad2dd135e20659864fb988ef67aa55f468ea0",
+          "qualification": "Direct human no-model-swap/research-branch boundary, R3 parser confound and local F0/F1/F2 design evidence; no execution or completion grant."
         }
       ]
     },
