@@ -267,6 +267,26 @@ impl ExecutionBoundaryCounters {
         }
     }
 
+    /// Rebuilds counters from a durable snapshot, so a reopened study resumes its totals.
+    pub fn restored(
+        caps: ExecutionBoundaryCaps,
+        reserved_assessment_fits: u64,
+        physical_fits: u64,
+        model_calls: u64,
+        reasoning_tokens_total: u64,
+        max_call_tokens_observed: u64,
+    ) -> Self {
+        ExecutionBoundaryCounters {
+            caps,
+            physical_fits: physical_fits.into(),
+            model_calls: model_calls.into(),
+            reasoning_tokens_total: reasoning_tokens_total.into(),
+            max_call_tokens_observed: max_call_tokens_observed.into(),
+            model_gate: Default::default(),
+            reserved_assessment_fits,
+        }
+    }
+
     /// Reserves `reserved` physical fits of the ceiling for the final assessments. Set before the
     /// counters are shared.
     pub fn with_reserved_assessment_fits(mut self, reserved: u64) -> Self {

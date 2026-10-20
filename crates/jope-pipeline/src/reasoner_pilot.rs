@@ -21,11 +21,77 @@ pub const NATIVE_STUDY_SOURCE_KIND: &str = "native_teacher_train_only";
 pub const FROZEN_WINNER_FILE: &str = "frozen-winner.json";
 /// Created exclusively when the one O assessment starts. A retry finds it and is refused.
 pub const ASSESSMENT_CLAIM_FILE: &str = "assessment-claim.json";
+/// The schema of the frozen-winner record.
+pub const FROZEN_SCHEMA: &str = "jope.native-study-frozen-winner/v2";
+/// The schema of the owner's admission manifest.
+pub const ADMISSION_SCHEMA: &str = "jope.native-study-admission/v1";
 
-/// A caller's role proof for the named native study. It attests the TRAIN-only role over the exact
-/// rows admitted. Validation recomputes every hash from the rows it is given, and refuses any
-/// mismatch before a fit. The attestation is a hash: it binds the proof to the input, but it does not
-/// authenticate who made the proof.
+/// SHA-256 of the owner-admitted admission manifest. It is not pinned in this build. The owner has to
+/// supply the root hash and the manifest's locator. While this is `None`, every load refuses, so the
+/// named study cannot start. A caller cannot supply its own root.
+pub const OWNER_ADMISSION_ROOT_SHA256: Option<&str> = None;
+
+/// One admitted study: the family, the source, the role, and the exact row bindings the owner admitted.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct NativeStudyAdmission {
+    pub family_id: String,
+    pub source_kind: String,
+    pub role: String,
+    pub ntest: u64,
+    pub cut_input_digest: String,
+    pub fit_a_rows_sha256: String,
+    pub hold_b_rows_sha256: String,
+}
+
+#[derive(serde::Deserialize)]
+struct AdmissionManifest {
+    schema: String,
+    admissions: Vec<NativeStudyAdmission>,
+}
+
+/// The admissions verified against a root hash. The only constructors check the manifest bytes against
+/// a root that the caller does not choose, so a caller cannot make its own admission.
+#[derive(Debug)]
+pub struct TrustedAdmissions {
+    admissions: Vec<NativeStudyAdmission>,
+}
+
+impl TrustedAdmissions {
+    /// Loads the owner's manifest against the pinned root. Fails closed while no root is pinned.
+    pub fn load_pinned(path: &std::path::Path) -> Result<Self> {
+        let root = OWNER_ADMISSION_ROOT_SHA256.ok_or_else(|| {
+            anyhow!(
+                "BLOCKER: no owner admission root is pinned in this build; the owner must supply the root SHA-256 and the manifest locator"
+            )
+        })?;
+        Self::verify(&std::fs::read(path)?, root)
+    }
+
+    /// Checks the manifest bytes against `root_sha256`, then parses them.
+    fn verify(bytes: &[u8], root_sha256: &str) -> Result<Self> {
+        ensure!(
+            sha256_hex(bytes) == root_sha256,
+            "the admission manifest does not match the pinned root"
+        );
+        let manifest: AdmissionManifest = serde_json::from_slice(bytes)?;
+        ensure!(
+            manifest.schema == ADMISSION_SCHEMA,
+            "unknown admission schema {:?}",
+            manifest.schema
+        );
+        Ok(Self {
+            admissions: manifest.admissions,
+        })
+    }
+
+    fn admits(&self, admission: &NativeStudyAdmission) -> bool {
+        self.admissions.iter().any(|entry| entry == admission)
+    }
+}
+
+/// A caller's role proof for the named native study. It holds row bindings only. Validation
+/// recomputes each hash from the rows it is given and refuses any mismatch. The proof is not
+/// authentication: authentication is the trusted admission in [`TrustedAdmissions`].
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct NativeStudyRoleProof {
     pub family_id: String,
@@ -36,8 +102,8 @@ pub struct NativeStudyRoleProof {
 }
 
 impl NativeStudyRoleProof {
-    /// Attests TRAIN-only admission of `a_rows` (fit) and `b_rows` (hold) for `family_id`. Every field
-    /// is computed from the given rows, so the proof verifies against exactly those rows.
+    /// Computes the row-binding proof for `a_rows` (fit) and `b_rows` (hold). It is computed from the
+    /// rows given, so it matches those rows and nothing else.
     pub fn attest_train_only(
         family_id: &str,
         features: &[Vec<f64>],
@@ -67,6 +133,7 @@ pub struct NativeStudySource<'a> {
     pub role: &'a str,
     pub ntest: u64,
     pub role_proof: &'a NativeStudyRoleProof,
+    pub admissions: &'a TrustedAdmissions,
     pub features: &'a [Vec<f64>],
     pub targets: &'a [f64],
     pub a_rows: &'a [u32],
@@ -103,6 +170,11 @@ pub struct FrozenNativeStudyWinner {
 pub struct NativeStudyRun {
     pub search: crate::search::CutSearch,
     pub frozen: FrozenNativeStudyWinner,
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    format!("{:x}", Sha256::digest(bytes))
 }
 
 /// Feeds one length-prefixed field into a SHA-256, so two different field lists cannot collide by
@@ -148,8 +220,8 @@ fn compute_cut_input_digest(
     format!("{:x}", hasher.finalize())
 }
 
-/// SHA-256 over the role proof fields: the proof's tag, family, TRAIN role, source kind, ntest 0, and
-/// the three hashes it attests.
+/// SHA-256 over the role proof fields: the tag, the family, the TRAIN role, the source kind, ntest 0,
+/// and the three hashes the proof attests.
 fn role_attestation_sha256(family_id: &str, fit: &str, hold: &str, digest: &str) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
@@ -165,8 +237,9 @@ fn role_attestation_sha256(family_id: &str, fit: &str, hold: &str, digest: &str)
 }
 
 /// Refuses every role but TRAIN, every source but the TRAIN-only native table, `ntest > 0`, repeated
-/// original row IDs, and any partition set the native evaluator rejects. Then recomputes the bindings
-/// from the rows and requires the caller's proof to match each one. All of this runs before any fit.
+/// original row IDs, and any partition set the native evaluator rejects. It then recomputes the row
+/// bindings and requires the proof to match them. Last, it requires a trusted admission for exactly
+/// this family, role and row set. All of this runs before any fit.
 fn validate_native_study_source(source: &NativeStudySource<'_>) -> Result<NativeStudyBindings> {
     match source.role {
         "TRAIN" => {}
@@ -197,7 +270,8 @@ fn validate_native_study_source(source: &NativeStudySource<'_>) -> Result<Native
 
     let fit = rows_sha256(source.features, source.targets, source.a_rows);
     let hold = rows_sha256(source.features, source.targets, source.b_rows);
-    let digest = compute_cut_input_digest(source.features, source.targets, source.a_rows, source.b_rows);
+    let digest =
+        compute_cut_input_digest(source.features, source.targets, source.a_rows, source.b_rows);
     let attestation = role_attestation_sha256(&source.role_proof.family_id, &fit, &hold, &digest);
     let proof = source.role_proof;
     ensure!(
@@ -215,6 +289,19 @@ fn validate_native_study_source(source: &NativeStudySource<'_>) -> Result<Native
     ensure!(
         proof.role_attestation_sha256 == attestation,
         "the role attestation does not verify over the proof's fields"
+    );
+    let admission = NativeStudyAdmission {
+        family_id: proof.family_id.clone(),
+        source_kind: source.source_kind.into(),
+        role: source.role.into(),
+        ntest: source.ntest,
+        cut_input_digest: digest.clone(),
+        fit_a_rows_sha256: fit.clone(),
+        hold_b_rows_sha256: hold.clone(),
+    };
+    ensure!(
+        source.admissions.admits(&admission),
+        "no trusted admission covers this family, role and row set; a self-attested proof is refused"
     );
     Ok(NativeStudyBindings {
         cut_input_digest: digest,
@@ -272,7 +359,7 @@ pub fn run_native_search_study_arm(
         .clone()
         .ok_or_else(|| anyhow!("the A/B search measured no winner"))?;
     let frozen = FrozenNativeStudyWinner {
-        schema: "jope.native-study-frozen-winner/v2".into(),
+        schema: FROZEN_SCHEMA.into(),
         source_kind: source.source_kind.into(),
         family_id: source.role_proof.family_id.clone(),
         cut_input_digest: bindings.cut_input_digest,
@@ -290,14 +377,15 @@ pub fn run_native_search_study_arm(
         .open(output.join(FROZEN_WINNER_FILE))
         .context("the winner is already frozen")?;
     std::io::Write::write_all(&mut file, &serde_json::to_vec_pretty(&frozen)?)?;
+    file.sync_all()?;
     Ok(NativeStudyRun { search, frozen })
 }
 
-/// The single O assessment. It validates the proof against the inputs, reads the frozen winner from
-/// disk, checks that every binding matches it, claims the assessment exclusively, and then scores the
-/// frozen winner on O once. The assessment fits on A and draws on the same counters as the search. A
-/// failed or refused assessment keeps its claim: there is no second attempt. Returns NaN when the
-/// winner does not fit or predict.
+/// The single O assessment. It validates the proof and the admission against the inputs, reads the
+/// frozen winner from disk, checks that every binding matches it, claims the assessment exclusively,
+/// and then scores the frozen winner on O once. The assessment fits on A and draws on the same
+/// counters as the search. A failed or refused assessment keeps its claim: there is no second attempt.
+/// Returns NaN when the winner does not fit or predict.
 pub fn assess_frozen_winner(
     source: NativeStudySource<'_>,
     counters: std::sync::Arc<crate::search::ExecutionBoundaryCounters>,
@@ -308,6 +396,11 @@ pub fn assess_frozen_winner(
         &std::fs::read(output.join(FROZEN_WINNER_FILE))
             .context("no frozen winner exists; O stays closed")?,
     )?;
+    ensure!(
+        frozen.schema == FROZEN_SCHEMA,
+        "the frozen winner has schema {:?}, expected {FROZEN_SCHEMA}",
+        frozen.schema
+    );
     ensure!(
         frozen.source_kind == source.source_kind && frozen.family_id == source.role_proof.family_id,
         "the frozen winner's source or family does not match the assessment source"
@@ -328,6 +421,7 @@ pub fn assess_frozen_winner(
         &mut claim,
         &serde_json::to_vec_pretty(&serde_json::json!({ "winner": frozen.winner }))?,
     )?;
+    claim.sync_all()?;
     let evaluator = adapters::NativeTeacherFoldEvaluator::new(
         source.features,
         source.targets,
@@ -344,9 +438,15 @@ pub fn assess_frozen_winner(
 
 /// The append-only study ledger's file name, inside the study directory.
 pub const STUDY_LEDGER_FILE: &str = "study-ledger.json";
+/// The exclusive study lock. The OS releases it when its holder exits, including after a crash.
+pub const STUDY_LOCK_FILE: &str = "study.lock";
+/// One JSON line per refused or failed durable operation. It never resets a counter.
+pub const FAILURE_RECEIPTS_FILE: &str = "failure-receipts.jsonl";
+const LEDGER_SCHEMA: &str = "jope.native-study-ledger/v2";
 
-/// One external model call. It is `charged` before generation and `completed` after EOS, with its
-/// generated tokens. A record is never removed.
+/// One external model call, as the caller reports it. `charged` before generation and `completed`
+/// after EOS. A record is never removed. The completion tokens are the caller's report: they are not
+/// physical proof that the E9 worker ran.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ExternalModelCall {
     pub call_id: String,
@@ -354,62 +454,241 @@ pub struct ExternalModelCall {
     pub generated_tokens: Option<u64>,
 }
 
+/// The counter totals written with each durable record, so a reopened study resumes them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct CounterSnapshot {
+    pub physical_fits: u64,
+    pub model_calls: u64,
+    pub generated_tokens: u64,
+    pub max_call_tokens: u64,
+}
+
+impl CounterSnapshot {
+    fn of(counters: &crate::search::ExecutionBoundaryCounters) -> Self {
+        Self {
+            physical_fits: counters.physical_fits(),
+            model_calls: counters.model_calls(),
+            generated_tokens: counters.generated_tokens_total(),
+            max_call_tokens: counters.max_call_tokens_observed(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ArmState {
+    /// Admitted and started. Its fit consumption is unknown until it freezes.
+    Admitted,
+    /// Frozen: the winner is on disk, and its bindings are recorded.
+    Frozen,
+    /// The one O assessment has completed.
+    Assessed,
+}
+
+/// One admitted arm: its state and the bindings it was admitted under.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ArmRecord {
+    pub name: String,
+    pub state: ArmState,
+    pub admission: Option<NativeStudyAdmission>,
+    pub attestation: Option<String>,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 struct StudyLedgerFile {
     schema: String,
+    caps: crate::search::ExecutionBoundaryCaps,
     reserved_assessment_fits: u64,
     expected_arms: Vec<String>,
-    arms_admitted: Vec<String>,
+    arms: Vec<ArmRecord>,
+    counters: CounterSnapshot,
     external_calls: Vec<ExternalModelCall>,
 }
 
-/// The study-wide controller. Every admitted search arm and every final O assessment of one study
-/// shares one `Arc<ExecutionBoundaryCounters>`. Search arms stop short of the reserved assessment
-/// fits. An assessment is refused until every expected arm has a frozen winner on disk. External
-/// `E9` model calls are charged to the same counters and recorded in the ledger file before they are
-/// allowed to generate.
+/// Checks an arm's frozen-winner file against the bindings the arm was admitted under. Existence alone
+/// does not qualify an arm.
+fn check_frozen_against_record(dir: &std::path::Path, record: &ArmRecord) -> Result<()> {
+    let admission = record
+        .admission
+        .as_ref()
+        .ok_or_else(|| anyhow!("arm {:?} has no admission record", record.name))?;
+    let attestation = record
+        .attestation
+        .as_deref()
+        .ok_or_else(|| anyhow!("arm {:?} has no attestation record", record.name))?;
+    let frozen: FrozenNativeStudyWinner = serde_json::from_slice(
+        &std::fs::read(dir.join(FROZEN_WINNER_FILE))
+            .with_context(|| format!("arm {:?} has no frozen winner", record.name))?,
+    )?;
+    ensure!(
+        frozen.schema == FROZEN_SCHEMA,
+        "arm {:?}: frozen winner schema {:?} is not {FROZEN_SCHEMA}",
+        record.name,
+        frozen.schema
+    );
+    ensure!(
+        frozen.source_kind == admission.source_kind
+            && frozen.family_id == admission.family_id
+            && frozen.cut_input_digest == admission.cut_input_digest
+            && frozen.fit_a_rows_sha256 == admission.fit_a_rows_sha256
+            && frozen.hold_b_rows_sha256 == admission.hold_b_rows_sha256
+            && frozen.role_attestation_sha256 == attestation,
+        "arm {:?}: its frozen winner does not match the bindings it was admitted under",
+        record.name
+    );
+    Ok(())
+}
+
+/// Accepts names that are non-empty, at most 64 characters, made of ASCII letters, digits, '-' and
+/// '_', and unique. A name becomes a directory, so it cannot contain a separator.
+fn validate_arm_names(arms: &[&str]) -> Result<()> {
+    ensure!(!arms.is_empty(), "a study needs at least one arm");
+    let mut seen = std::collections::BTreeSet::new();
+    for arm in arms {
+        ensure!(
+            !arm.is_empty()
+                && arm.len() <= 64
+                && arm.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "arm name {arm:?} is not a safe directory name"
+        );
+        ensure!(seen.insert(*arm), "arm name {arm:?} is defined twice");
+    }
+    Ok(())
+}
+
+fn acquire_study_lock(dir: &std::path::Path) -> Result<std::fs::File> {
+    std::fs::create_dir_all(dir)?;
+    let lock = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .open(dir.join(STUDY_LOCK_FILE))?;
+    match lock.try_lock() {
+        Ok(()) => Ok(lock),
+        Err(std::fs::TryLockError::WouldBlock) => {
+            bail!("the study directory is already owned by another open ledger")
+        }
+        Err(std::fs::TryLockError::Error(error)) => Err(error.into()),
+    }
+}
+
+/// The study-wide controller. Every admitted arm and every final O assessment of one study shares one
+/// counter set. Search arms stop short of the reserved assessment fits. An assessment waits until
+/// every expected arm is frozen, and each frozen record is checked against its admission. External
+/// model calls are charged to the same counters and persisted before they may generate.
+///
+/// The object holds an exclusive lock on the study directory for its whole lifetime. A second open
+/// on the same directory is refused. Each durable write goes through a temporary file, `sync_all`,
+/// a rename, and a `sync_all` of the directory.
 pub struct NativeStudyLedger {
     dir: std::path::PathBuf,
+    _lock: std::fs::File,
     counters: std::sync::Arc<crate::search::ExecutionBoundaryCounters>,
     file: StudyLedgerFile,
 }
 
 impl NativeStudyLedger {
-    /// Creates the study ledger create-only, reserving `reserved_assessment_fits` of the physical-fit
-    /// ceiling for the O assessments. `expected_arms` names every arm the study will admit.
+    /// Creates a study directory and its ledger. It refuses, before any search, a reservation below
+    /// the arm count, an unsafe or duplicate arm name, and an existing ledger.
     pub fn create(
         dir: &std::path::Path,
         caps: crate::search::ExecutionBoundaryCaps,
         reserved_assessment_fits: u64,
         expected_arms: &[&str],
     ) -> Result<Self> {
-        ensure!(!expected_arms.is_empty(), "a study needs at least one arm");
+        validate_arm_names(expected_arms)?;
+        ensure!(
+            reserved_assessment_fits >= expected_arms.len() as u64,
+            "the reservation of {reserved_assessment_fits} fits is below the {} arms; each arm needs its assessment fit",
+            expected_arms.len()
+        );
         ensure!(
             reserved_assessment_fits <= caps.max_physical_fits,
             "the reservation exceeds the physical-fit ceiling"
         );
-        std::fs::create_dir_all(dir)?;
+        let lock = acquire_study_lock(dir)?;
+        ensure!(
+            !dir.join(STUDY_LEDGER_FILE).exists(),
+            "a study ledger already exists in this directory; open it instead"
+        );
+        let file = StudyLedgerFile {
+            schema: LEDGER_SCHEMA.into(),
+            caps,
+            reserved_assessment_fits,
+            expected_arms: expected_arms.iter().map(|arm| (*arm).to_string()).collect(),
+            arms: Vec::new(),
+            counters: CounterSnapshot {
+                physical_fits: 0,
+                model_calls: 0,
+                generated_tokens: 0,
+                max_call_tokens: 0,
+            },
+            external_calls: Vec::new(),
+        };
         let ledger = Self {
             dir: dir.to_path_buf(),
+            _lock: lock,
             counters: std::sync::Arc::new(
                 crate::search::ExecutionBoundaryCounters::new(caps)
                     .with_reserved_assessment_fits(reserved_assessment_fits),
             ),
-            file: StudyLedgerFile {
-                schema: "jope.native-study-ledger/v1".into(),
-                reserved_assessment_fits,
-                expected_arms: expected_arms.iter().map(|arm| (*arm).to_string()).collect(),
-                arms_admitted: Vec::new(),
-                external_calls: Vec::new(),
-            },
+            file,
         };
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(dir.join(STUDY_LEDGER_FILE))
-            .context("the study ledger already exists")?;
-        std::io::Write::write_all(&mut file, &serde_json::to_vec_pretty(&ledger.file)?)?;
+        ledger.write_new()?;
         Ok(ledger)
+    }
+
+    /// Reopens an existing study. It refuses a second owner. It refuses any study that cannot prove its
+    /// fit and model-call totals: an arm admitted but never frozen, an assessment claimed but not
+    /// completed, or an external call charged without a completion. Such a study is halted until the
+    /// owner reconciles it.
+    pub fn open(dir: &std::path::Path) -> Result<Self> {
+        let lock = acquire_study_lock(dir)?;
+        let file: StudyLedgerFile = serde_json::from_slice(
+            &std::fs::read(dir.join(STUDY_LEDGER_FILE))
+                .context("no study ledger in this directory")?,
+        )?;
+        ensure!(
+            file.schema == LEDGER_SCHEMA,
+            "study ledger schema {:?} is not {LEDGER_SCHEMA}",
+            file.schema
+        );
+        for record in &file.arms {
+            match record.state {
+                ArmState::Admitted => bail!(
+                    "arm {:?} was admitted but never froze; its fit consumption is unknown and the study is halted",
+                    record.name
+                ),
+                ArmState::Frozen => ensure!(
+                    !dir.join("arms").join(&record.name).join(ASSESSMENT_CLAIM_FILE).exists(),
+                    "arm {:?} has an assessment claim with no completed record; its fits are unknown and the study is halted",
+                    record.name
+                ),
+                ArmState::Assessed => {}
+            }
+        }
+        for call in &file.external_calls {
+            ensure!(
+                call.state == "completed",
+                "external call {:?} was charged with no completion; its outcome is unknown and the study is halted",
+                call.call_id
+            );
+        }
+        let snapshot = file.counters;
+        let counters = std::sync::Arc::new(crate::search::ExecutionBoundaryCounters::restored(
+            file.caps,
+            file.reserved_assessment_fits,
+            snapshot.physical_fits,
+            snapshot.model_calls,
+            snapshot.generated_tokens,
+            snapshot.max_call_tokens,
+        ));
+        Ok(Self {
+            dir: dir.to_path_buf(),
+            _lock: lock,
+            counters,
+            file,
+        })
     }
 
     /// The counters every arm and assessment of this study shares.
@@ -422,8 +701,9 @@ impl NativeStudyLedger {
         self.dir.join("arms").join(arm)
     }
 
-    /// Runs one admitted arm on the shared counters. An arm is admitted once: it is recorded as
-    /// admitted before it runs, so a failed arm cannot be retried.
+    /// Runs one admitted arm on the shared counters. The source is validated, and the arm is recorded
+    /// as admitted and persisted, before any fit. An arm runs once. If the run fails, the arm stays
+    /// admitted and the study halts on reopen.
     pub fn run_arm(
         &mut self,
         arm: &str,
@@ -436,28 +716,84 @@ impl NativeStudyLedger {
             "arm {arm:?} is not part of this study"
         );
         ensure!(
-            !self.file.arms_admitted.iter().any(|admitted| admitted == arm),
+            !self.file.arms.iter().any(|record| record.name == arm),
             "arm {arm:?} was already admitted"
         );
-        self.file.arms_admitted.push(arm.into());
+        let bindings = validate_native_study_source(&source)?;
+        self.file.arms.push(ArmRecord {
+            name: arm.into(),
+            state: ArmState::Admitted,
+            admission: Some(NativeStudyAdmission {
+                family_id: source.role_proof.family_id.clone(),
+                source_kind: source.source_kind.into(),
+                role: source.role.into(),
+                ntest: source.ntest,
+                cut_input_digest: bindings.cut_input_digest,
+                fit_a_rows_sha256: bindings.fit_a_rows_sha256,
+                hold_b_rows_sha256: bindings.hold_b_rows_sha256,
+            }),
+            attestation: Some(bindings.role_attestation_sha256),
+        });
         self.persist()?;
-        run_native_search_study_arm(source, budget, seed, self.counters(), &self.arm_dir(arm))
+        let run = match run_native_search_study_arm(
+            source,
+            budget,
+            seed,
+            self.counters(),
+            &self.arm_dir(arm),
+        ) {
+            Ok(run) => run,
+            Err(error) => {
+                self.record_failure("run_arm", &format!("{error:#}"));
+                return Err(error);
+            }
+        };
+        self.set_state(arm, ArmState::Frozen);
+        self.persist()?;
+        Ok(run)
     }
 
-    /// The final O assessment of one arm. It is refused until every expected arm has a frozen winner
-    /// on disk, so no search arm can still need the reserved fits when an assessment starts.
-    pub fn assess_arm(&self, arm: &str, source: NativeStudySource<'_>) -> Result<f64> {
+    /// The final O assessment of one arm. It is refused until every expected arm is frozen, and each
+    /// frozen record matches the bindings its arm was admitted under.
+    pub fn assess_arm(&mut self, arm: &str, source: NativeStudySource<'_>) -> Result<f64> {
+        validate_native_study_source(&source)?;
         for expected in &self.file.expected_arms {
+            let record = self
+                .file
+                .arms
+                .iter()
+                .find(|record| &record.name == expected)
+                .ok_or_else(|| anyhow!("arm {expected:?} has not run; assessments wait for every arm"))?;
             ensure!(
-                self.arm_dir(expected).join(FROZEN_WINNER_FILE).exists(),
-                "arm {expected:?} has no frozen winner yet; assessments wait for every arm"
+                record.state != ArmState::Admitted,
+                "arm {expected:?} never froze; assessments wait for every arm"
             );
+            check_frozen_against_record(&self.arm_dir(expected), record)?;
         }
-        assess_frozen_winner(source, self.counters(), &self.arm_dir(arm))
+        let target = self
+            .file
+            .arms
+            .iter()
+            .find(|record| record.name == arm)
+            .ok_or_else(|| anyhow!("arm {arm:?} has not run"))?;
+        ensure!(
+            target.state == ArmState::Frozen,
+            "arm {arm:?} is not in the frozen state, so it cannot be assessed"
+        );
+        let value = match assess_frozen_winner(source, self.counters(), &self.arm_dir(arm)) {
+            Ok(value) => value,
+            Err(error) => {
+                self.record_failure("assess_arm", &format!("{error:#}"));
+                return Err(error);
+            }
+        };
+        self.set_state(arm, ArmState::Assessed);
+        self.persist()?;
+        Ok(value)
     }
 
-    /// Charges one external model call before it generates. The call counts against the call
-    /// ceiling, and it is persisted as `charged` before this returns. A call id is charged once.
+    /// Charges one external model call before it generates. The call counts against the call ceiling,
+    /// and it is persisted as `charged` before this returns. A call id is charged once.
     pub fn charge_external_model_call_before_generate(&mut self, call_id: &str) -> Result<()> {
         ensure!(!call_id.is_empty(), "a model call needs an id");
         ensure!(
@@ -472,11 +808,17 @@ impl NativeStudyLedger {
             state: "charged".into(),
             generated_tokens: None,
         });
-        self.persist()
+        if let Err(error) = self.persist() {
+            // The call stays counted. Generation must not start: the caller gets this error.
+            self.record_failure("charge_external_model_call", &format!("{error:#}"));
+            return Err(error);
+        }
+        Ok(())
     }
 
-    /// Records the generated tokens of a charged call after its EOS. A call that was never charged, or
-    /// is already completed, is refused: a post-hoc record cannot be created.
+    /// Records the generated tokens of a charged call after its EOS. The tokens are the caller's report,
+    /// not physical proof of execution. A call that was never charged, or is already completed, is
+    /// refused.
     pub fn complete_external_model_call_after_eos(
         &mut self,
         call_id: &str,
@@ -494,16 +836,74 @@ impl NativeStudyLedger {
             .map_err(|reason| anyhow!("model call {call_id:?} refused: {reason}"))?;
         call.state = "completed".into();
         call.generated_tokens = Some(generated_tokens);
-        self.persist()
+        if let Err(error) = self.persist() {
+            self.record_failure("complete_external_model_call", &format!("{error:#}"));
+            return Err(error);
+        }
+        Ok(())
     }
 
-    /// Writes the whole ledger through a temporary file and a rename, so a reader sees either the old
-    /// file or the new one.
+    fn set_state(&mut self, arm: &str, state: ArmState) {
+        if let Some(record) = self.file.arms.iter_mut().find(|record| record.name == arm) {
+            record.state = state;
+        }
+    }
+
+    /// Creates the ledger file, create-only, and makes it durable with its directory.
+    fn write_new(&self) -> Result<()> {
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(self.dir.join(STUDY_LEDGER_FILE))
+            .context("the study ledger already exists")?;
+        std::io::Write::write_all(&mut file, &self.serialized()?)?;
+        file.sync_all()?;
+        std::fs::File::open(&self.dir)?.sync_all()?;
+        Ok(())
+    }
+
+    /// The ledger with the current counter totals, as JSON.
+    fn serialized(&self) -> Result<Vec<u8>> {
+        let mut file = self.file.clone();
+        file.counters = CounterSnapshot::of(&self.counters);
+        Ok(serde_json::to_vec_pretty(&file)?)
+    }
+
+    /// Writes the whole ledger through a temporary file, `sync_all`, and a rename, then syncs the
+    /// directory, so a reader sees either the old file or the new one.
     fn persist(&self) -> Result<()> {
         let temporary = self.dir.join(format!("{STUDY_LEDGER_FILE}.tmp"));
-        std::fs::write(&temporary, serde_json::to_vec_pretty(&self.file)?)?;
+        {
+            let mut file = std::fs::File::create(&temporary)?;
+            std::io::Write::write_all(&mut file, &self.serialized()?)?;
+            file.sync_all()?;
+        }
         std::fs::rename(&temporary, self.dir.join(STUDY_LEDGER_FILE))?;
+        std::fs::File::open(&self.dir)?.sync_all()?;
         Ok(())
+    }
+
+    /// Appends one failure receipt, durably, with the counter totals as they stand. It never resets a
+    /// counter. The caller's error is returned whether or not this line lands.
+    fn record_failure(&self, operation: &str, reason: &str) {
+        let utc = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        let line = serde_json::json!({
+            "unix_seconds": utc,
+            "operation": operation,
+            "reason": reason,
+            "counters": CounterSnapshot::of(&self.counters),
+        });
+        if let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(self.dir.join(FAILURE_RECEIPTS_FILE))
+        {
+            let _ = std::io::Write::write_all(&mut file, format!("{line}\n").as_bytes());
+            let _ = file.sync_all();
+        }
     }
 }
 
@@ -700,6 +1100,36 @@ mod native_study_tests {
         NativeStudyRoleProof::attest_train_only("fixture-family", x, y, a, b)
     }
 
+    /// A generated owner manifest admitting exactly the given rows under `role`. The root is the
+    /// manifest's own SHA-256, computed here. In production the root is pinned outside the caller.
+    fn admit_with_role(
+        x: &[Vec<f64>],
+        y: &[f64],
+        a: &[u32],
+        b: &[u32],
+        role: &str,
+    ) -> TrustedAdmissions {
+        let entry = NativeStudyAdmission {
+            family_id: "fixture-family".into(),
+            source_kind: NATIVE_STUDY_SOURCE_KIND.into(),
+            role: role.into(),
+            ntest: 0,
+            cut_input_digest: compute_cut_input_digest(x, y, a, b),
+            fit_a_rows_sha256: rows_sha256(x, y, a),
+            hold_b_rows_sha256: rows_sha256(x, y, b),
+        };
+        let bytes = serde_json::to_vec(&serde_json::json!({
+            "schema": ADMISSION_SCHEMA,
+            "admissions": [entry],
+        }))
+        .unwrap();
+        TrustedAdmissions::verify(&bytes, &sha256_hex(&bytes)).unwrap()
+    }
+
+    fn admitted(x: &[Vec<f64>], y: &[f64], a: &[u32], b: &[u32]) -> TrustedAdmissions {
+        admit_with_role(x, y, a, b, "TRAIN")
+    }
+
     fn source<'a>(
         features: &'a [Vec<f64>],
         targets: &'a [f64],
@@ -707,12 +1137,14 @@ mod native_study_tests {
         b: &'a [u32],
         o: &'a [u32],
         role_proof: &'a NativeStudyRoleProof,
+        admissions: &'a TrustedAdmissions,
     ) -> NativeStudySource<'a> {
         NativeStudySource {
             source_kind: NATIVE_STUDY_SOURCE_KIND,
             role: "TRAIN",
             ntest: 0,
             role_proof,
+            admissions,
             features,
             targets,
             a_rows: a,
@@ -735,7 +1167,24 @@ mod native_study_tests {
     ) -> Result<NativeStudyRun> {
         let (a, b, o) = partitions();
         let proof = honest_proof(x, y, &a, &b);
-        run_native_search_study_arm(source(x, y, &a, &b, &o, &proof), budget(), 5, counters, dir)
+        let admissions = admitted(x, y, &a, &b);
+        run_native_search_study_arm(
+            source(x, y, &a, &b, &o, &proof, &admissions),
+            budget(),
+            5,
+            counters,
+            dir,
+        )
+    }
+
+    /// Physical fits of one search of the fixture under the natural-EOS policy, with no reservation.
+    fn search_fits() -> u64 {
+        let (x, y) = fixture();
+        let dir = tempfile::tempdir().unwrap();
+        run_once(&x, &y, natural_counters(), dir.path())
+            .unwrap()
+            .frozen
+            .physical_fits_at_freeze
     }
 
     #[test]
@@ -743,6 +1192,7 @@ mod native_study_tests {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
         let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
         let cases = [
             ("HOLDOUT", NATIVE_STUDY_SOURCE_KIND, 0),
             ("E", NATIVE_STUDY_SOURCE_KIND, 0),
@@ -753,7 +1203,7 @@ mod native_study_tests {
         ];
         for (role, kind, ntest) in cases {
             let counters = natural_counters();
-            let mut s = source(&x, &y, &a, &b, &o, &proof);
+            let mut s = source(&x, &y, &a, &b, &o, &proof, &admissions);
             s.role = role;
             s.source_kind = kind;
             s.ntest = ntest;
@@ -771,6 +1221,7 @@ mod native_study_tests {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
         let honest = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
         let forged = "0".repeat(64);
         let mut cases: Vec<(&str, NativeStudyRoleProof)> = Vec::new();
         let mut p = honest.clone();
@@ -785,7 +1236,6 @@ mod native_study_tests {
         let mut p = honest.clone();
         p.role_attestation_sha256 = forged.clone();
         cases.push(("role_attestation_sha256", p));
-        // A proof attested over a different B set is misbound to this cut.
         let short_b: Vec<u32> = (30..40).collect();
         cases.push(("proof of a different B", honest_proof(&x, &y, &a, &short_b)));
 
@@ -794,7 +1244,7 @@ mod native_study_tests {
             let dir = tempfile::tempdir().unwrap();
             assert!(
                 run_native_search_study_arm(
-                    source(&x, &y, &a, &b, &o, &proof),
+                    source(&x, &y, &a, &b, &o, &proof, &admissions),
                     budget(),
                     5,
                     counters.clone(),
@@ -806,6 +1256,89 @@ mod native_study_tests {
             assert_eq!(counters.physical_fits(), 0, "a forged {field} reached a fit");
             assert!(!dir.path().join(FROZEN_WINNER_FILE).exists(), "{field} froze a winner");
         }
+    }
+
+    /// A self-consistent proof is not authentication. A proof whose rows the owner never admitted is
+    /// refused before any fit, and so is a proof for a role the owner admitted under another name.
+    #[test]
+    fn self_attested_proof_outside_the_trusted_admission_is_refused_before_any_fit() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let admissions = admitted(&x, &y, &a, &b);
+
+        let short_b: Vec<u32> = (30..40).collect();
+        let self_attested = honest_proof(&x, &y, &a, &short_b);
+        let counters = natural_counters();
+        let dir = tempfile::tempdir().unwrap();
+        assert!(
+            run_native_search_study_arm(
+                source(&x, &y, &a, &short_b, &o, &self_attested, &admissions),
+                budget(),
+                5,
+                counters.clone(),
+                dir.path()
+            )
+            .is_err(),
+            "a self-attested proof over rows the owner never admitted was accepted"
+        );
+        assert_eq!(counters.physical_fits(), 0);
+
+        let holdout_only = admit_with_role(&x, &y, &a, &b, "HOLDOUT");
+        let proof = honest_proof(&x, &y, &a, &b);
+        let counters = natural_counters();
+        let dir = tempfile::tempdir().unwrap();
+        assert!(
+            run_native_search_study_arm(
+                source(&x, &y, &a, &b, &o, &proof, &holdout_only),
+                budget(),
+                5,
+                counters.clone(),
+                dir.path()
+            )
+            .is_err(),
+            "a TRAIN source was admitted under a HOLDOUT manifest entry"
+        );
+        assert_eq!(counters.physical_fits(), 0);
+    }
+
+    #[test]
+    fn the_trusted_manifest_must_match_its_root_and_the_pinned_root_fails_closed() {
+        let (x, y) = fixture();
+        let (a, b, _) = partitions();
+        let entry = NativeStudyAdmission {
+            family_id: "fixture-family".into(),
+            source_kind: NATIVE_STUDY_SOURCE_KIND.into(),
+            role: "TRAIN".into(),
+            ntest: 0,
+            cut_input_digest: compute_cut_input_digest(&x, &y, &a, &b),
+            fit_a_rows_sha256: rows_sha256(&x, &y, &a),
+            hold_b_rows_sha256: rows_sha256(&x, &y, &b),
+        };
+        let bytes = serde_json::to_vec(&serde_json::json!({
+            "schema": ADMISSION_SCHEMA,
+            "admissions": [entry],
+        }))
+        .unwrap();
+        let root = sha256_hex(&bytes);
+        assert!(TrustedAdmissions::verify(&bytes, &root).is_ok());
+        assert!(
+            TrustedAdmissions::verify(&bytes, &"0".repeat(64)).is_err(),
+            "a manifest was accepted against a wrong root"
+        );
+        let mut tampered = bytes.clone();
+        tampered.push(b' ');
+        assert!(
+            TrustedAdmissions::verify(&tampered, &root).is_err(),
+            "a tampered manifest was accepted"
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("admission.json");
+        std::fs::write(&path, &bytes).unwrap();
+        let error = TrustedAdmissions::load_pinned(&path).unwrap_err().to_string();
+        assert!(
+            error.contains("BLOCKER"),
+            "the unpinned path did not fail closed with the blocker: {error}"
+        );
     }
 
     #[test]
@@ -823,9 +1356,9 @@ mod native_study_tests {
         );
         assert_eq!(counters.physical_fits(), fits);
 
-        // The materialised cut is exactly A (train) and B (hold), and holds no O row.
         let proof = honest_proof(&x, &y, &a, &b);
-        let cut = materialize_native_cut(&source(&x, &y, &a, &b, &o, &proof));
+        let admissions = admitted(&x, &y, &a, &b);
+        let cut = materialize_native_cut(&source(&x, &y, &a, &b, &o, &proof, &admissions));
         let a_x: Vec<Vec<f64>> = a.iter().map(|&r| x[r as usize].clone()).collect();
         let a_y: Vec<f64> = a.iter().map(|&r| y[r as usize]).collect();
         let b_x: Vec<Vec<f64>> = b.iter().map(|&r| x[r as usize].clone()).collect();
@@ -836,17 +1369,21 @@ mod native_study_tests {
         assert_eq!(cut.hold_y, b_y, "hold labels are not exactly B");
         assert_eq!(cut.hold_indices, (30..45).collect::<Vec<usize>>());
 
-        // The frozen record binds the exact A and B row hashes the proof attested.
         assert_eq!(run.frozen.fit_a_rows_sha256, proof.fit_a_rows_sha256);
         assert_eq!(run.frozen.hold_b_rows_sha256, proof.hold_b_rows_sha256);
         assert_eq!(run.frozen.role_attestation_sha256, proof.role_attestation_sha256);
+        assert_eq!(run.frozen.schema, FROZEN_SCHEMA);
         let on_disk: FrozenNativeStudyWinner =
             serde_json::from_slice(&std::fs::read(dir.path().join(FROZEN_WINNER_FILE)).unwrap())
                 .unwrap();
         assert_eq!(on_disk, run.frozen);
 
-        let rmse = assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
-            .unwrap();
+        let rmse = assess_frozen_winner(
+            source(&x, &y, &a, &b, &o, &proof, &admissions),
+            counters.clone(),
+            dir.path(),
+        )
+        .unwrap();
         assert!(rmse.is_finite());
         assert_eq!(
             counters.physical_fits(),
@@ -854,8 +1391,12 @@ mod native_study_tests {
             "the assessment is not exactly one more physical fit"
         );
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
-                .is_err(),
+            assess_frozen_winner(
+                source(&x, &y, &a, &b, &o, &proof, &admissions),
+                counters.clone(),
+                dir.path()
+            )
+            .is_err(),
             "a second assessment was not refused"
         );
         assert_eq!(counters.physical_fits(), fits + 1, "a refused retry changed the quota");
@@ -886,11 +1427,16 @@ mod native_study_tests {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
         let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
         let dir = tempfile::tempdir().unwrap();
         let counters = natural_counters();
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
-                .is_err(),
+            assess_frozen_winner(
+                source(&x, &y, &a, &b, &o, &proof, &admissions),
+                counters.clone(),
+                dir.path()
+            )
+            .is_err(),
             "O opened without a frozen winner"
         );
         assert_eq!(counters.physical_fits(), 0);
@@ -900,9 +1446,10 @@ mod native_study_tests {
         let mut changed = x.clone();
         changed[30][0] += 1.0;
         let changed_proof = honest_proof(&changed, &y, &a, &b);
+        let changed_admissions = admitted(&changed, &y, &a, &b);
         assert!(
             assess_frozen_winner(
-                source(&changed, &y, &a, &b, &o, &changed_proof),
+                source(&changed, &y, &a, &b, &o, &changed_proof, &changed_admissions),
                 counters.clone(),
                 dir.path()
             )
@@ -913,8 +1460,12 @@ mod native_study_tests {
         assert!(!dir.path().join(ASSESSMENT_CLAIM_FILE).exists(), "a refused input took the claim");
         assert_eq!(run.frozen.physical_fits_at_freeze, fits);
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
-                .is_ok(),
+            assess_frozen_winner(
+                source(&x, &y, &a, &b, &o, &proof, &admissions),
+                counters.clone(),
+                dir.path()
+            )
+            .is_ok(),
             "the correct inputs were refused after the refusal"
         );
     }
@@ -924,9 +1475,8 @@ mod native_study_tests {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
         let proof = honest_proof(&x, &y, &a, &b);
-        let probe_dir = tempfile::tempdir().unwrap();
-        let probe = run_once(&x, &y, natural_counters(), probe_dir.path()).unwrap();
-        let search_fits = probe.frozen.physical_fits_at_freeze;
+        let admissions = admitted(&x, &y, &a, &b);
+        let search_fits = search_fits();
 
         let dir = tempfile::tempdir().unwrap();
         let counters = Arc::new(ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
@@ -934,7 +1484,7 @@ mod native_study_tests {
             ..ExecutionBoundaryCaps::reasoner_natural_eos()
         }));
         run_native_search_study_arm(
-            source(&x, &y, &a, &b, &o, &proof),
+            source(&x, &y, &a, &b, &o, &proof, &admissions),
             budget(),
             5,
             counters.clone(),
@@ -942,8 +1492,12 @@ mod native_study_tests {
         )
         .unwrap();
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
-                .is_err(),
+            assess_frozen_winner(
+                source(&x, &y, &a, &b, &o, &proof, &admissions),
+                counters.clone(),
+                dir.path()
+            )
+            .is_err(),
             "the assessment fit ran past the shared ceiling"
         );
         assert_eq!(counters.physical_fits(), search_fits, "a refused fit was counted");
@@ -962,25 +1516,14 @@ mod native_study_tests {
         assert_eq!(counters.physical_fits(), 0);
     }
 
-    /// Physical fits of one search of the fixture under the natural-EOS policy, with no reservation.
-    fn search_fits() -> u64 {
-        let (x, y) = fixture();
-        let dir = tempfile::tempdir().unwrap();
-        run_once(&x, &y, natural_counters(), dir.path())
-            .unwrap()
-            .frozen
-            .physical_fits_at_freeze
-    }
-
     #[test]
     fn search_arms_cannot_spend_the_reserved_assessment_fits() {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
         let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
         let fits = search_fits();
 
-        // One fit reserved under a ceiling of fits + 1: the search takes `fits`, and the assessment
-        // takes the last one.
         let dir = tempfile::tempdir().unwrap();
         let mut ledger = NativeStudyLedger::create(
             dir.path(),
@@ -993,16 +1536,14 @@ mod native_study_tests {
         )
         .unwrap();
         let run = ledger
-            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5)
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
             .unwrap();
         assert_eq!(run.frozen.physical_fits_at_freeze, fits);
         ledger
-            .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof))
+            .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions))
             .unwrap();
         assert_eq!(ledger.counters().physical_fits(), fits + 1);
 
-        // Under a ceiling of exactly `fits` with the same reservation, the search stops one fit short
-        // and never reaches the reserved fit.
         let dir = tempfile::tempdir().unwrap();
         let mut tight = NativeStudyLedger::create(
             dir.path(),
@@ -1014,14 +1555,12 @@ mod native_study_tests {
             &["arm-a"],
         )
         .unwrap();
-        let outcome = tight.run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5);
+        let outcome = tight.run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5);
         assert_eq!(
             tight.counters().physical_fits(),
             fits - 1,
             "the search dipped into the reserved assessment fit"
         );
-        // The search wanted `fits` fits, so the refused candidates must appear as failed measurements.
-        // Whether the run then fails or freezes a winner on the fits it had, it never passed the line.
         if let Ok(run) = outcome {
             assert!(
                 run.search.failed_or_unavailable_measurements > 0,
@@ -1036,6 +1575,7 @@ mod native_study_tests {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
         let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
         let dir = tempfile::tempdir().unwrap();
         let mut ledger = NativeStudyLedger::create(
             dir.path(),
@@ -1045,35 +1585,168 @@ mod native_study_tests {
         )
         .unwrap();
         ledger
-            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5)
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
             .unwrap();
         let before = ledger.counters().physical_fits();
         assert!(
             ledger
-                .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof))
+                .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions))
                 .is_err(),
             "an assessment ran before arm-b froze"
         );
         assert_eq!(ledger.counters().physical_fits(), before, "a refused assessment fitted");
 
         ledger
-            .run_arm("arm-b", source(&x, &y, &a, &b, &o, &proof), budget(), 6)
+            .run_arm("arm-b", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 6)
             .unwrap();
         ledger
-            .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof))
+            .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions))
             .unwrap();
         assert!(
             ledger
-                .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5)
+                .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
                 .is_err(),
             "an admitted arm ran twice"
         );
         assert!(
             ledger
-                .run_arm("arm-c", source(&x, &y, &a, &b, &o, &proof), budget(), 7)
+                .run_arm("arm-c", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 7)
                 .is_err(),
             "an arm outside the study was admitted"
         );
+    }
+
+    #[test]
+    fn assessment_refuses_a_tampered_frozen_record_and_accepts_the_original() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            2,
+            &["arm-a", "arm-b"],
+        )
+        .unwrap();
+        ledger
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
+            .unwrap();
+        ledger
+            .run_arm("arm-b", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 6)
+            .unwrap();
+        let frozen_path = ledger.arm_dir("arm-a").join(FROZEN_WINNER_FILE);
+        let original = std::fs::read(&frozen_path).unwrap();
+        let mut record: FrozenNativeStudyWinner = serde_json::from_slice(&original).unwrap();
+        record.cut_input_digest = "0".repeat(64);
+        std::fs::write(&frozen_path, serde_json::to_vec_pretty(&record).unwrap()).unwrap();
+        assert!(
+            ledger
+                .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions))
+                .is_err(),
+            "a tampered frozen record passed the barrier"
+        );
+        std::fs::write(&frozen_path, &original).unwrap();
+        assert!(
+            ledger
+                .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions))
+                .is_ok(),
+            "the original frozen record was refused after the restore"
+        );
+    }
+
+    #[test]
+    fn create_rejects_a_reservation_below_the_arm_count_and_unsafe_arm_names() {
+        let caps = ExecutionBoundaryCaps::reasoner_natural_eos();
+        let dir = tempfile::tempdir().unwrap();
+        assert!(
+            NativeStudyLedger::create(&dir.path().join("s1"), caps, 1, &["a", "b"]).is_err(),
+            "a reservation of 1 was accepted for 2 arms"
+        );
+        assert!(
+            NativeStudyLedger::create(&dir.path().join("s2"), caps, 2, &["a", "a"]).is_err(),
+            "a duplicate arm name was accepted"
+        );
+        assert!(
+            NativeStudyLedger::create(&dir.path().join("s3"), caps, 1, &["a/b"]).is_err(),
+            "a path separator in an arm name was accepted"
+        );
+        assert!(
+            NativeStudyLedger::create(&dir.path().join("s4"), caps, 1, &[""]).is_err(),
+            "an empty arm name was accepted"
+        );
+        assert!(
+            NativeStudyLedger::create(&dir.path().join("s5"), caps, 2, &["a", "b"]).is_ok(),
+            "a reservation equal to the arm count was refused"
+        );
+    }
+
+    #[test]
+    fn reopen_refuses_a_second_owner_and_resumes_the_counters() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger.charge_external_model_call_before_generate("call-1").unwrap();
+        ledger.complete_external_model_call_after_eos("call-1", 8_193).unwrap();
+        let second = NativeStudyLedger::open(dir.path());
+        assert!(second.is_err(), "a second owner opened the study");
+        assert!(second.err().unwrap().to_string().contains("already owned"));
+        drop(ledger);
+
+        let reopened = NativeStudyLedger::open(dir.path()).unwrap();
+        assert_eq!(reopened.counters().model_calls(), 1, "the call count was not resumed");
+        assert_eq!(reopened.counters().generated_tokens_total(), 8_193, "the token total was not resumed");
+    }
+
+    #[test]
+    fn reopen_halts_on_an_arm_that_was_admitted_but_never_froze() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps {
+                max_physical_fits: 1,
+                ..ExecutionBoundaryCaps::reasoner_natural_eos()
+            },
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        assert!(
+            ledger
+                .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
+                .is_err(),
+            "a search with no reservable fit reached a winner"
+        );
+        assert!(dir.path().join(FAILURE_RECEIPTS_FILE).exists(), "the failure was not receipted");
+        drop(ledger);
+        let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
+        assert!(error.contains("never froze"), "{error}");
+    }
+
+    #[test]
+    fn reopen_halts_on_an_external_call_charged_with_no_completion() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger.charge_external_model_call_before_generate("call-1").unwrap();
+        drop(ledger);
+        let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
+        assert!(error.contains("no completion"), "{error}");
     }
 
     #[test]
@@ -1082,7 +1755,7 @@ mod native_study_tests {
         let mut ledger = NativeStudyLedger::create(
             dir.path(),
             ExecutionBoundaryCaps::reasoner_natural_eos(),
-            0,
+            1,
             &["arm-a"],
         )
         .unwrap();
@@ -1121,7 +1794,7 @@ mod native_study_tests {
         let mut ledger = NativeStudyLedger::create(
             dir.path(),
             ExecutionBoundaryCaps::reasoner_natural_eos(),
-            0,
+            1,
             &["arm-a"],
         )
         .unwrap();
@@ -1144,7 +1817,7 @@ mod native_study_tests {
                 max_model_calls: 1,
                 ..ExecutionBoundaryCaps::reasoner_natural_eos()
             },
-            0,
+            1,
             &["arm-a"],
         )
         .unwrap();
@@ -1165,7 +1838,7 @@ mod native_study_tests {
                 max_generated_tokens_total: Some(100),
                 ..ExecutionBoundaryCaps::reasoner_natural_eos()
             },
-            0,
+            1,
             &["arm-a"],
         )
         .unwrap();
