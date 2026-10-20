@@ -10,7 +10,7 @@ disk incident recorded in [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md).
 
 ## Direction and evidence
 
-The product repository is `veox-ai/JopeDime`; its current goal is the bounded neural GP learning
+The product repository is `neverhuman/JopeDime`; its current goal is the bounded neural GP learning
 loop in [MASTER_PLAN.md](MASTER_PLAN.md#product-target). Dataset labels stay intact; outer test
 folds and sealed meta-test families stay outside the learning worker's input closure.
 See [ADR-0005](docs/adr/ADR-0005-canonical-learning-loop.md) for the model lineage,
@@ -130,7 +130,7 @@ on `main` belongs to a merged pull request.
 
 **Review must be independent of the writer and bind the exact full head SHA.** Check the PR
 author with `gh pr view <number> --json author,headRefOid` and every GitHub-associated commit
-author with `gh api --paginate repos/veox-ai/JopeDime/pulls/<number>/commits --jq '.[].author.login'`.
+author with `gh api --paginate repos/neverhuman/JopeDime/pulls/<number>/commits --jq '.[].author.login'`.
 The reviewing identity must differ from both the PR author and all those commit authors. Record
 unassociated authors explicitly; local Git names and emails do not establish GitHub identity.
 Changing a login does not make the writer an independent reviewer. Any changed head needs fresh
@@ -217,7 +217,7 @@ binding rule.
 
    ```sh
    gh pr view PR_NUMBER --json author,headRefOid,headRefName
-   gh api --paginate repos/veox-ai/JopeDime/pulls/PR_NUMBER/commits \
+   gh api --paginate repos/neverhuman/JopeDime/pulls/PR_NUMBER/commits \
      --jq '.[] | {sha, login: (.author.login // "UNASSOCIATED"), committer: (.committer.login // "UNASSOCIATED"), git_author: .commit.author}'
    ```
 
@@ -229,7 +229,7 @@ binding rule.
    The helper performs the same login comparison and prints its verdict:
 
    ```sh
-   /home/ubuntu/.local/bin/gh-role eligible reviewer veox-ai/JopeDime PR_NUMBER
+   /home/ubuntu/.local/bin/gh-role eligible reviewer neverhuman/JopeDime PR_NUMBER
    ```
 
    It prints the exclusion set with a reason per login (opened the PR, authored commit,
@@ -264,7 +264,7 @@ binding rule.
    exactly the current full SHA, with no unresolved blocking findings:
 
    ```sh
-   gh api --paginate repos/veox-ai/JopeDime/pulls/PR_NUMBER/reviews \
+   gh api --paginate repos/neverhuman/JopeDime/pulls/PR_NUMBER/reviews \
      --jq '.[] | {id, reviewer: .user.login, state, commit_id, submitted_at}'
    ```
 

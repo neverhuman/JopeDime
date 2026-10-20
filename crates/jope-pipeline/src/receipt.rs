@@ -761,11 +761,11 @@ pub fn derived_schema() -> serde_json::Value {
         .as_object_mut()
         .unwrap()
         .remove("temporal_limits_enabled");
-    for (definition, field) in [("Phase", "seconds_limit"), ("Search", "seconds")] {
+    for (definition, field, position) in [("Phase", "seconds_limit", 1), ("Search", "seconds", 3)] {
         value["$defs"][definition]["required"]
             .as_array_mut()
             .unwrap()
-            .push(field.into());
+            .insert(position, field.into());
     }
     value
 }
@@ -775,7 +775,8 @@ pub fn derived_no_time_schema() -> serde_json::Value {
     let mut value = schemars::schema_for!(Receipt).to_value();
     value["title"] = NO_TIME_SCHEMA_ID.into();
     value["$id"] =
-        "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v5.schema.json".into();
+        "https://github.com/neverhuman/JopeDime/schemas/jope.pipeline-receipt.v5.schema.json"
+            .into();
     value["properties"]["schema"]["const"] = NO_TIME_SCHEMA_ID.into();
     value["properties"]["policy"]["enum"] = serde_json::json!(["auto", "skip", "require"]);
     value["$defs"]["Stage"]["properties"]["status"]["enum"] = serde_json::json!(STATUSES);
