@@ -19,6 +19,7 @@ import os
 import time
 import socket
 import struct
+import stat
 import subprocess
 import signal
 import select
@@ -31,6 +32,7 @@ SYSTEMD_255_REFERENCES = (
     "https://www.freedesktop.org/software/systemd/man/255/systemctl.html",
     "https://www.freedesktop.org/software/systemd/man/255/systemd.resource-control.html",
     "https://www.freedesktop.org/software/systemd/man/255/systemd.scope.html",
+    "https://www.freedesktop.org/software/systemd/man/255/org.freedesktop.systemd1.html",
 )
 
 
@@ -209,6 +211,8 @@ class RootScopeCandidate:
                 "--property=MemoryMax=" + str(self.memory_max_bytes),
                 "--property=MemorySwapMax=0", "--property=TasksMax=64",
                 "--property=RuntimeMaxSec=" + str(self.runtime_seconds) + "s",
+                "--property=RuntimeRandomizedExtraSec=0", "--property=TimeoutStopSec=1s",
+                "--property=SendSIGKILL=yes",
                 "--", "/usr/bin/setpriv", "--reuid=" + str(self.uid), "--regid=" + str(self.gid),
                 "--init-groups", "--no-new-privs", "--", "/usr/bin/env", "-i",
                 "PATH=/usr/bin:/bin", "PYTHONDONTWRITEBYTECODE=1", "OMP_NUM_THREADS=2",
@@ -340,7 +344,7 @@ GRANT_KEYS = {"schema", "task_sha256", "source_sha256", "nonce", "expires_unix_n
               "online_ids", "allowed_ids", "memory_high_bytes", "memory_max_bytes", "runtime_seconds",
               "inert_seconds", "temperature_paths", "max_temperature_millic", "min_ram_bytes",
               "min_disk_bytes", "disk_path", "binary_sha256", "review_receipt_sha256", "resource_lease_id"}
-BINARIES = ("/usr/bin/systemd-run", "/usr/bin/setpriv", "/usr/bin/env", "/usr/bin/python3")
+BINARIES = ("/usr/bin/systemctl", "/usr/bin/systemd-run", "/usr/bin/setpriv", "/usr/bin/env", "/usr/bin/python3")
 
 
 def strict_json(raw):
@@ -403,11 +407,16 @@ def load_inert_grant(path):
     source = protected_root_file(Path(__file__).resolve())
     need(source.parent == path.parent and source.name == "guarded_job.py"
          and hashlib.sha256(source.read_bytes()).hexdigest() == doc["source_sha256"], "staged exact source pin")
+    verify_binary_pins(doc)
+    need(hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal"), "pidfd custodian support required")
+    return doc, path.parent, hashlib.sha256(raw).hexdigest()
+
+
+def verify_binary_pins(doc):
+    need(set(doc["binary_sha256"]) == set(BINARIES),"runtime closure missing binary")
     for name, expected in doc["binary_sha256"].items():
         p = protected_root_file(Path(name).resolve())
         need(hashlib.sha256(p.read_bytes()).hexdigest() == expected, "runtime binary drift")
-    need(hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal"), "pidfd custodian support required")
-    return doc, path.parent, hashlib.sha256(raw).hexdigest()
 
 
 def append_event(directory, event):
@@ -427,26 +436,96 @@ def process_start(pid):
     return int(text[text.rfind(")")+2:].split()[19])
 
 
+def timespan_usec(value):
+    """Closed finite systemctl show duration grammar; unknown formatting refuses."""
+    need(type(value) is str and value != "", "missing finite duration")
+    if value.isdecimal(): return int(value)
+    factors={"us":1,"ms":1000,"s":1_000_000,"min":60_000_000}
+    tokens=value.split();total=0
+    for token in tokens:
+        match=re.fullmatch(r"([0-9]+)(us|ms|s|min)",token)
+        need(match is not None,"unknown/nonfinite duration")
+        total+=int(match[1])*factors[match[2]]
+    return total
+
+
+def unit_lifetime(props, runtime_seconds, launch_lower_ns, expiry_mono_ns, now_ns):
+    # systemd255 Unit monotonic timestamps are boot-relative microseconds.
+    # RuntimeMax stops the scope; a <=1s stop timeout + SIGKILL is the separate
+    # finite backstop. Both, including setup latency, must fit original expiry.
+    need(props.get("ActiveState") == "active", "scope not active")
+    runtime=timespan_usec(props.get("RuntimeMaxUSec"))*1000
+    extra=timespan_usec(props.get("RuntimeRandomizedExtraUSec"))*1000
+    stop=timespan_usec(props.get("TimeoutStopUSec"))*1000
+    raw=props.get("ActiveEnterTimestampMonotonic")
+    need(type(raw) is str and raw.isdecimal(),"missing unit activation timestamp")
+    start=int(raw)*1000
+    need(runtime == runtime_seconds*1_000_000_000 and extra == 0,
+         "effective runtime drift/nonfinite random extension")
+    need(0 < stop <= 1_000_000_000 and props.get("SendSIGKILL") == "yes", "finite stop backstop missing")
+    need(0 < start and launch_lower_ns-1000 <= start <= now_ns,"unit activation outside original launch")
+    end=start+runtime
+    need(now_ns < end and end+stop <= expiry_mono_ns,"effective unit lifetime exceeds original expiry")
+    return end
+
+
 class PinnedInertLeaf:
-    """Only a pinned, one-process inert leaf. No pathname control writes."""
-    def __init__(self, unit, pid):
-        need(re.fullmatch(r"jope-research-[0-9a-f]{12}-[0-9a-f]{32}\.scope", unit), "exact own unit")
-        result = subprocess.run(["/usr/bin/systemctl", "--system", "--no-ask-password", "show", unit,
-                                 "--property=Id,ControlGroup,Slice", "--no-pager"],
-                                check=True, capture_output=True, text=True, timeout=2, env={"PATH":"/usr/bin:/bin"})
-        props = dict(line.split("=", 1) for line in result.stdout.splitlines())
-        relative = "/jarambit.slice/jarambit-evo.slice/"+unit
-        need(props == {"Id":unit, "ControlGroup":relative, "Slice":"jarambit-evo.slice"}, "exact new scope readback")
-        fd = os.open("/sys/fs/cgroup", os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    """Pinned one-process inert leaf; path rebinds/children refuse all writes."""
+    def unit_properties(self):
+        result = subprocess.run(["/usr/bin/systemctl", "--system", "--no-ask-password", "show", self.unit,
+            "--property=Id,ControlGroup,Slice,ActiveState,RuntimeMaxUSec,RuntimeRandomizedExtraUSec,TimeoutStopUSec,SendSIGKILL,ActiveEnterTimestampMonotonic", "--no-pager"],
+            check=True,capture_output=True,text=True,timeout=2,env={"PATH":"/usr/bin:/bin"})
+        pairs=[line.split("=",1) for line in result.stdout.splitlines()]
+        need(all(len(x)==2 for x in pairs) and len({x[0] for x in pairs}) == len(pairs),"invalid unit readback")
+        return dict(pairs)
+
+    def open_binding(self):
+        fd=os.open("/sys/fs/cgroup",os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
         try:
-            for part in relative.strip("/").split("/"):
-                nxt = os.open(part, os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW, dir_fd=fd); os.close(fd); fd = nxt
-            self.fd = fd; fd = None
-        finally:
-            if fd is not None: os.close(fd)
-        st = os.fstat(self.fd); self.device, self.inode = st.st_dev, st.st_ino
-        self.pid, self.start, self.path = pid, process_start(pid), "/sys/fs/cgroup"+relative
-        self.verify()
+            for part in self.relative.strip("/").split("/"):
+                nxt=os.open(part,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd)
+                os.close(fd);fd=nxt
+            return fd
+        except BaseException:
+            os.close(fd);raise
+
+    def path_identity(self):
+        fd=self.open_binding()
+        try:
+            st=os.fstat(fd);return st.st_dev,st.st_ino
+        finally:os.close(fd)
+
+    def verify_runtime(self,props):
+        end=unit_lifetime(props,self.runtime_seconds,self.launch_lower_ns,self.expiry_mono_ns,time.monotonic_ns())
+        start=props['ActiveEnterTimestampMonotonic']
+        if self.unit_start is not None:need(start == self.unit_start and end == self.runtime_deadline_ns,"unit restarted/runtime changed")
+        self.unit_start,self.runtime_deadline_ns=start,end
+
+    def verify_binding(self, *, containment=False):
+        props=self.unit_properties()
+        need(props.get('Id') == self.unit and props.get('ControlGroup') == self.relative
+             and props.get('Slice') == 'jarambit-evo.slice',"unit-to-directory binding changed")
+        need(self.path_identity() == (self.device,self.inode),"unit pathname rebound")
+        if containment:
+            # Expiry/drift must block releases, never an identity-bound freeze
+            # of the original unit. A restarted unit is foreign even here.
+            need(props.get("ActiveEnterTimestampMonotonic") == self.unit_start,"unit restarted before containment")
+        else:self.verify_runtime(props)
+
+    def __init__(self, unit, pid, doc, launch_lower_ns, expiry_mono_ns):
+        need(re.fullmatch(r"jope-research-[0-9a-f]{12}-[0-9a-f]{32}\.scope", unit), "exact own unit")
+        self.unit,self.relative=unit,"/jarambit.slice/jarambit-evo.slice/"+unit
+        self.runtime_seconds,self.launch_lower_ns,self.expiry_mono_ns=doc['runtime_seconds'],launch_lower_ns,expiry_mono_ns
+        self.unit_start,self.runtime_deadline_ns=None,None
+        props=self.unit_properties()
+        need(props.get('Id')==unit and props.get('ControlGroup')==self.relative
+             and props.get('Slice')=='jarambit-evo.slice',"exact new scope readback")
+        self.verify_runtime(props)
+        self.fd=self.open_binding()
+        st=os.fstat(self.fd);self.device,self.inode=st.st_dev,st.st_ino
+        self.pid,self.start,self.path=pid,process_start(pid),"/sys/fs/cgroup"+self.relative
+        try:self.verify()
+        except BaseException:os.close(self.fd);raise
 
     def read(self, name):
         need(name in ("cgroup.procs", "cgroup.events", "cgroup.freeze", "cpu.stat", "cpu.max", "cpuset.cpus.effective", "memory.high", "memory.max", "memory.swap.max", "pids.max"), "allowed leaf read")
@@ -454,16 +533,19 @@ class PinnedInertLeaf:
         try: return os.read(fd, 32768).decode().strip()
         finally: os.close(fd)
 
-    def verify(self):
+    def verify(self, *, containment=False):
+        self.verify_binding(containment=containment)
         st = os.fstat(self.fd)
         need((st.st_dev, st.st_ino) == (self.device, self.inode), "pinned leaf changed")
         need(self.read("cgroup.procs").split() == [str(self.pid)] and process_start(self.pid) == self.start,
              "inert PID/start roster changed")
-        need(not any(Path(self.path, name).is_dir() for name in os.listdir(self.fd)), "unexpected child cgroup")
+        for name in os.listdir(self.fd):
+            mode=os.stat(name,dir_fd=self.fd,follow_symlinks=False).st_mode
+            need(not stat.S_ISDIR(mode) and not stat.S_ISLNK(mode),"unexpected child cgroup/link")
 
     def write(self, name, value):
         need(name in ("cgroup.freeze", "cpu.max"), "only own freezer/quota writes")
-        self.verify()
+        self.verify(containment=(name == "cgroup.freeze" and value == "1"))
         fd = os.open(name, os.O_WRONLY|os.O_NOFOLLOW, dir_fd=self.fd)
         try: need(os.write(fd, value.encode()) == len(value), "complete control write")
         finally: os.close(fd)
@@ -539,8 +621,12 @@ class InertSupervisor:
     controller pidfd before freezing the original leaf, so a late thaw cannot
     undo custodian containment.
     """
-    def __init__(self, leaf, guard):
+    def __init__(self, leaf, guard, *, owned_freeze=False, release_check=None):
         self.leaf, self.guard, self.started, self.stopped = leaf, guard, False, False
+        # This process records only its own confirmed transition. A kernel
+        # frozen bit by itself never supplies ownership. Unknown holds stop.
+        self.owned_freeze=owned_freeze is True
+        self.release_check=release_check
         self.frozen_state=True
 
     def apply(self, plan, custodian_tripped):
@@ -548,17 +634,28 @@ class InertSupervisor:
         self.leaf.verify()
         try:
             need(self.leaf.frozen() == self.frozen_state,"unexpected external freezer change")
+            need(not self.frozen_state or self.owned_freeze,"unknown freeze ownership")
             need(plan["leaf_path"] == self.guard.leaf.path and plan["leaf_inode"] == self.guard.leaf.inode
                  and plan["leaf_device"] == self.guard.leaf.device, "plan leaf mismatch")
             if plan["mode"] != "RUN_CANDIDATE":
                 self.leaf.freeze(True)
                 self.frozen_state=True
+                self.owned_freeze=True
                 if plan["mode"] == "STOP": self.stopped = True
                 return False
             self.leaf.quota(min(plan["actions"][0]["quota_usec"], 25000))
             self.leaf.verify()
-            self.leaf.freeze(False)
-            self.frozen_state=False
+            need(self.leaf.frozen() == self.frozen_state,"external freeze during quota readback")
+            release=any(x.get('op') == 'release_own_freeze_after_readback' for x in plan['actions'])
+            if release:
+                need(self.frozen_state and self.owned_freeze,"no owned freeze transition to release")
+                need(callable(self.release_check) and self.release_check() is True,"fresh custodian release proof missing")
+                self.leaf.verify()
+                need(self.leaf.frozen() is True,"owned freeze changed before release")
+                self.leaf.freeze(False)
+                self.frozen_state=False;self.owned_freeze=False
+            else:
+                need(not self.frozen_state,"frozen plan lacks owned release action")
             self.started = True
             return True
         except BaseException:
@@ -569,34 +666,48 @@ class InertSupervisor:
             raise
 
 
+def contain_owned_leaf(leaf, parent_pidfd, payload_pidfd, directory, reason):
+    # This path is independent of heartbeat/journal output. New pollers avoid
+    # reusing a failed monitoring object. Kill-confirm own parent BEFORE freeze.
+    parent=select.poll();parent.register(parent_pidfd,select.POLLIN)
+    payload=select.poll();payload.register(payload_pidfd,select.POLLIN)
+    if not parent.poll(0):
+        try:signal.pidfd_send_signal(parent_pidfd,signal.SIGKILL)
+        except ProcessLookupError:pass
+        need(parent.poll(500),"controller death unconfirmed; containment unresolved")
+    event={"role":"custodian","reason":reason}
+    if payload.poll(0):event['event']='controller-lost-owned-payload-already-exited'
+    else:
+        leaf.freeze(True)
+        event.update(event='controller-lost-owned-leaf-frozen',pid=leaf.pid,inode=leaf.inode)
+    # Containment is attempted first. A broken journal cannot prevent it.
+    try:append_event(directory,event)
+    except Exception:pass
+
+
 def custodian_loop(leaf, heartbeat_fd, parent_pidfd, payload_pidfd, directory, deadline_ns, armed_fd):
-    poller = select.poll(); poller.register(parent_pidfd, select.POLLIN)
-    payload_poller=select.poll();payload_poller.register(payload_pidfd,select.POLLIN)
-    leaf.verify();os.write(armed_fd,b"A")
-    last = time.monotonic_ns()
-    while time.monotonic_ns() < deadline_ns:
-        os.write(armed_fd,struct.pack("<Q",time.monotonic_ns()))
-        try:
-            data = os.read(heartbeat_fd, 4096)
-            if not all(x in b"HD" for x in data): break
-            if b"D" in data:
-                if payload_poller.poll(500): return
-                break
-            if data: last = time.monotonic_ns()
-            if data == b"": break
-        except BlockingIOError: pass
-        if poller.poll(0) or time.monotonic_ns()-last > 1_500_000_000: break
-        time.sleep(0.05)
-    # pidfd captured for the supervisor itself before fork: never PID reuse,
-    # process groups, arbitrary PID or any model worker. Stop late thaw first.
-    if not poller.poll(0):
-        signal.pidfd_send_signal(parent_pidfd, signal.SIGKILL)
-        need(poller.poll(500), "controller death unconfirmed; containment unresolved")
-    if payload_poller.poll(0):
-        append_event(directory,{"role":"custodian","event":"controller-lost-owned-payload-already-exited"})
-        return
-    leaf.freeze(True)
-    append_event(directory, {"role":"custodian", "event":"controller-lost-owned-leaf-frozen", "pid":leaf.pid, "inode":leaf.inode})
+    reason='heartbeat EOF/stale/deadline or invalid completion'
+    try:
+        poller=select.poll();poller.register(parent_pidfd,select.POLLIN)
+        payload_poller=select.poll();payload_poller.register(payload_pidfd,select.POLLIN)
+        leaf.verify();os.write(armed_fd,b"A")
+        last=time.monotonic_ns()
+        while time.monotonic_ns() < deadline_ns:
+            os.write(armed_fd,struct.pack("<Q",time.monotonic_ns()))
+            try:
+                data=os.read(heartbeat_fd,4096)
+                if not all(x in b"HD" for x in data):break
+                if b"D" in data:
+                    if payload_poller.poll(500):return
+                    break
+                if data:last=time.monotonic_ns()
+                if data == b"":break
+            except BlockingIOError:pass
+            if poller.poll(0) or time.monotonic_ns()-last > 1_500_000_000:break
+            time.sleep(0.05)
+    except BaseException as error:
+        reason='custodian monitoring failure: '+type(error).__name__
+    contain_owned_leaf(leaf,parent_pidfd,payload_pidfd,directory,reason)
 
 
 def custodian_fresh(raw, now_ns):
@@ -622,6 +733,8 @@ def inert_barrier(socket_path, nonce, seconds):
 
 def run_inert_qualification(grant_path):
     doc, directory, grant_sha = load_inert_grant(grant_path)
+    # Anchor once; subsequent setup/readback never restarts the grant clock.
+    expiry_mono_ns=time.monotonic_ns()+max(0,doc["expires_unix_ns"]-time.time_ns())
     need(not any((directory/n).exists() for n in ("barrier.sock", "events.jsonl")), "qualification refuses reuse")
     source = str(Path(__file__).resolve()); socket_path = directory/"barrier.sock"
     spec = RootScopeCandidate(doc["task_sha256"],doc["source_sha256"],grant_sha,doc["nonce"],tuple(doc["online_ids"]),
@@ -639,12 +752,13 @@ def run_inert_qualification(grant_path):
     try:
         append_event(directory,{"event":"qualification-start", "unit":spec.unit,"grant_sha256":grant_sha,"source_sha256":doc["source_sha256"]})
         startup_admission(doc)
+        launch_lower_ns=time.monotonic_ns()
         launcher = subprocess.Popen(proposal["launch_argv_candidate"],env=root_env,stdin=subprocess.DEVNULL)
         conn,_ = server.accept()
         with conn:
             pid,uid,gid = struct.unpack("3i",conn.getsockopt(socket.SOL_SOCKET,socket.SO_PEERCRED,12))
             need(uid == doc["uid"] and gid == doc["gid"] and conn.recv(128) == ("READY:"+doc["nonce"]).encode(), "barrier peer identity")
-            leaf = PinnedInertLeaf(spec.unit,pid)
+            leaf = PinnedInertLeaf(spec.unit,pid,doc,launch_lower_ns,expiry_mono_ns)
             leaf.freeze(True); leaf.quota(25000)
             need(leaf.read("memory.high") == str(doc["memory_high_bytes"]) and leaf.read("memory.max") == str(doc["memory_max_bytes"])
                  and leaf.read("memory.swap.max") == "0" and leaf.read("pids.max") == "64", "RAM/swap/tasks readback")
@@ -655,8 +769,8 @@ def run_inert_qualification(grant_path):
                 pair=part.split("-"); ids.update(range(int(pair[0]),int(pair[-1])+1))
             need(ids == set(doc["allowed_ids"]), "effective CPU readback")
             bound = Leaf(grant_sha,leaf.path,leaf.device,leaf.inode,((pid,leaf.start),))
-            deadline = time.monotonic_ns()+min(doc["runtime_seconds"]*1_000_000_000,doc["expires_unix_ns"]-time.time_ns())
-            guard = Guard(bound,deadline_ns=deadline,max_owned_cores=1); core=InertSupervisor(leaf,guard)
+            deadline = min(expiry_mono_ns,leaf.runtime_deadline_ns)
+            guard = Guard(bound,deadline_ns=deadline,max_owned_cores=1); core=InertSupervisor(leaf,guard,owned_freeze=True)
             readfd,heart=os.pipe2(os.O_CLOEXEC|os.O_NONBLOCK); parent_pidfd=os.pidfd_open(os.getpid())
             payload_pidfd=os.pidfd_open(pid);arm_read,arm_write=os.pipe2(os.O_CLOEXEC|os.O_NONBLOCK)
             child=os.fork()
@@ -669,6 +783,10 @@ def run_inert_qualification(grant_path):
                 os._exit(0)
             os.close(readfd);os.close(arm_write)
             need(select.select([arm_read],[],[],1)[0] and os.read(arm_read,1) == b"A","custodian did not arm")
+            def release_ready():
+                need(os.waitpid(child,os.WNOHANG)[0] == 0,"custodian exited before release")
+                return custodian_fresh(os.read(arm_read,4096),time.monotonic_ns())
+            core.release_check=release_ready
             before=host_point(leaf);need(before.online_ids == tuple(doc["online_ids"]),"grant/actual online CPU mismatch")
             _,swap=resource_health(doc,None); released=False
             conn.setblocking(False)
@@ -697,7 +815,7 @@ def run_inert_qualification(grant_path):
                     raise
                 health,swap=resource_health(doc,swap)
                 frozen=leaf.frozen();need(frozen == core.frozen_state,"unowned freezer change")
-                facts=ScopeFacts(bound,0,True,leaf.ancestor_frozen(),True,True,True,True,frozen,grant_sha if frozen else None)
+                facts=ScopeFacts(bound,0,True,leaf.ancestor_frozen(),True,True,True,True,frozen,grant_sha if frozen and core.owned_freeze else None)
                 # These facts describe THIS verified staged inert runtime, not
                 # general host qualification. Verify current roster every step.
                 leaf.verify(); plan=guard.observe(before,after,time.monotonic_ns(),facts,health)

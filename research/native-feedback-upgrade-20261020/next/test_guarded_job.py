@@ -4,6 +4,9 @@ import unittest
 from unittest.mock import patch, Mock
 import json
 import struct
+import os
+import stat
+import guarded_job as gj
 from pathlib import Path
 
 from guarded_job import CpuPoint, Guard, Health, Leaf, RootScopeCandidate, ScopeFacts, cpu_interval, InertSupervisor, grant_shape, strict_json, parse_cpu, custodian_loop, custodian_fresh, inert_barrier, BINARIES
@@ -307,12 +310,12 @@ class ImplementationTests(unittest.TestCase):
         leaf=Mock();leaf.frozen.return_value=True
         guard=Mock();guard.leaf=Leaf("a"*64,"/sys/fs/cgroup/x/jope-research-test.scope",1,2,((3,4),))
         plan={"mode":"RUN_CANDIDATE","leaf_path":guard.leaf.path,"leaf_inode":2,"leaf_device":1,
-              "actions":[{"quota_usec":800000}]}
-        return leaf,InertSupervisor(leaf,guard),plan
+              "actions":[{"op":"set_cpu_max","quota_usec":800000},{"op":"release_own_freeze_after_readback"}]}
+        return leaf,InertSupervisor(leaf,guard,owned_freeze=True,release_check=lambda:True),plan
 
     def test_supervisor_caps_inert_quota_before_thaw(self):
         leaf,core,p=self.core();self.assertTrue(core.apply(p,False))
-        self.assertEqual([x[0] for x in leaf.method_calls],["verify","frozen","quota","verify","freeze"])
+        self.assertEqual([x[0] for x in leaf.method_calls],["verify","frozen","quota","verify","frozen","verify","frozen","freeze"])
         leaf.quota.assert_called_once_with(25000);leaf.freeze.assert_called_once_with(False)
 
     def test_failed_quota_readback_never_thaws_and_freezes(self):
@@ -342,7 +345,7 @@ class ImplementationTests(unittest.TestCase):
     def test_custodian_kills_only_supplied_parent_pidfd_before_freeze(self):
         events=[];parent=Mock();parent.poll.side_effect=[[],[(11,1)]];payload=Mock();payload.poll.return_value=[]
         leaf=Mock();leaf.freeze.side_effect=lambda state:events.append(("freeze",state))
-        with patch("guarded_job.select.poll",side_effect=[parent,payload]),patch("guarded_job.os.read",return_value=b""),\
+        with patch("guarded_job.select.poll",side_effect=[parent,payload,parent,payload]),patch("guarded_job.os.read",return_value=b""),\
              patch("guarded_job.os.write"),patch("guarded_job.os.close"),patch("guarded_job.time.monotonic_ns",return_value=1),\
              patch("guarded_job.signal.pidfd_send_signal",create=True,side_effect=lambda fd,sig:events.append(("kill-pidfd",fd))),\
              patch("guarded_job.append_event"):
@@ -351,7 +354,7 @@ class ImplementationTests(unittest.TestCase):
 
     def test_coalesced_heartbeat_done_requires_owned_payload_exit(self):
         parent=Mock();payload=Mock();payload.poll.return_value=[(12,1)];leaf=Mock()
-        with patch("guarded_job.select.poll",side_effect=[parent,payload]),patch("guarded_job.os.read",return_value=b"HHHD"),\
+        with patch("guarded_job.select.poll",side_effect=[parent,payload,parent,payload]),patch("guarded_job.os.read",return_value=b"HHHD"),\
              patch("guarded_job.os.write"),patch("guarded_job.os.close"),patch("guarded_job.time.monotonic_ns",return_value=1),\
              patch("guarded_job.signal.pidfd_send_signal",create=True) as kill:
             custodian_loop(leaf,10,11,12,Path("/fixture"),100,13)
@@ -359,7 +362,7 @@ class ImplementationTests(unittest.TestCase):
 
     def test_unconfirmed_parent_death_does_not_claim_containment(self):
         parent=Mock();parent.poll.return_value=[];payload=Mock();leaf=Mock()
-        with patch("guarded_job.select.poll",side_effect=[parent,payload]),patch("guarded_job.os.read",return_value=b""),\
+        with patch("guarded_job.select.poll",side_effect=[parent,payload,parent,payload]),patch("guarded_job.os.read",return_value=b""),\
              patch("guarded_job.os.write"),patch("guarded_job.os.close"),patch("guarded_job.time.monotonic_ns",return_value=1),\
              patch("guarded_job.signal.pidfd_send_signal",create=True):
             with self.assertRaisesRegex(ValueError,"unconfirmed"):
@@ -375,6 +378,95 @@ class ImplementationTests(unittest.TestCase):
                 inert_barrier("/run/jope-research/"+"a"*32+"/barrier.sock","a"*32,1)
         clock.assert_not_called()
 
+
+
+
+class ReviewRegressionTests(unittest.TestCase):
+    def test_real_pipe_epipe_still_kills_controller_then_freezes(self):
+        readfd,writefd=os.pipe();real_write=os.write
+        def arm_then_break(fd,data):
+            result=real_write(fd,data)
+            if data == b"A":os.close(readfd)
+            return result
+        events=[];parent=Mock();parent.poll.side_effect=[[],[(11,1)]]
+        payload=Mock();payload.poll.return_value=[];leaf=Mock()
+        leaf.freeze.side_effect=lambda state:events.append(("freeze",state))
+        try:
+            with patch("guarded_job.select.poll",side_effect=[parent,payload,parent,payload]), \
+                 patch("guarded_job.time.monotonic_ns",return_value=1), \
+                 patch("guarded_job.os.write",side_effect=arm_then_break), \
+                 patch("guarded_job.signal.pidfd_send_signal",create=True,side_effect=lambda fd,sig:events.append(("kill",fd))), \
+                 patch("guarded_job.append_event",side_effect=OSError("journal unavailable")):
+                custodian_loop(leaf,10,11,12,Path("/fixture"),100,writefd)
+        finally:os.close(writefd)
+        self.assertEqual(events,[("kill",11),("freeze",True)])
+
+    def test_unexpected_monitor_read_error_still_contains(self):
+        parent=Mock();parent.poll.side_effect=[[],[(11,1)]];payload=Mock();payload.poll.return_value=[];leaf=Mock()
+        with patch("guarded_job.select.poll",side_effect=[parent,payload,parent,payload]),patch("guarded_job.os.write"), \
+             patch("guarded_job.os.read",side_effect=OSError("monitor failed")),patch("guarded_job.time.monotonic_ns",return_value=1), \
+             patch("guarded_job.signal.pidfd_send_signal",create=True),patch("guarded_job.append_event"):
+            custodian_loop(leaf,10,11,12,Path("/fixture"),100,13)
+        leaf.freeze.assert_called_once_with(True)
+
+    def test_quota_only_plan_never_writes_thaw(self):
+        leaf=Mock();leaf.frozen.return_value=False;guard=Mock();guard.leaf=Leaf("a"*64,"/fixture",1,2,((3,4),))
+        core=InertSupervisor(leaf,guard);core.frozen_state=False;core.started=True
+        plan={"mode":"RUN_CANDIDATE","leaf_path":"/fixture","leaf_device":1,"leaf_inode":2,
+              "actions":[{"op":"set_cpu_max","quota_usec":25000},{"op":"readback_cpu_max"}]}
+        self.assertTrue(core.apply(plan,False));leaf.freeze.assert_not_called()
+        leaf.reset_mock();leaf.frozen.side_effect=[False,True]
+        with self.assertRaises(ValueError):core.apply(plan,False)
+        self.assertNotIn(unittest.mock.call(False),leaf.freeze.call_args_list)
+
+    def test_release_requires_owned_transition_and_fresh_custodian(self):
+        leaf=Mock();leaf.frozen.return_value=True;guard=Mock();guard.leaf=Leaf("a"*64,"/fixture",1,2,((3,4),))
+        core=InertSupervisor(leaf,guard)
+        plan={"mode":"RUN_CANDIDATE","leaf_path":"/fixture","leaf_device":1,"leaf_inode":2,
+              "actions":[{"op":"set_cpu_max","quota_usec":25000},{"op":"release_own_freeze_after_readback"}]}
+        with self.assertRaises(ValueError):core.apply(plan,False)
+        self.assertNotIn(unittest.mock.call(False),leaf.freeze.call_args_list)
+
+    def test_effective_lifetime_consumes_original_expiry_and_refuses_drift(self):
+        props={"RuntimeMaxUSec":"30s","RuntimeRandomizedExtraUSec":"0","TimeoutStopUSec":"1s",
+               "SendSIGKILL":"yes","ActiveState":"active","ActiveEnterTimestampMonotonic":"1000000"}
+        deadline=gj.unit_lifetime(props,30,900_000_000,35_000_000_000,2_000_000_000)
+        self.assertEqual(deadline,31_000_000_000)
+        for key,value in [("RuntimeMaxUSec","infinity"),("RuntimeMaxUSec","31s"),
+                          ("ActiveEnterTimestampMonotonic","0"),("ActiveEnterTimestampMonotonic","3000000"),
+                          ("TimeoutStopUSec","90s"),("RuntimeRandomizedExtraUSec","1s"),("SendSIGKILL","no")]:
+            with self.subTest(key=key),self.assertRaises(ValueError):
+                gj.unit_lifetime({**props,key:value},30,900_000_000,35_000_000_000,2_000_000_000)
+        with self.assertRaises(ValueError):gj.unit_lifetime(props,30,900_000_000,31_500_000_000,2_000_000_000)
+        with self.assertRaises(ValueError):gj.unit_lifetime({k:v for k,v in props.items() if k!='RuntimeMaxUSec'},30,900_000_000,35_000_000_000,2_000_000_000)
+
+    def test_systemctl_is_in_closed_runtime_pin_set(self):
+        self.assertIn("/usr/bin/systemctl",BINARIES)
+        doc=ImplementationTests().grant();doc['binary_sha256'].pop('/usr/bin/systemctl',None)
+        with self.assertRaises(ValueError):grant_shape(doc,1)
+
+    def test_drifted_systemctl_pin_is_rejected_before_launch(self):
+        doc=ImplementationTests().grant();fake=Mock();fake.read_bytes.return_value=b'drifted control binary'
+        with patch('guarded_job.protected_root_file',return_value=fake):
+            with self.assertRaisesRegex(ValueError,'runtime binary drift'):gj.verify_binary_pins(doc)
+
+    def test_unknown_child_is_checked_relative_to_pinned_fd(self):
+        leaf=object.__new__(gj.PinnedInertLeaf);leaf.fd=91;leaf.device=1;leaf.inode=2;leaf.pid=3;leaf.start=4;leaf.path='/rebound'
+        leaf.read=Mock(return_value='3');leaf.verify_binding=Mock()
+        st=Mock(st_dev=1,st_ino=2);child=Mock(st_mode=stat.S_IFDIR)
+        with patch('guarded_job.os.fstat',return_value=st),patch('guarded_job.process_start',return_value=4), \
+             patch('guarded_job.os.listdir',return_value=['unknown']),patch('guarded_job.os.stat',return_value=child) as check:
+            with self.assertRaises(ValueError):leaf.verify()
+        check.assert_called_with('unknown',dir_fd=91,follow_symlinks=False)
+
+    def test_rebound_path_is_refused_before_backend_write(self):
+        leaf=object.__new__(gj.PinnedInertLeaf);leaf.fd=91;leaf.device=1;leaf.inode=2;leaf.path='/rebound'
+        leaf.unit='jope-research-'+('a'*12)+'-'+('b'*32)+'.scope'
+        leaf.unit_properties=Mock(return_value={'Id':leaf.unit,'ControlGroup':'/expected','Slice':'jarambit-evo.slice'})
+        leaf.relative='/expected';leaf.verify_runtime=Mock()
+        leaf.path_identity=Mock(return_value=(1,99))
+        with patch('guarded_job.os.stat',return_value=Mock(st_dev=1,st_ino=99)):
+            with self.assertRaises(ValueError):leaf.verify_binding()
 
 
 if __name__ == "__main__":
