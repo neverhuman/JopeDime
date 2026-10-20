@@ -6100,7 +6100,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. X1 additionally executes jope pipeline run --emit cpp17-fitted, compiles the recorded standalone build and re-derives its receipt. E6 umbrella CLI tests additionally execute kernel2 profile dispatch, default fitted-C++ emission, v4 publication/evidence verification and refusal exit codes for unsupported cut/concurrency/incumbent configurations."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. X1 additionally executes jope pipeline run-legacy-gp --emit cpp17-fitted, compiles the recorded standalone build and re-derives its receipt. E6 umbrella CLI tests additionally execute kernel2 profile dispatch, default fitted-C++ emission, v4 publication/evidence verification and refusal exit codes for unsupported cut/concurrency/incumbent configurations."
     },
     "target:jope-cli/test/planted_tasks": {
       "discovery": {

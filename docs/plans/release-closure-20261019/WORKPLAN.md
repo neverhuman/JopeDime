@@ -261,3 +261,6 @@ Real admission root/provider/loader, a production study entry point and physical
 remain open. Separate Qwen9B recovery-r3 performs inference and GP evaluation, not native
 optimizer continuation; native training remains at 429 updates. No MR47 or older I66 task is
 accepted by this integration note.
+
+
+Count audit: [validation count notes](VALIDATION_COUNT_NOTES.json) separates 625 component top-level passes from its successful fresh-process replay, and 903 combined top-level passes from its replay. The earlier 626/904 aggregate summaries remain preserved. Combined 5c software tests passed; scoped clippy and CI hygiene/e2e still required repairs. No full release or scientific acceptance follows.

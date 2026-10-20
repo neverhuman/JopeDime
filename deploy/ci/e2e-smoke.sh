@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/ci/e2e-smoke.sh — the `e2e-smoke` lane: one end-to-end `jope pipeline run` on a committed
+# deploy/ci/e2e-smoke.sh — the `e2e-smoke` lane: one end-to-end `jope pipeline run-legacy-gp` on a committed
 # dataset, twice.
 #
 # What it proves:
@@ -51,8 +51,8 @@ JOPE=$(cargo run -q --locked -p jope-ci -- cargo-artifact build --package jope-c
 export OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 
 for run in a b; do
-  echo "== pipeline run $run"
-  "$JOPE" pipeline run \
+  echo "== pipeline run-legacy-gp $run"
+  "$JOPE" pipeline run-legacy-gp \
     --dataset "$DATASET" \
     --budget "$BUDGET" \
     --rng-seed "$RNG_SEED" \
@@ -66,7 +66,7 @@ done
 # program must have successful measurements on every cut. Failures are counted
 # as attempts but never count toward this coverage check.
 echo "== multi-cut selection ranks candidates measured on every cut"
-"$JOPE" pipeline run \
+"$JOPE" pipeline run-legacy-gp \
   --dataset "$DATASET" \
   --budget "$BUDGET" \
   --rng-seed "$RNG_SEED" \
@@ -136,7 +136,7 @@ PYEOF
 # artifact, and if it does not the run must exit non-zero with `ok:false` and a failed emit stage.
 echo "== a single uncovered target fails the run instead of passing with nothing emitted"
 set +e
-"$JOPE" pipeline run \
+"$JOPE" pipeline run-legacy-gp \
   --dataset "$DATASET" \
   --budget "$BUDGET" \
   --rng-seed "$RNG_SEED" \

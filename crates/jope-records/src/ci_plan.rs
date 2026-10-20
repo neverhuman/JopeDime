@@ -79,12 +79,12 @@ fn gate_for_lane(lane: &str) -> Option<&'static str> {
     }
 }
 
+/// Ordered lane and gate decisions for the frozen CI-plan contract.
+pub type LaneClassification = (BTreeMap<String, bool>, Vec<(&'static str, bool)>);
+
 /// Classify changed `paths` under `event` (`pull_request` or `workflow_dispatch`), returning
 /// `(lanes, gates)` with the exact lane and gate order of `deploy/ci/ci-plan.py`.
-pub fn classify(
-    paths: &[String],
-    event: &str,
-) -> Result<(BTreeMap<String, bool>, Vec<(&'static str, bool)>)> {
+pub fn classify(paths: &[String], event: &str) -> Result<LaneClassification> {
     require!(
         event == "pull_request" || event == "workflow_dispatch",
         "unsupported fast CI event: {event}"
@@ -107,17 +107,31 @@ pub fn classify(
     Ok((lanes, gates))
 }
 
-/// Build the `jope.ci-plan/v1` JSON object.
+/// Source and execution identities carried by a CI plan.
+#[derive(Clone, Copy, Debug)]
+pub struct PlanRunIdentity<'a> {
+    pub event: &'a str,
+    pub base_sha: &'a str,
+    pub source_sha: &'a str,
+    pub checkout_sha: &'a str,
+    pub run_id: &'a str,
+    pub attempt: i64,
+}
+
+/// Build the unchanged `jope.ci-plan/v1` wire object.
 pub fn build_plan_value(
-    event: &str,
-    base_sha: &str,
-    source_sha: &str,
-    checkout_sha: &str,
-    run_id: &str,
-    attempt: i64,
+    identity: PlanRunIdentity<'_>,
     paths: &[String],
     lanes: &BTreeMap<String, bool>,
 ) -> Value {
+    let PlanRunIdentity {
+        event,
+        base_sha,
+        source_sha,
+        checkout_sha,
+        run_id,
+        attempt,
+    } = identity;
     let mut lane_dict = Dict::new();
     for lane in LANES {
         if let Some(&v) = lanes.get(lane) {
@@ -186,12 +200,14 @@ pub fn run_from_env(repo: &Path, output: &Path) -> Result<(String, bool)> {
         .map_err(|_| Error::Invalid("invalid GITHUB_RUN_ATTEMPT".into()))?;
 
     let plan = build_plan_value(
-        &event,
-        &base,
-        &source_sha,
-        &checkout_sha,
-        &run_id,
-        attempt,
+        PlanRunIdentity {
+            event: &event,
+            base_sha: &base,
+            source_sha: &source_sha,
+            checkout_sha: &checkout_sha,
+            run_id: &run_id,
+            attempt,
+        },
         &paths,
         &lanes,
     );

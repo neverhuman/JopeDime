@@ -373,10 +373,7 @@ pub fn brief(entries: &[BriefEntry]) -> Result<String, String> {
 }
 
 fn markdown_cell(value: &str) -> String {
-    value
-        .replace('|', "\\|")
-        .replace('\r', " ")
-        .replace('\n', " ")
+    value.replace('|', "\\|").replace(['\r', '\n'], " ")
 }
 
 fn safe_link(value: &str) -> String {

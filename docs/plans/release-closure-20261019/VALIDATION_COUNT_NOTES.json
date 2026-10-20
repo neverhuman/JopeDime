@@ -1,0 +1,43 @@
+{
+  "schema": "jope.integration-validation-count-notes/v1",
+  "observed_utc": "2026-10-20T04:36:46.507172+00:00",
+  "scope": "Software fixture execution only; no model gain, optimizer update, real admission or overall CI PASS",
+  "counting": "Use the last summary in each Cargo Running/Doc-tests section for top-level tests; record earlier nested summaries separately.",
+  "runs": {
+    "e66442c8847fe3155a08f1fadb6a899d95111349": {
+      "log": "/home/ubuntu/jope-evidence/reasoner-pilot-20261019/adapters_and_runner/v11-logs/w1_postcommit_full_test.log",
+      "sha256": "cd3dc2c2473efbaaf36ad521f5295a844a383882b2d2cf3f4eed203919548880",
+      "top_level": {
+        "passed": 625,
+        "failed": 0,
+        "ignored": 3
+      },
+      "nested_replays": [
+        {
+          "header": "Running tests/model_build_persistence.rs (target/debug/deps/model_build_persistence-0e803cb6240a2e2b)",
+          "summaries": [
+            "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s"
+          ]
+        }
+      ]
+    },
+    "5c51992ca960f8963a094ab4831645a46e6f6856": {
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postcommit-5c51992ca/affected-package-tests.log",
+      "sha256": "6761006e8926c7206b3b77b8e13b38398f04ddce6bc4572ef3be700dec70a39e",
+      "top_level": {
+        "passed": 903,
+        "failed": 0,
+        "ignored": 3
+      },
+      "nested_replays": [
+        {
+          "header": "Running tests/model_build_persistence.rs (target/debug/deps/model_build_persistence-00ac40f758f3c42d)",
+          "summaries": [
+            "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s"
+          ]
+        }
+      ]
+    }
+  },
+  "correction": "The originally reported626/904passing summaries include one successful fresh-process replay each. There are625/903top-level passing cases respectively. Original raw logs and receipts are unchanged."
+}

@@ -4165,6 +4165,48 @@
         "gp"
       ]
     },
+    "target:jope-pipeline/test/model_build_admission": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "fitting",
+        "policy"
+      ]
+    },
+    "target:jope-pipeline/test/model_build_automl": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
+    "target:jope-pipeline/test/model_build_driver": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "storage"
+      ]
+    },
+    "target:jope-pipeline/test/model_build_ensemble": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
+    "target:jope-pipeline/test/model_build_flags": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ]
+    },
+    "target:jope-pipeline/test/model_build_persistence": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "storage"
+      ]
+    },
     "target:jope-pipeline/test/modern_gp_candidate": {
       "role": "regression",
       "source": "crates/jope-pipeline/tests/modern_gp_candidate.rs",
@@ -4188,6 +4230,13 @@
         "gp",
         "orchestration",
         "export"
+      ]
+    },
+    "target:jope-pipeline/test/pathway_plumbing": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "gp"
       ]
     },
     "target:jope-pipeline/test/residual_closure": {
