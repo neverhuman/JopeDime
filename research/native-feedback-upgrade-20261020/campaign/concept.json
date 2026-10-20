@@ -1,13 +1,21 @@
 {
-  "run_id": "composite-control-development-wave1",
-  "branch": "codex/native-feedback-upgrade-20261020",
-  "concept": "composite_control",
-  "assigned_node": "xbabe2_or_xbabe3_paired_control",
+  "run_id": "listwise-development-wave1",
+  "branch": "codex/research-listwise-20261020",
+  "concept": "top_listwise",
+  "assigned_node": "xbabe2",
   "scope": "historical_replay",
   "evaluation_partition": "calibration",
   "evaluation_exposure": "development_once_per_frozen_wave",
-  "seeds": [41, 73, 109],
-  "arms": ["continuation", "uniform_feedback", "targeted_feedback"],
+  "seeds": [
+    41,
+    73,
+    109
+  ],
+  "arms": [
+    "continuation",
+    "uniform_feedback",
+    "targeted_feedback"
+  ],
   "initial_updates": 192,
   "updates_per_wave": 192,
   "waves": 3,
