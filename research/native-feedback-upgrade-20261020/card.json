@@ -1,0 +1,32 @@
+{
+  "schema": "jope.research-card/v1",
+  "wave": "native-feedback-upgrade-20261020",
+  "stage": "historical-development-replay",
+  "disposition": "PRIMARY_INCONCLUSIVE_NATIVE_RANKING_CONTROLS_IMPROVED",
+  "objective": "Learn value-guided selection from measured S3 outcomes and test added feedback beyond extra optimization.",
+  "native_checkpoints": {
+    "native17773": "ea078456690b0665592652b2ed5b04a0deb39b9e604de97a513dc885e467f9fb",
+    "native429": "b888b5d66fda926c3609fa068a42a022a079e2d4bbc8db3b5badec8f51acaf20"
+  },
+  "primary": {
+    "confidence": 0.99,
+    "contexts": 214,
+    "effect": 0.01468298676559788,
+    "lower": -0.0015362225308254288,
+    "parents": 51,
+    "resamples": 10000,
+    "upper": 0.034344941945373894
+  },
+  "promotion": false,
+  "new_gp_fits": 0,
+  "unit_tests": {
+    "collected": 9,
+    "passed": 9,
+    "failed": 0
+  },
+  "post_run_audit": true,
+  "arm_wave_checks": 9,
+  "teacher_ce_reproduced": true,
+  "original_composite_vs_ce_diagnostic_failure_retained": true,
+  "next": "NEXT_WAVE.md"
+}

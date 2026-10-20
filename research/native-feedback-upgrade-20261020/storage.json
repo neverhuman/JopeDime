@@ -1,0 +1,50 @@
+{
+  "schema": "jope.research-s3-custody/v1",
+  "utc": "2026-10-20T09:19:11.258711+00:00",
+  "archives": {
+    "reusable-native-inputs": {
+      "compressed_sha256": "7cd08403163fefd4ffb94419d92b3df938e54f599a54b524ee7618bd2c5dae26",
+      "compressed_bytes": 59210735,
+      "index_sha256": "9ca53d6815e31579bd3228ee20b598a41e6a74ed09e0e2907dc0ef1e4bbcb96b",
+      "archive": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/native-feedback-upgrade-20261020/blobs/sha256/7cd08403163fefd4ffb94419d92b3df938e54f599a54b524ee7618bd2c5dae26",
+        "version_id": "GIFs_.q41kWuUJLhC39dge7WitW8Dza5",
+        "sha256": "7cd08403163fefd4ffb94419d92b3df938e54f599a54b524ee7618bd2c5dae26",
+        "bytes": 59210735,
+        "fresh_exact_version_get_verified": true
+      },
+      "decoded_tar_sha256": "b1fb75fdc8727b2c425d5b96d146f9a0e64c9e516edb056bd1ce55dd4c53f621",
+      "decoded_tar_bytes": 74414080,
+      "regular_members_verified": 8,
+      "index": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/native-feedback-upgrade-20261020/blobs/sha256/9ca53d6815e31579bd3228ee20b598a41e6a74ed09e0e2907dc0ef1e4bbcb96b",
+        "version_id": "4BlUrWTYrRsoei.Ox2GoyP52V5THNCeg",
+        "sha256": "9ca53d6815e31579bd3228ee20b598a41e6a74ed09e0e2907dc0ef1e4bbcb96b",
+        "bytes": 1045,
+        "fresh_exact_version_get_verified": true
+      }
+    },
+    "feedback-run": {
+      "compressed_sha256": "76e3183b96d097f7e9fa1c2319710df66adfe3e8327ff78fb4a1bf041fd29895",
+      "compressed_bytes": 102959867,
+      "index_sha256": "2c83bda54c029a13008c83eaae6a67846b73f056158a3e307da628cc0892ddcb",
+      "archive": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/native-feedback-upgrade-20261020/blobs/sha256/76e3183b96d097f7e9fa1c2319710df66adfe3e8327ff78fb4a1bf041fd29895",
+        "version_id": "fdIbK19FcrZeAIykTu3HmvfoKM1Hane7",
+        "sha256": "76e3183b96d097f7e9fa1c2319710df66adfe3e8327ff78fb4a1bf041fd29895",
+        "bytes": 102959867,
+        "fresh_exact_version_get_verified": true
+      },
+      "decoded_tar_sha256": "5ccde24cd1d8b2ea879e22db11b8d2478e7fb10e640fa6c7cc9c10cdad97f3f7",
+      "decoded_tar_bytes": 124108800,
+      "regular_members_verified": 60,
+      "index": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/native-feedback-upgrade-20261020/blobs/sha256/2c83bda54c029a13008c83eaae6a67846b73f056158a3e307da628cc0892ddcb",
+        "version_id": "M6kqsxgu46iXyDyCDHmE77OGlG1GNoE8",
+        "sha256": "2c83bda54c029a13008c83eaae6a67846b73f056158a3e307da628cc0892ddcb",
+        "bytes": 8662,
+        "fresh_exact_version_get_verified": true
+      }
+    }
+  }
+}

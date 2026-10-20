@@ -1,0 +1,337 @@
+{
+  "assessment_contexts": 214,
+  "assessment_parent_components": 51,
+  "metrics": {
+    "continuation/budget1": {
+      "beats_incumbent": 0.00326797385620915,
+      "best_found": 0.2740196078431372,
+      "normalized_quality": 0.8080545848027684,
+      "quality": 1.0520669833738385,
+      "regret": 0.1919454151972315
+    },
+    "continuation/budget4": {
+      "beats_incumbent": 0.01045751633986928,
+      "best_found": 0.6056489262371616,
+      "normalized_quality": 0.9593782166841949,
+      "quality": 1.2339742802710587,
+      "regret": 0.04062178331580519
+    },
+    "continuation/budget8": {
+      "beats_incumbent": 0.02418300653594771,
+      "best_found": 0.8254435107376284,
+      "normalized_quality": 0.991198029337968,
+      "quality": 1.2619473230828095,
+      "regret": 0.008801970662032046
+    },
+    "frozen_initial_adapter/budget1": {
+      "beats_incumbent": 0.013725490196078431,
+      "best_found": 0.2493930905695611,
+      "normalized_quality": 0.8006307364893326,
+      "quality": 1.0724370270505885,
+      "regret": 0.19936926351066744
+    },
+    "frozen_initial_adapter/budget4": {
+      "beats_incumbent": 0.016993464052287584,
+      "best_found": 0.6221288515406161,
+      "normalized_quality": 0.95976124033862,
+      "quality": 1.173422290022948,
+      "regret": 0.040238759661380054
+    },
+    "frozen_initial_adapter/budget8": {
+      "beats_incumbent": 0.024183006535947713,
+      "best_found": 0.8245098039215686,
+      "normalized_quality": 0.9922170528987505,
+      "quality": 1.2587197310128533,
+      "regret": 0.007782947101249505
+    },
+    "native17773_qhead/budget1": {
+      "beats_incumbent": 0.00326797385620915,
+      "best_found": 0.19901960784313727,
+      "normalized_quality": 0.7740951692005206,
+      "quality": 0.9581155539886131,
+      "regret": 0.22590483079947954
+    },
+    "native17773_qhead/budget4": {
+      "beats_incumbent": 0.016993464052287584,
+      "best_found": 0.5695144724556489,
+      "normalized_quality": 0.950469260503688,
+      "quality": 1.22562854251628,
+      "regret": 0.04953073949631217
+    },
+    "native17773_qhead/budget8": {
+      "beats_incumbent": 0.02091503267973856,
+      "best_found": 0.8186274509803921,
+      "normalized_quality": 0.985606822862061,
+      "quality": 1.254584821419149,
+      "regret": 0.014393177137938916
+    },
+    "native17773_trie/budget1": {
+      "beats_incumbent": 0.00784313725490196,
+      "best_found": 0.09722222222222224,
+      "normalized_quality": 0.6502440415523726,
+      "quality": 0.813087348275476,
+      "regret": 0.3497559584476276
+    },
+    "native17773_trie/budget4": {
+      "beats_incumbent": 0.00784313725490196,
+      "best_found": 0.36360877684407095,
+      "normalized_quality": 0.9104463478575044,
+      "quality": 1.1283371947615268,
+      "regret": 0.08955365214249558
+    },
+    "native17773_trie/budget8": {
+      "beats_incumbent": 0.02091503267973856,
+      "best_found": 0.6769140989729227,
+      "normalized_quality": 0.9746499933494703,
+      "quality": 1.2078972431548254,
+      "regret": 0.02535000665052963
+    },
+    "native429_qhead/budget1": {
+      "beats_incumbent": 0.02091503267973856,
+      "best_found": 0.20018674136321193,
+      "normalized_quality": 0.6833538153380156,
+      "quality": 0.889141593171147,
+      "regret": 0.3166461846619844
+    },
+    "native429_qhead/budget4": {
+      "beats_incumbent": 0.02091503267973856,
+      "best_found": 0.4648926237161531,
+      "normalized_quality": 0.9312070801453268,
+      "quality": 1.2014979933381111,
+      "regret": 0.06879291985467319
+    },
+    "native429_qhead/budget8": {
+      "beats_incumbent": 0.02483660130718954,
+      "best_found": 0.7301353874883286,
+      "normalized_quality": 0.9776492231132811,
+      "quality": 1.2438741153113728,
+      "regret": 0.02235077688671907
+    },
+    "native429_trie/budget1": {
+      "beats_incumbent": 0.00392156862745098,
+      "best_found": 0.0238562091503268,
+      "normalized_quality": 0.555006867634455,
+      "quality": 0.8431463747297048,
+      "regret": 0.44499313236554516
+    },
+    "native429_trie/budget4": {
+      "beats_incumbent": 0.00784313725490196,
+      "best_found": 0.28725490196078435,
+      "normalized_quality": 0.8784009243158101,
+      "quality": 1.0584991168798972,
+      "regret": 0.12159907568419001
+    },
+    "native429_trie/budget8": {
+      "beats_incumbent": 0.01764705882352941,
+      "best_found": 0.6334267040149393,
+      "normalized_quality": 0.9704975600674566,
+      "quality": 1.179640855075659,
+      "regret": 0.029502439932543496
+    },
+    "targeted_feedback/budget1": {
+      "beats_incumbent": 0.007189542483660131,
+      "best_found": 0.21003734827264237,
+      "normalized_quality": 0.8354586899468314,
+      "quality": 1.1678990791865298,
+      "regret": 0.16454131005316863
+    },
+    "targeted_feedback/budget4": {
+      "beats_incumbent": 0.01045751633986928,
+      "best_found": 0.645751633986928,
+      "normalized_quality": 0.9781969566913555,
+      "quality": 1.2401856722404023,
+      "regret": 0.021803043308644562
+    },
+    "targeted_feedback/budget8": {
+      "beats_incumbent": 0.02156862745098039,
+      "best_found": 0.8578431372549019,
+      "normalized_quality": 0.9915298922238013,
+      "quality": 1.2516397499617622,
+      "regret": 0.00847010777619865
+    },
+    "uniform_feedback/budget1": {
+      "beats_incumbent": 0.01045751633986928,
+      "best_found": 0.25329131652661063,
+      "normalized_quality": 0.8153976512836995,
+      "quality": 1.078837429070173,
+      "regret": 0.18460234871630057
+    },
+    "uniform_feedback/budget4": {
+      "beats_incumbent": 0.014379084967320262,
+      "best_found": 0.6419467787114845,
+      "normalized_quality": 0.9740612034497925,
+      "quality": 1.241829429838277,
+      "regret": 0.02593879655020731
+    },
+    "uniform_feedback/budget8": {
+      "beats_incumbent": 0.02483660130718954,
+      "best_found": 0.8676470588235294,
+      "normalized_quality": 0.9932888796654629,
+      "quality": 1.2503832100530596,
+      "regret": 0.0067111203345370666
+    },
+    "uniform_hash/budget1": {
+      "beats_incumbent": 0.01045751633986928,
+      "best_found": 0.06669000933706816,
+      "normalized_quality": 0.6273952368000404,
+      "quality": 0.8715267024308774,
+      "regret": 0.3726047631999595
+    },
+    "uniform_hash/budget4": {
+      "beats_incumbent": 0.013725490196078431,
+      "best_found": 0.31281512605042017,
+      "normalized_quality": 0.894289046163792,
+      "quality": 1.1557106212838157,
+      "regret": 0.10571095383620795
+    },
+    "uniform_hash/budget8": {
+      "beats_incumbent": 0.01764705882352941,
+      "best_found": 0.5947245564892624,
+      "normalized_quality": 0.968204930243877,
+      "quality": 1.2307361674389785,
+      "regret": 0.03179506975612314
+    }
+  },
+  "paired_99pct_intervals_budget4": {
+    "targeted_feedback-frozen_initial_adapter": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.01843571635273548,
+      "lower": 0.0005252576110212069,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.042710909309025054
+    },
+    "targeted_feedback-native17773_qhead": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.027727696187667607,
+      "lower": 0.006979346072138423,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.05624098396586312
+    },
+    "targeted_feedback-native17773_trie": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.067750608833851,
+      "lower": 0.0384602478207227,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.1017808844950425
+    },
+    "targeted_feedback-native429_qhead": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.046989876546028625,
+      "lower": 0.021257494087463382,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.07553400834897865
+    },
+    "targeted_feedback-native429_trie": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.09979603237554546,
+      "lower": 0.06003727090723306,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.14470905250754895
+    },
+    "targeted_feedback-uniform_feedback": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.00413575324156275,
+      "lower": -0.005081256823518221,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.014491299159333799
+    },
+    "uniform_feedback-continuation": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.01468298676559788,
+      "lower": -0.0015362225308254288,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.034344941945373894
+    },
+    "uniform_feedback-frozen_initial_adapter": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.014299963111172733,
+      "lower": -0.00456476824895525,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.03941021420908187
+    },
+    "uniform_feedback-native17773_qhead": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.023591942946104855,
+      "lower": 0.002680189775961241,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.05221493804384707
+    },
+    "uniform_feedback-native17773_trie": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.06361485559228826,
+      "lower": 0.03427577567028503,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.0971973906403797
+    },
+    "uniform_feedback-native429_qhead": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.04285412330446586,
+      "lower": 0.017741365092178826,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.0695393619662317
+    },
+    "uniform_feedback-native429_trie": {
+      "confidence": 0.99,
+      "contexts": 214,
+      "effect": 0.0956602791339827,
+      "lower": 0.0552630991356082,
+      "parents": 51,
+      "resamples": 10000,
+      "upper": 0.14195410973504624
+    }
+  },
+  "primary_replay_effect_positive": false,
+  "all_native_controls_beaten_by_uniform_at_99pct": true,
+  "acquisition": {
+    "continuation": {
+      "charged_logical_replay_slots": 1426,
+      "fresh_gp_fits": 0,
+      "unique_measured_train_pairs": 1426
+    },
+    "targeted_feedback": {
+      "charged_logical_replay_slots": 5704,
+      "fresh_gp_fits": 0,
+      "unique_measured_train_pairs": 5704
+    },
+    "uniform_feedback": {
+      "charged_logical_replay_slots": 5704,
+      "fresh_gp_fits": 0,
+      "unique_measured_train_pairs": 5704
+    }
+  },
+  "actual_adapter_optimizer_updates": 5760,
+  "elapsed_seconds": 38.2931957077235,
+  "limitations": [
+    "All pool contexts were historically TRAIN for both native models. Parent split withholds new ranking targets from adapter only. Existing archive has prior development exposure and unresolved original prospective provenance.",
+    "Historical S3 replay, no fresh outcomes, unseen-family confirmation, full decoder search or automatic promotion.",
+    "Frozen finite candidate pools exclude historical incumbent programs; candidates and cached outcomes predate this experiment.",
+    "Adapter training uses new ranking targets; native backbone weights and their teacher losses remain unchanged.",
+    "99% intervals describe retained parent variation in this historical replay. Secondary comparisons are exploratory, without familywise correction.",
+    "Three ensemble members form one policy, not three independent experimental replications.",
+    "No fresh numerical GP fits, raw S3 dataset refits, online pipeline integration, deployment or sealed confirmation."
+  ],
+  "qualified_self_improvement": false,
+  "production_promoted": false
+}

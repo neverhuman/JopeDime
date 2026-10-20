@@ -1,0 +1,154 @@
+{
+  "schema": "jope.research-fleet-observation/v1",
+  "observed_utc": "2026-10-20T09:18:55.577292+00:00",
+  "nodes": [
+    {
+      "host": "xbabe1",
+      "available": true,
+      "hostname": "xbabe1",
+      "system": "Linux",
+      "logical_cpus": 128,
+      "observed_unix": 1792487934.1243496,
+      "aggregate_cpu_percent": 1.2350504181974518,
+      "available_ram_bytes": 50222329856,
+      "gpu": {
+        "exit": 0,
+        "out": "NVIDIA GeForce RTX 4090, 24564 MiB, 16696 MiB, 30 %, 16 %\n",
+        "error": ""
+      },
+      "gpu_compute_processes": {
+        "exit": 0,
+        "out": "3873348, 16678 MiB\n",
+        "error": ""
+      },
+      "guard": {
+        "exit": 0,
+        "out": "MainPID=1985906\nActiveState=active\n",
+        "error": ""
+      },
+      "guard_environment_unavailable": "PermissionError",
+      "guard_cgroup": {
+        "cpu.max": "8236120 100000",
+        "cgroup.freeze": "0"
+      },
+      "disk": {
+        "total": 1966736678912,
+        "used": 1639111245824,
+        "free": 227645181952
+      },
+      "below_70_percent_at_sample": true,
+      "continuous_70_percent_ceiling_qualified": false,
+      "gpu_occupancy_is_not_optimizer_progress": true
+    },
+    {
+      "host": "xbabe2",
+      "available": true,
+      "hostname": "xbabe2",
+      "system": "Linux",
+      "logical_cpus": 128,
+      "observed_unix": 1792487934.3254466,
+      "aggregate_cpu_percent": 9.581881533101045,
+      "available_ram_bytes": 102018179072,
+      "gpu": {
+        "exit": 0,
+        "out": "NVIDIA GeForce RTX 3090, 24576 MiB, 1 MiB, 0 %, 0 %\n",
+        "error": ""
+      },
+      "gpu_compute_processes": {
+        "exit": 0,
+        "out": "",
+        "error": ""
+      },
+      "guard": {
+        "exit": 0,
+        "out": "MainPID=444350\nActiveState=active\n",
+        "error": ""
+      },
+      "guard_environment_unavailable": "PermissionError",
+      "guard_cgroup": {
+        "cpu.max": "50000 100000",
+        "cgroup.freeze": "1"
+      },
+      "disk": {
+        "total": 7936183619584,
+        "used": 7504048697344,
+        "free": 352113811456
+      },
+      "below_70_percent_at_sample": true,
+      "continuous_70_percent_ceiling_qualified": false,
+      "gpu_occupancy_is_not_optimizer_progress": true
+    },
+    {
+      "host": "xbabe3",
+      "available": true,
+      "hostname": "xbabe3",
+      "system": "Linux",
+      "logical_cpus": 128,
+      "observed_unix": 1792487934.321789,
+      "aggregate_cpu_percent": 6.854775676098171,
+      "available_ram_bytes": 117979193344,
+      "gpu": {
+        "exit": 0,
+        "out": "NVIDIA GeForce RTX 3090, 24576 MiB, 1 MiB, 0 %, 2 %\n",
+        "error": ""
+      },
+      "gpu_compute_processes": {
+        "exit": 0,
+        "out": "",
+        "error": ""
+      },
+      "guard": {
+        "exit": 0,
+        "out": "MainPID=2627322\nActiveState=active\n",
+        "error": ""
+      },
+      "guard_environment_unavailable": "PermissionError",
+      "guard_cgroup": {
+        "cpu.max": "8222812 100000",
+        "cgroup.freeze": "0"
+      },
+      "disk": {
+        "total": 982240026624,
+        "used": 949933658112,
+        "free": 22298845184
+      },
+      "below_70_percent_at_sample": true,
+      "continuous_70_percent_ceiling_qualified": false,
+      "gpu_occupancy_is_not_optimizer_progress": true
+    },
+    {
+      "host": "xbabe4",
+      "available": true,
+      "hostname": "Mac-Studio.local",
+      "system": "Darwin",
+      "logical_cpus": 32,
+      "observed_unix": 1792487933.881452,
+      "aggregate_cpu_percent": 13.420000000000002,
+      "gpu": {
+        "exit": 0,
+        "out": "Graphics/Displays:\n\n    Apple M3 Ultra:\n\n      Chipset Model: Apple M3 Ultra\n      Type: GPU\n      Bus: Built-In\n      Total Number of Cores: 80\n      Vendor: Apple (0x106b)\n      Metal Support: Metal 4\n      Displays:\n        Display:\n          Resolution: 1920 x 1080 (1080p FHD - Full High Definition)\n          UI Looks like: 1920 x 1080 @ 60.00Hz\n          Main Display: Yes\n          Mirror: Off\n          Online: Yes\n          Rotation: Supported\n\n",
+        "error": ""
+      },
+      "memory": {
+        "exit": 0,
+        "out": "549755813888\n",
+        "error": ""
+      },
+      "guard": {
+        "state": "not_qualified_by_this_probe",
+        "required": "owner-controlled Metal/CPU job guard"
+      },
+      "disk": {
+        "total": 3996329328640,
+        "used": 2967924490240,
+        "free": 1028404838400
+      },
+      "below_70_percent_at_sample": true,
+      "continuous_70_percent_ceiling_qualified": false,
+      "gpu_occupancy_is_not_optimizer_progress": true
+    }
+  ],
+  "read_only": true,
+  "all_nodes_below_70_at_sample": true,
+  "continuous_ceiling_qualified": false
+}
