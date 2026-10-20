@@ -221,9 +221,11 @@ fn a_file_claim_cannot_bypass_the_closure_on_the_public_command() {
         neural_checkpoint: Some(claim),
     };
     let text = serde_json::to_string(&file).unwrap();
-    let dir = std::env::temp_dir().join(format!("ja02-flags-{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let path = dir.join("options.json");
+    let dir = tempfile::Builder::new()
+        .prefix("ja02-flags-")
+        .tempdir()
+        .unwrap();
+    let path = dir.path().join("options.json");
     std::fs::write(&path, text).unwrap();
     let cli = parse(&[
         "run",
@@ -237,5 +239,4 @@ fn a_file_claim_cannot_bypass_the_closure_on_the_public_command() {
         err.contains("no independently trusted source expectation"),
         "{err}"
     );
-    let _ = std::fs::remove_dir_all(&dir);
 }
