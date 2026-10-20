@@ -19,6 +19,11 @@ pub const RECEIPT_SCHEMA_ID: &str = "jope.pipeline-receipt/v3";
 pub const RECEIPT_SCHEMA_JSON: &str =
     include_str!("../../../schemas/jope.pipeline-receipt.v3.schema.json");
 
+/// Additive reasoner no-time-limit contract. Historical v3 bytes remain frozen.
+pub const NO_TIME_SCHEMA_ID: &str = "jope.pipeline-receipt/v5";
+pub const NO_TIME_SCHEMA_JSON: &str =
+    include_str!("../../../schemas/jope.pipeline-receipt.v5.schema.json");
+
 /// The previous current schema: total-budget accounting and complete-coverage selection,
 /// without seeding.
 pub const V2_SCHEMA_ID: &str = "jope.pipeline-receipt/v2";
@@ -354,7 +359,14 @@ impl Receipt {
     /// Structural invariants the schema cannot express.
     pub fn invariant_errors(&self) -> Vec<String> {
         let mut errors = Vec::new();
-        if ![RECEIPT_SCHEMA_ID, V2_SCHEMA_ID, LEGACY_SCHEMA_ID].contains(&self.schema.as_str()) {
+        if ![
+            RECEIPT_SCHEMA_ID,
+            NO_TIME_SCHEMA_ID,
+            V2_SCHEMA_ID,
+            LEGACY_SCHEMA_ID,
+        ]
+        .contains(&self.schema.as_str())
+        {
             errors.push(format!(
                 "schema is {:?}, expected {RECEIPT_SCHEMA_ID:?}",
                 self.schema
@@ -447,10 +459,10 @@ impl Receipt {
                 self.search.selection
             ));
         }
-        if self.schema == RECEIPT_SCHEMA_ID || self.schema == V2_SCHEMA_ID {
+        if [RECEIPT_SCHEMA_ID, NO_TIME_SCHEMA_ID, V2_SCHEMA_ID].contains(&self.schema.as_str()) {
             self.v2_errors(&mut errors);
         }
-        if self.schema == RECEIPT_SCHEMA_ID {
+        if [RECEIPT_SCHEMA_ID, NO_TIME_SCHEMA_ID].contains(&self.schema.as_str()) {
             self.v3_errors(&mut errors);
         } else if self.search.seeding.is_some() || self.search.islands.is_some() {
             errors.push(format!(
@@ -735,11 +747,36 @@ pub fn schema() -> serde_json::Value {
 
 /// The schema schemars derives from [`Receipt`].
 pub fn derived_schema() -> serde_json::Value {
-    let mut value = schemars::schema_for!(Receipt).to_value();
+    let mut value = derived_no_time_schema();
     value["title"] = RECEIPT_SCHEMA_ID.into();
     value["$id"] =
         "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v3.schema.json".into();
     value["properties"]["schema"]["const"] = RECEIPT_SCHEMA_ID.into();
+    // Options deserialize historical values, but historical v3 requires numeric limits.
+    value["$defs"]["Phase"]["properties"]["seconds_limit"] =
+        serde_json::json!({"format":"double", "type":"number"});
+    value["$defs"]["Search"]["properties"]["seconds"] =
+        serde_json::json!({"format":"uint64", "minimum":0, "type":"integer"});
+    value["$defs"]["Search"]["properties"]
+        .as_object_mut()
+        .unwrap()
+        .remove("temporal_limits_enabled");
+    for (definition, field) in [("Phase", "seconds_limit"), ("Search", "seconds")] {
+        value["$defs"][definition]["required"]
+            .as_array_mut()
+            .unwrap()
+            .push(field.into());
+    }
+    value
+}
+
+/// The additive v5 contract derives the actual optional temporal-limit fields.
+pub fn derived_no_time_schema() -> serde_json::Value {
+    let mut value = schemars::schema_for!(Receipt).to_value();
+    value["title"] = NO_TIME_SCHEMA_ID.into();
+    value["$id"] =
+        "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v5.schema.json".into();
+    value["properties"]["schema"]["const"] = NO_TIME_SCHEMA_ID.into();
     value["properties"]["policy"]["enum"] = serde_json::json!(["auto", "skip", "require"]);
     value["$defs"]["Stage"]["properties"]["status"]["enum"] = serde_json::json!(STATUSES);
     let stops = serde_json::json!([
@@ -807,6 +844,8 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt, Vec<String>>
         serde_json::from_str(LEGACY_SCHEMA_JSON).expect("legacy schema parses")
     } else if value["schema"] == V2_SCHEMA_ID {
         serde_json::from_str(V2_SCHEMA_JSON).expect("v2 schema parses")
+    } else if value["schema"] == NO_TIME_SCHEMA_ID {
+        serde_json::from_str(NO_TIME_SCHEMA_JSON).expect("v5 schema parses")
     } else {
         schema()
     };

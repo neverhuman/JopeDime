@@ -22,17 +22,21 @@ fn copy_wave_tree(src_root: &Path, dst_root: &Path) {
     fs::create_dir_all(&waves_dst).expect("create waves_dst");
     fs::copy(waves_src.join("INDEX.jsonl"), waves_dst.join("INDEX.jsonl"))
         .expect("copy INDEX.jsonl");
-    for entry in fs::read_dir(&waves_src).expect("read_dir waves_src") {
-        let entry = entry.expect("dir entry");
-        if entry.file_type().expect("file_type").is_dir() {
-            let sub_dst = waves_dst.join(entry.file_name());
-            fs::create_dir_all(&sub_dst).expect("create sub_dst");
-            for f in fs::read_dir(entry.path()).expect("read wave subdir") {
-                let f = f.expect("wave file");
-                fs::copy(f.path(), sub_dst.join(f.file_name())).expect("copy wave file");
+    fn copy_directory(src: &Path, dst: &Path) {
+        fs::create_dir_all(dst).expect("create fixture directory");
+        for entry in fs::read_dir(src).expect("read fixture directory") {
+            let entry = entry.expect("fixture entry");
+            let kind = entry.file_type().expect("fixture type");
+            assert!(!kind.is_symlink(), "fixture copies do not follow links");
+            if kind.is_dir() {
+                copy_directory(&entry.path(), &dst.join(entry.file_name()));
+            } else {
+                assert!(kind.is_file(), "unexpected fixture asset");
+                fs::copy(entry.path(), dst.join(entry.file_name())).expect("copy wave file");
             }
         }
     }
+    copy_directory(&waves_src, &waves_dst);
     let cat_dst = dst_root.join("catalogs");
     let runbook_dst = dst_root.join("docs/runbooks");
     fs::create_dir_all(&cat_dst).expect("create catalogs");
@@ -62,6 +66,29 @@ fn cohort_3arm_roots_verified() {
     assert_eq!(summary.evidence_root_count, 11);
     assert_eq!(summary.assertion_count, 15);
     assert_eq!(summary.scored_contexts_total, 3408);
+    // Versioned publications are verified too; corruption cannot disappear behind flat layout.
+    let nested = tempfile::tempdir().expect("nested fixture");
+    copy_wave_tree(&root, nested.path());
+    let base = nested
+        .path()
+        .join("docs/research/waves/fresh-main-9f8d1a74-gpr-cuda-envelope-20261019T1851Z");
+    let context = base.join("v1/context.md");
+    let mut bytes = fs::read(&context).expect("nested context");
+    bytes.push(b'\n');
+    fs::write(&context, bytes).unwrap();
+    let error = verify_prospective_3arm_cohort_roots(nested.path()).unwrap_err();
+    assert!(error.contains("context.md sha256 mismatch"), "{error}");
+    // A duplicate flat layout is ambiguous even if the versioned projection is otherwise valid.
+    fs::copy(
+        base.join("v1/wave.manifest.json"),
+        base.join("wave.manifest.json"),
+    )
+    .unwrap();
+    let error = verify_prospective_3arm_cohort_roots(nested.path()).unwrap_err();
+    assert!(
+        error.contains("ambiguous wave projection layout"),
+        "{error}"
+    );
 
     // Negative control: tampering with card.json must fail closed with a sha256 mismatch.
     let tmp = tempfile::tempdir().expect("tempdir");

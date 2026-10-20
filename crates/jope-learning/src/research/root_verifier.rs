@@ -58,7 +58,25 @@ pub fn verify_all_indexed_wave_projections(
         let wave_id = row["wave_id"]
             .as_str()
             .ok_or_else(|| "missing wave_id in INDEX.jsonl row".to_string())?;
-        let wave_dir = repo_root.join("docs/research/waves").join(wave_id);
+        let root = repo_root.join("docs/research/waves").join(wave_id);
+        let version = row["version"]
+            .as_str()
+            .ok_or_else(|| "missing wave version".to_string())?;
+        // validate_index_rows already requires safe single path segments. Accept exactly one
+        // published layout; ambiguity must never let an unverified projection win by fallback.
+        let versioned = root.join(version);
+        let wave_dir = match (
+            root.join("wave.manifest.json").is_file(),
+            versioned.join("wave.manifest.json").is_file(),
+        ) {
+            (true, false) => root,
+            (false, true) => versioned,
+            _ => {
+                return Err(format!(
+                    "{wave_id}/{version}: missing or ambiguous wave projection layout"
+                ))
+            }
+        };
         for (field, filename) in [
             ("manifest_sha256", "wave.manifest.json"),
             ("card_sha256", "card.json"),

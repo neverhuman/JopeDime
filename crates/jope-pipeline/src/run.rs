@@ -536,7 +536,12 @@ fn assemble(
         });
     }
     Ok(Receipt {
-        schema: receipt::RECEIPT_SCHEMA_ID.to_owned(),
+        schema: if unbounded_time {
+            receipt::NO_TIME_SCHEMA_ID
+        } else {
+            receipt::RECEIPT_SCHEMA_ID
+        }
+        .to_owned(),
         ok: stages.iter().all(|s| s.status != "failed"),
         tool_version: TOOL_VERSION.to_owned(),
         git_sha: match &options.source_commit {
@@ -904,6 +909,7 @@ pub(crate) mod tests {
             assert_eq!(ta.comparison.seconds_limit, ba.comparison.seconds_limit);
         }
         for receipt in [&teacher, &baseline] {
+            assert_eq!(receipt.schema, receipt::NO_TIME_SCHEMA_ID);
             assert_eq!(receipt.search.seconds, None);
             assert_eq!(receipt.search.temporal_limits_enabled, Some(false));
             for cut in &receipt.search.cuts {
@@ -925,6 +931,7 @@ pub(crate) mod tests {
             ..small(&temp.path().join("legacy"), 40)
         })
         .unwrap();
+        assert_eq!(legacy.schema, receipt::RECEIPT_SCHEMA_ID);
         assert_eq!(legacy.search.seconds, Some(300));
         assert_eq!(legacy.search.temporal_limits_enabled, None);
         assert!(legacy.search.cuts.iter().all(|c| c
@@ -965,6 +972,9 @@ pub(crate) mod tests {
         .unwrap();
         let value = serde_json::to_value(&receipt).unwrap();
         assert!(receipt::validate_value(&value).is_ok());
+        let mut historical = value.clone();
+        historical["schema"] = receipt::RECEIPT_SCHEMA_ID.into();
+        assert!(receipt::validate_value(&historical).is_err());
         let mut flag_removed = value.clone();
         flag_removed["search"]
             .as_object_mut()

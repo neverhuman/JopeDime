@@ -166,7 +166,7 @@ pub enum Cmd {
         #[arg(long)]
         json: bool,
     },
-    /// Validate a receipt against the committed jope.pipeline-receipt/v1, v2 or v3 schema.
+    /// Validate a receipt against the committed jope.pipeline-receipt/v1, v2, v3 or no-time-limit v5 schema.
     VerifyReceipt {
         #[arg(long)]
         receipt: PathBuf,

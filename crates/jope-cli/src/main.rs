@@ -140,7 +140,7 @@ enum Command {
     /// Dataset catalog: ingest, fetch, verify and link content-addressed datasets.
     Datasets(jope_datasets::cli::Cli),
     /// Product pipeline: dataset, prepared cuts, GP search, emitted code and a receipt.
-    Pipeline(jope_pipeline::cli::Cli),
+    Pipeline(Box<jope_pipeline::cli::Cli>),
     /// Reusable program fragments kept in a private table, with exact expansion checks.
     /// Hidden from the default help until the capability is published (owner decision,
     /// 2026-09-24); `jope motifs --help` still works.
@@ -232,7 +232,7 @@ fn main() -> ExitCode {
         Command::Optimize(cli) => return jope_bench::panel::optimize_cli::execute(cli),
         Command::Models(cli) => return jope_models::cli::exec(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
-        Command::Pipeline(cli) => return jope_pipeline::cli::exec(cli),
+        Command::Pipeline(cli) => return jope_pipeline::cli::exec(*cli),
         Command::Motifs(cli) => return jope_motifs::cli::exec(cli),
         command => command,
     };

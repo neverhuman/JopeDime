@@ -124,6 +124,23 @@ fn receipt_schema_agrees_with_the_rust_type() {
         &mut findings,
     );
     assert!(findings.is_empty(), "{}", findings.join("\n"));
+    let no_time: Value = serde_json::from_str(jope_pipeline::receipt::NO_TIME_SCHEMA_JSON).unwrap();
+    let derived_no_time = jope_pipeline::receipt::derived_no_time_schema();
+    compare(
+        &no_time,
+        &derived_no_time,
+        &no_time,
+        &derived_no_time,
+        "",
+        &mut findings,
+    );
+    assert!(findings.is_empty(), "{}", findings.join("\n"));
+    assert_eq!(no_time["title"], jope_pipeline::receipt::NO_TIME_SCHEMA_ID);
+    assert_eq!(
+        no_time["properties"]["schema"]["const"],
+        jope_pipeline::receipt::NO_TIME_SCHEMA_ID
+    );
+
     assert_eq!(
         committed["$schema"],
         "https://json-schema.org/draft/2020-12/schema"

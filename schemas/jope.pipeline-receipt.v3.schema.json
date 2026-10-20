@@ -412,12 +412,8 @@
           "type": "number"
         },
         "seconds_limit": {
-          "description": "`null` only under the reasoner no-time-limit policy (`temporal_limits_enabled: false`).",
           "format": "double",
-          "type": [
-            "number",
-            "null"
-          ]
+          "type": "number"
         },
         "stopped_by": {
           "enum": [
@@ -437,6 +433,7 @@
       },
       "required": [
         "evaluation_limit",
+        "seconds_limit",
         "completed_evaluations",
         "successful_measurements",
         "failed_measurements",
@@ -586,13 +583,9 @@
           "type": "integer"
         },
         "seconds": {
-          "description": "`null` only under the reasoner no-time-limit policy (`temporal_limits_enabled: false`).",
           "format": "uint64",
           "minimum": 0,
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": "integer"
         },
         "seeding": {
           "additionalProperties": false,
@@ -645,19 +638,13 @@
         "selection": {
           "description": "v2: require every requested cut, then minimum mean RMSE, then canonical\ngenome. v1 used coverage count before RMSE, including different partial sets.",
           "type": "string"
-        },
-        "temporal_limits_enabled": {
-          "description": "Recorded as `false` only under the reasoner no-time-limit policy. Absent means enabled, so\nevery historical receipt keeps its bytes.",
-          "type": [
-            "boolean",
-            "null"
-          ]
         }
       },
       "required": [
         "engine",
         "rng_seed",
         "evaluations",
+        "seconds",
         "population",
         "max_transforms",
         "bootstrap_genome",
