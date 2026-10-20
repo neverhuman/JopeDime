@@ -482,6 +482,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for (entry, path) in observatory_fixtures.iter().zip(changed_fixtures) {
         assert_eq!(entry["path"], path);
     }
+    // PR387 model-cache lock change: announced identity only, historical objects unchanged.
+    let model_cache_workspace_lock =
+        old_fixture("transitions/model_cache_workspace_lock_identity_rebaseline.v1.json");
+    let cache_fixtures = model_cache_workspace_lock["fixtures"].as_array().unwrap();
+    assert_eq!(cache_fixtures.len(), 2);
+    for (entry, path) in cache_fixtures.iter().zip(changed_fixtures) {
+        assert_eq!(entry["path"], path);
+    }
     let identity_chain = [
         transition,
         successor,
@@ -504,6 +512,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         mr06_label_admission,
         mr19_shared_dag,
         observatory_workspace_lock,
+        model_cache_workspace_lock,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

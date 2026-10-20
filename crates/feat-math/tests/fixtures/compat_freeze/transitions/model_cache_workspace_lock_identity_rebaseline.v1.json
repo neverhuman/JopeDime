@@ -1,0 +1,31 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for PR387 model-cache rustix workspace lock dependency. Numerical evaluator sources, DSL ABI, behavioral fixtures, historical manifests and prior transition ledgers remain byte-identical. Lineage fixture changes generation header only.",
+  "plan_reference": "compat_freeze.rs documented identity-only mode; docs/adr/ADR-0004-evaluator-identity-known-table.md",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/387",
+  "source_commit": "49ae1ba7b06110828ecb05b47cf91be2f686034e",
+  "old_identity": {
+    "implementation_sha256": "15402c880c81b39acfc4f7cf95a794a8f22e5e6df3e9a8683c9a8e863be8fb22",
+    "cargo_lock_sha256": "8def8544c114029ee1ae8d72fb71141c5a90fe55fec46818891a9abe7738bf5a",
+    "identity_digest": "3aaea86da467719a3a3cb6200798b3f2aa7e18f7a95125191e44c4a1634b6d65",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "new_identity": {
+    "implementation_sha256": "b4b1ad10d3704086197c56cd4a9423e54a83686867a8b04d308882e87ac3c3a4",
+    "cargo_lock_sha256": "d96ade8a2a6c6d46869ac610321972f75fc8a9d60c663eefc33eb20b1abc24c9",
+    "identity_digest": "0e95cc2f612846c2fe3b8f35bf88b9c258b36f229d47c00d88c9469f67c9e721",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "8716cebbe8716a79ed3210e13374ae83e650072d785c40a50d62cc57b09404d6",
+      "after": "514ec62ebefc8eade9eea8f44c74f95c7ad9a84e7d24f808921cf611f500f15e"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "849f2faf8d414011e8e0b97e3901d16da202f2209c5cfd1898b9f7e911696b7d",
+      "after": "2f7dd693c41c273759a0c9ece408a2a1d78e5136d167ba2d780595188e667cdc"
+    }
+  ]
+}
