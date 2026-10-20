@@ -2319,6 +2319,14 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/source_capture": {
+      "role": "regression",
+      "scope": "Actual seeded core GP construction/population source capture and parser contracts; no benchmark or model-quality claim.",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/stable_exponential_execution_v2": {
       "role": "regression",
       "subsystems": [
@@ -2632,6 +2640,15 @@
       "subsystems": [
         "gp",
         "export"
+      ]
+    },
+    "target:jope-cli/test/gp_source_capture": {
+      "role": "regression",
+      "scope": "Actual invent draw capture before evaluation filtering, disabled-capture behavior comparison and visible capture-storage failure.",
+      "subsystems": [
+        "gp",
+        "export",
+        "orchestration"
       ]
     },
     "target:jope-cli/test/offline_cli": {
@@ -3465,6 +3482,15 @@
       "reason": "No unit cases in this CLI harness; bounded metadata collector behavior requires its own observer receipt, never inferred from compilation.",
       "role": "infrastructure"
     },
+    "target:jope-observatory/bin/gp-source-stream": {
+      "role": "regression",
+      "scope": "Runtime binary build/check; actual WebSocket/compiler/replay/error contracts execute in target:jope-observatory/test/gp_source. No standalone unit-test execution claimed.",
+      "subsystems": [
+        "export",
+        "evidence",
+        "storage"
+      ]
+    },
     "target:jope-observatory/bin/jope-observatory": {
       "role": "regression",
       "subsystems": [
@@ -3476,6 +3502,16 @@
       "role": "regression",
       "subsystems": [
         "training",
+        "storage"
+      ]
+    },
+    "target:jope-observatory/test/gp_source": {
+      "role": "regression",
+      "scope": "Complete four-language compilation-qualified token ledger, actual WebSocket/cursor replay, restart/dedup conservation, compiler errors/timeouts, corruption/bounds and producer/FIFO fairness contracts.",
+      "subsystems": [
+        "gp",
+        "export",
+        "evidence",
         "storage"
       ]
     },
@@ -4156,6 +4192,15 @@
       "subsystems": [
         "gp",
         "orchestration"
+      ]
+    },
+    "target:jope-pipeline/test/gp_source_capture": {
+      "role": "regression",
+      "scope": "Actual kernel2/shared strategy, complete refinement and record_events=false product draws; every captured materialized full program parses.",
+      "subsystems": [
+        "gp",
+        "export",
+        "evaluation"
       ]
     },
     "target:jope-pipeline/test/legacy_prototype_seam_regression": {

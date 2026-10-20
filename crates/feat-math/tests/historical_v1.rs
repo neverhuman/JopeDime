@@ -482,6 +482,13 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for (entry, path) in observatory_fixtures.iter().zip(changed_fixtures) {
         assert_eq!(entry["path"], path);
     }
+    // GP complete-source capture and lock successor: announced identity only.
+    let gp_source_stream = old_fixture("transitions/gp_source_stream_identity_rebaseline.v1.json");
+    let gp_fixtures = gp_source_stream["fixtures"].as_array().unwrap();
+    assert_eq!(gp_fixtures.len(), 2);
+    for (entry, path) in gp_fixtures.iter().zip(changed_fixtures) {
+        assert_eq!(entry["path"], path);
+    }
     let identity_chain = [
         transition,
         successor,
@@ -504,6 +511,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         mr06_label_admission,
         mr19_shared_dag,
         observatory_workspace_lock,
+        gp_source_stream,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

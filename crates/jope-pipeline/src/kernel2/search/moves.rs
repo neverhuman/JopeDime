@@ -480,6 +480,7 @@ pub(crate) fn propose(
         });
     }
     let program = GenomeIr::Pipeline(pipe).canonical();
+    feat_math::capture_gp_source!("kernel2-move", "rewrite", program.as_str());
     let reason = admit_child(&program, profile, width)
         .err()
         .map(|error| format!("{error:#}"));
@@ -884,3 +885,71 @@ mod tests;
 // laneD:B19-minimax-linearize
 #[cfg(test)]
 mod linearize_tests;
+
+#[cfg(test)]
+mod gp_source_move_capture_tests {
+    #[test]
+    fn complete_rewrite_and_linearization_proposals_are_captured() {
+        if std::env::var_os("JOPE_GP_MOVE_CAPTURE_CHILD").is_some() {
+            let profile = feat_math::kernel::profile::shipped_kernel2_profiles()
+                .into_iter()
+                .find(|p| p.id == "kernel2-baseline")
+                .unwrap();
+            let evaluator = crate::kernel2::Kernel2Evaluator::new(profile).unwrap();
+            let program = "(pipe X (derive expr=\"c0*1.0\" append=false) (ridge))";
+            assert!(super::propose(&evaluator, program, 1)
+                .unwrap()
+                .program
+                .is_some());
+            let x = (0..16).map(|i| vec![i as f64 / 10.0]).collect::<Vec<_>>();
+            let cut = crate::prepare::Cut {
+                index: 0,
+                train_y: x.iter().map(|r| r[0] * 2.0 + 1.0).collect(),
+                train_x: x,
+                hold_x: vec![],
+                hold_y: vec![],
+                hold_indices: vec![],
+            };
+            assert!(super::linearize::propose(
+                &evaluator,
+                "(pipe X (derive expr=\"sin((0.1*c0))*3.0\" append=false) (ridge))",
+                &cut,
+                1
+            )
+            .unwrap()
+            .iter()
+            .any(|p| p.program.is_some()));
+            return;
+        }
+        let root =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/gp-source-tests");
+        std::fs::create_dir_all(&root).unwrap();
+        let directory = tempfile::tempdir_in(root).unwrap();
+        let result = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "kernel2::search::moves::gp_source_move_capture_tests::complete_rewrite_and_linearization_proposals_are_captured", "--nocapture"])
+            .env("JOPE_GP_MOVE_CAPTURE_CHILD", "1").env("JOPE_GP_SOURCE_DIR", directory.path()).output().unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let mut rewrite = 0;
+        let mut linearize = 0;
+        for entry in std::fs::read_dir(directory.path()).unwrap() {
+            for line in std::fs::read_to_string(entry.unwrap().path())
+                .unwrap()
+                .lines()
+            {
+                let row: serde_json::Value = serde_json::from_str(line).unwrap();
+                feat_math::GenomeIr::parse(row["program"].as_str().unwrap()).unwrap();
+                if row["engine"] == "kernel2-move" {
+                    let coordinate = row["coordinate"].as_str().unwrap();
+                    rewrite += usize::from(coordinate == "rewrite");
+                    linearize += usize::from(coordinate.starts_with("linearize/stage/"));
+                }
+            }
+        }
+        assert_eq!(rewrite, 1);
+        assert!(linearize > 0);
+    }
+}
