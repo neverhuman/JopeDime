@@ -14,9 +14,32 @@ from pathlib import Path
 # -I deliberately excludes cwd. This is the exact pinned source capsule only.
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from protocol import canonical, digest, file_hash, publish, validate_plan, validate_result
+from protocol import BASELINES, canonical, digest, file_hash, finite, publish, validate_plan, validate_result
 from admission import check
 from acquisition import parent_bootstrap_weights, thompson_pick
+
+
+def native_control_scores(row, candidate_count):
+    """One authenticated control contract shared by preflight and evaluation."""
+    if type(candidate_count) is not int or candidate_count <= 0 or not isinstance(row, dict):
+        raise ValueError('native controls require a positive candidate count and mapping')
+    if not BASELINES.issubset(row):
+        raise ValueError('missing authentic native control keys: ' + ','.join(sorted(BASELINES - row.keys())))
+    scores = {}
+    for name in sorted(BASELINES):
+        values = row[name]
+        if not isinstance(values, list) or len(values) != candidate_count or not all(finite(v) for v in values):
+            raise ValueError('native control length/value mismatch: ' + name)
+        scores[name] = values
+    return scores
+
+
+def initial_uniform_acquisitions(rng, candidate_count):
+    """Keep the exact original ordered draws and log conditional probabilities."""
+    if type(candidate_count) is not int or candidate_count < 2:
+        raise ValueError('two initial outcomes require at least two candidates')
+    choices = rng.choice(candidate_count, 2, replace=False)
+    return [(int(member), 1 / (candidate_count - draw)) for draw, member in enumerate(choices)]
 
 
 def main(args):
@@ -92,6 +115,9 @@ def main(args):
         groups = {c: split[c]['group'] for c in eval_ids}
         if set(groups.values()) & {split[c]['group'] for c in train_ids}:
             raise ValueError('parent leakage')
+        controls = json.loads((args.inputs / 'controls.json').read_text())
+        for cid in train_ids + eval_ids:
+            native_control_scores(controls.get(cid), len(selected_rows[cid]['members']))
         arrays = np.load(args.inputs / 'features.npz', allow_pickle=False)
         features = {c: torch.tensor(arrays[c], device=device) for c in train_ids + eval_ids}
         arrays.close()
@@ -99,7 +125,6 @@ def main(args):
         for c, f in features.items():
             if f.ndim != 2 or f.shape[1] != width or not torch.isfinite(f).all():
                 raise ValueError('invalid frozen feature tensor')
-        controls = json.loads((args.inputs / 'controls.json').read_text())
         rng = np.random.default_rng(8102026)
         initial = FeedbackLedger(split, train_rows)
         acquisition_log = gzip.open(args.out / 'acquisition.jsonl.gz', 'wt')
@@ -121,9 +146,8 @@ def main(args):
             return target
 
         for cid in train_ids:
-            choices = rng.choice(len(selected_rows[cid]['members']), 2, replace=False)
-            for member in choices:
-                acquire(initial, cid, int(member), wave=0, propensity=1 / len(selected_rows[cid]['members']))
+            for member, propensity in initial_uniform_acquisitions(rng, len(selected_rows[cid]['members'])):
+                acquire(initial, cid, member, wave=0, propensity=propensity)
         publish(args.out / 'initial-targets.json', [vars(t) for _, t in sorted(initial.targets.items())])
         models, optimizers = [], []
         for seed in plan['seeds']:
@@ -293,9 +317,7 @@ def main(args):
             guard()
             row = selected_rows[cid]
             scores = {name: predict(arm['models'], cid).mean(0) for name, arm in arms.items()}
-            for native in ('native17773', 'native429'):
-                for head in ('trie', 'qhead'):
-                    scores[native + '_' + head] = controls[cid][native + '.safetensors_' + head]
+            scores.update(native_control_scores(controls[cid], len(row['members'])))
             per_context[cid] = {name: selection_metric(row, value, 4) for name, value in scores.items()}
         names = list(next(iter(per_context.values())))
         metrics = {}

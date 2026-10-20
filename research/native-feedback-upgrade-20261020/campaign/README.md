@@ -35,6 +35,15 @@ admission. `admission.py` is a **readback gate, not a launcher or governor**.
 Its source and the actual external route require independent review before use.
 It creates no unit, guard, root staging, process, signal or GPU allocation.
 
+The first independent source review found two defects before execution
+(`J3B-F01/F02`). The corrected runner uses one native-control inventory/length/
+finite-value validator before model construction and again in final evaluation.
+Initial without-replacement choices and RNG state stay unchanged; their logged
+conditional probabilities are `1/N` then `1/(N-1)`. Regression controls bind the
+actual input hashes, native score keys and NPY shape headers without reading pool
+outcomes or performing model work. Original heads and plans remain immutable;
+corrected source, evaluator and plan bindings require fresh exact-source review.
+
 ## Frozen first wave
 
 - All inputs bind compressed S3 archive, decoded/member provenance, features,
