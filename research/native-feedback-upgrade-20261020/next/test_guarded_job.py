@@ -1,12 +1,13 @@
 from dataclasses import replace
 from fractions import Fraction
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, MagicMock
 import json
 import struct
 import os
 import stat
 import guarded_job as gj
+from contextlib import ExitStack
 from pathlib import Path
 
 from guarded_job import CpuPoint, Guard, Health, Leaf, RootScopeCandidate, ScopeFacts, cpu_interval, InertSupervisor, grant_shape, strict_json, parse_cpu, custodian_loop, custodian_fresh, inert_barrier, BINARIES
@@ -467,6 +468,112 @@ class ReviewRegressionTests(unittest.TestCase):
         leaf.path_identity=Mock(return_value=(1,99))
         with patch('guarded_job.os.stat',return_value=Mock(st_dev=1,st_ino=99)):
             with self.assertRaises(ValueError):leaf.verify_binding()
+
+
+
+class HeartbeatOrchestrationTests(unittest.TestCase):
+    """Actual parent orchestration; every privileged/process/payload call mocked."""
+    def workflow(self, fault="none"):
+        doc = ImplementationTests().grant()
+        clock = {"ns": 0, "drained": None, "armed": False, "go": False, "done": False}
+        self.protocol_events = []
+        leaf = Mock()
+        unit = "jope-research-" + "a" * 12 + "-" + "c" * 32 + ".scope"
+        leaf.path = "/sys/fs/cgroup/jarambit.slice/jarambit-evo.slice/" + unit
+        leaf.device, leaf.inode, leaf.pid, leaf.start, leaf.fd = 1, 2, 123, 4, 51
+        leaf.runtime_deadline_ns = 30_000_000_000
+        leaf.frozen.return_value = False
+        leaf.ancestor_frozen.return_value = False
+        def freeze(value):
+            leaf.frozen.return_value = value
+            self.protocol_events.append(("freeze", value))
+        leaf.freeze.side_effect = freeze
+        reads = {"memory.high": str(doc["memory_high_bytes"]),
+                 "memory.max": str(doc["memory_max_bytes"]),
+                 "memory.swap.max": "0", "pids.max": "64", "cpuset.cpus.effective": "22,23"}
+        leaf.read.side_effect = reads.__getitem__
+        connection = MagicMock()
+        connection.__enter__.return_value = connection
+        connection.getsockopt.return_value = struct.pack("3i", 123, 1000, 1000)
+        greeting = [False]
+        def receive(size):
+            if not greeting[0]:
+                greeting[0] = True
+                return ("READY:" + doc["nonce"]).encode()
+            if clock["go"]:
+                return b'{"inert_completed":true,"seconds":3}'
+            raise BlockingIOError()
+        connection.recv.side_effect = receive
+        def send(raw):
+            self.protocol_events.append(("send", raw))
+            if raw == b"GO": clock["go"] = True
+        connection.sendall.side_effect = send
+        server = Mock()
+        server.accept.return_value = (connection, None)
+        launcher = Mock()
+        launcher.wait.return_value = 0
+        def sleep(seconds): clock["ns"] += int(seconds * 1_000_000_000)
+        def point(_):
+            step = clock["ns"] // 1_000_000_000
+            return CpuPoint(clock["ns"], tuple(range(128)),
+                            (1000 + 100 * step, 1000, 1000, 1000 + 900 * step,
+                             1000, 1000, 1000, 1000), 0)
+        def read(fd, count):
+            self.assertEqual(fd, 33)
+            if not clock["armed"]:
+                clock["armed"] = True
+                return b"A"
+            if fault == "missing": raise BlockingIOError()
+            if clock["drained"] != clock["ns"]:
+                clock["drained"] = clock["ns"]
+                return struct.pack("<Q", clock["ns"])
+            if clock["ns"] >= 3_000_000_000:
+                if fault == "eof": return b""
+                if fault == "malformed": return b"bad"
+                if fault == "future": return struct.pack("<Q", clock["ns"] + 1)
+                if fault == "replay": return struct.pack("<Q", clock["ns"])
+                if fault == "stale": clock["ns"] += 300_000_000
+            raise BlockingIOError()
+        def write(fd, raw):
+            self.assertEqual(fd, 32)
+            if raw == b"D": clock["done"] = True
+            return len(raw)
+        def wait(pid, flags):
+            if clock["done"]: return (77, 0)
+            if fault == "dead" and clock["ns"] >= 3_000_000_000 and clock["drained"] == clock["ns"]:
+                return (77, 0)
+            return (0, 0)
+        patches = {
+            "load_inert_grant": Mock(return_value=(doc, Path("/fixture"), "a" * 64)),
+            "append_event": Mock(), "startup_admission": Mock(),
+            "PinnedInertLeaf": Mock(return_value=leaf), "host_point": point,
+            "resource_health": Mock(return_value=(Health(True, True, True, True), (0, 0))),
+            "socket.socket": Mock(return_value=server), "socket.SO_PEERCRED": 17,
+            "subprocess.run": Mock(return_value=Mock(stdout="not-found")),
+            "subprocess.Popen": Mock(return_value=launcher),
+            "os.chmod": Mock(), "os.pipe2": Mock(side_effect=[(31, 32), (33, 34)]),
+            "os.pidfd_open": Mock(side_effect=[41, 42]), "os.fork": Mock(return_value=77),
+            "os.close": Mock(), "os.read": read, "os.write": write, "os.waitpid": wait,
+            "select.select": Mock(return_value=([33], [], [])),
+            "time.time_ns": Mock(return_value=0), "time.monotonic_ns": lambda: clock["ns"],
+            "time.sleep": sleep,
+        }
+        with ExitStack() as stack:
+            for name, replacement in patches.items():
+                stack.enter_context(patch("guarded_job." + name, replacement, create=True))
+            return gj.run_inert_qualification("/fixture/grant.json")
+
+    def test_loop_then_release_share_fresh_packet_without_second_packet(self):
+        result = self.workflow()
+        self.assertTrue(result["inert_completed"])
+        self.assertEqual(self.protocol_events.count(("send", b"GO")), 1)
+
+    def test_stale_eof_dead_malformed_future_replay_and_missing_still_refuse(self):
+        for fault in ["stale", "eof", "dead", "malformed", "future", "replay", "missing"]:
+            with self.subTest(fault=fault):
+                with self.assertRaises((ValueError, BlockingIOError)):
+                    self.workflow(fault)
+                self.assertNotIn(("send", b"GO"), self.protocol_events)
 
 
 if __name__ == "__main__":

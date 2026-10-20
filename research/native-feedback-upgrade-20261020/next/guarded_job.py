@@ -717,6 +717,53 @@ def custodian_fresh(raw, now_ns):
     return True
 
 
+
+class CustodianHeartbeat:
+    """One consumer for loop/release checks of the same owned heartbeat pipe.
+
+    A validated packet remains evidence only for its original <=250ms age.
+    EAGAIN never advances that timestamp. Observed EOF/death, malformed/replayed
+    data, clock reversal and stale evidence latch refusal for this instance.
+    """
+    def __init__(self, fd, child_alive):
+        need(integer(fd) and callable(child_alive), "owned heartbeat channel required")
+        self.fd, self.child_alive = fd, child_alive
+        self.latest_ns = None
+        self.checked_ns = None
+        self.latched = False
+
+    def check(self):
+        need(not self.latched, "custodian heartbeat fault remains latched")
+        try:
+            need(self.child_alive() is True, "custodian exited before freshness check")
+            try:
+                raw = os.read(self.fd, 4096)
+            except BlockingIOError:
+                raw = None
+            # Recheck death after the read; cached evidence cannot hide EOF or
+            # a newly observed exit. Read/check latency consumes packet age.
+            need(self.child_alive() is True, "custodian exited during freshness check")
+            now_ns = time.monotonic_ns()
+            need(integer(now_ns) and (self.checked_ns is None or now_ns >= self.checked_ns),
+                 "custodian check clock reversed")
+            if raw is not None:
+                custodian_fresh(raw, now_ns)  # EOF/partial/malformed/future/stale refuse.
+                stamps = struct.unpack("<" + "Q" * (len(raw) // 8), raw)
+                need(all(a < b for a, b in zip(stamps, stamps[1:])),
+                     "custodian packet timestamps reset/replayed")
+                need(self.latest_ns is None or stamps[0] > self.latest_ns,
+                     "custodian packet replay/reset")
+                self.latest_ns = stamps[-1]
+            need(self.latest_ns is not None, "no validated custodian heartbeat")
+            need(0 <= now_ns - self.latest_ns <= 250_000_000,
+                 "custodian heartbeat cache stale/future")
+            self.checked_ns = now_ns
+            return True
+        except BaseException:
+            self.latched = True
+            raise
+
+
 def inert_barrier(socket_path, nonce, seconds):
     need(os.geteuid() != 0 and integer(seconds,1) and seconds <= 5, "nonroot finite inert barrier only")
     p = Path(socket_path)
@@ -783,10 +830,9 @@ def run_inert_qualification(grant_path):
                 os._exit(0)
             os.close(readfd);os.close(arm_write)
             need(select.select([arm_read],[],[],1)[0] and os.read(arm_read,1) == b"A","custodian did not arm")
-            def release_ready():
-                need(os.waitpid(child,os.WNOHANG)[0] == 0,"custodian exited before release")
-                return custodian_fresh(os.read(arm_read,4096),time.monotonic_ns())
-            core.release_check=release_ready
+            heartbeat = CustodianHeartbeat(arm_read,
+                lambda: os.waitpid(child, os.WNOHANG)[0] == 0)
+            core.release_check = heartbeat.check
             before=host_point(leaf);need(before.online_ids == tuple(doc["online_ids"]),"grant/actual online CPU mismatch")
             _,swap=resource_health(doc,None); released=False
             conn.setblocking(False)
@@ -804,8 +850,7 @@ def run_inert_qualification(grant_path):
                 return result
             while time.monotonic_ns() < deadline:
                 os.write(heart,b"H"); time.sleep(1)
-                need(os.waitpid(child,os.WNOHANG)[0] == 0,"custodian exited unexpectedly")
-                custodian_fresh(os.read(arm_read,4096),time.monotonic_ns())
+                heartbeat.check()
                 result=completion()
                 if result is not None: return result
                 try: after=host_point(leaf)
