@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 8",
-  "count": 5684,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json",
+  "count": 5702,
   "ignored": 74,
   "packages": {
    "battle-gpu": {
@@ -40,7 +40,7 @@
     }
    },
    "feat-math": {
-    "count": 1331,
+    "count": 1332,
     "ignored": 12,
     "binaries": {
      "feat-math": {
@@ -1819,6 +1819,14 @@
        "w04_shared_subexpression_evaluates_once"
       ]
      },
+     "feat-math::source_capture": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "complete_populations_and_v3_candidates_are_captured_without_changing_rng"
+      ]
+     },
      "feat-math::stable_exponential_execution_v2": {
       "kind": "test",
       "count": 8,
@@ -2926,7 +2934,7 @@
     }
    },
    "jope-cli": {
-    "count": 80,
+    "count": 82,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -2994,6 +3002,15 @@
        "expression_recipe_cli_requires_opt_in_and_writes_public_api_bytes",
        "fitted_cpp_cli_exports_frozen_source_and_executable_runner",
        "fitted_cpp_cli_requires_numeric_training_csv_and_keeps_recipe_default"
+      ]
+     },
+     "jope-cli::gp_source_capture": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "enabled_capture_failure_stops_producer_instead_of_losing_source",
+       "invent_captures_all_draws_before_budget_and_preserves_results"
       ]
      },
      "jope-cli::offline_cli": {
@@ -3222,7 +3239,7 @@
     }
    },
    "jope-dime-regressor": {
-    "count": 1015,
+    "count": 1016,
     "ignored": 11,
     "binaries": {
      "jope-dime-regressor": {
@@ -4613,12 +4630,13 @@
      },
      "jope-dime-regressor::generalized_gp": {
       "kind": "test",
-      "count": 15,
+      "count": 16,
       "ignored": 0,
       "tests": [
        "archive_backfill_and_cv7_freeze_are_complete",
        "cas_retries_are_idempotent_and_collisions_or_corruption_fail",
        "confidence_penalizes_one_split_wonders",
+       "generalized_source_capture_retains_parseable_generation_zero_and_successors",
        "global_ranking_excludes_target_and_requires_cross_family_support",
        "launch_gate_blocks_the_current_zero_core_and_93_percent_disk_state",
        "malformed_heads_missing_artifacts_and_incomplete_plans_fail_closed",
@@ -5935,7 +5953,7 @@
     }
    },
    "jope-observatory": {
-    "count": 9,
+    "count": 22,
     "ignored": 0,
     "binaries": {
      "jope-observatory": {
@@ -5971,6 +5989,12 @@
       "ignored": 0,
       "tests": []
      },
+     "jope-observatory::bin/gp-source-stream": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
      "jope-observatory::bin/jope-observatory": {
       "kind": "bin",
       "count": 2,
@@ -5978,6 +6002,26 @@
       "tests": [
        "tests::polling_payload_excludes_library_rows_and_detail_retains_them",
        "tests::read_only_http_boundary_and_path_refusal"
+      ]
+     },
+     "jope-observatory::gp_source": {
+      "kind": "test",
+      "count": 13,
+      "ignored": 0,
+      "tests": [
+       "compiler_failure_charges_all_failed_source_tokens_as_loss",
+       "compiler_queue_follows_source_arrival_instead_of_lexical_ids_across_restart",
+       "compiler_timeout_charges_loss_and_retains_the_timeout_exit",
+       "every_language_compiles_and_every_token_survives_restart_and_duplicates",
+       "journals_keep_identical_occurrences_distinct_and_unicode_counts_do_not_panic",
+       "missing_compiler_is_loss_and_once_restart_does_not_double_count",
+       "multiple_producers_make_progress_before_an_old_backlog_drains",
+       "oversized_event_is_rejected_before_any_token_or_sequence_credit",
+       "partial_ingress_tail_remains_visible_after_complete_sources_validate",
+       "partial_producer_line_waits_but_corrupt_complete_or_event_lines_fail",
+       "pending_checks_recover_and_mismatched_results_are_refused",
+       "unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens",
+       "websocket_delivers_full_sources_checks_and_cursor_replay"
       ]
      }
     }
@@ -7413,7 +7457,7 @@
     }
    },
    "jope-pipeline": {
-    "count": 433,
+    "count": 434,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
@@ -7816,6 +7860,14 @@
        "fingerprints_are_bound_to_exact_probe_set_and_rounding",
        "finite_probe_collision_is_only_advisory_and_does_not_prove_equal_behavior",
        "probe_builder_rejects_outer_sealed_unknown_and_tainted_ancestry"
+      ]
+     },
+     "jope-pipeline::gp_source_capture": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "kernel2_and_shared_strategy_capture_complete_parseable_programs"
       ]
      },
      "jope-pipeline::legacy_prototype_seam_regression": {
@@ -8939,7 +8991,7 @@
   }
  },
  "totals": {
-  "rust": 5684,
+  "rust": 5702,
   "python": 182
  }
 }

@@ -2098,10 +2098,27 @@ service/compiler/WebSocket proofs are retained under
 `/home/ubuntu/jope-evidence/gp-source-stream-20261020/`. Source changes and Cargo.lock announce an
 ADR-0004 evaluator/lineage identity successor; only identity-mode compatibility regeneration is
 permitted, while behavioral/emitted/generator/search fixtures must still compare. Historical
-accepted identities are not rewritten. CI coverage maps all four added Cargo targets, and the
+accepted identities are not rewritten. CI coverage maps all five added Cargo targets, and the
 existing emitter lane runs nonzero source-stream and source-capture contract tests.
 
 The user explicitly requests Admiral/Captain coordination and PR plus merge. Native queue
 acceptances and durable requests exist; they are not consumption/review/ownership releases.
 Independent exact-head approval, current-head hosted CI, queue disposition and receiving-main
 verification remain required before any completed-merge claim.
+
+GP delivery source freeze (2026-10-20): `c6a95ea658e24fc37989bee8c34001511bfd384b`.
+Independent preliminary Claude findings were corrected: failed draws no longer fabricate empty
+programs; actual captured programs are parser-checked across engine families. A retained
+backlog RED led to bounded eight-record producer turns and an arrival-FIFO compiler queue.
+Thirteen service contracts plus core (1), CLI (2), pipeline/refinement (1) and generalized (1)
+contracts pass. Scoped strict observatory Clippy and workspace formatting pass. Both
+identity-only regeneration and unchanged-behavior compatibility comparison execute all 13
+freeze cases. The committed transition receipt preserves old/new identity hashes and unchanged
+behavioral fixtures/historical identity table. Refreshed inventory lists 5,702 Rust tests;
+static CI mapping has 785 items and zero unassigned/invalid entries. Listings are not executions.
+
+Captain actually parked PR387 closed/unmerged with its payload retained and released the sole
+publication slot to this feature; the same independent Claude session is reviewing corrected
+source. Final PR/full exact-head CI/native approval/guarded merge/main-guard remain pending.
+External lifecycle proof is retained in the dated evidence directory above; no earlier-head
+pass or queue acceptance is promoted to final-head acceptance.
