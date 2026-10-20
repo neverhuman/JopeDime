@@ -23,11 +23,11 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 The [training observatory](docs/dashboard/README.md) provides live loss, fleet, storage, dataset,
 program-library and checkpoint views with source identities, observation age and qualification scope.
 
-## GP source WebSocket
+## Program source WebSocket
 
-Capture every GP candidate occurrence, including non-winners, duplicates and failed emissions,
+Capture every complete program occurrence, including repeats and emission errors,
 and stream full Rust, Python, C++17 and JavaScript training-recipe source. Automatic capture
-covers the materialized in-tree program paths in the [engine coverage table](docs/gp-source-stream.md#engine-and-language-coverage):
+covers the materialized in-tree program paths in the [capture coverage](docs/program-source-stream.md#capture-coverage):
 
 ```sh
 # Linux: rustc, python3, g++, node, GNU timeout and prlimit must be on PATH.
@@ -44,7 +44,7 @@ JOPE_GP_SOURCE_DIR="$HOME/jope-stream/journals" \
 ```
 
 Connect to `ws://127.0.0.1:9876/api/v1/gp/source?after=0`; fetch metrics at
-[http://127.0.0.1:9876/api/v1/gp/metrics](http://127.0.0.1:9876/api/v1/gp/metrics).
+`http://127.0.0.1:9876/api/v1/gp/metrics`.
 Each `source` event contains **all four language rows and complete source text**, followed by
 `checked` events. Resume with `after=<last sequence>`; replay does not generate token credit.
 For xbabe2, run the service there and use `ssh -N -L 9876:127.0.0.1:9876 xbabe2` locally.
@@ -59,7 +59,7 @@ produce no tokens. A completed, error-free run reaches 100%; errors remain visib
 The existing C++17 and JavaScript emitters cover fewer heads than Rust/Python. Their refusals
 are streamed as errors, never silently excluded or replaced with another program. This service
 checks compilation without executing generated programs. See [protocol, capture coverage,
-limits and client examples](docs/gp-source-stream.md).
+limits and client examples](docs/program-source-stream.md).
 
 ## At a glance
 
@@ -73,7 +73,7 @@ limits and client examples](docs/gp-source-stream.md).
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
 | Coverage map | 785 items over 25 lanes <sup>7</sup> |
-| Capability matrix | 831 rows: 353 moved, 68 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Capability matrix | 832 rows: 353 moved, 69 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |

@@ -2087,7 +2087,7 @@ preserved. PR387 and research/live jobs remain under their existing owners.
 
 Implementation adds opt-in occurrence journals, unsampled generator/population/product hooks,
 a durable four-language source/compile event log with per-client replay, bounded compiler checks
-and per-language/aggregate token conservation. `docs/gp-source-stream.md` defines exact capture
+and per-language/aggregate token conservation. `docs/program-source-stream.md` defines exact capture
 points, duplicate occurrence semantics, compiler scope, errors, pending yield and access limits.
 Default emission bytes, model arithmetic and selection RNG are not intentionally changed.
 Capture costs real time and can affect counts under a wall-clock budget. Unsupported C++17/JS
@@ -2140,3 +2140,10 @@ chain/goldens execute 3/3; compatibility identity and comparison each execute 13
 source is preliminarily acceptable to the same independent reviewer. PR388 is open. A fresh
 final-head full CI run, independent native approval and verified merge/main-guard remain required;
 prior-head results never qualify a successor.
+
+PR388 public documentation/census correction: hygiene at `fce02059` rejected mechanism-revealing
+public prose and the missing binary census row. The public operator guide now uses delivery-only
+wording at `docs/program-source-stream.md`; detailed internal engine/parser coverage is preserved
+in `docs/coordination/gp-source-stream-capture-coverage.md`. No scrub rule/exemption is changed.
+The capability matrix adds the actual runtime binary, now 832 rows / 69 new entries. Source,
+identity fixtures and test inventory remain unchanged; the successor needs fresh full CI/review.
