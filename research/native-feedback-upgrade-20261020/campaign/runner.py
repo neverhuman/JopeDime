@@ -34,7 +34,7 @@ def main(args):
     if args.out.exists():
         raise ValueError('output already exists; retain original attempt, no implicit resume')
     # No torch, device, model, archive outcomes or output root before admission.
-    grant = check(args.grant, plan_sha256=plan_hash, source_commit=plan['source_commit'])
+    grant = check(args.grant, plan_sha256=plan_hash, source_commit=plan['source_commit'], expected_node=plan['assigned_node'])
     started = time.monotonic()
     import numpy as np
     import torch
@@ -151,7 +151,7 @@ def main(args):
             if now - started >= plan['wall_seconds']:
                 raise RuntimeError('original scientific wall budget exhausted')
             if now - last_guard >= .5:
-                check(args.grant, plan_sha256=plan_hash, source_commit=plan['source_commit'])
+                check(args.grant, plan_sha256=plan_hash, source_commit=plan['source_commit'], expected_node=plan['assigned_node'])
                 last_guard = now
             free, _ = torch.cuda.mem_get_info()
             if free < plan['vram_reserve_bytes']:
@@ -319,6 +319,7 @@ def main(args):
         result = {'schema': 'jope.research-result/v1', 'state': 'complete', 'run_id': plan['run_id'],
                   'branch': plan['branch'], 'source_commit': plan['source_commit'], 'preregistration_sha256': plan_hash,
                   'concept': plan['concept'], 'scope': 'historical_replay', 'comparison_identity': identity,
+                  'learned_component': 'value_guide_adapter', 'native_backbone_optimizer_updates': 0,
                   'comparison_identity_sha256': digest(identity), 'metrics': metrics, 'primary': primary,
                   'parameter_hashes': parameter_hashes, 'ancestry': ancestry,
                   'counts': {'optimizer_updates': updates, 'fresh_gp_fits': 0, 'historical_replay_slots': ledger_slots,
