@@ -1058,6 +1058,7 @@ pub fn crossover_pipelines(left: &str, right: &str, seed: u64) -> Result<Evolved
 
 impl From<CanonicalGenome> for EvolvedGenome {
     fn from(value: CanonicalGenome) -> Self {
+        crate::capture_gp_source!("full-rust", "offspring", &value.canonical);
         Self {
             canonical: value.canonical,
             semantic_sha256: value.semantic_sha256,

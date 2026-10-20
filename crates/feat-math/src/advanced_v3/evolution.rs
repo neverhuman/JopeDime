@@ -130,6 +130,11 @@ fn make_candidate(
     parents: &[&V3Candidate],
 ) -> Result<V3Candidate> {
     let syntax = canonicalize(source)?;
+    crate::capture_gp_source!(
+        "advanced-v3",
+        &format!("island/{island}/generation/{generation}/{operator}"),
+        &syntax
+    );
     let semantic_hash = hash(&[EVOLUTION_VERSION.as_bytes(), syntax.as_bytes()]);
     let mut lineage = Vec::new();
     for parent in parents {

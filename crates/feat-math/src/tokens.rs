@@ -65,7 +65,7 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
             i = end;
         } else if lang == Lang::Python
             && i + 2 < b.len()
-            && (&src[i..i + 3] == "\"\"\"" || &src[i..i + 3] == "'''")
+            && (b.get(i..i + 3) == Some(b"\"\"\"") || b.get(i..i + 3) == Some(b"'''"))
         {
             let quote = &src[i..i + 3];
             let rest = &src[i + 3..];

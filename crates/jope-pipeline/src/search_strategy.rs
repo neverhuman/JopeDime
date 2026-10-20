@@ -42,6 +42,7 @@ impl Proposer for ProductProposer<'_> {
             self.seed.wrapping_add(attempt as u64),
         )
         .ok()?;
+        feat_math::capture_gp_source!("shared-strategy", &format!("attempt/{attempt}"), &candidate);
         Some(Proposal {
             candidate: Candidate {
                 id: format!("proposal-{attempt}"),

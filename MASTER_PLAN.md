@@ -2073,3 +2073,35 @@ sessions.
 
 Source, reviewed deployment and live run evidence are recorded at the top of this document.
 They remain separate from full CPU qualification, which requires the subsequent repair phase.
+
+
+## 2026-10-20 GP source stream feature candidate
+
+Direct user assignment: capture all GP evolutions as full Rust, Python, C++17 and existing
+JavaScript source, expose a WebSocket, document access in README, count every emitted code and
+documentation token, report token/sec and compilation-qualified token yield, and land through a
+feature PR with CI. Branch `codex/gp-source-stream-20261020` starts from main
+`bccbb55d3fff0c03f4e90df48862273338d8c679`. Canonical source checkout is claimed for this feature;
+old `local/pr385-fixes-20261019`, its unique commits, board edits and all untracked files are
+preserved. PR387 and research/live jobs remain under their existing owners.
+
+Implementation adds opt-in occurrence journals, unsampled generator/population/product hooks,
+a durable four-language source/compile event log with per-client replay, bounded compiler checks
+and per-language/aggregate token conservation. `docs/gp-source-stream.md` defines exact capture
+points, duplicate occurrence semantics, compiler scope, errors, pending yield and access limits.
+Default emission bytes, model arithmetic and selection RNG are not intentionally changed.
+Capture costs real time and can affect counts under a wall-clock budget. Unsupported C++17/JS
+heads remain explicit emitter errors; no 100% yield or universal backend support is fabricated.
+
+Validation/lifecycle are in progress. Existing first-round schema regression and corrected
+service/compiler/WebSocket proofs are retained under
+`/home/ubuntu/jope-evidence/gp-source-stream-20261020/`. Source changes and Cargo.lock announce an
+ADR-0004 evaluator/lineage identity successor; only identity-mode compatibility regeneration is
+permitted, while behavioral/emitted/generator/search fixtures must still compare. Historical
+accepted identities are not rewritten. CI coverage maps all four added Cargo targets, and the
+existing emitter lane runs nonzero source-stream and source-capture contract tests.
+
+The user explicitly requests Admiral/Captain coordination and PR plus merge. Native queue
+acceptances and durable requests exist; they are not consumption/review/ownership releases.
+Independent exact-head approval, current-head hosted CI, queue disposition and receiving-main
+verification remain required before any completed-merge claim.
