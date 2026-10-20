@@ -1278,7 +1278,7 @@ impl<'a> NativeTeacherFoldEvaluator<'a> {
     /// Fits the genome on `A` and returns the RMSE on `rows`. A genome that does not parse is an
     /// error. A fit that fails, panics, or predicts non-finite values scores `NaN`, which the
     /// episode records as a non-finite candidate. A charge past the fit ceiling is an error.
-    fn scored(&self, serialized: &str, rows: &[u32]) -> Result<f64, AdapterError> {
+    fn scored(&self, serialized: &str, rows: &[u32], assessment: bool) -> Result<f64, AdapterError> {
         let genome = feat_math::genome::GenomeIr::parse(serialized).map_err(|error| {
             AdapterError::Malformed(format!("native pipeline {serialized:?}: {error}"))
         })?;
@@ -1297,9 +1297,12 @@ impl<'a> NativeTeacherFoldEvaluator<'a> {
             .map(|&row| self.features[row as usize].clone())
             .collect();
         let y_s: Vec<f64> = rows.iter().map(|&row| self.targets[row as usize]).collect();
-        self.counters
-            .charge_physical_fit()
-            .map_err(AdapterError::BudgetExhausted)?;
+        if assessment {
+            self.counters.charge_assessment_fit()
+        } else {
+            self.counters.charge_physical_fit()
+        }
+        .map_err(AdapterError::BudgetExhausted)?;
         let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let model = feat_math::fit(&genome, &x_a, &y_a)?;
             let predictions = model.predict(&x_s)?;
@@ -1318,12 +1321,12 @@ impl<'a> NativeTeacherFoldEvaluator<'a> {
 
 impl FoldEvaluator for NativeTeacherFoldEvaluator<'_> {
     fn score_selection(&self, serialized: &str) -> Result<(f64, u64), AdapterError> {
-        Ok((self.scored(serialized, self.b_rows)?, 1))
+        Ok((self.scored(serialized, self.b_rows, false)?, 1))
     }
 
     fn score_assessment(&self, serialized: &str) -> Result<f64, AdapterError> {
         self.o_reads.set(self.o_reads.get() + 1);
-        self.scored(serialized, self.o_rows)
+        self.scored(serialized, self.o_rows, true)
     }
 }
 

@@ -22,6 +22,42 @@ pub const FROZEN_WINNER_FILE: &str = "frozen-winner.json";
 /// Created exclusively when the one O assessment starts. A retry finds it and is refused.
 pub const ASSESSMENT_CLAIM_FILE: &str = "assessment-claim.json";
 
+/// A caller's role proof for the named native study. It attests the TRAIN-only role over the exact
+/// rows admitted. Validation recomputes every hash from the rows it is given, and refuses any
+/// mismatch before a fit. The attestation is a hash: it binds the proof to the input, but it does not
+/// authenticate who made the proof.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct NativeStudyRoleProof {
+    pub family_id: String,
+    pub expected_cut_input_digest: String,
+    pub fit_a_rows_sha256: String,
+    pub hold_b_rows_sha256: String,
+    pub role_attestation_sha256: String,
+}
+
+impl NativeStudyRoleProof {
+    /// Attests TRAIN-only admission of `a_rows` (fit) and `b_rows` (hold) for `family_id`. Every field
+    /// is computed from the given rows, so the proof verifies against exactly those rows.
+    pub fn attest_train_only(
+        family_id: &str,
+        features: &[Vec<f64>],
+        targets: &[f64],
+        a_rows: &[u32],
+        b_rows: &[u32],
+    ) -> Self {
+        let fit = rows_sha256(features, targets, a_rows);
+        let hold = rows_sha256(features, targets, b_rows);
+        let digest = compute_cut_input_digest(features, targets, a_rows, b_rows);
+        Self {
+            family_id: family_id.into(),
+            role_attestation_sha256: role_attestation_sha256(family_id, &fit, &hold, &digest),
+            expected_cut_input_digest: digest,
+            fit_a_rows_sha256: fit,
+            hold_b_rows_sha256: hold,
+        }
+    }
+}
+
 /// The inputs of the named native study. `a_rows` are fitted, `b_rows` select the winner, and
 /// `o_rows` are read once, at assessment, after the winner is frozen. The search never receives
 /// `o_rows`: its only input is the materialised A/B cut.
@@ -30,6 +66,7 @@ pub struct NativeStudySource<'a> {
     pub source_kind: &'a str,
     pub role: &'a str,
     pub ntest: u64,
+    pub role_proof: &'a NativeStudyRoleProof,
     pub features: &'a [Vec<f64>],
     pub targets: &'a [f64],
     pub a_rows: &'a [u32],
@@ -37,12 +74,25 @@ pub struct NativeStudySource<'a> {
     pub o_rows: &'a [u32],
 }
 
-/// The winner and the counters at the freeze. Assessment reads nothing but this record.
+/// The bindings recomputed from the rows. A proof must match them; they are never copied from it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NativeStudyBindings {
+    pub cut_input_digest: String,
+    pub fit_a_rows_sha256: String,
+    pub hold_b_rows_sha256: String,
+    pub role_attestation_sha256: String,
+}
+
+/// The winner and the bindings at the freeze. Assessment reads nothing but this record.
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct FrozenWinner {
+pub struct FrozenNativeStudyWinner {
     pub schema: String,
     pub source_kind: String,
-    pub cut_digest: String,
+    pub family_id: String,
+    pub cut_input_digest: String,
+    pub fit_a_rows_sha256: String,
+    pub hold_b_rows_sha256: String,
+    pub role_attestation_sha256: String,
     pub winner: String,
     pub validation_rmse_b: Option<f64>,
     pub physical_fits_at_freeze: u64,
@@ -52,12 +102,72 @@ pub struct FrozenWinner {
 /// The A/B search of the named study. `search` is the actual `search::run_cuts_with` result.
 pub struct NativeStudyRun {
     pub search: crate::search::CutSearch,
-    pub frozen: FrozenWinner,
+    pub frozen: FrozenNativeStudyWinner,
+}
+
+/// Feeds one length-prefixed field into a SHA-256, so two different field lists cannot collide by
+/// shifting bytes between fields.
+fn absorb(hasher: &mut sha2::Sha256, field: &[u8]) {
+    use sha2::Digest;
+    hasher.update((field.len() as u64).to_le_bytes());
+    hasher.update(field);
+}
+
+/// Absorbs each row: its original ID, then its features and its target, as exact bits.
+fn absorb_rows(hasher: &mut sha2::Sha256, features: &[Vec<f64>], targets: &[f64], rows: &[u32]) {
+    for &row in rows {
+        absorb(hasher, &row.to_le_bytes());
+        for value in &features[row as usize] {
+            absorb(hasher, &value.to_bits().to_le_bytes());
+        }
+        absorb(hasher, &targets[row as usize].to_bits().to_le_bytes());
+    }
+}
+
+/// SHA-256 over one partition's rows: original IDs, features and targets.
+fn rows_sha256(features: &[Vec<f64>], targets: &[f64], rows: &[u32]) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    absorb_rows(&mut hasher, features, targets, rows);
+    format!("{:x}", hasher.finalize())
+}
+
+/// SHA-256 over the A and B partitions, tagged, in the order the search sees them.
+fn compute_cut_input_digest(
+    features: &[Vec<f64>],
+    targets: &[f64],
+    a_rows: &[u32],
+    b_rows: &[u32],
+) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    absorb(&mut hasher, b"A");
+    absorb_rows(&mut hasher, features, targets, a_rows);
+    absorb(&mut hasher, b"B");
+    absorb_rows(&mut hasher, features, targets, b_rows);
+    format!("{:x}", hasher.finalize())
+}
+
+/// SHA-256 over the role proof fields: the proof's tag, family, TRAIN role, source kind, ntest 0, and
+/// the three hashes it attests.
+fn role_attestation_sha256(family_id: &str, fit: &str, hold: &str, digest: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    absorb(&mut hasher, b"jope.native_study_role_proof.v1");
+    absorb(&mut hasher, family_id.as_bytes());
+    absorb(&mut hasher, b"TRAIN");
+    absorb(&mut hasher, NATIVE_STUDY_SOURCE_KIND.as_bytes());
+    absorb(&mut hasher, &0u32.to_le_bytes());
+    absorb(&mut hasher, fit.as_bytes());
+    absorb(&mut hasher, hold.as_bytes());
+    absorb(&mut hasher, digest.as_bytes());
+    format!("{:x}", hasher.finalize())
 }
 
 /// Refuses every role but TRAIN, every source but the TRAIN-only native table, `ntest > 0`, repeated
-/// original row IDs, and any partition set the native evaluator rejects. Runs before any fit.
-fn validate_native_study_source(source: &NativeStudySource<'_>) -> Result<()> {
+/// original row IDs, and any partition set the native evaluator rejects. Then recomputes the bindings
+/// from the rows and requires the caller's proof to match each one. All of this runs before any fit.
+fn validate_native_study_source(source: &NativeStudySource<'_>) -> Result<NativeStudyBindings> {
     match source.role {
         "TRAIN" => {}
         "E" | "HOLDOUT" | "TEST" | "SEALED" => {
@@ -83,24 +193,35 @@ fn validate_native_study_source(source: &NativeStudySource<'_>) -> Result<()> {
         source.o_rows,
     )
     .map(|_| ())
-    .map_err(|error| anyhow!("invalid native study partitions: {error:?}"))
-}
+    .map_err(|error| anyhow!("invalid native study partitions: {error:?}"))?;
 
-/// SHA-256 over the A then B original row IDs, features and labels: the cut the search sees.
-fn native_cut_digest(source: &NativeStudySource<'_>) -> String {
-    use sha2::{Digest, Sha256};
-    let mut hasher = Sha256::new();
-    for (tag, rows) in [(b'A', source.a_rows), (b'B', source.b_rows)] {
-        hasher.update([tag]);
-        for &row in rows {
-            hasher.update(row.to_le_bytes());
-            for value in &source.features[row as usize] {
-                hasher.update(value.to_bits().to_le_bytes());
-            }
-            hasher.update(source.targets[row as usize].to_bits().to_le_bytes());
-        }
-    }
-    format!("{:x}", hasher.finalize())
+    let fit = rows_sha256(source.features, source.targets, source.a_rows);
+    let hold = rows_sha256(source.features, source.targets, source.b_rows);
+    let digest = compute_cut_input_digest(source.features, source.targets, source.a_rows, source.b_rows);
+    let attestation = role_attestation_sha256(&source.role_proof.family_id, &fit, &hold, &digest);
+    let proof = source.role_proof;
+    ensure!(
+        proof.expected_cut_input_digest == digest,
+        "the role proof is not bound to the actual cut input digest"
+    );
+    ensure!(
+        proof.fit_a_rows_sha256 == fit,
+        "the role proof's A-row hash does not match the fit rows"
+    );
+    ensure!(
+        proof.hold_b_rows_sha256 == hold,
+        "the role proof's B-row hash does not match the hold rows"
+    );
+    ensure!(
+        proof.role_attestation_sha256 == attestation,
+        "the role attestation does not verify over the proof's fields"
+    );
+    Ok(NativeStudyBindings {
+        cut_input_digest: digest,
+        fit_a_rows_sha256: fit,
+        hold_b_rows_sha256: hold,
+        role_attestation_sha256: attestation,
+    })
 }
 
 /// One cut: `train = A`, `hold = B`. Built directly from the admitted rows. `prepare::partition` and
@@ -132,7 +253,7 @@ pub fn run_native_search_study_arm(
     counters: std::sync::Arc<crate::search::ExecutionBoundaryCounters>,
     output: &std::path::Path,
 ) -> Result<NativeStudyRun> {
-    validate_native_study_source(&source)?;
+    let bindings = validate_native_study_source(&source)?;
     ensure!(
         counters.caps().max_reasoning_tokens_per_call.is_none(),
         "the named native study runs under the natural-EOS token policy; a per-call token cap is refused"
@@ -150,10 +271,14 @@ pub fn run_native_search_study_arm(
         .best_program
         .clone()
         .ok_or_else(|| anyhow!("the A/B search measured no winner"))?;
-    let frozen = FrozenWinner {
-        schema: "jope.native-study-frozen-winner/v1".into(),
+    let frozen = FrozenNativeStudyWinner {
+        schema: "jope.native-study-frozen-winner/v2".into(),
         source_kind: source.source_kind.into(),
-        cut_digest: native_cut_digest(&source),
+        family_id: source.role_proof.family_id.clone(),
+        cut_input_digest: bindings.cut_input_digest,
+        fit_a_rows_sha256: bindings.fit_a_rows_sha256,
+        hold_b_rows_sha256: bindings.hold_b_rows_sha256,
+        role_attestation_sha256: bindings.role_attestation_sha256,
         winner,
         validation_rmse_b: search.best_validation_rmse,
         physical_fits_at_freeze: counters.physical_fits(),
@@ -168,26 +293,30 @@ pub fn run_native_search_study_arm(
     Ok(NativeStudyRun { search, frozen })
 }
 
-/// The single O assessment. It needs the frozen winner on disk, checks the inputs match the frozen
-/// cut, claims the assessment exclusively, and then scores the frozen winner on O once. The
-/// assessment fits on A and draws on the same counters as the search. A failed or refused assessment
-/// keeps its claim: there is no second attempt. Returns NaN when the winner does not fit or predict.
+/// The single O assessment. It validates the proof against the inputs, reads the frozen winner from
+/// disk, checks that every binding matches it, claims the assessment exclusively, and then scores the
+/// frozen winner on O once. The assessment fits on A and draws on the same counters as the search. A
+/// failed or refused assessment keeps its claim: there is no second attempt. Returns NaN when the
+/// winner does not fit or predict.
 pub fn assess_frozen_winner(
     source: NativeStudySource<'_>,
     counters: std::sync::Arc<crate::search::ExecutionBoundaryCounters>,
     output: &std::path::Path,
 ) -> Result<f64> {
-    validate_native_study_source(&source)?;
-    let frozen: FrozenWinner = serde_json::from_slice(
+    let bindings = validate_native_study_source(&source)?;
+    let frozen: FrozenNativeStudyWinner = serde_json::from_slice(
         &std::fs::read(output.join(FROZEN_WINNER_FILE))
             .context("no frozen winner exists; O stays closed")?,
     )?;
     ensure!(
-        frozen.source_kind == source.source_kind,
-        "the frozen winner's source kind does not match the assessment source"
+        frozen.source_kind == source.source_kind && frozen.family_id == source.role_proof.family_id,
+        "the frozen winner's source or family does not match the assessment source"
     );
     ensure!(
-        frozen.cut_digest == native_cut_digest(&source),
+        frozen.cut_input_digest == bindings.cut_input_digest
+            && frozen.fit_a_rows_sha256 == bindings.fit_a_rows_sha256
+            && frozen.hold_b_rows_sha256 == bindings.hold_b_rows_sha256
+            && frozen.role_attestation_sha256 == bindings.role_attestation_sha256,
         "the assessment inputs do not match the frozen A/B cut"
     );
     let mut claim = std::fs::OpenOptions::new()
@@ -211,6 +340,171 @@ pub fn assess_frozen_winner(
     evaluator
         .score_assessment_once(&frozen.winner)
         .map_err(|error| anyhow!("{error:?}"))
+}
+
+/// The append-only study ledger's file name, inside the study directory.
+pub const STUDY_LEDGER_FILE: &str = "study-ledger.json";
+
+/// One external model call. It is `charged` before generation and `completed` after EOS, with its
+/// generated tokens. A record is never removed.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ExternalModelCall {
+    pub call_id: String,
+    pub state: String,
+    pub generated_tokens: Option<u64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+struct StudyLedgerFile {
+    schema: String,
+    reserved_assessment_fits: u64,
+    expected_arms: Vec<String>,
+    arms_admitted: Vec<String>,
+    external_calls: Vec<ExternalModelCall>,
+}
+
+/// The study-wide controller. Every admitted search arm and every final O assessment of one study
+/// shares one `Arc<ExecutionBoundaryCounters>`. Search arms stop short of the reserved assessment
+/// fits. An assessment is refused until every expected arm has a frozen winner on disk. External
+/// `E9` model calls are charged to the same counters and recorded in the ledger file before they are
+/// allowed to generate.
+pub struct NativeStudyLedger {
+    dir: std::path::PathBuf,
+    counters: std::sync::Arc<crate::search::ExecutionBoundaryCounters>,
+    file: StudyLedgerFile,
+}
+
+impl NativeStudyLedger {
+    /// Creates the study ledger create-only, reserving `reserved_assessment_fits` of the physical-fit
+    /// ceiling for the O assessments. `expected_arms` names every arm the study will admit.
+    pub fn create(
+        dir: &std::path::Path,
+        caps: crate::search::ExecutionBoundaryCaps,
+        reserved_assessment_fits: u64,
+        expected_arms: &[&str],
+    ) -> Result<Self> {
+        ensure!(!expected_arms.is_empty(), "a study needs at least one arm");
+        ensure!(
+            reserved_assessment_fits <= caps.max_physical_fits,
+            "the reservation exceeds the physical-fit ceiling"
+        );
+        std::fs::create_dir_all(dir)?;
+        let ledger = Self {
+            dir: dir.to_path_buf(),
+            counters: std::sync::Arc::new(
+                crate::search::ExecutionBoundaryCounters::new(caps)
+                    .with_reserved_assessment_fits(reserved_assessment_fits),
+            ),
+            file: StudyLedgerFile {
+                schema: "jope.native-study-ledger/v1".into(),
+                reserved_assessment_fits,
+                expected_arms: expected_arms.iter().map(|arm| (*arm).to_string()).collect(),
+                arms_admitted: Vec::new(),
+                external_calls: Vec::new(),
+            },
+        };
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(dir.join(STUDY_LEDGER_FILE))
+            .context("the study ledger already exists")?;
+        std::io::Write::write_all(&mut file, &serde_json::to_vec_pretty(&ledger.file)?)?;
+        Ok(ledger)
+    }
+
+    /// The counters every arm and assessment of this study shares.
+    pub fn counters(&self) -> std::sync::Arc<crate::search::ExecutionBoundaryCounters> {
+        std::sync::Arc::clone(&self.counters)
+    }
+
+    /// Where an arm writes its search output and its frozen winner.
+    pub fn arm_dir(&self, arm: &str) -> std::path::PathBuf {
+        self.dir.join("arms").join(arm)
+    }
+
+    /// Runs one admitted arm on the shared counters. An arm is admitted once: it is recorded as
+    /// admitted before it runs, so a failed arm cannot be retried.
+    pub fn run_arm(
+        &mut self,
+        arm: &str,
+        source: NativeStudySource<'_>,
+        budget: crate::search::Budget,
+        seed: u64,
+    ) -> Result<NativeStudyRun> {
+        ensure!(
+            self.file.expected_arms.iter().any(|expected| expected == arm),
+            "arm {arm:?} is not part of this study"
+        );
+        ensure!(
+            !self.file.arms_admitted.iter().any(|admitted| admitted == arm),
+            "arm {arm:?} was already admitted"
+        );
+        self.file.arms_admitted.push(arm.into());
+        self.persist()?;
+        run_native_search_study_arm(source, budget, seed, self.counters(), &self.arm_dir(arm))
+    }
+
+    /// The final O assessment of one arm. It is refused until every expected arm has a frozen winner
+    /// on disk, so no search arm can still need the reserved fits when an assessment starts.
+    pub fn assess_arm(&self, arm: &str, source: NativeStudySource<'_>) -> Result<f64> {
+        for expected in &self.file.expected_arms {
+            ensure!(
+                self.arm_dir(expected).join(FROZEN_WINNER_FILE).exists(),
+                "arm {expected:?} has no frozen winner yet; assessments wait for every arm"
+            );
+        }
+        assess_frozen_winner(source, self.counters(), &self.arm_dir(arm))
+    }
+
+    /// Charges one external model call before it generates. The call counts against the call
+    /// ceiling, and it is persisted as `charged` before this returns. A call id is charged once.
+    pub fn charge_external_model_call_before_generate(&mut self, call_id: &str) -> Result<()> {
+        ensure!(!call_id.is_empty(), "a model call needs an id");
+        ensure!(
+            !self.file.external_calls.iter().any(|call| call.call_id == call_id),
+            "model call {call_id:?} was already charged"
+        );
+        self.counters
+            .record_model_call(0)
+            .map_err(|reason| anyhow!("external model call {call_id:?} refused: {reason}"))?;
+        self.file.external_calls.push(ExternalModelCall {
+            call_id: call_id.into(),
+            state: "charged".into(),
+            generated_tokens: None,
+        });
+        self.persist()
+    }
+
+    /// Records the generated tokens of a charged call after its EOS. A call that was never charged, or
+    /// is already completed, is refused: a post-hoc record cannot be created.
+    pub fn complete_external_model_call_after_eos(
+        &mut self,
+        call_id: &str,
+        generated_tokens: u64,
+    ) -> Result<()> {
+        let call = self
+            .file
+            .external_calls
+            .iter_mut()
+            .find(|call| call.call_id == call_id)
+            .ok_or_else(|| anyhow!("model call {call_id:?} was never charged; refused"))?;
+        ensure!(call.state == "charged", "model call {call_id:?} is already completed");
+        self.counters
+            .add_generated_tokens(generated_tokens)
+            .map_err(|reason| anyhow!("model call {call_id:?} refused: {reason}"))?;
+        call.state = "completed".into();
+        call.generated_tokens = Some(generated_tokens);
+        self.persist()
+    }
+
+    /// Writes the whole ledger through a temporary file and a rename, so a reader sees either the old
+    /// file or the new one.
+    fn persist(&self) -> Result<()> {
+        let temporary = self.dir.join(format!("{STUDY_LEDGER_FILE}.tmp"));
+        std::fs::write(&temporary, serde_json::to_vec_pretty(&self.file)?)?;
+        std::fs::rename(&temporary, self.dir.join(STUDY_LEDGER_FILE))?;
+        Ok(())
+    }
 }
 
 /// A measured value that is either recorded or explicitly unknown. An unknown value is never zero.
@@ -402,17 +696,23 @@ mod native_study_tests {
         }
     }
 
+    fn honest_proof(x: &[Vec<f64>], y: &[f64], a: &[u32], b: &[u32]) -> NativeStudyRoleProof {
+        NativeStudyRoleProof::attest_train_only("fixture-family", x, y, a, b)
+    }
+
     fn source<'a>(
         features: &'a [Vec<f64>],
         targets: &'a [f64],
         a: &'a [u32],
         b: &'a [u32],
         o: &'a [u32],
+        role_proof: &'a NativeStudyRoleProof,
     ) -> NativeStudySource<'a> {
         NativeStudySource {
             source_kind: NATIVE_STUDY_SOURCE_KIND,
             role: "TRAIN",
             ntest: 0,
+            role_proof,
             features,
             targets,
             a_rows: a,
@@ -427,10 +727,22 @@ mod native_study_tests {
         ))
     }
 
+    fn run_once(
+        x: &[Vec<f64>],
+        y: &[f64],
+        counters: Arc<ExecutionBoundaryCounters>,
+        dir: &std::path::Path,
+    ) -> Result<NativeStudyRun> {
+        let (a, b, o) = partitions();
+        let proof = honest_proof(x, y, &a, &b);
+        run_native_search_study_arm(source(x, y, &a, &b, &o, &proof), budget(), 5, counters, dir)
+    }
+
     #[test]
     fn native_study_refuses_held_out_roles_and_bad_sources_before_any_fit() {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
         let cases = [
             ("HOLDOUT", NATIVE_STUDY_SOURCE_KIND, 0),
             ("E", NATIVE_STUDY_SOURCE_KIND, 0),
@@ -441,7 +753,7 @@ mod native_study_tests {
         ];
         for (role, kind, ntest) in cases {
             let counters = natural_counters();
-            let mut s = source(&x, &y, &a, &b, &o);
+            let mut s = source(&x, &y, &a, &b, &o, &proof);
             s.role = role;
             s.source_kind = kind;
             s.ntest = ntest;
@@ -455,28 +767,85 @@ mod native_study_tests {
     }
 
     #[test]
+    fn forged_or_misbound_role_proofs_are_refused_before_any_fit() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let honest = honest_proof(&x, &y, &a, &b);
+        let forged = "0".repeat(64);
+        let mut cases: Vec<(&str, NativeStudyRoleProof)> = Vec::new();
+        let mut p = honest.clone();
+        p.expected_cut_input_digest = forged.clone();
+        cases.push(("expected_cut_input_digest", p));
+        let mut p = honest.clone();
+        p.fit_a_rows_sha256 = forged.clone();
+        cases.push(("fit_a_rows_sha256", p));
+        let mut p = honest.clone();
+        p.hold_b_rows_sha256 = forged.clone();
+        cases.push(("hold_b_rows_sha256", p));
+        let mut p = honest.clone();
+        p.role_attestation_sha256 = forged.clone();
+        cases.push(("role_attestation_sha256", p));
+        // A proof attested over a different B set is misbound to this cut.
+        let short_b: Vec<u32> = (30..40).collect();
+        cases.push(("proof of a different B", honest_proof(&x, &y, &a, &short_b)));
+
+        for (field, proof) in cases {
+            let counters = natural_counters();
+            let dir = tempfile::tempdir().unwrap();
+            assert!(
+                run_native_search_study_arm(
+                    source(&x, &y, &a, &b, &o, &proof),
+                    budget(),
+                    5,
+                    counters.clone(),
+                    dir.path()
+                )
+                .is_err(),
+                "a forged {field} was admitted"
+            );
+            assert_eq!(counters.physical_fits(), 0, "a forged {field} reached a fit");
+            assert!(!dir.path().join(FROZEN_WINNER_FILE).exists(), "{field} froze a winner");
+        }
+    }
+
+    #[test]
     fn search_sees_only_a_and_b_and_o_is_assessed_once_after_the_freeze() {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
         let dir = tempfile::tempdir().unwrap();
         let counters = natural_counters();
-        let run = run_native_search_study_arm(
-            source(&x, &y, &a, &b, &o),
-            budget(),
-            5,
-            counters.clone(),
-            dir.path(),
-        )
-        .unwrap();
+        let run = run_once(&x, &y, counters.clone(), dir.path()).unwrap();
         let fits = run.frozen.physical_fits_at_freeze;
         assert!(fits > 0, "the search made no physical fit");
+        assert!(
+            run.search.successful_measurements > 0,
+            "the bootstrap fixture produced no successful native measurement"
+        );
         assert_eq!(counters.physical_fits(), fits);
-        let on_disk: FrozenWinner =
+
+        // The materialised cut is exactly A (train) and B (hold), and holds no O row.
+        let proof = honest_proof(&x, &y, &a, &b);
+        let cut = materialize_native_cut(&source(&x, &y, &a, &b, &o, &proof));
+        let a_x: Vec<Vec<f64>> = a.iter().map(|&r| x[r as usize].clone()).collect();
+        let a_y: Vec<f64> = a.iter().map(|&r| y[r as usize]).collect();
+        let b_x: Vec<Vec<f64>> = b.iter().map(|&r| x[r as usize].clone()).collect();
+        let b_y: Vec<f64> = b.iter().map(|&r| y[r as usize]).collect();
+        assert_eq!(cut.train_x, a_x, "train rows are not exactly A");
+        assert_eq!(cut.train_y, a_y, "train labels are not exactly A");
+        assert_eq!(cut.hold_x, b_x, "hold rows are not exactly B");
+        assert_eq!(cut.hold_y, b_y, "hold labels are not exactly B");
+        assert_eq!(cut.hold_indices, (30..45).collect::<Vec<usize>>());
+
+        // The frozen record binds the exact A and B row hashes the proof attested.
+        assert_eq!(run.frozen.fit_a_rows_sha256, proof.fit_a_rows_sha256);
+        assert_eq!(run.frozen.hold_b_rows_sha256, proof.hold_b_rows_sha256);
+        assert_eq!(run.frozen.role_attestation_sha256, proof.role_attestation_sha256);
+        let on_disk: FrozenNativeStudyWinner =
             serde_json::from_slice(&std::fs::read(dir.path().join(FROZEN_WINNER_FILE)).unwrap())
                 .unwrap();
         assert_eq!(on_disk, run.frozen);
 
-        let rmse = assess_frozen_winner(source(&x, &y, &a, &b, &o), counters.clone(), dir.path())
+        let rmse = assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
             .unwrap();
         assert!(rmse.is_finite());
         assert_eq!(
@@ -485,7 +854,8 @@ mod native_study_tests {
             "the assessment is not exactly one more physical fit"
         );
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o), counters.clone(), dir.path()).is_err(),
+            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
+                .is_err(),
             "a second assessment was not refused"
         );
         assert_eq!(counters.physical_fits(), fits + 1, "a refused retry changed the quota");
@@ -494,29 +864,15 @@ mod native_study_tests {
     #[test]
     fn poisoned_o_labels_leave_the_search_and_the_winner_unchanged() {
         let (x, mut y) = fixture();
-        let (a, b, o) = partitions();
+        let (_, _, o) = partitions();
         let first_dir = tempfile::tempdir().unwrap();
-        let first = run_native_search_study_arm(
-            source(&x, &y, &a, &b, &o),
-            budget(),
-            5,
-            natural_counters(),
-            first_dir.path(),
-        )
-        .unwrap();
+        let first = run_once(&x, &y, natural_counters(), first_dir.path()).unwrap();
         for &row in &o {
             y[row as usize] = f64::NAN;
         }
         let second_dir = tempfile::tempdir().unwrap();
-        let second = run_native_search_study_arm(
-            source(&x, &y, &a, &b, &o),
-            budget(),
-            5,
-            natural_counters(),
-            second_dir.path(),
-        )
-        .unwrap();
-        assert_eq!(first.frozen.cut_digest, second.frozen.cut_digest);
+        let second = run_once(&x, &y, natural_counters(), second_dir.path()).unwrap();
+        assert_eq!(first.frozen.cut_input_digest, second.frozen.cut_input_digest);
         assert_eq!(first.frozen.winner, second.frozen.winner);
         assert_eq!(first.frozen.validation_rmse_b, second.frozen.validation_rmse_b);
         assert_eq!(
@@ -529,35 +885,36 @@ mod native_study_tests {
     fn assessment_refuses_a_missing_freeze_and_a_changed_cut_without_consuming_the_claim() {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
         let dir = tempfile::tempdir().unwrap();
         let counters = natural_counters();
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o), counters.clone(), dir.path()).is_err(),
+            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
+                .is_err(),
             "O opened without a frozen winner"
         );
         assert_eq!(counters.physical_fits(), 0);
 
-        let run = run_native_search_study_arm(
-            source(&x, &y, &a, &b, &o),
-            budget(),
-            5,
-            counters.clone(),
-            dir.path(),
-        )
-        .unwrap();
+        let run = run_once(&x, &y, counters.clone(), dir.path()).unwrap();
         let fits = counters.physical_fits();
         let mut changed = x.clone();
         changed[30][0] += 1.0;
+        let changed_proof = honest_proof(&changed, &y, &a, &b);
         assert!(
-            assess_frozen_winner(source(&changed, &y, &a, &b, &o), counters.clone(), dir.path())
-                .is_err(),
+            assess_frozen_winner(
+                source(&changed, &y, &a, &b, &o, &changed_proof),
+                counters.clone(),
+                dir.path()
+            )
+            .is_err(),
             "a changed B row was assessed"
         );
         assert_eq!(counters.physical_fits(), fits);
         assert!(!dir.path().join(ASSESSMENT_CLAIM_FILE).exists(), "a refused input took the claim");
         assert_eq!(run.frozen.physical_fits_at_freeze, fits);
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o), counters.clone(), dir.path()).is_ok(),
+            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
+                .is_ok(),
             "the correct inputs were refused after the refusal"
         );
     }
@@ -566,15 +923,9 @@ mod native_study_tests {
     fn a_shared_ceiling_refuses_the_assessment_fit_and_keeps_the_claim() {
         let (x, y) = fixture();
         let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
         let probe_dir = tempfile::tempdir().unwrap();
-        let probe = run_native_search_study_arm(
-            source(&x, &y, &a, &b, &o),
-            budget(),
-            5,
-            natural_counters(),
-            probe_dir.path(),
-        )
-        .unwrap();
+        let probe = run_once(&x, &y, natural_counters(), probe_dir.path()).unwrap();
         let search_fits = probe.frozen.physical_fits_at_freeze;
 
         let dir = tempfile::tempdir().unwrap();
@@ -583,7 +934,7 @@ mod native_study_tests {
             ..ExecutionBoundaryCaps::reasoner_natural_eos()
         }));
         run_native_search_study_arm(
-            source(&x, &y, &a, &b, &o),
+            source(&x, &y, &a, &b, &o, &proof),
             budget(),
             5,
             counters.clone(),
@@ -591,7 +942,8 @@ mod native_study_tests {
         )
         .unwrap();
         assert!(
-            assess_frozen_winner(source(&x, &y, &a, &b, &o), counters.clone(), dir.path()).is_err(),
+            assess_frozen_winner(source(&x, &y, &a, &b, &o, &proof), counters.clone(), dir.path())
+                .is_err(),
             "the assessment fit ran past the shared ceiling"
         );
         assert_eq!(counters.physical_fits(), search_fits, "a refused fit was counted");
@@ -601,20 +953,229 @@ mod native_study_tests {
     #[test]
     fn the_named_study_refuses_the_legacy_per_call_token_cap() {
         let (x, y) = fixture();
-        let (a, b, o) = partitions();
         let dir = tempfile::tempdir().unwrap();
         let counters = Arc::new(ExecutionBoundaryCounters::new(ExecutionBoundaryCaps::default()));
         assert!(
-            run_native_search_study_arm(
-                source(&x, &y, &a, &b, &o),
-                budget(),
-                5,
-                counters.clone(),
-                dir.path()
-            )
-            .is_err(),
+            run_once(&x, &y, counters.clone(), dir.path()).is_err(),
             "the named study accepted the legacy 8192 cap"
         );
         assert_eq!(counters.physical_fits(), 0);
+    }
+
+    /// Physical fits of one search of the fixture under the natural-EOS policy, with no reservation.
+    fn search_fits() -> u64 {
+        let (x, y) = fixture();
+        let dir = tempfile::tempdir().unwrap();
+        run_once(&x, &y, natural_counters(), dir.path())
+            .unwrap()
+            .frozen
+            .physical_fits_at_freeze
+    }
+
+    #[test]
+    fn search_arms_cannot_spend_the_reserved_assessment_fits() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let fits = search_fits();
+
+        // One fit reserved under a ceiling of fits + 1: the search takes `fits`, and the assessment
+        // takes the last one.
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps {
+                max_physical_fits: fits + 1,
+                ..ExecutionBoundaryCaps::reasoner_natural_eos()
+            },
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        let run = ledger
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5)
+            .unwrap();
+        assert_eq!(run.frozen.physical_fits_at_freeze, fits);
+        ledger
+            .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof))
+            .unwrap();
+        assert_eq!(ledger.counters().physical_fits(), fits + 1);
+
+        // Under a ceiling of exactly `fits` with the same reservation, the search stops one fit short
+        // and never reaches the reserved fit.
+        let dir = tempfile::tempdir().unwrap();
+        let mut tight = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps {
+                max_physical_fits: fits,
+                ..ExecutionBoundaryCaps::reasoner_natural_eos()
+            },
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        let outcome = tight.run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5);
+        assert_eq!(
+            tight.counters().physical_fits(),
+            fits - 1,
+            "the search dipped into the reserved assessment fit"
+        );
+        // The search wanted `fits` fits, so the refused candidates must appear as failed measurements.
+        // Whether the run then fails or freezes a winner on the fits it had, it never passed the line.
+        if let Ok(run) = outcome {
+            assert!(
+                run.search.failed_or_unavailable_measurements > 0,
+                "the search met the ceiling without recording a refusal"
+            );
+            assert!(run.frozen.physical_fits_at_freeze <= fits - 1);
+        }
+    }
+
+    #[test]
+    fn assessment_waits_for_every_expected_arm_to_freeze() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            2,
+            &["arm-a", "arm-b"],
+        )
+        .unwrap();
+        ledger
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5)
+            .unwrap();
+        let before = ledger.counters().physical_fits();
+        assert!(
+            ledger
+                .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof))
+                .is_err(),
+            "an assessment ran before arm-b froze"
+        );
+        assert_eq!(ledger.counters().physical_fits(), before, "a refused assessment fitted");
+
+        ledger
+            .run_arm("arm-b", source(&x, &y, &a, &b, &o, &proof), budget(), 6)
+            .unwrap();
+        ledger
+            .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof))
+            .unwrap();
+        assert!(
+            ledger
+                .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof), budget(), 5)
+                .is_err(),
+            "an admitted arm ran twice"
+        );
+        assert!(
+            ledger
+                .run_arm("arm-c", source(&x, &y, &a, &b, &o, &proof), budget(), 7)
+                .is_err(),
+            "an arm outside the study was admitted"
+        );
+    }
+
+    #[test]
+    fn external_model_calls_are_charged_before_generation_and_completed_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            0,
+            &["arm-a"],
+        )
+        .unwrap();
+        assert!(
+            ledger
+                .complete_external_model_call_after_eos("call-1", 10)
+                .is_err(),
+            "a post-hoc completion was accepted"
+        );
+        assert_eq!(ledger.counters().model_calls(), 0);
+        ledger.charge_external_model_call_before_generate("call-1").unwrap();
+        assert!(
+            ledger.charge_external_model_call_before_generate("call-1").is_err(),
+            "a call was charged twice"
+        );
+        ledger.complete_external_model_call_after_eos("call-1", 8_193).unwrap();
+        assert!(
+            ledger.complete_external_model_call_after_eos("call-1", 1).is_err(),
+            "a call completed twice"
+        );
+        assert_eq!(ledger.counters().model_calls(), 1);
+        assert_eq!(ledger.counters().generated_tokens_total(), 8_193);
+
+        let persisted: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(dir.path().join(STUDY_LEDGER_FILE)).unwrap())
+                .unwrap();
+        let calls = persisted["external_calls"].as_array().unwrap();
+        assert_eq!(calls.len(), 1);
+        assert_eq!(calls[0]["state"], "completed");
+        assert_eq!(calls[0]["generated_tokens"], 8_193);
+    }
+
+    #[test]
+    fn external_calls_under_natural_eos_accept_beyond_8192_and_are_counted() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            0,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger.charge_external_model_call_before_generate("call-1").unwrap();
+        ledger.complete_external_model_call_after_eos("call-1", 8_193).unwrap();
+        ledger.charge_external_model_call_before_generate("call-2").unwrap();
+        ledger.complete_external_model_call_after_eos("call-2", 24_000).unwrap();
+        let counters = ledger.counters();
+        assert_eq!(counters.generated_tokens_total(), 32_193);
+        assert_eq!(counters.model_calls(), 2);
+        assert_eq!(counters.max_call_tokens_observed(), 24_000);
+    }
+
+    #[test]
+    fn an_external_call_refused_at_a_ceiling_is_never_recorded() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps {
+                max_model_calls: 1,
+                ..ExecutionBoundaryCaps::reasoner_natural_eos()
+            },
+            0,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger.charge_external_model_call_before_generate("call-1").unwrap();
+        assert!(
+            ledger.charge_external_model_call_before_generate("call-2").is_err(),
+            "a call past the call ceiling was charged"
+        );
+        let persisted: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(dir.path().join(STUDY_LEDGER_FILE)).unwrap())
+                .unwrap();
+        assert_eq!(persisted["external_calls"].as_array().unwrap().len(), 1);
+
+        let dir = tempfile::tempdir().unwrap();
+        let mut capped = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps {
+                max_generated_tokens_total: Some(100),
+                ..ExecutionBoundaryCaps::reasoner_natural_eos()
+            },
+            0,
+            &["arm-a"],
+        )
+        .unwrap();
+        capped.charge_external_model_call_before_generate("call-1").unwrap();
+        capped.complete_external_model_call_after_eos("call-1", 60).unwrap();
+        capped.charge_external_model_call_before_generate("call-2").unwrap();
+        assert!(
+            capped.complete_external_model_call_after_eos("call-2", 50).is_err(),
+            "tokens past the aggregate ceiling were recorded"
+        );
+        assert_eq!(capped.counters().generated_tokens_total(), 60);
     }
 }

@@ -249,6 +249,9 @@ pub struct ExecutionBoundaryCounters {
     /// Serialises the model-call checks with their increments, so two threads cannot both pass a
     /// ceiling that only one of them may reach.
     model_gate: std::sync::Mutex<()>,
+    /// Physical fits held back from search arms, for the final O assessments. Search charges stop
+    /// at `max_physical_fits - reserved`; only [`Self::charge_assessment_fit`] may use the rest.
+    reserved_assessment_fits: u64,
 }
 
 impl ExecutionBoundaryCounters {
@@ -260,7 +263,19 @@ impl ExecutionBoundaryCounters {
             reasoning_tokens_total: Default::default(),
             max_call_tokens_observed: Default::default(),
             model_gate: Default::default(),
+            reserved_assessment_fits: 0,
         }
+    }
+
+    /// Reserves `reserved` physical fits of the ceiling for the final assessments. Set before the
+    /// counters are shared.
+    pub fn with_reserved_assessment_fits(mut self, reserved: u64) -> Self {
+        self.reserved_assessment_fits = reserved;
+        self
+    }
+
+    pub fn reserved_assessment_fits(&self) -> u64 {
+        self.reserved_assessment_fits
     }
 
     pub fn caps(&self) -> ExecutionBoundaryCaps {
@@ -290,14 +305,49 @@ impl ExecutionBoundaryCounters {
             .load(std::sync::atomic::Ordering::SeqCst)
     }
 
-    /// Counts one physical fit before `feat_math::fit` runs. Refused at the ceiling, with the
-    /// reason `"physical fold fits"`.
+    /// Counts one physical fit made by a search arm, before `feat_math::fit` runs. Refused at the
+    /// ceiling less the reserved assessment fits, with the reason `"physical fold fits"`.
     pub fn charge_physical_fit(&self) -> Result<(), &'static str> {
+        take_one(
+            &self.physical_fits,
+            self.caps.max_physical_fits.saturating_sub(self.reserved_assessment_fits),
+            "physical fold fits",
+        )
+    }
+
+    /// Counts one physical fit made by a final O assessment. It may use the reserved fits, up to the
+    /// full ceiling.
+    pub fn charge_assessment_fit(&self) -> Result<(), &'static str> {
         take_one(
             &self.physical_fits,
             self.caps.max_physical_fits,
             "physical fold fits",
         )
+    }
+
+    /// Records the generated tokens of a model call that was already charged with
+    /// [`Self::record_model_call`] (zero tokens) before it ran. Applies the per-call and aggregate
+    /// ceilings, when set, and counts no call. A refused charge changes no total.
+    pub fn add_generated_tokens(&self, tokens: u64) -> Result<(), &'static str> {
+        use std::sync::atomic::Ordering::SeqCst;
+        let _gate = self
+            .model_gate
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        if let Some(max_per_call) = self.caps.max_reasoning_tokens_per_call {
+            if tokens > max_per_call {
+                return Err("reasoning tokens per call");
+            }
+        }
+        if let Some(max_total) = self.caps.max_generated_tokens_total {
+            let next_total = self.reasoning_tokens_total.load(SeqCst).saturating_add(tokens);
+            if next_total > max_total {
+                return Err("generated tokens total");
+            }
+        }
+        self.reasoning_tokens_total.fetch_add(tokens, SeqCst);
+        self.max_call_tokens_observed.fetch_max(tokens, SeqCst);
+        Ok(())
     }
 
     /// Counts one model call before it runs. The call ceiling is checked first, then the per-call
