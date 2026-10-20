@@ -242,8 +242,9 @@ Root01a13a98 is consolidating stopped W2 `e66442c8847fe3155a08f1fadb6a899d951113
 competing PR is created. C14 receipts are under
 `/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/`.
 
-The stopped component has 626 passed / 0 failed / 3 ignored, including 33 native-study and 8 compile-fail
-doctests (both included in 626), plus noncached clippy exit0. Independent driver-delta review
+The stopped component has 625 top-level passes plus one successful fresh-process replay, 0 failed and
+3 ignored. The 625 include 33 native-study cases and 8 compile-fail doctests (four each in
+`model_build/oof.rs` and `model_build/refit.rs`), plus noncached clippy exit0. Independent driver-delta review
 `review_w2_e66442c88_w1_native_driver_20261020.json` SHA256
 `acefed409a34af1924f96de4e284dd0a9c6c9df9f397cc3f018f456ecc2890dd` has no blocking findings.
 The original producer receipt has a future timestamp and omitted executed doctests; addendum

@@ -7,6 +7,14 @@ the commit areas (crate or lane) named in each subject line.
 
 ### Pipeline integration (not yet released)
 
+**Breaking CLI migration for the upcoming major release:** `jope pipeline run` now
+selects the Direct/Thinking model-building entry point. Existing CPU search callers
+must use `jope pipeline run-legacy-gp`; its search, numerical results and receipt
+format remain unchanged. The model-building entry point currently refuses before
+fitting until its trusted neural runtime is available. This migration follows the
+requested two model pathways and independent AutoML/ensemble configuration; it does
+not modify the published v0.3.0 binary or the `pipeline invent` subprocess contract.
+
 - The model-building `jope pipeline run` entry point accepts Direct/Thinking and independent AutoML/ensemble options. It requires trusted encoder/policy release closure and refuses before fitting while that runtime is unavailable. It never silently substitutes generic CPU GP.
 - Existing CPU-only search is explicitly named `jope pipeline run-legacy-gp`; its numerical and receipt behavior is preserved. Update legacy callers to this command. `pipeline invent` and the signed v0.3.0 release remain unchanged.
 - Add native CPU model selection/refit/persistence components and a study library with one shared fit ledger and freeze-before-held-out-assessment ordering. Fixture acceptance does not establish real-data admission or learning gain.

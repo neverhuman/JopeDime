@@ -1,0 +1,92 @@
+{
+  "schema": "jope.pr387_independent_review_disposition.v1",
+  "observed_utc": "2026-10-20T05:35:25.662908+00:00",
+  "reviewed_head": "1feee69df5ec46b38bbcb06a4b18931e505b10ca",
+  "reviewed_tree": "e800b1434a56e024034482c42cdd8f1f982676dc",
+  "reviewer_runtime": {
+    "screen": "487851.jope_review_claude:0",
+    "pid": 487858,
+    "native_session": "63549d68-f118-4ca7-a450-31ea253fc3c3",
+    "observed_cli_model": "haiku",
+    "github_login_authenticated": false
+  },
+  "original_receipt": {
+    "path": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/reviewer-1feee/PR387_1FEEE_SOURCE_REVIEW_RECEIPT.json",
+    "sha256": "4d6aef199288bc8474203311012ac642ad044f5805017983c7644260cc71616b",
+    "reported_reviewed_utc": "2026-10-20T05:40:00Z",
+    "actual_native_end_turn_utc": "2026-10-20T05:31:00.760Z",
+    "metadata_limit": "Original future timestamp and unverified GitHub-login assertion are preserved. Source review is independent process evidence, not native GitHub approval."
+  },
+  "findings": {
+    "F1": {
+      "disposition": "Intentional major-release CLI migration retained under direct human model-pathway instructions; explicit Breaking migration and legacy command recorded under Unreleased. Private enum representation itself preserves its parser behavior. No second PR or silent neural fallback."
+    },
+    "F2": {
+      "disposition": "README receipt-verification example uses run-legacy-gp; Direct/Thinking examples remain explicitly documented as currently refusing."
+    },
+    "F3": {
+      "disposition": "Transition statement narrowed to 38 hashed identity inputs. residual.rs mechanical match change is acknowledged outside that input closure."
+    },
+    "F4": {
+      "disposition": "Eight actual compile_fail blocks verified in source: oof.rs73/79/84/89, refit.rs58/64/69/74. Living count prose corrected to625top-level+1replay; original receipts unchanged."
+    },
+    "F9": {
+      "disposition": "OPEN: first pass explicitly did not review every changed Rust line. Same existing reviewer must cover remaining model/store/cache/AutoML/OOF/refit/ensemble/reasoner/native-study integration before source approval."
+    }
+  },
+  "native_approval": false,
+  "release_qualified": false,
+  "scientific_gain": false,
+  "source_mutation_scope": "Documentation/accounting only; no Rust/Cargo/schema/behavioral fixture changes.",
+  "documentation_qualification": {
+    "utc_interval": [
+      "2026-10-20T05:36:34.926786+00:00",
+      "2026-10-20T05:36:39.178938+00:00"
+    ],
+    "changed_docs_parent": "1feee69df5ec46b38bbcb06a4b18931e505b10ca",
+    "rust_schema_cargo_delta": false,
+    "commands": [
+      {
+        "name": "coverage",
+        "exit": 0,
+        "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0528-20261020/doc-repair-environment-corrected-coverage.log",
+        "sha256": "cf20eef01367c91178c46077a411b0b268cfc27e5a50edfe96acf52bdcce97f0"
+      },
+      {
+        "name": "readme",
+        "exit": 0,
+        "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0528-20261020/doc-repair-environment-corrected-readme.log",
+        "sha256": "f64e3cb7dec67d4ccd6af9007850586332b431d3c534fa3319c92517bc660e85"
+      },
+      {
+        "name": "layout",
+        "exit": 0,
+        "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0528-20261020/doc-repair-environment-corrected-layout.log",
+        "sha256": "03cebfcb97817a81d91b9d195ab5f6e3c39ebf18ce57b2e5302e8b462d30874c"
+      },
+      {
+        "name": "prose",
+        "exit": 0,
+        "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0528-20261020/doc-repair-environment-corrected-prose.log",
+        "sha256": "47432ab9fe0c43f7f4d07cfd5b1f2d95ff717a76628492ac0cf4d5abd9df19be"
+      },
+      {
+        "name": "gp-scope",
+        "exit": 0,
+        "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0528-20261020/doc-repair-environment-corrected-gp-scope.log",
+        "sha256": "8deaae75b08e049577ce849e72189f960b65c6480622826c3df757595034674f"
+      },
+      {
+        "name": "diff",
+        "exit": 0,
+        "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0528-20261020/doc-repair-environment-corrected-diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "missing_path_attempt_preserved": {
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0528-20261020/doc-repair-coverage.log",
+      "sha256": "33611d424ab84259641e0dd68d1397a2e78f886f16f399b1dd7492ed930212f0",
+      "cause": "Capped child lacked Cargo PATH for read-only cargo metadata. Explicit child PATH corrected; no source/test change."
+    }
+  }
+}

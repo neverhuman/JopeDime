@@ -495,7 +495,7 @@
           "path": "/home/ubuntu/jope-evidence/reasoner-pilot-20261019/review_w2_e66442c88_w1_native_driver_20261020.json",
           "sha256": "acefed409a34af1924f96de4e284dd0a9c6c9df9f397cc3f018f456ecc2890dd",
           "component_head": "e66442c8847fe3155a08f1fadb6a899d95111349",
-          "qualification": "Independent driver-delta review PASS and exact component626 pipeline tests/8compilefail; combined-head/final release qualification pending."
+          "qualification": "Independent driver-delta review PASS and component625top-levelPASS+1fresh-process replay, including8actualcompile_faildoctests (oof.rs4/refit.rs4); combined-head/final release qualification pending."
         },
         {
           "path": "docs/plans/release-closure-20261019/C14_VALIDATION_SNAPSHOT.json",

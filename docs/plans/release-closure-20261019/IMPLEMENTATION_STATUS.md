@@ -9,7 +9,7 @@ Dated observations follow.
 
 # Current integration update — 2026-10-20T03:55Z
 
-Stopped W2 e66442c88 is being consolidated in existing W under C14. Its component suite is 626 passed / 0 failed / 3 ignored, including 8 compile-fail doctests; independent driver review acefed409a has no blocking findings. Combined-head qualification/final review remain pending. Main bccbb55d is green; published v0.3.0 is bound to b3d347c9. Dated observations below remain history, including superseded CLI and hold descriptions. Latest direct human Qwen restart authorization governs separate recovery-r3; no native optimizer continuation or real-data admission is inferred. The two task ledgers remain separate and unwaived.
+Stopped W2 e66442c88 is being consolidated in existing W under C14. Its component suite reports 625 top-level passes plus one successful fresh-process replay, 0 failed and 3 ignored. The 625 include 8 compile-fail doctests, four each in `model_build/oof.rs` and `model_build/refit.rs`; independent driver review acefed409a has no blocking findings. Combined-head qualification/final review remain pending. Main bccbb55d is green; published v0.3.0 is bound to b3d347c9. Dated observations below remain history, including superseded CLI and hold descriptions. Latest direct human Qwen restart authorization governs separate recovery-r3; no native optimizer continuation or real-data admission is inferred. The two task ledgers remain separate and unwaived.
 
 # Closure packet status — 2026-10-19
 

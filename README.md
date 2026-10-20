@@ -336,7 +336,7 @@ cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --
 cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router target/jope-router --json
 # A requested target whose emitter does not cover the selected program is reported as not
 # emitted; the receipt lists the artifacts actually written (docs/emitters.md has the coverage).
-cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
+cargo run --locked --bin jope -- pipeline run-legacy-gp --dataset datasets/test/pmlb-229-pwlinear \
   --budget evaluations=8,seconds=120 --emit rust,python,cpp17,cpp20,js --policy skip --output target/e2e
 cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json
 ```

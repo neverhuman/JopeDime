@@ -1,6 +1,6 @@
 # Model cache lockfile identity transition
 
-PR #387 adds the existing locked rustix dependency to jope-models for descriptor-safe cache access. Cargo.lock is an ADR-0004 evaluator identity input, so this changes the build identity even though no numerical evaluator source or DSL ABI changed.
+PR #387 adds the existing locked rustix dependency to jope-models for descriptor-safe cache access. Cargo.lock is an ADR-0004 evaluator identity input, so this changes the build identity even though the other hashed evaluator inputs and DSL ABI did not change. The separate mechanical match simplification in `crates/feat-math/src/combinators/residual.rs` is outside the 38 hashed evaluator inputs; historical numerical behavior is checked by the preserved compatibility receipts.
 
 | Field | Previous fixture | New build (observed in CI) |
 | --- | --- | --- |
