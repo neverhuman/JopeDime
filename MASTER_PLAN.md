@@ -2122,3 +2122,21 @@ publication slot to this feature; the same independent Claude session is reviewi
 source. Final PR/full exact-head CI/native approval/guarded merge/main-guard remain pending.
 External lifecycle proof is retained in the dated evidence directory above; no earlier-head
 pass or queue acceptance is promoted to final-head acceptance.
+
+GP corrected source freeze superseding the first source milestone: `56fe07f4bcfcbcf90a88f30c07d15c80bb70d4fc`.
+Independent Claude verified the missing complete rewrite/linearization and active engine/policy
+grammar decode/projection hooks and their three actual capture/parser fixtures. Combined source
+contracts now total 21 across eight CI selections; inventory records all three additions and
+5,705 Rust tests. Decodes include teacher-forcing/encode-validation replay and count each labeled
+capture; enabled-process volume and journal-failure risk are documented. The active grammar
+source also mints teaching-store semantic-dependency and corpus scan-policy identities; old
+receipts stay under their old identities. The transition receipt names the exact source/hash
+effects. The byte-frozen historical grammar is unchanged.
+
+Actual first full CI at `4db4ea89ac9cc0083d651e7ec05ce39a9a5fe3b4`, run 39511599126 attempt 1,
+failed missing source-classification rows and historical identity-chain registration. Both were
+fixed without relaxing validators. Source classification and static coverage now pass; historical
+chain/goldens execute 3/3; compatibility identity and comparison each execute 13/13. Corrected
+source is preliminarily acceptable to the same independent reviewer. PR388 is open. A fresh
+final-head full CI run, independent native approval and verified merge/main-guard remain required;
+prior-head results never qualify a successor.

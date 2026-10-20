@@ -75,6 +75,13 @@ operation has a standalone emitter in every language.
 | `cpp17` | `transpile::emit_cpp17` | `g++ -std=c++17 -fsyntax-only` | Narrower certified coverage is an explicit emission error; compiler failures lose emitted tokens |
 | `javascript` | `transpile::emit_javascript` | `node --check` | Narrower certified coverage is an explicit emission error; check failures lose emitted tokens |
 
+Enabling capture in a policy/learning process also captures teacher-forcing and encode-validation
+decode replay. This can create many extra labeled occurrences and reach storage limits quickly;
+a journal I/O failure panics in that enabled process. Choose a dedicated external run directory.
+The active `grammar/automaton.rs` source change mints teaching-store semantic-dependency and
+corpus scan-policy successors. Verification refuses receipts bound to the previous listed-source
+hashes; retain old receipts under their original identity. No historical evidence is relabeled.
+
 All four rows are emitted for every captured occurrence, including failures. Source begins
 pending; only successful checks qualify its tokens. No unsupported operation is replaced with
 another program to improve yield. C++20 compilation is a mode over C++17 source, not another

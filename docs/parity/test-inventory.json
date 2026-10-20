@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5702,
+  "count": 5705,
   "ignored": 74,
   "packages": {
    "battle-gpu": {
@@ -6027,7 +6027,7 @@
     }
    },
    "jope-parallel": {
-    "count": 855,
+    "count": 856,
     "ignored": 15,
     "binaries": {
      "jope-parallel": {
@@ -7045,10 +7045,11 @@
      },
      "jope-parallel::grammar": {
       "kind": "test",
-      "count": 3,
+      "count": 4,
       "ignored": 0,
       "tests": [
        "exact_program_labels_never_snap_parameters",
+       "grammar_source_capture_retains_decoded_and_projected_programs",
        "masks_and_decoding_match_reference_fixtures",
        "proposal_projection_happens_before_scoring"
       ]
@@ -7457,12 +7458,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 434,
+    "count": 435,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 344,
+      "count": 345,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7617,6 +7618,7 @@
        "kernel2::review_tests::incremental_fit_keeps_reference_model_bytes_and_training_trace_counts",
        "kernel2::review_tests::malformed_refinement_rows_are_refused_before_any_prefix_or_trial",
        "kernel2::review_tests::ragged_training_and_holdout_are_typed_refusals_and_spend_one_measurement",
+       "kernel2::search::moves::gp_source_move_capture_tests::complete_rewrite_and_linearization_proposals_are_captured",
        "kernel2::search::moves::linearize_tests::a_constant_subtrees_finite_line_cannot_be_published_as_absent",
        "kernel2::search::moves::linearize_tests::a_faulting_stage_input_refuses_its_subtrees_and_the_run_publishes_and_verifies",
        "kernel2::search::moves::linearize_tests::a_line_offered_on_the_training_range_can_be_worse_off_it_and_the_native_score_decides",
@@ -8015,7 +8017,7 @@
     }
    },
    "jope-policy": {
-    "count": 109,
+    "count": 110,
     "ignored": 3,
     "binaries": {
      "jope-policy": {
@@ -8140,11 +8142,12 @@
      },
      "jope-policy::grammar_differential": {
       "kind": "test",
-      "count": 4,
+      "count": 5,
       "ignored": 0,
       "tests": [
        "eos_invalid_ids_and_mode_differences_are_refused_or_documented",
        "every_slot_value_and_small_expression_parses_and_round_trips",
+       "grammar_source_capture_retains_decoded_and_projected_programs",
        "longest_sampled_program_fits_the_token_budget",
        "masks_agree_with_the_typed_parser_over_the_bounded_state_domain"
       ]
@@ -8991,7 +8994,7 @@
   }
  },
  "totals": {
-  "rust": 5702,
+  "rust": 5705,
   "python": 182
  }
 }
