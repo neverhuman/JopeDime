@@ -1027,7 +1027,7 @@ mod native_study_tests {
                 run.search.failed_or_unavailable_measurements > 0,
                 "the search met the ceiling without recording a refusal"
             );
-            assert!(run.frozen.physical_fits_at_freeze <= fits - 1);
+            assert!(run.frozen.physical_fits_at_freeze < fits);
         }
     }
 
