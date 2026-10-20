@@ -379,18 +379,131 @@
       "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
       "scope": "Unique measurement JSONs and logs (163 files, 154 nine-row envelope_verified=true pass documents) from the 2026-10-19T19:20Z 3-host CUDA benchmark sweep and stopped rolling queue. Mixed binary provenance disclosed: 25 xbabe1 pass documents bind main 9f8d1a74 binary e39bca19..., while 129 pass documents (49 xbabe1, 6 xbabe2, 74 xbabe3) declare executable_sha256 c20a2dc8... whose source qualification remains unproven. Non-neural CUDA kernel benchmark only; zero neural updates or self-play gain.",
       "sha256": "bc6ad1688b4d118d2153d6224d53eec39cadcc1d8295d98fff48b4bbcb7f51da",
-      "version_id": "0r8bziZHXOZXBQ0mE7SGUr6a5gFZtJxs",
       "source_commits_by_executable_sha256": {
-        "e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490": "9f8d1a74ab08fc200214a82beaf2ee96e316061a",
-        "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da": null
-      }
+        "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da": null,
+        "e39bca1917ba1e26ad74c02f64fe8d0ebcf4c175ecabb096cfff20d24c809490": "9f8d1a74ab08fc200214a82beaf2ee96e316061a"
+      },
+      "version_id": "0r8bziZHXOZXBQ0mE7SGUr6a5gFZtJxs"
+    },
+    {
+      "actual_run_source_commit": null,
+      "bytes": 2391767,
+      "capture_status": "HISTORICAL_PARTIAL",
+      "codec": "tar+zstd",
+      "decoded_tar_bytes": 24422400,
+      "decoded_tar_sha256": "15b5004319d3c76ab5f15cf784b696b2e87a5956380e110775e801ce1cf57daa",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_INDEPENDENT_ALL_MEMBER_HASH_VERIFIED",
+      "git_publication_status": "GIT_PUBLICATION_PENDING",
+      "id": "qwen4b-fast-insight-v1-v2-20261020-results",
+      "index_sha256": "cc85afabb88f3e547614b97022a32c8f1e96540bc16303c89aecdd67552873c9",
+      "member_index_resolution": {
+        "bytes": 78761,
+        "kind": "standalone_exact_version",
+        "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/cc85afabb88f3e547614b97022a32c8f1e96540bc16303c89aecdd67552873c9",
+        "version_id": "WoN6UexjKjvrJXckVJnj1s.MNY6mJclN"
+      },
+      "member_locators": [
+        {
+          "bytes": 4292,
+          "enclosing_pack_sha256": "d4714ae04b78232a8139dd088b26e050bd4f0ee743e1c3b38546655c0a49988f",
+          "enclosing_pack_version_id": "LipEJUaZx_41VEWQYtHG.0sgci2E01Da",
+          "member_relative_path": "result-relay/RESULT.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "b85db6d30913bbd3acf95091e84474ed541bb7143021f6c0a414af3187b19b0e"
+        },
+        {
+          "bytes": 6520,
+          "enclosing_pack_sha256": "d4714ae04b78232a8139dd088b26e050bd4f0ee743e1c3b38546655c0a49988f",
+          "enclosing_pack_version_id": "LipEJUaZx_41VEWQYtHG.0sgci2E01Da",
+          "member_relative_path": "run-4b-direct-v2/RESULT.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "9c567aa39a437591a9fe41288d559e180d6899dd9943cea5b8e664f613416334"
+        }
+      ],
+      "observed_identity": {
+        "driver_sha256": "4c87b60559536d69aad60833158c68d4745171c465a35112c3e74859db0cae93",
+        "model": "Qwen/Qwen3.5-4B",
+        "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+        "source_commit": null,
+        "v1_protocol_sha256": "ceb01c05f214b276ea615512f8895826a9efcaf7c8b89531e9474b085337df74",
+        "v2_protocol_sha256": "b2fe186407711840fa61d214d5253ed61f7d8a6e906a5d2476fc70ce02e697f0"
+      },
+      "payload_files": 484,
+      "root_independent_restore": {
+        "bytes": 2342,
+        "git_path": "docs/research/waves/qwen4b-fast-insight-v1-v2-20261020/restoration.json",
+        "qualification": "fresh exact-VersionId GET; compressed/decoded hashes and all member payload hashes; source-build/scientific authority remains absent",
+        "sha256": "824f3ace34d001fa12d1ecc0a81e7a0a5336672891fcba50fbc1cf5237fb9780"
+      },
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/d4714ae04b78232a8139dd088b26e050bd4f0ee743e1c3b38546655c0a49988f",
+      "scope": "Descriptive exploratory model inference and restricted GP; output format improved but the direct arm did not beat the selected cheap baseline. No adoption, model training, or source-build qualification.",
+      "sha256": "d4714ae04b78232a8139dd088b26e050bd4f0ee743e1c3b38546655c0a49988f",
+      "version_id": "LipEJUaZx_41VEWQYtHG.0sgci2E01Da"
+    },
+    {
+      "actual_run_source_commit": null,
+      "bytes": 915635,
+      "capture_status": "HISTORICAL_PARTIAL",
+      "codec": "tar+zstd",
+      "decoded_tar_bytes": 162088960,
+      "decoded_tar_sha256": "d72a359df7efee60a11b1905f781b96da3e74c666e31d8c6a4a02eb090499e3a",
+      "evidence_level": "PRIVATE_EXACT_VERSION_ARCHIVE_AND_INDEPENDENT_ALL_MEMBER_HASH_VERIFIED",
+      "git_publication_status": "GIT_PUBLICATION_PENDING",
+      "id": "p1-rolling-gpu-1317-waves-unattributed-20261020-results",
+      "index_sha256": "e100ba5565f86e9ce8f6ac95079310e4e31095e6e2a7311ead1569cfeb8c9910",
+      "member_index_resolution": {
+        "enclosing_archive_version_id": "QaJodVUBEznLFuISmA9xhqw2tIuxHhAB",
+        "kind": "archive_member",
+        "relative_path": "INDEX_1317_WAVES_20261019T2315Z.json"
+      },
+      "member_locators": [
+        {
+          "bytes": 243077,
+          "enclosing_pack_sha256": "b7aaae2f3c6cf294743d36fad11d12ce299c8fe14e167fdd4a347506e130a417",
+          "enclosing_pack_version_id": "QaJodVUBEznLFuISmA9xhqw2tIuxHhAB",
+          "member_relative_path": "INDEX_1317_WAVES_20261019T2315Z.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "e100ba5565f86e9ce8f6ac95079310e4e31095e6e2a7311ead1569cfeb8c9910"
+        },
+        {
+          "bytes": 122310,
+          "enclosing_pack_sha256": "b7aaae2f3c6cf294743d36fad11d12ce299c8fe14e167fdd4a347506e130a417",
+          "enclosing_pack_version_id": "QaJodVUBEznLFuISmA9xhqw2tIuxHhAB",
+          "member_relative_path": "xbabe3/wave_0473_xbabe3_cuda0_9f8d1a74.json",
+          "resolution": "pack_member_via_index",
+          "sha256": "5c1ce07375494cebaa64b8af286f9c5ee981e68885f7581544a7e9bc3276121c"
+        }
+      ],
+      "observed_identity": {
+        "cases_sha256": "88f7151cd95af850215b82f8d0de26eae0fdcaaa003cbbebde5958d4bd620e38",
+        "executable_sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da",
+        "reference_sha256": "4c25a16695c901d7a5425e61c19acba668b1ad86779889eba66e149e7f0304e1",
+        "source_commit": null
+      },
+      "payload_files": 1321,
+      "root_independent_restore": {
+        "bytes": 2259,
+        "git_path": "docs/research/waves/p1-rolling-gpu-1317-waves-unattributed-20261020/restoration.json",
+        "qualification": "fresh exact-VersionId GET; compressed/decoded hashes and all member payload hashes; source-build/scientific authority remains absent",
+        "sha256": "9e37fb8a9c84738434ffc76e07155715cfb70a37a3a419052482ad628daf523d"
+      },
+      "s3_uri": "s3://veox-jopedime-learning-use2/staging/fleet-rnd-20261018T1140Z/evidence/blobs/sha256/b7aaae2f3c6cf294743d36fad11d12ce299c8fe14e167fdd4a347506e130a417",
+      "scope": "Descriptive repeated CUDA parity measurements of fixed cases. The executable is unattributed; filenames do not establish its source commit. No neural updates, independent scientific replications, or self-play gain are established.",
+      "sha256": "b7aaae2f3c6cf294743d36fad11d12ce299c8fe14e167fdd4a347506e130a417",
+      "version_id": "QaJodVUBEznLFuISmA9xhqw2tIuxHhAB"
     }
   ],
   "corrections": [
     "Prior Root shard census compared directory paths to object keys. The zero count is invalid as missing-data evidence; original retained and corrected directory-member census is authoritative.",
     "MR10 900-round archive (53a5bba05bc7d16e9788fc67a7060bfc36b11aadbca900f2e7d6b270617b3976, VersionId mfMvFeDeaxhVi0aQMYO9E_qo3X2q2xfo): the 900 null s3_sberbank_row summary fields in mr10_gpu_e2_receipt.json are a summary-selector bug in run_mr10_gpu_e2_s3.py:73 (`x.get('case_id')` vs `'id'`/`'context'`), not missing raw contexts; all 8,100 archived output rows identify `beyondarena:sberbank_housing_market_forecasting` and `parity_pass`. Original null summary fields are retained as history.",
     "MR06 local 7,877-shard closure reconciliation: Case 1 test name corrected from nonexistent `shard_index_payload_hashes_verified` (retained zero-test log 1769bac7945add53d125adf9de6d2b61c0c3449c2be87be51808f0403fa5a571) to `shard_index::tests::shard_index_payload_closure_verified` on 9569bb6076059ff66137a2a88b744b387cf07925 (1 test passed, log d2627e30e5a46d58ff4dd5b0019a7ba8dcedcd4eeaad802af50b1d467b42744f). Local 7,877-shard verify_shard_index runs on 28005df700d81f39ab51d796ea3a4f77db9277b5 (log 4c2486e02ea868fda5271928fd3e007a8f21f179b4bd2c06c919eea4a5756280) and 9569bb6076059ff66137a2a88b744b387cf07925 (log 0a285aade5a593850a905d490fa691fe1b496296f00c346ef6e1c8ab97b727d1) execute identical verify_shard_index logic against `/home/ubuntu/target/historical_index.json` (`1c840597...`); corpus admission remains PARTIAL/blocked pending independent S3/authority qualification.",
-    "Dated scope addendum (2026-10-19T06:55Z, CODEX_MONITOR_TRACKC_SCOPE_20261019T0603Z.json sha256 68b46adbbbd684e71eb1db66acf268923859d73d4239f8076874ba02cb4f5a6c and CODEX_MONITOR_MR10_OUTPUT_BINDINGS_20261019T0603Z.json sha256 8ea1b29f1761fabeda03b26fd4cd532170ac712f09c1bc7cb072c701cfdf28be): in both Track C (945/945 rows across 105 rounds) and MR10 (8,100/8,100 rows across 900 rounds), `gpr_cuda_bench` was invoked with `--prepared` bound to Sberbank cut-0 (`dataset.parquet` VersionId 700u27HTJgxZwidGhVh3k98Q4bBEW35D), so the 9-cell cases manifest (`88f7151cd95af850215b82f8d0de26eae0fdcaaa003cbbebde5958d4bd620e38`) specifies the 9 `(N, D, kernel, m)` grid dimensions/hyperparameters while all 9 cells execute against `beyondarena:sberbank_housing_market_forecasting`, distinct from the standalone offline synthetic fixture when `--prepared` is omitted. Frozen wave files under `docs/research/waves/` remain unchanged."
+    "Dated scope addendum (2026-10-19T06:55Z, CODEX_MONITOR_TRACKC_SCOPE_20261019T0603Z.json sha256 68b46adbbbd684e71eb1db66acf268923859d73d4239f8076874ba02cb4f5a6c and CODEX_MONITOR_MR10_OUTPUT_BINDINGS_20261019T0603Z.json sha256 8ea1b29f1761fabeda03b26fd4cd532170ac712f09c1bc7cb072c701cfdf28be): in both Track C (945/945 rows across 105 rounds) and MR10 (8,100/8,100 rows across 900 rounds), `gpr_cuda_bench` was invoked with `--prepared` bound to Sberbank cut-0 (`dataset.parquet` VersionId 700u27HTJgxZwidGhVh3k98Q4bBEW35D), so the 9-cell cases manifest (`88f7151cd95af850215b82f8d0de26eae0fdcaaa003cbbebde5958d4bd620e38`) specifies the 9 `(N, D, kernel, m)` grid dimensions/hyperparameters while all 9 cells execute against `beyondarena:sberbank_housing_market_forecasting`, distinct from the standalone offline synthetic fixture when `--prepared` is omitted. Frozen wave files under `docs/research/waves/` remain unchanged.",
+    {
+      "note": "Replaced proposed metadata with fresh exact-version lengths/hashes and embedded-index resolution; unknown source is null. Old stopped candidate is preserved outside Git.",
+      "recorded_at_utc": "2026-10-20T01:15:00.071208+00:00",
+      "scope": "New historical shadow research entries only; prior source identities and failures remain unchanged.",
+      "source_packet_sha256": "00115cb67de26c6e4747166cd21507d3980cdc47717f049bb54dee1513f58c2a"
+    }
   ],
   "current_production_training": {
     "authority_issuer": "Original installed-policy/trust authority; the assistant named Root is not an issuer.",

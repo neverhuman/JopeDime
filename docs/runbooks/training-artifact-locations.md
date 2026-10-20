@@ -153,3 +153,10 @@ A private custom tar/zstd child archive preserves 7 member files (150,057 payloa
   - `fresh_main_9f8d1a74_build_and_run_20261019T1847Z.log` (`2,099` B, `sha256: 293f3f8b0a1df4665ed715909f4693103ae0ee0c67d1d7b9d93a7333729abb64`)
 
 The compact Git `restoration.json` in this wave records a separate Codex exact-version restoration of every regular member, performed after the producer packet. Its bytes and hash are in the catalog. It retains the measured source and failures, and grants no training or serving admission.
+
+
+## Historical model-study and rolling parity archives
+
+The compact [model-study context](../research/waves/qwen4b-fast-insight-v1-v2-20261020/context.md) and [rolling parity context](../research/waves/p1-rolling-gpu-1317-waves-unattributed-20261020/context.md) link through their sibling manifests, metrics and restoration records. Resolve the matching `*-results` IDs in `catalogs/training-artifacts.json` for exact private S3 object VersionIds, compressed and decoded hashes, and member locators. Download the exact version and verify bytes before decoding; verify every indexed member before using it. The rolling archive carries its index as an archive member, not a standalone object with an inferred VersionId.
+
+These records preserve model-format failures and repeated parity results. Their capture remains `HISTORICAL_PARTIAL`: archive restoration is verified, while a complete source-build attestation is missing. A filename or current main SHA must not be substituted for unknown run provenance. No model promotion, optimizer progress or demonstrated self-play gain follows from these summaries. Git publication is pending the ordinary integration PR and receiving-main lifecycle.
