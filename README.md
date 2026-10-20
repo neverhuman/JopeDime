@@ -23,6 +23,43 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 The [training observatory](docs/dashboard/README.md) provides live loss, fleet, storage, dataset,
 program-library and checkpoint views with source identities, observation age and qualification scope.
 
+## GP source WebSocket
+
+Capture every GP candidate occurrence, including non-winners, duplicates and failed emissions,
+and stream full Rust, Python, C++17 and JavaScript training-recipe source:
+
+```sh
+# Linux: rustc, python3, g++, node, GNU timeout and prlimit must be on PATH.
+# Keep journals and generated source outside the Git checkout.
+cargo run --locked -p jope-observatory --bin gp-source-stream -- \
+  --journal-dir "$HOME/jope-stream/journals" \
+  --state-dir "$HOME/jope-stream/state"
+
+# In another terminal, enable capture before starting any GP producer:
+JOPE_GP_SOURCE_DIR="$HOME/jope-stream/journals" \
+  cargo run --locked --bin jope -- pipeline invent \
+  --train /absolute/path/train.csv --target target \
+  --work-dir /absolute/new/search-output --budget evaluations=100,seconds=120 --json
+```
+
+Connect to `ws://127.0.0.1:9876/api/v1/gp/source?after=0`; fetch metrics at
+[http://127.0.0.1:9876/api/v1/gp/metrics](http://127.0.0.1:9876/api/v1/gp/metrics).
+Each `source` event contains **all four language rows and complete source text**, followed by
+`checked` events. Resume with `after=<last sequence>`; replay does not generate token credit.
+For xbabe2, run the service there and use `ssh -N -L 9876:127.0.0.1:9876 xbabe2` locally.
+
+Token totals sum actual lexical code tokens **plus documentation tokens across every language**,
+including source that fails its compiler check. Metrics include per-language and aggregate
+output tokens/sec, assembly tokens/sec, pending/passed/lost tokens, compiler errors and emission
+errors. Token yield is `passed_tokens / emitted_tokens`; pending tokens cannot pass, and zero
+output has undefined (`null`) yield. Artifact yield also charges unsupported emitters that
+produce no tokens. A completed, error-free run reaches 100%; errors remain visible.
+
+The existing C++17 and JavaScript emitters cover fewer heads than Rust/Python. Their refusals
+are streamed as errors, never silently excluded or replaced with another program. This service
+checks compilation without executing generated programs. See [protocol, capture coverage,
+limits and client examples](docs/gp-source-stream.md).
+
 ## At a glance
 
 | What | 0.3.0 |

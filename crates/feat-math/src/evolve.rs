@@ -1547,7 +1547,9 @@ fn rand_genome_from(rng: &mut Pcg32, max_transforms: usize, vocab: &[&str]) -> D
     let n = 1 + (rng.next_u32() as usize) % max_transforms.clamp(1, 6);
     let mut stages: Vec<Stage> = (0..n).map(|_| rand_stage_from(rng, vocab)).collect();
     stages.push(rand_head(rng));
-    DslExpr { stages }
+    let program = DslExpr { stages };
+    crate::capture_gp_source!("legacy-operator", "rand_genome_from", &program.to_string());
+    program
 }
 
 fn rand_genome(rng: &mut Pcg32, max_transforms: usize) -> DslExpr {
@@ -1697,7 +1699,9 @@ fn mutate_v2(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize, vocab: &[&str]
     }
     let mut stages = tf;
     stages.push(head);
-    DslExpr { stages }
+    let program = DslExpr { stages };
+    crate::capture_gp_source!("legacy-operator", "mutate_v2", &program.to_string());
+    program
 }
 
 fn mutate(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize) -> DslExpr {
@@ -1741,7 +1745,9 @@ fn mutate(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize) -> DslExpr {
     }
     let mut stages = tf;
     stages.push(head);
-    DslExpr { stages }
+    let program = DslExpr { stages };
+    crate::capture_gp_source!("legacy-operator", "mutate", &program.to_string());
+    program
 }
 
 fn crossover(rng: &mut Pcg32, a: &DslExpr, b: &DslExpr, max_transforms: usize) -> DslExpr {
@@ -1755,7 +1761,9 @@ fn crossover(rng: &mut Pcg32, a: &DslExpr, b: &DslExpr, max_transforms: usize) -
     let head = if rng.next_f64() < 0.5 { ha } else { hb };
     let mut stages = tf;
     stages.push(head.unwrap_or_else(|| rand_head(rng)));
-    DslExpr { stages }
+    let program = DslExpr { stages };
+    crate::capture_gp_source!("legacy-operator", "crossover", &program.to_string());
+    program
 }
 
 /// Build one deterministic grammar-random pipeline using the evolution engine's RNG stream.
@@ -1887,7 +1895,9 @@ pub fn mutate_canonical_pipeline_with_arm(
         }
     }
     transforms.push(head);
-    Ok(GenomeIr::Pipeline(DslExpr { stages: transforms }).canonical())
+    let program = GenomeIr::Pipeline(DslExpr { stages: transforms }).canonical();
+    crate::capture_gp_source!("legacy-operator", "explicit-mutation-arm", &program);
+    Ok(program)
 }
 
 fn parse_canonical_pipeline(source: &str) -> Result<DslExpr, String> {
@@ -2660,6 +2670,14 @@ fn evolve_surrogate(
         }
         if cfg.time_budget_secs > 0.0 && t0.elapsed().as_secs_f64() > cfg.time_budget_secs {
             break;
+        }
+
+        for (slot, genome) in population.iter().enumerate() {
+            crate::capture_gp_source!(
+                "surrogate",
+                &format!("generation/{gen}/slot/{slot}"),
+                &genome.to_string()
+            );
         }
 
         // Evaluate all unseen genomes in parallel (the Rust interpreter executes each candidate).
@@ -5478,6 +5496,14 @@ fn evolve_lite_race_impl<'backend>(
             && t0.elapsed().as_secs_f64() > cfg.time_budget_secs
         {
             break;
+        }
+
+        for (slot, genome) in population.iter().enumerate() {
+            crate::capture_gp_source!(
+                "lite-race",
+                &format!("generation/{gen}/slot/{slot}"),
+                &genome.to_string()
+            );
         }
 
         for genome in &population {

@@ -622,3 +622,6 @@ mod tests {
         assert_eq!(v["status"], "unavailable");
     }
 }
+
+/// Complete GP source emission, validation and durable delivery.
+pub mod gp_source;

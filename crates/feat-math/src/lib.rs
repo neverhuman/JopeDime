@@ -50,6 +50,7 @@ pub mod target_transform;
 mod emit_py;
 mod emit_rs;
 mod mathexpr;
+pub mod source_stream;
 mod spec;
 pub mod tokens;
 pub mod transpile;

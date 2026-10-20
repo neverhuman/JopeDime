@@ -111,6 +111,16 @@ pub(super) fn measure_generation(
             candidates.push(offspring::draw(&parents, state, cut, options, slot)?);
         }
     }
+    for (slot, (genome, origin)) in candidates.iter().enumerate() {
+        feat_math::capture_gp_source!(
+            "kernel2",
+            &format!(
+                "cut/{}/generation/{}/slot/{slot}/{origin}",
+                cut.index, state.generation
+            ),
+            genome
+        );
+    }
     for (genome, origin) in candidates {
         cancelled(options)?;
         if state.budget.remaining() == 0 {

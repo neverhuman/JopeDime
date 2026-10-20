@@ -21,6 +21,11 @@ impl Kernel2Evaluator {
         origin: &'static str,
         clock: Clock,
     ) -> Kernel2Observation {
+        feat_math::capture_gp_source!(
+            "kernel2-evaluation",
+            &format!("cut/{}/generation/{generation}/{origin}", cut.index),
+            genome
+        );
         let started = clock.start();
         let mut record = empty_record(genome, cut.index, generation, origin);
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {

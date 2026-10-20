@@ -175,6 +175,13 @@ pub fn build_generation_zero(
         population,
     };
     generation.validate()?;
+    for member in &generation.population {
+        feat_math::capture_gp_source!(
+            "generalized-gp",
+            &format!("generation/0/slot/{}", member.slot),
+            &member.genome.canonical_genome
+        );
+    }
     Ok(generation)
 }
 
@@ -513,6 +520,13 @@ pub fn build_next_generation(
     }
     for member in &population {
         member.validate()?;
+    }
+    for member in &population {
+        feat_math::capture_gp_source!(
+            "generalized-gp",
+            &format!("successor/slot/{}", member.slot),
+            &member.genome.canonical_genome
+        );
     }
     Ok(population)
 }

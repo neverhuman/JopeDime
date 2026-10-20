@@ -217,6 +217,7 @@ impl<'a> Search<'a> {
     fn finish(&self, parent: &DslExpr, candidate: DslExpr, arm: PipelineArm) -> Offspring {
         let parent_text = GenomeIr::Pipeline(parent.clone()).canonical();
         let text = GenomeIr::Pipeline(candidate).canonical();
+        crate::capture_gp_source!("kernel2-operator", &format!("{arm:?}"), &text);
         // Keep the selected arm on structural rejection. Retrying with another
         // arm would change the declared proposal distribution.
         let program = if admit_child(&text, self.profile, self.width).is_ok() {
@@ -298,7 +299,9 @@ pub fn random_program(
         let result = search.finish(&parent, child, PipelineArm::Insert);
         parent = search.parent(&result.program)?;
     }
-    Ok(GenomeIr::Pipeline(parent).canonical())
+    let program = GenomeIr::Pipeline(parent).canonical();
+    crate::capture_gp_source!("kernel2-operator", "random_program", &program);
+    Ok(program)
 }
 
 /// Choose a stage or one-parent expression arm before selecting its site.
