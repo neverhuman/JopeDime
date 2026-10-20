@@ -8,9 +8,10 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 
 pub mod adapters;
 
-/// Runs one arm of the named reasoner study under the no-time-limit policy
-/// (`NO_TIME_LIMIT_POLICY_20261019`). The teacher arm and every matched baseline arm must go through
-/// this function, so the policy is identical for each by construction.
+/// Runs one arm through the generic legacy dataset loader under the no-time-limit policy
+/// (`NO_TIME_LIMIT_POLICY_20261019`). It re-partitions the dataset itself, and it attaches no
+/// admission, no study ledger and no shared fit counters. It is NOT the admitted native-study route.
+/// For the admitted, ledger-backed route, use [`run_native_study_driver`].
 pub fn run_study_arm(options: &crate::run::RunOptions) -> Result<crate::receipt::Receipt> {
     crate::run::run_no_time_limit(options)
 }
@@ -1038,6 +1039,198 @@ impl NativeStudyLedger {
             let _ = file.sync_all();
         }
     }
+}
+
+/// Separates a family id from an arm name in a ledger arm name. Neither may contain it, so each flat
+/// name is unique for each (family, arm) pair.
+const FAMILY_ARM_SEPARATOR: &str = "--";
+
+/// One matched arm of a family. It runs on the family's source, so it has the family's A, B and O rows.
+/// The arm carries no rows of its own: a matched arm cannot be given different partitions.
+#[derive(Clone, Copy, Debug)]
+pub struct NativeStudyArm<'a> {
+    pub name: &'a str,
+    pub budget: crate::search::Budget,
+    pub seed: u64,
+}
+
+/// One canonical family: a single authenticated source, and every matched arm that runs on it.
+pub struct NativeStudyFamily<'a> {
+    pub family_id: &'a str,
+    pub source: NativeStudySource<'a>,
+    pub arms: Vec<NativeStudyArm<'a>>,
+}
+
+/// The whole submitted study: every family and its arms, run through one ledger.
+pub struct NativeStudyDriverPlan<'a> {
+    pub families: Vec<NativeStudyFamily<'a>>,
+}
+
+/// The observed result of one arm. Fit counts are deltas of the shared counters while the arm ran, not
+/// the requested budget. Elapsed time is evidence only and bounds nothing.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NativeStudyArmOutcome {
+    pub ledger_arm: String,
+    pub family_id: String,
+    pub arm: String,
+    pub search_fits: u64,
+    pub assessment_fits: u64,
+    pub successful_measurements: u64,
+    pub failed_or_unavailable_measurements: u64,
+    pub winner: String,
+    pub validation_rmse_b: Option<f64>,
+    pub assessment_rmse_o: f64,
+}
+
+/// The result of a whole study: per-arm outcomes, the final shared counter totals, and the order of
+/// every step. Each `run:` entry precedes every `assess:` entry.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NativeStudyDriverOutcome {
+    pub arms: Vec<NativeStudyArmOutcome>,
+    pub counters: CounterSnapshot,
+    pub phase_log: Vec<String>,
+}
+
+/// Checks the whole plan before any ledger exists and before any fit. It refuses an empty or duplicate
+/// family, an empty or duplicate arm, an unsafe name, a family whose id does not match its source, a
+/// token policy that is not natural EOS, an unlimited (`u64::MAX`) ceiling, and a reservation below the
+/// arm count. Every family's source must pass the trusted-admission check.
+///
+/// Only the A and B rows are authenticated here. The O rows are checked for range and disjointness, but
+/// their labels are not read.
+fn validate_driver_plan(
+    plan: &NativeStudyDriverPlan<'_>,
+    caps: &crate::search::ExecutionBoundaryCaps,
+    reserved_assessment_fits: u64,
+) -> Result<Vec<String>> {
+    ensure!(!plan.families.is_empty(), "a study needs at least one family");
+    ensure!(
+        caps.max_reasoning_tokens_per_call.is_none() && caps.max_generated_tokens_total.is_none(),
+        "the named native study runs under the natural-EOS token policy: both token caps must be None"
+    );
+    ensure!(
+        caps.max_physical_fits < u64::MAX && caps.max_model_calls < u64::MAX,
+        "the physical-fit and model-call ceilings must be finite"
+    );
+    let mut family_ids = std::collections::BTreeSet::new();
+    let mut flat = Vec::new();
+    for family in &plan.families {
+        ensure!(
+            !family.family_id.is_empty() && !family.family_id.contains(FAMILY_ARM_SEPARATOR),
+            "family id {:?} is empty or contains {FAMILY_ARM_SEPARATOR:?}",
+            family.family_id
+        );
+        ensure!(family_ids.insert(family.family_id), "family id {:?} is defined twice", family.family_id);
+        ensure!(
+            family.source.role_proof.family_id == family.family_id,
+            "family {:?} does not match its source, which is for family {:?}",
+            family.family_id,
+            family.source.role_proof.family_id
+        );
+        ensure!(!family.arms.is_empty(), "family {:?} has no arms", family.family_id);
+        let mut arm_names = std::collections::BTreeSet::new();
+        for arm in &family.arms {
+            ensure!(
+                !arm.name.is_empty() && !arm.name.contains(FAMILY_ARM_SEPARATOR),
+                "arm {:?} of family {:?} is empty or contains {FAMILY_ARM_SEPARATOR:?}",
+                arm.name,
+                family.family_id
+            );
+            ensure!(
+                arm_names.insert(arm.name),
+                "arm {:?} is defined twice in family {:?}",
+                arm.name,
+                family.family_id
+            );
+            flat.push(format!("{}{FAMILY_ARM_SEPARATOR}{}", family.family_id, arm.name));
+        }
+        // Authenticate this family's source now, so a later bad family refuses the whole study before
+        // any fit has run.
+        validate_native_study_source(&family.source)
+            .with_context(|| format!("family {:?} is not admitted", family.family_id))?;
+    }
+    let names: Vec<&str> = flat.iter().map(String::as_str).collect();
+    validate_arm_names(&names)?;
+    ensure!(
+        reserved_assessment_fits >= names.len() as u64,
+        "the reservation of {reserved_assessment_fits} fits is below the {} arms; each arm needs its assessment fit",
+        names.len()
+    );
+    ensure!(
+        reserved_assessment_fits <= caps.max_physical_fits,
+        "the reservation exceeds the physical-fit ceiling"
+    );
+    Ok(flat)
+}
+
+/// Runs a whole NEW study through one ledger. Every family and arm freezes first, in plan order. Only
+/// after the last freeze does any assessment read O, in the same order. Each arm's search fits and
+/// assessment fit are the counters' observed deltas, and they must sum to the final shared total.
+///
+/// The study directory must not exist as a ledger. An existing ledger is refused, so this function
+/// never resumes, replays or re-assesses. For audit, use [`NativeStudyLedger::open`].
+///
+/// Any error returns at once, with no retry, no assessment and no reset of charges. The ledger then
+/// holds its own fail-closed state: an arm admitted but not frozen halts a later `open`.
+pub fn run_native_study_driver(
+    plan: &NativeStudyDriverPlan<'_>,
+    dir: &std::path::Path,
+    caps: crate::search::ExecutionBoundaryCaps,
+    reserved_assessment_fits: u64,
+) -> Result<NativeStudyDriverOutcome> {
+    let flat = validate_driver_plan(plan, &caps, reserved_assessment_fits)?;
+    let names: Vec<&str> = flat.iter().map(String::as_str).collect();
+    let mut ledger = NativeStudyLedger::create(dir, caps, reserved_assessment_fits, &names)?;
+    let counters = ledger.counters();
+    let mut phase_log = Vec::new();
+
+    // Phase 1: every family and arm freezes. No O label is read here.
+    let mut frozen = Vec::new();
+    let mut ledger_index = 0;
+    for family in &plan.families {
+        for arm in &family.arms {
+            let ledger_arm = flat[ledger_index].clone();
+            ledger_index += 1;
+            let before = counters.physical_fits();
+            let run = ledger.run_arm(&ledger_arm, family.source, arm.budget, arm.seed)?;
+            let search_fits = counters.physical_fits() - before;
+            phase_log.push(format!("run:{ledger_arm}"));
+            frozen.push((family.family_id, arm.name, ledger_arm, family.source, run, search_fits));
+        }
+    }
+
+    // Phase 2: only after the last freeze, each frozen winner is assessed once.
+    let mut arms = Vec::new();
+    for (family_id, arm, ledger_arm, source, run, search_fits) in frozen {
+        let before = counters.physical_fits();
+        let assessment_rmse_o = ledger.assess_arm(&ledger_arm, source)?;
+        let assessment_fits = counters.physical_fits() - before;
+        phase_log.push(format!("assess:{ledger_arm}"));
+        arms.push(NativeStudyArmOutcome {
+            ledger_arm,
+            family_id: family_id.to_owned(),
+            arm: arm.to_owned(),
+            search_fits,
+            assessment_fits,
+            successful_measurements: run.search.successful_measurements,
+            failed_or_unavailable_measurements: run.search.failed_or_unavailable_measurements,
+            winner: run.frozen.winner.clone(),
+            validation_rmse_b: run.frozen.validation_rmse_b,
+            assessment_rmse_o,
+        });
+    }
+
+    let total = counters.physical_fits();
+    let observed: u64 = arms.iter().map(|a| a.search_fits + a.assessment_fits).sum();
+    ensure!(
+        observed == total,
+        "the observed per-arm fits total {observed}, but the shared counter reads {total}"
+    );
+    Ok(NativeStudyDriverOutcome {
+        arms,
+        counters: CounterSnapshot::of(&counters),
+        phase_log,
+    })
 }
 
 /// A measured value that is either recorded or explicitly unknown. An unknown value is never zero.
@@ -2272,5 +2465,338 @@ mod native_study_tests {
         std::fs::remove_dir_all(dir.path().join("arms/arm-a")).unwrap();
         let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
         assert!(error.contains("frozen winner is missing"), "{error}");
+    }
+
+    // W1 driver. Generated fixtures only: two families, two matched arms each, one shared counter set.
+
+    fn scaled_fixture(scale: f64) -> (Vec<Vec<f64>>, Vec<f64>) {
+        let (x, _) = fixture();
+        let x: Vec<Vec<f64>> = x
+            .into_iter()
+            .map(|row| row.into_iter().map(|v| v * scale).collect())
+            .collect();
+        let y = x
+            .iter()
+            .map(|row| 2.0 * row[0] - row[1] + 0.5 * row[0] * row[1])
+            .collect();
+        (x, y)
+    }
+
+    /// A generated owner manifest with one entry per (family, rows, role). Every entry uses the fixed
+    /// partitions. The root is the manifest's own hash, computed here.
+    fn admit_families(families: &[(&str, &[Vec<f64>], &[f64], &str)]) -> TrustedAdmissions {
+        let (a, b, _) = partitions();
+        let admissions: Vec<NativeStudyAdmission> = families
+            .iter()
+            .map(|&(family, x, y, role)| NativeStudyAdmission {
+                family_id: family.into(),
+                source_kind: NATIVE_STUDY_SOURCE_KIND.into(),
+                role: role.into(),
+                ntest: 0,
+                cut_input_digest: compute_cut_input_digest(x, y, &a, &b),
+                fit_a_rows_sha256: rows_sha256(x, y, &a),
+                hold_b_rows_sha256: rows_sha256(x, y, &b),
+            })
+            .collect();
+        let bytes = serde_json::to_vec(&serde_json::json!({
+            "schema": ADMISSION_SCHEMA,
+            "admissions": admissions,
+        }))
+        .unwrap();
+        TrustedAdmissions::verify(&bytes, &sha256_hex(&bytes)).unwrap()
+    }
+
+    fn arm(name: &'static str, seed: u64) -> NativeStudyArm<'static> {
+        NativeStudyArm {
+            name,
+            budget: budget(),
+            seed,
+        }
+    }
+
+    fn two_family_plan<'a>(
+        s1: NativeStudySource<'a>,
+        s2: NativeStudySource<'a>,
+    ) -> NativeStudyDriverPlan<'a> {
+        NativeStudyDriverPlan {
+            families: vec![
+                NativeStudyFamily {
+                    family_id: "family-one",
+                    source: s1,
+                    arms: vec![arm("teacher", 5), arm("baseline", 6)],
+                },
+                NativeStudyFamily {
+                    family_id: "family-two",
+                    source: s2,
+                    arms: vec![arm("teacher", 7), arm("baseline", 8)],
+                },
+            ],
+        }
+    }
+
+    /// Runs a plan that must be refused, and checks that nothing reached a ledger, a fit or a freeze.
+    fn assert_refused_before_fit(
+        label: &str,
+        plan: &NativeStudyDriverPlan<'_>,
+        caps: crate::search::ExecutionBoundaryCaps,
+        reserved: u64,
+    ) {
+        let dir = tempfile::tempdir().unwrap();
+        let study = dir.path().join("study");
+        durability_hooks::clear();
+        assert!(
+            run_native_study_driver(plan, &study, caps, reserved).is_err(),
+            "{label} was accepted"
+        );
+        assert!(!study.join(STUDY_LEDGER_FILE).exists(), "{label} created a ledger");
+        assert!(
+            durability_hooks::events().is_empty(),
+            "{label} reached a fit or a freeze: {:?}",
+            durability_hooks::events()
+        );
+    }
+
+    #[test]
+    fn two_families_with_matched_arms_freeze_before_any_o_read_and_share_one_counter() {
+        let (x1, y1) = fixture();
+        let (x2, y2) = scaled_fixture(2.0);
+        let (a, b, o) = partitions();
+        let p1 = NativeStudyRoleProof::attest_train_only("family-one", &x1, &y1, &a, &b);
+        let p2 = NativeStudyRoleProof::attest_train_only("family-two", &x2, &y2, &a, &b);
+        let admissions = admit_families(&[
+            ("family-one", x1.as_slice(), y1.as_slice(), "TRAIN"),
+            ("family-two", x2.as_slice(), y2.as_slice(), "TRAIN"),
+        ]);
+        let s1 = source(&x1, &y1, &a, &b, &o, &p1, &admissions);
+        let s2 = source(&x2, &y2, &a, &b, &o, &p2, &admissions);
+        let plan = two_family_plan(s1, s2);
+        let dir = tempfile::tempdir().unwrap();
+
+        let outcome = run_native_study_driver(
+            &plan,
+            &dir.path().join("study"),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            4,
+        )
+        .unwrap();
+
+        assert_eq!(outcome.phase_log.len(), 8, "{:?}", outcome.phase_log);
+        assert!(
+            outcome.phase_log[..4].iter().all(|e| e.starts_with("run:")),
+            "an assessment ran before the last freeze: {:?}",
+            outcome.phase_log
+        );
+        assert!(outcome.phase_log[4..].iter().all(|e| e.starts_with("assess:")));
+        assert_eq!(outcome.arms.len(), 4);
+        for arm in &outcome.arms {
+            assert!(
+                arm.successful_measurements > 0,
+                "{}: no successful native measurement",
+                arm.ledger_arm
+            );
+            assert!(arm.search_fits > 0, "{}: the search made no fit", arm.ledger_arm);
+            assert_eq!(arm.assessment_fits, 1, "{}: the assessment is not one fit", arm.ledger_arm);
+            assert!(arm.assessment_rmse_o.is_finite());
+        }
+        let observed: u64 = outcome.arms.iter().map(|a| a.search_fits + a.assessment_fits).sum();
+        assert_eq!(outcome.counters.physical_fits, observed, "the shared counter disagrees with the arms");
+        assert_eq!(outcome.counters.model_calls, 0);
+    }
+
+    #[test]
+    fn a_later_invalid_family_refuses_the_whole_study_before_any_fit() {
+        let (x1, y1) = fixture();
+        let (x2, y2) = scaled_fixture(2.0);
+        let (a, b, o) = partitions();
+        let p1 = NativeStudyRoleProof::attest_train_only("family-one", &x1, &y1, &a, &b);
+        let p2 = NativeStudyRoleProof::attest_train_only("family-two", &x2, &y2, &a, &b);
+
+        // The second family is admitted under HOLDOUT, but its source says TRAIN.
+        let mismatched = admit_families(&[
+            ("family-one", x1.as_slice(), y1.as_slice(), "TRAIN"),
+            ("family-two", x2.as_slice(), y2.as_slice(), "HOLDOUT"),
+        ]);
+        let s1 = source(&x1, &y1, &a, &b, &o, &p1, &mismatched);
+        let s2 = source(&x2, &y2, &a, &b, &o, &p2, &mismatched);
+        assert_refused_before_fit("a family admitted under another role", &two_family_plan(s1, s2), ExecutionBoundaryCaps::reasoner_natural_eos(), 4);
+
+        // The second family's source says HOLDOUT.
+        let both = admit_families(&[
+            ("family-one", x1.as_slice(), y1.as_slice(), "TRAIN"),
+            ("family-two", x2.as_slice(), y2.as_slice(), "TRAIN"),
+        ]);
+        let s1 = source(&x1, &y1, &a, &b, &o, &p1, &both);
+        let mut s2 = source(&x2, &y2, &a, &b, &o, &p2, &both);
+        s2.role = "HOLDOUT";
+        assert_refused_before_fit("a HOLDOUT source", &two_family_plan(s1, s2), ExecutionBoundaryCaps::reasoner_natural_eos(), 4);
+
+        // The second family is not in the manifest at all.
+        let only_one = admit_families(&[("family-one", x1.as_slice(), y1.as_slice(), "TRAIN")]);
+        let s1 = source(&x1, &y1, &a, &b, &o, &p1, &only_one);
+        let s2 = source(&x2, &y2, &a, &b, &o, &p2, &only_one);
+        assert_refused_before_fit("an unadmitted family", &two_family_plan(s1, s2), ExecutionBoundaryCaps::reasoner_natural_eos(), 4);
+    }
+
+    #[test]
+    fn plan_identity_caps_and_reservation_defects_refuse_before_any_fit() {
+        let (x1, y1) = fixture();
+        let (x2, y2) = scaled_fixture(2.0);
+        let (a, b, o) = partitions();
+        let p1 = NativeStudyRoleProof::attest_train_only("family-one", &x1, &y1, &a, &b);
+        let p2 = NativeStudyRoleProof::attest_train_only("family-two", &x2, &y2, &a, &b);
+        let admissions = admit_families(&[
+            ("family-one", x1.as_slice(), y1.as_slice(), "TRAIN"),
+            ("family-two", x2.as_slice(), y2.as_slice(), "TRAIN"),
+        ]);
+        let natural = ExecutionBoundaryCaps::reasoner_natural_eos();
+        let s1 = || source(&x1, &y1, &a, &b, &o, &p1, &admissions);
+        let s2 = || source(&x2, &y2, &a, &b, &o, &p2, &admissions);
+        let family = |id: &'static str, arms: Vec<NativeStudyArm<'static>>| NativeStudyFamily {
+            family_id: id,
+            source: s1(),
+            arms,
+        };
+
+        let duplicate_family = NativeStudyDriverPlan {
+            families: vec![
+                family("family-one", vec![arm("teacher", 5)]),
+                family("family-one", vec![arm("baseline", 6)]),
+            ],
+        };
+        assert_refused_before_fit("a duplicate family", &duplicate_family, natural, 2);
+
+        let no_families = NativeStudyDriverPlan { families: Vec::new() };
+        assert_refused_before_fit("an empty study", &no_families, natural, 0);
+
+        let no_arms = NativeStudyDriverPlan {
+            families: vec![family("family-one", Vec::new())],
+        };
+        assert_refused_before_fit("a family with no arms", &no_arms, natural, 0);
+
+        let unsafe_name = NativeStudyDriverPlan {
+            families: vec![family("family-one", vec![arm("a/b", 5)])],
+        };
+        assert_refused_before_fit("an unsafe arm name", &unsafe_name, natural, 1);
+
+        let separator_in_arm = NativeStudyDriverPlan {
+            families: vec![family("family-one", vec![arm("x--y", 5)])],
+        };
+        assert_refused_before_fit("an arm name containing the separator", &separator_in_arm, natural, 1);
+
+        let duplicate_arm = NativeStudyDriverPlan {
+            families: vec![family("family-one", vec![arm("teacher", 5), arm("teacher", 6)])],
+        };
+        assert_refused_before_fit("a duplicate arm name", &duplicate_arm, natural, 2);
+
+        let mismatched_source = NativeStudyDriverPlan {
+            families: vec![NativeStudyFamily {
+                family_id: "family-one",
+                source: s2(),
+                arms: vec![arm("teacher", 5)],
+            }],
+        };
+        assert_refused_before_fit("a family id that does not match its source", &mismatched_source, natural, 1);
+
+        let two = two_family_plan(s1(), s2());
+        assert_refused_before_fit(
+            "a reservation below the arm count",
+            &two,
+            natural,
+            3,
+        );
+        assert_refused_before_fit(
+            "the legacy finite token cap",
+            &two,
+            ExecutionBoundaryCaps::default(),
+            4,
+        );
+        assert_refused_before_fit(
+            "an unlimited (u64::MAX) fit ceiling",
+            &two,
+            ExecutionBoundaryCaps {
+                max_physical_fits: u64::MAX,
+                ..natural
+            },
+            4,
+        );
+    }
+
+    #[test]
+    fn a_completed_driver_study_reopens_with_its_counts_and_refuses_a_second_run_and_a_second_assessment() {
+        let (x1, y1) = fixture();
+        let (x2, y2) = scaled_fixture(2.0);
+        let (a, b, o) = partitions();
+        let p1 = NativeStudyRoleProof::attest_train_only("family-one", &x1, &y1, &a, &b);
+        let p2 = NativeStudyRoleProof::attest_train_only("family-two", &x2, &y2, &a, &b);
+        let admissions = admit_families(&[
+            ("family-one", x1.as_slice(), y1.as_slice(), "TRAIN"),
+            ("family-two", x2.as_slice(), y2.as_slice(), "TRAIN"),
+        ]);
+        let s1 = source(&x1, &y1, &a, &b, &o, &p1, &admissions);
+        let s2 = source(&x2, &y2, &a, &b, &o, &p2, &admissions);
+        let plan = two_family_plan(s1, s2);
+        let natural = ExecutionBoundaryCaps::reasoner_natural_eos();
+        let dir = tempfile::tempdir().unwrap();
+        let study = dir.path().join("study");
+        let outcome = run_native_study_driver(&plan, &study, natural, 4).unwrap();
+
+        let mut reopened = NativeStudyLedger::open(&study).unwrap();
+        assert_eq!(reopened.counters().physical_fits(), outcome.counters.physical_fits, "fits were not resumed");
+        assert_eq!(reopened.counters().model_calls(), outcome.counters.model_calls);
+        assert_eq!(reopened.counters().generated_tokens_total(), outcome.counters.generated_tokens);
+
+        assert!(
+            run_native_study_driver(&plan, &study, natural, 4).is_err(),
+            "a NEW run reused an existing ledger"
+        );
+        assert!(
+            reopened.assess_arm("family-one--teacher", s1).is_err(),
+            "a second O assessment was accepted"
+        );
+        assert_eq!(
+            reopened.counters().physical_fits(),
+            outcome.counters.physical_fits,
+            "a refused assessment changed the count"
+        );
+    }
+
+    #[test]
+    fn a_failed_arm_stays_charged_and_halts_the_reopen_without_repair() {
+        let (x1, y1) = fixture();
+        let (a, b, o) = partitions();
+        let p1 = NativeStudyRoleProof::attest_train_only("family-one", &x1, &y1, &a, &b);
+        let admissions = admit_families(&[("family-one", x1.as_slice(), y1.as_slice(), "TRAIN")]);
+        let s1 = source(&x1, &y1, &a, &b, &o, &p1, &admissions);
+        let plan = NativeStudyDriverPlan {
+            families: vec![NativeStudyFamily {
+                family_id: "family-one",
+                source: s1,
+                arms: vec![arm("teacher", 5), arm("baseline", 6)],
+            }],
+        };
+        // Two fits in total, both reserved for assessment: the first arm's search has no fit to spend.
+        let caps = crate::search::ExecutionBoundaryCaps {
+            max_physical_fits: 2,
+            ..ExecutionBoundaryCaps::reasoner_natural_eos()
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let study = dir.path().join("study");
+        durability_hooks::clear();
+
+        assert!(
+            run_native_study_driver(&plan, &study, caps, 2).is_err(),
+            "a search with no spendable fit reached a winner"
+        );
+        assert!(
+            !durability_hooks::events().iter().any(|e| *e == "claim_created"),
+            "an assessment ran after a failed arm"
+        );
+        assert!(study.join(FAILURE_RECEIPTS_FILE).exists(), "the failure was not receipted");
+        let error = NativeStudyLedger::open(&study).err().unwrap().to_string();
+        assert!(error.contains("never froze"), "{error}");
+        assert!(
+            run_native_study_driver(&plan, &study, caps, 2).is_err(),
+            "a failed study was rerun in place"
+        );
     }
 }
