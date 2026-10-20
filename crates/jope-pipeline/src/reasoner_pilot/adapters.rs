@@ -1185,7 +1185,7 @@ pub struct NativeTeacherFoldEvaluator<'a> {
     a_rows: &'a [u32],
     b_rows: &'a [u32],
     o_rows: &'a [u32],
-    counters: crate::search::ExecutionBoundaryCounters,
+    counters: std::sync::Arc<crate::search::ExecutionBoundaryCounters>,
     o_reads: std::cell::Cell<u64>,
 }
 
@@ -1233,9 +1233,9 @@ impl<'a> NativeTeacherFoldEvaluator<'a> {
             a_rows,
             b_rows,
             o_rows,
-            counters: crate::search::ExecutionBoundaryCounters::new(
+            counters: std::sync::Arc::new(crate::search::ExecutionBoundaryCounters::new(
                 crate::search::ExecutionBoundaryCaps::default(),
-            ),
+            )),
             o_reads: std::cell::Cell::new(0),
         })
     }
@@ -1247,8 +1247,27 @@ impl<'a> NativeTeacherFoldEvaluator<'a> {
 
     /// Replaces the default ceilings. A fit past them is refused fail-closed.
     pub fn with_caps(mut self, caps: crate::search::ExecutionBoundaryCaps) -> Self {
-        self.counters = crate::search::ExecutionBoundaryCounters::new(caps);
+        self.counters = std::sync::Arc::new(crate::search::ExecutionBoundaryCounters::new(caps));
         self
+    }
+
+    /// Shares the caller's counters, so the search and this assessment draw on one quota.
+    pub fn with_shared_counters(
+        mut self,
+        counters: std::sync::Arc<crate::search::ExecutionBoundaryCounters>,
+    ) -> Self {
+        self.counters = counters;
+        self
+    }
+
+    /// The one O read allowed. A second call is refused before any fit runs or any O row is read.
+    pub fn score_assessment_once(&self, serialized: &str) -> Result<f64, AdapterError> {
+        if self.o_reads.get() != 0 {
+            return Err(AdapterError::EvaluatorFailed(
+                "O was already assessed; a second read is refused".into(),
+            ));
+        }
+        self.score_assessment(serialized)
     }
 
     /// How many times the `O` rows have been read. Selection never reads them.
