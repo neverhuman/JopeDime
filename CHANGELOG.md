@@ -8,7 +8,12 @@ the commit areas (crate or lane) named in each subject line.
 ## [0.3.0] - 2026-10-19
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then
-curated through #385. This tag packages the CPU CLI, including the jain-core subprocess contract
+curated through #385. The signed v0.3.0 artifacts were published from
+`b3d347c96ebe821a7b26d44790106aac3e63404d`. These notes were corrected after publication to
+include entries previously left under Unreleased. The signed `RELEASE-NOTES-v0.3.0.md` asset
+retains the original extracted notes; the published tag and binary are unchanged.
+
+This tag packages the CPU CLI, including the jain-core subprocess contract
 `jope pipeline invent`. Model/checkpoint publication, training admission and the separate
 47-task major research qualification remain governed by their own evidence and tracker;
 this binary release does not assert a qualified end-to-end learning flywheel.
