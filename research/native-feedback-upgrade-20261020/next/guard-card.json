@@ -1,0 +1,50 @@
+{
+  "schema": "jope.owned-leaf-guard-candidate-card/v1",
+  "utc": "2026-10-20T09:56:23.809668+00:00",
+  "parent_head": "8cfacc0015b95d06429d8c265e83ea8af5184cfa",
+  "files": {
+    "guarded_job.py": {
+      "bytes": 10314,
+      "sha256": "405e01afcf464f2a38db393fb0d83e9d0336a9b81238e8d95e31de67e71ff516"
+    },
+    "test_guarded_job.py": {
+      "bytes": 10604,
+      "sha256": "13710cf76b712041abf74bb1a3e98b6d1d942c455733a77abe891cfc54df34e1"
+    },
+    "GUARD_CANDIDATE.md": {
+      "bytes": 7124,
+      "sha256": "03c52fd3048efd6a32035372a96d15df2be978eac2d944b9ce823f405587d2cb"
+    }
+  },
+  "test_receipt": {
+    "utc": "2026-10-20T09:55:40.330622+00:00",
+    "argv": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "serious-upgrade-20261020/next",
+      "-p",
+      "test_guarded_job.py",
+      "-v"
+    ],
+    "exit_code": 0,
+    "raw_log": "/Users/bentaylor/Documents/ChatGPT/jope-research-data/native-feedback-upgrade-20261020/guard-tests-0952.log",
+    "log_sha256": "e28ea34d205b15572227aafcbdda97112116eb0072d73feff1fb3135c6cc08fc"
+  },
+  "tests": 21,
+  "failed": 0,
+  "skipped": 0,
+  "scope": "pure policy and fake supplied facts only",
+  "live_execution_qualified": false,
+  "host_adapter_implemented": false,
+  "guard_controls_executed": false,
+  "fresh_numerical_fits": 0,
+  "optimizer_updates": 0,
+  "independent_review": "pending",
+  "ci": "not run",
+  "deadline_original": "2026-10-20T10:59:46Z",
+  "guard_audit_sha256": "fd0471252541d9c0569b7f1fb24596df73f0ddceaa38654324913f29e4a1bec5",
+  "owner_disposition_sha256": "0f712c47bdf4b6ee1a4b86bf71b73a827fcb57eadd19d6739da925adf046e41f"
+}
