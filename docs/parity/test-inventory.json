@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 2",
-  "count": 5570,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 8",
+  "count": 5684,
   "ignored": 74,
   "packages": {
    "battle-gpu": {
@@ -40,12 +40,12 @@
     }
    },
    "feat-math": {
-    "count": 1285,
+    "count": 1331,
     "ignored": 12,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 521,
+      "count": 525,
       "ignored": 6,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -287,6 +287,10 @@
        "kernel::goertzel::tests::preparation_is_portable_and_frozen",
        "kernel::goertzel::tests::restored_state_must_be_the_canonical_preparation",
        "kernel::goertzel::tests::tones_and_mixtures_match_an_independent_dft",
+       "kernel::ir::graph::pure_dag_tests::lowered_stack_evaluates_each_shared_column_once",
+       "kernel::ir::graph::pure_dag_tests::operator_node_is_refused_at_the_pure_entry",
+       "kernel::ir::graph::pure_dag_tests::ordered_row_semantics_are_refused",
+       "kernel::ir::graph::pure_dag_tests::unreachable_node_is_refused",
        "kernel::lexicase::tests::a_selector_drawn_one_event_at_a_time_replays_select",
        "kernel::lexicase::tests::a_single_candidate_draws_nothing",
        "kernel::lexicase::tests::an_overflowing_tolerance_still_rejects_infinite_errors",
@@ -676,6 +680,16 @@
        "emitter_speed"
       ]
      },
+     "feat-math::capability_join_audit": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "capability_join_table_complete",
+       "roundtrip_and_differential_join_zero_drift",
+       "zero_unclassified_primitives_across_all_surfaces"
+      ]
+     },
      "feat-math::capability_manifest": {
       "kind": "test",
       "count": 16,
@@ -1058,6 +1072,19 @@
        "gp_tricks_compile_and_match_independent_references"
       ]
      },
+     "feat-math::gpr_cuda_bench_cases": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "benchmark_with_reference_or_reference_only_is_accepted",
+       "benchmark_without_reference_is_refused_before_preparation",
+       "gpr_cuda_bench_cases_json_valid",
+       "gpr_cuda_bench_cpu_reference_envelope_verified",
+       "validate_gpr_cuda_bench_cases_schema_and_cpu_reference",
+       "verify_benchmark_envelope_enforces_parity_and_timing_bounds"
+      ]
+     },
      "feat-math::gumbel_root": {
       "kind": "test",
       "count": 8,
@@ -1333,6 +1360,36 @@
        "structurally_valid_modern_children_execute_on_their_actual_task"
       ]
      },
+     "feat-math::lazy_if_and_partition_routing": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "lazy_if_poison_branch_never_evaluated",
+       "partitioned_batch_routing_exact_merge",
+       "w03_unselected_branch_zero_invocations_on_poison_trap"
+      ]
+     },
+     "feat-math::learning_program_v1_wire_and_digests": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "four_digest_canonical_identity_deterministic",
+       "proptest_10k_canonical_roundtrip_and_strict_reader",
+       "wire_v1_strict_reader_fails_closed"
+      ]
+     },
+     "feat-math::legacy_bridge_compatibility": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "all_historical_programs_translate_or_opaque_wrap",
+       "legacy_program_v1_exact_parity",
+       "opaque_legacy_node_zero_silent_drop"
+      ]
+     },
      "feat-math::legacy_v2_freeze": {
       "kind": "test",
       "count": 4,
@@ -1413,6 +1470,18 @@
        "step_is_strict_and_nan_compares_false",
        "the_output_filter_zeroes_non_finite_values_and_clamps_magnitude",
        "x_in_row_context_is_an_error_and_a_zero_derive_output"
+      ]
+     },
+     "feat-math::missingness_mask_and_output_policy": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "linear_output_unclamped_at_1e4",
+       "nan_distinct_from_zero_and_linear_unclamped",
+       "nan_mask_distinct_from_zero",
+       "post_expansion_width_admitted_exact",
+       "wp15_mask_and_clamp_export_subset_parity"
       ]
      },
      "feat-math::numeric_profile_v2": {
@@ -1501,6 +1570,17 @@
        "unsupported_portable_emission_is_reported_without_interpreter_substitution"
       ]
      },
+     "feat-math::operation_profile": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "elasticnet_profile_carries_l1_ratio_bound",
+       "join_covers_every_registry_entry",
+       "l1_ratio_unit_interval_is_enforced",
+       "registry_identity_is_unchanged"
+      ]
+     },
      "feat-math::operator_bandit": {
       "kind": "test",
       "count": 8,
@@ -1531,6 +1611,16 @@
        "sample_time_is_refused_for_iid_and_without_ordered_identity"
       ]
      },
+     "feat-math::parameter_domain_and_effect_witness": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "existential_param_effect_witness_all_ops",
+       "l1_ratio_unit_interval_and_all_param_ops_have_effect_witness",
+       "l1_ratio_unit_interval_repaired"
+      ]
+     },
      "feat-math::parity_bits": {
       "kind": "test",
       "count": 7,
@@ -1551,6 +1641,16 @@
       "ignored": 0,
       "tests": [
        "portable_all_helper_backends_match_bits"
+      ]
+     },
+     "feat-math::r0_baseline_golden_bank": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "baseline_manifest_and_7_routes_frozen",
+       "golden_bank_64_fixtures_bit_identical",
+       "verify_64_fixture_golden_bank_and_7_routes"
       ]
      },
      "feat-math::realized_path_stats_v2": {
@@ -1637,6 +1737,17 @@
        "versioned_emitted_recipes_refuse_zero_width_without_changing_legacy_bytes"
       ]
      },
+     "feat-math::schema_pointers_and_exact_literals": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "columns_up_to_511_lossless",
+       "exact_f64_literal_preserved",
+       "schema_vs_layout_permutation_invariance",
+       "w02_wide_columns_permutation_invariant_and_exact_f64"
+      ]
+     },
      "feat-math::scope_validation": {
       "kind": "test",
       "count": 14,
@@ -1694,6 +1805,18 @@
        "injected_recorder_receives_the_same_complete_ordered_trace",
        "oversized_candidates_and_nonfinite_scores_are_rejected",
        "strategy_identity_is_orthogonal_to_vocabulary_identity"
+      ]
+     },
+     "feat-math::shared_feature_dag_cse": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "invocation_local_cache_resets_across_inputs_and_permuted_schemas",
+       "legacy_v1_input_schema_identity_and_graph_lower_unchanged",
+       "program_graph_pure_feature_dag_public_roundtrip_and_bounds",
+       "rejects_cycles_invalid_refs_oob_select_overflow_and_fit_effects",
+       "w04_shared_subexpression_evaluates_once"
       ]
      },
      "feat-math::stable_exponential_execution_v2": {
@@ -2803,7 +2926,7 @@
     }
    },
    "jope-cli": {
-    "count": 79,
+    "count": 80,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -2899,12 +3022,13 @@
      },
      "jope-cli::pipeline_cli": {
       "kind": "test",
-      "count": 9,
+      "count": 10,
       "ignored": 0,
       "tests": [
        "a_given_source_commit_is_recorded_and_git_is_never_spawned",
        "a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs",
        "evolve_into_a_non_empty_output_exits_2_first_and_runs_once_it_is_emptied",
+       "invent_prints_candidates_and_refuses_bad_input_as_json",
        "kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds",
        "kernel2_lm_refinement_records_its_selection_and_verifies_evidence",
        "kernel2_profile_cli_publishes_v4_verifies_evidence_and_defaults_to_fitted_cpp",
@@ -4581,7 +4705,7 @@
     }
    },
    "jope-learning": {
-    "count": 659,
+    "count": 662,
     "ignored": 2,
     "binaries": {
      "jope-learning": {
@@ -5520,6 +5644,16 @@
        "sotarena_rows_append_verify_and_query"
       ]
      },
+     "jope-learning::spq1_prereg_provenance": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "artifact_location_registry_verified",
+       "cohort_3arm_roots_verified",
+       "verify_3arm_cohort_and_artifact_registry_roots"
+      ]
+     },
      "jope-learning::state_resolve": {
       "kind": "test",
       "count": 7,
@@ -5663,7 +5797,7 @@
     }
    },
    "jope-motifs": {
-    "count": 107,
+    "count": 111,
     "ignored": 0,
     "binaries": {
      "jope-motifs": {
@@ -5774,6 +5908,17 @@
        "validate::tests::validation_is_deterministic"
       ]
      },
+     "jope-motifs::legacy_prototype_seam_regression": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "all_prototype_seams_wired_and_measured",
+       "combinators_motifs_seam_verified",
+       "i47_measurement_harness_verified",
+       "typed_graph_effects_seam_verified"
+      ]
+     },
      "jope-motifs::motif_admission": {
       "kind": "test",
       "count": 6,
@@ -5789,13 +5934,61 @@
      }
     }
    },
+   "jope-observatory": {
+    "count": 9,
+    "ignored": 0,
+    "binaries": {
+     "jope-observatory": {
+      "kind": "lib",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "tests::config_mismatch_cannot_report_optimizer_progress",
+       "tests::gp_deduplicates_ids_and_requires_source_hash",
+       "tests::invalid_loss_and_unfixed_panels_are_excluded",
+       "tests::missing_source_is_unknown_and_size_limits_are_enforced",
+       "tests::symlink_and_parent_directory_reads_are_refused"
+      ]
+     },
+     "jope-observatory::bin/collect-datasets": {
+      "kind": "bin",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "tests::catalog_counts_ids_and_preserves_unknown_license",
+       "tests::duplicate_or_wrong_schema_cannot_make_a_census"
+      ]
+     },
+     "jope-observatory::bin/collect-fleet": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-observatory::bin/collect-storage": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-observatory::bin/jope-observatory": {
+      "kind": "bin",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "tests::polling_payload_excludes_library_rows_and_detail_retains_them",
+       "tests::read_only_http_boundary_and_path_refusal"
+      ]
+     }
+    }
+   },
    "jope-parallel": {
-    "count": 843,
+    "count": 855,
     "ignored": 15,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 461,
+      "count": 470,
       "ignored": 8,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -5935,6 +6128,7 @@
        "eval_registry::query::tests::retained_symbolic_model_scores_original_units_with_zero_rmse_without_fit",
        "eval_registry::query::tests::unsupported_metric_units_and_compact_view_deny_before_predicting",
        "eval_registry::service::funding_tests::bound_service_rejects_replaced_config_without_reloading_trust",
+       "eval_registry::service::funding_tests::controller_calls_verify_gpu_task_grant",
        "eval_registry::service::funding_tests::funding_concurrency_is_bounded_before_descriptor_read_and_released_on_disconnect",
        "eval_registry::service::funding_tests::funding_mutex_contention_expires_without_releasing_holder",
        "eval_registry::service::funding_tests::funding_mutex_poison_rejects_immediately",
@@ -5942,7 +6136,10 @@
        "eval_registry::service::funding_tests::funding_socket_returns_real_verified_start_and_participant_proofs",
        "eval_registry::service::funding_tests::generic_fit_client_still_rejects_an_actual_foreign_executable",
        "eval_registry::service::funding_tests::lost_funding_socket_reply_does_not_renew_original_start",
+       "eval_registry::service::funding_tests::negative_grant_mismatch_fails_closed",
+       "eval_registry::service::funding_tests::participant_per_rank_grant_verified",
        "eval_registry::service::funding_tests::server_rejects_wrong_descriptor_and_actual_runtime_before_start",
+       "eval_registry::service::funding_tests::verify_gpu_task_grant_positive_and_negative",
        "eval_registry::service::sandbox::tests::fit_child_is_confined_and_attested_only_after_lockdown",
        "eval_registry::service::sandbox::tests::fs_allowlist_requirement_refuses_kernels_without_landlock",
        "eval_registry::service::sandbox::tests::lockdown_refuses_a_child_with_more_threads_than_allowed",
@@ -6102,6 +6299,10 @@
        "jain_vocabulary::tests::search_loader_projects_only_executable_programs",
        "jain_vocabulary::tests::token_table_and_automaton_constants_are_unchanged",
        "label_admission::native_path_tests::external_witness_requires_exact_verified_native_binding",
+       "label_admission::tests::census_payload_samples_and_promotion_gate",
+       "label_admission::tests::historical_census_closure_verified",
+       "label_admission::tests::shard_directory_payload_hashes_verified",
+       "label_admission::tests::strict_v2_and_native_fit_binding_preflight",
        "native_genome::tests::all_failed_outcomes_do_not_invent_a_quality_target",
        "native_genome::tests::continuation_keeps_original_parent_until_measured_descendant_improves_it",
        "native_genome::tests::exact_direct_and_original_parent_contract_cannot_be_relabelled",
@@ -6208,6 +6409,7 @@
        "service::coverage::tests::generation_population_is_frozen_training_only_and_distinct_within_population",
        "service::coverage::tests::missing_census_cannot_reserve_and_historical_start_remains_unavailable",
        "service::coverage::tests::queued_plans_balance_families_and_datasets_without_inflating_dispatch_attempts",
+       "shard_index::tests::shard_index_payload_closure_verified",
        "smartcluster_worker::tests::atomic_record_publication_preserves_old_and_interrupted_bytes",
        "smartcluster_worker::tests::blocked_control_diagnostic_cannot_delay_stop_or_original_watchdog",
        "smartcluster_worker::tests::closure_fifo_is_rejected_without_waiting_for_writer",
@@ -6850,6 +7052,16 @@
       "ignored": 0,
       "tests": []
      },
+     "jope-parallel::native_gpu_grant_installed_policy": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "installed_policy_uid0_verified",
+       "installed_uid0_policy_and_signed_grant_admit_xbabe123",
+       "signed_native_grant_witness_bound"
+      ]
+     },
      "jope-parallel::native_loop_continuation": {
       "kind": "test",
       "count": 5,
@@ -7201,12 +7413,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 419,
+    "count": 433,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 338,
+      "count": 344,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7269,6 +7481,12 @@
        "experimental_producer::tests::initial_claims_reject_reordering_duplicates_wrong_head_and_native_tampering",
        "experimental_producer::tests::physical_python_argv_ignores_ambient_import_paths_and_pins_request",
        "experimental_producer::tests::runtime_inventory_detects_source_and_package_drift_before_launch",
+       "invent::tests::csv_moves_the_named_target_last_and_keeps_feature_order",
+       "invent::tests::csv_refuses_missing_target_text_and_non_finite_values",
+       "invent::tests::invent_ranks_executable_genomes_and_is_deterministic_under_an_evaluation_budget",
+       "invent::tests::only_jain_executable_pipelines_are_admitted",
+       "invent::tests::preflight_refuses_bad_counts_before_reading_anything",
+       "invent::tests::work_dir_must_be_new_or_empty_and_is_checked_before_anything_is_written",
        "islands::tests::island_zero_is_the_run_stream_and_others_differ",
        "islands::tests::next_seeds_is_independent_of_input_order",
        "islands::tests::next_seeds_ranks_deduplicates_and_caps",
@@ -7600,6 +7818,17 @@
        "probe_builder_rejects_outer_sealed_unknown_and_tainted_ancestry"
       ]
      },
+     "jope-pipeline::legacy_prototype_seam_regression": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "all_prototype_seams_wired_and_measured",
+       "combinators_motifs_seam_verified",
+       "i47_measurement_harness_verified",
+       "typed_graph_effects_seam_verified"
+      ]
+     },
      "jope-pipeline::modern_gp_candidate": {
       "kind": "test",
       "count": 5,
@@ -7621,6 +7850,17 @@
        "fitted_product_emit_reload_and_execute",
        "near_tie_fitted_quantiles_use_independent_oracle_through_product_route",
        "unsupported_options_and_heads_fail_before_export"
+      ]
+     },
+     "jope-pipeline::p03_numeric_v2_route_and_emit": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "numeric_v2_and_emit_adapters_execute_with_legacy_default_unchanged",
+       "old_default_route_outputs_unchanged",
+       "p03_numeric_v2_and_numeric_v2_emit_execute_on_supported_subset",
+       "pipeline_and_cli_kernel_adapters_wired"
       ]
      },
      "jope-pipeline::residual_closure": {
@@ -7723,7 +7963,7 @@
     }
    },
    "jope-policy": {
-    "count": 99,
+    "count": 109,
     "ignored": 3,
     "binaries": {
      "jope-policy": {
@@ -7829,6 +8069,23 @@
        "verified_3000_and_6000_descendants_are_valid_challengers"
       ]
      },
+     "jope-policy::factored_edit_policy_and_trace_accounting": {
+      "kind": "test",
+      "count": 10,
+      "ignored": 0,
+      "tests": [
+       "edit_policy::tests::columns_17_and_63_remap_equivariantly_under_schema_permutation",
+       "edit_policy::tests::eos_mass_and_continuous_density_match_sampler_and_scorer",
+       "edit_policy::tests::illegal_or_zero_support_actions_and_undeclared_time_edits_refuse",
+       "edit_policy::tests::unsupported_backend_length_and_schema_are_rejected_before_policy_use",
+       "g10_all_attempt_trajectory_logging_and_trace_vs_lower_bound_accounting",
+       "spec_a_g7_legacy_mode_legal_sets_and_decode_traces_exact_equality",
+       "spec_a_g7_zero_silently_truncated_or_misbound_accepted_children_over_10k_attempts",
+       "spec_b_g12_off_bin_descendants_never_inherit_projected_scores_and_unsupported_counted",
+       "spec_b_g13_enumerated_action_laws_normalize_no_minted_propensity",
+       "zero_truncated_misbound_over_10k_legacy_trace_parity_and_g12_g13"
+      ]
+     },
      "jope-policy::grammar_differential": {
       "kind": "test",
       "count": 4,
@@ -7882,14 +8139,23 @@
     }
    },
    "jope-records": {
-    "count": 236,
+    "count": 251,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 90,
+      "count": 102,
       "ignored": 0,
       "tests": [
+       "ci_plan::tests::docs_only_pull_request_runs_only_changes_and_hygiene",
+       "ci_plan::tests::feat_math_change_triggers_rust_emitters_and_e2e_only",
+       "ci_plan::tests::rejects_unsupported_event",
+       "ci_plan::tests::workflow_dispatch_enables_all_lanes",
+       "ci_results::tests::rejects_pytest_errors_or_nextest_mismatch",
+       "ci_results::tests::summarizes_nextest_and_reconciles_with_junit_missing_skipped_attr",
+       "ci_results::tests::summarizes_rust_and_pytest_logs",
+       "compare_bits::tests::agrees_when_all_pred_files_have_identical_ieee754_bits",
+       "compare_bits::tests::reports_first_mismatching_file_on_stderr",
        "coverage::tests::changed_target_requirements_fail",
        "coverage::tests::collection_failure_preserves_exit_without_static_fallback",
        "coverage::tests::current_mapping",
@@ -7979,6 +8245,9 @@
        "selfplay_baseline::tests::distinguish_current_ci_historical_runs_and_proposed_protocols",
        "selfplay_baseline::tests::reconcile_benchmark_and_product_profile_identities",
        "selfplay_baseline::tests::record_all_skipped_and_unavailable_runtime_combinations",
+       "source_inventory::tests::accepts_valid_minimal_repo",
+       "source_inventory::tests::rejects_parent_traversal_in_research_source_key",
+       "source_inventory::tests::rejects_tampered_research_source_hash",
        "zstd_frame::tests::round_trip_and_limit"
       ]
      },
@@ -7987,6 +8256,16 @@
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "jope-records::i53_i62_executable_receipts": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "i53_and_i62_contracts_execute",
+       "i53_executable_contract_test",
+       "i62_executable_contract_test"
+      ]
      },
      "jope-records::python_parity": {
       "kind": "test",
@@ -8660,7 +8939,7 @@
   }
  },
  "totals": {
-  "rust": 5570,
+  "rust": 5684,
   "python": 182
  }
 }

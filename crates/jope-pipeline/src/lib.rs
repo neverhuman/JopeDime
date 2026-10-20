@@ -43,6 +43,7 @@ pub mod experiment_v2;
 #[cfg(feature = "qualified-context")]
 pub mod experimental_producer;
 pub mod front_door;
+pub mod invent;
 pub mod islands;
 pub mod kernel2;
 pub mod lineage;

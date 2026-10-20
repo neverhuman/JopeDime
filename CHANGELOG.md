@@ -5,6 +5,10 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Pipeline
+
+- pipeline: `jope pipeline invent` prints ranked candidates for jain-core's `Jope` invention engine as `jope.candidates.v1`: a header CSV in (numeric, finite, regression), programs whose every op jain-math 9fa594e executes, hold RMSE and R2 per candidate, exit codes 0/2/3/143, and a `--work-dir` that must be new or empty (#385)
+
 ### Campaigns, self-play and learning
 
 - learning(clover): full-S3 `gp_distilled/v1` self-play flywheel and high-dimensional `ContextualSurrogateQHat` (#337), active-vs-passive flywheel control, S3 prior warm-start, and inner-CV meta-ridge (#338), and SoS sub-pool debiasing, continuous S3 priors, and decoupled projection ridge (#339)
