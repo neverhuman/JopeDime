@@ -330,6 +330,60 @@ fn materialize_native_cut(source: &NativeStudySource<'_>) -> crate::prepare::Cut
     }
 }
 
+/// Test-only fault and trace hooks for the create-only durability sequence. Thread-local, so parallel
+/// tests do not share them. They inject a failed directory sync in the test's own fixture. They do
+/// not simulate a power failure.
+#[cfg(test)]
+pub(crate) mod durability_hooks {
+    use std::cell::{Cell, RefCell};
+    thread_local! {
+        pub static TRACE: RefCell<Vec<&'static str>> = const { RefCell::new(Vec::new()) };
+        pub static FAIL_NEXT_DIR_SYNC: Cell<bool> = const { Cell::new(false) };
+    }
+    pub fn clear() {
+        TRACE.with(|t| t.borrow_mut().clear());
+    }
+    pub fn events() -> Vec<&'static str> {
+        TRACE.with(|t| t.borrow().clone())
+    }
+    pub fn fail_next_dir_sync() {
+        FAIL_NEXT_DIR_SYNC.with(|f| f.set(true));
+    }
+}
+
+/// Records one step of the create-only durability sequence. Compiled out of non-test builds.
+fn trace(event: &'static str) {
+    #[cfg(test)]
+    durability_hooks::TRACE.with(|t| t.borrow_mut().push(event));
+    #[cfg(not(test))]
+    let _ = event;
+}
+
+#[cfg(test)]
+fn injected_dir_sync_fault() -> bool {
+    durability_hooks::FAIL_NEXT_DIR_SYNC.with(|f| f.replace(false))
+}
+
+#[cfg(not(test))]
+fn injected_dir_sync_fault() -> bool {
+    false
+}
+
+/// Makes a create-only file's directory entry durable. A file's own `sync_all` does not persist the
+/// name it was created under: a crash can lose the file, and a new create could then take its place.
+/// Each caller runs this before it acknowledges the file or reads O. Errors propagate fail-closed.
+fn sync_containing_dir(dir: &std::path::Path) -> Result<()> {
+    ensure!(
+        !injected_dir_sync_fault(),
+        "injected directory sync failure (test fixture only) for {}",
+        dir.display()
+    );
+    std::fs::File::open(dir)
+        .with_context(|| format!("cannot open {} to sync it", dir.display()))?
+        .sync_all()
+        .with_context(|| format!("cannot sync directory {}", dir.display()))
+}
+
 /// The named native study's search arm. It runs `search::run_cuts_with` on the materialised A/B cut
 /// under `without_time_limit()`, with the caller's counters shared into the search. It then writes
 /// the frozen winner create-only, and returns. O is not opened here.
@@ -376,8 +430,14 @@ pub fn run_native_search_study_arm(
         .create_new(true)
         .open(output.join(FROZEN_WINNER_FILE))
         .context("the winner is already frozen")?;
+    trace("frozen_created");
     std::io::Write::write_all(&mut file, &serde_json::to_vec_pretty(&frozen)?)?;
     file.sync_all()?;
+    trace("frozen_file_synced");
+    // The freeze is not acknowledged until its name is durable. An error here returns to the caller
+    // with no run, so the arm is never marked frozen.
+    sync_containing_dir(output)?;
+    trace("frozen_dir_synced");
     Ok(NativeStudyRun { search, frozen })
 }
 
@@ -417,11 +477,17 @@ pub fn assess_frozen_winner(
         .create_new(true)
         .open(output.join(ASSESSMENT_CLAIM_FILE))
         .context("the assessment is already claimed; a retry is refused")?;
+    trace("claim_created");
     std::io::Write::write_all(
         &mut claim,
         &serde_json::to_vec_pretty(&serde_json::json!({ "winner": frozen.winner }))?,
     )?;
     claim.sync_all()?;
+    trace("claim_file_synced");
+    // The claim must be durable before O is read. If its name is lost in a crash, a second assessment
+    // could run, so an error here stops the assessment before the evaluator is built.
+    sync_containing_dir(output)?;
+    trace("claim_dir_synced");
     let evaluator = adapters::NativeTeacherFoldEvaluator::new(
         source.features,
         source.targets,
@@ -1850,5 +1916,166 @@ mod native_study_tests {
             "tokens past the aggregate ceiling were recorded"
         );
         assert_eq!(capped.counters().generated_tokens_total(), 60);
+    }
+
+    // S9. These fixtures inject a failed directory sync into this test's own temporary directory. They
+    // do not simulate a power failure, and they do not write a crash image. The claim is what a
+    // real crash would have to preserve, so the tests check the order of steps and the refusals that
+    // follow an injected failure.
+
+    #[test]
+    fn the_freeze_and_the_claim_sync_their_directories_in_order_before_any_o_read() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+
+        durability_hooks::clear();
+        run_once(&x, &y, natural_counters(), dir.path()).unwrap();
+        assert_eq!(
+            durability_hooks::events(),
+            vec!["frozen_created", "frozen_file_synced", "frozen_dir_synced"],
+            "the freeze was not made durable in order"
+        );
+
+        durability_hooks::clear();
+        assess_frozen_winner(
+            source(&x, &y, &a, &b, &o, &proof, &admissions),
+            natural_counters(),
+            dir.path(),
+        )
+        .unwrap();
+        assert_eq!(
+            durability_hooks::events(),
+            vec!["claim_created", "claim_file_synced", "claim_dir_synced"],
+            "the claim was not made durable in order before the O read"
+        );
+    }
+
+    #[test]
+    fn a_failed_claim_directory_sync_stops_before_any_o_read_and_keeps_the_claim() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+        run_once(&x, &y, natural_counters(), dir.path()).unwrap();
+
+        let counters = natural_counters();
+        let fits_before = counters.physical_fits();
+        durability_hooks::clear();
+        durability_hooks::fail_next_dir_sync();
+        let error = assess_frozen_winner(
+            source(&x, &y, &a, &b, &o, &proof, &admissions),
+            counters.clone(),
+            dir.path(),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("injected directory sync failure"), "{error}");
+        assert_eq!(
+            durability_hooks::events(),
+            vec!["claim_created", "claim_file_synced"],
+            "the evaluator ran after a failed claim sync"
+        );
+        assert_eq!(counters.physical_fits(), fits_before, "a fit ran past the failed sync");
+        assert!(
+            dir.path().join(ASSESSMENT_CLAIM_FILE).exists(),
+            "the claim was not kept after a failed sync"
+        );
+
+        durability_hooks::clear();
+        assert!(
+            assess_frozen_winner(
+                source(&x, &y, &a, &b, &o, &proof, &admissions),
+                counters.clone(),
+                dir.path()
+            )
+            .is_err(),
+            "a second assessment ran after the claim was created"
+        );
+        assert!(durability_hooks::events().is_empty(), "a refused retry reached the claim path");
+        assert_eq!(counters.physical_fits(), fits_before);
+    }
+
+    #[test]
+    fn a_failed_freeze_directory_sync_is_not_acknowledged() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+
+        durability_hooks::clear();
+        durability_hooks::fail_next_dir_sync();
+        let outcome = run_native_search_study_arm(
+            source(&x, &y, &a, &b, &o, &proof, &admissions),
+            budget(),
+            5,
+            natural_counters(),
+            dir.path(),
+        );
+        assert!(outcome.is_err(), "a freeze with an unsynced name was acknowledged");
+        assert_eq!(
+            durability_hooks::events(),
+            vec!["frozen_created", "frozen_file_synced"],
+            "the freeze continued past a failed directory sync"
+        );
+    }
+
+    #[test]
+    fn a_failed_freeze_sync_leaves_the_arm_admitted_so_the_study_halts_on_reopen() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        durability_hooks::fail_next_dir_sync();
+        assert!(
+            ledger
+                .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
+                .is_err(),
+            "the arm was marked frozen after a failed freeze sync"
+        );
+        drop(ledger);
+        let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
+        assert!(error.contains("never froze"), "{error}");
+    }
+
+    #[test]
+    fn a_failed_claim_sync_leaves_a_claim_that_halts_the_study_on_reopen() {
+        let (x, y) = fixture();
+        let (a, b, o) = partitions();
+        let proof = honest_proof(&x, &y, &a, &b);
+        let admissions = admitted(&x, &y, &a, &b);
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = NativeStudyLedger::create(
+            dir.path(),
+            ExecutionBoundaryCaps::reasoner_natural_eos(),
+            1,
+            &["arm-a"],
+        )
+        .unwrap();
+        ledger
+            .run_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions), budget(), 5)
+            .unwrap();
+        durability_hooks::fail_next_dir_sync();
+        assert!(
+            ledger
+                .assess_arm("arm-a", source(&x, &y, &a, &b, &o, &proof, &admissions))
+                .is_err(),
+            "the assessment completed after a failed claim sync"
+        );
+        drop(ledger);
+        let error = NativeStudyLedger::open(dir.path()).err().unwrap().to_string();
+        assert!(error.contains("assessment claim"), "{error}");
     }
 }
