@@ -182,6 +182,116 @@ pub struct SearchOptions {
     /// The reasoner no-time-limit policy (`NO_TIME_LIMIT_POLICY_20261019`). `false` keeps the
     /// legacy temporal bound `Budget.seconds`; `true` removes it. See [`SearchOptions::time_limit`].
     pub unbounded_time: bool,
+    /// Executing-boundary counters for every physical fit this search makes. `None` keeps the
+    /// legacy, uncounted behaviour.
+    pub fit_counters: Option<std::sync::Arc<ExecutionBoundaryCounters>>,
+}
+
+/// Ceilings enforced at the executing boundaries: each physical fit and each model call.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExecutionBoundaryCaps {
+    pub max_physical_fits: u64,
+    pub max_model_calls: u64,
+    pub max_reasoning_tokens_per_call: u64,
+}
+
+impl Default for ExecutionBoundaryCaps {
+    /// The ceilings of the reasoner pilot: 20 000 physical fits, 2 048 model calls and 8 192
+    /// reasoning tokens per call.
+    fn default() -> Self {
+        ExecutionBoundaryCaps {
+            max_physical_fits: 20_000,
+            max_model_calls: 2_048,
+            max_reasoning_tokens_per_call: 8_192,
+        }
+    }
+}
+
+/// Running totals at the executing boundaries. Each charge is counted before the work runs, and a
+/// charge past its ceiling is refused, so no work beyond a cap starts. Safe to share across the
+/// evaluation pool's threads.
+#[derive(Debug)]
+pub struct ExecutionBoundaryCounters {
+    caps: ExecutionBoundaryCaps,
+    physical_fits: std::sync::atomic::AtomicU64,
+    model_calls: std::sync::atomic::AtomicU64,
+    reasoning_tokens_total: std::sync::atomic::AtomicU64,
+    max_call_tokens_observed: std::sync::atomic::AtomicU64,
+}
+
+impl ExecutionBoundaryCounters {
+    pub fn new(caps: ExecutionBoundaryCaps) -> Self {
+        ExecutionBoundaryCounters {
+            caps,
+            physical_fits: Default::default(),
+            model_calls: Default::default(),
+            reasoning_tokens_total: Default::default(),
+            max_call_tokens_observed: Default::default(),
+        }
+    }
+
+    pub fn caps(&self) -> ExecutionBoundaryCaps {
+        self.caps
+    }
+
+    pub fn physical_fits(&self) -> u64 {
+        self.physical_fits.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn model_calls(&self) -> u64 {
+        self.model_calls.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn reasoning_tokens_total(&self) -> u64 {
+        self.reasoning_tokens_total
+            .load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn max_call_tokens_observed(&self) -> u64 {
+        self.max_call_tokens_observed
+            .load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Counts one physical fit before `feat_math::fit` runs. Refused at the ceiling, with the
+    /// reason `"physical fold fits"`.
+    pub fn charge_physical_fit(&self) -> Result<(), &'static str> {
+        take_one(
+            &self.physical_fits,
+            self.caps.max_physical_fits,
+            "physical fold fits",
+        )
+    }
+
+    /// Counts one model call before it runs. A call whose reasoning tokens exceed the per-call cap
+    /// is refused without being counted, with the reason `"reasoning tokens per call"`. A call past
+    /// the call ceiling is refused with the reason `"model calls"`.
+    pub fn record_model_call(&self, reasoning_tokens: u64) -> Result<(), &'static str> {
+        if reasoning_tokens > self.caps.max_reasoning_tokens_per_call {
+            return Err("reasoning tokens per call");
+        }
+        take_one(&self.model_calls, self.caps.max_model_calls, "model calls")?;
+        self.reasoning_tokens_total
+            .fetch_add(reasoning_tokens, std::sync::atomic::Ordering::SeqCst);
+        self.max_call_tokens_observed
+            .fetch_max(reasoning_tokens, std::sync::atomic::Ordering::SeqCst);
+        Ok(())
+    }
+}
+
+/// Increments `counter` only while it is below `ceiling`. Otherwise refuses with `reason`.
+fn take_one(
+    counter: &std::sync::atomic::AtomicU64,
+    ceiling: u64,
+    reason: &'static str,
+) -> Result<(), &'static str> {
+    counter
+        .fetch_update(
+            std::sync::atomic::Ordering::SeqCst,
+            std::sync::atomic::Ordering::SeqCst,
+            |n| (n < ceiling).then_some(n + 1),
+        )
+        .map(|_| ())
+        .map_err(|_| reason)
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -201,6 +311,7 @@ impl SearchOptions {
             record_events: true,
             event_binding: None,
             unbounded_time: false,
+            fit_counters: None,
         }
     }
 
@@ -684,12 +795,25 @@ pub(crate) fn stream(rng_seed: u64, cut: usize, generation: usize, slot: usize, 
 
 /// Fit one candidate on the cut's training rows and score it on the held-out
 /// rows. Never returns `Err`: a failure is an [`Observation`], not an abort.
+#[cfg(test)]
 pub(crate) fn evaluate(
     genome: &str,
     cut: &Cut,
     generation: usize,
     origin: &'static str,
     clock: Clock,
+) -> Observation {
+    evaluate_counted(genome, cut, generation, origin, clock, None)
+}
+
+/// [`evaluate`] with the physical fit counted against `counters` when given.
+pub(crate) fn evaluate_counted(
+    genome: &str,
+    cut: &Cut,
+    generation: usize,
+    origin: &'static str,
+    clock: Clock,
+    counters: Option<&ExecutionBoundaryCounters>,
 ) -> Observation {
     let started = clock.start();
     let record = |status, failure: Option<String>, seconds| Observation {
@@ -717,6 +841,18 @@ pub(crate) fn evaluate(
             );
         }
     };
+
+    // The fit is counted before it runs. A charge past the ceiling refuses the fit, so no
+    // physical fit beyond the cap starts. The refusal is recorded as a failed fit.
+    if let Some(counters) = counters {
+        if let Err(reason) = counters.charge_physical_fit() {
+            return record(
+                FIT_FAILED,
+                Some(format!("execution-boundary cap refused the fit: {reason}")),
+                started.elapsed().as_secs_f64(),
+            );
+        }
+    }
 
     // feat-math is a large numerical surface and the search reaches parameter
     // combinations no hand-written call does. A panic in one candidate must not
@@ -1096,7 +1232,7 @@ fn evaluate_admitted(
                     break;
                 }
                 results.push(Some(record_evaluation(recorder, draw, clock, || {
-                    let mut observation = evaluate(genome, cut, generation, origin, clock);
+                    let mut observation = evaluate_counted(genome, cut, generation, origin, clock, options.fit_counters.as_deref());
                     observation.island = (options.islands > 1).then_some(*island);
                     observation
                 })));
@@ -1111,7 +1247,7 @@ fn evaluate_admitted(
                     .map(|(island, genome, origin, _)| {
                         may_start(origin).then(|| {
                             let started = recorder.map(|_| clock.start());
-                            let mut observation = evaluate(genome, cut, generation, origin, clock);
+                            let mut observation = evaluate_counted(genome, cut, generation, origin, clock, options.fit_counters.as_deref());
                             observation.island = (options.islands > 1).then_some(*island);
                             let elapsed = started.map(|stamp| stamp.secs());
                             (observation, elapsed)
@@ -1487,7 +1623,7 @@ fn remeasure_in(
                     clock,
                     &stop,
                     recorder.as_ref(),
-                    &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                    &mut |g, c, n, o| evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref()),
                 );
             }
         }
@@ -1503,7 +1639,7 @@ fn remeasure_in(
                         clock,
                         &stop,
                         recorder.as_ref(),
-                        &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                        &mut |g, c, n, o| evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref()),
                     )
                 })
         }),
@@ -2031,6 +2167,46 @@ mod tests {
         }
         .check_evaluations()
         .is_err());
+    }
+
+    /// GATE 3 at the production boundary. A search whose fit counter has a small ceiling runs no
+    /// physical fit past it: the counter reads exactly the ceiling, and the refused candidates are
+    /// recorded as failed fits with the cap's reason.
+    #[test]
+    fn the_search_counts_each_physical_fit_and_refuses_past_the_ceiling() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "boundary",
+            7,
+            3,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let counters = Arc::new(ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_physical_fits: 3,
+            ..ExecutionBoundaryCaps::default()
+        }));
+        let options = SearchOptions {
+            fit_counters: Some(counters.clone()),
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 40,
+                    seconds: 60,
+                },
+                11,
+            )
+        };
+        // A cut whose every candidate is refused has no successful measurement, so the run fails
+        // closed with the cap's reason. It does not publish a search built from refused fits.
+        let error = run_cuts_with(&preparation.cuts, &options, &temp.path().join("search"))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("execution-boundary cap refused the fit: physical fold fits"),
+            "{error}"
+        );
+        assert_eq!(counters.physical_fits(), 3, "the counter must stop at its ceiling");
     }
 
     #[test]

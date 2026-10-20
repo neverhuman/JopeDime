@@ -657,6 +657,7 @@ pub struct RidgeFoldEvaluator<'a> {
     b_rows: &'a [u32],
     o_rows: &'a [u32],
     ridge_lambda: f64,
+    counters: crate::search::ExecutionBoundaryCounters,
     o_reads: std::cell::Cell<u64>,
 }
 
@@ -700,6 +701,7 @@ impl<'a> RidgeFoldEvaluator<'a> {
             o_rows,
             ridge_lambda,
             o_reads: std::cell::Cell::new(0),
+            counters: crate::search::ExecutionBoundaryCounters::new(crate::search::ExecutionBoundaryCaps::default()),
         })
     }
 
@@ -734,6 +736,7 @@ impl<'a> RidgeFoldEvaluator<'a> {
             .iter()
             .map(|&row| self.targets[row as usize])
             .collect();
+        self.counters.charge_physical_fit().map_err(AdapterError::BudgetExhausted)?;
         fit_ridge(&design, &targets, self.ridge_lambda)
     }
 
@@ -971,6 +974,7 @@ pub struct GpProgramFoldEvaluator<'a> {
     b_rows: &'a [u32],
     o_rows: &'a [u32],
     ridge_lambda: f64,
+    counters: crate::search::ExecutionBoundaryCounters,
     o_reads: std::cell::Cell<u64>,
 }
 
@@ -993,6 +997,7 @@ impl<'a> GpProgramFoldEvaluator<'a> {
             o_rows,
             ridge_lambda,
             o_reads: std::cell::Cell::new(0),
+            counters: crate::search::ExecutionBoundaryCounters::new(crate::search::ExecutionBoundaryCaps::default()),
         })
     }
 
@@ -1029,6 +1034,7 @@ impl<'a> GpProgramFoldEvaluator<'a> {
             .iter()
             .map(|&row| self.targets[row as usize])
             .collect();
+        self.counters.charge_physical_fit().map_err(AdapterError::BudgetExhausted)?;
         let beta = fit_ridge(&train, &y_a, self.ridge_lambda)?;
         let sse: f64 = test
             .iter()
@@ -1092,6 +1098,277 @@ pub fn evaluate_program_episode(
             }
         };
         let canonical = program.to_string();
+        if journal.is_seen(&canonical) {
+            journal.close_slot(&canonical, SlotOutcome::Duplicate, 0)?;
+            continue;
+        }
+        journal.charge_fits(cfg.fits_per_candidate)?;
+        let rmse_b = evaluator.score_selection(&canonical)?.0;
+        if !rmse_b.is_finite() {
+            journal.close_slot(&canonical, SlotOutcome::NonFinite, 1)?;
+            continue;
+        }
+        journal.close_slot(&canonical, SlotOutcome::Ok, 1)?;
+        credited += 1;
+        if best.as_ref().is_none_or(|(_, b)| rmse_b < *b) {
+            best = Some((canonical, rmse_b));
+        }
+    }
+    if credited == 0 {
+        if !o_fallback.is_finite() {
+            return Err(AdapterError::NonFiniteScore);
+        }
+        return Ok(DisjointEpisode {
+            epsilon_f,
+            selected: None,
+            o_score: o_fallback,
+            episode_failed: true,
+        });
+    }
+    let (selected, _) = best.ok_or(AdapterError::NoEligibleCandidate)?;
+    let o_score = evaluator.score_assessment(&selected)?;
+    if !o_score.is_finite() {
+        return Err(AdapterError::NonFiniteScore);
+    }
+    Ok(DisjointEpisode {
+        epsilon_f,
+        selected: Some(selected),
+        o_score,
+        episode_failed: false,
+    })
+}
+
+impl<'a> RidgeFoldEvaluator<'a> {
+    /// The executing-boundary counters for this evaluator's physical fits.
+    pub fn counters(&self) -> &crate::search::ExecutionBoundaryCounters {
+        &self.counters
+    }
+
+    /// Replaces the default ceilings. A fit past them is refused fail-closed.
+    pub fn with_caps(mut self, caps: crate::search::ExecutionBoundaryCaps) -> Self {
+        self.counters = crate::search::ExecutionBoundaryCounters::new(caps);
+        self
+    }
+}
+
+impl<'a> GpProgramFoldEvaluator<'a> {
+    /// The executing-boundary counters for this evaluator's physical fits.
+    pub fn counters(&self) -> &crate::search::ExecutionBoundaryCounters {
+        &self.counters
+    }
+
+    /// Replaces the default ceilings. A fit past them is refused fail-closed.
+    pub fn with_caps(mut self, caps: crate::search::ExecutionBoundaryCaps) -> Self {
+        self.counters = crate::search::ExecutionBoundaryCounters::new(caps);
+        self
+    }
+}
+
+/// GATE 1. A canonical `search.rs` pipeline genome, fitted with feat-math on the `A` rows and scored
+/// on `B` (selection) or `O` (assessment). It takes the production path: `GenomeIr::parse`,
+/// `feat_math::fit`, then `predict`. Each physical fit is counted before it runs (GATE 3).
+pub struct NativeTeacherFoldEvaluator<'a> {
+    features: &'a [Vec<f64>],
+    targets: &'a [f64],
+    a_rows: &'a [u32],
+    b_rows: &'a [u32],
+    o_rows: &'a [u32],
+    counters: crate::search::ExecutionBoundaryCounters,
+    o_reads: std::cell::Cell<u64>,
+}
+
+impl<'a> NativeTeacherFoldEvaluator<'a> {
+    /// Checks the partitions are disjoint and in range, and the table is a finite rectangle. The
+    /// targets of `O` may be non-finite: they are read only at assessment, and the tests rely on
+    /// that.
+    pub fn new(
+        features: &'a [Vec<f64>],
+        targets: &'a [f64],
+        a_rows: &'a [u32],
+        b_rows: &'a [u32],
+        o_rows: &'a [u32],
+    ) -> Result<Self, AdapterError> {
+        check_disjoint(a_rows, b_rows, o_rows)?;
+        let width = features.first().map_or(0, Vec::len);
+        if features.is_empty()
+            || width == 0
+            || features.len() != targets.len()
+            || features.iter().any(|row| row.len() != width)
+            || features.iter().flatten().any(|v| !v.is_finite())
+        {
+            return Err(AdapterError::EvaluatorFailed(
+                "features must be a finite rectangular table with one target per row".into(),
+            ));
+        }
+        if a_rows.len() < 2 || b_rows.is_empty() || o_rows.is_empty() {
+            return Err(AdapterError::TooFewTargets { n: a_rows.len() });
+        }
+        for &row in a_rows.iter().chain(b_rows).chain(o_rows) {
+            if row as usize >= features.len() {
+                return Err(AdapterError::EvaluatorFailed(format!(
+                    "row {row} is outside the table"
+                )));
+            }
+        }
+        for &row in a_rows.iter().chain(b_rows) {
+            if !targets[row as usize].is_finite() {
+                return Err(AdapterError::NonFiniteTarget);
+            }
+        }
+        Ok(Self {
+            features,
+            targets,
+            a_rows,
+            b_rows,
+            o_rows,
+            counters: crate::search::ExecutionBoundaryCounters::new(
+                crate::search::ExecutionBoundaryCaps::default(),
+            ),
+            o_reads: std::cell::Cell::new(0),
+        })
+    }
+
+    /// The executing-boundary counters for this evaluator's physical fits.
+    pub fn counters(&self) -> &crate::search::ExecutionBoundaryCounters {
+        &self.counters
+    }
+
+    /// Replaces the default ceilings. A fit past them is refused fail-closed.
+    pub fn with_caps(mut self, caps: crate::search::ExecutionBoundaryCaps) -> Self {
+        self.counters = crate::search::ExecutionBoundaryCounters::new(caps);
+        self
+    }
+
+    /// How many times the `O` rows have been read. Selection never reads them.
+    pub fn o_reads(&self) -> u64 {
+        self.o_reads.get()
+    }
+
+    /// Fits the genome on `A` and returns the RMSE on `rows`. A genome that does not parse is an
+    /// error. A fit that fails, panics, or predicts non-finite values scores `NaN`, which the
+    /// episode records as a non-finite candidate. A charge past the fit ceiling is an error.
+    fn scored(&self, serialized: &str, rows: &[u32]) -> Result<f64, AdapterError> {
+        let genome = feat_math::genome::GenomeIr::parse(serialized).map_err(|error| {
+            AdapterError::Malformed(format!("native pipeline {serialized:?}: {error}"))
+        })?;
+        let x_a: Vec<Vec<f64>> = self
+            .a_rows
+            .iter()
+            .map(|&row| self.features[row as usize].clone())
+            .collect();
+        let y_a: Vec<f64> = self
+            .a_rows
+            .iter()
+            .map(|&row| self.targets[row as usize])
+            .collect();
+        let x_s: Vec<Vec<f64>> = rows
+            .iter()
+            .map(|&row| self.features[row as usize].clone())
+            .collect();
+        let y_s: Vec<f64> = rows.iter().map(|&row| self.targets[row as usize]).collect();
+        self.counters
+            .charge_physical_fit()
+            .map_err(AdapterError::BudgetExhausted)?;
+        let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let model = feat_math::fit(&genome, &x_a, &y_a)?;
+            let predictions = model.predict(&x_s)?;
+            anyhow::Ok(predictions)
+        }));
+        let predictions = match outcome {
+            Ok(Ok(predictions)) => predictions,
+            _ => return Ok(f64::NAN),
+        };
+        if predictions.len() != y_s.len() || predictions.iter().any(|v| !v.is_finite()) {
+            return Ok(f64::NAN);
+        }
+        Ok(feat_math::metrics::rmse(&y_s, &predictions))
+    }
+}
+
+impl FoldEvaluator for NativeTeacherFoldEvaluator<'_> {
+    fn score_selection(&self, serialized: &str) -> Result<(f64, u64), AdapterError> {
+        Ok((self.scored(serialized, self.b_rows)?, 1))
+    }
+
+    fn score_assessment(&self, serialized: &str) -> Result<f64, AdapterError> {
+        self.o_reads.set(self.o_reads.get() + 1);
+        self.scored(serialized, self.o_rows)
+    }
+}
+
+/// The native candidates for one episode: the bootstrap genome first, then feat-math's random,
+/// mutated and crossed canonical pipelines, drawn deterministically from `seed`. Duplicates are
+/// skipped. Drawing stops at `count` candidates or after `64 * count` draws.
+pub fn propose_native_teacher_candidates(seed: u64, count: usize) -> Vec<String> {
+    let max = crate::search::MAX_TRANSFORMS;
+    let mut out: Vec<String> = Vec::new();
+    if count == 0 {
+        return out;
+    }
+    let mut seen: BTreeSet<String> = BTreeSet::new();
+    let bootstrap = crate::search::BOOTSTRAP_GENOME.to_string();
+    seen.insert(bootstrap.clone());
+    out.push(bootstrap);
+    let mut draw: u64 = 0;
+    while out.len() < count && draw < (count as u64) * 64 {
+        let s = seed
+            .wrapping_mul(0x9E37_79B9_7F4A_7C15)
+            .wrapping_add(draw);
+        let candidate = match draw % 3 {
+            0 => feat_math::evolve::random_canonical_pipeline(s, max),
+            1 => {
+                let parent = &out[(s as usize) % out.len()];
+                feat_math::evolve::mutate_canonical_pipeline(parent, s, max)
+                    .unwrap_or_else(|_| feat_math::evolve::random_canonical_pipeline(s, max))
+            }
+            _ => {
+                let left = &out[(s as usize) % out.len()];
+                let right = &out[((s >> 17) as usize) % out.len()];
+                feat_math::evolve::crossover_canonical_pipelines(left, right, s, max)
+                    .unwrap_or_else(|_| feat_math::evolve::random_canonical_pipeline(s, max))
+            }
+        };
+        if seen.insert(candidate.clone()) {
+            out.push(candidate);
+        }
+        draw += 1;
+    }
+    out
+}
+
+/// GATE 1 episode. Each native candidate is one slot, charged before it is parsed or fitted. A
+/// candidate that does not parse closes its slot as malformed, and a duplicate closes as a
+/// duplicate. Selection scores `B` only. `O` is scored once, after the selection is frozen. The
+/// fallback applies only when nothing was credited.
+#[allow(clippy::too_many_arguments)]
+pub fn evaluate_native_teacher_episode(
+    a_rows: &[u32],
+    b_rows: &[u32],
+    o_rows: &[u32],
+    y_a: &[f64],
+    candidates: &[String],
+    journal: &mut Journal,
+    cfg: &SeedBudgetConfig,
+    evaluator: &NativeTeacherFoldEvaluator,
+    o_fallback: f64,
+) -> Result<DisjointEpisode, AdapterError> {
+    check_disjoint(a_rows, b_rows, o_rows)?;
+    let epsilon_f = compute_epsilon_f(y_a)?;
+    validate_seed_and_bootstrap_budget(
+        &cfg.route,
+        cfg.initial_population,
+        cfg.seed_genomes,
+        cfg.low_budget_cap,
+    )?;
+    let mut best: Option<(String, f64)> = None;
+    let mut credited = 0usize;
+    for (index, raw) in candidates.iter().enumerate() {
+        journal.begin_slot(&format!("slot-{index}"))?;
+        if feat_math::genome::GenomeIr::parse(raw).is_err() {
+            journal.close_slot(raw, SlotOutcome::Malformed, 0)?;
+            continue;
+        }
+        let canonical = raw.clone();
         if journal.is_seen(&canonical) {
             journal.close_slot(&canonical, SlotOutcome::Duplicate, 0)?;
             continue;
@@ -1736,6 +2013,168 @@ mod tests {
         assert_eq!(episode.selected.as_deref(), Some("mul(f0,f1)"));
         assert!(matches!(journal.entries()[0].outcome, SlotOutcome::Malformed));
         assert_eq!(eval.o_reads(), 1);
+    }
+
+    /// GATE 1. The native teacher fits real feat-math canonical pipelines on `A`, selects on `B`, and
+    /// never reads `O` during selection. `O` is poisoned to NaN, so a read would show.
+    #[test]
+    fn native_teacher_fits_canonical_pipelines_on_a_and_selects_on_b_with_o_untouched() {
+        let (features, clean) = ridge_table();
+        let (a, b, o) = ridge_partitions();
+        let mut poisoned = clean.clone();
+        for &row in &o {
+            poisoned[row as usize] = f64::NAN;
+        }
+        let eval = NativeTeacherFoldEvaluator::new(&features, &poisoned, &a, &b, &o).unwrap();
+        for genome in ["(pipe X (ridge))", "(pipe X (standardize) (ridge))"] {
+            let (rmse_b, fits) = eval.score_selection(genome).unwrap();
+            assert!(rmse_b.is_finite(), "{genome}: B score {rmse_b}");
+            assert_eq!(fits, 1);
+        }
+        assert_eq!(eval.o_reads(), 0, "selection read the O rows");
+        assert!(eval.score_assessment("(pipe X (ridge))").unwrap().is_nan());
+        assert_eq!(eval.o_reads(), 1, "O must be read once, at assessment");
+        assert_eq!(eval.counters().physical_fits(), 3);
+    }
+
+    /// GATE 1. The native episode runs proposals end to end on `A/B/O` and selects a pipeline that beats
+    /// the constant fallback on scaled, nonlinear data.
+    #[test]
+    fn native_teacher_episode_beats_the_fallback_on_nonlinear_scaled_data() {
+        let n = 60;
+        let features: Vec<Vec<f64>> = (0..n)
+            .map(|i| {
+                let t = i as f64;
+                vec![1000.0 * (t * 0.37).sin(), (t * 0.11).cos(), t / n as f64]
+            })
+            .collect();
+        let targets: Vec<f64> = features
+            .iter()
+            .map(|x| 0.003 * x[0] * x[0] + x[1] - 2.0 * x[2])
+            .collect();
+        let a: Vec<u32> = (0..30).collect();
+        let b: Vec<u32> = (30..45).collect();
+        let o: Vec<u32> = (45..60).collect();
+        let y_a: Vec<f64> = a.iter().map(|&r| targets[r as usize]).collect();
+        let mean_a = y_a.iter().sum::<f64>() / y_a.len() as f64;
+        let o_fallback = (o
+            .iter()
+            .map(|&r| (targets[r as usize] - mean_a).powi(2))
+            .sum::<f64>()
+            / o.len() as f64)
+            .sqrt();
+        let candidates = propose_native_teacher_candidates(7, 8);
+        let eval = NativeTeacherFoldEvaluator::new(&features, &targets, &a, &b, &o).unwrap();
+        let mut journal = Journal::new(20, 200);
+        let episode = evaluate_native_teacher_episode(
+            &a,
+            &b,
+            &o,
+            &y_a,
+            &candidates,
+            &mut journal,
+            &ridge_cfg(),
+            &eval,
+            o_fallback,
+        )
+        .unwrap();
+        assert!(!episode.episode_failed, "no native candidate was credited");
+        let selected = episode.selected.expect("a selection");
+        assert!(
+            episode.o_score < o_fallback,
+            "{selected} did not beat the fallback: {} vs {o_fallback}",
+            episode.o_score
+        );
+        assert_eq!(eval.o_reads(), 1);
+    }
+
+    /// GATE 3. The physical-fit counter refuses the fit past its ceiling before the fit runs, and the
+    /// ridge and GP evaluators count their fits the same way.
+    #[test]
+    fn executing_boundary_counters_refuse_a_fit_past_its_cap_before_it_runs() {
+        use crate::search::ExecutionBoundaryCaps;
+        let caps = ExecutionBoundaryCaps {
+            max_physical_fits: 2,
+            max_model_calls: 2,
+            max_reasoning_tokens_per_call: 8_192,
+        };
+        let (features, targets) = ridge_table();
+        let (a, b, o) = ridge_partitions();
+        let native = NativeTeacherFoldEvaluator::new(&features, &targets, &a, &b, &o)
+            .unwrap()
+            .with_caps(caps);
+        native.score_selection("(pipe X (ridge))").unwrap();
+        native.score_selection("(pipe X (ridge))").unwrap();
+        let refused = native.score_selection("(pipe X (ridge))");
+        assert!(
+            matches!(refused, Err(AdapterError::BudgetExhausted("physical fold fits"))),
+            "{refused:?}"
+        );
+        assert_eq!(native.counters().physical_fits(), 2, "a refused fit was counted as run");
+
+        let ridge = RidgeFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3)
+            .unwrap()
+            .with_caps(caps);
+        ridge.score_selection("ridge").unwrap();
+        ridge.score_selection("ridge").unwrap();
+        assert!(matches!(
+            ridge.score_selection("ridge"),
+            Err(AdapterError::BudgetExhausted("physical fold fits"))
+        ));
+
+        let gp = GpProgramFoldEvaluator::new(&features, &targets, &a, &b, &o, 1e-3)
+            .unwrap()
+            .with_caps(caps);
+        gp.score_selection("add(f0,f1)").unwrap();
+        gp.score_selection("add(f0,f1)").unwrap();
+        assert!(matches!(
+            gp.score_selection("add(f0,f1)"),
+            Err(AdapterError::BudgetExhausted("physical fold fits"))
+        ));
+    }
+
+    /// GATE 3. The model-call boundary refuses a call past the call ceiling, and a call whose reasoning
+    /// tokens exceed the per-call ceiling. A refused call is not counted.
+    #[test]
+    fn model_call_boundary_refuses_past_the_call_and_per_call_token_ceilings() {
+        use crate::search::{ExecutionBoundaryCaps, ExecutionBoundaryCounters};
+        let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_physical_fits: 20_000,
+            max_model_calls: 2,
+            max_reasoning_tokens_per_call: 8_192,
+        });
+        assert_eq!(counters.record_model_call(100), Ok(()));
+        assert_eq!(counters.record_model_call(8_192), Ok(()));
+        assert_eq!(counters.record_model_call(1), Err("model calls"));
+        assert_eq!(counters.model_calls(), 2);
+        assert_eq!(counters.reasoning_tokens_total(), 8_292);
+        assert_eq!(counters.max_call_tokens_observed(), 8_192);
+
+        let per_call = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps::default());
+        assert_eq!(
+            per_call.record_model_call(8_193),
+            Err("reasoning tokens per call")
+        );
+        assert_eq!(per_call.model_calls(), 0, "a refused call was counted");
+        assert_eq!(per_call.reasoning_tokens_total(), 0);
+    }
+
+    /// The candidate proposer: the bootstrap first, every candidate a parseable canonical pipeline, no
+    /// duplicates, and deterministic from the seed.
+    #[test]
+    fn native_candidates_are_parseable_unique_and_deterministic() {
+        let first = propose_native_teacher_candidates(11, 10);
+        assert_eq!(first, propose_native_teacher_candidates(11, 10));
+        assert_eq!(first[0], crate::search::BOOTSTRAP_GENOME);
+        let unique: BTreeSet<&String> = first.iter().collect();
+        assert_eq!(unique.len(), first.len());
+        for candidate in &first {
+            assert!(
+                feat_math::genome::GenomeIr::parse(candidate).is_ok(),
+                "unparseable proposal {candidate:?}"
+            );
+        }
+        assert!(first.len() > 1, "the proposer produced no variation");
     }
 
     #[test]
