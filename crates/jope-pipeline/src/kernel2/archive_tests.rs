@@ -1162,7 +1162,7 @@ fn legacy_dispatch_refuses_before_writing(flag: &str) {
         let output = output.display().to_string();
         let mut argv: Vec<String> = [
             "jope-pipeline",
-            "run",
+            "run-legacy-gp",
             "--dataset",
             dataset.as_str(),
             "--output",

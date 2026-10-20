@@ -1,8 +1,15 @@
 # CPU pipeline budget and selection contract
 
-`jope pipeline run --dataset datasets/test/pmlb-229-pwlinear --cuts 3 \
+This contract describes the explicit CPU-only `run-legacy-gp` command. The model-building
+`pipeline run` command accepts Direct/Thinking/AutoML/ensemble options and requires a trusted
+neural release closure; it currently refuses without that closure. It does not fall back to
+this CPU path. See [README](../README.md#direct-thinking-automl-and-ensembles).
+
+```sh
+jope pipeline run-legacy-gp --dataset datasets/test/pmlb-229-pwlinear --cuts 3 \
   --budget evaluations=4,seconds=60 --rng-seed 7 --policy skip \
-  --emit rust,python --output <new-durable-output-directory>`
+  --emit rust,python --output <new-durable-output-directory>
+```
 
 The budget limits candidate attempts per cut across exploration and cross-cut
 comparison together. Parsing, fitting, scoring and numerical failures all consume
@@ -129,7 +136,7 @@ it here cross the boundary, not predictions.
   `--target`. Missing values, text and categorical columns are refused; encode and impute before
   calling. The task is regression. No catalog row, receipt or emitted source is involved.
 - **Search.** The same five-fold partition (keyed on the CSV's sha256 and `--seed`), budget,
-  islands and threads as `jope pipeline run`. `--cuts` defaults to 3. The per-cut evidence is
+  islands and threads as `jope pipeline run-legacy-gp`. `--cuts` defaults to 3. The per-cut evidence is
   written under `--work-dir`, which must be new or an empty directory; anything else is refused
   before the CSV is read.
 - **Restriction.** A program is offered only when every stage op is executable in jain-math
@@ -150,7 +157,7 @@ jope pipeline evolve --dataset datasets/test/uci-parkinsons-telemonitoring --rou
 jope pipeline lineage verify --lineage <new-directory>/lineage.json --require-bred-candidates
 ```
 
-Each round is a full `jope pipeline run` in `round-NNN/` on the identical prepared cuts (fixed
+Each round is a full `jope pipeline run-legacy-gp` in `round-NNN/` on the identical prepared cuts (fixed
 fold seed and cut count). Round 1 starts from `--seeds` (a `jope.pipeline-seeds/v1` file, such
 as a champion-bank export) or unseeded; every later round is seeded from the previous round's
 champion and ranked runners-up (at most four, `islands::next_seeds`), with the previous receipt
@@ -175,7 +182,7 @@ later round may carry. `--output` must be new or an empty directory: anything al
 stale `round-NNN/`, `control/` or `lineage.json`, or an unrelated file) is refused before anything
 is written, not when the round that would write over it is reached. A refused command leaves
 nothing behind, so the corrected command can be re-run into the same `--output`, or into it once
-emptied. `jope pipeline run` likewise makes each of these that applies to one run before it
+emptied. `jope pipeline run-legacy-gp` likewise makes each of these that applies to one run before it
 creates its `--output`, and refuses an `--output` that already holds an entry it writes
 (`receipt.json`, `prepared`, `search` or `emit`), a dangling symbolic link included; it leaves any
 other file there alone.

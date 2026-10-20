@@ -131,6 +131,40 @@ pub enum Cmd {
         /// Print the receipt as one JSON document.
         #[arg(long)]
         json: bool,
+        /// Model-build switches (`--automl`, `--ensemble`, `--thinking`) and options file.
+        #[command(flatten)]
+        model: crate::model_build::ModelBuildArgs,
+    },
+    /// Run the native AutoML bake-off and outer refit from a request file. Native heads only: no
+    /// neural route is involved. With `--output`, the admitted ensemble record is written as a new
+    /// file and an existing file is refused.
+    ModelBuildNative {
+        /// A jope.model-build-native-request/v1 JSON file.
+        #[arg(long)]
+        request: PathBuf,
+        /// Where the persisted ensemble record is written. Refused when the file exists.
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Explicit legacy generic GP search: no neural input and no model-build route. Its receipts
+    /// are unchanged and remain verifiable. It is never a fallback for `run`.
+    RunLegacyGp {
+        #[command(flatten)]
+        search: SearchArgs,
+        #[command(flatten)]
+        profile: crate::kernel2::cli::ProfileArgs,
+        /// Where the preparation, searches, emitted sources and receipt are written.
+        #[arg(long)]
+        output: PathBuf,
+        /// A jope.pipeline-seeds/v1 file: its genomes enter generation 0 after the bootstrap.
+        #[arg(long)]
+        seed_genomes: Option<PathBuf>,
+        /// A parent receipt: verified against its run's evidence before it is seeded.
+        #[arg(long)]
+        incumbent: Option<PathBuf>,
+        /// Print the receipt as one JSON document.
+        #[arg(long)]
+        json: bool,
     },
     /// Validate a receipt against the committed jope.pipeline-receipt/v1, v2 or v3 schema.
     VerifyReceipt {
@@ -268,7 +302,54 @@ pub fn exec(cli: Cli) -> ExitCode {
 
 pub fn run(cli: Cli) -> Result<ExitCode> {
     match cli.cmd {
-        Cmd::Run {
+        Cmd::Run { model, .. } => {
+            // Every route needs a verified checkpoint. Until P02 supplies a release closure, each
+            // route is refused here with its reason. Nothing falls back to the generic GP search.
+            let file = match &model.model_build_config {
+                Some(path) => Some(crate::model_build::config::load_file(path)?),
+                None => None,
+            };
+            let resolved = crate::model_build::resolve(file.as_ref(), model.flags()?)?;
+            // The source expectation comes from the operator, never from the claim. No P02 release
+            // closure provider exists yet, so a verified checkpoint cannot be produced here.
+            let checkpoint = match (
+                file.as_ref().and_then(|f| f.neural_checkpoint.as_ref()),
+                model.expected_source_commit.as_deref(),
+            ) {
+                (Some(claim), Some(expected)) => crate::model_build::NeuralCheckpoint::Refused(
+                    crate::model_build::verify_checkpoint(claim, None, expected)
+                        .err()
+                        .unwrap_or(crate::model_build::CheckpointRefusal::Absent),
+                ),
+                (Some(_), None) => crate::model_build::NeuralCheckpoint::Refused(
+                    crate::model_build::CheckpointRefusal::NoSourceExpectation,
+                ),
+                (None, _) => crate::model_build::NeuralCheckpoint::Refused(
+                    crate::model_build::CheckpointRefusal::Absent,
+                ),
+            };
+            let route = crate::model_build::route(&resolved);
+            match crate::model_build::disposition(route, &checkpoint) {
+                crate::model_build::Disposition::Refused { reason, .. } => anyhow::bail!(reason),
+                crate::model_build::Disposition::Pending { missing, .. } => anyhow::bail!(
+                    "{route:?} is not executable yet; missing: {}",
+                    missing.join(", ")
+                ),
+            }
+        }
+        Cmd::ModelBuildNative { request, output } => {
+            let request = crate::model_build::driver::read_native_request(&request)?;
+            let outcome =
+                crate::model_build::driver::run_native_request(&request, output.as_deref())?;
+            let summary = serde_json::json!({
+                "selected": outcome.receipt.selected,
+                "persisted": outcome.persisted.is_some(),
+                "output": output.as_ref().map(|path| path.display().to_string()),
+            });
+            println!("{}", serde_json::to_string_pretty(&summary)?);
+            Ok(ExitCode::SUCCESS)
+        }
+        Cmd::RunLegacyGp {
             search,
             profile,
             output,

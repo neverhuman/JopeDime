@@ -149,11 +149,19 @@ pub(crate) fn is_commit(value: &str) -> bool {
 /// partition), the budget, the policy and the parallelism this host admits. Returns the worker
 /// count.
 pub fn preflight(options: &RunOptions) -> Result<usize> {
+    preflight_with(options, false)
+}
+
+fn preflight_with(options: &RunOptions, unbounded_time: bool) -> Result<usize> {
     // The whole range the preparation accepts, not just a positive count: a count it refuses
     // after `evolve` has created `round-001/` blocks the corrected retry.
     prepare::check_cuts(options.cuts)?;
     ensure!(!options.languages.is_empty(), "--emit needs a target");
-    options.budget.check()?;
+    if unbounded_time {
+        options.budget.check_evaluations()?;
+    } else {
+        options.budget.check()?;
+    }
     // Fail closed before anything is written: a refused run must not leave a half
     // prepared output directory behind to block the retry.
     ensure!(
@@ -289,7 +297,19 @@ impl Stages {
 
 /// Run the pipeline and write `<output>/receipt.json`.
 pub fn run(options: &RunOptions) -> Result<Receipt> {
-    preflight(options)?;
+    run_with(options, false)
+}
+
+/// Run the pipeline under the reasoner no-time-limit policy (`NO_TIME_LIMIT_POLICY_20261019`).
+/// The receipt records `temporal_limits_enabled: false` and `null` seconds. Every other bound
+/// (evaluations, cancellation, memory and role guards) still applies. The teacher and matched
+/// baseline arms must both run through this entry point.
+pub fn run_no_time_limit(options: &RunOptions) -> Result<Receipt> {
+    run_with(options, true)
+}
+
+fn run_with(options: &RunOptions, unbounded_time: bool) -> Result<Receipt> {
+    preflight_with(options, unbounded_time)?;
     let clock = options.clock;
 
     let output = &options.output;
@@ -349,6 +369,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         migration_interval: options.migration_interval,
         clock,
         cancel: options.cancel.clone(),
+        unbounded_time,
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
@@ -439,6 +460,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     stages.record("receipt", "passed", None, started);
     let mut receipt = assemble(
         options,
+        unbounded_time,
         &resolved,
         &preparation,
         &searched,
@@ -478,6 +500,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
 #[allow(clippy::too_many_arguments)]
 fn assemble(
     options: &RunOptions,
+    unbounded_time: bool,
     resolved: &dataset::Resolved,
     preparation: &prepare::Preparation,
     searched: &[search::CutSearch],
@@ -505,7 +528,7 @@ fn assemble(
                 exploration: cut.exploration.clone(),
                 comparison: cut.comparison.clone(),
                 active_seconds: cut.seconds,
-                deadline_overrun: cut.seconds > cut.budget.seconds as f64,
+                deadline_overrun: cut.time_limit.is_some_and(|limit| cut.seconds > limit),
             }),
             best_validation_rmse: cut.best_validation_rmse,
             best_validation_r2: cut.best_validation_r2,
@@ -552,7 +575,8 @@ fn assemble(
             engine: search::SEARCH_ENGINE.to_owned(),
             rng_seed: options.rng_seed,
             evaluations: options.budget.evaluations as u64,
-            seconds: options.budget.seconds,
+            seconds: (!unbounded_time).then_some(options.budget.seconds),
+            temporal_limits_enabled: unbounded_time.then_some(false),
             population: search::POPULATION as u64,
             max_transforms: search::MAX_TRANSFORMS as u64,
             bootstrap_genome: search::BOOTSTRAP_GENOME.to_owned(),
@@ -848,6 +872,112 @@ pub(crate) mod tests {
                 .collect();
             assert_eq!(incumbents, vec![seeds[0].as_str(), seeds[1].as_str()]);
         }
+    }
+
+    /// Reasoner no-time-limit policy (`NO_TIME_LIMIT_POLICY_20261019`). With the clock past the
+    /// 600 s maximum, a bounded run stops at once by seconds, and the no-time-limit run does not.
+    /// The no-time-limit run goes on to its evaluation bound, and both arms share one policy. Its
+    /// receipt records `null` seconds and `temporal_limits_enabled: false`, and it verifies.
+    #[test]
+    fn a_no_time_limit_run_past_six_hundred_seconds_runs_to_its_evaluation_bound() {
+        let temp = tempfile::tempdir().unwrap();
+        let arm = |output: &std::path::Path| RunOptions {
+            cuts: 2,
+            clock: Clock::Expired,
+            ..small(output, 40)
+        };
+        let teacher_out = temp.path().join("teacher");
+        let teacher = run_no_time_limit(&arm(&teacher_out)).unwrap();
+        let baseline = run_no_time_limit(&arm(&temp.path().join("baseline"))).unwrap();
+        // The teacher and matched baseline arms share one temporal policy, field for field.
+        assert_eq!(teacher.search.seconds, baseline.search.seconds);
+        assert_eq!(
+            teacher.search.temporal_limits_enabled,
+            baseline.search.temporal_limits_enabled
+        );
+        for (t, b) in teacher.search.cuts.iter().zip(&baseline.search.cuts) {
+            let (ta, ba) = (
+                t.accounting.as_ref().unwrap(),
+                b.accounting.as_ref().unwrap(),
+            );
+            assert_eq!(ta.exploration.seconds_limit, ba.exploration.seconds_limit);
+            assert_eq!(ta.comparison.seconds_limit, ba.comparison.seconds_limit);
+        }
+        for receipt in [&teacher, &baseline] {
+            assert_eq!(receipt.search.seconds, None);
+            assert_eq!(receipt.search.temporal_limits_enabled, Some(false));
+            for cut in &receipt.search.cuts {
+                let accounting = cut.accounting.as_ref().unwrap();
+                assert!(!accounting.deadline_overrun);
+                assert_eq!(accounting.exploration.seconds_limit, None);
+                assert_eq!(accounting.comparison.seconds_limit, None);
+                assert_ne!(
+                    accounting.exploration.stopped_by,
+                    search::STOPPED_BY_SECONDS
+                );
+                assert!(cut.completed_evaluations > 0, "the job did not run");
+                assert!(cut.completed_evaluations <= 40);
+            }
+        }
+        let legacy = run(&RunOptions {
+            cuts: 2,
+            clock: Clock::Expired,
+            ..small(&temp.path().join("legacy"), 40)
+        })
+        .unwrap();
+        assert_eq!(legacy.search.seconds, Some(300));
+        assert_eq!(legacy.search.temporal_limits_enabled, None);
+        assert!(legacy.search.cuts.iter().all(|c| c
+            .accounting
+            .as_ref()
+            .is_some_and(|a| a.exploration.stopped_by == search::STOPPED_BY_SECONDS)));
+        crate::evidence::verify_champion_run(&teacher_out.join("receipt.json")).unwrap();
+    }
+
+    /// The no-time-limit policy removes only the temporal bound. The evaluation bound, the
+    /// cancellation stop and the budget's own range still refuse.
+    #[test]
+    fn the_no_time_limit_policy_keeps_every_other_guard() {
+        use std::sync::{atomic::AtomicBool, Arc};
+        let temp = tempfile::tempdir().unwrap();
+        let too_many = run_no_time_limit(&RunOptions {
+            cuts: 2,
+            ..small(&temp.path().join("too-many"), search::MAX_EVALUATIONS + 1)
+        });
+        assert!(too_many.is_err(), "evaluation bound was not enforced");
+        let cancelled = run_no_time_limit(&RunOptions {
+            cuts: 2,
+            cancel: Some(Arc::new(AtomicBool::new(true))),
+            ..small(&temp.path().join("cancelled"), 40)
+        });
+        assert!(cancelled.is_err(), "stop request was not honoured");
+    }
+
+    /// A receipt's `seconds` and every phase's `seconds_limit` must be `null` exactly when temporal
+    /// limits are disabled. Tampering either way is refused.
+    #[test]
+    fn a_no_time_limit_receipt_refuses_a_bounded_field_or_a_missing_flag() {
+        let temp = tempfile::tempdir().unwrap();
+        let receipt = run_no_time_limit(&RunOptions {
+            cuts: 2,
+            ..small(&temp.path().join("run"), 16)
+        })
+        .unwrap();
+        let value = serde_json::to_value(&receipt).unwrap();
+        assert!(receipt::validate_value(&value).is_ok());
+        let mut flag_removed = value.clone();
+        flag_removed["search"]
+            .as_object_mut()
+            .unwrap()
+            .remove("temporal_limits_enabled");
+        assert!(receipt::validate_value(&flag_removed).is_err());
+        let mut bounded_seconds = value.clone();
+        bounded_seconds["search"]["seconds"] = 300.into();
+        assert!(receipt::validate_value(&bounded_seconds).is_err());
+        let mut bounded_phase = value.clone();
+        bounded_phase["search"]["cuts"][0]["accounting"]["exploration"]["seconds_limit"] =
+            60.0.into();
+        assert!(receipt::validate_value(&bounded_phase).is_err());
     }
 
     #[test]

@@ -32,10 +32,10 @@ program-library and checkpoint views with source identities, observation age and
 | Workspace | 27 members: 20 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,684 listed in 27 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,982 listed in 27 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 780 items over 25 lanes <sup>7</sup> |
+| Coverage map | 787 items over 25 lanes <sup>7</sup> |
 | Capability matrix | 831 rows: 353 moved, 68 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
@@ -57,7 +57,8 @@ program-library and checkpoint views with source identities, observation age and
 | Surface | Status on this SHA |
 | --- | --- |
 | `jope` CLI | Fixtures (`verify-inputs`, `generate-fixtures`), CPU `encode` (fails closed without the Hyperion weights), `fit` / `search` / `emit`, `champions --local` (searches the supported regression fixtures and reports the rest as unsupported), `train-step --local` (fits a 128-d centroid router), `route`, `models`, `datasets`, `pipeline`, and the private ASM verbs `doctor`, `demo`, `benchmark`, `optimize` and `train` ([docs/asm.md](docs/asm.md)). `champions --pull/--push` and `train-step --env dev` or `--env prod` **fail closed**. |
-| `jope pipeline run` | CPU spine only: dataset -> folds -> program search -> select -> emit -> `jope.pipeline-receipt/v3`, optionally seeded from a `jope.pipeline-seeds/v1` file (`--seed-genomes`) or a verified parent receipt (`--incumbent`); seeds are re-measured, never trusted. Every candidate is fitted with `feat_math::fit` on a cut's training rows and scored on that cut's held-out rows, and selection requires measurements on every requested cut before comparing mean held-out RMSE. Exploration and cross-cut comparison share the [total per-cut budget](docs/pipeline.md). `--threads` and `--islands` (parallel search groups over the same cuts that pass their best program to each other at a fixed interval) set the workers, which must fit the CPUs the process may use and `--cpu-ceiling`. It does **not** use the engine's own search, which cannot measure in a shipped binary (`eval_registry/authority.rs` blocks every capability outside `cfg(test)` and `fit_boundary.rs` fences fitting behind a service socket). The encode/propose stage is **skipped** and recorded (`--policy require` fails closed); nothing in it publishes to S3 or trains the router. |
+| `jope pipeline run` | Direct/Thinking model-build entry point with independent `--automl` and `--ensemble` options. The parser and CPU CV/OOF, refit, persistence and ensemble components are implemented and fixture-tested. The production neural executor lacks a trusted encoder/policy release closure, so this entry point refuses before fitting. A caller checkpoint claim does not authorize it. |
+| `jope pipeline run-legacy-gp` | CPU spine only: dataset -> folds -> program search -> select -> emit -> `jope.pipeline-receipt/v3`, optionally seeded from a `jope.pipeline-seeds/v1` file (`--seed-genomes`) or a verified parent receipt (`--incumbent`); seeds are re-measured, never trusted. Every candidate is fitted with `feat_math::fit` on a cut's training rows and scored on that cut's held-out rows, and selection requires measurements on every requested cut before comparing mean held-out RMSE. Exploration and cross-cut comparison share the [total per-cut budget](docs/pipeline.md). `--threads` and `--islands` (parallel search groups over the same cuts that pass their best program to each other at a fixed interval) set the workers, which must fit the CPUs the process may use and `--cpu-ceiling`. It does **not** use the engine's own search, which cannot measure in a shipped binary (`eval_registry/authority.rs` blocks every capability outside `cfg(test)` and `fit_boundary.rs` fences fitting behind a service socket). The encode/propose stage is **skipped** and recorded (`--policy require` fails closed); nothing in it publishes to S3 or trains the router. |
 | Targeted single-dataset search | `jope pipeline evolve` runs rounds of `run` on one dataset's fixed cuts, each seeded from the previous round's champion and runners-up, chained in a `lineage.json` that `jope pipeline lineage verify` re-derives; `--control` adds one unseeded run. `jope pipeline score --split test` scores a selected program on the sealed test split at most once per dataset and program in its registry (a local record, not access control), and lists every earlier look. High-water-mark ingest (`jope-learning hwm ingest --source pipeline`) and the append-only local champion bank (`jope-learning bank add`, `list`, `export`; an export seeds the next round) are separate steps. The rounds select on reused folds, so only the test split speaks to generalisation. |
 | W7 native loop | `jope-native-loop`, a `jope-engine` binary: host census, run plans, signed participant grants, authenticated cross-host transport with pinned certificates and an absolute deadline on every read and write, controller recovery, and SmartCluster dispatch of bounded ranks that prove their job before any work. It is qualified on source and fixtures only: a same-host fixture with hermetic host identities, and a local one-rank dry run. The three-host proof ([runbook](docs/runbooks/w7-three-host-cpu-proof.md)) has **not** run and needs its own admission; live cross-host checkpoint exchange and continuation routing are deferred. |
 | S3 | `jope datasets` and `jope models` read and write `s3://` stores through `object_store`, resolving `credential_process` profiles themselves; `jope-learning` mirrors its store and publishes W8 progress when `--store` or `JOPE_LEARNING_URL` names one. `champions --pull/--push` has no live route (issue #62). The CLOVER tools `jope_pools` and `jope_retention` read local files (frozen pools, a `GP_RESULTS_INDEX.json` built from the S3 results tree) and write local receipts; they fit offline shadow selectors and train no policy. A separate S3-derived native PolicyLM research run completed 429 optimizer updates; its [committed wave](docs/research/waves/native-neural-kumos-derived-20261019T1303Z/context.md) records its scope. It does not update the bound step-60000 `jope-policy` checkpoint or establish a qualified self-play improvement. |
@@ -94,14 +95,15 @@ best single model with an explicit reason; enabling it does not promise improvem
 entry or XGBoost preset is eligible only after its actual implementation, runtime, license,
 persistence and prediction behavior are verified. A C API binding must be identified as such.
 
-**Availability:** these are release requirements, not capabilities of the current main CLI.
-The implementation branch has flag/configuration resolution, CV/OOF and ensemble source;
-verified encoder/policy release closure, real neural execution, complete estimator bindings,
-full-train refit and fresh-process reload/export still require acceptance evidence. Until those
-are connected, the new routes refuse. The current main `pipeline run` CPU behavior is described
-above. Its explicit successor name, `run-legacy-gp`, is part of the implementation branch.
+**Availability on this integration branch:** flag/configuration resolution and the CPU
+CV/OOF, ensemble, refit and persistence components are implemented. Combined release
+validation is pending. Trusted encoder/policy release closure, real neural execution,
+complete estimator bindings and qualified fresh-process reload/export remain incomplete.
+The new `pipeline run` route therefore refuses before fitting. Existing CPU search is
+available as `pipeline run-legacy-gp`, preserving its legacy behavior.
 
-Examples of the **planned interface** (run only after the release plan qualifies it):
+The implemented model-build interface is shown below. These commands parse the requested
+pathway; successful execution requires the missing trusted release and neural runtime:
 
 ```text
 jope pipeline run --dataset <dataset> --output <run-dir>
@@ -112,13 +114,23 @@ jope pipeline run --dataset <dataset> --output <run-dir> --automl --ensemble --t
 jope pipeline run --dataset <dataset> --output <run-dir> --model-build-config <options.json>
 ```
 
-The proposed `jope.model-build-options/v1` file carries `automl`, `ensemble`, `thinking` and
+The `jope.model-build-options/v1` file carries `automl`, `ensemble`, `thinking` and
 an explicit checkpoint claim. Flags override file settings, then defaults; `--no-automl` and
 `--no-ensemble` disable inherited options. A caller-supplied checkpoint hash or source flag
 is insufficient: the runtime must verify it against a trusted release manifest. See the
 [closure workplan](docs/plans/release-closure-20261019/WORKPLAN.md) for the remaining steps
 and the [47-task GP workplan](docs/plans/major-release-20261018/GP_UPGRADE_WORKPLAN.md)
 for the complete engineering scope.
+
+A separate CPU-only head bake-off is exposed as `jope pipeline model-build-native --request
+<request.json> [--output <new-model.json>]`, using the `jope.model-build-native-request/v1`
+contract. It does not invoke a neural model and is distinct from the Direct/Thinking route.
+Its supported estimator, admission and persistence limits are enforced by the request driver.
+
+The native-study library separately provides whole-plan admission checks, one shared fit
+counter and a barrier that freezes all families and arms before held-out assessment. Its
+synthetic tests do not qualify real datasets, a production study CLI or the physical
+reasoner worker. Those bindings remain explicit release work.
 
 ## Download encoders and model checkpoints
 

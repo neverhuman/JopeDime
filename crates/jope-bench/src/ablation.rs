@@ -3089,7 +3089,7 @@ mod tests {
     fn ablation_refuses_a_phase_the_seconds_bound_ended() {
         let phase = |stopped_by: &str| jope_pipeline::receipt::Phase {
             evaluation_limit: 20,
-            seconds_limit: 600.0,
+            seconds_limit: Some(600.0),
             completed_evaluations: 3,
             successful_measurements: 3,
             failed_measurements: 0,
@@ -3107,6 +3107,7 @@ mod tests {
             failed_or_unavailable_measurements: 0,
             stopped_by: search::STOPPED_BY_EVALUATIONS,
             seconds,
+            time_limit: Some(600.0),
             exploration: phase(exploration),
             comparison: jope_pipeline::receipt::Phase::not_requested(),
             best_validation_rmse: None,

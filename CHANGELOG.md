@@ -5,6 +5,12 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Pipeline integration (not yet released)
+
+- The model-building `jope pipeline run` entry point accepts Direct/Thinking and independent AutoML/ensemble options. It requires trusted encoder/policy release closure and refuses before fitting while that runtime is unavailable. It never silently substitutes generic CPU GP.
+- Existing CPU-only search is explicitly named `jope pipeline run-legacy-gp`; its numerical and receipt behavior is preserved. Update legacy callers to this command. `pipeline invent` and the signed v0.3.0 release remain unchanged.
+- Add native CPU model selection/refit/persistence components and a study library with one shared fit ledger and freeze-before-held-out-assessment ordering. Fixture acceptance does not establish real-data admission or learning gain.
+
 ## [0.3.0] - 2026-10-19
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then

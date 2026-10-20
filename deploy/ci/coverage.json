@@ -10244,6 +10244,102 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-pipeline/test/model_build_admission": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/model_build_admission.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check and actual CPU fixture tests for the integrated model-build/pathway slice. No model download, real neural execution, live-data admission, or scientific gain is inferred."
+    },
+    "target:jope-pipeline/test/model_build_automl": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/model_build_automl.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check and actual CPU fixture tests for the integrated model-build/pathway slice. No model download, real neural execution, live-data admission, or scientific gain is inferred."
+    },
+    "target:jope-pipeline/test/model_build_driver": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/model_build_driver.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check and actual CPU fixture tests for the integrated model-build/pathway slice. No model download, real neural execution, live-data admission, or scientific gain is inferred."
+    },
+    "target:jope-pipeline/test/model_build_ensemble": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/model_build_ensemble.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check and actual CPU fixture tests for the integrated model-build/pathway slice. No model download, real neural execution, live-data admission, or scientific gain is inferred."
+    },
+    "target:jope-pipeline/test/model_build_flags": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/model_build_flags.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check and actual CPU fixture tests for the integrated model-build/pathway slice. No model download, real neural execution, live-data admission, or scientific gain is inferred."
+    },
+    "target:jope-pipeline/test/model_build_persistence": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/model_build_persistence.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check and actual CPU fixture tests for the integrated model-build/pathway slice. No model download, real neural execution, live-data admission, or scientific gain is inferred."
+    },
     "target:jope-pipeline/test/modern_gp_candidate": {
       "discovery": {
         "doctest": false,
@@ -10291,6 +10387,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/pathway_plumbing": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/pathway_plumbing.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check and actual CPU fixture tests for the integrated model-build/pathway slice. No model download, real neural execution, live-data admission, or scientific gain is inferred."
     },
     "target:jope-pipeline/test/residual_closure": {
       "discovery": {

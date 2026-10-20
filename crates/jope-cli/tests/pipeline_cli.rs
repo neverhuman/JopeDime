@@ -38,10 +38,10 @@ fn fake_git(dir: &Path, marker: &Path) -> PathBuf {
     bin
 }
 
-fn run_args(output: &Path, budget: &str) -> Vec<String> {
+fn legacy_run_args(output: &Path, budget: &str) -> Vec<String> {
     [
         "pipeline",
-        "run",
+        "run-legacy-gp",
         "--dataset",
         dataset().to_str().unwrap(),
         "--output",
@@ -68,7 +68,7 @@ fn a_given_source_commit_is_recorded_and_git_is_never_spawned() {
     let with = temp.path().join("with");
     let output = jope()
         .env("PATH", &bin)
-        .args(run_args(&with, "evaluations=2,seconds=60"))
+        .args(legacy_run_args(&with, "evaluations=2,seconds=60"))
         .args(["--source-commit", commit])
         .output()
         .unwrap();
@@ -87,7 +87,7 @@ fn a_given_source_commit_is_recorded_and_git_is_never_spawned() {
     let without = temp.path().join("without");
     let output = jope()
         .env("PATH", &bin)
-        .args(run_args(&without, "evaluations=2,seconds=60"))
+        .args(legacy_run_args(&without, "evaluations=2,seconds=60"))
         .output()
         .unwrap();
     assert!(output.status.success());
@@ -96,7 +96,7 @@ fn a_given_source_commit_is_recorded_and_git_is_never_spawned() {
     // A malformed commit is refused before anything is written.
     let bad = temp.path().join("bad");
     let output = jope()
-        .args(run_args(&bad, "evaluations=2,seconds=60"))
+        .args(legacy_run_args(&bad, "evaluations=2,seconds=60"))
         .args(["--source-commit", "HEAD"])
         .output()
         .unwrap();
@@ -134,7 +134,7 @@ fn a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs() {
     }
     let run = temp.path().join("run");
     let result = jope()
-        .args(run_args(&run, "evaluations=4,seconds=60"))
+        .args(legacy_run_args(&run, "evaluations=4,seconds=60"))
         .args(["--cuts", "6"])
         .output()
         .unwrap();
@@ -236,7 +236,7 @@ fn sigterm_mid_search_stops_between_evaluations_and_writes_no_receipt() {
     let temp = tempfile::tempdir().unwrap();
     let output = temp.path().join("run");
     let mut child = jope()
-        .args(run_args(&output, "evaluations=400,seconds=600"))
+        .args(legacy_run_args(&output, "evaluations=400,seconds=600"))
         .spawn()
         .unwrap();
     // The search is running once the cuts are prepared.
@@ -322,7 +322,7 @@ fn pipeline_cli_emits_fitted_cpp_and_records_executable_build() {
     let temp = tempfile::tempdir().unwrap();
     let out = temp.path().join("fitted-run");
     let result = jope()
-        .args(["pipeline", "run", "--dataset"])
+        .args(["pipeline", "run-legacy-gp", "--dataset"])
         .arg(dataset())
         .args([
             "--emit",
@@ -384,7 +384,7 @@ fn pipeline_cli_emits_fitted_cpp_and_records_executable_build() {
 fn kernel2_profile_cli_publishes_v4_verifies_evidence_and_defaults_to_fitted_cpp() {
     let temp = tempfile::tempdir().unwrap();
     let directory = temp.path().join("run");
-    let mut argv = run_args(&directory, "evaluations=1,seconds=60");
+    let mut argv = legacy_run_args(&directory, "evaluations=1,seconds=60");
     argv.truncate(argv.len() - 2); // No explicit --emit: exercise the profile's default.
     let result = jope()
         .args(argv)
@@ -452,7 +452,7 @@ fn kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds() {
         ["--incumbent", "missing"],
     ] {
         let result = jope()
-            .args(run_args(&directory, "evaluations=4,seconds=60"))
+            .args(legacy_run_args(&directory, "evaluations=4,seconds=60"))
             .args([
                 "--search-profile",
                 "kernel2-baseline",
@@ -473,7 +473,7 @@ fn kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds() {
         assert!(!directory.exists());
     }
     let result = jope()
-        .args(run_args(&directory, "evaluations=4,seconds=60"))
+        .args(legacy_run_args(&directory, "evaluations=4,seconds=60"))
         .args([
             "--search-profile",
             "kernel2-baseline",
@@ -513,7 +513,7 @@ fn kernel2_lm_refinement_records_its_selection_and_verifies_evidence() {
     });
     std::fs::write(&seeds, serde_json::to_vec(&file).unwrap()).unwrap();
     let result = jope()
-        .args(run_args(&directory, "evaluations=20,seconds=600"))
+        .args(legacy_run_args(&directory, "evaluations=20,seconds=600"))
         .args([
             "--search-profile",
             "kernel2-baseline",
@@ -647,4 +647,41 @@ fn invent_prints_candidates_and_refuses_bad_input_as_json() {
     assert_eq!(doc["ok"], false);
     assert!(doc["error"].as_str().unwrap().contains("--target"), "{doc}");
     assert!(!refused.exists());
+}
+
+#[test]
+fn neural_model_build_routes_refuse_without_release_and_never_fall_back() {
+    let temp = tempfile::tempdir().unwrap();
+    for (index, flags) in [
+        vec![],
+        vec!["--automl"],
+        vec!["--ensemble"],
+        vec!["--automl", "--ensemble"],
+        vec!["--thinking", "high"],
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let output = temp.path().join(format!("model-build-{index}"));
+        let result = jope()
+            .args(["pipeline", "run", "--dataset"])
+            .arg(dataset())
+            .args(["--output"])
+            .arg(&output)
+            .args(["--budget", "evaluations=1,seconds=60", "--policy", "skip"])
+            .args(flags)
+            .output()
+            .unwrap();
+        let stderr = String::from_utf8_lossy(&result.stderr);
+        assert_eq!(result.status.code(), Some(2), "{stderr}");
+        assert!(
+            stderr.contains("checkpoint-bound neural inference is unavailable"),
+            "{stderr}"
+        );
+        assert!(
+            !output.exists(),
+            "a refused route wrote {}",
+            output.display()
+        );
+    }
 }

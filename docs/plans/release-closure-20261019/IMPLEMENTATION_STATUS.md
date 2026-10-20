@@ -1,3 +1,7 @@
+# Current integration update — 2026-10-20T03:55Z
+
+Stopped W2 e66442c88 is being consolidated in existing W under C14. Its component suite is 626 passed / 0 failed / 3 ignored, including 8 compile-fail doctests; independent driver review acefed409a has no blocking findings. Combined-head qualification/final review remain pending. Main bccbb55d is green; published v0.3.0 is bound to b3d347c9. Dated observations below remain history, including superseded CLI and hold descriptions. Latest direct human Qwen restart authorization governs separate recovery-r3; no native optimizer continuation or real-data admission is inferred. The two task ledgers remain separate and unwaived.
+
 # Closure packet status — 2026-10-19
 
 Dated observation updated at 2026-10-19T19:37:01.457486+00:00. Refresh GitHub and runtime before acting. The major-release tracker remains **3 pass, 2 partial, 1 in progress and 41 todo**; the older 66-task milestone is separate. No whole-release completion percentage is inferred from source commits.

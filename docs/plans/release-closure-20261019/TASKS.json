@@ -427,7 +427,7 @@
       "deps": [
         "C01"
       ],
-      "state": "documentation_validated_pending_integration_ci",
+      "state": "in_progress_combined_pipeline_cli_docs_refreshed_final_validation_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C13 \u2014 README and agent onboarding complete for actual state"
@@ -456,7 +456,7 @@
         "C11",
         "C13"
       ],
-      "state": "local_ci_authorized_source_dependencies_and_frozen_head_review_pending",
+      "state": "in_progress_stopped_source_integration_combined_head_validation_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C14 \u2014 Integrate once, finish JA06 and final CI on frozen head"
@@ -490,6 +490,12 @@
           "path": "/home/ubuntu/jope-evidence/release-closure-20261019/review_w_5619dfe0_ci_scratch_and_provenance_20261019.json",
           "sha256": "cf23e225242cac02ce1fd9a039618ad7759fe1eebf5b9dacc5b729fe31968241",
           "qualification": "Independentread-onlysource587/head5619 reviewPASS,no blocking source/fixturedefect. Exactdd95diff/blob/logs/inventoryverified; macro-generatedtestcountcorrected; actual5selectedtop-leveltests,14normalinventory/1ignoredentrypoint. Source-scope only, notnativeGitHubapproval/full336gate/mainmerge or hostcleanup. Captainimplementationadoption9106c204 existsatCI/CAPTAIN_IMPLEMENTATION_DIFF_ADOPTION_587BAE_20261019.json observed22:20; source587/head5619/dd95sectionsmatchGit. Secondaryhistoricalmanifestfieldsnotadoptedasnewscientificauthority."
+        },
+        {
+          "path": "/home/ubuntu/jope-evidence/reasoner-pilot-20261019/review_w2_e66442c88_w1_native_driver_20261020.json",
+          "sha256": "acefed409a34af1924f96de4e284dd0a9c6c9df9f397cc3f018f456ecc2890dd",
+          "component_head": "e66442c8847fe3155a08f1fadb6a899d95111349",
+          "qualification": "Independent driver-delta review PASS and exact component626 pipeline tests/8compilefail; combined-head/final release qualification pending."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C14",

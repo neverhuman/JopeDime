@@ -179,6 +179,304 @@ pub struct SearchOptions {
     pub record_events: bool,
     /// Original run/role/profile bindings, when supplied by the admitted caller.
     pub event_binding: Option<SearchBinding>,
+    /// The reasoner no-time-limit policy (`NO_TIME_LIMIT_POLICY_20261019`). `false` keeps the
+    /// legacy temporal bound `Budget.seconds`; `true` removes it. See [`SearchOptions::time_limit`].
+    pub unbounded_time: bool,
+    /// Executing-boundary counters for every physical fit this search makes. `None` keeps the
+    /// legacy, uncounted behaviour.
+    pub fit_counters: Option<std::sync::Arc<ExecutionBoundaryCounters>>,
+}
+
+/// Ceilings enforced at the executing boundaries: each physical fit and each model call.
+///
+/// A token ceiling of `None` means no explicit cap: natural EOS, bounded only by the model's
+/// context window and the runtime health guards. It is never encoded as `u64::MAX`. Generated
+/// tokens are counted whether or not a ceiling is set.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ExecutionBoundaryCaps {
+    pub max_physical_fits: u64,
+    pub max_model_calls: u64,
+    /// Per-call reasoning-token ceiling. A JSON document without this field reads as the legacy
+    /// 8 192-token cap, not as no cap.
+    #[serde(default = "legacy_reasoning_tokens_per_call")]
+    pub max_reasoning_tokens_per_call: Option<u64>,
+    /// Aggregate generated-token ceiling across every call. `None` imposes none.
+    #[serde(default)]
+    pub max_generated_tokens_total: Option<u64>,
+}
+
+fn legacy_reasoning_tokens_per_call() -> Option<u64> {
+    Some(8_192)
+}
+
+impl Default for ExecutionBoundaryCaps {
+    /// The ceilings of the reasoner pilot: 20 000 physical fits, 2 048 model calls and 8 192
+    /// reasoning tokens per call, with no aggregate generated-token ceiling.
+    fn default() -> Self {
+        ExecutionBoundaryCaps {
+            max_physical_fits: 20_000,
+            max_model_calls: 2_048,
+            max_reasoning_tokens_per_call: Some(8_192),
+            max_generated_tokens_total: None,
+        }
+    }
+}
+
+impl ExecutionBoundaryCaps {
+    /// The natural-EOS policy of the reasoner study (`NATURAL_EOS_TOKEN_POLICY_20261020`). The
+    /// fit and model-call ceilings stay finite. Neither token ceiling is set, so a call runs to
+    /// its natural end and every generated token is still counted.
+    pub fn reasoner_natural_eos() -> Self {
+        ExecutionBoundaryCaps {
+            max_physical_fits: 20_000,
+            max_model_calls: 2_048,
+            max_reasoning_tokens_per_call: None,
+            max_generated_tokens_total: None,
+        }
+    }
+}
+
+/// Running totals at the executing boundaries. Each charge is counted before the work runs, and a
+/// charge past its ceiling is refused, so no work beyond a cap starts. Safe to share across the
+/// evaluation pool's threads.
+#[derive(Debug)]
+pub struct ExecutionBoundaryCounters {
+    caps: ExecutionBoundaryCaps,
+    physical_fits: std::sync::atomic::AtomicU64,
+    model_calls: std::sync::atomic::AtomicU64,
+    reasoning_tokens_total: std::sync::atomic::AtomicU64,
+    max_call_tokens_observed: std::sync::atomic::AtomicU64,
+    /// Serialises the model-call checks with their increments, so two threads cannot both pass a
+    /// ceiling that only one of them may reach.
+    model_gate: std::sync::Mutex<()>,
+    /// Physical fits held back from search arms, for the final O assessments. Search charges stop
+    /// at `max_physical_fits - reserved`; only [`Self::charge_assessment_fit`] may use the rest.
+    reserved_assessment_fits: u64,
+}
+
+impl ExecutionBoundaryCounters {
+    pub fn new(caps: ExecutionBoundaryCaps) -> Self {
+        ExecutionBoundaryCounters {
+            caps,
+            physical_fits: Default::default(),
+            model_calls: Default::default(),
+            reasoning_tokens_total: Default::default(),
+            max_call_tokens_observed: Default::default(),
+            model_gate: Default::default(),
+            reserved_assessment_fits: 0,
+        }
+    }
+
+    /// Rebuilds counters from a durable snapshot, so a reopened study resumes its totals.
+    pub fn restored(
+        caps: ExecutionBoundaryCaps,
+        reserved_assessment_fits: u64,
+        physical_fits: u64,
+        model_calls: u64,
+        reasoning_tokens_total: u64,
+        max_call_tokens_observed: u64,
+    ) -> Self {
+        ExecutionBoundaryCounters {
+            caps,
+            physical_fits: physical_fits.into(),
+            model_calls: model_calls.into(),
+            reasoning_tokens_total: reasoning_tokens_total.into(),
+            max_call_tokens_observed: max_call_tokens_observed.into(),
+            model_gate: Default::default(),
+            reserved_assessment_fits,
+        }
+    }
+
+    /// Reserves `reserved` physical fits of the ceiling for the final assessments. Set before the
+    /// counters are shared.
+    pub fn with_reserved_assessment_fits(mut self, reserved: u64) -> Self {
+        self.reserved_assessment_fits = reserved;
+        self
+    }
+
+    pub fn reserved_assessment_fits(&self) -> u64 {
+        self.reserved_assessment_fits
+    }
+
+    pub fn caps(&self) -> ExecutionBoundaryCaps {
+        self.caps
+    }
+
+    pub fn physical_fits(&self) -> u64 {
+        self.physical_fits.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn model_calls(&self) -> u64 {
+        self.model_calls.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn reasoning_tokens_total(&self) -> u64 {
+        self.reasoning_tokens_total
+            .load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Every generated token across the admitted calls. Counted whether or not a token ceiling is set.
+    pub fn generated_tokens_total(&self) -> u64 {
+        self.reasoning_tokens_total()
+    }
+
+    pub fn max_call_tokens_observed(&self) -> u64 {
+        self.max_call_tokens_observed
+            .load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Counts one physical fit made by a search arm, before `feat_math::fit` runs. Refused at the
+    /// ceiling less the reserved assessment fits, with the reason `"physical fold fits"`.
+    pub fn charge_physical_fit(&self) -> Result<(), &'static str> {
+        take_one(
+            &self.physical_fits,
+            self.caps
+                .max_physical_fits
+                .saturating_sub(self.reserved_assessment_fits),
+            "physical fold fits",
+        )
+    }
+
+    /// Counts one physical fit made by a final O assessment. It may use the reserved fits, up to the
+    /// full ceiling.
+    pub fn charge_assessment_fit(&self) -> Result<(), &'static str> {
+        take_one(
+            &self.physical_fits,
+            self.caps.max_physical_fits,
+            "physical fold fits",
+        )
+    }
+
+    /// Records the generated tokens of a model call that was already charged with
+    /// [`Self::record_model_call`] (zero tokens) before it ran. Applies the per-call and aggregate
+    /// ceilings, when set, and counts no call. A refused charge changes no total.
+    pub fn add_generated_tokens(&self, tokens: u64) -> Result<(), &'static str> {
+        use std::sync::atomic::Ordering::SeqCst;
+        let _gate = self
+            .model_gate
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        if let Some(max_per_call) = self.caps.max_reasoning_tokens_per_call {
+            if tokens > max_per_call {
+                return Err("reasoning tokens per call");
+            }
+        }
+        if let Some(max_total) = self.caps.max_generated_tokens_total {
+            let next_total = self
+                .reasoning_tokens_total
+                .load(SeqCst)
+                .saturating_add(tokens);
+            if next_total > max_total {
+                return Err("generated tokens total");
+            }
+        }
+        self.reasoning_tokens_total.fetch_add(tokens, SeqCst);
+        self.max_call_tokens_observed.fetch_max(tokens, SeqCst);
+        Ok(())
+    }
+
+    /// Counts one model call before it runs. The call ceiling is checked first, then the per-call
+    /// ceiling (when set), then the aggregate generated-token ceiling (when set). A refused call is
+    /// not counted and changes no total. Reasons: `"model calls"`, `"reasoning tokens per call"`,
+    /// `"generated tokens total"`.
+    pub fn record_model_call(&self, reasoning_tokens: u64) -> Result<(), &'static str> {
+        use std::sync::atomic::Ordering::SeqCst;
+        let _gate = self
+            .model_gate
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        if self.model_calls.load(SeqCst) >= self.caps.max_model_calls {
+            return Err("model calls");
+        }
+        if let Some(max_per_call) = self.caps.max_reasoning_tokens_per_call {
+            if reasoning_tokens > max_per_call {
+                return Err("reasoning tokens per call");
+            }
+        }
+        if let Some(max_total) = self.caps.max_generated_tokens_total {
+            let next_total = self
+                .reasoning_tokens_total
+                .load(SeqCst)
+                .saturating_add(reasoning_tokens);
+            if next_total > max_total {
+                return Err("generated tokens total");
+            }
+        }
+        self.model_calls.fetch_add(1, SeqCst);
+        self.reasoning_tokens_total
+            .fetch_add(reasoning_tokens, SeqCst);
+        self.max_call_tokens_observed
+            .fetch_max(reasoning_tokens, SeqCst);
+        Ok(())
+    }
+}
+
+/// Increments `counter` only while it is below `ceiling`. Otherwise refuses with `reason`.
+fn take_one(
+    counter: &std::sync::atomic::AtomicU64,
+    ceiling: u64,
+    reason: &'static str,
+) -> Result<(), &'static str> {
+    counter
+        .fetch_update(
+            std::sync::atomic::Ordering::SeqCst,
+            std::sync::atomic::Ordering::SeqCst,
+            |n| (n < ceiling).then_some(n + 1),
+        )
+        .map(|_| ())
+        .map_err(|_| reason)
+}
+
+/// The role a fold plays in the reasoner split: `FitA` fits a candidate, `SelectB` ranks it, and
+/// `EvalO` is the one held-out read.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReasonerSplitRole {
+    FitA,
+    SelectB,
+    EvalO,
+}
+
+/// Opt-in ledger for the reasoner split. `FitA` and `SelectB` are charged only before the selection
+/// freeze, and `EvalO` only after it, at most once. A refused charge is not counted. A search with
+/// no ledger keeps the legacy cut folds.
+#[derive(Debug, Default)]
+pub struct ReasonerSplitLedger {
+    frozen: std::sync::atomic::AtomicBool,
+    o_reads: std::sync::atomic::AtomicU64,
+}
+
+impl ReasonerSplitLedger {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Closes selection: the B-rank freeze. Afterwards no candidate is fitted or ranked, and O may
+    /// be read once.
+    pub fn freeze_selection(&self) {
+        self.frozen.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn o_reads(&self) -> u64 {
+        self.o_reads.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Charges one use of `role`. Reasons: `"selection frozen"`, `"O read before the selection
+    /// freeze"`, `"O read more than once"`.
+    pub fn charge(&self, role: ReasonerSplitRole) -> Result<(), &'static str> {
+        let frozen = self.is_frozen();
+        match role {
+            ReasonerSplitRole::FitA | ReasonerSplitRole::SelectB if frozen => {
+                Err("selection frozen")
+            }
+            ReasonerSplitRole::FitA | ReasonerSplitRole::SelectB => Ok(()),
+            ReasonerSplitRole::EvalO if !frozen => Err("O read before the selection freeze"),
+            ReasonerSplitRole::EvalO => take_one(&self.o_reads, 1, "O read more than once"),
+        }
+    }
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -197,12 +495,29 @@ impl SearchOptions {
             cancel: None,
             record_events: true,
             event_binding: None,
+            unbounded_time: false,
+            fit_counters: None,
         }
     }
 
     /// `islands x threads`: the evaluation pool's size.
     pub fn workers(&self) -> usize {
         self.threads.max(1).saturating_mul(self.islands.max(1))
+    }
+
+    /// The temporal bound on this search. `Some` is the legacy bound `Budget.seconds`. `None` is the
+    /// reasoner no-time-limit policy: no seconds stop, no per-fit timeout, and no synthesized timeout
+    /// failure. Unlimited is never encoded as a number. Evaluations, cancellation and every other
+    /// bound still apply.
+    pub fn time_limit(&self) -> Option<Duration> {
+        (!self.unbounded_time).then(|| Duration::from_secs(self.budget.seconds))
+    }
+
+    /// Applies the reasoner no-time-limit policy. Both teacher and matched baseline arms must call
+    /// this through the same entry point, so they share one policy.
+    pub fn without_time_limit(mut self) -> Self {
+        self.unbounded_time = true;
+        self
     }
 
     pub fn cancelled(&self) -> bool {
@@ -261,6 +576,11 @@ impl Budget {
     /// Opt-in I16 resource vector. This does not change legacy search admission
     /// or make an in-process fit preemptible. Callers reserve all other stages
     /// and terminal headroom separately in the original experiment window.
+    ///
+    /// This is the finite legacy cap: `AttemptWallMicros` is `seconds` (300 by default) and
+    /// `CpuCoreMicros` is that wall times the CPU slots. A caller on the reasoner no-time-limit
+    /// path must use [`Budget::resource_cap_no_time_limit_v1`] instead, which never produces
+    /// these two units. See `the_no_time_limit_cap_never_carries_the_legacy_300s_wall`.
     pub fn resource_cap_v1(
         &self,
         cpu_slots: u64,
@@ -282,6 +602,24 @@ impl Budget {
                 Unit::CpuCoreMicros,
                 wall.checked_mul(cpu_slots).context("CPU cap overflow")?,
             ),
+            (Unit::PeakMemoryBytes, memory_bytes),
+            (Unit::Evaluations, u64::try_from(self.evaluations)?),
+        ]))
+    }
+
+    /// The cap for the reasoner no-time-limit policy. It carries the evaluation and memory bounds
+    /// only. `AttemptWallMicros` and `CpuCoreMicros` are not produced, so no finite wall or CPU
+    /// limit is encoded. The ledger refuses reservations of units a cap does not name, so a caller
+    /// on this path must not reserve those two units. Measured wall time is still recorded by
+    /// `Observation::resource_cost_v1`.
+    pub fn resource_cap_no_time_limit_v1(
+        &self,
+        memory_bytes: u64,
+    ) -> Result<crate::resource_ledger::Amounts> {
+        use crate::resource_ledger::{Amounts, Unit};
+        self.check_evaluations()?;
+        ensure!(memory_bytes > 0, "empty resource allocation");
+        Ok(Amounts::new([
             (Unit::PeakMemoryBytes, memory_bytes),
             (Unit::Evaluations, u64::try_from(self.evaluations)?),
         ]))
@@ -315,15 +653,22 @@ impl Budget {
     }
 
     pub fn check(&self) -> Result<()> {
-        ensure!(
-            self.evaluations > 0 && self.evaluations <= MAX_EVALUATIONS,
-            "budget evaluations must be 1..={MAX_EVALUATIONS}, got {}",
-            self.evaluations
-        );
+        self.check_evaluations()?;
         ensure!(
             self.seconds > 0 && self.seconds <= MAX_SECONDS,
             "budget seconds must be 1..={MAX_SECONDS}, got {}",
             self.seconds
+        );
+        Ok(())
+    }
+
+    /// The evaluation bound alone. The reasoner no-time-limit path validates only this, because its
+    /// temporal bound is `None` and `seconds` is never read.
+    pub fn check_evaluations(&self) -> Result<()> {
+        ensure!(
+            self.evaluations > 0 && self.evaluations <= MAX_EVALUATIONS,
+            "budget evaluations must be 1..={MAX_EVALUATIONS}, got {}",
+            self.evaluations
         );
         Ok(())
     }
@@ -544,6 +889,9 @@ pub struct CutSearch {
     pub rng_seed: u64,
     #[serde(skip)]
     pub budget: Budget,
+    /// The temporal bound this cut ran under, in seconds (`None` under the no-time-limit policy).
+    #[serde(skip)]
+    pub time_limit: Option<f64>,
 }
 
 /// A scored survivor carried between generations.
@@ -632,12 +980,25 @@ pub(crate) fn stream(rng_seed: u64, cut: usize, generation: usize, slot: usize, 
 
 /// Fit one candidate on the cut's training rows and score it on the held-out
 /// rows. Never returns `Err`: a failure is an [`Observation`], not an abort.
+#[cfg(test)]
 pub(crate) fn evaluate(
     genome: &str,
     cut: &Cut,
     generation: usize,
     origin: &'static str,
     clock: Clock,
+) -> Observation {
+    evaluate_counted(genome, cut, generation, origin, clock, None)
+}
+
+/// [`evaluate`] with the physical fit counted against `counters` when given.
+pub(crate) fn evaluate_counted(
+    genome: &str,
+    cut: &Cut,
+    generation: usize,
+    origin: &'static str,
+    clock: Clock,
+    counters: Option<&ExecutionBoundaryCounters>,
 ) -> Observation {
     let started = clock.start();
     let record = |status, failure: Option<String>, seconds| Observation {
@@ -665,6 +1026,18 @@ pub(crate) fn evaluate(
             );
         }
     };
+
+    // The fit is counted before it runs. A charge past the ceiling refuses the fit, so no
+    // physical fit beyond the cap starts. The refusal is recorded as a failed fit.
+    if let Some(counters) = counters {
+        if let Err(reason) = counters.charge_physical_fit() {
+            return record(
+                FIT_FAILED,
+                Some(format!("execution-boundary cap refused the fit: {reason}")),
+                started.elapsed().as_secs_f64(),
+            );
+        }
+    }
 
     // feat-math is a large numerical surface and the search reaches parameter
     // combinations no hand-written call does. A panic in one candidate must not
@@ -1025,13 +1398,16 @@ fn evaluate_admitted(
     options: &SearchOptions,
     pool: Option<&rayon::ThreadPool>,
     started: Stamp,
-    deadline: Duration,
+    deadline: Option<Duration>,
     recorder: Option<&Recorder>,
 ) -> Vec<Option<Observation>> {
     let clock = options.clock;
-    // A stop request is honoured exactly where the seconds bound is: before a fit starts.
+    // A stop request is honoured exactly where the seconds bound is: before a fit starts. Without a
+    // time bound (`None`) only the stop request stops a fit here.
     let may_start = |origin: &str| {
-        !options.cancelled() && (seconds_exempt(generation, origin) || started.elapsed() < deadline)
+        !options.cancelled()
+            && (seconds_exempt(generation, origin)
+                || deadline.is_none_or(|limit| started.elapsed() < limit))
     };
     match pool {
         None => {
@@ -1041,7 +1417,14 @@ fn evaluate_admitted(
                     break;
                 }
                 results.push(Some(record_evaluation(recorder, draw, clock, || {
-                    let mut observation = evaluate(genome, cut, generation, origin, clock);
+                    let mut observation = evaluate_counted(
+                        genome,
+                        cut,
+                        generation,
+                        origin,
+                        clock,
+                        options.fit_counters.as_deref(),
+                    );
                     observation.island = (options.islands > 1).then_some(*island);
                     observation
                 })));
@@ -1056,7 +1439,14 @@ fn evaluate_admitted(
                     .map(|(island, genome, origin, _)| {
                         may_start(origin).then(|| {
                             let started = recorder.map(|_| clock.start());
-                            let mut observation = evaluate(genome, cut, generation, origin, clock);
+                            let mut observation = evaluate_counted(
+                                genome,
+                                cut,
+                                generation,
+                                origin,
+                                clock,
+                                options.fit_counters.as_deref(),
+                            );
                             observation.island = (options.islands > 1).then_some(*island);
                             let elapsed = started.map(|stamp| stamp.secs());
                             (observation, elapsed)
@@ -1089,7 +1479,11 @@ fn run_cut_allocated(
     reserve: bool,
 ) -> Result<CutSearch> {
     let (budget, rng_seed, clock) = (options.budget, options.rng_seed, options.clock);
-    budget.check()?;
+    if options.unbounded_time {
+        budget.check_evaluations()?;
+    } else {
+        budget.check()?;
+    }
     ensure!(
         !output.join("search.json").exists(),
         "{}: a completed search is already published here",
@@ -1100,8 +1494,10 @@ fn run_cut_allocated(
     let recorder = recorder.as_ref();
     let started = clock.start();
     let evaluation_limit = exploration_limit(budget, if reserve { 2 } else { 1 });
-    let seconds_limit = budget.seconds as f64 / if reserve { 2.0 } else { 1.0 };
-    let deadline = Duration::from_secs_f64(seconds_limit);
+    let deadline = options
+        .time_limit()
+        .map(|limit| limit.div_f64(if reserve { 2.0 } else { 1.0 }));
+    let seconds_limit = deadline.map(|d| d.as_secs_f64());
 
     let mut observations: Vec<Observation> = Vec::new();
     let mut seen: BTreeSet<String> = BTreeSet::new();
@@ -1203,7 +1599,9 @@ fn run_cut_allocated(
                 admission(recorder, &draw, STOPPED_BY_EVALUATIONS);
                 break;
             }
-            if !seconds_exempt(generation, origin) && started.elapsed() >= deadline {
+            if !seconds_exempt(generation, origin)
+                && deadline.is_some_and(|limit| started.elapsed() >= limit)
+            {
                 bound = Some(STOPPED_BY_SECONDS);
                 admission(recorder, &draw, STOPPED_BY_SECONDS);
                 break;
@@ -1364,7 +1762,7 @@ fn run_cut_allocated(
             seconds,
             stopped_by: stopped_by.to_owned(),
         },
-        comparison: Phase::not_requested(),
+        comparison: Phase::not_requested_under(options.time_limit().is_some()),
         best_validation_rmse: best.rmse,
         best_validation_r2: best.hold_r2,
         best_program: Some(best.genome.clone()),
@@ -1374,6 +1772,7 @@ fn run_cut_allocated(
         observations_sha256: String::new(),
         rng_seed,
         budget,
+        time_limit: options.time_limit().map(|t| t.as_secs_f64()),
     };
     publish_cut_search(&mut search)?;
     Ok(search)
@@ -1423,7 +1822,9 @@ fn remeasure_in(
                     clock,
                     &stop,
                     recorder.as_ref(),
-                    &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                    &mut |g, c, n, o| {
+                        evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref())
+                    },
                 );
             }
         }
@@ -1439,7 +1840,9 @@ fn remeasure_in(
                         clock,
                         &stop,
                         recorder.as_ref(),
-                        &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                        &mut |g, c, n, o| {
+                            evaluate_counted(g, c, n, o, clock, options.fit_counters.as_deref())
+                        },
                     )
                 })
         }),
@@ -1537,7 +1940,9 @@ fn open_comparison(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<Option<Ve
         search.comparison = Phase {
             evaluation_limit: (search.budget.evaluations as u64)
                 .saturating_sub(search.completed_evaluations),
-            seconds_limit: (search.budget.seconds as f64 - search.seconds).max(0.0),
+            seconds_limit: search
+                .time_limit
+                .map(|limit| (limit - search.seconds).max(0.0)),
             stopped_by: STOPPED_BY_POOL.to_owned(),
             ..Phase::not_requested()
         };
@@ -1594,7 +1999,7 @@ fn remeasure_cut(
             "duplicate"
         } else if search.completed_evaluations >= search.budget.evaluations as u64 {
             STOPPED_BY_EVALUATIONS
-        } else if elapsed >= search.budget.seconds as f64 {
+        } else if search.time_limit.is_some_and(|limit| elapsed >= limit) {
             STOPPED_BY_SECONDS
         } else {
             "admitted"
@@ -1602,7 +2007,7 @@ fn remeasure_cut(
         admission(recorder, &draw, disposition);
         if !already
             && search.completed_evaluations < search.budget.evaluations as u64
-            && elapsed < search.budget.seconds as f64
+            && search.time_limit.is_none_or(|limit| elapsed < limit)
         {
             let observation = record_evaluation(recorder, &draw, clock, || {
                 evaluate_candidate(genome, cut, search.generations as usize, REMEASURE)
@@ -1627,7 +2032,10 @@ fn remeasure_cut(
 /// Record each cut's comparison outcome and best, and publish it.
 fn close_comparison(searches: &mut [CutSearch]) -> Result<()> {
     for search in searches.iter_mut() {
-        search.stopped_by = if search.seconds >= search.budget.seconds as f64 {
+        search.stopped_by = if search
+            .time_limit
+            .is_some_and(|limit| search.seconds >= limit)
+        {
             STOPPED_BY_SECONDS
         } else if search.completed_evaluations >= search.budget.evaluations as u64 {
             STOPPED_BY_EVALUATIONS
@@ -1670,10 +2078,17 @@ fn publish_cut_search(search: &mut CutSearch) -> Result<()> {
     summary["schema"] = "jope.pipeline-search/v2".into();
     summary["engine"] = SEARCH_ENGINE.into();
     summary["budget_policy"] = BUDGET_POLICY.into();
-    summary["deadline_overrun"] = (search.seconds > search.budget.seconds as f64).into();
+    summary["deadline_overrun"] = search
+        .time_limit
+        .is_some_and(|limit| search.seconds > limit)
+        .into();
     summary["rng_seed"] = search.rng_seed.into();
     summary["budget_evaluations"] = search.budget.evaluations.into();
-    summary["budget_seconds"] = search.budget.seconds.into();
+    summary["budget_seconds"] = match search.time_limit {
+        Some(_) => search.budget.seconds.into(),
+        None => serde_json::Value::Null,
+    };
+    summary["temporal_limits_enabled"] = search.time_limit.is_some().into();
     summary["observations_sha256"] = search.observations_sha256.clone().into();
     let summary_bytes = serde_json::to_vec_pretty(&summary)?;
     let search_path = output.join("search.json");
@@ -1909,6 +2324,212 @@ mod tests {
                 .iter()
                 .all(|s| s.stopped_by == STOPPED_BY_SECONDS
                     && s.comparison.completed_evaluations == 0)
+        );
+    }
+
+    /// Guard for the no-time-limit cap. It must not carry the legacy 300 s wall, the 600 s
+    /// maximum, `u64::MAX`, or any wall or CPU unit. The legacy `resource_cap_v1` still produces
+    /// the finite 300 s wall, pinned here so the two stay distinct.
+    #[test]
+    fn the_no_time_limit_cap_never_carries_the_legacy_300s_wall() {
+        use crate::resource_ledger::Unit;
+        let budget = Budget {
+            evaluations: 64,
+            seconds: 300,
+        };
+        let cap = budget.resource_cap_no_time_limit_v1(1 << 30).unwrap();
+        assert_eq!(cap.0.get(&Unit::AttemptWallMicros), None);
+        assert_eq!(cap.0.get(&Unit::CpuCoreMicros), None);
+        assert!(
+            cap.0
+                .values()
+                .all(|&v| v != 300_000_000 && v != 600_000_000 && v != u64::MAX),
+            "a finite wall-like value leaked into the no-time-limit cap: {:?}",
+            cap.0
+        );
+        assert_eq!(cap.0.get(&Unit::Evaluations), Some(&64));
+        assert_eq!(cap.0.get(&Unit::PeakMemoryBytes), Some(&(1 << 30)));
+        assert!(budget.resource_cap_no_time_limit_v1(0).is_err());
+        assert!(Budget {
+            evaluations: 0,
+            seconds: 300
+        }
+        .resource_cap_no_time_limit_v1(1)
+        .is_err());
+        let legacy = budget.resource_cap_v1(2, 1 << 30).unwrap();
+        assert_eq!(legacy.get(Unit::AttemptWallMicros), 300_000_000);
+        assert_eq!(legacy.get(Unit::CpuCoreMicros), 600_000_000);
+    }
+
+    /// `Some` is the legacy bound, and `without_time_limit` yields `None`. Unlimited is never a
+    /// number, so the bound cannot be confused with a finite deadline.
+    #[test]
+    fn the_time_bound_is_optional_and_unlimited_is_never_a_number() {
+        let budget = Budget {
+            evaluations: 8,
+            seconds: 300,
+        };
+        let legacy = SearchOptions::new(budget, 1);
+        assert_eq!(legacy.time_limit(), Some(Duration::from_secs(300)));
+        assert_eq!(legacy.without_time_limit().time_limit(), None);
+        assert!(Budget {
+            evaluations: 0,
+            seconds: 300
+        }
+        .check_evaluations()
+        .is_err());
+    }
+
+    /// V10. Under natural EOS a call past 8 192 tokens is accepted and charged, and the caps survive
+    /// a JSON round trip as `null`.
+    #[test]
+    fn reasoner_natural_eos_accepts_and_charges_beyond_8192_and_roundtrips_none() {
+        let caps = ExecutionBoundaryCaps::reasoner_natural_eos();
+        let counters = ExecutionBoundaryCounters::new(caps);
+        assert_eq!(counters.record_model_call(8_193), Ok(()));
+        assert_eq!(counters.record_model_call(24_000), Ok(()));
+        assert_eq!(counters.generated_tokens_total(), 32_193);
+        assert_eq!(counters.model_calls(), 2);
+        assert_eq!(counters.max_call_tokens_observed(), 24_000);
+
+        let json = serde_json::to_string(&caps).unwrap();
+        assert!(
+            json.contains("\"max_reasoning_tokens_per_call\":null"),
+            "{json}"
+        );
+        assert!(
+            json.contains("\"max_generated_tokens_total\":null"),
+            "{json}"
+        );
+        let back: ExecutionBoundaryCaps = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, caps);
+        assert_eq!(back.max_reasoning_tokens_per_call, None);
+        assert_eq!(back.max_generated_tokens_total, None);
+    }
+
+    /// V10. Natural EOS removes the token ceilings only. The call and fit ceilings still refuse.
+    #[test]
+    fn natural_eos_keeps_the_call_and_fit_ceilings_fail_closed() {
+        let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_model_calls: 1,
+            ..ExecutionBoundaryCaps::reasoner_natural_eos()
+        });
+        assert_eq!(counters.record_model_call(9_000), Ok(()));
+        assert_eq!(counters.record_model_call(9_000), Err("model calls"));
+        assert_eq!(counters.model_calls(), 1);
+        assert_eq!(counters.generated_tokens_total(), 9_000);
+
+        let fits = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_physical_fits: 1,
+            ..ExecutionBoundaryCaps::reasoner_natural_eos()
+        });
+        assert_eq!(fits.charge_physical_fit(), Ok(()));
+        assert_eq!(fits.charge_physical_fit(), Err("physical fold fits"));
+        assert_eq!(fits.physical_fits(), 1);
+    }
+
+    /// V10. An explicit aggregate ceiling refuses the call that would cross it, and the refused
+    /// call changes no counter.
+    #[test]
+    fn generated_tokens_total_cap_refuses_without_mutating_counters() {
+        let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_reasoning_tokens_per_call: None,
+            max_generated_tokens_total: Some(100),
+            ..ExecutionBoundaryCaps::reasoner_natural_eos()
+        });
+        assert_eq!(counters.record_model_call(60), Ok(()));
+        assert_eq!(
+            counters.record_model_call(50),
+            Err("generated tokens total")
+        );
+        assert_eq!(counters.generated_tokens_total(), 60);
+        assert_eq!(counters.model_calls(), 1);
+        assert_eq!(counters.max_call_tokens_observed(), 60);
+        assert_eq!(counters.record_model_call(40), Ok(()));
+        assert_eq!(counters.generated_tokens_total(), 100);
+    }
+
+    /// V10. The legacy default still refuses 8 193 tokens in one call, and a JSON document written
+    /// without the token fields reads back as that legacy cap, not as no cap.
+    #[test]
+    fn default_caps_still_refuse_a_call_past_8192_tokens() {
+        let counters = ExecutionBoundaryCounters::new(ExecutionBoundaryCaps::default());
+        assert_eq!(
+            counters.record_model_call(8_193),
+            Err("reasoning tokens per call")
+        );
+        assert_eq!(counters.model_calls(), 0);
+        assert_eq!(counters.record_model_call(8_192), Ok(()));
+
+        let legacy: ExecutionBoundaryCaps =
+            serde_json::from_str(r#"{"max_physical_fits":20000,"max_model_calls":2048}"#).unwrap();
+        assert_eq!(legacy.max_reasoning_tokens_per_call, Some(8_192));
+        assert_eq!(legacy.max_generated_tokens_total, None);
+    }
+
+    /// GATE 1 at the reasoner split. `EvalO` is read at most once and only after the selection
+    /// freeze. A fit or a rank after the freeze is refused.
+    #[test]
+    fn reasoner_split_reads_o_at_most_once_after_the_selection_freeze() {
+        use super::ReasonerSplitRole::{EvalO, FitA, SelectB};
+        let ledger = super::ReasonerSplitLedger::new();
+        assert_eq!(ledger.charge(FitA), Ok(()));
+        assert_eq!(ledger.charge(SelectB), Ok(()));
+        assert_eq!(
+            ledger.charge(EvalO),
+            Err("O read before the selection freeze")
+        );
+        assert_eq!(ledger.o_reads(), 0, "a refused O read was counted");
+
+        ledger.freeze_selection();
+        assert_eq!(ledger.charge(SelectB), Err("selection frozen"));
+        assert_eq!(ledger.charge(FitA), Err("selection frozen"));
+        assert_eq!(ledger.charge(EvalO), Ok(()));
+        assert_eq!(ledger.charge(EvalO), Err("O read more than once"));
+        assert_eq!(ledger.o_reads(), 1);
+    }
+
+    /// GATE 3 at the production boundary. A search whose fit counter has a small ceiling runs no
+    /// physical fit past it: the counter reads exactly the ceiling, and the refused candidates are
+    /// recorded as failed fits with the cap's reason.
+    #[test]
+    fn the_search_counts_each_physical_fit_and_refuses_past_the_ceiling() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "boundary",
+            7,
+            3,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let counters = Arc::new(ExecutionBoundaryCounters::new(ExecutionBoundaryCaps {
+            max_physical_fits: 3,
+            ..ExecutionBoundaryCaps::default()
+        }));
+        let options = SearchOptions {
+            fit_counters: Some(counters.clone()),
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 40,
+                    seconds: 60,
+                },
+                11,
+            )
+        };
+        // A cut whose every candidate is refused has no successful measurement, so the run fails
+        // closed with the cap's reason. It does not publish a search built from refused fits.
+        let error = run_cuts_with(&preparation.cuts, &options, &temp.path().join("search"))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("execution-boundary cap refused the fit: physical fold fits"),
+            "{error}"
+        );
+        assert_eq!(
+            counters.physical_fits(),
+            3,
+            "the counter must stop at its ceiling"
         );
     }
 

@@ -47,11 +47,14 @@ pub mod invent;
 pub mod islands;
 pub mod kernel2;
 pub mod lineage;
+pub mod model_build;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;
 pub mod parallel;
+pub mod pathway;
 pub mod prepare;
 pub mod prepared_data;
+pub mod reasoner_pilot;
 pub mod receipt;
 pub mod resource_ledger;
 pub mod run;

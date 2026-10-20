@@ -45,3 +45,32 @@ Before Cargo set `CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only`,
 Every wave keeps small manifest/card/metrics/context in Git, with bulk compressed immutable artifacts outside the tree and exact VersionIds/hashes/restoration receipts. Preserve failure/unknown outcomes and original source identities. Count proposals, actual measurements, published labels, optimizer updates and fresh-feedback updates separately. No source inventory percentage is proof of self-play gains.
 
 Never reset/clean valuable work, remove symlinks, touch another writer's files, repeat a benchmark to fill GPUs, or infer rights/admission from object existence. See the closure workplan for exact host lanes, current owners, stops, cleanup eligibility and handoff fields. Use the Admiral's existing dispatch path; no new worker/screen/worktree or competing platform deploy.
+
+
+## Combined source integration — 2026-10-20T03:55Z
+
+Root01a13a98 is consolidating stopped W2 `e66442c8847fe3155a08f1fadb6a899d95111349`
+(tree `3cea9f8cbf7d8c244c2b45c8e4a54549405cc3b9`) in the existing main-based
+`codex/major-release-closure-20261019` branch, preserving both histories. No new lane or
+competing PR is created. C14 receipts are under
+`/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/`.
+
+The stopped component has 626 passed / 0 failed / 3 ignored, including 33 native-study and 8 compile-fail
+doctests (both included in 626), plus noncached clippy exit0. Independent driver-delta review
+`review_w2_e66442c88_w1_native_driver_20261020.json` SHA256
+`acefed409a34af1924f96de4e284dd0a9c6c9df9f397cc3f018f456ecc2890dd` has no blocking findings.
+The original producer receipt has a future timestamp and omitted executed doctests; addendum
+`ccb6ec4e21f4152d5af2d5bc49435779f312dfb9c16ea39669011835b15780a7` preserves it and corrects
+those metadata errors. Observed full-log SHA256:
+`cd3dc2c2473efbaaf36ad521f5295a844a383882b2d2cf3f4eed203919548880`.
+
+Component results do not substitute for combined-head qualification or final native approval.
+Combined tests, generated inventory, README consistency and exact-head review remain pending
+until their actual receipts exist. The library validates the whole plan before any fit, uses
+one ledger/counter, freezes all arms before any O and refuses retry/reassessment of an existing
+study. It preserves the legacy finite budget API, which has no production caller.
+
+Real admission root/provider/loader, a production study entry point and physical E9 linkage
+remain open. Separate Qwen9B recovery-r3 performs inference and GP evaluation, not native
+optimizer continuation; native training remains at 429 updates. No MR47 or older I66 task is
+accepted by this integration note.

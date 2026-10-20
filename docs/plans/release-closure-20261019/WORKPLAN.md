@@ -232,3 +232,32 @@ A blocker packet names task, full head/path, actual failing command/log/hash, re
 Use `TASKS.json` for closure packet states and `MR_TASKS.json` as a dated reference; only the authoritative existing MR JSON/Markdown pair can change MR state after evidence. Count acceptance cases on actual final main; no single aggregate percentage merges source implementation, local proof, CI, science and deployment. Append short UTC status with full SHA and immutable evidence to existing coordination; store large logs compressed outside Git. Push work at least every30min or publish the exact blocker; never force-push. One actionable owner dispatch per new issue; suppress duplicate reminders while unchanged.
 
 At handoff include exact host/checkout/branch/base/stopped head, dirty/untracked/ignored ownership, patch/commit list, task/acceptance mapping, test census and environments, log/artifact hashes and locations, PR/review/CI/main receipts, resource/admission/retention end conditions, remaining blockers and next ready task. Have the Admiral acknowledge plan adoption with actual task IDs/owner leases or a concrete correction. No automatic new monitor is created by this finite plan; the human's existing30min monitor remains separately controlled.
+
+
+## Combined source integration — 2026-10-20T03:55Z
+
+Root01a13a98 is consolidating stopped W2 `e66442c8847fe3155a08f1fadb6a899d95111349`
+(tree `3cea9f8cbf7d8c244c2b45c8e4a54549405cc3b9`) in the existing main-based
+`codex/major-release-closure-20261019` branch, preserving both histories. No new lane or
+competing PR is created. C14 receipts are under
+`/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/`.
+
+The stopped component has 626 passed / 0 failed / 3 ignored, including 33 native-study and 8 compile-fail
+doctests (both included in 626), plus noncached clippy exit0. Independent driver-delta review
+`review_w2_e66442c88_w1_native_driver_20261020.json` SHA256
+`acefed409a34af1924f96de4e284dd0a9c6c9df9f397cc3f018f456ecc2890dd` has no blocking findings.
+The original producer receipt has a future timestamp and omitted executed doctests; addendum
+`ccb6ec4e21f4152d5af2d5bc49435779f312dfb9c16ea39669011835b15780a7` preserves it and corrects
+those metadata errors. Observed full-log SHA256:
+`cd3dc2c2473efbaaf36ad521f5295a844a383882b2d2cf3f4eed203919548880`.
+
+Component results do not substitute for combined-head qualification or final native approval.
+Combined tests, generated inventory, README consistency and exact-head review remain pending
+until their actual receipts exist. The library validates the whole plan before any fit, uses
+one ledger/counter, freezes all arms before any O and refuses retry/reassessment of an existing
+study. It preserves the legacy finite budget API, which has no production caller.
+
+Real admission root/provider/loader, a production study entry point and physical E9 linkage
+remain open. Separate Qwen9B recovery-r3 performs inference and GP evaluation, not native
+optimizer continuation; native training remains at 429 updates. No MR47 or older I66 task is
+accepted by this integration note.
