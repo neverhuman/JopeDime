@@ -27,23 +27,29 @@ fn request(candidates: &[&str]) -> NativeRequest {
         report_labels: u.report_labels.clone(),
         report_groups: vec![],
         candidates: candidates.iter().map(|c| c.to_string()).collect(),
-        budget: BudgetCounters::UNLIMITED,
+        budget: BudgetCounters {
+            candidate_evaluations: 16,
+            fold_fits: 80,
+            outer_refits: 16,
+            ensemble_attempts: 1,
+            neural_gp_work_units: 0,
+        },
         wall_limit_ms: None,
     }
 }
 
 /// A fresh directory for one test's request and output files.
-fn workdir(name: &str) -> PathBuf {
-    let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
-        .join("model-build-driver")
-        .join(name);
-    let _ = std::fs::remove_dir_all(&dir);
-    std::fs::create_dir_all(&dir).unwrap();
-    dir
+fn workdir(name: &str) -> tempfile::TempDir {
+    let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR"));
+    std::fs::create_dir_all(&root).unwrap();
+    tempfile::Builder::new()
+        .prefix(name)
+        .tempdir_in(root)
+        .unwrap()
 }
 
 fn write_request(dir: &std::path::Path, request: &NativeRequest) -> PathBuf {
-    let path = dir.join("request.json");
+    let path = dir.path().join("request.json");
     std::fs::write(&path, serde_json::to_vec(request).unwrap()).unwrap();
     path
 }
@@ -51,8 +57,8 @@ fn write_request(dir: &std::path::Path, request: &NativeRequest) -> PathBuf {
 #[test]
 fn the_request_file_runs_the_native_driver_and_writes_the_artifact_once() {
     let dir = workdir("driver-writes-once");
-    let request_path = write_request(&dir, &request(&["rust.ridge"]));
-    let output = dir.join("ensemble.json");
+    let request_path = write_request(dir.path(), &request(&["rust.ridge"]));
+    let output = dir.path().join("ensemble.json");
     let read = read_native_request(&request_path).unwrap();
     assert_eq!(read, request(&["rust.ridge"]));
     let out = run_native_request(&read, Some(&output)).unwrap();
@@ -70,8 +76,8 @@ fn the_request_file_runs_the_native_driver_and_writes_the_artifact_once() {
 #[test]
 fn the_cli_subcommand_reaches_the_same_driver_and_writes_the_artifact() {
     let dir = workdir("cli-writes");
-    let request_path = write_request(&dir, &request(&["rust.ridge"]));
-    let output = dir.join("ensemble.json");
+    let request_path = write_request(dir.path(), &request(&["rust.ridge"]));
+    let output = dir.path().join("ensemble.json");
     let cli = Cli::try_parse_from([
         "jope-pipeline",
         "model-build-native",
@@ -90,7 +96,7 @@ fn a_request_without_an_output_path_runs_and_writes_nothing() {
     let dir = workdir("no-output");
     let out = run_native_request(&request(&["rust.ridge"]), None).unwrap();
     assert!(out.persisted.is_some());
-    assert!(std::fs::read_dir(&dir).unwrap().count() == 0);
+    assert!(std::fs::read_dir(dir.path()).unwrap().count() == 0);
 }
 
 #[test]
@@ -124,7 +130,100 @@ fn an_unknown_request_field_is_refused_when_parsed() {
     let dir = workdir("unknown-field");
     let mut value = serde_json::to_value(request(&["rust.ridge"])).unwrap();
     value["surprise"] = serde_json::json!(1);
-    let path = dir.join("request.json");
+    let path = dir.path().join("request.json");
     std::fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
     assert!(read_native_request(&path).is_err());
+}
+
+#[test]
+fn native_request_unlimited_work_caps_are_refused_at_admission() {
+    for index in 0..5 {
+        let mut req = request(&["rust.ridge"]);
+        let caps = [
+            &mut req.budget.candidate_evaluations,
+            &mut req.budget.fold_fits,
+            &mut req.budget.outer_refits,
+            &mut req.budget.ensemble_attempts,
+            &mut req.budget.neural_gp_work_units,
+        ];
+        *caps.into_iter().nth(index).unwrap() = u64::MAX;
+        let result = run_native_request(&req, None);
+        assert!(
+            result.is_err(),
+            "unlimited native work cap {index} was accepted"
+        );
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("budget must be finite"));
+    }
+}
+
+#[test]
+fn native_request_maximum_wall_sentinel_is_refused_at_admission() {
+    let mut req = request(&["rust.ridge"]);
+    req.wall_limit_ms = Some(u64::MAX);
+    req.budget.candidate_evaluations = 0;
+    let error = run_native_request(&req, None).unwrap_err().to_string();
+    assert!(
+        error.contains("wall budget must be finite"),
+        "wrong refusal: {error}"
+    );
+}
+
+#[test]
+fn native_request_duplicate_roster_is_refused_before_budgeted_work() {
+    let mut req = request(&["rust.ridge", "rust.ridge"]);
+    req.budget.candidate_evaluations = 0;
+    let error = run_native_request(&req, None).unwrap_err().to_string();
+    assert!(
+        error.contains("duplicate candidate rust.ridge"),
+        "wrong refusal: {error}"
+    );
+}
+
+#[test]
+fn native_request_finite_work_without_wall_limit_still_executes() {
+    let req = request(&["rust.ridge"]);
+    assert_eq!(req.wall_limit_ms, None);
+    let result = run_native_request(&req, None).unwrap();
+    assert_eq!(result.receipt.selected.as_deref(), Some("rust.ridge"));
+}
+
+#[test]
+fn native_request_identity_rejects_the_old_unframed_protocol() {
+    use jope_pipeline::model_build::identity::{AdmittedIdentity, ExecutionIdentity};
+    use jope_pipeline::model_build::native::data_digest;
+    let req = request(&["rust.ridge"]);
+    let mut identity = ExecutionIdentity::new(
+        &req.plan.request_sha256,
+        &req.plan.digest(),
+        &data_digest(&req.data),
+        &req.plan.row_ids,
+        &req.plan.labels,
+        &req.plan.group_ids,
+        &req.data.row_ids[req.selection_len..],
+        &req.report_labels,
+        &req.report_groups,
+    )
+    .unwrap();
+    assert_eq!(identity.protocol, "outer-selection-refit-report/v2");
+    AdmittedIdentity::admit(
+        identity.clone(),
+        &req.plan,
+        &req.data,
+        req.selection_len,
+        &req.report_labels,
+    )
+    .unwrap();
+    identity.protocol = "outer-selection-refit-report/v1".into();
+    let error = AdmittedIdentity::admit(
+        identity,
+        &req.plan,
+        &req.data,
+        req.selection_len,
+        &req.report_labels,
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("protocol differs"));
 }

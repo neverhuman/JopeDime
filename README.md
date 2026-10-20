@@ -125,7 +125,10 @@ for the complete engineering scope.
 A separate CPU-only head bake-off is exposed as `jope pipeline model-build-native --request
 <request.json> [--output <new-model.json>]`, using the `jope.model-build-native-request/v1`
 contract. It does not invoke a neural model and is distinct from the Direct/Thinking route.
-Its supported estimator, admission and persistence limits are enforced by the request driver.
+Its supported estimator, admission and persistence limits are enforced by the request driver. Native requests require finite per-kind work
+budgets and reject duplicate candidate IDs before fitting. `wall_limit_ms` remains
+optional when work counters are finite; omitting it does not select an unlimited
+work budget.
 
 The native-study library separately provides whole-plan admission checks, one shared fit
 counter and a barrier that freezes all families and arms before held-out assessment. Its

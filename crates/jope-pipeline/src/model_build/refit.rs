@@ -156,8 +156,8 @@ impl OuterRefitRecord {
         &self.predict_rows_sha256
     }
 
-    /// True only for a record that `refit_members` produced in this process.
-    /// The members the record covers, by candidate id.
+    /// The members the record covers, by candidate id. This enumerator does not prove provenance;
+    /// only a `VerifiedRefit` carries the in-process refit construction guarantee.
     pub(super) fn member_ids(&self) -> impl Iterator<Item = &String> {
         self.members.keys()
     }

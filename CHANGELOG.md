@@ -19,6 +19,9 @@ not modify the published v0.3.0 binary or the `pipeline invent` subprocess contr
 - Existing CPU-only search is explicitly named `jope pipeline run-legacy-gp`; its numerical and receipt behavior is preserved. Update legacy callers to this command. `pipeline invent` and the signed v0.3.0 release remain unchanged.
 - Add native CPU model selection/refit/persistence components and a study library with one shared fit ledger and freeze-before-held-out-assessment ordering. Fixture acceptance does not establish real-data admission or learning gain.
 
+- Harden unreleased model-build row/group/label bindings with the versioned, length-framed `outer-selection-refit-report/v2` identity; prior v1 identities are refused instead of silently reinterpreted. Historical numerical evaluator identities and published artifacts are preserved.
+- Native model requests require finite work counters, reject unlimited wall sentinels and refuse duplicate candidates before fitting. Finite count-bounded runs may omit a wall-clock limit.
+
 ## [0.3.0] - 2026-10-19
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then

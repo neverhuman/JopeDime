@@ -1,3 +1,7 @@
+# Current source-review correction — qualification pending
+
+The same reviewer accepted the seven-file documentation correction at ac01b739 but reported identity framing and request-admission defects. Root reproduced four digest collisions/truncation/domain cases and three admission refusals against the unchanged production source. The repair uses versioned count/length-framed model-build identity v2, finite native work counters, duplicate-roster preflight and corrected refit documentation. Finite work without a temporal cap remains supported. The numerical evaluator identity and frozen historical schemas are separate and unchanged. Targeted qualification, final independent coverage and current-head CI are pending; no release or scientific acceptance follows. Original ac01 review and failed regressions are retained outside Git.
+
 C14 repaired-source checkpoint — 2026-10-20T05:12:31.421853+00:00
 
 One draft integration PR [#387](https://github.com/neverhuman/JopeDime/pull/387) contains both retained source histories. [The validation snapshot](C14_VALIDATION_SNAPSHOT.json) binds actual focused repairs at source843638354: 26 tests, strict affected-package clippy, CPU smoke, regression/source classification, layout, format and diff checks pass. Separate clean compatibility/historical checks at78036fd10 passed16/16; behavioral fixtures and all historical schemas remain frozen. The original584pass/1fail ordering mismatch and earlier903top-level+1replay evidence remain preserved at their actual heads. No broad workspace or current GitHub CI PASS is inferred.

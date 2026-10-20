@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
-pub const PROTOCOL: &str = "outer-selection-refit-report/v1";
+pub const PROTOCOL: &str = "outer-selection-refit-report/v2";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -40,30 +40,31 @@ pub struct ExecutionIdentity {
     pub report_group_sha256: String,
 }
 
-fn hex(bytes: impl AsRef<[u8]>) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+/// Length and item counts frame arbitrary UTF-8, including embedded NUL and unit separators.
+fn hash_strings(hasher: &mut Sha256, values: &[String]) {
+    hasher.update((values.len() as u64).to_le_bytes());
+    for value in values {
+        hasher.update((value.len() as u64).to_le_bytes());
+        hasher.update(value.as_bytes());
+    }
 }
 
-/// Digest of ordered identifiers, each terminated so concatenations cannot collide.
+/// Digest of ordered identifiers under the v2 count/length-framed identity protocol.
 pub fn digest_ids(ids: &[String]) -> String {
-    let mut buffer = Vec::new();
-    for id in ids {
-        buffer.extend_from_slice(id.as_bytes());
-        buffer.push(0);
-    }
-    hex(buffer)
+    let mut hasher = Sha256::new();
+    hasher.update(b"jope.model-build.identifiers/v2\0");
+    hash_strings(&mut hasher, ids);
+    format!("{:x}", hasher.finalize())
 }
 
-/// Digest of ordered identifiers paired with ordered labels.
+/// Digest of both ordered lists, with separate framing and a domain distinct from identifiers.
+/// All labels are bound even for malformed, unaligned lists, which admission refuses separately.
 pub fn digest_pairs(ids: &[String], labels: &[String]) -> String {
-    let mut buffer = Vec::new();
-    for (id, label) in ids.iter().zip(labels) {
-        buffer.extend_from_slice(id.as_bytes());
-        buffer.push(0x1f);
-        buffer.extend_from_slice(label.as_bytes());
-        buffer.push(0);
-    }
-    hex(buffer)
+    let mut hasher = Sha256::new();
+    hasher.update(b"jope.model-build.identifier-labels/v2\0");
+    hash_strings(&mut hasher, ids);
+    hash_strings(&mut hasher, labels);
+    format!("{:x}", hasher.finalize())
 }
 
 fn is_sha256(text: &str) -> bool {
@@ -337,5 +338,40 @@ mod tests {
             &[]
         )
         .is_err());
+    }
+    #[test]
+    fn identity_digest_embedded_nul_cannot_change_row_boundaries() {
+        assert_ne!(
+            digest_ids(&["a\0b".into()]),
+            digest_ids(&["a".into(), "b".into()])
+        );
+    }
+
+    #[test]
+    fn identity_digest_embedded_pair_separators_cannot_change_fields() {
+        assert_ne!(
+            digest_pairs(&["a\u{1f}b".into()], &["c".into()]),
+            digest_pairs(&["a".into()], &["b\u{1f}c".into()])
+        );
+        assert_ne!(
+            digest_pairs(&["a".into()], &["b\0c\u{1f}d".into()]),
+            digest_pairs(&["a\u{1f}b\0c".into()], &["d".into()])
+        );
+    }
+
+    #[test]
+    fn identity_digest_labels_are_not_silently_truncated() {
+        assert_ne!(
+            digest_pairs(&["a".into()], &["0".into(), "1".into()]),
+            digest_pairs(&["a".into()], &["0".into(), "2".into()])
+        );
+    }
+
+    #[test]
+    fn identity_digest_identifier_and_pair_domains_are_distinct() {
+        assert_ne!(
+            digest_ids(&["a\u{1f}b".into()]),
+            digest_pairs(&["a".into()], &["b".into()])
+        );
     }
 }

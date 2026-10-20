@@ -16,6 +16,7 @@ use super::selection::{BakeoffPlan, BudgetCounters, EvaluationBudget};
 use anyhow::{anyhow, ensure, Context, Result};
 use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use std::path::Path;
 use std::time::Duration;
 
@@ -36,7 +37,9 @@ pub struct NativeRequest {
     pub report_groups: Vec<String>,
     /// Candidate ids from the task's roster. Each must name a roster entry.
     pub candidates: Vec<String>,
+    /// Every work cap must be finite; `BudgetCounters::UNLIMITED` is not a request admission.
     pub budget: BudgetCounters,
+    /// Optional temporal guard. A finite work-bounded request may run without a wall-clock cap.
     #[serde(default)]
     pub wall_limit_ms: Option<u64>,
 }
@@ -54,6 +57,8 @@ pub fn run_native_request(request: &NativeRequest, output: Option<&Path>) -> Res
         "unknown request schema {}",
         request.schema
     );
+    validate_request_limits(request)?;
+    let roster = roster_for(request.plan.task, &request.candidates)?;
     let rows = request.data.row_ids.len();
     ensure!(
         request.selection_len <= rows
@@ -87,7 +92,6 @@ pub fn run_native_request(request: &NativeRequest, output: Option<&Path>) -> Res
         &request.report_labels,
         admitted.identity(),
     )?;
-    let roster = roster_for(plan.task, &request.candidates)?;
     let mut budget = EvaluationBudget::with_limits(request.budget);
     if let Some(ms) = request.wall_limit_ms {
         budget = budget.with_wall_limit(Duration::from_millis(ms));
@@ -104,7 +108,29 @@ pub fn run_native_request(request: &NativeRequest, output: Option<&Path>) -> Res
     )
 }
 
+fn validate_request_limits(request: &NativeRequest) -> Result<()> {
+    for (kind, cap) in [
+        ("candidate evaluation", request.budget.candidate_evaluations),
+        ("fold fit", request.budget.fold_fits),
+        ("outer refit", request.budget.outer_refits),
+        ("ensemble attempt", request.budget.ensemble_attempts),
+        ("neural/GP work", request.budget.neural_gp_work_units),
+    ] {
+        ensure!(cap != u64::MAX, "native {kind} budget must be finite");
+    }
+    ensure!(
+        request.wall_limit_ms != Some(u64::MAX),
+        "native wall budget must be finite when supplied"
+    );
+    Ok(())
+}
+
 fn roster_for(task: Task, ids: &[String]) -> Result<Vec<CandidateSpec>> {
+    ensure!(!ids.is_empty(), "no candidates requested");
+    let mut seen = BTreeSet::new();
+    for id in ids {
+        ensure!(seen.insert(id.as_str()), "duplicate candidate {id}");
+    }
     let roster = bakeoff_roster(task);
     ids.iter()
         .map(|id| {
