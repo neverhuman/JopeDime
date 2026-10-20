@@ -139,11 +139,13 @@ impl Kernel2Evaluator {
         let mut objective = |expr: &MathExpr, _: &[Vec<f64>], _: &[f64]| {
             let mut candidate = pipe.clone();
             set_expression(&mut candidate, index, expr)?;
-            let genome = admit_child(
-                &GenomeIr::Pipeline(candidate).canonical(),
-                self.profile(),
-                width,
-            )?;
+            let program = GenomeIr::Pipeline(candidate).canonical();
+            feat_math::capture_gp_source!(
+                "kernel2-refinement",
+                &format!("guarded/stage/{index}"),
+                &program
+            );
+            let genome = admit_child(&program, self.profile(), width)?;
             std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 training_loss(&genome, rows, targets)
             }))

@@ -10,7 +10,7 @@ use feat_math::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, VecDeque},
     fs::{self, File, OpenOptions},
     io::{BufRead, BufReader, Read, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
@@ -135,12 +135,14 @@ pub struct Store {
     pub sequence: u64,
     seen: BTreeMap<String, String>,
     pending: BTreeMap<(String, String), Pending>,
+    ready: VecDeque<(String, String)>,
     offsets: Vec<u64>,
     programs: BTreeSet<String>,
     pub metrics: BTreeMap<String, LanguageMetrics>,
     pub emit_ns: u64,
     first_unix_ns: Option<u64>,
     partial_journal_tails: Vec<String>,
+    backlogged_journals: Vec<String>,
     ingress_scanned: bool,
     failed: bool,
 }
@@ -169,6 +171,7 @@ impl Store {
             sequence: 0,
             seen: BTreeMap::new(),
             pending: BTreeMap::new(),
+            ready: VecDeque::new(),
             offsets: vec![0],
             programs: BTreeSet::new(),
             metrics: LANGUAGES
@@ -178,6 +181,7 @@ impl Store {
             emit_ns: 0,
             first_unix_ns: None,
             partial_journal_tails: Vec::new(),
+            backlogged_journals: Vec::new(),
             ingress_scanned: false,
             failed: false,
         };
@@ -188,6 +192,8 @@ impl Store {
             store.apply(&event)?;
             store.offsets.push(reader.stream_position()?);
         }
+        let pending = &store.pending;
+        store.ready.retain(|key| pending.contains_key(key));
         Ok(store)
     }
     fn apply(&mut self, event: &Event) -> Result<()> {
@@ -252,6 +258,8 @@ impl Store {
                             m.pending_artifacts += 1;
                             let mut descriptor = artifact.clone();
                             descriptor.source = None;
+                            self.ready
+                                .push_back((occurrence.id.clone(), artifact.language.clone()));
                             self.pending.insert(
                                 (occurrence.id.clone(), artifact.language.clone()),
                                 Pending {
@@ -312,6 +320,9 @@ impl Store {
                     m.compile_errors += 1;
                 }
                 self.pending.remove(&key);
+                if self.ready.front() == Some(&key) {
+                    self.ready.pop_front();
+                }
             }
         }
         self.first_unix_ns.get_or_insert(event.at_unix_ns);
@@ -361,6 +372,9 @@ impl Store {
             .get(usize::try_from(sequence)?)
             .copied()
             .context("future sequence cursor")
+    }
+    pub fn occurrence_count(&self) -> usize {
+        self.seen.len()
     }
     pub fn contains(&self, occurrence: &Occurrence) -> Result<bool> {
         match self.seen.get(&occurrence.id) {
@@ -421,13 +435,19 @@ impl Store {
         })
     }
     pub fn next_check(&mut self) -> Option<(String, Artifact, PathBuf)> {
-        let next = self.pending.values_mut().find(|p| !p.inflight)?;
-        next.inflight = true;
-        Some((
-            next.occurrence_id.clone(),
-            next.artifact.clone(),
-            self.root.clone(),
-        ))
+        while let Some(key) = self.ready.pop_front() {
+            if let Some(next) = self.pending.get_mut(&key) {
+                if !next.inflight {
+                    next.inflight = true;
+                    return Some((
+                        next.occurrence_id.clone(),
+                        next.artifact.clone(),
+                        self.root.clone(),
+                    ));
+                }
+            }
+        }
+        None
     }
     pub fn checked(&mut self, id: String, artifact: &Artifact, check: Check) -> Result<()> {
         self.append(Payload::Checked {
@@ -440,8 +460,13 @@ impl Store {
             elapsed_ns: check.elapsed_ns,
         })
     }
-    pub fn observed_ingress(&mut self, partial_journal_tails: Vec<String>) {
+    pub fn observed_ingress(
+        &mut self,
+        partial_journal_tails: Vec<String>,
+        backlogged_journals: Vec<String>,
+    ) {
         self.partial_journal_tails = partial_journal_tails;
+        self.backlogged_journals = backlogged_journals;
         self.ingress_scanned = true;
     }
     pub fn snapshot(&self) -> serde_json::Value {
@@ -465,7 +490,7 @@ impl Store {
                 "emitted_tokens_per_second":m.emitted_tokens as f64 / wall,
             })
         };
-        serde_json::json!({"schema":"jope.gp-source-metrics/v1", "tokenizer":"feat-math lexical code tokens plus documentation words; not model BPE", "sequence":self.sequence, "occurrences":self.seen.len(), "unique_programs":self.programs.len(), "elapsed_seconds_including_downtime":wall, "store_failed":self.failed, "ingress":{"scanned":self.ingress_scanned,"partial_journal_tails":self.partial_journal_tails}, "observed_backlog_clear":self.ingress_scanned && self.partial_journal_tails.is_empty() && self.pending.is_empty() && total.emission_errors == 0 && total.compile_errors == 0, "cumulative_emit_ns":self.emit_ns, "assembly_tokens_per_second":if self.emit_ns == 0 {None} else {Some(total.emitted_tokens as f64 * 1e9 / self.emit_ns as f64)}, "total":stats(&total), "languages":self.metrics.iter().map(|(l,m)| (l.clone(),stats(m))).collect::<BTreeMap<_,_>>()})
+        serde_json::json!({"schema":"jope.gp-source-metrics/v1", "tokenizer":"feat-math lexical code tokens plus documentation words; not model BPE", "sequence":self.sequence, "occurrences":self.seen.len(), "unique_programs":self.programs.len(), "elapsed_seconds_including_downtime":wall, "store_failed":self.failed, "ingress":{"scanned":self.ingress_scanned,"partial_journal_tails":self.partial_journal_tails, "backlogged_journals":self.backlogged_journals}, "observed_backlog_clear":self.ingress_scanned && self.partial_journal_tails.is_empty() && self.backlogged_journals.is_empty() && self.pending.is_empty() && total.emission_errors == 0 && total.compile_errors == 0, "cumulative_emit_ns":self.emit_ns, "assembly_tokens_per_second":if self.emit_ns == 0 {None} else {Some(total.emitted_tokens as f64 * 1e9 / self.emit_ns as f64)}, "total":stats(&total), "languages":self.metrics.iter().map(|(l,m)| (l.clone(),stats(m))).collect::<BTreeMap<_,_>>()})
     }
 }
 

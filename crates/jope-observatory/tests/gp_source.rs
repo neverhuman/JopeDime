@@ -442,3 +442,67 @@ fn oversized_event_is_rejected_before_any_token_or_sequence_credit() {
         0
     );
 }
+
+#[test]
+fn multiple_producers_make_progress_before_an_old_backlog_drains() {
+    let journals = test_dir();
+    let state = test_dir();
+    let mut old = Journal::create(journals.path()).unwrap();
+    for slot in 0..17 {
+        old.append("old-producer", &format!("slot/{slot}"), "(pipe X (ridge))")
+            .unwrap();
+    }
+    let mut new = Journal::create(journals.path()).unwrap();
+    let expected = new
+        .append("new-producer", "slot/0", "(pipe X (ridge))")
+        .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_gp-source-stream"))
+        .args([
+            "--journal-dir",
+            journals.path().to_str().unwrap(),
+            "--state-dir",
+            state.path().to_str().unwrap(),
+            "--once",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let events = fs::read_to_string(state.path().join("events.jsonl")).unwrap();
+    let sources = events
+        .lines()
+        .map(|s| serde_json::from_str::<serde_json::Value>(s).unwrap())
+        .filter(|e| e["kind"] == "source")
+        .collect::<Vec<_>>();
+    assert_eq!(sources.len(), 18, "once must drain every bounded turn");
+    let position = sources
+        .iter()
+        .position(|e| e["occurrence"]["id"] == expected.id)
+        .unwrap();
+    assert!(
+        position < 17,
+        "new producer starved behind the entire old journal"
+    );
+    let metrics: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(metrics["total"]["token_yield"], 1.0);
+    assert_eq!(metrics["observed_backlog_clear"], true);
+}
+
+#[test]
+fn compiler_queue_follows_source_arrival_instead_of_lexical_ids_across_restart() {
+    let root = test_dir();
+    let mut store = Store::open(root.path()).unwrap();
+    publish(&mut store, "z-arrived-first", "(pipe X (ridge))");
+    publish(&mut store, "a-arrived-later", "(pipe X (ridge))");
+    assert_eq!(store.next_check().unwrap().0, "z-arrived-first");
+    drop(store);
+    let mut store = Store::open(root.path()).unwrap();
+    assert_eq!(
+        store.next_check().unwrap().0,
+        "z-arrived-first",
+        "in-flight work recovers in source order"
+    );
+}

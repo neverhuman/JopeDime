@@ -31,13 +31,13 @@ and stream full Rust, Python, C++17 and JavaScript training-recipe source:
 ```sh
 # Linux: rustc, python3, g++, node, GNU timeout and prlimit must be on PATH.
 # Keep journals and generated source outside the Git checkout.
-cargo run --locked -p jope-observatory --bin gp-source-stream -- \
+cargo run --release --locked -p jope-observatory --bin gp-source-stream -- \
   --journal-dir "$HOME/jope-stream/journals" \
   --state-dir "$HOME/jope-stream/state"
 
 # In another terminal, enable capture before starting any GP producer:
 JOPE_GP_SOURCE_DIR="$HOME/jope-stream/journals" \
-  cargo run --locked --bin jope -- pipeline invent \
+  cargo run --release --locked --bin jope -- pipeline invent \
   --train /absolute/path/train.csv --target target \
   --work-dir /absolute/new/search-output --budget evaluations=100,seconds=120 --json
 ```

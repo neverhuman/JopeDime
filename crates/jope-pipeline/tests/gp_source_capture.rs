@@ -39,6 +39,52 @@ fn kernel2_and_shared_strategy_capture_complete_parseable_programs() {
             },
         )
         .unwrap();
+        let trial = "(pipe X (derive expr=\"sin(0.5*c0)\" append=false) (ridge))";
+        let mut budget = jope_pipeline::kernel2::EvaluationBudget::new(3);
+        assert!(
+            options
+                .evaluator()
+                .refine_training(trial, &cut.train_x, &cut.train_y, 3, &mut budget)
+                .unwrap()
+                .evaluations
+                > 0
+        );
+        let mut budget = jope_pipeline::kernel2::EvaluationBudget::new(3);
+        assert!(
+            options
+                .evaluator()
+                .refine_training_guarded(
+                    trial,
+                    &cut.train_x,
+                    &cut.train_y,
+                    3,
+                    &mut budget,
+                    &mut || true
+                )
+                .unwrap()
+                .refinement
+                .evaluations
+                > 0
+        );
+        let output_root =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/gp-source-tests");
+        fs::create_dir_all(&output_root).unwrap();
+        let output = tempfile::tempdir_in(output_root).unwrap();
+        let mut legacy = SearchOptions::new(
+            Budget {
+                evaluations: 2,
+                seconds: 120,
+            },
+            7,
+        );
+        legacy.record_events = false;
+        assert!(!jope_pipeline::search::run_cuts_with(
+            std::slice::from_ref(&cut),
+            &legacy,
+            output.path()
+        )
+        .unwrap()
+        .is_empty());
         assert!(!search::run_cut(&cut, &options)
             .unwrap()
             .observations
@@ -86,6 +132,8 @@ fn kernel2_and_shared_strategy_capture_complete_parseable_programs() {
         "kernel2",
         "kernel2-evaluation",
         "kernel2-operator",
+        "kernel2-refinement",
+        "pipeline",
         "shared-strategy",
     ] {
         assert!(counts[engine] > 0, "missing {engine}");
