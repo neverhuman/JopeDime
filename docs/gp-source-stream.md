@@ -16,7 +16,8 @@ operator outputs (including children not subsequently evaluated), FullRust evolv
 construction, kernel2 operator proposals, product pipeline draws even
 when search-event recording is disabled, kernel2 candidate populations and evaluation/refinement
 attempts, shared-strategy proposals, advanced V3 candidates, and generalized GP generation-zero
-and successor populations. Kernel2 population and evaluation are separate capture points; the
+and successor populations. Operator construction, population insertion (including elites), and kernel2 evaluation are
+separate capture points; the
 same program may appear in both. Every occurrence is retained and each actual emitted bundle is
 counted; `occurrences` is a capture count, not a count of independent numerical fits. No
 throttling, winner-only filter or unique-program token estimator is used. Embedded expression
@@ -37,8 +38,9 @@ so a compiler backlog does not throttle source mapping. Journal/event limits sto
 visibly; producer journals remain intact. No bounded broadcast queue discards a slow client's
 messages: each WebSocket reads the durable event log at its own cursor. A client that cannot
 accept a write within 10 seconds disconnects and can resume. Each source hash is checked before
-compilation; identical sources reuse the same compiler result within a service process, but
-every emitted occurrence still contributes its actual token count. Restart rebuilds metrics and
+compilation; identical sources reuse the same successful compiler result within a service process, but
+every emitted occurrence still contributes its actual token count. Failed, missing-tool and timed-out checks are retried for later occurrences rather than cached.
+Restart rebuilds metrics and
 pending checks from the log; replay and a re-read journal never create new token credit.
 
 ## Protocol
@@ -78,7 +80,8 @@ socket.onmessage = ({data}) => {
 };
 ```
 
-The server binds loopback only and checks Host and any supplied Origin. Use the exact
+At most 32 WebSocket clients connect concurrently; cursor lookup and journal reads run outside
+the async request threads. The server binds loopback only and checks Host and any supplied Origin. Use the exact
 `127.0.0.1:9876` authority when tunneling. Foreign website origins are refused. This is a local
 operator endpoint; it has no public authentication/deployment flow. Use an SSH tunnel for
 remote access. `after` only controls replay, never generation or numerical work.
@@ -110,7 +113,8 @@ Python uses built-in `compile`, C++ uses `-std=c++17 -fsyntax-only`, JavaScript 
 These prove syntax/types where applicable, not predictive parity, linking/execution, accuracy,
 safety of running code or scientific fitness. Existing emitter parity CI remains required.
 Missing tools, nonzero status and timeout are failures. Diagnostic files are capped at 4 MiB by
-Linux `prlimit`; returned diagnostics retain the first 64 KiB and exit status. Default per-check
+Linux `prlimit`; each compiler process also has an 8 GiB address-space cap and a CPU-seconds
+cap equal to its selected timeout. Returned diagnostics retain the first 64 KiB and exit status. Default per-check
 GNU `timeout` is 15 seconds (configurable from 1 to 300). Its process group bounds compiler
 children. Compiler paths default to PATH and can be overridden by `JOPE_GP_RUSTC`,
 `JOPE_GP_PYTHON`, `JOPE_GP_CXX`, `JOPE_GP_NODE`; use trusted local compilers.
@@ -121,13 +125,18 @@ Keep `rustc`, `python3`, `g++`, `node`, GNU `timeout` and `prlimit` available. S
 one service via a file lock. Default storage admission is one million occurrences and at most
 4096 producer journals per run. A source program is at most 4 MiB and a complete event at most
 32 MiB. Size/storage/corrupt-complete-record failures stop visibly; a partial final producer line
-waits for completion. A partial/corrupt service log is refused on restart: preserve the original
+waits for completion. Partial producer tails are listed in `ingress.partial_journal_tails`; `observed_backlog_clear`
+stays false while a tail or validation/error backlog exists. This is an observation of current
+queues, not proof that every producer has finished. A partial/corrupt service log is refused on restart: preserve the original
 before recovery rather than silently trimming evidence. Journals/sources/check diagnostics/logs
 are retained; plan storage and use a new declared run directory when archiving old output.
 
 ```sh
 cargo test --locked -p jope-observatory --test gp_source
 cargo test --locked -p jope-cli --test gp_source_capture
+cargo test --locked -p jope-pipeline --test gp_source_capture
+cargo test --locked -p jope-dime-regressor --test generalized_gp \
+  generalized_source_capture_retains_parseable_generation_zero_and_successors -- --exact
 # Finite ingestion/validation of current journals, with metrics on stdout:
 cargo run --locked -p jope-observatory --bin gp-source-stream -- \
   --journal-dir /absolute/journals --state-dir /absolute/state --once

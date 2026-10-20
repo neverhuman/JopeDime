@@ -6099,9 +6099,11 @@
       "lanes": [
         "rust-check",
         "rust-test",
-        "full-default"
+        "full-default",
+        "emitters",
+        "full-emitters"
       ],
-      "scope": "Complete GP source capture/stream contract. Real four-language compilation, loss/pending/restart accounting and WebSocket cursor replay execute in the emitters lane; no numerical quality or live research qualification is inferred."
+      "scope": "Two actual CLI subprocess contracts: capture includes all draws beyond the evaluation budget without changing selected genomes; capture IO failure stops the producer. Every captured program is nonempty and parseable."
     },
     "target:jope-cli/test/offline_cli": {
       "discovery": {
@@ -7416,9 +7418,11 @@
       "dispositions": [],
       "lanes": [
         "rust-check",
-        "full-default"
+        "full-default",
+        "emitters",
+        "full-emitters"
       ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. GP source emitters coverage selects only generalized_source_capture_retains_parseable_generation_zero_and_successors: actual generation zero and two successor constructions (240 program rows) must parse. Other tests in this target retain their existing lane scope; this focused selection is not whole-campaign qualification."
     },
     "target:jope-dime-regressor/test/hyperion_gate": {
       "discovery": {
@@ -8574,7 +8578,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Complete GP source capture/stream contract. Real four-language compilation, loss/pending/restart accounting and WebSocket cursor replay execute in the emitters lane; no numerical quality or live research qualification is inferred."
+      "scope": "Build/check the runtime binary; eleven integration contracts in target:jope-observatory/test/gp_source launch it for actual WebSocket, replay, restart and error accounting. This bin target itself has no standalone unit tests."
     },
     "target:jope-observatory/bin/jope-observatory": {
       "discovery": {
@@ -10297,6 +10301,24 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/gp_source_capture": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/gp_source_capture.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "emitters",
+        "full-emitters"
+      ],
+      "scope": "Actual kernel2 population/operator/evaluation and shared-strategy capture fixtures run as a subprocess with capture enabled; every captured complete program is parsed. No live data or scientific quality claim."
     },
     "target:jope-pipeline/test/legacy_prototype_seam_regression": {
       "discovery": {

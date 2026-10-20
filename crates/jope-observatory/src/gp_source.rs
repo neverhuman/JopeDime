@@ -140,6 +140,8 @@ pub struct Store {
     pub metrics: BTreeMap<String, LanguageMetrics>,
     pub emit_ns: u64,
     first_unix_ns: Option<u64>,
+    partial_journal_tails: Vec<String>,
+    ingress_scanned: bool,
     failed: bool,
 }
 impl Store {
@@ -175,6 +177,8 @@ impl Store {
                 .collect(),
             emit_ns: 0,
             first_unix_ns: None,
+            partial_journal_tails: Vec::new(),
+            ingress_scanned: false,
             failed: false,
         };
         let mut reader = BufReader::new(File::open(log_path)?);
@@ -329,13 +333,17 @@ impl Store {
             at_unix_ns,
             payload,
         };
+        let mut bytes = serde_json::to_vec(&event)?;
+        bytes.push(b'\n');
+        ensure!(
+            bytes.len() <= MAX_LINE,
+            "source event exceeds line limit; retain producer journal"
+        );
         // Validate before publishing. Apply errors are fatal; never keep serving partial state.
         if let Err(error) = self.apply(&event) {
             self.failed = true;
             return Err(error);
         }
-        let mut bytes = serde_json::to_vec(&event)?;
-        bytes.push(b'\n');
         if let Err(error) = self
             .log
             .write_all(&bytes)
@@ -432,6 +440,10 @@ impl Store {
             elapsed_ns: check.elapsed_ns,
         })
     }
+    pub fn observed_ingress(&mut self, partial_journal_tails: Vec<String>) {
+        self.partial_journal_tails = partial_journal_tails;
+        self.ingress_scanned = true;
+    }
     pub fn snapshot(&self) -> serde_json::Value {
         let mut total = LanguageMetrics::default();
         for metrics in self.metrics.values() {
@@ -453,7 +465,7 @@ impl Store {
                 "emitted_tokens_per_second":m.emitted_tokens as f64 / wall,
             })
         };
-        serde_json::json!({"schema":"jope.gp-source-metrics/v1", "tokenizer":"feat-math lexical code tokens plus documentation words; not model BPE", "sequence":self.sequence, "occurrences":self.seen.len(), "unique_programs":self.programs.len(), "elapsed_seconds_including_downtime":wall, "store_failed":self.failed, "cumulative_emit_ns":self.emit_ns, "assembly_tokens_per_second":if self.emit_ns == 0 {None} else {Some(total.emitted_tokens as f64 * 1e9 / self.emit_ns as f64)}, "total":stats(&total), "languages":self.metrics.iter().map(|(l,m)| (l.clone(),stats(m))).collect::<BTreeMap<_,_>>()})
+        serde_json::json!({"schema":"jope.gp-source-metrics/v1", "tokenizer":"feat-math lexical code tokens plus documentation words; not model BPE", "sequence":self.sequence, "occurrences":self.seen.len(), "unique_programs":self.programs.len(), "elapsed_seconds_including_downtime":wall, "store_failed":self.failed, "ingress":{"scanned":self.ingress_scanned,"partial_journal_tails":self.partial_journal_tails}, "observed_backlog_clear":self.ingress_scanned && self.partial_journal_tails.is_empty() && self.pending.is_empty() && total.emission_errors == 0 && total.compile_errors == 0, "cumulative_emit_ns":self.emit_ns, "assembly_tokens_per_second":if self.emit_ns == 0 {None} else {Some(total.emitted_tokens as f64 * 1e9 / self.emit_ns as f64)}, "total":stats(&total), "languages":self.metrics.iter().map(|(l,m)| (l.clone(),stats(m))).collect::<BTreeMap<_,_>>()})
     }
 }
 
@@ -550,10 +562,13 @@ pub fn check(root: &Path, artifact: &Artifact, timeout_seconds: u64) -> Result<C
         hash(&fs::read(&source)?) == *digest,
         "source changed before compilation"
     );
-    let scratch = root
-        .join("checks")
-        .join(format!("{digest}-{}", artifact.language));
-    fs::create_dir_all(&scratch)?;
+    let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+    let scratch = root.join("checks").join(format!(
+        "{digest}-{}-{stamp}-{}",
+        artifact.language,
+        std::process::id()
+    ));
+    fs::create_dir(&scratch)?;
     let diagnostics = scratch.join("diagnostic.txt");
     let (tool, mut args): (&str, Vec<String>) = match artifact.language.as_str() {
         "rust" => ("rustc", vec!["--edition=2021".into(), "--crate-name=gp_source".into(), "--crate-type=lib".into(), "--emit=metadata".into(), "-o".into(), scratch.join("checked.rmeta").to_string_lossy().into_owned()]),
@@ -594,6 +609,8 @@ pub fn check(root: &Path, artifact: &Artifact, timeout_seconds: u64) -> Result<C
     let status = Command::new("prlimit")
         .args([
             "--fsize=4194304",
+            "--as=8589934592",
+            &format!("--cpu={timeout_seconds}"),
             "--",
             "timeout",
             "--signal=KILL",
@@ -610,12 +627,12 @@ pub fn check(root: &Path, artifact: &Artifact, timeout_seconds: u64) -> Result<C
         Err(error) => (false, format!("compiler launch failed: {error}")),
     };
     let mut bytes = Vec::new();
-    File::open(diagnostics)?
+    File::open(&diagnostics)?
         .take(65536)
         .read_to_end(&mut bytes)?;
     let mut diagnostic = String::from_utf8_lossy(&bytes).into_owned();
     diagnostic.push_str(&format!("\n{error}"));
-    Ok(Check { status:if passed {Status::Passed} else {Status::Failed}, tool:format!("{tool}; version={version:?}; validation=syntax-and-types-v1; output_file_limit=4194304; timeout={timeout_seconds}s; argv={args:?}"), diagnostic, elapsed_ns:u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX) })
+    Ok(Check { status:if passed {Status::Passed} else {Status::Failed}, tool:format!("{tool}; version={version:?}; diagnostic_file={diagnostics:?}; validation=syntax-and-types-v1; output_file_limit=4194304; address_space_limit=8589934592; cpu_seconds_limit={timeout_seconds}; timeout={timeout_seconds}s; argv={args:?}"), diagnostic, elapsed_ns:u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX) })
 }
 
 /// Read a bounded complete line. A producer's in-progress final record waits for completion.

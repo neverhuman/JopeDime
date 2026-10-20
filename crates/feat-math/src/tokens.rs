@@ -69,13 +69,13 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
         {
             let quote = &src[i..i + 3];
             let rest = &src[i + 3..];
-            let end_rel = rest
-                .find(quote)
-                .map(|p| p + 3 + 3)
-                .unwrap_or(rest.len() + 3);
-            doc_tokens +=
-                word_count(&src[i + 3..(i + end_rel).min(src.len()).saturating_sub(3).max(i + 3)]);
-            i += end_rel;
+            if let Some(end) = rest.find(quote) {
+                doc_tokens += word_count(&rest[..end]);
+                i += 3 + end + 3;
+            } else {
+                doc_tokens += word_count(rest);
+                i = src.len();
+            }
         } else if c == '"' || (c == '\'' && matches!(lang, Lang::Python | Lang::JavaScript)) {
             // string literal = 1 code token
             let q = b[i];

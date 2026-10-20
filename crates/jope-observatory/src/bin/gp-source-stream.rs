@@ -53,6 +53,7 @@ struct App {
     store: Arc<Mutex<Store>>,
     authority: String,
     log: PathBuf,
+    clients: Arc<tokio::sync::Semaphore>,
 }
 #[derive(Default, Deserialize)]
 struct Cursor {
@@ -84,29 +85,48 @@ async fn boundary(State(app): State<App>, request: Request, next: Next) -> Respo
     response
 }
 async fn metrics(State(app): State<App>) -> Result<Json<serde_json::Value>, StatusCode> {
-    app.store
-        .lock()
-        .map(|s| Json(s.snapshot()))
-        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)
+    tokio::task::spawn_blocking(move || {
+        app.store
+            .lock()
+            .map(|s| Json(s.snapshot()))
+            .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)
+    })
+    .await
+    .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?
 }
 async fn stream(
     State(app): State<App>,
     Query(cursor): Query<Cursor>,
     upgrade: WebSocketUpgrade,
 ) -> Response {
-    let offset = match app.store.lock() {
-        Ok(s) => match s.offset_after(cursor.after) {
-            Ok(offset) => offset,
-            Err(_) => return StatusCode::BAD_REQUEST.into_response(),
-        },
+    let Ok(permit) = app.clients.clone().try_acquire_owned() else {
+        return StatusCode::SERVICE_UNAVAILABLE.into_response();
+    };
+    let store = app.store.clone();
+    let offset = match tokio::task::spawn_blocking(move || {
+        store
+            .lock()
+            .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?
+            .offset_after(cursor.after)
+            .map_err(|_| StatusCode::BAD_REQUEST)
+    })
+    .await
+    {
+        Ok(Ok(offset)) => offset,
+        Ok(Err(status)) => return status.into_response(),
         Err(_) => return StatusCode::SERVICE_UNAVAILABLE.into_response(),
     };
     upgrade
         .max_message_size(1024)
         .max_frame_size(1024)
-        .on_upgrade(move |socket| replay(socket, app.log, offset))
+        .on_upgrade(move |socket| replay(socket, app.log, offset, permit))
 }
-async fn replay(mut socket: WebSocket, log: PathBuf, offset: u64) {
+async fn replay(
+    mut socket: WebSocket,
+    log: PathBuf,
+    offset: u64,
+    _permit: tokio::sync::OwnedSemaphorePermit,
+) {
     let Ok(file) = File::open(log) else {
         return;
     };
@@ -115,7 +135,28 @@ async fn replay(mut socket: WebSocket, log: PathBuf, offset: u64) {
         return;
     }
     loop {
-        match complete_line(&mut reader, true) {
+        let mut read = tokio::task::spawn_blocking(move || {
+            let result = complete_line(&mut reader, true);
+            (reader, result)
+        });
+        // Continue processing control frames even while replaying a large retained backlog.
+        let result = loop {
+            tokio::select! {
+                result = &mut read => break result,
+                message = socket.recv() => match message {
+                    Some(Ok(Message::Ping(bytes))) => {
+                        if !matches!(tokio::time::timeout(Duration::from_secs(10), socket.send(Message::Pong(bytes))).await, Ok(Ok(()))) { return; }
+                    },
+                    Some(Ok(Message::Close(_))) | Some(Err(_)) | None => return,
+                    _ => {},
+                }
+            }
+        };
+        let Ok((returned, result)) = result else {
+            return;
+        };
+        reader = returned;
+        match result {
             Ok(Some(bytes)) => {
                 let Ok(event) = serde_json::from_slice::<Event>(&bytes) else {
                     return;
@@ -139,7 +180,7 @@ async fn replay(mut socket: WebSocket, log: PathBuf, offset: u64) {
             Ok(None) => {
                 tokio::select! {
                     message = socket.recv() => match message {
-                        Some(Ok(Message::Ping(bytes))) => { if socket.send(Message::Pong(bytes)).await.is_err() {return;} },
+                        Some(Ok(Message::Ping(bytes))) => { if !matches!(tokio::time::timeout(Duration::from_secs(10), socket.send(Message::Pong(bytes))).await, Ok(Ok(()))) {return;} },
                         Some(Ok(Message::Close(_))) | Some(Err(_)) | None => return,
                         _ => {},
                     },
@@ -180,11 +221,16 @@ fn collect(
         "more than 4096 producer journals; archive completed runs explicitly"
     );
     paths.sort();
+    let mut partial = Vec::new();
     for path in paths {
         let offset = offsets.get(&path).copied().unwrap_or(0);
+        let metadata = fs::metadata(&path)?;
+        if metadata.len() == offset {
+            continue;
+        }
         let file = File::open(&path)?;
         ensure!(
-            file.metadata()?.len() >= offset,
+            metadata.len() >= offset,
             "producer journal truncated; preserve it"
         );
         let mut reader = BufReader::new(file);
@@ -215,7 +261,19 @@ fn collect(
             }
             offsets.insert(path.clone(), reader.stream_position()?);
         }
+        if reader.get_ref().metadata()?.len() > reader.stream_position()? {
+            partial.push(
+                path.file_name()
+                    .context("journal file name")?
+                    .to_string_lossy()
+                    .into_owned(),
+            );
+        }
     }
+    store
+        .lock()
+        .map_err(|_| anyhow::anyhow!("store poisoned"))?
+        .observed_ingress(partial);
     Ok(())
 }
 fn check_one(
@@ -243,10 +301,12 @@ fn check_one(
         cached
     } else {
         let checked = gp_source::check(&root, &artifact, timeout)?;
-        if cache.len() >= 4096 {
-            cache.pop_first();
+        if checked.status == gp_source::Status::Passed {
+            if cache.len() >= 4096 {
+                cache.pop_first();
+            }
+            cache.insert(key, checked.clone());
         }
-        cache.insert(key, checked.clone());
         checked
     };
     store
@@ -288,10 +348,13 @@ async fn main() -> Result<()> {
         );
         return Ok(());
     }
+    let listener = tokio::net::TcpListener::bind(args.listen).await?;
+    let address = listener.local_addr()?;
     let app = App {
         store: store.clone(),
-        authority: args.listen.to_string(),
+        authority: address.to_string(),
         log: args.state_dir.join("events.jsonl"),
+        clients: Arc::new(tokio::sync::Semaphore::new(32)),
     };
     let stopped = Arc::new(AtomicBool::new(false));
     let (fatal_tx, mut fatal_rx) = tokio::sync::mpsc::unbounded_channel::<String>();
@@ -327,10 +390,9 @@ async fn main() -> Result<()> {
             }
         }
     });
-    let listener = tokio::net::TcpListener::bind(args.listen).await?;
     eprintln!(
         "GP source WebSocket ws://{}/api/v1/gp/source ; metrics http://{}/api/v1/gp/metrics",
-        args.listen, args.listen
+        address, address
     );
     let result = tokio::select! {
         result = axum::serve(listener, router(app)) => result.map_err(anyhow::Error::from),

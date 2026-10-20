@@ -9,6 +9,16 @@ use std::{
 };
 use tempfile::TempDir;
 
+fn test_dir() -> TempDir {
+    let root = std::env::var_os("JOPE_GP_SOURCE_TEST_ROOT")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| {
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/gp-source-tests")
+        });
+    fs::create_dir_all(&root).unwrap();
+    tempfile::tempdir_in(root).unwrap()
+}
+
 fn occurrence(id: &str, program: &str) -> Occurrence {
     Occurrence {
         schema: SCHEMA.into(),
@@ -42,7 +52,7 @@ fn counts(store: &Store) -> serde_json::Value {
 
 #[test]
 fn every_language_compiles_and_every_token_survives_restart_and_duplicates() {
-    let directory = TempDir::new().unwrap();
+    let directory = test_dir();
     let mut store = Store::open(directory.path()).unwrap();
     assert!(
         Store::open(directory.path()).is_err(),
@@ -82,7 +92,7 @@ fn every_language_compiles_and_every_token_survives_restart_and_duplicates() {
 
 #[test]
 fn unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens() {
-    let directory = TempDir::new().unwrap();
+    let directory = test_dir();
     let mut store = Store::open(directory.path()).unwrap();
     publish(&mut store, "invalid", "this does not parse");
     assert_eq!(counts(&store)["emission_errors"], 4);
@@ -97,7 +107,7 @@ fn unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens() {
 
 #[test]
 fn compiler_failure_charges_all_failed_source_tokens_as_loss() {
-    let directory = TempDir::new().unwrap();
+    let directory = test_dir();
     let mut store = Store::open(directory.path()).unwrap();
     let input = occurrence("broken-rust", "(pipe X (ridge))");
     let (mut artifacts, ns) = gp_source::emit(&input).unwrap();
@@ -136,7 +146,7 @@ fn compiler_failure_charges_all_failed_source_tokens_as_loss() {
 
 #[test]
 fn pending_checks_recover_and_mismatched_results_are_refused() {
-    let directory = TempDir::new().unwrap();
+    let directory = test_dir();
     let mut store = Store::open(directory.path()).unwrap();
     publish(&mut store, "pending", "(pipe X (ridge))");
     let _inflight = store.next_check().unwrap();
@@ -164,7 +174,7 @@ fn partial_producer_line_waits_but_corrupt_complete_or_event_lines_fail() {
         .is_none());
     assert_eq!(reader.stream_position().unwrap(), 0);
     assert!(gp_source::complete_line(&mut reader, false).is_err());
-    let directory = TempDir::new().unwrap();
+    let directory = test_dir();
     fs::write(directory.path().join("events.jsonl"), "bad\n").unwrap();
     assert!(Store::open(directory.path()).is_err());
     fs::write(directory.path().join("events.jsonl"), "{\"schema\":").unwrap();
@@ -173,7 +183,7 @@ fn partial_producer_line_waits_but_corrupt_complete_or_event_lines_fail() {
 
 #[test]
 fn journals_keep_identical_occurrences_distinct_and_unicode_counts_do_not_panic() {
-    let directory = TempDir::new().unwrap();
+    let directory = test_dir();
     let mut journal = Journal::create(directory.path()).unwrap();
     let a = journal
         .append("fixture", "slot/0", "(pipe X (ridge))")
@@ -185,6 +195,10 @@ fn journals_keep_identical_occurrences_distinct_and_unicode_counts_do_not_panic(
     assert_eq!(fs::read_to_string(journal.path).unwrap().lines().count(), 2);
     let count =
         feat_math::tokens::count_tokens("café = 1\n# résumé λ\n", feat_math::tokens::Lang::Python);
+    assert_eq!(
+        feat_math::tokens::count_tokens("\"\"\"café λ", feat_math::tokens::Lang::Python).doc_tokens,
+        2
+    );
     assert_eq!(count.doc_tokens, 2);
     assert!(count.code_tokens > 0);
 }
@@ -230,8 +244,8 @@ fn start(journals: &Path, state: &Path) -> (Server, std::net::SocketAddr) {
 #[tokio::test]
 async fn websocket_delivers_full_sources_checks_and_cursor_replay() {
     use futures_util::StreamExt;
-    let journals = TempDir::new().unwrap();
-    let state = TempDir::new().unwrap();
+    let journals = test_dir();
+    let state = test_dir();
     let (_server, address) = start(journals.path(), state.path());
     let url = format!("ws://{address}/api/v1/gp/source");
     let (mut ws, _) = tokio_tungstenite::connect_async(&url).await.unwrap();
@@ -304,8 +318,8 @@ fn once_with_rustc(journals: &Path, state: &Path, rustc: &Path) -> serde_json::V
 }
 #[test]
 fn missing_compiler_is_loss_and_once_restart_does_not_double_count() {
-    let journals = TempDir::new().unwrap();
-    let state = TempDir::new().unwrap();
+    let journals = test_dir();
+    let state = test_dir();
     Journal::create(journals.path())
         .unwrap()
         .append("fixture", "slot/0", "(pipe X (ridge))")
@@ -331,8 +345,8 @@ fn missing_compiler_is_loss_and_once_restart_does_not_double_count() {
 #[test]
 fn compiler_timeout_charges_loss_and_retains_the_timeout_exit() {
     use std::os::unix::fs::PermissionsExt;
-    let journals = TempDir::new().unwrap();
-    let state = TempDir::new().unwrap();
+    let journals = test_dir();
+    let state = test_dir();
     let tool = journals.path().join("slow-rustc");
     fs::write(&tool,"#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then echo fixture-slow-compiler; exit 0; fi\nsleep 5\n").unwrap();
     fs::set_permissions(&tool, fs::Permissions::from_mode(0o755)).unwrap();
@@ -350,4 +364,81 @@ fn compiler_timeout_charges_loss_and_retains_the_timeout_exit() {
             && e["language"] == "rust"
             && e["status"] == "failed"
             && e["diagnostic"].as_str().unwrap().contains("signal")));
+}
+
+#[test]
+fn partial_ingress_tail_remains_visible_after_complete_sources_validate() {
+    use std::io::Write;
+    let journals = test_dir();
+    let state = test_dir();
+    let mut journal = Journal::create(journals.path()).unwrap();
+    journal
+        .append("fixture", "slot/0", "(pipe X (ridge))")
+        .unwrap();
+    fs::OpenOptions::new()
+        .append(true)
+        .open(&journal.path)
+        .unwrap()
+        .write_all(b"{")
+        .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_gp-source-stream"))
+        .args([
+            "--journal-dir",
+            journals.path().to_str().unwrap(),
+            "--state-dir",
+            state.path().to_str().unwrap(),
+            "--once",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let metrics: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(metrics["total"]["token_yield"], 1.0);
+    assert_eq!(
+        metrics["ingress"]["partial_journal_tails"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(metrics["observed_backlog_clear"], false);
+}
+
+#[test]
+fn oversized_event_is_rejected_before_any_token_or_sequence_credit() {
+    let root = test_dir();
+    let mut store = Store::open(root.path()).unwrap();
+    let artifact = gp_source::Artifact {
+        language: "rust".into(),
+        source: None,
+        sha256: Some("a".repeat(64)),
+        code_tokens: 0,
+        doc_tokens: 0,
+        bytes: 0,
+        status: Status::Pending,
+        error: None,
+    };
+    let checked = Check {
+        status: Status::Failed,
+        tool: "fixture".into(),
+        diagnostic: "x".repeat(gp_source::MAX_LINE),
+        elapsed_ns: 1,
+    };
+    assert!(store
+        .checked("not-published".into(), &artifact, checked)
+        .unwrap_err()
+        .to_string()
+        .contains("exceeds line limit"));
+    assert_eq!(store.sequence, 0);
+    assert_eq!(counts(&store)["emitted_tokens"], 0);
+    assert_eq!(
+        fs::metadata(root.path().join("events.jsonl"))
+            .unwrap()
+            .len(),
+        0
+    );
 }

@@ -42,10 +42,17 @@ fn run(root: &std::path::Path, capture: Option<&std::path::Path>) -> std::proces
     }
     command.output().unwrap()
 }
+fn test_dir() -> tempfile::TempDir {
+    let root =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/gp-source-tests");
+    fs::create_dir_all(&root).unwrap();
+    tempfile::tempdir_in(root).unwrap()
+}
+
 #[test]
 fn invent_captures_all_draws_before_budget_and_preserves_results() {
-    let enabled = tempfile::tempdir().unwrap();
-    let disabled = tempfile::tempdir().unwrap();
+    let enabled = test_dir();
+    let disabled = test_dir();
     let journal = enabled.path().join("journals");
     let a = run(enabled.path(), Some(&journal));
     assert!(a.status.success(), "{}", String::from_utf8_lossy(&a.stderr));
@@ -70,7 +77,11 @@ fn invent_captures_all_draws_before_budget_and_preserves_results() {
     for entry in fs::read_dir(journal).unwrap() {
         let path = entry.unwrap().path();
         for line in fs::read_to_string(path).unwrap().lines() {
-            records.push(serde_json::from_str::<Value>(line).unwrap());
+            let record: Value = serde_json::from_str(line).unwrap();
+            let program = record["program"].as_str().unwrap();
+            assert!(!program.is_empty());
+            feat_math::GenomeIr::parse(program).unwrap();
+            records.push(record);
         }
     }
     assert!(
@@ -92,7 +103,7 @@ fn invent_captures_all_draws_before_budget_and_preserves_results() {
 }
 #[test]
 fn enabled_capture_failure_stops_producer_instead_of_losing_source() {
-    let root = tempfile::tempdir().unwrap();
+    let root = test_dir();
     let file = root.path().join("not-a-directory");
     fs::write(&file, "retain this file").unwrap();
     let result = run(root.path(), Some(&file));

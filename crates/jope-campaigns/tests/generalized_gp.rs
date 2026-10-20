@@ -941,3 +941,41 @@ fn launch_gate_blocks_the_current_zero_core_and_93_percent_disk_state() {
     ready.storage_free_fraction = 0.20;
     assert!(ready.launch_allowed().unwrap());
 }
+
+#[test]
+fn generalized_source_capture_retains_parseable_generation_zero_and_successors() {
+    let root =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/gp-source-tests");
+    fs::create_dir_all(&root).unwrap();
+    let directory = tempfile::tempdir_in(root).unwrap();
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "offspring_schedule_and_fresh_elite_evaluation_are_exact",
+            "--nocapture",
+        ])
+        .env("JOPE_GP_SOURCE_DIR", directory.path())
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let mut generalized = 0;
+    for entry in fs::read_dir(directory.path()).unwrap() {
+        for line in fs::read_to_string(entry.unwrap().path()).unwrap().lines() {
+            let record: serde_json::Value = serde_json::from_str(line).unwrap();
+            let source = record["program"].as_str().unwrap();
+            assert!(!source.is_empty());
+            GenomeIr::parse(source).unwrap();
+            if record["engine"] == "generalized-gp" {
+                generalized += 1;
+            }
+        }
+    }
+    assert_eq!(
+        generalized, 240,
+        "generation zero plus two successor constructions"
+    );
+}
