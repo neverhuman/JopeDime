@@ -54,6 +54,20 @@
       "compressed_sha256": "6deb205543a099cf10d5d68cc3466b1987d094cdbcd29b7bc6a104937ca447a3",
       "decoded_bytes": 1827,
       "decoded_sha256": "898a6f20a1baa7432f155f090bb783a2bd763c6cc595e640b82138ed2c8eab92"
+    },
+    {
+      "mode": "clean-compare-and-historical",
+      "source_commit": "78036fd108ca41393b6cc26a908a36d657a64910",
+      "exit_code": 0,
+      "executed": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "log": "compare-and-history.log.gz",
+      "compressed_bytes": 782,
+      "compressed_sha256": "722ed55c9043505221055c2299d650456754aeff4663262d4203e8844f84e139",
+      "decoded_bytes": 2130,
+      "decoded_sha256": "c5df1bb3c1855d0878b4d7133b014cda10f08d3cd6e2ef3bb827a06175b412c0"
     }
   ],
   "interpretation": "Identity and frozen software fixture observations only; not scientific gain, training admission or release acceptance."

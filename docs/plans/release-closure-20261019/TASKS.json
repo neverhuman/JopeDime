@@ -456,7 +456,7 @@
         "C11",
         "C13"
       ],
-      "state": "in_progress_stopped_source_integration_combined_head_validation_pending",
+      "state": "integration_pr_open_focused_repairs_pass_current_ci_independent_review_and_runtime_qualification_pending",
       "instructions": {
         "file": "WORKPLAN.md",
         "section": "C14 \u2014 Integrate once, finish JA06 and final CI on frozen head"
@@ -496,6 +496,12 @@
           "sha256": "acefed409a34af1924f96de4e284dd0a9c6c9df9f397cc3f018f456ecc2890dd",
           "component_head": "e66442c8847fe3155a08f1fadb6a899d95111349",
           "qualification": "Independent driver-delta review PASS and exact component626 pipeline tests/8compilefail; combined-head/final release qualification pending."
+        },
+        {
+          "path": "docs/plans/release-closure-20261019/C14_VALIDATION_SNAPSHOT.json",
+          "sha256": "98e7a5b575b621a62135ffa49e806473df0ddb772be8198411ba9b7e5c8ed528",
+          "component_head": "8436383544a8acff9ee006c52454d80408536cb0",
+          "qualification": "Focused source repairs26tests/strict scopedclippy/e2e/inventory/layoutPASS;16compat-historyPASS at780; currentCI/review/runtime/receivingmain remainpending. Source-only evidence, not final acceptance."
         }
       ],
       "admiralty_task_id": "ADM-JOPE-RC-C14",

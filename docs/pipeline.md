@@ -245,4 +245,4 @@ Use the repository's required Cargo environment for both commands.
 Neural proposals remain explicitly skipped here. The learning-loop, S3 recovery,
 worker isolation and promotion qualifications are separate follow-up work.
 
-No-time-limit research runs use the additive `jope.pipeline-receipt/v5` schema with explicit disabled temporal limits and null seconds. Bounded runs keep v3; the v1–v4 schema bytes remain frozen. This changes receipt accounting only, not GP operators or model checkpoints.
+No-time-limit research runs use the additive `jope.pipeline-receipt/v5` schema with explicit disabled temporal limits and null seconds. Bounded runs keep v3; the v1–v4 schema bytes remain frozen.

@@ -264,3 +264,10 @@ accepted by this integration note.
 
 
 Count audit: [validation count notes](VALIDATION_COUNT_NOTES.json) separates 625 component top-level passes from its successful fresh-process replay, and 903 combined top-level passes from its replay. The earlier 626/904 aggregate summaries remain preserved. Combined 5c software tests passed; scoped clippy and CI hygiene/e2e still required repairs. No full release or scientific acceptance follows.
+
+
+C14 repaired-source checkpoint — 2026-10-20T05:12:31.421853+00:00
+
+One draft integration PR [#387](https://github.com/neverhuman/JopeDime/pull/387) contains both retained source histories. [The validation snapshot](C14_VALIDATION_SNAPSHOT.json) binds actual focused repairs at source843638354: 26 tests, strict affected-package clippy, CPU smoke, regression/source classification, layout, format and diff checks pass. Separate clean compatibility/historical checks at78036fd10 passed16/16; behavioral fixtures and all historical schemas remain frozen. The original584pass/1fail ordering mismatch and earlier903top-level+1replay evidence remain preserved at their actual heads. No broad workspace or current GitHub CI PASS is inferred.
+
+README and agent instructions document the two model pathways, independent AutoML/ensemble switches, explicit legacy CPU command and current neural refusal. The root agent contract now uses the actual GitHub upstream. Real model/runtime/checkpoint closure, native-study admission/provider/loader, physical worker linkage, full final checks, exact-head independent approval and receiving-main validation remain open. C14 and the major release remain incomplete; 47-task and older66-task ledgers stay separate. No storage retirement or training continuation is authorized by this checkpoint.

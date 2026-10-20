@@ -1,0 +1,201 @@
+{
+  "schema": "jope.c14-repaired-source-validation/v1",
+  "observed_utc": "2026-10-20T05:12:31.421853+00:00",
+  "qualified_source_commit": "8436383544a8acff9ee006c52454d80408536cb0",
+  "qualified_source_tree": "212b69944a32efb885a1bb013a0c804bb5414873",
+  "scope": "Focused integration repairs only; current-head GitHub checks, independent review, real runtime qualification and receiving-main validation remain required. No full-workspace PASS or learning gain is claimed.",
+  "focused_test_count": 26,
+  "focused_failed": 0,
+  "checks": [
+    {
+      "name": "schema-order-unit",
+      "start_utc": "2026-10-20T05:06:28.547729+00:00",
+      "end_utc": "2026-10-20T05:06:47.947011+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/schema-order-unit.log",
+      "sha256": "7a7d3ab1aab11f72b3bed533ed1e6e4d56a2e9d2751775f03588abfe6557d77e",
+      "bytes": 491,
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "schema-agreement",
+      "start_utc": "2026-10-20T05:06:47.977612+00:00",
+      "end_utc": "2026-10-20T05:07:01.783038+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/schema-agreement.log",
+      "sha256": "b711528d8ac20e1456a0324cd124f2ab3fa06e81fe196edaf27834d1a3b0deb5",
+      "bytes": 1256,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "no-time-policy",
+      "start_utc": "2026-10-20T05:07:01.812985+00:00",
+      "end_utc": "2026-10-20T05:08:32.756666+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/no-time-policy.log",
+      "sha256": "d551130cc09f682ea6d76bce7747c5ce5e84cc181ad0f534fe55f2272f9a1035",
+      "bytes": 747,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "research-roots",
+      "start_utc": "2026-10-20T05:08:32.784574+00:00",
+      "end_utc": "2026-10-20T05:09:24.042825+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/research-roots.log",
+      "sha256": "b6f0d8757965cec7df84127ca881ce9b61a3bbf6efd13265e7185a44f8e0fe68",
+      "bytes": 1014,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "records-inventory",
+      "start_utc": "2026-10-20T05:09:24.071550+00:00",
+      "end_utc": "2026-10-20T05:09:26.185843+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/records-inventory.log",
+      "sha256": "0b145990b9ae09693c3d50a645efc7f5b039f1e061ee156fd78af8fd531b6642",
+      "bytes": 544,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "records-cli-summary",
+      "start_utc": "2026-10-20T05:09:26.214647+00:00",
+      "end_utc": "2026-10-20T05:09:27.306557+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/records-cli-summary.log",
+      "sha256": "eed537a38626f0b2a3cc148f542d12a414a1eac0a760b509515cdba1d87623e7",
+      "bytes": 328,
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "historical-wire",
+      "start_utc": "2026-10-20T05:09:27.334686+00:00",
+      "end_utc": "2026-10-20T05:09:28.000676+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/historical-wire.log",
+      "sha256": "724c717623675b29e120b066e8743cde04fe918c1785c177268b911a6251268e",
+      "bytes": 455,
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "start_utc": "2026-10-20T05:09:28.030613+00:00",
+      "end_utc": "2026-10-20T05:10:04.017412+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/clippy.log",
+      "sha256": "1a366d166fef7d9fbfd85a9daf93dc8d89b8f27c34cbdc114b9467f00f2601d3",
+      "bytes": 633
+    },
+    {
+      "name": "records-clippy",
+      "start_utc": "2026-10-20T05:10:04.046727+00:00",
+      "end_utc": "2026-10-20T05:10:10.221445+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/records-clippy.log",
+      "sha256": "44f0481c90fb36cf0902dceb811809126f28a853d33d33a0f662c5f9dd69d9ff",
+      "bytes": 484
+    },
+    {
+      "name": "e2e-smoke",
+      "start_utc": "2026-10-20T05:10:10.253434+00:00",
+      "end_utc": "2026-10-20T05:12:20.545096+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/e2e-smoke.log",
+      "sha256": "2791ae952df0247f1903618bad2f4a242c26fc4568ed6992c030657eef5a1c77",
+      "bytes": 6600
+    },
+    {
+      "name": "layout",
+      "start_utc": "2026-10-20T05:12:20.573136+00:00",
+      "end_utc": "2026-10-20T05:12:21.143739+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/layout.log",
+      "sha256": "d1ad87b85bb58eb62a3108846e869b75d87ace25a88fe7646cff5385622f101a",
+      "bytes": 223
+    },
+    {
+      "name": "source-classification",
+      "start_utc": "2026-10-20T05:12:21.172285+00:00",
+      "end_utc": "2026-10-20T05:12:21.499118+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/source-classification.log",
+      "sha256": "435ba3295280327b4315fa40c12b1b81e257ab069babefcc3ec1d876fe1a034d",
+      "bytes": 400
+    },
+    {
+      "name": "test-classification",
+      "start_utc": "2026-10-20T05:12:21.528139+00:00",
+      "end_utc": "2026-10-20T05:12:21.847998+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/test-classification.log",
+      "sha256": "ece8525b8f590347b21736aae08246404e9c5573d65569d0fb4045c3369f3e2f",
+      "bytes": 714
+    },
+    {
+      "name": "fmt",
+      "start_utc": "2026-10-20T05:12:21.878009+00:00",
+      "end_utc": "2026-10-20T05:12:31.325590+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "diff",
+      "start_utc": "2026-10-20T05:12:31.353734+00:00",
+      "end_utc": "2026-10-20T05:12:31.421231+00:00",
+      "exit": 0,
+      "log": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postrepair-843638354-finish/diff.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "previous_four_package_tests": {
+    "commit": "5c51992ca960f8963a094ab4831645a46e6f6856",
+    "top_level_passed": 903,
+    "fresh_process_replays_passed": 1,
+    "failed": 0,
+    "ignored": 3,
+    "receipt": "/home/ubuntu/jope-evidence/release-closure-20261019/monitor-0340-20261020/c14-integration/postcommit-5c51992ca/QUALIFICATION_RECEIPT.json",
+    "scope": "Ancestor-head fixture results; not restamped as this head."
+  },
+  "preserved_contract_repair_failure": {
+    "commit": "78036fd108ca41393b6cc26a908a36d657a64910",
+    "passed": 584,
+    "failed": 1,
+    "ignored": 2,
+    "log_sha256": "87227137230990b9f5ef583a34fe198c96e9741f334198e1f1fbd5fc5d6a373c",
+    "correction": "Derived v3 required-field ordering corrected in843638354; original unchanged equality test nowpasses. The earlier full invocation stopped before later integration targets."
+  },
+  "clippy_scope": "Strict --no-deps all-target checks for jope-cli,jope-pipeline,jope-models,jope-datasets and --no-deps --lib for changed jope-records. Earlier full dependency-graph failure in unchanged jope-learning remains preserved.",
+  "scientific_gain": false,
+  "real_admission": false
+}

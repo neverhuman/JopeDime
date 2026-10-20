@@ -1,3 +1,12 @@
+C14 repaired-source checkpoint — 2026-10-20T05:12:31.421853+00:00
+
+One draft integration PR [#387](https://github.com/neverhuman/JopeDime/pull/387) contains both retained source histories. [The validation snapshot](C14_VALIDATION_SNAPSHOT.json) binds actual focused repairs at source843638354: 26 tests, strict affected-package clippy, CPU smoke, regression/source classification, layout, format and diff checks pass. Separate clean compatibility/historical checks at78036fd10 passed16/16; behavioral fixtures and all historical schemas remain frozen. The original584pass/1fail ordering mismatch and earlier903top-level+1replay evidence remain preserved at their actual heads. No broad workspace or current GitHub CI PASS is inferred.
+
+README and agent instructions document the two model pathways, independent AutoML/ensemble switches, explicit legacy CPU command and current neural refusal. The root agent contract now uses the actual GitHub upstream. Real model/runtime/checkpoint closure, native-study admission/provider/loader, physical worker linkage, full final checks, exact-head independent approval and receiving-main validation remain open. C14 and the major release remain incomplete; 47-task and older66-task ledgers stay separate. No storage retirement or training continuation is authorized by this checkpoint.
+
+
+Dated observations follow.
+
 # Current integration update — 2026-10-20T03:55Z
 
 Stopped W2 e66442c88 is being consolidated in existing W under C14. Its component suite is 626 passed / 0 failed / 3 ignored, including 8 compile-fail doctests; independent driver review acefed409a has no blocking findings. Combined-head qualification/final review remain pending. Main bccbb55d is green; published v0.3.0 is bound to b3d347c9. Dated observations below remain history, including superseded CLI and hold descriptions. Latest direct human Qwen restart authorization governs separate recovery-r3; no native optimizer continuation or real-data admission is inferred. The two task ledgers remain separate and unwaived.
