@@ -1,8 +1,12 @@
 from dataclasses import replace
 from fractions import Fraction
 import unittest
+from unittest.mock import patch, Mock
+import json
+import struct
+from pathlib import Path
 
-from guarded_job import CpuPoint, Guard, Health, Leaf, RootScopeCandidate, ScopeFacts, cpu_interval
+from guarded_job import CpuPoint, Guard, Health, Leaf, RootScopeCandidate, ScopeFacts, cpu_interval, InertSupervisor, grant_shape, strict_json, parse_cpu, custodian_loop, custodian_fresh, inert_barrier, BINARIES
 
 
 class GuardTests(unittest.TestCase):
@@ -264,6 +268,113 @@ class RootScopeTests(unittest.TestCase):
                              ("barrier_argv", ("--shell",)), ("barrier_argv", ("/usr/bin/python3", "bad\narg"))]:
             with self.subTest(field=field), self.assertRaises(ValueError):
                 replace(self.spec, **{field: value}).proposal()
+
+
+class ImplementationTests(unittest.TestCase):
+    def test_custodian_running_without_fresh_heartbeat_is_insufficient(self):
+        self.assertTrue(custodian_fresh(struct.pack("<Q",500),500))
+        for raw,now in [(b"",1),(b"bad",1),(struct.pack("<Q",1),250000002),(struct.pack("<Q",5),4)]:
+            with self.subTest(raw=raw),self.assertRaises(ValueError):custodian_fresh(raw,now)
+    def grant(self):
+        return {"schema":"jope.owned-inert-qualification/v1","task_sha256":"a"*64,"source_sha256":"b"*64,
+            "nonce":"c"*32,"expires_unix_ns":50_000_000_000,"uid":1000,"gid":1000,"online_ids":list(range(128)),
+            "allowed_ids":[22,23],"memory_high_bytes":64*1024**2,"memory_max_bytes":128*1024**2,
+            "runtime_seconds":30,"inert_seconds":3,"temperature_paths":["/sys/devices/fixture/temp1_input"],
+            "max_temperature_millic":85000,"min_ram_bytes":20*1024**3,"min_disk_bytes":150*1024**3,
+            "disk_path":"/home/ubuntu/jope-evidence","binary_sha256":{p:"d"*64 for p in BINARIES},
+            "review_receipt_sha256":"e"*64,"resource_lease_id":"qualified-inert-example"}
+
+    def test_closed_finite_inert_grant_acceptance_and_no_training_schema(self):
+        doc=self.grant();self.assertIs(grant_shape(doc,1),doc)
+        for field,value in [("schema","training"),("inert_seconds",6),("runtime_seconds",61),
+                            ("memory_max_bytes",257*1024**2),("allowed_ids",[1,2,3]),
+                            ("expires_unix_ns",61_000_000_002),("min_ram_bytes",0),("min_disk_bytes",0),
+                            ("max_temperature_millic",85001),("resource_lease_id",""),
+                            ("review_receipt_sha256","0"*64),("binary_sha256",{}),("temperature_paths",[])]:
+            with self.subTest(field=field),self.assertRaises((ValueError,TypeError)):
+                grant_shape({**doc,field:value},1)
+        with self.assertRaises(ValueError):grant_shape({**doc,"extra":True},1)
+        with self.assertRaises(ValueError):grant_shape(doc,doc["expires_unix_ns"])
+
+    def test_duplicate_nonfinite_json_and_guest_counter_double_count_refused(self):
+        for raw in [b'{"a":1,"a":2}',b'{"a":NaN}']:
+            with self.assertRaises(ValueError):strict_json(raw)
+        point=parse_cpu("cpu 1 2 3 4 5 6 7 8 999 999\ncpu0 1 2\ncpu1 1 2\n",0,123)
+        self.assertEqual(point.ticks,(1,2,3,4,5,6,7,8))
+        self.assertEqual(point.online_ids,(0,1))
+
+    def core(self):
+        leaf=Mock();leaf.frozen.return_value=True
+        guard=Mock();guard.leaf=Leaf("a"*64,"/sys/fs/cgroup/x/jope-research-test.scope",1,2,((3,4),))
+        plan={"mode":"RUN_CANDIDATE","leaf_path":guard.leaf.path,"leaf_inode":2,"leaf_device":1,
+              "actions":[{"quota_usec":800000}]}
+        return leaf,InertSupervisor(leaf,guard),plan
+
+    def test_supervisor_caps_inert_quota_before_thaw(self):
+        leaf,core,p=self.core();self.assertTrue(core.apply(p,False))
+        self.assertEqual([x[0] for x in leaf.method_calls],["verify","frozen","quota","verify","freeze"])
+        leaf.quota.assert_called_once_with(25000);leaf.freeze.assert_called_once_with(False)
+
+    def test_failed_quota_readback_never_thaws_and_freezes(self):
+        leaf,core,p=self.core();leaf.quota.side_effect=ValueError("synthetic readback failure")
+        with self.assertRaises(ValueError):core.apply(p,False)
+        leaf.freeze.assert_called_once_with(True);self.assertTrue(core.stopped)
+
+    def test_external_freezer_change_and_custodian_trip_never_thaw(self):
+        leaf,core,p=self.core();leaf.frozen.return_value=False
+        with self.assertRaises(ValueError):core.apply(p,False)
+        leaf.freeze.assert_called_once_with(True)
+        leaf,core,p=self.core()
+        with self.assertRaises(ValueError):core.apply(p,True)
+        leaf.freeze.assert_not_called();leaf.quota.assert_not_called()
+
+    def test_unknown_identity_prevents_any_control_write(self):
+        leaf,core,p=self.core();leaf.verify.side_effect=ValueError("foreign roster")
+        with self.assertRaises(ValueError):core.apply(p,False)
+        leaf.freeze.assert_not_called();leaf.quota.assert_not_called()
+
+    def test_stop_remains_frozen_and_cannot_resume(self):
+        leaf,core,p=self.core();p["mode"]="STOP"
+        self.assertFalse(core.apply(p,False));self.assertTrue(core.stopped)
+        with self.assertRaises(ValueError):core.apply(p,False)
+        leaf.freeze.assert_called_once_with(True)
+
+    def test_custodian_kills_only_supplied_parent_pidfd_before_freeze(self):
+        events=[];parent=Mock();parent.poll.side_effect=[[],[(11,1)]];payload=Mock();payload.poll.return_value=[]
+        leaf=Mock();leaf.freeze.side_effect=lambda state:events.append(("freeze",state))
+        with patch("guarded_job.select.poll",side_effect=[parent,payload]),patch("guarded_job.os.read",return_value=b""),\
+             patch("guarded_job.os.write"),patch("guarded_job.os.close"),patch("guarded_job.time.monotonic_ns",return_value=1),\
+             patch("guarded_job.signal.pidfd_send_signal",create=True,side_effect=lambda fd,sig:events.append(("kill-pidfd",fd))),\
+             patch("guarded_job.append_event"):
+            custodian_loop(leaf,10,11,12,Path("/fixture"),100,13)
+        self.assertEqual(events,[("kill-pidfd",11),("freeze",True)])
+
+    def test_coalesced_heartbeat_done_requires_owned_payload_exit(self):
+        parent=Mock();payload=Mock();payload.poll.return_value=[(12,1)];leaf=Mock()
+        with patch("guarded_job.select.poll",side_effect=[parent,payload]),patch("guarded_job.os.read",return_value=b"HHHD"),\
+             patch("guarded_job.os.write"),patch("guarded_job.os.close"),patch("guarded_job.time.monotonic_ns",return_value=1),\
+             patch("guarded_job.signal.pidfd_send_signal",create=True) as kill:
+            custodian_loop(leaf,10,11,12,Path("/fixture"),100,13)
+        kill.assert_not_called();leaf.freeze.assert_not_called()
+
+    def test_unconfirmed_parent_death_does_not_claim_containment(self):
+        parent=Mock();parent.poll.return_value=[];payload=Mock();leaf=Mock()
+        with patch("guarded_job.select.poll",side_effect=[parent,payload]),patch("guarded_job.os.read",return_value=b""),\
+             patch("guarded_job.os.write"),patch("guarded_job.os.close"),patch("guarded_job.time.monotonic_ns",return_value=1),\
+             patch("guarded_job.signal.pidfd_send_signal",create=True):
+            with self.assertRaisesRegex(ValueError,"unconfirmed"):
+                custodian_loop(leaf,10,11,12,Path("/fixture"),100,13)
+        leaf.freeze.assert_not_called()
+
+    def test_closed_barrier_cannot_execute_inert_work(self):
+        connection=Mock();connection.recv.return_value=b"DENIED"
+        manager=Mock();manager.__enter__=Mock(return_value=connection);manager.__exit__=Mock(return_value=False)
+        with patch("guarded_job.os.geteuid",return_value=1000),patch("guarded_job.socket.socket",return_value=manager),\
+             patch("guarded_job.time.monotonic") as clock:
+            with self.assertRaisesRegex(ValueError,"barrier closed"):
+                inert_barrier("/run/jope-research/"+"a"*32+"/barrier.sock","a"*32,1)
+        clock.assert_not_called()
+
 
 
 if __name__ == "__main__":
