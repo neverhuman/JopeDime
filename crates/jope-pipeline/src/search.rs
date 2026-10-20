@@ -841,11 +841,13 @@ fn record_draw(
     outcome: &str,
     detail: Option<String>,
 ) -> Option<String> {
-    feat_math::capture_gp_source!(
-        "pipeline",
-        &format!("{coordinate}/{source}/{outcome}"),
-        genome.unwrap_or("")
-    );
+    if let Some(program) = genome {
+        feat_math::capture_gp_source!(
+            "pipeline",
+            &format!("{coordinate}/{source}/{outcome}"),
+            program
+        );
+    }
     recorder.and_then(|recorder| recorder.update(|log| {
         let canonical = genome.and_then(search_events::canonical_recipe);
         let program = genome.map(|g| sha256_hex(g.as_bytes()));

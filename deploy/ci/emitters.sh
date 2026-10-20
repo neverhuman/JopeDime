@@ -26,7 +26,7 @@ if [ -n "${JOPE_CXX_MARCH:-}" ]; then
 fi
 fail=0
 
-for tool in rustc g++ clang++ node python3 sha256sum timeout prlimit rg; do
+for tool in rustc g++ clang++ node python3 sha256sum timeout prlimit; do
   command -v "$tool" > /dev/null || { echo "missing required tool: $tool"; exit 1; }
 done
 [ ! -e "$OUT" ] || { echo "refusing to overwrite prior evidence: $OUT" >&2; exit 1; }
@@ -44,21 +44,24 @@ match = re.search(r"test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored;
 if not match or int(match[1]) < 3 or any(int(value) for value in match.groups()[1:]):
     raise SystemExit("historical_v1 golden did not execute all required cases")
 PY
-# Complete-source streaming is an emission contract: real four-language compilation,
-# failed-token accounting, pending recovery and an actual WebSocket/cursor replay.
-cargo test -p jope-observatory --locked --test gp_source > "$OUT/gp-source-stream.log" 2>&1
-cat "$OUT/gp-source-stream.log"
-# Cargo exits nonzero on failures; also refuse zero/filtered collection.
-if ! rg -q 'test result: ok\. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out' "$OUT/gp-source-stream.log"; then
-  echo "GP source stream did not execute all nine contract tests" >&2
-  exit 1
-fi
-cargo test -p feat-math --locked --test source_capture > "$OUT/gp-source-capture.log" 2>&1
-cat "$OUT/gp-source-capture.log"
-if ! rg -q 'test result: ok\. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out' "$OUT/gp-source-capture.log"; then
-  echo "GP population source capture did not execute its contract test" >&2
-  exit 1
-fi
+# Complete-source streaming is an emission contract. Execute each named selection and
+# retain its own receipt; the generalized target below intentionally selects one fixture.
+source_contract() { # <label> <expected-passes> <filtered-count-pattern> <cargo arguments...>
+  local label=$1 expected=$2 filtered=$3
+  shift 3
+  cargo test --locked "$@" > "$OUT/$label.log" 2>&1
+  cat "$OUT/$label.log"
+  if ! grep -qE "test result: ok\\. $expected passed; 0 failed; 0 ignored; 0 measured; $filtered filtered out" "$OUT/$label.log"; then
+    echo "$label did not execute its declared source contract" >&2
+    exit 1
+  fi
+}
+source_contract gp-source-stream 11 0 -p jope-observatory --test gp_source
+source_contract gp-source-capture 1 0 -p feat-math --test source_capture
+source_contract gp-source-cli 2 0 -p jope-cli --test gp_source_capture
+source_contract gp-source-kernel2 1 0 -p jope-pipeline --test gp_source_capture
+source_contract gp-source-generalized 1 '[0-9]+' -p jope-dime-regressor --test generalized_gp \
+  generalized_source_capture_retains_parseable_generation_zero_and_successors -- --exact
 
 EMIT=$(cargo run -q --locked -p jope-ci -- cargo-artifact build --package feat-math --example emit)
 

@@ -6,6 +6,13 @@ impl Observer for Observe {
     fn on_generation(&self, _: &GenStats) {}
     fn on_improvement(&self, _: &Scored, _: &Emitted, _: &GenStats) {}
 }
+fn test_dir() -> tempfile::TempDir {
+    let root =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/gp-source-tests");
+    fs::create_dir_all(&root).unwrap();
+    tempfile::tempdir_in(root).unwrap()
+}
+
 #[test]
 fn complete_populations_and_v3_candidates_are_captured_without_changing_rng() {
     if std::env::var_os("JOPE_GP_CAPTURE_FIXTURE_CHILD").is_some() {
@@ -32,7 +39,7 @@ fn complete_populations_and_v3_candidates_are_captured_without_changing_rng() {
         );
         return;
     }
-    let directory = tempfile::tempdir().unwrap();
+    let directory = test_dir();
     let result = Command::new(std::env::current_exe().unwrap())
         .args([
             "--exact",
@@ -52,6 +59,9 @@ fn complete_populations_and_v3_candidates_are_captured_without_changing_rng() {
     for entry in fs::read_dir(directory.path()).unwrap() {
         for line in fs::read_to_string(entry.unwrap().path()).unwrap().lines() {
             let record: serde_json::Value = serde_json::from_str(line).unwrap();
+            let program = record["program"].as_str().unwrap();
+            assert!(!program.is_empty());
+            feat_math::GenomeIr::parse(program).unwrap();
             *counts
                 .entry(record["engine"].as_str().unwrap().into())
                 .or_default() += 1;
