@@ -1,6 +1,6 @@
-# Complete GP source stream
+# Complete program source stream
 
-`gp-source-stream` maps captured GP occurrences to the existing standalone training-recipe
+`gp-source-stream` maps captured program occurrences to the existing standalone training-recipe
 emitters. It neither fits a model nor changes selection rules, RNG draws, reward, numerical evaluation, model
 weights or serving defaults. Full source includes its runtime and documentation, not just a
 DSL string, excerpt or a reference to a private library. C++17/JavaScript source exposes library
@@ -8,22 +8,14 @@ entry points; the existing emitter harness supplies CSV drivers when executing p
 
 ## Capture and delivery
 
-Set `JOPE_GP_SOURCE_DIR` to an external directory **before the GP process starts**. Capture is
-otherwise disabled. Capture and emission consume real wall time; time-limited searches can
-therefore complete fewer evaluations. Keep capture settings identical in timed comparisons. The opt-in setting is read once per process. Updated binaries capture
-surrogate and lite-race populations before score/dedup filtering, legacy random/mutation/crossover
-operator outputs (including children not subsequently evaluated), FullRust evolved-genome
-construction, kernel2 operator proposals, product pipeline draws even
-when search-event recording is disabled, kernel2 candidate populations and evaluation/refinement
-attempts, shared-strategy proposals, advanced V3 candidates, and generalized GP generation-zero
-and successor populations. Operator construction, population insertion (including elites), and kernel2 evaluation are
-separate capture points; the
-same program may appear in both. Every occurrence is retained and each actual emitted bundle is
-counted; `occurrences` is a capture count, not a count of independent numerical fits. No
-throttling, winner-only filter or unique-program token estimator is used. Embedded expression
-edits enter via their complete pipeline; a bare expression is not a standalone model recipe.
-Existing already-running binaries are unchanged; capture applies when producers start with the
-updated code and setting. External producers can append through
+Set `JOPE_GP_SOURCE_DIR` to an external directory **before the producer process starts**.
+Capture is otherwise disabled; the opt-in setting is read once per process. Capture and
+emission consume real wall time, so time-limited producers can complete fewer evaluations.
+Keep capture settings identical in timed comparisons. Every materialized complete program at
+a supported capture point is retained, including repeated programs. No sampling or unique-program
+token estimator is used. Partial expressions enter only through a complete executable recipe.
+Existing already-running binaries are unchanged; automatic capture requires the updated code
+and setting. External producers can append through
 `feat_math::source_stream::Journal::create` / `append` using an engine and coordinate.
 
 Each process owns a create-only JSONL journal with unique occurrence IDs. Identical programs at
@@ -47,26 +39,14 @@ every emitted occurrence still contributes its actual token count. Failed, missi
 Restart rebuilds metrics and
 pending checks from the log; replay and a re-read journal never create new token credit.
 
-## Engine and language coverage
+## Capture coverage
 
-Coverage is complete for the materialized full-program capture points below when the process
-starts with capture enabled. Parser fixtures check the actual captured strings; backend
-refusals remain in the four-target denominator. This is not a claim that every vocabulary
-operation has a standalone emitter in every language.
-
-| Producer | Capture point | Evidence / limit |
-| --- | --- | --- |
-| Surrogate and lite-race GP | Every population slot before filtering; private random/mutation/crossover construction also captures children never reached before stopping | `feat-math --test source_capture`; frozen seeded search/generator corpus remains unchanged. Population/operator/elite repeats are separate emitted occurrences. |
-| Legacy canonical mutation APIs | Shared random, mutation, crossover and explicit-arm output construction | Same typed `DslExpr`/canonical program path; source fixtures and generalized offspring exercise it. |
-| FullRust GP | Shared `From<CanonicalGenome>` for random/mutation/expanded mutation/crossover outputs | Actual random-construction parser fixture plus the shared constructor; no refit solely to emit source. |
-| Advanced V3 GP | Validated `make_candidate` for seeds/new candidates, including descendant construction | Actual initial population strings parse; all callers share the same canonicalizing constructor. Existing V3 controls retain their own scope. |
-| Legacy product pipeline | Every draw that actually produced program text, before score/budget/dedup filtering and independently of `record_events` | Actual CLI comparison and pipeline fixture with search-event recording disabled. Failed operators producing no program retain their native draw errors and are not invented empty-program emissions. |
-| Kernel2 and shared strategy | Operator proposals, population slots, evaluation attempts and shared-strategy proposals | Actual kernel2/shared-strategy capture child; every captured full program parses. Overlapping capture points remain labeled. |
-| Kernel2 rewrite and linearization moves | Every complete rewritten/linearized program before child admission, including refused or unevaluated proposals | Direct synthetic rewrite and linearization fixture parses actual captured rows. Re-deriving evidence invokes the same construction and is a distinct capture. |
-| Engine and policy grammars | Active `Vocab::decode` and `project_proposal` complete output, including GP projection and model-decoded/neural proposals | Actual engine and policy grammar fixtures exercise lossy projection plus decode and parse every output. Decode/projection/replay invocations are separate labeled captures. Historical byte-frozen `jope-engine/src/grammar.rs` is not the active module and is unchanged. No model inference/training is needed for this fixture. |
-| Kernel2 complete refinement trials | Coordinate/guarded and LM whole-pipeline objective construction, before admission and numerical catch boundaries; final child evaluation also captures | Coordinate/guarded synthetic training fixtures parse captured programs. LM uses the same canonical full-program construction; existing LM controls retain numerical scope. Bare solver AST steps enter only when a complete pipeline materializes. |
-| Generalized GP | Generation zero and successor populations, including preserved elites | Actual generation-zero plus two successor constructions: 240 materialized rows parse. This is a synthetic source fixture, not a benchmark campaign. |
-| External/custom or already-running producers | Explicit `Journal::append`; updated binaries/settings required for automatic hooks | No automatic historical archive backfill, unknown-engine discovery or mutation of frozen/running jobs is claimed. |
+Updated producers capture materialized complete programs at the instrumented construction and
+execution boundaries. Repeated programs at separate capture points remain distinct occurrences.
+The counter records captures rather than independent numerical fits. External/custom producers
+must append explicitly; already-running binaries and historical archives are unchanged.
+The developer implementation/parser coverage record is
+`docs/coordination/gp-source-stream-capture-coverage.md`.
 
 | Language row | Existing emitter | Actual check | Failure class |
 | --- | --- | --- | --- |
@@ -151,13 +131,13 @@ persisted source event, including service downtime. `assembly_tokens_per_second`
 cumulative actual emitted tokens by measured emitter/token-counting time. They measure different
 spans; neither is model inference token throughput, network retransmission throughput or fit
 speed. `unique_programs` counts distinct captured program bytes, not semantic novelty or independent fits.
-The older GP observer's dual-language credit/estimator is separate legacy telemetry;
+The older observer's dual-language credit/estimator is separate legacy telemetry;
 use this endpoint for the complete source-output ledger.
 
 Compiler checks do not run generated programs: Rust uses `--crate-type=lib --emit=metadata`,
 Python uses built-in `compile`, C++ uses `-std=c++17 -fsyntax-only`, JavaScript uses `node --check`.
 These prove syntax/types where applicable, not predictive parity, linking/execution, accuracy,
-safety of running code or scientific fitness. Existing emitter parity CI remains required.
+safety of running code or predictive quality. Existing emitter parity CI remains required.
 Missing tools, nonzero status and timeout are failures. Diagnostic files are capped at 4 MiB by
 Linux `prlimit`; each compiler process also has an 8 GiB address-space cap and a CPU-seconds
 cap equal to its selected timeout. Returned diagnostics retain the first 64 KiB and exit status. Default per-check

@@ -24,7 +24,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 23 | 0 | 23 | 0 | 0 | 0 |
+| new-bin | 24 | 0 | 24 | 0 | 0 | 0 |
 | new-example | 7 | 0 | 7 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **831** | **353** | **68** | **1** | **402** | **7** |
+| **total** | **832** | **353** | **69** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 300.
 
@@ -884,3 +884,5 @@ you saw.
 | new-bin | (new) research observatory | crates/jope-observatory/src/bin/collect-fleet.rs (collect-fleet) | none | new | Read-only native fleet resource observer; operational proof separate from compilation, no learning attribution. |
 | new-bin | (new) research observatory | crates/jope-observatory/src/bin/collect-storage.rs (collect-storage) | none | new | Explicit bounded S3 daily metadata refresh; original account/scope checks; no payload enumeration. |
 | new-bin | (new) research observatory | crates/jope-observatory/src/main.rs (jope-observatory) | jope-observatory::bin/jope-observatory (2 tests) | new | Read-only loopback training API and static React delivery; offline HTTP boundary fixtures do not grant training admission. |
+
+| new-bin | (new) complete program source stream | crates/jope-observatory/src/bin/gp-source-stream.rs (gp-source-stream) | jope-observatory::gp_source websocket_delivers_full_sources_checks_and_cursor_replay | new | Opt-in durable complete-source WebSocket/replay and compile-qualified token accounting; actual four-language/compiler/error contracts, no live deployment or predictive-quality claim. |
