@@ -268,11 +268,14 @@ fn collect(
                         < limit,
                     "occurrence storage limit reached; producer journals remain retained"
                 );
-                let (artifacts, elapsed) = gp_source::emit(&occurrence)?;
+                let context = format!("occurrence {} from {}", occurrence.id, path.display());
+                let (artifacts, elapsed) =
+                    gp_source::emit(&occurrence).with_context(|| context.clone())?;
                 store
                     .lock()
                     .map_err(|_| anyhow::anyhow!("source store poisoned"))?
-                    .publish(occurrence, artifacts, elapsed)?;
+                    .publish(occurrence, artifacts, elapsed)
+                    .with_context(|| context.clone())?;
             }
             offsets.insert(path.clone(), reader.stream_position()?);
             consumed += 1;

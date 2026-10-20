@@ -62,6 +62,8 @@ operation has a standalone emitter in every language.
 | Advanced V3 GP | Validated `make_candidate` for seeds/new candidates, including descendant construction | Actual initial population strings parse; all callers share the same canonicalizing constructor. Existing V3 controls retain their own scope. |
 | Legacy product pipeline | Every draw that actually produced program text, before score/budget/dedup filtering and independently of `record_events` | Actual CLI comparison and pipeline fixture with search-event recording disabled. Failed operators producing no program retain their native draw errors and are not invented empty-program emissions. |
 | Kernel2 and shared strategy | Operator proposals, population slots, evaluation attempts and shared-strategy proposals | Actual kernel2/shared-strategy capture child; every captured full program parses. Overlapping capture points remain labeled. |
+| Kernel2 rewrite and linearization moves | Every complete rewritten/linearized program before child admission, including refused or unevaluated proposals | Direct synthetic rewrite and linearization fixture parses actual captured rows. Re-deriving evidence invokes the same construction and is a distinct capture. |
+| Engine and policy grammars | Active `Vocab::decode` and `project_proposal` complete output, including GP projection and model-decoded/neural proposals | Actual engine and policy grammar fixtures exercise lossy projection plus decode and parse every output. Decode/projection/replay invocations are separate labeled captures. Historical byte-frozen `jope-engine/src/grammar.rs` is not the active module and is unchanged. No model inference/training is needed for this fixture. |
 | Kernel2 complete refinement trials | Coordinate/guarded and LM whole-pipeline objective construction, before admission and numerical catch boundaries; final child evaluation also captures | Coordinate/guarded synthetic training fixtures parse captured programs. LM uses the same canonical full-program construction; existing LM controls retain numerical scope. Bare solver AST steps enter only when a complete pipeline materializes. |
 | Generalized GP | Generation zero and successor populations, including preserved elites | Actual generation-zero plus two successor constructions: 240 materialized rows parse. This is a synthetic source fixture, not a benchmark campaign. |
 | External/custom or already-running producers | Explicit `Journal::append`; updated binaries/settings required for automatic hooks | No automatic historical archive backfill, unknown-engine discovery or mutation of frozen/running jobs is claimed. |
@@ -167,6 +169,14 @@ stays false while a tail, `ingress.backlogged_journals`, or validation/error bac
 queues, not proof that every producer has finished. A partial/corrupt service log is refused on restart: preserve the original
 before recovery rather than silently trimming evidence. Journals/sources/check diagnostics/logs
 are retained; plan storage and use a new declared run directory when archiving old output.
+Every uncached compiler attempt retains a separate diagnostics directory. At the default one-million
+occurrence limit this can approach four million directories; monitor both free bytes and inodes.
+There is no automatic retention/deletion policy. Archive stopped runs externally before choosing
+a new state directory. An event exceeding 32 MiB is a fatal admission failure before accounting;
+its producer record remains intact and is retried on restart, so simply restarting cannot recover
+that run. Preserve the journal/log, identify the offending occurrence from the terminal error,
+and explicitly archive/isolate that input before starting a new declared run. No oversized
+occurrence is silently skipped or credited as successfully emitted.
 
 ```sh
 cargo test --locked -p jope-observatory --test gp_source

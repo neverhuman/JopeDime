@@ -60,6 +60,12 @@ source_contract gp-source-stream 13 0 -p jope-observatory --test gp_source
 source_contract gp-source-capture 1 0 -p feat-math --test source_capture
 source_contract gp-source-cli 2 0 -p jope-cli --test gp_source_capture
 source_contract gp-source-kernel2 1 0 -p jope-pipeline --test gp_source_capture
+source_contract gp-source-moves 1 '[0-9]+' -p jope-pipeline --lib \
+  kernel2::search::moves::gp_source_move_capture_tests::complete_rewrite_and_linearization_proposals_are_captured -- --exact
+source_contract gp-source-engine-grammar 1 '[0-9]+' -p jope-parallel --test grammar \
+  grammar_source_capture_retains_decoded_and_projected_programs -- --exact
+source_contract gp-source-policy-grammar 1 '[0-9]+' -p jope-policy --test grammar_differential \
+  grammar_source_capture_retains_decoded_and_projected_programs -- --exact
 source_contract gp-source-generalized 1 '[0-9]+' -p jope-dime-regressor --test generalized_gp \
   generalized_source_capture_retains_parseable_generation_zero_and_successors -- --exact
 

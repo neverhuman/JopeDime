@@ -47,3 +47,72 @@ fn proposal_projection_happens_before_scoring() {
     assert!(v.encode(&projected).is_ok());
     assert_eq!(v.project_proposal(&projected).unwrap(), projected);
 }
+
+#[test]
+fn grammar_source_capture_retains_decoded_and_projected_programs() {
+    if std::env::var_os("JOPE_GP_GRAMMAR_CAPTURE_CHILD").is_some() {
+        let vocab: jope_parallel::grammar::Vocab = serde_json::from_slice(
+            &std::fs::read(
+                std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("assets/grammar/featmath.json"),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        let original = "(pipe X (nystrom gamma=0.873 k=23 seed=912) (ridge))";
+        let projected = vocab.project_proposal(original).unwrap();
+        assert_ne!(projected, original);
+        let tokens = vocab.encode(&projected).unwrap();
+        assert_eq!(vocab.decode(&tokens).unwrap(), projected);
+        return;
+    }
+    let root =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/gp-source-tests");
+    std::fs::create_dir_all(&root).unwrap();
+    let directory = root.join(format!(
+        "engine-grammar-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&directory).unwrap();
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "grammar_source_capture_retains_decoded_and_projected_programs",
+            "--nocapture",
+        ])
+        .env("JOPE_GP_GRAMMAR_CAPTURE_CHILD", "1")
+        .env("JOPE_GP_SOURCE_DIR", &directory)
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let mut coordinates = std::collections::BTreeMap::<String, usize>::new();
+    for entry in std::fs::read_dir(&directory).unwrap() {
+        for line in std::fs::read_to_string(entry.unwrap().path())
+            .unwrap()
+            .lines()
+        {
+            let record: serde_json::Value = serde_json::from_str(line).unwrap();
+            assert_eq!(record["engine"], "engine-grammar");
+            let program = record["program"].as_str().unwrap();
+            feat_math::GenomeIr::parse(program).unwrap();
+            assert_ne!(
+                program,
+                "(pipe X (nystrom gamma=0.873 k=23 seed=912) (ridge))"
+            );
+            *coordinates
+                .entry(record["coordinate"].as_str().unwrap().into())
+                .or_default() += 1;
+        }
+    }
+    assert!(coordinates["decode"] >= 2); // Encoding also replays decoded programs.
+    assert_eq!(coordinates["projection"], 1);
+    std::fs::remove_dir_all(directory).unwrap();
+}

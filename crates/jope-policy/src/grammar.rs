@@ -497,7 +497,9 @@ impl Vocab {
                 break;
             }
         }
-        Ok(DslExpr { stages }.to_string())
+        let program = DslExpr { stages }.to_string();
+        feat_math::capture_gp_source!("policy-grammar", "decode", program.as_str());
+        Ok(program)
     }
 
     /// Project a proposal before evaluation (lossy parameter snapping); the projected program
@@ -559,7 +561,9 @@ impl Vocab {
             }
         }
         let tokens = self.encode(&pipeline.to_string())?;
-        self.decode(&tokens)
+        let program = self.decode(&tokens)?;
+        feat_math::capture_gp_source!("policy-grammar", "projection", program.as_str());
+        Ok(program)
     }
 
     fn featmath_op(&self, name: &str) -> Option<&Op> {

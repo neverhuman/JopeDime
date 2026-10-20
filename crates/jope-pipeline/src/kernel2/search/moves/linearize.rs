@@ -267,6 +267,11 @@ fn assemble(
                         .params
                         .insert("expr".into(), ParamValue::Str(expression.to_source()?));
                     let program = GenomeIr::Pipeline(child).canonical();
+                    feat_math::capture_gp_source!(
+                        "kernel2-move",
+                        &format!("linearize/stage/{index}"),
+                        program.as_str()
+                    );
                     let reason = admit_child(&program, profile, width)
                         .err()
                         .map(|error| format!("{error:#}"));

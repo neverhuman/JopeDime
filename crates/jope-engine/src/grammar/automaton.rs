@@ -340,7 +340,9 @@ impl Vocab {
                 break;
             }
         }
-        Ok(DslExpr { stages }.to_string())
+        let program = DslExpr { stages }.to_string();
+        feat_math::capture_gp_source!("engine-grammar", "decode", program.as_str());
+        Ok(program)
     }
     /// Project a proposal BEFORE evaluation. The resulting program needs its own
     /// score; encode() deliberately never makes this lossy conversion.
@@ -403,7 +405,9 @@ impl Vocab {
             }
         }
         let tokens = self.encode(&pipeline.to_string())?;
-        self.decode(&tokens)
+        let program = self.decode(&tokens)?;
+        feat_math::capture_gp_source!("engine-grammar", "projection", program.as_str());
+        Ok(program)
     }
     pub fn task_id(&self, task: &str) -> Result<usize> {
         crate::task_contract::require_task(task)?;
