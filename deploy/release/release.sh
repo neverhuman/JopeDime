@@ -1153,6 +1153,9 @@ check_cargo_home() (
 # pinned builder image as the operator, with the run's tmp/container/ (0700) mounted at
 # CONTAINER_TMPDIR and at the container's /tmp, and TMPDIR set to CONTAINER_TMPDIR, so that nothing
 # a tool writes as a temporary file lands in the image's /tmp: it stays in this run's directory.
+# Bound every build/check/receipt container on shared training hosts. Fixed limits come after
+# internal extra arguments so callers cannot accidentally override them. Labels identify only
+# this release's containers for the operator's host-pressure monitoring.
 builder_container() {
   local ctmp=$run_dir/tmp/container
   local -a extra=()
@@ -1164,7 +1167,9 @@ builder_container() {
   chmod 0700 -- "$ctmp" || die "cannot make $ctmp private (0700)"
   docker run --rm --user "$(id -u):$(id -g)" \
     -v "$ctmp:$CONTAINER_TMPDIR" -v "$ctmp:$CONTAINER_SYSTEM_TMP" -e "TMPDIR=$CONTAINER_TMPDIR" \
-    "${extra[@]}" "$BUILDER_IMAGE" "$@"
+    "${extra[@]}" --cpus 4 --memory 20g --memory-swap 20g -e CARGO_BUILD_JOBS=4 \
+    --label "ai.jopedime.release.tag=$tag" --label "ai.jopedime.release.run=$run_dir" \
+    "$BUILDER_IMAGE" "$@"
 }
 
 # docker_run [extra docker args...] -- command...
