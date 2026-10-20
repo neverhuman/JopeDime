@@ -11,7 +11,7 @@ sys.path.insert(0, str(HERE))
 from protocol import digest, file_hash, publish, validate_plan
 
 
-def freeze(config, inputs, output, source_commit, custody):
+def freeze(config, inputs, output, source_commit, custody, node):
     original = json.loads((inputs / 'preregistration.json').read_text())
     receipt = json.loads((inputs / 'feature-receipt.json').read_text())
     root = HERE.parent
@@ -30,6 +30,10 @@ def freeze(config, inputs, output, source_commit, custody):
             'selection_rule': 'fixed final updates; no checkpoint/threshold choice on development outcomes',
             'resource_admission': 'external exact protected job/whole-tree/CPU70 proof REQUIRED; not supplied by freeze',
             'fresh_gp_fits': 0}
+    if node not in ('xbabe2', 'xbabe3') or (plan['assigned_node'] in ('xbabe2', 'xbabe3') and plan['assigned_node'] != node):
+        raise ValueError('concept must remain on its assigned node')
+    plan['assigned_node'] = node
+    plan['run_id'] += '-' + node
     plan['comparison_identity'] = {
         'task': 'historical_finite_pool_budget4', 'input_archive_sha256': plan['input_pins']['inputs.tar.zst'],
         'features_sha256': receipt['features_sha256'], 'split_sha256': original['split_sha256'],
@@ -50,6 +54,7 @@ if __name__ == '__main__':
     for name in ('config', 'inputs', 'out', 'custody'):
         ap.add_argument('--' + name, type=Path, required=True)
     ap.add_argument('--source-commit', required=True)
+    ap.add_argument('--node', choices=['xbabe2', 'xbabe3'], required=True)
     a = ap.parse_args()
-    freeze(a.config, a.inputs, a.out, a.source_commit, a.custody)
+    freeze(a.config, a.inputs, a.out, a.source_commit, a.custody, a.node)
     print(json.dumps({'state': 'preregistered_not_launched', 'sha256': file_hash(a.out)}))

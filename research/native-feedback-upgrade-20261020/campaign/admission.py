@@ -51,13 +51,15 @@ def protected_json(path):
         os.close(fd)
 
 
-def check(grant_path, *, plan_sha256, source_commit, clock=time.time):
+def check(grant_path, *, plan_sha256, source_commit, expected_node=None, clock=time.time):
     """Must run INSIDE the new, independently admitted job, before torch import."""
     g = protected_json(grant_path)
     if g.get("schema") != "jope.gpu-research-admission/v1":
         raise ValueError("no current GPU research admission")
     if g.get("node") != socket.gethostname() or g.get("node") not in ("xbabe2", "xbabe3"):
         raise ValueError("wrong research node")
+    if expected_node is not None and g['node'] != expected_node:
+        raise ValueError('grant node differs from frozen experiment assignment')
     if g.get("preregistration_sha256") != plan_sha256 or g.get("source_commit") != source_commit:
         raise ValueError("grant does not bind this source/plan")
     now = clock()

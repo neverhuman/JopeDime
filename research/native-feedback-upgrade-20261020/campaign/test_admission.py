@@ -40,6 +40,12 @@ class AdmissionTests(unittest.TestCase):
         with patch('admission.protected_json', return_value=g), patch('admission.socket.gethostname', return_value='xbabe2'):
             with self.assertRaises(ValueError): check('unused', plan_sha256='x', source_commit='y')
 
+    def test_frozen_node_assignment_cannot_migrate(self):
+        g = {'schema': 'jope.gpu-research-admission/v1', 'node': 'xbabe3'}
+        with patch('admission.protected_json', return_value=g), patch('admission.socket.gethostname', return_value='xbabe3'):
+            with self.assertRaisesRegex(ValueError, 'frozen experiment assignment'):
+                check('unused', plan_sha256='x', source_commit='y', expected_node='xbabe2')
+
     def test_old_source_receipt_does_not_admit_successor(self):
         g = {'schema': 'jope.gpu-research-admission/v1', 'node': 'xbabe2', 'source_commit': 'old', 'preregistration_sha256': 'old'}
         with patch('admission.protected_json', return_value=g), patch('admission.socket.gethostname', return_value='xbabe2'):
