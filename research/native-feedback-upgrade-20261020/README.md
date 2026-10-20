@@ -120,3 +120,15 @@ and mirrored custody `/home/ubuntu/jope-evidence/native-feedback-upgrade-2026102
 The delivery receipt records exact compressed storage, restoration and Git
 identities. Do not infer an S3 output publication or receiving-main merge from a
 local file. See `NEXT_WAVE.md` for remaining experiment and resource gates.
+
+## Additive follow-up, 2026-10-20 09:32Z check
+
+`next/` contains a durable measured-feedback journal and 17 passing fixture
+tests. It charges failed/unresolved logical opportunities across restarts,
+retains exact result bytes, and refuses incompatible comparison identities or
+unmeasured rewards. Native teaching verification and executor integration remain
+pending; its targets cannot admit training or publish HWM changes. See
+`next/README.md` for source pins, limits and the next owner's exact work packet.
+The completed historical trial and its results remain unchanged. The fleet
+resource audit found the current controller does not qualify the requested
+70% aggregate CPU ceiling; new GPU/GP training remains held for its owner.

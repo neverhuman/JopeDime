@@ -1,0 +1,39 @@
+{
+  "schema": "jope.feedback-journal-engineering-card/v1",
+  "observed_utc": "2026-10-20T09:39:52.545777+00:00",
+  "parent_git_head": "ca019e7c2c514f2875d64e12db1f28e4760d60a4",
+  "files": {
+    "next/README.md": {
+      "sha256": "52718dddcb45acbb99d1b7a7b0717a259146618e59b946f0aebbb9abd61987ee",
+      "bytes": 5958
+    },
+    "next/feedback_targets.py": {
+      "sha256": "2bf77eb047b28bdfcd54704bc72b01503366386112922da0c79c14b897b0a67d",
+      "bytes": 15653
+    },
+    "next/test_feedback_targets.py": {
+      "sha256": "85a8e5c29d6070c9b360993f0b9a167cd9ef6e6881346842fd7a2191946f29c1",
+      "bytes": 12041
+    }
+  },
+  "validation": {
+    "command": "rtk proxy env PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 JOPE_FEEDBACK_TEST_ROOT=/Users/bentaylor/Documents/ChatGPT/jope-research-data/native-feedback-upgrade-20261020/next-fixtures python3 -m unittest discover -s serious-upgrade-20261020/next -p test_feedback_targets.py -v",
+    "tests": 17,
+    "failures": 0,
+    "skipped": 0,
+    "elapsed_seconds": 0.855,
+    "exit_code": 0,
+    "evidence": "Observed unittest tool output in current research chat; no raw log was retained."
+  },
+  "fresh_gp_fits": 0,
+  "new_optimizer_updates": 0,
+  "science_result": "no new measured lift",
+  "native_teaching_qualification": "pending",
+  "training_admitted": false,
+  "hwm_published": false,
+  "independent_review": "pending",
+  "ci": "not run",
+  "resource_launch_qualified": false,
+  "cpu_audit_sha256": "fd0471252541d9c0569b7f1fb24596df73f0ddceaa38654324913f29e4a1bec5",
+  "original_trial_modified": false
+}
