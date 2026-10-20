@@ -2,7 +2,7 @@ from dataclasses import replace
 from fractions import Fraction
 import unittest
 
-from guarded_job import CpuPoint, Guard, Health, Leaf, ScopeFacts, cpu_interval
+from guarded_job import CpuPoint, Guard, Health, Leaf, RootScopeCandidate, ScopeFacts, cpu_interval
 
 
 class GuardTests(unittest.TestCase):
@@ -191,6 +191,79 @@ class GuardTests(unittest.TestCase):
         for value in [9, 0, True, 2.5]:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 Guard(self.leaf, deadline_ns=100_000_000_000, max_owned_cores=value)
+
+
+class RootScopeTests(unittest.TestCase):
+    def setUp(self):
+        self.spec = RootScopeCandidate("a"*64, "b"*64, "c"*64, "d"*32, tuple(range(128)), (22, 23),
+            1000, 1000, "/home/ubuntu/jope-evidence/native-feedback-upgrade-20261020/future-fixture",
+            ("/usr/bin/python3", "/qualified-fixture/start_barrier.py", "--lease", "c"*64),
+            6*1024**3, 8*1024**3, 3600)
+
+    def test_root_owned_exact_scope_does_not_assume_user_delegation(self):
+        p = self.spec.proposal()
+        self.assertEqual(p["unit"], "jope-research-aaaaaaaaaaaa-"+"d"*32+".scope")
+        self.assertFalse(p["live_execution_qualified"])
+        self.assertFalse(p["commands_executed"])
+        self.assertFalse(p["existing_wrapper_modified"])
+        self.assertFalse(p["shared_service_or_ancestor_write"])
+        self.assertEqual(p["root_exec_environment"], {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C.UTF-8"})
+        self.assertIn("--slice=jarambit-evo.slice", p["launch_argv_candidate"])
+        self.assertIn("--property=CPUQuota=25%", p["launch_argv_candidate"])
+
+    def test_literal_argv_cleans_environment_and_drops_privilege_before_barrier(self):
+        spec = replace(self.spec, barrier_argv=("/usr/bin/python3", "/fixture/a b.py", "$(literal)$HOME"))
+        args = spec.proposal()["launch_argv_candidate"]
+        self.assertEqual(args[-3:], list(spec.barrier_argv))
+        self.assertIn("--expand-environment=no", args)
+        self.assertLess(args.index("/usr/bin/setpriv"), args.index("/usr/bin/env"))
+        self.assertLess(args.index("/usr/bin/env"), args.index("/usr/bin/python3"))
+        self.assertIn("-i", args)
+        self.assertIn("CUDA_VISIBLE_DEVICES=", args)
+        self.assertNotIn("--preserve-env", args)
+
+    def test_controls_only_exact_generated_unit_and_runtime_quota(self):
+        q = self.spec.control_argv("quota", quota_usec=142801)
+        self.assertIn("--runtime", q)
+        self.assertIn("CPUQuota=142.801%", q)
+        self.assertIn(self.spec.unit, q)
+        self.assertEqual(self.spec.control_argv("freeze")[-2:], ["freeze", self.spec.unit])
+        self.assertEqual(self.spec.control_argv("thaw")[-2:], ["thaw", self.spec.unit])
+        for op in ["kill", "stop", "restart", "revert", "set-property", "*"]:
+            with self.subTest(op=op), self.assertRaises(ValueError):
+                self.spec.control_argv(op)
+
+    def test_quota_cannot_exceed_exact_allocated_cpu_count(self):
+        for q in [200001, 24999, 0, True, -1, None]:
+            with self.subTest(quota=q), self.assertRaises(ValueError):
+                self.spec.control_argv("quota", quota_usec=q)
+        with self.assertRaises(ValueError):
+            self.spec.control_argv("freeze", quota_usec=25000)
+
+    def test_invalid_scope_nonce_or_identity_cannot_target_foreign_unit(self):
+        for field, value in [("nonce", "*.slice"), ("nonce", "x"*32), ("task_sha256", "--system"),
+                             ("lease_sha256", ""), ("source_sha256", "b"*63)]:
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                replace(self.spec, **{field: value}).proposal()
+
+    def test_cpu_roster_and_nonroot_identity_must_be_explicit(self):
+        for field, value in [("allowed_ids", (128,)), ("allowed_ids", tuple(range(9))),
+                             ("allowed_ids", (22, 22)), ("online_ids", (1, 0)), ("uid", 0), ("gid", True)]:
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                replace(self.spec, **{field: value}).proposal()
+
+    def test_resource_bounds_cannot_expand_during_proposal(self):
+        for field, value in [("runtime_seconds", 3601), ("runtime_seconds", 0),
+                             ("memory_max_bytes", 9*1024**3), ("memory_high_bytes", 9*1024**3),
+                             ("device_visibility", "all"), ("device_visibility", 0)]:
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                replace(self.spec, **{field: value}).proposal()
+
+    def test_unsafe_cwd_or_option_shaped_entry_refused(self):
+        for field, value in [("cwd", "/tmp/job"), ("cwd", "/home/ubuntu/jope-evidence/../JopeDime"),
+                             ("barrier_argv", ("--shell",)), ("barrier_argv", ("/usr/bin/python3", "bad\narg"))]:
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                replace(self.spec, **{field: value}).proposal()
 
 
 if __name__ == "__main__":

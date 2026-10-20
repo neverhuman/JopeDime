@@ -15,6 +15,14 @@ from pathlib import PurePosixPath
 import re
 
 
+SYSTEMD_255_REFERENCES = (
+    "https://www.freedesktop.org/software/systemd/man/255/systemd-run.html",
+    "https://www.freedesktop.org/software/systemd/man/255/systemctl.html",
+    "https://www.freedesktop.org/software/systemd/man/255/systemd.resource-control.html",
+    "https://www.freedesktop.org/software/systemd/man/255/systemd.scope.html",
+)
+
+
 def need(condition, reason):
     if not condition:
         raise ValueError(reason)
@@ -106,6 +114,120 @@ class Health:
     swap_ok: bool
     temperature_ok: bool
     storage_ok: bool
+
+
+@dataclass(frozen=True)
+class RootScopeCandidate:
+    """Render-only alternative to an unavailable unprivileged delegation.
+
+    The existing resource owner would authorize a root supervisor controlling
+    exactly this NEW unit through systemd. No privilege/delegation is granted by
+    this value or its hashes. The first executable must be an independently
+    qualified start barrier, not an immediately executing training payload.
+    """
+    task_sha256: str
+    source_sha256: str
+    lease_sha256: str
+    nonce: str
+    online_ids: tuple[int, ...]
+    allowed_ids: tuple[int, ...]
+    uid: int
+    gid: int
+    cwd: str
+    barrier_argv: tuple[str, ...]
+    memory_high_bytes: int
+    memory_max_bytes: int
+    runtime_seconds: int
+    device_visibility: str = ""
+
+    def validate(self):
+        for value in (self.task_sha256, self.source_sha256, self.lease_sha256):
+            need(type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value), "unbound task/source/lease")
+        need(type(self.nonce) is str and re.fullmatch(r"[0-9a-f]{32}", self.nonce), "fresh exact-unit nonce required")
+        for roster in (self.online_ids, self.allowed_ids):
+            need(type(roster) is tuple and 0 < len(roster)
+                 and all(integer(x) for x in roster) and tuple(sorted(set(roster))) == roster, "invalid CPU roster")
+        need(set(self.allowed_ids) <= set(self.online_ids) and len(self.allowed_ids) <= 8, "allowed CPUs outside bound")
+        need(integer(self.uid, 1) and integer(self.gid, 1), "nonroot payload identity required")
+        p = PurePosixPath(self.cwd) if type(self.cwd) is str else PurePosixPath("/")
+        need(str(p) == self.cwd and p.is_relative_to("/home/ubuntu/jope-evidence") and ".." not in p.parts,
+             "explicit owned custody cwd required")
+        need(type(self.barrier_argv) is tuple and 0 < len(self.barrier_argv) <= 64
+             and all(type(x) is str and 0 < len(x) <= 4096 and not any(c in x for c in "\x00\r\n") for x in self.barrier_argv)
+             and self.barrier_argv[0].startswith("/"), "literal absolute barrier argv required")
+        need(integer(self.memory_high_bytes, 1) and integer(self.memory_max_bytes, 1)
+             and self.memory_high_bytes <= self.memory_max_bytes <= 8*1024**3, "candidate RAM ceiling")
+        need(integer(self.runtime_seconds, 1) and self.runtime_seconds <= 3600, "finite <=1h runtime bound")
+        need(self.device_visibility in ("", "0") and type(self.device_visibility) is str, "explicit candidate GPU visibility")
+
+    @property
+    def unit(self):
+        self.validate()
+        return "jope-research-" + self.task_sha256[:12] + "-" + self.nonce + ".scope"
+
+    def control_argv(self, operation, *, quota_usec=None):
+        """Literal commands for an owner-qualified root actor, NEVER executed.
+
+        No unit-pattern, ancestor, arbitrary property or stop/kill operation is
+        accepted. Revalidate exact path/inode/membership before every operation.
+        Successful command exit is not actual quota/freezer readback proof.
+        """
+        unit = self.unit
+        base = ["/usr/bin/systemctl", "--system", "--no-ask-password"]
+        need(operation in ("show", "quota", "freeze", "thaw"), "unknown owned-unit operation")
+        if operation == "quota":
+            need(integer(quota_usec, 25_000) and quota_usec <= len(self.allowed_ids)*100_000,
+                 "owned quota exceeds CPU allocation")
+            percent = f"{quota_usec//1000}.{quota_usec%1000:03d}%"
+            return base + ["--runtime", "set-property", unit, "CPUQuota=" + percent, "CPUQuotaPeriodSec=100ms"]
+        need(quota_usec is None, "quota supplied to nonquota action")
+        if operation == "show":
+            return base + ["show", unit, "--property=Id,LoadState,ActiveState,ControlGroup,Slice,FreezerState,CPUQuotaPerSecUSec,CPUQuotaPeriodUSec,EffectiveCPUs,MemoryHigh,MemoryMax,MemorySwapMax,TasksMax,RuntimeMaxUSec"]
+        return base + [operation, unit]
+
+    def proposal(self):
+        unit = self.unit
+        # 0.25 core startup quota confines the barrier. Raise it only after
+        # qualified fresh host/owned measurements and successful quota readback.
+        args = ["/usr/bin/systemd-run", "--system", "--no-ask-password", "--scope",
+                "--unit=" + unit, "--slice=jarambit-evo.slice", "--expand-environment=no",
+                "--working-directory=" + self.cwd,
+                "--property=CPUQuota=25%", "--property=CPUQuotaPeriodSec=100ms",
+                "--property=AllowedCPUs=" + ",".join(map(str, self.allowed_ids)),
+                "--property=MemoryHigh=" + str(self.memory_high_bytes),
+                "--property=MemoryMax=" + str(self.memory_max_bytes),
+                "--property=MemorySwapMax=0", "--property=TasksMax=64",
+                "--property=RuntimeMaxSec=" + str(self.runtime_seconds) + "s",
+                "--", "/usr/bin/setpriv", "--reuid=" + str(self.uid), "--regid=" + str(self.gid),
+                "--init-groups", "--no-new-privs", "--", "/usr/bin/env", "-i",
+                "PATH=/usr/bin:/bin", "PYTHONDONTWRITEBYTECODE=1", "OMP_NUM_THREADS=2",
+                "MKL_NUM_THREADS=2", "OPENBLAS_NUM_THREADS=2", "CUDA_VISIBLE_DEVICES=" + self.device_visibility,
+                *self.barrier_argv]
+        return {"schema": "jope.root-owned-scope-proposal/v1", "unit": unit,
+                "task_sha256": self.task_sha256, "source_sha256": self.source_sha256, "lease_sha256": self.lease_sha256,
+                "launch_argv_candidate": args, "show_argv": self.control_argv("show"),
+                "root_exec_environment": {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C.UTF-8"},
+                "privilege_actor": "existing owner-qualified root supervisor, exact new unit only",
+                "live_execution_qualified": False, "commands_executed": False,
+                "existing_wrapper_modified": False, "shared_service_or_ancestor_write": False,
+                "start_order": ["Verify pinned supervisor/barrier/executable identities and current exact task resource grant; root exec uses only root_exec_environment, never inherited LD/PYTHON/sudo-preserved variables",
+                                "Reject existing unit name; verify shared ancestor health without changing it",
+                                "Arm independent root custodian/watchdog outside the new payload scope",
+                                "Create only this scope at startup quota; nonroot barrier must not exec payload",
+                                "Read actual ControlGroup, device/inode, members/starts, cpuset/quota/RAM/swap/runtime bounds",
+                                "Freeze/read back only this new leaf; bind freeze ownership and Guard facts",
+                                "Require three consecutive safe host intervals and all health/watchdog conditions",
+                                "Set bounded quota then read actual cpu.max before releasing attested own freeze and barrier"],
+                "readback_contract": ["Cgroup path from exact unit show; pin path/device/inode, exact PID/start roster, no unknown descendants",
+                                      "Read cpu.max and effective cpuset; configured properties alone are insufficient",
+                                      "Freeze/thaw requires actual cgroup.events frozen state and bounded timeout; exit0 is insufficient",
+                                      "External/ancestor freeze must never be released; no unit patterns or shared property changes",
+                                      "A failed write/readback or missing controller heartbeat keeps the payload barrier closed; custodian freezes only original owned leaf"],
+                "remaining_blockers": ["Exact-unit root control grant and independent custodian/watchdog implementation/readback proof",
+                                       "Actual trusted start-barrier and root-supervisor executable closure; neither supplied here",
+                                       "Current native TRAIN data/evaluator/teaching/runtime/scientific protocol and GPU memory admission"],
+                "systemd_version_required": 255, "references": SYSTEMD_255_REFERENCES,
+                "limits": "Rendered argv is not a privilege grant, installed supervisor, containment proof or numerical launch. systemctl unit jobs may auto-thaw; freeze is not durable protection against unrelated unit operations."}
 
 
 class Guard:
