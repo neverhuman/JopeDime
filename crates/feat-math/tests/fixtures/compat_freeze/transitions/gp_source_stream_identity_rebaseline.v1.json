@@ -3,18 +3,18 @@
   "decision": "Human-requested all-GP complete-source streaming; announced source/lock identity successor only. Numerical/emitted/generator/search fixtures and accepted historical identities remain fixed.",
   "plan_reference": "MASTER_PLAN.md GP source-stream feature, 2026-10-20",
   "pr_reference": "Stream every GP evolution as complete source and account for compilation-qualified tokens",
-  "source_commit": "c6a95ea658e24fc37989bee8c34001511bfd384b",
+  "source_commit": "56fe07f4bcfcbcf90a88f30c07d15c80bb70d4fc",
   "base_commit": "bccbb55d3fff0c03f4e90df48862273338d8c679",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "8716cebbe8716a79ed3210e13374ae83e650072d785c40a50d62cc57b09404d6",
-      "after": "7e1b8896df62ef84486702cfbec485d41fe16bbce86e260a47cb7aa571448c9d"
+      "after": "5f737626493a1a2166e45a52c8160b1041a57b25f4eed484dacbb454f92691ee"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "849f2faf8d414011e8e0b97e3901d16da202f2209c5cfd1898b9f7e911696b7d",
-      "after": "064b3f1177a7db4ff71723fd5c773317ed2e10a62d39abc6d4297a82f621c69f"
+      "after": "2b2fa5786617fa5f5000ef92f4a98fcbd750ece33325ef70247c83e1e4ee881c"
     }
   ],
   "changed_evaluator_inputs": [
@@ -87,5 +87,20 @@
   "verification": [
     "cargo test --locked -p feat-math --test compat_freeze (identity mode): 13 passed",
     "cargo test --locked -p feat-math --test compat_freeze (comparison): 13 passed"
-  ]
+  ],
+  "changed_lineage_inputs": [
+    {
+      "lineage": "teaching store semantic_dependencies_sha256",
+      "path": "crates/jope-engine/src/grammar/automaton.rs",
+      "before": "27c81a3ddc4d59c5d98bd9207e15c5f983309e153618ff35454ddb44c42dd005",
+      "after": "898912247fdea658eaa7fbcc48ce92717c228292bad7fb5f578044adeb0fdb64"
+    },
+    {
+      "lineage": "corpus scan_policy",
+      "path": "crates/jope-engine/src/grammar/automaton.rs",
+      "before": "27c81a3ddc4d59c5d98bd9207e15c5f983309e153618ff35454ddb44c42dd005",
+      "after": "898912247fdea658eaa7fbcc48ce92717c228292bad7fb5f578044adeb0fdb64"
+    }
+  ],
+  "lineage_effect": "Active grammar/automaton.rs capture hooks change teaching-store semantic_dependencies_sha256 and corpus scan_policy. Receipts bound to the previous listed-source hashes fail verify_artifacts against the successor; preserve them under their original identity, do not relabel or migrate them. Linked executable hashes also mint new lineage identities on rebuild."
 }
