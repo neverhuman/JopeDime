@@ -1,0 +1,16 @@
+{
+  "schema": "jope.three-branch-research-registry/v1",
+  "parent_before_foundation": "0cc177c3ba34f69e4ed94e9bb03aca2d69741c31",
+  "owner": "researchRoot01a15887-bf8a-7bd2-ba41-1dd10e0920d2",
+  "coordination": "SAME existing Admiral/Captain; no direct RootW message or stopped automation restart",
+  "branches": [
+    {"branch": "codex/native-feedback-upgrade-20261020", "concept": "composite_control", "role": "current research plus matched control", "state": "prepared", "resource": "paired control within each admitted node job"},
+    {"branch": "codex/research-listwise-20261020", "concept": "top_listwise", "role": "candidate", "state": "blocked_resource_qualification", "resource": "xbabe2 GPU, assigned own CPU cores only"},
+    {"branch": "codex/research-uncertainty-20261020", "concept": "bootstrap_thompson", "role": "candidate", "state": "blocked_resource_qualification", "resource": "xbabe3 GPU, assigned own CPU cores only; storage hold"}
+  ],
+  "cadence_minutes": 20,
+  "check": ["actual updates and changed weights", "checkpoint/target ancestry", "guard one-second peaks and own-job custody", "useful throughput and actual allocator VRAM", "immutable result and full charged costs"],
+  "on_terminal": "Study all compatible results including negative/failure outcomes; propose and preregister a distinct next hypothesis before launching a newly admitted job.",
+  "no_idle_filler": true,
+  "production_promotion": "separate decision required"
+}

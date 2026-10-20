@@ -1,0 +1,82 @@
+{
+  "run_id": "original-historical-trial-20261020",
+  "scope": "historical_replay",
+  "source_commit": "ca019e7c2c514f2875d64e12db1f28e4760d60a4",
+  "source_commit_scope": "Post-run source publication; immutable preregistration pins actual original trial source.",
+  "comparison_identity": {
+    "budget": 4,
+    "evaluation_role": "original_214_context_assessment",
+    "evaluator_sha256": "84cf966327b8702e109a5abd535596f361354791660c47085c4f1db32cc21dc8",
+    "features_sha256": "9a65e29a56a7c0da6a1b768a841518d9ee4cccc65fa431ceb44b7129db212fc4",
+    "input_archive_sha256": "b061d6274be1f7b024896f8e9ac32fe8bb83aec614605c147b2d25c0e9e016ea",
+    "split_sha256": "6ea8b2a783827f3cf710b5b245e3d0feb469bb1e4ab6b38ccbc7aee4d246d0a2",
+    "task": "historical_finite_pool_budget4",
+    "vocabulary_sha256": "fd64472eaa5bfca4196f54b4208a39dfd1d697631f420e946f5920990112f8d9"
+  },
+  "comparison_identity_sha256": "9bb98ac976b92b70370cdd5dbd00e6da89b950df8b5fc5b767fe206aa5e712eb",
+  "metrics": {
+    "continuation": {
+      "parent_mean_beats_incumbent": 0.01045751633986928,
+      "parent_mean_quality": 1.2339742802710587,
+      "parent_mean_regret": 0.04062178331580519
+    },
+    "frozen_initial_adapter": {
+      "parent_mean_beats_incumbent": 0.016993464052287584,
+      "parent_mean_quality": 1.173422290022948,
+      "parent_mean_regret": 0.040238759661380054
+    },
+    "native17773_qhead": {
+      "parent_mean_beats_incumbent": 0.016993464052287584,
+      "parent_mean_quality": 1.22562854251628,
+      "parent_mean_regret": 0.04953073949631217
+    },
+    "native17773_trie": {
+      "parent_mean_beats_incumbent": 0.00784313725490196,
+      "parent_mean_quality": 1.1283371947615268,
+      "parent_mean_regret": 0.08955365214249558
+    },
+    "native429_qhead": {
+      "parent_mean_beats_incumbent": 0.02091503267973856,
+      "parent_mean_quality": 1.2014979933381111,
+      "parent_mean_regret": 0.06879291985467319
+    },
+    "native429_trie": {
+      "parent_mean_beats_incumbent": 0.00784313725490196,
+      "parent_mean_quality": 1.0584991168798972,
+      "parent_mean_regret": 0.12159907568419001
+    },
+    "targeted_feedback": {
+      "parent_mean_beats_incumbent": 0.01045751633986928,
+      "parent_mean_quality": 1.2401856722404023,
+      "parent_mean_regret": 0.021803043308644562
+    },
+    "uniform_feedback": {
+      "parent_mean_beats_incumbent": 0.014379084967320262,
+      "parent_mean_quality": 1.241829429838277,
+      "parent_mean_regret": 0.02593879655020731
+    },
+    "uniform_hash": {
+      "parent_mean_beats_incumbent": 0.013725490196078431,
+      "parent_mean_quality": 1.1557106212838157,
+      "parent_mean_regret": 0.10571095383620795
+    }
+  },
+  "primary": {
+    "confidence": 0.99,
+    "contexts": 214,
+    "decision": "inconclusive",
+    "effect": 0.01468298676559788,
+    "lower": -0.0015362225308254288,
+    "parents": 51,
+    "resamples": 10000,
+    "upper": 0.034344941945373894
+  },
+  "original_comparison_sha256": "5295f5cf2e9f18bf1209a362d88cb07f1df4be5d88048eb86267b70ed5991349",
+  "teacher_CE_native17773": 0.547696302,
+  "teacher_CE_native429": 0.956668408,
+  "new_work_in_this_campaign": "No new fits/optimizer updates; standardized existing immutable report only. New plans use a different development identity.",
+  "original_adapter_updates": 5760,
+  "fresh_gp_fits": 0,
+  "flywheel_feedback_benefit": "INCONCLUSIVE",
+  "production_promoted": false
+}

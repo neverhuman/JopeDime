@@ -1,0 +1,23 @@
+{
+  "run_id": "composite-control-development-wave1",
+  "branch": "codex/native-feedback-upgrade-20261020",
+  "concept": "composite_control",
+  "assigned_node": "xbabe2_or_xbabe3_paired_control",
+  "scope": "historical_replay",
+  "evaluation_partition": "calibration",
+  "evaluation_exposure": "development_once_per_frozen_wave",
+  "seeds": [41, 73, 109],
+  "arms": ["continuation", "uniform_feedback", "targeted_feedback"],
+  "initial_updates": 192,
+  "updates_per_wave": 192,
+  "waves": 3,
+  "effective_batch_contexts": 128,
+  "microbatch_contexts": 128,
+  "vram_reserve_bytes": 2147483648,
+  "wall_seconds": 3600,
+  "primary": "uniform_feedback minus continuation parent-mean normalized quality at budget4",
+  "practical_lift": 0.005,
+  "uncertainty": "99% parent-cluster bootstrap; seeds and members are repeated measures",
+  "failure_treatment": "retain failed/OOM/censored attempts and costs; no automatic retry",
+  "stop": "original wall/owner grant expiry, guard hold/staleness, RAM/swap/disk/temperature/VRAM breach, input/source drift, nonfinite gradient"
+}
