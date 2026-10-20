@@ -466,6 +466,8 @@ mod tests {
             verbs,
             [
                 "run",
+                "model-build-native",
+                "run-legacy-gp",
                 "verify-receipt",
                 "evolve",
                 "lineage",
