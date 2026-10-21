@@ -30,6 +30,8 @@
 /// Equal-budget comparison of search profiles (`jope-bench ablation`).
 pub mod ablation;
 pub mod adapter;
+/// Frozen original Rust learners and their AutoML comparison adapters.
+pub mod automl;
 pub mod cuts;
 pub mod emit;
 pub mod eval;
