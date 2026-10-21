@@ -19,7 +19,8 @@ else
 fi
 
 # The pinned binary that deploy/ci/install-jankurai.sh extracts, else one on PATH.
-jankurai=$(ls "$root"/target/jankurai/jankurai-*-x86_64-unknown-linux-gnu/jankurai 2>/dev/null | tail -1 || true)
+jankurai=$(ls -d "$root"/target/jankurai/jankurai-*-x86_64-unknown-linux-gnu/jankurai 2>/dev/null \
+  | sort -V | tail -1 || true)
 [ -n "$jankurai" ] || jankurai=$(command -v jankurai || true)
 if [ "${JANKURAI_SKIP_HOOKS:-}" = 1 ]; then
   echo "pre-commit: JANKURAI_SKIP_HOOKS=1; jankurai gate skipped" >&2
