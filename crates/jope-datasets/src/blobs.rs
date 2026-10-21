@@ -2,7 +2,7 @@
 //! atomic local stores (`.partial` + rename), hardlink-or-copy materialisation, verified downloads
 //! from a [`Store`] (`blobs/sha256/<sha256>`) and re-hash verification.
 
-use crate::hash::digest_file;
+use crate::hash::{digest_content, digest_content_async};
 use crate::store::Store;
 use anyhow::{anyhow, Context, Result};
 use std::os::unix::fs::MetadataExt;
@@ -111,7 +111,7 @@ impl BlobDir {
         let partial = self.partial_path(sha256);
         std::fs::copy(src, &partial).with_context(|| format!("copy {}", src.display()))?;
         if verify {
-            let got = digest_file(&partial)?.sha256;
+            let got = digest_content(&partial)?.sha256;
             if got != sha256 {
                 let _ = std::fs::remove_file(&partial);
                 return Err(anyhow!(
@@ -133,7 +133,7 @@ impl BlobDir {
         let dest = self.path(sha256);
         if let Ok(m) = std::fs::metadata(&dest) {
             let found = if m.len() == bytes {
-                let got = digest_file(&dest)?.sha256;
+                let got = digest_content_async(dest.clone()).await?.sha256;
                 if got == sha256 {
                     return Ok(false);
                 }
@@ -187,7 +187,7 @@ impl BlobDir {
                     report.errors.push(format!("blob {name}: empty"));
                 }
             } else {
-                match digest_file(&p) {
+                match digest_content(&p) {
                     Ok(d) if d.sha256 == name => {}
                     Ok(d) => report
                         .errors

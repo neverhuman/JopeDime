@@ -6,7 +6,7 @@
 use crate::manifest::BundleManifest;
 use anyhow::{anyhow, Context, Result};
 use jope_datasets::blobs::blob_key;
-use jope_datasets::hash::{digest_file, sha256_hex};
+use jope_datasets::hash::{digest_content_async, sha256_hex};
 use jope_datasets::store::Store;
 use jope_datasets::verified_object::{
     publish_verified_object_with_options, snapshot_and_verify_source_file, PublicationStatus,
@@ -79,7 +79,9 @@ pub async fn publish_with_options_and_hooks(
     //    before uploading a single blob.
     for f in &manifest.files {
         let src = from.join(&f.path);
-        let d = digest_file(&src).with_context(|| format!("hash {}", src.display()))?;
+        let d = digest_content_async(src.clone())
+            .await
+            .with_context(|| format!("hash {}", src.display()))?;
         if d.sha256 != f.sha256 || d.bytes != f.bytes {
             return Err(anyhow!(
                 "{}: {} ({} bytes) differs from the manifest ({} , {} bytes)",
