@@ -263,3 +263,54 @@ fn screen_ranks_everyone_and_deepens_the_top() {
     let error = run(&x, &y, &cuts, methods, &protocol, Task::Regression).unwrap_err();
     assert!(error.to_string().contains("duplicate method id"), "{error}");
 }
+
+fn entrant_spec(name: &str) -> AdapterSpec {
+    AdapterSpec {
+        name: name.to_owned(),
+        command: vec![BINARY.into(), "regressor-adapter".into(), name.into()],
+        version: None,
+        timeout_seconds: 120.0,
+    }
+}
+
+#[test]
+fn frozen_entrants_answer_the_contract_and_beat_the_constant() {
+    let (x, y) = toy();
+    let cuts = build(&FoldPlan::new("e", 1, 4), "e", "s", x.len()).unwrap();
+    let mean = evaluate_adapter(&mean_adapter(30.0), &x, &y, &cuts[0], Task::Regression);
+    for e in jope_bench::regressors::ENTRANTS {
+        let mut spec = entrant_spec(e.name);
+        spec.probe().unwrap();
+        let version = spec.version.clone().unwrap();
+        assert!(
+            version.starts_with(e.name) && version.ends_with(e.source_sha256),
+            "{version}"
+        );
+        let outcome = evaluate_adapter(&spec, &x, &y, &cuts[0], Task::Regression);
+        assert!(outcome.is_ok(), "{outcome:?}");
+        assert_eq!(outcome.predictions.len(), cuts[0].hold.len());
+        // y = a + b/2 is learnable from 60 rows: the entrant must clear the constant floor.
+        assert!(
+            outcome.score.unwrap() > mean.score.unwrap() + 0.5,
+            "{}: {:?} vs mean {:?}",
+            e.name,
+            outcome.score,
+            mean.score
+        );
+        let deep = evaluate_deep_adapter(&spec, &x, &y, &cuts, Task::Regression);
+        assert_eq!(deep.status, "ok", "{deep:?}");
+        // Regressors refuse other tasks with the usage code, so they rank as rejections there.
+        let yb: Vec<f64> = y
+            .iter()
+            .map(|v| if *v > 0.75 { 1.0 } else { 0.0 })
+            .collect();
+        let binary = evaluate_adapter(&spec, &x, &yb, &cuts[0], Task::Binary);
+        assert_eq!(binary.status, "rejected");
+        assert!(binary.reason.unwrap_or_default().contains("regression"));
+    }
+    let output = Command::new(BINARY)
+        .args(["regressor-adapter", "no-such-entrant", "--version"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(2));
+}
