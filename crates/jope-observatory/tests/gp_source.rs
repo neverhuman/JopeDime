@@ -506,3 +506,88 @@ fn compiler_queue_follows_source_arrival_instead_of_lexical_ids_across_restart()
         "in-flight work recovers in source order"
     );
 }
+
+#[test]
+fn shared_emission_matches_legacy_source_bytes_errors_and_token_rules() {
+    use feat_math::{
+        tokens::{count_tokens, Lang},
+        transpile::{self, EmitOptions},
+        GenomeIr,
+    };
+    let languages = ["rust", "python", "cpp17", "javascript"];
+    for (program, expected_success) in [
+        ("(pipe X (standardize) (ridge))", [true, true, true, true]),
+        (
+            "(pipe X (histgbm depth=2 rounds=2))",
+            [true, true, false, false],
+        ),
+        ("this does not parse", [false; 4]),
+    ] {
+        let parsed = GenomeIr::parse(program);
+        let pair = parsed.as_ref().map_err(|e| format!("{e:#}")).and_then(|g| {
+            transpile::emit(g, &EmitOptions::default()).map_err(|e| format!("{e:#}"))
+        });
+        let expected = [
+            pair.as_ref().map(|p| p.rust.clone()).map_err(Clone::clone),
+            pair.as_ref()
+                .map(|p| p.python.clone())
+                .map_err(Clone::clone),
+            parsed.as_ref().map_err(|e| format!("{e:#}")).and_then(|g| {
+                transpile::emit_cpp17(g, &EmitOptions::default()).map_err(|e| format!("{e:#}"))
+            }),
+            parsed.as_ref().map_err(|e| format!("{e:#}")).and_then(|g| {
+                transpile::emit_javascript(g, &EmitOptions::default()).map_err(|e| format!("{e:#}"))
+            }),
+        ];
+        assert_eq!(
+            expected.each_ref().map(|row| row.is_ok()),
+            expected_success,
+            "fixture emitter outcomes changed: {program}"
+        );
+        let (actual, _emit_ns) = gp_source::emit(&occurrence("cross-surface", program)).unwrap();
+        assert_eq!(actual.len(), 4);
+        let mut expected_tokens = [0u64; 4];
+        for (index, ((artifact, language), result)) in
+            actual.iter().zip(languages).zip(&expected).enumerate()
+        {
+            assert_eq!(artifact.language, language);
+            match result {
+                Ok(source) => {
+                    let kind = match index {
+                        0 => Lang::Rust,
+                        1 => Lang::Python,
+                        2 => Lang::Cpp,
+                        _ => Lang::JavaScript,
+                    };
+                    let counted = count_tokens(source, kind);
+                    assert_eq!(artifact.source.as_deref(), Some(source.as_str()));
+                    assert_eq!(
+                        artifact.sha256.as_deref(),
+                        Some(gp_source::hash(source.as_bytes()).as_str())
+                    );
+                    assert_eq!(artifact.status, Status::Pending);
+                    assert_eq!(artifact.error, None);
+                    assert_eq!(artifact.code_tokens, counted.code_tokens as u64);
+                    assert_eq!(artifact.doc_tokens, counted.doc_tokens as u64);
+                    assert_eq!(artifact.bytes, counted.bytes as u64);
+                    expected_tokens[index] = (counted.code_tokens + counted.doc_tokens) as u64;
+                }
+                Err(error) => {
+                    assert_eq!(artifact.status, Status::Failed);
+                    assert_eq!(artifact.error.as_deref(), Some(error.as_str()));
+                    assert_eq!(artifact.source, None);
+                    assert_eq!(artifact.sha256, None);
+                    assert_eq!(
+                        (artifact.code_tokens, artifact.doc_tokens, artifact.bytes),
+                        (0, 0, 0)
+                    );
+                }
+            }
+        }
+        assert_eq!(feat_math::source_stream::emit_languages(program), expected);
+        assert_eq!(
+            feat_math::source_stream::emitted_tokens(program),
+            expected_tokens
+        );
+    }
+}

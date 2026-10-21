@@ -1,20 +1,26 @@
 //! Live search progress for `jope pipeline invent` (`jope.invent.progress.v1`).
 //!
-//! Opt-in (`--events PATH`): one compact JSON object per line in the events file, each written
-//! with a single `write_all` and flushed, so a parent process can show progress while the search
-//! runs. Lines carry numbers only: never candidate source, column names or data values. stdout
-//! (`jope.candidates.v1`) and stderr are untouched. These records are interim, intended to become
-//! a kind of the planned `jope.run-event/v1` envelope. See `docs/pipeline.md`.
-//!
-//! Cadence: at most one line per [`MIN_INTERVAL`] at generation (and comparison-evaluation)
-//! boundaries, plus one whenever the best-so-far held-out RMSE improves, one at the end of every
-//! cut's exploration and one when the whole search finishes, so the last line is the end state.
+//! Opt-in best-effort NDJSON to a checked regular file, never stderr. Only fixed labels and
+//! numbers/null are included, without candidate source, column names or raw cell values.
+//! One process-wide worker serves all journals from a bounded 64-record queue, at most 2048
+//! bytes per record plus its current record. Search threads never wait for writes. Full or
+//! disconnected queues drop updates; file errors can lose records. No worker is joined, so
+//! sequence gaps and a missing final done record are possible, including at process exit.
+//! Writes are not guaranteed atomic. Updates occur at generation/comparison boundaries,
+//! once per second except observed improvements and cut/search ends. Improvements within
+//! one generation are coalesced. Emission overhead can affect a wall-limited search.
+//! See docs/pipeline.md; stdout schema/channel stays jope.candidates.v1.
 
 use crate::search::Observation;
 use serde::Serialize;
+#[cfg(test)]
+use std::sync::mpsc::Receiver;
 use std::{
     io::Write,
-    sync::Mutex,
+    sync::{
+        mpsc::{self, SyncSender},
+        Arc, Mutex, OnceLock,
+    },
     time::{Duration, Instant},
 };
 
@@ -72,8 +78,54 @@ pub struct ByLanguage {
     pub javascript: u64,
 }
 
+const QUEUE_CAPACITY: usize = 64;
+const MAX_LINE_BYTES: usize = 2048;
+struct PendingLine {
+    file: Arc<std::fs::File>,
+    bytes: Vec<u8>,
+}
+static FILE_QUEUE: OnceLock<Option<SyncSender<PendingLine>>> = OnceLock::new();
+
+enum Destination {
+    #[cfg(test)]
+    Test(SyncSender<Vec<u8>>),
+    File {
+        sender: SyncSender<PendingLine>,
+        file: Arc<std::fs::File>,
+    },
+}
+
+fn file_queue() -> Option<SyncSender<PendingLine>> {
+    FILE_QUEUE
+        .get_or_init(|| {
+            let (sender, receiver) = mpsc::sync_channel::<PendingLine>(QUEUE_CAPACITY);
+            std::thread::Builder::new()
+                .name("jope-invent-events".into())
+                .spawn(move || {
+                    for pending in receiver {
+                        let mut file = &*pending.file;
+                        // A failed file does not disable other journals. Blocking affects only this
+                        // single process worker; producers never wait or join it.
+                        let _ = file.write_all(&pending.bytes).and_then(|()| file.flush());
+                    }
+                })
+                .ok()?;
+            Some(sender)
+        })
+        .clone()
+}
+
+#[cfg(test)]
+fn drain(mut sink: impl Write, receiver: Receiver<Vec<u8>>) {
+    for bytes in receiver {
+        if sink.write_all(&bytes).and_then(|()| sink.flush()).is_err() {
+            break;
+        }
+    }
+}
+
 struct State {
-    sink: Box<dyn Write + Send>,
+    destination: Option<Destination>,
     started: Instant,
     last_emit: Option<Instant>,
     /// `(phase, cut, generation, evaluations)` of the last line, so a cut's end does not repeat
@@ -109,16 +161,16 @@ impl std::fmt::Debug for Progress {
 }
 
 impl Progress {
-    /// A reporter for `cuts` cuts with the given per-cut budget, writing to `sink`.
-    pub fn new(
-        sink: Box<dyn Write + Send>,
+    // Production files share one process worker; tests can inject bounded queues.
+    fn with_destination(
+        destination: Option<Destination>,
         cuts: usize,
         budget: crate::search::Budget,
         started: Instant,
     ) -> Self {
         Progress {
             state: Mutex::new(State {
-                sink,
+                destination,
                 started,
                 last_emit: None,
                 last_key: None,
@@ -138,6 +190,25 @@ impl Progress {
                 tokens: [0; 4],
             }),
         }
+    }
+
+    #[cfg(test)]
+    fn with_sender(
+        sender: Option<SyncSender<Vec<u8>>>,
+        cuts: usize,
+        budget: crate::search::Budget,
+        started: Instant,
+    ) -> Self {
+        Self::with_destination(sender.map(Destination::Test), cuts, budget, started)
+    }
+
+    /// Best-effort output to a prevalidated regular file. One bounded worker serves the process.
+    pub fn file(file: std::fs::File, cuts: usize, budget: crate::search::Budget) -> Self {
+        let destination = file_queue().map(|sender| Destination::File {
+            sender,
+            file: Arc::new(file),
+        });
+        Self::with_destination(destination, cuts, budget, Instant::now())
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, State> {
@@ -170,7 +241,6 @@ impl Progress {
 
     /// Count one finished evaluation, made on the cut at `position`.
     pub fn observe(&self, position: usize, observation: &Observation) {
-        // Emitted outside the lock, so concurrently compared cuts do not wait on each other.
         let tokens = feat_math::source_stream::emitted_tokens(&observation.genome);
         let mut state = self.lock();
         state.cut = position;
@@ -229,7 +299,7 @@ impl Progress {
         }
     }
 
-    /// The whole search finished: always emit the end state (phase `done`).
+    /// The search finished: attempt to enqueue its end state (phase `done`), without waiting.
     pub fn finish(&self) {
         let mut state = self.lock();
         state.phase = DONE;
@@ -291,11 +361,21 @@ impl Progress {
             return;
         };
         bytes.push(b'\n');
-        // Progress is advisory: a failing events file never stops the search.
-        let _ = state
-            .sink
-            .write_all(&bytes)
-            .and_then(|()| state.sink.flush());
+        if bytes.len() <= MAX_LINE_BYTES {
+            match &state.destination {
+                #[cfg(test)]
+                Some(Destination::Test(sender)) => {
+                    let _ = sender.try_send(bytes);
+                }
+                Some(Destination::File { sender, file }) => {
+                    let _ = sender.try_send(PendingLine {
+                        file: file.clone(),
+                        bytes,
+                    });
+                }
+                None => {}
+            }
+        }
         state.sequence += 1;
         state.last_key = Some(Self::key(state));
         state.last_emit = Some(now);
@@ -306,28 +386,21 @@ impl Progress {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
+    use std::{cell::RefCell, sync::Arc};
 
-    #[derive(Clone, Default)]
-    struct Shared(Arc<Mutex<Vec<u8>>>);
-
-    impl Write for Shared {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            self.0.lock().unwrap().extend_from_slice(buf);
-            Ok(buf.len())
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
+    struct Shared {
+        receiver: Receiver<Vec<u8>>,
+        history: RefCell<Vec<Line>>,
     }
 
     impl Shared {
         fn lines(&self) -> Vec<Line> {
-            String::from_utf8(self.0.lock().unwrap().clone())
-                .unwrap()
-                .lines()
-                .map(|l| serde_json::from_str(l).unwrap())
-                .collect()
+            let mut history = self.history.borrow_mut();
+            for bytes in self.receiver.try_iter() {
+                assert!(bytes.len() <= MAX_LINE_BYTES);
+                history.push(serde_json::from_slice(&bytes).unwrap());
+            }
+            history.clone()
         }
     }
 
@@ -353,12 +426,16 @@ mod tests {
     }
 
     fn reporter(t0: Instant) -> (Progress, Shared) {
-        let sink = Shared::default();
+        let (sender, receiver) = mpsc::sync_channel(QUEUE_CAPACITY);
+        let sink = Shared {
+            receiver,
+            history: RefCell::new(Vec::new()),
+        };
         let budget = crate::search::Budget {
             evaluations: 10,
             seconds: 30,
         };
-        (Progress::new(Box::new(sink.clone()), 2, budget, t0), sink)
+        (Progress::with_sender(Some(sender), 2, budget, t0), sink)
     }
 
     #[test]
@@ -426,5 +503,193 @@ mod tests {
         assert!(lines
             .windows(2)
             .all(|w| w[0].emitted_tokens <= w[1].emitted_tokens));
+    }
+
+    #[test]
+    fn full_and_disconnected_queues_do_not_wait_or_lose_counter_state() {
+        let budget = crate::search::Budget {
+            evaluations: 10,
+            seconds: 30,
+        };
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let progress = Progress::with_sender(Some(sender), 2, budget, Instant::now());
+        progress.observe(0, &observation(Some(0.5)));
+        progress.tick(); // fills queue
+        progress.observe(0, &observation(Some(0.4)));
+        progress.finish(); // full queue: drops done, without changing evaluation counters
+        let first: Line = serde_json::from_slice(&receiver.try_recv().unwrap()).unwrap();
+        assert_eq!((first.sequence, first.evaluations), (0, 1));
+        progress.observe(1, &observation(None));
+        progress.finish();
+        let latest: Line = serde_json::from_slice(&receiver.try_recv().unwrap()).unwrap();
+        assert_eq!(
+            (
+                latest.sequence,
+                latest.evaluations,
+                latest.measured,
+                latest.failed
+            ),
+            (2, 3, 2, 1)
+        );
+        assert_eq!(latest.phase, DONE);
+        assert_eq!(latest.best_hold_rmse, Some(0.4));
+        drop(receiver);
+        progress.finish(); // disconnected queue: also returns
+        assert_eq!(progress.lock().sequence, 4);
+        assert_eq!(progress.lock().evaluations, 3);
+    }
+
+    #[test]
+    fn worker_drains_records_and_stops_on_write_error() {
+        struct Sink(Arc<Mutex<Vec<u8>>>);
+        impl Write for Sink {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                // Deliberately accept partial writes: drain must finish the record.
+                let count = bytes.len().min(3);
+                self.0.lock().unwrap().extend_from_slice(&bytes[..count]);
+                Ok(count)
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let bytes = Arc::new(Mutex::new(Vec::new()));
+        let (sender, receiver) = mpsc::sync_channel(2);
+        sender.try_send(b"first\n".to_vec()).unwrap();
+        sender.try_send(b"second\n".to_vec()).unwrap();
+        drop(sender);
+        drain(Sink(bytes.clone()), receiver);
+        assert_eq!(*bytes.lock().unwrap(), b"first\nsecond\n");
+
+        struct Broken;
+        impl Write for Broken {
+            fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+                Err(std::io::ErrorKind::BrokenPipe.into())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                panic!("failed write must not flush")
+            }
+        }
+        let (sender, receiver) = mpsc::sync_channel(1);
+        sender.try_send(vec![0]).unwrap();
+        drain(Broken, receiver);
+        assert!(matches!(
+            sender.try_send(vec![1]),
+            Err(mpsc::TrySendError::Disconnected(_))
+        ));
+    }
+
+    #[test]
+    fn blocked_worker_cannot_hold_the_search_or_grow_the_queue() {
+        struct Blocked {
+            entered: mpsc::Sender<()>,
+            release: Receiver<()>,
+        }
+        impl Write for Blocked {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                self.entered.send(()).unwrap();
+                self.release.recv().unwrap();
+                Ok(bytes.len())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let (entered, wait_entered) = mpsc::channel();
+        let (release, wait_release) = mpsc::channel();
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let worker = std::thread::spawn(move || {
+            drain(
+                Blocked {
+                    entered,
+                    release: wait_release,
+                },
+                receiver,
+            )
+        });
+        sender.try_send(b"blocked\n".to_vec()).unwrap();
+        wait_entered.recv_timeout(Duration::from_secs(2)).unwrap();
+        let (complete, wait_complete) = mpsc::channel();
+        let search = std::thread::spawn(move || {
+            let progress = Progress::with_sender(
+                Some(sender),
+                2,
+                crate::search::Budget {
+                    evaluations: 1000,
+                    seconds: 30,
+                },
+                Instant::now(),
+            );
+            for _ in 0..1000 {
+                Progress::count(&mut progress.lock(), &observation(None), [0; 4]);
+                progress.finish();
+            }
+            let summary = {
+                let state = progress.lock();
+                (state.evaluations, state.sequence)
+            };
+            complete.send(summary).unwrap();
+        });
+        // This synchronizes on actual completion while the writer remains blocked.
+        let result = wait_complete.recv_timeout(Duration::from_secs(2));
+        // Release first write and queued record even if the no-wait assertion fails.
+        release.send(()).unwrap();
+        release.send(()).unwrap();
+        assert_eq!(result.unwrap(), (1000, 1000));
+        search.join().unwrap();
+        worker.join().unwrap();
+    }
+
+    #[test]
+    fn file_worker_writes_regular_output_with_actual_token_counts() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("events.ndjson");
+        let progress = Progress::file(
+            std::fs::File::create(&path).unwrap(),
+            1,
+            crate::search::Budget {
+                evaluations: 1,
+                seconds: 30,
+            },
+        );
+        progress.observe(0, &observation(Some(0.5)));
+        progress.finish();
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            let text = std::fs::read_to_string(&path).unwrap();
+            if let Some(line) = text
+                .lines()
+                .filter_map(|s| serde_json::from_str::<Line>(s).ok())
+                .find(|line| line.phase == DONE)
+            {
+                let expected =
+                    feat_math::source_stream::emitted_tokens(crate::select::BOOTSTRAP_GENOME);
+                assert_eq!(line.emitted_tokens, expected.iter().sum::<u64>());
+                assert!(line.emitted_tokens > 0);
+                assert_eq!(line.evaluations, 1);
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "regular-file worker produced no done record"
+            );
+            std::thread::sleep(Duration::from_millis(2));
+        }
+    }
+
+    #[test]
+    fn nonfinite_scores_never_cross_the_progress_json_boundary() {
+        let (progress, sink) = reporter(Instant::now());
+        progress.observe(0, &observation(Some(f64::NAN)));
+        progress.tick();
+        let mut measured = observation(Some(0.5));
+        measured.hold_r2 = Some(f64::INFINITY);
+        progress.observe(0, &measured);
+        progress.finish();
+        let lines = sink.lines();
+        assert_eq!(lines[0].best_hold_rmse, None);
+        assert_eq!(lines[1].best_hold_rmse, Some(0.5));
+        assert_eq!(lines[1].best_hold_r2, None);
+        assert_eq!(lines[1].evaluations, lines[1].measured + lines[1].failed);
     }
 }

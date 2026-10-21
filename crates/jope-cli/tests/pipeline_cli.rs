@@ -580,22 +580,29 @@ fn kernel2_lm_refinement_records_its_selection_and_verifies_evidence() {
 }
 // laneD:B17-lm-refinement end
 /// The opt-in `--events` feed: every line one compact `jope.invent.progress.v1` object, numbers
-/// only, evaluations never decreasing, and a last line that is the end state.
+/// only and evaluations never decreasing; delivery including the final record is best-effort.
 fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
     let text = std::fs::read_to_string(events).unwrap();
-    assert!(text.ends_with('\n'), "{text}");
     let lines: Vec<Value> = text
-        .lines()
-        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .split_inclusive('\n')
+        .filter(|line| line.ends_with('\n'))
+        .filter_map(|line| serde_json::from_str::<Value>(line).ok())
         .collect();
-    assert!(!lines.is_empty(), "no progress records: {text}");
     assert!(lines
         .iter()
         .all(|l| l["schema"] == "jope.invent.progress.v1"));
     let mut evaluations = 0;
     let mut emitted = 0;
+    let mut previous_sequence = None;
     for line in &lines {
         let object = line.as_object().unwrap();
+        let sequence = line["sequence"].as_u64().unwrap();
+        assert!(previous_sequence.is_none_or(|previous| sequence > previous));
+        previous_sequence = Some(sequence);
+        assert!(matches!(
+            line["phase"].as_str(),
+            Some("exploration" | "comparison" | "done")
+        ));
         for field in [
             "cut",
             "cuts",
@@ -649,11 +656,9 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
         );
         emitted = tokens;
     }
-    assert!(emitted > 0, "no emitted tokens counted: {text}");
-    let last = lines.last().unwrap();
-    assert_eq!(last["phase"], "done");
-    assert!(last["evaluations"].as_u64().unwrap() > 0);
-    assert!(last["best_hold_rmse"].is_number());
+    if !lines.is_empty() {
+        assert!(emitted > 0, "no emitted tokens counted: {text}");
+    }
     assert!(!text.contains("(pipe"), "program source in the events file");
 }
 
@@ -731,7 +736,7 @@ fn invent_prints_candidates_and_refuses_bad_input_as_json() {
     assert_invent_progress(&events, 2, 24);
     no_progress_on_stderr(&result.stderr);
 
-    // Without --events: no progress anywhere, stdout unchanged.
+    // Without --events: no progress feed; stdout retains its schema/channel.
     let quiet = dir.path().join("quiet");
     let result = invent("target", &quiet, None);
     assert!(result.status.success());

@@ -140,13 +140,16 @@ it here cross the boundary, not predictions.
   measured; 2 on refused input (under `--json`, stdout still carries
   `{"schema": "jope.candidates.v1", "ok": false, "error": ...}`); 143 on SIGTERM. `--source-commit`
   is reported as `git_sha`, and `git` is never spawned.
-- **Live progress (`--events PATH`, `jope.invent.progress.v1`).** Opt-in. With `--events PATH`,
-  `invent` creates (or truncates) `PATH` and writes progress records to it while it searches, one
-  compact JSON object per newline-terminated line (NDJSON), each written with a single write and
-  flushed. Without the flag nothing is written anywhere; stdout (`--json`, the single receipt) and
-  stderr are the same either way. `PATH` may not be the `--train` file, the `--work-dir` or a path
-  inside it, or an existing directory; such a command is refused (exit 2) before anything is
-  written. Records carry numbers only, never candidate source, column names or data values:
+- **Live progress (`--events PATH`, `jope.invent.progress.v1`).** Opt-in on Linux. With
+  `--events PATH`, `invent` creates or truncates a checked regular file and attempts progress
+  records as compact NDJSON while searching. Without the flag no progress feed is created.
+  The stdout receipt schema/channel and stderr diagnostics retain their existing roles;
+  source-emission/reporting overhead can affect wall timings and seconds-bound admission.
+  The target must be outside `--work-dir` and may not alias `--train`, including hard links.
+  Existing directories, symlinks and special files are refused before search publication;
+  the opened descriptor is checked before truncation. On other platforms `--events` is
+  refused before output is written. Aside from fixed labels, records contain numbers or null,
+  without candidate source, column names or raw cell values:
 
   ```json
   {"schema":"jope.invent.progress.v1","sequence":3,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.69,"seconds_budget":240.0,"emitted_tokens":188179,"emitted_tokens_by_language":{"rust":90305,"python":64838,"cpp17":9978,"javascript":23058},"emitted_tokens_per_second":70008.0}
@@ -173,9 +176,16 @@ it here cross the boundary, not predictions.
   time has elapsed). These are source tokens of generated candidates, not neural model tokens,
   and no compiler checks them, so they correspond to that ledger's `emitted_tokens`, not its
   `passed_tokens`. Emitting is paid only when `--events` is given.
-  Cadence: at most one record per second, plus one whenever the best held-out RMSE improves, one
-  at the end of each cut's exploration and a final `done` record, so the last record is the end
-  state. A cancelled or failed run ends without a `done` record.
+  At generation/comparison boundaries, updates are attempted at most once per second except
+  observed improvements and cut/search ends. Improvements within one generation are coalesced.
+  One process-wide worker serves all event files from a 64-record queue, with at most 2048 bytes
+  per record plus its current record. Search threads never wait for writes or join that worker.
+  Full/disconnected queues and write failures can lose records; failed worker creation disables
+  delivery. Sequence gaps, a partial final record and a missing final `done` are possible,
+  including at process exit. Keep only complete NDJSON records; atomic writes and durable delivery
+  are not promised. A `done` record describes search completion, not final candidate publication;
+  stdout and exit status remain authoritative. Best scores are selection-cut measurements,
+  not an untouched test score or the final cross-cut ranking.
 
   These records are **interim**: they are intended to become one event kind of the planned
   `jope.run-event/v1` envelope (T02/T04 of the terminal-experience plan,
