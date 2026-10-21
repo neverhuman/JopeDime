@@ -1257,38 +1257,44 @@ impl Keeper {
         // The runner and evaluator are the same files for every spec in this cycle: hash each
         // once here instead of twice per manifest inside render_spec (up to 1024 manifests per
         // cycle). They are hashed again after preparation, so a binary replaced while specs were
-        // being written still fails the cycle exactly as the per-manifest recheck did.
-        let runner_sha256 = sha256_file(&self.args.runner)?;
-        let evaluator_sha256 = sha256_file(&self.args.evaluator)?;
-        let pinned_tools = PinnedTools {
-            runner: (self.args.runner.as_path(), &runner_sha256),
-            evaluator: (self.args.evaluator.as_path(), &evaluator_sha256),
+        // being written fails the cycle. A wave with nothing accepted renders no spec and, as
+        // before, hashes nothing.
+        let prepared_rows = if accepted.is_empty() {
+            Vec::new()
+        } else {
+            let runner_sha256 = sha256_file(&self.args.runner)?;
+            let evaluator_sha256 = sha256_file(&self.args.evaluator)?;
+            let pinned_tools = PinnedTools {
+                runner: (self.args.runner.as_path(), &runner_sha256),
+                evaluator: (self.args.evaluator.as_path(), &evaluator_sha256),
+            };
+            let rows = self.workers.install(|| {
+                accepted
+                    .into_par_iter()
+                    .map(|(manifest, owner)| {
+                        let job_id = format!("jte-{}", &manifest.sha256[..24]);
+                        let spec = self
+                            .args
+                            .root
+                            .join("specs/evaluations")
+                            .join(format!("{job_id}.toml"));
+                        render_spec(&spec, &job_id, &manifest, &pinned_tools)?;
+                        // `submit-batch` runs SCQ's complete authoritative
+                        // validation path for every spec before it mutates the
+                        // scheduler. Running `scq check` here repeated the same
+                        // controller round trip once per manifest and could leave
+                        // the cluster starved while a large fresh wave waited.
+                        // The manifest/evaluator/input hashes have already been
+                        // validated above; permanent batch rejections remain
+                        // recorded by `submit_claims`.
+                        Ok((manifest, owner, job_id, spec))
+                    })
+                    .collect::<Vec<Result<_>>>()
+            });
+            let rows = rows.into_iter().collect::<Result<Vec<_>>>()?;
+            pinned_tools.verify_unchanged()?;
+            rows
         };
-        let prepared_rows = self.workers.install(|| {
-            accepted
-                .into_par_iter()
-                .map(|(manifest, owner)| {
-                    let job_id = format!("jte-{}", &manifest.sha256[..24]);
-                    let spec = self
-                        .args
-                        .root
-                        .join("specs/evaluations")
-                        .join(format!("{job_id}.toml"));
-                    render_spec(&spec, &job_id, &manifest, &pinned_tools)?;
-                    // `submit-batch` runs SCQ's complete authoritative
-                    // validation path for every spec before it mutates the
-                    // scheduler. Running `scq check` here repeated the same
-                    // controller round trip once per manifest and could leave
-                    // the cluster starved while a large fresh wave waited.
-                    // The manifest/evaluator/input hashes have already been
-                    // validated above; permanent batch rejections remain
-                    // recorded by `submit_claims`.
-                    Ok((manifest, owner, job_id, spec))
-                })
-                .collect::<Vec<Result<_>>>()
-        });
-        let prepared_rows = prepared_rows.into_iter().collect::<Result<Vec<_>>>()?;
-        pinned_tools.verify_unchanged()?;
         let prepared = prepared_rows.len();
         {
             let tx = self

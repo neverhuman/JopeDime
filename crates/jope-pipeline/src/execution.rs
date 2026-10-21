@@ -2187,9 +2187,14 @@ fn bounded_output(command: &mut Command) -> Result<std::process::Output> {
             let _ = killpg(Pid::from_raw(child.id() as i32), Signal::SIGKILL);
             let _ = child.kill();
             // Reap the killed child: try_wait right after SIGKILL usually saw it still running
-            // and left a zombie for the controller's lifetime. The capture threads are not
-            // joined, so a descendant that left the process group cannot hold this probe open.
-            let _ = child.wait();
+            // and left a zombie for the controller's lifetime. The reap is bounded too, so a
+            // child stuck in uninterruptible sleep cannot hold the caller (or HOST_LOCK). The
+            // capture threads are not joined, so a descendant that left the process group
+            // cannot hold this probe open.
+            let reap_deadline = Instant::now() + Duration::from_secs(1);
+            while matches!(child.try_wait(), Ok(None)) && Instant::now() < reap_deadline {
+                thread::sleep(Duration::from_millis(POLL_MS));
+            }
             anyhow::bail!("host dependency probe exceeded 2 seconds");
         }
         thread::sleep(Duration::from_millis(POLL_MS));

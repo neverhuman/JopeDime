@@ -1282,7 +1282,7 @@ pub(crate) fn persistent_worker(bootstrap_path: &Path) -> Result<()> {
         let request: WorkerRequest = serde_json::from_str(&line)?;
         let response =
             evaluate_worker_request(&bootstrap, &training, &train.y, &encoded, &runtime, request)?;
-        // One write per response instead of one per JSON token on the unbuffered handle.
+        // Serialize first and write each response line in one call, then flush it.
         let mut line = serde_json::to_vec(&response)?;
         line.push(b'\n');
         stdout.write_all(&line)?;
