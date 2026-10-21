@@ -220,10 +220,10 @@ fn stale_publisher_cannot_reintroduce_a_retired_version() {
         },
     );
     assert!(state
-        .validate_publish("trainer-a", "pin-11", &[retired.clone()])
+        .validate_publish("trainer-a", "pin-11", std::slice::from_ref(&retired))
         .is_err());
     assert!(state
-        .validate_publish("trainer-a", "pin-12", &[retired.clone()])
+        .validate_publish("trainer-a", "pin-12", std::slice::from_ref(&retired))
         .is_err());
     assert!(state.validate_publish("trainer-a", "pin-11", &[]).is_err());
     assert!(state

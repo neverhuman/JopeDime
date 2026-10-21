@@ -104,7 +104,7 @@ pub fn exact_best_of_b(
         return Ok(empty_result(ExactStatus::Unsupported, draws, incumbent));
     }
     ensure!(
-        incumbent.map_or(true, f64::is_finite),
+        incumbent.is_none_or(f64::is_finite),
         "incumbent must be finite"
     );
     let measured: std::collections::BTreeSet<_> = measured_actions.iter().collect();
@@ -117,7 +117,7 @@ pub fn exact_best_of_b(
             "action identity must be lowercase sha256"
         );
         ensure!(
-            atom.score.map_or(true, f64::is_finite),
+            atom.score.is_none_or(f64::is_finite),
             "scores must be finite"
         );
         mass_total = mass_total
@@ -304,7 +304,7 @@ impl DiscoveryAuc {
         ensure!(
             sorted
                 .iter()
-                .all(|(x, y)| x.is_finite() && *x >= 0.0 && y.map_or(true, f64::is_finite)),
+                .all(|(x, y)| x.is_finite() && *x >= 0.0 && y.is_none_or(f64::is_finite)),
             "nonfinite cost or score"
         );
         let transform = |x: f64| match clock {

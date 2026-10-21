@@ -532,7 +532,7 @@ async fn upload(
     summary: &mut Summary,
     ts: &str,
 ) -> Result<()> {
-    use futures_util::stream::{self, StreamExt};
+    use futures_util::stream::{self, StreamExt, TryStreamExt};
     let ledger = Mutex::new(
         std::fs::OpenOptions::new()
             .create(true)
@@ -598,14 +598,21 @@ async fn upload(
             PutOutcome::Exists => summary.already_present += 1,
         }
     }
-    for row in rows {
+    // One PUT per dataset manifest (3,859 for the T1 tier), up to PARALLEL_GETS in flight instead
+    // of one round trip at a time. Each manifest is its own key; `buffered` keeps input order, so
+    // the error reported is still the first failing row's, and the catalog below is written only
+    // after every manifest is in place, as before.
+    stream::iter(rows.iter().map(|row| async move {
         store
             .put(
                 &format!("datasets/{}/manifest.json", row.dataset_hash),
                 serde_json::to_vec_pretty(row)?,
             )
-            .await?;
-    }
+            .await
+    }))
+    .buffered(crate::blobs::PARALLEL_GETS)
+    .try_collect::<Vec<()>>()
+    .await?;
     let next = match store.get_string("catalog/LATEST").await? {
         Some(v) => v.trim().trim_start_matches('v').parse::<u64>().unwrap_or(0) + 1,
         None => 1,

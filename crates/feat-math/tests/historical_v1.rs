@@ -525,6 +525,43 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|entry| entry["path"] == path));
     }
+    let hpc_cache = old_fixture("transitions/hpc_cache_identity_rebaseline.v1.json");
+    let hpc_fixtures = hpc_cache["fixtures"].as_array().unwrap();
+    assert_eq!(hpc_fixtures.len(), 1);
+    assert_eq!(hpc_fixtures[0]["path"], changed_fixtures[0]);
+    // Preserve the original PR396 parallel edge without applying it after later identities.
+    identity_transitions::verify_fixture(
+        changed_fixtures[0],
+        hpc_fixtures[0]["before"].as_str().unwrap(),
+        hpc_fixtures[0]["after"].as_str().unwrap(),
+        &[hpc_cache.clone()],
+    )
+    .expect("preserved PR396 parallel identity announcement");
+    let pr396_combined =
+        old_fixture("transitions/pr396_after_jankurai_dependency_security_rebaseline.v1.json");
+    let combined_fixtures = pr396_combined["fixtures"].as_array().unwrap();
+    assert_eq!(combined_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
+    }
+    // Preserve original PR397 parallel edge separately from the combined linear successor.
+    let pr397_parallel = old_fixture("transitions/hpc_memory_threads_identity_rebaseline.v1.json");
+    for edge in pr397_parallel["fixtures"].as_array().unwrap() {
+        identity_transitions::verify_fixture(
+            edge["path"].as_str().unwrap(),
+            edge["before"].as_str().unwrap(),
+            edge["after"].as_str().unwrap(),
+            &[pr397_parallel.clone()],
+        )
+        .expect("preserved PR397 parallel identity announcement");
+    }
+    let pr397_combined =
+        old_fixture("transitions/pr397_after_pr396_jankurai_security_rebaseline.v1.json");
+    let combined_fixtures = pr397_combined["fixtures"].as_array().unwrap();
+    assert_eq!(combined_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -552,6 +589,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         appliance_after_automl,
         jankurai_runtime_safety,
         jankurai_dependency_security,
+        pr396_combined,
+        pr397_combined,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

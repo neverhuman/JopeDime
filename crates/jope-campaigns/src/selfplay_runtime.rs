@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use std::fs::{self, File};
-use std::io::{BufReader, Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -35,17 +35,10 @@ pub fn sha256_bytes(bytes: &[u8]) -> String {
 }
 
 pub fn sha256_file(path: &Path) -> Result<String> {
-    let mut reader =
-        BufReader::new(File::open(path).with_context(|| format!("open {}", path.display()))?);
+    let mut file = File::open(path).with_context(|| format!("open {}", path.display()))?;
     let mut hash = Sha256::new();
-    let mut buffer = [0_u8; 1024 * 1024];
-    loop {
-        let count = reader.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        hash.update(&buffer[..count]);
-    }
+    // io::copy streams through a small buffer and retries Interrupted reads, as fs::read does.
+    std::io::copy(&mut file, &mut hash).with_context(|| format!("read {}", path.display()))?;
     Ok(hex::encode(hash.finalize()))
 }
 

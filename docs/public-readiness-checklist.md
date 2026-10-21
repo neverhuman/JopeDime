@@ -53,7 +53,7 @@ any non-`recorded` member fails CI**.
 | `gh.env` (a GitHub PAT) and `aws.env` (a static AWS access key) were untracked in the historical tree and are out of the new tree; `*.env`, `*.pat`, `*.pem`, `*.key` ignored; `.gitleaks.toml` rule `jope-env-files` | done (ADR-0001 step 0) |
 | **Rotate the `gh.env` PAT and the `aws.env` static key** | **owner** — they were exposed on a shared host; rotation has not been receipted. Procedure: [runbooks/rotate-credentials.md](runbooks/rotate-credentials.md). Gate for the switch: a note in the checklist with the rotation date |
 | History scan: zero `github_pat_`/`ghp_`/`AKIA`/private-key matches in `git log --all -p`; no `*.env/*.pem/*.key/*.pyc` tracked | done at the first push (ADR-0001 step 5); re-run before the switch on the current history |
-| `gitleaks detect --redact` in every PR; `gitleaks protect --staged` in `.githooks/pre-commit` via `just setup` | gate (hygiene), green; the hook lands with the `.githooks` directory |
+| `gitleaks detect --redact` in every PR; `gitleaks protect --staged` in `ops/hooks/pre-commit` via `just setup` | gate (hygiene); the configured hook also runs the advisory `jankurai gate`. The separate `.githooks/pre-commit` is an optional legacy entry point, not the path selected by `just setup`. |
 | Runner secrets: the self-hosted runner's registration PAT is root-0600 on xbabe2, never mounted; no host credentials in containers; AWS only via OIDC roles `JopeDimeCiRead` / `JopeDimeTrainer` / `JopeDimeRelease` bound to exact `sub` claims | done for the roles (WP0/D0); runner provisioning lands with WP8 |
 | Static AWS keys anywhere in CI | none; gate: `.github/workflows/*` contain no `AWS_SECRET_ACCESS_KEY` (actionlint + review) |
 

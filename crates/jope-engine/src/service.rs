@@ -2,7 +2,7 @@ use crate::{
     manifest::*,
     telemetry::{now, Hardware, StageHeartbeat},
 };
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::os::unix::process::CommandExt;
 use std::{
@@ -60,6 +60,9 @@ impl std::ops::DerefMut for OwnedSlots {
 impl Drop for OwnedSlots {
     fn drop(&mut self) {
         for (_, child, _) in self.0.iter_mut().flatten() {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; every
+            // path that reaps a worker frees its slot first, so a child still in a slot is
+            // unreaped and its setpgid(0, 0) group id cannot have been reused.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
@@ -154,11 +157,20 @@ pub fn run_with_wait(
         workers > 0 && threads > 0 && workers * threads <= 104,
         "GP worker CPU budget exceeds 104"
     );
-    let mut cpus = (8..60).chain(70..122).collect::<Vec<usize>>();
-    let allowed = fs::read_to_string("/proc/self/status")?;
+    // The GP slot layout (CPUs 8-59 and 70-121), restricted to the CPUs this process may run
+    // on. Pinning a slot to a CPU outside the affinity mask or cgroup cpuset makes `taskset`
+    // fail at dispatch, which records the job's outcome as unknown; refuse the budget up front
+    // instead. On a host that allows the whole layout the slot CPUs are unchanged.
+    let allowed = allowed_cpus(&fs::read_to_string("/proc/self/status")?)?;
+    let mut cpus = (8..60)
+        .chain(70..122)
+        .filter(|cpu| allowed.contains(cpu))
+        .collect::<Vec<usize>>();
     ensure!(
-        allowed.contains("Cpus_allowed_list:"),
-        "CPU affinity unavailable"
+        workers * threads <= cpus.len(),
+        "GP worker CPU budget {workers}x{threads} exceeds the {} allowed CPUs of the GP slot \
+         layout (8-59, 70-121)",
+        cpus.len()
     );
     cpus.truncate(workers * threads);
     // All destinations stay inside the workspace. Job identities are checked
@@ -193,6 +205,8 @@ pub fn run_with_wait(
     let started = Instant::now();
     let mut slots = OwnedSlots((0..workers).map(|_| None).collect());
     STOP.store(false, std::sync::atomic::Ordering::Relaxed);
+    // SAFETY: `stop` is an extern "C" fn(c_int) whose only action is a lock-free atomic store,
+    // which is async-signal-safe, so it is a valid SIGTERM and SIGINT handler.
     unsafe {
         libc::signal(libc::SIGTERM, stop as *const () as libc::sighandler_t);
         libc::signal(libc::SIGINT, stop as *const () as libc::sighandler_t);
@@ -211,10 +225,7 @@ pub fn run_with_wait(
         .write(true)
         .open(lock)?;
     use std::os::fd::AsRawFd;
-    ensure!(
-        unsafe { libc::flock(_lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "GP service already running"
-    );
+    ensure!(_lock.try_lock().is_ok(), "GP service already running");
     let heartbeat = StageHeartbeat::start(
         &root.join("runs/gp-service.json"),
         serde_json::json!({
@@ -309,6 +320,8 @@ pub fn run_with_wait(
             );
             for slot in slots.iter_mut() {
                 if let Some((index, mut child, _)) = slot.take() {
+                    // SAFETY: kill takes only integers and has no memory-safety preconditions;
+                    // the worker is unreaped, so its setpgid(0, 0) group id is not reused.
                     unsafe {
                         libc::kill(-(child.id() as i32), libc::SIGKILL);
                     }
@@ -352,9 +365,13 @@ pub fn run_with_wait(
             if let Some((index, child, begun)) = slot {
                 let finished = child.try_wait()?;
                 if let Some(status) = finished {
+                    // The worker is reaped: free its slot before any fallible bookkeeping, so an
+                    // early return never leaves a reaped pid for OwnedSlots::drop to signal.
+                    let index = *index;
+                    *slot = None;
                     if status.success() {
                         completed += 1;
-                        let mut checked = vec![jobs.jobs[*index].clone()];
+                        let mut checked = vec![jobs.jobs[index].clone()];
                         let (_, count) =
                             restore_completed(root, &mut checked, &mut coverage, false)?;
                         ensure!(
@@ -364,7 +381,7 @@ pub fn run_with_wait(
                         evaluations += count;
                     } else {
                         failed += 1;
-                        let job = &jobs.jobs[*index];
+                        let job = &jobs.jobs[index];
                         let row = serde_json::json!({"timestamp":now(),"output":job.output,
                             "exit_code":status.code(),"outcome":"unknown",
                             "diagnosis":"worker exited without a verified completion; authority reconciliation required",
@@ -380,14 +397,17 @@ pub fn run_with_wait(
                         )?;
                         failed_rows.push(row);
                     }
-                    *slot = None;
                 } else if begun.elapsed() > Duration::from_secs(660) {
+                    // SAFETY: kill takes only integers and has no memory-safety preconditions;
+                    // the worker is unreaped, so its setpgid(0, 0) group id is not reused.
                     unsafe {
                         libc::kill(-(child.id() as i32), libc::SIGKILL);
                     }
                     let _ = child.wait();
+                    let index = *index;
+                    *slot = None;
                     failed += 1;
-                    let job = &jobs.jobs[*index];
+                    let job = &jobs.jobs[index];
                     let row = serde_json::json!({"timestamp":now(),"output":job.output,
                         "outcome":"unknown","diagnosis":"bounded search timeout; authority reconciliation required",
                         "automatic_retry":false});
@@ -401,7 +421,6 @@ pub fn run_with_wait(
                         &row,
                     )?;
                     failed_rows.push(row);
-                    *slot = None;
                 }
             }
         }
@@ -499,13 +518,19 @@ pub fn run_with_wait(
                     cmd.arg("--seeds").arg(path);
                 }
                 let parent_pid = std::process::id() as libc::pid_t;
+                // SAFETY: the hook runs between fork and exec and makes only async-signal-safe
+                // calls (setpgid, prctl, getppid, the fcntl in qualification_slots::inherit); its
+                // errors are errno codes, so nothing allocates in the child.
                 unsafe {
                     cmd.pre_exec(move || {
                         crate::qualification_slots::inherit(lease_fd)?;
-                        if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0
-                            || libc::getppid() != parent_pid
-                        {
-                            return Err(std::io::Error::other("GP service parent lost"));
+                        if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0 {
+                            return Err(std::io::Error::last_os_error());
+                        }
+                        // The service exited: refuse with an errno, which does not allocate
+                        // (an io::Error carrying a message would box it in the forked child).
+                        if libc::getppid() != parent_pid {
+                            return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                         }
                         if libc::setpgid(0, 0) != 0 {
                             return Err(std::io::Error::last_os_error());
@@ -601,4 +626,55 @@ pub fn validate_generation(root: &Path, job: &GpJob) -> Result<()> {
         "generation seed population missing"
     );
     Ok(())
+}
+
+/// The CPUs in `/proc/self/status`'s `Cpus_allowed_list` (affinity mask and cpuset), e.g.
+/// `0-3,8,10-11`.
+fn allowed_cpus(status: &str) -> Result<std::collections::BTreeSet<usize>> {
+    let list = status
+        .lines()
+        .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))
+        .context("CPU affinity unavailable")?
+        .trim();
+    let mut cpus = std::collections::BTreeSet::new();
+    for part in list.split(',') {
+        let (start, end) = match part.split_once('-') {
+            Some((start, end)) => (start.parse::<usize>()?, end.parse::<usize>()?),
+            None => {
+                let cpu = part.parse::<usize>()?;
+                (cpu, cpu)
+            }
+        };
+        ensure!(
+            start <= end && end < 1 << 16,
+            "invalid allowed CPU range {part}"
+        );
+        cpus.extend(start..=end);
+    }
+    ensure!(!cpus.is_empty(), "allowed CPU list is empty");
+    Ok(cpus)
+}
+
+#[cfg(test)]
+mod allowed_cpu_tests {
+    use super::allowed_cpus;
+
+    #[test]
+    fn allowed_cpu_list_parses_ranges_and_refuses_malformed_lists() {
+        let status = "Name:\tjope\nCpus_allowed:\tff\nCpus_allowed_list:\t0-3,8,10-11\n";
+        assert_eq!(
+            allowed_cpus(status)
+                .unwrap()
+                .into_iter()
+                .collect::<Vec<_>>(),
+            [0, 1, 2, 3, 8, 10, 11]
+        );
+        for bad in ["", "3-1", "1,,2", "a", "0-70000"] {
+            assert!(
+                allowed_cpus(&format!("Cpus_allowed_list:\t{bad}\n")).is_err(),
+                "{bad}"
+            );
+        }
+        assert!(allowed_cpus("Name:\tjope\n").is_err());
+    }
 }

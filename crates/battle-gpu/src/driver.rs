@@ -203,6 +203,7 @@ impl<'api> DeviceBuffer<'api> {
         // SAFETY: ptr is writable output storage; bytes is nonzero. Callers
         // hold the backend lock with its live context current on this thread.
         api.check(
+            // SAFETY: `ptr` is a live out-parameter and `bytes` is nonzero.
             unsafe { (api.cuMemAlloc_v2)(&mut ptr, bytes) },
             "cuMemAlloc",
         )?;

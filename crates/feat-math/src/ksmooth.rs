@@ -77,12 +77,16 @@ impl KsmoothModel {
         }
         let pf = p as f64;
         let kk = self.k.min(self.z.len());
+        // Scratch belongs to this prediction call, not to a global pool or the model. Reuse it
+        // across query rows, so concurrent callers remain independent without per-row allocation.
+        let mut zr = Vec::with_capacity(p);
+        let mut d2s = Vec::with_capacity(self.z.len());
+        let mut order = Vec::with_capacity(self.z.len());
         x.iter()
             .map(|row| {
-                let zr: Vec<f64> = (0..p.min(row.len()))
-                    .map(|j| (row[j] - self.means[j]) / self.scales[j])
-                    .collect();
-                let mut d2s = Vec::with_capacity(self.z.len());
+                zr.clear();
+                zr.extend((0..p.min(row.len())).map(|j| (row[j] - self.means[j]) / self.scales[j]));
+                d2s.clear();
                 for zb in &self.z {
                     let mut d2 = 0.0;
                     for d in 0..zr.len().min(zb.len()) {
@@ -91,8 +95,15 @@ impl KsmoothModel {
                     }
                     d2s.push(d2);
                 }
-                let mut order: Vec<usize> = (0..self.z.len()).collect();
-                order.sort_by(|&a, &b| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b)));
+                order.clear();
+                order.extend(0..self.z.len());
+                let compare = |&a: &usize, &b: &usize| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b));
+                // Select the same k rows as the full sort, then sort only that prefix. The row
+                // index makes this a total order even for ties; accumulation order stays exact.
+                if kk > 0 && kk < order.len() {
+                    order.select_nth_unstable_by(kk, compare);
+                }
+                order[..kk].sort_unstable_by(compare);
                 let base = d2s[order[0]];
                 let mut num = 0.0;
                 let mut den = 0.0;
@@ -114,6 +125,42 @@ mod tests {
     use crate::rng::Pcg32;
     use crate::GenomeIr;
 
+    fn full_sort_reference(model: &KsmoothModel, x: &Rows) -> Vec<f64> {
+        let p = model.means.len();
+        if model.z.is_empty() {
+            return x.iter().map(|_| model.y_mean.clamp(-60.0, 60.0)).collect();
+        }
+        let pf = p as f64;
+        let kk = model.k.min(model.z.len());
+        x.iter()
+            .map(|row| {
+                let zr: Vec<f64> = (0..p.min(row.len()))
+                    .map(|j| (row[j] - model.means[j]) / model.scales[j])
+                    .collect();
+                let mut d2s = Vec::with_capacity(model.z.len());
+                for zb in &model.z {
+                    let mut d2 = 0.0;
+                    for d in 0..zr.len().min(zb.len()) {
+                        let t = zr[d] - zb[d];
+                        d2 += t * t;
+                    }
+                    d2s.push(d2);
+                }
+                let mut order: Vec<usize> = (0..model.z.len()).collect();
+                order.sort_by(|&a, &b| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b)));
+                let base = d2s[order[0]];
+                let mut num = 0.0;
+                let mut den = 0.0;
+                for &i in order.iter().take(kk) {
+                    let w = (-model.gamma * (d2s[i] - base) / pf).exp();
+                    num += w * model.ys[i];
+                    den += w;
+                }
+                (num / den).clamp(-60.0, 60.0)
+            })
+            .collect()
+    }
+
     fn toy() -> (Rows, Vec<f64>) {
         let mut x = Vec::new();
         let mut y = Vec::new();
@@ -126,6 +173,73 @@ mod tests {
             y.push(2.0 * a - b + 0.3 * (6.0 * c).sin());
         }
         (x, y)
+    }
+
+    #[test]
+    fn partial_neighbors_match_full_sort_bits_including_ties_and_short_queries() {
+        let (mut x, mut y) = toy();
+        // Equal distances with different targets expose cutoff and accumulation-order errors.
+        x.extend(vec![vec![0.5, 0.5, 0.5]; 80]);
+        y.extend((0..80).map(|i| i as f64 - 40.0));
+        let mut queries = x.clone();
+        queries.extend([vec![], vec![0.5], vec![0.5, 0.5], vec![0.5; 4]]);
+        queries.extend([vec![f64::NAN; 3], vec![f64::INFINITY; 3]]);
+        for k in [0, 1, 8, 32, 79, 80, x.len() - 1, x.len(), x.len() + 1] {
+            for gamma in [1e-6, 1.0, 1e6] {
+                let model = KsmoothModel::fit(&x, &y, k, gamma);
+                let expected = full_sort_reference(&model, &queries);
+                let actual = model.predict(&queries);
+                assert_eq!(actual.len(), expected.len());
+                for (i, (a, b)) in actual.iter().zip(&expected).enumerate() {
+                    assert_eq!(a.to_bits(), b.to_bits(), "k={k} gamma={gamma} row={i}");
+                }
+                assert!(model.predict(&vec![]).is_empty());
+            }
+        }
+        let model = KsmoothModel::fit(&x, &y, 32, 1.0);
+        let expected = model.predict(&queries);
+        std::thread::scope(|scope| {
+            for _ in 0..4 {
+                scope.spawn(|| {
+                    let actual = model.predict(&queries);
+                    assert!(actual
+                        .iter()
+                        .zip(&expected)
+                        .all(|(a, b)| a.to_bits() == b.to_bits()));
+                });
+            }
+        });
+    }
+
+    #[test]
+    #[ignore = "manual CPU microbenchmark; prints timings without a speed threshold"]
+    fn ksmooth_prediction_benchmark() {
+        use std::hint::black_box;
+        use std::time::Instant;
+        let mut rng = Pcg32::new(42, 7);
+        let x: Rows = (0..20_000)
+            .map(|_| (0..8).map(|_| rng.next_f64()).collect())
+            .collect();
+        let y: Vec<f64> = x.iter().map(|r| r[0] - r[1]).collect();
+        let queries: Rows = x.iter().step_by(79).cloned().collect();
+        let model = KsmoothModel::fit(&x, &y, 32, 1.0);
+        for repeat in 0..5 {
+            // Alternate order to reduce systematic warmup bias.
+            let mut timings = [0.0; 2];
+            let mut outputs = [Vec::new(), Vec::new()];
+            for which in if repeat % 2 == 0 { [0, 1] } else { [1, 0] } {
+                let start = Instant::now();
+                outputs[which] = if which == 0 {
+                    full_sort_reference(black_box(&model), black_box(&queries))
+                } else {
+                    model.predict(black_box(&queries))
+                };
+                timings[which] = start.elapsed().as_secs_f64();
+            }
+            assert_eq!(outputs[0], outputs[1]);
+            println!("ksmooth n={} q={} p=8 k=32 repeat={repeat} full_sort_seconds={:.6} partial_seconds={:.6} speedup={:.3}",
+                x.len(), queries.len(), timings[0], timings[1], timings[0]/timings[1]);
+        }
     }
 
     #[test]

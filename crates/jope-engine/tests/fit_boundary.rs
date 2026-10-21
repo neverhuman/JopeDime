@@ -800,7 +800,7 @@ fn forge_journaled_activation(fixture: &Fixture) {
         .write(true)
         .open(root.join("authority.lock"))
         .unwrap();
-    assert_eq!(unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) }, 0);
+    assert!(lock.lock().is_ok());
     let checkpoint: Value = read_json(&fixture.witness).unwrap();
     let db = rusqlite::Connection::open(root.join("registry.sqlite")).unwrap();
     db.busy_timeout(Duration::from_secs(10)).unwrap();

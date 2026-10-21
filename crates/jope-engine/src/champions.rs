@@ -7,7 +7,6 @@ use std::{
     collections::BTreeMap,
     fs,
     io::Write,
-    os::fd::AsRawFd,
     path::{Path, PathBuf},
 };
 
@@ -281,10 +280,7 @@ fn publish_winner(root: &Path, champion: &Champion) -> Result<()> {
         .truncate(false)
         .write(true)
         .open(outbox.join("lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) } == 0,
-        "winner outbox lock failed"
-    );
+    ensure!(lock.lock().is_ok(), "winner outbox lock failed");
     // A crashed publisher must complete the original reserved sequence before
     // another winner can acquire one. This also repairs missing derived indexes.
     let pending_path = outbox.join("pending.json");
@@ -396,10 +392,7 @@ pub fn recover_outbox(root: &Path) -> Result<usize> {
             .truncate(false)
             .write(true)
             .open(directory.join("lock"))?;
-        ensure!(
-            unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) } == 0,
-            "champion recovery lock failed"
-        );
+        ensure!(lock.lock().is_ok(), "champion recovery lock failed");
         if pending.exists() {
             finish_champion(root, &directory, &read_json(&pending)?)?;
             recovered += 1;
@@ -438,10 +431,7 @@ fn record_inner(root: &Path, observation: &Value, source: &Path, publish: bool) 
         .truncate(false)
         .write(true)
         .open(directory.join("lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) } == 0,
-        "champion lock failed"
-    );
+    ensure!(lock.lock().is_ok(), "champion lock failed");
     let pending_path = directory.join("pending.json");
     if pending_path.exists() {
         finish_champion(root, &directory, &read_json(&pending_path)?)?;
@@ -548,10 +538,7 @@ fn freeze_snapshot_inner(
         .truncate(false)
         .write(true)
         .open(destination.with_extension("lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) } == 0,
-        "snapshot lock failed"
-    );
+    ensure!(lock.lock().is_ok(), "snapshot lock failed");
     let mut request = json!({"corpus_sha256":file_hash(&corpus.join("index.json"))?,
         "checkpoint_sha256":file_hash(&checkpoint.join("state.json"))?,"cuts":cuts,"cut_start":cut_start,
         "vocabulary_sha256":file_hash(&corpus.join("vocabulary.json"))?});

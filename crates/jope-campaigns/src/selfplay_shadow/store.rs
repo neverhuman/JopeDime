@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
-use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 
 jope_paths::once_str!(
@@ -355,8 +354,7 @@ impl FileLock {
             .read(true)
             .write(true)
             .open(path)?;
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
-        if result != 0 {
+        if file.lock().is_err() {
             bail!("cannot lock {}", path.display());
         }
         Ok(Self { file })
@@ -365,9 +363,7 @@ impl FileLock {
 
 impl Drop for FileLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 

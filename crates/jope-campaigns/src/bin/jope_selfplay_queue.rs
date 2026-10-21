@@ -27,7 +27,6 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
-use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
@@ -318,6 +317,14 @@ struct Keeper {
     reservation_cache: HashMap<(String, Option<String>, Option<String>), String>,
     terminal_seen: HashSet<String>,
     operator_registry: GeneratedOperatorRegistry,
+}
+
+/// Manifest validation/preparation workers: 32, or fewer on a host (or cgroup slice) with fewer
+/// usable CPUs. Each worker can run a preflight evaluator subprocess, so 32 of them on a small
+/// controller slice would time-share the CPUs the evaluators need. Results are collected in
+/// input order either way.
+fn manifest_pool_threads() -> usize {
+    std::thread::available_parallelism().map_or(1, |cpus| cpus.get().min(32))
 }
 
 fn bounded_validation_budget(unclaimed: usize, admission_limit: usize) -> usize {
@@ -1075,7 +1082,7 @@ impl Keeper {
         // invalid or concurrently reserved pairs; later cycles consume the rest.
         let validation_budget = bounded_validation_budget(unclaimed, limit);
         let validation_pool = ThreadPoolBuilder::new()
-            .num_threads(32)
+            .num_threads(manifest_pool_threads())
             .thread_name(|index| format!("jope-manifest-validate-{index}"))
             .build()?;
         let operator_registry = &self.operator_registry;
@@ -1237,7 +1244,7 @@ impl Keeper {
         }
 
         let preparation_pool = ThreadPoolBuilder::new()
-            .num_threads(32)
+            .num_threads(manifest_pool_threads())
             .thread_name(|index| format!("jope-manifest-prepare-{index}"))
             .build()?;
         let prepared_rows = preparation_pool.install(|| {
@@ -3582,8 +3589,7 @@ impl SingleInstanceLock {
             .read(true)
             .write(true)
             .open(path)?;
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-        if result != 0 {
+        if file.try_lock().is_err() {
             bail!("another Rust queue keeper owns {}", path.display());
         }
         Ok(Self { file })
@@ -3592,9 +3598,7 @@ impl SingleInstanceLock {
 
 impl Drop for SingleInstanceLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 

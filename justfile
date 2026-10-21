@@ -14,6 +14,12 @@ setup:
 hygiene:
     bash deploy/ci/check.sh
 
+# Full default-policy audit of immutable complete tracked input; fresh retained reports.
+# Hosted execution still requires the repository's existing runner opt-in.
+audit:
+    bash deploy/ci/install-jankurai.sh
+    JANKURAI_NO_UPDATE_CHECK=1 JANKURAI_BIN="$PWD/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai" bash ops/ci/jankurai.sh "$PWD/target/jankurai/reports/local-$(date -u +%Y%m%dT%H%M%SZ)-$$"
+
 fmt:
     cargo fmt --all -- --check
 

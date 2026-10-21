@@ -4,10 +4,6 @@
 //! type alias so frozen V1/V2 callers keep compiling, but new code should use
 //! `Task` and the registry returned by [`Task::semantics`].
 
-// The main binary also compiles this source as a private module; public Epoch 6
-// contract APIs are intentionally not all consumed by that compatibility path.
-#![allow(dead_code)]
-
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::{Digest, Sha256};

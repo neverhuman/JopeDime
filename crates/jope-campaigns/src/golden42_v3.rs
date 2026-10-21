@@ -12,7 +12,6 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::os::fd::AsRawFd;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -313,8 +312,7 @@ impl Lease {
             .read(true)
             .write(true)
             .open(path)?;
-        let status = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-        if status != 0 {
+        if file.try_lock().is_err() {
             bail!("campaign lease is already held at {}", path.display());
         }
         Ok(Self { file })
@@ -323,9 +321,7 @@ impl Lease {
 
 impl Drop for Lease {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 
@@ -340,6 +336,8 @@ impl Drop for WorkerProcess {
     fn drop(&mut self) {
         if self.child.try_wait().ok().flatten().is_none() {
             let pid = self.child.id() as i32;
+            // SAFETY: kill reads no memory; try_wait just saw this child unreaped, so its PID
+            // (never 0 or 1) is not reused and -pid can only name the group the child leads.
             unsafe {
                 libc::kill(-pid, libc::SIGKILL);
             }
@@ -1172,16 +1170,17 @@ fn spawn_workers(
                 )?,
             ));
         let parent_pid = std::process::id() as libc::pid_t;
+        // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls
+        // (prctl, getppid); its errors are errno codes, so nothing allocates in the child.
         unsafe {
             command.pre_exec(move || {
                 if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0 {
                     return Err(std::io::Error::last_os_error());
                 }
                 if libc::getppid() != parent_pid {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::BrokenPipe,
-                        "V3 controller exited during worker spawn",
-                    ));
+                    // The parent exited: refuse with an errno, which does not allocate
+                    // (an io::Error carrying a message would box it in the forked child).
+                    return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                 }
                 Ok(())
             });
@@ -1886,6 +1885,8 @@ fn terminate_workers(workers: &mut [WorkerProcess]) {
             continue;
         }
         let pid = worker.child.id() as i32;
+        // SAFETY: kill reads no memory; try_wait just saw this child unreaped, so its PID
+        // (never 0 or 1) is not reused and -pid can only name the group the child leads.
         unsafe {
             libc::kill(-pid, libc::SIGTERM);
         }
@@ -1903,6 +1904,8 @@ fn terminate_workers(workers: &mut [WorkerProcess]) {
     for worker in workers.iter_mut() {
         if worker.child.try_wait().ok().flatten().is_none() {
             let pid = worker.child.id() as i32;
+            // SAFETY: kill reads no memory; try_wait just saw this child unreaped, so its PID
+            // (never 0 or 1) is not reused and -pid can only name the group the child leads.
             unsafe {
                 libc::kill(-pid, libc::SIGKILL);
             }
@@ -2468,9 +2471,8 @@ fn sha256_bytes(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
-fn sha256_file(path: &Path) -> Result<String> {
-    Ok(sha256_bytes(&fs::read(path)?))
-}
+/// Streamed (bounded memory); the same digest as hashing the whole file.
+use jope_dime_regressor::selfplay_runtime::sha256_file;
 
 fn unix_ms() -> u128 {
     SystemTime::now()
@@ -2530,6 +2532,8 @@ mod tests {
         }];
         terminate_workers(&mut workers);
         assert!(workers[0].child.try_wait().unwrap().is_some());
+        // SAFETY: kill with signal 0 sends nothing and reads no memory; pid came from
+        // child.id() (never 0 or 1), so -pid names one process group.
         let status = unsafe { libc::kill(-pid, 0) };
         assert_eq!(status, -1, "cancelled worker process group survived");
     }

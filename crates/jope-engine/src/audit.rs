@@ -385,8 +385,11 @@ pub fn run(roots: &[PathBuf], decisions_path: &Path, output: &Path) -> Result<Au
         &json!({"phase":"table statistics","datasets":datasets.len(),"timestamp":crate::telemetry::now()}),
     )?;
     use rayon::prelude::*;
+    // Up to 8 readers, but no more than the CPUs this process may use (affinity and cgroup
+    // quota): a smaller slice would otherwise time-share eight CSV scans.
+    let readers = std::thread::available_parallelism().map_or(1, |cpus| cpus.get().min(8));
     rayon::ThreadPoolBuilder::new()
-        .num_threads(8)
+        .num_threads(readers)
         .build()?
         .install(|| {
             datasets

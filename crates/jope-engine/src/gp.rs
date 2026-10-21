@@ -65,6 +65,72 @@ pub mod outer_release_cli;
 pub mod paired;
 pub mod selection_replay;
 
+/// The SHA-256 of `csv_bytes(rows)`, the rows' identity in cuts, feature views and score
+/// identities, computed while the CSV is written: the table is never rendered into memory
+/// (about 20 bytes per cell, several times the table) and each row's cell strings reuse one set
+/// of buffers instead of allocating a `String` per cell. Same writer, same field text
+/// (`f64` `Display`), so the same bytes reach the hasher.
+fn csv_sha256(rows: &[Vec<f64>]) -> Result<String> {
+    use sha2::Digest as _;
+    use std::fmt::Write as _;
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(false)
+        .from_writer(sha2::Sha256::new());
+    let mut cells: Vec<String> = Vec::new();
+    for row in rows {
+        cells.resize_with(row.len(), String::new);
+        for (cell, value) in cells.iter_mut().zip(row) {
+            cell.clear();
+            write!(cell, "{value}")?;
+        }
+        writer.write_record(&cells)?;
+    }
+    let hasher = writer
+        .into_inner()
+        .map_err(|error| anyhow::anyhow!("csv digest: {}", error.error()))?;
+    Ok(hex::encode(hasher.finalize()))
+}
+
+#[cfg(test)]
+mod csv_digest_tests {
+    use super::*;
+
+    #[test]
+    fn streamed_csv_digest_equals_the_digest_of_the_rendered_csv() {
+        let specials = [
+            f64::NAN,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            0.0,
+            -0.0,
+            1e300,
+            -1e-300,
+            5e-324,
+            f64::MAX,
+            0.1 + 0.2,
+            -123456.789,
+            42.0,
+        ];
+        let tables: Vec<Vec<Vec<f64>>> = vec![
+            vec![],
+            vec![vec![]],
+            vec![specials.to_vec()],
+            specials.chunks(4).map(<[f64]>::to_vec).collect(),
+            (0..200)
+                .map(|i| (0..7).map(|j| (i * 7 + j) as f64 / 3.0 - 50.0).collect())
+                .collect(),
+        ];
+        for rows in tables {
+            assert_eq!(csv_sha256(&rows).unwrap(), hash(&csv_bytes(&rows).unwrap()));
+        }
+        // The csv writer refuses a record whose width differs from the first one; both paths
+        // use it, so a ragged table is refused by both rather than given a digest.
+        let ragged: Vec<Vec<f64>> = specials.chunks(5).map(<[f64]>::to_vec).collect();
+        assert!(csv_bytes(&ragged).is_err());
+        assert!(csv_sha256(&ragged).is_err());
+    }
+}
+
 #[cfg(test)]
 mod cpu_evaluator_tests {
     use super::*;
@@ -144,7 +210,7 @@ pub fn fit(train: &Path, genome: &str, output: &Path) -> Result<()> {
     let (x, y) = xy(&transformed);
     let g = GenomeIr::parse(genome)?;
     let preprocessing = serde_json::to_vec_pretty(&pp)?;
-    let feature_view = raw_feature_view(&hash(&csv_bytes(&transformed)?), &preprocessing)?;
+    let feature_view = raw_feature_view(&csv_sha256(&transformed)?, &preprocessing)?;
     let fitted =
         crate::fit_boundary::fit(&g.canonical(), x, y, preprocessing, feature_view, output)?;
     let p = Predictor {
@@ -244,7 +310,7 @@ fn fit_projected(
     output: &Path,
 ) -> Result<()> {
     ensure!(
-        hash(&csv_bytes(rows)?) == training_sha256,
+        csv_sha256(rows)? == training_sha256,
         "projected training rows differ from the cut's training identity"
     );
     let preprocessing: Preprocessing = serde_json::from_slice(&preprocessing_bytes)?;
@@ -294,8 +360,12 @@ pub fn fit_memory_input(rows: &[Vec<f64>], preprocessing: &[u8]) -> Result<fs::F
         "invalid projected export input shape"
     );
     let name = std::ffi::CString::new("jope-fit-input").unwrap();
+    // SAFETY: `name` is a CString that outlives the call, so the pointer is NUL-terminated and
+    // valid; MFD_ALLOW_SEALING is a valid flag.
     let fd = unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING) };
     ensure!(fd >= 0, "memfd_create failed");
+    // SAFETY: memfd_create returned this fresh, nonnegative descriptor and nothing else owns
+    // it; File takes sole ownership and closes it once.
     let file = unsafe { fs::File::from_raw_fd(fd) };
     {
         let mut out = std::io::BufWriter::new(&file);
@@ -311,6 +381,8 @@ pub fn fit_memory_input(rows: &[Vec<f64>], preprocessing: &[u8]) -> Result<fs::F
         out.flush()?;
     }
     ensure!(
+        // SAFETY: `file` owns the descriptor and outlives the call; F_ADD_SEALS takes an
+        // integer seal mask and reads or writes no caller memory.
         unsafe {
             libc::fcntl(
                 file.as_raw_fd(),
@@ -338,13 +410,19 @@ pub fn fit_memory(
     use std::os::fd::FromRawFd;
     ensure!(!output.exists(), "fitted predictor already exists");
     ensure!(fd >= 3, "invalid inherited projected input descriptor");
+    // SAFETY: F_GET_SEALS takes no pointer and only reads the seals of `fd`; it does not take
+    // ownership, and a failure returns -1, which is checked below.
     let seals = unsafe { libc::fcntl(fd, libc::F_GET_SEALS) };
     ensure!(
         seals >= 0 && seals & libc::F_SEAL_WRITE != 0 && seals & libc::F_SEAL_SHRINK != 0,
         "projected export input must be sealed memory"
     );
+    // SAFETY: dup takes a plain integer and never affects the inherited descriptor; a number
+    // that is not open makes it return -1, which is checked below.
     let copy = unsafe { libc::dup(fd) };
     ensure!(copy >= 0, "projected input descriptor missing");
+    // SAFETY: dup just returned `copy` as a fresh nonnegative descriptor no one else owns; File
+    // takes sole ownership and closes it once, leaving the inherited `fd` open.
     let mut file = unsafe { fs::File::from_raw_fd(copy) };
     file.seek(SeekFrom::Start(0))?;
     let mut header = [0u8; 24];
@@ -497,6 +575,8 @@ fn isolated_export(
             )
             .stdout(Stdio::from(log.try_clone()?))
             .stderr(Stdio::from(log.try_clone()?));
+        // SAFETY: the hook only calls async-signal-safe setrlimit (given its stack-local rlimit)
+        // and setpgid, and builds its error from errno without allocating.
         unsafe {
             command.pre_exec(|| {
                 let limit = libc::rlimit {
@@ -540,6 +620,8 @@ fn isolated_export(
             Ok(())
         })();
         if child.try_wait()?.is_none() {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; the
+            // worker is unreaped, so the group id it took with setpgid(0, 0) is not reused.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
@@ -709,8 +791,12 @@ pub fn memory_view(tr: &[Vec<f64>], va: &[Vec<f64>]) -> Result<fs::File> {
         "invalid in-memory view shape"
     );
     let name = std::ffi::CString::new("jope-cut").unwrap();
+    // SAFETY: `name` is a CString that outlives the call, so the pointer is NUL-terminated and
+    // valid; MFD_ALLOW_SEALING is a valid flag.
     let fd = unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING) };
     ensure!(fd >= 0, "memfd_create failed");
+    // SAFETY: memfd_create returned this fresh, nonnegative descriptor and nothing else owns
+    // it; File takes sole ownership and closes it once.
     let file = unsafe { fs::File::from_raw_fd(fd) };
     {
         let mut out = std::io::BufWriter::new(&file);
@@ -725,6 +811,8 @@ pub fn memory_view(tr: &[Vec<f64>], va: &[Vec<f64>]) -> Result<fs::File> {
         out.flush()?;
     }
     ensure!(
+        // SAFETY: `file` owns the descriptor and outlives the call; F_ADD_SEALS takes an
+        // integer seal mask and reads or writes no caller memory.
         unsafe {
             libc::fcntl(
                 file.as_raw_fd(),
@@ -748,9 +836,15 @@ pub fn evaluate_prepared_memory(
     use std::io::{Read, Seek, SeekFrom};
     use std::os::fd::FromRawFd;
     ensure!(fd >= 3, "invalid inherited memory descriptor");
+    // SAFETY: dup takes a plain integer and never affects the inherited descriptor; a number
+    // that is not open makes it return -1, which is checked below.
     let copy = unsafe { libc::dup(fd) };
     ensure!(copy >= 0, "cut memory descriptor missing");
+    // SAFETY: dup just returned `copy` as a fresh nonnegative descriptor no one else owns; File
+    // takes sole ownership and closes it once, leaving the inherited `fd` open.
     let mut file = unsafe { fs::File::from_raw_fd(copy) };
+    // SAFETY: F_GET_SEALS takes no pointer and only reads the seals of `fd`; it does not take
+    // ownership, and a failure returns -1, which is checked below.
     let seals = unsafe { libc::fcntl(fd, libc::F_GET_SEALS) };
     ensure!(
         seals >= 0 && seals & libc::F_SEAL_WRITE != 0,
@@ -794,8 +888,8 @@ pub fn evaluate_prepared_memory(
             .find(|c| c.index == cut)
             .context("unknown in-memory cut")?;
         ensure!(
-            hash(&csv_bytes(&rows[..dims[0]])?) == c.training_sha256
-                && hash(&csv_bytes(&rows[dims[0]..])?) == c.validation_sha256,
+            csv_sha256(&rows[..dims[0]])? == c.training_sha256
+                && csv_sha256(&rows[dims[0]..])? == c.validation_sha256,
             "sealed memory differs from prepared cut"
         );
         let bytes = fs::read(prepared.join(format!("cut-{cut}/preprocessing.json")))?;
@@ -855,10 +949,14 @@ pub fn guard_evaluator_group() -> Result<()> {
         .and_then(|pid| pid.parse().ok())
         .context("evaluator group guard names no controller")?;
     extern "C" fn kill_group(_: libc::c_int) {
+        // SAFETY: kill is async-signal-safe and takes only integers; pid 0 signals this
+        // process's own group, which the guard verified it leads before installing this.
         unsafe {
             libc::kill(0, libc::SIGKILL);
         }
     }
+    // SAFETY: all-zero is a valid sigaction (integers, a sigset, a nullable restorer); calls get
+    // live locals or a null old action, and the handler only calls async-signal-safe kill.
     unsafe {
         ensure!(
             libc::getpgrp() == libc::getpid(),
@@ -1322,7 +1420,12 @@ fn evaluate_tables(
     let (vx, vy) = xy(va);
     let g = GenomeIr::parse(&fs::read_to_string(genome)?)?;
     let start = Instant::now();
-    let feature_view = raw_feature_view(&hash(&csv_bytes(tr)?), preprocessing)?;
+    // The ordered training and scoring row digests are bound into the feature view, the
+    // baseline evidence and the score identity. Each one formats the whole table as CSV and
+    // hashes it, so compute each once (training here, where it was first needed and timed;
+    // scoring after the timed fit/predict, as before) and reuse the strings.
+    let training_rows_sha256 = csv_sha256(tr)?;
+    let feature_view = raw_feature_view(&training_rows_sha256, preprocessing)?;
     let fitted = crate::fit_boundary::fit(
         &g.canonical(),
         x,
@@ -1343,6 +1446,7 @@ fn evaluate_tables(
     m["primary_metric"] = json!(crate::task_contract::primary_metric(task)?);
     m["seconds"] = json!(start.elapsed().as_secs_f64());
     m["semantic_sha256"] = json!(hash(&serde_json::to_vec(&pred)?));
+    let scoring_rows_sha256 = csv_sha256(va)?;
     // Produce the baseline from the very same authorized cut arrays. This is
     // a new diagnostic; historical results without it stay unavailable.
     let training_mean = tr.iter().map(|row| row[row.len() - 1]).sum::<f64>() / tr.len() as f64;
@@ -1355,7 +1459,7 @@ fn evaluate_tables(
             "rule":"training_target_mean_on_scoring_rows","units":"cut_normalized_target",
             "rmse":baseline["rmse"],"training_target_mean":training_mean,
             "training_rows":tr.len(),"scoring_rows":va.len(),
-            "training_sha256":hash(&csv_bytes(tr)?),"scoring_sha256":hash(&csv_bytes(va)?),
+            "training_sha256":training_rows_sha256,"scoring_sha256":scoring_rows_sha256,
             "preprocessing_sha256":hash(preprocessing)});
     } else {
         m["baseline_status"] = json!("nonfinite baseline; ratios unavailable");
@@ -1373,7 +1477,7 @@ fn evaluate_tables(
     )?)?;
     let score_identity = json!({"schema":"parallel.gp_score_identity.v1",
         "fit_key":receipt.fit_key,"model_sha256":receipt.model_sha256,
-        "training_rows_sha256":hash(&csv_bytes(tr)?),"scoring_rows_sha256":hash(&csv_bytes(va)?),
+        "training_rows_sha256":training_rows_sha256,"scoring_rows_sha256":scoring_rows_sha256,
         "preprocessing_sha256":hash(preprocessing),"task":task,
         "primary_metric":m["primary_metric"],"metric_units":m["units"],
         "evaluator_protocol":crate::label_admission::PROTOCOL,
@@ -1437,26 +1541,29 @@ fn journaled_measurement_attested(root: &Path, row: &serde_json::Value) -> Resul
 /// it dies, so crash recovery needs no manual cleanup. The descriptor is
 /// close-on-exec: evaluator children never hold it.
 fn search_lease(output: &Path) -> Result<fs::File> {
-    use std::os::fd::AsRawFd;
     let lease = fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(output.join("search.lease"))?;
-    if unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
-        let error = std::io::Error::last_os_error();
-        ensure!(
-            error.raw_os_error() != Some(libc::EWOULDBLOCK),
-            "search output is held by another live searcher; concurrent dispatch refused"
-        );
-        return Err(error.into());
+    match lease.try_lock() {
+        Ok(()) => Ok(lease),
+        Err(fs::TryLockError::WouldBlock) => {
+            anyhow::bail!(
+                "search output is held by another live searcher; concurrent dispatch refused"
+            )
+        }
+        Err(fs::TryLockError::Error(error)) => Err(error.into()),
     }
-    Ok(lease)
 }
 
 /// Whether the evaluator has exited, without reaping it: an unreaped leader
 /// keeps its process-group id reserved while the group is drained.
 fn evaluator_exited(pid: i32) -> Result<bool> {
+    // SAFETY: siginfo_t holds only integer and raw-pointer fields, for which all-zero is valid;
+    // zeroing also leaves si_pid 0 when WNOHANG finds no exited child.
     let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+    // SAFETY: `info` is a live, writable siginfo_t for waitid to fill; WNOWAIT leaves the
+    // child unreaped, so its pid stays reserved.
     let status = unsafe {
         libc::waitid(
             libc::P_PID,
@@ -1470,6 +1577,8 @@ fn evaluator_exited(pid: i32) -> Result<bool> {
         "evaluator wait failed: {}",
         std::io::Error::last_os_error()
     );
+    // SAFETY: `info` is initialized (zeroed, then written by waitid), and si_pid reads the
+    // integer pid field of the SIGCHLD layout that waitid fills.
     Ok(unsafe { info.si_pid() } != 0)
 }
 
@@ -1502,6 +1611,8 @@ fn process_group_members(group: i32) -> usize {
 /// while the leader is unreaped (running on expiry, a zombie after exit).
 fn drain_process_group(group: i32) -> serde_json::Value {
     let members_at_exit = process_group_members(group);
+    // SAFETY: kill takes only integers and has no memory-safety preconditions; the caller holds
+    // the unreaped leader, so `group` still names the evaluator's own process group.
     unsafe {
         libc::kill(-group, libc::SIGKILL);
     }
@@ -1517,6 +1628,8 @@ fn drain_process_group(group: i32) -> serde_json::Value {
 fn experiment_failpoint(name: &str, isolated: bool) {
     // Only explicitly isolated experiments can exercise crash recovery gates.
     if isolated && std::env::var("JOPE_EXPERIMENT_CRASH_AFTER").ok().as_deref() == Some(name) {
+        // SAFETY: raise has no memory-safety preconditions; SIGKILL ends this process at once,
+        // which is the failpoint's purpose.
         unsafe {
             libc::raise(libc::SIGKILL);
         }
@@ -2486,14 +2599,20 @@ fn search_inner(
             // W5-T05: the evaluator's guard kills its whole process group when this
             // controller dies, even by SIGKILL (`guard_evaluator_group`).
             command.env(EVALUATOR_GROUP_GUARD, controller_pid.to_string());
+            // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls
+            // (setpgid, prctl, getppid, setrlimit); its errors are errno codes, so nothing
+            // allocates in the child.
             unsafe {
                 command.pre_exec(move || {
                     // SIGTERM, not SIGKILL: the guard turns it into SIGKILL for the group;
                     // an evaluator without the guard still ends by its default action.
-                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0
-                        || libc::getppid() as u32 != controller_pid
-                    {
-                        return Err(std::io::Error::other("evaluator lost controller"));
+                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0 {
+                        return Err(std::io::Error::last_os_error());
+                    }
+                    // The controller exited: refuse with an errno, which does not allocate
+                    // (an io::Error carrying a message would box it in the forked child).
+                    if libc::getppid() as u32 != controller_pid {
+                        return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                     }
                     let limit = libc::rlimit {
                         rlim_cur: 8 * 1024 * 1024 * 1024,

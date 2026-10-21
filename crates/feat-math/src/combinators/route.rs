@@ -12,7 +12,9 @@ pub fn route_action(predicate: usize, when_true: usize, when_false: usize) -> Ac
     }
 }
 
-pub(crate) fn route_rows(
+/// Eager row routing: every row takes `when_true` where `predicate` is nonzero, else
+/// `when_false`. Public so the lazy partition route can be checked against it bit for bit.
+pub fn route_rows(
     predicate: &Matrix,
     when_true: &Matrix,
     when_false: &Matrix,

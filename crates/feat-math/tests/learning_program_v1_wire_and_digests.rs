@@ -196,8 +196,8 @@ fn proptest_10k_canonical_roundtrip_and_strict_reader() {
     for i in 0..10_000usize {
         if i % 2 == 0 {
             // Case family A: Typed ProgramGraph with exact IEEE-754 constants and column refs.
-            let col_a = (i % 8) as usize;
-            let col_b = ((i / 8) % 8) as usize;
+            let col_a = i % 8;
+            let col_b = (i / 8) % 8;
             let raw_val = match i % 6 {
                 0 => 0.0_f64,
                 1 => -0.0_f64,

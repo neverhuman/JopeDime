@@ -6,8 +6,8 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5809,
-  "ignored": 74,
+  "count": 5813,
+  "ignored": 75,
   "packages": {
    "battle-gpu": {
     "count": 19,
@@ -42,13 +42,13 @@
     }
    },
    "feat-math": {
-    "count": 1332,
-    "ignored": 12,
+    "count": 1337,
+    "ignored": 13,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 525,
-      "ignored": 6,
+      "count": 530,
+      "ignored": 7,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
        "advanced_v3::csv::tests::malformed_quotes_are_rejected",
@@ -257,6 +257,7 @@
        "gpr::tests::periodic_kernel_beats_rbf_on_periodic_signal",
        "gpr::tests::plain_scratch_reuse_is_bit_identical",
        "gpr::tests::plain_scratch_reuse_preserves_constant_fallbacks",
+       "heads::tests::blocked_cholesky_is_bit_identical_to_the_row_major_loop",
        "heads::tests::hurdle2_constant_target_uses_finite_mean_fallback",
        "heads::tests::hurdle2_is_deterministic_and_learns_bimodal_expectation",
        "heads::tests::hurdle2_is_target_scale_equivariant",
@@ -347,7 +348,9 @@
        "krr::tests::krr_subset_cap_is_exercised",
        "ksmooth::tests::ksmooth_is_deterministic_and_learns_toy",
        "ksmooth::tests::ksmooth_params_flow_through_the_genome",
+       "ksmooth::tests::ksmooth_prediction_benchmark",
        "ksmooth::tests::ksmooth_small_n_falls_back_to_mean",
+       "ksmooth::tests::partial_neighbors_match_full_sort_bits_including_ties_and_short_queries",
        "math_expr::evolution::v2::egraph::tests::all_libm_calls_preserve_literal_shape_including_tanh",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_at_the_limits_are_admitted_as_before",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_over_the_limits_are_refused_uncopied",
@@ -549,10 +552,12 @@
        "stage_cache::tests::a_print_alike_constant_gets_its_own_fit_through_the_cache",
        "stage_cache::tests::admission_under_pressure_is_deterministic_and_a_sweep_frees_budget",
        "stage_cache::tests::chain_keys_separate_context_target_and_stages",
+       "stage_cache::tests::concurrent_reads_replacements_and_sweeps_preserve_cap_and_values",
        "stage_cache::tests::every_value_class_that_prints_alike_keys_apart",
        "stage_cache::tests::insert_get_sweep_and_byte_accounting",
        "stage_cache::tests::insertions_never_pass_the_byte_cap_between_sweeps",
        "stage_cache::tests::stages_that_print_alike_get_distinct_keys_and_entries",
+       "stage_cache::tests::streaming_fit_size_matches_json_and_refuses_oversized_entries",
        "target_transform::tests::fit_target_rejects_bad_kinds",
        "target_transform::tests::log1p_is_exact_inverse_on_unit_scale",
        "target_transform::tests::rank_gauss_constant_target_is_safe",
@@ -3363,7 +3368,7 @@
     }
    },
    "jope-dime-regressor": {
-    "count": 1016,
+    "count": 1012,
     "ignored": 11,
     "binaries": {
      "jope-dime-regressor": {
@@ -3623,7 +3628,7 @@
      },
      "jope-dime-regressor::bin/jope-dime-regressor": {
       "kind": "bin",
-      "count": 223,
+      "count": 219,
       "ignored": 9,
       "tests": [
        "commands::binary_cv::cli_smoke_support::export_binary_fixture_registry",
@@ -3732,10 +3737,6 @@
        "score_corpus::tests::same_size_ledger_rewrite_requests_retry_without_publication",
        "score_corpus::tests::tied_percentiles_use_unique_valid_genomes",
        "score_corpus::tests::truncated_ledger_after_open_requests_retry_without_publication",
-       "task::tests::embedded_and_rust_task_semantics_match",
-       "task::tests::legacy_derived_order_is_frozen_separately_from_canonical_order",
-       "task::tests::one_registry_owns_all_task_names_directories_and_metrics",
-       "task::tests::typed_scores_reject_wrong_domains_and_timeseries_parity_is_zero",
        "test_adaptive::aggressive::tests::aggressive_contract_is_not_benchmark_valid",
        "test_adaptive::aggressive::tests::corrected_generation_zero_has_one_parent_and_36_unique_descendants",
        "test_adaptive::aggressive::tests::corrected_next_population_caches_eight_elites_and_has_28_novel_children",
@@ -6211,12 +6212,12 @@
     }
    },
    "jope-parallel": {
-    "count": 859,
+    "count": 862,
     "ignored": 15,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 473,
+      "count": 476,
       "ignored": 8,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -6448,6 +6449,7 @@
        "family_growth::tests::integers_are_exact_or_refused",
        "family_growth::tests::python_equality_truthiness_and_membership",
        "gp::cpu_evaluator_tests::explicit_evaluator_has_no_current_executable_fallback",
+       "gp::csv_digest_tests::streamed_csv_digest_equals_the_digest_of_the_rendered_csv",
        "gp::fit_contract_tests::a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline",
        "gp::fit_contract_tests::a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other",
        "gp::fit_contract_tests::a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams",
@@ -6629,6 +6631,7 @@
        "sealed_storage::tests::full_unix_socket_backlog_obeys_connection_deadline",
        "sealed_storage::tests::refused_descriptor_messages_close_every_installed_descriptor",
        "sealed_storage::tests::regular_file_is_not_mistaken_for_fully_sealed_on_fcntl_error",
+       "service::allowed_cpu_tests::allowed_cpu_list_parses_ranges_and_refuses_malformed_lists",
        "service::coverage::tests::actual_reservations_apply_inflight_weight_instead_of_excluding_busy_cuts",
        "service::coverage::tests::balances_family_then_dataset_and_sweeps_all_existing_cuts",
        "service::coverage::tests::concurrent_clients_reserve_distinct_requests_and_restart_preserves_unknown",
@@ -6653,6 +6656,7 @@
        "smartcluster_worker::tests::logical_dataset_retry_preserves_original_operation_and_legacy_binding",
        "smartcluster_worker::tests::original_optimizer_window_is_checked_before_numerical_work",
        "smartcluster_worker::tests::scratch_accounting_rejects_symlink_escape",
+       "smartcluster_worker::tests::scratch_accounting_sums_nested_buckets_in_one_walk_and_needs_its_root",
        "smartcluster_worker::tests::subtask_cannot_escape_run_resources_or_deadline",
        "smartcluster_worker::tests::training_closure_refuses_non_admitted_contexts_by_closure_key",
        "smartcluster_worker::tests::truncated_control_frame_is_not_completion",
@@ -9238,7 +9242,7 @@
   }
  },
  "totals": {
-  "rust": 5809,
+  "rust": 5813,
   "python": 182
  }
 }

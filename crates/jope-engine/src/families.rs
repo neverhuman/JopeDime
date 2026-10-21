@@ -8,7 +8,6 @@ use serde_json::{json, Value};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::{self, File, OpenOptions},
-    os::fd::AsRawFd,
     path::{Path, PathBuf},
 };
 
@@ -378,10 +377,7 @@ pub fn freeze_growth(
         .truncate(false)
         .write(true)
         .open(output.with_extension("lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "growth output locked"
-    );
+    ensure!(lock.try_lock().is_ok(), "growth output locked");
     ensure!(!output.exists(), "immutable growth registry already exists");
     let binding = FileBinding::new(assignment_path)?;
     let receipt = verified_growth(&binding)?;
@@ -496,7 +492,7 @@ pub fn freeze(
         .write(true)
         .open(output.with_extension("lock"))?;
     ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+        lock.try_lock().is_ok(),
         "registry output is locked by another writer"
     );
     ensure!(!output.exists(), "immutable registry output already exists");

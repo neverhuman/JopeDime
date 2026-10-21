@@ -24,7 +24,7 @@ pub use feat_math::evolve::{
 };
 use feat_math::heads::RidgeModel;
 use std::ffi::CString;
-use std::os::raw::{c_int, c_uint, c_void};
+use std::os::raw::{c_char, c_int, c_uint, c_void};
 use std::sync::{Mutex, OnceLock};
 use std::time::Instant;
 
@@ -102,17 +102,20 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
     let mut driver_version: c_int = 0;
     // SAFETY: driver_version is a live, correctly aligned c_int output.
     api.check(
+        // SAFETY: `driver_version` is a live out-parameter.
         unsafe { (api.cuDriverGetVersion)(&mut driver_version) },
         "cuDriverGetVersion",
     )?;
     let mut device: driver::CUdevice = 0;
     // SAFETY: device is writable CUdevice storage; ordinal zero is checked by CUDA.
     api.check(unsafe { (api.cuDeviceGet)(&mut device, 0) }, "cuDeviceGet")?;
-    let mut name_buf = [0i8; 128];
+    let mut name_buf = [0 as c_char; 128];
     // SAFETY: name_buf has the advertised 128 writable bytes; device was
     // returned by cuDeviceGet and its failure was checked.
     api.check(
-        unsafe { (api.cuDeviceGetName)(name_buf.as_mut_ptr(), 128, device) },
+        // SAFETY: the driver writes at most `len` (= the buffer's length) bytes into the
+        // live local buffer.
+        unsafe { (api.cuDeviceGetName)(name_buf.as_mut_ptr(), name_buf.len() as c_int, device) },
         "cuDeviceGetName",
     )?;
     // Keep discovery bounded to the provided buffer, even if a driver omits
@@ -122,6 +125,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
     // SAFETY: the live c_int output matches this CUDA attribute's ABI; device
     // is valid and no Rust reference is retained by the synchronous query.
     api.check(
+        // SAFETY: `multiprocessors` is a live out-parameter; attribute and device are values.
         unsafe {
             (api.cuDeviceGetAttribute)(
                 &mut multiprocessors,
@@ -134,6 +138,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
     let mut total_mem: usize = 0;
     // SAFETY: total_mem is a live size_t-compatible output for this device.
     api.check(
+        // SAFETY: `total_mem` is a live out-parameter.
         unsafe { (api.cuDeviceTotalMem_v2)(&mut total_mem, device) },
         "cuDeviceTotalMem",
     )?;
@@ -141,6 +146,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
     // SAFETY: ctx is live output storage. A successful call gives this function
     // ownership of a context, released on failure below or transferred into Gpu.
     api.check(
+        // SAFETY: `ctx` is a live out-parameter; it is destroyed on every later failure path.
         unsafe { (api.cuCtxCreate_v2)(&mut ctx, 0, device) },
         "cuCtxCreate",
     )?;
@@ -151,6 +157,8 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
         // SAFETY: image contains the embedded, NUL-terminated PTX and lives
         // through the synchronous load. The current ctx owns the returned module.
         api.check(
+            // SAFETY: `image` is a NUL-terminated PTX string alive for the call; `module` is a
+            // live out-parameter. The driver copies the image.
             unsafe { (api.cuModuleLoadData)(&mut module, image.as_ptr() as *const c_void) },
             "cuModuleLoadData",
         )?;
@@ -160,6 +168,8 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
             // SAFETY: f is writable output storage, module is live in ctx,
             // and cname remains NUL-terminated throughout the synchronous lookup.
             api.check(
+                // SAFETY: `module` was loaded above, `cname` is NUL-terminated and alive for
+                // the call, and `f` is a live out-parameter.
                 unsafe { (api.cuModuleGetFunction)(&mut f, module, cname.as_ptr()) },
                 &format!("cuModuleGetFunction({name})"),
             )?;
@@ -175,6 +185,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
         // SAFETY: stream is live output storage. Its successful owned handle
         // is transferred to Gpu and destroyed before ctx on Drop.
         api.check(
+            // SAFETY: `stream` is a live out-parameter in the current context.
             unsafe { (api.cuStreamCreate)(&mut stream, 0) },
             "cuStreamCreate",
         )?;
@@ -209,7 +220,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
     }
 }
 
-fn device_name(buffer: &[i8]) -> Result<String, String> {
+fn device_name(buffer: &[c_char]) -> Result<String, String> {
     let end = buffer
         .iter()
         .position(|byte| *byte == 0)
@@ -440,6 +451,7 @@ pub fn gpu_ridge_score_batch(
     // SAFETY: guard exclusively owns access to this initialized context; set
     // it current before any thread-affine CUDA allocation, launch or transfer.
     api.check(
+        // SAFETY: `guard.ctx` is the backend's live context, used under its Mutex.
         unsafe { (api.cuCtxSetCurrent)(guard.ctx) },
         "cuCtxSetCurrent",
     )?;
@@ -554,11 +566,11 @@ fn run_wave(
                   block: c_uint,
                   args: &mut [*mut c_void]|
      -> Result<(), String> {
-        // SAFETY: f belongs to gpu's live module; grid/block sizes match the
-        // embedded kernels. Each args entry points to a live typed scalar slot
-        // in the exact kernel ABI order. CUDA copies these slots before return;
-        // all referenced DeviceBuffers remain live until synchronization below.
+        // f belongs to gpu's live module; grid/block sizes match the embedded kernels.
         api.check(
+            // SAFETY: each args entry points to a live typed scalar slot in the exact
+            // kernel ABI order. CUDA copies these slots before return; all referenced
+            // DeviceBuffers remain live until synchronization below.
             unsafe {
                 (api.cuLaunchKernel)(
                     f,
@@ -612,6 +624,7 @@ fn run_wave(
     // SAFETY: gpu owns this live stream under the backend lock. All buffers
     // referenced by the queued solve kernels remain allocated across the wait.
     api.check(
+        // SAFETY: `gpu.stream` is the backend's live stream in the current context.
         unsafe { (api.cuStreamSynchronize)(gpu.stream) },
         "cuStreamSynchronize(solve)",
     )?;
@@ -623,6 +636,7 @@ fn run_wave(
     // SAFETY: gpu owns this live stream and the prediction inputs/outputs
     // remain live; completion is checked before downloading initialized scores.
     api.check(
+        // SAFETY: `gpu.stream` is the backend's live stream in the current context.
         unsafe { (api.cuStreamSynchronize)(gpu.stream) },
         "cuStreamSynchronize(predict)",
     )?;
@@ -700,7 +714,7 @@ mod tests {
     #[test]
     fn driver_device_names_are_bounded_and_preserve_lossy_utf8() {
         assert_eq!(device_name(&[71, 80, 85, 0, 88]).unwrap(), "GPU");
-        assert_eq!(device_name(&[-1, 0]).unwrap(), "\u{fffd}");
+        assert_eq!(device_name(&[0xffu8 as c_char, 0]).unwrap(), "\u{fffd}");
         assert_eq!(device_name(&[0]).unwrap(), "");
         assert!(device_name(&[71, 80, 85]).is_err());
         assert!(device_name(&[]).is_err());

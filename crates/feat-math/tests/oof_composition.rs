@@ -1,8 +1,4 @@
-#[allow(dead_code)]
-#[path = "../src/combinators/residual.rs"]
-mod residual;
-
-use residual::{
+use feat_math::combinators::residual::{
     BoostCombinator, BoostOutcome, Candidate, FitError, FitInput, FitRole, FittedCandidate,
     OOFFitPlan, StackModel, StackOf, StackOutcome,
 };
