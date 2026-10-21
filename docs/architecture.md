@@ -39,47 +39,80 @@ passed by shared memory between stages, which is what makes each stage replayabl
 ```mermaid
 flowchart TB
   subgraph product["product crates (workspace version)"]
-    numpy[numpy-pcg64<br/>bit-exact numpy 1.26 RNG, 0 deps]
+    numpy[numpy-pcg64<br/>bit-exact numpy 1.26 RNG, 0 deps, no in-workspace consumer]
     fm[feat-math<br/>DSL · search · heads · registry · emitters · fitted C++ runtime]
     bg[battle-gpu<br/>raw dlopen CUDA screening, feature gpu]
     enc[jope-encoders<br/>lib name starforge: foundation, target, chimera, policy decoder]
     hyp[hyperion<br/>candle v5/v7 inference, router, GPU lease]
     pol[jope-policy<br/>step-60000 policy port]
-    eng[jope-engine<br/>package jope-parallel: 88 subcommands, --root, feature neural]
-    camp[jope-campaigns<br/>package jope-dime-regressor: 55 programs]
-    self[jope-selfplay<br/>flywheel control plane]
+    eng[jope-engine<br/>package jope-parallel: search, eval registry, native loop, feature neural]
+    camp[jope-campaigns<br/>package jope-dime-regressor: campaigns + self-play control plane bins]
     paths[jope-paths<br/>ADR-0003 roots, 0 deps]
     data[jope-datasets<br/>catalog · ingest · fetch/verify/link]
     models[jope-models<br/>bundle manifests · fetch/verify/publish]
     learn[jope-learning<br/>HWM ledger · snapshots · pointers]
     arena[jope-arena<br/>SOTArena fetch · Elo · scores]
+    bench[jope-bench<br/>same-cut benchmark, demo/benchmark/optimize]
+    automl[jope-automl<br/>native AutoML regressors, 0 deps]
+    pipe[jope-pipeline<br/>dataset → cuts → search → emitted code]
+    motifs[jope-motifs<br/>reusable program fragments]
+    records[jope-records<br/>record verifiers, hygiene guards]
+    ci[jope-ci<br/>cargo-artifact, build-dir report]
+    obs[jope-observatory<br/>training observatory: axum server, collectors]
     cli[jope-cli<br/>the jope umbrella binary]
   end
   subgraph vendored["vendored (upstream versions)"]
     sc[crates/smartcluster/*<br/>jain-smartcluster @ 715128f8, 7 crates]
   end
+  fm --> bg
   fm --> camp
   fm --> eng
-  bg -.gpu.-> camp
-  bg -.gpu.-> eng
-  numpy --> enc
-  enc --> pol
-  hyp --> pol
   fm --> pol
+  fm --> pipe
+  fm --> bench
+  fm --> motifs
+  fm --> obs
+  fm --> cli
+  bg -.gpu.-> camp
+  sc --> eng
   paths --> eng
   paths --> camp
-  paths --> self
-  sc -.cluster.-> eng
-  eng --> self
-  eng --> learn
+  paths --> pipe
+  paths --> learn
+  paths --> motifs
+  eng -.-> hyp
+  hyp --> cli
+  hyp -.-> pol
+  enc -.-> pol
+  pol -.-> pipe
+  pol -.-> bench
+  pol -.-> cli
+  data --> pipe
+  data --> learn
+  data --> models
+  data --> bench
   data --> cli
-  models --> cli
+  pipe --> learn
+  pipe --> motifs
+  pipe --> bench
+  pipe --> cli
+  records --> learn
+  records --> ci
+  learn --> motifs
+  learn -.-> bench
   learn --> cli
-  arena --> cli
-  eng --> cli
-  camp --> cli
-  self --> cli
+  arena --> bench
+  automl --> bench
+  bench --> cli
+  motifs --> cli
+  models --> cli
 ```
+
+Edges are the normal (non-dev) path dependencies in `cargo metadata`; dotted edges are optional,
+feature-gated ones. Regenerate the list with `cargo metadata --format-version 1 --no-deps` when a
+crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-engine` (except
+`hyperion`'s optional feature) or `numpy-pcg64`; the self-play control plane lives in
+`jope-campaigns` binaries, not in a separate `jope-selfplay` crate.
 
 | Crate (directory) | Package name | Status on `main` today | What it owns |
 |---|---|---|---|
@@ -87,7 +120,7 @@ flowchart TB
 | `crates/numpy-pcg64` | `numpy-pcg64` | landed (WP3) | Bit-exact numpy 1.26.4 `SeedSequence`/PCG64/`Generator` integer sampling and the frozen sampling recipes. |
 | `crates/jope-encoders` | `starforge` (lib name kept so no source edit was needed) | landed (WP3) | Foundation encoder (Starlight / TabPFN-v3-reg, TabICL), target encoder, chimera fusion, hash-verified bundle loader. Weight-bound tests are env-gated. |
 | `crates/battle-gpu` | `battle-gpu` | landed | Raw `dlopen("libcuda.so.1")` GPU screening for rung-0 ridge; feature `gpu`. No cudarc, so it never conflicts with candle. |
-| `crates/jope-engine` | `jope-parallel` | landed (WP1) | The engine: program search (`gp.rs`, `grammar.rs`, `proposals*.rs`, `champions.rs`, `corpus*.rs`, `tournament.rs`), eval registry authority (`eval_registry/`), the `jope-parallel` binary with its **92 clap subcommands and global `--root`** (the jain-core consumer contract; 88 carried over from the pre-port tree and 4 new, per the capability matrix), 12 more binaries in `src/bin` incl. `jope-build-receipt` and `jope-native-loop` (the matrix's other 12 engine-subcommand rows are that binary's); crate-local `assets/grammar/` (4 JSON, the committed `featmath-jain-v1.json` bakes the literal key `parallel/assets/grammar/featmath.json` — plan blocker B4) and `manifests/`. Feature `neural` = tch/LibTorch (self-hosted only); feature `cluster` (WP11) gates the smartcluster-bound modules. |
+| `crates/jope-engine` | `jope-parallel` | landed (WP1) | The engine: program search (`gp.rs`, `grammar.rs`, `proposals*.rs`, `champions.rs`, `corpus*.rs`, `tournament.rs`), eval registry authority (`eval_registry/`), the `jope-parallel` binary with its **92 clap subcommands and global `--root`** (the jain-core consumer contract; 88 carried over from the pre-port tree and 4 new, per the capability matrix), 12 more binaries in `src/bin` incl. `jope-build-receipt` and `jope-native-loop` (the matrix's other 12 engine-subcommand rows are that binary's); crate-local `assets/grammar/` (4 JSON, the committed `featmath-jain-v1.json` bakes the literal key `parallel/assets/grammar/featmath.json` — plan blocker B4) and `manifests/`. Feature `neural` = tch/LibTorch (self-hosted only). The smartcluster dependency is unconditional; the planned WP11 `cluster` feature does not exist in `Cargo.toml`. |
 | `crates/jope-campaigns` | `jope-dime-regressor` | landed (WP1); tests compile since B6 | Benchmark campaigns: Golden42/46 panels, exact-CV, test-adaptive, DL best5, generalized search, search v3, hyperion gate/router, plus today the 55 `src/bin` programs (the self-play control plane among them; no separate `jope-selfplay` crate exists). Crate-local `manifests/`, `seeds/`, `fixtures/` (`include_str!`/`include_bytes!` inputs, B1/B7/B8), `known-evaluator-identities.json` (ADR-0004). |
 | `crates/hyperion` | `hyperion` | landed (WP3) | Hyperion v5 arm B / v7 inference (candle 0.11), router, `.hvc2` cache, GPU lease; bins `hyperion-v5-reference`, `hyperion-batch-worker`. `HYPERION_V7_WEIGHTS` replaces the historical absolute path. |
 | `crates/jope-policy` | `jope-policy` | landed (WP3) | The step-60000 policy port: grammar/automaton, model, decode, ranking, seeds. |
@@ -103,6 +136,7 @@ flowchart TB
 | `crates/jope-records` | `jope-records` | landed | Verifiers and renderers of the committed records (core-IP findings, dispositions, claims, test inventory, task status, progress view, historical Elo replay) and the repository hygiene guards `coverage`, `rust-scope-check`, `parity-check`, `readme-benchmarks` and `repo-layout`; Rust ports of the retired Python verifiers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
 | `crates/jope-ci` | `jope-ci` | landed | CI and host-maintenance tooling: `cargo-artifact` (Cargo artifact selection) and the build-directory report; Rust ports of `deploy/ci` and `deploy/maintenance` Python helpers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
 | `crates/jope-cli` | `jope-cli` (binary `jope`) | landed | The `jope` binary. Verbs today: `doctor`, `demo`, `benchmark`, `train` (Linux), `optimize`, `verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`, `train-step`, `route`, `models`, `datasets`, `pipeline`, and the hidden `motifs`. The target design's `propose`, `learn`, `hwm`, `scores`, `arena`, `campaign` and `selfplay` verbs do not exist (see the status note at the top). |
+| `crates/jope-observatory` | `jope-observatory` | landed | The training observatory: an axum read-only JSON API (`/api/v1/snapshot`, `/api/v1/gp`, …) and the `collect-datasets`, `collect-fleet`, `collect-storage` and `gp-source-stream` collector binaries. |
 | `crates/smartcluster/*` | `jain-smartcluster{,-core,-fabric,-daemon}`, `jain-worker`, `jainnode`, `scq` | landed (vendored at 715128f8, versions 8.0.0) | The scheduler the engine's native loop, smartcluster worker and native graph bind to; crates.io dependencies only. Not covered by `deploy/ci/version-consistency.sh`. |
 
 `xtools/registry-dump-legacy` is a standalone dev-only package with its own `[workspace]`;
