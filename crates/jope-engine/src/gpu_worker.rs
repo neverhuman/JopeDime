@@ -459,8 +459,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         let mut stream = incoming?;
         let peer = protocol::peer_credentials(&stream)?;
         ensure!(
-            // SAFETY: geteuid has no preconditions and cannot fail.
-            peer.uid == unsafe { libc::geteuid() },
+            peer.uid == crate::host_os::effective_uid(),
             "resident task peer rejected"
         );
         let handshake_deadline = protocol::now_ms()?
@@ -603,7 +602,7 @@ mod tests {
             .write(true)
             .open(&p)
             .unwrap();
-        assert!(lease.try_lock().is_ok());
+        lease.try_lock().unwrap();
         let (sender, receiver) = UnixStream::pair().unwrap();
         send_fd(&sender, lease.as_raw_fd()).unwrap();
         let received = receive_fd(&receiver).unwrap();
@@ -611,6 +610,6 @@ mod tests {
         let competing = fs::OpenOptions::new().write(true).open(p).unwrap();
         assert!(competing.try_lock().is_err());
         drop(received);
-        assert!(competing.try_lock().is_ok());
+        competing.try_lock().unwrap();
     }
 }

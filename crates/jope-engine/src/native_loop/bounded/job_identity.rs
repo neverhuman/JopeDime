@@ -186,8 +186,7 @@ pub fn verify_job_record(
 }
 
 fn parent_pid() -> u32 {
-    // SAFETY: getppid has no preconditions.
-    unsafe { libc::getppid() as u32 }
+    crate::host_os::parent_pid()
 }
 
 /// Prove this process is the job leader the pinned daemon started for `expected`. Every
@@ -265,6 +264,5 @@ pub fn verify_running_job(
 
 /// `unix:<euid>` of this process: the only tenant a job it runs in may have.
 pub fn own_tenant() -> String {
-    // SAFETY: geteuid has no preconditions.
-    format!("unix:{}", unsafe { libc::geteuid() })
+    format!("unix:{}", crate::host_os::effective_uid())
 }

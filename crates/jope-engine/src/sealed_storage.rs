@@ -223,8 +223,7 @@ pub fn shared(path: &Path, expected: &str, length: usize) -> Result<Option<fs::F
     let socket = Path::new(&socket);
     let metadata = fs::symlink_metadata(socket)?;
     let parent = fs::symlink_metadata(socket.parent().context("cache socket parent absent")?)?;
-    // SAFETY: geteuid has no arguments or caller-managed memory.
-    let uid = unsafe { libc::geteuid() };
+    let uid = crate::host_os::effective_uid();
     ensure!(
         metadata.uid() == uid
             && parent.uid() == uid

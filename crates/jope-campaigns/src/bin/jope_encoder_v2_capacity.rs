@@ -25,10 +25,11 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let observation: EncoderCapacityObservation = serde_json::from_reader(
-        File::open(&args.observation)
-            .with_context(|| format!("open {}", args.observation.display()))?,
-    )?;
+    let observation: EncoderCapacityObservation =
+        serde_json::from_reader(std::io::BufReader::new(
+            File::open(&args.observation)
+                .with_context(|| format!("open {}", args.observation.display()))?,
+        ))?;
     let now = args.now_unix_ms.unwrap_or(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)?

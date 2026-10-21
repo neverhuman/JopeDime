@@ -548,6 +548,18 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         )
         .expect("preserved PR397 parallel identity announcement");
     }
+    // Preserve original PR398 parallel announcement separately from the combined successor.
+    let pr398_parallel = old_fixture("transitions/hpc_safety_cleanup_identity_rebaseline.v1.json");
+    assert_eq!(pr398_parallel["fixtures"].as_array().unwrap().len(), 2);
+    for edge in pr398_parallel["fixtures"].as_array().unwrap() {
+        identity_transitions::verify_fixture(
+            edge["path"].as_str().unwrap(),
+            edge["before"].as_str().unwrap(),
+            edge["after"].as_str().unwrap(),
+            &[pr398_parallel.clone()],
+        )
+        .expect("preserved PR398 parallel identity announcement");
+    }
     let identity_chain = [
         transition,
         successor,

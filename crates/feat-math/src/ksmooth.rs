@@ -161,6 +161,26 @@ mod tests {
             .collect()
     }
 
+    #[test]
+    fn partial_selection_predict_is_bit_identical_to_full_sort() {
+        let (x, y) = toy();
+        // Coarse grids create many exact distance ties, exercising the index tie-break.
+        let coarse: Rows = x
+            .iter()
+            .map(|r| r.iter().map(|v| (v * 4.0).round() / 4.0).collect())
+            .collect();
+        for rows in [&x, &coarse] {
+            for k in [0, 1, 2, 7, 32, 239, 240, 512] {
+                let mut m = KsmoothModel::fit(rows, &y, k.max(1), DEFAULT_GAMMA);
+                m.k = k; // a deserialized model may carry k = 0
+                let fast = m.predict(rows);
+                let reference = full_sort_reference(&m, rows);
+                let bits = |v: &[f64]| v.iter().map(|f| f.to_bits()).collect::<Vec<_>>();
+                assert_eq!(bits(&fast), bits(&reference), "k = {k}");
+            }
+        }
+    }
+
     fn toy() -> (Rows, Vec<f64>) {
         let mut x = Vec::new();
         let mut y = Vec::new();

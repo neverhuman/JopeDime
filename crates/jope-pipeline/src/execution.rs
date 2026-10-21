@@ -2186,8 +2186,11 @@ fn bounded_output(command: &mut Command) -> Result<std::process::Output> {
         if Instant::now() >= deadline {
             let _ = killpg(Pid::from_raw(child.id() as i32), Signal::SIGKILL);
             let _ = child.kill();
-            let _ = child.try_wait();
-            anyhow::bail!("host dependency probe exceeded2 seconds");
+            // Reap the killed child: try_wait right after SIGKILL usually saw it still running
+            // and left a zombie for the controller's lifetime. The capture threads are not
+            // joined, so a descendant that left the process group cannot hold this probe open.
+            let _ = child.wait();
+            anyhow::bail!("host dependency probe exceeded 2 seconds");
         }
         thread::sleep(Duration::from_millis(POLL_MS));
     };

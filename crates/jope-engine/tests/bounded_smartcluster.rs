@@ -992,7 +992,7 @@ fn an_inherited_flock_file_is_refused_without_releasing_the_parent_lock() {
         .write(true)
         .open(&path)
         .unwrap();
-    assert!(lock.try_lock().is_ok());
+    lock.try_lock().unwrap();
     // SAFETY: fcntl(F_GETFD) borrows the open File's descriptor and neither closes it.
     let flags = unsafe { libc::fcntl(lock.as_raw_fd(), libc::F_GETFD) };
     assert!(flags >= 0);
@@ -1036,7 +1036,7 @@ fn an_inherited_flock_file_is_refused_without_releasing_the_parent_lock() {
     drop(lock);
     // No surviving child/helper duplicate may keep the lock after its owner releases it.
     let contender = fs::File::open(path).unwrap();
-    assert!(contender.try_lock().is_ok());
+    contender.try_lock().unwrap();
 }
 
 #[test]

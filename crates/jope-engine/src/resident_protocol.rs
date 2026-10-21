@@ -489,8 +489,7 @@ impl WorkerIdentity {
         // SAFETY: geteuid takes no arguments or caller-managed memory; the
         // authenticated kernel peer credentials are compared without changing identity.
         ensure!(
-            // SAFETY: geteuid has no preconditions and cannot fail.
-            peer.uid == unsafe { libc::geteuid() } && peer.pid as u32 == self.process.pid,
+            peer.uid == crate::host_os::effective_uid() && peer.pid as u32 == self.process.pid,
             "resident socket peer changed"
         );
         ensure!(

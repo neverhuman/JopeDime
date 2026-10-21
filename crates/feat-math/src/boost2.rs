@@ -484,8 +484,8 @@ fn find_best_split(
     }
     let parent = rec.g * rec.g / (rec.h + LAMBDA);
     let mut best_gain = 1e-9;
-    for f in 0..n_feat {
-        if !col_ok[f] {
+    for (f, &usable) in col_ok.iter().enumerate().take(n_feat) {
+        if !usable {
             continue;
         }
         let lst = &rec.lists[f];

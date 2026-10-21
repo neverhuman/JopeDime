@@ -47,17 +47,18 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let encoder = decode_encoder_identity(&fs::read(&args.encoder_identity)?)?;
     let input = decode_dataset_input(&fs::read(&args.dataset_input)?)?;
-    let execution: EncoderExecutionReceiptV2 = serde_json::from_reader(
+    let execution: EncoderExecutionReceiptV2 = serde_json::from_reader(std::io::BufReader::new(
         File::open(&args.execution_receipt).context("open fetched execution receipt")?,
-    )?;
-    let attempt: EncoderAttemptReceiptV2 = serde_json::from_reader(
+    ))?;
+    let attempt: EncoderAttemptReceiptV2 = serde_json::from_reader(std::io::BufReader::new(
         File::open(&args.attempt_receipt).context("open fetched attempt receipt")?,
-    )?;
+    ))?;
     let quarantine = args
         .quarantine_index
         .as_ref()
         .map(|path| -> Result<V1EncodingQuarantineV1> {
-            let index: V1EncodingQuarantineV1 = serde_json::from_reader(File::open(path)?)?;
+            let index: V1EncodingQuarantineV1 =
+                serde_json::from_reader(std::io::BufReader::new(File::open(path)?))?;
             index.validate()?;
             Ok(index)
         })
