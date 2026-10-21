@@ -221,6 +221,10 @@ impl HistGbm2Model {
                 idx
             })
             .collect();
+        // Feature-major copy of the training features (`columns.at(f, row)`): split search and
+        // row partitioning read one feature for many rows, which here is one contiguous column
+        // instead of a pointer chase into each row. Values are copied, never recomputed.
+        let columns = Columns::new(&xtr, n_feat);
         let mut bags: Vec<Vec<BoostTree>> = Vec::with_capacity(cfg.bags);
         for bag in 1..=cfg.bags {
             let mut rng = Pcg32::new(bag as u64, BAG_STREAM);
@@ -257,7 +261,7 @@ impl HistGbm2Model {
                     (0..n_tr).map(|i| f_tr[i] - ytr[i]).collect()
                 };
                 let tree = grow_leafwise(
-                    &xtr,
+                    &columns,
                     &order,
                     &grad,
                     &in_sample,
@@ -325,9 +329,32 @@ struct LeafGroup {
     threshold: f64,
 }
 
+/// Training features stored feature-major: `values[f * rows + row]`.
+struct Columns {
+    values: Vec<f64>,
+    rows: usize,
+}
+
+impl Columns {
+    fn new(x: &Rows, n_feat: usize) -> Columns {
+        let rows = x.len();
+        let mut values = vec![0.0; rows * n_feat];
+        for (r, row) in x.iter().enumerate() {
+            for f in 0..n_feat {
+                values[f * rows + r] = row[f];
+            }
+        }
+        Columns { values, rows }
+    }
+
+    fn feature(&self, f: usize) -> &[f64] {
+        &self.values[f * self.rows..(f + 1) * self.rows]
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn grow_leafwise(
-    x: &Rows,
+    x: &Columns,
     order: &[Vec<usize>],
     grad: &[f64],
     in_sample: &[bool],
@@ -380,13 +407,20 @@ fn grow_leafwise(
         let rec = pool.remove(pick);
         let feat = rec.feature;
         let thr = rec.threshold;
+        let split_column = x.feature(feat);
+        // Every feature list holds the same rows, so each child's size is known up front.
+        let left_len = rec.lists[0]
+            .iter()
+            .filter(|&&i| split_column[i] <= thr)
+            .count();
+        let right_len = rec.lists[0].len() - left_len;
         let mut left_lists: Vec<Vec<usize>> = Vec::with_capacity(n_feat);
         let mut right_lists: Vec<Vec<usize>> = Vec::with_capacity(n_feat);
         for f in 0..n_feat {
-            let mut l = Vec::new();
-            let mut r = Vec::new();
+            let mut l = Vec::with_capacity(left_len);
+            let mut r = Vec::with_capacity(right_len);
             for &i in &rec.lists[f] {
-                if x[i][feat] <= thr {
+                if split_column[i] <= thr {
                     l.push(i);
                 } else {
                     r.push(i);
@@ -449,7 +483,7 @@ fn grow_leafwise(
 /// order means the lowest feature/threshold index wins ties. Features with
 /// `col_ok[f] == false` are skipped (per-tree column subsampling).
 fn find_best_split(
-    x: &Rows,
+    x: &Columns,
     grad: &[f64],
     rec: &mut LeafGroup,
     col_ok: &[bool],
@@ -463,11 +497,12 @@ fn find_best_split(
     }
     let parent = rec.g * rec.g / (rec.h + LAMBDA);
     let mut best_gain = 1e-9;
-    for f in 0..n_feat {
-        if !col_ok[f] {
+    for (f, &usable) in col_ok.iter().enumerate().take(n_feat) {
+        if !usable {
             continue;
         }
         let lst = &rec.lists[f];
+        let column = x.feature(f);
         let mut gl = 0.0;
         for t in 0..(m - 1) {
             let i = lst[t];
@@ -479,8 +514,8 @@ fn find_best_split(
             if m - cnt < min_leaf {
                 break;
             }
-            let v = x[i][f];
-            if v < x[lst[t + 1]][f] {
+            let v = column[i];
+            if v < column[lst[t + 1]] {
                 let hl = cnt as f64;
                 let hr = (m - cnt) as f64;
                 let gr = rec.g - gl;
