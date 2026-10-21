@@ -637,7 +637,8 @@ where
 }
 
 fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    serde_json::from_reader(File::open(path)?).with_context(|| format!("decode {}", path.display()))
+    serde_json::from_reader(std::io::BufReader::new(File::open(path)?))
+        .with_context(|| format!("decode {}", path.display()))
 }
 
 pub fn relative_path_is_v2_only(path: &Path) -> bool {

@@ -3767,8 +3767,10 @@ fn append_event(path: &Path, value: &Value) -> Result<()> {
         .append(true)
         .mode(0o600)
         .open(path)?;
-    serde_json::to_writer(&mut file, value)?;
-    file.write_all(b"\n")?;
+    // One write per record: an O_APPEND line lands whole instead of token by token.
+    let mut line = serde_json::to_vec(value)?;
+    line.push(b'\n');
+    file.write_all(&line)?;
     file.sync_data()?;
     Ok(())
 }

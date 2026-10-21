@@ -81,13 +81,14 @@ fn reject_v1_quarantine_window(encodings_root: &Path) -> Result<()> {
         return Ok(());
     }
     let index_path = quarantine_root.join("index.v1.json");
-    let index: V1EncodingQuarantineV1 =
-        serde_json::from_reader(std::fs::File::open(&index_path).with_context(|| {
+    let index: V1EncodingQuarantineV1 = serde_json::from_reader(std::io::BufReader::new(
+        std::fs::File::open(&index_path).with_context(|| {
             format!(
                 "V1 incident quarantine exists without readable frozen index {}",
                 index_path.display()
             )
-        })?)?;
+        })?,
+    ))?;
     index.validate()?;
     bail!("legacy expansion driver is disabled throughout the Encoder V2 quarantine window")
 }
@@ -875,8 +876,10 @@ fn emit_encoding_exclusion_receipts(conn: &Connection, root: &Path) -> Result<us
             .create_new(true)
             .open(path)?;
         use std::io::Write;
-        serde_json::to_writer(&mut file, &receipt)?;
-        file.write_all(b"\n")?;
+        // One write per record: an O_APPEND line lands whole instead of token by token.
+        let mut line = serde_json::to_vec(&receipt)?;
+        line.push(b'\n');
+        file.write_all(&line)?;
         file.sync_data()?;
         created += 1;
     }

@@ -154,9 +154,9 @@ fn sha256_bytes(bytes: &[u8]) -> String {
 }
 
 fn read_json(path: &Path) -> Result<Value> {
-    serde_json::from_reader(
+    serde_json::from_reader(std::io::BufReader::new(
         File::open(path).with_context(|| format!("open JSON {}", path.display()))?,
-    )
+    ))
     .with_context(|| format!("parse JSON {}", path.display()))
 }
 

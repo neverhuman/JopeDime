@@ -378,8 +378,10 @@ impl Supervisor {
             .append(true)
             .mode(0o600)
             .open(&self.events_path)?;
-        serde_json::to_writer(&mut file, &event)?;
-        file.write_all(b"\n")?;
+        // One write per record: an O_APPEND line lands whole instead of token by token.
+        let mut line = serde_json::to_vec(&event)?;
+        line.push(b'\n');
+        file.write_all(&line)?;
         file.sync_data()?;
         Ok(())
     }
@@ -1586,8 +1588,10 @@ fn handle_socket(mut stream: UnixStream, supervisor: &mut Supervisor) -> Result<
             "detail": error.to_string()
         }),
     };
-    serde_json::to_writer(&mut stream, &response)?;
-    stream.write_all(b"\n")?;
+    // One write per response instead of one per JSON token on the unbuffered handle.
+    let mut line = serde_json::to_vec(&response)?;
+    line.push(b'\n');
+    stream.write_all(&line)?;
     stream.flush()?;
     Ok(())
 }
