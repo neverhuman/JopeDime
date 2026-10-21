@@ -1,5 +1,11 @@
 # Releases
 
+The proposed model-inclusive `jopedime` appliance is specified in
+[`deploy/appliance/`](../../deploy/appliance/README.md), with an
+[implementation checklist](../../deploy/appliance/IMPLEMENTATION_CHECKLIST.md).
+That design is pending implementation and qualification. The procedure below
+describes the currently implemented `jope` release.
+
 A JopeDime release is cut on **xbabe2** by [`deploy/release/release.sh`](../../deploy/release/release.sh), under owner decision D-D (2026-09-27): a fast signed host release.
 
 Releases are published on `github.com/neverhuman/JopeDime` under tags `vX.Y.Z`. Each release is signed with a static cosign key whose files are root-only on xbabe2. [Key custody](#key-custody) describes who can actually use that key. There is no GitHub build-provenance attestation, no Sigstore transparency-log entry, and no Python wheel.
