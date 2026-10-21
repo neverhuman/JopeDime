@@ -552,7 +552,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             edge["before"].as_str().unwrap(),
             edge["after"].as_str().unwrap(),
             &[pr397_parallel.clone()],
-        ).expect("preserved PR397 parallel identity announcement");
+        )
+        .expect("preserved PR397 parallel identity announcement");
+    }
+    let pr397_combined =
+        old_fixture("transitions/pr397_after_pr396_jankurai_security_rebaseline.v1.json");
+    let combined_fixtures = pr397_combined["fixtures"].as_array().unwrap();
+    assert_eq!(combined_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
     }
     let identity_chain = [
         transition,
@@ -582,6 +590,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         jankurai_runtime_safety,
         jankurai_dependency_security,
         pr396_combined,
+        pr397_combined,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
