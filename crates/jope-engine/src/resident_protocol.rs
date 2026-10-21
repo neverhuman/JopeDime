@@ -510,12 +510,10 @@ pub fn peer_credentials(stream: &UnixStream) -> Result<libc::ucred> {
     // initialized storage is overwritten by SO_PEERCRED before credentials are used.
     let mut peer: libc::ucred = unsafe { std::mem::zeroed() };
     let mut length = std::mem::size_of_val(&peer) as libc::socklen_t;
-    // SAFETY: stream owns a live socket; peer is aligned writable ucred storage
-    // and length advertises its exact capacity. Both success and returned size are
-    // checked before the peer value escapes; the syscall retains neither pointer.
     ensure!(
-        // SAFETY: `stream` keeps its socket open for the call; `peer` and `length` are live
-        // locals and the kernel writes at most `length` (= size of ucred) bytes into `peer`.
+        // SAFETY: stream owns a live socket; peer is aligned writable ucred storage
+        // and length advertises its exact capacity. Both success and returned size are
+        // checked before the peer value escapes; the syscall retains neither pointer.
         unsafe {
             libc::getsockopt(
                 stream.as_raw_fd(),
