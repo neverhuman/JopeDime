@@ -1,19 +1,19 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced identity-only successor for the HPC memory/thread review (PR397), following the merged PR394 identity: bit-identical performance and memory changes to the ridge/KRR Cholesky, histgbm, histgbm2, ksmooth, the op epilogue, the stage cache and the GP token accounting, plus lint-only feat-math edits. Every behaviour fixture (stage values, serialized models, emitted bytes, seeded generator streams and search runs) is unchanged; DSL ABI, Cargo.lock, lineage source lists and accepted historical identities are unchanged. This record replaces the branch's earlier, never-merged parallel record minted from ca6e15f (identity 16eba4ea2ff66318...); that state stays in the PR branch history.",
+  "decision": "Announced identity-only successor for the HPC memory/thread review (PR397), following the merged PR395 identity: bit-identical performance and memory changes to the ridge/KRR Cholesky, histgbm, histgbm2, ksmooth, the op epilogue, the stage cache and the GP token accounting, plus lint-only feat-math edits. Every behaviour fixture (stage values, serialized models, emitted bytes, seeded generator streams and search runs) is unchanged; DSL ABI, Cargo.lock, lineage source lists and accepted historical identities are unchanged. This record replaces the branch's earlier, never-merged records minted from ca6e15f (identity 16eba4ea2ff66318...) and from 45490f2 (629c92424b78c922...); both stay in the PR branch history.",
   "pr_reference": "https://github.com/neverhuman/JopeDime/pull/397",
-  "source_commit": "959670cb700ef86a81ea0e804ba52b09f50cf38b",
-  "base_commit": "45490f2ce33075a355e08844351db197001beb90",
+  "source_commit": "fffeb40c1f743b023829448ad5d02d73db47f15a",
+  "base_commit": "b63b2a8bc16ba4d28ab2763a022e6fe43c86630d",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "07f0fe359134dad221f63b951ac95873591e373f3db7d64ca3ff04210dda3282",
-      "after": "d332a61867c09eee0646df941e8a3ae4a99ef53c1bdb831088d84685b8fac41b"
+      "before": "ef397fd5e973a949e76e039de350cb84ee8decfbcff45baed655c472718f2da4",
+      "after": "7111979b36c8ef0a84934f9c7e8d28e053e8eea757aa3f2cd02c73fd681229f2"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "6249f118f4e204466cede5657f9bfe7689b9a54fa41a04a1213b9b31c3444cd1",
-      "after": "c80a07ec172e55c712d689b220da14f27647f67c6277fb8b9b5fd0d1c40b3f38"
+      "before": "1b1ef1f166fec36271e36f2fa0e683e5a40bf656b93fd10ff3008b657736b68e",
+      "after": "6196297129678823d8ba50f329d435a96f146d1e6ab76006b185eb7afd7451f0"
     }
   ],
   "changed_evaluator_inputs": [
@@ -53,10 +53,10 @@
       "after": "6921ef90863318b8c3b7e37eb91b5f7f23ae2a5e43f32f62cbeea3fa46278bed"
     }
   ],
-  "before_implementation_sha256": "a718cb7d62cc803a6f59aad30c917a47c0cb85e2687e58a6b591ec4985473732",
-  "after_implementation_sha256": "4d3787797a33bb04c85ffe63c8ec27f048c8e2477e8b1cd80552ea18e9e5684d",
-  "before_identity_digest": "eacda5c015a67437d015ae60565b0b1b834ec62a52d61e300bae80f05adf4168",
-  "after_identity_digest": "629c92424b78c92229cb8c372892b5c8a73bc86e68424d550df4c384e10a7743",
+  "before_implementation_sha256": "84de7d2f80c6a63faac886df67193ba2fe0764bec0ce947328ff8222c0719209",
+  "after_implementation_sha256": "2c120d949400356a7d0308e511a4ae466a99614fb39de23a06ec6972d3e3e4d8",
+  "before_identity_digest": "80a45b4352edcbac2d5b12915066896d1b73ca4ae8a5a1fc690846c853950ec3",
+  "after_identity_digest": "aa72901bda03851362d645d5e603f603cbcadc2d181db694902ae2e92bdcd43a",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "behavioral_fixtures": [
     {
@@ -128,7 +128,7 @@
   "verification": [
     "Pinned Rust 1.97.1, cargo-nextest 0.9.133: JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=<source_commit> cargo nextest run --locked -P pr -p feat-math --test compat_freeze: 13 passed",
     "Same command in comparison mode with --test historical_v1: 16 passed (13 compat_freeze, 3 historical_v1)",
-    "Release A/B harness against ca6e15f (1 thread, CPU-pinned, 4 alternating runs): SHA-256 over every prediction bit of 8 fitted pipelines, 5 tie-heavy pipelines and 2 seeded searches identical (ALL_SHA 448c0c32f9890829...). base_commit differs from ca6e15f in feat-math only by the fitted-cpp cfg gate (Cargo.toml, build.rs, lib.rs re-exports, advanced_v3.rs), none of them an edited source.",
+    "Release A/B harness against ca6e15f (1 thread, CPU-pinned, 4 alternating runs): SHA-256 over every prediction bit of 8 fitted pipelines, 5 tie-heavy pipelines and 2 seeded searches identical (ALL_SHA 448c0c32f9890829...). base_commit differs from ca6e15f in feat-math sources only by #394's fitted-cpp cfg gate (Cargo.toml, build.rs, lib.rs re-exports, advanced_v3.rs), none of them an edited source; #395 changed Cargo.lock and no feat-math source.",
     "heads::tests::blocked_cholesky_is_bit_identical_to_the_row_major_loop and stage_cache::tests::serialized_len_counts_exactly_the_json_encoding pass"
   ]
 }
