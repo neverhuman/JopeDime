@@ -140,6 +140,31 @@ it here cross the boundary, not predictions.
   measured; 2 on refused input (under `--json`, stdout still carries
   `{"schema": "jope.candidates.v1", "ok": false, "error": ...}`); 143 on SIGTERM. `--source-commit`
   is reported as `git_sha`, and `git` is never spawned.
+- **Live progress (`jope.invent.progress.v1`).** While it searches, `invent` writes progress to
+  **stderr**, one compact JSON object per newline-terminated line, each written with a single
+  write and flushed; `--no-progress` turns it off. stdout and the work directory are unchanged.
+  Lines carry numbers only, never program source, genomes, column names or data values:
+
+  ```json
+  {"schema":"jope.invent.progress.v1","sequence":5,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.92,"seconds_budget":240.0}
+  ```
+
+  `cut` is the 0-based position of the current cut among the `cuts` searched (during the
+  comparison phase, the cut the latest evaluation ran on; cuts may be compared concurrently).
+  `generation` counts generations completed so far, **cumulative across cuts**. `evaluations`,
+  `measured` and `failed` are cumulative over exploration and comparison
+  (`evaluations = measured + failed`, never decreasing). `eval_budget` and `seconds_budget` are
+  for the whole search: the per-cut `--budget` values times `cuts`, so `evaluations /
+  eval_budget` is a progress fraction (a search may stop early, below 1). `best_hold_rmse` is the
+  lowest held-out RMSE of any single measured evaluation so far, in target units like the final
+  `hold RMSE` lines, and `best_hold_r2` is that evaluation's held-out R^2; both are `null` until
+  something measures. `elapsed_s` is wall seconds since the search started. `phase` is
+  `exploration`, `comparison` or `done`, and `sequence` numbers the lines from 0; both follow the
+  `jope.run-event/v1` envelope the terminal-experience plan proposes. Cadence: at most one line
+  per second, plus one whenever the best held-out RMSE improves, one at the end of each cut's
+  exploration and a final `done` line, so the last line is the end state. A cancelled or
+  refused run ends without a `done` line. Other diagnostics may share stderr: keep only lines
+  that parse as JSON with this `schema`.
 
 ## Targeted search (`jope pipeline evolve`)
 

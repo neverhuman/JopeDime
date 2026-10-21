@@ -179,6 +179,9 @@ pub struct SearchOptions {
     pub record_events: bool,
     /// Original run/role/profile bindings, when supplied by the admitted caller.
     pub event_binding: Option<SearchBinding>,
+    /// Live `jope.invent.progress.v1` lines ([`crate::progress`]); `None` reports nothing.
+    /// Advisory only: it never changes a decision, an observation or a published byte.
+    pub progress: Option<Arc<crate::progress::Progress>>,
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -197,6 +200,7 @@ impl SearchOptions {
             cancel: None,
             record_events: true,
             event_binding: None,
+            progress: None,
         }
     }
 
@@ -1003,7 +1007,10 @@ pub fn run_cuts_with(
     let concurrent = (options.workers() > 1).then_some(&pool);
     pool.install(|| {
         let mut searches = Vec::new();
-        for cut in cuts {
+        for (position, cut) in cuts.iter().enumerate() {
+            if let Some(progress) = &options.progress {
+                progress.begin_cut(position);
+            }
             searches.push(run_cut_allocated(
                 cut,
                 options,
@@ -1013,6 +1020,9 @@ pub fn run_cuts_with(
             )?);
         }
         remeasure_in(cuts, &mut searches, options, concurrent)?;
+        if let Some(progress) = &options.progress {
+            progress.finish();
+        }
         Ok(searches)
     })
 }
@@ -1250,7 +1260,13 @@ fn run_cut_allocated(
                 islands[island].survivors.push(Scored { genome, rmse });
             }
             observation.island = multi.then_some(island);
+            if let Some(progress) = &options.progress {
+                progress.observe_current(&observation);
+            }
             observations.push(observation);
+        }
+        if let Some(progress) = &options.progress {
+            progress.generation_done(generation as u64 + 1);
         }
         // Stopped between evaluations: nothing of this cut is published, and the run that
         // asked for it writes no receipt.
@@ -1311,6 +1327,9 @@ fn run_cut_allocated(
     };
 
     let seconds = started.elapsed().as_secs_f64();
+    if let Some(progress) = &options.progress {
+        progress.cut_done(generation as u64 + 1);
+    }
     if let Some(recorder) = recorder {
         recorder.publish(output)?;
     }
@@ -1420,9 +1439,27 @@ fn remeasure_in(
     let recorders = comparison_recorders(searches)?;
     let clock = options.clock;
     let stop = || options.cancelled();
+    let progress = options.progress.as_deref();
+    if let Some(progress) = progress {
+        progress.begin_comparison();
+    }
+    // Every comparison fit, counted on the cut (by position) it was made on.
+    let evaluate_counted = |position: usize, g: &str, c: &Cut, n: usize, o: &'static str| {
+        let observation = evaluate(g, c, n, o, clock);
+        if let Some(progress) = progress {
+            progress.observe(position, &observation);
+            progress.tick();
+        }
+        observation
+    };
     match pool {
         None => {
-            for ((cut, search), recorder) in cuts.iter().zip(searches.iter_mut()).zip(&recorders) {
+            for (position, ((cut, search), recorder)) in cuts
+                .iter()
+                .zip(searches.iter_mut())
+                .zip(&recorders)
+                .enumerate()
+            {
                 remeasure_cut(
                     cut,
                     search,
@@ -1430,7 +1467,7 @@ fn remeasure_in(
                     clock,
                     &stop,
                     recorder.as_ref(),
-                    &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                    &mut |g, c, n, o| evaluate_counted(position, g, c, n, o),
                 );
             }
         }
@@ -1438,7 +1475,8 @@ fn remeasure_in(
             cuts.par_iter()
                 .zip(searches.par_iter_mut())
                 .zip(recorders.par_iter())
-                .for_each(|((cut, search), recorder)| {
+                .enumerate()
+                .for_each(|(position, ((cut, search), recorder))| {
                     remeasure_cut(
                         cut,
                         search,
@@ -1446,7 +1484,7 @@ fn remeasure_in(
                         clock,
                         &stop,
                         recorder.as_ref(),
-                        &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                        &mut |g, c, n, o| evaluate_counted(position, g, c, n, o),
                     )
                 })
         }),
