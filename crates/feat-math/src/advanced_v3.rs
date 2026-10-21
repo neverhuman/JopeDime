@@ -11,8 +11,10 @@ mod emit;
 mod evolution;
 mod feature_block;
 mod fitted_cpp;
+#[cfg(feature = "fitted-cpp")]
 mod fitted_cpp_runtime;
 mod fitted_portable;
+#[cfg(feature = "fitted-cpp")]
 mod fitted_runtime_image;
 mod grammar;
 mod heads;
@@ -37,6 +39,7 @@ pub use feature_block::{
 // B12: distinct fitted v2 row-vector route.
 pub use fitted_cpp::emit_row_vector_cpp17;
 pub use fitted_cpp::{emit_fitted_cpp17, supports_fitted_cpp17, FittedCppArtifact};
+#[cfg(feature = "fitted-cpp")]
 pub use fitted_cpp_runtime::{
     encode_fitted_cpp17, validate_fitted_cpp_codec, EncodedTable, FittedCppError, FittedCppModel,
     FittedCppRuntime, FittedModelCodec,
