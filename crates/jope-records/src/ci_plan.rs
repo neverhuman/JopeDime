@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/)"
+                r"^(crates/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),
@@ -61,7 +61,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "e2e",
             Regex::new(&format!(
-                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|{common})"
+                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|docs/release/signing\.pub$|{common})"
             ))
             .expect("valid e2e regex"),
         ),
@@ -255,6 +255,31 @@ mod tests {
         assert_eq!(lanes["e2e-smoke"], true);
         assert_eq!(lanes["inputs"], false);
         assert_eq!(lanes["python"], false);
+    }
+
+    #[test]
+    fn appliance_changes_trigger_rust_and_e2e_only() {
+        for path in [
+            "crates/jope-assets/src/envelope.rs",
+            "crates/jope-runtime/src/automl.rs",
+            "deploy/appliance/profiles/fixture.toml",
+            "docs/release/signing.pub",
+        ] {
+            let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
+            assert_eq!(lanes["rust-check"], true, "{path}");
+            assert_eq!(lanes["rust-test"], true, "{path}");
+            assert_eq!(lanes["e2e-smoke"], true, "{path}");
+            assert_eq!(lanes["emitters"], false, "{path}");
+            assert_eq!(lanes["inputs"], false, "{path}");
+            assert_eq!(lanes["python"], false, "{path}");
+        }
+        let (lanes, _) = classify(
+            &["models/bundles/hyperion-v7.json".to_owned()],
+            "pull_request",
+        )
+        .unwrap();
+        assert_eq!(lanes["rust-test"], true);
+        assert_eq!(lanes["e2e-smoke"], false);
     }
 
     #[test]

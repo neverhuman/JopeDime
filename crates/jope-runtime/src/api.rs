@@ -1,0 +1,152 @@
+//! The runtime's public fit/predict API: what `jopedime fit`, `predict` and `fit-predict` call.
+use crate::automl::{self, Selection};
+use crate::budget::Budget;
+use crate::fitted::{CreatedBy, FitRecord, FittedModel};
+use crate::methods::{self, native::fit_native, native::Predictions, RustMethod, AUTO};
+use crate::table::{fitting_input_sha256, Training};
+use crate::Failure;
+use anyhow::Result;
+use std::time::Instant;
+
+/// How to choose and fit the method.
+#[derive(Clone, Debug)]
+pub struct FitOptions {
+    /// `auto`, or a method id, family or alias.
+    pub method: String,
+    /// For `auto`: restrict the candidates (ids, families or aliases); empty means the roster.
+    pub candidates: Vec<String>,
+    pub folds: usize,
+}
+
+impl Default for FitOptions {
+    fn default() -> Self {
+        Self {
+            method: AUTO.to_owned(),
+            candidates: Vec::new(),
+            folds: automl::DEFAULT_FOLDS,
+        }
+    }
+}
+
+pub struct FitOutcome {
+    pub fitted: FittedModel,
+    pub method: RustMethod,
+    pub selection: Option<Selection>,
+    pub select_seconds: f64,
+    pub fit_seconds: f64,
+}
+
+/// Choose the method (by name, or by bounded selection), refit it on every training row, and
+/// return the complete fitted state. Runs on the budget's thread pool.
+pub fn fit(
+    training: &Training,
+    options: &FitOptions,
+    budget: &Budget,
+    training_file_sha256: &str,
+    created_by: CreatedBy,
+) -> Result<FitOutcome> {
+    budget.install(|| fit_inner(training, options, budget, training_file_sha256, created_by))?
+}
+
+fn fit_inner(
+    training: &Training,
+    options: &FitOptions,
+    budget: &Budget,
+    training_file_sha256: &str,
+    created_by: CreatedBy,
+) -> Result<FitOutcome> {
+    let started = Instant::now();
+    let (method, selection) = if options.method == AUTO {
+        let candidates = if options.candidates.is_empty() {
+            methods::rust_methods(training.kind)?
+        } else {
+            let mut chosen: Vec<RustMethod> = Vec::new();
+            for name in &options.candidates {
+                let method = methods::resolve(training.kind, name)?;
+                if !chosen.contains(&method) {
+                    chosen.push(method);
+                }
+            }
+            chosen
+        };
+        let (selection, method) = automl::select(training, &candidates, options.folds, budget)?;
+        (method, Some(selection))
+    } else {
+        if !options.candidates.is_empty() {
+            return Err(Failure::input("--candidates applies only to --method auto"));
+        }
+        budget.check("fitting")?;
+        (methods::resolve(training.kind, &options.method)?, None)
+    };
+    let select_seconds = started.elapsed().as_secs_f64();
+    let started = Instant::now();
+    let model = fit_native(
+        &method,
+        training.kind,
+        &training.schema,
+        &training.classes,
+        &training.table,
+        &training.targets,
+    )?;
+    let fit_seconds = started.elapsed().as_secs_f64();
+    let budget_record = budget.record();
+    let fitted = FittedModel::new(FitRecord {
+        method: &method,
+        kind: training.kind,
+        classes: &training.classes,
+        target: &training.target,
+        schema: &training.schema,
+        model,
+        rows: training.targets.len(),
+        fitting_input_sha256: fitting_input_sha256(&training.table, &training.targets)?,
+        training_file_sha256: training_file_sha256.to_owned(),
+        selection: selection.as_ref(),
+        budget: &budget_record,
+        created_by,
+    })?;
+    Ok(FitOutcome {
+        fitted,
+        method,
+        selection,
+        select_seconds,
+        fit_seconds,
+    })
+}
+
+/// Predict on the budget's pool.
+pub fn predict(
+    fitted: &FittedModel,
+    table: &feat_math::advanced_v3::RawTable,
+    budget: &Budget,
+) -> Result<Predictions> {
+    budget.install(|| fitted.predict(table))?
+}
+
+/// Predictions as CSV: one `prediction` column for regression; one `p_<class>` column per class
+/// plus the argmax `prediction` for classification. Numbers use Rust's shortest round-trip form.
+pub fn predictions_csv(predictions: &Predictions) -> Result<Vec<u8>> {
+    let mut writer = csv::Writer::from_writer(Vec::new());
+    match predictions {
+        Predictions::Values(values) => {
+            writer.write_record(["prediction"])?;
+            for value in values {
+                writer.write_record([value.to_string()])?;
+            }
+        }
+        Predictions::Probabilities { classes, values } => {
+            let mut header = vec!["prediction".to_owned()];
+            header.extend(classes.iter().map(|c| format!("p_{c}")));
+            writer.write_record(&header)?;
+            for row in values {
+                let best = row
+                    .iter()
+                    .enumerate()
+                    .fold(0, |best, (i, p)| if *p > row[best] { i } else { best });
+                let mut record = vec![classes[best].clone()];
+                record.extend(row.iter().map(f64::to_string));
+                writer.write_record(&record)?;
+            }
+        }
+    }
+    writer.into_inner().map_err(|e| anyhow::anyhow!("{e}"))
+}

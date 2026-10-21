@@ -1,0 +1,656 @@
+//! `jopedime`: one signed executable that fits and predicts tabular models with native Rust
+//! methods (deploy/appliance/README.md).
+//!
+//! Every command authenticates the executable's own package first (footer, manifest, signature);
+//! an integrity failure is fatal and never becomes a fallback. Exit statuses follow
+//! SPECIFICATION.md §13.3: 0 success, 2 input, 3 integrity, 4 backend, 5 budget, 6 numerical,
+//! 7 output.
+#![forbid(unsafe_code)]
+
+mod bootstrap;
+mod cli;
+mod io;
+
+use clap::Parser;
+use cli::{Cli, Command, CommonArgs, TrainArgs};
+use jope_assets::Package;
+use jope_runtime::api::{self, FitOptions};
+use jope_runtime::backend::{self, DeviceRequest};
+use jope_runtime::budget::Budget;
+use jope_runtime::error::kind_of;
+use jope_runtime::fitted::{CreatedBy, FittedModel};
+use jope_runtime::limits::Limits;
+use jope_runtime::methods;
+use jope_runtime::receipt::{
+    ErrorRecord, FileRecord, MethodRecord, PackageRecord, Receipt, TaskRecord, Timings,
+};
+use jope_runtime::table;
+use jope_runtime::task::{self, TaskChoice};
+use jope_runtime::{Failure, FailureKind, RUNTIME_ABI};
+use serde_json::{json, Value};
+use std::path::Path;
+use std::process::ExitCode;
+use std::time::{Duration, Instant};
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Write to stdout. A closed pipe (`jopedime licenses | head`) ends the program quietly instead
+/// of panicking; any other write failure is an output failure.
+fn out(text: &str) {
+    use std::io::Write;
+    let mut stdout = std::io::stdout().lock();
+    if let Err(error) = stdout
+        .write_all(text.as_bytes())
+        .and_then(|()| stdout.flush())
+    {
+        if error.kind() == std::io::ErrorKind::BrokenPipe {
+            std::process::exit(0);
+        }
+        eprintln!("jopedime: stdout: {error}");
+        std::process::exit(i32::from(FailureKind::Output.exit_code()));
+    }
+}
+
+fn print_json(value: &Value) {
+    let mut text = serde_json::to_string_pretty(value).expect("JSON values serialize");
+    text.push('\n');
+    out(&text);
+}
+
+fn version_value() -> Value {
+    let package = Package::open_self();
+    let package = match &package {
+        Ok(Some(p)) => json!(bootstrap::summary(p)),
+        Ok(None) => Value::Null,
+        Err(error) => json!({"error": error.to_string()}),
+    };
+    json!({
+        "product": "jopedime",
+        "version": VERSION,
+        "source_sha40": bootstrap::source_sha40(),
+        "runtime_abi": RUNTIME_ABI,
+        "package_format": jope_assets::MANIFEST_SCHEMA,
+        "target": env!("JOPE_BUILD_TARGET"),
+        "features": {
+            "embedded": bootstrap::EMBEDDED,
+            "dev_keys": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
+            "cuda": backend::CUDA_COMPILED,
+        },
+        "trusts_development_key": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
+        "package": package,
+    })
+}
+
+fn doctor() -> anyhow::Result<(Value, bool)> {
+    let started = Instant::now();
+    let (package, promised, package_ok) = match Package::open_self() {
+        Ok(Some(p)) => {
+            let summary = bootstrap::summary(&p);
+            let methods = summary.methods.clone();
+            (
+                json!({"status": "authenticated", "summary": summary}),
+                methods,
+                true,
+            )
+        }
+        Ok(None) if bootstrap::EMBEDDED => (
+            json!({"status": "missing", "reason": "release build without its package"}),
+            Vec::new(),
+            false,
+        ),
+        Ok(None) => (json!({"status": "unpackaged"}), Vec::new(), true),
+        Err(error) => (
+            json!({"status": "refused", "reason": error.to_string()}),
+            Vec::new(),
+            false,
+        ),
+    };
+    let unexecutable: Vec<Value> = methods::unexecutable(&promised)?
+        .into_iter()
+        .map(|(id, reason)| json!({"id": id, "reason": reason}))
+        .collect();
+    let ok = package_ok && unexecutable.is_empty();
+    let value = json!({
+        "ok": ok,
+        "version": VERSION,
+        "package": package,
+        "promised_methods": promised,
+        "unexecutable_promised_methods": unexecutable,
+        "devices": backend::probe(),
+        "native_device": "cpu",
+        "limits": Limits::default(),
+        "cache": "none: packaged assets are authenticated and decoded in memory when a method \
+                  needs them; this build keeps no derived cache",
+        "worker_processes": "none: fitting runs in this process with a cooperative deadline",
+        "seconds": started.elapsed().as_secs_f64(),
+    });
+    Ok((value, ok))
+}
+
+fn methods_value(task_filter: Option<&str>) -> anyhow::Result<Value> {
+    if let Some(name) = task_filter {
+        if !matches!(name, "regression" | "binary" | "multiclass") {
+            return Err(Failure::input(format!("unknown task {name:?}")));
+        }
+    }
+    let promised: Vec<String> = match Package::open_self() {
+        Ok(Some(p)) => p.manifest().methods.clone(),
+        Ok(None) => Vec::new(),
+        Err(error) => return Err(bootstrap::integrity(error)),
+    };
+    let records: Vec<Value> = methods::records()?
+        .into_iter()
+        .filter(|r| task_filter.is_none_or(|t| r.task == t))
+        .map(|r| {
+            let mut value = json!(r);
+            value["promised_by_package"] = json!(promised.contains(&r.id));
+            value
+        })
+        .collect();
+    Ok(json!({
+        "auto": {
+            "id": methods::AUTO,
+            "policy": jope_runtime::automl::SELECTION_POLICY,
+            "fold_policy": jope_runtime::automl::FOLD_POLICY,
+            "default_folds": jope_runtime::automl::DEFAULT_FOLDS,
+            "metrics": {"regression": "rmse", "binary": "auroc", "multiclass": "log_loss"},
+        },
+        "methods": records,
+    }))
+}
+
+fn licenses(json_out: bool) -> anyhow::Result<()> {
+    let package = bootstrap::open()?;
+    let mut notices = Vec::new();
+    let mut assets = Vec::new();
+    if let Some(package) = &package {
+        for entry in &package.manifest().entries {
+            assets.push(json!({
+                "id": entry.id,
+                "origin": entry.origin,
+                "spdx": entry.license.spdx,
+                "redistribution": entry.license.redistribution,
+            }));
+            if entry.role == "notice" {
+                let bytes = package
+                    .read_entry(&entry.id)
+                    .map_err(bootstrap::integrity)?;
+                notices.push((
+                    entry.id.clone(),
+                    String::from_utf8_lossy(bytes.bytes()).into_owned(),
+                ));
+            }
+        }
+    }
+    if json_out {
+        print_json(&json!({
+            "product_license": "Apache-2.0",
+            "packaged": package.is_some(),
+            "assets": assets,
+            "notices": notices.iter().map(|(id, text)| json!({"id": id, "text": text})).collect::<Vec<_>>(),
+        }));
+    } else {
+        out(&format!(
+            "jopedime {VERSION} is licensed under Apache-2.0.\n"
+        ));
+        if package.is_none() {
+            out("This is an unpackaged development build: it embeds no notices.\n");
+        }
+        for (id, text) in notices {
+            out(&format!("\n==> {id} <==\n{text}\n"));
+        }
+    }
+    Ok(())
+}
+
+fn verify_self(json_out: bool) -> anyhow::Result<()> {
+    let package = Package::open_self()
+        .map_err(bootstrap::integrity)?
+        .ok_or_else(|| Failure::integrity("this executable has no package to verify"))?;
+    let report = package.verify_full().map_err(bootstrap::integrity)?;
+    let value = json!({
+        "ok": true,
+        "summary": bootstrap::summary(&package),
+        "report": report,
+        "note": "verify-self detects corruption; it cannot vouch for an executable that may \
+                 itself be modified. Verify a download with `jope-dist verify` or SHA256SUMS.",
+    });
+    if json_out {
+        print_json(&value);
+    } else {
+        eprintln!(
+            "verified {} bytes: executable, {} assets, manifest, signature ({})",
+            report.file_bytes,
+            report.entries,
+            package.signer().id
+        );
+    }
+    Ok(())
+}
+
+/// State shared by the fitting and prediction commands, so a failure still yields a receipt.
+struct Run {
+    command: &'static str,
+    started: Instant,
+    common: CommonArgs,
+    receipt: Receipt,
+}
+
+impl Run {
+    fn new(command: &'static str, common: &CommonArgs) -> Self {
+        Self {
+            command,
+            started: Instant::now(),
+            common: common.clone(),
+            receipt: Receipt {
+                schema: jope_runtime::receipt::SCHEMA,
+                command: command.to_owned(),
+                product_version: VERSION,
+                runtime_abi: RUNTIME_ABI,
+                source_sha40: bootstrap::source_sha40(),
+                package: None,
+                device: backend::DeviceChoice {
+                    requested: common.device.clone(),
+                    selected: "none",
+                    reason: "not selected".into(),
+                },
+                task: None,
+                method: None,
+                inputs: Vec::new(),
+                outputs: Vec::new(),
+                ignored_columns: Vec::new(),
+                budget: Budget::new(None, 1).record(),
+                timings: Timings::default(),
+                selection: None,
+                outcome: "failed",
+                error: None,
+            },
+        }
+    }
+
+    fn limits(&self) -> Limits {
+        Limits {
+            max_input_bytes: self.common.max_input_mib.saturating_mul(1 << 20),
+            max_rows: self.common.max_rows,
+            ..Limits::default()
+        }
+    }
+
+    fn budget(&self) -> anyhow::Result<Budget> {
+        let limit = match self.common.time_limit_seconds {
+            None => None,
+            Some(s) if s.is_finite() && s >= 0.0 => Some(Duration::from_secs_f64(s)),
+            Some(_) => {
+                return Err(Failure::input(
+                    "--time-limit-seconds must be a non-negative number",
+                ))
+            }
+        };
+        Ok(Budget::new(limit, self.common.threads))
+    }
+
+    /// Authenticate the package and select the device: the preamble of every run.
+    fn prepare(&mut self) -> anyhow::Result<(Option<Package>, Budget)> {
+        let request = DeviceRequest::parse(&self.common.device)
+            .ok_or_else(|| Failure::input(format!("unknown device {:?}", self.common.device)))?;
+        let package = bootstrap::open()?;
+        if let Some(p) = &package {
+            let s = bootstrap::summary(p);
+            self.receipt.package = Some(PackageRecord {
+                profile: s.profile,
+                scope: s.scope,
+                manifest_sha256: s.manifest_sha256,
+                signer: s.signer,
+                signer_role: s.signer_role,
+            });
+        }
+        self.receipt.device = backend::select(request)?;
+        let budget = self.budget()?;
+        self.receipt.budget = budget.record();
+        Ok((package, budget))
+    }
+
+    fn created_by(&self) -> CreatedBy {
+        CreatedBy {
+            source_sha40: bootstrap::source_sha40(),
+            package_manifest_sha256: self
+                .receipt
+                .package
+                .as_ref()
+                .map(|p| p.manifest_sha256.clone()),
+            package_profile: self.receipt.package.as_ref().map(|p| p.profile.clone()),
+        }
+    }
+
+    fn read_csv(&mut self, role: &'static str, path: &Path) -> anyhow::Result<table::CsvTable> {
+        let started = Instant::now();
+        let csv = table::read_csv(path, &self.limits())?;
+        self.receipt.inputs.push(FileRecord {
+            role,
+            path: path.display().to_string(),
+            bytes: csv.bytes,
+            sha256: csv.sha256.clone(),
+        });
+        self.receipt.timings.read_seconds += started.elapsed().as_secs_f64();
+        Ok(csv)
+    }
+
+    fn fit(&mut self, train: &TrainArgs, budget: &Budget) -> anyhow::Result<FittedModel> {
+        let choice = TaskChoice::parse(&train.task)
+            .ok_or_else(|| Failure::input(format!("unknown task {:?}", train.task)))?;
+        let csv = self.read_csv("train", &train.train)?;
+        let training = table::training(&csv, &train.target, choice, &self.limits())?;
+        self.receipt.task = Some(TaskRecord {
+            task: task::name(training.kind).to_owned(),
+            reason: training.task_reason.clone(),
+            target: training.target.clone(),
+            classes: training.classes.len(),
+            rows: training.targets.len(),
+            features: training.schema.columns.len(),
+        });
+        let options = FitOptions {
+            method: train.method.clone(),
+            candidates: train.candidates.clone(),
+            folds: train.folds,
+        };
+        let outcome = api::fit(&training, &options, budget, &csv.sha256, self.created_by())?;
+        self.receipt.timings.select_seconds = outcome.select_seconds;
+        self.receipt.timings.fit_seconds = outcome.fit_seconds;
+        self.receipt.method = Some(MethodRecord {
+            requested: train.method.clone(),
+            selected: outcome.method.id.clone(),
+            recipe_sha256: outcome.fitted.header.recipe_sha256.clone(),
+        });
+        self.receipt.selection = outcome.selection;
+        Ok(outcome.fitted)
+    }
+
+    fn predict(
+        &mut self,
+        fitted: &FittedModel,
+        input: &Path,
+        output: &Path,
+        budget: &Budget,
+    ) -> anyhow::Result<()> {
+        let csv = self.read_csv("input", input)?;
+        let started = Instant::now();
+        let (rows, ignored) = table::prediction(&csv, fitted.schema(), &fitted.header.target)?;
+        self.receipt.ignored_columns = ignored;
+        let predictions = api::predict(fitted, &rows, budget)?;
+        self.receipt.timings.predict_seconds = started.elapsed().as_secs_f64();
+        let started = Instant::now();
+        let bytes = api::predictions_csv(&predictions)?;
+        self.receipt
+            .outputs
+            .push(io::write_atomic("predictions", output, &bytes)?);
+        self.receipt.timings.write_seconds += started.elapsed().as_secs_f64();
+        Ok(())
+    }
+
+    /// Finish the receipt, write and print it, and return the exit status.
+    fn finish(mut self, result: anyhow::Result<()>, budget: Option<&Budget>) -> ExitCode {
+        if let Some(budget) = budget {
+            self.receipt.budget = budget.record();
+        }
+        self.receipt.timings.total_seconds = self.started.elapsed().as_secs_f64();
+        let code = match &result {
+            Ok(()) => {
+                self.receipt.outcome = "succeeded";
+                0
+            }
+            Err(error) => {
+                let kind = kind_of(error);
+                self.receipt.error = Some(ErrorRecord {
+                    kind,
+                    exit_code: kind.exit_code(),
+                    message: format!("{error:#}"),
+                });
+                kind.exit_code()
+            }
+        };
+        let value = json!(self.receipt);
+        let mut code = code;
+        if let Some(path) = &self.common.receipt {
+            let text = serde_json::to_vec_pretty(&value).expect("receipt serializes");
+            if let Err(error) = io::write_atomic("receipt", path, &text) {
+                eprintln!("jopedime: {error:#}");
+                if code == 0 {
+                    code = FailureKind::Output.exit_code();
+                }
+            }
+        }
+        if self.common.json {
+            print_json(&value);
+        } else {
+            match &result {
+                Ok(()) => summary_line(self.command, &self.receipt),
+                Err(error) => eprintln!("jopedime {}: {error:#}", self.command),
+            }
+        }
+        ExitCode::from(code)
+    }
+}
+
+fn summary_line(command: &str, receipt: &Receipt) {
+    let method = receipt
+        .method
+        .as_ref()
+        .map(|m| format!(" method={}", m.selected))
+        .unwrap_or_default();
+    let task = receipt
+        .task
+        .as_ref()
+        .map(|t| match command {
+            "predict" => format!(" task={}", t.task),
+            _ => format!(" task={} rows={}", t.task, t.rows),
+        })
+        .unwrap_or_default();
+    let outputs: Vec<&str> = receipt.outputs.iter().map(|o| o.path.as_str()).collect();
+    eprintln!(
+        "jopedime {command}:{task}{method} device={} wrote {} in {:.2}s",
+        receipt.device.selected,
+        outputs.join(", "),
+        receipt.timings.total_seconds
+    );
+}
+
+fn run_fit(train: &TrainArgs, output: &Path, common: &CommonArgs) -> ExitCode {
+    let mut run = Run::new("fit", common);
+    let mut budget = None;
+    let result = (|| -> anyhow::Result<()> {
+        io::refuse_aliasing(output, &[&train.train])?;
+        let (_, b) = run.prepare()?;
+        let fitted = run.fit(train, &b)?;
+        let started = Instant::now();
+        let bytes = fitted.to_bytes()?;
+        run.receipt
+            .outputs
+            .push(io::write_atomic("model", output, &bytes)?);
+        run.receipt.timings.write_seconds += started.elapsed().as_secs_f64();
+        budget = Some(b);
+        Ok(())
+    })();
+    run.finish(result, budget.as_ref())
+}
+
+fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -> ExitCode {
+    let mut run = Run::new("predict", common);
+    let mut budget = None;
+    let result = (|| -> anyhow::Result<()> {
+        io::refuse_aliasing(output, &[model, input])?;
+        let (_, b) = run.prepare()?;
+        let started = Instant::now();
+        let limit = Limits::default().max_model_bytes;
+        let len = std::fs::metadata(model)
+            .map_err(|e| Failure::input(format!("{}: {e}", model.display())))?
+            .len();
+        if len > limit {
+            return Err(Failure::input(format!(
+                "{} is {len} bytes; the model limit is {limit}",
+                model.display()
+            )));
+        }
+        let bytes = std::fs::read(model)
+            .map_err(|e| Failure::input(format!("{}: {e}", model.display())))?;
+        let fitted =
+            FittedModel::from_bytes(&bytes).map_err(|e| e.context(model.display().to_string()))?;
+        run.receipt.inputs.push(FileRecord {
+            role: "model",
+            path: model.display().to_string(),
+            bytes: bytes.len() as u64,
+            sha256: jope_runtime::sha256_hex(&bytes),
+        });
+        run.receipt.timings.read_seconds += started.elapsed().as_secs_f64();
+        run.receipt.method = Some(MethodRecord {
+            requested: "model".into(),
+            selected: fitted.header.method.id.clone(),
+            recipe_sha256: fitted.header.recipe_sha256.clone(),
+        });
+        run.receipt.task = Some(TaskRecord {
+            task: fitted.header.task.clone(),
+            reason: "from the model file".into(),
+            target: fitted.header.target.clone(),
+            classes: fitted.header.class_order.len(),
+            rows: fitted.header.training_procedure.rows,
+            features: fitted.header.input_schema.len(),
+        });
+        run.predict(&fitted, input, output, &b)?;
+        budget = Some(b);
+        Ok(())
+    })();
+    run.finish(result, budget.as_ref())
+}
+
+fn run_fit_predict(
+    train: &TrainArgs,
+    input: &Path,
+    output: &Path,
+    common: &CommonArgs,
+) -> ExitCode {
+    let mut run = Run::new("fit-predict", common);
+    let mut budget = None;
+    let result = (|| -> anyhow::Result<()> {
+        io::refuse_aliasing(output, &[&train.train, input])?;
+        let (_, b) = run.prepare()?;
+        let fitted = run.fit(train, &b)?;
+        run.predict(&fitted, input, output, &b)?;
+        budget = Some(b);
+        Ok(())
+    })();
+    run.finish(result, budget.as_ref())
+}
+
+fn report(result: anyhow::Result<()>) -> ExitCode {
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("jopedime: {error:#}");
+            ExitCode::from(kind_of(&error).exit_code())
+        }
+    }
+}
+
+fn main() -> ExitCode {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    // `--version` alone, and `--version --json` (SPECIFICATION.md §3.3).
+    match args
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<_>>()
+        .as_slice()
+    {
+        ["--version"] | ["-V"] => {
+            out(&format!("jopedime {VERSION}\n"));
+            return ExitCode::SUCCESS;
+        }
+        ["--version", "--json"] | ["--json", "--version"] => {
+            print_json(&version_value());
+            return ExitCode::SUCCESS;
+        }
+        _ => {}
+    }
+    let cli = Cli::parse();
+    match cli.command {
+        Command::Version(flag) => {
+            if flag.json {
+                print_json(&version_value());
+            } else {
+                out(&format!("jopedime {VERSION}\n"));
+            }
+            ExitCode::SUCCESS
+        }
+        Command::Doctor(flag) => match doctor() {
+            Ok((value, ok)) => {
+                if flag.json {
+                    print_json(&value);
+                } else {
+                    eprintln!(
+                        "jopedime doctor: {} (package: {}; devices: {})",
+                        if ok { "ok" } else { "NOT OK" },
+                        value["package"]["status"].as_str().unwrap_or("?"),
+                        value["devices"]["reason"].as_str().unwrap_or("?")
+                    );
+                    for item in value["unexecutable_promised_methods"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                    {
+                        eprintln!(
+                            "  promised but not executable: {} ({})",
+                            item["id"], item["reason"]
+                        );
+                    }
+                }
+                ExitCode::from(if ok {
+                    0
+                } else {
+                    FailureKind::Integrity.exit_code()
+                })
+            }
+            Err(error) => report(Err(error)),
+        },
+        Command::Methods { task, json } => report(methods_value(task.as_deref()).map(|value| {
+            if json.json {
+                print_json(&value);
+            } else {
+                for m in value["methods"].as_array().into_iter().flatten() {
+                    out(&format!(
+                        "{:<36} {:<11} {:<7} {}
+",
+                        m["id"].as_str().unwrap_or(""),
+                        m["task"].as_str().unwrap_or(""),
+                        m["kind"].as_str().unwrap_or(""),
+                        if m["executable"] == true {
+                            "executable"
+                        } else {
+                            "not executable"
+                        }
+                    ));
+                }
+                out(&format!(
+                    "auto: bounded selection ({})\n",
+                    jope_runtime::automl::SELECTION_POLICY
+                ));
+            }
+        })),
+        Command::Fit {
+            train,
+            output,
+            common,
+        } => run_fit(&train, &output, &common),
+        Command::Predict {
+            model,
+            input,
+            output,
+            common,
+        } => run_predict(&model, &input, &output, &common),
+        Command::FitPredict {
+            train,
+            input,
+            output,
+            common,
+        } => run_fit_predict(&train, &input, &output, &common),
+        Command::VerifySelf(flag) => report(verify_self(flag.json)),
+        Command::Licenses(flag) => report(licenses(flag.json)),
+    }
+}

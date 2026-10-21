@@ -1,0 +1,169 @@
+//! The committed lock is the derivation of the committed profiles (SPECIFICATION.md §5.3–5.4):
+//! rights the scope does not admit, missing acknowledgements, unlicensed weights and promised
+//! methods this build cannot run block a profile; structural mistakes are errors.
+use jope_dist::profile::{derive_lock, lock_profile, Profile};
+use std::path::{Path, PathBuf};
+
+fn repo() -> PathBuf {
+    jope_dist::repo_root()
+}
+
+#[test]
+fn the_committed_lock_is_current() {
+    let repo = repo();
+    let lock = derive_lock(&repo.join("deploy/appliance/profiles"), &repo).unwrap();
+    let committed =
+        std::fs::read_to_string(repo.join("deploy/appliance/models.lock.json")).unwrap();
+    assert_eq!(
+        committed,
+        lock.to_text(),
+        "run `jope-dist lock` and review the diff"
+    );
+    assert_eq!(lock.profiles["fixture"].status, "ready");
+    assert_eq!(lock.profiles["native-only"].status, "ready");
+    assert_eq!(lock.profiles["native-only"].total_bytes, 0);
+    let full = &lock.profiles["full"];
+    assert_eq!(full.status, "blocked");
+    assert!(full
+        .blockers
+        .iter()
+        .any(|b| b.contains("starlight_core_regressor") && b.contains("prohibited")));
+    assert!(full
+        .blockers
+        .iter()
+        .any(|b| b.contains("proposal.step60000.regression")));
+    // The accepted closure's five tensor files, as the specification inventories them.
+    let tensors: u64 = full
+        .components
+        .iter()
+        .flat_map(|c| &c.files)
+        .filter(|f| f.path.ends_with(".safetensors"))
+        .map(|f| f.bytes)
+        .sum();
+    assert_eq!(tensors, 438_062_296);
+}
+
+fn write_profile(dir: &Path, name: &str, body: &str) -> PathBuf {
+    let path = dir.join(format!("{name}.toml"));
+    std::fs::write(&path, body).unwrap();
+    path
+}
+
+const HEADER: &str = r#"schema = "jope.appliance-profile/v1"
+description = "test"
+methods = ["native"]
+bundles = "models/bundles"
+max_payload_mib = 512
+[codec]
+name = "zstd"
+level = 3
+frame_mib = 16
+"#;
+
+#[test]
+fn rights_outside_the_scope_block_and_never_pass() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = write_profile(
+        dir.path(),
+        "internal",
+        &format!(
+            "name = \"internal\"\nscope = \"internal\"\nredistribution = [\"permitted\", \"internal\"]\n{HEADER}\
+             [[component]]\nid = \"policy\"\nbundle = \"policy-step-60000\"\nfiles = [\"policy.safetensors\"]\nrole = \"model\"\n\
+             [[component]]\nid = \"tabicl\"\nbundle = \"jope-prime-gen31-v2\"\nfiles = [\"foundation/tabicl-regressor-v2-chimera-shuffled.safetensors\"]\nrole = \"model\"\n"
+        ),
+    );
+    let (profile, sha) = Profile::load(&path).unwrap();
+    let locked = lock_profile(&profile, &sha, &repo()).unwrap();
+    assert_eq!(locked.status, "blocked");
+    // The internal policy is admitted; the shuffled TabICL weights carry no licence record.
+    assert_eq!(locked.blockers.len(), 1, "{:?}", locked.blockers);
+    assert!(locked.blockers[0].contains("no licence record"));
+
+    let public = write_profile(
+        dir.path(),
+        "public",
+        &format!(
+            "name = \"public\"\nscope = \"public\"\nredistribution = [\"permitted\"]\n{HEADER}\
+             [[component]]\nid = \"policy\"\nbundle = \"policy-step-60000\"\nfiles = [\"policy.safetensors\"]\nrole = \"model\"\n"
+        ),
+    );
+    let (profile, sha) = Profile::load(&public).unwrap();
+    let locked = lock_profile(&profile, &sha, &repo()).unwrap();
+    assert!(locked
+        .blockers
+        .iter()
+        .any(|b| b.contains("`internal` is not admitted by scope public")));
+
+    // A public profile may not even claim to admit internal files.
+    let wide = write_profile(
+        dir.path(),
+        "wide",
+        &format!("name = \"wide\"\nscope = \"public\"\nredistribution = [\"permitted\", \"internal\"]\n{HEADER}"),
+    );
+    assert!(Profile::load(&wide).is_err());
+}
+
+#[test]
+fn structural_mistakes_are_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    let cases = [
+        (
+            "name = \"other\"\nscope = \"public\"\nredistribution = [\"permitted\"]\n",
+            "mismatched",
+        ),
+        (
+            "name = \"mismatched\"\nscope = \"everyone\"\nredistribution = [\"permitted\"]\n",
+            "mismatched",
+        ),
+        (
+            "name = \"mismatched\"\nscope = \"public\"\nredistribution = [\"free\"]\n",
+            "mismatched",
+        ),
+    ];
+    for (head, file) in cases {
+        let path = write_profile(dir.path(), file, &format!("{head}{HEADER}"));
+        assert!(Profile::load(&path).is_err(), "{head}");
+    }
+    let missing = write_profile(
+        dir.path(),
+        "missing",
+        &format!(
+            "name = \"missing\"\nscope = \"internal\"\nredistribution = [\"internal\"]\n{HEADER}\
+             [[component]]\nid = \"policy\"\nbundle = \"policy-step-60000\"\nfiles = [\"not-a-file.safetensors\"]\nrole = \"model\"\n"
+        ),
+    );
+    let (profile, sha) = Profile::load(&missing).unwrap();
+    assert!(lock_profile(&profile, &sha, &repo()).is_err());
+    let dangling = write_profile(
+        dir.path(),
+        "dangling",
+        &format!(
+            "name = \"dangling\"\nscope = \"internal\"\nredistribution = [\"internal\"]\n{HEADER}\
+             [[component]]\nid = \"policy\"\nbundle = \"policy-step-60000\"\nfiles = [\"policy.safetensors\"]\nrole = \"model\"\nrequires = [\"encoder\"]\n"
+        ),
+    );
+    assert!(Profile::load(&dangling).is_err());
+}
+
+#[test]
+fn limits_toml_matches_the_compiled_bounds() {
+    let text = std::fs::read_to_string(repo().join("deploy/appliance/limits.toml")).unwrap();
+    let doc: toml::Value = toml::from_str(&text).unwrap();
+    let p = &doc["package"];
+    let i = &doc["input"];
+    use jope_assets::limits as l;
+    let int = |v: &toml::Value| v.as_integer().unwrap() as u64;
+    assert_eq!(int(&p["max_manifest_bytes"]), l::MAX_MANIFEST_BYTES);
+    assert_eq!(int(&p["max_entries"]), l::MAX_ENTRIES as u64);
+    assert_eq!(int(&p["max_methods"]), l::MAX_METHODS as u64);
+    assert_eq!(int(&p["max_entry_bytes"]), l::MAX_ENTRY_BYTES);
+    assert_eq!(int(&p["max_frame_raw_bytes"]), l::MAX_FRAME_RAW_BYTES);
+    assert_eq!(int(&p["max_zstd_window_bytes"]), l::MAX_ZSTD_WINDOW);
+    assert_eq!(int(&p["max_name_bytes"]), l::MAX_NAME_BYTES as u64);
+    let r = jope_runtime::limits::Limits::default();
+    assert_eq!(int(&i["max_input_bytes"]), r.max_input_bytes);
+    assert_eq!(int(&i["max_rows"]), r.max_rows as u64);
+    assert_eq!(int(&i["max_columns"]), r.max_columns as u64);
+    assert_eq!(int(&i["max_classes"]), r.max_classes as u64);
+    assert_eq!(int(&i["max_model_bytes"]), r.max_model_bytes);
+}
