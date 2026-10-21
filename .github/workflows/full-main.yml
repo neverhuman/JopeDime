@@ -6,6 +6,11 @@ on:
 permissions:
   contents: read
 
+# Keep distinct source revisions eligible; only duplicate runs of one revision serialize.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}-${{ github.event_name }}
+  cancel-in-progress: false
+
 env:
   CARGO_INCREMENTAL: "0"
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
@@ -17,7 +22,7 @@ env:
   OPENBLAS_NUM_THREADS: "1"
   MKL_NUM_THREADS: "1"
 
-# Fixed full slots serialize jobs per host. No concurrency group discards pending pushes.
+# Fixed full slots serialize jobs per host. The SHA-scoped group keeps distinct pushes separate.
 jobs:
   cpu:
     if: github.ref == 'refs/heads/main'

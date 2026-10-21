@@ -12,6 +12,11 @@ permissions:
   issues: write
   pull-requests: read
 
+# Every new main SHA keeps its provenance check; duplicate attempts must not race issue creation.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   guard:
     runs-on: [self-hosted, linux, x64, jope-full-cpu]
