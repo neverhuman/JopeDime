@@ -2594,14 +2594,20 @@ fn search_inner(
             // W5-T05: the evaluator's guard kills its whole process group when this
             // controller dies, even by SIGKILL (`guard_evaluator_group`).
             command.env(EVALUATOR_GROUP_GUARD, controller_pid.to_string());
+            // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls
+            // (setpgid, prctl, getppid, setrlimit); its errors are errno codes, so nothing
+            // allocates in the child.
             unsafe {
                 command.pre_exec(move || {
                     // SIGTERM, not SIGKILL: the guard turns it into SIGKILL for the group;
                     // an evaluator without the guard still ends by its default action.
-                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0
-                        || libc::getppid() as u32 != controller_pid
-                    {
-                        return Err(std::io::Error::other("evaluator lost controller"));
+                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0 {
+                        return Err(std::io::Error::last_os_error());
+                    }
+                    // The controller exited: refuse with an errno, which does not allocate
+                    // (an io::Error carrying a message would box it in the forked child).
+                    if libc::getppid() as u32 != controller_pid {
+                        return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                     }
                     let limit = libc::rlimit {
                         rlim_cur: 8 * 1024 * 1024 * 1024,

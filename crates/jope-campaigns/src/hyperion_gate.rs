@@ -3986,6 +3986,8 @@ fn run_encoder_with_timeout(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(unix)]
+    // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls (setsid,
+    // prctl, getppid); its errors are errno codes, so nothing allocates in the child.
     unsafe {
         let parent_pid = std::process::id() as libc::pid_t;
         command.pre_exec(move || {
@@ -3996,10 +3998,9 @@ fn run_encoder_with_timeout(
                 return Err(std::io::Error::last_os_error());
             }
             if libc::getppid() != parent_pid {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::BrokenPipe,
-                    "Hyperion parent exited during encoder spawn",
-                ));
+                // The parent exited: refuse with an errno, which does not allocate
+                // (an io::Error carrying a message would box it in the forked child).
+                return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
             }
             Ok(())
         });

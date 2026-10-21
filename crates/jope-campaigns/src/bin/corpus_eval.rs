@@ -1335,6 +1335,8 @@ fn spawn_eval_one(
         .stdout(Stdio::null())
         .stderr(Stdio::null());
     #[cfg(unix)]
+    // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls (setsid,
+    // prctl, getppid); its errors are errno codes, so nothing allocates in the child.
     unsafe {
         command.pre_exec(|| {
             if libc::setsid() < 0 {
@@ -1345,10 +1347,9 @@ fn spawn_eval_one(
                 return Err(std::io::Error::last_os_error());
             }
             if libc::getppid() != parent {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::BrokenPipe,
-                    "corpus_eval parent exited during eval-one spawn",
-                ));
+                // The parent exited: refuse with an errno, which does not allocate
+                // (an io::Error carrying a message would box it in the forked child).
+                return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
             }
             Ok(())
         });

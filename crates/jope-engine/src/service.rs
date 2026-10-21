@@ -513,13 +513,19 @@ pub fn run_with_wait(
                     cmd.arg("--seeds").arg(path);
                 }
                 let parent_pid = std::process::id() as libc::pid_t;
+                // SAFETY: the hook runs between fork and exec and makes only async-signal-safe
+                // calls (setpgid, prctl, getppid, the fcntl in qualification_slots::inherit); its
+                // errors are errno codes, so nothing allocates in the child.
                 unsafe {
                     cmd.pre_exec(move || {
                         crate::qualification_slots::inherit(lease_fd)?;
-                        if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0
-                            || libc::getppid() != parent_pid
-                        {
-                            return Err(std::io::Error::other("GP service parent lost"));
+                        if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0 {
+                            return Err(std::io::Error::last_os_error());
+                        }
+                        // The service exited: refuse with an errno, which does not allocate
+                        // (an io::Error carrying a message would box it in the forked child).
+                        if libc::getppid() != parent_pid {
+                            return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                         }
                         if libc::setpgid(0, 0) != 0 {
                             return Err(std::io::Error::last_os_error());

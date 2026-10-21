@@ -1096,6 +1096,8 @@ pub fn training_probe(
             .env("OPENBLAS_NUM_THREADS", "1")
             .stdout(Stdio::from(log.try_clone()?))
             .stderr(Stdio::from(log));
+        // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls
+        // (setpgid, prctl, getppid); its errors are errno codes, so nothing allocates in the child.
         unsafe {
             let parent = libc::getpid();
             cmd.pre_exec(move || {
@@ -1105,7 +1107,9 @@ pub fn training_probe(
                     return Err(std::io::Error::last_os_error());
                 }
                 if libc::getppid() != parent {
-                    return Err(std::io::Error::other("probe controller exited"));
+                    // The controller exited: refuse with an errno, which does not allocate
+                    // (an io::Error carrying a message would box it in the forked child).
+                    return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                 }
                 Ok(())
             });

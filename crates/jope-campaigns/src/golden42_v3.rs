@@ -1170,16 +1170,17 @@ fn spawn_workers(
                 )?,
             ));
         let parent_pid = std::process::id() as libc::pid_t;
+        // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls
+        // (prctl, getppid); its errors are errno codes, so nothing allocates in the child.
         unsafe {
             command.pre_exec(move || {
                 if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0 {
                     return Err(std::io::Error::last_os_error());
                 }
                 if libc::getppid() != parent_pid {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::BrokenPipe,
-                        "V3 controller exited during worker spawn",
-                    ));
+                    // The parent exited: refuse with an errno, which does not allocate
+                    // (an io::Error carrying a message would box it in the forked child).
+                    return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                 }
                 Ok(())
             });
