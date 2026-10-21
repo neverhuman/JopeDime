@@ -1261,7 +1261,13 @@ impl Drop for Nccl {
         }
     }
 }
-pub struct Bf16;
+/// Scoped bf16 autocast on the current thread: [`Bf16::enter`] pushes the thread's prior
+/// autocast state onto the runtime's thread-local stack and dropping the guard pops it. The
+/// private field means a guard exists only through `enter`, and `*const ()` makes it `!Send`, so
+/// it is always dropped on the thread whose stack it pushed.
+pub struct Bf16 {
+    _thread_bound: std::marker::PhantomData<*const ()>,
+}
 impl Bf16 {
     pub fn enter() -> Self {
         // SAFETY: jp_bf16 takes its flag by value; enabling only pushes the prior autocast state
@@ -1269,11 +1275,15 @@ impl Bf16 {
         unsafe {
             jp_bf16(1);
         }
-        Self
+        Self {
+            _thread_bound: std::marker::PhantomData,
+        }
     }
 }
 impl Drop for Bf16 {
     fn drop(&mut self) {
+        // SAFETY: a Bf16 is only built by `enter`, which pushed this thread's autocast stack, and
+        // it is !Send, so this pops exactly that entry on the same thread (never an empty stack).
         unsafe {
             jp_bf16(0);
         }
