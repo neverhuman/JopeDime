@@ -12,7 +12,7 @@ The animation has two separate scenes:
    then refits, predicts and commits outputs. The final receipt/output phase
    precedes the success label. The proposed `--ui progress` flag is shown as
    part of the design. The native scene has no generated-source pane.
-2. **GP source viewer:** proposed `jope source watch --ui tui` attaches to the
+2. **generated-source viewer:** proposed `jope source watch --ui tui` attaches to the
    existing loopback WebSocket. A bounded pane switches between Rust, Python,
    C++17 and JavaScript, shows occurrence/sequence identity and compiler state,
    and updates source in place. New occurrence source appears before its

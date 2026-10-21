@@ -136,7 +136,7 @@ def render(font: ImageFont.FreeTypeFont, bold: ImageFont.FreeTypeFont):
         language = list(SOURCES)[(step // 2) % 4]
         occurrence = 42 if step < 8 else 43
         status = "PENDING" if step % 2 == 0 else "PASSED"
-        im, draw, text = canvas("02  SOURCE WATCH  /  separate GP search run")
+        im, draw, text = canvas("02  SOURCE WATCH  /  separate program generation run")
         text(40, 156, "$ jope source watch --ui tui --show-code latest", "text")
         text(40, 193, "WS 127.0.0.1:9876  /  connected  /  replay cursor retained", "muted")
         text(40, 246, f"occurrence demo-{occurrence:04d}   |   sequence {100+step:03d}   |   FOLLOW", "cyan")
@@ -152,7 +152,7 @@ def render(font: ImageFont.FreeTypeFont, bold: ImageFont.FreeTypeFont):
         text(40, 632, "Every occurrence stays in the source log; only this pane is replaced.", "muted")
         text(40, 668, "[space] pause display   [f] follow   [1-4] language   [q] detach", "cyan")
         draw.line((40, 704, 1160, 704), fill=COLORS["rule"])
-        text(40, 724, "Concept only. Existing transport: jope.gp-source/v1 WebSocket", "amber")
+        text(40, 724, "Concept only. Existing transport: versioned source WebSocket", "amber")
         append(im, 1600 if step in (1, 7, 11) else 700)
     return frames, durations
 
@@ -181,7 +181,7 @@ def main():
         "schema": "jope.terminal-preview/v1",
         "status": "design preview; synthetic values; proposed UI is not implemented",
         "source_base_sha40": BASE_SHA,
-        "scenes": ["native CSV fit", "separate GP source viewer"],
+        "scenes": ["native CSV fit", "separate generated-source viewer"],
         "dimensions": list(SIZE),
         "frames": len(frames),
         "durations_ms": durations,

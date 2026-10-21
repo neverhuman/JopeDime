@@ -16,10 +16,10 @@ run/event model across CLI presentation, an optional cloud jobs service and an
 MCP adapter. Keep the offline native appliance small and usable without any
 server, browser, weights download or network connection.
 
-Use the existing `jope pipeline invent` and all-language source stream for GP
-search. Native appliance fitting and GP invention have different semantics;
+Use the existing `jope pipeline invent` and all-language source stream for program
+generation. Native appliance fitting and program generation have different semantics;
 present that distinction in help and receipts rather than hiding it behind a
-new ambiguous `train` verb. A future appliance GP method can join this UI only
+new ambiguous `train` verb. A future appliance source-generating method can join this UI only
 after its runtime integration and artifact contract exist.
 
 The default should answer five questions immediately: what input is being used,
@@ -124,7 +124,7 @@ remain the source of truth until each implementation PR lands.
 | `--json` | Existing one-final-receipt stdout contract stays intact. |
 | `--output-format json\|ndjson` | New explicit machine stream; `--json` aliases json. Reject conflicting modes. Default remains human output. |
 | `--events PATH` | Opt-in versioned event journal, distinct from the authoritative final receipt; reject input/output aliases. |
-| `--show-code off\|latest\|all` | GP workflow only. Latest updates visible source; all appends every occurrence in plain mode. Native methods without source reject this flag. |
+| `--show-code off\|latest\|all` | Source-generation workflow only. Latest updates visible source; all appends every occurrence in plain mode. Native methods without source reject this flag. |
 | `--source-url URL` | Explicit terminal source client endpoint; loopback default and safe remote connection rules. |
 | `jope source watch ...` | Proposed standalone terminal client for existing WebSocket and durable cursor; can attach after producer startup. |
 
@@ -166,7 +166,7 @@ acknowledges an event only after processing it (or committing its local cache),
 reconnects using `after`, detects gaps and expired cursors, and reports an
 explicit resynchronization requirement. It must never silently jump to the
 latest event. Native fitting can show phase events without pretending it is a
-GP producer.
+program generator.
 
 The current producer flushes complete journal lines without per-occurrence
 fsync; the collector publishes durable events with its own serialization cost.
@@ -183,7 +183,7 @@ flowchart TD
     E --> J["Sequenced journal"]
     P --> T["CLI and TUI"]
     J --> G["Optional jobs gateway"]
-    S["Existing GP source log"] --> T
+    S["Existing generated-source log"] --> T
     S --> G
     G --> H["HTTP and WebSocket clients"]
     G --> M["MCP adapter"]
@@ -196,7 +196,7 @@ without terminal, Tokio, WebSocket or TUI dependencies. Preserve `api::fit` as
 a compatibility wrapper; introduce `fit_with_observer` or an explicit observer
 context rather than adding a required argument to existing callers. Check
 `predict` and pipeline boundaries in the same way. Avoid serializing full
-tables, genomes or model weights in a presentation event.
+tables, programs or model weights in a presentation event.
 
 Proposed `jope.run-event/v1` envelope: schema, run ID, per-run sequence, wall
 timestamp for correlation, monotonic elapsed nanoseconds, event kind and typed
@@ -269,7 +269,7 @@ Proposed HTTP resources:
 | --- | --- |
 | `POST /v1/runs` | Validate a typed fit/predict/invent request; reference uploaded immutable input IDs, return 202 and run ID. Bind an idempotency key to tenant plus canonical request hash; conflicting reuse returns 409. |
 | `GET /v1/runs/{id}` | State, phase snapshot, resource budget, artifact IDs and final receipt. Explicit queued/running/cancelling/succeeded/failed/cancelled transitions. |
-| `GET /v1/runs/{id}/events?after=N` | WebSocket upgrade with sequenced events/replay; expose retention floor and reconnect cursor. Keep existing local GP protocol available through a documented adapter. |
+| `GET /v1/runs/{id}/events?after=N` | WebSocket upgrade with sequenced events/replay; expose retention floor and reconnect cursor. Keep existing local source protocol available through a documented adapter. |
 | `GET /v1/artifacts/{id}` | Authorized immutable model, prediction, receipt or source download with byte count and digest; support large downloads without loading the whole file into RAM. |
 | `POST /v1/runs/{id}/cancel` | Idempotent authorized cancellation request, separate from observer disconnect. Final status reports what actually stopped and what was committed. |
 
@@ -308,7 +308,7 @@ PRs in order; the table does not authorize concurrent unclaimed lanes.
 | ID | Dependencies | Deliverable and likely paths | Estimate | Acceptance |
 | --- | --- | --- | ---: | --- |
 | T00 | None | Rebase on the selected merged HPC fixes; inventory current CLI/API/stream contracts and audit baseline in `docs/terminal/`. | 1–2 | Pin source, input hashes, hardware, thread limits, Jankurai version/config and full uncapped findings. |
-| T01 | T00 | Final UX/event contract, terminal policy matrix and cancellation decision; convert this proposal into tracked acceptance items. | 1–2 | Review examples for native fit versus GP, JSON/pipes and unavailable capabilities. |
+| T01 | T00 | Final UX/event contract, terminal policy matrix and cancellation decision; convert this proposal into tracked acceptance items. | 1–2 | Review examples for native fit versus program generation, JSON/pipes and unavailable capabilities. |
 | T02 | T01 | `jope-events` schema/reducer with clock injection and byte-bounded snapshots. | 2–3 | Serialize/replay compatibility, unknown ETA, terminal-state monotonicity and malformed-event tests. |
 | T03 | T02 | Observer wrappers in `jope-runtime/src/api.rs`, `automl.rs`, CSV ingress and appliance output boundary. | 2–4 | Existing API callers compile; UI off/on produces identical model/prediction bytes and equivalent receipts excluding timing/presentation fields. |
 | T04 | T02 | Pipeline observer adapter in `jope-pipeline` without changing canonical search evidence or RNG. | 2–3 | Fixed-evaluation same-seed runs preserve results and attempt identities; document time-budget sensitivity. |

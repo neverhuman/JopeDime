@@ -33,7 +33,7 @@ with explicit task, method, thread and input-size controls. Start with the
 [step-by-step CSV quick start](docs/terminal/quickstart.md), including a tiny
 sample dataset, model save/reload, receipts and the existing source WebSocket.
 
-![Design preview of a colorful live CSV progress view and a separate GP source TUI; synthetic data, proposed features](docs/terminal/terminal-preview.gif)
+![Design preview of a colorful live CSV progress view and a separate generated-source TUI; synthetic data, proposed features](docs/terminal/terminal-preview.gif)
 
 **Design preview, not a recording of shipped UI.** Progress bars, ETA, in-place
 source viewing and the TUI shown above are proposed. See the
@@ -59,7 +59,7 @@ This builds a local development-key package. A production `jopedime` download
 is not yet published; see [package status and signing](deploy/appliance/README.md).
 Today `--json` writes the final receipt on stdout; human summaries use stderr.
 `--time-limit-seconds` bounds selection, not the subsequent full-data refit.
-For GP-generated code, use the separate workflow below.
+For generated code, use the separate workflow below.
 
 ## Program source WebSocket
 
