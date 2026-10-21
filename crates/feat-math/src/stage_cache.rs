@@ -25,6 +25,24 @@ use std::sync::{Arc, Mutex};
 
 const SHARDS: usize = 64;
 
+/// Length of `value`'s compact JSON encoding (`serde_json::to_vec(value)?.len()`), counted by a
+/// writer that keeps no bytes, so admitting an entry does not allocate a copy of its encoding.
+fn serialized_len(value: &impl serde::Serialize) -> Option<usize> {
+    struct Count(usize);
+    impl std::io::Write for Count {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0 += buf.len();
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut count = Count(0);
+    serde_json::to_writer(&mut count, value).ok()?;
+    Some(count.0)
+}
+
 /// Default in-memory budget: 6 GiB.
 pub const DEFAULT_BYTE_CAP: usize = 6 * 1024 * 1024 * 1024;
 
@@ -148,20 +166,27 @@ impl StageCache {
 
     /// Fitted op + train-pass output block for this chain key, if cached.
     pub fn get(&self, key: &ChainKey) -> Option<(FittedOp, Arc<Rows>)> {
-        let shard = self.shard(key).lock().expect("stage cache shard");
-        match shard.get(&key.0) {
-            Some(entry) => {
-                entry
-                    .last_used
-                    .store(self.generation.load(Ordering::Relaxed), Ordering::Relaxed);
-                self.hits.fetch_add(1, Ordering::Relaxed);
-                Some((entry.fitted.clone(), Arc::clone(&entry.block)))
+        // Bookkeeping stays under the shard lock (so a concurrent sweep sees the same recency as
+        // before), but the deep clone of the fitted op runs after the guard drops: rank/Blom ops
+        // carry sorted columns, and every worker sharing a hot prefix would otherwise queue on
+        // this shard while one of them copies them.
+        let entry = {
+            let shard = self.shard(key).lock().expect("stage cache shard");
+            match shard.get(&key.0) {
+                Some(entry) => {
+                    entry
+                        .last_used
+                        .store(self.generation.load(Ordering::Relaxed), Ordering::Relaxed);
+                    self.hits.fetch_add(1, Ordering::Relaxed);
+                    Arc::clone(entry)
+                }
+                None => {
+                    self.misses.fetch_add(1, Ordering::Relaxed);
+                    return None;
+                }
             }
-            None => {
-                self.misses.fetch_add(1, Ordering::Relaxed);
-                None
-            }
-        }
+        };
+        Some((entry.fitted.clone(), Arc::clone(&entry.block)))
     }
 
     /// Keeps the entry when its bytes fit under the cap with everything already resident; an
@@ -170,7 +195,7 @@ impl StageCache {
     /// are the f64 payload and the serialized fit, not allocation overhead.
     pub fn insert(&self, key: ChainKey, fitted: FittedOp, block: Arc<Rows>) {
         let block_bytes = block.iter().map(|row| row.len() * 8).sum::<usize>();
-        let fitted_bytes = serde_json::to_vec(&fitted).map_or(1024, |bytes| bytes.len());
+        let fitted_bytes = serialized_len(&fitted).unwrap_or(1024);
         let bytes = block_bytes + fitted_bytes;
         let reserved = self
             .bytes
@@ -234,6 +259,31 @@ mod tests {
 
     fn stage(src: &str) -> Stage {
         parse_dsl(&format!("(pipe X {src})")).unwrap().stages[0].clone()
+    }
+
+    #[test]
+    fn serialized_len_counts_exactly_the_json_encoding() {
+        let x: Rows = (0..40)
+            .map(|i| {
+                (0..4)
+                    .map(|j| ((i * 7 + j * 3) % 11) as f64 - 5.0)
+                    .collect()
+            })
+            .collect();
+        let y: Vec<f64> = (0..40).map(|i| i as f64).collect();
+        for src in [
+            "(sigmoid)",
+            "(rank)",
+            "(standardize append=true)",
+            "(quantile_bins bins=8)",
+        ] {
+            let fitted = crate::ops::fit_op(&stage(src), &x, &y).unwrap();
+            assert_eq!(
+                serialized_len(&fitted),
+                Some(serde_json::to_vec(&fitted).unwrap().len()),
+                "{src}"
+            );
+        }
     }
 
     fn ctx() -> StageCacheCtx {

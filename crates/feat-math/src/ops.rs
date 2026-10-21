@@ -1301,18 +1301,22 @@ fn op_append(op: &FittedOp) -> bool {
 /// Append semantics + width cap + sanitize (mirrors the artifact epilogue of
 /// every transform function).
 fn finish(op: &FittedOp, input: &Rows, mut out: Rows) -> Rows {
-    if op_append(op) {
-        for (i, row) in out.iter_mut().enumerate() {
-            // One exact-size allocation per row (clone-then-append allocated twice).
-            let mut merged = Vec::with_capacity(input[i].len() + row.len());
-            merged.extend_from_slice(&input[i]);
-            merged.extend_from_slice(row);
+    let append = op_append(op);
+    for (i, row) in out.iter_mut().enumerate() {
+        if append {
+            // `input ++ row`, cut to the width cap, built once at its final size: the cap would
+            // otherwise truncate a longer allocation and keep all of its capacity.
+            let keep = (input[i].len() + row.len()).min(crate::MAX_WIDTH);
+            let from_input = input[i].len().min(keep);
+            let mut merged = Vec::with_capacity(keep);
+            merged.extend_from_slice(&input[i][..from_input]);
+            merged.extend_from_slice(&row[..keep - from_input]);
             *row = merged;
-        }
-    }
-    for row in out.iter_mut() {
-        if row.len() > crate::MAX_WIDTH {
+        } else if row.len() > crate::MAX_WIDTH {
+            // Expanding ops (one-hot, hinge, Chebyshev, products, splines) can generate several
+            // times the cap; release the dropped tail so cached blocks hold only what they keep.
             row.truncate(crate::MAX_WIDTH);
+            row.shrink_to_fit();
         }
         for v in row.iter_mut() {
             if !v.is_finite() {
