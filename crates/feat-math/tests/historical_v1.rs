@@ -499,6 +499,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             "PR392 transition must name {path}"
         );
     }
+    // PR396 exact-neighbor/cache implementation: only the announced evaluator identity moves.
+    let hpc_cache = old_fixture("transitions/hpc_cache_identity_rebaseline.v1.json");
+    let hpc_fixtures = hpc_cache["fixtures"].as_array().unwrap();
+    assert_eq!(hpc_fixtures.len(), 1);
+    assert_eq!(hpc_fixtures[0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,
@@ -523,6 +528,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         observatory_workspace_lock,
         gp_source_stream,
         gpt6p1_sol_max,
+        hpc_cache,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

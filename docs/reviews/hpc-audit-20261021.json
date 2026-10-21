@@ -173,6 +173,9 @@
     "numerical_sources_sha256": {
       "crates/feat-math/src/ksmooth.rs": "6733295c98c009e1acff75695e106cf785c3172b6202fed33de98f8b85cb1472",
       "crates/feat-math/src/stage_cache.rs": "fbad2ea478c19db290e6ca537a2be4dac8b37182be015d6fbfeed4e1faa51415"
-    }
+    },
+    "historical_fixture_tests_passed": 3,
+    "historical_test_build": "Fresh rustc1.97.1 test executable, linked against the already-built unchanged numerical library and dependencies",
+    "identity_transition_record": "crates/feat-math/tests/fixtures/compat_freeze/transitions/hpc_cache_identity_rebaseline.v1.json"
   }
 }
