@@ -87,15 +87,21 @@ impl StageHeartbeat {
                 receiver.recv_timeout(interval),
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout)
             );
-            let mut value = shared
-                .lock()
-                .map_err(|_| anyhow::anyhow!("stage progress poisoned"))?;
-            let timestamp = now();
-            value["timestamp"] = timestamp.into();
-            value["expires_at"] = timestamp.saturating_add(10).into();
-            value["heartbeat_sequence"] =
-                (value["heartbeat_sequence"].as_u64().unwrap_or(0) + 1).into();
-            write_json(&path, &*value)?;
+            // Update and serialize under the lock, then release it before the fsync'd atomic
+            // write, so `advance`/`publish` callers on the work path never wait on the disk.
+            // Only this thread writes the file, so sequence order is unchanged.
+            let bytes = {
+                let mut value = shared
+                    .lock()
+                    .map_err(|_| anyhow::anyhow!("stage progress poisoned"))?;
+                let timestamp = now();
+                value["timestamp"] = timestamp.into();
+                value["expires_at"] = timestamp.saturating_add(10).into();
+                value["heartbeat_sequence"] =
+                    (value["heartbeat_sequence"].as_u64().unwrap_or(0) + 1).into();
+                serde_json::to_vec_pretty(&*value)?
+            };
+            crate::manifest::atomic_write(&path, &bytes)?;
             if stopping {
                 return Ok(());
             }
