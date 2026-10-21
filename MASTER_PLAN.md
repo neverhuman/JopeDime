@@ -2147,3 +2147,17 @@ wording at `docs/program-source-stream.md`; detailed internal engine/parser cove
 in `docs/coordination/gp-source-stream-capture-coverage.md`. No scrub rule/exemption is changed.
 The capability matrix adds the actual runtime binary, now 832 rows / 69 new entries. Source,
 identity fixtures and test inventory remain unchanged; the successor needs fresh full CI/review.
+
+Actual PR388 Rust shard1 at `8e8aa202` executed 1,771 tests: 1,770 passed and the immutable
+legacy-wrapper body hash guard failed. That failure is retained, not bypassed. Corrected source
+`3d4fd8823f20a5e3b002ecab135df88462a74f43` restores all six pinned bodies byte-for-byte from main and observes
+every existing mutation/crossover caller through dedicated seams. The pin test/expected values
+are unchanged. All 16 capability-manifest cases and the expanded capture/parser fixture pass;
+identity-only regeneration and comparison each pass 13 cases with behavioral fixtures unchanged.
+The existing pin case now executes early in the emitter lane, in addition to the 21 new source
+cases (nine named selections / 22 cases). No test names, inventory count, targets or source-map
+items were added. Independent source review and fresh exact-final-head CI remain required.
+
+The existing core fixture now runs two generations in both fitness modes and checks breeding
+output growth separately for each mode before exercising the direct APIs, closing the independent
+reviewer's nonblocking caller-coverage gap. Same test name and total count; 5,705 listed tests.
