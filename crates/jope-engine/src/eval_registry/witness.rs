@@ -83,7 +83,7 @@ fn private_key(path: &Path) -> Result<SigningKey> {
     let mut file = checked_file(path)?;
     let meta = file.metadata()?;
     ensure!(
-        meta.is_file() && meta.uid() == unsafe { libc::geteuid() } && meta.mode() & 0o077 == 0,
+        meta.is_file() && meta.uid() == crate::host_os::effective_uid() && meta.mode() & 0o077 == 0,
         "witness private key must be owned machine-local mode 0600"
     );
     let mut value = Vec::new();
@@ -1090,7 +1090,7 @@ impl PinnedSshIdentity {
         let metadata = file.metadata()?;
         ensure!(
             metadata.is_file()
-                && metadata.uid() == unsafe { libc::geteuid() }
+                && metadata.uid() == crate::host_os::effective_uid()
                 && metadata.mode() & 0o077 == 0
                 && metadata.len() <= 16384,
             "SSH identity must be bounded private owner-only regular file"
@@ -1495,18 +1495,7 @@ impl WitnessClient {
     }
 }
 fn remaining(deadline: u64) -> Result<Duration> {
-    let mut t = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: 0,
-    };
-    ensure!(
-        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut t) } == 0,
-        "monotonic clock absent"
-    );
-    let now = (t.tv_sec as u64)
-        .checked_mul(1_000_000_000)
-        .and_then(|v| v.checked_add(t.tv_nsec as u64))
-        .context("clock overflow")?;
+    let now = crate::host_os::monotonic_ns().context("monotonic clock absent")?;
     Ok(Duration::from_nanos(
         deadline
             .checked_sub(now)

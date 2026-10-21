@@ -433,15 +433,7 @@ pub(super) fn monotonic_ns() -> Result<u64> {
     if let Some(now) = SYNTHETIC_MONOTONIC_NS.with(std::cell::Cell::get) {
         return Ok(now);
     }
-    let mut ts = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: 0,
-    };
-    ensure!(
-        unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut ts) } == 0,
-        "monotonic clock unavailable"
-    );
-    Ok((ts.tv_sec as u64) * 1_000_000_000 + ts.tv_nsec as u64)
+    crate::host_os::boottime_ns().context("monotonic clock unavailable")
 }
 
 /// Evaluation derives from a retained original model; it never grants a fit.
@@ -1114,7 +1106,7 @@ pub(super) fn authenticated_peer(
         } == 0
             && length as usize == std::mem::size_of::<libc::ucred>()
             && credential.pid > 0
-            && credential.uid == unsafe { libc::geteuid() },
+            && credential.uid == crate::host_os::effective_uid(),
         "unapproved local authority peer"
     );
     ProcessIdentity::read(credential.pid as u32)

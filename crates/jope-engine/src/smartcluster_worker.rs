@@ -1672,31 +1672,15 @@ fn stop_control_with(
     stop.store(true, Ordering::Release);
     // Arm independently of all diagnostic filesystem I/O.
     watchdog(instant);
-    let mut clock = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: 0,
-    };
-    let monotonic_ns = if unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut clock) } == 0 {
-        u64::try_from(clock.tv_sec)
-            .ok()
-            .and_then(|s| s.checked_mul(1_000_000_000))
-            .and_then(|n| {
-                u64::try_from(clock.tv_nsec)
-                    .ok()
-                    .and_then(|v| n.checked_add(v))
-            })
-            .and_then(|n| {
-                u64::try_from(
-                    instant
-                        .saturating_duration_since(std::time::Instant::now())
-                        .as_nanos(),
-                )
-                .ok()
-                .and_then(|v| n.checked_add(v))
-            })
-    } else {
-        None
-    };
+    let monotonic_ns = crate::host_os::monotonic_ns().ok().and_then(|n| {
+        u64::try_from(
+            instant
+                .saturating_duration_since(std::time::Instant::now())
+                .as_nanos(),
+        )
+        .ok()
+        .and_then(|v| n.checked_add(v))
+    });
     persist(ControlStopDeadline {
         instant,
         monotonic_ns,

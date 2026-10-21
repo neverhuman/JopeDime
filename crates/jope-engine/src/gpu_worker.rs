@@ -451,7 +451,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         let mut stream = incoming?;
         let peer = protocol::peer_credentials(&stream)?;
         ensure!(
-            peer.uid == unsafe { libc::geteuid() },
+            peer.uid == crate::host_os::effective_uid(),
             "resident task peer rejected"
         );
         let handshake_deadline = protocol::now_ms()?

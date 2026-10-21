@@ -487,7 +487,7 @@ impl WorkerIdentity {
         );
         let peer = peer_credentials(stream)?;
         ensure!(
-            peer.uid == unsafe { libc::geteuid() } && peer.pid as u32 == self.process.pid,
+            peer.uid == crate::host_os::effective_uid() && peer.pid as u32 == self.process.pid,
             "resident socket peer changed"
         );
         ensure!(

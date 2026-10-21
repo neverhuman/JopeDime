@@ -640,20 +640,7 @@ impl Drop for CountGuard<'_> {
 }
 
 fn request_monotonic_ns() -> Result<u64> {
-    let mut time = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: 0,
-    };
-    ensure!(
-        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut time) } == 0,
-        "request monotonic clock unavailable"
-    );
-    let seconds: u64 = time.tv_sec.try_into()?;
-    let nanos: u64 = time.tv_nsec.try_into()?;
-    seconds
-        .checked_mul(1_000_000_000)
-        .and_then(|s| s.checked_add(nanos))
-        .context("request monotonic clock overflow")
+    crate::host_os::monotonic_ns().context("request monotonic clock unavailable")
 }
 fn remaining_request(deadline: u64) -> Result<Duration> {
     let remaining = deadline
@@ -1344,7 +1331,7 @@ pub fn await_start_from_environment() -> Result<(VerifiedFit, WorkerPermit, Path
     ensure!(launch.len() <= MAX_FRAME, "worker launch exceeds protocol");
     let launch: WorkerLaunch = serde_json::from_slice(&launch)?;
     ensure!(
-        launch.service.process.pid == unsafe { libc::getppid() } as u32,
+        launch.service.process.pid == crate::host_os::parent_pid(),
         "worker original parent changed"
     );
     let duplicate = unsafe { libc::fcntl(fd, libc::F_DUPFD_CLOEXEC, 3) };
