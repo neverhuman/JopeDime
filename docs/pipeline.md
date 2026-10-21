@@ -144,8 +144,8 @@ it here cross the boundary, not predictions.
   **stderr** as best-effort compact JSON lines; `--no-progress` turns it off. The stdout
   `jope.candidates.v1` schema/output channel and work-directory layout are unchanged. Progress
   scheduling can affect wall timings and a search whose seconds deadline binds.
-  Aside from fixed schema/phase labels, fields contain numbers or null: no program source,
-  genomes, column names or raw cell values:
+  Aside from fixed schema/phase labels, fields contain numbers or null: no candidate source,
+  column names or raw cell values:
 
   ```json
   {"schema":"jope.invent.progress.v1","sequence":5,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.92,"seconds_budget":240.0}
