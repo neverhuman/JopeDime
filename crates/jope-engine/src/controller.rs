@@ -78,7 +78,6 @@ pub(crate) fn gpu_lease(root: &Path, phase: &str) -> Result<fs::File> {
     gpu_lease_controlled(root, phase, None)
 }
 fn gpu_lease_controlled(root: &Path, phase: &str, stop: Option<&AtomicBool>) -> Result<fs::File> {
-    use std::os::fd::AsRawFd;
     #[cfg(feature = "neural")]
     if let Ok(fd) = std::env::var("JOPE_GPU_WORKER_LEASE_FD") {
         use std::os::{fd::FromRawFd, unix::fs::MetadataExt};
@@ -94,7 +93,7 @@ fn gpu_lease_controlled(root: &Path, phase: &str, stop: Option<&AtomicBool>) -> 
         ensure!(
             actual.dev() == expected.dev()
                 && actual.ino() == expected.ino()
-                && unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+                && lease.try_lock().is_ok(),
             "resident GPU lease identity changed"
         );
         return Ok(lease);
@@ -110,7 +109,7 @@ fn gpu_lease_controlled(root: &Path, phase: &str, stop: Option<&AtomicBool>) -> 
         if std::env::var_os("JOPE_GPU_TASK_DEADLINE_MS").is_some() {
             crate::task_contract::gpu_task_deadline_ms()?;
         }
-        if unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
+        if lease.try_lock().is_ok() {
             return Ok(lease);
         }
         ensure!(

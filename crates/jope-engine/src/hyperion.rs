@@ -282,16 +282,12 @@ pub fn rank(
 }
 pub fn service(root: &Path, jobs: &Path, spec: &Path, output: &Path) -> Result<()> {
     fs::create_dir_all(output)?;
-    use std::os::fd::AsRawFd;
     let lease = fs::OpenOptions::new()
         .create(true)
         .truncate(false)
         .write(true)
         .open(root.join("runs/encoding-service.lock"))?;
-    ensure!(
-        unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "encoding service already running"
-    );
+    ensure!(lease.try_lock().is_ok(), "encoding service already running");
     let specification: Spec = read_json(spec)?;
     specification.verify(root)?;
     let persistent = specification

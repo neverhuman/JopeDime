@@ -292,7 +292,7 @@ pub fn inherited_task_lease(root: &Path) -> Result<fs::File> {
     ensure!(
         actual.dev() == expected.dev()
             && actual.ino() == expected.ino()
-            && unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+            && lease.try_lock().is_ok(),
         "training lease identity changed"
     );
     Ok(lease)
@@ -424,10 +424,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         .truncate(false)
         .write(true)
         .open(pool.join(format!("rank-{rank}.lock")))?;
-    ensure!(
-        unsafe { libc::flock(guard.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "resident rank already owned"
-    );
+    ensure!(guard.try_lock().is_ok(), "resident rank already owned");
     let socket = pool.join(format!("rank-{rank}.sock"));
     if socket.exists() {
         fs::remove_file(&socket)?;
@@ -468,7 +465,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         ensure!(
             expected.dev() == actual.dev()
                 && expected.ino() == actual.ino()
-                && unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+                && file.try_lock().is_ok(),
             "task did not transfer the exclusive GPU lease"
         );
         let line = protocol::read_line_until(&mut stream, 1024 * 1024, handshake_deadline)?;
@@ -591,23 +588,14 @@ mod tests {
             .write(true)
             .open(&p)
             .unwrap();
-        assert_eq!(
-            unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-            0
-        );
+        assert!(lease.try_lock().is_ok());
         let (sender, receiver) = UnixStream::pair().unwrap();
         send_fd(&sender, lease.as_raw_fd()).unwrap();
         let received = receive_fd(&receiver).unwrap();
         drop(lease);
         let competing = fs::OpenOptions::new().write(true).open(p).unwrap();
-        assert_ne!(
-            unsafe { libc::flock(competing.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-            0
-        );
+        assert!(competing.try_lock().is_err());
         drop(received);
-        assert_eq!(
-            unsafe { libc::flock(competing.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-            0
-        );
+        assert!(competing.try_lock().is_ok());
     }
 }

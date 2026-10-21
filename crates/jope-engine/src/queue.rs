@@ -5,7 +5,6 @@ use serde_json::{json, Value};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
-    os::fd::AsRawFd,
     path::{Path, PathBuf},
 };
 
@@ -423,10 +422,7 @@ pub fn merge(root: &Path, incoming: &GpJobs) -> Result<usize> {
         .truncate(false)
         .write(true)
         .open(root.join("runs/gp-priority-jobs.lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) } == 0,
-        "queue lock failed"
-    );
+    ensure!(lock.lock().is_ok(), "queue lock failed");
     let path = root.join("runs/gp-priority-jobs.json");
     let mut combined = incoming.clone();
     let mut added = incoming.jobs.len();

@@ -992,25 +992,18 @@ fn an_inherited_flock_file_is_refused_without_releasing_the_parent_lock() {
         .write(true)
         .open(&path)
         .unwrap();
-    // SAFETY: these operations borrow the open File's descriptor; neither closes it.
-    assert_eq!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-        0
-    );
+    assert!(lock.try_lock().is_ok());
+    // SAFETY: fcntl(F_GETFD) borrows the open File's descriptor and neither closes it.
     let flags = unsafe { libc::fcntl(lock.as_raw_fd(), libc::F_GETFD) };
     assert!(flags >= 0);
     let contended = || {
         // A new open file description is essential: dup/try_clone would share the lock.
         let contender = fs::File::open(&path).unwrap();
-        // SAFETY: contender is open and remains owned by this File.
-        assert_eq!(
-            unsafe { libc::flock(contender.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-            -1
-        );
-        assert_eq!(
-            std::io::Error::last_os_error().raw_os_error(),
-            Some(libc::EWOULDBLOCK)
-        );
+        // std's try_lock is flock(LOCK_EX | LOCK_NB); WouldBlock is exactly EWOULDBLOCK.
+        assert!(matches!(
+            contender.try_lock(),
+            Err(std::fs::TryLockError::WouldBlock)
+        ));
     };
     contended();
 
@@ -1043,10 +1036,7 @@ fn an_inherited_flock_file_is_refused_without_releasing_the_parent_lock() {
     drop(lock);
     // No surviving child/helper duplicate may keep the lock after its owner releases it.
     let contender = fs::File::open(path).unwrap();
-    assert_eq!(
-        unsafe { libc::flock(contender.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-        0
-    );
+    assert!(contender.try_lock().is_ok());
 }
 
 #[test]

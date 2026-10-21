@@ -1076,10 +1076,7 @@ fn execute(
         .truncate(false)
         .write(true)
         .open(directory.join("lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "task is already executing"
-    );
+    ensure!(lock.try_lock().is_ok(), "task is already executing");
     let intent = json!({"manifest_sha256":sha,"task":task,"input_manifest_sha256":task.input_manifest_sha256,"operation":input.operation,"output_receipt":input.output_receipt});
     let intent_path = directory.join("intent.json");
     if intent_path.exists() {

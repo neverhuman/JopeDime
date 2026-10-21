@@ -1437,20 +1437,19 @@ fn journaled_measurement_attested(root: &Path, row: &serde_json::Value) -> Resul
 /// it dies, so crash recovery needs no manual cleanup. The descriptor is
 /// close-on-exec: evaluator children never hold it.
 fn search_lease(output: &Path) -> Result<fs::File> {
-    use std::os::fd::AsRawFd;
     let lease = fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(output.join("search.lease"))?;
-    if unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
-        let error = std::io::Error::last_os_error();
-        ensure!(
-            error.raw_os_error() != Some(libc::EWOULDBLOCK),
-            "search output is held by another live searcher; concurrent dispatch refused"
-        );
-        return Err(error.into());
+    match lease.try_lock() {
+        Ok(()) => Ok(lease),
+        Err(fs::TryLockError::WouldBlock) => {
+            anyhow::bail!(
+                "search output is held by another live searcher; concurrent dispatch refused"
+            )
+        }
+        Err(fs::TryLockError::Error(error)) => Err(error.into()),
     }
-    Ok(lease)
 }
 
 /// Whether the evaluator has exited, without reaping it: an unreaped leader

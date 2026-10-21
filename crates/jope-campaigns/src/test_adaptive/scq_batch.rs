@@ -133,15 +133,14 @@ impl NodeLease {
                     .read(true)
                     .write(true)
                     .open(lock_dir.join(format!("{node}.slot-{slot}.lock")))?;
-                if file.try_lock().is_ok() {
-                    return Ok(Self { file });
-                }
-                let error = std::io::Error::last_os_error();
-                if !matches!(
-                    error.kind(),
-                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::Interrupted
-                ) {
-                    return Err(error).context("acquire SCQ node lease slot");
+                match file.try_lock() {
+                    Ok(()) => return Ok(Self { file }),
+                    Err(std::fs::TryLockError::WouldBlock) => {}
+                    Err(std::fs::TryLockError::Error(error))
+                        if error.kind() == std::io::ErrorKind::Interrupted => {}
+                    Err(std::fs::TryLockError::Error(error)) => {
+                        return Err(error).context("acquire SCQ node lease slot");
+                    }
                 }
             }
             thread::sleep(Duration::from_millis(50));
