@@ -537,6 +537,13 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &[hpc_cache.clone()],
     )
     .expect("preserved PR396 parallel identity announcement");
+    let pr396_combined =
+        old_fixture("transitions/pr396_after_jankurai_dependency_security_rebaseline.v1.json");
+    let combined_fixtures = pr396_combined["fixtures"].as_array().unwrap();
+    assert_eq!(combined_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -564,6 +571,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         appliance_after_automl,
         jankurai_runtime_safety,
         jankurai_dependency_security,
+        pr396_combined,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

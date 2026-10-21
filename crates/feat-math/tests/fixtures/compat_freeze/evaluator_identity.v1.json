@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "a158863c3126a22067f7000de7d8667e0e0c2506",
+  "generated_at_sha": "431532460d24e280757c52115efff89d545e44a5",
   "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
@@ -112,7 +112,7 @@
     {
       "label": "vendor/feat-math/src/ksmooth.rs",
       "path": "crates/feat-math/src/ksmooth.rs",
-      "sha256": "b51e993c929443c6aa0e5d134994f688d78031c13f432ccc5f0898ef027120a1"
+      "sha256": "6733295c98c009e1acff75695e106cf785c3172b6202fed33de98f8b85cb1472"
     },
     {
       "label": "vendor/feat-math/src/lib.rs",
@@ -177,7 +177,7 @@
     {
       "label": "vendor/feat-math/src/stage_cache.rs",
       "path": "crates/feat-math/src/stage_cache.rs",
-      "sha256": "f33106270371891c5493ed7b59cc6b68d8203710786977da86725d99568680f4"
+      "sha256": "fbad2ea478c19db290e6ca537a2be4dac8b37182be015d6fbfeed4e1faa51415"
     },
     {
       "label": "vendor/feat-math/src/target_transform.rs",
@@ -195,10 +195,10 @@
       "sha256": "fdcada3e1344b667bf3aa155564289a814953b906f85aeece5670b741e5dfe93"
     }
   ],
-  "implementation_sha256": "84de7d2f80c6a63faac886df67193ba2fe0764bec0ce947328ff8222c0719209",
+  "implementation_sha256": "547263b411416e6af0affc91e52c83c403e4cf16be16601f15983b3f6593692c",
   "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389",
   "cargo_lock_sha256": "f1f7a26844485ddc88cee3e78022da0087f6f79c8e4304d2561b240a459ca705",
-  "identity_digest": "80a45b4352edcbac2d5b12915066896d1b73ca4ae8a5a1fc690846c853950ec3",
+  "identity_digest": "05b7a667563e6ed97b1a2e0d56a42bde0bf6991612309d9ed0a5278c6ce9e153",
   "known_identities_sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "known_identity_rows": 2
 }
