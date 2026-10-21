@@ -30,7 +30,6 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::{Read, Write};
-use std::os::fd::AsFd;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -2620,7 +2619,7 @@ fn handle_run_checkpoint_gate(request: &Value, root: &Path) -> Result<Value> {
 }
 
 fn flock_exclusive(file: &fs::File, blocking: bool) -> Result<()> {
-    if let Err(error) = flock::exclusive(file.as_fd(), blocking) {
+    if let Err(error) = flock::exclusive(file, blocking) {
         bail!("flock failed: {}", error);
     }
     Ok(())

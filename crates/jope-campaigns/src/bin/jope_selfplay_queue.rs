@@ -27,7 +27,6 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
-use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
@@ -3582,8 +3581,7 @@ impl SingleInstanceLock {
             .read(true)
             .write(true)
             .open(path)?;
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-        if result != 0 {
+        if file.try_lock().is_err() {
             bail!("another Rust queue keeper owns {}", path.display());
         }
         Ok(Self { file })
@@ -3592,9 +3590,7 @@ impl SingleInstanceLock {
 
 impl Drop for SingleInstanceLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 

@@ -12,7 +12,6 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::fd::AsRawFd;
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
@@ -185,11 +184,8 @@ impl SupplyIntentHistoryV2 {
             .read(true)
             .append(true)
             .open(&self.path)?;
-        // SAFETY: `file` owns the live FD through append/sync; FD/LOCK_EX use libc's c_int ABI.
-        // flock borrows it without pointers or ownership transfer. Nonzero results are refused
-        // before history/intent changes, dropping and closing `file` on that error path.
-        let lock_result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
-        ensure!(lock_result == 0, "lock supply-intent history failed");
+        // A failed lock is refused before history/intent changes, dropping and closing `file`.
+        ensure!(file.lock().is_ok(), "lock supply-intent history failed");
         let result = (|| -> Result<()> {
             let entries = self.read()?;
             let previous = entries.last().unwrap();
@@ -213,10 +209,9 @@ impl SupplyIntentHistoryV2 {
             *intent = transitioned;
             Ok(())
         })();
-        // SAFETY: `file` owns the live FD after either outcome; FD/LOCK_UN use libc's c_int ABI.
-        // flock only borrows it. Unlock errors leave `result` unchanged; return closes `file`,
-        // releasing any remaining lock when the final open-file-description reference closes.
-        unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_UN) };
+        // Unlock errors leave `result` unchanged; return closes `file`, releasing any remaining
+        // lock when the final open-file-description reference closes.
+        let _ = file.unlock();
         result
     }
 }

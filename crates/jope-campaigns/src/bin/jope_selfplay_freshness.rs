@@ -18,7 +18,6 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Write};
-use std::os::fd::AsRawFd;
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
@@ -1523,8 +1522,7 @@ fn serve(
         .write(true)
         .mode(0o600)
         .open(ops.join("freshness.lock"))?;
-    let locked = unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-    if locked != 0 {
+    if lock.try_lock().is_err() {
         bail!("another freshness authority owns the process lock");
     }
     if socket_path.exists() {

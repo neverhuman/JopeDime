@@ -2,7 +2,6 @@ use super::*;
 use jope_dime_regressor::paths;
 use serde_json::json;
 use std::fs::File;
-use std::os::fd::AsRawFd;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::{Arc, Barrier, Mutex};
 use std::time::{Duration, Instant};
@@ -134,9 +133,7 @@ impl NodeLease {
                     .read(true)
                     .write(true)
                     .open(lock_dir.join(format!("{node}.slot-{slot}.lock")))?;
-                let result =
-                    unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-                if result == 0 {
+                if file.try_lock().is_ok() {
                     return Ok(Self { file });
                 }
                 let error = std::io::Error::last_os_error();
@@ -154,9 +151,7 @@ impl NodeLease {
 
 impl Drop for NodeLease {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 
