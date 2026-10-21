@@ -4124,9 +4124,11 @@
       "lanes": [
         "rust-check",
         "rust-test",
-        "full-default"
+        "full-default",
+        "emitters",
+        "full-emitters"
       ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Emitters additionally execute the exact immutable legacy_wrapper_body_hashes_are_pinned guard before source contracts; existing hashes are unchanged."
     },
     "target:feat-math/test/champion_parity": {
       "discovery": {

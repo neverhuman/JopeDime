@@ -56,6 +56,8 @@ source_contract() { # <label> <expected-passes> <filtered-count-pattern> <cargo 
     exit 1
   fi
 }
+source_contract legacy-wrapper-pins 1 '[0-9]+' -p feat-math --test capability_manifest \
+  legacy_wrapper_body_hashes_are_pinned -- --exact
 source_contract gp-source-stream 13 0 -p jope-observatory --test gp_source
 source_contract gp-source-capture 1 0 -p feat-math --test source_capture
 source_contract gp-source-cli 2 0 -p jope-cli --test gp_source_capture
