@@ -1,10 +1,13 @@
 # Releases
 
-The proposed model-inclusive `jopedime` appliance is specified in
+The model-inclusive `jopedime` appliance is specified in
 [`deploy/appliance/`](../../deploy/appliance/README.md), with an
-[implementation checklist](../../deploy/appliance/IMPLEMENTATION_CHECKLIST.md).
-That design is pending implementation and qualification. The procedure below
-describes the currently implemented `jope` release.
+[implementation checklist](../../deploy/appliance/IMPLEMENTATION_CHECKLIST.md) and
+[amendments](../../deploy/appliance/AMENDMENTS.md). Its CPU build, packaging, release-stage
+signing message, sealing and independent verification are implemented and exercised in CI;
+release-host integration, the neural profile and publication are pending, and no `jopedime`
+package has been published. A sealed package is signed by the same key as this release
+(`signing.pub`). The procedure below describes the currently implemented `jope` release.
 
 A JopeDime release is cut on **xbabe2** by [`deploy/release/release.sh`](../../deploy/release/release.sh), under owner decision D-D (2026-09-27): a fast signed host release.
 

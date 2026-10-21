@@ -1,0 +1,20 @@
+# Package, decode and input bounds (SPECIFICATION.md §10.2, §13.1). The values are the
+# constants in crates/jope-assets/src/lib.rs (`limits`) and crates/jope-runtime/src/limits.rs;
+# crates/jope-dist/tests/closure.rs keeps the three in agreement.
+schema = "jope.appliance-limits/v1"
+
+[package]
+max_manifest_bytes = 16777216
+max_entries = 4096
+max_methods = 1024
+max_entry_bytes = 8589934592
+max_frame_raw_bytes = 67108864
+max_zstd_window_bytes = 67108864
+max_name_bytes = 256
+
+[input]
+max_input_bytes = 1073741824
+max_rows = 2000000
+max_columns = 10000
+max_classes = 256
+max_model_bytes = 2147483648

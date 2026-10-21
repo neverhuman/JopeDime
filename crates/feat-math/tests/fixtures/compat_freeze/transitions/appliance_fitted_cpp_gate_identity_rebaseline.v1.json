@@ -1,0 +1,99 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the signed single-file appliance (PR #394). feat-math gains a default-on `fitted-cpp` feature that cfg-gates the fitted C++ runtime modules and the build script, so the appliance can depend on feat-math without C++; every existing build keeps the default and is unchanged. Cargo.lock changes for the four new crates and their dependencies. Numerical sources, the DSL ABI, default emitted bytes, behavioral fixtures, historical-v1 objects and all previous transition ledgers remain byte-identical. The lineage fixture changes its generation header only.",
+  "plan_reference": "deploy/appliance/AMENDMENTS.md A1 (C++ inside feat-math); compat_freeze.rs documented identity-only mode",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/394",
+  "source_commit": "c49d8f2c61a2dc3d6ecd8371d933faa6bd34f7c8",
+  "base_commit": "18dc38e24ee5018a453ad8b4a5fa5f2ec134bc32",
+  "old_identity": {
+    "implementation_sha256": "29252ccbce253ac8b1ae756e95710b3b19a96353ce52cdc7acef88569bfac4db",
+    "cargo_lock_sha256": "cf70ae86a4f0605f796603386e214bc1b6c0dde71e8b502263245a79dcc7c6c6",
+    "identity_digest": "95e7a685f86330fcac903df66b0795a47a63f66ca5cd048c7164ff962e61e297",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "new_identity": {
+    "implementation_sha256": "78a3ad6fc4e301115edcbb6afdd4889746f0125afccb75afae07411c4e0f7d8d",
+    "cargo_lock_sha256": "29c7bca626141a620eef4d12d2ffa9b3f2400d85e14276654db8cdcbc4294483",
+    "identity_digest": "b4f4c3fd8e9424b253bd78895b6c704f65125704d8106f31124c9c446397a550",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "539697e42cab314323620bf01269623074810f09c085ac6770b602f21576e2a9",
+      "after": "6cf98da8551ba6d150943d090897592bd5e922c6e67ec52b74d02992ce60dbcd"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "0c3f51645c1f94c2b7a396ca2829ad15689bcac088600c9ac5c3c1118e57cf8e",
+      "after": "9e69b14af24ed0d00f71fc293b125e34de801f7fff8d3b7ca98a78bbe8bb5d0a"
+    }
+  ],
+  "changed_evaluator_inputs": [
+    {
+      "path": "Cargo.lock",
+      "before": "cf70ae86a4f0605f796603386e214bc1b6c0dde71e8b502263245a79dcc7c6c6",
+      "after": "29c7bca626141a620eef4d12d2ffa9b3f2400d85e14276654db8cdcbc4294483"
+    },
+    {
+      "path": "crates/feat-math/Cargo.toml",
+      "before": "d5230fc7d1f22192332abd2387af8d328bbafea6e7e3c65c0da8d28a0ccdf8c0",
+      "after": "5468ffa35e364d7345a3ea271f974d4448e0e91a58356f1eb68ad287577a6149"
+    },
+    {
+      "path": "crates/feat-math/src/advanced_v3.rs",
+      "before": "3823df549605e1f5fbfdb82ef24fc632a77a0913466834d7bccf657c4c904891",
+      "after": "c3407f1474f41e4c2469a2487f4b89c293408d99d7d94028bb4d7b76c2e03a4b"
+    },
+    {
+      "path": "crates/feat-math/src/lib.rs",
+      "before": "4f2ef27ba1b3e5f7cc5147585e02fa5fa8b842d0e933c3f9960ecb42a2bc63de",
+      "after": "19f38bb566f997cd08ac058d63e04211010f64e3caee038508ad0ceab5bf6201"
+    }
+  ],
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
+  "behavioral_fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+      "sha256": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+      "sha256": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
+      "sha256": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json",
+      "sha256": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json",
+      "sha256": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json",
+      "sha256": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json",
+      "sha256": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+      "unchanged": true
+    }
+  ],
+  "verification": [
+    "cargo test --locked -p feat-math --test compat_freeze (identity mode, JOPE_COMPAT_FREEZE_SHA=c49d8f2c61a2dc3d6ecd8371d933faa6bd34f7c8): 13 passed",
+    "cargo test --locked -p feat-math --test compat_freeze (comparison): 13 passed",
+    "cargo test --locked -p feat-math --test advanced_v3_fitted_cpp (default features): 18 passed",
+    "cargo check --locked -p feat-math --no-default-features --all-targets: passed"
+  ],
+  "lineage_effect": "No listed lineage source changes. Each lineage identity also hashes the running executable, so binaries rebuilt with this feat-math mint new lineage identities; preserve receipts under their original identity, do not relabel or migrate them."
+}

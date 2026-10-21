@@ -499,8 +499,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             "PR392 transition must name {path}"
         );
     }
-    // HPC memory/thread review: bit-identical performance and lint-only feat-math edits,
-    // announced identity only.
+    // PR394 follows the merged PR392 identity, rather than its original parallel baseline.
+    let appliance_after_automl =
+        old_fixture("transitions/appliance_after_automl_identity_rebaseline.v1.json");
+    let appliance_fixtures = appliance_after_automl["fixtures"].as_array().unwrap();
+    assert_eq!(appliance_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(appliance_fixtures.iter().any(|entry| entry["path"] == path));
+    }
+    // HPC memory/thread review (PR397): bit-identical performance and lint-only feat-math edits,
+    // announced identity only, following the merged PR394 identity.
     let hpc_memory_threads =
         old_fixture("transitions/hpc_memory_threads_identity_rebaseline.v1.json");
     let hpc_fixtures = hpc_memory_threads["fixtures"].as_array().unwrap();
@@ -535,6 +543,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         observatory_workspace_lock,
         gp_source_stream,
         gpt6p1_sol_max,
+        appliance_after_automl,
         hpc_memory_threads,
     ];
     assert_eq!(rows.len(), 49);

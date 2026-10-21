@@ -1,8 +1,11 @@
 # Rust appliance implementation checklist
 
 This is the execution index for [SPECIFICATION.md](SPECIFICATION.md). The
-specification owns the detailed contracts and acceptance criteria. All stages
-below are pending; adding this checklist does not complete P0 or qualify a product.
+specification owns the detailed contracts and acceptance criteria;
+[AMENDMENTS.md](AMENDMENTS.md) records where the implementation corrects or decides them.
+Ticked items are implemented with the named evidence at the source state of the change that
+ticked them; exact-head CI and substantive agent review decide whether that change merges. No
+stage is closed: P1 and P2 have their CPU parts implemented, and nothing here qualifies a product.
 
 Each implementation PR must name its stage, changed paths, full source SHA,
 acceptance commands and results, evidence locations, and remaining requirements.
@@ -18,33 +21,46 @@ implemented command, qualified backend, and promoted release are separate states
 - [ ] Commit the deployment ADR, profiles, model lock, backend inventory, limits,
   qualification policy, and versioned schemas listed in
   [specification section 7](SPECIFICATION.md#7-repository-layout).
+  *Partly:* profiles, `models.lock.json`, `limits.toml`, `size-budgets.toml`,
+  `dependencies-deny.toml` and four `schemas/jope.appliance-*.v1` schemas exist; the ADR,
+  CUDA backend inventory and qualification policy do not.
 - [ ] Record concrete tensor/config/vocabulary/preprocessing identities and rights
   for the complete method dependency graph; reject placeholders and incompatible
   context ABIs. Keep the accepted policy's Hyperion v5 arm distinct from Hyperion v7.
-- [ ] Identify prohibited, internal, or unresolved redistribution records without
+- [x] Identify prohibited, internal, or unresolved redistribution records without
   rewriting them as permission. Separate fixture qualification from restricted
-  full-model qualification.
+  full-model qualification. *Evidence:* `models.lock.json` blockers (A7);
+  `crates/jope-dist/tests/closure.rs`; fixture tensors are generated, never real weights.
 
 Exit evidence: a reviewed method/asset/rights inventory with explicit unresolved
 items, concrete contracts, and a source-pinned implementation plan.
 
 ## P1 — Linkage and one-file feasibility
 
-- [ ] Introduce the minimal `jope-assets`, `jope-appliance`, and `jope-dist` package,
+- [x] Introduce the minimal `jope-assets`, `jope-appliance`, and `jope-dist` package,
   verification, fixture prediction, `doctor`, and method-reporting paths.
-- [ ] Implement the versioned envelope and signature contract in
+  *Evidence:* `crates/jope-appliance/tests/single_file.rs`; `test-clean-host.sh`.
+- [x] Implement the versioned envelope and signature contract in
   [section 10](SPECIFICATION.md#10-one-file-package-and-signature-format), including
   bounded parsing/decompression and an independently verifiable trust anchor.
-- [ ] Cover tampering, invalid signatures, truncation, invalid offsets, wrong
+  *As amended (A5, A6):* manifest-signed footer, per-asset authentication before
+  decompression, `docs/release/signing.pub` as the anchor, `jope-dist verify`.
+- [x] Cover tampering, invalid signatures, truncation, invalid offsets, wrong
   identities, and reproducible unsigned packing. Fixture keys must never authorize
-  production model IDs or distribution profiles.
+  production model IDs or distribution profiles. *Evidence:*
+  `crates/jope-assets/tests/{envelope,decode_bounds}.rs`,
+  `crates/jope-dist/tests/reproducible_pack.rs`; the development key is trusted only by
+  `dev-keys` builds and signs only `development`-scope profiles.
 - [ ] Resolve Candle/cudarc linkage with a narrow pinned patch if required;
   additive Cargo features must not leave mandatory CUDA loader dependencies.
 - [ ] Execute the **same tiny GPU-capable artifact** on both a host without CUDA
   and a driver-only GPU host. Inventory any bundled user-space libraries and their
   rights, and record exact file hashes and observed backends.
-- [ ] Route the new tests and receipts through the existing CI plan, inventories,
+- [x] Route the new tests and receipts through the existing CI plan, inventories,
   capability matrix, and aggregate checks as soon as executable paths land.
+  *Evidence (A4):* product test scope, `coverage.json`, the regression test inventory,
+  capability-matrix rows, `ci-plan.py`/`ci_plan.rs` gates, and the `e2e-smoke` appliance step
+  whose receipts the existing aggregate consumes.
 
 Exit evidence: real package negative tests and both clean-host execution receipts.
 An unavailable GPU runner leaves GPU feasibility pending. CPU scaffolding alone
@@ -52,14 +68,20 @@ is not a completed full-product deployment.
 
 ## P2 — Shared native runtime
 
-- [ ] Introduce `jope-runtime` table, method, budget, selection, receipt, and fitted
+- [x] Introduce `jope-runtime` table, method, budget, selection, receipt, and fitted
   state modules; extract the native roster from the benchmark-facing adapters.
-- [ ] Preserve the frozen preprocessing and `feat_math::advanced_v3` numerical
+  *Evidence:* A2; `crates/jope-bench` panel test `the_roster_is_the_appliance_registry`.
+- [x] Preserve the frozen preprocessing and `feat_math::advanced_v3` numerical
   contracts, training-partition boundaries, seeds, and task-specific support.
-- [ ] Implement fit/save/reload/predict for every promised native recipe and bounded
+  *Evidence:* moved code, unchanged pipeline (292) and panel (75) library suites.
+- [x] Implement fit/save/reload/predict for every promised native recipe and bounded
   AutoML selection. Persist all transforms, schema, class order, and fitted state.
-- [ ] Enforce a target/profile-specific dependency fence excluding research/cloud
+  *Evidence:* `crates/jope-runtime/tests/offline_fit_predict.rs` (bit-identical reload for
+  all 26 task/recipe pairs; `jope.runtime-select/v1`, A10).
+- [x] Enforce a target/profile-specific dependency fence excluding research/cloud
   services, Python, LibTorch, external training helpers, and runtime compilation.
+  *Evidence:* `dependencies-deny.toml`, `crates/jope-dist/tests/dependency_fence.rs`, the
+  `NEEDED` check in `build.sh`, and the `fitted-cpp` gate (A1).
 
 Exit evidence: complete native roster coverage, reload parity, bounded execution,
 dependency audit, and unchanged historical behavior tests.
@@ -131,7 +153,7 @@ downloaded artifact hash/signature equality. Publication remains a separate acti
   matrix, changelog, and version records to match the actual qualified behavior.
 - [ ] Index every acceptance result by final full source SHA, model lock, signed
   artifact hash, command, hardware, run/attempt, and retained evidence location.
-- [ ] Obtain required exact-head CI and eligible independent approval; repeat the
+- [ ] Obtain required exact-head CI and substantive head-bound agent review; repeat the
   applicable checks/review after any source change.
 - [ ] Qualify the merged candidate and publish only within its authorized scope.
   Verify the remote release and preserve rollback and verification instructions.
