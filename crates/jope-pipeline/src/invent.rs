@@ -56,6 +56,9 @@ pub struct InventOptions {
     pub source_commit: Option<String>,
     pub cancel: Option<Arc<AtomicBool>>,
     pub clock: Clock,
+    /// Write `jope.invent.progress.v1` lines to stderr while the search runs
+    /// ([`crate::progress`]). Off by default for library callers; the CLI turns it on.
+    pub progress: bool,
 }
 
 impl InventOptions {
@@ -80,6 +83,7 @@ impl InventOptions {
             source_commit: None,
             cancel: None,
             clock: Clock::Wall,
+            progress: false,
         }
     }
 }
@@ -330,6 +334,12 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
         migration_interval: options.migration_interval,
         clock: options.clock,
         cancel: options.cancel.clone(),
+        progress: options.progress.then(|| {
+            Arc::new(crate::progress::Progress::stderr(
+                preparation.cuts.len(),
+                options.budget,
+            ))
+        }),
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;

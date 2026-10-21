@@ -579,6 +579,63 @@ fn kernel2_lm_refinement_records_its_selection_and_verifies_evidence() {
     );
 }
 // laneD:B17-lm-refinement end
+/// The live `jope.invent.progress.v1` feed on stderr: one compact JSON object per line, numbers
+/// only, evaluations never decreasing, and a last line that is the end state.
+fn assert_invent_progress(stderr: &[u8], cuts: u64, eval_budget: u64) {
+    let text = String::from_utf8(stderr.to_vec()).unwrap();
+    let lines: Vec<Value> = text
+        .lines()
+        .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+        .filter(|line| line["schema"] == "jope.invent.progress.v1")
+        .collect();
+    assert!(!lines.is_empty(), "no progress lines on stderr: {text}");
+    let mut evaluations = 0;
+    for line in &lines {
+        let object = line.as_object().unwrap();
+        for field in [
+            "cut",
+            "cuts",
+            "generation",
+            "evaluations",
+            "eval_budget",
+            "measured",
+            "failed",
+            "elapsed_s",
+            "seconds_budget",
+        ] {
+            assert!(object[field].is_number(), "{field} in {line}");
+        }
+        for field in ["best_hold_rmse", "best_hold_r2"] {
+            assert!(
+                object[field].is_number() || object[field].is_null(),
+                "{field} in {line}"
+            );
+        }
+        // Numbers only: no program source, genome or column name crosses stderr.
+        assert!(
+            object.iter().all(
+                |(key, value)| matches!(key.as_str(), "schema" | "phase") || !value.is_string()
+            ),
+            "{line}"
+        );
+        assert_eq!(line["cuts"], cuts);
+        assert_eq!(line["eval_budget"], eval_budget);
+        assert!(line["cut"].as_u64().unwrap() < cuts);
+        let now = line["evaluations"].as_u64().unwrap();
+        assert!(now >= evaluations, "evaluations went backwards: {text}");
+        assert_eq!(
+            now,
+            line["measured"].as_u64().unwrap() + line["failed"].as_u64().unwrap()
+        );
+        evaluations = now;
+    }
+    let last = lines.last().unwrap();
+    assert_eq!(last["phase"], "done");
+    assert!(last["evaluations"].as_u64().unwrap() > 0);
+    assert!(last["best_hold_rmse"].is_number());
+    assert!(!text.contains("(pipe"), "program source on stderr");
+}
+
 /// `jope pipeline invent` the way jain-core's Jope engine launches it: a header CSV in, one
 /// jope.candidates.v1 document out, `git` never spawned, and a refused input reported as JSON with
 /// exit 2 before the work directory exists.
@@ -638,6 +695,7 @@ fn invent_prints_candidates_and_refuses_bad_input_as_json() {
         .unwrap()
         .starts_with("(pipe X "));
     assert!(!marker.exists(), "git was spawned");
+    assert_invent_progress(&result.stderr, 2, 24);
 
     let refused = dir.path().join("refused");
     let result = invent("missing", &refused);
