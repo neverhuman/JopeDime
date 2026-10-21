@@ -65,6 +65,67 @@ pub mod outer_release_cli;
 pub mod paired;
 pub mod selection_replay;
 
+/// The SHA-256 of `csv_bytes(rows)`, the rows' identity in cuts, feature views and score
+/// identities, computed while the CSV is written: the table is never rendered into memory
+/// (about 20 bytes per cell, several times the table) and each row's cell strings reuse one set
+/// of buffers instead of allocating a `String` per cell. Same writer, same field text
+/// (`f64` `Display`), so the same bytes reach the hasher.
+fn csv_sha256(rows: &[Vec<f64>]) -> Result<String> {
+    use sha2::Digest as _;
+    use std::fmt::Write as _;
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(false)
+        .from_writer(sha2::Sha256::new());
+    let mut cells: Vec<String> = Vec::new();
+    for row in rows {
+        cells.resize_with(row.len(), String::new);
+        for (cell, value) in cells.iter_mut().zip(row) {
+            cell.clear();
+            write!(cell, "{value}")?;
+        }
+        writer.write_record(&cells)?;
+    }
+    let hasher = writer
+        .into_inner()
+        .map_err(|error| anyhow::anyhow!("csv digest: {}", error.error()))?;
+    Ok(hex::encode(hasher.finalize()))
+}
+
+#[cfg(test)]
+mod csv_digest_tests {
+    use super::*;
+
+    #[test]
+    fn streamed_csv_digest_equals_the_digest_of_the_rendered_csv() {
+        let specials = [
+            f64::NAN,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            0.0,
+            -0.0,
+            1e300,
+            -1e-300,
+            5e-324,
+            f64::MAX,
+            0.1 + 0.2,
+            -123456.789,
+            42.0,
+        ];
+        let tables: Vec<Vec<Vec<f64>>> = vec![
+            vec![],
+            vec![vec![]],
+            vec![specials.to_vec()],
+            specials.chunks(5).map(<[f64]>::to_vec).collect(),
+            (0..200)
+                .map(|i| (0..7).map(|j| (i * 7 + j) as f64 / 3.0 - 50.0).collect())
+                .collect(),
+        ];
+        for rows in tables {
+            assert_eq!(csv_sha256(&rows).unwrap(), hash(&csv_bytes(&rows).unwrap()));
+        }
+    }
+}
+
 #[cfg(test)]
 mod cpu_evaluator_tests {
     use super::*;
@@ -144,7 +205,7 @@ pub fn fit(train: &Path, genome: &str, output: &Path) -> Result<()> {
     let (x, y) = xy(&transformed);
     let g = GenomeIr::parse(genome)?;
     let preprocessing = serde_json::to_vec_pretty(&pp)?;
-    let feature_view = raw_feature_view(&hash(&csv_bytes(&transformed)?), &preprocessing)?;
+    let feature_view = raw_feature_view(&csv_sha256(&transformed)?, &preprocessing)?;
     let fitted =
         crate::fit_boundary::fit(&g.canonical(), x, y, preprocessing, feature_view, output)?;
     let p = Predictor {
@@ -244,7 +305,7 @@ fn fit_projected(
     output: &Path,
 ) -> Result<()> {
     ensure!(
-        hash(&csv_bytes(rows)?) == training_sha256,
+        csv_sha256(rows)? == training_sha256,
         "projected training rows differ from the cut's training identity"
     );
     let preprocessing: Preprocessing = serde_json::from_slice(&preprocessing_bytes)?;
@@ -794,8 +855,8 @@ pub fn evaluate_prepared_memory(
             .find(|c| c.index == cut)
             .context("unknown in-memory cut")?;
         ensure!(
-            hash(&csv_bytes(&rows[..dims[0]])?) == c.training_sha256
-                && hash(&csv_bytes(&rows[dims[0]..])?) == c.validation_sha256,
+            csv_sha256(&rows[..dims[0]])? == c.training_sha256
+                && csv_sha256(&rows[dims[0]..])? == c.validation_sha256,
             "sealed memory differs from prepared cut"
         );
         let bytes = fs::read(prepared.join(format!("cut-{cut}/preprocessing.json")))?;
@@ -1326,7 +1387,7 @@ fn evaluate_tables(
     // baseline evidence and the score identity. Each one formats the whole table as CSV and
     // hashes it, so compute each once (training here, where it was first needed and timed;
     // scoring after the timed fit/predict, as before) and reuse the strings.
-    let training_rows_sha256 = hash(&csv_bytes(tr)?);
+    let training_rows_sha256 = csv_sha256(tr)?;
     let feature_view = raw_feature_view(&training_rows_sha256, preprocessing)?;
     let fitted = crate::fit_boundary::fit(
         &g.canonical(),
@@ -1348,7 +1409,7 @@ fn evaluate_tables(
     m["primary_metric"] = json!(crate::task_contract::primary_metric(task)?);
     m["seconds"] = json!(start.elapsed().as_secs_f64());
     m["semantic_sha256"] = json!(hash(&serde_json::to_vec(&pred)?));
-    let scoring_rows_sha256 = hash(&csv_bytes(va)?);
+    let scoring_rows_sha256 = csv_sha256(va)?;
     // Produce the baseline from the very same authorized cut arrays. This is
     // a new diagnostic; historical results without it stay unavailable.
     let training_mean = tr.iter().map(|row| row[row.len() - 1]).sum::<f64>() / tr.len() as f64;
