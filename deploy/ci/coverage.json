@@ -814,7 +814,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Jankurai v1.7.1 repository audit job on pull requests and main."
+      "scope": "Jankurai v1.7.5 repository audit job on pull requests and main."
     },
     "job:.github/workflows/main-guard.yml/guard": {
       "discovery": {
@@ -11127,7 +11127,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Jankurai v1.7.1 repository audit workflow on pull requests and main."
+      "scope": "Jankurai v1.7.5 repository audit workflow on pull requests and main."
     },
     "workflow:.github/workflows/main-guard.yml": {
       "discovery": {

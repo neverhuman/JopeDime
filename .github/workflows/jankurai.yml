@@ -30,13 +30,13 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Install pinned Jankurai v1.7.1
+      - name: Install pinned Jankurai v1.7.5
         run: |
           set -euo pipefail
           bash deploy/ci/install-jankurai.sh
-          echo "$PWD/target/jankurai/jankurai-1.7.1-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+          echo "$PWD/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
 
-      - name: Run full Jankurai v1.7.1 audit
+      - name: Run full Jankurai v1.7.5 audit
         run: |
           set -euo pipefail
           mkdir -p target/jankurai
