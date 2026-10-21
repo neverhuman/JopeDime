@@ -554,11 +554,11 @@ fn run_wave(
                   block: c_uint,
                   args: &mut [*mut c_void]|
      -> Result<(), String> {
-        // SAFETY: f belongs to gpu's live module; grid/block sizes match the
-        // embedded kernels. Each args entry points to a live typed scalar slot
-        // in the exact kernel ABI order. CUDA copies these slots before return;
-        // all referenced DeviceBuffers remain live until synchronization below.
+        // f belongs to gpu's live module; grid/block sizes match the embedded kernels.
         api.check(
+            // SAFETY: each args entry points to a live typed scalar slot in the exact
+            // kernel ABI order. CUDA copies these slots before return; all referenced
+            // DeviceBuffers remain live until synchronization below.
             unsafe {
                 (api.cuLaunchKernel)(
                     f,
