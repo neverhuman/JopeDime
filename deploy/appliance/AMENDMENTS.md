@@ -192,9 +192,11 @@ before pipeline code enters any shipped executable.
 
 | Build | Executable | Package |
 | --- | ---: | ---: |
-| `--profile dist` (fat LTO, one codegen unit, stripped), `embedded` | 3,713,088 B | native-only ≈ 3.8 MB |
+| `--profile dist` (fat LTO, one codegen unit, stripped), `embedded` | 3,713,088 B | native-only 3,733,648 B |
 | `--profile dist-ci` (thin LTO, 16 units), `embedded,dev-keys` | 5,429,128 B | fixture 5,545,586 B |
 
 `dist` builds in about 3 minutes and `dist-ci` in about 1.5 minutes from a warm dependency cache on
-2 vCPUs. Budgets with a 5% tolerance are in `size-budgets.toml`; the full profile's entry is
+2 vCPUs. The native-only package was staged, signed with an independent `openssl` P-256 key
+(base64 DER, as cosign writes it), sealed and verified with that key alone; the release build
+refuses to run it (exit 3) because it trusts only `docs/release/signing.pub`, as intended. Budgets with a 5% tolerance are in `size-budgets.toml`; the full profile's entry is
 provisional until its first internal-restricted build.

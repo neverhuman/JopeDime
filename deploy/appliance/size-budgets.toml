@@ -13,8 +13,8 @@ note = "dist-ci build plus 0.1 MiB of generated fixture tensors and notices"
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
 [profile.native-only]
 base_executable_bytes = 3713088
-final_executable_bytes = 3780000
-note = "native methods only; the payload is the licence and third-party notices"
+final_executable_bytes = 3733648
+note = "native methods only; the payload is the licence and third-party notices (sealed with an independent P-256 key)"
 
 # Blocked (models.lock.json). The tensors alone are 438,062,296 bytes before lossless packing.
 [profile.full]
