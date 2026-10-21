@@ -70,6 +70,10 @@ enum Command {
         /// Extra program: `NAME=<dsl>` or `NAME=@<file>` (repeatable).
         #[arg(long = "program")]
         programs: Vec<String>,
+        /// Original native AutoML regressor (repeatable; currently GPT6p1_Sol_Max).
+        /// Each is freshly fitted on each cut. Only regression datasets are eligible.
+        #[arg(long = "native")]
+        natives: Vec<String>,
         /// External engine as `NAME=<command...>` (repeatable; whitespace-split, no quoting).
         /// The command follows the jope.bench-adapter/v1 contract; `<command> --version` is
         /// probed before any dataset runs. Reference adapters: crates/jope-bench/adapters/
@@ -171,6 +175,7 @@ fn main() -> Result<()> {
             top,
             heads,
             programs,
+            natives,
             adapters,
             automl,
             adapter_timeout,
@@ -192,6 +197,9 @@ fn main() -> Result<()> {
                 .build_global()
                 .context("rayon pool")?;
             let mut extra_methods = Vec::new();
+            for name in &natives {
+                extra_methods.push(jope_bench::native::NativeSpec::new(name, seed)?.method());
+            }
             for spec in &programs {
                 extra_methods.push(methods::program(spec)?);
             }
@@ -262,9 +270,9 @@ fn main() -> Result<()> {
                     }
                 };
                 let task = dataset.bench_task()?;
-                if search_config.is_some() && task != Task::Regression {
+                if (search_config.is_some() || !natives.is_empty()) && task != Task::Regression {
                     eprintln!(
-                        "skip {} ({}): --search is regression-only and this dataset is {}",
+                        "skip {} ({}): --search and --native require regression; this dataset is {}",
                         dataset.row.id,
                         dir.display(),
                         task.as_str()

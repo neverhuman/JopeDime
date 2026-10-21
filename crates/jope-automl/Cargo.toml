@@ -1,0 +1,12 @@
+[package]
+name = "jope-automl"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Dependency-free native regressors with immutable submission identities"
+
+[lints]
+workspace = true

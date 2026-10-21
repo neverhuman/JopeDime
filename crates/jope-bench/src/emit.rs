@@ -73,13 +73,17 @@ pub fn score_rows(
             report.plan.seed, report.plan.k, report.protocol.screen_fold, report.protocol.top
         );
         for method in &report.methods {
-            let origin = match &method.method.adapter {
-                Some(spec) => format!(
+            let origin = match (&method.method.adapter, &method.method.native) {
+                (Some(spec), _) => format!(
                     "external adapter {} ({}), controller-scored; ",
                     spec.name,
                     spec.version.as_deref().unwrap_or("version unknown")
                 ),
-                None => String::new(),
+                (_, Some(spec)) => format!(
+                    "native regressor {} (source {}, seed {}), controller-scored; ",
+                    spec.name, spec.source_sha256, spec.seed
+                ),
+                _ => String::new(),
             };
             let (value, status, notes) = match stage {
                 Stage::Screen => match method.screen.metrics.get(metric) {

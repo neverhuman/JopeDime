@@ -25,6 +25,8 @@ pub enum MethodKind {
     Search,
     /// An external engine run as a subprocess on the same cuts ([`crate::adapter`]).
     Adapter,
+    /// An immutable native AutoML regressor, independently refitted on each cut.
+    Native,
 }
 
 /// One method: an id and the program it runs (or the adapter it invokes).
@@ -50,6 +52,9 @@ pub struct Method {
     /// The external engine this method runs, for [`MethodKind::Adapter`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub adapter: Option<AdapterSpec>,
+    /// Immutable source identity and seed for a native AutoML candidate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native: Option<crate::native::NativeSpec>,
 }
 
 /// An external engine as a method, `adapter.<name>`.
@@ -61,6 +66,7 @@ pub fn adapter(spec: AdapterSpec) -> Method {
         produce_seconds: 0.0,
         resample: None,
         adapter: Some(spec),
+        native: None,
     }
 }
 
@@ -105,6 +111,7 @@ pub fn baselines(heads: &[String], task: Task) -> Result<Vec<Method>> {
                 produce_seconds: 0.0,
                 resample: None,
                 adapter: None,
+                native: None,
             })
         })
         .collect()
@@ -145,6 +152,7 @@ pub fn program(spec: &str) -> Result<Method> {
         produce_seconds: 0.0,
         resample: None,
         adapter: None,
+        native: None,
     })
 }
 
@@ -205,6 +213,7 @@ pub fn shared_strategy(
             produce_seconds: started.elapsed().as_secs_f64(),
             resample: None,
             adapter: None,
+            native: None,
         },
         product_run,
     })
@@ -278,6 +287,7 @@ pub fn search(x: &Rows, y: &[f64], config: &SearchConfig) -> Result<Method> {
         produce_seconds: started.elapsed().as_secs_f64(),
         resample: None,
         adapter: None,
+        native: None,
     })
 }
 

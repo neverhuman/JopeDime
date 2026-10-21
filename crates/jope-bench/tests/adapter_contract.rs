@@ -310,6 +310,7 @@ fn screen_ranks_everyone_and_deepens_the_top() {
     )
     .unwrap();
     methods.push(Method {
+        native: None,
         id: "program.broken".to_owned(),
         kind: MethodKind::Program,
         dsl: "(pipe X (no_such_head_ever))".to_owned(),
