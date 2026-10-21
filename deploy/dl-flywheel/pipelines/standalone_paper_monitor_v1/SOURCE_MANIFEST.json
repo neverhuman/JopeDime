@@ -17,9 +17,9 @@
     },
     {
       "bytes": 3190,
+      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed.",
       "path": "README.md",
-      "sha256": "ee0b59e7abc19d524fe0e3a47a0d659b1ffef81b05113895bc4674ef8baa8408",
-      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed."
+      "sha256": "98a72f10f1267528c957570f9739cf101e807613272529eec14cdb71851994b3"
     },
     {
       "bytes": 21263,
