@@ -28,6 +28,16 @@ root (default `target/ci-evidence/rendered-ux` from repository root). This conta
 - `html/`, the portable browser report;
 - `results/`, failure screenshots/traces when a test fails.
 
+The rendered receipt helper's v2 format binds the tested source, browser checkout,
+workflow event, run and attempt separately. Hosted creation passes `--checkout-sha`
+from `git rev-parse HEAD` after checking it equals `JOPE_UI_SOURCE_SHA`, and
+`--event-sha` from `GITHUB_SHA`. Aggregate verification expects the producer's
+source checkout, even when its own checkout is a synthetic PR merge. Local helper
+calls default both identities to `--source-sha`. Known Playwright CI/Git annotations
+remain in the raw report and are checked against those identities; they cannot
+replace the mandatory source/run/attempt metadata. Earlier v1 receipts must be
+regenerated from their original evidence with explicitly checked identities.
+
 The two viewport projects use desktop 1440×1000 and mobile 390×844. Every section
 captures a screenshot, measured geometry and an axe WCAG A/AA result. Tests fail
 on document overflow, clipped panels, inaccessible scroll regions or axe violations.
