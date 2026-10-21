@@ -10,7 +10,7 @@ fn matrix() -> Value {
     serde_json::from_str(CANDIDATES).expect("role candidate JSON is valid")
 }
 
-fn roles<'a>(matrix: &'a Value) -> &'a [Value] {
+fn roles(matrix: &Value) -> &[Value] {
     matrix["roles"].as_array().expect("roles array")
 }
 

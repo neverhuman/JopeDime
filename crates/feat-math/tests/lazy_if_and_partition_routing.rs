@@ -2,19 +2,11 @@
 //! and partitioned batch routing (`RouteMask` / `Partition` / `Merge`) with poison-branch
 //! non-execution proof.
 
-#[path = "../src/combinators/residual.rs"]
-#[allow(dead_code)]
-mod residual;
-#[path = "../src/combinators/route.rs"]
-#[allow(dead_code)]
-mod route;
-#[path = "../src/combinators/union.rs"]
-#[allow(dead_code)]
-mod union;
-
-use route::{partition_route_lazy, route_rows, LazyIf, Merge, Partition, RouteMask};
+use feat_math::combinators::route::{
+    partition_route_lazy, route_rows, LazyIf, Merge, Partition, RouteMask,
+};
+use feat_math::combinators::union::{GraphError, Matrix};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use union::{GraphError, Matrix};
 
 fn bits(values: &[f64]) -> Vec<u64> {
     values.iter().map(|v| v.to_bits()).collect()

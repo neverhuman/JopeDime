@@ -181,7 +181,7 @@ fn brief_is_deterministic_and_enforces_the_byte_cap() {
         ci: ci(CiStatus::Pending, Some(HEAD), Some("run-4")),
         evidence_root: "https://evidence.invalid/I45/H1".into(),
     };
-    let rendered = brief(&[entry.clone()]).unwrap();
+    let rendered = brief(std::slice::from_ref(&entry)).unwrap();
     assert_eq!(rendered, brief(&[entry]).unwrap());
     assert!(rendered.len() <= STATE_BYTE_LIMIT);
     assert!(rendered.contains("CiPending"));

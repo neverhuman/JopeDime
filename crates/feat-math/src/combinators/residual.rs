@@ -175,11 +175,9 @@ impl OOFFitPlan {
             let train_target = select_values(target, &train);
             let train_ids = select_values(row_ids, &train);
             let held_ids = select_values(row_ids, &held);
-            let role = match outer_fold {
-                outer_fold => FitRole::InnerOof {
-                    outer_fold,
-                    inner_fold: fold,
-                },
+            let role = FitRole::InnerOof {
+                outer_fold,
+                inner_fold: fold,
             };
             let context = FitContext {
                 abi: COMBINATOR_ABI,

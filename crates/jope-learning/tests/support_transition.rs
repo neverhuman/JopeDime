@@ -207,7 +207,7 @@ fn exact_tiny_distribution_normalizes_and_fixed_seed_frequencies_conform() {
     assert_eq!(choices.len(), 2);
     let mut logits = vec![0.0; 282];
     logits[choices[0] as usize] = 0.0;
-    logits[choices[1] as usize] = (0.6f64).ln() as f64;
+    logits[choices[1] as usize] = 0.6f64.ln();
     let law = CloverBehaviorLaw::new(&trie, &support.vocabulary.sha256, 1.0).unwrap();
     let d = law.distribution(&trie, &prefix, &logits).unwrap();
     assert!((d.probabilities.iter().sum::<f64>() - 1.0).abs() < 1e-12);

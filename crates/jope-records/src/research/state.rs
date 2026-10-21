@@ -373,10 +373,7 @@ pub fn brief(entries: &[BriefEntry]) -> Result<String, String> {
 }
 
 fn markdown_cell(value: &str) -> String {
-    value
-        .replace('|', "\\|")
-        .replace('\r', " ")
-        .replace('\n', " ")
+    value.replace('|', "\\|").replace(['\r', '\n'], " ")
 }
 
 fn safe_link(value: &str) -> String {
@@ -632,7 +629,7 @@ mod tests {
             },
             evidence_root: "https://evidence.invalid/I45/H1".into(),
         };
-        let rendered = brief(&[entry.clone()]).unwrap();
+        let rendered = brief(std::slice::from_ref(&entry)).unwrap();
         assert_eq!(rendered, brief(&[entry]).unwrap());
         assert!(rendered.len() <= STATE_BYTE_LIMIT);
         assert!(rendered.contains("CiPending"));

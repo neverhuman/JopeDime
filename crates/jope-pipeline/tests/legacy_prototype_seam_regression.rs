@@ -3,16 +3,12 @@
 //! Verifies that all 7 legacy prototype seams (`I07`, `I08`, `I09`, `I54`, `I55`, `I56`, `I47`)
 //! are wired and measured without modifying frozen `compat_freeze` evaluator identities.
 
-#[path = "../../feat-math/src/combinators/residual.rs"]
-#[allow(dead_code)]
-mod residual;
-#[path = "../../feat-math/src/combinators/route.rs"]
-#[allow(dead_code)]
-mod route;
-#[path = "../../feat-math/src/combinators/union.rs"]
-#[allow(dead_code)]
-mod union;
-
+use feat_math::combinators::residual::{
+    Candidate, FitError, FitInput, FittedCandidate, OOFFitPlan,
+};
+use feat_math::combinators::union::{
+    Action, ColumnRef, DenseInput, Limits, Node, Program as DagProgram, Schema,
+};
 use feat_math::kernel::ir::legacy_bridge::{BridgeStatus, LegacyBridge};
 use feat_math::kernel::ir::{
     canon, Constraints, Dataset, ExecutionStats, FitPlan, InputIdentity, InputSchema, RowClosure,
@@ -23,9 +19,7 @@ use jope_pipeline::resource_ledger::{
     Amounts, AttemptCost, CacheState, Disposition, JoinIds, Measurement, Policy, Reading,
     ReservationRequest, ResourceLedger, Stage, Unit, SCHEMA,
 };
-use residual::{Candidate, FitError, FitInput, FittedCandidate, OOFFitPlan};
 use std::collections::BTreeSet;
-use union::{Action, ColumnRef, DenseInput, Limits, Node, Program as DagProgram, Schema};
 
 #[derive(Clone)]
 struct SimpleMeanCandidate;

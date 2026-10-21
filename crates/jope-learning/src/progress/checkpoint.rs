@@ -76,18 +76,54 @@ impl CommittedUpdate {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "state", content = "receipt")]
 pub enum CheckpointEvidence {
-    Committed(CommittedUpdate),
-    Proposed { key: String, source: ProofReference },
-    Computed { key: String, source: ProofReference },
-    Applied { key: String, source: ProofReference },
-    Uncommitted { key: String, source: ProofReference },
-    Failed { key: String, source: ProofReference },
-    Unknown { key: String, source: ProofReference },
-    Inconclusive { key: String, source: ProofReference },
-    Divergent { key: String, source: ProofReference },
-    Quarantined { key: String, source: ProofReference },
-    LocalOnly { key: String, source: ProofReference },
-    RemotePending { key: String, source: ProofReference },
+    /// Boxed: a committed update is ~3x the size of every other variant, and
+    /// evidence lists are held whole while a segment is rebuilt. Serde encodes
+    /// `Box<T>` exactly as `T`, so the receipt bytes are unchanged.
+    Committed(Box<CommittedUpdate>),
+    Proposed {
+        key: String,
+        source: ProofReference,
+    },
+    Computed {
+        key: String,
+        source: ProofReference,
+    },
+    Applied {
+        key: String,
+        source: ProofReference,
+    },
+    Uncommitted {
+        key: String,
+        source: ProofReference,
+    },
+    Failed {
+        key: String,
+        source: ProofReference,
+    },
+    Unknown {
+        key: String,
+        source: ProofReference,
+    },
+    Inconclusive {
+        key: String,
+        source: ProofReference,
+    },
+    Divergent {
+        key: String,
+        source: ProofReference,
+    },
+    Quarantined {
+        key: String,
+        source: ProofReference,
+    },
+    LocalOnly {
+        key: String,
+        source: ProofReference,
+    },
+    RemotePending {
+        key: String,
+        source: ProofReference,
+    },
 }
 
 impl CheckpointEvidence {
@@ -316,7 +352,7 @@ mod tests {
 
     #[test]
     fn duplicate_checkpoint_and_ack_identity_do_not_inflate_verified_updates() -> Result<()> {
-        let committed = CheckpointEvidence::Committed(update());
+        let committed = CheckpointEvidence::Committed(Box::new(update()));
         let unknown = CheckpointEvidence::Unknown {
             key: "update/unknown".into(),
             source: reference("unknown/1"),
@@ -336,17 +372,20 @@ mod tests {
 
     #[test]
     fn unsupported_or_conflicting_commit_proof_is_held_or_refused() -> Result<()> {
-        let evidence = CheckpointEvidence::Committed(update());
+        let evidence = CheckpointEvidence::Committed(Box::new(update()));
         let a =
             SegmentCheckpoint::new(1, "commit-1".into(), "c".repeat(64), vec![evidence.clone()])?;
-        assert_eq!(rebuild(&[a.clone()], &Verify(false))?.held_committed, 1);
+        assert_eq!(
+            rebuild(std::slice::from_ref(&a), &Verify(false))?.held_committed,
+            1
+        );
         let mut different = update();
         different.occurrence = reference("occurrence/other");
         let b = SegmentCheckpoint::new(
             2,
             "commit-2".into(),
             "d".repeat(64),
-            vec![CheckpointEvidence::Committed(different)],
+            vec![CheckpointEvidence::Committed(Box::new(different))],
         )?;
         assert!(rebuild(&[a, b], &Verify(true)).is_err());
         Ok(())

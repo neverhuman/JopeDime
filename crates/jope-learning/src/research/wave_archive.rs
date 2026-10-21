@@ -312,7 +312,7 @@ pub fn reconstruct(state: &State, manifest: &Manifest) -> anyhow::Result<Vec<Eve
                 Some(Cell::Str(s)) => {
                     let event = serde_json::from_str::<Event>(s)?;
                     anyhow::ensure!(
-                        row.get(0) == Some(&Cell::I64(i64::try_from(event.sequence)?))
+                        row.first() == Some(&Cell::I64(i64::try_from(event.sequence)?))
                             && row.get(1) == Some(&Cell::I64(i64::from(event.rank)))
                             && row.get(2) == Some(&Cell::I64(i64::from(event.attempt))),
                         "typed row keys disagree with event payload"

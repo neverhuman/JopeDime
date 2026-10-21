@@ -162,7 +162,7 @@ pub fn kernel2_identity(
         profile.revision,
         profile.sha256(),
         "kernel2.wp1.5",
-        &format!(
+        format!(
             "higher-selection-score-v1;fault-policy:{:?}",
             evaluator.fault_policy()
         ),

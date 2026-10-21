@@ -102,7 +102,7 @@ fn committed_progress_requires_source_proof_and_duplicate_ack_does_not_count_twi
         attempt: 1,
         epoch: 1,
     };
-    let committed = CheckpointEvidence::Committed(update);
+    let committed = CheckpointEvidence::Committed(Box::new(update));
     let unknown = CheckpointEvidence::Unknown {
         key: "attempt/unknown".into(),
         source: r("attempt", "attempt/unknown"),

@@ -541,8 +541,8 @@ pub enum LeagueGate {
 
 /// Readiness gate only. It does not implement a PFSP sampler or authorize policy/serving
 /// promotion. Member counts alone never activate the adaptive league.
-pub struct PFSP;
-impl PFSP {
+pub struct Pfsp;
+impl Pfsp {
     pub fn assess(manifest: &PayoffManifest, registry: &LeagueRegistry) -> Result<LeagueGate> {
         manifest.validate(registry)?;
         match manifest.purpose {
