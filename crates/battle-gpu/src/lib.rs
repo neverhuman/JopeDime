@@ -566,16 +566,11 @@ fn run_wave(
                   block: c_uint,
                   args: &mut [*mut c_void]|
      -> Result<(), String> {
-        // SAFETY: f belongs to gpu's live module; grid/block sizes match the
-        // embedded kernels. Each args entry points to a live typed scalar slot
-        // in the exact kernel ABI order. CUDA copies these slots before return;
-        // all referenced DeviceBuffers remain live until synchronization below.
+        // f belongs to gpu's live module; grid/block sizes match the embedded kernels.
         api.check(
-            // `f` is one of the four functions loaded from the embedded PTX, and every call site
-            // below passes `args` built by `ptr_args!` in that kernel's parameter order, each
-            // element pointing at a live local of the parameter's type (u64 device pointers, then
-            // the c_int problem count). The driver copies the values at launch; `extra` is null.
-            // SAFETY: kernel handle and argument list match the PTX signature (see above).
+            // SAFETY: each args entry points to a live typed scalar slot in the exact
+            // kernel ABI order. CUDA copies these slots before return; all referenced
+            // DeviceBuffers remain live until synchronization below.
             unsafe {
                 (api.cuLaunchKernel)(
                     f,
