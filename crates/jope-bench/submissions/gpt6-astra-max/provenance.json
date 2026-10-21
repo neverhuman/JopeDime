@@ -1,0 +1,28 @@
+{
+  "schema_version": "jopedime-original-submission-provenance/v1",
+  "algorithm_name": "GPT6_Astra_Max",
+  "source_file": "GPT6_Astra_Max.rs",
+  "source_sha256": "b51ad3291c6e433388a49ed8338d069a245300d634c9da76be1fb1f1454cd0eb",
+  "source_bytes": 27729,
+  "frozen_at_utc": "2026-10-21T06:30:07.171345+00:00",
+  "model_id_reported_by_session": "gpt-6-astra-wm",
+  "model_revision": null,
+  "generation_settings": null,
+  "filename_requested_by_user": true,
+  "prompt_sha256": "5ca568f40eb6ccb01f0d532512125db6512b6174a4cc24b5bc4d4ffd86615301",
+  "compiled_before_freeze": false,
+  "candidate_executed_before_freeze": false,
+  "data_experiments_during_design": false,
+  "repository_source_inspected_before_freeze": false,
+  "existing_project_memory_in_context": true,
+  "organizer_appendix_in_context": true,
+  "administrative_tools_used": [
+    "read attached prompt",
+    "write source and documentation",
+    "locate executables",
+    "hash source"
+  ],
+  "primary_challenge_eligibility": "not_asserted",
+  "eligibility_note": "This was a repository integration request in an existing conversation, not an isolated fresh-session challenge campaign. submission.json authoring_mode describes the mathematical design; it does not certify the prompt no-tools or neutral-context controls.",
+  "post_freeze_policy": "Preserve these source bytes. Record compilation and conformance separately; any algorithm correction must receive a new source identity."
+}
