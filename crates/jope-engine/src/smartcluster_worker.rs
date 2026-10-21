@@ -1544,10 +1544,13 @@ impl ScratchGuard {
             &task.task_id,
         ))?));
         fs::create_dir_all(&path)?;
+        let within = |usage: ScratchUsage| {
+            usage.task <= task.resources.scratch_bytes
+                && usage.allocation <= inherited_budget
+                && usage.root <= SCRATCH_ROOT_LIMIT
+        };
         ensure!(
-            tree_bytes(&path)? <= task.resources.scratch_bytes
-                && tree_bytes(&allocation_root)? <= inherited_budget
-                && tree_bytes(&inherited_root)? <= 32 * 1024 * 1024 * 1024,
+            within(scratch_usage(&inherited_root, &allocation_root, &path)?),
             "retained scratch exceeds task reservation"
         );
         std::env::set_var("TMPDIR", &path);
@@ -1556,11 +1559,15 @@ impl ScratchGuard {
         let state = state.to_owned();
         let thread = std::thread::spawn(move || {
             while !observed.load(Ordering::Acquire) {
-                if !tree_bytes(&path).is_ok_and(|bytes| bytes <= budget)
-                    || !tree_bytes(&allocation_root).is_ok_and(|bytes| bytes <= inherited_budget)
-                    || !tree_bytes(&inherited_root)
-                        .is_ok_and(|bytes| bytes <= 32 * 1024 * 1024 * 1024)
-                {
+                // One walk of the shared root per tick yields all three totals (the task and
+                // allocation directories are inside it); walking each tree separately stat'ed
+                // the task's files three times every 100 ms.
+                let usage = scratch_usage(&inherited_root, &allocation_root, &path);
+                if !usage.is_ok_and(|usage| {
+                    usage.task <= budget
+                        && usage.allocation <= inherited_budget
+                        && usage.root <= SCRATCH_ROOT_LIMIT
+                }) {
                     let _ = write_json(
                         &state.join("scratch-violation.json"),
                         &json!({"budget":budget,"path":path,"action":"terminate_and_preserve_attempt"}),
@@ -1586,18 +1593,53 @@ impl Drop for ScratchGuard {
         }
     }
 }
-fn tree_bytes(path: &Path) -> Result<u64> {
-    let mut total = 0u64;
-    for entry in walkdir::WalkDir::new(path).follow_links(false) {
-        let entry = entry?;
+/// Byte cap on the whole inherited scratch root.
+const SCRATCH_ROOT_LIMIT: u64 = 32 * 1024 * 1024 * 1024;
+
+/// Regular-file bytes under the scratch root, its allocation directory and the task directory.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct ScratchUsage {
+    root: u64,
+    allocation: u64,
+    task: u64,
+}
+
+/// Sums [`ScratchUsage`] in one walk of `root` (`allocation` and `task` are inside it). A
+/// symlink anywhere is refused. A file or directory that disappears between the directory read
+/// and its `lstat` is a temporary file the task removed (TMPDIR points here), not a violation, so
+/// it is skipped; a missing root, and every other error, still fails closed.
+fn scratch_usage(root: &Path, allocation: &Path, task: &Path) -> Result<ScratchUsage> {
+    let vanished = |error: &std::io::Error| error.kind() == std::io::ErrorKind::NotFound;
+    let mut usage = ScratchUsage {
+        root: 0,
+        allocation: 0,
+        task: 0,
+    };
+    for entry in walkdir::WalkDir::new(root).follow_links(false) {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(error) if error.depth() > 0 && error.io_error().is_some_and(vanished) => continue,
+            Err(error) => return Err(error.into()),
+        };
         ensure!(!entry.file_type().is_symlink(), "scratch symlink rejected");
-        if entry.file_type().is_file() {
-            total = total
-                .checked_add(entry.metadata()?.len())
-                .context("scratch size overflow")?;
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        let bytes = match entry.metadata() {
+            Ok(metadata) => metadata.len(),
+            Err(error) if error.io_error().is_some_and(vanished) => continue,
+            Err(error) => return Err(error.into()),
+        };
+        let add = |total: u64| total.checked_add(bytes).context("scratch size overflow");
+        usage.root = add(usage.root)?;
+        if entry.path().starts_with(allocation) {
+            usage.allocation = add(usage.allocation)?;
+            if entry.path().starts_with(task) {
+                usage.task = add(usage.task)?;
+            }
         }
     }
-    Ok(total)
+    Ok(usage)
 }
 
 struct DeadlineWatch {
@@ -2219,9 +2261,38 @@ mod tests {
     fn scratch_accounting_rejects_symlink_escape() {
         let dir = tempfile::tempdir().unwrap();
         fs::write(dir.path().join("bytes"), [0u8; 4096]).unwrap();
-        assert_eq!(tree_bytes(dir.path()).unwrap(), 4096);
+        let usage = |root: &Path| scratch_usage(root, &root.join("a"), &root.join("a/t"));
+        assert_eq!(
+            usage(dir.path()).unwrap(),
+            ScratchUsage {
+                root: 4096,
+                allocation: 0,
+                task: 0
+            }
+        );
         std::os::unix::fs::symlink("/tmp", dir.path().join("escape")).unwrap();
-        assert!(tree_bytes(dir.path()).is_err());
+        assert!(usage(dir.path()).is_err());
+    }
+    #[test]
+    fn scratch_accounting_sums_nested_buckets_in_one_walk_and_needs_its_root() {
+        let dir = tempfile::tempdir().unwrap();
+        let (root, allocation) = (dir.path(), dir.path().join("job"));
+        let task = allocation.join("task");
+        fs::create_dir_all(task.join("deep")).unwrap();
+        fs::write(root.join("other"), [0u8; 10]).unwrap();
+        fs::write(allocation.join("sibling"), [0u8; 100]).unwrap();
+        fs::write(task.join("deep/file"), [0u8; 1000]).unwrap();
+        // A same-prefix name next to the task directory is not inside it.
+        fs::write(allocation.join("task-not"), [0u8; 7]).unwrap();
+        assert_eq!(
+            scratch_usage(root, &allocation, &task).unwrap(),
+            ScratchUsage {
+                root: 1117,
+                allocation: 1107,
+                task: 1000
+            }
+        );
+        assert!(scratch_usage(&root.join("absent"), &allocation, &task).is_err());
     }
     #[test]
     fn closure_fifo_is_rejected_without_waiting_for_writer() {
