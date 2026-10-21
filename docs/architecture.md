@@ -1,5 +1,8 @@
 # Architecture
 
+For the dated current source boundaries and evidence limits, see the
+[runtime ownership map (2026-10-21)](coordination/runtime-ownership-20261021.md).
+
 > **Status on `main`:** this page describes the target design from the port plan. Run `jope --help` on `main` for the verbs that exist today. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary, with `hwm` and `scores` subcommands. See the README's "What this SHA actually does".
 
 JopeDime is one repository that holds the whole pipeline

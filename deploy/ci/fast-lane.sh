@@ -23,6 +23,11 @@ done
 cargo test -q --locked -p jope-ci
     # Coverage mapping and collection failure tests
 cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::
+python3 deploy/ci/test-security-lane.py
+python3 deploy/ci/test-gitleaks-config.py
+python3 deploy/ci/test-rendered-ux-receipt.py
+python3 deploy/ci/test-browser-deps.py
+python3 -B deploy/ci/test-vendor-security.py
 python3 deploy/ci/test-receipt.py
 python3 deploy/ci/test-results.py
 python3 deploy/ci/test-aggregate.py
@@ -52,35 +57,6 @@ cargo run -q --locked -p jope-records -- progress-view
 cargo run -q --locked -p jope-records -- elo-history --require-all
     # Hygiene
 bash deploy/ci/check.sh
-    # cargo-deny
-set -euo pipefail
-# Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
-# deliberately given no docker socket, and the binary is in the image anyway.
-cargo deny --version | grep -qF 'cargo-deny 0.20.2'
-# --all-features is NOT cosmetic: EmbarkStudios/cargo-deny-action defaulted to it,
-# which overrides deny.toml's [graph] all-features = false. Measured on this image
-# (cargo-deny 0.20.2): the graph is 329 crates without it and 367 with it, and
-# torch-sys and cudarc are absent from the smaller one. safetensors is in both -- it is
-# asserted below anyway as a canary, not as evidence that the scope changed.
-#
-# ORDER MATTERS: --all-features is a top-level cargo-deny option, not a `check`
-# option. `cargo deny check --all-features ...` is a parse error ("unexpected
-# argument '--all-features' found"), so an earlier attempt at this restore never ran
-# the gate at all. The assertion below is here because a comment could not stop that.
-# `--layout crate` prints one `name@version (n): licenses` line per crate, so the
-# crate name is anchored with @, not with a space.
-missing=""
-graph="$(cargo deny --all-features list --layout crate)"
-for c in torch-sys cudarc safetensors; do
-  grep -qE "^$c@" <<< "$graph" || missing="$missing $c"
-done
-if [ -n "$missing" ]; then
-  echo "cargo-deny is not seeing the optional-feature graph; missing:$missing" >&2
-  echo "check that --all-features is passed BEFORE the check subcommand" >&2
-  exit 1
-fi
-echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
-cargo deny --all-features check bans licenses sources
     # Lambda workspaces (deploy/lambda: standalone Cargo workspaces, not part of the jope build)
 bash deploy/ci/lambda.sh
 python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py

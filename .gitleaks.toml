@@ -10,4 +10,125 @@ path = '''(^|/)[^/]*\.env$'''
 # docs/archive/python-archive-manifest.json). Its entry stays: `gitleaks detect` in
 # deploy/ci/check.sh scans git history, where the file and its synthetic key fixture remain.
 paths = ['''^docs/legacy/''', '''\.sha256$''', '''SHA256SUMS$''', '''^python/src/jope/research/test_workspace_sync\.py$''']  # synthetic 'BEGIN OPENSSH PRIVATE KEY header\nsecret' fixture
-regexes = ['''[0-9a-f]{64}''', '''[0-9a-f]{40}''', '''EvaluationKey\.v2''', '''ObservationKeyV2''']  # content digests and git shas are not credentials
+# A credential may itself be a 40/64-character hexadecimal value. Never allow
+# findings solely because they contain a content hash or Git object ID.
+regexes = ['''^EvaluationKey\.v2$''', '''^ObservationKeyV2$''']  # exact documented schema/type fixtures
+
+
+# These public digest fields were reviewed in the retained full-HEAD findings.
+# Each exception requires BOTH an exact provenance file and an exact digest
+# assignment match. It cannot allow a different credential on the same line.
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 1"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^python/src/jope/policy/tokens\.py$''']
+regexes = ['''^ERATION31_TOKEN_SHA256 = "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 2"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_pins\.json$''']
+regexes = ['''^MAX_TOKENS_PER_CHUNK": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 3"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/release/release\.sh$''']
+regexes = ['''^PUBKEY_SHA256=[0-9a-f]{64}$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 4"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/dl-flywheel/pipelines/final_capture_v1/SOURCE_PINS\.json$''']
+regexes = ['''^dsl_tokenizer\.py": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 5"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/dl-flywheel/docs/continuous-runtime-pins-20261009\.json$''', '''^deploy/dl-flywheel/docs/native-runtime-pins-20261009\.json$''']
+regexes = ['''^dsl_tokenizer\.py":"[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 6"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/dl-trainonly/lane/src/dl_training_v1/tools/p2_decisions\.py$''']
+regexes = ['''^family_keys": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 7"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/selected-config-draft-review\.json$''']
+regexes = ['''^program_key": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 8"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/internal/kernel2/receipts/evaluator-identity-3ec654cb/receipt\.json$''', '''^docs/internal/kernel2/receipts/evaluator-identity-v0\.2\.0/receipt\.json$''']
+regexes = ['''^score_key":"[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 9"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/lambda/SNAPSHOT\.json$''']
+regexes = ['''^secrets_existence_sha256": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 10"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/internal/clover/gp-expansion-protocol\.v1\.json$''', '''^docs/internal/clover/gp-fixture-inputs\.v1\.json$''']
+regexes = ['''^tokenizer_sha256": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 11"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1C/0001\.v1\.json$''', '''^crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1D/0001\.v1\.json$''']
+regexes = ['''^tokens": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 12"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^crates/jope-engine/assets/grammar/featmath-jain-v1\.json$''', '''^crates/jope-engine/assets/grammar/featmath\.json$''', '''^deploy/kernel-v1/source/assets/grammar/featmath\.json$''']
+regexes = ['''^tokens\.py": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 13"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1A/0003\.v1\.json$''', '''^crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1A/0004\.v1\.json$''', '''^crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1C/0003\.v1\.json$''', '''^crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1C/0004\.v1\.json$''', '''^crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1C/0005\.v1\.json$''']
+regexes = ['''^tokens\.rs": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 14"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^crates/jope-learning/tests/fixtures/support-policy-v1\.json$''']
+regexes = ['''^trace_tokens_sha256":"[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 15"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/selected-qualification-v3/actual-readback-summary\.json$''']
+regexes = ['''^valuation_key": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "Reviewed public provenance digest context 16"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/dl-flywheel/docs/native-dispatch-qualification-20261009\.json$''', '''^docs/internal/kernel2/receipts/evaluator-identity-3ec654cb/receipt\.json$''', '''^docs/internal/kernel2/receipts/evaluator-identity-v0\.2\.0/receipt\.json$''']
+regexes = ['''^valuation_key":"[0-9a-f]{64}"$''']

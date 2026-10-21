@@ -28,7 +28,7 @@ csv = "1.4"
 flate2 = "1"
 object_store = { version = "0.14", default-features = false, features = ["fs"] }
 # Pure-Rust zstd decoder (already in the workspace via starforge) for `.zst` inputs.
-ruzstd = "0.8"
+ruzstd = "0.9.1"
 # The rustls crypto provider is named here (and handed to `ureq` in `fetch.rs`) so the
 # workspace resolves exactly one: `ureq` is built with `rustls-no-provider`, which keeps
 # `rustls/ring` out of the graph alongside the `rustls/aws_lc_rs` that jainnode and

@@ -1019,7 +1019,10 @@ fn checkpoint_shape(path: &Path) -> Result<CheckpointShape> {
     let file = File::open(path).with_context(|| format!("open checkpoint {}", path.display()))?;
     let mut archive = zip::ZipArchive::new(std::io::BufReader::new(file))
         .with_context(|| format!("checkpoint is not a torch archive: {}", path.display()))?;
-    let names = archive.file_names().map(str::to_owned).collect::<Vec<_>>();
+    let names = archive
+        .file_names()
+        .map(|name| name.map(|name| name.into_owned()))
+        .collect::<std::result::Result<Vec<_>, _>>()?;
     let mut tensors = 0usize;
     let mut pickle = None;
     for name in &names {

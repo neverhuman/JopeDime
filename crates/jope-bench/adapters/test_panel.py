@@ -59,6 +59,68 @@ def request(task="multiclass"):
 
 
 class PanelTests(unittest.TestCase):
+    def test_probability_matrix_budget_is_checked_before_model_fit_or_predict(self):
+        data = request("multiclass")
+        data["columns"] = data["columns"][:1]
+        data["train"]["features"] = [row[:1] for row in data["train"]["features"]]
+        data["predict"]["features"] = [["1"]] * 30
+        # Input matrices total 72 cells, but 30 x 3 probabilities exceed 80.
+        with patch.object(_panel, "MAX_TRANSFORMED_CELLS", 80, create=True):
+            create = unittest.mock.Mock(side_effect=lambda _: ReversedClassifier())
+            with self.assertRaisesRegex(ValueError, "transformed matrix"):
+                _panel.fit(data, create, "toy 1")
+            create.assert_not_called()
+            model = unittest.mock.Mock()
+            with self.assertRaisesRegex(ValueError, "transformed matrix"):
+                _panel.predictions(model, np.zeros((30, 2)), "multiclass", data["classes"])
+            model.predict_proba.assert_not_called()
+
+    def test_run_rejects_duplicate_json_before_model_construction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request_path, result_path = root / "request.json", root / "result.json"
+            raw = json.dumps(request("regression"))
+            raw = raw.replace('"contract":', '"contract":"untrusted-first-value","contract":', 1)
+            request_path.write_text(raw)
+            create = unittest.mock.Mock(side_effect=lambda _: ToyRegressor())
+            with patch.object(sys, "argv", ["adapter", "--panel-v2", str(request_path), str(result_path)]):
+                self.assertEqual(_panel.run(create, lambda: "toy 1"), 1)
+            create.assert_not_called()
+            self.assertFalse(result_path.exists())
+            self.assertFalse(result_path.with_name("result.json.fitted.pkl").exists())
+
+    def test_json_document_rejects_duplicate_fields_and_nonfinite_constants(self):
+        for raw in (b'{"contract":"first","contract":"second"}',
+                    b'{"train":{"targets":[],"targets":["replacement"]}}',
+                    b'{"unknown":NaN}', b'{"unknown":Infinity}', b'{"unknown":1e999}'):
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                _panel.parse_request(raw)
+        data = request("regression")
+        self.assertEqual(_panel.parse_request(json.dumps(data).encode()), data)
+
+    def test_transformed_matrix_budget_is_checked_before_model_construction(self):
+        data = request("regression")
+        # Two numeric outputs + five selected categories, across nine total rows.
+        with patch.object(_panel, "MAX_TRANSFORMED_CELLS", 62, create=True), \
+                patch.object(np, "zeros", wraps=np.zeros) as allocate:
+            create = unittest.mock.Mock(side_effect=lambda _: ToyRegressor())
+            with self.assertRaisesRegex(ValueError, "transformed matrix"):
+                _panel.fit(data, create, "toy 1")
+            create.assert_not_called()
+            allocate.assert_not_called()
+        with patch.object(_panel, "MAX_TRANSFORMED_CELLS", 63, create=True):
+            result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
+            self.assertEqual(_panel.replay(artifact, checksum, data["predict"]["features"]), result)
+
+    def test_transform_refuses_oversized_or_invalid_width_before_numpy_allocation(self):
+        state = _panel.fit_preprocessing(request()["columns"], request()["train"]["features"])
+        for width in (0, -1, True, getattr(_panel, "MAX_TRANSFORMED_CELLS", 16 * 1024 * 1024) + 1):
+            with self.subTest(width=width), patch.object(np, "zeros") as allocate:
+                invalid = dict(state, width=width)
+                with self.assertRaisesRegex(ValueError, "transformed matrix"):
+                    _panel.transform(invalid, [["1", "a"]])
+                allocate.assert_not_called()
+
     def test_train_only_preprocessing_preserves_literal_categories_and_null(self):
         data = request()
         _panel.validate_request(data)

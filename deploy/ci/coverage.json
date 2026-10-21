@@ -236,12 +236,112 @@
       "lanes": [],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
     },
+    "benchmark:vendor/security/candle-core-0.11.0/benches/bench_main.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/candle-core-0.11.0/examples/cuda_sum_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/gemm-0.18.2/benches/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/gemm-0.19.0/benches/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/pulp-0.22.3/benches/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/bert_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/bpe_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/layout_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/llama3_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/unigram_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
     "feature:feat-math/default": {
       "discovery": {
-        "kind": "feature",
         "dependencies": [
           "fitted-cpp"
-        ]
+        ],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -253,8 +353,8 @@
     },
     "feature:feat-math/fitted-cpp": {
       "discovery": {
-        "kind": "feature",
-        "dependencies": []
+        "dependencies": [],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -341,8 +441,8 @@
     },
     "feature:jope-appliance/default": {
       "discovery": {
-        "kind": "feature",
-        "dependencies": []
+        "dependencies": [],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -354,10 +454,10 @@
     },
     "feature:jope-appliance/dev-keys": {
       "discovery": {
-        "kind": "feature",
         "dependencies": [
           "jope-assets/dev-keys"
-        ]
+        ],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -367,8 +467,8 @@
     },
     "feature:jope-appliance/embedded": {
       "discovery": {
-        "kind": "feature",
-        "dependencies": []
+        "dependencies": [],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -404,8 +504,8 @@
     },
     "feature:jope-assets/default": {
       "discovery": {
-        "kind": "feature",
-        "dependencies": []
+        "dependencies": [],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -417,8 +517,8 @@
     },
     "feature:jope-assets/dev-keys": {
       "discovery": {
-        "kind": "feature",
-        "dependencies": []
+        "dependencies": [],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -431,10 +531,10 @@
     },
     "feature:jope-assets/pack": {
       "discovery": {
-        "kind": "feature",
         "dependencies": [
           "dep:zstd"
-        ]
+        ],
+        "kind": "feature"
       },
       "dispositions": [],
       "lanes": [
@@ -1443,6 +1543,16 @@
       ],
       "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
     },
+    "python:deploy/ci/test-browser-deps.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Actual offline deb extraction, cache content/type/path refusal and authorized reuse controls in hygiene; no host package install or network in fixtures."
+    },
     "python:deploy/ci/test-dl-offline-group.py": {
       "discovery": {
         "kind": "python-family"
@@ -1462,6 +1572,16 @@
         "hygiene"
       ],
       "scope": "Direct stdlib unittest execution of CPU runner admission/resources, independent family failure retention, and zero-SHA push-base fallback to origin/main."
+    },
+    "python:deploy/ci/test-gitleaks-config.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Real gitleaks synthetic credential/digest/context controls, including same-file and same-line bypass refusals; scanner absence/error fails hygiene. Full HEAD scan is separate."
     },
     "python:deploy/ci/test-install-private.py": {
       "discovery": {
@@ -1513,6 +1633,16 @@
       ],
       "scope": "Direct stdlib unittest execution of receipt identity, failure retention and evidence integrity."
     },
+    "python:deploy/ci/test-rendered-ux-receipt.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Rendered evidence source/run/attempt binding, nonzero complete desktop/mobile inventory and screenshot/geometry/axe tampering/refusal controls in hygiene."
+    },
     "python:deploy/ci/test-results.py": {
       "discovery": {
         "kind": "python-family"
@@ -1533,6 +1663,16 @@
       ],
       "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
     },
+    "python:deploy/ci/test-security-lane.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Scanner availability, optional-feature graph canaries and workflow/secret/advisory/frontend failure propagation controls in hygiene; mocks do not replace actual scans."
+    },
     "python:deploy/ci/test-status.py": {
       "discovery": {
         "kind": "python-family"
@@ -1552,6 +1692,16 @@
         "hygiene"
       ],
       "scope": "Direct stdlib unittest execution verifies required-training collection/JUnit gates reject missing, skipped, failed, stale or renamed cases."
+    },
+    "python:deploy/ci/test-vendor-security.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Descriptor-anchored exact reviewed vendor inventory/hash/size checks and 28 fail-closed tamper controls; no substitute for Git review of provenance or numerical qualification."
     },
     "python:deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py": {
       "discovery": {
@@ -4161,13 +4311,13 @@
     },
     "target:feat-math/test/advanced_v3_fitted_cpp": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/feat-math/tests/advanced_v3_fitted_cpp.rs",
-        "test": true,
         "doctest": false,
+        "kind": "target",
         "required_features": [
           "fitted-cpp"
-        ]
+        ],
+        "source": "crates/feat-math/tests/advanced_v3_fitted_cpp.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -5898,11 +6048,11 @@
     },
     "target:jope-appliance/bin/jopedime": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-appliance/src/main.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/src/main.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -5915,11 +6065,11 @@
     },
     "target:jope-appliance/custom-build/build-script-build": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-appliance/build.rs",
-        "test": false,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/build.rs",
+        "test": false
       },
       "dispositions": [],
       "lanes": [
@@ -5930,11 +6080,11 @@
     },
     "target:jope-appliance/test/single_file": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-appliance/tests/single_file.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/single_file.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -5997,11 +6147,11 @@
     },
     "target:jope-assets/custom-build/build-script-build": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-assets/build.rs",
-        "test": false,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/build.rs",
+        "test": false
       },
       "dispositions": [],
       "lanes": [
@@ -6012,11 +6162,11 @@
     },
     "target:jope-assets/lib/jope_assets": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-assets/src/lib.rs",
-        "test": true,
         "doctest": true,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/src/lib.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -6029,11 +6179,11 @@
     },
     "target:jope-assets/test/decode_bounds": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-assets/tests/decode_bounds.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/tests/decode_bounds.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -6045,11 +6195,11 @@
     },
     "target:jope-assets/test/envelope": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-assets/tests/envelope.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/tests/envelope.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -7799,11 +7949,11 @@
     },
     "target:jope-dist/bin/jope-dist": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-dist/src/main.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/src/main.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -7816,11 +7966,11 @@
     },
     "target:jope-dist/lib/jope_dist": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-dist/src/lib.rs",
-        "test": true,
         "doctest": true,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/src/lib.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -7833,11 +7983,11 @@
     },
     "target:jope-dist/test/closure": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-dist/tests/closure.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/closure.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -7849,11 +7999,11 @@
     },
     "target:jope-dist/test/dependency_fence": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-dist/tests/dependency_fence.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/dependency_fence.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -7865,11 +8015,11 @@
     },
     "target:jope-dist/test/reproducible_pack": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-dist/tests/reproducible_pack.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/reproducible_pack.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -7881,11 +8031,11 @@
     },
     "target:jope-dist/test/schemas": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-dist/tests/schemas.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/schemas.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -11030,6 +11180,22 @@
       ],
       "scope": "Explicit jope-policy --features testing under the main nextest profile."
     },
+    "target:jope-policy/test/npz_zip9_contract": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-policy/tests/npz_zip9_contract.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "CPU ZIP9/Candle serialization contracts for exact tensor bits, names, shapes, compressed reads and malformed/truncated refusal; no model/GPU training qualification."
+    },
     "target:jope-policy/test/scorer_dependencies": {
       "discovery": {
         "doctest": false,
@@ -11228,11 +11394,11 @@
     },
     "target:jope-runtime/lib/jope_runtime": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-runtime/src/lib.rs",
-        "test": true,
         "doctest": true,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/src/lib.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -11245,11 +11411,11 @@
     },
     "target:jope-runtime/test/method_roster": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-runtime/tests/method_roster.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/method_roster.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
@@ -11261,11 +11427,11 @@
     },
     "target:jope-runtime/test/offline_fit_predict": {
       "discovery": {
-        "kind": "target",
-        "source": "crates/jope-runtime/tests/offline_fit_predict.rs",
-        "test": true,
         "doctest": false,
-        "required_features": []
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/offline_fit_predict.rs",
+        "test": true
       },
       "dispositions": [],
       "lanes": [
