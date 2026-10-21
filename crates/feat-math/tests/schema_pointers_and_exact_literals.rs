@@ -2,16 +2,10 @@
 //! lift the 8-slot/64-column ceiling (`0, 7, 8, 17, 63, 511`), and preserve exact IEEE-754
 //! `f64` literals alongside quantized bins.
 
-#[path = "../src/combinators/residual.rs"]
-#[allow(dead_code)]
-mod residual;
-#[path = "../src/combinators/route.rs"]
-#[allow(dead_code)]
-mod route;
-#[path = "../src/combinators/union.rs"]
-#[allow(dead_code)]
-mod union;
-
+use feat_math::combinators::union::{
+    Action, ColumnRef as DagColumnRef, DenseInput, Limits, Node as DagNode, Program as DagProgram,
+    Schema as DagSchema,
+};
 use feat_math::kernel::ir::{
     canon, Constraints, Dataset, ExactF64, ExecutionStats, Expression, FitPlan, InputIdentity,
     InputSchema, Node as IrNode, OperatorRef, ProgramGraph, RowClosure, RowSemantics,
@@ -19,10 +13,6 @@ use feat_math::kernel::ir::{
 use feat_math::numeric_v2::{NumericModelV2, NumericProfileV2, TransformV2};
 use feat_math::{GenomeIr, Rows};
 use std::collections::{BTreeMap, BTreeSet};
-use union::{
-    Action, ColumnRef as DagColumnRef, DenseInput, Limits, Node as DagNode, Program as DagProgram,
-    Schema as DagSchema,
-};
 
 fn limits() -> Constraints {
     Constraints::default()
