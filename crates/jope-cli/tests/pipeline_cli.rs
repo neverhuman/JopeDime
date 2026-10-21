@@ -580,7 +580,7 @@ fn kernel2_lm_refinement_records_its_selection_and_verifies_evidence() {
 }
 // laneD:B17-lm-refinement end
 /// The live `jope.invent.progress.v1` feed on stderr: one compact JSON object per line, numbers
-/// only, evaluations never decreasing, and a last line that is the end state.
+/// only and evaluations never decreasing. Delivery is best-effort, including the done update.
 fn assert_invent_progress(stderr: &[u8], cuts: u64, eval_budget: u64) {
     let text = String::from_utf8(stderr.to_vec()).unwrap();
     let lines: Vec<Value> = text
@@ -588,10 +588,17 @@ fn assert_invent_progress(stderr: &[u8], cuts: u64, eval_budget: u64) {
         .filter_map(|line| serde_json::from_str::<Value>(line).ok())
         .filter(|line| line["schema"] == "jope.invent.progress.v1")
         .collect();
-    assert!(!lines.is_empty(), "no progress lines on stderr: {text}");
     let mut evaluations = 0;
+    let mut previous_sequence = None;
     for line in &lines {
         let object = line.as_object().unwrap();
+        let sequence = line["sequence"].as_u64().unwrap();
+        assert!(previous_sequence.is_none_or(|previous| sequence > previous));
+        previous_sequence = Some(sequence);
+        assert!(matches!(
+            line["phase"].as_str(),
+            Some("exploration" | "comparison" | "done")
+        ));
         for field in [
             "cut",
             "cuts",
@@ -629,10 +636,6 @@ fn assert_invent_progress(stderr: &[u8], cuts: u64, eval_budget: u64) {
         );
         evaluations = now;
     }
-    let last = lines.last().unwrap();
-    assert_eq!(last["phase"], "done");
-    assert!(last["evaluations"].as_u64().unwrap() > 0);
-    assert!(last["best_hold_rmse"].is_number());
     assert!(!text.contains("(pipe"), "program source on stderr");
 }
 
@@ -658,10 +661,14 @@ fn invent_prints_candidates_and_refuses_bad_input_as_json() {
         fake_git(dir.path(), &marker).display(),
         std::env::var("PATH").unwrap()
     );
-    let invent = |target: &str, work: &Path| {
-        jope()
-            .env("PATH", &path)
-            .args(["pipeline", "invent", "--train", train.to_str().unwrap()])
+    let invent = |target: &str, work: &Path, quiet: bool| {
+        let mut command = jope();
+        command.env("PATH", &path).args(["pipeline", "invent"]);
+        if quiet {
+            command.arg("--no-progress");
+        }
+        command
+            .args(["--train", train.to_str().unwrap()])
             .args(["--target", target, "--work-dir", work.to_str().unwrap()])
             .args([
                 "--budget",
@@ -677,7 +684,7 @@ fn invent_prints_candidates_and_refuses_bad_input_as_json() {
     };
 
     let work = dir.path().join("work");
-    let result = invent("target", &work);
+    let result = invent("target", &work, false);
     assert!(
         result.status.success(),
         "{}",
@@ -697,8 +704,22 @@ fn invent_prints_candidates_and_refuses_bad_input_as_json() {
     assert!(!marker.exists(), "git was spawned");
     assert_invent_progress(&result.stderr, 2, 24);
 
+    let quiet = invent("target", &dir.path().join("quiet"), true);
+    assert!(
+        quiet.status.success(),
+        "{}",
+        String::from_utf8_lossy(&quiet.stderr)
+    );
+    let quiet_doc: Value = serde_json::from_slice(&quiet.stdout).unwrap();
+    assert_eq!(quiet_doc["schema"], "jope.candidates.v1");
+    assert_eq!(quiet_doc["ok"], true);
+    assert!(!String::from_utf8_lossy(&quiet.stderr)
+        .lines()
+        .any(|line| serde_json::from_str::<Value>(line)
+            .is_ok_and(|value| value["schema"] == "jope.invent.progress.v1")));
+
     let refused = dir.path().join("refused");
-    let result = invent("missing", &refused);
+    let result = invent("missing", &refused, false);
     assert_eq!(result.status.code(), Some(2));
     let doc: Value = serde_json::from_slice(&result.stdout).unwrap();
     assert_eq!(doc["schema"], "jope.candidates.v1");

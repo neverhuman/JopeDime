@@ -141,9 +141,11 @@ it here cross the boundary, not predictions.
   `{"schema": "jope.candidates.v1", "ok": false, "error": ...}`); 143 on SIGTERM. `--source-commit`
   is reported as `git_sha`, and `git` is never spawned.
 - **Live progress (`jope.invent.progress.v1`).** While it searches, `invent` writes progress to
-  **stderr**, one compact JSON object per newline-terminated line, each written with a single
-  write and flushed; `--no-progress` turns it off. stdout and the work directory are unchanged.
-  Lines carry numbers only, never program source, genomes, column names or data values:
+  **stderr** as best-effort compact JSON lines; `--no-progress` turns it off. The stdout
+  `jope.candidates.v1` schema/output channel and work-directory layout are unchanged. Progress
+  scheduling can affect wall timings and a search whose seconds deadline binds.
+  Aside from fixed schema/phase labels, fields contain numbers or null: no program source,
+  genomes, column names or raw cell values:
 
   ```json
   {"schema":"jope.invent.progress.v1","sequence":5,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.92,"seconds_budget":240.0}
@@ -160,11 +162,18 @@ it here cross the boundary, not predictions.
   `hold RMSE` lines, and `best_hold_r2` is that evaluation's held-out R^2; both are `null` until
   something measures. `elapsed_s` is wall seconds since the search started. `phase` is
   `exploration`, `comparison` or `done`, and `sequence` numbers the lines from 0; both follow the
-  `jope.run-event/v1` envelope the terminal-experience plan proposes. Cadence: at most one line
-  per second, plus one whenever the best held-out RMSE improves, one at the end of each cut's
-  exploration and a final `done` line, so the last line is the end state. A cancelled or
-  refused run ends without a `done` line. Other diagnostics may share stderr: keep only lines
-  that parse as JSON with this `schema`.
+  `jope.run-event/v1` envelope the terminal-experience plan proposes. At generation/comparison
+  boundaries, updates are attempted at most once per second unless a new best was observed;
+  exploration improvements within a generation are coalesced. Cut-end and search-end `done`
+  updates are also attempted. One process-wide worker drains a fixed 64-line queue, with at
+  most 1024 bytes per line plus its current line, using an owned duplicate stderr handle.
+  Search threads never wait for stderr; full/disconnected queues drop updates, and process
+  exit does not wait for queued writes. Sequence gaps and a missing final `done` are expected
+  under backpressure or at exit. Writes are not promised atomic and other diagnostics may
+  interleave: keep only complete lines that parse as JSON with this `schema`. A `done` line
+  describes search completion, not final candidate publication; stdout/exit status remain
+  authoritative for the command outcome. The best score is a single selection-cut measurement,
+  not the final cross-cut ranking or an untouched test score.
 
 ## Targeted search (`jope pipeline evolve`)
 
