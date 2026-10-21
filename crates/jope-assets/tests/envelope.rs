@@ -193,9 +193,8 @@ fn every_tampered_region_is_refused() {
     };
     let open = |p: &Path| Package::open_with_keys(p, &trusted());
 
-    // Executable: opens (assets do not depend on it), and the full check refuses.
-    let package = open(&flip(10)).unwrap().unwrap();
-    assert!(matches!(package.verify_full(), Err(AssetError::CodeHash)));
+    // Executable: authenticated on every open, so it cannot be swapped under a signed manifest.
+    assert!(matches!(open(&flip(10)), Err(AssetError::CodeHash)));
     // Padding after the executable.
     let package = open(&flip(footer.base_executable_len + 1))
         .unwrap()
@@ -318,4 +317,37 @@ fn unknown_ids_are_missing_and_the_trait_reads_the_same_bytes() {
         package.read_entry(id).unwrap().bytes()
     );
     assert_eq!(source.manifest().profile, "fixture");
+}
+
+/// The development key signs only development-scope packages, and a release key never does.
+#[test]
+fn signer_role_must_match_the_scope() {
+    let dir = tempfile::tempdir().unwrap();
+    let code = code();
+    let mut public = options();
+    public.scope = Scope::Public;
+    let staged = stage(&code, inputs(), &public).unwrap();
+    let path = dir.path().join("public-by-development-key");
+    write_new(&assemble_development(&code, &staged).unwrap(), &path).unwrap();
+    assert!(matches!(
+        Package::open_with_keys(&path, &trusted()),
+        Err(AssetError::Manifest(reason)) if reason.contains("may not sign")
+    ));
+    // The same key presented as a release key may not sign a development package.
+    let fixture = build(dir.path());
+    let as_release =
+        jope_assets::TrustedKey::from_pem(&development_key().to_pem(), "release").unwrap();
+    assert!(matches!(
+        Package::open_with_keys(&fixture, std::slice::from_ref(&as_release)),
+        Err(AssetError::Manifest(_))
+    ));
+    let release_signed = dir.path().join("public-by-release-key");
+    write_new(
+        &assemble_development(&code, &staged).unwrap(),
+        &release_signed,
+    )
+    .unwrap();
+    assert!(Package::open_with_keys(&release_signed, &[as_release])
+        .unwrap()
+        .is_some());
 }

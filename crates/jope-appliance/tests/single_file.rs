@@ -330,6 +330,52 @@ fn every_failure_class_has_its_exit_status() {
         )),
         5
     );
+    // A receipt may not overwrite an input or the output; nothing is written.
+    let train_before = std::fs::read(d.join("train.csv")).unwrap();
+    for receipt in ["train.csv", "m-alias.jope"] {
+        assert_eq!(
+            code(&run(
+                &exe,
+                d,
+                &[
+                    "fit",
+                    "--train",
+                    "train.csv",
+                    "--target",
+                    "y",
+                    "--output",
+                    "m-alias.jope",
+                    "--method",
+                    "ridge",
+                    "--receipt",
+                    receipt
+                ],
+            )),
+            2,
+            "{receipt}"
+        );
+    }
+    assert_eq!(std::fs::read(d.join("train.csv")).unwrap(), train_before);
+    assert!(!d.join("m-alias.jope").exists());
+    // A time limit too large for a Duration is an input error, not a panic.
+    assert_eq!(
+        code(&run(
+            &exe,
+            d,
+            &[
+                "fit",
+                "--train",
+                "train.csv",
+                "--target",
+                "y",
+                "--output",
+                "m",
+                "--time-limit-seconds",
+                "1e20"
+            ],
+        )),
+        2
+    );
     // 7: output.
     assert_eq!(
         code(&run(

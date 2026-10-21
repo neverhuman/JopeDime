@@ -1,10 +1,11 @@
 //! `jopedime`: one signed executable that fits and predicts tabular models with native Rust
 //! methods (deploy/appliance/README.md).
 //!
-//! Every command authenticates the executable's own package first (footer, manifest, signature);
-//! an integrity failure is fatal and never becomes a fallback. Exit statuses follow
-//! SPECIFICATION.md §13.3: 0 success, 2 input, 3 integrity, 4 backend, 5 budget, 6 numerical,
-//! 7 output.
+//! Every command that fits, predicts, verifies or prints notices first authenticates the
+//! executable's own package (footer, manifest, signature, executable region); an integrity
+//! failure is fatal there and never becomes a fallback. `doctor` reports it with exit 3;
+//! `--version --json` reports it in its output. Exit statuses follow SPECIFICATION.md §13.3:
+//! 0 success, 2 input, 3 integrity, 4 backend, 5 budget, 6 numerical, 7 output.
 #![forbid(unsafe_code)]
 
 mod bootstrap;
@@ -34,6 +35,9 @@ use std::time::{Duration, Instant};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// The status a run will exit with, so a closed stdout while printing its receipt keeps it.
+static PENDING_EXIT: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
 /// Write to stdout. A closed pipe (`jopedime licenses | head`) ends the program quietly instead
 /// of panicking; any other write failure is an output failure.
 fn out(text: &str) {
@@ -44,7 +48,9 @@ fn out(text: &str) {
         .and_then(|()| stdout.flush())
     {
         if error.kind() == std::io::ErrorKind::BrokenPipe {
-            std::process::exit(0);
+            std::process::exit(i32::from(
+                PENDING_EXIT.load(std::sync::atomic::Ordering::SeqCst),
+            ));
         }
         eprintln!("jopedime: stdout: {error}");
         std::process::exit(i32::from(FailureKind::Output.exit_code()));
@@ -234,6 +240,10 @@ struct Run {
     started: Instant,
     common: CommonArgs,
     receipt: Receipt,
+    /// The run's budget once prepared, so a failed run still records what it consumed.
+    budget: Option<Budget>,
+    /// Whether `--receipt` names no input or output (checked before any work).
+    receipt_allowed: bool,
 }
 
 impl Run {
@@ -242,6 +252,8 @@ impl Run {
             command,
             started: Instant::now(),
             common: common.clone(),
+            budget: None,
+            receipt_allowed: false,
             receipt: Receipt {
                 schema: jope_runtime::receipt::SCHEMA,
                 command: command.to_owned(),
@@ -279,12 +291,10 @@ impl Run {
     fn budget(&self) -> anyhow::Result<Budget> {
         let limit = match self.common.time_limit_seconds {
             None => None,
-            Some(s) if s.is_finite() && s >= 0.0 => Some(Duration::from_secs_f64(s)),
-            Some(_) => {
-                return Err(Failure::input(
-                    "--time-limit-seconds must be a non-negative number",
-                ))
-            }
+            // Negative, NaN, infinite or too large for a Duration: an input error, never a panic.
+            Some(s) => Some(Duration::try_from_secs_f64(s).map_err(|_| {
+                Failure::input("--time-limit-seconds must be a non-negative number of seconds")
+            })?),
         };
         Ok(Budget::new(limit, self.common.threads))
     }
@@ -307,7 +317,20 @@ impl Run {
         self.receipt.device = backend::select(request)?;
         let budget = self.budget()?;
         self.receipt.budget = budget.record();
+        self.budget = Some(budget.clone());
         Ok((package, budget))
+    }
+
+    /// Refuse a receipt or output path that names an input, before any work. A receipt that
+    /// would overwrite an input or the output is never written.
+    fn refuse_aliasing(&mut self, output: &Path, inputs: &[&Path]) -> anyhow::Result<()> {
+        if let Some(receipt) = self.common.receipt.clone() {
+            let mut protected = inputs.to_vec();
+            protected.push(output);
+            io::refuse_aliasing(&receipt, &protected)?;
+        }
+        self.receipt_allowed = true;
+        io::refuse_aliasing(output, inputs)
     }
 
     fn created_by(&self) -> CreatedBy {
@@ -388,8 +411,8 @@ impl Run {
     }
 
     /// Finish the receipt, write and print it, and return the exit status.
-    fn finish(mut self, result: anyhow::Result<()>, budget: Option<&Budget>) -> ExitCode {
-        if let Some(budget) = budget {
+    fn finish(mut self, result: anyhow::Result<()>) -> ExitCode {
+        if let Some(budget) = &self.budget {
             self.receipt.budget = budget.record();
         }
         self.receipt.timings.total_seconds = self.started.elapsed().as_secs_f64();
@@ -410,7 +433,13 @@ impl Run {
         };
         let value = json!(self.receipt);
         let mut code = code;
-        if let Some(path) = &self.common.receipt {
+        PENDING_EXIT.store(code, std::sync::atomic::Ordering::SeqCst);
+        if let Some(path) = self
+            .common
+            .receipt
+            .as_ref()
+            .filter(|_| self.receipt_allowed)
+        {
             let text = serde_json::to_vec_pretty(&value).expect("receipt serializes");
             if let Err(error) = io::write_atomic("receipt", path, &text) {
                 eprintln!("jopedime: {error:#}");
@@ -456,9 +485,8 @@ fn summary_line(command: &str, receipt: &Receipt) {
 
 fn run_fit(train: &TrainArgs, output: &Path, common: &CommonArgs) -> ExitCode {
     let mut run = Run::new("fit", common);
-    let mut budget = None;
     let result = (|| -> anyhow::Result<()> {
-        io::refuse_aliasing(output, &[&train.train])?;
+        run.refuse_aliasing(output, &[&train.train])?;
         let (_, b) = run.prepare()?;
         let fitted = run.fit(train, &b)?;
         let started = Instant::now();
@@ -467,17 +495,15 @@ fn run_fit(train: &TrainArgs, output: &Path, common: &CommonArgs) -> ExitCode {
             .outputs
             .push(io::write_atomic("model", output, &bytes)?);
         run.receipt.timings.write_seconds += started.elapsed().as_secs_f64();
-        budget = Some(b);
         Ok(())
     })();
-    run.finish(result, budget.as_ref())
+    run.finish(result)
 }
 
 fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -> ExitCode {
     let mut run = Run::new("predict", common);
-    let mut budget = None;
     let result = (|| -> anyhow::Result<()> {
-        io::refuse_aliasing(output, &[model, input])?;
+        run.refuse_aliasing(output, &[model, input])?;
         let (_, b) = run.prepare()?;
         let started = Instant::now();
         let limit = Limits::default().max_model_bytes;
@@ -515,10 +541,9 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
             features: fitted.header.input_schema.len(),
         });
         run.predict(&fitted, input, output, &b)?;
-        budget = Some(b);
         Ok(())
     })();
-    run.finish(result, budget.as_ref())
+    run.finish(result)
 }
 
 fn run_fit_predict(
@@ -528,16 +553,14 @@ fn run_fit_predict(
     common: &CommonArgs,
 ) -> ExitCode {
     let mut run = Run::new("fit-predict", common);
-    let mut budget = None;
     let result = (|| -> anyhow::Result<()> {
-        io::refuse_aliasing(output, &[&train.train, input])?;
+        run.refuse_aliasing(output, &[&train.train, input])?;
         let (_, b) = run.prepare()?;
         let fitted = run.fit(train, &b)?;
         run.predict(&fitted, input, output, &b)?;
-        budget = Some(b);
         Ok(())
     })();
-    run.finish(result, budget.as_ref())
+    run.finish(result)
 }
 
 fn report(result: anyhow::Result<()>) -> ExitCode {

@@ -23,13 +23,27 @@
 //! `signed_prefix_len + 64 + 128` bytes.
 
 use crate::{
-    align_up, decode, limits, manifest::Manifest, sha256_hex, source::VerifiedBytes, verify,
-    AssetError, Entry, KeyId, TrustedKey, ALGORITHM_P256_SHA256, FOOTER_LEN, FORMAT_VERSION, MAGIC,
-    SIGNATURE_LEN,
+    align_up, decode, limits, manifest::Manifest, source::VerifiedBytes, verify, AssetError, Entry,
+    KeyId, TrustedKey, ALGORITHM_P256_SHA256, FOOTER_LEN, FORMAT_VERSION, MAGIC, SIGNATURE_LEN,
 };
 use std::fs::File;
 use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
+
+/// sha256 of `len` bytes of `file` from `offset`, read in bounded chunks.
+fn sha256_region(file: &File, offset: u64, len: u64) -> Result<String, AssetError> {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    let mut buffer = vec![0u8; (8 << 20).min(len as usize).max(1)];
+    let mut at = 0u64;
+    while at < len {
+        let take = buffer.len().min((len - at) as usize);
+        file.read_exact_at(&mut buffer[..take], offset + at)?;
+        hasher.update(&buffer[..take]);
+        at += take as u64;
+    }
+    Ok(hex::encode(hasher.finalize()))
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Footer {
@@ -222,6 +236,21 @@ impl Package {
                 "manifest and footer disagree on the executable length".into(),
             ));
         }
+        // The signer's role must match the audience: the development key signs only
+        // development-scope packages, and a release key never signs one.
+        let development = manifest.scope == crate::Scope::Development;
+        if development != (signer.role == "development") {
+            return Err(AssetError::Manifest(format!(
+                "a {} key may not sign a {} package",
+                signer.role,
+                manifest.scope.as_str()
+            )));
+        }
+        // The executable region is a few MiB: authenticate it on every open, so a package's
+        // signed manifest cannot be grafted onto another executable. The payload stays lazy.
+        if sha256_region(&file, 0, footer.base_executable_len)? != manifest.code.sha256 {
+            return Err(AssetError::CodeHash);
+        }
         Ok(Some(Self {
             file,
             path: path.to_owned(),
@@ -293,16 +322,8 @@ impl Package {
     pub fn verify_full(&self) -> Result<FullReport, AssetError> {
         use sha2::{Digest, Sha256};
         let code_len = self.footer.base_executable_len;
-        let mut hasher = Sha256::new();
-        let mut offset = 0u64;
         let mut buffer = vec![0u8; 8 << 20];
-        while offset < code_len {
-            let take = buffer.len().min((code_len - offset) as usize);
-            self.file.read_exact_at(&mut buffer[..take], offset)?;
-            hasher.update(&buffer[..take]);
-            offset += take as u64;
-        }
-        let code_sha256 = hex::encode(hasher.finalize());
+        let code_sha256 = sha256_region(&self.file, 0, code_len)?;
         if code_sha256 != self.manifest.code.sha256 {
             return Err(AssetError::CodeHash);
         }
@@ -340,11 +361,9 @@ impl Package {
         })
     }
 
-    /// sha256 of the executable region alone.
+    /// sha256 of the executable region alone (authenticated when the package was opened).
     pub fn base_executable_sha256(&self) -> Result<String, AssetError> {
-        let mut code = vec![0u8; self.footer.base_executable_len as usize];
-        self.file.read_exact_at(&mut code, 0)?;
-        Ok(sha256_hex(&code))
+        sha256_region(&self.file, 0, self.footer.base_executable_len)
     }
 }
 

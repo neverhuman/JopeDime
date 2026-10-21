@@ -28,4 +28,8 @@ native = [
   "ring", "aws-lc-sys", "libz-sys", "bzip2-sys", "lzma-sys", "cudarc", "nccl*",
 ]
 
+# Features that must stay off even though their crate is allowed: feature unification could
+# otherwise switch them on without adding a package (AMENDMENTS.md A1).
+denied_features = ["feat-math/fitted-cpp", "jope-assets/pack"]
+
 [native_allowed]

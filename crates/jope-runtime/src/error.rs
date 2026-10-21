@@ -68,6 +68,23 @@ impl Failure {
     }
 }
 
+/// Run numerical work so that a panic inside it becomes an error (a numerical failure) instead
+/// of ending the process: one failing candidate is recorded and the others still run. This is
+/// why the appliance's Cargo profile keeps `panic = "unwind"`.
+pub fn contain<T>(what: &str, work: impl FnOnce() -> anyhow::Result<T>) -> anyhow::Result<T> {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(work)) {
+        Ok(result) => result,
+        Err(payload) => {
+            let message = payload
+                .downcast_ref::<&str>()
+                .map(|s| (*s).to_owned())
+                .or_else(|| payload.downcast_ref::<String>().cloned())
+                .unwrap_or_else(|| "non-text panic payload".to_owned());
+            Err(anyhow::anyhow!("{what} panicked: {message}"))
+        }
+    }
+}
+
 /// The category of an error chain: the outermost [`Failure`], else numerical.
 pub fn kind_of(error: &anyhow::Error) -> FailureKind {
     error
@@ -101,5 +118,21 @@ mod tests {
         .map(FailureKind::exit_code)
         .to_vec();
         assert_eq!(codes, [2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn a_panic_in_numerical_work_becomes_a_numerical_failure() {
+        let error = contain("rust.ridge fold 0", || -> anyhow::Result<()> {
+            panic!("index out of bounds")
+        })
+        .unwrap_err();
+        assert_eq!(kind_of(&error), FailureKind::Numerical);
+        assert!(error
+            .to_string()
+            .contains("rust.ridge fold 0 panicked: index out of bounds"));
+        assert_eq!(contain("ok", || Ok(7)).unwrap(), 7);
+        let input =
+            contain("x", || -> anyhow::Result<()> { Err(Failure::input("bad")) }).unwrap_err();
+        assert_eq!(kind_of(&input), FailureKind::Input);
     }
 }

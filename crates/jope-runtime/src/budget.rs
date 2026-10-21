@@ -1,16 +1,19 @@
 //! Time and thread budgets (SPECIFICATION.md §4.3, §12.3).
 //!
 //! Enforcement in this build is cooperative and stated as such in every receipt: the deadline is
-//! checked before each candidate fold fit and before the final refit, never inside a fit, and
-//! one Rayon pool of `threads` workers carries all parallel numerical work. Same-binary worker
-//! processes with a parent-enforced wall deadline are the later hard-deadline step.
+//! checked before each selection fold fit and before fitting a named method, never inside a fit.
+//! Once selection has chosen a recipe, its final refit always runs and is charged to the run, so
+//! `consumed_seconds` can exceed the limit. One Rayon pool of `threads` workers carries all
+//! parallel numerical work. Same-binary worker processes with a parent-enforced wall deadline are
+//! the later hard-deadline step.
 use crate::Failure;
 use anyhow::Result;
 use serde::Serialize;
 use std::time::{Duration, Instant};
 
 /// How the deadline is enforced, as receipts name it.
-pub const ENFORCEMENT: &str = "cooperative: checked before every fold fit and the final refit";
+pub const ENFORCEMENT: &str = "cooperative: checked before every selection fold fit and before \
+     fitting a named method; the chosen recipe's final refit always runs and is charged";
 
 #[derive(Clone, Debug)]
 pub struct Budget {

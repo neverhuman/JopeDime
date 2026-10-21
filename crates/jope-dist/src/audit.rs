@@ -27,6 +27,10 @@ pub struct Policy {
     /// Approved native exceptions, `name = "reason"`.
     #[serde(default)]
     pub native_allowed: BTreeMap<String, String>,
+    /// `crate/feature` pairs that must not be enabled in the closure (feature unification can
+    /// switch a feature on without adding a package, e.g. `feat-math/fitted-cpp`).
+    #[serde(default)]
+    pub denied_features: Vec<String>,
 }
 
 impl Policy {
@@ -51,13 +55,14 @@ fn matches(pattern: &str, name: &str) -> bool {
     }
 }
 
-/// Package names `cargo tree` resolves for one selection (normal and build edges).
-pub fn closure(
+/// Package names `cargo tree` resolves for one selection (normal and build edges), each with
+/// its enabled features.
+pub fn closure_features(
     manifest: &Path,
     package: &str,
     target: &str,
     features: &[String],
-) -> Result<BTreeSet<String>> {
+) -> Result<BTreeMap<String, BTreeSet<String>>> {
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
     let mut command = Command::new(cargo);
     command.args(["tree", "--locked", "--offline", "--manifest-path"]);
@@ -72,7 +77,7 @@ pub fn closure(
         "--prefix",
         "none",
         "--format",
-        "{p}",
+        "{p}|{f}",
         "--no-default-features",
     ]);
     if !features.is_empty() {
@@ -84,10 +89,36 @@ pub fn closure(
         "cargo tree failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    Ok(String::from_utf8(output.stdout)?
-        .lines()
-        .filter_map(|line| line.split_whitespace().next())
-        .map(str::to_owned)
+    let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    for line in String::from_utf8(output.stdout)?.lines() {
+        let Some((package, enabled)) = line.rsplit_once('|') else {
+            continue;
+        };
+        let Some(name) = package.split_whitespace().next() else {
+            continue;
+        };
+        let entry = out.entry(name.to_owned()).or_default();
+        // A deduplicated repeat prints " (*)" after the features.
+        let enabled = enabled.trim_end_matches(" (*)").trim();
+        entry.extend(
+            enabled
+                .split(',')
+                .filter(|f| !f.is_empty())
+                .map(str::to_owned),
+        );
+    }
+    Ok(out)
+}
+
+/// Package names `cargo tree` resolves for one selection (normal and build edges).
+pub fn closure(
+    manifest: &Path,
+    package: &str,
+    target: &str,
+    features: &[String],
+) -> Result<BTreeSet<String>> {
+    Ok(closure_features(manifest, package, target, features)?
+        .into_keys()
         .collect())
 }
 
@@ -95,9 +126,10 @@ pub fn closure(
 pub fn audit(manifest: &Path, policy: &Policy) -> Result<Vec<String>> {
     let mut violations = Vec::new();
     for features in &policy.feature_sets {
-        let names = closure(manifest, &policy.package, &policy.target, features)?;
+        let resolved = closure_features(manifest, &policy.package, &policy.target, features)?;
+        let names: BTreeSet<&String> = resolved.keys().collect();
         ensure!(
-            names.contains(&policy.package),
+            resolved.contains_key(&policy.package),
             "cargo tree did not resolve {}",
             policy.package
         );
@@ -106,7 +138,15 @@ pub fn audit(manifest: &Path, policy: &Policy) -> Result<Vec<String>> {
         } else {
             features.join(",")
         };
-        for name in &names {
+        for denied in &policy.denied_features {
+            let (krate, feature) = denied
+                .split_once('/')
+                .with_context(|| format!("denied feature {denied:?} is not crate/feature"))?;
+            if resolved.get(krate).is_some_and(|f| f.contains(feature)) {
+                violations.push(format!("[{label}] {denied} is enabled"));
+            }
+        }
+        for name in names {
             if let Some(pattern) = policy.deny.iter().find(|p| matches(p, name)) {
                 violations.push(format!("[{label}] {name} is denied ({pattern})"));
             }

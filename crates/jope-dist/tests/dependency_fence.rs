@@ -21,6 +21,13 @@ fn the_policy_catches_a_research_crate() {
         violations.iter().any(|v| v.contains("jope-pipeline")),
         "{violations:#?}"
     );
+    // jope-bench takes feat-math with default features, so the C++ runtime is on there.
+    assert!(
+        violations
+            .iter()
+            .any(|v| v.contains("feat-math/fitted-cpp is enabled")),
+        "{violations:#?}"
+    );
     // The packer itself carries the zstd C library; the appliance must not.
     let packer = closure(&repo.join("Cargo.toml"), "jope-dist", &policy.target, &[]).unwrap();
     assert!(packer.contains("zstd-sys"));

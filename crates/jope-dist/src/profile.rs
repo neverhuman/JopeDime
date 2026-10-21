@@ -67,6 +67,16 @@ fn cpu_only() -> Vec<String> {
     vec!["cpu".to_owned()]
 }
 
+/// The widest redistribution classes each scope may admit. Development packages run on
+/// untrusted CI runners, so they carry only `permitted` (generated) files.
+pub fn admitted(scope: Scope) -> &'static [&'static str] {
+    match scope {
+        Scope::Development | Scope::Public => &["permitted"],
+        Scope::Internal => &["permitted", "internal", "conditional"],
+        Scope::InternalRestricted => &["permitted", "internal", "conditional", "prohibited"],
+    }
+}
+
 impl Profile {
     /// Parse and check a profile; returns it and the sha256 of its bytes.
     pub fn load(path: &Path) -> Result<(Self, String)> {
@@ -105,10 +115,18 @@ impl Profile {
                 "unknown redistribution class {class}"
             );
         }
-        if profile.scope == "public" {
+        let ceiling = admitted(profile.scope());
+        for class in &profile.redistribution {
             ensure!(
-                profile.redistribution.iter().all(|c| c == "permitted"),
-                "a public profile admits only `permitted` files"
+                ceiling.contains(&class.as_str()),
+                "scope {} admits at most {ceiling:?}; `{class}` is wider",
+                profile.scope
+            );
+        }
+        if profile.redistribution.iter().any(|c| c == "prohibited") {
+            ensure!(
+                profile.owner_ack.is_some(),
+                "a profile admitting `prohibited` files must name an owner_ack"
             );
         }
         let ids: BTreeSet<&str> = profile.components.iter().map(|c| c.id.as_str()).collect();

@@ -226,14 +226,51 @@ pub fn assemble_development(code: &[u8], staged: &Staged) -> std::io::Result<Vec
     assemble(code, staged, &signature, &verify::development_key())
 }
 
-/// Write `bytes` to a new file (refusing to overwrite), mode 0755, synced.
-pub fn write_new(bytes: &[u8], out: &Path) -> std::io::Result<()> {
+/// Write `bytes` to a temporary file beside `out` (mode 0755, synced) and return its path. The
+/// caller checks it and then [`publish`]es it, so a file that fails a check never appears at
+/// `out`.
+pub fn write_temporary(bytes: &[u8], out: &Path) -> std::io::Result<std::path::PathBuf> {
     use std::os::unix::fs::OpenOptionsExt;
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .mode(0o755)
-        .open(out)?;
-    file.write_all(bytes)?;
-    file.sync_all()
+    let name = out
+        .file_name()
+        .ok_or_else(|| std::io::Error::other("output path has no file name"))?;
+    let temp = out.with_file_name(format!(
+        ".{}.{}.tmp",
+        name.to_string_lossy(),
+        std::process::id()
+    ));
+    let result = (|| {
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o755)
+            .open(&temp)?;
+        file.write_all(bytes)?;
+        file.sync_all()
+    })();
+    if let Err(error) = result {
+        let _ = std::fs::remove_file(&temp);
+        return Err(error);
+    }
+    Ok(temp)
+}
+
+/// Move a checked temporary file to `out` without overwriting anything (a hard link, then the
+/// temporary name is removed). The temporary file is removed on failure too.
+pub fn publish(temp: &Path, out: &Path) -> std::io::Result<()> {
+    let result = std::fs::hard_link(temp, out);
+    let _ = std::fs::remove_file(temp);
+    result
+}
+
+/// Write `bytes` to `out`, which must not exist, atomically: no partial file is ever visible.
+pub fn write_new(bytes: &[u8], out: &Path) -> std::io::Result<()> {
+    if out.exists() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            format!("{} exists", out.display()),
+        ));
+    }
+    let temp = write_temporary(bytes, out)?;
+    publish(&temp, out)
 }

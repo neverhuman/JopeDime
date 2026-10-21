@@ -19,7 +19,7 @@ What exists, with the evidence that proves it:
 | Native fit, save, reload and predict for all 26 task/recipe pairs; bounded `auto` selection | `crates/jope-runtime` | `tests/offline_fit_predict.rs`, `tests/method_roster.rs` |
 | The `jopedime` executable: commands, exit statuses, receipts, self-verification | `crates/jope-appliance` | `tests/single_file.rs` |
 | Model lock with rights blockers, deterministic pack, release stage and seal, audit, notices, SBOM, provenance | `crates/jope-dist` | `tests/closure.rs`, `tests/reproducible_pack.rs`, `tests/dependency_fence.rs`, `tests/schemas.rs` |
-| Fixture appliance built, packed and run alone in an empty directory, network-less and traced | `build.sh`, `test-clean-host.sh` | `e2e-smoke` lane receipts |
+| Fixture appliance built, packed and run alone in an empty directory with an empty environment; without a network and under `strace` where the host provides them (the receipt records which) | `build.sh`, `test-clean-host.sh` | `e2e-smoke` lane receipts |
 
 Not yet: the accepted step-60000 proposal path and the neural alternatives (P3–P4), CUDA (P1
 second half, P5), the derived-asset cache and worker processes (P5), and `release.sh`

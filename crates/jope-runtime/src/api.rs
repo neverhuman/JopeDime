@@ -80,14 +80,17 @@ fn fit_inner(
     };
     let select_seconds = started.elapsed().as_secs_f64();
     let started = Instant::now();
-    let model = fit_native(
-        &method,
-        training.kind,
-        &training.schema,
-        &training.classes,
-        &training.table,
-        &training.targets,
-    )?;
+    // After `auto`, the chosen recipe's refit always runs (the deadline bounds selection).
+    let model = crate::error::contain(&method.id, || {
+        fit_native(
+            &method,
+            training.kind,
+            &training.schema,
+            &training.classes,
+            &training.table,
+            &training.targets,
+        )
+    })?;
     let fit_seconds = started.elapsed().as_secs_f64();
     let budget_record = budget.record();
     let fitted = FittedModel::new(FitRecord {
@@ -119,7 +122,7 @@ pub fn predict(
     table: &feat_math::advanced_v3::RawTable,
     budget: &Budget,
 ) -> Result<Predictions> {
-    budget.install(|| fitted.predict(table))?
+    budget.install(|| crate::error::contain("prediction", || fitted.predict(table)))?
 }
 
 /// Predictions as CSV: one `prediction` column for regression; one `p_<class>` column per class

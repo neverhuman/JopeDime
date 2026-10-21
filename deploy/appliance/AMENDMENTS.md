@@ -19,10 +19,14 @@ depends on `feat-math` with default features therefore carries compiled C++, whi
 
 **Change.** A `fitted-cpp` feature, default-on so every existing build is unchanged, gates the
 build step, the two modules and their re-exports; `tests/advanced_v3_fitted_cpp.rs` requires it.
-`jope-runtime` and `jope-policy` take `feat-math` with `default-features = false`. The dependency
-fence (`dependencies-deny.toml`, A4) and the `NEEDED` check in `build.sh` keep native code out of
-`jopedime`: its closure is 75 crates, none of which builds C or C++, and the executable links only
-`libc.so.6`, `libm.so.6` and `libgcc_s.so.1`.
+`jope-runtime` and `jope-policy` take `feat-math` with `default-features = false`. Because the
+C++ library is loaded through `memfd` and `dlopen`, neither a package-name audit nor `NEEDED`
+would see it come back through feature unification, so the dependency fence
+(`dependencies-deny.toml`) also denies the *feature* `feat-math/fitted-cpp` (and
+`jope-assets/pack`) in every audited feature set; its negative control finds it enabled under
+`jope-bench`. Together with the package deny lists and the `NEEDED` check in `build.sh`, this keeps
+native code out of `jopedime`: its closure is 75 crates, none of which builds C or C++, and the
+executable links only `libc.so.6`, `libm.so.6` and `libgcc_s.so.1`.
 
 ## A2 — The shared native path was extracted, not copied
 
@@ -90,15 +94,20 @@ decoded bytes. That is the "clear code-authentication story" §10.6 asks for:
   every byte: the executable hash, zero padding and every zero gap between frames, every frame,
   the manifest, and the whole-file sha256. A modified executable cannot vouch for itself, so
   §10.4's limit applies equally to both designs.
-- **While running.** Startup reads the footer, the manifest and the signature (64 bytes) and
-  verifies them; it never hashes the 400+ MiB payload. An asset's stored frames are hashed and
-  compared with the signed manifest *before* any byte reaches the decompressor; the decoded bytes
-  are compared again. An asset a run does not need is never read. `jopedime verify-self` performs
-  the full check on demand.
+- **While running.** Every open reads and verifies the footer, the manifest and the signature,
+  checks that the signer's role matches the package's scope (the development key signs only
+  development packages; a release key never does), and hashes the executable region (a few MiB)
+  against the manifest, so a signed manifest cannot be grafted onto another executable. It never
+  hashes the 400+ MiB payload. An asset's stored frames are hashed and compared with the signed
+  manifest *before* any byte reaches the decompressor; the decoded bytes are compared again. An
+  asset a run does not need is never read. `jopedime verify-self` performs the full check on
+  demand.
 
 A whole-prefix signature would make every invocation of the full profile read and hash about
 440 MB before printing `--version`; per-asset authentication gives the same guarantee for every
-byte that is used, and the full check remains one command. Further decisions inside the format:
+byte that is used, and the full check remains one command. `pack` and `seal` write the package
+beside its destination, re-open it with the signing key alone, cover every byte, and only then
+move it into place without overwriting anything. Further decisions inside the format:
 
 - Fixed-width `r || s` signatures with a low `S`: `jope-dist seal` converts cosign's DER and
   normalizes `S`; readers refuse a high `S`, so a sealed file has exactly one valid encoding.
@@ -109,8 +118,10 @@ byte that is used, and the full check remains one command. Further decisions ins
 - Codecs: `shuffle+zstd` (safetensors byte planes regrouped by dtype width, then zstd 19),
   `zstd`, and `raw`; a compressed form that is not smaller is stored raw. All are lossless, the
   packaging-only identity class of §8.2: accepted model hashes stay valid.
-- Bounds are enforced before allocation (`limits.toml`, mirrored by a test): manifest 16 MiB,
-  4096 entries, 1024 methods, 8 GiB per asset, 64 MiB per frame and zstd window, 256-byte names.
+- Bounds (`limits.toml`, mirrored by a test): the 16 MiB manifest cap is checked before the
+  manifest is read, and bounds every later parse; then 4096 entries, 1024 methods, 8 GiB per
+  asset, 64 MiB per frame and zstd window and 256-byte names are checked before any asset,
+  frame or decode buffer is allocated.
 - The manifest has one canonical byte string (serde field order, no whitespace, sorted entries
   and methods); any other encoding of the same values is refused.
 
@@ -131,8 +142,11 @@ reports `trusts_development_key` so the release lane can refuse such a build.
 A file whose redistribution class the scope does not admit, a `prohibited` file without its owner
 acknowledgement, weights with no licence record (for example the shuffled TabICL regressor), or a
 promised method this build cannot execute is recorded as a *blocker*; the lock still derives, CI
-checks it without weights, and `pack` refuses a blocked profile. A `public` profile may admit only
-`permitted` files. Today `fixture` and `native-only` are ready and `full` is blocked by the
+checks it without weights, and `pack` refuses a blocked profile. Each scope also has a fixed
+ceiling that a profile cannot widen: `development` and `public` admit only `permitted` files
+(development packages run on untrusted CI runners), `internal` adds `internal` and
+`conditional`, and only `internal-restricted` may add `prohibited`, which also requires an
+`owner_ack`. Today `fixture` and `native-only` are ready and `full` is blocked by the
 `prohibited` Starlight foundation regressor and the uncompiled proposal adapter. The full
 profile's five accepted tensor files total exactly the 438,062,296 bytes of §5.1 (asserted).
 
@@ -141,14 +155,20 @@ profile's five accepted tensor files total exactly the 438,062,296 bytes of §5.
 Implemented: `--version [--json]`, `version`, `doctor`, `methods`, `fit`, `predict`,
 `fit-predict`, `verify-self` and `licenses`, with `--device`, `--threads`,
 `--time-limit-seconds`, `--max-input-mib`, `--max-rows`, `--receipt` and `--json`, and the exit
-statuses of §13.3 (2 input, 3 integrity, 4 backend, 5 budget, 6 numerical, 7 output), each
-proven by `crates/jope-appliance/tests/single_file.rs`.
+statuses of §13.3 (2 input, 3 integrity, 4 backend, 5 budget, 6 numerical, 7 output).
+`crates/jope-appliance/tests/single_file.rs` produces 2, 3, 4, 5 and 7; 6 is the category of
+any error without one, including a contained panic, which `jope-runtime`'s unit tests cover.
+`--receipt` and `--output` may not name an input (or each other), and a failed run's receipt
+records the budget it consumed. A closed stdout keeps the run's exit status.
 
 Not yet: `cache inspect|prune`, `--cache-dir` and `--no-cache` (this build keeps no cache: assets
 are authenticated and decoded in memory when needed), `--memory-limit-mib` (no enforcement exists
 to name), `--precision` (CPU f64 only), and `--seed` (selection is deterministic and seedless).
 Same-binary worker processes (§4.3) are not implemented: the deadline is cooperative, checked
-before every fold fit and the final refit, and every receipt says so.
+before every selection fold fit and before fitting a named method; once `auto` has chosen a
+recipe, its final refit always runs and is charged, so consumed time can exceed the limit.
+Every receipt states this. A panic inside a method is contained (`catch_unwind`) and becomes that
+candidate's failure, or exit 6.
 
 ## A9 — A promised method that cannot run fails, it is not dropped
 
@@ -161,8 +181,8 @@ Requesting an uncompiled neural method exits 4; nothing substitutes another meth
 - `--method auto` runs `jope.runtime-select/v1`, a new runtime behaviour with its own identity:
   the task's native roster (or `--candidates`), `stratified-round-robin/v1` folds (deterministic,
   `min(5, rows/2, smallest class)`), out-of-fold RMSE, `1 - AUROC` or log loss (the panel's
-  primary metrics), lowest loss wins with ties to roster order, failed candidates recorded, then
-  one refit on all rows. Preprocessing is refitted inside every fold. Measured: 400 rows × 3
+  primary metrics), lowest loss wins with ties to roster order, failed (or panicking) candidates
+  recorded, then one refit on all rows. Preprocessing is refitted inside every fold. Measured: 400 rows × 3
   features, all 17 regression recipes, 2 threads: 214 s, of which `portfolio` takes 165 s;
   `--candidates` and `--time-limit-seconds` bound it.
 - `model.jope` (`JOPEFIT1`): a canonical JSON header and the native bound model, length-prefixed,

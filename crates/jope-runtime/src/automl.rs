@@ -13,9 +13,10 @@
 //! 4. Loss on the pooled out-of-fold predictions, matching the panel's primary metric: RMSE,
 //!    `1 - AUROC`, or log loss with probabilities clipped below at 1e-15.
 //! 5. The lowest loss wins; an exact tie goes to the earlier roster entry. A candidate that fails
-//!    any fold is recorded with its error and not selected.
-//! 6. The deadline is checked before every fold fit. Candidates not reached are recorded as
-//!    skipped. The selected recipe is then refitted once on all rows.
+//!    any fold, by error or by panic, is recorded with its error and not selected.
+//! 6. The deadline bounds selection: it is checked before every fold fit, and candidates not
+//!    reached are recorded as skipped. The chosen recipe is then refitted once on all rows; that
+//!    refit always runs and its time is charged to the run.
 use crate::budget::Budget;
 use crate::methods::native::{fit_native, predict_bound, Predictions};
 use crate::methods::RustMethod;
@@ -233,8 +234,10 @@ pub fn select(
             continue;
         }
         let mut completed = 0;
-        let result = out_of_fold(method, training, &assignment, k, budget, &mut completed)
-            .and_then(|p| loss(training.kind, &training.targets, &p));
+        let result = crate::error::contain(&method.id, || {
+            out_of_fold(method, training, &assignment, k, budget, &mut completed)
+        })
+        .and_then(|p| loss(training.kind, &training.targets, &p));
         let seconds = started.elapsed().as_secs_f64();
         match result {
             Ok(value) => {

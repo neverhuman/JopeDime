@@ -311,15 +311,26 @@ pub fn write_json(path: &Path, value: &impl Serialize) -> Result<()> {
     std::fs::write(path, text).with_context(|| format!("write {}", path.display()))
 }
 
-/// Re-open a written package with `key` alone and cover every byte.
-fn verify_written(path: &Path, key: &TrustedKey) -> Result<()> {
-    let package = Package::open_with_keys(path, std::slice::from_ref(key))
-        .with_context(|| format!("re-open {}", path.display()))?
-        .context("the written file carries no package")?;
-    package
-        .verify_full()
-        .with_context(|| format!("verify {}", path.display()))?;
-    Ok(())
+/// Write the package beside `out`, re-open it with `key` alone and cover every byte, and only
+/// then move it to `out` (which must not exist). A file that fails never appears at `out`.
+fn write_verified(bytes: &[u8], out: &Path, key: &TrustedKey) -> Result<()> {
+    ensure!(!out.exists(), "{} exists; give a new path", out.display());
+    let temp = writer::write_temporary(bytes, out)
+        .with_context(|| format!("write beside {}", out.display()))?;
+    let checked = (|| -> Result<()> {
+        let package = Package::open_with_keys(&temp, std::slice::from_ref(key))
+            .context("re-open the written package")?
+            .context("the written file carries no package")?;
+        package
+            .verify_full()
+            .context("verify the written package")?;
+        Ok(())
+    })();
+    if let Err(error) = checked {
+        let _ = std::fs::remove_file(&temp);
+        return Err(error);
+    }
+    writer::publish(&temp, out).with_context(|| format!("publish {}", out.display()))
 }
 
 pub fn pack(
@@ -336,8 +347,7 @@ pub fn pack(
                 "only development-scope profiles are signed here; release scopes use --stage"
             );
             let bytes = writer::assemble_development(&code, &staged)?;
-            writer::write_new(&bytes, out).with_context(|| format!("write {}", out.display()))?;
-            verify_written(out, &key)?;
+            write_verified(&bytes, out, &key)?;
             if let Some(path) = receipt_path {
                 write_json(path, &receipt(started, &staged, &profile.name, Some(out))?)?;
             }
@@ -429,8 +439,7 @@ pub fn seal(
     };
     let bytes = writer::assemble(&code_bytes, &staged, &signature, &key)
         .context("the signature does not verify against the release key over this stage")?;
-    writer::write_new(&bytes, out).with_context(|| format!("write {}", out.display()))?;
-    verify_written(out, &key)?;
+    write_verified(&bytes, out, &key)?;
     if let Some(path) = receipt_path {
         let profile = staged.manifest.profile.clone();
         write_json(path, &receipt(started, &staged, &profile, Some(out))?)?;
