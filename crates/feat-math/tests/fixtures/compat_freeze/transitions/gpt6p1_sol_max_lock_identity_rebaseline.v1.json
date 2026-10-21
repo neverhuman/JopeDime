@@ -1,0 +1,100 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for PR392 workspace lockfile addition of jope-automl; frozen learner, behavior, DSL ABI, lineage semantics and accepted historical identities remain unchanged.",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/392",
+  "source_commit": "3b68a7e29d4ae2d8315fec839d21763abc0f0086",
+  "base_commit": "95dcb0c0e44d95184607740aacd387bf5c007e89",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "0c3f51645c1f94c2b7a396ca2829ad15689bcac088600c9ac5c3c1118e57cf8e",
+      "after": "4220d83da822c79a80e875180ceb1c2ebe066a8259b351d18566356dd8bd96b1"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "539697e42cab314323620bf01269623074810f09c085ac6770b602f21576e2a9",
+      "after": "1b15af8929c9dab46b9673488fdc8008e7656cac1c203c49633dcc4a256e6bbb"
+    }
+  ],
+  "changed_evaluator_inputs": [
+    {
+      "path": "Cargo.lock",
+      "before": "cf70ae86a4f0605f796603386e214bc1b6c0dde71e8b502263245a79dcc7c6c6",
+      "after": "a3d2fdfb2446231bebf2a9d20de40a426dedc1b62b400eb1585260de4a5c0587"
+    }
+  ],
+  "before_implementation_sha256": "29252ccbce253ac8b1ae756e95710b3b19a96353ce52cdc7acef88569bfac4db",
+  "after_implementation_sha256": "498518151d5501d8d20dd8fa345c4805155710ac4e25529b6312fec4cb5117e5",
+  "before_identity_digest": "95e7a685f86330fcac903df66b0795a47a63f66ca5cd048c7164ff962e61e297",
+  "after_identity_digest": "8999aff99f7bd548ff4415b8fe64b9880f092d78445a3b5f9864c4e12be195e0",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
+  "behavioral_fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/meta.json",
+      "sha256": "45834e08a447bb41b5112119388890bce26580768dca538035506343d3fc492b",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json",
+      "sha256": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
+      "sha256": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json",
+      "sha256": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+      "sha256": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json",
+      "sha256": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+      "sha256": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json",
+      "sha256": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/source-manifest.json",
+      "sha256": "4628d4269f3b1fcb853ae0b04ec90972212b8b23ada9e9f310d77eb616cc3104",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/manifest.json",
+      "sha256": "117ac56a214384bd11964e5b105819b3f12da047be40ab5194c056a654d99d4f",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json",
+      "sha256": "b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3",
+      "unchanged": true
+    }
+  ],
+  "lineage_effect": "Only generated_at_sha refreshed by owning identity mode; all lineage source lists and hashes unchanged. Rebuilt executables retain their separate runtime identities.",
+  "frozen_learner_sha256_unchanged": "fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8",
+  "verification": [
+    "Pinned Rust1.97.1 cargo nextest --locked -P pr -p feat-math --test compat_freeze, identity mode:13 passed",
+    "Same command in comparison mode:13 passed"
+  ],
+  "ci_failure_receipt": {
+    "run": 39559030899,
+    "attempt": 1,
+    "job": 119087403141,
+    "result": "1773 passed,1 failed,1814 skipped; stale identity fixture"
+  }
+}
