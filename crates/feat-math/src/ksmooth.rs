@@ -76,13 +76,17 @@ impl KsmoothModel {
             return x.iter().map(|_| self.y_mean.clamp(-60.0, 60.0)).collect();
         }
         let pf = p as f64;
-        let kk = self.k.min(self.z.len());
+        let n = self.z.len();
+        let kk = self.k.min(n);
+        // Per-query scratch, reused across rows instead of three allocations per row.
+        let mut zr: Vec<f64> = Vec::with_capacity(p);
+        let mut d2s: Vec<f64> = Vec::with_capacity(n);
+        let mut order: Vec<usize> = Vec::with_capacity(n);
         x.iter()
             .map(|row| {
-                let zr: Vec<f64> = (0..p.min(row.len()))
-                    .map(|j| (row[j] - self.means[j]) / self.scales[j])
-                    .collect();
-                let mut d2s = Vec::with_capacity(self.z.len());
+                zr.clear();
+                zr.extend((0..p.min(row.len())).map(|j| (row[j] - self.means[j]) / self.scales[j]));
+                d2s.clear();
                 for zb in &self.z {
                     let mut d2 = 0.0;
                     for d in 0..zr.len().min(zb.len()) {
@@ -91,8 +95,18 @@ impl KsmoothModel {
                     }
                     d2s.push(d2);
                 }
-                let mut order: Vec<usize> = (0..self.z.len()).collect();
-                order.sort_by(|&a, &b| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b)));
+                // Only the kk nearest rows are read. (distance, index) is a strict total order,
+                // so selecting the kk smallest and sorting just those yields exactly the prefix
+                // the former full sort produced: same indices, same order, same sums.
+                order.clear();
+                order.extend(0..n);
+                let by_distance = |a: &usize, b: &usize| d2s[*a].total_cmp(&d2s[*b]).then(a.cmp(b));
+                if kk > 0 && kk < n {
+                    order.select_nth_unstable_by(kk - 1, by_distance);
+                }
+                order[..kk].sort_unstable_by(by_distance);
+                // order[0] is the global minimum whenever kk >= 1; with kk == 0 nothing below
+                // reads `base` (num/den stay 0, exactly as before).
                 let base = d2s[order[0]];
                 let mut num = 0.0;
                 let mut den = 0.0;
@@ -126,6 +140,64 @@ mod tests {
             y.push(2.0 * a - b + 0.3 * (6.0 * c).sin());
         }
         (x, y)
+    }
+
+    /// The pre-selection predict (full sort of every training row per query), kept verbatim
+    /// as the bit-exact reference for the partial-selection implementation.
+    fn full_sort_predict(m: &KsmoothModel, x: &Rows) -> Vec<f64> {
+        let p = m.means.len();
+        if m.z.is_empty() {
+            return x.iter().map(|_| m.y_mean.clamp(-60.0, 60.0)).collect();
+        }
+        let pf = p as f64;
+        let kk = m.k.min(m.z.len());
+        x.iter()
+            .map(|row| {
+                let zr: Vec<f64> = (0..p.min(row.len()))
+                    .map(|j| (row[j] - m.means[j]) / m.scales[j])
+                    .collect();
+                let mut d2s = Vec::with_capacity(m.z.len());
+                for zb in &m.z {
+                    let mut d2 = 0.0;
+                    for d in 0..zr.len().min(zb.len()) {
+                        let t = zr[d] - zb[d];
+                        d2 += t * t;
+                    }
+                    d2s.push(d2);
+                }
+                let mut order: Vec<usize> = (0..m.z.len()).collect();
+                order.sort_by(|&a, &b| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b)));
+                let base = d2s[order[0]];
+                let mut num = 0.0;
+                let mut den = 0.0;
+                for &i in order.iter().take(kk) {
+                    let w = (-m.gamma * (d2s[i] - base) / pf).exp();
+                    num += w * m.ys[i];
+                    den += w;
+                }
+                (num / den).clamp(-60.0, 60.0)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn partial_selection_predict_is_bit_identical_to_full_sort() {
+        let (x, y) = toy();
+        // Coarse grids create many exact distance ties, exercising the index tie-break.
+        let coarse: Rows = x
+            .iter()
+            .map(|r| r.iter().map(|v| (v * 4.0).round() / 4.0).collect())
+            .collect();
+        for rows in [&x, &coarse] {
+            for k in [0, 1, 2, 7, 32, 239, 240, 512] {
+                let mut m = KsmoothModel::fit(rows, &y, k.max(1), DEFAULT_GAMMA);
+                m.k = k; // a deserialized model may carry k = 0
+                let fast = m.predict(rows);
+                let reference = full_sort_predict(&m, rows);
+                let bits = |v: &[f64]| v.iter().map(|f| f.to_bits()).collect::<Vec<_>>();
+                assert_eq!(bits(&fast), bits(&reference), "k = {k}");
+            }
+        }
     }
 
     #[test]

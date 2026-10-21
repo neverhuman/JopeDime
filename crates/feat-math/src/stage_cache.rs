@@ -148,20 +148,26 @@ impl StageCache {
 
     /// Fitted op + train-pass output block for this chain key, if cached.
     pub fn get(&self, key: &ChainKey) -> Option<(FittedOp, Arc<Rows>)> {
-        let shard = self.shard(key).lock().expect("stage cache shard");
-        match shard.get(&key.0) {
-            Some(entry) => {
-                entry
-                    .last_used
-                    .store(self.generation.load(Ordering::Relaxed), Ordering::Relaxed);
-                self.hits.fetch_add(1, Ordering::Relaxed);
-                Some((entry.fitted.clone(), Arc::clone(&entry.block)))
+        // Only the Arc is cloned under the shard lock. Shared pipeline prefixes send concurrent
+        // workers to the same key (that is what the cache is for), and a fitted op such as
+        // rank/blom carries n x p sorted values, so the deep clone happens after unlocking.
+        let entry = {
+            let shard = self.shard(key).lock().expect("stage cache shard");
+            match shard.get(&key.0) {
+                Some(entry) => {
+                    entry
+                        .last_used
+                        .store(self.generation.load(Ordering::Relaxed), Ordering::Relaxed);
+                    self.hits.fetch_add(1, Ordering::Relaxed);
+                    Arc::clone(entry)
+                }
+                None => {
+                    self.misses.fetch_add(1, Ordering::Relaxed);
+                    return None;
+                }
             }
-            None => {
-                self.misses.fetch_add(1, Ordering::Relaxed);
-                None
-            }
-        }
+        };
+        Some((entry.fitted.clone(), Arc::clone(&entry.block)))
     }
 
     /// Keeps the entry when its bytes fit under the cap with everything already resident; an
@@ -170,7 +176,10 @@ impl StageCache {
     /// are the f64 payload and the serialized fit, not allocation overhead.
     pub fn insert(&self, key: ChainKey, fitted: FittedOp, block: Arc<Rows>) {
         let block_bytes = block.iter().map(|row| row.len() * 8).sum::<usize>();
-        let fitted_bytes = serde_json::to_vec(&fitted).map_or(1024, |bytes| bytes.len());
+        // Same count as `serde_json::to_vec(..).len()`, without materializing the text.
+        let mut counter = ByteCounter(0);
+        let fitted_bytes =
+            serde_json::to_writer(&mut counter, &fitted).map_or(1024, |()| counter.0);
         let bytes = block_bytes + fitted_bytes;
         let reserved = self
             .bytes
@@ -224,6 +233,20 @@ impl StageCache {
             self.misses.load(Ordering::Relaxed),
             self.bytes.load(Ordering::Relaxed),
         )
+    }
+}
+
+/// An `io::Write` sink that only counts bytes.
+struct ByteCounter(usize);
+
+impl std::io::Write for ByteCounter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0 += buf.len();
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
     }
 }
 

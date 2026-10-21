@@ -33,6 +33,19 @@ pub enum Model {
     Portfolio(crate::portfolio::PortfolioModel),
 }
 
+/// `x` with every non-finite cell zeroed. Borrows when every cell is already finite, where
+/// [`sanitize`] is the identity, so the common case skips a full copy of the input per fit
+/// and per predict.
+fn sanitized(x: &Rows) -> std::borrow::Cow<'_, Rows> {
+    if x.iter().all(|row| row.iter().all(|v| v.is_finite())) {
+        std::borrow::Cow::Borrowed(x)
+    } else {
+        let mut owned = x.clone();
+        sanitize(&mut owned);
+        std::borrow::Cow::Owned(owned)
+    }
+}
+
 pub fn fit(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Model> {
     if x.is_empty() || y.len() < x.len() {
         bail!("training data is empty or target is short");
@@ -56,12 +69,11 @@ pub fn fit(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Model> {
                 }
                 None => y,
             };
-            let mut cur = x.clone();
-            sanitize(&mut cur);
+            let mut cur = sanitized(x);
             let mut ops = Vec::with_capacity(transform_stages.len());
             for stage in transform_stages {
                 let op = fit_op(stage, &cur, y_eff)?;
-                cur = apply_op_train(&op, &cur)?;
+                cur = std::borrow::Cow::Owned(apply_op_train(&op, &cur)?);
                 ops.push(op);
             }
             let head = Box::new(fit_head(&head_stage, &cur, y_eff)?);
@@ -181,13 +193,12 @@ impl Model {
         reject_zero_width_rows(x)?;
         Ok(match self {
             Model::Pipeline { target, ops, head } => {
-                let mut cur = x.clone();
-                sanitize(&mut cur);
+                let mut cur = sanitized(x);
                 for (stage, op) in ops.iter().enumerate() {
-                    cur = apply_op(op, &cur).map_err(|mut error| {
+                    cur = std::borrow::Cow::Owned(apply_op(op, &cur).map_err(|mut error| {
                         error.stage = stage;
                         error
-                    })?;
+                    })?);
                 }
                 let preds = head.predict(&cur)?;
                 match target {

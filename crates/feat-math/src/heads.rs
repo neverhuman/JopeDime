@@ -1019,9 +1019,12 @@ impl RidgeGcvModel {
 /// converges quadratically, so well-conditioned inputs exit long before the
 /// cap). Same algorithm, same order, in the emitted artifacts.
 pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
-    let mut v = vec![0.0f64; p * p];
+    // The rotations update eigenvector columns i and j; accumulating V transposed
+    // (`vt[col * p + k]`) makes both updates contiguous instead of stride-p. Each element sees
+    // the same operations in the same order, and V is transposed back on return.
+    let mut vt = vec![0.0f64; p * p];
     for i in 0..p {
-        v[i * p + i] = 1.0;
+        vt[i * p + i] = 1.0;
     }
     let mut scale = 0.0;
     for i in 0..p {
@@ -1068,11 +1071,13 @@ pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
                 a[j * p + j] = s * s * aii + 2.0 * s * c * apq + c * c * ajj;
                 a[i * p + j] = 0.0;
                 a[j * p + i] = 0.0;
-                for k in 0..p {
-                    let vki = v[k * p + i];
-                    let vkj = v[k * p + j];
-                    v[k * p + i] = c * vki - s * vkj;
-                    v[k * p + j] = s * vki + c * vkj;
+                let (head, tail) = vt.split_at_mut(j * p);
+                let vi = &mut head[i * p..(i + 1) * p];
+                let vj = &mut tail[..p];
+                for (vki, vkj) in vi.iter_mut().zip(vj.iter_mut()) {
+                    let (old_i, old_j) = (*vki, *vkj);
+                    *vki = c * old_i - s * old_j;
+                    *vkj = s * old_i + c * old_j;
                 }
             }
         }
@@ -1080,6 +1085,12 @@ pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
     let mut e = vec![0.0f64; p];
     for i in 0..p {
         e[i] = a[i * p + i];
+    }
+    let mut v = vec![0.0f64; p * p];
+    for col in 0..p {
+        for k in 0..p {
+            v[k * p + col] = vt[col * p + k];
+        }
     }
     (e, v)
 }
@@ -1102,25 +1113,29 @@ impl ElasticNetModel {
         let n = x.len().min(y.len());
         let p = x[0].len();
         let (means, scales) = std_fit(x);
-        let mut xs: Rows = x[..n]
-            .iter()
-            .map(|r| {
-                (0..p)
-                    .map(|j| ((r[j] - means[j]) / scales[j]).clamp(-20.0, 20.0))
-                    .collect()
-            })
-            .collect();
+        // Standardized features stored column-major: coordinate descent reads one column at a
+        // time, so each sweep streams contiguous memory instead of chasing a row pointer per
+        // element. Every value, and every accumulation order below, is unchanged.
+        let mut xc = vec![0.0f64; n * p];
+        for (r, row) in x[..n].iter().enumerate() {
+            for j in 0..p {
+                xc[j * n + r] = ((row[j] - means[j]) / scales[j]).clamp(-20.0, 20.0);
+            }
+        }
         let y_mean = y[..n].iter().sum::<f64>() / n.max(1) as f64;
         let nf = n as f64;
         let l1 = alpha * l1_ratio;
         let l2 = alpha * (1.0 - l1_ratio);
-        // Column norms (constant during CD).
-        let mut col_sq = vec![0.0f64; p];
-        for r in xs.iter() {
-            for j in 0..p {
-                col_sq[j] += r[j] * r[j];
-            }
-        }
+        // Column norms (constant during CD); each still sums its rows in ascending order.
+        let col_sq: Vec<f64> = (0..p)
+            .map(|j| {
+                let mut sq = 0.0f64;
+                for &v in &xc[j * n..(j + 1) * n] {
+                    sq += v * v;
+                }
+                sq
+            })
+            .collect();
         let mut w = vec![0.0f64; p];
         let mut resid: Vec<f64> = (0..n).map(|r| y[r] - y_mean).collect();
         for _ in 0..sweeps.max(1) {
@@ -1129,17 +1144,18 @@ impl ElasticNetModel {
                 if col_sq[j] <= 1e-12 {
                     continue;
                 }
+                let column = &xc[j * n..(j + 1) * n];
                 let mut rho = 0.0;
-                for r in 0..n {
-                    rho += xs[r][j] * resid[r];
+                for (&v, &e) in column.iter().zip(&resid) {
+                    rho += v * e;
                 }
                 rho = rho / nf + w[j] * col_sq[j] / nf;
                 let denom = col_sq[j] / nf + l2;
                 let new_w = soft_threshold(rho, l1) / denom;
                 let delta = new_w - w[j];
                 if delta != 0.0 {
-                    for r in 0..n {
-                        resid[r] -= delta * xs[r][j];
+                    for (e, &v) in resid.iter_mut().zip(column) {
+                        *e -= delta * v;
                     }
                     w[j] = new_w;
                     let ad = delta.abs();
@@ -1152,7 +1168,6 @@ impl ElasticNetModel {
                 break;
             }
         }
-        xs.clear();
         ElasticNetModel {
             means,
             scales,
@@ -1268,27 +1283,42 @@ impl GbmModel {
             };
         }
         let edges: Vec<Vec<f64>> = (0..n_feat).map(|f| bin_edges(x, f, n, cfg.bins)).collect();
-        let train_bins = bin_rows(x, n, n_feat, &edges);
+        // Training bins are feature-major (`bins[f * n + row]`): the histogram and partition
+        // loops read one feature over an ascending row list, which is sequential here and was
+        // a stride of `n_feat` u16s in the row-major layout `predict` still uses.
+        let train_bins = bin_columns(x, n, n_feat, &edges);
         let init = mean(&y[..n]);
         let mut f_train = vec![init; n];
         let nbins = cfg.bins as u16;
         let mut trees = Vec::with_capacity(cfg.rounds);
+        // Round buffers are allocated once. `grad` is rewritten every round; `hess` never
+        // changes; every row lands in exactly one leaf, so `train_leaf` is fully rewritten by
+        // each tree. The histogram scratch is reused by every node of every tree.
+        let mut grad = vec![0.0f64; n];
+        let hess = vec![1.0f64; n];
+        let mut train_leaf = vec![0usize; n];
+        let mut histogram = GbmHistogram::new(nbins);
         for _ in 0..cfg.rounds {
-            let grad: Vec<f64> = (0..n).map(|i| f_train[i] - y[i]).collect();
-            let hess = vec![1.0f64; n];
+            for (g, (&f, &target)) in grad.iter_mut().zip(f_train.iter().zip(y)) {
+                *g = f - target;
+            }
             let mut tree: Vec<GbmNode> = Vec::new();
-            let mut train_leaf = vec![0usize; n];
-            build_tree(
-                &train_bins,
-                &grad,
-                &hess,
-                (0..n).collect(),
+            let inputs = TreeInputs {
+                bins: &train_bins,
+                n_rows: n,
+                grad: &grad,
+                hess: &hess,
                 n_feat,
                 nbins,
                 cfg,
+            };
+            build_tree(
+                &inputs,
+                (0..n).collect(),
                 0,
                 &mut tree,
                 &mut train_leaf,
+                &mut histogram,
             );
             for i in 0..n {
                 if let GbmNode::Leaf(v) = tree[train_leaf[i]] {
@@ -1324,19 +1354,48 @@ impl GbmModel {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-fn build_tree(
-    bins: &[u16],
-    grad: &[f64],
-    hess: &[f64],
-    rows: Vec<usize>,
+/// Read-only inputs shared by every node of one tree.
+struct TreeInputs<'a> {
+    /// Feature-major training bins: `bins[f * n_rows + row]`.
+    bins: &'a [u16],
+    n_rows: usize,
+    grad: &'a [f64],
+    hess: &'a [f64],
     n_feat: usize,
     nbins: u16,
-    cfg: &GbmParams,
+    cfg: &'a GbmParams,
+}
+
+impl TreeInputs<'_> {
+    fn feature(&self, f: usize) -> &[u16] {
+        &self.bins[f * self.n_rows..(f + 1) * self.n_rows]
+    }
+}
+
+/// Per-feature gradient/hessian histograms, zeroed before each use.
+struct GbmHistogram {
+    grad: Vec<f64>,
+    hess: Vec<f64>,
+}
+
+impl GbmHistogram {
+    fn new(nbins: u16) -> Self {
+        GbmHistogram {
+            grad: vec![0.0; nbins as usize],
+            hess: vec![0.0; nbins as usize],
+        }
+    }
+}
+
+fn build_tree(
+    t: &TreeInputs<'_>,
+    rows: Vec<usize>,
     depth: usize,
     out: &mut Vec<GbmNode>,
     leaf_of: &mut [usize],
+    histogram: &mut GbmHistogram,
 ) -> usize {
+    let (grad, hess, cfg, n_feat, nbins) = (t.grad, t.hess, t.cfg, t.n_feat, t.nbins);
     let g: f64 = rows.iter().map(|&i| grad[i]).sum();
     let h: f64 = rows.iter().map(|&i| hess[i]).sum();
     let leaf_value = -g / (h + cfg.lambda);
@@ -1356,10 +1415,14 @@ fn build_tree(
     let mut best_thr = 0u16;
     let parent = g * g / (h + cfg.lambda);
     for f in 0..n_feat {
-        let mut gh = vec![0.0f64; nbins as usize];
-        let mut hh = vec![0.0f64; nbins as usize];
+        // fill(0.0) leaves exactly the +0.0 a fresh allocation had; sums keep row order.
+        let gh = &mut histogram.grad;
+        let hh = &mut histogram.hess;
+        gh.fill(0.0);
+        hh.fill(0.0);
+        let column = t.feature(f);
         for &i in &rows {
-            let b = bins[i * n_feat + f] as usize;
+            let b = column[i] as usize;
             gh[b] += grad[i];
             hh[b] += hess[i];
         }
@@ -1383,10 +1446,11 @@ fn build_tree(
     if best_feat == usize::MAX || best_gain <= 1e-9 {
         return make_leaf(out, leaf_of, &rows);
     }
-    let mut left_rows = Vec::new();
-    let mut right_rows = Vec::new();
+    let split_column = t.feature(best_feat);
+    let mut left_rows = Vec::with_capacity(rows.len());
+    let mut right_rows = Vec::with_capacity(rows.len());
     for &i in &rows {
-        if bins[i * n_feat + best_feat] <= best_thr {
+        if split_column[i] <= best_thr {
             left_rows.push(i);
         } else {
             right_rows.push(i);
@@ -1397,30 +1461,8 @@ fn build_tree(
     }
     let idx = out.len();
     out.push(GbmNode::Leaf(0.0)); // temporary leaf, overwritten below
-    let left = build_tree(
-        bins,
-        grad,
-        hess,
-        left_rows,
-        n_feat,
-        nbins,
-        cfg,
-        depth + 1,
-        out,
-        leaf_of,
-    );
-    let right = build_tree(
-        bins,
-        grad,
-        hess,
-        right_rows,
-        n_feat,
-        nbins,
-        cfg,
-        depth + 1,
-        out,
-        leaf_of,
-    );
+    let left = build_tree(t, left_rows, depth + 1, out, leaf_of, histogram);
+    let right = build_tree(t, right_rows, depth + 1, out, leaf_of, histogram);
     out[idx] = GbmNode::Split {
         feature: best_feat,
         thr_bin: best_thr,
@@ -1461,6 +1503,18 @@ fn bin_edges(x: &Rows, f: usize, n: usize, bins: usize) -> Vec<f64> {
     }
     edges.dedup();
     edges
+}
+
+/// The bins of [`bin_rows`], stored feature-major: `out[f * rows + r]`.
+fn bin_columns(x: &Rows, rows: usize, n_feat: usize, edges: &[Vec<f64>]) -> Vec<u16> {
+    let mut out = vec![0u16; rows * n_feat];
+    for r in 0..rows {
+        for f in 0..n_feat {
+            let v = if f < x[r].len() { x[r][f] } else { 0.0 };
+            out[f * rows + r] = edges[f].partition_point(|e| *e < v) as u16;
+        }
+    }
+    out
 }
 
 fn bin_rows(x: &Rows, rows: usize, n_feat: usize, edges: &[Vec<f64>]) -> Vec<u16> {
