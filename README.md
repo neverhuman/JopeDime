@@ -1,5 +1,8 @@
 # JopeDime
 
+[Quick start](docs/quickstart.md) · [Contributor map](docs/README.md) ·
+[Architecture](docs/architecture.md) · [Performance review](docs/reviews/hpc-audit-20261021.md)
+
 Standalone JOPE-Dime: a typed program-synthesis engine for tabular models,
 encoders (Hyperion and companions), and emitters that lower a program to Python,
 Rust, C++17, and JavaScript. C++20 CI compiles the C++17 artifact; it is not a

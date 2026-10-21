@@ -814,7 +814,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Jankurai v1.7.1 repository audit job on pull requests and main."
+      "scope": "Jankurai v1.7.5 repository audit job on pull requests and main; execution requires JANKURAI_HOSTED_RUNNER=true."
     },
     "job:.github/workflows/main-guard.yml/guard": {
       "discovery": {

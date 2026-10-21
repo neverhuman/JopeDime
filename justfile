@@ -14,6 +14,12 @@ setup:
 hygiene:
     bash deploy/ci/check.sh
 
+# Full diagnostic; preserves the auditor's nonzero gate result and keeps reports out of Git.
+# Hosted execution still requires the repository's existing runner opt-in.
+audit:
+    bash deploy/ci/install-jankurai.sh
+    JANKURAI_NO_UPDATE_CHECK=1 target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai audit . --full --no-badge --no-score-history --json target/jankurai/repo-score.json --md target/jankurai/repo-score.md --repair-queue-jsonl target/jankurai/repair-queue.jsonl
+
 fmt:
     cargo fmt --all -- --check
 
