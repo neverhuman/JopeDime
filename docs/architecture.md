@@ -54,6 +54,10 @@ flowchart TB
     learn[jope-learning<br/>HWM ledger · snapshots · pointers]
     arena[jope-arena<br/>SOTArena fetch · Elo · scores]
     cli[jope-cli<br/>the jope umbrella binary]
+    rt[jope-runtime<br/>native roster · fit/predict · selection · model.jope]
+    assets[jope-assets<br/>signed single-file package format]
+    app[jope-appliance<br/>the jopedime binary]
+    dist[jope-dist<br/>build-time packer and verifier]
   end
   subgraph vendored["vendored (upstream versions)"]
     sc[crates/smartcluster/*<br/>jain-smartcluster @ 715128f8, 7 crates]
@@ -79,6 +83,11 @@ flowchart TB
   eng --> cli
   camp --> cli
   self --> cli
+  fm --> rt
+  rt --> app
+  assets --> app
+  rt --> dist
+  assets --> dist
 ```
 
 | Crate (directory) | Package name | Status on `main` today | What it owns |
@@ -96,11 +105,16 @@ flowchart TB
 | `crates/jope-models` | `jope-models` | landed (WP7) | `jope models fetch / verify / publish / path` over the content-addressed models bucket. [docs/models.md](models.md). |
 | `crates/jope-learning` | `jope-learning` | landed (WP11) | The S3-facing half of the learning loop of [ADR-0005](adr/ADR-0005-canonical-learning-loop.md): HWM ledger, corpus snapshots, checkpoint lineage, wave pointers; the separate `jope-learning` binary. [docs/learning.md](learning.md). |
 | `crates/jope-arena` | `jope-arena` | landed (WP12) | SOTArena fetch, score emission, family Elo. There is no `docs/arena.md` yet. |
+| `crates/jope-automl` | `jope-automl` | native candidate integration | Immutable original regressor sources and the native AutoML registry; `fit_rows`/`predict_rows`, plus the standalone challenge API. [Native regressors](../crates/jope-automl/README.md). |
 | `crates/jope-bench` | `jope-bench` | landed | Same-cut benchmark: tier-1 baselines and a searched program scored on identical cuts, screen then deepen; the `jope demo`, `jope benchmark` and `jope optimize` verbs. [docs/same-cut-bench.md](same-cut-bench.md). |
 | `crates/jope-pipeline` | `jope-pipeline` | landed | The product pipeline behind `jope pipeline`: dataset → prepared cuts → program search → emitted code, with a receipt; bin `jope-context-proof`. [docs/pipeline.md](pipeline.md). |
 | `crates/jope-motifs` | `jope-motifs` | landed | Reusable program fragments: private tables, exact expansion and compatibility checks; `jope motifs`, hidden from the default help until the capability is published (owner decision, 2026-09-24). |
 | `crates/jope-records` | `jope-records` | landed | Verifiers and renderers of the committed records (core-IP findings, dispositions, claims, test inventory, task status, progress view, historical Elo replay) and the repository hygiene guards `coverage`, `rust-scope-check`, `parity-check`, `readme-benchmarks` and `repo-layout`; Rust ports of the retired Python verifiers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
 | `crates/jope-ci` | `jope-ci` | landed | CI and host-maintenance tooling: `cargo-artifact` (Cargo artifact selection) and the build-directory report; Rust ports of `deploy/ci` and `deploy/maintenance` Python helpers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
+| `crates/jope-runtime` | `jope-runtime` | landed | The appliance runtime: the native method roster, raw-cell encoding and bound prediction shared with `jope-bench` and `jope-pipeline` (which re-export them), CSV ingress, bounded automatic selection (`jope.runtime-select/v1`), the `model.jope` fitted-state file and run receipts. Depends on `feat-math` without its C++ runtime. |
+| `crates/jope-assets` | `jope-assets` | landed | The signed single-file package: 128-byte footer, canonical manifest, P-256 signature over the footer, per-asset authentication before decompression, bounded decoding; the writer behind feature `pack`. |
+| `crates/jope-appliance` | `jope-appliance` (binary `jopedime`) | landed; not published | The signed single-file executable: `version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses`. [deploy/appliance](../deploy/appliance/README.md). |
+| `crates/jope-dist` | `jope-dist` | landed | Build-time only: model lock with rights blockers, deterministic pack, release stage and seal, independent verify, dependency audit, notices, size, SBOM and provenance. |
 | `crates/jope-cli` | `jope-cli` (binary `jope`) | landed | The `jope` binary. Verbs today: `doctor`, `demo`, `benchmark`, `train` (Linux), `optimize`, `verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`, `train-step`, `route`, `models`, `datasets`, `pipeline`, and the hidden `motifs`. The target design's `propose`, `learn`, `hwm`, `scores`, `arena`, `campaign` and `selfplay` verbs do not exist (see the status note at the top). |
 | `crates/smartcluster/*` | `jain-smartcluster{,-core,-fabric,-daemon}`, `jain-worker`, `jainnode`, `scq` | landed (vendored at 715128f8, versions 8.0.0) | The scheduler the engine's native loop, smartcluster worker and native graph bind to; crates.io dependencies only. Not covered by `deploy/ci/version-consistency.sh`. |
 

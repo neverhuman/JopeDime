@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5705,
+  "count": 5712,
   "ignored": 74,
   "packages": {
    "battle-gpu": {
@@ -2609,13 +2609,30 @@
      }
     }
    },
+   "jope-automl": {
+    "count": 4,
+    "ignored": 0,
+    "binaries": {
+     "jope-automl": {
+      "kind": "lib",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "tests::lifecycle_shapes_and_failed_refit_are_explicit",
+       "tests::prediction_is_row_local_and_refit_matches_fresh_state",
+       "tests::registry_and_transport_preserve_target_placement",
+       "tests::wide_missing_and_extreme_finite_inputs_remain_defined"
+      ]
+     }
+    }
+   },
    "jope-bench": {
-    "count": 162,
+    "count": 165,
     "ignored": 1,
     "binaries": {
      "jope-bench": {
       "kind": "lib",
-      "count": 138,
+      "count": 141,
       "ignored": 1,
       "tests": [
        "ablation::tests::ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference",
@@ -2677,6 +2694,9 @@
        "load::tests::numeric_csv_is_strict",
        "load::tests::targets_are_checked_against_the_task",
        "methods::tests::baselines_are_valid_single_head_programs_for_their_task",
+       "native::tests::held_out_labels_do_not_change_fitted_predictions",
+       "native::tests::screening_and_deepening_refit_the_registered_native_method",
+       "native::tests::source_hash_is_the_compiled_standalone_source",
        "panel::campaign::tests::interrupted_measurements_stay_unknown_and_evidence_is_immutable",
        "panel::campaign::tests::parent_scores_original_labels_and_refuses_changed_fitted_bytes",
        "panel::campaign::tests::reuse_keeps_same_cut_and_counts_physical_cost_once",

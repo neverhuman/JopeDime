@@ -6,13 +6,17 @@ members = [
   "crates/hyperion",
   "crates/jope-policy",
   "crates/battle-gpu",
+  "crates/jope-appliance",
   "crates/jope-arena",
+  "crates/jope-assets",
+  "crates/jope-automl",
   "crates/jope-bench",
   "crates/jope-engine",
   "crates/jope-campaigns",
   "crates/jope-ci",
   "crates/jope-cli",
   "crates/jope-datasets",
+  "crates/jope-dist",
   "crates/jope-encoders",
   "crates/jope-models",
   "crates/jope-learning",
@@ -20,6 +24,7 @@ members = [
   "crates/jope-paths",
   "crates/jope-pipeline",
   "crates/jope-records",
+  "crates/jope-runtime",
   "crates/numpy-pcg64",
   "crates/smartcluster/jain-smartcluster-core",
   "crates/smartcluster/jain-smartcluster",
@@ -67,11 +72,15 @@ futures-util = "0.3"
 hex = "0.4"
 nix = { version = "0.29", features = ["fs", "process", "signal", "socket", "term", "user"] }
 postcard = { version = "1", default-features = false, features = ["use-std"] }
+# Appliance package signatures (pure Rust): ECDSA P-256 over SHA-256, cosign-compatible (jope-assets).
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "pem", "std"] }
 proptest = "1"
 rand = "0.8"
 rayon = "1"
 redb = "2"
 rustls = "0.23"
+# Pure-Rust zstd decoder: the `jopedime` appliance decodes its packaged assets with it (jope-assets).
+ruzstd = "0.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
@@ -84,6 +93,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ulid = { version = "1", features = ["serde"] }
 zeroize = "1"
+# zstd encoder for the appliance packer only (jope-dist); never linked into `jopedime`.
+zstd = "0.13"
 
 # Hashing sits on every authority/witness path (the engine hashes its own ~220 MB debug binary and
 # the worker binary at startup). Unoptimised sha2 made the 30 s readiness deadline of the
@@ -99,6 +110,34 @@ opt-level = 3
 opt-level = 3
 lto = true
 codegen-units = 1
+
+# The `jopedime` appliance (deploy/appliance/SPECIFICATION.md §12.2). Speed first: fitting and
+# prediction dominate run time and the weights, not the code, dominate the file, so numerical
+# crates stay at opt-level 3 (no blanket "z": it disables loop vectorization). `panic` stays
+# "unwind": fitting contains failing candidates with catch_unwind. Cargo strips the symbols, so the
+# executable jope-dist packs is exactly what Cargo emitted.
+[profile.dist]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = 0
+strip = "symbols"
+incremental = false
+panic = "unwind"
+
+# Cold glue at size; measured against opt-level 3 in deploy/appliance/size-budgets.toml.
+[profile.dist.package.jope-appliance]
+opt-level = "s"
+[profile.dist.package.clap_builder]
+opt-level = "s"
+
+# The PR lane's appliance build: same flags, thin LTO and parallel codegen to fit the PR budget.
+# Release artifacts always use `dist`.
+[profile.dist-ci]
+inherits = "dist"
+lto = "thin"
+codegen-units = 16
 
 [workspace.lints.rust]
 unsafe_code = "deny"

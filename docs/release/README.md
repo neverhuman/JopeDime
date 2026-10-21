@@ -1,5 +1,14 @@
 # Releases
 
+The model-inclusive `jopedime` appliance is specified in
+[`deploy/appliance/`](../../deploy/appliance/README.md), with an
+[implementation checklist](../../deploy/appliance/IMPLEMENTATION_CHECKLIST.md) and
+[amendments](../../deploy/appliance/AMENDMENTS.md). Its CPU build, packaging, release-stage
+signing message, sealing and independent verification are implemented and exercised in CI;
+release-host integration, the neural profile and publication are pending, and no `jopedime`
+package has been published. A sealed package is signed by the same key as this release
+(`signing.pub`). The procedure below describes the currently implemented `jope` release.
+
 A JopeDime release is cut on **xbabe2** by [`deploy/release/release.sh`](../../deploy/release/release.sh), under owner decision D-D (2026-09-27): a fast signed host release.
 
 Releases are published on `github.com/neverhuman/JopeDime` under tags `vX.Y.Z`. Each release is signed with a static cosign key whose files are root-only on xbabe2. [Key custody](#key-custody) describes who can actually use that key. There is no GitHub build-provenance attestation, no Sigstore transparency-log entry, and no Python wheel.

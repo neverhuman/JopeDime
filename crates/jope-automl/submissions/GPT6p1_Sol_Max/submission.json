@@ -1,0 +1,19 @@
+{
+  "schema_version": "general-regressor-challenge/v2",
+  "algorithm_name": "GPT6p1_Sol_Max",
+  "language": "rust",
+  "edition": "2021",
+  "target_column": "last",
+  "prediction_input": "features_only",
+  "external_dependencies": [],
+  "unsafe_code": false,
+  "authoring_mode": "reasoning_only",
+  "data_accessed_during_design": false,
+  "experiments_run_during_design": false,
+  "external_code_used": false,
+  "compiled_during_design": false,
+  "single_frozen_implementation": true,
+  "fit_complexity": "Let n be input training rows, P features, R=min(n,24576), Q<=min(P,96), K<=min(P,512), U<=min(R,512), H=4 ridge penalties, S<=48 coordinate passes, F<=min(Q,32+Q/4), B<=64 bins, D<=6, T<=640 trees. Validation and final refit cost O(n(P+1)+P+UK+QR log R+HSRQ+TDRF+T*2^D*FB+TRD); both phases and all internal selection are included up to constant factors.",
+  "predict_complexity": "For m prediction rows: O(mP+mQ log B+mTD), including validation of all input features; Q<=96, B<=64, D<=6, T<=640.",
+  "memory_complexity": "Additional fitting storage O(RQ+R+K+QB+T*2^D); fitted state O(QB+T*2^D+Q); prediction additional storage O(m+Q). The caller's training input occupies O(n(P+1)) and prediction input O(mP), charged separately to the same process limit."
+}

@@ -5,6 +5,12 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Deployment
+
+- appliance: the signed single-file `jopedime` executable (`deploy/appliance/`): specification (#390) with amendments; `jope-assets` (128-byte footer, manifest-signed package, per-asset authentication before decompression, bounded zstd/byte-plane decoding, release key `docs/release/signing.pub`); `jope-runtime` (native roster, raw-cell encoding and bound prediction moved from the panel and pipeline with re-exports; CSV ingress; `jope.runtime-select/v1` bounded selection; `model.jope`; run receipts; exit statuses 2-7); `jope-appliance` (`version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses`); `jope-dist` (model lock with rights blockers, deterministic pack, release stage and seal, verify, audit, notices, size, SBOM, provenance); `fixture`, `native-only` and blocked `full` profiles; the `e2e-smoke` lane builds, packs and runs the fixture appliance alone
+- feat-math: the fitted C++ runtime is behind the default-on `fitted-cpp` feature so the appliance graph carries no C++
+- policy: `PolicyModel::load_bound_from_bytes` loads a verified checkpoint from bytes with the same identity checks as `load_bound`
+
 ## [0.3.0] - 2026-10-19
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then
