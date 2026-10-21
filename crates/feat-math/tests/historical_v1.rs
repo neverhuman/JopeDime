@@ -489,6 +489,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for (entry, path) in gp_fixtures.iter().zip(changed_fixtures) {
         assert_eq!(entry["path"], path);
     }
+    // PR394 appliance: default-on `fitted-cpp` gate and the new crates in the lock: announced identity only.
+    let appliance_fitted_cpp_gate =
+        old_fixture("transitions/appliance_fitted_cpp_gate_identity_rebaseline.v1.json");
+    let appliance_fixtures = appliance_fitted_cpp_gate["fixtures"].as_array().unwrap();
+    assert_eq!(appliance_fixtures.len(), 2);
+    for (entry, path) in appliance_fixtures.iter().zip(changed_fixtures) {
+        assert_eq!(entry["path"], path);
+    }
     let identity_chain = [
         transition,
         successor,
@@ -512,6 +520,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         mr19_shared_dag,
         observatory_workspace_lock,
         gp_source_stream,
+        appliance_fitted_cpp_gate,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
