@@ -446,12 +446,20 @@
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
+    "python:deploy/ci/test-browser-deps.py": {
+      "reason": "Hygiene executes bounded browser dependency extraction, cache custody, path and reuse regression controls; CI infrastructure only, not rendered-product qualification.",
+      "role": "infrastructure"
+    },
     "python:deploy/ci/test-dl-offline-group.py": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
     "python:deploy/ci/test-full-main.py": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
+    },
+    "python:deploy/ci/test-gitleaks-config.py": {
+      "reason": "Hygiene executes real Gitleaks synthetic positive/negative credential and digest controls, including same-line and same-file bypass refusal; not a substitute for the full HEAD scan.",
       "role": "infrastructure"
     },
     "python:deploy/ci/test-install-private.py": {
@@ -474,6 +482,10 @@
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
+    "python:deploy/ci/test-rendered-ux-receipt.py": {
+      "reason": "Hygiene executes source/run binding, nonzero desktop/mobile inventory and screenshot/geometry/axe tampering controls; CI evidence infrastructure only.",
+      "role": "infrastructure"
+    },
     "python:deploy/ci/test-results.py": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
@@ -482,12 +494,20 @@
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
+    "python:deploy/ci/test-security-lane.py": {
+      "reason": "Hygiene executes scanner availability, optional-feature graph and workflow/secret/advisory/frontend failure-propagation controls; mocks do not replace actual scans.",
+      "role": "infrastructure"
+    },
     "python:deploy/ci/test-status.py": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
     "python:deploy/ci/test-training-proof.py": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
+    },
+    "python:deploy/ci/test-vendor-security.py": {
+      "reason": "Hygiene executes descriptor-anchored vendor inventory/hash/size custody checks and tamper controls; CI infrastructure only, not numerical or upstream security qualification.",
       "role": "infrastructure"
     },
     "python:deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py": {
@@ -4416,6 +4436,14 @@
       "subsystems": [
         "policy",
         "encoders"
+      ]
+    },
+    "target:jope-policy/test/npz_zip9_contract": {
+      "note": "CPU ZIP9/Candle serialization contracts preserve exact tensor bits, names and shapes, compressed reads and malformed/truncated archive refusal; no model or GPU training qualification.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "storage"
       ]
     },
     "target:jope-policy/test/scorer_dependencies": {
