@@ -574,6 +574,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // PR398 follows the merged PR397 identity, rather than its original parallel baseline.
+    let pr398_combined =
+        old_fixture("transitions/pr398_after_pr397_hpc_safety_cleanup_rebaseline.v1.json");
+    let combined_fixtures = pr398_combined["fixtures"].as_array().unwrap();
+    assert_eq!(combined_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -603,6 +611,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         jankurai_dependency_security,
         pr396_combined,
         pr397_combined,
+        pr398_combined,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
