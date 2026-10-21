@@ -60,8 +60,9 @@ impl std::ops::DerefMut for OwnedSlots {
 impl Drop for OwnedSlots {
     fn drop(&mut self) {
         for (_, child, _) in self.0.iter_mut().flatten() {
-            // SAFETY: kill takes only integers and has no memory-safety preconditions; a child
-            // still in a slot is unreaped, so its setpgid(0, 0) group id is not reused.
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; every
+            // path that reaps a worker frees its slot first, so a child still in a slot is
+            // unreaped and its setpgid(0, 0) group id cannot have been reused.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
@@ -364,9 +365,13 @@ pub fn run_with_wait(
             if let Some((index, child, begun)) = slot {
                 let finished = child.try_wait()?;
                 if let Some(status) = finished {
+                    // The worker is reaped: free its slot before any fallible bookkeeping, so an
+                    // early return never leaves a reaped pid for OwnedSlots::drop to signal.
+                    let index = *index;
+                    *slot = None;
                     if status.success() {
                         completed += 1;
-                        let mut checked = vec![jobs.jobs[*index].clone()];
+                        let mut checked = vec![jobs.jobs[index].clone()];
                         let (_, count) =
                             restore_completed(root, &mut checked, &mut coverage, false)?;
                         ensure!(
@@ -376,7 +381,7 @@ pub fn run_with_wait(
                         evaluations += count;
                     } else {
                         failed += 1;
-                        let job = &jobs.jobs[*index];
+                        let job = &jobs.jobs[index];
                         let row = serde_json::json!({"timestamp":now(),"output":job.output,
                             "exit_code":status.code(),"outcome":"unknown",
                             "diagnosis":"worker exited without a verified completion; authority reconciliation required",
@@ -392,7 +397,6 @@ pub fn run_with_wait(
                         )?;
                         failed_rows.push(row);
                     }
-                    *slot = None;
                 } else if begun.elapsed() > Duration::from_secs(660) {
                     // SAFETY: kill takes only integers and has no memory-safety preconditions;
                     // the worker is unreaped, so its setpgid(0, 0) group id is not reused.
@@ -400,8 +404,10 @@ pub fn run_with_wait(
                         libc::kill(-(child.id() as i32), libc::SIGKILL);
                     }
                     let _ = child.wait();
+                    let index = *index;
+                    *slot = None;
                     failed += 1;
-                    let job = &jobs.jobs[*index];
+                    let job = &jobs.jobs[index];
                     let row = serde_json::json!({"timestamp":now(),"output":job.output,
                         "outcome":"unknown","diagnosis":"bounded search timeout; authority reconciliation required",
                         "automatic_retry":false});
@@ -415,7 +421,6 @@ pub fn run_with_wait(
                         &row,
                     )?;
                     failed_rows.push(row);
-                    *slot = None;
                 }
             }
         }
