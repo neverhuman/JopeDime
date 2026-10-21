@@ -180,7 +180,9 @@ class SecretScanTests(unittest.TestCase):
         workflow = (ROOT/'.github/workflows/ci.yml').read_text()
         hygiene = workflow.split('\n  hygiene:', 1)[1].split('\n  rust-check:', 1)[0]
         self.assertIn('fetch-depth: 0', hygiene)
-        self.assertIn('bash deploy/ci/secret-scan.sh', (ROOT/'deploy/ci/check.sh').read_text())
+        # Hygiene delegates to the fail-closed shared security entry point.
+        self.assertIn('bash tools/security-lane.sh', (ROOT/'deploy/ci/check.sh').read_text())
+        self.assertIn('bash deploy/ci/secret-scan.sh', (ROOT/'tools/security-lane.sh').read_text())
 
 
 class DropInAdmissionTests(unittest.TestCase):
