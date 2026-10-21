@@ -20,7 +20,6 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::fd::AsRawFd;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Component, Path, PathBuf};
 
@@ -479,17 +478,15 @@ impl CacheKeyLock {
             .truncate(false)
             .open(&path)
             .with_context(|| format!("open cache-key lock: {key}"))?;
+        // `File::lock` is flock(2) LOCK_EX on Linux. Only EINTR is retried; every other
+        // error is propagated before the cache key is used.
         loop {
-            // SAFETY: `file` owns the live FD, retained in `Self` on success; FD/LOCK_EX are c_int.
-            // flock borrows the FD without pointers or ownership transfer. Zero acquires the lock;
-            // below, only EINTR is retried; every other error is propagated before cache-key use.
-            let status = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
-            if status == 0 {
-                break;
-            }
-            let error = std::io::Error::last_os_error();
-            if error.kind() != std::io::ErrorKind::Interrupted {
-                return Err(error).with_context(|| format!("lock cache key: {key}"));
+            match file.lock() {
+                Ok(()) => break,
+                Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(error) => {
+                    return Err(error).with_context(|| format!("lock cache key: {key}"));
+                }
             }
         }
         file.sync_all()?;
@@ -503,10 +500,9 @@ impl Drop for CacheKeyLock {
         // The inode is deliberately retained. Unlinking a flock file permits a
         // racing process to create and lock a different inode for the same key.
         // The kernel releases this advisory lock even after SIGKILL or node loss.
-        // SAFETY: `self.file` owns the live FD during Drop; FD/LOCK_UN use libc's c_int ABI.
-        // flock only borrows it. Unlock errors are ignored; File drop closes this descriptor,
-        // releasing the lock on the final open-file-description close. The inode is retained.
-        let _ = unsafe { libc::flock(self.file.as_raw_fd(), libc::LOCK_UN) };
+        // Unlock errors are ignored; File drop closes this descriptor, releasing the lock on
+        // the final open-file-description close. The inode is retained.
+        let _ = self.file.unlock();
     }
 }
 

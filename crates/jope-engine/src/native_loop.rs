@@ -28,7 +28,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     io::{Read, Write},
-    os::{fd::AsRawFd, unix::fs::OpenOptionsExt},
+    os::unix::fs::OpenOptionsExt,
     path::{Path, PathBuf},
 };
 #[derive(Clone, Serialize, Deserialize)]
@@ -531,7 +531,7 @@ impl Loop {
             .custom_flags(libc::O_NOFOLLOW)
             .open(state.join("loop.lock"))?;
         ensure!(
-            unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+            lock.try_lock().is_ok(),
             "another learning planner owns this run"
         );
         frozen(root, &state.join("config.json"), &cfg)?;

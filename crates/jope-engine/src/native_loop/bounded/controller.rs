@@ -33,10 +33,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     io::Read,
-    os::{
-        fd::AsRawFd,
-        unix::fs::{MetadataExt, OpenOptionsExt},
-    },
+    os::unix::fs::{MetadataExt, OpenOptionsExt},
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
@@ -365,7 +362,7 @@ fn lock_file(dir: &Path, create: bool) -> Result<fs::File> {
     Ok(f)
 }
 fn try_lock(f: &fs::File) -> bool {
-    unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) == 0 }
+    f.try_lock().is_ok()
 }
 /// Non-interfering liveness probe: reads `/proc/locks` for an exclusive flock on the
 /// controller lock's inode. It never takes a lock itself, so it cannot block a writer.

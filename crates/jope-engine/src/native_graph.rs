@@ -217,7 +217,7 @@ impl Graph {
             .custom_flags(libc::O_NOFOLLOW)
             .open(directory_path.join("coordinator.lock"))?;
         ensure!(
-            unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+            lock.try_lock().is_ok(),
             "another graph coordinator owns this run"
         );
         Ok(Self {

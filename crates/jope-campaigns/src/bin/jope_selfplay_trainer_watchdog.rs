@@ -16,7 +16,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::fd::AsFd;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
@@ -491,7 +490,7 @@ impl ProcessLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
-        if flock::exclusive(file.as_fd(), false).is_err() {
+        if flock::exclusive(&file, false).is_err() {
             bail!("another trainer watchdog owns {}", path.display());
         }
         Ok(Self { _file: file })

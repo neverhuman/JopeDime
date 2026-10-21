@@ -1015,19 +1015,19 @@ impl FileLock {
                     "authority lock admission deadline elapsed"
                 );
             }
-            let operation = if exclusive {
-                libc::LOCK_EX
+            // flock(2) LOCK_EX/LOCK_SH with LOCK_NB; only contention is retried.
+            let attempt = if exclusive {
+                file.try_lock()
             } else {
-                libc::LOCK_SH
+                file.try_lock_shared()
             };
-            if unsafe { libc::flock(file.as_raw_fd(), operation | libc::LOCK_NB) } == 0 {
-                break;
+            match attempt {
+                Ok(()) => break,
+                Err(std::fs::TryLockError::WouldBlock) => {}
+                Err(std::fs::TryLockError::Error(error)) => {
+                    anyhow::bail!("custody lock error: {error}")
+                }
             }
-            let error = std::io::Error::last_os_error();
-            ensure!(
-                error.kind() == std::io::ErrorKind::WouldBlock,
-                "custody lock error: {error}"
-            );
             ensure!(
                 Instant::now() < deadline,
                 "authority busy: no dispatch fallback"
@@ -1055,9 +1055,7 @@ impl FileLock {
 }
 impl Drop for FileLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 

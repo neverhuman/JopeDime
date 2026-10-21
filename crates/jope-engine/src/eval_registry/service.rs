@@ -364,7 +364,7 @@ impl Lease {
             .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
             .open(&path)?;
         ensure!(
-            unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+            file.try_lock().is_ok(),
             "another native authority service owns custody"
         );
         let m = file.metadata()?;
@@ -385,7 +385,7 @@ impl Lease {
 }
 impl Drop for Lease {
     fn drop(&mut self) {
-        let _ = unsafe { libc::flock(self.file.as_raw_fd(), libc::LOCK_UN) };
+        let _ = self.file.unlock();
     }
 }
 
@@ -1303,7 +1303,11 @@ impl WorkerPermit {
             ProcessIdentity::current()? == self.permission.start.executor,
             "worker permit inherited by another process"
         );
-        let m = File::from(self.custody.try_clone()?).metadata()?;
+        // A dup shares the custody open file description, so it reads the same inode and
+        // flock(2) on it re-asserts the lock that `self.custody` holds; closing the dup
+        // afterwards does not release it.
+        let custody = File::from(self.custody.try_clone()?);
+        let m = custody.metadata()?;
         ensure!(
             (m.dev(), m.ino())
                 == (
@@ -1319,10 +1323,7 @@ impl WorkerPermit {
                 && (path.dev(), path.ino()) == (m.dev(), m.ino()),
             "worker custody pathname replaced"
         );
-        ensure!(
-            unsafe { libc::flock(self.custody.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-            "worker exclusive custody lost"
-        );
+        ensure!(custody.try_lock().is_ok(), "worker exclusive custody lost");
         Ok(())
     }
 }

@@ -2,7 +2,6 @@ use super::*;
 use jope_dime_regressor::paths;
 use serde_json::json;
 use std::fs::File;
-use std::os::fd::AsRawFd;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::{Arc, Barrier, Mutex};
 use std::time::{Duration, Instant};
@@ -134,17 +133,14 @@ impl NodeLease {
                     .read(true)
                     .write(true)
                     .open(lock_dir.join(format!("{node}.slot-{slot}.lock")))?;
-                let result =
-                    unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-                if result == 0 {
-                    return Ok(Self { file });
-                }
-                let error = std::io::Error::last_os_error();
-                if !matches!(
-                    error.kind(),
-                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::Interrupted
-                ) {
-                    return Err(error).context("acquire SCQ node lease slot");
+                match file.try_lock() {
+                    Ok(()) => return Ok(Self { file }),
+                    Err(std::fs::TryLockError::WouldBlock) => {}
+                    Err(std::fs::TryLockError::Error(error))
+                        if error.kind() == std::io::ErrorKind::Interrupted => {}
+                    Err(std::fs::TryLockError::Error(error)) => {
+                        return Err(error).context("acquire SCQ node lease slot");
+                    }
                 }
             }
             thread::sleep(Duration::from_millis(50));
@@ -154,9 +150,7 @@ impl NodeLease {
 
 impl Drop for NodeLease {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 

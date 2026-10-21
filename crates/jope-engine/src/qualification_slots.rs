@@ -5,7 +5,6 @@ use serde::Deserialize;
 use std::{
     collections::BTreeSet,
     fs::{File, OpenOptions},
-    os::fd::AsRawFd,
     path::Path,
 };
 
@@ -63,7 +62,7 @@ pub fn try_acquire(root: &Path, slot: usize) -> Result<Option<File>> {
         .read(true)
         .write(true)
         .open(root.join(format!("runs/gp-slot-{slot}.lock")))?;
-    if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
+    if file.try_lock().is_ok() {
         return Ok(Some(file));
     }
     let error = std::io::Error::last_os_error();
@@ -87,6 +86,7 @@ pub fn inherit(fd: std::os::fd::RawFd) -> std::io::Result<()> {
 mod tests {
     use super::*;
     use crate::manifest::write_json;
+    use std::os::fd::AsRawFd;
     use std::{
         os::unix::process::CommandExt,
         process::{Command, Stdio},

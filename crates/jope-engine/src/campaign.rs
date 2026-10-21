@@ -223,7 +223,7 @@ fn run_admitted(root: &Path, spec_path: &Path) -> Result<()> {
         .write(true)
         .open(root.join("runs/campaign.lock"))?;
     ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+        lock.try_lock().is_ok(),
         "another campaign controller owns this workspace"
     );
     let index: corpus::Index = read_json(&initial.join("index.json"))?;

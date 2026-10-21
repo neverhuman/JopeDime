@@ -15,7 +15,6 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     io::{BufWriter, Write},
-    os::fd::AsRawFd,
     path::{Path, PathBuf},
 };
 
@@ -385,10 +384,7 @@ fn publish_impl(
         .create(true)
         .truncate(false)
         .open(store.join("writer.lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "teaching store already owned"
-    );
+    ensure!(lock.try_lock().is_ok(), "teaching store already owned");
     let context_bytes = fs::read(contexts_path)?;
     let ci: Value = serde_json::from_slice(&context_bytes)?;
     ensure!(

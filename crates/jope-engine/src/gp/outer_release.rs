@@ -219,15 +219,11 @@ impl Authority {
 
     /// Serialize every mutation of this authority.
     fn lock(&self) -> Result<fs::File> {
-        use std::os::fd::AsRawFd;
         let lock = fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(self.dir.join("ledger.lock"))?;
-        ensure!(
-            unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) } == 0,
-            "outer release authority lock failed"
-        );
+        ensure!(lock.lock().is_ok(), "outer release authority lock failed");
         Ok(lock)
     }
 

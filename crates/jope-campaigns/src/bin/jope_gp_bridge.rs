@@ -21,7 +21,6 @@ use serde_json::{json, Map, Value};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
-use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 
 const EXPORT_SCHEMA: &str = "JopeGpSeedExport.v2";
@@ -262,17 +261,18 @@ impl ReceiptLock {
             .write(true)
             .open(&lock_path)
             .with_context(|| format!("open receipt lock {}", lock_path.display()))?;
-        let status = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
-        ensure!(status == 0, "acquire receipt lock {}", lock_path.display());
+        ensure!(
+            file.lock().is_ok(),
+            "acquire receipt lock {}",
+            lock_path.display()
+        );
         Ok(Self { file })
     }
 }
 
 impl Drop for ReceiptLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 

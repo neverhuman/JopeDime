@@ -12,7 +12,6 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::os::fd::AsRawFd;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -313,8 +312,7 @@ impl Lease {
             .read(true)
             .write(true)
             .open(path)?;
-        let status = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-        if status != 0 {
+        if file.try_lock().is_err() {
             bail!("campaign lease is already held at {}", path.display());
         }
         Ok(Self { file })
@@ -323,9 +321,7 @@ impl Lease {
 
 impl Drop for Lease {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 

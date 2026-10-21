@@ -425,10 +425,7 @@ pub async fn provision(config_path: &Path, input: &TaskInput) -> Result<Value> {
         .mode(0o600)
         .custom_flags(libc::O_NOFOLLOW)
         .open(config.state.join("lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "provisioner busy"
-    );
+    ensure!(lock.try_lock().is_ok(), "provisioner busy");
     let loop_config: LoopConfig =
         serde_json::from_slice(&checked(&config.root, &config.loop_config)?)?;
     protected(&config.witness_policy.path, false)?;

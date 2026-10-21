@@ -13,7 +13,6 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::fd::AsRawFd;
 use std::os::unix::fs::{symlink, OpenOptionsExt, PermissionsExt};
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
@@ -464,12 +463,9 @@ impl ActivationLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
-        // SAFETY: `file` owns the live FD, retained in `Self` on success. Both arguments are c_int;
-        // flock borrows the FD without pointers or ownership transfer. Every nonzero result,
-        // including EWOULDBLOCK or other errors, is refused below and drops/closes `file`.
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
+        // Every failure, EWOULDBLOCK or otherwise, is refused and drops/closes `file`.
         ensure!(
-            result == 0,
+            file.try_lock().is_ok(),
             "another DIME activation transaction owns the lock"
         );
         Ok(Self { _file: file })

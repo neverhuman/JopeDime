@@ -67,7 +67,6 @@ use serde_json::{json, Map, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
-use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::thread::sleep;
@@ -220,13 +219,8 @@ fn lock_exclusive(root: &Path) -> Result<File> {
         .write(true)
         .mode(0o644)
         .open(&path)?;
-    let status = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-    if status != 0 {
-        bail!(
-            "another corpus freeze holds {}: {}",
-            path.display(),
-            std::io::Error::last_os_error()
-        );
+    if let Err(error) = file.try_lock() {
+        bail!("another corpus freeze holds {}: {error}", path.display());
     }
     Ok(file)
 }

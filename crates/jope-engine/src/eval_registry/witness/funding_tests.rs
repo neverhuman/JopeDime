@@ -651,10 +651,7 @@ fn funding_lock_contention_expires_before_consumption_or_journal() {
         .write(true)
         .open(fixture.authority.join("authority.lock"))
         .unwrap();
-    assert_eq!(
-        unsafe { libc::flock(blocker.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-        0
-    );
+    blocker.try_lock().unwrap();
     let deadline = f::FundingClock::current().unwrap().monotonic_ns + 500_000_000;
     let started = std::time::Instant::now();
     let result = authority.funding_admit(
@@ -665,10 +662,7 @@ fn funding_lock_contention_expires_before_consumption_or_journal() {
         &fixture.descriptor,
         deadline,
     );
-    assert_eq!(
-        unsafe { libc::flock(blocker.as_raw_fd(), libc::LOCK_UN) },
-        0
-    );
+    blocker.unlock().unwrap();
     drop(blocker);
     assert!(
         started.elapsed() < Duration::from_secs(2),
@@ -812,10 +806,7 @@ fn metadata_funding_operations_obey_transport_deadline_without_journaling() {
         .write(true)
         .open(fixture.authority.join("authority.lock"))
         .unwrap();
-    assert_eq!(
-        unsafe { libc::flock(blocker.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-        0
-    );
+    blocker.try_lock().unwrap();
     for operation in 0..3 {
         let deadline = f::FundingClock::current().unwrap().monotonic_ns + 100_000_000;
         let started = std::time::Instant::now();
@@ -843,10 +834,7 @@ fn metadata_funding_operations_obey_transport_deadline_without_journaling() {
             before
         );
     }
-    assert_eq!(
-        unsafe { libc::flock(blocker.as_raw_fd(), libc::LOCK_UN) },
-        0
-    );
+    blocker.unlock().unwrap();
     drop(blocker);
     // Expired uncontended requests must fail too; releasing contention must not
     // revive the old request. A distinguishable new request may still preflight.

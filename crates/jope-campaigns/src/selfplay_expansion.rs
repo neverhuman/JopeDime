@@ -257,17 +257,14 @@ impl FileLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
-        ensure!(result == 0, "lock failed: {}", path.display());
+        ensure!(file.lock().is_ok(), "lock failed: {}", path.display());
         Ok(Self(file))
     }
 }
 
 impl Drop for FileLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.0.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.0.unlock();
     }
 }
 

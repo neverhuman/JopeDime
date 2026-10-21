@@ -28,7 +28,6 @@ use std::{
     io::{Read, Write},
     os::unix::{
         fs::{MetadataExt, OpenOptionsExt, PermissionsExt},
-        io::AsRawFd,
         process::CommandExt,
     },
     path::{Path, PathBuf},
@@ -630,7 +629,7 @@ impl WitnessStore {
         );
         let lease = checked_file(&root.join("lease"))?;
         ensure!(
-            unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_SH | libc::LOCK_NB) } == 0,
+            lease.try_lock_shared().is_ok(),
             "public witness snapshot still has an active writer"
         );
         let identity = |p: &Path| -> Result<(u64, u64)> {
@@ -766,10 +765,7 @@ impl WitnessStore {
             "wrong witness ACK key"
         );
         let lease = checked_file(&root.join("lease"))?;
-        ensure!(
-            unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-            "witness already owned"
-        );
+        ensure!(lease.try_lock().is_ok(), "witness already owned");
         let identity = |p: &Path| -> Result<(u64, u64)> {
             let m = fs::symlink_metadata(p)?;
             Ok((m.dev(), m.ino()))

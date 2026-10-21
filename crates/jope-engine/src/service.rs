@@ -211,10 +211,7 @@ pub fn run_with_wait(
         .write(true)
         .open(lock)?;
     use std::os::fd::AsRawFd;
-    ensure!(
-        unsafe { libc::flock(_lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "GP service already running"
-    );
+    ensure!(_lock.try_lock().is_ok(), "GP service already running");
     let heartbeat = StageHeartbeat::start(
         &root.join("runs/gp-service.json"),
         serde_json::json!({
