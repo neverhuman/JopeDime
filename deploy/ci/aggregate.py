@@ -87,7 +87,7 @@ def verify_receipt(mapping, lane, unit, path, receipt, expected, reject):
         reject(f"{unit}: receipt status {receipt.get('status')}, exit {receipt.get('exit_status')}")
     if receipt.get("dirty_source") != [] or receipt.get("dirty_source_after") != []:
         reject(f"{unit}: dirty or unrecorded source state")
-    if receipt.get("command") != ["bash", "deploy/ci/fast-lane.sh", lane]:
+    if receipt.get("command") != ["bash", "ops/ci/fast-lane.sh", lane]:
         reject(f"{unit}: unexpected command")
     try:
         start = datetime.datetime.fromisoformat(receipt["started_at"])
