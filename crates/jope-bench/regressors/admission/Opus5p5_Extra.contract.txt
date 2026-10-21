@@ -1,0 +1,44 @@
+# rustc 1.97.1 (8bab26f4f 2026-07-14); submission.rs sha256 2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834
+# rustc --edition=2021 --crate-name submission --crate-type rlib -C opt-level=3 -C codegen-units=1 -D unsafe-code submission.rs  -> exit 0, 2 warnings (unused_assignments)
+# rustc --edition=2021 -C opt-level=3 -C codegen-units=1 --extern submission=libsubmission.rlib -L . driver.rs -o driver && ./driver  (2-vCPU container, 2026-10-21T06:50Z)
+PASS  fit valid table
+PASS  predict length and finite
+PASS  fit wrong length -> Err
+PASS  fit n_rows*n_cols overflow -> Err
+PASS  fit n_rows = 0 -> Err
+PASS  fit n_cols = 0 -> Err
+PASS  predict wrong length -> Err
+PASS  predict overflow -> Err
+PASS  predict with width C (target placeholder) -> Err
+PASS  fit infinite feature -> Err
+PASS  fit NaN target -> Err
+PASS  fit infinite target -> Err
+PASS  predict infinite feature -> Err
+PASS  fit one-column table
+PASS  zero-feature predict returns n_rows mean values
+PASS  zero-feature predict n_rows=0 -> empty
+PASS  fit single-row table
+PASS  single-row predict finite
+PASS  fit two-row table
+PASS  constant target fits
+PASS  constant target predicts the constant
+PASS  degenerate columns / missing rows / repeated rows fit
+PASS  degenerate predict finite
+PASS  predict before fit -> Err
+PASS  predict before fit (empty batch) -> Err
+PASS  refit with invalid input -> Err
+PASS  predict after failed refit -> Err
+PASS  predict different width -> Err
+PASS  zero-row prediction -> empty
+PASS  same seed, fresh instance -> identical predictions
+PASS  repeated predict identical
+PASS  full vs batched predictions within tolerance
+PASS  permuted rows -> permuted outputs
+PASS  refit on second task == fresh instance
+PASS  different seed still finite
+
+contract checks: 35 passed, 0 failed
+smoke n=   2000 p=  8: fit    3.09s  predict  0.134s  rmse    45.511  mean-baseline  3515.523
+smoke n=  20000 p= 20: fit   27.36s  predict  1.418s  rmse    37.028  mean-baseline  3624.617
+smoke n= 100000 p= 10: fit   31.25s  predict  2.953s  rmse    46.624  mean-baseline  3678.758
+exit=0

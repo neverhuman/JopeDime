@@ -1,0 +1,340 @@
+{
+  "schema": "jope.blob-verification-review/v1",
+  "review_date": "2026-10-21",
+  "base_commit": "18b671e90102df16de8b0cd95f93fd4378c911ef",
+  "tested_source_commit": "4db629c3cd5555e27a4a1935aeea7f221d09c9a8",
+  "source_sha256": {
+    "crates/jope-datasets/src/blobs.rs": "7e4acbe9a1f32d7212bc8b162d90ffc6d10dc1cb894eb1b5ac4b9f5a27fff2b2",
+    "crates/jope-datasets/src/hash.rs": "4b239c0c5981b31ba37a3a60bcab8ef712558140c165d2f629920661f2216380",
+    "crates/jope-datasets/src/store.rs": "22df070ed5308771b5d7af386b5f9ed7572376c204aeed872188e73948357039",
+    "crates/jope-datasets/src/store/tests.rs": "6642c779a17abc5022b3b94d10967c8b73e62b23e54383a9fdf12c7d6fb05255",
+    "crates/jope-models/src/cache.rs": "a69264c08cdaa281830b4d59e6e7e45aff31212abc6f0dbe932c3e98cb259ed7",
+    "crates/jope-models/src/publish.rs": "779284b9fb8c62bdc135ea7c27a6b56980969938593b6a2111c8ed94b0f0a40e"
+  },
+  "validation": {
+    "rust": "1.97.1 (8bab26f4f 2026-07-14)",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+    "cpu_quota_millicores": 8000,
+    "tests": {
+      "command": "cargo test -p jope-datasets -p jope-models --locked --offline -j 1",
+      "exit_code": 0,
+      "passed": 93,
+      "failed": 0,
+      "ignored": 0,
+      "new_tests": 3,
+      "zero_test_harnesses": "Recorded as zero collected; not capability proof.",
+      "log_sha256": "acb64981a443c13239f019ae01c024bc1770e056c5debc6fcbedaee3caca319e"
+    },
+    "format": {
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0
+    },
+    "whitespace": {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    "ip_scrub": {
+      "command": "bash deploy/ci/ip-scrub.sh",
+      "exit_code": 0,
+      "files": 54
+    },
+    "python_inventory": {
+      "command": "bash deploy/ci/test-inventory.sh --no-rust --static-python",
+      "exit_code": 0,
+      "statically_collected": 182,
+      "removed": 0,
+      "rust_half": "not collected; committed inventory retained"
+    },
+    "required_gate": {
+      "command": "just required",
+      "exit_code": 127,
+      "status": "just unavailable; not executed"
+    },
+    "clippy": {
+      "command": "cargo clippy -p jope-datasets -p jope-models --all-targets --no-deps --locked --offline -j 1 -- -D warnings",
+      "exit_code": 101,
+      "status": "Filesystem exhausted before checking; not a pass."
+    },
+    "hosted_ci": "pending",
+    "independent_review": "required before merge; no writer self-approval",
+    "notes": [
+      "First library compile exposed Read imported indirectly by a store test; moved that import into the test module and replayed successfully.",
+      "A linker attempt exhausted memory-backed storage (SIGBUS). The single reused target directory was moved to disk, and all 93 affected-crate tests passed serially.",
+      "Earlier full-audit attempts were interrupted or terminated under shared memory pressure; only completed reports below are counted.",
+      "No Cargo.lock, evaluator mathematics, frozen artifacts, CI policies or active AutoML submissions changed.",
+      "PR built on newer main 18dc38e24ee5018a453ad8b4a5fa5f2ec134bc32 after API comparison proved its 14 changed paths do not overlap this patch. Affected source bytes are identical to tested 4db629c; exact-head integration CI is still required."
+    ]
+  },
+  "microbenchmark": {
+    "bytes": 16777216,
+    "baseline_seconds": [
+      0.041458247,
+      0.067954834,
+      0.063655494,
+      0.050477598,
+      0.039438589,
+      0.038340737,
+      0.03799716
+    ],
+    "content_seconds": [
+      0.014241167,
+      0.014651053,
+      0.018212793,
+      0.017224786,
+      0.014143631,
+      0.013557778,
+      0.013987995
+    ],
+    "pairs": 7,
+    "median_baseline_seconds": 0.041458247,
+    "median_content_seconds": 0.014241167,
+    "median_speedup": 2.9111551742915447,
+    "fixture": "16 MiB of byte 0x71; full SHA-256 and actual byte counts match",
+    "build": "rustc 1.97.1 -C opt-level=3, pinned workspace dependencies; original base hash.rs vs candidate hash.rs; alternating order, warm file cache",
+    "qualification": "Synthetic component measurement on a contended host; not an end-to-end or production HPC qualification."
+  },
+  "jankurai": {
+    "version": "1.7.5",
+    "binary_sha256": "d2414884a3dbe1cc2d02b4240588869f6afac26ff0f167829e907b1617501121",
+    "policy": "Official verified distribution; no rules, score floors or exclusions changed.",
+    "full_baseline": {
+      "command": "RAYON_NUM_THREADS=1 JANKURAI_NO_UPDATE_CHECK=1 jankurai audit <clean-base-worktree> --full --read-only --no-score-history --json <outside-repo>/before.json --md <outside-repo>/before.md --timings-json <outside-repo>/before-timings.json",
+      "exit_code": 1,
+      "source_commit": "18b671e90102df16de8b0cd95f93fd4378c911ef",
+      "score": 51,
+      "minimum_score": 85,
+      "findings": 591,
+      "hard": 502,
+      "soft": 89,
+      "caps": [
+        "no-security-lane-on-high-risk-repo",
+        "python-direct-product-truth-or-db-ownership",
+        "no-secret-or-dependency-scanning-in-ci",
+        "non-optimal-product-language-found",
+        "too-much-python-in-product-surface",
+        "vibe-placeholders-in-product-code",
+        "fallback-soup-in-product-code",
+        "future-hostile-dead-language-in-product-code",
+        "severe-duplication-in-product-code",
+        "missing-rendered-ux-qa-lane",
+        "false-green-test-risk",
+        "input-boundary-gap",
+        "release-readiness-gap",
+        "missing-agent-readable-docs",
+        "streaming-runtime-drift",
+        "rust-bad-behavior",
+        "python-bad-behavior",
+        "ci-bad-behavior",
+        "git-bad-behavior",
+        "release-bad-behavior",
+        "repo-rot-bad-behavior"
+      ],
+      "elapsed_ms": 765469,
+      "report_sha256": "2612a218e2e66a58aecee41db2f3b5a4edd40c918559a95ddfef8c3ffb955232",
+      "finding_families": {
+        "HLT-000-SCORE-DIMENSION:docs": 1,
+        "HLT-000-SCORE-DIMENSION:python": 1,
+        "HLT-000-SCORE-DIMENSION:stack": 1,
+        "HLT-001-DEAD-MARKER": 88,
+        "HLT-003-OWNERLESS-PATH": 1,
+        "HLT-005-PYTHON-PRODUCT-TRUTH": 2,
+        "HLT-006-DIRECT-DB-WRONG-LAYER": 1,
+        "HLT-007-HANDWRITTEN-CONTRACT": 1,
+        "HLT-008-FALSE-GREEN-RISK": 1,
+        "HLT-009-GENERATED-SECURITY": 1,
+        "HLT-013-RENDERED-UX-GAP": 1,
+        "HLT-015-CONTEXT-SETUP-GAP": 1,
+        "HLT-016-SUPPLY-CHAIN-DRIFT": 2,
+        "HLT-017-OPAQUE-OBSERVABILITY": 1,
+        "HLT-019-STREAMING-RUNTIME-DRIFT": 1,
+        "HLT-023-INPUT-BOUNDARY-GAP": 1,
+        "HLT-025-RELEASE-READINESS-GAP": 1,
+        "HLT-026-COST-BUDGET-GAP": 1,
+        "HLT-027-HUMAN-REVIEW-EVIDENCE-GAP": 1,
+        "HLT-029-RUST-BAD-BEHAVIOR": 303,
+        "HLT-033-PYTHON-BAD-BEHAVIOR": 32,
+        "HLT-034-CI-BAD-BEHAVIOR": 15,
+        "HLT-035-GIT-BAD-BEHAVIOR": 5,
+        "HLT-037-RELEASE-BAD-BEHAVIOR": 1,
+        "HLT-038-REFERENCE-PROFILE-STRUCTURE-GAP": 4,
+        "HLT-040-REPO-ROT-BAD-BEHAVIOR": 21,
+        "HLT-042-CI-LOCAL-PARITY": 11,
+        "HLT-043-COPY-PASTE-BAD-BEHAVIOR": 50,
+        "HLT-046-UNNECESSARY-VARIETY": 40,
+        "HLT-048-CANONICAL-CI-GAP": 1
+      }
+    },
+    "matching_scope": {
+      "command": "RAYON_NUM_THREADS=1 JANKURAI_NO_UPDATE_CHECK=1 jankurai audit <worktree> [--changed <path> repeated for each source_sha256 key] --changed-fast --read-only --no-score-history --json <outside-repo>/report.json --md <outside-repo>/report.md",
+      "scope": {
+        "mode": "changed-fast",
+        "paths": [
+          "crates/jope-datasets/src/blobs.rs",
+          "crates/jope-datasets/src/hash.rs",
+          "crates/jope-datasets/src/store.rs",
+          "crates/jope-datasets/src/store/tests.rs",
+          "crates/jope-models/src/cache.rs",
+          "crates/jope-models/src/publish.rs"
+        ]
+      },
+      "before_score": 54,
+      "after_score": 54,
+      "before_findings": 46,
+      "after_findings": 46,
+      "before_hard": 21,
+      "after_hard": 21,
+      "before_caps": [
+        "no-one-command-setup-or-validation",
+        "no-security-lane-on-high-risk-repo",
+        "no-secret-or-dependency-scanning-in-ci",
+        "future-hostile-dead-language-in-product-code",
+        "release-readiness-gap",
+        "no-agent-friendly-exception-pattern",
+        "missing-agent-readable-docs",
+        "ci-bad-behavior"
+      ],
+      "after_caps": [
+        "no-one-command-setup-or-validation",
+        "no-security-lane-on-high-risk-repo",
+        "no-secret-or-dependency-scanning-in-ci",
+        "future-hostile-dead-language-in-product-code",
+        "release-readiness-gap",
+        "no-agent-friendly-exception-pattern",
+        "missing-agent-readable-docs",
+        "ci-bad-behavior"
+      ],
+      "added_finding_fingerprints": [
+        "sha256:461eea2cf17ec5ebaf8733eb4429ffcab8bc219a3b9356b8c6a26aefec27f4ab"
+      ],
+      "removed_finding_fingerprints": [
+        "sha256:2f3b8fbe2e677883295994f3658aee78f815030aa756aa6b67bebb12889dd5e8"
+      ],
+      "exit_codes": [
+        1,
+        1
+      ],
+      "baseline_report_sha256": "a81a4d48e0fd2fdd3f065e6b84150270bdb098c7d70a08ae9b52eb4e7090cadb",
+      "candidate_report_sha256": "e776732ee2070df94c657639ce2f069cc30323fac184d01d6493dabfe210a4d0",
+      "status": "Both gates fail; matching scope comparison does not replace a post-change full audit.",
+      "finding_delta_explanation": "One soft shape-summary fingerprint changed: store.rs shrank from 705 to 690 LOC, while heuristic Rust advisory signals increased from 77 to 108 (the patch adds regression-test assertions). Hard findings and applied caps are unchanged. Advisory signals are retained, not declared qualified."
+    },
+    "cap_dispositions": [
+      {
+        "cap": "no-security-lane-on-high-risk-repo",
+        "status": "open",
+        "next_action": "Qualify actual security tool execution, exit propagation and runner isolation."
+      },
+      {
+        "cap": "python-direct-product-truth-or-db-ownership",
+        "status": "open",
+        "next_action": "Complete ADR-0006 runtime ownership with parity proofs."
+      },
+      {
+        "cap": "no-secret-or-dependency-scanning-in-ci",
+        "status": "open",
+        "next_action": "Verify secret/dependency checks execute and retain evidence."
+      },
+      {
+        "cap": "non-optimal-product-language-found",
+        "status": "open",
+        "next_action": "Separate maintained runtime languages from emitted code and historical evidence."
+      },
+      {
+        "cap": "too-much-python-in-product-surface",
+        "status": "open",
+        "next_action": "Complete the Python operational/training retirement inventory."
+      },
+      {
+        "cap": "vibe-placeholders-in-product-code",
+        "status": "open",
+        "next_action": "Review actual unsupported behavior at each flagged locator."
+      },
+      {
+        "cap": "fallback-soup-in-product-code",
+        "status": "open",
+        "next_action": "Prove explicit failure accounting; preserve unknown outcomes."
+      },
+      {
+        "cap": "future-hostile-dead-language-in-product-code",
+        "status": "open",
+        "next_action": "Separate behavioral TODOs from valid diagnostics; the changed stale-data refusal has an identical baseline fingerprint."
+      },
+      {
+        "cap": "severe-duplication-in-product-code",
+        "status": "open",
+        "next_action": "Consolidate semantic duplication without rewriting source-pinned contracts."
+      },
+      {
+        "cap": "missing-rendered-ux-qa-lane",
+        "status": "open",
+        "next_action": "Qualify rendered dashboard, accessibility and interaction tests."
+      },
+      {
+        "cap": "false-green-test-risk",
+        "status": "open",
+        "next_action": "Review assertion/fixture context without weakening compatibility evidence."
+      },
+      {
+        "cap": "input-boundary-gap",
+        "status": "open",
+        "next_action": "Qualify receiving-path validation, identity, race and malformed-input cases."
+      },
+      {
+        "cap": "release-readiness-gap",
+        "status": "open",
+        "next_action": "Reconcile docs/release/README.md navigation and qualify actual release/rollback evidence."
+      },
+      {
+        "cap": "missing-agent-readable-docs",
+        "status": "open",
+        "next_action": "Add a current runtime/ownership map tied to capability evidence."
+      },
+      {
+        "cap": "streaming-runtime-drift",
+        "status": "open",
+        "next_action": "Review actual streaming clients separately from logarithmic-unit fixtures using the word nats."
+      },
+      {
+        "cap": "rust-bad-behavior",
+        "status": "open",
+        "next_action": "Qualify unsafe sites, handle lifetimes, invariants and bounds."
+      },
+      {
+        "cap": "python-bad-behavior",
+        "status": "open",
+        "next_action": "Review executable-artifact trust boundaries and remaining Python exceptions."
+      },
+      {
+        "cap": "ci-bad-behavior",
+        "status": "open",
+        "next_action": "Review workflow concurrency/expressions against actual self-hosted admission rules."
+      },
+      {
+        "cap": "git-bad-behavior",
+        "status": "open",
+        "next_action": "Distinguish isolated Git fixtures/recovery guidance from shared-branch operations."
+      },
+      {
+        "cap": "release-bad-behavior",
+        "status": "open",
+        "next_action": "Review flagged source context against the real release path."
+      },
+      {
+        "cap": "repo-rot-bad-behavior",
+        "status": "open",
+        "next_action": "Remove proven dead behavior; preserve and restore-verify versioned source/evidence before migration."
+      }
+    ],
+    "changed_source_findings": [
+      {
+        "rule_id": "HLT-001-DEAD-MARKER",
+        "path": "crates/jope-datasets/src/blobs.rs",
+        "line": 147,
+        "fingerprint": "sha256:fa13a2d8103eeda06d5c85bd49ecc8869b16a7c6175e6917bbae92365d35eead",
+        "status": "pre-existing"
+      }
+    ]
+  },
+  "pr_base_commit": "18dc38e24ee5018a453ad8b4a5fa5f2ec134bc32"
+}

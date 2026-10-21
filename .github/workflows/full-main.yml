@@ -6,9 +6,10 @@ on:
 permissions:
   contents: read
 
-# Keep distinct source revisions eligible; only duplicate runs of one revision serialize.
+# Serialize duplicate invocations of this source without cancelling running proof.
+# Different main SHAs have different groups, so newer pushes cannot evict older heads.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.sha }}-${{ github.event_name }}
+  group: full-main-${{ github.sha }}
   cancel-in-progress: false
 
 env:
@@ -22,7 +23,7 @@ env:
   OPENBLAS_NUM_THREADS: "1"
   MKL_NUM_THREADS: "1"
 
-# Fixed full slots serialize jobs per host. The SHA-scoped group keeps distinct pushes separate.
+# Fixed full slots serialize jobs per host. No concurrency group discards pending pushes.
 jobs:
   cpu:
     if: github.ref == 'refs/heads/main'

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.appliance-manifest.v1.schema.json",
+  "title": "jopedime package manifest",
+  "description": "The signed manifest embedded in a jopedime package (crates/jope-assets/src/manifest.rs). Canonical bytes: serde_json field order, no whitespace; entries sorted by id; methods sorted. The footer carries its sha256 and the signature covers the footer (deploy/appliance/AMENDMENTS.md A5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "format_version", "product", "product_version", "target", "profile", "scope", "code", "source", "methods", "entries"],
+  "properties": {
+    "schema": {"const": "jope.appliance-manifest/v1"},
+    "format_version": {"const": 1},
+    "product": {"const": "jopedime"},
+    "product_version": {"type": "string", "minLength": 1},
+    "target": {"type": "string", "minLength": 1},
+    "profile": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "scope": {"enum": ["development", "public", "internal", "internal-restricted"]},
+    "code": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["len", "sha256"],
+      "properties": {
+        "len": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha40", "cargo_lock_sha256", "profile_sha256", "models_lock_sha256"],
+      "properties": {
+        "sha40": {"type": "string"},
+        "cargo_lock_sha256": {"type": "string"},
+        "profile_sha256": {"type": "string"},
+        "models_lock_sha256": {"type": "string"}
+      }
+    },
+    "methods": {"type": "array", "maxItems": 1024, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
+    "entries": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/entry"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "component", "origin", "sha256", "bytes", "codec", "stored_sha256", "stored_bytes", "frames", "license", "backends"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9._+:-]+(/[A-Za-z0-9._+:-]+)*$"},
+        "role": {"enum": ["model", "config", "manifest", "notice"]},
+        "component": {"type": "string", "minLength": 1},
+        "origin": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 8589934592},
+        "codec": {"enum": ["shuffle+zstd", "zstd", "raw"]},
+        "stored_sha256": {"$ref": "#/$defs/sha256"},
+        "stored_bytes": {"type": "integer", "minimum": 0},
+        "frames": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["offset", "len", "raw_len"],
+            "properties": {
+              "offset": {"type": "integer", "minimum": 0},
+              "len": {"type": "integer", "minimum": 1},
+              "raw_len": {"type": "integer", "minimum": 1, "maximum": 67108864}
+            }
+          }
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["spdx", "redistribution"],
+          "properties": {
+            "spdx": {"type": "string", "minLength": 1},
+            "redistribution": {"enum": ["permitted", "internal", "prohibited", "conditional", "none"]}
+          }
+        },
+        "backends": {"type": "array", "uniqueItems": true, "items": {"enum": ["cpu", "cuda"]}}
+      }
+    }
+  }
+}

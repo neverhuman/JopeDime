@@ -1,0 +1,27 @@
+[package]
+name = "jope-runtime"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Appliance runtime: native method roster, table ingress, local fit and prediction, bounded selection and fitted state"
+
+[dependencies]
+anyhow.workspace = true
+csv = "1.4"
+# No `fitted-cpp`: the appliance carries no C++ (deploy/appliance/AMENDMENTS.md A1).
+feat-math = { path = "../feat-math", default-features = false }
+hex.workspace = true
+rayon.workspace = true
+serde.workspace = true
+# float_roundtrip: a reloaded model must parse every fitted parameter bit for bit.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
+sha2.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

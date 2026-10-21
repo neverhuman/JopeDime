@@ -28,11 +28,11 @@ rand_chacha = "0.3"
 serde.workspace = true
 serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
-feat-math = { path = "../feat-math" }
+feat-math = { path = "../feat-math", default-features = false }
 candle-core = { version = "0.11.0", default-features = false }
 candle-nn = { version = "0.11.0", default-features = false }
 # jope_embed reads the foundation projection `.npz` (feat-core line, verbatim).
-zip = { version = "8.6", default-features = false, features = ["deflate"] }
+zip = { version = "9.0.5", default-features = false, features = ["deflate"] }
 
 # The port tests need the test-support feature; without it cargo refuses or skips the target
 # visibly instead of compiling an empty test binary.

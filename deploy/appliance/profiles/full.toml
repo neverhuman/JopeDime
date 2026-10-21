@@ -1,0 +1,59 @@
+# The full product: native methods plus the accepted step-60000 proposal path and its exact
+# encoder closure (SPECIFICATION.md §5.1). Neural alternatives (§6.2) join with their components
+# when their adapters land (P4).
+#
+# It is BLOCKED, and `jope-dist lock` records why (deploy/appliance/models.lock.json):
+#   * the Starlight foundation regressor is `prohibited` (provenance pending) and needs a recorded
+#     owner acknowledgement before even an internal-restricted package;
+#   * the proposal method's runtime adapter is not compiled yet (P3).
+# Rights are never edited to unblock it: resolve them at their source records.
+schema = "jope.appliance-profile/v1"
+name = "full"
+description = "Native methods plus the accepted step-60000 proposal closure (internal-restricted)."
+scope = "internal-restricted"
+redistribution = ["permitted", "internal", "prohibited"]
+methods = ["native", "proposal.step60000.regression"]
+bundles = "models/bundles"
+max_payload_mib = 512
+owner_ack = "deploy/appliance/acknowledgements/full-internal-restricted.md"
+
+[codec]
+name = "shuffle+zstd"
+level = 19
+frame_mib = 16
+
+[[component]]
+id = "policy-step-60000"
+bundle = "policy-step-60000"
+files = ["policy.safetensors", "context_transforms.safetensors"]
+role = "model"
+requires = ["hyperion-v5-arm-b", "starlight-foundation", "target-encoder", "governed-bundle"]
+
+[[component]]
+id = "hyperion-v5-arm-b"
+bundle = "jope-prime-gen31-v2"
+files = ["model-bundle/hyperion_v5_arm_b.safetensors", "model-bundle/hyperion_v5_arm_b.manifest.json"]
+role = "model"
+
+[[component]]
+id = "starlight-foundation"
+bundle = "jope-prime-gen31-v2"
+files = ["starforge/starlight_core_regressor.safetensors"]
+role = "model"
+
+[[component]]
+id = "target-encoder"
+bundle = "jope-prime-gen31-v2"
+files = [
+  "model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+  "model-bundle/target_encoder_fused_v1.meta.json",
+]
+role = "model"
+
+# The governed component-bundle manifest, retained so a projection loader can prove each selected
+# entry against it (SPECIFICATION.md §5.2).
+[[component]]
+id = "governed-bundle"
+bundle = "jope-prime-gen31-v2"
+files = ["model-bundle.v1.json"]
+role = "manifest"

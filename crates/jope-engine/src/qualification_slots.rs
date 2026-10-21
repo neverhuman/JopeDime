@@ -63,6 +63,8 @@ pub fn try_acquire(root: &Path, slot: usize) -> Result<Option<File>> {
         .read(true)
         .write(true)
         .open(root.join(format!("runs/gp-slot-{slot}.lock")))?;
+    // SAFETY: file owns the live descriptor and flock takes only integer
+    // arguments. The returned File retains the lock's open-file-description owner.
     if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
         return Ok(Some(file));
     }
@@ -76,7 +78,12 @@ pub fn try_acquire(root: &Path, slot: usize) -> Result<Option<File>> {
 /// Called in pre_exec: the search owns the slot until it exits. Dropping the
 /// supervisor's copy must not release it.
 pub fn inherit(fd: std::os::fd::RawFd) -> std::io::Result<()> {
+    // SAFETY: F_GETFD takes an integer descriptor and no pointer arguments;
+    // a closed/invalid descriptor is reported by the kernel and checked below.
     let flags = unsafe { libc::fcntl(fd, libc::F_GETFD) };
+    // SAFETY: after the successful read, only the integer FD_CLOEXEC bit is
+    // changed on the caller-borrowed slot descriptor. fcntl is async-signal-safe
+    // for this pre_exec path and retains no Rust pointer or reference.
     if flags < 0 || unsafe { libc::fcntl(fd, libc::F_SETFD, flags & !libc::FD_CLOEXEC) } < 0 {
         return Err(std::io::Error::last_os_error());
     }
@@ -130,6 +137,8 @@ mod tests {
         let fd = lease.as_raw_fd();
         let mut command = Command::new("cat");
         command.stdin(Stdio::piped()).stdout(Stdio::null());
+        // SAFETY: this closure invokes only inherit's async-signal-safe fcntl
+        // operations; the parent keeps lease alive until spawn finishes its fork/exec.
         unsafe {
             command.pre_exec(move || inherit(fd));
         }

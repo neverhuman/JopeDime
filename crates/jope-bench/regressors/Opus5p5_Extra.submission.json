@@ -1,0 +1,19 @@
+{
+  "schema_version": "general-regressor-challenge/v2",
+  "algorithm_name": "CBRS: Cross-fitted Boosted-Ridge Stack",
+  "language": "rust",
+  "edition": "2021",
+  "target_column": "last",
+  "prediction_input": "features_only",
+  "external_dependencies": [],
+  "unsafe_code": false,
+  "authoring_mode": "reasoning_only",
+  "data_accessed_during_design": false,
+  "experiments_run_during_design": false,
+  "external_code_used": false,
+  "compiled_during_design": false,
+  "single_frozen_implementation": true,
+  "fit_complexity": "O(n*P + P*S*log S + n_w*p_t*log B + K*R*(b*c + L*c*B + n_w*D) + n_w*P_c + K*n_w*d^2 + K*G*d^3 + n_w*log n_w). n = training rows, P = features, n_w = min(n, 400000) working rows, S <= min(n_w, max(2000, 1e8/P)) sampled rows for statistics, p_t <= min(P, 2000, 6e8/n_w) tree features, B <= 256 bins per feature, K in {2,...,5} folds, R <= 4000 boosting rounds per fold and per tree family (further bounded by a fixed 4e10-unit work budget and a prediction-cost cap), b = rows per tree, c <= 512 features per tree, L <= 64 nodes per tree, D <= 12 depth, P_c <= 2P linear candidates (screening term applies only when P_c exceeds the ridge cap), d <= 300 ridge columns, G = 14 ridge penalties.",
+  "predict_complexity": "O(m*(P + K*(T*D + d))). m = prediction rows, K folds, T <= 2R retained trees per fold, D <= 12 path length, d <= K*300 ridge coefficients; total node visits per row are capped near 5e9/n at fit time.",
+  "memory_complexity": "O(n*(P+1)) input + O(n_w*p_t) bytes binned matrix + O(n_w) per-row work vectors + O(K*P_c) screening sums + O(d^2) Gram + O(L*c*B) pooled histograms + O(K*R*L) stored trees."
+}

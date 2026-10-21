@@ -499,11 +499,44 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             "PR392 transition must name {path}"
         );
     }
-    // PR396 exact-neighbor/cache implementation: only the announced evaluator identity moves.
+    // PR394 follows the merged PR392 identity, rather than its original parallel baseline.
+    let appliance_after_automl =
+        old_fixture("transitions/appliance_after_automl_identity_rebaseline.v1.json");
+    let appliance_fixtures = appliance_after_automl["fixtures"].as_array().unwrap();
+    assert_eq!(appliance_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(appliance_fixtures.iter().any(|entry| entry["path"] == path));
+    }
+    // PR395 runtime audit repairs mint source-bound engine lineage only.
+    let jankurai_runtime_safety =
+        old_fixture("transitions/jankurai_runtime_safety_lineage_rebaseline.v1.json");
+    let audit_fixtures = jankurai_runtime_safety["fixtures"].as_array().unwrap();
+    assert_eq!(audit_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(audit_fixtures.iter().any(|entry| entry["path"] == path));
+    }
+    // Dependency/security successor preserves prior runtime and behavioral floors.
+    let jankurai_dependency_security =
+        old_fixture("transitions/jankurai_dependency_security_rebaseline.v1.json");
+    let dependency_fixtures = jankurai_dependency_security["fixtures"].as_array().unwrap();
+    assert_eq!(dependency_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(dependency_fixtures
+            .iter()
+            .any(|entry| entry["path"] == path));
+    }
     let hpc_cache = old_fixture("transitions/hpc_cache_identity_rebaseline.v1.json");
     let hpc_fixtures = hpc_cache["fixtures"].as_array().unwrap();
     assert_eq!(hpc_fixtures.len(), 1);
     assert_eq!(hpc_fixtures[0]["path"], changed_fixtures[0]);
+    // Preserve the original PR396 parallel edge without applying it after later identities.
+    identity_transitions::verify_fixture(
+        changed_fixtures[0],
+        hpc_fixtures[0]["before"].as_str().unwrap(),
+        hpc_fixtures[0]["after"].as_str().unwrap(),
+        &[hpc_cache.clone()],
+    )
+    .expect("preserved PR396 parallel identity announcement");
     let identity_chain = [
         transition,
         successor,
@@ -528,7 +561,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         observatory_workspace_lock,
         gp_source_stream,
         gpt6p1_sol_max,
-        hpc_cache,
+        appliance_after_automl,
+        jankurai_runtime_safety,
+        jankurai_dependency_security,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

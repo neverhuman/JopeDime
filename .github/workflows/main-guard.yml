@@ -12,9 +12,10 @@ permissions:
   issues: write
   pull-requests: read
 
-# Every new main SHA keeps its provenance check; duplicate attempts must not race issue creation.
+# Serialize duplicate invocations of this source without cancelling running proof.
+# Different main SHAs have different groups, so newer pushes cannot evict older heads.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.sha }}
+  group: main-guard-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:

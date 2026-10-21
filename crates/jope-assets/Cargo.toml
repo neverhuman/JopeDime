@@ -1,0 +1,37 @@
+[package]
+name = "jope-assets"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Signed single-file appliance package: envelope, manifest, signature check and verified asset decoding"
+
+[dependencies]
+hex.workspace = true
+p256.workspace = true
+rayon.workspace = true
+ruzstd.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+# Encoder for `pack` (used by jope-dist). `jopedime` only decodes, with ruzstd.
+zstd = { workspace = true, optional = true }
+
+[dev-dependencies]
+# The integration tests build real packages, so they need the writer and the test key.
+jope-assets = { path = ".", features = ["pack", "dev-keys"] }
+tempfile.workspace = true
+zstd.workspace = true
+
+[features]
+default = []
+# Writer: stage, sign with the deterministic test key, and seal packages. jope-dist only.
+pack = ["dep:zstd"]
+# Trust the deterministic development key (fixture packages). Release builds must not enable it:
+# `jopedime --version --json` reports `trusts_development_key`, and the release lane refuses true.
+dev-keys = []
+
+[lints]
+workspace = true

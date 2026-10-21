@@ -6,7 +6,7 @@
 use crate::manifest::{BundleFile, BundleManifest};
 use anyhow::{anyhow, Context, Result};
 use jope_datasets::blobs::{link_or_copy, same_file, BlobDir};
-use jope_datasets::hash::digest_file;
+use jope_datasets::hash::digest_content;
 use jope_datasets::paths::jope_home;
 use std::path::{Path, PathBuf};
 
@@ -192,7 +192,7 @@ fn check_file(
         }
         return;
     }
-    match digest_file(p) {
+    match digest_content(p) {
         Ok(d) if d.sha256 == sha256 && d.bytes == bytes => {}
         Ok(d) => errors.push(format!(
             "{label}: hashes to {} ({} bytes), manifest {sha256} ({bytes} bytes)",

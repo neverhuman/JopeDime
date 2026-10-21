@@ -2,8 +2,9 @@
   "files": [
     {
       "bytes": 190,
+      "normalization": " PR395 audit CI routing: exact current Python classifier pin; all original frozen source/fixture bytes and origin hashes preserved.",
       "path": "CI_SOURCE_PIN.json",
-      "sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658"
+      "sha256": "a8523c2d8ce82ae93878628a83c0ca629d75d7c2e7da0ca73d8da94a3a369918"
     },
     {
       "bytes": 9280,
@@ -17,6 +18,7 @@
     },
     {
       "bytes": 3190,
+      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed.",
       "path": "README.md",
       "sha256": "98a72f10f1267528c957570f9739cf101e807613272529eec14cdb71851994b3"
     },

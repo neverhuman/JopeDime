@@ -1,32 +1,19 @@
 //! Frozen-panel metrics consume complete probability matrices with explicit class order.
 use crate::experiment::Metric;
 use anyhow::{bail, ensure, Context, Result};
-use feat_math::advanced_v3::{BoundModel, RawTable, TaskKind};
 use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
 pub const PROBABILITY_EPSILON: f64 = 1e-15;
-/// Controller arithmetic is f64; external engines may return f32 probabilities.
-/// Admit their bounded row-sum roundoff without renormalizing any prediction.
-pub const PROBABILITY_SUM_TOLERANCE: f64 = 1e-6;
 pub const NUMERICAL_POLICY: &str =
     "asm-panel-f64-v1:platform-libm-v1:probability-epsilon=1e-15:row-sum-tolerance=1e-6";
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(
-    tag = "kind",
-    content = "data",
-    rename_all = "snake_case",
-    deny_unknown_fields
-)]
-pub enum Predictions {
-    Values(Vec<f64>),
-    Probabilities {
-        classes: Vec<String>,
-        values: Vec<Vec<f64>>,
-    },
-}
+/// Bound prediction and the probability contract moved to the appliance runtime unchanged; the
+/// panel and `jopedime` share one implementation.
+pub use jope_runtime::methods::native::{
+    predict_bound, validate_probabilities, Predictions, PROBABILITY_SUM_TOLERANCE,
+};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -149,95 +136,4 @@ pub fn score_predictions(
         value,
         loss,
     })
-}
-
-#[doc(hidden)]
-pub fn validate_probabilities(values: &[Vec<f64>], classes: usize) -> Result<()> {
-    for row in values {
-        ensure!(row.len() == classes, "probability column count mismatch");
-        ensure!(
-            row.iter()
-                .all(|probability| probability.is_finite() && (0.0..=1.0).contains(probability)),
-            "nonfinite or out-of-range probability"
-        );
-        ensure!(
-            (row.iter().sum::<f64>() - 1.0).abs() <= PROBABILITY_SUM_TOLERANCE,
-            "probability row does not sum to one"
-        );
-    }
-    Ok(())
-}
-
-/// Predict from complete fitted state, with no fitting or access to holdout labels.
-/// Native class IDs are the indices established by the training label mapping.
-pub fn predict_bound(
-    model: &BoundModel,
-    table: &RawTable,
-    classes: &[String],
-) -> Result<Predictions> {
-    let task = match model.task.kind {
-        TaskKind::Regression => Task::Regression,
-        TaskKind::Binary => Task::Binary,
-        TaskKind::Multiclass => Task::Multiclass,
-        TaskKind::Timeseries => bail!("timeseries model is outside the frozen panel"),
-    };
-    validate_class_order(task, classes)?;
-    match task {
-        Task::Regression => {
-            let values = model.predict_table(table)?;
-            ensure!(
-                values.len() == table.rows.len() && values.iter().all(|value| value.is_finite()),
-                "invalid bound regression predictions"
-            );
-            Ok(Predictions::Values(values))
-        }
-        Task::Binary => {
-            let probabilities = model.predict_table(table)?;
-            ensure!(
-                probabilities.len() == table.rows.len(),
-                "bound prediction row count mismatch"
-            );
-            let values: Vec<_> = probabilities
-                .iter()
-                .map(|probability| vec![1.0 - probability, *probability])
-                .collect();
-            validate_probabilities(&values, classes.len())?;
-            Ok(Predictions::Probabilities {
-                classes: classes.to_vec(),
-                values,
-            })
-        }
-        Task::Multiclass => {
-            let prediction = model.predict_multiclass_table(table)?;
-            ensure!(
-                prediction.probabilities.len() == table.rows.len(),
-                "bound prediction row count mismatch"
-            );
-            ensure!(
-                prediction.classes.len() == classes.len(),
-                "bound class count mismatch"
-            );
-            validate_probabilities(&prediction.probabilities, prediction.classes.len())?;
-            let order: Vec<_> = (0..classes.len())
-                .map(|index| {
-                    prediction
-                        .classes
-                        .iter()
-                        .position(|class| *class == index as i64)
-                        .context("bound class IDs do not match the frozen label mapping")
-                })
-                .collect::<Result<_>>()?;
-            let values: Vec<Vec<f64>> = prediction
-                .probabilities
-                .iter()
-                .map(|row| order.iter().map(|column| row[*column]).collect())
-                .collect();
-            validate_probabilities(&values, classes.len())?;
-            Ok(Predictions::Probabilities {
-                classes: classes.to_vec(),
-                values,
-            })
-        }
-        _ => unreachable!(),
-    }
 }

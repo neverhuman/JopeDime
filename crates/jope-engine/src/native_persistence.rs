@@ -3,6 +3,9 @@ use std::{ffi::CString, fs, io, os::unix::ffi::OsStrExt, path::Path};
 pub(crate) fn publish_staged(staging: &Path, destination: &Path) -> io::Result<()> {
     let source = CString::new(staging.as_os_str().as_bytes())?;
     let target = CString::new(destination.as_os_str().as_bytes())?;
+    // SAFETY: both owned CStrings remain NUL-terminated through the call;
+    // AT_FDCWD selects the process namespace and RENAME_NOREPLACE atomically
+    // refuses an existing destination. The kernel borrows, never retains, paths.
     let result = unsafe {
         libc::renameat2(
             libc::AT_FDCWD,

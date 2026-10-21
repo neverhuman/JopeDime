@@ -236,9 +236,111 @@
       "lanes": [],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
     },
+    "benchmark:vendor/security/candle-core-0.11.0/benches/bench_main.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/candle-core-0.11.0/examples/cuda_sum_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/gemm-0.18.2/benches/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/gemm-0.19.0/benches/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/pulp-0.22.3/benches/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/bert_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/bpe_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/layout_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/llama3_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:vendor/security/tokenizers-0.22.2/benches/unigram_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
     "feature:feat-math/default": {
       "discovery": {
-        "dependencies": [],
+        "dependencies": [
+          "fitted-cpp"
+        ],
         "kind": "feature"
       },
       "dispositions": [],
@@ -248,6 +350,20 @@
         "full-default"
       ],
       "scope": "Default feature graph in PR selection and the full workspace main profile."
+    },
+    "feature:feat-math/fitted-cpp": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-on: the fitted C++17 runtime compiled by build.rs and loaded with memfd/dlopen. The jopedime appliance graph (jope-runtime, jope-policy) takes feat-math without it; deploy/appliance/dependencies-deny.toml and crates/jope-dist/tests/dependency_fence.rs keep it out."
     },
     "feature:feat-math/gpr-scratch-reuse": {
       "discovery": {
@@ -323,6 +439,43 @@
       "lanes": [],
       "scope": "GPU feature not selected in CPU CI."
     },
+    "feature:jope-appliance/default": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default feature graph in PR selection and the full workspace main profile."
+    },
+    "feature:jope-appliance/dev-keys": {
+      "discovery": {
+        "dependencies": [
+          "jope-assets/dev-keys"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "e2e-smoke"
+      ],
+      "scope": "Forwards jope-assets/dev-keys for the fixture appliance in the e2e-smoke lane. Never in a release build."
+    },
+    "feature:jope-appliance/embedded": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "e2e-smoke"
+      ],
+      "scope": "Release behaviour: refuse to run without the sealed package. Built and executed by the e2e-smoke fixture appliance step; release builds always set it."
+    },
     "feature:jope-arena/default": {
       "discovery": {
         "dependencies": [],
@@ -348,6 +501,48 @@
         "full-s3-offline"
       ],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
+    },
+    "feature:jope-assets/default": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default feature graph in PR selection and the full workspace main profile."
+    },
+    "feature:jope-assets/dev-keys": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "e2e-smoke"
+      ],
+      "scope": "Trust in the deterministic development key: fixture packages only. Enabled through jope-dist, test dev-dependencies, and the e2e-smoke fixture appliance build; `jopedime --version --json` reports it and release builds must not set it."
+    },
+    "feature:jope-assets/pack": {
+      "discovery": {
+        "dependencies": [
+          "dep:zstd"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "The package writer (zstd C encoder). Enabled through jope-dist and the crates' own dev-dependencies; never in the jopedime closure (dependency fence)."
     },
     "feature:jope-bench/asm": {
       "discovery": {
@@ -997,10 +1192,38 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-appliance": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-appliance/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:jope-arena": {
       "discovery": {
         "kind": "package",
         "manifest": "crates/jope-arena/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-assets": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-assets/Cargo.toml"
       },
       "dispositions": [],
       "lanes": [
@@ -1091,6 +1314,20 @@
       "dispositions": [],
       "lanes": [
         "rust-check",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-dist": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-dist/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
         "full-default",
         "full-doctests"
       ],
@@ -1221,6 +1458,20 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-runtime": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-runtime/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:numpy-pcg64": {
       "discovery": {
         "kind": "package",
@@ -1292,6 +1543,16 @@
       ],
       "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
     },
+    "python:deploy/ci/test-browser-deps.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Actual offline deb extraction, cache content/type/path refusal and authorized reuse controls in hygiene; no host package install or network in fixtures."
+    },
     "python:deploy/ci/test-dl-offline-group.py": {
       "discovery": {
         "kind": "python-family"
@@ -1311,6 +1572,16 @@
         "hygiene"
       ],
       "scope": "Direct stdlib unittest execution of CPU runner admission/resources, independent family failure retention, and zero-SHA push-base fallback to origin/main."
+    },
+    "python:deploy/ci/test-gitleaks-config.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Real gitleaks synthetic credential/digest/context controls, including same-file and same-line bypass refusals; scanner absence/error fails hygiene. Full HEAD scan is separate."
     },
     "python:deploy/ci/test-install-private.py": {
       "discovery": {
@@ -1362,6 +1633,16 @@
       ],
       "scope": "Direct stdlib unittest execution of receipt identity, failure retention and evidence integrity."
     },
+    "python:deploy/ci/test-rendered-ux-receipt.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Rendered evidence source/run/attempt binding, nonzero complete desktop/mobile inventory and screenshot/geometry/axe tampering/refusal controls in hygiene."
+    },
     "python:deploy/ci/test-results.py": {
       "discovery": {
         "kind": "python-family"
@@ -1382,6 +1663,16 @@
       ],
       "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
     },
+    "python:deploy/ci/test-security-lane.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Scanner availability, optional-feature graph canaries and workflow/secret/advisory/frontend failure propagation controls in hygiene; mocks do not replace actual scans."
+    },
     "python:deploy/ci/test-status.py": {
       "discovery": {
         "kind": "python-family"
@@ -1401,6 +1692,16 @@
         "hygiene"
       ],
       "scope": "Direct stdlib unittest execution verifies required-training collection/JUnit gates reject missing, skipped, failed, stale or renamed cases."
+    },
+    "python:deploy/ci/test-vendor-security.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Descriptor-anchored exact reviewed vendor inventory/hash/size checks and 28 fail-closed tamper controls; no substitute for Git review of provenance or numerical qualification."
     },
     "python:deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py": {
       "discovery": {
@@ -4012,7 +4313,9 @@
       "discovery": {
         "doctest": false,
         "kind": "target",
-        "required_features": [],
+        "required_features": [
+          "fitted-cpp"
+        ],
         "source": "crates/feat-math/tests/advanced_v3_fitted_cpp.rs",
         "test": true
       },
@@ -5743,6 +6046,54 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-appliance/bin/jopedime": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/src/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "e2e-smoke"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness. The e2e-smoke lane builds it with `embedded,dev-keys`, packs the fixture profile and runs deploy/appliance/test-clean-host.sh on the packed file."
+    },
+    "target:jope-appliance/custom-build/build-script-build": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/build.rs",
+        "test": false
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Build script executed by Cargo builds, not a standalone test family. Records the target triple."
+    },
+    "target:jope-appliance/test/single_file": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/single_file.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build."
+    },
     "target:jope-arena/bin/jope-arena": {
       "discovery": {
         "doctest": false,
@@ -5793,6 +6144,70 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-assets/custom-build/build-script-build": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/build.rs",
+        "test": false
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Build script executed by Cargo builds, not a standalone test family. Compiles docs/release/signing.pub in as the release trust anchor."
+    },
+    "target:jope-assets/lib/jope_assets": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Package envelope, manifest, signature and bounded decoding unit tests; the writer and development key are enabled for tests through the crate's own dev-dependency."
+    },
+    "target:jope-assets/test/decode_bounds": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/tests/decode_bounds.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Bounds before allocation and decoding: frames declaring more than their manifest size, dictionaries, trailing frames, garbage, decoded-hash mismatch, frame/entry/count limits, overlap, alignment, traversal ids, non-canonical manifests and unknown versions."
+    },
+    "target:jope-assets/test/envelope": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-assets/tests/envelope.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Real packages: round trip, determinism and deduplication, and one refusal per file region (executable, padding, gaps, frames before decompression, manifest, signature, footer fields, key id), truncation, extension, untrusted signer, foreign and undomained signatures."
     },
     "target:jope-automl/lib/jope_automl": {
       "discovery": {
@@ -7531,6 +7946,104 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-dist/bin/jope-dist": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/src/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "e2e-smoke"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness. The e2e-smoke lane runs its lock check, dependency audit, notices, fixture, pack, verify, size-report and sbom-models commands through deploy/appliance/build.sh."
+    },
+    "target:jope-dist/lib/jope_dist": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Signature encodings (cosign base64 DER, DER, r||s) normalize to one low-S form."
+    },
+    "target:jope-dist/test/closure": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/closure.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "The committed model lock is the derivation of the committed profiles; scope/rights blockers, missing acknowledgements, unlicensed weights and uncompiled promised methods; structural profile errors; limits.toml equals the compiled bounds."
+    },
+    "target:jope-dist/test/dependency_fence": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/dependency_fence.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "cargo tree for jope-appliance under every feature set in deploy/appliance/dependencies-deny.toml obeys the deny and native-code lists; a research crate fails the same policy."
+    },
+    "target:jope-dist/test/reproducible_pack": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/reproducible_pack.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Fixture packs are byte-identical from two directories; repacking and changed model files are refused; a release-scope stage seals only with a signature over its own signing message and the right executable; blocked profiles never pack."
+    },
+    "target:jope-dist/test/schemas": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-dist/tests/schemas.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "The committed model lock, a packed fixture manifest, and a fitted model header validate against schemas/jope.appliance-*.v1 with the repository's own JSON Schema validator (jope-datasets)."
     },
     "target:jope-learning/bin/jope-learning": {
       "discovery": {
@@ -10667,6 +11180,22 @@
       ],
       "scope": "Explicit jope-policy --features testing under the main nextest profile."
     },
+    "target:jope-policy/test/npz_zip9_contract": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-policy/tests/npz_zip9_contract.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "CPU ZIP9/Candle serialization contracts for exact tensor bits, names, shapes, compressed reads and malformed/truncated refusal; no model/GPU training qualification."
+    },
     "target:jope-policy/test/scorer_dependencies": {
       "discovery": {
         "doctest": false,
@@ -10862,6 +11391,55 @@
         "full-default"
       ],
       "scope": "Additive jope.canonical-json/v1 wire-contract conformance suite (I02): positive canonical payload byte and length-prefixed domain-separated SHA-256 vectors (reordered nested keys, Unicode precomposed vs combining preservation, array order, ExactF32/ExactF64 +0/-0/subnormal bit tags, display_f64 stripping), negative lexical/numeric/cycle/authority refusals (duplicate keys at all depths, unpaired surrogates, -0/leading-zero/overflow integers, raw floats, NaN/Inf bits, self-referential own_id/signature/later_assessment_id cycles, unknown fields/enums), native/inference/storage adapter golden-byte equality, VerifiedMeasuredOutcome proof verification, independent Node.js cross-language vector verification, and 29 legacy schema + historical hash preservation."
+    },
+    "target:jope-runtime/lib/jope_runtime": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Table contract, task inference, folds, losses, error taxonomy and device selection unit tests."
+    },
+    "target:jope-runtime/test/method_roster": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/method_roster.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "The appliance roster equals the frozen panel's (17/5/4 recipes, 16 regression families), name resolution, and capability records that report uncompiled neural methods as not executable."
+    },
+    "target:jope-runtime/test/offline_fit_predict": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/offline_fit_predict.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Every native recipe for all three tasks: CSV fit, model.jope save, reload and bit-identical prediction; bounded selection by out-of-fold loss, determinism across thread counts, budget exhaustion, and integrity refusal of damaged or re-checksummed foreign model files. CPU only."
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {
@@ -11127,7 +11705,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Jankurai v1.7.1 repository audit workflow on pull requests and main."
+      "scope": "Jankurai v1.7.5 repository audit workflow on pull requests and main."
     },
     "workflow:.github/workflows/main-guard.yml": {
       "discovery": {
@@ -11245,7 +11823,9 @@
     },
     "e2e-smoke": {
       "checks": [
-        "bash deploy/ci/e2e-smoke.sh"
+        "bash deploy/ci/e2e-smoke.sh",
+        "bash deploy/appliance/build.sh --profile fixture --cargo-profile dist-ci --out <lane target>/appliance-lane/<run>/build (jope-dist lock --check, audit, NEEDED check, notices, fixture, pack, verify, size-report against deploy/appliance/size-budgets.toml, sbom-models)",
+        "bash deploy/appliance/test-clean-host.sh <package> <lane target>/appliance-lane/<run>/clean-host (empty directory and environment; no-network namespace and strace when available)"
       ],
       "command": [
         "bash",
@@ -11259,7 +11839,8 @@
       },
       "evidence": [
         "pipeline receipts/schema checks",
-        "reproducible emitted sources/predictions"
+        "reproducible emitted sources/predictions",
+        "appliance build, pack, verify, size, SBOM, clean-host and fit receipts (evidence/appliance/*.json); packages stay in the lane target"
       ],
       "feature_selection": "package-defaults",
       "inputs": [
@@ -11267,7 +11848,8 @@
         "Cargo.lock",
         "rust-toolchain.toml",
         "python/uv.lock",
-        "declared repository fixtures"
+        "declared repository fixtures",
+        "deploy/appliance profiles, model lock, fixture bundle manifests and budgets"
       ],
       "path_applicability": "ci.yml changes.e2e",
       "requires_nonzero_tests": false,

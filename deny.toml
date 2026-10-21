@@ -35,3 +35,11 @@ allow = ["CDLA-Permissive-2.0"]
 [[licenses.exceptions]]
 name = "webpki-roots"
 allow = ["CDLA-Permissive-2.0"]
+
+# ZIP9 replaces the vulnerable ZIP0/2/8 readers and uses this Rust bzip2 decoder.
+# Reviewed exact crate license against SPDX bzip2-1.0.6; retain upstream notices.
+# This exception is limited to the resolved crate/version, not the global policy.
+[[licenses.exceptions]]
+name = "libbz2-rs-sys"
+version = "=0.2.5"
+allow = ["bzip2-1.0.6"]

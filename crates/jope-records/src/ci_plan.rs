@@ -24,7 +24,7 @@ pub const LANES: [&str; 8] = [
     "e2e-smoke",
 ];
 
-const IMAGE: &str = r"deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/(cargo-artifact|receipt|results|ci-plan|fast-lane|pytest-evidence|aggregate|coverage|training-proof|test-training-proof)";
+const IMAGE: &str = r"ops/ci/|tools/security-lane\.sh$|deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/(cargo-artifact|receipt|results|ci-plan|fast-lane|pytest-evidence|aggregate|coverage|training-proof|test-training-proof)";
 
 fn filters() -> Vec<(&'static str, Regex)> {
     let common =
@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/)"
+                r"^(crates/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),
@@ -61,7 +61,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "e2e",
             Regex::new(&format!(
-                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|{common})"
+                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|docs/release/signing\.pub$|{common})"
             ))
             .expect("valid e2e regex"),
         ),
@@ -238,6 +238,87 @@ mod tests {
     }
 
     #[test]
+    fn shared_ci_wrappers_and_security_lane_trigger_every_lane() {
+        for path in [
+            "ops/ci/fast-lane.sh",
+            "ops/ci/lib.sh",
+            "tools/security-lane.sh",
+        ] {
+            let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
+            for lane in LANES {
+                assert!(lanes[lane], "{path} must activate {lane}");
+            }
+        }
+        for path in ["ops/circuit/unrelated.sh", "tools/security-lane.sh.bak"] {
+            let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
+            for lane in LANES {
+                assert_eq!(
+                    lanes[lane],
+                    matches!(lane, "changes" | "hygiene"),
+                    "{path}: {lane}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn python_and_rust_classification_agree_for_shared_ci_and_path_boundaries() {
+        let paths = [
+            "ops/ci/fast-lane.sh",
+            "ops/ci/lib.sh",
+            "tools/security-lane.sh",
+            "ops/circuit/unrelated.sh",
+            "tools/security-lane.sh.bak",
+            "docs/learning.md",
+            "crates/feat-math/src/lib.rs",
+            "deploy/ci/aggregate.py",
+            ".github/workflows/ci.yml",
+        ];
+        let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/ci/ci-plan.py");
+        let output = Command::new("python3")
+            .env("PYTHONDONTWRITEBYTECODE", "1")
+            .args([
+                "-c",
+                "import importlib.util,json,sys; s=importlib.util.spec_from_file_location('ci_plan',sys.argv[1]); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print(json.dumps([[event,path,*m.classify([path],event)] for event in ('pull_request','workflow_dispatch') for path in sys.argv[2:]]))",
+            ])
+            .arg(script)
+            .args(paths)
+            .output()
+            .expect("python3 is required to check the retained CI classifier parity");
+        assert!(
+            output.status.success(),
+            "Python classifier failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let mut expected = Vec::new();
+        for event in ["pull_request", "workflow_dispatch"] {
+            for path in paths {
+                let (lanes, gates) = classify(&[path.to_owned()], event).unwrap();
+                expected.push(Value::List(vec![
+                    event.into(),
+                    path.into(),
+                    Value::Dict(
+                        lanes
+                            .into_iter()
+                            .map(|(key, value)| (key, value.into()))
+                            .collect(),
+                    ),
+                    Value::Dict(
+                        gates
+                            .into_iter()
+                            .map(|(key, value)| (key, value.into()))
+                            .collect(),
+                    ),
+                ]));
+            }
+        }
+        assert_eq!(
+            pyjson::parse_bytes(&output.stdout).unwrap(),
+            Value::List(expected)
+        );
+    }
+
+    #[test]
     fn workflow_dispatch_enables_all_lanes() {
         let (lanes, _) = classify(&[], "workflow_dispatch").unwrap();
         for lane in LANES {
@@ -255,6 +336,31 @@ mod tests {
         assert_eq!(lanes["e2e-smoke"], true);
         assert_eq!(lanes["inputs"], false);
         assert_eq!(lanes["python"], false);
+    }
+
+    #[test]
+    fn appliance_changes_trigger_rust_and_e2e_only() {
+        for path in [
+            "crates/jope-assets/src/envelope.rs",
+            "crates/jope-runtime/src/automl.rs",
+            "deploy/appliance/profiles/fixture.toml",
+            "docs/release/signing.pub",
+        ] {
+            let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
+            assert_eq!(lanes["rust-check"], true, "{path}");
+            assert_eq!(lanes["rust-test"], true, "{path}");
+            assert_eq!(lanes["e2e-smoke"], true, "{path}");
+            assert_eq!(lanes["emitters"], false, "{path}");
+            assert_eq!(lanes["inputs"], false, "{path}");
+            assert_eq!(lanes["python"], false, "{path}");
+        }
+        let (lanes, _) = classify(
+            &["models/bundles/hyperion-v7.json".to_owned()],
+            "pull_request",
+        )
+        .unwrap();
+        assert_eq!(lanes["rust-test"], true);
+        assert_eq!(lanes["e2e-smoke"], false);
     }
 
     #[test]
