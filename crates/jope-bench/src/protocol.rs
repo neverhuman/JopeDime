@@ -81,6 +81,9 @@ pub fn rank_order(entries: &[(Option<f64>, &str)]) -> Vec<usize> {
 
 /// Screen-score one method on one cut: the adapter it names, else its program.
 fn screen(method: &Method, x: &Rows, y: &[f64], cut: &Cut, task: Task) -> Outcome {
+    if let Some(spec) = &method.native {
+        return crate::native::evaluate(spec, x, y, cut, task);
+    }
     match &method.adapter {
         Some(spec) => evaluate_adapter(spec, x, y, cut, task),
         None => evaluate(&method.dsl, x, y, cut, task),
@@ -91,6 +94,9 @@ fn screen(method: &Method, x: &Rows, y: &[f64], cut: &Cut, task: Task) -> Outcom
 /// method with `resample`, the search re-run on each cut's training rows and that cut's own
 /// program scored. A cut whose search fails is a rejected fold naming the cause.
 fn deepen(method: &Method, x: &Rows, y: &[f64], cuts: &[Cut], task: Task) -> Deep {
+    if let Some(spec) = &method.native {
+        return crate::native::evaluate_deep(spec, x, y, cuts, task);
+    }
     if let Some(spec) = &method.adapter {
         return evaluate_deep_adapter(spec, x, y, cuts, task);
     }
@@ -137,6 +143,7 @@ pub fn run(
     );
     let mut seen = std::collections::BTreeSet::new();
     for method in &methods {
+        crate::native::validate_method(method)?;
         if !seen.insert(method.id.as_str()) {
             bail!("duplicate method id {:?}", method.id);
         }

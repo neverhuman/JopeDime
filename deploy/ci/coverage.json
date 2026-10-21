@@ -1134,6 +1134,20 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-automl": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-automl/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:jope-bench": {
       "discovery": {
         "kind": "package",
@@ -6044,6 +6058,23 @@
         "full-default"
       ],
       "scope": "Real packages: round trip, determinism and deduplication, and one refusal per file region (executable, padding, gaps, frames before decompression, manifest, signature, footer fields, key id), truncation, extension, untrusted signer, foreign and undomained signatures."
+    },
+    "target:jope-automl/lib/jope_automl": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-automl/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-bench/bin/jope-bench": {
       "discovery": {

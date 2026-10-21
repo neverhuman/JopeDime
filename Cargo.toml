@@ -9,6 +9,7 @@ members = [
   "crates/jope-appliance",
   "crates/jope-arena",
   "crates/jope-assets",
+  "crates/jope-automl",
   "crates/jope-bench",
   "crates/jope-engine",
   "crates/jope-campaigns",

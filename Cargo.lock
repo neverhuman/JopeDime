@@ -2430,6 +2430,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-automl"
+version = "0.3.0"
+
+[[package]]
 name = "jope-bench"
 version = "0.3.0"
 dependencies = [
@@ -2438,6 +2442,7 @@ dependencies = [
  "clap",
  "feat-math",
  "jope-arena",
+ "jope-automl",
  "jope-datasets",
  "jope-learning",
  "jope-pipeline",

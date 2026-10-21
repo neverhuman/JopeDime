@@ -10,9 +10,9 @@ stage is closed: P1 and P2 have their CPU parts implemented, and nothing here qu
 Each implementation PR must name its stage, changed paths, full source SHA,
 acceptance commands and results, evidence locations, and remaining requirements.
 Follow the repository's [contribution contract](../../AGENTS.md), including claims,
-one implementation PR at a time, exact-head CI, and independent review. A passed
-fixture, implemented command, qualified backend, and promoted release are separate
-states.
+one implementation PR at a time, exact-head CI, and substantive head-bound agent
+review. The implementing agent may perform that review. A passed fixture,
+implemented command, qualified backend, and promoted release are separate states.
 
 ## P0 — Inventory and contracts
 
@@ -153,7 +153,7 @@ downloaded artifact hash/signature equality. Publication remains a separate acti
   matrix, changelog, and version records to match the actual qualified behavior.
 - [ ] Index every acceptance result by final full source SHA, model lock, signed
   artifact hash, command, hardware, run/attempt, and retained evidence location.
-- [ ] Obtain required exact-head CI and eligible independent approval; repeat the
+- [ ] Obtain required exact-head CI and substantive head-bound agent review; repeat the
   applicable checks/review after any source change.
 - [ ] Qualify the merged candidate and publish only within its authorized scope.
   Verify the remote release and preserve rollback and verification instructions.

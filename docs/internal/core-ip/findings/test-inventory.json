@@ -2573,6 +2573,13 @@
         "storage"
       ]
     },
+    "target:jope-automl/lib/jope_automl": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
     "target:jope-bench/bin/jope-bench": {
       "role": "regression",
       "subsystems": [
