@@ -1,0 +1,74 @@
+{
+  "schema_version": "jope.native-regressor-verification/v1",
+  "source_sha256": "fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8",
+  "base_commit": "95dcb0c0e44d95184607740aacd387bf5c007e89",
+  "compiler": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "checks": [
+    {
+      "command": "rustc --edition=2021 --crate-type rlib -C opt-level=3 -C codegen-units=1 -D unsafe-code GPT6p1_Sol_Max.rs",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "command": "cargo test -p jope-automl --locked --offline",
+      "status": "passed",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "command": "cargo test -p jope-bench --lib native::tests --locked --offline",
+      "status": "passed",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "command": "cargo test -p jope-bench --lib --locked --offline -- methods::tests protocol::tests",
+      "status": "passed",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "command": "cargo check -p jope-bench --all-targets --locked --offline",
+      "status": "passed"
+    },
+    {
+      "command": "cargo clippy -p jope-bench -p jope-automl --all-targets --no-deps --locked --offline -- -D warnings",
+      "status": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check; git diff --cached --check; source SHA-256/manifest/design/link checks",
+      "status": "passed"
+    },
+    {
+      "command": "jope-records coverage validate; verify-test-inventory; rust-scope-check; repo-layout",
+      "status": "passed",
+      "scope": "Static metadata checks; not full-workspace test execution."
+    },
+    {
+      "command": "jope-bench run --help",
+      "status": "passed",
+      "scope": "Native CLI flag is present; no dataset evaluation."
+    },
+    {
+      "command": "just required",
+      "status": "unavailable",
+      "reason": "just is not installed on this host."
+    },
+    {
+      "command": "cargo clippy -p jope-bench -p jope-automl --all-targets --locked --offline -- -D warnings",
+      "status": "failed",
+      "reason": "Unchanged dependency feat-math/src/combinators/residual.rs:178 triggers clippy::match_single_binding."
+    },
+    {
+      "command": "bash deploy/ci/check.sh",
+      "status": "failed",
+      "reason": "Existing InputBuildTests runs the full-lane helper, whose 50 GB reserve check exits before its fake cargo writes calls.jsonl on this host. Initial README count findings caused by the added crate/tests were corrected and checked separately. No disk guard or test was weakened."
+    }
+  ],
+  "source_changes_after_freeze": false,
+  "performance_benchmark_run": false,
+  "elo_measured": false,
+  "hosted_ci": "Pending exact-head PR run; local checks do not imply hosted CI success.",
+  "independent_review": "Pending; no self-approval or merge.",
+  "logs": "Local lane target/gpt6p1-sol-max-evidence contains contract/routing/CLI and hygiene output."
+}

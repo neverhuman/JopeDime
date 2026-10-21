@@ -1,0 +1,19 @@
+{
+  "schema_version": "general-regressor-challenge/v2",
+  "algorithm_name": "GPT6_Astra_Max",
+  "language": "rust",
+  "edition": "2021",
+  "target_column": "last",
+  "prediction_input": "features_only",
+  "external_dependencies": [],
+  "unsafe_code": false,
+  "authoring_mode": "reasoning_only",
+  "data_accessed_during_design": false,
+  "experiments_run_during_design": false,
+  "external_code_used": false,
+  "compiled_during_design": false,
+  "single_frozen_implementation": true,
+  "fit_complexity": "n=input rows,P=input features,s<=32768 retained rows,q<=128 retained features,d=4q,v<=2048,k<=32 passes per ridge fit,t<=320 rounds per boosting stage,u<=8192 sampled rows,c<=48 searched features,h<=6,b<=64 bins: O(n(P+1)+P(min(s,384)+128)+q*s*log(s)+sum(k*s*d)+sum(t*(u*c*h+2^h*c*b+(s+v)*h))); includes internal selection and final refit",
+  "predict_complexity": "m=prediction rows; remaining symbols as in fit: O(m*P+m*(q*log(b)+d+t*h))",
+  "memory_complexity": "Excluding caller input: O(s*d+v*d+s*q+v*q+s+q*b+t*2^h) working; O(q*b+d+t*2^h) stored; O(m+q) extra prediction memory"
+}

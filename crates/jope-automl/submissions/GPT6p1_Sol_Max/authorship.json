@@ -1,0 +1,45 @@
+{
+  "schema_version": "jope.native-regressor-authorship/v1",
+  "requested_submission_name": "GPT6p1_Sol_Max.rs",
+  "served_model_id": null,
+  "served_model_revision": null,
+  "model_identity_note": "The user supplied the artifact name. Exact provider model/revision telemetry is not exposed and is not inferred from that name.",
+  "source_sha256": "fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8",
+  "source_bytes": 25011,
+  "source_written_at_utc": "2026-10-21T06:29:37Z",
+  "first_compilation_confirmed_at_utc": "2026-10-21T06:33:45Z",
+  "source_changed_after_freeze": false,
+  "compilation_attempts_before_first_success": 1,
+  "authoring": {
+    "method": "Mathematical reasoning; tools for specification reading and writing source bytes.",
+    "numerical_experiments": false,
+    "repository_code_read_before_freeze": false,
+    "external_implementation_used_in_source": false,
+    "fresh_session": false,
+    "prior_project_context_present": true,
+    "eligible_for_pristine_primary_challenge_round": false,
+    "post_freeze_checks": "Independent compilation and contract fixtures only; no performance-based source revisions."
+  },
+  "session_estimates": {
+    "exact_provider_usage_available": false,
+    "exact_request_timestamp_available": false,
+    "start_proxy": "Attachment first available in scratch; includes the initial clarification interval, not solely active implementation time.",
+    "attachment_available_at_utc": "2026-10-21T06:16:57Z",
+    "elapsed_seconds_proxy_to_source_written": 760,
+    "elapsed_seconds_proxy_to_first_compile_confirmation": 1008,
+    "estimated_total_tokens_through_source_freeze": {
+      "central": 60000,
+      "low": 45000,
+      "high": 80000,
+      "definition": "Rough unique-context plus generated-token estimate for the session through source freeze, including the supplied specification, instructions/history, source, and other authoring output. Not an API billing total or a sum of repeated cached prompt processing.",
+      "basis": "Approximately 17k specification tokens, 7-9k source tokens, and broad allowance for supplied context and authoring generation. No provider tokenizer or exact reasoning-token counter is available."
+    },
+    "integration_and_verification": "Excluded from the authoring time/token estimates; recorded separately in Git and the handoff.",
+    "estimated_total_tokens_through_first_compile_confirmation": {
+      "central": 90000,
+      "low": 60000,
+      "high": 120000,
+      "definition": "Same rough unique-context plus generation basis as the source-freeze estimate, adding post-freeze repository inspection through first compilation confirmation. Not provider billing telemetry."
+    }
+  }
+}

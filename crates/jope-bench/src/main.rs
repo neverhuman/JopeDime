@@ -39,6 +39,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// List original Rust learners available through run --automl.
+    Automl,
     /// Frozen-panel inputs, recipes and planning through the product benchmark contract.
     Panel(jope_bench::panel::cli::BenchmarkCli),
     /// Benchmark every dataset under a directory tree and write one report per dataset.
@@ -68,12 +70,20 @@ enum Command {
         /// Extra program: `NAME=<dsl>` or `NAME=@<file>` (repeatable).
         #[arg(long = "program")]
         programs: Vec<String>,
+        /// Original native AutoML regressor (repeatable; currently GPT6p1_Sol_Max).
+        /// Each is freshly fitted on each cut. Only regression datasets are eligible.
+        #[arg(long = "native")]
+        natives: Vec<String>,
         /// External engine as `NAME=<command...>` (repeatable; whitespace-split, no quoting).
         /// The command follows the jope.bench-adapter/v1 contract; `<command> --version` is
         /// probed before any dataset runs. Reference adapters: crates/jope-bench/adapters/
         /// (`python3 crates/jope-bench/adapters/xgboost_adapter.py` and siblings).
         #[arg(long = "adapter")]
         adapters: Vec<String>,
+        /// Original Rust learner to include in same-cut selection and Elo reports (repeatable).
+        /// Only regression datasets are accepted when this option is supplied.
+        #[arg(long, value_delimiter = ',', value_parser = [jope_bench::automl::NAME])]
+        automl: Vec<String>,
         /// Wall-clock cap per adapter invocation, in seconds.
         #[arg(long, default_value_t = 600.0)]
         adapter_timeout: f64,
@@ -124,6 +134,12 @@ enum Command {
         #[arg(num_args = 0.., trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+    /// Internal process transport for registered Rust AutoML learners.
+    #[command(hide = true, disable_help_flag = true)]
+    AutomlAdapter {
+        #[arg(num_args = 0.., trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Compare two search profiles at an equal evaluation budget on the same datasets, cuts and
     /// seeds, and write one jope.bench-ablation/v1 document.
     Ablation(jope_bench::ablation::AblationArgs),
@@ -131,6 +147,16 @@ enum Command {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        Command::Automl => {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&jope_bench::automl::registry())?
+            );
+            Ok(())
+        }
+        Command::AutomlAdapter { args } => {
+            std::process::exit(jope_bench::automl::adapter_main(&args));
+        }
         Command::MeanAdapter { args } => {
             std::process::exit(jope_bench::adapter::mean_adapter(&args));
         }
@@ -149,7 +175,9 @@ fn main() -> Result<()> {
             top,
             heads,
             programs,
+            natives,
             adapters,
+            automl,
             adapter_timeout,
             search,
             resample_search,
@@ -169,6 +197,9 @@ fn main() -> Result<()> {
                 .build_global()
                 .context("rayon pool")?;
             let mut extra_methods = Vec::new();
+            for name in &natives {
+                extra_methods.push(jope_bench::native::NativeSpec::new(name, seed)?.method());
+            }
             for spec in &programs {
                 extra_methods.push(methods::program(spec)?);
             }
@@ -183,6 +214,16 @@ fn main() -> Result<()> {
                 );
                 extra_methods.push(methods::adapter(spec));
             }
+            for name in &automl {
+                let mut spec = jope_bench::automl::adapter_spec(
+                    name,
+                    &std::env::current_exe()?,
+                    seed,
+                    adapter_timeout,
+                )?;
+                spec.probe()?;
+                extra_methods.push(methods::adapter(spec));
+            }
             let search_config = search.then_some(SearchConfig {
                 pop: search_pop,
                 gens: search_gens,
@@ -191,7 +232,7 @@ fn main() -> Result<()> {
             });
             let protocol = Protocol { screen_fold, top };
             let dirs = discover(&datasets)?;
-            if let Some(heads) = &heads {
+            if heads.is_some() || !automl.is_empty() {
                 // Explicit heads are checked against every discovered dataset's task before
                 // any report is written, so a mixed-task tree cannot abort halfway through.
                 let mut tasks = std::collections::BTreeSet::new();
@@ -203,9 +244,17 @@ fn main() -> Result<()> {
                     }
                 }
                 for task in tasks {
-                    methods::baselines(heads, task).with_context(|| {
-                        format!("--heads against the {} datasets", task.as_str())
-                    })?;
+                    if let Some(heads) = &heads {
+                        methods::baselines(heads, task).with_context(|| {
+                            format!("--heads against the {} datasets", task.as_str())
+                        })?;
+                    }
+                    if !automl.is_empty() && task != Task::Regression {
+                        bail!(
+                            "--automl gpt6-astra-max requires regression datasets; found {}",
+                            task.as_str()
+                        );
+                    }
                 }
             }
             std::fs::create_dir_all(&out)?;
@@ -221,9 +270,9 @@ fn main() -> Result<()> {
                     }
                 };
                 let task = dataset.bench_task()?;
-                if search_config.is_some() && task != Task::Regression {
+                if (search_config.is_some() || !natives.is_empty()) && task != Task::Regression {
                     eprintln!(
-                        "skip {} ({}): --search is regression-only and this dataset is {}",
+                        "skip {} ({}): --search and --native require regression; this dataset is {}",
                         dataset.row.id,
                         dir.display(),
                         task.as_str()
@@ -379,7 +428,49 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{default_workers, DEFAULT_MAX_WORKERS};
+    use super::{default_workers, Cli, Command, DEFAULT_MAX_WORKERS};
+    use clap::Parser;
+
+    #[test]
+    fn original_automl_cli_preserves_explicit_selection_and_seed() {
+        let cli = Cli::try_parse_from([
+            "jope-bench",
+            "run",
+            "--datasets",
+            "data",
+            "--out",
+            "reports",
+            "--automl",
+            "gpt6-astra-max",
+            "--seed",
+            "37",
+        ])
+        .unwrap();
+        match cli.command {
+            Command::Run { automl, seed, .. } => {
+                assert_eq!(automl, ["gpt6-astra-max"]);
+                assert_eq!(seed, 37);
+            }
+            _ => panic!("expected run command"),
+        }
+        assert!(Cli::try_parse_from([
+            "jope-bench",
+            "run",
+            "--datasets",
+            "data",
+            "--out",
+            "reports",
+            "--automl",
+            "unknown",
+        ])
+        .is_err());
+        assert!(matches!(
+            Cli::try_parse_from(["jope-bench", "automl"])
+                .unwrap()
+                .command,
+            Command::Automl
+        ));
+    }
 
     #[test]
     fn default_run_workers_cap_at_the_host_budget() {
