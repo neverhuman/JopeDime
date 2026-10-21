@@ -26,6 +26,41 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 The [training observatory](docs/dashboard/README.md) provides live loss, fleet, storage, dataset,
 program-library and checkpoint views with source identities, observation age and qualification scope.
 
+## Terminal workflow
+
+The native `jopedime` appliance accepts a training CSV and a prediction CSV,
+with explicit task, method, thread and input-size controls. Start with the
+[step-by-step CSV quick start](docs/terminal/quickstart.md), including a tiny
+sample dataset, model save/reload, receipts and the existing source WebSocket.
+
+![Design preview of a colorful live CSV progress view and a separate GP source TUI; synthetic data, proposed features](docs/terminal/terminal-preview.gif)
+
+**Design preview, not a recording of shipped UI.** Progress bars, ETA, in-place
+source viewing and the TUI shown above are proposed. See the
+[detailed implementation workplan](docs/plans/terminal-experience-20261021.md)
+for the CLI, memory/thread budgets, HTTP/WebSocket jobs API and MCP adapter,
+and the [preview transcript and reproduction](docs/terminal/preview.md).
+
+Run the current CSV appliance from a clone (Linux x86-64, pinned Rust toolchain,
+Bash, `jq`, `readelf`; the build output directory must be new):
+
+```sh
+export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
+bash deploy/appliance/build.sh --profile fixture --cargo-profile dist-ci \
+  --out target/appliance/terminal-demo
+APP="$PWD/target/appliance/terminal-demo/jopedime"
+"$APP" doctor
+# Supply your CSVs: train.csv has the target y; test.csv has feature columns.
+"$APP" fit-predict --train train.csv --target y --task regression \
+  --input test.csv --output predictions.csv --threads 2 --receipt run.json
+```
+
+This builds a local development-key package. A production `jopedime` download
+is not yet published; see [package status and signing](deploy/appliance/README.md).
+Today `--json` writes the final receipt on stdout; human summaries use stderr.
+`--time-limit-seconds` bounds selection, not the subsequent full-data refit.
+For GP-generated code, use the separate workflow below.
+
 ## Program source WebSocket
 
 Capture every complete program occurrence, including repeats and emission errors,
@@ -78,7 +113,7 @@ limits and client examples](docs/program-source-stream.md).
 | Coverage map | 830 items over 25 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,207 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,208 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
