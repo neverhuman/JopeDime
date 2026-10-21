@@ -2,7 +2,7 @@ use crate::{
     manifest::*,
     telemetry::{now, Hardware, StageHeartbeat},
 };
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::os::unix::process::CommandExt;
 use std::{
@@ -154,11 +154,20 @@ pub fn run_with_wait(
         workers > 0 && threads > 0 && workers * threads <= 104,
         "GP worker CPU budget exceeds 104"
     );
-    let mut cpus = (8..60).chain(70..122).collect::<Vec<usize>>();
-    let allowed = fs::read_to_string("/proc/self/status")?;
+    // The GP slot layout (CPUs 8-59 and 70-121), restricted to the CPUs this process may run
+    // on. Pinning a slot to a CPU outside the affinity mask or cgroup cpuset makes `taskset`
+    // fail at dispatch, which records the job's outcome as unknown; refuse the budget up front
+    // instead. On a host that allows the whole layout the slot CPUs are unchanged.
+    let allowed = allowed_cpus(&fs::read_to_string("/proc/self/status")?)?;
+    let mut cpus = (8..60)
+        .chain(70..122)
+        .filter(|cpu| allowed.contains(cpu))
+        .collect::<Vec<usize>>();
     ensure!(
-        allowed.contains("Cpus_allowed_list:"),
-        "CPU affinity unavailable"
+        workers * threads <= cpus.len(),
+        "GP worker CPU budget {workers}x{threads} exceeds the {} allowed CPUs of the GP slot \
+         layout (8-59, 70-121)",
+        cpus.len()
     );
     cpus.truncate(workers * threads);
     // All destinations stay inside the workspace. Job identities are checked
@@ -598,4 +607,55 @@ pub fn validate_generation(root: &Path, job: &GpJob) -> Result<()> {
         "generation seed population missing"
     );
     Ok(())
+}
+
+/// The CPUs in `/proc/self/status`'s `Cpus_allowed_list` (affinity mask and cpuset), e.g.
+/// `0-3,8,10-11`.
+fn allowed_cpus(status: &str) -> Result<std::collections::BTreeSet<usize>> {
+    let list = status
+        .lines()
+        .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))
+        .context("CPU affinity unavailable")?
+        .trim();
+    let mut cpus = std::collections::BTreeSet::new();
+    for part in list.split(',') {
+        let (start, end) = match part.split_once('-') {
+            Some((start, end)) => (start.parse::<usize>()?, end.parse::<usize>()?),
+            None => {
+                let cpu = part.parse::<usize>()?;
+                (cpu, cpu)
+            }
+        };
+        ensure!(
+            start <= end && end < 1 << 16,
+            "invalid allowed CPU range {part}"
+        );
+        cpus.extend(start..=end);
+    }
+    ensure!(!cpus.is_empty(), "allowed CPU list is empty");
+    Ok(cpus)
+}
+
+#[cfg(test)]
+mod allowed_cpu_tests {
+    use super::allowed_cpus;
+
+    #[test]
+    fn allowed_cpu_list_parses_ranges_and_refuses_malformed_lists() {
+        let status = "Name:\tjope\nCpus_allowed:\tff\nCpus_allowed_list:\t0-3,8,10-11\n";
+        assert_eq!(
+            allowed_cpus(status)
+                .unwrap()
+                .into_iter()
+                .collect::<Vec<_>>(),
+            [0, 1, 2, 3, 8, 10, 11]
+        );
+        for bad in ["", "3-1", "1,,2", "a", "0-70000"] {
+            assert!(
+                allowed_cpus(&format!("Cpus_allowed_list:\t{bad}\n")).is_err(),
+                "{bad}"
+            );
+        }
+        assert!(allowed_cpus("Name:\tjope\n").is_err());
+    }
 }
