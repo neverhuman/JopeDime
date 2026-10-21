@@ -54,6 +54,8 @@ impl TaskDeadline {
         let thread = std::thread::spawn(move || {
             while !observed.load(Ordering::Acquire) {
                 if std::time::Instant::now() >= end || protocol::remaining(deadline).is_err() {
+                    // SAFETY: _exit takes only a status code and has no preconditions; it ends
+                    // the whole process at once without unwinding, the intended deadline stop.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -199,6 +201,8 @@ pub fn enabled() -> bool {
 
 pub fn inherit_lease(command: &mut std::process::Command, lease: &fs::File) -> Result<()> {
     ensure!(
+        // SAFETY: fcntl(F_SETFD, 0) takes integers only and clears just the close-on-exec flag;
+        // `lease` is borrowed for the call, so its descriptor stays open.
         unsafe { libc::fcntl(lease.as_raw_fd(), libc::F_SETFD, 0) } == 0,
         "cannot inherit GPU lease"
     );
@@ -284,8 +288,12 @@ pub fn inherited_task_lease(root: &Path) -> Result<fs::File> {
     let descriptor: i32 = std::env::var(key)
         .context("GPU rank requires its inherited controller lease")?
         .parse()?;
+    // SAFETY: dup takes a plain integer and never affects the original descriptor; a number
+    // that is not open makes it return -1, which is checked below.
     let copied = unsafe { libc::dup(descriptor) };
     ensure!(copied >= 0, "training lease is unavailable");
+    // SAFETY: dup just returned `copied` as a fresh nonnegative descriptor no one else owns;
+    // File takes sole ownership and closes it once, leaving the inherited original open.
     let lease = unsafe { fs::File::from_raw_fd(copied) };
     let actual = lease.metadata()?;
     let expected = root.join("runs/encoding-service.lock").metadata()?;
@@ -451,6 +459,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         let mut stream = incoming?;
         let peer = protocol::peer_credentials(&stream)?;
         ensure!(
+            // SAFETY: geteuid has no preconditions and cannot fail.
             peer.uid == unsafe { libc::geteuid() },
             "resident task peer rejected"
         );
@@ -523,6 +532,8 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                 if protocol::remaining(deadline).is_err() {
                     // A stuck collective cannot suppress the task watchdog.
                     // Acceptance remains unknown until the supervisor reconciles it.
+                    // SAFETY: _exit takes only a status code and has no preconditions; it ends
+                    // the whole process at once without unwinding, as intended here.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -532,6 +543,8 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                     events: libc::POLLRDHUP,
                     revents: 0,
                 };
+                // SAFETY: `poll` is one initialized pollfd that outlives the call and nfds is 1;
+                // the closure owns `watching`, so the polled descriptor stays open.
                 unsafe {
                     libc::poll(&mut poll, 1, 100);
                 }
@@ -540,6 +553,8 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                 {
                     // No live task client remains to supervise collectives. The
                     // pool supervisor restarts this rank from durable receipts.
+                    // SAFETY: _exit takes only a status code and has no preconditions; it ends
+                    // the whole process at once without unwinding, as intended here.
                     unsafe {
                         libc::_exit(75);
                     }

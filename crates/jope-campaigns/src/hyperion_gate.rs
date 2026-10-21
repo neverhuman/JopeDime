@@ -3833,6 +3833,8 @@ struct EncoderRun {
 
 fn encoder_process_group_exists(pid: libc::pid_t) -> Result<bool, String> {
     #[cfg(unix)]
+    // SAFETY: kill with signal 0 sends nothing and reads no memory; every caller passes a
+    // spawned child's PID (never 0 or 1), so -pid names one process group.
     unsafe {
         if libc::kill(-pid, 0) == 0 {
             return Ok(true);
@@ -3866,6 +3868,8 @@ fn wait_for_encoder_group_exit(pid: libc::pid_t, grace: Duration) -> Result<bool
 fn terminate_encoder_group(child: &mut std::process::Child, grace: Duration) -> Result<(), String> {
     let pid = child.id() as libc::pid_t;
     #[cfg(unix)]
+    // SAFETY: kill reads no memory; pid is the spawned child's PID (never 0 or 1), so -pid names
+    // one process group and never the 0/-1 broadcast forms.
     unsafe {
         if libc::kill(-pid, libc::SIGTERM) != 0
             && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH)
@@ -3893,6 +3897,8 @@ fn terminate_encoder_group(child: &mut std::process::Child, grace: Duration) -> 
         thread::sleep(Duration::from_millis(10));
     }
     #[cfg(unix)]
+    // SAFETY: kill reads no memory; pid is the spawned child's PID (never 0 or 1), so -pid names
+    // one process group and never the 0/-1 broadcast forms.
     unsafe {
         if libc::kill(-pid, libc::SIGKILL) != 0
             && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH)

@@ -595,6 +595,8 @@ fn copy_reflink_or_copy(source: &Path, destination: &Path) -> Result<()> {
     // Linux FICLONE; unsupported filesystems return an error and fall back to
     // buffered std::fs::copy.
     let cloned =
+        // SAFETY: FICLONE (_IOW(0x94, 9, int)) takes the source fd by value, not a pointer;
+        // `output` and `input` are open Files that outlive this call.
         unsafe { libc::ioctl(output.as_raw_fd(), 0x4004_9409_u64, input.as_raw_fd()) } == 0;
     drop(output);
     if !cloned {

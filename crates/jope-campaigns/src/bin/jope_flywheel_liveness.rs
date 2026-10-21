@@ -72,8 +72,12 @@ fn scheduler_job_active(scheduler: &Value, exact_id: Option<&str>, prefixes: &[&
 fn disk_used_percent(path: &Path) -> Result<u8> {
     let material = std::ffi::CString::new(path.to_string_lossy().as_bytes())?;
     let mut status = std::mem::MaybeUninit::<libc::statvfs>::uninit();
+    // SAFETY: `material` is a CString that outlives the call, so the path is NUL-terminated;
+    // `status` is a writable, aligned MaybeUninit<statvfs> that statvfs may fully overwrite.
     let result = unsafe { libc::statvfs(material.as_ptr(), status.as_mut_ptr()) };
     ensure!(result == 0, "statvfs failed for {}", path.display());
+    // SAFETY: ensure! returned early unless statvfs succeeded, and a successful statvfs fills
+    // every field of the struct, so `status` is initialized.
     let status = unsafe { status.assume_init() };
     let blocks = status.f_blocks as u128;
     let available = status.f_bavail as u128;

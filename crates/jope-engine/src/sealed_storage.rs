@@ -132,6 +132,7 @@ pub(crate) fn receive_fd(stream: &UnixStream) -> Result<OwnedFd> {
     // the kernel creates the traversed headers and fresh SCM_RIGHTS descriptors.
     // read_unaligned handles data alignment; each descriptor gets one OwnedFd
     // before validation, so every refusal closes the installed copies.
+    // SAFETY: msg points only at the live marker, iov and control locals, which outlive this block.
     unsafe {
         let n = libc::recvmsg(stream.as_raw_fd(), &mut msg, libc::MSG_CMSG_CLOEXEC);
         ensure!(n >= 0, "GPU lease transfer missing/truncated");

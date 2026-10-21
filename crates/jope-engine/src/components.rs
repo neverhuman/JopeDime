@@ -319,6 +319,8 @@ pub fn service(
                 .stdout(Stdio::from(log.try_clone()?))
                 .stderr(Stdio::from(log));
             use std::os::unix::process::CommandExt;
+            // SAFETY: the hook runs between fork and exec and only calls async-signal-safe
+            // setpgid; io::Error::last_os_error reads errno without allocating.
             unsafe {
                 cmd.pre_exec(|| {
                     if libc::setpgid(0, 0) != 0 {
@@ -372,6 +374,8 @@ pub fn service(
     })();
     if result.is_err() {
         for child in &mut children {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; it targets
+            // the process group each rank created with setpgid(0, 0); the result is ignored.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }

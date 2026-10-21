@@ -473,12 +473,18 @@ fn current_job(
 }
 
 fn retain_control_descriptor(descriptor: i32) -> Result<UnixStream> {
+    // SAFETY: F_DUPFD_CLOEXEC takes an integer minimum and touches no memory; an invalid
+    // `descriptor` only yields -1 (EBADF), checked below.
     let duplicate = unsafe { libc::fcntl(descriptor, libc::F_DUPFD_CLOEXEC, 3) };
     ensure!(duplicate >= 0, "cannot retain control descriptor");
     ensure!(
+        // SAFETY: F_SETFD takes an integer flag and touches no memory; an invalid
+        // `descriptor` only yields -1, which is checked.
         unsafe { libc::fcntl(descriptor, libc::F_SETFD, libc::FD_CLOEXEC) } == 0,
         "cannot protect inherited control descriptor"
     );
+    // SAFETY: F_DUPFD_CLOEXEC just returned this fresh, nonnegative duplicate that nothing else
+    // owns; UnixStream becomes its sole owner and closes it once. `descriptor` stays separate.
     Ok(unsafe { UnixStream::from_raw_fd(duplicate) })
 }
 
@@ -917,9 +923,12 @@ fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
         let path = std::ffi::CString::new(path.as_os_str().as_encoded_bytes())?;
         let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
         ensure!(
+            // SAFETY: `path` is a CString that outlives the call (NUL-terminated) and `stats`
+            // has room for the one statvfs that statvfs writes.
             unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } == 0,
             "storage measurement unavailable"
         );
+        // SAFETY: statvfs returned 0 (checked above), so it filled every field of `stats`.
         let stats = unsafe { stats.assume_init() };
         ensure!(
             stats.f_bavail.saturating_mul(stats.f_frsize) >= *reserve,
@@ -1572,6 +1581,8 @@ impl ScratchGuard {
                         &state.join("scratch-violation.json"),
                         &json!({"budget":budget,"path":path,"action":"terminate_and_preserve_attempt"}),
                     );
+                    // SAFETY: _exit has no preconditions. Skipping destructors and flushes is
+                    // intended: the violation record is written; the over-budget task stops now.
                     unsafe {
                         libc::_exit(78);
                     }
@@ -1663,6 +1674,8 @@ impl DeadlineWatch {
                     || started.elapsed()
                         >= remaining.saturating_add(Duration::from_millis(allowance))
                 {
+                    // SAFETY: _exit has no preconditions. Skipping destructors and flushes is
+                    // intended: past deadline plus allowance the process is ended at once.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -1718,6 +1731,8 @@ fn stop_control_with(
         tv_sec: 0,
         tv_nsec: 0,
     };
+    // SAFETY: `clock` is a live, initialized timespec that clock_gettime overwrites;
+    // CLOCK_MONOTONIC is a valid clock id.
     let monotonic_ns = if unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut clock) } == 0 {
         u64::try_from(clock.tv_sec)
             .ok()
@@ -1834,6 +1849,8 @@ pub fn serve(path: &Path, sha: &str) -> Result<()> {
                     std::thread::sleep(
                         deadline.saturating_duration_since(std::time::Instant::now()),
                     );
+                    // SAFETY: _exit has no preconditions. Skipping destructors and flushes is
+                    // intended: a worker still running past its checkpoint allowance is killed.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -2299,6 +2316,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("fifo");
         let name = std::ffi::CString::new(path.as_os_str().as_encoded_bytes()).unwrap();
+        // SAFETY: `name` is a CString that outlives the call, so the path is NUL-terminated.
         assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
         let started = std::time::Instant::now();
         assert!(read_closure(
@@ -2343,9 +2361,13 @@ mod tests {
     fn control_descriptor_is_absent_after_child_exec() {
         let (stream, _) = UnixStream::pair().unwrap();
         let fd = stream.as_raw_fd();
+        // SAFETY: `stream` stays alive for the whole test, so `fd` is open; F_SETFD takes an
+        // integer flag and touches no memory.
         assert_eq!(unsafe { libc::fcntl(fd, libc::F_SETFD, 0) }, 0);
         let retained = retain_control_descriptor(fd).unwrap();
         assert!(
+            // SAFETY: `retained` is a live UnixStream, so its descriptor is open; F_GETFD takes
+            // no third argument and only reads the descriptor flags.
             unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFD) } & libc::FD_CLOEXEC != 0
         );
         let status = std::process::Command::new("python3")

@@ -250,6 +250,8 @@ fn hash_parameter_values(h: &mut sha2::Sha256, values: &[f32]) {
     {
         // f32 has no padding and this read-only byte view stays within the live
         // slice. It preserves the previous per-value to_le_bytes representation.
+        // SAFETY: the pointer and size_of_val(values) cover exactly the initialized `values`;
+        // u8 needs no alignment, and the shared borrow keeps the slice alive and unchanged.
         let bytes = unsafe {
             std::slice::from_raw_parts(values.as_ptr().cast::<u8>(), std::mem::size_of_val(values))
         };

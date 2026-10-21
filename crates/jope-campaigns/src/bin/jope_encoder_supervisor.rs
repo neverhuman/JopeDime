@@ -126,6 +126,8 @@ struct LandlockRuleset {
 
 impl LandlockRuleset {
     fn new() -> Result<Self> {
+        // SAFETY: LANDLOCK_CREATE_RULESET_VERSION requires a null attr and size 0, which are
+        // passed; the kernel then only returns the ABI version and dereferences no memory.
         let abi = unsafe {
             libc::syscall(
                 libc::SYS_landlock_create_ruleset,
@@ -151,6 +153,8 @@ impl LandlockRuleset {
             | ACCESS_REFER
             | ACCESS_TRUNCATE;
         let attr = LandlockRulesetAttr { handled_access_fs };
+        // SAFETY: attr is a live repr(C) landlock_ruleset_attr (one u64) and its exact size is
+        // passed, so the kernel reads only initialized bytes; flags are 0 and nothing is retained.
         let fd = unsafe {
             libc::syscall(
                 libc::SYS_landlock_create_ruleset,
@@ -163,6 +167,8 @@ impl LandlockRuleset {
             return Err(std::io::Error::last_os_error()).context("create Landlock ruleset");
         }
         Ok(Self {
+            // SAFETY: landlock_create_ruleset just returned this fresh nonnegative fd and no other
+            // owner holds it; OwnedFd takes sole ownership and closes it exactly once.
             fd: unsafe { OwnedFd::from_raw_fd(fd) },
             abi,
         })
@@ -198,6 +204,8 @@ impl LandlockRuleset {
             parent_fd: path_fd.as_raw_fd(),
             _reserved: 0,
         };
+        // SAFETY: the kernel copies just the 12 bytes of packed landlock_path_beneath_attr, which
+        // match live attr's repr(C) prefix; self.fd and path_fd stay open for the call.
         let result = unsafe {
             libc::syscall(
                 libc::SYS_landlock_add_rule,
@@ -357,6 +365,8 @@ fn run(args: &Args) -> Result<()> {
         .env("JOPE_ENCODER_INPUT_ROOT", &args.input_root)
         .env("JOPE_ENCODER_OUTPUT_ROOT", &args.output_root)
         .env("JOPE_ENCODER_OUTPUT_NAME", &args.output_name);
+    // SAFETY: the closure makes only async-signal-safe syscalls (dup2, fcntl, prctl, Landlock) and
+    // reads errno, never allocating or locking; child_receipt_file and ruleset outlive status().
     unsafe {
         command.pre_exec(move || {
             if libc::dup2(receipt_raw_fd, CHILD_RECEIPT_FD) < 0 {
@@ -768,6 +778,8 @@ mod tests {
             .arg("landlock-test")
             .arg(allowed.join("train.csv"))
             .args(&denied);
+        // SAFETY: the closure makes only async-signal-safe prctl/landlock syscalls and reads errno,
+        // never allocating or locking; `ruleset`, which owns ruleset_fd, outlives status().
         unsafe {
             command.pre_exec(move || {
                 if libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0 {

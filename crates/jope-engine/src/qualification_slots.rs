@@ -72,7 +72,11 @@ pub fn try_acquire(root: &Path, slot: usize) -> Result<Option<File>> {
 /// Called in pre_exec: the search owns the slot until it exits. Dropping the
 /// supervisor's copy must not release it.
 pub fn inherit(fd: std::os::fd::RawFd) -> std::io::Result<()> {
+    // SAFETY: F_GETFD takes no pointer and only reads `fd`'s descriptor flags; a descriptor
+    // that is not open returns -1, which is checked below. It is async-signal-safe.
     let flags = unsafe { libc::fcntl(fd, libc::F_GETFD) };
+    // SAFETY: F_SETFD takes an integer flag word and changes only `fd`'s close-on-exec flag;
+    // it touches no caller memory and is async-signal-safe, as the pre_exec caller requires.
     if flags < 0 || unsafe { libc::fcntl(fd, libc::F_SETFD, flags & !libc::FD_CLOEXEC) } < 0 {
         return Err(std::io::Error::last_os_error());
     }
@@ -126,6 +130,8 @@ mod tests {
         let fd = lease.as_raw_fd();
         let mut command = Command::new("cat");
         command.stdin(Stdio::piped()).stdout(Stdio::null());
+        // SAFETY: the hook only runs `inherit`, which makes async-signal-safe fcntl calls; `lease`
+        // keeps `fd` open in the parent until after spawn, so the child inherits it.
         unsafe {
             command.pre_exec(move || inherit(fd));
         }

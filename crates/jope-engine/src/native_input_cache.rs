@@ -129,10 +129,14 @@ fn open_at(directory: &File, relative: &Path) -> Result<File> {
             } else {
                 0
             };
+        // SAFETY: `parent` is an open File for the whole call and `name` is a live CString, so
+        // the path is NUL-terminated; without O_CREAT, openat reads no mode argument.
         let fd = unsafe { libc::openat(parent.as_raw_fd(), name.as_ptr(), flags) };
         if fd < 0 {
             return Err(std::io::Error::last_os_error().into());
         }
+        // SAFETY: openat just returned this nonnegative descriptor and nothing else owns it;
+        // File becomes its sole owner and closes it once (the old `parent` closes its own fd).
         parent = unsafe { File::from_raw_fd(fd) };
     }
     Ok(parent)
@@ -196,9 +200,12 @@ const EXT4_SUPER_MAGIC: u64 = 0xef53;
 /// both below 2^31, is ever tested, and those compare correctly on every target.
 fn filesystem_magic(file: &File) -> Result<u64> {
     let mut status = std::mem::MaybeUninit::<libc::statfs>::uninit();
+    // SAFETY: `file` is a borrowed open File, so its descriptor is valid for the call, and
+    // `status` has room for one statfs, the only memory fstatfs writes.
     if unsafe { libc::fstatfs(file.as_raw_fd(), status.as_mut_ptr()) } != 0 {
         return Err(std::io::Error::last_os_error().into());
     }
+    // SAFETY: fstatfs returned 0 (checked above), so it filled every field of `status`.
     let status = unsafe { status.assume_init() };
     Ok(status.f_type as u64)
 }
@@ -464,6 +471,8 @@ mod tests {
             },
         ];
         assert_eq!(
+            // SAFETY: `name` is a CString that outlives the call, so the path is NUL-terminated,
+            // and `times` is the two-element timespec array utimensat reads.
             unsafe { libc::utimensat(libc::AT_FDCWD, name.as_ptr(), times.as_ptr(), 0) },
             0
         );
@@ -566,6 +575,7 @@ mod tests {
         let t = tempfile::tempdir().unwrap();
         let p = t.path().join("a");
         let name = CString::new(p.as_os_str().as_encoded_bytes()).unwrap();
+        // SAFETY: `name` is a CString that outlives the call, so the path is NUL-terminated.
         assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
         let _s = enter(t.path(), &BTreeMap::from([("a".into(), "a".repeat(64))])).unwrap();
         assert!(hash_if_bound(&p).unwrap().is_err());

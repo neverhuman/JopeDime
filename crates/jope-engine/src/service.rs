@@ -60,6 +60,8 @@ impl std::ops::DerefMut for OwnedSlots {
 impl Drop for OwnedSlots {
     fn drop(&mut self) {
         for (_, child, _) in self.0.iter_mut().flatten() {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; a child
+            // still in a slot is unreaped, so its setpgid(0, 0) group id is not reused.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
@@ -202,6 +204,8 @@ pub fn run_with_wait(
     let started = Instant::now();
     let mut slots = OwnedSlots((0..workers).map(|_| None).collect());
     STOP.store(false, std::sync::atomic::Ordering::Relaxed);
+    // SAFETY: `stop` is an extern "C" fn(c_int) whose only action is a lock-free atomic store,
+    // which is async-signal-safe, so it is a valid SIGTERM and SIGINT handler.
     unsafe {
         libc::signal(libc::SIGTERM, stop as *const () as libc::sighandler_t);
         libc::signal(libc::SIGINT, stop as *const () as libc::sighandler_t);
@@ -315,6 +319,8 @@ pub fn run_with_wait(
             );
             for slot in slots.iter_mut() {
                 if let Some((index, mut child, _)) = slot.take() {
+                    // SAFETY: kill takes only integers and has no memory-safety preconditions;
+                    // the worker is unreaped, so its setpgid(0, 0) group id is not reused.
                     unsafe {
                         libc::kill(-(child.id() as i32), libc::SIGKILL);
                     }
@@ -388,6 +394,8 @@ pub fn run_with_wait(
                     }
                     *slot = None;
                 } else if begun.elapsed() > Duration::from_secs(660) {
+                    // SAFETY: kill takes only integers and has no memory-safety preconditions;
+                    // the worker is unreaped, so its setpgid(0, 0) group id is not reused.
                     unsafe {
                         libc::kill(-(child.id() as i32), libc::SIGKILL);
                     }

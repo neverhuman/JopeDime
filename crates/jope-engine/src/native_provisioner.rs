@@ -401,6 +401,7 @@ fn finish_acknowledged(
 /// intent intact; a later invocation retries its exact bytes before any new work.
 pub async fn provision(config_path: &Path, input: &TaskInput) -> Result<Value> {
     ensure!(
+        // SAFETY: geteuid has no preconditions and cannot fail.
         unsafe { libc::geteuid() } == 0,
         "provisioner requires root custody"
     );
@@ -699,8 +700,11 @@ pub async fn provision(config_path: &Path, input: &TaskInput) -> Result<Value> {
     let proof: NativeGrantProof = if ackpath.exists() {
         serde_json::from_slice(&read(&ackpath)?)?
     } else {
+        // SAFETY: the all-zero bit pattern is valid for timespec: its fields are plain integers.
         let mut t: libc::timespec = unsafe { std::mem::zeroed() };
         ensure!(
+            // SAFETY: `t` is a live, exclusively borrowed timespec that clock_gettime fills;
+            // CLOCK_MONOTONIC is a valid clock id.
             unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut t) } == 0,
             "monotonic clock"
         );

@@ -355,8 +355,12 @@ pub fn fit_memory_input(rows: &[Vec<f64>], preprocessing: &[u8]) -> Result<fs::F
         "invalid projected export input shape"
     );
     let name = std::ffi::CString::new("jope-fit-input").unwrap();
+    // SAFETY: `name` is a CString that outlives the call, so the pointer is NUL-terminated and
+    // valid; MFD_ALLOW_SEALING is a valid flag.
     let fd = unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING) };
     ensure!(fd >= 0, "memfd_create failed");
+    // SAFETY: memfd_create returned this fresh, nonnegative descriptor and nothing else owns
+    // it; File takes sole ownership and closes it once.
     let file = unsafe { fs::File::from_raw_fd(fd) };
     {
         let mut out = std::io::BufWriter::new(&file);
@@ -372,6 +376,8 @@ pub fn fit_memory_input(rows: &[Vec<f64>], preprocessing: &[u8]) -> Result<fs::F
         out.flush()?;
     }
     ensure!(
+        // SAFETY: `file` owns the descriptor and outlives the call; F_ADD_SEALS takes an
+        // integer seal mask and reads or writes no caller memory.
         unsafe {
             libc::fcntl(
                 file.as_raw_fd(),
@@ -399,13 +405,19 @@ pub fn fit_memory(
     use std::os::fd::FromRawFd;
     ensure!(!output.exists(), "fitted predictor already exists");
     ensure!(fd >= 3, "invalid inherited projected input descriptor");
+    // SAFETY: F_GET_SEALS takes no pointer and only reads the seals of `fd`; it does not take
+    // ownership, and a failure returns -1, which is checked below.
     let seals = unsafe { libc::fcntl(fd, libc::F_GET_SEALS) };
     ensure!(
         seals >= 0 && seals & libc::F_SEAL_WRITE != 0 && seals & libc::F_SEAL_SHRINK != 0,
         "projected export input must be sealed memory"
     );
+    // SAFETY: dup takes a plain integer and never affects the inherited descriptor; a number
+    // that is not open makes it return -1, which is checked below.
     let copy = unsafe { libc::dup(fd) };
     ensure!(copy >= 0, "projected input descriptor missing");
+    // SAFETY: dup just returned `copy` as a fresh nonnegative descriptor no one else owns; File
+    // takes sole ownership and closes it once, leaving the inherited `fd` open.
     let mut file = unsafe { fs::File::from_raw_fd(copy) };
     file.seek(SeekFrom::Start(0))?;
     let mut header = [0u8; 24];
@@ -558,6 +570,8 @@ fn isolated_export(
             )
             .stdout(Stdio::from(log.try_clone()?))
             .stderr(Stdio::from(log.try_clone()?));
+        // SAFETY: the hook only calls async-signal-safe setrlimit (given its stack-local rlimit)
+        // and setpgid, and builds its error from errno without allocating.
         unsafe {
             command.pre_exec(|| {
                 let limit = libc::rlimit {
@@ -601,6 +615,8 @@ fn isolated_export(
             Ok(())
         })();
         if child.try_wait()?.is_none() {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; the
+            // worker is unreaped, so the group id it took with setpgid(0, 0) is not reused.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
@@ -770,8 +786,12 @@ pub fn memory_view(tr: &[Vec<f64>], va: &[Vec<f64>]) -> Result<fs::File> {
         "invalid in-memory view shape"
     );
     let name = std::ffi::CString::new("jope-cut").unwrap();
+    // SAFETY: `name` is a CString that outlives the call, so the pointer is NUL-terminated and
+    // valid; MFD_ALLOW_SEALING is a valid flag.
     let fd = unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING) };
     ensure!(fd >= 0, "memfd_create failed");
+    // SAFETY: memfd_create returned this fresh, nonnegative descriptor and nothing else owns
+    // it; File takes sole ownership and closes it once.
     let file = unsafe { fs::File::from_raw_fd(fd) };
     {
         let mut out = std::io::BufWriter::new(&file);
@@ -786,6 +806,8 @@ pub fn memory_view(tr: &[Vec<f64>], va: &[Vec<f64>]) -> Result<fs::File> {
         out.flush()?;
     }
     ensure!(
+        // SAFETY: `file` owns the descriptor and outlives the call; F_ADD_SEALS takes an
+        // integer seal mask and reads or writes no caller memory.
         unsafe {
             libc::fcntl(
                 file.as_raw_fd(),
@@ -809,9 +831,15 @@ pub fn evaluate_prepared_memory(
     use std::io::{Read, Seek, SeekFrom};
     use std::os::fd::FromRawFd;
     ensure!(fd >= 3, "invalid inherited memory descriptor");
+    // SAFETY: dup takes a plain integer and never affects the inherited descriptor; a number
+    // that is not open makes it return -1, which is checked below.
     let copy = unsafe { libc::dup(fd) };
     ensure!(copy >= 0, "cut memory descriptor missing");
+    // SAFETY: dup just returned `copy` as a fresh nonnegative descriptor no one else owns; File
+    // takes sole ownership and closes it once, leaving the inherited `fd` open.
     let mut file = unsafe { fs::File::from_raw_fd(copy) };
+    // SAFETY: F_GET_SEALS takes no pointer and only reads the seals of `fd`; it does not take
+    // ownership, and a failure returns -1, which is checked below.
     let seals = unsafe { libc::fcntl(fd, libc::F_GET_SEALS) };
     ensure!(
         seals >= 0 && seals & libc::F_SEAL_WRITE != 0,
@@ -916,10 +944,14 @@ pub fn guard_evaluator_group() -> Result<()> {
         .and_then(|pid| pid.parse().ok())
         .context("evaluator group guard names no controller")?;
     extern "C" fn kill_group(_: libc::c_int) {
+        // SAFETY: kill is async-signal-safe and takes only integers; pid 0 signals this
+        // process's own group, which the guard verified it leads before installing this.
         unsafe {
             libc::kill(0, libc::SIGKILL);
         }
     }
+    // SAFETY: all-zero is a valid sigaction (integers, a sigset, a nullable restorer); calls get
+    // live locals or a null old action, and the handler only calls async-signal-safe kill.
     unsafe {
         ensure!(
             libc::getpgrp() == libc::getpid(),
@@ -1522,7 +1554,11 @@ fn search_lease(output: &Path) -> Result<fs::File> {
 /// Whether the evaluator has exited, without reaping it: an unreaped leader
 /// keeps its process-group id reserved while the group is drained.
 fn evaluator_exited(pid: i32) -> Result<bool> {
+    // SAFETY: siginfo_t holds only integer and raw-pointer fields, for which all-zero is valid;
+    // zeroing also leaves si_pid 0 when WNOHANG finds no exited child.
     let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+    // SAFETY: `info` is a live, writable siginfo_t for waitid to fill; WNOWAIT leaves the
+    // child unreaped, so its pid stays reserved.
     let status = unsafe {
         libc::waitid(
             libc::P_PID,
@@ -1536,6 +1572,8 @@ fn evaluator_exited(pid: i32) -> Result<bool> {
         "evaluator wait failed: {}",
         std::io::Error::last_os_error()
     );
+    // SAFETY: `info` is initialized (zeroed, then written by waitid), and si_pid reads the
+    // integer pid field of the SIGCHLD layout that waitid fills.
     Ok(unsafe { info.si_pid() } != 0)
 }
 
@@ -1568,6 +1606,8 @@ fn process_group_members(group: i32) -> usize {
 /// while the leader is unreaped (running on expiry, a zombie after exit).
 fn drain_process_group(group: i32) -> serde_json::Value {
     let members_at_exit = process_group_members(group);
+    // SAFETY: kill takes only integers and has no memory-safety preconditions; the caller holds
+    // the unreaped leader, so `group` still names the evaluator's own process group.
     unsafe {
         libc::kill(-group, libc::SIGKILL);
     }
@@ -1583,6 +1623,8 @@ fn drain_process_group(group: i32) -> serde_json::Value {
 fn experiment_failpoint(name: &str, isolated: bool) {
     // Only explicitly isolated experiments can exercise crash recovery gates.
     if isolated && std::env::var("JOPE_EXPERIMENT_CRASH_AFTER").ok().as_deref() == Some(name) {
+        // SAFETY: raise has no memory-safety preconditions; SIGKILL ends this process at once,
+        // which is the failpoint's purpose.
         unsafe {
             libc::raise(libc::SIGKILL);
         }

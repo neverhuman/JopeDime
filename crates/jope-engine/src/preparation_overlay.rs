@@ -567,6 +567,8 @@ mod tests {
         let t = tempfile::tempdir().unwrap();
         let fifo = t.path().join("fifo");
         let name = std::ffi::CString::new(fifo.as_os_str().as_encoded_bytes()).unwrap();
+        // SAFETY: `name` is a CString that outlives the call, so the path pointer is
+        // NUL-terminated and valid; mkfifo only reads that string.
         assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
         assert!(checked_hash(&fifo).is_err());
         std::os::unix::fs::symlink(&fifo, t.path().join("link")).unwrap();

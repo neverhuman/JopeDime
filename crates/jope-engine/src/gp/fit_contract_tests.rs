@@ -2275,6 +2275,8 @@ struct CensusGuard(PathBuf);
 impl Drop for CensusGuard {
     fn drop(&mut self) {
         for pid in live_left_behind(&self.0) {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; `pid` is
+            // a live `sleep 300` helper this test provoked, just found by the census.
             unsafe {
                 libc::kill(pid, libc::SIGKILL);
             }

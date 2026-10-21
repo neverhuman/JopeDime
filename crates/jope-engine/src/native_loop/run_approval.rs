@@ -237,7 +237,11 @@ impl Loop {
         let name = std::ffi::CString::new(b.cgroup_root.as_os_str().as_encoded_bytes())?;
         let mut st = std::mem::MaybeUninit::<libc::statfs>::uninit();
         ensure!(
+            // SAFETY: `name` is a CString that outlives the call (NUL-terminated path) and `st`
+            // has room for the one statfs that statfs writes.
             unsafe { libc::statfs(name.as_ptr(), st.as_mut_ptr()) } == 0
+                // SAFETY: `&&` short-circuits, so this runs only after statfs returned 0 and
+                // filled every field of `st`.
                 && unsafe { st.assume_init() }.f_type == libc::CGROUP2_SUPER_MAGIC,
             "run drain requires real cgroup v2"
         );

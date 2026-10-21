@@ -336,6 +336,8 @@ impl Drop for WorkerProcess {
     fn drop(&mut self) {
         if self.child.try_wait().ok().flatten().is_none() {
             let pid = self.child.id() as i32;
+            // SAFETY: kill reads no memory; try_wait just saw this child unreaped, so its PID
+            // (never 0 or 1) is not reused and -pid can only name the group the child leads.
             unsafe {
                 libc::kill(-pid, libc::SIGKILL);
             }
@@ -1882,6 +1884,8 @@ fn terminate_workers(workers: &mut [WorkerProcess]) {
             continue;
         }
         let pid = worker.child.id() as i32;
+        // SAFETY: kill reads no memory; try_wait just saw this child unreaped, so its PID
+        // (never 0 or 1) is not reused and -pid can only name the group the child leads.
         unsafe {
             libc::kill(-pid, libc::SIGTERM);
         }
@@ -1899,6 +1903,8 @@ fn terminate_workers(workers: &mut [WorkerProcess]) {
     for worker in workers.iter_mut() {
         if worker.child.try_wait().ok().flatten().is_none() {
             let pid = worker.child.id() as i32;
+            // SAFETY: kill reads no memory; try_wait just saw this child unreaped, so its PID
+            // (never 0 or 1) is not reused and -pid can only name the group the child leads.
             unsafe {
                 libc::kill(-pid, libc::SIGKILL);
             }
@@ -2525,6 +2531,8 @@ mod tests {
         }];
         terminate_workers(&mut workers);
         assert!(workers[0].child.try_wait().unwrap().is_some());
+        // SAFETY: kill with signal 0 sends nothing and reads no memory; pid came from
+        // child.id() (never 0 or 1), so -pid names one process group.
         let status = unsafe { libc::kill(-pid, 0) };
         assert_eq!(status, -1, "cancelled worker process group survived");
     }

@@ -1989,7 +1989,10 @@ pub(super) fn job_allowed_cpus() -> Result<Vec<usize>> {
         .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))
         .context("process status has no Cpus_allowed_list")?;
     let parsed = parse_cpu_list(encoded)?;
+    // SAFETY: cpu_set_t is a plain array of integer words; all-zero is the valid empty set.
     let mut kernel_set: libc::cpu_set_t = unsafe { std::mem::zeroed() };
+    // SAFETY: pid 0 means the calling thread, and `kernel_set` is a writable cpu_set_t whose
+    // exact size is passed, so the kernel writes only within it.
     if unsafe {
         libc::sched_getaffinity(0, std::mem::size_of::<libc::cpu_set_t>(), &mut kernel_set)
     } != 0
@@ -1997,6 +2000,8 @@ pub(super) fn job_allowed_cpus() -> Result<Vec<usize>> {
         return Err(std::io::Error::last_os_error()).context("read job CPU affinity");
     }
     let kernel = (0..libc::CPU_SETSIZE as usize)
+        // SAFETY: `kernel_set` is an initialized cpu_set_t and `cpu` < CPU_SETSIZE, so
+        // CPU_ISSET reads in bounds.
         .filter(|cpu| unsafe { libc::CPU_ISSET(*cpu, &kernel_set) })
         .collect::<Vec<_>>();
     if parsed != kernel {
@@ -2045,18 +2050,26 @@ pub(super) fn pin_current_thread(cpu: usize) -> Result<()> {
     if cpu >= libc::CPU_SETSIZE as usize {
         bail!("CPU {cpu} exceeds cpu_set_t capacity");
     }
+    // SAFETY: cpu_set_t is a plain array of integer words; all-zero is the valid empty set.
     let mut requested: libc::cpu_set_t = unsafe { std::mem::zeroed() };
+    // SAFETY: `requested` is a valid cpu_set_t and the guard above ensures cpu < CPU_SETSIZE,
+    // so CPU_ZERO and CPU_SET stay in bounds.
     unsafe {
         libc::CPU_ZERO(&mut requested);
         libc::CPU_SET(cpu, &mut requested);
     }
+    // SAFETY: pid 0 means the calling thread; `requested` is an initialized cpu_set_t and its
+    // exact size is passed, so the kernel reads only within it.
     if unsafe { libc::sched_setaffinity(0, std::mem::size_of::<libc::cpu_set_t>(), &requested) }
         != 0
     {
         return Err(std::io::Error::last_os_error())
             .with_context(|| format!("pin candidate thread to CPU {cpu}"));
     }
+    // SAFETY: cpu_set_t is a plain array of integer words; all-zero is the valid empty set.
     let mut actual: libc::cpu_set_t = unsafe { std::mem::zeroed() };
+    // SAFETY: pid 0 means the calling thread, and `actual` is a writable cpu_set_t whose exact
+    // size is passed, so the kernel writes only within it.
     if unsafe { libc::sched_getaffinity(0, std::mem::size_of::<libc::cpu_set_t>(), &mut actual) }
         != 0
     {
@@ -2064,6 +2077,8 @@ pub(super) fn pin_current_thread(cpu: usize) -> Result<()> {
             .with_context(|| format!("verify candidate thread affinity on CPU {cpu}"));
     }
     let pinned = (0..libc::CPU_SETSIZE as usize)
+        // SAFETY: `actual` is an initialized cpu_set_t and `candidate` < CPU_SETSIZE, so
+        // CPU_ISSET reads in bounds.
         .filter(|candidate| unsafe { libc::CPU_ISSET(*candidate, &actual) })
         .collect::<Vec<_>>();
     if pinned != [cpu] {
