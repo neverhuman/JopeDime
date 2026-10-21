@@ -10,7 +10,7 @@ disk incident recorded in [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md).
 
 ## Direction and evidence
 
-The product repository is `veox-ai/JopeDime`; its current goal is the bounded neural GP learning
+The product repository is `neverhuman/JopeDime`; its current goal is the bounded neural GP learning
 loop in [MASTER_PLAN.md](MASTER_PLAN.md#product-target). Dataset labels stay intact; outer test
 folds and sealed meta-test families stay outside the learning worker's input closure.
 See [ADR-0005](docs/adr/ADR-0005-canonical-learning-loop.md) for the model lineage,
@@ -124,22 +124,14 @@ commits" for a repository that holds dozens on other local branches.
 
 ## Pull requests
 
-Land work through the reviewed lifecycle: branch → PR → CI green at the exact head → review by a
-**different identity** → merge → verify the remote state. `main-guard` enforces that every commit
-on `main` belongs to a merged pull request.
+**Owner ruling, 2026-10-21: the same agent may implement, review and merge its PR.**
+This supersedes the earlier requirement for a different agent, session or GitHub identity.
+An outside reviewer and a native GitHub approval are optional; their absence is not a blocker.
+Keep review substantive and bind it to the exact full head SHA. Preserve existing authorship.
 
-**Review must be independent of the writer and bind the exact full head SHA.** Check the PR
-author with `gh pr view <number> --json author,headRefOid` and every GitHub-associated commit
-author with `gh api --paginate repos/veox-ai/JopeDime/pulls/<number>/commits --jq '.[].author.login'`.
-The reviewing identity must differ from both the PR author and all those commit authors. Record
-unassociated authors explicitly; local Git names and emails do not establish GitHub identity.
-Changing a login does not make the writer an independent reviewer. Any changed head needs fresh
-checks and review. Distinguish an independent review comment from a native GitHub approval, and
-claim enforced protection only after reading it back from the API.
-Use the established writer identity for new commits so the designated reviewer stays eligible;
-preserve existing authorship. If that reviewer becomes ineligible, find another eligible independent
-reviewer rather than rewriting attribution or self-approving.
-If no eligible independent reviewer is available, keep the PR open with that blocker recorded.
+Land work through the reviewed lifecycle: branch → PR → CI green at the exact head →
+agent review → merge → verify the remote state. `main-guard` checks that every commit
+on `main` belongs to a merged pull request; it does not certify review quality.
 
 Before starting new implementation work, check the open pull-request queue. If a PR is awaiting
 review, checks, correction, or merge, resolve it before opening another lane. The current delivery
@@ -149,140 +141,63 @@ Each focused PR states the behavior it changes, the acceptance command, and the 
 For behavioral fixes, preserve a reproducing failure and prove the corrected behavior; refusing
 an operation and successfully executing its authorized path are different acceptance cases.
 For documentation, `git diff --check` and link/import verification supplement the same exact-head
-CI requirement; a declared path exclusion is recorded as `skipped-by-path`, not passed. Merge with
-`gh pr merge <number> --rebase --match-head-commit <reviewed-full-sha>`, then verify the resulting
-remote `main` and `main-guard`. GitHub's rebase merge does not authorize rewriting a shared branch.
+CI requirement; a declared path exclusion is recorded as `skipped-by-path`, not passed.
+Any changed head needs fresh checks and review. Resolve blocking findings before merging.
+Trust-surface changes, including workflows, lockfiles, credentials and protection settings,
+also receive a security review; the implementing agent may perform it.
 
 ### Approval procedure on this host
 
-Verified on 2026-09-22: the established writer is **`jepsontaylor`**. The designated
-review account is **`neverhuman`**, used by an independent Claude review process.
-These are working defaults, not permanent eligibility: verify both identities for every PR.
-The writer session never calls the approval API for its own change. Independence comes from
-a separate reviewer process that did not write the change; selecting another account alone
-does not provide it. An independent agent review is recorded as such, not as a human review.
-
-**The installed helper selects these two configured identities:**
+Use the established writer identity for commits, pushes and PRs. Verify the live identity rather
+than relying on historical account names or Git config. The `xbabe2` helper selects a configured
+account for one child process without changing the shared active login:
 
 ```sh
-/home/ubuntu/.local/bin/gh-role writer    <gh arguments>   # jepsontaylor: commits, pushes, PR creation
-/home/ubuntu/.local/bin/gh-role reviewer  <gh arguments>   # neverhuman: independent review only
+/home/ubuntu/.local/bin/gh-role writer <gh arguments>
 ```
 
-It takes the named account's credential from the CLI store and passes it to that one child
-process. It never runs `gh auth switch`, because that rewrites a `hosts.yml` every concurrent
-agent on this host shares. An inherited `GH_TOKEN` cannot override the role: the helper clears
-`GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN`, `GITHUB_ENTERPRISE_TOKEN`, `GH_CONFIG_DIR` and
-`GH_HOST`, then confirms `/user` really is the account asked for before running anything.
+An optional separate reviewer may use `gh-role reviewer` after verifying its identity and
+eligibility. The installed helper's native-approval eligibility restrictions still apply.
+Do not alter credentials, switch accounts or rewrite attribution to manufacture a self-approval.
+Same-agent review is recorded honestly as such; GitHub does not allow a PR author to submit a
+native approval on their own PR. A head-bound `COMMENT` review or equivalent durable review
+receipt records the agent's findings without requiring that approval.
 
-Plain `gh` can use the active account or an inherited token override. Verify the resulting
-identity at every use; the helper clears those overrides for the selected role.
-
-**Observed behavior (2026-09-22 23:10 UTC).** The installed helper refuses approvals by the
-account that opened the PR, by any associated author or committer of a commit on the PR,
-by anyone while the PR carries commits with no GitHub account attached unless
-`--ack-unassociated` is passed explicitly, PR creation under the reviewer role, and any
-recognized approval operation whose eligibility lookup fails (it fails closed). Its commit
-lookup reads at most 100 commits, and unknown command shapes pass through. Its merge path only
-warns when the merger authored or committed on the PR (`GH_ROLE_STRICT_MERGER=1` makes that
-fatal), can continue after a failed eligibility lookup, and performs no check at all for a merge
-it cannot pin to a PR number. It prints one reason per excluded login and flags unassociated
-commit authors but not unassociated committers. The offline tests in
-`/home/ubuntu/.local/bin/test-gh-role.py` cover the approval-eligibility decisions (opener,
-associated author, associated committer, unassociated commits with and without acknowledgement,
-fail-closed lookup) and the argument parsing; they do not exercise the merge path's warning.
-A copy that excluded only the PR opener existed on this host between 22:25 and 23:10 UTC on
-2026-09-22; the owner ruled that the full exclusion set is the rule and it was restored (backup
-`~/.config/github-access/backups/gh-role.20260922T2310Z.strong`).
-
-**A successful helper check does not satisfy this repository's reviewer rule.**
-Independently compare the reviewer with the PR author and every associated commit
-author (and committer) using the paginated API inventory in step 2. The installed
-script can change independently of this repository; recheck it at use time. Never
-use a weaker copy of it to self-approve or bypass the exact-head merge procedure.
-
-**Its limits, so this is not read as more than it is.** Every agent here runs as `ubuntu`, so
-anything that can run `gh-role` can run `gh` directly and skip it: it prevents the mistake, not a
-determined actor. It is installed on **xbabe2 only** and is not yet version-controlled. It
-checks logins: reviewer versus opener, authors and committers. It cannot establish
-*independence*: a session that wrote the change does not become an independent reviewer by
-selecting the other account, which is what the paragraph above already says and remains the
-binding rule.
-
-1. Claim the checkout as above, preserve existing commit authorship, and use the writer for
-   new commits and the PR. Check `gh api user --jq .login` before creating it. Current Git
-   authorship is `Jepson Taylor <130782313+jepsontaylor@users.noreply.github.com>`; Git config
-   and SSH key names alone do not prove the GitHub-associated author.
-2. Freeze the final head. Run these read-only checks, replacing `PR_NUMBER` with the number:
+1. Claim the checkout as above and preserve existing commit authorship. Verify the posting
+   identity with `gh-role writer api user --jq .login`. Freeze the final full head SHA and retain
+   the PR, commit inventory and complete review diff.
+2. Dispatch `gh-role writer workflow run ci.yml --repo neverhuman/JopeDime --ref BRANCH`.
+   Record dispatch time, then identify the new manual run by branch, creation time and frozen
+   source SHA. Retain run ID, full source SHA and attempt; never substitute an older success.
+   All declared full manual lanes, including both Rust test shards, frontend tests and aggregate,
+   must pass at that head. A path-gated PR run may legitimately skip declared lanes; retain its
+   synthetic checkout SHA separately. Missing, stale, cancelled, failed and zero-test results
+   are not passes. Use **Re-run all jobs** for another attempt.
+3. Review the complete candidate and relevant context, including substantive test evidence and
+   unresolved discussions. The same implementing agent may perform this review. Record the
+   exact full SHA, findings and disposition in a durable receipt or native `COMMENT` review
+   with `commit_id: FULL_SHA`. Do not describe a self-review as an independent or human review.
+   Preserve any existing independent review evidence as additional evidence.
+4. Immediately before merging, recheck the current head, current-attempt CI, review disposition,
+   discussion resolution and effective protection. Preserve API readbacks outside the checkout.
+   The 2026-10-21 owner-authorized settings require zero approving reviews, no last-push approval
+   and no extra approval for unattributed changes in both main protection layers. Required
+   status checks, strict up-to-date checks, conversation resolution and push protections remain
+   enforced. Read settings back before claiming enforcement; do not bypass them with `--admin`.
+5. Merge with the guarded command, then verify `merged_at`, resulting remote main and successful
+   `main-guard`. GitHub's rebase merge does not authorize rewriting the shared source branch:
 
    ```sh
-   gh pr view PR_NUMBER --json author,headRefOid,headRefName
-   gh api --paginate repos/veox-ai/JopeDime/pulls/PR_NUMBER/commits \
-     --jq '.[] | {sha, login: (.author.login // "UNASSOCIATED"), committer: (.committer.login // "UNASSOCIATED"), git_author: .commit.author}'
+   gh-role writer pr merge PR_NUMBER --repo neverhuman/JopeDime --rebase --match-head-commit FULL_SHA
    ```
 
-   The reviewer must differ from the PR author and **every** associated commit author.
-   Record unassociated authors and establish independence; do not silently omit them.
-   If the reviewer opened the PR accidentally, preserve its discussion/evidence, close it
-   as superseded and recreate it as the writer. Preserve the commits and their attribution.
+   If GitHub cannot safely rebase a branch with conflict resolution, use the enabled squash
+   strategy with the same `--match-head-commit FULL_SHA` guard and all checks above. Preserve
+   the shared source branch and verify that the merged tree exactly matches the reviewed tree.
 
-   The helper performs the same login comparison and prints its verdict:
-
-   ```sh
-   /home/ubuntu/.local/bin/gh-role eligible reviewer veox-ai/JopeDime PR_NUMBER
-   ```
-
-   It prints the exclusion set with a reason per login (opened the PR, authored commit,
-   committed commit) and lists commits with no GitHub account attached. Use it before every
-   approval as a second check, never as the only one: it reads at most 100 commits and it
-   does **not** establish reviewer independence. Always retain the complete paginated
-   author/committer inventory above.
-3. Dispatch `gh workflow run ci.yml --ref BRANCH`, then identify and retain that run's
-   **full source SHA, run ID and attempt**. Record the dispatch time, then use
-   `gh run list --workflow ci.yml --branch BRANCH --event workflow_dispatch --json databaseId,headSha,createdAt,attempt`
-   to select the new run created after that time at the frozen full SHA; inspect it with
-   `gh run view RUN_ID --json headSha,attempt,status,conclusion,jobs`. Do not select an older
-   success. All eight lanes plus `aggregate` must pass at
-   that head for a full manual run. A PR run may have declared `skipped-by-path` lanes;
-   inspect its aggregate and retain the synthetic checkout SHA separately. Cancelled,
-   missing, stale or zero-test results cannot pass. Use **Re-run all jobs** for another
-   attempt. Full-main CPU results are diagnostic until the later qualification phase.
-4. Give a separate Claude reviewer the PR number, full head, diff, acceptance commands and
-   evidence paths. Restrict it to reading/reviewing the candidate; it must not modify the
-   source, deploy or merge. Supply the eligible review credential only to that child process
-   (example below). It verifies its own `gh api user` identity and all authors before reviewing.
-   Its prompt must prohibit credential-file reads, `gh auth` subcommands and using another
-   identity; review credential separation on this shared Unix user is procedural, not a
-   security boundary.
-   It posts findings and, only if acceptable, submits a **native GitHub approval** with an
-   explicit `commit_id: FULL_SHA` and `event: APPROVE` through the
-   [review API](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request).
-   A review comment, an approval of an ancestor, or a different login without independence
-   is insufficient. Any changed head repeats CI and review. Keep the PR open if no eligible
-   independent reviewer is available.
-5. Read the native reviews back and verify an eligible, undismissed `APPROVED` review on
-   exactly the current full SHA, with no unresolved blocking findings:
-
-   ```sh
-   gh api --paginate repos/veox-ai/JopeDime/pulls/PR_NUMBER/reviews \
-     --jq '.[] | {id, reviewer: .user.login, state, commit_id, submitted_at}'
-   ```
-
-   Before executing the merge, recheck the head, author eligibility, current-attempt CI
-   and review state. Preserve their API readbacks outside the checkout. Only then run:
-
-   ```sh
-   gh pr merge PR_NUMBER --rebase --match-head-commit FULL_SHA
-   ```
-
-   After merging,
-   verify `merged_at`, fetch `origin/main`, verify the resulting main commit and its
-   successful `main-guard`, and return the canonical checkout clean to that remote main.
-   Preserve the lifecycle receipt before removing any closed worktree under the custody rules.
-
-Protection readback returned HTTP 403 on 2026-09-22. This procedure is **procedural
-enforcement**; `main-guard` detects unreviewed pushes after they happen and is not a preventive
-branch lock. A paid-plan upgrade is not a prerequisite for the authorized reviewed merges.
+   Return the canonical checkout to verified remote main while preserving live coordination
+   appends and other owners' dirty files. Retain lifecycle receipts before removing closed lanes
+   under the custody rules.
 
 ### Credential and key locations
 
@@ -295,8 +210,8 @@ checked at use time; `GH_TOKEN`/`GITHUB_TOKEN` can override the stored CLI accou
 | --- | --- | --- |
 | GitHub CLI writer/reviewer authentication | `/home/ubuntu/.config/gh/hosts.yml` (0600) | Stored `jepsontaylor` and `neverhuman` accounts. Retrieve through `gh auth token --hostname github.com --user ACCOUNT` into a child environment; do not parse or copy the file. A configured `GH_CONFIG_DIR` changes the location. |
 | GitHub SSH writer key | `/home/ubuntu/.ssh/id_ed25519_github` (0600) | Selected by `Host github.com` in `/home/ubuntu/.ssh/config`. Git transport only; it does not select the API approval identity. |
-| GitHub SSH alternate key | `/home/ubuntu/.ssh/id_ed25519_neverhuman` (0600) | Selected by SSH aliases `github-neverhuman` and `github-mirror`. It does not authorize the writer to self-approve. |
-| Claude CLI authentication | `/home/ubuntu/.claude/.credentials.json` (0600) | Authentication for the independent Claude process; separate from the GitHub credential it uses to submit review. |
+| GitHub SSH alternate key | `/home/ubuntu/.ssh/id_ed25519_neverhuman` (0600) | Selected by SSH aliases `github-neverhuman` and `github-mirror`. Git transport does not select the API identity; same-agent review needs no native self-approval. |
+| Claude CLI authentication | `/home/ubuntu/.claude/.credentials.json` (0600) | Authentication for an optional Claude process; separate from GitHub review credentials. |
 | Runner registration PAT | `/etc/jope-runner/github-pat` (root:root, 0600 on runner hosts) | Host launcher only, for single-use JIT registration. Never mount into a job or use as the PR review credential. |
 | GitHub identity helper | `/home/ubuntu/.local/bin/gh-role` (0700) | `gh-role writer` → `jepsontaylor`, `gh-role reviewer` → `neverhuman`. The supported way to select an identity; see the approval procedure above. xbabe2 only. |
 | GitHub writer token file | `/home/ubuntu/.config/jopedime/secrets/gh.env` (0600) | A **bare token on one line with no `KEY=`**, despite the suffix. Sourcing it attempts to execute the token as a command and can expose it in shell diagnostics. Never source it; prefer the CLI credential store through the helper. |
@@ -311,7 +226,7 @@ provider above does not supply those restricted roles. This inventory documents 
 only; it does not authorize credential provisioning, AWS permission changes, storage rollout
 or campaign compute.
 
-The following launcher fragment illustrates credential delivery to a separate review process.
+The following optional launcher fragment illustrates credential delivery to a separate review process; it is not required for same-agent review.
 It is not the helper's full validation implementation. On another host, verify account and
 host selection explicitly before use. It does not change the shared writer's login:
 

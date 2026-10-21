@@ -1,5 +1,14 @@
 # JopeDime current direction
 
+**Owner ruling — 2026-10-21: same-agent PR review.** The implementing agent may review
+and merge its own PR after exact-head CI and substantive head-bound review. A separate
+agent/session/account and native GitHub approval are optional. This supersedes earlier
+independent-review requirements in this delivery record; historical review receipts remain
+historical evidence. The live procedure is [AGENTS.md](AGENTS.md#pull-requests).
+Both main protection layers were read back with zero required approvals and no last-push
+approval. Required `aggregate`, `changes`, `hygiene` and `observatory-ui` checks, strict
+up-to-date branches, resolved discussions and force-push/deletion protections remain enforced.
+
 **2026-10-17 self-play / CLOVER / JAILGUN status and gate map (`SPQ-1`, `EXP-NEXT-02` & `EXP-NEXT-04`).**
 - **Merged `0.3.0` self-play, CLOVER and flywheel baseline (`#278`–`#354`, `main` `8fcf7c62f4a4de7973193dd2407803387c9e6851`).**
   - *Lineage A / RLFW (`#278`–`#293`, `#307`, `#330`):* High-water ledger, exact trie log-prob and decision trace v2 (`#278`), matched-budget arena and KPI harness (`#280`), best-of-32 predicted rerank slates (`#281`), guarded train-only first-label bootstrap (`#282`), continual GP learning and experiment dashboard (`#283`), S3 lifecycle proposals (`#284`), Lane B judge seal and power table (`#285`), offline C11 IPO/DPO and trie PUCT/Gumbel/OPE (`#286`), verified RLOO/PKPO objectives (`#287`), read-only D9 metrics (`#288`), exact trie readouts and KV analysis (`#289`), monitor evidence sources (`#290`), R5 parity outcome charging and rediscovery KPI (`#291`), v2.0.0 learner source (`runner_v6` with custody, R23 anchored objective, T12 KL guard, 213 offline CPU fixtures) (`#292`), durable caller return before overlay admission (`#293`), R25-kNN-CE scratch arm source (`#307`), and J26 Lineage-A reuse boundary (`#330`).
@@ -1852,10 +1861,11 @@ missing fixtures instead of importing them wholesale, and it keeps the ten
 
 - `full-main-cpu` runs on every push to `main`; its first success came after #116 (see the
   2026-09-28 record). The `xbabe2-gpu` runner that `weekly.yml` targets is not provisioned.
-  Keep runner credentials separate and preserve independent reviewer eligibility for each
-  subsequent PR.
-- Private-repo rulesets API returns HTTP 403 until the org is upgraded (D3,
-  owner action in progress). Until then the merge rule below is process-only.
+  Keep runner credentials separate. Subsequent PRs follow the same-agent review procedure
+  in [AGENTS.md](AGENTS.md#pull-requests).
+- The earlier rulesets API HTTP403 blocker is superseded by successful 2026-10-21 readback
+  of `neverhuman/JopeDime` main branch protection and active ruleset `23800072`. Required CI
+  remains enforced; outside approval is no longer required.
 - No `--admin` merge. Worktrees only in `.agent/worktrees/`, at most four,
   with the current serial queue policy in [AGENTS.md](AGENTS.md). No credentials in git.
 
@@ -1863,23 +1873,23 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 
 ## Owner decisions — 2026-09-21
 
-D2–D5 remain in effect. The Sep22 user-directed continuation clarifies D1 to
-check both PR and commit authors and uses one implementation PR at a time;
-the current operating rules are in [AGENTS.md](AGENTS.md).
+D2, D4 and D5 remain in effect. The 2026-10-21 owner ruling updates D1 and D3 below
+and preserves one implementation PR at a time. Earlier independent-review decisions are
+superseded; the current operating rules are in [AGENTS.md](AGENTS.md).
 
 | # | Decision |
 | --- | --- |
-| D1 | Agents merge after exact-head CI and independent review by an identity different from both PR and GitHub-associated commit authors (`jepsontaylor` / `neverhuman`, when eligible), with guarded merge and remote `main` readback. |
+| D1 | Updated 2026-10-21: the same agent may implement, review and merge after exact-head CI and head-bound review, with guarded merge and remote `main`/`main-guard` readback. Outside review and native approval are optional. |
 | D2 | PR gate at `70506066` = the seven jobs `ci.yml` defines: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python` (#38), `rust-test` (#39) — all path-gated. **`rust-check` runs `cargo check --workspace --all-targets --locked` plus a systemd test and an MSRV check; it runs neither clippy nor rustfmt** — those exist only in the local `justfile`, which is why #37 had to land rustfmt drift that no lane would have caught. Full nextest, LibTorch `features`, sanitizers, security, artifacts, Jankurai = visible non-blocking main/nightly lanes, each promoted to blocking once it passes on main. Jankurai is a no-regression ratchet, never a merge gate. |
-| D3 | Owner upgrades `veox-ai` to Team; branch protection (required checks + 1 approval + no force-push) is enabled the moment the API stops returning 403. |
+| D3 | Updated 2026-10-21: both main protection layers on `neverhuman/JopeDime` enforce required status checks and strict up-to-date branches, with zero required approvals and no last-push approval. Preserve resolved discussions, admin enforcement and force-push/deletion protections; verify effective API state. |
 | D4 | `veox-jopedime-{datasets,models,learning,archive}-use2` (+usw2 replicas) = product buckets the crates target. `jopedime-714044927654-us-east-2-{dev,prod,sealed}` = preservation custody. Nothing deleted; `catalogs/s3.json` records both. |
 | D5 | Both the ten real test datasets (`wpd1`) and the forty synthetic fixtures (Codex `15a1d31`) are admitted to Git. |
 
 ## Merge rule (per PR)
 
 1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` at `3e061605`: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python`, `rust-test`, `e2e-smoke`). A lane legitimately excluded by its declared path matrix is recorded as `skipped-by-path`, not green. Every required execution must pass at the exact head; absent, cancelled or failed is not green. The configured jobs are not proof of execution. Heavy functional lanes become required after their successful main qualification; Jankurai remains informational under D2.
-2. Review must come from a session that did not write the PR and a GitHub identity distinct from both the PR author and every GitHub-associated commit author. Follow the PR-scoped identity checks in `AGENTS.md`; check `gh api user --jq .login` in the posting environment. #40 and #41 were opened under the wrong account and replaced by #42 and #43. An agent-operated approval proves an independent read at the exact head, not human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) also receive a security review.
-3. `gh pr merge <n> --rebase --match-head-commit <reviewed-full-sha>`, then verify fresh remote `main` and `main-guard`. Preserve shared source-branch history when updating its base.
+2. The same agent may implement, review and merge. Follow `AGENTS.md`; verify the live posting identity and record review findings/disposition against the exact full SHA. Outside review and native approval are optional. Do not manufacture a self-approval by changing identities or attribution. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) also receive a security review, which the implementing agent may perform.
+3. `gh pr merge <n> --rebase --match-head-commit <reviewed-full-sha>`, then verify fresh remote `main` and `main-guard`. If GitHub cannot safely rebase conflict resolution, use the enabled squash strategy with the same head guard and checks, preserving the shared source branch. Verify the merged tree matches the reviewed tree.
 4. Resolve the existing queue, then one implementation PR at a time. Fix review findings on its existing branch; record explicit replacement/disposition for superseded work. The four managed-lane limit does not authorize four concurrent implementation PRs.
 
 ## Landing board (Claude integrator; old PR → new PR → merged SHA)
