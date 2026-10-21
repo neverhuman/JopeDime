@@ -6,6 +6,12 @@ on:
 permissions:
   contents: read
 
+# Serialize duplicate invocations of this source without cancelling running proof.
+# Different main SHAs have different groups, so newer pushes cannot evict older heads.
+concurrency:
+  group: full-main-${{ github.sha }}
+  cancel-in-progress: false
+
 env:
   CARGO_INCREMENTAL: "0"
   CARGO_PROFILE_DEV_DEBUG: line-tables-only

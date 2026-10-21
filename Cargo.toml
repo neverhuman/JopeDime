@@ -1,5 +1,7 @@
 [workspace]
 resolver = "2"
+# Source-pinned third-party dependency repairs remain outside product workspace ownership.
+exclude = ["vendor/security/*"]
 members = [
   "crates/jope-observatory",
   "crates/feat-math",
@@ -78,9 +80,9 @@ proptest = "1"
 rand = "0.8"
 rayon = "1"
 redb = "2"
-rustls = "0.23"
+rustls = "0.23.46"
 # Pure-Rust zstd decoder: the `jopedime` appliance decodes its packaged assets with it (jope-assets).
-ruzstd = "0.8"
+ruzstd = "0.9.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
@@ -146,3 +148,26 @@ unsafe_code = "deny"
 all = { level = "warn", priority = -1 }
 module_name_repetitions = "allow"
 must_use_candidate = "allow"
+
+# Root integration suggestion only; merge with any existing patch table.
+[patch.crates-io]
+candle_core_0_11_0 = { package = "candle-core", path = "vendor/security/candle-core-0.11.0" }
+gemm_0_18_2 = { package = "gemm", path = "vendor/security/gemm-0.18.2" }
+gemm_0_19_0 = { package = "gemm", path = "vendor/security/gemm-0.19.0" }
+gemm_c32_0_18_2 = { package = "gemm-c32", path = "vendor/security/gemm-c32-0.18.2" }
+gemm_c32_0_19_0 = { package = "gemm-c32", path = "vendor/security/gemm-c32-0.19.0" }
+gemm_c64_0_18_2 = { package = "gemm-c64", path = "vendor/security/gemm-c64-0.18.2" }
+gemm_c64_0_19_0 = { package = "gemm-c64", path = "vendor/security/gemm-c64-0.19.0" }
+gemm_common_0_18_2 = { package = "gemm-common", path = "vendor/security/gemm-common-0.18.2" }
+gemm_common_0_19_0 = { package = "gemm-common", path = "vendor/security/gemm-common-0.19.0" }
+gemm_f16_0_18_2 = { package = "gemm-f16", path = "vendor/security/gemm-f16-0.18.2" }
+gemm_f16_0_19_0 = { package = "gemm-f16", path = "vendor/security/gemm-f16-0.19.0" }
+gemm_f32_0_18_2 = { package = "gemm-f32", path = "vendor/security/gemm-f32-0.18.2" }
+gemm_f32_0_19_0 = { package = "gemm-f32", path = "vendor/security/gemm-f32-0.19.0" }
+gemm_f64_0_18_2 = { package = "gemm-f64", path = "vendor/security/gemm-f64-0.18.2" }
+gemm_f64_0_19_0 = { package = "gemm-f64", path = "vendor/security/gemm-f64-0.19.0" }
+pulp_0_22_3 = { package = "pulp", path = "vendor/security/pulp-0.22.3" }
+ratatui_0_29_0 = { package = "ratatui", path = "vendor/security/ratatui-0.29.0" }
+tch_0_26_0 = { package = "tch", path = "vendor/security/tch-0.26.0" }
+tokenizers_0_22_2 = { package = "tokenizers", path = "vendor/security/tokenizers-0.22.2" }
+torch_sys_0_26_0 = { package = "torch-sys", path = "vendor/security/torch-sys-0.26.0" }

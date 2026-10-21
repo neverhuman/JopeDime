@@ -8,7 +8,7 @@
 //! | `root-md` | a tracked Markdown file at the repository root that is not allowlisted |
 //! | `log` | a tracked `.log`, `.err` or `.stderr` file that is not allowlisted |
 //! | `dir-package` | a workspace member whose directory name differs from its `[package] name` |
-//! | `dup-package` | two tracked `Cargo.toml` files declaring the same package name (no allowlist) |
+//! | `dup-package` | two tracked `Cargo.toml` files declaring the same package name, except exact reviewed two-version gemm vendor pairs |
 //! | `temp-dir` | calls of the process-wide temp directory (`std::env::temp_dir`) in test code under `crates/`, above the allowlisted count |
 //! | `bad-manifest` | a tracked `Cargo.toml` that is not readable as TOML 1.0: not UTF-8, not TOML 1.0, or a `[package]` table without a non-empty string `name` (no allowlist) |
 //! | `bad-path` | a tracked path that is not UTF-8 (no allowlist) |
@@ -49,12 +49,105 @@ use std::path::Path;
 use std::process::Command;
 
 use regex::Regex;
+use sha2::Digest;
 
 use crate::pyjson::Value;
 use crate::{Error, Result};
 
 /// The reviewed exceptions, relative to the repository root.
 pub const ALLOWLIST: &str = "deploy/ci/repo-layout-allow.txt";
+
+// These are dependency identities, not product-package exceptions. Every manifest must match
+// its exact PROVENANCE.json candidate pin and versioned directory; full source custody remains
+// enforced by deploy/ci/verify-vendor-security.py. An upgrade requires a reviewed pin change.
+const REVIEWED_GEMM_VERSIONS: [&str; 2] = ["0.18.2", "0.19.0"];
+const REVIEWED_GEMM_MANIFESTS: &[(&str, [&str; 2])] = &[
+    (
+        "gemm",
+        [
+            "6510d43872444c9f5dbab1a774573791a98a891c990ba2811dd12bab37c14db8",
+            "475d12ec9c311f5970ad6574c4fbc9b9e63377e78df4e395ba67f797646a4168",
+        ],
+    ),
+    (
+        "gemm-c32",
+        [
+            "53296fadbbfe2ee5849469da5b441265b58622e930a95ef23fb475693da617f4",
+            "9bf484b69fd49611b49a7de1d161cde81297043d64795cd21eb378c755bdb74e",
+        ],
+    ),
+    (
+        "gemm-c64",
+        [
+            "bb81831a93de7f5a72fd936945d96d2c4d0610a0500bba744bfd932dd0c10544",
+            "eb69b31aa4dcc59b83af044318c92f7c720f07136c561c015facf069595a5e04",
+        ],
+    ),
+    (
+        "gemm-common",
+        [
+            "29044e6cd42521526654860c5dfdab84c7714e485eda85c34a78faaadb4a609f",
+            "1ce14ff38846ec6f9f7e9071db15e00f93d2076778f795943a40662b4748efe4",
+        ],
+    ),
+    (
+        "gemm-f16",
+        [
+            "be2e69beffee45fd2dda2ee96da0ed8019f716725488c3b6566120b4a4b55a7a",
+            "36e228585e982ba3ccdd52689e0837d7d4f35c7fdcafa8bd77adfa312949cbd6",
+        ],
+    ),
+    (
+        "gemm-f32",
+        [
+            "d77a7dc6f854039d027dcd5271b71ff1bde1972c7d59c04f35351c8ddd33788f",
+            "9d6e298631c47522ffa71c1bd805d4f14804d07ac407daf5694e9164512a6227",
+        ],
+    ),
+    (
+        "gemm-f64",
+        [
+            "602c533b7ad5d05b54cab5d573cac884fb26a320c33b47958d798c5623aff457",
+            "57745976614c4d3143f440562f8c20143d1dc8ce544dc8ce32971c3bf096cb17",
+        ],
+    ),
+];
+
+fn reviewed_vendor_pair(input: &Input, name: &str, paths: &[&str]) -> bool {
+    let Some((_, pins)) = REVIEWED_GEMM_MANIFESTS
+        .iter()
+        .find(|(package, _)| *package == name)
+    else {
+        return false;
+    };
+    if paths.len() != REVIEWED_GEMM_VERSIONS.len() {
+        return false;
+    }
+    REVIEWED_GEMM_VERSIONS
+        .iter()
+        .zip(pins)
+        .all(|(version, pin)| {
+            let path = format!("vendor/security/{name}-{version}/Cargo.toml");
+            if !paths.contains(&path.as_str()) {
+                return false;
+            }
+            let Some(bytes) = input.manifests.get(&path) else {
+                return false;
+            };
+            let Ok(text) = std::str::from_utf8(bytes) else {
+                return false;
+            };
+            let Ok(table) = parse_toml(text) else {
+                return false;
+            };
+            let Some(package) = table.get("package").and_then(toml::Value::as_table) else {
+                return false;
+            };
+            package.get("name").and_then(toml::Value::as_str) == Some(name)
+                && package.get("version").and_then(toml::Value::as_str) == Some(*version)
+                && format!("{:x}", sha2::Sha256::digest(bytes)) == *pin
+        })
+}
 
 /// What the rules read: the tracked paths that are UTF-8, the tracked paths that are not (each
 /// byte that is not UTF-8 written `\xHH`), the workspace members, the bytes of the tracked
@@ -456,7 +549,8 @@ pub fn check(input: &Input) -> Vec<String> {
         }
     }
 
-    // R4 dup-package (no allowlist).
+    // R4 dup-package: only the exact reviewed, distinct-version vendor pairs are identities.
+    // Product duplicates, extra copies, path lookalikes and manifest changes still refuse.
     let mut declared: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     for (path, reading) in &readings {
         if let Ok(Some(name)) = reading {
@@ -465,7 +559,7 @@ pub fn check(input: &Input) -> Vec<String> {
     }
     for (name, paths) in &declared {
         if let [first, others @ ..] = paths.as_slice() {
-            if !others.is_empty() {
+            if !others.is_empty() && !reviewed_vendor_pair(input, name, paths) {
                 findings.push(format!(
                     "dup-package {first}: package `{name}` is also declared by {}; rename one \
                      package or remove the copy (this rule has no allowlist)",
@@ -733,6 +827,115 @@ pub fn fixture(value: &Value) -> Result<(Input, Vec<String>)> {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+
+    fn reviewed_vendor_input() -> Input {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let mut input = Input::default();
+        for (name, _) in REVIEWED_GEMM_MANIFESTS {
+            for version in REVIEWED_GEMM_VERSIONS {
+                let path = format!("vendor/security/{name}-{version}/Cargo.toml");
+                input
+                    .manifests
+                    .insert(path.clone(), std::fs::read(root.join(&path)).unwrap());
+                input.tracked.push(path);
+            }
+        }
+        input
+    }
+
+    #[test]
+    fn reviewed_vendor_pairs_match_exact_custody_identities() {
+        let input = reviewed_vendor_input();
+        assert_eq!(input.manifests.len(), 14);
+        assert!(check(&input).is_empty());
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let provenance =
+            crate::py::load_json(&root.join("vendor/security/PROVENANCE.json")).unwrap();
+        let crates = provenance.get("crates").and_then(Value::as_list).unwrap();
+        for (name, pins) in REVIEWED_GEMM_MANIFESTS {
+            for (version, pin) in REVIEWED_GEMM_VERSIONS.iter().zip(pins) {
+                let matching: Vec<_> = crates
+                    .iter()
+                    .filter(|record| {
+                        record.get("name").and_then(Value::as_str) == Some(*name)
+                            && record.get("version").and_then(Value::as_str) == Some(*version)
+                    })
+                    .collect();
+                assert_eq!(matching.len(), 1, "{name}-{version}");
+                let record = matching[0];
+                assert_eq!(
+                    record.get("directory").and_then(Value::as_str),
+                    Some(format!("{name}-{version}").as_str())
+                );
+                assert_eq!(
+                    record
+                        .get("manifest_candidate_sha256")
+                        .and_then(Value::as_str),
+                    Some(*pin)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn reviewed_vendor_pairs_do_not_hide_copies_path_spoofs_or_manifest_tampering() {
+        let original = reviewed_vendor_input();
+        let old = "vendor/security/gemm-0.18.2/Cargo.toml";
+        let new = "vendor/security/gemm-0.19.0/Cargo.toml";
+        let rejects = |input: Input, label: &str| {
+            assert!(
+                check(&input)
+                    .iter()
+                    .any(|finding| finding.starts_with("dup-package ")),
+                "{label}"
+            );
+        };
+        // A product package colliding with a legitimate imported identity is still a duplicate.
+        let mut input = original.clone();
+        let copy = "crates/gemm/Cargo.toml".to_owned();
+        input.tracked.push(copy.clone());
+        input.manifests.insert(copy, input.manifests[old].clone());
+        rejects(input, "product collision / third copy");
+        // The path must be exact, even when bytes and parsed identity remain authentic.
+        for spoof in [
+            "vendor/security-copy/gemm-0.19.0/Cargo.toml",
+            "vendor/security/gemm-0.19.0-copy/Cargo.toml",
+            "vendor/security/nested/gemm-0.19.0/Cargo.toml",
+            "vendor/security/gemm-0.20.0/Cargo.toml",
+        ] {
+            let mut input = original.clone();
+            let bytes = input.manifests.remove(new).unwrap();
+            input.tracked.retain(|path| path != new);
+            input.tracked.push(spoof.to_owned());
+            input.manifests.insert(spoof.to_owned(), bytes);
+            rejects(input, spoof);
+        }
+        let mut input = original.clone();
+        input
+            .manifests
+            .insert(new.to_owned(), input.manifests[old].clone());
+        rejects(input, "same version at another reviewed directory");
+        let mut input = original.clone();
+        input
+            .manifests
+            .get_mut(new)
+            .unwrap()
+            .extend_from_slice(b"\n# unreviewed manifest edit\n");
+        rejects(input, "even identity-preserving manifest tamper");
+        // Distinct versions are not a blanket exception for product or unreviewed vendor names.
+        for prefix in ["crates", "vendor/security"] {
+            let mut input = Input::default();
+            for version in ["1.0.0", "2.0.0"] {
+                let path = format!("{prefix}/other-{version}/Cargo.toml");
+                input.tracked.push(path.clone());
+                input.manifests.insert(
+                    path,
+                    format!("[package]\nname = \"other\"\nversion = \"{version}\"\n").into_bytes(),
+                );
+            }
+            rejects(input, prefix);
+        }
+    }
 
     fn fixtures() -> Vec<(PathBuf, Value)> {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/repo-layout");

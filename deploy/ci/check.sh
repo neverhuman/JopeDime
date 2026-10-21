@@ -3,6 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 fail=0
+python3 -B deploy/ci/verify-vendor-security.py --root .
 step(){ printf '\n== %s\n' "$*"; }
 step "cargo metadata --locked"; cargo metadata --locked --format-version 1 --no-deps > /dev/null
 step "Rust formatting"; if ! cargo fmt --all --check; then fail=1; fi
@@ -36,8 +37,7 @@ step "DL lane pinned source custody (stdlib, no staged imports)"; if ! python3 d
 step "DL offline Python audit refusals (stdlib, no traffic or jobs)"; if ! python3 deploy/dl-trainonly/test_offline_guard.py; then fail=1; fi
 step "DL offline shard group shares one deadline (scaled, fake runner)"; if ! python3 deploy/ci/test-dl-offline-group.py; then fail=1; fi
 step "shell syntax + shellcheck"; while IFS= read -r f; do bash -n "$f"; done < <(git ls-files '*.sh'); if command -v shellcheck >/dev/null; then git ls-files 'deploy/ci/*.sh' 'deploy/release/*.sh' 'xtools/**/*.sh' | xargs -r shellcheck -S warning; fi
-step "workflow validation"; if ! bash deploy/ci/actionlint-workflows.sh; then fail=1; fi
-step "gitleaks"; if command -v gitleaks >/dev/null; then bash deploy/ci/secret-scan.sh ; else echo "gitleaks not installed (skipped locally; CI installs it)"; fi
+step "security lane (workflow lint, full-history secrets, all-feature dependency advisories)"; if ! bash tools/security-lane.sh; then fail=1; fi
 step "no family leftovers"; leftovers=$(git grep -nE 'git\.neverhuman\.org|127\.0\.0\.1:8787' -- crates python deploy .github ':!docs' ':!**/docs/**' ':!crates/jope-engine/assets/grammar/*' || true); if [ -n "$leftovers" ]; then head -20 <<<"$leftovers"; echo "family remotes still referenced above"; fail=1; else echo "ok"; fi
 step "shipped-text rule in prose (deploy/ci/ip-scrub.sh; emitted code is covered by feat-math's ip_scrub test)"; if ! bash deploy/ci/ip-scrub.sh; then fail=1; fi
 step "capability parity matrix (docs/parity/capability-matrix.md; source-parsed subcommands, --help cross-check runs in the test lanes)"; if ! bash deploy/ci/parity-matrix.sh --no-build; then fail=1; fi

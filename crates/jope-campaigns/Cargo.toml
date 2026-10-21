@@ -21,7 +21,7 @@ rusqlite = "0.32"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 sha2 = "0.10"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9.0.5", default-features = false, features = ["deflate"] }
 # GPU screening backend (raw CUDA driver FFI). Optional: the default build is
 # dependency-identical; only `--features gpu` links it. The frozen exact-cv
 # lane keeps rejecting GPU flags regardless.

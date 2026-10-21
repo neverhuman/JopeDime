@@ -1054,7 +1054,7 @@ fn upsert_observation(
             .is_none_or(|(prior_score, prior_receipt, prior_protocol)| {
                 prior_protocol.as_deref() != Some(protocol_sha256)
                     || score > *prior_score
-                    || (score == *prior_score && receipt_sha256 > prior_receipt)
+                    || (score == *prior_score && receipt_sha256 > prior_receipt.as_str())
             });
     if !should_write {
         return Ok(());

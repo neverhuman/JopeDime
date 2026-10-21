@@ -2,8 +2,9 @@
   "files": [
     {
       "bytes": 190,
+      "normalization": " PR395 audit CI routing: exact current Python classifier pin; all original frozen source/fixture bytes and origin hashes preserved.",
       "path": "CI_SOURCE_PIN.json",
-      "sha256": "0c8a3f90086025b7c2029f2459333266255be5935497189d02c0eddf41566b34"
+      "sha256": "a8523c2d8ce82ae93878628a83c0ca629d75d7c2e7da0ca73d8da94a3a369918"
     },
     {
       "bytes": 9280,
