@@ -13,7 +13,7 @@ import sys
 import xml.etree.ElementTree as ET
 import zlib
 
-SCHEMA = "jope.rendered-ux-ci/v1"
+SCHEMA = "jope.rendered-ux-ci/v2"
 RECEIPT = "rendered-receipt.json"
 MAX_FILE_BYTES = 64 * 1024 * 1024
 MAX_TOTAL_BYTES = 512 * 1024 * 1024
@@ -167,24 +167,23 @@ def artifact_inventory(root):
     return entries
 
 
-def build(root, source_sha, run_id, attempt):
-    need(re.fullmatch(r"[0-9a-f]{40}", source_sha) is not None, "full source SHA required")
+def report_identity(config, source_sha, run_id, attempt, checkout_sha=None, event_sha=None):
+    """Check caller-bound identities; Playwright annotations never replace core metadata."""
+    checkout_sha = source_sha if checkout_sha is None else checkout_sha
+    event_sha = source_sha if event_sha is None else event_sha
+    for value in (source_sha, checkout_sha, event_sha):
+        need(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{40}", value) is not None,
+             "full source, checkout and event SHAs required")
+    need(checkout_sha == source_sha, "browser checkout must equal tested source")
     need(re.fullmatch(r"[1-9][0-9]*", run_id) is not None
          and re.fullmatch(r"[1-9][0-9]*", attempt) is not None, "positive run/attempt required")
-    need(root.is_dir() and not root.is_symlink(), "real evidence root required")
-    root = root.resolve()
-    raw_report = read_file(root / "report.json")
-    report = document(raw_report)
-    identity = {"source_sha": source_sha, "run_id": run_id, "attempt": attempt}
-    need(isinstance(report, dict) and report.get("errors") == [], "report has global errors")
-    config = report.get("config", {})
+    core = {"source_sha": source_sha, "run_id": run_id, "attempt": attempt}
     need(isinstance(config, dict), "report configuration required")
     metadata = config.get("metadata")
-    need(isinstance(metadata, dict) and all(metadata.get(k) == v for k, v in identity.items())
-         and set(metadata) <= set(identity) | {"actualWorkers"},
+    need(isinstance(metadata, dict) and all(metadata.get(k) == v for k, v in core.items())
+         and set(metadata) <= set(core) | {"actualWorkers", "ci", "gitCommit", "gitDiff"},
          "stale, missing or unknown report source/run/attempt metadata")
-    # Playwright adds actualWorkers to supplied metadata after worker execution.
-    # It is runtime accounting, never a substitute for the exact provenance keys.
+    # These are known Playwright annotations, validated separately from provenance.
     if "workers" in config:
         need(type(config["workers"]) is int and config["workers"] > 0,
              "invalid configured browser worker count")
@@ -192,6 +191,65 @@ def build(root, source_sha, run_id, attempt):
         need(type(metadata["actualWorkers"]) is int and metadata["actualWorkers"] > 0
              and ("workers" not in config or metadata["actualWorkers"] <= config["workers"]),
              "invalid actual browser worker count")
+
+    def text(value, maximum):
+        return isinstance(value, str) and len(value) <= maximum and "\x00" not in value
+
+    repository = "https://github.com/neverhuman/JopeDime"
+    if "ci" in metadata:
+        ci = metadata["ci"]
+        need(isinstance(ci, dict) and set(ci) <= {
+            "commitHref", "commitHash", "buildHref", "prHref", "prTitle", "prBaseHash", "branch"},
+            "unknown or invalid Playwright CI annotations")
+        need(ci.get("commitHash") == event_sha
+             and ci.get("commitHref") == f"{repository}/commit/{event_sha}"
+             and ci.get("buildHref") in (f"{repository}/actions/runs/{run_id}",
+                                        f"{repository}/actions/runs/{run_id}/attempts/{attempt}"),
+             "Playwright CI annotation does not match event/run/attempt")
+        if "prHref" in ci:
+            need(isinstance(ci["prHref"], str) and re.fullmatch(
+                re.escape(repository) + r"/pull/[1-9][0-9]*", ci["prHref"]) is not None,
+                "invalid pull request annotation")
+        if "prBaseHash" in ci:
+            need(isinstance(ci["prBaseHash"], str)
+                 and re.fullmatch(r"[0-9a-f]{40}", ci["prBaseHash"]) is not None,
+                 "invalid pull request base annotation")
+        for key in ("prTitle", "branch"):
+            if key in ci:
+                need(text(ci[key], 4096), "invalid Playwright CI text annotation")
+    if "gitCommit" in metadata:
+        commit = metadata["gitCommit"]
+        need(isinstance(commit, dict) and set(commit) <= {
+            "shortHash", "hash", "subject", "body", "author", "committer", "branch"}
+             and commit.get("hash") == checkout_sha,
+             "Playwright Git annotation does not match checkout")
+        if "shortHash" in commit:
+            short = commit["shortHash"]
+            need(isinstance(short, str) and re.fullmatch(r"[0-9a-f]{4,40}", short) is not None
+                 and checkout_sha.startswith(short), "invalid short checkout annotation")
+        for key, maximum in (("subject", 16384), ("body", 1000000), ("branch", 4096)):
+            if key in commit:
+                need(text(commit[key], maximum), "invalid Playwright Git text annotation")
+        for key in ("author", "committer"):
+            if key in commit:
+                person = commit[key]
+                need(isinstance(person, dict) and set(person) == {"name", "email", "time"}
+                     and text(person["name"], 4096) and text(person["email"], 4096)
+                     and type(person["time"]) is int and person["time"] >= 0,
+                     "invalid Playwright commit person annotation")
+    if "gitDiff" in metadata:
+        need(text(metadata["gitDiff"], 100000), "invalid Playwright diff annotation")
+    return {**core, "checkout_sha": checkout_sha, "event_sha": event_sha}
+
+
+def build(root, source_sha, run_id, attempt, checkout_sha=None, event_sha=None):
+    need(root.is_dir() and not root.is_symlink(), "real evidence root required")
+    root = root.resolve()
+    raw_report = read_file(root / "report.json")
+    report = document(raw_report)
+    need(isinstance(report, dict) and report.get("errors") == [], "report has global errors")
+    config = report.get("config", {})
+    identity = report_identity(config, source_sha, run_id, attempt, checkout_sha, event_sha)
     projects = config.get("projects")
     need(isinstance(projects, list) and projects, "declared browser projects required")
     project_ids = [p.get("id") for p in projects if isinstance(p, dict)]
@@ -273,11 +331,14 @@ def main(argv=None):
     parser.add_argument("mode", choices=("create", "verify"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
+    parser.add_argument("--checkout-sha", help="trusted browser checkout; defaults to source")
+    parser.add_argument("--event-sha", help="trusted workflow event SHA; defaults to source")
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--attempt", required=True)
     args = parser.parse_args(argv)
     try:
-        expected = build(args.root, args.source_sha, args.run_id, args.attempt)
+        expected = build(args.root, args.source_sha, args.run_id, args.attempt,
+                         args.checkout_sha, args.event_sha)
         receipt = args.root / RECEIPT
         if args.mode == "create":
             raw = (json.dumps(expected, sort_keys=True, indent=2, allow_nan=False) + "\n").encode()
@@ -290,6 +351,7 @@ def main(argv=None):
             need(document(read_file(receipt)) == expected, "missing, stale or tampered rendered receipt/evidence")
         print(json.dumps({"schema": SCHEMA, "mode": args.mode, "executed": expected["executed"],
                           "checks": expected["checks"], "source_sha": args.source_sha,
+                          "checkout_sha": expected["checkout_sha"], "event_sha": expected["event_sha"],
                           "run_id": args.run_id, "attempt": args.attempt}))
         return 0
     except (OSError, ValueError, TypeError, KeyError, ET.ParseError) as error:
