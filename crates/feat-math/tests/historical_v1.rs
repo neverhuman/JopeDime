@@ -515,6 +515,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(audit_fixtures.iter().any(|entry| entry["path"] == path));
     }
+    // Dependency/security successor preserves prior runtime and behavioral floors.
+    let jankurai_dependency_security =
+        old_fixture("transitions/jankurai_dependency_security_rebaseline.v1.json");
+    let dependency_fixtures = jankurai_dependency_security["fixtures"].as_array().unwrap();
+    assert_eq!(dependency_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(dependency_fixtures
+            .iter()
+            .any(|entry| entry["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -541,6 +551,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gpt6p1_sol_max,
         appliance_after_automl,
         jankurai_runtime_safety,
+        jankurai_dependency_security,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

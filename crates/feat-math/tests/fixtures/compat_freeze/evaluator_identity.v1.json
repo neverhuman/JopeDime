@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "83800605480677a59d1c300689df6f287da6ca91",
+  "generated_at_sha": "a158863c3126a22067f7000de7d8667e0e0c2506",
   "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
@@ -27,12 +27,12 @@
     {
       "label": "Cargo.toml",
       "path": "crates/jope-campaigns/Cargo.toml",
-      "sha256": "42cf949c8ca8ceb8c3fdc6ce9b5d02bad8543ebd43ff72ef7d7a6b4a466e30e6"
+      "sha256": "f9a82717ad88b37d50f4753dbe63befe0ccbac73d3f08503d144ee74e922a14d"
     },
     {
       "label": "Cargo.lock",
       "path": "Cargo.lock",
-      "sha256": "8edf827e18f505ab22f1f2f2c47ac7bfca97b5ab8b30fd9c6751ec4eafd6c931"
+      "sha256": "f1f7a26844485ddc88cee3e78022da0087f6f79c8e4304d2561b240a459ca705"
     },
     {
       "label": "vendor/feat-math/Cargo.toml",
@@ -195,10 +195,10 @@
       "sha256": "fdcada3e1344b667bf3aa155564289a814953b906f85aeece5670b741e5dfe93"
     }
   ],
-  "implementation_sha256": "a718cb7d62cc803a6f59aad30c917a47c0cb85e2687e58a6b591ec4985473732",
+  "implementation_sha256": "84de7d2f80c6a63faac886df67193ba2fe0764bec0ce947328ff8222c0719209",
   "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389",
-  "cargo_lock_sha256": "8edf827e18f505ab22f1f2f2c47ac7bfca97b5ab8b30fd9c6751ec4eafd6c931",
-  "identity_digest": "eacda5c015a67437d015ae60565b0b1b834ec62a52d61e300bae80f05adf4168",
+  "cargo_lock_sha256": "f1f7a26844485ddc88cee3e78022da0087f6f79c8e4304d2561b240a459ca705",
+  "identity_digest": "80a45b4352edcbac2d5b12915066896d1b73ca4ae8a5a1fc690846c853950ec3",
   "known_identities_sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "known_identity_rows": 2
 }
