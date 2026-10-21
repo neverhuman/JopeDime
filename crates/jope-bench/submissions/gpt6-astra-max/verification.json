@@ -1,0 +1,124 @@
+{
+  "schema_version": "jopedime-submission-integration-verification/v1",
+  "source_sha256": "b51ad3291c6e433388a49ed8338d069a245300d634c9da76be1fb1f1454cd0eb",
+  "source_unchanged_after_freeze": true,
+  "created_at_utc": "2026-10-21T06:46:09.263354+00:00",
+  "base_commit": "95dcb0c0e44d95184607740aacd387bf5c007e89",
+  "compiler": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+  "repository_toolchain_pin": "1.97.1",
+  "local_toolchain_override": "1.96.0: installed compiler satisfies workspace rust-version 1.96; pinned-toolchain hosted CI remains separate.",
+  "cargo_environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+    "CARGO_TARGET_DIR": "unset",
+    "offline": true
+  },
+  "checks": [
+    {
+      "scope": "standalone source",
+      "command": "rustc --edition=2021 --crate-name gpt6_astra_max --crate-type rlib -C opt-level=3 -D unsafe-code crates/jope-bench/submissions/GPT6_Astra_Max.rs -o target/astra-evidence/libgpt6_astra_max.rlib",
+      "status": "passed",
+      "compiler_attempts": 1
+    },
+    {
+      "scope": "standalone conformance",
+      "command": "rustc --edition=2021 --test -C opt-level=2 <harness importing frozen source and automl_contract_tests.rs>; contracts --test-threads=1",
+      "status": "passed",
+      "tests_passed": 7,
+      "tests_failed": 0,
+      "note": "The same seven contract cases are also included in the Cargo unit target below; do not double count them."
+    },
+    {
+      "scope": "integration compilation",
+      "command": "cargo check -p jope-bench --all-targets --locked --offline -j 2",
+      "status": "passed"
+    },
+    {
+      "scope": "learner and registration unit tests",
+      "command": "cargo test -p jope-bench --lib automl --locked --offline -j 2 -- --test-threads=1",
+      "status": "passed",
+      "tests_passed": 9,
+      "tests_failed": 0,
+      "tests_ignored": 0,
+      "other_tests_filtered": 138
+    },
+    {
+      "scope": "CLI and process transport",
+      "command": "cargo test -p jope-bench --bin jope-bench --test adapter_contract --locked --offline -j 2 -- --test-threads=1",
+      "status": "passed",
+      "tests_passed": 9,
+      "tests_failed": 0,
+      "tests_ignored": 0,
+      "detail": "3 CLI cases and 6 adapter cases; includes existing regression coverage."
+    },
+    {
+      "scope": "workspace formatting",
+      "command": "cargo fmt --all -- --check",
+      "status": "passed"
+    },
+    {
+      "scope": "whitespace",
+      "command": "git diff --check",
+      "status": "passed"
+    },
+    {
+      "scope": "identity and documentation",
+      "command": "validate metadata JSON, relative links, source byte cap and SHA-256",
+      "status": "passed"
+    },
+    {
+      "scope": "Clippy on integration targets",
+      "command": "cargo clippy -p jope-bench --all-targets --no-deps --locked --offline -j 2 -- -D warnings",
+      "status": "passed",
+      "note": "The immutable entrant module has a narrowly scoped clippy::all style-lint allowance; rustc still forbids unsafe code."
+    },
+    {
+      "scope": "prose/IP scrub",
+      "command": "bash deploy/ci/ip-scrub.sh",
+      "status": "passed",
+      "files_checked": 54
+    },
+    {
+      "scope": "repository hygiene",
+      "command": "bash deploy/ci/check.sh",
+      "status": "failed_environment_precondition",
+      "exit_code": 1,
+      "detail": "test-full-main.py InputBuildTests.test_joint_build_keeps_both_checks_and_fails_closed errors in six subcases because full-lane.sh exits 78 at its 50,000,000,000-byte free-space guard before the fake cargo fixture runs. This host filesystem totals 33,770,192,896 bytes. Both scripts are unchanged from base. Other reported hygiene checks pass; gitleaks is absent locally and is skipped by the script. The disk guard was not bypassed."
+    },
+    {
+      "scope": "disk guard diagnosis",
+      "command": "JOPE_LANE_EVIDENCE=target/astra-evidence bash deploy/ci/full-lane.sh full-inputs",
+      "status": "unavailable",
+      "exit_code": 78,
+      "output": "unavailable: less than 50 GB disk reserve"
+    }
+  ],
+  "unique_cargo_tests_passed": 18,
+  "predictive_experiments": 0,
+  "performance_or_elo_claim": null,
+  "campaign_qualification": "not_asserted",
+  "hosted_ci_at_receipt_creation": "not_started",
+  "independent_native_review": "required_before_merge",
+  "updated_at_utc": "2026-10-21T06:53:49.934244+00:00",
+  "verified_implementation_sha256": {
+    "crates/jope-bench/src/automl.rs": "ab45ad2049449499ec3e05f1d719c81d2fefc72636f3291ad26c95e92151519b",
+    "crates/jope-bench/src/automl_contract_tests.rs": "3c279f64086cfbee700896685dc8c7a86efb362bf3b5dd49ef32b9e1da097818",
+    "crates/jope-bench/src/main.rs": "5d567d57cc9b90b985586752e6cf4b35daeacbf3d8b71ab96f32f90f4197b004",
+    "crates/jope-bench/src/lib.rs": "13ed3f1308a0f021663edb24d7c646a48b67095d6927f824d5d9aeda05d28fab",
+    "crates/jope-bench/tests/adapter_contract.rs": "7708a93888361343d1bfd6c0558e4d7acbeecc54751bd3af39eb5fac6971cead"
+  },
+  "local_log_sha256": {
+    "cargo-check.log": "25a762db92d0c6bbcc35d46c578eb2512f076d3820d93d51c67059c839bb23ff",
+    "clippy.log": "c3df570183ddf2f169bdf93f9dc560baedaae32048cf9c8911876d29d047bb09",
+    "format-check.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hygiene.log": "d79252e3cd16e67b50448bb72424624822671ce0f08e298572eacd2ca8568b33",
+    "integration-tests.log": "292b1a04c791d857747ff94bca2629529dc5b0cf0b1235916b8a05d6459f86c7",
+    "prose-check.log": "47432ab9fe0c43f7f4d07cfd5b1f2d95ff717a76628492ac0cf4d5abd9df19be",
+    "unit-tests.log": "86b85300018c32d24e502968d0b93ef65edbf4dc9d1fe2a4e7c7b26b36288d53"
+  },
+  "repository_required_checks": {
+    "local_full_hygiene": "not_green: disk guard environment precondition",
+    "pinned_toolchain_ci": "pending",
+    "gitleaks": "not_run_locally: tool unavailable"
+  }
+}
