@@ -34,3 +34,17 @@ check-*.log
 /web/training-dashboard/node_modules/
 /web/training-dashboard/dist/
 /web/training-dashboard/coverage/
+
+# Editor and OS droppings.
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# `just python-check` runs pytest with the cache provider on (CI passes -p no:cacheprovider).
+.pytest_cache/
+# python/prime.toml writes artifacts, runs, cache, checkpoints and models under python/prime/.
+/python/prime/
+# test_trace_recovery_v2.py creates its TemporaryDirectory under this fixtures/ directory.
+/deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/fixtures/
