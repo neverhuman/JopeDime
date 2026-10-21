@@ -3,18 +3,18 @@
   "decision": "Human-requested all-GP complete-source streaming; announced source/lock identity successor only. Numerical/emitted/generator/search fixtures and accepted historical identities remain fixed.",
   "plan_reference": "MASTER_PLAN.md GP source-stream feature, 2026-10-20",
   "pr_reference": "Stream every GP evolution as complete source and account for compilation-qualified tokens",
-  "source_commit": "56fe07f4bcfcbcf90a88f30c07d15c80bb70d4fc",
+  "source_commit": "3d4fd8823f20a5e3b002ecab135df88462a74f43",
   "base_commit": "bccbb55d3fff0c03f4e90df48862273338d8c679",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "8716cebbe8716a79ed3210e13374ae83e650072d785c40a50d62cc57b09404d6",
-      "after": "5f737626493a1a2166e45a52c8160b1041a57b25f4eed484dacbb454f92691ee"
+      "after": "539697e42cab314323620bf01269623074810f09c085ac6770b602f21576e2a9"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "849f2faf8d414011e8e0b97e3901d16da202f2209c5cfd1898b9f7e911696b7d",
-      "after": "2b2fa5786617fa5f5000ef92f4a98fcbd750ece33325ef70247c83e1e4ee881c"
+      "after": "0c3f51645c1f94c2b7a396ca2829ad15689bcac088600c9ac5c3c1118e57cf8e"
     }
   ],
   "changed_evaluator_inputs": [
@@ -26,7 +26,7 @@
     {
       "path": "crates/feat-math/src/evolve.rs",
       "before": "680cbfa420a12c9e5ebbbd738fbe61aa6be6b9048c9df2f727ff8f18b4ad580e",
-      "after": "aaa60509ffc692c11e604044d674e661240c5b6205ab35d8e97588b64fdb1a89"
+      "after": "4ec59add2ea7f04dae21326b7302cecd2f3b02c662224ed9878bd89cc9204be5"
     },
     {
       "path": "crates/feat-math/src/full_rust.rs",
@@ -45,7 +45,7 @@
     }
   ],
   "before_identity_digest": "3aaea86da467719a3a3cb6200798b3f2aa7e18f7a95125191e44c4a1634b6d65",
-  "after_identity_digest": "8fa9442e06825bd4211ac0b9c64e8e9b4a56c4865a8b1dd4f02d8663e114780f",
+  "after_identity_digest": "95e7a685f86330fcac903df66b0795a47a63f66ca5cd048c7164ff962e61e297",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "behavioral_fixtures": [
     {
@@ -102,5 +102,6 @@
       "after": "898912247fdea658eaa7fbcc48ce92717c228292bad7fb5f578044adeb0fdb64"
     }
   ],
-  "lineage_effect": "Active grammar/automaton.rs capture hooks change teaching-store semantic_dependencies_sha256 and corpus scan_policy. Receipts bound to the previous listed-source hashes fail verify_artifacts against the successor; preserve them under their original identity, do not relabel or migrate them. Linked executable hashes also mint new lineage identities on rebuild."
+  "lineage_effect": "Active grammar/automaton.rs capture hooks change teaching-store semantic_dependencies_sha256 and corpus scan_policy. Receipts bound to the previous listed-source hashes fail verify_artifacts against the successor; preserve them under their original identity, do not relabel or migrate them. Linked executable hashes also mint new lineage identities on rebuild.",
+  "legacy_operator_bodies": "All six immutable rand_params/mutate/mutate_v2/jitter_params/jitter_params_v2/crossover bodies and their existing capability_manifest expected hashes remain byte-for-byte main. Capture occurs in dedicated call-boundary seams; no pinned algorithm body rebaseline."
 }
