@@ -394,6 +394,8 @@ fn publish_impl(
     );
     let contexts: Vec<ContextRow> = serde_json::from_value(ci["encodings"].clone())?;
     let vocab_bytes = fs::read(vocabulary)?;
+    // Hashed once: the binding, every admitted row and the index share this digest.
+    let vocabulary_sha256 = hash(&vocab_bytes);
     let vocab: Vocab = serde_json::from_slice(&vocab_bytes)?;
     let expected: Option<Value> = admission.map(read_json).transpose()?;
     let mut authority = expected
@@ -447,7 +449,7 @@ fn publish_impl(
     ))?);
     let binding = hash(&serde_json::to_vec(&(
         hash(&context_bytes),
-        hash(&vocab_bytes),
+        &vocabulary_sha256,
         qualification,
         policy,
         &expected,
@@ -613,7 +615,7 @@ fn publish_impl(
                         &contexts[c],
                         &prepared[&contexts[c].prepared],
                         crate::label_admission::AdmissionInputs {
-                            vocabulary_sha: &hash(&vocab_bytes),
+                            vocabulary_sha: &vocabulary_sha256,
                             expected,
                             fit_training: training,
                         },
@@ -990,7 +992,7 @@ fn publish_impl(
         label_policy: policy.into(),
         semantic_dependencies_sha256,
         admission_policy: expected,
-        vocabulary_sha256: hash(&vocab_bytes),
+        vocabulary_sha256,
         context_index_sha256: hash(&context_bytes),
         contexts,
         records,
