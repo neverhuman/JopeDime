@@ -474,6 +474,8 @@ mod tests {
         // SAFETY: name and both timespec entries are live through utimensat;
         // the kernel borrows the two bounded elements and this private fixture path.
         assert_eq!(
+            // SAFETY: `name` is a CString that outlives the call, so the path is NUL-terminated,
+            // and `times` is the two-element timespec array utimensat reads.
             unsafe { libc::utimensat(libc::AT_FDCWD, name.as_ptr(), times.as_ptr(), 0) },
             0
         );

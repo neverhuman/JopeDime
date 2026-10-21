@@ -33,7 +33,6 @@ use clap::Parser;
 use serde_json::{json, Map, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
-use std::os::fd::AsFd;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -188,7 +187,7 @@ fn try_lock(path: &Path) -> Result<Option<File>> {
         .write(true)
         .truncate(false)
         .open(path)?;
-    if flock::exclusive(file.as_fd(), false).is_err() {
+    if flock::exclusive(&file, false).is_err() {
         return Ok(None);
     }
     Ok(Some(file))

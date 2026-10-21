@@ -5,7 +5,6 @@ use serde::Deserialize;
 use std::{
     collections::BTreeSet,
     fs::{File, OpenOptions},
-    os::fd::AsRawFd,
     path::Path,
 };
 
@@ -63,16 +62,11 @@ pub fn try_acquire(root: &Path, slot: usize) -> Result<Option<File>> {
         .read(true)
         .write(true)
         .open(root.join(format!("runs/gp-slot-{slot}.lock")))?;
-    // SAFETY: file owns the live descriptor and flock takes only integer
-    // arguments. The returned File retains the lock's open-file-description owner.
-    if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
-        return Ok(Some(file));
+    match file.try_lock() {
+        Ok(()) => Ok(Some(file)),
+        Err(std::fs::TryLockError::WouldBlock) => Ok(None),
+        Err(std::fs::TryLockError::Error(error)) => Err(error.into()),
     }
-    let error = std::io::Error::last_os_error();
-    if error.kind() == std::io::ErrorKind::WouldBlock {
-        return Ok(None);
-    }
-    Err(error.into())
 }
 
 /// Called in pre_exec: the search owns the slot until it exits. Dropping the
@@ -95,7 +89,7 @@ mod tests {
     use super::*;
     use crate::manifest::write_json;
     use std::{
-        os::unix::process::CommandExt,
+        os::{fd::AsRawFd, unix::process::CommandExt},
         process::{Command, Stdio},
     };
 

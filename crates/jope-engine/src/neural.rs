@@ -1051,6 +1051,8 @@ impl AdamW {
         let mut v = pointers(&mut second);
         let step = self.step + 1;
         ensure!(
+            // SAFETY: `p`, `m`, `v` are equal-length (>= 1: `gradients` is nonempty) arrays of
+            // torch::Tensor* into tensors that outlive the call; the C++ catches exceptions.
             unsafe {
                 jp_fused_adamw(
                     p.as_mut_ptr(),
@@ -1115,6 +1117,8 @@ extern "C" {
     ) -> i32;
 }
 fn native_error() -> String {
+    // SAFETY: jp_error returns c_str() of this thread's error string: non-null and
+    // NUL-terminated; it is copied before any further native call can change it.
     unsafe { CStr::from_ptr(jp_error()).to_string_lossy().into_owned() }
 }
 pub struct Nccl {
@@ -1125,16 +1129,21 @@ pub struct Nccl {
 /// and boot identity and the UUID of every visible CUDA ordinal.
 pub fn local_devices() -> Result<crate::training::topology::LocalDevices> {
     let (host_id, boot_id) = crate::training::topology::host_identity()?;
+    // SAFETY: jp_device_count takes no arguments; it reports errors by returning -1.
     let count = unsafe { jp_device_count() };
     ensure!(count >= 0, "{}", native_error());
     let visible = (0..count)
         .map(|index| {
             let mut out = [0 as std::ffi::c_char; 41];
             ensure!(
+                // SAFETY: `out` has 41 writable bytes and jp_device_uuid's snprintf writes at
+                // most 41, NUL included; an invalid index only returns an error.
                 unsafe { jp_device_uuid(index, out.as_mut_ptr()) } == 0,
                 "{}",
                 native_error()
             );
+            // SAFETY: jp_device_uuid returned 0, so snprintf left a NUL-terminated string in
+            // `out`, which outlives the copy made by into_owned.
             Ok(unsafe { CStr::from_ptr(out.as_ptr()) }
                 .to_string_lossy()
                 .into_owned())
@@ -1152,6 +1161,7 @@ pub fn local_devices() -> Result<crate::training::topology::LocalDevices> {
 pub fn nccl_unique_id() -> Result<[u8; crate::native_loop::bounded::launch::NCCL_UNIQUE_ID_BYTES]> {
     let mut id = [0u8; crate::native_loop::bounded::launch::NCCL_UNIQUE_ID_BYTES];
     ensure!(
+        // SAFETY: `id` has NCCL_UNIQUE_ID_BYTES (128) bytes; jp_unique_id writes exactly 128.
         unsafe { jp_unique_id(id.as_mut_ptr()) } == 0,
         "{}",
         native_error()
@@ -1182,6 +1192,7 @@ impl Nccl {
                 "rendezvous must be unique to this launch"
             );
             ensure!(
+                // SAFETY: `id` is a 128-byte buffer and jp_unique_id writes exactly 128 bytes.
                 unsafe { jp_unique_id(id.as_mut_ptr()) } == 0,
                 "{}",
                 native_error()
@@ -1214,6 +1225,8 @@ impl Nccl {
         let (rank, world) = (binding.global_rank(), binding.world());
         ensure!(rank < world && world <= 8, "invalid rank topology");
         let expected = std::ffi::CString::new(binding.gpu_uuid().unwrap_or(""))?;
+        // SAFETY: `id` has the 128 bytes jp_nccl_init copies and `expected` is a CString that
+        // outlives the call; failure returns null (checked below) and sets the error string.
         let comm = unsafe {
             jp_nccl_init(
                 id.as_ptr(),
@@ -1228,6 +1241,8 @@ impl Nccl {
     }
     pub fn reduce(&self, t: &mut Tensor) -> Result<()> {
         ensure!(
+            // SAFETY: `self.comm` is live until Drop and `t` is a live tensor whose pointer is
+            // its torch::Tensor*; the C++ checks dtype/device and catches exceptions.
             unsafe { jp_allreduce(self.comm, t.as_mut_ptr() as *mut c_void) } == 0,
             "{}",
             native_error()
@@ -1239,22 +1254,36 @@ impl Nccl {
 }
 impl Drop for Nccl {
     fn drop(&mut self) {
+        // SAFETY: `comm` is the non-null communicator `create` got from jp_nccl_init (the only
+        // constructor; the field is private); Drop runs once, so it is aborted exactly once.
         unsafe {
             jp_nccl_abort(self.comm);
         }
     }
 }
-pub struct Bf16;
+/// Scoped bf16 autocast on the current thread: [`Bf16::enter`] pushes the thread's prior
+/// autocast state onto the runtime's thread-local stack and dropping the guard pops it. The
+/// private field means a guard exists only through `enter`, and `*const ()` makes it `!Send`, so
+/// it is always dropped on the thread whose stack it pushed.
+pub struct Bf16 {
+    _thread_bound: std::marker::PhantomData<*const ()>,
+}
 impl Bf16 {
     pub fn enter() -> Self {
+        // SAFETY: jp_bf16 takes its flag by value; enabling only pushes the prior autocast state
+        // onto a thread-local stack and sets autocast, touching no caller memory.
         unsafe {
             jp_bf16(1);
         }
-        Self
+        Self {
+            _thread_bound: std::marker::PhantomData,
+        }
     }
 }
 impl Drop for Bf16 {
     fn drop(&mut self) {
+        // SAFETY: a Bf16 is only built by `enter`, which pushed this thread's autocast stack, and
+        // it is !Send, so this pops exactly that entry on the same thread (never an empty stack).
         unsafe {
             jp_bf16(0);
         }

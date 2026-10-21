@@ -131,7 +131,7 @@ fn curriculum_schedule_and_actual_exposure_parent_chain_are_enforced() {
         Some("e1")
     );
     assert_eq!(snapshot.exposures[1].schedule_position, 1);
-    assert_eq!(snapshot.can_claim_real_family_improvement(), false);
+    assert!(!snapshot.can_claim_real_family_improvement());
 }
 
 #[test]

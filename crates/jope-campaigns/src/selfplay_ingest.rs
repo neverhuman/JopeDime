@@ -3636,7 +3636,6 @@ pub fn seeding_curve(root: &Path, max_rows: usize) -> Result<Value> {
 struct CurveLock(#[allow(dead_code)] File);
 
 fn try_curve_lock(root: &Path) -> Result<Option<CurveLock>> {
-    use std::os::unix::io::AsRawFd;
     let lock_path = root.join(SEEDING_CURVE_LOCK_RELATIVE);
     if let Some(parent) = lock_path.parent() {
         fs::create_dir_all(parent)?;
@@ -3646,8 +3645,7 @@ fn try_curve_lock(root: &Path) -> Result<Option<CurveLock>> {
         .truncate(false)
         .write(true)
         .open(&lock_path)?;
-    let locked = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-    if locked != 0 {
+    if file.try_lock().is_err() {
         return Ok(None);
     }
     Ok(Some(CurveLock(file)))

@@ -58,7 +58,7 @@ use super::exact_cv::{
     stratified_assignments, DeterministicRng,
 };
 use crate::data::RegressionData;
-use crate::task::TaskKind;
+use jope_dime_regressor::task::TaskKind;
 
 const POPULATION: usize = 60;
 const CV5_FOLDS: usize = 5;

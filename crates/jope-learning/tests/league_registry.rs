@@ -4,7 +4,7 @@ mod league;
 use anyhow::Result;
 use league::{
     ContextIdentity, HistoricalCost, LeagueGate, LeagueGateReason, LeagueMember, LeagueRegistry,
-    MatchmakingMemory, MemberKind, PayoffCell, PayoffManifest, PayoffPurpose, PFSP,
+    MatchmakingMemory, MemberKind, PayoffCell, PayoffManifest, PayoffPurpose, Pfsp,
 };
 
 const H0: &str = "0000000000000000000000000000000000000000000000000000000000000000";
@@ -136,7 +136,7 @@ fn baseline_registry_freezes_parent_controls_identity_and_cost() -> Result<()> {
     r.validate_frozen_baseline()?;
     let original = r.member("frozen-parent").unwrap().clone();
     assert!(
-        r.register(original.clone())? == false,
+        !r.register(original.clone())?,
         "exact re-registration is idempotent"
     );
     let table = manifest(&r, PayoffPurpose::FrozenBaseline, "transitive")?;
@@ -254,7 +254,7 @@ fn member_counts_alone_never_activate_pf_scheduling() -> Result<()> {
         let r = registry(count)?;
         let table = manifest(&r, PayoffPurpose::TrainingMatchmaking, "transitive")?;
         assert_eq!(
-            PFSP::assess(&table, &r)?,
+            Pfsp::assess(&table, &r)?,
             LeagueGate::Deferred {
                 reason: LeagueGateReason::NoMeasuredCycleOrSpecialization
             },
@@ -264,7 +264,7 @@ fn member_counts_alone_never_activate_pf_scheduling() -> Result<()> {
     let r = registry(0)?;
     let table = manifest(&r, PayoffPurpose::TrainingMatchmaking, "transitive")?;
     assert_eq!(
-        PFSP::assess(&table, &r)?,
+        Pfsp::assess(&table, &r)?,
         LeagueGate::Deferred {
             reason: LeagueGateReason::NoAcceptedCompetitors
         }
@@ -277,7 +277,7 @@ fn measured_cycle_or_family_specialization_only_yields_separate_review_candidate
     let r = registry(3)?;
     let table = manifest(&r, PayoffPurpose::TrainingMatchmaking, "cycle")?;
     assert_eq!(
-        PFSP::assess(&table, &r)?,
+        Pfsp::assess(&table, &r)?,
         LeagueGate::CandidateForSeparateReview {
             evidence_sha256: table.identity_sha256(&r)?,
             basis: "measured_nontransitive_cycle".into()
@@ -287,7 +287,7 @@ fn measured_cycle_or_family_specialization_only_yields_separate_review_candidate
     let r = registry(2)?;
     let table = manifest(&r, PayoffPurpose::TrainingMatchmaking, "specialization")?;
     assert_eq!(
-        PFSP::assess(&table, &r)?,
+        Pfsp::assess(&table, &r)?,
         LeagueGate::CandidateForSeparateReview {
             evidence_sha256: table.identity_sha256(&r)?,
             basis: "measured_family_specialization".into()
@@ -301,14 +301,14 @@ fn qualification_and_baseline_purposes_never_enable_adaptive_league() -> Result<
     let r = registry(3)?;
     let qual = manifest(&r, PayoffPurpose::Qualification, "cycle")?;
     assert_eq!(
-        PFSP::assess(&qual, &r)?,
+        Pfsp::assess(&qual, &r)?,
         LeagueGate::Deferred {
             reason: LeagueGateReason::QualificationPurpose
         }
     );
     let baseline = manifest(&r, PayoffPurpose::FrozenBaseline, "cycle")?;
     assert_eq!(
-        PFSP::assess(&baseline, &r)?,
+        Pfsp::assess(&baseline, &r)?,
         LeagueGate::Deferred {
             reason: LeagueGateReason::FrozenBaselinePurpose
         }

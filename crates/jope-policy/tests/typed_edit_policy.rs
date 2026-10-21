@@ -2,6 +2,10 @@
 //!
 //! Parent exports, target registration and coverage/inventory are integrator-owned. Including the
 //! source paths here lets this bounded CPU target exercise both versions before shared wiring.
+// The native adapter includes `src/edit_policy.rs` again as its `shared` module. Loading the
+// same file through both routes is the point of this target (it compares them), so the lint
+// against duplicate module loading is expected here and nowhere else.
+#![allow(clippy::duplicate_mod)]
 
 #[path = "../src/edit_policy.rs"]
 mod policy_edit_policy;

@@ -54,6 +54,8 @@ impl TaskDeadline {
         let thread = std::thread::spawn(move || {
             while !observed.load(Ordering::Acquire) {
                 if std::time::Instant::now() >= end || protocol::remaining(deadline).is_err() {
+                    // SAFETY: _exit takes only a status code and has no preconditions; it ends
+                    // the whole process at once without unwinding, the intended deadline stop.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -199,6 +201,8 @@ pub fn enabled() -> bool {
 
 pub fn inherit_lease(command: &mut std::process::Command, lease: &fs::File) -> Result<()> {
     ensure!(
+        // SAFETY: fcntl(F_SETFD, 0) takes integers only and clears just the close-on-exec flag;
+        // `lease` is borrowed for the call, so its descriptor stays open.
         unsafe { libc::fcntl(lease.as_raw_fd(), libc::F_SETFD, 0) } == 0,
         "cannot inherit GPU lease"
     );
@@ -284,15 +288,19 @@ pub fn inherited_task_lease(root: &Path) -> Result<fs::File> {
     let descriptor: i32 = std::env::var(key)
         .context("GPU rank requires its inherited controller lease")?
         .parse()?;
+    // SAFETY: dup takes a plain integer and never affects the original descriptor; a number
+    // that is not open makes it return -1, which is checked below.
     let copied = unsafe { libc::dup(descriptor) };
     ensure!(copied >= 0, "training lease is unavailable");
+    // SAFETY: dup just returned `copied` as a fresh nonnegative descriptor no one else owns;
+    // File takes sole ownership and closes it once, leaving the inherited original open.
     let lease = unsafe { fs::File::from_raw_fd(copied) };
     let actual = lease.metadata()?;
     let expected = root.join("runs/encoding-service.lock").metadata()?;
     ensure!(
         actual.dev() == expected.dev()
             && actual.ino() == expected.ino()
-            && unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+            && lease.try_lock().is_ok(),
         "training lease identity changed"
     );
     Ok(lease)
@@ -424,10 +432,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         .truncate(false)
         .write(true)
         .open(pool.join(format!("rank-{rank}.lock")))?;
-    ensure!(
-        unsafe { libc::flock(guard.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "resident rank already owned"
-    );
+    ensure!(guard.try_lock().is_ok(), "resident rank already owned");
     let socket = pool.join(format!("rank-{rank}.sock"));
     if socket.exists() {
         fs::remove_file(&socket)?;
@@ -454,6 +459,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         let mut stream = incoming?;
         let peer = protocol::peer_credentials(&stream)?;
         ensure!(
+            // SAFETY: geteuid has no preconditions and cannot fail.
             peer.uid == unsafe { libc::geteuid() },
             "resident task peer rejected"
         );
@@ -468,7 +474,7 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
         ensure!(
             expected.dev() == actual.dev()
                 && expected.ino() == actual.ino()
-                && unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+                && file.try_lock().is_ok(),
             "task did not transfer the exclusive GPU lease"
         );
         let line = protocol::read_line_until(&mut stream, 1024 * 1024, handshake_deadline)?;
@@ -526,6 +532,8 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                 if protocol::remaining(deadline).is_err() {
                     // A stuck collective cannot suppress the task watchdog.
                     // Acceptance remains unknown until the supervisor reconciles it.
+                    // SAFETY: _exit takes only a status code and has no preconditions; it ends
+                    // the whole process at once without unwinding, as intended here.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -535,6 +543,8 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                     events: libc::POLLRDHUP,
                     revents: 0,
                 };
+                // SAFETY: `poll` is one initialized pollfd that outlives the call and nfds is 1;
+                // the closure owns `watching`, so the polled descriptor stays open.
                 unsafe {
                     libc::poll(&mut poll, 1, 100);
                 }
@@ -543,6 +553,8 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                 {
                     // No live task client remains to supervise collectives. The
                     // pool supervisor restarts this rank from durable receipts.
+                    // SAFETY: _exit takes only a status code and has no preconditions; it ends
+                    // the whole process at once without unwinding, as intended here.
                     unsafe {
                         libc::_exit(75);
                     }
@@ -591,23 +603,14 @@ mod tests {
             .write(true)
             .open(&p)
             .unwrap();
-        assert_eq!(
-            unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-            0
-        );
+        assert!(lease.try_lock().is_ok());
         let (sender, receiver) = UnixStream::pair().unwrap();
         send_fd(&sender, lease.as_raw_fd()).unwrap();
         let received = receive_fd(&receiver).unwrap();
         drop(lease);
         let competing = fs::OpenOptions::new().write(true).open(p).unwrap();
-        assert_ne!(
-            unsafe { libc::flock(competing.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-            0
-        );
+        assert!(competing.try_lock().is_err());
         drop(received);
-        assert_eq!(
-            unsafe { libc::flock(competing.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-            0
-        );
+        assert!(competing.try_lock().is_ok());
     }
 }

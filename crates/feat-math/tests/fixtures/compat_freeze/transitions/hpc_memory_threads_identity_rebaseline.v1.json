@@ -1,0 +1,134 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the HPC memory/thread review: bit-identical performance and memory changes to the ridge/KRR Cholesky, histgbm, histgbm2, ksmooth, the op epilogue, the stage cache and the GP token accounting, plus lint-only feat-math edits. Every behaviour fixture (stage values, serialized models, emitted bytes, seeded generator streams and search runs) is unchanged; DSL ABI, lineage source lists and accepted historical identities are unchanged.",
+  "pr_reference": "perf/hpc-memory-threads-20261021",
+  "source_commit": "b638a55a5789e6bf8bba4e6f98dfe832021a2263",
+  "base_commit": "ca6e15f1c4dad721987f30825fe19b50bbf4e408",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "4220d83da822c79a80e875180ceb1c2ebe066a8259b351d18566356dd8bd96b1",
+      "after": "47a3245f005da9c73a4838ee9e9d1827ef4aa1516e4ab6c2e1b98dc10ac61058"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "1b15af8929c9dab46b9673488fdc8008e7656cac1c203c49633dcc4a256e6bbb",
+      "after": "d3cd7fa772d4669527ec17362182c083b8490a83b77fafcc4dc07b255fc9e9d7"
+    }
+  ],
+  "changed_evaluator_inputs": [
+    {
+      "path": "crates/feat-math/src/boost2.rs",
+      "before": "ec959293ea73bf67e18f6121457a8c85d78bade018952d1bef561edbff9ccc55",
+      "after": "094dbe6c7cd09956522ca2ddbb8fc7126c9f00bacf8e646894e3caaa383ab80c"
+    },
+    {
+      "path": "crates/feat-math/src/evolve.rs",
+      "before": "4ec59add2ea7f04dae21326b7302cecd2f3b02c662224ed9878bd89cc9204be5",
+      "after": "2ecc2bcedb3d66ffb91cfdc741ca06ab56fb08536e6fe0ccd59e407e72525ee1"
+    },
+    {
+      "path": "crates/feat-math/src/heads.rs",
+      "before": "1d63aab8a327e74236c11175a7ecfb92934259097da01d92ed5c5a95ad747df9",
+      "after": "b59f33872c5088ab06d1b7a6bc969bd7ceb63aa2444c892850e89907cbb53906"
+    },
+    {
+      "path": "crates/feat-math/src/ksmooth.rs",
+      "before": "b51e993c929443c6aa0e5d134994f688d78031c13f432ccc5f0898ef027120a1",
+      "after": "7290dd89bfcfdab753c09841d584733b608e6d990c08cfff3e8f56a11b472199"
+    },
+    {
+      "path": "crates/feat-math/src/ops.rs",
+      "before": "0cdb6cb817239af8715af995b67f5327548f6db49b292ea2f6303ab23d063106",
+      "after": "041ef019af69e8194f482faa60ea2ec3998d768fd5c45f4319536b4ad5fdcd2e"
+    },
+    {
+      "path": "crates/feat-math/src/stage_cache.rs",
+      "before": "f33106270371891c5493ed7b59cc6b68d8203710786977da86725d99568680f4",
+      "after": "d91486045b30b9639ea19320026f130363c5cec2a3fd7d55690aac737040404c"
+    },
+    {
+      "path": "crates/feat-math/src/transpile.rs",
+      "before": "fdcada3e1344b667bf3aa155564289a814953b906f85aeece5670b741e5dfe93",
+      "after": "6921ef90863318b8c3b7e37eb91b5f7f23ae2a5e43f32f62cbeea3fa46278bed"
+    }
+  ],
+  "before_implementation_sha256": "498518151d5501d8d20dd8fa345c4805155710ac4e25529b6312fec4cb5117e5",
+  "after_implementation_sha256": "6dcb74a9e7732b05422b78d4c2a4b7ee7b93ef4ce8737290695a54ee5f8163fc",
+  "before_identity_digest": "8999aff99f7bd548ff4415b8fe64b9880f092d78445a3b5f9864c4e12be195e0",
+  "after_identity_digest": "16eba4ea2ff663183ce48166c11f4db3e12bde071e8ee80daf8648898ec7253a",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
+  "behavioral_fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/meta.json",
+      "sha256": "45834e08a447bb41b5112119388890bce26580768dca538035506343d3fc492b",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json",
+      "sha256": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
+      "sha256": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json",
+      "sha256": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+      "sha256": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json",
+      "sha256": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+      "sha256": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json",
+      "sha256": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/source-manifest.json",
+      "sha256": "4628d4269f3b1fcb853ae0b04ec90972212b8b23ada9e9f310d77eb616cc3104",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/manifest.json",
+      "sha256": "117ac56a214384bd11964e5b105819b3f12da047be40ab5194c056a654d99d4f",
+      "unchanged": true
+    }
+  ],
+  "lineage_effect": "Only generated_at_sha refreshed by the owning identity mode; all lineage source lists and hashes unchanged. Rebuilt executables mint their own runtime identities, as for every engine change.",
+  "other_runtime_source_identities": [
+    {
+      "identity": "feat-math numeric_v2_emit::numeric_source_hash (numeric_v2.rs, heads.rs, ops.rs, stack.rs, rng.rs)",
+      "before": "965c790f1a775d4cfec1a25dcea3adf8031458f98706f1b620867a2db1cf5405",
+      "after": "962c6eed65ce3d7625c674bdb93f57e642e24a98e86198abbb15636cb84ffb4f",
+      "effect": "FittedArtifactV2::reload refuses numeric-fitted-artifact-v2 artifacts emitted at base_commit (numeric source identity mismatch); re-emit them from the same model. No such artifact or digest is pinned in the tree."
+    },
+    {
+      "identity": "jope-pipeline search_events::source_sha256 (search.rs, search_events.rs, feat-math evolve.rs, jope-records wire_contract.rs)",
+      "before": "ad7c98be89b539eb9f6cdcd68fcd56250eac3b5b249d45cf73d067a218b08370",
+      "after": "8becb8f1e3119d06736adb1957769626cb108e87b27913bbf36cdffe92e0be0f",
+      "effect": "search_recorder refuses a caller SearchBinding made at base_commit; existing event logs keep their recorded source identity. No digest is pinned in the tree."
+    }
+  ],
+  "verification": [
+    "Pinned Rust 1.97.1, cargo-nextest 0.9.133: JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=<source_commit> cargo nextest run --locked -P pr -p feat-math --test compat_freeze: 13 passed",
+    "Same command in comparison mode with --test historical_v1: 16 passed (13 compat_freeze, 3 historical_v1)",
+    "Release A/B harness against base_commit (1 thread, CPU-pinned, 4 alternating runs): SHA-256 over every prediction bit of 8 fitted pipelines, 5 tie-heavy pipelines and 2 seeded searches identical (ALL_SHA 448c0c32f9890829...)",
+    "heads::tests::blocked_cholesky_is_bit_identical_to_the_row_major_loop and stage_cache::tests::serialized_len_counts_exactly_the_json_encoding pass"
+  ]
+}

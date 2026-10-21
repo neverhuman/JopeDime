@@ -42,20 +42,26 @@ passed by shared memory between stages, which is what makes each stage replayabl
 ```mermaid
 flowchart TB
   subgraph product["product crates (workspace version)"]
-    numpy[numpy-pcg64<br/>bit-exact numpy 1.26 RNG, 0 deps]
+    numpy[numpy-pcg64<br/>bit-exact numpy 1.26 RNG, 0 deps, no in-workspace consumer]
     fm[feat-math<br/>DSL · search · heads · registry · emitters · fitted C++ runtime]
     bg[battle-gpu<br/>raw dlopen CUDA screening, feature gpu]
     enc[jope-encoders<br/>lib name starforge: foundation, target, chimera, policy decoder]
     hyp[hyperion<br/>candle v5/v7 inference, router, GPU lease]
     pol[jope-policy<br/>step-60000 policy port]
-    eng[jope-engine<br/>package jope-parallel: 88 subcommands, --root, feature neural]
-    camp[jope-campaigns<br/>package jope-dime-regressor: 55 programs]
-    self[jope-selfplay<br/>flywheel control plane]
+    eng[jope-engine<br/>package jope-parallel: search, eval registry, native loop, feature neural]
+    camp[jope-campaigns<br/>package jope-dime-regressor: campaigns + self-play control plane bins]
     paths[jope-paths<br/>ADR-0003 roots, 0 deps]
     data[jope-datasets<br/>catalog · ingest · fetch/verify/link]
     models[jope-models<br/>bundle manifests · fetch/verify/publish]
     learn[jope-learning<br/>HWM ledger · snapshots · pointers]
     arena[jope-arena<br/>SOTArena fetch · Elo · scores]
+    bench[jope-bench<br/>same-cut benchmark, demo/benchmark/optimize]
+    automl[jope-automl<br/>native AutoML regressors, 0 deps]
+    pipe[jope-pipeline<br/>dataset → cuts → search → emitted code]
+    motifs[jope-motifs<br/>reusable program fragments]
+    records[jope-records<br/>record verifiers, hygiene guards]
+    ci[jope-ci<br/>cargo-artifact, build-dir report]
+    obs[jope-observatory<br/>training observatory: axum server, collectors]
     cli[jope-cli<br/>the jope umbrella binary]
     rt[jope-runtime<br/>native roster · fit/predict · selection · model.jope]
     assets[jope-assets<br/>signed single-file package format]
@@ -65,33 +71,62 @@ flowchart TB
   subgraph vendored["vendored (upstream versions)"]
     sc[crates/smartcluster/*<br/>jain-smartcluster @ 715128f8, 7 crates]
   end
-  fm --> camp
-  fm --> eng
-  bg -.gpu.-> camp
-  bg -.gpu.-> eng
-  numpy --> enc
-  enc --> pol
-  hyp --> pol
-  fm --> pol
-  paths --> eng
-  paths --> camp
-  paths --> self
-  sc -.cluster.-> eng
-  eng --> self
-  eng --> learn
-  data --> cli
-  models --> cli
-  learn --> cli
-  arena --> cli
-  eng --> cli
-  camp --> cli
-  self --> cli
-  fm --> rt
-  rt --> app
+  arena --> bench
   assets --> app
-  rt --> dist
   assets --> dist
+  automl --> bench
+  bench --> cli
+  bg -.-> camp
+  data --> bench
+  data --> cli
+  data --> learn
+  data --> models
+  data --> pipe
+  enc -.-> pol
+  eng -.-> hyp
+  fm --> bench
+  fm --> bg
+  fm --> camp
+  fm --> cli
+  fm --> eng
+  fm --> motifs
+  fm --> obs
+  fm --> pipe
+  fm --> pol
+  fm --> rt
+  hyp --> cli
+  hyp -.-> pol
+  learn -.-> bench
+  learn --> cli
+  learn --> motifs
+  models --> cli
+  motifs --> cli
+  paths --> camp
+  paths --> eng
+  paths --> learn
+  paths --> motifs
+  paths --> pipe
+  pipe --> bench
+  pipe --> cli
+  pipe --> learn
+  pipe --> motifs
+  pol -.-> bench
+  pol -.-> cli
+  pol -.-> pipe
+  records --> ci
+  records --> learn
+  rt --> app
+  rt --> bench
+  rt --> dist
+  rt --> pipe
+  sc --> eng
 ```
+
+Edges follow normal (non-dev) workspace path dependencies, from dependency to consumer;
+dotted edges are optional, feature-gated dependencies. Regenerate the list with `cargo metadata --format-version 1 --no-deps` when a
+crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-engine` (except
+`hyperion`'s optional feature) or `numpy-pcg64`; the self-play control plane lives in
+`jope-campaigns` binaries, not in a separate `jope-selfplay` crate.
 
 | Crate (directory) | Package name | Status on `main` today | What it owns |
 |---|---|---|---|
@@ -99,7 +134,7 @@ flowchart TB
 | `crates/numpy-pcg64` | `numpy-pcg64` | landed (WP3) | Bit-exact numpy 1.26.4 `SeedSequence`/PCG64/`Generator` integer sampling and the frozen sampling recipes. |
 | `crates/jope-encoders` | `starforge` (lib name kept so no source edit was needed) | landed (WP3) | Foundation encoder (Starlight / TabPFN-v3-reg, TabICL), target encoder, chimera fusion, hash-verified bundle loader. Weight-bound tests are env-gated. |
 | `crates/battle-gpu` | `battle-gpu` | landed | Raw `dlopen("libcuda.so.1")` GPU screening for rung-0 ridge; feature `gpu`. No cudarc, so it never conflicts with candle. |
-| `crates/jope-engine` | `jope-parallel` | landed (WP1) | The engine: program search (`gp.rs`, `grammar.rs`, `proposals*.rs`, `champions.rs`, `corpus*.rs`, `tournament.rs`), eval registry authority (`eval_registry/`), the `jope-parallel` binary with its **92 clap subcommands and global `--root`** (the jain-core consumer contract; 88 carried over from the pre-port tree and 4 new, per the capability matrix), 12 more binaries in `src/bin` incl. `jope-build-receipt` and `jope-native-loop` (the matrix's other 12 engine-subcommand rows are that binary's); crate-local `assets/grammar/` (4 JSON, the committed `featmath-jain-v1.json` bakes the literal key `parallel/assets/grammar/featmath.json` — plan blocker B4) and `manifests/`. Feature `neural` = tch/LibTorch (self-hosted only); feature `cluster` (WP11) gates the smartcluster-bound modules. |
+| `crates/jope-engine` | `jope-parallel` | landed (WP1) | The engine: program search (`gp.rs`, `grammar.rs`, `proposals*.rs`, `champions.rs`, `corpus*.rs`, `tournament.rs`), eval registry authority (`eval_registry/`), the `jope-parallel` binary with its **92 clap subcommands and global `--root`** (the jain-core consumer contract; 88 carried over from the pre-port tree and 4 new, per the capability matrix), 12 more binaries in `src/bin` incl. `jope-build-receipt` and `jope-native-loop` (the matrix's other 12 engine-subcommand rows are that binary's); crate-local `assets/grammar/` (4 JSON, the committed `featmath-jain-v1.json` bakes the literal key `parallel/assets/grammar/featmath.json` — plan blocker B4) and `manifests/`. Feature `neural` = tch/LibTorch (self-hosted only). The smartcluster dependency is unconditional; the planned WP11 `cluster` feature does not exist in `Cargo.toml`. |
 | `crates/jope-campaigns` | `jope-dime-regressor` | landed (WP1); tests compile since B6 | Benchmark campaigns: Golden42/46 panels, exact-CV, test-adaptive, DL best5, generalized search, search v3, hyperion gate/router, plus today the 55 `src/bin` programs (the self-play control plane among them; no separate `jope-selfplay` crate exists). Crate-local `manifests/`, `seeds/`, `fixtures/` (`include_str!`/`include_bytes!` inputs, B1/B7/B8), `known-evaluator-identities.json` (ADR-0004). |
 | `crates/hyperion` | `hyperion` | landed (WP3) | Hyperion v5 arm B / v7 inference (candle 0.11), router, `.hvc2` cache, GPU lease; bins `hyperion-v5-reference`, `hyperion-batch-worker`. `HYPERION_V7_WEIGHTS` replaces the historical absolute path. |
 | `crates/jope-policy` | `jope-policy` | landed (WP3) | The step-60000 policy port: grammar/automaton, model, decode, ranking, seeds. |
@@ -119,10 +154,13 @@ flowchart TB
 | `crates/jope-appliance` | `jope-appliance` (binary `jopedime`) | landed; not published | The signed single-file executable: `version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses`. [deploy/appliance](../deploy/appliance/README.md). |
 | `crates/jope-dist` | `jope-dist` | landed | Build-time only: model lock with rights blockers, deterministic pack, release stage and seal, independent verify, dependency audit, notices, size, SBOM and provenance. |
 | `crates/jope-cli` | `jope-cli` (binary `jope`) | landed | The `jope` binary. Verbs today: `doctor`, `demo`, `benchmark`, `train` (Linux), `optimize`, `verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`, `train-step`, `route`, `models`, `datasets`, `pipeline`, and the hidden `motifs`. The target design's `propose`, `learn`, `hwm`, `scores`, `arena`, `campaign` and `selfplay` verbs do not exist (see the status note at the top). |
+| `crates/jope-observatory` | `jope-observatory` | landed | The training observatory: an axum read-only JSON API (`/api/v1/snapshot`, `/api/v1/gp`, …) and the `collect-datasets`, `collect-fleet`, `collect-storage` and `gp-source-stream` collector binaries. |
 | `crates/smartcluster/*` | `jain-smartcluster{,-core,-fabric,-daemon}`, `jain-worker`, `jainnode`, `scq` | landed (vendored at 715128f8, versions 8.0.0) | The scheduler the engine's native loop, smartcluster worker and native graph bind to; crates.io dependencies only. Not covered by `deploy/ci/version-consistency.sh`. |
 
-`xtools/registry-dump-legacy` is a standalone dev-only package with its own `[workspace]`;
-nothing else is excluded. The frozen kernel-v1 evaluator lineage (`deploy/kernel-v1/source`)
+`xtools/registry-dump-legacy` is a standalone dev-only package with its own `[workspace]`.
+The reviewed dependency sources under `vendor/security/*` are excluded from the product
+workspace and retain upstream versions; `vendor/security/PROVENANCE.json` and
+`deploy/ci/verify-vendor-security.py` bind their exact source inventory. The frozen kernel-v1 evaluator lineage (`deploy/kernel-v1/source`)
 was retired from the tree on 2026-09-28; `docs/archive/clean-base-manifest.json` gives its
 restore command.
 

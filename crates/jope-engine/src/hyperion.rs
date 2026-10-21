@@ -164,8 +164,12 @@ pub fn rank(
         use std::io::Write;
         use std::os::fd::{AsRawFd, FromRawFd};
         let name = std::ffi::CString::new("jope-training-view")?;
+        // SAFETY: `name` is a CString that outlives the call, so the pointer is NUL-terminated
+        // and valid; flags 0 is a valid flag set.
         let fd = unsafe { libc::memfd_create(name.as_ptr(), 0) };
         ensure!(fd >= 0, "memory view allocation failed");
+        // SAFETY: memfd_create returned this fresh, nonnegative descriptor and nothing else owns
+        // it; File takes sole ownership and closes it once.
         let mut memory = unsafe { fs::File::from_raw_fd(fd) };
         memory.write_all(&crate::prepare::csv_bytes(&rows)?)?;
         let train = PathBuf::from(format!("/proc/self/fd/{}", memory.as_raw_fd()));
@@ -282,16 +286,12 @@ pub fn rank(
 }
 pub fn service(root: &Path, jobs: &Path, spec: &Path, output: &Path) -> Result<()> {
     fs::create_dir_all(output)?;
-    use std::os::fd::AsRawFd;
     let lease = fs::OpenOptions::new()
         .create(true)
         .truncate(false)
         .write(true)
         .open(root.join("runs/encoding-service.lock"))?;
-    ensure!(
-        unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "encoding service already running"
-    );
+    ensure!(lease.try_lock().is_ok(), "encoding service already running");
     let specification: Spec = read_json(spec)?;
     specification.verify(root)?;
     let persistent = specification
@@ -374,6 +374,8 @@ pub fn service(root: &Path, jobs: &Path, spec: &Path, output: &Path) -> Result<(
                 .stdout(Stdio::from(log.try_clone()?))
                 .stderr(Stdio::from(log));
             use std::os::unix::process::CommandExt;
+            // SAFETY: the hook runs between fork and exec and only calls async-signal-safe
+            // setpgid; io::Error::last_os_error reads errno without allocating.
             unsafe {
                 command.pre_exec(|| {
                     if libc::setpgid(0, 0) != 0 {
@@ -441,6 +443,8 @@ pub fn service(root: &Path, jobs: &Path, spec: &Path, output: &Path) -> Result<(
     if result.is_err() {
         for child in &mut children {
             if child.try_wait()?.is_none() {
+                // SAFETY: kill takes only integers and has no memory-safety preconditions; the
+                // rank is unreaped, so the group id it took with setpgid(0, 0) is not reused.
                 unsafe {
                     libc::kill(-(child.id() as i32), libc::SIGKILL);
                 }

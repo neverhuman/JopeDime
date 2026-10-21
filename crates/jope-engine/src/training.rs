@@ -248,10 +248,10 @@ fn hash_parameter_values(h: &mut sha2::Sha256, values: &[f32]) {
     use sha2::Digest;
     #[cfg(target_endian = "little")]
     {
+        // Little-endian bytes preserve the per-value to_le_bytes representation.
         // SAFETY: f32 has no padding and all initialized value bytes may be read.
         // The byte view borrows exactly the live immutable slice's allocation;
         // its size cannot exceed isize::MAX and it does not escape this block.
-        // Little-endian bytes preserve the per-value to_le_bytes representation.
         let bytes = unsafe {
             std::slice::from_raw_parts(values.as_ptr().cast::<u8>(), std::mem::size_of_val(values))
         };

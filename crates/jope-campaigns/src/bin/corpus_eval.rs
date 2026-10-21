@@ -1335,6 +1335,8 @@ fn spawn_eval_one(
         .stdout(Stdio::null())
         .stderr(Stdio::null());
     #[cfg(unix)]
+    // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls (setsid,
+    // prctl, getppid); its errors are errno codes, so nothing allocates in the child.
     unsafe {
         command.pre_exec(|| {
             if libc::setsid() < 0 {
@@ -1345,10 +1347,9 @@ fn spawn_eval_one(
                 return Err(std::io::Error::last_os_error());
             }
             if libc::getppid() != parent {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::BrokenPipe,
-                    "corpus_eval parent exited during eval-one spawn",
-                ));
+                // The parent exited: refuse with an errno, which does not allocate
+                // (an io::Error carrying a message would box it in the forked child).
+                return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
             }
             Ok(())
         });
@@ -1360,6 +1361,8 @@ fn spawn_eval_one(
 
 fn process_group_exists(pid: libc::pid_t) -> Result<bool> {
     #[cfg(unix)]
+    // SAFETY: kill with signal 0 sends nothing and reads no memory; every caller passes a
+    // spawned child's PID (never 0 or 1), so -pid names one process group.
     unsafe {
         if libc::kill(-pid, 0) == 0 {
             return Ok(true);
@@ -1393,6 +1396,8 @@ fn wait_for_process_group_exit(pid: libc::pid_t, grace: Duration) -> Result<bool
 fn terminate_process_group(child: &mut std::process::Child, grace: Duration) -> Result<()> {
     let pid = child.id() as libc::pid_t;
     #[cfg(unix)]
+    // SAFETY: kill reads no memory; pid is the spawned child's PID (never 0 or 1), so -pid names
+    // one process group. __errno_location returns this thread's valid, aligned errno pointer.
     unsafe {
         // The child is a session leader created by setsid, so its PID is its
         // process-group ID. A negative kill reaches descendants as well.
@@ -1412,6 +1417,8 @@ fn terminate_process_group(child: &mut std::process::Child, grace: Duration) -> 
         std::thread::sleep(Duration::from_millis(10));
     }
     #[cfg(unix)]
+    // SAFETY: kill reads no memory; pid is the spawned child's PID (never 0 or 1), so -pid names
+    // one process group. __errno_location returns this thread's valid, aligned errno pointer.
     unsafe {
         if libc::kill(-pid, libc::SIGKILL) != 0 && *libc::__errno_location() != libc::ESRCH {
             return Err(std::io::Error::last_os_error()).context("kill eval-one group");
@@ -2382,6 +2389,8 @@ mod tests {
         for _ in 0..50 {
             let mut command = Command::new("sh");
             command.args(["-c", "sleep 30 & wait"]);
+            // SAFETY: the closure only calls setsid and reads errno via last_os_error; both are
+            // async-signal-safe and neither allocates nor locks in the forked child.
             unsafe {
                 command.pre_exec(|| {
                     if libc::setsid() < 0 {

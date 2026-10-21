@@ -14,6 +14,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// disconnect and release transferred leases even after SIGKILL.
 fn bind_parent_death(command: &mut Command) {
     let parent = std::process::id();
+    // SAFETY: the hook only makes async-signal-safe prctl and getppid calls and builds its
+    // io::Errors from errno codes without allocating; `parent` is a captured u32.
     unsafe {
         command.pre_exec(move || {
             if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL, 0, 0, 0) != 0 {
@@ -78,7 +80,6 @@ pub(crate) fn gpu_lease(root: &Path, phase: &str) -> Result<fs::File> {
     gpu_lease_controlled(root, phase, None)
 }
 fn gpu_lease_controlled(root: &Path, phase: &str, stop: Option<&AtomicBool>) -> Result<fs::File> {
-    use std::os::fd::AsRawFd;
     #[cfg(feature = "neural")]
     if let Ok(fd) = std::env::var("JOPE_GPU_WORKER_LEASE_FD") {
         use std::os::{fd::FromRawFd, unix::fs::MetadataExt};
@@ -86,15 +87,19 @@ fn gpu_lease_controlled(root: &Path, phase: &str, stop: Option<&AtomicBool>) -> 
             std::env::var_os("JOPE_GPU_WORKER_ACTIVE").is_some(),
             "GPU lease bypass outside resident worker"
         );
+        // SAFETY: dup takes a plain integer and never affects the original descriptor; a number
+        // that is not open makes it return -1, which is checked below.
         let copied = unsafe { libc::dup(fd.parse()?) };
         ensure!(copied >= 0, "resident task lost its GPU lease");
+        // SAFETY: dup just returned `copied` as a fresh nonnegative descriptor no one else owns;
+        // File takes sole ownership and closes it once, leaving the worker's original open.
         let lease = unsafe { fs::File::from_raw_fd(copied) };
         let actual = lease.metadata()?;
         let expected = root.join("runs/encoding-service.lock").metadata()?;
         ensure!(
             actual.dev() == expected.dev()
                 && actual.ino() == expected.ino()
-                && unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+                && lease.try_lock().is_ok(),
             "resident GPU lease identity changed"
         );
         return Ok(lease);
@@ -110,7 +115,7 @@ fn gpu_lease_controlled(root: &Path, phase: &str, stop: Option<&AtomicBool>) -> 
         if std::env::var_os("JOPE_GPU_TASK_DEADLINE_MS").is_some() {
             crate::task_contract::gpu_task_deadline_ms()?;
         }
-        if unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
+        if lease.try_lock().is_ok() {
             return Ok(lease);
         }
         ensure!(
@@ -128,6 +133,8 @@ impl Drop for Ranks {
     fn drop(&mut self) {
         for child in &mut self.0 {
             if child.try_wait().ok().flatten().is_none() {
+                // SAFETY: kill takes only integers and has no memory-safety preconditions; the
+                // rank is unreaped, so the group id it took with setpgid(0, 0) is not reused.
                 unsafe {
                     libc::kill(-(child.id() as i32), libc::SIGKILL);
                 }
@@ -311,6 +318,8 @@ pub fn propose_with_generation(
         crate::gpu_worker::inherit_lease(&mut cmd, &_lease)?;
         cmd.env("JOPE_GPU_TASK_DEADLINE_MS", task_deadline.to_string());
         bind_parent_death(&mut cmd);
+        // SAFETY: the hook runs between fork and exec and only calls async-signal-safe setpgid;
+        // io::Error::last_os_error reads errno without allocating.
         unsafe {
             cmd.pre_exec(|| {
                 if libc::setpgid(0, 0) != 0 {
@@ -805,6 +814,8 @@ pub(crate) fn train_controlled(
                 }
             }
             bind_parent_death(&mut cmd);
+            // SAFETY: the hook runs between fork and exec and only calls async-signal-safe
+            // setpgid; io::Error::last_os_error reads errno without allocating.
             unsafe {
                 cmd.pre_exec(|| {
                     if libc::setpgid(0, 0) != 0 {
@@ -937,6 +948,8 @@ pub fn probe(world: usize, output: &Path, timeout: u64, fail_rank: Option<usize>
             .stdout(Stdio::from(log.try_clone()?))
             .stderr(Stdio::from(log));
         bind_parent_death(&mut cmd);
+        // SAFETY: the hook runs between fork and exec and only calls async-signal-safe setpgid;
+        // io::Error::last_os_error reads errno without allocating.
         unsafe {
             cmd.pre_exec(|| {
                 if libc::setpgid(0, 0) != 0 {
@@ -991,6 +1004,8 @@ pub fn probe(world: usize, output: &Path, timeout: u64, fail_rank: Option<usize>
     }
     if outcome.is_err() {
         for child in &mut children {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; it targets
+            // the process group each rank created with setpgid(0, 0); the result is ignored.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
@@ -1081,6 +1096,8 @@ pub fn training_probe(
             .env("OPENBLAS_NUM_THREADS", "1")
             .stdout(Stdio::from(log.try_clone()?))
             .stderr(Stdio::from(log));
+        // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls
+        // (setpgid, prctl, getppid); its errors are errno codes, so nothing allocates in the child.
         unsafe {
             let parent = libc::getpid();
             cmd.pre_exec(move || {
@@ -1090,7 +1107,9 @@ pub fn training_probe(
                     return Err(std::io::Error::last_os_error());
                 }
                 if libc::getppid() != parent {
-                    return Err(std::io::Error::other("probe controller exited"));
+                    // The controller exited: refuse with an errno, which does not allocate
+                    // (an io::Error carrying a message would box it in the forked child).
+                    return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
                 }
                 Ok(())
             });
@@ -1137,6 +1156,8 @@ pub fn training_probe(
     })();
     if result.is_err() {
         for child in &mut children.0 {
+            // SAFETY: kill takes only integers and has no memory-safety preconditions; it targets
+            // the process group each rank created with setpgid(0, 0); the result is ignored.
             unsafe {
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
@@ -1288,6 +1309,8 @@ mod campaign_deadline_tests {
     fn auxiliary_stop_reaps_only_owned_rank() {
         let mut command = Command::new("/bin/sleep");
         command.arg("30");
+        // SAFETY: the hook runs between fork and exec and only calls async-signal-safe setpgid;
+        // io::Error::last_os_error reads errno without allocating.
         unsafe {
             command.pre_exec(|| {
                 if libc::setpgid(0, 0) != 0 {
@@ -1309,6 +1332,8 @@ mod campaign_deadline_tests {
             .unwrap_err()
             .to_string()
             .contains("auxiliary training stopped"));
+        // SAFETY: kill with signal 0 sends nothing and has no memory-safety preconditions; it
+        // only probes whether the reaped rank's pid still exists.
         assert_eq!(unsafe { libc::kill(pid, 0) }, -1);
         assert_eq!(
             std::io::Error::last_os_error().raw_os_error(),
@@ -1323,6 +1348,8 @@ mod campaign_deadline_tests {
         fs::write(&checkpoint, b"durable checkpoint").unwrap();
         let mut command = Command::new("/bin/sleep");
         command.arg("30");
+        // SAFETY: the hook runs between fork and exec and only calls async-signal-safe setpgid;
+        // io::Error::last_os_error reads errno without allocating.
         unsafe {
             command.pre_exec(|| {
                 if libc::setpgid(0, 0) != 0 {
@@ -1346,6 +1373,8 @@ mod campaign_deadline_tests {
             .unwrap_err()
             .to_string()
             .contains("fixed campaign deadline"));
+        // SAFETY: kill with signal 0 sends nothing and has no memory-safety preconditions; it
+        // only probes whether the reaped rank's pid still exists.
         assert_eq!(unsafe { libc::kill(pid, 0) }, -1);
         assert_eq!(
             std::io::Error::last_os_error().raw_os_error(),
@@ -1407,6 +1436,8 @@ mod lifetime_tests {
                 break;
             }
             if start.elapsed() > Duration::from_secs(5) {
+                // SAFETY: kill takes only integers and has no memory-safety preconditions; it
+                // cleans up the fixture's surviving rank before the test fails.
                 unsafe {
                     libc::kill(pid.parse().unwrap(), libc::SIGKILL);
                 }

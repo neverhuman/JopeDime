@@ -1482,13 +1482,7 @@ impl CaptureLock {
             .truncate(false)
             .open(archive.join(LOCK_FILE))?;
         for attempt in 0..attempts.max(1) {
-            let rc = unsafe {
-                libc::flock(
-                    std::os::unix::io::AsRawFd::as_raw_fd(&file),
-                    libc::LOCK_EX | libc::LOCK_NB,
-                )
-            };
-            if rc == 0 {
+            if file.try_lock().is_ok() {
                 return Ok(Some(Self { file }));
             }
             if attempt + 1 < attempts.max(1) {
@@ -1501,12 +1495,7 @@ impl CaptureLock {
 
 impl Drop for CaptureLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(
-                std::os::unix::io::AsRawFd::as_raw_fd(&self.file),
-                libc::LOCK_UN,
-            );
-        }
+        let _ = self.file.unlock();
     }
 }
 

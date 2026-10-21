@@ -28,7 +28,6 @@ mod golden42_v3;
 mod ratchet;
 mod runtime;
 mod score_corpus;
-mod task;
 mod test_adaptive;
 
 jope_paths::once_str!(

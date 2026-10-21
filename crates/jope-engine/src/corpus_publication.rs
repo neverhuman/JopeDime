@@ -99,14 +99,13 @@ pub fn build(
         .file_name()
         .context("corpus name absent")?
         .to_string_lossy();
-    use std::os::fd::AsRawFd;
     let lock = fs::OpenOptions::new()
         .create(true)
         .truncate(false)
         .write(true)
         .open(output.with_file_name(format!(".{name}.lock")))?;
     ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+        lock.try_lock().is_ok(),
         "another packer owns this corpus publication"
     );
     let request = json!({"schema":"parallel.corpus_publication.v1", "contexts_sha256":contexts_sha,

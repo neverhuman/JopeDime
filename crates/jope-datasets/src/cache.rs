@@ -339,13 +339,19 @@ impl Fetcher<'_> {
                 .collect());
         }
         let coll = self.collection(selector).await?;
-        let mut rows = Vec::new();
-        for member in &coll.members {
-            let hash = crate::dataset_dir_hash(member)
-                .ok_or_else(|| anyhow!("collection member {member} is not a dataset id"))?;
-            rows.push(self.manifest(hash).await?);
-        }
-        Ok(rows)
+        // One manifest GET per member, up to PARALLEL_GETS in flight instead of one round trip
+        // at a time. `buffered` yields in member order, so the rows keep the collection's order
+        // and the first failing member (in order) is the error reported, as before.
+        use futures_util::stream::{self, StreamExt, TryStreamExt};
+        stream::iter(&coll.members)
+            .map(|member| async move {
+                let hash = crate::dataset_dir_hash(member)
+                    .ok_or_else(|| anyhow!("collection member {member} is not a dataset id"))?;
+                self.manifest(hash).await
+            })
+            .buffered(PARALLEL_GETS)
+            .try_collect()
+            .await
     }
 
     async fn ensure_blob(&self, sha256: &str, bytes: u64) -> Result<bool> {

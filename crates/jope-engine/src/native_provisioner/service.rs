@@ -25,6 +25,8 @@ struct Outbox {
 fn directory(path: &Path) -> Result<OwnedFd> {
     ensure!(path.is_absolute(), "absolute outbox directory required");
     let slash = CString::new("/")?;
+    // SAFETY: `slash` is a CString that outlives the call, so the path is NUL-terminated;
+    // without O_CREAT, open reads no mode argument.
     let fd = unsafe {
         libc::open(
             slash.as_ptr(),
@@ -32,6 +34,8 @@ fn directory(path: &Path) -> Result<OwnedFd> {
         )
     };
     ensure!(fd >= 0, "cannot open directory root");
+    // SAFETY: open just returned this nonnegative descriptor and nothing else owns it;
+    // OwnedFd becomes its sole owner and closes it once.
     let mut fd = unsafe { OwnedFd::from_raw_fd(fd) };
     for part in path.components() {
         let Component::Normal(name) = part else {
@@ -42,6 +46,8 @@ fn directory(path: &Path) -> Result<OwnedFd> {
             continue;
         };
         let name = CString::new(name.as_encoded_bytes())?;
+        // SAFETY: `fd` is an open OwnedFd for the call and `name` is a live CString
+        // (NUL-terminated); without O_CREAT, openat reads no mode argument.
         let next = unsafe {
             libc::openat(
                 fd.as_raw_fd(),
@@ -52,6 +58,8 @@ fn directory(path: &Path) -> Result<OwnedFd> {
         if next < 0 {
             return Err(std::io::Error::last_os_error().into());
         }
+        // SAFETY: openat just returned this nonnegative descriptor and nothing else owns it;
+        // OwnedFd becomes its sole owner; the replaced `fd` closes only its own descriptor.
         fd = unsafe { OwnedFd::from_raw_fd(next) };
     }
     Ok(fd)
@@ -62,6 +70,8 @@ fn at(fd: &OwnedFd, name: &str) -> Result<Vec<u8>> {
         "invalid outbox entry name"
     );
     let name = CString::new(name)?;
+    // SAFETY: `fd` is a borrowed OwnedFd, open for the call, and `name` is a live CString
+    // (NUL-terminated); without O_CREAT, openat reads no mode argument.
     let raw = unsafe {
         libc::openat(
             fd.as_raw_fd(),
@@ -72,6 +82,8 @@ fn at(fd: &OwnedFd, name: &str) -> Result<Vec<u8>> {
     if raw < 0 {
         return Err(std::io::Error::last_os_error().into());
     }
+    // SAFETY: openat just returned this nonnegative descriptor and nothing else owns it;
+    // File becomes its sole owner and closes it once.
     let mut file = unsafe { File::from_raw_fd(raw) };
     let before = file.metadata()?;
     ensure!(
@@ -218,6 +230,7 @@ pub async fn serve(config_path: &Path, poll_ms: u64, max_runtime_seconds: u64) -
         "invalid bounded provisioner service interval/runtime"
     );
     ensure!(
+        // SAFETY: geteuid has no preconditions and cannot fail.
         unsafe { libc::geteuid() } == 0,
         "root provisioner custody required"
     );
@@ -304,6 +317,7 @@ mod tests {
         std::os::unix::fs::symlink(t.path().join("d"), t.path().join("alias")).unwrap();
         assert!(directory(&t.path().join("alias")).is_err());
         let path = CString::new(t.path().join("d/fifo").as_os_str().as_encoded_bytes()).unwrap();
+        // SAFETY: `path` is a CString that outlives the call, so the path is NUL-terminated.
         assert_eq!(unsafe { libc::mkfifo(path.as_ptr(), 0o600) }, 0);
         assert!(at(&d, "fifo").is_err());
     }

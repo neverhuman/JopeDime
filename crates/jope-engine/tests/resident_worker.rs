@@ -3,10 +3,7 @@ use jope_parallel::manifest::*;
 use std::{
     fs,
     io::Write,
-    os::{
-        fd::AsRawFd,
-        unix::{fs::MetadataExt, net::UnixStream},
-    },
+    os::unix::{fs::MetadataExt, net::UnixStream},
     path::Path,
     process::{Child, Command, Stdio},
     time::{Duration, Instant},
@@ -75,10 +72,7 @@ fn replacement_worker_becomes_ready_while_parent_holds_the_gpu_lease() {
         .create_new(true)
         .open(root.join("runs/encoding-service.lock"))
         .unwrap();
-    assert_eq!(
-        unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
-        0
-    );
+    assert!(lease.try_lock().is_ok());
     let mut child = spawn(root, &pool);
     let state = ready(&mut child, &pool);
     assert_eq!(state["worker"]["process"]["pid"], child.0.id());

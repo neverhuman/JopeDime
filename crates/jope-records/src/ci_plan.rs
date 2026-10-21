@@ -79,12 +79,22 @@ fn gate_for_lane(lane: &str) -> Option<&'static str> {
     }
 }
 
+/// Selected lanes by name, and the path gates in their declared order.
+pub type Classification = (BTreeMap<String, bool>, Vec<(&'static str, bool)>);
+
+/// The run that a plan is bound to: the CI event and the commits and attempt it describes.
+pub struct PlanRun<'a> {
+    pub event: &'a str,
+    pub base_sha: &'a str,
+    pub source_sha: &'a str,
+    pub checkout_sha: &'a str,
+    pub run_id: &'a str,
+    pub attempt: i64,
+}
+
 /// Classify changed `paths` under `event` (`pull_request` or `workflow_dispatch`), returning
 /// `(lanes, gates)` with the exact lane and gate order of `deploy/ci/ci-plan.py`.
-pub fn classify(
-    paths: &[String],
-    event: &str,
-) -> Result<(BTreeMap<String, bool>, Vec<(&'static str, bool)>)> {
+pub fn classify(paths: &[String], event: &str) -> Result<Classification> {
     require!(
         event == "pull_request" || event == "workflow_dispatch",
         "unsupported fast CI event: {event}"
@@ -109,15 +119,18 @@ pub fn classify(
 
 /// Build the `jope.ci-plan/v1` JSON object.
 pub fn build_plan_value(
-    event: &str,
-    base_sha: &str,
-    source_sha: &str,
-    checkout_sha: &str,
-    run_id: &str,
-    attempt: i64,
+    run: &PlanRun<'_>,
     paths: &[String],
     lanes: &BTreeMap<String, bool>,
 ) -> Value {
+    let PlanRun {
+        event,
+        base_sha,
+        source_sha,
+        checkout_sha,
+        run_id,
+        attempt,
+    } = *run;
     let mut lane_dict = Dict::new();
     for lane in LANES {
         if let Some(&v) = lanes.get(lane) {
@@ -185,16 +198,15 @@ pub fn run_from_env(repo: &Path, output: &Path) -> Result<(String, bool)> {
         .parse()
         .map_err(|_| Error::Invalid("invalid GITHUB_RUN_ATTEMPT".into()))?;
 
-    let plan = build_plan_value(
-        &event,
-        &base,
-        &source_sha,
-        &checkout_sha,
-        &run_id,
+    let run = PlanRun {
+        event: &event,
+        base_sha: &base,
+        source_sha: &source_sha,
+        checkout_sha: &checkout_sha,
+        run_id: &run_id,
         attempt,
-        &paths,
-        &lanes,
-    );
+    };
+    let plan = build_plan_value(&run, &paths, &lanes);
     let rendered = format!("{}\n", pyjson::dumps(&plan, false, Some(2)));
     let mut file = OpenOptions::new()
         .write(true)
@@ -227,14 +239,14 @@ mod tests {
     fn docs_only_pull_request_runs_only_changes_and_hygiene() {
         let paths = vec!["docs/learning.md".to_owned(), "README.md".to_owned()];
         let (lanes, _) = classify(&paths, "pull_request").unwrap();
-        assert_eq!(lanes["changes"], true);
-        assert_eq!(lanes["hygiene"], true);
-        assert_eq!(lanes["rust-check"], false);
-        assert_eq!(lanes["rust-test"], false);
-        assert_eq!(lanes["emitters"], false);
-        assert_eq!(lanes["inputs"], false);
-        assert_eq!(lanes["python"], false);
-        assert_eq!(lanes["e2e-smoke"], false);
+        assert!(lanes["changes"]);
+        assert!(lanes["hygiene"]);
+        assert!(!lanes["rust-check"]);
+        assert!(!lanes["rust-test"]);
+        assert!(!lanes["emitters"]);
+        assert!(!lanes["inputs"]);
+        assert!(!lanes["python"]);
+        assert!(!lanes["e2e-smoke"]);
     }
 
     #[test]
@@ -322,7 +334,7 @@ mod tests {
     fn workflow_dispatch_enables_all_lanes() {
         let (lanes, _) = classify(&[], "workflow_dispatch").unwrap();
         for lane in LANES {
-            assert_eq!(lanes[lane], true, "lane {lane} should be true");
+            assert!(lanes[lane], "lane {lane} should be true");
         }
     }
 
@@ -330,12 +342,12 @@ mod tests {
     fn feat_math_change_triggers_rust_emitters_and_e2e_only() {
         let paths = vec!["crates/feat-math/src/lib.rs".to_owned()];
         let (lanes, _) = classify(&paths, "pull_request").unwrap();
-        assert_eq!(lanes["rust-check"], true);
-        assert_eq!(lanes["rust-test"], true);
-        assert_eq!(lanes["emitters"], true);
-        assert_eq!(lanes["e2e-smoke"], true);
-        assert_eq!(lanes["inputs"], false);
-        assert_eq!(lanes["python"], false);
+        assert!(lanes["rust-check"]);
+        assert!(lanes["rust-test"]);
+        assert!(lanes["emitters"]);
+        assert!(lanes["e2e-smoke"]);
+        assert!(!lanes["inputs"]);
+        assert!(!lanes["python"]);
     }
 
     #[test]
@@ -347,20 +359,20 @@ mod tests {
             "docs/release/signing.pub",
         ] {
             let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
-            assert_eq!(lanes["rust-check"], true, "{path}");
-            assert_eq!(lanes["rust-test"], true, "{path}");
-            assert_eq!(lanes["e2e-smoke"], true, "{path}");
-            assert_eq!(lanes["emitters"], false, "{path}");
-            assert_eq!(lanes["inputs"], false, "{path}");
-            assert_eq!(lanes["python"], false, "{path}");
+            assert!(lanes["rust-check"], "{path}");
+            assert!(lanes["rust-test"], "{path}");
+            assert!(lanes["e2e-smoke"], "{path}");
+            assert!(!lanes["emitters"], "{path}");
+            assert!(!lanes["inputs"], "{path}");
+            assert!(!lanes["python"], "{path}");
         }
         let (lanes, _) = classify(
             &["models/bundles/hyperion-v7.json".to_owned()],
             "pull_request",
         )
         .unwrap();
-        assert_eq!(lanes["rust-test"], true);
-        assert_eq!(lanes["e2e-smoke"], false);
+        assert!(lanes["rust-test"]);
+        assert!(!lanes["e2e-smoke"]);
     }
 
     #[test]

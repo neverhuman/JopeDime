@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Repository pre-commit hook, enabled by `just setup` (git config core.hooksPath .githooks).
+#
+# 1. Secret scan of the staged changes (gitleaks, repository .gitleaks.toml). Blocking: a staged
+#    secret stops the commit. CI's hygiene lane scans the full history again (secret-scan.sh).
+# 2. Jankurai pre-commit gate on the staged files. Advisory unless agent/audit-policy.toml sets
+#    `[precommit_gate] blocking = true`; it reports new hard findings and score regressions.
+#
+# Each step is skipped, with a notice, when its tool is not installed, so a fresh clone can
+# still commit. Set JANKURAI_SKIP_HOOKS=1 to skip the jankurai step for one commit.
+set -euo pipefail
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --no-banner --config "$root/.gitleaks.toml"
+else
+  echo "pre-commit: gitleaks not installed; staged secret scan skipped (CI still scans)" >&2
+fi
+
+# The pinned binary that deploy/ci/install-jankurai.sh extracts, else one on PATH.
+jankurai=$(ls -d "$root"/target/jankurai/jankurai-*-x86_64-unknown-linux-gnu/jankurai 2>/dev/null \
+  | sort -V | tail -1 || true)
+[ -n "$jankurai" ] || jankurai=$(command -v jankurai || true)
+if [ "${JANKURAI_SKIP_HOOKS:-}" = 1 ]; then
+  echo "pre-commit: JANKURAI_SKIP_HOOKS=1; jankurai gate skipped" >&2
+elif [ -n "$jankurai" ]; then
+  "$jankurai" gate --staged-only "$root"
+else
+  echo "pre-commit: jankurai not installed; gate skipped (bash deploy/ci/install-jankurai.sh installs the pinned one)" >&2
+fi

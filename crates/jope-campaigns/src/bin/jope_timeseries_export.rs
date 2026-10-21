@@ -25,13 +25,8 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-fn sha256_file(path: &Path) -> Result<String> {
-    let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
-    Ok(Sha256::digest(&bytes)
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect())
-}
+/// Streamed (bounded memory); the same digest as hashing the whole file.
+use jope_dime_regressor::selfplay_runtime::sha256_file;
 
 fn finite_cell(value: f64) -> f64 {
     if value.is_finite() {

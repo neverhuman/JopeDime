@@ -149,7 +149,7 @@ fn existential_param_effect_witness_all_ops() {
                             && param.name == "preset"
                             && val == "none"
                         {
-                            format!("(pipe X (portfolio preset=none add1=ridge_gcv_raw))")
+                            "(pipe X (portfolio preset=none add1=ridge_gcv_raw))".to_owned()
                         } else {
                             format!("(pipe X ({} {}={}))", schema.op, param.name, val)
                         }

@@ -204,6 +204,15 @@ impl HistGbm2Model {
         let xh: Rows = hold_idx.iter().map(|&i| x[i].clone()).collect();
         let y_hold: Vec<f64> = hold_idx.iter().map(|&i| y[i]).collect();
         let init = mean(&ytr);
+        // Feature-major copy of the training values the split search and the partition read
+        // (`xcol[f * n_tr + i] == xtr[i][f]`): one contiguous column per feature instead of a
+        // row-pointer chase per cell. Same values, same comparisons.
+        let mut xcol = vec![0.0f64; n_feat * n_tr];
+        for (i, row) in xtr.iter().enumerate() {
+            for f in 0..n_feat {
+                xcol[f * n_tr + i] = row[f];
+            }
+        }
         // Pre-sort feature indices once; ties break on the row index so the
         // order matches a stable value sort in every implementation.
         let order: Vec<Vec<usize>> = (0..n_feat)
@@ -257,7 +266,8 @@ impl HistGbm2Model {
                     (0..n_tr).map(|i| f_tr[i] - ytr[i]).collect()
                 };
                 let tree = grow_leafwise(
-                    &xtr,
+                    &xcol,
+                    n_tr,
                     &order,
                     &grad,
                     &in_sample,
@@ -325,9 +335,11 @@ struct LeafGroup {
     threshold: f64,
 }
 
+/// `xcol` is the feature-major training matrix: `xcol[f * n_rows + i]` is row `i`, feature `f`.
 #[allow(clippy::too_many_arguments)]
 fn grow_leafwise(
-    x: &Rows,
+    xcol: &[f64],
+    n_rows: usize,
     order: &[Vec<usize>],
     grad: &[f64],
     in_sample: &[bool],
@@ -361,7 +373,7 @@ fn grow_leafwise(
         feature: 0,
         threshold: 0.0,
     };
-    find_best_split(x, grad, &mut root, col_ok, n_feat, min_leaf);
+    find_best_split(xcol, n_rows, grad, &mut root, col_ok, n_feat, min_leaf);
     let mut pool = vec![root];
     let mut leaf_count = 1usize;
     while leaf_count < max_leaves {
@@ -382,11 +394,19 @@ fn grow_leafwise(
         let thr = rec.threshold;
         let mut left_lists: Vec<Vec<usize>> = Vec::with_capacity(n_feat);
         let mut right_lists: Vec<Vec<usize>> = Vec::with_capacity(n_feat);
+        let split_col = &xcol[feat * n_rows..(feat + 1) * n_rows];
+        // Every feature's list holds the same rows, so the child sizes are known up front and
+        // each child list is allocated once at its exact size (stable partition, same order).
+        let n_left = rec.lists[0]
+            .iter()
+            .filter(|&&i| split_col[i] <= thr)
+            .count();
+        let n_right = rec.lists[0].len() - n_left;
         for f in 0..n_feat {
-            let mut l = Vec::new();
-            let mut r = Vec::new();
+            let mut l = Vec::with_capacity(n_left);
+            let mut r = Vec::with_capacity(n_right);
             for &i in &rec.lists[f] {
-                if x[i][feat] <= thr {
+                if split_col[i] <= thr {
                     l.push(i);
                 } else {
                     r.push(i);
@@ -426,7 +446,7 @@ fn grow_leafwise(
             feature: 0,
             threshold: 0.0,
         };
-        find_best_split(x, grad, &mut lrec, col_ok, n_feat, min_leaf);
+        find_best_split(xcol, n_rows, grad, &mut lrec, col_ok, n_feat, min_leaf);
         pool.push(lrec);
         let mut rrec = LeafGroup {
             node: ri,
@@ -437,7 +457,7 @@ fn grow_leafwise(
             feature: 0,
             threshold: 0.0,
         };
-        find_best_split(x, grad, &mut rrec, col_ok, n_feat, min_leaf);
+        find_best_split(xcol, n_rows, grad, &mut rrec, col_ok, n_feat, min_leaf);
         pool.push(rrec);
         leaf_count += 1;
     }
@@ -449,7 +469,8 @@ fn grow_leafwise(
 /// order means the lowest feature/threshold index wins ties. Features with
 /// `col_ok[f] == false` are skipped (per-tree column subsampling).
 fn find_best_split(
-    x: &Rows,
+    xcol: &[f64],
+    n_rows: usize,
     grad: &[f64],
     rec: &mut LeafGroup,
     col_ok: &[bool],
@@ -468,6 +489,7 @@ fn find_best_split(
             continue;
         }
         let lst = &rec.lists[f];
+        let col = &xcol[f * n_rows..(f + 1) * n_rows];
         let mut gl = 0.0;
         for t in 0..(m - 1) {
             let i = lst[t];
@@ -479,8 +501,8 @@ fn find_best_split(
             if m - cnt < min_leaf {
                 break;
             }
-            let v = x[i][f];
-            if v < x[lst[t + 1]][f] {
+            let v = col[i];
+            if v < col[lst[t + 1]] {
                 let hl = cnt as f64;
                 let hr = (m - cnt) as f64;
                 let gr = rec.g - gl;

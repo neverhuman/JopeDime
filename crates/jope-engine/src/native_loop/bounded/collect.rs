@@ -477,6 +477,7 @@ pub(crate) fn der_element(b: &[u8]) -> Result<DerElement<'_>> {
 pub fn local_addresses() -> Result<BTreeSet<IpAddr>> {
     let mut head: *mut libc::ifaddrs = std::ptr::null_mut();
     ensure!(
+        // SAFETY: `head` is a live local out-pointer; on success the list is freed once below.
         unsafe { libc::getifaddrs(&mut head) } == 0,
         "getifaddrs: {}",
         std::io::Error::last_os_error()
@@ -489,10 +490,14 @@ pub fn local_addresses() -> Result<BTreeSet<IpAddr>> {
         if !ifa.ifa_addr.is_null() {
             match i32::from(unsafe { (*ifa.ifa_addr).sa_family }) {
                 libc::AF_INET => {
+                    // SAFETY: sa_family is AF_INET, so getifaddrs stored a sockaddr_in at
+                    // `ifa_addr`; it lives in the list until freeifaddrs below.
                     let sa = unsafe { &*(ifa.ifa_addr as *const libc::sockaddr_in) };
                     out.insert(IpAddr::V4(Ipv4Addr::from(u32::from_be(sa.sin_addr.s_addr))));
                 }
                 libc::AF_INET6 => {
+                    // SAFETY: sa_family is AF_INET6, so getifaddrs stored a sockaddr_in6 at
+                    // `ifa_addr`; it lives in the list until freeifaddrs below.
                     let sa = unsafe { &*(ifa.ifa_addr as *const libc::sockaddr_in6) };
                     out.insert(IpAddr::V6(Ipv6Addr::from(sa.sin6_addr.s6_addr)));
                 }
@@ -501,11 +506,14 @@ pub fn local_addresses() -> Result<BTreeSet<IpAddr>> {
         }
         cursor = ifa.ifa_next;
     }
+    // SAFETY: `head` is the list the successful getifaddrs allocated, freed exactly once here;
+    // no reference into it (`ifa`, `sa`) outlives the loop above.
     unsafe { libc::freeifaddrs(head) };
     Ok(out)
 }
 
 fn online_cpu_millicores() -> Result<u32> {
+    // SAFETY: sysconf takes a constant by value and has no preconditions; -1 is checked below.
     let n = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
     ensure!(n > 0, "online CPU count unavailable");
     u32::try_from(n)

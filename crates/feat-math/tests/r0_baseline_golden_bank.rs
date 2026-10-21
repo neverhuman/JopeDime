@@ -10,6 +10,7 @@
 //!    - 55 `compat_freeze` (`emitted_bytes.v1.json` + `model_serde.v1.json`) programs
 //!    - 5 `legacy_v2_freeze` representative fixtures
 //!    - 4 `historical_v1` wire-alias fixtures
+//!
 //!    Total = 64 golden fixtures verified bit-identical against frozen hashes and prediction bits.
 
 use feat_math::kernel::ir::legacy_bridge::{BridgeStatus, LegacyBridge};

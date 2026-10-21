@@ -24,7 +24,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::os::fd::AsFd;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
@@ -925,7 +924,7 @@ impl SingleInstanceLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
-        if flock::exclusive(file.as_fd(), false).is_err() {
+        if flock::exclusive(&file, false).is_err() {
             bail!(
                 "another micro-wave supply supervisor owns {}",
                 path.display()

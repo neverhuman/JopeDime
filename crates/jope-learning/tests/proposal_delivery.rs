@@ -174,7 +174,7 @@ fn ten_thousand_duplicate_transports_keep_draws_and_authorize_one_fit() -> Resul
     assert!(outbox.status(&key)?.attempts[0]
         .ack_sha256
         .as_deref()
-        .is_some_and(|sha| jope_learning::canon::is_hex64(sha)));
+        .is_some_and(jope_learning::canon::is_hex64));
     drop(outbox);
     let mut recovered = ProposalOutbox::open(&root, PendingLimits::DRAFT, &FixtureAccepted)?;
     assert_eq!(recovered.status(&key)?.attempts[0].physical_cost_units, 7);

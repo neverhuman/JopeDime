@@ -1,13 +1,8 @@
-#[path = "../src/combinators/residual.rs"]
-#[allow(dead_code)]
-mod residual;
-#[path = "../src/combinators/route.rs"]
-mod route;
-#[path = "../src/combinators/union.rs"]
-mod union;
-
-use residual::FitRole;
-use union::{Action, ColumnRef, DenseInput, FitEffect, GraphError, Limits, Node, Program, Schema};
+use feat_math::combinators::residual::FitRole;
+use feat_math::combinators::route;
+use feat_math::combinators::union::{
+    Action, ColumnRef, DenseInput, FitEffect, GraphError, Limits, Node, Program, Schema,
+};
 
 fn limits(width: usize, fuel: u64) -> Limits {
     Limits {

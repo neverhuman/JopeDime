@@ -141,6 +141,14 @@ fn ingest_upload_fetch_verify_roundtrip() {
         (3, 3, 6),
         "{r:?}"
     );
+    // Member manifests are fetched concurrently; the rows still come back in member order.
+    let rows = rt().block_on(f.resolve("test-3")).unwrap();
+    let resolved: Vec<&str> = rows.iter().map(|row| row.dataset_hash.as_str()).collect();
+    let expected: Vec<&str> = members
+        .iter()
+        .map(|member| jope_datasets::dataset_dir_hash(member).unwrap())
+        .collect();
+    assert_eq!(resolved, expected);
     assert!(cache
         .collections_dir()
         .join("test-3")

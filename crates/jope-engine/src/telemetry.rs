@@ -87,15 +87,21 @@ impl StageHeartbeat {
                 receiver.recv_timeout(interval),
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout)
             );
-            let mut value = shared
-                .lock()
-                .map_err(|_| anyhow::anyhow!("stage progress poisoned"))?;
-            let timestamp = now();
-            value["timestamp"] = timestamp.into();
-            value["expires_at"] = timestamp.saturating_add(10).into();
-            value["heartbeat_sequence"] =
-                (value["heartbeat_sequence"].as_u64().unwrap_or(0) + 1).into();
-            write_json(&path, &*value)?;
+            // Update and serialize under the lock, then release it before the fsync'd atomic
+            // write, so `advance`/`publish` callers on the work path never wait on the disk.
+            // Only this thread writes the file, so sequence order is unchanged.
+            let bytes = {
+                let mut value = shared
+                    .lock()
+                    .map_err(|_| anyhow::anyhow!("stage progress poisoned"))?;
+                let timestamp = now();
+                value["timestamp"] = timestamp.into();
+                value["expires_at"] = timestamp.saturating_add(10).into();
+                value["heartbeat_sequence"] =
+                    (value["heartbeat_sequence"].as_u64().unwrap_or(0) + 1).into();
+                serde_json::to_vec_pretty(&*value)?
+            };
+            crate::manifest::atomic_write(&path, &bytes)?;
             if stopping {
                 return Ok(());
             }
@@ -450,7 +456,10 @@ impl Sampler {
         h.ram_used_gb = h.ram_total_gb - h.available_gb;
         if let Ok(path) = std::ffi::CString::new(root.as_os_str().as_encoded_bytes()) {
             let mut stat = std::mem::MaybeUninit::<libc::statvfs>::uninit();
+            // SAFETY: `path` is a CString that outlives the call, so it is NUL-terminated; `stat`
+            // is writable, aligned storage for exactly one statvfs, which the call fills.
             if unsafe { libc::statvfs(path.as_ptr(), stat.as_mut_ptr()) } == 0 {
+                // SAFETY: statvfs returned 0, so it has initialized every field of `stat`.
                 let stat = unsafe { stat.assume_init() };
                 h.disk_free_gb = stat.f_bavail as f64 * stat.f_frsize as f64 / 1024f64.powi(3);
             }

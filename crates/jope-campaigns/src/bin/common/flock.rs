@@ -1,24 +1,21 @@
 //! Exclusive advisory locking shared by the campaign binaries.
 
+use std::fs::{File, TryLockError};
 use std::io;
-use std::os::fd::{AsRawFd, BorrowedFd};
 
 /// Lock this open file description until all its descriptors are closed.
 /// Nonblocking contention returns EWOULDBLOCK (`ErrorKind::WouldBlock`); other
 /// failures retain their OS error. Neither kind of failure is retried here.
-pub fn exclusive(fd: BorrowedFd<'_>, blocking: bool) -> io::Result<()> {
-    let operation: libc::c_int = if blocking {
-        libc::LOCK_EX
-    } else {
-        libc::LOCK_EX | libc::LOCK_NB
-    };
-    // SAFETY: BorrowedFd borrows the caller's live File for this synchronous call.
-    // RawFd and the libc flags have the c_int ABI; flock takes no pointers and
-    // neither closes nor transfers the descriptor. File retains its ownership.
-    let status = unsafe { libc::flock(fd.as_raw_fd(), operation) };
-    if status != 0 {
-        Err(io::Error::last_os_error())
-    } else {
-        Ok(())
+///
+/// std's `File::lock`/`File::try_lock` are a single `flock(2)` call with
+/// `LOCK_EX`/`LOCK_EX | LOCK_NB` on Linux, so no unsafe code is needed.
+pub fn exclusive(file: &File, blocking: bool) -> io::Result<()> {
+    if blocking {
+        return file.lock();
     }
+    file.try_lock().map_err(|error| match error {
+        // Keep the raw errno so callers' messages stay "Resource temporarily unavailable".
+        TryLockError::WouldBlock => io::Error::from_raw_os_error(libc::EWOULDBLOCK),
+        TryLockError::Error(error) => error,
+    })
 }

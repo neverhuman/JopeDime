@@ -368,14 +368,13 @@ pub fn run(
         "cycle paths must be absolute"
     );
     fs::create_dir_all(output)?;
-    use std::os::fd::AsRawFd;
     let _lock = fs::OpenOptions::new()
         .create(true)
         .truncate(false)
         .write(true)
         .open(output.join("cycle.lock"))?;
     ensure!(
-        unsafe { libc::flock(_lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+        _lock.try_lock().is_ok(),
         "another controller owns this cycle directory"
     );
     let (executable, executable_sha) = verify_cycle_identity(

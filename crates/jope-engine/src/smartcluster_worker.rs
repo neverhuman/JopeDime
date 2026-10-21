@@ -473,12 +473,18 @@ fn current_job(
 }
 
 fn retain_control_descriptor(descriptor: i32) -> Result<UnixStream> {
+    // SAFETY: F_DUPFD_CLOEXEC takes an integer minimum and touches no memory; an invalid
+    // `descriptor` only yields -1 (EBADF), checked below.
     let duplicate = unsafe { libc::fcntl(descriptor, libc::F_DUPFD_CLOEXEC, 3) };
     ensure!(duplicate >= 0, "cannot retain control descriptor");
     ensure!(
+        // SAFETY: F_SETFD takes an integer flag and touches no memory; an invalid
+        // `descriptor` only yields -1, which is checked.
         unsafe { libc::fcntl(descriptor, libc::F_SETFD, libc::FD_CLOEXEC) } == 0,
         "cannot protect inherited control descriptor"
     );
+    // SAFETY: F_DUPFD_CLOEXEC just returned this fresh, nonnegative duplicate that nothing else
+    // owns; UnixStream becomes its sole owner and closes it once. `descriptor` stays separate.
     Ok(unsafe { UnixStream::from_raw_fd(duplicate) })
 }
 
@@ -917,9 +923,12 @@ fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
         let path = std::ffi::CString::new(path.as_os_str().as_encoded_bytes())?;
         let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
         ensure!(
+            // SAFETY: `path` is a CString that outlives the call (NUL-terminated) and `stats`
+            // has room for the one statvfs that statvfs writes.
             unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } == 0,
             "storage measurement unavailable"
         );
+        // SAFETY: statvfs returned 0 (checked above), so it filled every field of `stats`.
         let stats = unsafe { stats.assume_init() };
         ensure!(
             stats.f_bavail.saturating_mul(stats.f_frsize) >= *reserve,
@@ -1076,10 +1085,7 @@ fn execute(
         .truncate(false)
         .write(true)
         .open(directory.join("lock"))?;
-    ensure!(
-        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "task is already executing"
-    );
+    ensure!(lock.try_lock().is_ok(), "task is already executing");
     let intent = json!({"manifest_sha256":sha,"task":task,"input_manifest_sha256":task.input_manifest_sha256,"operation":input.operation,"output_receipt":input.output_receipt});
     let intent_path = directory.join("intent.json");
     if intent_path.exists() {
@@ -1547,10 +1553,13 @@ impl ScratchGuard {
             &task.task_id,
         ))?));
         fs::create_dir_all(&path)?;
+        let within = |usage: ScratchUsage| {
+            usage.task <= task.resources.scratch_bytes
+                && usage.allocation <= inherited_budget
+                && usage.root <= SCRATCH_ROOT_LIMIT
+        };
         ensure!(
-            tree_bytes(&path)? <= task.resources.scratch_bytes
-                && tree_bytes(&allocation_root)? <= inherited_budget
-                && tree_bytes(&inherited_root)? <= 32 * 1024 * 1024 * 1024,
+            within(scratch_usage(&inherited_root, &allocation_root, &path)?),
             "retained scratch exceeds task reservation"
         );
         std::env::set_var("TMPDIR", &path);
@@ -1559,15 +1568,21 @@ impl ScratchGuard {
         let state = state.to_owned();
         let thread = std::thread::spawn(move || {
             while !observed.load(Ordering::Acquire) {
-                if !tree_bytes(&path).is_ok_and(|bytes| bytes <= budget)
-                    || !tree_bytes(&allocation_root).is_ok_and(|bytes| bytes <= inherited_budget)
-                    || !tree_bytes(&inherited_root)
-                        .is_ok_and(|bytes| bytes <= 32 * 1024 * 1024 * 1024)
-                {
+                // One walk of the shared root per tick yields all three totals (the task and
+                // allocation directories are inside it); walking each tree separately stat'ed
+                // the task's files three times every 100 ms.
+                let usage = scratch_usage(&inherited_root, &allocation_root, &path);
+                if !usage.is_ok_and(|usage| {
+                    usage.task <= budget
+                        && usage.allocation <= inherited_budget
+                        && usage.root <= SCRATCH_ROOT_LIMIT
+                }) {
                     let _ = write_json(
                         &state.join("scratch-violation.json"),
                         &json!({"budget":budget,"path":path,"action":"terminate_and_preserve_attempt"}),
                     );
+                    // SAFETY: _exit has no preconditions. Skipping destructors and flushes is
+                    // intended: the over-budget task stops now, after a best-effort record.
                     unsafe {
                         libc::_exit(78);
                     }
@@ -1589,18 +1604,68 @@ impl Drop for ScratchGuard {
         }
     }
 }
-fn tree_bytes(path: &Path) -> Result<u64> {
-    let mut total = 0u64;
-    for entry in walkdir::WalkDir::new(path).follow_links(false) {
-        let entry = entry?;
+/// Byte cap on the whole inherited scratch root.
+const SCRATCH_ROOT_LIMIT: u64 = 32 * 1024 * 1024 * 1024;
+
+/// Regular-file bytes under the scratch root, its allocation directory and the task directory.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct ScratchUsage {
+    root: u64,
+    allocation: u64,
+    task: u64,
+}
+
+/// Sums [`ScratchUsage`] in one walk of `root` (`allocation` and `task` are inside it). A
+/// symlink anywhere is refused. A file or directory that disappears between the directory read
+/// and its `lstat` is a temporary file the task removed (TMPDIR points here), not a violation, so
+/// it is skipped. The root, allocation and task directories themselves must exist (each
+/// separate walk used to fail on a missing one): the root as a directory, possibly behind a link
+/// as before (walkdir follows a root link), the other two as physical directories. Every other
+/// error still fails closed. Entries renamed during a walk are counted on the next tick.
+fn scratch_usage(root: &Path, allocation: &Path, task: &Path) -> Result<ScratchUsage> {
+    let root_metadata =
+        fs::metadata(root).with_context(|| format!("scratch root {}", root.display()))?;
+    ensure!(root_metadata.is_dir(), "scratch root is not a directory");
+    for directory in [allocation, task] {
+        let metadata = fs::symlink_metadata(directory)
+            .with_context(|| format!("scratch directory {}", directory.display()))?;
+        ensure!(
+            metadata.is_dir(),
+            "scratch path is not a physical directory: {}",
+            directory.display()
+        );
+    }
+    let vanished = |error: &std::io::Error| error.kind() == std::io::ErrorKind::NotFound;
+    let mut usage = ScratchUsage {
+        root: 0,
+        allocation: 0,
+        task: 0,
+    };
+    for entry in walkdir::WalkDir::new(root).follow_links(false) {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(error) if error.depth() > 0 && error.io_error().is_some_and(vanished) => continue,
+            Err(error) => return Err(error.into()),
+        };
         ensure!(!entry.file_type().is_symlink(), "scratch symlink rejected");
-        if entry.file_type().is_file() {
-            total = total
-                .checked_add(entry.metadata()?.len())
-                .context("scratch size overflow")?;
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        let bytes = match entry.metadata() {
+            Ok(metadata) => metadata.len(),
+            Err(error) if error.io_error().is_some_and(vanished) => continue,
+            Err(error) => return Err(error.into()),
+        };
+        let add = |total: u64| total.checked_add(bytes).context("scratch size overflow");
+        usage.root = add(usage.root)?;
+        if entry.path().starts_with(allocation) {
+            usage.allocation = add(usage.allocation)?;
+            if entry.path().starts_with(task) {
+                usage.task = add(usage.task)?;
+            }
         }
     }
-    Ok(total)
+    Ok(usage)
 }
 
 struct DeadlineWatch {
@@ -1624,6 +1689,8 @@ impl DeadlineWatch {
                     || started.elapsed()
                         >= remaining.saturating_add(Duration::from_millis(allowance))
                 {
+                    // SAFETY: _exit has no preconditions. Skipping destructors and flushes is
+                    // intended: past deadline plus allowance the process is ended at once.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -1679,6 +1746,8 @@ fn stop_control_with(
         tv_sec: 0,
         tv_nsec: 0,
     };
+    // SAFETY: `clock` is a live, initialized timespec that clock_gettime overwrites;
+    // CLOCK_MONOTONIC is a valid clock id.
     let monotonic_ns = if unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut clock) } == 0 {
         u64::try_from(clock.tv_sec)
             .ok()
@@ -1795,6 +1864,8 @@ pub fn serve(path: &Path, sha: &str) -> Result<()> {
                     std::thread::sleep(
                         deadline.saturating_duration_since(std::time::Instant::now()),
                     );
+                    // SAFETY: _exit has no preconditions. Skipping destructors and flushes is
+                    // intended: a worker still running past its checkpoint allowance is killed.
                     unsafe {
                         libc::_exit(76);
                     }
@@ -2222,15 +2293,48 @@ mod tests {
     fn scratch_accounting_rejects_symlink_escape() {
         let dir = tempfile::tempdir().unwrap();
         fs::write(dir.path().join("bytes"), [0u8; 4096]).unwrap();
-        assert_eq!(tree_bytes(dir.path()).unwrap(), 4096);
+        fs::create_dir_all(dir.path().join("a/t")).unwrap();
+        let usage = |root: &Path| scratch_usage(root, &root.join("a"), &root.join("a/t"));
+        assert_eq!(
+            usage(dir.path()).unwrap(),
+            ScratchUsage {
+                root: 4096,
+                allocation: 0,
+                task: 0
+            }
+        );
         std::os::unix::fs::symlink("/tmp", dir.path().join("escape")).unwrap();
-        assert!(tree_bytes(dir.path()).is_err());
+        assert!(usage(dir.path()).is_err());
+    }
+    #[test]
+    fn scratch_accounting_sums_nested_buckets_in_one_walk_and_needs_its_root() {
+        let dir = tempfile::tempdir().unwrap();
+        let (root, allocation) = (dir.path(), dir.path().join("job"));
+        let task = allocation.join("task");
+        fs::create_dir_all(task.join("deep")).unwrap();
+        fs::write(root.join("other"), [0u8; 10]).unwrap();
+        fs::write(allocation.join("sibling"), [0u8; 100]).unwrap();
+        fs::write(task.join("deep/file"), [0u8; 1000]).unwrap();
+        // A same-prefix name next to the task directory is not inside it.
+        fs::write(allocation.join("task-not"), [0u8; 7]).unwrap();
+        assert_eq!(
+            scratch_usage(root, &allocation, &task).unwrap(),
+            ScratchUsage {
+                root: 1117,
+                allocation: 1107,
+                task: 1000
+            }
+        );
+        assert!(scratch_usage(&root.join("absent"), &allocation, &task).is_err());
+        assert!(scratch_usage(root, &allocation, &allocation.join("absent")).is_err());
+        assert!(scratch_usage(root, &root.join("absent"), &task).is_err());
     }
     #[test]
     fn closure_fifo_is_rejected_without_waiting_for_writer() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("fifo");
         let name = std::ffi::CString::new(path.as_os_str().as_encoded_bytes()).unwrap();
+        // SAFETY: `name` is a CString that outlives the call, so the path is NUL-terminated.
         assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
         let started = std::time::Instant::now();
         assert!(read_closure(
@@ -2275,9 +2379,13 @@ mod tests {
     fn control_descriptor_is_absent_after_child_exec() {
         let (stream, _) = UnixStream::pair().unwrap();
         let fd = stream.as_raw_fd();
+        // SAFETY: `stream` stays alive for the whole test, so `fd` is open; F_SETFD takes an
+        // integer flag and touches no memory.
         assert_eq!(unsafe { libc::fcntl(fd, libc::F_SETFD, 0) }, 0);
         let retained = retain_control_descriptor(fd).unwrap();
         assert!(
+            // SAFETY: `retained` is a live UnixStream, so its descriptor is open; F_GETFD takes
+            // no third argument and only reads the descriptor flags.
             unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFD) } & libc::FD_CLOEXEC != 0
         );
         let status = std::process::Command::new("python3")

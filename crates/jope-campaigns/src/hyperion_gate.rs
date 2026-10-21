@@ -3833,6 +3833,8 @@ struct EncoderRun {
 
 fn encoder_process_group_exists(pid: libc::pid_t) -> Result<bool, String> {
     #[cfg(unix)]
+    // SAFETY: kill with signal 0 sends nothing and reads no memory; every caller passes a
+    // spawned child's PID (never 0 or 1), so -pid names one process group.
     unsafe {
         if libc::kill(-pid, 0) == 0 {
             return Ok(true);
@@ -3866,6 +3868,8 @@ fn wait_for_encoder_group_exit(pid: libc::pid_t, grace: Duration) -> Result<bool
 fn terminate_encoder_group(child: &mut std::process::Child, grace: Duration) -> Result<(), String> {
     let pid = child.id() as libc::pid_t;
     #[cfg(unix)]
+    // SAFETY: kill reads no memory; pid is the spawned child's PID (never 0 or 1), so -pid names
+    // one process group and never the 0/-1 broadcast forms.
     unsafe {
         if libc::kill(-pid, libc::SIGTERM) != 0
             && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH)
@@ -3893,6 +3897,8 @@ fn terminate_encoder_group(child: &mut std::process::Child, grace: Duration) -> 
         thread::sleep(Duration::from_millis(10));
     }
     #[cfg(unix)]
+    // SAFETY: kill reads no memory; pid is the spawned child's PID (never 0 or 1), so -pid names
+    // one process group and never the 0/-1 broadcast forms.
     unsafe {
         if libc::kill(-pid, libc::SIGKILL) != 0
             && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH)
@@ -3980,6 +3986,8 @@ fn run_encoder_with_timeout(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(unix)]
+    // SAFETY: the hook runs between fork and exec and makes only async-signal-safe calls (setsid,
+    // prctl, getppid); its errors are errno codes, so nothing allocates in the child.
     unsafe {
         let parent_pid = std::process::id() as libc::pid_t;
         command.pre_exec(move || {
@@ -3990,10 +3998,9 @@ fn run_encoder_with_timeout(
                 return Err(std::io::Error::last_os_error());
             }
             if libc::getppid() != parent_pid {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::BrokenPipe,
-                    "Hyperion parent exited during encoder spawn",
-                ));
+                // The parent exited: refuse with an errno, which does not allocate
+                // (an io::Error carrying a message would box it in the forked child).
+                return Err(std::io::Error::from_raw_os_error(libc::ESRCH));
             }
             Ok(())
         });

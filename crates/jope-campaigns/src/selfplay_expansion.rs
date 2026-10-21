@@ -257,17 +257,14 @@ impl FileLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
-        ensure!(result == 0, "lock failed: {}", path.display());
+        ensure!(file.lock().is_ok(), "lock failed: {}", path.display());
         Ok(Self(file))
     }
 }
 
 impl Drop for FileLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.0.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.0.unlock();
     }
 }
 
@@ -598,6 +595,8 @@ fn copy_reflink_or_copy(source: &Path, destination: &Path) -> Result<()> {
     // Linux FICLONE; unsupported filesystems return an error and fall back to
     // buffered std::fs::copy.
     let cloned =
+        // SAFETY: FICLONE (_IOW(0x94, 9, int)) takes the source fd by value, not a pointer;
+        // `output` and `input` are open Files that outlive this call.
         unsafe { libc::ioctl(output.as_raw_fd(), 0x4004_9409_u64, input.as_raw_fd()) } == 0;
     drop(output);
     if !cloned {
