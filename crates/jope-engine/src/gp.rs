@@ -1322,7 +1322,10 @@ fn evaluate_tables(
     let (vx, vy) = xy(va);
     let g = GenomeIr::parse(&fs::read_to_string(genome)?)?;
     let start = Instant::now();
-    let feature_view = raw_feature_view(&hash(&csv_bytes(tr)?), preprocessing)?;
+    // Each table's canonical CSV digest is computed once and reused for the
+    // feature view, baseline evidence and score identity (identical bytes).
+    let training_sha256 = hash(&csv_bytes(tr)?);
+    let feature_view = raw_feature_view(&training_sha256, preprocessing)?;
     let fitted = crate::fit_boundary::fit(
         &g.canonical(),
         x,
@@ -1343,6 +1346,7 @@ fn evaluate_tables(
     m["primary_metric"] = json!(crate::task_contract::primary_metric(task)?);
     m["seconds"] = json!(start.elapsed().as_secs_f64());
     m["semantic_sha256"] = json!(hash(&serde_json::to_vec(&pred)?));
+    let scoring_sha256 = hash(&csv_bytes(va)?);
     // Produce the baseline from the very same authorized cut arrays. This is
     // a new diagnostic; historical results without it stay unavailable.
     let training_mean = tr.iter().map(|row| row[row.len() - 1]).sum::<f64>() / tr.len() as f64;
@@ -1355,7 +1359,7 @@ fn evaluate_tables(
             "rule":"training_target_mean_on_scoring_rows","units":"cut_normalized_target",
             "rmse":baseline["rmse"],"training_target_mean":training_mean,
             "training_rows":tr.len(),"scoring_rows":va.len(),
-            "training_sha256":hash(&csv_bytes(tr)?),"scoring_sha256":hash(&csv_bytes(va)?),
+            "training_sha256":training_sha256,"scoring_sha256":scoring_sha256,
             "preprocessing_sha256":hash(preprocessing)});
     } else {
         m["baseline_status"] = json!("nonfinite baseline; ratios unavailable");
@@ -1373,7 +1377,7 @@ fn evaluate_tables(
     )?)?;
     let score_identity = json!({"schema":"parallel.gp_score_identity.v1",
         "fit_key":receipt.fit_key,"model_sha256":receipt.model_sha256,
-        "training_rows_sha256":hash(&csv_bytes(tr)?),"scoring_rows_sha256":hash(&csv_bytes(va)?),
+        "training_rows_sha256":training_sha256,"scoring_rows_sha256":scoring_sha256,
         "preprocessing_sha256":hash(preprocessing),"task":task,
         "primary_metric":m["primary_metric"],"metric_units":m["units"],
         "evaluator_protocol":crate::label_admission::PROTOCOL,
