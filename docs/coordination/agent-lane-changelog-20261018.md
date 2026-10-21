@@ -1,3 +1,7 @@
+<!-- Archived 2026-10-21 from `.agent/CHANGELOG.md`, which was tracked although `.agent/` is the ignored per-host agent area. -->
+<!-- Verbatim body below the blank line; body SHA-256 9ab6e1fc3434a2ef9f8131532acb4f686453acc8e5de3d7cbdce3fe644d5d328. -->
+<!-- Historical record, not current status. -->
+
 ## 2026-10-18 03:47 UTC | TASK I03 | T3 gpt-6.1-sol xhigh | lane 1369684.jope_i03_codex
 - worktree/branch: /home/ubuntu/JopeDime/.agent/worktrees/lane-i03-20261018 @ lane/selfplay-i03-20261018
 - commits: base 85d7304a11462bb782607cbc780108408a930777 (I01 + I02 + I07)
