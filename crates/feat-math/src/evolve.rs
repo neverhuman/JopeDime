@@ -1699,9 +1699,7 @@ fn mutate_v2(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize, vocab: &[&str]
     }
     let mut stages = tf;
     stages.push(head);
-    let program = DslExpr { stages };
-    crate::capture_gp_source!("legacy-operator", "mutate_v2", &program.to_string());
-    program
+    DslExpr { stages }
 }
 
 fn mutate(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize) -> DslExpr {
@@ -1745,9 +1743,7 @@ fn mutate(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize) -> DslExpr {
     }
     let mut stages = tf;
     stages.push(head);
-    let program = DslExpr { stages };
-    crate::capture_gp_source!("legacy-operator", "mutate", &program.to_string());
-    program
+    DslExpr { stages }
 }
 
 fn crossover(rng: &mut Pcg32, a: &DslExpr, b: &DslExpr, max_transforms: usize) -> DslExpr {
@@ -1761,7 +1757,35 @@ fn crossover(rng: &mut Pcg32, a: &DslExpr, b: &DslExpr, max_transforms: usize) -
     let head = if rng.next_f64() < 0.5 { ha } else { hb };
     let mut stages = tf;
     stages.push(head.unwrap_or_else(|| rand_head(rng)));
-    let program = DslExpr { stages };
+    DslExpr { stages }
+}
+
+// Keep the immutable legacy bodies above byte-for-byte intact. All production
+// callers cross these observation seams before selection or population admission.
+fn mutate_with_source_capture(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize) -> DslExpr {
+    let program = mutate(rng, g, max_transforms);
+    crate::capture_gp_source!("legacy-operator", "mutate", &program.to_string());
+    program
+}
+
+fn mutate_v2_with_source_capture(
+    rng: &mut Pcg32,
+    g: &DslExpr,
+    max_transforms: usize,
+    vocab: &[&str],
+) -> DslExpr {
+    let program = mutate_v2(rng, g, max_transforms, vocab);
+    crate::capture_gp_source!("legacy-operator", "mutate_v2", &program.to_string());
+    program
+}
+
+fn crossover_with_source_capture(
+    rng: &mut Pcg32,
+    a: &DslExpr,
+    b: &DslExpr,
+    max_transforms: usize,
+) -> DslExpr {
+    let program = crossover(rng, a, b, max_transforms);
     crate::capture_gp_source!("legacy-operator", "crossover", &program.to_string());
     program
 }
@@ -1786,7 +1810,12 @@ pub fn mutate_canonical_pipeline(
 ) -> Result<String, String> {
     let parent = parse_canonical_pipeline(source)?;
     let mut rng = Pcg32::new(seed, 0x5EED);
-    Ok(GenomeIr::Pipeline(mutate(&mut rng, &parent, max_transforms)).canonical())
+    Ok(GenomeIr::Pipeline(mutate_with_source_capture(
+        &mut rng,
+        &parent,
+        max_transforms,
+    ))
+    .canonical())
 }
 
 /// Deterministically cross two valid pipelines and return canonical pipeline DSL.
@@ -1802,7 +1831,13 @@ pub fn crossover_canonical_pipelines(
     let left = parse_canonical_pipeline(left)?;
     let right = parse_canonical_pipeline(right)?;
     let mut rng = Pcg32::new(seed, 0x5EED);
-    Ok(GenomeIr::Pipeline(crossover(&mut rng, &left, &right, max_transforms)).canonical())
+    Ok(GenomeIr::Pipeline(crossover_with_source_capture(
+        &mut rng,
+        &left,
+        &right,
+        max_transforms,
+    ))
+    .canonical())
 }
 
 /// v2 twin of `mutate_canonical_pipeline`: expansion-aware insert vocabulary,
@@ -1822,7 +1857,13 @@ pub fn mutate_canonical_pipeline_v2(
         vocab.extend_from_slice(&EXPANSION_TRANSFORMS);
     }
     let mut rng = Pcg32::new(seed, 0x5EED);
-    Ok(GenomeIr::Pipeline(mutate_v2(&mut rng, &parent, max_transforms, &vocab)).canonical())
+    Ok(GenomeIr::Pipeline(mutate_v2_with_source_capture(
+        &mut rng,
+        &parent,
+        max_transforms,
+        &vocab,
+    ))
+    .canonical())
 }
 
 /// Explicit mutation arms for train-only search protocols that seal an
@@ -2923,12 +2964,14 @@ fn evolve_surrogate(
                 let pb = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
                 let (ga, gb) = (parse_pipe(&ranked[pa].dsl), parse_pipe(&ranked[pb].dsl));
                 match (ga, gb) {
-                    (Some(a), Some(b)) => crossover(&mut rng, &a, &b, cfg.max_transforms),
+                    (Some(a), Some(b)) => {
+                        crossover_with_source_capture(&mut rng, &a, &b, cfg.max_transforms)
+                    }
                     _ => rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab),
                 }
             } else {
                 match parse_pipe(&ranked[pa].dsl) {
-                    Some(a) => mutate(&mut rng, &a, cfg.max_transforms),
+                    Some(a) => mutate_with_source_capture(&mut rng, &a, cfg.max_transforms),
                     None => rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab),
                 }
             };
@@ -5696,12 +5739,14 @@ fn evolve_lite_race_impl<'backend>(
                 let pb = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
                 let (ga, gb) = (parse_pipe(&ranked[pa].dsl), parse_pipe(&ranked[pb].dsl));
                 match (ga, gb) {
-                    (Some(a), Some(b)) => crossover(&mut rng, &a, &b, cfg.max_transforms),
+                    (Some(a), Some(b)) => {
+                        crossover_with_source_capture(&mut rng, &a, &b, cfg.max_transforms)
+                    }
                     _ => rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab),
                 }
             } else {
                 match parse_pipe(&ranked[pa].dsl) {
-                    Some(a) => mutate(&mut rng, &a, cfg.max_transforms),
+                    Some(a) => mutate_with_source_capture(&mut rng, &a, cfg.max_transforms),
                     None => rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab),
                 }
             };
