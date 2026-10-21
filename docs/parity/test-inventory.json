@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5813,
+  "count": 5822,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -42,12 +42,12 @@
     }
    },
    "feat-math": {
-    "count": 1337,
+    "count": 1341,
     "ignored": 13,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 530,
+      "count": 534,
       "ignored": 7,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -258,6 +258,8 @@
        "gpr::tests::plain_scratch_reuse_is_bit_identical",
        "gpr::tests::plain_scratch_reuse_preserves_constant_fallbacks",
        "heads::tests::blocked_cholesky_is_bit_identical_to_the_row_major_loop",
+       "heads::tests::column_major_elastic_matches_397_row_major_bits",
+       "heads::tests::direct_feature_major_bins_match_397_transpose",
        "heads::tests::hurdle2_constant_target_uses_finite_mean_fallback",
        "heads::tests::hurdle2_is_deterministic_and_learns_bimodal_expectation",
        "heads::tests::hurdle2_is_target_scale_equivariant",
@@ -268,6 +270,7 @@
        "heads::tests::ridge_gcv_screen_path_end_to_end",
        "heads::tests::ridge_gcv_screen_ranks_by_abs_corr",
        "heads::tests::ridge_gcv_wide_perf",
+       "heads::tests::transposed_jacobi_matches_397_row_major_bits",
        "kernel::admission::tests::a_constant_stage_pass_is_domain_faulted_from_two_cells",
        "kernel::admission::tests::each_severity_counts_a_cell_once_across_its_classes",
        "kernel::admission::tests::hard_classes_are_collected_and_named",
@@ -351,6 +354,7 @@
        "ksmooth::tests::ksmooth_prediction_benchmark",
        "ksmooth::tests::ksmooth_small_n_falls_back_to_mean",
        "ksmooth::tests::partial_neighbors_match_full_sort_bits_including_ties_and_short_queries",
+       "ksmooth::tests::partial_selection_predict_is_bit_identical_to_full_sort",
        "math_expr::evolution::v2::egraph::tests::all_libm_calls_preserve_literal_shape_including_tanh",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_at_the_limits_are_admitted_as_before",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_over_the_limits_are_refused_uncopied",
@@ -3368,7 +3372,7 @@
     }
    },
    "jope-dime-regressor": {
-    "count": 1012,
+    "count": 1014,
     "ignored": 11,
     "binaries": {
      "jope-dime-regressor": {
@@ -4306,7 +4310,7 @@
      },
      "jope-dime-regressor::bin/jope_selfplay_queue": {
       "kind": "bin",
-      "count": 21,
+      "count": 23,
       "ignored": 0,
       "tests": [
        "tests::admission_waves_are_oldest_first_and_exclude_claimed_manifests",
@@ -4321,12 +4325,14 @@
        "tests::generated_registry_preflight_runs_before_reservation",
        "tests::held_multiclass_jobs_are_outside_the_release_contract",
        "tests::held_release_only_fills_the_gap_under_target",
+       "tests::keeper_workers_follow_usable_cpus_and_stay_bounded",
        "tests::manifest_metric_map_agrees_with_task_authority",
        "tests::manifest_validation_is_bounded_to_the_next_admission_batch",
        "tests::newest_two_complete_waves_are_never_admitted",
        "tests::node_slots_use_live_schema_without_fabricating_xbabe4_multiplier",
        "tests::only_explicit_infrastructure_classes_retry",
        "tests::queue_policy_has_a_dynamic_slot_horizon_and_held_is_not_a_queue_state",
+       "tests::rendered_spec_pins_every_input_and_tool_drift_fails_the_cycle",
        "tests::restart_submitting_claim_is_idempotently_adoptable",
        "tests::rfc3339_parser_handles_fractional_utc_and_offset",
        "tests::typed_preflight_receipts_are_append_only"
@@ -6212,12 +6218,12 @@
     }
    },
    "jope-parallel": {
-    "count": 862,
+    "count": 864,
     "ignored": 15,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 476,
+      "count": 478,
       "ignored": 8,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -6522,6 +6528,8 @@
        "gp::selection_replay::tests::score_identities_bind_the_fold_protocol_and_predictions",
        "gp::selection_replay::tests::stop_decisions_follow_the_frozen_budget_deadline_and_proposal_cap",
        "grammar::task_encode_tests::encode_for_task_emits_regression_and_rejects_unqualified_tasks",
+       "host_os::tests::clocks_are_nondecreasing_and_agree_with_libc",
+       "host_os::tests::identity_matches_libc",
        "hyperion::scheduling_tests::concurrent_encoders_and_gp_have_disjoint_complete_cpu_budgets",
        "hyperion::scheduling_tests::default_exclusive_budget_remains_available",
        "jain_vocabulary::tests::committed_restricted_vocabulary_is_the_derivation",
@@ -7649,12 +7657,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 435,
+    "count": 436,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 345,
+      "count": 346,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7993,6 +8001,7 @@
        "select::tests::the_lowest_mean_wins_among_programs_measured_on_the_same_cuts",
        "select::tests::ties_break_deterministically_on_the_genome",
        "supervisor::tests::resume_runtime_uses_original_global_deadline_preserving_fit_cutoff",
+       "supervisor::tests::second_cancellation_signal_exits_with_cancelled_status",
        "supervisor::tests::supervisor_paths_cannot_escape_system_slice",
        "supervisor::tests::uses_allowed_cpu_ids_and_rejects_insufficient_capacity",
        "synthesized_recipe::tests::lossless_original_and_explicit_input_derivation",
@@ -9242,7 +9251,7 @@
   }
  },
  "totals": {
-  "rust": 5813,
+  "rust": 5822,
   "python": 182
  }
 }
