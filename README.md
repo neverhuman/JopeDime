@@ -69,13 +69,13 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 32 members: 25 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,712 listed in 28 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,809 listed in 32 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 814 items over 25 lanes <sup>7</sup> |
+| Coverage map | 830 items over 25 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,207 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
