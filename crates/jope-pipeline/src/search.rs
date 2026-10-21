@@ -179,6 +179,10 @@ pub struct SearchOptions {
     pub record_events: bool,
     /// Original run/role/profile bindings, when supplied by the admitted caller.
     pub event_binding: Option<SearchBinding>,
+    /// Live `jope.invent.progress.v1` lines ([`crate::progress`]); `None` reports nothing.
+    /// Advisory only: it does not mutate decisions or observations. Reporter overhead can
+    /// affect wall timings and admission when the seconds deadline binds.
+    pub progress: Option<Arc<crate::progress::Progress>>,
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -197,6 +201,7 @@ impl SearchOptions {
             cancel: None,
             record_events: true,
             event_binding: None,
+            progress: None,
         }
     }
 
@@ -1003,7 +1008,10 @@ pub fn run_cuts_with(
     let concurrent = (options.workers() > 1).then_some(&pool);
     pool.install(|| {
         let mut searches = Vec::new();
-        for cut in cuts {
+        for (position, cut) in cuts.iter().enumerate() {
+            if let Some(progress) = &options.progress {
+                progress.begin_cut(position);
+            }
             searches.push(run_cut_allocated(
                 cut,
                 options,
@@ -1013,6 +1021,9 @@ pub fn run_cuts_with(
             )?);
         }
         remeasure_in(cuts, &mut searches, options, concurrent)?;
+        if let Some(progress) = &options.progress {
+            progress.finish();
+        }
         Ok(searches)
     })
 }
@@ -1250,7 +1261,13 @@ fn run_cut_allocated(
                 islands[island].survivors.push(Scored { genome, rmse });
             }
             observation.island = multi.then_some(island);
+            if let Some(progress) = &options.progress {
+                progress.observe_current(&observation);
+            }
             observations.push(observation);
+        }
+        if let Some(progress) = &options.progress {
+            progress.generation_done(generation as u64 + 1);
         }
         // Stopped between evaluations: nothing of this cut is published, and the run that
         // asked for it writes no receipt.
@@ -1311,6 +1328,9 @@ fn run_cut_allocated(
     };
 
     let seconds = started.elapsed().as_secs_f64();
+    if let Some(progress) = &options.progress {
+        progress.cut_done(generation as u64 + 1);
+    }
     if let Some(recorder) = recorder {
         recorder.publish(output)?;
     }
@@ -1420,9 +1440,27 @@ fn remeasure_in(
     let recorders = comparison_recorders(searches)?;
     let clock = options.clock;
     let stop = || options.cancelled();
+    let progress = options.progress.as_deref();
+    if let Some(progress) = progress {
+        progress.begin_comparison();
+    }
+    // Every comparison fit, counted on the cut (by position) it was made on.
+    let evaluate_counted = |position: usize, g: &str, c: &Cut, n: usize, o: &'static str| {
+        let observation = evaluate(g, c, n, o, clock);
+        if let Some(progress) = progress {
+            progress.observe(position, &observation);
+            progress.tick();
+        }
+        observation
+    };
     match pool {
         None => {
-            for ((cut, search), recorder) in cuts.iter().zip(searches.iter_mut()).zip(&recorders) {
+            for (position, ((cut, search), recorder)) in cuts
+                .iter()
+                .zip(searches.iter_mut())
+                .zip(&recorders)
+                .enumerate()
+            {
                 remeasure_cut(
                     cut,
                     search,
@@ -1430,7 +1468,7 @@ fn remeasure_in(
                     clock,
                     &stop,
                     recorder.as_ref(),
-                    &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                    &mut |g, c, n, o| evaluate_counted(position, g, c, n, o),
                 );
             }
         }
@@ -1438,7 +1476,8 @@ fn remeasure_in(
             cuts.par_iter()
                 .zip(searches.par_iter_mut())
                 .zip(recorders.par_iter())
-                .for_each(|((cut, search), recorder)| {
+                .enumerate()
+                .for_each(|(position, ((cut, search), recorder))| {
                     remeasure_cut(
                         cut,
                         search,
@@ -1446,7 +1485,7 @@ fn remeasure_in(
                         clock,
                         &stop,
                         recorder.as_ref(),
-                        &mut |g, c, n, o| evaluate(g, c, n, o, clock),
+                        &mut |g, c, n, o| evaluate_counted(position, g, c, n, o),
                     )
                 })
         }),
@@ -2724,5 +2763,71 @@ mod tests {
         );
         assert!(result.is_err());
         assert_eq!(std::fs::read(&blocked).unwrap(), b"existing bytes");
+    }
+
+    #[test]
+    fn progress_search_refuses_previous_source_binding_before_publication() {
+        // Literal pre-progress source digest from the four include_bytes inputs at91a94c3.
+        // This is a compatibility refusal check, not an evaluator/lineage fixture rebaseline.
+        const PRE_PROGRESS_SOURCE: &str =
+            "8becb8f1e3119d06736adb1957769626cb108e87b27913bbf36cdffe92e0be0f";
+        let temp = tempfile::tempdir().unwrap();
+        let cut = one_cut(&temp.path().join("prepared"), "progress-source-binding");
+        let current = search_events::source_sha256();
+        assert_ne!(
+            current, PRE_PROGRESS_SOURCE,
+            "progress source identity did not move"
+        );
+        let mut binding = SearchBinding {
+            run_id: sha256_hex(b"progress-source-binding"),
+            task: "regression".into(),
+            experiment: EvidenceRef::unknown("test supplies no experiment authority"),
+            role_exposure: EvidenceRef::unknown("test supplies no authenticated role exposure"),
+            context_sha256: search_events::cut_context_sha256(&cut).unwrap(),
+            source_sha256: PRE_PROGRESS_SOURCE.into(),
+            evaluator: EvidenceRef::unknown("test supplies no evaluator authority"),
+            profile: EvidenceRef::unknown("test supplies no registered profile"),
+            legal_set: EvidenceRef::unknown("test supplies no legal-set authority"),
+            fidelity: "full-cut-fit-and-heldout-score".into(),
+        };
+        let mut options = SearchOptions {
+            clock: Clock::Frozen,
+            event_binding: Some(binding.clone()),
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 1,
+                    seconds: 60,
+                },
+                7,
+            )
+        };
+        let stale = temp.path().join("stale");
+        let error = run_cuts_with(std::slice::from_ref(&cut), &options, &stale).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("search-event source differs from actual implementation"),
+            "{error:#}"
+        );
+        assert!(
+            !stale.exists(),
+            "stale binding must be refused before publication or fitting"
+        );
+
+        // Change only the binding's source identity: the same actual run path now measures
+        // and publishes current-source evidence, with unknown authority still unknown.
+        binding.source_sha256 = current.clone();
+        options.event_binding = Some(binding);
+        let searches = run_cuts_with(
+            std::slice::from_ref(&cut),
+            &options,
+            &temp.path().join("current"),
+        )
+        .unwrap();
+        assert_eq!(searches.len(), 1);
+        assert_eq!(searches[0].completed_evaluations, 1);
+        assert_eq!(searches[0].successful_measurements, 1);
+        let path = searches[0].output.join("search-events.json");
+        let log = SearchEventLog::from_bytes(&std::fs::read(path).unwrap()).unwrap();
+        assert_eq!(log.binding.source_sha256, current);
+        assert_eq!(log.require_complete().unwrap().evaluation_attempts, 1);
     }
 }

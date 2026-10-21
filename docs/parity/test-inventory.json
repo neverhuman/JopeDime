@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5813,
+  "count": 5825,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -6138,7 +6138,7 @@
     }
    },
    "jope-observatory": {
-    "count": 22,
+    "count": 23,
     "ignored": 0,
     "binaries": {
      "jope-observatory": {
@@ -6191,7 +6191,7 @@
      },
      "jope-observatory::gp_source": {
       "kind": "test",
-      "count": 13,
+      "count": 14,
       "ignored": 0,
       "tests": [
        "compiler_failure_charges_all_failed_source_tokens_as_loss",
@@ -6205,6 +6205,7 @@
        "partial_ingress_tail_remains_visible_after_complete_sources_validate",
        "partial_producer_line_waits_but_corrupt_complete_or_event_lines_fail",
        "pending_checks_recover_and_mismatched_results_are_refused",
+       "shared_emission_matches_legacy_source_bytes_errors_and_token_rules",
        "unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens",
        "websocket_delivers_full_sources_checks_and_cursor_replay"
       ]
@@ -7649,12 +7650,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 435,
+    "count": 446,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 345,
+      "count": 356,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7719,6 +7720,10 @@
        "experimental_producer::tests::runtime_inventory_detects_source_and_package_drift_before_launch",
        "invent::tests::csv_moves_the_named_target_last_and_keeps_feature_order",
        "invent::tests::csv_refuses_missing_target_text_and_non_finite_values",
+       "invent::tests::events_open_preserves_input_and_truncates_only_valid_regular_output",
+       "invent::tests::events_refuses_hard_link_input_and_nonregular_targets",
+       "invent::tests::events_refuses_input_and_output_aliases",
+       "invent::tests::events_refuses_unresolved_parent_work_alias",
        "invent::tests::invent_ranks_executable_genomes_and_is_deterministic_under_an_evaluation_budget",
        "invent::tests::only_jain_executable_pipelines_are_admitted",
        "invent::tests::preflight_refuses_bad_counts_before_reading_anything",
@@ -7928,6 +7933,12 @@
        "prepared_data::tests::rows_groups_and_actual_fold_membership_are_checked",
        "prepared_data::tests::tampered_bytes_are_rejected_before_parsing",
        "prepared_data::tests::the_real_development_partitions_are_admitted_as_their_release_members",
+       "progress::tests::blocked_worker_cannot_hold_the_search_or_grow_the_queue",
+       "progress::tests::file_worker_writes_regular_output_with_actual_token_counts",
+       "progress::tests::full_and_disconnected_queues_do_not_wait_or_lose_counter_state",
+       "progress::tests::lines_are_rate_limited_except_improvements_and_cut_ends",
+       "progress::tests::nonfinite_scores_never_cross_the_progress_json_boundary",
+       "progress::tests::worker_drains_records_and_stops_on_write_error",
        "run::tests::a_budget_that_cannot_remeasure_the_seeds_is_refused",
        "run::tests::a_champion_is_never_worse_than_its_seed_on_the_same_cuts",
        "run::tests::a_given_source_commit_is_the_receipts_git_sha_and_a_malformed_one_is_refused",
@@ -7967,6 +7978,7 @@
        "search::tests::islands_migrate_record_and_replay_on_any_worker_count",
        "search::tests::no_candidate_is_fitted_twice_on_one_cut",
        "search::tests::one_island_is_the_plain_search",
+       "search::tests::progress_search_refuses_previous_source_binding_before_publication",
        "search::tests::seeds_are_remeasured_on_every_cut_even_past_the_seconds_bound",
        "search::tests::the_bootstrap_genome_is_always_measured_first",
        "search::tests::the_evaluation_bound_stops_the_search_and_is_recorded",
@@ -9242,7 +9254,7 @@
   }
  },
  "totals": {
-  "rust": 5813,
+  "rust": 5825,
   "python": 182
  }
 }

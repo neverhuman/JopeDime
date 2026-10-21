@@ -52,6 +52,7 @@ pub mod neural_search;
 pub mod parallel;
 pub mod prepare;
 pub mod prepared_data;
+pub mod progress;
 pub mod receipt;
 pub mod resource_ledger;
 pub mod run;
