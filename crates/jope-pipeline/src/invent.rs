@@ -56,6 +56,10 @@ pub struct InventOptions {
     pub source_commit: Option<String>,
     pub cancel: Option<Arc<AtomicBool>>,
     pub clock: Clock,
+    /// Write `jope.invent.progress.v1` records to this file (created or truncated) while the
+    /// search runs ([`crate::progress`]); `None` writes none. It may not alias `train` or lie
+    /// in `work_dir` ([`check_events`]).
+    pub events: Option<PathBuf>,
 }
 
 impl InventOptions {
@@ -80,6 +84,7 @@ impl InventOptions {
             source_commit: None,
             cancel: None,
             clock: Clock::Wall,
+            events: None,
         }
     }
 }
@@ -304,16 +309,137 @@ fn ensure_fresh_work_dir(work_dir: &Path) -> Result<()> {
     }
 }
 
+/// `path` with its existing ancestors resolved, so that two spellings of one file (`a/../b`,
+/// a symbolic link) compare equal whether or not the file exists yet.
+fn resolve_lexically(path: &Path) -> Result<PathBuf> {
+    use std::path::Component;
+    let absolute = std::path::absolute(path)?;
+    let mut resolved = PathBuf::new();
+    for component in absolute.components() {
+        match component {
+            Component::Prefix(prefix) => resolved.push(prefix.as_os_str()),
+            Component::RootDir => resolved.push(component.as_os_str()),
+            Component::CurDir => {}
+            Component::ParentDir => {
+                resolved.pop();
+            }
+            Component::Normal(name) => {
+                resolved.push(name);
+                match std::fs::symlink_metadata(&resolved) {
+                    Ok(_) => {
+                        resolved = resolved
+                            .canonicalize()
+                            .with_context(|| format!("resolve {}", resolved.display()))?
+                    }
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => {
+                        return Err(e).with_context(|| format!("inspect {}", resolved.display()))
+                    }
+                }
+            }
+        }
+    }
+    Ok(resolved)
+}
+
+#[cfg(unix)]
+fn same_file(left: &std::fs::Metadata, right: &std::fs::Metadata) -> bool {
+    use std::os::unix::fs::MetadataExt;
+    left.dev() == right.dev() && left.ino() == right.ino()
+}
+
+/// `--events` must name a file that is neither the input nor inside the work directory, and not
+/// an existing directory ("reject input/output aliases"). Checked before anything is written.
+fn check_events(events: &Path, train: &Path, work_dir: &Path) -> Result<()> {
+    ensure!(
+        !events.is_dir(),
+        "{}: --events is a directory; name a file",
+        events.display()
+    );
+    match std::fs::symlink_metadata(events) {
+        Ok(meta) => {
+            ensure!(
+                meta.is_file(),
+                "{}: --events must be a regular file, not a symlink or special target",
+                events.display()
+            );
+            #[cfg(unix)]
+            ensure!(
+                !same_file(&meta, &std::fs::metadata(train)?),
+                "{}: --events aliases the --train input",
+                events.display()
+            );
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(e).with_context(|| format!("inspect --events {}", events.display())),
+    }
+    let target = resolve_lexically(events)?;
+    ensure!(
+        target != resolve_lexically(train)?,
+        "{}: --events names the --train input",
+        events.display()
+    );
+    ensure!(
+        !target.starts_with(resolve_lexically(work_dir)?),
+        "{}: --events is the --work-dir or inside it; write it elsewhere",
+        events.display()
+    );
+    Ok(())
+}
+
+/// Open without truncation, then validate the actual descriptor before changing any bytes.
+#[cfg(target_os = "linux")]
+fn open_events(events: &Path, train: &Path, work_dir: &Path) -> Result<std::fs::File> {
+    use std::os::unix::fs::OpenOptionsExt;
+    check_events(events, train, work_dir)?;
+    let file = std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .custom_flags(nix::libc::O_NONBLOCK | nix::libc::O_NOFOLLOW)
+        .open(events)
+        .with_context(|| format!("open --events {}", events.display()))?;
+    let actual = file.metadata()?;
+    ensure!(actual.is_file(), "--events opened a nonregular file");
+    ensure!(
+        !same_file(&actual, &std::fs::metadata(train)?),
+        "--events aliases the --train input"
+    );
+    let named = std::fs::symlink_metadata(events)?;
+    ensure!(
+        named.is_file() && same_file(&actual, &named),
+        "--events target changed while opening"
+    );
+    check_events(events, train, work_dir)?;
+    file.set_len(0)
+        .context("truncate validated --events file")?;
+    Ok(file)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn open_events(_events: &Path, _train: &Path, _work_dir: &Path) -> Result<std::fs::File> {
+    anyhow::bail!("safe --events file opening is currently supported on Linux only")
+}
+
 /// Search the CSV and return the ranked genomes jain-math can execute.
 pub fn invent(options: &InventOptions) -> Result<Candidates> {
     preflight(options)?;
     ensure_fresh_work_dir(&options.work_dir)?;
+    if let Some(events) = &options.events {
+        check_events(events, &options.train, &options.work_dir)?;
+    }
     let executable = Executable::load()?;
     let started = options.clock.start();
 
     let (feature_names, rows, dataset_sha256) = load_csv(&options.train, &options.target)?;
     // Refusals (too few rows in a cut, a constant held-out target) come before anything is written.
     let partition = prepare::partition(&rows, &dataset_sha256, options.seed, options.cuts)?;
+
+    let event_file = options
+        .events
+        .as_ref()
+        .map(|path| open_events(path, &options.train, &options.work_dir))
+        .transpose()?;
 
     std::fs::create_dir_all(&options.work_dir)
         .with_context(|| format!("create {}", options.work_dir.display()))?;
@@ -330,6 +456,13 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
         migration_interval: options.migration_interval,
         clock: options.clock,
         cancel: options.cancel.clone(),
+        progress: event_file.map(|file| {
+            Arc::new(crate::progress::Progress::file(
+                file,
+                preparation.cuts.len(),
+                options.budget,
+            ))
+        }),
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
@@ -515,6 +648,82 @@ mod tests {
         // Quarantined in jain-math.
         assert!(!executable.admits("(pipe X (rff_orthogonal) (ridge))"));
         assert!(!executable.admits("not a genome"));
+    }
+
+    #[test]
+    fn events_refuses_unresolved_parent_work_alias() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = write_csv(dir.path(), 4);
+        let work = dir.path().join("missing/../work");
+        let events = dir.path().join("work/prepared/cuts.ndjson");
+        let result = check_events(&events, &train, &work);
+        assert!(
+            result.is_err(),
+            "unresolved-parent --work-dir alias was accepted"
+        );
+        assert!(!dir.path().join("work").exists());
+        assert!(!dir.path().join("missing").exists());
+    }
+
+    #[test]
+    fn events_refuses_input_and_output_aliases() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = write_csv(dir.path(), 4);
+        let work = dir.path().join("work");
+        let check = |events: &Path| check_events(events, &train, &work);
+        // The input, by another spelling too.
+        let msg = check(&train).unwrap_err().to_string();
+        assert!(msg.contains("--train"), "{msg}");
+        assert!(check(&dir.path().join("work/../train.csv")).is_err());
+        // The work directory itself (not yet created) and anything under it.
+        assert!(check(&work).unwrap_err().to_string().contains("--work-dir"));
+        assert!(check(&work.join("progress.ndjson")).is_err());
+        // An existing directory.
+        let msg = check(dir.path()).unwrap_err().to_string();
+        assert!(msg.contains("directory"), "{msg}");
+        // A new file beside them is fine.
+        check(&dir.path().join("progress.ndjson")).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn events_refuses_hard_link_input_and_nonregular_targets() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = write_csv(dir.path(), 4);
+        let before = std::fs::read(&train).unwrap();
+        let work = dir.path().join("work");
+        let alias = dir.path().join("input-alias.ndjson");
+        std::fs::hard_link(&train, &alias).unwrap();
+        let refused = check_events(&alias, &train, &work);
+        assert!(refused.is_err(), "hard-linked --train was accepted");
+        assert_eq!(std::fs::read(&train).unwrap(), before);
+        assert!(!work.exists());
+        // A Unix socket is an existing nonregular filesystem target. Never open it: the
+        // preflight itself must refuse it, just as it must refuse a FIFO/device.
+        let socket = dir.path().join("events.socket");
+        let _listener = std::os::unix::net::UnixListener::bind(&socket).unwrap();
+        assert!(check_events(&socket, &train, &work).is_err());
+        assert_eq!(std::fs::read(&train).unwrap(), before);
+        assert!(!work.exists());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn events_open_preserves_input_and_truncates_only_valid_regular_output() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = write_csv(dir.path(), 4);
+        let before = std::fs::read(&train).unwrap();
+        let work = dir.path().join("work");
+        let alias = dir.path().join("alias");
+        std::fs::hard_link(&train, &alias).unwrap();
+        assert!(open_events(&alias, &train, &work).is_err());
+        assert_eq!(std::fs::read(&train).unwrap(), before);
+        let output = dir.path().join("events.ndjson");
+        std::fs::write(&output, b"old journal").unwrap();
+        let file = open_events(&output, &train, &work).unwrap();
+        assert_eq!(file.metadata().unwrap().len(), 0);
+        assert_eq!(std::fs::read(&train).unwrap(), before);
+        assert!(!work.exists());
     }
 
     #[test]

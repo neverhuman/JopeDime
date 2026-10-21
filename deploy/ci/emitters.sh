@@ -60,8 +60,8 @@ source_contract legacy-wrapper-pins 1 '[0-9]+' -p feat-math --test capability_ma
   legacy_wrapper_body_hashes_are_pinned -- --exact
 # Restart assertions share this harness process with subprocess-spawning tests. A forked
 # child can briefly retain another test's flock descriptor after its parent drops the store.
-# Serialize this target while retaining all 13 cases and the exclusive-owner assertions.
-source_contract gp-source-stream 13 0 -p jope-observatory --test gp_source -- --test-threads=1
+# Serialize this target while retaining all 14 cases and the exclusive-owner assertions.
+source_contract gp-source-stream 14 0 -p jope-observatory --test gp_source -- --test-threads=1
 source_contract gp-source-capture 1 0 -p feat-math --test source_capture
 source_contract gp-source-cli 2 0 -p jope-cli --test gp_source_capture
 source_contract gp-source-kernel2 1 0 -p jope-pipeline --test gp_source_capture
