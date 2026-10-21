@@ -1303,8 +1303,10 @@ fn op_append(op: &FittedOp) -> bool {
 fn finish(op: &FittedOp, input: &Rows, mut out: Rows) -> Rows {
     if op_append(op) {
         for (i, row) in out.iter_mut().enumerate() {
-            let mut merged = input[i].clone();
-            merged.append(row);
+            // One exact-size allocation per row (clone-then-append allocated twice).
+            let mut merged = Vec::with_capacity(input[i].len() + row.len());
+            merged.extend_from_slice(&input[i]);
+            merged.extend_from_slice(row);
             *row = merged;
         }
     }

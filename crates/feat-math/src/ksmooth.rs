@@ -77,33 +77,45 @@ impl KsmoothModel {
         }
         let pf = p as f64;
         let kk = self.k.min(self.z.len());
-        x.iter()
-            .map(|row| {
-                let zr: Vec<f64> = (0..p.min(row.len()))
-                    .map(|j| (row[j] - self.means[j]) / self.scales[j])
-                    .collect();
-                let mut d2s = Vec::with_capacity(self.z.len());
-                for zb in &self.z {
-                    let mut d2 = 0.0;
-                    for d in 0..zr.len().min(zb.len()) {
-                        let t = zr[d] - zb[d];
-                        d2 += t * t;
-                    }
-                    d2s.push(d2);
+        // Only the `kk` nearest rows (and the overall nearest, `base`) are ever read, so select
+        // them in O(n) and sort just that prefix instead of sorting all n training rows per
+        // query. The comparator (distance, then row index) is a strict total order, so the
+        // selected prefix and its order are exactly the full sort's first `kk` entries; the
+        // weighted sums below run over the same rows in the same order. The three scratch
+        // buffers are reused across query rows.
+        let take = kk.max(1);
+        let mut zr = Vec::with_capacity(p);
+        let mut d2s = Vec::with_capacity(self.z.len());
+        let mut order: Vec<usize> = Vec::with_capacity(self.z.len());
+        let mut out = Vec::with_capacity(x.len());
+        for row in x {
+            zr.clear();
+            zr.extend((0..p.min(row.len())).map(|j| (row[j] - self.means[j]) / self.scales[j]));
+            d2s.clear();
+            for zb in &self.z {
+                let mut d2 = 0.0;
+                for d in 0..zr.len().min(zb.len()) {
+                    let t = zr[d] - zb[d];
+                    d2 += t * t;
                 }
-                let mut order: Vec<usize> = (0..self.z.len()).collect();
-                order.sort_by(|&a, &b| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b)));
-                let base = d2s[order[0]];
-                let mut num = 0.0;
-                let mut den = 0.0;
-                for &i in order.iter().take(kk) {
-                    let w = (-self.gamma * (d2s[i] - base) / pf).exp();
-                    num += w * self.ys[i];
-                    den += w;
-                }
-                (num / den).clamp(-60.0, 60.0)
-            })
-            .collect()
+                d2s.push(d2);
+            }
+            order.clear();
+            order.extend(0..self.z.len());
+            let nearest = |a: &usize, b: &usize| d2s[*a].total_cmp(&d2s[*b]).then(a.cmp(b));
+            order.select_nth_unstable_by(take - 1, nearest);
+            order[..take].sort_by(nearest);
+            let base = d2s[order[0]];
+            let mut num = 0.0;
+            let mut den = 0.0;
+            for &i in order.iter().take(kk) {
+                let w = (-self.gamma * (d2s[i] - base) / pf).exp();
+                num += w * self.ys[i];
+                den += w;
+            }
+            out.push((num / den).clamp(-60.0, 60.0));
+        }
+        out
     }
 }
 

@@ -2043,6 +2043,23 @@ fn lite_budget(g: &DslExpr) -> DslExpr {
     c
 }
 
+/// The static emitted-token estimate (Python + Rust) of each genome, in input order, computed
+/// in parallel. Genomes the emitter cannot support estimate `0.0`, as the serial loops did.
+fn token_estimates<'a>(genomes: impl Iterator<Item = &'a DslExpr>) -> Vec<f64> {
+    let genomes: Vec<&DslExpr> = genomes.collect();
+    genomes
+        .into_par_iter()
+        .map(|genome| {
+            crate::tokens::try_estimate_tokens(
+                &GenomeIr::Pipeline(genome.clone()),
+                &EmitOptions::default(),
+            )
+            .map(|e| (e.py + e.rs) as f64)
+            .unwrap_or(0.0)
+        })
+        .collect()
+}
+
 fn score_genome(
     g: &DslExpr,
     x: &Rows,
@@ -2724,15 +2741,7 @@ fn evolve_surrogate(
         // Evaluate all unseen genomes in parallel (the Rust interpreter executes each candidate).
         let unseen: Vec<(String, DslExpr)> = population
             .iter()
-            .map(|g| {
-                (
-                    DslExpr {
-                        stages: g.stages.clone(),
-                    }
-                    .to_string(),
-                    g.clone(),
-                )
-            })
+            .map(|g| (g.to_string(), g.clone()))
             .filter(|(key, _)| !memo.contains_key(key))
             .collect();
         let fresh: Vec<(String, DslExpr, Option<Vec<f64>>)> = match admission.as_mut() {
@@ -2787,20 +2796,16 @@ fn evolve_surrogate(
                     .collect()
             }
         };
-        for (key, g, scores) in &fresh {
+        // Per-generation token accounting uses the STATIC estimator (X6, no
+        // emission): every evaluated genome is a shippable dual-language
+        // algorithm, so we credit its exact predicted Python+Rust token
+        // count without paying to emit it. tokens/sec is therefore live even
+        // when no improvement fires. Genomes the emitter cannot support
+        // (never generated here) simply credit nothing. The estimates are pure,
+        // so they are computed in parallel and credited in candidate order.
+        let estimates = token_estimates(fresh.iter().map(|(_, g, _)| g));
+        for ((key, _, scores), est) in fresh.iter().zip(estimates) {
             evals += 1;
-            // Per-generation token accounting uses the STATIC estimator (X6, no
-            // emission): every evaluated genome is a shippable dual-language
-            // algorithm, so we credit its exact predicted Python+Rust token
-            // count without paying to emit it. tokens/sec is therefore live even
-            // when no improvement fires. Genomes the emitter cannot support
-            // (never generated here) simply credit nothing.
-            let est = crate::tokens::try_estimate_tokens(
-                &GenomeIr::Pipeline(g.clone()),
-                &EmitOptions::default(),
-            )
-            .map(|e| (e.py + e.rs) as f64)
-            .unwrap_or(0.0);
             ledger.add(est);
             memo.insert(key.clone(), scores.clone());
 
@@ -2827,10 +2832,7 @@ fn evolve_surrogate(
             let mut v: Vec<Scored> = population
                 .iter()
                 .filter_map(|g| {
-                    let key = DslExpr {
-                        stages: g.stages.clone(),
-                    }
-                    .to_string();
+                    let key = g.to_string();
                     if !seen.insert(key.clone()) {
                         return None;
                     }
@@ -4363,21 +4365,22 @@ fn eval_rung(
         };
         st.gpu_screen_timings.add(evaluation.timings);
         st.spent[rung] += c0.elapsed().as_secs_f64();
-        for (fresh_index, ((key, genome), scores)) in
+        // Token credit once per genome (rung 0 sees every candidate exactly once). The static
+        // estimate is a pure function of the genome, so it is computed for the whole chunk in
+        // parallel and credited below in the same order as before.
+        let token_estimates = if rung == 0 {
+            token_estimates(chunk.iter().map(|(_, genome)| genome))
+        } else {
+            Vec::new()
+        };
+        for (fresh_index, ((key, _), scores)) in
             chunk.iter().zip(evaluation.scores.drain(..)).enumerate()
         {
             let r0_seq = (rung == 0).then_some(st.rung_evals[0]);
             st.evals += 1;
             st.rung_evals[rung] += 1;
-            // Token credit once per genome (rung 0 sees every candidate exactly once).
             if rung == 0 {
-                let est = crate::tokens::try_estimate_tokens(
-                    &GenomeIr::Pipeline(genome.clone()),
-                    &EmitOptions::default(),
-                )
-                .map(|e| (e.py + e.rs) as f64)
-                .unwrap_or(0.0);
-                st.ledger.add(est);
+                st.ledger.add(token_estimates[fresh_index]);
             }
             // Live candidate stream (throttled), SCORE ONLY — same contract as v1.
             if let Some(fs) = &scores {
@@ -4485,20 +4488,22 @@ fn eval_rung_admitted(
             });
         }
         st.spent[rung] += c0.elapsed().as_secs_f64();
-        for (fresh_index, ((key, genome), admitted)) in chunk.iter().zip(admitted).enumerate() {
+        // Token credit once per genome (rung 0 sees every candidate exactly once). The static
+        // estimate is a pure function of the genome, so it is computed for the whole chunk in
+        // parallel and credited below in the same order as before.
+        let token_estimates = if rung == 0 {
+            token_estimates(chunk.iter().map(|(_, genome)| genome))
+        } else {
+            Vec::new()
+        };
+        for (fresh_index, ((key, _), admitted)) in chunk.iter().zip(admitted).enumerate() {
             let scores = admission.record(key, rung, admitted, obs);
             // The bookkeeping of `eval_rung`, unchanged.
             let r0_seq = (rung == 0).then_some(st.rung_evals[0]);
             st.evals += 1;
             st.rung_evals[rung] += 1;
             if rung == 0 {
-                let est = crate::tokens::try_estimate_tokens(
-                    &GenomeIr::Pipeline(genome.clone()),
-                    &EmitOptions::default(),
-                )
-                .map(|e| (e.py + e.rs) as f64)
-                .unwrap_or(0.0);
-                st.ledger.add(est);
+                st.ledger.add(token_estimates[fresh_index]);
             }
             if let Some(fs) = &scores {
                 if !fs.is_empty() {
@@ -4596,20 +4601,22 @@ fn eval_rung_cases(
             });
         }
         st.spent[rung] += c0.elapsed().as_secs_f64();
-        for (fresh_index, ((key, genome), scored)) in chunk.iter().zip(scored).enumerate() {
+        // Token credit once per genome (rung 0 sees every candidate exactly once). The static
+        // estimate is a pure function of the genome, so it is computed for the whole chunk in
+        // parallel and credited below in the same order as before.
+        let token_estimates = if rung == 0 {
+            token_estimates(chunk.iter().map(|(_, genome)| genome))
+        } else {
+            Vec::new()
+        };
+        for (fresh_index, ((key, _), scored)) in chunk.iter().zip(scored).enumerate() {
             let (scores, residuals) = scored.unzip();
             // The bookkeeping of `eval_rung`, unchanged.
             let r0_seq = (rung == 0).then_some(st.rung_evals[0]);
             st.evals += 1;
             st.rung_evals[rung] += 1;
             if rung == 0 {
-                let est = crate::tokens::try_estimate_tokens(
-                    &GenomeIr::Pipeline(genome.clone()),
-                    &EmitOptions::default(),
-                )
-                .map(|e| (e.py + e.rs) as f64)
-                .unwrap_or(0.0);
-                st.ledger.add(est);
+                st.ledger.add(token_estimates[fresh_index]);
             }
             if let Some(fs) = &scores {
                 if !fs.is_empty() {
@@ -5116,10 +5123,7 @@ fn rank_race(
     let mut v: Vec<RankRec> = population
         .iter()
         .filter_map(|g| {
-            let key = DslExpr {
-                stages: g.stages.clone(),
-            }
-            .to_string();
+            let key = g.to_string();
             if !seen.insert(key.clone()) {
                 return None;
             }
@@ -5570,10 +5574,7 @@ fn evolve_lite_race_impl<'backend>(
             population
                 .iter()
                 .filter_map(|g| {
-                    let key = DslExpr {
-                        stages: g.stages.clone(),
-                    }
-                    .to_string();
+                    let key = g.to_string();
                     if !seen.insert(key.clone()) || st.memo.contains_key(&key) {
                         return None;
                     }

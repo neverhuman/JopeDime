@@ -1268,18 +1268,29 @@ impl GbmModel {
             };
         }
         let edges: Vec<Vec<f64>> = (0..n_feat).map(|f| bin_edges(x, f, n, cfg.bins)).collect();
-        let train_bins = bin_rows(x, n, n_feat, &edges);
+        // Training bins are only read one feature at a time (histograms, split partition), so
+        // store them feature-major: a node's histogram then walks one contiguous column instead
+        // of striding `n_feat` entries per row. Same bin values, same per-bin summation order.
+        let train_cols = feature_major(&bin_rows(x, n, n_feat, &edges), n, n_feat);
         let init = mean(&y[..n]);
         let mut f_train = vec![init; n];
         let nbins = cfg.bins as u16;
         let mut trees = Vec::with_capacity(cfg.rounds);
+        // Round-invariant (hess) and reusable (grad, leaf map, histogram) buffers, allocated
+        // once per fit instead of once per round / per node and feature.
+        let hess = vec![1.0f64; n];
+        let mut grad = vec![0.0f64; n];
+        let mut train_leaf = vec![0usize; n];
+        let mut scratch = HistScratch::new(nbins as usize);
         for _ in 0..cfg.rounds {
-            let grad: Vec<f64> = (0..n).map(|i| f_train[i] - y[i]).collect();
-            let hess = vec![1.0f64; n];
+            for i in 0..n {
+                grad[i] = f_train[i] - y[i];
+            }
+            train_leaf.fill(0);
             let mut tree: Vec<GbmNode> = Vec::new();
-            let mut train_leaf = vec![0usize; n];
             build_tree(
-                &train_bins,
+                &train_cols,
+                n,
                 &grad,
                 &hess,
                 (0..n).collect(),
@@ -1289,6 +1300,7 @@ impl GbmModel {
                 0,
                 &mut tree,
                 &mut train_leaf,
+                &mut scratch,
             );
             for i in 0..n {
                 if let GbmNode::Leaf(v) = tree[train_leaf[i]] {
@@ -1324,9 +1336,37 @@ impl GbmModel {
     }
 }
 
+/// Reused per-feature histogram buffers for [`build_tree`].
+struct HistScratch {
+    gh: Vec<f64>,
+    hh: Vec<f64>,
+}
+
+impl HistScratch {
+    fn new(nbins: usize) -> Self {
+        HistScratch {
+            gh: vec![0.0; nbins],
+            hh: vec![0.0; nbins],
+        }
+    }
+}
+
+/// Row-major `bins[i * n_feat + f]` to feature-major `cols[f * n + i]`.
+fn feature_major(bins: &[u16], n: usize, n_feat: usize) -> Vec<u16> {
+    let mut cols = vec![0u16; n * n_feat];
+    for i in 0..n {
+        for f in 0..n_feat {
+            cols[f * n + i] = bins[i * n_feat + f];
+        }
+    }
+    cols
+}
+
+/// Grow one tree over feature-major training bins `cols[f * n_rows + i]`.
 #[allow(clippy::too_many_arguments)]
 fn build_tree(
-    bins: &[u16],
+    cols: &[u16],
+    n_rows: usize,
     grad: &[f64],
     hess: &[f64],
     rows: Vec<usize>,
@@ -1336,6 +1376,7 @@ fn build_tree(
     depth: usize,
     out: &mut Vec<GbmNode>,
     leaf_of: &mut [usize],
+    scratch: &mut HistScratch,
 ) -> usize {
     let g: f64 = rows.iter().map(|&i| grad[i]).sum();
     let h: f64 = rows.iter().map(|&i| hess[i]).sum();
@@ -1356,10 +1397,12 @@ fn build_tree(
     let mut best_thr = 0u16;
     let parent = g * g / (h + cfg.lambda);
     for f in 0..n_feat {
-        let mut gh = vec![0.0f64; nbins as usize];
-        let mut hh = vec![0.0f64; nbins as usize];
+        let col = &cols[f * n_rows..(f + 1) * n_rows];
+        let (gh, hh) = (&mut scratch.gh, &mut scratch.hh);
+        gh.fill(0.0);
+        hh.fill(0.0);
         for &i in &rows {
-            let b = bins[i * n_feat + f] as usize;
+            let b = col[i] as usize;
             gh[b] += grad[i];
             hh[b] += hess[i];
         }
@@ -1385,8 +1428,9 @@ fn build_tree(
     }
     let mut left_rows = Vec::new();
     let mut right_rows = Vec::new();
+    let split_col = &cols[best_feat * n_rows..(best_feat + 1) * n_rows];
     for &i in &rows {
-        if bins[i * n_feat + best_feat] <= best_thr {
+        if split_col[i] <= best_thr {
             left_rows.push(i);
         } else {
             right_rows.push(i);
@@ -1398,7 +1442,8 @@ fn build_tree(
     let idx = out.len();
     out.push(GbmNode::Leaf(0.0)); // temporary leaf, overwritten below
     let left = build_tree(
-        bins,
+        cols,
+        n_rows,
         grad,
         hess,
         left_rows,
@@ -1408,9 +1453,11 @@ fn build_tree(
         depth + 1,
         out,
         leaf_of,
+        scratch,
     );
     let right = build_tree(
-        bins,
+        cols,
+        n_rows,
         grad,
         hess,
         right_rows,
@@ -1420,6 +1467,7 @@ fn build_tree(
         depth + 1,
         out,
         leaf_of,
+        scratch,
     );
     out[idx] = GbmNode::Split {
         feature: best_feat,
