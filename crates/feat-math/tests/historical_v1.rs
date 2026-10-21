@@ -499,6 +499,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             "PR392 transition must name {path}"
         );
     }
+    // PR394 follows the merged PR392 identity, rather than its original parallel baseline.
+    let appliance_after_automl =
+        old_fixture("transitions/appliance_after_automl_identity_rebaseline.v1.json");
+    let appliance_fixtures = appliance_after_automl["fixtures"].as_array().unwrap();
+    assert_eq!(appliance_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(appliance_fixtures.iter().any(|entry| entry["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -523,6 +531,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         observatory_workspace_lock,
         gp_source_stream,
         gpt6p1_sol_max,
+        appliance_after_automl,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

@@ -17,8 +17,8 @@
 //! the manifest, and authenticates each asset's stored bytes against the manifest *before* they
 //! reach the decompressor; the decoded bytes are checked again. [`Package::verify_full`]
 //! additionally hashes the executable region, the padding and every gap, so every byte of the file
-//! is covered. Startup therefore costs one footer, one manifest and one signature, not a hash of
-//! the whole file, and an asset is read and verified only when a method needs it.
+//! is covered. Startup therefore costs one footer, one manifest, one signature and a hash of the
+//! executable region, rather than a hash of the whole file, and an asset is read and verified only when a method needs it.
 //!
 //! The reader is pure Rust: positioned reads, `ruzstd`, `p256`. The writer (feature `pack`) uses
 //! the zstd C library and is linked only into the build-time packer, `jope-dist`.

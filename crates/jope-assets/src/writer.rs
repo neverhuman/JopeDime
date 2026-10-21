@@ -239,12 +239,14 @@ pub fn write_temporary(bytes: &[u8], out: &Path) -> std::io::Result<std::path::P
         name.to_string_lossy(),
         std::process::id()
     ));
-    let result = (|| {
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .mode(0o755)
-            .open(&temp)?;
+    // A create_new refusal does not confer ownership of the existing path. Only a
+    // temporary file opened by this call may be removed on a later write failure.
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o755)
+        .open(&temp)?;
+    let result = (|| -> std::io::Result<()> {
         file.write_all(bytes)?;
         file.sync_all()
     })();
@@ -273,4 +275,26 @@ pub fn write_new(bytes: &[u8], out: &Path) -> std::io::Result<()> {
     }
     let temp = write_temporary(bytes, out)?;
     publish(&temp, out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn regression_temporary_collision_preserves_foreign_bytes() {
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("package");
+        let temp = dir
+            .path()
+            .join(format!(".package.{}.tmp", std::process::id()));
+        std::fs::write(&temp, b"pre-existing source").unwrap();
+        let error = write_temporary(b"new package", &out).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::AlreadyExists);
+        assert_eq!(
+            std::fs::read(&temp).expect("unowned file must remain"),
+            b"pre-existing source"
+        );
+        assert!(!out.exists());
+    }
 }

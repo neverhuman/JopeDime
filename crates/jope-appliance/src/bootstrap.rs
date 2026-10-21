@@ -1,7 +1,7 @@
 //! Open and authenticate the running executable's package (SPECIFICATION.md §10.4, §10.6).
 //!
-//! Startup reads the footer, the manifest and the signature only — the manifest binds the
-//! executable's sha256 and every asset's hashes, and each asset is authenticated when it is read
+//! Startup authenticates the footer, manifest, signature and executable region. The manifest
+//! binds every asset's hashes, and each asset is authenticated when it is read
 //! (AMENDMENTS.md A5). `verify-self` covers every byte.
 use jope_assets::{AssetError, Package};
 use jope_runtime::Failure;

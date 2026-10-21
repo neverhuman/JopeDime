@@ -53,11 +53,14 @@ pub fn write_atomic(role: &'static str, path: &Path, bytes: &[u8]) -> anyhow::Re
         name.to_string_lossy(),
         std::process::id()
     ));
+    // A create_new refusal does not confer ownership of the existing path. Only a
+    // temporary file opened by this call may be removed on a later write failure.
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temp)
+        .map_err(output)?;
     let result = (|| -> std::io::Result<()> {
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temp)?;
         file.write_all(bytes)?;
         file.sync_all()?;
         std::fs::rename(&temp, path)

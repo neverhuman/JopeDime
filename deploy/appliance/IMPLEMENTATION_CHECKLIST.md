@@ -4,7 +4,7 @@ This is the execution index for [SPECIFICATION.md](SPECIFICATION.md). The
 specification owns the detailed contracts and acceptance criteria;
 [AMENDMENTS.md](AMENDMENTS.md) records where the implementation corrects or decides them.
 Ticked items are implemented with the named evidence at the source state of the change that
-ticked them; exact-head CI and independent review still decide whether that change merges. No
+ticked them; exact-head CI and substantive agent review decide whether that change merges. No
 stage is closed: P1 and P2 have their CPU parts implemented, and nothing here qualifies a product.
 
 Each implementation PR must name its stage, changed paths, full source SHA,

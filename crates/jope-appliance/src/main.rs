@@ -433,7 +433,6 @@ impl Run {
         };
         let value = json!(self.receipt);
         let mut code = code;
-        PENDING_EXIT.store(code, std::sync::atomic::Ordering::SeqCst);
         if let Some(path) = self
             .common
             .receipt
@@ -448,6 +447,7 @@ impl Run {
                 }
             }
         }
+        PENDING_EXIT.store(code, std::sync::atomic::Ordering::SeqCst);
         if self.common.json {
             print_json(&value);
         } else {
@@ -604,6 +604,12 @@ fn main() -> ExitCode {
         }
         Command::Doctor(flag) => match doctor() {
             Ok((value, ok)) => {
+                let code = if ok {
+                    0
+                } else {
+                    FailureKind::Integrity.exit_code()
+                };
+                PENDING_EXIT.store(code, std::sync::atomic::Ordering::SeqCst);
                 if flag.json {
                     print_json(&value);
                 } else {
@@ -624,11 +630,7 @@ fn main() -> ExitCode {
                         );
                     }
                 }
-                ExitCode::from(if ok {
-                    0
-                } else {
-                    FailureKind::Integrity.exit_code()
-                })
+                ExitCode::from(code)
             }
             Err(error) => report(Err(error)),
         },
