@@ -597,23 +597,81 @@ fn accumulate_ridge_tile(a: &[f64], b: &[f64], ata: &mut [f64], p: usize, i0: us
     }
 }
 
+/// Rows factored together by [`cholesky_factor`].
+const CHOLESKY_ROW_BLOCK: usize = 4;
+
+/// In-place row-oriented Cholesky factorization (`A = L Lᵀ`, `L` in the lower triangle), with
+/// exactly the arithmetic of the textbook loop
+///
+/// ```text
+/// for i in 0..p { for j in 0..=i {
+///     s = a[i][j]; for k in 0..j { s -= a[i][k] * a[j][k] }
+///     a[i][j] = if i == j { if s > 1e-12 { sqrt(s) } else { 1e-6 } } else { s / a[j][j] }
+/// } }
+/// ```
+///
+/// Each entry's `s -= ..` chain is one dependent floating-point sequence, so that loop runs at
+/// FP latency. Entries of *different* rows left of a row block depend only on finished rows and
+/// on their own row, so here [`CHOLESKY_ROW_BLOCK`] rows are factored together: their chains
+/// interleave, which hides the latency, while every entry still sees the same operands in the
+/// same order (bit-identical; Rust never contracts to FMA). The small triangle inside each block
+/// is then finished in the original row-major order.
+fn cholesky_factor(a: &mut [f64], p: usize) {
+    let mut i0 = 0;
+    while i0 < p {
+        let rows = CHOLESKY_ROW_BLOCK.min(p - i0);
+        match rows {
+            4 => cholesky_block_left::<4>(a, p, i0),
+            3 => cholesky_block_left::<3>(a, p, i0),
+            2 => cholesky_block_left::<2>(a, p, i0),
+            _ => cholesky_block_left::<1>(a, p, i0),
+        }
+        for i in i0..i0 + rows {
+            for j in i0..=i {
+                let mut s = a[i * p + j];
+                for k in 0..j {
+                    s -= a[i * p + k] * a[j * p + k];
+                }
+                a[i * p + j] = if i == j {
+                    if s > 1e-12 {
+                        s.sqrt()
+                    } else {
+                        1e-6
+                    }
+                } else {
+                    s / a[j * p + j]
+                };
+            }
+        }
+        i0 += rows;
+    }
+}
+
+/// Entries `(i0 + t, j)` for `t < R` and every `j < i0`: `R` independent chains per column.
+fn cholesky_block_left<const R: usize>(a: &mut [f64], p: usize, i0: usize) {
+    for j in 0..i0 {
+        let mut s = [0.0f64; R];
+        for (t, st) in s.iter_mut().enumerate() {
+            *st = a[(i0 + t) * p + j];
+        }
+        for k in 0..j {
+            let ajk = a[j * p + k];
+            for (t, st) in s.iter_mut().enumerate() {
+                *st -= a[(i0 + t) * p + k] * ajk;
+            }
+        }
+        let d = a[j * p + j];
+        for (t, st) in s.iter().enumerate() {
+            a[(i0 + t) * p + j] = st / d;
+        }
+    }
+}
+
 /// In-place Cholesky solve of the SPD system A w = b (A carries λ ≥ 1e-3 on the
 /// diagonal). Same algorithm, same order, in the emitted artifacts.
 pub fn cholesky_solve(a: &mut [f64], b: &mut [f64], p: usize) -> Vec<f64> {
     // Decompose: A = L Lᵀ, L stored in the lower triangle of a.
-    for i in 0..p {
-        for j in 0..=i {
-            let mut s = a[i * p + j];
-            for k in 0..j {
-                s -= a[i * p + k] * a[j * p + k];
-            }
-            if i == j {
-                a[i * p + j] = if s > 1e-12 { s.sqrt() } else { 1e-6 };
-            } else {
-                a[i * p + j] = s / a[j * p + j];
-            }
-        }
-    }
+    cholesky_factor(a, p);
     // Forward: L z = b.
     let mut z = vec![0.0f64; p];
     for i in 0..p {
@@ -1276,9 +1334,9 @@ impl GbmModel {
         let mut f_train = vec![init; n];
         let nbins = cfg.bins as u16;
         let mut trees = Vec::with_capacity(cfg.rounds);
-        // Round-invariant (hess) and reusable (grad, leaf map, histogram) buffers, allocated
-        // once per fit instead of once per round / per node and feature.
-        let hess = vec![1.0f64; n];
+        // Reusable (grad, leaf map, histogram) buffers, allocated once per fit instead of once
+        // per round / per node and feature. Squared loss has a unit hessian, so `build_tree`
+        // counts rows where a general booster would sum hessians.
         let mut grad = vec![0.0f64; n];
         let mut train_leaf = vec![0usize; n];
         let mut scratch = HistScratch::new(nbins as usize);
@@ -1292,7 +1350,6 @@ impl GbmModel {
                 &train_cols,
                 n,
                 &grad,
-                &hess,
                 (0..n).collect(),
                 n_feat,
                 nbins,
@@ -1336,17 +1393,17 @@ impl GbmModel {
     }
 }
 
-/// Reused per-feature histogram buffers for [`build_tree`].
+/// Reused per-feature histogram buffers for [`build_tree`]: gradient sum and row count per bin.
 struct HistScratch {
     gh: Vec<f64>,
-    hh: Vec<f64>,
+    count: Vec<u32>,
 }
 
 impl HistScratch {
     fn new(nbins: usize) -> Self {
         HistScratch {
             gh: vec![0.0; nbins],
-            hh: vec![0.0; nbins],
+            count: vec![0; nbins],
         }
     }
 }
@@ -1363,12 +1420,15 @@ fn feature_major(bins: &[u16], n: usize, n_feat: usize) -> Vec<u16> {
 }
 
 /// Grow one tree over feature-major training bins `cols[f * n_rows + i]`.
+///
+/// The squared-loss hessian is 1 for every row, so a node's hessian sum is its row count and a
+/// bin's is its row count: both are exact in `f64` (far below 2^53), so they equal the sums of
+/// unit hessians the booster used to accumulate, bit for bit.
 #[allow(clippy::too_many_arguments)]
 fn build_tree(
     cols: &[u16],
     n_rows: usize,
     grad: &[f64],
-    hess: &[f64],
     rows: Vec<usize>,
     n_feat: usize,
     nbins: u16,
@@ -1379,7 +1439,7 @@ fn build_tree(
     scratch: &mut HistScratch,
 ) -> usize {
     let g: f64 = rows.iter().map(|&i| grad[i]).sum();
-    let h: f64 = rows.iter().map(|&i| hess[i]).sum();
+    let h: f64 = rows.iter().map(|_| 1.0f64).sum();
     let leaf_value = -g / (h + cfg.lambda);
     let make_leaf = |out: &mut Vec<GbmNode>, leaf_of: &mut [usize], rows: &[usize]| -> usize {
         let idx = out.len();
@@ -1398,18 +1458,23 @@ fn build_tree(
     let parent = g * g / (h + cfg.lambda);
     for f in 0..n_feat {
         let col = &cols[f * n_rows..(f + 1) * n_rows];
-        let (gh, hh) = (&mut scratch.gh, &mut scratch.hh);
+        let (gh, count) = (&mut scratch.gh, &mut scratch.count);
         gh.fill(0.0);
-        hh.fill(0.0);
+        count.fill(0);
         for &i in &rows {
             let b = col[i] as usize;
             gh[b] += grad[i];
-            hh[b] += hess[i];
+            count[b] += 1;
         }
         let (mut gl, mut hl) = (0.0f64, 0.0f64);
         for b in 0..(nbins as usize - 1) {
             gl += gh[b];
-            hl += hh[b];
+            hl += count[b] as f64;
+            // An empty bin leaves (gl, hl) where the previous bin left them, so its candidate
+            // gain equals that bin's and can never pass the strict `>` below: skip it.
+            if count[b] == 0 {
+                continue;
+            }
             let gr = g - gl;
             let hr = h - hl;
             if hl < 1.0 || hr < 1.0 {
@@ -1445,7 +1510,6 @@ fn build_tree(
         cols,
         n_rows,
         grad,
-        hess,
         left_rows,
         n_feat,
         nbins,
@@ -1459,7 +1523,6 @@ fn build_tree(
         cols,
         n_rows,
         grad,
-        hess,
         right_rows,
         n_feat,
         nbins,
@@ -1533,6 +1596,107 @@ fn mean(v: &[f64]) -> f64 {
 mod tests {
     use super::*;
     use crate::rng::Pcg32;
+
+    /// The textbook row-major loop `cholesky_factor` must reproduce bit for bit.
+    fn reference_cholesky_factor(a: &mut [f64], p: usize) {
+        for i in 0..p {
+            for j in 0..=i {
+                let mut s = a[i * p + j];
+                for k in 0..j {
+                    s -= a[i * p + k] * a[j * p + k];
+                }
+                if i == j {
+                    a[i * p + j] = if s > 1e-12 { s.sqrt() } else { 1e-6 };
+                } else {
+                    a[i * p + j] = s / a[j * p + j];
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn blocked_cholesky_is_bit_identical_to_the_row_major_loop() {
+        let mut rng = Pcg32::new(0xc401, 3);
+        let specials = [
+            f64::NAN,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            -0.0,
+            0.0,
+            1e-300,
+        ];
+        // Every block remainder (p mod 4), SPD and non-SPD inputs (the 1e-6 branch), and
+        // non-finite entries.
+        for p in 0..=37usize {
+            for case in 0..6 {
+                let mut a = vec![0.0f64; p * p];
+                match case {
+                    0 | 1 => {
+                        // SPD: Gram matrix plus a ridge, as the heads build it.
+                        let m = p + 3;
+                        let z: Vec<f64> = (0..m * p).map(|_| rng.gaussian()).collect();
+                        for i in 0..p {
+                            for j in 0..p {
+                                a[i * p + j] = (0..m).map(|r| z[r * p + i] * z[r * p + j]).sum();
+                            }
+                            a[i * p + i] += if case == 0 { 1e-3 } else { 10.0 };
+                        }
+                    }
+                    2 | 3 => {
+                        // Symmetric indefinite: many non-positive pivots.
+                        for i in 0..p {
+                            for j in 0..=i {
+                                let v = rng.next_f64() * 4.0 - 2.0;
+                                a[i * p + j] = v;
+                                a[j * p + i] = v;
+                            }
+                        }
+                    }
+                    _ => {
+                        for v in a.iter_mut() {
+                            *v = rng.gaussian();
+                        }
+                        for _ in 0..(p / 3 + 1).min(p * p) {
+                            let at = (rng.next_f64() * (p * p) as f64) as usize % (p * p);
+                            let pick = (rng.next_f64() * specials.len() as f64) as usize;
+                            a[at] = specials[pick.min(specials.len() - 1)];
+                        }
+                    }
+                }
+                let mut want = a.clone();
+                reference_cholesky_factor(&mut want, p);
+                let mut got = a.clone();
+                cholesky_factor(&mut got, p);
+                for (w, g) in want.iter().zip(&got) {
+                    assert_eq!(w.to_bits(), g.to_bits(), "p={p} case={case}");
+                }
+                let b: Vec<f64> = (0..p).map(|_| rng.gaussian()).collect();
+                let (mut a1, mut b1) = (a.clone(), b.clone());
+                let solved = cholesky_solve(&mut a1, &mut b1, p);
+                let mut a2 = a.clone();
+                reference_cholesky_factor(&mut a2, p);
+                let mut z = vec![0.0f64; p];
+                for i in 0..p {
+                    let mut s = b[i];
+                    for k in 0..i {
+                        s -= a2[i * p + k] * z[k];
+                    }
+                    z[i] = s / a2[i * p + i];
+                }
+                let mut w = vec![0.0f64; p];
+                for i in (0..p).rev() {
+                    let mut s = z[i];
+                    for k in (i + 1)..p {
+                        s -= a2[k * p + i] * w[k];
+                    }
+                    w[i] = s / a2[i * p + i];
+                }
+                for (x, y) in solved.iter().zip(&w) {
+                    assert_eq!(x.to_bits(), y.to_bits(), "solve p={p} case={case}");
+                }
+            }
+        }
+    }
 
     #[test]
     fn hurdle2_is_deterministic_and_learns_bimodal_expectation() {
