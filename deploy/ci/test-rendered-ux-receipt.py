@@ -46,6 +46,9 @@ def synthetic_report():
             "stats": {"expected": 2, "skipped": 0, "unexpected": 0, "flaky": 0}}
 
 
+ACTUAL_MANUAL_CONFIG = {'metadata': {'source_sha': '9bf1037f73e98b083e72e4e373780c393a7fc4ec', 'run_id': '39641157469', 'attempt': '1', 'ci': {'commitHref': 'https://github.com/neverhuman/JopeDime/commit/9bf1037f73e98b083e72e4e373780c393a7fc4ec', 'commitHash': '9bf1037f73e98b083e72e4e373780c393a7fc4ec', 'buildHref': 'https://github.com/neverhuman/JopeDime/actions/runs/39641157469'}, 'gitCommit': {'shortHash': '9bf1037f7', 'hash': '9bf1037f73e98b083e72e4e373780c393a7fc4ec', 'subject': 'test: classify audit controls and pin source inventory', 'body': 'test: classify audit controls and pin source inventory\n\nAgent-Session: JopeDime\nAgent-Model: gpt-6-luna medium\nAgent-Task: codex/pr395-integration-20261021\n', 'author': {'name': 'Jepson Taylor', 'email': '130782313+jepsontaylor@users.noreply.github.com', 'time': 1792602430000}, 'committer': {'name': 'Jepson Taylor', 'email': '130782313+jepsontaylor@users.noreply.github.com', 'time': 1792602430000}, 'branch': 'HEAD'}, 'actualWorkers': 1}, 'workers': 1}
+
+
 class ReceiptControls(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="rendered-receipt-control-")
@@ -66,10 +69,12 @@ class ReceiptControls(unittest.TestCase):
     def build(self):
         return receipt.build(self.root, SHA, RUN, ATTEMPT)
 
-    def cli(self, mode, root=None):
+    def cli(self, mode, root=None, checkout=None, event=None):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             return receipt.main([mode, "--root", str(root or self.root), "--source-sha", SHA,
-                                 "--run-id", RUN, "--attempt", ATTEMPT])
+                                 "--run-id", RUN, "--attempt", ATTEMPT]
+                                + (["--checkout-sha", checkout] if checkout is not None else [])
+                                + (["--event-sha", event] if event is not None else []))
 
     def result(self):
         return self.report["suites"][0]["specs"][0]["tests"][0]["results"][0]
@@ -80,6 +85,95 @@ class ReceiptControls(unittest.TestCase):
         change(value)
         item["body"] = base64.b64encode(json.dumps(value).encode()).decode()
         self.save()
+
+    def hosted(self, event="c" * 40):
+        metadata = self.report["config"]["metadata"]
+        repository = "https://github.com/neverhuman/JopeDime"
+        metadata.update(ci={"commitHash": event, "commitHref": repository + "/commit/" + event,
+                            "buildHref": repository + "/actions/runs/" + RUN,
+                            "prHref": repository + "/pull/395", "prTitle": "synthetic control",
+                            "prBaseHash": "b" * 40, "branch": "feature"},
+                        gitCommit={"hash": SHA, "shortHash": SHA[:9], "subject": "synthetic",
+                                   "body": "synthetic", "author": {"name": "fixture", "email": "fixture@example.invalid", "time": 0},
+                                   "committer": {"name": "fixture", "email": "fixture@example.invalid", "time": 0}, "branch": "HEAD"},
+                        gitDiff="diff --git synthetic nonbinding annotation", actualWorkers=1)
+        self.report["config"]["workers"] = 1
+        self.save()
+        return metadata
+
+    def test_actual_hosted_manual_report_metadata_is_accepted(self):
+        # Verbatim config.metadata from retained raw manual report 39641157469/a1;
+        # this checks real annotations, not the original rendered artifact qualification.
+        config = ACTUAL_MANUAL_CONFIG
+        sha = "9bf1037f73e98b083e72e4e373780c393a7fc4ec"
+        before = copy.deepcopy(config)
+        bound = receipt.report_identity(config, sha, "39641157469", "1", sha, sha)
+        self.assertEqual(bound["checkout_sha"], sha)
+        self.assertEqual(config, before)
+
+    def test_pr_checkout_and_event_are_distinct_bound_and_portable(self):
+        self.hosted()
+        before = (self.root / "report.json").read_bytes()
+        self.assertEqual(self.cli("create", checkout=SHA, event="c" * 40), 0)
+        self.assertEqual(self.cli("verify", checkout=SHA, event="c" * 40), 0)
+        value = json.loads((self.root / receipt.RECEIPT).read_text())
+        self.assertEqual(value["schema"], "jope.rendered-ux-ci/v2")
+        self.assertEqual((value["source_sha"], value["checkout_sha"], value["event_sha"]), (SHA, SHA, "c" * 40))
+        self.assertEqual((self.root / "report.json").read_bytes(), before)
+        moved = self.root.with_name("downloaded")
+        shutil.copytree(self.root, moved)
+        self.assertEqual(self.cli("verify", moved, SHA, "c" * 40), 0)
+        self.assertEqual(self.cli("verify", moved, "c" * 40, "c" * 40), 1)
+        self.assertEqual(self.cli("verify", moved, SHA, SHA), 1)
+
+    def test_hosted_links_hashes_and_attempts_cannot_substitute_for_core(self):
+        for where, key, value in (
+            ("ci", "commitHash", SHA), ("ci", "commitHref", "https://github.com/neverhuman/JopeDime/commit/" + SHA),
+            ("ci", "buildHref", "https://github.com/neverhuman/JopeDime/actions/runs/124"),
+            ("ci", "buildHref", "https://github.com/neverhuman/JopeDime/actions/runs/123/attempts/2"),
+            ("ci", "buildHref", "https://github.com/other/repository/actions/runs/123"),
+            ("gitCommit", "hash", "c" * 40), ("gitCommit", "shortHash", "bbbbbbb")):
+            with self.subTest(where=where, key=key, value=value):
+                self.report = synthetic_report()
+                metadata = self.hosted()
+                metadata[where][key] = value
+                self.save()
+                self.assertEqual(self.cli("create", checkout=SHA, event="c" * 40), 1)
+        for key in ("source_sha", "run_id", "attempt"):
+            self.report = synthetic_report()
+            metadata = self.hosted()
+            metadata.pop(key)
+            self.save()
+            self.assertEqual(self.cli("create", checkout=SHA, event="c" * 40), 1)
+
+    def test_known_hosted_annotations_remain_typed_and_unknown_fields_refused(self):
+        changes = (
+            lambda m: m["ci"].update(unknown="x"), lambda m: m["gitCommit"].update(unknown="x"),
+            lambda m: m["gitCommit"]["author"].update(time=True),
+            lambda m: m["gitCommit"]["committer"].update(unknown="x"),
+            lambda m: m["ci"].update(prTitle=1), lambda m: m["ci"].update(branch=[]),
+            lambda m: m["ci"].update(prBaseHash="short"), lambda m: m["ci"].update(prHref="https://example.invalid/pull/395"),
+            lambda m: m.update(gitDiff={}), lambda m: m.update(gitDiff="x" * 100001))
+        for change in changes:
+            with self.subTest(change=change):
+                self.report = synthetic_report()
+                metadata = self.hosted()
+                change(metadata)
+                self.save()
+                self.assertEqual(self.cli("create", checkout=SHA, event="c" * 40), 1)
+
+    def test_matching_attempt_link_is_allowed_and_v1_receipt_not_relabeled(self):
+        metadata = self.hosted()
+        metadata["ci"]["buildHref"] += "/attempts/1"
+        self.save()
+        self.assertEqual(self.cli("create", checkout=SHA, event="c" * 40), 0)
+        path = self.root / receipt.RECEIPT
+        value = json.loads(path.read_text())
+        value["schema"] = "jope.rendered-ux-ci/v1"
+        value.pop("checkout_sha")
+        value.pop("event_sha")
+        path.write_text(json.dumps(value))
+        self.assertEqual(self.cli("verify", checkout=SHA, event="c" * 40), 1)
 
     def test_playwright_actual_workers_is_accepted_without_weakening_identity(self):
         self.report["config"]["metadata"]["actualWorkers"] = 1

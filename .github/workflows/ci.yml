@@ -312,7 +312,9 @@ jobs:
           export FONTCONFIG_FILE
           npx playwright install --only-shell chromium
           npm run test:rendered
-          python3 "$GITHUB_WORKSPACE/deploy/ci/rendered-ux-receipt.py" create --root "$JOPE_UX_EVIDENCE" --source-sha "$JOPE_UI_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+          checkout_sha=$(git rev-parse HEAD)
+          test "$checkout_sha" = "$JOPE_UI_SOURCE_SHA"
+          python3 "$GITHUB_WORKSPACE/deploy/ci/rendered-ux-receipt.py" create --root "$JOPE_UX_EVIDENCE" --source-sha "$JOPE_UI_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --checkout-sha "$checkout_sha" --event-sha "$GITHUB_SHA"
       - name: Retain exact-head frontend evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -420,7 +422,8 @@ jobs:
           set -euo pipefail
           root="target/ci-ui-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           rendered_root=$(python3 -c 'import pathlib,sys; p=list(pathlib.Path(sys.argv[1]).rglob("rendered-receipt.json")); assert len(p)==1, "one rendered receipt required"; print(p[0].parent)' "$root")
-          python3 deploy/ci/rendered-ux-receipt.py verify --root "$rendered_root" --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+          # UI checks out the source head explicitly; aggregate may use a synthetic PR merge.
+          python3 deploy/ci/rendered-ux-receipt.py verify --root "$rendered_root" --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --checkout-sha "$JOPE_SOURCE_SHA" --event-sha "$GITHUB_SHA"
       - name: Validate every required result
         if: always()
         env:
