@@ -7,9 +7,9 @@ below are pending; adding this checklist does not complete P0 or qualify a produ
 Each implementation PR must name its stage, changed paths, full source SHA,
 acceptance commands and results, evidence locations, and remaining requirements.
 Follow the repository's [contribution contract](../../AGENTS.md), including claims,
-one implementation PR at a time, exact-head CI, and independent review. A passed
-fixture, implemented command, qualified backend, and promoted release are separate
-states.
+one implementation PR at a time, exact-head CI, and substantive head-bound agent
+review. The implementing agent may perform that review. A passed fixture,
+implemented command, qualified backend, and promoted release are separate states.
 
 ## P0 — Inventory and contracts
 

@@ -84,6 +84,11 @@ enum Command {
         /// Only regression datasets are accepted when this option is supplied.
         #[arg(long, value_delimiter = ',', value_parser = [jope_bench::automl::NAME])]
         automl: Vec<String>,
+        /// Frozen challenge regressor built into this binary, run through the same adapter
+        /// contract as `adapter.<NAME>` on regression datasets only (repeatable; see
+        /// crates/jope-bench/regressors/). Built in: `Opus5p5_Extra`.
+        #[arg(long = "entrant")]
+        entrants: Vec<String>,
         /// Wall-clock cap per adapter invocation, in seconds.
         #[arg(long, default_value_t = 600.0)]
         adapter_timeout: f64,
@@ -140,6 +145,13 @@ enum Command {
         #[arg(num_args = 0.., trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+    /// A frozen challenge regressor built into this binary, as a jope.bench-adapter/v1 process:
+    /// `<entrant> --version`, or `<entrant> [--seed N] <train.csv> <predict.csv> <out.csv> <task>`.
+    #[command(hide = true, disable_help_flag = true)]
+    RegressorAdapter {
+        #[arg(num_args = 0.., trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Compare two search profiles at an equal evaluation budget on the same datasets, cuts and
     /// seeds, and write one jope.bench-ablation/v1 document.
     Ablation(jope_bench::ablation::AblationArgs),
@@ -160,6 +172,9 @@ fn main() -> Result<()> {
         Command::MeanAdapter { args } => {
             std::process::exit(jope_bench::adapter::mean_adapter(&args));
         }
+        Command::RegressorAdapter { args } => {
+            std::process::exit(jope_bench::regressors::regressor_adapter(&args));
+        }
         Command::Panel(cli) => {
             if jope_bench::panel::cli::execute(cli) != std::process::ExitCode::SUCCESS {
                 bail!("panel command failed");
@@ -178,6 +193,7 @@ fn main() -> Result<()> {
             natives,
             adapters,
             automl,
+            entrants,
             adapter_timeout,
             search,
             resample_search,
@@ -223,6 +239,22 @@ fn main() -> Result<()> {
                 )?;
                 spec.probe()?;
                 extra_methods.push(methods::adapter(spec));
+            }
+            let mut entrant_methods = Vec::new();
+            if !entrants.is_empty() {
+                let exe = std::env::current_exe()
+                    .context("this binary's path, for the entrant adapter command")?;
+                for name in &entrants {
+                    let mut spec =
+                        jope_bench::regressors::adapter_spec(name, &exe, seed, adapter_timeout)?;
+                    spec.probe()?;
+                    eprintln!(
+                        "entrant {}: {}",
+                        spec.name,
+                        spec.version.as_deref().unwrap_or("?")
+                    );
+                    entrant_methods.push(methods::adapter(spec));
+                }
             }
             let search_config = search.then_some(SearchConfig {
                 pop: search_pop,
@@ -286,6 +318,9 @@ fn main() -> Result<()> {
                     None => methods::default_baselines(task)?,
                 };
                 methods.extend(extra_methods.iter().cloned());
+                if task == Task::Regression {
+                    methods.extend(entrant_methods.iter().cloned());
+                }
                 let plan = FoldPlan::new(&dataset.row.dataset_hash, seed, folds);
                 let cuts = match cuts::build(
                     &plan,
