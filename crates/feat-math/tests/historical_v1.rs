@@ -499,6 +499,17 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             "PR392 transition must name {path}"
         );
     }
+    // HPC/safety cleanup: bit-exact feat-math rewrites and engine lock/clippy changes.
+    // Announced identity and teaching-store lineage only; behavior pins stay strict.
+    let hpc_cleanup = old_fixture("transitions/hpc_safety_cleanup_identity_rebaseline.v1.json");
+    let hpc_fixtures = hpc_cleanup["fixtures"].as_array().unwrap();
+    assert_eq!(hpc_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(
+            hpc_fixtures.iter().any(|entry| entry["path"] == path),
+            "HPC cleanup transition must name {path}"
+        );
+    }
     let identity_chain = [
         transition,
         successor,
@@ -523,6 +534,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         observatory_workspace_lock,
         gp_source_stream,
         gpt6p1_sol_max,
+        hpc_cleanup,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
