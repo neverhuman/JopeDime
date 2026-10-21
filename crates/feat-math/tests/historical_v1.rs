@@ -552,7 +552,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             edge["before"].as_str().unwrap(),
             edge["after"].as_str().unwrap(),
             &[pr397_parallel.clone()],
-        ).expect("preserved PR397 parallel identity announcement");
+        )
+        .expect("preserved PR397 parallel identity announcement");
     }
     let identity_chain = [
         transition,
