@@ -143,7 +143,7 @@ it here cross the boundary, not predictions.
 - **Live progress (`jope.invent.progress.v1`).** While it searches, `invent` writes progress to
   **stderr**, one compact JSON object per newline-terminated line, each written with a single
   write and flushed; `--no-progress` turns it off. stdout and the work directory are unchanged.
-  Lines carry numbers only, never program source, genomes, column names or data values:
+  Lines carry numbers only, never candidate source, column names or data values:
 
   ```json
   {"schema":"jope.invent.progress.v1","sequence":5,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.92,"seconds_budget":240.0}
