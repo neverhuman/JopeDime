@@ -538,11 +538,11 @@ fn run_wave(
                   args: &mut [*mut c_void]|
      -> Result<(), String> {
         api.check(
-            // SAFETY: `f` is one of the four functions loaded from the embedded PTX, and every
-            // call site below passes `args` built by `ptr_args!` in that kernel's parameter
-            // order, each element pointing at a live local of the kernel parameter's type
-            // (u64 device pointers, then the c_int problem count). The driver copies the parameter
-            // values at launch, before this borrow ends; `extra` is null.
+            // `f` is one of the four functions loaded from the embedded PTX, and every call site
+            // below passes `args` built by `ptr_args!` in that kernel's parameter order, each
+            // element pointing at a live local of the parameter's type (u64 device pointers, then
+            // the c_int problem count). The driver copies the values at launch; `extra` is null.
+            // SAFETY: kernel handle and argument list match the PTX signature (see above).
             unsafe {
                 (api.cuLaunchKernel)(
                     f,

@@ -55,10 +55,10 @@ macro_rules! api {
                         if ptr.is_null() {
                             return Err(format!("libcuda: missing symbol {}", stringify!($name)));
                         }
-                        // SAFETY: `ptr` is a non-null libcuda export named exactly like this
-                        // field, and the `api!` table spells that symbol's documented CUDA
-                        // driver prototype, so the pointer is a valid function of this type.
+                        // `ptr` is a non-null libcuda export named exactly like this field, and
+                        // the `api!` table spells that symbol's documented CUDA driver prototype.
                         // Code and data pointers have one size on the supported Linux targets.
+                        // SAFETY: so the pointer is a valid function of exactly this type.
                         unsafe { std::mem::transmute::<*mut c_void, unsafe extern "C" fn($($arg),*) -> CUresult>(ptr) }
                     },)*
                 })
