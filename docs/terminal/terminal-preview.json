@@ -1,0 +1,49 @@
+{
+  "schema": "jope.terminal-preview/v1",
+  "status": "design preview; synthetic values; proposed UI is not implemented",
+  "source_base_sha40": "45490f2ce33075a355e08844351db197001beb90",
+  "scenes": [
+    "native CSV fit",
+    "separate generated-source viewer"
+  ],
+  "dimensions": [
+    1200,
+    780
+  ],
+  "frames": 26,
+  "durations_ms": [
+    1700,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    1700,
+    700,
+    1600,
+    700,
+    700,
+    700,
+    700,
+    700,
+    1600,
+    700,
+    700,
+    700,
+    1600
+  ],
+  "loop": 0,
+  "pillow_version": "10.2.0",
+  "font_sha256": "c805f9436dbc268644c1d9584f01a601a653e028e08fd74b9b949f6cf8304d88",
+  "bold_font_sha256": "3a3c502eeff669a231549e80df9f7c49de109bafe303170409e905d0b31a38fe",
+  "generator_sha256": "907a32f6483472af9718359f7b357896437bb145131955de3ba368757bee4bf8",
+  "gif_sha256": "b9595d9502e9ed490e437ae0c09deb6adf475fd0f62c6b457ce5a075954fd482",
+  "gif_bytes": 195383
+}
