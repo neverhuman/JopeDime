@@ -2520,6 +2520,20 @@
         "orchestration"
       ]
     },
+    "target:jope-appliance/bin/jopedime": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "fitting"
+      ]
+    },
+    "target:jope-appliance/test/single_file": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "fitting"
+      ]
+    },
     "target:jope-arena/bin/jope-arena": {
       "role": "regression",
       "subsystems": [
@@ -2536,6 +2550,27 @@
       "role": "regression",
       "subsystems": [
         "evaluation"
+      ]
+    },
+    "target:jope-assets/lib/jope_assets": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "storage"
+      ]
+    },
+    "target:jope-assets/test/decode_bounds": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "storage"
+      ]
+    },
+    "target:jope-assets/test/envelope": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "storage"
       ]
     },
     "target:jope-automl/lib/jope_automl": {
@@ -3037,6 +3072,37 @@
     "target:jope-dime-regressor/test/systemd_unit_paths": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
+    },
+    "target:jope-dist/bin/jope-dist": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:jope-dist/lib/jope_dist": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:jope-dist/test/closure": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "storage"
+      ]
+    },
+    "target:jope-dist/test/dependency_fence": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:jope-dist/test/reproducible_pack": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:jope-dist/test/schemas": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
     },
     "target:jope-learning/bin/jope-learning": {
       "role": "regression",
@@ -4429,6 +4495,27 @@
       "role": "regression",
       "subsystems": [
         "evidence"
+      ]
+    },
+    "target:jope-runtime/lib/jope_runtime": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "preparation"
+      ]
+    },
+    "target:jope-runtime/test/method_roster": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
+    "target:jope-runtime/test/offline_fit_predict": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "preparation",
+        "export"
       ]
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {

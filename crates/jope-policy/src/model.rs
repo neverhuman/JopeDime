@@ -219,6 +219,18 @@ impl PolicyModel {
     pub fn load_bound(path: &Path, binding: &CheckpointBinding, device: Device) -> Result<Self> {
         let bytes =
             std::fs::read(path).with_context(|| format!("reading policy {}", path.display()))?;
+        Self::load_bound_from_bytes(bytes, binding, device)
+    }
+
+    /// [`Self::load_bound`] over safetensors bytes the caller already holds, such as an asset the
+    /// `jopedime` appliance decoded and verified from its signed package
+    /// (`deploy/appliance/SPECIFICATION.md` §9). The same file, tensor-inventory and
+    /// parameter-hash checks apply, so packaged bytes prove exactly what a file on disk proves.
+    pub fn load_bound_from_bytes(
+        bytes: Vec<u8>,
+        binding: &CheckpointBinding,
+        device: Device,
+    ) -> Result<Self> {
         let file_sha256 = sha256_hex(&bytes);
         ensure!(
             file_sha256 == binding.policy_safetensors_sha256(),

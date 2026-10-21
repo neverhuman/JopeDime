@@ -1,0 +1,275 @@
+{
+  "schema": "jope.appliance-model-lock/v1",
+  "profiles": {
+    "fixture": {
+      "profile_sha256": "c6c219d35dd765f1b11e6f0d0c325052ebe18ec7d245b9588e11095b4e099b16",
+      "scope": "development",
+      "status": "ready",
+      "blockers": [],
+      "methods": [
+        "auto",
+        "rust.elasticnet",
+        "rust.ensemble",
+        "rust.extra_trees",
+        "rust.gam_boost",
+        "rust.gpr",
+        "rust.gpr.rbf_linear",
+        "rust.histgbm",
+        "rust.histgbm2",
+        "rust.hurdle2",
+        "rust.krr",
+        "rust.ksmooth",
+        "rust.logit_ridge",
+        "rust.multiclass_diagonal_lda",
+        "rust.multiclass_nearest_centroid",
+        "rust.multiclass_ovr_logistic",
+        "rust.multiclass_ridge",
+        "rust.pls",
+        "rust.portfolio",
+        "rust.ridge",
+        "rust.ridge_gcv",
+        "rust.stack",
+        "rust.tab_boost"
+      ],
+      "components": [
+        {
+          "id": "fixture-encoder",
+          "role": "model",
+          "bundle_id": "fixture-encoder",
+          "bundle_manifest_sha256": "84b611bd5110837eac3f2b556acf4d3551d2afc13a8a6c87f58c6f6adbb5ea68",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "encoder.safetensors",
+              "sha256": "5284fbb32ce6ecf82dc25168e86e7c75e73aa03a2038f33f45712ea22b7918f2",
+              "bytes": 16927,
+              "kind": "model",
+              "spdx": "LicenseRef-Jope-Fixture",
+              "redistribution": "permitted"
+            },
+            {
+              "path": "encoder.config.json",
+              "sha256": "693d3a5f1a138fd00e55195386cfaa0e6bcf1ef40a9a2db4419b8077253fa37f",
+              "bytes": 55,
+              "kind": "config",
+              "spdx": "LicenseRef-Jope-Fixture",
+              "redistribution": "permitted"
+            }
+          ]
+        },
+        {
+          "id": "fixture-policy",
+          "role": "model",
+          "bundle_id": "fixture-policy",
+          "bundle_manifest_sha256": "7adec58f6fb014fe474e99e7b4f5b76c64f2a694191fd0014932527f43591955",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "policy.safetensors",
+              "sha256": "3d4d3050fac3b5fbfead5d45df9f88505b31afba90aa9ec65e54a3caadfc3236",
+              "bytes": 86238,
+              "kind": "model",
+              "spdx": "LicenseRef-Jope-Fixture",
+              "redistribution": "permitted"
+            }
+          ]
+        }
+      ],
+      "total_bytes": 103220
+    },
+    "full": {
+      "profile_sha256": "fb48836c5d9e1d90c8a9fbdde49373fd7098109345ce435f447d73362729b561",
+      "scope": "internal-restricted",
+      "status": "blocked",
+      "blockers": [
+        "jope-prime-gen31-v2/starforge/starlight_core_regressor.safetensors: `prohibited` needs the owner acknowledgement deploy/appliance/acknowledgements/full-internal-restricted.md, which does not exist",
+        "method proposal.step60000.regression: neural adapters are not compiled into this build (IMPLEMENTATION_CHECKLIST.md P3-P4)"
+      ],
+      "methods": [
+        "auto",
+        "proposal.step60000.regression",
+        "rust.elasticnet",
+        "rust.ensemble",
+        "rust.extra_trees",
+        "rust.gam_boost",
+        "rust.gpr",
+        "rust.gpr.rbf_linear",
+        "rust.histgbm",
+        "rust.histgbm2",
+        "rust.hurdle2",
+        "rust.krr",
+        "rust.ksmooth",
+        "rust.logit_ridge",
+        "rust.multiclass_diagonal_lda",
+        "rust.multiclass_nearest_centroid",
+        "rust.multiclass_ovr_logistic",
+        "rust.multiclass_ridge",
+        "rust.pls",
+        "rust.portfolio",
+        "rust.ridge",
+        "rust.ridge_gcv",
+        "rust.stack",
+        "rust.tab_boost"
+      ],
+      "components": [
+        {
+          "id": "policy-step-60000",
+          "role": "model",
+          "bundle_id": "policy-step-60000",
+          "bundle_manifest_sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "policy.safetensors",
+              "sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+              "bytes": 111199088,
+              "kind": "policy",
+              "spdx": "LicenseRef-Jain-Internal-Model",
+              "redistribution": "internal"
+            },
+            {
+              "path": "context_transforms.safetensors",
+              "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+              "bytes": 8413808,
+              "kind": "context_transforms",
+              "spdx": "LicenseRef-Jain-Internal-Model",
+              "redistribution": "internal"
+            }
+          ]
+        },
+        {
+          "id": "hyperion-v5-arm-b",
+          "role": "model",
+          "bundle_id": "jope-prime-gen31-v2",
+          "bundle_manifest_sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "model-bundle/hyperion_v5_arm_b.safetensors",
+              "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+              "bytes": 6650692,
+              "kind": "hyperion_v5_arm_b",
+              "spdx": "LicenseRef-Jain-Redistributable-Model",
+              "redistribution": "permitted"
+            },
+            {
+              "path": "model-bundle/hyperion_v5_arm_b.manifest.json",
+              "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+              "bytes": 264,
+              "kind": "hyperion_runtime_manifest",
+              "spdx": "LicenseRef-Jain-Redistributable-Model",
+              "redistribution": "permitted"
+            }
+          ]
+        },
+        {
+          "id": "starlight-foundation",
+          "role": "model",
+          "bundle_id": "jope-prime-gen31-v2",
+          "bundle_manifest_sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "starforge/starlight_core_regressor.safetensors",
+              "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+              "bytes": 233183532,
+              "kind": "starlight_regressor",
+              "spdx": "LicenseRef-Jain-ThirdParty-Provenance-Pending",
+              "redistribution": "prohibited"
+            }
+          ]
+        },
+        {
+          "id": "target-encoder",
+          "role": "model",
+          "bundle_id": "jope-prime-gen31-v2",
+          "bundle_manifest_sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+              "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+              "bytes": 78615176,
+              "kind": "target_encoder_fused_v1",
+              "spdx": "LicenseRef-Jain-Redistributable-Model",
+              "redistribution": "permitted"
+            },
+            {
+              "path": "model-bundle/target_encoder_fused_v1.meta.json",
+              "sha256": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+              "bytes": 40915,
+              "kind": "target_encoder_metadata",
+              "spdx": "LicenseRef-Jain-Redistributable-Model",
+              "redistribution": "permitted"
+            }
+          ]
+        },
+        {
+          "id": "governed-bundle",
+          "role": "manifest",
+          "bundle_id": "jope-prime-gen31-v2",
+          "bundle_manifest_sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "model-bundle.v1.json",
+              "sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+              "bytes": 22649,
+              "kind": "metadata",
+              "spdx": "none",
+              "redistribution": "none"
+            }
+          ]
+        }
+      ],
+      "total_bytes": 438126124
+    },
+    "native-only": {
+      "profile_sha256": "f44efaec01ce4a4fbc0eb44235aafde03322d16e389ce3122d9d2d2fa552cbc8",
+      "scope": "public",
+      "status": "ready",
+      "blockers": [],
+      "methods": [
+        "auto",
+        "rust.elasticnet",
+        "rust.ensemble",
+        "rust.extra_trees",
+        "rust.gam_boost",
+        "rust.gpr",
+        "rust.gpr.rbf_linear",
+        "rust.histgbm",
+        "rust.histgbm2",
+        "rust.hurdle2",
+        "rust.krr",
+        "rust.ksmooth",
+        "rust.logit_ridge",
+        "rust.multiclass_diagonal_lda",
+        "rust.multiclass_nearest_centroid",
+        "rust.multiclass_ovr_logistic",
+        "rust.multiclass_ridge",
+        "rust.pls",
+        "rust.portfolio",
+        "rust.ridge",
+        "rust.ridge_gcv",
+        "rust.stack",
+        "rust.tab_boost"
+      ],
+      "components": [],
+      "total_bytes": 0
+    }
+  }
+}

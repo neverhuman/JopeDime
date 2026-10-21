@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.appliance-run.v1.schema.json",
+  "title": "jopedime run receipt",
+  "description": "What one fit, predict or fit-predict run did (crates/jope-runtime/src/receipt.rs). Written on success and on failure; never contains dataset values or targets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "command", "product_version", "runtime_abi", "source_sha40", "package", "device", "task", "method", "inputs", "outputs", "ignored_columns", "budget", "timings", "selection", "outcome"],
+  "properties": {
+    "schema": {"const": "jope.appliance-run/v1"},
+    "command": {"enum": ["fit", "predict", "fit-predict"]},
+    "product_version": {"type": "string"},
+    "runtime_abi": {"const": "jope.appliance-runtime/v1"},
+    "source_sha40": {"type": "string"},
+    "package": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "profile": {"type": "string"},
+        "scope": {"type": "string"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "signer": {"type": "string"},
+        "signer_role": {"enum": ["release", "development"]}
+      }
+    },
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested", "selected", "reason"],
+      "properties": {"requested": {"type": "string"}, "selected": {"enum": ["cpu", "none"]}, "reason": {"type": "string"}}
+    },
+    "task": {"type": ["object", "null"]},
+    "method": {"type": ["object", "null"]},
+    "inputs": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+    "outputs": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+    "ignored_columns": {"type": "array", "items": {"type": "string"}},
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time_limit_seconds", "consumed_seconds", "threads", "enforcement"],
+      "properties": {
+        "time_limit_seconds": {"type": ["number", "null"]},
+        "consumed_seconds": {"type": "number", "minimum": 0},
+        "threads": {"type": "integer", "minimum": 1},
+        "enforcement": {"type": "string"}
+      }
+    },
+    "timings": {"type": "object"},
+    "selection": {"type": ["object", "null"]},
+    "outcome": {"enum": ["succeeded", "failed"]},
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "exit_code", "message"],
+      "properties": {
+        "kind": {"enum": ["input", "integrity", "backend", "budget", "numerical", "output"]},
+        "exit_code": {"enum": [2, 3, 4, 5, 6, 7]},
+        "message": {"type": "string"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "path", "bytes", "sha256"],
+      "properties": {
+        "role": {"enum": ["train", "input", "model", "predictions", "receipt"]},
+        "path": {"type": "string"},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

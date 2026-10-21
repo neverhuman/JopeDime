@@ -9,9 +9,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 use std::path::Path;
 
-/// Fitted envelopes must retain this policy and replay `raw_table` at inference.
-pub const RAW_CELL_ENCODING: &str = "jope.raw-cell-encoding/v1";
-const CATEGORY_PREFIX: &str = "jope.category.v1:";
+#[cfg(test)]
+use jope_runtime::table::CATEGORY_PREFIX;
+/// The raw-cell encoding and fitting-input digest moved to the appliance runtime unchanged;
+/// fitted envelopes retain the policy and replay `raw_table` at inference.
+pub use jope_runtime::table::{fitting_input_sha256, FITTING_INPUT, RAW_CELL_ENCODING};
 const MAX_DEVELOPMENT_BYTES: u64 = 128 * 1024 * 1024;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -329,73 +331,20 @@ fn schema_for(features: &[Column]) -> Result<DataSchema> {
 }
 
 fn encode_cell(kind: ColumnKind, value: Option<&str>) -> Result<String> {
-    let Some(value) = value else {
-        return Ok(String::new());
-    };
+    jope_runtime::table::encode_cell(engine_kind(kind), value)
+}
+
+fn engine_kind(kind: ColumnKind) -> feat_math::advanced_v3::ColumnKind {
     match kind {
-        ColumnKind::Numeric => {
-            let number: f64 = value.trim().parse().context("invalid numeric feature")?;
-            ensure!(
-                number.is_finite(),
-                "numeric features must be finite or null"
-            );
-            Ok(value.to_owned())
-        }
-        // Every present category is namespaced, including literal null/NA/empty.
-        // This prevents RawTable's missing-token vocabulary from collapsing it.
-        ColumnKind::Categorical => Ok(format!(
-            "{CATEGORY_PREFIX}{}",
-            serde_json::to_string(value)?
-        )),
+        ColumnKind::Numeric => feat_math::advanced_v3::ColumnKind::Numeric,
+        ColumnKind::Categorical => feat_math::advanced_v3::ColumnKind::Categorical,
     }
 }
 
 /// Reusable label-free preprocessing for fitting, workers and fitted inference.
 /// JSON null is the only missing cell; original categorical strings are injective.
 pub fn raw_table(features: &[Column], values: &[Vec<Option<String>>]) -> Result<RawTable> {
-    let schema = schema_for(features)?;
-    let rows = values
-        .iter()
-        .map(|row| {
-            ensure!(row.len() == features.len(), "ragged raw feature row");
-            row.iter()
-                .zip(features)
-                .map(|(value, feature)| encode_cell(feature.kind, value.as_deref()))
-                .collect::<Result<Vec<_>>>()
-        })
-        .collect::<Result<Vec<_>>>()?;
-    let table = RawTable::new(
-        features.iter().map(|column| column.name.clone()).collect(),
-        rows,
-    )?;
-    table.validate_against(&schema)?;
-    Ok(table)
-}
-
-/// W3-T04: the schema of [`fitting_input_sha256`].
-pub const FITTING_INPUT: &str = "jope.fitting-input/v1";
-
-/// W3-T04: the digest a fitted artifact binds its fitting input by: the exact training table and
-/// targets, in row order, that a fit worker receives. A fit worker computes it from its own input
-/// without receiving any row identity; a receiver recomputes it from authenticated prepared
-/// development bytes ([`DataPartition::fitting_input_sha256`]). A struct rather than a JSON map,
-/// so the byte order never depends on serde_json features.
-pub fn fitting_input_sha256(table: &RawTable, targets: &[f64]) -> Result<String> {
-    #[derive(Serialize)]
-    struct FittingInput<'a> {
-        schema: &'static str,
-        table: &'a RawTable,
-        targets: &'a [f64],
-    }
-    ensure!(
-        table.rows.len() == targets.len() && targets.iter().all(|t| t.is_finite()),
-        "fitting input targets differ from its training rows"
-    );
-    Ok(sha256_hex(&serde_json::to_vec(&FittingInput {
-        schema: FITTING_INPUT,
-        table,
-        targets,
-    })?))
+    jope_runtime::table::raw_table(&schema_for(features)?, values)
 }
 
 impl DataPartition {

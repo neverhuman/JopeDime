@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.appliance-model-lock.v1.schema.json",
+  "title": "jopedime model lock",
+  "description": "deploy/appliance/models.lock.json: every profile's resolved asset closure, rights and blockers, derived by `jope-dist lock` from deploy/appliance/profiles and the committed bundle manifests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "profiles"],
+  "properties": {
+    "schema": {"const": "jope.appliance-model-lock/v1"},
+    "profiles": {"type": "object", "additionalProperties": {"$ref": "#/$defs/profile"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_sha256", "scope", "status", "blockers", "methods", "components", "total_bytes"],
+      "properties": {
+        "profile_sha256": {"$ref": "#/$defs/sha256"},
+        "scope": {"enum": ["development", "public", "internal", "internal-restricted"]},
+        "status": {"enum": ["ready", "blocked"]},
+        "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "methods": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "total_bytes": {"type": "integer", "minimum": 0},
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "role", "bundle_id", "bundle_manifest_sha256", "backends", "files"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "role": {"enum": ["model", "config", "manifest"]},
+              "bundle_id": {"type": "string", "minLength": 1},
+              "bundle_manifest_sha256": {"$ref": "#/$defs/sha256"},
+              "backends": {"type": "array", "uniqueItems": true, "items": {"enum": ["cpu", "cuda"]}},
+              "files": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["path", "sha256", "bytes", "kind", "spdx", "redistribution"],
+                  "properties": {
+                    "path": {"type": "string", "minLength": 1},
+                    "sha256": {"$ref": "#/$defs/sha256"},
+                    "bytes": {"type": "integer", "minimum": 0},
+                    "kind": {"type": "string", "minLength": 1},
+                    "spdx": {"type": "string", "minLength": 1},
+                    "redistribution": {"enum": ["permitted", "internal", "prohibited", "conditional", "none"]}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
