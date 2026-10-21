@@ -35,6 +35,8 @@ pub mod emit;
 pub mod eval;
 pub mod load;
 pub mod methods;
+/// Original native AutoML candidates, evaluated with the same cuts and scorer.
+pub mod native;
 /// Frozen development panel: raw inputs, task metrics and fitted predictors.
 pub mod panel;
 pub mod protocol;
