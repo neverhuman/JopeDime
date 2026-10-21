@@ -1,0 +1,99 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for PR396 exact kernel-smoother selection and stage-cache resource handling; behavior, emitted artifacts, DSL ABI, lineage and accepted historical identities remain frozen.",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/396",
+  "source_commit": "7a2feaf22aa4155e1edcaa6bb75086be2b6699bf",
+  "base_commit": "ca6e15f1c4dad721987f30825fe19b50bbf4e408",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "1b15af8929c9dab46b9673488fdc8008e7656cac1c203c49633dcc4a256e6bbb",
+      "after": "85c4c1279650ad21ea4a31159c1886ddc3d1e5aaf4f720f9de7975325668dee3"
+    }
+  ],
+  "changed_evaluator_inputs": [
+    {
+      "path": "crates/feat-math/src/ksmooth.rs",
+      "before": "b51e993c929443c6aa0e5d134994f688d78031c13f432ccc5f0898ef027120a1",
+      "after": "6733295c98c009e1acff75695e106cf785c3172b6202fed33de98f8b85cb1472"
+    },
+    {
+      "path": "crates/feat-math/src/stage_cache.rs",
+      "before": "f33106270371891c5493ed7b59cc6b68d8203710786977da86725d99568680f4",
+      "after": "fbad2ea478c19db290e6ca537a2be4dac8b37182be015d6fbfeed4e1faa51415"
+    }
+  ],
+  "before_implementation_sha256": "498518151d5501d8d20dd8fa345c4805155710ac4e25529b6312fec4cb5117e5",
+  "after_implementation_sha256": "e4dfb56370d652c7d81ba350b261c86a34c118222b997d7f404cea75b30be090",
+  "before_identity_digest": "8999aff99f7bd548ff4415b8fe64b9880f092d78445a3b5f9864c4e12be195e0",
+  "after_identity_digest": "2d5e9e675cb11d853c75cda518290a04462408a398692e4501e3a1c17ec9076d",
+  "cargo_lock_sha256_unchanged": "a3d2fdfb2446231bebf2a9d20de40a426dedc1b62b400eb1585260de4a5c0587",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
+  "behavioral_fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/meta.json",
+      "sha256": "45834e08a447bb41b5112119388890bce26580768dca538035506343d3fc492b",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json",
+      "sha256": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
+      "sha256": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json",
+      "sha256": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+      "sha256": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json",
+      "sha256": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+      "sha256": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json",
+      "sha256": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "sha256": "4220d83da822c79a80e875180ceb1c2ebe066a8259b351d18566356dd8bd96b1",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/source-manifest.json",
+      "sha256": "4628d4269f3b1fcb853ae0b04ec90972212b8b23ada9e9f310d77eb616cc3104",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/manifest.json",
+      "sha256": "117ac56a214384bd11964e5b105819b3f12da047be40ab5194c056a654d99d4f",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json",
+      "sha256": "b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3",
+      "unchanged": true
+    }
+  ],
+  "verification": [
+    "Owning identity regeneration and complete compare mode: 13 passed",
+    "Cache: 13 passed; smoother: 4 passed, timing test intentionally ignored",
+    "Fresh Rust1.97.1 historical corpus/manifest executable: 3 passed"
+  ]
+}

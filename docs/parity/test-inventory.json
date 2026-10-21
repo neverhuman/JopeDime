@@ -6,8 +6,8 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5809,
-  "ignored": 74,
+  "count": 5813,
+  "ignored": 75,
   "packages": {
    "battle-gpu": {
     "count": 19,
@@ -42,13 +42,13 @@
     }
    },
    "feat-math": {
-    "count": 1332,
-    "ignored": 12,
+    "count": 1336,
+    "ignored": 13,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 525,
-      "ignored": 6,
+      "count": 529,
+      "ignored": 7,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
        "advanced_v3::csv::tests::malformed_quotes_are_rejected",
@@ -347,7 +347,9 @@
        "krr::tests::krr_subset_cap_is_exercised",
        "ksmooth::tests::ksmooth_is_deterministic_and_learns_toy",
        "ksmooth::tests::ksmooth_params_flow_through_the_genome",
+       "ksmooth::tests::ksmooth_prediction_benchmark",
        "ksmooth::tests::ksmooth_small_n_falls_back_to_mean",
+       "ksmooth::tests::partial_neighbors_match_full_sort_bits_including_ties_and_short_queries",
        "math_expr::evolution::v2::egraph::tests::all_libm_calls_preserve_literal_shape_including_tanh",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_at_the_limits_are_admitted_as_before",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_over_the_limits_are_refused_uncopied",
@@ -549,10 +551,12 @@
        "stage_cache::tests::a_print_alike_constant_gets_its_own_fit_through_the_cache",
        "stage_cache::tests::admission_under_pressure_is_deterministic_and_a_sweep_frees_budget",
        "stage_cache::tests::chain_keys_separate_context_target_and_stages",
+       "stage_cache::tests::concurrent_reads_replacements_and_sweeps_preserve_cap_and_values",
        "stage_cache::tests::every_value_class_that_prints_alike_keys_apart",
        "stage_cache::tests::insert_get_sweep_and_byte_accounting",
        "stage_cache::tests::insertions_never_pass_the_byte_cap_between_sweeps",
        "stage_cache::tests::stages_that_print_alike_get_distinct_keys_and_entries",
+       "stage_cache::tests::streaming_fit_size_matches_json_and_refuses_oversized_entries",
        "target_transform::tests::fit_target_rejects_bad_kinds",
        "target_transform::tests::log1p_is_exact_inverse_on_unit_scale",
        "target_transform::tests::rank_gauss_constant_target_is_safe",
@@ -9238,7 +9242,7 @@
   }
  },
  "totals": {
-  "rust": 5809,
+  "rust": 5813,
   "python": 182
  }
 }

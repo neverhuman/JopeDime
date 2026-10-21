@@ -1,0 +1,181 @@
+{
+  "schema": "jope.hpc-audit-review/v1",
+  "base_commit": "18b671e90102df16de8b0cd95f93fd4378c911ef",
+  "source_commit_local": "6b0d2071098f01126f40f0998591d41690662d96",
+  "published_equivalent_source_commit": "53999b34df33aba28944fdc18338358e4117c44d",
+  "equivalent_source_tree": "6668dd14a97890e9fee998432c39e1531cd145df",
+  "audit": {
+    "auditor_version": "1.7.5",
+    "scope": {
+      "mode": "full",
+      "paths": []
+    },
+    "elapsed_ms": 1122516,
+    "score": 51,
+    "raw_score": 51,
+    "decision": {
+      "status": "fail",
+      "minimum_score": 85,
+      "passed": false,
+      "hard_findings": 502,
+      "soft_findings": 89,
+      "ratchet": {
+        "baseline_score": 51,
+        "allowed_drop": 0,
+        "passed": false,
+        "score_delta": 0,
+        "baseline_report_fingerprint": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "baseline_input_fingerprint": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "baseline_policy_fingerprint": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "new_caps": [],
+        "new_hard_findings": [],
+        "policy_changed": false
+      }
+    },
+    "dirty_worktree": true,
+    "report_fingerprint": "sha256:bcb294ac760c0df74f0555657e78e3e18dc59544127162dd824bfb17875a0408",
+    "input_fingerprint": "sha256:e388f3e0d6a798d13b545ea89cfc058d4ab3d15759720de2382e53c41a053833",
+    "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111"
+  },
+  "raw_report_sha256": "45a0c1e5956e7e73577b8c5fb26e0928dec9b1a98672d78a5564a7976924142b",
+  "findings_total": 591,
+  "findings_by_rule": {
+    "HLT-001-DEAD-MARKER": 88,
+    "HLT-003-OWNERLESS-PATH": 1,
+    "HLT-005-PYTHON-PRODUCT-TRUTH": 2,
+    "HLT-006-DIRECT-DB-WRONG-LAYER": 1,
+    "HLT-007-HANDWRITTEN-CONTRACT": 1,
+    "HLT-008-FALSE-GREEN-RISK": 1,
+    "HLT-009-GENERATED-SECURITY": 1,
+    "HLT-013-RENDERED-UX-GAP": 1,
+    "HLT-015-CONTEXT-SETUP-GAP": 1,
+    "HLT-016-SUPPLY-CHAIN-DRIFT": 2,
+    "HLT-017-OPAQUE-OBSERVABILITY": 1,
+    "HLT-019-STREAMING-RUNTIME-DRIFT": 1,
+    "HLT-023-INPUT-BOUNDARY-GAP": 1,
+    "HLT-025-RELEASE-READINESS-GAP": 1,
+    "HLT-026-COST-BUDGET-GAP": 1,
+    "HLT-027-HUMAN-REVIEW-EVIDENCE-GAP": 1,
+    "HLT-029-RUST-BAD-BEHAVIOR": 303,
+    "HLT-033-PYTHON-BAD-BEHAVIOR": 32,
+    "HLT-034-CI-BAD-BEHAVIOR": 15,
+    "HLT-035-GIT-BAD-BEHAVIOR": 5,
+    "HLT-037-RELEASE-BAD-BEHAVIOR": 1,
+    "HLT-038-REFERENCE-PROFILE-STRUCTURE-GAP": 4,
+    "HLT-040-REPO-ROT-BAD-BEHAVIOR": 21,
+    "HLT-042-CI-LOCAL-PARITY": 11,
+    "HLT-043-COPY-PASTE-BAD-BEHAVIOR": 50,
+    "HLT-046-UNNECESSARY-VARIETY": 40,
+    "HLT-048-CANONICAL-CI-GAP": 1,
+    "unclassified-dimension": 3
+  },
+  "caps": [
+    {
+      "id": "no-security-lane-on-high-risk-repo",
+      "disposition": "Open: existing hygiene delegates to secret-scan.sh and cargo deny; require exact-head execution receipts and auditor script-delegation support, not a marker-only lane."
+    },
+    {
+      "id": "python-direct-product-truth-or-db-ownership",
+      "disposition": "Open: qualify individual Python product boundaries under PYTHON_EXCEPTIONS.md and the Rust migration plan."
+    },
+    {
+      "id": "no-secret-or-dependency-scanning-in-ci",
+      "disposition": "Open: scanner does not follow deploy/ci/fast-lane.sh; retain source-declared tools separately from verified execution."
+    },
+    {
+      "id": "non-optimal-product-language-found",
+      "disposition": "Open profile mismatch: preserve supported emitted C++/JS/Python contracts; qualify repository-specific boundaries."
+    },
+    {
+      "id": "too-much-python-in-product-surface",
+      "disposition": "Open: migrate live product Python with parity proof; historical records require custody before relocation."
+    },
+    {
+      "id": "vibe-placeholders-in-product-code",
+      "disposition": "Open: triage each behavioral placeholder; do not bulk rename lexical markers."
+    },
+    {
+      "id": "fallback-soup-in-product-code",
+      "disposition": "Open: prove terminal failure accounting and explicit fallback semantics per receiving path."
+    },
+    {
+      "id": "future-hostile-dead-language-in-product-code",
+      "disposition": "Open: inventory live runtimes versus generated/historical compatibility surfaces before removal."
+    },
+    {
+      "id": "severe-duplication-in-product-code",
+      "disposition": "Open: 50 copy findings need source-owner review; keep versioned and source-pinned evidence intact."
+    },
+    {
+      "id": "missing-rendered-ux-qa-lane",
+      "disposition": "Open: add rendered browser QA alongside existing React tests; this PR has no rendered UI claim."
+    },
+    {
+      "id": "false-green-test-risk",
+      "disposition": "Retained detector mismatch: historical content-addressed JSON quotes source text; changing it would invalidate the fixture."
+    },
+    {
+      "id": "input-boundary-gap",
+      "disposition": "Retained detector mismatch at ledger reconciler: the flagged SELECT uses bound placeholders and a prepared transaction."
+    },
+    {
+      "id": "release-readiness-gap",
+      "disposition": "Open discovery mismatch: release process is docs/release/README.md; new contributor map links it without fabricating another release process."
+    },
+    {
+      "id": "missing-agent-readable-docs",
+      "disposition": "Partially addressed: new contributor map/navigation; remaining agent-context findings require qualification."
+    },
+    {
+      "id": "streaming-runtime-drift",
+      "disposition": "Retained detector mismatch: xadd is matched inside UnixAddr in nix socket test imports, not a queue client."
+    },
+    {
+      "id": "rust-bad-behavior",
+      "disposition": "Open: 303 findings; site-specific lifetime, alignment, aliasing and thread-affinity proof remains necessary."
+    },
+    {
+      "id": "python-bad-behavior",
+      "disposition": "Open: 32 findings; separate trusted pinned-code loads/tests from untrusted deserialization and SQL sinks."
+    },
+    {
+      "id": "ci-bad-behavior",
+      "disposition": "Partially addressed after this audit: full-main and main-guard serialize duplicate SHA runs without cancelling distinct source revisions; other CI/runner/evidence findings remain."
+    },
+    {
+      "id": "git-bad-behavior",
+      "disposition": "Open: inspect isolated Git fixture setup versus production mutation before changing behavior."
+    },
+    {
+      "id": "release-bad-behavior",
+      "disposition": "Retained detector mismatch: flagged tag push is in the isolated release test harness; preserve the production tag contract."
+    },
+    {
+      "id": "repo-rot-bad-behavior",
+      "disposition": "Open: qualify live references before deleting versioned captures, snapshots or compatibility code."
+    }
+  ],
+  "limitations": [
+    "Full audit observed an intermediate dirty worktree, before concurrency and closeout documentation changes.",
+    "No successful same-version pre-change baseline exists; no audit score improvement is claimed.",
+    "Full required gate and Clippy remain blocked by missing tooling or host resource failures.",
+    "Source-level corrections do not establish live runtime or GPU qualification."
+  ],
+  "integration": {
+    "main_commit": "ca6e15f1c4dad721987f30825fe19b50bbf4e408",
+    "merged_source_commit": "7a2feaf22aa4155e1edcaa6bb75086be2b6699bf",
+    "preserved_main_commits": 6,
+    "compatibility_compare_passed": 13,
+    "cache_tests_passed": 13,
+    "smoother_tests_passed": 4,
+    "compiled_binaries_reused": true,
+    "fresh_whole_workspace_build": "pending exact-head CI",
+    "numerical_sources_sha256": {
+      "crates/feat-math/src/ksmooth.rs": "6733295c98c009e1acff75695e106cf785c3172b6202fed33de98f8b85cb1472",
+      "crates/feat-math/src/stage_cache.rs": "fbad2ea478c19db290e6ca537a2be4dac8b37182be015d6fbfeed4e1faa51415"
+    },
+    "historical_fixture_tests_passed": 3,
+    "historical_test_build": "Fresh rustc1.97.1 test executable, linked against the already-built unchanged numerical library and dependencies",
+    "identity_transition_record": "crates/feat-math/tests/fixtures/compat_freeze/transitions/hpc_cache_identity_rebaseline.v1.json"
+  }
+}
