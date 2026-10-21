@@ -323,5 +323,9 @@
       "derivation": "SHA256 of u64-little-endian length then bytes for each listed include in order (numeric_source_hash); only heads.rs changed."
     }
   ],
-  "verification": []
+  "verification": [
+    "Rust 1.97.1 owning identity-only compatibility (JOPE_COMPAT_FREEZE_REGENERATE=identity, JOPE_COMPAT_FREEZE_SHA=65f324d627c4145ae02d3a9b57057202a3906305) 13/13 passed; only the two announced identity fixtures were rewritten.",
+    "Comparison compat_freeze 13/13, historical_v1 3/3 and kernel2_pipeline_search 22/22 passed with the original PR398 parallel edge checked separately and this combined successor appended after pr397_combined; every prior fixture and transition byte unchanged.",
+    "#400 (main 9d5ca9932dd071d510e6b3ad3832b6367b2999a0) changed no identity fixture, so this successor still starts from main's recorded identity."
+  ]
 }
