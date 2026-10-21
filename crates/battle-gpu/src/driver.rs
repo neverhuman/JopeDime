@@ -48,10 +48,17 @@ macro_rules! api {
                 Ok(Api {
                     $($name: {
                         let symbol = concat!(stringify!($name), "\0");
+                        // SAFETY: `handle` is the live, non-null result of `dlopen` held by the
+                        // `Library` that `Library::api` borrows; `symbol` is a static
+                        // NUL-terminated name. dlsym reads both and retains neither.
                         let ptr = unsafe { dlsym(handle, symbol.as_ptr() as *const c_char) };
                         if ptr.is_null() {
                             return Err(format!("libcuda: missing symbol {}", stringify!($name)));
                         }
+                        // SAFETY: `ptr` is a non-null libcuda export named exactly like this
+                        // field, and the `api!` table spells that symbol's documented CUDA
+                        // driver prototype, so the pointer is a valid function of this type.
+                        // Code and data pointers have one size on the supported Linux targets.
                         unsafe { std::mem::transmute::<*mut c_void, unsafe extern "C" fn($($arg),*) -> CUresult>(ptr) }
                     },)*
                 })
@@ -97,15 +104,20 @@ pub struct Library {
     handle: *mut c_void,
 }
 
-// The raw handle is only ever used behind the backend Mutex.
+// SAFETY: the handle is an opaque process-global token; glibc's dlsym/dlclose are MT-safe,
+// the handle is only ever used behind the backend Mutex, and it is closed once, on drop.
 unsafe impl Send for Library {}
 
 impl Library {
     pub fn open(path: &str) -> Result<Library, String> {
         let name = format!("{path}\0");
-        unsafe { dlerror() }; // clear any stale error
+        // SAFETY: dlerror has no preconditions; this call only clears the thread's stale error.
+        unsafe { dlerror() };
+        // SAFETY: `name` is an owned NUL-terminated string that outlives the call.
         let handle = unsafe { dlopen(name.as_ptr() as *const c_char, RTLD_LAZY | RTLD_LOCAL) };
         if handle.is_null() {
+            // SAFETY: dlerror returns null (handled) or this thread's NUL-terminated message,
+            // valid until the next dl* call on this thread; it is copied out immediately.
             let detail = unsafe {
                 let err = dlerror();
                 if err.is_null() {
@@ -126,6 +138,7 @@ impl Library {
 
 impl Drop for Library {
     fn drop(&mut self) {
+        // SAFETY: `handle` came from a successful dlopen and Drop runs exactly once.
         unsafe { dlclose(self.handle) };
     }
 }
@@ -134,8 +147,10 @@ impl Api {
     /// Human-readable name for a nonzero CUresult.
     pub fn error_name(&self, code: CUresult) -> String {
         let mut name: *const c_char = std::ptr::null();
+        // SAFETY: `name` is a live out-parameter; the driver rejects unknown codes itself.
         let status = unsafe { (self.cuGetErrorName)(code, &mut name) };
         if status == CUDA_SUCCESS && !name.is_null() {
+            // SAFETY: on success the driver stores a static NUL-terminated string.
             unsafe { CStr::from_ptr(name).to_string_lossy().into_owned() }
         } else {
             format!("CUDA_ERROR_{code}")
@@ -183,6 +198,7 @@ impl<'api> DeviceBuffer<'api> {
         // Zero-sized allocs are illegal in the driver API; round up to 8.
         let bytes = bytes.max(8);
         api.check(
+            // SAFETY: `ptr` is a live out-parameter and `bytes` is nonzero.
             unsafe { (api.cuMemAlloc_v2)(&mut ptr, bytes) },
             "cuMemAlloc",
         )?;
@@ -236,6 +252,8 @@ impl<'api> DeviceBuffer<'api> {
 
 impl Drop for DeviceBuffer<'_> {
     fn drop(&mut self) {
+        // SAFETY: `ptr` came from this buffer's successful cuMemAlloc_v2, the borrowed `Api`
+        // outlives the buffer, and Drop frees it exactly once. Errors are reported, not UB.
         unsafe { (self.api.cuMemFree_v2)(self.ptr) };
     }
 }
