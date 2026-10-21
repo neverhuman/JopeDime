@@ -160,5 +160,19 @@
     "No successful same-version pre-change baseline exists; no audit score improvement is claimed.",
     "Full required gate and Clippy remain blocked by missing tooling or host resource failures.",
     "Source-level corrections do not establish live runtime or GPU qualification."
-  ]
+  ],
+  "integration": {
+    "main_commit": "ca6e15f1c4dad721987f30825fe19b50bbf4e408",
+    "merged_source_commit": "7a2feaf22aa4155e1edcaa6bb75086be2b6699bf",
+    "preserved_main_commits": 6,
+    "compatibility_compare_passed": 13,
+    "cache_tests_passed": 13,
+    "smoother_tests_passed": 4,
+    "compiled_binaries_reused": true,
+    "fresh_whole_workspace_build": "pending exact-head CI",
+    "numerical_sources_sha256": {
+      "crates/feat-math/src/ksmooth.rs": "6733295c98c009e1acff75695e106cf785c3172b6202fed33de98f8b85cb1472",
+      "crates/feat-math/src/stage_cache.rs": "fbad2ea478c19db290e6ca537a2be4dac8b37182be015d6fbfeed4e1faa51415"
+    }
+  }
 }
