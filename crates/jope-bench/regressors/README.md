@@ -85,3 +85,10 @@ estimates. Post-freeze figures are measured from the session transcript.
 | Freeze, admission and bench integration (measured) | 06:40:49Z to about 07:05Z, about 25 min | 94k+ output (27k reasoning), 245k new input. Repeated context reads of 19.5M+ cached tokens are not new tokens. |
 
 The source needed zero post-freeze edits, so the frozen message is the final working source.
+
+## Integration review correction
+
+The transport rejects nonempty CSV cells for zero-feature prediction rows. The
+run --seed value is forwarded to the learner, including its version probe;
+registered entrant adapters use the existing positive, finite timeout validation.
+These wrapper corrections preserve the frozen learner source and its identity.

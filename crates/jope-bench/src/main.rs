@@ -204,19 +204,8 @@ fn main() -> Result<()> {
                 let exe = std::env::current_exe()
                     .context("this binary's path, for the entrant adapter command")?;
                 for name in &entrants {
-                    if jope_bench::regressors::entrant(name).is_none() {
-                        bail!("--entrant {name:?} is not built in");
-                    }
-                    let mut spec = jope_bench::adapter::AdapterSpec {
-                        name: name.clone(),
-                        command: vec![
-                            exe.to_string_lossy().into_owned(),
-                            "regressor-adapter".to_owned(),
-                            name.clone(),
-                        ],
-                        version: None,
-                        timeout_seconds: adapter_timeout,
-                    };
+                    let mut spec =
+                        jope_bench::regressors::adapter_spec(name, &exe, seed, adapter_timeout)?;
                     spec.probe()?;
                     eprintln!(
                         "entrant {}: {}",

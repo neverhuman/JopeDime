@@ -108,6 +108,31 @@ pub fn entrant(name: &str) -> Option<&'static Entrant> {
     ENTRANTS.iter().find(|e| e.name == name)
 }
 
+/// Build the supervised process command without losing argv boundaries or the run seed.
+pub fn adapter_spec(
+    name: &str,
+    executable: &std::path::Path,
+    seed: u64,
+    timeout_seconds: f64,
+) -> anyhow::Result<crate::adapter::AdapterSpec> {
+    anyhow::ensure!(
+        entrant(name).is_some(),
+        "--entrant {name:?} is not built in"
+    );
+    let mut spec = crate::adapter::parse_spec(&format!("{name}=unused"), timeout_seconds)?;
+    spec.command = vec![
+        executable
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("non-UTF-8 executable path"))?
+            .to_owned(),
+        "regressor-adapter".to_owned(),
+        name.to_owned(),
+        "--seed".to_owned(),
+        seed.to_string(),
+    ];
+    Ok(spec)
+}
+
 /// Seed handed to `Regressor::new` when the command line gives none: the bench's fold seed.
 pub const DEFAULT_ENTRANT_SEED: u64 = crate::DEFAULT_SEED;
 
@@ -131,6 +156,14 @@ fn usage() -> i32 {
 /// value; the entrant validates everything else (infinite values, widths, finite targets).
 pub fn parse_table(text: &str, width: Option<usize>) -> Result<(Vec<f64>, usize, usize), String> {
     if width == Some(0) {
+        for (line_no, line) in text.lines().enumerate() {
+            if !line.trim().is_empty() {
+                return Err(format!(
+                    "line {}: fields supplied for a zero-feature prediction row",
+                    line_no + 1
+                ));
+            }
+        }
         return Ok((Vec::new(), text.lines().count(), 0));
     }
     let mut values = Vec::new();
@@ -197,12 +230,6 @@ pub fn regressor_adapter(args: &[String]) -> i32 {
         eprintln!("unknown entrant {name:?}");
         return usage();
     };
-    if let [flag] = rest {
-        if flag == "--version" {
-            println!("{}", entrant.version_line());
-            return 0;
-        }
-    }
     let (seed, rest) = match rest {
         [flag, value, rest @ ..] if flag == "--seed" => match value.parse::<u64>() {
             Ok(seed) => (seed, rest),
@@ -213,6 +240,12 @@ pub fn regressor_adapter(args: &[String]) -> i32 {
         },
         _ => (DEFAULT_ENTRANT_SEED, rest),
     };
+    if let [flag] = rest {
+        if flag == "--version" {
+            println!("{}", entrant.version_line());
+            return 0;
+        }
+    }
     let [train, predict, out, task] = rest else {
         return usage();
     };
@@ -256,6 +289,26 @@ mod tests {
             assert_eq!(m["target_column"], "last");
             assert_eq!(m["prediction_input"], "features_only");
             assert!(e.version_line().contains(e.source_sha256));
+            let spec = adapter_spec(
+                name,
+                std::path::Path::new("path with spaces/jope-bench"),
+                37,
+                120.0,
+            )
+            .unwrap();
+            assert_eq!(
+                spec.command,
+                [
+                    "path with spaces/jope-bench",
+                    "regressor-adapter",
+                    name,
+                    "--seed",
+                    "37"
+                ]
+            );
+            for timeout in [0.0, -1.0, f64::NAN, f64::INFINITY] {
+                assert!(adapter_spec(name, std::path::Path::new("bench"), 37, timeout).is_err());
+            }
         }
     }
 
@@ -267,6 +320,9 @@ mod tests {
         assert!(parse_table("1,2\n3\n", None).is_err());
         assert!(parse_table("1,x\n", None).is_err());
         assert_eq!(parse_table("\n\n\n", Some(0)).unwrap(), (Vec::new(), 3, 0));
+        assert_eq!(parse_table("", Some(0)).unwrap(), (Vec::new(), 0, 0));
+        assert!(parse_table("1,2\n", Some(0)).is_err());
+        assert!(parse_table("\nNaN\n", Some(0)).is_err());
         assert!(parse_table("1,2\n", Some(3)).is_err());
     }
 

@@ -265,12 +265,7 @@ fn screen_ranks_everyone_and_deepens_the_top() {
 }
 
 fn entrant_spec(name: &str) -> AdapterSpec {
-    AdapterSpec {
-        name: name.to_owned(),
-        command: vec![BINARY.into(), "regressor-adapter".into(), name.into()],
-        version: None,
-        timeout_seconds: 120.0,
-    }
+    jope_bench::regressors::adapter_spec(name, std::path::Path::new(BINARY), 37, 120.0).unwrap()
 }
 
 #[test]
@@ -313,4 +308,28 @@ fn frozen_entrants_answer_the_contract_and_beat_the_constant() {
         .output()
         .unwrap();
     assert_eq!(output.status.code(), Some(2));
+
+    // A target-only fit expects truly empty feature rows, not ignored CSV fields.
+    let dir = tempfile::tempdir().unwrap();
+    let train = dir.path().join("train.csv");
+    let predict = dir.path().join("predict.csv");
+    let out = dir.path().join("out.csv");
+    std::fs::write(&train, "1\n2\n6\n").unwrap();
+    let invoke = || {
+        Command::new(BINARY)
+            .args(["regressor-adapter", "Opus5p5_Extra", "--seed", "37"])
+            .arg(&train)
+            .arg(&predict)
+            .arg(&out)
+            .arg("regression")
+            .output()
+            .unwrap()
+    };
+    std::fs::write(&predict, "\n\n").unwrap();
+    assert!(invoke().status.success());
+    assert_eq!(std::fs::read_to_string(&out).unwrap(), "3.0\n3.0\n");
+    std::fs::write(&predict, "1,2\n").unwrap();
+    let rejected = invoke();
+    assert_eq!(rejected.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&rejected.stderr).contains("zero-feature"));
 }
