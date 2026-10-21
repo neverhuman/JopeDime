@@ -486,6 +486,8 @@ impl WorkerIdentity {
             "resident socket was replaced"
         );
         let peer = peer_credentials(stream)?;
+        // SAFETY: geteuid takes no arguments or caller-managed memory; the
+        // authenticated kernel peer credentials are compared without changing identity.
         ensure!(
             peer.uid == unsafe { libc::geteuid() } && peer.pid as u32 == self.process.pid,
             "resident socket peer changed"
@@ -503,8 +505,13 @@ impl WorkerIdentity {
 }
 
 pub fn peer_credentials(stream: &UnixStream) -> Result<libc::ucred> {
+    // SAFETY: every ucred field is an integer for which zero is valid. The
+    // initialized storage is overwritten by SO_PEERCRED before credentials are used.
     let mut peer: libc::ucred = unsafe { std::mem::zeroed() };
     let mut length = std::mem::size_of_val(&peer) as libc::socklen_t;
+    // SAFETY: stream owns a live socket; peer is aligned writable ucred storage
+    // and length advertises its exact capacity. Both success and returned size are
+    // checked before the peer value escapes; the syscall retains neither pointer.
     ensure!(
         unsafe {
             libc::getsockopt(

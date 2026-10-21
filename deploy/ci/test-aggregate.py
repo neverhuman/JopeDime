@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import copy
 import json
+import re
 import shutil
 from pathlib import Path
 import tempfile
@@ -47,7 +48,7 @@ class AggregateTests(unittest.TestCase):
                 for name in ('nextest-started', 'nextest.toml', 'disk-before.txt', 'disk-after.txt', 'target-bytes.txt'):
                     (folder / name).write_text('fixture')
             result_counts = dict.fromkeys(('collected','executed','passed','failed','skipped','excluded')) if backend == 'none' else counts(2, 0, 3 if backend == 'nextest' else 0)
-            receipt = dict(schema='jope.ci-receipt/v1', **self.expected, lane=lane, command=['bash','deploy/ci/fast-lane.sh',lane], dirty_source=[], dirty_source_after=[], inputs=inputs, started_at='2026-09-22T00:00:00+00:00', finished_at='2026-09-22T00:01:00+00:00', status='passed', exit_status=0, counts=result_counts,
+            receipt = dict(schema='jope.ci-receipt/v1', **self.expected, lane=lane, command=['bash','ops/ci/fast-lane.sh',lane], dirty_source=[], dirty_source_after=[], inputs=inputs, started_at='2026-09-22T00:00:00+00:00', finished_at='2026-09-22T00:01:00+00:00', status='passed', exit_status=0, counts=result_counts,
                            environment=environment, evidence={p.name:digest(p) for p in folder.iterdir()})
             self.receipts[unit] = [(folder / 'receipt.json', receipt)]
 
@@ -75,6 +76,43 @@ class AggregateTests(unittest.TestCase):
 
     def test_valid_complete_execution(self):
         self.assertEqual([], self.verify()['errors'])
+
+    def test_all_nine_receipt_units_match_actual_workflow_producer_commands(self):
+        workflow = (aggregate.ROOT / '.github/workflows/ci.yml').read_text()
+        producers = re.findall(r'python3 deploy/ci/receipt.py --lane ([a-z0-9-]+)[^\n]* -- bash ([a-zA-Z0-9_./-]+) ([a-z0-9-]+)$', workflow, re.M)
+        self.assertEqual(len(aggregate.plan_module.LANES), len(producers))
+        self.assertEqual(set(aggregate.plan_module.LANES), {lane for lane, _, _ in producers})
+        commands = {}
+        for lane, path, argument in producers:
+            self.assertEqual(lane, argument)
+            self.assertEqual('ops/ci/fast-lane.sh', path)
+            commands[lane] = ['bash', path, argument]
+        self.assertEqual(9, len(self.receipts))
+        for unit, candidates in self.receipts.items():
+            lane = candidates[0][1]['lane']
+            candidates[0][1]['command'] = commands[lane]
+        self.assertEqual([], self.verify()['errors'])
+
+    def test_every_receipt_unit_rejects_bypass_alias_arguments_and_stale_identity(self):
+        for unit, candidates in self.receipts.items():
+            value = candidates[0][1]
+            original = copy.deepcopy(value)
+            lane = value['lane']
+            for command in (['bash', 'deploy/ci/fast-lane.sh', lane],
+                            ['bash', './ops/ci/fast-lane.sh', lane],
+                            ['bash', 'ops/ci/fast-lane.sh', 'other-lane'],
+                            ['bash', 'ops/ci/fast-lane.sh', lane, '--extra'],
+                            ['bash', '-c', 'true']):
+                with self.subTest(unit=unit, command=command):
+                    value['command'] = command
+                    self.assertIn(unit + ': unexpected command', self.verify()['errors'])
+            value.clear()
+            value.update(copy.deepcopy(original))
+            for field, wrong in (('source_sha', 'c' * 40), ('run_id', '43'), ('attempt', 3)):
+                with self.subTest(unit=unit, field=field):
+                    value[field] = wrong
+                    self.assertIn(unit + ': ' + field + ' mismatch', self.verify()['errors'])
+                    value[field] = original[field]
 
     def test_product_receipt_is_hashed_data_not_a_ci_lane(self):
         path, receipt = self.receipts['e2e-smoke'][0]

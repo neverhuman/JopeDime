@@ -1,4 +1,5 @@
 use super::*;
+use std::io::Read;
 use std::sync::{Arc, Barrier};
 
 fn exercise_preconditions(store: &Store) {

@@ -8,7 +8,7 @@ default:
 
 # one-time developer setup: git hooks, uv environment (CPU torch)
 setup:
-    git config core.hooksPath .githooks
+    git config core.hooksPath ops/git-hooks
     cd python && uv sync --extra dev --extra cpu
 
 hygiene:

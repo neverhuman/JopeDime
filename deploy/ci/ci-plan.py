@@ -9,7 +9,7 @@ import subprocess
 
 LANES = ("changes", "hygiene", "rust-check", "rust-test", "emitters", "inputs", "python", "e2e-smoke")
 # These preserve the existing path gates, adding shared receipt/plan code to every lane.
-IMAGE = r"deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/(cargo-artifact|receipt|results|ci-plan|fast-lane|pytest-evidence|aggregate|coverage|training-proof|test-training-proof)"
+IMAGE = r"ops/ci/|tools/security-lane\.sh$|deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/(cargo-artifact|receipt|results|ci-plan|fast-lane|pytest-evidence|aggregate|coverage|training-proof|test-training-proof)"
 COMMON = rf"Cargo\.(toml|lock)$|rust-toolchain\.toml$|{IMAGE}|\.github/workflows/ci\.yml$"
 FILTERS = {
     "rust": rf"^(crates/|benchmarks/|schemas/|{COMMON}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)",

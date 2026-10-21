@@ -4,6 +4,12 @@ name: runner-admission-probe
 on:
   workflow_dispatch:
 permissions: {}
+# Serialize duplicate invocations of this source without cancelling running proof.
+# Different main SHAs have different groups, so newer pushes cannot evict older heads.
+concurrency:
+  group: runner-admission-probe-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   reject-fast:
     runs-on: [self-hosted, linux, x64, jope-ci]
