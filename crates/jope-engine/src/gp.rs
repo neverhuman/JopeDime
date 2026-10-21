@@ -115,7 +115,7 @@ mod csv_digest_tests {
             vec![],
             vec![vec![]],
             vec![specials.to_vec()],
-            specials.chunks(5).map(<[f64]>::to_vec).collect(),
+            specials.chunks(4).map(<[f64]>::to_vec).collect(),
             (0..200)
                 .map(|i| (0..7).map(|j| (i * 7 + j) as f64 / 3.0 - 50.0).collect())
                 .collect(),
@@ -123,6 +123,11 @@ mod csv_digest_tests {
         for rows in tables {
             assert_eq!(csv_sha256(&rows).unwrap(), hash(&csv_bytes(&rows).unwrap()));
         }
+        // The csv writer refuses a record whose width differs from the first one; both paths
+        // use it, so a ragged table is refused by both rather than given a digest.
+        let ragged: Vec<Vec<f64>> = specials.chunks(5).map(<[f64]>::to_vec).collect();
+        assert!(csv_bytes(&ragged).is_err());
+        assert!(csv_sha256(&ragged).is_err());
     }
 }
 
