@@ -74,3 +74,14 @@ to the design, and no byte was changed.
   are not fully clean.
 - Out-of-fold estimates also reuse the rows that chose early stopping.
 - Predictions are capped at 10% beyond the training target range.
+
+**Authoring cost.** This was recorded for the O3 authorship receipt. The pre-freeze turns
+reached this record only as imported history with no usage telemetry, so those figures are
+estimates. Post-freeze figures are measured from the session transcript.
+
+| Phase | Wall time | Tokens |
+| --- | --- | --- |
+| Prompt to frozen working source (estimated) | About 25 min (likely 15–40). Only the final source message is bounded: at most 6.3 min, from 06:17:44Z to before 06:24Z. | About 75k output, likely 50–100k, including reasoning. The final 68.5k-character message alone is about 20k. At least one earlier, incomplete attempt preceded it ("continuing in smaller pieces"). Input was about 30–80k, mostly the roughly 16k-token spec re-read each turn. |
+| Freeze, admission and bench integration (measured) | 06:40:49Z to about 07:05Z, about 25 min | 94k+ output (27k reasoning), 245k new input. Repeated context reads of 19.5M+ cached tokens are not new tokens. |
+
+The source needed zero post-freeze edits, so the frozen message is the final working source.
