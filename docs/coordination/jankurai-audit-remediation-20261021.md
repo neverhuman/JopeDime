@@ -61,8 +61,9 @@ concurrency and fail-closed aggregate receipts preserve the existing 11 manual
 jobs. The [rendered test suite](../../web/training-dashboard/e2e/observatory.spec.ts)
 checks desktop/mobile layouts, keyboard/dialog focus and zero axe violations;
 CSS contrast and named scroll regions were repaired. Its
-[receipt verifier](../../deploy/ci/rendered-ux-receipt.py) binds source, run and
-attempt, requires nonzero unskipped/unflaky success, and hashes the report and
+[receipt verifier](../../deploy/ci/rendered-ux-receipt.py) binds source, browser
+checkout, workflow event, run and attempt separately, requires nonzero
+unskipped/unflaky success, and hashes the report and
 complete screenshot/geometry/axe evidence. Browser native dependencies are
 pinned and loaded from 107 signed Ubuntu packages into the job's owned writable
 evidence area, without a host installation. The pinned immutable tracked-source

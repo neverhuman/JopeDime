@@ -38,6 +38,11 @@ mkdir -p "$out"
 
 dist() { cargo run -q --locked -p jope-dist -- "$@"; }
 
+# Offline notices metadata enumerates locked workspace packages beyond the built target.
+# Fetch their sources explicitly while network access is allowed; keep audit/notices offline.
+echo "== fetch locked workspace metadata dependencies"
+cargo fetch --locked
+
 echo "== lock and dependency fence"
 dist lock --check
 dist audit
