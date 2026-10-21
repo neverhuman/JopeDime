@@ -1,9 +1,10 @@
 //! Live search progress for `jope pipeline invent` (`jope.invent.progress.v1`).
 //!
-//! One compact JSON object per line on stderr, each written with a single `write_all` and
-//! flushed, so a parent process can show progress while the search runs. Lines carry numbers
-//! only: never program source, genomes, column names or data values. The stdout contract
-//! (`jope.candidates.v1`) is untouched. See `docs/pipeline.md`.
+//! Opt-in (`--events PATH`): one compact JSON object per line in the events file, each written
+//! with a single `write_all` and flushed, so a parent process can show progress while the search
+//! runs. Lines carry numbers only: never candidate source, column names or data values. stdout
+//! (`jope.candidates.v1`) and stderr are untouched. These records are interim, intended to become
+//! a kind of the planned `jope.run-event/v1` envelope. See `docs/pipeline.md`.
 //!
 //! Cadence: at most one line per [`MIN_INTERVAL`] at generation (and comparison-evaluation)
 //! boundaries, plus one whenever the best-so-far held-out RMSE improves, one at the end of every
@@ -53,6 +54,22 @@ pub struct Line {
     pub elapsed_s: f64,
     /// Active-seconds budget of the whole search: the per-cut bound times `cuts` (0 if none).
     pub seconds_budget: f64,
+    /// Lexical source tokens (code plus documentation) of every evaluated candidate's emitted
+    /// source in all four languages, cumulative; a repeated candidate is charged again.
+    pub emitted_tokens: u64,
+    pub emitted_tokens_by_language: ByLanguage,
+    /// `emitted_tokens / elapsed_s`; 0 when no time has elapsed.
+    pub emitted_tokens_per_second: f64,
+}
+
+/// Per-language split of [`Line::emitted_tokens`], in source-output ledger order
+/// ([`feat_math::source_stream::LANGUAGES`]).
+#[derive(Clone, Debug, Default, PartialEq, Serialize, serde::Deserialize)]
+pub struct ByLanguage {
+    pub rust: u64,
+    pub python: u64,
+    pub cpp17: u64,
+    pub javascript: u64,
 }
 
 struct State {
@@ -77,6 +94,7 @@ struct State {
     best: Option<(f64, Option<f64>)>,
     improved: bool,
     seconds_budget: f64,
+    tokens: [u64; 4],
 }
 
 /// Collects a search's counters and writes rate-limited progress lines to its sink.
@@ -117,13 +135,9 @@ impl Progress {
                 best: None,
                 improved: false,
                 seconds_budget: budget.seconds as f64 * cuts as f64,
+                tokens: [0; 4],
             }),
         }
-    }
-
-    /// A reporter writing to this process's stderr, started now.
-    pub fn stderr(cuts: usize, budget: crate::search::Budget) -> Self {
-        Self::new(Box::new(std::io::stderr()), cuts, budget, Instant::now())
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, State> {
@@ -149,18 +163,24 @@ impl Progress {
 
     /// Count one finished exploration evaluation on the current cut.
     pub fn observe_current(&self, observation: &Observation) {
+        let tokens = feat_math::source_stream::emitted_tokens(&observation.genome);
         let mut state = self.lock();
-        Self::count(&mut state, observation);
+        Self::count(&mut state, observation, tokens);
     }
 
     /// Count one finished evaluation, made on the cut at `position`.
     pub fn observe(&self, position: usize, observation: &Observation) {
+        // Emitted outside the lock, so concurrently compared cuts do not wait on each other.
+        let tokens = feat_math::source_stream::emitted_tokens(&observation.genome);
         let mut state = self.lock();
         state.cut = position;
-        Self::count(&mut state, observation);
+        Self::count(&mut state, observation, tokens);
     }
 
-    fn count(state: &mut State, observation: &Observation) {
+    fn count(state: &mut State, observation: &Observation, tokens: [u64; 4]) {
+        for (total, add) in state.tokens.iter_mut().zip(tokens) {
+            *total += add;
+        }
         state.evaluations += 1;
         if !observation.measured() {
             state.failed += 1;
@@ -237,6 +257,8 @@ impl Progress {
     }
 
     fn emit(state: &mut State, now: Instant) {
+        let elapsed_s = now.saturating_duration_since(state.started).as_secs_f64();
+        let emitted_tokens: u64 = state.tokens.iter().sum();
         let line = Line {
             schema: SCHEMA.to_owned(),
             sequence: state.sequence,
@@ -250,14 +272,26 @@ impl Progress {
             failed: state.failed,
             best_hold_rmse: state.best.map(|(rmse, _)| rmse),
             best_hold_r2: state.best.and_then(|(_, r2)| r2.filter(|r| r.is_finite())),
-            elapsed_s: now.saturating_duration_since(state.started).as_secs_f64(),
+            elapsed_s,
             seconds_budget: state.seconds_budget,
+            emitted_tokens,
+            emitted_tokens_by_language: ByLanguage {
+                rust: state.tokens[0],
+                python: state.tokens[1],
+                cpp17: state.tokens[2],
+                javascript: state.tokens[3],
+            },
+            emitted_tokens_per_second: if elapsed_s > 0.0 {
+                emitted_tokens as f64 / elapsed_s
+            } else {
+                0.0
+            },
         };
         let Ok(mut bytes) = serde_json::to_vec(&line) else {
             return;
         };
         bytes.push(b'\n');
-        // Progress is advisory: a closed or full stderr never stops the search.
+        // Progress is advisory: a failing events file never stops the search.
         let _ = state
             .sink
             .write_all(&bytes)
@@ -299,7 +333,7 @@ mod tests {
 
     fn observation(rmse: Option<f64>) -> Observation {
         Observation {
-            genome: "(pipe X (ridge 1.0))".into(),
+            genome: crate::select::BOOTSTRAP_GENOME.into(),
             program_sha256: String::new(),
             cut: 0,
             generation: 0,
@@ -380,5 +414,17 @@ mod tests {
         assert_eq!((last.evaluations, last.measured, last.failed), (5, 3, 2));
         assert_eq!(last.best_hold_rmse, Some(0.5));
         assert_eq!((last.eval_budget, last.seconds_budget), (20, 60.0));
+        // Every evaluation, failed or not, is charged its emitted source in all four languages.
+        let one = feat_math::source_stream::emitted_tokens(crate::select::BOOTSTRAP_GENOME);
+        assert!(one.iter().all(|&n| n > 0), "{one:?}");
+        assert_eq!(last.emitted_tokens, 5 * one.iter().sum::<u64>());
+        let by = &last.emitted_tokens_by_language;
+        assert_eq!(
+            by.rust + by.python + by.cpp17 + by.javascript,
+            last.emitted_tokens
+        );
+        assert!(lines
+            .windows(2)
+            .all(|w| w[0].emitted_tokens <= w[1].emitted_tokens));
     }
 }

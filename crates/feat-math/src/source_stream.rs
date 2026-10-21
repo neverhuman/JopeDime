@@ -86,6 +86,63 @@ fn state() -> &'static std::result::Result<Option<Mutex<Journal>>, String> {
     })
 }
 
+/// The emitted source languages of the source-output ledger, in ledger order.
+pub const LANGUAGES: [&str; 4] = ["rust", "python", "cpp17", "javascript"];
+
+/// `program` emitted in each of [`LANGUAGES`], in that order, under default options. A row is
+/// the language's complete source, or the error text when the program does not parse or that
+/// emitter does not support it. Emission only: nothing is compiled or run.
+pub fn emit_languages(program: &str) -> [std::result::Result<String, String>; 4] {
+    use crate::transpile::{self, EmitOptions};
+    let parsed = crate::GenomeIr::parse(program);
+    let pair = parsed
+        .as_ref()
+        .map_err(|e| format!("{e:#}"))
+        .and_then(|g| transpile::emit(g, &EmitOptions::default()).map_err(|e| format!("{e:#}")));
+    [
+        pair.as_ref().map(|p| p.rust.clone()).map_err(Clone::clone),
+        pair.as_ref()
+            .map(|p| p.python.clone())
+            .map_err(Clone::clone),
+        parsed.as_ref().map_err(|e| format!("{e:#}")).and_then(|g| {
+            transpile::emit_cpp17(g, &EmitOptions::default()).map_err(|e| format!("{e:#}"))
+        }),
+        parsed.as_ref().map_err(|e| format!("{e:#}")).and_then(|g| {
+            transpile::emit_javascript(g, &EmitOptions::default()).map_err(|e| format!("{e:#}"))
+        }),
+    ]
+}
+
+/// The lexical token rules ([`crate::tokens::count_tokens`]) of a [`LANGUAGES`] entry.
+pub fn language_kind(language: &str) -> Option<crate::tokens::Lang> {
+    use crate::tokens::Lang;
+    Some(match language {
+        "rust" => Lang::Rust,
+        "python" => Lang::Python,
+        "cpp17" => Lang::Cpp,
+        "javascript" => Lang::JavaScript,
+        _ => return None,
+    })
+}
+
+/// Code plus documentation tokens of `program`'s emitted source per [`LANGUAGES`] entry, as the
+/// source-output ledger counts them. A language that fails to emit contributes 0: no guessed
+/// count is credited.
+pub fn emitted_tokens(program: &str) -> [u64; 4] {
+    let mut tokens = [0u64; 4];
+    for ((slot, language), source) in tokens
+        .iter_mut()
+        .zip(LANGUAGES)
+        .zip(emit_languages(program))
+    {
+        if let (Ok(source), Some(kind)) = (source, language_kind(language)) {
+            let count = crate::tokens::count_tokens(&source, kind);
+            *slot = (count.code_tokens + count.doc_tokens) as u64;
+        }
+    }
+    tokens
+}
+
 /// Whether this process enables capture. Initialization failures remain visible on capture.
 pub fn enabled() -> bool {
     !matches!(state(), Ok(None))
