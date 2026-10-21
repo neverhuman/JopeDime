@@ -1,19 +1,19 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced identity-only successor for the HPC/safety cleanup branch: bit-exact feat-math hot-path rewrites (ksmooth, heads, ops, stage_cache, boost2, transpile) move the evaluator implementation identity, and std File locks, clippy fixes and a once-per-publish vocabulary digest move the teaching-store lineage sources. Frozen behavior surfaces, DSL ABI, Cargo.lock, accepted historical identities, the corpus scan policy and the eval-registry query lineage remain unchanged.",
-  "pr_reference": "perf/hpc-safety-cleanup-20261021",
-  "source_commit": "428b82ca3a3e7092bcdc967d69e12a1c7a12bdf0",
-  "base_commit": "1df23a24c0abcf48cf871004408e207340b13f32",
+  "decision": "Announced identity-only successor for PR398 (HPC/safety cleanup), following PR394's appliance_after_automl identity: bit-exact feat-math hot-path rewrites (ksmooth, heads, ops, stage_cache, boost2, transpile) move the evaluator implementation identity, and std File locks, clippy fixes and a once-per-publish vocabulary digest move the teaching-store lineage sources. Frozen behavior surfaces, DSL ABI, Cargo.lock, accepted historical identities, the corpus scan policy and the eval-registry query lineage remain unchanged.",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/398",
+  "source_commit": "d53eb086661845a2399abe3fd7e16bfca81f76e4",
+  "base_commit": "45490f2ce33075a355e08844351db197001beb90",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "4220d83da822c79a80e875180ceb1c2ebe066a8259b351d18566356dd8bd96b1",
-      "after": "700329e500f382c0177871003babe026d19a47e4f606cc6eaa22bdcd65713c04"
+      "before": "07f0fe359134dad221f63b951ac95873591e373f3db7d64ca3ff04210dda3282",
+      "after": "6fdac433eedbfa0da6b360ae6195cf8b6c07b8821c4299005a0a287340f010b1"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "1b15af8929c9dab46b9673488fdc8008e7656cac1c203c49633dcc4a256e6bbb",
-      "after": "68bbb4bc98cac003ece22c23bbde099fa03c234fb93b9e42fde5c4b05deb2701"
+      "before": "6249f118f4e204466cede5657f9bfe7689b9a54fa41a04a1213b9b31c3444cd1",
+      "after": "89e5f732f60fa3ee1e53c942cf63ecb22c0d53429c46c00fd9f45beae1cb44d6"
     }
   ],
   "changed_evaluator_inputs": [
@@ -80,12 +80,12 @@
       "after": "a5c4f64ac6e47f70b1bd05ad067e29796dd4fdfe3f7867ba076d1206f1d6ab6f"
     }
   ],
-  "before_implementation_sha256": "498518151d5501d8d20dd8fa345c4805155710ac4e25529b6312fec4cb5117e5",
-  "after_implementation_sha256": "106ea5782e417b5e9398b1f6b41617de729eaea7de20b65d8e66c5d9493410d7",
-  "before_identity_digest": "8999aff99f7bd548ff4415b8fe64b9880f092d78445a3b5f9864c4e12be195e0",
-  "after_identity_digest": "72a2ee4705bbade3c4bead75719ce788749bd5de35dbcb327af0a27c37977b8a",
+  "before_implementation_sha256": "a718cb7d62cc803a6f59aad30c917a47c0cb85e2687e58a6b591ec4985473732",
+  "after_implementation_sha256": "c21ec07f20b4dcbe9daf52024f6ea9b6279fd2ca65155fef9585becd75fb563e",
+  "before_identity_digest": "eacda5c015a67437d015ae60565b0b1b834ec62a52d61e300bae80f05adf4168",
+  "after_identity_digest": "6fe924f671abb0dba3d026a44110273f482bb26b001c26a0528f766f175a5a2e",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
-  "cargo_lock_sha256_unchanged": "a3d2fdfb2446231bebf2a9d20de40a426dedc1b62b400eb1585260de4a5c0587",
+  "cargo_lock_sha256_unchanged": "8edf827e18f505ab22f1f2f2c47ac7bfca97b5ab8b30fd9c6751ec4eafd6c931",
   "behavioral_fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/meta.json",
