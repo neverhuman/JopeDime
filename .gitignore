@@ -56,3 +56,8 @@ htmlcov/
 *.profraw
 perf.data*
 nohup.out
+
+# Regenerable rlfw analytics outputs (parquet partitions, HTML dashboards). They are built by
+# the package beside them and kept out of the tree; its METRICS.md links the last committed copy.
+/deploy/dl-flywheel/pipelines/rlfw/analytics/**/*.parquet
+/deploy/dl-flywheel/pipelines/rlfw/analytics/*.html

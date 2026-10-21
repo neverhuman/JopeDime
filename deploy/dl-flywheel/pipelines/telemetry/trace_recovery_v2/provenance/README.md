@@ -6,7 +6,8 @@ fixtures are untouched. This is a new one-use executor, not a restart of v1.
 
 ## Verified input and intended continuation
 
-Root's post-exit capture is `prior-capture.json`, exact SHA
+Root's post-exit capture is `prior-capture.json` (kept out of the tree since 2026-10-21; it is at
+[commit ca6e15f1c](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/prior-capture.json)), exact SHA
 `2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4`
 (2837433B). It records recovery1 inactive/PID0/empty cgroup/resultsuccess/exit0,
 with original deadline13:34:39UTC unchanged. Offline `metadata-audit.json`
