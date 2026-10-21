@@ -507,6 +507,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(appliance_fixtures.iter().any(|entry| entry["path"] == path));
     }
+    // PR395 runtime audit repairs mint source-bound engine lineage only.
+    let jankurai_runtime_safety =
+        old_fixture("transitions/jankurai_runtime_safety_lineage_rebaseline.v1.json");
+    let audit_fixtures = jankurai_runtime_safety["fixtures"].as_array().unwrap();
+    assert_eq!(audit_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(audit_fixtures.iter().any(|entry| entry["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -532,6 +540,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gp_source_stream,
         gpt6p1_sol_max,
         appliance_after_automl,
+        jankurai_runtime_safety,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
