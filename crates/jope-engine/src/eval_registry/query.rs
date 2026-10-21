@@ -177,7 +177,18 @@ pub(super) fn load_retained_model(bytes: &[u8]) -> Result<feat_math::Model> {
 }
 
 fn monotonic_ns() -> Result<u64> {
-    crate::host_os::monotonic_ns().context("query monotonic clock unavailable")
+    let mut time = libc::timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+    ensure!(
+        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut time) } == 0,
+        "query monotonic clock unavailable"
+    );
+    (time.tv_sec as u64)
+        .checked_mul(1_000_000_000)
+        .and_then(|n| n.checked_add(time.tv_nsec as u64))
+        .context("query clock overflow")
 }
 fn vector_bits(values: &[f64]) -> Vec<u8> {
     let mut bytes = (values.len() as u64).to_le_bytes().to_vec();
