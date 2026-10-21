@@ -3,10 +3,7 @@ use jope_parallel::manifest::*;
 use std::{
     fs,
     io::Write,
-    os::{
-        fd::AsRawFd,
-        unix::{fs::MetadataExt, net::UnixStream},
-    },
+    os::unix::{fs::MetadataExt, net::UnixStream},
     path::Path,
     process::{Child, Command, Stdio},
     time::{Duration, Instant},
