@@ -400,8 +400,9 @@ mod tests {
         };
         // Pass the directed bigram bucket for 22 -> 11 through both hidden layers to output.
         let bucket = pair_bucket(22, 11);
-        p.first_weights[0 * FEATURE_DIM + HALF_DIM + bucket] = 1.0;
-        p.second_weights[0 * WIDTH] = 1.0;
+        // Hidden unit 0 reads the bucket; second-layer unit 0 reads hidden unit 0.
+        p.first_weights[HALF_DIM + bucket] = 1.0;
+        p.second_weights[0] = 1.0;
         p.output_weights[0] = 1.0;
         p
     }
