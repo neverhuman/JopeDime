@@ -23,6 +23,8 @@ feat-math = { path = "../feat-math" }
 jope-datasets = { path = "../jope-datasets" }
 # The default test-score registry lives under $JOPE_STATE (zero dependencies).
 jope-paths = { path = "../jope-paths" }
+# Raw-cell encoding, fitting-input digest and bound prediction, shared with the appliance.
+jope-runtime = { path = "../jope-runtime" }
 jope-policy = { path = "../jope-policy", optional = true }
 # Bounded parallel candidate evaluation (`--threads`); already in the graph through feat-math.
 rayon.workspace = true

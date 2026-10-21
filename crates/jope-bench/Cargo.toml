@@ -24,6 +24,8 @@ jope-arena = { path = "../jope-arena" }
 jope-automl = { path = "../jope-automl" }
 jope-datasets = { path = "../jope-datasets" }
 jope-pipeline = { path = "../jope-pipeline" }
+# The native roster and fit path shared with the `jopedime` appliance.
+jope-runtime = { path = "../jope-runtime" }
 jope-learning = { path = "../jope-learning", optional = true }
 jope-policy = { path = "../jope-policy", optional = true, features = ["context-producer"] }
 candle-core = { version = "0.11.0", default-features = false, optional = true }

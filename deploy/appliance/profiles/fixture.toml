@@ -1,0 +1,29 @@
+# CI fixture profile: deterministic generated tensors (`jope-dist fixture`), signed with the
+# development key, which only `dev-keys` builds trust. Exercises the real pack/sign/verify and
+# asset-authentication code on an untrusted runner without any real weight.
+schema = "jope.appliance-profile/v1"
+name = "fixture"
+description = "CI fixture: generated tensors, development key, every native method."
+scope = "development"
+redistribution = ["permitted"]
+methods = ["native"]
+bundles = "deploy/appliance/fixtures/bundles"
+max_payload_mib = 4
+
+[codec]
+name = "shuffle+zstd"
+level = 19
+frame_mib = 1
+
+[[component]]
+id = "fixture-encoder"
+bundle = "fixture-encoder"
+files = ["encoder.safetensors", "encoder.config.json"]
+role = "model"
+
+[[component]]
+id = "fixture-policy"
+bundle = "fixture-policy"
+files = ["policy.safetensors"]
+role = "model"
+requires = ["fixture-encoder"]

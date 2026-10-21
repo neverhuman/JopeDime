@@ -1,0 +1,16 @@
+# The native-only edition: every native Rust method and bounded selection, no pretrained
+# weights. A separate, publicly redistributable edition; it is not the full neural product
+# (SPECIFICATION.md §5.4).
+schema = "jope.appliance-profile/v1"
+name = "native-only"
+description = "Native Rust methods and bounded selection; no pretrained weights."
+scope = "public"
+redistribution = ["permitted"]
+methods = ["native"]
+bundles = "models/bundles"
+max_payload_mib = 1
+
+[codec]
+name = "shuffle+zstd"
+level = 19
+frame_mib = 16

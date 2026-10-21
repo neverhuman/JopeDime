@@ -287,6 +287,18 @@ for tool in g++ clang++ node python3 rustc cargo; do
 done
     # End-to-end pipeline smoke
 E2E_OUT="$EVIDENCE/pipeline" bash deploy/ci/e2e-smoke.sh
+    # The jopedime appliance (deploy/appliance): build with the PR profile, pack and sign the fixture
+    # profile with the development key, then run the packed file alone in an empty directory.
+    # The packages stay in the lane target; only their receipts are evidence.
+appliance_target=$(cargo run -q --locked -p jope-ci -- cargo-artifact target-dir)
+appliance_work="$appliance_target/appliance-lane/${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
+bash deploy/appliance/build.sh --profile fixture --cargo-profile dist-ci --out "$appliance_work/build" \
+  --source-sha "${JOPE_SOURCE_SHA:-$(git rev-parse HEAD)}"
+bash deploy/appliance/test-clean-host.sh "$appliance_work/build/jopedime" "$appliance_work/clean-host"
+mkdir -p "$EVIDENCE/appliance"
+cp -- "$appliance_work"/build/{build,pack-receipt,verify,size,sbom-models}.json \
+  "$appliance_work"/clean-host/{clean-host,fit}.json "$EVIDENCE/appliance/"
+rm -r -- "$appliance_work"
     ;;
   *) echo "unknown CI lane: $1" >&2; exit 2 ;;
 esac

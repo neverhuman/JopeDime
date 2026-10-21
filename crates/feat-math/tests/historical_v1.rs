@@ -499,8 +499,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             "PR392 transition must name {path}"
         );
     }
-    // HPC/safety cleanup: bit-exact feat-math rewrites and engine lock/clippy changes.
-    // Announced identity and teaching-store lineage only; behavior pins stay strict.
+    // PR394 follows the merged PR392 identity, rather than its original parallel baseline.
+    let appliance_after_automl =
+        old_fixture("transitions/appliance_after_automl_identity_rebaseline.v1.json");
+    let appliance_fixtures = appliance_after_automl["fixtures"].as_array().unwrap();
+    assert_eq!(appliance_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(appliance_fixtures.iter().any(|entry| entry["path"] == path));
+    }
+    // PR398 HPC/safety cleanup follows PR394: bit-exact feat-math rewrites and engine
+    // lock/clippy changes. Announced identity and teaching-store lineage only.
     let hpc_cleanup = old_fixture("transitions/hpc_safety_cleanup_identity_rebaseline.v1.json");
     let hpc_fixtures = hpc_cleanup["fixtures"].as_array().unwrap();
     assert_eq!(hpc_fixtures.len(), 2);
@@ -534,6 +542,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         observatory_workspace_lock,
         gp_source_stream,
         gpt6p1_sol_max,
+        appliance_after_automl,
         hpc_cleanup,
     ];
     assert_eq!(rows.len(), 49);

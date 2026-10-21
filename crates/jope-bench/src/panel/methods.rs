@@ -1,8 +1,7 @@
 //! Frozen-panel methods. Historical same-cut v1 methods and adapters are unchanged.
 use anyhow::{ensure, Context, Result};
 use feat_math::advanced_v3::{
-    fit_table, validate_v3_genome, BoundModel, ColumnSpec, DataSchema, Objective, RawTable,
-    TaskSpec,
+    validate_v3_genome, BoundModel, ColumnSpec, DataSchema, RawTable, TaskSpec,
 };
 use feat_math::GenomeIr;
 use jope_datasets::catalog::Task;
@@ -20,46 +19,20 @@ pub const RUST_ARTIFACT: &str = "jope.panel-fitted-rust/v1";
 /// worker computes from its own input without receiving any row identity.
 pub const RUST_ARTIFACT_V2: &str = "jope.panel-fitted-rust/v2";
 pub const ADAPTER_CONTRACT: &str = "jope.bench-adapter/v2";
-pub const INPUT_POLICY: &str = "median-onehot256-indicator/v1";
-/// No target-aware encodings: groups cannot leak through ordered target statistics.
-pub const INPUT_STAGE: &str =
-    "(input numeric=median categorical=onehot missing=indicator min_count=1 max_onehot=256)";
+use jope_runtime::methods::registry;
+/// The roster, input policy and recipes live in the appliance runtime's registry
+/// (`jope_runtime::methods::registry`), so the panel and `jopedime` run one definition.
+pub use jope_runtime::methods::registry::{RustMethod, INPUT_POLICY, INPUT_STAGE};
+use jope_runtime::task::TaskKind;
 
-/// A recipe is distinct from an algorithm family. Aliases never add screening slots.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RustMethod {
-    pub id: String,
-    pub family: String,
-    pub configuration: String,
-    pub aliases: Vec<String>,
-    pub dsl: String,
-}
-
-fn method(
-    head: &str,
-    configuration: &str,
-    parameters: &str,
-    aliases: &[&str],
-) -> Result<RustMethod> {
-    let suffix = if configuration == "default" || configuration == "core_v1" {
-        String::new()
-    } else {
-        format!(".{configuration}")
-    };
-    let stage = if parameters.is_empty() {
-        head.to_owned()
-    } else {
-        format!("{head} {parameters}")
-    };
-    let genome = GenomeIr::parse(&format!("(pipe X {INPUT_STAGE} ({stage}))"))?;
-    Ok(RustMethod {
-        id: format!("rust.{head}{suffix}"),
-        family: head.to_owned(),
-        configuration: configuration.to_owned(),
-        aliases: aliases.iter().map(|name| (*name).to_owned()).collect(),
-        dsl: genome.canonical(),
-    })
+/// The catalog task as the runtime's task contract; the panel admits three tasks.
+fn kind(task: Task) -> Result<TaskKind> {
+    match task {
+        Task::Regression => Ok(TaskKind::Regression),
+        Task::Binary => Ok(TaskKind::Binary),
+        Task::Multiclass => Ok(TaskKind::Multiclass),
+        other => anyhow::bail!("{} is outside the frozen panel", other.as_str()),
+    }
 }
 
 /// Every executable product head compatible with the task, through the raw-table boundary.
@@ -67,79 +40,18 @@ fn method(
 /// Binary has five families; multiclass has four. Engine defaults stay defaults (in particular,
 /// multiclass's 64 transformed-feature budget); arbitrary hyperparameter sweeps are not implied.
 pub fn rust_methods(task: Task) -> Result<Vec<RustMethod>> {
-    let mut out = Vec::new();
-    match task {
-        Task::Regression => {
-            for (head, aliases) in [
-                ("ridge", &["logistic"][..]),
-                ("ridge_gcv", &[][..]),
-                ("elasticnet", &[][..]),
-                ("histgbm", &["gbm"][..]),
-                ("histgbm2", &[][..]),
-                ("ksmooth", &[][..]),
-                ("ensemble", &["ensemble_ridge_gbm"][..]),
-                ("krr", &[][..]),
-                ("gpr", &[][..]),
-                ("hurdle2", &[][..]),
-                ("stack", &[][..]),
-                ("tab_boost", &[][..]),
-                ("extra_trees", &[][..]),
-                ("gam_boost", &[][..]),
-                ("pls", &[][..]),
-            ] {
-                out.push(method(head, "default", "", aliases)?);
-            }
-            out.push(method("portfolio", "core_v1", "preset=core", &[])?);
-            out.push(method("gpr", "rbf_linear", "kernel=rbf+linear", &[])?);
-        }
-        Task::Binary => {
-            out.push(method("logit_ridge", "default", "", &["logistic"])?);
-            for head in ["tab_boost", "extra_trees", "gam_boost", "portfolio"] {
-                out.push(method(head, "default", "", &[])?);
-            }
-        }
-        Task::Multiclass => {
-            for head in [
-                "multiclass_ridge",
-                "multiclass_ovr_logistic",
-                "multiclass_diagonal_lda",
-                "multiclass_nearest_centroid",
-            ] {
-                out.push(method(head, "default", "", &[])?);
-            }
-        }
-        other => anyhow::bail!("{} is outside the frozen panel", other.as_str()),
-    }
-    Ok(out)
+    registry::rust_methods(kind(task)?)
 }
 
 /// The fitted engine task is separate from the controller's primary metric. The engine's
 /// multiclass task contract admits MacroF1; the panel scores its probability matrix with log loss.
 pub fn task_spec(task: Task) -> Result<TaskSpec> {
-    match task {
-        Task::Regression => TaskSpec::regression(Objective::Rmse),
-        Task::Binary => TaskSpec::binary(Objective::RocAuc),
-        Task::Multiclass => TaskSpec::multiclass(Objective::MacroF1),
-        other => anyhow::bail!("{} is outside the frozen panel", other.as_str()),
-    }
+    registry::task_spec(kind(task)?)
 }
 
 fn validate_classes(task: Task, classes: &[String]) -> Result<()> {
-    ensure!(
-        classes.iter().collect::<BTreeSet<_>>().len() == classes.len()
-            && classes.iter().all(|class| !class.is_empty()),
-        "empty or duplicate class labels"
-    );
-    ensure!(
-        match task {
-            Task::Regression => classes.is_empty(),
-            Task::Binary => classes.len() == 2,
-            Task::Multiclass => classes.len() >= 3,
-            _ => false,
-        },
-        "class vocabulary is incompatible with task"
-    );
-    Ok(())
+    // Outside the panel's tasks the runtime's timeseries rule gives the same two refusals.
+    registry::validate_classes(kind(task).unwrap_or(TaskKind::Timeseries), classes)
 }
 
 /// This is the entire Rust fit-worker input. Scoring labels, row identities, panel roots, sealed
@@ -306,10 +218,11 @@ pub struct RustFitResult {
 
 pub fn fit_rust(request: &RustFitRequest) -> Result<RustFitResult> {
     request.validate()?;
-    let model = fit_table(
-        &GenomeIr::parse(&request.method.dsl)?,
-        &task_spec(request.task)?,
+    let model = jope_runtime::methods::native::fit_native(
+        &request.method,
+        kind(request.task)?,
         &request.schema,
+        &request.classes,
         &request.train,
         &request.targets,
     )?;
@@ -479,6 +392,32 @@ mod tests {
             let mut malformed = artifact.clone();
             malformed.fitting_input_sha256 = Some("../fitting-input".into());
             assert!(malformed.validate().is_err());
+        }
+    }
+
+    /// The panel offers exactly the appliance's registry (`jope_runtime`), not a copy of it.
+    #[test]
+    fn the_roster_is_the_appliance_registry() {
+        for (task, kind) in [
+            (Task::Regression, TaskKind::Regression),
+            (Task::Binary, TaskKind::Binary),
+            (Task::Multiclass, TaskKind::Multiclass),
+        ] {
+            assert_eq!(
+                rust_methods(task).unwrap(),
+                registry::rust_methods(kind).unwrap()
+            );
+            assert_eq!(task_spec(task).unwrap(), registry::task_spec(kind).unwrap());
+        }
+        for task in [Task::MultiLabel, Task::Timeseries] {
+            assert_eq!(
+                rust_methods(task).unwrap_err().to_string(),
+                format!("{} is outside the frozen panel", task.as_str())
+            );
+            assert_eq!(
+                validate_classes(task, &[]).unwrap_err().to_string(),
+                "class vocabulary is incompatible with task"
+            );
         }
     }
 

@@ -1,0 +1,40 @@
+[package]
+name = "jope-appliance"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "The jopedime appliance: one signed executable that fits and predicts with native methods and its packaged assets"
+
+[[bin]]
+name = "jopedime"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap = { workspace = true, features = ["derive"] }
+jope-assets = { path = "../jope-assets" }
+jope-runtime = { path = "../jope-runtime" }
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+# Test builds of `jopedime` pack fixture packages and trust the development key. Release builds
+# (no dev-dependencies) get neither.
+jope-assets = { path = "../jope-assets", features = ["pack", "dev-keys"] }
+# The repository's JSON Schema validator, for the run receipt schema.
+jope-datasets = { path = "../jope-datasets" }
+tempfile.workspace = true
+
+[features]
+default = []
+# The executable refuses to run without its sealed package: every release build sets it, so a
+# release binary separated from its payload stops instead of running unauthenticated.
+embedded = []
+# Trust the deterministic development key: fixture packages in CI only. Never in a release
+# (`--version --json` reports it; the release lane refuses it).
+dev-keys = ["jope-assets/dev-keys"]
+
+[lints]
+workspace = true
