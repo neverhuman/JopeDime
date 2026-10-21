@@ -46,19 +46,22 @@ See [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md) for the full record.
 
 ## Reviews
 
-Follow `AGENTS.md`: the reviewer must be independent of the writer, and its GitHub identity must
-differ from the PR author and every GitHub-associated commit author. Review names the exact full
-head SHA; a changed head needs fresh checks and review. Check the actual authenticated account
-before posting with `gh api user --jq .login` in the exact environment used to post. With
-`GH_TOKEN` unset, `gh` falls back to its stored account; this has previously caused author-side
-comments and PR creation to use the reviewing login. GitHub then refused review with
-`Can not request changes on your own pull request` (#40/#41). Never infer eligibility from a
-token variable or Git name.
+Follow `AGENTS.md`: the same agent may implement, review and merge its PR. Review must
+be substantive and name the exact full head SHA; a changed head needs fresh checks and
+review. An outside agent/account and native GitHub approval are optional. Preserve
+existing authorship and record findings and their disposition honestly.
 
-The concrete approval commands and host-local credential paths are in
-[`AGENTS.md`](AGENTS.md#approval-procedure-on-this-host). In an independent review process,
-do not read credential files, run `gh auth` subcommands, change the shared login or use another
-account. Use only the review credential supplied by the launcher and verify it with `gh api user`.
+Verify the actual authenticated account in the posting environment, using the xbabe2
+`gh-role writer api user --jq .login` helper where available. Do not infer identity from
+a token variable or Git name. GitHub does not permit a PR author to approve their own PR;
+use a head-bound `COMMENT` review or durable receipt for same-agent review. Do not switch
+accounts or rewrite attribution to manufacture a self-approval.
+
+The review procedure and host-local credential paths are in
+[`AGENTS.md`](AGENTS.md#approval-procedure-on-this-host). In an optional separate review
+process, do not read credential files, run `gh auth` subcommands, change the shared login
+or use another account. Use only the review credential supplied by its launcher and
+verify it with `gh api user`.
 
 ## Coordination
 

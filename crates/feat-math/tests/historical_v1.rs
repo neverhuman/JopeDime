@@ -489,6 +489,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for (entry, path) in gp_fixtures.iter().zip(changed_fixtures) {
         assert_eq!(entry["path"], path);
     }
+    // PR392 jope-automl workspace lock addition: announced identity only.
+    let gpt6p1_sol_max = old_fixture("transitions/gpt6p1_sol_max_lock_identity_rebaseline.v1.json");
+    let automl_fixtures = gpt6p1_sol_max["fixtures"].as_array().unwrap();
+    assert_eq!(automl_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(
+            automl_fixtures.iter().any(|entry| entry["path"] == path),
+            "PR392 transition must name {path}"
+        );
+    }
     let identity_chain = [
         transition,
         successor,
@@ -512,6 +522,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         mr19_shared_dag,
         observatory_workspace_lock,
         gp_source_stream,
+        gpt6p1_sol_max,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

@@ -16,6 +16,106 @@ use jope_bench::task::Task;
 
 const BINARY: &str = env!("CARGO_BIN_EXE_jope-bench");
 
+#[test]
+fn astra_automl_catalog_and_process_are_connected_to_same_cut_selection() {
+    let catalog = Command::new(BINARY).arg("automl").output().unwrap();
+    assert!(catalog.status.success());
+    let catalog: serde_json::Value = serde_json::from_slice(&catalog.stdout).unwrap();
+    assert_eq!(catalog["methods"][0]["method_id"], "adapter.GPT6_Astra_Max");
+    let mut spec =
+        jope_bench::automl::adapter_spec(jope_bench::automl::NAME, Path::new(BINARY), 29, 30.0)
+            .unwrap();
+    spec.probe().unwrap();
+    assert!(spec
+        .version
+        .as_ref()
+        .unwrap()
+        .contains(jope_bench::automl::SOURCE_SHA256));
+    assert!(spec.version.as_ref().unwrap().contains("seed=29"));
+
+    // These are post-freeze transport/API fixtures. No accuracy threshold is used.
+    let (x, y) = toy();
+    let cuts = build(
+        &FoldPlan::new("astra-contract", 1, 3),
+        "astra-contract",
+        "s",
+        x.len(),
+    )
+    .unwrap();
+    let first = evaluate_adapter(&spec, &x, &y, &cuts[0], Task::Regression);
+    assert!(first.is_ok(), "{first:?}");
+    assert_eq!(first.predictions.len(), cuts[0].hold.len());
+    let mut changed_labels = y.clone();
+    for &row in &cuts[0].hold {
+        changed_labels[row] += 100.0;
+    }
+    let second = evaluate_adapter(&spec, &x, &changed_labels, &cuts[0], Task::Regression);
+    assert!(second.is_ok(), "{second:?}");
+    assert_eq!(
+        first.predictions, second.predictions,
+        "held-out labels cannot change predictions"
+    );
+    let results = run(
+        &x,
+        &y,
+        &cuts,
+        vec![methods::adapter(spec.clone())],
+        &Protocol {
+            screen_fold: 0,
+            top: 1,
+        },
+        Task::Regression,
+    )
+    .unwrap();
+    assert_eq!(results[0].method.id, "adapter.GPT6_Astra_Max");
+    assert!(results[0].screen.is_ok());
+    assert_eq!(results[0].deep.as_ref().unwrap().folds.len(), cuts.len());
+    assert_eq!(results[0].deep.as_ref().unwrap().status, "ok");
+    let wrong_task = evaluate_adapter(&spec, &x, &y, &cuts[0], Task::Binary);
+    assert!(!wrong_task.is_ok());
+    assert!(wrong_task.reason.unwrap().contains("regression only"));
+}
+
+#[test]
+fn astra_transport_preserves_zero_width_rows_and_rejects_invalid_input() {
+    let dir = tempfile::tempdir().unwrap();
+    let train = dir.path().join("train.csv");
+    let predict = dir.path().join("predict.csv");
+    let out = dir.path().join("out.csv");
+    std::fs::write(&train, "2\n4\n6\n").unwrap();
+    std::fs::write(&predict, "\n\n\n").unwrap();
+    let invoke = || {
+        Command::new(BINARY)
+            .args(["automl-adapter", jope_bench::automl::NAME, "11"])
+            .arg(&train)
+            .arg(&predict)
+            .arg(&out)
+            .arg("regression")
+            .output()
+            .unwrap()
+    };
+    let output = invoke();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(std::fs::read_to_string(&out).unwrap(), "4.0\n4.0\n4.0\n");
+    std::fs::write(&predict, "").unwrap();
+    assert!(invoke().status.success());
+    assert_eq!(std::fs::read_to_string(&out).unwrap(), "");
+    std::fs::write(&predict, "1\n").unwrap();
+    assert!(!invoke().status.success());
+    std::fs::write(&train, "1,NaN\n").unwrap();
+    assert!(!invoke().status.success());
+    std::fs::write(&train, "NaN,2\n3,4\n").unwrap();
+    std::fs::write(&predict, "NaN\n3\n").unwrap();
+    assert!(invoke().status.success());
+    assert_eq!(std::fs::read_to_string(&out).unwrap().lines().count(), 2);
+    std::fs::write(&predict, "3,4\n").unwrap();
+    assert!(!invoke().status.success(), "no target placeholder accepted");
+}
+
 fn mean_adapter(timeout: f64) -> AdapterSpec {
     parse_spec(&format!("mean={BINARY} mean-adapter"), timeout).unwrap()
 }
@@ -210,6 +310,7 @@ fn screen_ranks_everyone_and_deepens_the_top() {
     )
     .unwrap();
     methods.push(Method {
+        native: None,
         id: "program.broken".to_owned(),
         kind: MethodKind::Program,
         dsl: "(pipe X (no_such_head_ever))".to_owned(),

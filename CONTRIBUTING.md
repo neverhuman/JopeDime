@@ -17,10 +17,12 @@ emitter or a learning-loop pointer can be reviewed and reproduced by someone who
 
 ## The landing policy
 
-Every change lands as a pull request against `main`; there are no direct pushes, the owner merges.
-`main-guard.yml` (landing with PR #7) fails and files an issue when a commit reaches `main`
-without a merged pull request, until branch protection is enforced on the Team plan. Squash or
-rebase merges only (linear history); the branch is deleted on merge.
+Every change lands as a pull request against `main`; there are no direct pushes. The same
+agent may implement, review and merge after substantive review at the exact head and passing
+CI. Follow [AGENTS.md](AGENTS.md#pull-requests) for the current procedure. `main-guard.yml`
+checks that commits reaching `main` belong to merged pull requests; branch protection enforces
+the required checks. Squash or rebase merges only (linear history); preserve source branches
+and evidence until cleanup satisfies the custody rules in `AGENTS.md`.
 
 1. Branch from `main`: `<area>/<topic>` (`feat-math/…`, `engine/…`, `docs/…`, `wp<N>/…` for plan
    work packages).
@@ -31,16 +33,19 @@ rebase merges only (linear history); the branch is deleted on merge.
    lanes themselves are `deploy/ci/fast-lane.sh`) plus clippy: `deploy/ci/check.sh`, the core of
    the `hygiene` lane, `cargo fmt --check`, clippy `-D warnings` (which no CI lane runs),
    `cargo nextest -P pr` over the product crates, and ruff and pytest over the Python that
-   remains until ADR-0006's phase P3. A PR that touches only docs runs
-   `hygiene` alone in CI; still run `just docs` locally (rustdoc builds — its warnings are
-   advisory until the WP8 `docs` lane makes `-D warnings` blocking — plus the markdown link check
-   over README and `docs/`).
+   remains until ADR-0006's phase P3. Path-gated PR runs may skip declared lanes; the full
+   exact-head manual CI requirement in `AGENTS.md` still applies. For documentation, include
+   diff and link checks; `just docs` also runs rustdoc and the README/`docs/` link check
+   (rustdoc warnings remain advisory until promoted to blocking).
 4. Open the PR with a description that a reviewer can verify: what was run, on which host, with
    which output. Tests you had to change are listed explicitly (the test-inventory guard landing
    with WP10 fails a PR that silently removes tests).
-5. Review by someone other than the author; every conversation resolved; the required checks
-   (`hygiene`, `rust-check`, `emitters`, `python` once each lane exists) green. The `python` lane
-   covers only the remaining Python and is removed at the end of ADR-0006's phase P3.
+5. Record substantive review against the exact full head SHA; the implementing agent may
+   perform it. Outside review and native GitHub approval are optional. Resolve conversations,
+   pass the current full manual CI procedure in `AGENTS.md`, and retain green protected checks
+   (`aggregate`, `changes`, `hygiene`, `observatory-ui`) on an up-to-date branch. Any changed head
+   needs fresh checks and review; use a head-bound `COMMENT` or durable receipt for same-agent
+   review, without manufacturing a native self-approval.
 
 ## What reviewers look for
 

@@ -66,13 +66,13 @@ limits and client examples](docs/program-source-stream.md).
 | What | 0.3.0 |
 | --- | --- |
 | `jope` with no arguments | prints `jope 0.3.0` <sup>1</sup> |
-| Workspace | 27 members: 20 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| Workspace | 28 members: 21 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,705 listed in 27 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,712 listed in 28 packages, 74 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 785 items over 25 lanes <sup>7</sup> |
+| Coverage map | 787 items over 25 lanes <sup>7</sup> |
 | Capability matrix | 832 rows: 353 moved, 69 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,185 `.py` files, 159 of them under `python/` <sup>10</sup> |
@@ -334,13 +334,14 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Layout (this SHA)
 
-The 27 workspace members, by directory under `crates/`; the package name follows where it differs.
+The 28 workspace members, by directory under `crates/`; the package name follows where it differs.
 [docs/architecture.md](docs/architecture.md#crate-graph) describes each crate.
 
 | Group | Crates | Role |
 | --- | --- | --- |
 | Default build | `jope-cli` (binary `jope`), `feat-math`, `jope-pipeline`, `jope-bench`, `jope-datasets`, `jope-models`, `jope-motifs`, `jope-policy` | The workspace `default-members`, what a bare `cargo build` selects: the `jope` binary and its direct workspace dependencies except `hyperion` and `jope-learning`, which it still builds as dependencies (`Cargo.toml` says why). Programs, fit and emitters; the pipeline; the same-cut benchmark; dataset and model stores; program fragments; the proposal policy. |
 | Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders, Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
+| Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors, including `GPT6p1_Sol_Max`; selectable with `jope-bench run --native GPT6p1_Sol_Max` and callable directly from Rust. |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
 | Vendored | `smartcluster/*` (7 crates) | The jain-smartcluster scheduler, at its own version 8.0.0. |
