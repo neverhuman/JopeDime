@@ -25,6 +25,8 @@ class VendorCustodyTests(unittest.TestCase):
         for name, version in sorted(GUARD.EXPECTED_CRATES):
             directory = f"{name}-{version}"
             contents = f'[package]\nname = "{name}"\nversion = "{version}"\n'.encode()
+            if name == "ratatui":
+                contents += b'\n[dependencies.lru]\nversion = "=0.18.4"\n'
             target = self.base / directory / "Cargo.toml"
             target.parent.mkdir()
             target.write_bytes(contents)
@@ -58,6 +60,39 @@ class VendorCustodyTests(unittest.TestCase):
         after = {p.relative_to(self.base).as_posix(): (p.read_bytes(), p.stat().st_mtime_ns)
                  for p in self.base.rglob("*") if p.is_file()}
         self.assertEqual(before, after)
+
+    def test_ratatui_lru_floor_refuses_coherent_downgrades_and_overrides(self):
+        path = "vendor/security/ratatui-0.29.0/Cargo.toml"
+        target = self.root / path
+        original_data = copy.deepcopy(self.data)
+        original_bytes = target.read_bytes()
+        substitutions = [
+            b'version = "0.12.0"',
+            b'version = "=0.16.4"',  # fixes only the first advisory
+            b'version = "=0.18.1"',
+            b'version = "0.18"',  # admits unpatched0.18.0/0.18.1
+            b'version = "=0.18.4"\npath = "../../unreviewed"',
+            b'version = "=0.18.4"\ngit = "https://invalid.example/lru"',
+        ]
+        for replacement in substitutions:
+            with self.subTest(requirement=replacement):
+                self.data = copy.deepcopy(original_data)
+                candidate = original_bytes.replace(b'version = "=0.18.4"', replacement)
+                target.write_bytes(candidate)
+                digest = hashlib.sha256(candidate).hexdigest()
+                delta = len(candidate) - len(original_bytes)
+                pin = next(p for p in self.data["retained_file_pins"] if p["path"] == path)
+                pin.update(bytes=len(candidate), candidate_sha256=digest,
+                           changed=digest != pin["upstream_sha256"])
+                crate = next(c for c in self.data["crates"] if c["name"] == "ratatui")
+                crate["manifest_candidate_sha256"] = digest
+                crate["retained_bytes"] += delta
+                self.data["bytes"] += delta
+                self.write()
+                self.reject("ratatui lru must retain reviewed")
+        target.write_bytes(original_bytes)
+        self.data = original_data
+        self.write()
 
     def test_same_size_content_tamper(self):
         self.target.write_bytes(b"X" * self.target.stat().st_size)

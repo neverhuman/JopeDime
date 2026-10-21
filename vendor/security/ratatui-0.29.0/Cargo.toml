@@ -381,7 +381,7 @@ version = "0.3.1"
 version = "0.13"
 
 [dependencies.lru]
-version = "0.12.0"
+version = "=0.18.4"
 
 [dependencies.palette]
 version = "0.7.6"
