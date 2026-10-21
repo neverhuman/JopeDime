@@ -24,7 +24,7 @@ pub use feat_math::evolve::{
 };
 use feat_math::heads::RidgeModel;
 use std::ffi::CString;
-use std::os::raw::{c_int, c_uint, c_void};
+use std::os::raw::{c_char, c_int, c_uint, c_void};
 use std::sync::{Mutex, OnceLock};
 use std::time::Instant;
 
@@ -64,13 +64,19 @@ struct Gpu {
     info: GpuInfo,
 }
 
-// All access is serialized through the backend Mutex; raw handles never leave it.
+// SAFETY: CUDA driver handles (context, stream, functions) are process-wide and usable from
+// any thread once the context is made current there; every user calls cuCtxSetCurrent on its
+// own thread before issuing work (score_on_gpu, Drop). Gpu is only reachable through the
+// backend Mutex, so no two threads use these handles at once. It is deliberately not Sync.
 unsafe impl Send for Gpu {}
 
 impl Drop for Gpu {
     fn drop(&mut self) {
         // Release the stream before its owning context, while the driver library
         // is still loaded. The process-lifetime BACKEND retains its usual lifetime.
+        // SAFETY: ctx and stream were created by init_backend and are destroyed exactly once,
+        // stream first, with the context current on this thread; `_lib` is still loaded
+        // because fields drop after this body runs.
         unsafe {
             (self.api.cuCtxSetCurrent)(self.ctx);
             (self.api.cuStreamDestroy)(self.stream);
@@ -91,24 +97,35 @@ fn backend() -> Result<&'static Mutex<Gpu>, String> {
 fn init_backend() -> Result<Mutex<Gpu>, String> {
     let lib = Library::open("libcuda.so.1")?;
     let api = lib.api()?;
+    // SAFETY (each driver call in init_backend): the Api was resolved from the live `lib`,
+    // every out-pointer is a valid `&mut` local of the declared C type, and every input
+    // handle was produced by a prior successful call in this function.
+    // SAFETY: cuInit takes flags only (0 is the only defined value).
     api.check(unsafe { (api.cuInit)(0) }, "cuInit")?;
     let mut driver_version: c_int = 0;
     api.check(
+        // SAFETY: writes one c_int through the valid out-pointer.
         unsafe { (api.cuDriverGetVersion)(&mut driver_version) },
         "cuDriverGetVersion",
     )?;
     let mut device: driver::CUdevice = 0;
+    // SAFETY: writes one CUdevice through the valid out-pointer for ordinal 0.
     api.check(unsafe { (api.cuDeviceGet)(&mut device, 0) }, "cuDeviceGet")?;
-    let mut name_buf = [0i8; 128];
+    let mut name_buf = [0u8; 128];
     api.check(
-        unsafe { (api.cuDeviceGetName)(name_buf.as_mut_ptr(), 128, device) },
+        // SAFETY: the driver writes at most `len` (128) bytes into the 128-byte buffer.
+        unsafe { (api.cuDeviceGetName)(name_buf.as_mut_ptr().cast::<c_char>(), 128, device) },
         "cuDeviceGetName",
     )?;
-    let name = unsafe { std::ffi::CStr::from_ptr(name_buf.as_ptr()) }
+    // Bounded read: a name that fills all 128 bytes without a NUL is refused rather than read
+    // past the buffer (the previous CStr::from_ptr had no such bound).
+    let name = std::ffi::CStr::from_bytes_until_nul(&name_buf)
+        .map_err(|_| "cuDeviceGetName returned an unterminated name".to_string())?
         .to_string_lossy()
         .into_owned();
     let mut multiprocessors: c_int = 0;
     api.check(
+        // SAFETY: writes one c_int; the attribute id is a defined CUdevice_attribute.
         unsafe {
             (api.cuDeviceGetAttribute)(
                 &mut multiprocessors,
@@ -120,11 +137,13 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
     )?;
     let mut total_mem: usize = 0;
     api.check(
+        // SAFETY: writes one size_t through the valid out-pointer.
         unsafe { (api.cuDeviceTotalMem_v2)(&mut total_mem, device) },
         "cuDeviceTotalMem",
     )?;
     let mut ctx: driver::CUcontext = std::ptr::null_mut();
     api.check(
+        // SAFETY: writes one context handle; flags 0 = default scheduling.
         unsafe { (api.cuCtxCreate_v2)(&mut ctx, 0, device) },
         "cuCtxCreate",
     )?;
@@ -133,6 +152,8 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
         let image = CString::new(PTX).map_err(|_| "PTX contains NUL".to_string())?;
         let mut module: driver::CUmodule = std::ptr::null_mut();
         api.check(
+            // SAFETY: `image` is a NUL-terminated PTX string alive across the call (the driver
+            // copies/JITs it); writes one module handle.
             unsafe { (api.cuModuleLoadData)(&mut module, image.as_ptr() as *const c_void) },
             "cuModuleLoadData",
         )?;
@@ -140,6 +161,8 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
             let cname = CString::new(name).unwrap();
             let mut f: CUfunction = std::ptr::null_mut();
             api.check(
+                // SAFETY: `module` was loaded above; `cname` is NUL-terminated and alive;
+                // writes one function handle.
                 unsafe { (api.cuModuleGetFunction)(&mut f, module, cname.as_ptr()) },
                 &format!("cuModuleGetFunction({name})"),
             )?;
@@ -153,6 +176,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
         ];
         let mut stream: driver::CUstream = std::ptr::null_mut();
         api.check(
+            // SAFETY: writes one stream handle in the current (just created) context.
             unsafe { (api.cuStreamCreate)(&mut stream, 0) },
             "cuStreamCreate",
         )?;
@@ -178,6 +202,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
             }))
         }
         Err(error) => {
+            // SAFETY: `ctx` was created above, is not stored anywhere, and is destroyed once.
             unsafe { (api.cuCtxDestroy_v2)(ctx) };
             drop(lib);
             Err(error)
@@ -400,6 +425,8 @@ pub fn gpu_ridge_score_batch(
         .map_err(|_| "battle-gpu mutex poisoned".to_string())?;
     let api = &guard.api;
     api.check(
+        // SAFETY: `guard.ctx` is the live backend context; holding the Mutex guard makes this
+        // thread its only user until the guard drops.
         unsafe { (api.cuCtxSetCurrent)(guard.ctx) },
         "cuCtxSetCurrent",
     )?;
@@ -407,6 +434,7 @@ pub fn gpu_ridge_score_batch(
     // Wave budget from free memory (fallback: fixed 2 GiB).
     let budget = {
         let (mut free, mut total): (usize, usize) = (0, 0);
+        // SAFETY: writes two size_t values through valid out-pointers in the current context.
         let status = unsafe { (api.cuMemGetInfo_v2)(&mut free, &mut total) };
         if status == 0 {
             ((free as f64 * WAVE_MEM_FRACTION) as usize).max(64 << 20)
@@ -512,7 +540,11 @@ fn run_wave(
                   block: c_uint,
                   args: &mut [*mut c_void]|
      -> Result<(), String> {
+        // `args` holds one pointer per kernel parameter, in the PTX signature's order, each to a
+        // live local of that parameter's type; the driver copies the values during the call,
+        // and the device buffers they name stay allocated until the stream is synchronized.
         api.check(
+            // SAFETY: `f` is from the loaded module; backend stream; no dynamic shared memory.
             unsafe {
                 (api.cuLaunchKernel)(
                     f,
@@ -564,6 +596,7 @@ fn run_wave(
     let mut a3 = ptr_args![pgo, pso, pwo, pp, pym, pg, pb, pz, pw, problems];
     launch(gpu.f_chol_solve, chol_grid, 128, &mut a3)?;
     api.check(
+        // SAFETY: the backend stream is live and its context is current on this thread.
         unsafe { (api.cuStreamSynchronize)(gpu.stream) },
         "cuStreamSynchronize(solve)",
     )?;
@@ -573,6 +606,7 @@ fn run_wave(
     let mut a4 = ptr_args![pvx, pvy, pvxo, pvyo, pso, pwo, pvn, pp, pm, psc, pw, psr, problems];
     launch(gpu.f_predict_r2, chol_grid, 128, &mut a4)?;
     api.check(
+        // SAFETY: as above; this also orders the scores download after the kernel.
         unsafe { (api.cuStreamSynchronize)(gpu.stream) },
         "cuStreamSynchronize(predict)",
     )?;
