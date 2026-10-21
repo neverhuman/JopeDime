@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "3b68a7e29d4ae2d8315fec839d21763abc0f0086",
+  "generated_at_sha": "b638a55a5789e6bf8bba4e6f98dfe832021a2263",
   "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
@@ -47,7 +47,7 @@
     {
       "label": "vendor/feat-math/src/boost2.rs",
       "path": "crates/feat-math/src/boost2.rs",
-      "sha256": "ec959293ea73bf67e18f6121457a8c85d78bade018952d1bef561edbff9ccc55"
+      "sha256": "094dbe6c7cd09956522ca2ddbb8fc7126c9f00bacf8e646894e3caaa383ab80c"
     },
     {
       "label": "vendor/feat-math/src/credit.rs",
@@ -72,7 +72,7 @@
     {
       "label": "vendor/feat-math/src/evolve.rs",
       "path": "crates/feat-math/src/evolve.rs",
-      "sha256": "4ec59add2ea7f04dae21326b7302cecd2f3b02c662224ed9878bd89cc9204be5"
+      "sha256": "2ecc2bcedb3d66ffb91cfdc741ca06ab56fb08536e6fe0ccd59e407e72525ee1"
     },
     {
       "label": "vendor/feat-math/src/explain.rs",
@@ -102,7 +102,7 @@
     {
       "label": "vendor/feat-math/src/heads.rs",
       "path": "crates/feat-math/src/heads.rs",
-      "sha256": "1d63aab8a327e74236c11175a7ecfb92934259097da01d92ed5c5a95ad747df9"
+      "sha256": "b59f33872c5088ab06d1b7a6bc969bd7ceb63aa2444c892850e89907cbb53906"
     },
     {
       "label": "vendor/feat-math/src/krr.rs",
@@ -112,7 +112,7 @@
     {
       "label": "vendor/feat-math/src/ksmooth.rs",
       "path": "crates/feat-math/src/ksmooth.rs",
-      "sha256": "b51e993c929443c6aa0e5d134994f688d78031c13f432ccc5f0898ef027120a1"
+      "sha256": "7290dd89bfcfdab753c09841d584733b608e6d990c08cfff3e8f56a11b472199"
     },
     {
       "label": "vendor/feat-math/src/lib.rs",
@@ -147,7 +147,7 @@
     {
       "label": "vendor/feat-math/src/ops.rs",
       "path": "crates/feat-math/src/ops.rs",
-      "sha256": "0cdb6cb817239af8715af995b67f5327548f6db49b292ea2f6303ab23d063106"
+      "sha256": "041ef019af69e8194f482faa60ea2ec3998d768fd5c45f4319536b4ad5fdcd2e"
     },
     {
       "label": "vendor/feat-math/src/portfolio.rs",
@@ -177,7 +177,7 @@
     {
       "label": "vendor/feat-math/src/stage_cache.rs",
       "path": "crates/feat-math/src/stage_cache.rs",
-      "sha256": "f33106270371891c5493ed7b59cc6b68d8203710786977da86725d99568680f4"
+      "sha256": "d91486045b30b9639ea19320026f130363c5cec2a3fd7d55690aac737040404c"
     },
     {
       "label": "vendor/feat-math/src/target_transform.rs",
@@ -192,13 +192,13 @@
     {
       "label": "vendor/feat-math/src/transpile.rs",
       "path": "crates/feat-math/src/transpile.rs",
-      "sha256": "fdcada3e1344b667bf3aa155564289a814953b906f85aeece5670b741e5dfe93"
+      "sha256": "6921ef90863318b8c3b7e37eb91b5f7f23ae2a5e43f32f62cbeea3fa46278bed"
     }
   ],
-  "implementation_sha256": "498518151d5501d8d20dd8fa345c4805155710ac4e25529b6312fec4cb5117e5",
+  "implementation_sha256": "6dcb74a9e7732b05422b78d4c2a4b7ee7b93ef4ce8737290695a54ee5f8163fc",
   "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389",
   "cargo_lock_sha256": "a3d2fdfb2446231bebf2a9d20de40a426dedc1b62b400eb1585260de4a5c0587",
-  "identity_digest": "8999aff99f7bd548ff4415b8fe64b9880f092d78445a3b5f9864c4e12be195e0",
+  "identity_digest": "16eba4ea2ff663183ce48166c11f4db3e12bde071e8ee80daf8648898ec7253a",
   "known_identities_sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "known_identity_rows": 2
 }

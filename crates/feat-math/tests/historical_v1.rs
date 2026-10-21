@@ -499,6 +499,18 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             "PR392 transition must name {path}"
         );
     }
+    // HPC memory/thread review: bit-identical performance and lint-only feat-math edits,
+    // announced identity only.
+    let hpc_memory_threads =
+        old_fixture("transitions/hpc_memory_threads_identity_rebaseline.v1.json");
+    let hpc_fixtures = hpc_memory_threads["fixtures"].as_array().unwrap();
+    assert_eq!(hpc_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(
+            hpc_fixtures.iter().any(|entry| entry["path"] == path),
+            "HPC memory/thread transition must name {path}"
+        );
+    }
     let identity_chain = [
         transition,
         successor,
@@ -523,6 +535,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         observatory_workspace_lock,
         gp_source_stream,
         gpt6p1_sol_max,
+        hpc_memory_threads,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
