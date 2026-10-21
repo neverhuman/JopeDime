@@ -145,7 +145,7 @@ currently no bundled terminal source viewer. See the full
 [terminal-preview.gif](terminal-preview.gif) and its
 [generator](render_preview.py) illustrate proposed progress and source views.
 All counters, rates, scores and times in the animation are synthetic. The
-appliance scene and GP source scene are different runs. Native fitting must
+appliance scene and generated-source scene are different runs. Native fitting must
 not advertise generated source when its chosen method has no source artifact.
 No model-quality or performance result is established by the animation.
 
