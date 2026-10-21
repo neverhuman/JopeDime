@@ -319,6 +319,14 @@ struct Keeper {
     operator_registry: GeneratedOperatorRegistry,
 }
 
+/// Manifest validation/preparation workers: 32, or fewer on a host (or cgroup slice) with fewer
+/// usable CPUs. Each worker can run a preflight evaluator subprocess, so 32 of them on a small
+/// controller slice would time-share the CPUs the evaluators need. Results are collected in
+/// input order either way.
+fn manifest_pool_threads() -> usize {
+    std::thread::available_parallelism().map_or(1, |cpus| cpus.get().min(32))
+}
+
 fn bounded_validation_budget(unclaimed: usize, admission_limit: usize) -> usize {
     let headroom = VALIDATION_HEADROOM.min(admission_limit);
     unclaimed.min(admission_limit.saturating_add(headroom))
@@ -1074,7 +1082,7 @@ impl Keeper {
         // invalid or concurrently reserved pairs; later cycles consume the rest.
         let validation_budget = bounded_validation_budget(unclaimed, limit);
         let validation_pool = ThreadPoolBuilder::new()
-            .num_threads(32)
+            .num_threads(manifest_pool_threads())
             .thread_name(|index| format!("jope-manifest-validate-{index}"))
             .build()?;
         let operator_registry = &self.operator_registry;
@@ -1236,7 +1244,7 @@ impl Keeper {
         }
 
         let preparation_pool = ThreadPoolBuilder::new()
-            .num_threads(32)
+            .num_threads(manifest_pool_threads())
             .thread_name(|index| format!("jope-manifest-prepare-{index}"))
             .build()?;
         let prepared_rows = preparation_pool.install(|| {

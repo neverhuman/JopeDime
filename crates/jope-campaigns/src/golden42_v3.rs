@@ -2464,9 +2464,8 @@ fn sha256_bytes(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
-fn sha256_file(path: &Path) -> Result<String> {
-    Ok(sha256_bytes(&fs::read(path)?))
-}
+/// Streamed (bounded memory); the same digest as hashing the whole file.
+use jope_dime_regressor::selfplay_runtime::sha256_file;
 
 fn unix_ms() -> u128 {
     SystemTime::now()
