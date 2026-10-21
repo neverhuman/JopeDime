@@ -1,17 +1,17 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate test row (flag-off gate); prior entries unchanged.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate test row (flag-off gate); prior entries unchanged. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "0082eb8f39eaced73b24abfc439a622874e15d4c53cd380998cc2a22b399ac93"
+      "sha256": "4968a7f4cc52f35c36ba8e44ec675e73f515eaaf95dbd1f37687c56923c81275"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "be3a68cbeb8d4cd07bf4cf16d53cfe12163a89fdbbc131738a12ce314c8a39d5"
+      "sha256": "a49fbade20454e886dad6262849531ecdf95dd199c895885f0027b2dd6eace9e"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -5423,18 +5423,18 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 research test-family items; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate row; prior entries unchanged.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 research test-family items; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate row; prior entries unchanged. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "49f0f312cd6b1c79bc697fd4a34ca19fe89ce008a74ea23946768d6a945e868c"
+      "sha256": "bc298fbd3255af5f22bb59d780e16c521d11b57db87bd3cc85d924d131631f59"
     },
     {
-      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/ci/ci-plan.py",
       "origin_sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8",
       "path": "deploy/ci/ci-plan.py",
-      "sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8"
+      "sha256": "6df75899d7e5caf67d74f2701d3488f4658a306d972bab3b24b994c5608d7c79"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -5549,11 +5549,11 @@
       "sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536"
     },
     {
-      "normalization": "Cold r2 exact CI source pin; no execution or authority.",
+      "normalization": "Cold r2 exact CI source pin; no execution or authority. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
       "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
-      "sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658"
+      "sha256": "0c8a3f90086025b7c2029f2459333266255be5935497189d02c0eddf41566b34"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -5577,11 +5577,11 @@
       "sha256": "98a72f10f1267528c957570f9739cf101e807613272529eec14cdb71851994b3"
     },
     {
-      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
       "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
-      "sha256": "894c2d07673b3264a02fba7a11c2d16239308a5a611914bfd16b54f8ee8c5f51"
+      "sha256": "2887599b18bbc37c6c3517088c0642a7cbb62a552a92ea18a89ec7f5a00e53ad"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
