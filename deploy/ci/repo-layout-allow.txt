@@ -62,7 +62,6 @@ temp-dir crates/hyperion/src/hyperion_v7/weights.rs 1 -- test scratch in the pro
 temp-dir crates/jope-campaigns/src/bin/jope_gpu_lane_admission.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/bin/jope_ledger_reconciler.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/bin/jope_selfplay_expansion_driver.rs 4 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
-temp-dir crates/jope-campaigns/src/campaign.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/commands/binary_cv.rs 2 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/commands/exact_cv.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/commands/exact_cv_v2.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
