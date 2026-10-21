@@ -278,20 +278,20 @@ mod tests {
             "docs/release/signing.pub",
         ] {
             let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
-            assert_eq!(lanes["rust-check"], true, "{path}");
-            assert_eq!(lanes["rust-test"], true, "{path}");
-            assert_eq!(lanes["e2e-smoke"], true, "{path}");
-            assert_eq!(lanes["emitters"], false, "{path}");
-            assert_eq!(lanes["inputs"], false, "{path}");
-            assert_eq!(lanes["python"], false, "{path}");
+            assert!(lanes["rust-check"], "{path}");
+            assert!(lanes["rust-test"], "{path}");
+            assert!(lanes["e2e-smoke"], "{path}");
+            assert!(!lanes["emitters"], "{path}");
+            assert!(!lanes["inputs"], "{path}");
+            assert!(!lanes["python"], "{path}");
         }
         let (lanes, _) = classify(
             &["models/bundles/hyperion-v7.json".to_owned()],
             "pull_request",
         )
         .unwrap();
-        assert_eq!(lanes["rust-test"], true);
-        assert_eq!(lanes["e2e-smoke"], false);
+        assert!(lanes["rust-test"]);
+        assert!(!lanes["e2e-smoke"]);
     }
 
     #[test]
