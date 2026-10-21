@@ -534,7 +534,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         changed_fixtures[0],
         hpc_fixtures[0]["before"].as_str().unwrap(),
         hpc_fixtures[0]["after"].as_str().unwrap(),
-        &[hpc_cache.clone()],
+        std::slice::from_ref(&hpc_cache),
     )
     .expect("preserved PR396 parallel identity announcement");
     let pr396_combined =
@@ -551,7 +551,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             edge["path"].as_str().unwrap(),
             edge["before"].as_str().unwrap(),
             edge["after"].as_str().unwrap(),
-            &[pr397_parallel.clone()],
+            std::slice::from_ref(&pr397_parallel),
         )
         .expect("preserved PR397 parallel identity announcement");
     }
@@ -563,7 +563,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             edge["path"].as_str().unwrap(),
             edge["before"].as_str().unwrap(),
             edge["after"].as_str().unwrap(),
-            &[pr398_parallel.clone()],
+            std::slice::from_ref(&pr398_parallel),
         )
         .expect("preserved PR398 parallel identity announcement");
     }
