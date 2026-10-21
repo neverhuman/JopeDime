@@ -111,6 +111,20 @@
     }
   ],
   "lineage_effect": "Only generated_at_sha refreshed by the owning identity mode; all lineage source lists and hashes unchanged. Rebuilt executables mint their own runtime identities, as for every engine change.",
+  "other_runtime_source_identities": [
+    {
+      "identity": "feat-math numeric_v2_emit::numeric_source_hash (numeric_v2.rs, heads.rs, ops.rs, stack.rs, rng.rs)",
+      "before": "965c790f1a775d4cfec1a25dcea3adf8031458f98706f1b620867a2db1cf5405",
+      "after": "962c6eed65ce3d7625c674bdb93f57e642e24a98e86198abbb15636cb84ffb4f",
+      "effect": "FittedArtifactV2::reload refuses numeric-fitted-artifact-v2 artifacts emitted at base_commit (numeric source identity mismatch); re-emit them from the same model. No such artifact or digest is pinned in the tree."
+    },
+    {
+      "identity": "jope-pipeline search_events::source_sha256 (search.rs, search_events.rs, feat-math evolve.rs, jope-records wire_contract.rs)",
+      "before": "ad7c98be89b539eb9f6cdcd68fcd56250eac3b5b249d45cf73d067a218b08370",
+      "after": "8becb8f1e3119d06736adb1957769626cb108e87b27913bbf36cdffe92e0be0f",
+      "effect": "search_recorder refuses a caller SearchBinding made at base_commit; existing event logs keep their recorded source identity. No digest is pinned in the tree."
+    }
+  ],
   "verification": [
     "Pinned Rust 1.97.1, cargo-nextest 0.9.133: JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=<source_commit> cargo nextest run --locked -P pr -p feat-math --test compat_freeze: 13 passed",
     "Same command in comparison mode with --test historical_v1: 16 passed (13 compat_freeze, 3 historical_v1)",
