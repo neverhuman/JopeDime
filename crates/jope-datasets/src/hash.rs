@@ -44,7 +44,7 @@ pub fn digest_content(path: &Path) -> io::Result<ContentDigest> {
 }
 
 // A process-wide bound also applies when callers use different Tokio runtimes.
-// Hold the permit IN the blocking job: cancelling its future cannot stop a file
+// Hold the permit in the admitted read worker: cancelling its future cannot stop a file
 // read, and must not admit a replacement hash before that read has finished.
 static HASH_SLOTS: LazyLock<Arc<tokio::sync::Semaphore>> = LazyLock::new(|| {
     let workers = std::thread::available_parallelism()
@@ -53,7 +53,7 @@ static HASH_SLOTS: LazyLock<Arc<tokio::sync::Semaphore>> = LazyLock::new(|| {
     Arc::new(tokio::sync::Semaphore::new(workers))
 });
 
-/// Hash without blocking an async executor thread. At most four hashes run at
+/// Hash on an admitted dedicated read worker. At most four hashes run at
 /// once (fewer under a smaller CPU quota), each with one 1 MiB read buffer.
 pub async fn digest_content_async(path: PathBuf) -> io::Result<ContentDigest> {
     on_hash_worker(Arc::clone(&HASH_SLOTS), move || digest_content(&path)).await
@@ -69,15 +69,21 @@ async fn on_hash_worker<T: Send + 'static>(
     slots: Arc<tokio::sync::Semaphore>,
     work: impl FnOnce() -> io::Result<T> + Send + 'static,
 ) -> io::Result<T> {
-    let runtime = tokio::runtime::Handle::try_current().map_err(io::Error::other)?;
+    // Keep admitted reads off the shared blocking pool: destination-lock waiters
+    // can occupy every blocking worker while their lock holder awaits this hash.
+    let _runtime = tokio::runtime::Handle::try_current().map_err(io::Error::other)?;
     let permit = slots.acquire_owned().await.map_err(io::Error::other)?;
-    runtime
-        .spawn_blocking(move || {
-            let _permit = permit;
-            work()
-        })
-        .await
-        .map_err(io::Error::other)?
+    let (send, receive) = tokio::sync::oneshot::channel();
+    std::thread::Builder::new()
+        .name("jope-blob-hash".into())
+        .spawn(move || {
+            // Cancelling delivery cannot cancel the actual read or free its slot.
+            let result = work();
+            // Publish completion only after the read has relinquished admission.
+            drop(permit);
+            let _ = send.send(result);
+        })?;
+    receive.await.map_err(io::Error::other)?
 }
 
 /// What one pass over a file yields.
@@ -287,5 +293,107 @@ mod tests {
             );
             assert_eq!(slots.available_permits(), 1);
         });
+    }
+
+    #[test]
+    fn hashing_progresses_while_a_destination_waiter_occupies_the_blocking_pool() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("cached-blob");
+        let bytes = b"hashing must progress under destination lock contention";
+        std::fs::write(&path, bytes).unwrap();
+        let lock_path = dir.path().join("destination.partial.lock");
+        let owner = std::fs::OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .write(true)
+            .open(&lock_path)
+            .unwrap();
+        owner.lock().unwrap();
+        let waiter = std::fs::OpenOptions::new()
+            .write(true)
+            .open(lock_path)
+            .unwrap();
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .max_blocking_threads(1)
+            .enable_time()
+            .build()
+            .unwrap();
+        let (started, wait_started) = tokio::sync::oneshot::channel();
+        let waiting = runtime.spawn_blocking(move || {
+            started.send(()).unwrap();
+            waiter.lock().map(|()| waiter)
+        });
+        let result = runtime.block_on(async {
+            wait_started.await.unwrap();
+            tokio::time::timeout(
+                std::time::Duration::from_secs(2),
+                digest_content_async(path),
+            )
+            .await
+        });
+        // Release before asserting: the old circular wait becomes a bounded failure,
+        // rather than hanging runtime destruction on a still-held filesystem lock.
+        drop(owner);
+        drop(runtime.block_on(waiting).unwrap().unwrap());
+        let digest = result
+            .expect("hashing must progress independently of lock waiters")
+            .unwrap();
+        assert_eq!(digest.sha256, sha256_hex(bytes));
+        assert_eq!(digest.bytes, bytes.len() as u64);
+    }
+
+    #[test]
+    fn admitted_read_keeps_its_slot_across_runtime_shutdown() {
+        let slots = Arc::new(tokio::sync::Semaphore::new(1));
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_time()
+            .build()
+            .unwrap();
+        let (started, wait_started) = tokio::sync::oneshot::channel();
+        let (release, wait_release) = std::sync::mpsc::sync_channel(1);
+        let first = runtime.spawn(on_hash_worker(Arc::clone(&slots), move || {
+            let _ = started.send(());
+            wait_release
+                .recv_timeout(std::time::Duration::from_secs(5))
+                .map_err(io::Error::other)?;
+            Ok(())
+        }));
+        runtime.block_on(async {
+            tokio::time::timeout(std::time::Duration::from_secs(2), wait_started)
+                .await
+                .unwrap()
+                .unwrap();
+            first.abort();
+            assert!(first.await.unwrap_err().is_cancelled());
+        });
+        drop(runtime);
+        assert_eq!(
+            slots.available_permits(),
+            0,
+            "the actual read retains admission"
+        );
+        let next_runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_time()
+            .build()
+            .unwrap();
+        next_runtime.block_on(async {
+            let mut next = tokio::spawn(on_hash_worker(Arc::clone(&slots), || Ok(7)));
+            assert!(
+                tokio::time::timeout(std::time::Duration::from_millis(50), &mut next)
+                    .await
+                    .is_err(),
+                "replacement work must await the old read"
+            );
+            release.send(()).unwrap();
+            assert_eq!(
+                tokio::time::timeout(std::time::Duration::from_secs(2), next)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .unwrap(),
+                7
+            );
+        });
+        assert_eq!(slots.available_permits(), 1);
     }
 }

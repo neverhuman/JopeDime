@@ -208,6 +208,33 @@ fn record_byte_len(count: usize) -> Result<usize> {
     Ok(bytes)
 }
 
+/// Copy exactly the advertised record bytes and reject growth without retaining
+/// or writing any trailing payload. The caller still verifies the returned hash.
+fn copy_record_bytes(
+    source: &mut impl std::io::Read,
+    destination: &mut impl std::io::Write,
+    bytes: usize,
+) -> Result<[u8; 32]> {
+    use sha2::{Digest, Sha256};
+    let mut digest = Sha256::new();
+    let mut buffer = vec![0u8; bytes.min(1024 * 1024)];
+    let mut remaining = bytes;
+    while remaining > 0 {
+        let capacity = remaining.min(buffer.len());
+        let n = source.read(&mut buffer[..capacity])?;
+        ensure!(n > 0, "record artifact truncated during verification");
+        digest.update(&buffer[..n]);
+        destination.write_all(&buffer[..n])?;
+        remaining -= n;
+    }
+    let mut trailing = [0u8; 1];
+    ensure!(
+        source.read(&mut trailing)? == 0,
+        "record artifact grew during verification"
+    );
+    Ok(digest.finalize().into())
+}
+
 /// Read-only memory mapping of the immutable training artifact.
 pub struct Records {
     ptr: *mut libc::c_void,
@@ -221,15 +248,13 @@ impl Records {
     /// Hash the bytes actually copied into sealed shared storage. A subsequent
     /// source mutation cannot change training inputs or cause mmap SIGBUS.
     pub fn open_verified(path: &Path, count: usize, expected: &str) -> Result<Self> {
-        use sha2::{Digest, Sha256};
-        use std::{
-            io::{Read, Write},
-            os::fd::{AsRawFd, FromRawFd},
-        };
+        use std::os::fd::{AsRawFd, FromRawFd};
         let bytes = record_byte_len(count)?;
         if let Some(file) = crate::sealed_storage::shared(path, expected, bytes)? {
             return Self::from_file(file, count);
         }
+        // SAFETY: the static name is NUL-terminated and flags are supported
+        // integer constants. Check the result before constructing its sole owner.
         let fd = unsafe {
             libc::memfd_create(
                 c"jope-teaching-records".as_ptr(),
@@ -237,24 +262,26 @@ impl Records {
             )
         };
         ensure!(fd >= 0, "cannot create sealed teaching storage");
+        // SAFETY: memfd_create returned this fresh nonnegative descriptor;
+        // ownership is transferred once and File closes it on every error path.
         let mut sealed = unsafe { fs::File::from_raw_fd(fd) };
         let mut source = fs::File::open(path)?;
-        let mut digest = Sha256::new();
-        let mut buffer = vec![0u8; 1024 * 1024];
-        loop {
-            let n = source.read(&mut buffer)?;
-            if n == 0 {
-                break;
-            }
-            digest.update(&buffer[..n]);
-            sealed.write_all(&buffer[..n])?;
-        }
+        let metadata = source.metadata()?;
         ensure!(
-            hex::encode(digest.finalize()) == expected,
+            metadata.is_file() && metadata.len() == bytes as u64,
+            "record artifact dimensions changed"
+        );
+        // A matching initial length is not enough: a mutable source can grow
+        // after fstat. Never copy beyond the count-bound artifact into memfd.
+        let digest = copy_record_bytes(&mut source, &mut sealed, bytes)?;
+        ensure!(
+            hex::encode(digest) == expected,
             "record content changed during verification"
         );
         let seals =
             libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+        // SAFETY: sealed owns this descriptor; F_ADD_SEALS takes integer flags,
+        // not a pointer. Successful sealing freezes exactly the bytes just hashed.
         ensure!(
             unsafe { libc::fcntl(sealed.as_raw_fd(), libc::F_ADD_SEALS, seals) } == 0,
             "cannot seal teaching storage"
@@ -267,6 +294,9 @@ impl Records {
         let len = usize::try_from(file.metadata()?.len())
             .context("record artifact exceeds addressable byte capacity")?;
         ensure!(len == expected, "record artifact dimensions changed");
+        // SAFETY: len is positive, addressable and matches the file length;
+        // mmap owns its mapping independently of the borrowed file descriptor.
+        // Only read access is requested and MAP_FAILED is checked before storage.
         let ptr = unsafe {
             libc::mmap(
                 std::ptr::null_mut(),
@@ -291,6 +321,8 @@ impl Records {
 }
 impl Drop for Records {
     fn drop(&mut self) {
+        // SAFETY: this unique owner stores the exact successful mmap base and
+        // length; shared methods cannot outlive &self and no mapping slice escapes.
         unsafe {
             libc::munmap(self.ptr, self.len);
         }
@@ -1097,6 +1129,42 @@ mod record_bounds_tests {
             percentile: 0.5,
             runtime: 1.0,
         }
+    }
+
+    #[test]
+    fn sealed_record_copy_rejects_unending_growth_with_bounded_io() {
+        struct GrowingSource(usize);
+        impl std::io::Read for GrowingSource {
+            fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+                buffer.fill(7);
+                self.0 += buffer.len();
+                Ok(buffer.len())
+            }
+        }
+        let mut source = GrowingSource(0);
+        let mut copied = Vec::new();
+        let error = copy_record_bytes(&mut source, &mut copied, RECORD_BYTES).unwrap_err();
+        assert!(error.to_string().contains("grew during verification"));
+        assert_eq!(source.0, RECORD_BYTES + 1);
+        assert_eq!(copied, vec![7u8; RECORD_BYTES]);
+    }
+
+    #[test]
+    fn sealed_record_copy_hashes_exact_bytes_and_refuses_truncation() {
+        use sha2::{Digest, Sha256};
+        let expected = record(0.125).bytes();
+        let mut copied = Vec::new();
+        let actual =
+            copy_record_bytes(&mut expected.as_slice(), &mut copied, expected.len()).unwrap();
+        let expected_digest: [u8; 32] = Sha256::digest(&expected).into();
+        assert_eq!(actual, expected_digest);
+        assert_eq!(copied, expected);
+
+        let mut copied = Vec::new();
+        let mut truncated = &expected[..expected.len() - 1];
+        let error = copy_record_bytes(&mut truncated, &mut copied, expected.len()).unwrap_err();
+        assert!(error.to_string().contains("truncated during verification"));
+        assert_eq!(copied.len(), expected.len() - 1);
     }
 
     #[test]
