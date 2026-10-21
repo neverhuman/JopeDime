@@ -1,0 +1,60 @@
+{
+  "schema_version": "jopedime-authoring-effort-estimate/v1",
+  "scope": "Attachment availability through original source writing and post-freeze verification; integration milestones are recorded separately.",
+  "clock": {
+    "zone": "UTC",
+    "start_proxy": "2026-10-21T06:17:17.290155+00:00",
+    "start_proxy_basis": "Modification time of the attachment supplied to this session; exact coding-request receipt timestamp is not exposed. This includes the initial clarification exchange.",
+    "final_learner_source_written_at": "2026-10-21T06:28:35.757504+00:00",
+    "source_frozen_at": "2026-10-21T06:30:07.171345+00:00",
+    "first_successful_standalone_compile_at": "2026-10-21T06:34:18.327115+00:00",
+    "first_contract_test_build_at": "2026-10-21T06:37:40.146516+00:00",
+    "seconds_to_final_learner_source_written": 678.5,
+    "seconds_to_first_standalone_compile": 1021.0,
+    "seconds_to_first_contract_test_build": 1222.9,
+    "contract_test_runtime_seconds_observed": 0.02,
+    "integration_source_written_at": "2026-10-21T06:41:21.590273+00:00",
+    "seconds_to_integration_source_written": 1444.3,
+    "first_successful_integration_test_completion_at": "2026-10-21T06:44:53.869865+00:00",
+    "seconds_to_first_successful_integration_tests": 1656.6
+  },
+  "tokens": {
+    "metered_input_tokens": null,
+    "metered_output_tokens": null,
+    "metered_reasoning_tokens": null,
+    "metered_api_total_tokens": null,
+    "prompt_file_bytes": 68744,
+    "prompt_file_estimate": {
+      "point": 17175,
+      "low": 13740,
+      "high": 19629
+    },
+    "learner_source_bytes": 27729,
+    "learner_source_estimate": {
+      "point": 7923,
+      "low": 6932,
+      "high": 9243
+    },
+    "total_unique_session_content_through_source_freeze_estimate": {
+      "point": 80000,
+      "low": 60000,
+      "high": 110000,
+      "confidence": "low",
+      "includes": "Prompt, inherited conversation/instructions, tool-returned text, generated reasoning, source, and administrative authoring text; repeated prefix retransmission is not counted.",
+      "basis": "Retrospective order-of-magnitude estimate from session content, not a tokenizer or usage meter."
+    },
+    "file_estimation_method": "Character-count heuristic: prose roughly 3.5\u20135 characters/token; Rust roughly 3\u20134 characters/token. The served model tokenizer and usage counters are not exposed.",
+    "billing_caveat": "Actual API/billed total cannot be recovered here. It can differ substantially because of repeated context, caching, hidden runtime accounting, and reasoning tokens. Do not treat the estimate as a usage receipt.",
+    "total_unique_session_content_through_working_integration_estimate": {
+      "point": 130000,
+      "low": 95000,
+      "high": 180000,
+      "confidence": "low",
+      "basis": "Retrospective content-volume estimate including the earlier source milestone, repository/tool output and integration work; excludes repeated prefix retransmission. Exact API or billed totals are not observable."
+    }
+  },
+  "algorithm_revisions_after_source_freeze": 0,
+  "initial_compiler_attempts": 1,
+  "design_time_predictive_experiments": 0,
+  "note": "The requested Max filename is an identifier, not proof of an independently observed inference-effort setting."
+}
