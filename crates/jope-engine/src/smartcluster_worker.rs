@@ -1582,7 +1582,7 @@ impl ScratchGuard {
                         &json!({"budget":budget,"path":path,"action":"terminate_and_preserve_attempt"}),
                     );
                     // SAFETY: _exit has no preconditions. Skipping destructors and flushes is
-                    // intended: the violation record is written; the over-budget task stops now.
+                    // intended: the over-budget task stops now, after a best-effort record.
                     unsafe {
                         libc::_exit(78);
                     }
@@ -1618,8 +1618,23 @@ struct ScratchUsage {
 /// Sums [`ScratchUsage`] in one walk of `root` (`allocation` and `task` are inside it). A
 /// symlink anywhere is refused. A file or directory that disappears between the directory read
 /// and its `lstat` is a temporary file the task removed (TMPDIR points here), not a violation, so
-/// it is skipped; a missing root, and every other error, still fails closed.
+/// it is skipped. The root, allocation and task directories themselves must exist (each
+/// separate walk used to fail on a missing one): the root as a directory, possibly behind a link
+/// as before (walkdir follows a root link), the other two as physical directories. Every other
+/// error still fails closed. Entries renamed during a walk are counted on the next tick.
 fn scratch_usage(root: &Path, allocation: &Path, task: &Path) -> Result<ScratchUsage> {
+    let root_metadata =
+        fs::metadata(root).with_context(|| format!("scratch root {}", root.display()))?;
+    ensure!(root_metadata.is_dir(), "scratch root is not a directory");
+    for directory in [allocation, task] {
+        let metadata = fs::symlink_metadata(directory)
+            .with_context(|| format!("scratch directory {}", directory.display()))?;
+        ensure!(
+            metadata.is_dir(),
+            "scratch path is not a physical directory: {}",
+            directory.display()
+        );
+    }
     let vanished = |error: &std::io::Error| error.kind() == std::io::ErrorKind::NotFound;
     let mut usage = ScratchUsage {
         root: 0,
@@ -2278,6 +2293,7 @@ mod tests {
     fn scratch_accounting_rejects_symlink_escape() {
         let dir = tempfile::tempdir().unwrap();
         fs::write(dir.path().join("bytes"), [0u8; 4096]).unwrap();
+        fs::create_dir_all(dir.path().join("a/t")).unwrap();
         let usage = |root: &Path| scratch_usage(root, &root.join("a"), &root.join("a/t"));
         assert_eq!(
             usage(dir.path()).unwrap(),
@@ -2310,6 +2326,8 @@ mod tests {
             }
         );
         assert!(scratch_usage(&root.join("absent"), &allocation, &task).is_err());
+        assert!(scratch_usage(root, &allocation, &allocation.join("absent")).is_err());
+        assert!(scratch_usage(root, &root.join("absent"), &task).is_err());
     }
     #[test]
     fn closure_fifo_is_rejected_without_waiting_for_writer() {

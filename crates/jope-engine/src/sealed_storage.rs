@@ -128,11 +128,11 @@ pub(crate) fn receive_fd(stream: &UnixStream) -> Result<OwnedFd> {
     msg.msg_iovlen = 1;
     msg.msg_control = control.as_mut_ptr().cast();
     msg.msg_controllen = std::mem::size_of_val(&control);
-    // SAFETY: recvmsg writes to live, bounded iov and aligned control buffers;
-    // the kernel creates the traversed headers and fresh SCM_RIGHTS descriptors.
-    // read_unaligned handles data alignment; each descriptor gets one OwnedFd
-    // before validation, so every refusal closes the installed copies.
-    // SAFETY: msg points only at the live marker, iov and control locals, which outlive this block.
+    // recvmsg writes to live, bounded iov and aligned control buffers; the kernel creates the
+    // traversed headers and fresh SCM_RIGHTS descriptors. read_unaligned handles data alignment;
+    // each descriptor gets one OwnedFd before validation, so every refusal closes the installed
+    // copies. SAFETY: given that, and `msg` points only at the live marker, iov and control
+    // locals, which outlive this block.
     unsafe {
         let n = libc::recvmsg(stream.as_raw_fd(), &mut msg, libc::MSG_CMSG_CLOEXEC);
         ensure!(n >= 0, "GPU lease transfer missing/truncated");
