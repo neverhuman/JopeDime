@@ -2,10 +2,8 @@
 //! This module never fits a model or runs generated programs.
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::{
-    source_stream::{Occurrence, SCHEMA},
+    source_stream::{emit_languages, Occurrence, SCHEMA},
     tokens::{count_tokens, Lang},
-    transpile::{self, EmitOptions},
-    GenomeIr,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -20,7 +18,7 @@ use std::{
 
 pub const EVENT_SCHEMA: &str = "jope.gp-source/v1";
 pub const MAX_LINE: usize = 32 * 1024 * 1024;
-pub const LANGUAGES: [&str; 4] = ["rust", "python", "cpp17", "javascript"];
+pub const LANGUAGES: [&str; 4] = feat_math::source_stream::LANGUAGES;
 
 pub fn hash(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
@@ -495,13 +493,10 @@ impl Store {
 }
 
 pub fn language_kind(language: &str) -> Result<Lang> {
-    Ok(match language {
-        "rust" => Lang::Rust,
-        "python" => Lang::Python,
-        "cpp17" => Lang::Cpp,
-        "javascript" => Lang::JavaScript,
-        _ => bail!("unknown language"),
-    })
+    match feat_math::source_stream::language_kind(language) {
+        Some(kind) => Ok(kind),
+        None => bail!("unknown language"),
+    }
 }
 pub fn emit(occurrence: &Occurrence) -> Result<(Vec<Artifact>, u64)> {
     ensure!(
@@ -510,27 +505,11 @@ pub fn emit(occurrence: &Occurrence) -> Result<(Vec<Artifact>, u64)> {
         "invalid/oversized occurrence"
     );
     let started = Instant::now();
-    let parsed = GenomeIr::parse(&occurrence.program);
-    let pair = parsed
-        .as_ref()
-        .map_err(|e| format!("{e:#}"))
-        .and_then(|g| transpile::emit(g, &EmitOptions::default()).map_err(|e| format!("{e:#}")));
     let mut artifacts = Vec::new();
-    for language in LANGUAGES {
-        let source: std::result::Result<String, String> = match language {
-            "rust" => pair.as_ref().map(|p| p.rust.clone()).map_err(Clone::clone),
-            "python" => pair
-                .as_ref()
-                .map(|p| p.python.clone())
-                .map_err(Clone::clone),
-            "cpp17" => parsed.as_ref().map_err(|e| format!("{e:#}")).and_then(|g| {
-                transpile::emit_cpp17(g, &EmitOptions::default()).map_err(|e| format!("{e:#}"))
-            }),
-            "javascript" => parsed.as_ref().map_err(|e| format!("{e:#}")).and_then(|g| {
-                transpile::emit_javascript(g, &EmitOptions::default()).map_err(|e| format!("{e:#}"))
-            }),
-            _ => unreachable!(),
-        };
+    for (language, source) in LANGUAGES
+        .into_iter()
+        .zip(emit_languages(&occurrence.program))
+    {
         artifacts.push(match source {
             Ok(source) => {
                 let count = count_tokens(&source, language_kind(language)?);

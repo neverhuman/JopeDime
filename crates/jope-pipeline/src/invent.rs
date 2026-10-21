@@ -56,9 +56,10 @@ pub struct InventOptions {
     pub source_commit: Option<String>,
     pub cancel: Option<Arc<AtomicBool>>,
     pub clock: Clock,
-    /// Write `jope.invent.progress.v1` lines to stderr while the search runs
-    /// ([`crate::progress`]). Off by default for library callers; the CLI turns it on.
-    pub progress: bool,
+    /// Write `jope.invent.progress.v1` records to this file (created or truncated) while the
+    /// search runs ([`crate::progress`]); `None` writes none. It may not alias `train` or lie
+    /// in `work_dir` ([`check_events`]).
+    pub events: Option<PathBuf>,
 }
 
 impl InventOptions {
@@ -83,7 +84,7 @@ impl InventOptions {
             source_commit: None,
             cancel: None,
             clock: Clock::Wall,
-            progress: false,
+            events: None,
         }
     }
 }
@@ -308,10 +309,56 @@ fn ensure_fresh_work_dir(work_dir: &Path) -> Result<()> {
     }
 }
 
+/// `path` with its existing ancestors resolved, so that two spellings of one file (`a/../b`,
+/// a symbolic link) compare equal whether or not the file exists yet.
+fn resolve_lexically(path: &Path) -> Result<PathBuf> {
+    let absolute =
+        std::path::absolute(path).with_context(|| format!("resolve {}", path.display()))?;
+    let mut existing = absolute.as_path();
+    let mut rest = Vec::new();
+    loop {
+        if let Ok(resolved) = existing.canonicalize() {
+            return Ok(rest.iter().rev().fold(resolved, |p, c| p.join(c)));
+        }
+        match (existing.parent(), existing.file_name()) {
+            (Some(parent), Some(name)) => {
+                rest.push(name.to_owned());
+                existing = parent;
+            }
+            _ => return Ok(absolute),
+        }
+    }
+}
+
+/// `--events` must name a file that is neither the input nor inside the work directory, and not
+/// an existing directory ("reject input/output aliases"). Checked before anything is written.
+fn check_events(events: &Path, train: &Path, work_dir: &Path) -> Result<()> {
+    ensure!(
+        !events.is_dir(),
+        "{}: --events is a directory; name a file",
+        events.display()
+    );
+    let target = resolve_lexically(events)?;
+    ensure!(
+        target != resolve_lexically(train)?,
+        "{}: --events names the --train input",
+        events.display()
+    );
+    ensure!(
+        !target.starts_with(resolve_lexically(work_dir)?),
+        "{}: --events is the --work-dir or inside it; write it elsewhere",
+        events.display()
+    );
+    Ok(())
+}
+
 /// Search the CSV and return the ranked genomes jain-math can execute.
 pub fn invent(options: &InventOptions) -> Result<Candidates> {
     preflight(options)?;
     ensure_fresh_work_dir(&options.work_dir)?;
+    if let Some(events) = &options.events {
+        check_events(events, &options.train, &options.work_dir)?;
+    }
     let executable = Executable::load()?;
     let started = options.clock.start();
 
@@ -334,12 +381,19 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
         migration_interval: options.migration_interval,
         clock: options.clock,
         cancel: options.cancel.clone(),
-        progress: options.progress.then(|| {
-            Arc::new(crate::progress::Progress::stderr(
-                preparation.cuts.len(),
-                options.budget,
-            ))
-        }),
+        progress: match &options.events {
+            None => None,
+            Some(path) => {
+                let file = std::fs::File::create(path)
+                    .with_context(|| format!("create --events {}", path.display()))?;
+                Some(Arc::new(crate::progress::Progress::new(
+                    Box::new(file),
+                    preparation.cuts.len(),
+                    options.budget,
+                    std::time::Instant::now(),
+                )))
+            }
+        },
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
@@ -525,6 +579,26 @@ mod tests {
         // Quarantined in jain-math.
         assert!(!executable.admits("(pipe X (rff_orthogonal) (ridge))"));
         assert!(!executable.admits("not a genome"));
+    }
+
+    #[test]
+    fn events_refuses_input_and_output_aliases() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = write_csv(dir.path(), 4);
+        let work = dir.path().join("work");
+        let check = |events: &Path| check_events(events, &train, &work);
+        // The input, by another spelling too.
+        let msg = check(&train).unwrap_err().to_string();
+        assert!(msg.contains("--train"), "{msg}");
+        assert!(check(&dir.path().join("work/../train.csv")).is_err());
+        // The work directory itself (not yet created) and anything under it.
+        assert!(check(&work).unwrap_err().to_string().contains("--work-dir"));
+        assert!(check(&work.join("progress.ndjson")).is_err());
+        // An existing directory.
+        let msg = check(dir.path()).unwrap_err().to_string();
+        assert!(msg.contains("directory"), "{msg}");
+        // A new file beside them is fine.
+        check(&dir.path().join("progress.ndjson")).unwrap();
     }
 
     #[test]

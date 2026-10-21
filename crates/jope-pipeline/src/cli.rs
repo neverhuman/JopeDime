@@ -231,9 +231,10 @@ pub enum Cmd {
         /// Print one jope.candidates.v1 document, including on failure.
         #[arg(long)]
         json: bool,
-        /// Do not write jope.invent.progress.v1 lines to stderr while searching.
+        /// Write jope.invent.progress.v1 records (NDJSON) to this file while searching; created
+        /// or truncated. Must not be the --train file, the --work-dir or inside it.
         #[arg(long)]
-        no_progress: bool,
+        events: Option<PathBuf>,
     },
 }
 
@@ -517,7 +518,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             parallel,
             source_commit,
             json,
-            no_progress,
+            events,
         } => {
             let outcome = Budget::parse(&budget).and_then(|budget| {
                 let options = crate::invent::InventOptions {
@@ -532,7 +533,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     cpu_ceiling_millicores: parallel.cpu_ceiling,
                     source_commit,
                     cancel: Some(crate::parallel::termination_flag()?),
-                    progress: !no_progress,
+                    events,
                     ..crate::invent::InventOptions::new(train, target, work_dir)
                 };
                 crate::invent::invent(&options)

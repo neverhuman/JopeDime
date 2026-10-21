@@ -140,40 +140,47 @@ it here cross the boundary, not predictions.
   measured; 2 on refused input (under `--json`, stdout still carries
   `{"schema": "jope.candidates.v1", "ok": false, "error": ...}`); 143 on SIGTERM. `--source-commit`
   is reported as `git_sha`, and `git` is never spawned.
-- **Live progress (`jope.invent.progress.v1`).** While it searches, `invent` writes progress to
-  **stderr** as best-effort compact JSON lines; `--no-progress` turns it off. The stdout
-  `jope.candidates.v1` schema/output channel and work-directory layout are unchanged. Progress
-  scheduling can affect wall timings and a search whose seconds deadline binds.
-  Aside from fixed schema/phase labels, fields contain numbers or null: no candidate source,
-  column names or raw cell values:
+- **Live progress (`--events PATH`, `jope.invent.progress.v1`).** Opt-in. With `--events PATH`,
+  `invent` creates (or truncates) `PATH` and writes progress records to it while it searches, one
+  compact JSON object per newline-terminated line (NDJSON), each written with a single write and
+  flushed. Without the flag nothing is written anywhere; stdout (`--json`, the single receipt) and
+  stderr are the same either way. `PATH` may not be the `--train` file, the `--work-dir` or a path
+  inside it, or an existing directory; such a command is refused (exit 2) before anything is
+  written. Records carry numbers only, never candidate source, column names or data values:
 
   ```json
-  {"schema":"jope.invent.progress.v1","sequence":5,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.92,"seconds_budget":240.0}
+  {"schema":"jope.invent.progress.v1","sequence":3,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.69,"seconds_budget":240.0,"emitted_tokens":188179,"emitted_tokens_by_language":{"rust":90305,"python":64838,"cpp17":9978,"javascript":23058},"emitted_tokens_per_second":70008.0}
   ```
 
   `cut` is the 0-based position of the current cut among the `cuts` searched (during the
   comparison phase, the cut the latest evaluation ran on; cuts may be compared concurrently).
   `generation` counts generations completed so far, **cumulative across cuts**. `evaluations`,
   `measured` and `failed` are cumulative over exploration and comparison
-  (`evaluations = measured + failed`, never decreasing). `eval_budget` and `seconds_budget` are
-  for the whole search: the per-cut `--budget` values times `cuts`, so `evaluations /
-  eval_budget` is a progress fraction (a search may stop early, below 1). `best_hold_rmse` is the
-  lowest held-out RMSE of any single measured evaluation so far, in target units like the final
-  `hold RMSE` lines, and `best_hold_r2` is that evaluation's held-out R^2; both are `null` until
-  something measures. `elapsed_s` is wall seconds since the search started. `phase` is
-  `exploration`, `comparison` or `done`, and `sequence` numbers the lines from 0; both follow the
-  `jope.run-event/v1` envelope the terminal-experience plan proposes. At generation/comparison
-  boundaries, updates are attempted at most once per second unless a new best was observed;
-  exploration improvements within a generation are coalesced. Cut-end and search-end `done`
-  updates are also attempted. One process-wide worker drains a fixed 64-line queue, with at
-  most 1024 bytes per line plus its current line, using an owned duplicate stderr handle.
-  Search threads never wait for stderr; full/disconnected queues drop updates, and process
-  exit does not wait for queued writes. Sequence gaps and a missing final `done` are expected
-  under backpressure or at exit. Writes are not promised atomic and other diagnostics may
-  interleave: keep only complete lines that parse as JSON with this `schema`. A `done` line
-  describes search completion, not final candidate publication; stdout/exit status remain
-  authoritative for the command outcome. The best score is a single selection-cut measurement,
-  not the final cross-cut ranking or an untouched test score.
+  (`evaluations = measured + failed`, never decreasing). `eval_budget` is the per-cut
+  evaluations bound times `cuts`, so `evaluations / eval_budget` is a progress fraction (a search
+  may stop early, below 1); `seconds_budget` is the per-cut seconds bound times `cuts`.
+  `best_hold_rmse` is the lowest held-out RMSE of any single measured evaluation so far, in target
+  units like the final `hold RMSE` lines, and `best_hold_r2` is that evaluation's held-out R^2;
+  both are `null` until something measures. `elapsed_s` is wall seconds since the search started.
+  `phase` is `exploration`, `comparison` or `done`, and `sequence` numbers the records from 0.
+  `emitted_tokens` counts the lexical source tokens of every evaluated candidate, emitted in Rust,
+  Python, C++17 and JavaScript with the same emitters and the same `feat_math::tokens` rules
+  (code plus documentation tokens) as `jope.gp-source-metrics/v1` in
+  [program-source-stream.md](program-source-stream.md#metrics-and-errors), cumulative; a
+  repeated candidate is charged again, and a language that fails to emit contributes 0.
+  `emitted_tokens_by_language` splits it (`rust`, `python`, `cpp17`, `javascript`; the four sum
+  to the total) and `emitted_tokens_per_second` is `emitted_tokens / elapsed_s` (0 before any
+  time has elapsed). These are source tokens of generated candidates, not neural model tokens,
+  and no compiler checks them, so they correspond to that ledger's `emitted_tokens`, not its
+  `passed_tokens`. Emitting is paid only when `--events` is given.
+  Cadence: at most one record per second, plus one whenever the best held-out RMSE improves, one
+  at the end of each cut's exploration and a final `done` record, so the last record is the end
+  state. A cancelled or failed run ends without a `done` record.
+
+  These records are **interim**: they are intended to become one event kind of the planned
+  `jope.run-event/v1` envelope (T02/T04 of the terminal-experience plan,
+  `docs/plans/terminal-experience-20261021.md`, proposed in PR #399), whose single stderr renderer
+  and `--events` journal they anticipate.
 
 ## Targeted search (`jope pipeline evolve`)
 
