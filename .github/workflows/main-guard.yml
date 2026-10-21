@@ -12,6 +12,12 @@ permissions:
   issues: write
   pull-requests: read
 
+# Serialize duplicate invocations of this source without cancelling running proof.
+# Different main SHAs have different groups, so newer pushes cannot evict older heads.
+concurrency:
+  group: main-guard-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   guard:
     runs-on: [self-hosted, linux, x64, jope-full-cpu]

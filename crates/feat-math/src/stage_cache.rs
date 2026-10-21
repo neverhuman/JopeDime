@@ -25,25 +25,7 @@ use std::sync::{Arc, Mutex};
 
 const SHARDS: usize = 64;
 
-/// Length of `value`'s compact JSON encoding (`serde_json::to_vec(value)?.len()`), counted by a
-/// writer that keeps no bytes, so admitting an entry does not allocate a copy of its encoding.
-fn serialized_len(value: &impl serde::Serialize) -> Option<usize> {
-    struct Count(usize);
-    impl std::io::Write for Count {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            self.0 += buf.len();
-            Ok(buf.len())
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-    let mut count = Count(0);
-    serde_json::to_writer(&mut count, value).ok()?;
-    Some(count.0)
-}
-
-/// Default in-memory budget: 6 GiB.
+/// Default accounted payload budget: 6 GiB. Heap overhead and caller-held clones are additional.
 pub const DEFAULT_BYTE_CAP: usize = 6 * 1024 * 1024 * 1024;
 
 /// Everything besides the stage chain itself that pins a stage computation:
@@ -166,27 +148,28 @@ impl StageCache {
 
     /// Fitted op + train-pass output block for this chain key, if cached.
     pub fn get(&self, key: &ChainKey) -> Option<(FittedOp, Arc<Rows>)> {
-        // Bookkeeping stays under the shard lock (so a concurrent sweep sees the same recency as
-        // before), but the deep clone of the fitted op runs after the guard drops: rank/Blom ops
-        // carry sorted columns, and every worker sharing a hot prefix would otherwise queue on
-        // this shard while one of them copies them.
         let entry = {
             let shard = self.shard(key).lock().expect("stage cache shard");
-            match shard.get(&key.0) {
-                Some(entry) => {
-                    entry
-                        .last_used
-                        .store(self.generation.load(Ordering::Relaxed), Ordering::Relaxed);
-                    self.hits.fetch_add(1, Ordering::Relaxed);
-                    Arc::clone(entry)
-                }
-                None => {
-                    self.misses.fetch_add(1, Ordering::Relaxed);
-                    return None;
-                }
+            let entry = shard.get(&key.0).cloned();
+            if let Some(entry) = &entry {
+                entry
+                    .last_used
+                    .store(self.generation.load(Ordering::Relaxed), Ordering::Relaxed);
             }
+            entry
         };
-        Some((entry.fitted.clone(), Arc::clone(&entry.block)))
+        // Fitted transforms can own large matrices. Pin the entry under the lock, then do
+        // the deep clone outside it so other workers on this shard can make progress.
+        match entry {
+            Some(entry) => {
+                self.hits.fetch_add(1, Ordering::Relaxed);
+                Some((entry.fitted.clone(), Arc::clone(&entry.block)))
+            }
+            None => {
+                self.misses.fetch_add(1, Ordering::Relaxed);
+                None
+            }
+        }
     }
 
     /// Keeps the entry when its bytes fit under the cap with everything already resident; an
@@ -194,9 +177,25 @@ impl StageCache {
     /// resident total therefore never passes the cap, between sweeps included. The bytes counted
     /// are the f64 payload and the serialized fit, not allocation overhead.
     pub fn insert(&self, key: ChainKey, fitted: FittedOp, block: Arc<Rows>) {
-        let block_bytes = block.iter().map(|row| row.len() * 8).sum::<usize>();
-        let fitted_bytes = serialized_len(&fitted).unwrap_or(1024);
-        let bytes = block_bytes + fitted_bytes;
+        let Some(block_bytes) = block.iter().try_fold(0usize, |total, row| {
+            total.checked_add(row.len().checked_mul(std::mem::size_of::<f64>())?)
+        }) else {
+            return;
+        };
+        let Some(fitted_limit) = self.byte_cap.checked_sub(block_bytes) else {
+            return;
+        };
+        // Count the existing JSON representation without allocating a second copy of a fitted
+        // matrix. Stop at the entry limit and reject serialization errors instead of guessing
+        // 1024 bytes, which could undercount a large fit.
+        let mut fitted_bytes = ByteCounter {
+            bytes: 0,
+            limit: fitted_limit,
+        };
+        if serde_json::to_writer(&mut fitted_bytes, &fitted).is_err() {
+            return;
+        }
+        let bytes = block_bytes + fitted_bytes.bytes;
         let reserved = self
             .bytes
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |resident| {
@@ -252,6 +251,27 @@ impl StageCache {
     }
 }
 
+/// A bounded counting sink: cache accounting uses serialized bytes, not a transient JSON Vec.
+struct ByteCounter {
+    bytes: usize,
+    limit: usize,
+}
+
+impl std::io::Write for ByteCounter {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.bytes = self
+            .bytes
+            .checked_add(bytes.len())
+            .filter(|total| *total <= self.limit)
+            .ok_or_else(|| std::io::Error::other("stage cache entry exceeds byte cap"))?;
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -259,31 +279,6 @@ mod tests {
 
     fn stage(src: &str) -> Stage {
         parse_dsl(&format!("(pipe X {src})")).unwrap().stages[0].clone()
-    }
-
-    #[test]
-    fn serialized_len_counts_exactly_the_json_encoding() {
-        let x: Rows = (0..40)
-            .map(|i| {
-                (0..4)
-                    .map(|j| ((i * 7 + j * 3) % 11) as f64 - 5.0)
-                    .collect()
-            })
-            .collect();
-        let y: Vec<f64> = (0..40).map(|i| i as f64).collect();
-        for src in [
-            "(sigmoid)",
-            "(rank)",
-            "(standardize append=true)",
-            "(quantile_bins bins=8)",
-        ] {
-            let fitted = crate::ops::fit_op(&stage(src), &x, &y).unwrap();
-            assert_eq!(
-                serialized_len(&fitted),
-                Some(serde_json::to_vec(&fitted).unwrap().len()),
-                "{src}"
-            );
-        }
     }
 
     fn ctx() -> StageCacheCtx {
@@ -555,5 +550,66 @@ mod tests {
             "the replacement is stored"
         );
         assert_eq!(roomy.stats().2, one, "a replacement does not double-count");
+    }
+
+    #[test]
+    fn streaming_fit_size_matches_json_and_refuses_oversized_entries() {
+        let fitted = FittedOp::Rank {
+            sorted_cols: vec![vec![-0.0, 1.25, f64::MAX]; 32],
+            append: true,
+        };
+        let expected = serde_json::to_vec(&fitted).unwrap().len();
+        let mut counter = ByteCounter {
+            bytes: 0,
+            limit: expected,
+        };
+        serde_json::to_writer(&mut counter, &fitted).unwrap();
+        assert_eq!(counter.bytes, expected);
+        let block = Arc::new(vec![vec![1.0; 8]]);
+        for cap in [0, 63, 64, expected + 63, expected + 64] {
+            let cache = StageCache::new(cap);
+            let key = cache.chain_root(&ctx(), None);
+            cache.insert(key, fitted.clone(), block.clone());
+            assert_eq!(cache.get(&key).is_some(), cap == expected + 64);
+            assert_eq!(cache.stats().2, if cap == expected + 64 { cap } else { 0 });
+        }
+        let mut overflow = ByteCounter {
+            bytes: usize::MAX,
+            limit: usize::MAX,
+        };
+        assert!(std::io::Write::write(&mut overflow, b"x").is_err());
+    }
+
+    #[test]
+    fn concurrent_reads_replacements_and_sweeps_preserve_cap_and_values() {
+        let cache = StageCache::new(4096);
+        let key = cache.chain_root(&ctx(), None);
+        let block = Arc::new(vec![vec![1.0; 8]]);
+        cache.insert(key, FittedOp::Sigmoid { append: false }, block.clone());
+        std::thread::scope(|scope| {
+            for _ in 0..8 {
+                let block = &block;
+                let cache = &cache;
+                scope.spawn(move || {
+                    for _ in 0..200 {
+                        cache.insert(key, FittedOp::Sigmoid { append: false }, block.clone());
+                        let (fitted, found) = cache.get(&key).unwrap();
+                        assert!(matches!(fitted, FittedOp::Sigmoid { append: false }));
+                        assert_eq!(found.as_ref(), block.as_ref());
+                        assert!(cache.stats().2 <= 4096);
+                        cache.sweep();
+                    }
+                });
+            }
+        });
+        assert_eq!(cache.stats().2, 92);
+        cache.begin_generation(2);
+        cache.sweep();
+        assert_eq!(cache.stats().2, 0);
+        assert_eq!(
+            block.as_ref(),
+            &vec![vec![1.0; 8]],
+            "readers retain their block"
+        );
     }
 }

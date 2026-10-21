@@ -1,0 +1,35 @@
+[package]
+name = "jope-dist"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Build-time appliance packer: closure lock, deterministic packaging, signing message, seal, verification, audit and reports"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "jope-dist"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap = { workspace = true, features = ["derive"] }
+hex.workspace = true
+# The writer (`pack`) and the development key for fixture packages.
+jope-assets = { path = "../jope-assets", features = ["pack", "dev-keys"] }
+# The native roster the profiles promise and what this build can execute.
+jope-runtime = { path = "../jope-runtime" }
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+# The repository's JSON Schema validator, for the appliance schemas.
+jope-datasets = { path = "../jope-datasets" }
+tempfile.workspace = true
+
+[lints]
+workspace = true

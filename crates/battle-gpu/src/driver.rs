@@ -10,7 +10,7 @@
 //! module.
 
 use libc::{c_char, c_int, c_uint, c_void, dlclose, dlerror, dlopen, dlsym, RTLD_LAZY, RTLD_LOCAL};
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 
 pub type CUresult = c_int;
 pub type CUdevice = c_int;
@@ -48,17 +48,15 @@ macro_rules! api {
                 Ok(Api {
                     $($name: {
                         let symbol = concat!(stringify!($name), "\0");
-                        // SAFETY: `handle` is the live, non-null result of `dlopen` held by the
-                        // `Library` that `Library::api` borrows; `symbol` is a static
-                        // NUL-terminated name. dlsym reads both and retains neither.
+                        // SAFETY: handle is the live dlopen handle borrowed from Library;
+                        // symbol is a static NUL-terminated name and remains live for this call.
                         let ptr = unsafe { dlsym(handle, symbol.as_ptr() as *const c_char) };
                         if ptr.is_null() {
                             return Err(format!("libcuda: missing symbol {}", stringify!($name)));
                         }
-                        // `ptr` is a non-null libcuda export named exactly like this field, and
-                        // the `api!` table spells that symbol's documented CUDA driver prototype.
-                        // Code and data pointers have one size on the supported Linux targets.
-                        // SAFETY: so the pointer is a valid function of exactly this type.
+                        // SAFETY: these exact CUDA driver symbols use the declared C ABI
+                        // signatures. POSIX dlsym permits conversion to their function pointers;
+                        // the owning Gpu retains Library until all calls and cleanup finish.
                         unsafe { std::mem::transmute::<*mut c_void, unsafe extern "C" fn($($arg),*) -> CUresult>(ptr) }
                     },)*
                 })
@@ -104,20 +102,22 @@ pub struct Library {
     handle: *mut c_void,
 }
 
-// SAFETY: the handle is an opaque process-global token; glibc's dlsym/dlclose are MT-safe,
-// the handle is only ever used behind the backend Mutex, and it is closed once, on drop.
+// SAFETY: the loader handle has no thread affinity. Ownership moves with Gpu,
+// which serializes CUDA calls and makes its context current on the calling thread.
+// Moving Library never unloads it; its sole Drop closes the owned loader reference.
 unsafe impl Send for Library {}
 
 impl Library {
     pub fn open(path: &str) -> Result<Library, String> {
-        let name = format!("{path}\0");
-        // SAFETY: dlerror has no preconditions; this call only clears the thread's stale error.
+        let name = CString::new(path).map_err(|_| "library path contains NUL".to_string())?;
+        // SAFETY: dlerror has no arguments and clears this thread's loader error.
         unsafe { dlerror() };
-        // SAFETY: `name` is an owned NUL-terminated string that outlives the call.
-        let handle = unsafe { dlopen(name.as_ptr() as *const c_char, RTLD_LAZY | RTLD_LOCAL) };
+        // SAFETY: name is NUL-terminated and lives through dlopen. A successful
+        // call creates one owned loader reference, released only by Library::drop.
+        let handle = unsafe { dlopen(name.as_ptr(), RTLD_LAZY | RTLD_LOCAL) };
         if handle.is_null() {
-            // SAFETY: dlerror returns null (handled) or this thread's NUL-terminated message,
-            // valid until the next dl* call on this thread; it is copied out immediately.
+            // SAFETY: dlerror returns null or this thread's NUL-terminated loader
+            // error. Copy it before another loader operation can invalidate it.
             let detail = unsafe {
                 let err = dlerror();
                 if err.is_null() {
@@ -138,7 +138,8 @@ impl Library {
 
 impl Drop for Library {
     fn drop(&mut self) {
-        // SAFETY: `handle` came from a successful dlopen and Drop runs exactly once.
+        // SAFETY: successful open created this loader reference; no clone exists.
+        // Gpu::drop completes driver cleanup before fields (including Library) drop.
         unsafe { dlclose(self.handle) };
     }
 }
@@ -147,10 +148,12 @@ impl Api {
     /// Human-readable name for a nonzero CUresult.
     pub fn error_name(&self, code: CUresult) -> String {
         let mut name: *const c_char = std::ptr::null();
-        // SAFETY: `name` is a live out-parameter; the driver rejects unknown codes itself.
+        // SAFETY: the driver writes one pointer to live storage. Api is used
+        // only while its driver Library is loaded by the owning Gpu.
         let status = unsafe { (self.cuGetErrorName)(code, &mut name) };
         if status == CUDA_SUCCESS && !name.is_null() {
-            // SAFETY: on success the driver stores a static NUL-terminated string.
+            // SAFETY: successful cuGetErrorName returns a static NUL-terminated
+            // driver string; the null case was rejected and the string is copied.
             unsafe { CStr::from_ptr(name).to_string_lossy().into_owned() }
         } else {
             format!("CUDA_ERROR_{code}")
@@ -197,6 +200,8 @@ impl<'api> DeviceBuffer<'api> {
         let mut ptr: CUdeviceptr = 0;
         // Zero-sized allocs are illegal in the driver API; round up to 8.
         let bytes = bytes.max(8);
+        // SAFETY: ptr is writable output storage; bytes is nonzero. Callers
+        // hold the backend lock with its live context current on this thread.
         api.check(
             // SAFETY: `ptr` is a live out-parameter and `bytes` is nonzero.
             unsafe { (api.cuMemAlloc_v2)(&mut ptr, bytes) },
@@ -252,8 +257,8 @@ impl<'api> DeviceBuffer<'api> {
 
 impl Drop for DeviceBuffer<'_> {
     fn drop(&mut self) {
-        // SAFETY: `ptr` came from this buffer's successful cuMemAlloc_v2, the borrowed `Api`
-        // outlives the buffer, and Drop frees it exactly once. Errors are reported, not UB.
+        // SAFETY: this buffer uniquely owns the allocation returned by cuMemAlloc;
+        // it drops while the backend lock, current context and borrowed Api are live.
         unsafe { (self.api.cuMemFree_v2)(self.ptr) };
     }
 }
@@ -294,6 +299,14 @@ mod buffer_tests {
         api.cuMemcpyHtoD_v2 = upload;
         api.cuMemcpyDtoH_v2 = download;
         api
+    }
+
+    #[test]
+    fn embedded_nul_library_path_is_refused_before_loading_a_prefix() {
+        let error = Library::open("libc.so.6\0not-the-requested-library")
+            .err()
+            .expect("a loader path must not be silently truncated");
+        assert_eq!(error, "library path contains NUL");
     }
 
     #[test]

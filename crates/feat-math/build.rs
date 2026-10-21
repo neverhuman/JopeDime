@@ -22,6 +22,11 @@ fn main() {
     println!("cargo:rerun-if-changed=cpp/fitted_runtime.cpp");
     println!("cargo:rerun-if-env-changed=CXX");
     println!("cargo:rerun-if-env-changed=JOPE_CXX_MARCH");
+    // The fitted C++ runtime is compiled only with the `fitted-cpp` feature (default-on). The
+    // `jopedime` appliance turns it off, so that build neither needs g++ nor embeds C++.
+    if std::env::var_os("CARGO_FEATURE_FITTED_CPP").is_none() {
+        return;
+    }
     // ADR-0002 §5: the fitted runtime is compiled for a portable baseline by default so hosted CI
     // runners and the RTX box produce the same bits; `-ffp-contract=off -fno-fast-math` are what
     // make the result deterministic, the target ISA only changes speed. JOPE_CXX_MARCH opts in to

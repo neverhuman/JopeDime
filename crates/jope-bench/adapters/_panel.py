@@ -18,6 +18,44 @@ ARTIFACT = "jope.panel-fitted-python/v1"
 INPUT_POLICY = "median-onehot256-indicator/v1"
 MAX_ONEHOT = 256
 MAX_REQUEST_BYTES = 128 * 1024 * 1024
+MAX_COLUMNS = 4096
+MAX_ROWS = 1_000_000
+# float64 train + prediction matrices together; model-internal allocations are
+# separate and remain subject to the caller's process/resource limits.
+MAX_TRANSFORMED_CELLS = 16 * 1024 * 1024
+
+
+def parse_request(raw):
+    """Decode one bounded JSON request with no ambiguous fields or nonfinite values."""
+    if not isinstance(raw, bytes) or not raw or len(raw) > MAX_REQUEST_BYTES:
+        raise ValueError("fit input must be nonempty bytes within 128 MiB")
+
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError(f"duplicate JSON field: {key!r}")
+            result[key] = value
+        return result
+
+    def finite_float(value):
+        result = float(value)
+        if not math.isfinite(result):
+            raise ValueError("JSON number must be finite")
+        return result
+
+    def invalid_constant(value):
+        raise ValueError(f"nonfinite JSON constant: {value}")
+
+    return json.loads(raw, object_pairs_hook=pairs, parse_float=finite_float,
+                      parse_constant=invalid_constant)
+
+
+def _matrix_budget(width, *row_counts):
+    if (type(width) is not int or width <= 0
+            or any(type(rows) is not int or rows < 0 for rows in row_counts)
+            or width * sum(row_counts) > MAX_TRANSFORMED_CELLS):
+        raise ValueError("transformed matrix exceeds the 128 MiB float64 cell budget")
 
 
 def _keys(value, expected, where):
@@ -61,8 +99,8 @@ def validate_request(request):
             or (task == "multiclass" and len(classes) >= 3)):
         raise ValueError("class vocabulary is incompatible with task")
     columns = request["columns"]
-    if not isinstance(columns, list) or not columns:
-        raise ValueError("no feature columns")
+    if not isinstance(columns, list) or not 0 < len(columns) <= MAX_COLUMNS:
+        raise ValueError("feature column count must be within 1..4096")
     names = set()
     for column in columns:
         _keys(column, ("name", "kind"), "column")
@@ -76,8 +114,9 @@ def validate_request(request):
     _keys(request["predict"], ("features",), "predict")
     for part in ("train", "predict"):
         rows = request[part]["features"]
-        if not isinstance(rows, list) or not rows:
-            raise ValueError(f"{part}: no rows")
+        if not isinstance(rows, list) or not 0 < len(rows) <= MAX_ROWS:
+            raise ValueError(f"{part}: row count must be within 1..1000000")
+        _matrix_budget(len(columns), len(rows))
         for row in rows:
             if not isinstance(row, list) or len(row) != len(columns):
                 raise ValueError(f"{part}: feature width mismatch")
@@ -133,6 +172,7 @@ def transform(state, rows):
 
     if state["policy"] != INPUT_POLICY:
         raise ValueError("unsupported preprocessing policy")
+    _matrix_budget(state["width"], len(rows))
     result = np.zeros((len(rows), state["width"]), dtype=np.float64)
     offset = 0
     for j, column in enumerate(state["fitted"]):
@@ -162,6 +202,7 @@ def predictions(model, x, task, classes):
         if values.shape != (len(x),) or not np.all(np.isfinite(values)):
             raise ValueError("malformed regression predictions")
         return {"kind": "values", "data": values.tolist()}
+    _matrix_budget(len(classes), len(x))
     probabilities = np.asarray(model.predict_proba(x), dtype=np.float64)
     model_classes = np.asarray(model.classes_).reshape(-1).tolist()
     if len(model_classes) != len(classes) or set(model_classes) != set(range(len(classes))):
@@ -177,7 +218,13 @@ def predictions(model, x, task, classes):
 
 
 def replay(artifact_bytes, expected_sha256, rows):
-    """Replay a private artifact only after verifying its caller-supplied complete digest."""
+    """Replay a trusted private artifact after verifying its complete digest.
+
+    The pin must come from the caller's trusted custody record, never from an
+    untrusted artifact's accompanying JSON. SHA-256 provides integrity, not
+    authenticity; Python estimator pickle is executable and is not a sandbox.
+    The CLI only calls this on bytes just produced by its own fit invocation.
+    """
     if (not isinstance(expected_sha256, str) or len(expected_sha256) != 64
             or any(c not in "0123456789abcdef" for c in expected_sha256)):
         raise ValueError("fitted artifact SHA-256 pin is missing or invalid")
@@ -198,6 +245,10 @@ def fit(request, create_model, engine_version):
 
     validate_request(request)
     preprocessing = fit_preprocessing(request["columns"], request["train"]["features"])
+    _matrix_budget(preprocessing["width"], len(request["train"]["features"]),
+                   len(request["predict"]["features"]))
+    if request["task"] != "regression":
+        _matrix_budget(len(request["classes"]), len(request["predict"]["features"]))
     x = transform(preprocessing, request["train"]["features"])
     labels = request["train"]["targets"]
     classes = request["classes"]
@@ -246,7 +297,7 @@ def run(create_model, version):
         if os.path.lexists(result_path) or os.path.lexists(artifact_path):
             raise ValueError("private output already exists")
         request_bytes = read_request_bytes(request_path)
-        request = json.loads(request_bytes)
+        request = parse_request(request_bytes)
         engine_version = version()
         output, artifact, checksum = fit(request, create_model, engine_version)
         result = {"contract": CONTRACT, "engine_version": engine_version,

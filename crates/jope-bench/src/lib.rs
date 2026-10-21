@@ -16,7 +16,9 @@
 //! Tier-2 baselines are external engines (XGBoost, LightGBM, CatBoost, a scikit-learn forest)
 //! run as subprocesses on the same cuts ([`adapter`]): the controller hands them a cut's training
 //! rows and the held-out features only, and scores the predictions they return with the same
-//! evaluator, so their rows are as honest as a program's.
+//! evaluator, so their rows are as honest as a program's. Frozen General Regressor Challenge
+//! entrants written in safe Rust ([`regressors`], `run --entrant <name>`) are compiled into this
+//! binary and run through that same adapter contract, so they are scored like any external engine.
 //!
 //! What it deliberately does not do: touch the catalog's sealed `test.csv` (cuts are made from
 //! training rows only), reuse the pipeline's private evaluator (it carries its own, [`eval`], so
@@ -42,6 +44,7 @@ pub mod native;
 /// Frozen development panel: raw inputs, task metrics and fitted predictors.
 pub mod panel;
 pub mod protocol;
+pub mod regressors;
 pub mod report;
 pub mod task;
 

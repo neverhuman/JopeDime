@@ -5,19 +5,20 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5712,
-  "ignored": 74,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
+  "count": 5813,
+  "ignored": 75,
   "packages": {
    "battle-gpu": {
-    "count": 17,
+    "count": 19,
     "ignored": 0,
     "binaries": {
      "battle-gpu": {
       "kind": "lib",
-      "count": 17,
+      "count": 19,
       "ignored": 0,
       "tests": [
+       "driver::buffer_tests::embedded_nul_library_path_is_refused_before_loading_a_prefix",
        "driver::buffer_tests::empty_transfers_do_not_call_the_driver",
        "driver::buffer_tests::exact_size_and_smaller_transfers_execute_the_checked_driver_calls",
        "driver::buffer_tests::oversized_download_is_refused_without_modifying_the_host",
@@ -30,6 +31,7 @@
        "shape_bounds_tests::valid_shapes_and_empty_validation_remain_admitted",
        "shape_bounds_tests::wrapped_training_dimensions_are_refused_without_panicking",
        "tests::backend_signature_matches_the_seam",
+       "tests::driver_device_names_are_bounded_and_preserve_lossy_utf8",
        "tests::gpu_scores_match_cpu_reference_bitwise",
        "tests::malformed_problems_error_instead_of_scoring",
        "tests::same_wave_twice_is_bit_identical",
@@ -40,13 +42,13 @@
     }
    },
    "feat-math": {
-    "count": 1332,
-    "ignored": 12,
+    "count": 1337,
+    "ignored": 13,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 525,
-      "ignored": 6,
+      "count": 530,
+      "ignored": 7,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
        "advanced_v3::csv::tests::malformed_quotes_are_rejected",
@@ -255,6 +257,7 @@
        "gpr::tests::periodic_kernel_beats_rbf_on_periodic_signal",
        "gpr::tests::plain_scratch_reuse_is_bit_identical",
        "gpr::tests::plain_scratch_reuse_preserves_constant_fallbacks",
+       "heads::tests::blocked_cholesky_is_bit_identical_to_the_row_major_loop",
        "heads::tests::hurdle2_constant_target_uses_finite_mean_fallback",
        "heads::tests::hurdle2_is_deterministic_and_learns_bimodal_expectation",
        "heads::tests::hurdle2_is_target_scale_equivariant",
@@ -345,7 +348,9 @@
        "krr::tests::krr_subset_cap_is_exercised",
        "ksmooth::tests::ksmooth_is_deterministic_and_learns_toy",
        "ksmooth::tests::ksmooth_params_flow_through_the_genome",
+       "ksmooth::tests::ksmooth_prediction_benchmark",
        "ksmooth::tests::ksmooth_small_n_falls_back_to_mean",
+       "ksmooth::tests::partial_neighbors_match_full_sort_bits_including_ties_and_short_queries",
        "math_expr::evolution::v2::egraph::tests::all_libm_calls_preserve_literal_shape_including_tanh",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_at_the_limits_are_admitted_as_before",
        "math_expr::evolution::v2::egraph::tests::decoded_inputs_over_the_limits_are_refused_uncopied",
@@ -547,10 +552,12 @@
        "stage_cache::tests::a_print_alike_constant_gets_its_own_fit_through_the_cache",
        "stage_cache::tests::admission_under_pressure_is_deterministic_and_a_sweep_frees_budget",
        "stage_cache::tests::chain_keys_separate_context_target_and_stages",
+       "stage_cache::tests::concurrent_reads_replacements_and_sweeps_preserve_cap_and_values",
        "stage_cache::tests::every_value_class_that_prints_alike_keys_apart",
        "stage_cache::tests::insert_get_sweep_and_byte_accounting",
        "stage_cache::tests::insertions_never_pass_the_byte_cap_between_sweeps",
        "stage_cache::tests::stages_that_print_alike_get_distinct_keys_and_entries",
+       "stage_cache::tests::streaming_fit_size_matches_json_and_refuses_oversized_entries",
        "target_transform::tests::fit_target_rejects_bad_kinds",
        "target_transform::tests::log1p_is_exact_inverse_on_unit_scale",
        "target_transform::tests::rank_gauss_constant_target_is_safe",
@@ -2542,6 +2549,33 @@
      }
     }
    },
+   "jope-appliance": {
+    "count": 8,
+    "ignored": 0,
+    "binaries": {
+     "jope-appliance::bin/jopedime": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-appliance::single_file": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "a_damaged_package_stops_every_command",
+       "a_packaged_copy_fits_saves_reloads_and_predicts_alone",
+       "a_promised_method_this_build_cannot_run_fails_doctor",
+       "an_unpackaged_development_build_runs_native_methods",
+       "every_failure_class_has_its_exit_status",
+       "regression_doctor_failure_survives_a_closed_json_pipe",
+       "regression_output_collision_preserves_the_input_file",
+       "regression_receipt_failure_survives_a_closed_json_pipe"
+      ]
+     }
+    }
+   },
    "jope-arena": {
     "count": 41,
     "ignored": 0,
@@ -2609,6 +2643,59 @@
      }
     }
    },
+   "jope-assets": {
+    "count": 26,
+    "ignored": 0,
+    "binaries": {
+     "jope-assets": {
+      "kind": "lib",
+      "count": 15,
+      "ignored": 0,
+      "tests": [
+       "decode::tests::frames_decode_to_the_original_bytes",
+       "decode::tests::header_check_refuses_wrong_size_dictionary_and_garbage",
+       "decode::tests::json_asked_to_shuffle_falls_back_and_incompressible_bytes_stay_raw",
+       "decode::tests::non_safetensors_bytes_are_not_shuffled",
+       "decode::tests::shuffle_round_trips_every_width",
+       "envelope::tests::every_footer_rule_is_enforced",
+       "envelope::tests::footer_round_trips_with_the_specified_offsets",
+       "envelope::tests::missing_magic_means_unpackaged",
+       "manifest::tests::names_refuse_traversal_and_odd_bytes",
+       "manifest::tests::zstd_bound_matches_the_c_library_formula_plus_headroom",
+       "verify::tests::development_key_signs_and_verifies",
+       "verify::tests::high_s_is_normalized_on_seal_and_refused_in_a_file",
+       "verify::tests::pem_round_trip_keeps_the_id_and_release_key_parses",
+       "verify::tests::the_message_is_domain_separated",
+       "writer::tests::regression_temporary_collision_preserves_foreign_bytes"
+      ]
+     },
+     "jope-assets::decode_bounds": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "a_frame_that_expands_past_its_declared_size_is_refused_before_decoding",
+       "decoded_bytes_must_match_the_manifest_hash",
+       "dictionaries_trailing_frames_and_garbage_are_refused",
+       "manifest_bounds_are_enforced_before_allocation"
+      ]
+     },
+     "jope-assets::envelope": {
+      "kind": "test",
+      "count": 7,
+      "ignored": 0,
+      "tests": [
+       "a_signature_binds_one_footer",
+       "an_unpackaged_file_has_no_package",
+       "every_tampered_region_is_refused",
+       "packing_is_deterministic_and_independent_of_input_order",
+       "round_trip_returns_every_asset_exactly_and_covers_every_byte",
+       "signer_role_must_match_the_scope",
+       "unknown_ids_are_missing_and_the_trait_reads_the_same_bytes"
+      ]
+     }
+    }
+   },
    "jope-automl": {
     "count": 4,
     "ignored": 0,
@@ -2627,12 +2714,12 @@
     }
    },
    "jope-bench": {
-    "count": 165,
+    "count": 182,
     "ignored": 1,
     "binaries": {
      "jope-bench": {
       "kind": "lib",
-      "count": 141,
+      "count": 154,
       "ignored": 1,
       "tests": [
        "ablation::tests::ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference",
@@ -2686,6 +2773,15 @@
        "ablation::tests::review05_same_winner_means_program_identity_including_score_ties",
        "ablation::tests::review06_sign_test_is_the_correctly_rounded_exact_tail",
        "ablation::tests::review07_sign_test_bounds_its_count_domain",
+       "automl::contract_tests::bounded_sampling_and_refit_are_reproducible",
+       "automl::contract_tests::final_column_is_target_and_zero_features_work",
+       "automl::contract_tests::invalid_values_invalidate_old_state",
+       "automl::contract_tests::missing_constants_and_extreme_scales_have_finite_outputs",
+       "automl::contract_tests::unfitted_and_invalid_shapes_fail_explicitly",
+       "automl::contract_tests::validation_path_is_deterministic_and_batch_independent",
+       "automl::contract_tests::wide_feature_screening_retains_valid_shapes",
+       "automl::tests::frozen_source_and_catalog_identity_agree",
+       "automl::tests::registration_preserves_argv_and_rejects_invalid_requests",
        "cuts::tests::cuts_partition_rows_and_ids_follow_every_input",
        "eval::tests::binary_programs_score_auc_and_regression_heads_are_refused",
        "eval::tests::multiclass_programs_score_macro_f1",
@@ -2734,6 +2830,7 @@
        "panel::methods::tests::fitted_state_reloads_with_prediction_and_original_class_order_parity",
        "panel::methods::tests::raw_prediction_refuses_changed_feature_kind_and_empty_class_labels",
        "panel::methods::tests::roster_covers_heads_and_records_aliases_without_duplicate_algorithms",
+       "panel::methods::tests::the_roster_is_the_appliance_registry",
        "panel::methods::tests::worker_request_rejects_missing_class_and_has_no_scoring_labels",
        "panel::optimize_cli::tests::capabilities_are_metadata_only_and_never_qualification",
        "panel::proposal_validation::tests::preserves_invalid_slots_and_rejects_unknown_label_fields",
@@ -2775,15 +2872,21 @@
        "protocol::tests::binary_and_multiclass_run_through_the_protocol",
        "protocol::tests::far_below_zero_still_orders_and_unscored_ranks_last",
        "protocol::tests::resampled_search_produces_a_program_per_cut",
+       "regressors::tests::entrants_fit_and_predict_through_the_challenge_lifecycle",
+       "regressors::tests::frozen_sources_match_their_pinned_hashes_and_manifests",
+       "regressors::tests::tables_parse_with_missing_values_and_zero_feature_rows",
        "task::tests::spellings_round_trip_and_specs_validate"
       ]
      },
      "jope-bench::adapter_contract": {
       "kind": "test",
-      "count": 4,
+      "count": 7,
       "ignored": 0,
       "tests": [
        "adapter_failures_are_rejections_with_the_cause",
+       "astra_automl_catalog_and_process_are_connected_to_same_cut_selection",
+       "astra_transport_preserves_zero_width_rows_and_rejects_invalid_input",
+       "frozen_entrants_answer_the_contract_and_beat_the_constant",
        "mean_adapter_process_follows_the_retired_script",
        "screen_ranks_everyone_and_deepens_the_top",
        "specs_parse_and_the_mean_adapter_answers_the_contract"
@@ -2791,11 +2894,12 @@
      },
      "jope-bench::bin/jope-bench": {
       "kind": "bin",
-      "count": 2,
+      "count": 3,
       "ignored": 0,
       "tests": [
        "tests::default_run_workers_cap_at_the_host_budget",
-       "tests::explicit_run_workers_are_not_capped_but_never_zero"
+       "tests::explicit_run_workers_are_not_capped_but_never_zero",
+       "tests::original_automl_cli_preserves_explicit_selection_and_seed"
       ]
      },
      "jope-bench::classification": {
@@ -3098,12 +3202,12 @@
     }
    },
    "jope-datasets": {
-    "count": 79,
+    "count": 84,
     "ignored": 0,
     "binaries": {
      "jope-datasets": {
       "kind": "lib",
-      "count": 30,
+      "count": 35,
       "ignored": 0,
       "tests": [
        "blobs::concurrency_tests::concurrent_ensure_of_one_blob_is_serialised",
@@ -3118,9 +3222,14 @@
        "credentials::tests::profile_replaces_ambient_session_token",
        "credentials::tests::rejects_missing_partial_and_empty_sources",
        "credentials::tests::tolerates_quoting_and_unrelated_lines",
+       "hash::tests::admitted_read_keeps_its_slot_across_runtime_shutdown",
+       "hash::tests::binary_content_identity_matches_csv_digest_across_chunk_boundaries",
+       "hash::tests::cancelled_hash_keeps_its_slot_until_the_blocking_job_finishes",
        "hash::tests::counts_columns_beyond_the_first_line_cap",
        "hash::tests::counts_rows_and_columns",
+       "hash::tests::hashing_progresses_while_a_destination_waiter_occupies_the_blocking_pool",
        "hash::tests::headerless_detection",
+       "hash::tests::wide_first_line_keeps_all_column_counts_and_only_the_header_prefix",
        "meta::tests::real_row",
        "meta::tests::synthetic_row_and_rejects",
        "paths::tests::relpaths",
@@ -3259,7 +3368,7 @@
     }
    },
    "jope-dime-regressor": {
-    "count": 1016,
+    "count": 1012,
     "ignored": 11,
     "binaries": {
      "jope-dime-regressor": {
@@ -3519,7 +3628,7 @@
      },
      "jope-dime-regressor::bin/jope-dime-regressor": {
       "kind": "bin",
-      "count": 223,
+      "count": 219,
       "ignored": 9,
       "tests": [
        "commands::binary_cv::cli_smoke_support::export_binary_fixture_registry",
@@ -3628,10 +3737,6 @@
        "score_corpus::tests::same_size_ledger_rewrite_requests_retry_without_publication",
        "score_corpus::tests::tied_percentiles_use_unique_valid_genomes",
        "score_corpus::tests::truncated_ledger_after_open_requests_retry_without_publication",
-       "task::tests::embedded_and_rust_task_semantics_match",
-       "task::tests::legacy_derived_order_is_frozen_separately_from_canonical_order",
-       "task::tests::one_registry_owns_all_task_names_directories_and_metrics",
-       "task::tests::typed_scores_reject_wrong_domains_and_timeseries_parity_is_zero",
        "test_adaptive::aggressive::tests::aggressive_contract_is_not_benchmark_valid",
        "test_adaptive::aggressive::tests::corrected_generation_zero_has_one_parent_and_36_unique_descendants",
        "test_adaptive::aggressive::tests::corrected_next_population_caches_eight_elites_and_has_28_novel_children",
@@ -4738,6 +4843,66 @@
        "rendered_units_resolve_only_under_the_rendered_roots",
        "selfplay_units_never_resolve_against_the_source_checkout",
        "unit_exec_start_paths_are_absolute"
+      ]
+     }
+    }
+   },
+   "jope-dist": {
+    "count": 13,
+    "ignored": 0,
+    "binaries": {
+     "jope-dist": {
+      "kind": "lib",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "signature::tests::every_encoding_normalizes_to_the_same_fixed_signature"
+      ]
+     },
+     "jope-dist::bin/jope-dist": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-dist::closure": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "limits_toml_matches_the_compiled_bounds",
+       "rights_outside_the_scope_block_and_never_pass",
+       "structural_mistakes_are_errors",
+       "the_committed_lock_is_current"
+      ]
+     },
+     "jope-dist::dependency_fence": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "the_appliance_closure_obeys_the_policy",
+       "the_policy_catches_a_research_crate"
+      ]
+     },
+     "jope-dist::reproducible_pack": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "a_blocked_profile_is_never_packed",
+       "a_release_stage_seals_only_with_its_own_signature",
+       "the_fixture_packs_identically_from_two_directories"
+      ]
+     },
+     "jope-dist::schemas": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "a_fitted_header_matches_its_schema",
+       "a_packed_manifest_matches_its_schema",
+       "the_committed_lock_matches_its_schema"
       ]
      }
     }
@@ -6047,12 +6212,12 @@
     }
    },
    "jope-parallel": {
-    "count": 856,
+    "count": 862,
     "ignored": 15,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 470,
+      "count": 476,
       "ignored": 8,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -6105,6 +6270,8 @@
        "corpus::cache_tests::exhausted_cache_preserves_results_without_retaining_more_payload",
        "corpus::record_bounds_tests::impossible_record_counts_return_errors_without_panicking",
        "corpus::record_bounds_tests::mapped_records_preserve_first_and_last_record_values",
+       "corpus::record_bounds_tests::sealed_record_copy_hashes_exact_bytes_and_refuses_truncation",
+       "corpus::record_bounds_tests::sealed_record_copy_rejects_unending_growth_with_bounded_io",
        "corpus::record_bounds_tests::wrapped_record_index_is_refused_before_mapping_access",
        "dashboard::observed_service_tests::every_observed_service_has_a_tracked_unit_template",
        "dashboard::worker_identity_tests::recognizes_batch_workers_without_a_world_flag",
@@ -6282,6 +6449,7 @@
        "family_growth::tests::integers_are_exact_or_refused",
        "family_growth::tests::python_equality_truthiness_and_membership",
        "gp::cpu_evaluator_tests::explicit_evaluator_has_no_current_executable_fallback",
+       "gp::csv_digest_tests::streamed_csv_digest_equals_the_digest_of_the_rendered_csv",
        "gp::fit_contract_tests::a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline",
        "gp::fit_contract_tests::a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other",
        "gp::fit_contract_tests::a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams",
@@ -6459,9 +6627,11 @@
        "runtime_custody::tests::unobservable_executable_images_and_duplicate_environment_reject",
        "sealed_storage::tests::accepted_descriptor_has_one_owner_and_cloexec",
        "sealed_storage::tests::claimed_digest_cannot_hide_different_sealed_bytes",
+       "sealed_storage::tests::empty_sealed_storage_requires_the_original_deadline_and_exact_dimensions",
        "sealed_storage::tests::full_unix_socket_backlog_obeys_connection_deadline",
        "sealed_storage::tests::refused_descriptor_messages_close_every_installed_descriptor",
        "sealed_storage::tests::regular_file_is_not_mistaken_for_fully_sealed_on_fcntl_error",
+       "service::allowed_cpu_tests::allowed_cpu_list_parses_ranges_and_refuses_malformed_lists",
        "service::coverage::tests::actual_reservations_apply_inflight_weight_instead_of_excluding_busy_cuts",
        "service::coverage::tests::balances_family_then_dataset_and_sweeps_all_existing_cuts",
        "service::coverage::tests::concurrent_clients_reserve_distinct_requests_and_restart_preserves_unknown",
@@ -6486,6 +6656,7 @@
        "smartcluster_worker::tests::logical_dataset_retry_preserves_original_operation_and_legacy_binding",
        "smartcluster_worker::tests::original_optimizer_window_is_checked_before_numerical_work",
        "smartcluster_worker::tests::scratch_accounting_rejects_symlink_escape",
+       "smartcluster_worker::tests::scratch_accounting_sums_nested_buckets_in_one_walk_and_needs_its_root",
        "smartcluster_worker::tests::subtask_cannot_escape_run_resources_or_deadline",
        "smartcluster_worker::tests::training_closure_refuses_non_admitted_contexts_by_closure_key",
        "smartcluster_worker::tests::truncated_control_frame_is_not_completion",
@@ -8037,7 +8208,7 @@
     }
    },
    "jope-policy": {
-    "count": 110,
+    "count": 111,
     "ignored": 3,
     "binaries": {
      "jope-policy": {
@@ -8172,6 +8343,14 @@
        "masks_agree_with_the_typed_parser_over_the_bounded_state_domain"
       ]
      },
+     "jope-policy::npz_zip9_contract": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "npz_zip9_preserves_names_shapes_float_bits_and_refuses_truncation"
+      ]
+     },
      "jope-policy::scorer_dependencies": {
       "kind": "test",
       "count": 3,
@@ -8214,17 +8393,20 @@
     }
    },
    "jope-records": {
-    "count": 251,
+    "count": 256,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 102,
+      "count": 107,
       "ignored": 0,
       "tests": [
+       "ci_plan::tests::appliance_changes_trigger_rust_and_e2e_only",
        "ci_plan::tests::docs_only_pull_request_runs_only_changes_and_hygiene",
        "ci_plan::tests::feat_math_change_triggers_rust_emitters_and_e2e_only",
+       "ci_plan::tests::python_and_rust_classification_agree_for_shared_ci_and_path_boundaries",
        "ci_plan::tests::rejects_unsupported_event",
+       "ci_plan::tests::shared_ci_wrappers_and_security_lane_trigger_every_lane",
        "ci_plan::tests::workflow_dispatch_enables_all_lanes",
        "ci_results::tests::rejects_pytest_errors_or_nextest_mismatch",
        "ci_results::tests::summarizes_nextest_and_reconciles_with_junit_missing_skipped_attr",
@@ -8310,6 +8492,8 @@
        "repo_layout::tests::package_name_reads_only_the_package_table",
        "repo_layout::tests::package_name_refuses_what_cargo_cannot_read",
        "repo_layout::tests::package_name_says_toml_1_0_for_toml_1_1_only_syntax",
+       "repo_layout::tests::reviewed_vendor_pairs_do_not_hide_copies_path_spoofs_or_manifest_tampering",
+       "repo_layout::tests::reviewed_vendor_pairs_match_exact_custody_identities",
        "repo_layout::tests::test_code_is_whole_test_files_and_cfg_test_modules",
        "research::state::tests::brief_is_deterministic_linked_and_capped_without_truncation",
        "research::state::tests::exact_repeat_warns_but_explicit_preregistered_replication_is_preserved",
@@ -8528,6 +8712,50 @@
        "native_inference_and_storage_adapters_emit_same_golden_payload_bytes_and_ids",
        "negative_vectors_lexical_numeric_cycle_and_authority_refusals",
        "positive_vectors_canonical_bytes_and_domain_separated_ids_match"
+      ]
+     }
+    }
+   },
+   "jope-runtime": {
+    "count": 17,
+    "ignored": 0,
+    "binaries": {
+     "jope-runtime": {
+      "kind": "lib",
+      "count": 9,
+      "ignored": 0,
+      "tests": [
+       "automl::tests::folds_are_stratified_and_deterministic",
+       "automl::tests::losses_match_the_panel_metrics",
+       "backend::tests::explicit_cuda_fails_and_auto_reports_cpu",
+       "error::tests::a_panic_in_numerical_work_becomes_a_numerical_failure",
+       "error::tests::the_outermost_failure_names_the_category",
+       "table::tests::malformed_input_is_refused_with_an_input_failure",
+       "table::tests::missing_cells_categories_and_kinds_follow_the_contract",
+       "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",
+       "table::tests::tasks_and_class_order"
+      ]
+     },
+     "jope-runtime::method_roster": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "records_distinguish_native_and_uncompiled_neural_methods",
+       "roster_counts_families_and_aliases"
+      ]
+     },
+     "jope-runtime::offline_fit_predict": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "an_exhausted_budget_is_a_budget_failure",
+       "auto_selects_by_out_of_fold_loss_and_records_every_candidate",
+       "damaged_or_foreign_model_files_are_integrity_failures",
+       "every_native_method_fits_saves_reloads_and_predicts_identically",
+       "prediction_csv_has_probabilities_in_class_order",
+       "selection_is_deterministic"
       ]
      }
     }
@@ -9014,7 +9242,7 @@
   }
  },
  "totals": {
-  "rust": 5705,
+  "rust": 5813,
   "python": 182
  }
 }

@@ -1,0 +1,121 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for PR394 after PR392: retain the jope-automl workspace member and add four appliance crates plus default-on fitted-cpp gating. The prior parallel appliance ledger is preserved byte-for-byte as historical evidence, but cannot follow the392 identity: this successor starts from the actual merged392 fixtures. Default numerical behavior, DSL ABI, all prior transitions and accepted identity table stay unchanged.",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/394",
+  "source_commit": "6443100a7f8ca3c93163055263692414eb4ebff7",
+  "base_commit": "ca6e15f1c4dad721987f30825fe19b50bbf4e408",
+  "old_identity": {
+    "implementation_sha256": "498518151d5501d8d20dd8fa345c4805155710ac4e25529b6312fec4cb5117e5",
+    "cargo_lock_sha256": "a3d2fdfb2446231bebf2a9d20de40a426dedc1b62b400eb1585260de4a5c0587",
+    "identity_digest": "8999aff99f7bd548ff4415b8fe64b9880f092d78445a3b5f9864c4e12be195e0",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "new_identity": {
+    "implementation_sha256": "a718cb7d62cc803a6f59aad30c917a47c0cb85e2687e58a6b591ec4985473732",
+    "cargo_lock_sha256": "8edf827e18f505ab22f1f2f2c47ac7bfca97b5ab8b30fd9c6751ec4eafd6c931",
+    "identity_digest": "eacda5c015a67437d015ae60565b0b1b834ec62a52d61e300bae80f05adf4168",
+    "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389"
+  },
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "4220d83da822c79a80e875180ceb1c2ebe066a8259b351d18566356dd8bd96b1",
+      "after": "07f0fe359134dad221f63b951ac95873591e373f3db7d64ca3ff04210dda3282"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "1b15af8929c9dab46b9673488fdc8008e7656cac1c203c49633dcc4a256e6bbb",
+      "after": "6249f118f4e204466cede5657f9bfe7689b9a54fa41a04a1213b9b31c3444cd1"
+    }
+  ],
+  "changed_evaluator_inputs": [
+    {
+      "path": "Cargo.lock",
+      "before": "a3d2fdfb2446231bebf2a9d20de40a426dedc1b62b400eb1585260de4a5c0587",
+      "after": "8edf827e18f505ab22f1f2f2c47ac7bfca97b5ab8b30fd9c6751ec4eafd6c931"
+    },
+    {
+      "path": "crates/feat-math/Cargo.toml",
+      "before": "d5230fc7d1f22192332abd2387af8d328bbafea6e7e3c65c0da8d28a0ccdf8c0",
+      "after": "5468ffa35e364d7345a3ea271f974d4448e0e91a58356f1eb68ad287577a6149"
+    },
+    {
+      "path": "crates/feat-math/src/advanced_v3.rs",
+      "before": "3823df549605e1f5fbfdb82ef24fc632a77a0913466834d7bccf657c4c904891",
+      "after": "c3407f1474f41e4c2469a2487f4b89c293408d99d7d94028bb4d7b76c2e03a4b"
+    },
+    {
+      "path": "crates/feat-math/src/lib.rs",
+      "before": "4f2ef27ba1b3e5f7cc5147585e02fa5fa8b842d0e933c3f9960ecb42a2bc63de",
+      "after": "19f38bb566f997cd08ac058d63e04211010f64e3caee038508ad0ceab5bf6201"
+    }
+  ],
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
+  "behavioral_fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/meta.json",
+      "sha256": "45834e08a447bb41b5112119388890bce26580768dca538035506343d3fc492b",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json",
+      "sha256": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
+      "sha256": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json",
+      "sha256": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+      "sha256": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json",
+      "sha256": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+      "sha256": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json",
+      "sha256": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/source-manifest.json",
+      "sha256": "4628d4269f3b1fcb853ae0b04ec90972212b8b23ada9e9f310d77eb616cc3104",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/manifest.json",
+      "sha256": "117ac56a214384bd11964e5b105819b3f12da047be40ab5194c056a654d99d4f",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/README.md",
+      "sha256": "263dff168010eb2d556a57c5b0c51b81a84403b8632c118345404260443b740b",
+      "unchanged": true
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json",
+      "sha256": "b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3",
+      "unchanged": true
+    }
+  ],
+  "lineage_effect": "Only the owning generation header changes; lineage source lists/hashes stay unchanged. Rebuilt executable identities remain separately attributed.",
+  "verification": [
+    "Pinned Rust1.97.1 owning compat_freeze identity mode:13passed; paired comparison/historical guard follows.",
+    "Pinned Rust1.97.1 paired comparison compat_freeze13/13 + historical_v1 3/3 passed; no weakened historical hash floor."
+  ]
+}

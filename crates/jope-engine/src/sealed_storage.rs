@@ -167,9 +167,23 @@ pub(crate) fn receive_fd(stream: &UnixStream) -> Result<OwnedFd> {
     }
 }
 
+fn check_verification_deadline(deadline: u128) -> Result<()> {
+    ensure!(
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_millis()
+            < deadline,
+        "shared cache verification exceeded its original deadline"
+    );
+    Ok(())
+}
+
 /// Cache telemetry is not verification authority. Verify sealed received bytes
 /// independently before mmap, even when the server claims the expected digest.
 fn verify_sealed(file: &fs::File, expected: &str, length: usize, deadline: u128) -> Result<()> {
+    // Empty payloads still have the original deadline; they must not bypass it
+    // by skipping the read loop. Check again after the final read and digest.
+    check_verification_deadline(deadline)?;
     let seals = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
     // SAFETY: F_GET_SEALS takes a borrowed live descriptor, no pointer argument.
     let actual = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GET_SEALS) };
@@ -181,13 +195,7 @@ fn verify_sealed(file: &fs::File, expected: &str, length: usize, deadline: u128)
     let mut offset = 0;
     let mut block = vec![0u8; 1024 * 1024];
     while offset < length {
-        ensure!(
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)?
-                .as_millis()
-                < deadline,
-            "shared cache verification exceeded its original deadline"
-        );
+        check_verification_deadline(deadline)?;
         let capacity = block.len().min(length - offset);
         let count = file.read_at(&mut block[..capacity], offset as u64)?;
         ensure!(count > 0, "shared teaching storage truncated");
@@ -198,6 +206,7 @@ fn verify_sealed(file: &fs::File, expected: &str, length: usize, deadline: u128)
         hex::encode(digest.finalize()) == expected,
         "shared teaching received bytes changed"
     );
+    check_verification_deadline(deadline)?;
     Ok(())
 }
 
@@ -417,6 +426,38 @@ mod tests {
         verify_sealed(&file, &crate::manifest::hash(b"actual bytes"), 12, deadline).unwrap();
         assert!(verify_sealed(&file, &crate::manifest::hash(b"actual bytes"), 12, 1).is_err());
     }
+    #[test]
+    fn empty_sealed_storage_requires_the_original_deadline_and_exact_dimensions() {
+        // SAFETY: the static name is NUL-terminated; the result is checked before
+        // ownership transfer. This test never requests executable or writable maps.
+        let fd = unsafe {
+            libc::memfd_create(
+                c"test-empty-sealed".as_ptr(),
+                libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING,
+            )
+        };
+        assert!(fd >= 0);
+        // SAFETY: this successful memfd_create returned a fresh descriptor that
+        // has no other Rust owner. File closes it on every test exit path.
+        let file = unsafe { fs::File::from_raw_fd(fd) };
+        let seals =
+            libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+        // SAFETY: file owns the live descriptor and F_ADD_SEALS takes integer flags.
+        assert_eq!(unsafe { libc::fcntl(fd, libc::F_ADD_SEALS, seals) }, 0);
+        let expected = crate::manifest::hash(b"");
+        let deadline = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis()
+            + 60_000;
+        verify_sealed(&file, &expected, 0, deadline).unwrap();
+        let error = verify_sealed(&file, &expected, 0, 1).unwrap_err();
+        assert!(error.to_string().contains("exceeded its original deadline"));
+        assert!(verify_sealed(&file, &expected, 1, deadline).is_err());
+        let unsealed = tempfile::tempfile().unwrap();
+        assert!(verify_sealed(&unsealed, &expected, 0, deadline).is_err());
+    }
+
     #[test]
     fn regular_file_is_not_mistaken_for_fully_sealed_on_fcntl_error() {
         let mut file = tempfile::tempfile().unwrap();

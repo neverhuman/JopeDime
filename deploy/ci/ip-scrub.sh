@@ -22,9 +22,14 @@ is_exempt() {
   [ -f "$exempt" ] && grep -vE '^\s*(#|$)' "$exempt" | cut -d' ' -f1 | grep -qxF "$1"
 }
 
+git rev-parse --show-toplevel >/dev/null
+
 files=()
 for f in README.md SECURITY.md CONTRIBUTING.md docs/*.md docs/runbooks/*.md; do
-  [ -f "$f" ] && files+=("$f")
+  # Published prose is tracked; preserve unrelated local documents outside this guard.
+  if [ -f "$f" ] && git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then
+    files+=("$f")
+  fi
 done
 # Product crate descriptions (the list deploy/ci/rust-test-scope.sh maintains).
 while read -r pkg; do

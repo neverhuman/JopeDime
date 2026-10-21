@@ -344,7 +344,10 @@ pub fn optimizer_moment_bytes(path: &Path) -> Result<u64> {
         let entry = archive
             .by_index_raw(index)
             .map_err(|e| Error::Shape(format!("{}: {e}", path.display())))?;
-        if entry.name().contains("/data/") {
+        let name = entry
+            .name()
+            .map_err(|e| Error::Shape(format!("{}: {e}", path.display())))?;
+        if name.contains("/data/") {
             total += entry.size();
         }
     }

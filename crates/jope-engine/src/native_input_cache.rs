@@ -129,14 +129,15 @@ fn open_at(directory: &File, relative: &Path) -> Result<File> {
             } else {
                 0
             };
-        // SAFETY: `parent` is an open File for the whole call and `name` is a live CString, so
-        // the path is NUL-terminated; without O_CREAT, openat reads no mode argument.
+        // SAFETY: parent owns the live directory descriptor, name is one
+        // validated NUL-terminated component, and no create flag needs a mode.
+        // NOFOLLOW rejects symlinks and NONBLOCK prevents a FIFO open from hanging.
         let fd = unsafe { libc::openat(parent.as_raw_fd(), name.as_ptr(), flags) };
         if fd < 0 {
             return Err(std::io::Error::last_os_error().into());
         }
-        // SAFETY: openat just returned this nonnegative descriptor and nothing else owns it;
-        // File becomes its sole owner and closes it once (the old `parent` closes its own fd).
+        // SAFETY: successful openat returned this fresh descriptor. Transfer
+        // ownership once; assignment also closes the previous directory owner.
         parent = unsafe { File::from_raw_fd(fd) };
     }
     Ok(parent)
@@ -200,12 +201,12 @@ const EXT4_SUPER_MAGIC: u64 = 0xef53;
 /// both below 2^31, is ever tested, and those compare correctly on every target.
 fn filesystem_magic(file: &File) -> Result<u64> {
     let mut status = std::mem::MaybeUninit::<libc::statfs>::uninit();
-    // SAFETY: `file` is a borrowed open File, so its descriptor is valid for the call, and
-    // `status` has room for one statfs, the only memory fstatfs writes.
+    // SAFETY: status provides aligned writable statfs storage and file owns a
+    // live descriptor. fstatfs initializes the output only on its checked success.
     if unsafe { libc::fstatfs(file.as_raw_fd(), status.as_mut_ptr()) } != 0 {
         return Err(std::io::Error::last_os_error().into());
     }
-    // SAFETY: fstatfs returned 0 (checked above), so it filled every field of `status`.
+    // SAFETY: the preceding fstatfs succeeded; every statfs field is initialized.
     let status = unsafe { status.assume_init() };
     Ok(status.f_type as u64)
 }
@@ -470,6 +471,8 @@ mod tests {
                 tv_nsec: old.mtime_nsec(),
             },
         ];
+        // SAFETY: name and both timespec entries are live through utimensat;
+        // the kernel borrows the two bounded elements and this private fixture path.
         assert_eq!(
             // SAFETY: `name` is a CString that outlives the call, so the path is NUL-terminated,
             // and `times` is the two-element timespec array utimensat reads.
@@ -575,7 +578,8 @@ mod tests {
         let t = tempfile::tempdir().unwrap();
         let p = t.path().join("a");
         let name = CString::new(p.as_os_str().as_encoded_bytes()).unwrap();
-        // SAFETY: `name` is a CString that outlives the call, so the path is NUL-terminated.
+        // SAFETY: name is NUL-terminated and names this test's private fixture;
+        // mkfifo takes only a borrowed pathname and integer permission bits.
         assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
         let _s = enter(t.path(), &BTreeMap::from([("a".into(), "a".repeat(64))])).unwrap();
         assert!(hash_if_bound(&p).unwrap().is_err());

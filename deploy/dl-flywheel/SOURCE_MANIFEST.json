@@ -1,17 +1,18 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate test row (flag-off gate); prior entries unchanged.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate test row (flag-off gate); prior entries unchanged. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Final PR395 additive exact NPZ target/vendor tamper control and retained upstream benchmark discovery; no prior mapping removed or floor reduced. PR396: correct the declared Jankurai1.7.5 workflow scope only; every prior lane/item/disposition and frozen row retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "0082eb8f39eaced73b24abfc439a622874e15d4c53cd380998cc2a22b399ac93"
+      "sha256": "55df230c852dcc35b8428b9b3649a7ec0628ac6e4af30162420b3288e948995b"
     },
     {
+      "normalization": " PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Final PR395 additive exact NPZ target/vendor tamper control and retained upstream benchmark discovery; no prior mapping removed or floor reduced.",
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "be3a68cbeb8d4cd07bf4cf16d53cfe12163a89fdbbc131738a12ce314c8a39d5"
+      "sha256": "f304595256b0c933b9f93699283daeff8bfacc1f13166694ab3bb36eb4e4e4e0"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -4730,11 +4731,11 @@
       "sha256": "f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/INTERFACE.md",
-      "sha256": "a60875798769f961c8dec826e4b9619295ac4e2d7ac7c258cbcf21c10b295bc2",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "a60875798769f961c8dec826e4b9619295ac4e2d7ac7c258cbcf21c10b295bc2"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4761,11 +4762,11 @@
       "sha256": "4934c449eaff686a493d5abc2e6cd567fba661c658120aefc43ddd77d58fd44c"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py",
-      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4774,11 +4775,11 @@
       "sha256": "720c8e16405d7ca5e98f569ea925189e8128109497920b1ed80c4b9629efe95d"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "6176ce748946a22683efda7cd381a908cf11d294356641c45d079060161831c9",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/test-identities.json",
-      "sha256": "61c91f3362c4281de42cae0cbd0e7f87fba521b474c60527b0c1c11fd6dfafb3",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "61c91f3362c4281de42cae0cbd0e7f87fba521b474c60527b0c1c11fd6dfafb3"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4793,11 +4794,11 @@
       "sha256": "14e614367b19fe003f90a51d4d6b018f78c8f43a94872547b8e3a42d94db1369"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "c35af46c58c7d2e0503aed50c942cf075038934e3e915f1541ff628df9991e24",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py",
-      "sha256": "7cb7ceefb567e9219e1511536683678539f1dce1b7617db0b0eb81699fff3e2e",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "7cb7ceefb567e9219e1511536683678539f1dce1b7617db0b0eb81699fff3e2e"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4909,11 +4910,18 @@
       "sha256": "345baae54ac798542c151fa7a20f869ad8279436884b066e83def324215144e7"
     },
     {
-      "normalization": "Documentation link changed to lossless historical tests-log-custody.json with exact original log hash/bytes; all historical qualifications retained and no test rerun. 2026-10-21: prior-capture.json left the tree; the README links it at commit ca6e15f1c4dad721987f30825fe19b50bbf4e408.",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/prior-capture.json",
+      "origin_sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/prior-capture.json",
+      "sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4"
+    },
+    {
+      "normalization": "Documentation link changed to lossless historical tests-log-custody.json with exact original log hash/bytes; all historical qualifications retained and no test rerun.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/README.md",
       "origin_sha256": "10150225ed0585e32aff815f6f4872ea7edcfbf775aff5894b1409569ab7738f",
       "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/README.md",
-      "sha256": "078808cf484859512446fd34e54315f45d9075f92070dd01efd932523ba44908"
+      "sha256": "eb08fadd177ad6bf5c8af05a6a247b6ed6935abc91f69628835c1c6825407076"
     },
     {
       "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority.",
@@ -5416,18 +5424,18 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 research test-family items; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate row; prior entries unchanged.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 research test-family items; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate row; prior entries unchanged. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "49f0f312cd6b1c79bc697fd4a34ca19fe89ce008a74ea23946768d6a945e868c"
+      "sha256": "7a75fd0bca9e1a2c777c57126ff1d9989cd2462cc363c73318c6ad95114cd907"
     },
     {
-      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/ci/ci-plan.py",
       "origin_sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8",
       "path": "deploy/ci/ci-plan.py",
-      "sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8"
+      "sha256": "1df3b00df8b9fb60986967797e8072e9b8d609fc3bf27c0ecb44df3e879dd2cd"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -5542,11 +5550,11 @@
       "sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536"
     },
     {
-      "normalization": "Cold r2 exact CI source pin; no execution or authority.",
+      "normalization": "Cold r2 exact CI source pin; no execution or authority. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
       "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
-      "sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658"
+      "sha256": "a8523c2d8ce82ae93878628a83c0ca629d75d7c2e7da0ca73d8da94a3a369918"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -5570,11 +5578,11 @@
       "sha256": "98a72f10f1267528c957570f9739cf101e807613272529eec14cdb71851994b3"
     },
     {
-      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
       "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
-      "sha256": "894c2d07673b3264a02fba7a11c2d16239308a5a611914bfd16b54f8ee8c5f51"
+      "sha256": "aa39841c0a26ed2fa4747263e876b462392a4c06428b7c0e12633001ea87fda0"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -6388,8 +6396,7 @@
       "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "56bd5e8dacd176d39edd1523c566c37c4f68132d93978ae5f32bb7129d5a592b",
       "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/METRICS.md",
-      "sha256": "e3b9dcde5d3f72a5fd6604aeb2e443f6bc52a5386f8842b2cb7ba35162a6a4ff",
-      "normalization": "2026-10-21: links to the generated parquet/HTML outputs, removed from the tree, now open them at commit ca6e15f1c4dad721987f30825fe19b50bbf4e408; a header note says so. No measurement text changed."
+      "sha256": "fac59119335c985eaec14f15a18662b86fb074b752096c1285213789a2819df2"
     },
     {
       "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
@@ -6423,9 +6430,141 @@
     },
     {
       "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "6c702137f6b2c074cef21f37a27df0eec1a6d4bd294aaf9cde892fcbd759631e",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/context-daily/2026-10-10.parquet",
+      "sha256": "6c702137f6b2c074cef21f37a27df0eec1a6d4bd294aaf9cde892fcbd759631e"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "3d456821079f33ea15e79d29117718444ce57818564d0cf05c6f25854fe389b6",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/context-dashboard.html",
+      "sha256": "3d456821079f33ea15e79d29117718444ce57818564d0cf05c6f25854fe389b6"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
       "origin_sha256": "43d18b9c893febb770238d63db359954fdc48b2098fc13b5eadae425b19f6d73",
       "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/context_costs.py",
       "sha256": "08d066500e337c2a77ac87d56db78a270507d313bd45a33af7dd01c33ccc17e2"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/2026-10-09.parquet",
+      "sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "7305f108fff19d2f8e937bcc63dd2e449f70cd4aa6f946f5b6f19eb39bfaeddb",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/2026-10-10.parquet",
+      "sha256": "7305f108fff19d2f8e937bcc63dd2e449f70cd4aa6f946f5b6f19eb39bfaeddb"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "38a59880fb6f96cf5aa7bde934b922a6b1f6dff8ba4d21030d00d313e17d56f2",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-000/2026-10-11.parquet",
+      "sha256": "38a59880fb6f96cf5aa7bde934b922a6b1f6dff8ba4d21030d00d313e17d56f2"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "7f43e5d41c0bcaf220001b9772ef93f4361cc898fe1e5b5df89b1be8d48fc197",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-001/2026-10-11.parquet",
+      "sha256": "7f43e5d41c0bcaf220001b9772ef93f4361cc898fe1e5b5df89b1be8d48fc197"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "f3475b9e911a39a026760bc678fb11f29fbf2facd5a2e6f7640f38f4c69d7034",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-002/2026-10-11.parquet",
+      "sha256": "f3475b9e911a39a026760bc678fb11f29fbf2facd5a2e6f7640f38f4c69d7034"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "3b6d3184cc0ed5d8101a101b482482b521944ef15fbf94535fa7f823eaa0b968",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-003/2026-10-11.parquet",
+      "sha256": "3b6d3184cc0ed5d8101a101b482482b521944ef15fbf94535fa7f823eaa0b968"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-000/2026-10-09.parquet",
+      "sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "2c36bacd02b2ec3faab821261a5f5b311f40fc80b1530c106f6880cbfa9e8bbc",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-001/2026-10-10.parquet",
+      "sha256": "2c36bacd02b2ec3faab821261a5f5b311f40fc80b1530c106f6880cbfa9e8bbc"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "09dbc7f347d42acfab36674715e327a011e39c37eab62705d5049b3662c2c6e9",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-002/2026-10-11.parquet",
+      "sha256": "09dbc7f347d42acfab36674715e327a011e39c37eab62705d5049b3662c2c6e9"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "a11fe84bf2ecea121b46b345521e317997461afec690e4a857eca2840347cda7",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-003/2026-10-11.parquet",
+      "sha256": "a11fe84bf2ecea121b46b345521e317997461afec690e4a857eca2840347cda7"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "ac7d46289228a7dcb2c5e3d3610691e2723fe17f3b67807948aa09b271995a94",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-004/2026-10-11.parquet",
+      "sha256": "ac7d46289228a7dcb2c5e3d3610691e2723fe17f3b67807948aa09b271995a94"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "c5cbce61856d4afd53eb02fc2cc1ec0a5d5f4d1ec53121cfe42a586453bdd28a",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-005/2026-10-11.parquet",
+      "sha256": "c5cbce61856d4afd53eb02fc2cc1ec0a5d5f4d1ec53121cfe42a586453bdd28a"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "e530c8df7412d0caa85328e257d457f5279d09b205aa9149952ac2770d6dcaf7",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-006/2026-10-11.parquet",
+      "sha256": "e530c8df7412d0caa85328e257d457f5279d09b205aa9149952ac2770d6dcaf7"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "e58f10a7a4e56bfb9bd9d1aae0981a58c74529aeffd94fef4d69587b3dd04b1e",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-007/2026-10-11.parquet",
+      "sha256": "e58f10a7a4e56bfb9bd9d1aae0981a58c74529aeffd94fef4d69587b3dd04b1e"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "7d260d394a2e9ab3da34b84e9e7905684fbec05da2ddc5e5200bb443f33eb70c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-008/2026-10-11.parquet",
+      "sha256": "7d260d394a2e9ab3da34b84e9e7905684fbec05da2ddc5e5200bb443f33eb70c"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-09.parquet",
+      "sha256": "ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "03399dc551c0116481c906f58f321c63ed25169aef2d38c9695415e0286126da",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-10.parquet",
+      "sha256": "03399dc551c0116481c906f58f321c63ed25169aef2d38c9695415e0286126da"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "a514504ae54dda0e8e39d5adda9ec82e6273b3c16a1dfb232766b76dd6d27eaa",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard-20261011.html",
+      "sha256": "f63e0e0ad0a13812dda34aeea5d089a378a32ce4d8de91ada00fd86d7f7b2822"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "fd45451eacbe5e209e25f80793d3f78f8ea47946856322431bc3a261bcd0235d",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard-gap-20261011.html",
+      "sha256": "fd45451eacbe5e209e25f80793d3f78f8ea47946856322431bc3a261bcd0235d"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "33f086ed60ad602bd6c87bf9daec8839bb4073122596d7fd1782e6a405b1d54f",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard.html",
+      "sha256": "33f086ed60ad602bd6c87bf9daec8839bb4073122596d7fd1782e6a405b1d54f"
     },
     {
       "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
@@ -6456,6 +6595,18 @@
       "origin_sha256": "05bcfb59b02cccade629551ad428fc22869158d44207db8d0f6954578b5180cd",
       "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py",
       "sha256": "3a6481529f77e0fc1fc15d700fc3f16fcedda1e5a889b5db067a97d7ff6f7cd9"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "648f36d040c29315af73e3e4a8369e83267a7cd0f4254dea895d86b6ff796e9b",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-daily/2026-10-10.parquet",
+      "sha256": "648f36d040c29315af73e3e4a8369e83267a7cd0f4254dea895d86b6ff796e9b"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "dd13fb84d4e9d04fa81036d3accd259e38681e204c8d5cd6a8fbf8be14b76c99",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-dashboard.html",
+      "sha256": "dd13fb84d4e9d04fa81036d3accd259e38681e204c8d5cd6a8fbf8be14b76c99"
     },
     {
       "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
@@ -6500,15 +6651,15 @@
       "sha256": "253d10fda99deb153144a820e971bd359929c1bef0f720e75864d04a64977b87"
     },
     {
-      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py",
       "origin": "CX-OP owner GB-03 assignment 2026-10-12; new source",
       "origin_sha256": "6ca6f16a2440ca04a0a2b869a34924d79242d073d81811ec88c6f4fa6a96aa3c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py",
       "sha256": "f0c74484765d5d46cedff540ef066c2b7384bec25e122f974ad54ab03c6271c3"
     },
     {
-      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py",
       "origin": "CX-OP owner GB-03 assignment 2026-10-12; new source",
       "origin_sha256": "50efe03aaaf3d34978af13c37754aa77b70bfeaa5e156eaba3768993e8ccc013",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py",
       "sha256": "9eda8b846c3faf1b7b346e29d9bb098c5e04bf8a4beeed1ba506628c034288cc"
     },
     {
@@ -6657,228 +6808,228 @@
       "sha256": "92172a0b908198828711118259cbb2eb4db039f1911c2e5ff09356c333289a88"
     },
     {
+      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
+      "origin_sha256": "3051d5090776872e839b7916248b28b28db242d7978dff2b430a4bfe453dbcf3",
       "path": "deploy/dl-flywheel/pipelines/rlfw/multiseed/PLAN.md",
-      "sha256": "3051d5090776872e839b7916248b28b28db242d7978dff2b430a4bfe453dbcf3",
-      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
-      "origin_sha256": "3051d5090776872e839b7916248b28b28db242d7978dff2b430a4bfe453dbcf3"
+      "sha256": "3051d5090776872e839b7916248b28b28db242d7978dff2b430a4bfe453dbcf3"
     },
     {
+      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
+      "origin_sha256": "ab51a80abdd48d981cc65e231d931b1c330a22cbcc09b446c56675d41c509032",
       "path": "deploy/dl-flywheel/pipelines/rlfw/multiseed/__init__.py",
-      "sha256": "ab51a80abdd48d981cc65e231d931b1c330a22cbcc09b446c56675d41c509032",
-      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
-      "origin_sha256": "ab51a80abdd48d981cc65e231d931b1c330a22cbcc09b446c56675d41c509032"
+      "sha256": "ab51a80abdd48d981cc65e231d931b1c330a22cbcc09b446c56675d41c509032"
     },
     {
+      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
+      "origin_sha256": "3ed91409b65e1d7b0114f85f4c13389216fb39b3a1da5d71877255e621053821",
       "path": "deploy/dl-flywheel/pipelines/rlfw/multiseed/analysis.py",
-      "sha256": "3ed91409b65e1d7b0114f85f4c13389216fb39b3a1da5d71877255e621053821",
-      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
-      "origin_sha256": "3ed91409b65e1d7b0114f85f4c13389216fb39b3a1da5d71877255e621053821"
+      "sha256": "3ed91409b65e1d7b0114f85f4c13389216fb39b3a1da5d71877255e621053821"
     },
     {
+      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
+      "origin_sha256": "8f403f9834f410d63c3271e59e49938f63fe9af4bda6b08298fe0922a7f0f3b8",
       "path": "deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py",
-      "sha256": "8f403f9834f410d63c3271e59e49938f63fe9af4bda6b08298fe0922a7f0f3b8",
-      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
-      "origin_sha256": "8f403f9834f410d63c3271e59e49938f63fe9af4bda6b08298fe0922a7f0f3b8"
+      "sha256": "8f403f9834f410d63c3271e59e49938f63fe9af4bda6b08298fe0922a7f0f3b8"
     },
     {
+      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
+      "origin_sha256": "9848d6ebe4faa85c14a18289efed4168c220c8927c132227102500578b62a494",
       "path": "deploy/dl-flywheel/pipelines/rlfw/multiseed/test-identities.json",
-      "sha256": "9848d6ebe4faa85c14a18289efed4168c220c8927c132227102500578b62a494",
-      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
-      "origin_sha256": "9848d6ebe4faa85c14a18289efed4168c220c8927c132227102500578b62a494"
+      "sha256": "9848d6ebe4faa85c14a18289efed4168c220c8927c132227102500578b62a494"
     },
     {
+      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
+      "origin_sha256": "d30ccdbde0723da097dbfacd89e3a31db1eeed8e13728567680f76e6188ddff9",
       "path": "deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/__init__.py",
-      "sha256": "d30ccdbde0723da097dbfacd89e3a31db1eeed8e13728567680f76e6188ddff9",
-      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
-      "origin_sha256": "d30ccdbde0723da097dbfacd89e3a31db1eeed8e13728567680f76e6188ddff9"
+      "sha256": "d30ccdbde0723da097dbfacd89e3a31db1eeed8e13728567680f76e6188ddff9"
     },
     {
+      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
+      "origin_sha256": "8837c667d79a209dce0a2dd3ec95aa1aba3b1ecff89aa006cb8a770e65a8d296",
       "path": "deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/test_multiseed.py",
-      "sha256": "8837c667d79a209dce0a2dd3ec95aa1aba3b1ecff89aa006cb8a770e65a8d296",
-      "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
-      "origin_sha256": "8837c667d79a209dce0a2dd3ec95aa1aba3b1ecff89aa006cb8a770e65a8d296"
+      "sha256": "8837c667d79a209dce0a2dd3ec95aa1aba3b1ecff89aa006cb8a770e65a8d296"
     },
     {
-      "path": "crates/jope-learning/src/bin/jope_custody.rs",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/bin/jope_custody.rs",
       "origin_sha256": "30de2ad3e3a13504f4e45d7447b447cff1449ebc8cae40ef3b08addbe2d08a6a",
-      "sha256": "30de2ad3e3a13504f4e45d7447b447cff1449ebc8cae40ef3b08addbe2d08a6a",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/src/bin/jope_custody.rs",
+      "sha256": "30de2ad3e3a13504f4e45d7447b447cff1449ebc8cae40ef3b08addbe2d08a6a"
     },
     {
-      "path": "crates/jope-learning/src/custody/README.md",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/README.md",
       "origin_sha256": "e59036b6cab2d1b709ed67a82a5598c2d7eedb2ddc063f717e358f230c4b9da3",
-      "sha256": "e59036b6cab2d1b709ed67a82a5598c2d7eedb2ddc063f717e358f230c4b9da3",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/src/custody/README.md",
+      "sha256": "e59036b6cab2d1b709ed67a82a5598c2d7eedb2ddc063f717e358f230c4b9da3"
     },
     {
-      "path": "crates/jope-learning/src/custody/cost.rs",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/cost.rs",
       "origin_sha256": "209b216fe8ffcbacf9ad151c97e25b7e26f28da71545226aa3998f6854b87f97",
-      "sha256": "209b216fe8ffcbacf9ad151c97e25b7e26f28da71545226aa3998f6854b87f97",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/src/custody/cost.rs",
+      "sha256": "209b216fe8ffcbacf9ad151c97e25b7e26f28da71545226aa3998f6854b87f97"
     },
     {
-      "path": "crates/jope-learning/src/custody/mod.rs",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. Preserve an abort witness when a newly created directory parent fsync fails; never write into an existing unowned directory.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/mod.rs",
       "origin_sha256": "189a2b81d33c57fdc700e1ac076295ce1728de3f959a83852b6daff3ea703e91",
-      "sha256": "a9598adcf9ffa38be99c3b7bacfc9867e9af79fb956f92eb67c81d572bf601f5",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. Preserve an abort witness when a newly created directory parent fsync fails; never write into an existing unowned directory."
+      "path": "crates/jope-learning/src/custody/mod.rs",
+      "sha256": "a9598adcf9ffa38be99c3b7bacfc9867e9af79fb956f92eb67c81d572bf601f5"
     },
     {
-      "path": "crates/jope-learning/src/custody/reader.rs",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/reader.rs",
       "origin_sha256": "6e520814bd6eca2adf1cd8df9236163623c12e12581b1d280229673ea9c5c9ae",
-      "sha256": "6e520814bd6eca2adf1cd8df9236163623c12e12581b1d280229673ea9c5c9ae",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/src/custody/reader.rs",
+      "sha256": "6e520814bd6eca2adf1cd8df9236163623c12e12581b1d280229673ea9c5c9ae"
     },
     {
-      "path": "crates/jope-learning/tests/custody.rs",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. J24 F1: checked TAR member/block/record layout plus bounded PAX allowance; size-varied/native GNU regressions. Original custody fixture bytes unchanged.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/custody.rs",
       "origin_sha256": "a3edfe254382d5beb09d5d646884050faef0b4a92234a3d6c9f7dada647892c6",
-      "sha256": "dd5e2ad0f05a0784bff10315baa792d3c421feca30fd8d76424cc22d6300effe",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. J24 F1: checked TAR member/block/record layout plus bounded PAX allowance; size-varied/native GNU regressions. Original custody fixture bytes unchanged."
+      "path": "crates/jope-learning/tests/custody.rs",
+      "sha256": "dd5e2ad0f05a0784bff10315baa792d3c421feca30fd8d76424cc22d6300effe"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/budget.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/budget.json",
       "origin_sha256": "42939836122984d06e86801ef234c77689d976303456ae7cedecd2287bca1c06",
-      "sha256": "42939836122984d06e86801ef234c77689d976303456ae7cedecd2287bca1c06",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/budget.json",
+      "sha256": "42939836122984d06e86801ef234c77689d976303456ae7cedecd2287bca1c06"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/classify.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/classify.json",
       "origin_sha256": "f606a3ff0a40ae83886131c84396ed3b7d0a99274789f74cf0600694808f9133",
-      "sha256": "f606a3ff0a40ae83886131c84396ed3b7d0a99274789f74cf0600694808f9133",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/classify.json",
+      "sha256": "f606a3ff0a40ae83886131c84396ed3b7d0a99274789f74cf0600694808f9133"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/cost.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/cost.json",
       "origin_sha256": "dd216eae176958abbbd1834da0ba185e4b816dbe8a53b4b046c50bab896d1610",
-      "sha256": "dd216eae176958abbbd1834da0ba185e4b816dbe8a53b4b046c50bab896d1610",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/cost.json",
+      "sha256": "dd216eae176958abbbd1834da0ba185e4b816dbe8a53b4b046c50bab896d1610"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/fixture-index.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/fixture-index.json",
       "origin_sha256": "3ff9f0ca617eb3c5710b364929eff8c59901afc108845beef06d5383b1e4d6d5",
-      "sha256": "3ff9f0ca617eb3c5710b364929eff8c59901afc108845beef06d5383b1e4d6d5",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/fixture-index.json",
+      "sha256": "3ff9f0ca617eb3c5710b364929eff8c59901afc108845beef06d5383b1e4d6d5"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gzip-second-member-with-data.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/gzip-second-member-with-data.tar.gz",
       "origin_sha256": "55c73973ac7ba040b0b07b1786a4b5b8a12589832043cd75031a5aebff441680",
-      "sha256": "55c73973ac7ba040b0b07b1786a4b5b8a12589832043cd75031a5aebff441680",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gzip-second-member-with-data.tar.gz",
+      "sha256": "55c73973ac7ba040b0b07b1786a4b5b8a12589832043cd75031a5aebff441680"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/index.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/index.json",
       "origin_sha256": "5a9676b49e5ce1acdf59bfd414716b653fd4e9756c79c4084bbec70a98d0b0d8",
-      "sha256": "5a9676b49e5ce1acdf59bfd414716b653fd4e9756c79c4084bbec70a98d0b0d8",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/index.json",
+      "sha256": "5a9676b49e5ce1acdf59bfd414716b653fd4e9756c79c4084bbec70a98d0b0d8"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/tar-nonzero-tail.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/tar-nonzero-tail.tar.gz",
       "origin_sha256": "b2dcc042d7835f807c01cfb9f34e8c8f7c6143f217dfadef44e945635c9c0bfd",
-      "sha256": "b2dcc042d7835f807c01cfb9f34e8c8f7c6143f217dfadef44e945635c9c0bfd",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/tar-nonzero-tail.tar.gz",
+      "sha256": "b2dcc042d7835f807c01cfb9f34e8c8f7c6143f217dfadef44e945635c9c0bfd"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/unsafe-pax-name.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/unsafe-pax-name.tar.gz",
       "origin_sha256": "636ef0072c6a306880a4d0d10eba625eacf0ac31baaf69d9d0f6685e58e101a9",
-      "sha256": "636ef0072c6a306880a4d0d10eba625eacf0ac31baaf69d9d0f6685e58e101a9",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/unsafe-pax-name.tar.gz",
+      "sha256": "636ef0072c6a306880a4d0d10eba625eacf0ac31baaf69d9d0f6685e58e101a9"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/valid-pax.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/valid-pax.tar.gz",
       "origin_sha256": "85272167b15e2ebaf0375a311953b2c95d8e860ce040e5eb1af3ccbe5e1cb8c7",
-      "sha256": "85272167b15e2ebaf0375a311953b2c95d8e860ce040e5eb1af3ccbe5e1cb8c7",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/valid-pax.tar.gz",
+      "sha256": "85272167b15e2ebaf0375a311953b2c95d8e860ce040e5eb1af3ccbe5e1cb8c7"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/pack.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/pack.json",
       "origin_sha256": "f9df415a8dd502cfa70d48a830137fc04dff0410666313440155e4dfcfadfe97",
-      "sha256": "f9df415a8dd502cfa70d48a830137fc04dff0410666313440155e4dfcfadfe97",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/pack.json",
+      "sha256": "f9df415a8dd502cfa70d48a830137fc04dff0410666313440155e4dfcfadfe97"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_outer.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_outer.tar.gz",
       "origin_sha256": "11d510e067d2cdcd7559bd86d27a2f4c20babd43670346b97af99b522c1f0075",
-      "sha256": "11d510e067d2cdcd7559bd86d27a2f4c20babd43670346b97af99b522c1f0075",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_outer.tar.gz",
+      "sha256": "11d510e067d2cdcd7559bd86d27a2f4c20babd43670346b97af99b522c1f0075"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_payload_updated_outer_sha.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_payload_updated_outer_sha.tar.gz",
       "origin_sha256": "e5e31d59fb7a8d23718179e963b35cb9cb4ea62d93354cdfde0f2134da1a6af5",
-      "sha256": "e5e31d59fb7a8d23718179e963b35cb9cb4ea62d93354cdfde0f2134da1a6af5",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_payload_updated_outer_sha.tar.gz",
+      "sha256": "e5e31d59fb7a8d23718179e963b35cb9cb4ea62d93354cdfde0f2134da1a6af5"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/pax_inflation.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/pax_inflation.tar.gz",
       "origin_sha256": "a54254ada24b6e1b446e552673600461cb8ec4c6faa48766108ba51ccbd5596e",
-      "sha256": "a54254ada24b6e1b446e552673600461cb8ec4c6faa48766108ba51ccbd5596e",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/pax_inflation.tar.gz",
+      "sha256": "a54254ada24b6e1b446e552673600461cb8ec4c6faa48766108ba51ccbd5596e"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/valid/4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5.tar.gz",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/valid/4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5.tar.gz",
       "origin_sha256": "4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5",
-      "sha256": "4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/valid/4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5.tar.gz",
+      "sha256": "4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/valid/manifest.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/valid/manifest.json",
       "origin_sha256": "1162795d4a3e27e154e2d524b0260f5222aac8250ee19d04fedd8f9297a57726",
-      "sha256": "1162795d4a3e27e154e2d524b0260f5222aac8250ee19d04fedd8f9297a57726",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/valid/manifest.json",
+      "sha256": "1162795d4a3e27e154e2d524b0260f5222aac8250ee19d04fedd8f9297a57726"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/schedule.json",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/schedule.json",
       "origin_sha256": "7485b5882d7902a3ff732cfa1d3820d23858cdbde2262d7511a0fefe1417c7d0",
-      "sha256": "7485b5882d7902a3ff732cfa1d3820d23858cdbde2262d7511a0fefe1417c7d0",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/schedule.json",
+      "sha256": "7485b5882d7902a3ff732cfa1d3820d23858cdbde2262d7511a0fefe1417c7d0"
     },
     {
-      "path": "crates/jope-records/src/custody_archive.rs",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. J24 F1: checked TAR member/block/record layout plus bounded PAX allowance; size-varied/native GNU regressions. Original custody fixture bytes unchanged.",
       "origin": "native:GB02-custody-v2/crates/jope-records/src/custody_archive.rs",
       "origin_sha256": "424e33733c9cb6a42782a96263c5e935143a21328dc5f521cda7fe6890b70a8d",
-      "sha256": "0491466a47a44914d12f600c3bde3592a4030284228e52658098d23ac6e5a760",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. J24 F1: checked TAR member/block/record layout plus bounded PAX allowance; size-varied/native GNU regressions. Original custody fixture bytes unchanged."
+      "path": "crates/jope-records/src/custody_archive.rs",
+      "sha256": "0491466a47a44914d12f600c3bde3592a4030284228e52658098d23ac6e5a760"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-layout-index.json",
+      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification.",
       "origin": "native:GB02-custody-v2/GNU-tar-1.35/gnu-layout-index.json",
       "origin_sha256": "45ab422f2b0b777564755d92df13af058088b24fe24dda4f9b264bc2a542966e",
-      "sha256": "45ab422f2b0b777564755d92df13af058088b24fe24dda4f9b264bc2a542966e",
-      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-layout-index.json",
+      "sha256": "45ab422f2b0b777564755d92df13af058088b24fe24dda4f9b264bc2a542966e"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-ustar-8705.tar.gz",
+      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification.",
       "origin": "native:GB02-custody-v2/GNU-tar-1.35/gnu-ustar-8705.tar.gz",
       "origin_sha256": "4e0a5fdea75fc202067ea13805a8464d0404570a58bdce431c71615cdf684a26",
-      "sha256": "4e0a5fdea75fc202067ea13805a8464d0404570a58bdce431c71615cdf684a26",
-      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-ustar-8705.tar.gz",
+      "sha256": "4e0a5fdea75fc202067ea13805a8464d0404570a58bdce431c71615cdf684a26"
     },
     {
-      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-pax-3x8705.tar.gz",
+      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification.",
       "origin": "native:GB02-custody-v2/GNU-tar-1.35/gnu-pax-3x8705.tar.gz",
       "origin_sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d",
-      "sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d",
-      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification."
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-pax-3x8705.tar.gz",
+      "sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d"
     },
     {
       "origin": "CX-MET GB-08 baseline source; contract in analytics/BASELINE.md",

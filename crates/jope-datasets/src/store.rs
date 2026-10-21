@@ -7,7 +7,7 @@ use object_store::{
     GetOptions, GetRange, ObjectStore, ObjectStoreExt, PutMode, PutOptions, PutPayload,
 };
 use sha2::{Digest, Sha256};
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::Path;
 use url::Url;
 
@@ -624,7 +624,12 @@ impl Store {
             .ok_or_else(|| anyhow!("{rel}: not found in {}", self.url))?;
         // Another writer may have completed this destination while we waited for the lock.
         if let Ok(m) = std::fs::metadata(dest) {
-            if m.len() == total && digest_file_hex(dest)? == expected_sha256 {
+            if m.len() == total
+                && crate::hash::digest_content_async(dest.to_path_buf())
+                    .await?
+                    .sha256
+                    == expected_sha256
+            {
                 return Ok(total);
             }
             std::fs::remove_file(dest)?;
@@ -633,16 +638,11 @@ impl Store {
         let mut start = 0u64;
         if let Ok(m) = std::fs::metadata(&partial) {
             if m.len() >= resume_threshold && m.len() <= total {
-                let mut f = std::fs::File::open(&partial)?;
-                let mut buf = vec![0u8; 1 << 20];
-                loop {
-                    let n = f.read(&mut buf)?;
-                    if n == 0 {
-                        break;
-                    }
-                    hasher.update(&buf[..n]);
-                }
-                start = m.len();
+                let (prefix_hasher, prefix_bytes) =
+                    crate::hash::content_hasher_async(partial.clone()).await?;
+                ensure!(prefix_bytes == m.len(), "partial changed while hashing");
+                hasher = prefix_hasher;
+                start = prefix_bytes;
             } else {
                 let _ = std::fs::remove_file(&partial);
             }
@@ -684,21 +684,6 @@ impl Store {
             ))
         }
     }
-}
-
-/// sha256 (hex) of a local file, streamed.
-fn digest_file_hex(path: &Path) -> Result<String> {
-    let mut f = std::fs::File::open(path)?;
-    let mut hasher = Sha256::new();
-    let mut buf = vec![0u8; 1 << 20];
-    loop {
-        let n = f.read(&mut buf)?;
-        if n == 0 {
-            break;
-        }
-        hasher.update(&buf[..n]);
-    }
-    Ok(hex::encode(hasher.finalize()))
 }
 
 #[cfg(test)]

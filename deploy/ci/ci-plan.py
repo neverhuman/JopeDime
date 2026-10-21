@@ -9,14 +9,14 @@ import subprocess
 
 LANES = ("changes", "hygiene", "rust-check", "rust-test", "emitters", "inputs", "python", "e2e-smoke")
 # These preserve the existing path gates, adding shared receipt/plan code to every lane.
-IMAGE = r"deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/(cargo-artifact|receipt|results|ci-plan|fast-lane|pytest-evidence|aggregate|coverage|training-proof|test-training-proof)"
+IMAGE = r"ops/ci/|tools/security-lane\.sh$|deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/(cargo-artifact|receipt|results|ci-plan|fast-lane|pytest-evidence|aggregate|coverage|training-proof|test-training-proof)"
 COMMON = rf"Cargo\.(toml|lock)$|rust-toolchain\.toml$|{IMAGE}|\.github/workflows/ci\.yml$"
 FILTERS = {
-    "rust": rf"^(crates/|benchmarks/|schemas/|{COMMON}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/)",
+    "rust": rf"^(crates/|benchmarks/|schemas/|{COMMON}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)",
     "emitters": rf"^(crates/feat-math/|datasets/test/|deploy/ci/emitters|{COMMON})",
     "inputs": rf"^(datasets/synthetic/|crates/(jope-cli|jope-campaigns|jope-arena)/|python/src/jope/research/|{COMMON})",
     "python": rf"^(python/|benchmarks/|crates/jope-bench/adapters/|deploy/systemd/|deploy/dl-flywheel/pipelines/rlfw/|deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/|deploy/dl-flywheel/dashboard/|{IMAGE}|\.github/workflows/ci\.yml$)",
-    "e2e": rf"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|{COMMON})",
+    "e2e": rf"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|docs/release/signing\.pub$|{COMMON})",
 }
 GATES = {"rust-check": "rust", "rust-test": "rust", "emitters": "emitters", "inputs": "inputs", "python": "python", "e2e-smoke": "e2e"}
 

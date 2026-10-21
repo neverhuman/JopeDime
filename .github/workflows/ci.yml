@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
-          python3 deploy/ci/receipt.py --lane changes --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh changes
+          python3 deploy/ci/receipt.py --lane changes --output "$evidence" --backend none -- bash ops/ci/fast-lane.sh changes
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -69,7 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
-          python3 deploy/ci/receipt.py --lane hygiene --output "$evidence" --backend unittest -- bash deploy/ci/fast-lane.sh hygiene
+          python3 deploy/ci/receipt.py --lane hygiene --output "$evidence" --backend unittest -- bash ops/ci/fast-lane.sh hygiene
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -96,7 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
-          python3 deploy/ci/receipt.py --lane rust-check --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh rust-check
+          python3 deploy/ci/receipt.py --lane rust-check --output "$evidence" --backend rust -- bash ops/ci/fast-lane.sh rust-check
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -137,7 +137,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB-$SHARD"
-          python3 deploy/ci/receipt.py --lane rust-test --output "$evidence" --backend nextest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh rust-test
+          python3 deploy/ci/receipt.py --lane rust-test --output "$evidence" --backend nextest --junit "$evidence/junit.xml" -- bash ops/ci/fast-lane.sh rust-test
         env:
           SHARD: ${{ matrix.shard }}
       - name: Upload current lane evidence
@@ -168,7 +168,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
-          python3 deploy/ci/receipt.py --lane emitters --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh emitters
+          python3 deploy/ci/receipt.py --lane emitters --output "$evidence" --backend rust -- bash ops/ci/fast-lane.sh emitters
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -195,7 +195,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
-          python3 deploy/ci/receipt.py --lane inputs --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh inputs
+          python3 deploy/ci/receipt.py --lane inputs --output "$evidence" --backend none -- bash ops/ci/fast-lane.sh inputs
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -222,7 +222,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
-          python3 deploy/ci/receipt.py --lane python --output "$evidence" --backend pytest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh python
+          python3 deploy/ci/receipt.py --lane python --output "$evidence" --backend pytest --junit "$evidence/junit.xml" -- bash ops/ci/fast-lane.sh python
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -249,7 +249,7 @@ jobs:
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
-          python3 deploy/ci/receipt.py --lane e2e-smoke --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh e2e-smoke
+          python3 deploy/ci/receipt.py --lane e2e-smoke --output "$evidence" --backend none -- bash ops/ci/fast-lane.sh e2e-smoke
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -260,7 +260,7 @@ jobs:
   observatory-ui:
     needs: changes
     runs-on: [self-hosted, linux, x64, jope-ci]
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       JOPE_UI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
@@ -296,6 +296,23 @@ jobs:
           JS
           npm run build
           sha256sum package-lock.json dist/index.html dist/assets/* > "$JOPE_UI_EVIDENCE/build-sha256.txt"
+      - name: Rendered UX, keyboard navigation and accessibility
+        working-directory: web/training-dashboard
+        shell: bash
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_GC: '1'
+        run: |
+          set -euo pipefail
+          export JOPE_UX_EVIDENCE="$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/rendered"
+          export PLAYWRIGHT_BROWSERS_PATH="$GITHUB_WORKSPACE/target/browser-cache/playwright"
+          native_receipt="$JOPE_UX_EVIDENCE/browser-dependencies.json"
+          runtime=$(python3 "$GITHUB_WORKSPACE/deploy/ci/browser-deps.py" --cache "$GITHUB_WORKSPACE/target/tool-cache/chromium-dependencies" --receipt "$native_receipt")
+          export LD_LIBRARY_PATH="$runtime/usr/lib/x86_64-linux-gnu:$runtime/lib/x86_64-linux-gnu:$runtime/usr/lib:$runtime/lib"
+          FONTCONFIG_FILE=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["fontconfig"])' "$native_receipt")
+          export FONTCONFIG_FILE
+          npx playwright install --only-shell chromium
+          npm run test:rendered
+          python3 "$GITHUB_WORKSPACE/deploy/ci/rendered-ux-receipt.py" create --root "$JOPE_UX_EVIDENCE" --source-sha "$JOPE_UI_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
       - name: Retain exact-head frontend evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
@@ -397,6 +414,13 @@ jobs:
           assert r['executed'] > 0 and r['passed'] == r['executed'] and r['failed'] == 0
           print('Exact-head frontend tests:', r['executed'], 'passed')
           PY
+      - name: Require exact-head complete rendered UX evidence
+        if: always()
+        run: |
+          set -euo pipefail
+          root="target/ci-ui-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          rendered_root=$(python3 -c 'import pathlib,sys; p=list(pathlib.Path(sys.argv[1]).rglob("rendered-receipt.json")); assert len(p)==1, "one rendered receipt required"; print(p[0].parent)' "$root")
+          python3 deploy/ci/rendered-ux-receipt.py verify --root "$rendered_root" --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
       - name: Validate every required result
         if: always()
         env:

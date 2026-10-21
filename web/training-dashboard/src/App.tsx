@@ -377,7 +377,12 @@ function Training({
               Latest 24 manifests. Weight hashes are declared by the checkpoint
               producer; the dashboard does not repeatedly read model weights.
             </p>
-            <div className="table-wrap">
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Checkpoint records"
+            >
               <table>
                 <thead>
                   <tr>
@@ -467,10 +472,16 @@ function Dialog({
   children: ReactNode;
 }) {
   const container = useRef<HTMLElement>(null);
+  // Capture before React commits autoFocus to the close button. An effect runs
+  // after that commit and would otherwise remember a soon-detached dialog node.
+  const opener = useRef(document.activeElement as HTMLElement | null);
   const closeRef = useRef(close);
   closeRef.current = close;
   useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
+    const previous = opener.current;
+    // Focus on each effect setup, including React StrictMode's setup/cleanup
+    // probe. Restoring the opener in that probe must not leave focus outside.
+    container.current?.querySelector<HTMLElement>("button")?.focus();
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeRef.current();
       if (e.key === "Tab") {
@@ -480,7 +491,10 @@ function Dialog({
         if (!items?.length) return;
         const first = items[0],
           last = items[items.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
+        if (!container.current?.contains(document.activeElement)) {
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+        } else if (e.shiftKey && document.activeElement === first) {
           e.preventDefault();
           last.focus();
         } else if (!e.shiftKey && document.activeElement === last) {
@@ -544,7 +558,12 @@ function StorageView({ snapshot: s }: { snapshot: Snapshot }) {
           refresh. Physical replicas are included; unavailable buckets remain
           unknown.
         </p>
-        <div className="table-wrap">
+        <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Storage bucket records"
+            >
           <table>
             <thead>
               <tr>
@@ -595,7 +614,12 @@ function StorageView({ snapshot: s }: { snapshot: Snapshot }) {
           Dataset IDs, corpus contexts, shard records, and S3 objects are
           separate quantities.
         </p>
-        <div className="table-wrap">
+        <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Dataset catalog records"
+            >
           <table>
             <thead>
               <tr>
@@ -730,7 +754,12 @@ export function GpLibrary({ summary }: { summary: GP }) {
         {!library && !error && (
           <Empty>Loading hash-pinned program records…</Empty>
         )}
-        <div className="table-wrap">
+        <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Program library records"
+            >
           <table>
             <thead>
               <tr>
@@ -927,7 +956,12 @@ function Results({ snapshot: s }: { snapshot: Snapshot }) {
           {s.research.scope}. Git files, archive claims, exact S3 versions, and
           restoration proofs are distinct preservation milestones.
         </p>
-        <div className="table-wrap">
+        <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Research wave records"
+            >
           <table>
             <thead>
               <tr>
@@ -1002,7 +1036,12 @@ function Results({ snapshot: s }: { snapshot: Snapshot }) {
               archive_roots: wave.archive_roots,
             }}
           />
-          <div className="table-wrap">
+          <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Research measurements"
+            >
             <table>
               <thead>
                 <tr>
@@ -1119,9 +1158,10 @@ export default function App() {
             <button
               key={t}
               className={tab === t ? "selected" : ""}
+              aria-current={tab === t ? "page" : undefined}
               onClick={() => setTab(t)}
             >
-              <span className="nav-symbol">
+              <span className="nav-symbol" aria-hidden="true">
                 {["◫", "↗", "▦", "▱", "⌘", "◷"][i]}
               </span>
               {t}

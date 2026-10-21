@@ -1,19 +1,13 @@
 # D9 measurement record (CX-MET, BUILD ONLY)
 
-> **Generated outputs live outside the tree.** The parquet partitions and HTML dashboards this page
-> describes were removed from the source tree on 2026-10-21 (about 30 MB of regenerable output; the
-> repository keeps bulk data out of working trees). Links below open them at commit
-> [`ca6e15f1c`](https://github.com/neverhuman/JopeDime/tree/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/), the last one that carries them; the
-> `*SNAPSHOT.json` receipts beside this page keep their paths and SHA-256 digests.
-
 Daily Parquet, a static HTML dashboard, and read-only receipt adapters live here.
 This package measures retained Lane A observations. It does not execute programs,
 drain an outbox, launch a learner, publish to S3, spend a seal, or promote a model.
 Missing measurements are Parquet NULL and display as **unmeasured**.
 
-Open [dashboard.html](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard.html); its rows come from the committed
-[daily/2026-10-09.parquet](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-09.parquet) and
-[daily/2026-10-10.parquet](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-10.parquet) readback.
+Open [dashboard.html](dashboard.html); its rows come from the committed
+[daily/2026-10-09.parquet](daily/2026-10-09.parquet) and
+[daily/2026-10-10.parquet](daily/2026-10-10.parquet) readback.
 [SNAPSHOT.json](SNAPSHOT.json) pins 1,116 rows and the full custody receipt.
 The extraction implementation commit is
 `cbeca37700daf9404afd4b9fec3414573b919462`. Later optional rolling-adapter
@@ -163,9 +157,9 @@ retained cohort, green CI, and a qualified live learning loop remain separate.
 
 ## Owner 19:50Z scratch-run ingest: 2026-10-10
 
-The owner-authorized CPU receipt ingest adds [scratch-dashboard.html](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-dashboard.html)
+The owner-authorized CPU receipt ingest adds [scratch-dashboard.html](scratch-dashboard.html)
 with per-arm validation-loss and KL curves alongside the retained D9 dashboard.
-[scratch-daily/2026-10-10.parquet](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-daily/2026-10-10.parquet) has **349 rows**
+[scratch-daily/2026-10-10.parquet](scratch-daily/2026-10-10.parquet) has **349 rows**
 from **20 distinct receipt/partial sources**, observed at 20:09Z; no scoring or
 training runs execute in this analytics lane. [SCRATCH_SNAPSHOT.json](SCRATCH_SNAPSHOT.json)
 pins the extraction code commit `d7919d669a6232fd5d578590b4b307c5e3681894`, raw input
@@ -301,8 +295,8 @@ live writable DB. Per-context pairs stay in Parquet while dashboard tables show
 cohort summaries, validation/KL curves and costs. G/evaluator-core-hour remains
 unmeasured because there is no qualifying HWM/evaluator CPU join.
 
-Committed refresh: [context-dashboard.html](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/context-dashboard.html),
-[context-daily/2026-10-10.parquet](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/context-daily/2026-10-10.parquet), and
+Committed refresh: [context-dashboard.html](context-dashboard.html),
+[context-daily/2026-10-10.parquet](context-daily/2026-10-10.parquet), and
 [CONTEXT_SNAPSHOT.json](CONTEXT_SNAPSHOT.json) pin 13296 rows at 2026-10-10T20:32:52.817730+00:00
 with exact extraction source `430f8b377569dd4007cfe706566329b9040ffbce`.
 Source/fixture coverage is now 52 tests, all executed with zero errors/failures/skips.
@@ -313,7 +307,7 @@ CPU watcher was replaced with the remaining launch budget. No GPU jobs changed.
 
 ## Owner 2026-10-11 19:30Z refresh
 
-[dashboard-20261011.html](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard-20261011.html) reads back **148,485 rows** from the new [daily-20261011/](https://github.com/neverhuman/JopeDime/tree/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/) partitions. The snapshot observes provider metadata through **2026-10-11T19:56:05.102008+00:00**, including **147,369 scratch rows**, **1,116 retained D9 rows** and **1,034 retained fold pairs**. [DAY_20261011_SNAPSHOT.json](DAY_20261011_SNAPSHOT.json) binds every physical copy, output hash, kernel limit, successful driver and clean extraction commit `144b6041a8ca6a6c12d09bd4158b24232d5d3eab`. The large daily partition is stored as four shards below the repository's 5 MiB file limit; a row multiset hash proves that every record is retained. Older committed snapshots remain dated observations.
+[dashboard-20261011.html](dashboard-20261011.html) reads back **148,485 rows** from the new [daily-20261011/](daily-20261011/) partitions. The snapshot observes provider metadata through **2026-10-11T19:56:05.102008+00:00**, including **147,369 scratch rows**, **1,116 retained D9 rows** and **1,034 retained fold pairs**. [DAY_20261011_SNAPSHOT.json](DAY_20261011_SNAPSHOT.json) binds every physical copy, output hash, kernel limit, successful driver and clean extraction commit `144b6041a8ca6a6c12d09bd4158b24232d5d3eab`. The large daily partition is stored as four shards below the repository's 5 MiB file limit; a row multiset hash proves that every record is retained. Older committed snapshots remain dated observations.
 
 The refresh consumes G-ABL equal/tau/tau0/tau0-s11 receipts, OP R7/R8 terminals and R9 running receipts/paired metadata, current CX-KV and OP native KV inference, and CL sweep6 `773040d562805fc7ad11a254dab44fe10c8bdbe367a5a3e5465e514ec909d11c`. CL source and jobs are unchanged. The native indexed join checks ordered roster hashes, checkpoint parameters/updates and saved L6 macros; `r23_control` is now recognized as OP's comparator. The before/after failure is preserved in custody `r23-control-reproduction.json:1`.
 
@@ -396,7 +390,7 @@ Validation before extraction: **58/58 analytics fixtures passed**, zero failures
 
 ## Owner 2026-10-11 20:20Z expert-review metrics
 
-[dashboard-gap-20261011.html](https://github.com/neverhuman/JopeDime/blob/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard-gap-20261011.html) reads **198,859 rows** from [daily-gap-20261011/](https://github.com/neverhuman/JopeDime/tree/ca6e15f1c4dad721987f30825fe19b50bbf4e408/deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/), including **44,349 operational/parent records**. Nine shards preserve the complete row multiset and every file stays below 5 MiB. [DAY_GAP_20261011_SNAPSHOT.json](DAY_GAP_20261011_SNAPSHOT.json) pins source code `599295bb572e2f0dfd72824f69b375bc8a7596ff`, physical copies, driver limits and hashes. The native ingest observed at 2026-10-11T21:09:04Z; its base watch closed after three passes at the original deadline. Earlier snapshots remain dated evidence.
+[dashboard-gap-20261011.html](dashboard-gap-20261011.html) reads **198,859 rows** from [daily-gap-20261011/](daily-gap-20261011/), including **44,349 operational/parent records**. Nine shards preserve the complete row multiset and every file stays below 5 MiB. [DAY_GAP_20261011_SNAPSHOT.json](DAY_GAP_20261011_SNAPSHOT.json) pins source code `599295bb572e2f0dfd72824f69b375bc8a7596ff`, physical copies, driver limits and hashes. The native ingest observed at 2026-10-11T21:09:04Z; its base watch closed after three passes at the original deadline. Earlier snapshots remain dated evidence.
 
 G-S3GP denominator export `throughput-denominator-20261011.json:1` reconciles with the copied terminal `scratch-gp-xb3/receipt.json:1` at provider commit `9a030299620df3ca1ebc4b510ee086d0ef094ad7`. These are closed-run rates, not UTC-day allocations or qualified production rates.
 

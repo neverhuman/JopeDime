@@ -1416,16 +1416,18 @@ fn read_npz_arrays(path: &Path) -> Result<BTreeMap<String, NpyArray>> {
     let mut arrays = BTreeMap::new();
     for index in 0..archive.len() {
         let mut member = archive.by_index(index)?;
-        if !member.name().ends_with(".npy") {
-            continue;
-        }
-        let name = member
-            .name()
-            .rsplit('/')
-            .next()
-            .unwrap_or(member.name())
-            .trim_end_matches(".npy")
-            .to_owned();
+        let name = {
+            let member_name = member.name()?;
+            if !member_name.ends_with(".npy") {
+                continue;
+            }
+            member_name
+                .rsplit('/')
+                .next()
+                .unwrap_or(member_name.as_ref())
+                .trim_end_matches(".npy")
+                .to_owned()
+        };
         arrays.insert(name, parse_npy(&mut member)?);
     }
     Ok(arrays)

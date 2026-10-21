@@ -1396,14 +1396,14 @@ impl GbmModel {
 /// Reused per-feature histogram buffers for [`build_tree`]: gradient sum and row count per bin.
 struct HistScratch {
     gh: Vec<f64>,
-    count: Vec<u32>,
+    count: Vec<f64>,
 }
 
 impl HistScratch {
     fn new(nbins: usize) -> Self {
         HistScratch {
             gh: vec![0.0; nbins],
-            count: vec![0; nbins],
+            count: vec![0.0; nbins],
         }
     }
 }
@@ -1460,19 +1460,19 @@ fn build_tree(
         let col = &cols[f * n_rows..(f + 1) * n_rows];
         let (gh, count) = (&mut scratch.gh, &mut scratch.count);
         gh.fill(0.0);
-        count.fill(0);
+        count.fill(0.0);
         for &i in &rows {
             let b = col[i] as usize;
             gh[b] += grad[i];
-            count[b] += 1;
+            count[b] += 1.0;
         }
         let (mut gl, mut hl) = (0.0f64, 0.0f64);
         for b in 0..(nbins as usize - 1) {
             gl += gh[b];
-            hl += count[b] as f64;
+            hl += count[b];
             // An empty bin leaves (gl, hl) where the previous bin left them, so its candidate
             // gain equals that bin's and can never pass the strict `>` below: skip it.
-            if count[b] == 0 {
+            if count[b] == 0.0 {
                 continue;
             }
             let gr = g - gl;

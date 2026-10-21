@@ -1,5 +1,8 @@
 # Architecture
 
+For the dated current source boundaries and evidence limits, see the
+[runtime ownership map (2026-10-21)](coordination/runtime-ownership-20261021.md).
+
 > **Status on `main`:** this page describes the target design from the port plan. Run `jope --help` on `main` for the verbs that exist today. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary, with `hwm` and `scores` subcommands. See the README's "What this SHA actually does".
 
 JopeDime is one repository that holds the whole pipeline
@@ -60,56 +63,67 @@ flowchart TB
     ci[jope-ci<br/>cargo-artifact, build-dir report]
     obs[jope-observatory<br/>training observatory: axum server, collectors]
     cli[jope-cli<br/>the jope umbrella binary]
+    rt[jope-runtime<br/>native roster · fit/predict · selection · model.jope]
+    assets[jope-assets<br/>signed single-file package format]
+    app[jope-appliance<br/>the jopedime binary]
+    dist[jope-dist<br/>build-time packer and verifier]
   end
   subgraph vendored["vendored (upstream versions)"]
     sc[crates/smartcluster/*<br/>jain-smartcluster @ 715128f8, 7 crates]
   end
-  fm --> bg
-  fm --> camp
-  fm --> eng
-  fm --> pol
-  fm --> pipe
-  fm --> bench
-  fm --> motifs
-  fm --> obs
-  fm --> cli
-  bg -.gpu.-> camp
-  sc --> eng
-  paths --> eng
-  paths --> camp
-  paths --> pipe
-  paths --> learn
-  paths --> motifs
-  eng -.-> hyp
-  hyp --> cli
-  hyp -.-> pol
-  enc -.-> pol
-  pol -.-> pipe
-  pol -.-> bench
-  pol -.-> cli
-  data --> pipe
-  data --> learn
-  data --> models
-  data --> bench
-  data --> cli
-  pipe --> learn
-  pipe --> motifs
-  pipe --> bench
-  pipe --> cli
-  records --> learn
-  records --> ci
-  learn --> motifs
-  learn -.-> bench
-  learn --> cli
   arena --> bench
+  assets --> app
+  assets --> dist
   automl --> bench
   bench --> cli
-  motifs --> cli
+  bg -.-> camp
+  data --> bench
+  data --> cli
+  data --> learn
+  data --> models
+  data --> pipe
+  enc -.-> pol
+  eng -.-> hyp
+  fm --> bench
+  fm --> bg
+  fm --> camp
+  fm --> cli
+  fm --> eng
+  fm --> motifs
+  fm --> obs
+  fm --> pipe
+  fm --> pol
+  fm --> rt
+  hyp --> cli
+  hyp -.-> pol
+  learn -.-> bench
+  learn --> cli
+  learn --> motifs
   models --> cli
+  motifs --> cli
+  paths --> camp
+  paths --> eng
+  paths --> learn
+  paths --> motifs
+  paths --> pipe
+  pipe --> bench
+  pipe --> cli
+  pipe --> learn
+  pipe --> motifs
+  pol -.-> bench
+  pol -.-> cli
+  pol -.-> pipe
+  records --> ci
+  records --> learn
+  rt --> app
+  rt --> bench
+  rt --> dist
+  rt --> pipe
+  sc --> eng
 ```
 
-Edges are the normal (non-dev) path dependencies in `cargo metadata`; dotted edges are optional,
-feature-gated ones. Regenerate the list with `cargo metadata --format-version 1 --no-deps` when a
+Edges follow normal (non-dev) workspace path dependencies, from dependency to consumer;
+dotted edges are optional, feature-gated dependencies. Regenerate the list with `cargo metadata --format-version 1 --no-deps` when a
 crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-engine` (except
 `hyperion`'s optional feature) or `numpy-pcg64`; the self-play control plane lives in
 `jope-campaigns` binaries, not in a separate `jope-selfplay` crate.
@@ -135,12 +149,18 @@ crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-eng
 | `crates/jope-motifs` | `jope-motifs` | landed | Reusable program fragments: private tables, exact expansion and compatibility checks; `jope motifs`, hidden from the default help until the capability is published (owner decision, 2026-09-24). |
 | `crates/jope-records` | `jope-records` | landed | Verifiers and renderers of the committed records (core-IP findings, dispositions, claims, test inventory, task status, progress view, historical Elo replay) and the repository hygiene guards `coverage`, `rust-scope-check`, `parity-check`, `readme-benchmarks` and `repo-layout`; Rust ports of the retired Python verifiers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
 | `crates/jope-ci` | `jope-ci` | landed | CI and host-maintenance tooling: `cargo-artifact` (Cargo artifact selection) and the build-directory report; Rust ports of `deploy/ci` and `deploy/maintenance` Python helpers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
+| `crates/jope-runtime` | `jope-runtime` | landed | The appliance runtime: the native method roster, raw-cell encoding and bound prediction shared with `jope-bench` and `jope-pipeline` (which re-export them), CSV ingress, bounded automatic selection (`jope.runtime-select/v1`), the `model.jope` fitted-state file and run receipts. Depends on `feat-math` without its C++ runtime. |
+| `crates/jope-assets` | `jope-assets` | landed | The signed single-file package: 128-byte footer, canonical manifest, P-256 signature over the footer, per-asset authentication before decompression, bounded decoding; the writer behind feature `pack`. |
+| `crates/jope-appliance` | `jope-appliance` (binary `jopedime`) | landed; not published | The signed single-file executable: `version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses`. [deploy/appliance](../deploy/appliance/README.md). |
+| `crates/jope-dist` | `jope-dist` | landed | Build-time only: model lock with rights blockers, deterministic pack, release stage and seal, independent verify, dependency audit, notices, size, SBOM and provenance. |
 | `crates/jope-cli` | `jope-cli` (binary `jope`) | landed | The `jope` binary. Verbs today: `doctor`, `demo`, `benchmark`, `train` (Linux), `optimize`, `verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`, `train-step`, `route`, `models`, `datasets`, `pipeline`, and the hidden `motifs`. The target design's `propose`, `learn`, `hwm`, `scores`, `arena`, `campaign` and `selfplay` verbs do not exist (see the status note at the top). |
 | `crates/jope-observatory` | `jope-observatory` | landed | The training observatory: an axum read-only JSON API (`/api/v1/snapshot`, `/api/v1/gp`, …) and the `collect-datasets`, `collect-fleet`, `collect-storage` and `gp-source-stream` collector binaries. |
 | `crates/smartcluster/*` | `jain-smartcluster{,-core,-fabric,-daemon}`, `jain-worker`, `jainnode`, `scq` | landed (vendored at 715128f8, versions 8.0.0) | The scheduler the engine's native loop, smartcluster worker and native graph bind to; crates.io dependencies only. Not covered by `deploy/ci/version-consistency.sh`. |
 
-`xtools/registry-dump-legacy` is a standalone dev-only package with its own `[workspace]`;
-nothing else is excluded. The frozen kernel-v1 evaluator lineage (`deploy/kernel-v1/source`)
+`xtools/registry-dump-legacy` is a standalone dev-only package with its own `[workspace]`.
+The reviewed dependency sources under `vendor/security/*` are excluded from the product
+workspace and retain upstream versions; `vendor/security/PROVENANCE.json` and
+`deploy/ci/verify-vendor-security.py` bind their exact source inventory. The frozen kernel-v1 evaluator lineage (`deploy/kernel-v1/source`)
 was retired from the tree on 2026-09-28; `docs/archive/clean-base-manifest.json` gives its
 restore command.
 

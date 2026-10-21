@@ -277,6 +277,49 @@ fn agrees(actual: f64, expected: f64) -> bool {
     (actual - expected).abs() <= ABS_TOLERANCE + REL_TOLERANCE * actual.abs().max(expected.abs())
 }
 
+/// Compiler receipts are separate from deterministic emitted program bytes.
+/// Keep failed compiler output too; this never deletes prior retained evidence.
+fn run_rust_compiler(command: &mut Command, directory: &Path) {
+    use sha2::{Digest, Sha256};
+    let output = command
+        .output()
+        .unwrap_or_else(|error| panic!("{command:?}: {error}"));
+    fs::write(directory.join("rust-compile.stdout"), &output.stdout).unwrap();
+    fs::write(directory.join("rust-compile.stderr"), &output.stderr).unwrap();
+    let source = fs::read(directory.join("probe.rs")).unwrap();
+    let binary = if output.status.success() {
+        let bytes = fs::read(directory.join("rust-probe")).unwrap();
+        Some(serde_json::json!({
+            "path": "rust-probe",
+            "bytes": bytes.len(),
+            "sha256": format!("{:x}", Sha256::digest(&bytes)),
+        }))
+    } else {
+        None
+    };
+    let receipt = serde_json::json!({
+        "schema": "jope.gp-emitter-rust-compile/v1",
+        "program": command.get_program().to_string_lossy(),
+        "arguments": command.get_args().map(|arg| arg.to_string_lossy()).collect::<Vec<_>>(),
+        "source_path": "probe.rs",
+        "source_sha256": format!("{:x}", Sha256::digest(&source)),
+        "success": output.status.success(),
+        "exit_code": output.status.code(),
+        "exit_status": output.status.to_string(),
+        "binary": binary,
+    });
+    fs::write(
+        directory.join("rust-compile.json"),
+        serde_json::to_vec_pretty(&receipt).unwrap(),
+    )
+    .unwrap();
+    assert!(
+        output.status.success(),
+        "{command:?}: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
 fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path) {
     let rows = rows();
     let train: Vec<Vec<f64>> = (0..16)
@@ -308,11 +351,24 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
                 fs::write(directory.join("model.rs"), &source).unwrap();
                 let driver = format!("\n#[test] fn gp_probe(){{let rows={test_rows};let train={training};let y={y};let model=Model::fit(&train,&y[0]);let (f,q)=scalar_stage1_values(&rows);for v in f.into_iter().flatten().chain(model.predict(&rows)){{println!(\"V {{:016x}}\",v.to_bits());}}for v in q{{println!(\"Q {{}}\",v);}}}}\n");
                 fs::write(directory.join("probe.rs"), source + &driver).unwrap();
-                run(Command::new("rustc")
-                    .args(["--test", "--edition=2021", "-C", "opt-level=1"])
-                    .arg(directory.join("probe.rs"))
-                    .arg("-o")
-                    .arg(directory.join("rust-probe")));
+                // Retain this run's exact source, binary and command evidence without
+                // copying the standard library's full DWARF into every probe binary.
+                // strip=debuginfo preserves symbol names and all numerical/codegen flags.
+                run_rust_compiler(
+                    Command::new("rustc")
+                        .args([
+                            "--test",
+                            "--edition=2021",
+                            "-C",
+                            "opt-level=1",
+                            "-C",
+                            "strip=debuginfo",
+                        ])
+                        .arg(directory.join("probe.rs"))
+                        .arg("-o")
+                        .arg(directory.join("rust-probe")),
+                    directory,
+                );
                 vec![(
                     "Rust",
                     run(Command::new(directory.join("rust-probe")).args([
@@ -389,6 +445,12 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
 
 fn differential(shard: usize) {
     let directory = evidence_directory(&format!("shard-{shard}-"));
+    // Record the actual selected toolchain once per shard, outside source-byte comparisons.
+    fs::write(
+        directory.join("rustc-version.txt"),
+        run(Command::new("rustc").arg("-vV")),
+    )
+    .unwrap();
     for (case, program) in corpus()
         .iter()
         .enumerate()

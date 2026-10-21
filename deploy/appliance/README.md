@@ -5,21 +5,71 @@ offline Rust executable with its selected pretrained models and native AutoML
 alternatives. The proposed installed command is `jopedime`; the initial target is
 Linux x86-64 with glibc 2.36 or newer.
 
-**Status: design ready for review; appliance implementation and qualification are
-pending.** This documentation PR adds no executable, model bundle, deployment job,
-or new runtime capability. The existing [`jope` release procedure](../../docs/release/README.md)
-continues to describe the currently implemented release.
+**Status: CPU appliance implemented (native-only and fixture profiles); neural, GPU and
+release-host integration pending.** This directory holds the specification (#390, imported
+unchanged), its [amendments](AMENDMENTS.md), and the deployment inputs the implementation reads.
+The existing [`jope` release procedure](../../docs/release/README.md) is unchanged and still
+describes the only published release; no `jopedime` package has been published.
+
+What exists, with the evidence that proves it:
+
+| Capability | Where | Proof |
+| --- | --- | --- |
+| Signed single-file package: footer, manifest, signature, bounded per-asset authentication | `crates/jope-assets` | `tests/envelope.rs`, `tests/decode_bounds.rs` |
+| Native fit, save, reload and predict for all 26 task/recipe pairs; bounded `auto` selection | `crates/jope-runtime` | `tests/offline_fit_predict.rs`, `tests/method_roster.rs` |
+| The `jopedime` executable: commands, exit statuses, receipts, self-verification | `crates/jope-appliance` | `tests/single_file.rs` |
+| Model lock with rights blockers, deterministic pack, release stage and seal, audit, notices, SBOM, provenance | `crates/jope-dist` | `tests/closure.rs`, `tests/reproducible_pack.rs`, `tests/dependency_fence.rs`, `tests/schemas.rs` |
+| Fixture appliance built, packed and run alone in an empty directory with an empty environment; without a network and under `strace` where the host provides them (the receipt records which) | `build.sh`, `test-clean-host.sh` | `e2e-smoke` lane receipts |
+
+Not yet: the accepted step-60000 proposal path and the neural alternatives (P3–P4), CUDA (P1
+second half, P5), the derived-asset cache and worker processes (P5), and `release.sh`
+integration and publication (P6). The `full` profile is locked and *blocked* until then; see
+[models.lock.json](models.lock.json).
+
+## Build and run
+
+```bash
+export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
+# CI fixture: build, pack and sign with the development key, verify, size and SBOM.
+bash deploy/appliance/build.sh --profile fixture --cargo-profile dist-ci --out target/appliance/fixture
+bash deploy/appliance/test-clean-host.sh target/appliance/fixture/jopedime target/appliance/clean-host
+# Release scopes stop at a stage; the release host signs stage/signing-message.bin with cosign:
+bash deploy/appliance/build.sh --profile native-only --out target/appliance/native-only
+cargo run -p jope-dist -- seal --code target/appliance/native-only/code \
+  --stage target/appliance/native-only/stage --signature manifest.sig --out jopedime
+cargo run -p jope-dist -- verify --file jopedime     # trusts docs/release/signing.pub
+```
+
+```bash
+jopedime --version --json
+jopedime doctor
+jopedime fit --train train.csv --target y --output model.jope          # --method auto (default)
+jopedime predict --model model.jope --input rows.csv --output predictions.csv
+jopedime fit-predict --train train.csv --target y --input rows.csv --output predictions.csv
+jopedime verify-self
+jopedime licenses
+```
+
+Exit statuses: 0 success, 2 invalid input, 3 integrity or compatibility, 4 backend unavailable,
+5 time budget exhausted, 6 numerical failure, 7 output failure.
 
 | File | Purpose |
 | --- | --- |
 | [SPECIFICATION.md](SPECIFICATION.md) | Complete 22-section engineering specification, architecture diagrams, exact file changes, formats, CI, release flow, and acceptance criteria. |
 | [IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md) | Ordered implementation work packages and the evidence required to close each one. |
+| [AMENDMENTS.md](AMENDMENTS.md) | Corrections and decisions made while implementing: C++ in `feat-math`, CUDA linkage, CI shape, package format v1, trust anchor, rights, selection, measurements. |
+| [profiles/](profiles/) | `fixture` (CI), `native-only` (public), `full` (internal-restricted, blocked). |
+| [models.lock.json](models.lock.json) | Each profile's exact asset closure, rights and blockers (`jope-dist lock --check`). |
+| [dependencies-deny.toml](dependencies-deny.toml) | The shipped dependency fence (`jope-dist audit`). |
+| [limits.toml](limits.toml), [size-budgets.toml](size-budgets.toml) | Package/input bounds and measured size budgets. |
+| [fixtures/bundles/](fixtures/bundles/) | Manifests of the generated CI fixture tensors (no weights are committed). |
+| [build.sh](build.sh), [test-clean-host.sh](test-clean-host.sh) | Build-pack-verify, and the empty-directory run. |
 
 The specification was prepared on October 20, 2026, America/Denver, against commit
 [`95dcb0c0e44d95184607740aacd387bf5c007e89`](https://github.com/neverhuman/JopeDime/commit/95dcb0c0e44d95184607740aacd387bf5c007e89)
 and is imported unchanged. Its statements about work performed describe that review.
-Future implementation PRs must re-audit their merge base and record any design
-changes here and in the specification.
+Design changes made while implementing it are recorded in [AMENDMENTS.md](AMENDMENTS.md)
+rather than by editing the specification.
 
 ## Implementation contract
 
