@@ -16,6 +16,7 @@
 //! section hash, the model's own binding and the recipe against this build's registry.
 use crate::automl::Selection;
 use crate::budget::BudgetRecord;
+use crate::calibration::OutputTransform;
 use crate::methods::native::{predict_bound, Predictions};
 use crate::methods::registry::{
     rust_methods, task_spec, validate_classes, RustMethod, INPUT_POLICY,
@@ -58,6 +59,14 @@ pub struct Header {
     pub training_procedure: TrainingProcedure,
     pub retained_training_context: RetainedContext,
     pub created_by: CreatedBy,
+    /// The objective-aware output map applied after the native model (regression selections
+    /// that calibrated). Absent means raw native predictions; a reader that does not know this
+    /// field refuses the file rather than silently ignoring the map.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_transform: Option<OutputTransform>,
+    /// Numeric columns the selection objective read: never features, ignored in prediction input.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub auxiliary_columns: Vec<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -139,6 +148,13 @@ pub struct FitRecord<'a> {
     pub created_by: CreatedBy,
 }
 
+/// The output map a selection chose for its winner, if any.
+fn selected_transform(selection: Option<&Selection>) -> Option<OutputTransform> {
+    selection
+        .and_then(|s| s.calibration.as_ref())
+        .and_then(|c| c.output_transform)
+}
+
 const RETAINED_NOTE: &str = "native fitted parameters can embed training rows (kernel, \
      smoother and Gaussian-process heads keep support rows); treat this file as containing \
      training data";
@@ -160,7 +176,10 @@ impl FittedModel {
                 implementation: format!("feat_math::advanced_v3 {}", record.model.artifact_schema),
             },
             task: task::name(record.kind).to_owned(),
-            metric: task::metric(record.kind).to_owned(),
+            metric: record
+                .selection
+                .map_or(task::metric(record.kind), |s| s.metric.as_str())
+                .to_owned(),
             class_order: record.classes.to_vec(),
             target: record.target.to_owned(),
             input_schema: record
@@ -201,6 +220,12 @@ impl FittedModel {
                 note: RETAINED_NOTE.to_owned(),
             },
             created_by: record.created_by,
+            output_transform: selected_transform(record.selection),
+            auxiliary_columns: record
+                .selection
+                .and_then(|s| s.fitness.as_ref())
+                .map(|f| f.columns().into_iter().collect())
+                .unwrap_or_default(),
         };
         let fitted = Self {
             header,
@@ -244,6 +269,72 @@ impl FittedModel {
             return Err(fail("preprocessing policy differs from this build"));
         }
         let kind = self.kind()?;
+        let recorded_transform = h
+            .training_procedure
+            .selection
+            .as_ref()
+            .and_then(|s| s.get("calibration"))
+            .filter(|c| !c.is_null())
+            .and_then(|c| c.get("output_transform"))
+            .filter(|t| !t.is_null())
+            .map(|t| serde_json::from_value::<OutputTransform>(t.clone()))
+            .transpose()
+            .map_err(|e| fail(&format!("invalid output transform: {e}")))?;
+        if recorded_transform != h.output_transform {
+            return Err(fail("output transform differs from the selection record"));
+        }
+        if let Some(transform) = &h.output_transform {
+            transform.validate().map_err(|e| fail(&format!("{e:#}")))?;
+            if kind != TaskKind::Regression {
+                return Err(fail("only regression models carry an output transform"));
+            }
+        }
+        let recorded_columns: Vec<String> = h
+            .training_procedure
+            .selection
+            .as_ref()
+            .and_then(|s| s.get("fitness"))
+            .filter(|f| !f.is_null())
+            .map(|f| serde_json::from_value::<crate::fitness::Fitness>(f.clone()))
+            .transpose()
+            .map_err(|e| fail(&format!("invalid fitness: {e}")))?
+            .map(|f| f.columns().into_iter().collect())
+            .unwrap_or_default();
+        if recorded_columns != h.auxiliary_columns
+            || h.auxiliary_columns
+                .iter()
+                .any(|c| *c == h.target || h.input_schema.iter().any(|i| i.name == *c))
+        {
+            return Err(fail("objective columns differ from the selection record"));
+        }
+        if let Some(selection) = &h.training_procedure.selection {
+            if selection.get("metric").and_then(|v| v.as_str()) != Some(h.metric.as_str()) {
+                return Err(fail("selection metric differs from header"));
+            }
+            if let Some(spec) = selection.get("fitness").filter(|v| !v.is_null()) {
+                let fitness: crate::fitness::Fitness = serde_json::from_value(spec.clone())
+                    .map_err(|e| fail(&format!("invalid fitness: {e}")))?;
+                if kind != TaskKind::Regression
+                    || fitness.name() != h.metric
+                    || Some(
+                        fitness
+                            .identity()
+                            .map_err(|e| fail(&format!("invalid fitness: {e}")))?
+                            .as_str(),
+                    ) != selection.get("fitness_sha256").and_then(|v| v.as_str())
+                {
+                    return Err(fail("fitness identity differs from selection record"));
+                }
+            } else if h.metric != task::metric(kind)
+                || selection
+                    .get("fitness_sha256")
+                    .is_some_and(|value| !value.is_null())
+            {
+                return Err(fail("selection objective definition is missing"));
+            }
+        } else if h.metric != task::metric(kind) {
+            return Err(fail("named fit has a noncanonical task metric"));
+        }
         validate_classes(kind, &h.class_order).map_err(|e| fail(&format!("{e:#}")))?;
         let method = self.method()?;
         if method.dsl != h.method.recipe
@@ -285,8 +376,20 @@ impl FittedModel {
         &self.model.schema
     }
 
+    /// Native predictions, then the stored output map (regression with calibration only).
     pub fn predict(&self, table: &RawTable) -> Result<Predictions> {
-        predict_bound(&self.model, table, &self.header.class_order)
+        let predictions = predict_bound(&self.model, table, &self.header.class_order)?;
+        Ok(match (predictions, &self.header.output_transform) {
+            (Predictions::Values(values), Some(transform)) => {
+                let values = transform.apply_all(&values);
+                anyhow::ensure!(
+                    values.iter().all(|v| v.is_finite()),
+                    "calibrated prediction is not finite"
+                );
+                Predictions::Values(values)
+            }
+            (predictions, _) => predictions,
+        })
     }
 
     pub fn to_bytes(&self) -> Result<Vec<u8>> {

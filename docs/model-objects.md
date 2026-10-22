@@ -129,6 +129,13 @@ retain the original schema, category encoding and class order alongside them. Th
 not expand the emitter's numerical coverage or retrofit persistence into every standalone
 recipe's language-local `Model.fit`. Those recipes can adopt the adapter contract above.
 
+An appliance fitted with an objective may retain an output calibration after its native model.
+Object copies and `fitted` exports preserve that complete state and its predictions. When the
+calibration changes predictions, `bound-json` and portable source exports return an unsupported
+backend error before creating output; those formats cannot yet encode the extra map. Inspection,
+verification and inference still use the complete fitted object. The model MCP prediction tool
+accepts and ignores retained auxiliary columns just as CLI prediction does.
+
 ONNX is a useful optional interoperability target. Its [IR](https://onnx.ai/onnx/repo-docs/IR.html)
 and [custom operator mechanism](https://onnx.ai/onnx/intro/concepts.html) allow extension
 namespaces, but a runtime still needs implementations for those operators. A private ONNX

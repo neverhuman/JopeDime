@@ -182,6 +182,7 @@ impl Measurement {
                 train_r2: r.train_r2,
                 hold_r2: r.hold_r2,
                 rmse: r.rmse,
+                objective_loss: None,
                 seconds: r.seconds,
                 failure: r.failure.clone(),
                 island: None,

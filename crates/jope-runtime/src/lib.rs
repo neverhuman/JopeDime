@@ -16,13 +16,16 @@ pub mod api;
 pub mod automl;
 pub mod backend;
 pub mod budget;
+pub mod calibration;
 pub mod error;
+pub mod fitness;
 pub mod fitted;
 pub mod limits;
 pub mod methods;
 pub mod model_object;
 pub mod model_session;
 pub mod receipt;
+pub mod service;
 pub mod table;
 pub mod task;
 

@@ -1,0 +1,6 @@
+{
+  "metric": "omega",
+  "max_position": 1.0,
+  "cost": 0.0005,
+  "threshold": 0.0
+}

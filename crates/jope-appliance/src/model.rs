@@ -189,7 +189,7 @@ pub fn run(args: ModelArgs) -> anyhow::Result<()> {
         } => {
             let object = open(&model)?;
             if require_executable {
-                object.bound()?;
+                object.verify_executable()?;
             }
             json!(object.inspect()?)
         }
@@ -392,8 +392,12 @@ fn call_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
                 ..Limits::default()
             };
             let csv = jope_runtime::table::parse_csv(args.csv.as_bytes(), &limits)?;
-            let (rows, _) =
-                jope_runtime::table::prediction(&csv, fitted.schema(), &fitted.header.target)?;
+            let (rows, _) = jope_runtime::table::prediction_ignoring(
+                &csv,
+                fitted.schema(),
+                &fitted.header.target,
+                &fitted.header.auxiliary_columns,
+            )?;
             let budget = jope_runtime::budget::Budget::new(None, 1);
             let predictions = jope_runtime::api::predict(&fitted, &rows, &budget)?;
             Ok(
@@ -404,7 +408,7 @@ fn call_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
             let args: IdArgs = arguments(args)?;
             let object = ModelObject::read(&object_path(root, &args.id)?, MAX_FRAME as u64)?;
             if name == "model_verify" {
-                object.bound()?;
+                object.verify_executable()?;
             }
             if name == "model_export" {
                 let parts: BTreeMap<_, _> = object

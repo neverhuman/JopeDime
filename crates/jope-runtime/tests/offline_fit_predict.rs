@@ -372,3 +372,59 @@ fn importing_native_bytes_preserves_noncanonical_state_json_exactly() {
     let loaded = ModelObject::read(&path, Limits::default().max_model_bytes).unwrap();
     assert_eq!(loaded.parts()["model.jope"], file);
 }
+
+#[test]
+fn calibrated_object_round_trip_preserves_predictions_and_refuses_lossy_lowering() {
+    let limits = Limits::default();
+    let mut csv = String::from("x,y\n");
+    for i in 0..90 {
+        csv.push_str(&format!("{},{}\n", i, 20 + 3 * i + (i * 37) % 11));
+    }
+    let table = parse_csv(csv.as_bytes(), &limits).unwrap();
+    let train = training(
+        &table,
+        "y",
+        TaskChoice::Fixed(TaskKind::Regression),
+        &limits,
+    )
+    .unwrap();
+    let outcome = fit(
+        &train,
+        &FitOptions {
+            candidates: vec!["ridge".into()],
+            folds: 3,
+            fitness: Some(jope_runtime::fitness::Fitness::Pinball { quantile: 0.9 }),
+            ..FitOptions::default()
+        },
+        &Budget::new(None, 1),
+        &table.sha256,
+        CreatedBy::default(),
+    )
+    .unwrap();
+    let transform = outcome
+        .fitted
+        .header
+        .output_transform
+        .expect("quantile calibration");
+    assert!(!transform.is_identity());
+    let input = parse_csv(b"x\n1\n4\n", &limits).unwrap();
+    let (rows, _) = prediction(&input, &train.schema, "y").unwrap();
+    let expected =
+        predictions_csv(&predict(&outcome.fitted, &rows, &Budget::new(None, 1)).unwrap()).unwrap();
+    let object = jope_runtime::model_object::ModelObject::from_fitted(&outcome.fitted).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let path = object.save(root.path(), limits.max_model_bytes).unwrap();
+    let loaded = jope_runtime::model_object::load_fitted(&path, limits.max_model_bytes).unwrap();
+    assert_eq!(
+        expected,
+        predictions_csv(&predict(&loaded, &rows, &Budget::new(None, 1)).unwrap()).unwrap()
+    );
+    assert!(object.inspect().unwrap().executable);
+    for language in ["python", "rust", "javascript"] {
+        assert!(
+            object.export_source(language).is_err(),
+            "{language} dropped calibration"
+        );
+    }
+    assert!(object.bound().is_err(), "bound JSON dropped calibration");
+}

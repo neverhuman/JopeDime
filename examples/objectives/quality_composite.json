@@ -1,0 +1,19 @@
+{
+  "metric": "composite",
+  "terms": [
+    {
+      "weight": 0.8,
+      "scale": 0.01,
+      "fitness": {
+        "metric": "mae"
+      }
+    },
+    {
+      "weight": 0.2,
+      "scale": 0.05,
+      "fitness": {
+        "metric": "max_error"
+      }
+    }
+  ]
+}

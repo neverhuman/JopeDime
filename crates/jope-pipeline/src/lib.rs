@@ -70,7 +70,7 @@ pub mod supervisor;
 pub mod synthesized_recipe;
 pub mod test_score;
 
-pub use receipt::{Receipt, RECEIPT_SCHEMA_ID};
+pub use receipt::{Receipt, OBJECTIVE_SCHEMA_ID, RECEIPT_SCHEMA_ID};
 pub use run::{run, Policy, RunOptions};
 
 /// Version stamped into every receipt.

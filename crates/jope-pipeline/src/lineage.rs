@@ -193,10 +193,7 @@ pub fn seeds_after(run: &VerifiedRun) -> Result<Vec<Champion>> {
     let ranking = run.ranking()?;
     let champions: Vec<Champion> = ranking
         .into_iter()
-        .map(|best| Champion {
-            genome: best.genome,
-            rmse: best.validation_rmse,
-        })
+        .map(|best| Champion::by_rmse(best.genome, best.validation_rmse))
         .collect();
     Ok(islands::next_seeds(&champions, search::ELITES))
 }
@@ -405,6 +402,13 @@ pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
     ensure!(
         options.run.seed_genomes.is_none() && options.run.incumbent.is_none(),
         "evolve seeds its own rounds; pass round 1's seeds with --seeds"
+    );
+    // A lineage carries its champions by RMSE and verifies that RMSE never regresses between
+    // rounds, so an objective-ranked round could not be carried or compared.
+    ensure!(
+        options.run.objective.is_none(),
+        "a lineage ranks and verifies its rounds by held-out RMSE; run an objective-ranked \
+         search with jope pipeline run --fitness"
     );
     let output = &options.output;
     check_output(output)?;
@@ -1388,6 +1392,22 @@ mod tests {
     /// as "already holds a lineage". Anything in `--output`, an unrelated file included, is now
     /// refused before a byte is written, and so is an `--output` that is not a directory. An
     /// empty directory is accepted: the same command runs once the stale entry is removed.
+    #[test]
+    fn an_objective_ranked_lineage_is_refused_before_writing() {
+        let temp = tempfile::tempdir().unwrap();
+        let out = temp.path().join("objective");
+        let run = RunOptions {
+            objective: Some(jope_runtime::fitness::Fitness::Mae {}),
+            ..template(10)
+        };
+        let error = format!("{:#}", evolve_into(&out, 2, false, run).unwrap_err());
+        assert!(
+            error.contains("ranks and verifies its rounds by held-out RMSE"),
+            "{error}"
+        );
+        assert!(!out.exists());
+    }
+
     #[test]
     fn a_non_empty_output_is_refused_before_writing_and_the_emptied_one_runs() {
         let temp = tempfile::tempdir().unwrap();

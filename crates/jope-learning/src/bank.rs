@@ -406,10 +406,7 @@ pub fn export(
         .collect();
     let champions: Vec<jope_pipeline::islands::Champion> = entries
         .iter()
-        .map(|e| jope_pipeline::islands::Champion {
-            genome: e.genome.clone(),
-            rmse: e.validation_rmse,
-        })
+        .map(|e| jope_pipeline::islands::Champion::by_rmse(e.genome.clone(), e.validation_rmse))
         .collect();
     let chosen = jope_pipeline::islands::next_seeds(&champions, top);
     let mut genomes = Vec::new();

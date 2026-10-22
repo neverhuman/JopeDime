@@ -74,6 +74,7 @@ script and its plotting dependency; that is not needed to typeset a fresh checko
 | `sections/03-method.tex` | Existing model lineages, protected interface, support and learning objectives |
 | `sections/04-evidence.tex` | Code/report distinctions and exploratory four-artifact comparison |
 | `sections/05-protocol.tex` | Prospective family-level experiments and Move42 criteria |
+| `sections/05b-objectives.tex` | Objectives as part of the task: decision losses, objective-conditioned commitment and controls |
 | `sections/06-accounting.tex` | Token categories, yield and symmetric cost amortization |
 | `sections/07-discussion.tex` | Limitations, disclosure and future scope |
 | `sections/08-conclusion.tex` | Evidence-bounded conclusion |

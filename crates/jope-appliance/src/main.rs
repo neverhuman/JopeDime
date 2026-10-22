@@ -363,8 +363,28 @@ impl Run {
     fn fit(&mut self, train: &TrainArgs, budget: &Budget) -> anyhow::Result<FittedModel> {
         let choice = TaskChoice::parse(&train.task)
             .ok_or_else(|| Failure::input(format!("unknown task {:?}", train.task)))?;
+        let fitness = train
+            .fitness
+            .as_deref()
+            .map(load_fitness)
+            .transpose()
+            .map_err(|e| Failure::input(format!("fitness: {e:#}")))?;
+        let calibration = jope_runtime::calibration::Calibration::parse(&train.calibration)
+            .ok_or_else(|| {
+                Failure::input(format!("unknown calibration {:?}", train.calibration))
+            })?;
         let csv = self.read_csv("train", &train.train)?;
-        let training = table::training(&csv, &train.target, choice, &self.limits())?;
+        let auxiliary = fitness
+            .as_ref()
+            .map(jope_runtime::fitness::Fitness::columns)
+            .unwrap_or_default();
+        let training = table::training_with_auxiliary(
+            &csv,
+            &train.target,
+            choice,
+            &self.limits(),
+            &auxiliary,
+        )?;
         self.receipt.task = Some(TaskRecord {
             task: task::name(training.kind).to_owned(),
             reason: training.task_reason.clone(),
@@ -377,6 +397,16 @@ impl Run {
             method: train.method.clone(),
             candidates: train.candidates.clone(),
             folds: train.folds,
+            fitness,
+            calibration,
+            validation: if train.validation == "forward" {
+                jope_runtime::automl::Validation::Forward { gap: train.gap }
+            } else {
+                if train.gap != 0 {
+                    return Err(Failure::input("--gap requires --validation forward"));
+                }
+                jope_runtime::automl::Validation::Iid {}
+            },
         };
         let outcome = api::fit(&training, &options, budget, &csv.sha256, self.created_by())?;
         self.receipt.timings.select_seconds = outcome.select_seconds;
@@ -399,7 +429,12 @@ impl Run {
     ) -> anyhow::Result<()> {
         let csv = self.read_csv("input", input)?;
         let started = Instant::now();
-        let (rows, ignored) = table::prediction(&csv, fitted.schema(), &fitted.header.target)?;
+        let (rows, ignored) = table::prediction_ignoring(
+            &csv,
+            fitted.schema(),
+            &fitted.header.target,
+            &fitted.header.auxiliary_columns,
+        )?;
         self.receipt.ignored_columns = ignored;
         let predictions = api::predict(fitted, &rows, budget)?;
         self.receipt.timings.predict_seconds = started.elapsed().as_secs_f64();
@@ -476,9 +511,28 @@ fn summary_line(command: &str, receipt: &Receipt) {
             _ => format!(" task={} rows={}", t.task, t.rows),
         })
         .unwrap_or_default();
+    let objective = receipt
+        .selection
+        .as_ref()
+        .filter(|s| s.fitness.is_some())
+        .map(|s| {
+            let calibrated = s
+                .calibration
+                .as_ref()
+                .and_then(|c| c.output_transform)
+                .map_or("", |t| {
+                    if t.intercept == 0.0 && t.slope == 1.0 {
+                        " floored"
+                    } else {
+                        " calibrated"
+                    }
+                });
+            format!(" objective={}{calibrated}", s.metric)
+        })
+        .unwrap_or_default();
     let outputs: Vec<&str> = receipt.outputs.iter().map(|o| o.path.as_str()).collect();
     eprintln!(
-        "jopedime {command}:{task}{method} device={} wrote {} in {:.2}s",
+        "jopedime {command}:{task}{method}{objective} device={} wrote {} in {:.2}s",
         receipt.device.selected,
         outputs.join(", "),
         receipt.timings.total_seconds
@@ -696,7 +750,112 @@ fn main() -> ExitCode {
             output,
             common,
         } => run_fit_predict(&train, &input, &output, &common),
+        Command::Fitness { command } => report(match command {
+            cli::FitnessCommand::List => {
+                print_json(&jope_runtime::service::catalog());
+                Ok(())
+            }
+            cli::FitnessCommand::Validate { spec } => (|| {
+                let fitness = load_fitness(&spec)?;
+                print_json(&jope_runtime::service::describe(&fitness)?);
+                Ok(())
+            })(),
+            cli::FitnessCommand::Schema => {
+                print_json(&jope_runtime::fitness::schema());
+                Ok(())
+            }
+            cli::FitnessCommand::Evaluate { input } => (|| {
+                use std::io::Read;
+                // Read at most one byte past the limit, so an oversized file is never loaded.
+                let mut bytes = Vec::new();
+                std::fs::File::open(input)?
+                    .take((jope_runtime::service::MAX_MESSAGE_BYTES + 1) as u64)
+                    .read_to_end(&mut bytes)?;
+                anyhow::ensure!(
+                    bytes.len() <= jope_runtime::service::MAX_MESSAGE_BYTES,
+                    "evaluation request too large"
+                );
+                let request = serde_json::from_slice(&bytes)?;
+                print_json(&jope_runtime::service::evaluate(request)?);
+                Ok(())
+            })(),
+        }),
+        Command::Mcp => report(serve(true)),
+        Command::Api => report(serve(false)),
         Command::VerifySelf(flag) => report(verify_self(flag.json)),
         Command::Licenses(flag) => report(licenses(flag.json)),
     }
+}
+
+fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::Fitness> {
+    let value = if let Some(path) = text.strip_prefix('@') {
+        let mut file = std::fs::File::open(path)?;
+        use std::io::Read;
+        let mut bytes = Vec::new();
+        file.by_ref()
+            .take((jope_runtime::fitness::MAX_SPEC_BYTES + 1) as u64)
+            .read_to_end(&mut bytes)?;
+        String::from_utf8(bytes)?
+    } else {
+        text.to_owned()
+    };
+    jope_runtime::fitness::Fitness::parse(&value)
+}
+
+fn serve(mcp: bool) -> anyhow::Result<()> {
+    use std::io::{BufRead, Read, Write};
+    let package = bootstrap::open()?;
+    let mut server = jope_runtime::service::Server::new(CreatedBy {
+        source_sha40: bootstrap::source_sha40(),
+        package_manifest_sha256: package
+            .as_ref()
+            .map(|p| bootstrap::summary(p).manifest_sha256),
+        package_profile: package.as_ref().map(|p| p.manifest().profile.clone()),
+    });
+    let mut input = std::io::stdin().lock();
+    let mut output = std::io::stdout().lock();
+    loop {
+        let mut bytes = Vec::new();
+        input
+            .by_ref()
+            .take((jope_runtime::service::MAX_MESSAGE_BYTES + 1) as u64)
+            .read_until(b'\n', &mut bytes)?;
+        if bytes.is_empty() {
+            break;
+        }
+        let response = if bytes.len() > jope_runtime::service::MAX_MESSAGE_BYTES {
+            // Skip the rest of the oversized line and answer it; the session goes on.
+            if !bytes.ends_with(b"\n") {
+                let mut rest = Vec::new();
+                loop {
+                    rest.clear();
+                    let read = input
+                        .by_ref()
+                        .take(64 * 1024)
+                        .read_until(b'\n', &mut rest)?;
+                    if read == 0 || rest.ends_with(b"\n") {
+                        break;
+                    }
+                }
+            }
+            Some(
+                serde_json::json!({"jsonrpc":"2.0","id":null,"error":{"code":-32600,
+                "message":format!("message larger than {} bytes",
+                    jope_runtime::service::MAX_MESSAGE_BYTES)}}),
+            )
+        } else {
+            match serde_json::from_slice(&bytes) {
+                Ok(value) => server.dispatch(value, mcp),
+                Err(error) => Some(
+                    serde_json::json!({"jsonrpc":"2.0", "id":null,"error":{"code":-32700,"message":error.to_string()}}),
+                ),
+            }
+        };
+        if let Some(response) = response {
+            serde_json::to_writer(&mut output, &response)?;
+            writeln!(output)?;
+            output.flush()?;
+        }
+    }
+    Ok(())
 }

@@ -331,7 +331,17 @@ impl ModelObject {
     pub fn bound(&self) -> Result<feat_math::advanced_v3::BoundModel> {
         self.require_executable()?;
         if self.manifest.format == APPLIANCE {
-            return Ok(self.fitted()?.model);
+            let fitted = self.fitted()?;
+            if fitted
+                .header
+                .output_transform
+                .is_some_and(|map| !map.is_identity())
+            {
+                return Err(Failure::backend(
+                    "bound/source export cannot preserve this model's output calibration; export object or fitted state instead",
+                ));
+            }
+            return Ok(fitted.model);
         }
         let model: feat_math::advanced_v3::BoundModel =
             crate::strict_json::decode(&self.parts[&self.manifest.primary])
@@ -379,10 +389,21 @@ impl ModelObject {
         Ok(())
     }
 
+    /// Verify the complete executable state without reducing an appliance to its native model.
+    pub fn verify_executable(&self) -> Result<()> {
+        self.require_executable()?;
+        if self.manifest.format == APPLIANCE {
+            self.fitted()?;
+        } else {
+            self.bound()?;
+        }
+        Ok(())
+    }
+
     pub fn inspect(&self) -> Result<Inspection> {
         let unsupported = self.unsupported();
         if unsupported.is_empty() {
-            self.bound()?;
+            self.verify_executable()?;
         }
         Ok(Inspection {
             schema: INSPECTION_SCHEMA,

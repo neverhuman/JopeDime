@@ -129,8 +129,12 @@ incremental = false
 panic = "unwind"
 
 # Cold glue at size; measured against opt-level 3 in deploy/appliance/size-budgets.toml.
+# `strip` is repeated on purpose: with an override that omits it, Cargo passes
+# `-C strip=debuginfo` to this crate, which links the executable, and the symbol tables stayed in
+# (deploy/appliance/AMENDMENTS.md A13).
 [profile.dist.package.jope-appliance]
 opt-level = "s"
+strip = "symbols"
 [profile.dist.package.clap_builder]
 opt-level = "s"
 

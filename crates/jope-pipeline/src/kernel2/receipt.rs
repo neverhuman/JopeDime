@@ -101,6 +101,13 @@ pub fn derived_schema() -> serde_json::Value {
             schema["$defs"][name]["additionalProperties"] = false.into();
         }
     }
+    // An observation's objective loss belongs to objective-ranked pipeline searches. Kernel2
+    // never ranks by an objective and never writes it, so v4 keeps its frozen shape.
+    schema
+        .pointer_mut("/$defs/ObservationRecord/properties")
+        .and_then(serde_json::Value::as_object_mut)
+        .and_then(|properties| properties.remove("objective_loss"))
+        .expect("observations carry an optional objective loss");
     schema
 }
 
