@@ -10,13 +10,18 @@ output=$(realpath -m -- "$1")
 mkdir -p -- "$output"
 export GIT_OPTIONAL_LOCKS=0
 python3 deploy/ci/audit-source.py --repo "$PWD" --output "$output/input"
+read -r manifest_sha256 _ < <(sha256sum -- "$output/input/SOURCE_MANIFEST.json")
 status=0
 "$auditor" audit "$output/input/source" --full --read-only --no-badge --no-score-history --mode standard \
   --json "$output/repo-score.json" --md "$output/repo-score.md" \
   --timings-json "$output/timings.json" \
   --github-step-summary "$output/summary.md" \
   --repair-queue-jsonl "$output/repair-queue.jsonl" || status=$?
+verification_status=0
+python3 -B deploy/ci/verify-audit-report.py "$output" --audit-exit "$status" \
+  --expected-manifest-sha256 "$manifest_sha256" || verification_status=$?
 if [[ -f "$output/summary.md" && -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   cat "$output/summary.md" >> "$GITHUB_STEP_SUMMARY"
 fi
-exit "$status"
+if [[ "$status" != 0 ]]; then exit "$status"; fi
+exit "$verification_status"

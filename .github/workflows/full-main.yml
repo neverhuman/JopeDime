@@ -118,3 +118,30 @@ jobs:
         with:
           name: full-cpu-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/full-cpu-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
+
+  audit:
+    # Reuse the admitted trusted-main workflow; no new runner/host admission.
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, jope-full-cpu]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Runner provenance and approved resources
+        uses: ./.github/actions/runner-provenance
+      - name: Install pinned full-source auditor
+        run: bash deploy/ci/install-jankurai.sh
+      - name: Full default-policy Jankurai audit and source re-verification
+        env:
+          JANKURAI_NO_UPDATE_CHECK: "1"
+          JANKURAI_BIN: ${{ github.workspace }}/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai
+        run: |
+          bash ops/ci/jankurai.sh "target/full-audit/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+      - name: Retain complete audit evidence including failed gates
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: full-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/full-audit/${{ github.run_id }}/${{ github.run_attempt }}/
