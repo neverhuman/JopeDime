@@ -37,6 +37,11 @@ report = {
                  "minimum_score": floor, "hard_findings": int(failed), "soft_findings": 0},
     "findings": [{"severity": "high", "hardness": "hard"}] if failed else [],
 }
+if mode == "severity":
+    report["findings"] = [{"severity": "critical", "hardness": "soft"}]
+    report["decision"]["soft_findings"] = 1
+if mode == "raw":
+    report["raw_score"] = 1
 if mode == "policy":
     report["policy_fingerprint"] = "sha256:" + "0" * 64
 if mode == "scope":
@@ -50,6 +55,11 @@ for flag, value in [
 ]:
     pathlib.Path(args[args.index(flag) + 1]).write_text(value)
 output = pathlib.Path(args[args.index("--json") + 1]).parent
+if mode == "duplicate":
+    path = output / "repo-score.json"
+    path.write_text('{"score":0,' + path.read_text()[1:])
+if mode == "nonfinite":
+    (output / "timings.json").write_text('{"elapsed":NaN}')
 if mode == "malformed":
     (output / "repo-score.json").write_text("{")
 if mode == "source":
@@ -139,7 +149,7 @@ class AuditLaneTests(unittest.TestCase):
 
     def test_changed_protocol_or_evidence_cannot_pass(self):
         for mode in ("policy", "scope", "counts", "malformed", "source", "extra",
-                     "manifest", "archive", "link", "mode"):
+                     "manifest", "archive", "link", "mode", "severity", "raw", "duplicate", "nonfinite"):
             with self.subTest(mode=mode):
                 self.assertNotEqual(0, self.run_audit(mode).returncode)
 

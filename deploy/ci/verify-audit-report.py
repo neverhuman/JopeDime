@@ -21,6 +21,20 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def decode(text):
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            require(key not in result, f"duplicate JSON key: {key}")
+            result[key] = value
+        return result
+
+    def reject_constant(value):
+        raise ValueError(f"nonfinite JSON constant: {value}")
+
+    return json.loads(text, object_pairs_hook=unique, parse_constant=reject_constant)
+
+
 def regular(path):
     require(not path.is_symlink() and path.is_file(), f"missing/nonregular evidence: {path.name}")
     return path
@@ -33,11 +47,11 @@ def validate(output, audit_exit, expected_manifest):
         regular(output / name)
     require((output / "repo-score.md").stat().st_size > 0, "empty Markdown report")
     require((output / "summary.md").stat().st_size > 0, "empty step summary")
-    require(isinstance(json.loads((output / "timings.json").read_text()), dict), "invalid timings")
+    require(isinstance(decode((output / "timings.json").read_text()), dict), "invalid timings")
     for line in (output / "repair-queue.jsonl").read_text().splitlines():
-        require(isinstance(json.loads(line), dict), "invalid repair queue entry")
+        require(isinstance(decode(line), dict), "invalid repair queue entry")
 
-    report = json.loads((output / "repo-score.json").read_text())
+    report = decode((output / "repo-score.json").read_text())
     for field, value in (
         ("auditor_version", "1.7.5"), ("schema_version", "1.9.0"),
         ("standard_version", "0.9.0"), ("paper_edition", "2026.05-ed8"),
@@ -55,8 +69,11 @@ def validate(output, audit_exit, expected_manifest):
             "decision floor differs from policy")
     for field in ("score", "raw_score"):
         require(type(report[field]) is int and 0 <= report[field] <= 100, f"invalid {field}")
+    require(report["score"] <= report["raw_score"], "score exceeds raw score")
     findings = report["findings"]
     require(isinstance(findings, list), "invalid findings")
+    require(all(item.get("severity") in ("critical", "high", "medium", "low", "info")
+                for item in findings), "unknown finding severity")
     hard = sum(item.get("hardness") == "hard" for item in findings)
     soft = sum(item.get("hardness") == "soft" for item in findings)
     require(hard + soft == len(findings), "unknown finding hardness")
@@ -71,10 +88,12 @@ def validate(output, audit_exit, expected_manifest):
     require(passed == (audit_exit == 0), "auditor exit and policy decision disagree")
     if passed:
         require(report["score"] >= 85 and hard == 0, "passing report violates policy")
+        require(not any(item["severity"] in policy["fail_on"] for item in findings),
+                "passing report contains a blocking severity")
 
     manifest_path = regular(output / "input/SOURCE_MANIFEST.json")
     require(digest(manifest_path) == expected_manifest, "input manifest changed during audit")
-    manifest = json.loads(manifest_path.read_text())
+    manifest = decode(manifest_path.read_text())
     require(manifest["schema"] == "jope.audit-product-input/v1", "unknown input manifest")
     for field in ("source_sha", "checkout_sha", "tree_sha"):
         require(re.fullmatch(r"[0-9a-f]{40}", manifest[field]) is not None, f"invalid {field}")
