@@ -152,8 +152,13 @@ it here cross the boundary, not predictions.
   without candidate source, column names or raw cell values:
 
   ```json
-  {"schema":"jope.invent.progress.v1","sequence":3,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.69,"seconds_budget":240.0,"emitted_tokens":188179,"emitted_tokens_by_language":{"rust":90305,"python":64838,"cpp17":9978,"javascript":23058},"emitted_tokens_per_second":70008.0}
+  {"schema":"jope.invent.progress.v1","kind":"progress","sequence":3,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.69,"seconds_budget":240.0,"emitted_tokens":188179,"emitted_tokens_by_language":{"rust":90305,"python":64838,"cpp17":9978,"javascript":23058},"emitted_tokens_per_second":70008.0}
+  {"schema":"jope.invent.progress.v1","kind":"candidate","sequence":1,"elapsed_s":0.012,"generation":0,"cut":0,"hold_r2":0.9996,"hold_rmse":0.0874,"status":"measured"}
   ```
+
+  Every record has `schema`, `kind` (`progress` or `candidate`) and `sequence`, one counter over
+  both kinds; the fixed labels are `schema`, `kind`, `phase` and `status`. The `progress` sample
+  above omits `generations` and `population_r2` for width.
 
   `cut` is the 0-based position of the current cut among the `cuts` searched (during the
   comparison phase, the cut the latest evaluation ran on; cuts may be compared concurrently).
@@ -176,7 +181,19 @@ it here cross the boundary, not predictions.
   time has elapsed). These are source tokens of generated candidates, not neural model tokens,
   and no compiler checks them, so they correspond to that ledger's `emitted_tokens`, not its
   `passed_tokens`. Emitting is paid only when `--events` is given.
-  At generation/comparison boundaries, updates are attempted at most once per second except
+  `generations`, the total the search will run, is `null`: the search stops on its evaluation
+  and seconds bounds, so the count is not fixed in advance. `population_r2` lists the held-out
+  R^2 of the candidates the latest generation ended with (carried survivors and newly measured
+  candidates, every island): finite values only, sorted descending, evenly downsampled to at most
+  64, and halved again while the record would exceed 2048 bytes (typical R^2 values keep all 64;
+  only extreme magnitudes shorten it). Later `progress` records repeat the latest snapshot, and it
+  is `null` before the first generation ends.
+  `candidate` records report one evaluation each as evaluations finish: `generation` is the
+  cumulative 0-based index of its generation (in the comparison phase, the generations completed),
+  `cut` the cut it ran on, `status` is `measured` or `failed`, and `hold_r2`/`hold_rmse` are its
+  finite held-out scores or `null` when it failed. At most five are attempted per second; a newer
+  evaluation replaces the waiting one, and the waiting one is attempted when the search ends.
+  At generation/comparison boundaries, `progress` updates are attempted at most once per second except
   observed improvements and cut/search ends. Improvements within one generation are coalesced.
   One process-wide worker serves all event files from a 64-record queue, with at most 2048 bytes
   per record plus its current record. Search threads never wait for writes or join that worker.
