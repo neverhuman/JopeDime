@@ -128,12 +128,13 @@ splits, one seed; `bash examples/objectives/real-world/fetch.sh && bash examples
 | California houses | `mape:epsilon=1` | 0.210 | 0.210 | **0.195** (−7%) |
 | Roadside PM10 | `pinball:quantile=0.9` | 0.240 | 0.240 | **0.122** (−49%) |
 | Roadside NO2 | `asymmetric_absolute:under_cost=4,over_cost=1` | 0.975 | 0.975 | **0.629** (−35%) |
-| S&P 500, monthly | `sortino:cost=0.001,periods_per_year=12` (higher is better) | 0.894 | 0.894 | **0.933** (+4%) |
-| French motor claims | exposure-weighted Poisson deviance | undefined¹ | 0.492 | **0.475** |
+| S&P 500, monthly | `sortino:cost=0.001,periods_per_year=12` (higher is better) | 0.783 | **1.155** (+48%) | 0.839 (+7%) |
+| French motor claims | exposure-weighted Poisson deviance | undefined¹ | 0.789 | **0.637** (−19%) |
 
-¹ The RMSE-selected learner predicts negative claim rates for 68 of 6,780 test policies. On five
+¹ The RMSE-selected learner predicts non-positive claim rates for 80 of 6,781 test policies. On four
 tables the objective picked the same learner as RMSE: choosing among squared-error learners is not
-enough, which is why the calibration step exists. Ranking written programs by the objective is not
+enough, which is why the calibration step exists. On the S&P series selection alone did best; the
+calibrated arm settled on a nearly constant full position. Ranking written programs by the objective is not
 enough on its own either: on the ten committed regression datasets it lowered sealed-test pinball
 loss on four ([search benchmark](examples/objectives/real-world/README.md#program-search-ranked-by-the-objective)).
 
@@ -183,7 +184,7 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,881 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,886 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
 | Coverage map | 836 items over 27 lanes <sup>7</sup> |

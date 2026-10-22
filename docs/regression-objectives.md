@@ -63,9 +63,9 @@ loss for selection; both values are recorded.
 | `calmar`, `omega` | max | Growth over drawdown; gains above a threshold over shortfalls below it. |
 | `expected_shortfall` | min | Mean loss of the worst `alpha` fraction of net returns (CVaR). |
 | `hit_rate` | max | Share of nonzero targets whose sign is predicted. |
-| `normalized_gini` | max | Ranking quality: Lorenz-curve Gini over the perfect ranking's (actuarial lift; Kaggle). |
+| `normalized_gini` | max | Ranking quality: Lorenz-curve Gini over the perfect ranking's (actuarial lift; Kaggle). Tied predictions share their mean target, so row order earns nothing. |
 | `kge` | max | Kling–Gupta efficiency for streamflow (Gupta et al., 2009). |
-| `capture_at` | max | Share of the target total captured by the top `fraction` of rows (targeting, fraud). |
+| `capture_at` | max | Share of the target total captured by the top `fraction` of rows (targeting, fraud); ties share their mean target. |
 
 Undefined values — a constant target for R², a zero-risk Sharpe, a negative prediction under a
 deviance, an overflow — fail the candidate with its reason. They never become artificial perfect
@@ -110,13 +110,15 @@ Two combinators complete the grammar:
 
 - **Weighted**: `{"metric":"weighted","weights":<expression>,"fitness":<objective>}` gives rows
   nonnegative weights — an exposure column for claim frequency, a notional, `abs(y)`. Weighted R²,
-  Gini, WAPE and quantiles use their weighted definitions; objectives whose meaning weights would
+  Gini, WAPE and quantiles use their weighted definitions (equal weights reproduce the unweighted
+  values exactly, quantiles included); objectives whose meaning weights would
   change (`max_error`, `spearman`, `kge`, strategy metrics) refuse them.
 - **Composite**: `{"metric":"composite","terms":[{"weight":w,"scale":s,"fitness":<objective>}]}`
   sums `w·loss/s` over terms, each converted to a minimization loss first. Choose scales from
   business units before selection.
 
-Limits: expressions have depth ≤ 16 and ≤ 256 nodes, compositions depth ≤ 8 and ≤ 64 objectives,
+Limits: expressions have depth ≤ 16 and at most 256 nodes in one whole specification,
+compositions depth ≤ 8 and ≤ 64 objectives,
 at most 16 columns and 32 KiB per specification. JSON objects reject unknown fields. There is no
 code execution, file, network or callback access from an objective. The grammar is
 `schemas/jope.regression-fitness.v1.schema.json`; `jopedime fitness schema` prints it.
@@ -133,17 +135,24 @@ pred' = max(intercept + slope · pred, lower)      slope > 0
 ```
 
 - **Learned on held-out predictions.** For each candidate, the map applied to fold *k* is learned
-  on the out-of-fold prediction/label pairs of the other folds (forward validation: earlier folds
-  only), never on fold *k*'s own pairs. As in stacking, fold *k*'s labels still trained the models
-  that produced the other folds' predictions; with two map parameters this second-order effect is
-  small, and forward validation removes it. A candidate keeps its raw predictions unless
-  calibration improves this cross-fitted score.
+  on the out-of-fold prediction/label pairs of the other folds, never on fold *k*'s own pairs.
+  With forward validation it uses only the rows fold *k*'s model could train on: earlier rows,
+  minus the `--gap` rows just before the fold. As in stacking, with IID folds fold *k*'s labels
+  still trained the models that produced the other folds' predictions; with two map parameters
+  this second-order effect is small, and forward validation removes it. A candidate keeps its
+  raw predictions unless calibration improves this cross-fitted score; taking the better of the
+  two on the same rows makes the winner's recorded validation loss slightly optimistic, which is
+  why a sealed test look remains the measure. Cross-fitting stops at the selection's time limit
+  like the folds do (the candidate is then skipped), and so does the winner's final map (the
+  selection then fails with a budget error).
 - **Stored with the model.** The winner's final map is learned on all of its out-of-fold
   predictions, written to `model.jope` (`output_transform`), checked against the selection record
   when the file loads, and applied after the native model at prediction time. A reader that does
   not know the field refuses the file instead of silently dropping the map.
 - **Domain-safe.** For Poisson, Gamma and Tweedie deviances the floor keeps predictions positive
-  (one thousandth of the smallest positive training target); for log errors it is zero.
+  (one thousandth of the smallest positive training target); for log errors it is zero. When the
+  raw predictions win, the stored map is that floor alone, so the refitted model cannot leave the
+  domain on new rows. `--calibration none` stores no map at all, floor included.
 - **Families.** `--calibration auto` (default: `affine` with an objective, `none` without),
   `none`, `shift` (intercept only) or `affine`. The search is a deterministic, bounded
   Nelder–Mead from fixed starts.
@@ -191,7 +200,8 @@ cargo run --locked --release --bin jope -- pipeline invent \
   --train train.csv --target y --work-dir target/p90-invent --fitness pinball:quantile=0.9
 ```
 
-Every measured observation carries `objective_loss`; the receipt gains `search.objective`
+Every measured observation carries `objective_loss`; the run writes
+`jope.pipeline-objective-receipt/v1`, which is `jope.pipeline-receipt/v3` plus `search.objective`
 (specification, name, direction and identity) and `validation_objective`, and selection uses
 `all_cuts_then_min_mean_validation_objective_then_genome`. `pipeline verify-receipt --evidence`
 re-derives the champion from the published observations under the same rule, and
@@ -233,8 +243,9 @@ claude mcp add jopedime -- /absolute/path/to/jopedime mcp
 {"mcpServers": {"jopedime": {"command": "/absolute/path/to/jopedime", "args": ["mcp"]}}}
 ```
 
-The server speaks MCP revision 2025-11-25 and echoes 2025-06-18, 2025-03-26 or 2024-11-05 when a
-client asks for one of them. It sends `instructions` describing the grammar to the client. Unknown
+The server speaks MCP revision 2025-11-25 and echoes 2025-06-18 or 2024-11-05 when a client asks
+for one of them; 2025-03-26 is answered with 2025-11-25, because that revision requires JSON-RPC
+batches, which the server does not accept. It sends `instructions` describing the grammar to the client. Unknown
 tools are protocol errors; a failing tool call is an `isError` result with the reason. Requests are
 limited to 8 MiB, 100,000 rows, 1,000 columns, 32 candidate selectors and 2–20 folds, with one
 numerical worker and a 30-second cooperative selection budget. The service has no network listener
@@ -248,10 +259,12 @@ RMSE selection, objective selection, and objective selection with calibration. I
 the datasets, licences, objectives and measured results, and a wider shortlist of open datasets
 (insurance, retail, energy, hydrology, finance) with their domain-standard metrics.
 
-On the six tables measured there, objective selection alone chose the same learner as RMSE five
-times; the exception was French motor claims, where the RMSE choice predicted negative rates and
-could not be scored. Calibration reduced held-out loss by 7% to 63% on the four loss objectives,
-raised the after-cost Sortino ratio by 4%, and lowered the claims deviance from 0.492 to 0.475.
+On the six tables measured there, objective selection alone chose the same learner as RMSE four
+times. The exceptions were French motor claims, where the RMSE choice predicted non-positive rates
+and could not be scored, and the S&P 500 series, where selection by the after-cost Sortino ratio
+raised it on the test months from 0.783 to 1.155. Calibration reduced held-out loss by 7% to 63% on
+the four loss objectives and the claims deviance by 19% (0.789 to 0.637); on the S&P series its map,
+nearly a constant full position, scored 0.839.
 These are single splits with one seed: they show the mechanism, not a general effect size.
 
 ## Evidence and identity
