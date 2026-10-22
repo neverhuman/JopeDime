@@ -43,6 +43,7 @@ and this binary release does not claim a qualified end-to-end learning flywheel.
 - release: bump the workspace and product crate versions from `0.3.0` to `0.4.0`, syncing the standalone Lambda workspace locks (`deploy/lambda/SNAPSHOT.json`); `jope` prints `jope 0.4.0`
 - release: the signed release's build, check and receipt containers are capped at 4 CPUs, 20 GiB RAM, no extra swap and 4 Cargo jobs. The 0.3.0 notes were corrected (#386)
 - ci: GP source contract tests run serially in the emitters lane (#390). The workspace `cargo clippy --all-targets -D warnings` gate passes (#398)
+- ci: the `full-main-cpu` `full-emitters` family deadline goes from 300 s to 1200 s, and the CPU job's timeout from 130 to 145 min, so every family's declared deadline still fits one job. The family had timed out on every completed main run since #388: its GP-source contracts compile inside the deadline, and the same work takes 343-638 s in the PR-lane emitters job
 
 ### Deployment
 
