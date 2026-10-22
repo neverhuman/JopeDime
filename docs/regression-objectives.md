@@ -1,223 +1,289 @@
-# Regression objective: optimize the cost that matters
+# Regression objectives: optimize the cost that matters
 
-`jopedime fit --method auto` can select native regression models using 25 built-in objectives,
-your own row loss, or a scaled combination of objectives. The Rust API, JSON-lines API and MCP
-server use the same specification and scorer. The objective changes **candidate selection on
-out-of-fold predictions**; it does not change an individual estimator's training loss. The
-winner is refitted on all training rows. Keep a separate final test set for an unbiased report.
+Root mean squared error is a statistician's default, not a business decision. A stock-out costs
+more than an unsold unit, an underestimated pollution peak is worse than a false alarm, an insurer
+prices claim *rates* per unit of exposure, and a portfolio manager is judged on downside risk after
+costs. JopeDime lets you state that cost once, as a portable JSON specification, and uses it
+everywhere a model is chosen, tuned or written:
 
-This interface belongs to the deployable `jopedime` runtime. The research `jope pipeline`
-algorithm-synthesis search, frozen benchmark/Elo protocols, and policy-training rewards retain
-their existing objectives and evidence identities. They do not silently consume these settings.
+| Where | What the objective changes |
+| --- | --- |
+| `jopedime fit --fitness …` | **Selection**: every native method is scored by your objective on out-of-fold predictions. |
+| same, `--calibration` (on by default) | **Calibration**: each method's outputs get a monotone map `max(a + b·pred, floor)` learned to minimize your objective, cross-fitted so the score stays honest. A squared-error model becomes a 90th-percentile forecast, an order quantity or a position size. |
+| `jope pipeline run --fitness …`, `jope pipeline invent --fitness …` | **Program search**: every candidate program is ranked by your objective on held-out rows; the receipt records the objective and its identity. |
+| Rust, JSON-RPC (`jopedime api`) and MCP (`jopedime mcp`) | The same specification, the same scorer, the same identity. |
 
-## Start with a built-in
+Without an objective nothing changes: selection is RMSE (`jope.runtime-select/v1`) and the program
+search ranks by held-out RMSE.
 
-```sh
-cargo build --locked -p jope-appliance
-./target/debug/jopedime fitness list
-./target/debug/jopedime fit \
-  --train examples/fitness/train.csv --target y --task regression \
-  --method auto --candidates ridge,histgbm --folds 3 --fitness mae \
-  --output target/fitness-model.jope --receipt target/fitness-receipt.json --json
-./target/debug/jopedime predict --model target/fitness-model.jope \
-  --input examples/fitness/predict.csv --output target/fitness-predictions.csv
-```
-
-`--fitness` accepts a catalog name, an inline JSON object, or `@path.json`. The examples use
-synthetic fixtures to exercise the interface; their numbers are illustrative business costs,
-not calibrated industry recommendations. Select `--task regression` when the target's meaning
-is continuous but a small integer CSV could otherwise be inferred as classification.
+## Quick start
 
 ```sh
-./target/debug/jopedime fit \
-  --train examples/fitness/train.csv --target y --task regression \
-  --method auto --candidates ridge,histgbm --folds 3 \
-  --fitness @examples/fitness/grid_underforecast.json \
-  --output target/grid-model.jope --json
-./target/debug/jopedime fitness evaluate --input examples/fitness/evaluation_request.json
+export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
+cargo build --locked --release -p jope-appliance
+J=target/release/jopedime
+
+$J fitness list                                  # 38 built-ins, defaults, directions
+$J fitness validate pinball:quantile=0.9         # resolved spec + sha256 identity
+$J fit --train examples/objectives/train.csv --target y --task regression \
+  --fitness pinball:quantile=0.9 --output p90.jope --json
+$J predict --model p90.jope --input examples/objectives/predict.csv --output p90.csv
 ```
 
-Omitting objective preserves RMSE model selection and the existing `jope.runtime-select/v1`
-policy. Explicit objective, or forward validation, uses `jope.runtime-select/v2`. A named method
-cannot use a selection objective and is refused rather than accepting an unused flag.
-Classification refuses regression objective. The fitted container's shape and runtime ABI remain
-v1; its metric field admits custom names, and its selection record carries the exact specification.
-Older schema validators with the former three-metric enum need the updated fitted schema.
+`--fitness` accepts a catalog name (`mae`), a name with numeric overrides
+(`sortino:cost=0.0005,periods_per_year=52`), inline JSON, or `@path.json`. The receipt's
+`selection` block records the exact specification, its `fitness_sha256`, each candidate's raw and
+calibrated held-out loss, and the map the winner keeps. `examples/objectives/` holds 41 ready recipes.
 
-## Choose an objective
+## Built-in objectives
 
-Let `e = y - pred`. Percentage errors below are ratios, not percentages multiplied by 100.
+Let `e = y − pred`. Ratios are fractions, not percentages. Maximized objectives are negated into a
+loss for selection; both values are recorded.
 
-| Name | Natural direction | Definition / useful setting |
+| Name | Direction | Definition and typical use |
 | --- | --- | --- |
-| `rmse`, `mse` | minimize | Square-root mean squared error / mean squared error; emphasize large misses. |
-| `mae` | minimize | Mean absolute error; linear cost per unit missed. |
-| `median_absolute_error` | minimize | Median absolute error, linearly interpolated for even row counts. |
-| `max_error` | minimize | Worst absolute error; a measured worst-case objective, not a safety guarantee. |
-| `mape` | minimize | Mean `abs(e)/max(abs(y),epsilon)`; default epsilon `1e-8`. Near-zero targets need a meaningful floor. |
-| `smape` | minimize | Mean `2*abs(e)/max(abs(y)+abs(pred),epsilon)`; default epsilon `1e-8`. |
-| `wape` | minimize | `sum(abs(e))/sum(abs(y))`; undefined for all-zero targets. |
-| `msle`, `rmsle` | minimize | Mean squared `log1p` error / its root; y and pred must be nonnegative. |
-| `r2` | maximize | `1 - mean(e²)/population_variance(y)`. |
-| `explained_variance` | maximize | `1 - population_variance(e)/population_variance(y)`; insensitive to constant bias. |
-| `pearson` | maximize | Pearson correlation; measures association rather than calibration. |
-| `spearman` | maximize | Pearson correlation of average tied ranks; signed zeros tie. |
-| `huber` | minimize | `0.5*e²` inside delta; `delta*(abs(e)-0.5*delta)` outside; default delta 1. |
-| `pseudo_huber` | minimize | `delta²*(sqrt(1+(e/delta)²)-1)`; default delta 1. |
-| `log_cosh` | minimize | Stable `log(cosh(e))`; quadratic near zero, approximately absolute for large errors. |
-| `pinball` | minimize | `q*e` when e≥0, `(q-1)*e` otherwise; default q=0.5. Set q=0.9 for costly shortages. |
-| `expectile` | minimize | `q*e²` when e≥0, `(1-q)*e²` otherwise; default q=0.5. |
-| `poisson_deviance` | minimize | Mean Poisson deviance; y≥0, pred>0. Includes y=0 by its limit. |
-| `gamma_deviance` | minimize | Mean Gamma deviance; y>0, pred>0. |
-| `tweedie_deviance` | minimize | Mean Tweedie deviance with 1<power<2, default 1.5; y≥0, pred>0. Use named endpoint deviances for power 1 or 2. |
-| `mean_return` | maximize | Mean net strategy return under the explicit position/cost convention below. |
-| `sharpe` | maximize | Excess mean return / standard deviation with divisor N × sqrt(periods_per_year). |
-| `sortino` | maximize | Excess mean return / full-sample downside deviation × sqrt(periods_per_year). |
+| `rmse`, `mse` | min | Squared error; emphasizes large misses. |
+| `mae` | min | Absolute error; linear cost per unit. |
+| `median_absolute_error` | min | Median absolute error. |
+| `max_error` | min | Worst absolute error on scored rows (a measurement, not a guarantee). |
+| `mape`, `smape`, `rmspe` | min | Relative errors with a denominator floor `epsilon`; RMSPE was the Rossmann sales metric. |
+| `wape` | min | Total absolute error over total absolute target volume. |
+| `msle`, `rmsle` | min | Squared `log1p` error; nonnegative targets and predictions. |
+| `r2`, `explained_variance` | max | Variance explained; R² is the hydrologists' NSE. |
+| `pearson`, `spearman` | max | Linear and rank correlation (Spearman is the information coefficient of a signal). |
+| `huber`, `pseudo_huber`, `log_cosh` | min | Robust losses for spiky sensors. |
+| `pinball` | min | Quantile loss; `quantile=0.9` makes a shortage 9× as costly as an excess. |
+| `expectile` | min | Asymmetric squared error. |
+| `linex` | min | `exp(a·e) − a·e − 1`: a > 0 punishes under-prediction exponentially (Varian, 1975). |
+| `asymmetric_absolute`, `asymmetric_squared` | min | Newsvendor cost: `under_cost` per unit short, `over_cost` per unit over. |
+| `poisson_deviance`, `gamma_deviance`, `tweedie_deviance` | min | Counts, positive severities and zero-inflated costs (insurance, healthcare). |
+| `mase` | min | MAE over the seasonal naive MAE (`season`) on the same chronological rows. |
+| `mean_return`, `sharpe`, `sortino` | max | Strategy return and risk ratios after turnover cost (see below). |
+| `max_drawdown` | min | Largest peak-to-trough loss of compounded equity. |
+| `calmar`, `omega` | max | Growth over drawdown; gains above a threshold over shortfalls below it. |
+| `expected_shortfall` | min | Mean loss of the worst `alpha` fraction of net returns (CVaR). |
+| `hit_rate` | max | Share of nonzero targets whose sign is predicted. |
+| `normalized_gini` | max | Ranking quality: Lorenz-curve Gini over the perfect ranking's (actuarial lift; Kaggle). |
+| `kge` | max | Kling–Gupta efficiency for streamflow (Gupta et al., 2009). |
+| `capture_at` | max | Share of the target total captured by the top `fraction` of rows (targeting, fraud). |
 
-Constant-target R²/explained variance, constant-vector correlations, and zero-risk ratios are
-undefined and refused. They never receive artificial perfect scores. Log/deviance objectives
-do not clip predictions to hide domain violations; incompatible candidates fail with a reason.
-Every built-in parameter, including all defaults resolved from short names, is retained.
+Undefined values — a constant target for R², a zero-risk Sharpe, a negative prediction under a
+deviance, an overflow — fail the candidate with its reason. They never become artificial perfect
+scores, and a failing objective never silently falls back to RMSE.
 
-## Build your own
+## Your own objective
 
-A custom objective is a JSON expression over **held-out** `y` and `pred`, followed by an
-aggregation. `examples/fitness/grid_underforecast.json` implements
-`mean(5*max(y-pred,0) + max(pred-y,0))`. Underforecasting one unit costs five; overforecasting
-one unit costs one. Change those costs to your operational values.
+A custom objective is a row expression followed by an aggregation. It can read `y`, `pred`, and
+**numeric columns of the training table** (`{"op":"column","name":"unit_margin"}`). Columns an
+objective reads are taken out of the features, required in every training row, and ignored when
+present in prediction input. Example: a newsvendor whose shortage cost is each row's own margin.
 
 ```json
 {
-  "metric": "custom",
-  "name": "absolute_business_error",
-  "direction": "minimize",
-  "expression": {
-    "op": "abs",
-    "arg": {"op": "sub", "left": {"op": "y"}, "right": {"op": "pred"}}
-  },
+  "metric": "custom", "name": "newsvendor_cost", "direction": "minimize",
+  "expression": {"op": "where",
+    "condition": {"op": "sub", "left": {"op": "y"}, "right": {"op": "pred"}},
+    "then": {"op": "mul", "left": {"op": "column", "name": "unit_margin"},
+             "right": {"op": "sub", "left": {"op": "y"}, "right": {"op": "pred"}}},
+    "else": {"op": "mul", "left": {"op": "column", "name": "holding_cost"},
+             "right": {"op": "sub", "left": {"op": "pred"}, "right": {"op": "y"}}}},
   "aggregation": {"kind": "mean"}
 }
 ```
 
-| Expression | Fields |
+| Expression `op` | Fields |
 | --- | --- |
 | `y`, `pred` | none |
 | `constant` | `value` |
-| `add`, `sub`, `mul`, `div`, `min`, `max` | `left`, `right` expressions |
-| `abs`, `square`, `sqrt`, `ln`, `exp` | `arg` expression |
+| `column` | `name`: a numeric training column, never a feature |
+| `add`, `sub`, `mul`, `div`, `min`, `max`, `pow` | `left`, `right` |
+| `abs`, `neg`, `square`, `sqrt`, `ln`, `log1p`, `exp` | `arg` |
+| `step` | `arg`: 1 when `arg > 0`, else 0 (fixed penalties, exceedances) |
+| `clip` | `arg`, `min`, `max` |
+| `where` | `condition`, `then`, `else`: `then` when `condition > 0` |
 
-Aggregations: `mean`, `sum`, `max`, or `{"kind":"quantile","quantile":0.99}`.
-Quantiles use linear interpolation at `q*(n-1)`. A 99th-percentile loss is not CVaR and is not
-a guarantee about unobserved failures. Custom names need 1–64 ASCII letters, digits or underscores.
+Aggregations: `mean`, `sum`, `max`, `{"kind":"quantile","quantile":q}`,
+`{"kind":"tail_mean","fraction":f}` (the mean of the worst `f` share of rows: CVaR of a row loss)
+and `root_mean`.
 
-Use `{"metric":"composite","terms":[{"weight":0.8,"scale":0.01,"objective":{"metric":"mae"}},
-{"weight":0.2,"scale":0.05,"objective":{"metric":"max_error"}}]}` to combine normalized costs.
-Each term is converted to a minimization loss, divided by its positive scale, and multiplied by
-its positive weight. Choose scales from business units or training-only baselines before
-selection; weights need not sum to one. Maximized terms enter with a negative sign.
+Two combinators complete the grammar:
 
-The complete machine-readable grammar is
-`schemas/jope.regression-fitness.v1.schema.json`.
-MCP discovery includes it. JSON objects reject unknown fields, including parameter-free metrics.
-There is no Python, shell, dynamic library, network or filesystem access from a objective.
-Expressions are bounded to depth 16 and 256 nodes; compositions to depth 8, 64 objectives and
-16 terms per composite. Text specs are limited to 32 KiB. Division by zero, domain errors and
-overflow fail that candidate. Weighted row costs can be expressed using y/pred; arbitrary
-external sample weights, feature columns, protected groups and user callbacks are not part of
-this v1 data contract. Such costs need an explicit future input/identity extension.
+- **Weighted**: `{"metric":"weighted","weights":<expression>,"fitness":<objective>}` gives rows
+  nonnegative weights — an exposure column for claim frequency, a notional, `abs(y)`. Weighted R²,
+  Gini, WAPE and quantiles use their weighted definitions; objectives whose meaning weights would
+  change (`max_error`, `spearman`, `kge`, strategy metrics) refuse them.
+- **Composite**: `{"metric":"composite","terms":[{"weight":w,"scale":s,"fitness":<objective>}]}`
+  sums `w·loss/s` over terms, each converted to a minimization loss first. Choose scales from
+  business units before selection.
 
-## Sortino and chronological evaluation
+Limits: expressions have depth ≤ 16 and ≤ 256 nodes, compositions depth ≤ 8 and ≤ 64 objectives,
+at most 16 columns and 32 KiB per specification. JSON objects reject unknown fields. There is no
+code execution, file, network or callback access from an objective. The grammar is
+`schemas/jope.regression-fitness.v1.schema.json`; `jopedime fitness schema` prints it.
 
-Sortino is a strategy objective, not a generic regression residual metric. Here:
+## Calibration: why choosing among mean models is not enough
 
-- `y[t]` is the simple realized return during interval t, in decimals.
-- `position[t] = clamp(pred[t], -max_position, max_position)`. Predictions are positions directly;
-  forecasting a return of 0.01 gives 0.01 units of exposure under this rule. There is no implicit
-  sign strategy, threshold, leverage scaling or allocation optimization.
-- `net[t] = position[t]*y[t] - cost*abs(position[t]-position[t-1])`, starting from position 0.
-  Cost is per unit turnover, charged on entry and position changes. No final liquidation cost,
-  compounding, financing, borrow fees or execution-price model is assumed.
-- `target` is the minimum acceptable return **per interval**.
-- Sortino's denominator is `sqrt(mean(min(net-target,0)^2))`, counting **all scored intervals**.
-  Sharpe uses standard deviation with divisor N of net returns.
-- Ratios multiply by `sqrt(periods_per_year)`; mean return remains per interval. The scaling is
-  an explicit conventional assumption, not a correction for serial dependence or overlapping returns.
+Every native method fits its parameters with its own loss, almost always squared error. Choosing
+among such models by a pinball or newsvendor objective can only find the least-bad *mean*
+forecast. Calibration learns the decision layer that turns a mean forecast into the action your
+objective rewards:
 
-```sh
-./target/debug/jopedime fit --train chronological_returns.csv --target realized_return \
-  --task regression --method auto --candidates ridge,histgbm --folds 3 \
-  --validation forward --gap 1 --fitness @examples/fitness/portfolio_sortino.json \
-  --output target/returns-model.jope --json
+```text
+pred' = max(intercept + slope · pred, lower)      slope > 0
 ```
 
-Return-based metrics, including nested composite terms, require forward validation. They are
-rejected under IID folds. Sort input rows chronologically before calling: v1 does not infer
-chronology from a timestamp column. Choose a gap at least as large as the label-overlap horizon
-for your labeling scheme. The caller owns that temporal contract and past-only feature design.
+- **Learned on held-out predictions.** For each candidate, the map applied to fold *k* is learned
+  on the out-of-fold prediction/label pairs of the other folds (forward validation: earlier folds
+  only), never on fold *k*'s own pairs. As in stacking, fold *k*'s labels still trained the models
+  that produced the other folds' predictions; with two map parameters this second-order effect is
+  small, and forward validation removes it. A candidate keeps its raw predictions unless
+  calibration improves this cross-fitted score.
+- **Stored with the model.** The winner's final map is learned on all of its out-of-fold
+  predictions, written to `model.jope` (`output_transform`), checked against the selection record
+  when the file loads, and applied after the native model at prediction time. A reader that does
+  not know the field refuses the file instead of silently dropping the map.
+- **Domain-safe.** For Poisson, Gamma and Tweedie deviances the floor keeps predictions positive
+  (one thousandth of the smallest positive training target); for log errors it is zero.
+- **Families.** `--calibration auto` (default: `affine` with an objective, `none` without),
+  `none`, `shift` (intercept only) or `affine`. The search is a deterministic, bounded
+  Nelder–Mead from fixed starts.
 
-For k folds and n rows, block size is floor(n/(k+1)). The first block is training-only warmup.
-Each later block is predicted using only earlier rows, excluding the configured gap; the final
-validation block includes the remainder. At least two training rows must remain after the gap.
-Predictions are pooled in original row order and the objective runs **once on the scored suffix**;
-warmup never contributes a made-up prediction or return. Turnover carries across scored fold
-boundaries, because the evaluation models one sequential strategy. The record names the fold
-policy, gap, warmup and scored row counts. Return metrics alone do not establish a valid backtest.
+Calibration cannot add information the features lack, cannot reorder predictions, and is not a
+replacement for a model trained with the objective. It is the cheapest, model-agnostic step that
+makes a selection objective change what you actually predict.
+
+## Order-dependent objectives
+
+`mean_return`, `sharpe`, `sortino`, `max_drawdown`, `calmar`, `omega`, `expected_shortfall` and
+`mase` score a *sequence*. They require `--validation forward` and chronological rows; IID folds are
+refused.
+
+- `y[t]` is the simple return realized during interval *t*;
+  `position[t] = clamp(pred[t], −max_position, max_position)`.
+- `net[t] = position[t]·y[t] − cost·|position[t] − position[t−1]|`, starting flat.
+- Sortino divides by `sqrt(mean(min(net − target, 0)²))` over **all** scored intervals; Sharpe uses
+  the standard deviation with divisor N. Ratios are multiplied by `sqrt(periods_per_year)`.
+- Drawdown and Calmar compound `1 + net[t]`; a period losing everything ends the curve at zero.
+  Calmar divides the compound annual growth rate by the maximum drawdown.
+- With *k* folds, the first `floor(n/(k+1))` rows are training-only warm-up; each later block is
+  predicted from earlier rows minus `--gap` rows; the objective runs once on the pooled suffix.
+
+```sh
+$J fit --train returns.csv --target next_return --task regression \
+  --validation forward --gap 1 --fitness @examples/objectives/portfolio_sortino.json \
+  --output allocation.jope --json
+```
+
+A risk ratio on a backtest is not a valid trading claim by itself: survivorship, look-ahead in
+features, overlapping labels and capacity are the caller's responsibility.
+
+## Program search under your objective
+
+The program search ranks every candidate program by the objective on held-out rows instead of
+RMSE, so the program it keeps (transforms, features and model head) is the one that scores best
+on your cost:
+
+```sh
+cargo run --locked --release --bin jope -- pipeline run \
+  --dataset datasets/test/pmlb-229-pwlinear --fitness pinball:quantile=0.9 \
+  --budget evaluations=64,seconds=300 --emit rust,python --output target/p90-run
+cargo run --locked --release --bin jope -- pipeline invent \
+  --train train.csv --target y --work-dir target/p90-invent --fitness pinball:quantile=0.9
+```
+
+Every measured observation carries `objective_loss`; the receipt gains `search.objective`
+(specification, name, direction and identity) and `validation_objective`, and selection uses
+`all_cuts_then_min_mean_validation_objective_then_genome`. `pipeline verify-receipt --evidence`
+re-derives the champion from the published observations under the same rule, and
+`pipeline score --split test` reports the objective on the sealed test rows (`--fitness` reports
+another objective on the same single look, for example to compare an RMSE-ranked run).
+
+Programs still fit their own parameters with their heads' estimators; the objective decides which
+program wins, not what each program predicts. Measured on the ten committed regression datasets
+(`examples/objectives/real-world/search-benchmark.sh`), ranking by a 90th-percentile pinball loss
+changed the selected program every time but lowered the sealed test loss on only four of ten.
+Ranking mean predictors by a quantile loss is a weak lever on its own; for quantile and asymmetric
+costs today, `jopedime` with calibration is the stronger tool.
+The search refuses order-dependent objectives (its cuts are a fold partition) and objectives that
+read columns (prepared cuts carry features only); use `jopedime` for those. Multi-round
+`pipeline evolve` lineages and the kernel2 profiles keep their own ranking and refuse `--fitness`.
 
 ## API and MCP
 
-Rust callers set `jope_runtime::api::FitOptions.fitness: Option<Fitness>` and
-`validation: automl::Validation`, then call the existing `api::fit`. Direct scoring is
-`fitness.evaluate(&targets, &predictions)`. `Score.value` is natural; `Score.loss` is negated for
-maximization. Candidate outcomes record both. Exact ties retain roster order.
+Rust: set `jope_runtime::api::FitOptions { fitness, validation, calibration, .. }` and call
+`api::fit`. Build the table with `table::training_with_auxiliary(…, &spec.columns())` when the
+objective reads columns. Score directly with `spec.evaluate_with(&y, &pred, &columns)`.
 
-For local JSON-RPC over JSON lines:
+JSON-RPC over JSON lines (`jopedime api`) and MCP over stdio (`jopedime mcp`) expose four tools:
+
+| Tool | Purpose |
+| --- | --- |
+| `fitness_list` | Built-ins with defaults, directions, descriptions and the custom grammar summary. |
+| `fitness_validate` | Resolve a name, shorthand or JSON spec; return its identity, columns and requirements. |
+| `fitness_evaluate` | Score targets and predictions (plus `columns` when the objective reads them). |
+| `regression_fit_predict` | Select, calibrate and refit native models for an objective on inline CSV; predict. |
+
+Register the server with an MCP client:
 
 ```sh
-./target/debug/jopedime api < examples/fitness/api_request.jsonl
+claude mcp add jopedime -- /absolute/path/to/jopedime mcp
 ```
-
-Methods: `fitness_list`, `fitness_evaluate` and `regression_fit_predict`. The latter accepts
-inline `train_csv`, `input_csv`, `target` and `options` (method, candidates, folds, objective,
-validation). It returns predictions CSV, model header, selection evidence and budget. It does
-not save a fitted model: use the CLI or Rust API when you need persistence.
-
-For MCP, configure a stdio server with `command` pointing to the absolute `jopedime` executable
-and `args: ["mcp"]`. This server implements the **2025-11-25 handshake protocol**; configure a
-compatible client. Initialize, send `notifications/initialized`, then discover/call the same
-three tools. It negotiates this supported revision even if another revision is requested.
-Example tool arguments for scoring:
 
 ```json
-{"name":"fitness_evaluate","arguments":{"fitness":{"metric":"pinball","quantile":0.9},"targets":[10,20,30],"predictions":[9,22,28]}}
+{"mcpServers": {"jopedime": {"command": "/absolute/path/to/jopedime", "args": ["mcp"]}}}
 ```
 
-Only protocol responses go to stdout. MCP tool failures use `isError: true`; bad JSON produces
-a parse error. Notifications do not produce responses. API/MCP requests are limited to 8 MiB,
-100,000 rows, 1,000 columns, 32 candidate selectors and 2–20 folds; one numerical worker and a
-30-second **cooperative selection** budget apply. Fits and final refits are not preempted.
-The service has no network listener or remote authentication layer; a hosting wrapper must own
-those concerns. Packaged executables authenticate their package before serving.
+The server speaks MCP revision 2025-11-25 and echoes 2025-06-18, 2025-03-26 or 2024-11-05 when a
+client asks for one of them. It sends `instructions` describing the grammar to the client. Unknown
+tools are protocol errors; a failing tool call is an `isError` result with the reason. Requests are
+limited to 8 MiB, 100,000 rows, 1,000 columns, 32 candidate selectors and 2–20 folds, with one
+numerical worker and a 30-second cooperative selection budget. The service has no network listener
+or file access; a hosting wrapper owns transport security.
 
-## Evidence and examples
+## Real-world datasets
 
-The selection record retains the exact resolved spec, `fitness_sha256`, both natural and
-minimization scores for each successful candidate, failed/skipped reasons, validation plan
-settings, and the chosen model. The digest hashes JSON serialization of `["jope.regression-fitness/v1", spec]`.
-Changing a parameter or expression changes it. Model reload checks the objective/name/identity
-against its selection metadata; prediction does not reevaluate objective or refit.
+`examples/objectives/real-world/` fetches public datasets where the right objective is not RMSE
+(outside the checkout, digest-pinned), and benchmarks three arms on the same held-out rows:
+RMSE selection, objective selection, and objective selection with calibration. Its README lists
+the datasets, licences, objectives and measured results, and a wider shortlist of open datasets
+(insurance, retail, energy, hydrology, finance) with their domain-standard metrics.
 
-See `examples/fitness/README.md` for 18 business examples.
+On the six tables measured there, objective selection alone chose the same learner as RMSE five
+times; the exception was French motor claims, where the RMSE choice predicted negative rates and
+could not be scored. Calibration reduced held-out loss by 7% to 63% on the four loss objectives,
+raised the after-cost Sortino ratio by 4%, and lowered the claims deviance from 0.492 to 0.475.
+These are single splits with one seed: they show the mechanism, not a general effect size.
 
-Validation commands:
+## Evidence and identity
+
+The objective identity is the sha256 of the JSON serialization of
+`["jope.regression-fitness/v1", specification]`; every parameter, including defaults resolved from
+short names, is part of it. A fitted model stores the selection record, the objective's columns
+and the output map; loading checks that they agree. Prediction never re-evaluates the objective or
+refits.
 
 ```sh
-cargo test --locked -p jope-runtime
-cargo test --locked -p jope-appliance --test single_file
-cargo clippy --locked -p jope-runtime -p jope-appliance --no-deps -- -D warnings
-bash examples/fitness/run.sh
+cargo test --locked -p jope-runtime -p jope-appliance
+cargo test --locked -p jope-pipeline --lib -- objective
+bash examples/objectives/run.sh
 ```
 
-References for definitions: [scikit-learn regression metrics](https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics),
-[CFA Institute on the Sortino ratio](https://rpc.cfainstitute.org/-/media/documents/code/gips/the-sortino-ratio.pdf),
-and [MCP 2025-11-25 schema](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2025-11-25/schema.ts).
-These inform the definitions; JopeDime's explicit edge-case, cost, pooling and validation conventions above control this implementation.
+## References
+
+- Granger, C. W. J. (1969). Prediction with a generalized cost of error function. *Journal of the
+  Operational Research Society* 20(2), 199–207.
+- Varian, H. R. (1975). A Bayesian approach to real estate assessment. In *Studies in Bayesian
+  Econometrics and Statistics*, 195–208 (LinEx loss).
+- Christoffersen, P. F., Diebold, F. X. (1997). Optimal prediction under asymmetric loss.
+  *Econometric Theory* 13(6), 808–817.
+- Gneiting, T. (2011). Making and evaluating point forecasts. *JASA* 106(494), 746–762.
+- Sortino, F. A., Price, L. N. (1994). Performance measurement in a downside risk framework.
+  *Journal of Investing* 3(3), 59–64.
+- Hong, T., et al. (2016). Probabilistic energy forecasting: GEFCom2014 and beyond. *International
+  Journal of Forecasting* 32(3), 896–913.
+- Frees, E. W., Meyers, G., Cummings, A. D. (2011). Summarizing insurance scores using a Gini index.
+  *JASA* 106(495), 1085–1098.
+- Gupta, H. V., Kling, H., Yilmaz, K. K., Martinez, G. F. (2009). Decomposition of the mean squared
+  error and NSE performance criteria. *Journal of Hydrology* 377(1–2), 80–91.
+- Makridakis, S., Spiliotis, E., Assimakopoulos, V. (2022). M5 accuracy competition: results,
+  findings, and conclusions. *International Journal of Forecasting* 38(4), 1346–1364.

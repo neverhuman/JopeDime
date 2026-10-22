@@ -61,6 +61,82 @@ Today `--json` writes the final receipt on stdout; human summaries use stderr.
 `--time-limit-seconds` bounds selection, not the subsequent full-data refit.
 For generated code, use the separate workflow below.
 
+## Custom regression objectives (your own `fitness` function)
+
+RMSE is rarely what a business pays for. Tell JopeDime the cost you actually face — a stock-out that
+costs four times an unsold unit, claim frequency per unit of exposure, downside risk after trading
+costs — and it is used to **select** methods, **calibrate** their outputs, and **rank the programs
+the search writes**. One JSON specification works from the CLI, the program search, Rust,
+JSON-RPC and MCP, and is recorded with its sha256 identity in every receipt and model file.
+
+```sh
+J=target/release/jopedime        # cargo build --locked --release -p jope-appliance
+
+# 38 built-ins, with parameter overrides on the command line.
+$J fitness list
+$J fit --train demand.csv --target units --task regression \
+  --fitness pinball:quantile=0.9 --output p90.jope --json        # a P90 forecast, not a mean
+$J fit --train demand.csv --target units --task regression \
+  --fitness asymmetric_absolute:under_cost=4,over_cost=1 --output order.jope
+
+# Your own cost, reading per-row columns that are never used as features.
+cat > cost.json <<'JSON'
+{"metric": "custom", "name": "newsvendor_cost", "direction": "minimize",
+ "expression": {"op": "where", "condition": {"op": "sub", "left": {"op": "y"}, "right": {"op": "pred"}},
+   "then": {"op": "mul", "left": {"op": "column", "name": "unit_margin"},
+            "right": {"op": "sub", "left": {"op": "y"}, "right": {"op": "pred"}}},
+   "else": {"op": "mul", "left": {"op": "column", "name": "holding_cost"},
+            "right": {"op": "sub", "left": {"op": "pred"}, "right": {"op": "y"}}}},
+ "aggregation": {"kind": "mean"}}
+JSON
+$J fitness validate @cost.json                  # resolved spec, columns, sha256 identity
+$J fit --train demand.csv --target units --task regression --fitness @cost.json --output cost.jope
+
+# Insurance: Poisson deviance weighted by an exposure column.
+$J fit --train claims.csv --target frequency --task regression \
+  --fitness @examples/objectives/claims_frequency_exposure.json --output frequency.jope
+
+# Finance: after-cost Sortino on chronological rows, with forward validation.
+$J fit --train returns.csv --target next_return --task regression --validation forward --gap 1 \
+  --fitness sortino:cost=0.0005,periods_per_year=12 --output allocation.jope
+
+# The program search ranks every candidate program by the objective instead of RMSE.
+cargo run --locked --release --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
+  --fitness pinball:quantile=0.9 --budget evaluations=64,seconds=300 --output target/p90-run
+
+# MCP: the same objectives as tools for an agent.
+claude mcp add jopedime -- "$PWD/target/release/jopedime" mcp
+```
+
+Selecting among squared-error models cannot turn a mean forecast into a quantile, so `jopedime`
+also learns a **cross-fitted output calibration**, `max(a + b·pred, floor)`, on out-of-fold
+predictions for your objective, keeps it only when it improves the held-out score, and stores it in
+the model file. Custom objectives are row expressions over `y`, `pred` and numeric columns
+(`where`, `step`, `clip`, `pow`, `log1p`, …) aggregated by mean, sum, quantile or tail mean (CVaR),
+plus weighted and composite forms. The full grammar, the 38 built-ins and the forward-validation
+contract are in [docs/regression-objectives.md](docs/regression-objectives.md);
+[41 recipes](examples/objectives/README.md) cover retail, insurance, energy, safety, finance and
+targeting, and [a real-world benchmark](examples/objectives/real-world/README.md) measures the effect
+on public datasets.
+
+On six public tables, each scored on held-out rows with its own objective (single deterministic
+splits, one seed; `bash examples/objectives/real-world/fetch.sh && bash examples/objectives/real-world/benchmark.sh`):
+
+| Table | Objective | Selected by RMSE | Selected by the objective | + output calibration |
+| --- | --- | ---: | ---: | ---: |
+| Irish wind speed | `pinball:quantile=0.1` | 1.410 | 1.410 | **0.517** (−63%) |
+| California houses | `mape:epsilon=1` | 0.210 | 0.210 | **0.195** (−7%) |
+| Roadside PM10 | `pinball:quantile=0.9` | 0.240 | 0.240 | **0.122** (−49%) |
+| Roadside NO2 | `asymmetric_absolute:under_cost=4,over_cost=1` | 0.975 | 0.975 | **0.629** (−35%) |
+| S&P 500, monthly | `sortino:cost=0.001,periods_per_year=12` (higher is better) | 0.894 | 0.894 | **0.933** (+4%) |
+| French motor claims | exposure-weighted Poisson deviance | undefined¹ | 0.492 | **0.475** |
+
+¹ The RMSE-selected learner predicts negative claim rates for 68 of 6,780 test policies. On five
+tables the objective picked the same learner as RMSE: choosing among squared-error learners is not
+enough, which is why the calibration step exists. Ranking written programs by the objective is not
+enough on its own either: on the ten committed regression datasets it lowered sealed-test pinball
+loss on four ([search benchmark](examples/objectives/real-world/README.md#program-search-ranked-by-the-objective)).
+
 ## Program source WebSocket
 
 Capture every complete program occurrence, including repeats and emission errors,
@@ -107,10 +183,10 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,860 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,881 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 834 items over 27 lanes <sup>7</sup> |
+| Coverage map | 836 items over 27 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,212 `.py` files, 159 of them under `python/` <sup>10</sup> |
