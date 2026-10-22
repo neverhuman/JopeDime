@@ -361,13 +361,6 @@
             "null"
           ]
         },
-        "objective_loss": {
-          "format": "double",
-          "type": [
-            "number",
-            "null"
-          ]
-        },
         "origin": {
           "type": "string"
         },

@@ -129,19 +129,21 @@ incremental = false
 panic = "unwind"
 
 # Cold glue at size; measured against opt-level 3 in deploy/appliance/size-budgets.toml.
+# `strip` is repeated on purpose: with an override that omits it, Cargo passes
+# `-C strip=debuginfo` to this crate, which links the executable, and the symbol tables stayed in
+# (deploy/appliance/AMENDMENTS.md A13).
 [profile.dist.package.jope-appliance]
 opt-level = "s"
+strip = "symbols"
 [profile.dist.package.clap_builder]
 opt-level = "s"
 
-# The PR lane's appliance uses release's whole-program optimization so the
-# portable objective/API adapters fit the existing executable size ceilings.
-# Numerical crates stay at opt-level 3; panic recovery and all features remain.
+# The PR lane's appliance build: same flags, thin LTO and parallel codegen to fit the PR budget.
 # Release artifacts always use `dist`.
 [profile.dist-ci]
 inherits = "dist"
-lto = "fat"
-codegen-units = 1
+lto = "thin"
+codegen-units = 16
 
 [workspace.lints.rust]
 unsafe_code = "deny"
