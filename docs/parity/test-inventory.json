@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5860,
+  "count": 5881,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -2554,7 +2554,7 @@
     }
    },
    "jope-appliance": {
-    "count": 11,
+    "count": 12,
     "ignored": 0,
     "binaries": {
      "jope-appliance::bin/jopedime": {
@@ -2565,13 +2565,14 @@
      },
      "jope-appliance::single_file": {
       "kind": "test",
-      "count": 11,
+      "count": 12,
       "ignored": 0,
       "tests": [
        "a_damaged_package_stops_every_command",
        "a_packaged_copy_fits_saves_reloads_and_predicts_alone",
        "a_promised_method_this_build_cannot_run_fails_doctor",
        "an_unpackaged_development_build_runs_native_methods",
+       "calibrated_objective_with_a_cost_column_round_trips_through_the_model_file",
        "custom_fitness_cli_persists_the_objective_and_predicts_after_reload",
        "every_failure_class_has_its_exit_status",
        "fitness_schema_accepts_examples_and_rejects_unknown_parameters",
@@ -3069,7 +3070,7 @@
     }
    },
    "jope-cli": {
-    "count": 82,
+    "count": 83,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -3174,11 +3175,12 @@
      },
      "jope-cli::pipeline_cli": {
       "kind": "test",
-      "count": 10,
+      "count": 11,
       "ignored": 0,
       "tests": [
        "a_given_source_commit_is_recorded_and_git_is_never_spawned",
        "a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs",
+       "an_objective_ranked_run_records_its_objective_and_bad_objectives_are_refused_first",
        "evolve_into_a_non_empty_output_exits_2_first_and_runs_once_it_is_emptied",
        "invent_prints_candidates_and_refuses_bad_input_as_json",
        "kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds",
@@ -7665,12 +7667,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 451,
+    "count": 456,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 361,
+      "count": 366,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7739,12 +7741,14 @@
        "invent::tests::events_refuses_hard_link_input_and_nonregular_targets",
        "invent::tests::events_refuses_input_and_output_aliases",
        "invent::tests::events_refuses_unresolved_parent_work_alias",
+       "invent::tests::invent_ranks_candidates_by_an_objective_and_records_it",
        "invent::tests::invent_ranks_executable_genomes_and_is_deterministic_under_an_evaluation_budget",
        "invent::tests::only_jain_executable_pipelines_are_admitted",
        "invent::tests::preflight_refuses_bad_counts_before_reading_anything",
        "invent::tests::work_dir_must_be_new_or_empty_and_is_checked_before_anything_is_written",
        "islands::tests::island_zero_is_the_run_stream_and_others_differ",
        "islands::tests::next_seeds_is_independent_of_input_order",
+       "islands::tests::next_seeds_rank_by_the_objective_score_and_keep_the_rmse",
        "islands::tests::next_seeds_ranks_deduplicates_and_caps",
        "kernel2::archive_tests::a_constructed_front_keeps_exactly_the_programs_no_simpler_one_matches",
        "kernel2::archive_tests::archive_on_and_off_keep_every_measurement_refinement_and_the_winner_bit_for_bit",
@@ -7968,6 +7972,7 @@
        "run::tests::a_tampered_parent_receipt_is_refused_before_anything_is_written",
        "run::tests::an_entry_the_run_writes_is_refused_even_as_a_dangling_link",
        "run::tests::an_island_run_records_its_islands_and_migrations_and_reverifies",
+       "run::tests::an_objective_run_ranks_programs_by_it_records_it_and_reverifies",
        "run::tests::classification_is_refused_before_writing_a_regression_run",
        "run::tests::islands_times_threads_above_the_ceiling_is_refused",
        "run::tests::one_thread_and_eight_threads_write_byte_identical_runs",
@@ -8018,6 +8023,7 @@
        "seeds::tests::a_seeds_file_round_trips_and_a_tampered_one_is_refused",
        "seeds::tests::admission_canonicalises_deduplicates_drops_the_bootstrap_and_caps",
        "select::tests::a_failed_observation_never_contributes_a_score",
+       "select::tests::an_objective_ranks_programs_and_mixing_rules_is_refused",
        "select::tests::an_unmeasured_search_fails_closed",
        "select::tests::complete_cover_still_ranks_above_a_better_partial_cover",
        "select::tests::different_partial_cut_sets_are_never_compared",
@@ -8032,6 +8038,7 @@
        "test_score::tests::a_concurrent_score_waits_and_names_the_look_it_waited_for",
        "test_score::tests::a_receipt_that_does_not_verify_or_another_dataset_scores_nothing",
        "test_score::tests::a_score_names_the_earlier_looks_at_its_datasets_test_split",
+       "test_score::tests::a_test_score_reports_the_run_objective_or_a_requested_one",
        "test_score::tests::test_rows_are_the_sealed_split_parsed_like_the_training_rows",
        "test_score::tests::the_test_split_is_scored_once_per_dataset_and_genome"
       ]
@@ -8749,20 +8756,26 @@
     }
    },
    "jope-runtime": {
-    "count": 32,
+    "count": 46,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
       "kind": "lib",
-      "count": 24,
+      "count": 38,
       "ignored": 0,
       "tests": [
+       "automl::fitness_tests::calibration_turns_mean_models_into_the_requested_quantile_and_never_scores_worse",
        "automl::fitness_tests::custom_fitness_changes_the_selected_candidate_and_records_both_directions",
        "automl::fitness_tests::explicit_default_matches_existing_selection_and_invalid_scope_is_refused",
        "automl::fitness_tests::forward_validation_excludes_warmup_and_never_trains_on_future_labels",
+       "automl::fitness_tests::objectives_read_auxiliary_columns_that_never_become_features",
        "automl::tests::folds_are_stratified_and_deterministic",
        "automl::tests::losses_match_the_panel_metrics",
        "backend::tests::explicit_cuda_fails_and_auto_reports_cpu",
+       "calibration::tests::affine_calibration_moves_a_mean_forecast_toward_the_requested_quantile",
+       "calibration::tests::calibration_never_worsens_the_fitted_rows_and_honors_the_domain_floor",
+       "calibration::tests::cross_fitting_applies_only_maps_learned_without_the_scored_fold",
+       "calibration::tests::transforms_validate_and_families_resolve",
        "error::tests::a_panic_in_numerical_work_becomes_a_numerical_failure",
        "error::tests::the_outermost_failure_names_the_category",
        "fitness::tests::all_checked_in_fitness_examples_parse_and_score",
@@ -8770,15 +8783,23 @@
        "fitness::tests::configuration_parameters_and_expression_limits_are_enforced",
        "fitness::tests::correlations_handle_ties_signed_zero_and_direction",
        "fitness::tests::custom_aggregations_and_scaled_composition_preserve_semantics",
+       "fitness::tests::drawdown_calmar_omega_and_expected_shortfall_follow_their_definitions",
+       "fitness::tests::expression_operators_columns_and_branches_compute_business_costs",
        "fitness::tests::log_and_deviance_metrics_match_independent_calculations",
        "fitness::tests::malformed_nonfinite_and_undefined_values_never_become_winners",
+       "fitness::tests::ranking_hydrology_and_forecast_scale_metrics_match_hand_calculations",
        "fitness::tests::return_ratios_use_positions_turnover_full_sample_downside_and_annualization",
+       "fitness::tests::shorthand_overrides_numeric_defaults_and_refuses_unknown_parameters",
        "fitness::tests::standard_metrics_match_independent_hand_calculations",
+       "fitness::tests::weights_reweight_rows_and_refuse_bad_values",
        "service::tests::api_mcp_and_rust_evaluation_have_identical_scores",
+       "service::tests::fit_predict_reads_objective_columns_from_training_and_ignores_them_in_input",
        "service::tests::fit_predict_transport_runs_the_custom_objective_and_binds_it_to_the_model",
        "service::tests::rpc_lifecycle_discovery_errors_and_notifications_are_explicit",
+       "service::tests::validate_reports_identity_columns_and_temporal_requirements",
        "table::tests::malformed_input_is_refused_with_an_input_failure",
        "table::tests::missing_cells_categories_and_kinds_follow_the_contract",
+       "table::tests::objective_columns_are_numeric_never_features_and_ignored_at_prediction",
        "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",
        "table::tests::tasks_and_class_order"
       ]
@@ -9289,7 +9310,7 @@
   }
  },
  "totals": {
-  "rust": 5860,
+  "rust": 5881,
   "python": 182
  }
 }

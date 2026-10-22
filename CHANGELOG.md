@@ -5,6 +5,14 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Regression objectives
+
+- runtime: `jopedime fit --fitness` selects native methods by a portable regression objective: 38 built-ins (quantile, newsvendor, LinEx, relative errors, Poisson/Gamma/Tweedie deviances, MASE, Sharpe, Sortino, drawdown, Calmar, Omega, expected shortfall, hit rate, normalized Gini, KGE, top-fraction capture and more), `name:key=value` overrides, and custom JSON row expressions over `y`, `pred` and numeric training columns that are never features, with weighted and composite forms. Every specification has a sha256 identity in the selection record, model file and receipt
+- runtime: objective-aware output calibration (`--calibration auto|none|shift|affine`, default affine with an objective): a monotone `max(a + b*pred, floor)` map learned on out-of-fold predictions, cross-fitted for selection, stored in `model.jope` and applied at prediction. A model whose map or objective columns disagree with its selection record does not load
+- runtime: chronological `--validation forward --gap N` for order-dependent objectives; JSON-RPC (`jopedime api`) and MCP (`jopedime mcp`; revisions 2025-11-25 back to 2024-11-05) tools `fitness_list`, `fitness_validate`, `fitness_evaluate` and `regression_fit_predict`
+- pipeline: `jope pipeline run --fitness` and `jope pipeline invent --fitness` rank candidate programs by the objective on held-out rows; observations carry `objective_loss`, receipts record `search.objective` and `validation_objective`, evidence re-derivation and sealed test scoring use the same objective. Order-dependent objectives and objectives that read columns are refused by the search
+- examples: 41 objective recipes and a real-world benchmark (`examples/objectives/real-world`) that fetches public datasets outside the checkout and compares RMSE selection, objective selection and calibrated selection on held-out rows
+
 ### Benchmarks and AutoML
 
 - automl: the owner-supplied `Gemini4_argon_high` Rust regressor joins the native registry byte-for-byte (`jope-bench run --native Gemini4_argon_high`), replacing the earlier `gemini-argon-4` candidate. The adapter now refuses a non-finite prediction instead of passing it on; the frozen source returns `inf` for some extreme finite inputs

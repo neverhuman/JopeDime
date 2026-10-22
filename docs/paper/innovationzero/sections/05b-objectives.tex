@@ -1,0 +1,136 @@
+\section{The objective belongs to the problem}
+\label{sec:objectives}
+
+Section~\ref{sec:setting} treats a task as a training table. In practice a
+task also has a cost of error, and that cost is rarely squared error.
+Forecasting theory has held for half a century that the decision loss, not a
+convenient norm, defines a good prediction~\citep{granger1969,elliott2008}.
+Under squared error the optimal point forecast is the conditional mean; under
+an asymmetric linear cost it is the conditional quantile at the cost ratio;
+under LinEx it is a shifted mean whose shift depends on the predictive
+variance~\citep{varian1975,christoffersen1997}. Gneiting shows that scoring a
+point forecast with a function that is inconsistent with the functional the
+decision needs can lead to badly misguided conclusions~\citep{gneiting2011}.
+Applied fields encode the same lesson. Energy forecasting competitions score
+quantiles with the pinball loss~\citep{hong2016gefcom}; retail competitions use
+scaled and weighted errors~\citep{makridakis2022m5}; actuaries fit claim
+frequency with exposure-weighted Poisson deviance and judge risk ranking with
+Gini indices~\citep{frees2011gini}; hydrologists use efficiency criteria such
+as KGE~\citep{gupta2009kge}; investment managers penalize downside deviation
+rather than volatility~\citep{sortino1994}.
+
+\paragraph{Human design does not follow the objective.}
+Learning algorithms are nevertheless designed for a few convenient losses. A
+new estimator, with its fitting rule, numerical safeguards, regularization
+and tests, is a research and engineering project. Its cost is recovered only
+when many users share its objective. General libraries therefore admit custom
+objectives through narrow interfaces, typically a per-row loss with a gradient
+and Hessian~\citep{xgboost}. Objectives that are non-differentiable, that
+aggregate over a sequence (Sortino, maximum drawdown, expected shortfall), or
+that read quantities outside the prediction (a unit margin, an exposure, an
+imbalance price) fall outside that interface. The usual workaround fits a
+squared-error model and then reports the real cost. No organization can ask a
+human researcher for a new learning algorithm per cost function; the long tail
+of objectives is served by procedures designed for someone else's loss.
+
+\paragraph{Objective-conditioned commitment.}
+The InnovationZero boundary extends directly. Let $L$ be a declarative,
+content-addressed specification of the evaluation objective. The generator
+receives the permitted training view and $L$, and commits
+\begin{gather}
+ a = G_\theta(D_{\mathrm{tr}}, L), \label{eq:objective}\\
+ \hat y_{\mathrm{te}} = a.\mathrm{fit}(D_{\mathrm{tr}}).\mathrm{predict}(X_{\mathrm{te}}),
+ \qquad \mathcal{E}_L(a) = L(y_{\mathrm{te}}, \hat y_{\mathrm{te}}). \nonumber
+\end{gather}
+The objective's identity is frozen with the procedure, and
+Equation~\ref{eq:zero} is unchanged: conditioning on $L$ is permitted
+information, not feedback. If the generator writes procedures, the marginal
+cost of serving a new objective becomes compute rather than researcher time.
+The historical frontier-authored regressors of Appendix~\ref{app:effort}
+reached source in roughly 11 to 25 minutes of estimated, unmetered authoring
+time. None was asked to specialize to a cost function, but the same economics
+would make one procedure per objective affordable. That long tail, where no
+human would write a dedicated learner, is where an amortized proposer could
+differ most from human algorithm design. It is also
+a claim that requires the controls below.
+
+\paragraph{What the repository implements.}
+The code-verified interface represents $L$ as strict JSON: 38 built-in
+objectives with explicit parameters, bounded row expressions over targets,
+predictions and declared auxiliary columns, nonnegative row weights, and
+positive scaled composites. Every specification has a SHA-256 identity
+recorded in selection records, model files and search receipts. Three
+mechanisms consume it. First, selection among the fixed native learners uses
+held-out $L$ rather than RMSE. Second, a cross-fitted monotone output map,
+$\max(\alpha+\beta\hat y,\ \ell)$ with $\beta>0$, is learned on out-of-fold
+predictions to minimize $L$; it turns a squared-error forecast into the act
+$L$ rewards, such as a quantile, an order quantity or a position size, without
+changing the estimator. Third, the program search ranks every candidate program
+by held-out $L$, so the structure it selects is chosen for the objective.
+Parameter fitting inside a program still uses each head's own estimator loss.
+These mechanisms are therefore objective-aware baselines, not the
+objective-conditioned generator of Equation~\ref{eq:objective}.
+
+\paragraph{Exploratory evidence.}
+A repository-reported benchmark
+(\nolinkurl{examples/objectives/real-world}) fits six public tables three ways
+on the same training rows and scores the same held-out rows with each table's
+objective: RMSE selection among six native learners, selection by the
+objective, and selection with the cross-fitted output map
+(Table~\ref{tab:objective-evidence}). On five of the six tables the
+objective chose the same learner as RMSE, so selection alone did not change
+the predictions. The output map reduced held-out loss against RMSE selection
+by 63\% for a 10th-percentile wind commitment, 49\% for a 90th-percentile
+pollution forecast, 35\% for a 4:1 asymmetric exposure cost and 7\% for
+relative valuation error, and raised an after-cost Sortino ratio by 4\% on a
+chronological S\&P~500 split. On exposure-weighted claim frequency the
+RMSE-selected learner predicted negative rates for 68 of 6{,}780 held-out
+policies, so its Poisson deviance is undefined; selection by the objective
+chose a learner with positive rates (deviance 0.492), and the floored output
+map lowered it to 0.475. Ranking written programs by the objective was not
+sufficient either. On the ten committed regression datasets, a program search
+ranked by 90th-percentile pinball loss, with every program still fitted by
+squared error, kept a different program than the RMSE-ranked search on all
+ten but lowered sealed-test loss on only four (geometric-mean change
+$+4.5\%$).
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Held-out objective values for three arms on six public tables
+(single deterministic splits, one seed). Lower is better except Sortino.}
+\label{tab:objective-evidence}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Table & Objective & RMSE-sel. & Obj.-sel. & + map \\
+\midrule
+wind & pinball, $\tau=0.1$ & 1.410 & 1.410 & 0.517 \\
+houses & MAPE & 0.210 & 0.210 & 0.195 \\
+pm10 & pinball, $\tau=0.9$ & 0.240 & 0.240 & 0.122 \\
+no2 & asymmetric, 4:1 & 0.975 & 0.975 & 0.629 \\
+sp500 & Sortino, net of cost & 0.894 & 0.894 & 0.933 \\
+freMTPL & weighted Poisson & undef. & 0.492 & 0.475 \\
+\bottomrule
+\end{tabular}
+\end{table}
+These are single splits of
+small, public and previously studied tables, with one seed and no family
+separation, and they measure a decision layer rather than synthesis. They
+show that the objective must change what is fitted or written, not only what
+is ranked, and they set the baseline an objective-conditioned proposer must
+beat.
+
+\paragraph{An objective-conditioned protocol.}
+The family-level protocol of Section~\ref{sec:protocol} gains an objective
+axis. Each confirmation family is paired with objectives drawn from declared
+classes: quantile and asymmetric costs, deviances with exposure weights,
+relative errors, ranking objectives and sequence-level risk measures. Some
+classes are withheld entirely from training. Three comparisons are required.
+A cross-objective matrix commits $a_i$ for $L_i$ and scores it under every
+$L_j$; an objective-conditioned proposer should win on the diagonal, not
+merely on average. The controls are the implemented baselines: an RMSE learner
+with cross-fitted calibration for $L_j$, objective-aware selection among the
+archive's fixed learners, and the same generator with $L$ withheld. Failures,
+including procedures that cannot be scored under $L$, remain in the
+denominator. A generator that only reproduces calibration would be reported
+as such.

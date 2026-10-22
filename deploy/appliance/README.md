@@ -111,10 +111,12 @@ artifact-size uncertainty early. Follow [P0–P1](IMPLEMENTATION_CHECKLIST.md#p0
 for the first executable PR. The examples in the specification are proposed
 contracts, not production locks or release-ready configuration.
 
-## Business-specific regression fitness
+## Business-specific regression objectives
 
-Automatic selection supports 25 regression objectives and portable custom costs through
-`--fitness mae`, `--fitness @cost.json`, Rust, JSON-RPC and MCP. See
-[the fitness guide](../../docs/regression-objectives.md) and
-[18 executable recipes](../../examples/fitness/README.md). Return/risk objectives require
+Automatic selection supports 38 regression objectives and portable custom costs through
+`--fitness mae`, `--fitness pinball:quantile=0.9`, `--fitness @cost.json`, Rust, JSON-RPC and MCP.
+Objective-aware output calibration (`--calibration`, on by default with an objective) is
+cross-fitted during selection and stored in the model file; columns an objective reads are never
+features. See [the objective guide](../../docs/regression-objectives.md) and
+[41 executable recipes](../../examples/objectives/README.md). Order-dependent objectives require
 chronological forward validation; defaults remain RMSE.

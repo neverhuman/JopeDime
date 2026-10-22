@@ -226,6 +226,26 @@
       ],
       "scope": "Opt-in benchmark-local arena/compare CLI. Synthetic compare and live-scope refusal fixtures run via run_rlfw_offline.py; no native execution or performance proof in CI."
     },
+    "benchmark:examples/objectives/real-world/benchmark.sh": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Opt-in regression-objective comparison on public tables fetched outside the checkout (network, digest-pinned); not run in CI and not a collected test or performance proof."
+    },
+    "benchmark:examples/objectives/real-world/search-benchmark.sh": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Opt-in comparison of RMSE-ranked and objective-ranked program search on datasets/test; not run in CI and not a collected test or performance proof."
+    },
     "benchmark:python/src/jope/elo_bench.py": {
       "discovery": {
         "kind": "benchmark-source"
