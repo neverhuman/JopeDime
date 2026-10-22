@@ -517,9 +517,7 @@ fn validate_recipe_target(
         if let GenomeIr::Pipeline(pipe) = genome {
             for stage in &pipe.stages {
                 let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
-                    .ok_or_else(|| {
-                        anyhow::anyhow!("unregistered legacy operation {}", stage.op)
-                    })?;
+                    .ok_or_else(|| anyhow::anyhow!("unregistered legacy operation {}", stage.op))?;
                 row.supports(target.registry_target())
                     .map_err(anyhow::Error::msg)?;
             }

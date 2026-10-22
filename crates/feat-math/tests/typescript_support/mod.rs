@@ -105,7 +105,10 @@ pub fn run(
         let driver_name = format!("driver.{extension}");
         fs::write(dir.join(&driver_name), driver).unwrap();
         command(&dir, "node", &[&driver_name]);
-        eprintln!("TypeScript {folder}: {} predictions qualified", expected.len());
+        eprintln!(
+            "TypeScript {folder}: {} predictions qualified",
+            expected.len()
+        );
     }
 }
 
@@ -134,14 +137,44 @@ const DRIVER: &str = r#"
   assert.equal(WebAssembly.Module.imports(module).length,0);
   const input=JSON.parse(fs.readFileSync('../input.json','utf8'));
   const expected=JSON.parse(fs.readFileSync('../expected.json','utf8'));
+  const raw=(await WebAssembly.instantiate(module,{})).exports;
+  assert.equal(raw.model_abi_version(),1);
+  for(const allocator of ['model_values','model_labels','model_text']) {
+    assert.equal(raw[allocator](16777217),0);
+    assert.equal(raw[allocator](0xffffffff),0);
+  }
+  assert.notEqual(raw.model_fit(0,1),0);
+  assert.notEqual(raw.model_fit(1,0),0);
+  assert.notEqual(raw.model_fit(0xffffffff,0xffffffff),0);
+  assert.notEqual(raw.model_predict(1,1),0);
+  assert.equal(raw.model_output_len(),0);
+  if(fitted) {
+    const p=raw.model_text(1);new Uint8Array(raw.memory.buffer,p,1)[0]=255;
+    assert.notEqual(raw.model_predict_text(),0); // Invalid UTF-8, not lossy replacement.
+  } else {
+    assert.notEqual(raw.model_predict_text(),0);
+    const p=raw.model_values(1);new Float64Array(raw.memory.buffer,p,1)[0]=1;
+    assert.notEqual(raw.model_fit(2,1),0); // Declared dimensions differ from storage.
+    const q=raw.model_labels(1);new Float64Array(raw.memory.buffer,q,1)[0]=NaN;
+    assert.notEqual(raw.model_fit(1,1),0);
+  }
+  raw.model_dispose();raw.model_dispose();assert.equal(raw.model_output_len(),0);
   const model=await createModel(module);
   const other=await createModel(bytes);
+  // Respect the byteOffset/byteLength of caller views instead of compiling
+  // unrelated prefix/suffix bytes from the backing ArrayBuffer.
+  const padded=new Uint8Array(bytes.length+16);padded.set(bytes,8);
+  const sliced=await createModel(padded.subarray(8,8+bytes.length));sliced.dispose();
+  const arrayBuffer=await createModel(new Uint8Array(bytes).buffer);arrayBuffer.dispose();
   let got;
   if(fitted) {
     got=model.predictStrings(input.rows);
     assert.throws(()=>model.fit([[1]],[1]));
     assert.throws(()=>model.predictCsv('wrong\n1\n'));
     assert.throws(()=>model.predictStrings([[1]]));
+    assert.throws(()=>model.predictStrings([new Array(input.rows[0].length)]));
+    assert.equal(model.predictStrings([]).length,0);
+    assert.throws(()=>model.predictCsv('"unterminated'));
     assert.deepEqual(model.predictStrings(input.rows),got);
     const otherResult=other.predictStrings(input.rows);
     assert.deepEqual(otherResult,got);
@@ -150,11 +183,20 @@ const DRIVER: &str = r#"
     assert.throws(()=>model.fit([],[]));
     assert.throws(()=>model.fit([[1],[1,2]],[1,2]));
     assert.throws(()=>model.fit([[1]],[NaN]));
+    assert.throws(()=>model.fit([[1]],new Array(1)));
+    assert.throws(()=>model.fit([[1]],['1']));
+    assert.throws(()=>model.fit([new Array(input.train[0].length)],[1]));
     assert.equal(model.fit(input.train,input.targets),model);
     got=model.predict(input.test);
     assert.equal(model.predict([]).length,0);
     assert.equal(model.score([],[]),0);
     assert.equal(model.score(input.test,new Array(input.test.length).fill(2)),0);
+    assert.throws(()=>model.score(input.test,new Array(input.test.length)));
+    assert.throws(()=>model.score(input.test,input.test.map(()=>Infinity)));
+    const mean=expected.reduce((a,b)=>a+b,0)/expected.length;
+    const total=expected.reduce((a,b)=>a+(b-mean)**2,0);
+    const residual=expected.reduce((a,b,i)=>a+(b-got[i])**2,0);
+    assert.ok(Math.abs(model.score(input.test,expected)-(total<=0?0:1-residual/total))<1e-12);
     assert.throws(()=>model.predict([new Array(input.train[0].length+1).fill(0)]));
     const retained=Array.from(got);
     const shifted=input.targets.map(v=>v+0.25);

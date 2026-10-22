@@ -1528,7 +1528,10 @@ fn main() {
 
 #[cfg(test)]
 mod typescript_support {
-    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/typescript_support/mod.rs"));
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/typescript_support/mod.rs"
+    ));
 }
 
 #[cfg(test)]

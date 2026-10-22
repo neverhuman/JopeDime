@@ -185,8 +185,7 @@ fn install_v3(
                         } else {
                             "cpp17-fitted"
                         }
-                    } else if record.target == Target::TypeScript
-                        && f.path.ends_with(".kernel.rs")
+                    } else if record.target == Target::TypeScript && f.path.ends_with(".kernel.rs")
                     {
                         "typescript-kernel"
                     } else {

@@ -654,6 +654,18 @@ fn golden_portfolio_duplicate_rows() {
     write_csvs(&dir, &x_train, &y_train, &x_test);
     let py = run_python(&dir, &artifact);
     let rs = run_rust(&dir, &artifact);
+    if typescript_support::enabled() {
+        let bundle =
+            feat_math::transpile::emit_typescript(&genome, &EmitOptions::default()).unwrap();
+        typescript_support::run(
+            &dir.join("typescript"),
+            &bundle.source,
+            &bundle.kernel,
+            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test}),
+            &rs,
+            false,
+        );
+    }
     let py_diff = max_abs_diff(&reference, &py);
     let rs_diff = max_abs_diff(&reference, &rs);
     assert_eq!(
@@ -1198,6 +1210,17 @@ fn assert_fast_parity(name: &str, genome_src: &str) {
     fs::create_dir_all(&dir_ref).unwrap();
     write_csvs(&dir_ref, &x_train, &y_train, &x_test);
     let rs_default = run_rust(&dir_ref, &default);
+    if typescript_support::enabled() {
+        let bundle = feat_math::transpile::emit_typescript(&genome, &fast_opts()).unwrap();
+        typescript_support::run(
+            &dir_fast.join("typescript"),
+            &bundle.source,
+            &bundle.kernel,
+            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test}),
+            &rs_default,
+            false,
+        );
+    }
 
     assert_eq!(
         max_abs_diff(&reference, &py),

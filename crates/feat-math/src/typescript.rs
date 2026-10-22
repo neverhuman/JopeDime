@@ -7,6 +7,9 @@ use anyhow::Result;
 pub const EMITTER_VERSION: &str = "typescript-wasm/1";
 pub const BUILD_COMMAND: &str = "rustc --edition=2021 --target wasm32-unknown-unknown --crate-type cdylib --crate-name model_kernel -C opt-level=3 -C panic=abort model.kernel.rs -o model.wasm && tsc --strict --target ES2020 --module commonjs --lib ES2020,DOM --declaration model.ts";
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Clone, Debug)]
 pub struct TypeScriptEmitted {
     pub source: String,
@@ -45,13 +48,40 @@ pub fn emit(genome: &GenomeIr, options: &EmitOptions) -> Result<TypeScriptEmitte
     let mut sequential = options.clone();
     sequential.fast_runtime = false;
     let pair = transpile::emit(genome, &sequential)?;
+    Ok(recipe_from_rust(pair.rust))
+}
+
+fn recipe_from_rust(rust: String) -> TypeScriptEmitted {
     let source = include_str!("typescript/model.ts").replace("__BOUND_HEADERS__", "null");
     let body = format!(
         "{}\n{}",
         include_str!("typescript/buffers.rs.txt"),
         include_str!("typescript/recipe.rs.txt")
     );
-    Ok(assemble(pair.rust, &body, source))
+    assemble(rust, &body, source)
+}
+
+/// Explicit scalar-v2 programs use their existing Rust recipe and validation.
+pub fn emit_scalar(
+    program: &crate::kernel::scalar_program::ScalarExpressionProgram,
+    carrier: crate::kernel::scalar_program::ScalarCarrier,
+    width: usize,
+    lambda: f64,
+) -> Result<TypeScriptEmitted> {
+    Ok(recipe_from_rust(program.emit_recipe(
+        crate::kernel::scalar_program::ScalarLanguage::Rust,
+        carrier,
+        width,
+        lambda,
+    )?))
+}
+
+/// Explicit feature-position Savitzky–Golay/Goertzel programs retain their
+/// geometry-only Rust constants and independent per-row numerical contract.
+pub fn emit_row_vector(program: &crate::kernel::row_vector::Program) -> Result<TypeScriptEmitted> {
+    Ok(recipe_from_rust(program.emit_recipe(
+        crate::kernel::row_vector::emit::RowRecipeLanguage::Rust,
+    )?))
 }
 
 /// Full fitted coverage follows the existing bound Rust emitter. Unsupported
@@ -61,7 +91,12 @@ pub fn emit_bound(
     options: &EmitOptions,
 ) -> Result<TypeScriptEmitted> {
     let pair = crate::advanced_v3::emit_bound(model, options)?;
-    let headers: Vec<_> = model.schema.columns.iter().map(|c| c.name.as_str()).collect();
+    let headers: Vec<_> = model
+        .schema
+        .columns
+        .iter()
+        .map(|c| c.name.as_str())
+        .collect();
     let json = serde_json::to_string(&headers)?;
     let source = include_str!("typescript/model.ts").replace("__BOUND_HEADERS__", &json);
     let rust_headers = format!(

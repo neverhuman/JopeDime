@@ -59,8 +59,7 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
         } else if matches!(
             lang,
             Lang::Rust | Lang::Cpp | Lang::JavaScript | Lang::TypeScript
-        )
-            && c == '/'
+        ) && c == '/'
             && i + 1 < b.len()
             && b[i + 1] == b'/'
         {
@@ -81,8 +80,7 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
                 i = src.len();
             }
         } else if c == '"'
-            || (c == '\''
-                && matches!(lang, Lang::Python | Lang::JavaScript | Lang::TypeScript))
+            || (c == '\'' && matches!(lang, Lang::Python | Lang::JavaScript | Lang::TypeScript))
         {
             // string literal = 1 code token
             let q = b[i];

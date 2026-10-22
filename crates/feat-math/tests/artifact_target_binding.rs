@@ -295,7 +295,10 @@ fn bound_adapter_preserves_v2_sources_and_binds_fitted_state() {
         .unwrap();
     assert!(matches!(
         &typescript.state,
-        TargetState::Supported { fitted: Some(_), .. }
+        TargetState::Supported {
+            fitted: Some(_),
+            ..
+        }
     ));
     assert!(!e.manifest.all_supported());
     assert_eq!(

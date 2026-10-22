@@ -4,7 +4,9 @@ The `typescript` (alias `ts`) target emits a strict TypeScript API plus a WebAss
 build source. The numerical implementation is the existing complete Rust emitter:
 all accepted recipe transforms, target mappings, symbolic programs and regression
 heads follow that emitter. The narrower JavaScript emitter does not determine this
-target's coverage. Fitted export follows the existing bound Rust emitter's admitted
+target's coverage. Explicit scalar-v2 and feature-position row-vector programs also have TypeScript
+export APIs (`typescript::emit_scalar` and `typescript::emit_row_vector`).
+Fitted export follows the existing bound Rust emitter's admitted
 model forms, including schema encoding, missing cells, calibration and ordered rows.
 
 This is a TypeScript/WebAssembly bundle. It is not a pure TypeScript numerical port.
@@ -133,30 +135,37 @@ deployment is implied.
 
 ```sh
 rustup target add wasm32-unknown-unknown
-export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
+export CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
 npm ci --prefix deploy/ci/typescript --ignore-scripts --no-audit --no-fund
-export PATH="$PWD/deploy/ci/typescript/node_modules/.bin:$PATH"
-export JOPE_TYPESCRIPT_PARITY=1
-cargo test --locked -p feat-math --no-default-features --test golden -- --test-threads=2
-cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit:: -- --test-threads=2
-cargo test --locked -p feat-math --no-default-features --test artifact_target_binding
-cargo test --locked -p jope-pipeline --test artifact_target_binding
+bash deploy/ci/typescript/qualify.sh
+# Real browsers require the engine downloads and their system libraries.
+deploy/ci/typescript/node_modules/.bin/playwright install --with-deps chromium firefox webkit
+node deploy/ci/typescript/browser.mjs
 ```
 
-`tsc`, `node`, and the WebAssembly Rust target are required when this qualification
-is selected. Missing tools fail. `JOPE_TSC` can name the TypeScript executable.
+Missing compilers, missing browser engines, zero tests and incomplete census records
+fail qualification. `JOPE_TSC` selects the compiler in the shared test helper.
+The main CI aggregate requires the reusable TypeScript workflow for Rust/emitter
+changes; changes to this workflow or its tools select that gate too. Both Node
+24.19.0 and 26.1.0 must pass. The Node 26 leg also requires Chromium, Firefox and
+WebKit, running every census fixture in the page and a module worker.
 
-The existing golden tests now compile and execute TypeScript in both strict CommonJS
-and strict ES2020 module mode when the flag is enabled. They compare against the
-native emitted Rust predictions, which the existing suite independently compares
-with the interpreter and Python. They exercise transforms, nonlinear heads, target
-mappings, RNG, symbolic programs, refits, independent instances, empty predictions,
-malformed dimensions and disposal. Existing fitted tests add ordered lag/roll tails
-and control/Unicode categorical values. Existing manifest tests cover determinism,
-complete source closure, deletion and tampering.
+| Coverage boundary | Required proof |
+| --- | --- |
+| Recipe registry | Every spelling is discovered from the publication registry. Each Rust-supported spelling executes in strict CommonJS and ESM; all other spellings must be refused by both emitters. Aliases are included. |
+| Fitted models | Every `rust_bound` registry entry and every admitted legacy recipe state is exercised or has the same explicit Rust refusal. Additional cases cover categorical codec modes, ordered tails, missing cells and Unicode/CSV quoting. The existing bound Rust emitter refuses some saved heads, including portfolio. |
+| Scalar-v2 | Every decodable scalar function ID, both numerical policies and row/elementwise carriers; native fitted predictions compared to Wasm. |
+| Row vectors | Input-only, Savitzky–Golay and Goertzel recipes, preserving Rust geometry constants. |
+| Existing numerical goldens | The complete existing golden suite, including nonlinear heads, target transforms, symbolic programs, duplicate-row portfolio and fast-runtime options, with native Rust/Python/interpreter checks retained. |
+| TypeScript facade | V8 line, branch and function thresholds are each **100%**. Tests evaluate the actual compiled template body with recipe/fitted header bindings and fault-injecting ABI doubles; both byte orders, malformed ABI, allocation failures, traps, sparse arrays and disposal are tested. This metric covers the facade, not the Rust numerical library. |
+| Actual Wasm ABI | Oversized/negative dimensions, allocation refusal, storage/dimension mismatch, invalid labels and UTF-8, no host imports, buffer growth, refitting, disposal, independent instances and copied outputs. |
+| Publication | Complete two-source manifest closure, deterministic identities, tampering/deletion, CLI and pipeline target routing. |
+| CI evidence | Exact source/run/attempt, nonzero test results, complete executed/refused census, matching CJS/ESM counts and a real covered facade file. Negative receipt tests reject fabricated empty success and missing coverage/cases. |
 
-The dedicated `typescript` workflow retains exact source/run/attempt identities and
-logs. A workflow definition or emitted file is not passing evidence; use the
-actual exact-head run result before claiming qualification. Browser compatibility
-follows the import-free module contract; the current executable matrix uses Node
-and does not claim a real-browser run.
+A 100% registry census and 100% facade coverage have finite, stated denominators.
+They do not mean every parameter combination is tested, every inherited fitted form
+is supported, universal bit equality holds, or the entire repository has 100% code
+coverage. Real-Wasm numerical comparisons and real-browser tests are separate from
+fault-injected facade coverage. See [the red-team record](typescript-redteam.md) for
+observed results and remaining qualification limits. A workflow definition is not a
+passing run; use current exact-head CI before claiming hosted qualification.

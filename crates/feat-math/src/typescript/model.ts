@@ -39,6 +39,13 @@ function numericShape(rows: NumericRows, width?: number): number {
 function quote(value: string): string {
   return '"' + value.replace(/"/g, '""') + '"';
 }
+function finiteTargets(targets: NumericVector, count: number): void {
+  if (targets.length !== count) throw new RangeError("invalid targets");
+  // Array.some skips holes. Iteration must reject sparse JavaScript arrays too.
+  for (const value of targets)
+    if (typeof value !== "number" || !Number.isFinite(value))
+      throw new RangeError("finite numeric targets required");
+}
 
 export class Model {
   private width: number | undefined;
@@ -104,10 +111,9 @@ export class Model {
   fit(rows: NumericRows, targets: NumericVector): this {
     this.check();
     if (boundHeaders !== null) throw new Error("fitted artifact cannot be refitted");
+    if (rows.length === 0) throw new RangeError("empty training rows");
     const cols = numericShape(rows);
-    if (rows.length === 0 || targets.length !== rows.length ||
-        targets.some(value => typeof value !== "number" || !Number.isFinite(value)))
-      throw new RangeError("invalid training targets");
+    finiteTargets(targets, rows.length);
     this.call(() => {
       this.copyRows(rows, cols);
       const pointer = this.kernel.model_labels(targets.length);
@@ -141,8 +147,9 @@ export class Model {
     if (boundHeaders === null) throw new Error("string rows require a fitted artifact");
     const records = [boundHeaders.map(quote).join(",")];
     for (const row of rows) {
-      if (row.length !== boundHeaders.length || row.some(value => typeof value !== "string"))
-        throw new RangeError("invalid string row");
+      if (row.length !== boundHeaders.length) throw new RangeError("invalid string row width");
+      for (const value of row)
+        if (typeof value !== "string") throw new TypeError("string cells required");
       records.push(row.map(quote).join(","));
     }
     return this.predictCsv(records.join("\n") + "\n", rows.length);
@@ -163,8 +170,8 @@ export class Model {
   }
 
   score(rows: NumericRows, targets: NumericVector): number {
-    if (targets.length !== rows.length || targets.some(v => !Number.isFinite(v)))
-      throw new RangeError("invalid scoring targets");
+    this.check();
+    finiteTargets(targets, rows.length);
     const predictions = this.predict(rows);
     if (targets.length === 0) return 0;
     let mean = 0;
@@ -180,7 +187,10 @@ export class Model {
   }
 
   dispose(): void {
-    if (this.alive) { this.kernel.model_dispose(); this.alive = false; }
+    if (this.alive) {
+      try { this.kernel.model_dispose(); }
+      finally { this.alive = false; }
+    }
   }
 }
 

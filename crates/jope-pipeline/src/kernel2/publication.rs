@@ -421,7 +421,8 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
     let mut targets = BTreeSet::new();
     for target in retained.split_whitespace() {
         ensure!(
-            ["py", "rs", "cpp", "js", "ts", "cpp17-fitted"].contains(&target) && targets.insert(target),
+            ["py", "rs", "cpp", "js", "ts", "cpp17-fitted"].contains(&target)
+                && targets.insert(target),
             "unknown or duplicate emitted target"
         );
     }
