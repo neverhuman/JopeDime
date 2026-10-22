@@ -1,0 +1,73 @@
+{
+  "schema_version": "jope.native-regressor-verification/v1",
+  "source_sha256": "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3",
+  "base_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+  "compiler": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "checks": [
+    {
+      "command": "rustc --edition=2021 --crate-type lib --emit=metadata Gemini4_argon_high.rs",
+      "status": "passed",
+      "attempt": 1,
+      "note": "one unused-import warning (std::cmp::Ordering) in the frozen source"
+    },
+    {
+      "command": "edge-case probe (compile-check/probe.rs): shapes, refit, NaN/infinite inputs, row locality, determinism, extreme finite inputs",
+      "status": "passed",
+      "finding": "extreme finite inputs near +/-f64::MAX can yield non-finite predictions; refused by the adapter"
+    },
+    {
+      "command": "cargo test -p jope-automl --locked",
+      "status": "passed",
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "command": "cargo test -p jope-bench --locked",
+      "status": "passed",
+      "passed": 182,
+      "failed": 0,
+      "ignored": 1
+    },
+    {
+      "command": "cargo clippy -p jope-automl -p jope-bench --all-targets --no-deps --locked -- -D warnings",
+      "status": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "status": "passed"
+    },
+    {
+      "command": "cargo nextest run --locked -P pr -p feat-math --test compat_freeze --test historical_v1",
+      "status": "passed",
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "command": "bash deploy/ci/check.sh",
+      "status": "passed except environment",
+      "note": "every step passes except the host cargo-deny 0.19.8 vs required 0.20.2 assertion, which fails identically on main"
+    },
+    {
+      "command": "deploy/ci/test-inventory.sh --update --no-python",
+      "status": "passed",
+      "rust_tests": 5842
+    }
+  ],
+  "source_changes_after_freeze": false,
+  "performance_benchmark_run": true,
+  "elo_measured": true,
+  "elo": {
+    "panel": "64 families x 3 folds x 3 seeds (576 cells)",
+    "cells_completed": 576,
+    "rating": 1560.785994324077,
+    "ci95": [
+      1518.787411186119,
+      1606.8925888173178
+    ],
+    "rank": "2 of 4",
+    "results": "assets/automl-elo/v1/RESULTS.json"
+  },
+  "hosted_ci": null,
+  "independent_review": false,
+  "logs": "/home/ubuntu/jope-evidence/gemini4-argon-high-20261022/"
+}

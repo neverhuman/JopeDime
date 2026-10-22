@@ -1,0 +1,39 @@
+{
+  "schema": "jope.automl-elo-figure-validation/v1",
+  "inputs": {
+    "FOUR_MODEL_RESULTS.json": "f1f7f3c304110bb17a2862d3405d2c55ff23ff6c1269c27189d0f16e7078e70a",
+    "four-match-matrix.txt": "ebdac2bb7aef7ba9f94d095e89a11a0f05ce61d1693d51d460b65d27e25c5d4d",
+    "SOURCE_COUNTS.json": "cf826a15b9ea1c7d172eea5122ea92d4ec4dc6938712d3c70e1837c5304c1f38"
+  },
+  "rendering": {
+    "matplotlib": "3.10.8",
+    "svg_text": true,
+    "deterministic_metadata": true
+  },
+  "figures": {
+    "algorithm-source-size.png": {
+      "sha256": "289ef13fe317d30e7380b42fac2937ad1d638fb224a92462bcf8b0278a0a6f73",
+      "bytes": 52435
+    },
+    "algorithm-source-size.svg": {
+      "sha256": "32fffde8c9d2b323ac92017dd51fad9db733d05d1c6125553d1c599fa3792857",
+      "bytes": 9316
+    },
+    "automl-elo.png": {
+      "sha256": "b6b3e407b9adc2bb304041151219a0f4b11226ac63a442b0ab226e0e08a037a0",
+      "bytes": 73712
+    },
+    "automl-elo.svg": {
+      "sha256": "0b1fbdc9a68ef91d0eff7fbd7fbf440597ea503db684f49ad1bbd5fabcab2bf0",
+      "bytes": 12826
+    },
+    "automl-pairwise.png": {
+      "sha256": "54e1717023626decaa2a4b883e6a39a4b1d5555d02b71125993bbe0150aec093",
+      "bytes": 90306
+    },
+    "automl-pairwise.svg": {
+      "sha256": "35a92a0c6a633c08d5fbf20979017009cca38e7f6b11b9074a7d8d1dc02536ab",
+      "bytes": 16004
+    }
+  }
+}

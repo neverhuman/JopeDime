@@ -1,0 +1,33 @@
+{
+  "schema_version": "jope.native-regressor-authorship/v1",
+  "requested_submission_name": "Gemini4_argon_high.rs",
+  "served_model_id": null,
+  "served_model_revision": null,
+  "model_identity_note": "The owner supplied the artifact name and file. Its name suggests a Gemini model; exact provider, model and revision telemetry was not supplied and is not inferred.",
+  "source_sha256": "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3",
+  "source_bytes": 96694,
+  "source_written_at_utc": null,
+  "source_received_at_utc": "2026-10-22T08:08:38Z",
+  "source_received_note": "Modification time of /home/ubuntu/JopeDime/Gemini4_argon_high.rs when the owner placed it; not an authoring timestamp.",
+  "first_compilation_confirmed_at_utc": "2026-10-22T08:11:45Z",
+  "source_changed_after_freeze": false,
+  "compilation_attempts_before_first_success": 1,
+  "authoring": {
+    "method": null,
+    "numerical_experiments": null,
+    "repository_code_read_before_freeze": null,
+    "external_implementation_used_in_source": null,
+    "fresh_session": null,
+    "prior_project_context_present": null,
+    "eligible_for_pristine_primary_challenge_round": false,
+    "post_freeze_checks": "Independent compilation, contract fixtures and the AutoML Elo panel; no source revisions."
+  },
+  "session_estimates": {
+    "exact_provider_usage_available": false,
+    "note": "No authoring-session telemetry was supplied."
+  },
+  "supersedes": {
+    "entrant": "gemini-argon-4",
+    "note": "Owner decision 2026-10-22: this source replaces the earlier gemini_argon_4.rs as the Gemini AutoML entrant. That earlier source is not part of this repository."
+  }
+}
