@@ -33,8 +33,18 @@ Run the identical full-scope Jankurai audit with
 `JANKURAI_BIN=/path/to/pinned/jankurai bash ops/ci/jankurai.sh /owned/fresh/report-directory`.
 The wrapper requires version1.7.5, emits timings and a repair queue, disables
 badge/history writes, and selects read-only mode when reports live outside the
-checkout. The dedicated hosted workflow remains subject to its existing runner
-admission condition; a skipped job is not audit evidence.
+checkout. The independent audit job in full-main.yml uses the existing trusted-main
+runner on main pushes and main workflow dispatches. It runs alongside the eleven
+CPU families; a failed audit fails the workflow even when the CPU aggregate passes.
+The dedicated hosted workflow remains optional; its skipped runs are not evidence.
+
+The wrapper pins its input manifest before execution. Afterward it validates the
+pinned default policy and unchanged 85 floor, full scope, required reports, finding
+counts and agreement between decision and exit status. It rechecks every captured
+file, its read-only mode, the archive and the complete path set. The resulting
+audit-verification.json records artifact integrity separately from audit_passed.
+A valid failed audit retains its failure; a zero exit with invalid evidence fails.
+Both passing and failing reports use the existing local/cache evidence transport.
 
 The full auditor follows ignored `.agent/worktrees` by default. The audit wrapper
 therefore exports every tracked Git blob into an immutable evidence input and
