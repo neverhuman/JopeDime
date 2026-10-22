@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5842,
+  "count": 5860,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -2554,7 +2554,7 @@
     }
    },
    "jope-appliance": {
-    "count": 8,
+    "count": 11,
     "ignored": 0,
     "binaries": {
      "jope-appliance::bin/jopedime": {
@@ -2565,14 +2565,17 @@
      },
      "jope-appliance::single_file": {
       "kind": "test",
-      "count": 8,
+      "count": 11,
       "ignored": 0,
       "tests": [
        "a_damaged_package_stops_every_command",
        "a_packaged_copy_fits_saves_reloads_and_predicts_alone",
        "a_promised_method_this_build_cannot_run_fails_doctor",
        "an_unpackaged_development_build_runs_native_methods",
+       "custom_fitness_cli_persists_the_objective_and_predicts_after_reload",
        "every_failure_class_has_its_exit_status",
+       "fitness_schema_accepts_examples_and_rejects_unknown_parameters",
+       "mcp_stdio_handshake_discovery_and_custom_scoring_work_in_the_packaged_binary",
        "regression_doctor_failure_survives_a_closed_json_pipe",
        "regression_output_collision_preserves_the_input_file",
        "regression_receipt_failure_survives_a_closed_json_pipe"
@@ -8746,19 +8749,34 @@
     }
    },
    "jope-runtime": {
-    "count": 17,
+    "count": 32,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
       "kind": "lib",
-      "count": 9,
+      "count": 24,
       "ignored": 0,
       "tests": [
+       "automl::fitness_tests::custom_fitness_changes_the_selected_candidate_and_records_both_directions",
+       "automl::fitness_tests::explicit_default_matches_existing_selection_and_invalid_scope_is_refused",
+       "automl::fitness_tests::forward_validation_excludes_warmup_and_never_trains_on_future_labels",
        "automl::tests::folds_are_stratified_and_deterministic",
        "automl::tests::losses_match_the_panel_metrics",
        "backend::tests::explicit_cuda_fails_and_auto_reports_cpu",
        "error::tests::a_panic_in_numerical_work_becomes_a_numerical_failure",
        "error::tests::the_outermost_failure_names_the_category",
+       "fitness::tests::all_checked_in_fitness_examples_parse_and_score",
+       "fitness::tests::catalog_and_custom_identities_round_trip_and_bind_every_parameter",
+       "fitness::tests::configuration_parameters_and_expression_limits_are_enforced",
+       "fitness::tests::correlations_handle_ties_signed_zero_and_direction",
+       "fitness::tests::custom_aggregations_and_scaled_composition_preserve_semantics",
+       "fitness::tests::log_and_deviance_metrics_match_independent_calculations",
+       "fitness::tests::malformed_nonfinite_and_undefined_values_never_become_winners",
+       "fitness::tests::return_ratios_use_positions_turnover_full_sample_downside_and_annualization",
+       "fitness::tests::standard_metrics_match_independent_hand_calculations",
+       "service::tests::api_mcp_and_rust_evaluation_have_identical_scores",
+       "service::tests::fit_predict_transport_runs_the_custom_objective_and_binds_it_to_the_model",
+       "service::tests::rpc_lifecycle_discovery_errors_and_notifications_are_explicit",
        "table::tests::malformed_input_is_refused_with_an_input_failure",
        "table::tests::missing_cells_categories_and_kinds_follow_the_contract",
        "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",
@@ -9271,7 +9289,7 @@
   }
  },
  "totals": {
-  "rust": 5842,
+  "rust": 5860,
   "python": 182
  }
 }

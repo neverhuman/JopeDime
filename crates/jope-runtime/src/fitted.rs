@@ -160,7 +160,10 @@ impl FittedModel {
                 implementation: format!("feat_math::advanced_v3 {}", record.model.artifact_schema),
             },
             task: task::name(record.kind).to_owned(),
-            metric: task::metric(record.kind).to_owned(),
+            metric: record
+                .selection
+                .map_or(task::metric(record.kind), |s| s.metric.as_str())
+                .to_owned(),
             class_order: record.classes.to_vec(),
             target: record.target.to_owned(),
             input_schema: record
@@ -244,6 +247,28 @@ impl FittedModel {
             return Err(fail("preprocessing policy differs from this build"));
         }
         let kind = self.kind()?;
+        if let Some(selection) = &h.training_procedure.selection {
+            if selection.get("metric").and_then(|v| v.as_str()) != Some(h.metric.as_str()) {
+                return Err(fail("selection metric differs from header"));
+            }
+            if let Some(spec) = selection.get("fitness").filter(|v| !v.is_null()) {
+                let fitness: crate::fitness::Fitness = serde_json::from_value(spec.clone())
+                    .map_err(|e| fail(&format!("invalid fitness: {e}")))?;
+                if kind != TaskKind::Regression
+                    || fitness.name() != h.metric
+                    || Some(
+                        fitness
+                            .identity()
+                            .map_err(|e| fail(&format!("invalid fitness: {e}")))?
+                            .as_str(),
+                    ) != selection.get("fitness_sha256").and_then(|v| v.as_str())
+                {
+                    return Err(fail("fitness identity differs from selection record"));
+                }
+            }
+        } else if h.metric != task::metric(kind) {
+            return Err(fail("named fit has a noncanonical task metric"));
+        }
         validate_classes(kind, &h.class_order).map_err(|e| fail(&format!("{e:#}")))?;
         let method = self.method()?;
         if method.dsl != h.method.recipe

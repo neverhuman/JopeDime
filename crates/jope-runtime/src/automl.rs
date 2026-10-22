@@ -25,7 +25,7 @@ use crate::task::{self, TaskKind};
 use crate::Failure;
 use anyhow::{Context, Result};
 use feat_math::advanced_v3::RawTable;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
 pub const SELECTION_POLICY: &str = "jope.runtime-select/v1";
@@ -34,6 +34,20 @@ pub const DEFAULT_FOLDS: usize = 5;
 /// Probability floor of the log loss, the panel's epsilon.
 pub const PROBABILITY_EPSILON: f64 = 1e-15;
 
+/// Forward folds train only on earlier rows, with an explicit embargo of `gap` rows.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Validation {
+    Iid {},
+    Forward { gap: usize },
+}
+
+impl Default for Validation {
+    fn default() -> Self {
+        Self::Iid {}
+    }
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct CandidateOutcome {
     pub id: String,
@@ -41,6 +55,8 @@ pub struct CandidateOutcome {
     pub status: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub loss: Option<f64>,
+    /// Natural value (before maximization is negated).
+    pub fitness_value: Option<f64>,
     pub folds_completed: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
@@ -52,8 +68,15 @@ pub struct Selection {
     pub policy: &'static str,
     pub fold_policy: &'static str,
     pub folds: usize,
-    pub metric: &'static str,
-    pub loss: &'static str,
+    pub metric: String,
+    pub loss: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fitness: Option<crate::fitness::Fitness>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fitness_sha256: Option<String>,
+    pub validation: Validation,
+    pub scored_rows: usize,
+    pub warmup_rows: usize,
     pub selected: String,
     pub candidates: Vec<CandidateOutcome>,
 }
@@ -131,13 +154,21 @@ fn out_of_fold(
     k: usize,
     budget: &Budget,
     completed: &mut usize,
-) -> Result<Predictions> {
+    validation: &Validation,
+) -> Result<(Predictions, Vec<f64>)> {
     let n = training.targets.len();
     let mut values: Vec<Option<Vec<f64>>> = vec![None; n];
     for fold in 0..k {
         budget.check(&format!("fold {fold} of {}", method.id))?;
-        let train_rows: Vec<usize> = (0..n).filter(|r| assignment[*r] != fold).collect();
         let valid_rows: Vec<usize> = (0..n).filter(|r| assignment[*r] == fold).collect();
+        let train_rows: Vec<usize> = match validation {
+            Validation::Iid {} => (0..n).filter(|r| assignment[*r] != fold).collect(),
+            Validation::Forward { gap } => (0..valid_rows[0].saturating_sub(*gap)).collect(),
+        };
+        anyhow::ensure!(
+            train_rows.len() >= 2,
+            "forward fold needs at least two training rows after gap"
+        );
         let train = subset(&training.table, &train_rows)?;
         let targets: Vec<f64> = train_rows.iter().map(|r| training.targets[*r]).collect();
         let model = fit_native(
@@ -168,18 +199,26 @@ fn out_of_fold(
         }
         *completed += 1;
     }
-    let rows: Vec<Vec<f64>> = values
-        .into_iter()
-        .map(|v| v.context("a row was in no fold"))
-        .collect::<Result<_>>()?;
-    Ok(if training.kind == TaskKind::Regression {
-        Predictions::Values(rows.into_iter().map(|r| r[0]).collect())
-    } else {
-        Predictions::Probabilities {
-            classes: training.classes.clone(),
-            values: rows,
+    let mut targets = Vec::new();
+    let mut rows = Vec::new();
+    for (index, value) in values.into_iter().enumerate() {
+        if assignment[index] == usize::MAX {
+            continue;
         }
-    })
+        rows.push(value.context("a scoring row was in no fold")?);
+        targets.push(training.targets[index]);
+    }
+    Ok((
+        if training.kind == TaskKind::Regression {
+            Predictions::Values(rows.into_iter().map(|r| r[0]).collect())
+        } else {
+            Predictions::Probabilities {
+                classes: training.classes.clone(),
+                values: rows,
+            }
+        },
+        targets,
+    ))
 }
 
 /// The effective fold count, or an input failure when selection is impossible.
@@ -216,8 +255,62 @@ pub fn select(
     requested_folds: usize,
     budget: &Budget,
 ) -> Result<(Selection, RustMethod)> {
+    select_with_fitness(
+        training,
+        candidates,
+        requested_folds,
+        budget,
+        None,
+        &Validation::Iid {},
+    )
+}
+
+/// Selection with a portable regression objective. Existing callers retain the original default.
+pub fn select_with_fitness(
+    training: &Training,
+    candidates: &[RustMethod],
+    requested_folds: usize,
+    budget: &Budget,
+    fitness: Option<&crate::fitness::Fitness>,
+    validation: &Validation,
+) -> Result<(Selection, RustMethod)> {
+    if let Some(fitness) = fitness {
+        fitness.validate()?;
+        anyhow::ensure!(
+            training.kind == TaskKind::Regression,
+            "custom fitness is regression-only"
+        );
+        anyhow::ensure!(
+            !fitness.requires_order() || matches!(validation, Validation::Forward { .. }),
+            "return/risk fitness requires forward validation"
+        );
+    }
+    anyhow::ensure!(
+        matches!(validation, Validation::Iid {}) || training.kind == TaskKind::Regression,
+        "forward validation is regression-only"
+    );
     let k = effective_folds(training, requested_folds)?;
-    let assignment = folds(training.kind, &training.targets, k);
+    let n = training.targets.len();
+    let assignment = match validation {
+        Validation::Iid {} => folds(training.kind, &training.targets, k),
+        Validation::Forward { gap } => {
+            let block = n / (k + 1);
+            anyhow::ensure!(
+                block.saturating_sub(*gap) >= 2,
+                "forward validation needs more rows or a smaller fold count/gap"
+            );
+            (0..n)
+                .map(|r| {
+                    if r < block {
+                        usize::MAX
+                    } else {
+                        ((r - block) / block).min(k - 1)
+                    }
+                })
+                .collect()
+        }
+    };
+    let warmup_rows = assignment.iter().filter(|f| **f == usize::MAX).count();
     let mut outcomes = Vec::with_capacity(candidates.len());
     let mut best: Option<(f64, usize)> = None;
     for (index, method) in candidates.iter().enumerate() {
@@ -227,6 +320,7 @@ pub fn select(
                 id: method.id.clone(),
                 status: "skipped",
                 loss: None,
+                fitness_value: None,
                 folds_completed: 0,
                 reason: Some("time limit reached".into()),
                 seconds: 0.0,
@@ -235,12 +329,31 @@ pub fn select(
         }
         let mut completed = 0;
         let result = crate::error::contain(&method.id, || {
-            out_of_fold(method, training, &assignment, k, budget, &mut completed)
+            out_of_fold(
+                method,
+                training,
+                &assignment,
+                k,
+                budget,
+                &mut completed,
+                validation,
+            )
         })
-        .and_then(|p| loss(training.kind, &training.targets, &p));
+        .and_then(|(p, targets)| {
+            if let Some(fitness) = fitness {
+                let Predictions::Values(values) = p else {
+                    anyhow::bail!("regression fitness needs numeric predictions");
+                };
+                let score = fitness.evaluate(&targets, &values)?;
+                Ok((score.loss, score.value))
+            } else {
+                let value = loss(training.kind, &targets, &p)?;
+                Ok((value, value))
+            }
+        });
         let seconds = started.elapsed().as_secs_f64();
         match result {
-            Ok(value) => {
+            Ok((value, natural)) => {
                 if best.is_none_or(|(b, _)| value < b) {
                     best = Some((value, index));
                 }
@@ -248,6 +361,7 @@ pub fn select(
                     id: method.id.clone(),
                     status: "scored",
                     loss: Some(value),
+                    fitness_value: Some(natural),
                     folds_completed: completed,
                     reason: None,
                     seconds,
@@ -259,6 +373,7 @@ pub fn select(
                     id: method.id.clone(),
                     status: if skipped { "skipped" } else { "failed" },
                     loss: None,
+                    fitness_value: None,
                     folds_completed: completed,
                     reason: Some(format!("{error:#}")),
                     seconds,
@@ -280,11 +395,30 @@ pub fn select(
         });
     };
     let selection = Selection {
-        policy: SELECTION_POLICY,
-        fold_policy: FOLD_POLICY,
+        policy: if fitness.is_some() || !matches!(validation, Validation::Iid {}) {
+            "jope.runtime-select/v2"
+        } else {
+            SELECTION_POLICY
+        },
+        fold_policy: if matches!(validation, Validation::Iid {}) {
+            FOLD_POLICY
+        } else {
+            "expanding-window-gap/v1"
+        },
         folds: k,
-        metric: task::metric(training.kind),
-        loss: loss_name(training.kind),
+        metric: fitness
+            .map_or(task::metric(training.kind), |f| f.name())
+            .into(),
+        loss: if fitness.is_some() {
+            "direction_normalized_fitness".into()
+        } else {
+            loss_name(training.kind).into()
+        },
+        fitness: fitness.cloned(),
+        fitness_sha256: fitness.map(|f| f.identity()).transpose()?,
+        validation: validation.clone(),
+        scored_rows: n - warmup_rows,
+        warmup_rows,
         selected: candidates[winner].id.clone(),
         candidates: outcomes,
     };
@@ -335,5 +469,181 @@ mod tests {
         };
         let ll = loss(TaskKind::Multiclass, &[0.0, 1.0], &p).unwrap();
         assert!((ll - (-(1e-15f64).ln() / 2.0)).abs() < 1e-9);
+    }
+}
+
+#[cfg(test)]
+mod fitness_tests {
+    use super::*;
+    use crate::fitness::{Aggregation, Direction, Expression, Fitness};
+    fn training() -> Training {
+        let text = String::from("x,y\n")
+            + &(0..60)
+                .map(|i| format!("{i},{}\n", i * i + (if i % 7 == 0 { 250 } else { 0 })))
+                .collect::<String>();
+        let limits = crate::limits::Limits::default();
+        let csv = crate::table::parse_csv(text.as_bytes(), &limits).unwrap();
+        crate::table::training(
+            &csv,
+            "y",
+            crate::task::TaskChoice::Fixed(TaskKind::Regression),
+            &limits,
+        )
+        .unwrap()
+    }
+    #[test]
+    fn custom_fitness_changes_the_selected_candidate_and_records_both_directions() {
+        let train = training();
+        let budget = Budget::new(None, 1);
+        let candidates =
+            ["ridge", "histgbm"].map(|s| crate::methods::resolve(TaskKind::Regression, s).unwrap());
+        let run = |direction| {
+            let f = Fitness::Custom {
+                name: "mean_prediction".into(),
+                direction,
+                expression: Expression::Pred {},
+                aggregation: Aggregation::Mean {},
+            };
+            let (selection, method) = select_with_fitness(
+                &train,
+                &candidates,
+                3,
+                &budget,
+                Some(&f),
+                &Validation::Iid {},
+            )
+            .unwrap();
+            let best = selection
+                .candidates
+                .iter()
+                .filter_map(|c| c.loss)
+                .min_by(f64::total_cmp)
+                .unwrap();
+            assert_eq!(
+                selection
+                    .candidates
+                    .iter()
+                    .find(|c| c.id == method.id)
+                    .unwrap()
+                    .loss,
+                Some(best)
+            );
+            assert_eq!(selection.fitness_sha256, Some(f.identity().unwrap()));
+            for c in &selection.candidates {
+                assert_eq!(
+                    c.loss,
+                    c.fitness_value
+                        .map(|v| if direction == Direction::Minimize {
+                            v
+                        } else {
+                            -v
+                        })
+                );
+            }
+            method.id
+        };
+        assert_ne!(run(Direction::Minimize), run(Direction::Maximize));
+    }
+    #[test]
+    fn forward_validation_excludes_warmup_and_never_trains_on_future_labels() {
+        let mut train = training();
+        let budget = Budget::new(None, 1);
+        let method = crate::methods::resolve(TaskKind::Regression, "ridge").unwrap();
+        let validation = Validation::Forward { gap: 2 };
+        let (selection, _) = select_with_fitness(
+            &train,
+            std::slice::from_ref(&method),
+            3,
+            &budget,
+            Some(&Fitness::Mae {}),
+            &validation,
+        )
+        .unwrap();
+        assert_eq!(selection.warmup_rows, 15);
+        assert_eq!(selection.scored_rows, 45);
+        assert_eq!(selection.fold_policy, "expanding-window-gap/v1");
+        let assignment = (0..60)
+            .map(|r| {
+                if r < 15 {
+                    usize::MAX
+                } else {
+                    ((r - 15) / 15).min(2)
+                }
+            })
+            .collect::<Vec<_>>();
+        let (a, ya) = out_of_fold(
+            &method,
+            &train,
+            &assignment,
+            3,
+            &budget,
+            &mut 0,
+            &validation,
+        )
+        .unwrap();
+        // Fold 0 holds rows 15..30; gap rows 13,14 and all rows >=30 are unavailable to it.
+        for i in [13, 14, 30, 45, 59] {
+            train.targets[i] += 1e6;
+        }
+        let (b, yb) = out_of_fold(
+            &method,
+            &train,
+            &assignment,
+            3,
+            &budget,
+            &mut 0,
+            &validation,
+        )
+        .unwrap();
+        let (Predictions::Values(a), Predictions::Values(b)) = (a, b) else {
+            panic!("regression");
+        };
+        assert_eq!(&a[..15], &b[..15]);
+        assert_eq!(&ya[..15], &yb[..15]);
+        assert!(select_with_fitness(
+            &train,
+            &[method],
+            3,
+            &budget,
+            Some(&Fitness::parse("sortino").unwrap()),
+            &Validation::Iid {}
+        )
+        .is_err());
+    }
+    #[test]
+    fn explicit_default_matches_existing_selection_and_invalid_scope_is_refused() {
+        let train = training();
+        let budget = Budget::new(None, 1);
+        let candidates =
+            ["ridge", "histgbm"].map(|s| crate::methods::resolve(TaskKind::Regression, s).unwrap());
+        let (a, ma) = select(&train, &candidates, 3, &budget).unwrap();
+        let (b, mb) = select_with_fitness(
+            &train,
+            &candidates,
+            3,
+            &budget,
+            Some(&Fitness::Rmse {}),
+            &Validation::Iid {},
+        )
+        .unwrap();
+        assert_eq!(ma, mb);
+        for (a, b) in a.candidates.iter().zip(b.candidates) {
+            assert!((a.loss.unwrap() - b.loss.unwrap()).abs() < 1e-10);
+        }
+        let options = crate::api::FitOptions {
+            method: "ridge".into(),
+            fitness: Some(Fitness::Mae {}),
+            ..Default::default()
+        };
+        assert!(crate::api::fit(&train, &options, &budget, "", Default::default()).is_err());
+        assert!(select_with_fitness(
+            &train,
+            &candidates,
+            3,
+            &budget,
+            None,
+            &Validation::Forward { gap: 99 }
+        )
+        .is_err());
     }
 }

@@ -25,7 +25,7 @@
       }
     },
     "task": {"enum": ["regression", "binary", "multiclass"]},
-    "metric": {"enum": ["rmse", "auroc", "log_loss"]},
+    "metric": {"type": "string", "minLength": 1, "maxLength": 64, "description": "Selection fitness name when selected automatically; canonical task metric for a named fit. The exact custom specification and identity are in training_procedure.selection."},
     "class_order": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "target": {"type": "string", "minLength": 1},
     "input_schema": {

@@ -375,6 +375,20 @@ impl Run {
             method: train.method.clone(),
             candidates: train.candidates.clone(),
             folds: train.folds,
+            fitness: train
+                .fitness
+                .as_deref()
+                .map(load_fitness)
+                .transpose()
+                .map_err(|e| Failure::input(format!("fitness: {e:#}")))?,
+            validation: if train.validation == "forward" {
+                jope_runtime::automl::Validation::Forward { gap: train.gap }
+            } else {
+                if train.gap != 0 {
+                    return Err(Failure::input("--gap requires --validation forward"));
+                }
+                jope_runtime::automl::Validation::Iid {}
+            },
         };
         let outcome = api::fit(&training, &options, budget, &csv.sha256, self.created_by())?;
         self.receipt.timings.select_seconds = outcome.select_seconds;
@@ -675,7 +689,80 @@ fn main() -> ExitCode {
             output,
             common,
         } => run_fit_predict(&train, &input, &output, &common),
+        Command::Fitness { command } => report(match command {
+            cli::FitnessCommand::List => {
+                print_json(&jope_runtime::service::catalog());
+                Ok(())
+            }
+            cli::FitnessCommand::Evaluate { input } => (|| {
+                let bytes = std::fs::read(input)?;
+                anyhow::ensure!(
+                    bytes.len() <= jope_runtime::service::MAX_MESSAGE_BYTES,
+                    "evaluation request too large"
+                );
+                let request = serde_json::from_slice(&bytes)?;
+                print_json(&jope_runtime::service::evaluate(request)?);
+                Ok(())
+            })(),
+        }),
+        Command::Mcp => report(serve(true)),
+        Command::Api => report(serve(false)),
         Command::VerifySelf(flag) => report(verify_self(flag.json)),
         Command::Licenses(flag) => report(licenses(flag.json)),
     }
+}
+
+fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::Fitness> {
+    let value = if let Some(path) = text.strip_prefix('@') {
+        let mut file = std::fs::File::open(path)?;
+        use std::io::Read;
+        let mut bytes = Vec::new();
+        file.by_ref()
+            .take((jope_runtime::fitness::MAX_SPEC_BYTES + 1) as u64)
+            .read_to_end(&mut bytes)?;
+        String::from_utf8(bytes)?
+    } else {
+        text.to_owned()
+    };
+    jope_runtime::fitness::Fitness::parse(&value)
+}
+
+fn serve(mcp: bool) -> anyhow::Result<()> {
+    use std::io::{BufRead, Read, Write};
+    let package = bootstrap::open()?;
+    let mut server = jope_runtime::service::Server::new(CreatedBy {
+        source_sha40: bootstrap::source_sha40(),
+        package_manifest_sha256: package
+            .as_ref()
+            .map(|p| bootstrap::summary(p).manifest_sha256),
+        package_profile: package.as_ref().map(|p| p.manifest().profile.clone()),
+    });
+    let mut input = std::io::stdin().lock();
+    let mut output = std::io::stdout().lock();
+    loop {
+        let mut bytes = Vec::new();
+        input
+            .by_ref()
+            .take((jope_runtime::service::MAX_MESSAGE_BYTES + 1) as u64)
+            .read_until(b'\n', &mut bytes)?;
+        if bytes.is_empty() {
+            break;
+        }
+        anyhow::ensure!(
+            bytes.len() <= jope_runtime::service::MAX_MESSAGE_BYTES,
+            "API message too large"
+        );
+        let response = match serde_json::from_slice(&bytes) {
+            Ok(value) => server.dispatch(value, mcp),
+            Err(error) => Some(
+                serde_json::json!({"jsonrpc":"2.0", "id":null,"error":{"code":-32700,"message":error.to_string()}}),
+            ),
+        };
+        if let Some(response) = response {
+            serde_json::to_writer(&mut output, &response)?;
+            writeln!(output)?;
+            output.flush()?;
+        }
+    }
+    Ok(())
 }

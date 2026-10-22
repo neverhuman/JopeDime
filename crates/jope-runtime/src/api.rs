@@ -9,13 +9,17 @@ use anyhow::Result;
 use std::time::Instant;
 
 /// How to choose and fit the method.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct FitOptions {
     /// `auto`, or a method id, family or alias.
     pub method: String,
     /// For `auto`: restrict the candidates (ids, families or aliases); empty means the roster.
     pub candidates: Vec<String>,
     pub folds: usize,
+    /// Regression-only objective used on held-out predictions, never on a final test set.
+    pub fitness: Option<crate::fitness::Fitness>,
+    pub validation: automl::Validation,
 }
 
 impl Default for FitOptions {
@@ -24,6 +28,8 @@ impl Default for FitOptions {
             method: AUTO.to_owned(),
             candidates: Vec::new(),
             folds: automl::DEFAULT_FOLDS,
+            fitness: None,
+            validation: automl::Validation::default(),
         }
     }
 }
@@ -55,6 +61,30 @@ fn fit_inner(
     training_file_sha256: &str,
     created_by: CreatedBy,
 ) -> Result<FitOutcome> {
+    if let Some(fitness) = &options.fitness {
+        fitness
+            .validate()
+            .map_err(|e| Failure::input(format!("{e:#}")))?;
+        if training.kind != crate::task::TaskKind::Regression || options.method != AUTO {
+            return Err(Failure::input(
+                "fitness applies only to regression with --method auto",
+            ));
+        }
+        if fitness.requires_order()
+            && !matches!(options.validation, automl::Validation::Forward { .. })
+        {
+            return Err(Failure::input(
+                "return/risk fitness requires --validation forward; rows must be chronological",
+            ));
+        }
+    }
+    if !matches!(options.validation, automl::Validation::Iid {})
+        && (options.method != AUTO || training.kind != crate::task::TaskKind::Regression)
+    {
+        return Err(Failure::input(
+            "forward validation applies only to regression with --method auto",
+        ));
+    }
     let started = Instant::now();
     let (method, selection) = if options.method == AUTO {
         let candidates = if options.candidates.is_empty() {
@@ -69,7 +99,14 @@ fn fit_inner(
             }
             chosen
         };
-        let (selection, method) = automl::select(training, &candidates, options.folds, budget)?;
+        let (selection, method) = automl::select_with_fitness(
+            training,
+            &candidates,
+            options.folds,
+            budget,
+            options.fitness.as_ref(),
+            &options.validation,
+        )?;
         (method, Some(selection))
     } else {
         if !options.candidates.is_empty() {

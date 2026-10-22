@@ -1,0 +1,21 @@
+{
+  "metric": "custom",
+  "name": "fab_tail_error",
+  "direction": "minimize",
+  "expression": {
+    "op": "abs",
+    "arg": {
+      "op": "sub",
+      "left": {
+        "op": "y"
+      },
+      "right": {
+        "op": "pred"
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "quantile",
+    "quantile": 0.99
+  }
+}

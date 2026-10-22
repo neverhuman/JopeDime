@@ -1,0 +1,772 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.regression-fitness.v1.schema.json",
+  "title": "Portable JopeDime regression fitness v1",
+  "$ref": "#/$defs/fitness",
+  "$defs": {
+    "fitness": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "rmse"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "mse"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "mae"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "median_absolute_error"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "max_error"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "wape"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "msle"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "rmsle"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "r2"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "explained_variance"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "pearson"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "spearman"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "log_cosh"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "poisson_deviance"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "gamma_deviance"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "epsilon"
+          ],
+          "properties": {
+            "metric": {
+              "const": "mape"
+            },
+            "epsilon": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "epsilon"
+          ],
+          "properties": {
+            "metric": {
+              "const": "smape"
+            },
+            "epsilon": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "delta"
+          ],
+          "properties": {
+            "metric": {
+              "const": "huber"
+            },
+            "delta": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "delta"
+          ],
+          "properties": {
+            "metric": {
+              "const": "pseudo_huber"
+            },
+            "delta": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "quantile"
+          ],
+          "properties": {
+            "metric": {
+              "const": "pinball"
+            },
+            "quantile": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "quantile"
+          ],
+          "properties": {
+            "metric": {
+              "const": "expectile"
+            },
+            "quantile": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "power"
+          ],
+          "properties": {
+            "metric": {
+              "const": "tweedie_deviance"
+            },
+            "power": {
+              "type": "number",
+              "exclusiveMinimum": 1,
+              "exclusiveMaximum": 2
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "max_position",
+            "cost"
+          ],
+          "properties": {
+            "metric": {
+              "const": "mean_return"
+            },
+            "max_position": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "cost": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "max_position",
+            "cost",
+            "target",
+            "periods_per_year"
+          ],
+          "properties": {
+            "metric": {
+              "const": "sharpe"
+            },
+            "max_position": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "cost": {
+              "type": "number",
+              "minimum": 0
+            },
+            "target": {
+              "type": "number"
+            },
+            "periods_per_year": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "max_position",
+            "cost",
+            "target",
+            "periods_per_year"
+          ],
+          "properties": {
+            "metric": {
+              "const": "sortino"
+            },
+            "max_position": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "cost": {
+              "type": "number",
+              "minimum": 0
+            },
+            "target": {
+              "type": "number"
+            },
+            "periods_per_year": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "name",
+            "direction",
+            "expression",
+            "aggregation"
+          ],
+          "properties": {
+            "metric": {
+              "const": "custom"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_]{1,64}$"
+            },
+            "direction": {
+              "enum": [
+                "minimize",
+                "maximize"
+              ]
+            },
+            "expression": {
+              "$ref": "#/$defs/expression"
+            },
+            "aggregation": {
+              "$ref": "#/$defs/aggregation"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric",
+            "terms"
+          ],
+          "properties": {
+            "metric": {
+              "const": "composite"
+            },
+            "terms": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "required": [
+                  "weight",
+                  "scale",
+                  "fitness"
+                ],
+                "properties": {
+                  "weight": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "scale": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "fitness": {
+                    "$ref": "#/$defs/fitness"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "expression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "y"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "pred"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "value"
+          ],
+          "properties": {
+            "op": {
+              "const": "constant"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "properties": {
+            "op": {
+              "const": "add"
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "properties": {
+            "op": {
+              "const": "sub"
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "properties": {
+            "op": {
+              "const": "mul"
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "properties": {
+            "op": {
+              "const": "div"
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "properties": {
+            "op": {
+              "const": "min"
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "properties": {
+            "op": {
+              "const": "max"
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "abs"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "square"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "sqrt"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "ln"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "exp"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "aggregation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "mean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "sum"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "max"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "quantile"
+          ],
+          "properties": {
+            "kind": {
+              "const": "quantile"
+            },
+            "quantile": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}
