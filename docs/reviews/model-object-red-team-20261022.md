@@ -85,8 +85,8 @@ Run from the repository root with the repository's required Cargo environment:
 
 ```sh
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4
-cargo test --locked -p jope-runtime -p jope-appliance --lib \
-  --test method_roster --test offline_fit_predict --test single_file
+cargo test --locked -p jope-runtime --lib --test method_roster --test offline_fit_predict
+cargo test --locked -p jope-appliance --test single_file
 cargo clippy --locked -p jope-runtime -p jope-appliance --all-targets -- -D warnings
 cargo fmt -p jope-runtime -p jope-appliance -- --check
 node examples/model-objects/check.mjs /absolute/path/to/authenticated/jopedime
@@ -96,3 +96,23 @@ The local command receipts distinguish failures corrected during development fro
 successful runs. The committed test inventory is a listing, not an execution certificate.
 PR review and hosted/manual CI must bind to the final exact head after publication. Queued,
 cancelled, skipped-by-path or unrun lanes do not establish a passing full check.
+
+
+## Integration with regression objectives (PR #411)
+
+The integration review reproduced two failures before correction. Lowering a calibrated
+appliance object to its bound model silently discarded its output transform, and model MCP
+prediction rejected the objective's retained auxiliary columns even though CLI prediction
+accepted them. Both regressions now have executable tests. Object/fitted exports retain the
+whole state; reduced bound/source exports refuse nonidentity calibration before output.
+Executable verification validates the complete fitted object without reducing it. Model MCP
+uses the same auxiliary-column exclusion as CLI prediction.
+
+The integrated runtime suite passed 57 unit tests, two roster tests and nine offline tests;
+the packaged CLI suite passed all 15 tests. Scoped all-target Clippy and formatting passed.
+The fresh workspace inventory lists 5,909 Rust tests and retains the 182-test Python half;
+listing is not an execution result. Identity-only regeneration through the owning freeze
+test changed exactly evaluator identity and lineage source identity. All behavior fixtures
+and prior transition ledgers stayed byte-identical. The new transition is explicitly
+registered in the historical chain; 13 freeze and three historical tests passed.
+Final exact-head full CI and review remain mandatory after synchronization and publication.
