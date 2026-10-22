@@ -26,11 +26,8 @@ done
 for tool in docker jq curl unzip sha256sum systemctl; do
   command -v "$tool" >/dev/null || { echo "missing tool: $tool" >&2; exit 2; }
 done
-case $JOPE_RUNNER_HOST in
-  xbabe1) lanes=(ci ci2) ;;
-  xbabe2|xbabe3) lanes=(full) ;;
-  *) echo "unapproved CPU runner host" >&2; exit 2 ;;
-esac
+lanes_text=$(jope_runner_lanes "$JOPE_RUNNER_HOST") || exit 2
+read -ra lanes <<< "$lanes_text"
 JOPE_VOLUMES=(jope-sdk)
 for lane in "${lanes[@]}"; do
   jope_runner_role "$JOPE_RUNNER_HOST" "$lane"
@@ -94,7 +91,7 @@ install -d -m 0755 /opt/jope-runner
 install -d -m 0755 /etc/tmpfiles.d
 install -m 0644 "$here"/jope-exclusive-cpu.conf /etc/tmpfiles.d/
 systemd-tmpfiles --create /etc/tmpfiles.d/jope-exclusive-cpu.conf
-install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/job-started.sh "$here"/job-policy.py /opt/jope-runner/
+install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/trim-deps.sh "$here"/job-started.sh "$here"/job-policy.py /opt/jope-runner/
 install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service /etc/systemd/system/
 # The drop-in was committed but never installed here, so a freshly provisioned host ran with the
 # upstream RuntimeMaxSec=1800 -- the mid-job SIGTERM the drop-in exists to prevent. Installed as a
@@ -120,5 +117,5 @@ jq -n --arg image "$JOPE_RUNNER_IMAGE" --arg image_id "$image_id" --arg scripts_
 chmod 0640 "$JOPE_RUNNER_STATE/image.json"
 echo "recorded $JOPE_RUNNER_STATE/image.json: image_id=$image_id scripts_sha256=$scripts_sha"
 
-echo "installed units: jope-runner@{ci,ci2,full}.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"
+echo "approved lanes on $JOPE_RUNNER_HOST: ${lanes[*]}; installed units: jope-runner@<lane>.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"
 echo "full-lane labels: jope-full-cpu,jope-ci (owner permanent; lockstep provision all hosts after merge)"

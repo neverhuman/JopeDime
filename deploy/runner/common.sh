@@ -19,6 +19,9 @@ JOPE_RUNNER_HOST=$(hostname -s)       # runner names and labels follow the host
 JOPE_RUNNER_CPUS=16
 JOPE_RUNNER_PIDS=4096
 JOPE_RUNNER_TMPFS_SIZE=4g
+# Build-cache trim (jope_runner_trim_lane): newest builds kept per crate and kind, at most daily.
+JOPE_RUNNER_TRIM_KEEP=6
+JOPE_RUNNER_TRIM_INTERVAL_S=86400
 JOPE_RUNNER_DOCKER_PROXY_SOCK=${JOPE_RUNNER_DOCKER_PROXY_SOCK:-/run/jope-docker-proxy/docker.sock}
 
 # Every file provision.sh installs onto the host, in a fixed order. This list is the single
@@ -32,6 +35,7 @@ JOPE_RUNNER_DEPLOYED=(
   /opt/jope-runner/run.sh
   /opt/jope-runner/disk-guard.sh
   /opt/jope-runner/prune.sh
+  /opt/jope-runner/trim-deps.sh
   /opt/jope-runner/job-started.sh
   /opt/jope-runner/job-policy.py
   /etc/systemd/system/jope-runner@.service
@@ -80,13 +84,25 @@ jope_runner_pin_swap() { # <container name>
 # Fixed host allocation enforces exclusivity among this repository's runner jobs. xbabe3/full is
 # a second trusted-main slot with the same 48 GiB/16 CPU cap, so full-main-cpu groups run in
 # parallel. Full lanes also register the jope-ci label (owner permanent 2026-10-14) so PR/manual
-# ci.yml can use xbabe2/xbabe3 full capacity. Historical GPU/kernel/ci3/ci4 lanes remain
-# unavailable in this CPU foundation.
+# ci.yml can use xbabe2/xbabe3 full capacity. Seven slots (owner 2026-10-22): xbabe1 ci+ci2,
+# xbabe2 and xbabe3 full plus a pr-domain ci lane each, and xbabe0 ci. A ci lane on a full host
+# has its own jope-pr-ci-* volumes and never the exclusive CPU lock. Historical
+# GPU/kernel/ci3/ci4 lanes remain unavailable in this CPU foundation.
 jope_runner_role() { # <host> <lane>; callers use actual hostname, never a job variable
   case "$1/$2" in
-    xbabe1/ci|xbabe1/ci2) JOPE_RUNNER_DOMAIN="pr"; JOPE_RUNNER_MEMORY=16g ;;
+    xbabe1/ci|xbabe1/ci2|xbabe2/ci|xbabe3/ci|xbabe0/ci) JOPE_RUNNER_DOMAIN="pr"; JOPE_RUNNER_MEMORY=16g ;;
     xbabe2/full|xbabe3/full) JOPE_RUNNER_DOMAIN=main; JOPE_RUNNER_MEMORY=48g ;;
     *) echo "unapproved runner host/lane: $1/$2" >&2; return 2 ;;
+  esac
+}
+
+# The approved lanes of a host, in provisioning order; every one is also a jope_runner_role case.
+jope_runner_lanes() { # <host>
+  case $1 in
+    xbabe1) echo "ci ci2" ;;
+    xbabe2|xbabe3) echo "full ci" ;;
+    xbabe0) echo "ci" ;;
+    *) echo "unapproved CPU runner host: $1" >&2; return 2 ;;
   esac
 }
 
@@ -106,7 +122,7 @@ jope_runner_check_existing() { # requested lane; docker failure is never an empt
   while read -r id running; do
     [[ -n $id ]] || continue
     case "$JOPE_RUNNER_HOST/$running" in
-      xbabe1/ci|xbabe1/ci2|xbabe2/full|xbabe3/full) ;;
+      xbabe1/ci|xbabe1/ci2|xbabe2/full|xbabe2/ci|xbabe3/full|xbabe3/ci|xbabe0/ci) ;;
       *) echo "unapproved existing JopeDime container: $id lane=$running" >&2; return 2 ;;
     esac
     [[ $running != "$1" ]] || { echo "existing container owns lane $1: $id" >&2; return 2; }
@@ -145,4 +161,40 @@ jope_runner_exclusive_cpu() {
   exec 8</run/lock/jope-exclusive-cpu.lock
   flock -n 8 || { echo "ASM/exclusive CPU allocation active" >&2; return 2; }
   jope_runner_check_asm_groups /sys/fs/cgroup/system.slice
+}
+
+# A lane's persistent Cargo target grows with every build: xbabe1's two pr targets reached 355 GB
+# each, and the disk guard then refused every listener (2026-10-22). run.sh calls this while it
+# holds the lane lock and before the lane's container starts, so no build of this lane can be
+# running. At most once per JOPE_RUNNER_TRIM_INTERVAL_S it removes older duplicate builds from
+# <target volume>/*/debug/deps with trim-deps.sh (the newest JOPE_RUNNER_TRIM_KEEP per crate and
+# kind stay), inside a network-less container that mounts only this lane's target volume. Every
+# removed path is recorded in a manifest under the state directory. A failure never blocks the
+# listener, and nothing is removed that was not listed first.
+jope_runner_trim_lane() { # <lane>; needs JOPE_RUNNER_DOMAIN from jope_runner_role
+  local lane=${1:?lane required} dir stamp_file now last manifest volume summary
+  volume="jope-$JOPE_RUNNER_DOMAIN-$lane-target"
+  dir="$JOPE_RUNNER_STATE/trim"
+  stamp_file="$dir/$lane.last"
+  now=$(date +%s)
+  if [[ -f $stamp_file ]]; then
+    last=$(stat -c %Y "$stamp_file") || last=0
+    (( now - last >= JOPE_RUNNER_TRIM_INTERVAL_S )) || return 0
+  fi
+  docker volume inspect "$volume" >/dev/null 2>&1 || { echo "trim $lane: no volume $volume, skipped"; return 0; }
+  mkdir -p "$dir" || return 0
+  manifest="$dir/$(date -u +%Y%m%dT%H%M%SZ)-$lane.tsv"
+  if docker run --rm --network none --user "$JOPE_RUNNER_UID" --cap-drop ALL \
+       --security-opt no-new-privileges --read-only --tmpfs /tmp:size=64m \
+       --pids-limit 256 --memory 1g --cpus 2 \
+       -v "$volume:/v" -v /opt/jope-runner/trim-deps.sh:/opt/jope-runner/trim-deps.sh:ro \
+       --entrypoint bash "$JOPE_RUNNER_IMAGE" \
+       /opt/jope-runner/trim-deps.sh /v "$JOPE_RUNNER_TRIM_KEEP" --apply > "$manifest"; then
+    touch "$stamp_file"
+    summary=$(awk -F'\t' '{n++; s+=$2} END {printf "%d files, %d bytes", n, s}' "$manifest")
+    echo "trim $lane: removed $summary from $volume; manifest $manifest sha256 $(sha256sum < "$manifest" | cut -d' ' -f1)"
+  else
+    echo "trim $lane: failed; anything removed is listed in $manifest; the listener continues" >&2
+  fi
+  return 0
 }
