@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Exercise audit failures and source/report integrity using an isolated fake auditor."""
+import hashlib
 import importlib.util
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -24,7 +26,8 @@ assert args[args.index("--mode") + 1] == "standard"
 source = pathlib.Path(args[1])
 if mode == "missing":
     sys.exit(0)
-failed = mode in ("failed", "false-green")
+failed = mode in ("failed", "false-green", "failed-above-floor")
+low = mode in ("failed", "false-green")
 floor = 0 if mode == "floor" else 85
 report = {
     "auditor_version": "1.7.5", "schema_version": "1.9.0",
@@ -32,7 +35,7 @@ report = {
     "scope": {"mode": "full", "paths": []},
     "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111",
     "policy": {"minimum_score": floor, "mode": "standard", "fail_on": ["critical", "high"]},
-    "score": 52 if failed else 94, "raw_score": 52 if failed else 94,
+    "score": 52 if low else 94, "raw_score": 52 if low else 94,
     "decision": {"status": "fail" if failed else "pass", "passed": not failed,
                  "minimum_score": floor, "hard_findings": int(failed), "soft_findings": 0},
     "findings": [{"severity": "high", "hardness": "hard"}] if failed else [],
@@ -91,7 +94,7 @@ if mode == "link":
     path = output / "repo-score.md"
     path.unlink()
     path.symlink_to(output / "summary.md")
-sys.exit(1 if mode == "failed" else 0)
+sys.exit(1 if mode in ("failed", "failed-above-floor") else 0)
 '''
 
 
@@ -120,8 +123,8 @@ class AuditLaneTests(unittest.TestCase):
         self.auditor.write_text(FAKE.lstrip())
         self.auditor.chmod(0o755)
 
-    def run_audit(self, mode, report_only=False):
-        self.output = self.base / ("report-" + mode + ("-report-only" if report_only else ""))
+    def run_audit(self, mode, report_only=False, output=None):
+        self.output = output or self.base / ("report-" + mode + ("-report-only" if report_only else ""))
         env = dict(os.environ, JANKURAI_BIN=str(self.auditor), AUDIT_TEST_MODE=mode)
         for key in ("JOPE_SOURCE_SHA", "GITHUB_STEP_SUMMARY", "JOPE_AUDIT_REPORT_ONLY"):
             env.pop(key, None)
@@ -153,7 +156,7 @@ class AuditLaneTests(unittest.TestCase):
     def test_report_only_still_refuses_invalid_evidence(self):
         for mode in ("missing", "false-green", "floor", "version", "policy", "scope", "counts",
                      "malformed", "source", "extra", "manifest", "archive", "link", "mode",
-                     "severity", "raw", "duplicate", "nonfinite", "fifo"):
+                     "severity", "raw", "duplicate", "nonfinite", "fifo", "failed-above-floor"):
             with self.subTest(mode=mode):
                 self.assertNotEqual(0, self.run_audit(mode, report_only=True).returncode)
                 self.assertFalse((self.output / "report-only.json").exists())
@@ -162,14 +165,32 @@ class AuditLaneTests(unittest.TestCase):
         self.assertEqual(0, self.run_audit("pass", report_only=True).returncode)
         self.assertFalse((self.output / "report-only.json").exists())
 
-    def test_captured_source_is_left_deletable(self):
-        # Self-hosted workspaces persist; a read-only tree breaks the next job's checkout.
-        for mode in ("pass", "failed", "mode", "manifest"):
+    def test_retained_evidence_replays_then_post_upload_unlock_makes_it_deletable(self):
+        # Retained evidence keeps its read-only captured source so the verifier replays on it.
+        # Self-hosted workspaces persist, so the workflow's post-upload step must unlock it, or
+        # the next job's checkout cannot delete it.
+        spec = importlib.util.spec_from_file_location("verify_audit_report", ROOT / "deploy/ci/verify-audit-report.py")
+        verifier = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(verifier)
+        workflow = (ROOT / ".github/workflows/full-main.yml").read_text()
+        block = workflow.split("\n  audit:\n", 1)[1]
+        unlock = block.split("      - name: Leave the persistent workspace deletable for the next checkout\n", 1)[1]
+        self.assertTrue(unlock.startswith("        if: always()\n        run: "))
+        command = unlock.split("        run: ", 1)[1].splitlines()[0]
+        self.assertEqual("if [ -d target/full-audit ]; then chmod -R u+w target/full-audit; fi", command)
+        for mode, audit_exit in (("pass", 0), ("failed", 1)):
             with self.subTest(mode=mode):
-                self.run_audit(mode)
+                workspace = self.base / ("workspace-" + mode)
+                self.run_audit(mode, output=workspace / "target/full-audit/1/1")
+                manifest = hashlib.sha256((self.output / "input/SOURCE_MANIFEST.json").read_bytes()).hexdigest()
+                verifier.validate(self.output, audit_exit, manifest)
+                self.assertTrue([p for p in self.output.rglob("*") if p.is_dir() and not os.stat(p).st_mode & 0o200])
+                subprocess.run(["bash", "-c", command], cwd=workspace, check=True)
                 stuck = [p for p in [self.output, *self.output.rglob("*")]
                          if not p.is_symlink() and not os.stat(p).st_mode & 0o200]
                 self.assertEqual([], stuck)
+                shutil.rmtree(workspace / "target")
+                self.assertFalse((workspace / "target").exists())
 
     def test_valid_pass_is_accepted(self):
         result = self.run_audit("pass")
@@ -215,6 +236,8 @@ class AuditLaneTests(unittest.TestCase):
         self.assertNotIn("|| true", block)
         self.assertNotIn("JANKURAI_HOSTED_RUNNER", block)
         self.assertEqual(1, block.count('JOPE_AUDIT_REPORT_ONLY: "1"'))
+        self.assertLess(block.index("uses: ./.github/actions/upload-ci-evidence"),
+                        block.index("chmod -R u+w target/full-audit"))
         spec = importlib.util.spec_from_file_location("audit_job_policy", ROOT / "deploy/runner/job-policy.py")
         policy = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(policy)
