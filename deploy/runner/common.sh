@@ -20,7 +20,7 @@ JOPE_RUNNER_CPUS=16
 JOPE_RUNNER_PIDS=4096
 JOPE_RUNNER_TMPFS_SIZE=4g
 # Build-cache trim (jope_runner_trim_lane): newest builds kept per crate and kind, at most daily.
-JOPE_RUNNER_TRIM_KEEP=6
+JOPE_RUNNER_TRIM_KEEP=3
 JOPE_RUNNER_TRIM_INTERVAL_S=86400
 JOPE_RUNNER_DOCKER_PROXY_SOCK=${JOPE_RUNNER_DOCKER_PROXY_SOCK:-/run/jope-docker-proxy/docker.sock}
 
