@@ -2,11 +2,13 @@
 //! [`jope_pipeline::Receipt`] must agree on every object's required set and
 //! property list, so neither can drift without this failing. The walk is the one
 //! `crates/jope-datasets/tests/schema_agreement.rs` uses. v1 and v2 receipts keep
-//! validating against their own committed schemas.
+//! validating against their own committed schemas. The objective receipt is v3 plus the
+//! objective, generated from the same type.
 
 use jope_pipeline::receipt::{
-    derived_schema, schema, validate_value, RECEIPT_SCHEMA_ID, RECEIPT_SCHEMA_JSON, V2_SCHEMA_ID,
-    V2_SCHEMA_JSON,
+    derived_objective_schema, derived_schema, objective_schema, schema, validate_value,
+    OBJECTIVE_SCHEMA_ID, OBJECTIVE_SCHEMA_JSON, RECEIPT_SCHEMA_ID, RECEIPT_SCHEMA_JSON,
+    V2_SCHEMA_ID, V2_SCHEMA_JSON,
 };
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
@@ -587,6 +589,62 @@ fn schema_only_consumers_require_every_new_v2_field() {
 #[test]
 fn committed_schema_is_generated_from_code_exactly() {
     assert_eq!(schema(), derived_schema());
+}
+
+#[test]
+fn the_objective_receipt_is_v3_plus_the_objective_generated_from_code() {
+    let committed = objective_schema();
+    assert_eq!(committed, derived_objective_schema());
+    let schemas = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../schemas");
+    assert_eq!(
+        std::fs::read_to_string(schemas.join("jope.pipeline-objective-receipt.v1.schema.json"))
+            .unwrap(),
+        OBJECTIVE_SCHEMA_JSON
+    );
+    assert_eq!(committed["title"], OBJECTIVE_SCHEMA_ID);
+    assert_eq!(
+        committed["properties"]["schema"]["const"],
+        OBJECTIVE_SCHEMA_ID
+    );
+    // Whatever v3 says, the objective receipt says identically: it only adds.
+    let v3 = schema();
+    let mut reduced = committed.clone();
+    for pointer in [
+        "/$defs/Best/properties/validation_objective",
+        "/$defs/CutSearch/properties/best_validation_objective",
+        "/$defs/Search/properties/objective",
+        "/$defs/Objective",
+    ] {
+        let (parent, key) = pointer.rsplit_once('/').unwrap();
+        let parent = reduced
+            .pointer_mut(parent)
+            .unwrap()
+            .as_object_mut()
+            .unwrap();
+        assert!(parent.remove(key).is_some(), "{pointer}");
+    }
+    reduced["$id"] = v3["$id"].clone();
+    reduced["title"] = v3["title"].clone();
+    reduced["properties"]["schema"]["const"] = v3["properties"]["schema"]["const"].clone();
+    assert_eq!(reduced, v3);
+}
+
+#[test]
+fn only_the_objective_receipt_records_an_objective() {
+    let mut ranked = fixture();
+    ranked["search"]["objective"] = json!({
+        "name": "pinball", "direction": "minimize", "fitness_sha256": "0".repeat(64),
+        "specification": {"metric": "pinball", "quantile": 0.9}});
+    // The frozen v3 schema has no place for it.
+    assert!(validate_value(&ranked).is_err());
+    // An objective receipt without its objective says nothing about how it ranked.
+    let mut bare = fixture();
+    bare["schema"] = OBJECTIVE_SCHEMA_ID.into();
+    let errors = validate_value(&bare).unwrap_err();
+    assert!(
+        errors.iter().any(|e| e.contains("lacks an objective")),
+        "{errors:?}"
+    );
 }
 
 #[test]

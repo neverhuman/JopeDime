@@ -536,7 +536,7 @@ fn assemble(
         });
     }
     Ok(Receipt {
-        schema: receipt::RECEIPT_SCHEMA_ID.to_owned(),
+        schema: receipt::schema_id(options.objective.is_some()).to_owned(),
         ok: stages.iter().all(|s| s.status != "failed"),
         tool_version: TOOL_VERSION.to_owned(),
         git_sha: match &options.source_commit {
@@ -1169,6 +1169,8 @@ pub(crate) mod tests {
             ..small(&output, 40)
         })
         .unwrap();
+        // The objective receipt, not v3: v3 is frozen and cannot carry what ranked the programs.
+        assert_eq!(receipt.schema, receipt::OBJECTIVE_SCHEMA_ID);
         let recorded = receipt.search.objective.clone().unwrap();
         assert_eq!(recorded.name, "pinball");
         assert_eq!(recorded.fitness_sha256, objective.identity().unwrap());
@@ -1194,9 +1196,13 @@ pub(crate) mod tests {
             .windows(2)
             .all(|w| w[0].validation_objective <= w[1].validation_objective));
 
-        // Removing the objective from the receipt no longer re-derives its champion's evidence.
+        // Relabelled v3, the frozen schema refuses the objective it carries.
         let mut value: serde_json::Value =
             serde_json::from_slice(&std::fs::read(output.join("receipt.json")).unwrap()).unwrap();
+        let mut relabelled = value.clone();
+        relabelled["schema"] = receipt::RECEIPT_SCHEMA_ID.into();
+        assert!(receipt::validate_value(&relabelled).is_err());
+        // Removing the objective from the receipt no longer re-derives its champion's evidence.
         value["search"].as_object_mut().unwrap().remove("objective");
         std::fs::write(
             output.join("receipt.json"),
