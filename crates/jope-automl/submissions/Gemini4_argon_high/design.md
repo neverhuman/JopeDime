@@ -39,9 +39,10 @@ row-local: a row's prediction does not depend on the other rows in the batch.
   CI 1519–1607.
 - **Cost.** It is the slowest of the four to fit on that panel: 1,986 s across 576 fits, at most
   56 s each.
-- **Accuracy.** Its RMSE advantage over the other entrants is not significant after Holm
-  adjustment. Its geometric-mean RMSE is about 15% higher than `GPT6p1_Sol_Max`'s, although it
-  beats Sol on 66% of families.
+- **Accuracy.** None of its RMSE differences from the other three entrants is significant after
+  Holm adjustment. The Sol/Gemini geometric-mean RMSE ratio is 0.847 (95% CI 0.623–1.055):
+  `GPT6p1_Sol_Max`'s RMSE is 15.3% lower, or Gemini's is 18.1% higher, although Gemini beats Sol
+  on 66% of families.
 - **Known defect.** With extreme finite inputs, such as features or targets near `±f64::MAX`, the
   source can return non-finite predictions. The source is not patched. The `jope-automl` adapter
   refuses any non-finite prediction with an error instead

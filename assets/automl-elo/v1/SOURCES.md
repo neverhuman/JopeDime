@@ -35,9 +35,10 @@ on that cell's held-out rows only.
 
 **Reading the results.** The Elo ranks how often an entrant wins a family, not the size of its
 errors. None of Gemini4_argon_high's three RMSE-ratio comparisons is significant after Holm
-adjustment (adjusted p = 0.19, 0.37, 0.37). Its geometric-mean RMSE is about 15% *higher* than
-GPT6p1_Sol_Max's (ratio 0.85, CI 0.62–1.06), although it beats Sol on 66% of families. These are
-64 families from one panel; nothing here generalises beyond it.
+adjustment (adjusted p = 0.19, 0.37, 0.37). The Sol/Gemini geometric-mean RMSE ratio is 0.847
+(95% CI 0.623–1.055). So GPT6p1_Sol_Max's geometric-mean RMSE is 15.3% lower than
+Gemini4_argon_high's, or equivalently Gemini's is 18.1% higher than Sol's, although Gemini beats
+Sol on 66% of families. These are 64 families from one panel; nothing here generalises beyond it.
 
 ## How it was produced
 
