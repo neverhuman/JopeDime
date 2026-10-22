@@ -275,11 +275,28 @@ fn bound_adapter_preserves_v2_sources_and_binds_fitted_state() {
         &model,
         &g,
         &opts,
-        &[Target::Python, Target::Rust, Target::JavaScript],
+        &[
+            Target::Python,
+            Target::Rust,
+            Target::JavaScript,
+            Target::TypeScript,
+        ],
     )
     .unwrap();
     assert_eq!(e.sources["model.py"], old.python);
     assert_eq!(e.sources["model.rs"], old.rust);
+    assert!(e.sources.contains_key("model.ts"));
+    assert!(e.sources.contains_key("model.kernel.rs"));
+    let typescript = e
+        .manifest
+        .targets
+        .iter()
+        .find(|r| r.target == Target::TypeScript)
+        .unwrap();
+    assert!(matches!(
+        &typescript.state,
+        TargetState::Supported { fitted: Some(_), .. }
+    ));
     assert!(!e.manifest.all_supported());
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&old.manifest).unwrap()["schema"],

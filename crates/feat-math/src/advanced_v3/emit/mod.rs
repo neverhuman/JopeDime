@@ -1746,7 +1746,12 @@ mod quotation_regression_tests {
         let table = RawTable::new(
             vec!["label\u{2028}\u{301}\u{7f}".into()],
             (0..12)
-                .map(|i| vec![format!("category-{}\u{2028}\u{301}\u{7f}", i % 3)])
+                .map(|i| {
+                    vec![format!(
+                        "category-{}#![forbid(unsafe_code)]\u{2028}\u{301}\u{7f}",
+                        i % 3
+                    )]
+                })
                 .collect(),
         )
         .unwrap();
