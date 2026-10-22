@@ -7,7 +7,9 @@ permissions:
 jobs:
   typescript-parity:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # The existing pure-Python wide GCV oracle is intentionally expensive;
+    # retain that fixture and allow the added complete census to finish too.
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:

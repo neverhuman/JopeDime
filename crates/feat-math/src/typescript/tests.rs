@@ -274,7 +274,7 @@ fn scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute() {
                 } else {
                     Var::X
                 })];
-                if matches!(id, 7 | 8 | 9 | 10) {
+                if matches!(id, 7..=10) {
                     args.push(ScalarNode::Const(-0.5));
                 }
                 if id == 9 {
@@ -334,7 +334,10 @@ fn scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute() {
 
 #[test]
 fn fitted_legacy_registry_states_execute_or_match_rust_refusal() {
-    use crate::advanced_v3::{fit_legacy_numeric_bound, RawTable};
+    use crate::advanced_v3::{
+        fit_legacy_numeric_bound, fit_table, ColumnSpec, DataSchema, Objective, RawTable,
+        RowSemantics, TaskSpec,
+    };
     if !support::enabled() {
         return;
     }
@@ -342,6 +345,21 @@ fn fitted_legacy_registry_states_execute_or_match_rust_refusal() {
         .unwrap()
         .join("../../target/typescript-census/bound");
     let (x, y, probe) = data();
+    let headers = (0..5).map(|i| format!("c{i}")).collect::<Vec<_>>();
+    let schema = DataSchema {
+        columns: headers
+            .iter()
+            .map(|h| ColumnSpec::numeric(h.clone()))
+            .collect(),
+        row_semantics: RowSemantics::Iid,
+    };
+    let training = RawTable::new(
+        headers,
+        x.iter()
+            .map(|r| r.iter().map(f64::to_string).collect())
+            .collect(),
+    )
+    .unwrap();
     let rows = OPERATORS
         .iter()
         .filter(|r| r.dialect == "legacy_recipe" && r.targets.contains(&"rust_recipe"))
@@ -360,7 +378,25 @@ fn fitted_legacy_registry_states_execute_or_match_rust_refusal() {
         } else {
             format!("(pipe X ({stage}) (ridge))")
         };
-        let model = fit_legacy_numeric_bound(&GenomeIr::parse(&source).unwrap(), &x, &y).unwrap();
+        let genome = GenomeIr::parse(&source).unwrap();
+        let legacy = fit_legacy_numeric_bound(&genome, &x, &y).unwrap();
+        assert!(crate::advanced_v3::emit_bound(&legacy, &EmitOptions::default()).is_err());
+        assert!(emit_bound(&legacy, &EmitOptions::default()).is_err());
+        // Rust bound emission accepts Pipeline state, not the raw Legacy
+        // wrapper. Feature-position lag/roll remain in that legacy wrapper;
+        // table-aware ordered versions have their own positive fitted tests.
+        let model = if matches!(row.name, "lag" | "roll") {
+            legacy
+        } else {
+            fit_table(
+                &genome,
+                &TaskSpec::regression(Objective::R2).unwrap(),
+                &schema,
+                &training,
+                &y,
+            )
+            .unwrap_or_else(|e| panic!("{} fitted pipeline: {e}", row.name))
+        };
         let rust = crate::advanced_v3::emit_bound(&model, &EmitOptions::default());
         let ts = emit_bound(&model, &EmitOptions::default());
         assert_eq!(
