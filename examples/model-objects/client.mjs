@@ -15,7 +15,7 @@ function call(executable, args) {
 export class JopeModel {
   constructor(path, executable = 'jopedime') {
     this.path = resolve(path);
-    this.executable = executable;
+    this.executable = /[/\\]/.test(executable) ? resolve(executable) : executable;
   }
   static fit({ train, target, task = 'auto', method = 'auto', root = 'models', executable = 'jopedime' }) {
     const receipt = call(executable, ['fit', '--train', train, '--target', target, '--task', task,
@@ -41,10 +41,15 @@ export function saveState({ format, primary, files, metadata = {}, requiredCapab
   mkdirSync(absoluteRoot, { recursive: true });
   const staging = mkdtempSync(join(absoluteRoot, '.import-'));
   try {
+    const names = new Set();
     const descriptors = Object.entries(files).map(([path, part]) => {
-      if (!/^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/.test(path) || path === 'manifest.json') {
+      const lower = path.toLowerCase();
+      if (!/^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/.test(path) || path.endsWith('.')
+          || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(path)
+          || lower === 'manifest.json' || names.has(lower)) {
         throw new Error('Parts require unique flat filenames');
       }
+      names.add(lower);
       const bytes = Buffer.from(part.bytes);
       writeFileSync(join(staging, path), bytes, { flag: 'wx', mode: 0o600 });
       return { path, media_type: part.mediaType, bytes: bytes.length,

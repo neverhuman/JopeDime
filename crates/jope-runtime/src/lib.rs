@@ -21,6 +21,7 @@ pub mod fitted;
 pub mod limits;
 pub mod methods;
 pub mod model_object;
+pub mod model_session;
 pub mod receipt;
 pub mod table;
 pub mod task;
@@ -35,3 +36,5 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     hex::encode(Sha256::digest(bytes))
 }
+
+pub mod strict_json;

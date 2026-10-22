@@ -36,6 +36,9 @@ not a mathematical equivalence class of predictors.
 
 The owned, versioned format is **`jope.model-object/v1`**, specified here and in
 [`schemas/jope.model-object.v1.schema.json`](../schemas/jope.model-object.v1.schema.json).
+See the normative [format specification](model-object-format.md),
+[session and rollback guide](model-sessions.md), and
+[red-team review](reviews/model-object-red-team-20261022.md).
 Its envelope uses ordinary UTF-8 JSON, raw payload files and SHA-256. No ONNX library,
 Python pickle, language object dump, compiler or source execution is needed to retain it.
 Rust implementation: `jope_runtime::model_object`.
@@ -149,6 +152,9 @@ line, with stdout reserved for protocol traffic.
 | `model_verify {id}` | Additionally require a supported, valid decoder |
 | `model_export {id}` | Exact manifest text and `parts_hex` for language-neutral transport |
 | `model_import {manifest, parts_hex}` | Validate and commit to the configured root; returns ID/path |
+| `model_session_show {name}` | Read the session history and active model path |
+| `model_session_record {name,id,expected_head,label?}` | Append a saved candidate after comparing the observed head |
+| `model_session_rollback {name,version,expected_head,label?}` | Select a previous version while retaining history |
 | `model_predict {id, csv}` | Load appliance state and infer on inline CSV; returns predictions CSV |
 
 IDs must match `sha256-[0-9a-f]{64}` and cannot select arbitrary filesystem paths. The server
@@ -159,18 +165,20 @@ it does not add authentication for network clients or sandbox numerical computat
 
 ## Integrity, publication and limits
 
-Readers check compatibility, primary membership, unique flat filenames, finite bounds,
+Readers check compatibility, primary membership, case-insensitively unique portable filenames, unique JSON keys, finite bounds,
 checksums and supported decoder bindings. The manifest limit is 1 MiB; at most 256 parts
 and 2 GiB total payload are accepted by default. Reads remain bounded if a file grows.
 Direct object/part symlinks and path traversal are refused. The store is trusted local
 filesystem space; concurrent hostile filesystem changes is outside this contract.
 
-Publication creates an owner-only object directory on Unix, writes and syncs create-only
+Publication validates supported state before store creation, creates owner-only directories
+and files on Unix, writes and syncs create-only
 parts, then atomically links `manifest.json` as the commit marker. It requires a local
 filesystem supporting hard links. A reader never accepts an object lacking a committed
-manifest. A crash can leave an uncommitted directory; it is listed as invalid and never
-automatically overwritten or deleted. A retry of a fully committed identical object is
-idempotent. Exports are create-only and cannot replace existing destinations. Model input
+manifest. A crash can leave an uncommitted directory; it is listed as invalid. A retry resumes
+when all existing declared parts agree, adds missing parts and commits the manifest. Conflicting
+state is never overwritten or deleted. Concurrent identical publishers are safe. A retry of a
+fully committed identical object is idempotent. Exports are create-only and cannot replace existing destinations. Model input
 directories are protected against prediction output/receipt aliases. Preserve unique state
 before manually reclaiming incomplete objects.
 
@@ -179,3 +187,29 @@ integrity against retained metadata, not publisher authenticity or scientific qu
 Store copies and access controls remain the caller's responsibility. Kernel/smoother/support
 models can retain training rows; the native header's retained-data notice is preserved.
 Generated local `models/sha256-*/` is gitignored and is not silently uploaded or committed.
+
+## Versioned sessions
+
+Use `model session record` after a successful save to retain successive candidates in one
+named session. Every update compares the previously observed head; `model session rollback`
+appends a selection of a previous version without modifying or deleting any model. The returned
+`model_path` is suitable for prediction. The [session guide](model-sessions.md) documents
+commands, concurrent updates, backup/recovery and the additional state needed for exact
+training continuation. Session history lives under `models/sessions/`, separately from each
+immutable object. No automatic pruning or training-resume implementation is introduced.
+
+## Capability matrix
+
+| Producer or consumer | Managed fit persists objects | Native disk inference | Independent native executor |
+| --- | --- | --- | --- |
+| Rust runtime | `ModelObject::from_fitted` / `from_bound`, then `save` | Rust fitted/bound API | Shared native implementation |
+| Native CLI or MCP client in any language | CLI `fit --json`; MCP imports already fitted bytes | CLI/MCP appliance objects | Delegates to packaged native executable |
+| Node / TypeScript-facing example | `JopeModel.fit` / `saveState` | Adapter calls packaged executable | No JavaScript numerical executor added |
+| Independent Python, C++, Java or other estimator | Implement declared codec and call CLI/MCP import | Requires a registered compatible decoder | Must qualify separately |
+| Exported Python / Rust / JavaScript source | No automatic persistence added to standalone recipes | Existing emitter's admitted subset only | Export coverage gate may refuse |
+| ONNX export | Unimplemented, exit 4 | Unimplemented | A custom domain also needs a compatible runtime |
+
+Inspection uses response schema `jope.model-object-inspection/v1`, distinct from the stored
+manifest schema. `executable` reports registered decoder/binding acceptance, not complete
+numerical-state validation, platform parity or resumability. Unknown state stays opaque and
+retained. Byte bounds do not make hostile numerical state safe; see the format's trust limits.

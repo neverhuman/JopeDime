@@ -6,6 +6,7 @@ implementation before changing a subsystem.
 
 | Work | Implementation | Read first |
 | --- | --- | --- |
+| Saved fitted objects and versioned sessions | `crates/jope-runtime/src/model_object.rs`, `model_session.rs`, `crates/jope-appliance/src/model.rs` | [Model objects](model-objects.md), [format](model-object-format.md), [rollback](model-sessions.md) |
 | Numerical operators, fitted models, code emission | `crates/feat-math/` | [Emitters](emitters.md), [parity matrix](parity/capability-matrix.md) |
 | Bounded search, evaluation, caching, worker budgets | `crates/jope-pipeline/` | [Pipeline](pipeline.md) |
 | Distributed execution and fitted-result authority | `crates/jope-engine/`, `crates/smartcluster/` | [Architecture](architecture.md), [runbooks](runbooks/) |

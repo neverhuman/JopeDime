@@ -259,3 +259,116 @@ fn prediction_csv_has_probabilities_in_class_order() {
     assert_eq!(header, "prediction,p_high,p_low,p_mid");
     assert_eq!(text.lines().count(), 4);
 }
+
+#[test]
+fn bound_programs_keep_symbolic_target_and_ordered_input_state_on_disk() {
+    use feat_math::advanced_v3::{
+        fit_table, ColumnSpec, DataSchema, Objective, RawTable, RowSemantics, TaskSpec,
+    };
+    use jope_runtime::model_object::ModelObject;
+    let root = tempfile::tempdir().unwrap();
+    let schema = DataSchema {
+        columns: vec![
+            ColumnSpec::numeric("amount"),
+            ColumnSpec::categorical("country"),
+        ],
+        row_semantics: RowSemantics::Iid,
+    };
+    let table = RawTable::new(
+        vec!["amount".into(), "country".into()],
+        (0..24)
+            .map(|i| {
+                vec![
+                    (i as f64 * 0.1).to_string(),
+                    ["US", "CA", "FR"][i % 3].into(),
+                ]
+            })
+            .collect(),
+    )
+    .unwrap();
+    let rows = RawTable::new(
+        table.headers.clone(),
+        vec![
+            vec!["".into(), "unseen".into()],
+            vec!["0.8".into(), "US".into()],
+        ],
+    )
+    .unwrap();
+    let y: Vec<f64> = (0..24).map(|i| (i as f64 * 0.3).sin() + 2.0).collect();
+    let task = TaskSpec::regression(Objective::R2).unwrap();
+    let x: Vec<Vec<f64>> = (0..24)
+        .map(|i| vec![i as f64 * 0.1, (i % 3) as f64])
+        .collect();
+    let symbolic = feat_math::advanced_v3::fit_legacy_numeric_bound(
+        &feat_math::GenomeIr::parse("(sym raw \"sqrt(c0) + sin(c1)\")").unwrap(),
+        &x,
+        &y,
+    )
+    .unwrap();
+    let numeric_rows = RawTable::new(
+        vec!["c0".into(), "c1".into()],
+        vec![vec!["0.5".into(), "2".into()], vec!["0".into(), "1".into()]],
+    )
+    .unwrap();
+    let expected = symbolic.predict_table(&numeric_rows).unwrap();
+    let object = ModelObject::from_bound(&symbolic).unwrap();
+    let path = object
+        .save(root.path(), Limits::default().max_model_bytes)
+        .unwrap();
+    let reloaded = ModelObject::read(&path, Limits::default().max_model_bytes)
+        .unwrap()
+        .bound()
+        .unwrap();
+    assert_eq!(expected, reloaded.predict_table(&numeric_rows).unwrap());
+    for source in [
+
+        "(pipe X (target kind=log1p) (input numeric=median categorical=frequency) (ridge))",
+        "(pipe X (target kind=rank_gauss) (input numeric=median categorical=ordered prior=5 folds=5) (standardize) (ridge))",
+    ] {
+        let model = fit_table(&feat_math::GenomeIr::parse(source).unwrap(),&task,&schema,&table,&y).unwrap();
+        let expected = model.predict_table(&rows).unwrap();
+        let object = ModelObject::from_bound(&model).unwrap();
+        let path = object.save(root.path(),Limits::default().max_model_bytes).unwrap();
+        let loaded = ModelObject::read(&path,Limits::default().max_model_bytes).unwrap().bound().unwrap();
+        assert_eq!(expected.iter().map(|v|v.to_bits()).collect::<Vec<_>>(),loaded.predict_table(&rows).unwrap().iter().map(|v|v.to_bits()).collect::<Vec<_>>(),"{source}");
+    }
+}
+
+#[test]
+fn importing_native_bytes_preserves_noncanonical_state_json_exactly() {
+    use jope_runtime::model_object::ModelObject;
+    use sha2::{Digest, Sha256};
+    let outcome = fit(
+        &prepared(TaskKind::Regression, 24),
+        &FitOptions {
+            method: "ridge".into(),
+            ..FitOptions::default()
+        },
+        &Budget::new(None, 1),
+        "",
+        CreatedBy::default(),
+    )
+    .unwrap();
+    let original = outcome.fitted.to_bytes().unwrap();
+    let body = serde_json::to_vec_pretty(&outcome.fitted.model).unwrap();
+    let mut header = outcome.fitted.header.clone();
+    header.fitted_sections[0].bytes = body.len() as u64;
+    header.fitted_sections[0].sha256 = jope_runtime::sha256_hex(&body);
+    let header = serde_json::to_vec(&header).unwrap();
+    let mut file = original[..16].to_vec();
+    file.extend_from_slice(&(header.len() as u64).to_le_bytes());
+    file.extend_from_slice(&header);
+    file.extend_from_slice(&(body.len() as u64).to_le_bytes());
+    file.extend_from_slice(&body);
+    let digest = Sha256::digest(&file);
+    file.extend_from_slice(&digest);
+    FittedModel::from_bytes(&file).unwrap();
+    assert_ne!(file, original);
+    let object = ModelObject::from_fitted_bytes(file.clone()).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let path = object
+        .save(root.path(), Limits::default().max_model_bytes)
+        .unwrap();
+    let loaded = ModelObject::read(&path, Limits::default().max_model_bytes).unwrap();
+    assert_eq!(loaded.parts()["model.jope"], file);
+}

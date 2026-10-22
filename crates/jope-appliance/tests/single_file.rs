@@ -721,6 +721,7 @@ fn standard_object_fit_reload_export_and_mcp_predict_agree() {
     )
     .unwrap();
     assert_eq!(info["executable"], true);
+    assert_eq!(info["schema"], "jope.model-object-inspection/v1");
     ok(run(
         &exe,
         dir.path(),
@@ -854,6 +855,82 @@ fn standard_object_fit_reload_export_and_mcp_predict_agree() {
         manifest_bytes
     );
     let id = info["id"].as_str().unwrap();
+    // A directory relative to cwd must still derive its identity from the resolved name.
+    let dot: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            &object_path,
+            &["model", "inspect", "--model", "."],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    assert_eq!(dot["id"], info["id"]);
+    let first: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "session",
+                "record",
+                "--name",
+                "test",
+                "--id",
+                id,
+                "--expected-head",
+                "empty",
+            ],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    assert_eq!(
+        code(&run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "session",
+                "record",
+                "--name",
+                "test",
+                "--id",
+                id,
+                "--expected-head",
+                "empty"
+            ]
+        )),
+        7
+    );
+    let rollback: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "session",
+                "rollback",
+                "--name",
+                "test",
+                "--version",
+                "1",
+                "--expected-head",
+                first["head"].as_str().unwrap(),
+            ],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    let event_schema: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../schemas/jope.model-session.v1.schema.json"
+    ))
+    .unwrap();
+    for event in rollback["versions"].as_array().unwrap() {
+        assert!(jope_datasets::schema::validate(&event_schema, event).is_empty());
+    }
+    assert_eq!(rollback["versions"][1]["model_id"], id);
+    assert_eq!(rollback["model_path"], path);
     let requests = [
         serde_json::json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1"}}}),
         serde_json::json!({"jsonrpc":"2.0","method":"notifications/initialized"}),
@@ -862,6 +939,8 @@ fn standard_object_fit_reload_export_and_mcp_predict_agree() {
         serde_json::json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"model_predict","arguments":{"id":id,"csv":std::fs::read_to_string(dir.path().join("rows.csv")).unwrap()}}}),
         serde_json::json!({"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"model_inspect","arguments":{"id":"../escape"}}}),
         serde_json::json!({"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"model_export","arguments":{"id":id}}}),
+        serde_json::json!({"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"model_session_show","arguments":{"name":"test"}}}),
+        serde_json::json!({"jsonrpc":"2.0","method":"tools/call","params":{"name":"model_session_record","arguments":{"name":"unwanted","id":id,"expected_head":"empty"}}}),
     ];
     let mut child = Command::new(&exe)
         .args(["model", "mcp", "--root", "models"])
@@ -883,9 +962,14 @@ fn standard_object_fit_reload_export_and_mcp_predict_agree() {
         .lines()
         .map(|s| serde_json::from_str(s).unwrap())
         .collect();
-    assert_eq!(replies.len(), 6); // no response to notifications
+    assert_eq!(replies.len(), 7); // no response to notifications
+    assert_eq!(
+        replies[6]["result"]["structuredContent"]["head"],
+        rollback["head"]
+    );
+    assert!(!dir.path().join("models/sessions/unwanted").exists());
     assert_eq!(replies[0]["result"]["protocolVersion"], "2025-11-25");
-    assert_eq!(replies[1]["result"]["tools"].as_array().unwrap().len(), 6);
+    assert_eq!(replies[1]["result"]["tools"].as_array().unwrap().len(), 9);
     assert_eq!(replies[2]["result"]["structuredContent"]["id"], info["id"]);
     assert_eq!(
         replies[3]["result"]["structuredContent"]["predictions_csv"],

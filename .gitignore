@@ -70,3 +70,5 @@ nohup.out
 # Local fitted model object store; models can retain training data.
 /models/sha256-*/
 /models/.import-*/
+
+/models/sessions/

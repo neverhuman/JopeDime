@@ -1,6 +1,6 @@
 export type ExportFormat = 'object' | 'fitted' | 'bound-json' | 'python' | 'rust' | 'javascript' | 'onnx';
 export interface Inspection {
-  schema: 'jope.model-object/v1'; id: string; integrity_verified: boolean; executable: boolean;
+  schema: 'jope.model-object-inspection/v1'; id: string; integrity_verified: boolean; executable: boolean;
   unsupported_capabilities: string[]; format: string; primary: string;
   files: Array<{path: string; media_type: string; bytes: number; sha256: string}>;
   metadata: unknown;

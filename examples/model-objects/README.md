@@ -35,3 +35,16 @@ jope("predict", "--model", model_path, "--input", "rows.csv", "--output", "predi
 C++/Java/Go and other clients use the same argument/JSON contract or MCP tools; Rust can call
 `jope_runtime::model_object` directly. Independently trained language-local models follow the
 [producer and decoder contract](../../docs/model-objects.md#adding-a-language-or-gp-variant).
+
+## Acceptance and session rollback
+
+Run `node examples/model-objects/check.mjs /absolute/path/to/jopedime` with an authenticated
+appliance. It fits a model, reloads from disk after changing working directory, retains a second
+opaque checkpoint, records both in one session, rolls back and compares prediction bytes. The
+adapter pins executable paths containing a slash at construction time; a bare command such as
+`jopedime` uses the caller's PATH on each invocation. Use an absolute executable in services.
+
+The [format specification](../../docs/model-object-format.md) covers portable names, byte
+identity and decoder requirements. The [session guide](../../docs/model-sessions.md) documents
+record/show/rollback commands, expected-head conflicts and training checkpoint limitations.
+`saveState` preserves supplied byte buffers; do not parse and reserialize foreign fitted state.

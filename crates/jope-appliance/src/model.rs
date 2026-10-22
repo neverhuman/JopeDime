@@ -2,7 +2,7 @@
 use clap::{Args, Subcommand};
 use jope_runtime::limits::Limits;
 use jope_runtime::model_object::{self as objects, Manifest, ModelObject};
-use jope_runtime::{Failure, FailureKind};
+use jope_runtime::{model_session as sessions, Failure, FailureKind};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
@@ -53,8 +53,48 @@ enum ModelCommand {
         #[arg(long, default_value = "models")]
         root: PathBuf,
     },
+    /// Version history and reversible active selection, independent of immutable model bytes.
+    Session {
+        #[command(subcommand)]
+        command: SessionCommand,
+    },
     /// MCP 2025-11-25 stdio service. Filesystem access is limited to this explicitly chosen store.
     Mcp {
+        #[arg(long, default_value = "models")]
+        root: PathBuf,
+    },
+}
+
+#[derive(Subcommand)]
+enum SessionCommand {
+    Show {
+        #[arg(long)]
+        name: String,
+        #[arg(long, default_value = "models")]
+        root: PathBuf,
+    },
+    Record {
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        id: String,
+        /// Previously observed history head, or "empty" for the first version.
+        #[arg(long)]
+        expected_head: String,
+        #[arg(long, default_value = "")]
+        label: String,
+        #[arg(long, default_value = "models")]
+        root: PathBuf,
+    },
+    Rollback {
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        version: u64,
+        #[arg(long)]
+        expected_head: String,
+        #[arg(long, default_value = "")]
+        label: String,
         #[arg(long, default_value = "models")]
         root: PathBuf,
     },
@@ -69,14 +109,14 @@ fn open(path: &Path) -> anyhow::Result<ModelObject> {
     if path.is_dir() {
         ModelObject::read(path, max_bytes())
     } else {
-        ModelObject::from_fitted(&objects::load_fitted(path, max_bytes())?)
+        ModelObject::from_fitted_bytes(objects::read_bounded(path, max_bytes())?)
     }
 }
 
 fn import_manifest(path: &Path) -> anyhow::Result<ModelObject> {
     let bytes = objects::read_bounded(path, objects::MAX_MANIFEST_BYTES)?;
     let manifest: Manifest =
-        serde_json::from_slice(&bytes).map_err(|e| Failure::integrity(e.to_string()))?;
+        jope_runtime::strict_json::decode(&bytes).map_err(|e| Failure::integrity(e.to_string()))?;
     manifest.validate(max_bytes())?;
     let parent = path.parent().unwrap_or(Path::new("."));
     let mut parts = BTreeMap::new();
@@ -114,7 +154,10 @@ fn list(root: &Path) -> anyhow::Result<Value> {
 
 fn export_bytes(object: &ModelObject, format: &str) -> anyhow::Result<Vec<u8>> {
     match format {
-        "fitted" => object.fitted()?.to_bytes(),
+        "fitted" => {
+            object.fitted()?;
+            Ok(object.parts()[&object.manifest().primary].clone())
+        },
         "bound-json" => serde_json::to_vec(&object.bound()?).map_err(Into::into),
         "python" | "rust" | "javascript" => object.export_source(format),
         "onnx" => Err(Failure::backend("ONNX conversion is not implemented; retain the complete model object. A custom-domain ONNX graph also requires a compatible operator runtime.")),
@@ -165,6 +208,39 @@ pub fn run(args: ModelArgs) -> anyhow::Result<()> {
             }
         }
         ModelCommand::List { root } => list(&root)?,
+        ModelCommand::Session { command } => match command {
+            SessionCommand::Show { name, root } => json!(sessions::read(&root, &name)?),
+            SessionCommand::Record {
+                name,
+                id,
+                expected_head,
+                label,
+                root,
+            } => json!(sessions::append(
+                &root,
+                &name,
+                &expected_head,
+                Some(&id),
+                None,
+                &label,
+                max_bytes()
+            )?),
+            SessionCommand::Rollback {
+                name,
+                version,
+                expected_head,
+                label,
+                root,
+            } => json!(sessions::append(
+                &root,
+                &name,
+                &expected_head,
+                None,
+                Some(version),
+                &label,
+                max_bytes()
+            )?),
+        },
         ModelCommand::Mcp { root } => return serve(&root),
     };
     crate::print_json(&value);
@@ -190,20 +266,15 @@ fn tools_list() -> Value {
         tool("model_verify", "Require both byte integrity and a supported state decoder.", json!({"id": id}), &["id"], true),
         tool("model_export", "Return exact portable object manifest and hexadecimal parts, without filesystem writes.", json!({"id": id}), &["id"], true),
         tool("model_import", "Commit a portable object to the configured store. No executable code is loaded.", json!({"manifest": {"type":"string"}, "parts_hex": {"type":"object", "additionalProperties":{"type":"string"}}}), &["manifest", "parts_hex"], false),
+        tool("model_session_show", "Read version history and the active model path.", json!({"name":{"type":"string"}}), &["name"], true),
+        tool("model_session_record", "Append a retained model version, comparing the observed head.", json!({"name":{"type":"string"}, "id": id, "expected_head":{"type":"string"}, "label":{"type":"string"}}), &["name","id","expected_head"], false),
+        tool("model_session_rollback", "Append a selection of an earlier version; preserve every candidate.", json!({"name":{"type":"string"}, "version":{"type":"integer","minimum":1}, "expected_head":{"type":"string"}, "label":{"type":"string"}}), &["name","version","expected_head"], false),
         tool("model_predict", "Load an appliance object and infer from inline CSV; never refits.", json!({"id": id, "csv": {"type": "string"}}), &["id", "csv"], true)
     ]})
 }
 
 fn object_path(root: &Path, id: &str) -> anyhow::Result<PathBuf> {
-    if id.len() != 71
-        || !id.starts_with("sha256-")
-        || !id[7..]
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
-    {
-        return Err(Failure::input("invalid model object id"));
-    }
-    Ok(root.join(id))
+    sessions::object_path(root, id)
 }
 fn encode_hex(data: &[u8]) -> String {
     data.iter().map(|b| format!("{b:02x}")).collect()
@@ -235,11 +306,62 @@ struct ImportArgs {
     manifest: String,
     parts_hex: BTreeMap<String, String>,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SessionName {
+    name: String,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SessionRecord {
+    name: String,
+    id: String,
+    expected_head: String,
+    #[serde(default)]
+    label: String,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SessionRollback {
+    name: String,
+    version: u64,
+    expected_head: String,
+    #[serde(default)]
+    label: String,
+}
 fn arguments<T: serde::de::DeserializeOwned>(value: Value) -> anyhow::Result<T> {
     serde_json::from_value(value).map_err(|e| Failure::input(e.to_string()))
 }
 fn call_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
     match name {
+        "model_session_show" => {
+            let args: SessionName = arguments(args)?;
+            Ok(json!(sessions::read(root, &args.name)?))
+        }
+        "model_session_record" => {
+            let args: SessionRecord = arguments(args)?;
+            Ok(json!(sessions::append(
+                root,
+                &args.name,
+                &args.expected_head,
+                Some(&args.id),
+                None,
+                &args.label,
+                MAX_FRAME as u64
+            )?))
+        }
+        "model_session_rollback" => {
+            let args: SessionRollback = arguments(args)?;
+            Ok(json!(sessions::append(
+                root,
+                &args.name,
+                &args.expected_head,
+                None,
+                Some(args.version),
+                &args.label,
+                MAX_FRAME as u64
+            )?))
+        }
         "model_list" => {
             if args != json!({}) {
                 return Err(Failure::input("model_list accepts no arguments"));
@@ -316,7 +438,7 @@ fn serve(root: &Path) -> anyhow::Result<()> {
         if line.len() > MAX_FRAME {
             return Err(Failure::input("MCP frame exceeds 8 MiB"));
         }
-        let request: Value = match serde_json::from_slice(&line) {
+        let request: Value = match jope_runtime::strict_json::decode(&line) {
             Ok(request) => request,
             Err(_) => {
                 writeln!(

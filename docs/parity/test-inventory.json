@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5851,
+  "count": 5863,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -8748,12 +8748,12 @@
     }
    },
    "jope-runtime": {
-    "count": 24,
+    "count": 36,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
       "kind": "lib",
-      "count": 16,
+      "count": 26,
       "ignored": 0,
       "tests": [
        "automl::tests::folds_are_stratified_and_deterministic",
@@ -8761,13 +8761,23 @@
        "backend::tests::explicit_cuda_fails_and_auto_reports_cpu",
        "error::tests::a_panic_in_numerical_work_becomes_a_numerical_failure",
        "error::tests::the_outermost_failure_names_the_category",
+       "model_object::tests::an_interrupted_publication_resumes_without_overwriting_retained_parts",
        "model_object::tests::atomic_create_only_exports_preserve_existing_files",
+       "model_object::tests::concurrent_identical_publication_and_conflicting_recovery_preserve_bytes",
+       "model_object::tests::duplicate_json_metadata_is_refused_before_cross_language_disagreement",
        "model_object::tests::envelope_bounds_and_paths_are_checked_before_part_access",
        "model_object::tests::future_variants_retain_all_bytes_but_require_their_decoder",
+       "model_object::tests::malformed_known_state_is_refused_before_creating_a_store",
        "model_object::tests::manifest_identity_uses_retained_bytes_including_foreign_whitespace",
+       "model_object::tests::new_gp_fields_cannot_be_silently_dropped_by_an_older_decoder",
+       "model_object::tests::portable_parts_refuse_device_names_trailing_dots_and_case_collisions",
        "model_object::tests::symlinked_parts_and_object_directories_are_refused",
        "model_object::tests::truncation_substitution_wrong_directory_and_uncommitted_store_are_refused",
        "model_object::tests::unknown_required_capabilities_are_never_ignored_for_a_known_format",
+       "model_session::tests::competing_updates_fail_without_losing_a_version",
+       "model_session::tests::corrupt_history_missing_models_and_path_traversal_are_refused",
+       "model_session::tests::versions_rollback_and_continue_keep_every_object_and_selection",
+       "strict_json::tests::escaped_duplicate_keys_nested_arrays_and_trailing_values_are_refused",
        "table::tests::malformed_input_is_refused_with_an_input_failure",
        "table::tests::missing_cells_categories_and_kinds_follow_the_contract",
        "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",
@@ -8785,13 +8795,15 @@
      },
      "jope-runtime::offline_fit_predict": {
       "kind": "test",
-      "count": 6,
+      "count": 8,
       "ignored": 0,
       "tests": [
        "an_exhausted_budget_is_a_budget_failure",
        "auto_selects_by_out_of_fold_loss_and_records_every_candidate",
+       "bound_programs_keep_symbolic_target_and_ordered_input_state_on_disk",
        "damaged_or_foreign_model_files_are_integrity_failures",
        "every_native_method_fits_saves_reloads_and_predicts_identically",
+       "importing_native_bytes_preserves_noncanonical_state_json_exactly",
        "prediction_csv_has_probabilities_in_class_order",
        "selection_is_deterministic"
       ]

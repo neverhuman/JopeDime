@@ -12,6 +12,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
+pub const INSPECTION_SCHEMA: &str = "jope.model-object-inspection/v1";
 pub const SCHEMA: &str = "jope.model-object/v1";
 pub const APPLIANCE: &str = "org.jopedime/appliance-fitted/v1";
 pub const BOUND: &str = "org.jopedime/battle-artifact/v2";
@@ -107,9 +108,18 @@ fn filename(value: &str) -> bool {
         && value != "."
         && value != ".."
         && !value.starts_with('.')
+        && !value.ends_with('.')
+        && !device_name(value)
         && value
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
+}
+pub(crate) fn device_name(value: &str) -> bool {
+    let stem = value.split('.').next().unwrap_or("").to_ascii_uppercase();
+    matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || (stem.len() == 4
+            && (stem.starts_with("COM") || stem.starts_with("LPT"))
+            && matches!(stem.as_bytes()[3], b'1'..=b'9'))
 }
 fn token(value: &str) -> bool {
     !value.is_empty()
@@ -141,8 +151,8 @@ impl Manifest {
         }
         for part in &self.files {
             if !filename(&part.path)
-                || part.path == MANIFEST
-                || !names.insert(&part.path)
+                || part.path.eq_ignore_ascii_case(MANIFEST)
+                || !names.insert(part.path.to_ascii_lowercase())
                 || !hex_hash(&part.sha256)
                 || part.media_type.is_empty()
             {
@@ -152,7 +162,7 @@ impl Manifest {
                 .checked_add(part.bytes)
                 .ok_or_else(|| bad("size overflow"))?;
         }
-        if total > max_bytes || !names.contains(&self.primary) {
+        if total > max_bytes || !self.files.iter().any(|part| part.path == self.primary) {
             return Err(bad("invalid primary or object exceeds byte limit"));
         }
         let requirements: BTreeSet<_> = self.required_capabilities.iter().collect();
@@ -220,7 +230,7 @@ impl ModelObject {
         if manifest_bytes.len() as u64 > MAX_MANIFEST_BYTES {
             return Err(Failure::integrity("manifest exceeds its byte limit"));
         }
-        let manifest: Manifest = serde_json::from_slice(&manifest_bytes)
+        let manifest: Manifest = crate::strict_json::decode(&manifest_bytes)
             .map_err(|e| Failure::integrity(format!("model manifest: {e}")))?;
         manifest.validate(max_bytes)?;
         if parts.len() != manifest.files.len() {
@@ -249,7 +259,12 @@ impl ModelObject {
 
     /// Wrap the entire native fitted file; no fit or parameter conversion occurs.
     pub fn from_fitted(model: &FittedModel) -> Result<Self> {
-        let bytes = model.to_bytes()?;
+        Self::from_fitted_bytes(model.to_bytes()?)
+    }
+
+    /// Import an already serialized fitted file without normalizing its JSON state bytes.
+    pub fn from_fitted_bytes(bytes: Vec<u8>) -> Result<Self> {
+        let model = FittedModel::from_bytes(&bytes)?;
         let manifest = Manifest {
             schema: SCHEMA.into(),
             minimum_reader_version: 1,
@@ -319,7 +334,7 @@ impl ModelObject {
             return Ok(self.fitted()?.model);
         }
         let model: feat_math::advanced_v3::BoundModel =
-            serde_json::from_slice(&self.parts[&self.manifest.primary])
+            crate::strict_json::decode(&self.parts[&self.manifest.primary])
                 .map_err(|e| Failure::integrity(format!("bound state: {e}")))?;
         model
             .validate_binding()
@@ -370,7 +385,7 @@ impl ModelObject {
             self.bound()?;
         }
         Ok(Inspection {
-            schema: SCHEMA,
+            schema: INSPECTION_SCHEMA,
             id: self.id.clone(),
             integrity_verified: true,
             executable: unsupported.is_empty(),
@@ -386,6 +401,11 @@ impl ModelObject {
     /// leaves an uncommitted directory which readers refuse; it never damages another object.
     pub fn save(&self, root: &Path, max_bytes: u64) -> Result<PathBuf> {
         self.manifest.validate(max_bytes)?;
+        // Decode known state before any filesystem mutation. Unsupported codecs remain opaque.
+        self.inspect()?;
+        if root.to_str().is_none() {
+            return Err(Failure::input("model root must be UTF-8"));
+        }
         fs::create_dir_all(root)
             .map_err(|e| Failure::output(format!("{}: {e}", root.display())))?;
         let destination = root.join(&self.id);
@@ -398,25 +418,38 @@ impl ModelObject {
         match builder.create(&destination) {
             Ok(()) => (),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-                let existing = Self::read(&destination, max_bytes)?;
-                if existing.manifest_bytes != self.manifest_bytes {
-                    return Err(Failure::integrity("existing object differs"));
+                if !fs::symlink_metadata(&destination)?.file_type().is_dir() {
+                    return Err(Failure::integrity(
+                        "object destination is not a regular directory",
+                    ));
                 }
-                return Ok(destination);
+                if fs::symlink_metadata(destination.join(MANIFEST)).is_ok() {
+                    let existing = Self::read(&destination, max_bytes)?;
+                    if existing.manifest_bytes != self.manifest_bytes {
+                        return Err(Failure::integrity("existing object differs"));
+                    }
+                    return Ok(destination);
+                }
             }
             Err(e) => return Err(Failure::output(format!("{}: {e}", destination.display()))),
         }
+        // Resume an interrupted publication only when every retained declared part agrees.
+        // Never overwrite or reclaim state; a concurrent identical publisher is safe.
         for (name, data) in &self.parts {
-            write_new(&destination.join(name), data)?;
+            if let Ok(metadata) = fs::symlink_metadata(destination.join(name)) {
+                if !metadata.file_type().is_file()
+                    || read_bounded(&destination.join(name), data.len() as u64)? != *data
+                {
+                    return Err(Failure::integrity(
+                        "incomplete object contains conflicting state",
+                    ));
+                }
+            }
         }
-        write_new(&destination.join(".manifest.pending"), &self.manifest_bytes)?;
-        fs::hard_link(
-            destination.join(".manifest.pending"),
-            destination.join(MANIFEST),
-        )
-        .map_err(|e| Failure::output(format!("commit model manifest: {e}")))?;
-        fs::remove_file(destination.join(".manifest.pending"))
-            .map_err(|e| Failure::output(e.to_string()))?;
+        for (name, data) in &self.parts {
+            publish_identical(&destination.join(name), data)?;
+        }
+        publish_identical(&destination.join(MANIFEST), &self.manifest_bytes)?;
         #[cfg(unix)]
         {
             File::open(&destination)
@@ -443,11 +476,12 @@ impl ModelObject {
             ));
         }
         let manifest_bytes = read_bounded(&path.join(MANIFEST), MAX_MANIFEST_BYTES)?;
-        let manifest: Manifest = serde_json::from_slice(&manifest_bytes)
+        let manifest: Manifest = crate::strict_json::decode(&manifest_bytes)
             .map_err(|e| Failure::integrity(format!("model manifest: {e}")))?;
         manifest.validate(max_bytes)?;
         let id = format!("sha256-{}", sha256_hex(&manifest_bytes));
-        if path.file_name().and_then(|n| n.to_str()) != Some(&id) {
+        let resolved = fs::canonicalize(path).map_err(|e| Failure::input(e.to_string()))?;
+        if resolved.file_name().and_then(|n| n.to_str()) != Some(&id) {
             return Err(Failure::integrity(
                 "object directory does not match manifest identity",
             ));
@@ -476,9 +510,14 @@ pub fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create_new(true)
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options
         .open(&temporary)
         .map_err(|e| Failure::output(format!("{}: {e}", temporary.display())))?;
     let result = file
@@ -488,6 +527,17 @@ pub fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
     // Ownership follows successful create_new; never remove an existing destination.
     let _ = fs::remove_file(&temporary);
     result.map_err(|e| Failure::output(format!("{}: {e}", path.display())))
+}
+
+// A failed atomic create may mean a concurrent writer committed exactly these bytes.
+fn publish_identical(path: &Path, bytes: &[u8]) -> Result<()> {
+    if let Err(error) = write_new(path, bytes) {
+        if read_bounded(path, bytes.len() as u64).is_ok_and(|existing| existing == bytes) {
+            return Ok(());
+        }
+        return Err(error);
+    }
+    Ok(())
 }
 
 /// Backwards-compatible entry point for inference: a standalone `.jope` or a committed object.
@@ -502,6 +552,158 @@ pub fn load_fitted(path: &Path, max_bytes: u64) -> Result<FittedModel> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn portable_parts_refuse_device_names_trailing_dots_and_case_collisions() {
+        let object = future();
+        for name in [
+            "NUL",
+            "con.json",
+            "COM1.bin",
+            "lpt9",
+            "AUX",
+            "PRN.txt",
+            "state.",
+            "MANIFEST.JSON",
+        ] {
+            let mut manifest = object.manifest.clone();
+            manifest.files[0].path = name.into();
+            manifest.primary = name.into();
+            assert!(
+                manifest.validate(1024).is_err(),
+                "accepted nonportable part {name}"
+            );
+        }
+        let mut manifest = object.manifest.clone();
+        manifest.files[1].path = "STATE.JSON".into();
+        assert!(
+            manifest.validate(1024).is_err(),
+            "accepted case-insensitive collision"
+        );
+    }
+
+    #[test]
+    fn an_interrupted_publication_resumes_without_overwriting_retained_parts() {
+        let object = future();
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join(object.id());
+        fs::create_dir(&path).unwrap();
+        fs::write(path.join("weights.bin"), &object.parts["weights.bin"]).unwrap();
+        object.save(root.path(), 1024).unwrap();
+        assert_eq!(ModelObject::read(&path, 1024).unwrap().parts, object.parts);
+    }
+
+    #[test]
+    fn concurrent_identical_publication_and_conflicting_recovery_preserve_bytes() {
+        let object = future();
+        let root = tempfile::tempdir().unwrap();
+        std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..4)
+                .map(|_| scope.spawn(|| object.save(root.path(), 1024)))
+                .collect();
+            for handle in handles {
+                handle.join().unwrap().unwrap();
+            }
+        });
+        assert_eq!(
+            ModelObject::read(&root.path().join(object.id()), 1024)
+                .unwrap()
+                .parts,
+            object.parts
+        );
+        let damaged = tempfile::tempdir().unwrap();
+        let path = damaged.path().join(object.id());
+        fs::create_dir(&path).unwrap();
+        fs::write(path.join("weights.bin"), b"retained conflicting bytes").unwrap();
+        assert!(object.save(damaged.path(), 1024).is_err());
+        assert_eq!(
+            fs::read(path.join("weights.bin")).unwrap(),
+            b"retained conflicting bytes"
+        );
+        assert!(!path.join(MANIFEST).exists());
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let path = root.path().join(object.id());
+            assert_eq!(
+                fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+                0o700
+            );
+            assert_eq!(
+                fs::metadata(path.join(MANIFEST))
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o600
+            );
+        }
+    }
+
+    #[test]
+    fn malformed_known_state_is_refused_before_creating_a_store() {
+        let mut manifest = future().manifest;
+        let bytes = b"not a fitted file".to_vec();
+        manifest.format = APPLIANCE.into();
+        manifest.required_capabilities.clear();
+        manifest.primary = "model.jope".into();
+        manifest.files = vec![Part::new(
+            "model.jope",
+            "application/vnd.jopedime.fitted",
+            &bytes,
+        )];
+        let object = ModelObject::new(
+            manifest,
+            BTreeMap::from([("model.jope".into(), bytes)]),
+            1024,
+        )
+        .unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let store = root.path().join("store");
+        assert!(object.save(&store, 1024).is_err());
+        assert!(!store.exists());
+    }
+
+    #[test]
+    fn duplicate_json_metadata_is_refused_before_cross_language_disagreement() {
+        let object = future();
+        let text = String::from_utf8(object.manifest_bytes).unwrap();
+        let duplicated = text.replace(
+            "\"extension\": {",
+            "\"extension\": {\"unicode\":\"other\"}, \"extension\": {",
+        );
+        assert!(ModelObject::decode(duplicated.into_bytes(), object.parts, 1024).is_err());
+    }
+
+    #[test]
+    fn new_gp_fields_cannot_be_silently_dropped_by_an_older_decoder() {
+        let genome = feat_math::GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let x = (0..16)
+            .map(|i| vec![i as f64, (i % 3) as f64])
+            .collect::<Vec<_>>();
+        let y = (0..16).map(|i| i as f64 * 0.5).collect::<Vec<_>>();
+        let fitted = feat_math::advanced_v3::fit_legacy_numeric_bound(&genome, &x, &y).unwrap();
+        let mut value = serde_json::to_value(&fitted).unwrap();
+        let head = value
+            .pointer_mut("/predictor/Legacy/Pipeline/head/Ridge")
+            .unwrap();
+        head.as_object_mut()
+            .unwrap()
+            .insert("future_required_state".into(), json!({"offset": 123}));
+        let bytes = serde_json::to_vec(&value).unwrap();
+        let mut manifest = ModelObject::from_bound(&fitted).unwrap().manifest;
+        manifest.files = vec![Part::new("state.json", "application/json", &bytes)];
+        let object = ModelObject::new(
+            manifest,
+            BTreeMap::from([("state.json".into(), bytes)]),
+            1 << 20,
+        )
+        .unwrap();
+        assert!(
+            object.bound().is_err(),
+            "older decoder discarded required fitted state"
+        );
+    }
 
     fn future() -> ModelObject {
         let state = b"{\"variant\":\"future\",\"operators\":[\"org.example/solver/v7\"]}".to_vec();

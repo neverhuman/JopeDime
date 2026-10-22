@@ -15,6 +15,7 @@ feat-math = { path = "../feat-math", default-features = false }
 hex.workspace = true
 rayon.workspace = true
 serde.workspace = true
+serde_ignored = "0.1.14"
 # float_roundtrip: a reloaded model must parse every fitted parameter bit for bit.
 serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
