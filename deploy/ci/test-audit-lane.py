@@ -66,11 +66,17 @@ if mode == "source":
     target = source / "README.md"
     target.chmod(0o644)
     target.write_text("modified after capture")
+    target.chmod(0o444)
 if mode == "mode":
     (source / "README.md").chmod(0o644)
 if mode == "extra":
     source.chmod(0o755)
     (source / "untracked.txt").write_text("not admitted")
+    source.chmod(0o555)
+if mode == "fifo":
+    source.chmod(0o755)
+    os.mkfifo(source / "unexpected-fifo")
+    source.chmod(0o555)
 if mode == "manifest":
     path = output / "input/SOURCE_MANIFEST.json"
     payload = json.loads(path.read_text())
@@ -80,6 +86,7 @@ if mode == "archive":
     path = output / "input/source.tar"
     path.chmod(0o644)
     path.write_bytes(path.read_bytes() + b"changed")
+    path.chmod(0o444)
 if mode == "link":
     path = output / "repo-score.md"
     path.unlink()
@@ -149,7 +156,7 @@ class AuditLaneTests(unittest.TestCase):
 
     def test_changed_protocol_or_evidence_cannot_pass(self):
         for mode in ("policy", "scope", "counts", "malformed", "source", "extra",
-                     "manifest", "archive", "link", "mode", "severity", "raw", "duplicate", "nonfinite"):
+                     "manifest", "archive", "link", "mode", "severity", "raw", "duplicate", "nonfinite", "fifo"):
             with self.subTest(mode=mode):
                 self.assertNotEqual(0, self.run_audit(mode).returncode)
 

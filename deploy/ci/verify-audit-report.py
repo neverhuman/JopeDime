@@ -105,6 +105,8 @@ def validate(output, audit_exit, expected_manifest):
     require(source.is_dir() and not source.is_symlink(), "invalid immutable source directory")
     paths = list(source.rglob("*"))
     require(not any(path.is_symlink() for path in paths), "source contains a symlink")
+    require(all(path.is_file() or path.is_dir() for path in paths),
+            "source contains an unsupported entry")
     require((source.stat().st_mode & 0o777) == 0o555, "source directory mode changed")
     require(all((path.stat().st_mode & 0o777) == 0o555 for path in paths if path.is_dir()),
             "source directory mode changed")
