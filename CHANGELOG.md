@@ -5,6 +5,10 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### CI
+
+- ci(full-main): the trusted-main source audit is report-only until its score reaches 85 (owner decision, 2026-10-22; 54 at `bdf9441aa`). A verified below-floor audit passes the `audit` job with a warning and a `report-only.json` marker, and its reports keep the failed decision. Missing, inconsistent or tampered evidence, version and tool errors still fail it, and the floor and policy are unchanged
+
 ## [0.4.0] - 2026-10-22
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.3.0` (#386 and

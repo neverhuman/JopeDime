@@ -47,7 +47,9 @@ fresh checks and substantive review; same-agent review is permitted and identifi
 `full-main.yml` runs the eleven extended CPU families in two non-cancelling groups.
 Its aggregate verifies the entire declared partition and all evidence. The independent
 trusted-main audit job executes the same immutable-input audit wrapper used locally.
-A failed audit fails the workflow even if all CPU families pass.
+Until the score reaches the 85 floor the job is report-only: a verified below-floor
+audit passes with a warning and `report-only.json`, while invalid or inconsistent
+evidence still fails it. A green audit job is therefore not a passing audit.
 A successful `main-guard` proves merged-PR provenance; it does not certify tests,
 audit quality, scientific utility or serving readiness.
 
