@@ -8,6 +8,9 @@ auditor=${JANKURAI_BIN:-jankurai}
 output=$(realpath -m -- "$1")
 [[ ! -e "$output" && ! -L "$output" ]] || { echo 'audit report directory must be fresh' >&2; exit 2; }
 mkdir -p -- "$output"
+# The captured source is read-only while it is audited and verified. Make it writable again on
+# exit: self-hosted workspaces persist, and the next job's checkout must be able to delete it.
+trap 'chmod -R u+w -- "$output" 2>/dev/null || true' EXIT
 export GIT_OPTIONAL_LOCKS=0
 python3 deploy/ci/audit-source.py --repo "$PWD" --output "$output/input"
 read -r manifest_sha256 _ < <(sha256sum -- "$output/input/SOURCE_MANIFEST.json")
