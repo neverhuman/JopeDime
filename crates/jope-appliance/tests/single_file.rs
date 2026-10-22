@@ -764,6 +764,25 @@ fn custom_fitness_cli_persists_the_objective_and_predicts_after_reload() {
     bad.header.training_procedure.selection.as_mut().unwrap()["fitness_sha256"] =
         "0".repeat(64).into();
     assert!(bad.validate().is_err());
+    for remove_hash in [false, true] {
+        let mut missing = model.clone();
+        let selection = missing
+            .header
+            .training_procedure
+            .selection
+            .as_mut()
+            .unwrap()
+            .as_object_mut()
+            .unwrap();
+        selection.remove("fitness");
+        if remove_hash {
+            selection.remove("fitness_sha256");
+        }
+        assert!(
+            missing.validate().is_err(),
+            "a custom metric lost its objective"
+        );
+    }
 }
 
 #[test]

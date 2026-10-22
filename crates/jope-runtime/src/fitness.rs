@@ -515,9 +515,13 @@ impl Fitness {
             Self::MedianAbsoluteError {} => quantile(&abs, 0.5),
             Self::MaxError {} => abs.iter().copied().fold(0.0, f64::max),
             Self::Mape { epsilon } => row_loss(&|y, p| (y - p).abs() / y.abs().max(*epsilon)),
-            Self::Smape { epsilon } => {
-                row_loss(&|y, p| 2.0 * (y - p).abs() / (y.abs() + p.abs()).max(*epsilon))
-            }
+            Self::Smape { epsilon } => row_loss(&|y, p| {
+                // Normalize before adding or doubling: finite same-sign inputs
+                // can overflow the unscaled denominator and hide real error.
+                let scale = y.abs().max(p.abs()).max(*epsilon);
+                let denominator = (y.abs() / scale + p.abs() / scale).max(epsilon / scale);
+                ((y - p).abs() / scale) * (2.0 / denominator)
+            }),
             Self::Wape {} => {
                 let den = mean(&y.iter().map(|y| y.abs()).collect::<Vec<_>>());
                 ensure!(den > 0.0, "WAPE undefined for all-zero targets");
@@ -746,6 +750,15 @@ mod tests {
                 expected,
             );
         }
+        // A bounded relative error must not collapse to zero when only the
+        // unscaled denominator overflows for finite, same-sign inputs.
+        near(
+            Fitness::Smape { epsilon: 1e-8 }
+                .evaluate(&[1.2e308], &[9e307])
+                .unwrap()
+                .value,
+            2.0 / 7.0,
+        );
     }
     #[test]
     fn log_and_deviance_metrics_match_independent_calculations() {

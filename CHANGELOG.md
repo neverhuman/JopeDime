@@ -12,6 +12,8 @@ the commit areas (crate or lane) named in each subject line.
 
 ### CI
 
+- appliance: PR package builds use fat LTO and one codegen unit to retain the existing executable size limits with the new objective/API adapters; numerical optimization, panic recovery and the 5% size tolerance remain unchanged
+
 - runner: the daily build-cache trim keeps the newest 3 builds per crate and kind instead of 6. xbabe3's full-lane target regrew to 211 GB within a day under keep-6, its root disk fell below the 50 GB runner reserve, and both its lanes refused to start (main full-main-cpu 39770894207 cpu-1). Rolled out with the usual runner re-provisioning freeze
 - ci(browser-deps): `observatory-ui` retries a dropped or refused download of a pinned Ubuntu package up to 4 times with backoff (transport errors and HTTP 5xx only). A size or hash mismatch or an HTTP 4xx still fails at once, and nothing is published before verification. Two jobs failed on 2026-10-22 from single mirror drops
 - ci(full-main): the trusted-main source audit is report-only until its score reaches 85 (owner decision, 2026-10-22; 54 at `bdf9441aa`). A verified audit that fails below 85 passes the `audit` job with a warning and a `report-only.json` marker, and its reports keep the failed decision. A failed audit at or above 85 still fails the job, as do missing, inconsistent or tampered evidence and version or tool errors. The floor and policy are unchanged

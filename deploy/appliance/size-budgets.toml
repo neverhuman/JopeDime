@@ -4,7 +4,8 @@
 schema = "jope.appliance-size-budgets/v1"
 tolerance_percent = 5
 
-# PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
+# PR lane: `--profile dist-ci` (fat LTO, one codegen unit), `embedded,dev-keys`.
+# Retain the original thin-LTO/16-unit measured ceilings; do not rebaseline them.
 [profile.fixture]
 base_executable_bytes = 5429128
 final_executable_bytes = 5545586
