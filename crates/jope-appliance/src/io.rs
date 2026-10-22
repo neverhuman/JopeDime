@@ -27,7 +27,9 @@ pub fn refuse_aliasing(output: &Path, inputs: &[&Path]) -> anyhow::Result<()> {
     for input in inputs {
         let resolved = |p: &Path| std::fs::canonicalize(p).ok();
         let same = identity(input).is_some_and(|i| i == out)
-            || resolved(input).is_some_and(|i| resolved(output) == Some(i));
+            || resolved(input).is_some_and(|i| {
+                resolved(output) == Some(i.clone()) || (input.is_dir() && out.starts_with(i))
+            });
         if same {
             return Err(Failure::input(format!(
                 "output {} is also an input",

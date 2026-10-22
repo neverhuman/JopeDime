@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5842,
+  "count": 5851,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -2554,7 +2554,7 @@
     }
    },
    "jope-appliance": {
-    "count": 8,
+    "count": 10,
     "ignored": 0,
     "binaries": {
      "jope-appliance::bin/jopedime": {
@@ -2565,7 +2565,7 @@
      },
      "jope-appliance::single_file": {
       "kind": "test",
-      "count": 8,
+      "count": 10,
       "ignored": 0,
       "tests": [
        "a_damaged_package_stops_every_command",
@@ -2573,9 +2573,11 @@
        "a_promised_method_this_build_cannot_run_fails_doctor",
        "an_unpackaged_development_build_runs_native_methods",
        "every_failure_class_has_its_exit_status",
+       "foreign_extensions_import_without_claiming_execution",
        "regression_doctor_failure_survives_a_closed_json_pipe",
        "regression_output_collision_preserves_the_input_file",
-       "regression_receipt_failure_survives_a_closed_json_pipe"
+       "regression_receipt_failure_survives_a_closed_json_pipe",
+       "standard_object_fit_reload_export_and_mcp_predict_agree"
       ]
      }
     }
@@ -8746,12 +8748,12 @@
     }
    },
    "jope-runtime": {
-    "count": 17,
+    "count": 24,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
       "kind": "lib",
-      "count": 9,
+      "count": 16,
       "ignored": 0,
       "tests": [
        "automl::tests::folds_are_stratified_and_deterministic",
@@ -8759,6 +8761,13 @@
        "backend::tests::explicit_cuda_fails_and_auto_reports_cpu",
        "error::tests::a_panic_in_numerical_work_becomes_a_numerical_failure",
        "error::tests::the_outermost_failure_names_the_category",
+       "model_object::tests::atomic_create_only_exports_preserve_existing_files",
+       "model_object::tests::envelope_bounds_and_paths_are_checked_before_part_access",
+       "model_object::tests::future_variants_retain_all_bytes_but_require_their_decoder",
+       "model_object::tests::manifest_identity_uses_retained_bytes_including_foreign_whitespace",
+       "model_object::tests::symlinked_parts_and_object_directories_are_refused",
+       "model_object::tests::truncation_substitution_wrong_directory_and_uncommitted_store_are_refused",
+       "model_object::tests::unknown_required_capabilities_are_never_ignored_for_a_known_format",
        "table::tests::malformed_input_is_refused_with_an_input_failure",
        "table::tests::missing_cells_categories_and_kinds_follow_the_contract",
        "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",

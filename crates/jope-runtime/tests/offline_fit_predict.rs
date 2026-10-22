@@ -68,6 +68,32 @@ fn every_native_method_fits_saves_reloads_and_predicts_identically() {
             .unwrap_or_else(|e| panic!("{}: {e:#}", method.id));
             assert_eq!(outcome.method, method);
             let in_memory = predict(&outcome.fitted, &rows, &budget).unwrap();
+            // The same fitted state can be retained in the shared object store, reloaded
+            // without fitting, and exported as bound JSON without dropping preprocessing.
+            let directory = tempfile::tempdir().unwrap();
+            let object =
+                jope_runtime::model_object::ModelObject::from_fitted(&outcome.fitted).unwrap();
+            let path = object
+                .save(directory.path(), Limits::default().max_model_bytes)
+                .unwrap();
+            assert!(object.inspect().unwrap().executable);
+            let loaded =
+                jope_runtime::model_object::load_fitted(&path, Limits::default().max_model_bytes)
+                    .unwrap();
+            let object_predictions = predict(&loaded, &rows, &budget).unwrap();
+            assert_eq!(
+                serde_json::to_vec(&in_memory).unwrap(),
+                serde_json::to_vec(&object_predictions).unwrap(),
+                "{} object round trip",
+                method.id
+            );
+            let bound_object =
+                jope_runtime::model_object::ModelObject::from_bound(&outcome.fitted.model).unwrap();
+            let bound = bound_object.bound().unwrap();
+            assert_eq!(
+                serde_json::to_vec(&bound).unwrap(),
+                serde_json::to_vec(&outcome.fitted.model).unwrap()
+            );
             let bytes = outcome.fitted.to_bytes().unwrap();
             let reloaded = FittedModel::from_bytes(&bytes).unwrap();
             let again = predict(&reloaded, &rows, &budget).unwrap();

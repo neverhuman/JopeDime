@@ -20,6 +20,7 @@ pub mod error;
 pub mod fitted;
 pub mod limits;
 pub mod methods;
+pub mod model_object;
 pub mod receipt;
 pub mod table;
 pub mod task;
