@@ -11,10 +11,19 @@ Branch protection remains procedural until the API readback establishes enforcem
 | --- | --- | --- | --- |
 | xbabe1 | ci, ci2 / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci, pr-ci2 |
 | xbabe2 | full / jope-full-cpu, jope-ci | 48 GiB, 16 CPUs, no swap | main-full |
+| xbabe2 | ci / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci (xbabe2's own volumes) |
 | xbabe3 | full / jope-full-cpu, jope-ci | 48 GiB, 16 CPUs, no swap | main-full (xbabe3's own volumes) |
+| xbabe3 | ci / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci (xbabe3's own volumes) |
+| xbabe0 | ci / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci (xbabe0's own volumes) |
 
-The two full slots run the full-main-cpu matrix groups in parallel and also execute main-guard;
-each slot runs one job at a time. No other JopeDime runner role is admitted on xbabe2 or xbabe3.
+Seven slots (owner 2026-10-22, from four): every slot runs one job at a time. The two full slots
+run the full-main-cpu matrix groups in parallel and also execute main-guard. The ci slots on
+xbabe2 and xbabe3 are untrusted pr-domain lanes beside the full lane: their own `jope-pr-ci-*`
+volumes, never the main-full volumes, and never the exclusive CPU lock, so ASM allocations still
+wait only for the full lane. xbabe0 holds one ci lane because its free disk (169 GB on
+2026-10-22) fits one persistent Cargo target. `jope_runner_lanes` in `common.sh` is the per-host
+lane list that `provision.sh` installs. xbabe4 is a macOS host and xbabe5 offers only a legacy SSH
+host key, so neither carries a Linux container runner.
 `common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
 GPU and kernel roles. Their live qualification and persistent runner migration remain deferred.
 The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
@@ -57,7 +66,7 @@ From the reviewed checkout, `sudo deploy/runner/provision.sh --skip-sdk` builds 
 creates the role-specific volumes, installs host files/units and writes
 `/var/lib/jope-runner/image.json`. It enables no listener. Initial SDK provisioning follows its
 pinned receipt; the CPU delivery reuses the existing SDK read-only. Re-run provisioning after
-any image rebuild. Start only ci/ci2 timers on xbabe1 and only full on xbabe2 and xbabe3; keep retired timers
+any image rebuild. Start only ci/ci2 timers on xbabe1, full and ci on xbabe2 and xbabe3, and ci on xbabe0; keep retired timers
 disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
 operational delivery. `--skip-image` requires an existing correctly built image.
 
@@ -124,6 +133,58 @@ from merged main in the same post-merge freeze, or every job fails provenance:
 
 xbabe3 also runs GPU and research CPU work outside this fleet. The full lane takes only its
 16-CPU/48 GiB cap and the host-local ASM lock; it does not stop or wait for unrelated work.
+
+## Build-cache trim
+
+Each lane's persistent Cargo target keeps every build it ever made. On 2026-10-22 xbabe1's two pr
+targets had reached 355 GB each, and xbabe3's main-full target held up to 76 builds of one crate.
+The 50 GB disk guard then refused every listener on both hosts. `run.sh` therefore calls
+`jope_runner_trim_lane` (common.sh) after taking the lane lock and checking that no container of
+the lane exists, and before the disk guard. That is the one moment no build of the lane can be
+running: an idle listener holds the lock while it waits, so a separate timer would almost never
+find the lane free.
+
+At most once per day per lane (`JOPE_RUNNER_TRIM_INTERVAL_S`), `trim-deps.sh` runs in a
+network-less, read-only container, as uid 1001, mounting only that lane's target volume. It
+removes files directly in `<volume>/*/debug/deps` that are named `<stem>-<16 hex>[.<ext>]` and
+are older than the newest `JOPE_RUNNER_TRIM_KEEP` (6) builds of the same directory, crate stem
+and kind, so each feature and profile variant keeps its recent builds. Nothing else is touched:
+other names, `build/`, `incremental/`, `tmp/`, deeper paths, and any top-level directory whose
+name contains `evidence`.
+
+Every removed path, size and mtime is listed in
+`/var/lib/jope-runner/trim/<UTC>-<lane>.tsv` before deletion, and its sha256 is logged. A listing
+error deletes nothing. A failed trim never blocks the listener, and it keeps the previous stamp,
+so the next start retries. The nightly prune timer still only reports storage.
+
+## Seven-slot deployment (post-merge freeze)
+
+The seven-slot change edits `common.sh`, `run.sh`, `provision.sh` and adds `trim-deps.sh`, all of
+which are in `JOPE_RUNNER_DEPLOYED`. After the PR merges, every runner host must be
+re-provisioned from merged main in the same freeze, or every push/manual job fails provenance:
+
+1. Pause merges to main. Stop the JopeDime timers on every host (`jope-runner@ci.timer` and
+   `jope-runner@ci2.timer` on xbabe1, `jope-runner@full.timer` on xbabe2 and xbabe3). Wait until
+   GitHub shows each JopeDime runner `busy` false, stop idle listeners, and confirm no JopeDime
+   container runs.
+2. On xbabe1, xbabe2 and xbabe3 (check `hostname -s` each time), as root from a clean checkout of
+   merged main, run `deploy/runner/provision.sh --skip-sdk --skip-image`. This reinstalls the host
+   files and creates any missing lane volumes. Volumes are created before the image step, so
+   xbabe2 and xbabe3 gain their `jope-pr-ci-{work,cargo,target,uv}` volumes even with
+   `--skip-image`. The existing image is used to set volume ownership.
+3. On xbabe0, as root from a clean checkout of merged main (a registered checkout, never under
+   `/tmp`), run `deploy/runner/provision.sh --skip-sdk`. This builds the image, creates the ci
+   volumes and an empty `jope-sdk` volume (ci lanes do not need the SDK), installs the units and
+   creates an empty `/etc/jope-runner/github-pat` (root:root 0600).
+4. The owner places the runner PAT in xbabe0's `/etc/jope-runner/github-pat`. Agents never read,
+   print or copy it.
+5. Re-enable the existing timers. Then run `systemctl enable --now jope-runner@ci.timer` on xbabe2,
+   xbabe3 and xbabe0.
+6. Verify that the GitHub runner list shows `xbabe1-ci`, `xbabe1-ci2`, `xbabe2-full`, `xbabe2-ci`,
+   `xbabe3-full`, `xbabe3-ci` and `xbabe0-ci` online. Dispatch `ci.yml` on a branch and
+   `full-main.yml` on main, and confirm for jobs on the new lanes: provenance, container caps,
+   the pr-domain policy file, and the `jope-pr-ci-*` volume mounts. Check the first
+   `/var/lib/jope-runner/trim/*.tsv` manifest on each host.
 
 ## Evidence and operation
 
