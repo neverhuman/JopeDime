@@ -5,11 +5,56 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-22
+
+Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.3.0` (#386 and
+#388 through #400), then curated. This tag packages the CPU CLI from `main` after #398. The
+47-task major research qualification and the research branches are not part of this release.
+Model and checkpoint publication and training admission remain governed by their own evidence,
+and this binary release does not claim a qualified end-to-end learning flywheel.
+
+### Pipeline
+
+- pipeline: `jope pipeline invent --events PATH` writes opt-in progress records without changing the single final `--json` stdout contract. Delivery is bounded and best-effort: records may be dropped and sequences may have gaps. Each evaluated attempt counts the lexical code and documentation tokens of its complete Rust, Python, C++17 and JavaScript sources. On Linux, event-file admission refuses input and work-directory aliases and unsafe targets before truncating (#400)
+- gp: every complete program materialized at the documented GP construction and evaluation boundaries is captured and streamed (`gp-source-stream`) as full Rust, Python, C++17 and JavaScript training-recipe source with compilation-qualified token metrics. Legacy operator bodies are observed without being changed (#388)
+
+### Benchmarks and AutoML
+
+- bench: the `GPT6_Astra_Max` Rust regressor joins the same-cut AutoML comparison and Elo path (`jope-bench run --automl gpt6-astra-max`) (#391)
+- automl: a dependency-free `jope-automl` native registry with the `GPT6p1_Sol_Max` Rust regressor (`jope-bench run --native GPT6p1_Sol_Max`) (#392)
+- bench: the frozen `Opus5p5_Extra` regressor through the explicit `--entrant` path, with wrapper validation of CSV shape, seeds, budgets and process failures (#393)
+
+### Performance
+
+- feat-math: kernel-smoother prediction selects the nearest k rows and sorts only that prefix. Stage-cache hits clone fitted operations after releasing the shard lock, and admission counts serialized bytes through a bounded sink (#396)
+- feat-math, engine: feature-major histogram bins, fit-local scratch, capped output allocations, blocked Cholesky, ordered parallel token estimation and streamed CSV hashes. Runtime workers respect the allowed CPUs (#397)
+- feat-math: `jacobi_eigen` (every ridge_gcv fit) accumulates eigenvectors transposed, elastic-net coordinate descent reads column-major features, and histgbm builds feature-major bins directly. Each is checked bit-identical to its predecessor (#398)
+- engine, campaigns: the queue keeper owns one pool sized to the usable CPUs and hashes its runner and evaluator once per cycle. `serde_json` file reads are buffered, each JSONL record is written in one call, and the teaching store hashes its vocabulary once per publish (#398)
+
+### Engine, security and runtime
+
+- datasets, models: blob verification hashes binary content in one streaming pass with bounded header storage. Dedicated read threads avoid a circular wait between a destination-lock waiter and Tokio's blocking pool (#395)
+- audit: bounds on adapter parsing and allocation, corpus copies, and native and GPU inputs; canonical blocking security entry points; an all-feature cargo-deny gate (#395)
+- engine: the remaining raw `libc::flock` calls become std `File` locks. A safe `host_os` module provides monotonic and boot-time clocks and process identity. A second SIGINT/SIGTERM exits 143, and timed-out host probes are reaped within a bound (#398)
+- vendor: the vendored `ratatui 0.29.0` requires `lru =0.18.4` (RUSTSEC-2026-0002, RUSTSEC-2026-0253), and the vendor-custody verifier enforces that floor (#398)
+
+### CI, build and release
+
+- release: bump the workspace and product crate versions from `0.3.0` to `0.4.0`, syncing the standalone Lambda workspace locks (`deploy/lambda/SNAPSHOT.json`); `jope` prints `jope 0.4.0`
+- release: the signed release's build, check and receipt containers are capped at 4 CPUs, 20 GiB RAM, no extra swap and 4 Cargo jobs. The 0.3.0 notes were corrected (#386)
+- ci: GP source contract tests run serially in the emitters lane (#390). The workspace `cargo clippy --all-targets -D warnings` gate passes (#398)
+
 ### Deployment
 
-- appliance: the signed single-file `jopedime` executable (`deploy/appliance/`): specification (#390) with amendments; `jope-assets` (128-byte footer, manifest-signed package, per-asset authentication before decompression, bounded zstd/byte-plane decoding, release key `docs/release/signing.pub`); `jope-runtime` (native roster, raw-cell encoding and bound prediction moved from the panel and pipeline with re-exports; CSV ingress; `jope.runtime-select/v1` bounded selection; `model.jope`; run receipts; exit statuses 2-7); `jope-appliance` (`version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses`); `jope-dist` (model lock with rights blockers, deterministic pack, release stage and seal, verify, audit, notices, size, SBOM, provenance); `fixture`, `native-only` and blocked `full` profiles; the `e2e-smoke` lane builds, packs and runs the fixture appliance alone
-- feat-math: the fitted C++ runtime is behind the default-on `fitted-cpp` feature so the appliance graph carries no C++
-- policy: `PolicyModel::load_bound_from_bytes` loads a verified checkpoint from bytes with the same identity checks as `load_bound`
+- appliance: the signed single-file `jopedime` executable (`deploy/appliance/`): specification (#390) with amendments; `jope-assets` (128-byte footer, manifest-signed package, per-asset authentication before decompression, bounded zstd/byte-plane decoding, release key `docs/release/signing.pub`); `jope-runtime` (native roster, raw-cell encoding and bound prediction moved from the panel and pipeline with re-exports; CSV ingress; `jope.runtime-select/v1` bounded selection; `model.jope`; run receipts; exit statuses 2-7); `jope-appliance` (`version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses`); `jope-dist` (model lock with rights blockers, deterministic pack, release stage and seal, verify, audit, notices, size, SBOM, provenance); `fixture`, `native-only` and blocked `full` profiles; the `e2e-smoke` lane builds, packs and runs the fixture appliance alone (#394)
+- feat-math: the fitted C++ runtime is behind the default-on `fitted-cpp` feature so the appliance graph carries no C++ (#394)
+- policy: `PolicyModel::load_bound_from_bytes` loads a verified checkpoint from bytes with the same identity checks as `load_bound` (#394)
+
+### Documentation
+
+- docs: the Rust frontier regression challenge specification is versioned under `docs/challenges/` (#389)
+- docs: a CSV terminal quickstart, a reproducible synthetic preview and an implementation workplan (#399)
+- governance: the same agent may implement, review and merge its pull request; both main protection layers require zero approving reviews (#393)
 
 ## [0.3.0] - 2026-10-19
 
