@@ -979,6 +979,16 @@
       ],
       "scope": "Always re-verify every group of this run/attempt and require each declared full-* family exactly once; diagnostic, no merge gate or qualification claim."
     },
+    "job:.github/workflows/full-main.yml/audit": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "source-audit"
+      ],
+      "scope": "Independent trusted-main full default-policy source audit with the pinned auditor, unchanged floor 85, complete source re-verification and always-uploaded failed evidence; configured routing is not a passing audit."
+    },
     "job:.github/workflows/full-main.yml/cpu": {
       "discovery": {
         "kind": "workflow-job"
@@ -999,7 +1009,7 @@
         "full-e2e",
         "full-emitters"
       ],
-      "scope": "Push/main-manual diagnostic CPU families in independent matrix groups (deploy/ci/full-main.py GROUPS), independent outcomes within120minutes; no merge gate or qualification claim."
+      "scope": "Push/main-manual diagnostic CPU families in independent matrix groups (deploy/ci/full-main.py GROUPS), independent outcomes within the declared 145-minute CPU job deadline; no merge gate or qualification claim."
     },
     "job:.github/workflows/jankurai.yml/jankurai-audit": {
       "discovery": {
@@ -1542,6 +1552,16 @@
         "hygiene"
       ],
       "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
+    },
+    "python:deploy/ci/test-audit-lane.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of nine audit-wrapper controls, including fifteen adversarial subcases, with a fake auditor; proves report/source integrity guards, not broad source quality or model qualification."
     },
     "python:deploy/ci/test-browser-deps.py": {
       "discovery": {
@@ -11693,9 +11713,10 @@
         "full-inputs",
         "full-e2e",
         "full-emitters",
-        "cpu-aggregate"
+        "cpu-aggregate",
+        "source-audit"
       ],
-      "scope": "Push/main-manual diagnostic CPU families, independent outcomes within120minutes; no merge gate or qualification claim."
+      "scope": "Push/main-manual diagnostic CPU families, independent outcomes within the declared 145-minute CPU job deadline; no merge gate or qualification claim."
     },
     "workflow:.github/workflows/jankurai.yml": {
       "discovery": {
@@ -12714,6 +12735,33 @@
       "path_applicability": "ci.yml changes.rust",
       "requires_nonzero_tests": true,
       "result_backend": "nextest",
+      "stage": "execution"
+    },
+    "source-audit": {
+      "command": [
+        "bash",
+        "ops/ci/jankurai.sh",
+        "target/full-audit/RUN_ID/RUN_ATTEMPT"
+      ],
+      "environment": {
+        "JANKURAI_BIN": "checksum-pinned Jankurai 1.7.5 installed by deploy/ci/install-jankurai.sh",
+        "JANKURAI_NO_UPDATE_CHECK": "1"
+      },
+      "evidence": [
+        "full default-policy audit reports, including failed gates",
+        "complete source archive and SOURCE_MANIFEST.json bound to the full Git SHA",
+        "audit-verification.json: report consistency and source closure; validity does not imply score >=85"
+      ],
+      "feature_selection": "not-applicable",
+      "inputs": [
+        "exact full Git source SHA",
+        "checksum-pinned Jankurai 1.7.5 binary",
+        "default audit policy and unchanged score floor 85",
+        "captured source path, mode and blob digest manifest"
+      ],
+      "path_applicability": "every push to main and manual dispatch of main; independent from the eleven full-* CPU families",
+      "requires_nonzero_tests": false,
+      "result_backend": "none",
       "stage": "execution"
     }
   },
