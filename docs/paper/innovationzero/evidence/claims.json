@@ -1,0 +1,300 @@
+{
+  "schema_version": "innovationzero.claims/v1",
+  "audit_base": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+  "additional_evidence_revision": "584713ed3f512057361460567bb56d620162286a",
+  "method": "Source and receipt audit; no training or predictive benchmark rerun.",
+  "claims": [
+    {
+      "id": "IZ-E01",
+      "claim": "Corrected public-development engine ladder: rank 31/304, Elo 1687.0, coverage 42/45.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "README.md",
+          "sha256": "df4fc6782a85e5d15cb8281527cc22902895ef41e693420279ffc1fa71e97bc2",
+          "bytes": 37175,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/README.md"
+        },
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "sha256": "e5eb1309d3dedb14a5d553b3c1c3fcb5047e1c74ea6d47d05546be595332f1bc",
+          "bytes": 180941,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/assets/regression/elo-tabular-regression-v2.benchmark-valid.json"
+        }
+      ],
+      "qualification": "Mixed-protocol public-development ladder; not prospective neural K=1 synthesis."
+    },
+    {
+      "id": "IZ-E02",
+      "claim": "Published 2259.8 Elo rank-one row is a test-selected oracle envelope.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "README.md",
+          "sha256": "df4fc6782a85e5d15cb8281527cc22902895ef41e693420279ffc1fa71e97bc2",
+          "bytes": 37175,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/README.md"
+        }
+      ],
+      "qualification": "42 Golden42 rows selected over 63,108 test-scored evaluations; no held-out claim."
+    },
+    {
+      "id": "IZ-E03",
+      "claim": "Same-cut engine searched 32 programs x 8 rounds per cut; rank 3/15, Elo 1556.6.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "README.md",
+          "sha256": "df4fc6782a85e5d15cb8281527cc22902895ef41e693420279ffc1fa71e97bc2",
+          "bytes": 37175,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/README.md"
+        },
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "assets/same-cut/v2/SOURCES.md",
+          "sha256": "d561871f743ba08f43413d034835dead6d645514312f2ba3733e4cf4df962bba",
+          "bytes": 5948,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/assets/same-cut/v2/SOURCES.md"
+        }
+      ],
+      "qualification": "Ten favourably selected datasets; top-five deepening and5/10 finalist coverage; not K=1."
+    },
+    {
+      "id": "IZ-E04",
+      "claim": "CLOVER v1 fresh-program q-head pairwise accuracy 0.506 with 95% interval [0.441,0.568].",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "docs/paper/TECHNICAL_WRITEUP.md",
+          "sha256": "bb053e4090b6fb2ea336d8f021a8b0d3e3ae798d917152b54ade23473a9cf6db",
+          "bytes": 124899,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/docs/paper/TECHNICAL_WRITEUP.md"
+        },
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "docs/paper/claims.json",
+          "sha256": "ec2676a662b163bdd1502ba84de71eede9b93467d04d47844c5a2da07f459d7a",
+          "bytes": 127260,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/docs/paper/claims.json"
+        }
+      ],
+      "qualification": "32 kept development lineages; not proof that all learned proposers fail."
+    },
+    {
+      "id": "IZ-E05",
+      "claim": "CLOVER v1 reportedly used 6,640 programs; the audited decoder returns complete programs from its supplied finite catalog.",
+      "status": "code-verified and repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "docs/paper/TECHNICAL_WRITEUP.md",
+          "sha256": "bb053e4090b6fb2ea336d8f021a8b0d3e3ae798d917152b54ade23473a9cf6db",
+          "bytes": 124899,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/docs/paper/TECHNICAL_WRITEUP.md"
+        },
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "deploy/dl-flywheel/pipelines/continuous/neural_decode.py",
+          "sha256": "cf36801e284492dd41126feaf3014bff1feb20adc2f9a3b5ee27459519e8763a",
+          "bytes": 4445,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/deploy/dl-flywheel/pipelines/continuous/neural_decode.py"
+        }
+      ],
+      "qualification": "The historical catalog count is reported, not hard-coded. The implementation establishes finite support, so it cannot emit outside the supplied complete-program catalog."
+    },
+    {
+      "id": "IZ-E06",
+      "claim": "Offline contextual surrogate improved pairwise ranking by 0.046[0.040,0.052].",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "docs/paper/TECHNICAL_WRITEUP.md",
+          "sha256": "bb053e4090b6fb2ea336d8f021a8b0d3e3ae798d917152b54ade23473a9cf6db",
+          "bytes": 124899,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/docs/paper/TECHNICAL_WRITEUP.md"
+        }
+      ],
+      "qualification": "1136 frozen shadow contexts,255 parents; post-iteration shadow validation; flywheel_established false."
+    },
+    {
+      "id": "IZ-E07",
+      "claim": "Four-entrant Elo ratings and intervals shown in figure2 derive from exact RESULTS.json.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "584713ed3f512057361460567bb56d620162286a",
+          "path": "assets/automl-elo/v1/RESULTS.json",
+          "sha256": "f1f7f3c304110bb17a2862d3405d2c55ff23ff6c1269c27189d0f16e7078e70a",
+          "bytes": 2661,
+          "url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/RESULTS.json"
+        }
+      ],
+      "qualification": "Exploratory evidence on branch snapshot584713e; no InnovationZero entrant."
+    },
+    {
+      "id": "IZ-E08",
+      "claim": "Panel includes 64 existing training families; preprocessing fitted before original split; seed 41 inspected before 73/109.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "584713ed3f512057361460567bb56d620162286a",
+          "path": "assets/automl-elo/v1/HISTORICAL_THREE_ENTRANT.json",
+          "sha256": "c953ba0f67da179aa7bd70b152fe96d3c40704f96d4c2dc2d12209a2d8d0897e",
+          "bytes": 12356,
+          "url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/HISTORICAL_THREE_ENTRANT.json"
+        }
+      ],
+      "qualification": "Original receipt explicitly declines untouched-generalization interpretation."
+    },
+    {
+      "id": "IZ-E09",
+      "claim": "All four artifacts have 576 fitted cells; three historical fits reused and Gemini newly fitted.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "584713ed3f512057361460567bb56d620162286a",
+          "path": "assets/automl-elo/v1/SOURCES.md",
+          "sha256": "90b7d544e93a6a1df67a5b78fa42efc30f9ede2cba8ed83e8d87caac4b06498b",
+          "bytes": 7183,
+          "url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/SOURCES.md"
+        },
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "584713ed3f512057361460567bb56d620162286a",
+          "path": "assets/automl-elo/v1/GEMINI_COSTS.json",
+          "sha256": "7eb8fe0990154eefae93930625b28acc226b95cf02cdde6971835fd6b45eb061",
+          "bytes": 320,
+          "url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/GEMINI_COSTS.json"
+        }
+      ],
+      "qualification": "No refits performed during manuscript build; cross-host durations not a controlled speed comparison."
+    },
+    {
+      "id": "IZ-E10",
+      "claim": "Sol/Gemini geometric RMSE ratio 0.8468263 implies Gemini 18.1% higher at the point estimate.",
+      "status": "derived from repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "584713ed3f512057361460567bb56d620162286a",
+          "path": "assets/automl-elo/v1/RESULTS.json",
+          "sha256": "f1f7f3c304110bb17a2862d3405d2c55ff23ff6c1269c27189d0f16e7078e70a",
+          "bytes": 2661,
+          "url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/RESULTS.json"
+        }
+      ],
+      "qualification": "Interval crosses1; all three Gemini Holm-adjusted p-values exceed.05."
+    },
+    {
+      "id": "IZ-E11",
+      "claim": "Historical report C matches Opus record; 94k output already includes 27k reasoning.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "crates/jope-bench/regressors/README.md",
+          "sha256": "b5877ba8e67c2ff26026e13fddd2a46ef8a377da54f0df03b626ea26e7b59192",
+          "bytes": 5873,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/regressors/README.md"
+        }
+      ],
+      "qualification": "Authoring phase estimated; integration phase separately reported; not provider-verified telemetry."
+    },
+    {
+      "id": "IZ-E12",
+      "claim": "Astra/Sol pilot sessions were not pristine; model naming and source identity differ from provider telemetry.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "crates/jope-bench/submissions/gpt6-astra-max/provenance.json",
+          "sha256": "30998e4aa45b8ec3e4decf734279c7b6e013ab8e59f91c184411b71e6984f2d2",
+          "bytes": 1454,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/submissions/gpt6-astra-max/provenance.json"
+        },
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+          "path": "crates/jope-automl/submissions/GPT6p1_Sol_Max/authorship.json",
+          "sha256": "4c08c18af776406b25e768d731cc771148822fe1ed9ac03b65891a5baf338e3b",
+          "bytes": 2706,
+          "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-automl/submissions/GPT6p1_Sol_Max/authorship.json"
+        }
+      ],
+      "qualification": "Neither is eligible as a pristine primary challenge-round source."
+    },
+    {
+      "id": "IZ-E13",
+      "claim": "Gemini replacement source is 96,694 bytes, with no supplied authoring-session telemetry.",
+      "status": "repository-reported",
+      "manuscript": "sections/04-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "584713ed3f512057361460567bb56d620162286a",
+          "path": "crates/jope-automl/submissions/Gemini4_argon_high/authorship.json",
+          "sha256": "bc76f10a50fcdd35fed6a0b9ea628debd2febb08ac637f41c4fc9c8ef98d7999",
+          "bytes": 1658,
+          "url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/crates/jope-automl/submissions/Gemini4_argon_high/authorship.json"
+        }
+      ],
+      "qualification": "Historical reportD remains unattributed; do not link it by model-like filename."
+    },
+    {
+      "id": "IZ-P01",
+      "claim": "One-proposal zero-feedback deployment and 512-dimensional solution_embedding are proposed evaluation contracts.",
+      "status": "proposed",
+      "manuscript": "sections/03-method.tex",
+      "sources": [],
+      "qualification": "No prospective headline synthesis or Move42 result established by this paper."
+    }
+  ],
+  "audit_refresh": {
+    "date": "2026-10-22",
+    "pull_request": 407,
+    "observed_head": "ddefbe2d9f7b6ead2a0cd43708a4982121e7a579",
+    "pinned_evidence_revision": "584713ed3f512057361460567bb56d620162286a",
+    "comparison": "The observed head merges main after PR406. Its changes from the pinned evidence revision affect eight CI/audit/documentation files only.",
+    "unchanged_paths": [
+      "assets/automl-elo/v1/",
+      "crates/jope-automl/src/Gemini4_argon_high.rs",
+      "crates/jope-automl/submissions/Gemini4_argon_high/"
+    ],
+    "verification": "git diff --exit-code 584713ed3f512057361460567bb56d620162286a..ddefbe2d9f7b6ead2a0cd43708a4982121e7a579 -- assets/automl-elo/v1 crates/jope-automl/src/Gemini4_argon_high.rs crates/jope-automl/submissions/Gemini4_argon_high",
+    "exit_code": 0,
+    "interpretation": "No changes to the scientific evidence or Gemini source in this refresh; original immutable archival identities remain authoritative."
+  }
+}

@@ -6,6 +6,14 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 default:
     @just --list
 
+# InnovationZero publication only: source/receipt checks and three typeset PDFs.
+paper:
+    make -C docs/paper/innovationzero check self-test pdf
+
+# Validate imports, citations, immutable appendices, and deliberate refusal cases without TeX.
+paper-check:
+    make -C docs/paper/innovationzero check self-test
+
 # one-time developer setup: git hooks, uv environment (CPU torch)
 setup:
     git config core.hooksPath ops/git-hooks

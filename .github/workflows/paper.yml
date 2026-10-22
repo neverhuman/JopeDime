@@ -1,0 +1,76 @@
+name: InnovationZero publication
+
+on:
+  pull_request:
+    paths:
+      - docs/paper/innovationzero/**
+      - .github/workflows/paper.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/paper/innovationzero/**
+      - .github/workflows/paper.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paper-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Hosted publication build: no self-hosted admission, corpus, models, or Rust execution.
+    # A queued/unavailable hosted runner is not a passing publication check.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install publication tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            latexmk texlive-latex-extra texlive-fonts-recommended texlive-xetex \
+            fonts-dejavu-core fonts-urw-base35 poppler-utils
+
+      - name: Check sources, exercise refusals, and build the three PDFs
+        run: |
+          set -euo pipefail
+          evidence="target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/paper"
+          build="target/innovationzero-paper"
+          python3 deploy/ci/receipt.py --lane paper --output "$evidence" --backend none \
+            --evidence "$build/InnovationZero.pdf" \
+            --evidence "$build/InnovationZero-Supplement.pdf" \
+            --evidence "$build/InnovationZero-Archive.pdf" \
+            --evidence "$build/InnovationZero.log" \
+            --evidence "$build/InnovationZero-Supplement.log" \
+            --evidence "$build/InnovationZero-Archive.log" \
+            --evidence "$build/build-environment.txt" \
+            -- make -C docs/paper/innovationzero check self-test pdf
+
+      - name: Retain publication PDFs, logs, and source-bound receipt
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        env:
+          JOPE_LOCAL_EVIDENCE_ROOT: ${{ runner.temp }}/jope-paper-evidence
+        with:
+          name: paper-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/paper/
+
+      - name: Explain evidence retrieval
+        if: always()
+        run: |
+          {
+            echo '### InnovationZero publication outputs'
+            echo 'The source-bound receipt contains the three PDFs, TeX logs, build environment, and check output.'
+            echo 'Evidence uses the existing run/attempt-scoped Actions cache transport; GitHub artifact storage is not used.'
+            echo 'The upload step records the cache publication and SHA-256 manifest. Restore it with the repository download-ci-evidence action using the same name and path.'
+            echo 'Hosted runner-local copies are temporary; cache availability is subject to eviction.'
+          } >> "$GITHUB_STEP_SUMMARY"

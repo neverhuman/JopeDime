@@ -1,0 +1,6 @@
+# Immutable archival bytes: never apply checkout/commit line-ending conversion.
+** -text
+# The supplied snapshots intentionally retain their boundary/trailing newlines.
+# Hash validation is authoritative; do not normalize them to satisfy prose style.
+benchmark/** whitespace=-blank-at-eof
+challenge/participant.md whitespace=-blank-at-eof

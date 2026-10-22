@@ -1031,6 +1031,16 @@
       ],
       "scope": "Push-to-main provenance gate."
     },
+    "job:.github/workflows/paper.yml/build": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "paper"
+      ],
+      "scope": "Build three InnovationZero PDFs after archival/citation/import checks and negative controls; retain exact-source receipt, PDFs and logs using existing evidence transport. Hosted execution remains pending until its run completes."
+    },
     "job:.github/workflows/release.yml/release": {
       "discovery": {
         "kind": "workflow-job"
@@ -11738,6 +11748,16 @@
       ],
       "scope": "Push-to-main provenance gate."
     },
+    "workflow:.github/workflows/paper.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "paper"
+      ],
+      "scope": "Standalone hosted publication source checks and PDF build on relevant PRs/main pushes or manual dispatch; does not execute model training, benchmark entrants, or production runtime."
+    },
     "workflow:.github/workflows/release.yml": {
       "discovery": {
         "kind": "workflow"
@@ -12587,6 +12607,36 @@
       ],
       "path_applicability": "Every admitted ci.yml PR/manual run; required frontend job and exact-head receipt before aggregate passes.",
       "requires_nonzero_tests": true,
+      "result_backend": "none",
+      "stage": "execution"
+    },
+    "paper": {
+      "command": [
+        "make",
+        "-C",
+        "docs/paper/innovationzero",
+        "check",
+        "self-test",
+        "pdf"
+      ],
+      "environment": {
+        "JOPE_LOCAL_EVIDENCE_ROOT": "hosted runner temporary publication evidence; Actions cache transport is evictable",
+        "SOURCE_DATE_EPOCH": "paper build default or explicit reproducible override"
+      },
+      "evidence": [
+        "source/check/refusal-case output in command.log",
+        "three PDFs with embedded fonts and resolved references",
+        "three TeX logs and build-environment.txt",
+        "jope.ci-receipt/v1 with source/checkout SHA and per-file SHA256"
+      ],
+      "feature_selection": "not-applicable",
+      "inputs": [
+        "exact full Git source SHA",
+        "docs/paper/innovationzero source, bibliography, figures and hash-pinned archive",
+        "latexmk, pdfLaTeX, XeLaTeX, BibTeX and Poppler versions recorded by build"
+      ],
+      "path_applicability": "docs/paper/innovationzero/** or .github/workflows/paper.yml; manual workflow_dispatch always",
+      "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "execution"
     },

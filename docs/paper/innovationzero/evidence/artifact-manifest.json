@@ -1,0 +1,512 @@
+{
+  "schema_version": "innovationzero.artifact-manifest/v1",
+  "description": "All 25 supplied archival payloads are preserved exactly. Independent Git comparison finds 18 exact matches and seven benchmark payloads with one extra trailing LF in the supplied appendix. No experiment was rerun.",
+  "source_attachment": {
+    "filename": "InnovationZero_Final_Specification(2).md",
+    "sha256": "5512856892c1a9ef2bcaa8fc6eaabaa3233b74cf20e4af046fa0f375908b3b38",
+    "payload_format": "IZ_ARTIFACT byte-length framing; no whitespace normalization"
+  },
+  "snapshots": {
+    "main": {
+      "commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "scope": "pinned main snapshot used by supplied specification"
+    },
+    "pr407": {
+      "commit": "584713ed3f512057361460567bb56d620162286a",
+      "pull_request": 407,
+      "scope": "separate PR head; open/unmerged at supplied specification audit; no assertion of current PR status"
+    }
+  },
+  "artifact_count": 25,
+  "total_bytes": 518161,
+  "artifacts": [
+    {
+      "id": "challenge-master",
+      "path": "artifacts/challenge/master.md",
+      "bytes": 68744,
+      "sha256": "5ca568f40eb6ccb01f0d532512125db6512b6174a4cc24b5bc4d4ffd86615301",
+      "kind": "challenge",
+      "content_role": "complete organizer master",
+      "evidence_status": "byte-verified-source",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "docs/challenges/frontier-regression-master-spec.md",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/docs/challenges/frontier-regression-master-spec.md",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:docs/challenges/frontier-regression-master-spec.md",
+        "bytes": 68744,
+        "sha256": "5ca568f40eb6ccb01f0d532512125db6512b6174a4cc24b5bc4d4ffd86615301"
+      }
+    },
+    {
+      "id": "challenge-participant",
+      "path": "artifacts/challenge/participant.md",
+      "bytes": 39747,
+      "sha256": "96a9d0c4625bd9840fd1d6ed9afad4fca07dc832fa9fe7c1f3fda3a21cba3d39",
+      "kind": "challenge",
+      "content_role": "exact inter-marker span including boundary newlines",
+      "evidence_status": "byte-verified-source",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "docs/challenges/frontier-regression-master-spec.md",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/docs/challenges/frontier-regression-master-spec.md",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:docs/challenges/frontier-regression-master-spec.md",
+        "bytes": 39747,
+        "sha256": "96a9d0c4625bd9840fd1d6ed9afad4fca07dc832fa9fe7c1f3fda3a21cba3d39"
+      },
+      "derivation": {
+        "operation": "bytes_strictly_between_markers",
+        "begin_marker": "<!-- BEGIN MASTER PROMPT -->",
+        "end_marker": "<!-- END MASTER PROMPT -->",
+        "trim_whitespace": false
+      }
+    },
+    {
+      "id": "opus-source",
+      "path": "artifacts/sources/Opus5p5_Extra.rs",
+      "bytes": 66536,
+      "sha256": "2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834",
+      "kind": "source",
+      "content_role": "complete frozen source",
+      "evidence_status": "byte-verified-source",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/regressors/Opus5p5_Extra.rs",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/regressors/Opus5p5_Extra.rs",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/regressors/Opus5p5_Extra.rs",
+        "bytes": 66536,
+        "sha256": "2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834"
+      }
+    },
+    {
+      "id": "astra-source",
+      "path": "artifacts/sources/GPT6_Astra_Max.rs",
+      "bytes": 27729,
+      "sha256": "b51ad3291c6e433388a49ed8338d069a245300d634c9da76be1fb1f1454cd0eb",
+      "kind": "source",
+      "content_role": "complete frozen source",
+      "evidence_status": "byte-verified-source",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/submissions/GPT6_Astra_Max.rs",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/submissions/GPT6_Astra_Max.rs",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/submissions/GPT6_Astra_Max.rs",
+        "bytes": 27729,
+        "sha256": "b51ad3291c6e433388a49ed8338d069a245300d634c9da76be1fb1f1454cd0eb"
+      }
+    },
+    {
+      "id": "sol-source",
+      "path": "artifacts/sources/GPT6p1_Sol_Max.rs",
+      "bytes": 25011,
+      "sha256": "fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8",
+      "kind": "source",
+      "content_role": "complete frozen source",
+      "evidence_status": "byte-verified-source",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-automl/src/GPT6p1_Sol_Max.rs",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-automl/src/GPT6p1_Sol_Max.rs",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-automl/src/GPT6p1_Sol_Max.rs",
+        "bytes": 25011,
+        "sha256": "fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8"
+      }
+    },
+    {
+      "id": "gemini-source",
+      "path": "artifacts/sources/Gemini4_argon_high.rs",
+      "bytes": 96694,
+      "sha256": "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3",
+      "kind": "source",
+      "content_role": "complete owner-supplied source; authoring model/session unverified",
+      "evidence_status": "byte-verified-source",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "crates/jope-automl/src/Gemini4_argon_high.rs",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/crates/jope-automl/src/Gemini4_argon_high.rs",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:crates/jope-automl/src/Gemini4_argon_high.rs",
+        "bytes": 96694,
+        "sha256": "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3"
+      }
+    },
+    {
+      "id": "astra-effort",
+      "path": "artifacts/receipts/astra/effort.json",
+      "bytes": 3271,
+      "sha256": "6a653045a913a1afc59f47ad02cc2fd1ea33d8724930d9f75453b44018df62f6",
+      "kind": "receipt",
+      "content_role": "historical authoring estimates and milestone clocks; not provider-metered tokens",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/submissions/gpt6-astra-max/effort.json",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/submissions/gpt6-astra-max/effort.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/submissions/gpt6-astra-max/effort.json",
+        "bytes": 3271,
+        "sha256": "6a653045a913a1afc59f47ad02cc2fd1ea33d8724930d9f75453b44018df62f6"
+      }
+    },
+    {
+      "id": "astra-provenance",
+      "path": "artifacts/receipts/astra/provenance.json",
+      "bytes": 1454,
+      "sha256": "30998e4aa45b8ec3e4decf734279c7b6e013ab8e59f91c184411b71e6984f2d2",
+      "kind": "receipt",
+      "content_role": "historical authorship/provenance",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/submissions/gpt6-astra-max/provenance.json",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/submissions/gpt6-astra-max/provenance.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/submissions/gpt6-astra-max/provenance.json",
+        "bytes": 1454,
+        "sha256": "30998e4aa45b8ec3e4decf734279c7b6e013ab8e59f91c184411b71e6984f2d2"
+      }
+    },
+    {
+      "id": "astra-verification",
+      "path": "artifacts/receipts/astra/verification.json",
+      "bytes": 5843,
+      "sha256": "67545a501ac0e98e2a9452429fc5732fa02829e20960186c12fbe5e7d377f8e9",
+      "kind": "receipt",
+      "content_role": "historical verification; not rerun",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/submissions/gpt6-astra-max/verification.json",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/submissions/gpt6-astra-max/verification.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/submissions/gpt6-astra-max/verification.json",
+        "bytes": 5843,
+        "sha256": "67545a501ac0e98e2a9452429fc5732fa02829e20960186c12fbe5e7d377f8e9"
+      }
+    },
+    {
+      "id": "sol-authorship",
+      "path": "artifacts/receipts/sol/authorship.json",
+      "bytes": 2706,
+      "sha256": "4c08c18af776406b25e768d731cc771148822fe1ed9ac03b65891a5baf338e3b",
+      "kind": "receipt",
+      "content_role": "historical estimates/provenance",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-automl/submissions/GPT6p1_Sol_Max/authorship.json",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-automl/submissions/GPT6p1_Sol_Max/authorship.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-automl/submissions/GPT6p1_Sol_Max/authorship.json",
+        "bytes": 2706,
+        "sha256": "4c08c18af776406b25e768d731cc771148822fe1ed9ac03b65891a5baf338e3b"
+      }
+    },
+    {
+      "id": "sol-verification",
+      "path": "artifacts/receipts/sol/verification.json",
+      "bytes": 2888,
+      "sha256": "f86ca3409732b9529ec5c8f5fef78735d3f765509855d9b8d97948f65bb2427c",
+      "kind": "receipt",
+      "content_role": "historical verification; not rerun",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-automl/submissions/GPT6p1_Sol_Max/verification.json",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-automl/submissions/GPT6p1_Sol_Max/verification.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-automl/submissions/GPT6p1_Sol_Max/verification.json",
+        "bytes": 2888,
+        "sha256": "f86ca3409732b9529ec5c8f5fef78735d3f765509855d9b8d97948f65bb2427c"
+      }
+    },
+    {
+      "id": "opus-report-c",
+      "path": "artifacts/receipts/opus/registry-readme.md",
+      "bytes": 5873,
+      "sha256": "b5877ba8e67c2ff26026e13fddd2a46ef8a377da54f0df03b626ea26e7b59192",
+      "kind": "narrative_receipt",
+      "content_role": "registry prose identifying report C; estimates and repository-reported measured usage",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/regressors/README.md",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/regressors/README.md",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/regressors/README.md",
+        "bytes": 5873,
+        "sha256": "b5877ba8e67c2ff26026e13fddd2a46ef8a377da54f0df03b626ea26e7b59192"
+      }
+    },
+    {
+      "id": "opus-submission",
+      "path": "artifacts/receipts/opus/submission.json",
+      "bytes": 1648,
+      "sha256": "6e356ced71c307ca8994ae9fab1205923f4a639202f80233b7a01b66e25b899f",
+      "kind": "receipt",
+      "content_role": "historical submission manifest",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/regressors/Opus5p5_Extra.submission.json",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/regressors/Opus5p5_Extra.submission.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/regressors/Opus5p5_Extra.submission.json",
+        "bytes": 1648,
+        "sha256": "6e356ced71c307ca8994ae9fab1205923f4a639202f80233b7a01b66e25b899f"
+      }
+    },
+    {
+      "id": "opus-contract",
+      "path": "artifacts/receipts/opus/contract.txt",
+      "bytes": 2088,
+      "sha256": "620c542109efb8b702d197004466541845199a4a34a2b9c016bfb7c9f4c6d320",
+      "kind": "narrative_receipt",
+      "content_role": "historical compiler/contract/synthetic-smoke log; not real-data comparison",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "bdf9441aaa17f87dcb37053d33b185ba2217bf17",
+      "source_path": "crates/jope-bench/regressors/admission/Opus5p5_Extra.contract.txt",
+      "source_snapshot": "main",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/crates/jope-bench/regressors/admission/Opus5p5_Extra.contract.txt",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "bdf9441aaa17f87dcb37053d33b185ba2217bf17:crates/jope-bench/regressors/admission/Opus5p5_Extra.contract.txt",
+        "bytes": 2088,
+        "sha256": "620c542109efb8b702d197004466541845199a4a34a2b9c016bfb7c9f4c6d320"
+      }
+    },
+    {
+      "id": "gemini-authorship",
+      "path": "artifacts/receipts/gemini/authorship.json",
+      "bytes": 1658,
+      "sha256": "bc76f10a50fcdd35fed6a0b9ea628debd2febb08ac637f41c4fc9c8ef98d7999",
+      "kind": "receipt",
+      "content_role": "owner-supplied label; provider/session/usage/conditions null",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "crates/jope-automl/submissions/Gemini4_argon_high/authorship.json",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/crates/jope-automl/submissions/Gemini4_argon_high/authorship.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:crates/jope-automl/submissions/Gemini4_argon_high/authorship.json",
+        "bytes": 1658,
+        "sha256": "bc76f10a50fcdd35fed6a0b9ea628debd2febb08ac637f41c4fc9c8ef98d7999"
+      }
+    },
+    {
+      "id": "gemini-submission",
+      "path": "artifacts/receipts/gemini/submission.json",
+      "bytes": 777,
+      "sha256": "df14c7fd8ab7ff6faf7ee4cf0dd9dfe4a1b9e4c64be6f93157525aeafa0029b3",
+      "kind": "receipt",
+      "content_role": "historical submission manifest; unknown authoring fields remain null",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "crates/jope-automl/submissions/Gemini4_argon_high/submission.json",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/crates/jope-automl/submissions/Gemini4_argon_high/submission.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:crates/jope-automl/submissions/Gemini4_argon_high/submission.json",
+        "bytes": 777,
+        "sha256": "df14c7fd8ab7ff6faf7ee4cf0dd9dfe4a1b9e4c64be6f93157525aeafa0029b3"
+      }
+    },
+    {
+      "id": "gemini-verification",
+      "path": "artifacts/receipts/gemini/verification.json",
+      "bytes": 2392,
+      "sha256": "fea1b3b2574471b1a91d3f69d60ba77e1eafc6897e61742a40a601437646c24a",
+      "kind": "receipt",
+      "content_role": "historical branch verification; not rerun",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "crates/jope-automl/submissions/Gemini4_argon_high/verification.json",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/crates/jope-automl/submissions/Gemini4_argon_high/verification.json",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:crates/jope-automl/submissions/Gemini4_argon_high/verification.json",
+        "bytes": 2392,
+        "sha256": "fea1b3b2574471b1a91d3f69d60ba77e1eafc6897e61742a40a601437646c24a"
+      }
+    },
+    {
+      "id": "gemini-design",
+      "path": "artifacts/receipts/gemini/design.md",
+      "bytes": 3297,
+      "sha256": "01d7bf3618aff7f971978aebd8374090e42c90f77bdd56c567b0bb63691018c3",
+      "kind": "narrative_receipt",
+      "content_role": "integration-time readout, not original author notes; known ratio/match wording errors preserved",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "crates/jope-automl/submissions/Gemini4_argon_high/design.md",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/crates/jope-automl/submissions/Gemini4_argon_high/design.md",
+      "upstream_comparison": {
+        "status": "exact-match",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:crates/jope-automl/submissions/Gemini4_argon_high/design.md",
+        "bytes": 3297,
+        "sha256": "01d7bf3618aff7f971978aebd8374090e42c90f77bdd56c567b0bb63691018c3"
+      }
+    },
+    {
+      "id": "elo-results",
+      "path": "artifacts/benchmark/RESULTS.json",
+      "bytes": 2662,
+      "sha256": "91fa3f1d2c7fffeee72169a246b09a4cc3c5e3724acbb71f677d12b634377eca",
+      "kind": "derived_result",
+      "content_role": "exploratory four-entrant ratings/paired error summaries",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "assets/automl-elo/v1/RESULTS.json",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/RESULTS.json",
+      "upstream_comparison": {
+        "status": "extra-trailing-lf-in-attachment",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:assets/automl-elo/v1/RESULTS.json",
+        "bytes": 2661,
+        "sha256": "f1f7f3c304110bb17a2862d3405d2c55ff23ff6c1269c27189d0f16e7078e70a",
+        "note": "Supplied appendix includes one extra trailing LF. Retained exactly as uploaded; all other bytes match upstream."
+      }
+    },
+    {
+      "id": "elo-historical",
+      "path": "artifacts/benchmark/HISTORICAL_THREE_ENTRANT.json",
+      "bytes": 12357,
+      "sha256": "b04cf43e4ab2156a0b9b4e5da247bee1fd1506064c77e231545b4ac32cd4d782",
+      "kind": "receipt",
+      "content_role": "inherited exploratory protocol/exposure/custody limitations",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "assets/automl-elo/v1/HISTORICAL_THREE_ENTRANT.json",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/HISTORICAL_THREE_ENTRANT.json",
+      "upstream_comparison": {
+        "status": "extra-trailing-lf-in-attachment",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:assets/automl-elo/v1/HISTORICAL_THREE_ENTRANT.json",
+        "bytes": 12356,
+        "sha256": "c953ba0f67da179aa7bd70b152fe96d3c40704f96d4c2dc2d12209a2d8d0897e",
+        "note": "Supplied appendix includes one extra trailing LF. Retained exactly as uploaded; all other bytes match upstream."
+      }
+    },
+    {
+      "id": "elo-sources",
+      "path": "artifacts/benchmark/SOURCES.md",
+      "bytes": 7184,
+      "sha256": "432171ccb28f99bb5d769c5286f96e1a68cc767ab0bee57e11f253f461062223",
+      "kind": "narrative_receipt",
+      "content_role": "historical benchmark provenance; no independent rerun implied",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "assets/automl-elo/v1/SOURCES.md",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/SOURCES.md",
+      "upstream_comparison": {
+        "status": "extra-trailing-lf-in-attachment",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:assets/automl-elo/v1/SOURCES.md",
+        "bytes": 7183,
+        "sha256": "90b7d544e93a6a1df67a5b78fa42efc30f9ede2cba8ed83e8d87caac4b06498b",
+        "note": "Supplied appendix includes one extra trailing LF. Retained exactly as uploaded; all other bytes match upstream."
+      }
+    },
+    {
+      "id": "source-counts",
+      "path": "artifacts/benchmark/SOURCE_COUNTS.json",
+      "bytes": 1204,
+      "sha256": "90cbee67fa3733471724e112b6c9125da758c6dcb550c6a19e8d7e87c248a06b",
+      "kind": "derived_result",
+      "content_role": "lexical source counts, not provider tokens",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "assets/automl-elo/v1/SOURCE_COUNTS.json",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/SOURCE_COUNTS.json",
+      "upstream_comparison": {
+        "status": "extra-trailing-lf-in-attachment",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:assets/automl-elo/v1/SOURCE_COUNTS.json",
+        "bytes": 1203,
+        "sha256": "cf826a15b9ea1c7d172eea5122ea92d4ec4dc6938712d3c70e1837c5304c1f38",
+        "note": "Supplied appendix includes one extra trailing LF. Retained exactly as uploaded; all other bytes match upstream."
+      }
+    },
+    {
+      "id": "gemini-costs",
+      "path": "artifacts/benchmark/GEMINI_COSTS.json",
+      "bytes": 321,
+      "sha256": "d3072932b8556ac503f09118244d54521b206d1c2deb6e5e243a31f4c9567379",
+      "kind": "derived_result",
+      "content_role": "aggregate reported costs; hosts not controlled",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "assets/automl-elo/v1/GEMINI_COSTS.json",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/GEMINI_COSTS.json",
+      "upstream_comparison": {
+        "status": "extra-trailing-lf-in-attachment",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:assets/automl-elo/v1/GEMINI_COSTS.json",
+        "bytes": 320,
+        "sha256": "7eb8fe0990154eefae93930625b28acc226b95cf02cdde6971835fd6b45eb061",
+        "note": "Supplied appendix includes one extra trailing LF. Retained exactly as uploaded; all other bytes match upstream."
+      }
+    },
+    {
+      "id": "match-matrix",
+      "path": "artifacts/benchmark/match-matrix.txt",
+      "bytes": 2065,
+      "sha256": "b5ab62bdc42d2c51e61cdc07089c2081e28100ef4c38a602d8271e7b99913f91",
+      "kind": "derived_result",
+      "content_role": "family seed-averaged fractional match scores",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "assets/automl-elo/v1/match-matrix.txt",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/match-matrix.txt",
+      "upstream_comparison": {
+        "status": "extra-trailing-lf-in-attachment",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:assets/automl-elo/v1/match-matrix.txt",
+        "bytes": 2064,
+        "sha256": "ebdac2bb7aef7ba9f94d095e89a11a0f05ce61d1693d51d460b65d27e25c5d4d",
+        "note": "Supplied appendix includes one extra trailing LF. Retained exactly as uploaded; all other bytes match upstream."
+      }
+    },
+    {
+      "id": "gemini-cells",
+      "path": "artifacts/benchmark/gemini4-argon-high-cells.csv",
+      "bytes": 134012,
+      "sha256": "ff6e0efed6e09f0878019bfbb49668f562d90ad6c2aff1a510cf181a8d18831b",
+      "kind": "raw_cell_table",
+      "content_role": "576-cell reported Gemini measurements; underlying data/predictions not included",
+      "evidence_status": "repository-reported-not-rerun",
+      "source_commit": "584713ed3f512057361460567bb56d620162286a",
+      "source_path": "assets/automl-elo/v1/gemini4-argon-high-cells.csv",
+      "source_snapshot": "pr407",
+      "source_url": "https://github.com/neverhuman/JopeDime/blob/584713ed3f512057361460567bb56d620162286a/assets/automl-elo/v1/gemini4-argon-high-cells.csv",
+      "upstream_comparison": {
+        "status": "extra-trailing-lf-in-attachment",
+        "compared_object": "584713ed3f512057361460567bb56d620162286a:assets/automl-elo/v1/gemini4-argon-high-cells.csv",
+        "bytes": 134011,
+        "sha256": "c51d9e9c78ebc08d4c9b87117dacd91c1507385e1717a72136786c5946fea606",
+        "note": "Supplied appendix includes one extra trailing LF. Retained exactly as uploaded; all other bytes match upstream."
+      }
+    }
+  ]
+}
