@@ -120,11 +120,13 @@ class AuditLaneTests(unittest.TestCase):
         self.auditor.write_text(FAKE.lstrip())
         self.auditor.chmod(0o755)
 
-    def run_audit(self, mode):
-        self.output = self.base / ("report-" + mode)
+    def run_audit(self, mode, report_only=False):
+        self.output = self.base / ("report-" + mode + ("-report-only" if report_only else ""))
         env = dict(os.environ, JANKURAI_BIN=str(self.auditor), AUDIT_TEST_MODE=mode)
-        for key in ("JOPE_SOURCE_SHA", "GITHUB_STEP_SUMMARY"):
+        for key in ("JOPE_SOURCE_SHA", "GITHUB_STEP_SUMMARY", "JOPE_AUDIT_REPORT_ONLY"):
             env.pop(key, None)
+        if report_only:
+            env["JOPE_AUDIT_REPORT_ONLY"] = "1"
         return subprocess.run(["bash", "ops/ci/jankurai.sh", str(self.output)],
                               cwd=self.repo, env=env, capture_output=True, text=True)
 
@@ -134,6 +136,31 @@ class AuditLaneTests(unittest.TestCase):
         report = json.loads((self.output / "repo-score.json").read_text())
         self.assertEqual(52, report["score"])
         self.assertFalse(report["decision"]["passed"])
+
+    def test_report_only_passes_verified_below_floor_audit(self):
+        result = self.run_audit("failed", report_only=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("::warning title=Audit below floor (report-only)::score 52/85", result.stdout)
+        report = json.loads((self.output / "repo-score.json").read_text())
+        self.assertFalse(report["decision"]["passed"])
+        receipt = json.loads((self.output / "audit-verification.json").read_text())
+        self.assertTrue(receipt["artifact_valid"])
+        self.assertFalse(receipt["audit_passed"])
+        marker = json.loads((self.output / "report-only.json").read_text())
+        self.assertEqual({"audit_exit": 1, "audit_passed": False, "score": 52, "minimum_score": 85},
+                         {key: marker[key] for key in ("audit_exit", "audit_passed", "score", "minimum_score")})
+
+    def test_report_only_still_refuses_invalid_evidence(self):
+        for mode in ("missing", "false-green", "floor", "version", "policy", "scope", "counts",
+                     "malformed", "source", "extra", "manifest", "archive", "link", "mode",
+                     "severity", "raw", "duplicate", "nonfinite", "fifo"):
+            with self.subTest(mode=mode):
+                self.assertNotEqual(0, self.run_audit(mode, report_only=True).returncode)
+                self.assertFalse((self.output / "report-only.json").exists())
+
+    def test_report_only_leaves_passing_audit_unmarked(self):
+        self.assertEqual(0, self.run_audit("pass", report_only=True).returncode)
+        self.assertFalse((self.output / "report-only.json").exists())
 
     def test_valid_pass_is_accepted(self):
         result = self.run_audit("pass")
@@ -178,6 +205,7 @@ class AuditLaneTests(unittest.TestCase):
         self.assertNotIn("continue-on-error", block)
         self.assertNotIn("|| true", block)
         self.assertNotIn("JANKURAI_HOSTED_RUNNER", block)
+        self.assertEqual(1, block.count('JOPE_AUDIT_REPORT_ONLY: "1"'))
         spec = importlib.util.spec_from_file_location("audit_job_policy", ROOT / "deploy/runner/job-policy.py")
         policy = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(policy)

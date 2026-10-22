@@ -137,6 +137,9 @@ jobs:
         env:
           JANKURAI_NO_UPDATE_CHECK: "1"
           JANKURAI_BIN: ${{ github.workspace }}/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai
+          # Owner decision 2026-10-22: report-only until the score reaches 85 (54 at bdf9441aa).
+          # Integrity and consistency failures still fail; remove this line at 85.
+          JOPE_AUDIT_REPORT_ONLY: "1"
         run: |
           bash ops/ci/jankurai.sh "target/full-audit/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
       - name: Retain complete audit evidence including failed gates
