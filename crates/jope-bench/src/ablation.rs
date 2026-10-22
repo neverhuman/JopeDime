@@ -3111,6 +3111,7 @@ mod tests {
             comparison: jope_pipeline::receipt::Phase::not_requested(),
             best_validation_rmse: None,
             best_validation_r2: None,
+            best_validation_objective: None,
             best_program: None,
             migrations: Vec::new(),
             observations: Vec::new(),

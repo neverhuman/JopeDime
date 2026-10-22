@@ -509,9 +509,22 @@ fn summary_line(command: &str, receipt: &Receipt) {
             _ => format!(" task={} rows={}", t.task, t.rows),
         })
         .unwrap_or_default();
+    let objective = receipt
+        .selection
+        .as_ref()
+        .filter(|s| s.fitness.is_some())
+        .map(|s| {
+            let calibrated = s
+                .calibration
+                .as_ref()
+                .and_then(|c| c.output_transform)
+                .map_or("", |_| " calibrated");
+            format!(" objective={}{calibrated}", s.metric)
+        })
+        .unwrap_or_default();
     let outputs: Vec<&str> = receipt.outputs.iter().map(|o| o.path.as_str()).collect();
     eprintln!(
-        "jopedime {command}:{task}{method} device={} wrote {} in {:.2}s",
+        "jopedime {command}:{task}{method}{objective} device={} wrote {} in {:.2}s",
         receipt.device.selected,
         outputs.join(", "),
         receipt.timings.total_seconds
