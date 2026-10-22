@@ -142,6 +142,7 @@ const DRIVER: &str = r#"
     assert.throws(()=>model.fit([[1]],[1]));
     assert.throws(()=>model.predictCsv('wrong\n1\n'));
     assert.throws(()=>model.predictStrings([[1]]));
+    assert.deepEqual(model.predictStrings(input.rows),got);
     const otherResult=other.predictStrings(input.rows);
     assert.deepEqual(otherResult,got);
   } else {
@@ -149,7 +150,7 @@ const DRIVER: &str = r#"
     assert.throws(()=>model.fit([],[]));
     assert.throws(()=>model.fit([[1],[1,2]],[1,2]));
     assert.throws(()=>model.fit([[1]],[NaN]));
-    model.fit(input.train,input.targets);
+    assert.equal(model.fit(input.train,input.targets),model);
     got=model.predict(input.test);
     assert.equal(model.predict([]).length,0);
     assert.equal(model.score([],[]),0);

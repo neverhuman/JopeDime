@@ -507,8 +507,6 @@ pub fn lint_shipped_text(src: &str) -> Vec<String> {
     hits
 }
 
-/// Opt-in target-complete manifest. Historical `emit` and its defaults stay unchanged.
-/// Unsupported targets remain explicit; successful rendering binds exact source bytes.
 fn validate_recipe_target(
     genome: &GenomeIr,
     target: crate::artifact_manifest::Target,
@@ -530,6 +528,8 @@ fn validate_recipe_target(
     Ok(())
 }
 
+/// Opt-in target-complete manifest. Historical `emit` and its defaults stay unchanged.
+/// Unsupported targets remain explicit; successful rendering binds exact source bytes.
 pub fn emit_targets_v3(
     genome: &GenomeIr,
     options: &EmitOptions,

@@ -5,6 +5,7 @@ on:
       - 'crates/feat-math/**'
       - 'crates/jope-cli/**'
       - 'crates/jope-pipeline/**'
+      - 'deploy/ci/typescript/**'
       - '.github/workflows/typescript.yml'
   workflow_dispatch:
 permissions:
@@ -38,8 +39,8 @@ jobs:
           set -euo pipefail
           rustup show active-toolchain
           rustup target add wasm32-unknown-unknown
-          npm install --prefix "$RUNNER_TEMP/jope-typescript" --ignore-scripts --no-audit --no-fund typescript@7.0.2
-          echo "$RUNNER_TEMP/jope-typescript/node_modules/.bin" >> "$GITHUB_PATH"
+          npm ci --prefix deploy/ci/typescript --ignore-scripts --no-audit --no-fund
+          echo "$GITHUB_WORKSPACE/deploy/ci/typescript/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Formatting and complete source checks
         shell: bash
         run: |
@@ -50,7 +51,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p target/typescript-evidence
+          mkdir -p target/typescript-evidence target/typescript-tmp
+          export TMPDIR="$PWD/target/typescript-tmp"
           test "$(git rev-parse HEAD)" = "$JOPE_SOURCE_SHA"
           rustc --version > target/typescript-evidence/toolchains.txt
           node --version >> target/typescript-evidence/toolchains.txt

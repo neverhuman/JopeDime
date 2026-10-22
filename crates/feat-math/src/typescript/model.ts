@@ -5,6 +5,7 @@ export type StringRows = ReadonlyArray<ReadonlyArray<string>>;
 export type ModuleSource = Uint8Array | ArrayBuffer | WebAssembly.Module;
 const boundHeaders: ReadonlyArray<string> | null = __BOUND_HEADERS__;
 const maxElements = 16_777_216;
+const littleEndian = new Uint8Array(new Uint16Array([1]).buffer)[0] === 1;
 
 interface Kernel {
   memory: WebAssembly.Memory;
@@ -77,15 +78,27 @@ export class Model {
     const len = rows.length * cols;
     const pointer = this.kernel.model_values(len);
     if (len > 0 && pointer === 0) throw new RangeError("feature allocation refused");
-    const values = new Float64Array(this.kernel.memory.buffer, pointer, len);
-    let offset = 0;
-    for (const row of rows) { values.set(row, offset); offset += cols; }
+    if (littleEndian) {
+      const values = new Float64Array(this.kernel.memory.buffer, pointer, len);
+      let offset = 0;
+      for (const row of rows) { values.set(row, offset); offset += cols; }
+    } else {
+      const view = new DataView(this.kernel.memory.buffer, pointer, len * 8);
+      let index = 0;
+      for (const row of rows)
+        for (const value of row) { view.setFloat64(index * 8, value, true); index++; }
+    }
   }
   private output(expected?: number): Float64Array {
     const length = this.kernel.model_output_len();
     if (expected !== undefined && length !== expected) throw new Error("prediction count mismatch");
     // Never expose a live view: the next call can allocate/grow linear memory.
-    return new Float64Array(this.kernel.memory.buffer, this.kernel.model_output(), length).slice();
+    const pointer = this.kernel.model_output();
+    if (littleEndian) return new Float64Array(this.kernel.memory.buffer, pointer, length).slice();
+    const view = new DataView(this.kernel.memory.buffer, pointer, length * 8);
+    const result = new Float64Array(length);
+    for (let i = 0; i < length; i++) result[i] = view.getFloat64(i * 8, true);
+    return result;
   }
 
   fit(rows: NumericRows, targets: NumericVector): this {
@@ -99,7 +112,12 @@ export class Model {
       this.copyRows(rows, cols);
       const pointer = this.kernel.model_labels(targets.length);
       if (pointer === 0) throw new RangeError("target allocation refused");
-      new Float64Array(this.kernel.memory.buffer, pointer, targets.length).set(targets);
+      if (littleEndian) {
+        new Float64Array(this.kernel.memory.buffer, pointer, targets.length).set(targets);
+      } else {
+        const view = new DataView(this.kernel.memory.buffer, pointer, targets.length * 8);
+        for (let i = 0; i < targets.length; i++) view.setFloat64(i * 8, targets[i], true);
+      }
       return this.kernel.model_fit(rows.length, cols);
     });
     this.width = cols;

@@ -22,7 +22,7 @@ fn main() -> Result<()> {
         .any(|arg| arg == "--typescript" || arg == "--ts");
     args.retain(|arg| !["--all", "--typescript", "--ts"].contains(&arg.as_str()));
     let [dsl, out] = args.as_slice() else {
-        bail!("usage: emit [--all] <program.dsl> <out-dir>");
+        bail!("usage: emit [--all] [--typescript] <program.dsl> <out-dir>");
     };
     let (dsl, out) = (dsl.clone(), out.clone());
     let source = std::fs::read_to_string(&dsl).with_context(|| format!("read {dsl}"))?;

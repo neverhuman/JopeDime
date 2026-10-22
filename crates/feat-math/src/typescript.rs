@@ -20,7 +20,11 @@ pub struct TypeScriptEmitted {
 fn assemble(rust: String, body: &str, source: String) -> TypeScriptEmitted {
     // Export attributes cannot live under forbid(unsafe_code). Only this lint
     // changes; the numerical Rust source is otherwise retained byte for byte.
-    let rust = rust.replace("#![forbid(unsafe_code)]", "#![deny(unsafe_op_in_unsafe_fn)]");
+    let rust = rust.replacen(
+        "\n#![forbid(unsafe_code)]\n",
+        "\n#![deny(unsafe_op_in_unsafe_fn)]\n",
+        1,
+    );
     let kernel = format!("{rust}\n{body}");
     let source_sha256 = crate::artifact_manifest::sha256(source.as_bytes());
     let kernel_sha256 = crate::artifact_manifest::sha256(kernel.as_bytes());

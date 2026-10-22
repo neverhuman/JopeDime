@@ -1,0 +1,8 @@
+{
+  "name": "@jopedime/typescript-qualification",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

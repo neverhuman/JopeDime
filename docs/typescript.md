@@ -134,6 +134,8 @@ deployment is implied.
 ```sh
 rustup target add wasm32-unknown-unknown
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
+npm ci --prefix deploy/ci/typescript --ignore-scripts --no-audit --no-fund
+export PATH="$PWD/deploy/ci/typescript/node_modules/.bin:$PATH"
 export JOPE_TYPESCRIPT_PARITY=1
 cargo test --locked -p feat-math --no-default-features --test golden -- --test-threads=2
 cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit:: -- --test-threads=2
