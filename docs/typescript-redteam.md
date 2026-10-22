@@ -13,6 +13,7 @@ PR draft until its required checks pass.
 | Disposal traps left the facade alive | Disposal now invalidates in `finally`; a throwing kernel cannot be called again through the same facade. Fault injection covers this case. |
 | A minimum execution count allowed missing operators | Qualification now enumerates the real publication registry and records each executed/refused identity. Missing records, unequal module executions and zero tests fail. |
 | TypeScript qualification did not block the main CI aggregate | The normal CI workflow now calls the Node matrix and requires its complete result. Workflow/tool changes select the gate. |
+| The pipeline executable-fixture target did not compile | Its exhaustive target match omitted TypeScript. The fixture now executes the verified TypeScript/Wasm bundle in both module modes; qualification also checks all targets of feat-math, jope-cli and jope-pipeline. |
 | Browser support had no actual-browser test | Every census fixture is now required in Chromium, Firefox and WebKit, in a page and module worker. |
 | Explicit scalar/row-vector APIs lacked the target | `typescript::emit_scalar` and `typescript::emit_row_vector` reuse the existing validated Rust recipes. |
 

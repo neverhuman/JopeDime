@@ -42,7 +42,7 @@ jobs:
           set -euo pipefail
           git diff --check
           cargo fmt --all --check
-          cargo check --locked -p jope-cli --no-default-features
+          cargo check --locked -p feat-math -p jope-cli -p jope-pipeline --no-default-features --all-targets
       - name: Complete census, golden parity, 100 percent facade coverage and publication contracts
         run: bash deploy/ci/typescript/qualify.sh
       - name: Install real browser engines

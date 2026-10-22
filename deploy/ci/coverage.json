@@ -12849,7 +12849,7 @@
     "typescript-parity": {
       "checks": [
         "bash deploy/ci/typescript/qualify.sh (closed census; 100% facade line/branch/function coverage; all existing parity/publication checks)",
-        "cargo check --locked -p jope-cli --no-default-features",
+        "cargo check --locked -p feat-math -p jope-cli -p jope-pipeline --no-default-features --all-targets",
         "JOPE_TYPESCRIPT_PARITY=1 cargo test --locked -p feat-math --no-default-features --test golden",
         "JOPE_TYPESCRIPT_PARITY=1 cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit::",
         "cargo test --locked -p feat-math --no-default-features --test artifact_target_binding",

@@ -7,6 +7,8 @@ use jope_pipeline::{
     search::Budget,
 };
 use std::{fs, path::Path};
+#[path = "../../feat-math/tests/typescript_support/mod.rs"]
+mod typescript_support;
 fn scratch() -> tempfile::TempDir {
     let root = Path::new(env!("CARGO_TARGET_TMPDIR"));
     fs::create_dir_all(root).unwrap();
@@ -351,6 +353,9 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     let root = dir.path();
     let mut targets = Target::RECIPES.to_vec();
     targets.extend([Target::Cpp17RecipeV2, Target::Cpp17Fitted]);
+    if typescript_support::enabled() {
+        targets.push(Target::TypeScript);
+    }
     let program = "(pipe X (ridge alpha=1.0))";
     let out = emit::emit_v3(program, &targets, root, Some(&rows())).unwrap();
     assert!(out.manifest.all_supported());
@@ -376,6 +381,20 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     for target in targets {
         let predictions = root.join(format!("{}.predictions", target.as_str()));
         match target {
+            Target::TypeScript => {
+                // Execute the exact two sources admitted by read_identity_v3.
+                // The shared qualifier checks actual CJS/ESM predictions with
+                // the declared Wasm tolerance, rather than the native bit gate.
+                typescript_support::run(
+                    &root.join("verified-typescript"),
+                    &fs::read_to_string(root.join("model.ts")).unwrap(),
+                    &fs::read_to_string(root.join("model.kernel.rs")).unwrap(),
+                    &serde_json::json!({"train":x,"targets":y,"test":[[0.5],[2.5]]}),
+                    &expected,
+                    false,
+                );
+                continue;
+            }
             Target::Python => execute(
                 Command::new("python3")
                     .arg(root.join("model.py"))
