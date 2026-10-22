@@ -64,6 +64,15 @@ pub enum Command {
         #[command(flatten)]
         common: CommonArgs,
     },
+    /// Discover or evaluate regression fitness functions.
+    Fitness {
+        #[command(subcommand)]
+        command: FitnessCommand,
+    },
+    /// Serve JSON-RPC MCP tools on stdin/stdout (one JSON document per line).
+    Mcp,
+    /// Serve the same fit/evaluate API on stdin/stdout as JSON lines.
+    Api,
     /// Verify this executable's embedded package completely. A diagnostic: it cannot establish
     /// trust in a binary that may itself be modified; verify downloads with `jope-dist verify`.
     VerifySelf(JsonFlag),
@@ -98,6 +107,15 @@ pub struct TrainArgs {
     /// With `--method auto`: cross-validation folds (reduced for small tables).
     #[arg(long, default_value_t = 5)]
     pub folds: usize,
+    /// Regression selection objective: catalog name, inline JSON, or @path.json.
+    #[arg(long)]
+    pub fitness: Option<String>,
+    /// iid or forward (chronological expanding-window validation).
+    #[arg(long, default_value = "iid", value_parser = ["iid", "forward"])]
+    pub validation: String,
+    /// Rows excluded between each forward training window and its validation block.
+    #[arg(long, default_value_t = 0)]
+    pub gap: usize,
 }
 
 #[derive(Args, Clone)]
@@ -123,4 +141,15 @@ pub struct CommonArgs {
     /// Print the run receipt as JSON on stdout instead of a summary on stderr.
     #[arg(long)]
     pub json: bool,
+}
+
+#[derive(Subcommand)]
+pub enum FitnessCommand {
+    /// List built-in names with their exact default parameters and directions.
+    List,
+    /// Score a JSON file containing {fitness, targets, predictions}.
+    Evaluate {
+        #[arg(long)]
+        input: PathBuf,
+    },
 }

@@ -1,0 +1,62 @@
+{
+  "fitness": {
+    "metric": "custom",
+    "name": "grid_underforecast",
+    "direction": "minimize",
+    "expression": {
+      "op": "add",
+      "left": {
+        "op": "mul",
+        "left": {
+          "op": "constant",
+          "value": 5
+        },
+        "right": {
+          "op": "max",
+          "left": {
+            "op": "sub",
+            "left": {
+              "op": "y"
+            },
+            "right": {
+              "op": "pred"
+            }
+          },
+          "right": {
+            "op": "constant",
+            "value": 0
+          }
+        }
+      },
+      "right": {
+        "op": "max",
+        "left": {
+          "op": "sub",
+          "left": {
+            "op": "pred"
+          },
+          "right": {
+            "op": "y"
+          }
+        },
+        "right": {
+          "op": "constant",
+          "value": 0
+        }
+      }
+    },
+    "aggregation": {
+      "kind": "mean"
+    }
+  },
+  "targets": [
+    10,
+    20,
+    30
+  ],
+  "predictions": [
+    9,
+    22,
+    28
+  ]
+}

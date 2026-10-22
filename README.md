@@ -107,7 +107,7 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,842 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 5,860 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
 | Coverage map | 834 items over 27 lanes <sup>7</sup> |
@@ -382,7 +382,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 | Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max` and `Gemini4_argon_high`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md). |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
-| Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |
+| Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, [custom regression fitness via CLI/API/MCP](docs/regression-fitness.md), and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |
 | Vendored | `smartcluster/*` (7 crates) | The jain-smartcluster scheduler, at its own version 8.0.0. |
 
 | Path | Role |
