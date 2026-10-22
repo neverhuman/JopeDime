@@ -19,6 +19,12 @@ The three evidence stages are distinct:
 * **Execution:** a fresh receipt reports the command, outcome, counts and evidence. A configured
   workflow or deferred full-main mapping is not execution qualification.
 
+The independent trusted-main audit job is assigned to `source-audit`. It runs the
+checksum-pinned full default-policy source audit and retains failed reports and the
+source archive; report validity does not imply a passing score. It is separate from
+the eleven `full-*` CPU families. Its nine fake-auditor controls run in hygiene and
+check report/source integrity, without claiming broad source-audit qualification.
+
 The maintained Python selection is the explicit `python/tests/` file set in the mapping.
 Research/tools test-named scripts, maintenance fixture programs and benchmarks have separate
 dispositions. PR pytest selects `not xbabe2`; exclusions must remain
