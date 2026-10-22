@@ -145,9 +145,10 @@ export class Model {
   }
 
   score(rows: NumericRows, targets: NumericVector): number {
-    if (targets.length !== rows.length || targets.length === 0 || targets.some(v => !Number.isFinite(v)))
+    if (targets.length !== rows.length || targets.some(v => !Number.isFinite(v)))
       throw new RangeError("invalid scoring targets");
     const predictions = this.predict(rows);
+    if (targets.length === 0) return 0;
     let mean = 0;
     for (const value of targets) mean += value;
     mean /= targets.length;

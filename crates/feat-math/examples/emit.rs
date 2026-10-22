@@ -17,7 +17,9 @@ use feat_math::transpile::{self, EmitOptions};
 fn main() -> Result<()> {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
     let require_all = args.iter().any(|arg| arg == "--all");
-    let typescript = args.iter().any(|arg| arg == "--typescript" || arg == "--ts");
+    let typescript = args
+        .iter()
+        .any(|arg| arg == "--typescript" || arg == "--ts");
     args.retain(|arg| !["--all", "--typescript", "--ts"].contains(&arg.as_str()));
     let [dsl, out] = args.as_slice() else {
         bail!("usage: emit [--all] <program.dsl> <out-dir>");

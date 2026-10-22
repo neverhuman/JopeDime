@@ -185,6 +185,10 @@ fn install_v3(
                         } else {
                             "cpp17-fitted"
                         }
+                    } else if record.target == Target::TypeScript
+                        && f.path.ends_with(".kernel.rs")
+                    {
+                        "typescript-kernel"
                     } else {
                         record.target.as_str()
                     };
@@ -229,7 +233,9 @@ fn v3_run(root: &Path, requested: &[Target]) -> (Receipt, ExpectedArtifactV3) {
 fn native_publication_accepts_supported_pinned_v3_run() {
     let dir = scratch();
     let root = dir.path().join("run");
-    let (r, expected) = v3_run(&root, &Target::RECIPES);
+    let mut targets = Target::RECIPES.to_vec();
+    targets.push(Target::TypeScript);
+    let (r, expected) = v3_run(&root, &targets);
     assert_eq!(
         publication::verify_run_v3(&root.join("receipt.json"), &expected).unwrap(),
         r
@@ -260,6 +266,8 @@ fn native_publication_refuses_cpp20_substitution_even_with_loose_hash_updated() 
 #[test]
 fn native_publication_refuses_javascript_substitution_even_with_loose_hash_updated() {
     substituted_run(Target::JavaScript, "model.js", "javascript");
+    substituted_run(Target::TypeScript, "model.ts", "typescript");
+    substituted_run(Target::TypeScript, "model.kernel.rs", "typescript-kernel");
 }
 #[test]
 fn native_publication_refuses_python_substitution_even_with_loose_hash_updated() {

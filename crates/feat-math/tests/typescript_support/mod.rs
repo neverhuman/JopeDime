@@ -6,12 +6,21 @@ use std::process::Command;
 pub fn enabled() -> bool {
     std::env::var("JOPE_TYPESCRIPT_PARITY").as_deref() == Ok("1")
 }
+
 fn command(root: &Path, program: &str, args: &[&str]) {
-    let output = Command::new(program).args(args).current_dir(root).output()
+    let output = Command::new(program)
+        .args(args)
+        .current_dir(root)
+        .output()
         .unwrap_or_else(|e| panic!("required TypeScript tool {program}: {e}"));
-    assert!(output.status.success(), "{program} {args:?}:\n{}\n{}",
-        String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{program} {args:?}:\n{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
 }
+
 pub fn run(
     root: &Path,
     source: &str,
@@ -20,33 +29,86 @@ pub fn run(
     expected: &[f64],
     fitted: bool,
 ) {
-    if !enabled() { return; }
+    if !enabled() {
+        return;
+    }
     fs::create_dir_all(root).unwrap();
     fs::write(root.join("model.kernel.rs"), kernel).unwrap();
-    command(root, "rustc", &["--edition=2021", "--crate-name", "model_kernel",
-        "--target", "wasm32-unknown-unknown", "--crate-type", "cdylib",
-        "-C", "opt-level=3", "-C", "panic=abort", "model.kernel.rs", "-o", "model.wasm"]);
+    command(
+        root,
+        "rustc",
+        &[
+            "--edition=2021",
+            "--crate-name",
+            "model_kernel",
+            "--target",
+            "wasm32-unknown-unknown",
+            "--crate-type",
+            "cdylib",
+            "-C",
+            "opt-level=3",
+            "-C",
+            "panic=abort",
+            "model.kernel.rs",
+            "-o",
+            "model.wasm",
+        ],
+    );
     fs::write(root.join("input.json"), serde_json::to_vec(input).unwrap()).unwrap();
-    fs::write(root.join("expected.json"), serde_json::to_vec(expected).unwrap()).unwrap();
+    fs::write(
+        root.join("expected.json"),
+        serde_json::to_vec(expected).unwrap(),
+    )
+    .unwrap();
     for (folder, module, extension, loader) in [
-        ("cjs", "commonjs", "cjs", "const {createModel}=require('./model.js');"),
-        ("esm", "ES2020", "mjs", "import {createModel} from './model.js';"),
+        (
+            "cjs",
+            "commonjs",
+            "cjs",
+            "const {createModel}=require('./model.js');",
+        ),
+        (
+            "esm",
+            "ES2020",
+            "mjs",
+            "import {createModel} from './model.js';",
+        ),
     ] {
-        let dir=root.join(folder);
+        let dir = root.join(folder);
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("model.ts"), source).unwrap();
         fs::write(dir.join("consumer.ts"), CONSUMER).unwrap();
-        fs::write(dir.join("package.json"), if folder=="esm" {r#"{"type":"module"}"#} else {r#"{"type":"commonjs"}"#}).unwrap();
-        let compiler=std::env::var("JOPE_TSC").unwrap_or_else(|_| "tsc".into());
-        command(&dir, &compiler, &["--strict", "--target", "ES2020", "--module", module,
-            "--lib", "ES2020,DOM", "--declaration", "model.ts", "consumer.ts"]);
-        let driver=format!("{loader}\nconst fitted={fitted};\n{DRIVER}");
-        let driver_name=format!("driver.{extension}");
+        let package = if folder == "esm" {
+            r#"{"type":"module"}"#
+        } else {
+            r#"{"type":"commonjs"}"#
+        };
+        fs::write(dir.join("package.json"), package).unwrap();
+        let compiler = std::env::var("JOPE_TSC").unwrap_or_else(|_| "tsc".into());
+        command(
+            &dir,
+            &compiler,
+            &[
+                "--strict",
+                "--target",
+                "ES2020",
+                "--module",
+                module,
+                "--lib",
+                "ES2020,DOM",
+                "--declaration",
+                "model.ts",
+                "consumer.ts",
+            ],
+        );
+        let driver = format!("{loader}\nconst fitted={fitted};\n{DRIVER}");
+        let driver_name = format!("driver.{extension}");
         fs::write(dir.join(&driver_name), driver).unwrap();
         command(&dir, "node", &[&driver_name]);
         eprintln!("TypeScript {folder}: {} predictions qualified", expected.len());
     }
 }
+
 const CONSUMER: &str = r#"import { Model, createModel } from "./model.js";
 function typeContract(model: Model): Float64Array {
   model.fit([[1, 2]], [3]);
@@ -90,12 +152,21 @@ const DRIVER: &str = r#"
     model.fit(input.train,input.targets);
     got=model.predict(input.test);
     assert.equal(model.predict([]).length,0);
+    assert.equal(model.score([],[]),0);
+    assert.equal(model.score(input.test,new Array(input.test.length).fill(2)),0);
     assert.throws(()=>model.predict([new Array(input.train[0].length+1).fill(0)]));
     const retained=Array.from(got);
     const shifted=input.targets.map(v=>v+0.25);
     other.fit(input.train,shifted);
     other.predict(input.test);
+    assert.deepEqual(model.predict(input.test),got);
     assert.deepEqual(Array.from(got),retained);
+    if(input.stress) {
+      const many=Array.from({length:65536},()=>input.test[0]);
+      const grown=model.predict(many);
+      assert.equal(grown.length,many.length);
+      assert.deepEqual(Array.from(got),retained);
+    }
     model.fit(input.train,input.targets);
     assert.deepEqual(model.predict(input.test),got);
   }

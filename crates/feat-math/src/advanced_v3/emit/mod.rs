@@ -1612,11 +1612,16 @@ mod tests {
             .unwrap();
         let temp = scratch.path();
         if super::typescript_support::enabled() {
-            let bundle = crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default()).unwrap();
+            let bundle =
+                crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default())
+                    .unwrap();
             super::typescript_support::run(
-                &temp.join("typescript"), &bundle.source, &bundle.kernel,
+                &temp.join("typescript"),
+                &bundle.source,
+                &bundle.kernel,
                 &serde_json::json!({"rows":test.rows}),
-                &runtime, true,
+                &runtime,
+                true,
             );
         }
         let csv_path = temp.join("test.csv");
@@ -1758,12 +1763,17 @@ mod quotation_regression_tests {
         )
         .unwrap();
         if super::typescript_support::enabled() {
-            let bundle = crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default()).unwrap();
+            let bundle =
+                crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default())
+                    .unwrap();
             let scratch = tempfile::tempdir().unwrap();
             super::typescript_support::run(
-                scratch.path(), &bundle.source, &bundle.kernel,
+                scratch.path(),
+                &bundle.source,
+                &bundle.kernel,
                 &serde_json::json!({"rows":table.rows}),
-                &model.predict_table(&table).unwrap(), true,
+                &model.predict_table(&table).unwrap(),
+                true,
             );
         }
         let source = emit_bound(&model, &crate::transpile::EmitOptions::default())
@@ -1846,7 +1856,10 @@ pub fn emit_bound_targets_v3(
                 target,
                 "advanced_v3",
                 crate::typescript::EMITTER_VERSION,
-                &[("model.ts", &bundle.source), ("model.kernel.rs", &bundle.kernel)],
+                &[
+                    ("model.ts", &bundle.source),
+                    ("model.kernel.rs", &bundle.kernel),
+                ],
                 Some(fitted.clone()),
             ));
             sources.insert("model.ts".into(), bundle.source);
@@ -1870,7 +1883,7 @@ pub fn emit_bound_targets_v3(
         } else {
             records.push(TargetRecord::unsupported(
                 target,
-                "bound-v2 adapter supports Python and Rust only".into(),
+                "bound-v2 adapter supports Python, Rust and TypeScript".into(),
             ));
         }
     }

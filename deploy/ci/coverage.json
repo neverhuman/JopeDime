@@ -1071,6 +1071,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "job:.github/workflows/typescript.yml/typescript-parity": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "typescript-parity"
+      ],
+      "scope": "Opt-in exact-source TypeScript/WebAssembly qualification; strict CommonJS/ESM, full golden recipes and existing fitted cases. Defined scope is not a passing run or live browser qualification."
+    },
     "job:.github/workflows/weekly.yml/regression-suite": {
       "discovery": {
         "kind": "workflow-job"
@@ -11778,6 +11788,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "workflow:.github/workflows/typescript.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "typescript-parity"
+      ],
+      "scope": "Opt-in exact-source TypeScript/WebAssembly qualification; strict CommonJS/ESM, full golden recipes and existing fitted cases. Defined scope is not a passing run or live browser qualification."
+    },
     "workflow:.github/workflows/weekly.yml": {
       "discovery": {
         "kind": "workflow"
@@ -12814,6 +12834,46 @@
       "path_applicability": "every push to main and manual dispatch of main; independent from the eleven full-* CPU families",
       "requires_nonzero_tests": false,
       "result_backend": "none",
+      "stage": "execution"
+    },
+    "typescript-parity": {
+      "checks": [
+        "cargo check --locked -p jope-cli --no-default-features",
+        "JOPE_TYPESCRIPT_PARITY=1 cargo test --locked -p feat-math --no-default-features --test golden",
+        "JOPE_TYPESCRIPT_PARITY=1 cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit::",
+        "cargo test --locked -p feat-math --no-default-features --test artifact_target_binding",
+        "cargo test --locked -p jope-pipeline --test artifact_target_binding",
+        "cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests::"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/typescript.yml",
+        "typescript-parity"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "JOPE_TYPESCRIPT_PARITY": "1",
+        "Node": "26.1.0",
+        "TypeScript": "7.0.2",
+        "target": "wasm32-unknown-unknown"
+      },
+      "evidence": [
+        "exact source SHA/run/attempt identity",
+        "strict CommonJS and ES2020 compilation with negative consumer contracts",
+        "executed golden/fitted/native-reference prediction comparisons and lifecycle contracts",
+        "manifest complete-closure/tamper assertions"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "committed golden fixtures"
+      ],
+      "path_applicability": "typescript.yml pull_request path filters or workflow_dispatch",
+      "requires_nonzero_tests": true,
+      "result_backend": "rust",
       "stage": "execution"
     }
   },

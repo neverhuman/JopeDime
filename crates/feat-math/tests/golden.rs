@@ -144,7 +144,7 @@ fn assert_parity_sized(name: &str, genome_src: &str, rows: usize, cols: usize, t
             &dir.join("typescript"),
             &artifact.source,
             &artifact.kernel,
-            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test}),
+            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test,"stress":name=="robust_ridge"}),
             &rs,
             false,
         );

@@ -232,7 +232,7 @@ pub fn emit_with_options(
     }
 
     if languages.contains(&Language::TypeScript) {
-        let bundle = transpile::emit_typescript(&parsed, options)?;
+        let bundle = transpile::emit_typescript(render_target, options)?;
         artifacts.push(Artifact {
             language: "typescript",
             build: Some(feat_math::typescript::BUILD_COMMAND.into()),
@@ -528,6 +528,19 @@ mod tests {
         assert_eq!(
             std::fs::read_to_string(temp.path().join("targets.txt")).unwrap(),
             "py rs cpp js\n"
+        );
+        let typescript_dir = temp.path().join("typescript");
+        let typescript = emit(
+            crate::select::BOOTSTRAP_GENOME,
+            &[Language::TypeScript],
+            &typescript_dir,
+        )
+        .unwrap();
+        assert!(typescript.exclusions.is_empty());
+        assert_eq!(typescript.artifacts.len(), 2);
+        assert_eq!(
+            std::fs::read_to_string(typescript_dir.join("targets.txt")).unwrap(),
+            "ts\n"
         );
         assert!(temp.path().join("manifest.json").is_file());
         assert_eq!(

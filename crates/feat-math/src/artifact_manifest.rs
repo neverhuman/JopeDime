@@ -186,7 +186,19 @@ impl BuildIdentity {
             Target::TypeScript => (
                 "rustc+tsc".into(),
                 "typescript-es2020+wasm32".into(),
-                vec!["--strict".into(), "--target=wasm32-unknown-unknown".into()],
+                vec![
+                    "--edition=2021".into(),
+                    "--target=wasm32-unknown-unknown".into(),
+                    "--crate-type=cdylib".into(),
+                    "--crate-name=model_kernel".into(),
+                    "-Copt-level=3".into(),
+                    "-Cpanic=abort".into(),
+                    "--strict".into(),
+                    "--target=ES2020".into(),
+                    "--module=commonjs".into(),
+                    "--lib=ES2020,DOM".into(),
+                    "--declaration".into(),
+                ],
                 "typescript-wasm-v1",
             ),
             _ => {
@@ -208,7 +220,12 @@ impl BuildIdentity {
             toolchain,
             standard,
             flags,
-            backend: if target == Target::TypeScript { "wasm32-scalar" } else { "cpu-scalar" }.into(),
+            backend: if target == Target::TypeScript {
+                "wasm32-scalar"
+            } else {
+                "cpu-scalar"
+            }
+            .into(),
             abi: abi.into(),
             execution: BuildExecution::Unknown,
         }
@@ -387,6 +404,12 @@ impl ArtifactManifestV3 {
                             && !build.toolchain.is_empty(),
                         "target build identity mismatch"
                     );
+                    if record.target == Target::TypeScript {
+                        ensure!(
+                            build.toolchain == declared.toolchain && build.flags == declared.flags,
+                            "TypeScript build recipe mismatch"
+                        );
+                    }
                     if matches!(
                         record.target,
                         Target::Cpp17 | Target::Cpp20 | Target::Cpp17RecipeV2 | Target::Cpp17Fitted

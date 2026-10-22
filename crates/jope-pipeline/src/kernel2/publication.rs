@@ -385,7 +385,9 @@ fn check_artifact_manifest(
         Some(Language::Python) => ("model.py", "python"),
         Some(Language::JavaScript) => ("model.js", "javascript"),
         Some(Language::TypeScript) => ("model.ts", "typescript"),
-        None if artifact.language == "typescript-kernel" => ("model.kernel.rs", "typescript-kernel"),
+        None if artifact.language == "typescript-kernel" => {
+            ("model.kernel.rs", "typescript-kernel")
+        }
         Some(language @ (Language::Cpp17 | Language::Cpp20)) => ("model.cpp", language.as_str()),
         Some(Language::Cpp17Fitted) => ("cpp17-fitted/model.cpp", "cpp17-fitted"),
         None if artifact.language == "cpp17-fitted-codec" => {

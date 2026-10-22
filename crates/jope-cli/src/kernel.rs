@@ -545,6 +545,14 @@ mod artifact_v3_tests {
         assert_eq!(report.schema, "jope.emit.v3");
         assert!(report.ok);
         assert!(report.artifacts.iter().any(|a| a.lang == "manifest-v3"));
+        for language in ["ts", "typescript", "v3:typescript"] {
+            let output = dir.path().join(language.replace(':', "-"));
+            let report = emit_genome(DEFAULT_GENOME, language, Some(&output)).unwrap();
+            assert!(report.ok);
+            assert!(output.join("model.ts").is_file());
+            assert!(output.join("model.kernel.rs").is_file());
+            assert!(report.artifacts.iter().any(|a| a.lang == "typescript"));
+        }
         let refused = dir.path().join("unsupported");
         let err = emit_genome("(pipe X (histgbm))", "v3:js", Some(&refused)).unwrap_err();
         assert!(err.to_string().contains("unsupported requested targets"));

@@ -35,6 +35,20 @@ fn all_requested_recipe_targets_bind_exact_source_bytes() {
     assert!(ts.manifest.all_supported());
     assert_eq!(Target::parse("ts").unwrap(), Target::TypeScript);
     assert_eq!(ts.sources.len(), 2);
+    for source in ts.sources.values() {
+        assert!(transpile::lint_shipped_text(source).is_empty());
+    }
+    let tokens = feat_math::tokens::count_tokens(
+        "// typed model\nconst label: string = 'ok';",
+        feat_math::tokens::Lang::TypeScript,
+    );
+    assert_eq!(tokens.doc_tokens, 2);
+    assert!(tokens.code_tokens > 0);
+    let mut weakened = ts.manifest.clone();
+    if let TargetState::Supported { build, .. } = &mut weakened.targets[0].state {
+        build.flags.clear();
+    }
+    assert!(weakened.validate().is_err());
     let again = emission(&[Target::TypeScript]);
     assert_eq!(ts.sources, again.sources);
     let (ts_dir, ts_pin) = publish(&ts);
