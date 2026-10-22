@@ -25,7 +25,19 @@
       }
     },
     "task": {"enum": ["regression", "binary", "multiclass"]},
-    "metric": {"type": "string", "minLength": 1, "maxLength": 64, "description": "Selection fitness name when selected automatically; canonical task metric for a named fit. The exact custom specification and identity are in training_procedure.selection."},
+    "metric": {"type": "string", "minLength": 1, "maxLength": 128, "description": "Selection objective name when selected automatically; canonical task metric for a named fit. The exact custom specification and identity are in training_procedure.selection."},
+    "output_transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intercept", "slope"],
+      "description": "Objective-aware output map applied after the native model: max(intercept + slope * prediction, lower). Must equal training_procedure.selection.calibration.output_transform.",
+      "properties": {
+        "intercept": {"type": "number"},
+        "slope": {"type": "number", "exclusiveMinimum": 0},
+        "lower": {"type": "number"}
+      }
+    },
+    "auxiliary_columns": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}, "description": "Numeric training columns the selection objective read; never features, ignored in prediction input."},
     "class_order": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "target": {"type": "string", "minLength": 1},
     "input_schema": {

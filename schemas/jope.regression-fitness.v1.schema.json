@@ -1,13 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.regression-fitness.v1.schema.json",
-  "title": "Portable JopeDime regression fitness v1",
+  "title": "Portable JopeDime regression objective v1",
+  "description": "A built-in metric with explicit parameters, a custom row expression, a weighted objective or a composite. The runtime also bounds expression depth (16) and nodes (256), composition depth (8) and nodes (64), columns (16) and specification size (32 KiB).",
   "$ref": "#/$defs/fitness",
   "$defs": {
     "fitness": {
       "oneOf": [
         {
           "type": "object",
+          "description": "Root mean squared error. Minimize.",
           "required": [
             "metric"
           ],
@@ -20,6 +22,7 @@
         },
         {
           "type": "object",
+          "description": "Mean squared error. Minimize.",
           "required": [
             "metric"
           ],
@@ -32,6 +35,7 @@
         },
         {
           "type": "object",
+          "description": "Mean absolute error. Minimize.",
           "required": [
             "metric"
           ],
@@ -44,6 +48,7 @@
         },
         {
           "type": "object",
+          "description": "Median absolute error. Minimize.",
           "required": [
             "metric"
           ],
@@ -56,6 +61,7 @@
         },
         {
           "type": "object",
+          "description": "Largest absolute error. Minimize. Refuses row weights.",
           "required": [
             "metric"
           ],
@@ -68,6 +74,45 @@
         },
         {
           "type": "object",
+          "description": "Mean absolute percentage error as a ratio. Minimize.",
+          "required": [
+            "metric",
+            "epsilon"
+          ],
+          "properties": {
+            "metric": {
+              "const": "mape"
+            },
+            "epsilon": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Denominator floor for |y|."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Symmetric mean absolute percentage error (0..2). Minimize.",
+          "required": [
+            "metric",
+            "epsilon"
+          ],
+          "properties": {
+            "metric": {
+              "const": "smape"
+            },
+            "epsilon": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Denominator floor."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Sum of absolute errors over sum of absolute targets. Minimize.",
           "required": [
             "metric"
           ],
@@ -80,6 +125,7 @@
         },
         {
           "type": "object",
+          "description": "Mean squared log1p error; y, pred >= 0. Minimize.",
           "required": [
             "metric"
           ],
@@ -92,6 +138,7 @@
         },
         {
           "type": "object",
+          "description": "Root mean squared log1p error; y, pred >= 0. Minimize.",
           "required": [
             "metric"
           ],
@@ -104,6 +151,7 @@
         },
         {
           "type": "object",
+          "description": "Coefficient of determination. Maximize.",
           "required": [
             "metric"
           ],
@@ -116,6 +164,7 @@
         },
         {
           "type": "object",
+          "description": "Explained variance. Maximize.",
           "required": [
             "metric"
           ],
@@ -128,6 +177,7 @@
         },
         {
           "type": "object",
+          "description": "Pearson correlation. Maximize.",
           "required": [
             "metric"
           ],
@@ -140,6 +190,7 @@
         },
         {
           "type": "object",
+          "description": "Spearman rank correlation (information coefficient). Maximize. Refuses row weights.",
           "required": [
             "metric"
           ],
@@ -152,6 +203,45 @@
         },
         {
           "type": "object",
+          "description": "Huber loss. Minimize.",
+          "required": [
+            "metric",
+            "delta"
+          ],
+          "properties": {
+            "metric": {
+              "const": "huber"
+            },
+            "delta": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Quadratic-to-linear threshold in target units."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Smooth Huber loss. Minimize.",
+          "required": [
+            "metric",
+            "delta"
+          ],
+          "properties": {
+            "metric": {
+              "const": "pseudo_huber"
+            },
+            "delta": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Scale in target units."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "log(cosh(y - pred)). Minimize.",
           "required": [
             "metric"
           ],
@@ -164,6 +254,47 @@
         },
         {
           "type": "object",
+          "description": "Quantile (pinball) loss. Minimize.",
+          "required": [
+            "metric",
+            "quantile"
+          ],
+          "properties": {
+            "metric": {
+              "const": "pinball"
+            },
+            "quantile": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1,
+              "description": "Target quantile; 0.9 makes under-prediction 9x as costly as over-prediction."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Asymmetric squared error. Minimize.",
+          "required": [
+            "metric",
+            "quantile"
+          ],
+          "properties": {
+            "metric": {
+              "const": "expectile"
+            },
+            "quantile": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1,
+              "description": "Asymmetry of the squared error."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Mean Poisson deviance; y >= 0, pred > 0. Minimize.",
           "required": [
             "metric"
           ],
@@ -176,6 +307,7 @@
         },
         {
           "type": "object",
+          "description": "Mean Gamma deviance; y > 0, pred > 0. Minimize.",
           "required": [
             "metric"
           ],
@@ -188,110 +320,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "metric",
-            "epsilon"
-          ],
-          "properties": {
-            "metric": {
-              "const": "mape"
-            },
-            "epsilon": {
-              "type": "number",
-              "exclusiveMinimum": 0
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "metric",
-            "epsilon"
-          ],
-          "properties": {
-            "metric": {
-              "const": "smape"
-            },
-            "epsilon": {
-              "type": "number",
-              "exclusiveMinimum": 0
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "metric",
-            "delta"
-          ],
-          "properties": {
-            "metric": {
-              "const": "huber"
-            },
-            "delta": {
-              "type": "number",
-              "exclusiveMinimum": 0
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "metric",
-            "delta"
-          ],
-          "properties": {
-            "metric": {
-              "const": "pseudo_huber"
-            },
-            "delta": {
-              "type": "number",
-              "exclusiveMinimum": 0
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "metric",
-            "quantile"
-          ],
-          "properties": {
-            "metric": {
-              "const": "pinball"
-            },
-            "quantile": {
-              "type": "number",
-              "exclusiveMinimum": 0,
-              "exclusiveMaximum": 1
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "metric",
-            "quantile"
-          ],
-          "properties": {
-            "metric": {
-              "const": "expectile"
-            },
-            "quantile": {
-              "type": "number",
-              "exclusiveMinimum": 0,
-              "exclusiveMaximum": 1
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
+          "description": "Mean Tweedie deviance; y >= 0, pred > 0. Minimize.",
           "required": [
             "metric",
             "power"
@@ -303,13 +332,125 @@
             "power": {
               "type": "number",
               "exclusiveMinimum": 1,
-              "exclusiveMaximum": 2
+              "exclusiveMaximum": 2,
+              "description": "Tweedie power in (1,2)."
             }
           },
           "additionalProperties": false
         },
         {
           "type": "object",
+          "description": "LinEx loss exp(a*e) - a*e - 1 with e = y - pred. Minimize.",
+          "required": [
+            "metric",
+            "a"
+          ],
+          "properties": {
+            "metric": {
+              "const": "linex"
+            },
+            "a": {
+              "type": "number",
+              "not": {
+                "const": 0
+              },
+              "description": "Asymmetry: a > 0 makes under-prediction exponentially costly, a < 0 over-prediction."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Newsvendor cost. Minimize.",
+          "required": [
+            "metric",
+            "under_cost",
+            "over_cost"
+          ],
+          "properties": {
+            "metric": {
+              "const": "asymmetric_absolute"
+            },
+            "under_cost": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Cost per unit the prediction falls short of y."
+            },
+            "over_cost": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Cost per unit the prediction exceeds y."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Asymmetric squared cost. Minimize.",
+          "required": [
+            "metric",
+            "under_cost",
+            "over_cost"
+          ],
+          "properties": {
+            "metric": {
+              "const": "asymmetric_squared"
+            },
+            "under_cost": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Weight of squared shortfall."
+            },
+            "over_cost": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Weight of squared excess."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Root mean squared percentage error as a ratio. Minimize.",
+          "required": [
+            "metric",
+            "epsilon"
+          ],
+          "properties": {
+            "metric": {
+              "const": "rmspe"
+            },
+            "epsilon": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Denominator floor for |y|."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "MAE over the seasonal naive MAE on the same chronological rows. Minimize. Requires forward validation.",
+          "required": [
+            "metric",
+            "season"
+          ],
+          "properties": {
+            "metric": {
+              "const": "mase"
+            },
+            "season": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "description": "Seasonal lag of the naive forecast."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Mean net strategy return; y is the realized return, pred the position. Maximize. Requires forward validation.",
           "required": [
             "metric",
             "max_position",
@@ -321,17 +462,20 @@
             },
             "max_position": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "description": "Largest absolute position; prediction is clipped to [-max_position, max_position]."
             },
             "cost": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "Cost per unit of position turnover, in return units."
             }
           },
           "additionalProperties": false
         },
         {
           "type": "object",
+          "description": "Annualized Sharpe ratio of net strategy returns. Maximize. Requires forward validation.",
           "required": [
             "metric",
             "max_position",
@@ -345,24 +489,29 @@
             },
             "max_position": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "description": "Largest absolute position; prediction is clipped to [-max_position, max_position]."
             },
             "cost": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "Cost per unit of position turnover, in return units."
             },
             "target": {
-              "type": "number"
+              "type": "number",
+              "description": "Minimum acceptable return per interval."
             },
             "periods_per_year": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "description": "Intervals per year used to annualize."
             }
           },
           "additionalProperties": false
         },
         {
           "type": "object",
+          "description": "Annualized Sortino ratio of net strategy returns. Maximize. Requires forward validation.",
           "required": [
             "metric",
             "max_position",
@@ -376,24 +525,206 @@
             },
             "max_position": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "description": "Largest absolute position; prediction is clipped to [-max_position, max_position]."
             },
             "cost": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "Cost per unit of position turnover, in return units."
             },
             "target": {
-              "type": "number"
+              "type": "number",
+              "description": "Minimum acceptable return per interval."
             },
             "periods_per_year": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "description": "Intervals per year used to annualize."
             }
           },
           "additionalProperties": false
         },
         {
           "type": "object",
+          "description": "Largest peak-to-trough loss of compounded equity (0..1). Minimize. Requires forward validation.",
+          "required": [
+            "metric",
+            "max_position",
+            "cost"
+          ],
+          "properties": {
+            "metric": {
+              "const": "max_drawdown"
+            },
+            "max_position": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Largest absolute position; prediction is clipped to [-max_position, max_position]."
+            },
+            "cost": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Cost per unit of position turnover, in return units."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Compound annual growth over maximum drawdown. Maximize. Requires forward validation.",
+          "required": [
+            "metric",
+            "max_position",
+            "cost",
+            "periods_per_year"
+          ],
+          "properties": {
+            "metric": {
+              "const": "calmar"
+            },
+            "max_position": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Largest absolute position; prediction is clipped to [-max_position, max_position]."
+            },
+            "cost": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Cost per unit of position turnover, in return units."
+            },
+            "periods_per_year": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Intervals per year used to annualize."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Gains above threshold over shortfalls below it. Maximize. Requires forward validation.",
+          "required": [
+            "metric",
+            "max_position",
+            "cost",
+            "threshold"
+          ],
+          "properties": {
+            "metric": {
+              "const": "omega"
+            },
+            "max_position": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Largest absolute position; prediction is clipped to [-max_position, max_position]."
+            },
+            "cost": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Cost per unit of position turnover, in return units."
+            },
+            "threshold": {
+              "type": "number",
+              "description": "Return threshold per interval."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Mean loss of the worst alpha fraction of net returns (CVaR). Minimize. Requires forward validation.",
+          "required": [
+            "metric",
+            "max_position",
+            "cost",
+            "alpha"
+          ],
+          "properties": {
+            "metric": {
+              "const": "expected_shortfall"
+            },
+            "max_position": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Largest absolute position; prediction is clipped to [-max_position, max_position]."
+            },
+            "cost": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Cost per unit of position turnover, in return units."
+            },
+            "alpha": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1,
+              "description": "Tail fraction, e.g. 0.05."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Share of nonzero targets whose sign is predicted. Maximize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "hit_rate"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Gini of targets ranked by prediction over the perfect Gini. Maximize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "normalized_gini"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Kling-Gupta efficiency. Maximize. Refuses row weights.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "kge"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Share of the target total captured by the top-ranked fraction. Maximize. Refuses row weights.",
+          "required": [
+            "metric",
+            "fraction"
+          ],
+          "properties": {
+            "metric": {
+              "const": "capture_at"
+            },
+            "fraction": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "description": "Top fraction of rows by prediction."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "A row expression over y, pred and numeric training columns, aggregated over scored rows.",
           "required": [
             "metric",
             "name",
@@ -426,6 +757,28 @@
         },
         {
           "type": "object",
+          "description": "Another objective with nonnegative per-row weights (an expression, usually a column such as exposure).",
+          "required": [
+            "metric",
+            "weights",
+            "fitness"
+          ],
+          "properties": {
+            "metric": {
+              "const": "weighted"
+            },
+            "weights": {
+              "$ref": "#/$defs/expression"
+            },
+            "fitness": {
+              "$ref": "#/$defs/fitness"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Positive weighted sum of minimization losses, each divided by its scale.",
           "required": [
             "metric",
             "terms"
@@ -470,6 +823,7 @@
       "oneOf": [
         {
           "type": "object",
+          "description": "The target.",
           "required": [
             "op"
           ],
@@ -482,6 +836,7 @@
         },
         {
           "type": "object",
+          "description": "The prediction.",
           "required": [
             "op"
           ],
@@ -494,6 +849,7 @@
         },
         {
           "type": "object",
+          "description": "A finite constant.",
           "required": [
             "op",
             "value"
@@ -510,6 +866,26 @@
         },
         {
           "type": "object",
+          "description": "A numeric training column, excluded from features.",
+          "required": [
+            "op",
+            "name"
+          ],
+          "properties": {
+            "op": {
+              "const": "column"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "add(left, right).",
           "required": [
             "op",
             "left",
@@ -530,6 +906,7 @@
         },
         {
           "type": "object",
+          "description": "sub(left, right).",
           "required": [
             "op",
             "left",
@@ -550,6 +927,7 @@
         },
         {
           "type": "object",
+          "description": "mul(left, right).",
           "required": [
             "op",
             "left",
@@ -570,6 +948,7 @@
         },
         {
           "type": "object",
+          "description": "div(left, right).",
           "required": [
             "op",
             "left",
@@ -590,6 +969,7 @@
         },
         {
           "type": "object",
+          "description": "min(left, right).",
           "required": [
             "op",
             "left",
@@ -610,6 +990,7 @@
         },
         {
           "type": "object",
+          "description": "max(left, right).",
           "required": [
             "op",
             "left",
@@ -630,6 +1011,28 @@
         },
         {
           "type": "object",
+          "description": "pow(left, right).",
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "properties": {
+            "op": {
+              "const": "pow"
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "abs(arg).",
           "required": [
             "op",
             "arg"
@@ -646,6 +1049,24 @@
         },
         {
           "type": "object",
+          "description": "neg(arg).",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "neg"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "square(arg).",
           "required": [
             "op",
             "arg"
@@ -662,6 +1083,7 @@
         },
         {
           "type": "object",
+          "description": "sqrt(arg).",
           "required": [
             "op",
             "arg"
@@ -678,6 +1100,7 @@
         },
         {
           "type": "object",
+          "description": "ln(arg).",
           "required": [
             "op",
             "arg"
@@ -694,6 +1117,24 @@
         },
         {
           "type": "object",
+          "description": "log1p(arg).",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "log1p"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "exp(arg).",
           "required": [
             "op",
             "arg"
@@ -707,6 +1148,73 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "1 if arg > 0 else 0.",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "const": "step"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "arg limited to [min, max].",
+          "required": [
+            "op",
+            "arg",
+            "min",
+            "max"
+          ],
+          "properties": {
+            "op": {
+              "const": "clip"
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            },
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "then if condition > 0 else else.",
+          "required": [
+            "op",
+            "condition",
+            "then",
+            "else"
+          ],
+          "properties": {
+            "op": {
+              "const": "where"
+            },
+            "condition": {
+              "$ref": "#/$defs/expression"
+            },
+            "then": {
+              "$ref": "#/$defs/expression"
+            },
+            "else": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -714,6 +1222,7 @@
       "oneOf": [
         {
           "type": "object",
+          "description": "Mean (weighted mean under weighted).",
           "required": [
             "kind"
           ],
@@ -726,6 +1235,7 @@
         },
         {
           "type": "object",
+          "description": "Sum.",
           "required": [
             "kind"
           ],
@@ -738,6 +1248,7 @@
         },
         {
           "type": "object",
+          "description": "Maximum.",
           "required": [
             "kind"
           ],
@@ -750,6 +1261,7 @@
         },
         {
           "type": "object",
+          "description": "Linearly interpolated quantile.",
           "required": [
             "kind",
             "quantile"
@@ -762,6 +1274,38 @@
               "type": "number",
               "minimum": 0,
               "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Mean of the largest values holding this fraction of rows: CVaR of a row loss.",
+          "required": [
+            "kind",
+            "fraction"
+          ],
+          "properties": {
+            "kind": {
+              "const": "tail_mean"
+            },
+            "fraction": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Square root of the mean.",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "root_mean"
             }
           },
           "additionalProperties": false

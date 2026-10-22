@@ -64,7 +64,7 @@ pub enum Command {
         #[command(flatten)]
         common: CommonArgs,
     },
-    /// Discover or evaluate regression fitness functions.
+    /// Discover, validate or evaluate regression objectives (`--fitness` specifications).
     Fitness {
         #[command(subcommand)]
         command: FitnessCommand,
@@ -107,9 +107,14 @@ pub struct TrainArgs {
     /// With `--method auto`: cross-validation folds (reduced for small tables).
     #[arg(long, default_value_t = 5)]
     pub folds: usize,
-    /// Regression selection objective: catalog name, inline JSON, or @path.json.
+    /// Regression objective for selection and calibration: a catalog name (`mae`), a name with
+    /// numeric overrides (`pinball:quantile=0.9`), inline JSON, or @path.json.
     #[arg(long)]
     pub fitness: Option<String>,
+    /// Objective-aware output calibration learned on out-of-fold predictions: auto (affine with
+    /// --fitness, otherwise none), none, shift or affine.
+    #[arg(long, default_value = "auto", value_parser = ["auto", "none", "shift", "affine"])]
+    pub calibration: String,
     /// iid or forward (chronological expanding-window validation).
     #[arg(long, default_value = "iid", value_parser = ["iid", "forward"])]
     pub validation: String,
@@ -145,11 +150,18 @@ pub struct CommonArgs {
 
 #[derive(Subcommand)]
 pub enum FitnessCommand {
-    /// List built-in names with their exact default parameters and directions.
+    /// List built-in names with their exact default parameters, directions and descriptions.
     List,
-    /// Score a JSON file containing {fitness, targets, predictions}.
+    /// Check a specification (name, name:key=value, JSON or @path.json) and print its identity.
+    Validate {
+        /// The specification, as `--fitness` accepts it.
+        spec: String,
+    },
+    /// Score a JSON file containing {fitness, targets, predictions[, columns]}.
     Evaluate {
         #[arg(long)]
         input: PathBuf,
     },
+    /// Print the JSON Schema of objective specifications.
+    Schema,
 }

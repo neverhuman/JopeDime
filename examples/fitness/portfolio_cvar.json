@@ -1,0 +1,6 @@
+{
+  "metric": "expected_shortfall",
+  "max_position": 1.0,
+  "cost": 0.0005,
+  "alpha": 0.05
+}

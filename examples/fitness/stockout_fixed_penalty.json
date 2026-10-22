@@ -1,0 +1,42 @@
+{
+  "metric": "custom",
+  "name": "stockout_penalty",
+  "direction": "minimize",
+  "expression": {
+    "op": "add",
+    "left": {
+      "op": "mul",
+      "left": {
+        "op": "constant",
+        "value": 25.0
+      },
+      "right": {
+        "op": "step",
+        "arg": {
+          "op": "sub",
+          "left": {
+            "op": "y"
+          },
+          "right": {
+            "op": "pred"
+          }
+        }
+      }
+    },
+    "right": {
+      "op": "abs",
+      "arg": {
+        "op": "sub",
+        "left": {
+          "op": "y"
+        },
+        "right": {
+          "op": "pred"
+        }
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "mean"
+  }
+}

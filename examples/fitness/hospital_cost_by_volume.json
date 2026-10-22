@@ -1,0 +1,10 @@
+{
+  "metric": "weighted",
+  "weights": {
+    "op": "column",
+    "name": "discharges"
+  },
+  "fitness": {
+    "metric": "gamma_deviance"
+  }
+}

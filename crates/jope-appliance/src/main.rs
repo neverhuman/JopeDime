@@ -361,8 +361,28 @@ impl Run {
     fn fit(&mut self, train: &TrainArgs, budget: &Budget) -> anyhow::Result<FittedModel> {
         let choice = TaskChoice::parse(&train.task)
             .ok_or_else(|| Failure::input(format!("unknown task {:?}", train.task)))?;
+        let fitness = train
+            .fitness
+            .as_deref()
+            .map(load_fitness)
+            .transpose()
+            .map_err(|e| Failure::input(format!("fitness: {e:#}")))?;
+        let calibration = jope_runtime::calibration::Calibration::parse(&train.calibration)
+            .ok_or_else(|| {
+                Failure::input(format!("unknown calibration {:?}", train.calibration))
+            })?;
         let csv = self.read_csv("train", &train.train)?;
-        let training = table::training(&csv, &train.target, choice, &self.limits())?;
+        let auxiliary = fitness
+            .as_ref()
+            .map(jope_runtime::fitness::Fitness::columns)
+            .unwrap_or_default();
+        let training = table::training_with_auxiliary(
+            &csv,
+            &train.target,
+            choice,
+            &self.limits(),
+            &auxiliary,
+        )?;
         self.receipt.task = Some(TaskRecord {
             task: task::name(training.kind).to_owned(),
             reason: training.task_reason.clone(),
@@ -375,12 +395,8 @@ impl Run {
             method: train.method.clone(),
             candidates: train.candidates.clone(),
             folds: train.folds,
-            fitness: train
-                .fitness
-                .as_deref()
-                .map(load_fitness)
-                .transpose()
-                .map_err(|e| Failure::input(format!("fitness: {e:#}")))?,
+            fitness,
+            calibration,
             validation: if train.validation == "forward" {
                 jope_runtime::automl::Validation::Forward { gap: train.gap }
             } else {
@@ -411,7 +427,12 @@ impl Run {
     ) -> anyhow::Result<()> {
         let csv = self.read_csv("input", input)?;
         let started = Instant::now();
-        let (rows, ignored) = table::prediction(&csv, fitted.schema(), &fitted.header.target)?;
+        let (rows, ignored) = table::prediction_ignoring(
+            &csv,
+            fitted.schema(),
+            &fitted.header.target,
+            &fitted.header.auxiliary_columns,
+        )?;
         self.receipt.ignored_columns = ignored;
         let predictions = api::predict(fitted, &rows, budget)?;
         self.receipt.timings.predict_seconds = started.elapsed().as_secs_f64();
@@ -692,6 +713,15 @@ fn main() -> ExitCode {
         Command::Fitness { command } => report(match command {
             cli::FitnessCommand::List => {
                 print_json(&jope_runtime::service::catalog());
+                Ok(())
+            }
+            cli::FitnessCommand::Validate { spec } => (|| {
+                let fitness = load_fitness(&spec)?;
+                print_json(&jope_runtime::service::describe(&fitness)?);
+                Ok(())
+            })(),
+            cli::FitnessCommand::Schema => {
+                print_json(&jope_runtime::fitness::schema());
                 Ok(())
             }
             cli::FitnessCommand::Evaluate { input } => (|| {
