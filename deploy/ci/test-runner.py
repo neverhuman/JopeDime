@@ -294,7 +294,7 @@ class TrimTests(unittest.TestCase):
                 self.assertIn(flag, run[0])
             mounts = [args[i + 1] for i, a in enumerate(args) if a == '-v']
             self.assertEqual(['jope-pr-ci-target:/v', '/opt/jope-runner/trim-deps.sh:/opt/jope-runner/trim-deps.sh:ro'], mounts)
-            self.assertEqual(['/v', '6', '--apply'], args[-3:])
+            self.assertEqual(['/v', '3', '--apply'], args[-3:])
             manifests = sorted((state / 'trim').glob('*-ci.tsv'))
             self.assertEqual(1, len(manifests))
             self.assertIn('libfoo-0123456789abcdef.rlib\t10\t1.5', manifests[0].read_text())

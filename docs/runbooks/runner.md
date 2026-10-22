@@ -147,7 +147,7 @@ find the lane free.
 At most once per day per lane (`JOPE_RUNNER_TRIM_INTERVAL_S`), `trim-deps.sh` runs in a
 network-less, read-only container, as uid 1001, mounting only that lane's target volume. It
 removes files directly in `<volume>/*/debug/deps` that are named `<stem>-<16 hex>[.<ext>]` and
-are older than the newest `JOPE_RUNNER_TRIM_KEEP` (6) builds of the same directory, crate stem
+are older than the newest `JOPE_RUNNER_TRIM_KEEP` (3; it was 6 until xbabe3 ran short of disk on 2026-10-22) builds of the same directory, crate stem
 and kind, so each feature and profile variant keeps its recent builds. Nothing else is touched:
 other names, `build/`, `incremental/`, `tmp/`, deeper paths, and any top-level directory whose
 name contains `evidence`.
