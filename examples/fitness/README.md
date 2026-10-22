@@ -32,4 +32,4 @@ and prices with your training-only, predeclared business assumptions.
 Run `bash examples/fitness/run.sh` from the repository root. It creates its outputs under
 `target/fitness-example/`, verifies a custom CLI fit/predict, evaluates the cost recipe, and
 executes the equivalent API request. For return recipes, supply chronological return data and
-`--validation forward --gap N`; see [the full contract](../../docs/regression-fitness.md).
+`--validation forward --gap N`; see [the full contract](../../docs/regression-objectives.md).
