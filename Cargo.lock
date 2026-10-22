@@ -246,7 +246,7 @@ checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
 name = "battle-gpu"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "feat-math",
  "libc",
@@ -1253,7 +1253,7 @@ checksum = "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
 
 [[package]]
 name = "feat-math"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "libc",
@@ -1918,7 +1918,7 @@ dependencies = [
 
 [[package]]
 name = "hyperion"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -2319,7 +2319,7 @@ dependencies = [
 
 [[package]]
 name = "jope-appliance"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2333,7 +2333,7 @@ dependencies = [
 
 [[package]]
 name = "jope-arena"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2352,7 +2352,7 @@ dependencies = [
 
 [[package]]
 name = "jope-assets"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "hex",
  "jope-assets",
@@ -2369,11 +2369,11 @@ dependencies = [
 
 [[package]]
 name = "jope-automl"
-version = "0.3.0"
+version = "0.4.0"
 
 [[package]]
 name = "jope-bench"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -2396,7 +2396,7 @@ dependencies = [
 
 [[package]]
 name = "jope-ci"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "clap",
  "jope-records",
@@ -2410,7 +2410,7 @@ dependencies = [
 
 [[package]]
 name = "jope-cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2433,7 +2433,7 @@ dependencies = [
 
 [[package]]
 name = "jope-datasets"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2454,7 +2454,7 @@ dependencies = [
 
 [[package]]
 name = "jope-dime-regressor"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "battle-gpu",
@@ -2478,7 +2478,7 @@ dependencies = [
 
 [[package]]
 name = "jope-dist"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2494,7 +2494,7 @@ dependencies = [
 
 [[package]]
 name = "jope-learning"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2518,7 +2518,7 @@ dependencies = [
 
 [[package]]
 name = "jope-models"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2532,7 +2532,7 @@ dependencies = [
 
 [[package]]
 name = "jope-motifs"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2548,7 +2548,7 @@ dependencies = [
 
 [[package]]
 name = "jope-observatory"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -2567,7 +2567,7 @@ dependencies = [
 
 [[package]]
 name = "jope-parallel"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "cc",
@@ -2597,11 +2597,11 @@ dependencies = [
 
 [[package]]
 name = "jope-paths"
-version = "0.3.0"
+version = "0.4.0"
 
 [[package]]
 name = "jope-pipeline"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2623,7 +2623,7 @@ dependencies = [
 
 [[package]]
 name = "jope-policy"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -2641,7 +2641,7 @@ dependencies = [
 
 [[package]]
 name = "jope-records"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "clap",
  "flate2",
@@ -2655,7 +2655,7 @@ dependencies = [
 
 [[package]]
 name = "jope-runtime"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "csv",
@@ -3081,7 +3081,7 @@ dependencies = [
 
 [[package]]
 name = "numpy-pcg64"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde_json",
 ]
@@ -4406,7 +4406,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "starforge"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "blake2",

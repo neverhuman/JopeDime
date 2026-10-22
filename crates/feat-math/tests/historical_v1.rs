@@ -582,6 +582,13 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // Workspace version bump to 0.4.0 (just bump 0.4.0): announced identity only.
+    let release_0_4_0 = old_fixture("transitions/release_0_4_0_identity_rebaseline.v1.json");
+    let release_fixtures = release_0_4_0["fixtures"].as_array().unwrap();
+    assert_eq!(release_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(release_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -612,6 +619,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         pr396_combined,
         pr397_combined,
         pr398_combined,
+        release_0_4_0,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
