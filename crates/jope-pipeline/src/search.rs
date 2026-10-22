@@ -1270,9 +1270,25 @@ fn run_cut_allocated(
             observation.island = multi.then_some(island);
             observations.push(observation);
         }
+        // Another island's draw of a genome this generation measured joins that island with
+        // the existing score. Folded before the stop checks below so the progress snapshot sees
+        // the complete per-island population on every path; after a stop nothing reads
+        // `islands`, so the search itself is unchanged.
+        for (island, genome) in shared {
+            let known = observations
+                .iter()
+                .find(|o| o.genome == genome && o.measured())
+                .and_then(|o| o.rmse);
+            if let Some(rmse) = known {
+                if !islands[island].survivors.iter().any(|s| s.genome == genome) {
+                    islands[island].survivors.push(Scored { genome, rmse });
+                }
+            }
+        }
         if let Some(progress) = &options.progress {
-            // The candidates this generation ended with: every island's carried survivors and
-            // newly measured candidates, by their held-out R^2 on this cut.
+            // The candidates this generation ended with: every island's carried survivors,
+            // newly measured candidates and reused shared draws, by their held-out R^2 on this
+            // cut.
             let population_r2 = islands
                 .iter()
                 .flat_map(|island| &island.survivors)
@@ -1299,17 +1315,6 @@ fn run_cut_allocated(
         }
         if let Some(bound) = bound {
             break 'search bound;
-        }
-        for (island, genome) in shared {
-            let known = observations
-                .iter()
-                .find(|o| o.genome == genome && o.measured())
-                .and_then(|o| o.rmse);
-            if let Some(rmse) = known {
-                if !islands[island].survivors.iter().any(|s| s.genome == genome) {
-                    islands[island].survivors.push(Scored { genome, rmse });
-                }
-            }
         }
 
         // A generation that spent nothing drew only genomes already measured.
@@ -2211,6 +2216,80 @@ mod tests {
                 },
                 rng_seed,
             )
+        }
+    }
+
+    /// The `population_r2` snapshot is the fully folded per-island population: with two
+    /// islands both draw the bootstrap in generation 0, it is fitted once, and the second copy
+    /// joins its island as a shared draw. That copy must be in the snapshot on a generation that
+    /// continues, on one the evaluation budget ends, and the seconds-stopped path still reports.
+    #[test]
+    fn population_snapshot_includes_shared_draws_on_every_path() {
+        let temp = tempfile::tempdir().unwrap();
+        let cut = one_cut(&temp.path().join("prepared"), "shared-population");
+        // (evaluations, clock, extra bootstrap copies expected in the snapshot)
+        for (case, (evaluations, clock, shared_copies)) in [
+            (23, Clock::Frozen, 1), // generation 0 completes; generation 1 ends on the budget
+            (20, Clock::Frozen, 1), // the budget ends generation 0 after island 1's bootstrap
+            (20, Clock::Expired, 0), // seconds stop island 0 before island 1 is drawn
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let (sender, receiver) = std::sync::mpsc::sync_channel(64);
+            let budget = Budget {
+                evaluations,
+                seconds: 600,
+            };
+            let options = SearchOptions {
+                islands: 2,
+                clock,
+                progress: Some(Arc::new(crate::progress::Progress::with_sender(
+                    Some(sender),
+                    1,
+                    budget,
+                    std::time::Instant::now(),
+                ))),
+                ..SearchOptions::new(budget, 5)
+            };
+            let searched = run_cuts_with(
+                std::slice::from_ref(&cut),
+                &options,
+                &temp.path().join(format!("case-{case}")),
+            )
+            .unwrap();
+            let generation0: Vec<&Observation> = searched[0]
+                .observations
+                .iter()
+                .filter(|o| o.generation == 0 && o.measured())
+                .collect();
+            let bootstrap = generation0
+                .iter()
+                .find(|o| o.genome == BOOTSTRAP_GENOME)
+                .and_then(|o| o.hold_r2)
+                .unwrap();
+            let expected = crate::progress::population_snapshot(
+                generation0
+                    .iter()
+                    .filter_map(|o| o.hold_r2)
+                    .chain(std::iter::repeat_n(bootstrap, shared_copies)),
+                crate::progress::POPULATION_SAMPLES,
+            );
+            // The first progress record is generation 0's end.
+            let first = receiver
+                .try_iter()
+                .map(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).unwrap())
+                .find(|r| r["kind"] == "progress")
+                .unwrap();
+            assert_eq!(first["generation"], 1, "case {case}: {first}");
+            let snapshot: Vec<f64> =
+                serde_json::from_value(first["population_r2"].clone()).unwrap();
+            assert_eq!(snapshot, expected, "case {case}");
+            assert_eq!(
+                snapshot.len(),
+                generation0.len() + shared_copies,
+                "case {case}"
+            );
         }
     }
 
