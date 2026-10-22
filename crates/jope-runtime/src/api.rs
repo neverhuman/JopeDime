@@ -20,6 +20,8 @@ pub struct FitOptions {
     /// Regression-only objective used on held-out predictions, never on a final test set.
     pub fitness: Option<crate::fitness::Fitness>,
     pub validation: automl::Validation,
+    /// Objective-aware output calibration; `auto` is `affine` with an objective, else `none`.
+    pub calibration: crate::calibration::Calibration,
 }
 
 impl Default for FitOptions {
@@ -30,6 +32,7 @@ impl Default for FitOptions {
             folds: automl::DEFAULT_FOLDS,
             fitness: None,
             validation: automl::Validation::default(),
+            calibration: crate::calibration::Calibration::Auto,
         }
     }
 }
@@ -85,6 +88,32 @@ fn fit_inner(
             "forward validation applies only to regression with --method auto",
         ));
     }
+    if options.calibration.resolve(options.fitness.is_some())
+        != crate::calibration::Calibration::None
+        && options.fitness.is_none()
+    {
+        return Err(Failure::input(
+            "output calibration needs a regression objective (--fitness)",
+        ));
+    }
+    let wanted = options
+        .fitness
+        .as_ref()
+        .map(crate::fitness::Fitness::columns)
+        .unwrap_or_default();
+    if training
+        .auxiliary
+        .keys()
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>()
+        != wanted
+    {
+        return Err(Failure::input(format!(
+            "the training table holds objective columns {:?}, but the objective reads {:?}",
+            training.auxiliary.keys().collect::<Vec<_>>(),
+            wanted
+        )));
+    }
     let started = Instant::now();
     let (method, selection) = if options.method == AUTO {
         let candidates = if options.candidates.is_empty() {
@@ -106,6 +135,7 @@ fn fit_inner(
             budget,
             options.fitness.as_ref(),
             &options.validation,
+            options.calibration,
         )?;
         (method, Some(selection))
     } else {
