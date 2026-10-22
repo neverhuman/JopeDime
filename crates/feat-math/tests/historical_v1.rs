@@ -534,7 +534,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         changed_fixtures[0],
         hpc_fixtures[0]["before"].as_str().unwrap(),
         hpc_fixtures[0]["after"].as_str().unwrap(),
-        &[hpc_cache.clone()],
+        std::slice::from_ref(&hpc_cache),
     )
     .expect("preserved PR396 parallel identity announcement");
     let pr396_combined =
@@ -551,13 +551,33 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             edge["path"].as_str().unwrap(),
             edge["before"].as_str().unwrap(),
             edge["after"].as_str().unwrap(),
-            &[pr397_parallel.clone()],
+            std::slice::from_ref(&pr397_parallel),
         )
         .expect("preserved PR397 parallel identity announcement");
+    }
+    // Preserve original PR398 parallel announcement separately from the combined successor.
+    let pr398_parallel = old_fixture("transitions/hpc_safety_cleanup_identity_rebaseline.v1.json");
+    assert_eq!(pr398_parallel["fixtures"].as_array().unwrap().len(), 2);
+    for edge in pr398_parallel["fixtures"].as_array().unwrap() {
+        identity_transitions::verify_fixture(
+            edge["path"].as_str().unwrap(),
+            edge["before"].as_str().unwrap(),
+            edge["after"].as_str().unwrap(),
+            std::slice::from_ref(&pr398_parallel),
+        )
+        .expect("preserved PR398 parallel identity announcement");
     }
     let pr397_combined =
         old_fixture("transitions/pr397_after_pr396_jankurai_security_rebaseline.v1.json");
     let combined_fixtures = pr397_combined["fixtures"].as_array().unwrap();
+    assert_eq!(combined_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
+    }
+    // PR398 follows the merged PR397 identity, rather than its original parallel baseline.
+    let pr398_combined =
+        old_fixture("transitions/pr398_after_pr397_hpc_safety_cleanup_rebaseline.v1.json");
+    let combined_fixtures = pr398_combined["fixtures"].as_array().unwrap();
     assert_eq!(combined_fixtures.len(), 2);
     for path in changed_fixtures {
         assert!(combined_fixtures.iter().any(|edge| edge["path"] == path));
@@ -591,6 +611,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         jankurai_dependency_security,
         pr396_combined,
         pr397_combined,
+        pr398_combined,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

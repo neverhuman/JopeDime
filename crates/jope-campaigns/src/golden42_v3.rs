@@ -858,8 +858,11 @@ pub(crate) fn run(
                     .create(true)
                     .append(true)
                     .open(root.join("worker-retries.v1.jsonl"))?;
-                serde_json::to_writer(&mut file, &record)?;
-                file.write_all(b"\n")?;
+                // Serialize record and newline before appending; write_all may retry short writes.
+                // An I/O failure can still leave an incomplete record.
+                let mut line = serde_json::to_vec(&record)?;
+                line.push(b'\n');
+                file.write_all(&line)?;
                 file.flush()?;
             }
             Err(error) => return Err(error),
@@ -1279,8 +1282,10 @@ pub(crate) fn persistent_worker(bootstrap_path: &Path) -> Result<()> {
         let request: WorkerRequest = serde_json::from_str(&line)?;
         let response =
             evaluate_worker_request(&bootstrap, &training, &train.y, &encoded, &runtime, request)?;
-        serde_json::to_writer(&mut stdout, &response)?;
-        stdout.write_all(b"\n")?;
+        // Serialize first and write each response line in one call, then flush it.
+        let mut line = serde_json::to_vec(&response)?;
+        line.push(b'\n');
+        stdout.write_all(&line)?;
         stdout.flush()?;
     }
     Ok(())
@@ -2096,8 +2101,11 @@ fn append_telemetry(
     };
     let path = root.join("telemetry.v1.jsonl");
     let mut file = OpenOptions::new().create(true).append(true).open(path)?;
-    serde_json::to_writer(&mut file, &record)?;
-    file.write_all(b"\n")?;
+    // Serialize record and newline before appending; write_all may retry short writes.
+    // An I/O failure can still leave an incomplete record.
+    let mut line = serde_json::to_vec(&record)?;
+    line.push(b'\n');
+    file.write_all(&line)?;
     file.flush()?;
     Ok(())
 }
@@ -2214,8 +2222,11 @@ fn wait_for_resources(
             .create(true)
             .append(true)
             .open(root.join("resource-pauses.v1.jsonl"))?;
-        serde_json::to_writer(&mut file, &record)?;
-        file.write_all(b"\n")?;
+        // Serialize record and newline before appending; write_all may retry short writes.
+        // An I/O failure can still leave an incomplete record.
+        let mut line = serde_json::to_vec(&record)?;
+        line.push(b'\n');
+        file.write_all(&line)?;
         thread::sleep(Duration::from_secs(5));
     }
 }

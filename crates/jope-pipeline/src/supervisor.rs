@@ -27,10 +27,21 @@ pub struct LaunchResult {
     pub reason: Option<String>,
 }
 
+/// A flag SIGINT and SIGTERM set. Registering the flag replaces the default action, so a
+/// process busy outside its polling loop (input hashing, admission) could otherwise only be
+/// stopped with SIGKILL; a second signal while the first is honoured now exits at once with
+/// [`crate::parallel::CANCELLED_EXIT`], as `parallel::termination_flag` already does. The
+/// conditional shutdown is registered before the flag so the first signal only sets it.
 pub fn cancellation() -> Result<Arc<AtomicBool>> {
     let flag = Arc::new(AtomicBool::new(false));
-    signal_hook::flag::register(signal_hook::consts::SIGINT, flag.clone())?;
-    signal_hook::flag::register(signal_hook::consts::SIGTERM, flag.clone())?;
+    for signal in [signal_hook::consts::SIGINT, signal_hook::consts::SIGTERM] {
+        signal_hook::flag::register_conditional_shutdown(
+            signal,
+            i32::from(crate::parallel::CANCELLED_EXIT),
+            flag.clone(),
+        )?;
+        signal_hook::flag::register(signal, flag.clone())?;
+    }
     Ok(flag)
 }
 
@@ -360,6 +371,46 @@ mod tests {
         assert!(cpus("Cpus_allowed_list:\t4-6\n", 4).is_err());
         assert!(cpus("Cpus_allowed_list:\t6-4\n", 1).is_err());
         assert!(cpus("", 1).is_err());
+    }
+    /// The first SIGTERM only sets the flag; the second exits with CANCELLED_EXIT. Runs in a
+    /// re-executed copy of this test binary so the exit cannot take the test runner with it.
+    #[test]
+    fn second_cancellation_signal_exits_with_cancelled_status() {
+        use nix::sys::signal::{kill, Signal};
+        use nix::unistd::Pid;
+        const CHILD: &str = "JOPE_CANCELLATION_SIGNAL_CHILD";
+        const NAME: &str =
+            "supervisor::tests::second_cancellation_signal_exits_with_cancelled_status";
+        if std::env::var_os(CHILD).is_some() {
+            let flag = cancellation().unwrap();
+            kill(Pid::this(), Signal::SIGTERM).unwrap();
+            let deadline = std::time::Instant::now() + Duration::from_secs(5);
+            while !flag.load(Ordering::Acquire) {
+                assert!(
+                    std::time::Instant::now() < deadline,
+                    "first signal not observed"
+                );
+                thread::sleep(Duration::from_millis(1));
+            }
+            println!("first-signal-survived");
+            kill(Pid::this(), Signal::SIGTERM).unwrap();
+            thread::sleep(Duration::from_secs(5));
+            panic!("a second signal must exit the process");
+        }
+        let output = Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", NAME, "--nocapture", "--test-threads=1"])
+            .env(CHILD, "1")
+            .stdin(Stdio::null())
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert_eq!(
+            output.status.code(),
+            Some(i32::from(crate::parallel::CANCELLED_EXIT)),
+            "{stdout}{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(stdout.contains("first-signal-survived"), "{stdout}");
     }
     #[test]
     fn supervisor_paths_cannot_escape_system_slice() {

@@ -27,7 +27,7 @@ pub fn execute_query_worker() -> Result<()> {
         .parse()?;
     ensure!(fd > 2, "invalid query custody channel");
     let mut channel = unsafe { UnixStream::from_raw_fd(fd) };
-    let parent = ProcessIdentity::read(unsafe { libc::getppid() } as u32)?;
+    let parent = ProcessIdentity::read(crate::host_os::parent_pid())?;
     ensure!(
         authenticated_peer(&channel)? == parent,
         "query channel is not owned by original parent"

@@ -72,7 +72,7 @@ fn replacement_worker_becomes_ready_while_parent_holds_the_gpu_lease() {
         .create_new(true)
         .open(root.join("runs/encoding-service.lock"))
         .unwrap();
-    assert!(lease.try_lock().is_ok());
+    lease.try_lock().unwrap();
     let mut child = spawn(root, &pool);
     let state = ready(&mut child, &pool);
     assert_eq!(state["worker"]["process"]["pid"], child.0.id());

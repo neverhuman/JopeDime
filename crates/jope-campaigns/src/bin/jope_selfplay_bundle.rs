@@ -347,10 +347,10 @@ fn main() -> Result<()> {
         return Ok(());
     }
     if let Some(path) = &args.verify_rollback_capsule {
-        let value: Value = serde_json::from_reader(
+        let value: Value = serde_json::from_reader(std::io::BufReader::new(
             File::open(path)
                 .with_context(|| format!("open rollback capsule {}", path.display()))?,
-        )?;
+        ))?;
         ensure!(
             classify_rollback_capsule_schema(&value)? == "authorizing-v2",
             "JopeRollbackCapsule.v1 is historical evidence and can never authorize activation"
@@ -386,10 +386,10 @@ fn main() -> Result<()> {
             "existing bundle verification requires a lowercase SHA-256"
         );
         let manifest_path = args.output_root.join(bundle_sha256).join("bundle.json");
-        let manifest: Value = serde_json::from_reader(
+        let manifest: Value = serde_json::from_reader(std::io::BufReader::new(
             File::open(&manifest_path)
                 .with_context(|| format!("open staged bundle {}", manifest_path.display()))?,
-        )?;
+        ))?;
         verify_intrinsic_existing(&args.output_root, bundle_sha256)?;
         if args.verify_existing.is_some() {
             println!(
@@ -452,9 +452,9 @@ fn load_activation_rollback_capsule(args: &Args) -> Result<(RollbackCapsuleV2, P
         .rollback_capsule
         .as_ref()
         .context("activation requires --rollback-capsule")?;
-    let value: Value = serde_json::from_reader(
+    let value: Value = serde_json::from_reader(std::io::BufReader::new(
         File::open(path).with_context(|| format!("open rollback capsule {}", path.display()))?,
-    )
+    ))
     .context("decode rollback capsule")?;
     ensure!(
         classify_rollback_capsule_schema(&value)? == "authorizing-v2",
@@ -487,10 +487,10 @@ fn activate_manifest(
     let rollback_capsule_sha256 =
         verify_rollback_capsule(output_root, evidence_root, rollback_capsule, now)?;
     let rollback_path = output_root.join(ROLLBACK_BUNDLE_SHA256).join("bundle.json");
-    let rollback_manifest: Value = serde_json::from_reader(
+    let rollback_manifest: Value = serde_json::from_reader(std::io::BufReader::new(
         File::open(&rollback_path)
             .with_context(|| format!("open rollback bundle {}", rollback_path.display()))?,
-    )?;
+    ))?;
     verify_rollback_candidate(
         rollback_path
             .parent()
@@ -531,10 +531,10 @@ fn activate_manifest(
             .external_activation_gate
             .as_ref()
             .context("forward DIME activation requires --external-activation-gate")?;
-        let gate: DimeExternalActivationGateV1 = serde_json::from_reader(
+        let gate: DimeExternalActivationGateV1 = serde_json::from_reader(std::io::BufReader::new(
             File::open(path)
                 .with_context(|| format!("open external activation gate {}", path.display()))?,
-        )?;
+        ))?;
         gate.validate_at(path.parent().unwrap_or_else(|| Path::new(".")), now)?;
         ensure!(
             gate.candidate_bundle_sha256 == bundle_sha256,
@@ -597,10 +597,10 @@ fn verify_candidate_review_gate(args: &Args, manifest: &Value, now_unix_ms: u64)
         .candidate_review_gate
         .as_ref()
         .context("forward activation requires --candidate-review-gate")?;
-    let gate: DimeCandidateReviewGateV1 = serde_json::from_reader(
+    let gate: DimeCandidateReviewGateV1 = serde_json::from_reader(std::io::BufReader::new(
         File::open(path)
             .with_context(|| format!("open candidate review gate {}", path.display()))?,
-    )?;
+    ))?;
     gate.validate_at(path.parent().unwrap_or_else(|| Path::new(".")), now_unix_ms)?;
     let bundle_sha256 = manifest
         .get("bundle_sha256")
@@ -685,9 +685,9 @@ fn collect_json_references(path: &Path, output: &mut BTreeSet<String>) -> Result
     if !path.is_file() {
         return Ok(());
     }
-    let value: Value = serde_json::from_reader(
+    let value: Value = serde_json::from_reader(std::io::BufReader::new(
         File::open(path).with_context(|| format!("open evaluator reference {}", path.display()))?,
-    )?;
+    ))?;
     collect_evaluator_digests(&value, output);
     Ok(())
 }
@@ -823,7 +823,8 @@ fn retain_evaluators(output_root: &Path, prepared_bundle_sha256: &str) -> Result
     });
     let index_path = root.join("training/evaluator-retention-index.v1.json");
     if index_path.is_file() {
-        let existing: Value = serde_json::from_reader(File::open(&index_path)?)?;
+        let existing: Value =
+            serde_json::from_reader(std::io::BufReader::new(File::open(&index_path)?))?;
         let stable = |mut value: Value| {
             if let Some(object) = value.as_object_mut() {
                 object.remove("generated_at_ms");
@@ -844,13 +845,14 @@ fn build(args: &Args) -> Result<Value> {
         .service_manifest
         .clone()
         .unwrap_or_else(|| args.source.join(DEFAULT_SERVICE_MANIFEST));
-    let service_manifest: ServiceManifest =
-        serde_json::from_reader(File::open(&service_manifest_path).with_context(|| {
+    let service_manifest: ServiceManifest = serde_json::from_reader(std::io::BufReader::new(
+        File::open(&service_manifest_path).with_context(|| {
             format!(
                 "open declarative service manifest {}",
                 service_manifest_path.display()
             )
-        })?)?;
+        })?,
+    ))?;
     validate_recovery_service_manifest(&service_manifest)?;
     let candidates = sources(args, &service_manifest, &service_manifest_path)?;
     let inventory = inventory(&candidates)?;
@@ -860,7 +862,8 @@ fn build(args: &Args) -> Result<Value> {
     let manifest_path = final_dir.join("bundle.json");
     if manifest_path.is_file() {
         let _ = fs::remove_dir_all(rendered_units_dir(args));
-        let manifest: Value = serde_json::from_reader(File::open(&manifest_path)?)?;
+        let manifest: Value =
+            serde_json::from_reader(std::io::BufReader::new(File::open(&manifest_path)?))?;
         verify_existing(&final_dir, &manifest)?;
         return Ok(manifest);
     }
@@ -1790,10 +1793,10 @@ fn prime_support_provenance(
         "Prime support must come from immutable bundle {PRIME_SOURCE_BUNDLE_SHA256}"
     );
     let manifest_path = source_bundle.join("bundle.json");
-    let manifest: Value = serde_json::from_reader(
+    let manifest: Value = serde_json::from_reader(std::io::BufReader::new(
         File::open(&manifest_path)
             .with_context(|| format!("open Prime source bundle {}", manifest_path.display()))?,
-    )?;
+    ))?;
     ensure!(
         manifest.get("bundle_sha256").and_then(Value::as_str) == Some(PRIME_SOURCE_BUNDLE_SHA256),
         "Prime source bundle identity drift"
@@ -1909,9 +1912,9 @@ fn verify_intrinsic_existing(output_root: &Path, bundle_sha256: &str) -> Result<
     require_bundle_sha256(bundle_sha256)?;
     let root = output_root.join(bundle_sha256);
     let path = root.join("bundle.json");
-    let manifest: Value = serde_json::from_reader(
+    let manifest: Value = serde_json::from_reader(std::io::BufReader::new(
         File::open(&path).with_context(|| format!("open staged bundle {}", path.display()))?,
-    )?;
+    ))?;
     if manifest
         .get("clean_detached_source")
         .and_then(Value::as_bool)
@@ -2221,10 +2224,12 @@ fn derive_rollback_baseline(
 
 fn verify_rollback_derivation(output_root: &Path, derived_bundle_sha256: &str) -> Result<()> {
     let derivation_path = rollback_derivation_path(output_root, derived_bundle_sha256);
-    let derivation: RollbackBaselineDerivationV1 = serde_json::from_reader(
-        File::open(&derivation_path)
-            .with_context(|| format!("open rollback derivation {}", derivation_path.display()))?,
-    )?;
+    let derivation: RollbackBaselineDerivationV1 =
+        serde_json::from_reader(std::io::BufReader::new(
+            File::open(&derivation_path).with_context(|| {
+                format!("open rollback derivation {}", derivation_path.display())
+            })?,
+        ))?;
     derivation.validate()?;
     ensure!(
         derivation.derived_bundle_sha256 == derived_bundle_sha256,
@@ -2233,9 +2238,11 @@ fn verify_rollback_derivation(output_root: &Path, derived_bundle_sha256: &str) -
     let parent_root = output_root.join(&derivation.parent_bundle_sha256);
     let derived_root = output_root.join(derived_bundle_sha256);
     let parent_manifest_path = parent_root.join("bundle.json");
-    let parent_manifest: Value = serde_json::from_reader(File::open(&parent_manifest_path)?)?;
-    let derived_manifest: Value =
-        serde_json::from_reader(File::open(derived_root.join("bundle.json"))?)?;
+    let parent_manifest: Value =
+        serde_json::from_reader(std::io::BufReader::new(File::open(&parent_manifest_path)?))?;
+    let derived_manifest: Value = serde_json::from_reader(std::io::BufReader::new(File::open(
+        derived_root.join("bundle.json"),
+    )?))?;
     ensure!(
         sha256_file(&parent_manifest_path)? == derivation.parent_manifest_file_sha256
             && canonical_json_sha256(&parent_manifest)?
@@ -2373,7 +2380,8 @@ fn verify_rollback_capsule(
         sha256_file(&runtime_manifest_path)? == capsule.runtime_bundle_manifest_file_sha256,
         "rollback runtime manifest digest mismatch"
     );
-    let runtime_manifest: Value = serde_json::from_reader(File::open(&runtime_manifest_path)?)?;
+    let runtime_manifest: Value =
+        serde_json::from_reader(std::io::BufReader::new(File::open(&runtime_manifest_path)?))?;
     ensure!(
         canonical_json_sha256(&runtime_manifest)?
             == capsule.runtime_bundle_manifest_canonical_json_sha256,

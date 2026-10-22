@@ -179,9 +179,9 @@ fn collect_named(directory: &Path, suffix: &str, output: &mut Vec<PathBuf>) {
 }
 
 fn read_json(path: &Path) -> Result<Value> {
-    Ok(serde_json::from_reader(
+    Ok(serde_json::from_reader(std::io::BufReader::new(
         File::open(path).with_context(|| format!("open {}", path.display()))?,
-    )?)
+    ))?)
 }
 
 fn read_optional_json(path: &Path) -> Value {

@@ -186,19 +186,10 @@ impl FundingClock {
             .duration_since(std::time::UNIX_EPOCH)?
             .as_millis()
             .try_into()?;
-        let mut value: libc::timespec = unsafe { std::mem::zeroed() };
-        ensure!(
-            unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut value) } == 0,
-            "funding monotonic clock unavailable"
-        );
-        let seconds: u64 = value.tv_sec.try_into()?;
-        let nanos: u64 = value.tv_nsec.try_into()?;
         Ok(Self {
             unix_ms,
-            monotonic_ns: seconds
-                .checked_mul(1_000_000_000)
-                .and_then(|n| n.checked_add(nanos))
-                .context("funding clock overflow")?,
+            monotonic_ns: crate::host_os::monotonic_ns()
+                .context("funding monotonic clock unavailable")?,
         })
     }
 }

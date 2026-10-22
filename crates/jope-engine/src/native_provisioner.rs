@@ -401,8 +401,7 @@ fn finish_acknowledged(
 /// intent intact; a later invocation retries its exact bytes before any new work.
 pub async fn provision(config_path: &Path, input: &TaskInput) -> Result<Value> {
     ensure!(
-        // SAFETY: geteuid has no preconditions and cannot fail.
-        unsafe { libc::geteuid() } == 0,
+        crate::host_os::effective_uid() == 0,
         "provisioner requires root custody"
     );
     protected(config_path, false)?;
@@ -700,18 +699,9 @@ pub async fn provision(config_path: &Path, input: &TaskInput) -> Result<Value> {
     let proof: NativeGrantProof = if ackpath.exists() {
         serde_json::from_slice(&read(&ackpath)?)?
     } else {
-        // SAFETY: the all-zero bit pattern is valid for timespec: its fields are plain integers.
-        let mut t: libc::timespec = unsafe { std::mem::zeroed() };
-        ensure!(
-            // SAFETY: `t` is a live, exclusively borrowed timespec that clock_gettime fills;
-            // CLOCK_MONOTONIC is a valid clock id.
-            unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut t) } == 0,
-            "monotonic clock"
-        );
-        let deadline = (t.tv_sec as u64)
-            .checked_mul(1_000_000_000)
-            .and_then(|x| x.checked_add(t.tv_nsec as u64))
-            .and_then(|x| x.checked_add(30_000_000_000))
+        let deadline = crate::host_os::monotonic_ns()
+            .context("monotonic clock")?
+            .checked_add(30_000_000_000)
             .context("transport deadline overflow")?;
         witness::add_native_grant_remote(&transport, &intent.request, deadline)?
     };

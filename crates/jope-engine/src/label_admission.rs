@@ -764,7 +764,8 @@ mod tests {
         without_native["native_fit_policy"] = Value::Null;
         preflight_policy(&without_native).unwrap();
 
-        let negatives: &[(&str, fn(&mut Value))] = &[
+        type Mutation = (&'static str, fn(&mut Value));
+        let negatives: &[Mutation] = &[
             ("schema", |p| {
                 p["schema"] = json!("parallel.label_admission.v1")
             }),

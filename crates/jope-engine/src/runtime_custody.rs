@@ -226,17 +226,7 @@ pub fn loaded_runtime_descriptor(process: &ProcessIdentity) -> Result<Value> {
 }
 
 fn monotonic_ns() -> Result<u64> {
-    let mut clock: libc::timespec = unsafe { std::mem::zeroed() };
-    ensure!(
-        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut clock) } == 0,
-        "runtime monotonic clock unavailable"
-    );
-    let seconds: u64 = clock.tv_sec.try_into()?;
-    let nanos: u64 = clock.tv_nsec.try_into()?;
-    seconds
-        .checked_mul(1_000_000_000)
-        .and_then(|value| value.checked_add(nanos))
-        .context("runtime monotonic clock overflow")
+    crate::host_os::monotonic_ns().context("runtime monotonic clock unavailable")
 }
 
 /// Use the original admission/task CLOCK_MONOTONIC deadline for both snapshots.

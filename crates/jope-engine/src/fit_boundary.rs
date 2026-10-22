@@ -29,18 +29,7 @@ pub struct RegisteredModel {
 
 /// Same-host absolute execution deadline; request provenance, never fit identity.
 pub fn deadline_after(duration: Duration) -> Result<u64> {
-    let mut time = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: 0,
-    };
-    ensure!(
-        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut time) } == 0,
-        "monotonic execution clock unavailable"
-    );
-    let now = (time.tv_sec as u64)
-        .checked_mul(1_000_000_000)
-        .and_then(|s| s.checked_add(time.tv_nsec as u64))
-        .context("execution clock overflow")?;
+    let now = crate::host_os::monotonic_ns().context("monotonic execution clock unavailable")?;
     now.checked_add(duration.as_nanos().try_into()?)
         .context("execution deadline overflow")
 }

@@ -433,15 +433,7 @@ pub(super) fn monotonic_ns() -> Result<u64> {
     if let Some(now) = SYNTHETIC_MONOTONIC_NS.with(std::cell::Cell::get) {
         return Ok(now);
     }
-    let mut ts = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: 0,
-    };
-    ensure!(
-        unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut ts) } == 0,
-        "monotonic clock unavailable"
-    );
-    Ok((ts.tv_sec as u64) * 1_000_000_000 + ts.tv_nsec as u64)
+    crate::host_os::boottime_ns().context("monotonic clock unavailable")
 }
 
 /// Evaluation derives from a retained original model; it never grants a fit.
@@ -1015,19 +1007,19 @@ impl FileLock {
                     "authority lock admission deadline elapsed"
                 );
             }
-            let operation = if exclusive {
-                libc::LOCK_EX
+            // flock(2) LOCK_EX/LOCK_SH with LOCK_NB; only contention is retried.
+            let attempt = if exclusive {
+                file.try_lock()
             } else {
-                libc::LOCK_SH
+                file.try_lock_shared()
             };
-            if unsafe { libc::flock(file.as_raw_fd(), operation | libc::LOCK_NB) } == 0 {
-                break;
+            match attempt {
+                Ok(()) => break,
+                Err(std::fs::TryLockError::WouldBlock) => {}
+                Err(std::fs::TryLockError::Error(error)) => {
+                    anyhow::bail!("custody lock error: {error}")
+                }
             }
-            let error = std::io::Error::last_os_error();
-            ensure!(
-                error.kind() == std::io::ErrorKind::WouldBlock,
-                "custody lock error: {error}"
-            );
             ensure!(
                 Instant::now() < deadline,
                 "authority busy: no dispatch fallback"
@@ -1055,9 +1047,7 @@ impl FileLock {
 }
 impl Drop for FileLock {
     fn drop(&mut self) {
-        unsafe {
-            libc::flock(self.file.as_raw_fd(), libc::LOCK_UN);
-        }
+        let _ = self.file.unlock();
     }
 }
 
@@ -1116,7 +1106,7 @@ pub(super) fn authenticated_peer(
         } == 0
             && length as usize == std::mem::size_of::<libc::ucred>()
             && credential.pid > 0
-            && credential.uid == unsafe { libc::geteuid() },
+            && credential.uid == crate::host_os::effective_uid(),
         "unapproved local authority peer"
     );
     ProcessIdentity::read(credential.pid as u32)

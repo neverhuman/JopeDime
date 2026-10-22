@@ -1077,9 +1077,12 @@ impl RidgeGcvModel {
 /// converges quadratically, so well-conditioned inputs exit long before the
 /// cap). Same algorithm, same order, in the emitted artifacts.
 pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
-    let mut v = vec![0.0f64; p * p];
+    // The rotations update eigenvector columns i and j; accumulating V transposed
+    // (`vt[col * p + k]`) makes both updates contiguous instead of stride-p. Each element sees
+    // the same operations in the same order, and V is transposed back on return.
+    let mut vt = vec![0.0f64; p * p];
     for i in 0..p {
-        v[i * p + i] = 1.0;
+        vt[i * p + i] = 1.0;
     }
     let mut scale = 0.0;
     for i in 0..p {
@@ -1126,11 +1129,13 @@ pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
                 a[j * p + j] = s * s * aii + 2.0 * s * c * apq + c * c * ajj;
                 a[i * p + j] = 0.0;
                 a[j * p + i] = 0.0;
-                for k in 0..p {
-                    let vki = v[k * p + i];
-                    let vkj = v[k * p + j];
-                    v[k * p + i] = c * vki - s * vkj;
-                    v[k * p + j] = s * vki + c * vkj;
+                let (head, tail) = vt.split_at_mut(j * p);
+                let vi = &mut head[i * p..(i + 1) * p];
+                let vj = &mut tail[..p];
+                for (vki, vkj) in vi.iter_mut().zip(vj.iter_mut()) {
+                    let (old_i, old_j) = (*vki, *vkj);
+                    *vki = c * old_i - s * old_j;
+                    *vkj = s * old_i + c * old_j;
                 }
             }
         }
@@ -1138,6 +1143,12 @@ pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
     let mut e = vec![0.0f64; p];
     for i in 0..p {
         e[i] = a[i * p + i];
+    }
+    let mut v = vec![0.0f64; p * p];
+    for col in 0..p {
+        for k in 0..p {
+            v[k * p + col] = vt[col * p + k];
+        }
     }
     (e, v)
 }
@@ -1160,25 +1171,29 @@ impl ElasticNetModel {
         let n = x.len().min(y.len());
         let p = x[0].len();
         let (means, scales) = std_fit(x);
-        let mut xs: Rows = x[..n]
-            .iter()
-            .map(|r| {
-                (0..p)
-                    .map(|j| ((r[j] - means[j]) / scales[j]).clamp(-20.0, 20.0))
-                    .collect()
-            })
-            .collect();
+        // Standardized features stored column-major: coordinate descent reads one column at a
+        // time, so each sweep streams contiguous memory instead of chasing a row pointer per
+        // element. Every value, and every accumulation order below, is unchanged.
+        let mut xc = vec![0.0f64; n * p];
+        for (r, row) in x[..n].iter().enumerate() {
+            for j in 0..p {
+                xc[j * n + r] = ((row[j] - means[j]) / scales[j]).clamp(-20.0, 20.0);
+            }
+        }
         let y_mean = y[..n].iter().sum::<f64>() / n.max(1) as f64;
         let nf = n as f64;
         let l1 = alpha * l1_ratio;
         let l2 = alpha * (1.0 - l1_ratio);
-        // Column norms (constant during CD).
-        let mut col_sq = vec![0.0f64; p];
-        for r in xs.iter() {
-            for j in 0..p {
-                col_sq[j] += r[j] * r[j];
-            }
-        }
+        // Column norms (constant during CD); each still sums its rows in ascending order.
+        let col_sq: Vec<f64> = (0..p)
+            .map(|j| {
+                let mut sq = 0.0f64;
+                for &v in &xc[j * n..(j + 1) * n] {
+                    sq += v * v;
+                }
+                sq
+            })
+            .collect();
         let mut w = vec![0.0f64; p];
         let mut resid: Vec<f64> = (0..n).map(|r| y[r] - y_mean).collect();
         for _ in 0..sweeps.max(1) {
@@ -1187,17 +1202,18 @@ impl ElasticNetModel {
                 if col_sq[j] <= 1e-12 {
                     continue;
                 }
+                let column = &xc[j * n..(j + 1) * n];
                 let mut rho = 0.0;
-                for r in 0..n {
-                    rho += xs[r][j] * resid[r];
+                for (&v, &e) in column.iter().zip(&resid) {
+                    rho += v * e;
                 }
                 rho = rho / nf + w[j] * col_sq[j] / nf;
                 let denom = col_sq[j] / nf + l2;
                 let new_w = soft_threshold(rho, l1) / denom;
                 let delta = new_w - w[j];
                 if delta != 0.0 {
-                    for r in 0..n {
-                        resid[r] -= delta * xs[r][j];
+                    for (e, &v) in resid.iter_mut().zip(column) {
+                        *e -= delta * v;
                     }
                     w[j] = new_w;
                     let ad = delta.abs();
@@ -1210,7 +1226,6 @@ impl ElasticNetModel {
                 break;
             }
         }
-        xs.clear();
         ElasticNetModel {
             means,
             scales,
@@ -1329,7 +1344,7 @@ impl GbmModel {
         // Training bins are only read one feature at a time (histograms, split partition), so
         // store them feature-major: a node's histogram then walks one contiguous column instead
         // of striding `n_feat` entries per row. Same bin values, same per-bin summation order.
-        let train_cols = feature_major(&bin_rows(x, n, n_feat, &edges), n, n_feat);
+        let train_cols = bin_columns(x, n, n_feat, &edges);
         let init = mean(&y[..n]);
         let mut f_train = vec![init; n];
         let nbins = cfg.bins as u16;
@@ -1408,15 +1423,16 @@ impl HistScratch {
     }
 }
 
-/// Row-major `bins[i * n_feat + f]` to feature-major `cols[f * n + i]`.
-fn feature_major(bins: &[u16], n: usize, n_feat: usize) -> Vec<u16> {
-    let mut cols = vec![0u16; n * n_feat];
-    for i in 0..n {
+/// Direct feature-major training bins, avoiding a temporary row-major matrix.
+fn bin_columns(x: &Rows, rows: usize, n_feat: usize, edges: &[Vec<f64>]) -> Vec<u16> {
+    let mut out = vec![0u16; rows * n_feat];
+    for r in 0..rows {
         for f in 0..n_feat {
-            cols[f * n + i] = bins[i * n_feat + f];
+            let v = if f < x[r].len() { x[r][f] } else { 0.0 };
+            out[f * rows + r] = edges[f].partition_point(|e| *e < v) as u16;
         }
     }
-    cols
+    out
 }
 
 /// Grow one tree over feature-major training bins `cols[f * n_rows + i]`.
@@ -1596,6 +1612,217 @@ fn mean(v: &[f64]) -> f64 {
 mod tests {
     use super::*;
     use crate::rng::Pcg32;
+
+    fn reference_row_major_jacobi(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
+        let mut v = vec![0.0f64; p * p];
+        for i in 0..p {
+            v[i * p + i] = 1.0;
+        }
+        let mut scale = 0.0;
+        for i in 0..p {
+            scale += a[i * p + i];
+        }
+        let limit = (scale * 1e-12) * (scale * 1e-12);
+        for _ in 0..20 {
+            let mut off = 0.0;
+            for i in 0..p {
+                for j in (i + 1)..p {
+                    off += a[i * p + j] * a[i * p + j];
+                }
+            }
+            if off <= limit {
+                break;
+            }
+            for i in 0..p {
+                for j in (i + 1)..p {
+                    let apq = a[i * p + j];
+                    if apq == 0.0 {
+                        continue;
+                    }
+                    let theta = (a[j * p + j] - a[i * p + i]) / (2.0 * apq);
+                    let t = if theta >= 0.0 {
+                        1.0 / (theta + (theta * theta + 1.0).sqrt())
+                    } else {
+                        -1.0 / ((theta * theta + 1.0).sqrt() - theta)
+                    };
+                    let c = 1.0 / (t * t + 1.0).sqrt();
+                    let s = t * c;
+                    for k in 0..p {
+                        if k != i && k != j {
+                            let aki = a[k * p + i];
+                            let akj = a[k * p + j];
+                            a[k * p + i] = c * aki - s * akj;
+                            a[i * p + k] = a[k * p + i];
+                            a[k * p + j] = s * aki + c * akj;
+                            a[j * p + k] = a[k * p + j];
+                        }
+                    }
+                    let aii = a[i * p + i];
+                    let ajj = a[j * p + j];
+                    a[i * p + i] = c * c * aii - 2.0 * s * c * apq + s * s * ajj;
+                    a[j * p + j] = s * s * aii + 2.0 * s * c * apq + c * c * ajj;
+                    a[i * p + j] = 0.0;
+                    a[j * p + i] = 0.0;
+                    for k in 0..p {
+                        let vki = v[k * p + i];
+                        let vkj = v[k * p + j];
+                        v[k * p + i] = c * vki - s * vkj;
+                        v[k * p + j] = s * vki + c * vkj;
+                    }
+                }
+            }
+        }
+        let mut e = vec![0.0f64; p];
+        for i in 0..p {
+            e[i] = a[i * p + i];
+        }
+        (e, v)
+    }
+
+    fn reference_row_major_elastic(
+        x: &Rows,
+        y: &[f64],
+        alpha: f64,
+        l1_ratio: f64,
+        sweeps: usize,
+    ) -> ElasticNetModel {
+        let n = x.len().min(y.len());
+        let p = x[0].len();
+        let (means, scales) = std_fit(x);
+        let mut xs: Rows = x[..n]
+            .iter()
+            .map(|r| {
+                (0..p)
+                    .map(|j| ((r[j] - means[j]) / scales[j]).clamp(-20.0, 20.0))
+                    .collect()
+            })
+            .collect();
+        let y_mean = y[..n].iter().sum::<f64>() / n.max(1) as f64;
+        let nf = n as f64;
+        let l1 = alpha * l1_ratio;
+        let l2 = alpha * (1.0 - l1_ratio);
+        // Column norms (constant during CD).
+        let mut col_sq = vec![0.0f64; p];
+        for r in xs.iter() {
+            for j in 0..p {
+                col_sq[j] += r[j] * r[j];
+            }
+        }
+        let mut w = vec![0.0f64; p];
+        let mut resid: Vec<f64> = (0..n).map(|r| y[r] - y_mean).collect();
+        for _ in 0..sweeps.max(1) {
+            let mut max_delta = 0.0f64;
+            for j in 0..p {
+                if col_sq[j] <= 1e-12 {
+                    continue;
+                }
+                let mut rho = 0.0;
+                for r in 0..n {
+                    rho += xs[r][j] * resid[r];
+                }
+                rho = rho / nf + w[j] * col_sq[j] / nf;
+                let denom = col_sq[j] / nf + l2;
+                let new_w = soft_threshold(rho, l1) / denom;
+                let delta = new_w - w[j];
+                if delta != 0.0 {
+                    for r in 0..n {
+                        resid[r] -= delta * xs[r][j];
+                    }
+                    w[j] = new_w;
+                    let ad = delta.abs();
+                    if ad > max_delta {
+                        max_delta = ad;
+                    }
+                }
+            }
+            if max_delta < 1e-9 {
+                break;
+            }
+        }
+        xs.clear();
+        ElasticNetModel {
+            means,
+            scales,
+            w0: y_mean,
+            w,
+        }
+    }
+
+    #[test]
+    fn transposed_jacobi_matches_397_row_major_bits() {
+        for p in 0..=13 {
+            for case in 0..4 {
+                let mut a = vec![0.0; p * p];
+                for i in 0..p {
+                    for j in 0..=i {
+                        let value = if case == 0 {
+                            0.0
+                        } else {
+                            ((i * 17 + j * 3 + case) as f64 / 11.0).sin()
+                        };
+                        a[i * p + j] = value;
+                        a[j * p + i] = value;
+                    }
+                    a[i * p + i] += case as f64;
+                }
+                let mut b = a.clone();
+                let (ae, av) = jacobi_eigen(&mut a, p);
+                let (be, bv) = reference_row_major_jacobi(&mut b, p);
+                let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+                assert_eq!(bits(&a), bits(&b), "matrix p={p} case={case}");
+                assert_eq!(bits(&ae), bits(&be), "eigenvalues p={p} case={case}");
+                assert_eq!(bits(&av), bits(&bv), "vectors p={p} case={case}");
+            }
+        }
+    }
+
+    #[test]
+    fn column_major_elastic_matches_397_row_major_bits() {
+        for n in [1, 7, 24] {
+            for p in [0, 1, 3, 8] {
+                let x: Rows = (0..n)
+                    .map(|i| {
+                        (0..p)
+                            .map(|j| {
+                                if j == 0 {
+                                    -0.0
+                                } else {
+                                    ((i * 7 + j) as f64).sin()
+                                }
+                            })
+                            .collect()
+                    })
+                    .collect();
+                let y: Vec<f64> = (0..n).map(|i| i as f64 / 3.0 - 2.0).collect();
+                for sweeps in [0, 1, 5] {
+                    for ratio in [0.0, 0.5, 1.0] {
+                        let a = ElasticNetModel::fit(&x, &y, 0.1, ratio, sweeps);
+                        let b = reference_row_major_elastic(&x, &y, 0.1, ratio, sweeps);
+                        assert_eq!(
+                            serde_json::to_vec(&a).unwrap(),
+                            serde_json::to_vec(&b).unwrap(),
+                            "n={n} p={p} sweeps={sweeps} ratio={ratio}"
+                        );
+                        let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+                        assert_eq!(bits(&a.predict(&x)), bits(&b.predict(&x)));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn direct_feature_major_bins_match_397_transpose() {
+        let x = vec![vec![-0.0, f64::NAN], vec![f64::INFINITY], vec![-1.0, 4.0]];
+        let edges = vec![vec![-1.0, 0.0, 2.0], vec![0.0, 3.0, 5.0]];
+        let row_bins = bin_rows(&x, 3, 2, &edges);
+        let direct = bin_columns(&x, 3, 2, &edges);
+        for r in 0..3 {
+            for f in 0..2 {
+                assert_eq!(direct[f * 3 + r], row_bins[r * 2 + f]);
+            }
+        }
+    }
 
     /// The textbook row-major loop `cholesky_factor` must reproduce bit for bit.
     fn reference_cholesky_factor(a: &mut [f64], p: usize) {

@@ -1,5 +1,5 @@
 {
-  "bytes": 12750981,
+  "bytes": 12750982,
   "crates": [
     {
       "archive_sha256": "5ecb245093b0f791b89d3420c3df9c6d49c60ab63ba54db896bf8a3baf486706",
@@ -293,11 +293,11 @@
       "archive_sha256": "eabd94c2f37801c20583fc49dd5cd6b0ba68c716787c2dd6ed18571e1e63117b",
       "archive_url": "https://static.crates.io/crates/ratatui/ratatui-0.29.0.crate",
       "directory": "ratatui-0.29.0",
-      "manifest_candidate_sha256": "5cc643725f9975dc7cb3ca9f2286aa6425fc331c1e1dc91cd7d721044829fc4b",
+      "manifest_candidate_sha256": "876d746b8c07a3ba84b25608489355a6b36df2f00b775e2fbe80ee1ea619211c",
       "manifest_upstream_sha256": "0c4ae19f356ad2785b12058d59041c48266e58bb7dacc71a11b4a460976ec2dc",
       "name": "ratatui",
       "repository": "https://github.com/ratatui/ratatui",
-      "retained_bytes": 2627002,
+      "retained_bytes": 2627003,
       "retained_files": 218,
       "upstream_vcs": {
         "git": {
@@ -360,6 +360,20 @@
         "path_in_vcs": "torch-sys"
       },
       "version": "0.26.0"
+    }
+  ],
+  "dependency_security_followups": [
+    {
+      "advisories": [
+        "RUSTSEC-2026-0002",
+        "RUSTSEC-2026-0253"
+      ],
+      "candidate_manifest_requirement": "=0.18.4",
+      "consumer": "ratatui@0.29.0",
+      "dependency": "lru",
+      "lru_registry_archive_sha256": "ff9840bcc50b71349309900da0ce7279aa336ae71d73250b07998932c7d97c25",
+      "prior_manifest_requirement": "0.12.0",
+      "scope": "Manifest-only existing-vendor followup; all ratatui Rust bytes unchanged. Root Cargo.lock records the dependency resolution; compilation, behavior and advisory qualification are recorded separately."
     }
   ],
   "files": 797,
@@ -2650,8 +2664,8 @@
       "upstream_sha256": "54e4e04aad1ca000c23c9bf29154d9ab0d148ed6d5a1341aee88412e80da587e"
     },
     {
-      "bytes": 10666,
-      "candidate_sha256": "5cc643725f9975dc7cb3ca9f2286aa6425fc331c1e1dc91cd7d721044829fc4b",
+      "bytes": 10667,
+      "candidate_sha256": "876d746b8c07a3ba84b25608489355a6b36df2f00b775e2fbe80ee1ea619211c",
       "changed": true,
       "path": "vendor/security/ratatui-0.29.0/Cargo.toml",
       "upstream_sha256": "0c4ae19f356ad2785b12058d59041c48266e58bb7dacc71a11b4a460976ec2dc"

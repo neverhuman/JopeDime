@@ -54,6 +54,21 @@ const QUEUE_STATES: &[&str] = &["queued", "starting"];
 const TERMINAL_STATES: &[&str] = &["completed", "failed", "cancelled"];
 const REGRESSION_SCREENING_COST_THRESHOLD: u64 = 30;
 const REGRESSION_SCREENING_BUDGET_SECONDS: u64 = 30;
+/// Upper bound on the keeper's validation/preparation workers.
+const MAX_KEEPER_WORKERS: usize = 32;
+
+/// Worker threads for manifest validation and spec preparation: the CPUs this process may
+/// actually use, capped at [`MAX_KEEPER_WORKERS`]. `available_parallelism` honours both the
+/// affinity mask and the cgroup `cpu.max` quota, so under the shipped unit (`CPUQuota=400%`)
+/// this is 4. Each worker runs a validator and, for bounded screening, a wall-clock-budgeted
+/// evaluator subprocess in the same cgroup; a fixed 32 oversubscribed those 4 CPUs ~8x and
+/// let CPU contention alone exhaust the 30 s screening budget, which is recorded as a
+/// permanent rejection.
+fn keeper_workers() -> usize {
+    thread::available_parallelism()
+        .map_or(1, std::num::NonZeroUsize::get)
+        .min(MAX_KEEPER_WORKERS)
+}
 
 #[derive(Parser, Debug)]
 #[command(
@@ -317,14 +332,9 @@ struct Keeper {
     reservation_cache: HashMap<(String, Option<String>, Option<String>), String>,
     terminal_seen: HashSet<String>,
     operator_registry: GeneratedOperatorRegistry,
-}
-
-/// Manifest validation/preparation workers: 32, or fewer on a host (or cgroup slice) with fewer
-/// usable CPUs. Each worker can run a preflight evaluator subprocess, so 32 of them on a small
-/// controller slice would time-share the CPUs the evaluators need. Results are collected in
-/// input order either way.
-fn manifest_pool_threads() -> usize {
-    std::thread::available_parallelism().map_or(1, |cpus| cpus.get().min(32))
+    /// One pool for the keeper's lifetime, shared by validation and preparation (which run one
+    /// after the other). It used to be rebuilt twice per cycle, i.e. 64 threads every 5 s.
+    workers: rayon::ThreadPool,
 }
 
 fn bounded_validation_budget(unclaimed: usize, admission_limit: usize) -> usize {
@@ -397,6 +407,10 @@ impl Keeper {
                 )
             })?,
         )?;
+        let workers = ThreadPoolBuilder::new()
+            .num_threads(keeper_workers())
+            .thread_name(|index| format!("jope-keeper-worker-{index}"))
+            .build()?;
         Ok(Self {
             args,
             backlog,
@@ -406,6 +420,7 @@ impl Keeper {
             reservation_cache: HashMap::new(),
             terminal_seen,
             operator_registry,
+            workers,
         })
     }
 
@@ -1081,12 +1096,8 @@ impl Keeper {
         // Validate enough manifests to fill this cycle plus bounded headroom for
         // invalid or concurrently reserved pairs; later cycles consume the rest.
         let validation_budget = bounded_validation_budget(unclaimed, limit);
-        let validation_pool = ThreadPoolBuilder::new()
-            .num_threads(manifest_pool_threads())
-            .thread_name(|index| format!("jope-manifest-validate-{index}"))
-            .build()?;
         let operator_registry = &self.operator_registry;
-        let validation_results = validation_pool.install(|| {
+        let validation_results = self.workers.install(|| {
             candidate_paths
                 .par_iter()
                 .take(validation_budget)
@@ -1243,40 +1254,47 @@ impl Keeper {
             )?;
         }
 
-        let preparation_pool = ThreadPoolBuilder::new()
-            .num_threads(manifest_pool_threads())
-            .thread_name(|index| format!("jope-manifest-prepare-{index}"))
-            .build()?;
-        let prepared_rows = preparation_pool.install(|| {
-            accepted
-                .into_par_iter()
-                .map(|(manifest, owner)| {
-                    let job_id = format!("jte-{}", &manifest.sha256[..24]);
-                    let spec = self
-                        .args
-                        .root
-                        .join("specs/evaluations")
-                        .join(format!("{job_id}.toml"));
-                    render_spec(
-                        &spec,
-                        &job_id,
-                        &manifest,
-                        &self.args.runner,
-                        &self.args.evaluator,
-                    )?;
-                    // `submit-batch` runs SCQ's complete authoritative
-                    // validation path for every spec before it mutates the
-                    // scheduler. Running `scq check` here repeated the same
-                    // controller round trip once per manifest and could leave
-                    // the cluster starved while a large fresh wave waited.
-                    // The manifest/evaluator/input hashes have already been
-                    // validated above; permanent batch rejections remain
-                    // recorded by `submit_claims`.
-                    Ok((manifest, owner, job_id, spec))
-                })
-                .collect::<Vec<Result<_>>>()
-        });
-        let prepared_rows = prepared_rows.into_iter().collect::<Result<Vec<_>>>()?;
+        // The runner and evaluator are the same files for every spec in this cycle: hash each
+        // once here instead of twice per manifest inside render_spec (up to 1024 manifests per
+        // cycle). They are hashed again after preparation, so a binary replaced while specs were
+        // being written fails the cycle. A wave with nothing accepted renders no spec and, as
+        // before, hashes nothing.
+        let prepared_rows = if accepted.is_empty() {
+            Vec::new()
+        } else {
+            let runner_sha256 = sha256_file(&self.args.runner)?;
+            let evaluator_sha256 = sha256_file(&self.args.evaluator)?;
+            let pinned_tools = PinnedTools {
+                runner: (self.args.runner.as_path(), &runner_sha256),
+                evaluator: (self.args.evaluator.as_path(), &evaluator_sha256),
+            };
+            let rows = self.workers.install(|| {
+                accepted
+                    .into_par_iter()
+                    .map(|(manifest, owner)| {
+                        let job_id = format!("jte-{}", &manifest.sha256[..24]);
+                        let spec = self
+                            .args
+                            .root
+                            .join("specs/evaluations")
+                            .join(format!("{job_id}.toml"));
+                        render_spec(&spec, &job_id, &manifest, &pinned_tools)?;
+                        // `submit-batch` runs SCQ's complete authoritative
+                        // validation path for every spec before it mutates the
+                        // scheduler. Running `scq check` here repeated the same
+                        // controller round trip once per manifest and could leave
+                        // the cluster starved while a large fresh wave waited.
+                        // The manifest/evaluator/input hashes have already been
+                        // validated above; permanent batch rejections remain
+                        // recorded by `submit_claims`.
+                        Ok((manifest, owner, job_id, spec))
+                    })
+                    .collect::<Vec<Result<_>>>()
+            });
+            let rows = rows.into_iter().collect::<Result<Vec<_>>>()?;
+            pinned_tools.verify_unchanged()?;
+            rows
+        };
         let prepared = prepared_rows.len();
         {
             let tx = self
@@ -3238,17 +3256,37 @@ fn evaluator_failure_is_permanent(error: &anyhow::Error) -> bool {
     format!("{error:#}").contains("Rust evaluator rejected")
 }
 
+/// The runner and evaluator binaries every spec of one cycle pins, with the digests taken
+/// once at the start of preparation.
+struct PinnedTools<'a> {
+    runner: (&'a Path, &'a String),
+    evaluator: (&'a Path, &'a String),
+}
+
+impl PinnedTools<'_> {
+    /// Refuse the cycle if either binary changed while its specs were written.
+    fn verify_unchanged(&self) -> Result<()> {
+        for (source, digest) in [self.runner, self.evaluator] {
+            if !source.is_file() || sha256_file(source)? != *digest {
+                bail!("spec input content pin drift: {}", source.display());
+            }
+        }
+        Ok(())
+    }
+}
+
 fn render_spec(
     path: &Path,
     job_id: &str,
     manifest: &ValidManifest,
-    runner: &Path,
-    evaluator: &Path,
+    tools: &PinnedTools<'_>,
 ) -> Result<()> {
     let train = path_field(&manifest.value, "train_csv")?;
     let test = path_field(&manifest.value, "test_csv")?;
+    let (runner, runner_sha256) = tools.runner;
+    let (evaluator, evaluator_sha256) = tools.evaluator;
     let inputs = [
-        ("runner", runner, "runner.sh", sha256_file(runner)?),
+        ("runner", runner, "runner.sh", runner_sha256.clone()),
         (
             "manifest",
             manifest.path.as_path(),
@@ -3271,10 +3309,15 @@ fn render_spec(
             "evaluator",
             evaluator,
             "corpus_eval",
-            sha256_file(evaluator)?,
+            evaluator_sha256.clone(),
         ),
     ];
-    for (_, source, _, digest) in &inputs {
+    // The manifest and its train/test files keep their per-manifest content check. The
+    // runner/evaluator digests are per cycle and rechecked by `PinnedTools::verify_unchanged`.
+    for (name, source, _, digest) in &inputs {
+        if matches!(*name, "runner" | "evaluator") {
+            continue;
+        }
         if !source.is_file() || sha256_file(source)? != *digest {
             bail!("spec input content pin drift: {}", source.display());
         }
@@ -3606,6 +3649,72 @@ impl Drop for SingleInstanceLock {
 mod tests {
     use super::*;
     use tempfile::tempdir;
+
+    #[test]
+    fn keeper_workers_follow_usable_cpus_and_stay_bounded() {
+        let usable = thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
+        assert_eq!(keeper_workers(), usable.min(MAX_KEEPER_WORKERS));
+        assert!((1..=MAX_KEEPER_WORKERS).contains(&keeper_workers()));
+    }
+
+    #[test]
+    fn rendered_spec_pins_every_input_and_tool_drift_fails_the_cycle() {
+        let root = tempdir().unwrap();
+        let write = |name: &str, bytes: &[u8]| {
+            let path = root.path().join(name);
+            fs::write(&path, bytes).unwrap();
+            path
+        };
+        let runner = write("runner.sh", b"#!/bin/sh\n");
+        let evaluator = write("corpus_eval", b"evaluator-v1");
+        let train = write("train.csv", b"x,y\n1,2\n");
+        let test = write("test.csv", b"x,y\n3,4\n");
+        let manifest_path = write("manifest.json", b"{}");
+        let manifest = ValidManifest {
+            path: manifest_path.clone(),
+            sha256: sha256_file(&manifest_path).unwrap(),
+            generated_at_ms: 0,
+            pairs: Vec::new(),
+            value: json!({
+                "train_csv": train.to_string_lossy(),
+                "test_csv": test.to_string_lossy(),
+                "train_sha256": sha256_file(&train).unwrap(),
+                "test_sha256": sha256_file(&test).unwrap(),
+            }),
+        };
+        let runner_sha256 = sha256_file(&runner).unwrap();
+        let evaluator_sha256 = sha256_file(&evaluator).unwrap();
+        let tools = PinnedTools {
+            runner: (runner.as_path(), &runner_sha256),
+            evaluator: (evaluator.as_path(), &evaluator_sha256),
+        };
+        let spec = root.path().join("job.toml");
+        render_spec(&spec, "jte-test", &manifest, &tools).unwrap();
+        let text = fs::read_to_string(&spec).unwrap();
+        for digest in [
+            &runner_sha256,
+            &evaluator_sha256,
+            &manifest.sha256,
+            &sha256_file(&train).unwrap(),
+            &sha256_file(&test).unwrap(),
+        ] {
+            assert!(text.contains(&format!("sha256 = \"{digest}\"")), "{text}");
+        }
+        tools.verify_unchanged().unwrap();
+
+        // A manifest-declared input that drifted is still refused per manifest.
+        fs::write(&train, b"x,y\n9,9\n").unwrap();
+        let error = render_spec(&spec, "jte-test", &manifest, &tools).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("content pin drift"),
+            "{error:#}"
+        );
+
+        // A tool replaced after the cycle hashed it fails the cycle.
+        fs::write(&evaluator, b"evaluator-v2").unwrap();
+        let error = tools.verify_unchanged().unwrap_err();
+        assert!(format!("{error:#}").contains("corpus_eval"), "{error:#}");
+    }
 
     #[test]
     fn manifest_metric_map_agrees_with_task_authority() {

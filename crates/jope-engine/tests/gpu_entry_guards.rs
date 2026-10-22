@@ -15,7 +15,7 @@ fn entry_guard_child() {
         .write(true)
         .open(root.join("runs/encoding-service.lock"))
         .unwrap();
-    assert!(lease.try_lock().is_ok());
+    lease.try_lock().unwrap();
     // A real exclusive lease, future deadline and caller declarations cannot
     // substitute for the absent original native grant verifier.
     std::env::set_var("JOPE_GPU_TASK_DEADLINE_MS", u64::MAX.to_string());

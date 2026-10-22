@@ -15,6 +15,7 @@ from pathlib import Path, PurePosixPath
 import re
 import stat
 import sys
+import tomllib
 
 MAX_FILE_BYTES = 5 * 1024 * 1024
 PREFIX = "vendor/security/"
@@ -124,6 +125,24 @@ def inventory(directory_fd):
     return files, directories
 
 
+def verify_ratatui_lru(directory_fd, expected):
+    # This source-reviewed manifest floor closes both cached lru soundness advisories.
+    # Re-read through the existing descriptor custody rules and bind these bytes to
+    # the inventory; coherent provenance edits cannot silently downgrade the floor.
+    directory = "ratatui-0.29.0"
+    fd = os.open(directory, DIRECTORY_FLAGS, dir_fd=directory_fd)
+    try:
+        raw = read_regular(fd, "Cargo.toml", directory + "/Cargo.toml")
+    finally:
+        os.close(fd)
+    require((len(raw), hashlib.sha256(raw).hexdigest()) == expected[directory + "/Cargo.toml"],
+            "ratatui manifest changed during dependency check")
+    manifest = tomllib.loads(raw.decode("utf-8"))
+    dependencies = manifest.get("dependencies")
+    require(isinstance(dependencies, dict) and dependencies.get("lru") == {"version": "=0.18.4"},
+            "ratatui lru must retain reviewed =0.18.4 advisory floor without overrides")
+
+
 def verify(root):
     opened = []
     try:
@@ -201,6 +220,7 @@ def verify(root):
                 f"extra={sorted(actual.keys() - expected.keys())}")
         for path in sorted(expected):
             require(actual[path] == expected[path], f"file size/hash mismatch: {path}")
+        verify_ratatui_lru(fd, expected)
         return {"schema": "jope.vendor-custody/v1", "status": "pass", "crates": len(crates),
                 "files": len(expected), "bytes": total_bytes,
                 "provenance_sha256": hashlib.sha256(raw).hexdigest()}

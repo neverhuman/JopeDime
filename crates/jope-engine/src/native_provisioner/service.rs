@@ -230,8 +230,7 @@ pub async fn serve(config_path: &Path, poll_ms: u64, max_runtime_seconds: u64) -
         "invalid bounded provisioner service interval/runtime"
     );
     ensure!(
-        // SAFETY: geteuid has no preconditions and cannot fail.
-        unsafe { libc::geteuid() } == 0,
+        crate::host_os::effective_uid() == 0,
         "root provisioner custody required"
     );
     protected(config_path, false)?;
