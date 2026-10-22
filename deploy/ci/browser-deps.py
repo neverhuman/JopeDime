@@ -4,19 +4,26 @@ import argparse
 import contextlib
 import fcntl
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path, PurePosixPath
 import platform
 import stat
 import subprocess
+import sys
 import tarfile
 import tempfile
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
 LOCK = Path(__file__).with_name("browser-deps.lock.json")
+# The archive mirror occasionally drops a connection; a job fetches about a hundred packages.
+ATTEMPTS = 4
+BACKOFF_SECONDS = 2.0
 
 
 def digest(path):
@@ -78,6 +85,42 @@ def verify_runtime(root, expected):
         raise ValueError("browser dependency cache differs from verified deb contents; refusing reuse")
 
 
+def transient(error):
+    """A dropped or refused transport, or a server-side HTTP error; never a 4xx or a content mismatch."""
+    if isinstance(error, urllib.error.HTTPError):
+        return error.code >= 500
+    return isinstance(error, (urllib.error.URLError, http.client.HTTPException, OSError))
+
+
+def download(package, path, archives):
+    """Fetch one locked package, retrying only transient transport failures."""
+    for attempt in range(1, ATTEMPTS + 1):
+        # Exclusive temporary output is unpublished until size+hash verification.
+        with tempfile.NamedTemporaryFile(dir=archives, delete=False) as output:
+            temporary = Path(output.name)
+            try:
+                with urllib.request.urlopen(package["url"], timeout=60) as response:
+                    size = 0
+                    while block := response.read(1024 * 1024):
+                        size += len(block)
+                        if size > package["size"]:
+                            raise ValueError("package response exceeds locked size")
+                        output.write(block)
+                output.flush()
+                if size != package["size"] or digest(temporary) != package["sha256"]:
+                    raise ValueError("downloaded package differs from lock")
+                temporary.replace(path)
+                return
+            except Exception as error:
+                if attempt == ATTEMPTS or not transient(error):
+                    raise
+                print(f"browser-deps: attempt {attempt}/{ATTEMPTS} for {package['url']} failed: {error!r}; retrying", file=sys.stderr)
+            finally:
+                if temporary.exists():
+                    temporary.unlink()
+        time.sleep(BACKOFF_SECONDS * attempt)
+
+
 def prepare(cache, receipt):
     if platform.machine() != "x86_64":
         raise ValueError("Ubuntu browser dependency lock is amd64 only")
@@ -104,24 +147,7 @@ def prepare(cache, receipt):
             if path.is_symlink():
                 raise ValueError("package cache must not be a symlink")
             if not path.exists():
-                # Exclusive temporary output is unpublished until size+hash verification.
-                with tempfile.NamedTemporaryFile(dir=archives, delete=False) as output:
-                    temporary = Path(output.name)
-                    try:
-                        with urllib.request.urlopen(package["url"], timeout=60) as response:
-                            size = 0
-                            while block := response.read(1024 * 1024):
-                                size += len(block)
-                                if size > package["size"]:
-                                    raise ValueError("package response exceeds locked size")
-                                output.write(block)
-                        output.flush()
-                        if size != package["size"] or digest(temporary) != sha:
-                            raise ValueError("downloaded package differs from lock")
-                        temporary.replace(path)
-                    finally:
-                        if temporary.exists():
-                            temporary.unlink()
+                download(package, path, archives)
             if path.stat().st_size != package["size"] or digest(path) != sha:
                 raise ValueError("cached package differs from lock")
             paths.append(path)

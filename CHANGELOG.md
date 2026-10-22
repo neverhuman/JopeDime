@@ -12,6 +12,7 @@ the commit areas (crate or lane) named in each subject line.
 
 ### CI
 
+- ci(browser-deps): `observatory-ui` retries a dropped or refused download of a pinned Ubuntu package up to 4 times with backoff (transport errors and HTTP 5xx only). A size or hash mismatch or an HTTP 4xx still fails at once, and nothing is published before verification. Two jobs failed on 2026-10-22 from single mirror drops
 - ci(full-main): the trusted-main source audit is report-only until its score reaches 85 (owner decision, 2026-10-22; 54 at `bdf9441aa`). A verified audit that fails below 85 passes the `audit` job with a warning and a `report-only.json` marker, and its reports keep the failed decision. A failed audit at or above 85 still fails the job, as do missing, inconsistent or tampered evidence and version or tool errors. The floor and policy are unchanged
 - ci(full-main): the audit no longer breaks the self-hosted runner after it. Its captured source was left read-only in the persistent workspace, so every later job on that runner failed in `actions/checkout` (`Permission denied`, then `not a git repository`). An always-run step after the evidence upload now restores write permission. The retained evidence keeps its read-only modes, so the verifier still replays on it
 
