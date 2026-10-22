@@ -8,6 +8,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+mod typescript_support;
+
 fn toy_data(n: usize, cols: usize, seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
     let mut rng = Pcg32::new(seed, 17);
     let mut x = Vec::new();
@@ -136,6 +138,17 @@ fn assert_parity_sized(name: &str, genome_src: &str, rows: usize, cols: usize, t
     let rs = run_rust(&dir, &artifact);
     let rs_secs = t_rs.elapsed().as_secs_f64();
 
+    if typescript_support::enabled() {
+        let artifact = feat_math::transpile::emit_typescript(&genome, &opts).unwrap();
+        typescript_support::run(
+            &dir.join("typescript"),
+            &artifact.source,
+            &artifact.kernel,
+            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test}),
+            &rs,
+            false,
+        );
+    }
     let py_diff = max_abs_diff(&reference, &py);
     let rs_diff = max_abs_diff(&reference, &rs);
     assert_eq!(py_diff, 0.0, "python parity broken for {genome_src}");

@@ -256,6 +256,29 @@ fn emit_genome_with_options_impl(
                     emit_cpp17(&parsed, opts).context("emit C++20")?
                 }
             }
+            "typescript" => {
+                let bundle = feat_math::transpile::emit_typescript(&parsed, opts)?;
+                for (target, filename, source) in [
+                    ("typescript", "model.ts", &bundle.source),
+                    ("typescript-kernel", "model.kernel.rs", &bundle.kernel),
+                ] {
+                    let path = if let Some(root) = output {
+                        fs::create_dir_all(root)?;
+                        let path = root.join(filename);
+                        fs::write(&path, source)?;
+                        Some(path.display().to_string())
+                    } else {
+                        None
+                    };
+                    artifacts.push(Artifact {
+                        lang: target.into(),
+                        bytes: source.len(),
+                        sha256: digest(source),
+                        path,
+                    });
+                }
+                continue;
+            }
             "javascript" => emit_javascript(&parsed, opts).context("emit javascript")?,
             _ => unreachable!(),
         };
@@ -370,9 +393,10 @@ fn languages(lang: &str) -> Result<Vec<&'static str>> {
         "cpp17-recipe-v2" => vec!["cpp17-recipe-v2"],
         "cpp20" => vec!["cpp20"],
         "javascript" | "js" => vec!["javascript"],
+        "typescript" | "ts" => vec!["typescript"],
         "all" => vec!["python", "rust", "cpp17", "javascript"],
         other => bail!(
-            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|all)"
+            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|typescript|all)"
         ),
     })
 }

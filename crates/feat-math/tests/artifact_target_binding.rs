@@ -31,6 +31,19 @@ fn publish(e: &TargetEmission) -> (tempfile::TempDir, ExpectedArtifactV3) {
 }
 #[test]
 fn all_requested_recipe_targets_bind_exact_source_bytes() {
+    let ts = emission(&[Target::TypeScript]);
+    assert!(ts.manifest.all_supported());
+    assert_eq!(Target::parse("ts").unwrap(), Target::TypeScript);
+    assert_eq!(ts.sources.len(), 2);
+    let again = emission(&[Target::TypeScript]);
+    assert_eq!(ts.sources, again.sources);
+    let (ts_dir, ts_pin) = publish(&ts);
+    verify_directory(ts_dir.path(), "manifest.json", &ts_pin).unwrap();
+    std::fs::write(ts_dir.path().join("model.kernel.rs"), "tampered").unwrap();
+    assert!(verify_directory(ts_dir.path(), "manifest.json", &ts_pin).is_err());
+    let (ts_dir, ts_pin) = publish(&ts);
+    std::fs::remove_file(ts_dir.path().join("model.kernel.rs")).unwrap();
+    assert!(verify_directory(ts_dir.path(), "manifest.json", &ts_pin).is_err());
     let e = emission(&Target::RECIPES);
     assert!(e.manifest.all_supported(), "{:?}", e.manifest.targets);
     assert_eq!(e.manifest.targets.len(), 5);

@@ -5,7 +5,7 @@
 
 Standalone JOPE-Dime: a typed program-synthesis engine for tabular models,
 encoders (Hyperion and companions), and emitters that lower a program to Python,
-Rust, C++17, and JavaScript. C++20 CI compiles the C++17 artifact; it is not a
+Rust, C++17, JavaScript, and [TypeScript/WebAssembly](docs/typescript.md). C++20 CI compiles the C++17 artifact; it is not a
 second numeric dialect.
 
 This is the product tree for [`neverhuman/JopeDime`](https://github.com/neverhuman/JopeDime),

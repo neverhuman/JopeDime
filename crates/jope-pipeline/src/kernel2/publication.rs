@@ -366,6 +366,8 @@ fn v3_language(target: feat_math::artifact_manifest::Target, path: &str) -> &'st
         Target::Cpp17 => "cpp17",
         Target::Cpp20 => "cpp20",
         Target::JavaScript => "javascript",
+        Target::TypeScript if path.ends_with(".kernel.rs") => "typescript-kernel",
+        Target::TypeScript => "typescript",
         Target::Cpp17RecipeV2 => "cpp17-recipe-v2",
         Target::Cpp17Fitted if path.ends_with(".codec.json") => "cpp17-fitted-codec",
         Target::Cpp17Fitted if path.ends_with("standalone.cpp") => "cpp17-fitted-standalone",
@@ -382,6 +384,8 @@ fn check_artifact_manifest(
         Some(Language::Rust) => ("model.rs", "rust"),
         Some(Language::Python) => ("model.py", "python"),
         Some(Language::JavaScript) => ("model.js", "javascript"),
+        Some(Language::TypeScript) => ("model.ts", "typescript"),
+        None if artifact.language == "typescript-kernel" => ("model.kernel.rs", "typescript-kernel"),
         Some(language @ (Language::Cpp17 | Language::Cpp20)) => ("model.cpp", language.as_str()),
         Some(Language::Cpp17Fitted) => ("cpp17-fitted/model.cpp", "cpp17-fitted"),
         None if artifact.language == "cpp17-fitted-codec" => {
@@ -415,7 +419,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
     let mut targets = BTreeSet::new();
     for target in retained.split_whitespace() {
         ensure!(
-            ["py", "rs", "cpp", "js", "cpp17-fitted"].contains(&target) && targets.insert(target),
+            ["py", "rs", "cpp", "js", "ts", "cpp17-fitted"].contains(&target) && targets.insert(target),
             "unknown or duplicate emitted target"
         );
     }
@@ -426,6 +430,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
             "rust" => "rs",
             "cpp17" | "cpp20" => "cpp",
             "javascript" => "js",
+            "typescript" | "typescript-kernel" => "ts",
             _ => "cpp17-fitted",
         })
         .collect();
@@ -433,6 +438,12 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
         targets == actual,
         "artifact languages disagree with emitted targets"
     );
+    for language in ["typescript", "typescript-kernel"] {
+        ensure!(
+            languages.contains(language) == targets.contains("ts"),
+            "incomplete TypeScript artifact set"
+        );
+    }
     for language in [
         "cpp17-fitted",
         "cpp17-fitted-codec",

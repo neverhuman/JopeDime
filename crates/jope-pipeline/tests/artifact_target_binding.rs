@@ -22,6 +22,7 @@ fn writer_reader_accounts_for_all_recipe_and_fitted_components() {
     let dir = scratch();
     let mut targets = Target::RECIPES.to_vec();
     targets.push(Target::Cpp17Fitted);
+    targets.push(Target::TypeScript);
     let out = emit::emit_v3("(pipe X (ridge))", &targets, dir.path(), Some(&rows())).unwrap();
     assert!(out.manifest.all_supported());
     assert_eq!(

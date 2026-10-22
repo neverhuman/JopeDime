@@ -387,6 +387,16 @@ pub fn supports_javascript(genome: &GenomeIr) -> std::result::Result<(), Vec<Str
     emit_js::emit_js(&plan, &EmitOptions::default()).map(|_| ())
 }
 
+/// Emit a typed TypeScript API and its complete WebAssembly build source.
+pub fn emit_typescript(genome: &GenomeIr, opts: &EmitOptions) -> Result<crate::typescript::TypeScriptEmitted> {
+    crate::typescript::emit(genome, opts)
+}
+
+/// TypeScript shares the full Rust recipe coverage.
+pub fn supports_typescript(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
+    supports(genome)
+}
+
 /// Banned-vocabulary lint run on every emitted artifact (emission fails on
 /// hit). Extended for v35 with `nnls` and the portfolio member registry
 /// identifiers — none of which any artifact (old or new) ever contained.
@@ -516,6 +526,23 @@ pub fn emit_targets_v3(
     let mut sources = std::collections::BTreeMap::new();
     let mut records = Vec::new();
     for &target in requested {
+        if target == Target::TypeScript {
+            match emit_typescript(genome, options) {
+                Ok(bundle) => {
+                    records.push(TargetRecord::supported(
+                        target,
+                        "legacy_recipe",
+                        crate::typescript::EMITTER_VERSION,
+                        &[("model.ts", &bundle.source), ("model.kernel.rs", &bundle.kernel)],
+                        None,
+                    ));
+                    sources.insert("model.ts".into(), bundle.source);
+                    sources.insert("model.kernel.rs".into(), bundle.kernel);
+                }
+                Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
+            }
+            continue;
+        }
         let result: Result<(String, String)> = (|| {
             // I07's declared per-stage support supplements the actual recipe gate.
             // Expression-recipe-v2 and fitted exports keep their separate existing gates.
@@ -561,6 +588,7 @@ pub fn emit_targets_v3(
                         .map_err(anyhow::Error::msg)?;
                     (e.source, e.profile.into())
                 }
+                Target::TypeScript => unreachable!("handled as a complete bundle"),
                 Target::Cpp17Fitted => {
                     anyhow::bail!("fitted target requires explicit training rows")
                 }

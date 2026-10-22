@@ -5,6 +5,10 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Model export
+
+- TypeScript: explicit `typescript` / `ts` output with a strict typed API and a WebAssembly build source reusing the complete Rust recipe implementation. Includes bound fitted-model export, CLI/pipeline/v3 source binding, token counting, and an executable CommonJS/ESM qualification lane. Build requirements, arithmetic tolerance and current qualification limits are in `docs/typescript.md`.
+
 ### Benchmarks and AutoML
 
 - automl: the owner-supplied `Gemini4_argon_high` Rust regressor joins the native registry byte-for-byte (`jope-bench run --native Gemini4_argon_high`), replacing the earlier `gemini-argon-4` candidate. The adapter now refuses a non-finite prediction instead of passing it on; the frozen source returns `inf` for some extreme finite inputs
