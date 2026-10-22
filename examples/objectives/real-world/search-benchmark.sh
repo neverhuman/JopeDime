@@ -8,8 +8,10 @@
 # (default pinball:quantile=0.9), then score each selected program once on the sealed test split
 # with OBJECTIVE. Environment: BUDGET (default evaluations=64,seconds=300), CUTS (default 2),
 # THREADS (default 1), DATASETS (space-separated names; default every regression dataset) and
-# JOPE_BIN (an existing `jope` binary; default builds target/release/jope). Writes target/fitness-search-benchmark/results.{jsonl,md}; the test-score
-# registry is private to that directory.
+# JOPE_BIN (an existing `jope` binary; default builds target/release/jope). Writes
+# target/fitness-search-benchmark/results.{jsonl,md} (JOPE_SEARCH_OUT). Each run takes one sealed
+# test look per dataset and arm, recorded in that directory's test-score registries, so the script
+# refuses an existing directory instead of clearing the record of earlier looks.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/../../.." && pwd)
 objective=${1:-pinball:quantile=0.9}
@@ -22,9 +24,12 @@ if [ -n "${JOPE_BIN:-}" ]; then
   jope=$JOPE_BIN
 else
   (cd "$root" && cargo build --locked --release --bin jope >&2)
-  jope="$root/target/release/jope"
+  jope="${CARGO_TARGET_DIR:-$root/target}/release/jope"
 fi
-rm -rf "$out"
+if [ -e "$out" ]; then
+  echo "search-benchmark.sh: $out exists and records earlier sealed test looks; set JOPE_SEARCH_OUT to a new directory" >&2
+  exit 2
+fi
 mkdir -p "$out"
 : > "$out/results.jsonl"
 for dir in "$root"/datasets/test/*/; do

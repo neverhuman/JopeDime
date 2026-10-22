@@ -518,7 +518,13 @@ fn summary_line(command: &str, receipt: &Receipt) {
                 .calibration
                 .as_ref()
                 .and_then(|c| c.output_transform)
-                .map_or("", |_| " calibrated");
+                .map_or("", |t| {
+                    if t.intercept == 0.0 && t.slope == 1.0 {
+                        " floored"
+                    } else {
+                        " calibrated"
+                    }
+                });
             format!(" objective={}{calibrated}", s.metric)
         })
         .unwrap_or_default();
@@ -738,7 +744,12 @@ fn main() -> ExitCode {
                 Ok(())
             }
             cli::FitnessCommand::Evaluate { input } => (|| {
-                let bytes = std::fs::read(input)?;
+                use std::io::Read;
+                // Read at most one byte past the limit, so an oversized file is never loaded.
+                let mut bytes = Vec::new();
+                std::fs::File::open(input)?
+                    .take((jope_runtime::service::MAX_MESSAGE_BYTES + 1) as u64)
+                    .read_to_end(&mut bytes)?;
                 anyhow::ensure!(
                     bytes.len() <= jope_runtime::service::MAX_MESSAGE_BYTES,
                     "evaluation request too large"
@@ -791,15 +802,33 @@ fn serve(mcp: bool) -> anyhow::Result<()> {
         if bytes.is_empty() {
             break;
         }
-        anyhow::ensure!(
-            bytes.len() <= jope_runtime::service::MAX_MESSAGE_BYTES,
-            "API message too large"
-        );
-        let response = match serde_json::from_slice(&bytes) {
-            Ok(value) => server.dispatch(value, mcp),
-            Err(error) => Some(
-                serde_json::json!({"jsonrpc":"2.0", "id":null,"error":{"code":-32700,"message":error.to_string()}}),
-            ),
+        let response = if bytes.len() > jope_runtime::service::MAX_MESSAGE_BYTES {
+            // Skip the rest of the oversized line and answer it; the session goes on.
+            if !bytes.ends_with(b"\n") {
+                let mut rest = Vec::new();
+                loop {
+                    rest.clear();
+                    let read = input
+                        .by_ref()
+                        .take(64 * 1024)
+                        .read_until(b'\n', &mut rest)?;
+                    if read == 0 || rest.ends_with(b"\n") {
+                        break;
+                    }
+                }
+            }
+            Some(
+                serde_json::json!({"jsonrpc":"2.0","id":null,"error":{"code":-32600,
+                "message":format!("message larger than {} bytes",
+                    jope_runtime::service::MAX_MESSAGE_BYTES)}}),
+            )
+        } else {
+            match serde_json::from_slice(&bytes) {
+                Ok(value) => server.dispatch(value, mcp),
+                Err(error) => Some(
+                    serde_json::json!({"jsonrpc":"2.0", "id":null,"error":{"code":-32700,"message":error.to_string()}}),
+                ),
+            }
         };
         if let Some(response) = response {
             serde_json::to_writer(&mut output, &response)?;

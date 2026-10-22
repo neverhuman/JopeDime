@@ -645,6 +645,15 @@ fn only_the_objective_receipt_records_an_objective() {
         errors.iter().any(|e| e.contains("lacks an objective")),
         "{errors:?}"
     );
+    // With its objective, each best program must carry the loss it was best by.
+    ranked["schema"] = OBJECTIVE_SCHEMA_ID.into();
+    let errors = validate_value(&ranked).unwrap_err();
+    for missing in [
+        "lacks its validation_objective",
+        "lacks its best_validation_objective",
+    ] {
+        assert!(errors.iter().any(|e| e.contains(missing)), "{errors:?}");
+    }
 }
 
 #[test]

@@ -2,20 +2,30 @@
 # Real-world objective benchmark. For each dataset, fit three ways on the same training rows and
 # score the same held-out test rows with that dataset's objective:
 #
-#   rmse        --method auto            RMSE selection (the behaviour before objectives existed)
-#   selected    --fitness F --calibration none   objective-aware selection only
-#   calibrated  --fitness F              selection plus objective-aware output calibration
+#   rmse        --fitness rmse --calibration none   RMSE selection (the behaviour before objectives)
+#   selected    --fitness F --calibration none      objective-aware selection only
+#   calibrated  --fitness F                         selection plus objective-aware calibration
+#
+# All three arms see the same features: columns an objective reads (an exposure, a margin) are
+# never features in the objective arms, so the RMSE arm's training and input files drop them too.
 #
 #   bash examples/objectives/real-world/fetch.sh            # once; data stays outside the checkout
 #   bash examples/objectives/real-world/benchmark.sh [name ...]
 #
 # Environment: JOPE_FITNESS_DATA (fetch.sh's directory), JOPEDIME (binary; default: build
-# target/release/jopedime), CANDIDATES (comma list), THREADS (0 = all), FOLDS (default 5).
-# Writes target/fitness-real-world/results.{json,md}. Needs awk, jq and sha256sum.
+# release jopedime under $CARGO_TARGET_DIR or target/), CANDIDATES (comma list), THREADS
+# (0 = all), FOLDS (default 5). Splits, models, predictions and evaluation requests stay in
+# $JOPE_FITNESS_DATA/work (outside the checkout, like the data); only the summary
+# results.{json,md} is written to JOPE_FITNESS_OUT (default target/fitness-real-world).
+# Needs awk and jq.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/../../.." && pwd)
 data=${JOPE_FITNESS_DATA:-$HOME/jope-data/fitness-real-world}
 out=${JOPE_FITNESS_OUT:-$root/target/fitness-real-world}
+if [ -d "$data" ]; then data=$(cd "$data" && pwd -P); fi
+case "$data/" in
+  "$(cd "$root" && pwd -P)"/*) echo "benchmark.sh: the data directory is inside the checkout ($data)" >&2; exit 2 ;;
+esac
 candidates=${CANDIDATES:-ridge,elasticnet,histgbm,extra_trees,gam_boost,ensemble}
 threads=${THREADS:-0}
 folds=${FOLDS:-5}
@@ -23,7 +33,7 @@ recipes="$root/examples/objectives"
 if [ -z "${JOPEDIME:-}" ]; then
   export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
   (cd "$root" && cargo build --locked --release -p jope-appliance >&2)
-  JOPEDIME="$root/target/release/jopedime"
+  JOPEDIME="${CARGO_TARGET_DIR:-$root/target}/release/jopedime"
 fi
 bin=$JOPEDIME
 
@@ -43,6 +53,12 @@ column() { # csv name -> one value per data row
     { print $c }' "$1"
 }
 json_array() { awk 'BEGIN { printf "[" } { printf "%s%s", (NR > 1 ? "," : ""), $0 } END { print "]" }'; }
+drop_columns() { # csv "a b c" -> the csv without those columns
+  awk -F, -v drop=" $2 " 'NR == 1 { for (i = 1; i <= NF; i++) keep[i] = index(drop, " " $i " ") == 0 }
+    { line = ""; first = 1
+      for (i = 1; i <= NF; i++) if (keep[i]) { line = line (first ? "" : ",") $i; first = 0 }
+      print line }' "$1"
+}
 
 split_rows() { # csv kind train test
   local rows
@@ -65,7 +81,7 @@ for spec in "${datasets[@]}"; do
     echo "skip $name: $csv not found (run fetch.sh; freMTPL needs FETCH_FREMTPL=1)" >&2
     continue
   fi
-  work="$out/$name"
+  work="$data/work/$name"
   rm -rf "$work"
   mkdir -p "$work"
   split_rows "$csv" "$split" "$work/train.csv" "$work/test.csv"
@@ -75,7 +91,11 @@ for spec in "${datasets[@]}"; do
   "$bin" fitness validate "$objective" > "$work/objective.json"
   column "$work/test.csv" "$target" | json_array > "$work/targets.json"
   echo '{}' > "$work/columns.json"
-  for c in $(jq -r '.columns[]' "$work/objective.json"); do
+  objective_columns=$(jq -r '.columns | join(" ")' "$work/objective.json")
+  # The RMSE arm sees exactly the features the objective arms see.
+  drop_columns "$work/train.csv" "$objective_columns" > "$work/train.features.csv"
+  drop_columns "$work/input.csv" "$objective_columns" > "$work/input.features.csv"
+  for c in $objective_columns; do
     column "$work/test.csv" "$c" | json_array > "$work/column.json"
     jq -c --arg c "$c" --slurpfile v "$work/column.json" '. + {($c): $v[0]}' "$work/columns.json" \
       > "$work/columns.next.json"
@@ -84,13 +104,16 @@ for spec in "${datasets[@]}"; do
   validation_args=(--validation iid)
   if [[ $validation == forward:* ]]; then validation_args=(--validation forward --gap "${validation#forward:}"); fi
   for arm in rmse selected calibrated; do
-    args=(fit --train "$work/train.csv" --target "$target" --task regression --method auto
+    train="$work/train.csv"
+    input="$work/input.csv"
+    if [ "$arm" = rmse ]; then train="$work/train.features.csv"; input="$work/input.features.csv"; fi
+    args=(fit --train "$train" --target "$target" --task regression --method auto
       --candidates "$candidates" --folds "$folds" --threads "$threads"
       --output "$work/$arm.jope" --json)
     # Every arm uses the dataset's validation scheme: chronological rows get forward folds.
     args+=("${validation_args[@]}")
     case $arm in
-      rmse) ;;
+      rmse) args+=(--fitness rmse --calibration none) ;;
       selected) args+=(--fitness "$objective" --calibration none) ;;
       calibrated) args+=(--fitness "$objective") ;;
     esac
@@ -104,7 +127,7 @@ for spec in "${datasets[@]}"; do
     if ! "$bin" "${args[@]}" > "$work/$arm.fit.json"; then
       undefined "fit failed: $(jq -r '.error.message // "unknown"' "$work/$arm.fit.json")"
     else
-      "$bin" predict --model "$work/$arm.jope" --input "$work/input.csv" \
+      "$bin" predict --model "$work/$arm.jope" --input "$input" \
         --output "$work/$arm.predictions.csv" --json > "$work/$arm.predict.json"
       column "$work/$arm.predictions.csv" prediction | json_array > "$work/$arm.predictions.json"
       jq -n --slurpfile spec "$work/objective.json" --slurpfile y "$work/targets.json" \

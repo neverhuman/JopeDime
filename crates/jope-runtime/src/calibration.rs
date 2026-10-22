@@ -20,11 +20,15 @@
 //! predictions; forward validation removes even that.
 //! A candidate keeps its raw predictions unless calibration improves that cross-fitted score.
 //! The winner's final map is learned on all of its out-of-fold predictions and stored with the
-//! fitted model; prediction applies it after the native model.
+//! fitted model; prediction applies it after the native model. When the raw predictions win but
+//! the objective's domain needs a floor, the stored map is the floor alone, so a refitted model
+//! cannot leave the domain on new rows.
 //!
 //! The search is a deterministic Nelder–Mead over `(intercept / scale, ln slope)` from fixed
-//! starts, bounded in iterations, so the same inputs always give the same map.
+//! starts, bounded in iterations, so the same inputs always give the same map. Cross-fitting
+//! during selection also stops at the selection's time limit (a budget failure, as for folds).
 use crate::fitness::{Columns, Fitness};
+use crate::Failure;
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 
@@ -188,8 +192,14 @@ fn loss_of(
         .unwrap_or(f64::INFINITY)
 }
 
-/// Deterministic Nelder–Mead minimization in one or two dimensions.
-fn nelder_mead(f: &dyn Fn(&[f64]) -> f64, start: &[f64], step: f64) -> (Vec<f64>, f64) {
+/// Deterministic Nelder–Mead minimization in one or two dimensions; `None` when `stop()` asked
+/// it to give up.
+fn nelder_mead(
+    f: &dyn Fn(&[f64]) -> f64,
+    start: &[f64],
+    step: f64,
+    stop: &dyn Fn() -> bool,
+) -> Option<(Vec<f64>, f64)> {
     let dim = start.len();
     let mut simplex: Vec<(Vec<f64>, f64)> = Vec::with_capacity(dim + 1);
     simplex.push((start.to_vec(), f(start)));
@@ -204,6 +214,9 @@ fn nelder_mead(f: &dyn Fn(&[f64]) -> f64, start: &[f64], step: f64) -> (Vec<f64>
         s.sort_by(|a, b| a.1.total_cmp(&b.1).then(a.0[0].total_cmp(&b.0[0])));
     };
     while evaluations < MAX_EVALUATIONS {
+        if stop() {
+            return None;
+        }
         order(&mut simplex);
         let (best, worst) = (simplex[0].1, simplex[dim].1);
         let spread: f64 = (1..=dim)
@@ -268,12 +281,21 @@ fn nelder_mead(f: &dyn Fn(&[f64]) -> f64, start: &[f64], step: f64) -> (Vec<f64>
         }
     }
     order(&mut simplex);
-    let (point, value) = simplex.swap_remove(0);
-    (point, value)
+    Some(simplex.swap_remove(0))
+}
+
+/// The map a model keeps when its raw predictions win: identity plus the floor the objective's
+/// domain needs, or `None` when the domain needs no floor.
+pub fn floor_only(fitness: &Fitness, y: &[f64]) -> Option<OutputTransform> {
+    domain_floor(prediction_domain(fitness), y).map(|lower| OutputTransform {
+        lower: Some(lower),
+        ..OutputTransform::IDENTITY
+    })
 }
 
 /// Learn the map of `family` minimizing `fitness` on `(y, p)`. Never fails: when nothing beats
-/// identity (plus the domain floor), that is the map.
+/// identity (plus the domain floor), that is the map. The search is bounded by its evaluation
+/// count, not by a clock.
 pub fn fit(
     fitness: &Fitness,
     family: Calibration,
@@ -281,12 +303,25 @@ pub fn fit(
     p: &[f64],
     columns: &Columns,
 ) -> OutputTransform {
+    fit_until(fitness, family, y, p, columns, &|| false)
+        .expect("a search that is never stopped finishes")
+}
+
+/// [`fit`], abandoned with a budget failure as soon as `stop()` reports the time limit.
+pub fn fit_until(
+    fitness: &Fitness,
+    family: Calibration,
+    y: &[f64],
+    p: &[f64],
+    columns: &Columns,
+    stop: &dyn Fn() -> bool,
+) -> Result<OutputTransform> {
     let base = OutputTransform {
         lower: domain_floor(prediction_domain(fitness), y),
         ..OutputTransform::IDENTITY
     };
     if matches!(family, Calibration::None | Calibration::Auto) || y.len() < MIN_CALIBRATION_ROWS {
-        return base;
+        return Ok(base);
     }
     let mean = |v: &[f64]| v.iter().sum::<f64>() / v.len() as f64;
     let (my, mp) = (mean(y), mean(p));
@@ -315,16 +350,22 @@ pub fn fit(
         vec![vec![0.0], vec![mean_shift]]
     };
     for start in starts {
-        let (point, value) = nelder_mead(&objective, &start, 0.25);
+        let Some((point, value)) = nelder_mead(&objective, &start, 0.25, stop) else {
+            return Err(Failure::budget(
+                "time limit reached during output calibration",
+            ));
+        };
         if value < best.1 {
             best = (decode(&point), value);
         }
     }
-    best.0
+    Ok(best.0)
 }
 
 /// Cross-fitted calibrated predictions: rows of fold `f` use a map learned on `fit_rows(f)`.
-/// `folds[i]` is the fold of scored row `i`; `fit_rows(f)` lists scored-row indices.
+/// `folds[i]` is the fold of scored row `i`; `fit_rows(f)` lists scored-row indices. Fails with
+/// a budget failure when `stop()` reports the time limit.
+#[allow(clippy::too_many_arguments)]
 pub fn cross_fit(
     fitness: &Fitness,
     family: Calibration,
@@ -333,27 +374,29 @@ pub fn cross_fit(
     columns: &Columns,
     folds: &[usize],
     fit_rows: &dyn Fn(usize) -> Vec<usize>,
-) -> Vec<f64> {
+    stop: &dyn Fn() -> bool,
+) -> Result<Vec<f64>> {
     let mut out = vec![0.0; p.len()];
     let mut distinct: Vec<usize> = folds.to_vec();
     distinct.sort_unstable();
     distinct.dedup();
     for fold in distinct {
         let rows = fit_rows(fold);
-        let transform = fit(
+        let transform = fit_until(
             fitness,
             family,
             &subset(y, &rows),
             &subset(p, &rows),
             &subset_columns(columns, &rows),
-        );
+            stop,
+        )?;
         for (i, f) in folds.iter().enumerate() {
             if *f == fold {
                 out[i] = transform.apply(p[i]);
             }
         }
     }
-    out
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -447,7 +490,9 @@ mod tests {
             &columns,
             &folds,
             &others,
-        );
+            &|| false,
+        )
+        .unwrap();
         // Recompute fold 1 independently.
         let rows1 = others(1);
         let t1 = fit(
@@ -471,10 +516,36 @@ mod tests {
             &columns,
             &folds,
             &others,
-        );
+            &|| false,
+        )
+        .unwrap();
         for i in (0..120).filter(|i| folds[*i] == 1) {
             assert_eq!(crossed[i], again[i]);
         }
+        // A spent time limit abandons the search with a budget failure, never a partial map.
+        let stopped = cross_fit(
+            &fitness,
+            Calibration::Affine,
+            &y,
+            &p,
+            &columns,
+            &folds,
+            &others,
+            &|| true,
+        )
+        .unwrap_err();
+        assert_eq!(crate::error::kind_of(&stopped), crate::FailureKind::Budget);
+    }
+
+    #[test]
+    fn a_floor_alone_is_kept_only_where_the_domain_needs_one() {
+        let y = [0.5, 2.0, 4.0];
+        let floor = floor_only(&Fitness::PoissonDeviance {}, &y).unwrap();
+        assert_eq!(floor.lower, Some(0.5e-3));
+        assert_eq!((floor.intercept, floor.slope), (0.0, 1.0));
+        assert_eq!(floor.apply(-3.0), 0.5e-3);
+        assert_eq!(floor.apply(2.0), 2.0);
+        assert!(floor_only(&Fitness::Mae {}, &y).is_none());
     }
 
     #[test]

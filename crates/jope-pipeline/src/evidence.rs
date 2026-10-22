@@ -81,7 +81,7 @@ pub fn verify_run(receipt_path: &Path) -> Result<VerifiedRun> {
 
     (|| -> Result<VerifiedRun> {
         if let Some(objective) = &receipt.search.objective {
-            objective.fitness()?;
+            crate::run::check_objective(&objective.fitness()?)?;
             ensure!(
                 receipt.search.selection == crate::select::MIN_MEAN_VALIDATION_OBJECTIVE,
                 "a receipt with an objective must select by it"

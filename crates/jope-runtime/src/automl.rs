@@ -66,7 +66,8 @@ pub struct CandidateOutcome {
     pub status: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub loss: Option<f64>,
-    /// Natural value (before maximization is negated).
+    /// Natural value (before maximization is negated); with an objective only.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fitness_value: Option<f64>,
     /// With calibration: the objective loss of the raw out-of-fold predictions (absent when the
     /// raw predictions are outside the objective's domain).
@@ -95,9 +96,13 @@ pub struct Selection {
     pub fitness: Option<crate::fitness::Fitness>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fitness_sha256: Option<String>,
-    pub validation: Validation,
-    pub scored_rows: usize,
-    pub warmup_rows: usize,
+    /// `v2` only (an objective or forward validation): a `v1` record keeps its original shape.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validation: Option<Validation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scored_rows: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub warmup_rows: Option<usize>,
     /// Present when the selection learned output maps.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub calibration: Option<CalibrationRecord>,
@@ -307,22 +312,34 @@ struct Scored {
     predictions: Vec<f64>,
 }
 
+/// Where the scored rows sit in a forward-validated table, so a fold's output map obeys the
+/// same embargo as its model.
+struct ForwardRows<'a> {
+    /// Table row of each scored row.
+    positions: &'a [usize],
+    /// First table row of each fold.
+    starts: Vec<usize>,
+    gap: usize,
+}
+
 /// Scored rows whose out-of-fold predictions may teach the map applied to `fold`: every other
-/// fold, or with forward validation only the earlier folds (none for the first).
-fn calibration_rows(folds_of_scored: &[usize], fold: usize, forward: bool) -> Vec<usize> {
+/// fold, or with forward validation only the rows the fold's model could have trained on (rows
+/// more than `gap` before the fold starts; none for the first fold).
+fn calibration_rows(
+    folds_of_scored: &[usize],
+    fold: usize,
+    forward: Option<&ForwardRows>,
+) -> Vec<usize> {
     (0..folds_of_scored.len())
-        .filter(|&i| {
-            if forward {
-                folds_of_scored[i] < fold
-            } else {
-                folds_of_scored[i] != fold
-            }
+        .filter(|&i| match forward {
+            Some(rows) => rows.positions[i] + rows.gap < rows.starts[fold],
+            None => folds_of_scored[i] != fold,
         })
         .collect()
 }
 
 /// The objective's score of one candidate's out-of-fold predictions: raw, and cross-fitted
-/// calibrated when a calibration family is in force.
+/// calibrated when a calibration family is in force. Calibration stops at the time limit.
 #[allow(clippy::too_many_arguments)]
 fn objective_score(
     fitness: &Fitness,
@@ -331,15 +348,25 @@ fn objective_score(
     p: &[f64],
     columns: &Columns,
     folds_of_scored: &[usize],
-    forward: bool,
+    forward: Option<&ForwardRows>,
+    budget: &Budget,
 ) -> Result<(Option<f64>, Option<f64>)> {
     let raw = fitness.evaluate_with(y, p, columns).map(|s| s.loss);
     if family == Calibration::None {
         return Ok((Some(raw?), None));
     }
+    budget.check("output calibration")?;
     let fit_rows = |fold: usize| calibration_rows(folds_of_scored, fold, forward);
-    let crossed =
-        calibration::cross_fit(fitness, family, y, p, columns, folds_of_scored, &fit_rows);
+    let crossed = calibration::cross_fit(
+        fitness,
+        family,
+        y,
+        p,
+        columns,
+        folds_of_scored,
+        &fit_rows,
+        &|| budget.exhausted(),
+    )?;
     let calibrated = fitness.evaluate_with(y, &crossed, columns).map(|s| s.loss);
     match (raw, calibrated) {
         (Err(raw), Err(_)) => Err(raw),
@@ -392,10 +419,12 @@ pub fn select_with_fitness(
         Validation::Iid {} => folds(training.kind, &training.targets, k),
         Validation::Forward { gap } => {
             let block = n / (k + 1);
-            anyhow::ensure!(
-                block.saturating_sub(*gap) >= 2,
-                "forward validation needs more rows or a smaller fold count/gap"
-            );
+            if block.saturating_sub(*gap) < 2 {
+                return Err(Failure::input(format!(
+                    "forward validation needs more rows or a smaller fold count/gap \
+                     ({n} rows, {k} folds, gap {gap})"
+                )));
+            }
             (0..n)
                 .map(|r| {
                     if r < block {
@@ -410,6 +439,21 @@ pub fn select_with_fitness(
     let forward = matches!(validation, Validation::Forward { .. });
     let warmup_rows = assignment.iter().filter(|f| **f == usize::MAX).count();
     let scored_rows: Vec<usize> = (0..n).filter(|r| assignment[*r] != usize::MAX).collect();
+    let forward_rows = match validation {
+        Validation::Forward { gap } => Some(ForwardRows {
+            positions: &scored_rows,
+            starts: (0..k)
+                .map(|f| {
+                    assignment
+                        .iter()
+                        .position(|a| *a == f)
+                        .expect("every forward fold has rows")
+                })
+                .collect(),
+            gap: *gap,
+        }),
+        Validation::Iid {} => None,
+    };
     let scored_targets: Vec<f64> = scored_rows.iter().map(|r| training.targets[*r]).collect();
     let scored_folds: Vec<usize> = scored_rows.iter().map(|r| assignment[*r]).collect();
     let scored_columns = calibration::subset_columns(&training.auxiliary, &scored_rows);
@@ -467,7 +511,8 @@ pub fn select_with_fitness(
                 &values,
                 &scored_columns,
                 &scored_folds,
-                forward,
+                forward_rows.as_ref(),
+                budget,
             )?;
             let use_calibrated = match (raw, calibrated) {
                 (Some(r), Some(c)) => c < r,
@@ -491,7 +536,7 @@ pub fn select_with_fitness(
                 };
                 outcome.status = "scored";
                 outcome.loss = Some(value);
-                outcome.fitness_value = Some(natural);
+                outcome.fitness_value = fitness.is_some().then_some(natural);
                 if family != Calibration::None {
                     outcome.uncalibrated_loss = raw;
                     outcome.calibrated_loss = calibrated;
@@ -528,15 +573,20 @@ pub fn select_with_fitness(
         (Some(fitness), family) if family != Calibration::None => {
             let won = evidence[winner].as_ref().expect("the winner was scored");
             debug_assert!(won.loss.is_finite());
-            let output_transform = won.calibrated.then(|| {
-                calibration::fit(
+            // The final map honours the clock like the cross-fitted ones; a budget that runs out
+            // here fails the selection. A winner that kept its raw predictions keeps the floor.
+            let output_transform = if won.calibrated {
+                Some(calibration::fit_until(
                     fitness,
                     family,
                     &scored_targets,
                     &won.predictions,
                     &scored_columns,
-                )
-            });
+                    &|| budget.exhausted(),
+                )?)
+            } else {
+                calibration::floor_only(fitness, &scored_targets)
+            };
             Some(CalibrationRecord {
                 family,
                 method: calibration::CALIBRATION_METHOD,
@@ -566,9 +616,9 @@ pub fn select_with_fitness(
         },
         fitness: fitness.cloned(),
         fitness_sha256: fitness.map(Fitness::identity).transpose()?,
-        validation: validation.clone(),
-        scored_rows: n - warmup_rows,
-        warmup_rows,
+        validation: v2.then(|| validation.clone()),
+        scored_rows: v2.then_some(n - warmup_rows),
+        warmup_rows: v2.then_some(warmup_rows),
         calibration: calibration_record,
         selected: candidates[winner].id.clone(),
         candidates: outcomes,
@@ -713,8 +763,8 @@ mod fitness_tests {
         )
         .unwrap();
         assert!(selection.calibration.is_some());
-        assert_eq!(selection.warmup_rows, 15);
-        assert_eq!(selection.scored_rows, 45);
+        assert_eq!(selection.warmup_rows, Some(15));
+        assert_eq!(selection.scored_rows, Some(45));
         assert_eq!(selection.fold_policy, "expanding-window-gap/v1");
         let assignment = (0..60)
             .map(|r| {
@@ -755,14 +805,26 @@ mod fitness_tests {
         assert_eq!(&a[..15], &b[..15]);
         assert_eq!(sa, (15..60).collect::<Vec<_>>());
         assert_eq!(sa, sb);
-        // A map applied to a forward fold is learned only from earlier folds' predictions.
+        // A map applied to a forward fold is learned only from rows its model could train on:
+        // earlier folds' predictions, minus the gap rows just before the fold.
         let folds: Vec<usize> = assignment[15..].to_vec();
-        assert!(calibration_rows(&folds, 0, true).is_empty());
+        let positions: Vec<usize> = (15..60).collect();
+        let rows = ForwardRows {
+            positions: &positions,
+            starts: vec![15, 30, 45],
+            gap: 2,
+        };
+        assert!(calibration_rows(&folds, 0, Some(&rows)).is_empty());
+        // Fold 1 starts at row 30: rows 28 and 29 are embargoed for its model and its map.
         assert_eq!(
-            calibration_rows(&folds, 2, true),
-            (0..30).collect::<Vec<_>>()
+            calibration_rows(&folds, 1, Some(&rows)),
+            (0..13).collect::<Vec<_>>()
         );
-        assert_eq!(calibration_rows(&folds, 1, false).len(), 30);
+        assert_eq!(
+            calibration_rows(&folds, 2, Some(&rows)),
+            (0..28).collect::<Vec<_>>()
+        );
+        assert_eq!(calibration_rows(&folds, 1, None).len(), 30);
         for order_dependent in ["sortino", "mase", "max_drawdown"] {
             assert!(select_with_fitness(
                 &train,
@@ -775,6 +837,47 @@ mod fitness_tests {
             )
             .is_err());
         }
+    }
+    #[test]
+    fn a_selection_without_an_objective_keeps_the_v1_record_shape() {
+        let train = training();
+        let budget = Budget::new(None, 1);
+        let method = crate::methods::resolve(TaskKind::Regression, "ridge").unwrap();
+        let (selection, _) = select(&train, std::slice::from_ref(&method), 3, &budget).unwrap();
+        let record = serde_json::to_value(&selection).unwrap();
+        let mut keys: Vec<&str> = record
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        keys.sort_unstable();
+        assert_eq!(
+            keys,
+            [
+                "candidates",
+                "fold_policy",
+                "folds",
+                "loss",
+                "metric",
+                "policy",
+                "selected"
+            ]
+        );
+        let candidate = record["candidates"][0].as_object().unwrap();
+        assert!(!candidate.contains_key("fitness_value"));
+        // A gap the table cannot hold is an input error, not a numerical one.
+        let error = select_with_fitness(
+            &train,
+            std::slice::from_ref(&method),
+            3,
+            &budget,
+            Some(&Fitness::Mae {}),
+            &Validation::Forward { gap: 1000 },
+            Calibration::None,
+        )
+        .unwrap_err();
+        assert_eq!(crate::error::kind_of(&error), crate::FailureKind::Input);
     }
     #[test]
     fn explicit_default_matches_existing_selection_and_invalid_scope_is_refused() {
