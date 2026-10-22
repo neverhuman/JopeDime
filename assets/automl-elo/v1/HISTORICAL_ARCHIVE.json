@@ -1,0 +1,22 @@
+{
+  "uri": "s3://veox-jopedime-learning-use2/staging/regression-flywheel-20261021/w000003/sha256/48065da046d63dcf8202299a6953731c994f35c11b94e96ca14c779dc5bc162e.tar.gz",
+  "bucket": "veox-jopedime-learning-use2",
+  "key": "staging/regression-flywheel-20261021/w000003/sha256/48065da046d63dcf8202299a6953731c994f35c11b94e96ca14c779dc5bc162e.tar.gz",
+  "version_id": "2DTF8GCgR6gdGdynZ5Q_0jLaliZOvBva",
+  "sha256": "48065da046d63dcf8202299a6953731c994f35c11b94e96ca14c779dc5bc162e",
+  "bytes": 38653069,
+  "format": "application/gzip; tar+gzip",
+  "exact_version_head_verified": true,
+  "verification_receipt": {
+    "uri": "s3://veox-jopedime-learning-use2/staging/regression-flywheel-20261021/w000003/sha256/99d5f46b726ae9528566887b4d00787bbbb6eb144ddb87a6e9eb560f9fcb073c.verification.json",
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "staging/regression-flywheel-20261021/w000003/sha256/99d5f46b726ae9528566887b4d00787bbbb6eb144ddb87a6e9eb560f9fcb073c.verification.json",
+    "version_id": "Ick1G2z4Uh4QlanoE3qfD6mwDc8H1CK3",
+    "sha256": "99d5f46b726ae9528566887b4d00787bbbb6eb144ddb87a6e9eb560f9fcb073c",
+    "bytes": 1041,
+    "format": "application/json",
+    "exact_version_head_verified": true
+  },
+  "remote_recovery_verified": true,
+  "verified_host": "Mac-Studio.local"
+}

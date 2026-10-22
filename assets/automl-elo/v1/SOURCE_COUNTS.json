@@ -1,0 +1,42 @@
+{
+  "schema": "jope.automl-source-counts/v1",
+  "counter": "four-model-20261022/lexical_counter.rs (reproduces the prior counts exactly)",
+  "counts": [
+    {
+      "method": "Opus5p5_Extra",
+      "source_sha256": "2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834",
+      "lines": 2284,
+      "code_tokens": 14326,
+      "doc_tokens": 380,
+      "bytes": 66536,
+      "total_tokens": 14706
+    },
+    {
+      "method": "GPT6_Astra_Max",
+      "source_sha256": "b51ad3291c6e433388a49ed8338d069a245300d634c9da76be1fb1f1454cd0eb",
+      "lines": 821,
+      "code_tokens": 5782,
+      "doc_tokens": 142,
+      "bytes": 27729,
+      "total_tokens": 5924
+    },
+    {
+      "method": "GPT6p1_Sol_Max",
+      "source_sha256": "fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8",
+      "lines": 687,
+      "code_tokens": 5335,
+      "doc_tokens": 107,
+      "bytes": 25011,
+      "total_tokens": 5442
+    },
+    {
+      "lines": 2931,
+      "code_tokens": 16709,
+      "doc_tokens": 708,
+      "bytes": 96694,
+      "total_tokens": 17417,
+      "method": "Gemini4_argon_high",
+      "source_sha256": "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3"
+    }
+  ]
+}

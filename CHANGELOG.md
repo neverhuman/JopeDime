@@ -5,6 +5,11 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Benchmarks and AutoML
+
+- automl: the owner-supplied `Gemini4_argon_high` Rust regressor joins the native registry byte-for-byte (`jope-bench run --native Gemini4_argon_high`), replacing the earlier `gemini-argon-4` candidate. The adapter now refuses a non-finite prediction instead of passing it on; the frozen source returns `inf` for some extreme finite inputs
+- automl-elo: `assets/automl-elo/v1` adds the four-entrant AutoML Elo over 64 families × 3 folds × 3 seeds. Gemini4_argon_high was fitted on all 576 cells (one CPU and 8 GiB each, no failures); the three earlier entrants' 1,728 fits are reused and the historical fit is reproduced exactly. Ratings: Opus5p5_Extra 1641, Gemini4_argon_high 1561, GPT6p1_Sol_Max 1456, GPT6_Astra_Max 1342 (95% family-bootstrap intervals in `RESULTS.json`; Gemini's RMSE differences are not significant after Holm adjustment), with Elo, pairwise and source-size figures
+
 ## [0.4.0] - 2026-10-22
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.3.0` (#386 and
