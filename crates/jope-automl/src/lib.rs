@@ -1,6 +1,6 @@
 //! Native, original-source regressors available to AutoML callers and same-cut benchmarks.
 //!
-//! The submission is included byte-for-byte. Adapters own transport and registration;
+//! Sol is included byte-for-byte; Gemini has only four recorded type annotations. Adapters own transport and registration;
 //! they do not replace its preprocessing, fitting, or prediction procedure.
 
 #[rustfmt::skip]
@@ -9,6 +9,22 @@
 mod submission;
 
 pub use submission::{Regressor as Gpt6p1SolMax, RegressorApi};
+
+// Preserve the frozen entrant's bytes. Style and unused private fields are
+// reviewed in the submission record; the adapters retain normal workspace lints.
+#[rustfmt::skip]
+#[allow(clippy::all, dead_code)]
+#[path = "gemini_argon_4.rs"]
+mod gemini;
+pub use gemini::{Regressor as GeminiArgon4, RegressorApi as GeminiRegressorApi};
+
+/// Select the annotation-only Gemini submission through either benchmark path.
+pub const GEMINI_ARGON_4: &str = "gemini-argon-4";
+/// SHA-256 of the corrected, otherwise unchanged submitted source.
+pub const GEMINI_ARGON_4_SHA256: &str =
+    "b0aa42d24d0b067e0597f6f538b14cab75dca8b976731668c894d80684d4992d";
+/// Source bytes corresponding to the compiled Gemini module.
+pub const GEMINI_ARGON_4_SOURCE: &str = include_str!("gemini_argon_4.rs");
 
 /// Frozen candidate identifier. This is a regressor, not a GP grammar operator.
 pub const GPT6P1_SOL_MAX: &str = "GPT6p1_Sol_Max";
@@ -27,11 +43,18 @@ pub struct Definition {
 }
 
 /// Native AutoML candidate registry. Entries have no dataset-specific configuration.
-pub const REGRESSORS: &[Definition] = &[Definition {
-    id: GPT6P1_SOL_MAX,
-    source_sha256: GPT6P1_SOL_MAX_SHA256,
-    source_file: "GPT6p1_Sol_Max.rs",
-}];
+pub const REGRESSORS: &[Definition] = &[
+    Definition {
+        id: GPT6P1_SOL_MAX,
+        source_sha256: GPT6P1_SOL_MAX_SHA256,
+        source_file: "GPT6p1_Sol_Max.rs",
+    },
+    Definition {
+        id: GEMINI_ARGON_4,
+        source_sha256: GEMINI_ARGON_4_SHA256,
+        source_file: "gemini_argon_4.rs",
+    },
+];
 
 /// Resolve a requested candidate; an unknown name never silently selects another model.
 pub fn definition(id: &str) -> Result<&'static Definition, String> {
@@ -43,8 +66,65 @@ pub fn definition(id: &str) -> Result<&'static Definition, String> {
 
 /// Independently fitted state for one AutoML candidate.
 pub struct FittedRegressor {
-    model: Gpt6p1SolMax,
+    model: Model,
     width: usize,
+}
+
+enum Model {
+    Sol(Box<Gpt6p1SolMax>),
+    Gemini(Box<GeminiArgon4>),
+}
+
+fn validate_length(values: &[f64], rows: usize, columns: usize) -> Result<(), String> {
+    let expected = rows
+        .checked_mul(columns)
+        .ok_or_else(|| String::from("table dimensions overflow"))?;
+    if values.len() != expected {
+        return Err(String::from("flat table length does not match dimensions"));
+    }
+    Ok(())
+}
+
+/// Fit the challenge's row-major table with the target in its last column.
+pub fn fit_flat(
+    id: &str,
+    table: &[f64],
+    rows: usize,
+    columns: usize,
+    seed: u64,
+) -> Result<FittedRegressor, String> {
+    definition(id)?;
+    if rows == 0 || columns == 0 {
+        return Err(String::from(
+            "nonempty training rows and target column required",
+        ));
+    }
+    validate_length(table, rows, columns)?;
+    for row in table.chunks_exact(columns) {
+        if !row[columns - 1].is_finite() {
+            return Err(String::from("training targets must be finite"));
+        }
+        if row[..columns - 1].iter().any(|value| value.is_infinite()) {
+            return Err(String::from("infinite training feature"));
+        }
+    }
+    let model = match id {
+        GPT6P1_SOL_MAX => {
+            let mut model = Gpt6p1SolMax::new(seed);
+            model.fit(table, rows, columns)?;
+            Model::Sol(Box::new(model))
+        }
+        GEMINI_ARGON_4 => {
+            let mut model = GeminiArgon4::new(seed);
+            model.fit(table, rows, columns)?;
+            Model::Gemini(Box::new(model))
+        }
+        _ => unreachable!("definition checked above"),
+    };
+    Ok(FittedRegressor {
+        model,
+        width: columns - 1,
+    })
 }
 
 /// Fit only the supplied training rows. The adapter appends each training target last.
@@ -79,9 +159,7 @@ pub fn fit_rows(
         table.extend_from_slice(row);
         table.push(*target);
     }
-    let mut model = Gpt6p1SolMax::new(seed);
-    model.fit(&table, features.len(), columns)?;
-    Ok(FittedRegressor { model, width })
+    fit_flat(id, &table, features.len(), columns, seed)
 }
 
 impl FittedRegressor {
@@ -100,7 +178,30 @@ impl FittedRegressor {
             }
             flat.extend_from_slice(row);
         }
-        self.model.predict(&flat, features.len(), self.width)
+        self.predict_flat(&flat, features.len(), self.width)
+    }
+
+    /// Predict feature-only flat rows, retaining the learner's shape validation.
+    pub fn predict_flat(
+        &self,
+        features: &[f64],
+        rows: usize,
+        columns: usize,
+    ) -> Result<Vec<f64>, String> {
+        if columns != self.width {
+            return Err(String::from("prediction feature width changed"));
+        }
+        if rows > isize::MAX as usize / std::mem::size_of::<f64>() {
+            return Err(String::from("prediction output dimensions overflow"));
+        }
+        validate_length(features, rows, columns)?;
+        if features.iter().any(|value| value.is_infinite()) {
+            return Err(String::from("infinite prediction feature"));
+        }
+        match &self.model {
+            Model::Sol(model) => model.predict(features, rows, columns),
+            Model::Gemini(model) => model.predict(features, rows, columns),
+        }
     }
 }
 
@@ -164,7 +265,7 @@ mod tests {
 
     #[test]
     fn registry_and_transport_preserve_target_placement() {
-        assert_eq!(REGRESSORS.len(), 1);
+        assert_eq!(REGRESSORS.len(), 2);
         assert!(definition("missing").is_err());
         let model = fit_rows(GPT6P1_SOL_MAX, &[vec![10.0], vec![20.0]], &[7.0, 7.0], 1).unwrap();
         assert_eq!(
@@ -207,3 +308,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "gemini_contract_tests.rs"]
+mod gemini_contract_tests;

@@ -1,0 +1,41 @@
+{
+  "original_sha256": "ddddc2557195830ee7fdb156f14802c63da22c171a31b15c232e45635b74b88c",
+  "corrected_sha256": "b0aa42d24d0b067e0597f6f538b14cab75dca8b976731668c894d80684d4992d",
+  "only_changes": [
+    [
+      "let mut qs = Vec::with_capacity(n_q);",
+      "let mut qs: Vec<f64> = Vec::with_capacity(n_q);"
+    ],
+    [
+      "let beta1 = 0.9;",
+      "let beta1: f64 = 0.9;"
+    ],
+    [
+      "let beta2 = 0.999;",
+      "let beta2: f64 = 0.999;"
+    ],
+    [
+      "let mut edges = Vec::new();",
+      "let mut edges: Vec<f64> = Vec::new();"
+    ]
+  ],
+  "patch_sha256": "9179e13a3ac28259cadd0b223ce12ce499abebd13121dbe3923587cd618a6c86",
+  "command": [
+    "rustc",
+    "--edition=2021",
+    "--crate-name",
+    "gemini_argon_4",
+    "--crate-type",
+    "rlib",
+    "-D",
+    "unsafe-code",
+    "-C",
+    "opt-level=3",
+    "-C",
+    "codegen-units=1",
+    "/home/ubuntu/jope-evidence/four-model-20261022/submission/gemini_argon_4.rs",
+    "-o",
+    "/home/ubuntu/jope-evidence/four-model-20261022/target/gemini_argon_4.rlib"
+  ],
+  "exit_code": 0
+}

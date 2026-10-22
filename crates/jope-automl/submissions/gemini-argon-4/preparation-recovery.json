@@ -1,0 +1,51 @@
+{
+  "uri": "s3://veox-jopedime-learning-use2/staging/four-model-20261022/sha256/665a31e76a5a6263bf20561d2fb793d3818f497681ec8e9f93904fc0ed036d43.tar.gz",
+  "bucket": "veox-jopedime-learning-use2",
+  "key": "staging/four-model-20261022/sha256/665a31e76a5a6263bf20561d2fb793d3818f497681ec8e9f93904fc0ed036d43.tar.gz",
+  "version_id": "0bHPDpPtb4ZsxpPb3KdmOLBQ4WNak6xk",
+  "sha256": "665a31e76a5a6263bf20561d2fb793d3818f497681ec8e9f93904fc0ed036d43",
+  "bytes": 2723450,
+  "exact_version_head_verified": true,
+  "verification_receipt": {
+    "uri": "s3://veox-jopedime-learning-use2/staging/four-model-20261022/sha256/b2df6de3641b1b4463a1d42951b87bb3b002edabe04e71ac0238f0ccfee80672.verification.json",
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "staging/four-model-20261022/sha256/b2df6de3641b1b4463a1d42951b87bb3b002edabe04e71ac0238f0ccfee80672.verification.json",
+    "version_id": "TTc.WXDTrGfwqryIaGROxFLgjMKBOrOZ",
+    "sha256": "b2df6de3641b1b4463a1d42951b87bb3b002edabe04e71ac0238f0ccfee80672",
+    "bytes": 3314,
+    "exact_version_head_verified": true
+  },
+  "independent_recovery_verified": true,
+  "schema": "jope.frozen-submission-recovery/v1",
+  "state": "HISTORICAL_PREPARATION_ONLY_NOT_COMPLETED_CAMPAIGNS",
+  "member_inventory": {
+    "path": "MEMBERS.json",
+    "sha256": "32fc12a953b608e450d8eee6be7b6b1d1dc3330d02ffc4858c3fad22cf44af39",
+    "bytes": 29341,
+    "independently_verified_members": 196
+  },
+  "source_identity": {
+    "prepared_base_commit": "64cc88b1d9904acf9c14aef0cb24580a147b6a3a",
+    "prepared_patch_sha256": "a6b81de1a1b8e2d2361608b272b8ab8d8a56275b2aeae547e364edcd605823f8",
+    "corrected_gemini_sha256": "b0aa42d24d0b067e0597f6f538b14cab75dca8b976731668c894d80684d4992d"
+  },
+  "protocol_identity": {
+    "schema": "jope.code-production-protocol/v1",
+    "live_execution": "unexecuted",
+    "gemini_cells_completed": 0,
+    "code_production_requests_completed": 0
+  },
+  "independent_restoration": {
+    "host": "Mac-Studio.local",
+    "receipt_object": {
+      "uri": "s3://veox-jopedime-learning-use2/staging/four-model-20261022/sha256/b2df6de3641b1b4463a1d42951b87bb3b002edabe04e71ac0238f0ccfee80672.verification.json",
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "staging/four-model-20261022/sha256/b2df6de3641b1b4463a1d42951b87bb3b002edabe04e71ac0238f0ccfee80672.verification.json",
+      "version_id": "TTc.WXDTrGfwqryIaGROxFLgjMKBOrOZ",
+      "sha256": "b2df6de3641b1b4463a1d42951b87bb3b002edabe04e71ac0238f0ccfee80672",
+      "bytes": 3314,
+      "exact_version_head_verified": true
+    },
+    "scope": "196memberhashes,frozencompileandnativefixtureproof,sourcecounts,historicalEloandfigurerendering;notfourentrantorrequestmeasurements"
+  }
+}

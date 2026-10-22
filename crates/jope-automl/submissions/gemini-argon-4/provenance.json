@@ -1,0 +1,15 @@
+{
+  "schema": "jope.native-regressor-provenance/v1",
+  "requested_name": "gemini-argon-4",
+  "original_sha256": "ddddc2557195830ee7fdb156f14802c63da22c171a31b15c232e45635b74b88c",
+  "corrected_sha256": "b0aa42d24d0b067e0597f6f538b14cab75dca8b976731668c894d80684d4992d",
+  "source_edits": "Exactly four type annotations; no numerical or algorithm changes.",
+  "display_records": "Design and manifest display copies trim trailing blank lines. Verbatim supplied records and raw annotation patch remain in the independently recoverable custody archive.",
+  "original_compile": "Four rustc inference errors; preserved in external qualification receipts.",
+  "successor_compile": "rustc 1.97.1, edition2021, safe Rust, exit0; source qualification is not hosted CI.",
+  "authoring_record": "Original user message in preceding task01a160b7; supplied statements are not independently verified.",
+  "supplied_telemetry_status": "Estimates, not provider metering. Upgrade estimate1490lines/47.8KB differs from actual2968lines/98057bytes.",
+  "served_model_identity": null,
+  "retained_output_yield": null,
+  "retained_output_yield_reason": "No complete consistently tokenized author reasoning and revision record."
+}

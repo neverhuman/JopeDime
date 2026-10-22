@@ -1,0 +1,19 @@
+{
+  "schema_version": "general-regressor-challenge/v2",
+  "algorithm_name": "OmniStack-6 Sovereign Multi-Paradigm Ensemble (CatBoost-Oblivious + PseudoHuber-GBDT + Spline-ElasticNet + ResMLP + Adaptive-KNN)",
+  "language": "rust",
+  "edition": "2021",
+  "target_column": "last",
+  "prediction_input": "features_only",
+  "external_dependencies": [],
+  "unsafe_code": false,
+  "authoring_mode": "reasoning_only",
+  "data_accessed_during_design": false,
+  "experiments_run_during_design": false,
+  "external_code_used": false,
+  "compiled_during_design": false,
+  "single_frozen_implementation": true,
+  "fit_complexity": "O(n * P * log(n) + F * (n * d_lin + min(d_lin^3, n * d_lin) + T * 2^D * n * d_tree + E * n * H * d_lin + n_val * n_ref * d_lin)) where n is training rows, P is input features, d_lin <= 5200 is expanded spline/quantile linear features, d_tree <= 1140 is tree features, F <= 5 is CV folds, T <= 240 is boosting trees, D <= 7 is tree depth, E <= 36 is ResMLP epochs, H <= 36 is hidden units, and n_ref <= 1600 is KNN reference rows.",
+  "predict_complexity": "O(m * (P + F * (d_lin + T * D + H * d_lin + n_ref * d_lin))) where m is prediction rows, P is input features, and F, d_lin, T, D, H, n_ref are the bounded fitted structural parameters.",
+  "memory_complexity": "O(n * (P + d_lin + d_tree) + F * (d_lin + T * 2^D + H * d_lin + n_ref * d_lin) + m * P) bytes."
+}

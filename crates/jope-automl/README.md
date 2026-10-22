@@ -1,5 +1,46 @@
 # Native AutoML regressors
 
+`gemini-argon-4` is also registered. Its implementation is
+[`src/gemini_argon_4.rs`](src/gemini_argon_4.rs); the
+[original submission](submissions/gemini-argon-4/original.rs), supplied design,
+telemetry and correction record remain under
+[`submissions/gemini-argon-4/`](submissions/gemini-argon-4/).
+The original fails compilation. Its successor changes exactly four type
+annotations, with SHA-256
+`b0aa42d24d0b067e0597f6f538b14cab75dca8b976731668c894d80684d4992d`.
+Neither its numerical procedure nor the other entrants' source bytes are changed.
+
+Both benchmark selectors use that same implementation:
+
+```sh
+jope-bench automl
+jope-bench run --datasets /path/to/catalog --out /path/to/reports --automl gemini-argon-4
+jope-bench run --datasets /path/to/catalog --out /path/to/reports --native gemini-argon-4
+```
+
+Gemini classification requests fail validation before fitting. Its adapters reject
+malformed dimensions, infinite features and nonfinite targets; NaN features remain
+missing values. `fit_flat` accepts row-major training data with the target last,
+and `predict_flat` accepts features only. `GeminiArgon4` and `GeminiRegressorApi`
+expose the original challenge interface. Each fitted instance owns its state.
+
+Reproduce the original's four required annotation errors and compile the corrected
+source with the repository-pinned compiler using the offline verification harness:
+
+```sh
+python3 tools/qualify-gemini.py --output /owned/fresh/compiler-evidence
+cargo test --locked -p jope-bench gemini
+```
+
+The harness verifies all frozen entrant hashes and retains commands, full compiler
+identity, diagnostics and outcomes. It does not run a scientific fit. Module-level
+formatting and style-lint exclusions preserve the frozen implementation; adapter
+code follows normal workspace rules. The
+[entrant review](submissions/gemini-argon-4/REVIEW.md) retains its internal-validation
+limitations. The [delivery checklist](../../docs/coordination/four-model-benchmark-20261022.md)
+tracks the separate benchmark and code-production work; registration implies no
+comparative performance result.
+
 `GPT6p1_Sol_Max` is an original safe Rust regressor with no dependencies beyond the
 standard library. Its entire learning procedure lives in
 [`src/GPT6p1_Sol_Max.rs`](src/GPT6p1_Sol_Max.rs). The source was frozen before
@@ -35,7 +76,7 @@ cargo run --release -p jope-bench -- ladder \
 method is recorded as `native.GPT6p1_Sol_Max` with source SHA-256 and seed in its
 report. It is fitted anew on each cut's training rows, then scored and pooled by
 the existing benchmark. Non-regression datasets are explicitly skipped when a
-native regressor is requested. Historical default rosters, frozen panel plans,
+`GPT6p1_Sol_Max` is requested. Historical default rosters, frozen panel plans,
 GP grammars, and Elo calculations retain their existing definitions.
 
 The same-cut integration is trusted in-process product code. It does not implement

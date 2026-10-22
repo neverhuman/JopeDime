@@ -17,6 +17,49 @@ use jope_bench::task::Task;
 const BINARY: &str = env!("CARGO_BIN_EXE_jope-bench");
 
 #[test]
+fn gemini_process_keeps_held_out_targets_in_the_scoring_controller() {
+    let catalog = Command::new(BINARY).arg("automl").output().unwrap();
+    assert!(catalog.status.success());
+    let catalog: serde_json::Value = serde_json::from_slice(&catalog.stdout).unwrap();
+    let entry = catalog["methods"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"] == jope_automl::GEMINI_ARGON_4)
+        .unwrap();
+    assert_eq!(entry["tasks"], serde_json::json!(["regression"]));
+    assert_eq!(entry["source_sha256"], jope_automl::GEMINI_ARGON_4_SHA256);
+    let mut spec =
+        jope_bench::automl::adapter_spec(jope_automl::GEMINI_ARGON_4, Path::new(BINARY), 41, 30.0)
+            .unwrap();
+    spec.probe().unwrap();
+    assert!(spec
+        .version
+        .as_ref()
+        .unwrap()
+        .contains(jope_automl::GEMINI_ARGON_4_SHA256));
+    let (mut x, y) = toy();
+    x[0][0] = f64::NAN;
+    let cuts = build(
+        &FoldPlan::new("gemini-process", 41, 3),
+        "gemini-process",
+        "source",
+        x.len(),
+    )
+    .unwrap();
+    let first = evaluate_adapter(&spec, &x, &y, &cuts[0], Task::Regression);
+    let mut scoring_labels = y.clone();
+    for &row in &cuts[0].hold {
+        scoring_labels[row] += 1000.0;
+    }
+    let second = evaluate_adapter(&spec, &x, &scoring_labels, &cuts[0], Task::Regression);
+    assert!(first.is_ok() && second.is_ok(), "{first:?}; {second:?}");
+    assert_eq!(first.predictions, second.predictions);
+    assert_ne!(first.score, second.score);
+    assert!(!evaluate_adapter(&spec, &x, &y, &cuts[0], Task::Binary).is_ok());
+}
+
+#[test]
 fn astra_automl_catalog_and_process_are_connected_to_same_cut_selection() {
     let catalog = Command::new(BINARY).arg("automl").output().unwrap();
     assert!(catalog.status.success());

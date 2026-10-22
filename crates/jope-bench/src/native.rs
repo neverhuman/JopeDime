@@ -208,6 +208,58 @@ mod tests {
     use crate::protocol::{run, Protocol};
 
     #[test]
+    fn gemini_identity_selection_and_held_out_target_boundary() {
+        assert_eq!(
+            crate::load::sha256_hex(jope_automl::GEMINI_ARGON_4_SOURCE.as_bytes()),
+            jope_automl::GEMINI_ARGON_4_SHA256
+        );
+        let spec = NativeSpec::new(jope_automl::GEMINI_ARGON_4, 41).unwrap();
+        validate_method(&spec.method()).unwrap();
+        let x: Rows = (0..80).map(|i| vec![i as f64]).collect();
+        let y: Vec<f64> = (0..80).map(|i| (i % 13) as f64).collect();
+        let cuts = build(
+            &FoldPlan::new("gemini-boundary", 41, 2),
+            "gemini-boundary",
+            "source",
+            x.len(),
+        )
+        .unwrap();
+        let original = evaluate(&spec, &x, &y, &cuts[0], Task::Regression);
+        let mut changed = y.clone();
+        for &row in &cuts[0].hold {
+            changed[row] += 1000.0;
+        }
+        let counterfactual = evaluate(&spec, &x, &changed, &cuts[0], Task::Regression);
+        assert!(original.is_ok() && counterfactual.is_ok());
+        assert_eq!(original.predictions, counterfactual.predictions);
+        assert_ne!(original.score, counterfactual.score);
+        let result = run(
+            &x,
+            &y,
+            &cuts,
+            vec![spec.method()],
+            &Protocol {
+                screen_fold: 0,
+                top: 1,
+            },
+            Task::Regression,
+        )
+        .unwrap();
+        assert_eq!(result[0].method.id, "native.gemini-argon-4");
+        assert!(result[0].screen.is_ok());
+        assert_eq!(result[0].deep.as_ref().unwrap().status, "ok");
+        let empty: Rows = Vec::new();
+        for task in [Task::Binary, Task::Multiclass] {
+            let rejected = evaluate(&spec, &empty, &[], &cuts[0], task);
+            assert!(!rejected.is_ok());
+            assert!(rejected
+                .reason
+                .unwrap()
+                .contains("requires a regression task"));
+        }
+    }
+
+    #[test]
     fn source_hash_is_the_compiled_standalone_source() {
         assert_eq!(
             crate::load::sha256_hex(jope_automl::GPT6P1_SOL_MAX_SOURCE.as_bytes()),

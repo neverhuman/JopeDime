@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5834,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 2",
+  "count": 5849,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -2701,14 +2701,19 @@
     }
    },
    "jope-automl": {
-    "count": 4,
+    "count": 9,
     "ignored": 0,
     "binaries": {
      "jope-automl": {
       "kind": "lib",
-      "count": 4,
+      "count": 9,
       "ignored": 0,
       "tests": [
+       "gemini_contract_tests::adapter_validation_preserves_existing_and_gemini_contracts",
+       "gemini_contract_tests::gemini_missing_values_determinism_refit_and_batch_independence",
+       "gemini_contract_tests::gemini_registration_and_feature_only_transport",
+       "gemini_contract_tests::gemini_rejects_malformed_inputs_and_invalidates_failed_refit",
+       "gemini_contract_tests::gemini_zero_features_and_constant_missing_columns",
        "tests::lifecycle_shapes_and_failed_refit_are_explicit",
        "tests::prediction_is_row_local_and_refit_matches_fresh_state",
        "tests::registry_and_transport_preserve_target_placement",
@@ -2718,12 +2723,12 @@
     }
    },
    "jope-bench": {
-    "count": 182,
+    "count": 188,
     "ignored": 1,
     "binaries": {
      "jope-bench": {
       "kind": "lib",
-      "count": 154,
+      "count": 156,
       "ignored": 1,
       "tests": [
        "ablation::tests::ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference",
@@ -2785,6 +2790,7 @@
        "automl::contract_tests::validation_path_is_deterministic_and_batch_independent",
        "automl::contract_tests::wide_feature_screening_retains_valid_shapes",
        "automl::tests::frozen_source_and_catalog_identity_agree",
+       "automl::tests::gemini_catalog_dispatch_and_feature_only_csv_contract",
        "automl::tests::registration_preserves_argv_and_rejects_invalid_requests",
        "cuts::tests::cuts_partition_rows_and_ids_follow_every_input",
        "eval::tests::binary_programs_score_auc_and_regression_heads_are_refused",
@@ -2794,6 +2800,7 @@
        "load::tests::numeric_csv_is_strict",
        "load::tests::targets_are_checked_against_the_task",
        "methods::tests::baselines_are_valid_single_head_programs_for_their_task",
+       "native::tests::gemini_identity_selection_and_held_out_target_boundary",
        "native::tests::held_out_labels_do_not_change_fitted_predictions",
        "native::tests::screening_and_deepening_refit_the_registered_native_method",
        "native::tests::source_hash_is_the_compiled_standalone_source",
@@ -2884,13 +2891,14 @@
      },
      "jope-bench::adapter_contract": {
       "kind": "test",
-      "count": 7,
+      "count": 8,
       "ignored": 0,
       "tests": [
        "adapter_failures_are_rejections_with_the_cause",
        "astra_automl_catalog_and_process_are_connected_to_same_cut_selection",
        "astra_transport_preserves_zero_width_rows_and_rejects_invalid_input",
        "frozen_entrants_answer_the_contract_and_beat_the_constant",
+       "gemini_process_keeps_held_out_targets_in_the_scoring_controller",
        "mean_adapter_process_follows_the_retired_script",
        "screen_ranks_everyone_and_deepens_the_top",
        "specs_parse_and_the_mean_adapter_answers_the_contract"
@@ -2898,21 +2906,24 @@
      },
      "jope-bench::bin/jope-bench": {
       "kind": "bin",
-      "count": 3,
+      "count": 4,
       "ignored": 0,
       "tests": [
        "tests::default_run_workers_cap_at_the_host_budget",
        "tests::explicit_run_workers_are_not_capped_but_never_zero",
+       "tests::gemini_cli_selectors_and_regression_preflight",
        "tests::original_automl_cli_preserves_explicit_selection_and_seed"
       ]
      },
      "jope-bench::classification": {
       "kind": "test",
-      "count": 2,
+      "count": 4,
       "ignored": 0,
       "tests": [
        "a_regression_fixture_still_loads_as_regression",
-       "binary_and_multiclass_run_end_to_end_and_rank_by_maximize"
+       "binary_and_multiclass_run_end_to_end_and_rank_by_maximize",
+       "gemini_cli_refuses_classification_before_reading_training_targets",
+       "gemini_cli_selectors_execute_the_same_frozen_regressor"
       ]
      },
      "jope-bench::committed_evidence": {
@@ -7658,12 +7669,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 447,
+    "count": 451,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 357,
+      "count": 361,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7942,11 +7953,14 @@
        "prepared_data::tests::tampered_bytes_are_rejected_before_parsing",
        "prepared_data::tests::the_real_development_partitions_are_admitted_as_their_release_members",
        "progress::tests::blocked_worker_cannot_hold_the_search_or_grow_the_queue",
+       "progress::tests::candidates_are_rate_limited_newest_wins_and_the_last_is_attempted_at_the_end",
        "progress::tests::file_worker_writes_regular_output_with_actual_token_counts",
        "progress::tests::full_and_disconnected_queues_do_not_wait_or_lose_counter_state",
        "progress::tests::lines_are_rate_limited_except_improvements_and_cut_ends",
        "progress::tests::nonfinite_scores_never_cross_the_progress_json_boundary",
+       "progress::tests::population_is_finite_sorted_descending_and_at_most_64",
        "progress::tests::worker_drains_records_and_stops_on_write_error",
+       "progress::tests::worst_case_records_fit_the_cap",
        "run::tests::a_budget_that_cannot_remeasure_the_seeds_is_refused",
        "run::tests::a_champion_is_never_worse_than_its_seed_on_the_same_cuts",
        "run::tests::a_given_source_commit_is_the_receipts_git_sha_and_a_malformed_one_is_refused",
@@ -7986,6 +8000,7 @@
        "search::tests::islands_migrate_record_and_replay_on_any_worker_count",
        "search::tests::no_candidate_is_fitted_twice_on_one_cut",
        "search::tests::one_island_is_the_plain_search",
+       "search::tests::population_snapshot_includes_shared_draws_on_every_path",
        "search::tests::progress_search_refuses_previous_source_binding_before_publication",
        "search::tests::seeds_are_remeasured_on_every_cut_even_past_the_seconds_bound",
        "search::tests::the_bootstrap_genome_is_always_measured_first",
@@ -9263,7 +9278,7 @@
   }
  },
  "totals": {
-  "rust": 5834,
+  "rust": 5849,
   "python": 182
  }
 }

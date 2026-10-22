@@ -26,6 +26,26 @@ fn default_workers(explicit: Option<usize>, available: Option<usize>) -> usize {
         .max(1)
 }
 
+fn validate_regressor_task(task: Task, automl: &[String], natives: &[String]) -> Result<()> {
+    for (selector, selected) in [
+        ("--automl", !automl.is_empty()),
+        (
+            "--native",
+            natives
+                .iter()
+                .any(|name| name == jope_automl::GEMINI_ARGON_4),
+        ),
+    ] {
+        if selected && task != Task::Regression {
+            bail!(
+                "{selector} requires regression datasets; found {}",
+                task.as_str()
+            );
+        }
+    }
+    Ok(())
+}
+
 #[derive(Parser)]
 #[command(
     name = "jope-bench",
@@ -70,7 +90,7 @@ enum Command {
         /// Extra program: `NAME=<dsl>` or `NAME=@<file>` (repeatable).
         #[arg(long = "program")]
         programs: Vec<String>,
-        /// Original native AutoML regressor (repeatable; currently GPT6p1_Sol_Max).
+        /// Original native AutoML regressor (repeatable; see the native registry).
         /// Each is freshly fitted on each cut. Only regression datasets are eligible.
         #[arg(long = "native")]
         natives: Vec<String>,
@@ -82,7 +102,7 @@ enum Command {
         adapters: Vec<String>,
         /// Original Rust learner to include in same-cut selection and Elo reports (repeatable).
         /// Only regression datasets are accepted when this option is supplied.
-        #[arg(long, value_delimiter = ',', value_parser = [jope_bench::automl::NAME])]
+        #[arg(long, value_delimiter = ',', value_parser = jope_bench::automl::NAMES)]
         automl: Vec<String>,
         /// Frozen challenge regressor built into this binary, run through the same adapter
         /// contract as `adapter.<NAME>` on regression datasets only (repeatable; see
@@ -264,7 +284,7 @@ fn main() -> Result<()> {
             });
             let protocol = Protocol { screen_fold, top };
             let dirs = discover(&datasets)?;
-            if heads.is_some() || !automl.is_empty() {
+            if heads.is_some() || !automl.is_empty() || !natives.is_empty() {
                 // Explicit heads are checked against every discovered dataset's task before
                 // any report is written, so a mixed-task tree cannot abort halfway through.
                 let mut tasks = std::collections::BTreeSet::new();
@@ -281,12 +301,7 @@ fn main() -> Result<()> {
                             format!("--heads against the {} datasets", task.as_str())
                         })?;
                     }
-                    if !automl.is_empty() && task != Task::Regression {
-                        bail!(
-                            "--automl gpt6-astra-max requires regression datasets; found {}",
-                            task.as_str()
-                        );
-                    }
+                    validate_regressor_task(task, &automl, &natives)?;
                 }
             }
             std::fs::create_dir_all(&out)?;
@@ -302,6 +317,7 @@ fn main() -> Result<()> {
                     }
                 };
                 let task = dataset.bench_task()?;
+                validate_regressor_task(task, &automl, &natives)?;
                 if (search_config.is_some() || !natives.is_empty()) && task != Task::Regression {
                     eprintln!(
                         "skip {} ({}): --search and --native require regression; this dataset is {}",
@@ -465,6 +481,62 @@ fn main() -> Result<()> {
 mod tests {
     use super::{default_workers, Cli, Command, DEFAULT_MAX_WORKERS};
     use clap::Parser;
+
+    #[test]
+    fn gemini_cli_selectors_and_regression_preflight() {
+        let selected = vec![jope_automl::GEMINI_ARGON_4.to_owned()];
+        for selector in ["--automl", "--native"] {
+            let cli = Cli::try_parse_from([
+                "jope-bench",
+                "run",
+                "--datasets",
+                "data",
+                "--out",
+                "reports",
+                selector,
+                jope_automl::GEMINI_ARGON_4,
+                "--seed",
+                "41",
+            ])
+            .unwrap();
+            match cli.command {
+                Command::Run {
+                    automl,
+                    natives,
+                    seed,
+                    ..
+                } => {
+                    assert_eq!(seed, 41);
+                    assert_eq!(
+                        if selector == "--automl" {
+                            automl
+                        } else {
+                            natives
+                        },
+                        selected
+                    );
+                }
+                _ => panic!("expected run command"),
+            }
+        }
+        for task in jope_bench::task::Task::ALL {
+            assert_eq!(
+                super::validate_regressor_task(task, &selected, &[]).is_ok(),
+                task == jope_bench::task::Task::Regression
+            );
+            assert_eq!(
+                super::validate_regressor_task(task, &[], &selected).is_ok(),
+                task == jope_bench::task::Task::Regression
+            );
+            assert!(super::validate_regressor_task(task, &[], &[]).is_ok());
+            assert!(super::validate_regressor_task(
+                task,
+                &[],
+                &[jope_automl::GPT6P1_SOL_MAX.to_owned()]
+            )
+            .is_ok());
+        }
+    }
 
     #[test]
     fn original_automl_cli_preserves_explicit_selection_and_seed() {

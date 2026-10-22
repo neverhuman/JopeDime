@@ -106,7 +106,12 @@ fn write_dataset(dir: &Path, task: Task, x: &[Vec<f64>], y: &[f64]) -> PathBuf {
         "categorical_features": 0,
         "columns": features + 1,
     });
-    meta["target"] = json!({"name": "target", "index": -1, "type": task.as_str()});
+    let target_type = if task == Task::Regression {
+        "numeric"
+    } else {
+        task.as_str()
+    };
+    meta["target"] = json!({"name": "target", "index": -1, "type": target_type});
     meta["files"] = json!({
         "train": {"sha256": train_sha, "bytes": train.len(), "rows": split, "columns": features + 1, "has_header": false},
         "test": {"sha256": test_sha, "bytes": test.len(), "rows": x.len() - split, "columns": features + 1, "has_header": false},
@@ -130,6 +135,108 @@ fn write_dataset(dir: &Path, task: Task, x: &[Vec<f64>], y: &[f64]) -> PathBuf {
     fs::write(dataset_dir.join("train.csv"), train).unwrap();
     fs::write(dataset_dir.join("test.csv"), test).unwrap();
     dataset_dir
+}
+
+#[test]
+fn gemini_cli_selectors_execute_the_same_frozen_regressor() {
+    let temp = tempfile::tempdir().unwrap();
+    let (x, _) = synth(Task::Regression);
+    let dir = write_dataset(temp.path(), Task::Regression, &x, &vec![7.0; x.len()]);
+    let dataset = load_dataset(&dir).unwrap();
+    for (selector, method) in [
+        ("--automl", "adapter.gemini-argon-4"),
+        ("--native", "native.gemini-argon-4"),
+    ] {
+        let out = temp.path().join(selector.trim_start_matches('-'));
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_jope-bench"))
+            .args(["run", "--datasets"])
+            .arg(&dir)
+            .arg("--out")
+            .arg(&out)
+            .args([
+                selector,
+                jope_automl::GEMINI_ARGON_4,
+                "--seed",
+                "41",
+                "--folds",
+                "2",
+                "--top",
+                "2",
+                "--heads",
+                "ridge",
+                "--workers",
+                "1",
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let report =
+            Report::read(&out.join(format!("{}.bench-report.json", dataset.row.dataset_hash)))
+                .unwrap();
+        let result = report
+            .methods
+            .iter()
+            .find(|row| row.method.id == method)
+            .unwrap();
+        assert!(result.screen.is_ok());
+        assert!(result.screen.predictions.iter().all(|value| *value == 7.0));
+        let deep = result.deep.as_ref().unwrap();
+        assert_eq!(deep.status, "ok");
+        assert_eq!(deep.folds.len(), 2);
+        assert!(deep.folds.iter().all(|fold| fold
+            .outcome
+            .predictions
+            .iter()
+            .all(|value| *value == 7.0)));
+        if let Some(native) = &result.method.native {
+            assert_eq!(native.source_sha256, jope_automl::GEMINI_ARGON_4_SHA256);
+            assert_eq!(native.seed, 41);
+        } else {
+            assert!(result
+                .method
+                .adapter
+                .as_ref()
+                .unwrap()
+                .version
+                .as_ref()
+                .unwrap()
+                .contains(jope_automl::GEMINI_ARGON_4_SHA256));
+        }
+    }
+}
+
+#[test]
+fn gemini_cli_refuses_classification_before_reading_training_targets() {
+    let temp = tempfile::tempdir().unwrap();
+    for task in [Task::Binary, Task::Multiclass] {
+        let (x, y) = synth(task);
+        let dir = write_dataset(temp.path(), task, &x, &y);
+        fs::rename(dir.join("train.csv"), dir.join("controller-only.csv")).unwrap();
+        fs::write(dir.join("train.csv"), "INVALID-TARGET-MUST-NOT-BE-PARSED\n").unwrap();
+        for selector in ["--automl", "--native"] {
+            let out = temp.path().join(format!("{}-{selector}", task.as_str()));
+            let output = std::process::Command::new(env!("CARGO_BIN_EXE_jope-bench"))
+                .args(["run", "--datasets"])
+                .arg(&dir)
+                .arg("--out")
+                .arg(&out)
+                .args([selector, jope_automl::GEMINI_ARGON_4, "--workers", "1"])
+                .output()
+                .unwrap();
+            assert!(!output.status.success());
+            assert!(
+                String::from_utf8_lossy(&output.stderr)
+                    .contains(&format!("{selector} requires regression")),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(!out.exists());
+        }
+    }
 }
 
 #[test]

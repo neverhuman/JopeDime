@@ -1,0 +1,38 @@
+Please study our models (I thought we had a 4th... we do!): Also, [Pushed GPT6_Astra_Max.rs and its AutoML integration in JopeDime PR #391. Select it with --automl gpt6-astra-max.
+Compilation, 18 focused tests, formatting, and Clippy passed.
+Estimated session effort:
+* Final Rust source written: 11m 18s; first successful compile at 17m 01s.
+* Working AutoML integration verified: 27m 37s.
+* Tokens: approximately 80,000 through source freeze (60k–110k), or 130,000 through working integration (95k–180k).
+Timing uses attachment availability as the start proxy; token estimates are approximate, not metered totals. Details are committed in effort.json.
+The PR is pushed, not merged. Hosted CI is queued and independent review remains pending. Full local hygiene was blocked by the repository’s 50 GB disk-reserve requirement
+ ——————————————————————————————-
+
+Implemented GPT6p1_Sol_Max.rs, registered it in native AutoML, and pushed PR #392.
+20 focused tests pass. Hosted CI is queued; broader lint/environment blockers are documented in the PR.
+Milestone	Estimated elapsed time	Estimated tokens
+Source written	13 minutes	60k (45k–80k)
+First successful compilation	17 minutes	90k (60k–120k)
+These are rough context/output estimates, not metered usage. Timing includes initial clarification. Integration and publishing took additional time. The authorship receipt also discloses prior project context.
+
+——————————————————————————————-
+
+Tokens and time. The earlier turns that produced the source came into this session without usage data, so that row is an estimate. The rest is measured from the session log.
+Phase	Time	Tokens
+Prompt to final working source (estimated)	about 25 min, likely 15–40	about 75k output including reasoning, likely 50–100k; about 30–80k input
+Freeze, checks, integration, push (measured)	about 25 min (06:40Z to about 07:05Z)	about 94k output (27k reasoning), about 245k new input
+	•	Final source message: it was written in at most 6.3 minutes (06:17:44Z to before 06:24Z) and is about 20k tokens on its own. At least one earlier, incomplete attempt came before it.
+* Input figure: it is mostly the 16k-token spec being re-read each turn.
+* Cached reads: the integration phase also re-read about 19.5M cached tokens. Those are repeat context, not new tokens.
+* Zero edits: the source needed no changes after the freeze, so that first message is the final working source.
+—————————————————————————————
+For the authorship receipt and session telemetry, below is the breakdown of the token usage and wall-clock generation time required to go from the prompt to the completed submission (submission.rs, submission.json, and design.md):
+Metric	Estimated Value	Breakdown / Notes
+Input Prompt Tokens	~6,850 tokens	Frontier_Regression_Challenge_Master_Spec.md (~34.5 KB UTF-8 text, including the master prompt and organizer appendix).
+Internal Reasoning Tokens	~3,400 tokens	Single-pass architecture planning, mathematical formulation, Rust borrow-checker/lifetime verification, and edge-case contract checks.
+Output Completion Tokens	~9,650 tokens	submission.rs (~1,085 lines / ~33.6 KB / ~7,850 tokens) + submission.json (~220 tokens) + design.md (~1,350 words / ~1,580 tokens).
+Total Session Tokens	~19,900 tokens	End-to-end token footprint (Input + Reasoning + Output) in a single turn (attempt_index: 1).
+Prefill & Reasoning Time	~12 – 18 seconds	Prompt ingestion and internal design synthesis prior to first output token.
+Code & Spec Generation Time	~65 – 85 seconds	Streaming ~9,650 output tokens of dense safe Rust and mathematical documentation.
+Total Wall-Clock Time	~75 – 105 seconds	~1.3 to 1.75 minutes end-to-end, single-shot (reasoning_only, 0 tool calls, 0 compilation retries).
+(Note: Because the model runtime does not expose hardware-level tokenizer counters or a system wall-clock timer inside the sandbox, token counts are estimated from exact byte/character/line lengths using standard Rust/Markdown token density of ~3.8 characters per token, and wall-clock time is estimated from standard token streaming throughput. You can cross-reference this against your API response metadata or client-side request logs for the exact millisecond timestamp and billed token count.)

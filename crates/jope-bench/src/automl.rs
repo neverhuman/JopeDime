@@ -21,6 +21,18 @@ use submission::{Regressor, RegressorApi};
 
 /// Stable CLI name for this original learner.
 pub const NAME: &str = "gpt6-astra-max";
+pub const NAMES: [&str; 2] = [NAME, jope_automl::GEMINI_ARGON_4];
+
+fn identity(name: &str) -> Result<(&'static str, &'static str)> {
+    match name {
+        NAME => Ok(("GPT6_Astra_Max", SOURCE_SHA256)),
+        jope_automl::GEMINI_ARGON_4 => Ok((
+            jope_automl::GEMINI_ARGON_4,
+            jope_automl::GEMINI_ARGON_4_SHA256,
+        )),
+        _ => bail!("unknown AutoML method {name:?}"),
+    }
+}
 /// Identity embedded in adapter version output and checked by the contract tests.
 pub const SOURCE_SHA256: &str = "b51ad3291c6e433388a49ed8338d069a245300d634c9da76be1fb1f1454cd0eb";
 
@@ -28,18 +40,20 @@ pub const SOURCE_SHA256: &str = "b51ad3291c6e433388a49ed8338d069a245300d634c9da7
 pub fn registry() -> serde_json::Value {
     serde_json::json!({
         "schema": "jope.original-rust-automl/v1",
-        "methods": [{
-            "name": NAME,
-            "algorithm_name": "GPT6_Astra_Max",
-            "method_id": "adapter.GPT6_Astra_Max",
+        "methods": NAMES.iter().map(|name| {
+            let (algorithm, source) = identity(name).expect("static catalog identity");
+            serde_json::json!({
+            "name": name,
+            "algorithm_name": algorithm,
+            "method_id": format!("adapter.{algorithm}"),
             "tasks": ["regression"],
             "language": "rust",
-            "source_sha256": SOURCE_SHA256,
+            "source_sha256": source,
             "input_contract": "last_target_features_only_prediction",
             "single_threaded_learner": true,
             "primary_challenge_eligibility": "not_asserted",
             "predictive_quality": "unmeasured"
-        }]
+        })}).collect::<Vec<_>>()
     })
 }
 
@@ -51,8 +65,8 @@ pub fn adapter_spec(
     seed: u64,
     timeout_seconds: f64,
 ) -> Result<AdapterSpec> {
-    ensure!(name == NAME, "unknown AutoML method {name:?}");
-    let mut spec = parse_spec("GPT6_Astra_Max=unused", timeout_seconds)?;
+    let (algorithm, _) = identity(name)?;
+    let mut spec = parse_spec(&format!("{algorithm}=unused"), timeout_seconds)?;
     spec.command = vec![
         executable
             .to_str()
@@ -112,11 +126,12 @@ fn read_table(path: &Path, expected_width: Option<usize>) -> Result<NumericTable
 }
 
 fn execute_adapter(args: &[String]) -> Result<()> {
-    ensure!(args.len() >= 2 && args[0] == NAME,
-        "usage: automl-adapter gpt6-astra-max <seed> --version | <train.csv> <predict.csv> <out.csv> regression");
+    ensure!(args.len() >= 2,
+        "usage: automl-adapter <method> <seed> --version | <train.csv> <predict.csv> <out.csv> regression");
+    let (algorithm, source) = identity(&args[0])?;
     let seed = args[1].parse::<u64>().context("invalid AutoML seed")?;
     if args.len() == 3 && args[2] == "--version" {
-        println!("GPT6_Astra_Max 1 source-sha256={SOURCE_SHA256} seed={seed}");
+        println!("{algorithm} 1 source-sha256={source} seed={seed}");
         return Ok(());
     }
     ensure!(
@@ -125,21 +140,24 @@ fn execute_adapter(args: &[String]) -> Result<()> {
     );
     ensure!(
         args[5] == "regression",
-        "GPT6_Astra_Max supports regression only"
+        "{algorithm} supports regression only"
     );
     let train = read_table(Path::new(&args[2]), None)?;
     ensure!(
         train.columns >= 1 && train.rows >= 1,
         "training table is empty"
     );
-    let mut model = Regressor::new(seed);
-    model
-        .fit(&train.values, train.rows, train.columns)
-        .map_err(anyhow::Error::msg)?;
     let predict = read_table(Path::new(&args[3]), Some(train.columns - 1))?;
-    let predictions = model
-        .predict(&predict.values, predict.rows, predict.columns)
-        .map_err(anyhow::Error::msg)?;
+    let predictions = if args[0] == jope_automl::GEMINI_ARGON_4 {
+        jope_automl::fit_flat(algorithm, &train.values, train.rows, train.columns, seed)
+            .and_then(|model| model.predict_flat(&predict.values, predict.rows, predict.columns))
+    } else {
+        let mut model = Regressor::new(seed);
+        model
+            .fit(&train.values, train.rows, train.columns)
+            .and_then(|()| model.predict(&predict.values, predict.rows, predict.columns))
+    }
+    .map_err(anyhow::Error::msg)?;
     ensure!(predictions.len() == predict.rows, "wrong prediction count");
     if predictions.iter().any(|value| !value.is_finite()) {
         bail!("nonfinite prediction");
@@ -157,7 +175,7 @@ pub fn adapter_main(args: &[String]) -> i32 {
     match execute_adapter(args) {
         Ok(()) => 0,
         Err(error) => {
-            eprintln!("GPT6_Astra_Max: {error:#}");
+            eprintln!("AutoML: {error:#}");
             1
         }
     }
@@ -203,5 +221,42 @@ mod tests {
             "binary".into()
         ])
         .is_err());
+    }
+
+    #[test]
+    fn gemini_catalog_dispatch_and_feature_only_csv_contract() {
+        let spec = adapter_spec(
+            jope_automl::GEMINI_ARGON_4,
+            Path::new("path with spaces/jope-bench"),
+            73,
+            600.0,
+        )
+        .unwrap();
+        assert_eq!(spec.id(), "adapter.gemini-argon-4");
+        assert_eq!(spec.command[2], jope_automl::GEMINI_ARGON_4);
+        assert_eq!(spec.command[3], "73");
+        let row = &registry()["methods"][1];
+        assert_eq!(row["source_sha256"], jope_automl::GEMINI_ARGON_4_SHA256);
+        assert_eq!(row["tasks"], serde_json::json!(["regression"]));
+        let root = tempfile::tempdir().unwrap();
+        let train = root.path().join("train.csv");
+        let predict = root.path().join("features.csv");
+        let out = root.path().join("predictions.csv");
+        std::fs::write(&train, "1,7\n2,7\n").unwrap();
+        std::fs::write(&predict, "NaN\n123\n").unwrap();
+        let mut argv = vec![
+            jope_automl::GEMINI_ARGON_4.to_owned(),
+            "73".into(),
+            train.display().to_string(),
+            predict.display().to_string(),
+            out.display().to_string(),
+            "regression".into(),
+        ];
+        execute_adapter(&argv).unwrap();
+        assert_eq!(std::fs::read_to_string(&out).unwrap(), "7.0\n7.0\n");
+        std::fs::write(&predict, "123,7\n").unwrap();
+        assert!(execute_adapter(&argv).is_err());
+        argv[5] = "binary".into();
+        assert!(execute_adapter(&argv).is_err());
     }
 }
