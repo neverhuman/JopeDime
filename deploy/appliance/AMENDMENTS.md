@@ -217,21 +217,21 @@ override does not repeat `strip`, and `jope-appliance`, which links the executab
 that removes 591 KB from the `dist` executable (3,738,480 → 3,147,304 B) and 1.75 MB from the
 `dist-ci` one (5,435,360 → 3,684,472 B).
 
-Regression objectives (PR #411) then add 880,008 B to `dist` (+28.0% over stripped main) and
-920,552 B to `dist-ci`, beyond the 5% tolerance, so `size-budgets.toml` was rebaselined to the
+Regression objectives (PR #411) then add 898,952 B to `dist` (+28.6% over stripped main) and
+928,584 B to `dist-ci`, beyond the 5% tolerance, so `size-budgets.toml` was rebaselined to the
 measured head with that attribution: the objective grammar (parse, validate, evaluate) is about
-280 KB of machine code, the JSON-RPC/MCP adapters 80 KB, objective-aware selection and
-calibration 45 KB, shared `serde_json`/`core` instantiations the rest of +670 KB of code, with
+300 KB of machine code, the JSON-RPC/MCP adapters 80 KB, objective-aware selection and
+calibration 45 KB, shared `serde_json`/`core` instantiations the rest of +688 KB of code, with
 unwind tables, read-only data and relocations in proportion. No dependency was added. Net of
-both, the native-only package is 4,049,039 B, 8.4% above its 2026-10-21 baseline of 3,733,648 B
+both, the native-only package is 4,065,423 B, 8.9% above its 2026-10-21 baseline of 3,733,648 B
 (sealed with an independent P-256 key, as below).
 
 ## Measured sizes and build times
 
 | Build | Executable | Package |
 | --- | ---: | ---: |
-| `--profile dist` (fat LTO, one codegen unit, stripped), `embedded` | 4,027,312 B | native-only 4,049,039 B |
-| `--profile dist-ci` (thin LTO, 16 units), `embedded,dev-keys` | 4,605,024 B | fixture 4,722,293 B |
+| `--profile dist` (fat LTO, one codegen unit, stripped), `embedded` | 4,046,256 B | native-only 4,065,423 B |
+| `--profile dist-ci` (thin LTO, 16 units), `embedded,dev-keys` | 4,613,056 B | fixture 4,730,485 B |
 | 2026-10-21, before A13 (symbols not stripped): `dist` | 3,713,088 B | native-only 3,733,648 B |
 | 2026-10-21, before A13 (symbols not stripped): `dist-ci` | 5,429,128 B | fixture 5,545,586 B |
 
