@@ -95,7 +95,7 @@ the PR is merged, in a post-merge freeze coordinated with ENG:watcher, never fro
 
 Idle listeners are not stopped by a service-start deadline: that deadline previously cut into
 accepted jobs. Each JIT listener still executes only one job. Workflows own execution timeouts;
-full-main has120minutes, with110minutes of independent family limits plus kill grace and an
+full-main has 145 minutes, with 137.75 minutes of independent family limits plus kill grace and an
 upload reserve. Timers launch the next ephemeral listener after its predecessor exits.
 
 The bounded ASM controller and the local full lane share the boot-persistent inode
