@@ -1,0 +1,11 @@
+{
+  "attempted": 576,
+  "completed": 576,
+  "fit_wall_seconds": 1985.8421823850017,
+  "fit_cpu_seconds": 1980.952259,
+  "predict_wall_seconds": 31.442666094,
+  "predict_cpu_seconds": 24.296932,
+  "charged_wall_seconds": 2199.3395948410034,
+  "peak_memory_bytes": 25194496,
+  "max_single_fit_wall_seconds": 55.58874497
+}

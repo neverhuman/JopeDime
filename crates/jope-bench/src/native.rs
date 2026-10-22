@@ -232,6 +232,30 @@ mod tests {
     }
 
     #[test]
+    fn gemini4_argon_high_source_hash_and_route_are_registered() {
+        assert_eq!(
+            crate::load::sha256_hex(jope_automl::GEMINI4_ARGON_HIGH_SOURCE.as_bytes()),
+            jope_automl::GEMINI4_ARGON_HIGH_SHA256
+        );
+        let spec = NativeSpec::new(jope_automl::GEMINI4_ARGON_HIGH, 5).unwrap();
+        let method = spec.method();
+        assert_eq!(method.id, "native.Gemini4_argon_high");
+        validate_method(&method).unwrap();
+        let x: Rows = (0..24).map(|i| vec![i as f64, (i % 3) as f64]).collect();
+        let y: Vec<f64> = (0..24).map(|i| 0.5 * i as f64).collect();
+        let cuts = build(
+            &FoldPlan::new("gemini-contract", 13, 2),
+            "gemini-contract",
+            "source",
+            x.len(),
+        )
+        .unwrap();
+        let outcome = evaluate(&spec, &x, &y, &cuts[0], Task::Regression);
+        assert!(outcome.is_ok());
+        assert_eq!(outcome.predictions.len(), cuts[0].hold.len());
+    }
+
+    #[test]
     fn screening_and_deepening_refit_the_registered_native_method() {
         let x: Rows = (0..32)
             .map(|i| vec![if i == 0 { f64::NAN } else { i as f64 }])

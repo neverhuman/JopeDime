@@ -1,0 +1,20 @@
+{
+  "schema_version": "general-regressor-challenge/v2",
+  "algorithm_name": "Gemini4_argon_high",
+  "language": "rust",
+  "edition": "2021",
+  "target_column": "last",
+  "prediction_input": "features_only",
+  "external_dependencies": [],
+  "unsafe_code": false,
+  "authoring_mode": null,
+  "data_accessed_during_design": null,
+  "experiments_run_during_design": null,
+  "external_code_used": null,
+  "compiled_during_design": null,
+  "single_frozen_implementation": true,
+  "fit_complexity": null,
+  "predict_complexity": null,
+  "memory_complexity": null,
+  "unknown_fields_note": "The owner supplied the source file without an authoring manifest. Authoring conditions and the author's complexity statements were not supplied and are recorded as null rather than inferred."
+}

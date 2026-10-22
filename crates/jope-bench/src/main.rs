@@ -70,7 +70,7 @@ enum Command {
         /// Extra program: `NAME=<dsl>` or `NAME=@<file>` (repeatable).
         #[arg(long = "program")]
         programs: Vec<String>,
-        /// Original native AutoML regressor (repeatable; currently GPT6p1_Sol_Max).
+        /// Original native AutoML regressor (repeatable; GPT6p1_Sol_Max or Gemini4_argon_high).
         /// Each is freshly fitted on each cut. Only regression datasets are eligible.
         #[arg(long = "native")]
         natives: Vec<String>,

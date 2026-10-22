@@ -8,6 +8,12 @@
 #[path = "GPT6p1_Sol_Max.rs"]
 mod submission;
 
+#[rustfmt::skip]
+#[allow(clippy::all, unused_imports)]
+#[path = "Gemini4_argon_high.rs"]
+mod gemini4_argon_high;
+
+pub use gemini4_argon_high::{Regressor as Gemini4ArgonHigh, RegressorApi as Gemini4ArgonHighApi};
 pub use submission::{Regressor as Gpt6p1SolMax, RegressorApi};
 
 /// Frozen candidate identifier. This is a regressor, not a GP grammar operator.
@@ -18,6 +24,14 @@ pub const GPT6P1_SOL_MAX_SHA256: &str =
 /// The exact file can also be built directly with `rustc --crate-type rlib`.
 pub const GPT6P1_SOL_MAX_SOURCE: &str = include_str!("GPT6p1_Sol_Max.rs");
 
+/// Frozen candidate identifier of the owner-supplied Gemini submission.
+pub const GEMINI4_ARGON_HIGH: &str = "Gemini4_argon_high";
+/// Hash of the owner-supplied standalone source; it is included byte-for-byte.
+pub const GEMINI4_ARGON_HIGH_SHA256: &str =
+    "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3";
+/// The exact file also builds directly with `rustc --crate-type rlib`.
+pub const GEMINI4_ARGON_HIGH_SOURCE: &str = include_str!("Gemini4_argon_high.rs");
+
 /// One immutable, selectable native algorithm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Definition {
@@ -27,11 +41,18 @@ pub struct Definition {
 }
 
 /// Native AutoML candidate registry. Entries have no dataset-specific configuration.
-pub const REGRESSORS: &[Definition] = &[Definition {
-    id: GPT6P1_SOL_MAX,
-    source_sha256: GPT6P1_SOL_MAX_SHA256,
-    source_file: "GPT6p1_Sol_Max.rs",
-}];
+pub const REGRESSORS: &[Definition] = &[
+    Definition {
+        id: GPT6P1_SOL_MAX,
+        source_sha256: GPT6P1_SOL_MAX_SHA256,
+        source_file: "GPT6p1_Sol_Max.rs",
+    },
+    Definition {
+        id: GEMINI4_ARGON_HIGH,
+        source_sha256: GEMINI4_ARGON_HIGH_SHA256,
+        source_file: "Gemini4_argon_high.rs",
+    },
+];
 
 /// Resolve a requested candidate; an unknown name never silently selects another model.
 pub fn definition(id: &str) -> Result<&'static Definition, String> {
@@ -43,8 +64,13 @@ pub fn definition(id: &str) -> Result<&'static Definition, String> {
 
 /// Independently fitted state for one AutoML candidate.
 pub struct FittedRegressor {
-    model: Gpt6p1SolMax,
+    model: Model,
     width: usize,
+}
+
+enum Model {
+    Gpt6p1SolMax(Gpt6p1SolMax),
+    Gemini4ArgonHigh(Box<Gemini4ArgonHigh>),
 }
 
 /// Fit only the supplied training rows. The adapter appends each training target last.
@@ -54,7 +80,7 @@ pub fn fit_rows(
     targets: &[f64],
     seed: u64,
 ) -> Result<FittedRegressor, String> {
-    definition(id)?;
+    let definition = definition(id)?;
     if features.is_empty() || targets.len() != features.len() {
         return Err(String::from(
             "nonempty training rows and matching targets required",
@@ -79,8 +105,19 @@ pub fn fit_rows(
         table.extend_from_slice(row);
         table.push(*target);
     }
-    let mut model = Gpt6p1SolMax::new(seed);
-    model.fit(&table, features.len(), columns)?;
+    let model = match definition.id {
+        GPT6P1_SOL_MAX => {
+            let mut model = Gpt6p1SolMax::new(seed);
+            model.fit(&table, features.len(), columns)?;
+            Model::Gpt6p1SolMax(model)
+        }
+        GEMINI4_ARGON_HIGH => {
+            let mut model = <Gemini4ArgonHigh as Gemini4ArgonHighApi>::new(seed);
+            Gemini4ArgonHighApi::fit(&mut model, &table, features.len(), columns)?;
+            Model::Gemini4ArgonHigh(Box::new(model))
+        }
+        other => return Err(format!("registered regressor {other:?} has no fitter")),
+    };
     Ok(FittedRegressor { model, width })
 }
 
@@ -100,7 +137,17 @@ impl FittedRegressor {
             }
             flat.extend_from_slice(row);
         }
-        self.model.predict(&flat, features.len(), self.width)
+        let predictions = match &self.model {
+            Model::Gpt6p1SolMax(model) => model.predict(&flat, features.len(), self.width)?,
+            Model::Gemini4ArgonHigh(model) => {
+                Gemini4ArgonHighApi::predict(&**model, &flat, features.len(), self.width)?
+            }
+        };
+        // A frozen submission is never patched; a non-finite output is refused here instead.
+        if predictions.iter().any(|value| !value.is_finite()) {
+            return Err(String::from("regressor returned a non-finite prediction"));
+        }
+        Ok(predictions)
     }
 }
 
@@ -163,8 +210,100 @@ mod tests {
     }
 
     #[test]
+    fn gemini4_argon_high_lifecycle_and_shapes_are_explicit() {
+        let mut model = <Gemini4ArgonHigh as Gemini4ArgonHighApi>::new(7);
+        assert!(Gemini4ArgonHighApi::predict(&model, &[], 0, 0).is_err());
+        assert!(Gemini4ArgonHighApi::fit(&mut model, &[], 0, 1).is_err());
+        assert!(Gemini4ArgonHighApi::fit(&mut model, &[], 1, 0).is_err());
+        assert!(Gemini4ArgonHighApi::fit(&mut model, &[], usize::MAX, 2).is_err());
+        assert!(Gemini4ArgonHighApi::fit(&mut model, &[1.0, 2.0], 2, 2).is_err());
+        Gemini4ArgonHighApi::fit(&mut model, &[2.0, 4.0, 6.0], 3, 1).unwrap();
+        assert_eq!(
+            Gemini4ArgonHighApi::predict(&model, &[], 3, 0).unwrap(),
+            vec![4.0; 3]
+        );
+        // A failed refit leaves no stale fitted state behind.
+        assert!(Gemini4ArgonHighApi::fit(&mut model, &[f64::NAN], 1, 1).is_err());
+        assert!(Gemini4ArgonHighApi::predict(&model, &[], 1, 0).is_err());
+        assert!(Gemini4ArgonHighApi::fit(&mut model, &[f64::INFINITY, 1.0], 1, 2).is_err());
+        assert!(Gemini4ArgonHighApi::fit(&mut model, &[1.0, f64::INFINITY], 1, 2).is_err());
+    }
+
+    #[test]
+    fn gemini4_argon_high_prediction_is_row_local_and_refit_matches_fresh_state() {
+        // Contract checks only; no accuracy threshold, model comparison, or tuning.
+        let table: Vec<f64> = (0..80)
+            .flat_map(|i| {
+                [
+                    if i % 7 == 0 { f64::NAN } else { i as f64 },
+                    (i % 5) as f64,
+                    (i % 13) as f64,
+                ]
+            })
+            .collect();
+        let mut model = <Gemini4ArgonHigh as Gemini4ArgonHighApi>::new(19);
+        Gemini4ArgonHighApi::fit(&mut model, &table, 80, 3).unwrap();
+        let rows = [f64::NAN, 2.0, 4.0, 1.0, f64::MAX, 0.0];
+        let all = Gemini4ArgonHighApi::predict(&model, &rows, 3, 2).unwrap();
+        assert!(all.iter().all(|value| value.is_finite()));
+        for i in 0..3 {
+            let one = Gemini4ArgonHighApi::predict(&model, &rows[2 * i..2 * i + 2], 1, 2);
+            assert_eq!(one.unwrap()[0], all[i]);
+        }
+        let permuted =
+            Gemini4ArgonHighApi::predict(&model, &[f64::MAX, 0.0, f64::NAN, 2.0, 4.0, 1.0], 3, 2)
+                .unwrap();
+        assert_eq!(permuted, vec![all[2], all[0], all[1]]);
+        assert!(Gemini4ArgonHighApi::predict(&model, &[1.0], 1, 1).is_err());
+        assert!(Gemini4ArgonHighApi::predict(&model, &[f64::INFINITY, 0.0], 1, 2).is_err());
+        assert!(Gemini4ArgonHighApi::predict(&model, &[], usize::MAX, 2).is_err());
+        let mut fresh = <Gemini4ArgonHigh as Gemini4ArgonHighApi>::new(19);
+        Gemini4ArgonHighApi::fit(&mut fresh, &table, 80, 3).unwrap();
+        assert_eq!(
+            Gemini4ArgonHighApi::predict(&fresh, &rows, 3, 2).unwrap(),
+            all
+        );
+    }
+
+    #[test]
+    fn gemini4_argon_high_non_finite_output_is_refused_by_the_adapter() {
+        // The frozen source returns inf for some extreme finite inputs; the adapter refuses it.
+        let mut model = <Gemini4ArgonHigh as Gemini4ArgonHighApi>::new(2);
+        let table = [f64::NAN, -f64::MAX, f64::NAN, f64::MAX];
+        Gemini4ArgonHighApi::fit(&mut model, &table, 2, 2).unwrap();
+        let raw = Gemini4ArgonHighApi::predict(&model, &[f64::NAN, f64::MAX], 2, 1).unwrap();
+        assert!(raw.iter().any(|value| !value.is_finite()));
+        let fitted = fit_rows(
+            GEMINI4_ARGON_HIGH,
+            &[vec![f64::NAN], vec![f64::NAN]],
+            &[-f64::MAX, f64::MAX],
+            2,
+        )
+        .unwrap();
+        assert!(fitted
+            .predict_rows(&[vec![f64::NAN], vec![f64::MAX]])
+            .is_err());
+    }
+
+    #[test]
     fn registry_and_transport_preserve_target_placement() {
-        assert_eq!(REGRESSORS.len(), 1);
+        assert_eq!(REGRESSORS.len(), 2);
+        assert_eq!(
+            definition(GEMINI4_ARGON_HIGH).unwrap().source_file,
+            "Gemini4_argon_high.rs"
+        );
+        let model = fit_rows(
+            GEMINI4_ARGON_HIGH,
+            &[vec![10.0], vec![20.0]],
+            &[7.0, 7.0],
+            1,
+        )
+        .unwrap();
+        assert_eq!(
+            model.predict_rows(&[vec![1234.0], vec![f64::NAN]]).unwrap(),
+            vec![7.0; 2]
+        );
+        assert!(model.predict_rows(&[vec![1.0, 2.0]]).is_err());
         assert!(definition("missing").is_err());
         let model = fit_rows(GPT6P1_SOL_MAX, &[vec![10.0], vec![20.0]], &[7.0, 7.0], 1).unwrap();
         assert_eq!(

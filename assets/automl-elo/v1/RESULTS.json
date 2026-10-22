@@ -1,0 +1,118 @@
+{
+  "state": "COMPLETE",
+  "methods": [
+    "GPT6_Astra_Max",
+    "GPT6p1_Sol_Max",
+    "Gemini4_argon_high",
+    "Opus5p5_Extra"
+  ],
+  "elo": {
+    "GPT6_Astra_Max": {
+      "rating": 1342.1080952180282,
+      "ci95": [
+        1288.868359109259,
+        1388.247137822583
+      ]
+    },
+    "GPT6p1_Sol_Max": {
+      "rating": 1455.8058996468567,
+      "ci95": [
+        1414.1333313097623,
+        1496.7735782937384
+      ]
+    },
+    "Gemini4_argon_high": {
+      "rating": 1560.785994324077,
+      "ci95": [
+        1518.787411186119,
+        1606.8925888173178
+      ]
+    },
+    "Opus5p5_Extra": {
+      "rating": 1641.3000108110382,
+      "ci95": [
+        1599.3057067311033,
+        1689.1874579492674
+      ]
+    }
+  },
+  "pairwise": [
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "GPT6p1_Sol_Max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.3454788017632944,
+      "ratio_ci95": [
+        1.135777444712288,
+        1.6703825754442125
+      ],
+      "p": 0.005599440055994401
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "Gemini4_argon_high",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.1393868314940336,
+      "ratio_ci95": [
+        0.9866858971922163,
+        1.301100970502794
+      ],
+      "p": 0.0644935506449355,
+      "holm_gemini_three_p": 0.1934806519348065
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.295262126111961,
+      "ratio_ci95": [
+        1.0851705033680616,
+        1.575405040971078
+      ],
+      "p": 0.007999200079992
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "Gemini4_argon_high",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.8468262970779099,
+      "ratio_ci95": [
+        0.6233556271142736,
+        1.0553728540565777
+      ],
+      "p": 0.2445755424457554,
+      "holm_gemini_three_p": 0.37336266373362664
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.9626774679872157,
+      "ratio_ci95": [
+        0.7249217184700295,
+        1.1732764768999802
+      ],
+      "p": 0.7666233376662334
+    },
+    {
+      "a": "Gemini4_argon_high",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.136806298185432,
+      "ratio_ci95": [
+        0.9781850313409002,
+        1.4331699016443702
+      ],
+      "p": 0.18668133186681332,
+      "holm_gemini_three_p": 0.37336266373362664
+    }
+  ],
+  "bootstrap_samples": 10000,
+  "cluster": "family",
+  "seeds_repeated_within_family": [
+    41,
+    73,
+    109
+  ],
+  "complete_pairwise_coverage": true
+}
