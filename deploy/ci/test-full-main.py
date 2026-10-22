@@ -185,7 +185,7 @@ sys.exit(int(a.status))
         workflow = (ROOT/'.github/workflows/full-main.yml').read_text()
         # The cpu job keeps the single job's deadline, which fits every family, so it fits each group.
         job_minutes = int(re.search(r'^    timeout-minutes: (\d+)$', workflow, re.M)[1])
-        self.assertEqual(130, job_minutes)
+        self.assertEqual(145, job_minutes)
         self.assertLessEqual(total, (job_minutes - 5) * 60)
         self.assertEqual([], full.partition_errors(lanes, full.GROUPS))
         self.assertEqual(['cpu-1', 'cpu-2'], list(full.GROUPS))

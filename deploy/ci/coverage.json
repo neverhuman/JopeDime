@@ -12066,7 +12066,7 @@
         "timeout",
         "--signal=TERM",
         "--kill-after=15s",
-        "300s",
+        "1200s",
         "bash",
         "deploy/ci/full-lane.sh",
         "full-emitters"

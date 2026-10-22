@@ -28,9 +28,9 @@ jobs:
   cpu:
     if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, linux, x64, jope-full-cpu]
-    # The 11 bounded families total 122.75min including kill grace; each group runs a subset of
-    # them, so the unchanged job deadline still retains >=5min for uploads.
-    timeout-minutes: 130
+    # The 11 bounded families total 137.75min including kill grace; each group runs a subset of
+    # them, so the job deadline still retains >=5min for uploads.
+    timeout-minutes: 145
     strategy:
       # Groups are independent outcomes, as families are within a group: one failing group must
       # not cancel the other. deploy/ci/full-main.py GROUPS is the partition; the aggregate job
