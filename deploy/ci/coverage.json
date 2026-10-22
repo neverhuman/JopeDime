@@ -987,7 +987,7 @@
       "lanes": [
         "source-audit"
       ],
-      "scope": "Independent trusted-main full default-policy source audit with the pinned auditor, unchanged floor 85, complete source re-verification and always-uploaded failed evidence; configured routing is not a passing audit."
+      "scope": "Independent trusted-main full default-policy source audit with the pinned auditor, unchanged floor 85, complete source re-verification and always-uploaded failed evidence; report-only below the floor until it reaches 85, so a green job is not a passing audit."
     },
     "job:.github/workflows/full-main.yml/cpu": {
       "discovery": {
@@ -12745,12 +12745,14 @@
       ],
       "environment": {
         "JANKURAI_BIN": "checksum-pinned Jankurai 1.7.5 installed by deploy/ci/install-jankurai.sh",
-        "JANKURAI_NO_UPDATE_CHECK": "1"
+        "JANKURAI_NO_UPDATE_CHECK": "1",
+        "JOPE_AUDIT_REPORT_ONLY": "1 on trusted main until the score reaches 85 (owner decision 2026-10-22)"
       },
       "evidence": [
         "full default-policy audit reports, including failed gates",
         "complete source archive and SOURCE_MANIFEST.json bound to the full Git SHA",
-        "audit-verification.json: report consistency and source closure; validity does not imply score >=85"
+        "audit-verification.json: report consistency and source closure; validity does not imply score >=85",
+        "report-only.json and a job warning when a verified audit is below the floor; the job passes only then, and every integrity, consistency or tool failure still fails it"
       ],
       "feature_selection": "not-applicable",
       "inputs": [

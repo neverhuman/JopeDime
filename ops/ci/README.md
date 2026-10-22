@@ -34,7 +34,9 @@ Run the identical full-scope Jankurai audit with
 The wrapper requires version1.7.5, emits timings and a repair queue, disables
 badge/history writes, and always selects read-only mode. The independent audit job in full-main.yml uses the existing trusted-main
 runner on main pushes and main workflow dispatches. It runs alongside the eleven
-CPU families; a failed audit fails the workflow even when the CPU aggregate passes.
+CPU families. On main it sets `JOPE_AUDIT_REPORT_ONLY=1` until the score reaches 85: a
+verified below-floor audit then passes with a warning and writes `report-only.json`;
+any integrity, consistency or tool failure still fails the job. Local runs enforce the floor.
 The dedicated hosted workflow remains optional; its skipped runs are not evidence.
 
 The wrapper pins its input manifest before execution. Afterward it validates the
@@ -44,6 +46,8 @@ file, its read-only mode, the archive and the complete path set. The resulting
 audit-verification.json records artifact integrity separately from audit_passed.
 A valid failed audit retains its failure; a zero exit with invalid evidence fails.
 Both passing and failing reports use the existing local/cache evidence transport.
+The captured source stays read-only in the retained evidence so the verifier replays on it;
+the audit job restores write permission after the upload so the persistent workspace stays deletable.
 
 The full auditor follows ignored `.agent/worktrees` by default. The audit wrapper
 therefore exports every tracked Git blob into an immutable evidence input and

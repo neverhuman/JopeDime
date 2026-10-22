@@ -23,5 +23,22 @@ python3 -B deploy/ci/verify-audit-report.py "$output" --audit-exit "$status" \
 if [[ -f "$output/summary.md" && -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   cat "$output/summary.md" >> "$GITHUB_STEP_SUMMARY"
 fi
+# JOPE_AUDIT_REPORT_ONLY=1 (trusted main, until the score reaches the floor) passes only an
+# auditor policy failure (exit 1) below the 85 floor whose reports and captured input verified;
+# the failed decision stays in the reports. A failure at or above the floor (for example hard
+# findings), and every refusal, inconsistency or tool error, still fails. The captured source
+# stays read-only here so retained evidence replays; the workflow unlocks it after upload.
+score=-1
+if [[ "$status" == 1 && "$verification_status" == 0 && "${JOPE_AUDIT_REPORT_ONLY:-}" == 1 ]]; then
+  score=$(python3 -B -c 'import json, sys; print(json.load(open(sys.argv[1]))["score"])' "$output/audit-verification.json")
+fi
+if (( score >= 0 && score < 85 )); then
+  printf '{"schema": "jope.audit-report-only/v1", "audit_exit": 1, "audit_passed": false, "score": %s, "minimum_score": 85, "job_result": "report-only pass"}\n' "$score" > "$output/report-only.json"
+  echo "::warning title=Audit below floor (report-only)::score $score/85; the failed decision is retained in repo-score.json"
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    printf '\n**Report-only:** score %s/85 is below the floor; this job passes until the floor is reached.\n' "$score" >> "$GITHUB_STEP_SUMMARY"
+  fi
+  exit 0
+fi
 if [[ "$status" != 0 ]]; then exit "$status"; fi
 exit "$verification_status"
