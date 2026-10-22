@@ -446,6 +446,10 @@
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
+    "python:deploy/ci/test-audit-lane.py": {
+      "reason": "CI audit report/source-integrity infrastructure controls with a fake auditor; supports hygiene without exercising a GP, data, training or model-quality subsystem",
+      "role": "infrastructure"
+    },
     "python:deploy/ci/test-browser-deps.py": {
       "reason": "Hygiene executes bounded browser dependency extraction, cache custody, path and reuse regression controls; CI infrastructure only, not rendered-product qualification.",
       "role": "infrastructure"
