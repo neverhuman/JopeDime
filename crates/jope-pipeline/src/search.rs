@@ -1061,6 +1061,10 @@ fn evaluate_admitted(
                 results.push(Some(record_evaluation(recorder, draw, clock, || {
                     let mut observation = evaluate(genome, cut, generation, origin, clock);
                     observation.island = (options.islands > 1).then_some(*island);
+                    // Counted as it finishes, so `candidate` records follow the evaluations.
+                    if let Some(progress) = &options.progress {
+                        progress.observe_current(&observation);
+                    }
                     observation
                 })));
             }
@@ -1076,6 +1080,9 @@ fn evaluate_admitted(
                             let started = recorder.map(|_| clock.start());
                             let mut observation = evaluate(genome, cut, generation, origin, clock);
                             observation.island = (options.islands > 1).then_some(*island);
+                            if let Some(progress) = &options.progress {
+                                progress.observe_current(&observation);
+                            }
                             let elapsed = started.map(|stamp| stamp.secs());
                             (observation, elapsed)
                         })
@@ -1261,13 +1268,23 @@ fn run_cut_allocated(
                 islands[island].survivors.push(Scored { genome, rmse });
             }
             observation.island = multi.then_some(island);
-            if let Some(progress) = &options.progress {
-                progress.observe_current(&observation);
-            }
             observations.push(observation);
         }
         if let Some(progress) = &options.progress {
-            progress.generation_done(generation as u64 + 1);
+            // The candidates this generation ended with: every island's carried survivors and
+            // newly measured candidates, by their held-out R^2 on this cut.
+            let population_r2 = islands
+                .iter()
+                .flat_map(|island| &island.survivors)
+                .filter_map(|scored| {
+                    observations
+                        .iter()
+                        .rev()
+                        .find(|o| o.genome == scored.genome && o.measured())
+                        .and_then(|o| o.hold_r2)
+                })
+                .collect();
+            progress.generation_done(generation as u64 + 1, population_r2);
         }
         // Stopped between evaluations: nothing of this cut is published, and the run that
         // asked for it writes no receipt.

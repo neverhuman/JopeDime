@@ -583,22 +583,45 @@ fn kernel2_lm_refinement_records_its_selection_and_verifies_evidence() {
 /// only and evaluations never decreasing; delivery including the final record is best-effort.
 fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
     let text = std::fs::read_to_string(events).unwrap();
-    let lines: Vec<Value> = text
+    let records: Vec<Value> = text
         .split_inclusive('\n')
         .filter(|line| line.ends_with('\n'))
         .filter_map(|line| serde_json::from_str::<Value>(line).ok())
         .collect();
-    assert!(lines
+    assert!(records
         .iter()
         .all(|l| l["schema"] == "jope.invent.progress.v1"));
-    let mut evaluations = 0;
-    let mut emitted = 0;
+    assert!(text.split_inclusive('\n').all(|line| line.len() <= 2048));
+    // One sequence over every kind.
     let mut previous_sequence = None;
-    for line in &lines {
-        let object = line.as_object().unwrap();
-        let sequence = line["sequence"].as_u64().unwrap();
+    for record in &records {
+        let sequence = record["sequence"].as_u64().unwrap();
         assert!(previous_sequence.is_none_or(|previous| sequence > previous));
         previous_sequence = Some(sequence);
+        assert!(
+            matches!(record["kind"].as_str(), Some("progress" | "candidate")),
+            "{record}"
+        );
+        // Aside from fixed labels, numbers or null.
+        assert!(
+            record
+                .as_object()
+                .unwrap()
+                .iter()
+                .all(|(key, value)| !value.is_string()
+                    || matches!(key.as_str(), "schema" | "kind" | "phase" | "status")),
+            "{record}"
+        );
+    }
+    let lines: Vec<&Value> = records.iter().filter(|r| r["kind"] == "progress").collect();
+    let candidates: Vec<&Value> = records
+        .iter()
+        .filter(|r| r["kind"] == "candidate")
+        .collect();
+    let mut evaluations = 0;
+    let mut emitted = 0;
+    for line in &lines {
+        let object = line.as_object().unwrap();
         assert!(matches!(
             line["phase"].as_str(),
             Some("exploration" | "comparison" | "done")
@@ -618,19 +641,21 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
         ] {
             assert!(object[field].is_number(), "{field} in {line}");
         }
-        for field in ["best_hold_rmse", "best_hold_r2"] {
+        for field in ["best_hold_rmse", "best_hold_r2", "generations"] {
             assert!(
                 object[field].is_number() || object[field].is_null(),
                 "{field} in {line}"
             );
         }
-        // Numbers only: no program source, genome or column name crosses stderr.
-        assert!(
-            object.iter().all(
-                |(key, value)| matches!(key.as_str(), "schema" | "phase") || !value.is_string()
-            ),
-            "{line}"
-        );
+        match line["population_r2"].as_array() {
+            Some(values) => {
+                let values: Vec<f64> = values.iter().map(|v| v.as_f64().unwrap()).collect();
+                assert!(values.len() <= 64, "{line}");
+                assert!(values.iter().all(|v| v.is_finite()), "{line}");
+                assert!(values.windows(2).all(|w| w[0] >= w[1]), "{line}");
+            }
+            None => assert!(line["population_r2"].is_null(), "{line}"),
+        }
         assert_eq!(line["cuts"], cuts);
         assert_eq!(line["eval_budget"], eval_budget);
         assert!(line["cut"].as_u64().unwrap() < cuts);
@@ -658,6 +683,55 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
     }
     if !lines.is_empty() {
         assert!(emitted > 0, "no emitted tokens counted: {text}");
+    }
+    // This small run's records fit the queue: both kinds and a snapshot arrive.
+    assert!(!candidates.is_empty(), "no candidate records: {text}");
+    assert!(lines
+        .iter()
+        .any(|l| l["population_r2"].as_array().is_some_and(|p| !p.is_empty())));
+    assert!(
+        !text.contains("x0") && !text.contains("x1"),
+        "column name in the events file"
+    );
+    // Candidates: scores only, at most five a second (the end may add the waiting one).
+    let times: Vec<f64> = candidates
+        .iter()
+        .map(|c| c["elapsed_s"].as_f64().unwrap())
+        .collect();
+    assert!(
+        times[..times.len().saturating_sub(1)]
+            .windows(2)
+            .all(|w| w[1] - w[0] >= 0.199),
+        "{times:?}"
+    );
+    for candidate in &candidates {
+        assert!(candidate["generation"].is_u64() && candidate["cut"].as_u64().unwrap() < cuts);
+        match candidate["status"].as_str() {
+            Some("measured") => assert!(candidate["hold_rmse"].as_f64().unwrap().is_finite()),
+            Some("failed") => assert!(candidate["hold_rmse"].is_null()),
+            other => panic!("status {other:?}"),
+        }
+        assert!(candidate["hold_r2"].is_null() || candidate["hold_r2"].is_number());
+        let keys: Vec<&str> = candidate
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            keys,
+            [
+                "cut",
+                "elapsed_s",
+                "generation",
+                "hold_r2",
+                "hold_rmse",
+                "kind",
+                "schema",
+                "sequence",
+                "status"
+            ]
+        );
     }
     assert!(!text.contains("(pipe"), "program source in the events file");
 }
