@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the owner-directed 0.4.0 workspace version bump (just bump 0.4.0). Updating crates/jope-campaigns/Cargo.toml and the root Cargo.lock from 0.3.0 to 0.4.0 moves the ADR-0004 evaluator identity; lineage_sources.v1.json changes only its generated_at_sha. All behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "Owner release request 2026-10-22 (new version after all PRs merged, research branch excluded); deploy/release/bump.sh",
+  "pr_reference": "chore(release): bump workspace and crate versions from 0.3.0 to 0.4.0",
+  "source_commit": "3f966de018ab87f33edc6bf1fa2684c419ab6d1f",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "11a1aa8e9222c7d79cde1087da45510fab1c86f16e140aa348426938e894c74d",
+      "after": "622f10a106c72193029b60042c619a83c0186e836a3bd7559def2f8a01fc42a0"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "16e3317250e5af3595ce94147c74030702c3ec55ce7a5d3c2d7c03782a795b73",
+      "after": "69db12c0002555670a2f36a5d5c34d8a5a5f014dae70e2c3eb8dbe2ce60c268b"
+    }
+  ]
+}
