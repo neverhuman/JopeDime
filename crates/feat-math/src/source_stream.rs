@@ -129,14 +129,15 @@ pub fn language_kind(language: &str) -> Option<crate::tokens::Lang> {
 /// source-output ledger counts them. A language that fails to emit contributes 0: no guessed
 /// count is credited.
 pub fn emitted_tokens(program: &str) -> [u64; 4] {
+    count_emitted(&emit_languages(program))
+}
+
+/// [`emitted_tokens`] of sources already emitted by [`emit_languages`].
+pub fn count_emitted(sources: &[std::result::Result<String, String>; 4]) -> [u64; 4] {
     let mut tokens = [0u64; 4];
-    for ((slot, language), source) in tokens
-        .iter_mut()
-        .zip(LANGUAGES)
-        .zip(emit_languages(program))
-    {
+    for ((slot, language), source) in tokens.iter_mut().zip(LANGUAGES).zip(sources) {
         if let (Ok(source), Some(kind)) = (source, language_kind(language)) {
-            let count = crate::tokens::count_tokens(&source, kind);
+            let count = crate::tokens::count_tokens(source, kind);
             *slot = (count.code_tokens + count.doc_tokens) as u64;
         }
     }

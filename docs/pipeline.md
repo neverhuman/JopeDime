@@ -148,16 +148,18 @@ it here cross the boundary, not predictions.
   The target must be outside `--work-dir` and may not alias `--train`, including hard links.
   Existing directories, symlinks and special files are refused before search publication;
   the opened descriptor is checked before truncation. On other platforms `--events` is
-  refused before output is written. Aside from fixed labels, records contain numbers or null,
-  without candidate source, column names or raw cell values:
+  refused before output is written. `progress` records contain, aside from fixed labels, numbers
+  or null. `candidate` and `best` records also contain source: the run's own generated program
+  text (`program`, as the rank lines print it) and that program's emitted Python (`python`),
+  which name input columns only by position. No record contains column names or raw cell values:
 
   ```json
   {"schema":"jope.invent.progress.v1","kind":"progress","sequence":3,"phase":"done","cut":1,"cuts":2,"generation":2,"evaluations":18,"eval_budget":24,"measured":18,"failed":0,"best_hold_rmse":0.0687,"best_hold_r2":0.9997,"elapsed_s":2.69,"seconds_budget":240.0,"emitted_tokens":188179,"emitted_tokens_by_language":{"rust":90305,"python":64838,"cpp17":9978,"javascript":23058},"emitted_tokens_per_second":70008.0}
-  {"schema":"jope.invent.progress.v1","kind":"candidate","sequence":1,"elapsed_s":0.012,"generation":0,"cut":0,"hold_r2":0.9996,"hold_rmse":0.0874,"status":"measured"}
+  {"schema":"jope.invent.progress.v1","kind":"candidate","sequence":1,"elapsed_s":0.012,"generation":0,"cut":0,"hold_r2":0.9996,"hold_rmse":0.0874,"status":"measured","program":"(pipe X (ridge))","python":"\"\"\"Regression model: ridge regression. ..."}
   ```
 
-  Every record has `schema`, `kind` (`progress` or `candidate`) and `sequence`, one counter over
-  both kinds; the fixed labels are `schema`, `kind`, `phase` and `status`. The `progress` sample
+  Every record has `schema`, `kind` (`progress`, `candidate` or `best`) and `sequence`, one
+  counter over all kinds; the fixed labels are `schema`, `kind`, `phase` and `status`. The `progress` sample
   above omits `generations` and `population_r2` for width.
 
   `cut` is the 0-based position of the current cut among the `cuts` searched (during the
@@ -193,10 +195,15 @@ it here cross the boundary, not predictions.
   `cut` the cut it ran on, `status` is `measured` or `failed`, and `hold_r2`/`hold_rmse` are its
   finite held-out scores or `null` when it failed. At most five are attempted per second; a newer
   evaluation replaces the waiting one, and the waiting one is attempted when the search ends.
+  Each carries `program`; at most once per second one also carries `python`, the program's
+  emitted Python (the emission the token count already does), capped at 16 KiB with a
+  `# [truncated: N bytes total]` marker line. `best` records are attempted on every improvement
+  of the best held-out RMSE, with the same fields and `python` (same cap). A `candidate` or
+  `best` record may be at most 20 KiB; one over it is attempted without `python`, then dropped.
   At generation/comparison boundaries, `progress` updates are attempted at most once per second except
   observed improvements and cut/search ends. Improvements within one generation are coalesced.
   One process-wide worker serves all event files from a 64-record queue, with at most 2048 bytes
-  per record plus its current record. Search threads never wait for writes or join that worker.
+  per `progress` record and 20 KiB per `candidate`/`best` record, plus its current record. Search threads never wait for writes or join that worker.
   Full/disconnected queues and write failures can lose records; failed worker creation disables
   delivery. Sequence gaps, a partial final record and a missing final `done` are possible,
   including at process exit. Keep only complete NDJSON records; atomic writes and durable delivery

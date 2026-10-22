@@ -1,9 +1,12 @@
 //! Live search progress for `jope pipeline invent` (`jope.invent.progress.v1`).
 //!
-//! Opt-in best-effort NDJSON to a checked regular file, never stderr. Only fixed labels and
-//! numbers/null are included, without candidate source, column names or raw cell values.
-//! One process-wide worker serves all journals from a bounded 64-record queue, at most 2048
-//! bytes per record plus its current record. Search threads never wait for writes. Full or
+//! Opt-in best-effort NDJSON to a checked regular file, never stderr. `progress` records hold
+//! only fixed labels and numbers/null. `candidate` and `best` records also carry the run's own
+//! generated program text (positional columns only) and, at most once per second for
+//! `candidate`, its emitted Python capped at [`PYTHON_CAP`] bytes; never column names or raw
+//! cell values. One process-wide worker serves all journals from a bounded 64-record queue, at
+//! most 2048 bytes per `progress` record and [`SOURCE_LINE_BYTES`] per `candidate`/`best`
+//! record, plus its current record. Search threads never wait for writes. Full or
 //! disconnected queues drop updates; file errors can lose records. No worker is joined, so
 //! sequence gaps and a missing final done record are possible, including at process exit.
 //! Writes are not guaranteed atomic. `kind: "progress"` updates occur at generation/comparison
@@ -36,9 +39,34 @@ pub const CANDIDATE_INTERVAL: Duration = Duration::from_millis(200);
 /// Most values in a `population_r2` snapshot (fewer when the record would exceed its cap).
 pub const POPULATION_SAMPLES: usize = 64;
 
+/// At most one `candidate` record per second carries Python source.
+pub const PYTHON_INTERVAL: Duration = Duration::from_secs(1);
+/// Largest `python` value in bytes, truncation marker included.
+pub const PYTHON_CAP: usize = 16 * 1024;
+/// Cap of a `candidate` or `best` record (program, capped Python and scores). A record over it
+/// is attempted without its Python, and dropped if still over.
+pub const SOURCE_LINE_BYTES: usize = 20 * 1024;
+
 /// Record kinds.
 pub const PROGRESS: &str = "progress";
 pub const CANDIDATE: &str = "candidate";
+pub const BEST: &str = "best";
+
+/// `source` cut to at most [`PYTHON_CAP`] bytes on a character boundary, with a marker line.
+pub fn cap_python(source: String) -> String {
+    if source.len() <= PYTHON_CAP {
+        return source;
+    }
+    let marker = format!("\n# [truncated: {} bytes total]\n", source.len());
+    let mut keep = PYTHON_CAP - marker.len();
+    while !source.is_char_boundary(keep) {
+        keep -= 1;
+    }
+    let mut capped = source;
+    capped.truncate(keep);
+    capped.push_str(&marker);
+    capped
+}
 
 /// The search phase a line was emitted in.
 pub const EXPLORATION: &str = "exploration";
@@ -90,11 +118,12 @@ pub struct Line {
     pub population_r2: Option<Vec<f64>>,
 }
 
-/// One `kind: "candidate"` record: a single evaluation's scores.
+/// One `kind: "candidate"` record (a single evaluation) or `kind: "best"` record (an
+/// improvement of the best held-out RMSE).
 #[derive(Clone, Debug, PartialEq, Serialize, serde::Deserialize)]
 pub struct CandidateLine {
     pub schema: String,
-    /// [`CANDIDATE`].
+    /// [`CANDIDATE`] or [`BEST`].
     pub kind: String,
     pub sequence: u64,
     pub elapsed_s: f64,
@@ -105,18 +134,26 @@ pub struct CandidateLine {
     /// Finite held-out R^2 and RMSE of a measured evaluation; `null` otherwise.
     pub hold_r2: Option<f64>,
     pub hold_rmse: Option<f64>,
-    /// `measured` or `failed`.
+    /// `measured` or `failed` (always `measured` for `best`).
     pub status: String,
+    /// Canonical program text, as the rank lines print it; columns are positional.
+    pub program: String,
+    /// The program's emitted Python, at most [`PYTHON_CAP`] bytes: on every `best` record and
+    /// at most once per [`PYTHON_INTERVAL`] on `candidate` records; absent otherwise or when
+    /// the Python emitter does not support the program.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub python: Option<String>,
 }
 
 /// An evaluation waiting for its `candidate` record.
-#[derive(Clone, Copy)]
 struct PendingCandidate {
     generation: u64,
     cut: usize,
     hold_r2: Option<f64>,
     hold_rmse: Option<f64>,
     measured: bool,
+    program: String,
+    python: Option<String>,
 }
 
 /// Finite values sorted descending, evenly downsampled (first and last kept) to `max`.
@@ -196,6 +233,7 @@ struct State {
     last_key: Option<(&'static str, usize, u64, u64)>,
     sequence: u64,
     last_candidate: Option<Instant>,
+    last_python: Option<Instant>,
     pending: Option<PendingCandidate>,
     population: Option<Vec<f64>>,
     phase: &'static str,
@@ -242,6 +280,7 @@ impl Progress {
                 last_key: None,
                 sequence: 0,
                 last_candidate: None,
+                last_python: None,
                 pending: None,
                 population: None,
                 phase: EXPLORATION,
@@ -312,36 +351,46 @@ impl Progress {
     }
 
     fn observe_at(&self, position: Option<usize>, observation: &Observation, now: Instant) {
-        let tokens = feat_math::source_stream::emitted_tokens(&observation.genome);
+        // One emission serves the token count and the Python preview.
+        let sources = feat_math::source_stream::emit_languages(&observation.genome);
+        let tokens = feat_math::source_stream::count_emitted(&sources);
+        let [_, python, _, _] = sources;
         let mut state = self.lock();
         if let Some(position) = position {
             state.cut = position;
         }
+        let best_before = state.best;
         Self::count(&mut state, observation, tokens);
         let measured = observation.measured();
         let finite = |value: Option<f64>| value.filter(|v| measured && v.is_finite());
-        state.pending = Some(PendingCandidate {
+        let pending = PendingCandidate {
             generation: state.generations_before + state.generations_in_cut,
             cut: state.cut,
             hold_r2: finite(observation.hold_r2),
             hold_rmse: finite(observation.rmse),
             measured,
-        });
+            program: observation.genome.clone(),
+            python: python.ok(),
+        };
+        if state.best != best_before {
+            let python = pending.python.clone().map(cap_python);
+            Self::send_candidate(&mut state, BEST, &pending, python, now);
+        }
+        state.pending = Some(pending);
         Self::flush_candidate_if_due(&mut state, now);
     }
 
-    /// Attempt the waiting `candidate` record when the candidate interval allows it.
-    fn flush_candidate_if_due(state: &mut State, now: Instant) {
-        let due = state
-            .last_candidate
-            .is_none_or(|last| now.saturating_duration_since(last) >= CANDIDATE_INTERVAL);
-        let Some(pending) = state.pending.filter(|_| due) else {
-            return;
-        };
-        state.pending = None;
-        let line = CandidateLine {
+    /// Attempt one `candidate` or `best` record; numbers the next record.
+    fn send_candidate(
+        state: &mut State,
+        kind: &str,
+        pending: &PendingCandidate,
+        python: Option<String>,
+        now: Instant,
+    ) {
+        let mut line = CandidateLine {
             schema: SCHEMA.to_owned(),
-            kind: CANDIDATE.to_owned(),
+            kind: kind.to_owned(),
             sequence: state.sequence,
             elapsed_s: now.saturating_duration_since(state.started).as_secs_f64(),
             generation: pending.generation,
@@ -354,11 +403,43 @@ impl Progress {
                 "failed"
             }
             .to_owned(),
+            program: pending.program.clone(),
+            python,
         };
-        if let Ok(bytes) = serde_json::to_vec(&line) {
-            Self::send(state, bytes);
+        if let Ok(mut bytes) = serde_json::to_vec(&line) {
+            // Over the cap: try once more without the Python.
+            if bytes.len() + 1 > SOURCE_LINE_BYTES && line.python.take().is_some() {
+                bytes = serde_json::to_vec(&line).unwrap_or_default();
+            }
+            if !bytes.is_empty() {
+                Self::send(state, bytes, SOURCE_LINE_BYTES);
+            }
         }
         state.sequence += 1;
+    }
+
+    /// Attempt the waiting `candidate` record when the candidate interval allows it.
+    fn flush_candidate_if_due(state: &mut State, now: Instant) {
+        let due = state
+            .last_candidate
+            .is_none_or(|last| now.saturating_duration_since(last) >= CANDIDATE_INTERVAL);
+        if !due {
+            return;
+        }
+        let Some(pending) = state.pending.take() else {
+            return;
+        };
+        let python_due = state
+            .last_python
+            .is_none_or(|last| now.saturating_duration_since(last) >= PYTHON_INTERVAL);
+        let python = match (python_due, &pending.python) {
+            (true, Some(source)) => {
+                state.last_python = Some(now);
+                Some(cap_python(source.clone()))
+            }
+            _ => None,
+        };
+        Self::send_candidate(state, CANDIDATE, &pending, python, now);
         state.last_candidate = Some(now);
     }
 
@@ -498,7 +579,7 @@ impl Progress {
             }
         };
         if let Some(bytes) = bytes {
-            Self::send(state, bytes);
+            Self::send(state, bytes, MAX_LINE_BYTES);
         }
         state.sequence += 1;
         state.last_key = Some(Self::key(state));
@@ -507,9 +588,9 @@ impl Progress {
     }
 
     /// Attempt one record (newline added) without waiting; over the cap it is dropped.
-    fn send(state: &State, mut bytes: Vec<u8>) {
+    fn send(state: &State, mut bytes: Vec<u8>, cap: usize) {
         bytes.push(b'\n');
-        if bytes.len() <= MAX_LINE_BYTES {
+        if bytes.len() <= cap {
             match &state.destination {
                 #[cfg(test)]
                 Some(Destination::Test(sender)) => {
@@ -541,8 +622,12 @@ mod tests {
         fn records(&self) -> Vec<serde_json::Value> {
             let mut history = self.history.borrow_mut();
             for bytes in self.receiver.try_iter() {
-                assert!(bytes.len() <= MAX_LINE_BYTES);
-                history.push(serde_json::from_slice(&bytes).unwrap());
+                assert!(bytes.len() <= SOURCE_LINE_BYTES);
+                let record: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+                if record["kind"] == PROGRESS {
+                    assert!(bytes.len() <= MAX_LINE_BYTES);
+                }
+                history.push(record);
             }
             history.clone()
         }
@@ -889,12 +974,25 @@ mod tests {
             ("measured", Some(0.25))
         );
         assert_eq!(last.hold_r2, Some(0.75));
-        // Fixed labels and numbers only.
+        // Fixed labels, numbers, and only candidate records carry the program and Python.
         for record in sink.records() {
             let object = record.as_object().unwrap();
             assert!(object.iter().all(|(key, value)| !value.is_string()
-                || matches!(key.as_str(), "schema" | "kind" | "phase" | "status")));
+                || matches!(key.as_str(), "schema" | "kind" | "phase" | "status")
+                || (record["kind"] != PROGRESS && matches!(key.as_str(), "program" | "python"))));
         }
+        assert!(candidates
+            .iter()
+            .all(|c| c.program == crate::select::BOOTSTRAP_GENOME));
+        // Python at most once a second: the first record only among the three inside this half
+        // second (the end-of-search flush runs on the wall clock, so it may carry Python).
+        let with_python: Vec<bool> = candidates.iter().map(|c| c.python.is_some()).collect();
+        assert_eq!(with_python[..3], [true, false, false]);
+        // The single improvement (the last evaluation) is a `best` record with its Python.
+        let best: Vec<CandidateLine> = sink.kind(BEST);
+        assert_eq!(best.len(), 1);
+        assert_eq!(best[0].hold_rmse, Some(0.25));
+        assert!(best[0].python.as_deref().is_some_and(|p| !p.is_empty()));
     }
 
     #[test]
@@ -920,6 +1018,9 @@ mod tests {
                 hold_r2: Some(-f64::MIN_POSITIVE),
                 hold_rmse: Some(-f64::MAX),
                 measured: false,
+                // A capped Python that, with this program, overflows the source cap.
+                program: "(pipe X (ridge))".repeat(400),
+                python: Some("\u{1}".repeat(PYTHON_CAP * 2)),
             });
             state.phase = COMPARISON;
         }
@@ -935,8 +1036,11 @@ mod tests {
                 .clone(),
         )
         .unwrap();
+        // Over the source cap with its Python: attempted again without it.
         let candidate = records.iter().find(|r| r["kind"] == CANDIDATE).unwrap();
-        assert!(serde_json::to_vec(candidate).unwrap().len() < 512);
+        assert!(serde_json::to_vec(candidate).unwrap().len() < SOURCE_LINE_BYTES);
+        assert!(candidate.get("python").is_none());
+        assert_eq!(candidate["program"].as_str().unwrap().len(), 16 * 400);
         let population = line.population_r2.unwrap();
         assert!(!population.is_empty() && population.len() < POPULATION_SAMPLES);
         assert!(population.windows(2).all(|w| w[0] >= w[1]));
@@ -944,6 +1048,15 @@ mod tests {
         let (progress, sink) = reporter(Instant::now());
         progress.generation_done(1, (0..500).map(|i| 1.0 - i as f64 * 0.001234567).collect());
         assert_eq!(sink.lines()[0].population_r2.as_ref().unwrap().len(), 64);
+    }
+
+    #[test]
+    fn python_is_capped_on_a_character_boundary() {
+        let short = "x = 1\n".to_owned();
+        assert_eq!(cap_python(short.clone()), short);
+        let capped = cap_python("é".repeat(20_000));
+        assert!(capped.len() <= PYTHON_CAP);
+        assert!(capped.ends_with("# [truncated: 40000 bytes total]\n"));
     }
 
     #[test]

@@ -591,25 +591,33 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
     assert!(records
         .iter()
         .all(|l| l["schema"] == "jope.invent.progress.v1"));
-    assert!(text.split_inclusive('\n').all(|line| line.len() <= 2048));
+    // 20 KiB per candidate/best record (program and Python); 2048 bytes per progress record.
+    assert!(text
+        .split_inclusive('\n')
+        .all(|line| line.len() <= 20 * 1024));
     // One sequence over every kind.
     let mut previous_sequence = None;
     for record in &records {
         let sequence = record["sequence"].as_u64().unwrap();
         assert!(previous_sequence.is_none_or(|previous| sequence > previous));
         previous_sequence = Some(sequence);
+        let kind = record["kind"].as_str().unwrap();
         assert!(
-            matches!(record["kind"].as_str(), Some("progress" | "candidate")),
+            matches!(kind, "progress" | "candidate" | "best"),
             "{record}"
         );
-        // Aside from fixed labels, numbers or null.
+        if kind == "progress" {
+            assert!(serde_json::to_vec(record).unwrap().len() < 2048);
+        }
+        // Aside from fixed labels, numbers or null; candidate/best add the program and Python.
         assert!(
             record
                 .as_object()
                 .unwrap()
                 .iter()
                 .all(|(key, value)| !value.is_string()
-                    || matches!(key.as_str(), "schema" | "kind" | "phase" | "status")),
+                    || matches!(key.as_str(), "schema" | "kind" | "phase" | "status")
+                    || (kind != "progress" && matches!(key.as_str(), "program" | "python"))),
             "{record}"
         );
     }
@@ -693,7 +701,7 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
         !text.contains("x0") && !text.contains("x1"),
         "column name in the events file"
     );
-    // Candidates: scores only, at most five a second (the end may add the waiting one).
+    // Candidates: at most five a second (the end may add the waiting one).
     let times: Vec<f64> = candidates
         .iter()
         .map(|c| c["elapsed_s"].as_f64().unwrap())
@@ -704,6 +712,33 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
             .all(|w| w[1] - w[0] >= 0.199),
         "{times:?}"
     );
+    let python_times: Vec<f64> = candidates
+        .iter()
+        .filter(|c| c.get("python").is_some())
+        .map(|c| c["elapsed_s"].as_f64().unwrap())
+        .collect();
+    assert!(!python_times.is_empty());
+    assert!(
+        python_times.windows(2).all(|w| w[1] - w[0] >= 0.999),
+        "{python_times:?}"
+    );
+    let best: Vec<&Value> = records.iter().filter(|r| r["kind"] == "best").collect();
+    assert!(!best.is_empty(), "no best records: {text}");
+    let rmse: Vec<f64> = best
+        .iter()
+        .map(|b| b["hold_rmse"].as_f64().unwrap())
+        .collect();
+    assert!(rmse.windows(2).all(|w| w[1] < w[0]), "{rmse:?}");
+    for record in candidates.iter().chain(&best) {
+        assert!(
+            record["program"].as_str().unwrap().starts_with("(pipe X "),
+            "{record}"
+        );
+        if let Some(python) = record.get("python") {
+            assert!(python.as_str().unwrap().len() <= 16 * 1024);
+        }
+    }
+    assert!(best.iter().all(|b| b["python"].is_string()));
     for candidate in &candidates {
         assert!(candidate["generation"].is_u64() && candidate["cut"].as_u64().unwrap() < cuts);
         match candidate["status"].as_str() {
@@ -717,6 +752,7 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
             .unwrap()
             .keys()
             .map(String::as_str)
+            .filter(|key| *key != "python")
             .collect();
         assert_eq!(
             keys,
@@ -727,13 +763,13 @@ fn assert_invent_progress(events: &Path, cuts: u64, eval_budget: u64) {
                 "hold_r2",
                 "hold_rmse",
                 "kind",
+                "program",
                 "schema",
                 "sequence",
                 "status"
             ]
         );
     }
-    assert!(!text.contains("(pipe"), "program source in the events file");
 }
 
 fn no_progress_on_stderr(stderr: &[u8]) {
