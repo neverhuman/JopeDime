@@ -1,0 +1,26 @@
+% Per-dataset rank among 18 methods (1 = lowest pooled out-of-fold RMSE).
+% Source: data/pilot-ranks.csv, derived from evidence/pilot-2026-10-22/scores-deep.csv.
+\begin{tikzpicture}[x=0.072\linewidth, y=0.46cm]
+\def\methods{{"AFM-Lite","Opus","Sol","Astra","Stack","CatBoost","Rand.\ forest","LightGBM","XGBoost"}}
+\def\datasets{{"047e62b5","1cb97b1d","21fbfe8b","30ef3eaa","43b4cc3a","693890aa","79e600bc","b5beff4a","c32fa09b","c7d81571"}}
+\def\R{{{1,7,6,12,5,10,11,13,15},{3,6,13,17,4,12,2,9,10},{14,1,2,12,7,4,8,5,3},{3,4,2,1,5,10,14,12,15},{9,5,3,8,2,14,16,12,18},{4,7,11,9,3,5,6,12,8},{5,1,12,14,7,4,2,6,13},{8,3,6,12,9,13,16,10,18},{9,2,1,6,4,15,17,14,18},{7,1,3,2,5,12,11,13,18}}}
+\foreach \d in {0,...,9}{
+  \pgfmathsetmacro{\dn}{\datasets[\d]}
+  \node[anchor=east, font=\ttfamily\scriptsize\color{izgrey}] at (-0.15,-\d) {\dn};
+  \foreach \m in {0,...,8}{
+    \pgfmathtruncatemacro{\r}{\R[\d][\m]}
+    \pgfmathsetmacro{\shade}{100-(\r-1)*100/17}
+    \fill[izaccent!\shade!white] (\m+0.04,-\d-0.44) rectangle (\m+0.96,-\d+0.44);
+    \pgfmathsetmacro{\txt}{\r<7 ? "white" : "izink"}
+    \node[font=\sffamily\scriptsize\color{\txt}] at (\m+0.5,-\d) {\r};
+  }
+}
+\foreach \m in {0,...,8}{
+  \pgfmathsetmacro{\mn}{\methods[\m]}
+  \node[anchor=south west, rotate=35, font=\sffamily\scriptsize] at (\m+0.25,0.55) {\mn};
+}
+\draw[izwarm, line width=0.8pt] (1,0.5) rectangle (4,-9.5);
+\node[font=\sffamily\scriptsize\color{izwarm}, anchor=north] at (2.5,-9.6) {frontier entrants};
+\draw[izaccent, line width=0.8pt] (0,0.5) rectangle (1,-9.5);
+\node[font=\sffamily\scriptsize\color{izaccent}, anchor=north] at (0.5,-9.6) {engine};
+\end{tikzpicture}

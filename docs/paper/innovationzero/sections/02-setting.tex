@@ -1,77 +1,97 @@
-\section{The commitment boundary}
+% Section 2 — Setting: what "zero" means
+\section{The setting: what ``zero'' means}
 \label{sec:setting}
 
-Let a task supply training data $D_{\mathrm{tr}}=(X,y)$ and reserve
-$D_{\mathrm{te}}$ for an independent evaluator. The final table column is
-always the target. A generator $G_\theta$ maps the permitted training view to
-a complete learning procedure $a$, including its configuration and declared
-dependencies. After commitment, the evaluator executes
-$m=a.\mathrm{fit}(D_{\mathrm{tr}})$ and
-$\hat y=m.\mathrm{predict}(X_{\mathrm{te}})$. Test labels never enter the
-generator, its encoder, preprocessing, fitting or model selection.
-Conditioning on \emph{training} labels is permitted and is not intrinsically
-leakage.
-
-\paragraph{One proposal, zero candidate feedback.}
-For the primary track the contract is
+``Zero-shot'' is used loosely enough that we define it by counting. A dataset $D$ is split into
+training rows $D_{\mathrm{tr}}$ and held-out rows $D_{\mathrm{te}}$, the target always in the last
+column. A \emph{proposer} $P$ reads whatever evidence its track permits and \emph{commits} a program
+$a$: source code together with every configuration, constant and version that determines its
+behaviour. Only then is the program fitted and scored:
 \begin{equation}
- K=1,\quad E_{\mathrm{pre}}=0,\quad R_{\mathrm{fb}}=0,
- \quad \Delta\theta_{\mathrm{target}}=0.
- \label{eq:zero}
+w = \mathrm{Fit}_a(D_{\mathrm{tr}}), \qquad \hat y = \mathrm{Predict}_a(X_{\mathrm{te}};\, w),
+\qquad \text{outcome} = \ell(\hat y, y_{\mathrm{te}}).
+\label{eq:commit}
 \end{equation}
-Here $K$ counts completed candidate proposals; $E_{\mathrm{pre}}$ counts
-candidate-specific executions before commitment, including compilation;
-$R_{\mathrm{fb}}$ counts feedback-driven repairs or revisions; and the final
-term forbids target-specific generator updates. Static constrained decoding
-may enforce representation rules, but an executing checker cannot silently
-become an extra proposal-selection channel. The decoding rule and seed are
-fixed in advance. Multiple sampled candidates, reranking, a rescue fallback
-or a replacement after compilation failure belong to a different budgeted
-track. A failed first proposal remains a failure.
+Here $w$ is the fitted state of the \emph{program} (ridge coefficients, tree splits), not the
+weights of the proposer. Held-out labels $y_{\mathrm{te}}$ never reach $P$.
 
-Commitment freezes source bytes, configuration, generator and encoder
-identities, preprocessing contract, random seeds, dependency closure and
-resource limits in a content-addressed receipt. A timestamped event trace
-records the ordering and evaluator accesses. These are requirements of the
-proposed experiment, not claims that the existing runtime already enforces
-Equation~\ref{eq:zero}. One autoregressively decoded algorithm can require
-many neural forward calls; ``one proposal'' never means ``one forward pass.''
+\begin{definition}{The commitment contract}
+\label{def:zero}
+A proposal is \emph{zero-feedback} when, for the dataset at hand,
+\begin{itemize}
+\item $K=1$: exactly one complete program is committed; no rejection sampling, no reranking among
+complete candidates, no best-of-$B$;
+\item $E=0$: no candidate is executed, compiled for feedback, or scored before commitment;
+\item $R=0$: nothing is revised after any feedback; a repaired program is a new attempt, and the
+first attempt's failure stands.
+\end{itemize}
+Permitted: computing an encoding of $D_{\mathrm{tr}}$, any number of internal decoding steps
+(each counted and reported), and fitting the committed program afterwards. A program may itself
+contain internal model selection inside $\mathrm{Fit}$; such programs satisfy the contract but are
+labelled \emph{search-in-fit}, and a claim of ``no search at all'' requires a cohort that forbids
+it. Counters are recorded by the supervisor, never taken from the proposer's own report.
+\end{definition}
 
-\paragraph{Fitting is a separate computation.}
-A committed learner can perform matrix factorization, gradient updates or
-boosting during \texttt{fit}. The broad track also permits disclosed
-training-only internal validation specified by the frozen algorithm. That
-does not send feedback to the generator, but it does perform algorithm
-selection inside the learner. We therefore record an orthogonal
-\emph{fitting-search} classification. A stricter arm disallows internal
-hyperparameter or pipeline search while permitting a predefined optimizer
-for the estimator. Historical frontier sources retain their original
-behavior and are not relabelled as belonging to this stricter arm.
+\paragraph{Three tracks} The contract lets us separate three settings that are usually blurred
+(\cref{tab:tracks}). In \textbf{track U} (universal), the proposer sees no data at all and writes
+one program for every dataset; a frontier model answering the General Regressor Challenge is a
+track-U proposer with $K=1$, $E=0$, $R=0$. In \textbf{track S} (search-assisted), the proposer
+reads $D_{\mathrm{tr}}$ and may execute up to $k$ candidates on it before committing; the engine
+whose programs we report in \cref{sec:evidence} is a track-S proposer with $k=256$. In
+\textbf{track C} (conditional first proposal), the proposer reads $D_{\mathrm{tr}}$ and commits once
+with $E=0$. Track C is the InnovationZero setting, and it is the one this paper does not yet have
+results for.
 
-\paragraph{Universal and conditional generation.}
-A universal frontier submission is written once from the challenge and then
-fits many datasets. A conditional generator receives a permitted view of
-each new dataset before writing its procedure. These are different
-information and amortization regimes. Universal submissions are informative
-fixed learners, but the primary test of conditioned synthesis requires
-matched conditioned baselines. Section~\ref{sec:protocol} specifies both
-shared-view and native-view comparisons. An opaque embedding handed to an
-unadapted language model is not an adequate information-matched baseline.
+\begin{table}[t]
+\caption{Three tracks. Every result in this paper is labelled with its track, and no comparison
+crosses tracks without saying so.}
+\label{tab:tracks}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}lLlll@{}}
+\toprule
+Track & Proposer sees & Programs & $E$ before commit & Status here \\
+\midrule
+U \textperiodcentered{} universal & a contract, no data & one for all datasets & 0 & 4 entrants, 2 pilots \pre \\
+S \textperiodcentered{} search-assisted & $D_{\mathrm{tr}}$ & one per dataset & $\le k$ (here 256) & engine, 2 ladders \est \\
+C \textperiodcentered{} conditional first proposal & $D_{\mathrm{tr}}$, via an encoding & one per dataset & 0 & specified \pend \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
-\paragraph{Relation to earlier work.}
-DeepCoder learns to guide search, DreamCoder learns reusable abstractions,
-and AutoML-Zero evolves complete learning algorithms
-\citep{deepcoder,dreamcoder,automlzero}. End-to-end symbolic regression predicts
-expressions from data, while hypernetworks generate the parameters of other
-networks \citep{symbolicregression,hypernetworks}. These are close precedents,
-not straw-man alternatives. Our proposed test jointly requires a reusable
-learning procedure, an auditable feedback boundary, held-out dataset
-families, and a comparison against the same training archive's selectors.
-Any incremental claim must survive those controls. A system that learns
-excellent selection without structural synthesis should be reported as such.
+\paragraph{A limit on catalog-bound decoders} The most natural way to build a track-C proposer is
+to train a network to choose among programs that worked before. The engine's first neural policy
+does exactly that: it decodes inside a prefix tree built from a fixed catalog $\mathcal{C}$ of
+6,640 verified programs, renormalizing its logits over the children of each prefix
+\citep{jopedime2026writeup}. Such a decoder can be excellent at selection. It cannot invent.
 
-We use four evidence states: \emph{code-verified} for inspected interfaces;
-\emph{repository-reported} for retained historical results not rerun here;
-\emph{proposed} for unexecuted experiments; and \emph{unresolved} when the
-required artifact is absent. These states apply to claims, not to the
-reputation of a model or author.
+\begin{proposition}{Closed support}
+\label{prop:closed}
+If the support of $\pi_\theta(\cdot\mid z)$ is contained in a fixed set
+$\mathcal{C}$ for every permitted encoding $z$, then $\Pr_{a\sim\pi_\theta(\cdot\mid z)}[a\notin
+\mathcal{C}]=0$ for every $\theta$ the training procedure can reach.
+\par\smallskip
+\emph{Proof.} Probability outside the support is zero by definition, and no update to $\theta$ that
+keeps the decoding mask changes the support. \hfill\tikz\draw[line width=0.5pt] (0,0) rectangle (0.62em,0.62em);
+\par\smallskip
+\emph{Consequence.} Novelty relative to $\mathcal{C}$ requires a proposer whose support extends
+beyond it; better optimization, more data or a better reward cannot substitute. A catalog-bound
+policy is a \emph{control} for track C --- the selection baseline that open synthesis must beat ---
+not a candidate for it. A membership test against $\mathcal{C}$, published without the catalog
+itself, is enough for readers to audit the claim.
+\end{proposition}
+
+The same observation splits the gap between a proposer and the best achievable program into two
+parts. Let $U(a)$ be held-out utility, $a^\star_{\mathrm{all}}$ the best program in any language and
+$a^\star_{\mathcal{A}}$ the best program the proposer can express. Then
+\begin{equation}
+U(a^\star_{\mathrm{all}}) - U(\hat a) =
+\underset{\text{construction gap}}{\bigl[U(a^\star_{\mathrm{all}}) - U(a^\star_{\mathcal{A}})\bigr]}
++ \underset{\text{policy regret}}{\bigl[U(a^\star_{\mathcal{A}}) - U(\hat a)\bigr]} .
+\label{eq:regret}
+\end{equation}
+Training reduces only the second term; only a richer construction space reduces the first. A third
+loss sits upstream: a proposer that sees $D_{\mathrm{tr}}$ only through an encoding $z$ can do no
+better in expectation than one that sees $D_{\mathrm{tr}}$ itself, $\mathbb{E}[\sup_a
+\mathbb{E}[U\mid z,a]] \le \mathbb{E}[\sup_a \mathbb{E}[U\mid D_{\mathrm{tr}},a]]$. Encoder
+information loss, construction-space exclusion and policy regret are therefore separate
+bottlenecks, and the protocol in \cref{sec:protocol} measures each.

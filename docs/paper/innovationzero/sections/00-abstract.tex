@@ -1,20 +1,40 @@
-Automated discovery often alternates proposals with experiments. Can the
-consequences of earlier experiments improve the first algorithm proposed for
-a new problem, before that algorithm is tested? We define
-\emph{InnovationZero} as a data-to-algorithm protocol: a frozen generator
-receives permitted training data, commits one reusable learning procedure,
-and receives no candidate-specific execution feedback before commitment.
-Independent compilation, fitting and evaluation follow. An audit of JopeDime
-distinguishes executable construction, catalog-constrained neural learning,
-four frontier-labelled regression artifacts and exploratory benchmark
-evidence. These establish components of the research program, not its central
-generalization claim. In particular, a decoder restricted to a finite catalog
-cannot establish synthesis outside that catalog. We specify a prospective,
-family-separated comparison with selection, retrieval, conditional generation
-and strong fixed learners; failures remain in the denominator. Structural,
-behavioral and intervention-based novelty tests distinguish a useful new
-procedure from a new source file. Finally, compatible token accounting and
-symmetric cost amortization separate retained output from discovery
-efficiency. The resulting framework asks how much experimental work can move
-into training without confusing a promising first proposal with verified
-new knowledge.
+% Abstract
+\begin{izabstract}
+\noindent{\sffamily\sbseries\small\color{izaccent}Abstract}\par\smallskip
+\noindent In 2016, AlphaGo played a move its own imitation network rated at one chance in ten
+thousand, and won with it; the move came from search. The best-known machine discoveries since, from faster
+matrix multiplication to new mathematical constructions, were likewise found by generating and
+testing candidates for the problem at hand. We ask whether that iteration can be learned once and
+then removed: can a model read a dataset and propose a new, working algorithm for it \emph{before
+any candidate has been executed}? We make the question precise. \emph{Zero} is a set of counters
+--- one committed proposal, no candidate executions, no revisions --- and we separate three tracks:
+a universal algorithm written without data (U), a data-conditioned program found with a declared
+evaluation budget (S), and a conditional first proposal with none (C), which is the InnovationZero
+setting. For track U we built the General Regressor Challenge, a closed-world, reasoning-only
+contract, and gave it to four frontier language models. They succeed: each wrote a complete,
+dependency-free Rust regressor, and on a 64-family panel the best ranks well above the rest
+(Opus~5.5 at Elo~1641 against 1342 for the weakest) and is the best of the four on 30 families ---
+yet every entrant is the best somewhere, and error magnitudes separate only the weakest. By their own
+receipts the three sessions with records kept 10--15\% of the tokens they processed and delivered
+about ten tokens of algorithm a second. All four designs are variations on one textbook hybrid of
+ridge regression and gradient-boosted trees. For
+track S, a program-synthesis engine writes a different standalone program for each dataset in
+seconds; on ten datasets with identical cuts it is statistically indistinguishable from the best
+frontier entrant and above default gradient-boosting libraries. Track C has not been run, and we
+prove that the engine's existing catalog-bound neural policy cannot, by construction, produce a
+program outside its catalog. We therefore contribute the setting, the challenge, a frontier comparison, a pilot, a
+token-yield accounting that compares where systems explore rather than how much they print, and a
+pre-specified decisive experiment --- including an operational definition of \emph{Move~42}, a
+held-out-useful algorithm beyond retrieval whose mechanism survives ablation.
+\end{izabstract}
+
+\begin{figure}[h]
+\centering
+\input{figures/fig-two-routes}
+\caption{Two routes to an algorithm without test-time experiments. Route~1 (track U): a frontier
+model reasons in language to one general program, paid for once. Route~2 (tracks S and C): a
+model reads the training rows of one dataset and proposes a program for it; exploration happens in
+a typed program space rather than in text. The synthesis we propose (\cref{sec:protocol})
+decomposes general inventions into operators the learned model can compose.}
+\label{fig:routes}
+\end{figure}

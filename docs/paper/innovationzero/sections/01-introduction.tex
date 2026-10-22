@@ -1,66 +1,147 @@
-\section{Can experiments become intuition?}
-\label{sec:introduction}
+% Section 1 — Introduction
+\section{Introduction}
+\label{sec:intro}
 
-A useful algorithm can arrive before its author knows that it is useful.
-This distinction separates proposing an idea from establishing knowledge
-about it. Automated discovery systems make the distinction concrete: propose
-a program, run an experiment, inspect the outcome, and revise. Their success
-raises a second question. After enough experience, can a model make a better
-first proposal on a new problem without repeating that experimental loop?
+\paragraph{Move 37} On 10 March 2016, in the second game of its match against Lee Sedol, AlphaGo
+placed a stone on the fifth line that commentators first took for a mistake. Fan Hui, the European
+champion the program had beaten months earlier, was blunt: ``It's not a human move. I've never seen
+a human play this move'' \citep{metz2016wired}. Lee left the table and took roughly a quarter of an
+hour to reply. AlphaGo's policy network, trained to imitate strong human players, had put the chance
+that a person would play the move at about one in ten thousand \citep{hassabis2016seoul}. The
+program played it anyway, because its search said it would win. It won that game and the match,
+four games to one.
 
-AlphaGo's celebrated Move~37 illustrates both the promise and the boundary.
-DeepMind described the move in its second game against Lee Sedol as one its
-model assigned roughly a one-in-ten-thousand chance of a human playing.
-That estimate characterized a learned prior, not a universal measure of
-creativity. The deployed player also searched. AlphaGo Zero subsequently
-showed how search-guided self-play could train a strong policy without
-human-game supervision; its policy-only and search-assisted evaluations
-made the value of the remaining search visible \citep{move37,alphago,alphagozero}.
-The important inheritance is the experiment that separates learned
-competence from computation performed at the moment of decision.
+Three days later Lee answered with Move~78, a wedge that professionals called ``God's touch''
+\citep{koreaherald2016}, and AlphaGo's network had rated that move at the same one in ten thousand
+\citep{hassabis2016seoul}. Lee won the game. Invention ran in both directions that week, and in
+both directions it registered the same way: as an event the imitation model considered nearly
+impossible.
 
-Algorithm discovery offers an analogous opportunity. AlphaTensor and
-AlphaDev use outcome-driven search; FunSearch and AlphaEvolve combine
-language-model proposals with executable evaluators
-\citep{alphatensor,alphadev,funsearch,alphaevolve}. Learned program synthesis,
-library learning and neural symbolic regression already show that experience
-can guide or directly supply programs for new inputs
-\citep{deepcoder,dreamcoder,symbolicregression}. We therefore make no claim
-that data-to-program learning, compositional representations, or the
-amortization of search are new in themselves. The question here is narrower:
-\emph{what useful algorithmic competence transfers to unseen dataset
-families before any candidate-specific experimental feedback is available?}
+It is worth being exact about where Move~37 came from. The component of AlphaGo that had learned
+from people thought it unthinkable; the component that evaluated consequences found it. The
+creativity was in the search, and the search was paid for at the moment of play.
 
-We study reusable regression learning procedures. The input is a permitted
-training table. The output is an executable procedure with fitting and
-prediction interfaces, rather than a prediction vector or a set of fitted
-coefficients. The generator makes one proposal and commits it before any
-candidate execution. Compilation, ordinary estimator fitting and independent
-testing then determine whether the procedure works. We call this setting
-\emph{InnovationZero}; ``Zero'' describes the pre-commitment feedback budget,
-not the amount of training, computation or scientific verification.
+\paragraph{From imitation to amortization} Nineteen months later AlphaGo Zero removed the human
+games entirely \citep{silver2017zero}. Starting from random play and the rules, it learned by
+playing itself: each new network was trained to predict the moves its own search preferred and the
+games it went on to win. After three days it beat the version that had defeated Lee Sedol by 100
+games to none. One result in that paper matters more to us than its headline. With no search at
+all --- a single forward pass, playing the network's preferred move --- AlphaGo Zero rated about
+3,000 Elo, close to the version that had first beaten a professional; with search it rated 5,185
+\citep{silver2017zero}. A large share of what search had discovered had been \emph{amortized} into
+the network. The rest still needed search at the moment of play.
 
-This paper is a protocol and evidence audit. JopeDime provides a substantial
-implementation and historical evidence base, including constrained program
-construction, learned catalog selection and frontier-authored Rust
-regressors \citep{jope,clover}. Those pieces must not be assembled rhetorically
-into a result they have not jointly demonstrated. The current audit does not
-establish a prospective, structurally novel, first-proposal advantage on
-untouched families. It identifies the evidence and controls that would make
-such a claim meaningful, including outcomes that would falsify it.
+\begin{figure}[t]
+\centering
+\makebox[\linewidth][c]{\input{figures/fig-timeline}}
+\caption{Learning from outcomes, 1898--2026 (milestones evenly spaced, not to time scale). From
+Thorndike's law of effect \citep{thorndike1911} and Bellman's dynamic programming
+\citep{bellman1957} through Samuel's self-improving checkers player \citep{samuel1959}, Michie's
+matchbox learner \citep{michie1963menace}, temporal differences \citep{sutton1988td}, Q-learning
+\citep{watkins1989}, TD-Gammon \citep{tesauro1992}, deep Q-networks \citep{mnih2015dqn}, AlphaGo
+\citep{silver2016alphago,silver2017zero}, learning from human preference
+\citep{christiano2017rlhf,ouyang2022instructgpt}, algorithm discovery
+\citep{fawzi2022alphatensor,mankowitz2023alphadev,romeraparedes2024funsearch,novikov2025alphaevolve}
+and reinforcement learning on verifiable reasoning \citep{openai2024o1,deepseek2025r1}, to the
+founders' 2024 Turing Award \citep{acm2025turing}.}
+\label{fig:timeline}
+\end{figure}
 
-Our contributions are fourfold. First, we define an operational commitment
-boundary that separates proposal from evaluation. Second, we reconcile
-model lineages and exploratory evidence, including a simple support argument
-that distinguishes catalog selection from synthesis. Third, we specify a
-failure-inclusive, family-level evaluation of predictive utility, novelty
-and transfer from experimental history. Fourth, we separate token retention,
-artifact throughput and amortized deployment cost. The archived challenge,
-complete source submissions and provenance accompany the manuscript in a
-separate source volume.
+The lineage that followed pointed the same recipe at harder kinds of discovery
+(\cref{fig:timeline}). AlphaZero generalized it across chess, shogi and Go
+\citep{silver2018alphazero}; MuZero learned the rules themselves \citep{schrittwieser2020muzero};
+AlphaTensor found a way to multiply $4\times4$ matrices in arithmetic modulo 2 with 47
+multiplications, improving on Strassen's 49 \citep{fawzi2022alphatensor}; AlphaDev found sorting
+routines that were merged into the LLVM C\texttt{++} standard library
+\citep{mankowitz2023alphadev}; FunSearch, wrapping a language model in a loop of proposal and
+evaluation, improved the asymptotic lower bound for cap sets \citep{romeraparedes2024funsearch};
+and AlphaEvolve found a 48-multiplication algorithm for $4\times4$ complex-valued matrices and a
+scheduling heuristic that recovers about 0.7\% of Google's worldwide compute
+\citep{novikov2025alphaevolve}. Each was a genuine discovery. Each was found the same way: by
+generating and evaluating thousands to millions of candidates \emph{for the problem at hand}.
 
-The ambition is a future \emph{Move42}: a useful procedure whose distinctive
-mechanism survives independent scrutiny and changes how a problem is solved.
-Move42 is our proposed milestone, not AlphaGo's historical Move~37 and not a
-discovery reported here. Can a history of experiments improve the first idea
-enough to reach it?
+\paragraph{The objection} Language models were built on the opposite principle. They learn from
+what people wrote, and then from what people prefer \citep{ouyang2022instructgpt}. Their critics
+argue that this is the wrong objective for discovery. Yann LeCun wrote in 2023 that ``On the
+highway towards Human-Level AI, Large Language Model is an off-ramp'' \citep{lecun2023offramp},
+and in 2025 that in their purest form they are ``incapable of inventing new things''
+\citep{lecun2025bigtech}; in 2026, founding a company on the alternative, he put it more simply:
+``The breakthroughs are not going to come from scaling up LLMs'' \citep{lecun2026mittr}. Richard
+Sutton argues that a language model can predict what a person would say but not what will happen,
+because ``There's no ground truth in large language models'' \citep{sutton2025dwarkesh}. Thomas
+Wolf calls today's assistants ``a country of yes-men on servers'' and, pointedly, describes Move~37
+itself as ``essentially a straight-A student answer'' \citep{wolf2025einstein}. Demis Hassabis sets
+the bar higher still: the test of machine creativity is not a brilliant move but whether a system
+could invent a game as deep as Go \citep{hassabis2025bigtech,mccracken2026alphago}. And Diogo
+Almeida, an author of the instruction-following work that made assistants useful, now argues that
+training on human preference is the wrong target for systems that must act alone
+\citep{almeida2026aie,typesafe2026jev}.
+
+The counter-evidence is just as real. Frontier models now reach certified gold-medal standard at the
+International Mathematical Olympiad \citep{deepmind2025imo} and write large working programs; inside
+evaluator loops such as AlphaEvolve's, or the automated research loop with which Recursive reports
+building its Flint model \citep{recursive2026flint}, they contribute to discoveries. Richard Socher's
+\emph{The Eureka Machine} \citep{socher2026eureka} extends that loop to all of science: a model of
+the world's knowledge, a model of reality learned from measurement, high-fidelity simulation and
+autonomous laboratories, with swarms of agents proposing and criticizing ideas across them
+\citep{socher2026bookbite}. The disagreement, then, is not really about whether language models help
+discovery. It is about \emph{where the discovery comes from}: from the model, or from the loop
+wrapped around it.
+
+\paragraph{A test without a loop} To separate the two we removed the loop. In the General Regressor
+Challenge (\cref{sec:challenge}) a frontier model receives a forty-kilobyte contract and must write, by
+reasoning alone, the strongest general regression algorithm it can --- in dependency-free Rust, with
+no data, no execution and no feedback, frozen once and ranked by held-out error on datasets it will
+never see. Four frontier-model entrants did it,\footnote{The entrants are named for the models that
+wrote them. Only Opus~5.5's configured model identity is recorded; the GPT-6 Astra session reported
+its own model string, and the files submitted as GPT-6.1 Sol and Gemini carry no provider
+telemetry. \Cref{tab:entrants,app:receipts} give each receipt as written.} and every program
+worked. On a 64-family panel the best of them, written by Opus~5.5, ranks clearly above the
+others; on ten datasets with identical cuts, the original three all rank above the default settings
+of XGBoost, LightGBM and CatBoost by Elo, though only Opus's margins are statistically clear
+(\cref{sec:evidence}). Reasoning in words can produce a working new algorithm. But the receipts show
+what it costs and where it goes: the three sessions with records kept 10--15\% of the tokens they
+processed, and all four designs are variations on one hybrid --- ridge regression plus
+gradient-boosted trees, blended on held-out rows --- that is the consensus answer of a decade of
+tabular machine learning \citep{grinsztajn2022trees}. Asked to invent, the models reconstructed the
+textbook.
+
+\paragraph{The question} Every route to machine discovery above pays for search when the problem
+arrives. AlphaGo Zero's raw network suggests another possibility: that much of that search can be
+paid for in advance, across many problems, and carried in a model that proposes well the first
+time. Algorithms are not Go positions --- every dataset is a new board, the space of programs is
+unbounded, and winning means predicting rows nobody has seen --- and nobody knows whether this kind
+of amortization is possible for them. If it is, the economics of discovery change: the loop does
+not disappear, it moves upstream into training, where it runs once over every dataset the system
+has met.
+
+\begin{izquestion}
+Can a model read a dataset it has never seen and propose a new, working algorithm for it in one
+move --- before a single candidate has been executed? And if it can, what is the first algorithm it
+writes that a frontier model would not: its Move~42?
+\end{izquestion}
+
+\paragraph{Contributions} This paper does not answer that question yet; it makes it answerable, and
+reports what can already be measured.
+\begin{enumerate}
+\item \textbf{A precise setting} (\cref{sec:setting}). We define \emph{zero} by counters --- one
+committed proposal, no candidate executions, no revisions --- distinguish universal (U),
+search-assisted (S) and conditional first-proposal (C) tracks, and prove that a decoder whose
+support is a fixed catalog cannot produce a program outside it, however it is trained.
+\item \textbf{The General Regressor Challenge} (\cref{sec:challenge} and the archive volume): a
+neutral, closed-world, red-teamed contract for invention by reasoning, with four frozen frontier
+entrants and their authoring receipts.
+\item \textbf{An architecture and game for track C} (\cref{sec:model}): a 512-dimensional problem
+encoding, a protected \emph{kernel embedding} described by the guarantees it enforces, and the
+outcome-based objectives used to train it.
+\item \textbf{A frontier comparison} (\cref{sec:frontier}, \cref{app:frontier}): the four
+frontier-written algorithms on 64 dataset families, by Elo, error magnitude and family-by-family
+wins, beside the \emph{token yield} and tokens per second of the sessions that wrote them --- an
+accounting of machine invention that measures where a system explores, with the receipts'
+inconsistencies shown.
+\item \textbf{A pilot on identical cuts} (\cref{sec:evidence}): the frontier entrants against a
+data-conditioned engine and standard libraries --- including results that do not favour our own
+system.
+\item \textbf{A decisive experiment, specified in advance} (\cref{sec:protocol}), with a claim
+ladder and an operational definition of Move~42.
+\end{enumerate}

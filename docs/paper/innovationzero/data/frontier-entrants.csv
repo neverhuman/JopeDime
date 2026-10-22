@@ -1,0 +1,5 @@
+entrant,y,elo,elo_lo,elo_hi,ycont,ycont_lo,ycont_hi,ygen,ygen_lo,ygen_hi,tps,tps_lo,tps_hi,sps,sps_lo,sps_hi,fit_s,mem_mb,src_bytes,src_tokens,freeze_s,sr_ygen,sr_tps,sr_tps_lo,sr_tps_hi,sr_sps,sr_sps_lo,sr_sps_hi
+Opus5p5_Extra,1,1641.30,1599.31,1689.19,14.6,9.2,27.7,25.3,16.6,44.4,86.7,33.3,200.0,12.7,6.9,24.6,459.5,80.1,66536,19010,1500,nan,nan,nan,nan,nan,nan,nan
+Gemini4_argon_high,2,1560.79,1518.79,1606.89,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,1985.8,25.2,96694,27627,nan,78.0,168.6,138.8,214.5,394.7,284.4,586.0
+GPT6p1_Sol_Max,3,1455.81,1414.13,1496.77,11.9,7.8,18.5,nan,nan,nan,78.9,59.2,105.3,9.4,8.2,11.0,72.1,19.3,25011,7146,760,nan,nan,nan,nan,nan,nan,nan
+GPT6_Astra_Max,4,1342.11,1288.87,1388.25,9.9,6.3,15.4,nan,nan,nan,103.9,77.9,142.9,10.3,9.0,12.0,61.9,28.8,27729,7923,770,nan,nan,nan,nan,nan,nan,nan

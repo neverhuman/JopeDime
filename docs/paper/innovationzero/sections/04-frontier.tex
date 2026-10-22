@@ -1,0 +1,246 @@
+% Section 4 — The four frontier inventors compared: quality, token yield, speed and cost
+\section{Four frontier inventors, compared}
+\label{sec:frontier}
+
+The four frozen programs can now be compared in the only way the challenge allows: by running them,
+unchanged, on data none of their authors saw. \Cref{fig:frontier} puts the comparison on one page. It
+answers four questions about the same four programs --- how good each is, how much of the text its
+session processed survived into the program, how fast that text was produced, and what the program
+costs to run --- and it marks, rather than hides, the one answer the receipts cannot support. This
+is track U throughout: one general program per model, no data at design time.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-frontier}
+\caption{The four frontier entrants on one page. \textbf{(a)}~Elo on 64 dataset families $\times$
+3~folds $\times$ 3~seeds, with 95\% family-bootstrap intervals (10,000 resamples) \pre.
+\textbf{(b)}~Token yield: tokens of the frozen source as a share of all tokens the authoring session
+processed through freeze ($Y_{\mathrm{cont}}$, filled), and, for the one session that separates
+generation from input, as a share of tokens generated ($Y_{\mathrm{gen}}$, open).
+\textbf{(c)}~Tokens per second from task to frozen source: session content (filled) and frozen
+source (open diamonds). \textbf{(d)}~Total wall-clock time to fit the frozen program 576 times, one
+CPU per fit; Gemini4\_argon\_high ran on a different host. Panels (b) and (c) are the sessions' own
+estimates, with their stated ranges and source tokens counted as bytes/3.5 (3.0--4.0); no session
+was metered. $^\dagger$Gemini's open grey markers come from an authoring statement supplied after
+integration whose token count cannot be reconciled with the archived source (\cref{sec:yield}):
+they are shown, not compared. Data:
+\code{data/frontier-entrants.csv}, checked against the archived receipts by \code{scripts/check.sh}.}
+\label{fig:frontier}
+\end{figure}
+
+\subsection{Quality: who wins, and by how much}
+\label{sec:u64}
+
+The panel is 64 dataset families, each with three folds and three seeds, for 576 fits per entrant;
+every fit was isolated to one CPU and 8~GiB as in the challenge contract, inputs were byte-identical
+across entrants and no cell failed \pre. A family's match outcome between two entrants is the mean
+over seeds of a win, loss or tie on RMSE pooled across folds, and the ratings are a Bradley--Terry fit
+on those outcomes \citep{bradley1952,elo1978}. Opus5p5\_Extra rates 1641 (95\% interval 1599--1689),
+Gemini4\_argon\_high 1561 (1519--1607), GPT6p1\_Sol\_Max 1456 (1414--1497) and GPT6\_Astra\_Max
+1342 (1289--1388) (\cref{fig:frontier}a). Adjacent intervals overlap, but each excludes its
+neighbours' point estimates.
+
+The ratings rest on head-to-head records that are easy to state. Opus beats Gemini on 60\% of family
+matches, Sol on 79\% and Astra on 86\%; Gemini beats Sol on 66\% and Astra on 77\%; Sol beats Astra
+on 70\%. Counting every family separately (\cref{app:frontier}), Opus is the best of the four on 30
+families, Gemini on 20, Sol on 7 and Astra on 5, with two families shared; Opus sweeps all three of
+its matches on all three seeds in 24 families and Astra in one. Every entrant is the best available
+general algorithm somewhere. None is the best everywhere.
+
+Elo counts wins, not margins, and the two orderings disagree in an instructive way
+(\cref{tab:magnitude}). Sol, third by Elo, has the lowest geometric-mean error of the four --- 4\%
+below Opus's, not significantly --- while Gemini, which beats Sol on 65.6\% of family matches, has a
+geometric-mean RMSE 18\% \emph{higher} than Sol's at the point estimate (ratio 0.847, interval
+0.623--1.055): against Sol, Gemini's wins are small and its losses large. Only Astra is separated
+from the others on magnitude, and none of the three Gemini comparisons survives the Holm adjustment
+its analysis applies \citep{holm1979}. A paper that reported only the ladder would
+rank these inventions; it would not say how much better any of them is.
+
+\begin{table}[t]
+\caption{Geometric-mean RMSE ratios on the 64 families (first entrant over second; below 1 means the
+first has lower error), with 95\% family-bootstrap intervals and two-sided $p$-values; the three
+Gemini comparisons are also Holm-adjusted \pre. Plotted in \cref{fig:frontier-wins}b.}
+\label{tab:magnitude}
+\centering\sffamily\footnotesize\lining
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Pair & Ratio & 95\% interval & $p$ & Holm $p$ \\
+\midrule
+Sol / Opus & 0.963 & 0.725--1.173 & 0.77 & --- \\
+Sol / Gemini & 0.847 & 0.623--1.055 & 0.24 & 0.37 \\
+Gemini / Opus & 1.137 & 0.978--1.433 & 0.19 & 0.37 \\
+Astra / Gemini & 1.139 & 0.987--1.301 & 0.064 & 0.19 \\
+Astra / Opus & 1.295 & 1.085--1.575 & 0.008 & --- \\
+Astra / Sol & 1.345 & 1.136--1.670 & 0.006 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three limits travel with these numbers, and the analysis that produced them states each one. The 64
+families are current training families with prepared inner-validation contexts, not untouched data;
+the stored preprocessing was fitted before the original train/test split; and the first seed's
+outcomes were seen before the other two seeds were fixed. The three earlier entrants' 1,728 fits
+were reused from one host and Gemini's 576 run on another. The ratings describe these four programs
+on this panel, against each other: they do not transfer to another ladder, and they are not
+evidence about how a model performs on independent data.
+
+\subsection{Token yield: where the invention happened}
+\label{sec:yield}
+
+A frontier model that invents an algorithm by reasoning pays for every idea it considers in tokens:
+abandoned approaches, re-reading of the specification, partial drafts and the final source are all
+generated or processed text. A program-synthesis model pays for exploration in program evaluations
+instead, which cost milliseconds of CPU and produce no text at all. \emph{Token yield} makes that
+difference visible. It is not a measure of quality, and it is easy to misuse, so we define it with
+care.
+
+Let $S$ be the number of tokens in the frozen source that the system itself generated, $O$ all
+visible output generated before freezing, $R$ hidden reasoning tokens not already counted in $O$,
+and $I$ the input tokens processed (new and cached reads reported separately, never added twice).
+All counts use one stated tokenizer; a count that is not available is \emph{missing}, never zero.
+
+\begin{definition}{Token yield}
+\label{def:yield}
+\begin{equation*}
+Y_{\mathrm{out}} = \frac{S}{O}, \qquad
+Y_{\mathrm{gen}} = \frac{S}{O+R}, \qquad
+Y_{\mathrm{proc}} = \frac{S}{I+O+R}.
+\end{equation*}
+$Y_{\mathrm{gen}}$ asks how much of what the system generated survived into the artifact;
+$Y_{\mathrm{proc}}$ charges everything it read as well. When only a session's total content $T$ is
+known, we report the \emph{content yield} $Y_{\mathrm{cont}} = S/T$ and say so.
+\end{definition}
+
+Two further quantities complete the picture. A system that explores without generating text has no
+meaningful token yield; for it we report the \emph{candidate yield}, one over the number of
+candidates executed before commitment ($1/k$ for a track-S proposer, $1$ for track C and for
+reasoning-only authors), and the \emph{expansion factor} $X = S_{\mathrm{emit}}/N_{\mathrm{dec}}$, the
+emitted source per decoded decision. $X$ can exceed one and is not an efficiency: a 512-coordinate
+vector is not 512 language-model tokens, and source expanded from it is not evidence of
+near-complete discovery efficiency. The repository's own stream metric, compiler-passed tokens over
+emitted tokens, measures something else again (compilation and conformance), and we name it
+accordingly.
+
+\paragraph{What the receipts say} No frontier session in this study has metered usage; every token
+count is the session's own estimate, and source tokens are frozen bytes divided by 3.5 characters
+per token (range 3.0--4.0), the heuristic Astra's own receipt uses. \Cref{tab:yield} and
+\cref{fig:frontier}b report what can be computed. The three documented sessions kept 10--15\% of the
+content they processed: Astra 9.9\% (6.3--15.4), Sol 11.9\% (7.8--18.5) and Opus 14.6\%
+(9.2--27.7). Opus, the one session that separates generation from input, kept a quarter of what it
+generated (25.3\%, 16.6--44.4). Its integration phase then processed a further 94 thousand output
+tokens --- 27 thousand of them reasoning, already included --- 245 thousand new input tokens and 19.5
+million cached re-reads; counted all the way to a working integration, about one token in a thousand
+that the session read survived into the regressor.
+
+\begin{table}[t]
+\caption{Token yield of the frontier authoring sessions through source freeze. Central estimate,
+with the range implied by the sessions' own ranges and by 3.0--4.0 characters per token. All counts
+are estimates; ``---'' marks a count the receipt does not contain. The last two rows are
+self-reports whose counts do not reconcile with the sources they describe; report D is
+unattributed and is not plotted.}
+\label{tab:yield}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}lrrrRRr@{}}
+\toprule
+Session & $S$ (source) & $O+R$ & $T$ or $I{+}O{+}R$ & $Y_{\mathrm{gen}}$ & $Y_{\mathrm{cont}}$ or $Y_{\mathrm{proc}}$ & Time to freeze \\
+\midrule
+\code{GPT6\_Astra\_Max} & 7,923 & --- & 80k (60--110k) & --- & 9.9\% (6.3--15.4) & 770 s \\
+\code{GPT6p1\_Sol\_Max} & 7,146 & --- & 60k (45--80k) & --- & 11.9\% (7.8--18.5) & 760 s \\
+\code{Opus5p5\_Extra} & 19,010 & 75k (50--100k) & 130k (80--180k) & 25.3\% (16.6--44.4) & 14.6\% (9.2--27.7) & \textasciitilde25 min \\
+\code{Gemini4\_argon\_high}$^{\dagger}$ & 27,627 & 11,800 & --- & $>$100\% & --- & 55--85 s \\
+Report D (unattributed) & 9,600 & 13,050 & 19,900 & 74\% & 48\% & 75--105 s$^{*}$ \\
+\bottomrule
+\multicolumn{7}{@{}l}{\scriptsize $^{\dagger}$Self-reported after integration; the archived source alone exceeds the reported output.\enspace $^{*}$Inferred from an assumed streaming rate.}
+\end{tabularx}
+\end{table}
+
+\paragraph{Gemini's statement} After integration the repository owner supplied an authoring statement
+for the Gemini entrant (archived verbatim in \code{evidence/gemini-authoring-statement-20261022.md}):
+a single \code{reasoning\_only} pass of about 11,800 tokens --- 2,600 reasoning and 9,200 output
+across the source, its manifest and a design note --- in an estimated 55--85 seconds, with no
+compilation, data or experiments during design. Taken at its word it would make Gemini the outlier
+on every axis: up to 78\% of what it generated kept, and 139--215 tokens a second. But the counts do
+not fit the file. The archived source alone is 96,694 bytes, 24--32 thousand tokens at 3.0--4.0
+characters per token, which is 2.6--3.5 times the output the statement reports for all three files;
+at face value it would be 10.5 bytes per token, and with the archived source as numerator its yield
+would exceed 100\%. Delivering that source in 55--85 seconds would also mean 284--586 source tokens a
+second, twenty to sixty times the documented sessions. The superseded Gemini source is larger still
+(98,057 bytes), so the statement does not describe it either. Either its counts are about threefold
+low or they describe another generation. We draw its values, open and grey, so that the reader can
+see them, and we compare nothing with them until the session is re-run with metering (E0).
+
+\paragraph{The one exception, and why it is not yet one} The last row of \cref{tab:yield} is an
+anonymous single-shot report (``report D'') for a 33.6-kilobyte source that is not in the
+repository. It does not describe the 96,694-byte Gemini entrant, and we do not assign it to Gemini by
+resemblance of names, although its scale --- about 9.7 thousand completion tokens in 75--105 seconds
+--- is close to that of Gemini's statement. On its own count of 7,850 code tokens it claims 81\% of visible completion and
+39\% of everything processed; on our byte count, 74\% of what was generated. But its arithmetic does
+not hold: it reports 33.6 kilobytes as 7,850 tokens (4.3 characters per token, not the 3.8 it states),
+describes a 34.5-kilobyte prompt that matches neither the 39.7-kilobyte packet nor the 68.7-kilobyte file,
+counts 3,400 reasoning tokens a model cannot observe in itself, and derives its 75--105-second
+duration from an assumed token rate, so any tokens-per-second figure computed from it would be
+circular. The two single-pass self-reports agree with each other in claiming that most of what a
+single pass generates survives into the program; neither agrees with its own source. Until metered
+usage exists (E0, \cref{sec:protocol}), the defensible summary is that reasoning-only invention by
+the documented sessions kept on the order of a tenth of the text it processed, and that the
+single-pass claims are a hypothesis worth metering, not a result.
+
+\subsection{Tokens per second: what the rate measures}
+\label{sec:throughput}
+
+Session-level rates are not decoding speeds, and \cref{fig:frontier}c keeps two of them apart. The
+filled points divide everything a session processed by its time to frozen source: about 104 tokens a
+second for Astra (78--143), 79 for Sol (59--105) and 87 for Opus (33--200, its time being an estimate
+of 15--40 minutes). The open diamonds divide only the frozen source by the same time: Astra delivered
+10.3 source tokens a second (9.0--12.0), Sol 9.4 (8.2--11.0) and Opus 12.7 (6.9--24.6). Gemini's
+self-reported 169 tokens a second (139--215), and the 395 source tokens a second (284--586) its stated
+time would imply, are shown in grey for the reasons given above. Opus generated
+about 50 tokens a second over its whole session and at least 53 a second while writing its final
+20-thousand-token source message. The ratio of the two rates is the token yield again: a session
+that processes a hundred tokens a second and keeps ten of them delivers ten tokens of algorithm a
+second.
+
+These rates describe a whole authoring session --- reading, clarification, reasoning and writing ---
+and not a model's streaming speed; with unknown hardware and no metering, they support no
+efficiency ranking between providers. They are useful for a different comparison. The engine's
+emitter writes each of its pilot programs, 3.9--10.8 thousand tokens of Rust, in 4.6--7.0
+milliseconds (median of 25 runs, process start included), about a million tokens a second. That
+number says nothing about invention: the program was chosen beforehand, after 256 executed
+candidates, and the emitter only expands a decision of 13--45 kernel tokens by a factor of 240--300.
+A frontier session, a candidate-evaluating search and a compiler expanding a decision measure three
+different things; \cref{tab:yield} is the only place they share a row, and the useful quantity for
+any of them is cost to a useful fitted predictor, not text per second.
+
+\subsection{What the frozen programs cost to run}
+
+The entrants' footprints differ by more than their accuracy (\cref{fig:frontier}d). Fitting 576
+times took 62 seconds for Astra, 72 for Sol and 459 for Opus on one host --- 0.11, 0.13 and 0.80
+seconds per fit --- and 1,986 seconds for Gemini on another, 3.4 seconds per fit with a longest
+single fit of 56 seconds. Peak memory ranged from 19 to 80 megabytes. Because the hosts differ,
+Gemini's time supports no controlled speed ratio; within one host, Opus's lead in quality was bought
+with six to seven times the fitting time of Sol's and Astra's. All four are complete, single-threaded,
+dependency-free programs that could be deployed as they stand.
+
+\paragraph{Amortization} Yields compare \emph{where} exploration happens, not total cost. A frontier
+entrant's authoring cost is paid once and buys a program that serves every later dataset; a
+data-conditioned proposer pays a training cost once and a proposal cost per dataset. Over $N$
+datasets,
+\begin{align}
+C_{\mathrm{U}}(N) &= C_{\mathrm{author}} + N\,\bigl(c_{\mathrm{fit}}^{\mathrm{U}} + c_{\mathrm{predict}}^{\mathrm{U}}\bigr),\\
+C_{\mathrm{IZ}}(N) &= C_{\mathrm{history}} + C_{\mathrm{train}} + N\,\bigl(c_{\mathrm{encode}} + c_{\mathrm{propose}} + c_{\mathrm{emit}} + c_{\mathrm{fit}}^{\mathrm{IZ}} + c_{\mathrm{predict}}^{\mathrm{IZ}}\bigr),
+\end{align}
+where $C_{\mathrm{history}}$ is the cost of the experiments the proposer learns from. Break-even
+falls at $N^\star = (C_{\mathrm{history}} + C_{\mathrm{train}} - C_{\mathrm{author}})/(c^{\mathrm{U}} -
+c^{\mathrm{IZ}})$ when the per-dataset difference is positive and matched quality holds, and nowhere
+otherwise. Charging the frontier model's authoring cost to every dataset while amortizing the
+proposer's training would manufacture an advantage; we do neither, and unknown upstream pretraining
+costs are disclosed symmetrically.
+
+\paragraph{What the comparison shows} Reasoning in language produced four working, deployable
+regression algorithms, and one of them is clearly better than the others by wins. The receipts
+locate the invention in the text: roughly nine-tenths of what each documented session processed was
+exploration that did not survive. And the four programs are, in substance, one design. A track-C
+proposer would have nothing to discard by construction --- it commits the first program it decodes ---
+so the claim worth testing is not that its yield is 100\%, which is definitional, but that it reaches
+a frontier entrant's held-out quality at lower cost per useful algorithm once both are fully
+amortized. That claim is gate M6 of the protocol (\cref{sec:protocol}).

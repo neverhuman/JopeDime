@@ -403,7 +403,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 - [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the emitters
 - [`docs/datasets.md`](docs/datasets.md) — dataset store layout, licence rule and `datasets/test`
 - [`docs/campaigns.md`](docs/campaigns.md) — benchmark campaigns
-- [`docs/paper/innovationzero/`](docs/paper/innovationzero/) — InnovationZero publication: sectioned manuscript, technical supplement, complete challenge and source appendix, with a reproducible PDF build. A protocol and evidence audit; the prospective first-proposal result remains unestablished.
+- [`docs/paper/innovationzero/`](docs/paper/innovationzero/) — InnovationZero publication: sectioned paper, technical supplement and byte-exact archive, with the four frontier entrants compared on Elo, token yield and tokens per second, and a checked, reproducible PDF build. The prospective first-proposal result remains unestablished.
 - [`docs/paper/TECHNICAL_WRITEUP.md`](docs/paper/TECHNICAL_WRITEUP.md) — the CLOVER technical write-up (a draft), its [claim ledger](docs/paper/claims.json) and [numbers trace](docs/paper/NUMBERS_TRACE.md)
 - [`docs/experiments/README.md`](docs/experiments/README.md) — curated 18-record experiment digest ([`experiments.jsonl`](docs/experiments/experiments.jsonl), [`schema.v1.json`](docs/experiments/schema.v1.json) and [synthesis roadmap](docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md))
 - [`docs/runbooks/`](docs/runbooks/) — operator runbooks, the W7 three-host proof among them

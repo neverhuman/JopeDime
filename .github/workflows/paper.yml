@@ -37,9 +37,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            latexmk texlive-latex-extra texlive-fonts-recommended texlive-xetex \
-            fonts-dejavu-core fonts-urw-base35 poppler-utils
+            latexmk texlive-xetex texlive-latex-extra texlive-pictures texlive-science \
+            poppler-utils jq unzip
 
+      # Fonts are fetched by scripts/build.sh from the release archives pinned in fonts.lock and
+      # verified by SHA-256 before use; nothing else in the build reads the network.
       - name: Check sources, exercise refusals, and build the three PDFs
         run: |
           set -euo pipefail

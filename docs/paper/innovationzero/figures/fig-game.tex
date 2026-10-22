@@ -1,0 +1,23 @@
+% Algorithmic self-play. Solid: implemented and run (first policy generation). Dashed:
+% implemented, offline and shadow-only. Dotted: proposed in this paper (gate M7).
+\begin{tikzpicture}[x=1cm,y=1cm]
+\tikzset{g/.style={izbox, text width=26mm, minimum height=13mm}}
+\node[g] (ctx) at (0,0) {Context $c$\\[1pt]{\scriptsize one dataset cut;\\two inner folds}};
+\node[izhidden, text width=26mm, minimum height=13mm] (pol) at (3.7,0) {Policy $\pi_\theta$\\[1pt]{\scriptsize proposes kernel $a$}};
+\node[izstage, text width=26mm, minimum height=13mm] (exe) at (7.4,0) {Execute $a$\\[1pt]{\scriptsize native and emitted;\\parity-checked}};
+\node[g, fill=izpaper] (q) at (11.1,0) {Outcome $q(c,a)$\\[1pt]{\scriptsize \cref{eq:q}}};
+\node[g] (teach) at (0,-2.9) {Teachers\\[1pt]{\scriptsize high-water-mark programs\\from an offline search}};
+\node[g] (train) at (3.7,-2.9) {Training signal\\[1pt]{\scriptsize imitation, value,\\ranking, feasibility}};
+\node[g] (judge) at (7.4,-2.9) {Win, draw or loss\\[1pt]{\scriptsize $q>h_c+\tau$ wins;\\failure loses}};
+\node[g] (inc) at (11.1,-2.9) {Incumbent $h_c$\\[1pt]{\scriptsize best verified program\\for $c$ so far}};
+\draw[izarrow] (ctx) -- (pol);
+\draw[izarrow] (pol) -- (exe);
+\draw[izarrow] (exe) -- (q);
+\draw[izarrow] (q) -- (inc);
+\draw[izarrow] (inc) -- (judge);
+\draw[izarrow] (judge) -- (train);
+\draw[izarrow] (teach) -- node[iznote, above]{imitation} (train);
+\draw[izarrow] (train) -- node[iznote, right, align=left]{update $\theta$} (pol);
+\draw[izarrow, dashed] (judge.south) -- ++(0,-0.55) -| node[iznote, pos=0.25, below]{a winner becomes the incumbent (offline shadow pools only)} (inc.south);
+\draw[izarrow, dotted, line width=0.9pt] (inc.south east) ++(-0.3,0) -- ++(0,-1.35) -| node[iznote, pos=0.25, below]{verified winners added to the teachers (proposed; gate M7)} (teach.south);
+\end{tikzpicture}

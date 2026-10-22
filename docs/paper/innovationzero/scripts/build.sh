@@ -1,50 +1,80 @@
 #!/usr/bin/env bash
+# docs/paper/innovationzero/scripts/build.sh — check the sources, then typeset the three volumes.
+#
+#   bash scripts/build.sh            check, typeset and check the PDFs (make pdf)
+#   bash scripts/build.sh --clean    remove only the files this build produces
+#
+# Products go to the lane's reused target directory, $repo/target/innovationzero-paper (override
+# with IZ_BUILD_DIR): InnovationZero.pdf (the paper), InnovationZero-Supplement.pdf and
+# InnovationZero-Archive.pdf, with their TeX logs and build-environment.txt. Needs XeLaTeX, latexmk
+# and BibTeX (TeX Live 2023 or later), Poppler, jq, curl, unzip and sha256sum. Fonts come from
+# fonts.lock: pinned release archives, verified by SHA-256 and cached outside the working tree
+# (IZ_FONT_CACHE, default ~/.cache/innovationzero-fonts). The three font archives are the only
+# network reads, and only when they are not already cached.
 set -euo pipefail
-paper_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-repo_dir=$(git -C "$paper_dir" rev-parse --show-toplevel)
-build_dir="$repo_dir/target/innovationzero-paper"
-cd "$paper_dir"
-if [[ "${1:-}" == "--clean" ]]; then
-  # Never blanket-delete target: only this build's known generated products.
-  for stem in InnovationZero InnovationZero-Supplement InnovationZero-Archive; do
-    for extension in aux bbl blg fdb_latexmk fls log out toc xdv pdf; do
-      rm -f -- "$build_dir/$stem.$extension"
-    done
+paper=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+repo=$(git -C "$paper" rev-parse --show-toplevel)
+build=${IZ_BUILD_DIR:-$repo/target/innovationzero-paper}
+cache=${IZ_FONT_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/innovationzero-fonts}
+volumes=(InnovationZero-Supplement:supplement InnovationZero:main InnovationZero-Archive:archive)
+
+if [ "${1:-}" = --clean ]; then
+  # Never blanket-delete target/: only this build's known products.
+  for v in "${volumes[@]}"; do
+    for ext in aux bbl blg fdb_latexmk fls log out toc xdv pdf build.txt; do rm -f -- "$build/${v%%:*}.$ext"; done
   done
-  rm -f -- "$build_dir/archive-index.tex" "$build_dir/build-environment.txt"
+  rm -f -- "$build/archive-index.tex" "$build/build-environment.txt"
   exit 0
 fi
-if [[ $# -ne 0 ]]; then
-  printf 'usage: %s [--clean]\n' "$0" >&2
-  exit 2
-fi
-for tool in python3 latexmk pdflatex xelatex bibtex pdfinfo pdftotext pdffonts; do
-  command -v "$tool" >/dev/null || { printf 'Missing build tool: %s\n' "$tool" >&2; exit 1; }
+[ $# -eq 0 ] || { echo "usage: $0 [--clean]" >&2; exit 2; }
+
+for tool in xelatex latexmk bibtex pdfinfo pdftotext pdffonts jq curl unzip sha256sum; do
+  command -v "$tool" >/dev/null || { echo "build.sh: $tool is required" >&2; exit 2; }
 done
-mkdir -p -- "$build_dir"
-# Stable source epoch: the pinned main snapshot's committer timestamp (2026-10-22).
-# Override explicitly for release reproducibility; never use the current wall clock.
-export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-1792655756}"
-export FORCE_SOURCE_DATE=1
-export TZ=UTC
-export LC_ALL=C.UTF-8
-export TEXINPUTS="$paper_dir:$build_dir:${TEXINPUTS:-}"
-python3 scripts/check.py --prepare "$build_dir"
+mkdir -p -- "$build" "$cache/archives" "$cache/fonts"
+
+while read -r digest url members; do
+  case "$digest" in ''|'#'*) continue ;; esac
+  archive="$cache/archives/$(basename "$url")"
+  if [ ! -f "$archive" ] || ! echo "$digest  $archive" | sha256sum -c --status; then
+    echo "fetching $url"
+    curl -fsSL --retry 3 -o "$archive.part" "$url"
+    mv -- "$archive.part" "$archive"
+  fi
+  echo "$digest  $archive" | sha256sum -c --status || { echo "build.sh: SHA-256 mismatch for $url" >&2; exit 3; }
+  for m in $members; do
+    [ -f "$cache/fonts/$(basename "$m")" ] || unzip -o -q -j "$archive" "$m" -d "$cache/fonts"
+  done
+done < "$paper/fonts.lock"
+
+bash "$paper/scripts/check.sh" --prepare "$build"
+
+# Reproducible dates: the committer time of the pinned main snapshot unless overridden.
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1792655756} FORCE_SOURCE_DATE=1 TZ=UTC
+export TEXINPUTS="$paper//:$build:" BIBINPUTS="$paper:"
 {
   printf 'SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH"
-  printf 'source_head=%s\n' "$(git -C "$repo_dir" rev-parse HEAD)"
-  latexmk -version
-  pdflatex --version
-  xelatex --version
-  python3 --version
-} > "$build_dir/build-environment.txt"
-# Main text links into the separately paginated methods supplement.
-latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape \
-  -outdir="$build_dir" -jobname=InnovationZero-Supplement supplement.tex
-latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape \
-  -outdir="$build_dir" -jobname=InnovationZero main.tex
-# XeLaTeX preserves Unicode in the archived prompt and source comments.
-latexmk -xelatex -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape \
-  -outdir="$build_dir" -jobname=InnovationZero-Archive listings.tex
-python3 scripts/check.py --pdf-dir "$build_dir"
-printf '\nBuilt publication PDFs in %s\n' "$build_dir"
+  printf 'source_head=%s\n' "$(git -C "$repo" rev-parse HEAD)"
+  printf 'source_dirty=%s\n' "$(git -C "$repo" status --porcelain -- "$paper" | wc -l)"
+  latexmk -version | head -n 2
+  xelatex --version | head -n 1
+  bibtex --version | head -n 1
+  pdfinfo -v 2>&1 | head -n 1
+  sha256sum "$paper/fonts.lock"
+} > "$build/build-environment.txt"
+
+pretex="\\def\\IZFontDir{$cache/fonts/}"
+for v in "${volumes[@]}"; do
+  job=${v%%:*} src=${v#*:}
+  (cd "$paper" && latexmk -xelatex -interaction=nonstopmode -halt-on-error -file-line-error \
+     -no-shell-escape -outdir="$build" -jobname="$job" -usepretex="$pretex" "$src.tex" \
+     > "$build/$job.build.txt" 2>&1) || {
+    tail -n 40 "$build/$job.build.txt" >&2
+    echo "build.sh: $src.tex failed (full output: $build/$job.build.txt)" >&2; exit 1; }
+done
+
+bash "$paper/scripts/check.sh" --pdf-dir "$build"
+for v in "${volumes[@]}"; do
+  printf '%-28s %4s pages\n' "${v%%:*}.pdf" "$(pdfinfo "$build/${v%%:*}.pdf" | awk '/^Pages:/{print $2}')"
+done
+echo "Built in $build"
