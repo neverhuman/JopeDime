@@ -2,7 +2,8 @@
 # deploy/runner/run.sh <ci|ci2|full> — start ONE ephemeral runner job container (called by
 # jope-runner@<lane>.service, as root, on the timer's cadence).
 #
-#   1. disk guard (refuse under 50 GB free);
+#   1. at most daily, trim older duplicate builds from this lane's target volume (common.sh
+#      jope_runner_trim_lane), then the disk guard (refuse under 50 GB free);
 #   2. read the fine-grained PAT from the root-0600 file (never exported, never mounted) and ask
 #      GitHub for a single-use JIT config:
 #        POST /repos/<owner>/<repo>/actions/runners/generate-jitconfig
@@ -38,6 +39,8 @@ jq -n --arg domain "$JOPE_RUNNER_DOMAIN" --arg lane "$lane" --arg host "$JOPE_RU
   '{domain:$domain,lane:$lane,host:$host,memory:$memory,cpus:16,volume_prefix:$prefix}' > "$policy"
 chmod 0444 "$policy"
 [[ $(id -u) -eq 0 ]] || { echo "run.sh must run as root (reads $JOPE_RUNNER_PAT_FILE)" >&2; exit 2; }
+# The lane lock is held and no container of this lane runs: the one safe point to trim its cache.
+jope_runner_trim_lane "$lane" || true
 "$(dirname "${BASH_SOURCE[0]}")/disk-guard.sh"
 
 [[ -f $JOPE_RUNNER_PAT_FILE ]] || { echo "run.sh: $JOPE_RUNNER_PAT_FILE is missing (docs/runbooks/runner.md)" >&2; exit 2; }
