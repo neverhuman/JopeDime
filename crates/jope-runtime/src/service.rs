@@ -16,8 +16,9 @@ use std::time::Duration;
 pub const MAX_MESSAGE_BYTES: usize = 8 * 1024 * 1024;
 /// The newest MCP revision this server speaks; `initialize` echoes a supported older request.
 pub const MCP_VERSION: &str = "2025-11-25";
-pub const MCP_SUPPORTED_VERSIONS: [&str; 4] =
-    ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
+/// 2025-03-26 is left out on purpose: it obliges servers to accept JSON-RPC batches, which this
+/// server refuses, so a client asking for it is offered the newest revision instead.
+pub const MCP_SUPPORTED_VERSIONS: [&str; 3] = ["2025-11-25", "2025-06-18", "2024-11-05"];
 
 const INSTRUCTIONS: &str = "Regression objectives for JopeDime. Call fitness_list to see the \
      built-in objectives (pass a name, `name:param=value`, or a JSON specification), \
@@ -406,7 +407,11 @@ mod tests {
             .get("error")
             .is_some());
         // An older client revision is echoed; an unknown one gets the newest.
-        for (requested, expected) in [("2025-06-18", "2025-06-18"), ("1999-01-01", MCP_VERSION)] {
+        for (requested, expected) in [
+            ("2025-06-18", "2025-06-18"),
+            ("2025-03-26", MCP_VERSION),
+            ("1999-01-01", MCP_VERSION),
+        ] {
             let init = Server::default().dispatch(json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":requested,"clientInfo":{"name":"t","version":"1"},"capabilities":{}}}),true).unwrap();
             assert_eq!(init["result"]["protocolVersion"], expected);
         }

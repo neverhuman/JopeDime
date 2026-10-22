@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.regression-fitness.v1.schema.json",
   "title": "Portable JopeDime regression objective v1",
-  "description": "A built-in metric with explicit parameters, a custom row expression, a weighted objective or a composite. The runtime also bounds expression depth (16) and nodes (256), composition depth (8) and nodes (64), columns (16) and specification size (32 KiB).",
+  "description": "A built-in metric with explicit parameters, a custom row expression, a weighted objective or a composite. The runtime also bounds expression depth (16) and expression nodes (256 in one specification), composition depth (8) and nodes (64), columns (16) and specification size (32 KiB).",
   "$ref": "#/$defs/fitness",
   "$defs": {
     "fitness": {

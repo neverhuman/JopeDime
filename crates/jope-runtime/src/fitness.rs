@@ -18,6 +18,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub const FITNESS_VERSION: &str = "jope.regression-fitness/v1";
 pub const MAX_SPEC_BYTES: usize = 32 * 1024;
+/// Expression nodes in one specification, summed over every custom expression and weight, so
+/// the cost of scoring a row stays bounded however the expressions are composed.
+pub const MAX_EXPRESSION_NODES: usize = 256;
 /// Most distinct auxiliary columns one specification may read.
 pub const MAX_COLUMNS: usize = 16;
 const MAX_COLUMN_NAME_BYTES: usize = 256;
@@ -317,8 +320,9 @@ fn quantile(v: &[f64], q: f64) -> f64 {
     let i = p.floor() as usize;
     v[i] + (v[p.ceil() as usize] - v[i]) * (p - i as f64)
 }
-/// Unweighted: linear interpolation at `q·(n−1)`. Weighted: linear interpolation between the
-/// midpoints of each value's cumulative weight interval (zero-weight rows are ignored).
+/// Linear interpolation at `q·(n−1)` over the sorted values. Weighted, each value sits at the
+/// share of weight below it, scaled so the largest value sits at 1: equal weights give exactly the
+/// unweighted quantile. Zero-weight rows are ignored.
 fn wquantile(v: &[f64], w: Option<&[f64]>, q: f64) -> Result<f64> {
     let Some(w) = w else {
         return Ok(quantile(v, q));
@@ -326,31 +330,24 @@ fn wquantile(v: &[f64], w: Option<&[f64]>, q: f64) -> Result<f64> {
     let mut order: Vec<usize> = (0..v.len()).filter(|&i| w[i] > 0.0).collect();
     ensure!(!order.is_empty(), "every row has zero weight");
     order.sort_by(|&a, &b| v[a].total_cmp(&v[b]).then(a.cmp(&b)));
-    let total: f64 = order.iter().map(|&i| w[i]).sum();
-    let mut acc = 0.0;
+    let last = order.len() - 1;
+    let span: f64 = order[..last].iter().map(|&i| w[i]).sum();
+    if last == 0 || q <= 0.0 {
+        return Ok(v[order[0]]);
+    }
+    let mut below = 0.0;
     let positions: Vec<f64> = order
         .iter()
         .map(|&i| {
-            let p = (acc + w[i] / 2.0) / total;
-            acc += w[i];
+            let p = below / span;
+            below += w[i];
             p
         })
         .collect();
-    let last = order.len() - 1;
-    if q <= positions[0] {
-        return Ok(v[order[0]]);
-    }
-    if q >= positions[last] {
-        return Ok(v[order[last]]);
-    }
-    let k = positions.partition_point(|&p| p < q);
+    let k = positions.partition_point(|&p| p < q).clamp(1, last);
     let (p0, p1) = (positions[k - 1], positions[k]);
     let (v0, v1) = (v[order[k - 1]], v[order[k]]);
-    Ok(if p1 > p0 {
-        v0 + (v1 - v0) * (q - p0) / (p1 - p0)
-    } else {
-        v1
-    })
+    Ok(v0 + (v1 - v0) * ((q - p0) / (p1 - p0)).min(1.0))
 }
 /// Mean of the largest values that hold `fraction` of the total weight (each row weighs 1 when
 /// unweighted); the boundary row contributes the part of its weight that is needed.
@@ -389,6 +386,10 @@ fn correlation(a: &[f64], b: &[f64], w: Option<&[f64]>) -> Result<f64> {
     let av = wvariance(a, w);
     let bv = wvariance(b, w);
     ensure!(
+        av.is_finite() && bv.is_finite(),
+        "correlation overflows: the variance of a vector is not finite"
+    );
+    ensure!(
         av > 0.0 && bv > 0.0,
         "correlation undefined for a constant vector"
     );
@@ -420,25 +421,37 @@ fn ranks(v: &[f64]) -> Vec<f64> {
     }
     out
 }
-/// Rows ordered by prediction, highest first; ties keep row order.
-fn by_prediction_descending(p: &[f64]) -> Vec<usize> {
-    let mut order: Vec<usize> = (0..p.len()).collect();
-    order.sort_by(|&a, &b| p[b].total_cmp(&p[a]).then(a.cmp(&b)));
-    order
+/// `(weight, target)` in descending order of `key`. A group of tied keys shares its weighted mean
+/// target, so a tie is one straight segment of a Lorenz or capture curve (unweighted, the expected
+/// curve over every order of the tied rows): the rows' file order never counts as ranking skill.
+fn ranked(y: &[f64], key: &[f64], w: Option<&[f64]>) -> Vec<(f64, f64)> {
+    let weight = |i: usize| w.map_or(1.0, |w| w[i]);
+    let mut order: Vec<usize> = (0..y.len()).collect();
+    order.sort_by(|&a, &b| key[b].total_cmp(&key[a]));
+    let mut out = Vec::with_capacity(order.len());
+    for group in order.chunk_by(|&a, &b| key[a] == key[b]) {
+        let total: f64 = group.iter().map(|&i| weight(i)).sum();
+        let target = if total > 0.0 {
+            group.iter().map(|&i| weight(i) * y[i]).sum::<f64>() / total
+        } else {
+            group.iter().map(|&i| y[i]).sum::<f64>() / group.len() as f64
+        };
+        out.extend(group.iter().map(|&i| (weight(i), target)));
+    }
+    out
 }
 /// Twice the trapezoid area under the cumulative-weight vs cumulative-(w·y) curve, minus one.
-fn lorenz_gini(y: &[f64], order: &[usize], w: Option<&[f64]>) -> Result<f64> {
-    let weight = |i: usize| w.map_or(1.0, |w| w[i]);
-    let total_w: f64 = order.iter().map(|&i| weight(i)).sum();
-    let total_y: f64 = order.iter().map(|&i| weight(i) * y[i]).sum();
+fn lorenz_gini(ranked: &[(f64, f64)]) -> Result<f64> {
+    let total_w: f64 = ranked.iter().map(|(w, _)| w).sum();
+    let total_y: f64 = ranked.iter().map(|(w, y)| w * y).sum();
     ensure!(
         total_w > 0.0 && total_y.is_finite() && total_y != 0.0,
         "Gini needs a nonzero weighted target total"
     );
     let (mut x0, mut y0, mut area) = (0.0, 0.0, 0.0);
-    for &i in order {
-        let x1 = x0 + weight(i) / total_w;
-        let y1 = y0 + weight(i) * y[i] / total_y;
+    for &(w, y) in ranked {
+        let x1 = x0 + w / total_w;
+        let y1 = y0 + w * y / total_y;
         area += (x1 - x0) * (y0 + y1) / 2.0;
         (x0, y0) = (x1, y1);
     }
@@ -463,25 +476,27 @@ fn strategy_returns(y: &[f64], p: &[f64], max_position: f64, cost: f64) -> Resul
     );
     Ok(returns)
 }
-/// Compounded equity curve from 1; a period losing everything ends the curve at zero.
-fn equity_curve(returns: &[f64]) -> Vec<f64> {
+/// Compounded equity curve from 1; a period losing everything ends the curve at zero. An
+/// overflowing curve is an error, never a finite score.
+fn equity_curve(returns: &[f64]) -> Result<Vec<f64>> {
     let mut equity = 1.0f64;
-    returns
-        .iter()
-        .map(|r| {
-            equity = (equity * (1.0 + r)).max(0.0);
-            equity
-        })
-        .collect()
+    let mut curve = Vec::with_capacity(returns.len());
+    for r in returns {
+        let next = equity * (1.0 + r);
+        ensure!(next.is_finite(), "the equity curve overflowed");
+        equity = next.max(0.0);
+        curve.push(equity);
+    }
+    Ok(curve)
 }
-fn max_drawdown(returns: &[f64]) -> f64 {
+fn max_drawdown(returns: &[f64]) -> Result<f64> {
     let mut peak = 1.0f64;
     let mut worst = 0.0f64;
-    for e in equity_curve(returns) {
+    for e in equity_curve(returns)? {
         peak = peak.max(e);
         worst = worst.max(1.0 - e / peak);
     }
-    worst
+    Ok(worst)
 }
 fn validate_column_name(name: &str) -> Result<()> {
     ensure!(
@@ -497,8 +512,9 @@ impl Expression {
     fn validate(&self, depth: usize, nodes: &mut usize) -> Result<()> {
         *nodes += 1;
         ensure!(
-            depth <= 16 && *nodes <= 256,
-            "fitness expression exceeds depth/node limit"
+            depth <= 16 && *nodes <= MAX_EXPRESSION_NODES,
+            "fitness expressions exceed depth 16 or {MAX_EXPRESSION_NODES} nodes in one \
+             specification"
         );
         match self {
             Self::Constant { value } => {
@@ -1020,7 +1036,7 @@ impl Fitness {
         }
     }
     pub fn validate(&self) -> Result<()> {
-        self.validate_at(0, &mut 0, false)?;
+        self.validate_at(0, &mut 0, &mut 0, false)?;
         let columns = self.columns();
         ensure!(
             columns.len() <= MAX_COLUMNS,
@@ -1032,7 +1048,13 @@ impl Fitness {
         );
         Ok(())
     }
-    fn validate_at(&self, depth: usize, nodes: &mut usize, weighted: bool) -> Result<()> {
+    fn validate_at(
+        &self,
+        depth: usize,
+        nodes: &mut usize,
+        expression_nodes: &mut usize,
+        weighted: bool,
+    ) -> Result<()> {
         *nodes += 1;
         ensure!(
             depth <= 8 && *nodes <= 64,
@@ -1148,7 +1170,7 @@ impl Fitness {
                         && name.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'_'),
                     "custom name needs 1..64 ASCII letters, digits or underscores"
                 );
-                expression.validate(0, &mut 0)?;
+                expression.validate(0, expression_nodes)?;
                 match aggregation {
                     Aggregation::Quantile { quantile } => ensure!(
                         quantile.is_finite() && (0.0..=1.0).contains(quantile),
@@ -1163,8 +1185,8 @@ impl Fitness {
             }
             Self::Weighted { weights, fitness } => {
                 ensure!(!weighted, "weighting cannot be nested");
-                weights.validate(0, &mut 0)?;
-                fitness.validate_at(depth + 1, nodes, true)?;
+                weights.validate(0, expression_nodes)?;
+                fitness.validate_at(depth + 1, nodes, expression_nodes, true)?;
             }
             Self::Composite { terms } => {
                 ensure!(
@@ -1176,7 +1198,8 @@ impl Fitness {
                         positive(t.weight) && positive(t.scale),
                         "term weight and scale must be positive and finite"
                     );
-                    t.fitness.validate_at(depth + 1, nodes, weighted)?;
+                    t.fitness
+                        .validate_at(depth + 1, nodes, expression_nodes, weighted)?;
                 }
             }
             _ => (),
@@ -1185,10 +1208,25 @@ impl Fitness {
     }
     pub fn identity(&self) -> Result<String> {
         self.validate()?;
-        Ok(crate::sha256_hex(&serde_json::to_vec(&(
-            FITNESS_VERSION,
-            self,
-        ))?))
+        // Compact JSON, except that −0.0 is written as 0.0: they score identically, so they are
+        // one objective. Every other specification hashes exactly as `serde_json::to_vec`.
+        struct Canonical;
+        impl serde_json::ser::Formatter for Canonical {
+            fn write_f64<W: ?Sized + std::io::Write>(
+                &mut self,
+                writer: &mut W,
+                value: f64,
+            ) -> std::io::Result<()> {
+                let value = if value == 0.0 { 0.0 } else { value };
+                serde_json::ser::CompactFormatter.write_f64(writer, value)
+            }
+        }
+        let mut bytes = Vec::new();
+        serde::Serialize::serialize(
+            &(FITNESS_VERSION, self),
+            &mut serde_json::Serializer::with_formatter(&mut bytes, Canonical),
+        )?;
+        Ok(crate::sha256_hex(&bytes))
     }
     /// Score predictions of a specification that reads no auxiliary column.
     pub fn evaluate(&self, y: &[f64], pred: &[f64]) -> Result<Score> {
@@ -1320,6 +1358,10 @@ impl Fitness {
             }
             Self::R2 {} | Self::ExplainedVariance {} => {
                 let den = wvariance(y, w);
+                ensure!(
+                    den.is_finite(),
+                    "R2/explained variance overflows: the target variance is not finite"
+                );
                 ensure!(
                     y.len() >= 2 && den > 0.0,
                     "R2/explained variance undefined for constant or singleton targets"
@@ -1457,11 +1499,14 @@ impl Fitness {
                 } else {
                     variance(&returns).sqrt()
                 };
-                ensure!(den > 0.0, "risk ratio undefined with zero risk denominator");
-                (mean(&returns) - target) / den * periods_per_year.sqrt()
+                ensure!(
+                    den > 0.0 && den.is_finite(),
+                    "risk ratio undefined with a zero or non-finite risk denominator"
+                );
+                finite((mean(&returns) - target) / den * periods_per_year.sqrt())?
             }
             Self::MaxDrawdown { max_position, cost } => {
-                max_drawdown(&strategy_returns(y, p, *max_position, *cost)?)
+                max_drawdown(&strategy_returns(y, p, *max_position, *cost)?)?
             }
             Self::Calmar {
                 max_position,
@@ -1469,9 +1514,9 @@ impl Fitness {
                 periods_per_year,
             } => {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
-                let drawdown = max_drawdown(&returns);
+                let drawdown = max_drawdown(&returns)?;
                 ensure!(drawdown > 0.0, "Calmar undefined without a drawdown");
-                let end = *equity_curve(&returns).last().expect("nonempty");
+                let end = *equity_curve(&returns)?.last().expect("nonempty");
                 let growth = end.powf(periods_per_year / returns.len() as f64) - 1.0;
                 growth / drawdown
             }
@@ -1483,6 +1528,7 @@ impl Fitness {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
                 let gains: f64 = returns.iter().map(|r| (r - threshold).max(0.0)).sum();
                 let losses: f64 = returns.iter().map(|r| (threshold - r).max(0.0)).sum();
+                ensure!(gains.is_finite() && losses.is_finite(), "Omega overflowed");
                 ensure!(losses > 0.0, "Omega undefined without a shortfall");
                 gains / losses
             }
@@ -1510,8 +1556,8 @@ impl Fitness {
                 hits / total
             }
             Self::NormalizedGini {} => {
-                let model = lorenz_gini(y, &by_prediction_descending(p), w)?;
-                let perfect = lorenz_gini(y, &by_prediction_descending(y), w)?;
+                let model = lorenz_gini(&ranked(y, p, w))?;
+                let perfect = lorenz_gini(&ranked(y, y, w))?;
                 ensure!(
                     perfect != 0.0,
                     "normalized Gini undefined for constant targets"
@@ -1533,18 +1579,17 @@ impl Fitness {
                     total > 0.0 && total.is_finite(),
                     "capture needs a positive target total"
                 );
-                let order = by_prediction_descending(p);
                 let mass = fraction * y.len() as f64;
                 let (mut taken, mut captured) = (0.0f64, 0.0);
-                for i in order {
+                for (_, target) in ranked(y, p, None) {
                     let take = (mass - taken).min(1.0);
                     if take <= 0.0 {
                         break;
                     }
-                    captured += take * y[i];
+                    captured += take * target;
                     taken += take;
                 }
-                captured / total
+                finite(captured / total)?
             }
             Self::Custom {
                 expression,
@@ -1747,6 +1792,13 @@ mod tests {
     }
     #[test]
     fn ranking_hydrology_and_forecast_scale_metrics_match_hand_calculations() {
+        // A variance that overflows fails the score instead of returning a finite wrong value.
+        assert!(Fitness::Pearson {}
+            .evaluate(&[-1e155, 1e155], &[-1.0, 1.0])
+            .is_err());
+        assert!(Fitness::R2 {}
+            .evaluate(&[-1e200, 1e200, 0.0], &[0.0, 0.0, 0.0])
+            .is_err());
         // Kaggle-style normalized Gini: 0.25 / 0.3125.
         let claims = [1.0, 0.0, 0.0, 3.0];
         let risk = [0.2, 0.1, 0.3, 0.9];
@@ -1759,6 +1811,22 @@ mod tests {
         near(
             value(&Fitness::CaptureAt { fraction: 0.375 }, &claims, &risk),
             0.75,
+        );
+        // Tied predictions earn nothing from the rows' order: a constant prediction on rows
+        // sorted by claims ranks nothing, and a tie shares its claims across the boundary.
+        let sorted = [3.0, 1.0, 0.0, 0.0];
+        near(value(&Fitness::NormalizedGini {}, &sorted, &[0.5; 4]), 0.0);
+        near(
+            value(&Fitness::CaptureAt { fraction: 0.25 }, &sorted, &[0.5; 4]),
+            0.25,
+        );
+        near(
+            value(
+                &Fitness::CaptureAt { fraction: 0.25 },
+                &sorted,
+                &[0.9, 0.9, 0.1, 0.1],
+            ),
+            0.5,
         );
         near(
             value(&Fitness::Kge {}, &[1.0, 2.0, 3.0], &[2.0, 4.0, 6.0]),
@@ -1869,6 +1937,35 @@ mod tests {
         .validate()
         .is_err());
         assert!(Fitness::parse(&" ".repeat(MAX_SPEC_BYTES + 1)).is_err());
+        // The node limit covers the whole specification, not each expression in it.
+        let chain = |n: usize| {
+            let mut e = Expression::Y {};
+            for _ in 0..n {
+                e = Expression::Add {
+                    left: Box::new(e),
+                    right: Box::new(Expression::Constant { value: 1.0 }),
+                };
+            }
+            e
+        };
+        let custom = |n: usize| Fitness::Custom {
+            name: "wide".into(),
+            direction: Direction::Minimize,
+            expression: chain(n),
+            aggregation: Aggregation::Mean {},
+        };
+        assert!(custom(7).validate().is_ok());
+        let composite = |n: usize| Fitness::Composite {
+            terms: (0..2)
+                .map(|_| Term {
+                    weight: 1.0,
+                    scale: 1.0,
+                    fitness: custom(n),
+                })
+                .collect(),
+        };
+        assert!(composite(7).validate().is_ok());
+        assert!(composite(100).validate().is_err());
         let f = Fitness::Custom {
             name: "zero_division".into(),
             direction: Direction::Minimize,
@@ -2003,12 +2100,25 @@ mod tests {
                 .value,
             3.0 / 9.0,
         );
-        // Unit weights reproduce every unweighted row-mean metric exactly.
+        // Unit weights reproduce every unweighted metric exactly, quantiles included.
         let ones = columns_from_pairs(&[("exposure", vec![1.0; 3])]);
+        let p90 = Fitness::Custom {
+            name: "p90_error".into(),
+            direction: Direction::Minimize,
+            expression: Expression::Abs {
+                arg: Box::new(Expression::Sub {
+                    left: Box::new(Expression::Y {}),
+                    right: Box::new(Expression::Pred {}),
+                }),
+            },
+            aggregation: Aggregation::Quantile { quantile: 0.9 },
+        };
         for f in [
             Fitness::Mae {},
             Fitness::R2 {},
             Fitness::Pinball { quantile: 0.8 },
+            Fitness::MedianAbsoluteError {},
+            p90.clone(),
         ] {
             near(
                 weighted(f.clone())
@@ -2018,6 +2128,17 @@ mod tests {
                 value(&f, &y, &p),
             );
         }
+        // Ten distinct errors: the 0.9 quantile is 9.1 weighted by ones, as unweighted.
+        let ten: Vec<f64> = (1..=10).map(f64::from).collect();
+        let ten_ones = columns_from_pairs(&[("exposure", vec![1.0; 10])]);
+        near(value(&p90, &ten, &[0.0; 10]), 9.1);
+        near(
+            weighted(p90)
+                .evaluate_with(&ten, &[0.0; 10], &ten_ones)
+                .unwrap()
+                .value,
+            9.1,
+        );
         let negative = columns_from_pairs(&[("exposure", vec![1.0, -1.0, 2.0])]);
         assert!(mae.evaluate_with(&y, &p, &negative).is_err());
         let zero = columns_from_pairs(&[("exposure", vec![0.0; 3])]);
@@ -2061,6 +2182,22 @@ mod tests {
         assert!(sortino.requires_order());
         assert!(sortino.evaluate(&[0.1, 0.2], &[1.0, 1.0]).is_err());
         assert!(sharpe.evaluate(&[0.1, 0.1], &[1.0, 1.0]).is_err());
+        // Overflow is an error, not a finite score: an infinite variance, an exploding equity.
+        assert!(sharpe.evaluate(&[1e200, -1e200], &[1.0, 1.0]).is_err());
+        assert!(Fitness::MaxDrawdown {
+            max_position: 1.0,
+            cost: 0.0
+        }
+        .evaluate(&[1e200, 1e200], &[1.0, 1.0])
+        .is_err());
+        // −0.0 and 0.0 are one objective.
+        assert_eq!(
+            Fitness::parse("sharpe:cost=-0.0")
+                .unwrap()
+                .identity()
+                .unwrap(),
+            Fitness::parse("sharpe:cost=0").unwrap().identity().unwrap()
+        );
     }
     #[test]
     fn drawdown_calmar_omega_and_expected_shortfall_follow_their_definitions() {

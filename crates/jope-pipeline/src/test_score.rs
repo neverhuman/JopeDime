@@ -101,10 +101,16 @@ pub struct TestScore {
 pub struct ObjectiveScore {
     pub name: String,
     pub fitness_sha256: String,
-    /// The objective's natural value on the test rows.
-    pub test_value: f64,
+    /// The objective's natural value on the test rows; absent when it is undefined there.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test_value: Option<f64>,
     /// Its minimization loss (the value negated for a maximized objective).
-    pub test_loss: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test_loss: Option<f64>,
+    /// Why the objective is undefined on the test rows (a domain or nonfinite failure). The
+    /// look is recorded and spent all the same, so a failing objective cannot probe test labels.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undefined: Option<String>,
     /// The receipt's mean held-out loss over its cuts, for reference; absent when the run
     /// ranked by RMSE or by another objective.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -310,15 +316,21 @@ fn score_observed(options: &ScoreOptions, observe: &dyn Fn(Stage)) -> Result<(Te
         None => None,
         Some(fitness) => {
             jope_runtime::fitness::require_no_columns(&fitness, "a test score")?;
-            let score = fitness.evaluate(&test_y, &predictions)?;
+            let fitness_sha256 = fitness.identity()?;
+            // Whatever the objective makes of the test rows, the look below is recorded.
+            let (test_value, test_loss, undefined) = match fitness.evaluate(&test_y, &predictions) {
+                Ok(score) => (Some(score.value), Some(score.loss), None),
+                Err(error) => (None, None, Some(format!("{error:#}"))),
+            };
             let ranked_by_it = recorded
                 .as_ref()
-                .is_some_and(|r| r.identity().ok() == Some(score.fitness_sha256.clone()));
+                .is_some_and(|r| r.identity().ok().as_ref() == Some(&fitness_sha256));
             Some(ObjectiveScore {
                 name: fitness.name(),
-                fitness_sha256: score.fitness_sha256,
-                test_value: score.value,
-                test_loss: score.loss,
+                fitness_sha256,
+                test_value,
+                test_loss,
+                undefined,
                 validation_loss: if ranked_by_it {
                     Some(
                         receipt
@@ -457,7 +469,10 @@ mod tests {
         assert_eq!(reported.name, "pinball");
         assert_eq!(reported.fitness_sha256, objective.identity().unwrap());
         assert!(reported.validation_loss.is_some());
-        assert!(reported.test_loss.is_finite() && reported.test_loss >= 0.0);
+        assert!(reported
+            .test_loss
+            .is_some_and(|l| l.is_finite() && l >= 0.0));
+        assert!(reported.undefined.is_none());
         // An RMSE run's single look can also report the objective, with no development value.
         let plain = a_run_of(temp.path(), "plain", 8);
         let (score_plain, _) = score(&ScoreOptions {
@@ -467,6 +482,31 @@ mod tests {
         .unwrap_or_else(|e| panic!("{e:#}"));
         let reported = score_plain.objective.unwrap();
         assert!(reported.validation_loss.is_none());
+        // An objective that is undefined on the test rows still spends the one look: the score
+        // and its RMSE are recorded, and a second probe of the same genome is refused.
+        let probe: jope_runtime::fitness::Fitness = serde_json::from_value(serde_json::json!({
+            "metric": "custom", "name": "probe", "direction": "minimize",
+            "expression": {"op": "ln", "arg": {"op": "sub", "left": {"op": "y"},
+                "right": {"op": "constant", "value": 1e300}}},
+            "aggregation": {"kind": "mean"}}))
+        .unwrap();
+        let probed = a_run_of(temp.path(), "probed", 9);
+        let probe_registry = temp.path().join("probe-registry");
+        let (scored, path) = score(&ScoreOptions {
+            objective: Some(probe.clone()),
+            ..options(&probed, &probe_registry)
+        })
+        .unwrap_or_else(|e| panic!("{e:#}"));
+        let reported = scored.objective.as_ref().unwrap();
+        assert!(reported.test_value.is_none() && reported.test_loss.is_none());
+        assert!(reported.undefined.is_some());
+        assert!(scored.test_rmse.is_finite());
+        assert_eq!(read(&path).unwrap(), scored);
+        assert!(score(&ScoreOptions {
+            objective: Some(probe),
+            ..options(&probed, &probe_registry)
+        })
+        .is_err());
     }
 
     #[test]

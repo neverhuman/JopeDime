@@ -12,8 +12,9 @@ use serde::Serialize;
 use std::time::{Duration, Instant};
 
 /// How the deadline is enforced, as receipts name it.
-pub const ENFORCEMENT: &str = "cooperative: checked before every selection fold fit and before \
-     fitting a named method; the chosen recipe's final refit always runs and is charged";
+pub const ENFORCEMENT: &str = "cooperative: checked before every selection fold fit, before \
+     fitting a named method and during output calibration; the chosen recipe's final refit \
+     always runs and is charged";
 
 #[derive(Clone, Debug)]
 pub struct Budget {

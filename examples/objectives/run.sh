@@ -7,7 +7,7 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$root"
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
 cargo build --locked -p jope-appliance
-binary="$root/target/debug/jopedime"
+binary="${CARGO_TARGET_DIR:-$root/target}/debug/jopedime"
 out="$root/target/fitness-example"
 mkdir -p "$out"
 fail() { echo "objective examples: $*" >&2; exit 1; }

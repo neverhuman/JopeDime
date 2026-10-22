@@ -443,6 +443,22 @@ impl Receipt {
                 }
             ));
         }
+        // Under an objective, every best program carries the loss it was best by.
+        if self.search.objective.is_some() {
+            if let Some(best) = &self.search.best {
+                if best.validation_objective.is_none() {
+                    errors.push("the best program lacks its validation_objective".into());
+                }
+            }
+            for cut in &self.search.cuts {
+                if cut.best_program.is_some() && cut.best_validation_objective.is_none() {
+                    errors.push(format!(
+                        "cut {}: the best program lacks its best_validation_objective",
+                        cut.cut
+                    ));
+                }
+            }
+        }
         for stage in &self.stages {
             if !STATUSES.contains(&stage.status.as_str()) {
                 errors.push(format!(
