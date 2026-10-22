@@ -2,14 +2,18 @@
 """Actual deb extraction/cache integrity controls; no network, root or host install."""
 import contextlib
 import hashlib
+import http.client
 import importlib.util
 import io
 import json
 from pathlib import Path
 import shutil
+import ssl
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
+import urllib.error
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("browser_deps", Path(__file__).with_name("browser-deps.py"))
@@ -82,6 +86,49 @@ class BrowserDependencies(unittest.TestCase):
         link.symlink_to("different-target")
         with self.assertRaisesRegex(ValueError, "differs from verified"):
             self.prepare("bad.json")
+
+    def fetch(self, outcomes):
+        """Prepare with an empty package cache and a scripted mirror; returns the call count."""
+        self.cached.unlink()
+        calls = []
+
+        def mirror(url, timeout):
+            calls.append(url)
+            outcome = outcomes[min(len(calls), len(outcomes)) - 1]
+            if isinstance(outcome, BaseException):
+                raise outcome
+            return contextlib.nullcontext(io.BytesIO(outcome))
+
+        with mock.patch.object(MODULE.urllib.request, "urlopen", mirror), \
+                mock.patch.object(MODULE, "BACKOFF_SECONDS", 0), \
+                contextlib.redirect_stderr(io.StringIO()):
+            try:
+                self.prepare()
+            finally:
+                self.calls = len(calls)
+
+    def test_dropped_connections_are_retried(self):
+        archive = self.archive.read_bytes()
+        eof = urllib.error.URLError(ssl.SSLEOFError(8, "EOF occurred in violation of protocol"))
+        self.fetch([http.client.RemoteDisconnected("closed"), eof, archive])
+        self.assertEqual(3, self.calls)
+        self.assertEqual(MODULE.digest(self.cached), MODULE.digest(self.archive))
+
+    def test_persistent_drops_fail_after_bounded_attempts(self):
+        with self.assertRaises(http.client.RemoteDisconnected):
+            self.fetch([http.client.RemoteDisconnected("closed")])
+        self.assertEqual(MODULE.ATTEMPTS, self.calls)
+        self.assertFalse(self.cached.exists())
+
+    def test_content_mismatch_and_client_errors_are_not_retried(self):
+        archive = self.archive.read_bytes()
+        for outcome, error in ((archive + b"x", ValueError), (archive[:-1] + b"x", ValueError),
+                               (urllib.error.HTTPError("u", 404, "missing", {}, None), urllib.error.HTTPError)):
+            with self.subTest(outcome=type(outcome).__name__), self.assertRaises(error):
+                shutil.copyfile(self.archive, self.cached)
+                self.fetch([outcome, archive])
+            self.assertEqual(1, self.calls)
+            self.assertEqual([], [p for p in self.cached.parent.iterdir() if p != self.cached])
 
     def test_member_paths_cannot_escape(self):
         for path in ("/absolute", "../outside", "usr/../../outside"):
