@@ -844,7 +844,7 @@ fn fitness_schema_accepts_examples_and_rejects_unknown_parameters() {
         assert!(failures.is_empty(), "{value}: {failures:?}");
     }
     // Every checked-in recipe is valid under the published schema, not only the Rust parser.
-    let examples = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/fitness");
+    let examples = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/objectives");
     let mut checked = 0;
     for entry in std::fs::read_dir(examples).unwrap() {
         let path = entry.unwrap().path();

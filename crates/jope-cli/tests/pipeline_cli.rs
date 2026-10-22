@@ -485,7 +485,10 @@ fn an_objective_ranked_run_records_its_objective_and_bad_objectives_are_refused_
     );
     let receipt: Value = serde_json::from_slice(&result.stdout).unwrap();
     assert_eq!(receipt["search"]["objective"]["name"], "pinball");
-    assert_eq!(receipt["search"]["objective"]["specification"]["quantile"], 0.8);
+    assert_eq!(
+        receipt["search"]["objective"]["specification"]["quantile"],
+        0.8
+    );
     assert!(receipt["search"]["best"]["validation_objective"].is_number());
     let verified = jope()
         .args(["pipeline", "verify-receipt", "--receipt"])

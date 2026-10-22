@@ -104,6 +104,7 @@ fn fixture() -> (
                 status: status.into(),
                 failure: (!success).then(|| "original failed fit".into()),
                 island: None,
+                objective_loss: None,
             };
             let bytes = serde_json::to_vec(&observation).unwrap();
             let digest = sha256_hex(&bytes);
