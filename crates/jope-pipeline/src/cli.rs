@@ -128,6 +128,12 @@ pub enum Cmd {
         /// first and its sha256 recorded as this run's parent.
         #[arg(long)]
         incumbent: Option<PathBuf>,
+        /// Rank programs by this regression objective on held-out rows instead of RMSE: a
+        /// catalog name (`mae`), `name:key=value` (`pinball:quantile=0.9`), inline JSON or
+        /// @path.json. Legacy search profile only; order-dependent objectives and objectives
+        /// that read extra columns are refused (use `jopedime` for those).
+        #[arg(long)]
+        fitness: Option<String>,
         /// Print the receipt as one JSON document.
         #[arg(long)]
         json: bool,
@@ -191,6 +197,10 @@ pub enum Cmd {
         /// registry starts empty.
         #[arg(long)]
         registry: Option<PathBuf>,
+        /// Also report this regression objective on the test rows (default: the objective the
+        /// run ranked by, if any). The same single look; nothing reads it back into selection.
+        #[arg(long)]
+        fitness: Option<String>,
         #[arg(long)]
         json: bool,
     },
@@ -235,6 +245,10 @@ pub enum Cmd {
         /// or truncated. Must not be the --train file, the --work-dir or inside it.
         #[arg(long)]
         events: Option<PathBuf>,
+        /// Rank candidates by this regression objective on held-out rows instead of RMSE (as
+        /// `pipeline run --fitness` accepts it).
+        #[arg(long)]
+        fitness: Option<String>,
     },
 }
 
@@ -254,6 +268,26 @@ pub enum LineageCmd {
         #[arg(long)]
         json: bool,
     },
+}
+
+/// `--fitness`: a catalog name, `name:key=value,…`, inline JSON or `@path.json`.
+pub fn load_objective(text: &str) -> Result<jope_runtime::fitness::Fitness> {
+    use std::io::Read;
+    let spec = match text.strip_prefix('@') {
+        Some(path) => {
+            let mut bytes = Vec::new();
+            std::fs::File::open(path)
+                .map_err(|e| anyhow::anyhow!("--fitness {path}: {e}"))?
+                .take((jope_runtime::fitness::MAX_SPEC_BYTES + 1) as u64)
+                .read_to_end(&mut bytes)?;
+            String::from_utf8(bytes)?
+        }
+        None => text.to_owned(),
+    };
+    let objective = jope_runtime::fitness::Fitness::parse(&spec)
+        .map_err(|e| anyhow::anyhow!("--fitness: {e:#}"))?;
+    crate::run::check_objective(&objective)?;
+    Ok(objective)
 }
 
 pub fn exec(cli: Cli) -> ExitCode {
@@ -278,9 +312,16 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             output,
             seed_genomes,
             incumbent,
+            fitness,
             json,
         } => {
+            let objective = fitness.as_deref().map(load_objective).transpose()?;
             if let Some(mut options) = profile.options(&search, output.clone(), true)? {
+                anyhow::ensure!(
+                    objective.is_none(),
+                    "--fitness ranks the legacy search profile; {} keeps its own objective",
+                    profile.search_profile
+                );
                 options.run.seed_genomes = seed_genomes;
                 options.run.incumbent = incumbent;
                 return crate::kernel2::cli::print_run(&options, json);
@@ -288,6 +329,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             let options = RunOptions {
                 seed_genomes,
                 incumbent,
+                objective,
                 ..search.options(output, true)?
             };
             let receipt = crate::run::run(&options)?;
@@ -301,10 +343,19 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     .map(|c| c.successful_measurements)
                     .sum();
                 let score = match &receipt.search.best {
-                    Some(best) => format!(
-                        "hold RMSE {:.6}, hold R2 {:.6} over {} cut(s)",
-                        best.validation_rmse, best.validation_r2, best.cuts_measured
-                    ),
+                    Some(best) => {
+                        let objective = match (&receipt.search.objective, best.validation_objective)
+                        {
+                            (Some(objective), Some(loss)) => {
+                                format!("hold {} loss {loss:.6}, ", objective.name)
+                            }
+                            _ => String::new(),
+                        };
+                        format!(
+                            "{objective}hold RMSE {:.6}, hold R2 {:.6} over {} cut(s)",
+                            best.validation_rmse, best.validation_r2, best.cuts_measured
+                        )
+                    }
                     None => "no measurement".to_owned(),
                 };
                 println!(
@@ -426,6 +477,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             split,
             dataset,
             registry,
+            fitness,
             json,
         } => {
             anyhow::ensure!(split == "test", "--split must be test, got {split:?}");
@@ -434,6 +486,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 dataset,
                 registry: registry.unwrap_or_else(crate::test_score::default_registry),
                 clock: crate::clock::Clock::Wall,
+                objective: fitness.as_deref().map(load_objective).transpose()?,
             })?;
             if !score.earlier_looks.is_empty() {
                 eprintln!(
@@ -519,9 +572,12 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             source_commit,
             json,
             events,
+            fitness,
         } => {
             let outcome = Budget::parse(&budget).and_then(|budget| {
+                let objective = fitness.as_deref().map(load_objective).transpose()?;
                 let options = crate::invent::InventOptions {
+                    objective,
                     budget,
                     seed,
                     rng_seed,
@@ -544,8 +600,12 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                         println!("{}", serde_json::to_string(&candidates)?);
                     } else {
                         for c in &candidates.candidates {
+                            let objective = c
+                                .mean_hold_objective
+                                .map(|loss| format!("objective loss {loss:.6}, "))
+                                .unwrap_or_default();
                             println!(
-                                "{:>2}. hold RMSE {:.6}, hold R2 {:.6}  {}",
+                                "{:>2}. {objective}hold RMSE {:.6}, hold R2 {:.6}  {}",
                                 c.rank, c.mean_hold_rmse, c.mean_hold_r2, c.genome
                             );
                         }

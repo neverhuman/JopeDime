@@ -78,6 +78,27 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
   cargo run --locked -q -p jope-pipeline --example receipt_schema
 ```
 
+## Objective ranking (`--fitness`)
+
+`jope pipeline run --fitness SPEC` and `jope pipeline invent --fitness SPEC` rank candidate programs
+by a regression objective on each cut's held-out rows instead of RMSE. `SPEC` is a catalog name, a
+`name:key=value` override, inline JSON or `@path.json`, exactly as in
+[the objective guide](regression-objectives.md). Each measured observation then carries
+`objective_loss` alongside its RMSE and R²; a candidate the objective cannot score (for example a
+non-positive prediction under a Poisson deviance) is a score failure with its reason. Survivors,
+island migration, the comparison pool, each cut's best and the final selection all use the
+objective loss; a run never mixes rules. Selection is
+`all_cuts_then_min_mean_validation_objective_then_genome`, the receipt records `search.objective`
+(specification, name, direction and its sha256 identity) and `validation_objective`, and
+`verify-receipt --evidence` and `score --split test` use the recorded objective. `score --fitness`
+reports an objective for any verified receipt on the same single test look, including one that
+ranked by RMSE; its development loss is reported only when the run ranked by that objective.
+
+The cuts are the dataset's unordered fold partition and carry features only, so objectives that
+depend on row order (returns, drawdown, MASE) or read extra columns are refused before anything is
+written. Use `jopedime fit --validation forward` for those. Multi-round `evolve` lineages and the
+kernel2 profiles keep their own ranking and refuse `--fitness`.
+
 ## Parallelism (`--threads`, `--islands`, `--cpu-ceiling`)
 
 `--threads N` evaluates each generation's admitted candidates on N workers. Admission (which

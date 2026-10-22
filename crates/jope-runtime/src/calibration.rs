@@ -13,9 +13,11 @@
 //! the objective's prediction domain requires it (Poisson/Gamma/Tweedie deviances need positive
 //! predictions; log errors need nonnegative ones).
 //!
-//! Selection compares candidates by an honest, **cross-fitted** calibrated score: each fold's
-//! predictions are transformed by a map learned on the other folds' out-of-fold predictions (with
-//! forward validation, on earlier folds only), so no row is scored by a map that saw its label.
+//! Selection compares candidates by a **cross-fitted** calibrated score: each fold's predictions
+//! are transformed by a map learned on the other folds' out-of-fold prediction/label pairs (with
+//! forward validation, on earlier folds only), so no row is scored by a map fitted to its own
+//! pair. As in stacking, a fold's labels still trained the models behind the other folds'
+//! predictions; forward validation removes even that.
 //! A candidate keeps its raw predictions unless calibration improves that cross-fitted score.
 //! The winner's final map is learned on all of its out-of-fold predictions and stored with the
 //! fitted model; prediction applies it after the native model.

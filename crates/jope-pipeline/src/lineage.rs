@@ -193,10 +193,7 @@ pub fn seeds_after(run: &VerifiedRun) -> Result<Vec<Champion>> {
     let ranking = run.ranking()?;
     let champions: Vec<Champion> = ranking
         .into_iter()
-        .map(|best| Champion {
-            genome: best.genome,
-            rmse: best.validation_rmse,
-        })
+        .map(|best| Champion::by_rmse(best.genome, best.validation_rmse))
         .collect();
     Ok(islands::next_seeds(&champions, search::ELITES))
 }

@@ -29,6 +29,46 @@ pub const LEGACY_SCHEMA_ID: &str = "jope.pipeline-receipt/v1";
 pub const LEGACY_SCHEMA_JSON: &str =
     include_str!("../../../schemas/jope.pipeline-receipt.v1.schema.json");
 
+/// The regression objective a search ranked programs by.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Objective {
+    /// The objective's name (`pinball`, a custom name, `weighted_…`, `composite`).
+    pub name: String,
+    /// `minimize` or `maximize`; selection always minimizes the loss (maximized values negated).
+    pub direction: String,
+    /// sha256 of `["jope.regression-fitness/v1", specification]`.
+    #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
+    pub fitness_sha256: String,
+    /// The complete specification (`schemas/jope.regression-fitness.v1.schema.json`).
+    pub specification: serde_json::Value,
+}
+
+impl Objective {
+    pub fn of(fitness: &jope_runtime::fitness::Fitness) -> anyhow::Result<Self> {
+        Ok(Objective {
+            name: fitness.name(),
+            direction: match fitness.direction() {
+                jope_runtime::fitness::Direction::Minimize => "minimize",
+                jope_runtime::fitness::Direction::Maximize => "maximize",
+            }
+            .to_owned(),
+            fitness_sha256: fitness.identity()?,
+            specification: serde_json::to_value(fitness)?,
+        })
+    }
+    /// The specification, re-validated against its recorded identity.
+    pub fn fitness(&self) -> anyhow::Result<jope_runtime::fitness::Fitness> {
+        let fitness: jope_runtime::fitness::Fitness =
+            serde_json::from_value(self.specification.clone())?;
+        anyhow::ensure!(
+            fitness.identity()? == self.fitness_sha256 && fitness.name() == self.name,
+            "the recorded objective does not match its identity"
+        );
+        Ok(fitness)
+    }
+}
+
 /// One genome generation 0 was seeded with.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -219,6 +259,10 @@ pub struct CutSearch {
     /// That same candidate's held-out R^2.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_validation_r2: Option<f64>,
+    /// With `search.objective`: that same candidate's held-out objective loss, by which it was
+    /// the best; `best_validation_rmse` is then its RMSE, not necessarily the lowest RMSE.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub best_validation_objective: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_program: Option<String>,
 }
@@ -233,6 +277,10 @@ pub struct Best {
     /// dataset's own target units. There is no normalisation to undo: the search
     /// fits the committed rows as they are.
     pub validation_rmse: f64,
+    /// With `search.objective`: the mean held-out objective loss (minimized) the program was
+    /// selected by.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub validation_objective: Option<f64>,
     /// Mean held-out R^2 over the same cuts — the fits never saw these rows.
     pub validation_r2: f64,
     /// Mean in-sample R^2, for the gap against `validation_r2`.
@@ -284,6 +332,10 @@ pub struct Search {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(required)]
     pub islands: Option<Islands>,
+    /// The regression objective (`--fitness`) every candidate was ranked by on its held-out
+    /// rows. Absent: ranked by held-out RMSE.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective: Option<Objective>,
 }
 
 /// One emitted source file.
@@ -543,7 +595,12 @@ impl Receipt {
         {
             errors.push("invalid v2 total budget or missing budget policy".into());
         }
-        if search.selection != crate::select::MIN_MEAN_VALIDATION_RMSE
+        let rule = if search.objective.is_some() {
+            crate::select::MIN_MEAN_VALIDATION_OBJECTIVE
+        } else {
+            crate::select::MIN_MEAN_VALIDATION_RMSE
+        };
+        if search.selection != rule
             || search.compared_cuts.as_ref() != Some(&expected.iter().copied().collect::<Vec<_>>())
         {
             errors.push("v2 selection must compare all requested cuts".into());

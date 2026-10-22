@@ -79,6 +79,9 @@ pub struct TestScore {
     pub test_r2: f64,
     /// The receipt's development estimate (mean held-out RMSE over its cuts), for reference.
     pub validation_rmse: f64,
+    /// When the run ranked programs by a regression objective: that objective on the test rows.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective: Option<ObjectiveScore>,
     /// Where the once-per-(dataset, genome) record lives.
     pub registry: String,
     /// The genomes (program sha256s, sorted) already scored on this dataset's test split in this
@@ -92,12 +95,31 @@ pub struct TestScore {
     pub seconds: f64,
 }
 
+/// The receipt's objective scored on the sealed test rows.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ObjectiveScore {
+    pub name: String,
+    pub fitness_sha256: String,
+    /// The objective's natural value on the test rows.
+    pub test_value: f64,
+    /// Its minimization loss (the value negated for a maximized objective).
+    pub test_loss: f64,
+    /// The receipt's mean held-out loss over its cuts, for reference; absent when the run
+    /// ranked by RMSE or by another objective.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub validation_loss: Option<f64>,
+}
+
 pub struct ScoreOptions {
     pub receipt: PathBuf,
     /// Defaults to the receipt's recorded dataset path.
     pub dataset: Option<String>,
     pub registry: PathBuf,
     pub clock: Clock,
+    /// Also report this objective on the test rows (`--fitness`); defaults to the receipt's own.
+    /// It is a report of the same one look, never an input to selection.
+    pub objective: Option<jope_runtime::fitness::Fitness>,
 }
 
 /// `$JOPE_STATE/pipeline/test-scores`.
@@ -278,6 +300,40 @@ fn score_observed(options: &ScoreOptions, observe: &dyn Fn(Stage)) -> Result<(Te
     if !test_rmse.is_finite() || !test_r2.is_finite() {
         bail!("nonfinite test score: rmse {test_rmse}, r2 {test_r2}");
     }
+    let recorded = receipt
+        .search
+        .objective
+        .as_ref()
+        .map(crate::receipt::Objective::fitness)
+        .transpose()?;
+    let objective = match options.objective.clone().or_else(|| recorded.clone()) {
+        None => None,
+        Some(fitness) => {
+            jope_runtime::fitness::require_no_columns(&fitness, "a test score")?;
+            let score = fitness.evaluate(&test_y, &predictions)?;
+            let ranked_by_it = recorded
+                .as_ref()
+                .is_some_and(|r| r.identity().ok() == Some(score.fitness_sha256.clone()));
+            Some(ObjectiveScore {
+                name: fitness.name(),
+                fitness_sha256: score.fitness_sha256,
+                test_value: score.value,
+                test_loss: score.loss,
+                validation_loss: if ranked_by_it {
+                    Some(
+                        receipt
+                            .search
+                            .best
+                            .as_ref()
+                            .and_then(|b| b.validation_objective)
+                            .context("the receipt's champion has no objective loss")?,
+                    )
+                } else {
+                    None
+                },
+            })
+        }
+    };
     let record = TestScore {
         schema: TEST_SCORE_SCHEMA_ID.to_owned(),
         tool_version: TOOL_VERSION.to_owned(),
@@ -302,6 +358,7 @@ fn score_observed(options: &ScoreOptions, observe: &dyn Fn(Stage)) -> Result<(Te
             .as_ref()
             .context("the receipt names no measured champion")?
             .validation_rmse,
+        objective,
         registry: options.registry.display().to_string(),
         earlier_looks,
         feeds_selection: false,
@@ -373,7 +430,43 @@ mod tests {
             dataset: None,
             registry: registry.to_path_buf(),
             clock: Clock::Wall,
+            objective: None,
         }
+    }
+
+    #[test]
+    fn a_test_score_reports_the_run_objective_or_a_requested_one() {
+        let temp = tempfile::tempdir().unwrap();
+        let registry = temp.path().join("registry");
+        let objective = jope_runtime::fitness::Fitness::parse("pinball:quantile=0.9").unwrap();
+        let ranked = temp.path().join("ranked");
+        run(&RunOptions {
+            budget: Budget {
+                evaluations: 6,
+                seconds: 600,
+            },
+            rng_seed: 7,
+            languages: vec![Language::Rust],
+            policy: Policy::Skip,
+            objective: Some(objective.clone()),
+            ..RunOptions::new(dataset("pmlb-229-pwlinear"), &ranked)
+        })
+        .unwrap();
+        let (score_ranked, _) = score(&options(&ranked.join("receipt.json"), &registry)).unwrap();
+        let reported = score_ranked.objective.unwrap();
+        assert_eq!(reported.name, "pinball");
+        assert_eq!(reported.fitness_sha256, objective.identity().unwrap());
+        assert!(reported.validation_loss.is_some());
+        assert!(reported.test_loss.is_finite() && reported.test_loss >= 0.0);
+        // An RMSE run's single look can also report the objective, with no development value.
+        let plain = a_run_of(temp.path(), "plain", 8);
+        let (score_plain, _) = score(&ScoreOptions {
+            objective: Some(objective),
+            ..options(&plain, &temp.path().join("another-registry"))
+        })
+        .unwrap_or_else(|e| panic!("{e:#}"));
+        let reported = score_plain.objective.unwrap();
+        assert!(reported.validation_loss.is_none());
     }
 
     #[test]

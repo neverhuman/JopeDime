@@ -185,6 +185,7 @@ fn empty_record(
             train_r2: None,
             hold_r2: None,
             rmse: None,
+            objective_loss: None,
             seconds: 0.0,
             status: FIT_FAILED,
             failure: None,

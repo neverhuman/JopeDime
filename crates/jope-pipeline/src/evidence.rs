@@ -80,6 +80,13 @@ pub fn verify_run(receipt_path: &Path) -> Result<VerifiedRun> {
     };
 
     (|| -> Result<VerifiedRun> {
+        if let Some(objective) = &receipt.search.objective {
+            objective.fitness()?;
+            ensure!(
+                receipt.search.selection == crate::select::MIN_MEAN_VALIDATION_OBJECTIVE,
+                "a receipt with an objective must select by it"
+            );
+        }
         read_digest(
             &root.join("prepared").join("prepared.json"),
             &receipt.prepared.sha256,
@@ -135,18 +142,29 @@ pub fn verify_run(receipt_path: &Path) -> Result<VerifiedRun> {
                     cut.cut
                 );
             }
+            // A run ranks by its recorded objective or by RMSE, never a mix.
+            let objective_run = receipt.search.objective.is_some();
+            ensure!(
+                observations
+                    .iter()
+                    .filter(|o| o.measured())
+                    .all(|o| o.objective_loss.is_some() == objective_run),
+                "cut {}: observations do not carry the objective loss the receipt ranks by",
+                cut.cut
+            );
             let best = observations.iter().filter(|o| o.measured()).min_by(|a, b| {
-                a.rmse
+                a.score()
                     .unwrap()
-                    .total_cmp(&b.rmse.unwrap())
+                    .total_cmp(&b.score().unwrap())
                     .then(a.genome.cmp(&b.genome))
             });
             ensure!(
-                best.map(|o| (o.genome.clone(), o.rmse, o.hold_r2))
+                best.map(|o| (o.genome.clone(), o.rmse, o.hold_r2, o.objective_loss))
                     == cut.best_program.clone().map(|g| (
                         g,
                         cut.best_validation_rmse,
-                        cut.best_validation_r2
+                        cut.best_validation_r2,
+                        cut.best_validation_objective
                     )),
                 "cut {}: the recorded best is not the best observation",
                 cut.cut
@@ -172,6 +190,8 @@ pub fn verify_run(receipt_path: &Path) -> Result<VerifiedRun> {
                 && selection.program_sha256 == receipt.search.selected_program_sha256
                 && derived.genome == recorded.genome
                 && derived.validation_rmse.to_bits() == recorded.validation_rmse.to_bits()
+                && derived.validation_objective.map(f64::to_bits)
+                    == recorded.validation_objective.map(f64::to_bits)
                 && derived.validation_r2.to_bits() == recorded.validation_r2.to_bits()
                 && derived.train_r2.to_bits() == recorded.train_r2.to_bits()
                 && derived.seconds.to_bits() == recorded.seconds.to_bits()

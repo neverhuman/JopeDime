@@ -568,6 +568,7 @@ mod tests {
             train_r2: rmse.map(|_| 0.5),
             hold_r2: rmse.map(|r| 1.0 - r),
             rmse,
+            objective_loss: None,
             seconds: 0.0,
             status: if rmse.is_some() {
                 crate::search::MEASURED
