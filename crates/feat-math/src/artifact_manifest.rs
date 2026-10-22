@@ -25,6 +25,7 @@ pub enum Target {
     JavaScript,
     Cpp17RecipeV2,
     Cpp17Fitted,
+    C17,
 }
 impl Target {
     pub const RECIPES: [Self; 5] = [
@@ -43,6 +44,7 @@ impl Target {
             "javascript" | "js" => Self::JavaScript,
             "cpp17-recipe-v2" => Self::Cpp17RecipeV2,
             "cpp17-fitted" => Self::Cpp17Fitted,
+            "c" | "c17" => Self::C17,
             _ => anyhow::bail!("unknown requested target {value:?}"),
         })
     }
@@ -62,6 +64,7 @@ impl Target {
     }
     pub fn path(self) -> &'static str {
         match self {
+            Self::C17 => "c17/model.h",
             Self::Python => "model.py",
             Self::Rust => "model.rs",
             Self::Cpp17 | Self::Cpp20 => "model.cpp",
@@ -72,6 +75,7 @@ impl Target {
     }
     pub fn as_str(self) -> &'static str {
         match self {
+            Self::C17 => "c17",
             Self::Python => "python",
             Self::Rust => "rust",
             Self::Cpp17 => "cpp17",
@@ -83,6 +87,8 @@ impl Target {
     }
     pub fn registry_target(self) -> &'static str {
         match self {
+            // The C boundary invokes the safe Rust recipe without changing arithmetic.
+            Self::C17 => "rust_recipe",
             Self::Python => "python_recipe",
             Self::Rust => "rust_recipe",
             Self::Cpp17 | Self::Cpp20 => "cpp17_recipe",
@@ -170,6 +176,18 @@ pub enum BuildExecution {
 impl BuildIdentity {
     pub fn declared(target: Target) -> Self {
         let (toolchain, standard, flags, abi) = match target {
+            Target::C17 => (
+                "rustc".into(),
+                "rust2021+c17".into(),
+                vec![
+                    "--edition=2021".into(),
+                    "-O".into(),
+                    "-C".into(),
+                    "panic=unwind".into(),
+                    "--crate-type=staticlib".into(),
+                ],
+                "c17-v1",
+            ),
             Target::Python => ("python3".into(), "python3".into(), vec![], "script"),
             Target::Rust => (
                 "rustc".into(),
@@ -358,6 +376,13 @@ impl ArtifactManifestV3 {
                             "cpp17-fitted/model.codec.json",
                             "cpp17-fitted/standalone.cpp",
                         ]
+                    } else if record.target == Target::C17 {
+                        vec![
+                            "c17/manifest.json",
+                            "c17/model.h",
+                            "c17/model_core.rs",
+                            "c17/model_ffi.rs",
+                        ]
                     } else {
                         vec![record.target.path()]
                     };
@@ -374,6 +399,9 @@ impl ArtifactManifestV3 {
                             && !build.toolchain.is_empty(),
                         "target build identity mismatch"
                     );
+                    if record.target == Target::C17 {
+                        ensure!(build == &declared, "C17 build recipe mismatch");
+                    }
                     if matches!(
                         record.target,
                         Target::Cpp17 | Target::Cpp20 | Target::Cpp17RecipeV2 | Target::Cpp17Fitted

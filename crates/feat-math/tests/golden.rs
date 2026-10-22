@@ -2,6 +2,11 @@
 //! emitted+compiled Rust artifact, and feat_math::fit_predict must agree
 //! bit-for-bit (max abs diff == 0.0) on a deterministic toy dataset.
 
+#[path = "support/c17.rs"]
+mod c17;
+#[path = "support/c17_export.rs"]
+mod c17_export;
+
 use feat_math::transpile::{emit, lint_vocabulary, supports, EmitOptions, Emitted};
 use feat_math::{fit_predict, GenomeIr, Pcg32};
 use std::fs;
@@ -135,6 +140,20 @@ fn assert_parity_sized(name: &str, genome_src: &str, rows: usize, cols: usize, t
     let t_rs = std::time::Instant::now();
     let rs = run_rust(&dir, &artifact);
     let rs_secs = t_rs.elapsed().as_secs_f64();
+
+    let c17 = c17::predictions(
+        &dir.join("c17"),
+        &genome,
+        &opts,
+        &x_train,
+        &y_train,
+        &x_test,
+    );
+    assert_eq!(
+        reference.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+        c17,
+        "C17 parity for {name}"
+    );
 
     let py_diff = max_abs_diff(&reference, &py);
     let rs_diff = max_abs_diff(&reference, &rs);
@@ -641,6 +660,20 @@ fn golden_portfolio_duplicate_rows() {
     write_csvs(&dir, &x_train, &y_train, &x_test);
     let py = run_python(&dir, &artifact);
     let rs = run_rust(&dir, &artifact);
+    let c17 = c17::predictions(
+        &dir.join("c17"),
+        &genome,
+        &EmitOptions::default(),
+        &x_train,
+        &y_train,
+        &x_test,
+    );
+    assert_eq!(
+        reference.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+        c17,
+        "C17 parity for duplicate-row portfolio"
+    );
+
     let py_diff = max_abs_diff(&reference, &py);
     let rs_diff = max_abs_diff(&reference, &rs);
     assert_eq!(
@@ -1180,6 +1213,19 @@ fn assert_fast_parity(name: &str, genome_src: &str) {
     write_csvs(&dir_fast, &x_train, &y_train, &x_test);
     let py = run_python(&dir_fast, &fast);
     let rs_fast = run_rust(&dir_fast, &fast);
+    let c_bits = c17::predictions(
+        &dir_fast.join("c17"),
+        &genome,
+        &fast_opts(),
+        &x_train,
+        &y_train,
+        &x_test,
+    );
+    assert_eq!(
+        c_bits,
+        rs_fast.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+        "C17 fast parity for {name}"
+    );
 
     let dir_ref = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(format!("fastp_{name}_ref"));
     fs::create_dir_all(&dir_ref).unwrap();

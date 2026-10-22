@@ -342,7 +342,7 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     let dir = scratch();
     let root = dir.path();
     let mut targets = Target::RECIPES.to_vec();
-    targets.extend([Target::Cpp17RecipeV2, Target::Cpp17Fitted]);
+    targets.extend([Target::Cpp17RecipeV2, Target::Cpp17Fitted, Target::C17]);
     let program = "(pipe X (ridge alpha=1.0))";
     let out = emit::emit_v3(program, &targets, root, Some(&rows())).unwrap();
     assert!(out.manifest.all_supported());
@@ -368,6 +368,54 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     for target in targets {
         let predictions = root.join(format!("{}.predictions", target.as_str()));
         match target {
+            Target::C17 => {
+                let cdir = root.join("c17");
+                execute(Command::new("rustc").current_dir(&cdir).args([
+                    "--edition=2021",
+                    "-O",
+                    "-C",
+                    "panic=unwind",
+                    "--crate-type=staticlib",
+                    "model_ffi.rs",
+                    "-o",
+                    "libmodel.a",
+                ]));
+                fs::write(
+                    cdir.join("consumer.c"),
+                    r#"#include "model.h"
+#include <stdio.h>
+int main(int argc, char **argv) {
+    if (argc != 2) return 1;
+    double x[10], y[10], t[]={0.5,2.5}, out[2]; uint64_t h=0;
+    for (int i=0;i<10;i++) {x[i]=i; y[i]=2*i+1;}
+    if (jope_model_fit(x,10,y,10,10,1,&h)) return 2;
+    if (jope_model_predict(h,t,2,2,1,out,2)) return 3;
+    FILE *f=fopen(argv[1],"w"); if (!f) return 4;
+    fprintf(f,"%.17g\n%.17g\n",out[0],out[1]);
+    if (fclose(f)) return 5;
+    return jope_model_free(h);
+}
+"#,
+                )
+                .unwrap();
+                execute(Command::new("gcc").current_dir(&cdir).args([
+                    "-std=c17",
+                    "-pedantic-errors",
+                    "-Wall",
+                    "-Wextra",
+                    "-Werror",
+                    "-fno-fast-math",
+                    "-ffp-contract=off",
+                    "consumer.c",
+                    "libmodel.a",
+                    "-ldl",
+                    "-lpthread",
+                    "-lm",
+                    "-o",
+                    "consumer",
+                ]));
+                execute(Command::new(cdir.join("consumer")).arg(&predictions));
+            }
             Target::Python => execute(
                 Command::new("python3")
                     .arg(root.join("model.py"))
@@ -472,6 +520,21 @@ fn native_publication_verifies_fitted_closure_and_refuses_codec_deletion() {
     publication::verify_run_v3(&root.join("receipt.json"), &expected).unwrap();
     fs::remove_file(root.join("emit/cpp17-fitted/model.codec.json")).unwrap();
     assert!(publication::verify_run_v3(&root.join("receipt.json"), &expected).is_err());
+}
+
+#[test]
+fn native_publication_requires_every_c17_bundle_member() {
+    for member in ["manifest.json", "model.h", "model_core.rs", "model_ffi.rs"] {
+        let dir = scratch();
+        let root = dir.path().join("run");
+        let (_, expected) = v3_run(&root, &[Target::C17]);
+        publication::verify_run_v3(&root.join("receipt.json"), &expected).unwrap();
+        fs::remove_file(root.join("emit/c17").join(member)).unwrap();
+        assert!(
+            publication::verify_run_v3(&root.join("receipt.json"), &expected).is_err(),
+            "{member}"
+        );
+    }
 }
 #[test]
 fn native_publication_requires_explicit_unsupported_accounting() {

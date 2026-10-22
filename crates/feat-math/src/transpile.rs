@@ -293,6 +293,16 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
     })
 }
 
+/// Emit a complete native C17 model API bundle backed by the full Rust recipe.
+pub fn emit_c17(genome: &GenomeIr, opts: &EmitOptions) -> Result<crate::c17::Emitted> {
+    crate::c17::emit(genome, opts)
+}
+
+/// C17 uses exactly the Rust recipe coverage, without a second arithmetic backend.
+pub fn supports_c17(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
+    supports(genome)
+}
+
 /// Check emitter coverage; Err lists unsupported ops (judge rejects such claims).
 pub fn supports(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
     match crate::spec::build_plan(genome) {
@@ -516,6 +526,27 @@ pub fn emit_targets_v3(
     let mut sources = std::collections::BTreeMap::new();
     let mut records = Vec::new();
     for &target in requested {
+        if target == Target::C17 {
+            match emit_c17(genome, options) {
+                Ok(bundle) => {
+                    let inputs: Vec<_> = bundle
+                        .files
+                        .iter()
+                        .map(|(p, s)| (p.as_str(), s.as_str()))
+                        .collect();
+                    records.push(TargetRecord::supported(
+                        target,
+                        "legacy_recipe",
+                        crate::c17::EMITTER,
+                        &inputs,
+                        None,
+                    ));
+                    sources.extend(bundle.files);
+                }
+                Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
+            }
+            continue;
+        }
         let result: Result<(String, String)> = (|| {
             // I07's declared per-stage support supplements the actual recipe gate.
             // Expression-recipe-v2 and fitted exports keep their separate existing gates.
@@ -561,6 +592,7 @@ pub fn emit_targets_v3(
                         .map_err(anyhow::Error::msg)?;
                     (e.source, e.profile.into())
                 }
+                Target::C17 => unreachable!("multi-file target handled above"),
                 Target::Cpp17Fitted => {
                     anyhow::bail!("fitted target requires explicit training rows")
                 }

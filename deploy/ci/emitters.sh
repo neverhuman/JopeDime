@@ -26,7 +26,7 @@ if [ -n "${JOPE_CXX_MARCH:-}" ]; then
 fi
 fail=0
 
-for tool in rustc g++ clang++ node python3 sha256sum timeout prlimit; do
+for tool in rustc gcc clang g++ clang++ node python3 sha256sum timeout prlimit; do
   command -v "$tool" > /dev/null || { echo "missing required tool: $tool"; exit 1; }
 done
 [ ! -e "$OUT" ] || { echo "refusing to overwrite prior evidence: $OUT" >&2; exit 1; }
@@ -56,6 +56,7 @@ source_contract() { # <label> <expected-passes> <filtered-count-pattern> <cargo 
     exit 1
   fi
 }
+source_contract c17-native-contracts 5 83 -p feat-math --test golden c17_export::
 source_contract legacy-wrapper-pins 1 '[0-9]+' -p feat-math --test capability_manifest \
   legacy_wrapper_body_hashes_are_pinned -- --exact
 # Restart assertions share this harness process with subprocess-spawning tests. A forked
