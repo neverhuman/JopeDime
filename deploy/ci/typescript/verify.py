@@ -20,7 +20,9 @@ for c in censuses:
     else:
         assert len(c['executed']) + len(c['refused']) == c['total']
         assert not set(c['executed']) & set(c['refused'])
-expected_executions = sum(c['executed'] if c['kind'] == 'v2' else len(c['executed']) for c in censuses) + 5  # categorical codec variants
+metadata = (root/'census.log').read_text().count('TypeScript metadata: strict heading qualified')
+assert metadata == 1, 'metadata boundary qualification missing'
+expected_executions = sum(c['executed'] if c['kind'] == 'v2' else len(c['executed']) for c in censuses) + 5 + metadata  # categorical codec variants and metadata boundary
 assert (root/'census.log').read_text().count('TypeScript cjs:') == expected_executions
 contracts = (root/'contracts.log').read_text()
 assert re.search(r'pass [1-9]\d*', contracts) and re.search(r'fail 0\b', contracts)

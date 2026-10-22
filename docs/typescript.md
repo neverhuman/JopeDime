@@ -117,6 +117,7 @@ as in the existing bound Rust/Python API.
 | Bounds | At most 16,777,216 transferred numeric elements or UTF-8 input bytes per call; model fitting can require additional memory |
 | Failure | Shape errors refuse before fitting; a WebAssembly trap invalidates the instance |
 | Parallelism | One synchronous instance; `fast_runtime` selects the sequential Rust numerical body for this target |
+| Metadata | Recipe title whitespace is folded onto one Rust documentation line before source assembly |
 
 The bridge accepts lengths and dimensions, never caller-supplied memory addresses.
 Its buffers and fitted model are private to each WebAssembly instance. The host

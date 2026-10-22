@@ -47,6 +47,13 @@ fn assemble(rust: String, body: &str, source: String) -> TypeScriptEmitted {
 pub fn emit(genome: &GenomeIr, options: &EmitOptions) -> Result<TypeScriptEmitted> {
     let mut sequential = options.clone();
     sequential.fast_runtime = false;
+    // The inherited Rust emitter places the title in a single doc-comment
+    // line. Keep caller metadata on that line, including CR/LF and Unicode
+    // separators, without changing the frozen numerical templates.
+    sequential.title = options
+        .title
+        .as_ref()
+        .map(|title| title.split_whitespace().collect::<Vec<_>>().join(" "));
     let pair = transpile::emit(genome, &sequential)?;
     Ok(recipe_from_rust(pair.rust))
 }

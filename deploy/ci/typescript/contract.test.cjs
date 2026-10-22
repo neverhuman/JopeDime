@@ -99,7 +99,7 @@ test('qualification verifier rejects zero tests, missing census cases and missin
   const ok='test result: ok. 1 passed; 0 failed\n';
   const execution='TypeScript cjs: 1 predictions qualified\nTypeScript esm: 1 predictions qualified\n';
   const records=['recipe','bound','legacy-bound'].map(kind=>({kind,total:1,executed:['x'],refused:[],unaccounted:0}));records.push({kind:'v2',total:1,executed:1,unaccounted:0});
-  const census=ok+execution.repeat(9)+records.map(c=>'TypeScript census: '+JSON.stringify(c)+'\n').join('');
+  const census=ok+execution.repeat(10)+records.map(c=>'TypeScript census: '+JSON.stringify(c)+'\n').join('')+'TypeScript metadata: strict heading qualified\n';
   const coverage='pass 7\nfail 0\nmodel.js | 100.00 | 100.00 | 100.00\n';
   for(const name of ['recipes','fitted','bindings','pipeline','cli'])fs.writeFileSync(path.join(evidence,name+'.log'),ok+execution);
   const run=()=>spawnSync('python3',[verifier],{cwd:dir,encoding:'utf8'});
