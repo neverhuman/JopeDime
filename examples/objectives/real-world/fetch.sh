@@ -11,9 +11,10 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/../../.." && pwd)
 data=${1:-${JOPE_FITNESS_DATA:-$HOME/jope-data/fitness-real-world}}
 mkdir -p "$data"
-data=$(cd "$data" && pwd)
+# Physical paths on both sides, so a symlink into the checkout is refused too.
+data=$(cd "$data" && pwd -P)
 case "$data/" in
-  "$root"/*) echo "fetch.sh: refusing to write datasets inside the checkout ($data)" >&2; exit 2 ;;
+  "$(cd "$root" && pwd -P)"/*) echo "fetch.sh: refusing to write datasets inside the checkout ($data)" >&2; exit 2 ;;
 esac
 mkdir -p "$data/raw" "$data/csv"
 
@@ -24,7 +25,9 @@ fetch() { # file url sha256
     mv "$out.part" "$out"
   fi
   if ! echo "$3  $out" | sha256sum -c --quiet - >/dev/null 2>&1; then
-    echo "fetch.sh: $1 does not match its pinned sha256 $3; the source changed" >&2
+    # Drop it, so a corrected pin or a fixed upstream is fetched again on the next run.
+    rm -f -- "$out"
+    echo "fetch.sh: $1 does not match its pinned sha256 $3; the source changed (removed)" >&2
     exit 3
   fi
 }
@@ -62,25 +65,29 @@ if [ "$pinned" != "0e0eb501cd45d55a6b4cb2aad4431969289542ad57f0c7f5917985b7c3b76
   echo "fetch.sh: S&P 500 rows through 2023-07 changed upstream (sha256 $pinned)" >&2
   exit 3
 fi
-# Features known at month t; target is the next month's total return (price + dividend/12).
-# Shiller's prices are monthly averages, which makes adjacent returns positively correlated, so
-# last month's return is deliberately not a feature.
+# Features published by the end of month t; target is the next month's total return (price +
+# dividend/12). Dividends and earnings are lagged three months (they are reported after the
+# quarter) and CPI one month (published about two weeks after its month). Shiller's prices are
+# monthly averages, which makes adjacent returns positively correlated, so no feature contains
+# the latest month's return: momentum is 12-1, the twelve months ending a month ago.
 awk -F, 'NR > 1 && $1 >= "1900-01-01" && $1 <= "2023-07-01" { print }' "$spx" | awk -F, '
   { date[NR] = $1; p[NR] = $2; d[NR] = $3; e[NR] = $4; cpi[NR] = $5; rate[NR] = $6; pe10[NR] = $10 }
   END {
-    print "dividend_yield,earnings_yield,cape_yield,long_rate,inflation_12m,momentum_12m,next_return"
-    for (t = 13; t < NR; t++) {
-      if (p[t] <= 0 || p[t - 12] <= 0 || cpi[t - 12] <= 0 || pe10[t] <= 0) continue
-      printf "%.8f,%.8f,%.8f,%.4f,%.8f,%.8f,%.8f\n", d[t] / p[t], e[t] / p[t], 1 / pe10[t], \
-        rate[t], cpi[t] / cpi[t - 12] - 1, p[t] / p[t - 12] - 1, \
+    print "dividend_yield,earnings_yield,cape_yield,long_rate,inflation_12m,momentum_12_1,next_return"
+    for (t = 14; t < NR; t++) {
+      if (p[t] <= 0 || p[t - 1] <= 0 || p[t - 13] <= 0 || cpi[t - 13] <= 0 || pe10[t] <= 0) continue
+      printf "%.8f,%.8f,%.8f,%.4f,%.8f,%.8f,%.8f\n", d[t - 3] / p[t], e[t - 3] / p[t], \
+        1 / pe10[t], rate[t], cpi[t - 1] / cpi[t - 13] - 1, p[t - 1] / p[t - 13] - 1, \
         (p[t + 1] + d[t] / 12) / p[t] - 1
     }
   }' > "$data/csv/sp500.csv"
 
-# freMTPL2freq (OpenML 41214), optional: claim frequency with exposure.
+# freMTPL2freq (OpenML 41214, file 20649148), optional: claim frequency with exposure. The pin is
+# the 678,013-policy file whose md5 matches the checksum OpenML publishes for it
+# (f8875568bf0ca622929105197e2db613).
 if [ "${FETCH_FREMTPL:-0}" = 1 ]; then
   fetch freMTPL2freq.arff https://openml.org/data/v1/download/20649148/freMTPL2freq.arff \
-    "${FREMTPL_SHA256:?set FREMTPL_SHA256 to the digest you verified for the OpenML file}"
+    a45363e056e2ea56408b38eeb9d4d04d7f6c6982eb7a14ed5e807c7c71807cdd
   awk -f "$root/examples/objectives/real-world/arff-to-csv.awk" "$data/raw/freMTPL2freq.arff" \
     | awk -F, 'NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i
                          print "VehPower,VehAge,DrivAge,BonusMalus,VehBrand,VehGas,Area,Density,Region,exposure,frequency"; next }

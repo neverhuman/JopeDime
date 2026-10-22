@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5881,
+  "count": 5886,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -7667,12 +7667,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 456,
+    "count": 459,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 366,
+      "count": 367,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7898,6 +7898,7 @@
        "lineage::tests::a_stop_request_during_a_round_keeps_only_completed_rounds",
        "lineage::tests::a_tampered_lineage_round_receipt_or_seeds_file_fails_verification",
        "lineage::tests::an_existing_lineage_or_a_bad_round_count_is_refused_before_writing",
+       "lineage::tests::an_objective_ranked_lineage_is_refused_before_writing",
        "lineage::tests::one_and_eight_threads_write_byte_identical_lineages",
        "lineage::tests::round_one_can_start_from_a_seeds_file",
        "lineage::tests::rounds_chain_on_identical_cuts_never_get_worse_and_verify",
@@ -8182,16 +8183,18 @@
      },
      "jope-pipeline::schema_agreement": {
       "kind": "test",
-      "count": 13,
+      "count": 15,
       "ignored": 0,
       "tests": [
        "a_well_formed_receipt_validates",
        "asm_contract_schemas_match_generated_types_exactly",
        "committed_schema_is_generated_from_code_exactly",
        "old_v1_receipts_remain_readable_without_claiming_v2_budget_guarantees",
+       "only_the_objective_receipt_records_an_objective",
        "receipt_schema_agrees_with_the_rust_type",
        "schema_only_consumers_require_every_new_v2_field",
        "the_committed_file_is_byte_identical_to_the_embedded_schema",
+       "the_objective_receipt_is_v3_plus_the_objective_generated_from_code",
        "the_validator_refuses_an_emit_stage_that_disagrees_with_the_artifacts",
        "the_validator_rejects_what_the_schema_and_the_invariants_forbid",
        "v2_receipts_still_verify_and_cannot_claim_v3_seeding",
@@ -8756,14 +8759,15 @@
     }
    },
    "jope-runtime": {
-    "count": 46,
+    "count": 48,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
       "kind": "lib",
-      "count": 38,
+      "count": 40,
       "ignored": 0,
       "tests": [
+       "automl::fitness_tests::a_selection_without_an_objective_keeps_the_v1_record_shape",
        "automl::fitness_tests::calibration_turns_mean_models_into_the_requested_quantile_and_never_scores_worse",
        "automl::fitness_tests::custom_fitness_changes_the_selected_candidate_and_records_both_directions",
        "automl::fitness_tests::explicit_default_matches_existing_selection_and_invalid_scope_is_refused",
@@ -8772,6 +8776,7 @@
        "automl::tests::folds_are_stratified_and_deterministic",
        "automl::tests::losses_match_the_panel_metrics",
        "backend::tests::explicit_cuda_fails_and_auto_reports_cpu",
+       "calibration::tests::a_floor_alone_is_kept_only_where_the_domain_needs_one",
        "calibration::tests::affine_calibration_moves_a_mean_forecast_toward_the_requested_quantile",
        "calibration::tests::calibration_never_worsens_the_fitted_rows_and_honors_the_domain_floor",
        "calibration::tests::cross_fitting_applies_only_maps_learned_without_the_scored_fold",
@@ -9310,7 +9315,7 @@
   }
  },
  "totals": {
-  "rust": 5881,
+  "rust": 5886,
   "python": 182
  }
 }

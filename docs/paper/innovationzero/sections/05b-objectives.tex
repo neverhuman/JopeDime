@@ -77,17 +77,19 @@ A repository-reported benchmark
 on the same training rows and scores the same held-out rows with each table's
 objective: RMSE selection among six native learners, selection by the
 objective, and selection with the cross-fitted output map
-(Table~\ref{tab:objective-evidence}). On five of the six tables the
+(Table~\ref{tab:objective-evidence}). On four of the six tables the
 objective chose the same learner as RMSE, so selection alone did not change
 the predictions. The output map reduced held-out loss against RMSE selection
 by 63\% for a 10th-percentile wind commitment, 49\% for a 90th-percentile
 pollution forecast, 35\% for a 4:1 asymmetric exposure cost and 7\% for
-relative valuation error, and raised an after-cost Sortino ratio by 4\% on a
-chronological S\&P~500 split. On exposure-weighted claim frequency the
-RMSE-selected learner predicted negative rates for 68 of 6{,}780 held-out
-policies, so its Poisson deviance is undefined; selection by the objective
-chose a learner with positive rates (deviance 0.492), and the floored output
-map lowered it to 0.475. Ranking written programs by the objective was not
+relative valuation error. On a chronological S\&P~500 split, selection by the
+after-cost Sortino ratio alone chose a different learner and raised the test
+ratio from 0.783 to 1.155, while the map settled on a nearly constant full
+position (0.839). On exposure-weighted claim frequency the RMSE-selected
+learner predicted non-positive rates for 80 of 6{,}781 held-out policies, so
+its Poisson deviance is undefined; selection by the objective chose a learner
+with positive rates (deviance 0.789), and the floored output map lowered it to
+0.637 ($-19\%$). Ranking written programs by the objective was not
 sufficient either. On the ten committed regression datasets, a program search
 ranked by 90th-percentile pinball loss, with every program still fitted by
 squared error, kept a different program than the RMSE-ranked search on all
@@ -108,17 +110,17 @@ wind & pinball, $\tau=0.1$ & 1.410 & 1.410 & 0.517 \\
 houses & MAPE & 0.210 & 0.210 & 0.195 \\
 pm10 & pinball, $\tau=0.9$ & 0.240 & 0.240 & 0.122 \\
 no2 & asymmetric, 4:1 & 0.975 & 0.975 & 0.629 \\
-sp500 & Sortino, net of cost & 0.894 & 0.894 & 0.933 \\
-freMTPL & weighted Poisson & undef. & 0.492 & 0.475 \\
+sp500 & Sortino, net of cost & 0.783 & 1.155 & 0.839 \\
+freMTPL & weighted Poisson & undef. & 0.789 & 0.637 \\
 \bottomrule
 \end{tabular}
 \end{table}
 These are single splits of
 small, public and previously studied tables, with one seed and no family
 separation, and they measure a decision layer rather than synthesis. They
-show that the objective must change what is fitted or written, not only what
-is ranked, and they set the baseline an objective-conditioned proposer must
-beat.
+show that ranking helps only when some candidate already suits the objective
+(two tables of six); otherwise the objective must change what is fitted or
+written. They set the baseline an objective-conditioned proposer must beat.
 
 \paragraph{An objective-conditioned protocol.}
 The family-level protocol of Section~\ref{sec:protocol} gains an objective

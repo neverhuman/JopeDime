@@ -12,15 +12,17 @@ rows with the dataset's objective:
 | objective + calibration | `--fitness F` | Selection plus the cross-fitted output map (the default with an objective). |
 
 ```sh
-bash examples/objectives/real-world/fetch.sh          # data stays outside the checkout
-bash examples/objectives/real-world/benchmark.sh      # or: benchmark.sh wind sp500
-FETCH_FREMTPL=1 FREMTPL_SHA256=<digest you verified> bash examples/objectives/real-world/fetch.sh
+bash examples/objectives/real-world/fetch.sh                  # data stays outside the checkout
+FETCH_FREMTPL=1 bash examples/objectives/real-world/fetch.sh   # optional: also freMTPL2freq
+bash examples/objectives/real-world/benchmark.sh              # or: benchmark.sh wind sp500
 ```
 
 `fetch.sh` writes to `$JOPE_FITNESS_DATA` (default `~/jope-data/fitness-real-world`), refuses a
 directory inside the checkout, pins every download by sha256 and converts it to a header CSV.
-`benchmark.sh` writes `target/fitness-real-world/results.{json,md}` and every intermediate file
-(splits, models, receipts, predictions and evaluation requests) so each number can be re-derived.
+`benchmark.sh` writes the summary to `target/fitness-real-world/results.{json,md}` and every
+intermediate file (splits, models, predictions and evaluation requests) to
+`$JOPE_FITNESS_DATA/work/`, next to the data and outside the checkout, so each number can be
+re-derived.
 
 ## Datasets
 
@@ -30,14 +32,15 @@ directory inside the checkout, pins every download by sha256 and converts it to 
 | `houses` | PMLB `537_houses` (MIT; Pace and Barry 1997, 1990 California census) | 20,640 | Median house value per block group | `mape:epsilon=1` | Valuation error is judged relative to price. |
 | `pm10` | PMLB `522_pm10` (MIT; Norwegian Public Roads Administration via StatLib) | 500 | Hourly log PM10 concentration near a road | `pinball:quantile=0.9` | An air-quality warning needs an upper forecast. |
 | `no2` | PMLB `547_no2` (same source) | 500 | Hourly log NO2 concentration | `asymmetric_absolute:under_cost=4,over_cost=1` | Missing a peak costs more than a false alarm. |
-| `sp500` | Shiller monthly S&P 500 (ODC-PDDL-1.0, `datasets/s-and-p-500`) | 1,470 | Next month's total return, from valuation, rates, inflation and momentum | `sortino:cost=0.001,periods_per_year=12` (forward validation, gap 1) | Allocation is judged on downside risk after costs, not on return MSE. |
-| `fremtpl` | freMTPL2freq (OpenML 41214, recorded CC0; CASdatasets upstream GPL≥2; optional, every 20th policy) | 33,900 | Claims per policy-year (`ClaimNb` capped at 4 over `Exposure` capped at 1) | `claims_frequency_exposure.json` | Frequency is priced per unit of exposure: exposure-weighted Poisson deviance. |
+| `sp500` | Shiller monthly S&P 500 (ODC-PDDL-1.0, `datasets/s-and-p-500`) | 1,469 | Next month's total return, from valuation, rates, inflation and momentum | `sortino:cost=0.001,periods_per_year=12` (forward validation, gap 1) | Allocation is judged on downside risk after costs, not on return MSE. |
+| `fremtpl` | freMTPL2freq (OpenML 41214, recorded CC0; CASdatasets upstream GPL≥2; optional, every 20th policy) | 33,901 | Claims per policy-year (`ClaimNb` capped at 4 over `Exposure` capped at 1) | `claims_frequency_exposure.json` | Frequency is priced per unit of exposure: exposure-weighted Poisson deviance. |
 
-The S&P features are dividend, earnings and CAPE yields, the long rate, 12-month inflation and
-12-month momentum, all known at the month in question. Shiller's prices are monthly averages,
-which makes adjacent returns positively correlated, so last month's return is deliberately not a
-feature and absolute ratios still overstate what a trader could realize. Compare the arms, not the
-level. Each split is one deterministic split (chronological for `wind` and `sp500`, a fixed hash
+The S&P features are the dividend and earnings yields (dividends and earnings lagged three months,
+as they are reported after the quarter), Shiller's CAPE yield, the long rate, 12-month inflation
+lagged one month (CPI is published about two weeks after its month) and 12-1 momentum. Shiller's
+prices are monthly averages, which makes adjacent returns positively correlated, so no feature
+contains the latest month's return, and absolute ratios still overstate what a trader could
+realize. Compare the arms, not the level. Each split is one deterministic split (chronological for `wind` and `sp500`, a fixed hash
 of the row number otherwise), so small differences are within noise.
 
 ## Results
@@ -45,7 +48,8 @@ of the row number otherwise), so small differences are within noise.
 Each table is fitted three ways on the same training rows, with the same validation scheme, and
 the same held-out rows are scored with that table's objective. The arms are: `--fitness rmse`
 with no calibration, the objective with `--calibration none` (selection only), and the objective
-with the default cross-fitted output map.
+with the default cross-fitted output map. Measured 2026-10-22 with a release `jopedime` on
+x86_64 Linux, default candidates and five folds.
 
 | Dataset | Objective | Train/test rows | RMSE-selected | Objective-selected | + calibration | Change vs RMSE-selected |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -53,28 +57,31 @@ with the default cross-fitted output map.
 | `houses` | `mape:epsilon=1` (minimize) | 16,513 / 4,127 | 0.2096 | 0.2096 | 0.1946 | 7% lower loss |
 | `pm10` | `pinball:quantile=0.9` (minimize) | 400 / 100 | 0.2405 | 0.2405 | 0.1220 | 49% lower loss |
 | `no2` | `asymmetric_absolute:under_cost=4,over_cost=1` (minimize) | 400 / 100 | 0.9748 | 0.9748 | 0.6289 | 35% lower loss |
-| `sp500` | `sortino:cost=0.001,periods_per_year=12` (maximize) | 1,176 / 294 | 0.8938 | 0.8938 | 0.9332 | 4% higher |
-| `fremtpl` | exposure-weighted Poisson deviance (minimize) | 27,120 / 6,780 | undefined | 0.4923 | 0.4754 | RMSE arm cannot be scored |
+| `sp500` | `sortino:cost=0.001,periods_per_year=12` (maximize) | 1,175 / 294 | 0.7831 | 1.1553 | 0.8392 | 7% higher (objective-selected: 48% higher) |
+| `fremtpl` | exposure-weighted Poisson deviance (minimize) | 27,120 / 6,781 | undefined | 0.7892 | 0.6365 | RMSE arm cannot be scored; 19% below objective-selected |
 
 What the numbers say, and what they do not:
 
-- **Selection alone changed the learner once in six.** On five tables the objective picked the
-  same learner as RMSE, so the objective-selected predictions are identical. The exception is
-  `fremtpl`: the RMSE choice (`rust.gam_boost`) predicts a negative claim rate for 68 of 6,780
-  held-out policies, where a Poisson deviance is undefined, and the objective chose
-  `rust.extra_trees`, whose rates are all positive.
+- **Selection alone changed the learner twice in six.** On four tables the objective picked the
+  same learner as RMSE, so the objective-selected predictions are identical. On `fremtpl` the RMSE
+  choice (`rust.gam_boost`) predicts a non-positive claim rate for 80 of 6,781 held-out policies,
+  where a Poisson deviance is undefined, and the objective chose `rust.extra_trees`, whose rates
+  are all positive. On `sp500` the objective chose `rust.elasticnet` over `rust.extra_trees`,
+  raising the test Sortino ratio from 0.783 to 1.155.
 - **The output map does the work.** `max(a + b·pred, floor)` moves a mean forecast to the act the
-  objective rewards: a 10th or 90th percentile, a 4:1 cost-weighted level, a relative-error
-  optimum or a position size. With the map, `sp500` and `fremtpl` also switched learners
-  (`rust.gam_boost` and `rust.elasticnet` with a floor of 0.001), because selection compares
-  calibrated validation losses.
+  objective rewards: a 10th or 90th percentile, a 4:1 cost-weighted level or a relative-error
+  optimum. With the map, `fremtpl` switched back to `rust.gam_boost`, shrunk (slope 0.14) and
+  floored at 0.001, because selection compares calibrated validation losses.
+- **The map is not always the best act.** On `sp500` the calibrated arm kept `rust.extra_trees`
+  with a map that is nearly a constant full position (slope 0.001, intercept 1.01): buy-and-hold,
+  which scored best on the forward validation folds (whose calibration rows are embargoed by the
+  gap). On the test months it reached 0.839, above RMSE selection's 0.783 but below the
+  uncalibrated elastic net's 1.155.
 - **These are single deterministic splits** with one seed. `pm10` and `no2` have 100 test rows,
   and the S&P figures use Shiller's monthly averages, so compare the arms, not the levels.
-- **The `fremtpl` row was measured on the CASdatasets copy** (677,991 policies, the `freMTPL2freq.rda` in
-  `dutangc/CASdatasets`, sha256 `82c8598513d9fa78226b6c7d271a9940eca4b8083e9e32320a75d377bdfe15a3`)
-  converted locally, because OpenML was not reachable from the machine
-  that produced this table. `fetch.sh` uses OpenML's 678,013-policy copy, so the every-20th sample
-  differs slightly; expect nearby, not identical, numbers.
+- **`fremtpl` is OpenML's 678,013-policy file**, pinned by sha256 in `fetch.sh` (its md5 matches
+  the checksum OpenML publishes, `f8875568bf0ca622929105197e2db613`); every 20th policy gives
+  33,901 rows.
 
 ## Program search ranked by the objective
 
