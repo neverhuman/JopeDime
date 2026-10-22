@@ -88,8 +88,12 @@ by a regression objective on each cut's held-out rows instead of RMSE. `SPEC` is
 non-positive prediction under a Poisson deviance) is a score failure with its reason. Survivors,
 island migration, the comparison pool, each cut's best and the final selection all use the
 objective loss; a run never mixes rules. Selection is
-`all_cuts_then_min_mean_validation_objective_then_genome`, the receipt records `search.objective`
-(specification, name, direction and its sha256 identity) and `validation_objective`, and
+`all_cuts_then_min_mean_validation_objective_then_genome`. Such a run writes
+`jope.pipeline-objective-receipt/v1` instead of v3: the same document plus `search.objective`
+(specification, name, direction and its sha256 identity), `validation_objective` and each cut's
+`best_validation_objective` (`schemas/jope.pipeline-objective-receipt.v1.schema.json`, generated
+with `--example receipt_schema objective`). The v3 schema stays frozen and an RMSE-ranked run's v3
+receipt is unchanged byte for byte; a v3 receipt cannot carry an objective.
 `verify-receipt --evidence` and `score --split test` use the recorded objective. `score --fitness`
 reports an objective for any verified receipt on the same single test look, including one that
 ranked by RMSE; its development loss is reported only when the run ranked by that objective.
