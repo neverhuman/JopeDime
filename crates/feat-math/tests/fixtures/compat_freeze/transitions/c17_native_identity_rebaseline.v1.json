@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the C17 native recipe target. Emitter plumbing and token-language registration move the evaluator source identity. Numerical implementations, existing emitter bytes and all behavior fixtures stay unchanged.",
+  "plan_reference": "Owner C17 output-target request 2026-10-22",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/414",
+  "source_commit": "6b32ff78ea1da200e605f10f5410e5ce68519e9c",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "622f10a106c72193029b60042c619a83c0186e836a3bd7559def2f8a01fc42a0",
+      "after": "0cf8737f1452a49fe443b633faede86fab5ac90a0a98fe49e86685df59cab40b"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "69db12c0002555670a2f36a5d5c34d8a5a5f014dae70e2c3eb8dbe2ce60c268b",
+      "after": "aa4dbf8ab29e4ca084ba4ec5d0edb6b7b719050f9a37668587f770df0aaea334"
+    }
+  ]
+}
