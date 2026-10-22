@@ -262,7 +262,7 @@ impl Progress {
     }
 
     #[cfg(test)]
-    fn with_sender(
+    pub(crate) fn with_sender(
         sender: Option<SyncSender<Vec<u8>>>,
         cuts: usize,
         budget: crate::search::Budget,
