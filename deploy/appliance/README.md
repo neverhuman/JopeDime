@@ -115,6 +115,6 @@ contracts, not production locks or release-ready configuration.
 
 Automatic selection supports 25 regression objectives and portable custom costs through
 `--fitness mae`, `--fitness @cost.json`, Rust, JSON-RPC and MCP. See
-[the fitness guide](../../docs/regression-fitness.md) and
+[the fitness guide](../../docs/regression-objectives.md) and
 [18 executable recipes](../../examples/fitness/README.md). Return/risk objectives require
 chronological forward validation; defaults remain RMSE.
