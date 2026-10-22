@@ -1213,7 +1213,7 @@ impl Fitness {
     }
     /// The minimization loss of an already validated specification, without hashing it. The
     /// calibration search calls this many times on one validated objective.
-    pub(crate) fn loss_unhashed(&self, y: &[f64], pred: &[f64], columns: &Columns) -> Result<f64> {
+    pub fn loss_unhashed(&self, y: &[f64], pred: &[f64], columns: &Columns) -> Result<f64> {
         let value = self.checked_value(y, pred, columns)?;
         Ok(if self.direction() == Direction::Maximize {
             -value
@@ -2185,7 +2185,8 @@ mod tests {
     }
     #[test]
     fn all_checked_in_fitness_examples_parse_and_score() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/fitness");
+        let root =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/objectives");
         let mut count = 0;
         let mut paths: Vec<_> = std::fs::read_dir(root)
             .unwrap()

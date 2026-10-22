@@ -97,6 +97,8 @@ pub struct RunOptions {
     /// written.
     pub cancel: Option<Arc<AtomicBool>>,
     pub clock: Clock,
+    /// Rank programs by this regression objective on held-out rows instead of RMSE.
+    pub objective: Option<jope_runtime::fitness::Fitness>,
 }
 
 impl RunOptions {
@@ -121,6 +123,7 @@ impl RunOptions {
             source_commit: None,
             cancel: None,
             clock: Clock::Wall,
+            objective: None,
         }
     }
 }
@@ -171,11 +174,29 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
             "--source-commit {commit:?} is not a full commit id (40 or 64 lowercase hex digits)"
         );
     }
+    if let Some(objective) = &options.objective {
+        check_objective(objective)?;
+    }
     crate::parallel::admit(
         options.threads,
         options.islands,
         options.cpu_ceiling_millicores,
     )
+}
+
+/// The objectives a program search can rank by: valid, scored from targets and predictions
+/// alone (the prepared cuts carry features only), and independent of row order (the cuts are
+/// the dataset's fold partition, not a chronological split).
+pub fn check_objective(objective: &jope_runtime::fitness::Fitness) -> Result<()> {
+    objective.validate()?;
+    jope_runtime::fitness::require_no_columns(objective, "a program search")?;
+    ensure!(
+        !objective.requires_order(),
+        "{} depends on row order; the search's cuts are an unordered fold partition. Use \
+         jopedime with --validation forward for order-dependent objectives",
+        objective.name()
+    );
+    Ok(())
 }
 
 /// A catalog row this regression-only path can fit, resolved and byte-verified, or the refusal.
@@ -349,6 +370,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         migration_interval: options.migration_interval,
         clock,
         cancel: options.cancel.clone(),
+        objective: options.objective.clone(),
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
@@ -509,6 +531,7 @@ fn assemble(
             }),
             best_validation_rmse: cut.best_validation_rmse,
             best_validation_r2: cut.best_validation_r2,
+            best_validation_objective: cut.best_validation_objective,
             best_program: cut.best_program.clone(),
         });
     }
@@ -567,6 +590,7 @@ fn assemble(
                 genome: b.genome.clone(),
                 program_sha256: b.program_sha256.clone(),
                 validation_rmse: b.validation_rmse,
+                validation_objective: b.validation_objective,
                 validation_r2: b.validation_r2,
                 train_r2: b.train_r2,
                 seconds: b.seconds,
@@ -581,6 +605,11 @@ fn assemble(
                     .flat_map(|cut| cut.migrations.iter().cloned())
                     .collect(),
             }),
+            objective: options
+                .objective
+                .as_ref()
+                .map(receipt::Objective::of)
+                .transpose()?,
         },
         artifacts: emitted
             .artifacts
@@ -1125,6 +1154,70 @@ pub(crate) mod tests {
             crate::evidence::verify_run(&output.join("receipt.json")).unwrap_err()
         );
         assert!(error.contains("recorded migrations"), "{error}");
+    }
+
+    #[test]
+    fn an_objective_run_ranks_programs_by_it_records_it_and_reverifies() {
+        let temp = tempfile::tempdir().unwrap();
+        let objective = jope_runtime::fitness::Fitness::parse("pinball:quantile=0.9").unwrap();
+        let output = temp.path().join("objective");
+        let receipt = run(&RunOptions {
+            cuts: 2,
+            islands: 2,
+            migration_interval: 1,
+            objective: Some(objective.clone()),
+            ..small(&output, 40)
+        })
+        .unwrap();
+        let recorded = receipt.search.objective.clone().unwrap();
+        assert_eq!(recorded.name, "pinball");
+        assert_eq!(recorded.fitness_sha256, objective.identity().unwrap());
+        assert_eq!(
+            receipt.search.selection,
+            select::MIN_MEAN_VALIDATION_OBJECTIVE
+        );
+        let best = receipt.search.best.clone().unwrap();
+        let loss = best.validation_objective.unwrap();
+        assert!(loss.is_finite() && loss >= 0.0);
+        let verified = crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+        // Every measured program carries the objective, and the champion has the lowest mean
+        // objective loss among programs measured on every cut, not necessarily the lowest RMSE.
+        assert!(verified
+            .cuts
+            .iter()
+            .flat_map(|(_, o)| o)
+            .filter(|o| o.measured())
+            .all(|o| o.objective_loss.is_some()));
+        let ranking = verified.ranking().unwrap();
+        assert_eq!(ranking[0].genome, receipt.search.selected_genome);
+        assert!(ranking
+            .windows(2)
+            .all(|w| w[0].validation_objective <= w[1].validation_objective));
+
+        // Removing the objective from the receipt no longer re-derives its champion's evidence.
+        let mut value: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(output.join("receipt.json")).unwrap()).unwrap();
+        value["search"].as_object_mut().unwrap().remove("objective");
+        std::fs::write(
+            output.join("receipt.json"),
+            serde_json::to_vec_pretty(&value).unwrap(),
+        )
+        .unwrap();
+        assert!(crate::evidence::verify_run(&output.join("receipt.json")).is_err());
+
+        // The search cannot score order-dependent objectives or objectives that read columns.
+        for refused in [
+            "sortino",
+            "mase",
+            r#"{"metric":"weighted","weights":{"op":"column","name":"w"},"fitness":{"metric":"mae"}}"#,
+        ] {
+            let options = RunOptions {
+                objective: Some(jope_runtime::fitness::Fitness::parse(refused).unwrap()),
+                ..small(&temp.path().join("refused"), 8)
+            };
+            assert!(run(&options).is_err(), "{refused}");
+            assert!(!temp.path().join("refused").exists());
+        }
     }
 
     #[test]

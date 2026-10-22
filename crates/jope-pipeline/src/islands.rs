@@ -4,39 +4,60 @@
 
 use std::collections::BTreeMap;
 
-/// A measured program: its canonical genome and its held-out RMSE (per cut inside a search,
-/// mean over the run's cuts between rounds).
+/// A measured program: its canonical genome, its held-out RMSE and the score it is ranked by
+/// (per cut inside a search, mean over the run's cuts between rounds). The score is the RMSE
+/// itself unless the search ranks by a regression objective (`--fitness`), when it is that
+/// objective's minimization loss.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Champion {
     pub genome: String,
     pub rmse: f64,
+    pub score: f64,
 }
 
-/// Up to `k` distinct champions, best first: lowest RMSE, ties broken on the canonical genome.
-/// A genome listed more than once keeps its best RMSE.
+impl Champion {
+    /// A champion ranked by its RMSE.
+    pub fn by_rmse(genome: impl Into<String>, rmse: f64) -> Self {
+        Champion {
+            genome: genome.into(),
+            rmse,
+            score: rmse,
+        }
+    }
+}
+
+/// Up to `k` distinct champions, best first: lowest score, ties broken on the canonical genome.
+/// A genome listed more than once keeps its best score (and that measurement's RMSE).
 ///
 /// Pure and deterministic: the result depends on the multiset of champions only, never on the
 /// order they are listed in, which is what lets migration and round-to-round seeding replay from
 /// the seed alone whatever order threads finished in.
 pub fn next_seeds(champions: &[Champion], k: usize) -> Vec<Champion> {
-    let mut best: BTreeMap<&str, f64> = BTreeMap::new();
+    let mut best: BTreeMap<&str, (f64, f64)> = BTreeMap::new();
     for champion in champions {
+        let key = (champion.score, champion.rmse);
         best.entry(champion.genome.as_str())
-            .and_modify(|rmse| {
-                if champion.rmse.total_cmp(rmse).is_lt() {
-                    *rmse = champion.rmse;
+            .and_modify(|kept| {
+                if key
+                    .0
+                    .total_cmp(&kept.0)
+                    .then(key.1.total_cmp(&kept.1))
+                    .is_lt()
+                {
+                    *kept = key;
                 }
             })
-            .or_insert(champion.rmse);
+            .or_insert(key);
     }
     let mut seeds: Vec<Champion> = best
         .into_iter()
-        .map(|(genome, rmse)| Champion {
+        .map(|(genome, (score, rmse))| Champion {
             genome: genome.to_owned(),
             rmse,
+            score,
         })
         .collect();
-    seeds.sort_by(|a, b| a.rmse.total_cmp(&b.rmse).then(a.genome.cmp(&b.genome)));
+    seeds.sort_by(|a, b| a.score.total_cmp(&b.score).then(a.genome.cmp(&b.genome)));
     seeds.truncate(k);
     seeds
 }
@@ -63,10 +84,7 @@ mod tests {
     use super::*;
 
     fn c(genome: &str, rmse: f64) -> Champion {
-        Champion {
-            genome: genome.to_owned(),
-            rmse,
-        }
+        Champion::by_rmse(genome, rmse)
     }
 
     #[test]
@@ -104,6 +122,18 @@ mod tests {
         assert_eq!(forward, next_seeds(&rotated, 3));
         assert_eq!(forward[0], c("(pipe X (rank) (ridge))", 2.5));
         assert_eq!(forward[1], c("(pipe X (standardize) (ridge))", 2.5));
+    }
+
+    #[test]
+    fn next_seeds_rank_by_the_objective_score_and_keep_the_rmse() {
+        let scored = |genome: &str, rmse: f64, score: f64| Champion {
+            genome: genome.to_owned(),
+            rmse,
+            score,
+        };
+        // Under an objective, the lower-RMSE program can rank second.
+        let seeds = next_seeds(&[scored("a", 1.0, 5.0), scored("b", 2.0, 3.0)], 2);
+        assert_eq!(seeds, vec![scored("b", 2.0, 3.0), scored("a", 1.0, 5.0)]);
     }
 
     #[test]

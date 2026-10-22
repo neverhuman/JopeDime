@@ -619,6 +619,7 @@ fn search_adapters_preserve_legacy_budget_and_explicit_unknowns() {
         train_r2: None,
         hold_r2: None,
         rmse: None,
+        objective_loss: None,
         seconds: 0.0001,
         status: FIT_FAILED,
         failure: Some("fit failed".into()),

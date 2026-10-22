@@ -61,6 +61,14 @@
           "format": "double",
           "type": "number"
         },
+        "validation_objective": {
+          "description": "With `search.objective`: the mean held-out objective loss (minimized) the program was\nselected by.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
         "validation_r2": {
           "description": "Mean held-out R^2 over the same cuts — the fits never saw these rows.",
           "format": "double",
@@ -156,6 +164,14 @@
         "best_program": {
           "type": [
             "string",
+            "null"
+          ]
+        },
+        "best_validation_objective": {
+          "description": "With `search.objective`: that same candidate's held-out objective loss, by which it was\nthe best; `best_validation_rmse` is then its RMSE, not necessarily the lowest RMSE.",
+          "format": "double",
+          "type": [
+            "number",
             "null"
           ]
         },
@@ -388,6 +404,35 @@
       ],
       "type": "object"
     },
+    "Objective": {
+      "additionalProperties": false,
+      "description": "The regression objective a search ranked programs by.",
+      "properties": {
+        "direction": {
+          "description": "`minimize` or `maximize`; selection always minimizes the loss (maximized values negated).",
+          "type": "string"
+        },
+        "fitness_sha256": {
+          "description": "sha256 of `[\"jope.regression-fitness/v1\", specification]`.",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "name": {
+          "description": "The objective's name (`pinball`, a custom name, `weighted_…`, `composite`).",
+          "type": "string"
+        },
+        "specification": {
+          "description": "The complete specification (`schemas/jope.regression-fitness.v1.schema.json`)."
+        }
+      },
+      "required": [
+        "name",
+        "direction",
+        "fitness_sha256",
+        "specification"
+      ],
+      "type": "object"
+    },
     "Phase": {
       "additionalProperties": false,
       "description": "Per-phase admission limits and actual work. One non-preemptible fit can\nexceed seconds_limit; no later fit is admitted in that phase.",
@@ -570,6 +615,17 @@
           "format": "uint64",
           "minimum": 0,
           "type": "integer"
+        },
+        "objective": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Objective"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The regression objective (`--fitness`) every candidate was ranked by on its held-out\nrows. Absent: ranked by held-out RMSE."
         },
         "population": {
           "description": "Candidates alive per generation, and the transform depth they may reach.",
