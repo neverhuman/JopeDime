@@ -1,0 +1,66 @@
+\section{Can experiments become intuition?}
+\label{sec:introduction}
+
+A useful algorithm can arrive before its author knows that it is useful.
+This distinction separates proposing an idea from establishing knowledge
+about it. Automated discovery systems make the distinction concrete: propose
+a program, run an experiment, inspect the outcome, and revise. Their success
+raises a second question. After enough experience, can a model make a better
+first proposal on a new problem without repeating that experimental loop?
+
+AlphaGo's celebrated Move~37 illustrates both the promise and the boundary.
+DeepMind described the move in its second game against Lee Sedol as one its
+model assigned roughly a one-in-ten-thousand chance of a human playing.
+That estimate characterized a learned prior, not a universal measure of
+creativity. The deployed player also searched. AlphaGo Zero subsequently
+showed how search-guided self-play could train a strong policy without
+human-game supervision; its policy-only and search-assisted evaluations
+made the value of the remaining search visible \citep{move37,alphago,alphagozero}.
+The important inheritance is the experiment that separates learned
+competence from computation performed at the moment of decision.
+
+Algorithm discovery offers an analogous opportunity. AlphaTensor and
+AlphaDev use outcome-driven search; FunSearch and AlphaEvolve combine
+language-model proposals with executable evaluators
+\citep{alphatensor,alphadev,funsearch,alphaevolve}. Learned program synthesis,
+library learning and neural symbolic regression already show that experience
+can guide or directly supply programs for new inputs
+\citep{deepcoder,dreamcoder,symbolicregression}. We therefore make no claim
+that data-to-program learning, compositional representations, or the
+amortization of search are new in themselves. The question here is narrower:
+\emph{what useful algorithmic competence transfers to unseen dataset
+families before any candidate-specific experimental feedback is available?}
+
+We study reusable regression learning procedures. The input is a permitted
+training table. The output is an executable procedure with fitting and
+prediction interfaces, rather than a prediction vector or a set of fitted
+coefficients. The generator makes one proposal and commits it before any
+candidate execution. Compilation, ordinary estimator fitting and independent
+testing then determine whether the procedure works. We call this setting
+\emph{InnovationZero}; ``Zero'' describes the pre-commitment feedback budget,
+not the amount of training, computation or scientific verification.
+
+This paper is a protocol and evidence audit. JopeDime provides a substantial
+implementation and historical evidence base, including constrained program
+construction, learned catalog selection and frontier-authored Rust
+regressors \citep{jope,clover}. Those pieces must not be assembled rhetorically
+into a result they have not jointly demonstrated. The current audit does not
+establish a prospective, structurally novel, first-proposal advantage on
+untouched families. It identifies the evidence and controls that would make
+such a claim meaningful, including outcomes that would falsify it.
+
+Our contributions are fourfold. First, we define an operational commitment
+boundary that separates proposal from evaluation. Second, we reconcile
+model lineages and exploratory evidence, including a simple support argument
+that distinguishes catalog selection from synthesis. Third, we specify a
+failure-inclusive, family-level evaluation of predictive utility, novelty
+and transfer from experimental history. Fourth, we separate token retention,
+artifact throughput and amortized deployment cost. The archived challenge,
+complete source submissions and provenance accompany the manuscript in a
+separate source volume.
+
+The ambition is a future \emph{Move42}: a useful procedure whose distinctive
+mechanism survives independent scrutiny and changes how a problem is solved.
+Move42 is our proposed milestone, not AlphaGo's historical Move~37 and not a
+discovery reported here. Can a history of experiments improve the first idea
+enough to reach it?

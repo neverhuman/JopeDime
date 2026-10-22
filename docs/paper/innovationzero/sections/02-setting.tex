@@ -1,0 +1,77 @@
+\section{The commitment boundary}
+\label{sec:setting}
+
+Let a task supply training data $D_{\mathrm{tr}}=(X,y)$ and reserve
+$D_{\mathrm{te}}$ for an independent evaluator. The final table column is
+always the target. A generator $G_\theta$ maps the permitted training view to
+a complete learning procedure $a$, including its configuration and declared
+dependencies. After commitment, the evaluator executes
+$m=a.\mathrm{fit}(D_{\mathrm{tr}})$ and
+$\hat y=m.\mathrm{predict}(X_{\mathrm{te}})$. Test labels never enter the
+generator, its encoder, preprocessing, fitting or model selection.
+Conditioning on \emph{training} labels is permitted and is not intrinsically
+leakage.
+
+\paragraph{One proposal, zero candidate feedback.}
+For the primary track the contract is
+\begin{equation}
+ K=1,\quad E_{\mathrm{pre}}=0,\quad R_{\mathrm{fb}}=0,
+ \quad \Delta\theta_{\mathrm{target}}=0.
+ \label{eq:zero}
+\end{equation}
+Here $K$ counts completed candidate proposals; $E_{\mathrm{pre}}$ counts
+candidate-specific executions before commitment, including compilation;
+$R_{\mathrm{fb}}$ counts feedback-driven repairs or revisions; and the final
+term forbids target-specific generator updates. Static constrained decoding
+may enforce representation rules, but an executing checker cannot silently
+become an extra proposal-selection channel. The decoding rule and seed are
+fixed in advance. Multiple sampled candidates, reranking, a rescue fallback
+or a replacement after compilation failure belong to a different budgeted
+track. A failed first proposal remains a failure.
+
+Commitment freezes source bytes, configuration, generator and encoder
+identities, preprocessing contract, random seeds, dependency closure and
+resource limits in a content-addressed receipt. A timestamped event trace
+records the ordering and evaluator accesses. These are requirements of the
+proposed experiment, not claims that the existing runtime already enforces
+Equation~\ref{eq:zero}. One autoregressively decoded algorithm can require
+many neural forward calls; ``one proposal'' never means ``one forward pass.''
+
+\paragraph{Fitting is a separate computation.}
+A committed learner can perform matrix factorization, gradient updates or
+boosting during \texttt{fit}. The broad track also permits disclosed
+training-only internal validation specified by the frozen algorithm. That
+does not send feedback to the generator, but it does perform algorithm
+selection inside the learner. We therefore record an orthogonal
+\emph{fitting-search} classification. A stricter arm disallows internal
+hyperparameter or pipeline search while permitting a predefined optimizer
+for the estimator. Historical frontier sources retain their original
+behavior and are not relabelled as belonging to this stricter arm.
+
+\paragraph{Universal and conditional generation.}
+A universal frontier submission is written once from the challenge and then
+fits many datasets. A conditional generator receives a permitted view of
+each new dataset before writing its procedure. These are different
+information and amortization regimes. Universal submissions are informative
+fixed learners, but the primary test of conditioned synthesis requires
+matched conditioned baselines. Section~\ref{sec:protocol} specifies both
+shared-view and native-view comparisons. An opaque embedding handed to an
+unadapted language model is not an adequate information-matched baseline.
+
+\paragraph{Relation to earlier work.}
+DeepCoder learns to guide search, DreamCoder learns reusable abstractions,
+and AutoML-Zero evolves complete learning algorithms
+\citep{deepcoder,dreamcoder,automlzero}. End-to-end symbolic regression predicts
+expressions from data, while hypernetworks generate the parameters of other
+networks \citep{symbolicregression,hypernetworks}. These are close precedents,
+not straw-man alternatives. Our proposed test jointly requires a reusable
+learning procedure, an auditable feedback boundary, held-out dataset
+families, and a comparison against the same training archive's selectors.
+Any incremental claim must survive those controls. A system that learns
+excellent selection without structural synthesis should be reported as such.
+
+We use four evidence states: \emph{code-verified} for inspected interfaces;
+\emph{repository-reported} for retained historical results not rerun here;
+\emph{proposed} for unexecuted experiments; and \emph{unresolved} when the
+required artifact is absent. These states apply to claims, not to the
+reputation of a model or author.

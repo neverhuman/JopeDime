@@ -1,0 +1,36 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage{style}
+\usepackage{flushend}
+\externaldocument[][nocite]{InnovationZero-Supplement}[InnovationZero-Supplement.pdf]
+\begin{document}
+\twocolumn[{
+\frontmatter{Research manuscript}
+\begin{minipage}{\textwidth}
+\small
+\noindent\textbf{Abstract.}\quad\input{sections/00-abstract}
+\end{minipage}
+\vspace{9pt}
+\begin{minipage}{\textwidth}
+\centering
+\includegraphics[width=\textwidth]{figures/commitment.pdf}
+\captionof{figure}{\textbf{Move experimentation upstream; keep evaluation independent.}
+Historical experiments may train the proposer. On a new task, one procedure is committed
+before candidate-specific execution or feedback. Compilation, fitting and independent
+evaluation follow the commitment. This is the proposed experimental contract, not a
+claim that the repository has already demonstrated it.}
+\label{fig:commitment}
+\end{minipage}
+\vspace{10pt}
+}]
+\thispagestyle{plain}
+\input{sections/01-introduction}
+\input{sections/02-setting}
+\input{sections/03-method}
+\input{sections/04-evidence}
+\input{sections/05-protocol}
+\input{sections/06-accounting}
+\input{sections/07-discussion}
+\input{sections/08-conclusion}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

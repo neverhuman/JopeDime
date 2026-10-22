@@ -1,5 +1,17 @@
 # Changes to the CLOVER write-up: 2026-10-10 draft to 2026-10-13 revision (gap GB-11)
 
+## Companion publication added: 22 October 2026
+
+[InnovationZero](innovationzero/README.md) is a separate, sectioned publication
+with a reproducible three-volume PDF build. It preserves this technical report
+and its historical claim ledger as evidence. The new manuscript distinguishes
+current implementations and exploratory comparisons from its proposed
+first-proposal experiment; it does not relabel earlier results as a completed
+InnovationZero campaign. Exact challenge/source artifacts, a provenance manifest,
+and public literature references accompany it. See the
+[editorial decisions](innovationzero/EDITORIAL_DECISIONS.md) for how the five
+supplied proposals were reconciled.
+
 ## Inputs and outputs
 
 The previous draft, the LaTeX scaffold (`tex/`), the paper tools (`tools/`) and the internal companion are lane files in `.agent/proposals/claude-rlfw-20261009/paper/` on xbabe2. They are not in this repository.

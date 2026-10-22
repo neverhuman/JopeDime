@@ -1,0 +1,79 @@
+\section{Historical effort and token provenance}
+\label{app:effort}
+
+The following records describe historical authoring and integration phases.
+They are not a newly metered experiment, a matched-hardware benchmark or a
+ranking of model families. Artifact labels are retained as identifiers; a
+filename does not authenticate a provider model or revision. Raw receipt files
+and exact source identities accompany the artifact supplement.
+
+\paragraph{Astra (report A).}
+The recorded attachment-availability proxy reaches source written at 678.5
+seconds (11 minutes 18.5 seconds), first compilation at 1,021.0 seconds and
+working integration tests at 1,656.6 seconds. Source-written and subsequent
+source-freeze timestamps are distinct. Estimated usage is 80k tokens
+(60k--110k) through freeze and 130k (95k--180k) through integration. These are
+unmetered content estimates, not provider billing totals. The receipt discloses
+prior project context; historical successful checks do not establish pristine
+challenge eligibility or predictive superiority.
+
+\paragraph{Sol (report B).}
+The source-written proxy is 760 seconds, conventionally rounded to 13 minutes;
+first compilation is 1,008 seconds, rounded to 17 minutes. Estimated usage is
+60k tokens (45k--80k) to source and 90k (60k--120k) to first compile. The start
+includes clarification/context intervals, and later integration/publishing is
+outside those scopes. Provider model/revision telemetry is unavailable, and
+prior project context is disclosed.
+
+\paragraph{Opus (report C).}
+The regressor README ties report C to the Opus-labelled CBRS artifact. This is
+repository attribution, not independent provider attestation. Prompt to frozen
+source is estimated at 25 minutes (15--40), with approximately 75k output tokens
+(50k--100k), reasoning included, and 30k--80k input. At least one earlier
+incomplete attempt preceded the final source message. The latter is bounded by
+06:17:44Z to before 06:24Z, at most 6.3 minutes, and its roughly 20k-token estimate
+includes message/manifest material rather than a separately metered code span.
+
+The later admission/integration record spans approximately
+06:40:49Z--07:05Z and reports 94k-plus output, \emph{including} 27k reasoning,
+245k new input and 19.5M-plus cached rereads. These are repository-reported
+transcript-derived measurements; this paper did not recover and re-meter their
+raw provider payloads. Do not add the 27k reasoning again, call cached rereads
+unique information, or charge this post-freeze window as source discovery.
+There is also a gap between the recorded phase windows, so their sum is not an
+exact continuous-session duration.
+
+\paragraph{Unresolved report D.}
+The historical single-shot report estimates 6,850 input, 3,400 reasoning and
+9,650 completion tokens, totaling 19,900 under its assumed disjoint categories.
+It describes roughly 7,850 Rust tokens, 1,085 lines and 33.6~KB; JSON and design
+prose account for the remaining completion. Its 75--105-second duration derives
+from character-per-token and streaming-rate assumptions rather than a wall-clock
+meter. Zero tools, one attempt and no compilation retries remain unverified
+historical declarations. Dividing estimated tokens by a duration inferred from
+assumed token speed would be circular.
+
+The located Gemini replacement is 96,694 bytes with 2,931 newline-terminated
+lines and has no supplied authoring-session telemetry. It is not a source match
+for D. D therefore remains unattributed and is excluded from model-labelled
+throughput or yield comparisons. The replacement's post-freeze compilation and
+predictive evidence cannot retroactively authenticate its original authoring
+conditions.
+
+\paragraph{Reconciliation contract.}
+For future measurements, retain raw request IDs, phase boundaries, retry parent,
+provider usage schema and source hashes. Normalize into disjoint categories only
+after recording whether cached input is included in input total and whether
+reasoning is included in output total. Preserve measurement status per field:
+metered, repository-reported, reconstructed, estimated or unknown. A common
+reference tokenizer can count observable source and text, while proprietary
+hidden reasoning remains in provider-native units. Lexical code/documentation
+counts, source bytes, representation decisions and model tokens must remain
+separate. Report code-only and all-deliverables numerators explicitly, and charge
+discarded/failed attempts within the declared phase.
+
+An illustrative ratio using estimated report D is $7{,}850/9{,}650\approx81\%$
+for code over visible completion, versus $7{,}850/19{,}900\approx39\%$ over its
+reported all-in estimate. These different denominators answer different
+questions; neither is a measured efficiency result. There is no corresponding
+matched prospective InnovationZero measurement in the present evidence.

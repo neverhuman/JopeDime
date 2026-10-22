@@ -1,0 +1,95 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{style}[2026/10/22 InnovationZero publication style]
+\RequirePackage{iftex}
+\ifPDFTeX
+  \RequirePackage[T1]{fontenc}
+  \RequirePackage[utf8]{inputenc}
+  \RequirePackage[sc]{mathpazo}
+  \RequirePackage[scaled=0.92]{helvet}
+  \renewcommand{\ttdefault}{lmtt}
+\else
+  \RequirePackage{mathpazo}
+  \RequirePackage{fontspec}
+  \setmainfont{DejaVu Serif}
+  \setsansfont{DejaVu Sans}[Scale=0.90]
+  \setmonofont{DejaVu Sans Mono}[Scale=0.90]
+\fi
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{microtype}
+\RequirePackage[letterpaper,left=0.70in,right=0.70in,top=0.65in,bottom=0.70in,headheight=14pt,headsep=15pt,footskip=24pt]{geometry}
+\RequirePackage{xcolor,graphicx,booktabs,tabularx,array,multirow}
+\RequirePackage{enumitem}
+\RequirePackage{titlesec}
+\RequirePackage{fancyhdr}
+\RequirePackage{caption}
+\RequirePackage{subcaption}
+\RequirePackage{stfloats}
+\RequirePackage[numbers,sort&compress]{natbib}
+\RequirePackage[hyphens]{url}
+\RequirePackage{xurl}
+\RequirePackage{xr-hyper}
+\RequirePackage{hyperref}
+\RequirePackage{bookmark}
+\definecolor{Ink}{HTML}{173242}
+\definecolor{Cyan}{HTML}{087F8C}
+\definecolor{Amber}{HTML}{B27624}
+\definecolor{Muted}{HTML}{56616A}
+\definecolor{Pale}{HTML}{EDF4F5}
+\hypersetup{colorlinks=true,linkcolor=Ink,citecolor=Cyan,urlcolor=Cyan,
+  pdfcreator={pdfLaTeX / InnovationZero reproducible build},
+  pdfauthor={JopeDime research project},
+  pdftitle={InnovationZero: Learning to Propose Algorithms Before Testing Them},
+  pdfsubject={Protocol and evidence audit},bookmarksnumbered=true}
+\setlength{\columnsep}{0.25in}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\linespread{1.035}
+\setlength{\emergencystretch}{1.5em}
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\setlist{nosep,leftmargin=1.3em,topsep=4pt}
+\titleformat{\section}{\large\sffamily\bfseries\color{Ink}}{\thesection}{0.55em}{}
+\titleformat{\subsection}{\normalsize\sffamily\bfseries\color{Ink}}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}[runin]{\normalsize\bfseries}{\thesubsubsection}{0.45em}{}[.]
+\titlespacing*{\section}{0pt}{10pt plus 2pt minus 1pt}{5pt}
+\titlespacing*{\subsection}{0pt}{8pt plus 1pt minus 1pt}{3pt}
+\titlespacing*{\subsubsection}{0pt}{5pt}{0.5em}
+\captionsetup{font=small,labelfont={bf,sf,color=Ink},textfont=normalfont,
+  labelsep=period,skip=5pt,justification=raggedright,singlelinecheck=false}
+\captionsetup[table]{position=top}
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{9pt plus 2pt minus 2pt}
+\setlength{\intextsep}{9pt plus 2pt minus 2pt}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\color{Muted}InnovationZero}
+\fancyhead[R]{\small\sffamily\color{Muted}Protocol and evidence audit}
+\fancyfoot[C]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+\newcommand{\method}{InnovationZero}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\status}[1]{\textsf{\small\color{Cyan}#1}}
+\newcommand{\papertitle}{InnovationZero: Learning to Propose\newline Algorithms Before Testing Them}
+\newcommand{\publicationdate}{22 October 2026}
+\newcommand{\frontmatter}[1]{%
+  \begin{center}
+  {\sffamily\bfseries\color{Cyan}\fontsize{9}{11}\selectfont PROTOCOL AND EVIDENCE AUDIT}\par\vspace{7pt}
+  {\sffamily\bfseries\color{Ink}\fontsize{23}{26}\selectfont\papertitle\par}
+  \vspace{8pt}
+  {\normalsize JopeDime research project}\par\vspace{2pt}
+  {\small\color{Muted}\publicationdate\quad\textperiodcentered\quad #1}\par
+  \end{center}\vspace{5pt}}
+\newcommand{\supplementtitle}[1]{%
+  \frontmatter{#1}
+  \vspace{5pt}\hrule height 0.4pt\vspace{12pt}}
+\AtBeginDocument{\color{Ink}}
+\endinput
