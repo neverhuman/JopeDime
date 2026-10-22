@@ -29,6 +29,7 @@ try{
   for(const name of selected){
     const engine=engines[name];
     const browser=await engine.launch({headless:true,...(name==='chromium'&&process.env.JOPE_TS_CHROMIUM_EXECUTABLE?{executablePath:process.env.JOPE_TS_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage']}: {})});
+    const version=browser.version();
     try{
       const page=await browser.newPage();await page.goto(origin+'/');
       for(const fixture of cases){
@@ -61,10 +62,10 @@ try{
           }finally{worker.terminate();URL.revokeObjectURL(workerUrl);}
           return out.length;
         },{url,fitted:fixture.kind==='bound'});
-        results.push({browser:name,...fixture,predictions:result,worker:true});
+        results.push({browser:name,version,...fixture,predictions:result,worker:true});
         if(results.length%20===0)console.log(name+': '+fixture.kind+'/'+fixture.name+' ('+results.length+' completed)');
       }
-      console.log(name+': '+cases.length+' ESM and module worker fixtures passed');
+      console.log(name+' '+version+': '+cases.length+' ESM and module worker fixtures passed');
     }finally{await browser.close();}
   }
   assert.equal(results.length,cases.length*selected.length);
