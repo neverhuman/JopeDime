@@ -148,3 +148,6 @@ jobs:
         with:
           name: full-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/full-audit/${{ github.run_id }}/${{ github.run_attempt }}/
+      - name: Leave the persistent workspace deletable for the next checkout
+        if: always()
+        run: if [ -d target/full-audit ]; then chmod -R u+w target/full-audit; fi

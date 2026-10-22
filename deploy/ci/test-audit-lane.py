@@ -162,6 +162,15 @@ class AuditLaneTests(unittest.TestCase):
         self.assertEqual(0, self.run_audit("pass", report_only=True).returncode)
         self.assertFalse((self.output / "report-only.json").exists())
 
+    def test_captured_source_is_left_deletable(self):
+        # Self-hosted workspaces persist; a read-only tree breaks the next job's checkout.
+        for mode in ("pass", "failed", "mode", "manifest"):
+            with self.subTest(mode=mode):
+                self.run_audit(mode)
+                stuck = [p for p in [self.output, *self.output.rglob("*")]
+                         if not p.is_symlink() and not os.stat(p).st_mode & 0o200]
+                self.assertEqual([], stuck)
+
     def test_valid_pass_is_accepted(self):
         result = self.run_audit("pass")
         self.assertEqual(0, result.returncode, result.stderr)

@@ -46,6 +46,8 @@ file, its read-only mode, the archive and the complete path set. The resulting
 audit-verification.json records artifact integrity separately from audit_passed.
 A valid failed audit retains its failure; a zero exit with invalid evidence fails.
 Both passing and failing reports use the existing local/cache evidence transport.
+The captured source is read-only only while it is audited and verified; the wrapper
+restores write permission on exit so the persistent runner workspace stays deletable.
 
 The full auditor follows ignored `.agent/worktrees` by default. The audit wrapper
 therefore exports every tracked Git blob into an immutable evidence input and

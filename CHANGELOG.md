@@ -8,6 +8,7 @@ the commit areas (crate or lane) named in each subject line.
 ### CI
 
 - ci(full-main): the trusted-main source audit is report-only until its score reaches 85 (owner decision, 2026-10-22; 54 at `bdf9441aa`). A verified below-floor audit passes the `audit` job with a warning and a `report-only.json` marker, and its reports keep the failed decision. Missing, inconsistent or tampered evidence, version and tool errors still fail it, and the floor and policy are unchanged
+- ci(full-main): the audit no longer breaks the self-hosted runner after it. Its captured source was left read-only in the persistent workspace, so every later job on that runner failed in `actions/checkout` (`Permission denied`, then `not a git repository`). `jankurai.sh` now restores write permission on exit, after verification, and an always-run step does the same after the evidence upload
 
 ## [0.4.0] - 2026-10-22
 
