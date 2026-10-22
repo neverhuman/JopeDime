@@ -265,6 +265,12 @@ impl FittedModel {
                 {
                     return Err(fail("fitness identity differs from selection record"));
                 }
+            } else if h.metric != task::metric(kind)
+                || selection
+                    .get("fitness_sha256")
+                    .is_some_and(|value| !value.is_null())
+            {
+                return Err(fail("selection objective definition is missing"));
             }
         } else if h.metric != task::metric(kind) {
             return Err(fail("named fit has a noncanonical task metric"));
