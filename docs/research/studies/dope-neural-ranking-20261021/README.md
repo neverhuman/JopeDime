@@ -1,3 +1,29 @@
+# Dope and GP landmarking research archive — current index
+
+**Current conclusion: no established incremental Dope-state or landmark routing lift.** This public historical archive retains favorable, null, adverse, incomplete and source-only studies. Read the [full research audit and highest-value next wave](research-wave-20261023/README.md), [external review guide](REVIEW_GUIDE.md), and [H27 matched 36-model result](h27/nn-fixed400-study.md) first.
+
+| Evidence | Start here |
+| --- | --- |
+| Original corrected study and H01–H14 follow-ups | [Early history and original conclusions](early-history/README.md) |
+| Early neural training, including failed and partial runs | [DL02](early-history/dl02-learning-curves.json), [DL03](early-history/dl03-learning-curves.json), [DL04](early-history/dl04-learning-curves.json); [DL01 unavailable](early-history/dl01-learning-curves.json) |
+| DL03–DL06 controls, failures and endpoints | [Experiment ledger](experiment-ledger.json), [DL06 curves](dl06-learning-curves.json) |
+| H18 residual state | [Results and all 18 model curves](h18/README.md) |
+| H20 wider state correction | [Results and all 12 adapter curves](h20/README.md) |
+| H21–H26 S3/source qualification | [History index](history-index.json), [H26 fold-contract correction](h26/fold-identity-correction.md) |
+| H27 rapid GP probes and fresh Dope | [34,000 probe fits](h27/full850-verified-landmarking.md), [36 neural models/180 observations](h27/nn-fixed400-study.md) |
+| H28 gate-transition concentration | [Independent saved-choice arithmetic](h28/README.md) |
+| Highest-value new research | [Worker-ready next-wave plan](research-wave-20261023/NEXT_WAVE_PLAN.md) |
+
+H27's two predeclared raw-fitness contrasts are five-fold-minus-zero **−0.105572 [−0.789036,+0.286984]** and five-fold-minus-one **+0.148218 [−0.023060,+0.401283]**. Negative favors treatment; both intervals include harm. These are central98.75% intervals, jointly familywise97.5%. One-fold has the favorable exploratory point, but H28 shows rare failed choices dominate the differences. All850 contexts/162components are historically exposed TRAIN, with no new independent-family validation. The next wave prioritizes a strong no-Dope tree and qualified task breadth; longer optimization is a controlled question, not a promised cure.
+
+Reports use their original endpoint and population: CV-ratio percentages, raw constrained fitness, R²/AUC, shadow gain and training losses are not interchangeable. Missing historical artifacts stay unavailable. Aggregate-only publication does not expose task cells, individual candidate outcomes, private identities/locators, credentials or bulk weights. It is not an admitted governed wave or production promotion. Source identities and prior receipt boundaries remain in each study.
+
+## Dated publication history
+
+The material below is append-preserved historical reporting. Earlier phrases such as “preparing,” “pending publication,” proposed budgets, or unresolved next packets describe their original snapshot; later completed reports and the current index above supersede those status statements. Historical failures and old deadline refusals are preserved. The human removed compute deadlines for new work; the recurring30-minute cadence is not a compute limit.
+
+---
+
 # Latest continuation — H20 completed, H21 data qualification
 
 [H20 results and all 12 actual TRAIN curves](h20/README.md) are complete: 2,400 updates, later separate full replay passed; both primary intervals include harm. No established incremental state lift. Original failures remain. The [highest-value next data experiment](h21/PLAN.md) qualifies exact S3 input, membership, source-family roles and reservations before learning admission. Its current census and membership-first pilot are separate from model validation.

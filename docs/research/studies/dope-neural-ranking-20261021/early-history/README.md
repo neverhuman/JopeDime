@@ -1,0 +1,12 @@
+# Early corrected research and DL01–DL04 learning curves
+
+Read [H01–H14 aggregate outcomes](hypotheses-results.json) and the [source receipt](source-receipt.json). This historical export adds no fits, array reads, new significance tests or promotion claims.
+
+H01 continuous cost had promising exploratory comparisons, but stronger-baseline and shuffled-control stability checks prevent established lift. H02 geometry was null. H03 functional summaries improved weaker controls without established benefit over stronger A0. H06 matched controls were inconclusive. H07 compressed conditional Ridge was worse than stronger trees. H08 corrected full-pool sensitivity retained no established neural-function advantage; its invalid original score direction remains disclosed. H04/H10/H12 were inventory or metadata qualification, not newly admitted independent volume. H13 closed partial; H14 was an inconclusive secondary diagnostic. H05 was conceptual and H09 queued; H11 is unavailable in the bounded record, with no fabricated result.
+
+- [DL01 curves](dl01-learning-curves.json): unavailable, zero dataset updates after extraction/preparation failure.
+- [DL02 curves](dl02-learning-curves.json): 12 runs, 156 saved snapshots, 7,200 updates. Historical backbone exposure and adverse constrained-fitness point estimates remain. Its old collector filename says DL01, but its embedded results are exactly DL02.
+- [DL03 curves](dl03-learning-curves.json): 15 runs, 147 snapshots, 6,600 updates: six configuration runs at 200 updates and nine final runs at 600. INNER was used for configuration selection. Seed aggregation was posthoc.
+- [DL04 curves](dl04-learning-curves.json): 15 runs with curves, 152 snapshots, 6,875 updates. Six selection runs, eight completed final models and 75 partial updates; missing matched controls and failed partial audit remain. The partial seed was last evaluated at step 50, not 75.
+
+Every snapshot is a saved per-run scalar, with no interpolation or invented endpoint. TRAIN is a small fixed panel, not full-population training loss. DL04 CAL is a calibration-fitting diagnostic; SELECT enters final training. Neither becomes independent validation. M0/M1 loss units differ. These traces do not justify choosing a favorable later endpoint or pooling losses across objectives. Reused families, historical exposure, unavailable independent outer evaluation and all original primary uncertainty remain. No established independent state lift or production promotion follows.
