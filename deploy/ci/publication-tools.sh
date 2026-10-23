@@ -16,7 +16,12 @@ export TMPDIR="$repo/target/tmp"
 # Debian normally creates these files in package-maintainer scripts. Generate only
 # the English XeLaTeX configuration in our writable state, never in the deb tree.
 state="$cache/tex-state"
-mkdir -p "$state/config/web2c" "$state/config/tex/generic/config" "$state/var" "$state/home" "$state/local"
+mkdir -p "$state/config/web2c" "$state/config/tex/generic/config" "$state/var" "$state/home" "$state/local" "$state/bin"
+# Debian registers this command through update-alternatives, which we never run.
+# Bind it directly to the verified package binary in our task-local PATH instead.
+test -x "$runtime/usr/bin/bibtex.original"
+ln -sfn "$runtime/usr/bin/bibtex.original" "$state/bin/bibtex"
+export PATH="$state/bin:$PATH"
 cp "$runtime/var/lib/tex-common/fmtutil-cnf/texlive/texlive-xetex.cnf" "$state/config/web2c/fmtutil.cnf"
 printf 'english hyphen.tex\n=usenglish\n=USenglish\n=american\n' > "$state/config/tex/generic/config/language.dat"
 printf '\\addlanguage{USenglish}{hyphen}{}{0}{3}{2}\n' > "$state/config/tex/generic/config/language.def"

@@ -34,3 +34,14 @@ CI, source-bound receipts and visual PDF review are separate requirements before
 Evidence custody: /home/ubuntu/jope-evidence/pr-release-drive-20261022T2319Z. This is the
 implementing agent's review, not an independent numerical or human peer review. Track C and
 authoring-telemetry limitations remain explicit in the manuscript.
+
+
+The first complete isolated build refused missing `bibtex`: Ubuntu registers its public name
+through update-alternatives, absent in extraction-only operation. The bootstrap now binds that
+name to the locked `bibtex.original` in separate task-local PATH state. No maintainer script runs.
+Initial hygiene also refused the two newly discovered reusable caller jobs; both are explicitly
+assigned to the existing paper lane, and the README coverage count is derived from that map.
+Both reproducing failures are retained; complete corrected container build and hygiene remain
+separate acceptance commands.
+
+The corrected container command first reused existing PDFs (latexmk reported no work); that is a cache/readback check, not a fresh image compilation. Preserve those PDFs/logs, clean only the publication build products through its owning target, and rebuild all three volumes from source in the pinned read-only image before calling the image build qualified.

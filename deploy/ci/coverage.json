@@ -959,6 +959,16 @@
       ],
       "scope": "Exact-head Node26 typecheck, nonzero Vitest JSON fixtures and Vite build in the admitted ci.yml workflow. Aggregate requires successful job plus retained source/run/attempt-bound nonzero receipt. No live training qualification."
     },
+    "job:.github/workflows/ci.yml/paper": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "paper"
+      ],
+      "scope": "Call the reusable publication build through existing ci.yml admission; aggregate requires its successful current-source PDF/check evidence."
+    },
     "job:.github/workflows/ci.yml/python": {
       "discovery": {
         "kind": "workflow-job"
@@ -1030,6 +1040,16 @@
         "full-emitters"
       ],
       "scope": "Push/main-manual diagnostic CPU families in independent matrix groups (deploy/ci/full-main.py GROUPS), independent outcomes within the declared 145-minute CPU job deadline; no merge gate or qualification claim."
+    },
+    "job:.github/workflows/full-main.yml/paper": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "paper"
+      ],
+      "scope": "Call the reusable publication build through existing full-main.yml admission; aggregate requires its successful current-source PDF/check evidence."
     },
     "job:.github/workflows/jankurai.yml/jankurai-audit": {
       "discovery": {
