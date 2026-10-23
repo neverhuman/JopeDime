@@ -1,0 +1,46 @@
+% Abstract, reader note and Figure 1.
+\begin{ezsynnote}
+\noindent{\sffamily\sbseries\color{ezsyn}How to read this draft.}\enspace This is the paper we intend
+to earn, written before its decisive experiments. Framing, method, protocol and historical evidence
+are real; \textbf{every EurekaZero result is synthetic}, set in \textcolor{ezsyn}{purple} and linked
+to the gap ledger (\cref{app:gaps}), which names the experiment that must replace it. Figures with
+synthetic data carry a \textsf{SYNTHETIC} tag; real results (\cref{app:history}) carry \est{} and
+\pre{} badges.
+\end{ezsynnote}
+
+\begin{ezabstract}
+\noindent{\sffamily\sbseries\small\color{ezaccent}Abstract}\par\smallskip
+\noindent AlphaGo Zero showed that a network trained on the outcomes of its own search can play
+strong moves without searching. We argue that innovation admits the same treatment. When a
+problem's requirements can be encoded, its candidate solutions written in a typed language and
+their quality measured by an independent verifier, inventing a solution is a move in a game against
+the best solution known so far. We formalize this \emph{innovation game} and introduce EurekaZero,
+which maps an encoded problem state through a learned solution embedding to one typed, executable
+candidate (\code{game\_state\_encoding} $\to$ \code{solution\_embedding} $\to$ \code{solution}) and
+is trained on verified outcomes of earlier searches. \emph{Zero} is a protocol: one candidate is
+committed before any candidate-specific execution, scoring or revision. On sealed problem families
+in three domains---learning procedures for unseen datasets, next-experiment decisions from
+optimization histories, and load-bearing parts from engineering specifications---one EurekaZero
+proposal improves failure-inclusive utility over the strongest predeclared non-search control by
+\syn[EZ-G01]{\EZdA}, \syn[EZ-G03]{\EZdB} and \syn[EZ-G05]{\EZdC}, matches search after
+\syn[EZ-G02]{\EZbeqA} and \syn[EZ-G06]{\EZbeqC} evaluated candidates, and beats frontier language
+models given the same information and one attempt. Ablations attribute the gain to outcome training
+and the solution embedding rather than to retrieval or catalog selection, and one shared model plays
+all three games. Of committed learning procedures, \syn[EZ-G15]{\EZnovAfour\%} are useful and absent
+from the frozen training archive; \syn[EZ-G15]{\EZnFive} proposed mechanisms survive removal and
+replacement on reserved problems, \syn[EZ-G15]{\EZnSix} of them independently replicated. We release
+the protocol, the benchmarks and every committed proposal.
+\end{ezabstract}
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-game}
+\caption{Innovation as a game. The game AlphaGo Zero mastered (left) and three innovation games
+EurekaZero plays share one structure. A \emph{state} encodes everything the player may see; a
+\emph{move} is one complete, typed candidate committed before it is tested; the \emph{rules} are the
+typed solution language and its guarantees; an independent \emph{verifier} scores the move after
+commitment; and the \emph{opponent} is the incumbent, the best verified solution known for that
+problem. Winning a game raises the bar for the next one. Unlike Go, each innovation game is a new
+board drawn from a family the player has never seen.}
+\label{fig:game}
+\end{figure}

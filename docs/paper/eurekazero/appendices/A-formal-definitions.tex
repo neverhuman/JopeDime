@@ -1,0 +1,70 @@
+% Appendix A — Formal definitions and proofs
+\section{Formal definitions}
+\label{app:formal}
+
+\paragraph{Innovation game} An innovation game is a tuple
+$\mathcal G=(\mathcal S,\mathcal L,\mathcal V,u,\mathcal I,\beta)$: a state space $\mathcal S$ of
+encoded problems; a typed solution language $\mathcal L$ whose well-typed members are complete
+candidates; a verifier $\mathcal V:\mathcal S\times\mathcal L\to\mathcal Y\cup\{\bot\}$ returning an
+outcome or a failure; a utility $u:\mathcal Y\cup\{\bot\}\to[-1,1]$ with $u(\bot)=-1$; an incumbent
+map $\mathcal I:\mathcal S\to\mathcal L$ giving the best verified solution known for a state before
+play; and a declared budget $\beta$ (candidates, evaluations, simulations, wall time). A family
+$F$ is a distribution over $\mathcal S$ induced by one source or generator; families sharing a source
+form a dependency component. A \emph{one-shot game} ($H=1$) ends after one move. A \emph{sequential
+game} of horizon $T$ appends each verified outcome to the state,
+$s_{t+1}=s_t\oplus(a_t,\mathcal V(s_t,a_t))$.
+
+\paragraph{The four conditions} The innovation-game hypothesis applies to a problem class when
+(i) every instance can be encoded as $s\in\mathcal S$ without the verifier's private data;
+(ii) $\mathcal L$ is decidable---well-typedness is checked without executing the candidate;
+(iii) $\mathcal V$ is independent of the player: it runs outside the player's process, from inputs the
+player cannot write; and (iv) $\beta$ is declared before play.
+
+\paragraph{Information sets and the Zero contract} Let $\Omega(s)$ be the information available to the
+player at commitment and $c=\mathrm{hash}(a)$ the commitment. The Zero contract
+(\cref{def:zero}) holds when the supervisor's counters satisfy
+$K=|\{a:\text{committed}\}|=1$, $E=|\{\text{candidate-specific evaluations before } c\}|=0$ and
+$R=|\{\text{revisions after any feedback}\}|=0$, and $\Omega(s)$ contains no function of
+$\mathcal V(s,\cdot)$. Track C0 has $\Omega(s)=s$; track CH has
+$\Omega(s)=s\oplus h$ for a frozen history $h$ identical across arms; track SEQ applies the contract at
+each step; track S relaxes $K$, $E$ and $R$ to a declared budget.
+
+\paragraph{Utility and estimand} For a state $s$ with reference $b(s)$ and domain loss $e$,
+$U=\mathrm{clip}(\log(b(s)/e),-1,1)$ for valid moves and $U=-1$ for failures. For arm $m$ and
+comparator $c$, the family-level paired difference is
+$\delta_F=\mathbb E_{s\sim F}[U_m(s)-U_c(s)]$ and the estimand is
+$\Delta=\mathbb E_{F}[\delta_F]$ over confirmation families with equal family weights.
+
+\paragraph{Search-equivalent budget} Let $\mu_{\mathrm{search}}(B)$ be the family-weighted mean
+utility of the declared search procedure at budget $B$ on a measured grid $\mathcal B$. Then
+$B_{\mathrm{eq}}=\min\{B\in\mathcal B:\mu_{\mathrm{search}}(B)\ge\mu_{\mathrm{EZ}}(1)\}$; if no
+$B\in\mathcal B$ qualifies, we report $B_{\mathrm{eq}}>\max\mathcal B$ and do not extrapolate. Its
+interval is the set of grid points selected across bootstrap replicates (\cref{app:statistics}).
+
+\subsection{Proofs}
+
+\paragraph{\Cref{prop:closed} (closed support)} Let $p_\theta(\cdot\mid s)$ have support
+$\mathcal A_{\mathrm{train}}$ for every $\theta$ in the parameter set $\Theta$ reachable by training.
+Then $\Pr_\theta[a\notin\mathcal A_{\mathrm{train}}]=\sum_{a\notin\mathcal A_{\mathrm{train}}}
+p_\theta(a\mid s)=0$. Every update maps $\Theta$ into itself, so the support never grows.
+\hfill\tikz\draw[line width=0.5pt] (0,0) rectangle (0.62em,0.62em);
+
+\paragraph{\Cref{prop:repr} (representation limit)} Let $z=E(s)$. For any policy
+$\pi(a\mid z)$, $\mathbb E[U\mid s,\pi]\le\sup_a\mathbb E[U\mid s,a]$ for every $s$, with equality only
+if $\pi$ puts its mass on moves optimal for $s$. If $E(s)=E(s')$ and no move optimal for $s$ is optimal
+for $s'$, $\pi(\cdot\mid z)$ cannot put all its mass on optimal moves for both, so it is suboptimal on
+at least one. Taking expectations over states gives the inequality.
+\hfill\tikz\draw[line width=0.5pt] (0,0) rectangle (0.62em,0.62em);
+
+\paragraph{Decomposition} For any proposer $\pi$ and any larger language
+$\mathcal L^\star\supseteq\mathcal L$, the gap to the best achievable move splits into three
+non-negative terms:
+\begin{align*}
+\mathbb E\sup_{a\in\mathcal L^\star}\mathbb E[U\mid s,a]-\mathbb E[U\mid z,\pi]
+={}&\underbrace{\mathbb E\sup_{a\in\mathcal L^\star}\mathbb E[U\mid s,a]-\mathbb E\sup_{a\in\mathcal L}\mathbb E[U\mid s,a]}_{\text{language}}\\
+&+\underbrace{\mathbb E\sup_{a\in\mathcal L}\mathbb E[U\mid s,a]-\mathbb E\sup_{a\in\mathcal L}\mathbb E[U\mid z,a]}_{\text{encoder}}\\
+&+\underbrace{\mathbb E\sup_{a\in\mathcal L}\mathbb E[U\mid z,a]-\mathbb E[U\mid z,\pi]}_{\text{policy}}.
+\end{align*}
+The
+experiments estimate the encoder term with oracle-state controls, the language term with a richer
+decoder on development data, and the policy term with search at large budget.

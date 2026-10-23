@@ -7,6 +7,7 @@ on:
         type: string
         default: jope-ci
 
+  workflow_dispatch:
 permissions:
   contents: read
 

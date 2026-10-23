@@ -7,6 +7,8 @@ use jope_pipeline::{
     search::Budget,
 };
 use std::{fs, path::Path};
+#[path = "../../feat-math/tests/go_support/mod.rs"]
+mod go_support;
 #[path = "../../feat-math/tests/typescript_support/mod.rs"]
 mod typescript_support;
 fn scratch() -> tempfile::TempDir {
@@ -25,6 +27,7 @@ fn writer_reader_accounts_for_all_recipe_and_fitted_components() {
     let mut targets = Target::RECIPES.to_vec();
     targets.push(Target::Cpp17Fitted);
     targets.push(Target::TypeScript);
+    targets.push(Target::Go);
     let out = emit::emit_v3("(pipe X (ridge))", &targets, dir.path(), Some(&rows())).unwrap();
     assert!(out.manifest.all_supported());
     assert_eq!(
@@ -190,6 +193,12 @@ fn install_v3(
                     } else if record.target == Target::TypeScript && f.path.ends_with(".kernel.rs")
                     {
                         "typescript-kernel"
+                    } else if record.target == Target::Go && f.path.ends_with(".kernel.rs") {
+                        "go-kernel"
+                    } else if record.target == Target::Go && f.path == "go.mod" {
+                        "go-module"
+                    } else if record.target == Target::Go && f.path == "go.sum" {
+                        "go-checksums"
                     } else {
                         record.target.as_str()
                     };
@@ -236,6 +245,7 @@ fn native_publication_accepts_supported_pinned_v3_run() {
     let root = dir.path().join("run");
     let mut targets = Target::RECIPES.to_vec();
     targets.push(Target::TypeScript);
+    targets.push(Target::Go);
     let (r, expected) = v3_run(&root, &targets);
     assert_eq!(
         publication::verify_run_v3(&root.join("receipt.json"), &expected).unwrap(),
@@ -269,6 +279,10 @@ fn native_publication_refuses_javascript_substitution_even_with_loose_hash_updat
     substituted_run(Target::JavaScript, "model.js", "javascript");
     substituted_run(Target::TypeScript, "model.ts", "typescript");
     substituted_run(Target::TypeScript, "model.kernel.rs", "typescript-kernel");
+    substituted_run(Target::Go, "model.go", "go");
+    substituted_run(Target::Go, "model.go.kernel.rs", "go-kernel");
+    substituted_run(Target::Go, "go.mod", "go-module");
+    substituted_run(Target::Go, "go.sum", "go-checksums");
 }
 #[test]
 fn native_publication_refuses_python_substitution_even_with_loose_hash_updated() {
@@ -353,8 +367,17 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     let root = dir.path();
     let mut targets = Target::RECIPES.to_vec();
     targets.extend([Target::Cpp17RecipeV2, Target::Cpp17Fitted, Target::C17]);
+    if matches!(
+        std::env::var("JOPE_CUDA_PARITY").as_deref(),
+        Ok("host" | "compile" | "device")
+    ) {
+        targets.push(Target::Cuda);
+    }
     if typescript_support::enabled() {
         targets.push(Target::TypeScript);
+    }
+    if go_support::enabled() {
+        targets.push(Target::Go);
     }
     let program = "(pipe X (ridge alpha=1.0))";
     let out = emit::emit_v3(program, &targets, root, Some(&rows())).unwrap();
@@ -381,6 +404,54 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     for target in targets {
         let predictions = root.join(format!("{}.predictions", target.as_str()));
         match target {
+            Target::Cuda => {
+                let cdir = root.join("cuda");
+                execute(Command::new("rustc").current_dir(&cdir).args([
+                    "--edition=2021",
+                    "-O",
+                    "-C",
+                    "panic=unwind",
+                    "--crate-type=staticlib",
+                    "model_native.rs",
+                    "-o",
+                    "libmodel_native.a",
+                ]));
+                fs::write(
+                    cdir.join("consumer.cpp"),
+                    r#"#include "model.hpp"
+#include <fstream>
+#include <iomanip>
+int main(int argc,char** argv){
+ if(argc!=2)return 1;
+ jope_cuda::Rows x;std::vector<double> y;
+ for(int i=0;i<10;++i){x.push_back({static_cast<double>(i)});y.push_back(2*i+1);}
+ jope_cuda::Model m;m.fit(x,y);auto out=m.predict({{0.5},{2.5}});
+ std::ofstream f(argv[1]);f<<std::setprecision(17);
+ for(double v:out)f<<v<<'\n';return f?0:2;
+}"#,
+                )
+                .unwrap();
+                execute(Command::new("g++").current_dir(&cdir).args([
+                    "-std=c++17",
+                    "-x",
+                    "c++",
+                    "-O2",
+                    "-DJOPE_CUDA_HOST_ONLY",
+                    "-ffp-contract=off",
+                    "-fno-fast-math",
+                    "model.cu",
+                    "consumer.cpp",
+                    "-x",
+                    "none",
+                    "libmodel_native.a",
+                    "-ldl",
+                    "-lpthread",
+                    "-lm",
+                    "-o",
+                    "consumer",
+                ]));
+                execute(Command::new(cdir.join("consumer")).arg(&predictions));
+            }
             Target::C17 => {
                 let cdir = root.join("c17");
                 execute(Command::new("rustc").current_dir(&cdir).args([
@@ -437,6 +508,20 @@ int main(int argc, char **argv) {
                     &root.join("verified-typescript"),
                     &fs::read_to_string(root.join("model.ts")).unwrap(),
                     &fs::read_to_string(root.join("model.kernel.rs")).unwrap(),
+                    &serde_json::json!({"train":x,"targets":y,"test":[[0.5],[2.5]]}),
+                    &expected,
+                    false,
+                );
+                continue;
+            }
+            Target::Go => {
+                // Execute the exact two sources admitted by read_identity_v3.
+                // The shared qualifier checks actual CJS/ESM predictions with
+                // the declared Wasm tolerance, rather than the native bit gate.
+                go_support::run(
+                    &root.join("verified-go"),
+                    &fs::read_to_string(root.join("model.go")).unwrap(),
+                    &fs::read_to_string(root.join("model.go.kernel.rs")).unwrap(),
                     &serde_json::json!({"train":x,"targets":y,"test":[[0.5],[2.5]]}),
                     &expected,
                     false,

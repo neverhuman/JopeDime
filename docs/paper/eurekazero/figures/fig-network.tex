@@ -1,0 +1,74 @@
+% Figure — the EurekaZero network at a high level. Conceptual architecture; dimensions are the
+% proposed design (gap EZ-G21), not a trained checkpoint.
+\begin{tikzpicture}[x=1cm, y=1cm,
+  inbox/.style={ezbox, font=\sffamily\scriptsize, text width=1.95cm, minimum height=1.05cm, inner sep=2.5pt},
+  adapt/.style={ezstage, font=\sffamily\scriptsize, text width=1.95cm, minimum height=1.05cm, inner sep=2.5pt},
+  dec/.style={ezstage, font=\sffamily\scriptsize, text width=1.85cm, minimum height=1.05cm, inner sep=2.5pt},
+  emit/.style={ezbox, font=\sffamily\scriptsize, text width=1.55cm, minimum height=1.05cm, inner sep=2.5pt},
+  tok/.style={draw=ezaccent, fill=ezaccentsoft, minimum size=0.17cm, inner sep=0pt},
+  slot/.style={draw=white, fill=ezaccent!55, minimum size=0.2cm, inner sep=0pt, line width=0.4pt},
+  lab/.style={font=\sffamily\scriptsize, text=ezgrey, align=center},
+  arr/.style={ezarrow, line width=0.6pt}]
+
+  % ---------------- inputs
+  \node[inbox] (in1) at (0.95, 1.55) {\textbf{Observed data}\\training rows, objective, budget};
+  \node[inbox] (in2) at (0.95, 0.00) {\textbf{History}\\$(x_i, y_i)$, bounds, cost, horizon};
+  \node[inbox] (in3) at (0.95,-1.55) {\textbf{Specification}\\loads, interfaces, material};
+
+  % ---------------- adapters (drawn with depth to suggest stacked layers)
+  \foreach \y/\nm/\txt in {1.55/ad1/{Row--feature\\set transformer}, 0.00/ad2/{History\\transformer}, -1.55/ad3/{Typed-token\\transformer}} {
+    \fill[ezaccent!12, rounded corners=2.5pt] (2.62+0.12,\y-0.52+0.10) rectangle (4.57+0.12,\y+0.52+0.10);
+    \fill[ezaccent!20, rounded corners=2.5pt] (2.62+0.06,\y-0.52+0.05) rectangle (4.57+0.06,\y+0.52+0.05);
+    \node[adapt] (\nm) at (3.6,\y) {\txt\\[1pt]{\color{ezgrey}$E_{\phi,d}\;{\times}L$}};}
+  \foreach \i in {1,2,3} \draw[arr] (in\i.east) -- (ad\i.west);
+
+  % ---------------- state tokens z
+  \foreach \k in {0,...,9} \node[tok] (z\k) at (5.25, 1.55-0.345*\k) {};
+  \node[lab, anchor=north] at (5.25,-1.75) {$z$\\[-1pt]state\\[-2pt]tokens};
+  \draw[arr] (ad1.east) -- (5.12,1.45);
+  \draw[arr] (ad2.east) -- (5.12,0.00);
+  \draw[arr] (ad3.east) -- (5.12,-1.40);
+
+  % ---------------- shared proposer and solution embedding (protected)
+  \node[ezhidden, minimum width=3.15cm, minimum height=4.35cm] (prop) at (7.55,0.0) {};
+  \node[font=\sffamily\sbseries\scriptsize, text=white, anchor=north] at (7.55,2.05) {Shared proposer $P_\theta$};
+  \foreach \j in {0,1,2} \draw[white, line width=0.5pt, rounded corners=1.5pt]
+    (6.25,1.30-0.42*\j) rectangle (8.85,1.62-0.42*\j);
+  \node[font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, text=white] at (7.55,1.46) {latent cross-attention};
+  \node[font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, text=white] at (7.55,1.04) {self-attention over slots};
+  \node[font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, text=white] at (7.55,0.62) {${\times}N$ blocks};
+  \foreach \r in {0,...,3} \foreach \c in {0,...,3} \node[slot] at (6.98+0.25*\c, -0.25-0.25*\r) {};
+  \node[font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, text=white, align=center, anchor=north] at (7.355,-1.2)
+    {$h$: solution embedding\\[-1pt]{\color{white!75}slots $\times$ width}};
+  \node[font=\sffamily\fontsize{5.2pt}{6pt}\selectfont, text=white!70, anchor=south east] at (9.08,-2.13) {protected};
+  \draw[arr] (5.38,0.0) -- (prop.west);
+
+  % ---------------- decoders and emitters
+  \node[dec] (de1) at (10.55, 1.55) {Program decoder\\{\color{ezgrey}typed grammar}};
+  \node[dec] (de2) at (10.55, 0.00) {Query decoder\\{\color{ezgrey}typed space}};
+  \node[dec] (de3) at (10.55,-1.55) {Construction decoder\\{\color{ezgrey}CAD grammar}};
+  \foreach \i/\y in {1/1.55,2/0.0,3/-1.55} \draw[arr] (prop.east |- 0,\y) -- (de\i.west);
+  \node[emit] (em1) at (12.95, 1.55) {\textbf{Procedure}\\Rust \textperiodcentered{} Python};
+  \node[emit] (em2) at (12.95, 0.00) {\textbf{Next query}\\$x_{t+1}$ (JSON)};
+  \node[emit] (em3) at (12.95,-1.55) {\textbf{CAD program}\\CadQuery $\to$ STEP};
+  \foreach \i in {1,2,3} \draw[arr] (de\i.east) -- (em\i.west);
+
+  % ---------------- commitment
+  \draw[ezwarm, line width=0.8pt, dashed] (14.05,2.35) -- (14.05,-2.35);
+  \node[font=\sffamily\sbseries\scriptsize, text=ezwarm, rotate=90, anchor=north] at (14.12,0.0) {commit: hash and freeze};
+
+  % ---------------- interface braces
+  \draw[decorate, decoration={brace, amplitude=4pt}, ezaccent, line width=0.6pt] (2.55,2.45) -- (5.45,2.45)
+    node[midway, above=4pt, font=\ttfamily\scriptsize, text=ezaccent] {game\_state\_encoding};
+  \draw[decorate, decoration={brace, amplitude=4pt}, ezink, line width=0.6pt] (5.95,2.45) -- (9.15,2.45)
+    node[midway, above=4pt, font=\ttfamily\scriptsize, text=ezink] {solution\_embedding};
+  \draw[decorate, decoration={brace, amplitude=4pt}, ezaccent, line width=0.6pt] (9.6,2.45) -- (13.8,2.45)
+    node[midway, above=4pt, font=\ttfamily\scriptsize, text=ezaccent] {solution};
+
+  % ---------------- training signals (training only, never at proposal time)
+  \node[ezbox, font=\sffamily\scriptsize, text width=7.6cm, fill=ezpaper] (exp) at (8.85,-3.25)
+    {\textbf{Verified experience} (training only): imitation of verified search \textperiodcentered{}
+     first-proposal utility $J_1$ \textperiodcentered{} value, feasibility and cost heads};
+  \draw[ezarrow, dashed] (exp.north -| 7.55,0) -- (prop.south);
+  \draw[ezarrow, dashed] (exp.north -| 10.55,0) -- (de3.south);
+\end{tikzpicture}

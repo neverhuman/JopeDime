@@ -1535,6 +1535,14 @@ mod typescript_support {
 }
 
 #[cfg(test)]
+mod go_support {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/go_support/mod.rs"
+    ));
+}
+
+#[cfg(test)]
 mod tests {
     use super::super::csv::RawTable;
     use super::super::pipeline::fit_table;
@@ -1620,6 +1628,18 @@ mod tests {
                     .unwrap();
             super::typescript_support::run(
                 &temp.join("typescript"),
+                &bundle.source,
+                &bundle.kernel,
+                &serde_json::json!({"rows":test.rows}),
+                &runtime,
+                true,
+            );
+        }
+        if super::go_support::enabled() {
+            let bundle =
+                crate::go::emit_bound(&model, &crate::transpile::EmitOptions::default()).unwrap();
+            super::go_support::run(
+                &temp.join("go"),
                 &bundle.source,
                 &bundle.kernel,
                 &serde_json::json!({"rows":test.rows}),
@@ -1784,6 +1804,19 @@ mod quotation_regression_tests {
                 true,
             );
         }
+        if super::go_support::enabled() {
+            let bundle =
+                crate::go::emit_bound(&model, &crate::transpile::EmitOptions::default()).unwrap();
+            let scratch = tempfile::tempdir().unwrap();
+            super::go_support::run(
+                scratch.path(),
+                &bundle.source,
+                &bundle.kernel,
+                &serde_json::json!({"rows":table.rows}),
+                &model.predict_table(&table).unwrap(),
+                true,
+            );
+        }
         let source = emit_bound(&model, &crate::transpile::EmitOptions::default())
             .unwrap()
             .python;
@@ -1858,6 +1891,23 @@ pub fn emit_bound_targets_v3(
     let mut records = Vec::new();
     let mut sources = std::collections::BTreeMap::new();
     for &target in requested {
+        if target == Target::Cuda {
+            let bundle = crate::cuda::emit_bound(model, options)?;
+            let inputs: Vec<_> = bundle
+                .files
+                .iter()
+                .map(|(p, s)| (p.as_str(), s.as_str()))
+                .collect();
+            records.push(TargetRecord::supported(
+                target,
+                "advanced_v3",
+                crate::cuda::EMITTER,
+                &inputs,
+                Some(fitted.clone()),
+            ));
+            sources.extend(bundle.files);
+            continue;
+        }
         if target == Target::TypeScript {
             let bundle = crate::typescript::emit_bound(model, options)?;
             records.push(TargetRecord::supported(
@@ -1872,6 +1922,20 @@ pub fn emit_bound_targets_v3(
             ));
             sources.insert("model.ts".into(), bundle.source);
             sources.insert("model.kernel.rs".into(), bundle.kernel);
+            continue;
+        }
+        if target == Target::Go {
+            let bundle = crate::go::emit_bound(model, options)?;
+            records.push(TargetRecord::supported(
+                target,
+                "advanced_v3",
+                crate::go::EMITTER_VERSION,
+                &crate::go::sources(&bundle),
+                Some(fitted.clone()),
+            ));
+            for (path, source) in crate::go::sources(&bundle) {
+                sources.insert(path.into(), source.into());
+            }
             continue;
         }
         let source = match target {
@@ -1891,7 +1955,7 @@ pub fn emit_bound_targets_v3(
         } else {
             records.push(TargetRecord::unsupported(
                 target,
-                "bound-v2 adapter supports Python, Rust and TypeScript".into(),
+                "bound-v2 adapter supports Python, Rust, TypeScript, Go and CUDA C++".into(),
             ));
         }
     }

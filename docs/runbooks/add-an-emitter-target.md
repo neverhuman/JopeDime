@@ -74,3 +74,10 @@ recipe and its golden fixtures once; the C caller in `tests/golden.rs` then exer
 implementation through the ABI. Keep `src/c17/model.h`, `bridge.rs`, manifest closure and
 `tests/support/c17_export.rs` synchronized when changing the ABI. Build dependencies and fitted-format
 limits are explicit in [the C17 guide](../c17-export.md). Existing legacy defaults stay frozen.
+
+## CUDA C++ hybrid target
+
+The complete host recipe uses the same safe native implementation as C17. CUDA-specific
+C++ ownership and device-head boundaries are in `src/cuda/`. Extend the Rust recipes once,
+then run the CUDA registry census and golden qualification. Keep host, compiler-only and
+actual device receipts distinct; see [the execution and qualification contract](../cuda.md).

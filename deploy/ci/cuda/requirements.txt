@@ -1,0 +1,5 @@
+# Official NVIDIA compiler/runtime wheels, Linux x86_64, CUDA 13.0 update 1.
+nvidia-cuda-nvcc==13.0.88 --hash=sha256:56fe502eb77625a12f25172caa3cdddb4e4c8ba2c8c17dba44b164761b380f03
+nvidia-cuda-runtime==13.0.88 --hash=sha256:422a38f7c739ecbdd3a4b6ec7ed0a1d74db43d8e9bc26685f3d845638922b178
+nvidia-cuda-crt==13.0.88 --hash=sha256:2c8043c7c9e02492716426e9919fc78d2c5b3b2a7a768a88e952676b08aa55a4
+nvidia-nvvm==13.0.88 --hash=sha256:c5f41ffeb6466944a026dfa5317d7d85355c119bbec279205d22f1869d1054e0

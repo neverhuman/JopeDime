@@ -1,0 +1,75 @@
+% Appendix I — What the program has actually measured (REAL evidence; no synthetic numbers here)
+\section{What the program has measured so far}
+\label{app:history}
+
+Everything in this appendix is real and comes from the JopeDime repository at the commit this draft
+was written against \citep{jopedime2026repo,jopedime2026innovationzero,jopedime2026experiments}.
+\est{} marks an established measurement with receipts; \pre{} marks a preliminary or non-qualifying
+one. Several of these results are unfavourable to the hypothesis of this paper, and we report them
+for that reason.
+
+\subsection{Corpus and engine}
+
+The learning-procedure corpus holds 14,987 verified runs over 3,003 dataset versions, 7,120
+contexts and 1,068 parent lineages, from a real tier of 3,859 datasets \est. On the public Golden45
+regression ladder, a single fixed-seed run of the program's search engine, which never sees test
+labels, ranks 31st of 304 methods at Elo 1687.0 with 42 of 45 datasets covered, below tabular
+foundation models such as TabPFN v3 at 1909.5 \est. Choosing the engine's best program per dataset by
+its test score, the minimum over 63,108 test-scored evaluations on 42 datasets, would rank first at
+2259.8; that number is an oracle envelope and must never be read as a result. The gap between the
+two is the problem EurekaZero addresses: strong procedures exist in the language, and finding one
+without looking at the answer is the whole difficulty.
+
+\subsection{Frontier models at one attempt}
+
+In the program's General Regressor Challenge, frontier models wrote one general regressor each
+without seeing any data. On 64 dataset families, the four entrants rated from 1641 to 1342 on a
+shared Bradley--Terry panel, and every entrant was the best of the four on some families
+\pre{} \citep{jopedime2026challenge,jopedime2026writeup}. In a same-cut pilot of eighteen methods on
+ten datasets that had been selected because the engine ranked first on them, the best frontier
+regressor ranked first at Elo 1761.4 and the engine's searched programs fourth \pre. These results
+are the reason a frontier-model control (A8) is a primary comparator in every game.
+
+\subsection{The learned policy}
+
+The program's first learned policy, CLOVER, has 893,957 parameters and selects among a frozen catalog
+of 6,640 complete programs \est{}; it is the catalog-bound control of \cref{prop:closed}. Its
+outcome head ranked freshly executed programs at chance, pairwise accuracy 0.506 [0.441, 0.568] on 32
+development contexts \pre. Search seeded by the frozen policy was worse than retrieval-seeded search
+on 15 of 17 complete-case training contexts, with unequal attempt budgets (1,714 against 2,082)
+\pre; in the same readout, 40 of the 51 selected programs were syntactically outside the frozen
+catalog, with behavioural novelty unmeasured \pre. Three continued fine-tunes of the policy, judged on 1,148
+contexts, each raised a regression alert against the frozen first generation \pre. The one
+favourable result is an offline shadow study in which a debiased surrogate distilled from scored runs
+improved top-1 selection over two baselines; it is established only as a shadow result and does not
+establish a self-improvement loop \pre.
+
+\subsection{Training on more of the same experience}
+
+In a matched study of 36 neural ranking models trained for a fixed 400 updates each, all training
+and internal-monitor objectives ended below their initial values, but 31 of 36 internal-monitor
+objectives were worse at update 400 than at update 100, against none of the training objectives.
+The two predeclared ranking contrasts were $-0.1056$ $[-0.7890, +0.2870]$ and
+$+0.1482$ $[-0.0231, +0.4013]$, central 98.75\% intervals with negative values favouring treatment;
+both include harm, and ranking lift was not established \pre{} \citep{jopedime2026h27}.
+
+\subsection{The state encoding}
+
+The current policy context has 2,048 values: a 512-value native block, a 1,024-value foundation
+encoding and a 512-value target encoding \est. The native block is produced by a dimension-128
+checkpoint whose four pooled statistics give 512 values; it is labelled with a later version string
+only to satisfy the loader, and the earlier paper's description of it as the later model is
+corrected here \est. The foundation encoding is derived from a third-party pretrained tabular
+regressor; its weights are provenance-pending and their redistribution is prohibited under current
+terms \est. A second tabular foundation model used elsewhere in the program is not part of the state
+encoding. The program's current release policy has width 512, 6 layers, 4 heads and 27,796,494
+parameters \est.
+
+\subsection{What this means for the draft}
+
+The catalog-bound policy, its chance-level outcome head and its losses to retrieval are the reasons
+the proposer of this paper has an open-support decoder, is trained on the utility of its first
+proposal rather than on a ranking loss, and is compared first against retrieval and catalog
+selection. The monitor-objective result is the reason the improvement rounds of \cref{sec:mechanisms}
+use fresh outcomes rather than more updates on the same experience. None of these results is evidence
+for EurekaZero; all of them constrain what it must show.

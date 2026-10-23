@@ -1,0 +1,480 @@
+{
+  "schema": "jope.go-qualification.v1",
+  "pr": 416,
+  "base": "5390576ffe98f1bea9b1378479e05fb1a141314a",
+  "numerical_source_commit": "d5c243671321f5d98c82ade363bccd324e1efb7e",
+  "frozen_suite_integration_commit": "833091a0e17c4496797b0765a4cd1f94801b15a5",
+  "go_versions": [
+    "1.25.12",
+    "1.26.10"
+  ],
+  "rust": "1.97.1",
+  "host": "Linux x86_64",
+  "coverage": {
+    "scope": "generated model.go facade statements only",
+    "percent": 100,
+    "branch_coverage": false
+  },
+  "receipts": [
+    {
+      "log": "target/go-census.log",
+      "sha256": "0ce29e3cbed460eaf5443931eb5a736f563bcbdd87c801a0f4bb3216cc4a1a27",
+      "bytes": 75126,
+      "rust_results": [
+        "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 534 filtered out; finished in 204.55s"
+      ]
+    },
+    {
+      "log": "target/go-goldens-codegen1.log",
+      "sha256": "d2f37d1002e930741699b1fea3921a6242c25966d5d80efe206c2043f1e73eeb",
+      "bytes": 37672,
+      "rust_results": [
+        "test result: ok. 83 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2043.60s"
+      ]
+    },
+    {
+      "log": "target/go-contracts.log",
+      "sha256": "4f3f121ffcd22a84dd37543478e0645a0ab060df151c7fb01aca90723c6ca884",
+      "bytes": 2453,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-125.log",
+      "sha256": "1da3f9f04ce0a9e55b7c7d3ec1f0e67cfa07cfe985fc2acfe2b0df1c0af2d152",
+      "bytes": 1419,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-race.log",
+      "sha256": "f81f5605b8b548f64686ffb4f6c7c6101a43632850c4aa23c85d46db1e77736a",
+      "bytes": 1348,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-fuzz.log",
+      "sha256": "0d8be7e9fb60e8458e4a674af1f4c0458036125e2b32abf41ecba5b99746b76b",
+      "bytes": 868,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-cross-all.log",
+      "sha256": "e19f021be10ac282a2176420ecd714feda7375096efbebbcd82a45ec0c898333",
+      "bytes": 120,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-bindings-final.log",
+      "sha256": "98269a34feda02715295a72c76696158806c2926497959e45d0141779d57ea06",
+      "bytes": 1660,
+      "rust_results": [
+        "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s"
+      ]
+    },
+    {
+      "log": "target/go-pipeline-final.log",
+      "sha256": "b4f5386ecfeb44d62c73dbb4cd08f2794612214da40f7d452df707d105f1edc1",
+      "bytes": 9993,
+      "rust_results": [
+        "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.49s"
+      ]
+    },
+    {
+      "log": "target/go-cli-retry.log",
+      "sha256": "e0bd00751a3911ec526a519d0e9cf1fbee8c4f6b26706aa41603737cf2a7e037",
+      "bytes": 1302,
+      "rust_results": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 24 filtered out; finished in 0.07s"
+      ]
+    },
+    {
+      "log": "target/go-fitted.log",
+      "sha256": "b51e0c0e7ed14476fe43fdaf2350f67dd9bf388c1b6a83f93d7e82e50e86bee8",
+      "bytes": 1626,
+      "rust_results": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 537 filtered out; finished in 4.19s"
+      ]
+    },
+    {
+      "log": "target/go-freeze-final-source.log",
+      "sha256": "d231aac002d8b4e25a266d243ad85a27438e9f0258b985d48a74fde39ab8e5d5",
+      "bytes": 1163,
+      "rust_results": [
+        "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.27s"
+      ]
+    },
+    {
+      "log": "target/go-historical-final.log",
+      "sha256": "a0c3fb53c384721fc9bbb49e2c4feb9e45649cefa107cbc948aaea2b1481572c",
+      "bytes": 1100,
+      "rust_results": [
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s",
+        "test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.05s"
+      ]
+    },
+    {
+      "log": "target/go-generated-golden.log",
+      "sha256": "767bd3d70854a34cf77d3bed64c850fc95204b4e20c668b29e152bd1b7209e0d",
+      "bytes": 839,
+      "rust_results": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 83 filtered out; finished in 1.36s"
+      ]
+    },
+    {
+      "log": "target/go-generated-required-positive.log",
+      "sha256": "58caf6ddffc0989b1aea0d1b25a3f48773f82c31e2afe0a85c5a67ba14770296",
+      "bytes": 300,
+      "rust_results": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 83 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "log": "target/go-generated-required.log",
+      "sha256": "8bd944812d2aac0c014bd41bfa316b9633e55d409ee8c07b51e8f89a71f1de8b",
+      "bytes": 748,
+      "rust_results": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 83 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "log": "target/go-generated-clippy.log",
+      "sha256": "7519d1f1f7c3494ee8e8f3b96170c4d14a8605e41ba2564759028ae92d883628",
+      "bytes": 697,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-all-targets.log",
+      "sha256": "008851a2c92d38da567cb9fb8cc368a3c04fe2861be9b37761b9d2ab7a8feafd",
+      "bytes": 9840,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-clippy.log",
+      "sha256": "e1b7ed1becdea4ff2f1dae5dbd72ac81a49a9244eed664fea03d53ec26f7f7f0",
+      "bytes": 2174,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-aggregate-final.log",
+      "sha256": "b7de7f2724518b49dfe229e79d1a4dcb050a299f9cb7f57a03bfd74261ea1b54",
+      "bytes": 120,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-map-final.log",
+      "sha256": "617eedef18bd1eb06af3c5eac95c7e961f12f298c0fd51f20c0717542ee17079",
+      "bytes": 186,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-actionlint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-unit.log",
+      "sha256": "38143ae78aacd74f7da326ece2463023abe32f360659f792f9efb1c3edea7d4c",
+      "bytes": 49307,
+      "rust_results": [
+        "test result: FAILED. 525 passed; 2 failed; 7 ignored; 0 measured; 5 filtered out; finished in 329.50s"
+      ]
+    },
+    {
+      "log": "target/go-example.log",
+      "sha256": "299c8c7d7564a77239ed6521d691b6b32491faf11b003a12c8fa6d2c7d77ed77",
+      "bytes": 424,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-census-portable-final.log",
+      "sha256": "bb7659469fe17ffffbba7fb9bcfd30b36b1c948b8495c81f193c8b92bffab424",
+      "bytes": 72809,
+      "rust_results": [
+        "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 523 filtered out; finished in 185.93s"
+      ]
+    },
+    {
+      "log": "target/go-published-freeze-final.log",
+      "sha256": "950fe9b0cf3cc2d5dc93fb9cce0cf0824f9b16f121eee1a851bbfde9c902aa8a",
+      "bytes": 1955,
+      "rust_results": [
+        "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.43s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+        "test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.04s"
+      ]
+    },
+    {
+      "log": "target/go-records-final-classified.log",
+      "sha256": "383e2e00ab515bf5718484815f63e2b38b0a96ede8272d0f53cbbeba1311be5b",
+      "bytes": 20066,
+      "rust_results": [
+        "test result: ok. 107 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.51s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 21 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 6.84s",
+        "test result: ok. 85 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.49s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s"
+      ]
+    },
+    {
+      "log": "target/go-generated-complete.log",
+      "sha256": "938d6b22f84ea953d1fb9de0a7ca39e5dad9896e2fd7ec394e57229b087cf725",
+      "bytes": 36738,
+      "rust_results": [
+        "test result: ok. 84 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1972.98s"
+      ]
+    },
+    {
+      "log": "target/go-evidence-verification-final.log",
+      "sha256": "f3019ca57d5f046952478c800bfcd66f95687af74c68d60ef104a3016e9b9ff9",
+      "bytes": 71,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-example-final.log",
+      "sha256": "1324d1e4299c7353c0daedac8ebf901a85878fb2dc051553aa186c2e1318cfd5",
+      "bytes": 9850,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-cross-executables-final.log",
+      "sha256": "5026a4e3f70f32f011a6101e4efc39d807dcb86effe16e5ac3c8db6814830dfd",
+      "bytes": 186,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-records-final-routing.log",
+      "sha256": "872210fe2a983b9f9d57b8c543beb81796fa0d3da9f6ae1c5882435b8babe8dd",
+      "bytes": 20698,
+      "rust_results": [
+        "test result: ok. 107 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.57s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 21 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 6.92s",
+        "test result: ok. 85 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.57s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s"
+      ]
+    },
+    {
+      "log": "target/go-records-routing-clippy.log",
+      "sha256": "9e0c6980b8b7d9588efaaa154c8149c2eefcfbf0295b53428bb8fd1bfab41fa3",
+      "bytes": 1759,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-aggregate-final-routing.log",
+      "sha256": "7c4b2e31ea8ecc65a8d8290b745aaa6335b9c50e618fdf5be262ee5bb0f9ac3b",
+      "bytes": 120,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-final-census.log",
+      "sha256": "8f608b52d0a4534c68c4363fb4b0fce656fbf5557973ac2ff938f94999f8361a",
+      "bytes": 72900,
+      "rust_results": [
+        "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 528 filtered out; finished in 213.71s"
+      ]
+    },
+    {
+      "log": "target/go-final-identity.log",
+      "sha256": "6ddb8d5932f638fce307740a0d89d0726020c47c7d46a137b23674ff34ccd42c",
+      "bytes": 1218,
+      "rust_results": [
+        "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.29s"
+      ]
+    },
+    {
+      "log": "target/go-final-historical.log",
+      "sha256": "961b39c07166b28cf0213a7f2dda41cbeadee7b956b6c16c03d3755f4db7adae",
+      "bytes": 1045,
+      "rust_results": [
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+        "test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.04s"
+      ]
+    },
+    {
+      "log": "target/go-final-records.log",
+      "sha256": "7c694e2f6c5d58e6c781791c6405fa483f4acf051190e8e8e53b5b5e665ffd5f",
+      "bytes": 20066,
+      "rust_results": [
+        "test result: ok. 107 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.59s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 21 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 6.94s",
+        "test result: ok. 85 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.27s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s"
+      ]
+    },
+    {
+      "log": "target/go-merged-check.log",
+      "sha256": "39fb942e0b2be0f93a490d4e237db497e3e232104833a0ce6766fad3b3a6e46b",
+      "bytes": 8679,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-merged-bindings.log",
+      "sha256": "98f7712e2cbdce7502969e7472bf5e416d1656bd1a67fde7ca51a8ccd8c3b350",
+      "bytes": 1661,
+      "rust_results": [
+        "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s"
+      ]
+    },
+    {
+      "log": "target/go-merged-pipeline.log",
+      "sha256": "a4029c2a27ad7fd5b52acf3af65db1e6cbfe16c03299e340c3f3c6d8cbf433d5",
+      "bytes": 11653,
+      "rust_results": [
+        "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.41s"
+      ]
+    },
+    {
+      "log": "target/go-merged-cli.log",
+      "sha256": "70e488f6779b45ec8a940b2854aab80fb44947fc33f66cb277fcc4594a423573",
+      "bytes": 1304,
+      "rust_results": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 24 filtered out; finished in 0.07s"
+      ]
+    },
+    {
+      "log": "target/go-merged-fitted.log",
+      "sha256": "06d70016491ec7725e512e23141d5f72211c1e4c74623a5e6130e63bf090cd12",
+      "bytes": 1626,
+      "rust_results": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 542 filtered out; finished in 3.87s"
+      ]
+    },
+    {
+      "log": "target/go-merged-aggregate.log",
+      "sha256": "46f6a471067ab91004d0f1b836fe23974ad8d7e7386135972ebee53e26d4ad72",
+      "bytes": 121,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-merged-typescript-evidence.log",
+      "sha256": "b2eaaa537fbd4f1c3eb611dacfe3317a4a398b414aafd80353e983a5cd6c7af7",
+      "bytes": 248,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-rebased-clippy.log",
+      "sha256": "263194e08ba83ee37e85517a22a183abfd5806215c47c613c5b33b2f3972bc91",
+      "bytes": 1383,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-score-overflow-before.log",
+      "sha256": "6a4de786862f3989510cc53baf293a7b371c02bba6ab8465fc0c3e3959276824",
+      "bytes": 134,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-score-contracts-final.log",
+      "sha256": "c6c9d591a478fc03b3c5b85e1acb3e0d7487595ebdc5d7e26a1c76daff40423c",
+      "bytes": 2453,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-score-125-final.log",
+      "sha256": "dd20e6f161d0e89fbcf97527d451e2b7133a615ede1ba252b644492341c405a7",
+      "bytes": 64,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-score-race-final.log",
+      "sha256": "04051bdafbf94f617aa377c21a2e98ce23c6a11531845319196a67920ba6d075",
+      "bytes": 33,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-final-example.log",
+      "sha256": "65354b31601feca760d32448c13b9f3b0c13fa73cd2a2b8c1448e2ffbd0e97e1",
+      "bytes": 1087,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-final-executables.log",
+      "sha256": "5026a4e3f70f32f011a6101e4efc39d807dcb86effe16e5ac3c8db6814830dfd",
+      "bytes": 186,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-final-evidence.log",
+      "sha256": "f3019ca57d5f046952478c800bfcd66f95687af74c68d60ef104a3016e9b9ff9",
+      "bytes": 71,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-final-generated.log",
+      "sha256": "f5b1afc3f0b3d569a408d048fd8ecaae7da082b35535b1a6b90eada6c8fc75b8",
+      "bytes": 839,
+      "rust_results": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 83 filtered out; finished in 1.34s"
+      ]
+    },
+    {
+      "log": "target/go-final-required.log",
+      "sha256": "4f712a13079e363b1e009f8a803e4b791980207b29fc699d76d26e270bfe2553",
+      "bytes": 300,
+      "rust_results": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 83 filtered out; finished in 0.00s"
+      ]
+    }
+  ],
+  "derived_suite": {
+    "native_reference_sha256": "25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2",
+    "derived_source_sha256": "7e8ded31e5282963abdca859257800d8b7dec112efe1324c35acdfb50866c43e",
+    "exact_body_equivalence": true,
+    "generated_paths": [
+      "target/debug/build/feat-math-cd36486dbeb3b5fe/out/go_golden.rs"
+    ]
+  },
+  "limitations": [
+    "Default feat-math library run: 525 passed, 2 unchanged C++ LeakSanitizer tests blocked by sandbox /proc inspection, 7 pre-existing ignored, 5 Go census tests qualified separately.",
+    "Hosted exact-head CI remains queued; configured macOS/Windows jobs are not executed evidence.",
+    "100% statement coverage excludes the Rust numerical kernel and wazero dependency."
+  ],
+  "complete_generated_suite_commit": "6d0a0b6c900d3baeb76622887e2533ca08d74927",
+  "complete_generated_suite_tests": 84,
+  "complete_generated_suite_go_engine_runs": {
+    "auto": 73,
+    "interpreter": 73
+  },
+  "debug_build_workaround": "Go qualification/example builds use one debug codegen unit after observed zero-length Rust archive objects in feat-math and jope-records on this host. Release and standalone Wasm compiler flags are unchanged.",
+  "updated_main": "6c21e10788d89528a72d377a9dd8326b0f8548a6",
+  "merged_native_reference_sha256": "035635a57cc9441871a879be7bc56bed93ae10a17baf6fa3a3186f0f9876ca46",
+  "final_source_commit": "940eaa6ffdef3c72388ded126c1fe461563180a2",
+  "post_update_artifact_audit": {
+    "main": "d8b27f6fd89f65742a8c16aa68cbe4a658187941",
+    "source_commit": "940eaa6ffdef3c72388ded126c1fe461563180a2",
+    "source_members": 768,
+    "kernel_members_unchanged": 192,
+    "module_and_checksum_members_unchanged": 384,
+    "facade_members_with_only_score_guard": 192,
+    "normalized_sources_identical": true,
+    "guard_sha256": "b8ebd057518acb519549acff6d3cf429cc972eb3f1b354dc525a59740ed03628",
+    "before_manifest_sha256": "e75b508bd06cf22d5b72322e96b53928bb2c38c3369bc6fa085c2810c4ab6645"
+  },
+  "golden_structure_audit": {
+    "original_native_assertions_preserved": true,
+    "upstream_additions_only": 36,
+    "native_before_sha256": "25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2",
+    "native_current_sha256": "035635a57cc9441871a879be7bc56bed93ae10a17baf6fa3a3186f0f9876ca46",
+    "go_hook_anchors_and_calls_unchanged": true,
+    "go_hook_pairs": 4,
+    "optional_typescript_module_kept": true
+  },
+  "score_overflow_regression": "Perfect predictions with MaxFloat64 targets reproduced an accepted overflowed mean before the fix. An explicit mean guard now rejects it; contracts retain 100% raw statements on both Go versions.",
+  "documentation_refresh": "Subsequent main commits add only research documentation, one archived plotter and its README count. Go implementation and numerical qualification inputs remain unchanged."
+}

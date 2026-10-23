@@ -5,8 +5,24 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-23
+
+Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.4.0` (#403, #407 and
+#412 through #415), then curated, absorbing the Unreleased entries. This tag packages the CPU CLI
+from `main` at f9543b85, plus the tokio security patch below, for the cloud appliance. The research branches are not part of this
+release, and this binary release does not claim a qualified end-to-end learning flywheel.
+
+### Pipeline
+
+- pipeline: the `jope pipeline invent --events` journal gains `candidate` records (one evaluation's generation, cut, held-out R^2 and RMSE, or null when it failed, with a fixed `measured`/`failed` status; at most five a second, under 512 bytes each) and `progress` gains `population_r2` and `generations`. Records stay numbers-only labels and values, at most 2048 bytes, through the bounded worker of #400. The shared fold now runs before the progress snapshot, so `population_r2` counts draws another island already measured; the search's decisions and published bytes are unchanged (#403)
+
+### Model objects
+
+- models: saved model objects share one standard layout with session versions and rollback (#413)
+
 ### Model export
 
+- C17: native C17 bindings with complete Rust recipe coverage, qualified by six required native contracts (#414)
 - TypeScript: explicit `typescript` / `ts` output with a strict typed API and a WebAssembly build source reusing the complete Rust recipe implementation. Includes bound fitted-model export, CLI/pipeline/v3 source binding, token counting, and an executable CommonJS/ESM qualification lane. Build requirements, arithmetic tolerance and current qualification limits are in `docs/typescript.md`.
 
 ### Regression objectives
@@ -26,10 +42,15 @@ the commit areas (crate or lane) named in each subject line.
 
 - appliance: PR package builds use fat LTO and one codegen unit to retain the existing executable size limits with the new objective/API adapters; numerical optimization, panic recovery and the 5% size tolerance remain unchanged
 
+- runners: four isolated Linux/Docker PR lanes on the xbabe4 VM and three guard-only main lanes join the seven heavy roles, bound to the reviewed deployment inventory
 - runner: the daily build-cache trim keeps the newest 3 builds per crate and kind instead of 6. xbabe3's full-lane target regrew to 211 GB within a day under keep-6, its root disk fell below the 50 GB runner reserve, and both its lanes refused to start (main full-main-cpu 39770894207 cpu-1). Rolled out with the usual runner re-provisioning freeze
 - ci(browser-deps): `observatory-ui` retries a dropped or refused download of a pinned Ubuntu package up to 4 times with backoff (transport errors and HTTP 5xx only). A size or hash mismatch or an HTTP 4xx still fails at once, and nothing is published before verification. Two jobs failed on 2026-10-22 from single mirror drops
 - ci(full-main): the trusted-main source audit is report-only until its score reaches 85 (owner decision, 2026-10-22; 54 at `bdf9441aa`). A verified audit that fails below 85 passes the `audit` job with a warning and a `report-only.json` marker, and its reports keep the failed decision. A failed audit at or above 85 still fails the job, as do missing, inconsistent or tampered evidence and version or tool errors. The floor and policy are unchanged
 - ci(full-main): the audit no longer breaks the self-hosted runner after it. Its captured source was left read-only in the persistent workspace, so every later job on that runner failed in `actions/checkout` (`Permission denied`, then `not a git repository`). An always-run step after the evidence upload now restores write permission. The retained evidence keeps its read-only modes, so the verifier still replays on it
+
+### Security
+
+- deps: tokio 1.53.1 → 1.53.3 in the root lock and the CSV Lambda lockgraph for RUSTSEC-2026-0386 (`AsyncFd::new` and related constructors violate I/O safety). `cargo deny` failed on `main` from the advisory's publication. Announced identity-only successor `tokio_security_identity_rebaseline.v1.json` after the 0.4.1 release successor: implementation 09d29b91 → 25d93b7b, identity digest b35ac562 → 50f75477
 
 ## [0.4.0] - 2026-10-22
 

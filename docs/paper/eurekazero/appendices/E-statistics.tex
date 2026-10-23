@@ -1,0 +1,39 @@
+% Appendix E — Statistical analysis plan
+\section{Statistical analysis plan}
+\label{app:statistics}
+
+\paragraph{Unit and estimand} The inferential unit is the dependency component; the estimand is the
+family-weighted mean paired difference $\Delta$ (\cref{app:formal}). Problems within a family are
+averaged first, so a family with many problems does not dominate.
+
+\paragraph{Intervals} 95\% intervals are bias-corrected and accelerated \citep{efron1987bca}, from
+10,000 paired cluster-bootstrap resamples of components, with both arms resampled together.
+
+\paragraph{Primary tests and multiplicity} One primary test per game: superiority of A1 over the
+locked comparator with margin 0.02 utility units, one-sided, Holm-adjusted across the three games at a
+familywise 5\% level \citep{holm1979}. ``All three games'' requires all three adjusted tests.
+Non-inferiority claims (A1n, the shared model) use the same margin and are secondary. No secondary
+result is reported as confirming unless its interval clears the margin.
+
+\paragraph{Failures and missing data} Failures score $-1$ and stay in every denominator. A problem on
+which the verifier fails for every arm is excluded and counted; a problem missing for one arm is a
+failure of that arm.
+
+\paragraph{Comparison identity} Every comparison binds the task, dataset hash, cut, evaluator
+version, solution-language version and protocol. Results with different identities are never pooled,
+and a change of evaluator identity starts a new comparison.
+
+\paragraph{Power} Sample sizes come from simulation using development-only variance and failure
+rates. A game whose power at the margin falls below 0.8 is declared a pilot before unblinding and
+reported without a confirmatory claim.
+
+\paragraph{Search-equivalent budget} $B_{\mathrm{eq}}$ is computed on the measured grid
+$\{1,2,4,\ldots,256\}$ in each bootstrap replicate; its interval is the 2.5th and 97.5th
+percentile grid points. When the grid maximum does not reach the first proposal, the result is a bound.
+
+\paragraph{Subgroups} Subgroups (rows, features and noise for A; dimension and noise for B; load cases,
+contact and process for C) are predeclared, reported with intervals and never used for a confirmatory
+claim.
+
+\paragraph{Registration} The analysis plan, rosters, comparators, margins and this appendix are
+frozen and hashed before confirmation runs; deviations are listed with their reasons.

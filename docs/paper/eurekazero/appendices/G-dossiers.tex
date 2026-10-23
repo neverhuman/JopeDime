@@ -1,0 +1,40 @@
+% Appendix G — Discovery dossiers (SYNTHETIC)
+\section{Discovery dossiers}
+\label{app:dossiers}
+
+\paragraph{Protocol} A dossier is opened for an N4 proposal whose new component can be isolated as a
+named part of the artifact. Opportunities are examined in order of the committed artifact's hash,
+lowest first, until the dossier budget is spent; no proposal is chosen for looking interesting. Each
+dossier records, before any intervention: the proposed mechanism in one paragraph; the component that
+implements it; the nearest known alternative and why it is nearest; and the reserved problems on which
+it will be tested (60 per dossier, from families not used in training or confirmation). The
+interventions are removal at matched capacity and replacement by the nearest known alternative. N5
+requires both effects to have interval bounds above zero and a prior-work review, by a reviewer not
+involved in the proposal, that finds no equivalent.
+
+\paragraph{Outcome} \syn[EZ-G15]{\EZdossA} learning-procedure and \syn[EZ-G15]{\EZdossC} CAD dossiers
+were opened. \syn[EZ-G15]{\EZnFiveA} and \syn[EZ-G15]{\EZnFiveC} reached N5; the others failed at
+removal (the component was not needed), at replacement (a known alternative did as well) or at
+prior-work review. All are listed in \cref{tab:dossiers}.
+
+\begin{table}[h]
+\caption{Dossiers that reached N5. Mechanism statements are illustrative placeholders for the shape of
+a dossier, not discoveries (gaps EZ-G15 to EZ-G17).}
+\label{tab:dossiers}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}llLl@{}}
+\toprule
+Dossier & Game & Proposed mechanism (stated before testing) & Rung \\
+\midrule
+D-A1 & A & noise-gated shrinkage of rare categorical levels toward their parent grouping & \syn[EZ-G16]{N6} \\
+D-A2 & A & interaction screening by residual rank correlation before the main fit & \syn[EZ-G15]{N5} \\
+D-A3 & A & smoothing strength tied to each feature's missingness rate & \syn[EZ-G15]{N5} \\
+D-C1 & C & offset web with a gusset sharing the preload and bending paths & \syn[EZ-G17]{N6} \\
+D-C2 & C & split ribs at bolt bosses that move the stress peak away from the hole edge & \syn[EZ-G15]{N5} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Replication} D-A1 was replicated by a group outside the program on its own datasets and
+evaluation code; D-C1 by fabrication and load test at a laboratory not involved in the design
+(\cref{sec:discoveries}) \synbadge.

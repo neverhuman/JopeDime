@@ -1,0 +1,22 @@
+% Figure — amortization: cumulative cost of one-proposal deployment against search at matched quality.
+% Reads SYNTHETIC data (gap EZ-G18).
+\begin{tikzpicture}
+\begin{axis}[ez, width=0.62\linewidth, height=5.0cm, xmode=log, ymode=log, axis lines*=left,
+    xmin=10, xmax=100000, ymin=150, ymax=3e6, clip=false,
+    xlabel={problems solved (deployments)}, ylabel={cumulative CPU-hour equivalents},
+    xtick={10,100,1000,10000,100000}, xticklabels={10,100,1k,10k,100k},
+    ytick={1000,10000,100000,1000000}, yticklabels={1k,10k,100k,1M},
+    legend pos=north west,
+    legend style={font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, draw=none, fill=white,
+      fill opacity=0.85, text opacity=1, cells={anchor=west}, row sep=-1.5pt}]
+  \addplot[ezgrey, line width=1pt] table[col sep=comma, x=n, y=search] {data/synthetic/cost.csv};
+  \addlegendentry{search at $B_{\mathrm{eq}}$ per problem}
+  \addplot[ezwarm, line width=1.2pt] table[col sep=comma, x=n, y=ez] {data/synthetic/cost.csv};
+  \addlegendentry{EurekaZero: teacher search, training, then one proposal}
+  \draw[ezink, line width=0.4pt, densely dotted] (axis cs:2302,150) -- (axis cs:2302,46046);
+  \fill[ezink] (axis cs:2302,46046) circle (1.3pt);
+  \node[font=\sffamily\fontsize{5.8pt}{6.4pt}\selectfont, text=ezink, anchor=north west, align=left]
+    at (axis cs:2600,40000) {break-even\\$\approx$2,300 problems};
+\end{axis}
+\synfigtag
+\end{tikzpicture}

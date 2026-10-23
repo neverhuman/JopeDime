@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced additive CUDA C++ target identity successor after the ctutils security transition. Only evaluator and lineage identity fixtures change; all numerical, emitted-byte, model, generator and search fixtures remain unchanged. No serving identity or scientific result is minted by a language export.",
+  "plan_reference": "Explicit user request for a new CUDA C++ language-target PR with full language parity; AGENTS.md and ADR-0004",
+  "pr_reference": "feat/cuda-cpp-target-20261023",
+  "source_commit": "449e342f4771156f965be938212c34008c9ef12a",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "7be6fd5683f1f4e942822c4eeddda3ac8ff5a86af02634c501ff29d8e257ba98",
+      "after": "949db61a36469c7f0fe6ff79bb1b652ffc2e54c00a0dff38177cf568f76a9661"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "537448563fc86bff466a75967c498323b867fdfdfdc2638b78ac285b8ab11935",
+      "after": "1441e8c2a3042ea589c9683a9acae639941ab5e804cacc93e1c57c658fc8dcf0"
+    }
+  ]
+}

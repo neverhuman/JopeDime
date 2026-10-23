@@ -1,0 +1,44 @@
+% Section 10 — Compute, amortization and when to search anyway (SYNTHETIC results)
+\section{What a proposal costs}
+\label{sec:compute}
+
+A first proposal is cheap only after someone has paid for the searches it learned from. We therefore
+charge EurekaZero for its teacher searches, every training stage and every proposal, meter all
+three, never add a nested measurement twice, and convert GPU-hours to CPU-hour equivalents at a
+declared rate of \syn[EZ-G18]{\EZgpuRate}, with the conclusions re-derived at half and twice that
+rate in \cref{app:compute} \synbadge.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-cost}
+\caption{Cumulative cost of solving learning-procedure problems at matched quality. Search pays
+the search-equivalent budget on every problem; EurekaZero pays its teacher searches and training
+once and then a negligible cost per proposal. Synthetic (gap EZ-G18).}
+\label{fig:cost}
+\end{figure}
+
+\paragraph{Break-even} For learning procedures, the fixed cost is \syn[EZ-G18]{\EZfixA} CPU-hour
+equivalents: \syn[EZ-G18]{\EZteachA} of teacher search and \syn[EZ-G18]{\EZshareA} for this domain's
+share of training. Search that matches one proposal costs \syn[EZ-G18]{\EZsearchPerA} per problem,
+and a proposal costs \syn[EZ-G18]{\EZmarginA}, so EurekaZero is cheaper after
+\syn[EZ-G18]{\EZbreakA} problems (\cref{fig:cost}). For CAD, the fixed cost is
+\syn[EZ-G18]{\EZfixC} against \syn[EZ-G18]{\EZsearchPerC} per specification, and break-even falls at
+\syn[EZ-G18]{\EZbreakC} specifications. For next-experiment decisions the relevant cost is not
+compute but experiments: a closed-loop controller that needs \syn[EZ-G04]{\EZsaveB} times fewer
+evaluations to reach the target regret saves laboratory time that compute does not measure.
+
+\paragraph{Latency} A proposal takes a median of \syn[EZ-G18]{\EZlatA}, \syn[EZ-G18]{\EZlatB} and
+\syn[EZ-G18]{\EZlatC} seconds in the three games, so the decision is available while the problem is
+still being discussed rather than after a search job finishes.
+
+\paragraph{When to search anyway} The first proposal is not the best attainable answer. As for
+AlphaGo Zero's raw network, which played far below the strength of the full system with search
+\citep{silver2017zero}, verified search at a large enough budget overtakes one EurekaZero
+proposal in both games where we measured it (\cref{fig:curves}), and the regimes of \cref{sec:heterogeneity} are where it
+does so soonest. The two compose: a first proposal is a strong seed, and the search budget it saves
+can be spent where the first proposal is least reliable. Search seeded by the first proposal is
+reported as track S and never as a first-proposal result.
+
+\paragraph{What we do not know about scaling} We measured one model size and four experience
+fractions per game (\cref{fig:scaling}). The curves rise without saturating, but four points do not
+make a scaling law, and we do not extrapolate them.

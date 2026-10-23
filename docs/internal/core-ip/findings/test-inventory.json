@@ -442,6 +442,10 @@
         "evaluation"
       ]
     },
+    "python:deploy/ci/cuda/test_evidence.py": {
+      "reason": "CUDA qualification receipt integrity; collection and execution remain distinct from hardware qualification.",
+      "role": "infrastructure"
+    },
     "python:deploy/ci/test-aggregate.py": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
@@ -1924,6 +1928,20 @@
         "export"
       ]
     },
+    "target:feat-math/test/cuda_census": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "export"
+      ]
+    },
+    "target:feat-math/test/cuda_export": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "export"
+      ]
+    },
     "target:feat-math/test/cumulative_integration_v2": {
       "role": "regression",
       "subsystems": [
@@ -3098,12 +3116,12 @@
       "role": "historical"
     },
     "target:jope-dist/bin/jope-dist": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-dist/lib/jope_dist": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-dist/test/closure": {
       "role": "regression",
@@ -3113,8 +3131,8 @@
       ]
     },
     "target:jope-dist/test/dependency_fence": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-dist/test/reproducible_pack": {
       "role": "regression",
@@ -4536,6 +4554,19 @@
         "preparation"
       ]
     },
+    "target:jope-runtime/test/fitted_js_qualification": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:jope-runtime/test/math_pipeline": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "evidence"
+      ]
+    },
     "target:jope-runtime/test/method_roster": {
       "role": "regression",
       "subsystems": [
@@ -4623,6 +4654,14 @@
       "role": "regression",
       "subsystems": [
         "encoders"
+      ]
+    },
+    "target:feat-math/test/go_golden": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/go_golden.rs",
+      "subsystems": [
+        "fitting",
+        "export"
       ]
     }
   },

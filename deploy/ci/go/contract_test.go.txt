@@ -1,0 +1,500 @@
+package model
+
+import (
+	"bytes"
+	"context"
+	"encoding/binary"
+	"errors"
+	"math"
+	"os"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+)
+
+var ctx = context.Background()
+
+func bad(t *testing.T, e error) {
+	t.Helper()
+	if e == nil {
+		t.Fatal("expected refusal")
+	}
+}
+func good(t *testing.T, e error) {
+	t.Helper()
+	if e != nil {
+		t.Fatal(e)
+	}
+}
+
+type fault struct {
+	fail, name                          string
+	value                               uint64
+	badRead, badWrite, closed, closeErr bool
+	memory                              []byte
+	output                              []byte
+}
+
+func (k *fault) call(_ context.Context, n string, _ ...uint64) (uint64, error) {
+	if n == k.fail {
+		return 0, errors.New("trap")
+	}
+	if n == k.name {
+		return k.value, nil
+	}
+	switch n {
+	case "model_values", "model_labels", "model_output", "model_text":
+		return 8, nil
+	case "model_output_len":
+		return 1, nil
+	}
+	return 0, nil
+}
+func (k *fault) read(_ uint32, n uint32) ([]byte, bool) {
+	if k.output != nil {
+		return k.output, !k.badRead
+	}
+	return make([]byte, n), !k.badRead
+}
+func (k *fault) write(_ uint32, b []byte) bool {
+	k.memory = append([]byte(nil), b...)
+	return !k.badWrite
+}
+func (k *fault) close(context.Context) error {
+	k.closed = true
+	if k.closeErr {
+		return errors.New("close")
+	}
+	return nil
+}
+func fake() (*Model, *fault) { k := &fault{}; return &Model{k: k, width: 1}, k }
+func leb(n uint32) []byte {
+	var b []byte
+	for {
+		v := byte(n & 127)
+		n >>= 7
+		if n != 0 {
+			v |= 128
+		}
+		b = append(b, v)
+		if n == 0 {
+			return b
+		}
+	}
+}
+func str(s string) []byte { return append(leb(uint32(len(s))), []byte(s)...) }
+func section(out []byte, id byte, b []byte) []byte {
+	return append(append(out, id), append(leb(uint32(len(b))), b...)...)
+}
+
+// Actual incompatible Wasm modules exercise validation rather than mocking it.
+func tiny(mode string) []byte {
+	out := []byte{0, 97, 115, 109, 1, 0, 0, 0}
+	typ := []byte{5, 96, 0, 1, 127, 96, 1, 127, 1, 127, 96, 2, 127, 127, 1, 127, 96, 0, 0, 96, 0, 1, 126}
+	if mode == "parameter" {
+		typ[7] = 126
+	}
+	out = section(out, 1, typ)
+	offset := uint32(0)
+	if mode == "import" {
+		b := []byte{1}
+		b = append(b, str("host")...)
+		b = append(b, str("call")...)
+		b = append(b, 0, 0)
+		out = section(out, 2, b)
+		offset = 1
+	}
+	if mode == "memory-import" {
+		b := []byte{1}
+		b = append(b, str("host")...)
+		b = append(b, str("memory")...)
+		b = append(b, 2, 0, 1)
+		out = section(out, 2, b)
+	}
+	types := []byte{0, 1, 1, 1, 0, 0, 2, 2, 0}
+	if mode == "signature" {
+		types[0] = 4
+	}
+	if mode == "start" {
+		types = append(types, 3)
+	}
+	out = section(out, 3, append([]byte{byte(len(types))}, types...))
+	if mode != "memory-import" {
+		out = section(out, 5, []byte{1, 0, 1})
+	}
+	names := []string{"model_abi_version", "model_values", "model_labels", "model_text", "model_output", "model_output_len", "model_fit", "model_predict", "model_predict_text"}
+	var exports []byte
+	n := 0
+	if mode != "no-memory" {
+		exports = append(exports, str("memory")...)
+		exports = append(exports, 2, 0)
+		n++
+	}
+	for i, name := range names {
+		if mode == "missing" && i == 0 {
+			continue
+		}
+		exports = append(exports, str(name)...)
+		exports = append(exports, 0)
+		exports = append(exports, leb(uint32(i)+offset)...)
+		n++
+	}
+	out = section(out, 7, append([]byte{byte(n)}, exports...))
+	if mode == "start" {
+		out = section(out, 8, []byte{9})
+	}
+	code := []byte{byte(len(types))}
+	for i, ty := range types {
+		body := []byte{0, 65, 0, 11}
+		if i == 0 {
+			body[2] = 1
+			if mode == "version" {
+				body[2] = 2
+			}
+			if mode == "trap" {
+				body = []byte{0, 0, 11}
+			}
+			if mode == "loop" {
+				body = []byte{0, 3, 64, 12, 0, 11, 65, 1, 11}
+			}
+		}
+		if ty == 4 {
+			body = []byte{0, 66, 1, 11}
+		}
+		if ty == 3 {
+			body = []byte{0, 0, 11}
+		}
+		code = append(code, leb(uint32(len(body)))...)
+		code = append(code, body...)
+	}
+	return section(out, 10, code)
+}
+func TestLoader(t *testing.T) {
+	_, e := NewWithEngine(ctx, tiny(""), Engine(99))
+	bad(t, e)
+	_, e = New(ctx, []byte("malformed"))
+	bad(t, e)
+	for _, mode := range []string{"import", "memory-import", "no-memory", "missing", "signature", "parameter", "start", "trap", "version"} {
+		t.Run(mode, func(t *testing.T) {
+			m, e := New(ctx, tiny(mode))
+			if m != nil {
+				m.Close(ctx)
+			}
+			bad(t, e)
+		})
+	}
+	for _, engine := range []Engine{Auto, Interpreter} {
+		c, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+		_, e = NewWithEngine(c, tiny("loop"), engine)
+		cancel()
+		bad(t, e)
+	}
+	m, e := New(ctx, tiny(""))
+	good(t, e)
+	good(t, m.Close(ctx))
+	b, e := os.ReadFile("model.wasm")
+	good(t, e)
+	m, e = New(ctx, b)
+	good(t, e)
+	c, cancel := context.WithCancel(ctx)
+	cancel()
+	bad(t, m.Fit(c, [][]float64{{1}, {2}}, []float64{1, 2}))
+	if m.k != nil {
+		t.Fatal("cancelled instance survived")
+	}
+}
+func TestNumericValidationAndScore(t *testing.T) {
+	saved := boundHeaders
+	boundHeaders = nil
+	defer func() { boundHeaders = saved }()
+	m, k := fake()
+	bad(t, m.Fit(ctx, nil, nil))
+	for _, x := range [][][]float64{{{}}, {{1}, {1, 2}}} {
+		bad(t, m.Fit(ctx, x, make([]float64, len(x))))
+	}
+	bad(t, m.Fit(ctx, [][]float64{{1}}, nil))
+	for _, v := range []float64{math.NaN(), math.Inf(1), math.Inf(-1)} {
+		bad(t, m.Fit(ctx, [][]float64{{1}}, []float64{v}))
+	}
+	good(t, m.Fit(ctx, [][]float64{{1}}, []float64{2}))
+	_, e := m.Predict(ctx, [][]float64{{1, 2}})
+	bad(t, e)
+	m.width = 0
+	_, e = m.Predict(ctx, nil)
+	bad(t, e)
+	m.width = 1
+	_, e = m.PredictStrings(ctx, nil)
+	bad(t, e)
+	_, e = m.Score(ctx, [][]float64{{1}}, nil)
+	bad(t, e)
+	_, e = m.Score(ctx, [][]float64{{1}, {2}}, []float64{1, 2})
+	bad(t, e)
+	k.name = "model_output_len"
+	k.value = 2
+	v, e := m.Score(ctx, [][]float64{{1}, {2}}, []float64{1, 2})
+	good(t, e)
+	if v != -9 {
+		t.Fatal("R-squared", v)
+	}
+	_, e = m.Score(ctx, [][]float64{{1}, {2}}, []float64{math.MaxFloat64, math.MaxFloat64})
+	bad(t, e)
+	// A perfect prediction must still refuse an overflowed target mean.
+	k.output = make([]byte, 16)
+	for i := 0; i < 2; i++ {
+		binary.LittleEndian.PutUint64(k.output[i*8:], math.Float64bits(math.MaxFloat64))
+	}
+	_, e = m.Score(ctx, [][]float64{{1}, {2}}, []float64{math.MaxFloat64, math.MaxFloat64})
+	bad(t, e)
+	k.output = nil
+	// This mean is finite while squared residuals/variance overflow.
+	_, e = m.Score(ctx, [][]float64{{1}, {2}}, []float64{-math.MaxFloat64, math.MaxFloat64})
+	bad(t, e)
+	k.value = 0
+	v, e = m.Score(ctx, nil, nil)
+	good(t, e)
+	if v != 0 {
+		t.Fatal(v)
+	}
+	k.value = 1
+	v, e = m.Score(ctx, [][]float64{{1}}, []float64{2})
+	good(t, e)
+	if v != 0 {
+		t.Fatal(v)
+	}
+	k.closeErr = true
+	bad(t, m.Close(ctx))
+	good(t, m.Close(ctx))
+	bad(t, m.Fit(ctx, nil, nil))
+	_, e = m.Predict(ctx, nil)
+	bad(t, e)
+	_, e = m.PredictStrings(ctx, nil)
+	bad(t, e)
+	_, e = m.Score(ctx, nil, nil)
+	bad(t, e)
+	if !k.closed {
+		t.Fatal("leak")
+	}
+	tooMany := make([][]float64, maxElements+1)
+	_, e = shape(tooMany, 1)
+	bad(t, e)
+	tooMany = nil
+	_, e = shape([][]float64{{1}, {2}}, maxElements)
+	bad(t, e)
+	_, e = shape(nil, maxElements+1)
+	bad(t, e)
+}
+func TestKernelFaults(t *testing.T) {
+	saved := boundHeaders
+	boundHeaders = nil
+	defer func() { boundHeaders = saved }()
+	x, y := [][]float64{{1}}, []float64{2}
+	for _, n := range []string{"model_values", "model_labels", "model_fit"} {
+		m, k := fake()
+		k.fail = n
+		bad(t, m.Fit(ctx, x, y))
+		if !k.closed || m.k != nil {
+			t.Fatal("trap survived")
+		}
+	}
+	for _, n := range []string{"model_values", "model_predict", "model_output_len", "model_output"} {
+		m, k := fake()
+		k.fail = n
+		_, e := m.Predict(ctx, x)
+		bad(t, e)
+	}
+	for _, n := range []string{"model_values", "model_labels"} {
+		for _, v := range []uint64{0, math.MaxUint32 + 1} {
+			m, k := fake()
+			k.name = n
+			k.value = v
+			bad(t, m.Fit(ctx, x, y))
+		}
+	}
+	m, k := fake()
+	k.badWrite = true
+	bad(t, m.Fit(ctx, x, y))
+	m, k = fake()
+	k.name = "model_fit"
+	k.value = 1
+	bad(t, m.Fit(ctx, x, y))
+	m, k = fake()
+	k.name = "model_predict"
+	k.value = 1
+	_, e := m.Predict(ctx, x)
+	bad(t, e)
+	m, k = fake()
+	k.name = "model_output"
+	k.value = math.MaxUint32 + 1
+	_, e = m.Predict(ctx, x)
+	bad(t, e)
+	m, k = fake()
+	k.badRead = true
+	_, e = m.Predict(ctx, x)
+	bad(t, e)
+	m, k = fake()
+	values := []float64{math.Copysign(0, -1), math.NaN(), math.Inf(1), math.Inf(-1), 1.25}
+	good(t, m.transfer(ctx, "model_values", [][]float64{values}, len(values)))
+	for i, v := range values {
+		if binary.LittleEndian.Uint64(k.memory[i*8:]) != math.Float64bits(v) {
+			t.Fatal("little-endian bits")
+		}
+	}
+}
+func TestStringsAndEncodingBudget(t *testing.T) {
+	saved := boundHeaders
+	boundHeaders = []string{"name"}
+	defer func() { boundHeaders = saved }()
+	m, _ := fake()
+	bad(t, m.Fit(ctx, nil, nil))
+	_, e := m.Predict(ctx, nil)
+	bad(t, e)
+	for _, r := range [][][]string{{{}}, {{"a", "b"}}, {{string([]byte{255})}}, {{strings.Repeat("x", maxElements+1)}}, {{strings.Repeat("x", maxElements)}}, {{strings.Repeat("\"", maxElements)}}} {
+		_, e = m.PredictStrings(ctx, r)
+		bad(t, e)
+	}
+	many := make([][]string, maxElements+1)
+	_, e = m.PredictStrings(ctx, many)
+	bad(t, e)
+	many = nil
+	for _, n := range []string{"model_text", "model_predict_text"} {
+		m, k := fake()
+		k.fail = n
+		_, e = m.PredictStrings(ctx, [][]string{{"a"}})
+		bad(t, e)
+	}
+	for _, v := range []uint64{0, math.MaxUint32 + 1} {
+		m, k := fake()
+		k.name = "model_text"
+		k.value = v
+		_, e = m.PredictStrings(ctx, [][]string{{"a"}})
+		bad(t, e)
+	}
+	m, k := fake()
+	k.badWrite = true
+	_, e = m.PredictStrings(ctx, [][]string{{"a"}})
+	bad(t, e)
+	m, k = fake()
+	_, e = m.PredictStrings(ctx, [][]string{{"a,\"b\"\n雪😀"}})
+	good(t, e)
+	if !bytes.Contains(k.memory, []byte("\"a,\"\"b\"\"\n雪😀\"")) {
+		t.Fatal("CSV quote")
+	}
+	for _, h := range []string{strings.Repeat("x", maxElements+1), strings.Repeat("\"", maxElements+1)} {
+		boundHeaders = []string{h}
+		_, e = m.PredictStrings(ctx, nil)
+		bad(t, e)
+	}
+}
+func TestRealOwnedMemoryAndConcurrentClose(t *testing.T) {
+	b, e := os.ReadFile("model.wasm")
+	good(t, e)
+	m, e := New(ctx, b)
+	good(t, e)
+	defer m.Close(ctx)
+	for _, name := range []string{"model_values", "model_labels", "model_text"} {
+		for _, n := range []uint64{maxElements + 1, math.MaxUint32} {
+			v, e := m.k.call(ctx, name, n)
+			good(t, e)
+			if v != 0 {
+				t.Fatal("raw cap")
+			}
+		}
+	}
+	for _, dims := range [][2]uint64{{0, 0}, {1, 0}, {math.MaxUint32, 2}, {2, 2}} {
+		v, e := m.k.call(ctx, "model_fit", dims[0], dims[1])
+		good(t, e)
+		if v == 0 {
+			t.Fatal("bad raw dims")
+		}
+	}
+	for _, name := range []string{"model_predict", "model_predict_text"} {
+		args := []uint64{}
+		if name == "model_predict" {
+			args = []uint64{1, 1}
+		}
+		v, e := m.k.call(ctx, name, args...)
+		good(t, e)
+		if v == 0 {
+			t.Fatal("wrong raw state")
+		}
+	}
+	good(t, m.Fit(ctx, [][]float64{{1}, {2}, {3}}, []float64{2, 4, 6}))
+	p, e := m.Predict(ctx, [][]float64{{1.5}})
+	good(t, e)
+	if len(p) != 1 || math.IsNaN(p[0]) {
+		t.Fatal("positive path")
+	}
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if i%4 == 0 {
+				_ = m.Close(ctx)
+			} else {
+				_, _ = m.Predict(ctx, [][]float64{{1.5}})
+			}
+		}(i)
+	}
+	wg.Wait()
+	good(t, m.Close(ctx))
+	_, e = m.Predict(ctx, nil)
+	bad(t, e)
+}
+func FuzzLifecycle(f *testing.F) {
+	for _, s := range [][]byte{{0, 1, 2, 3, 4}, {2, 0, 1}, {4, 0, 1, 5, 6, 7}} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, ops []byte) {
+		if len(ops) > 1024 {
+			return
+		}
+		saved := boundHeaders
+		boundHeaders = nil
+		defer func() { boundHeaders = saved }()
+		m, _ := fake()
+		closed := false
+		for _, op := range ops {
+			var e error
+			switch op % 8 {
+			case 0:
+				e = m.Fit(ctx, [][]float64{{1}}, []float64{2})
+				if !closed {
+					good(t, e)
+				}
+			case 1:
+				_, e = m.Predict(ctx, [][]float64{{1}})
+				if !closed {
+					good(t, e)
+				}
+			case 2:
+				good(t, m.Close(ctx))
+				closed = true
+				continue
+			case 3:
+				_, e = m.Score(ctx, [][]float64{{1}}, []float64{2})
+				if !closed {
+					good(t, e)
+				}
+			case 4:
+				m, _ = fake()
+				closed = false
+				continue
+			case 5:
+				e = m.Fit(ctx, [][]float64{{1}}, []float64{math.NaN()})
+				bad(t, e)
+			case 6:
+				_, e = m.Predict(ctx, [][]float64{{1, 2}})
+				bad(t, e)
+			case 7:
+				_, e = m.PredictStrings(ctx, nil)
+				bad(t, e)
+			}
+			if closed {
+				bad(t, e)
+			}
+		}
+		good(t, m.Close(ctx))
+	})
+}

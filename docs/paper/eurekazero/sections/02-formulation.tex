@@ -1,0 +1,136 @@
+% Section 2 — Innovation as a game: states, moves, verifiers and utility
+\section{Innovation as a game}
+\label{sec:formulation}
+
+\subsection{The innovation game}
+
+A task instance is $\tau=(d,\mathcal X,\mathcal A,\mathcal O,\mathcal C,\mathcal V,b)$: a domain and
+output role $d$, admissible observations $\mathcal X$, a typed candidate space $\mathcal A$,
+objectives $\mathcal O$, hard constraints $\mathcal C$, an evaluator contract $\mathcal V$ and a
+resource budget $b$. The evaluator contract can be public while its withheld data---held-out labels,
+the true objective function, the physical part---stays hidden from the player. At decision time $t$
+the player sees a state
+\begin{equation}
+\begin{aligned}
+s_t=\bigl(&\text{specification},\ \text{observations},\ H_t,\ \text{objectives},\\
+&\text{constraints},\ \text{remaining budget},\ \text{fidelity},\ \text{uncertainty}\bigr),
+\end{aligned}
+\label{eq:state}
+\end{equation}
+where $H_t$ records what has been tried and observed, and may be empty. A table of labelled
+examples, a sequence of evaluated parameters and a geometry-and-load specification are different
+typed observations under one envelope. For a partially observed problem $s_t$ is an observation
+history, not a sufficient Markov state, and we do not call it one without evidence.
+
+\begin{definition}{Innovation game}
+\label{def:game}
+An innovation game $\Gamma=(\mathcal S,\mathcal A_d,V_d,U,h,H)$ is played on a state
+$s\in\mathcal S$ drawn from a family the player has not seen. A \emph{move} is one complete candidate
+$a\in\mathcal A_d$, written in a typed language whose guarantees are the \emph{rules}. After the move
+is committed, the \emph{verifier} returns
+\begin{equation*}
+(v,\,y,\,c)=V_d(s,a)
+\end{equation*}
+---validity $v$, measured outcomes $y$ and incurred cost $c$---and the move earns utility
+$U(s,a)$. The \emph{opponent} is the incumbent $h(s)$, the best verified utility known for that
+state: the move wins if $U>h(s)+\epsilon$, draws within $\epsilon$ and loses otherwise, and any
+failure loses. A one-shot game has horizon $H=1$; a sequential game appends each verified outcome to
+the next state, $s_{t+1}=s_t\oplus(a_t,v_t,y_t,c_t)$, for $H=T$ decisions.
+\end{definition}
+
+The game is single-player against a rising bar, closer to a contextual bandit than to Go, and we use
+``self-play'' only in that sense: the incumbent is a solution the system itself once found, and
+beating it raises the bar for the next game on that state \citep{laterre2018ranked}. Two features
+separate innovation games from board games. Every game is played on a \emph{new board}---an unseen
+dataset, objective or specification---so competence must transfer across states rather than deepen
+within one position. And the verifier is \emph{external}: utility is what the program does on rows
+nobody saw, what the experiment returns, or what the part does under load, not what any model
+predicts.
+
+\subsection{Three output roles}
+
+A move can play one of three roles (\cref{tab:roles}). Every table in this paper labels its output
+role, because a cheap next-point prediction and a complete algorithm solve different problems even
+when both can be assigned a scalar score.
+
+\begin{table}[t]
+\caption{Three output roles in one interface. ``One proposal'' never means that the move has been
+verified, or that the whole problem has been solved in one call.}
+\label{tab:roles}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}p{0.27\linewidth}LL@{}}
+\toprule
+Role & Example & What one proposal means & What it does not mean \\
+\midrule
+Complete artifact & learning procedure; CAD construction program & one immutable artifact is emitted & that it has been verified or is optimal \\
+Next action & next parameter vector, experiment or measurement & one decision from the supplied history & that the sequential problem is solved in one call \\
+Reusable policy & optimizer rule; scheduling heuristic; controller & one procedure is emitted and later exercised & that each later execution is a new invention \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Which problems are innovation games}
+
+A problem is an innovation game when four conditions hold: its requirements can be \emph{encoded} as a
+state; its candidate solutions can be \emph{written} in a typed language with checkable rules; their
+quality can be \emph{measured} by an evaluator independent of the player; and the measurement fits a
+\emph{declared budget}. Learning-algorithm design, experimental design, structural design, numerical
+kernels, preconditioners, compression transforms, schedulers, controllers, circuits and many
+scientific measurement policies satisfy all four (\cref{sec:limits}). Business strategy, art and open
+scientific theories often do not: their objectives are contested, delayed or unmeasurable. The
+innovation-game hypothesis is therefore a hypothesis about a large and growing class of problems, not
+about all creative work, and this paper tests it in three games chosen to vary both the
+\emph{representation} of the move and the \emph{verifier} that judges it: a program judged by data, a
+decision judged by an unknown function, and a geometry judged by physics.
+
+\subsection{Utility, validity and the generalization target}
+
+Each domain keeps its native metrics---held-out loss, simple regret, mass at a stiffness limit---and
+they are reported raw. For the primary comparison we also use a predeclared, unit-free utility,
+\begin{equation}
+U(s,a)=\begin{cases}\operatorname{clip}\bigl(\log\tfrac{b(s)}{e(s,a)},\,-1,\,1\bigr) & \text{valid, feasible move},\\
+-1 & \text{any failure},\end{cases}
+\label{eq:utility}
+\end{equation}
+where $e$ is the domain loss and $b(s)$ a declared reference for that state (the training-mean
+predictor, random search at the same step, or a fixed default design). Failures---invalid syntax,
+non-finite output, timeouts, infeasible designs---stay in every denominator. For constrained games we
+report feasibility first, then quality among feasible moves, then the failure-inclusive primary, so
+that a method with a few brilliant moves and many failures cannot look uniformly strong.
+
+The generalization target is a distribution over \emph{families}: a dataset with its versions and
+derived targets, a function class or real tuning task, a design lineage with its parameter variants.
+Families that share a source or generator form one dependency component, and the component is the
+inferential unit (\cref{sec:design}).
+
+\subsection{Three limits}
+
+\begin{proposition}{Closed support}
+\label{prop:closed}
+If the decoder's support is a finite archive $\mathcal A_{\mathrm{train}}$ of complete solutions for
+every encoded state, then $\Pr[a\notin\mathcal A_{\mathrm{train}}]=0$ for every parameter value
+training can reach.
+\par\smallskip
+\emph{Proof.} Probability outside the support is zero, and no update that keeps the support changes
+it.\hfill\tikz\draw[line width=0.5pt] (0,0) rectangle (0.62em,0.62em);
+\par\smallskip
+\emph{Consequence.} A decoder that walks paths through known complete solutions is a selector,
+however good, and serves as a control (\cref{sec:design}); out-of-archive proposals need a
+compositional language whose support extends beyond the archive.
+\end{proposition}
+
+\begin{proposition}{Representation limit}
+\label{prop:repr}
+If two states map to the same encoding, $E(s)=E(s')$, and every optimal move for $s$ is suboptimal
+for $s'$, then no policy conditioned only on the encoding is optimal on both; in expectation,
+$\mathbb E[\sup_a \mathbb E[U\mid E(s),a]]\le\mathbb E[\sup_a\mathbb E[U\mid s,a]]$.
+\end{proposition}
+
+The gap between a proposal and the best achievable solution therefore splits into three parts that
+the experiments measure separately: information lost by the encoder, solutions the language cannot
+express, and policy regret within what it can. Training reduces only the third.
+
+\paragraph{Amortization has a price} A learned first proposal can lower the per-problem cost of
+reaching a given quality only relative to a declared deployment volume. The search that generated
+the training experience, the training itself and every later verification remain real costs, and we
+report them (\cref{sec:compute}).

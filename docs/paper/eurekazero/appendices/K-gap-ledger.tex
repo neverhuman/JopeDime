@@ -1,0 +1,23 @@
+% Appendix K — The gap ledger. Generated from northstar/gaps.json by scripts/check.sh --prepare.
+\section{Gap ledger: what must replace each synthetic result}
+\label{app:gaps}
+
+Every purple number in this draft links to one entry below. An entry names the result it stands
+for, the work package that must produce the measurement, and the acceptance test the measurement
+must pass before it may replace the synthetic value. When an entry is closed, its number is replaced
+by a receipt-bound measurement, its \code{\textbackslash syn} wrapper is removed, and the entry is
+deleted; the paper may be submitted only when this appendix is empty.
+
+\newcommand\gapentry[7]{%
+  \par\smallskip\noindent\hypertarget{gap.#1}{}%
+  \begin{tcolorbox}[enhanced, breakable, colback=ezsynsoft, colframe=ezsynsoft, arc=1.5pt,
+      left=7pt, right=7pt, top=4pt, bottom=4pt, before skip=3pt, after skip=3pt, fontupper=\small]
+  {\sffamily\sbseries\color{ezsyn}#1}\quad{\sffamily\sbseries #2}\hfill{\sffamily\footnotesize\color{ezgrey}#3}\par
+  {\footnotesize\sffamily
+  \textcolor{ezgrey}{Replaces}\enspace #6\par
+  \textcolor{ezgrey}{Work}\enspace #4\par
+  \textcolor{ezgrey}{Acceptance}\enspace #5\par
+  \textcolor{ezgrey}{Claims}\enspace #7}
+  \end{tcolorbox}}
+
+\input{gap-ledger}

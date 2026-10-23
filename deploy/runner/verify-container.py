@@ -18,7 +18,7 @@ provenance_bind = _load_provenance_bind()
 
 def verify(policy, memory, cpu, swap, devices):
     role = (policy["host"], policy["lane"])
-    if role in {("xbabe1", "ci"), ("xbabe1", "ci2"), ("xbabe2", "ci"), ("xbabe3", "ci"), ("xbabe0", "ci"), ("xbabe4", "ci"), ("xbabe4", "ci2"), ("xbabe4", "ci3"), ("xbabe4", "ci4")}:
+    if role in {("xbabe1", "ci"), ("xbabe1", "ci2"), ("xbabe2", "ci"), ("xbabe3", "ci"), ("xbabe0", "ci"), ("xbabe4", "ci"), ("xbabe4", "ci2"), ("xbabe4", "ci3"), ("xbabe4", "ci4"), ("xbabe4", "ci5"), ("xbabe4", "ci6"), ("xbabe4", "ci7"), ("xbabe4", "ci8"), ("xbabe4", "ci9"), ("xbabe4", "ci10"), ("xbabe4", "ci11"), ("xbabe4", "ci12")}:
         domain, gib, cpus = "pr", 16, 16
     elif role in {("xbabe2", "full"), ("xbabe3", "full")}:
         domain, gib, cpus = "main", 48, 16

@@ -7,7 +7,7 @@
 
 mod calibration;
 mod csv;
-mod emit;
+pub(crate) mod emit;
 mod evolution;
 mod feature_block;
 mod fitted_cpp;

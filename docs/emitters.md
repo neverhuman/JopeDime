@@ -1,4 +1,4 @@
-# Emitters: Python, Rust, C++17, C++20, JavaScript, TypeScript, C17
+# Emitters: Python, Rust, C++17, C++20, JavaScript, TypeScript, C17, CUDA C++
 
 > **Status on `main` (2026-09-30):** `jope emit` (all five targets, `--lang cpp20` included), `jope pipeline run --emit …`, `jope models` and `jope datasets` are on `main`. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary. The generated capability matrix is machine-checked by the manifest and closure tests; the hand table below summarizes it. See the README's "What this SHA actually does".
 
@@ -15,11 +15,16 @@ Rust is a build dependency. It is a C binding rather than a C-only arithmetic im
 |---|---|---|---|---|
 | Python | `transpile::emit` → `.python` | `model.py`, dependency-free script (`python3 model.py train.csv test_features.csv predictions`) | CPython 3.11+ | full DSL (every planned op and head) |
 | Rust | `transpile::emit` → `.rust` | `model.rs`, single file, no crates (`rustc -O model.rs`) | Rust 2021 | full DSL; **bit-identical pair with Python by construction** |
+| CUDA C++ | `transpile::emit_cuda`, gate `supports_cuda` | Six-file `cuda/` source bundle and source manifest | CUDA C++17 + native Rust build; explicit host-only option | full Rust recipe coverage on the host; explicit FP64 device linear heads; [execution contract](cuda.md) |
 | C17 | `transpile::emit_c17`, gate `supports_c17` | `c17/model.h`, Rust core/boundary, source manifest | Strict C17 caller; Rust 2021 library build | same numeric recipe coverage as Python/Rust; separate fitted formats excluded |
 | C++17 | `transpile::emit_cpp17`, gate `supports_cpp17` | `model.cpp`, a library with a C ABI; `deploy/ci/emitters/driver.cpp` makes it a program | `-std=c++17`; also a valid C++20 program | 22 transforms, heads `ridge`, `elasticnet` |
 | C++20 | same source as C++17 | same `model.cpp` compiled with `-std=c++20` (`cxx::CxxStd::Cxx20`) | `-std=c++20` | identical to C++17: C++20 is a **compile target**, not a second emitter |
 | TypeScript | `transpile::emit_typescript`, gate `supports_typescript` | `model.ts` + `model.kernel.rs`, compiled to JavaScript + `model.wasm` | strict TypeScript ES2020, Rust wasm32 | full Rust recipe coverage; fitted coverage follows bound Rust; [build and arithmetic contract](typescript.md) |
 | JavaScript | `transpile::emit_javascript`, gate `supports_javascript` | `model.js`, ES2020/CommonJS functions; `deploy/ci/emitters/driver.js` makes it a program (`node program.js …`) | Node ≥ 20 (CI uses 26) | same 22 transforms and two heads as C++ |
+
+| Go | `transpile::emit_go`, `go::emit_bound` | `model.go`, `model.go.kernel.rs`, `go.mod`, `go.sum` | Go 1.25+, pinned wazero, Rust Wasm build | full Rust recipe admission, existing Rust bound admission/refusals, scalar-v2 and row-vector APIs; finite native/Wasm tolerance |
+
+[Go build, API and qualification contract](go.md). The Go binding uses finite Wasm tolerance, while the native Python/Rust pair retains its bit-equality gates.
 
 The `emit` example (`cargo run -p feat-math --example emit -- [--all] <program.dsl> <out-dir>`)
 writes `model.py`/`model.rs` always, `model.cpp`/`model.js` when their gates pass, a sidecar

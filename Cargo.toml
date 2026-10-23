@@ -55,7 +55,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 rust-version = "1.96"
 license = "Apache-2.0"
@@ -107,6 +107,15 @@ opt-level = 3
 
 [profile.dev.package.digest]
 opt-level = 3
+
+# Rust 1.97.1 can emit a zero-length debug CGU for the enlarged emitter crate,
+# which its archive builder rejects. Keep this workaround scoped to debug/test
+# feat-math builds; generated models and release profiles retain their flags.
+[profile.dev.package.feat-math]
+codegen-units = 1
+
+[profile.test.package.feat-math]
+codegen-units = 1
 
 [profile.release]
 opt-level = 3

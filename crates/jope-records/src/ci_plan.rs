@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|benchmarks/|schemas/|{common}|\.github/workflows/typescript\.yml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
+                r"^(crates/|examples/go/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/(go|typescript)\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),
@@ -282,11 +282,18 @@ mod tests {
             "ops/circuit/unrelated.sh",
             "tools/security-lane.sh.bak",
             "docs/learning.md",
+            "examples/go/main.go",
+            "examples/goes/main.go",
+            ".github/workflows/go.yml",
             "crates/feat-math/src/lib.rs",
             "deploy/ci/aggregate.py",
             ".github/workflows/ci.yml",
             ".github/workflows/typescript.yml",
         ];
+        for path in ["examples/go/main.go", ".github/workflows/go.yml"] {
+            let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
+            assert!(lanes["rust-check"] && lanes["rust-test"], "{path}");
+        }
         let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/ci/ci-plan.py");
         let output = Command::new("python3")
             .env("PYTHONDONTWRITEBYTECODE", "1")

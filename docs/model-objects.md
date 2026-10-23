@@ -55,6 +55,7 @@ Rust implementation: `jope_runtime::model_object`.
 | `metadata` | Extensible descriptive metadata; cannot enable execution or override requirements |
 | `model.jope` | Native appliance fitted state under `org.jopedime/appliance-fitted/v1` |
 | `state.json` | Complete bound state under `org.jopedime/battle-artifact/v2` |
+| `pipeline.json` + `input.json` | Fitted feat-math pipeline and its numeric input contract under `org.jopedime/math-pipeline/v1` |
 | Additional `.bin` or `.json` parts | Optional typed buffers, operator parameters, support rows, calibration or other fitted state, as defined by that decoder |
 
 The directory ID is `sha256-` plus SHA-256 of the **exact manifest bytes**. A reader
@@ -214,6 +215,7 @@ immutable object. No automatic pruning or training-resume implementation is intr
 | Node / TypeScript-facing example | `JopeModel.fit` / `saveState` | Adapter calls packaged executable | No JavaScript numerical executor added |
 | Independent Python, C++, Java or other estimator | Implement declared codec and call CLI/MCP import | Requires a registered compatible decoder | Must qualify separately |
 | Exported Python / Rust / JavaScript source | No automatic persistence added to standalone recipes | Existing emitter's admitted subset only | Export coverage gate may refuse |
+| `math-pipeline/v1` object from an external producer | Producer writes `pipeline.json` + `input.json`, then CLI `model import --manifest` | CLI `predict` | `model export --format javascript` carries the fitted state; JavaScript slice only |
 | ONNX export | Unimplemented, exit 4 | Unimplemented | A custom domain also needs a compatible runtime |
 
 Inspection uses response schema `jope.model-object-inspection/v1`, distinct from the stored

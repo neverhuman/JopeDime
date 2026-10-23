@@ -7,9 +7,13 @@ license.workspace = true
 description = "Model-synthesis kernel: pipeline-program DSL interpreter, Python/Rust/C++17/JavaScript/TypeScript code emitters, native C17 model exports, and in-process program synthesis"
 
 [features]
+# Dedicated Go qualification derives all cases from the unchanged native golden suite.
+go-parity-tests = []
 default = ["fitted-cpp"]
 # Requires exact parity and funded full-task performance qualification before use.
 gpr-scratch-reuse = []
+# Explicit local CUDA qualification only; never selected by standard CI.
+cuda-parity-tests = []
 # The fitted C++ runtime: build.rs compiles cpp/fitted_runtime.cpp with g++ into a shared library
 # that is embedded and loaded with memfd + dlopen. Default-on so every existing build keeps it.
 # The `jopedime` appliance must not carry C++ (deploy/appliance/AMENDMENTS.md A1): crates in its
@@ -19,6 +23,18 @@ fitted-cpp = []
 [[test]]
 name = "advanced_v3_fitted_cpp"
 required-features = ["fitted-cpp"]
+
+[[test]]
+name = "go_golden"
+required-features = ["go-parity-tests"]
+
+[[test]]
+name = "cuda_export"
+required-features = ["cuda-parity-tests"]
+
+[[test]]
+name = "cuda_census"
+required-features = ["cuda-parity-tests"]
 
 [dependencies]
 anyhow.workspace = true

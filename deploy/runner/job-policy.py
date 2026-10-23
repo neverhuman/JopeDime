@@ -34,8 +34,16 @@ def authorize(policy, env):
                 or event != "push"):
             raise ValueError("guard storage admits only the exact main-guard push")
     elif policy["domain"] == "pr":
-        if not workflow.startswith(f"{repo}/.github/workflows/ci.yml@") or event not in {"pull_request", "workflow_dispatch"}:
-            raise ValueError("fast storage admits only ci PR/manual jobs")
+        ci_ok = (workflow.startswith(f"{repo}/.github/workflows/ci.yml@")
+                 and event in {"pull_request", "workflow_dispatch"})
+        qualification_ok = (
+            workflow == f"{repo}/.github/workflows/runner-qualification.yml@refs/heads/main"
+            and event == "workflow_dispatch" and env.get("GITHUB_REF") == "refs/heads/main"
+            and policy.get("host") == "xbabe4"
+            and policy.get("lane") in {"ci", "ci2", "ci3", "ci4", "ci5", "ci6", "ci7", "ci8", "ci9", "ci10", "ci11", "ci12"}
+            and env.get("GITHUB_SHA") != "0" * 40)
+        if not (ci_ok or qualification_ok):
+            raise ValueError("fast storage admits ci PR/manual or exact Mac main qualification")
     else:
         raise ValueError("unknown storage domain")
     if not re.fullmatch(r"[0-9a-f]{40}", env.get("GITHUB_SHA", "")):

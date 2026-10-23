@@ -1,0 +1,15 @@
+package model
+import("context";"encoding/json";"math";"os";"sync";"testing")
+func TestParity(t *testing.T){
+ ctx:=context.Background();load:=func(n string,v any){b,e:=os.ReadFile(n);if e!=nil{t.Fatal(e)};if e=json.Unmarshal(b,v);e!=nil{t.Fatal(e)}}
+ var in struct{Train [][]float64;Targets []float64;Test [][]float64;Rows [][]string};var expected []float64;load("input.json",&in);load("expected.json",&expected);wasm,e:=os.ReadFile("model.wasm");if e!=nil{t.Fatal(e)}
+ for _,engine:=range []Engine{Auto,Interpreter}{t.Run(map[Engine]string{Auto:"auto",Interpreter:"interpreter"}[engine],func(t *testing.T){m,e:=NewWithEngine(ctx,wasm,engine);if e!=nil{t.Fatal(e)};defer m.Close(ctx)
+ if !__FITTED__{if _,e=m.Predict(ctx,in.Test);e==nil{t.Fatal("unfitted accepted")};if e=m.Fit(ctx,in.Train,in.Targets);e!=nil{t.Fatal(e)}}else{if e=m.Fit(ctx,nil,nil);e==nil{t.Fatal("bound fit accepted")}}
+ predict:=func()([]float64,error){if __FITTED__{return m.PredictStrings(ctx,in.Rows)};return m.Predict(ctx,in.Test)}
+ check:=func(p []float64,e error){t.Helper();if e!=nil{t.Fatal(e)};if len(p)!=len(expected){t.Fatal("count")};for i,v:=range expected{if math.IsNaN(p[i])||math.IsInf(p[i],0)||math.Abs(p[i]-v)>1e-8*(1+math.Abs(v)){t.Fatalf("prediction %d: %.17g != %.17g",i,p[i],v)}}}
+ p,e:=predict();check(p,e);if len(p)>0{p[0]=math.Inf(1);check(predict())}
+ var wg sync.WaitGroup;for i:=0;i<4;i++{wg.Add(1);go func(){defer wg.Done();p,e:=predict();if e!=nil||len(p)!=len(expected){t.Error(e)}}()};wg.Wait()
+ if !__FITTED__{if p,e=m.Predict(ctx,nil);e!=nil||len(p)!=0{t.Fatal(e)};if v,e:=m.Score(ctx,nil,nil);e!=nil||v!=0{t.Fatal(e)}}else{if p,e=m.PredictStrings(ctx,nil);e!=nil||len(p)!=0{t.Fatal(e)}}
+ if e=m.Close(ctx);e!=nil{t.Fatal(e)};if e=m.Close(ctx);e!=nil{t.Fatal(e)};if _,e=predict();e==nil{t.Fatal("closed instance accepted")};t.Logf("Go %d: %d predictions qualified",engine,len(expected))
+ })}
+}

@@ -16,15 +16,20 @@ use feat_math::transpile::{self, EmitOptions};
 
 fn main() -> Result<()> {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
+    let cuda = args.iter().any(|arg| arg == "--cuda");
+    args.retain(|arg| arg != "--cuda");
     let c17 = args.iter().any(|arg| arg == "--c17");
     args.retain(|arg| arg != "--c17");
     let require_all = args.iter().any(|arg| arg == "--all");
     let typescript = args
         .iter()
         .any(|arg| arg == "--typescript" || arg == "--ts");
-    args.retain(|arg| !["--all", "--typescript", "--ts"].contains(&arg.as_str()));
+    let go = args.iter().any(|arg| arg == "--go" || arg == "--golang");
+    args.retain(|arg| {
+        !["--all", "--go", "--golang", "--typescript", "--ts"].contains(&arg.as_str())
+    });
     let [dsl, out] = args.as_slice() else {
-        bail!("usage: emit [--all] [--c17] [--typescript] <program.dsl> <out-dir>");
+        bail!("usage: emit [--all] [--go] [--cuda] [--c17] [--typescript] <program.dsl> <out-dir>");
     };
     let (dsl, out) = (dsl.clone(), out.clone());
     let source = std::fs::read_to_string(&dsl).with_context(|| format!("read {dsl}"))?;
@@ -64,6 +69,14 @@ fn main() -> Result<()> {
         }
         Err(unsupported) => eprintln!("JavaScript target not emitted: {}", unsupported.join(", ")),
     }
+    if cuda {
+        for (path, source) in transpile::emit_cuda(&genome, &opts)?.files {
+            let dest = out.join(path);
+            std::fs::create_dir_all(dest.parent().context("CUDA output parent")?)?;
+            std::fs::write(dest, source)?;
+        }
+        targets.push("cuda");
+    }
     if c17 {
         for (path, source) in transpile::emit_c17(&genome, &opts)?.files {
             let dest = out.join(path);
@@ -77,6 +90,13 @@ fn main() -> Result<()> {
         std::fs::write(out.join("model.ts"), bundle.source)?;
         std::fs::write(out.join("model.kernel.rs"), bundle.kernel)?;
         targets.push("ts");
+    }
+    if go {
+        let bundle = transpile::emit_go(&genome, &opts)?;
+        for (path, source) in feat_math::go::sources(&bundle) {
+            std::fs::write(out.join(path), source)?;
+        }
+        targets.push("golang");
     }
     std::fs::write(out.join("targets.txt"), format!("{}\n", targets.join(" ")))?;
     println!("emitted {} to {}", targets.join(" "), out.display());

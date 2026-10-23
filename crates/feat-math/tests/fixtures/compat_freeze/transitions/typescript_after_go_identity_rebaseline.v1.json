@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Parallel-branch join: the previously published Go proposal reaches the identical combined Go/TypeScript identity. No behavior fixtures change.",
+  "plan_reference": "Explicit Go target/current-main parity request; ADR-0004 identity-only procedure",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/416",
+  "source_commit": "940eaa6ffdef3c72388ded126c1fe461563180a2",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "c31903f654c307d91f076feb344019ba4275473fcf4a873d172ac8c07c94e6fa",
+      "after": "164c8ef88fe93b3f85b588f963eb9cb5590c4ea2507a39d918b35ea47dc50c99"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "281e52d17bfbca1395b478389df6911d6c399f124cc252fd04f2ea27deb49d21",
+      "after": "c26662da74253a6447772c1bab41815496d74972e312b488dd2fc07f51ff7041"
+    }
+  ]
+}

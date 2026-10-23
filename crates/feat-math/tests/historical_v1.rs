@@ -633,6 +633,149 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(security_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // Workspace version bump to 0.4.1 (just bump 0.4.1): announced identity only.
+    let release_0_4_1 = old_fixture("transitions/release_0_4_1_identity_rebaseline.v1.json");
+    let release_0_4_1_fixtures = release_0_4_1["fixtures"].as_array().unwrap();
+    assert_eq!(release_0_4_1_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(release_0_4_1_fixtures
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
+    // tokio 1.53.3 security patch (RUSTSEC-2026-0386): announced identity only.
+    let tokio_security = old_fixture("transitions/tokio_security_identity_rebaseline.v1.json");
+    let tokio_security_fixtures = tokio_security["fixtures"].as_array().unwrap();
+    assert_eq!(tokio_security_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(tokio_security_fixtures
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
+    let integration_join =
+        old_fixture("transitions/emergency_20261023_after_go_identity_join.v1.json");
+    let shared_feature_join =
+        old_fixture("transitions/pr416_after_shared_capacity_release_identity_join.v1.json");
+    let feature_shared_join = old_fixture(
+        "transitions/pr416_shared_capacity_release_after_feature_identity_join.v1.json",
+    );
+    for record in [&shared_feature_join, &feature_shared_join] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
+    // The capacity branch announced the same Tokio fix on the old workspace version.
+    // Keep its original edge and verify the parallel join to the release identity.
+    let capacity_tokio =
+        old_fixture("transitions/pr420_tokio_security_identity_rebaseline.v1.json");
+    let capacity_release_join =
+        old_fixture("transitions/pr420_after_release_0_4_1_identity_join.v1.json");
+    for record in [&capacity_tokio, &capacity_release_join] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
+    for edge in capacity_tokio["fixtures"].as_array().unwrap() {
+        let path = edge["path"].as_str().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        identity_transitions::verify_fixture(
+            path,
+            edge["before"].as_str().unwrap(),
+            &current,
+            &[
+                capacity_tokio.clone(),
+                capacity_release_join.clone(),
+                shared_feature_join.clone(),
+                integration_join.clone(),
+            ],
+        )
+        .expect("capacity Tokio history joins the release0.4.1 security identity");
+    }
+    let go_after_c17 = old_fixture("transitions/pr416_after_c17_identity_rebaseline.v1.json");
+    let go_parallel_join =
+        old_fixture("transitions/pr416_c17_after_go_identity_rebaseline.v1.json");
+    let published_go = old_fixture("transitions/go_after_typescript_identity_rebaseline.v1.json");
+    for record in [&go_after_c17, &go_parallel_join] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
+    for edge in published_go["fixtures"].as_array().unwrap() {
+        let path = edge["path"].as_str().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        identity_transitions::verify_fixture(
+            path,
+            edge["after"].as_str().unwrap(),
+            &current,
+            &[
+                go_parallel_join.clone(),
+                feature_shared_join.clone(),
+                integration_join.clone(),
+            ],
+        )
+        .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
+    }
+    for edge in go_after_c17["fixtures"].as_array().unwrap() {
+        let path = edge["path"].as_str().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        identity_transitions::verify_fixture(
+            path,
+            edge["before"].as_str().unwrap(),
+            &current,
+            &[
+                go_after_c17.clone(),
+                feature_shared_join.clone(),
+                integration_join.clone(),
+            ],
+        )
+        .expect("published feature history joins shared capacity and release fixes");
+    }
+    // Preserve CUDA's independently announced history through the combined identity.
+    let cuda_cpp = old_fixture("transitions/cuda_cpp_identity_rebaseline.v1.json");
+    let cuda_local_only = old_fixture("transitions/cuda_local_only_ci_identity_rebaseline.v1.json");
+    let cuda_feature_shared_join = old_fixture(
+        "transitions/pr422_shared_capacity_release_after_feature_identity_join.v1.json",
+    );
+    let cuda_shared_feature_join =
+        old_fixture("transitions/pr422_after_shared_capacity_release_identity_join.v1.json");
+    let cuda_integration_join =
+        old_fixture("transitions/emergency_20261023_after_cuda_identity_join.v1.json");
+    for record in [
+        &cuda_cpp,
+        &cuda_local_only,
+        &cuda_feature_shared_join,
+        &cuda_shared_feature_join,
+        &cuda_integration_join,
+    ] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
+    for (origin, chain) in [
+        (
+            &cuda_cpp,
+            vec![
+                cuda_cpp.clone(),
+                cuda_local_only.clone(),
+                cuda_feature_shared_join.clone(),
+                cuda_integration_join.clone(),
+            ],
+        ),
+        (
+            &cuda_shared_feature_join,
+            vec![
+                cuda_shared_feature_join.clone(),
+                cuda_integration_join.clone(),
+            ],
+        ),
+    ] {
+        for edge in origin["fixtures"].as_array().unwrap() {
+            let path = edge["path"].as_str().unwrap();
+            let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+            let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+            identity_transitions::verify_fixture(
+                path,
+                edge["before"].as_str().unwrap(),
+                &current,
+                &chain,
+            )
+            .expect("preserved CUDA history joins combined integration identity");
+        }
+    }
     let identity_chain = [
         transition,
         successor,
@@ -668,6 +811,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         typescript,
         c17_combined,
         ctutils_security,
+        release_0_4_1,
+        tokio_security,
+        shared_feature_join,
+        integration_join,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

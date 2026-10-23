@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Owner-directed eight-PR integration. Identity-only owning regeneration; original scientific/emitted/model/search/golden fixtures and every historical transition preserved.",
+  "plan_reference": "AGENTS.md one-time emergency integration 2026-10-23; ADR-0004 identity-only procedure",
+  "pr_reference": "Original PR416 and PR420 through PR426 consolidated under explicit human direction",
+  "source_commit": "a9d3b2744412daf7ab1ea710fddb496e0427bd49",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "c5febbc3612c4763152a572ede55a60b4a8f10bb041c9885148c7d43e011bf06",
+      "after": "8053eb02ce8c87ec15956e0ae3ecbbb7ddcaffbe6476045a72722e7a77f6687c"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "bab5ef1f587ff3b6bbad0f54d4c9479cd9bbcafbb9eb340c0a217cb033bb5f2f",
+      "after": "d1889d2812726e7099420c5a0c4c67e10617e40783993821d02f7aa7e4577ec8"
+    }
+  ]
+}

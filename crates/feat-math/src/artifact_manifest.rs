@@ -25,9 +25,12 @@ pub enum Target {
     JavaScript,
     #[serde(rename = "typescript")]
     TypeScript,
+    #[serde(rename = "go")]
+    Go,
     Cpp17RecipeV2,
     Cpp17Fitted,
     C17,
+    Cuda,
 }
 impl Target {
     pub const RECIPES: [Self; 5] = [
@@ -45,9 +48,11 @@ impl Target {
             "cpp20" | "c++20" => Self::Cpp20,
             "javascript" | "js" => Self::JavaScript,
             "typescript" | "ts" => Self::TypeScript,
+            "go" | "golang" => Self::Go,
             "cpp17-recipe-v2" => Self::Cpp17RecipeV2,
             "cpp17-fitted" => Self::Cpp17Fitted,
             "c" | "c17" => Self::C17,
+            "cuda" | "cuda-cpp" | "cu" => Self::Cuda,
             _ => anyhow::bail!("unknown requested target {value:?}"),
         })
     }
@@ -68,11 +73,13 @@ impl Target {
     pub fn path(self) -> &'static str {
         match self {
             Self::C17 => "c17/model.h",
+            Self::Cuda => "cuda/model.cu",
             Self::Python => "model.py",
             Self::Rust => "model.rs",
             Self::Cpp17 | Self::Cpp20 => "model.cpp",
             Self::JavaScript => "model.js",
             Self::TypeScript => "model.ts",
+            Self::Go => "model.go",
             Self::Cpp17RecipeV2 => "cpp17-recipe-v2/model.cpp",
             Self::Cpp17Fitted => "cpp17-fitted/model.cpp",
         }
@@ -80,12 +87,14 @@ impl Target {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::C17 => "c17",
+            Self::Cuda => "cuda",
             Self::Python => "python",
             Self::Rust => "rust",
             Self::Cpp17 => "cpp17",
             Self::Cpp20 => "cpp20",
             Self::JavaScript => "javascript",
             Self::TypeScript => "typescript",
+            Self::Go => "go",
             Self::Cpp17RecipeV2 => "cpp17-recipe-v2",
             Self::Cpp17Fitted => "cpp17-fitted",
         }
@@ -93,9 +102,9 @@ impl Target {
     pub fn registry_target(self) -> &'static str {
         match self {
             // The C boundary invokes the safe Rust recipe without changing arithmetic.
-            Self::C17 => "rust_recipe",
+            Self::C17 | Self::Cuda => "rust_recipe",
             Self::Python => "python_recipe",
-            Self::Rust | Self::TypeScript => "rust_recipe",
+            Self::Rust | Self::Go | Self::TypeScript => "rust_recipe",
             Self::Cpp17 | Self::Cpp20 => "cpp17_recipe",
             Self::JavaScript => "javascript",
             Self::Cpp17RecipeV2 => "cpp17_recipe_v2",
@@ -181,6 +190,21 @@ pub enum BuildExecution {
 impl BuildIdentity {
     pub fn declared(target: Target) -> Self {
         let (toolchain, standard, flags, abi) = match target {
+            Target::Cuda => (
+                "rustc+nvcc".into(),
+                "rust2021+cuda-c++17".into(),
+                vec![
+                    "--edition=2021".into(),
+                    "-O".into(),
+                    "-Cpanic=unwind".into(),
+                    "--crate-type=staticlib".into(),
+                    "-std=c++17".into(),
+                ]
+                .into_iter()
+                .chain(crate::cuda::DEVICE_FLAGS.iter().map(|s| s.to_string()))
+                .collect(),
+                "cuda-native-v1",
+            ),
             Target::C17 => (
                 "rustc".into(),
                 "rust2021+c17".into(),
@@ -219,6 +243,22 @@ impl BuildIdentity {
                 ],
                 "typescript-wasm-v1",
             ),
+            Target::Go => (
+                "rustc+go".into(),
+                "go1.25+wasm32".into(),
+                vec![
+                    "--edition=2021".into(),
+                    "--target=wasm32-unknown-unknown".into(),
+                    "--crate-type=cdylib".into(),
+                    "--crate-name=model_kernel".into(),
+                    "-Copt-level=3".into(),
+                    "-Cpanic=abort".into(),
+                    "CGO_ENABLED=0".into(),
+                    "-mod=readonly".into(),
+                    "wazero/v1.12.0".into(),
+                ],
+                "go-wasm-v1",
+            ),
             _ => {
                 let standard = if target == Target::Cpp20 {
                     "c++20"
@@ -238,8 +278,10 @@ impl BuildIdentity {
             toolchain,
             standard,
             flags,
-            backend: if target == Target::TypeScript {
+            backend: if matches!(target, Target::Go | Target::TypeScript) {
                 "wasm32-scalar"
+            } else if target == Target::Cuda {
+                "cpu-native+cuda-linear-head"
             } else {
                 "cpu-scalar"
             }
@@ -404,6 +446,15 @@ impl ArtifactManifestV3 {
                             "cpp17-fitted/model.codec.json",
                             "cpp17-fitted/standalone.cpp",
                         ]
+                    } else if record.target == Target::Cuda {
+                        vec![
+                            "cuda/CMakeLists.txt",
+                            "cuda/manifest.json",
+                            "cuda/model.cu",
+                            "cuda/model.hpp",
+                            "cuda/model_core.rs",
+                            "cuda/model_native.rs",
+                        ]
                     } else if record.target == Target::C17 {
                         vec![
                             "c17/manifest.json",
@@ -413,6 +464,8 @@ impl ArtifactManifestV3 {
                         ]
                     } else if record.target == Target::TypeScript {
                         vec!["model.ts", "model.kernel.rs"]
+                    } else if record.target == Target::Go {
+                        vec!["model.go", "model.go.kernel.rs", "go.mod", "go.sum"]
                     } else {
                         vec![record.target.path()]
                     };
@@ -429,12 +482,12 @@ impl ArtifactManifestV3 {
                             && !build.toolchain.is_empty(),
                         "target build identity mismatch"
                     );
-                    if record.target == Target::C17 {
-                        ensure!(build == &declared, "C17 build recipe mismatch");
-                    } else if record.target == Target::TypeScript {
+                    if matches!(record.target, Target::C17 | Target::Cuda) {
+                        ensure!(build == &declared, "native build recipe mismatch");
+                    } else if matches!(record.target, Target::Go | Target::TypeScript) {
                         ensure!(
                             build.toolchain == declared.toolchain && build.flags == declared.flags,
-                            "TypeScript build recipe mismatch"
+                            "Wasm target build recipe mismatch"
                         );
                     }
                     if matches!(

@@ -1,0 +1,29 @@
+% Appendix L — Reproducibility tiers
+\section{Reproducibility}
+\label{app:repro}
+
+Each result row states which of five tiers a reader can reach with what we release
+(\cref{tab:tiers}).
+
+\begin{table}[h]
+\caption{Reproduction tiers.}
+\label{tab:tiers}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}llL@{}}
+\toprule
+Tier & Name & What a reader does \\
+\midrule
+R0 & read & checks receipts: hashes, counters, commands, exit codes and resource use \\
+R1 & re-verify & re-runs the verifier on every committed artifact and recovers every utility \\
+R2 & re-propose & runs the released checkpoint on the sealed states and recovers every committed artifact, byte for byte under the declared seed \\
+R3 & retrain & trains a proposer from the released experience and recovers the primary results within their intervals \\
+R4 & regenerate & regenerates experience with a teacher; protected for our teacher (\cref{app:disclosure}), open for any teacher the reader supplies \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{This draft} The draft itself is reproducible at R1 in the sense that matters for a
+north-star document: every synthetic number and figure regenerates byte for byte from
+\code{scripts/synthesize.sh} with a fixed seed, and \code{make check} refuses a draft in which any
+synthetic value is unlabelled, any gap is unledgered or any figure plotting synthetic data is
+untagged. \code{make submission-check} refuses this draft, by design.

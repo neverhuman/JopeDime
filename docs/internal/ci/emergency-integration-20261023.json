@@ -1,0 +1,83 @@
+{
+  "schema": "jope.emergency-integration/v1",
+  "date": "2026-10-23",
+  "authority": "Human approved consolidate and validate together, reviewed merge-first plan, then Please ensure this is finished and nothing is lot.",
+  "premerge_main": "f9543b85b356675d377e38d75c4e3ecea8b2d302",
+  "sources": [
+    {
+      "headRefName": "docs/eurekazero-north-star-paper",
+      "headRefOid": "a787c8075e5b8860131386a871c9ec2f75419f11",
+      "isDraft": false,
+      "number": 426,
+      "title": "docs(paper): add EurekaZero north-star draft with synthetic results",
+      "url": "https://github.com/neverhuman/JopeDime/pull/426"
+    },
+    {
+      "headRefName": "dependabot/github_actions/taiki-e/install-action-2.87.29",
+      "headRefOid": "f18a40727fa29ce21c28119664363953135e2f2b",
+      "isDraft": false,
+      "number": 425,
+      "title": "chore(deps): bump taiki-e/install-action from 2.87.22 to 2.87.29",
+      "url": "https://github.com/neverhuman/JopeDime/pull/425"
+    },
+    {
+      "headRefName": "dependabot/github_actions/astral-sh/setup-uv-10.3.0",
+      "headRefOid": "62a31162ff6ee42b36931467e5b2d49844abc965",
+      "isDraft": false,
+      "number": 424,
+      "title": "chore(deps): bump astral-sh/setup-uv from 10.2.0 to 10.3.0",
+      "url": "https://github.com/neverhuman/JopeDime/pull/424"
+    },
+    {
+      "headRefName": "alton/math-pipeline-decoder",
+      "headRefOid": "11e553a551d885cb54959175b0bea4a2b60bd254",
+      "isDraft": false,
+      "number": 423,
+      "title": "feat(models): math-pipeline/v1 decoder for externally fitted pipelines",
+      "url": "https://github.com/neverhuman/JopeDime/pull/423"
+    },
+    {
+      "headRefName": "feat/cuda-cpp-target-20261023",
+      "headRefOid": "fd66b87f6084d257f7deca2ca8d41a7b4ceb0d88",
+      "isDraft": false,
+      "number": 422,
+      "title": "feat(emit): add CUDA C++ target with Rust host parity and local qualification",
+      "url": "https://github.com/neverhuman/JopeDime/pull/422"
+    },
+    {
+      "headRefName": "alton/release-v0.4.1",
+      "headRefOid": "6933700d845e2d1265a5f88a893c25c9d3ce3037",
+      "isDraft": false,
+      "number": 421,
+      "title": "chore(release): jope v0.4.1",
+      "url": "https://github.com/neverhuman/JopeDime/pull/421"
+    },
+    {
+      "headRefName": "codex/ci-sdk-workdir-20261023",
+      "headRefOid": "9c0cab3a37ea72fa05289ace3932e5a7c5ac5c79",
+      "isDraft": true,
+      "number": 420,
+      "title": "feat(ci): expand xbabe4 to twelve isolated Linux workers",
+      "url": "https://github.com/neverhuman/JopeDime/pull/420"
+    },
+    {
+      "headRefName": "feat/go-wasm-target-20261023",
+      "headRefOid": "d2d9a21589ef498e1bb5c05c64c534485a37dd1f",
+      "isDraft": true,
+      "number": 416,
+      "title": "feat(emit): add Go/Wasm output with Rust target parity and qualification CI",
+      "url": "https://github.com/neverhuman/JopeDime/pull/416"
+    }
+  ],
+  "ci_disposition": "Full matrix deferred by explicit owner-directed emergency exception; not passed",
+  "source_policy": "All original heads retained in integration ancestry and original branches. Numerical/emitted/model/search/golden fixtures and serving-known identity table unchanged; owning identity metadata only with additive history joins.",
+  "evidence": "/home/ubuntu/jope-evidence/pr-all-clearance-20261023/emergency-execution",
+  "rollback_ref": "codex/emergency-rollback-20261023-f9543b85b356",
+  "resolution_notes": [
+    "Mechanical union of Go and CUDA aliases/modules/dispatch/native recipe checks and opt-in Cargo declarations. CUDA CI removed; no GPU qualification claimed.",
+    "Keep release0.4.1 and Tokio1.53.3 tested graph; preserve all prior evaluator history records.",
+    "Browser dependencies retain107 closed dated snapshot URLs and current release zlib2.3 size63158/SHA376249c8de139568221dbb242318cc8cb8f02299e3a62b7432948e1754fbddf9.",
+    "Math decoder prediction-consistency checks retained. Both dependency action pins retained.",
+    "EurekaZero remains explicitly synthetic north-star draft, submission refusal retained."
+  ]
+}

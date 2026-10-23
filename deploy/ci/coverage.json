@@ -155,7 +155,7 @@
         "pinned data/models"
       ],
       "owner_phase": "GPU/S3 qualification",
-      "reason": "Configured weekly GPU/S3 workflows are separate from CPU CI and not live qualification evidence.",
+      "reason": "Former scheduled GPU workflow removed by explicit user instruction; retained regression/restore scripts require a separate explicit local invocation, accepted budget and capability-bound evidence.",
       "status": "deferred"
     }
   },
@@ -356,6 +356,18 @@
       "lanes": [],
       "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
     },
+    "feature:feat-math/cuda-parity-tests": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Explicit local qualification feature; excluded from default Cargo tests and all GitHub Actions workflows. No hardware qualification is implied by discovery."
+    },
     "feature:feat-math/default": {
       "discovery": {
         "dependencies": [
@@ -384,6 +396,17 @@
         "full-default"
       ],
       "scope": "Default-on: the fitted C++17 runtime compiled by build.rs and loaded with memfd/dlopen. The jopedime appliance graph (jope-runtime, jope-policy) takes feat-math without it; deploy/appliance/dependencies-deny.toml and crates/jope-dist/tests/dependency_fence.rs keep it out."
+    },
+    "feature:feat-math/go-parity-tests": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Explicit qualification only: derive Go-enabled tests from the unchanged frozen native golden source; no production runtime/API feature gate."
     },
     "feature:feat-math/gpr-scratch-reuse": {
       "discovery": {
@@ -929,6 +952,16 @@
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
+    "job:.github/workflows/ci.yml/go": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
     "job:.github/workflows/ci.yml/hygiene": {
       "discovery": {
         "kind": "workflow-job"
@@ -1061,6 +1094,26 @@
       ],
       "scope": "Call the reusable publication build through existing full-main.yml admission; aggregate requires its successful current-source PDF/check evidence."
     },
+    "job:.github/workflows/go.yml/go-parity": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
+    "job:.github/workflows/go.yml/go-platform": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
     "job:.github/workflows/jankurai.yml/jankurai-audit": {
       "discovery": {
         "kind": "workflow-job"
@@ -1121,6 +1174,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "job:.github/workflows/runner-qualification.yml/qualify": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "mac-runner-qualification"
+      ],
+      "scope": "Main-only manual operational qualification after reviewed merged deployment. All twelve exact xbabe4 roles must execute the runner and provenance contracts and verify actual kernel limits and installed-file identity. Source discovery, registration and skipped jobs do not qualify live capacity."
+    },
     "job:.github/workflows/typescript.yml/typescript-parity": {
       "discovery": {
         "kind": "workflow-job"
@@ -1130,26 +1193,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "job:.github/workflows/weekly.yml/regression-suite": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [
-        "weekly"
-      ],
-      "lanes": [],
-      "scope": "Configured workflow/job; current execution unqualified."
-    },
-    "job:.github/workflows/weekly.yml/restore-drill": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [
-        "weekly"
-      ],
-      "lanes": [],
-      "scope": "Configured workflow/job; current execution unqualified."
     },
     "package:battle-gpu": {
       "discovery": {
@@ -1612,6 +1655,17 @@
         "python"
       ],
       "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
+    },
+    "python:deploy/ci/cuda/test_evidence.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Local-only stdlib CUDA evidence negative controls, invoked by the manual qualifier; not part of standard hygiene."
     },
     "python:deploy/ci/test-aggregate.py": {
       "discovery": {
@@ -4666,6 +4720,40 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/cuda_census": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "cuda-parity-tests"
+        ],
+        "source": "crates/feat-math/tests/cuda_census.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Explicit local CUDA qualification only, selected with cuda-parity-tests by qualify.sh; excluded from default and standard CI test collection. Actual device results require a successful local device receipt."
+    },
+    "target:feat-math/test/cuda_export": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "cuda-parity-tests"
+        ],
+        "source": "crates/feat-math/tests/cuda_export.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Explicit local CUDA qualification only, selected with cuda-parity-tests by qualify.sh; excluded from default and standard CI test collection. Actual device results require a successful local device receipt."
+    },
     "target:feat-math/test/cumulative_integration_v2": {
       "discovery": {
         "doctest": false,
@@ -4779,6 +4867,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/go_golden": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "go-parity-tests"
+        ],
+        "source": "crates/feat-math/tests/go_golden.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Every original native golden assertion plus Go/Wasm parity; checked additive generation leaves tests/golden.rs and its frozen hash unchanged. Go runtime presence is required."
     },
     "target:feat-math/test/golden": {
       "discovery": {
@@ -11499,6 +11603,38 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Table contract, task inference, folds, losses, error taxonomy and device selection unit tests."
     },
+    "target:jope-runtime/test/fitted_js_qualification": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/fitted_js_qualification.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Fitted JavaScript for every transform and head in the JavaScript slice: fit in Rust, emit with fitted state, run under Node without refitting, agree with Model::predict to 1e-8*(1+|reference|); plan-mismatch refusals. Node is required under JOPE_PARITY_STRICT=1."
+    },
+    "target:jope-runtime/test/math_pipeline": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/math_pipeline.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "org.jopedime/math-pipeline/v1: decoder and exported JavaScript reproduce an external producer's predictions as identical f32 values for 78 generated rows (range, missing, boolean, infinite and unparseable cells); strict refusal of unknown fields, wrong task, bad selection, width mismatch, extra parts and missing columns. Node is required under JOPE_PARITY_STRICT=1."
+    },
     "target:jope-runtime/test/method_roster": {
       "discovery": {
         "doctest": false,
@@ -11788,6 +11924,16 @@
       ],
       "scope": "Push/main-manual diagnostic CPU families, independent outcomes within the declared 145-minute CPU job deadline; no merge gate or qualification claim."
     },
+    "workflow:.github/workflows/go.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
     "workflow:.github/workflows/jankurai.yml": {
       "discovery": {
         "kind": "workflow"
@@ -11838,6 +11984,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "workflow:.github/workflows/runner-qualification.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "mac-runner-qualification"
+      ],
+      "scope": "Main-only manual operational qualification after reviewed merged deployment. All twelve exact xbabe4 roles must execute the runner and provenance contracts and verify actual kernel limits and installed-file identity. Source discovery, registration and skipped jobs do not qualify live capacity."
+    },
     "workflow:.github/workflows/typescript.yml": {
       "discovery": {
         "kind": "workflow"
@@ -11847,16 +12003,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "workflow:.github/workflows/weekly.yml": {
-      "discovery": {
-        "kind": "workflow"
-      },
-      "dispositions": [
-        "weekly"
-      ],
-      "lanes": [],
-      "scope": "Configured workflow/job; current execution unqualified."
     }
   },
   "lanes": {
@@ -11930,6 +12076,79 @@
       "path_applicability": "every full-main-cpu run, including failed or cancelled groups",
       "requires_nonzero_tests": false,
       "result_backend": "none",
+      "stage": "execution"
+    },
+    "cuda-device": {
+      "checks": [
+        "bash deploy/ci/cuda/qualify.sh device"
+      ],
+      "command": [
+        "bash",
+        "deploy/ci/cuda/qualify.sh",
+        "device"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_CODEGEN_UNITS": "1",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CUDA": "13.0.88 official hash-pinned wheels",
+        "GPU": "Local NVIDIA device and compatible driver; nvcc and nvidia-smi required",
+        "JOPE_CUDA_PARITY": "device"
+      },
+      "evidence": [
+        "all host/compilation checks plus actual bitwise GPU linear-head predictions",
+        "NVIDIA device/driver identity",
+        "borrowed-stream, launch/batch and host floating-environment refusal checks",
+        "zero fallback; no universal GPU coverage or performance claim"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "committed golden fixtures",
+        "deploy/ci/cuda/requirements.txt"
+      ],
+      "path_applicability": "Manual local qualification only; excluded from hosted CI and merge gates",
+      "requires_nonzero_tests": true,
+      "result_backend": "rust",
+      "stage": "execution"
+    },
+    "cuda-parity": {
+      "checks": [
+        "bash deploy/ci/cuda/qualify.sh host",
+        "bash deploy/ci/cuda/qualify.sh compile"
+      ],
+      "command": [
+        "bash",
+        "deploy/ci/cuda/qualify.sh",
+        "compile"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_CODEGEN_UNITS": "1",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CUDA": "13.0.88 official hash-pinned wheels",
+        "JOPE_CUDA_PARITY": "host or compile"
+      },
+      "evidence": [
+        "exact source SHA/run/attempt and hashed nonzero execution logs",
+        "complete Rust-matched recipe/bound/v2 acceptance and refusal census",
+        "bitwise native-reference and host-prepared linear-head comparisons",
+        "real nvcc device compilation; no GPU execution claim",
+        "native lifetime, boundary, linking, build, CLI and artifact-tamper contracts"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "committed golden fixtures",
+        "deploy/ci/cuda/requirements.txt"
+      ],
+      "path_applicability": "Manual local qualification only; excluded from hosted CI and merge gates",
+      "requires_nonzero_tests": true,
+      "result_backend": "rust",
       "stage": "execution"
     },
     "e2e-smoke": {
@@ -12473,6 +12692,47 @@
       "result_backend": "nextest",
       "stage": "execution"
     },
+    "go-parity": {
+      "checks": [
+        "bash deploy/ci/go/qualify.sh (including --features go-parity-tests --test go_golden)",
+        "go test -mod=readonly -race ./... (generated contract package)",
+        "go test -run ^$ -fuzz ^FuzzLifecycle$ -fuzztime=20s -parallel=2",
+        "six pure Go cross-builds; native macOS/Windows census and contracts"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/go.yml"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CGO_ENABLED": "0; 1 for race instrumentation only",
+        "Go": "1.25.12 and 1.26.10",
+        "JOPE_GO_PARITY": "1",
+        "target": "wasm32-unknown-unknown",
+        "wazero": "v1.12.0"
+      },
+      "evidence": [
+        "source/checkout/toolchain identities",
+        "closed registry-derived executed/refused census, both engines",
+        "all golden and fitted native-reference comparisons",
+        "complete four-file closure, deletion and tamper controls",
+        "raw 100% Go facade statement counters",
+        "race, fuzz, platform and cross-build results"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "Go module/checksum closure",
+        "committed golden fixtures"
+      ],
+      "path_applicability": "required reusable CI on Rust/emitter paths, Go workflow/tools and all manual full CI; direct Go PR/dispatch trigger",
+      "requires_nonzero_tests": true,
+      "result_backend": "rust",
+      "stage": "execution"
+    },
     "host-real-corpus": {
       "checks": [
         "reject writable/link/special files and compare sorted MANIFEST.sha256 with hashes of the complete discovered regular-file closure",
@@ -12618,6 +12878,40 @@
       "path_applicability": "ci.yml changes.inputs",
       "requires_nonzero_tests": false,
       "result_backend": "none",
+      "stage": "execution"
+    },
+    "mac-runner-qualification": {
+      "checks": [
+        "python3 deploy/ci/test-runner.py",
+        "python3 deploy/ci/test-provenance.py"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/runner-qualification.yml",
+        "qualify"
+      ],
+      "environment": {
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only"
+      },
+      "evidence": [
+        "exact merged main SHA, run ID and attempt",
+        "all twelve distinct role job results and assigned runner identities",
+        "45 runner and 31 provenance contract tests executed per role",
+        "root admission and actual cgroup CPU, memory, swap and process limits",
+        "checkout-bound deployed scripts, immutable hooks and pinned image identity"
+      ],
+      "feature_selection": "not-applicable",
+      "inputs": [
+        "reviewed merged source SHA",
+        "installed runner policy and file digest",
+        "pinned runner image and existing SDK",
+        "twelve isolated xbabe4 Linux/Docker roles"
+      ],
+      "path_applicability": "manual runner-qualification.yml dispatch on main only, after uniform reviewed merged deployment; all twelve roles required",
+      "requires_nonzero_tests": true,
+      "result_backend": "unittest",
       "stage": "execution"
     },
     "main-guard": {

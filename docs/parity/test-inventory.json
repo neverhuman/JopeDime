@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5922,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception).",
+  "count": 5933,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -42,12 +42,12 @@
     }
    },
    "feat-math": {
-    "count": 1352,
+    "count": 1357,
     "ignored": 13,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 539,
+      "count": 544,
       "ignored": 7,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -243,6 +243,11 @@
        "genome::tests::portfolio_form_parses_and_canonicalizes_order_preserving",
        "genome::tests::portfolio_form_rejects_bad_shapes",
        "genome::tests::symbolic_wire_form_rejects_unknown_modes_and_incomplete_delimiters",
+       "go::tests::complete_bound_registry_and_codec_modes_execute",
+       "go::tests::complete_recipe_registry_executes_or_refuses_identically",
+       "go::tests::fitted_legacy_registry_states_execute_or_match_rust_refusal",
+       "go::tests::multiline_metadata_remains_documentation",
+       "go::tests::scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute",
        "gpr::tests::composite_kernels_are_deterministic_and_learn_toy",
        "gpr::tests::composite_scratch_reuse_matches_historical_model_and_prediction_bits",
        "gpr::tests::composite_scratch_reuse_preserves_constant_fallbacks",
@@ -8775,7 +8780,7 @@
     }
    },
    "jope-runtime": {
-    "count": 68,
+    "count": 74,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
@@ -8865,6 +8870,26 @@
        "importing_native_bytes_preserves_noncanonical_state_json_exactly",
        "prediction_csv_has_probabilities_in_class_order",
        "selection_is_deterministic"
+      ]
+     },
+     "jope-runtime::fitted_js_qualification": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "fitted_javascript_matches_rust_prediction_for_every_supported_stage",
+       "fitted_javascript_refuses_a_model_from_another_plan",
+       "fitted_javascript_refuses_contradictory_prediction_parameters"
+      ]
+     },
+     "jope-runtime::math_pipeline": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "decoder_refuses_what_it_cannot_reproduce",
+       "decoder_reproduces_the_producer_for_every_row",
+       "exported_javascript_reproduces_the_producer_for_every_row"
       ]
      }
     }
@@ -9351,7 +9376,7 @@
   }
  },
  "totals": {
-  "rust": 5922,
+  "rust": 5933,
   "python": 182
  }
 }

@@ -362,3 +362,23 @@ Before running Cargo, verify or explicitly set `CARGO_INCREMENTAL=0` and
 `CARGO_PROFILE_DEV_DEBUG=line-tables-only`. Claude's settings retain these values;
 other agents may not inherit them. Keep `CARGO_TARGET_DIR` unset globally. Preserve
 JopeDime CI's job-scoped target selection and separate PR/trusted-main storage domains.
+
+## One-time owner-directed emergency integration — 2026-10-23
+
+The owner approved consolidating PRs #416, #420–#426 and then instructed completion
+after reviewing the merge-first plan. For this integration only, expensive native
+and manual matrix validation is deferred until after merge. Main is UNVERIFIED
+until actual merged-source manual CI and repairs complete. This is an explicit
+exception to the usual premerge full-run requirement, not evidence of passing CI.
+Short format, locked workspace/all-target compilation, actionlint, source
+preservation and exact-head substantive review remain admission requirements.
+The integrator may temporarily remove only required status checks in BOTH main
+protection layers for this one exact-head PR merge and must immediately restore
+and read back both complete policies, including on failure. PR/discussion/linear
+history/force-push/deletion controls remain. Preserve original branches, commits,
+authors and scientific fixtures. Ordinary PR rules resume after this merge.
+Automatic test/build triggers are paused; maintained jobs remain manually callable.
+CUDA qualification remains local/manual only. Runtime deployment requires actual
+merged source and retains separate qualification gates. Signed release publication
+waits for validation and remains assigned to the existing release owner.
+See [the source inventory](docs/internal/ci/emergency-integration-20261023.json).

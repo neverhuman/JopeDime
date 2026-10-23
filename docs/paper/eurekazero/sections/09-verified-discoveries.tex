@@ -1,0 +1,94 @@
+% Section 9 — Discoveries: the novelty ladder and prospective dossiers (SYNTHETIC results)
+\section{What one proposal discovers}
+\label{sec:discoveries}
+
+Beating a comparator shows that a first proposal is useful. It does not show that it is new, and
+newness is the part of innovation most easily overclaimed. Byte-level novelty is trivial for any
+generator; ``absent from the training data'' depends on how hard one looked; and a mechanism is not
+discovered because a model emitted it. We therefore grade every committed proposal on a ladder whose
+rungs are tested separately (\cref{tab:ladder}) and report every rung with every attempt in the
+denominator.
+
+\begin{table}[t]
+\caption{The novelty ladder. Each rung adds a test to the one below. Rungs N0 to N4 are computed for
+every committed proposal against a complete-artifact archive frozen before unblinding; N5 and N6
+are decided only in prospective dossiers.}
+\label{tab:ladder}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}llL@{}}
+\toprule
+Rung & Name & Test \\
+\midrule
+N0 & new bytes & the artifact differs from every archived artifact as bytes \\
+N1 & structurally new & no archived artifact is equivalent under canonicalization and an enumerated set of rewrite rules, frozen before unblinding \\
+N2 & outside the archive & no archived artifact lies within a predeclared behavioural distance on the development problems \\
+N3 & useful & verified utility above the locked comparator on the problem for which it was proposed \\
+N4 & useful outside the archive & N2 and N3 on the same problem \\
+N5 & mechanism supported & on reserved problems, removing the new component and replacing it with the nearest known alternative at matched capacity both lose utility, with interval bounds above zero; prior-work review finds no equivalent \\
+N6 & independently replicated & a group not involved in the proposal reproduces the N5 effect with its own evaluation setup, data or fabrication \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{How often a first proposal is new and useful}
+
+Of \syn[EZ-G20]{\EZctxA} committed learning procedures, \syn[EZ-G15]{\EZnovAone\%} are structurally
+new, \syn[EZ-G15]{\EZnovAtwo\%} lie outside the archive, and \syn[EZ-G15]{\EZnovAfour\%}
+[\syn[EZ-G15]{\EZnovAfourLo}, \syn[EZ-G15]{\EZnovAfourHi}] are both outside it and better than the
+comparator (\cref{fig:discovery}). For CAD the rates are \syn[EZ-G15]{\EZnovCone\%},
+\syn[EZ-G15]{\EZnovCtwo\%} and \syn[EZ-G15]{\EZnovCfour\%} of \syn[EZ-G20]{\EZspecC} committed parts.
+The denominators include failed proposals. Most first proposals that win are therefore not
+reproductions of archived solutions, but N4 is a statement about our archive, not about all prior
+art; the rungs above it exist because that distinction matters.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-discovery}
+\caption{Left: committed first proposals passing each rung of the novelty ladder, on a logarithmic
+scale. Right: the two dossiers' interventions on 60 reserved problems each, with 95\% intervals;
+removing the proposed component and replacing it with the nearest known alternative both lose
+utility. Synthetic (gaps EZ-G15, EZ-G16, EZ-G17).}
+\label{fig:discovery}
+\end{figure}
+
+\subsection{Discovery dossiers}
+
+From the N4 proposals we drew \syn[EZ-G15]{\EZdossA} learning-procedure and \syn[EZ-G15]{\EZdossC}
+CAD dossier opportunities by a rule fixed before unblinding: among proposals whose new component is
+isolable, the lowest hash of the committed artifact is examined first. A dossier states the proposed
+mechanism in words, before any intervention, and then tests it on problems reserved for that purpose.
+\syn[EZ-G15]{\EZnFiveA} learning-procedure and \syn[EZ-G15]{\EZnFiveC} CAD mechanisms reached N5;
+\syn[EZ-G15]{\EZnSix} reached N6. We summarize one dossier per game; all are in \cref{app:dossiers}.
+
+\begin{ezdef}{Dossier D-A1 \quad\normalfont\sffamily\color{ezink}noise-gated category shrinkage \synbadge}
+\textit{Statement before testing.} The committed procedure encodes high-cardinality categorical
+features by their target means, but shrinks each level toward its parent grouping by an amount set
+from the out-of-fold residual variance of a preliminary fit, rather than from the level's count
+alone; on noisy targets rare levels are shrunk harder. \textit{Removal} of the gate, keeping a
+count-only shrinkage of the same capacity, loses \syn[EZ-G16]{\EZdaRemove}
+[\syn[EZ-G16]{\EZdaRemoveLo}, \syn[EZ-G16]{\EZdaRemoveHi}] utility on 60 reserved families.
+\textit{Replacement} by the nearest known alternative, smoothing with a cross-validated prior
+strength, loses \syn[EZ-G16]{\EZdaReplace}. \textit{Prior-work review} found shrinkage estimators
+with fixed or cross-validated strength but no noise-gated variant in the reviewed literature; this
+supports N5 and is not a claim that the idea has never been written down.
+\end{ezdef}
+
+\begin{ezdef}{Dossier D-C1 \quad\normalfont\sffamily\color{ezink}offset web with load-path gusset \synbadge}
+\textit{Statement before testing.} For brackets whose bolt pattern is eccentric to the load line, the
+committed part offsets its web toward the load and adds a gusset that carries the bolt-preload path
+and the bending path in the same material (\cref{fig:cad}, right). \textit{Removal} of the feature,
+with all other dimensions re-optimized within the declared language, raises the mass needed to meet
+the stiffness requirement by \syn[EZ-G17]{\EZdcMass\%}, a utility loss of \syn[EZ-G17]{\EZdcRemove}. \textit{Replacement} by the nearest
+template rib pattern loses \syn[EZ-G17]{\EZdcReplace} utility. \textit{Physical test.} Of
+\syn[EZ-G17]{\EZphysN} parts fabricated and load-tested by a laboratory not involved in the design,
+all met the load requirement; measured stiffness differed from the prediction by
+\syn[EZ-G17]{\EZphysErr\%} on average.
+\end{ezdef}
+
+\subsection{The standard we are holding ourselves to}
+
+AlphaGo's move 37 against Lee Sedol mattered because experts first read it as a mistake and then
+changed how they played. The analogue for an innovation game is a first proposal that a prospective
+expert panel rated unlikely before seeing its outcome, that survives the N5 interventions, and that
+practitioners adopt. N6 is the most this paper can test; adoption is outside any paper's control.
+We report how far each discovery climbs and do not round a rung up.

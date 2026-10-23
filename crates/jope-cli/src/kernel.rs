@@ -230,9 +230,13 @@ fn emit_genome_with_options_impl(
     );
     let mut artifacts = Vec::new();
     for name in languages(lang)? {
-        if name == "c17" {
-            let bundle = feat_math::transpile::emit_c17(&parsed, opts)?;
-            for (file, source) in bundle.files {
+        if name == "c17" || name == "cuda" {
+            let files = if name == "cuda" {
+                feat_math::transpile::emit_cuda(&parsed, opts)?.files
+            } else {
+                feat_math::transpile::emit_c17(&parsed, opts)?.files
+            };
+            for (file, source) in files {
                 let path = if let Some(root) = output {
                     let path = root.join(file);
                     fs::create_dir_all(path.parent().context("C17 output parent")?)?;
@@ -242,7 +246,7 @@ fn emit_genome_with_options_impl(
                     None
                 };
                 artifacts.push(Artifact {
-                    lang: "c17".into(),
+                    lang: name.into(),
                     bytes: source.len(),
                     sha256: digest(&source),
                     path,
@@ -281,6 +285,31 @@ fn emit_genome_with_options_impl(
                 for (target, filename, source) in [
                     ("typescript", "model.ts", &bundle.source),
                     ("typescript-kernel", "model.kernel.rs", &bundle.kernel),
+                ] {
+                    let path = if let Some(root) = output {
+                        fs::create_dir_all(root)?;
+                        let path = root.join(filename);
+                        fs::write(&path, source)?;
+                        Some(path.display().to_string())
+                    } else {
+                        None
+                    };
+                    artifacts.push(Artifact {
+                        lang: target.into(),
+                        bytes: source.len(),
+                        sha256: digest(source),
+                        path,
+                    });
+                }
+                continue;
+            }
+            "go" => {
+                let bundle = feat_math::transpile::emit_go(&parsed, opts)?;
+                for (target, filename, source) in [
+                    ("go", "model.go", &bundle.source),
+                    ("go-kernel", "model.go.kernel.rs", &bundle.kernel),
+                    ("go-module", "go.mod", &feat_math::go::MODULE.to_string()),
+                    ("go-checksums", "go.sum", &feat_math::go::SUM.to_string()),
                 ] {
                     let path = if let Some(root) = output {
                         fs::create_dir_all(root)?;
@@ -415,9 +444,11 @@ fn languages(lang: &str) -> Result<Vec<&'static str>> {
         "cpp20" => vec!["cpp20"],
         "javascript" | "js" => vec!["javascript"],
         "typescript" | "ts" => vec!["typescript"],
+        "go" | "golang" => vec!["go"],
+        "cuda" | "cuda-cpp" | "cu" => vec!["cuda"],
         "all" => vec!["python", "rust", "cpp17", "javascript"],
         other => bail!(
-            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|typescript|c17|all)"
+            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|typescript|go|c17|cuda|all)"
         ),
     })
 }
@@ -573,6 +604,35 @@ mod artifact_v3_tests {
             assert!(output.join("model.ts").is_file());
             assert!(output.join("model.kernel.rs").is_file());
             assert!(report.artifacts.iter().any(|a| a.lang == "typescript"));
+        }
+        for language in ["golang", "go", "v3:go"] {
+            let output = dir.path().join(language.replace(':', "-"));
+            let report = emit_genome(DEFAULT_GENOME, language, Some(&output)).unwrap();
+            assert!(report.ok);
+            assert!(output.join("model.go").is_file());
+            assert!(output.join("model.go.kernel.rs").is_file());
+            assert!(report.artifacts.iter().any(|a| a.lang == "go"));
+        }
+        if matches!(
+            std::env::var("JOPE_CUDA_PARITY").as_deref(),
+            Ok("host" | "compile" | "device")
+        ) {
+            for language in ["cuda", "cu", "cuda-cpp", "v3:cuda"] {
+                let output = dir.path().join(language.replace(':', "-"));
+                let report = emit_genome(DEFAULT_GENOME, language, Some(&output)).unwrap();
+                assert!(report.ok);
+                for file in [
+                    "CMakeLists.txt",
+                    "model.cu",
+                    "model.hpp",
+                    "model_core.rs",
+                    "model_native.rs",
+                    "manifest.json",
+                ] {
+                    assert!(output.join("cuda").join(file).is_file());
+                }
+                assert!(report.artifacts.iter().any(|a| a.lang == "cuda"));
+            }
         }
         let refused = dir.path().join("unsupported");
         let err = emit_genome("(pipe X (histgbm))", "v3:js", Some(&refused)).unwrap_err();

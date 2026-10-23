@@ -23,7 +23,7 @@ Use that returned path for `predict`, or `jopedime model` to inspect, verify and
 The extensible JSON manifest retains complete fitted state across producer languages;
 CLI and MCP use the same validator.
 
-What changed in 0.4.0, 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
+What changed in 0.4.1, 0.4.0, 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 [`docs/release/README.md`](docs/release/README.md).
 
@@ -386,19 +386,19 @@ limits and client examples](docs/program-source-stream.md).
 
 ## At a glance
 
-| What | 0.4.0 |
+| What | 0.4.1 |
 | --- | --- |
-| `jope` with no arguments | prints `jope 0.4.0` <sup>1</sup> |
-| Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| `jope` with no arguments | prints `jope 0.4.1` <sup>1</sup> |
+| Workspace | 32 members: 25 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
-| Emit targets | 8: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly) and `c17` (native C17 bindings) <sup>4</sup> |
-| Rust tests | 5,922 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
+| Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
+| Rust tests | 5,933 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
-| CI | 12 jobs per pull request in `ci.yml` (top-level declarations; 14 expanded jobs); 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 841 items over 28 lanes <sup>7</sup> |
+| CI | 13 jobs per pull request configured in `ci.yml` (automatic triggering paused; dispatch manually) (top-level declarations; 18 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
+| Coverage map | 852 items over 32 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,211 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,214 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -435,7 +435,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.4.0
+# jope 0.4.1
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -448,6 +448,8 @@ cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --
 cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router target/jope-router --json
 # A requested target whose emitter does not cover the selected program is reported as not
 # emitted; the receipt lists the artifacts actually written (docs/emitters.md has the coverage).
+For CUDA C++ output, use `jope emit --lang cuda`; see [the CUDA build, API and qualification contract](docs/cuda.md). Host recipe coverage matches Rust; device acceleration is explicitly limited to linear heads.
+
 cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
   --budget evaluations=8,seconds=120 --emit rust,python,cpp17,cpp20,js --policy skip --output target/e2e
 cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json
@@ -459,9 +461,13 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-Pull-request CI is `.github/workflows/ci.yml`: twelve jobs declared at the top
-level expand to fourteen jobs, including both Rust shards and both TypeScript
-runtimes, on the self-hosted `jope-ci` runners. Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
+CI is temporarily manual under the owner-directed 2026-10-23 emergency integration.
+The configured pull-request CI is `.github/workflows/ci.yml`: thirteen jobs declared at the top
+level expand to eighteen jobs, including both Rust shards, both TypeScript runtimes,
+two Go versions and two native Go platform jobs. Existing lanes use self-hosted
+`jope-ci` runners; the Go matrix uses hosted Linux/macOS/Windows workers.
+Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
+CUDA qualification runs locally with the commands in the [handoff guide](docs/cuda-handoff.md).
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated
 blocks, and `jope-records paper-trace`, which checks the white paper's printed numbers against its
@@ -495,7 +501,7 @@ annotated tag `vX.Y.Z` and the GitHub release and reads both back. A release hol
 SPDX and CycloneDX SBOMs, the release notes, a release manifest and `SHA256SUMS`, signed with cosign
 by a release key held on xbabe2. There is no Python wheel and no provenance attestation.
 [`release.yml`](.github/workflows/release.yml) is dispatch-only and fails closed. This tree is the
-source of v0.4.0; the release exists only once `release.sh --publish` has run.
+source of v0.4.1; the release exists only once `release.sh --publish` has run.
 
 To verify one, take `signing.pub` from the tag and check its fingerprint as
 [docs/release/README.md](docs/release/README.md) describes, then check the signature and the sums:
@@ -552,7 +558,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 
 ## Further reading
 
-- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.4.0, 0.3.0 and 0.2.0
+- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.4.1, 0.4.0, 0.3.0 and 0.2.0
 - [`MASTER_PLAN.md`](MASTER_PLAN.md) — current direction and the landing record
 - [`docs/release/README.md`](docs/release/README.md) — how a release is cut, signed and verified
 - [`docs/pipeline.md`](docs/pipeline.md) — the pipeline's budget, selection, seeding, parallelism and test-split contracts

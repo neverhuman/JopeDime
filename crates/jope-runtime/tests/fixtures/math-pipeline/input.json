@@ -1,0 +1,68 @@
+{
+ "task": "regression",
+ "columns": [
+  {
+   "name": "cement",
+   "min": 106.63328,
+   "max": 537.7175,
+   "constant": false
+  },
+  {
+   "name": "blast_furnace_slag",
+   "min": 0.0,
+   "max": 345.09357,
+   "constant": false
+  },
+  {
+   "name": "fly_ash",
+   "min": 0.0,
+   "max": 197.9593,
+   "constant": false
+  },
+  {
+   "name": "water",
+   "min": 122.86384,
+   "max": 246.53775,
+   "constant": false
+  },
+  {
+   "name": "superplasticizer",
+   "min": 0.0,
+   "max": 32.083397,
+   "constant": false
+  },
+  {
+   "name": "coarse_aggregate",
+   "min": 803.5591,
+   "max": 1144.3558,
+   "constant": false
+  },
+  {
+   "name": "fine_aggregate",
+   "min": 594.0064,
+   "max": 990.73474,
+   "constant": false
+  },
+  {
+   "name": "age",
+   "min": 1.0,
+   "max": 365.0,
+   "constant": false
+  }
+ ],
+ "selected": [
+  0,
+  1,
+  7,
+  3,
+  4,
+  2,
+  5,
+  6
+ ],
+ "target": {
+  "name": "compressive_strength_mpa",
+  "min": -9.435246,
+  "scale": 114.0974
+ }
+}

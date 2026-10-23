@@ -1,0 +1,18 @@
+% Table (typeset as a picture so it carries the synthetic tag) — every arm on confirmation families.
+% Reads SYNTHETIC data (gaps EZ-G01, EZ-G03, EZ-G05, EZ-G08, EZ-G09).
+\begin{tikzpicture}
+\node[inner sep=0pt] {\tablesf\color{ezsyn}%
+\pgfplotstabletypeset[col sep=comma, string type,
+  columns={arm,track,A,B,C},
+  columns/arm/.style={column name={\color{ezink}Arm}, column type={l},
+    postproc cell content/.append style={/pgfplots/table/@cell content/.add={\color{ezink}}{}}},
+  columns/track/.style={column name={\color{ezink}Track}, column type={l},
+    postproc cell content/.append style={/pgfplots/table/@cell content/.add={\color{ezink}}{}}},
+  columns/A/.style={column name={\color{ezink}A Learning}, column type={r}},
+  columns/B/.style={column name={\color{ezink}B1 Next exp.}, column type={r}},
+  columns/C/.style={column name={\color{ezink}C CAD}, column type={r}},
+  every head row/.style={before row=\toprule, after row=\midrule},
+  every last row/.style={after row=\bottomrule},
+  every row no 2/.style={after row=\midrule}]{data/synthetic/outcomes.csv}};
+\synfigtag
+\end{tikzpicture}

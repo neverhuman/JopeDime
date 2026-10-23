@@ -26,6 +26,7 @@ jope_mac_ssh() { # host | preflight lane | run lane name (private stdin)
     -oUpdateHostKeys=no -oForwardAgent=no -oServerAliveInterval=30 -oServerAliveCountMax=3)
   case $mode in
     host)
+      # shellcheck disable=SC2016 # This program expands on the remote Mac, not here.
       host_code='set -eu; h=$(/bin/hostname); f=$(/bin/df -Pk /Users/agent | /usr/bin/awk "NR==2{print \$4}"); case $f in ""|*[!0-9]*) exit 2;; esac; printf "{\"host\":\"%s\",\"free_bytes\":%s}\n" "$h" "$((f*1024))"'
       args=(/bin/sh -c "$host_code") ;;
     preflight) args=(/opt/homebrew/bin/colima ssh --profile jope-ci -- sudo -n /opt/jope-runner/mac-guest.sh "$1") ;;
@@ -68,18 +69,19 @@ jope_mac_validate_guest() { # public facts, policy, lane, expected installed dig
     .digest == $digest and .recorded_digest == $digest and .sdk_version == $p.sdk_version and
     .lane_idle == true and (.active_lanes | type == "array") and
     (.active_lanes | index($lane) == null) and
-    (.active_lanes | all(. == "ci" or . == "ci2" or . == "ci3" or . == "ci4")) and
+    (.active_lanes | all(test("^ci([2-9]|1[0-2])?$"))) and
     (.active_lanes | length == (unique | length)) and
-    .reserved_gib == ((.active_lanes | length) * 16) and (.reserved_gib + 16 <= 64)
+    .reserved_gib == ((.active_lanes | length) * 16) and (.reserved_gib + 16 <= 192)
   ' >/dev/null
 }
 
 jope_mac_launch() { # lane, provisioned state dir, public policy JSON, optional test timestamp
   local lane=$1 state_dir=$2 cfg=$3 stamp=${4:-} digest mac guest user name current history state start request response='' encoded='' id labels
   export -n response encoded
-  case $lane in ci|ci2|ci3|ci4) ;; *) return 2 ;; esac
+  case $lane in ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12) ;; *) return 2 ;; esac
   printf '%s' "$cfg" | jq -e '
     .schema == "jope.mac-capacity/v1" and .ssh_alias == "xbabe2" and .profile == "jope-ci" and
+    .runner_label == "jope-mac-ci" and
     .colima == "/opt/homebrew/bin/colima" and .mac_hostname == "Mac-Studio.local" and
     .guest_hostname == "xbabe4" and (.image_id | test("^sha256:[0-9a-f]{64}$"))
   ' >/dev/null || return 2
@@ -113,7 +115,7 @@ jope_mac_launch() { # lane, provisioned state dir, public policy JSON, optional 
     '{phase:"mint_requested",name:$name,lane:$lane,digest:$digest,started_utc:$utc}') || return 2
   # Persist BEFORE the non-idempotent API call. An interrupted phase blocks the next launch.
   jope_mac_write_state "$current" "$state" || return 2
-  labels=$(jq -nc --arg lane "$lane" '["self-hosted","linux","x64","jope-ci","xbabe4-"+$lane]') || return 2
+  labels=$(jq -nc --arg lane "$lane" '["self-hosted","linux","x64","jope-mac-ci","xbabe4-"+$lane]') || return 2
   request=$(jq -nc --arg name "$name" --arg lane "$lane" --argjson labels "$labels" \
     '{name:$name,runner_group_id:1,labels:$labels,work_folder:("/home/runner/work/"+$lane)}') || return 2
   if ! response=$(jope_mac_api repos/neverhuman/JopeDime/actions/runners/generate-jitconfig "$request"); then

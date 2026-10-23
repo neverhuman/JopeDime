@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Preserve the parallel capacity Tokio security identity and join it to the already regenerated release0.4.1+Tokio1.53.3 identity. Every declared evaluator input is byte-identical to the release; do not regenerate or change numerical, emitted, model, search or serving-known identity fixtures.",
+  "plan_reference": "Direct human cherry-pick all fixes/merge all PRs; AGENTS.md and ADR-0004 identity-only history.",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/421",
+  "source_commit": "3642956b51dfb95736ce3b45313139d89ad737a4",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "da4f3fc043642faf86cf68faa5a4c72c24e72ee5fc7448aaa166fd4bdcf565bb",
+      "after": "122547c68ddd262091dbd4718a1c2a9dfea986cd42fb13588b874783e58b4599"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "8e02f946a0145afd3d23ed9ecb832f85ceff2759af6830511a158b547c77aa3a",
+      "after": "2493c14ffefb5f6b45434faba3c139f973dd2aa13d204cf6c039644c08414dbc"
+    }
+  ]
+}
