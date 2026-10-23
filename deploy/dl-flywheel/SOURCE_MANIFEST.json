@@ -5431,11 +5431,11 @@
       "sha256": "09f5f160a23d04902de030792a425cebe730ac6d0f97a69b9b72d2045a3f034e"
     },
     {
-      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Go target: additive qualification and matching path gate; prior dispositions preserved.",
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Go target: additive qualification and matching path gate; prior dispositions preserved. Go example changes trigger required qualification; matching owned source pin.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/ci/ci-plan.py",
       "origin_sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8",
       "path": "deploy/ci/ci-plan.py",
-      "sha256": "8a2b7a3249e8f079c960d9e3ca5d0d7e32c663cd62939eeec17b13e23eb77248"
+      "sha256": "40acef0e6cded34a5a1ac511b985986d49a3a2b9a7517a4df0831259c22c31e1"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -5550,11 +5550,11 @@
       "sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536"
     },
     {
-      "normalization": "Cold r2 exact CI source pin; no execution or authority. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved.",
+      "normalization": "Cold r2 exact CI source pin; no execution or authority. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Go example changes trigger required qualification; matching owned source pin.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
       "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
-      "sha256": "5ee806796ba4f2d40a8101cd00b64dc832047b2954201b5074549b02db04af2b"
+      "sha256": "efbfbf68d7d6b060e44d8cca9d33c80107cd5f8aeb42fb71666dc34ac4729102"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -5578,11 +5578,11 @@
       "sha256": "98a72f10f1267528c957570f9739cf101e807613272529eec14cdb71851994b3"
     },
     {
-      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Go target: matching owned README inventory pin.",
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Go target: matching owned README inventory pin. Go example changes trigger required qualification; matching owned source pin.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
       "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
-      "sha256": "0097025b794166b36cc47dc4fb2ef781ff0bcc9ea8738d8dd374133c4465b1ec"
+      "sha256": "6c29d1e882fada05e1e91b245921506ff1c6430c855970dc6f4015215763401d"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",

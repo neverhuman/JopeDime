@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=2
+export CARGO_PROFILE_DEV_CODEGEN_UNITS=1 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=2
 export JOPE_GO_PARITY=1 JOPE_PARITY_STRICT=1 CGO_ENABLED=0 GOMAXPROCS=2
 export TMPDIR="$PWD/target/go-tmp"
 mkdir -p "$TMPDIR" target/go-evidence

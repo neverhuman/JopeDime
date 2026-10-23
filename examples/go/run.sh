@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CGO_ENABLED=0
+export CARGO_PROFILE_DEV_CODEGEN_UNITS=1 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CGO_ENABLED=0
 out="$PWD/target/go-example"
 mkdir -p "$out"
 cargo run --locked -p jope-cli --bin jope -- emit --genome '(pipe X (ridge))' --lang go --output "$out/model"

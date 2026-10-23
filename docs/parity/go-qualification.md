@@ -15,10 +15,10 @@ Rust support, not a new independently implemented Go solver. See [the API/build 
 | Legacy bound rows | 14 executed, 39 inherited refusals |
 | Explicit v2 programs | All 95 scalar/row-vector cases executed |
 | Codec/metadata additions | Five codec cases and one hostile metadata case executed |
-| Native Python/Rust/Go numerical goldens | All 83 tests passed; finite tolerance `1e-8*(1+abs(reference))`; both Go engines |
+| Native Python/Rust/Go golden target | All 84 tests passed, including the required-runtime gate; finite tolerance `1e-8*(1+abs(reference))`; both Go engines |
 | Generated Go API | 100% raw statement counters covered on Go 1.25.12 and 1.26.10 |
 | Race / lifecycle fuzz | Passed with actual emitted Wasm; 179,148 fuzz executions |
-| CGO-disabled deployment | Six builds passed: Linux/macOS/Windows × amd64/arm64 |
+| CGO-disabled deployment | Example ran successfully; six consumer executables linked: Linux/macOS/Windows × amd64/arm64 |
 | Source binding / pipeline | 21 and 18 tests passed, including every source member's tamper/deletion checks |
 | CLI / fitted regressions | Two and two tests passed; saved schema/codecs/ordered-tail fixtures executed |
 | Compatibility freeze | 13 passed; historical three passed; legacy three passed, one existing opt-in generator ignored |
@@ -26,14 +26,13 @@ Rust support, not a new independently implemented Go solver. See [the API/build 
 | Records and repository contracts | 259 tests passed; README counts and new target classification verified |
 | Evidence verifier adversarial fixtures | 21 aggregate tests passed; absent/zero/partial/filtered/missing-engine/uncovered evidence rejected |
 
-The numerical golden run used the Go-enabled 83-test body at `d5c2436` and completed
-in 2043.60 seconds. Review discovered the original golden file is frozen. Commit
-`833091a` restores it byte-for-byte and derives a separate feature-gated target with checked
-insertions. The derived body is exactly equivalent apart from comments and isolated output
-paths, plus one required-runtime assertion. Its representative robust-ridge test and positive
-presence assertion passed; the missing-flag negative probe correctly failed. The complete
-new 84-test binary has not been rerun in one invocation. CI requires that unfiltered suite;
-the local equivalence evidence must not be represented as a completed exact-head CI run.
+The original Go-enabled 83-test body passed at `d5c2436`. Review discovered that native
+golden source is frozen, so `833091a` restores it byte-for-byte and derives a dedicated
+feature-gated target with checked insertions. The derived body is equivalent apart from
+comments and isolated output paths, plus one required-runtime assertion. The complete new
+84-test binary then passed, unfiltered, at `6d0a0b6c900d3baeb76622887e2533ca08d74927`.
+Both Go engines executed 73 golden-model qualifications each. The missing-flag negative probe correctly failed.
+The combined evidence verifier accepted the complete lane logs and raw statement counters.
 
 ## Remaining qualification
 
@@ -43,8 +42,12 @@ restriction. Seven pre-existing tests were ignored, and the five Go census tests
 No sanitizer check was disabled. Hosted CI explicitly reruns the two native sanitizer tests.
 
 Hosted Go and aggregate CI were still queued/pending at this report. Native Windows/macOS
-execution and the complete generated suite therefore remain CI requirements. Keep the PR draft
+execution therefore remains a CI requirement. Keep the PR draft
 until the exact current head is qualified. No all-repository-tests-green claim is made.
+
+Qualification/example debug builds use one codegen unit after observed zero-length Rust
+archive objects in feat-math and jope-records on this host. Release settings and the standalone
+Wasm compiler command are unchanged.
 
 Go has no built-in branch coverage measurement. The 100% figure covers statements in emitted
 `model.go`; it excludes inherited Rust numerical code and wazero. The census qualifies exercised

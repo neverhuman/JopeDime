@@ -2,6 +2,7 @@ name: go
 on:
   pull_request:
     paths:
+      - 'examples/go/**'
       - 'crates/feat-math/**'
       - 'crates/jope-cli/**'
       - 'crates/jope-pipeline/**'
@@ -28,6 +29,7 @@ jobs:
         go: ['1.25.12', '1.26.10']
     env:
       CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_CODEGEN_UNITS: '1'
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
       CARGO_BUILD_JOBS: '2'
     steps:
@@ -69,9 +71,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cd target/go-contract
+          bash examples/go/run.sh
+          cd target/go-example
+          mkdir -p ../go-executables
           for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
-            GOOS=${target%/*} GOARCH=${target#*/} CGO_ENABLED=0 go build -mod=readonly ./...
+            GOOS=${target%/*} GOARCH=${target#*/} CGO_ENABLED=0 go build -mod=readonly -o "../go-executables/${target%/*}-${target#*/}" .
           done
       - name: Retain qualification evidence
         if: always()
@@ -98,6 +102,7 @@ jobs:
     timeout-minutes: 40
     env:
       CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_CODEGEN_UNITS: '1'
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
       CARGO_BUILD_JOBS: '2'
       JOPE_GO_PARITY: '1'

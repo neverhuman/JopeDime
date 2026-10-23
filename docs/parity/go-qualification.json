@@ -219,6 +219,61 @@
         "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s",
         "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s"
       ]
+    },
+    {
+      "log": "target/go-generated-complete.log",
+      "sha256": "938d6b22f84ea953d1fb9de0a7ca39e5dad9896e2fd7ec394e57229b087cf725",
+      "bytes": 36738,
+      "rust_results": [
+        "test result: ok. 84 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1972.98s"
+      ]
+    },
+    {
+      "log": "target/go-evidence-verification-final.log",
+      "sha256": "f3019ca57d5f046952478c800bfcd66f95687af74c68d60ef104a3016e9b9ff9",
+      "bytes": 71,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-example-final.log",
+      "sha256": "1324d1e4299c7353c0daedac8ebf901a85878fb2dc051553aa186c2e1318cfd5",
+      "bytes": 9850,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-cross-executables-final.log",
+      "sha256": "5026a4e3f70f32f011a6101e4efc39d807dcb86effe16e5ac3c8db6814830dfd",
+      "bytes": 186,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-records-final-routing.log",
+      "sha256": "872210fe2a983b9f9d57b8c543beb81796fa0d3da9f6ae1c5882435b8babe8dd",
+      "bytes": 20698,
+      "rust_results": [
+        "test result: ok. 107 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.57s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 21 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 6.92s",
+        "test result: ok. 85 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.57s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s"
+      ]
+    },
+    {
+      "log": "target/go-records-routing-clippy.log",
+      "sha256": "9e0c6980b8b7d9588efaaa154c8149c2eefcfbf0295b53428bb8fd1bfab41fa3",
+      "bytes": 1759,
+      "rust_results": []
+    },
+    {
+      "log": "target/go-aggregate-final-routing.log",
+      "sha256": "7c4b2e31ea8ecc65a8d8290b745aaa6335b9c50e618fdf5be262ee5bb0f9ac3b",
+      "bytes": 120,
+      "rust_results": []
     }
   ],
   "derived_suite": {
@@ -230,9 +285,15 @@
     ]
   },
   "limitations": [
-    "Full 83-test Go-enabled golden body passed before restoring the frozen source. The new generated 84-test target has exact body equivalence plus the presence assertion; representative and presence tests passed, but the complete generated binary has not been rerun as a single invocation. CI requires all 84 unfiltered tests.",
     "Default feat-math library run: 525 passed, 2 unchanged C++ LeakSanitizer tests blocked by sandbox /proc inspection, 7 pre-existing ignored, 5 Go census tests qualified separately.",
     "Hosted exact-head CI remains queued; configured macOS/Windows jobs are not executed evidence.",
     "100% statement coverage excludes the Rust numerical kernel and wazero dependency."
-  ]
+  ],
+  "complete_generated_suite_commit": "6d0a0b6c900d3baeb76622887e2533ca08d74927",
+  "complete_generated_suite_tests": 84,
+  "complete_generated_suite_go_engine_runs": {
+    "auto": 73,
+    "interpreter": 73
+  },
+  "debug_build_workaround": "Go qualification/example builds use one debug codegen unit after observed zero-length Rust archive objects in feat-math and jope-records on this host. Release and standalone Wasm compiler flags are unchanged."
 }
