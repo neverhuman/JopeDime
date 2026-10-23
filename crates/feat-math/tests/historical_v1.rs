@@ -612,6 +612,26 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(go_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    let combined = old_fixture("transitions/go_after_typescript_identity_rebaseline.v1.json");
+    let parallel_join = old_fixture("transitions/typescript_after_go_identity_rebaseline.v1.json");
+    for (previous, next) in [
+        (&typescript_fixtures, &combined),
+        (&go_fixtures, &parallel_join),
+    ] {
+        assert_eq!(next["fixtures"].as_array().unwrap().len(), 2);
+        for edge in *previous {
+            let path = edge["path"].as_str().unwrap();
+            let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+            let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+            identity_transitions::verify_fixture(
+                path,
+                edge["after"].as_str().unwrap(),
+                &current,
+                std::slice::from_ref(next),
+            )
+            .unwrap();
+        }
+    }
     let identity_chain = [
         transition,
         successor,
@@ -645,7 +665,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         release_0_4_0,
         model_objects,
         typescript,
-        // The pre-main Go proposal is retained above; the merged successor follows TypeScript.
+        // The parallel pre-main Go record is retained and verified above.
+        combined,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

@@ -25,7 +25,7 @@ Rust support, not a new independently implemented Go solver. See [the API/build 
 | Compatibility freeze | 13 passed; historical three passed; legacy three passed, one existing opt-in generator ignored |
 | Static checks | All-target check, scoped Clippy, generated-target Clippy, fmt/diff, actionlint and coverage-map validation passed |
 | Records and repository contracts | 259 tests passed; README counts and new target classification verified |
-| Evidence verifier adversarial fixtures | 21 aggregate tests passed; absent/zero/partial/filtered/missing-engine/uncovered evidence rejected |
+| Evidence verifier adversarial fixtures | 22 aggregate tests passed; absent/zero/partial/filtered/missing-engine/uncovered evidence rejected |
 
 The original Go-enabled 83-test body passed at `d5c2436`. Review discovered that native
 golden source is frozen, so `833091a` restores it byte-for-byte and derives a dedicated
@@ -34,6 +34,29 @@ comments and isolated output paths, plus one required-runtime assertion. The com
 84-test binary then passed, unfiltered, at `6d0a0b6c900d3baeb76622887e2533ca08d74927`.
 Both Go engines executed 73 golden-model qualifications each. The missing-flag negative probe correctly failed.
 The combined evidence verifier accepted the complete lane logs and raw statement counters.
+
+## Main refresh and final red-team fix
+
+The TypeScript PR merged during the full golden run. The Go branch integrates that main,
+retaining both public targets, required CI matrices, all original TypeScript source files and
+its approved native-golden/freeze bytes. Updated joint binding, pipeline, CLI and fitted tests
+passed (21, 18, two and two); records (259), Clippy, workflow lint and 22 aggregate tests passed.
+The retained TypeScript evidence adversarial test also passed.
+
+The final no-default-features census executed all 192 artifacts under both engines again.
+All 192 Rust kernels and 384 module/checksum members are byte-identical to the pre-refresh
+Go artifacts. Each of the 192 Go facades differs only by an explicit target-mean overflow guard
+in Score. A regression demonstrated the previous erroneous acceptance even with perfect
+predictions; the fix passes with 100% raw facade statement counters on Go 1.25/1.26 and the
+race detector. Updated consumer executables link for all six platforms.
+
+The 84-test full run above predates the main refresh. Structural comparison confirms all its
+native assertions remain, with the same four Go hook pairs; upstream adds only 36 optional
+TypeScript lines. The rebased generated target's representative/presence tests passed. The
+complete integrated target still requires exact-head CI; source/behavior equivalence is
+recorded separately from a new full-suite invocation. The identity join follows merged
+TypeScript and also verifies the previously published Go branch's successor, preserving both
+old transition records and every historical row. The final identity freeze has 13 passes.
 
 ## Remaining qualification
 

@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Main-line successor: add Go after the merged TypeScript target, preserving all original TypeScript/Go transition records and all numerical behavior fixtures.",
+  "plan_reference": "Explicit Go target/current-main parity request; ADR-0004 identity-only procedure",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/416",
+  "source_commit": "940eaa6ffdef3c72388ded126c1fe461563180a2",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "96d0872f5b4a8e8782d9cab54b6e31cc50becccdd4ff9d1b37c56f06bd1fd2ed",
+      "after": "164c8ef88fe93b3f85b588f963eb9cb5590c4ea2507a39d918b35ea47dc50c99"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "8eb521566501dc57aacc42b618c0ceba9dac7a2e54a9b5c59fa296657b30871e",
+      "after": "c26662da74253a6447772c1bab41815496d74972e312b488dd2fc07f51ff7041"
+    }
+  ]
+}
