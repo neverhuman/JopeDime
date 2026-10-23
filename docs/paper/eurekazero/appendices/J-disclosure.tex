@@ -1,0 +1,35 @@
+% Appendix J — Disclosure boundary
+\section{Disclosure boundary}
+\label{app:disclosure}
+
+Two components are protected: the internal construction of the solution-embedding stage, and the
+internals of the teacher searches that generate training experience. Everything needed to check the
+paper's claims is disclosed. \Cref{tab:disclosure} draws the line.
+
+\begin{table}[h]
+\caption{What is released, what is available for audit, and what is protected.}
+\label{tab:disclosure}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}LL@{}}
+\toprule
+Item & Status & Why it suffices \\
+\midrule
+Protocol, counters, supervisor & released & the Zero contract is checked by code, not by our report \\
+Benchmarks, rosters, verifiers & released, with the sealing salt after unblinding & every first proposal can be re-verified \\
+Every committed artifact & released, with receipts & first proposals can be inspected and re-run without EurekaZero \\
+Adapters, decoders, solution languages & released & what the model can and cannot express is public \\
+Proposer checkpoint & released for evaluation, excluding third-party weights & every first-proposal result can be reproduced \\
+Solution-embedding contract & released and tested (\cref{app:model}) & the stage's inputs, outputs and guarantees are verifiable \\
+Solution-embedding internals & protected & not needed to reproduce or audit any result \\
+Training experience & released for the public families, as $(s,a,y,\text{receipt})$ & training can be reproduced from the experience \\
+Teacher-search internals & protected; budgets, interfaces and outputs released & what the teacher produced, and at what cost, is public \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{What the boundary costs} A reader can reproduce every evaluation and, from the released
+experience, the training of the released proposer. A reader cannot regenerate the experience with our
+teacher. We state this as a limitation of reproducibility at the training-data level, the same
+limitation that applies to any model trained on data the reader cannot recreate. Reviewers may audit
+the protected components under a confidentiality agreement; the audit checks the four guarantees of
+\cref{app:model} and that no protected component reads the verifier or the confirmation families.

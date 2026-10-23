@@ -1,0 +1,103 @@
+% Section 8 — Why it works: representations, transfer and experience (SYNTHETIC results)
+\section{What carries the first proposal}
+\label{sec:mechanisms}
+
+A first-proposal gain could come from the state encoder, from retrieval in disguise, from the
+decoder's prior or from the outcome objective. Each predeclared control removes one of these
+(\cref{tab:arms}); \cref{fig:ablation} shows what each costs \synbadge.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-ablation}
+\caption{Left: utility lost when one component is removed or replaced, with 95\% intervals, on
+development families held out from training. Right: one shared model minus three separate models of
+matched total compute; the shaded band is the equivalence margin. Synthetic (gaps EZ-G09, EZ-G11).}
+\label{fig:ablation}
+\end{figure}
+
+\subsection{The proposer reads the state}
+
+Shuffling states across problems costs \syn[EZ-G09]{\EZshufA}, \syn[EZ-G09]{\EZshufB} and
+\syn[EZ-G09]{\EZshufC} utility in the three games, far more than any other ablation and below the
+best single solution (\cref{app:outcomes}): the proposer is not emitting one good default. Retrieval of the nearest training
+state's incumbent loses \syn[EZ-G09]{\EZabRetA} in learning procedures, so the gain is not a lookup.
+
+\subsection{The solution embedding matters}
+
+Mapping adapter tokens directly to the typed decoder at matched capacity, without the solution
+embedding, loses \syn[EZ-G09]{\EZabDirectA} in learning procedures and \syn[EZ-G09]{\EZabDirectC} in
+CAD. Two interventions on the embedding itself test whether it carries the move rather than merely
+routing information. In \syn[EZ-G09]{\EZswapPairs} pairs of development states with different
+incumbents, decoding the embedding of state $s'$ in place of that of $s$ yields a candidate that
+scores higher on $s'$ than on $s$ in \syn[EZ-G09]{\EZswapRate\%} [\syn[EZ-G09]{\EZswapRateLo},
+\syn[EZ-G09]{\EZswapRateHi}] of pairs, against 50\% if the embedding carried nothing
+state-specific; and an embedding taken from a random state of another family beats the recipient's own
+first proposal on the recipient's problem in only \syn[EZ-G09]{\EZswapShuffled\%} of pairs. The
+decoded candidate follows the embedding, and the embedding follows the state.
+
+\subsection{Open support and outcome training}
+
+A decoder restricted to programs and parts already in the complete-artifact archive loses
+\syn[EZ-G09]{\EZabCatA} in learning procedures: generation outside the archive is worth more than
+selecting well within it (\cref{prop:closed}). Stopping after conditional imitation (Stage B),
+without training on the utility of the first proposal, loses \syn[EZ-G09]{\EZabImitA} and
+\syn[EZ-G09]{\EZabImitC}. Imitation teaches the proposer what verified search found; the first-proposal
+objective teaches it which of those moves to make when it gets only one.
+
+\subsection{The specification steers the move}
+
+If the proposer reads the objective, changing the objective should change the move. Across
+\syn[EZ-G10]{\EZsteerN} reserved families per game we tightened one declared constraint and left
+everything else fixed. Tightening the latency limit of a learning procedure produced a faster
+committed procedure within the error tolerance in \syn[EZ-G10]{\EZsteerA\%} of families, at a utility
+cost of \syn[EZ-G10]{\EZsteerCostA}; tightening the stiffness requirement of a part produced a stiffer
+part in \syn[EZ-G10]{\EZsteerC\%} of specifications. A proposer that had memorized good answers per
+problem would not respond to an edited specification.
+
+\subsection{Pretrained encoders}
+
+The learning-procedure adapter uses two pretrained tabular foundation encoders whose weights we do not
+own (\cref{app:model,app:history}). EurekaZero-Native, which replaces them with encoders trained only
+on our corpus, differs by \syn[EZ-G12]{\EZnativeA} [\syn[EZ-G12]{\EZnativeAlo},
+\syn[EZ-G12]{\EZnativeAhi}]. The interval excludes a loss larger than 0.022 but crosses the
+predeclared margin of 0.02, so non-inferiority is not established: the pretrained encoders may
+contribute a small amount, and the headline results do not depend on them for more than that.
+
+\subsection{One model across games}
+
+A shared proposer with three adapters and three decoders, against three separate models of matched
+total compute, differs by \syn[EZ-G11]{\EZtrA} [\syn[EZ-G11]{\EZtrAlo}, \syn[EZ-G11]{\EZtrAhi}] in
+learning procedures and \syn[EZ-G11]{\EZtrC} [\syn[EZ-G11]{\EZtrClo}, \syn[EZ-G11]{\EZtrChi}] in CAD
+(\cref{fig:ablation}). Sharing costs nothing detectable in learning procedures and next-experiment
+decisions; in CAD the interval crosses the margin and a small cost cannot be excluded. These results
+support one interface for several games. They do not show positive transfer between games, and we do
+not claim it (\cref{app:claims}, EZ-C08).
+
+\subsection{Experience and improvement rounds}
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-scaling}
+\caption{Left: search-equivalent budget against the fraction of verified training experience, on
+logarithmic axes. Right: search-equivalent budget after each controlled improvement round, when the
+teacher's searches are seeded by the current model, against a static teacher given equal new compute.
+Synthetic (gaps EZ-G13, EZ-G14).}
+\label{fig:scaling}
+\end{figure}
+
+The value of one proposal grows with the verified experience it is trained on. Between one eighth
+and all of the training experience, the search-equivalent budget rises from
+\syn[EZ-G13]{\EZhistAlow} to \syn[EZ-G13]{\EZbeqA} evaluations in learning procedures and from \syn[EZ-G13]{\EZhistClow} to
+\syn[EZ-G13]{\EZbeqC} simulations in CAD (\cref{fig:scaling}), and closed-loop savings rise from
+\syn[EZ-G13]{\EZhistSaveLow} to \syn[EZ-G13]{\EZsaveB} times. Training on fresh outcomes from searches seeded by
+the current model raises $B_{\mathrm{eq}}$ in each of three rounds, while a static teacher given the
+same new compute saturates (\syn[EZ-G14]{\EZstaticThree} against \syn[EZ-G14]{\EZbeqA} evaluations after round 3).
+
+This is the result the program has so far failed to produce. Continued fine-tuning of its first
+learned policy on its own accumulated experience raised regression alerts against the frozen first
+generation \pre{}; in a matched study of 36 ranking models, training objectives fell throughout while
+31 of 36 held-out monitor objectives were worse after 400 updates than after 100 \pre{}; and search
+seeded by the frozen policy was worse than retrieval-seeded search on 15 of 17 contexts, at unequal
+budgets \pre{} (\cref{app:history}). A rising curve in the right panel, under
+the receipt and comparison rules of \cref{app:statistics}, is the single most important gap
+in this draft.

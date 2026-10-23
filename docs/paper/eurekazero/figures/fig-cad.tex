@@ -1,0 +1,39 @@
+% Figure — CAD: relative mass against relative compliance, and an illustrative committed part.
+% Reads SYNTHETIC data (gap EZ-G19); the part drawing is a schematic, not an output.
+\begin{tikzpicture}
+\begin{axis}[ez, width=0.56\linewidth, height=5.4cm, xmin=0.62, xmax=1.42, ymin=0.6, ymax=1.5,
+    xlabel={compliance relative to the specification limit}, ylabel={mass relative to tuned template},
+    axis lines*=left, legend columns=2, legend style={at={(0.5,0.99)}, anchor=north, column sep=4pt, fill=none}, unbounded coords=discard,
+    xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=1},
+    yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=1},
+    legend style={font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, draw=none, fill=white, fill opacity=0.85, text opacity=1, cells={anchor=west}}]
+  \fill[ezwarm, opacity=0.06] (axis cs:1,0.6) rectangle (axis cs:1.42,1.5);
+  \node[font=\sffamily\fontsize{5.8pt}{6.4pt}\selectfont, text=ezwarm, anchor=north east] at (axis cs:1.41,0.68) {infeasible};
+  \draw[ezwarm, line width=0.6pt, densely dashed] (axis cs:1,0.6) -- (axis cs:1,1.5);
+  \addplot[only marks, mark=*, mark size=1.4pt, ezwarm, fill opacity=0.8, ezwhere={method}{ez}] table[col sep=comma, x=compliance, y=mass] {data/synthetic/cad-pareto.csv};
+  \addlegendentry{EurekaZero, one proposal}
+  \addplot[only marks, mark=square*, mark size=1.2pt, ezaccent, fill opacity=0.7, ezwhere={method}{topopt}] table[col sep=comma, x=compliance, y=mass] {data/synthetic/cad-pareto.csv};
+  \addlegendentry{topology optimization, 32 simulations}
+  \addplot[only marks, mark=triangle*, mark size=1.5pt, ezgrey, fill opacity=0.7, ezwhere={method}{template}] table[col sep=comma, x=compliance, y=mass] {data/synthetic/cad-pareto.csv};
+  \addlegendentry{tuned template}
+  \addplot[only marks, mark=diamond*, mark size=1.5pt, ezaccent!50, fill opacity=0.7, ezwhere={method}{retrieval}] table[col sep=comma, x=compliance, y=mass] {data/synthetic/cad-pareto.csv};
+  \addlegendentry{retrieval + adaptation}
+  \addplot[only marks, mark=o, mark size=1.4pt, ezgreen, ezwhere={method}{frontier}] table[col sep=comma, x=compliance, y=mass] {data/synthetic/cad-pareto.csv};
+  \addlegendentry{best frontier model}
+\end{axis}
+% schematic of a committed bracket (illustrative)
+\begin{scope}[shift={(9.55,1.15)}, scale=1.05]
+  \filldraw[fill=ezaccentsoft, draw=ezink, line width=0.6pt]
+    (0,0) -- (3.6,0) -- (3.6,0.32) -- (1.25,0.32) .. controls (0.95,0.95) .. (0.62,1.55) -- (0.62,2.55) -- (0,2.55) -- cycle;
+  \filldraw[fill=ezaccent!25, draw=ezink, line width=0.5pt] (0.62,0.32) -- (1.15,0.32) .. controls (0.88,0.85) .. (0.62,1.25) -- cycle;
+  \draw[ezink, line width=0.5pt] (0.62,0.32) -- (0.62,1.55);
+  \foreach \x in {2.3,3.15} \filldraw[fill=white, draw=ezink, line width=0.4pt] (\x,0.16) circle (0.08);
+  \filldraw[fill=white, draw=ezink, line width=0.4pt] (0.31,2.2) circle (0.09);
+  \fill[pattern=north east lines, pattern color=ezgrey] (-0.1,-0.16) rectangle (3.7,-0.03);
+  \draw[ezwarm, line width=1pt, -{Stealth[length=2.2mm]}] (1.35,2.95) -- (0.4,2.45);
+  \node[font=\sffamily\scriptsize, text=ezwarm] at (1.55,3.05) {$F$};
+  \node[font=\sffamily\fontsize{5.8pt}{6.4pt}\selectfont, text=ezgrey, align=center, anchor=north] at (1.8,-0.25)
+    {committed part (schematic)\\offset web and gusset};
+\end{scope}
+\synfigtag
+\end{tikzpicture}

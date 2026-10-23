@@ -1,0 +1,102 @@
+% Section 5 — Learning from verified outcomes
+\section{Learning from verified outcomes}
+\label{sec:training}
+
+EurekaZero learns the way AlphaGo Zero did, with one change of venue (\cref{fig:loop}): during
+training, search plays the innovation games and an external verifier scores every move; the network
+learns to make the first move; at test time the network moves alone. The improvement operator is
+search plus verification; the network's job is to carry what search found into a single proposal on
+problems search has not yet seen \citep{silver2017zero,anthony2017exit}.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-loop}
+\caption{The discovery loop. In training, a verified search plays each training game at budget $k$;
+every attempt, including failures, enters the experience store; staged training produces EurekaZero,
+whose proposals seed the next round, and every verified win raises that state's incumbent. At test
+time the frozen network makes one move on an unseen state, and the verifier scores it only after
+commitment. The search's internals are protected; its budget, outputs and receipts are not.}
+\label{fig:loop}
+\end{figure}
+
+\subsection{The unit of experience}
+
+A training example binds the state, the candidate, the verifier's result, its cost and its
+provenance, and the store keeps the full attempted set---inferior candidates and failures
+included---rather than only winners (\cref{app:corpus}). Each record names the policy that produced
+the candidate; a selection probability is recorded only when it was actually known, never inferred
+from an archive rank, because unknown propensities limit every off-policy claim.
+
+\subsection{Teachers}
+
+The principal teacher is a verified search over the solution language, run at a declared budget on
+training families. Conventional solvers, qualified human artifacts and verified candidates from earlier
+EurekaZero rounds can join the corpus, each with its source recorded, and a \emph{search-only} arm
+trained without them measures what they add (\cref{sec:mechanisms}). The corpus and its family map
+are frozen before any confirmation family is exposed, records from a teacher that saw a family's test
+outcomes are excluded from claims about that family, and examples are balanced by family so that a few
+cheap tasks with millions of candidates cannot dominate.
+
+\subsection{Four training stages}
+
+\paragraph{Stage A: representation and validity} The decoders learn to reconstruct decomposed
+training artifacts and to predict feasibility. We measure reconstruction and validity on held-out
+artifact families, and claim nothing about innovation from this stage.
+
+\paragraph{Stage B: conditional imitation} The proposer learns $P_\theta(h\mid z)$ from states and
+verified teacher outcomes, weighting candidates by verified utility and keeping several strong,
+structurally different solutions per state. Uniform imitation and strongest-solution imitation are
+compared arms.
+
+\paragraph{Stage C: the first-proposal objective} The objective that matches the Zero contract is the
+expected utility of the one move the deployed policy will make,
+\begin{equation}
+J_1(\theta)=\mathbb E_{\tau\sim p_{\mathrm{train}}}\ \mathbb E_{a\sim\pi_\theta(\cdot\mid s_\tau)}\bigl[U_\tau(a)\bigr],
+\label{eq:j1}
+\end{equation}
+estimated on policy with a per-state baseline $v(s)$ and a regularizer toward a reference policy,
+\begin{equation}
+\mathcal L_{\mathrm{PG}}=-\frac1m\sum_{i=1}^{m}\bigl(u_i-\operatorname{sg}(v(s_i))\bigr)\log\pi_\theta(a_i\mid s_i)
++\beta\,\mathrm{KL}\bigl(\pi_\theta\,\Vert\,\pi_{\mathrm{ref}}\bigr).
+\label{eq:pg}
+\end{equation}
+The reference must give positive probability to every legal move: a reference whose support is a
+finite catalog makes the KL term infinite for every new solution and silently forbids invention. We
+therefore use a declared mixture of the Stage-B policy and a grammar-uniform policy. Checkpoints are
+selected on $J_1$ at $K=1$ on development families, never on best-of-$B$, which can improve while the
+first proposal gets worse; and a falling training loss is not evidence of a better first proposal,
+a lesson the program learned the hard way (\cref{app:history}).
+
+\paragraph{Stage D: controlled improvement rounds} New training-family candidates are generated,
+verified and added; the model is updated; and a development panel reserved for this stage measures
+the first proposal. Each round is compared with adding the same amount of data from a static teacher
+and with training the same model longer on the old data, and confirmation families never enter the
+loop. This is the stage that turns imitation into self-play against the incumbent.
+
+\subsection{Sequential games}
+
+For the next-experiment game, a useful exploratory query may not improve the incumbent immediately.
+We therefore train two objectives and report them separately: the one-step utility of the next
+decision given a frozen history (track CH), and the final regret after $T$ decisions (track SEQ),
+optimized as a horizon-dependent return. The teacher for both is EurekaZero's own look-ahead search on
+training problems, where the objective is cheap to query; imitating the traces of human-designed
+optimizers is a labelled baseline arm, not the training signal.
+
+\Cref{tab:training} gives the training ledger. Its costs reappear, uncompressed, in the break-even
+analysis of \cref{sec:compute}.
+
+\begin{table}[t]
+\caption{Training ledger by domain. All entries are synthetic targets (gaps EZ-G18, EZ-G20).}
+\label{tab:training}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}lLLL@{}}
+\toprule
+ & Learning procedures & Next experiment & CAD parts \\
+\midrule
+Teacher search (CPU-hours) & \syn[EZ-G18]{\EZteachA} & \syn[EZ-G18]{\EZteachB} & \syn[EZ-G18]{\EZteachC} \\
+Confirmation families & \syn[EZ-G20]{\EZnA} & \syn[EZ-G20]{\EZnB} & \syn[EZ-G20]{\EZnC} \\
+Proposal latency, median (s) & \syn[EZ-G18]{\EZlatA} & \syn[EZ-G18]{\EZlatB} & \syn[EZ-G18]{\EZlatC} \\
+Training compute, all stages & \multicolumn{3}{l}{\syn[EZ-G18]{\EZgpuH} GPU-hours across the three domains} \\
+\bottomrule
+\end{tabularx}
+\end{table}

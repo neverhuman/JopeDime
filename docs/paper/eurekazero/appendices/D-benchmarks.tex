@@ -1,0 +1,37 @@
+% Appendix D — Benchmarks, families, verifiers
+\section{Benchmarks and verifiers}
+\label{app:benchmarks}
+
+\paragraph{Sealing} For each game, confirmation families are drawn from dependency components held
+out at the time the corpus is frozen. Their identities are committed as a salted hash list before any
+EurekaZero model is trained, and the salt is revealed only at unblinding. The confirmation roster
+(\syn[EZ-G20]{\EZnA}, \syn[EZ-G20]{\EZnB} and \syn[EZ-G20]{\EZnC} families) is registered with the
+analysis plan; families are split into development and confirmation halves within components, never
+across them.
+
+\paragraph{Verifiers} \Cref{tab:verifiers} gives each verifier. Verifiers run in a process the
+proposer cannot write to, from inputs it never sees, with fixed resource limits; a timeout or crash
+is a failure of the candidate only when the same verifier succeeds on the incumbent.
+
+\begin{table}[h]
+\caption{Verifiers by game.}
+\label{tab:verifiers}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}LL@{}}
+\toprule
+Game & Verifier & Failure classes \\
+\midrule
+A Learning procedures & compile and run the emitted procedure on training rows; score predictions on the outer test fold the proposer never saw; record wall time and memory & does not compile; non-finite or malformed output; exceeds the latency or memory limit; crashes \\
+B Next experiment & evaluate the queried point with the declared objective and constraints (oracle functions, surrogate-free benchmark tables, or a recorded reaction model with declared noise) & outside the search space; malformed query; violates a hard constraint \\
+C CAD parts & build the STEP solid; check envelope, interfaces and process rules; mesh with declared element size and run linear static analysis for every load case, with a mesh-convergence check; a second solver on a random 10\% & invalid solid; envelope or interface violation; mesher or solver failure; stress or displacement above the limit (infeasible) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{References $b(s)$} A: the training-mean predictor. B: random search at the same step.
+C: the envelope block with its interfaces, which is feasible but heavy. References are fixed before
+training and never tuned on confirmation families.
+
+\paragraph{Public replication} For learning procedures we also report the confirmation protocol on
+TabArena tasks \citep{erickson2025tabarena}, which are public but whose test folds the proposer never
+sees, so that a reader can rerun one game without our corpus.

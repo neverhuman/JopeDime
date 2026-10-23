@@ -1,0 +1,113 @@
+% Section 4 — EurekaZero architecture
+\section{EurekaZero}
+\label{sec:architecture}
+
+EurekaZero has three stages and an emitter (\cref{fig:network}): domain adapters that encode the game
+state, a shared proposer that maps the encoding to a solution embedding, and typed decoders that write
+one complete move in the domain's language. The interface is shared; the trained parameters are
+shared only where \cref{tab:params} says so, and a shared interface alone never implies shared
+weights.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-network}
+\caption{The EurekaZero network. Domain adapters encode observed data, optimization histories and
+engineering specifications into a common set of state tokens (\code{game\_state\_encoding}). A shared
+proposer attends from a small set of latent slots to those tokens and produces the solution embedding
+(\code{solution\_embedding}), the protected stage. Typed decoders write one complete move under a
+grammar mask, and emitters lower it to executable source, a query or a CAD program
+(\code{solution}). The candidate is hashed and frozen at the commitment line. Verified experience
+trains the proposer and decoders; it is never consulted at proposal time.}
+\label{fig:network}
+\end{figure}
+
+\subsection{State adapters: \texorpdfstring{\code{game\_state\_encoding}}{game\_state\_encoding}}
+
+Each adapter maps its domain's typed observations into the same token space, with an explicit mask for
+missing, failed, censored and below-resolution values, because ``not observed'', ``observed zero'' and
+``failed'' are different states.
+\emph{Observed data} are encoded by a row--feature set transformer that alternates attention across
+rows and across features: it is invariant to row order, keeps feature identity and type, and receives
+the objective, the label-access rule and the fit/predict budget as tokens.
+\emph{Optimization histories} are encoded one token per evaluation---parameters embedded by variable
+type, outcome rank-normalized within the history, feasibility, fidelity and cost---plus tokens for the
+bounds, the variable structure and the remaining horizon. Order is encoded only when chronology
+carries information (drift, delayed measurements, changing budgets); otherwise the history is a set.
+\emph{Engineering specifications} are encoded as typed tokens for interfaces, loads, boundary
+conditions, envelope and keep-out regions, material and process, after non-dimensionalizing by
+envelope size, load magnitude and material stiffness and canonicalizing the coordinate frame; an
+optional point-cloud branch encodes the envelope's geometry.
+
+\subsection{Shared proposer and \texorpdfstring{\code{solution\_embedding}}{solution\_embedding}}
+
+The proposer is a latent-slot transformer: $m$ learned slot queries cross-attend to the state tokens and
+then attend to each other for $N$ blocks. Its output, the solution embedding $h$, is a short sequence
+of slots rather than one vector, because good solutions are compositional---a feature map and a fitted
+head, a load path and its stiffeners---and because one problem can have several excellent, structurally
+different solutions. The proposer therefore models a conditional distribution $P_\theta(h\mid z)$; in
+the strict tracks one sample is drawn with a declared temperature and seed, and averaging two valid
+solutions is never assumed to produce a third. Our design uses \syn[EZ-G21]{\EZslots} slots of width
+\syn[EZ-G21]{\EZslotDim} and \syn[EZ-G21]{\EZparamShared}M shared parameters; these are development
+choices to be fixed by a capacity-matched comparison of widths 128, 256 and 512 and of a single vector
+against slots (\cref{sec:mechanisms}).
+
+The solution embedding is also the boundary of what we disclose. How the embedding is constructed,
+and how the training-time search that teaches it explores the solution language, are proprietary; we
+specify that stage by the contract it satisfies---its interface, its counters and the six guarantees of
+every move it can produce---and release every move it commits (\cref{app:disclosure}).
+
+\subsection{Typed decoders with open support}
+
+Each domain has a versioned solution language and an autoregressive decoder constrained by a grammar
+mask, with numeric heads for constants and parameters. Every move the decoder can write satisfies six
+guarantees (\cref{tab:guarantees}). Two properties matter most. The language is
+\emph{compositional}, so the decoder can write complete artifacts that are absent from the training
+archive---a property we test with output and provenance checks rather than assume; a decoder that only
+walks paths through known complete solutions is kept as the catalog control of
+\cref{prop:closed}. And the mask is \emph{fixed and declared}: it enforces typing, totality and bounds,
+but it never hides an evaluator, a validity search or a repair loop.
+
+\begin{table}[t]
+\caption{The six guarantees every committed move satisfies, by domain.}
+\label{tab:guarantees}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}p{0.24\linewidth}LL@{}}
+\toprule
+Guarantee & Learning procedure & Next experiment & CAD program \\
+\midrule
+Typed & ill-typed compositions cannot be written & query typed by the search space & typed construction operations \\
+Total & missing values, constant columns, single rows defined & every state maps to an in-bounds query & interfaces built first; every solid contains them \\
+Bounded & stated work in rows and features & constant time per query & bounded operation and feature count \\
+Deterministic & all randomness from one seed & one seed & one seed and a deterministic kernel \\
+Emittable & Rust and Python, refusals recorded & JSON query & CadQuery program, STEP and STL export \\
+Verifiable & native and emitted predictions agree to $10^{-9}$ & the query is the artifact & two meshes or solvers agree within tolerance \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Parameters and lineage}
+
+\Cref{tab:params} separates shared from private parameters; \cref{app:model} gives every shape. The
+design differs from the systems the JopeDime program has built so far, and we do not present those
+systems as one trained model. Its first neural policy decoded inside a fixed catalog of complete
+programs and is therefore the catalog control, not a proposer (\cref{app:history}); its released policy
+consumes a frozen 2,048-value context assembled from three separately trained encoders \est. EurekaZero
+replaces that context with versioned adapters behind a new schema, and keeps the historical
+checkpoints and their ABIs unchanged.
+
+\begin{table}[t]
+\caption{Shared and private parameters of the design. Sizes are proposed development targets (gap
+EZ-G21), not a trained checkpoint.}
+\label{tab:params}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}lLl@{}}
+\toprule
+Component & Role & Parameters \\
+\midrule
+State adapters $E_{\phi,d}$ & private per domain & \syn[EZ-G21]{\EZparamAdapters}M each \\
+Shared proposer $P_\theta$ & per domain in the primary runs; shared across domains in the shared-model study (\cref{sec:mechanisms}) & \syn[EZ-G21]{\EZparamShared}M \\
+Typed decoders $D_{\psi,d}$ & private per domain & included in adapter range \\
+Value, feasibility and cost heads & training only; never rank candidates in strict tracks & small \\
+\bottomrule
+\end{tabularx}
+\end{table}

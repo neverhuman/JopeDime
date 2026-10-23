@@ -1,0 +1,87 @@
+% Figure 1 — innovation as a game: Go and three innovation games, row by row. Conceptual; no data.
+\begin{tikzpicture}[x=1cm, y=1cm,
+  cell/.style={font=\sffamily\scriptsize, text width=3.05cm, align=center, inner sep=1pt, text=ezink},
+  rowlab/.style={font=\sffamily\sbseries\scriptsize, color=ezaccent, anchor=west, text width=1.25cm, align=left},
+  head/.style={font=\sffamily\sbseries\small, text=ezink, align=center, text width=3.1cm}]
+  % column backdrops
+  \fill[ezpaper, rounded corners=4pt] (1.42,1.05) rectangle (4.58,-6.32);
+  \fill[ezaccentsoft, rounded corners=4pt] (4.72,1.05) rectangle (14.88,-6.32);
+  \node[font=\sffamily\scriptsize, text=ezgrey, anchor=south] at (3.0,1.05) {precedent};
+  \node[font=\sffamily\sbseries\scriptsize, text=ezaccent, anchor=south] at (9.8,1.05) {innovation games played by EurekaZero};
+
+  % ---------------- icons
+  % Go board
+  \begin{scope}[shift={(3.0,0.1)}]
+    \fill[ezamber!22, rounded corners=1pt] (-0.72,-0.72) rectangle (0.72,0.72);
+    \foreach \i in {0,...,6} {
+      \draw[ezgrey!80, line width=0.3pt] (-0.6+0.2*\i,-0.6) -- (-0.6+0.2*\i,0.6);
+      \draw[ezgrey!80, line width=0.3pt] (-0.6,-0.6+0.2*\i) -- (0.6,-0.6+0.2*\i);}
+    \foreach \p in {(-0.2,0.0),(0.2,0.2),(-0.4,0.4),(0.0,-0.4),(0.4,-0.2)} \fill[ezink] \p circle (0.082);
+    \foreach \p in {(0.0,0.2),(-0.2,-0.2),(0.2,-0.4),(0.4,0.4)} \filldraw[fill=white, draw=ezink, line width=0.3pt] \p circle (0.082);
+    \fill[ezink] (0.2,0.0) circle (0.082);
+    \draw[ezwarm, line width=0.9pt] (0.2,0.0) circle (0.14);
+  \end{scope}
+  % Learning procedure: data table -> program
+  \begin{scope}[shift={(6.4,0.1)}]
+    \foreach \r in {0,...,5} \foreach \c in {0,...,4} {
+      \pgfmathsetmacro\shade{\c==4 ? 1 : 0}
+      \ifdim\shade pt=1pt \filldraw[fill=ezaccent!35, draw=white, line width=0.4pt] (-1.25+0.2*\c,-0.6+0.2*\r) rectangle ++(0.2,0.2);
+      \else \filldraw[fill=white, draw=ezrule, line width=0.4pt] (-1.25+0.2*\c,-0.6+0.2*\r) rectangle ++(0.2,0.2); \fi}
+    \draw[ezarrow] (-0.2,0.0) -- (0.18,0.0);
+    \node[draw=ezaccent, fill=white, rounded corners=1.5pt, inner sep=2.5pt, font=\ttfamily\fontsize{5.4pt}{6.2pt}\selectfont, align=left, anchor=west]
+      at (0.24,0.0) {fn fit(\ldots)\\fn predict(\ldots)\\\{ \ldots \}};
+  \end{scope}
+  % Next experiment: observations and the proposed point
+  \begin{scope}[shift={(9.8,0.1)}]
+    \draw[ezrule, line width=0.5pt, -{Stealth[length=1.4mm]}] (-0.95,-0.62) -- (0.98,-0.62);
+    \draw[ezrule, line width=0.5pt, -{Stealth[length=1.4mm]}] (-0.95,-0.62) -- (-0.95,0.7);
+    \draw[ezgrey!60, dashed, line width=0.5pt] plot[smooth, domain=-0.9:0.9, samples=40] (\x, {0.42*cos(deg(2.6*\x))-0.05*\x});
+    \foreach \p in {(-0.78,0.0),(-0.45,0.17),(-0.1,-0.23),(0.36,-0.08),(0.72,0.16)} \fill[ezink] \p circle (0.05);
+    \node[star, star points=5, star point ratio=2.2, fill=ezwarm, inner sep=0pt, minimum size=0.26cm] at (0.12,0.44) {};
+    \node[font=\sffamily\fontsize{5.6pt}{6pt}\selectfont, text=ezwarm, anchor=west] at (0.22,0.47) {$x_{t+1}$};
+  \end{scope}
+  % Engineering part: bracket under load
+  \begin{scope}[shift={(13.2,0.05)}]
+    \filldraw[fill=ezgrey!25, draw=ezink, line width=0.5pt]
+      (-0.85,-0.62) -- (0.85,-0.62) -- (0.85,-0.40) -- (-0.30,-0.40) -- (-0.58,0.12) -- (-0.58,0.62) -- (-0.85,0.62) -- cycle;
+    \fill[white] (0.55,-0.51) circle (0.055); \fill[white] (0.15,-0.51) circle (0.055); \fill[white] (-0.715,0.40) circle (0.055);
+    \draw[ezwarm, line width=0.9pt, -{Stealth[length=1.8mm]}] (-0.1,0.78) -- (-0.52,0.42);
+    \node[font=\sffamily\fontsize{5.6pt}{6pt}\selectfont, text=ezwarm] at (0.05,0.86) {$F$};
+    \fill[pattern=north east lines, pattern color=ezgrey] (-0.9,-0.70) rectangle (0.9,-0.64);
+  \end{scope}
+
+  % ---------------- column heads
+  \node[head] at (3.0,-1.02) {Go\\[-1pt]{\scriptsize\mdseries\color{ezgrey}AlphaGo Zero}};
+  \node[head] at (6.4,-1.02) {Learning procedure\\[-1pt]{\scriptsize\mdseries\color{ezgrey}domain A \textperiodcentered{} artifact}};
+  \node[head] at (9.8,-1.02) {Next experiment\\[-1pt]{\scriptsize\mdseries\color{ezgrey}domain B \textperiodcentered{} action}};
+  \node[head] at (13.2,-1.02) {Engineering part\\[-1pt]{\scriptsize\mdseries\color{ezgrey}domain C \textperiodcentered{} artifact}};
+
+  % ---------------- rows
+  \foreach \lab/\y in {State/-1.95, Move/-2.80, Rules/-3.65, Verifier/-4.50, Opponent/-5.35} {
+    \node[rowlab] at (0.0,\y) {\lab};
+    \draw[ezrule, line width=0.3pt] (1.5,\y+0.43) -- (14.8,\y+0.43);}
+  \node[cell] at (3.0,-1.95) {a $19\times19$ position};
+  \node[cell] at (6.4,-1.95) {training rows, objective, resource budget};
+  \node[cell] at (9.8,-1.95) {evaluated points $(x_i,y_i)$, bounds, horizon};
+  \node[cell] at (13.2,-1.95) {loads, interfaces, envelope, material, process};
+  \node[cell] at (3.0,-2.80) {place one stone};
+  \node[cell] at (6.4,-2.80) {commit one fit/predict program};
+  \node[cell] at (9.8,-2.80) {commit one next query $x_{t+1}$};
+  \node[cell] at (13.2,-2.80) {commit one CAD construction program};
+  \node[cell] at (3.0,-3.65) {the rules of Go};
+  \node[cell] at (6.4,-3.65) {typed procedure language, six guarantees};
+  \node[cell] at (9.8,-3.65) {typed search space and budget};
+  \node[cell] at (13.2,-3.65) {typed CAD language, validity checks};
+  \node[cell] at (3.0,-4.50) {the game result};
+  \node[cell] at (6.4,-4.50) {fit, then error on held-out rows};
+  \node[cell] at (9.8,-4.50) {the objective's measured value};
+  \node[cell] at (13.2,-4.50) {build, mesh, finite elements, load test};
+  \node[cell] at (3.0,-5.35) {the previous network};
+  \node[cell] at (6.4,-5.35) {incumbent procedure for that dataset};
+  \node[cell] at (9.8,-5.35) {incumbent decision for that history};
+  \node[cell] at (13.2,-5.35) {incumbent design for that specification};
+
+  % ---------------- the game, in one line
+  \node[font=\sffamily\scriptsize, text=ezaccent, align=center] at (9.8,-6.05)
+    {state $\;\to\;$ one committed move $\;\to\;$ verified outcome $\;\to\;$ win if it beats the incumbent};
+\end{tikzpicture}

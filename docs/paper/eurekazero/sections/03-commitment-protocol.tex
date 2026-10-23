@@ -1,0 +1,115 @@
+% Section 3 — A commitment protocol for one proposal
+\section{A commitment protocol for one move}
+\label{sec:protocol}
+
+\begin{definition}{The Zero contract}
+\label{def:zero}
+A proposal satisfies the Zero contract when, for the problem at hand,
+\begin{itemize}
+\item $K=1$: exactly one complete candidate is committed---no sampling several and keeping one, no
+beam over competing candidates, no best-of-$B$;
+\item $E=0$: no candidate is executed, compiled for feedback, simulated or scored, by a verifier or by
+a learned critic, before commitment;
+\item $R=0$: nothing is revised after any feedback; a repaired candidate is a new attempt and the
+first attempt's failure stands.
+\end{itemize}
+Permitted: frozen normalization, declared tokenization, direct feature computation, fixed typed
+grammar masks, one sampled or greedy decoding trajectory with every step counted, and deterministic
+serialization. Counters are recorded by an isolated supervisor and never taken from the proposer's
+own report.
+\end{definition}
+
+\subsection{Four tracks}
+
+The contract separates four settings that are routinely blurred (\cref{tab:tracks,fig:protocol}).
+\textbf{C0} is the cold-start artifact: the player sees the specification and authorized
+observations---for a learning procedure, the training rows---and commits one candidate with no new
+probe of the target task. \textbf{CH} is the history-conditioned decision: every compared method
+receives the same frozen, disclosed history of earlier evaluations and emits one new decision; the
+history is charged to the workflow that produced it. \textbf{SEQ} is a sequential controller: one
+proposal per step, with new observations in between, reported as $T$ decisions and their total
+evaluation budget, never as ``one inference''. \textbf{S} is search-assisted: multiple candidates,
+ranking, evaluation or repair at a declared budget $B$. A learned critic may be used in training or in
+an explicitly labelled S arm; its deployment use, not its existence, decides the track.
+
+\begin{table}[t]
+\caption{Four tracks. Every result is labelled with its track, and no comparison crosses tracks
+without saying so.}
+\label{tab:tracks}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}p{0.27\linewidth}LL@{}}
+\toprule
+Track & Starting information & Permitted before commitment & Correct description \\
+\midrule
+C0 cold start & specification and authorized observations & one trajectory; no probes, execution, feedback or revision & first artifact from the supplied state \\
+CH history & a frozen, disclosed history, identical across methods & one new proposal; no look-ahead evaluation & one decision given an existing history \\
+SEQ sequential & an initial state, then accumulating outcomes & one proposal per step & $T$ decisions and their evaluation budget \\
+S search & declared state and search budget $B$ & several candidates, ranking, evaluation, repair & search-enhanced performance at budget $B$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-protocol}
+\caption{The information boundary. Everything left of the commitment line is available to the
+player; the candidate is hashed and frozen before any candidate-specific execution; everything to the
+right is verification. In C0 and CH the game ends at the verifier. In SEQ the verified outcome
+becomes part of the next state, and each step is a new move under the same contract. In S the player
+may cross the line repeatedly before committing, and every crossing is counted.}
+\label{fig:protocol}
+\end{figure}
+
+\subsection{What counts as computation}
+
+One proposal is not one forward pass. An autoregressive decoder makes many network evaluations while
+writing one program; an encoder may process many chunks. All can belong to one declared proposal
+transaction, but they are different computational claims, so the supervisor records them separately
+(\cref{tab:counters}). A parallel batch is not free because it arrives in one request, and missing
+telemetry is reported as unknown, never as zero.
+
+\begin{table}[t]
+\caption{Counters recorded for every proposal by the supervisor (\cref{app:formal} gives the
+schema).}
+\label{tab:counters}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.36\linewidth}L@{}}
+\toprule
+Counter & Meaning \\
+\midrule
+\code{proposal\_transactions} & complete user-visible proposal requests \\
+\code{candidate\_trajectories}, \code{complete\_candidates} & competing paths and complete candidates generated, including discarded ones (strict tracks: exactly 1) \\
+\code{encoder\_forward\_calls}, \code{proposer\_forward\_calls}, \code{decoder\_steps} & network computation, with the batching convention \\
+\code{new\_target\_probe\_evaluations} & new evaluations of the target task acquired during the request (C0: 0) \\
+\code{candidate\_executions\_before\_commit}, \code{surrogate\_candidate\_scores} & compiler, simulator, runtime or critic feedback on candidates (strict tracks: 0) \\
+\code{repair\_or\_retry\_count}, \code{external\_model\_or\_tool\_calls} & revisions and outside services used during proposal (strict tracks: 0) \\
+\code{historical\_evaluations\_supplied} & observations and costs supplied as input history (CH and SEQ) \\
+\code{postcommit\_verification\_work} & all later fitting, testing, simulation and physical evaluation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Commit, execute, verify}
+
+The candidate includes everything that determines its behaviour: source or construction sequence,
+structural choices, constants, dependencies, seeds and the execution recipe. The supervisor binds
+them in a proposal receipt before any feedback exists; the verifier then runs the unchanged
+candidate, and only the verifier holds the withheld data.
+
+\emph{Learning procedures} are fitted on the authorized training rows after commitment; ordinary
+fitting is disclosed execution cost. Hyperparameter sweeps, model selection or validation-chosen
+ensembles inside \code{fit} are \emph{search-in-fit} and are reported in a separate cohort; the
+primary cohort forbids them. \emph{CAD programs} are built, meshed and simulated after commitment; a
+build failure is the proposal's failure, and any geometry healing is a fixed declared transformation
+applied identically to every method or reported as a repair-assisted result. \emph{Optimization
+points} are fixed, with any fidelity choice, before the next objective value exists, and a rejected
+point is not replaced for free.
+
+\subsection{Failure, abstention and fallback}
+
+The scientific primary keeps the first proposal's failure. A deployed system may fall back to a safe
+conventional method, and we then report both the first-proposal result and the total service result,
+fallback cost included. Abstention is also an output: we report coverage and utility over all
+requested tasks. Invalid syntax, invalid types, non-finite values, timeouts, infeasible designs,
+evaluator faults and missing measurements are distinguished; unknown outcomes are neither failures
+nor successes, and infrastructure retries follow a rule fixed before any method runs.

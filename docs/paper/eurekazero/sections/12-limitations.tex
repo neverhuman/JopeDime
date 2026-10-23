@@ -1,0 +1,62 @@
+% Section 12 — Scope, limitations and broader impact
+\section{Scope and limitations}
+\label{sec:limits}
+
+\paragraph{Which innovations are games} The innovation-game hypothesis applies where four conditions
+hold: the problem can be encoded as a state, candidate solutions can be written in a typed language,
+an independent verifier can score them, and a budget can be declared (\cref{sec:formulation}).
+Many valuable problems meet them (\cref{tab:othergames}); many do not. Problems whose quality is a
+matter of taste or negotiation have no verifier. Problems whose verifier takes years, such as a
+clinical trial, cannot supply the experience the method learns from. And the hardest part of much
+invention is finding the problem and writing its specification, which this formulation takes as
+given. We test three games and claim nothing about the rest (\cref{app:claims}, EZ-C12).
+
+\begin{table}[t]
+\caption{Games we have not played. Candidate innovation games that meet the four conditions, with the
+verifier that would score a committed move. None is evaluated in this paper.}
+\label{tab:othergames}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.19\linewidth}LLL@{}}
+\toprule
+Game & State & Move & Verifier \\
+\midrule
+Molecules for a target & assay target, property limits, synthesis constraints & one molecule & docking and property oracles, then assay \citep{gao2022pmo} \\
+Reaction conditions & reactants, product, available reagents & one set of conditions & measured yield \citep{shields2021reaction,ahneman2018cn} \\
+Compiler optimization & a program and its target machine & one transformation sequence & equivalence check and timed benchmark \\
+Analog circuit sizing & topology, specifications & one set of device sizes & circuit simulation, then silicon \\
+Formal lemmas & a statement in a proof assistant & one proof script & the proof checker \\
+Control policies & plant model, objective, safety limits & one controller program & simulation, then hardware \\
+Materials composition & target properties, process limits & one composition and process & simulation, then synthesis and test \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Verifiers can be gamed} A proposer trained on a verifier's score will exploit any gap
+between the score and the intent. Typed decoders remove some exploits by construction; the verifier
+runs outside the proposer's process; confirmation problems are sealed and their verifiers are not
+used in training; and the CAD results are checked by a second analysis and, for a sample, by
+physical test. None of this proves the absence of exploits, and each new game needs its own audit.
+
+\paragraph{Archive novelty is not novelty} Rungs N1 to N4 of the novelty ladder are statements about
+a frozen archive, which is large but not the literature. Rungs N5 and N6 add interventions, prior-work
+review and replication, and still cannot prove that no one has had the idea before.
+
+\paragraph{Sealed is not unbounded} Confirmation families are unseen, but they come from the same
+generators and sources as training families. Problems far from that distribution may behave like the
+regimes in \cref{sec:heterogeneity}, where the first proposal's advantage disappears.
+
+\paragraph{Cost and reproducibility} The fixed costs in \cref{sec:compute} are within reach of an
+academic laboratory but not of every one, and the learning-procedure adapter depends on third-party
+pretrained encoders whose redistribution terms we do not control (\cref{app:model}). The
+EurekaZero-Native arm exists so that the central claims do not depend on them.
+
+\paragraph{Dual use and inventorship} A system that proposes working molecules, controllers or parts
+in one step lowers the cost of harmful designs as well as useful ones \citep{urbina2022dualuse}. We
+restrict the released games to the three studied here and gate verifier access for any future game
+with a plausible misuse route. Under the USPTO's revised inventorship guidance, only natural persons
+can be named as inventors and AI systems are treated as tools \citep{uspto2025inventorship}; who
+conceives an invention first proposed by EurekaZero is a legal question we do not answer.
+
+\paragraph{This draft} Every EurekaZero result above is synthetic. The draft fixes the claims, the
+protocol and the analyses in advance so that the experiments can confirm or refute them; the
+experiments may do either.
