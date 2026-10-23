@@ -1,0 +1,13 @@
+# H27 landmarking: feature generation complete, routing lift untested
+
+All34,000 planned unique GP probe fits completed over850 historically exposed TRAIN contexts/162lineage components:8fixed probes ×5internal folds. The640pilot fits were reused, not refit. Producer records show0failed/unknown/unattempted/retried fits. All32full-cohort worker units and2empty owned host slices were captured and stopped. Full independent numerical replay remains pending; the640pilot saved models independently replayed with exact prediction bits and q error0.
+
+Pilot descriptors: onefold andfivefold best-probe sets differ on3/16tasks under1e-8tie tolerance. Depth4 boostedtrees lead11/16; raw androbust ridge CV values differ by at most2.5091e-13 across80foldpairs. These observations concern feature diversity and redundancy;0routing outcomes were read for this diagnostic and0neural models fit. All8probes remain frozen. They do not establish routing lift or unbiased raw-source generalization.
+
+Onefold is fold0 of the commonCV5 partition; fivefold is the arithmetic mean of those same5qvalues. Eachfold's target mean/std and feature transforms fit its own training rows. The current historical curated-view curation and duplicatedXrows are retained and disclosed. ProbeCV5 scores do not replace archived S1 constrained-fitness labels.
+
+Next: independently verify allclosed raw outputs directly under read-only mounts, qualify clean-default latest-source Dope state, then fit a prospectively frozen matched2state×3fingerprint neural comparison. Realstate five-minus-zero andfive-minus-one are primary; zero-state interactions secondary. TRAIN-only scalers, monitor-component exclusion, fixed endpoints and equalcomponent paired uncertainty are required. NoOLDDEV/CAL/outer-outcome tuning, favorable seed/checkpoint/ensemble selection or loss-as-lift claim.
+
+Long-term archival is now real: a2,644-member H18/H20/backend source closure totaling1,525,397,041bytes passed3S3PUT/exact-versionGETpairs plus independent local recovery. Seven separate closed own packages totaling204,777,873bytes passed8PUT/GETpairs plus5TB/Mac/compatibility readback before204,820,480allocated SSDbytes were reclaimed. Noforeign oractive worktree was removed. Newpilot/fullGPraw S3 archival remains pending, distinct from the earlier archive. The5TB data mount stays NOEXEC; pinned executables remain on executable storage.
+
+See [completion/counts/costs](probe-completion.json) and [pilot descriptor diagnostic](pilot-feature-diagnostic.json). Source hashes bind private results; bulk models, predictions, raw data, identities and object locators remain outside this public aggregate capsule. Product repository integration remains separately foreign-owned and queued.

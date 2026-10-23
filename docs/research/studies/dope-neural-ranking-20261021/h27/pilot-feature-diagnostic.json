@@ -1,0 +1,24 @@
+{
+  "state": "TIE_AWARE_DESCRIPTOR_DIAGNOSTIC_NOT_ROUTING_LIFT",
+  "at": "2026-10-22T23:48:11.089584+00:00",
+  "tasks": 16,
+  "probes": 8,
+  "raw_argmin_changes": 3,
+  "disjoint_best_probe_sets_onefold_vs_fivefold": 3,
+  "tie_tolerance_q": 1e-08,
+  "fivefold_best_support_including_ties": {
+    "0": 2,
+    "1": 2,
+    "2": 0,
+    "3": 2,
+    "4": 1,
+    "5": 0,
+    "6": 0,
+    "7": 11
+  },
+  "raw_vs_robust_ridge_max_absolute_q_difference_all80foldpairs": 2.509104035652854e-13,
+  "mean_absolute_onefold_minus_fivefold_q_all128features": 0.08399583982118695,
+  "routing_outcomes_read": 0,
+  "NN_models_fit": 0,
+  "limits": "Exploratory feature-only pilot diagnostic; no route selection/recipe replacement or ranking/NN-loss claim. Near ties are grouped to prevent floating-point winner changes being sold as signal. All8frozenprobesretained."
+}

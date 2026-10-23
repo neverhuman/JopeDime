@@ -1,0 +1,103 @@
+{
+  "schema": "dope-ranking.h27-public-hypothesis/v1",
+  "status": "PROSPECTIVE_SOURCE_PREPARATION_ONLY",
+  "mechanism": "New fully captured TRAIN-internal fitted genetic-program performance responses, candidate-conditioned beyond unchanged common descriptors and permitted Dope state.",
+  "existing_baseline_landmarks": [
+    "ridge heldout score",
+    "1-nearest-neighbor heldout score",
+    "linear residual summaries"
+  ],
+  "factorial": {
+    "state": [
+      "verified_permitted_real_state",
+      "zero_after_scaling"
+    ],
+    "fingerprint": [
+      "zero_after_scaling",
+      "one_fixed_fold",
+      "mean_same_five_folds"
+    ],
+    "conditions": 6,
+    "common_descriptors": 240,
+    "candidate_descriptors": 412,
+    "state_width": 112,
+    "probe_score_width": 8,
+    "equal_capacity_and_candidate_interactions_required": true,
+    "latest_state_identity_reuse_qualification_pending": true
+  },
+  "primary_contrasts": [
+    {
+      "contrast": "real_state_fivefold_minus_real_state_zero",
+      "question": "Incremental response information beyond existing descriptors and real state."
+    },
+    {
+      "contrast": "real_state_fivefold_minus_real_state_onefold",
+      "question": "Benefit of fivefold averaging at equal width and individual-fit fraction."
+    }
+  ],
+  "secondary": [
+    "zero-state matched three fingerprint arms",
+    "state-by-fingerprint interaction",
+    "exact probe-overlap and predeclared nonprobe-support endpoints",
+    "direct best-probe selection where archived target overlap exists",
+    "gate failure, regret, full-slate coverage and CV endpoints"
+  ],
+  "endpoint": {
+    "name": "selected_recorded_raw_constrained_fitness",
+    "direction": "MINIMIZE",
+    "aggregation": "context mean within component; components equal; paired differences averaged across all three fixed seeds",
+    "established_favorable_direction": "adjusted confidence interval upper bound strictly below zero plus all predeclared support criteria",
+    "not_established": "interval includes zero or positive harm; no surrogate-loss-only lift claim",
+    "familywise_central_coverage": 0.975,
+    "primary_contrasts": 2,
+    "each_central_coverage": 0.9875,
+    "bootstrap_draws": 100000,
+    "bootstrap_unit": "paired component",
+    "posthoc_score_ensemble": false
+  },
+  "feature_protocol": {
+    "partition": "fixed identity-bound TRAIN-internal fivefold, with known grouping/time constraints",
+    "row_identity": "stable qualified teacher TRAIN positions, not acquisition row IDs",
+    "one": "fold0 reused exactly",
+    "five": "arithmetic mean of same five fold scores",
+    "fit_fraction": "approximately80percent for each fit; exact fraction follows row/group indivisibility",
+    "target_scaler": "per-fold fitting rows only: mean and population std; zero std becomes1",
+    "score": "0.5*log((mean((prediction_z-heldout_z)^2)+1e-12)/(mean(heldout_z^2)+1e-12))",
+    "baseline": "fold-TRAIN mean zero in normalized units",
+    "old_archived_target_contract_replaced": false,
+    "candidate_interaction_required": true
+  },
+  "safeguards": {
+    "gradient_heldout_monitor": "whole components selected before fits from neural TRAIN, excluded from all ranker/scaler/selection fits",
+    "final_component_OOF": "evaluate once after all models close",
+    "capture": "all fixed probe/fold attempts including failures, never winner-only",
+    "unexpected_fit_failure": "feature phase incomplete; refuse neural training rather than drop contexts/probes",
+    "exact_probe_target_overlap": "qualify canonical identity; missing direct-selector target support remains unavailable",
+    "heldout_task_covariates": "own permitted GP outer-TRAIN X/y only; no heldout ranking outcomes or outer-test data",
+    "fresh_rankers_and_fixed_recipe_required": true
+  },
+  "planned_probe_fits": {
+    "identity_selected_panel_contexts": 16,
+    "panel_if_complete": 640,
+    "full_contexts": 850,
+    "full_if_complete_including_reused_panel": 34000,
+    "onefold_deployment_alternative": 6800,
+    "fold0_refits": 0,
+    "multiply_by_factorial_conditions": false,
+    "additional_independent_QA_fits": "must be declared and charged separately"
+  },
+  "current_actual": {
+    "builds": 0,
+    "GP_fits": 0,
+    "neural_fits": 0,
+    "optimizer_updates": 0,
+    "numerical_array_reads_or_hashes": 0,
+    "API_or_provider_calls": 0
+  },
+  "validation_limits": [
+    "historically exposed internal support, not untouched external validation",
+    "current cache contents and numerical source boundary not freshly verified",
+    "fixed NN architecture/model/update recipe and exact source/resource grant pending",
+    "no numerical lift or runtime result yet"
+  ]
+}

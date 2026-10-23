@@ -1,0 +1,251 @@
+{
+  "R1_acquisition": {
+    "SDK_retry_attempts": 0,
+    "all_phases_unique_object_GET_invocations": 6,
+    "cache_hits": 1,
+    "cached_first_bytes": 3221,
+    "exact_returned_VersionId_ContentLength_SHA_and_HTTP200_verified": 6,
+    "first_object_reGETs": 0,
+    "new_GET_bodies": 5,
+    "new_GET_bytes": 16097,
+    "new_SDK_GET_invocations": 5,
+    "producer_cost": {
+      "CPU_seconds": 0.560772076,
+      "CPUs": 2,
+      "MemoryMax_bytes": 8589934592,
+      "compute_deadline": null,
+      "max_rss_kib": 90632,
+      "wall_seconds": 1.30334075295832
+    },
+    "provider_label": "approved-existing-audit-provider",
+    "provider_route": "Explicit source-pinned existing SDK custom-process profile; no default or alternate provider fallback.",
+    "saved_metadata_bytes": 19318,
+    "saved_metadata_manifests": 6,
+    "wire_request_count_limit": "SDK invocation and response metadata recorded; credential-provider internal wire traffic was not independently instrumented."
+  },
+  "admission": {
+    "GP_fitness_input_equivalence_qualified": 0,
+    "new_independent_validation_contexts": 0,
+    "new_numeric_TRAIN_contexts": 0,
+    "source_row_transform_or_historical_writer_certificates": 0
+  },
+  "created_utc": "2026-10-22T16:58:30.042439+00:00",
+  "denominator": {
+    "MAIN_source_manifests_in_this_packet": 6,
+    "incoming_cases_separate_packet": 6,
+    "original_membership_pilot_cases": 12,
+    "selected_MAIN_included_current_train_fit_known_reservation_clean": 6
+  },
+  "forbidden_work": {
+    "GPU_calls": 0,
+    "GP_or_baseline_or_neural_fits": 0,
+    "JTT1_or_CSV_or_outcome_array_reads": 0,
+    "dataset_optimizer_updates": 0,
+    "reference_bodies_followed": 0
+  },
+  "limits_and_next_gate": [
+    "No global absence claim: queried row/scaler/preprocessing/writer groups were absent only in these six inspected manifests.",
+    "Sample/canonical literal matches and current role/epoch/reservation cleanliness do not certify original ordered rows, TRAIN-only transforms, label orientation, or archived GP input equivalence.",
+    "selected_source_indices_sha256 and sampler_result_sha256 are observed digest fields, not reconstructed selection or ordering algorithms.",
+    "Full TRAIN/test/split and parent-split references are exact next-resolution pointers. Any body access needs a separately frozen typed allowlist and semantic scope; this packet followed none.",
+    "Resolve the exact membership/sampler/source-row writer domains and original TRAIN-view/scaler-fit chain, then prove GP-label input equality before numerical admission.",
+    "All twelve pilot cases remain in the denominator; six incoming cases retain their separate packet status. Historical exposure and genuinely independent validation remain unresolved.",
+    "Reported costs cover named executed worker/QA phases, not total human or preparation time. Prior failed phases remain immutable and are not relabeled PASS."
+  ],
+  "narrow_R1_amendment": {
+    "all_other_payload_guards_retained": true,
+    "allowed_shape": "Exactly bucket/key/version_id nonempty strings, lowercase 64-hex sha256, and strictly positive integer bytes excluding bool.",
+    "exact_path": "objects.data",
+    "independent_saved_first_reparse_QA": {
+      "cost": {
+        "CPU_seconds": 0.277016933,
+        "GPU_calls": 0,
+        "fits": 0,
+        "input_outcome_arrays": 0,
+        "max_rss_kib": 95576,
+        "network_requests": 0,
+        "new_GETs": 0,
+        "new_bodies": 0,
+        "optimizer_updates": 0,
+        "wall_seconds": 0.33246486505959183
+      },
+      "new_GETs": 0,
+      "state": "PASS_WITH_LIMITS"
+    },
+    "remaining_five_execution_started_only_after_independent_first_reparse_PASS": true,
+    "saved_first_reparse": {
+      "bytes": 3221,
+      "cost": {
+        "CPU_seconds": 0.321704647,
+        "S3_requests": 0,
+        "wall_seconds": 0.4694408819777891
+      },
+      "new_GETs": 0,
+      "objects": 1,
+      "state": "PASS_SAVED_BODY_METADATA_REPARSE_WITH_LIMITS"
+    }
+  },
+  "observed_metadata": {
+    "all_six_reference_field_paths": [
+      "objects.data",
+      "objects.diagnostic",
+      "objects.membership",
+      "source.split",
+      "source.test",
+      "source.train",
+      "split_policy.parent_split"
+    ],
+    "digest_domain_limit": "objects.membership object byte-SHA and the prior parent logical digest differ in all six cases. No equality was expected without the writer's domain/formula; neither mismatch nor a logical reconstruction proof is inferred.",
+    "field_and_literal_parity_counts_of_six": {
+      "canonical_literal_in_prior_bindings": 6,
+      "membership_byte_digest_equals_parent_logical_literal": 0,
+      "parent_split_ref": 6,
+      "queried_row_certificate_group": 0,
+      "queried_scaler_preprocessing_group": 0,
+      "queried_writer_group": 0,
+      "sample_identity_literal_matches_prior_case": 6,
+      "sampler_result_hash_field": 6,
+      "selected_source_indices_hash_field": 6,
+      "source_split_ref": 6,
+      "source_test_ref": 6,
+      "source_train_ref": 6
+    },
+    "per_manifest_sanitized_verdicts": [
+      {
+        "canonical_and_sample_literal_parity": true,
+        "logical_algorithm_or_TRAIN_input_admission": "UNQUALIFIED",
+        "manifest_ordinal": 1,
+        "queried_original_row_scaler_writer_certificates": "NOT_PRESENT_IN_THIS_MANIFEST",
+        "saved_byte_metadata_QA": "PASS_WITH_LIMITS",
+        "source_and_parent_split_refs": "PRESENT_POINTERS_NOT_FOLLOWED"
+      },
+      {
+        "canonical_and_sample_literal_parity": true,
+        "logical_algorithm_or_TRAIN_input_admission": "UNQUALIFIED",
+        "manifest_ordinal": 2,
+        "queried_original_row_scaler_writer_certificates": "NOT_PRESENT_IN_THIS_MANIFEST",
+        "saved_byte_metadata_QA": "PASS_WITH_LIMITS",
+        "source_and_parent_split_refs": "PRESENT_POINTERS_NOT_FOLLOWED"
+      },
+      {
+        "canonical_and_sample_literal_parity": true,
+        "logical_algorithm_or_TRAIN_input_admission": "UNQUALIFIED",
+        "manifest_ordinal": 3,
+        "queried_original_row_scaler_writer_certificates": "NOT_PRESENT_IN_THIS_MANIFEST",
+        "saved_byte_metadata_QA": "PASS_WITH_LIMITS",
+        "source_and_parent_split_refs": "PRESENT_POINTERS_NOT_FOLLOWED"
+      },
+      {
+        "canonical_and_sample_literal_parity": true,
+        "logical_algorithm_or_TRAIN_input_admission": "UNQUALIFIED",
+        "manifest_ordinal": 4,
+        "queried_original_row_scaler_writer_certificates": "NOT_PRESENT_IN_THIS_MANIFEST",
+        "saved_byte_metadata_QA": "PASS_WITH_LIMITS",
+        "source_and_parent_split_refs": "PRESENT_POINTERS_NOT_FOLLOWED"
+      },
+      {
+        "canonical_and_sample_literal_parity": true,
+        "logical_algorithm_or_TRAIN_input_admission": "UNQUALIFIED",
+        "manifest_ordinal": 5,
+        "queried_original_row_scaler_writer_certificates": "NOT_PRESENT_IN_THIS_MANIFEST",
+        "saved_byte_metadata_QA": "PASS_WITH_LIMITS",
+        "source_and_parent_split_refs": "PRESENT_POINTERS_NOT_FOLLOWED"
+      },
+      {
+        "canonical_and_sample_literal_parity": true,
+        "logical_algorithm_or_TRAIN_input_admission": "UNQUALIFIED",
+        "manifest_ordinal": 6,
+        "queried_original_row_scaler_writer_certificates": "NOT_PRESENT_IN_THIS_MANIFEST",
+        "saved_byte_metadata_QA": "PASS_WITH_LIMITS",
+        "source_and_parent_split_refs": "PRESENT_POINTERS_NOT_FOLLOWED"
+      }
+    ],
+    "schema_literals": {
+      "jope.regression-research-dataset-manifest/v1": 6
+    },
+    "schema_status": "Observed literal and structural metadata shape only; authority of this schema was not established by the acquisition packet.",
+    "source_catalog_status": "Partial bucket/key/version reference observed; no full byte-digest/size certificate inferred."
+  },
+  "original_failed_phase_preserved": {
+    "SDK_GET_invocations": 1,
+    "cause": "objects.data was a complete typed object-reference dictionary rejected by the original payload-name guard.",
+    "cost": {
+      "CPU_seconds": 0.594615945,
+      "CPUs": 2,
+      "MemoryMax_bytes": 8589934592,
+      "compute_deadline": null,
+      "max_rss_kib": 89468,
+      "wall_seconds": 0.910407624905929
+    },
+    "delivered_bodies": 1,
+    "delivered_raw_bytes": 3221,
+    "metadata_accepted_bodies": 0,
+    "state": "CLOSED_METADATA_GUARD_FAILURE_WITH_FIVE_UNATTEMPTED",
+    "unattempted_objects": 5
+  },
+  "resources": {
+    "RAM_limit_bytes": 8589934592,
+    "RuntimeMax": "infinity",
+    "TasksMax": 64,
+    "User": "ubuntu",
+    "compute_deadline": null,
+    "per_worker_CPU_limit": 2,
+    "swap_bytes": 0
+  },
+  "saved_byte_QA": {
+    "independent_agent": {
+      "bytes": 19318,
+      "cost": {
+        "CPU_seconds": 0.33958955599999996,
+        "GPU_calls": 0,
+        "fits": 0,
+        "input_outcome_array_bodies": 0,
+        "max_rss_kib": 96332,
+        "network_requests": 0,
+        "new_GETs": 0,
+        "optimizer_updates": 0,
+        "wall_seconds": 0.4148755898931995
+      },
+      "manifests": 6,
+      "state": "PASS_WITH_LIMITS"
+    },
+    "independently_recomputed_typed_reference_descriptors": 42,
+    "new_GETs": 0,
+    "same_author": {
+      "bytes": 19318,
+      "cost": {
+        "CPU_seconds": 0.194468243,
+        "GPU_calls": 0,
+        "S3_requests": 0,
+        "arrays": 0,
+        "fits": 0,
+        "updates": 0,
+        "wall_seconds": 0.25027563399635255
+      },
+      "manifests": 6,
+      "state": "PASS_WITH_LIMITS"
+    }
+  },
+  "schema": "h21.public-main-source-manifest-aggregate/v1",
+  "source_artifact_sha256": {
+    "independent_saved_first_reparse_QA": "e98b88333f286da0564386b83f5113c30e1ef68f3da4fda7bb53fbd052ab60c2",
+    "original_failure_results": "69b16bac971acf4f9c42c1ddc471d4a70473a218130a488ee3e38f8790f0ef25",
+    "original_independent_partial_QA": "83a07b384e14b6bb42759161e93bd560bf67df3b2c33aebb10aef675e518094a",
+    "original_producer_closure": "beb910d455a33ee572c435680b28f5deb0b41868e84f9be7b8432c71688f49df",
+    "original_protocol": "9c2989a9fa85447da3d882fe9423d5f6d00f06646bd7939d1e822e6159711cde",
+    "original_worker": "25051cc844526cd692c0bfcf9729d7fd24ab3bb7df537b2d3d4e05884419c39f",
+    "parent_resolution_independent_QA": "6c5f1a3910100bf04b6b2dae3f987478334d40fce3f9152b4c2a0c8a1b0dbf95",
+    "parent_retrieval_proposal": "fe8c927ed86522a5a551fdec3c95fa19475d71a421d366be56742a60e8b7bf9c",
+    "public_projection_builder": "944491357e23921c01cb239f5c9208c370a8beee085847526045588c2235a72f",
+    "r1_independent_saved_byte_QA": "c6404e101e839944a5a1b7f70c1f12c14ec350e9b8b84a6d6b294537d52fab88",
+    "r1_producer_closure": "a048adf505e1fa0594706f7912e0a7c975242872e8e7d6fd8b6098ea3bc93387",
+    "r1_protocol": "a294b91922fa538462117d69ab5f3c57fe564243ce1006424ee5e3fec4132695",
+    "r1_results": "7366e5f991446755bc8f0e004319052fc01a7fd128ad5294d7cfb0780972ac2a",
+    "r1_same_author_saved_byte_QA": "1ba019bb6872d4e3413aeba6eb0e0934d0bb33b351e1bb604d089a55b1c4d9e6",
+    "r1_source_amendment": "26dd0cc8c62bfe1c64a3fee9da2cfa22011646b26becd14b28ac47bc6f499b57",
+    "r1_source_freeze": "e277f35a78b5048f54b1ec742cbddac24db2a2039f566f8b05e08bf0a31283ad",
+    "r1_worker": "3025ea558a73d3ea39d4fbe572f92429b859b934de708a99df420b5ce8987d03",
+    "saved_first_reparse": "a8ff9c184168a016e49ac57997c3ff180478bb2b8d14ca755dd6392d8194a17a"
+  },
+  "state": "METADATA_COMPLETE_INDEPENDENTLY_VERIFIED_WITH_LIMITS_ZERO_ADMISSIONS"
+}

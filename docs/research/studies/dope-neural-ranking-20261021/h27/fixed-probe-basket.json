@@ -1,0 +1,75 @@
+{
+  "schema": "h27.public-fixed-probe-basket/v1",
+  "source_basket_sha256": "c9eac9a1d7b5cc2eb0ffee6aa97f80ba5174be13228aaee38210730d519cb543",
+  "status": "EIGHT_CANONICAL_IDENTITIES_QUALIFIED_ON_SYNTHETIC_INPUTS",
+  "probes": [
+    {
+      "ordinal": 0,
+      "probe_id": "ridge_raw",
+      "dsl": "(pipe X (ridge lambda_frac=0.02))",
+      "dsl_utf8_sha256": "cf8440acc19f1d6ae2a80009b3cbda8884074402d66b5f8e1225e271179b9745",
+      "mechanistic_bias": "linear / raw view",
+      "canonical_program_sha256": "cf8440acc19f1d6ae2a80009b3cbda8884074402d66b5f8e1225e271179b9745"
+    },
+    {
+      "ordinal": 1,
+      "probe_id": "ridge_robust",
+      "dsl": "(pipe X (robust_scale) (ridge lambda_frac=0.02))",
+      "dsl_utf8_sha256": "2bce4efe8918f979bccc9ea448c3992640639d74712e46636dcdb70db4c90fc3",
+      "mechanistic_bias": "linear / robust fitted view",
+      "canonical_program_sha256": "2bce4efe8918f979bccc9ea448c3992640639d74712e46636dcdb70db4c90fc3"
+    },
+    {
+      "ordinal": 2,
+      "probe_id": "ridge_rank",
+      "dsl": "(pipe X (rank) (ridge lambda_frac=0.02))",
+      "dsl_utf8_sha256": "3ffd7d77d559ab629e021152c41beece03f8310c8f6fd33f570062bcb1ef7028",
+      "mechanistic_bias": "linear / fitted rank view",
+      "canonical_program_sha256": "3ffd7d77d559ab629e021152c41beece03f8310c8f6fd33f570062bcb1ef7028"
+    },
+    {
+      "ordinal": 3,
+      "probe_id": "elasticnet",
+      "dsl": "(pipe X (standardize) (elasticnet alpha=0.001 l1_ratio=0.5 sweeps=60))",
+      "dsl_utf8_sha256": "c9824dfc6f39adce86bc35a1745adb724046eca11a5c912358cc7a63bc99c7d9",
+      "mechanistic_bias": "sparse linear",
+      "canonical_program_sha256": "c9824dfc6f39adce86bc35a1745adb724046eca11a5c912358cc7a63bc99c7d9"
+    },
+    {
+      "ordinal": 4,
+      "probe_id": "local_k1",
+      "dsl": "(pipe X (standardize) (ksmooth k=1 gamma=1.0))",
+      "dsl_utf8_sha256": "bfa9c75b1a3a443c0491d06dc0d4b2ce7a3cdf4870bcf01c7e86c5d42d1931ce",
+      "mechanistic_bias": "local one-neighbor kernel",
+      "canonical_program_sha256": "d053d7274cfb987982f6d2e104361f84137f08c8e67a477682f0e6358d5008c8"
+    },
+    {
+      "ordinal": 5,
+      "probe_id": "local_k16",
+      "dsl": "(pipe X (standardize) (ksmooth k=16 gamma=1.0))",
+      "dsl_utf8_sha256": "325558a4e0b6e147cf1a104a8412bab233fc408c7a47a1951d065e5ddb3ccee8",
+      "mechanistic_bias": "local smoothed kernel",
+      "canonical_program_sha256": "5954fe59e544e605d312f3c2e268cc1ff6432391527d2f03cc4869fac2200c62"
+    },
+    {
+      "ordinal": 6,
+      "probe_id": "boost_depth2",
+      "dsl": "(pipe X (histgbm depth=2 rounds=32 lr=0.1))",
+      "dsl_utf8_sha256": "f9b45696bf416a9bba3f9bd7eef671bd026d6f43f693d5522041de2899a7bd17",
+      "mechanistic_bias": "shallow boosted interactions",
+      "canonical_program_sha256": "a3b077a6a8e75f691448585e1914fc57f4b486736e2d4c2f5c25d68b4936d5f9"
+    },
+    {
+      "ordinal": 7,
+      "probe_id": "boost_depth4",
+      "dsl": "(pipe X (histgbm depth=4 rounds=32 lr=0.1))",
+      "dsl_utf8_sha256": "d4fab799585d51d51c4bdf07c9d02085a4672f61bb3e658b8932c51c646e8d31",
+      "mechanistic_bias": "deeper boosted interactions",
+      "canonical_program_sha256": "95dffd18350e3e733cdc26d72903ab4a7a7f0d9c6112c76e0c8b9ca224c1b6ae"
+    }
+  ],
+  "feature_rule": "For each probe, onefold=q_fold0, fivefold=arithmetic mean of same five q values. No additional fold0 fit.",
+  "q": "0.5*log((MSE(pred_z-z_valid)+1e-12)/(mean(z_valid^2)+1e-12)); foldTRAINmean/populationstd, constant scale1.",
+  "legacy_clamp": "Kernel absolute prediction clamp remains +/-60 in normalized target units.",
+  "existing_landmarks": "A0 already has ridge and1NN; this tests incremental diverse fitted response information."
+}

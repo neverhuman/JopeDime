@@ -1,0 +1,31 @@
+{
+  "SDK_or_provider_calls": 0,
+  "candidate_outcome_or_fitness_reads": 0,
+  "case_matrix_or_index_data_reads": 0,
+  "dataset_prediction_model_body_reads": 0,
+  "finding": "Existing audit case-matrix writer describes exposed-test high-water records, not qualified inner-fitness training labels. Prior selected prepared metadata declares two-fold legacy contexts; this does not bind completed candidate execution or other three-fold sources.",
+  "limits": [
+    "Source definitions are not observed successful execution checks.",
+    "Prepared declarations and fold row counts do not prove actual candidate inputs or row-index identity.",
+    "A transformed GP task is an acceptable input boundary when its execution, cuts and relevant fit scope are proven.",
+    "No matrix or outcome was opened and no new fit was launched."
+  ],
+  "new_GP_or_baseline_fits": 0,
+  "new_H25_body_reads": 0,
+  "new_numerical_admissions": 0,
+  "new_optimizer_updates": 0,
+  "next": "Separately freeze and grant an exact-context metadata-only locator projection; keep outcome metrics excluded and stop on missing execution receipts.",
+  "prior_prepared_metadata_documents_decoded_in_preparation": 2,
+  "schema": "h26.public-source-feasibility-summary/v1",
+  "selected_previously_qualified_metadata_cases": 2,
+  "source_hashes": {
+    "build_gp_case_matrix.py": "c2a6715cab83144a99c58bbe44d16bffb3d4245ab1dea7df16a811efc2350228",
+    "corpus_build.py.e446f88277d0adacee573f87697d9f6f10c5f329b2c8388b34bad8f2b86ebec4": "e446f88277d0adacee573f87697d9f6f10c5f329b2c8388b34bad8f2b86ebec4",
+    "corpus_schema.py.aa451bc553c82543a43c6543c6e52b755119fe5306c5af34beafaaf11d854c3a": "aa451bc553c82543a43c6543c6e52b755119fe5306c5af34beafaaf11d854c3a",
+    "prepare_pool_dl03.py": "fe73aaccbe5ed9297f33c55406ecd179413aa1759767c0f2296ff1c1a6f9bb6d",
+    "project_fold_fits.py": "b40c3365501618f1940fb9801d975692ba8e672b4b209ae08373f9367c056f6b",
+    "project_telemetry.py": "2e0178adf11fb46fd30acdbe053af06a180a0f2bb90b3e68c5402d101d936219",
+    "scale_check.py.089d9b64868cea74ce4e39711e5d8462be1b4dac35167a2c1809cd80d494931b": "089d9b64868cea74ce4e39711e5d8462be1b4dac35167a2c1809cd80d494931b"
+  },
+  "state": "PREPARATION_ONLY"
+}

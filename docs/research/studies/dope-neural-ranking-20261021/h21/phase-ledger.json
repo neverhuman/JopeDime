@@ -1,0 +1,51 @@
+{
+  "compute_deadlines": false,
+  "limits": "These are metadata/source-admission studies, not model utility comparisons. H20 null/adverse primary intervals remain unchanged. All12 pilot cases retained, no new independent validation. Preparation and transfers not fully timed. Product import separate from private Git custody, no S3 artifact durability claim.",
+  "new_GP_or_baseline_refits": 0,
+  "new_model_fits": 0,
+  "new_numeric_admissions": 0,
+  "new_optimizer_updates": 0,
+  "prepared_utc": "2026-10-22T17:18:46.405373+00:00",
+  "records": [
+    {
+      "GETs": 0,
+      "details": "parent-resolution-results.json",
+      "independent_QA_wall_seconds": 5.931638280046172,
+      "phase": "parent metadata lookup",
+      "producer_wall_seconds": 3.5187014039838687,
+      "result": "6exactpointers/6unresolved;12role/epoch/reservationbindingsPASS"
+    },
+    {
+      "GETs": 0,
+      "details": "cached-parent-results.json",
+      "phase": "cached parent metadata",
+      "result": "6objects491782compressed/868025decodedbytes;126consistencychecksPASS_WITH_LIMITS"
+    },
+    {
+      "details": "source-manifest-results.json",
+      "original_failure_preserved": true,
+      "phase": "MAIN original source-manifest run",
+      "result": "FAIL after1exactGET3221B, legitimate objects.data descriptor rejected;5unattempted"
+    },
+    {
+      "details": "source-manifest-results.json",
+      "new_GETs": 5,
+      "phase": "MAIN separate R1 amendment",
+      "result": "cachedfirst0GET +5new16097B;6unique19318B cumulative, separatefullQA PASS_WITH_LIMITS"
+    },
+    {
+      "GETs": 0,
+      "details": "source-bridge-results.json",
+      "phase": "source schema and byte bridge",
+      "result": "Closeddiagnosticschemaexcludesstructuredprovenance;0matches12incomingCSVparts against1548rawrecords/307uniqueSHA",
+      "two_prior_preparation_failures_preserved": true
+    },
+    {
+      "details": "../h22/results.json",
+      "phase": "H22 fresh S3 metadata census",
+      "result": "29ownedgeneralbuckets/29completeconfigqueries/6inventories;30SDKmetadatacalls,0objectGET"
+    }
+  ],
+  "schema": "dope-research.h21-h22-phase-ledger/v1",
+  "status": "COMPLETED_COMPARISONS_WITH_SEPARATE_FAILURES_AND_QA"
+}

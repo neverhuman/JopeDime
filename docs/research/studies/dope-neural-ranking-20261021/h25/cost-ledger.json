@@ -1,0 +1,60 @@
+{
+  "S3_API_calls": 0,
+  "dataset_optimizer_updates": 0,
+  "new_fits": 0,
+  "phases": [
+    {
+      "CPU_seconds": 0.001743789999999995,
+      "new_original_cache_reads": 1,
+      "phase": "R1 strict reader projection, refused",
+      "wall_seconds": 0.002127045998349786
+    },
+    {
+      "CPU_seconds": 0.0026452000000000003,
+      "max_rss_kib": 40768,
+      "new_original_cache_reads": 0,
+      "phase": "R1 independent saved partial QA",
+      "wall_seconds": 0.015509413089603186
+    },
+    {
+      "CPU_seconds": 0.001049848000000006,
+      "new_original_cache_reads": 0,
+      "phase": "Root-requested redundant saved-copy diagnostic, launched before cancellation",
+      "wall_seconds": 0.0010507190600037575
+    },
+    {
+      "CPU_seconds": 0.0007808839999999956,
+      "new_original_cache_reads": 0,
+      "phase": "R2 strict reader projection, refused",
+      "wall_seconds": 0.004948410904034972
+    },
+    {
+      "CPU_seconds": 0.006838221999999991,
+      "new_original_cache_reads": 1,
+      "phase": "R3 separate value-free structure inventory",
+      "wall_seconds": 0.02389937697444111
+    },
+    {
+      "CPU_seconds": 0.016203916,
+      "max_rss_kib": 40768,
+      "new_original_cache_reads": 0,
+      "phase": "Independent final two saved-copy QA",
+      "wall_seconds": 0.028362905024550855
+    }
+  ],
+  "preparation_controls": {
+    "R0_passed": 20,
+    "R1_passed": 26,
+    "R2_final_passed": 32,
+    "R2_initial_test_helper_failure_preserved": true,
+    "R3_passed": 14,
+    "controls_are_synthetic_not_dataset_updates": true,
+    "independent_final_controls": 6
+  },
+  "schema": "h25.phase-cost-ledger/v1",
+  "scope": "Measured worker/QA phases only. Interactive preparation, copying, source discovery, custody and publication are not a complete measured session total. Launcher rows, where retained privately, overlap worker rows and must not be added.",
+  "unmeasured_or_partial": [
+    "Interactive preparation/source inspection/SSH/custody are not fully measured.",
+    "Earlier same-author source/saved-copy diagnostic is preserved privately without claiming a full preparation-session total."
+  ]
+}

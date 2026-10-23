@@ -1,0 +1,73 @@
+{
+  "GPU": 0,
+  "SDK_API_calls": 30,
+  "boto3_version": "1.35.49",
+  "botocore_version": "1.35.99",
+  "buckets_with_inventory_configurations": 6,
+  "configuration_census_complete_buckets": 29,
+  "configuration_census_failed_buckets": 0,
+  "configured_reference_coverage": {
+    "incoming_stored_CSV_descriptors": 12,
+    "main_stored_CSV_descriptors": 12,
+    "qualification": "Configured filters only: no report delivery, freshness, actual record/version presence or source/scaler authority.",
+    "unique_exact_versioned_stored_CSV_refs": 24,
+    "unique_source_CSV_keys_inside_enabled_all_version_configuration_filters": 24
+  },
+  "cost": {
+    "CPU_seconds": 1.4860751300000001,
+    "max_rss_kib": 59600,
+    "wall_seconds": 10.397536137956195
+  },
+  "fits": 0,
+  "independent_QA_cost": {
+    "CPU_seconds": 0.005363287999999994,
+    "GPU_calls": 0,
+    "fits": 0,
+    "input_outcome_array_bodies": 0,
+    "max_rss_kib": 34624,
+    "new_API_calls": 0,
+    "object_GETs": 0,
+    "optimizer_updates": 0,
+    "wall_seconds": 0.016436570091173053
+  },
+  "independent_relevance_cost": {
+    "CPU_seconds": 0.003928879999999996,
+    "CSV_cell_outcome_model_bodies": 0,
+    "GPU_calls": 0,
+    "fits": 0,
+    "max_rss_kib": 36672,
+    "new_API_calls": 0,
+    "object_GETs": 0,
+    "optimizer_updates": 0,
+    "wall_seconds": 0.04251051100436598
+  },
+  "independent_relevance_status": "PASS_WITH_SEMANTIC_REFINEMENT",
+  "inventory_configurations": 6,
+  "later_analysis_history": "The initial six filename-extension matches were MAIN objects.data sampled/prepared-data references, with zero overlap with the24typed stored source-CSV references. Preserve the original misclassification and the later root role correction. Separate independent QA confirms24unique stored CSV references and configured-filter coverage, with no APIs or data reads.",
+  "limits": [
+    "Only owned general-purpose buckets of the selected existing account/profile. Directory buckets, cross-account shared buckets and other accounts are outside this API census.",
+    "Configuration existence does not verify report delivery, inventory freshness, dataset identity, object content or training admission. No configuration was created or modified.",
+    "No bucket contents, source data, outcomes, predictions or model bodies were read. Earlier global object/storage census remains dated/partial.",
+    "Provider internal network is not measured; SDK operation ledger is not a packet-level wire accounting. No retries/default-profile fallback or research compute deadlines."
+  ],
+  "new_numeric_admissions": 0,
+  "object_GETs": 0,
+  "object_content_lists": 0,
+  "observed_utc": "2026-10-22T17:08:56.759065+00:00",
+  "owned_general_buckets": 29,
+  "preparation_cost_limit": "Preparation, controller probes and later cached metadata relevance calculations were not fully timed; no dataset optimizer updates.",
+  "schema": "dope-research.h22-public-bucket-census/v1",
+  "source_sha256": {
+    "CONFIGURATION_RELEVANCE.json": "293a63f77d9f239a2e7f50a5206d1c3b4cbba132c788567702ee051b1e7bbe25",
+    "CONFIGURATION_RELEVANCE_CORRECTION.json": "9491a22ce76bf8d5545129ecd3d9981e25790668916064d50f234854e686aee0",
+    "independent-configuration-relevance-verification.json": "9ecd3c8b004d020332ae02091c023628788bd317347c09a4896842493843dc94",
+    "independent-review.md": "03ae80915879f08dc1d1ea5c6af4bcce6ee04e689f3c8a03613f53de20c16d75",
+    "independent-verification.json": "00d3dbeedf9cf2c5b15ed284badbba9bb65549514877fd88e53b051358fc9d87",
+    "protocol.json": "d2d22158cfc8bbec5aed86d8c418e8f3cd58250862be9a263fa11d1ce757ecb3",
+    "results.json": "a1476bbd469f7c8363a2ee13591862d92c71ca67bbe9b403b93e83128a4c17f2",
+    "worker.py": "cb53c1cb732efd81c6cb0b46a5e2906ee79900f54e75e14d2967d79a1a70c28c"
+  },
+  "status": "COMPLETE_INDEPENDENT_QA_PASS_WITH_LIMITS",
+  "synthetic_controls": 9,
+  "updates": 0
+}

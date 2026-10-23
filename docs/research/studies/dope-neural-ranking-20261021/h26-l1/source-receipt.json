@@ -1,0 +1,60 @@
+{
+  "next_packet_amendment": "New native read-only SQLite online-backup proposal supersedes raw-copy-only closed-writer requirement when separately source-frozen, reviewed and granted; no original DB accessed during this amendment.",
+  "private_snapshot": {
+    "bytes": 12982517,
+    "cached_S3_version_proven": false,
+    "physical_excluded_score_winner_tokens_present": true,
+    "raw_snapshot_digest_withheld": true,
+    "whole_byte_SHA_length_verified_before_decode": true
+  },
+  "public_safety": "No private context/family/dataset/program identifiers, body digests, columns/category/scaler values, object tuples/account/profile or absolute input paths. Receipt/code digests are provenance only.",
+  "qualified_source_code_sha256": {
+    "audit_matrix_writer": "c2a6715cab83144a99c58bbe44d16bffb3d4245ab1dea7df16a811efc2350228",
+    "incoming_projector": "101c3a03523a977cf5cfa36002a170e3e812cd8427109d7758639daae6a56248",
+    "telemetry_projector": "2e0178adf11fb46fd30acdbe053af06a180a0f2bb90b3e68c5402d101d936219"
+  },
+  "read_accounting": {
+    "execution_original_snapshot_copy_passes": 1,
+    "independent_original_reads": 0,
+    "independent_saved_metadata_decode_passes": 1,
+    "independent_saved_metadata_hash_passes": 1,
+    "known_original_full_file_passes_preparation_plus_execution": 2,
+    "preparation_original_full_file_hash_passes": 1,
+    "private_snapshot_bytes": 12982517,
+    "producer_saved_metadata_decode_passes": 1,
+    "total_saved_custody_hash_passes": "NOT_COMPREHENSIVELY_MEASURED"
+  },
+  "receipt_sha256": {
+    "L2_next_packet": "f2515a6539ef2a0d18281e99fd4b72b0310930de0f3061a69b2192b0c3fb0a5a",
+    "L2_source_freeze": "f2c9a46f4af113af00a34474b34bd0b3a7544f990689bef7ccde4f40f50d057d",
+    "independent_controls": "652e5b525117e091ae0ad0fbb4cab82f977a3b8788ab8ae9baa2af9deced0af3",
+    "independent_final_closure": "81616d8fc3b9e5c77078db0e723a06ee30c6e3a6e353e18714c9115b4cecc3c5",
+    "independent_prospective_review": "9b7499410184b9b4d12f5c698f0c51a21064406da3e5974ae6a3c62d5159bce0",
+    "independent_public_summary": "61ffe4ac3f7a04aa3bc623afc8cf99249d7c5f30c690140e7073ca1dc00d98f4",
+    "independent_review": "3c6413c775031e2b37aa70ea70d9f175f1ab5c8a148022e1d8e3f1e231f7bb38",
+    "independent_source_receipt": "eed2a967ed51e222242aa52bebfe6c6c4b5a41e0a50ee1f1b763fbaca27794bf",
+    "independent_verification": "f445e877769b44908bbf321de5dd6def6ba7385dd6010afb07f86070143c2b77",
+    "independent_verifier_source": "1608aece123a9881841600c2b6d4dc4ee7690825a85cd334f3823d19dac8c316",
+    "mandatory_fold_identity_erratum_R1": "77a3ef933719cdc3f54cf81ba09540777ef6c467dfeeaa28fb1941308cbcaf0e",
+    "producer_allowlist_receipt": "255a02f161367b0736e58b0981911829e278c3fa0cac21a376e229ddd7cff3b5",
+    "producer_closure": "73559b4fd5d7f238dd36e832999a47530344abdd22f1ca7df553062b4d0f004d",
+    "producer_controls": "f589b07b9d4611da62e38357c67842ece6d1de56991445e84610e727c6c60977",
+    "producer_draft_corrections": "449f2eaad22731b7071765cd01b0857a8ab31b2b62cf8201f697cb6f3bfac2a5",
+    "producer_parser_source": "afca450322be675446d76c3a754155359f85654916ea5247c9a31b740ede2814",
+    "producer_preparation_errors": "1c690437c5c3cfdddea7cb5ef03e1bd30d5978f8165f6fabed9eff7181d4f254",
+    "producer_prospective_freeze": "58679a1355361390c64c9e9aa6b7a010d4f79d2ae64f32b2e42ff963c280e738",
+    "producer_protocol": "931083b899db2ab806478b7177d6b4a97612b775e712f4a5571e4f775882d197",
+    "producer_results": "395be5b40f115090508cf9095360b3917716c1709b482cda50c060240deb3f2b",
+    "producer_root_grant": "9247f269f612bbb7a794ea47a55058cf0eff002fc45507af36544bfb9c3ae861",
+    "producer_saved_identity_receipt": "23d0a75fd5f729e5d404afc15b097d6885f4d51484369bb32864055373f5fe2b",
+    "producer_source_pins_receipt": "0e1f0f871b722404debbb95cdc811ca04f4d43232e19116a624aac6a523fa837",
+    "producer_stat_hash_preparation": "58b0f6e120aeb44497e3b174eac1d8643d45ffcce24dcc4755afcbdb60c931af",
+    "producer_worker_source": "c3b6f4d27560deaa62ef7dd91ae10e73044adc84862389953d278d8a3c89fa33",
+    "root_native_backup_research_addendum": "bb1840b5a0ac58ff28dca665cc1f58f7a970c6c9e63bc42aefba51517cbdf53d"
+  },
+  "schema": "h26.l1-public-source-receipt/v1",
+  "scientific_scope": "locator feasibility only; actual input/cuts/transform-fit/source-specific evaluator/fold/fitness/full-slate gates remain; no fits or admissions",
+  "state": "CLOSED_SOURCE_RESULT_INDEPENDENT_QA_BOUND",
+  "unmeasured_is_not_zero": true,
+  "unmeasured_preparation_cost": null
+}

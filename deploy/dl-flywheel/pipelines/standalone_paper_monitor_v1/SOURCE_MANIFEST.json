@@ -18,9 +18,9 @@
     },
     {
       "bytes": 43366,
-      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed. Go integration after merged TypeScript: matching combined classifier and additive README counts; prior origins preserved.",
+      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed. Go integration after merged TypeScript: matching combined classifier and additive README counts; prior origins preserved. Preserve latest main research archive and count its added plotter together with the Go verifier.",
       "path": "README.md",
-      "sha256": "6d5a8b2295ef610c232958322679774d04f3d960117a0e393696a5829c284466"
+      "sha256": "c6232fff8fb6d67b5060511f18c4d958cc6b1942d3ffc756ca6690c58a9ac976"
     },
     {
       "bytes": 21263,

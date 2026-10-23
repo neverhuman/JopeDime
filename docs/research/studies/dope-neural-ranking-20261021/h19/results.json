@@ -1,0 +1,209 @@
+{
+  "schema": "h19.train-only-box-geometry/v1",
+  "status": "COMPLETE_TRAIN_ONLY_DIAGNOSTIC_SAVED_SCORE_QA_PASS",
+  "rows": 2550,
+  "contexts": 850,
+  "components": 162,
+  "models": 6,
+  "metrics": {
+    "envelope_size": {
+      "equal_component_mean": 6.330918432847446,
+      "quantiles_0_25_50_75_90_100": [
+        1.0,
+        2.0,
+        4.0,
+        8.0,
+        14.0,
+        92.0
+      ]
+    },
+    "real_2B_size": {
+      "equal_component_mean": 6.330918432847446,
+      "quantiles_0_25_50_75_90_100": [
+        1.0,
+        2.0,
+        4.0,
+        8.0,
+        14.0,
+        92.0
+      ]
+    },
+    "envelope_outside_top32": {
+      "equal_component_mean": 0.25712313520955493,
+      "quantiles_0_25_50_75_90_100": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        60.0
+      ]
+    },
+    "top32_outside_envelope": {
+      "equal_component_mean": 25.92620470236211,
+      "quantiles_0_25_50_75_90_100": [
+        0.0,
+        24.0,
+        28.0,
+        30.0,
+        31.0,
+        31.0
+      ]
+    },
+    "top1_top2_gap": {
+      "equal_component_mean": 0.21827720925845714,
+      "quantiles_0_25_50_75_90_100": [
+        0.0,
+        0.027435302734375,
+        0.0870826244354248,
+        0.23018300533294678,
+        0.5000051021575926,
+        9.087515592575073
+      ]
+    },
+    "softmax_mass_outside_envelope": {
+      "equal_component_mean": 0.6005940192596512,
+      "quantiles_0_25_50_75_90_100": [
+        0.0046269501024918955,
+        0.5147646509472077,
+        0.660950537341005,
+        0.762681706587131,
+        0.8371544701837909,
+        0.9711978374321298
+      ]
+    },
+    "abs_rank_gradient_fraction_outside_envelope": {
+      "equal_component_mean": 0.6404116525106422,
+      "quantiles_0_25_50_75_90_100": [
+        0.04843434294691616,
+        0.45353033891077926,
+        0.7947218755494279,
+        0.9090070018569303,
+        0.9551167155875374,
+        0.9991850026619122
+      ]
+    },
+    "base_F": {
+      "equal_component_mean": -1.7284153232473691,
+      "quantiles_0_25_50_75_90_100": [
+        -19.850746658122734,
+        -2.1407939599478527,
+        -0.9287194661475104,
+        -0.51749086146803,
+        -0.30753969070829984,
+        -0.11062325679535583
+      ]
+    },
+    "full_oracle_F": {
+      "equal_component_mean": -1.8483524868140653,
+      "quantiles_0_25_50_75_90_100": [
+        -19.922700473071195,
+        -2.23671583431013,
+        -0.9722137051449737,
+        -0.5537762719747389,
+        -0.3346328337283908,
+        -0.13764349297482284
+      ]
+    },
+    "envelope_oracle_F": {
+      "equal_component_mean": -1.7684723631290105,
+      "quantiles_0_25_50_75_90_100": [
+        -19.922700473071195,
+        -2.1670411004550516,
+        -0.9529136979849394,
+        -0.5326623596840447,
+        -0.3254177048448793,
+        -0.12585041794123797
+      ]
+    },
+    "full_headroom": {
+      "equal_component_mean": 0.11993716356669637,
+      "quantiles_0_25_50_75_90_100": [
+        0.0,
+        0.003019191649201128,
+        0.027670316644102244,
+        0.09152486420434428,
+        0.28814817761551637,
+        9.26708899368057
+      ]
+    },
+    "envelope_headroom": {
+      "equal_component_mean": 0.04005703988164156,
+      "quantiles_0_25_50_75_90_100": [
+        0.0,
+        0.0,
+        0.0038052188038848744,
+        0.03526470975291418,
+        0.1059376759516744,
+        5.262338805807088
+      ]
+    },
+    "base_failed": {
+      "equal_component_mean": 0.0,
+      "quantiles_0_25_50_75_90_100": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "best_tie_in_envelope": {
+      "equal_component_mean": 0.5080282086454926,
+      "quantiles_0_25_50_75_90_100": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  },
+  "box_headroom_fraction": 0.3339835518068265,
+  "envelope_larger_than32_rows": 47,
+  "envelope_singleton_rows": 326,
+  "top32_misses_envelope_rows": 47,
+  "zero_gradient_rows": 0,
+  "dataset_optimizer_updates": 0,
+  "new_fits": 0,
+  "S3_GETs": 0,
+  "OOF_CAL_OLDDEV_pool_reads": 0,
+  "limits": [
+    "Independent box envelope only; shared adapter weights may realize fewer candidates.",
+    "TRAIN-only diagnostic; oracle headroom is not achieved lift.",
+    "No bound, K, checkpoint, seed, recipe or production policy selected here."
+  ],
+  "producer_original_status": "COMPLETE_PENDING_INDEPENDENT_QA",
+  "costs": {
+    "producer_seconds": 46.04490553215146,
+    "saved_score_QA_seconds": 4.325807765126228,
+    "new_fits": 0,
+    "optimizer_updates": 0,
+    "S3_GETs": 0
+  },
+  "source_pins": {
+    "protocol.json": "06ae26f6f2c579da2d7d6cd9b13920fce67e4b0c45c9c5921b27aea6f217a9e7",
+    "producer_geometry.py": "1dcf0f7d1ca017eae0ce7899ff99a08bd1c4d938f97892311fc79cc7663114f5",
+    "verify_geometry.py": "ed09aa983ddcb275229c29e336857b22192e84773072d15ea264b05a5276dd22",
+    "execution.json": "06c122c6ffc77d814b017aca319bcddc94fd8eff7691218c23f024d3f388171e",
+    "results.json": "ee598441672714c24fdc07ecbf5a280e6a6dbad5e363787216fde3f82dbb8ed9",
+    "verification.json": "8faa8e552ba6c3adf949c69c7bf5be9163025a2b7381abbd7a61ad4ae23cae5d",
+    "row-geometry.jsonl": "af6520e59df4853215f4ab4e5f7acd37058e7bfa7a05cbcba3f19b54a9af901a"
+  },
+  "QA_limits": [
+    "Saved-score NumPy arithmetic and source QA, not a neural-weight replay.",
+    "Independent numeric-box envelope; shared adapter need not realize it.",
+    "Own-fold TRAIN-only oracle headroom is not achieved lift or external validation.",
+    "Original TRAIN32 controls are aggregate sanity checks at producer tolerance2e-5."
+  ],
+  "S3_admission": {
+    "potential_contexts": 235,
+    "potential_families": 220,
+    "new_admissions": 0,
+    "false_prefit_flag_survivors": 1,
+    "next_gate": "Recover exact original-row/scaler/input authority for cached source; stored CSV S3 reference alone is insufficient"
+  },
+  "next_hypothesis": "H20 fixed10x correction range, matchedT/R controls, no shortlist or bound search;12freshadapters2400updates; preparation only"
+}
