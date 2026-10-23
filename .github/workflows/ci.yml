@@ -7,6 +7,13 @@ on:
         type: string
         required: false
         default: ""
+      runner_pool:
+        description: "Use native Linux workers while Mac capacity is unavailable"
+        type: choice
+        options:
+          - auto
+          - native
+        default: auto
 permissions:
   contents: read
   pull-requests: read
@@ -34,7 +41,9 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
-      runner_pool: ${{ steps.provenance.outputs.runner-pool }}
+      # The helper still verifies and reports merged capability. The manual choice
+      # selects only the already-deployed native pool; no caller-supplied label is used.
+      runner_pool: ${{ inputs.runner_pool == 'native' && 'jope-ci' || steps.provenance.outputs.runner-pool }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
