@@ -12,23 +12,29 @@
 #     about 300 KB, the JSON-RPC/MCP adapters 80 KB, objective-aware selection and calibration
 #     45 KB, shared serde_json and core instantiations the rest; unwind tables +110 KB, read-only
 #     data +73 KB, relocations +28 KB. No dependency was added.
+# Rebaselined 2026-10-22 for model-object persistence (PR #413), amendment A14:
+#   * Same-host dist-ci executable: 4,613,056 -> 5,319,208 B (+706,152, 15.3%).
+#   * Complete object/session CLI and MCP, bounded filesystem publication, strict state JSON
+#     and the pinned serde_ignored adapter; numerical algorithms and optimization stay unchanged.
+#   * Native-only dist executable: 4,542,168 B; independently sealed size-validation package:
+#     4,561,056 B. The production signing key was not used; this is not a published appliance.
 schema = "jope.appliance-size-budgets/v1"
 tolerance_percent = 5
 
 # PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
 [profile.fixture]
-base_executable_bytes = 4613056
-final_executable_bytes = 4730485
+base_executable_bytes = 5319208
+final_executable_bytes = 5435014
 note = "dist-ci build plus 0.1 MiB of generated fixture tensors and notices"
 
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
 [profile.native-only]
-base_executable_bytes = 4046256
-final_executable_bytes = 4065423
+base_executable_bytes = 4542168
+final_executable_bytes = 4561056
 note = "native methods only; the payload is the licence and third-party notices (sealed with an independent P-256 key)"
 
 # Blocked (models.lock.json). The tensors alone are 438,062,296 bytes before lossless packing.
 [profile.full]
-base_executable_bytes = 4046256
+base_executable_bytes = 4542168
 final_executable_bytes = 460000000
 note = "provisional: replace with the first measured internal-restricted build"

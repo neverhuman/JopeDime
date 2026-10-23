@@ -240,3 +240,33 @@ both, the native-only package is 4,065,423 B, 8.9% above its 2026-10-21 baseline
 (base64 DER, as cosign writes it), sealed and verified with that key alone; the release build
 refuses to run it (exit 3) because it trusts only `docs/release/signing.pub`, as intended. Budgets with a 5% tolerance are in `size-budgets.toml`; the full profile's entry is
 provisional until its first internal-restricted build.
+
+
+## A14 — Size attribution for immutable model objects and sessions
+
+PR #413 adds the manifest/hashed-part store, create-only publication and import/export,
+append-only session history, CLI/MCP interfaces and strict known-state JSON consumption.
+Its pinned `serde_ignored` adapter is the sole new dependency. Neither the numerical
+algorithms, optimization settings, signature verification nor 5% size tolerance changes.
+
+A fresh baseline build of PR #411 (`e04cb3fdf3f6dade3e5d017419a126694e15e65d`)
+on xbabe2 with Rust 1.97.1, `dist-ci`, `embedded,dev-keys` reproduced exactly 4,613,056 B
+of code and a 4,730,485 B fixture package. The integrated source
+`d04153fa6715c723522e8cf8d36bd8af8bf6f8ae`, built identically, measures 5,319,208 B
+and 5,435,014 B: +706,152 B of executable (15.3%) and +704,529 B packaged (14.9%).
+ELF comparison attributes 525,584 B to machine code, 32,576 B to
+read-only data, 133,768 B to
+exception/unwind tables and 7,728 B to dynamic relocations. These are
+whole-feature section deltas; per-function attribution is not claimed.
+
+The native-only `dist`, `embedded` build measures 4,542,168 B of executable and
+4,561,056 B packaged (prior A13: 4,046,256 / 4,065,423 B). Its stage was sealed and
+verified with an independent P-256 validation key. The actual model command refuses that
+key before store access (exit 3); the release signing key was not used. Version diagnostics
+can report an untrusted package with exit 0, so that command alone is not a refusal test.
+The fixture budget and native-only budget now name these measured sizes. The blocked
+full profile keeps its provisional 460,000,000 B final limit and follows the new code size;
+no full/neural package or release-host integration is qualified by this measurement.
+
+Raw build, signature, verification, old-budget failure, ELF-section and refusal receipts:
+`/home/ubuntu/jope-evidence/pr-release-drive-20261022T2319Z/413-SIZE-ATTRIBUTION.json`.

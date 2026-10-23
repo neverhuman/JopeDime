@@ -472,7 +472,7 @@ impl FittedModel {
         if section.bytes != body.len() as u64 || section.sha256 != sha256_hex(body) {
             return Err(fail("fitted section does not match its record"));
         }
-        let model: BoundModel = serde_json::from_slice(body)
+        let model: BoundModel = crate::strict_json::decode(body)
             .context("decode bound model")
             .map_err(|e| fail(&format!("{e:#}")))?;
         let fitted = Self { header, model };

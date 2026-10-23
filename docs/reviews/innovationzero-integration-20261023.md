@@ -45,3 +45,17 @@ Both reproducing failures are retained; complete corrected container build and h
 separate acceptance commands.
 
 The corrected container command first reused existing PDFs (latexmk reported no work); that is a cache/readback check, not a fresh image compilation. Preserve those PDFs/logs, clean only the publication build products through its owning target, and rebuild all three volumes from source in the pinned read-only image before calling the image build qualified.
+
+
+The fresh read-only093036ba image build completed at da532e2f30afaf52e9e3d91ced04b916849e19d5,
+with no network and2CPU/8GiB. Each volume compiled from source after preserving previous products
+and invoking the owning clean target:45/12/235 pages, all PDF checks passed. All3 output hashes
+match the visually inspected previews exactly. The corrected full local hygiene command also
+passed368/368 unit checks,99 Lambda Rust cases and42 bump checks; its unchanged9912 untracked
+legacy target-* entries are explicitly disclosed, not treated as clean hosted source.
+
+PR413 merged as01850a92892f85a384a30db1dc3e4b4beb98d3d2 with reviewed-tree equality and a passing
+main-guard. Its integration into this publication branch was conflict-free and changed no paper
+source, archive or plot input. Post-integration source/13refusal checks, coverage validation,
+paper/README numbers, actionlint and shellcheck pass. Fresh final-head PR/manual CI is still
+required; the earlier private local proofs do not substitute for it.

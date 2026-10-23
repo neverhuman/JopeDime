@@ -18,6 +18,8 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Save, inspect, verify and export language-neutral fitted objects; or serve their MCP tools.
+    Model(crate::model::ModelArgs),
     /// Product version, source commit, runtime ABI, target and package identity.
     Version(JsonFlag),
     /// Package integrity, devices, promised methods and limits.
@@ -34,9 +36,12 @@ pub enum Command {
     Fit {
         #[command(flatten)]
         train: TrainArgs,
-        /// Fitted model file to write (atomically).
+        /// Write a legacy fitted file instead of the standard content-addressed object.
         #[arg(long)]
-        output: PathBuf,
+        output: Option<PathBuf>,
+        /// Object store root when --output is omitted.
+        #[arg(long, default_value = "models", conflicts_with = "output")]
+        model_root: PathBuf,
         #[command(flatten)]
         common: CommonArgs,
     },
