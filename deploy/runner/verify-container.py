@@ -18,10 +18,12 @@ provenance_bind = _load_provenance_bind()
 
 def verify(policy, memory, cpu, swap, devices):
     role = (policy["host"], policy["lane"])
-    if role in {("xbabe1", "ci"), ("xbabe1", "ci2"), ("xbabe2", "ci"), ("xbabe3", "ci"), ("xbabe0", "ci")}:
-        domain, gib = "pr", 16
+    if role in {("xbabe1", "ci"), ("xbabe1", "ci2"), ("xbabe2", "ci"), ("xbabe3", "ci"), ("xbabe0", "ci"), ("xbabe4", "ci"), ("xbabe4", "ci2"), ("xbabe4", "ci3"), ("xbabe4", "ci4")}:
+        domain, gib, cpus = "pr", 16, 16
     elif role in {("xbabe2", "full"), ("xbabe3", "full")}:
-        domain, gib = "main", 48
+        domain, gib, cpus = "main", 48, 16
+    elif role in {("xbabe1", "guard"), ("xbabe2", "guard"), ("xbabe3", "guard")}:
+        domain, gib, cpus = "guard", 2, 2
     else:
         raise ValueError("unapproved host/lane")
     if policy != dict(
@@ -29,7 +31,7 @@ def verify(policy, memory, cpu, swap, devices):
         lane=role[1],
         domain=domain,
         memory=f"{gib}g",
-        cpus=16,
+        cpus=cpus,
         volume_prefix=f"jope-{domain}-{role[1]}",
     ):
         raise ValueError("unexpected immutable launch policy")
@@ -37,7 +39,7 @@ def verify(policy, memory, cpu, swap, devices):
     if (
         memory != str(gib * 1024**3)
         or quota == "max"
-        or int(quota) != 16 * int(period)
+        or int(quota) != cpus * int(period)
         or swap != "0"
     ):
         raise ValueError("cgroup limits do not equal the approved CPU budget")

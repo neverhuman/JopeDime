@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   guard:
-    runs-on: [self-hosted, linux, x64, jope-full-cpu]
+    runs-on: [self-hosted, linux, x64, jope-main-guard]
     timeout-minutes: 5
     steps:
       # This workflow stands in for branch protection until the org is on the Team plan, and it
