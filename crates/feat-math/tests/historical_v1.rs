@@ -651,6 +651,27 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
+    // The capacity branch announced the same Tokio fix on the old workspace version.
+    // Keep its original edge and verify the parallel join to the release identity.
+    let capacity_tokio =
+        old_fixture("transitions/pr420_tokio_security_identity_rebaseline.v1.json");
+    let capacity_release_join =
+        old_fixture("transitions/pr420_after_release_0_4_1_identity_join.v1.json");
+    for record in [&capacity_tokio, &capacity_release_join] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
+    for edge in capacity_tokio["fixtures"].as_array().unwrap() {
+        let path = edge["path"].as_str().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        identity_transitions::verify_fixture(
+            path,
+            edge["before"].as_str().unwrap(),
+            &current,
+            &[capacity_tokio.clone(), capacity_release_join.clone()],
+        )
+        .expect("capacity Tokio history joins the release0.4.1 security identity");
+    }
     let identity_chain = [
         transition,
         successor,
