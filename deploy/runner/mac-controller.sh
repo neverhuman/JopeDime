@@ -26,6 +26,7 @@ jope_mac_ssh() { # host | preflight lane | run lane name (private stdin)
     -oUpdateHostKeys=no -oForwardAgent=no -oServerAliveInterval=30 -oServerAliveCountMax=3)
   case $mode in
     host)
+      # shellcheck disable=SC2016 # This program expands on the remote Mac, not here.
       host_code='set -eu; h=$(/bin/hostname); f=$(/bin/df -Pk /Users/agent | /usr/bin/awk "NR==2{print \$4}"); case $f in ""|*[!0-9]*) exit 2;; esac; printf "{\"host\":\"%s\",\"free_bytes\":%s}\n" "$h" "$((f*1024))"'
       args=(/bin/sh -c "$host_code") ;;
     preflight) args=(/opt/homebrew/bin/colima ssh --profile jope-ci -- sudo -n /opt/jope-runner/mac-guest.sh "$1") ;;

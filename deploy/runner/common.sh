@@ -111,7 +111,7 @@ jope_runner_external_jit() { # <actual host> <lane> <public runner name>, encode
     xbabe4/ci|xbabe4/ci2|xbabe4/ci3|xbabe4/ci4|xbabe4/ci5|xbabe4/ci6|xbabe4/ci7|xbabe4/ci8|xbabe4/ci9|xbabe4/ci10|xbabe4/ci11|xbabe4/ci12) ;;
     *) echo "external JIT is not approved for this host/lane" >&2; return 2 ;;
   esac
-  [[ $name == "$host-$lane-"* && $name =~ ^xbabe4-ci(2|3|4)?-[0-9]{8}T[0-9]{6}Z$ ]] || {
+  [[ $name == "$host-$lane-"* && $name =~ ^xbabe4-ci([2-9]|1[0-2])?-[0-9]{8}T[0-9]{6}Z$ ]] || {
     echo "external JIT runner name does not match its lane" >&2; return 2;
   }
   # The sentinel preserves trailing newlines so they cannot disappear before validation.

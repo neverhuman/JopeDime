@@ -126,6 +126,12 @@ done
         self.assertEqual(0, valid.returncode, valid.stderr)
         self.assertEqual('64', valid.stdout)
         self.assertNotIn(token, valid.stdout + valid.stderr)
+        for lane in ['ci']+['ci'+str(n) for n in range(2,13)]:
+            candidate=f'xbabe4-{lane}-20261023T000000Z'
+            accepted=subprocess.run(['bash','-ec',script,'test','xbabe4',lane,candidate],cwd=ROOT,
+                                    input=token,capture_output=True,text=True)
+            self.assertEqual(0,accepted.returncode,(lane,accepted.stderr))
+            self.assertEqual('64',accepted.stdout)
         for host, lane, candidate, payload in [('xbabe2', 'ci', name, token),
                                                 ('xbabe4', 'full', name, token),
                                                 ('xbabe4', 'ci', 'xbabe4-ci2-20261023T000000Z', token),
