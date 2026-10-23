@@ -391,7 +391,7 @@ limits and client examples](docs/program-source-stream.md).
 | `jope` with no arguments | prints `jope 0.4.0` <sup>1</sup> |
 | Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
-| Emit targets | 9: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly) `c17` (native C17 bindings) and opt-in [`go`](docs/go.md) <sup>4</sup> |
+| Emit targets | 9: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) and opt-in [`go`](docs/go.md) <sup>4</sup> |
 | Rust tests | 5,927 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 13 jobs per pull request in `ci.yml` (top-level declarations; 18 expanded jobs); 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |

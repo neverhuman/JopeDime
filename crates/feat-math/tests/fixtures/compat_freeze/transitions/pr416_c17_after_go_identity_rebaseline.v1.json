@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Parallel identity join from the previously published Go/TypeScript proposal to the same combined Go/TypeScript/C17 source. Preserve the original Go announcements and all behavior baselines.",
+  "plan_reference": "Latest direct human instruction to merge/fix all PRs; AGENTS.md and ADR-0004 identity-only procedure",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/416",
+  "source_commit": "a5c429d64e7cd8f428f071d86ca928adaac7c80c",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "164c8ef88fe93b3f85b588f963eb9cb5590c4ea2507a39d918b35ea47dc50c99",
+      "after": "52936148533dd0c6838d4183dc679d5838346593b53f59eb580247a3b99e1a20"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "c26662da74253a6447772c1bab41815496d74972e312b488dd2fc07f51ff7041",
+      "after": "d6e799b6acf5e20bb906f20ce3f131d485d459d326a58fb0ae94372b55a267a5"
+    }
+  ]
+}
