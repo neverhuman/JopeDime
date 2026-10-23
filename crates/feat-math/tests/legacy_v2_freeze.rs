@@ -416,7 +416,13 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
             // PR414: additive C17 compiler/caller parity beside all retained native and TS cases.
             // Owning G00 regeneration must retain all43native behavior records.
             // Previous: 035635a57cc9441871a879be7bc56bed93ae10a17baf6fa3a3186f0f9876ca46
-            "41fa308a94170150c6d694018444e06d25133fd6786b8275425951e71955c100",
+            // PR422/427: the local-only, default-off cuda-parity-tests module and hook
+            // were added beside the retained C17/TypeScript and native assertions.
+            // No prior golden source line was removed. Owning legacy regeneration
+            // retains every genome/emission/prediction/RNG/fold constant; all 86
+            // golden cases run without enabling CUDA CI or requiring a GPU.
+            // Previous: 41fa308a94170150c6d694018444e06d25133fd6786b8275425951e71955c100
+            "f6a7cab70280b0c174b98b5802893b5b3e411a0421875feb77213a13b2e3728d",
         ),
         (
             "tests/champion_parity.rs",
