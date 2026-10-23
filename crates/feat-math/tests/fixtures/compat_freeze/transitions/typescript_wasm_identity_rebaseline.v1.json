@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for PR412 TypeScript/Wasm emitter and target routing, integrated after model objects and combined publication. Every behavior fixture and prior transition ledger remains byte-identical; no historical identity row is invented. Native numerical templates and default target membership remain unchanged.",
+  "plan_reference": "Current user request to merge all pending PRs with passing CI and publish the next standard jope version; AGENTS.md reviewed lifecycle and ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/412",
+  "source_commit": "01952fe4f91a2ef61069960a2951071530ac53f7",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "8bd43218668e377a4b63e420e08aca22d0c09d2fcdecce5fc5e930a8e1fc2d30",
+      "after": "96d0872f5b4a8e8782d9cab54b6e31cc50becccdd4ff9d1b37c56f06bd1fd2ed"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "9c260a36dfe8b5744445d55db1e7677607d7980721e2cec5b6ed0e20ecedbf37",
+      "after": "8eb521566501dc57aacc42b618c0ceba9dac7a2e54a9b5c59fa296657b30871e"
+    }
+  ]
+}

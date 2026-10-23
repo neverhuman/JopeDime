@@ -2,9 +2,9 @@
   "files": [
     {
       "bytes": 190,
-      "normalization": " PR395 audit CI routing: exact current Python classifier pin; all original frozen source/fixture bytes and origin hashes preserved.",
+      "normalization": " PR395 audit CI routing: exact current Python classifier pin; all original frozen source/fixture bytes and origin hashes preserved. PR412 TypeScript integration: exact classifier adds the TypeScript workflow to the Rust gate; refresh only its current adapter declaration and enclosing source pins. Original origin hashes, every fixture/module byte, source membership and refusal guards are retained.",
       "path": "CI_SOURCE_PIN.json",
-      "sha256": "a8523c2d8ce82ae93878628a83c0ca629d75d7c2e7da0ca73d8da94a3a369918"
+      "sha256": "9edc69819d7b357d9cfd99ce3417dbdef9506d285f54f44a87354089a9fb1402"
     },
     {
       "bytes": 9280,

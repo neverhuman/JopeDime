@@ -397,6 +397,19 @@ pub fn supports_javascript(genome: &GenomeIr) -> std::result::Result<(), Vec<Str
     emit_js::emit_js(&plan, &EmitOptions::default()).map(|_| ())
 }
 
+/// Emit a typed TypeScript API and its complete WebAssembly build source.
+pub fn emit_typescript(
+    genome: &GenomeIr,
+    opts: &EmitOptions,
+) -> Result<crate::typescript::TypeScriptEmitted> {
+    crate::typescript::emit(genome, opts)
+}
+
+/// TypeScript shares the full Rust recipe coverage.
+pub fn supports_typescript(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
+    supports(genome)
+}
+
 /// Banned-vocabulary lint run on every emitted artifact (emission fails on
 /// hit). Extended for v35 with `nnls` and the portfolio member registry
 /// identifiers — none of which any artifact (old or new) ever contained.
@@ -504,6 +517,25 @@ pub fn lint_shipped_text(src: &str) -> Vec<String> {
     hits
 }
 
+fn validate_recipe_target(
+    genome: &GenomeIr,
+    target: crate::artifact_manifest::Target,
+) -> Result<()> {
+    use crate::artifact_manifest::Target;
+    // TypeScript reuses the Rust numerical implementation and its admission.
+    if Target::RECIPES.contains(&target) || matches!(target, Target::TypeScript | Target::C17) {
+        if let GenomeIr::Pipeline(pipe) = genome {
+            for stage in &pipe.stages {
+                let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
+                    .ok_or_else(|| anyhow::anyhow!("unregistered legacy operation {}", stage.op))?;
+                row.supports(target.registry_target())
+                    .map_err(anyhow::Error::msg)?;
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Opt-in target-complete manifest. Historical `emit` and its defaults stay unchanged.
 /// Unsupported targets remain explicit; successful rendering binds exact source bytes.
 pub fn emit_targets_v3(
@@ -527,7 +559,9 @@ pub fn emit_targets_v3(
     let mut records = Vec::new();
     for &target in requested {
         if target == Target::C17 {
-            match emit_c17(genome, options) {
+            let result =
+                validate_recipe_target(genome, target).and_then(|()| emit_c17(genome, options));
+            match result {
                 Ok(bundle) => {
                     let inputs: Vec<_> = bundle
                         .files
@@ -547,21 +581,30 @@ pub fn emit_targets_v3(
             }
             continue;
         }
-        let result: Result<(String, String)> = (|| {
-            // I07's declared per-stage support supplements the actual recipe gate.
-            // Expression-recipe-v2 and fitted exports keep their separate existing gates.
-            if Target::RECIPES.contains(&target) {
-                if let GenomeIr::Pipeline(pipe) = genome {
-                    for stage in &pipe.stages {
-                        let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
-                            .ok_or_else(|| {
-                                anyhow::anyhow!("unregistered legacy operation {}", stage.op)
-                            })?;
-                        row.supports(target.registry_target())
-                            .map_err(anyhow::Error::msg)?;
-                    }
+        if target == Target::TypeScript {
+            let result = validate_recipe_target(genome, target)
+                .and_then(|()| emit_typescript(genome, options));
+            match result {
+                Ok(bundle) => {
+                    records.push(TargetRecord::supported(
+                        target,
+                        "legacy_recipe",
+                        crate::typescript::EMITTER_VERSION,
+                        &[
+                            ("model.ts", &bundle.source),
+                            ("model.kernel.rs", &bundle.kernel),
+                        ],
+                        None,
+                    ));
+                    sources.insert("model.ts".into(), bundle.source);
+                    sources.insert("model.kernel.rs".into(), bundle.kernel);
                 }
+                Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
             }
+            continue;
+        }
+        let result: Result<(String, String)> = (|| {
+            validate_recipe_target(genome, target)?;
             Ok(match target {
                 Target::Python | Target::Rust => {
                     let pair = emit(genome, options)?;
@@ -593,6 +636,7 @@ pub fn emit_targets_v3(
                     (e.source, e.profile.into())
                 }
                 Target::C17 => unreachable!("multi-file target handled above"),
+                Target::TypeScript => unreachable!("handled as a complete bundle"),
                 Target::Cpp17Fitted => {
                     anyhow::bail!("fitted target requires explicit training rows")
                 }

@@ -1,0 +1,112 @@
+\section{Historical context and scope of the comparison}
+\label{sup:context}
+
+\paragraph{The useful lesson of Move 37.}
+AlphaGo combined learned evaluation with tree search~\cite{silver2016alphago}.
+After the 2016 match with Lee Sedol, Hassabis reported that its thirty-seventh
+move in Game 2 had an estimated one-in-ten-thousand chance of being played by
+a human~\cite{hassabis2016seoul}. That estimate came from the system's account of human
+play; it is not a universal probability of creativity. An improbable move can
+be poor, and a valuable move can be unsurprising. InnovationZero consequently
+uses Move42 as a prospective, explicitly defined research event, rather than
+borrowing the historical estimate as a novelty threshold already satisfied by
+its programs. The analogy motivates an experiment; it does not provide its
+result.
+
+\paragraph{Learning from search is an established idea.}
+AlphaGo Zero removed the human-game supervision used by its predecessor,
+training a policy and value network through search-guided self-play. Its
+network improved search, which in turn supplied stronger training targets.
+The paper's policy-only evaluation also distinguishes learned competence from
+the strength obtained by adding search~\cite{silver2017zero}. This is the relevant
+precedent for the proposed feedback-budget curve. It does not make a
+one-step contextual-bandit problem equivalent to a competitive, sequential
+board game. Nor does learning without human game records imply learning
+without human assumptions: a representation, a legal action space, an
+objective, and a learning procedure still have designers.
+
+\paragraph{From games to algorithms.}
+AlphaTensor recasts matrix-multiplication algorithm discovery as a single-player
+game; AlphaDev searches assembly programs using reinforcement learning and
+measured performance~\cite{fawzi2022alphatensor,mankowitz2023alphadev}. Their achievements show that
+formal structure and executable feedback can support useful discoveries.
+FunSearch and AlphaEvolve provide a complementary lineage: a language model
+proposes code, evaluators assess it, and successful candidates inform later
+proposals~\cite{romeraparedes2024funsearch,novikov2025alphaevolve}. These systems are precedents for
+outcome-driven discovery, rather than evidence that all invention necessarily
+requires the same amount of search. Language models are participants in this
+lineage; treating them as intrinsically incapable of contributing new
+algorithms would misdescribe the evidence.
+
+\paragraph{The closest technical antecedents.}
+DeepCoder learns properties of programs from input-output examples to guide
+symbolic search~\cite{balog2017deepcoder}. DreamCoder combines learned abstractions with
+neural guidance over a growing program library~\cite{ellis2021dreamcoder}.
+AutoML-Zero discovers complete learning procedures from basic mathematical
+operations~\cite{real2020automlzero}. HyperNetworks generate the parameters of another
+network~\cite{ha2017hypernetworks}; end-to-end transformers can predict a full mathematical
+expression, including constants, before optional numerical
+refinement~\cite{kamienny2022e2e}. Latent Programmer predicts a discrete
+program representation before generating source, organizing synthesis as a
+two-level search~\cite{hong2021latent}. HyperFast uses a meta-trained
+hypernetwork to produce a dataset-specific classifier in a forward
+pass~\cite{bonet2024hyperfast}. These are close precedents for a solution representation
+and data-conditioned generation, respectively; a fitted classifier and a
+reusable learning procedure are different output objects. Together these works rule out a broad
+priority claim for learned data-to-program generation, representation
+learning over algorithms, or transferring computation from deployment to
+training. The distinctive question here is narrower: can an outcome-trained
+proposer commit a useful, reusable fitting procedure for a previously unseen
+dataset family before receiving any candidate-specific feedback, and can that
+boundary be audited independently of its later fit and evaluation?
+
+\paragraph{The Eureka Machine frame.}
+Socher's \emph{The Eureka Machine} connects scientific discovery to increasingly
+automated cycles of hypothesis and experiment~\cite{socher2026eureka}. In an
+associated author-written account, he describes four foundations: accumulated
+human knowledge, scientific measurements, digital simulations, and autonomous
+physical laboratories~\cite{socher2026bookbite}. Coordinating agents sit above these
+foundations. This is a vision for a scientific system, not a claim that a
+single model already implements every component. A data-conditioned algorithm
+proposer could occupy one component of such a system: it attempts to transfer
+lessons from earlier experiments into the first proposal for a new problem.
+Its usefulness would not eliminate the need to test the resulting scientific
+claim.
+
+Recursive's research report describes multiple concurrent research threads
+that propose, implement, run, and validate experiments before choosing what
+to attempt next~\cite{recursive2026firststeps}. The company subsequently attributed
+much of Flint's development stack to its Eureka Machine
+system~\cite{recursive2026flint}. These are company-reported development results;
+they are neither independent validation of unrestricted recursive
+self-improvement nor demonstrations of feedback-free scientific discovery.
+The comparison clarifies where feedback is used. An iterative research system
+can produce training evidence for an amortized proposer, while a strong
+proposer can improve the starting point of an iterative research system.
+Recent work on SwarmRSI likewise describes experimental feedback steering the
+variation and recombination of ideas across a swarm of scientific
+agents~\cite{meng2026swarmrsi}. Its October 2026 preprint reports an iterative
+feedback loop; it is not evidence for a first-proposal, zero-feedback protocol.
+
+\paragraph{Which objective, for which deployment?}
+The intended ``Jev'' reference is the TypeSafe model introduced by Diogo
+Almeida, not a researcher of that name~\cite{typesafe2026jev}. Its stated objective is to
+return calibrated, typed decisions suitable for software integration. That
+argument motivates matching a learning signal to the downstream task; it
+does not establish that text generation is generally the wrong objective.
+Human-preference learning and learning from verifiable outcomes are distinct,
+already established approaches~\cite{christiano2017rlhf,deepseek2025r1}, and contemporary language
+models may combine several training signals. Exact training recipes for the
+historical frontier entrants are not established by their submission names.
+The appropriate comparison therefore concerns observed behavior, declared
+information access, and measured resources, not a presumed dichotomy between
+``preference-only'' language models and ``grounded'' algorithm models.
+
+LeCun and coauthors argue that autonomous learning should integrate observation,
+active behavior, and internal control over when to use each~\cite{dupoux2026autonomous}.
+This supplies a contextualized critique of current learning systems, not an
+impossibility theorem about new knowledge. This manuscript avoids attributing
+an unverified podcast quotation to LeCun. Its empirical question remains
+answerable whichever broader architecture ultimately proves most capable:
+after training has stopped, what useful algorithmic competence survives when
+candidate feedback is withheld until commitment?

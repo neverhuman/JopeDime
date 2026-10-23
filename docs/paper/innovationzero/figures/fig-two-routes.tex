@@ -1,0 +1,20 @@
+% Two routes to zero-shot invention. Numbers: Section 3 (frontier), Section 7 (engine).
+\begin{tikzpicture}[node distance=4.2mm]
+\tikzset{r1/.style={izbox, text width=0.37\linewidth, draw=izwarm!60, fill=izwarm!6},
+         r2/.style={izbox, text width=0.37\linewidth, draw=izaccent!60, fill=izaccentsoft},
+         hd/.style={font=\sffamily\sbseries\small, align=center, text width=0.4\linewidth}}
+\node[hd, text=izwarm] (h1) {Route 1 \textperiodcentered{} reasoning in words};
+\node[hd, text=izaccent, right=0.07\linewidth of h1] (h2) {Route 2 \textperiodcentered{} learning from outcomes};
+\node[r1, below=3mm of h1] (a1) {A 39,746-byte challenge: invent one general regressor from first principles; no data, no execution};
+\node[r1, below=of a1] (b1) {A frontier model reasons \emph{in language}: 60k--130k tokens of session content, 11--25 minutes};
+\node[r1, below=of b1] (c1) {One frozen, general Rust regressor: 25--67 KB; the same program for every dataset};
+\node[r2, below=3mm of h2] (a2) {The training rows of \emph{this} dataset; held-out rows never enter};
+\node[r2, below=of a2] (b2) {A 512-dimensional problem embedding, then the kernel embedding: exploration happens \emph{in program space}};
+\node[r2, below=of b2] (c2) {A program for this dataset: 13--45 kernel tokens, emitted as 14--38 KB of standalone Rust};
+\foreach \u/\v in {a1/b1,b1/c1,a2/b2,b2/c2} \draw[izarrow] (\u) -- (\v);
+\node[izbox, below=6mm of $(c1.south)!0.5!(c2.south)$, text width=0.86\linewidth, draw=izink, line width=0.8pt]
+  (syn) {\textsf{\sbseries Synthesis (E10).} Decompose each general invention into typed operators and let the
+  learned model choose, per dataset, when to use it. \emph{Frontier models invent; algorithm models compose.}};
+\draw[izarrow] (c1.south) -- (c1.south |- syn.north);
+\draw[izarrow] (c2.south) -- (c2.south |- syn.north);
+\end{tikzpicture}

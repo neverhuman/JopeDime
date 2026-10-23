@@ -1,0 +1,55 @@
+% Appendix B — the identical-cuts pilot
+\section{The identical-cuts pilot: protocol and per-dataset results}
+\label{app:pilot}
+
+\paragraph{Protocol} \code{jope-bench run} at repository commit \code{8d0fa7b} (unchanged for every
+file it reads at \code{bdf9441}), over \code{datasets/test}: fold seed 20260907, five folds, screen fold
+0, every method deep-scored on all five cuts (\code{--top 20}); the engine's proposer with 32 candidates
+in each of 8 rounds, re-run on every cut's training rows (\code{--search --search-pop 32
+--search-gens 8 --resample-search}); entrants \code{--entrant Opus5p5\_Extra}, \code{--automl
+gpt6-astra-max} and \code{--native GPT6p1\_Sol\_Max}; external adapters for scikit-learn 1.7.2,
+XGBoost 2.1.4, LightGBM 4.6.0 and CatBoost 1.2.10 at library defaults with one thread. Ladder by
+\code{jope-bench ladder} and Elo by \code{jope-arena elo}. Host: a 2-vCPU cloud container with 7 GB of
+memory, \code{rustc} 1.97.0 (the pinned 1.97.1 was not available), two workers; total wall time 388 s.
+The score table is committed as \code{evidence/pilot-2026-10-22/scores-deep.csv} (SHA-256
+\code{86fec7790c8f\ldots}) with the Elo output beside it; the engine found byte-identical programs to
+the committed same-cut run on all ten datasets.
+
+\paragraph{Per-dataset error} \Cref{tab:rel} gives each method's pooled out-of-fold RMSE divided by
+the best of all eighteen methods on that dataset. Two rows deserve attention. On \code{693890aa}, a
+single-feature dataset whose best method is a Gaussian process baseline, most methods' errors are
+several times the best, and this one dataset moves every geometric mean in \cref{sec:pilot}. On
+\code{21fbfe8b} the engine's Gaussian-process program has twice the best error: the program chosen on
+the screen cut generalized poorly to the other cuts.
+
+\begin{table}[h]
+\caption{Pooled out-of-fold RMSE relative to the best of eighteen methods on each pilot dataset
+(1.000 = best). Bold marks the best of the nine methods shown; the last row counts those wins.
+No default library is the best of the nine on any dataset except the random forest on one.}
+\label{tab:rel}
+\centering\sffamily\footnotesize\lining
+\setlength\tabcolsep{4.2pt}
+\begin{tabular}{@{}lrrrrrrrrr@{}}
+\toprule
+Dataset & Engine & Opus & Sol & Astra & Stack & CatBoost & LightGBM & XGBoost & RF \\
+\midrule
+\code{047e62b5} & \textbf{1.000} & 1.028 & 1.024 & 1.116 & 1.018 & 1.083 & 1.130 & 1.171 & 1.093 \\
+\code{1cb97b1d} & 1.110 & 1.160 & 1.282 & 1.684 & 1.128 & 1.277 & 1.220 & 1.240 & \textbf{1.106} \\
+\code{21fbfe8b} & 2.085 & \textbf{1.000} & 1.082 & 1.702 & 1.161 & 1.087 & 1.137 & 1.087 & 1.294 \\
+\code{30ef3eaa} & 1.132 & 1.198 & 1.113 & \textbf{1.000} & 1.335 & 1.624 & 1.639 & 1.907 & 1.845 \\
+\code{43b4cc3a} & 1.031 & 1.010 & 1.002 & 1.016 & \textbf{1.001} & 1.095 & 1.076 & 1.312 & 1.110 \\
+\code{693890aa} & 1.398 & 3.341 & 9.273 & 8.012 & \textbf{1.219} & 2.147 & 20.987 & 7.311 & 2.234 \\
+\code{79e600bc} & 1.039 & \textbf{1.000} & 1.085 & 1.124 & 1.040 & 1.030 & 1.040 & 1.090 & 1.001 \\
+\code{b5beff4a} & 1.032 & \textbf{1.003} & 1.009 & 1.063 & 1.035 & 1.112 & 1.054 & 1.434 & 1.234 \\
+\code{c32fa09b} & 1.032 & 1.001 & \textbf{1.000} & 1.014 & 1.008 & 1.079 & 1.065 & 1.199 & 1.090 \\
+\code{c7d81571} & 1.026 & \textbf{1.000} & 1.009 & 1.006 & 1.019 & 1.062 & 1.068 & 1.162 & 1.040 \\
+\midrule
+Geometric mean & 1.157 & 1.171 & 1.321 & 1.413 & 1.092 & 1.224 & 1.534 & 1.513 & 1.259 \\
+Best of the nine & 1 & 4 & 1 & 1 & 2 & 0 & 0 & 0 & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Emission timing} Each of the ten programs was emitted 25 times in all four languages by
+one emitter process; median wall times were 4.6--7.0 ms and minima 3.6--5.2 ms, process start
+included (\code{evidence/pilot-2026-10-22/emit.csv}).

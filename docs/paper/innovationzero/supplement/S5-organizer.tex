@@ -1,0 +1,45 @@
+% Supplement S5 — the organizer appendix, summarized
+\section{The organizer appendix, summarized}
+\label{sup:organizer}
+
+The participant packet is followed in the same file by an organizer appendix that entrants never
+see. We summarize it here; the full text is printed in the archive volume.
+
+\paragraph{O0 Red-team findings} Sixteen weaknesses of earlier drafts, each with its resolution:
+the target column was unspecified in the callable contract; a complete training row could be used as
+a feature row; ``the last column is the target'' could be applied a second time at inference; one
+function signature was not valid Rust; several scalar functions and row summaries were only
+implicit; ``use all fundamentals'' could be read as a requirement; ``Rust only'' could still wrap
+another implementation; an unrestricted standard library could expose time, files, entropy or
+processes; optional compilation depended on each model's tools; ``no execution'' could be bypassed
+through constant evaluation or build machinery; a refit could inherit a stale random stream or
+model; constructor work and repeated prediction calls could escape the time budgets; exact bit
+equality under every batching could reject harmless round-off; degenerate shapes and missing values
+had incomplete semantics; a bare ``Elo'' left ties, failures, splits and rating order underspecified;
+and silent fixes or selective omission could follow an evaluation. The appendix closes with the
+limit we quote in Section~3 of the paper: the challenge tests task-time reasoning without data
+experiments, not whether a model met an idea in pre-training.
+
+\paragraph{O1--O2 Information boundary and scoring} The packet must contain no project source,
+repository link, existing algorithm, tuned setting or result; sessions must be fresh, with retrieval,
+browsing and delegation disabled. The arena's metric, pairwise rules, failure handling, rating fit,
+dataset weights and uncertainty method are frozen in one scoring card before any entrant is collected.
+
+\paragraph{O3 Single submission} Every entrant receives identical packet bytes and the same number of
+attempts; all attempts are reported and none is chosen by hidden score; source bytes and their
+SHA-256 are frozen before any numerical execution; a corrected source is a new entrant in a new round.
+
+\paragraph{O5--O6 Execution and correctness} Every entrant is compiled with the same pinned compiler and
+run in a fresh, isolated process per task with one core, the memory and time limits, no network, no
+writable shared location and no credentials. Twenty-two organizer-only checks run after freezing:
+wrong lengths and dimension overflow, the target column, zero-feature tables, empty and invalid
+inputs, missing values, constant targets and columns, repeated rows, lifecycle errors, prediction
+after a failed refit, width mismatches, empty batches, reproducibility, batching and permutation
+invariance, and refit isolation.
+
+\paragraph{O7--O9 Integrity and release} No outcome-based dataset selection, identical tasks for all
+entrants, grouped splits for related data, no unrecorded retries or best-of-seed choices, a frozen
+rating update order, a fixed opponent pool, and no candidate-specific feedback while others are still
+authoring. Every scheduled job produces a receipt, a rating pipeline refuses to finalize with missing
+outcomes, and ratings are published with coverage and uncertainty, traceable to source, task,
+prediction and scorer identities.

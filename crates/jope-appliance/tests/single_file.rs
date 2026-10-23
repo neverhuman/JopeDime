@@ -661,3 +661,908 @@ fn regression_doctor_failure_survives_a_closed_json_pipe() {
     );
     assert!(!String::from_utf8_lossy(&output.stderr).contains("panicked"));
 }
+
+#[test]
+fn standard_object_fit_reload_export_and_mcp_predict_agree() {
+    use std::io::Write;
+    use std::process::Stdio;
+    let dir = tempfile::tempdir().unwrap();
+    let exe = package(dir.path(), &["rust.ridge"]);
+    train_csv(dir.path());
+    let receipt: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "fit",
+                "--train",
+                "train.csv",
+                "--target",
+                "y",
+                "--task",
+                "regression",
+                "--method",
+                "ridge",
+                "--threads",
+                "1",
+                "--receipt",
+                "fit-receipt.json",
+                "--json",
+            ],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    let saved_receipt: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(dir.path().join("fit-receipt.json")).unwrap())
+            .unwrap();
+    assert_eq!(receipt, saved_receipt);
+    let path = receipt["outputs"][0]["path"].as_str().unwrap();
+    assert!(path.starts_with("models/sha256-"));
+    let object_path = dir.path().join(path);
+    let manifest_bytes = std::fs::read(object_path.join("manifest.json")).unwrap();
+    assert_eq!(
+        receipt["outputs"][0]["sha256"],
+        jope_runtime::sha256_hex(&manifest_bytes)
+    );
+    let manifest_schema: serde_json::Value = serde_json::from_slice(include_bytes!(
+        "../../../schemas/jope.model-object.v1.schema.json"
+    ))
+    .unwrap();
+    let manifest_value: serde_json::Value = serde_json::from_slice(&manifest_bytes).unwrap();
+    assert!(jope_datasets::schema::validate(&manifest_schema, &manifest_value).is_empty());
+    let info: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            dir.path(),
+            &["model", "verify", "--model", path, "--require-executable"],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    assert_eq!(info["executable"], true);
+    assert_eq!(info["schema"], "jope.model-object-inspection/v1");
+    ok(run(
+        &exe,
+        dir.path(),
+        &[
+            "predict",
+            "--model",
+            path,
+            "--input",
+            "rows.csv",
+            "--output",
+            "object.csv",
+            "--threads",
+            "1",
+        ],
+    ));
+    ok(run(
+        &exe,
+        dir.path(),
+        &[
+            "model",
+            "export",
+            "--model",
+            path,
+            "--format",
+            "fitted",
+            "--output",
+            "export.jope",
+        ],
+    ));
+    ok(run(
+        &exe,
+        dir.path(),
+        &[
+            "predict",
+            "--model",
+            "export.jope",
+            "--input",
+            "rows.csv",
+            "--output",
+            "legacy.csv",
+            "--threads",
+            "1",
+        ],
+    ));
+    assert_eq!(
+        std::fs::read(dir.path().join("object.csv")).unwrap(),
+        std::fs::read(dir.path().join("legacy.csv")).unwrap()
+    );
+    assert_eq!(
+        std::fs::read(dir.path().join("export.jope")).unwrap(),
+        std::fs::read(object_path.join("model.jope")).unwrap()
+    );
+    assert_eq!(
+        code(&run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "export",
+                "--model",
+                path,
+                "--format",
+                "fitted",
+                "--output",
+                "export.jope"
+            ]
+        )),
+        7
+    );
+    assert_eq!(
+        code(&run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "export",
+                "--model",
+                path,
+                "--format",
+                "onnx",
+                "--output",
+                "model.onnx"
+            ]
+        )),
+        4
+    );
+    assert!(!dir.path().join("model.onnx").exists());
+    // A prediction output or receipt must never overwrite any member of its source object.
+    let protected = format!("{path}/model.jope");
+    assert_eq!(
+        code(&run(
+            &exe,
+            dir.path(),
+            &[
+                "predict",
+                "--model",
+                path,
+                "--input",
+                "rows.csv",
+                "--output",
+                &protected,
+                "--threads",
+                "1"
+            ]
+        )),
+        2
+    );
+    let protected_manifest = format!("{path}/manifest.json");
+    assert_eq!(
+        code(&run(
+            &exe,
+            dir.path(),
+            &[
+                "predict",
+                "--model",
+                path,
+                "--input",
+                "rows.csv",
+                "--output",
+                "unused.csv",
+                "--receipt",
+                &protected_manifest,
+                "--threads",
+                "1"
+            ]
+        )),
+        2
+    );
+    assert_eq!(
+        std::fs::read(object_path.join("manifest.json")).unwrap(),
+        manifest_bytes
+    );
+    let id = info["id"].as_str().unwrap();
+    // A directory relative to cwd must still derive its identity from the resolved name.
+    let dot: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            &object_path,
+            &["model", "inspect", "--model", "."],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    assert_eq!(dot["id"], info["id"]);
+    let first: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "session",
+                "record",
+                "--name",
+                "test",
+                "--id",
+                id,
+                "--expected-head",
+                "empty",
+            ],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    assert_eq!(
+        code(&run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "session",
+                "record",
+                "--name",
+                "test",
+                "--id",
+                id,
+                "--expected-head",
+                "empty"
+            ]
+        )),
+        7
+    );
+    let rollback: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "model",
+                "session",
+                "rollback",
+                "--name",
+                "test",
+                "--version",
+                "1",
+                "--expected-head",
+                first["head"].as_str().unwrap(),
+            ],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    let event_schema: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../schemas/jope.model-session.v1.schema.json"
+    ))
+    .unwrap();
+    for event in rollback["versions"].as_array().unwrap() {
+        assert!(jope_datasets::schema::validate(&event_schema, event).is_empty());
+    }
+    assert_eq!(rollback["versions"][1]["model_id"], id);
+    assert_eq!(rollback["model_path"], path);
+    let requests = [
+        serde_json::json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1"}}}),
+        serde_json::json!({"jsonrpc":"2.0","method":"notifications/initialized"}),
+        serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/list"}),
+        serde_json::json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"model_inspect","arguments":{"id":id}}}),
+        serde_json::json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"model_predict","arguments":{"id":id,"csv":std::fs::read_to_string(dir.path().join("rows.csv")).unwrap()}}}),
+        serde_json::json!({"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"model_inspect","arguments":{"id":"../escape"}}}),
+        serde_json::json!({"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"model_export","arguments":{"id":id}}}),
+        serde_json::json!({"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"model_session_show","arguments":{"name":"test"}}}),
+        serde_json::json!({"jsonrpc":"2.0","method":"tools/call","params":{"name":"model_session_record","arguments":{"name":"unwanted","id":id,"expected_head":"empty"}}}),
+    ];
+    let mut child = Command::new(&exe)
+        .args(["model", "mcp", "--root", "models"])
+        .current_dir(dir.path())
+        .env_clear()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut stdin = child.stdin.take().unwrap();
+    for request in requests {
+        writeln!(stdin, "{request}").unwrap();
+    }
+    drop(stdin);
+    let output = ok(child.wait_with_output().unwrap());
+    let replies: Vec<serde_json::Value> = String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .map(|s| serde_json::from_str(s).unwrap())
+        .collect();
+    assert_eq!(replies.len(), 7); // no response to notifications
+    assert_eq!(
+        replies[6]["result"]["structuredContent"]["head"],
+        rollback["head"]
+    );
+    assert!(!dir.path().join("models/sessions/unwanted").exists());
+    assert_eq!(replies[0]["result"]["protocolVersion"], "2025-11-25");
+    assert_eq!(replies[1]["result"]["tools"].as_array().unwrap().len(), 9);
+    assert_eq!(replies[2]["result"]["structuredContent"]["id"], info["id"]);
+    assert_eq!(
+        replies[3]["result"]["structuredContent"]["predictions_csv"],
+        std::fs::read_to_string(dir.path().join("object.csv")).unwrap()
+    );
+    assert_eq!(replies[4]["result"]["isError"], true);
+    assert_eq!(
+        replies[5]["result"]["structuredContent"]["manifest"],
+        String::from_utf8(manifest_bytes).unwrap()
+    );
+    let exported = &replies[5]["result"]["structuredContent"];
+    let import_request = serde_json::json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"model_import","arguments":{"manifest":exported["manifest"],"parts_hex":exported["parts_hex"]}}});
+    let mut child = Command::new(&exe)
+        .args(["model", "mcp", "--root", "mcp-imported"])
+        .current_dir(dir.path())
+        .env_clear()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    writeln!(child.stdin.take().unwrap(), "{import_request}").unwrap();
+    let imported: serde_json::Value =
+        serde_json::from_slice(&ok(child.wait_with_output().unwrap()).stdout).unwrap();
+    assert_eq!(imported["result"]["isError"], false);
+    assert_eq!(
+        imported["result"]["structuredContent"]["inspection"]["id"],
+        info["id"]
+    );
+    let imported_path = imported["result"]["structuredContent"]["path"]
+        .as_str()
+        .unwrap();
+    ok(run(
+        &exe,
+        dir.path(),
+        &[
+            "predict",
+            "--model",
+            imported_path,
+            "--input",
+            "rows.csv",
+            "--output",
+            "mcp-import.csv",
+            "--threads",
+            "1",
+        ],
+    ));
+    assert_eq!(
+        std::fs::read(dir.path().join("object.csv")).unwrap(),
+        std::fs::read(dir.path().join("mcp-import.csv")).unwrap()
+    );
+}
+
+#[test]
+fn foreign_extensions_import_without_claiming_execution() {
+    use jope_runtime::model_object::{Manifest, Part, Producer, SCHEMA};
+    let dir = tempfile::tempdir().unwrap();
+    let state = b"arbitrary future GP bytecode and fitted parameters\0\xff";
+    std::fs::write(dir.path().join("state.bin"), state).unwrap();
+    let manifest = Manifest {
+        schema: SCHEMA.into(),
+        minimum_reader_version: 1,
+        format: "org.example/future-gp/v9".into(),
+        producer: Producer {
+            name: "external".into(),
+            version: "1".into(),
+            language: "typescript".into(),
+        },
+        primary: "state.bin".into(),
+        required_capabilities: vec!["org.example/solver/v9".into()],
+        files: vec![Part::new("state.bin", "application/octet-stream", state)],
+        metadata: serde_json::json!({"note":"retained, not executable in this build"}),
+    };
+    std::fs::write(
+        dir.path().join("manifest.json"),
+        serde_json::to_vec(&manifest).unwrap(),
+    )
+    .unwrap();
+    let receipt: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            Path::new(BIN),
+            dir.path(),
+            &["model", "import", "--manifest", "manifest.json"],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    let path = receipt["path"].as_str().unwrap();
+    assert_eq!(receipt["inspection"]["integrity_verified"], true);
+    assert_eq!(receipt["inspection"]["executable"], false);
+    assert_eq!(
+        std::fs::read(dir.path().join(path).join("state.bin")).unwrap(),
+        state
+    );
+    ok(run(
+        Path::new(BIN),
+        dir.path(),
+        &["model", "verify", "--model", path],
+    ));
+    assert_eq!(
+        code(&run(
+            Path::new(BIN),
+            dir.path(),
+            &["model", "verify", "--model", path, "--require-executable"]
+        )),
+        4
+    );
+    std::fs::write(dir.path().join(path).join("state.bin"), b"corrupt").unwrap();
+    assert_eq!(
+        code(&run(
+            Path::new(BIN),
+            dir.path(),
+            &["model", "verify", "--model", path]
+        )),
+        3
+    );
+}
+
+#[test]
+fn custom_fitness_cli_persists_the_objective_and_predicts_after_reload() {
+    let dir = tempfile::tempdir().unwrap();
+    let exe = package(dir.path(), &["rust.ridge"]);
+    train_csv(dir.path());
+    let invalid = run(
+        &exe,
+        dir.path(),
+        &[
+            "fit",
+            "--train",
+            "train.csv",
+            "--target",
+            "y",
+            "--task",
+            "regression",
+            "--fitness",
+            "unknown",
+            "--output",
+            "invalid.jope",
+            "--json",
+        ],
+    );
+    assert_eq!(code(&invalid), 2);
+    assert!(!dir.path().join("invalid.jope").exists());
+    std::fs::write(
+        dir.path().join("fitness.json"),
+        r#"{"metric":"pinball","quantile":0.9}"#,
+    )
+    .unwrap();
+    let fitted = run(
+        &exe,
+        dir.path(),
+        &[
+            "fit",
+            "--train",
+            "train.csv",
+            "--target",
+            "y",
+            "--task",
+            "regression",
+            "--method",
+            "auto",
+            "--candidates",
+            "ridge",
+            "--folds",
+            "3",
+            "--fitness",
+            "@fitness.json",
+            "--output",
+            "model.jope",
+            "--json",
+        ],
+    );
+    assert_eq!(
+        code(&fitted),
+        0,
+        "{}",
+        String::from_utf8_lossy(&fitted.stderr)
+    );
+    let receipt: serde_json::Value = serde_json::from_slice(&fitted.stdout).unwrap();
+    assert!(run_receipt_errors(&receipt).is_empty());
+    assert_eq!(receipt["selection"]["metric"], "pinball");
+    assert_eq!(receipt["selection"]["fitness"]["quantile"], 0.9);
+    let model = jope_runtime::fitted::FittedModel::from_bytes(
+        &std::fs::read(dir.path().join("model.jope")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(model.header.metric, "pinball");
+    let schema: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../schemas/jope.appliance-fitted.v1.schema.json"
+    ))
+    .unwrap();
+    assert!(jope_datasets::schema::validate(
+        &schema,
+        &serde_json::to_value(&model.header).unwrap()
+    )
+    .is_empty());
+    let output = run(
+        &exe,
+        dir.path(),
+        &[
+            "predict",
+            "--model",
+            "model.jope",
+            "--input",
+            "rows.csv",
+            "--output",
+            "predictions.csv",
+            "--json",
+        ],
+    );
+    assert_eq!(
+        code(&output),
+        0,
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let mut bad = model.clone();
+    bad.header.training_procedure.selection.as_mut().unwrap()["fitness_sha256"] =
+        "0".repeat(64).into();
+    assert!(bad.validate().is_err());
+    for remove_hash in [false, true] {
+        let mut missing = model.clone();
+        let selection = missing
+            .header
+            .training_procedure
+            .selection
+            .as_mut()
+            .unwrap()
+            .as_object_mut()
+            .unwrap();
+        selection.remove("fitness");
+        if remove_hash {
+            selection.remove("fitness_sha256");
+        }
+        assert!(
+            missing.validate().is_err(),
+            "a custom metric lost its objective"
+        );
+    }
+}
+
+#[test]
+fn mcp_stdio_handshake_discovery_and_custom_scoring_work_in_the_packaged_binary() {
+    use std::io::Write;
+    use std::process::Stdio;
+    let dir = tempfile::tempdir().unwrap();
+    let exe = package(dir.path(), &["rust.ridge"]);
+    let mut child = Command::new(exe)
+        .arg("mcp")
+        .env_clear()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let messages = [
+        serde_json::json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"fixture","version":"1"}}}),
+        serde_json::json!({"jsonrpc":"2.0","method":"notifications/initialized"}),
+        serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/list"}),
+        serde_json::json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"fitness_evaluate","arguments":{"fitness":{"metric":"mae"},"targets":[1,2,3],"predictions":[2,2,2]}}}),
+    ];
+    let mut input = child.stdin.take().unwrap();
+    for message in messages {
+        writeln!(input, "{message}").unwrap();
+    }
+    drop(input);
+    let output = child.wait_with_output().unwrap();
+    assert_eq!(
+        code(&output),
+        0,
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let responses = String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .map(|s| serde_json::from_str::<serde_json::Value>(s).unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(responses.len(), 3);
+    assert_eq!(responses[1]["result"]["tools"].as_array().unwrap().len(), 4);
+    assert!(
+        (responses[2]["result"]["structuredContent"]["value"]
+            .as_f64()
+            .unwrap()
+            - 2.0 / 3.0)
+            .abs()
+            < 1e-12
+    );
+    assert!(responses[1]["result"]["tools"][1]["inputSchema"]["$defs"]["fitness"].is_object());
+}
+
+#[test]
+fn fitness_schema_accepts_examples_and_rejects_unknown_parameters() {
+    let schema = jope_runtime::fitness::schema();
+    for entry in jope_runtime::fitness::Fitness::catalog() {
+        let value = serde_json::to_value(entry.fitness).unwrap();
+        let failures = jope_datasets::schema::validate(&schema, &value);
+        assert!(failures.is_empty(), "{value}: {failures:?}");
+    }
+    // Every checked-in recipe is valid under the published schema, not only the Rust parser.
+    let examples = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/objectives");
+    let mut checked = 0;
+    for entry in std::fs::read_dir(examples).unwrap() {
+        let path = entry.unwrap().path();
+        let name = path.file_name().unwrap().to_string_lossy().into_owned();
+        if path.extension().is_some_and(|e| e == "json") && !name.contains("request") {
+            let value: serde_json::Value =
+                serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+            let failures = jope_datasets::schema::validate(&schema, &value);
+            assert!(failures.is_empty(), "{name}: {failures:?}");
+            checked += 1;
+        }
+    }
+    assert!(checked >= 24, "{checked}");
+    for bad in [
+        serde_json::json!({"metric":"mae","ignored":true}),
+        serde_json::json!({"metric":"pinball","quantile":1.5}),
+        serde_json::json!({"metric":"custom","name":"x","direction":"minimize",
+            "expression":{"op":"column"},"aggregation":{"kind":"mean"}}),
+    ] {
+        assert!(
+            !jope_datasets::schema::validate(&schema, &bad).is_empty(),
+            "{bad}"
+        );
+    }
+}
+
+#[test]
+fn calibrated_objective_with_a_cost_column_round_trips_through_the_model_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let exe = package(dir.path(), &["rust.ridge"]);
+    // Demand with a per-row unit margin; underage costs the margin, overage costs 1.
+    let mut text = String::from("x,margin,demand\n");
+    for i in 0..90 {
+        let x = i as f64 / 10.0;
+        let margin = 2.0 + (i % 4) as f64;
+        let noise = ((i * 37) % 11) as f64 - 5.0;
+        text.push_str(&format!("{x},{margin},{:.3}\n", 20.0 + 3.0 * x + noise));
+    }
+    std::fs::write(dir.path().join("train.csv"), text).unwrap();
+    std::fs::write(dir.path().join("rows.csv"), "margin,x\n3,1.0\n5,4.0\n").unwrap();
+    std::fs::write(
+        dir.path().join("cost.json"),
+        r#"{"metric":"custom","name":"stock_cost","direction":"minimize",
+        "expression":{"op":"where","condition":{"op":"sub","left":{"op":"y"},"right":{"op":"pred"}},
+          "then":{"op":"mul","left":{"op":"column","name":"margin"},"right":{"op":"sub","left":{"op":"y"},"right":{"op":"pred"}}},
+          "else":{"op":"sub","left":{"op":"pred"},"right":{"op":"y"}}},
+        "aggregation":{"kind":"mean"}}"#,
+    )
+    .unwrap();
+    let validated = ok(run(
+        &exe,
+        dir.path(),
+        &["fitness", "validate", "@cost.json"],
+    ));
+    let described: serde_json::Value = serde_json::from_slice(&validated.stdout).unwrap();
+    assert_eq!(described["columns"], serde_json::json!(["margin"]));
+    let fit = |calibration: &str, model: &str| {
+        let output = ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "fit",
+                "--train",
+                "train.csv",
+                "--target",
+                "demand",
+                "--task",
+                "regression",
+                "--candidates",
+                "ridge",
+                "--folds",
+                "3",
+                "--fitness",
+                "@cost.json",
+                "--calibration",
+                calibration,
+                "--output",
+                model,
+                "--json",
+            ],
+        ));
+        let receipt: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert!(run_receipt_errors(&receipt).is_empty());
+        assert_eq!(receipt["task"]["features"], 1, "margin is not a feature");
+        let predicted = ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "predict",
+                "--model",
+                model,
+                "--input",
+                "rows.csv",
+                "--output",
+                &format!("{model}.csv"),
+                "--json",
+            ],
+        ));
+        let predict: serde_json::Value = serde_json::from_slice(&predicted.stdout).unwrap();
+        assert_eq!(predict["ignored_columns"], serde_json::json!(["margin"]));
+        let values: Vec<f64> = std::fs::read_to_string(dir.path().join(format!("{model}.csv")))
+            .unwrap()
+            .lines()
+            .skip(1)
+            .map(|l| l.parse().unwrap())
+            .collect();
+        (receipt, values)
+    };
+    let (raw, raw_values) = fit("none", "raw.jope");
+    let (tuned, tuned_values) = fit("affine", "tuned.jope");
+    assert!(raw["selection"].get("calibration").is_none());
+    let candidate = &tuned["selection"]["candidates"][0];
+    assert!(candidate["calibrated"].as_bool().unwrap());
+    assert!(candidate["calibrated_loss"].as_f64() < candidate["uncalibrated_loss"].as_f64());
+    // Shortages cost 2-5x overages, so the calibrated order quantity is higher.
+    for (raw, tuned) in raw_values.iter().zip(&tuned_values) {
+        assert!(tuned > raw, "{tuned} <= {raw}");
+    }
+    let model = jope_runtime::fitted::FittedModel::from_bytes(
+        &std::fs::read(dir.path().join("tuned.jope")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(model.header.auxiliary_columns, ["margin"]);
+    let transform = model.header.output_transform.unwrap();
+    let schema: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../schemas/jope.appliance-fitted.v1.schema.json"
+    ))
+    .unwrap();
+    assert!(jope_datasets::schema::validate(
+        &schema,
+        &serde_json::to_value(&model.header).unwrap()
+    )
+    .is_empty());
+    // A model whose stored map disagrees with its selection record does not load.
+    let mut tampered = model.clone();
+    tampered.header.output_transform = Some(jope_runtime::calibration::OutputTransform {
+        intercept: transform.intercept + 1.0,
+        ..transform
+    });
+    assert!(tampered.validate().is_err());
+    let mut dropped = model.clone();
+    dropped.header.output_transform = None;
+    assert!(dropped.validate().is_err());
+    let mut renamed = model;
+    renamed.header.auxiliary_columns = vec!["price".into()];
+    assert!(renamed.validate().is_err());
+    // Calibration without an objective is an input error.
+    let refused = run(
+        &exe,
+        dir.path(),
+        &[
+            "fit",
+            "--train",
+            "train.csv",
+            "--target",
+            "demand",
+            "--calibration",
+            "affine",
+            "--output",
+            "never.jope",
+        ],
+    );
+    assert_eq!(code(&refused), 2);
+}
+
+#[test]
+fn calibrated_object_model_mcp_accepts_auxiliary_columns_like_cli_prediction() {
+    use std::io::Write;
+    use std::process::Stdio;
+    let dir = tempfile::tempdir().unwrap();
+    let exe = package(dir.path(), &["rust.ridge"]);
+    let mut train = String::from("x,margin,y\n");
+    for i in 0..90 {
+        train.push_str(&format!(
+            "{},{},{}\n",
+            i,
+            2 + i % 4,
+            20 + 3 * i + (i * 37) % 11
+        ));
+    }
+    std::fs::write(dir.path().join("train.csv"), train).unwrap();
+    let input = "margin,x\n3,1\n5,4\n";
+    std::fs::write(dir.path().join("input.csv"), input).unwrap();
+    let fitness = r#"{"metric":"weighted","weights":{"op":"column","name":"margin"},"fitness":{"metric":"pinball","quantile":0.9}}"#;
+    let fitted: serde_json::Value = serde_json::from_slice(
+        &ok(run(
+            &exe,
+            dir.path(),
+            &[
+                "fit",
+                "--train",
+                "train.csv",
+                "--target",
+                "y",
+                "--task",
+                "regression",
+                "--candidates",
+                "ridge",
+                "--folds",
+                "3",
+                "--fitness",
+                fitness,
+                "--threads",
+                "1",
+                "--json",
+            ],
+        ))
+        .stdout,
+    )
+    .unwrap();
+    let path = fitted["outputs"][0]["path"].as_str().unwrap();
+    let object =
+        jope_runtime::model_object::ModelObject::read(&dir.path().join(path), 1 << 24).unwrap();
+    assert!(!object
+        .fitted()
+        .unwrap()
+        .header
+        .output_transform
+        .unwrap()
+        .is_identity());
+    ok(run(
+        &exe,
+        dir.path(),
+        &["model", "verify", "--model", path, "--require-executable"],
+    ));
+    ok(run(
+        &exe,
+        dir.path(),
+        &[
+            "predict",
+            "--model",
+            path,
+            "--input",
+            "input.csv",
+            "--output",
+            "cli.csv",
+            "--threads",
+            "1",
+        ],
+    ));
+    for format in ["bound-json", "python", "rust", "javascript"] {
+        let output = format!("lossy-{format}");
+        let refused = run(
+            &exe,
+            dir.path(),
+            &[
+                "model", "export", "--model", path, "--format", format, "--output", &output,
+            ],
+        );
+        assert_eq!(
+            code(&refused),
+            4,
+            "{format}: {}",
+            String::from_utf8_lossy(&refused.stderr)
+        );
+        assert!(!dir.path().join(&output).exists());
+    }
+    let mut child = Command::new(&exe)
+        .args(["model", "mcp", "--root", "models"])
+        .current_dir(dir.path())
+        .env_clear()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut stdin = child.stdin.take().unwrap();
+    for message in [
+        serde_json::json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"fixture","version":"1"}}}),
+        serde_json::json!({"jsonrpc":"2.0","method":"notifications/initialized"}),
+        serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"model_predict","arguments":{"id":object.id(),"csv":input}}}),
+        serde_json::json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"model_verify","arguments":{"id":object.id()}}}),
+    ] {
+        writeln!(stdin, "{message}").unwrap();
+    }
+    drop(stdin);
+    let output = child.wait_with_output().unwrap();
+    assert_eq!(
+        code(&output),
+        0,
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let responses: Vec<serde_json::Value> = String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    assert_eq!(responses[1]["result"]["isError"], false, "{}", responses[1]);
+    assert_eq!(
+        responses[1]["result"]["structuredContent"]["predictions_csv"],
+        std::fs::read_to_string(dir.path().join("cli.csv")).unwrap()
+    );
+    assert_eq!(responses[2]["result"]["isError"], false, "{}", responses[2]);
+}

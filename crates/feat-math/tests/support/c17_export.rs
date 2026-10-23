@@ -233,3 +233,38 @@ int main(void) {
     ]));
     c17::run(Command::new("python3").current_dir(&root).args(["-c", "import ctypes; m=ctypes.CDLL('./libmodel.so'); assert m.jope_model_abi_version()==1; assert m.jope_model_free(0)==2"]));
 }
+
+#[test]
+fn title_line_breaks_remain_metadata_and_native_callers_execute() {
+    let root = dir("title-framing");
+    let genome = fixture();
+    let options = EmitOptions {
+        title: Some("C17\r\ncompile_error!(\"injected title\");\u{2028}\u{2029}tail".into()),
+        ..EmitOptions::default()
+    };
+    let bundle = transpile::emit_c17(&genome, &options).unwrap();
+    let manifest: serde_json::Value =
+        serde_json::from_str(&bundle.files["c17/manifest.json"]).unwrap();
+    assert_eq!(
+        manifest["options"]["title"],
+        options.title.as_deref().unwrap()
+    );
+    let x = vec![vec![0.0], vec![1.0], vec![2.0], vec![3.0]];
+    let y = vec![1.0, 3.0, 5.0, 7.0];
+    let test = vec![vec![0.5], vec![2.5]];
+    let expected = feat_math::fit_predict(&genome, &x, &y, &test).unwrap();
+    let got = c17::predictions(&root, &genome, &options, &x, &y, &test);
+    assert_eq!(
+        got,
+        expected
+            .iter()
+            .map(|value| value.to_bits())
+            .collect::<Vec<_>>()
+    );
+    let caller = fs::read_to_string(root.join("consumer.c")).unwrap();
+    let clang: Vec<u64> = c17::consumer(&root, "clang", &caller)
+        .lines()
+        .map(|line| u64::from_str_radix(line, 16).unwrap())
+        .collect();
+    assert_eq!(clang, got);
+}

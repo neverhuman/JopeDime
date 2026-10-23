@@ -85,9 +85,9 @@ bash examples/c17/run.sh
 CC=clang bash examples/c17/run.sh
 ```
 
-The five native contract tests cover deterministic source identity, all compilation-input
+The six native contract tests cover deterministic source identity, all compilation-input
 bindings, strict C17 under GCC/Clang, C++ linkage, shared-library loading, shape/overflow/
 alignment refusal, handle lifetime, concurrent prediction, aliasing, explicit runtime options
-and injected panic containment. The existing 83-case golden suite now executes a real C caller
+injected panic containment, and CRLF/Unicode title framing with exact option metadata. The existing 83-case golden suite now executes a real C caller
 and compares prediction bits against the interpreter alongside Python/Rust, including the
 fast-runtime fixtures. A passing test listing alone is not execution evidence.

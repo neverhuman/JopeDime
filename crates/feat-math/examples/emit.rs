@@ -19,9 +19,12 @@ fn main() -> Result<()> {
     let c17 = args.iter().any(|arg| arg == "--c17");
     args.retain(|arg| arg != "--c17");
     let require_all = args.iter().any(|arg| arg == "--all");
-    args.retain(|arg| arg != "--all");
+    let typescript = args
+        .iter()
+        .any(|arg| arg == "--typescript" || arg == "--ts");
+    args.retain(|arg| !["--all", "--typescript", "--ts"].contains(&arg.as_str()));
     let [dsl, out] = args.as_slice() else {
-        bail!("usage: emit [--all] [--c17] <program.dsl> <out-dir>");
+        bail!("usage: emit [--all] [--c17] [--typescript] <program.dsl> <out-dir>");
     };
     let (dsl, out) = (dsl.clone(), out.clone());
     let source = std::fs::read_to_string(&dsl).with_context(|| format!("read {dsl}"))?;
@@ -68,6 +71,12 @@ fn main() -> Result<()> {
             std::fs::write(dest, source)?;
         }
         targets.push("c17");
+    }
+    if typescript {
+        let bundle = transpile::emit_typescript(&genome, &opts)?;
+        std::fs::write(out.join("model.ts"), bundle.source)?;
+        std::fs::write(out.join("model.kernel.rs"), bundle.kernel)?;
+        targets.push("ts");
     }
     std::fs::write(out.join("targets.txt"), format!("{}\n", targets.join(" ")))?;
     println!("emitted {} to {}", targets.join(" "), out.display());

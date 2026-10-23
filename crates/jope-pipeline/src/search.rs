@@ -59,6 +59,7 @@ use feat_math::{
     genome::GenomeIr,
     metrics::{r2, rmse},
 };
+use jope_runtime::fitness::Fitness;
 use rayon::prelude::*;
 use serde::Serialize;
 use std::{
@@ -183,6 +184,10 @@ pub struct SearchOptions {
     /// Advisory only: it does not mutate decisions or observations. Reporter overhead can
     /// affect wall timings and admission when the seconds deadline binds.
     pub progress: Option<Arc<crate::progress::Progress>>,
+    /// The regression objective programs are ranked by (`--fitness`), validated by the caller.
+    /// `None` ranks by held-out RMSE. RMSE and R² are measured either way; under an objective a
+    /// candidate whose held-out predictions the objective cannot score is a score failure.
+    pub objective: Option<Fitness>,
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -202,6 +207,7 @@ impl SearchOptions {
             record_events: true,
             event_binding: None,
             progress: None,
+            objective: None,
         }
     }
 
@@ -355,6 +361,10 @@ pub struct Observation {
     /// Held-out RMSE, in the dataset's own target units.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rmse: Option<f64>,
+    /// The search objective's minimization loss on the held-out rows; present exactly when the
+    /// search ranks by an objective and the candidate measured.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective_loss: Option<f64>,
     pub seconds: f64,
     /// [`MEASURED`], or one of the failure statuses.
     pub status: &'static str,
@@ -444,6 +454,11 @@ impl Observation {
     pub fn measured(&self) -> bool {
         self.status == MEASURED
     }
+
+    /// What the search ranks by: the objective's loss when it has one, else held-out RMSE.
+    pub fn score(&self) -> Option<f64> {
+        self.objective_loss.or(self.rmse)
+    }
 }
 
 /// An [`Observation`] as `observations.json` publishes it, read back for re-derivation.
@@ -461,6 +476,8 @@ pub struct ObservationRecord {
     pub hold_r2: Option<f64>,
     #[serde(default)]
     pub rmse: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective_loss: Option<f64>,
     pub seconds: f64,
     pub status: String,
     #[serde(default)]
@@ -493,6 +510,11 @@ impl ObservationRecord {
                 && (status == MEASURED) == self.failure.is_none(),
             "observation status {status} disagrees with its scores"
         );
+        ensure!(
+            self.objective_loss
+                .is_none_or(|loss| status == MEASURED && loss.is_finite()),
+            "an objective loss belongs to a measured observation"
+        );
         Ok(Observation {
             genome: self.genome,
             program_sha256: self.program_sha256,
@@ -502,6 +524,7 @@ impl ObservationRecord {
             train_r2: self.train_r2,
             hold_r2: self.hold_r2,
             rmse: self.rmse,
+            objective_loss: self.objective_loss,
             seconds: self.seconds,
             status,
             failure: self.failure,
@@ -534,6 +557,9 @@ pub struct CutSearch {
     pub best_validation_rmse: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_validation_r2: Option<f64>,
+    /// With an objective: the best program's held-out objective loss on this cut.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub best_validation_objective: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_program: Option<String>,
     /// Every champion migration between islands on this cut (none with one island).
@@ -643,6 +669,7 @@ pub(crate) fn evaluate(
     generation: usize,
     origin: &'static str,
     clock: Clock,
+    objective: Option<&Fitness>,
 ) -> Observation {
     let started = clock.start();
     let record = |status, failure: Option<String>, seconds| Observation {
@@ -654,6 +681,7 @@ pub(crate) fn evaluate(
         train_r2: None,
         hold_r2: None,
         rmse: None,
+        objective_loss: None,
         seconds,
         status,
         failure,
@@ -720,10 +748,29 @@ pub(crate) fn evaluate(
             seconds,
         );
     }
+    let objective_loss = match objective {
+        None => None,
+        Some(objective) => match objective
+            .loss_unhashed(&cut.hold_y, &hold, &Default::default())
+            .and_then(|loss| {
+                ensure!(loss.is_finite(), "non-finite objective loss");
+                Ok(loss)
+            }) {
+            Ok(loss) => Some(loss),
+            Err(error) => {
+                return record(
+                    SCORE_FAILED,
+                    Some(format!("objective {}: {error:#}", objective.name())),
+                    seconds,
+                )
+            }
+        },
+    };
     Observation {
         train_r2: Some(train_r2),
         hold_r2: Some(hold_r2),
         rmse: Some(hold_rmse),
+        objective_loss,
         ..record(MEASURED, None, seconds)
     }
 }
@@ -1059,7 +1106,14 @@ fn evaluate_admitted(
                     break;
                 }
                 results.push(Some(record_evaluation(recorder, draw, clock, || {
-                    let mut observation = evaluate(genome, cut, generation, origin, clock);
+                    let mut observation = evaluate(
+                        genome,
+                        cut,
+                        generation,
+                        origin,
+                        clock,
+                        options.objective.as_ref(),
+                    );
                     observation.island = (options.islands > 1).then_some(*island);
                     // Counted as it finishes, so `candidate` records follow the evaluations.
                     if let Some(progress) = &options.progress {
@@ -1078,7 +1132,14 @@ fn evaluate_admitted(
                     .map(|(island, genome, origin, _)| {
                         may_start(origin).then(|| {
                             let started = recorder.map(|_| clock.start());
-                            let mut observation = evaluate(genome, cut, generation, origin, clock);
+                            let mut observation = evaluate(
+                                genome,
+                                cut,
+                                generation,
+                                origin,
+                                clock,
+                                options.objective.as_ref(),
+                            );
                             observation.island = (options.islands > 1).then_some(*island);
                             if let Some(progress) = &options.progress {
                                 progress.observe_current(&observation);
@@ -1264,8 +1325,12 @@ fn run_cut_allocated(
                 continue;
             };
             evaluations += 1;
-            if let Some(rmse) = observation.rmse {
-                islands[island].survivors.push(Scored { genome, rmse });
+            if let (Some(rmse), Some(score)) = (observation.rmse, observation.score()) {
+                islands[island].survivors.push(Scored {
+                    genome,
+                    rmse,
+                    score,
+                });
             }
             observation.island = multi.then_some(island);
             observations.push(observation);
@@ -1278,10 +1343,14 @@ fn run_cut_allocated(
             let known = observations
                 .iter()
                 .find(|o| o.genome == genome && o.measured())
-                .and_then(|o| o.rmse);
-            if let Some(rmse) = known {
+                .and_then(|o| Some((o.rmse?, o.score()?)));
+            if let Some((rmse, score)) = known {
                 if !islands[island].survivors.iter().any(|s| s.genome == genome) {
-                    islands[island].survivors.push(Scored { genome, rmse });
+                    islands[island].survivors.push(Scored {
+                        genome,
+                        rmse,
+                        score,
+                    });
                 }
             }
         }
@@ -1386,9 +1455,9 @@ fn run_cut_allocated(
         .iter()
         .filter(|o| o.measured())
         .min_by(|a, b| {
-            a.rmse
+            a.score()
                 .unwrap_or(f64::INFINITY)
-                .total_cmp(&b.rmse.unwrap_or(f64::INFINITY))
+                .total_cmp(&b.score().unwrap_or(f64::INFINITY))
                 .then(a.genome.cmp(&b.genome))
         })
         .expect("a successful measurement exists");
@@ -1416,6 +1485,7 @@ fn run_cut_allocated(
         comparison: Phase::not_requested(),
         best_validation_rmse: best.rmse,
         best_validation_r2: best.hold_r2,
+        best_validation_objective: best.objective_loss,
         best_program: Some(best.genome.clone()),
         migrations,
         observations,
@@ -1468,7 +1538,7 @@ fn remeasure_in(
     }
     // Every comparison fit, counted on the cut (by position) it was made on.
     let evaluate_counted = |position: usize, g: &str, c: &Cut, n: usize, o: &'static str| {
-        let observation = evaluate(g, c, n, o, clock);
+        let observation = evaluate(g, c, n, o, clock, options.objective.as_ref());
         if let Some(progress) = progress {
             progress.observe(position, &observation);
             progress.tick();
@@ -1573,9 +1643,9 @@ fn open_comparison(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<Option<Ve
                 .filter(|o| o.measured())
                 .collect();
             measured.sort_by(|a, b| {
-                a.rmse
+                a.score()
                     .unwrap()
-                    .total_cmp(&b.rmse.unwrap())
+                    .total_cmp(&b.score().unwrap())
                     .then(a.genome.cmp(&b.genome))
             });
             measured
@@ -1708,14 +1778,15 @@ fn close_comparison(searches: &mut [CutSearch]) -> Result<()> {
             .iter()
             .filter(|o| o.measured())
             .min_by(|a, b| {
-                a.rmse
+                a.score()
                     .unwrap()
-                    .total_cmp(&b.rmse.unwrap())
+                    .total_cmp(&b.score().unwrap())
                     .then(a.genome.cmp(&b.genome))
             })
         {
             search.best_validation_rmse = best.rmse;
             search.best_validation_r2 = best.hold_r2;
+            search.best_validation_objective = best.objective_loss;
             search.best_program = Some(best.genome.clone());
         }
         publish_cut_search(search)?;
@@ -1990,7 +2061,7 @@ mod tests {
         remeasure_with(&cuts, &mut searches, |genome, cut, generation, origin| {
             calls += 1;
             std::thread::sleep(Duration::from_millis(25));
-            evaluate(genome, cut, generation, origin, Clock::Wall)
+            evaluate(genome, cut, generation, origin, Clock::Wall, None)
         })
         .unwrap();
         assert_eq!(calls, 1);
@@ -2014,6 +2085,7 @@ mod tests {
                 train_r2: None,
                 hold_r2: None,
                 rmse: None,
+                objective_loss: None,
                 seconds: 0.0,
                 status: FIT_FAILED,
                 failure: Some("injected failure".to_owned()),
@@ -2385,10 +2457,7 @@ mod tests {
 
     #[test]
     fn a_migrant_enters_only_an_island_it_improves() {
-        let champion = |genome: &str, rmse: f64| Champion {
-            genome: genome.to_owned(),
-            rmse,
-        };
+        let champion = |genome: &str, rmse: f64| Champion::by_rmse(genome, rmse);
         let mut islands = vec![
             Island {
                 rng_seed: 1,
@@ -2605,10 +2674,7 @@ mod tests {
     #[test]
     fn a_single_parent_still_produces_a_child() {
         let seen = BTreeSet::new();
-        let parents = [Scored {
-            genome: BOOTSTRAP_GENOME.to_owned(),
-            rmse: 1.0,
-        }];
+        let parents = [Scored::by_rmse(BOOTSTRAP_GENOME, 1.0)];
         for slot in 0..4 {
             let (genome, origin) = offspring(&parents, &seen, 7, 0, 1, slot);
             assert!(GenomeIr::parse(&genome).is_ok(), "{genome}");
@@ -2756,10 +2822,7 @@ mod tests {
             7,
         );
         let recorder = search_recorder(&cut, &options).unwrap().unwrap();
-        let parents = vec![Scored {
-            genome: BOOTSTRAP_GENOME.into(),
-            rmse: 1.,
-        }];
+        let parents = vec![Scored::by_rmse(BOOTSTRAP_GENOME, 1.)];
         let mut seen = BTreeSet::new();
         for attempt in 0..DISTINCT_CHILD_ATTEMPTS {
             let seed = stream(7, cut.index, 1, 1, attempt as u64);
@@ -2784,10 +2847,7 @@ mod tests {
         .unwrap();
         assert_eq!(log.reconcile().unwrap().draws, DISTINCT_CHILD_ATTEMPTS + 1);
         assert!(log.events.iter().any(|e| matches!(&e.event, SearchEvent::Draw { decision } if decision.source == "random_fallback")));
-        let invalid = vec![Scored {
-            genome: "invalid-parent".into(),
-            rmse: 1.,
-        }];
+        let invalid = vec![Scored::by_rmse("invalid-parent", 1.)];
         let recorder = search_recorder(&cut, &options).unwrap().unwrap();
         let expected = offspring(&invalid, &seen, 7, cut.index, 2, 1);
         let (genome, origin, _) =

@@ -1,36 +1,50 @@
-\documentclass[10pt,twocolumn]{article}
-\usepackage{style}
-\usepackage{flushend}
-\externaldocument[][nocite]{InnovationZero-Supplement}[InnovationZero-Supplement.pdf]
+% main.tex — InnovationZero: Learning to Propose Algorithms Before Testing Them.
+% Build: make -C docs/paper/innovationzero (scripts/build.sh). One file per section under sections/
+% and appendices/; the technical supplement (supplement.tex) and the archive (archive.tex) are
+% separate volumes. Cross-volume references use the prefix S- and resolve against the supplement's
+% .aux in the build directory, so the supplement is typeset first.
+\documentclass[11pt]{article}
+\usepackage{iz}
+\externaldocument[S-]{InnovationZero-Supplement}
+
+\renewcommand\IZShortTitle{InnovationZero}
+\renewcommand\IZTitle{InnovationZero}
+\renewcommand\IZSubtitle{Learning to propose algorithms before testing them}
+\renewcommand\IZAuthors{Jepson Taylor\quad Jordan Morrow\quad Alton Alexander\par\smallskip
+  {\footnotesize\textcolor{izgrey}{Correspondence: Jepson Taylor, Veox AI \textperiodcentered{} \href{mailto:jepson@veox.ai}{jepson@veox.ai}}}}
+\renewcommand\IZDate{Preprint \textperiodcentered{} 22 October 2026 \textperiodcentered{} \href{https://github.com/neverhuman/JopeDime/tree/main/docs/paper/innovationzero}{github.com/neverhuman/JopeDime}}
+\renewcommand\IZStatus{PROTOCOL, PILOTS AND FRONTIER COMPARISON \textperiodcentered{} VERSION 1.1}
+
+\hypersetup{pdftitle={InnovationZero: Learning to Propose Algorithms Before Testing Them},
+  pdfauthor={Jepson Taylor, Jordan Morrow, Alton Alexander}, pdfsubject={Algorithm synthesis from data},
+  pdfkeywords={algorithm synthesis, zero feedback, frontier models, token yield, Elo, Move 42}}
+
 \begin{document}
-\twocolumn[{
-\frontmatter{Research manuscript}
-\begin{minipage}{\textwidth}
-\small
-\noindent\textbf{Abstract.}\quad\input{sections/00-abstract}
-\end{minipage}
-\vspace{9pt}
-\begin{minipage}{\textwidth}
-\centering
-\includegraphics[width=\textwidth]{figures/commitment.pdf}
-\captionof{figure}{\textbf{Move experimentation upstream; keep evaluation independent.}
-Historical experiments may train the proposer. On a new task, one procedure is committed
-before candidate-specific execution or feedback. Compilation, fitting and independent
-evaluation follow the commitment. This is the proposed experimental contract, not a
-claim that the repository has already demonstrated it.}
-\label{fig:commitment}
-\end{minipage}
-\vspace{10pt}
-}]
-\thispagestyle{plain}
+\izmaketitle
+\input{sections/00-abstract}
 \input{sections/01-introduction}
 \input{sections/02-setting}
-\input{sections/03-method}
-\input{sections/04-evidence}
-\input{sections/05-protocol}
-\input{sections/06-accounting}
-\input{sections/07-discussion}
-\input{sections/08-conclusion}
-\bibliographystyle{plainnat}
-\bibliography{references}
+\input{sections/03-challenge}
+\input{sections/04-frontier}
+\input{sections/05-model}
+\input{sections/05b-objectives}
+\input{sections/06-evidence}
+\input{sections/07-protocol}
+\input{sections/08-related}
+\input{sections/09-discussion}
+\input{sections/10-conclusion}
+
+\bibliographystyle{unsrtnat}
+{\small\bibliography{references}}
+
+\clearpage
+\appendix
+\renewcommand\thesection{\Alph{section}}
+\input{appendices/A-frontier}
+\input{appendices/B-pilot}
+\input{appendices/C-programs}
+\input{appendices/D-receipts}
+\input{appendices/E-disclosure}
+\input{appendices/F-reproducibility}
+\input{appendices/G-claims}
 \end{document}

@@ -1,0 +1,57 @@
+% Appendix D — authoring receipts
+\section{Authoring receipts and token accounting}
+\label{app:receipts}
+
+Every figure below is taken from the receipt file named, whose exact bytes are archived under
+\code{artifacts/receipts/} with their SHA-256 in \code{evidence/artifact-manifest.json}; none is
+metered provider usage. Supplement~\ref{S-sup:effort} reconciles the phases, the overlap rules
+between reported counters and the contract that future metering must follow.
+
+\paragraph{Opus5p5\_Extra} (\code{crates/jope-bench/regressors/README.md}). Configured model
+\code{claude-opus-5-5}, \code{reasoning\_only}. Source and manifest emitted in one message on
+2026-10-21, between 06:17:44Z and before 06:24Z (at most 6.3 minutes for about 20 thousand tokens);
+at least one earlier, incomplete attempt preceded it. Prompt to frozen source: about 25 minutes
+(15--40), about 75 thousand output tokens including reasoning (50--100k) and 30--80 thousand input
+tokens, mostly the specification re-read each turn. Freeze, admission and integration (measured,
+06:40:49Z to about 07:05Z): 94 thousand or more output tokens (27 thousand reasoning), 245 thousand
+new input tokens and 19.5 million or more cached re-reads. Zero source edits after freezing.
+
+\paragraph{GPT6\_Astra\_Max} (\code{crates/jope-bench/submissions/gpt6-astra-max/effort.json},
+\code{provenance.json}). Start proxy 2026-10-21T06:17:17Z (attachment availability, including a
+clarification exchange); final source written after 678.5 s; frozen at 06:30:07Z (770 s); first
+standalone compile after 1,021 s; working integration tests after 1,657 s. Unique session content
+about 80 thousand tokens through freeze (60--110k), 130 thousand through integration (95--180k);
+prompt file 68,744 bytes (estimated 17,175 tokens); source 27,729 bytes (estimated 7,923 tokens).
+Project memory and the organizer appendix were in context.
+
+\paragraph{GPT6p1\_Sol\_Max} (\code{crates/jope-automl/submissions/GPT6p1\_Sol\_Max/authorship.json}).
+Served model and revision not recorded. Attachment available 06:16:57Z; source written 06:29:37Z
+(760 s); first compile confirmed 06:33:45Z (1,008 s). About 60 thousand tokens through source freeze
+(45--80k) and 90 thousand through first compile (60--120k), described as unique context plus
+generation, not billing. Prior project context present.
+
+\paragraph{Gemini4\_argon\_high} (pull request \#407,
+\code{crates/jope-automl/submissions/Gemini4\_argon\_high/authorship.json}). Served model, revision,
+authoring method and session usage are all unrecorded; the file was received at 08:08:38Z on
+2026-10-22 and compiled at its first attempt at 08:11:45Z with one unused-import warning. It replaced
+an earlier Gemini source that is not in the repository (\code{gemini\_argon\_4.rs}, 98,057 bytes,
+2,968 lines). After integration the owner supplied an authoring statement, archived verbatim in
+\code{evidence/gemini-authoring-statement-20261022.md}: single-pass \code{reasoning\_only}, no
+compilation, data or experiments during design, about 11,800 tokens (2,600 reasoning and 9,200
+output across source, manifest and design note) in an estimated 55--85 seconds. The archived source
+alone is 24,174--32,231 tokens at 4.0--3.0 characters per token, so the reported output cannot
+contain it; the statement's declarations are recorded as self-reported and its counts as
+unreconciled.
+
+\paragraph{Report D} An unattributed single-shot self-report, supplied with the request that began
+this work: 6,850 input, 3,400 reasoning and 9,650 completion tokens (19,900 in total) for a
+33.6-kilobyte, 1,085-line source plus a manifest and design note, in an estimated 75--105 seconds,
+with zero tool calls. The report states that its counts were derived from characters at about 3.8 per
+token and that no runtime counters were visible to it. Its source does not match any file in the
+repository.
+
+\paragraph{Method for \cref{tab:yield}} Source tokens are frozen bytes divided by 3.5 (range 3.0--4.0
+characters per token). For a lexical comparison on a common counter, the repository's source-count
+receipt gives 14,706 tokens for Opus, 5,924 for Astra, 5,442 for Sol and 17,417 for Gemini
+(\code{assets/automl-elo/v1/SOURCE\_COUNTS.json} in pull request \#407). Ranges combine the session's
+own token range with the character range, taking the least and most favourable pairing.

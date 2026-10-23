@@ -2,15 +2,15 @@
 
 ## Companion publication added: 22 October 2026
 
-[InnovationZero](innovationzero/README.md) is a separate, sectioned publication
-with a reproducible three-volume PDF build. It preserves this technical report
-and its historical claim ledger as evidence. The new manuscript distinguishes
-current implementations and exploratory comparisons from its proposed
-first-proposal experiment; it does not relabel earlier results as a completed
-InnovationZero campaign. Exact challenge/source artifacts, a provenance manifest,
-and public literature references accompany it. See the
-[editorial decisions](innovationzero/EDITORIAL_DECISIONS.md) for how the five
-supplied proposals were reconciled.
+[InnovationZero](innovationzero/README.md) is a separate, sectioned publication with a checked,
+reproducible three-volume PDF build (paper, technical supplement, archive). It preserves this
+technical report and its historical claim ledger as evidence. The paper compares the four frontier
+challenge entrants on Elo, error magnitude, token yield, tokens per second and fitting cost, reports
+an identical-cuts pilot against the engine, and specifies — without reporting — the first-proposal
+experiment; it does not relabel earlier results as a completed InnovationZero campaign. Exact
+challenge and source artifacts, a provenance manifest and verified literature references accompany
+it. See the [editorial decisions](innovationzero/EDITORIAL_DECISIONS.md) for how the drafts and
+proposals were reconciled.
 
 ## Inputs and outputs
 

@@ -60,6 +60,8 @@ pub struct InventOptions {
     /// search runs ([`crate::progress`]); `None` writes none. It may not alias `train` or lie
     /// in `work_dir` ([`check_events`]).
     pub events: Option<PathBuf>,
+    /// Rank programs by this regression objective on held-out rows instead of RMSE.
+    pub objective: Option<jope_runtime::fitness::Fitness>,
 }
 
 impl InventOptions {
@@ -85,6 +87,7 @@ impl InventOptions {
             cancel: None,
             clock: Clock::Wall,
             events: None,
+            objective: None,
         }
     }
 }
@@ -111,6 +114,9 @@ pub struct Candidates {
     /// Of those, programs with a stage jain-math cannot execute.
     pub excluded_not_executable: usize,
     pub elapsed_seconds: f64,
+    /// The regression objective candidates were ranked by; absent means held-out RMSE.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub objective: Option<crate::receipt::Objective>,
     pub candidates: Vec<Candidate>,
 }
 
@@ -147,6 +153,10 @@ pub struct Candidate {
     /// The search operator that first produced the program (`bootstrap`, `mutation`, ...).
     pub origin: String,
     pub mean_hold_rmse: f64,
+    /// With an objective: its mean held-out minimization loss, the value candidates are
+    /// ranked by.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mean_hold_objective: Option<f64>,
     pub mean_hold_r2: f64,
     pub train_r2: f64,
     pub cuts_measured: usize,
@@ -424,6 +434,9 @@ fn open_events(_events: &Path, _train: &Path, _work_dir: &Path) -> Result<std::f
 /// Search the CSV and return the ranked genomes jain-math can execute.
 pub fn invent(options: &InventOptions) -> Result<Candidates> {
     preflight(options)?;
+    if let Some(objective) = &options.objective {
+        crate::run::check_objective(objective)?;
+    }
     ensure_fresh_work_dir(&options.work_dir)?;
     if let Some(events) = &options.events {
         check_events(events, &options.train, &options.work_dir)?;
@@ -463,6 +476,7 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
                 options.budget,
             ))
         }),
+        objective: options.objective.clone(),
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
@@ -512,6 +526,7 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
                 .unwrap_or("unknown")
                 .to_owned(),
             mean_hold_rmse: best.validation_rmse,
+            mean_hold_objective: best.validation_objective,
             mean_hold_r2: best.validation_r2,
             train_r2: best.train_r2,
             cuts_measured: best.cuts_measured,
@@ -555,6 +570,11 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
         ranked,
         excluded_not_executable,
         elapsed_seconds: started.elapsed().as_secs_f64(),
+        objective: options
+            .objective
+            .as_ref()
+            .map(crate::receipt::Objective::of)
+            .transpose()?,
         candidates,
     })
 }
@@ -796,5 +816,40 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("--work-dir"));
+    }
+
+    #[test]
+    fn invent_ranks_candidates_by_an_objective_and_records_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = write_csv(dir.path(), 120);
+        let objective = jope_runtime::fitness::Fitness::parse(
+            r#"{"metric":"asymmetric_absolute","under_cost":4,"over_cost":1}"#,
+        )
+        .unwrap();
+        let mut options = InventOptions::new(&train, "y", dir.path().join("objective"));
+        options.budget = search::Budget {
+            evaluations: 24,
+            seconds: 600,
+        };
+        options.cuts = 2;
+        options.top_k = 4;
+        options.objective = Some(objective.clone());
+        let ranked = invent(&options).unwrap();
+        assert_eq!(
+            ranked.objective.as_ref().unwrap().fitness_sha256,
+            objective.identity().unwrap()
+        );
+        assert!(ranked
+            .candidates
+            .iter()
+            .all(|c| c.mean_hold_objective.is_some_and(f64::is_finite)));
+        assert!(ranked
+            .candidates
+            .windows(2)
+            .all(|w| w[0].mean_hold_objective <= w[1].mean_hold_objective));
+        let mut refused = InventOptions::new(&train, "y", dir.path().join("refused"));
+        refused.objective = Some(jope_runtime::fitness::Fitness::parse("sharpe").unwrap());
+        assert!(invent(&refused).is_err());
+        assert!(!dir.path().join("refused").exists());
     }
 }

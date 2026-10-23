@@ -1,0 +1,5 @@
+{
+  "metric": "asymmetric_absolute",
+  "under_cost": 3.0,
+  "over_cost": 1.0
+}

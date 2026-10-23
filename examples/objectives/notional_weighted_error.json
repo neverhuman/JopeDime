@@ -1,0 +1,10 @@
+{
+  "metric": "weighted",
+  "weights": {
+    "op": "column",
+    "name": "notional"
+  },
+  "fitness": {
+    "metric": "mae"
+  }
+}

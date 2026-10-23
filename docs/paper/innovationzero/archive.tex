@@ -1,0 +1,61 @@
+% archive.tex — InnovationZero archive: every complete text the paper compares, byte for byte.
+% The entries are generated into the build directory (archive-index.tex) by scripts/check.sh
+% --prepare, from evidence/artifact-manifest.json and evidence/pilot-2026-10-22/programs.tsv, after
+% every byte count and SHA-256 has been verified. Nothing here is typed by hand.
+\documentclass[10pt]{article}
+\usepackage{iz}
+\externaldocument[M-]{InnovationZero}
+\renewcommand\thesection{\arabic{section}}
+\renewcommand\IZShortTitle{InnovationZero \textperiodcentered{} Archive}
+\renewcommand\IZTitle{Archive}
+\renewcommand\IZSubtitle{The General Regressor Challenge, the four frontier entrants and the ten
+  engine programs compared in \emph{InnovationZero}, printed in full}
+\renewcommand\IZAuthors{Jepson Taylor\quad Jordan Morrow\quad Alton Alexander}
+\renewcommand\IZDate{22 October 2026 \textperiodcentered{} repository \code{neverhuman/JopeDime}}
+\renewcommand\IZStatus{SUPPLEMENTARY MATERIAL \textperiodcentered{} ARCHIVE}
+\hypersetup{pdftitle={InnovationZero: Archive}, pdfauthor={Jepson Taylor, Jordan Morrow, Alton Alexander}}
+
+\DefineVerbatimEnvironment{ArchiveText}{Verbatim}{}
+\newcommand\archivepart[2]{\clearpage
+  \phantomsection\addcontentsline{toc}{part}{#1}%
+  {\noindent\sffamily\sbseries\Large\color{izaccent}#1\par}\medskip
+  \noindent #2\par}
+% #1 kind (text|rust), #2 title, #3 id, #4 path, #5 bytes, #6 lines, #7 SHA-256, #8 snapshot
+\newcommand\archiveentry[8]{\clearpage
+  \section{#2}\label{arc:#3}
+  \begin{center}\tablesf
+  \begin{tabularx}{\linewidth}{@{}lL@{}}
+  \toprule
+  File & \nolinkurl{docs/paper/innovationzero/#4} \\
+  Size & #5 bytes, #6 lines \\
+  SHA-256 & \nolinkurl{#7} \\
+  Snapshot & #8 \\
+  \bottomrule
+  \end{tabularx}
+  \end{center}
+  \ifx\relax#1\relax\else\csname archive@#1\endcsname{#4}\fi}
+\expandafter\def\csname archive@rust\endcsname#1{\lstinputlisting[language=Rust]{#1}}
+\expandafter\def\csname archive@text\endcsname#1{\VerbatimInput[fontsize=\fontsize{7.2pt}{8.6pt},
+  breaklines=true, breakanywhere=true, breaksymbolleft={\textcolor{izrule}{$\hookrightarrow$}},
+  breaksymbolright={}, numbers=left, numbersep=7pt,
+  formatcom=\color{izink}\ttfamily, tabsize=4, xleftmargin=16pt]{#1}}
+
+\begin{document}
+\izmaketitle
+\noindent This volume prints, in full and without edits, every text whose content the paper analyses:
+the challenge as its entrants received it and as its organizer wrote it, the four frozen frontier
+entrants, and the ten programs the engine wrote for the pilot datasets. Each entry is typeset
+directly from the archived file named in its header, after the build has checked that file's byte
+count and SHA-256 against the manifest; snapshot commits identify where in the repository's history
+each archived copy was taken. Line numbers are the file's own; a hooked arrow marks a line wrapped
+for the page. Wrapping and page breaks are presentation only: the files and their hashes are the
+authority. Printing a source establishes what was compiled and scored; it does not establish how
+fairly a session was run or how well a program generalizes, which the paper discusses with the
+receipts.
+
+{\small\tableofcontents}
+\archivepart{The challenge and the four frontier entrants}{The participant packet and master file of
+the General Regressor Challenge (Section~\ref{M-sec:challenge} of the paper), followed by the four
+frontier-written regressors in order of their Elo on the 64-family panel.}
+\input{archive-index}
+\end{document}

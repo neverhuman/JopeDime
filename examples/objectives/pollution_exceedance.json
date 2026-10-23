@@ -1,0 +1,54 @@
+{
+  "metric": "composite",
+  "terms": [
+    {
+      "weight": 0.6,
+      "scale": 1.0,
+      "fitness": {
+        "metric": "pinball",
+        "quantile": 0.9
+      }
+    },
+    {
+      "weight": 0.4,
+      "scale": 1.0,
+      "fitness": {
+        "metric": "custom",
+        "name": "missed_alerts",
+        "direction": "minimize",
+        "expression": {
+          "op": "mul",
+          "left": {
+            "op": "step",
+            "arg": {
+              "op": "sub",
+              "left": {
+                "op": "y"
+              },
+              "right": {
+                "op": "constant",
+                "value": 50.0
+              }
+            }
+          },
+          "right": {
+            "op": "step",
+            "arg": {
+              "op": "sub",
+              "left": {
+                "op": "constant",
+                "value": 50.0
+              },
+              "right": {
+                "op": "pred"
+              }
+            }
+          }
+        },
+        "aggregation": {
+          "kind": "mean"
+        }
+      }
+    }
+  ]
+}

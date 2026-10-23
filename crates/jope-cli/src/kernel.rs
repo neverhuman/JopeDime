@@ -276,6 +276,29 @@ fn emit_genome_with_options_impl(
                     emit_cpp17(&parsed, opts).context("emit C++20")?
                 }
             }
+            "typescript" => {
+                let bundle = feat_math::transpile::emit_typescript(&parsed, opts)?;
+                for (target, filename, source) in [
+                    ("typescript", "model.ts", &bundle.source),
+                    ("typescript-kernel", "model.kernel.rs", &bundle.kernel),
+                ] {
+                    let path = if let Some(root) = output {
+                        fs::create_dir_all(root)?;
+                        let path = root.join(filename);
+                        fs::write(&path, source)?;
+                        Some(path.display().to_string())
+                    } else {
+                        None
+                    };
+                    artifacts.push(Artifact {
+                        lang: target.into(),
+                        bytes: source.len(),
+                        sha256: digest(source),
+                        path,
+                    });
+                }
+                continue;
+            }
             "javascript" => emit_javascript(&parsed, opts).context("emit javascript")?,
             _ => unreachable!(),
         };
@@ -391,9 +414,10 @@ fn languages(lang: &str) -> Result<Vec<&'static str>> {
         "cpp17-recipe-v2" => vec!["cpp17-recipe-v2"],
         "cpp20" => vec!["cpp20"],
         "javascript" | "js" => vec!["javascript"],
+        "typescript" | "ts" => vec!["typescript"],
         "all" => vec!["python", "rust", "cpp17", "javascript"],
         other => bail!(
-            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|c17|all)"
+            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|typescript|c17|all)"
         ),
     })
 }
@@ -542,6 +566,14 @@ mod artifact_v3_tests {
         assert_eq!(report.schema, "jope.emit.v3");
         assert!(report.ok);
         assert!(report.artifacts.iter().any(|a| a.lang == "manifest-v3"));
+        for language in ["ts", "typescript", "v3:typescript"] {
+            let output = dir.path().join(language.replace(':', "-"));
+            let report = emit_genome(DEFAULT_GENOME, language, Some(&output)).unwrap();
+            assert!(report.ok);
+            assert!(output.join("model.ts").is_file());
+            assert!(output.join("model.kernel.rs").is_file());
+            assert!(report.artifacts.iter().any(|a| a.lang == "typescript"));
+        }
         let refused = dir.path().join("unsupported");
         let err = emit_genome("(pipe X (histgbm))", "v3:js", Some(&refused)).unwrap_err();
         assert!(err.to_string().contains("unsupported requested targets"));

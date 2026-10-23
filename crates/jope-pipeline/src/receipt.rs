@@ -9,6 +9,13 @@
 //! v3 adds `search.seeding` (the genomes generation 0 was seeded with, their digests and the
 //! parent receipt they came from). v1 and v2 receipts keep validating against their own
 //! committed schemas; nothing about them is reinterpreted.
+//!
+//! A search ranked by a regression objective writes `jope.pipeline-objective-receipt/v1`
+//! instead: v3 plus the objective (`search.objective`) and the best program's held-out
+//! objective loss (`search.best.validation_objective`, per cut `best_validation_objective`).
+//! A search ranked by RMSE still writes v3, byte for byte. The v3 file is frozen
+//! (`docs/contracts/algorithmic-selfplay-identity.md`) and `jope.pipeline-receipt/v5` is
+//! reserved for the self-play plan, hence a name of its own.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -19,6 +26,29 @@ pub const RECEIPT_SCHEMA_ID: &str = "jope.pipeline-receipt/v3";
 pub const RECEIPT_SCHEMA_JSON: &str =
     include_str!("../../../schemas/jope.pipeline-receipt.v3.schema.json");
 
+/// The receipt of a search ranked by a regression objective: v3 plus the objective.
+pub const OBJECTIVE_SCHEMA_ID: &str = "jope.pipeline-objective-receipt/v1";
+pub const OBJECTIVE_SCHEMA_JSON: &str =
+    include_str!("../../../schemas/jope.pipeline-objective-receipt.v1.schema.json");
+
+/// What the objective receipt adds to v3, as JSON pointers into the derived schema.
+const OBJECTIVE_ONLY: [&str; 4] = [
+    "/$defs/Best/properties/validation_objective",
+    "/$defs/CutSearch/properties/best_validation_objective",
+    "/$defs/Search/properties/objective",
+    "/$defs/Objective",
+];
+
+/// The schema a new receipt is written under: the objective receipt exactly when the search
+/// ranked programs by an objective.
+pub fn schema_id(objective_ranked: bool) -> &'static str {
+    if objective_ranked {
+        OBJECTIVE_SCHEMA_ID
+    } else {
+        RECEIPT_SCHEMA_ID
+    }
+}
+
 /// The previous current schema: total-budget accounting and complete-coverage selection,
 /// without seeding.
 pub const V2_SCHEMA_ID: &str = "jope.pipeline-receipt/v2";
@@ -28,6 +58,48 @@ pub const V2_SCHEMA_JSON: &str =
 pub const LEGACY_SCHEMA_ID: &str = "jope.pipeline-receipt/v1";
 pub const LEGACY_SCHEMA_JSON: &str =
     include_str!("../../../schemas/jope.pipeline-receipt.v1.schema.json");
+
+/// The regression objective a search ranked programs by.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Objective {
+    /// The objective's name (`pinball`, a custom name, `weighted_…`, `composite`).
+    pub name: String,
+    /// `minimize` or `maximize`; selection always minimizes the loss (maximized values negated).
+    pub direction: String,
+    /// sha256 of `["jope.regression-fitness/v1", specification]`.
+    #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
+    pub fitness_sha256: String,
+    /// The complete specification (`schemas/jope.regression-fitness.v1.schema.json`).
+    pub specification: serde_json::Value,
+}
+
+impl Objective {
+    pub fn of(fitness: &jope_runtime::fitness::Fitness) -> anyhow::Result<Self> {
+        Ok(Objective {
+            name: fitness.name(),
+            direction: match fitness.direction() {
+                jope_runtime::fitness::Direction::Minimize => "minimize",
+                jope_runtime::fitness::Direction::Maximize => "maximize",
+            }
+            .to_owned(),
+            fitness_sha256: fitness.identity()?,
+            specification: serde_json::to_value(fitness)?,
+        })
+    }
+    /// The specification, re-validated against its recorded identity.
+    pub fn fitness(&self) -> anyhow::Result<jope_runtime::fitness::Fitness> {
+        let fitness: jope_runtime::fitness::Fitness =
+            serde_json::from_value(self.specification.clone())?;
+        anyhow::ensure!(
+            fitness.identity()? == self.fitness_sha256
+                && fitness.name() == self.name
+                && Self::of(&fitness)?.direction == self.direction,
+            "the recorded objective does not match its identity, name or direction"
+        );
+        Ok(fitness)
+    }
+}
 
 /// One genome generation 0 was seeded with.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -219,6 +291,10 @@ pub struct CutSearch {
     /// That same candidate's held-out R^2.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_validation_r2: Option<f64>,
+    /// With `search.objective`: that same candidate's held-out objective loss, by which it was
+    /// the best; `best_validation_rmse` is then its RMSE, not necessarily the lowest RMSE.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub best_validation_objective: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_program: Option<String>,
 }
@@ -233,6 +309,10 @@ pub struct Best {
     /// dataset's own target units. There is no normalisation to undo: the search
     /// fits the committed rows as they are.
     pub validation_rmse: f64,
+    /// With `search.objective`: the mean held-out objective loss (minimized) the program was
+    /// selected by.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub validation_objective: Option<f64>,
     /// Mean held-out R^2 over the same cuts — the fits never saw these rows.
     pub validation_r2: f64,
     /// Mean in-sample R^2, for the gap against `validation_r2`.
@@ -284,6 +364,10 @@ pub struct Search {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(required)]
     pub islands: Option<Islands>,
+    /// The regression objective (`--fitness`) every candidate was ranked by on its held-out
+    /// rows. Absent: ranked by held-out RMSE.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective: Option<Objective>,
 }
 
 /// One emitted source file.
@@ -334,11 +418,46 @@ impl Receipt {
     /// Structural invariants the schema cannot express.
     pub fn invariant_errors(&self) -> Vec<String> {
         let mut errors = Vec::new();
-        if ![RECEIPT_SCHEMA_ID, V2_SCHEMA_ID, LEGACY_SCHEMA_ID].contains(&self.schema.as_str()) {
+        if ![
+            RECEIPT_SCHEMA_ID,
+            OBJECTIVE_SCHEMA_ID,
+            V2_SCHEMA_ID,
+            LEGACY_SCHEMA_ID,
+        ]
+        .contains(&self.schema.as_str())
+        {
             errors.push(format!(
-                "schema is {:?}, expected {RECEIPT_SCHEMA_ID:?}",
+                "schema is {:?}, expected {RECEIPT_SCHEMA_ID:?} or {OBJECTIVE_SCHEMA_ID:?}",
                 self.schema
             ));
+        }
+        // An objective changes what "best" means, so the schema says which ranking was used.
+        if self.search.objective.is_some() != (self.schema == OBJECTIVE_SCHEMA_ID) {
+            errors.push(format!(
+                "a {} receipt {} an objective; only {OBJECTIVE_SCHEMA_ID} records one",
+                self.schema,
+                if self.search.objective.is_some() {
+                    "records"
+                } else {
+                    "lacks"
+                }
+            ));
+        }
+        // Under an objective, every best program carries the loss it was best by.
+        if self.search.objective.is_some() {
+            if let Some(best) = &self.search.best {
+                if best.validation_objective.is_none() {
+                    errors.push("the best program lacks its validation_objective".into());
+                }
+            }
+            for cut in &self.search.cuts {
+                if cut.best_program.is_some() && cut.best_validation_objective.is_none() {
+                    errors.push(format!(
+                        "cut {}: the best program lacks its best_validation_objective",
+                        cut.cut
+                    ));
+                }
+            }
         }
         for stage in &self.stages {
             if !STATUSES.contains(&stage.status.as_str()) {
@@ -427,10 +546,11 @@ impl Receipt {
                 self.search.selection
             ));
         }
-        if self.schema == RECEIPT_SCHEMA_ID || self.schema == V2_SCHEMA_ID {
+        let current = self.schema == RECEIPT_SCHEMA_ID || self.schema == OBJECTIVE_SCHEMA_ID;
+        if current || self.schema == V2_SCHEMA_ID {
             self.v2_errors(&mut errors);
         }
-        if self.schema == RECEIPT_SCHEMA_ID {
+        if current {
             self.v3_errors(&mut errors);
         } else if self.search.seeding.is_some() || self.search.islands.is_some() {
             errors.push(format!(
@@ -543,7 +663,12 @@ impl Receipt {
         {
             errors.push("invalid v2 total budget or missing budget policy".into());
         }
-        if search.selection != crate::select::MIN_MEAN_VALIDATION_RMSE
+        let rule = if search.objective.is_some() {
+            crate::select::MIN_MEAN_VALIDATION_OBJECTIVE
+        } else {
+            crate::select::MIN_MEAN_VALIDATION_RMSE
+        };
+        if search.selection != rule
             || search.compared_cuts.as_ref() != Some(&expected.iter().copied().collect::<Vec<_>>())
         {
             errors.push("v2 selection must compare all requested cuts".into());
@@ -689,18 +814,46 @@ impl Receipt {
     }
 }
 
-/// The committed schema, parsed.
+/// The committed v3 schema, parsed.
 pub fn schema() -> serde_json::Value {
     serde_json::from_str(RECEIPT_SCHEMA_JSON).expect("committed receipt schema parses")
 }
 
-/// The schema schemars derives from [`Receipt`].
+/// The committed objective receipt schema, parsed.
+pub fn objective_schema() -> serde_json::Value {
+    serde_json::from_str(OBJECTIVE_SCHEMA_JSON).expect("committed objective receipt schema parses")
+}
+
+/// The v3 schema schemars derives from [`Receipt`]: the type without what an objective adds.
 pub fn derived_schema() -> serde_json::Value {
+    let mut value = derive(
+        RECEIPT_SCHEMA_ID,
+        "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v3.schema.json",
+    );
+    for pointer in OBJECTIVE_ONLY {
+        let (parent, key) = pointer.rsplit_once('/').expect("a pointer below the root");
+        let removed = value
+            .pointer_mut(parent)
+            .and_then(serde_json::Value::as_object_mut)
+            .and_then(|map| map.remove(key));
+        assert!(removed.is_some(), "the derived schema has no {pointer}");
+    }
+    value
+}
+
+/// The objective receipt schema schemars derives from [`Receipt`].
+pub fn derived_objective_schema() -> serde_json::Value {
+    derive(
+        OBJECTIVE_SCHEMA_ID,
+        "https://github.com/neverhuman/JopeDime/schemas/jope.pipeline-objective-receipt.v1.schema.json",
+    )
+}
+
+fn derive(id: &str, url: &str) -> serde_json::Value {
     let mut value = schemars::schema_for!(Receipt).to_value();
-    value["title"] = RECEIPT_SCHEMA_ID.into();
-    value["$id"] =
-        "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v3.schema.json".into();
-    value["properties"]["schema"]["const"] = RECEIPT_SCHEMA_ID.into();
+    value["title"] = id.into();
+    value["$id"] = url.into();
+    value["properties"]["schema"]["const"] = id.into();
     value["properties"]["policy"]["enum"] = serde_json::json!(["auto", "skip", "require"]);
     value["$defs"]["Stage"]["properties"]["status"]["enum"] = serde_json::json!(STATUSES);
     let stops = serde_json::json!([
@@ -768,6 +921,8 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt, Vec<String>>
         serde_json::from_str(LEGACY_SCHEMA_JSON).expect("legacy schema parses")
     } else if value["schema"] == V2_SCHEMA_ID {
         serde_json::from_str(V2_SCHEMA_JSON).expect("v2 schema parses")
+    } else if value["schema"] == OBJECTIVE_SCHEMA_ID {
+        objective_schema()
     } else {
         schema()
     };

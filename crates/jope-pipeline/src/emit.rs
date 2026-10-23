@@ -35,6 +35,7 @@ pub enum Language {
     Cpp17,
     Cpp20,
     JavaScript,
+    TypeScript,
     Cpp17Fitted,
     C17,
 }
@@ -55,6 +56,7 @@ impl Language {
             Language::Cpp17 => "cpp17",
             Language::Cpp20 => "cpp20",
             Language::JavaScript => "javascript",
+            Language::TypeScript => "typescript",
             Language::Cpp17Fitted => "cpp17-fitted",
             Language::C17 => "c17",
         }
@@ -67,6 +69,7 @@ impl Language {
             "cpp17" | "c++17" => Some(Language::Cpp17),
             "cpp20" | "c++20" => Some(Language::Cpp20),
             "javascript" | "js" => Some(Language::JavaScript),
+            "typescript" | "ts" => Some(Language::TypeScript),
             "cpp17-fitted" => Some(Language::Cpp17Fitted),
             "c17" | "c" => Some(Language::C17),
             _ => None,
@@ -84,7 +87,7 @@ impl Language {
             }
             let language = Language::parse(part).with_context(|| {
                 format!(
-                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, c17, cpp17-fitted or all"
+                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, ts, c17, cpp17-fitted or all"
                 )
             })?;
             chosen.insert(language);
@@ -94,7 +97,7 @@ impl Language {
         }
         Ok(Language::ALL
             .into_iter()
-            .chain([Language::Cpp17Fitted, Language::C17])
+            .chain([Language::TypeScript, Language::Cpp17Fitted, Language::C17])
             .filter(|l| chosen.contains(l))
             .collect())
     }
@@ -232,7 +235,7 @@ pub fn emit_with_options(
     }
 
     if languages.contains(&Language::C17) {
-        for (path, source) in transpile::emit_c17(&parsed, options)?.files {
+        for (path, source) in transpile::emit_c17(render_target, options)?.files {
             artifacts.push(Artifact {
                 language: Language::C17.as_str(),
                 build: Some(format!("cd c17 && {}", feat_math::c17::BUILD)),
@@ -240,6 +243,19 @@ pub fn emit_with_options(
             });
         }
         targets.push("c17");
+    }
+    if languages.contains(&Language::TypeScript) {
+        let bundle = transpile::emit_typescript(render_target, options)?;
+        artifacts.push(Artifact {
+            language: "typescript",
+            build: Some(feat_math::typescript::BUILD_COMMAND.into()),
+            ..write(directory, "model.ts", &bundle.source)?
+        });
+        artifacts.push(Artifact {
+            language: "typescript-kernel",
+            ..write(directory, "model.kernel.rs", &bundle.kernel)?
+        });
+        targets.push("ts");
     }
 
     write(
@@ -554,6 +570,19 @@ mod tests {
         assert_eq!(
             std::fs::read_to_string(temp.path().join("targets.txt")).unwrap(),
             "py rs cpp js\n"
+        );
+        let typescript_dir = temp.path().join("typescript");
+        let typescript = emit(
+            crate::select::BOOTSTRAP_GENOME,
+            &[Language::TypeScript],
+            &typescript_dir,
+        )
+        .unwrap();
+        assert!(typescript.exclusions.is_empty());
+        assert_eq!(typescript.artifacts.len(), 2);
+        assert_eq!(
+            std::fs::read_to_string(typescript_dir.join("targets.txt")).unwrap(),
+            "ts\n"
         );
         assert!(temp.path().join("manifest.json").is_file());
         assert_eq!(

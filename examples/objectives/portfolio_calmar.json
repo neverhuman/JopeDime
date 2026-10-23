@@ -1,0 +1,6 @@
+{
+  "metric": "calmar",
+  "max_position": 1.0,
+  "cost": 0.0005,
+  "periods_per_year": 252.0
+}

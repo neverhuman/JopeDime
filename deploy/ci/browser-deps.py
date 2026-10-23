@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify and extract pinned Ubuntu browser libraries into task-local cache; never install."""
+"""Verify and extract pinned Ubuntu task-local dependencies into task-local cache; never install."""
 import argparse
 import contextlib
 import fcntl
@@ -121,12 +121,12 @@ def download(package, path, archives):
         time.sleep(BACKOFF_SECONDS * attempt)
 
 
-def prepare(cache, receipt):
+def prepare(cache, receipt, lock_path=None):
     if platform.machine() != "x86_64":
         raise ValueError("Ubuntu browser dependency lock is amd64 only")
-    lock_bytes = LOCK.read_bytes()
+    lock_bytes = (LOCK if lock_path is None else lock_path).read_bytes()
     lock = json.loads(lock_bytes)
-    if lock["schema"] != "jope.chromium-ubuntu24.04-dependencies/v1" or lock["architecture"] != "amd64":
+    if lock["schema"] not in ("jope.chromium-ubuntu24.04-dependencies/v1", "jope.ubuntu24.04-dependencies/v1") or lock["architecture"] != "amd64":
         raise ValueError("unsupported browser dependency lock")
     identity = hashlib.sha256(lock_bytes).hexdigest()
     cache = cache.resolve()
@@ -171,7 +171,7 @@ def prepare(cache, receipt):
                  "packages": len(paths), "package_bytes": sum(p["size"] for p in lock["packages"]),
                  "inventory_sha256": hashlib.sha256(json.dumps(expected, sort_keys=True).encode()).hexdigest(),
                  "inventory_files": len(expected), "runtime": str(runtime), "fontconfig": str(fontconfig),
-                 "scope": "Task-local native browser dependencies. No apt install, maintainer scripts, host/image changes or runner provenance changes."}
+                 "scope": "Task-local pinned Ubuntu dependencies. No apt install, maintainer scripts, host/image changes or runner provenance changes."}
         receipt.parent.mkdir(parents=True, exist_ok=True)
         with receipt.open("x") as stream:
             stream.write(json.dumps(proof, indent=2) + "\n")
@@ -182,5 +182,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
+    parser.add_argument("--lock", type=Path, help="explicit pinned Ubuntu dependency lock; defaults to Chromium")
     args = parser.parse_args()
-    prepare(args.cache, args.receipt)
+    prepare(args.cache, args.receipt, args.lock)

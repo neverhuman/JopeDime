@@ -208,15 +208,65 @@ In an installed binary that stamps the *user's* repository into receipts. The ap
 depend on `jope-pipeline` (the fence denies it), so this change leaves it alone; it must be fixed
 before pipeline code enters any shipped executable.
 
+## A13 — Stripping fixed; size rebaselined for regression objectives
+
+`[profile.dist]` says `strip = "symbols"`, but the executable kept its symbol tables: Cargo (1.95
+and 1.97, reproduced with a one-file crate) passes `-C strip=debuginfo` to a package whose profile
+override does not repeat `strip`, and `jope-appliance`, which links the executable, has one
+(`opt-level = "s"`). The override now states `strip = "symbols"`. On main (1240120d)
+that removes 591 KB from the `dist` executable (3,738,480 → 3,147,304 B) and 1.75 MB from the
+`dist-ci` one (5,435,360 → 3,684,472 B).
+
+Regression objectives (PR #411) then add 898,952 B to `dist` (+28.6% over stripped main) and
+928,584 B to `dist-ci`, beyond the 5% tolerance, so `size-budgets.toml` was rebaselined to the
+measured head with that attribution: the objective grammar (parse, validate, evaluate) is about
+300 KB of machine code, the JSON-RPC/MCP adapters 80 KB, objective-aware selection and
+calibration 45 KB, shared `serde_json`/`core` instantiations the rest of +688 KB of code, with
+unwind tables, read-only data and relocations in proportion. No dependency was added. Net of
+both, the native-only package is 4,065,423 B, 8.9% above its 2026-10-21 baseline of 3,733,648 B
+(sealed with an independent P-256 key, as below).
+
 ## Measured sizes and build times
 
 | Build | Executable | Package |
 | --- | ---: | ---: |
-| `--profile dist` (fat LTO, one codegen unit, stripped), `embedded` | 3,713,088 B | native-only 3,733,648 B |
-| `--profile dist-ci` (thin LTO, 16 units), `embedded,dev-keys` | 5,429,128 B | fixture 5,545,586 B |
+| `--profile dist` (fat LTO, one codegen unit, stripped), `embedded` | 4,046,256 B | native-only 4,065,423 B |
+| `--profile dist-ci` (thin LTO, 16 units), `embedded,dev-keys` | 4,613,056 B | fixture 4,730,485 B |
+| 2026-10-21, before A13 (symbols not stripped): `dist` | 3,713,088 B | native-only 3,733,648 B |
+| 2026-10-21, before A13 (symbols not stripped): `dist-ci` | 5,429,128 B | fixture 5,545,586 B |
 
 `dist` builds in about 3 minutes and `dist-ci` in about 1.5 minutes from a warm dependency cache on
 2 vCPUs. The native-only package was staged, signed with an independent `openssl` P-256 key
 (base64 DER, as cosign writes it), sealed and verified with that key alone; the release build
 refuses to run it (exit 3) because it trusts only `docs/release/signing.pub`, as intended. Budgets with a 5% tolerance are in `size-budgets.toml`; the full profile's entry is
 provisional until its first internal-restricted build.
+
+
+## A14 — Size attribution for immutable model objects and sessions
+
+PR #413 adds the manifest/hashed-part store, create-only publication and import/export,
+append-only session history, CLI/MCP interfaces and strict known-state JSON consumption.
+Its pinned `serde_ignored` adapter is the sole new dependency. Neither the numerical
+algorithms, optimization settings, signature verification nor 5% size tolerance changes.
+
+A fresh baseline build of PR #411 (`e04cb3fdf3f6dade3e5d017419a126694e15e65d`)
+on xbabe2 with Rust 1.97.1, `dist-ci`, `embedded,dev-keys` reproduced exactly 4,613,056 B
+of code and a 4,730,485 B fixture package. The integrated source
+`d04153fa6715c723522e8cf8d36bd8af8bf6f8ae`, built identically, measures 5,319,208 B
+and 5,435,014 B: +706,152 B of executable (15.3%) and +704,529 B packaged (14.9%).
+ELF comparison attributes 525,584 B to machine code, 32,576 B to
+read-only data, 133,768 B to
+exception/unwind tables and 7,728 B to dynamic relocations. These are
+whole-feature section deltas; per-function attribution is not claimed.
+
+The native-only `dist`, `embedded` build measures 4,542,168 B of executable and
+4,561,056 B packaged (prior A13: 4,046,256 / 4,065,423 B). Its stage was sealed and
+verified with an independent P-256 validation key. The actual model command refuses that
+key before store access (exit 3); the release signing key was not used. Version diagnostics
+can report an untrusted package with exit 0, so that command alone is not a refusal test.
+The fixture budget and native-only budget now name these measured sizes. The blocked
+full profile keeps its provisional 460,000,000 B final limit and follows the new code size;
+no full/neural package or release-host integration is qualified by this measurement.
+
+Raw build, signature, verification, old-budget failure, ELF-section and refusal receipts:
+`/home/ubuntu/jope-evidence/pr-release-drive-20261022T2319Z/413-SIZE-ATTRIBUTION.json`.

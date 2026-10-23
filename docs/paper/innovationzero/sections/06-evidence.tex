@@ -1,0 +1,165 @@
+% Section 6 — Evidence for data-conditioned programs
+\section{Evidence today: programs written for each dataset}
+\label{sec:evidence}
+
+\Cref{sec:frontier} measured route~1, one general program per model. This section turns to route~2:
+programs written for one dataset at a time. Everything in it is a pilot or a reference measurement. Each result carries its track
+(\cref{tab:tracks}) and an evidence label: \est{} established in the repository with a committed,
+reproducible record; \pre{} preliminary, meaning a small panel, an unmerged branch, an estimate or a
+run on a non-qualifying host; \pend{} not yet measured. \Cref{app:claims} traces every number to its
+file.
+
+\subsection{What the program space contains}
+\label{sec:space}
+
+Two reference measurements put those numbers in perspective. Neither is a fair comparison, and we
+use neither as one.
+
+On the 64 families of \cref{sec:u64}, the best program that the engine's offline search had previously found for
+each family --- selected on the same inner validation, after a much larger and unequal search budget
+--- has a geometric-mean RMSE 2.2 to 3.0 times lower than the frontier entrants': the entrants'
+errors are 2.29 (Opus), 2.21 (Sol) and 2.97 (Astra) times the incumbent's, and they beat it on 21, 11
+and 3 of the 64 families respectively \pre. This is a conditional reference, not a contest: the
+incumbent saw far more evaluations and was selected on the same folds it is scored on. What it shows
+is how much better the best known program for each dataset is than any single general algorithm,
+however carefully reasoned.
+
+The public Golden45 ladder makes the same point from the other side \est. When the engine's best
+program per dataset is chosen by looking at test scores --- the minimum over 63,108 test-scored
+evaluations on 42 datasets --- it ranks first of 304 methods at Elo 2259.8. A single fixed-seed run of
+the engine, which never sees test labels, ranks 31st at 1687.0 with 42 of 45 datasets covered,
+below tabular foundation models such as TabFM
+(1934.9) and TabPFN v3 (1909.5) \citep{hollmann2025tabpfn}. The first number is an oracle envelope
+and must never be read as a result; the gap between the two is the clearest statement we have of
+the problem InnovationZero addresses. \emph{Strong programs for these datasets exist in the space.
+Finding them without looking at the answer is the whole problem.}
+
+\subsection{Tracks U and S on identical cuts}
+\label{sec:pilot}
+
+The repository's committed same-cut comparison ranked the engine third of 15 (Elo 1556.6), but on
+ten favourably selected datasets, with only the top five methods deepened and half of the finalists
+covered; it contained no frontier entrant. We therefore ran a complete one \pre: the three
+merged entrants, the engine's track-S proposer at $k=256$ (32 candidates in each of 8 rounds,
+re-run on every cut's training rows), its ten single-head baselines and four external libraries at
+their defaults (XGBoost 2.1.4, LightGBM 4.6.0, CatBoost 1.2.10 and scikit-learn's random forest
+1.7.2) \citep{chen2016xgboost,ke2017lightgbm,prokhorenkova2018catboost,breiman2001rf}. All eighteen
+methods were fitted on the same training rows and scored on the same held-out rows of five cuts of
+the repository's ten test datasets, by one evaluator; every method was scored on every cut, so
+coverage is complete (\cref{app:pilot} gives the protocol). The datasets are a favourable selection
+for the engine: they were chosen, historically, because it ranked first on them.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-pilot-ladder}
+\caption{Tracks U and S on identical cuts: Elo of 18 methods over ten datasets and five cuts
+(\code{jope-arena}, regularized Bradley--Terry). The frontier entrants are track U, the engine track
+S with $k=256$. Pilot on a 2-vCPU host; non-qualifying \pre.}
+\label{fig:ladder}
+\end{figure}
+
+\Cref{fig:ladder} gives the result. Opus's regressor ranks first (Elo 1761.4), the engine's own
+stacking baseline second (1691.8), Sol third (1649.0) and the engine's searched programs fourth
+(1630.9); Astra is eighth (1506.2). The four libraries at their defaults rank tenth to seventeenth.
+On error magnitude the picture shifts again: the engine's programs have the lowest geometric-mean
+RMSE relative to each dataset's best method among the non-baseline methods (1.157, against 1.171 for
+Opus, 1.224 for CatBoost and 1.321 for Sol). Paired over the ten datasets (\cref{tab:pairs}), no
+difference between a frontier entrant and the engine is statistically distinguishable; Opus beats
+XGBoost and LightGBM on all ten datasets and CatBoost on nine; and Opus and Astra differ clearly
+from each other. Per-dataset ranks (\cref{fig:heatmap}) show why aggregates hide so much: most
+methods' ranks swing by ten places or more across datasets, while Opus's regressor is the most
+consistent, never worse than seventh.
+
+\begin{table}[t]
+\caption{Paired comparisons over the ten pilot datasets: wins and losses on pooled out-of-fold RMSE,
+two-sided sign-test $p$, and the geometric-mean RMSE ratio (first over second; below 1 favours the
+first) \pre.}
+\label{tab:pairs}
+\centering\sffamily\footnotesize\lining
+\begin{tabular}{@{}lrrr@{\qquad}lrrr@{}}
+\toprule
+Pair & W--L & $p$ & Ratio & Pair & W--L & $p$ & Ratio \\
+\midrule
+Opus / engine & 6--4 & 0.75 & 1.012 & Engine / XGBoost & 9--1 & 0.021 & 0.765 \\
+Sol / engine & 6--4 & 0.75 & 1.142 & Engine / LightGBM & 9--1 & 0.021 & 0.754 \\
+Astra / engine & 5--5 & 1.00 & 1.222 & Engine / CatBoost & 8--2 & 0.11 & 0.945 \\
+Stack / engine & 5--5 & 1.00 & 0.944 & Opus / XGBoost & 10--0 & 0.002 & 0.774 \\
+Opus / Sol & 6--4 & 0.75 & 0.886 & Opus / LightGBM & 10--0 & 0.002 & 0.763 \\
+Opus / Astra & 9--1 & 0.021 & 0.829 & Opus / CatBoost & 9--1 & 0.021 & 0.957 \\
+Sol / Astra & 7--3 & 0.34 & 0.935 & Sol / CatBoost & 7--3 & 0.34 & 1.080 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-pilot-heatmap}
+\caption{Rank of each method on each pilot dataset among all eighteen (1 = lowest pooled
+out-of-fold RMSE; darker is better). The engine and the frontier entrants trade places dataset by
+dataset; the default libraries are rarely near the top \pre.}
+\label{fig:heatmap}
+\end{figure}
+
+We draw three conclusions, none of which depends on the small sample being representative. First,
+reasoning-only invention is strong: a program written by a language model that never saw a dataset
+ranked first among eighteen, ahead of every library default. Second, on these datasets a
+data-conditioned program found with 256 evaluations is about as good as the best frontier entrant,
+and better on magnitude than most --- which is a statement about track S, not about track C. Third,
+the engine's own stacking head beats its searched programs on error magnitude (ratio 0.944): even
+with 256 evaluations, choosing the best program for a small dataset is noisy. That is precisely the
+job a learned first proposal would have to do better.
+
+\subsection{Ten datasets, ten algorithms}
+\label{sec:code}
+
+Where each frontier entrant wrote one algorithm for every dataset, the engine wrote a different one
+for each (\cref{tab:programs}): ridge regression after robust scaling for one, a Gaussian process
+with a radial-basis-plus-linear kernel over sigmoid features and pairwise products for another,
+gradient-boosted trees after Chebyshev features for a third. Each program was found in 0.33--10.3
+seconds on two CPU cores, and the same program was found on both hosts where the search was run. The
+components are known methods, documented with their origins in the emitted code \citep{hoerl1970ridge,friedman2001gbm};
+what is specific to each dataset is the composition. One program contains a redundant step (robust
+scaling applied twice); we note it rather than tidy it.
+
+\begin{table}[t]
+\caption{The engine's program for each pilot dataset (screen cut), described by its components;
+the full emitted Rust for all ten is in the code supplement \est.}
+\label{tab:programs}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}lrLrr@{}}
+\toprule
+Dataset & Rows $\times$ features & Program & Found in & Rust \\
+\midrule
+\code{047e62b5} & 195 $\times$ 12 & robust scaling, standardization, ridge & 0.4 s & 13.7 KB \\
+\code{1cb97b1d} & 166 $\times$ 10 & sigmoid features, top-5 pairwise products, Gaussian process (rbf + linear) & 10.3 s & 34.3 KB \\
+\code{21fbfe8b} & 1000 $\times$ 21 & winsorizing, Chebyshev degree 6, pairwise products, Gaussian process (rbf + linear) & 1.5 s & 37.9 KB \\
+\code{30ef3eaa} & 109 $\times$ 30 & standardization, ranks, polynomial interactions, ridge & 1.1 s & 15.5 KB \\
+\code{43b4cc3a} & 482 $\times$ 39 & robust scaling, gradient-boosted trees (depth 6, 89 rounds) & 1.4 s & 16.6 KB \\
+\code{693890aa} & 202 $\times$ 1 & target-binned encoding (12 bins), Gaussian process & 9.0 s & 21.9 KB \\
+\code{79e600bc} & 180 $\times$ 3 & polynomial interactions, robust scaling, gradient-boosted trees (depth 3) & 0.3 s & 17.9 KB \\
+\code{b5beff4a} & 575 $\times$ 15 & ranks, normal scores, ridge with cross-validated penalty & 0.7 s & 24.4 KB \\
+\code{c32fa09b} & 1000 $\times$ 9 & ranks, polynomial interactions, bagged histogram boosting & 0.6 s & 24.4 KB \\
+\code{c7d81571} & 1000 $\times$ 7 & winsorizing, Chebyshev degree 4, robust scaling, gradient-boosted trees & 0.6 s & 19.0 KB \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{The emitted code} All ten programs were emitted as standalone Rust and Python, and all
+compile: the Rust with \code{rustc --edition=2021 -O -D unsafe-code} and no warnings, the Python
+with \code{py\_compile} \est. Neither uses anything beyond its standard library; the Python imports
+only \code{csv}, \code{math} and \code{sys}. Two qualifications matter. The C\texttt{++}17 and
+JavaScript emitters cover fewer heads: they produced code for the two ridge programs and refused the
+other eight, so the honest coverage is 10/10 for Rust and Python and 2/10 for C\texttt{++}17 and
+JavaScript (24 of 40 language targets). And each emitted program is a command-line tool that reads
+CSV files, so it uses the standard library's file, environment and process modules, which the
+challenge forbids its entrants; a fit/predict library form, comparable to the challenge interface,
+is part of the protocol. The emitted programs are 13.7--37.9 kilobytes of Rust, the same scale as
+the frontier entrants' 25--97 kilobytes, which makes the two code appendices a fair side-by-side.
+
+\subsection{What is not yet shown}
+
+No result in this section is a track-C result. The engine's programs were chosen after executing
+256 candidates per cut; the frontier entrants are universal programs, not proposals conditioned on
+the data; and no neural proposer has yet committed a first program on held-out data
+(\cref{sec:model}). The question in \cref{sec:intro} is therefore still open, and the next section
+specifies the experiment that will answer it.

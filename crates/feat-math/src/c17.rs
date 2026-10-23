@@ -18,7 +18,15 @@ pub struct Emitted {
 
 /// Same coverage and option admission as the Rust/Python pair. No tool executes here.
 pub fn emit(genome: &GenomeIr, options: &EmitOptions) -> Result<Emitted> {
-    let pair = transpile::emit(genome, options)?;
+    // The shared template emits the title as one Rust doc-comment line.
+    // Normalize only this target's comment framing; retain the caller's exact
+    // original options below and keep the numerical templates unchanged.
+    let mut framed = options.clone();
+    framed.title = options
+        .title
+        .as_ref()
+        .map(|title| title.split_whitespace().collect::<Vec<_>>().join(" "));
+    let pair = transpile::emit(genome, &framed)?;
     let rust_source_sha256 = sha256(pair.rust.as_bytes());
     let mut files: BTreeMap<String, String> = BTreeMap::from([
         ("c17/model.h".into(), include_str!("c17/model.h").into()),

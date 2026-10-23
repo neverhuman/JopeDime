@@ -5,7 +5,7 @@
 
 Standalone JOPE-Dime: a typed program-synthesis engine for tabular models,
 encoders (Hyperion and companions), and emitters that lower a program to Python,
-Rust, C++17, and JavaScript. C++20 CI compiles the C++17 artifact; it is not a
+Rust, C++17, JavaScript, and [TypeScript/WebAssembly](docs/typescript.md). C++20 CI compiles the C++17 artifact; it is not a
 second numeric dialect.
 
 This is the product tree for [`neverhuman/JopeDime`](https://github.com/neverhuman/JopeDime),
@@ -16,6 +16,12 @@ forty generated synthetic fixtures and ten tiny test datasets.
 SOTArena **ASPFM** / `jope-dime` campaign wins are the feat-math program track. The
 encodings→program neural policy will ship because the product needs a router; it is
 **not** a held-out SOTA claim.
+
+Trained models have a [shared model-object contract](docs/model-objects.md):
+`jopedime fit --train train.csv --target y --json` saves to `models/sha256-…/`.
+Use that returned path for `predict`, or `jopedime model` to inspect, verify and export it.
+The extensible JSON manifest retains complete fitted state across producer languages;
+CLI and MCP use the same validator.
 
 What changed in 0.4.0, 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
@@ -60,6 +66,83 @@ is not yet published; see [package status and signing](deploy/appliance/README.m
 Today `--json` writes the final receipt on stdout; human summaries use stderr.
 `--time-limit-seconds` bounds selection, not the subsequent full-data refit.
 For generated code, use the separate workflow below.
+
+## Custom regression objectives (your own `fitness` function)
+
+RMSE is rarely what a business pays for. Tell JopeDime the cost you actually face — a stock-out that
+costs four times an unsold unit, claim frequency per unit of exposure, downside risk after trading
+costs — and it is used to **select** methods, **calibrate** their outputs, and **rank the programs
+the search writes**. One JSON specification works from the CLI, the program search, Rust,
+JSON-RPC and MCP, and is recorded with its sha256 identity in every receipt and model file.
+
+```sh
+J=target/release/jopedime        # cargo build --locked --release -p jope-appliance
+
+# 38 built-ins, with parameter overrides on the command line.
+$J fitness list
+$J fit --train demand.csv --target units --task regression \
+  --fitness pinball:quantile=0.9 --output p90.jope --json        # a P90 forecast, not a mean
+$J fit --train demand.csv --target units --task regression \
+  --fitness asymmetric_absolute:under_cost=4,over_cost=1 --output order.jope
+
+# Your own cost, reading per-row columns that are never used as features.
+cat > cost.json <<'JSON'
+{"metric": "custom", "name": "newsvendor_cost", "direction": "minimize",
+ "expression": {"op": "where", "condition": {"op": "sub", "left": {"op": "y"}, "right": {"op": "pred"}},
+   "then": {"op": "mul", "left": {"op": "column", "name": "unit_margin"},
+            "right": {"op": "sub", "left": {"op": "y"}, "right": {"op": "pred"}}},
+   "else": {"op": "mul", "left": {"op": "column", "name": "holding_cost"},
+            "right": {"op": "sub", "left": {"op": "pred"}, "right": {"op": "y"}}}},
+ "aggregation": {"kind": "mean"}}
+JSON
+$J fitness validate @cost.json                  # resolved spec, columns, sha256 identity
+$J fit --train demand.csv --target units --task regression --fitness @cost.json --output cost.jope
+
+# Insurance: Poisson deviance weighted by an exposure column.
+$J fit --train claims.csv --target frequency --task regression \
+  --fitness @examples/objectives/claims_frequency_exposure.json --output frequency.jope
+
+# Finance: after-cost Sortino on chronological rows, with forward validation.
+$J fit --train returns.csv --target next_return --task regression --validation forward --gap 1 \
+  --fitness sortino:cost=0.0005,periods_per_year=12 --output allocation.jope
+
+# The program search ranks every candidate program by the objective instead of RMSE.
+cargo run --locked --release --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
+  --fitness pinball:quantile=0.9 --budget evaluations=64,seconds=300 --output target/p90-run
+
+# MCP: the same objectives as tools for an agent.
+claude mcp add jopedime -- "$PWD/target/release/jopedime" mcp
+```
+
+Selecting among squared-error models cannot turn a mean forecast into a quantile, so `jopedime`
+also learns a **cross-fitted output calibration**, `max(a + b·pred, floor)`, on out-of-fold
+predictions for your objective, keeps it only when it improves the held-out score, and stores it in
+the model file. Custom objectives are row expressions over `y`, `pred` and numeric columns
+(`where`, `step`, `clip`, `pow`, `log1p`, …) aggregated by mean, sum, quantile or tail mean (CVaR),
+plus weighted and composite forms. The full grammar, the 38 built-ins and the forward-validation
+contract are in [docs/regression-objectives.md](docs/regression-objectives.md);
+[41 recipes](examples/objectives/README.md) cover retail, insurance, energy, safety, finance and
+targeting, and [a real-world benchmark](examples/objectives/real-world/README.md) measures the effect
+on public datasets.
+
+On six public tables, each scored on held-out rows with its own objective (single deterministic
+splits, one seed; `bash examples/objectives/real-world/fetch.sh && bash examples/objectives/real-world/benchmark.sh`):
+
+| Table | Objective | Selected by RMSE | Selected by the objective | + output calibration |
+| --- | --- | ---: | ---: | ---: |
+| Irish wind speed | `pinball:quantile=0.1` | 1.410 | 1.410 | **0.517** (−63%) |
+| California houses | `mape:epsilon=1` | 0.210 | 0.210 | **0.195** (−7%) |
+| Roadside PM10 | `pinball:quantile=0.9` | 0.240 | 0.240 | **0.122** (−49%) |
+| Roadside NO2 | `asymmetric_absolute:under_cost=4,over_cost=1` | 0.975 | 0.975 | **0.629** (−35%) |
+| S&P 500, monthly | `sortino:cost=0.001,periods_per_year=12` (higher is better) | 0.783 | **1.155** (+48%) | 0.839 (+7%) |
+| French motor claims | exposure-weighted Poisson deviance | undefined¹ | 0.789 | **0.637** (−19%) |
+
+¹ The RMSE-selected learner predicts non-positive claim rates for 80 of 6,781 test policies. On four
+tables the objective picked the same learner as RMSE: choosing among squared-error learners is not
+enough, which is why the calibration step exists. On the S&P series selection alone did best; the
+calibrated arm settled on a nearly constant full position. Ranking written programs by the objective is not
+enough on its own either: on the ten committed regression datasets it lowered sealed-test pinball
+loss on four ([search benchmark](examples/objectives/real-world/README.md#program-search-ranked-by-the-objective)).
 
 ## Program source WebSocket
 
@@ -106,14 +189,14 @@ limits and client examples](docs/program-source-stream.md).
 | `jope` with no arguments | prints `jope 0.4.0` <sup>1</sup> |
 | Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
-| Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 5,842 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
+| Emit targets | 8: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly) and `c17` (native C17 bindings) <sup>4</sup> |
+| Rust tests | 5,914 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
-| CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 834 items over 27 lanes <sup>7</sup> |
+| CI | 12 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
+| Coverage map | 841 items over 28 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,212 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,210 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -303,7 +386,7 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-Pull-request CI is `.github/workflows/ci.yml`: ten jobs on the self-hosted `jope-ci` runners.
+Pull-request CI is `.github/workflows/ci.yml`: twelve jobs on the self-hosted `jope-ci` runners.
 Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated
@@ -382,7 +465,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 | Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max` and `Gemini4_argon_high`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md). |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
-| Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |
+| Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, [custom regression objectives via CLI/API/MCP](docs/regression-objectives.md), and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |
 | Vendored | `smartcluster/*` (7 crates) | The jain-smartcluster scheduler, at its own version 8.0.0. |
 
 | Path | Role |
@@ -403,7 +486,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 - [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the emitters
 - [`docs/datasets.md`](docs/datasets.md) — dataset store layout, licence rule and `datasets/test`
 - [`docs/campaigns.md`](docs/campaigns.md) — benchmark campaigns
-- [`docs/paper/innovationzero/`](docs/paper/innovationzero/) — InnovationZero publication: sectioned manuscript, technical supplement, complete challenge and source appendix, with a reproducible PDF build. A protocol and evidence audit; the prospective first-proposal result remains unestablished.
+- [`docs/paper/innovationzero/`](docs/paper/innovationzero/) — InnovationZero publication: sectioned paper, technical supplement and byte-exact archive, with the four frontier entrants compared on Elo, token yield and tokens per second, and a checked, reproducible PDF build. The prospective first-proposal result remains unestablished.
 - [`docs/paper/TECHNICAL_WRITEUP.md`](docs/paper/TECHNICAL_WRITEUP.md) — the CLOVER technical write-up (a draft), its [claim ledger](docs/paper/claims.json) and [numbers trace](docs/paper/NUMBERS_TRACE.md)
 - [`docs/experiments/README.md`](docs/experiments/README.md) — curated 18-record experiment digest ([`experiments.jsonl`](docs/experiments/experiments.jsonl), [`schema.v1.json`](docs/experiments/schema.v1.json) and [synthesis roadmap](docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md))
 - [`docs/runbooks/`](docs/runbooks/) — operator runbooks, the W7 three-host proof among them

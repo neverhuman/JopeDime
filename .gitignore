@@ -66,3 +66,12 @@ nohup.out
 /python/prime/
 # test_trace_recovery_v2.py creates its TemporaryDirectory under this fixtures/ directory.
 /deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/fixtures/
+
+# Local fitted model object store; models can retain training data.
+/models/sha256-*/
+/models/.import-*/
+
+/models/sessions/
+
+# The TypeScript qualification SDK may be a local cache symlink or an npm directory.
+/deploy/ci/typescript/node_modules

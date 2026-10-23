@@ -1,0 +1,58 @@
+% Section 8 — Related work
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Learning from outcomes, and paying for search} The lineage in \cref{fig:timeline} ends in
+an argument that the next generation of systems should learn mainly from the consequences of their
+own actions rather than from human data \citep{silver2025era}, and in the older observation that
+general methods which exploit computation, search and learning eventually win
+\citep{sutton2019bitter}. AlphaGo Zero is the cleanest demonstration of the half of that argument we
+rely on: a network trained on the outcomes of its own search carries much of that search into a
+single forward pass \citep{silver2017zero}. The algorithm-discovery systems that followed ---
+AlphaTensor, AlphaDev, FunSearch and AlphaEvolve
+\citep{fawzi2022alphatensor,mankowitz2023alphadev,romeraparedes2024funsearch,novikov2025alphaevolve}
+--- and AutoML-Zero, which discovers complete learning procedures from basic mathematical operations
+\citep{real2020automlzero}, all pay for their search when the problem is posed. They are precedents
+for outcome-driven discovery, not evidence that every invention needs the same amount of it, and
+language models are participants in that lineage, not outsiders to it.
+
+\paragraph{Program synthesis guided by learning} DeepCoder learns properties of programs from
+input--output examples to steer an enumerative search \citep{balog2017deepcoder}; DreamCoder grows
+a library of abstractions and learns to search with it \citep{ellis2021dreamcoder}; Latent Programmer
+first predicts a discrete latent code and then decodes a program from it, a two-level search
+\citep{hong2021latent} that is the closest antecedent of our solution embedding. Code-generating
+language models sample many programs and filter them on tests \citep{chen2021codex,li2022alphacode}.
+In each case learning makes search cheaper; none commits one program before execution as a
+contract that a supervisor can audit.
+
+\paragraph{Generating a model from data} Several systems produce a predictor for a dataset in one
+pass. HyperNetworks generate the weights of another network \citep{ha2017hypernetworks}; HyperFast
+meta-trains a hypernetwork that writes a dataset-specific classifier in a forward pass
+\citep{bonet2024hyperfast}; TabPFN predicts by in-context learning, conditioning a pretrained
+transformer on the training rows \citep{hollmann2025tabpfn}; and end-to-end transformers predict a
+complete mathematical expression, constants included, from observations \citep{kamienny2022e2e}.
+These rule out any broad claim of priority for learned data-to-model generation. They differ from
+InnovationZero in the object they output: weights, predictions or a formula, rather than a reusable,
+inspectable learning procedure with its own \code{fit} and \code{predict} that runs without the
+generator.
+
+\paragraph{AutoML and meta-learning} AutoML systems search configuration and pipeline spaces for each
+dataset \citep{feurer2015autosklearn,olson2016tpot,wang2021flaml}, and some warm-start that search
+from configurations that worked on similar datasets. Warm-starting is amortized proposal over a
+closed space, the setting of \cref{prop:closed}: it can choose well, and it cannot propose outside
+its portfolio. The engine of \cref{sec:evidence} belongs to this family as a track-S proposer.
+
+\paragraph{The limits of language-model reasoning} A growing literature questions what next-token
+training can do on its own: that teacher-forced prediction can fail to learn planning
+\citep{bachmann2024pitfalls}, that language models need external verifiers to plan reliably
+\citep{kambhampati2024modulo}, and that training and evaluation reward confident guessing
+\citep{kalai2025hallucinate}. Our challenge is a direct, if narrow, test of the opposite case:
+whether reasoning alone, with no verifier and no execution, produces a working algorithm. It does;
+what it produces is the consensus design.
+
+\paragraph{The question that remains} Together these works leave a narrower question than ``can
+models generate programs from data''. It is whether a proposer trained on measured outcomes can
+commit a useful, reusable fitting procedure for a dataset family it has never seen, before any
+candidate-specific feedback, and whether that boundary can be audited independently of the later
+fit and evaluation. Supplement~\ref{S-sup:context} discusses the precedents and the debate around
+them at greater length.

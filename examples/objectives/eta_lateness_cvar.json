@@ -1,0 +1,25 @@
+{
+  "metric": "custom",
+  "name": "lateness_cvar",
+  "direction": "minimize",
+  "expression": {
+    "op": "max",
+    "left": {
+      "op": "sub",
+      "left": {
+        "op": "y"
+      },
+      "right": {
+        "op": "pred"
+      }
+    },
+    "right": {
+      "op": "constant",
+      "value": 0.0
+    }
+  },
+  "aggregation": {
+    "kind": "tail_mean",
+    "fraction": 0.05
+  }
+}
