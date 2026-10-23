@@ -651,6 +651,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
+    let shared_feature_join =
+        old_fixture("transitions/pr422_after_shared_capacity_release_identity_join.v1.json");
+    let feature_shared_join = old_fixture(
+        "transitions/pr422_shared_capacity_release_after_feature_identity_join.v1.json",
+    );
+    for record in [&shared_feature_join, &feature_shared_join] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
     // The capacity branch announced the same Tokio fix on the old workspace version.
     // Keep its original edge and verify the parallel join to the release identity.
     let capacity_tokio =
@@ -668,9 +676,47 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             path,
             edge["before"].as_str().unwrap(),
             &current,
-            &[capacity_tokio.clone(), capacity_release_join.clone()],
+            &[
+                capacity_tokio.clone(),
+                capacity_release_join.clone(),
+                shared_feature_join.clone(),
+            ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
+    }
+    let cuda_cpp = old_fixture("transitions/cuda_cpp_identity_rebaseline.v1.json");
+    assert_eq!(cuda_cpp["fixtures"].as_array().unwrap().len(), 2);
+    for path in changed_fixtures {
+        assert!(cuda_cpp["fixtures"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
+    let cuda_local_only = old_fixture("transitions/cuda_local_only_ci_identity_rebaseline.v1.json");
+    assert_eq!(cuda_local_only["fixtures"].as_array().unwrap().len(), 2);
+    for path in changed_fixtures {
+        assert!(cuda_local_only["fixtures"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
+    for edge in cuda_cpp["fixtures"].as_array().unwrap() {
+        let path = edge["path"].as_str().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        identity_transitions::verify_fixture(
+            path,
+            edge["before"].as_str().unwrap(),
+            &current,
+            &[
+                cuda_cpp.clone(),
+                cuda_local_only.clone(),
+                feature_shared_join.clone(),
+            ],
+        )
+        .expect("published feature history joins shared capacity and release fixes");
     }
     let identity_chain = [
         transition,
@@ -709,6 +755,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         ctutils_security,
         release_0_4_1,
         tokio_security,
+        shared_feature_join,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
