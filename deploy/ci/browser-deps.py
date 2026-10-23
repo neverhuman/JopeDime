@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import platform
+import re
 import stat
 import subprocess
 import sys
@@ -138,7 +139,18 @@ def prepare(cache, receipt, lock_path=None):
         paths = []
         for package in lock["packages"]:
             url = urllib.parse.urlsplit(package["url"])
-            if url.scheme != "https" or url.hostname not in ("us.archive.ubuntu.com", "security.ubuntu.com") or not url.path.startswith("/ubuntu/pool/"):
+            official = url.netloc in ("us.archive.ubuntu.com", "security.ubuntu.com") and url.path.startswith("/ubuntu/pool/")
+            if url.netloc == "snapshot.ubuntu.com":
+                snapshot = re.fullmatch(r"/ubuntu/([0-9]{8}T[0-9]{6}Z)/pool/.+", url.path)
+                official = False
+                if snapshot:
+                    try:
+                        time.strptime(snapshot[1], "%Y%m%dT%H%M%SZ")
+                        official = True
+                    except ValueError:
+                        pass
+            if (url.scheme != "https" or url.query or url.fragment or not official
+                    or ".." in PurePosixPath(urllib.parse.unquote(url.path)).parts):
                 raise ValueError("dependency is not from the pinned official Ubuntu archive")
             sha = package["sha256"]
             if len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
