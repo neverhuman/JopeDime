@@ -30,6 +30,7 @@ pub enum Target {
     Cpp17RecipeV2,
     Cpp17Fitted,
     C17,
+    Cuda,
 }
 impl Target {
     pub const RECIPES: [Self; 5] = [
@@ -51,6 +52,7 @@ impl Target {
             "cpp17-recipe-v2" => Self::Cpp17RecipeV2,
             "cpp17-fitted" => Self::Cpp17Fitted,
             "c" | "c17" => Self::C17,
+            "cuda" | "cuda-cpp" | "cu" => Self::Cuda,
             _ => anyhow::bail!("unknown requested target {value:?}"),
         })
     }
@@ -71,6 +73,7 @@ impl Target {
     pub fn path(self) -> &'static str {
         match self {
             Self::C17 => "c17/model.h",
+            Self::Cuda => "cuda/model.cu",
             Self::Python => "model.py",
             Self::Rust => "model.rs",
             Self::Cpp17 | Self::Cpp20 => "model.cpp",
@@ -84,6 +87,7 @@ impl Target {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::C17 => "c17",
+            Self::Cuda => "cuda",
             Self::Python => "python",
             Self::Rust => "rust",
             Self::Cpp17 => "cpp17",
@@ -98,7 +102,7 @@ impl Target {
     pub fn registry_target(self) -> &'static str {
         match self {
             // The C boundary invokes the safe Rust recipe without changing arithmetic.
-            Self::C17 => "rust_recipe",
+            Self::C17 | Self::Cuda => "rust_recipe",
             Self::Python => "python_recipe",
             Self::Rust | Self::Go | Self::TypeScript => "rust_recipe",
             Self::Cpp17 | Self::Cpp20 => "cpp17_recipe",
@@ -186,6 +190,21 @@ pub enum BuildExecution {
 impl BuildIdentity {
     pub fn declared(target: Target) -> Self {
         let (toolchain, standard, flags, abi) = match target {
+            Target::Cuda => (
+                "rustc+nvcc".into(),
+                "rust2021+cuda-c++17".into(),
+                vec![
+                    "--edition=2021".into(),
+                    "-O".into(),
+                    "-Cpanic=unwind".into(),
+                    "--crate-type=staticlib".into(),
+                    "-std=c++17".into(),
+                ]
+                .into_iter()
+                .chain(crate::cuda::DEVICE_FLAGS.iter().map(|s| s.to_string()))
+                .collect(),
+                "cuda-native-v1",
+            ),
             Target::C17 => (
                 "rustc".into(),
                 "rust2021+c17".into(),
@@ -261,6 +280,8 @@ impl BuildIdentity {
             flags,
             backend: if matches!(target, Target::Go | Target::TypeScript) {
                 "wasm32-scalar"
+            } else if target == Target::Cuda {
+                "cpu-native+cuda-linear-head"
             } else {
                 "cpu-scalar"
             }
@@ -425,6 +446,15 @@ impl ArtifactManifestV3 {
                             "cpp17-fitted/model.codec.json",
                             "cpp17-fitted/standalone.cpp",
                         ]
+                    } else if record.target == Target::Cuda {
+                        vec![
+                            "cuda/CMakeLists.txt",
+                            "cuda/manifest.json",
+                            "cuda/model.cu",
+                            "cuda/model.hpp",
+                            "cuda/model_core.rs",
+                            "cuda/model_native.rs",
+                        ]
                     } else if record.target == Target::C17 {
                         vec![
                             "c17/manifest.json",
@@ -452,8 +482,8 @@ impl ArtifactManifestV3 {
                             && !build.toolchain.is_empty(),
                         "target build identity mismatch"
                     );
-                    if record.target == Target::C17 {
-                        ensure!(build == &declared, "C17 build recipe mismatch");
+                    if matches!(record.target, Target::C17 | Target::Cuda) {
+                        ensure!(build == &declared, "native build recipe mismatch");
                     } else if matches!(record.target, Target::Go | Target::TypeScript) {
                         ensure!(
                             build.toolchain == declared.toolchain && build.flags == declared.flags,

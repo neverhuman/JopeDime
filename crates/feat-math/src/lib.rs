@@ -115,3 +115,4 @@ pub mod c17;
 
 /// Go output backed by the complete Rust WebAssembly implementation.
 pub mod go;
+pub mod cuda;

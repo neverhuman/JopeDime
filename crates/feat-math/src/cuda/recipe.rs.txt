@@ -1,0 +1,12 @@
+// Safe typed model facade. Buffers and handles are managed by the native boundary.
+pub(crate) struct CudaModel { model: Model, pub(crate) width: usize }
+impl CudaModel {
+    pub(crate) fn fit(x:&[Vec<f64>],y:&[f64],width:usize)->Result<Self,i32>{
+        Ok(Self{model:Model::fit(x,y),width})
+    }
+    pub(crate) fn open()->Result<Self,i32>{Err(5)}
+    pub(crate) fn predict(&self,x:&[Vec<f64>])->Result<Vec<f64>,i32>{Ok(self.model.predict(x))}
+    pub(crate) fn score(&self,x:&[Vec<f64>],y:&[f64])->Result<f64,i32>{Ok(self.model.score(x,y))}
+    pub(crate) fn predict_text(&self,_csv:&str)->Result<Vec<f64>,i32>{Err(5)}
+    __LINEAR__
+}

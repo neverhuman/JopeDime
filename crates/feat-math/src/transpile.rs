@@ -294,6 +294,14 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
 }
 
 /// Emit a complete native C17 model API bundle backed by the full Rust recipe.
+/// CUDA C++ bundle with complete native recipe coverage and explicit device inference.
+pub fn emit_cuda(genome: &GenomeIr, opts: &EmitOptions) -> Result<crate::cuda::Emitted> {
+    crate::cuda::emit(genome, opts)
+}
+pub fn supports_cuda(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
+    supports(genome)
+}
+
 pub fn emit_c17(genome: &GenomeIr, opts: &EmitOptions) -> Result<crate::c17::Emitted> {
     crate::c17::emit(genome, opts)
 }
@@ -531,9 +539,9 @@ fn validate_recipe_target(
     target: crate::artifact_manifest::Target,
 ) -> Result<()> {
     use crate::artifact_manifest::Target;
-    // Go, TypeScript and C17 reuse the Rust numerical implementation and its admission.
+    // Go, TypeScript, C17 and CUDA reuse the Rust numerical implementation and its admission.
     if Target::RECIPES.contains(&target)
-        || matches!(target, Target::Go | Target::TypeScript | Target::C17)
+        || matches!(target, Target::Go | Target::TypeScript | Target::C17 | Target::Cuda)
     {
         if let GenomeIr::Pipeline(pipe) = genome {
             for stage in &pipe.stages {
@@ -569,6 +577,29 @@ pub fn emit_targets_v3(
     let mut sources = std::collections::BTreeMap::new();
     let mut records = Vec::new();
     for &target in requested {
+        if target == Target::Cuda {
+            let result =
+                validate_recipe_target(genome, target).and_then(|()| emit_cuda(genome, options));
+            match result {
+                Ok(bundle) => {
+                    let inputs: Vec<_> = bundle
+                        .files
+                        .iter()
+                        .map(|(p, s)| (p.as_str(), s.as_str()))
+                        .collect();
+                    records.push(TargetRecord::supported(
+                        target,
+                        "legacy_recipe",
+                        crate::cuda::EMITTER,
+                        &inputs,
+                        None,
+                    ));
+                    sources.extend(bundle.files);
+                }
+                Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
+            }
+            continue;
+        }
         if target == Target::C17 {
             let result =
                 validate_recipe_target(genome, target).and_then(|()| emit_c17(genome, options));
@@ -666,7 +697,7 @@ pub fn emit_targets_v3(
                         .map_err(anyhow::Error::msg)?;
                     (e.source, e.profile.into())
                 }
-                Target::C17 => unreachable!("multi-file target handled above"),
+                Target::C17 | Target::Cuda => unreachable!("multi-file target handled above"),
                 Target::TypeScript => unreachable!("handled as a complete bundle"),
                 Target::Go => unreachable!("handled as a complete bundle"),
                 Target::Cpp17Fitted => {

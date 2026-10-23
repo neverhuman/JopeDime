@@ -367,6 +367,12 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     let root = dir.path();
     let mut targets = Target::RECIPES.to_vec();
     targets.extend([Target::Cpp17RecipeV2, Target::Cpp17Fitted, Target::C17]);
+    if matches!(
+        std::env::var("JOPE_CUDA_PARITY").as_deref(),
+        Ok("host" | "compile" | "device")
+    ) {
+        targets.push(Target::Cuda);
+    }
     if typescript_support::enabled() {
         targets.push(Target::TypeScript);
     }
@@ -398,6 +404,54 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     for target in targets {
         let predictions = root.join(format!("{}.predictions", target.as_str()));
         match target {
+            Target::Cuda => {
+                let cdir = root.join("cuda");
+                execute(Command::new("rustc").current_dir(&cdir).args([
+                    "--edition=2021",
+                    "-O",
+                    "-C",
+                    "panic=unwind",
+                    "--crate-type=staticlib",
+                    "model_native.rs",
+                    "-o",
+                    "libmodel_native.a",
+                ]));
+                fs::write(
+                    cdir.join("consumer.cpp"),
+                    r#"#include "model.hpp"
+#include <fstream>
+#include <iomanip>
+int main(int argc,char** argv){
+ if(argc!=2)return 1;
+ jope_cuda::Rows x;std::vector<double> y;
+ for(int i=0;i<10;++i){x.push_back({static_cast<double>(i)});y.push_back(2*i+1);}
+ jope_cuda::Model m;m.fit(x,y);auto out=m.predict({{0.5},{2.5}});
+ std::ofstream f(argv[1]);f<<std::setprecision(17);
+ for(double v:out)f<<v<<'\n';return f?0:2;
+}"#,
+                )
+                .unwrap();
+                execute(Command::new("g++").current_dir(&cdir).args([
+                    "-std=c++17",
+                    "-x",
+                    "c++",
+                    "-O2",
+                    "-DJOPE_CUDA_HOST_ONLY",
+                    "-ffp-contract=off",
+                    "-fno-fast-math",
+                    "model.cu",
+                    "consumer.cpp",
+                    "-x",
+                    "none",
+                    "libmodel_native.a",
+                    "-ldl",
+                    "-lpthread",
+                    "-lm",
+                    "-o",
+                    "consumer",
+                ]));
+                execute(Command::new(cdir.join("consumer")).arg(&predictions));
+            }
             Target::C17 => {
                 let cdir = root.join("c17");
                 execute(Command::new("rustc").current_dir(&cdir).args([

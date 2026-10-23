@@ -391,7 +391,7 @@ limits and client examples](docs/program-source-stream.md).
 | `jope` with no arguments | prints `jope 0.4.1` <sup>1</sup> |
 | Workspace | 32 members: 25 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
-| Emit targets | 9: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) and opt-in [`go`](docs/go.md) <sup>4</sup> |
+| Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 5,927 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 13 jobs per pull request in `ci.yml` (top-level declarations; 18 expanded jobs); 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
@@ -448,6 +448,8 @@ cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --
 cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router target/jope-router --json
 # A requested target whose emitter does not cover the selected program is reported as not
 # emitted; the receipt lists the artifacts actually written (docs/emitters.md has the coverage).
+For CUDA C++ output, use `jope emit --lang cuda`; see [the CUDA build, API and qualification contract](docs/cuda.md). Host recipe coverage matches Rust; device acceleration is explicitly limited to linear heads.
+
 cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
   --budget evaluations=8,seconds=120 --emit rust,python,cpp17,cpp20,js --policy skip --output target/e2e
 cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json
@@ -464,6 +466,7 @@ level expand to eighteen jobs, including both Rust shards, both TypeScript runti
 two Go versions and two native Go platform jobs. Existing lanes use self-hosted
 `jope-ci` runners; the Go matrix uses hosted Linux/macOS/Windows workers.
 Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
+CUDA qualification runs locally with the commands in the [handoff guide](docs/cuda-handoff.md).
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated
 blocks, and `jope-records paper-trace`, which checks the white paper's printed numbers against its

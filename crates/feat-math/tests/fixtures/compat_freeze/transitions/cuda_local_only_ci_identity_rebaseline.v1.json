@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Explicit user-directed removal of all CUDA CI. Nondefault local-only CUDA test selection changes the feat-math manifest and therefore its evaluator identity. Owning identity regeneration preserves every numerical/emitted-byte/model/generator/search fixture and historical edge; no serving identity or scientific result is minted.",
+  "plan_reference": "User: Please remove ALL CUDA CI; CUDA related CI locally, manually only. AGENTS.md and ADR-0004.",
+  "pr_reference": "feat/cuda-cpp-target-20261023",
+  "source_commit": "8dd267730eaae24bcdc76e86731cc4232a716ca9",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "949db61a36469c7f0fe6ff79bb1b652ffc2e54c00a0dff38177cf568f76a9661",
+      "after": "d7c9c466f7b8d8cec220dcea3ced4e63678ce8a7cf4d8b4eeca8b0d276c710c1"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "1441e8c2a3042ea589c9683a9acae639941ab5e804cacc93e1c57c658fc8dcf0",
+      "after": "fc89c7c1f1314bf225f7ad0e4872dc85ae25cdb75c57aeb84a7ce600f8556aba"
+    }
+  ]
+}

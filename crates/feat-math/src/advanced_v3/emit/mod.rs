@@ -1891,6 +1891,23 @@ pub fn emit_bound_targets_v3(
     let mut records = Vec::new();
     let mut sources = std::collections::BTreeMap::new();
     for &target in requested {
+        if target == Target::Cuda {
+            let bundle = crate::cuda::emit_bound(model, options)?;
+            let inputs: Vec<_> = bundle
+                .files
+                .iter()
+                .map(|(p, s)| (p.as_str(), s.as_str()))
+                .collect();
+            records.push(TargetRecord::supported(
+                target,
+                "advanced_v3",
+                crate::cuda::EMITTER,
+                &inputs,
+                Some(fitted.clone()),
+            ));
+            sources.extend(bundle.files);
+            continue;
+        }
         if target == Target::TypeScript {
             let bundle = crate::typescript::emit_bound(model, options)?;
             records.push(TargetRecord::supported(
@@ -1938,7 +1955,7 @@ pub fn emit_bound_targets_v3(
         } else {
             records.push(TargetRecord::unsupported(
                 target,
-                "bound-v2 adapter supports Python, Rust, TypeScript and Go".into(),
+                "bound-v2 adapter supports Python, Rust, TypeScript, Go and CUDA C++".into(),
             ));
         }
     }

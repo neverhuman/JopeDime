@@ -12,6 +12,8 @@ go-parity-tests = []
 default = ["fitted-cpp"]
 # Requires exact parity and funded full-task performance qualification before use.
 gpr-scratch-reuse = []
+# Explicit local CUDA qualification only; never selected by standard CI.
+cuda-parity-tests = []
 # The fitted C++ runtime: build.rs compiles cpp/fitted_runtime.cpp with g++ into a shared library
 # that is embedded and loaded with memfd + dlopen. Default-on so every existing build keeps it.
 # The `jopedime` appliance must not carry C++ (deploy/appliance/AMENDMENTS.md A1): crates in its
@@ -25,6 +27,14 @@ required-features = ["fitted-cpp"]
 [[test]]
 name = "go_golden"
 required-features = ["go-parity-tests"]
+
+[[test]]
+name = "cuda_export"
+required-features = ["cuda-parity-tests"]
+
+[[test]]
+name = "cuda_census"
+required-features = ["cuda-parity-tests"]
 
 [dependencies]
 anyhow.workspace = true

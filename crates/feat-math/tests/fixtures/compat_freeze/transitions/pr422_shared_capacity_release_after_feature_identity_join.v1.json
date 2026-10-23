@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Published feature identity joins the same shared release/capacity integration. Owning identity-only regeneration preserves every prior transition, numerical/emitted/model/search/golden baseline and serving-known identity table.",
+  "plan_reference": "Direct user cherry-pick all fixes quickly and merge all PRs; AGENTS.md and ADR-0004 identity-only procedure.",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/422",
+  "source_commit": "6bd9dc608bb8dbe47f48eafdc31e8434762e9215",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "d7c9c466f7b8d8cec220dcea3ced4e63678ce8a7cf4d8b4eeca8b0d276c710c1",
+      "after": "c5febbc3612c4763152a572ede55a60b4a8f10bb041c9885148c7d43e011bf06"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "fc89c7c1f1314bf225f7ad0e4872dc85ae25cdb75c57aeb84a7ce600f8556aba",
+      "after": "bab5ef1f587ff3b6bbad0f54d4c9479cd9bbcafbb9eb340c0a217cb033bb5f2f"
+    }
+  ]
+}

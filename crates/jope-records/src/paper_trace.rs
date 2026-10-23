@@ -667,7 +667,7 @@ pub fn glance(root: &Path) -> Result<Glance> {
     }
 
     let kernel = py::read_text(&root.join("crates/jope-cli/src/kernel.rs"))?;
-    let arm = re(r#"^\s+"([a-z0-9+-]+)"(?: \| "[a-z]+")? => vec!\["#);
+    let arm = re(r#"^\s+"([a-z0-9+-]+)"(?: \| "[a-z0-9+-]+")* => vec!\["#);
     g.emit_targets = kernel
         .split("fn languages")
         .nth(1)

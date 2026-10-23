@@ -39,6 +39,7 @@ pub enum Language {
     TypeScript,
     Cpp17Fitted,
     C17,
+    Cuda,
 }
 
 impl Language {
@@ -61,6 +62,7 @@ impl Language {
             Language::Go => "go",
             Language::Cpp17Fitted => "cpp17-fitted",
             Language::C17 => "c17",
+            Language::Cuda => "cuda",
         }
     }
 
@@ -75,6 +77,7 @@ impl Language {
             "go" | "golang" => Some(Language::Go),
             "cpp17-fitted" => Some(Language::Cpp17Fitted),
             "c17" | "c" => Some(Language::C17),
+            "cuda" | "cuda-cpp" | "cu" => Some(Language::Cuda),
             _ => None,
         }
     }
@@ -90,7 +93,7 @@ impl Language {
             }
             let language = Language::parse(part).with_context(|| {
                 format!(
-                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, ts, go, c17, cpp17-fitted or all"
+                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, ts, go, c17, cuda, cpp17-fitted or all"
                 )
             })?;
             chosen.insert(language);
@@ -105,6 +108,7 @@ impl Language {
                 Language::TypeScript,
                 Language::Cpp17Fitted,
                 Language::C17,
+                Language::Cuda,
             ])
             .filter(|l| chosen.contains(l))
             .collect())
@@ -242,6 +246,16 @@ pub fn emit_with_options(
         }
     }
 
+    if languages.contains(&Language::Cuda) {
+        for (path, source) in transpile::emit_cuda(render_target, options)?.files {
+            artifacts.push(Artifact {
+                language: Language::Cuda.as_str(),
+                build: Some(feat_math::cuda::BUILD.into()),
+                ..write(directory, &path, &source)?
+            });
+        }
+        targets.push("cuda");
+    }
     if languages.contains(&Language::C17) {
         for (path, source) in transpile::emit_c17(render_target, options)?.files {
             artifacts.push(Artifact {

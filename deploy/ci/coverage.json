@@ -155,7 +155,7 @@
         "pinned data/models"
       ],
       "owner_phase": "GPU/S3 qualification",
-      "reason": "Configured weekly GPU/S3 workflows are separate from CPU CI and not live qualification evidence.",
+      "reason": "Former scheduled GPU workflow removed by explicit user instruction; retained regression/restore scripts require a separate explicit local invocation, accepted budget and capability-bound evidence.",
       "status": "deferred"
     }
   },
@@ -355,6 +355,18 @@
       ],
       "lanes": [],
       "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "feature:feat-math/cuda-parity-tests": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Explicit local qualification feature; excluded from default Cargo tests and all GitHub Actions workflows. No hardware qualification is implied by discovery."
     },
     "feature:feat-math/default": {
       "discovery": {
@@ -1182,26 +1194,6 @@
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
     },
-    "job:.github/workflows/weekly.yml/regression-suite": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [
-        "weekly"
-      ],
-      "lanes": [],
-      "scope": "Configured workflow/job; current execution unqualified."
-    },
-    "job:.github/workflows/weekly.yml/restore-drill": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [
-        "weekly"
-      ],
-      "lanes": [],
-      "scope": "Configured workflow/job; current execution unqualified."
-    },
     "package:battle-gpu": {
       "discovery": {
         "kind": "package",
@@ -1663,6 +1655,17 @@
         "python"
       ],
       "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
+    },
+    "python:deploy/ci/cuda/test_evidence.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Local-only stdlib CUDA evidence negative controls, invoked by the manual qualifier; not part of standard hygiene."
     },
     "python:deploy/ci/test-aggregate.py": {
       "discovery": {
@@ -4716,6 +4719,40 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/cuda_census": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "cuda-parity-tests"
+        ],
+        "source": "crates/feat-math/tests/cuda_census.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Explicit local CUDA qualification only, selected with cuda-parity-tests by qualify.sh; excluded from default and standard CI test collection. Actual device results require a successful local device receipt."
+    },
+    "target:feat-math/test/cuda_export": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "cuda-parity-tests"
+        ],
+        "source": "crates/feat-math/tests/cuda_export.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "cuda-parity",
+        "cuda-device"
+      ],
+      "scope": "Explicit local CUDA qualification only, selected with cuda-parity-tests by qualify.sh; excluded from default and standard CI test collection. Actual device results require a successful local device receipt."
     },
     "target:feat-math/test/cumulative_integration_v2": {
       "discovery": {
@@ -11934,16 +11971,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "workflow:.github/workflows/weekly.yml": {
-      "discovery": {
-        "kind": "workflow"
-      },
-      "dispositions": [
-        "weekly"
-      ],
-      "lanes": [],
-      "scope": "Configured workflow/job; current execution unqualified."
     }
   },
   "lanes": {
@@ -12017,6 +12044,79 @@
       "path_applicability": "every full-main-cpu run, including failed or cancelled groups",
       "requires_nonzero_tests": false,
       "result_backend": "none",
+      "stage": "execution"
+    },
+    "cuda-device": {
+      "checks": [
+        "bash deploy/ci/cuda/qualify.sh device"
+      ],
+      "command": [
+        "bash",
+        "deploy/ci/cuda/qualify.sh",
+        "device"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_CODEGEN_UNITS": "1",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CUDA": "13.0.88 official hash-pinned wheels",
+        "GPU": "Local NVIDIA device and compatible driver; nvcc and nvidia-smi required",
+        "JOPE_CUDA_PARITY": "device"
+      },
+      "evidence": [
+        "all host/compilation checks plus actual bitwise GPU linear-head predictions",
+        "NVIDIA device/driver identity",
+        "borrowed-stream, launch/batch and host floating-environment refusal checks",
+        "zero fallback; no universal GPU coverage or performance claim"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "committed golden fixtures",
+        "deploy/ci/cuda/requirements.txt"
+      ],
+      "path_applicability": "Manual local qualification only; excluded from hosted CI and merge gates",
+      "requires_nonzero_tests": true,
+      "result_backend": "rust",
+      "stage": "execution"
+    },
+    "cuda-parity": {
+      "checks": [
+        "bash deploy/ci/cuda/qualify.sh host",
+        "bash deploy/ci/cuda/qualify.sh compile"
+      ],
+      "command": [
+        "bash",
+        "deploy/ci/cuda/qualify.sh",
+        "compile"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_CODEGEN_UNITS": "1",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CUDA": "13.0.88 official hash-pinned wheels",
+        "JOPE_CUDA_PARITY": "host or compile"
+      },
+      "evidence": [
+        "exact source SHA/run/attempt and hashed nonzero execution logs",
+        "complete Rust-matched recipe/bound/v2 acceptance and refusal census",
+        "bitwise native-reference and host-prepared linear-head comparisons",
+        "real nvcc device compilation; no GPU execution claim",
+        "native lifetime, boundary, linking, build, CLI and artifact-tamper contracts"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "committed golden fixtures",
+        "deploy/ci/cuda/requirements.txt"
+      ],
+      "path_applicability": "Manual local qualification only; excluded from hosted CI and merge gates",
+      "requires_nonzero_tests": true,
+      "result_backend": "rust",
       "stage": "execution"
     },
     "e2e-smoke": {
