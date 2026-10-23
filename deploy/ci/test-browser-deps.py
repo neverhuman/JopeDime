@@ -78,10 +78,28 @@ class BrowserDependencies(unittest.TestCase):
             explicit.write_text(json.dumps(bad))
             with self.assertRaisesRegex(ValueError, "unsupported"):
                 MODULE.prepare(self.cache, self.root / "bad-generic.json", explicit)
-        data["packages"][0]["url"] = "https://example.invalid/ubuntu/pool/fixture.deb"
+        # A dated official snapshot must admit the same pinned bytes, even on reuse.
+        data["packages"][0]["url"] = "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/f/fixture/fixture.deb"
         explicit.write_text(json.dumps(data))
-        with self.assertRaisesRegex(ValueError, "official Ubuntu"):
-            MODULE.prepare(self.cache, self.root / "bad-mirror.json", explicit)
+        with contextlib.redirect_stdout(io.StringIO()):
+            MODULE.prepare(self.cache, self.root / "snapshot.json", explicit)
+        snapshot = json.loads((self.root / "snapshot.json").read_text())
+        self.assertEqual(snapshot["lock_sha256"], MODULE.digest(explicit))
+        self.assertEqual((Path(snapshot["runtime"]) / self.payload).read_bytes(), b"bounded fixture library bytes")
+        for url in (
+            "https://example.invalid/ubuntu/pool/fixture.deb",
+            "http://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/fixture.deb",
+            "https://snapshot.ubuntu.com.evil.invalid/ubuntu/20261023T000000Z/pool/fixture.deb",
+            "https://snapshot.ubuntu.com/ubuntu/latest/pool/fixture.deb",
+            "https://snapshot.ubuntu.com/ubuntu/20261332T000000Z/pool/fixture.deb",
+            "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/%2e%2e/fixture.deb",
+            "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/fixture.deb?mirror=other",
+            "https://user@snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/fixture.deb",
+        ):
+            data["packages"][0]["url"] = url
+            explicit.write_text(json.dumps(data))
+            with self.subTest(url=url), self.assertRaisesRegex(ValueError, "official Ubuntu"):
+                MODULE.prepare(self.cache, self.root / "bad-mirror.json", explicit)
 
     def test_corrupt_download_cache_is_refused(self):
         self.cached.write_bytes(b"corrupt archive")
