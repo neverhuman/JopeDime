@@ -16,6 +16,7 @@ import re
 import signal
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 from typing import Mapping, Optional
 
@@ -55,9 +56,76 @@ def bind_rev(event_name: str, base_sha: str = "") -> Optional[str]:
     return None
 
 
+def github_public_json(path: str, environ: Mapping[str, str]) -> dict:
+    """Read only this pinned repository API; never log token, headers or response bodies."""
+    token = environ.get("JOPE_PROVENANCE_FETCH_TOKEN", "")
+    if not token:
+        raise ValueError("manual PR provenance requires the read-only job token")
+    request = urllib.request.Request(
+        "https://api.github.com/repos/neverhuman/JopeDime/" + path,
+        headers={"Accept": "application/vnd.github+json", "Authorization": "Bearer " + token,
+                 "X-GitHub-Api-Version": "2022-11-28"})
+    class RefuseRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            raise ValueError("manual PR provenance refuses an API redirect")
+    opener = urllib.request.build_opener(RefuseRedirect())
+    with opener.open(request, timeout=30) as response:
+        raw = response.read(2_097_153)
+    if len(raw) > 2_097_152:
+        raise ValueError("manual PR provenance API response exceeds its bound")
+    return json.loads(raw)
+
+
+def manual_pr_bind(environ: Mapping[str, str], number: str) -> str:
+    """Full manual candidate tests on merged runner policy, just like native PR CI.
+
+    This does not certify candidate runner deployment. After merge, receiving CI still
+    requires exact merged-head host bytes and the new roles need live qualification.
+    """
+    if not re.fullmatch(r"[1-9][0-9]{0,8}", number):
+        raise ValueError("provenance_pr must be a positive PR number")
+    repo = "neverhuman/JopeDime"
+    if environ.get("GITHUB_REPOSITORY") != repo or environ.get("GITHUB_REPOSITORY_ID") != "1376159324":
+        raise ValueError("manual PR provenance repository identity differs")
+    sha = environ.get("GITHUB_SHA", "")
+    bind_rev("pull_request", sha)  # full nonzero SHA, before any API call
+    pr = github_public_json("pulls/" + number, environ)
+    if (pr.get("number") != int(number) or pr.get("state") != "open" or pr.get("merged") is not False
+            or pr.get("base", {}).get("ref") != "main"):
+        raise ValueError("manual PR provenance requires this open PR targeting main")
+    for side in ("base", "head"):
+        repository = pr.get(side, {}).get("repo") or {}
+        if repository.get("id") != 1376159324 or repository.get("full_name") != repo:
+            raise ValueError("manual PR provenance refuses a fork or transferred repository")
+    head = pr["head"]
+    ref = environ.get("GITHUB_REF", "")
+    if (head.get("sha") != sha or head.get("ref") == "main"
+            or ref != "refs/heads/" + head.get("ref", "")
+            or environ.get("GITHUB_WORKFLOW_REF") != repo + "/.github/workflows/ci.yml@" + ref):
+        raise ValueError("manual PR provenance head, branch or workflow differs")
+    base = bind_rev("pull_request", pr["base"].get("sha", ""))
+    if github_public_json("git/ref/heads/main", environ).get("object", {}).get("sha") != base:
+        raise ValueError("manual PR provenance base is no longer current main")
+    return base
+
+
 def bind_rev_from_env(environ: Optional[Mapping[str, str]] = None) -> Optional[str]:
     env = environ if environ is not None else os.environ
     event = env.get("GITHUB_EVENT_NAME", "")
+    # An explicit input is read from GitHub's dispatch payload, not a caller-supplied base.
+    # No input keeps the original exact-head rule for workflow_dispatch/main.
+    if event == "workflow_dispatch":
+        event_path = env.get("GITHUB_EVENT_PATH", "")
+        payload = json.loads(Path(event_path).read_text()) if event_path else {}
+        # GitHub declares dispatch inputs as object or null (including no-input workflows).
+        inputs = payload.get("inputs")
+        if inputs is None:
+            inputs = {}
+        if not isinstance(inputs, dict):
+            raise ValueError("workflow_dispatch inputs must be an object or null")
+        number = inputs.get("provenance_pr", "")
+        if number:
+            return manual_pr_bind(env, number)
     base = env.get("BASE_SHA", "")
     if not base.strip():
         event_path = env.get("GITHUB_EVENT_PATH", "")
@@ -386,6 +454,20 @@ def verify_hooks(
         require_hook_match(name, actual, hook_digest(repo, rev, name))
 
 
+def runner_pool(repo: Path, environ: Optional[Mapping[str, str]] = None) -> str:
+    """Select only a capability pool declared by the provenance-bound merged policy.
+
+    A candidate's unmerged label never changes where its own premerge jobs run.
+    The composite action calls this only after the installed scripts/hooks/kernel proof.
+    """
+    rev = bind_rev_from_env(environ)
+    policy = json.loads(file_bytes(repo, rev, "deploy/runner/mac-capacity.json"))
+    label = policy.get("runner_label", "jope-ci")
+    if label not in ("jope-ci", "jope-mac-ci"):
+        raise ValueError("unapproved provenance-bound CI capability label")
+    return label
+
+
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     repo = Path(os.environ.get("GITHUB_WORKSPACE", ".")).resolve()
@@ -404,6 +486,9 @@ def main(argv: list[str] | None = None) -> int:
             flush=True,
         )
         return 0
+    if args[0] == "runner-pool":
+        print(runner_pool(repo))
+        return 0
     if args[0] == "ensure-base":
         rev = ensure_bind_rev(repo)
         print(f"bind rev:       {rev or 'WORKTREE'} (readable)", flush=True)
@@ -414,7 +499,7 @@ def main(argv: list[str] | None = None) -> int:
         rev = validate_digest_rev(args[1]) if len(args) > 1 else None
         print(scripts_digest(repo, rev))
         return 0
-    raise SystemExit(f"usage: {Path(sys.argv[0]).name} [verify|ensure-base|digest [REV]]")
+    raise SystemExit(f"usage: {Path(sys.argv[0]).name} [verify|ensure-base|runner-pool|digest [REV]]")
 
 
 if __name__ == "__main__":

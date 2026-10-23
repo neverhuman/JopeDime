@@ -62,8 +62,10 @@ if [[ $skip_sdk -eq 0 ]]; then
     echo "sdk volume already holds LibTorch $expected"
   else
     echo "provisioning the SDK volume from $receipt (LibTorch $expected + $(jq '.companions | length' "$receipt") companion wheels)"
+    # Keep Docker workdir off the SDK mount: it can reset its ownership to root.
+    # The container command creates and enters SDK/dl itself.
     docker run --rm --platform linux/amd64 --user "$JOPE_RUNNER_UID" --network host --cap-drop ALL --security-opt no-new-privileges \
-      --entrypoint bash -v jope-sdk:/opt/jope-sdk -v "$receipt:/receipt.json:ro" -w /opt/jope-sdk \
+      --entrypoint bash -v jope-sdk:/opt/jope-sdk -v "$receipt:/receipt.json:ro" \
       "$JOPE_RUNNER_IMAGE" -c '
         set -euo pipefail
         R=/receipt.json; SDK=/opt/jope-sdk
