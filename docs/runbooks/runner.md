@@ -185,13 +185,17 @@ Deploy only reviewed merged files, in the existing coordinated freeze:
    registration, admission and a real CI job. Confirm the guard handles a main push and refuses
    other workflows. Confirm the full receiving checks and full manual gate at the exact source.
    A running VM, Listener version or source unit test alone is not operational qualification.
-6. From the exact deployed merged main, dispatch `ci.yml --ref main -f qualify_mac=true`.
-   The twelve additional `mac-runner-qualification` jobs each select one exact xbabe4 label,
-   check checkout-bound installed provenance and real kernel limits, then execute the runner
-   and provenance contract suites. All twelve jobs must succeed. Retain their source SHA,
-   run ID/attempt, runner names/IDs and actual mounts/caps; a skipped job is not a pass.
-   The fourteen normal CI jobs still execute and must also pass. Ordinary candidate dispatches
-   leave `qualify_mac=false` and record these post-deployment jobs as excluded, never passed.
+6. From the exact deployed merged main, dispatch `runner-qualification.yml --ref main`.
+   This separate, main-only workflow has twelve `mac-role` jobs. Each selects one exact
+   xbabe4 label, checks checkout-bound installed provenance and real kernel limits, then
+   executes the runner and provenance contract suites. Root admission permits this workflow
+   only for the closed xbabe4 PR roles, exact repository identity, main ref and manual event;
+   it refuses native/full/guard roles, other refs/events/workflows and missing source identity.
+   All twelve jobs must succeed. Retain source SHA, run ID/attempt, runner names/IDs and actual
+   mounts/caps; missing, skipped or cancelled jobs are not passes. Also dispatch normal
+   `ci.yml --ref main` and require all fourteen physical execution jobs, plus receiving checks.
+   The operational workflow adds no conditional placeholder to pull-request CI: its twelve
+   declared job families (fourteen executions after matrices) and README trace stay intact.
 
 The Mac VM and image have prerequisite execution proofs. This source change does not itself
 qualify any new Mac or guard slot. The already restored xbabe3 ci/full lanes are the existing

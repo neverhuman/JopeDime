@@ -164,6 +164,25 @@ done
                     with self.assertRaises(ValueError):
                         policy.authorize({'domain': domain}, env)
 
+    def test_mac_qualification_is_main_dispatch_and_mac_pr_storage_only(self):
+        env=self.env('runner-qualification','workflow_dispatch','refs/heads/main')
+        for lane in ['ci']+['ci'+str(n) for n in range(2,13)]:
+            with self.subTest(lane=lane):
+                policy.authorize(dict(host='xbabe4',lane=lane,domain='pr'),env)
+        for launch in [dict(domain='pr'),dict(host='xbabe1',lane='ci',domain='pr'),
+                       dict(host='xbabe4',lane='ci13',domain='pr'),
+                       dict(host='xbabe4',lane='ci',domain='main'),
+                       dict(host='xbabe4',lane='ci',domain='guard')]:
+            with self.subTest(launch=launch),self.assertRaises(ValueError):
+                policy.authorize(launch,env)
+        for key,value in [('GITHUB_EVENT_NAME','pull_request'),('GITHUB_EVENT_NAME','push'),
+                          ('GITHUB_REF','refs/heads/feature'),('GITHUB_REF','refs/tags/v0.4.1'),
+                          ('GITHUB_WORKFLOW_REF','neverhuman/JopeDime/.github/workflows/runner-qualification.yml@refs/heads/feature'),
+                          ('GITHUB_REPOSITORY','foreign/repo'),('GITHUB_REPOSITORY_ID','1'),
+                          ('GITHUB_SHA','0'*40),('GITHUB_SHA','HEAD'),('GITHUB_SHA','a'*39)]:
+            with self.subTest(key=key,value=value),self.assertRaises(ValueError):
+                policy.authorize(dict(host='xbabe4',lane='ci',domain='pr'),env|{key:value})
+
     def test_trusted_events(self):
         for workflow, event in [('full-main', 'push'), ('full-main', 'workflow_dispatch'), ('main-guard', 'push')]:
             policy.authorize({'domain':'main'}, self.env(workflow, event))

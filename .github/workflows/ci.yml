@@ -8,11 +8,6 @@ on:
         type: string
         required: false
         default: ""
-      qualify_mac:
-        description: "After merged deployment only: qualify each of the twelve xbabe4 roles with real source-bound tests"
-        type: boolean
-        required: false
-        default: false
 permissions:
   contents: read
   pull-requests: read
@@ -561,33 +556,3 @@ jobs:
         with:
           name: ci-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/ci-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
-
-  mac-runner-qualification:
-    # This is a separate post-deployment capability proof, not a substitute for any
-    # of the fourteen normal CI jobs. Ordinary PR/manual runs do not execute it.
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.qualify_mac
-    strategy:
-      fail-fast: false
-      matrix:
-        lane: [ci, ci2, ci3, ci4, ci5, ci6, ci7, ci8, ci9, ci10, ci11, ci12]
-    runs-on: [self-hosted, linux, x64, jope-mac-ci, "xbabe4-${{ matrix.lane }}"]
-    timeout-minutes: 20
-    steps:
-      - name: Checkout exact merged source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ env.JOPE_SOURCE_SHA }}
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Persistent Cargo target
-        uses: ./.github/actions/cargo-target
-      - name: Runner provenance and actual cgroup limits
-        uses: ./.github/actions/runner-provenance
-      - name: Real runner and provenance contract tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p target/tmp
-          export TMPDIR="$PWD/target/tmp"
-          python3 deploy/ci/test-runner.py
-          python3 deploy/ci/test-provenance.py
