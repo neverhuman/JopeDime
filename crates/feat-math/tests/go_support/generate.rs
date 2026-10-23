@@ -13,9 +13,7 @@ pub fn generate() {
     let mut text = original.clone();
     insert(
         &mut text,
-        r#####"//! bit-for-bit (max abs diff == 0.0) on a deterministic toy dataset.
-
-use feat_math::transpile::{emit, lint_vocabulary, supports, EmitOptions, Emitted};
+        r#####"use feat_math::transpile::{emit, lint_vocabulary, supports, EmitOptions, Emitted};
 use feat_math::{fit_predict, GenomeIr, Pcg32};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -98,6 +96,22 @@ mod go_support { include!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/go_support
     // Preserve that module using an absolute include from this generated file.
     assert_eq!(text.matches("mod typescript_support;").count(), 1);
     text = text.replace("mod typescript_support;", "mod typescript_support { include!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/tests/typescript_support/mod.rs\")); }");
+    // C17 support is also retained verbatim. The generated suite lives in OUT_DIR,
+    // so its path attributes must resolve back to the original native helpers.
+    for (attribute, relative) in [
+        ("#[path = \"support/c17.rs\"]", "tests/support/c17.rs"),
+        (
+            "#[path = \"support/c17_export.rs\"]",
+            "tests/support/c17_export.rs",
+        ),
+    ] {
+        assert_eq!(
+            text.matches(attribute).count(),
+            1,
+            "native C17 module drift"
+        );
+        text = text.replace(attribute, &format!("#[path = {:?}]", root.join(relative)));
+    }
     // An include expansion cannot carry the original crate-level doc comments.
     text = text
         .lines()
