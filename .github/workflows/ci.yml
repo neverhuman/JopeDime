@@ -50,7 +50,9 @@ jobs:
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   hygiene:
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # Release security checks require an actually empty tool HOME. Rosetta
+    # creates .cache/rosetta when jq starts; retain the checks on native Linux.
+    runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
     # Headroom for the three bounded evidence-publication attempts, each of which can stall for
     # about two minutes on a blackholed connection before it resets.
     timeout-minutes: 20
