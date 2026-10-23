@@ -1,0 +1,35 @@
+{
+  "CPU_seconds": 0.25213605099999997,
+  "all_original_primaries_and_CIs_unchanged": true,
+  "arms": 3,
+  "choices": 7650,
+  "components": 162,
+  "contexts": 850,
+  "contrasts": 3,
+  "input_sha256": {
+    "aggregate": "e253a2108f33bc413a843bbd63fbad6efc284c2c7b6cad64e819eb216333efb8",
+    "approved_QA": "3e7b84b19a41b8dbc3270f41914541a22d05fa503fa166a4b0b7c979dd7a486b",
+    "choices": "23b5db64e9c05a892a81896af3ee42d82ff799132fb4b70dc9e4ace721b0a45b",
+    "roles": "371a1e9a713265ae20c0ff48246ef37350f395b891d31d2f7e244e9a9a884b2e"
+  },
+  "limits": [
+    "Arithmetic-only saved-choice replay; original18NPZ extraction/rawmodels/nativeforward not revalidated.",
+    "Historical exposedTRAIN support; posthoc descriptive decomposition is not causal or new significance."
+  ],
+  "max_RSS_KiB": 59200,
+  "new_fits_reranking_CI_APIs": 0,
+  "protocol_sha256": "3c8c5982dc3569de8a3f8e63c4ee146f74df6b47bf8ea5ce99f5a9a09393854c",
+  "read_accounting": {
+    "JSON_decode_attempts": 4,
+    "JSON_decode_completed": 4,
+    "bytes_returned": 2460916,
+    "hash_qualified": 4,
+    "read_attempts": 4,
+    "read_completed": 4
+  },
+  "root_grant_sha256": "4eda7c7f86b7a5f72d9da6ff4b698d13f636471aefc2f1075606e511cc9af187",
+  "seeds": 3,
+  "source_freeze_sha256": "10929618d8f36c0827a1bcf907c4892f85efba4720dc48338a757c7415e65d57",
+  "state": "PASS_INDEPENDENT_SAVED_CHOICE_ARITHMETIC_WITH_LIMITS",
+  "wall_seconds": 1.5984095489839092
+}

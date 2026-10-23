@@ -1,0 +1,95 @@
+{
+  "schema": "jope.public-research-summary-source-pins/v1",
+  "proposed_repository_directory": "docs/research/studies/dope-neural-ranking-20261021/research-wave-20261023",
+  "sources": [
+    {
+      "name": "prior_audit_freeze",
+      "sha256": "6cf3e2f98c54b1e410fc336fbef22cf223b30b5686d96c6b040c44e7b322e090",
+      "bytes": 11875,
+      "role": "Private completed source-and-aggregate audit receipt; no private locators are projected."
+    },
+    {
+      "name": "duration_recomputation",
+      "sha256": "981dabde413e338f6aaa0d044861046dea27bcb52aa504316760c5ff7100ad4d",
+      "bytes": 264,
+      "role": "Within-model arithmetic on all180 already-public curve observations."
+    },
+    {
+      "name": "H27_public_independent_results",
+      "sha256": "feee35f6dc8517cc2784570da462f4e88033d4c8ba58911fa9822d6c34906f38",
+      "bytes": 6017,
+      "role": "Exact approved public aggregate projection."
+    },
+    {
+      "name": "H27_public_training_curves",
+      "sha256": "8b925895582040cdcd9e63f549d0cdee5bf6ab3c0679788ed7c8c6ca5a8500dc",
+      "bytes": 201741,
+      "role": "All180 fixed observations; no selected checkpoint."
+    },
+    {
+      "name": "prior_audit_report",
+      "sha256": "01455561701cd367da41e8d078ca80fcfce2e3c7dc6671eb908a4364b86b4f94",
+      "bytes": 12484,
+      "role": "Completed private evidence audit, source pin only."
+    },
+    {
+      "name": "original_H27_independent_verification",
+      "sha256": "3e7b84b19a41b8dbc3270f41914541a22d05fa503fa166a4b0b7c979dd7a486b",
+      "bytes": 22875,
+      "role": "Approved original full36OOF/gradientstatistics/schedule/init verification withlimits."
+    },
+    {
+      "name": "H28_producer_public_aggregate",
+      "sha256": "e253a2108f33bc413a843bbd63fbad6efc284c2c7b6cad64e819eb216333efb8",
+      "bytes": 9857,
+      "role": "Closed producer aggregate, independently reproduced by the saved-choice arithmetic verifier."
+    },
+    {
+      "name": "H28_producer_verification",
+      "sha256": "20a42d31f6586041598b46893db5f7d3aaaf229d6c1c2734958f2607fee48fe8",
+      "bytes": 1598,
+      "role": "Producer extraction receipt, separate from later independent saved-choice arithmetic QA."
+    },
+    {
+      "name": "H28_independent_saved_arithmetic_verification",
+      "sha256": "28b66b34b57deadd297110dfb88d920efedc7e15d4b0b5a7ec0a4be0478f77a0",
+      "bytes": 1427,
+      "role": "Actual independent saved-choice arithmetic QA; all original primary intervals unchanged; no original array/model/native replay."
+    },
+    {
+      "name": "H28_independent_arithmetic_aggregate",
+      "sha256": "d44246f08ee3af1aba1b17ef2237f0f1349bde7adf2bf03ff621cafa3b3d5150",
+      "bytes": 8348,
+      "role": "Independently reconstructed context\u2192seed\u2192component aggregate, no individual choices or component IDs projected."
+    }
+  ],
+  "read_first_repository_files": [
+    "AGENTS.md",
+    "MASTER_PLAN.md",
+    "docs/experiments/README.md",
+    "docs/experiments/experiments.jsonl",
+    "docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md",
+    "docs/learning.md",
+    "docs/adr/ADR-0005-canonical-learning-loop.md"
+  ],
+  "primary_research": [
+    {
+      "title": "Why do tree-based models still outperform deep learning on typical tabular data?",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/0378c7692da36807bdec87ab043cdadc-Abstract-Datasets_and_Benchmarks.html"
+    },
+    {
+      "title": "On Over-fitting in Model Selection and Subsequent Selection Bias in Performance Evaluation",
+      "url": "https://www.jmlr.org/beta/papers/v11/cawley10a.html"
+    },
+    {
+      "title": "Distributionally Robust Neural Networks for Group Shifts: On the Importance of Regularization for Worst-Case Generalization",
+      "url": "https://openreview.net/pdf?id=ryxGuJrFvS"
+    }
+  ],
+  "limits": [
+    "Source/receipt SHA pins authenticate bytes, not independent correctness of every historical model.",
+    "No dataset hashes, context/family/program IDs, weights, private locators or credentials are projected.",
+    "H28 arithmetic QA inherits prior extraction/pick authority and does not revalidate original arrays or native models."
+  ],
+  "prospective_method_decision_provenance": "Root instruction after initial draft, before new tree fitting; changes only proposed method/reporting, no H27/H28 data or results."
+}

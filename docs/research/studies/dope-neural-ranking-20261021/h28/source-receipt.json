@@ -1,0 +1,21 @@
+{
+  "independent_model_or_native_forward": false,
+  "preserved_original_primary_intervals": true,
+  "schema": "research.public-source-receipt/v1",
+  "source_refs": {
+    "independent_arithmetic_verification": {
+      "bytes": 1427,
+      "sha256": "28b66b34b57deadd297110dfb88d920efedc7e15d4b0b5a7ec0a4be0478f77a0"
+    },
+    "producer_public_aggregate": {
+      "bytes": 9857,
+      "sha256": "e253a2108f33bc413a843bbd63fbad6efc284c2c7b6cad64e819eb216333efb8"
+    },
+    "producer_verification": {
+      "bytes": 1598,
+      "sha256": "20a42d31f6586041598b46893db5f7d3aaaf229d6c1c2734958f2607fee48fe8"
+    }
+  },
+  "study": "H28",
+  "zero_new_fits": true
+}

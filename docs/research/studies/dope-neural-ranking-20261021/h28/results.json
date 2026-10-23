@@ -1,0 +1,259 @@
+{
+  "arm_original_weight_failure_rates": {
+    "real112/five8": 0.004402105096549541,
+    "real112/one8": 0.0029914529914529917,
+    "real112/zero8": 0.005460588793922127
+  },
+  "arm_original_weight_mean_fitness": {
+    "real112/five8": -1.0170008043720131,
+    "real112/one8": -1.1652185843543532,
+    "real112/zero8": -0.9114288392687053
+  },
+  "arm_unweighted_failure_counts": {
+    "real112/five8": 10,
+    "real112/one8": 7,
+    "real112/zero8": 9
+  },
+  "choice_records": 7650,
+  "components": 162,
+  "contexts": 850,
+  "contrasts": [
+    {
+      "all_components_retained": true,
+      "concentration_descriptive_only": {
+        "1": {
+          "absolute_contribution_mass": 0.2056735520395758,
+          "fraction_of_total_absolute_mass": 0.5322447136315672,
+          "signed_contribution": -0.2056735520395758
+        },
+        "10": {
+          "absolute_contribution_mass": 0.3555630525758525,
+          "fraction_of_total_absolute_mass": 0.9201307276483737,
+          "signed_contribution": -0.10549110159633744
+        },
+        "5": {
+          "absolute_contribution_mass": 0.340354325857865,
+          "fraction_of_total_absolute_mass": 0.8807733853141564,
+          "signed_contribution": -0.10406056480543746
+        }
+      },
+      "contrast": "five-minus-zero_PRIMARY",
+      "difference_lower_better": -0.10557196510330782,
+      "gate_transition_cells": {
+        "fail_fail": {
+          "conditional_difference_descriptive_only": 0.0,
+          "contribution": 0.0,
+          "original_weight_mass": 0.0028331750553972778,
+          "pairs": 6,
+          "weighted_A_fitness_sum": 0.28420425411984307,
+          "weighted_B_fitness_sum": 0.28420425411984307
+        },
+        "fail_pass": {
+          "conditional_difference_descriptive_only": 101.54782936321544,
+          "contribution": 0.15932144010175264,
+          "original_weight_mass": 0.0015689300411522635,
+          "pairs": 4,
+          "weighted_A_fitness_sum": 0.15827627368728717,
+          "weighted_B_fitness_sum": -0.001045166414465457
+        },
+        "pass_fail": {
+          "conditional_difference_descriptive_only": -100.04416650254689,
+          "contribution": -0.26285741752805925,
+          "original_weight_mass": 0.0026274137385248497,
+          "pairs": 3,
+          "weighted_A_fitness_sum": -0.0004891196494231953,
+          "weighted_B_fitness_sum": 0.2623682978786361
+        },
+        "pass_pass": {
+          "conditional_difference_descriptive_only": -0.0020504010095170775,
+          "contribution": -0.0020359876770012215,
+          "original_weight_mass": 0.9929704811649256,
+          "pairs": 2537,
+          "weighted_A_fitness_sum": -1.4589922125297203,
+          "weighted_B_fitness_sum": -1.456956224852719
+        }
+      },
+      "negative_gain_mass": -0.24599931729408972,
+      "original_weight_failure_rate_difference": -0.0010584836973725866,
+      "positive_harm_mass": 0.1404273521907819,
+      "recomputed_CI_or_pvalue": false,
+      "seed_differences": {
+        "20261022": -0.116546143809282,
+        "20261023": 0.18502739944736443,
+        "20261024": -0.385197150948006
+      }
+    },
+    {
+      "all_components_retained": true,
+      "concentration_descriptive_only": {
+        "1": {
+          "absolute_contribution_mass": 0.05267687350763447,
+          "fraction_of_total_absolute_mass": 0.2648152793625433,
+          "signed_contribution": 0.05267687350763447
+        },
+        "10": {
+          "absolute_contribution_mass": 0.18453467460501985,
+          "fraction_of_total_absolute_mass": 0.927686063230802,
+          "signed_contribution": 0.14928875555709262
+        },
+        "5": {
+          "absolute_contribution_mass": 0.17655646727130178,
+          "fraction_of_total_absolute_mass": 0.8875783069573656,
+          "signed_contribution": 0.1440603288048005
+        }
+      },
+      "contrast": "five-minus-one_PRIMARY",
+      "difference_lower_better": 0.14821777998234006,
+      "gate_transition_cells": {
+        "fail_fail": {
+          "conditional_difference_descriptive_only": 0.0,
+          "contribution": 0.0,
+          "original_weight_mass": 0.0028331750553972778,
+          "pairs": 6,
+          "weighted_A_fitness_sum": 0.28414046301811413,
+          "weighted_B_fitness_sum": 0.28414046301811413
+        },
+        "fail_pass": {
+          "conditional_difference_descriptive_only": 101.81757075228431,
+          "contribution": 0.15974464547040493,
+          "original_weight_mass": 0.0015689300411522635,
+          "pairs": 4,
+          "weighted_A_fitness_sum": 0.1583400647890161,
+          "weighted_B_fitness_sum": -0.0014045806813888116
+        },
+        "pass_fail": {
+          "conditional_difference_descriptive_only": -101.16058859336867,
+          "contribution": -0.01601148917273958,
+          "original_weight_mass": 0.00015827793605571383,
+          "pairs": 1,
+          "weighted_A_fitness_sum": -0.00018369556716819644,
+          "weighted_B_fitness_sum": 0.015827793605571384
+        },
+        "pass_pass": {
+          "conditional_difference_descriptive_only": 0.00450516898085404,
+          "contribution": 0.004484623684674734,
+          "original_weight_mass": 0.9954396169673948,
+          "pairs": 2539,
+          "weighted_A_fitness_sum": -1.4592976366119752,
+          "weighted_B_fitness_sum": -1.46378226029665
+        }
+      },
+      "negative_gain_mass": -0.025350766631432937,
+      "original_weight_failure_rate_difference": 0.0014106521050965492,
+      "positive_harm_mass": 0.173568546613773,
+      "recomputed_CI_or_pvalue": false,
+      "seed_differences": {
+        "20261022": 0.11697716489703042,
+        "20261023": 0.19935975144321633,
+        "20261024": 0.1283164236067735
+      }
+    },
+    {
+      "all_components_retained": true,
+      "concentration_descriptive_only": {
+        "1": {
+          "absolute_contribution_mass": 0.2056735520395758,
+          "fraction_of_total_absolute_mass": 0.6952311493244699,
+          "signed_contribution": -0.2056735520395758
+        },
+        "10": {
+          "absolute_contribution_mass": 0.2699626744457866,
+          "fraction_of_total_absolute_mass": 0.9125454321591004,
+          "signed_contribution": -0.2479753228497666
+        },
+        "5": {
+          "absolute_contribution_mass": 0.26152128816888076,
+          "fraction_of_total_absolute_mass": 0.8840113079365762,
+          "signed_contribution": -0.253258332471587
+        }
+      },
+      "contrast": "one-minus-zero_EXPLORATORY",
+      "difference_lower_better": -0.2537897450856479,
+      "gate_transition_cells": {
+        "fail_fail": {
+          "conditional_difference_descriptive_only": 0.0,
+          "contribution": 0.0,
+          "original_weight_mass": 0.0025799303577081355,
+          "pairs": 6,
+          "weighted_A_fitness_sum": 0.25887978435092884,
+          "weighted_B_fitness_sum": 0.25887978435092884
+        },
+        "fail_pass": {
+          "conditional_difference_descriptive_only": 99.97361510770739,
+          "contribution": 0.041141405394118265,
+          "original_weight_mass": 0.00041152263374485596,
+          "pairs": 1,
+          "weighted_A_fitness_sum": 0.041088472272756665,
+          "weighted_B_fitness_sum": -5.293312136160148e-05
+        },
+        "pass_fail": {
+          "conditional_difference_descriptive_only": -100.1196585795656,
+          "contribution": -0.2884105391180902,
+          "original_weight_mass": 0.002880658436213992,
+          "pairs": 3,
+          "weighted_A_fitness_sum": -0.0007177714705399552,
+          "weighted_B_fitness_sum": 0.2876927676475503
+        },
+        "pass_pass": {
+          "conditional_difference_descriptive_only": -0.006559127287979219,
+          "contribution": -0.006520611361675954,
+          "original_weight_mass": 0.994127888572333,
+          "pairs": 2540,
+          "weighted_A_fitness_sum": -1.4644690695074989,
+          "weighted_B_fitness_sum": -1.4579484581458229
+        }
+      },
+      "negative_gain_mass": -0.27481226105412776,
+      "original_weight_failure_rate_difference": -0.0024691358024691358,
+      "positive_harm_mass": 0.021022515968479868,
+      "recomputed_CI_or_pvalue": false,
+      "seed_differences": {
+        "20261022": -0.2335233087063124,
+        "20261023": -0.014332351995851868,
+        "20261024": -0.5135135745547795
+      }
+    }
+  ],
+  "limits": [
+    "Historically exposed original850TRAIN support; no independent-family confirmation.",
+    "Posthoc additive description, not a causal failure explanation or new significance result.",
+    "No failed choice or component removed; original weights/three-seed means unchanged."
+  ],
+  "new_fits_reranking_selection": 0,
+  "original_bootstrap_UNCHANGED": {
+    "familywise_coverage": 0.975,
+    "paired_unit": "wholecomponent",
+    "quantiles": [
+      0.00625,
+      0.99375
+    ],
+    "replicates": 100000,
+    "same_resamples_both_primaries": true,
+    "seed": 20261022
+  },
+  "original_primary_intervals_UNCHANGED": [
+    {
+      "central98_75_interval": [
+        -0.7890362249303311,
+        0.2869843098065123
+      ],
+      "established_favorable_direction": false,
+      "lower_is_better": true,
+      "name": "real112/five8-minus-real112/zero8",
+      "raw_fitness_difference": -0.10557196510330781
+    },
+    {
+      "central98_75_interval": [
+        -0.02305955244217988,
+        0.4012829989769582
+      ],
+      "established_favorable_direction": false,
+      "lower_is_better": true,
+      "name": "real112/five8-minus-real112/one8",
+      "raw_fitness_difference": 0.1482177799823401
+    }
+  ],
+  "schema": "h28.exact-saved-choice-additive-diagnostic/v1",
+  "source_freeze_sha256": "997466de74588fdd44156670921e2b2525879a8a0f81f98c032afe5cffb6717f",
+  "state": "COMPLETE_DESCRIPTIVE_DECOMPOSITION_NO_NEW_SIGNIFICANCE_OR_FITS"
+}
