@@ -642,8 +642,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
-    let cuda_local_only =
-        old_fixture("transitions/cuda_local_only_ci_identity_rebaseline.v1.json");
+    let cuda_local_only = old_fixture("transitions/cuda_local_only_ci_identity_rebaseline.v1.json");
     assert_eq!(cuda_local_only["fixtures"].as_array().unwrap().len(), 2);
     for path in changed_fixtures {
         assert!(cuda_local_only["fixtures"]
