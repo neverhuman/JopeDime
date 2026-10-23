@@ -1,0 +1,50 @@
+% Appendix F — reproducing this paper
+\section{Reproducing this paper}
+\label{app:repro}
+
+Every file referenced below is in the repository at the commit this paper is built from.
+
+\paragraph{The paper} \code{make -C docs/paper/innovationzero} (or \code{just paper}) runs the source
+checks and typesets three volumes with XeLaTeX into \code{target/innovationzero-paper/}: this paper,
+its technical supplement and its archive. Fonts (Libertinus, Inter and JetBrains Mono, all under the
+SIL Open Font License) are fetched once from their release archives, checked against the SHA-256
+values in \code{fonts.lock} and cached outside the working tree. Before typesetting,
+\code{scripts/check.sh} verifies the byte count and SHA-256 of every archived artifact against
+\code{evidence/artifact-manifest.json}, binds the plotted Elo, cost and source-size figures to the
+archived receipts, regenerates the derived plot tables and compares them with the committed copies,
+resolves every input and citation, and refuses restricted vocabulary in the manuscript;
+\code{make self-test} shows that each of those refusals fires on a deliberately broken fixture.
+After typesetting it fails on any overfull box, unresolved reference, missing glyph or unembedded
+font. Listings are included directly from the files they print.
+
+\paragraph{The challenge} The participant packet is the text between the \code{BEGIN} and \code{END}
+markers of \code{docs/challenges/frontier-regression-master-spec.md}: lines 16--541 (39,746 bytes)
+together with the newline that closes the opening marker, archived as 39,747 bytes with SHA-256
+\code{96a9d0c4625bd984\ldots}. The full file is 68,744 bytes, SHA-256 \code{5ca568f40eb6ccb0\ldots}.
+Both are printed in full in the archive volume.
+
+\paragraph{The pilot} From the repository root, with the four Python adapters' libraries installed at
+the versions in \cref{app:pilot}:
+\begin{lstlisting}[style=prompt]
+cargo build --release --locked -p jope-bench -p jope-arena
+target/release/jope-bench run --datasets datasets/test --out OUT/reports \
+  --adapter "catboost=python3 crates/jope-bench/adapters/catboost_adapter.py" \
+  --adapter "lightgbm=python3 crates/jope-bench/adapters/lightgbm_adapter.py" \
+  --adapter "rf=python3 crates/jope-bench/adapters/sklearn_rf_adapter.py" \
+  --adapter "xgboost=python3 crates/jope-bench/adapters/xgboost_adapter.py" \
+  --native GPT6p1_Sol_Max --automl gpt6-astra-max --entrant Opus5p5_Extra \
+  --top 20 --search --search-pop 32 --search-gens 8 --resample-search --workers 2
+target/release/jope-bench ladder --reports OUT/reports --track-root OUT/track --track prelim-frontier
+target/release/jope-arena elo --track prelim-frontier-deep --root OUT/track
+\end{lstlisting}
+The engine's programs are deterministic given the search seed; Elo values depend only on the score
+table, whose SHA-256 is recorded in \cref{app:pilot}.
+
+\paragraph{The 64-family panel} The cell protocol, isolation settings, scorer and worker identities
+are recorded in \code{artifacts/benchmark/SOURCES.md}, archived from pull request \#407; the
+historical cells are held outside the repository at the locations listed there, so this panel can be
+re-scored from its receipts but not re-run from Git alone.
+
+\paragraph{The emitted programs} \code{cargo build --release --locked -p feat-math --example emit}
+builds the emitter used for \cref{app:programs}; each committed program compiles with
+\code{rustc --edition=2021 -O -D unsafe-code}.

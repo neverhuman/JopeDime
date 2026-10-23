@@ -1,0 +1,12 @@
+# Compile receipt for the ten emitted programs (rustc and py_compile), 2026-10-22T10:21:28Z
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07); python: Python 3.13.16
+047e62b52a3f4ede rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+1cb97b1d7314d43d rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+21fbfe8b53dbcd60 rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+30ef3eaa6d2971a9 rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+43b4cc3ab0ebbd97 rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+693890aae9dc860b rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+79e600bc5fcd5da7 rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+b5beff4a53fa12c0 rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+c32fa09b48fb2f27 rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0
+c7d815714ca52bce rustc --edition=2021 -O -D unsafe-code: exit 0, warnings 0; python3 -m py_compile model.py: exit 0

@@ -192,11 +192,11 @@ limits and client examples](docs/program-source-stream.md).
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
 | Rust tests | 5,909 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
-| CI | 10 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 836 items over 27 lanes <sup>7</sup> |
+| CI | 11 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
+| Coverage map | 838 items over 27 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,212 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,210 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -386,7 +386,7 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-Pull-request CI is `.github/workflows/ci.yml`: ten jobs on the self-hosted `jope-ci` runners.
+Pull-request CI is `.github/workflows/ci.yml`: eleven jobs on the self-hosted `jope-ci` runners.
 Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated
@@ -486,7 +486,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 - [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the emitters
 - [`docs/datasets.md`](docs/datasets.md) — dataset store layout, licence rule and `datasets/test`
 - [`docs/campaigns.md`](docs/campaigns.md) — benchmark campaigns
-- [`docs/paper/innovationzero/`](docs/paper/innovationzero/) — InnovationZero publication: sectioned manuscript, technical supplement, complete challenge and source appendix, with a reproducible PDF build. A protocol and evidence audit; the prospective first-proposal result remains unestablished.
+- [`docs/paper/innovationzero/`](docs/paper/innovationzero/) — InnovationZero publication: sectioned paper, technical supplement and byte-exact archive, with the four frontier entrants compared on Elo, token yield and tokens per second, and a checked, reproducible PDF build. The prospective first-proposal result remains unestablished.
 - [`docs/paper/TECHNICAL_WRITEUP.md`](docs/paper/TECHNICAL_WRITEUP.md) — the CLOVER technical write-up (a draft), its [claim ledger](docs/paper/claims.json) and [numbers trace](docs/paper/NUMBERS_TRACE.md)
 - [`docs/experiments/README.md`](docs/experiments/README.md) — curated 18-record experiment digest ([`experiments.jsonl`](docs/experiments/experiments.jsonl), [`schema.v1.json`](docs/experiments/schema.v1.json) and [synthesis roadmap](docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md))
 - [`docs/runbooks/`](docs/runbooks/) — operator runbooks, the W7 three-host proof among them

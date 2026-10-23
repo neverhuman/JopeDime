@@ -1,0 +1,49 @@
+% Section 10 — Conclusion
+\section{Conclusion: the search for Move 42}
+\label{sec:conclusion}
+
+Move~37 showed that a machine could make a move its imitation policy considered highly unlikely and win with it. It took
+a search to find it. InnovationZero asks whether the search can be learned and then removed: whether
+a model can read a dataset and write the algorithm for it, as working code, before trying anything.
+
+We have made that question precise and testable. We defined zero by counting --- one committed
+program, no executions, no revisions --- and separated three tracks that are usually confused. We gave
+frontier models a closed-world challenge and found that they can invent working algorithms by
+reasoning alone, that the best of them is very good, and that all of them reinvent the same
+textbook design while keeping a small fraction of the tokens they process. We showed that a
+data-conditioned engine already writes a different, standalone program for every dataset, about as
+good as the best frontier invention on our pilot panel, and that strong programs for these datasets
+exist in the space it searches. And we proved that the most obvious learned proposer, one that
+chooses from a catalog, can never answer the question, which tells us what the one that can must
+look like.
+
+The task also includes its cost of error. The controls of \cref{sec:objectives} separate a
+proposer that writes a procedure for an organization's own objective from a fixed learner with
+objective-aware selection or calibration. Serving this long tail could change the economics of
+algorithm design; it remains a hypothesis requiring the same held-out, cross-objective tests.
+
+The same construction is not specific to regression. Any problem whose solution is a program and
+whose outcome can be measured admits the same contract, the same tracks and the same ladder: binary
+and multiclass classification, scored by held-out discrimination and calibration; forecasting,
+scored out of time; combinatorial optimization, scored by objective value under a time limit; and,
+because a system's own proposal and selection procedures are programs with measurable outcomes, the
+improvement of the system itself --- the last rung of the ladder, and the one that should be
+claimed last. The repository already contains classification heads and metrics and time-series
+fixtures; none of these extensions has yet been qualified, and we list them as directions, not
+results.
+
+We call the class of models that write algorithms from data and learn from what those algorithms do
+\emph{algorithmic foundation models}. Language models learned to write about solutions. The open
+question is whether a model can learn, from the outcomes of experiments, to write the solution itself
+--- and the first program it writes that works, that no archive contained and that no frontier model
+would have proposed, will be its Move~42. We have released the challenge, the entrants, the pilots and
+the protocol so that anyone can look for it.
+
+\section*{Acknowledgements and disclosures}
+\addcontentsline{toc}{section}{Acknowledgements and disclosures}
+The frontier-model entrants were written by the models named for them, in sessions run by the
+repository's owner; integration and verification were carried out by coding agents working in the
+repository, whose receipts are cited. This paper was drafted with the assistance of AI models,
+and numerical claims reference the repository files and evidence disclosures listed in \cref{app:claims}. Jepson
+Taylor is the founder of Veox AI, which develops the system described. The kernel language and the
+trained proposer are proprietary; \cref{app:disclosure} lists what is and is not released.

@@ -1,0 +1,171 @@
+% Section 3 — The General Regressor Challenge
+\section{The General Regressor Challenge}
+\label{sec:challenge}
+
+Arguments about whether language models can invent are usually conducted with anecdotes. We
+wanted a measurement: a task with one deliverable, no access to data, no feedback, and a
+verdict that does not depend on anyone's taste. The General Regressor Challenge
+\citep{jopedime2026challenge} is that task. Its participant packet and the organizer's master file
+are reproduced byte for byte in the archive volume that accompanies this paper; this section explains
+the design and what four frontier models did with it.
+
+\subsection{Design}
+
+\paragraph{One deliverable, frozen once} An entrant must write \emph{one} complete regression
+algorithm in safe Rust (edition 2021, a single file, single-threaded) that will be fitted,
+without the entrant's involvement, on thousands of unknown datasets and ranked by Elo on
+held-out root-mean-squared error. ``One algorithm'' means one immutable learning procedure:
+it may estimate parameters and make internal decisions from its current training rows, but it
+may not recognize datasets, defer choices, or ask to be tuned later.
+
+\paragraph{A closed world of fundamentals} Everything not expressly permitted is forbidden.
+Entrants may use IEEE-754 binary64 arithmetic; nineteen named scalar functions (from
+\code{abs} and \code{sqrt} to \code{erf}, \code{asinh} and \code{sigmoid}); seven row summaries;
+arrays, sorting and any linear algebra they implement themselves; and a pseudorandom generator
+seeded only from the supplied seed. No external crate, no \code{unsafe}, no filesystem, clock,
+thread or network access, and no numerical library: there is no supplied matrix inverse,
+solver, optimizer or regression estimator. A function an entrant could have written is not
+allowed merely because it could have been written; it must be written.
+
+\paragraph{Design without experiments} The default authoring mode is \emph{reasoning only}: no
+tools, no browsing, no code execution, no data. Entrants may not generate synthetic data, run
+a candidate on anything, or train a surrogate. An organizer may instead enable a uniform
+\emph{compilation-only} mode (at most three compiler requests and two revisions, diagnostics
+only). After the source is frozen, the evaluator fits it on training rows; that is its
+intended use. The prohibition is on empirical feedback during design, not on learning at
+evaluation time.
+
+\paragraph{A fixed contract} The final column of every training table is the target; prediction
+inputs contain features only. The callable interface is the trait in \cref{lst:trait}; the
+resource contract is one CPU core, \SI{8}{GiB} of memory, \SI{600}{s} per fit and \SI{60}{s}
+per prediction partition. Failures, timeouts and non-finite predictions count as losses.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}{0.62\linewidth}
+\begin{lstlisting}[language=Rust, numbers=none, xleftmargin=6pt, basicstyle=\ttfamily\fontsize{7.6pt}{9.2pt}\selectfont]
+pub trait RegressorApi: Sized {
+    fn new(seed: u64) -> Self;
+
+    fn fit(
+        &mut self,
+        train: &[f64],
+        n_rows: usize,
+        n_cols: usize,
+    ) -> Result<(), String>;
+
+    fn predict(
+        &self,
+        features: &[f64],
+        n_rows: usize,
+        n_features: usize,
+    ) -> Result<Vec<f64>, String>;
+}
+\end{lstlisting}
+\end{minipage}
+\caption{The entire interface an entrant implements. \code{train} is row-major with the target
+in its last column; \code{features} never contains a target column.}
+\label{lst:trait}
+\end{figure}
+
+\paragraph{A red-teamed specification} The organizer appendix (Supplement~\ref{S-sup:organizer}) records
+sixteen attacks on earlier drafts and how each was closed: an unspecified target column, row
+summaries that could leak the label, a wrapper around a foreign implementation, compile-time
+evaluation used as a hidden experiment, unequal tool access between entrants, refits that
+inherit stale state, and selective omission of failed tasks, among others. Twenty-two
+organizer-only correctness checks (shape errors, overflow, missing values, zero features,
+lifecycle, batch and permutation invariance, refit isolation) run only after the source is
+frozen and return no feedback to the author.
+
+The challenge measures task-time reasoning. It cannot certify that a model never encountered
+an idea, or a dataset, during pre-training, and the specification says so in its own words
+(Supplement~\ref{S-sup:organizer}). What it can certify is that the frozen program was not shaped by any
+data the entrant saw during the task.
+
+\subsection{Entrants}
+\label{sec:entrants}
+
+Four entrants have been frozen and integrated into the repository's benchmark harness: three on
+21 October 2026 (pull requests \#391, \#392 and \#393) and one on 22 October (pull request \#407,
+open at the time of writing). \Cref{tab:entrants} records what each receipt says about its own
+authorship. Every entrant compiled at its first post-freeze attempt and none was edited after
+freezing. None is a pristine primary entrant, and the receipts say so. Each of the first three
+authoring conversations carried earlier project context; Astra's provenance records that the
+organizer appendix was in context and that its prompt hash is that of the full 68,744-byte
+specification rather than the participant packet, and the specification sizes Opus and Sol report
+(about 16--17 thousand tokens) also match the full file. The fourth file was supplied by the
+repository owner without authoring telemetry; its name indicates a Gemini model, and it replaced an
+earlier Gemini source that is not in the repository. An authoring statement supplied for it later is
+a self-report whose token counts do not fit the file, and we treat it as such (\cref{sec:yield}).
+
+\begin{table}[t]
+\caption{The four frozen entrants and their authoring receipts. Times run from the specification
+becoming available (including an initial clarification exchange) to the frozen source. Token counts
+are the sessions' own estimates, not metered usage. Gemini4\_argon\_high is in pull request \#407; its
+statement was supplied after integration and is archived in \code{evidence/}.}
+\label{tab:entrants}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.15\linewidth}LLLL@{}}
+\toprule
+& \code{Opus5p5\_Extra} & \code{GPT6\_Astra\_Max} & \code{GPT6p1\_Sol\_Max} & \code{Gemini4\_argon\_high} \\
+\midrule
+Model, as recorded & configured \code{claude-opus-5-5} & session-reported \code{gpt-6-astra-wm} & requested name; served model not recorded & owner-supplied file; no telemetry \\
+Source & 66,536 B, 2,284 lines & 27,729 B, 821 lines & 25,011 B, 687 lines & 96,694 B, 2,931 lines \\
+Time to frozen source & \textasciitilde25 min (15--40), estimated & 770 s, timestamped & 760 s, timestamped & 55--85 s, self-reported later \\
+Session tokens to freeze & 75k output incl.\ reasoning + 30--80k input & 80k (60--110k) content & 60k (45--80k) content & 11.8k self-reported; fewer than its source holds \\
+Admission & 35/35 contract-driver cases & 18 focused tests & 20 focused tests & 7 crate tests; edge-case probe \\
+Context disclosed & earlier project turns & project memory; organizer appendix & prior project context & unknown \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{What they invented}
+\label{sec:convergence}
+
+Read side by side, the four designs describe one idea four times (\cref{tab:convergence}). Each
+fits a ridge-regularized linear model whose penalty is chosen on rows held out inside the training
+call; each fits histogram-binned gradient-boosted trees with explicit handling of missing values;
+and each combines its components by minimizing squared error on internal held-out rows, with the
+training mean available as a fallback. Opus adds a second boosting family and cross-fitting; Astra
+a quadratic feature expansion; Sol starts its trees from the ridge residual; Gemini, the largest
+file, stacks five experts including splines, an asinh-target booster and nearest neighbours. These
+are real differences in engineering. They are not differences in kind.
+
+\begin{table}[t]
+\caption{Components of the four frozen designs, from their design documents (Gemini's was written
+by the integrator from the source). Every entrant chose the same three ingredients.}
+\label{tab:convergence}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.13\linewidth}LLLL@{}}
+\toprule
+& \code{Opus5p5\_Extra} & \code{GPT6\_Astra\_Max} & \code{GPT6p1\_Sol\_Max} & \code{Gemini4\_argon\_high} \\
+\midrule
+Linear model & ridge by Cholesky; 14 penalties chosen by pooled out-of-fold error & ridge by coordinate descent; 3 penalties, internal validation & ridge by coordinate descent; 4 penalties, internal validation & spline/ridge basis with pairwise interactions \\
+Boosted trees & leaf-wise histogram boosting \emph{and} ridge-initialized oblivious boosting & histogram residual trees, depth 4--6 & histogram residual trees from the ridge fit, depth 4--6 & oblivious, leaf-wise (ridge prior) and asinh-target boosting \\
+Other & --- & squares, positive parts, missingness indicators & --- & $k$-nearest neighbours (8--3,000 rows) \\
+Combination & simplex blend of 4 components & convex mixture of mean, ridge, trees & blend weight in $[0,1]$ & non-negative simplex stack \\
+Held-out rows inside \code{fit} & $K$-fold cross-fitting, $K=2$--$5$ & one 20\% split & one 20\% split & 3--5 folds \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+That design is, in substance, the consensus answer of the last decade of tabular machine
+learning: gradient-boosted trees dominate typical tabular data
+\citep{grinsztajn2022trees,chen2016xgboost,ke2017lightgbm,prokhorenkova2018catboost}, linear
+models are the classic remedy for their poor extrapolation \citep{hoerl1970ridge}, and blending
+on held-out error is standard practice. Asked to invent, the models reconstructed the textbook.
+We state the limit of this observation plainly: the first three sessions shared project context and
+the fourth is undocumented, so their agreement is not independent evidence. It is nonetheless what each model chose when told
+that nothing would be recommended to it.
+
+\subsection{What they got right}
+
+It would be easy to read the convergence as a failure. It is not. Writing 25--67 kilobytes of
+numerically careful Rust with no compiler, no test and no data, as the three documented entrants
+did, and having it compile at the first attempt and pass every contract check, is a feat that would have been unthinkable for any
+model five years ago. The entrants handle missing values, zero-feature tables, single rows,
+constant targets, overflow-safe target scaling and deterministic refits, all without having run
+a line. \Cref{sec:evidence} shows that, on our pilot panel, their predictions are also good. The
+question this paper asks is not whether frontier models can write a new working algorithm. They
+can. It is where the invention comes from, what it costs, and whether it can come from the data
+instead.

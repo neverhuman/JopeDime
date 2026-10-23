@@ -1,0 +1,247 @@
+% Section 5 — The model: problem encoding, kernel embedding, game and objectives
+\section{From data to algorithm: the InnovationZero model}
+\label{sec:model}
+
+The InnovationZero model is an \emph{algorithmic foundation model}: a network whose output is an
+algorithm, and whose training signal is what that algorithm does on data it has not seen. This
+section describes it at the level a reader needs to assess the claims, and no further at one
+point: the language in which kernels are written is proprietary, so we describe it by the
+guarantees it enforces rather than by its syntax (\cref{app:disclosure} draws the boundary
+precisely). Four maps define the model:
+\begin{equation}
+z = E_\phi(D_{\mathrm{tr}}), \qquad h = S_\theta(z), \qquad a = G(h), \qquad c_\ell = \Lambda_\ell(a),
+\label{eq:contract}
+\end{equation}
+an encoder $E_\phi$ from training rows to a \emph{problem embedding} $z$; the \emph{kernel
+embedding} $S_\theta$, which turns $z$ into a representation $h$ of a solution and decodes it into
+a typed kernel $a=G(h)$; and emitters $\Lambda_\ell$ that lower the kernel to source code in a
+language $\ell$. After commitment, the emitted program is fitted and scored exactly as in
+\cref{eq:commit}. \Cref{fig:pipeline} shows the flow.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-pipeline}
+\caption{The data-to-algorithm flow. Only training rows enter; the kernel is frozen before anything
+is executed (the track-C contract). The dark stage is the protected kernel embedding. $^\dag$C\texttt{++}17 and
+JavaScript emitters cover fewer kernel heads than Rust and Python (\cref{sec:code}).}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{The problem encoding}
+
+The encoder reads the values and labels of the training rows and nothing else. Its principal
+component is Hyperion v7, a transformer with model width 512, eight attention heads and twelve
+blocks over six bands of scale, whose pooled output is a 512-dimensional embedding
+(\code{crates/hyperion/src/hyperion\_v7}). The engine's current policy concatenates that embedding
+with a 1,024-dimensional foundation encoding and a 512-dimensional encoding of the target column, a
+2,048-value context frozen under the recipe \code{frozen-512+1024+512-clip32/v1}
+(\code{crates/jope-policy}). Encoders are fitted only on training contexts and are never refitted
+when new datasets arrive. The encoder may read training targets --- supervised conditioning is the
+point --- but outer-test rows and their labels never reach it.
+
+\subsection{The kernel embedding}
+
+The kernel embedding is a conditional generative model over algorithms. It maps $z$ to a
+distribution $\pi_\theta(a\mid z)$ over complete kernels, decoded step by step; the current release
+is a decoder of width 512 with six layers, four heads and 27,796,494 parameters
+(checkpoint \code{policy-step-60000}). Two qualifications keep this description honest. A
+512-dimensional solution embedding $h$ is the bottleneck we propose to test, against direct
+conditioning and other widths; neither the 512-dimensional problem signature nor the 2,048-value
+policy context establishes that a trained solution embedding of that width exists. And one
+proposal is one committed trajectory, not one forward pass: decoding a kernel may take many
+autoregressive calls, each counted. A kernel is a feature map followed by a fitted head --- a
+ridge regression, a Gaussian process, a gradient-boosted ensemble and so on --- and every kernel the
+decoder can express carries six guarantees:
+\begin{itemize}
+\item \textbf{Typed.} Every operation has an input and output signature; ill-typed compositions
+cannot be written.
+\item \textbf{Total.} Finite inputs give finite outputs; missing values, constant columns, single
+rows and empty feature sets have defined behaviour --- the edge cases the challenge's organizer
+checks demand of frontier entrants.
+\item \textbf{Bounded.} Work grows at a stated rate in rows and features; there are no unbounded
+loops.
+\item \textbf{Deterministic.} All randomness flows from one seed.
+\item \textbf{Emittable.} Every operation lowers to each target language, or the emitter records a
+refusal; a refusal is a failure, never a silent substitution of another language.
+\item \textbf{Verifiable.} An outcome counts only when two independent implementations, the native
+evaluator and the compiled emission, agree on every prediction:
+\begin{equation}
+\bigl|\hat y^{\mathrm{native}}_i - \hat y^{\mathrm{emitted}}_i\bigr| \le 10^{-9}\max\bigl(1, |\hat y^{\mathrm{native}}_i|\bigr)
+\quad\text{for all rows } i.
+\label{eq:parity}
+\end{equation}
+\end{itemize}
+
+\paragraph{Algorithm decomposition} To learn a distribution over algorithms, an algorithm must first
+be decomposed into a canonical sequence of typed operations, the way text is decomposed into
+tokens. Decomposition makes algorithms comparable (two programs that compute the same thing receive
+the same canonical form), countable (a distribution over them is well defined) and learnable (a
+decoder can assign credit to each step). Training the kernel embedding therefore requires a large
+corpus of algorithms that have been decomposed this way \emph{and} measured on real data. In this
+sense, decomposition is the tokenizer of invention: a model can only learn to propose what has been
+broken into parts it can compose. It is also the bridge between our two routes, because a general
+algorithm invented by a frontier model can be decomposed into new operations that the kernel
+embedding may then use (\cref{sec:protocol}, E10).
+
+\paragraph{What is not yet true} The release policy's proposals have so far been consumed only as
+seeds for the engine's evaluation-based proposer, and its first accepted-model run timed out before
+producing a proposal (\code{docs/asm.md}). The earlier CLOVER policy, an 893,957-parameter decoder
+over a 2,051-value encoding, decodes inside a fixed catalog of 6,640 programs and is therefore
+catalog-bound in the sense of \cref{prop:closed} \citep{jopedime2026writeup}. It is a
+pre-normalized causal transformer of width 128 with two blocks, four heads, a feed-forward width of
+512 and programs of at most 640 representation tokens --- tokens of the kernel language, not of any
+natural language. Its outcome head ranks freshly executed programs at chance (pairwise accuracy
+0.506, 95\% interval $[0.441,0.568]$, in 32 development contexts), and the repository's archive
+records that the neural policy did not beat the non-neural proposer on held-out seed comparisons.
+A later offline surrogate raised pairwise ranking accuracy by 0.046 ($[0.040,0.052]$) across 1,136
+frozen shadow contexts from 255 parents; that is post-iteration shadow validation, and the
+repository keeps its flag \code{flywheel\_established=false}. We report these results because they define the
+starting point honestly: \emph{no neural proposer in this system has yet satisfied the track-C
+contract on held-out data.}
+
+\subsection{The game}
+
+Each training context $c$ is one dataset cut with two inner folds on its training rows. A move is a
+complete kernel. Its outcome is the log ratio of its error to that of the mean predictor fitted on
+the complementary fold:
+\begin{equation}
+q(c,a) = -\tfrac12 \sum_{j=1}^{2} \log \frac{\max(r_j,\varepsilon_c)}{\max(b_j,\varepsilon_c)},
+\qquad \varepsilon_c = \max\bigl(10^{-12}\max(1,|\bar y|),\; 10^{-6} s_c\bigr),
+\label{eq:q}
+\end{equation}
+where $r_j$ is the program's RMSE on fold $j$, $b_j$ the mean predictor's, and $s_c$ a robust scale
+of the training targets (1.4826 times the median absolute deviation, falling back to the
+inter-quartile range and then the standard deviation) \citep{jopedime2026writeup}. $q=0$ is the
+mean predictor and $q=\log 10$ a tenfold lower geometric-mean error; $q$ is unit-free, so games on
+different datasets are comparable, and it is clipped to $\pm\log 1000$.
+
+The opponent is the \emph{incumbent}: the best verified program found so far for the same context,
+its high-water mark $h_c$. A move wins if $q > h_c+\tau$, draws within $\tau=0.01$, and loses
+otherwise; any failure, timeout or parity violation loses. Because every incumbent is itself a
+program the system once found, we call this \emph{algorithmic self-play}, with one correction to
+the analogy: it is not a two-player zero-sum game but a one-step contextual game against a rising
+bar, closer to a bandit than to Go. \Cref{fig:game} marks which parts of the loop have run.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-game}
+\caption{Algorithmic self-play. Solid arrows have run in the first policy generation; the dashed
+ratchet runs offline on shadow pools and trains no policy; the dotted path is proposed. Teachers
+are verified high-water-mark programs from an offline search, frozen for a model generation;
+programs the model writes train its value and ranking heads but never become imitation targets.}
+\label{fig:game}
+\end{figure}
+
+\begin{table}[t]
+\caption{AlphaGo Zero and InnovationZero, row by row. The last two rows are the ones the protocol
+in \cref{sec:protocol} is designed to measure.}
+\label{tab:go}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}lLL@{}}
+\toprule
+& AlphaGo Zero & InnovationZero \\
+\midrule
+Board & a $19\times19$ position & the training rows of one dataset \\
+Board as seen by the network & 17 binary feature planes & a 512-dimensional problem embedding (plus context) \\
+Rules & the rules of Go & typed, total, bounded, emittable kernels \\
+Move & place one stone & commit one complete algorithm \\
+Outcome & win or loss at game end & held-out error relative to the mean predictor, $q$ \\
+Opponent & the best previous network & the best previous program for that dataset \\
+Policy target & search-improved move distribution & verified incumbents from an offline search \\
+Value target & game outcome & measured outcome $q$ \\
+Without search & raw network, about 3,000 Elo & track C: pending \\
+With search & 5,185 Elo & track S: the engine, $k=256$ \\
+What humans supplied & the rules & the operation families and the fundamentals \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Objectives}
+
+\paragraph{The existing training loss} The first policy generation minimizes a support-masked sum of
+six terms \citep{jopedime2026writeup}:
+\begin{equation}
+\mathcal{L}_6 = 1.00\,\mathcal{L}_{\mathrm{CE}} + 0.25\,\mathcal{L}_{\mathrm{BT}} + 0.10\,\mathcal{L}_{\mathrm{list}}
++ 0.25\,\mathcal{L}_{q} + 0.10\,\mathcal{L}_{\mathrm{feas}} + 0.05\,\mathcal{L}_{\mathrm{rt}} ,
+\label{eq:l6}
+\end{equation}
+where $\mathcal{L}_{\mathrm{CE}}$ is sequence cross-entropy toward the frozen teachers (learn to
+write what won), $\mathcal{L}_{q}$ a Huber loss between a predicted and a measured outcome (predict
+how well a program will do before running it), $\mathcal{L}_{\mathrm{BT}}$ and
+$\mathcal{L}_{\mathrm{list}}$ pairwise and listwise ranking losses on that prediction,
+$\mathcal{L}_{\mathrm{feas}}$ a three-way classification of completion, failure and timeout, and
+$\mathcal{L}_{\mathrm{rt}}$ a censored loss on log runtime. Continued training adds an exact KL
+anchor to the frozen first generation, $\mathcal{L}_{\mathrm{v2}} = \mathcal{L}_6 +
+0.2\,\mathrm{KL}(\pi_\theta \,\|\, \pi_{\mathrm{v1}})$. The analogy with AlphaGo Zero is close:
+imitation toward search-improved targets supplies the policy, outcome prediction supplies the
+value.
+
+\paragraph{The objective track C needs} $\mathcal{L}_6$ has no term that rewards a single proposal
+for being good; it imitates teachers and models outcomes. The objective that matches the track-C
+contract is the expected utility of one proposal,
+\begin{equation}
+J_1(\theta) = \mathbb{E}_{c}\,\mathbb{E}_{a\sim\pi_\theta(\cdot\mid z_c)}\bigl[u(c,a)\bigr],
+\qquad u = \begin{cases}\mathrm{clip}(q,-1,1) & \text{valid program}\\ -1 & \text{any failure,}\end{cases}
+\label{eq:j1}
+\end{equation}
+optimized, for instance, by a policy gradient with a per-context baseline $b_c$ and a reference
+penalty,
+\begin{equation}
+\mathcal{L}_{\mathrm{PG}} = -\,\mathbb{E}\bigl[(u - \operatorname{sg}(b_c))\log\pi_\theta(a\mid z_c)\bigr]
++ \beta\,\mathbb{E}_c\,\mathrm{KL}\bigl(\pi_\theta \,\|\, \pi_{\mathrm{ref}}\bigr).
+\label{eq:pg}
+\end{equation}
+Two cautions follow. The historical selection statistic, the best-of-eight surplus
+\begin{equation*}
+J_8=\mathbb{E}\bigl[\max(h_c,q_1,\ldots,q_8)-h_c\bigr],
+\end{equation*}
+can improve while the first proposal gets worse, and a falling $\mathcal{L}_6$ can too, because its ranking terms train the outcome head rather than the
+probability of a complete program; neither is evidence about $J_1$. And if the reference policy gives
+zero probability to programs outside its
+catalog, $\mathrm{KL}(\pi_\theta\,\|\,\pi_{\mathrm{ref}})$ is infinite for any $\pi_\theta$ that
+proposes one, so the existing anchor cannot be carried into an open-support experiment unchanged;
+the reference must itself have full support over the legal language. Checkpoints are selected on
+$J_1$ at $K=1$, never on best-of-$B$, which can reward a lucky tail without improving any single
+proposal.
+
+\paragraph{The objective, in one table} \Cref{tab:objectives} sets the three objectives side by
+side. It is the whole ``wrong objective'' argument of \cref{sec:discussion} in miniature.
+
+\begin{table}[h]
+\caption{What each kind of system is trained to maximize.}
+\label{tab:objectives}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}lLl@{}}
+\toprule
+System & Trained to maximize & Ground truth? \\
+\midrule
+Pretrained language model & likelihood of the next token of human-written text & what a person \emph{would write} \\
+Preference-tuned language model & a learned model of human preference & what a person \emph{would prefer} \\
+Reasoning-tuned language model & reward from a checker on problems with verifiable answers & what a checker \emph{accepts} \\
+InnovationZero (track C) & held-out utility of the one program it commits, $J_1$ & what the code \emph{does} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Data, splits and optimization}
+
+The training corpus holds 14,987 data runs from 3,003 dataset versions, of which 7,120 contexts have
+complete teacher and input records (6,857 training and 263 validation), drawn from a real tier of
+3,859 datasets: 2,611 regression, 843 binary, 322 multi-label and 83 time series
+\citep{jopedime2026writeup}. Separation is enforced at five levels. Outer test rows never reach the
+encoder, the normalizer, the labels or the teachers. Outcomes are measured on two inner folds of the
+training rows. Datasets are grouped into 1,068 parent lineages, about 5\% of which are assigned to
+validation by a fixed hash; aliases, target variants and synthetic descendants inherit their
+parent's role, so no family straddles training and validation. Sealed families stay outside the
+training closure entirely. And the development roster is split into a freely inspected half and a
+confirmation half that receives exactly one official look per pre-specified comparison.
+
+The first generation was trained with AdamW (learning rate $3\times10^{-4}$, weight decay 0.01,
+gradient clipping at 1, plateau halving with patience 5 to a floor of $10^{-6}$; biases and
+normalization weights exempt from decay), drawing up to 16 contexts per update with at most one per
+lineage. The continued (v2) run restarts from the first generation's optimizer state and adds the KL
+anchor on selected training contexts, so any gain it reports needs restart-only and equal-compute
+controls before it can be credited to the anchor. It ran 17,773 updates and plateaued: full
+validation loss stayed within $[0.8968, 0.8978]$ for its last 31 epochs. We print the plateau
+rather than hide it; it is one more reason the decisive experiment in \cref{sec:protocol} trains on
+$J_1$ rather than continuing $\mathcal{L}_6$.

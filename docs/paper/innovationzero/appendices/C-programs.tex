@@ -1,0 +1,42 @@
+% Appendix C — the engine's programs
+\section{The engine's programs}
+\label{app:programs}
+
+The ten programs of \cref{tab:programs} are committed under
+\code{docs/paper/innovationzero/evidence/pilot-2026-10-22/programs/} and printed in full in the
+companion archive, beside the four frontier entrants and the challenge they answered. \Cref{tab:manifest} lists them.
+The excerpt below is from the smallest, the ridge program for \code{047e62b5}: its self-documenting
+header and its fitting routine. Every emitted program begins with a plain-language description of
+its pipeline, cites the origin of each method it uses, and solves its own linear algebra.
+
+\begin{table}[h]
+\caption{The ten emitted Rust programs: size, SHA-256 prefix, and which of the other targets the
+emitters produced.}
+\label{tab:manifest}
+\centering\sffamily\footnotesize\lining
+\begin{tabular}{@{}lrrlccc@{}}
+\toprule
+Dataset & Bytes & Lines & SHA-256 (first 16) & Python & C\texttt{++}17 & JavaScript \\
+\midrule
+\code{047e62b5} & 13,690 & 419 & \code{e650fa85808e8e15} & yes & yes & yes \\
+\code{1cb97b1d} & 34,271 & 913 & \code{0e106a59975d14b5} & yes & refused & refused \\
+\code{21fbfe8b} & 37,878 & 1,010 & \code{3d6eb2182565648f} & yes & refused & refused \\
+\code{30ef3eaa} & 15,502 & 475 & \code{4158bbea05c812ae} & yes & yes & yes \\
+\code{43b4cc3a} & 16,554 & 494 & \code{2f3e202b6661ad5b} & yes & refused & refused \\
+\code{693890aa} & 21,899 & 632 & \code{6aec85ed2f40cb3f} & yes & refused & refused \\
+\code{79e600bc} & 17,859 & 532 & \code{2c92012855cb23f3} & yes & refused & refused \\
+\code{b5beff4a} & 24,418 & 737 & \code{e95f426ddd99a23c} & yes & refused & refused \\
+\code{c32fa09b} & 24,382 & 703 & \code{59f9a97f87a176a5} & yes & refused & refused \\
+\code{c7d81571} & 19,007 & 559 & \code{46ed1c24c57ebd3e} & yes & refused & refused \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\lstinputlisting[language=Rust, firstline=1, lastline=25, title={\sffamily\scriptsize\color{izgrey}\code{047e62b52a3f4ede.rs}, lines 1--25}]{evidence/pilot-2026-10-22/programs/047e62b52a3f4ede.rs}
+\lstinputlisting[language=Rust, firstline=204, lastline=246, firstnumber=204, title={\sffamily\scriptsize\color{izgrey}\code{047e62b52a3f4ede.rs}, lines 204--246}]{evidence/pilot-2026-10-22/programs/047e62b52a3f4ede.rs}
+
+Two properties of this program are worth stating because a reader will find them. The ridge head
+clips its predictions to $[-60, 60]$ in target units, a bound that is part of the emitted program and
+would need revisiting for targets on a larger scale. And the command-line wrapper around \code{fit}
+and \code{predict} reads and writes CSV files, which a challenge entrant may not do; the learning code
+itself uses arithmetic, vectors and sorting only.

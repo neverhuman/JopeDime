@@ -1,0 +1,34 @@
+% The InnovationZero curve as specified. Only the k = 256 engine point and the horizontal
+% references are measured (pilot pool, evidence/pilot-2026-10-22/elo-deep.csv). Every other
+% budget is pending (E2); no value is drawn for it.
+\begin{tikzpicture}
+\begin{axis}[iz,
+  width=0.9\linewidth, height=0.5\linewidth,
+  xmin=-0.5, xmax=8.6, ymin=1280, ymax=1820,
+  xtick={0,1,2,4,6,8}, xticklabels={0,1,4,16,64,256},
+  xlabel={Evaluation budget $k$ before the program is frozen (candidates executed on training rows)},
+  ylabel={Elo (pilot pool)}, ymajorgrids,
+  axis y line*=left, axis x line*=bottom, clip=false]
+% frontier band and references
+\addplot[draw=none, fill=izwarm, fill opacity=0.10, forget plot] coordinates {(-0.5,1506.2) (8.6,1506.2) (8.6,1761.4) (-0.5,1761.4)} \closedcycle;
+\addplot[izwarm, line width=0.7pt, forget plot] coordinates {(-0.5,1761.4) (8.6,1761.4)};
+\addplot[izwarm!80, line width=0.5pt, dashed, forget plot] coordinates {(-0.5,1649.0) (8.6,1649.0)};
+\addplot[izwarm!60, line width=0.5pt, dashed, forget plot] coordinates {(-0.5,1506.2) (8.6,1506.2)};
+\addplot[izgreen, line width=0.6pt, densely dotted, forget plot] coordinates {(-0.5,1482.2) (8.6,1482.2)};
+\addplot[izgreen, line width=0.6pt, densely dotted, forget plot] coordinates {(-0.5,1326.0) (8.6,1326.0)};
+\node[font=\sffamily\scriptsize\color{izwarm}, anchor=west] at (axis cs:8.7,1761.4) {Opus};
+\node[font=\sffamily\scriptsize\color{izwarm}, anchor=west] at (axis cs:8.7,1649.0) {Sol};
+\node[font=\sffamily\scriptsize\color{izwarm}, anchor=west] at (axis cs:8.7,1506.2) {Astra};
+\node[font=\sffamily\scriptsize\color{izgreen}, anchor=west] at (axis cs:8.7,1482.2) {CatBoost};
+\node[font=\sffamily\scriptsize\color{izgreen}, anchor=west] at (axis cs:8.7,1326.0) {XGBoost};
+% pending budgets
+\foreach \x in {0,1,2,4,6}{
+  \edef\tmp{\noexpand\draw[izrule, line width=0.5pt, dash pattern=on 1.5pt off 1.5pt] (axis cs:\x,1300) -- (axis cs:\x,1800);
+            \noexpand\node[font=\noexpand\sffamily\noexpand\tiny\noexpand\color{izgrey}, fill=white, inner sep=1pt] at (axis cs:\x,1300) {pending};}
+  \tmp}
+\node[font=\sffamily\scriptsize\color{izaccent}, align=left, anchor=south west, inner sep=1.5pt] at (axis cs:0.08,1765) {$k=0$: the zero-shot claim};
+% the one measured engine point
+\addplot[only marks, mark=*, mark size=3pt, izaccent] coordinates {(8,1630.9)};
+\node[font=\sffamily\scriptsize\color{izaccent}, anchor=north east] at (axis cs:7.9,1622) {engine, measured};
+\end{axis}
+\end{tikzpicture}

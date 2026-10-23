@@ -959,6 +959,16 @@
       ],
       "scope": "Exact-head Node26 typecheck, nonzero Vitest JSON fixtures and Vite build in the admitted ci.yml workflow. Aggregate requires successful job plus retained source/run/attempt-bound nonzero receipt. No live training qualification."
     },
+    "job:.github/workflows/ci.yml/paper": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "paper"
+      ],
+      "scope": "Call the reusable publication build through existing ci.yml admission; aggregate requires its successful current-source PDF/check evidence."
+    },
     "job:.github/workflows/ci.yml/python": {
       "discovery": {
         "kind": "workflow-job"
@@ -1031,6 +1041,16 @@
       ],
       "scope": "Push/main-manual diagnostic CPU families in independent matrix groups (deploy/ci/full-main.py GROUPS), independent outcomes within the declared 145-minute CPU job deadline; no merge gate or qualification claim."
     },
+    "job:.github/workflows/full-main.yml/paper": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "paper"
+      ],
+      "scope": "Call the reusable publication build through existing full-main.yml admission; aggregate requires its successful current-source PDF/check evidence."
+    },
     "job:.github/workflows/jankurai.yml/jankurai-audit": {
       "discovery": {
         "kind": "workflow-job"
@@ -1059,7 +1079,7 @@
       "lanes": [
         "paper"
       ],
-      "scope": "Build three InnovationZero PDFs after archival/citation/import checks and negative controls; retain exact-source receipt, PDFs and logs using existing evidence transport. Hosted execution remains pending until its run completes."
+      "scope": "Build three InnovationZero PDFs after archival/citation/import checks and negative controls; retain exact-source receipt, PDFs and logs using existing evidence transport. Execution through existing admitted ci.yml/full-main.yml callers; success requires retained current-source build evidence."
     },
     "job:.github/workflows/release.yml/release": {
       "discovery": {
@@ -11776,7 +11796,7 @@
       "lanes": [
         "paper"
       ],
-      "scope": "Standalone hosted publication source checks and PDF build on relevant PRs/main pushes or manual dispatch; does not execute model training, benchmark entrants, or production runtime."
+      "scope": "Reusable publication source checks and PDF build on all PR/manual CI and trusted-main full-main pushes/manual runs; does not execute model training, benchmark entrants, or production runtime."
     },
     "workflow:.github/workflows/release.yml": {
       "discovery": {
@@ -12640,22 +12660,24 @@
         "pdf"
       ],
       "environment": {
-        "JOPE_LOCAL_EVIDENCE_ROOT": "hosted runner temporary publication evidence; Actions cache transport is evictable",
+        "JOPE_LOCAL_EVIDENCE_ROOT": "runner temporary publication evidence; existing Actions cache transport is evictable",
         "SOURCE_DATE_EPOCH": "paper build default or explicit reproducible override"
       },
       "evidence": [
         "source/check/refusal-case output in command.log",
         "three PDFs with embedded fonts and resolved references",
         "three TeX logs and build-environment.txt",
-        "jope.ci-receipt/v1 with source/checkout SHA and per-file SHA256"
+        "jope.ci-receipt/v1 with source/checkout SHA and per-file SHA256",
+        "publication source/event/checkout identities and strict reviewed-source tree equality"
       ],
       "feature_selection": "not-applicable",
       "inputs": [
         "exact full Git source SHA",
         "docs/paper/innovationzero source, bibliography, figures and hash-pinned archive",
-        "latexmk, pdfLaTeX, XeLaTeX, BibTeX and Poppler versions recorded by build"
+        "latexmk, pdfLaTeX, XeLaTeX, BibTeX and Poppler versions recorded by build",
+        "deploy/ci/publication-deps.lock.json; verified official Ubuntu packages, task-local XeLaTeX format"
       ],
-      "path_applicability": "docs/paper/innovationzero/** or .github/workflows/paper.yml; manual workflow_dispatch always",
+      "path_applicability": "All ci.yml PR/manual and trusted-main full-main.yml runs through reusable paper.yml; native event checkout must have the same tree as the reviewed source head",
       "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "execution"

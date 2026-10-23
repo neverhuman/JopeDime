@@ -1,0 +1,218 @@
+% Section 7 — The decisive experiment, specified in advance
+\section{The decisive experiment, specified in advance}
+\label{sec:protocol}
+
+This section specifies, before any of it is run, the experiment that would answer the question of
+\cref{sec:intro}. Its design follows one principle: \emph{every way the result could be explained
+without learning from experience gets its own control arm.}
+
+\subsection{Unit, endpoint and power}
+
+\paragraph{Unit} The unit of analysis is the dataset \emph{family}: a dataset together with its
+versions, aliases and derived targets. Families are drawn from the sealed holdout, which no model,
+teacher or catalog in this work has touched, and are frozen, with their identities hashed, before
+any arm runs. Each family contributes $T_f$ tasks evaluated over $R=9$ outer splits (three split
+seeds, three folds).
+
+\paragraph{Utility} For a committed program $a$ on an outer split, let $e$ be its held-out RMSE and
+$b$ that of the training-mean predictor, with $\varepsilon$ computed from training targets only:
+\begin{equation}
+u = \begin{cases} \mathrm{clip}\bigl(\log\frac{\max(b,\varepsilon)}{\max(e,\varepsilon)},\,-1,\,1\bigr) & \text{valid program,}\\
+-1 & \text{any failure.}\end{cases}
+\label{eq:utility}
+\end{equation}
+A failure is any refusal, compile or runtime error, timeout, memory exhaustion, non-finite output or
+protocol violation. Failures are never dropped; infrastructure retries are distinct from method
+failures and are logged.
+
+\paragraph{Primary endpoint} With $U_{f}$ the family-mean utility,
+$\Delta = \tfrac1F\sum_f (U_f^{\mathrm{IZ}} - U_f^{\mathrm{B}})$, where B is the strongest
+selection or retrieval arm (\cref{tab:arms}), chosen on validation families and named before
+unblinding. The primary hypothesis is superiority with margin $m=0.02$ utility units: the lower bound
+of the two-sided 95\% family-bootstrap interval (10,000 resamples, BCa \citep{efron1987bca}) must
+exceed 0.02. The margin is not a 2\% RMSE improvement; the raw log-RMSE ratio is reported
+separately. Elo, where shown, is refitted inside every bootstrap resample and is never the primary
+statistic.
+
+\paragraph{Power} Planning for a true effect of 0.05 with a family-level standard deviation of 0.15
+requires $\lceil (1.96+0.84)^2\, 0.15^2/(0.05-0.02)^2\rceil = 196$ families; we register a floor of
+240 and a ceiling of 640, with 60 further families reserved for mechanism tests. The standard
+deviation is an assumption, not a pilot measurement: at 0.25 the same calculation asks for 545
+families, so the roster is fixed by development-only simulation before any confirmation outcome is
+opened, and a study that cannot reach adequate power is declared exploratory in advance. The
+estimand, interval method, multiplicity rules and resource envelope are specified in full in
+Supplement~\ref{S-sup:statistics}. In a ten-dataset
+pilot like \cref{sec:pilot}, a sign test reaches significance only when one method wins at least
+nine of ten datasets, which is why it is labelled a pilot.
+
+\paragraph{Commit first, evaluate independently} For each outer-training context the proposer
+receives only permitted training information and a common resource card, and commits its source,
+constants, dependencies and component identities before any candidate-specific execution. A
+deterministic structural check may refuse an output, but a refusal consumes the attempt: there is no
+resampling and no replacement. Compilation follows commitment, so a compiler failure remains a
+failure of the primary attempt, and diagnostics never return to the proposer. An isolated supervisor
+records the order of events and the source hashes rather than trusting a proposer's account of what
+it did; the evaluator then compiles, fits and scores the unchanged source, and only the scorer holds
+the test labels. Selection among alternatives inside \code{fit} is disclosed as fitting-time search
+rather than hidden inside the proposal budget.
+
+\paragraph{Matched information} Every conditional arm --- the learned proposer, the frontier models
+asked for one program per family, the retrieval and selection controls --- receives the same
+deterministic, training-only view of each task: sampled rows, neutral feature identifiers, permitted
+targets and the resource card, hashed before use. Size limits and any label-independent feature
+reduction are fixed in advance, and no provider may truncate its input silently. A separate arm can
+then measure what that compression costs. The committed programs themselves fit on the whole
+outer-training partition.
+
+\subsection{Arms}
+
+\begin{table}[t]
+\caption{Arms of the decisive experiment, all at $K=1$ on the same untouched families and the same
+resource card. A5 is the control that distinguishes composition from a portfolio.}
+\label{tab:arms}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}llL@{}}
+\toprule
+Arm & Track & What it isolates \\
+\midrule
+A1 InnovationZero & C & open-support proposer trained on $J_1$ (\cref{eq:j1}); the treatment \\
+A2 Catalog-bound policy & C & selection only (\cref{prop:closed}); same encoder and training budget \\
+A3 Retrieval & C & nearest training family in encoding space, then its incumbent program \\
+A4 Best single program & U & the one kernel with the best mean utility over training families \\
+A5 Distilled bank & C & A1's own programs, collected on a separate development pool, frozen as a bank, plus a selector trained with A1's encoder and budget \\
+A6 Shuffled context & C & A1 given the encoding of a different dataset: does it read the data? \\
+A7 Frontier entrants & U & pristine re-issue of the challenge (E0), three attempts per model, all reported \\
+A8 Frontier, conditional & C & frontier models given the information-matched data packet, one program per family \\
+A9 Search at budget $k$ & S & the engine's proposer with $k\in\{1,4,16,64,256\}$ evaluations, with and without A1 as a seed \\
+A10 Libraries & S & XGBoost, LightGBM, CatBoost, random forest at defaults and tuned to A9's wall clock \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A5 is the decisive control. If a selector over A1's own frozen outputs matches A1 on untouched
+families, A1's advantage is a good portfolio, not composition. If A1 wins, and wins most on families
+whose best programs combine operations in ways absent from training (a compositional hold-out), that
+is evidence of a capacity to construct. A6 tests whether the encoding is used at all. A8 receives,
+in text, exactly the table A1's encoder reads --- at most 4,096 training rows and 256 features,
+capped at 64 KiB --- so that any difference between them is not a difference in information.
+
+\subsection{The InnovationZero curve}
+
+The amortization question has a direct measurement. Let $U_{\mathrm{S}}(k)$ be the mean utility of
+the search-assisted proposer with $k$ evaluations and $U_{\mathrm{IZ}}$ that of A1's single
+proposal. The \emph{equivalent search budget} of the learned proposer is
+\begin{equation}
+k_{\mathrm{eq}} = \min\bigl\{ k : \mathbb{E}[U_{\mathrm{S}}(k)] \ge \mathbb{E}[U_{\mathrm{IZ}}] \bigr\},
+\label{eq:keq}
+\end{equation}
+estimated with a joint family bootstrap and reported as ``not reached within 256 evaluations'' rather
+than extrapolated. $k_{\mathrm{eq}}$ is the number of experiments a first proposal is worth. It is
+the analogue, for algorithms, of the gap between AlphaGo Zero's raw network and its search; repeated
+at several fractions of training history (none, a quarter, a half, all), it measures how much of
+that worth comes from experience. \Cref{fig:curve} shows the design with the only point measured
+today.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-iz-curve}
+\caption{The InnovationZero curve as specified. The one measured point is the engine at
+$k=256$ on the pilot panel; the horizontal lines are the frontier entrants and two libraries on the
+same panel. Every other budget, and the $k=0$ point that is the zero-shot claim, is pending; nothing
+is drawn for them \pend.}
+\label{fig:curve}
+\end{figure}
+
+\subsection{Novelty and Move 42}
+
+\paragraph{A novelty ladder} ``New'' is graded, and each grade licenses specific words
+(\cref{tab:novelty}). Before unblinding, the complete reference archive --- teachers, catalog,
+retrieval bank, decomposition corpus and every program used in training --- is frozen with its
+canonicalizer and hashes. A program is \emph{out of archive} only if no archived program matches it
+after canonicalization, and the difference is more than names, constants, fitted state, dead code or
+emitter expansion; two blinded reviewers and an adjudicator must agree on what reusable structure
+changed. The \emph{useful out-of-archive rate} $p_{\mathrm{UN}}$ is the fraction of all attempts,
+failures included, that are valid, out of archive and useful (no more than 0.95 times ridge
+regression's error, and within 5\% of the best arm's).
+
+\begin{table}[t]
+\caption{The novelty ladder: what each level requires and what it permits us to say.}
+\label{tab:novelty}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}lLL@{}}
+\toprule
+Level & Requirement & Permitted wording \\
+\midrule
+N0 & a new source hash & ``new bytes'' \\
+N1 & canonical structure differs & ``a different program'' \\
+N2 & outside the complete frozen archive & ``not retrieval'' \\
+N3 & composes relations held out of training & ``compositional transfer'' \\
+N4 & behaves differently on independent probe tasks & ``a functionally new program'' \\
+N5 & removing or replacing its mechanism lowers held-out utility & ``a useful new mechanism'' \\
+N6 & an expert prior-art audit finds no precedent within stated limits & ``contextually novel'' \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{definition}{Move 42}
+\label{def:move42}
+A \emph{Move 42} is a program committed under the track-C contract that (i) lies outside the frozen
+archive (N2), (ii) improves held-out utility over the strongest arm on its family, and (iii) contains
+a mechanism whose removal, or replacement by the nearest known component at matched capacity, lowers
+utility on a separately reserved set of 60 families, with the lower bound of the 95\% interval above
+zero and the effect not confined to one data source. The case is selected by a rule fixed in
+advance --- the lowest committed source hash among qualifying programs --- not by inspection.
+\end{definition}
+
+The name marks a debt and a distinction. Move~37 was a move in a game whose rules people wrote, found
+by search at the moment of play, and judged surprising because an imitation model gave it one chance
+in ten thousand. Move~42 is an answer the data gives about itself --- an algorithm, not a move --- found
+without executing anything, and judged by whether it works and why. Rarity under a frontier model's
+prior can be reported as a secondary statistic: zero occurrences in $n$ independent draws bound the
+probability by roughly $3/n$, so a one-in-ten-thousand claim needs about 30,000 draws, and even then
+rarity is not novelty. If no program meets \cref{def:move42}, we will report that no Move~42 was
+found.
+
+\subsection{Claim ladder and stop rules}
+
+Results are reported against a ladder fixed in advance (\cref{tab:ladder}); each rung licenses one
+claim, a rung is passed only if every rung below it is, and missing evidence is never averaged into
+success. Three stop rules are fixed with it: if A6 matches A1, we do not claim data-conditioned
+proposal; if A1's programs remain inside the catalog, we stop claiming open synthesis; and if A1's
+utility improves only after any selection among complete candidates, it is reclassified as track S.
+
+\begin{table}[t]
+\caption{The claim ladder. Today only M0 is partially met.}
+\label{tab:ladder}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}llLl@{}}
+\toprule
+Rung & Gate & Requirement & Claim permitted \\
+\midrule
+M0 & custody & every attempt reconciled, every artifact hashed & an auditable instrument \\
+M1 & boundary & $K=1$, $E=0$, $R=0$ recorded by the supervisor & a zero-feedback proposer \\
+M2 & completion & lower bound of executable rate $\ge 95\%$ & a reliable proposer \\
+M3 & utility & $\Delta$ lower bound $>0.02$ against B & a useful first proposal \\
+M3b & attribution & A1 $>$ A5 and A1 $>$ A6 & learned from experience, not a portfolio \\
+M4 & novelty & lower bound of $p_{\mathrm{UN}} > 10\%$ & useful synthesis beyond the archive \\
+M5 & mechanism & \cref{def:move42} met and replicated & a Move~42 \\
+M6 & economics & lower cost per useful algorithm at matched quality, fully amortized & an efficiency claim \\
+M7 & self-improvement & successive generations beat matched static controls on fresh families & bounded self-improvement \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Resources} The planning envelope is one CPU and 8~GiB for preprocessing, compilation,
+fitting and prediction, with limits of 120, 120, 600 and 60 seconds; encoding may use one disclosed
+GPU of at most 24~GiB for 120 seconds, and proposal through commitment has a 600-second ceiling and
+one trajectory. At 240 families, three split seeds and three folds give 2,160 contexts, and so 2,160
+fits, per arm: at most 360 CPU-hours each at the fitting ceiling, or 3,600 for the ten arms of
+\cref{tab:arms} before A9's additional budgets. That is a bound, not a forecast.
+Every scheduled attempt must reconcile to a commitment or a typed failure, and no timeout, missing
+receipt or dropped difficult task may leave the denominator.
+
+\paragraph{Before the decisive experiment} Two cheaper experiments come first. \textbf{E0} re-issues
+the challenge to frontier models in fresh sessions with only the participant packet, metered usage
+and three attempts per model, replacing every estimate in \cref{sec:yield}. \textbf{E10} decomposes
+the E0 inventions into typed operations, adds them to the kernel language and lets A1 learn when to
+use them; it tests whether general inventions and per-dataset composition are better together than
+apart (\cref{fig:routes}).

@@ -1,0 +1,61 @@
+% Where each frontier entrant wins, on the 64-family panel of Figure 4(a).
+% Data: data/frontier-pairwise.csv, data/frontier-family-strip.csv and data/frontier-ratios.csv,
+% derived from artifacts/benchmark/match-matrix.txt and RESULTS.json by scripts/derive-frontier.sh;
+% scripts/check.sh regenerates them and fails on any difference.
+\pgfplotsset{izheat/.style={colormap={izheat}{color=(white) color=(izaccent!18) color=(izaccent!70) color=(izaccent)}}}
+\pgfplotstableread[col sep=comma]{data/frontier-ratios.csv}\IZratios
+\begin{tikzpicture}
+% (a) pairwise family-weighted match score, row entrant against column entrant
+\begin{axis}[iz, izheat, name=pw, scale only axis, width=3.9cm, height=3.9cm,
+  xmin=0.5, xmax=4.5, ymin=0.5, ymax=4.5, y dir=reverse, axis on top,
+  xtick={1,2,3,4}, ytick={1,2,3,4}, xticklabels={Opus,Gemini,Sol,Astra},
+  yticklabels={Opus,Gemini,Sol,Astra}, xticklabel pos=top, tick style={draw=none},
+  every tick label/.append style={font=\sffamily\scriptsize\color{izink}},
+  axis line style={draw=none}, point meta min=0, point meta max=1,
+  title={(a) Row beats column}, title style={yshift=13pt},
+  nodes near coords={\ifdim\maj pt<0pt\else\ifdim\pct pt>62pt\color{white}\fi
+    \pgfmathprintnumber[fixed,precision=0,assume math mode=true]{\pct}\,\%\\[-1pt]{\scalebox{0.85}{\pgfmathprintnumber[fixed,precision=0,assume math mode=true]{\maj}/64}}\fi},
+  nodes near coords style={font=\sffamily\tiny, anchor=center, text=izink, align=center},
+  visualization depends on={\thisrow{majority} \as \maj},
+  visualization depends on={100*\thisrow{score} \as \pct}]
+\addplot[matrix plot*, mesh/cols=4, mesh/ordering=x varies, point meta=explicit, draw=white, line width=1.2pt]
+  table[col sep=comma, x=col, y=row, meta=score] {data/frontier-pairwise.csv};
+\pgfplotsinvokeforeach{1,2,3,4}{\fill[izpaper] (axis cs:#1-0.47,#1-0.47) rectangle (axis cs:#1+0.47,#1+0.47);}
+\end{axis}
+% (b) geometric-mean RMSE ratio with 95% family-bootstrap interval; below 1 favours the first
+\begin{axis}[iz, at={($(pw.east)+(1.9cm,0)$)}, anchor=west, name=fr, scale only axis,
+  width=4.2cm, height=3.9cm, xmode=log, log basis x=10, xmin=0.55, xmax=1.9,
+  xtick={0.6,0.8,1,1.25,1.6}, xticklabels={0.6,0.8,1,1.25,1.6},
+  ytick={1,2,3,4,5,6}, y dir=reverse, ymin=0.4, ymax=6.6,
+  yticklabels from table={\IZratios}{label},
+  yticklabel style={font=\sffamily\scriptsize\color{izink}},
+  axis y line*=left, axis x line*=bottom, xmajorgrids,
+  title={(b) Error ratio, first / second}, xlabel={geometric-mean RMSE ratio, log scale}]
+\draw[izgrey, line width=0.6pt, dashed] (axis cs:1,0.4) -- (axis cs:1,6.6);
+\addplot[only marks, mark=*, mark size=2.2pt, izaccent, mark options={fill=izaccent, draw=izaccent}, error bars/.cd, x dir=both, x explicit,
+  error bar style={izaccent, line width=0.8pt}, error mark options={rotate=90, mark size=2.2pt, izaccent}]
+  table[x=ratio, y=y, x error minus expr=\thisrow{ratio}-\thisrow{lo},
+        x error plus expr=\thisrow{hi}-\thisrow{ratio}] {\IZratios};
+\end{axis}
+% (c) every family: Copeland score of each entrant (0-3 matches won, seed-averaged); dots mark the best
+\begin{axis}[iz, at={($(pw.south west)+(0,-2.35cm)$)}, anchor=north west, name=st, scale only axis,
+  width=11.2cm, height=1.5cm, xmin=0.5, xmax=64.5, ymin=0.5, ymax=4.5, y dir=reverse,
+  colormap={izstrip}{color=(white) color=(izaccent!30) color=(izaccent)},
+  point meta min=0, point meta max=3, axis on top, axis line style={izrule},
+  xtick={1,10,20,30,40,50,60,64}, xticklabels={1,,,,,,,64}, ytick={1,2,3,4},
+  yticklabels={Opus,Gemini,Sol,Astra}, yticklabel style={font=\sffamily\scriptsize\color{izink}},
+  tick style={draw=none}, xlabel={64 families, grouped by best entrant}, clip=false,
+  title={(c) Every family: matches won against the other three}, title style={anchor=south west, at={(0,1)}, yshift=8pt}]
+\addplot[matrix plot*, mesh/cols=64, mesh/rows=4, mesh/ordering=y varies, point meta=explicit]
+  table[col sep=comma, x=x, y=y, meta=score] {data/frontier-family-strip.csv};
+\addplot[only marks, mark=*, mark size=0.85pt, white, restrict expr to domain={\thisrow{best}}{1:1}]
+  table[col sep=comma, x=x, y=y] {data/frontier-family-strip.csv};
+% group boundaries: Opus best (30), Gemini (20), Sol (7), Astra (5), shared (2)
+\pgfplotsinvokeforeach{30.5,50.5,57.5,62.5}{\draw[izink, line width=0.7pt] (axis cs:#1,0.5) -- (axis cs:#1,4.5);}
+\node[font=\sffamily\tiny\color{izgrey}, anchor=south] at (axis cs:15.5,0.45) {Opus best on 30};
+\node[font=\sffamily\tiny\color{izgrey}, anchor=south] at (axis cs:40.5,0.45) {Gemini on 20};
+\node[font=\sffamily\tiny\color{izgrey}, anchor=south] at (axis cs:54,0.45) {Sol, 7};
+\node[font=\sffamily\tiny\color{izgrey}, anchor=south] at (axis cs:60,0.45) {Astra, 5};
+\node[font=\sffamily\tiny\color{izgrey}, anchor=south west] at (axis cs:62.6,0.45) {tied, 2};
+\end{axis}
+\end{tikzpicture}

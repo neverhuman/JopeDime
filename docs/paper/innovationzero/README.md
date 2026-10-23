@@ -1,108 +1,81 @@
-# InnovationZero publication
+# InnovationZero — publication sources
 
-**InnovationZero: Learning to Propose Algorithms Before Testing Them** is a complete
-research manuscript, methods supplement and immutable source archive. It is labeled
-**protocol and evidence audit**: the central first-proposal generalization experiment
-has not been reported as completed. Publication polish does not change that evidence
-status.
+*InnovationZero: Learning to Propose Algorithms Before Testing Them* asks whether a model can read a
+dataset and commit a working algorithm for it before executing any candidate. This directory holds
+the sectioned manuscript, its technical supplement, a byte-exact archive of everything it compares,
+and the checks that bind every plotted number to an archived receipt.
 
-## Build and read
+| Volume | Source | Contents |
+| --- | --- | --- |
+| `InnovationZero.pdf` | `main.tex`, `sections/`, `appendices/` | The paper: setting, challenge, frontier comparison (Elo, error magnitude, token yield, tokens per second, fitting cost), model, pilot, protocol, related work; appendices with every family's outcome, the pilot's per-dataset wins, the emitted programs, receipts, disclosure boundary, reproduction and claim ledger |
+| `InnovationZero-Supplement.pdf` | `supplement.tex`, `supplement/` | S1 context, S2 method audit of the native objective, S3 statistical and resource contract, S4 effort reconciliation, S5 the organizer's red-team record |
+| `InnovationZero-Archive.pdf` | `archive.tex` (entries generated from the manifests) | The challenge packet and master file, the four frontier sources and the ten emitted programs, each with bytes, lines and SHA-256 |
 
-From the repository root:
-
-```sh
-make -C docs/paper/innovationzero check self-test pdf
-```
-
-The three outputs are written to the lane's reused `target/innovationzero-paper/`:
-
-| Output | Contents |
-| --- | --- |
-| `InnovationZero.pdf` | Main research manuscript, two-column Palatino text and math, vector figures and references |
-| `InnovationZero-Supplement.pdf` | Methods, objective lineage, statistics, historical effort and research context |
-| `InnovationZero-Archive.pdf` | Complete organizer master, exact participant packet, and all four frozen Rust sources |
-
-Keep the three PDFs beside each other so cross-volume links resolve. Their source
-files are deliberately separate: edit one section without editing the complete paper.
-The archival files in [`artifacts/`](artifacts/README.md) are the byte-level authority;
-the source PDF adds page breaks, line numbers and wrapping for reading.
-
-### Dependencies
-
-The build uses Python 3.9 or newer, Make, `latexmk`, pdfLaTeX, XeLaTeX, BibTeX and
-Poppler (`pdfinfo`, `pdftotext`, `pdffonts`). On Debian/Ubuntu:
+## Build
 
 ```sh
-sudo apt-get install make python3 latexmk texlive-latex-extra \
-  texlive-fonts-recommended texlive-xetex fonts-dejavu-core fonts-urw-base35 poppler-utils
+make -C docs/paper/innovationzero          # or: just paper
+make -C docs/paper/innovationzero check    # sources only, no TeX
+make -C docs/paper/innovationzero self-test
 ```
 
-There is no network access during the build, no shell escape, no executed embedded
-Rust source, and no model, training or benchmark dependency. Figures are committed
-vector PDFs and SVGs. Regenerating them uses the separately documented Python figure
-script and its plotting dependency; that is not needed to typeset a fresh checkout.
+Outputs go to `target/innovationzero-paper/`. The build needs XeLaTeX, latexmk and BibTeX (TeX Live
+2023+), Poppler, jq, curl, unzip and sha256sum; it is bash throughout (ADR-0006). Fonts — Libertinus
+Serif and Math, Inter, JetBrains Mono, all SIL OFL — are fetched once from the release archives pinned
+by SHA-256 in `fonts.lock` and cached outside the tree.
 
-### Verification and reproducibility
+`scripts/check.sh` refuses the build if any archived artifact's bytes or SHA-256 differ from
+`evidence/artifact-manifest.json`; if the plotted Elo, cost or source-size values differ from the
+archived receipts; if `data/frontier-*.csv` do not regenerate from the archived match matrix
+(`scripts/derive-frontier.sh`); if an input, figure or citation does not resolve or a section file is
+not included; or if the manuscript uses the repository's restricted vocabulary
+(`deploy/ci/ip-scrub.sh`). After typesetting it fails on overfull boxes, unresolved references,
+missing glyphs and unembedded fonts. `make self-test` breaks a disposable copy thirteen ways and
+requires each refusal to fire.
 
-- `make check` verifies TeX imports, included figures, bibliography keys, the absence
-  of unresolved editorial placeholders, and every archived file's byte count and
-  SHA-256 digest. Elo ratings, intervals and pairwise values must exactly match the archived result receipt; numerical finiteness, panel scope and oriented ratio calculations are checked. It requires all four complete source artifacts and both prompt
-  variants. Validation checks source identity, not scientific correctness.
-- `make self-test` exercises eight refusal paths using disposable fixtures: altered
-  size, altered digest, duplicate identity, path escape, unresolved citation and
-  missing section, numerical rating drift and a falsely qualified experimental arm. It never changes the real archive.
-- `make pdf` runs both checks required by the build and then rejects missing PDFs,
-  unresolved references/citations, missing glyphs, overfull boxes, unembedded fonts
-  and PDFs without extractable text. Review rendered pages as well: programmatic
-  checks cannot establish visual quality or scientific adequacy.
-- Output timestamps use `SOURCE_DATE_EPOCH=1792655756`, the pinned main evidence
-  snapshot's commit timestamp. Set this variable explicitly to use another release
-  epoch. The build writes `build-environment.txt` with the current source HEAD and
-  tool versions. Exact PDF-byte reproducibility is scoped to matching tools/fonts;
-  different TeX distributions can paginate or serialize differently.
-- `make clean` removes only the known products of this paper build. It never
-  recursively deletes `target/`, other lanes or preserved evidence.
+## Layout
 
-## Editorial structure
+- `sections/00-abstract.tex` … `10-conclusion.tex`; `appendices/A-frontier.tex` … `G-claims.tex`;
+  `supplement/S1-context.tex` … `S5-organizer.tex` — one file per section.
+- `figures/` — TikZ/pgfplots sources; plots read `data/`.
+- `data/` — plotted tables: `frontier-entrants.csv` (transcribed from receipts, checked),
+  `frontier-pairwise.csv`, `frontier-family-strip.csv`, `frontier-ratios.csv` (derived, checked),
+  `pilot-*.csv`.
+- `artifacts/` — exact copies of the challenge, the four sources, their receipts and the four-entrant
+  benchmark outputs, with provenance in `evidence/artifact-manifest.json`.
+- `evidence/` — `claims.json` (machine-readable claim ledger), `elo-summary.json`, `literature.md`
+  (primary-source verification of the references), `pilot-2026-10-22/` (identical-cuts pilot: score
+  table, Elo, compile and emission receipts, the ten emitted programs) and
+  `gemini-authoring-statement-20261022.md` (a later self-report, archived verbatim and reconciled).
+- `EDITORIAL_DECISIONS.md` — how the competing drafts and proposals were reconciled.
 
-| Source | Purpose |
-| --- | --- |
-| `main.tex`, `style.sty` | Main assembly and shared typography; no venue branding or invented author roster |
-| `sections/00-abstract.tex` | Standalone abstract paragraph |
-| `sections/01-introduction.tex` | Scientific question, historical motivation and contributions |
-| `sections/02-setting.tex` | Commitment, information and fitting boundaries |
-| `sections/03-method.tex` | Existing model lineages, protected interface, support and learning objectives |
-| `sections/04-evidence.tex` | Code/report distinctions and exploratory four-artifact comparison |
-| `sections/05-protocol.tex` | Prospective family-level experiments and Move42 criteria |
-| `sections/05b-objectives.tex` | Objectives as part of the task: decision losses, objective-conditioned commitment and controls |
-| `sections/06-accounting.tex` | Token categories, yield and symmetric cost amortization |
-| `sections/07-discussion.tex` | Limitations, disclosure and future scope |
-| `sections/08-conclusion.tex` | Evidence-bounded conclusion |
-| `appendices/*.tex` | Methods, statistics, effort and contextual detail |
-| `references.bib` | Shared bibliography |
-| `evidence/artifact-manifest.json` | Exact file hashes, sizes, source revisions and snapshot distinctions |
-| `evidence/claims.json` | Claim-level evidence and qualification |
-| `evidence/elo-summary.json` | Figure data copied from the separately pinned exploratory result |
-| `scripts/figures.py` | Deterministic vector figure generation |
+## Status
 
-## Evidence and release discipline
+The paper reports a closed-world challenge, four frontier entrants on a 64-family exploratory panel,
+and a pilot on ten datasets. It specifies, but does not report, the decisive track-C experiment: no
+neural proposer in this repository has yet committed a first program on held-out data. Evidence
+labels in the text (EST, PRE, PEND) and Appendix G say which is which. Private kernel-language
+productions, token mappings and decomposition rules are not part of this release; emitted programs
+are published in full.
 
-The main evidence snapshot is `bdf9441aaa17f87dcb37053d33b185ba2217bf17`.
-Additional four-source results are pinned separately to PR #407 at
-`584713ed3f512057361460567bb56d620162286a`; inclusion does not assert that this branch
-was merged into the main snapshot. The evidence section explains training-family,
-preprocessing, adaptive-seed, custody and hardware limitations next to the result.
-The source archive preserves receipt wording even when the manuscript corrects its
-interpretation. Never silently edit an original receipt to repair a narrative error.
 
-The chosen experimental proposal uses failure-inclusive utility clipped to `[-1,1]`
-and a superiority margin of **0.02 utility units**, not a claimed 2% RMSE gain.
-Proposed thresholds, a proposed 512-dimensional solution representation and Move42
-must remain labeled until their registered evidence exists. No hypothetical winning
-curves, token-efficiency claims or unobserved experiments are drawn as results.
+The combined publication retains PR #411's task-specific objective section in
+`sections/05b-objectives.tex`, its implementation/baseline distinctions, exploratory six-table
+results and cross-objective protocol. The historical effort reference now targets Supplement S4;
+the commitment reference targets the current definition. A nonsignificant small-pilot comparison
+does not establish equivalence. Source conflicts were resolved without changing archived artifacts,
+plotted frontier inputs or the three original author commits.
 
-This directory preserves public challenge/source material without exposing private
-GP productions, token mappings or proprietary decomposition rules. Releasing output
-programs is not equivalent to releasing the generator's training implementation.
-Before a venue submission, confirm the author list, venue style, references, access
-arrangements and the highest supported claim against the current evidence manifest.
+
+CI runs the reusable `paper.yml` from the existing admitted `ci.yml` and trusted-main
+`full-main.yml` callers. Every PR/manual CI run builds all three volumes; the aggregate requires
+its source-bound receipt and verifies every retained payload hash. The paper job uses the native
+event checkout (synthetic merge on PRs), refuses unless its tree exactly matches the reviewed
+source head, and retains both commit identities and their equal trees. Full manual CI checks out
+the actual source commit. Main-push CPU qualification
+also requires the publication job. Queueing or a missing receipt fails qualification.
+`deploy/ci/publication-tools.sh COMMAND...` extracts the SHA-256/size-pinned official Ubuntu
+packages in `deploy/ci/publication-deps.lock.json` into the lane target cache and generates an
+English XeLaTeX format in separate writable state. It needs no sudo, host package installation,
+maintainer scripts, runner-image changes, corpus access or credentials. Existing Chromium lock
+callers keep their original default. The package cache and extracted runtime are verified on reuse.
