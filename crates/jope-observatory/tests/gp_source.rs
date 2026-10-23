@@ -295,6 +295,9 @@ async fn websocket_delivers_full_sources_checks_and_cursor_replay() {
     assert!(tokio_tungstenite::connect_async(request).await.is_err());
 }
 
+// Match drain()'s syntax-check budget so a healthy C++ compiler under CI load does
+// not become a second failure in the missing-Rust test. The timeout fixture below
+// deliberately outlives this budget; production defaults and limits are unchanged.
 fn once_with_rustc(journals: &Path, state: &Path, rustc: &Path) -> serde_json::Value {
     let output = Command::new(env!("CARGO_BIN_EXE_gp-source-stream"))
         .args([
@@ -303,7 +306,7 @@ fn once_with_rustc(journals: &Path, state: &Path, rustc: &Path) -> serde_json::V
             "--state-dir",
             state.to_str().unwrap(),
             "--compile-timeout-seconds",
-            "1",
+            "15",
             "--once",
         ])
         .env("JOPE_GP_RUSTC", rustc)
@@ -330,8 +333,15 @@ fn missing_compiler_is_loss_and_once_restart_does_not_double_count() {
         Path::new("/nonexistent-jope-rustc"),
     );
     let m = &first["total"]["counts"];
-    assert_eq!(m["compile_errors"], 1);
-    assert_eq!(m["passed_artifacts"], 3);
+    assert_eq!(m["compile_errors"], 1, "{first}");
+    assert_eq!(m["passed_artifacts"], 3, "{first}");
+    assert_eq!(first["languages"]["rust"]["counts"]["compile_errors"], 1);
+    for language in ["python", "cpp17", "javascript"] {
+        assert_eq!(
+            first["languages"][language]["counts"]["passed_artifacts"], 1,
+            "{language}: {first}"
+        );
+    }
     assert!(m["lost_tokens"].as_u64().unwrap() > 0);
     let second = once_with_rustc(
         journals.path(),
@@ -348,7 +358,7 @@ fn compiler_timeout_charges_loss_and_retains_the_timeout_exit() {
     let journals = test_dir();
     let state = test_dir();
     let tool = journals.path().join("slow-rustc");
-    fs::write(&tool,"#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then echo fixture-slow-compiler; exit 0; fi\nsleep 5\n").unwrap();
+    fs::write(&tool,"#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then echo fixture-slow-compiler; exit 0; fi\nsleep 60\n").unwrap();
     fs::set_permissions(&tool, fs::Permissions::from_mode(0o755)).unwrap();
     Journal::create(journals.path())
         .unwrap()
@@ -363,7 +373,8 @@ fn compiler_timeout_charges_loss_and_retains_the_timeout_exit() {
         .any(|e| e["kind"] == "checked"
             && e["language"] == "rust"
             && e["status"] == "failed"
-            && e["diagnostic"].as_str().unwrap().contains("signal")));
+            && e["diagnostic"].as_str().unwrap().contains("signal")
+            && e["tool"].as_str().unwrap().contains("timeout=15s")));
 }
 
 #[test]
