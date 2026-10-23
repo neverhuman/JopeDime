@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor after the Tokio 1.53.3 patch for RUSTSEC-2026-0386 in root Cargo.lock. Pinned Cargo 1.97.1 also resolves seven Windows dependency edges without changing any other package version or checksum. All prior transitions and all numerical/emitted/search/known-identity baselines remain byte-for-byte unchanged.",
+  "plan_reference": "Human instruction to merge the PR queue with passing CI and publish a standard jope release; AGENTS.md reviewed lifecycle and ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/420",
+  "source_commit": "94dc300acb593fd64735f3c6e61b59ac0098cccc",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "7be6fd5683f1f4e942822c4eeddda3ac8ff5a86af02634c501ff29d8e257ba98",
+      "after": "da4f3fc043642faf86cf68faa5a4c72c24e72ee5fc7448aaa166fd4bdcf565bb"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "537448563fc86bff466a75967c498323b867fdfdfdc2638b78ac285b8ab11935",
+      "after": "8e02f946a0145afd3d23ed9ecb832f85ceff2759af6830511a158b547c77aa3a"
+    }
+  ]
+}
