@@ -155,7 +155,7 @@
         "pinned data/models"
       ],
       "owner_phase": "GPU/S3 qualification",
-      "reason": "Configured weekly GPU/S3 workflows are separate from CPU CI and not live qualification evidence.",
+      "reason": "Former scheduled GPU workflow removed by explicit user instruction; retained regression/restore scripts require a separate explicit local invocation, accepted budget and capability-bound evidence.",
       "status": "deferred"
     }
   },

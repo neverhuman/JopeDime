@@ -352,12 +352,13 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     let dir = scratch();
     let root = dir.path();
     let mut targets = Target::RECIPES.to_vec();
-    targets.extend([
-        Target::Cpp17RecipeV2,
-        Target::Cpp17Fitted,
-        Target::C17,
-        Target::Cuda,
-    ]);
+    targets.extend([Target::Cpp17RecipeV2, Target::Cpp17Fitted, Target::C17]);
+    if matches!(
+        std::env::var("JOPE_CUDA_PARITY").as_deref(),
+        Ok("host" | "compile" | "device")
+    ) {
+        targets.push(Target::Cuda);
+    }
     if typescript_support::enabled() {
         targets.push(Target::TypeScript);
     }

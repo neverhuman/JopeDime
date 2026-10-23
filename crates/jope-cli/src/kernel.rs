@@ -579,21 +579,26 @@ mod artifact_v3_tests {
             assert!(output.join("model.kernel.rs").is_file());
             assert!(report.artifacts.iter().any(|a| a.lang == "typescript"));
         }
-        for language in ["cuda", "cu", "cuda-cpp", "v3:cuda"] {
-            let output = dir.path().join(language.replace(':', "-"));
-            let report = emit_genome(DEFAULT_GENOME, language, Some(&output)).unwrap();
-            assert!(report.ok);
-            for file in [
-                "CMakeLists.txt",
-                "model.cu",
-                "model.hpp",
-                "model_core.rs",
-                "model_native.rs",
-                "manifest.json",
-            ] {
-                assert!(output.join("cuda").join(file).is_file());
+        if matches!(
+            std::env::var("JOPE_CUDA_PARITY").as_deref(),
+            Ok("host" | "compile" | "device")
+        ) {
+            for language in ["cuda", "cu", "cuda-cpp", "v3:cuda"] {
+                let output = dir.path().join(language.replace(':', "-"));
+                let report = emit_genome(DEFAULT_GENOME, language, Some(&output)).unwrap();
+                assert!(report.ok);
+                for file in [
+                    "CMakeLists.txt",
+                    "model.cu",
+                    "model.hpp",
+                    "model_core.rs",
+                    "model_native.rs",
+                    "manifest.json",
+                ] {
+                    assert!(output.join("cuda").join(file).is_file());
+                }
+                assert!(report.artifacts.iter().any(|a| a.lang == "cuda"));
             }
-            assert!(report.artifacts.iter().any(|a| a.lang == "cuda"));
         }
         let refused = dir.path().join("unsupported");
         let err = emit_genome("(pipe X (histgbm))", "v3:js", Some(&refused)).unwrap_err();

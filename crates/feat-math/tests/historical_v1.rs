@@ -642,6 +642,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
+    let cuda_local_only =
+        old_fixture("transitions/cuda_local_only_ci_identity_rebaseline.v1.json");
+    assert_eq!(cuda_local_only["fixtures"].as_array().unwrap().len(), 2);
+    for path in changed_fixtures {
+        assert!(cuda_local_only["fixtures"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -678,6 +688,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         c17_combined,
         ctutils_security,
         cuda_cpp,
+        cuda_local_only,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

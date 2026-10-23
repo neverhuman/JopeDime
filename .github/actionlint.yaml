@@ -1,7 +1,6 @@
 # actionlint configuration: the self-hosted runner labels of xbabe2 (deploy/runner/common.sh).
 self-hosted-runner:
   labels:
-    - xbabe2-gpu
     - xbabe2-kernel
     # Fixed CPU host roles are enforced in deploy/runner/common.sh.
     - jope-ci

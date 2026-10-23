@@ -185,3 +185,8 @@ The initial proposed hardware workflow reused CPU-only runner guards. That misma
 was found during review. All CUDA-specific hosted workflows and merge gates were
 removed under the user's local-CI direction; runner admission policies remain unchanged.
 Device execution and hardware memory checking remain local follow-up work.
+
+The CLI CUDA alias fixture and pipeline CUDA runtime fixture also require an explicit
+`JOPE_CUDA_PARITY=host|compile|device`, set by `qualify.sh`. Default CI does not compile
+or execute emitted CUDA libraries. The former scheduled GPU regression/restore
+workflow is removed; [manual commands remain available](runbooks/manual-gpu-qualification.md).

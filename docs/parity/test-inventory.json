@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Baseline: cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4; additive CUDA binaries collected with cargo test --locked -p feat-math --no-default-features --test cuda_export --test cuda_census -- --list",
-  "count": 5938,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
+  "count": 5922,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -42,7 +42,7 @@
     }
    },
    "feat-math": {
-    "count": 1368,
+    "count": 1352,
     "ignored": 13,
     "binaries": {
      "feat-math": {
@@ -1990,36 +1990,6 @@
        "bounded_v2_envelope_corruption_is_typed_and_never_falls_back",
        "tagged_model_metadata_and_legacy_control_keep_their_version_boundary",
        "unassigned_and_out_of_range_v2_ids_are_refused_at_every_ingress"
-      ]
-     },
-     "feat-math::cuda_census": {
-      "kind": "test",
-      "count": 5,
-      "ignored": 0,
-      "tests": [
-       "complete_bound_registry_and_codec_modes_execute",
-       "complete_recipe_registry_executes_or_refuses_identically",
-       "fitted_legacy_registry_states_execute_or_match_rust_refusal",
-       "multiline_metadata_remains_documentation",
-       "scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute"
-      ]
-     },
-     "feat-math::cuda_export": {
-      "kind": "test",
-      "count": 11,
-      "ignored": 0,
-      "tests": [
-       "caller_metadata_is_data_and_fast_profile_is_preserved",
-       "caller_strings_matching_internal_symbol_templates_remain_exact_data",
-       "complete_bundle_is_deterministic_binds_every_input_and_keeps_original_rust",
-       "device_stream_and_batch_boundaries_are_strictly_qualified_when_requested",
-       "emitted_cmake_builds_the_declared_library_and_a_real_consumer",
-       "fitted_raw_strings_preserve_ordered_tails_and_reject_stale_rows",
-       "independently_emitted_models_link_together_with_isolated_symbols",
-       "native_extra_boundaries_preserve_outputs_and_refuse_aliases_overflows_and_stale_handles",
-       "native_lifecycle_shapes_refit_concurrency_and_explicit_device_errors",
-       "nonlinear_symbolic_target_and_linear_recipes_match_reference_bits",
-       "v3_closure_aliases_and_build_flags_are_authenticated"
       ]
      }
     }
@@ -9381,7 +9351,7 @@
   }
  },
  "totals": {
-  "rust": 5938,
+  "rust": 5922,
   "python": 182
  }
 }
