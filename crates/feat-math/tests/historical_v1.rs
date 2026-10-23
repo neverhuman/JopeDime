@@ -633,6 +633,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(security_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    let cuda_cpp = old_fixture("transitions/cuda_cpp_identity_rebaseline.v1.json");
+    assert_eq!(cuda_cpp["fixtures"].as_array().unwrap().len(), 2);
+    for path in changed_fixtures {
+        assert!(cuda_cpp["fixtures"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -668,6 +677,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         typescript,
         c17_combined,
         ctutils_security,
+        cuda_cpp,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

@@ -42,7 +42,7 @@ fn recipe(root: &Path, source: &str) {
 }
 
 /// This denominator comes from the same registry used to admit publication.
-/// Every Rust recipe spelling either executes through both TS module modes or
+/// Every Rust recipe spelling either executes through the selected CUDA C++ build mode or
 /// is explicitly refused by both emitters. New registry rows enter automatically.
 #[test]
 fn complete_recipe_registry_executes_or_refuses_identically() {

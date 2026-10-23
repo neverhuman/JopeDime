@@ -146,8 +146,9 @@ JOPE_NVCC=/path/to/nvcc bash deploy/ci/cuda/qualify.sh compile
 bash deploy/ci/cuda/qualify.sh device
 ```
 
-The manual `ci.yml` input `cuda_device=true` selects the existing `xbabe2-gpu` runner
-label and requires its device receipt in aggregate. No host provisioning or admission
+CUDA implementation, numerical-template and qualification changes automatically require
+the device job and its receipt in aggregate. The manual `ci.yml` input `cuda_device=true`
+also requests it. Both use the existing `xbabe2-gpu` runner label. No host provisioning or admission
 policy is changed here. A missing/offline runner is pending, and a skipped device job
 is unqualified. Until a fresh exact-head device run passes, do not describe this target
 as 100% CUDA-hardware-qualified. Universal GPU execution for nonlinear/bound models

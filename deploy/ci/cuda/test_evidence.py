@@ -73,6 +73,16 @@ class EvidenceTests(unittest.TestCase):
             file.write("altered bytes\n")
         self.assertNotEqual(before["files"], evidence.inspect(self.root, "compile")["files"])
 
+    def test_cuda_sources_and_qualification_changes_require_hardware(self):
+        for path in ("crates/feat-math/src/cuda.rs", "crates/feat-math/src/cuda/model.cu",
+                     "crates/feat-math/src/emit_rs.rs", "crates/feat-math/tests/cuda_export.rs",
+                     "deploy/ci/cuda/evidence.py", ".github/workflows/cuda.yml"):
+            with self.subTest(path=path):
+                self.assertTrue(evidence.device_required([path]))
+
+    def test_unrelated_changes_do_not_claim_or_request_device_qualification(self):
+        self.assertFalse(evidence.device_required(["README.md", "Cargo.lock", "crates/jope-records/src/main.rs"]))
+
 
 if __name__ == "__main__":
     unittest.main()

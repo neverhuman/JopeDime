@@ -391,14 +391,14 @@ limits and client examples](docs/program-source-stream.md).
 | `jope` with no arguments | prints `jope 0.4.0` <sup>1</sup> |
 | Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
-| Emit targets | 8: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly) and `c17` (native C17 bindings) <sup>4</sup> |
-| Rust tests | 5,922 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
+| Emit targets | 9: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly) `c17` (native C17 bindings) and `cuda` (CUDA C++ with a native core) <sup>4</sup> |
+| Rust tests | 5,938 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
-| CI | 12 jobs per pull request in `ci.yml` (top-level declarations; 14 expanded jobs); 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
+| CI | 13 jobs per pull request in `ci.yml` (top-level declarations; CUDA expands into host/compiler legs and a device job for CUDA changes); 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
 | Coverage map | 848 items over 30 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,211 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,213 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -461,9 +461,9 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-Pull-request CI is `.github/workflows/ci.yml`: twelve jobs declared at the top
-level expand to fourteen jobs, including both Rust shards and both TypeScript
-runtimes, on the self-hosted `jope-ci` runners. Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
+Pull-request CI is `.github/workflows/ci.yml`: thirteen jobs declared at the top
+level include both Rust shards, both TypeScript runtimes and separate CUDA host/compiler
+legs on the self-hosted `jope-ci` runners. The CUDA device job uses `xbabe2-gpu` for CUDA implementation changes or an explicit manual request. Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated
 blocks, and `jope-records paper-trace`, which checks the white paper's printed numbers against its

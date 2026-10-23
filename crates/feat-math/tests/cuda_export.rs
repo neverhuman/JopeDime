@@ -311,6 +311,7 @@ fn emitted_cmake_builds_the_declared_library_and_a_real_consumer() {
     if mode == "host" {
         args.push("-DJOPE_CUDA_HOST_ONLY=ON".into());
     } else {
+        args.push("-DJOPE_CUDA_HOST_ONLY=OFF".into());
         args.push(format!(
             "-DCMAKE_CUDA_COMPILER={}",
             std::env::var("JOPE_NVCC").unwrap_or_else(|_| "nvcc".into())
@@ -322,6 +323,12 @@ fn emitted_cmake_builds_the_declared_library_and_a_real_consumer() {
         "cmake",
         &args.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
     );
+    let cache = fs::read_to_string(root.join("build/CMakeCache.txt")).unwrap();
+    assert!(cache.contains(if mode == "host" {
+        "JOPE_CUDA_HOST_ONLY:BOOL=ON"
+    } else {
+        "JOPE_CUDA_HOST_ONLY:BOOL=OFF"
+    }));
     cuda::command(&root, "cmake", &["--build", "build", "--parallel", "2"]);
     cuda::command(&root, "./build/consumer", &[]);
 }
@@ -404,4 +411,49 @@ assert(m.predict_strings({{"A","3","3"}}).size()==1);}
         assert!(v3.manifest.all_supported());
         assert_eq!(v3.sources.len(), 6);
     }
+}
+
+#[test]
+fn caller_strings_matching_internal_symbol_templates_remain_exact_data() {
+    use feat_math::advanced_v3::{
+        fit_table, ColumnSpec, DataSchema, Objective, RawTable, RowSemantics, TaskSpec,
+    };
+    let name = "namespace jope_cuda { jope_cuda_native_\"\n雪 __BOUND_WIDTH__ __BOUND_HEADERS__";
+    let categories = [
+        "namespace jope_cuda {",
+        "jope_cuda_native_",
+        "JOPE_CUDA_MODEL_HPP",
+        "quoted,\"\n雪",
+    ];
+    let raw = RawTable::new(
+        vec![name.into()],
+        (0..16).map(|i| vec![categories[i % 4].into()]).collect(),
+    )
+    .unwrap();
+    let schema = DataSchema {
+        columns: vec![ColumnSpec::categorical(name)],
+        row_semantics: RowSemantics::Iid,
+    };
+    let g = GenomeIr::parse("(pipe X (input categorical=onehot) (ridge))").unwrap();
+    let y: Vec<_> = (0..16).map(|i| (i % 4) as f64 * 3.0).collect();
+    let model = fit_table(
+        &g,
+        &TaskSpec::regression(Objective::R2).unwrap(),
+        &schema,
+        &raw,
+        &y,
+    )
+    .unwrap();
+    let original = feat_math::advanced_v3::emit_bound(&model, &EmitOptions::default()).unwrap();
+    let bundle = emitter::emit_bound(&model, &EmitOptions::default()).unwrap();
+    assert!(bundle.files["cuda/model_core.rs"].starts_with(&original.rust));
+    assert_eq!(
+        cuda::bound_predictions(&root("literal-data"), &bundle, &raw.rows),
+        model
+            .predict_table(&raw)
+            .unwrap()
+            .iter()
+            .map(|v| v.to_bits())
+            .collect::<Vec<_>>()
+    );
 }

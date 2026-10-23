@@ -11,6 +11,17 @@ import sys
 LOGS = ("contracts.log", "census.log", "golden.log", "ordered-bound.log", "bindings.log", "pipeline.log", "cli.log")
 
 
+def device_required(paths):
+    """CUDA implementation changes require real hardware evidence before merge."""
+    exact = {".github/workflows/cuda.yml", "crates/feat-math/src/cuda.rs",
+             "crates/feat-math/src/emit_rs.rs", "crates/feat-math/src/c17/bridge.rs",
+             "crates/feat-math/src/kernel/scalar_program/emit.rs",
+             "crates/feat-math/src/kernel/scalar_program/recipe.rs",
+             "crates/feat-math/src/kernel/row_vector/emit.rs"}
+    prefixes = ("crates/feat-math/src/cuda/", "crates/feat-math/tests/cuda_", "deploy/ci/cuda/")
+    return any(path in exact or path.startswith(prefixes) for path in paths)
+
+
 def digest(path):
     return {"bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
@@ -58,6 +69,15 @@ def inspect(root, mode):
 
 
 def main():
+    if sys.argv[1] == "select-device":
+        base = sys.argv[2]
+        if not base:
+            base = subprocess.check_output(["git", "merge-base", "origin/main", "HEAD"], text=True).strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", base):
+            raise ValueError("full base SHA required for CUDA device selection")
+        paths = subprocess.check_output(["git", "diff", "--name-only", "-z", base, "HEAD"], text=True).split("\0")
+        print(str(device_required(paths)).lower())
+        return
     action, folder, mode = sys.argv[1:]
     root = Path(folder)
     receipt = root / "qualification.json"

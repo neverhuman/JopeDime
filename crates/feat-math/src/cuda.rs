@@ -110,8 +110,8 @@ pub fn emit_bound(
         .collect::<Vec<_>>()
         .join(",");
     let facade = include_str!("cuda/bound.rs.txt")
-        .replace("__BOUND_HEADERS__", &format!("vec![{quoted}]"))
-        .replace("__BOUND_WIDTH__", &headers.len().to_string());
+        .replace("__BOUND_WIDTH__", &headers.len().to_string())
+        .replace("__BOUND_HEADERS__", &format!("vec![{quoted}]"));
     assemble(
         pair.rust,
         facade,
@@ -264,10 +264,17 @@ fn assemble(
     let namespace = format!("jope_cuda_{symbol_identity}");
     let native_prefix = format!("{namespace}_native_");
     for (path, source) in &mut files {
-        *source = source.replace("jope_cuda_native_", &native_prefix).replace(
-            "namespace jope_cuda {",
-            &format!("namespace {namespace} {{"),
-        );
+        // Rename only fixed boundary templates. Caller strings in the numerical
+        // module must remain byte-exact, even when they match a symbol template.
+        if matches!(path.as_str(), "cuda/model.cu" | "cuda/model_native.rs") {
+            *source = source.replace("jope_cuda_native_", &native_prefix);
+        }
+        if matches!(path.as_str(), "cuda/model.cu" | "cuda/model.hpp") {
+            *source = source.replace(
+                "namespace jope_cuda {",
+                &format!("namespace {namespace} {{"),
+            );
+        }
         if path == "cuda/model_native.rs" {
             *source = format!("#![crate_name=\"model_native_{symbol_identity}\"]\n{source}");
         }

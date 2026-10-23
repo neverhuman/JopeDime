@@ -5,8 +5,8 @@
     "python": 172
   },
   "rust": {
-    "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-    "count": 5937,
+    "command": "Baseline: cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4; additive CUDA binaries collected with cargo test --locked -p feat-math --no-default-features --test cuda_export --test cuda_census -- --list",
+    "count": 5938,
     "ignored": 75,
     "packages": {
       "battle-gpu": {
@@ -42,7 +42,7 @@
         }
       },
       "feat-math": {
-        "count": 1367,
+        "count": 1368,
         "ignored": 13,
         "binaries": {
           "feat-math": {
@@ -2006,10 +2006,11 @@
           },
           "feat-math::cuda_export": {
             "kind": "test",
-            "count": 10,
+            "count": 11,
             "ignored": 0,
             "tests": [
               "caller_metadata_is_data_and_fast_profile_is_preserved",
+              "caller_strings_matching_internal_symbol_templates_remain_exact_data",
               "complete_bundle_is_deterministic_binds_every_input_and_keeps_original_rust",
               "device_stream_and_batch_boundaries_are_strictly_qualified_when_requested",
               "emitted_cmake_builds_the_declared_library_and_a_real_consumer",
@@ -9380,7 +9381,7 @@
     }
   },
   "totals": {
-    "rust": 5937,
+    "rust": 5938,
     "python": 182
   }
 }

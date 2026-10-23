@@ -12053,7 +12053,7 @@
         "committed golden fixtures",
         "deploy/ci/cuda/requirements.txt"
       ],
-      "path_applicability": "explicit manual ci.yml cuda_device=true; absent/offline hardware stays pending or unqualified",
+      "path_applicability": "CUDA implementation/template/qualification changes, or explicit manual ci.yml cuda_device=true; absent/offline hardware stays pending or unqualified",
       "requires_nonzero_tests": true,
       "result_backend": "rust",
       "stage": "execution"

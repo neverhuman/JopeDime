@@ -31,6 +31,7 @@ jobs:
     outputs:
       rust: ${{ steps.lane.outputs.rust }}
       emitters: ${{ steps.lane.outputs.emitters }}
+      cuda_device: ${{ steps.cuda.outputs.required }}
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
@@ -40,6 +41,12 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Select required CUDA hardware qualification
+        id: cuda
+        run: |
+          set -euo pipefail
+          required=$(python3 deploy/ci/cuda/evidence.py select-device "$BASE_SHA")
+          printf 'required=%s\n' "$required" >> "$GITHUB_OUTPUT"
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
       - name: Run declared lane and retain receipt
@@ -338,7 +345,7 @@ jobs:
     if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
     uses: ./.github/workflows/cuda.yml
     with:
-      run-device: ${{ github.event_name == 'workflow_dispatch' && inputs.cuda_device == true }}
+      run-device: ${{ needs.changes.outputs.cuda_device == 'true' || (github.event_name == 'workflow_dispatch' && inputs.cuda_device == true) }}
 
   paper:
     uses: ./.github/workflows/paper.yml
@@ -539,7 +546,7 @@ jobs:
           layout: name
           into: target/ci-cuda-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect requested CUDA device evidence
-        if: github.event_name == 'workflow_dispatch' && inputs.cuda_device == true
+        if: needs.changes.outputs.cuda_device == 'true' || (github.event_name == 'workflow_dispatch' && inputs.cuda_device == true)
         uses: ./.github/actions/download-ci-evidence
         with:
           name: cuda-${{ github.run_id }}-${{ github.run_attempt }}-device
@@ -550,7 +557,7 @@ jobs:
         if: always() && (needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true')
         env:
           CUDA_RESULT: ${{ needs.cuda.result }}
-          CUDA_DEVICE: ${{ github.event_name == 'workflow_dispatch' && inputs.cuda_device == true }}
+          CUDA_DEVICE: ${{ needs.changes.outputs.cuda_device == 'true' || (github.event_name == 'workflow_dispatch' && inputs.cuda_device == true) }}
         run: |
           set -euo pipefail
           test "$CUDA_RESULT" = success

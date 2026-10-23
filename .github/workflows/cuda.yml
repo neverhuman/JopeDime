@@ -45,7 +45,7 @@ jobs:
           path: target/cuda-evidence/${{ matrix.mode }}/
 
   cuda-device:
-    # Explicit full manual qualification on the existing GPU runner label.
+    # Required for CUDA implementation changes, or an explicit manual request.
     # A skipped job supplies no device evidence and is never called a GPU pass.
     if: inputs.run-device
     runs-on: [self-hosted, linux, x64, xbabe2-gpu]
