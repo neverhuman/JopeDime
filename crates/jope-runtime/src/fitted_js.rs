@@ -27,6 +27,8 @@ pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
             "fitted JavaScript needs a pipeline without a target transform",
         ));
     };
+    feat_math::kernel::width::check_input_width(model, width)
+        .map_err(|e| Failure::integrity(format!("fitted JavaScript input width: {e}")))?;
     let mut source = emit_javascript(genome, &EmitOptions::default())
         .map_err(|e| Failure::backend(format!("{e:#}")))?;
     let planned_stages = declared_kinds(&source, "const MODEL_STAGES=")?;
@@ -73,6 +75,7 @@ pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
             problems.join(", ")
         )));
     }
+    validate_prediction_parameters(&source, ops)?;
     // serde_json writes the shortest round-trip form, so every f64 parses back bit-exactly. It
     // writes a non-finite f64 as null, so a null anywhere inside a state is refused; only a whole
     // stateless stage is null.
@@ -95,6 +98,86 @@ pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
         )));
     }
     Ok(source)
+}
+
+/// Check every recipe literal read by applyStage during prediction. Learned arrays
+/// come from the fitted model; fit-only parameters (seed, regularization, etc.) do
+/// not affect prediction and cannot be recovered from every fitted operator.
+fn validate_prediction_parameters(source: &str, ops: &[FittedOp]) -> Result<()> {
+    let line = source
+        .lines()
+        .find(|line| line.starts_with("const MODEL_STAGES="))
+        .ok_or_else(|| Failure::integrity("recipe has no MODEL_STAGES line"))?;
+    // stage_js emits flat object literals. Read its resolved defaults/clamps,
+    // rather than duplicating the planner's parameter normalization here.
+    let specs: Vec<_> = line
+        .split('{')
+        .skip(1)
+        .map(|tail| {
+            tail.split('}')
+                .next()
+                .unwrap_or("")
+                .split(',')
+                .filter_map(|field| field.split_once(':'))
+                .collect::<std::collections::BTreeMap<_, _>>()
+        })
+        .collect();
+    if specs.len() != ops.len() {
+        return Err(Failure::integrity("recipe stage literals are incomplete"));
+    }
+    for (index, (spec, op)) in specs.iter().zip(ops).enumerate() {
+        use FittedOp as F;
+        let append = match op {
+            F::Standardize { append, .. }
+            | F::RobustScale { append, .. }
+            | F::Rank { append, .. }
+            | F::Blom { append, .. }
+            | F::QuantileBins { append, .. }
+            | F::BinOnehot { append, .. }
+            | F::Hinge { append, .. }
+            | F::WinsorClip { append, .. }
+            | F::Cheb { append, .. }
+            | F::PolyInteract { append, .. }
+            | F::RffCos { append, .. }
+            | F::RffSin { append, .. }
+            | F::RandProj { append, .. }
+            | F::LandmarkDist { append, .. }
+            | F::ObliqueHinge { append, .. }
+            | F::RowStats { append }
+            | F::PairProd { append, .. }
+            | F::TargetBinEncode { append, .. }
+            | F::Sigmoid { append }
+            | F::Step { append, .. }
+            | F::NormRow { append }
+            | F::RowDiffStats { append } => *append,
+            _ => return Err(Failure::backend("unsupported fitted JavaScript stage")),
+        };
+        if spec.get("append").copied() != Some(if append { "true" } else { "false" }) {
+            return Err(Failure::backend(format!(
+                "fitted JavaScript refused: stage {index} append parameter differs from fitted state"
+            )));
+        }
+        let parameter = match op {
+            F::QuantileBins { bins, .. } | F::BinOnehot { bins, .. } => {
+                Some(("bins", *bins as f64))
+            }
+            F::Cheb { degree, .. } => Some(("degree", *degree as f64)),
+            F::LandmarkDist { gamma, .. } => Some(("gamma", *gamma)),
+            F::Step { t, .. } => Some(("t", *t)),
+            _ => None,
+        };
+        if let Some((name, fitted)) = parameter {
+            let planned = spec.get(name).and_then(|value| value.parse::<f64>().ok());
+            if !fitted.is_finite()
+                || planned.is_none_or(|value| value.to_bits() != fitted.to_bits())
+            {
+                return Err(Failure::backend(format!(
+                    "fitted JavaScript refused: stage {index} {name} parameter differs from fitted state"
+                )));
+            }
+        }
+    }
+    Ok(())
 }
 
 /// The `kind:"…"` values, in order, on the recipe line that starts with `prefix`.

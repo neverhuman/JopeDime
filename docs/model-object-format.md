@@ -196,3 +196,8 @@ Native tests cover all current 26 appliance recipes, additional bound program fo
 refusal and local concurrency. Every additional language executor still needs independent
 fit/save/process-exit/load/inference fixtures and malformed-state/resource tests. A shared
 container does not establish cross-platform numerical parity.
+
+Fitted JavaScript export validates input width and all prediction-time recipe literals
+against fitted state: every append flag, bin counts, Chebyshev degree, landmark gamma
+and step threshold. A contradictory declaration refuses export. Learned arrays remain
+authoritative; fit-only seeds and regularization are not reconstructed or refitted.

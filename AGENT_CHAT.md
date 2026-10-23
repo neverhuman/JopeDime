@@ -1829,3 +1829,8 @@ Benchmark re-run (release jopedime; OpenML freMTPL2freq pinned by sha256, md5 ma
 Verification: fmt, check, clippy -D warnings; the PR lane's unpartitioned nextest selection 3,716/3,716 then jope-runtime/appliance, jope-pipeline/cli/learning re-run after the review fixes; e2e-smoke lane and clean-host run on the stripped fixture; jope-records checks; check.sh except cargo-deny (host has 0.19.8, lane pins 0.20.2; Cargo.lock unchanged); paper make check pdf.
 
 CI blocker: every jope-ci runner is offline since 15:19 UTC; jope-runner@ci gets HTTP 401 from generate-jitconfig with /etc/jope-runner/github-pat. Owner must replace the PAT (agents never read or write it). Merge waits for green hosted CI.
+
+
+## 2026-10-23 — PR423 fitted export admission correction
+
+Standing all-PR review/fix owner Codex preserves alton math-pipeline decoder parent7e453d2. Two synthetic native/Node regressions reproduce accepted step-threshold and append mismatches returning status0 with different predictions. JS export now validates actual fitted input width and all prediction-time recipe literals against the resolved emitted specs, with six parameter refusals and a zero-stage matching control. Frozen feat-math/numerical/Cargo/identity bytes unchanged. Fresh exact-head targeted/strictNode, default inventory, native/fullmanual CI and review required; no hardware, deployment or merge claim.
