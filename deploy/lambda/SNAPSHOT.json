@@ -984,10 +984,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/Cargo.lock",
-      "tree_sha256": "4d965443dae00d25b0da240d9040c2bdf5276184961432a232f2848a8b3e1bf0",
+      "tree_sha256": "c127462e9b3d84806f3f170ac058173548357a8956ee215282027b947c6a84db",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "ctutils 0.4.4 security patch for RUSTSEC-2026-0385; retain the original frozen checksum; root path dependency versions remain 0.4.0",
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.1, the workspace version of this release; no other package moves",
       "version_sync_bases": [
         {
           "schema": "jope.lambda-version-sync-base/v1",
@@ -1805,10 +1805,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression/rust/Cargo.lock",
-      "tree_sha256": "dea49e0e69930a75f4d5547a7cbf420a154832da0396c127f9ddb27e039774b7",
+      "tree_sha256": "d21f7d082c9d11cbb4d9468c98ccb0b1d321aaf7878269256572598dc367fdbd",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.1, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression",
@@ -2359,10 +2359,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression-ops/rust/Cargo.lock",
-      "tree_sha256": "08f64977467e74fde00a154ddeb3d4de51c525b6ec2ee1917f3b883312c6105a",
+      "tree_sha256": "0921eca8fca0cc9caa8aee390054cf96b93778c0adffc2089c50f018ba12185f",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.1, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression-ops",
@@ -2635,10 +2635,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.lock",
-      "tree_sha256": "074f9c33b99e3d4777e2f7fd0045f5faa42c541f8c9a79d7325101b045dc3a39",
+      "tree_sha256": "3d3f69da83da664d116d319dddd07036b650e8b6daaf9cc987e1524700e6e619",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.1, the workspace version of this release; no other package moves"
     },
     {
       "body": "teacher-v2",
@@ -3237,10 +3237,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/s1-proposal/Cargo.lock",
-      "tree_sha256": "0cbcfc8667116e4f3410dfc85031d96eaea99e66c8630b8477ecd59b46195d6d",
+      "tree_sha256": "6f6b74224cfeffb6d93b9b08c5485c7d1364940f68b4a3c3f9e6e2e1ee14eb29",
       "custody_tarball": null,
       "reason": "new workspace lock with current feat-math0.2 and unique package; historical proposal lock retained separately",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.1, the workspace version of this release; no other package moves"
     }
   ],
   "excluded": [
