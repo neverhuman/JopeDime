@@ -23,6 +23,11 @@ description: >-
       bind to that merged base as on pull_request. This qualifies candidate tests, not deployment.
     - push / main / other dispatch: host digest must equal the checkout under test.
 
+outputs:
+  runner-pool:
+    description: Capability label from the verified merged policy; candidate labels cannot bootstrap their deployment.
+    value: ${{ steps.pool.outputs.label }}
+
 runs:
   using: composite
   steps:
@@ -52,3 +57,13 @@ runs:
       env:
         JOPE_PROVENANCE_FETCH_TOKEN: ${{ github.token }}
       run: python3 deploy/runner/verify-container.py
+    - name: Capability pool from verified merged runner policy
+      id: pool
+      shell: bash
+      env:
+        JOPE_PROVENANCE_FETCH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        label=$(python3 deploy/runner/provenance_bind.py runner-pool)
+        case "$label" in jope-ci|jope-mac-ci) ;; *) exit 2 ;; esac
+        echo "label=$label" >> "$GITHUB_OUTPUT"

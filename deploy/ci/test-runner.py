@@ -107,7 +107,7 @@ done
         for lane in ('ci', 'ci2', 'ci3', 'ci4', 'ci5', 'ci6', 'ci7', 'ci8', 'ci9', 'ci10', 'ci11', 'ci12'):
             result = subprocess.run(['bash', '-ec', script, 'test', lane], cwd=ROOT, capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stderr)
-            self.assertEqual(f'xbabe4-{lane},jope-ci', result.stdout.strip())
+            self.assertEqual(f'xbabe4-{lane},jope-mac-ci', result.stdout.strip())
             launch = dict(host='xbabe4', lane=lane, domain='pr', memory='16g', cpus=16,
                           volume_prefix=f'jope-pr-{lane}')
             container.verify(launch, str(16*1024**3), '1600000 100000', '0', [])

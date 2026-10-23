@@ -123,6 +123,16 @@ The guard lanes have the separate `jope-main-guard` label, 2 GiB and 2 CPUs, wit
 `main-guard.yml` push to main. They cannot execute ci.yml, full-main, release or PR jobs.
 Existing seven heavy roles, caps, labels and storage domains remain as listed above.
 
+Mac roles advertise `jope-mac-ci` and their exact host/lane label, never the legacy
+`jope-ci` label. Older PR workflows therefore stay on native Linux roles. The `changes`
+job obtains its pool from the runner-provenance action only after installed scripts,
+hooks and actual kernel limits match the merged provenance base. Compatible Rust-check,
+emitter, input, Python, smoke, UI and aggregate jobs consume that closed output. An
+unmerged candidate cannot select its own new capability label: before this deployment its
+merged base returns `jope-ci`; after merged deployment the policy returns `jope-mac-ci`.
+Complete Rust test shards, strict release hygiene, TypeScript and paper jobs retain native
+roles. No test partition, assertion or timeout is dropped for emulation compatibility.
+
 Each Mac PR lane has its own `jope-pr-<lane>-{work,cargo,target,uv}` volumes and the normal
 16 GiB/16 CPU/no-swap container limits. The VM has 24 virtual CPUs and 256 GiB RAM, shared by
 all twelve lanes; the per-container CPU limits share those 24 virtual CPUs. Admission

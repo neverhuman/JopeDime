@@ -114,7 +114,7 @@ jope_mac_launch() { # lane, provisioned state dir, public policy JSON, optional 
     '{phase:"mint_requested",name:$name,lane:$lane,digest:$digest,started_utc:$utc}') || return 2
   # Persist BEFORE the non-idempotent API call. An interrupted phase blocks the next launch.
   jope_mac_write_state "$current" "$state" || return 2
-  labels=$(jq -nc --arg lane "$lane" '["self-hosted","linux","x64","jope-ci","xbabe4-"+$lane]') || return 2
+  labels=$(jq -nc --arg lane "$lane" '["self-hosted","linux","x64","jope-mac-ci","xbabe4-"+$lane]') || return 2
   request=$(jq -nc --arg name "$name" --arg lane "$lane" --argjson labels "$labels" \
     '{name:$name,runner_group_id:1,labels:$labels,work_folder:("/home/runner/work/"+$lane)}') || return 2
   if ! response=$(jope_mac_api repos/neverhuman/JopeDime/actions/runners/generate-jitconfig "$request"); then

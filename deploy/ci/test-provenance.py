@@ -84,6 +84,8 @@ def write_tree(repo: Path, marker: str) -> None:
         else:
             path.write_text(f"{rel}\n{marker}\n")
     (repo / "deploy/runner/entrypoint.sh").write_text(f"entrypoint\n{marker}\n")
+    (repo / "deploy/runner/mac-capacity.json").write_text(json.dumps(
+        {"runner_label": "jope-mac-ci"} if marker.startswith("head") else {}))
 
 
 def git(repo: Path, *args: str) -> str:
@@ -214,6 +216,17 @@ class ProvenanceBindTests(unittest.TestCase):
         }
         env.update(extra)
         return env
+
+    def test_candidate_capability_label_cannot_bootstrap_its_own_pool(self):
+        self.assertEqual("jope-ci", bind.runner_pool(self.repo,
+            {"GITHUB_EVENT_NAME":"pull_request", "BASE_SHA":self.base_sha}))
+        self.assertEqual("jope-mac-ci", bind.runner_pool(self.repo,
+            {"GITHUB_EVENT_NAME":"push"}))
+        path=self.repo/"deploy/runner/mac-capacity.json"
+        for label in ["foreign", "jope-ci,jope-main-guard", "jope-mac-ci\nINJECTED=1", None, 12]:
+            path.write_text(json.dumps({"runner_label":label}))
+            with self.subTest(label=label),self.assertRaises(ValueError):
+                bind.runner_pool(self.repo,{"GITHUB_EVENT_NAME":"push"})
 
     def test_pull_request_passes_when_host_matches_base_not_head(self):
         env = self._env("pull_request", self.base_digest, "base", BASE_SHA=self.base_sha)

@@ -40,6 +40,7 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
+      runner_pool: ${{ steps.provenance.outputs.runner-pool }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -47,6 +48,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Runner provenance
+        id: provenance
         uses: ./.github/actions/runner-provenance
       - name: Run declared lane and retain receipt
         id: lane
@@ -94,7 +96,7 @@ jobs:
   rust-check:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -167,7 +169,7 @@ jobs:
   emitters:
     needs: changes
     if: needs.changes.outputs.emitters == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 30
     env:
       JOPE_PARITY_STRICT: "1"
@@ -196,7 +198,7 @@ jobs:
   inputs:
     needs: changes
     if: needs.changes.outputs.inputs == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -223,7 +225,7 @@ jobs:
   python:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -250,7 +252,7 @@ jobs:
   e2e-smoke:
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -276,7 +278,7 @@ jobs:
 
   observatory-ui:
     needs: changes
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     env:
       JOPE_UI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -350,7 +352,7 @@ jobs:
   aggregate:
     needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript]
     if: always()
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -568,7 +570,7 @@ jobs:
       fail-fast: false
       matrix:
         lane: [ci, ci2, ci3, ci4, ci5, ci6, ci7, ci8, ci9, ci10, ci11, ci12]
-    runs-on: [self-hosted, linux, x64, jope-ci, "xbabe4-${{ matrix.lane }}"]
+    runs-on: [self-hosted, linux, x64, jope-mac-ci, "xbabe4-${{ matrix.lane }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout exact merged source

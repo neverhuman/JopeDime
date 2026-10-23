@@ -448,6 +448,20 @@ def verify_hooks(
         require_hook_match(name, actual, hook_digest(repo, rev, name))
 
 
+def runner_pool(repo: Path, environ: Optional[Mapping[str, str]] = None) -> str:
+    """Select only a capability pool declared by the provenance-bound merged policy.
+
+    A candidate's unmerged label never changes where its own premerge jobs run.
+    The composite action calls this only after the installed scripts/hooks/kernel proof.
+    """
+    rev = bind_rev_from_env(environ)
+    policy = json.loads(file_bytes(repo, rev, "deploy/runner/mac-capacity.json"))
+    label = policy.get("runner_label", "jope-ci")
+    if label not in ("jope-ci", "jope-mac-ci"):
+        raise ValueError("unapproved provenance-bound CI capability label")
+    return label
+
+
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     repo = Path(os.environ.get("GITHUB_WORKSPACE", ".")).resolve()
@@ -466,6 +480,9 @@ def main(argv: list[str] | None = None) -> int:
             flush=True,
         )
         return 0
+    if args[0] == "runner-pool":
+        print(runner_pool(repo))
+        return 0
     if args[0] == "ensure-base":
         rev = ensure_bind_rev(repo)
         print(f"bind rev:       {rev or 'WORKTREE'} (readable)", flush=True)
@@ -476,7 +493,7 @@ def main(argv: list[str] | None = None) -> int:
         rev = validate_digest_rev(args[1]) if len(args) > 1 else None
         print(scripts_digest(repo, rev))
         return 0
-    raise SystemExit(f"usage: {Path(sys.argv[0]).name} [verify|ensure-base|digest [REV]]")
+    raise SystemExit(f"usage: {Path(sys.argv[0]).name} [verify|ensure-base|runner-pool|digest [REV]]")
 
 
 if __name__ == "__main__":

@@ -136,6 +136,10 @@ jope_runner_lanes() { # <host>
 
 jope_runner_labels() {
   jope_runner_role "$JOPE_RUNNER_HOST" "$1" || return
+  if [[ $JOPE_RUNNER_HOST == xbabe4 ]]; then
+    echo "$JOPE_RUNNER_HOST-$1,jope-mac-ci"
+    return
+  fi
   case $1 in
     ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12) echo "$JOPE_RUNNER_HOST-$1,jope-ci" ;;
     full) echo "$JOPE_RUNNER_HOST-full,jope-full-cpu,jope-ci" ;;
