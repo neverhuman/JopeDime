@@ -56,10 +56,11 @@ export TEXINPUTS="$paper//:$build:" BIBINPUTS="$paper:"
   printf 'source_head=%s\n' "$(git -C "$repo" rev-parse HEAD)"
   printf 'source_dirty=%s\n' "$(git -C "$repo" status --porcelain -- "$paper" | wc -l)"
   printf 'content=north-star draft; every result is SYNTHETIC (see northstar/gaps.json)\n'
-  latexmk -version | head -n 2
-  xelatex --version | head -n 1
-  bibtex --version | head -n 1
-  pdfinfo -v 2>&1 | head -n 1
+  # sed reads to the end, so a version banner longer than one write cannot raise SIGPIPE under pipefail.
+  latexmk -version | sed -n '1,2p'
+  xelatex --version | sed -n 1p
+  bibtex --version | sed -n 1p
+  pdfinfo -v 2>&1 | sed -n 1p
   sha256sum "$paper/fonts.lock"
 } > "$build/build-environment.txt"
 
