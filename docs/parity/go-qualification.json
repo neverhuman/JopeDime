@@ -184,6 +184,41 @@
       "sha256": "299c8c7d7564a77239ed6521d691b6b32491faf11b003a12c8fa6d2c7d77ed77",
       "bytes": 424,
       "rust_results": []
+    },
+    {
+      "log": "target/go-census-portable-final.log",
+      "sha256": "bb7659469fe17ffffbba7fb9bcfd30b36b1c948b8495c81f193c8b92bffab424",
+      "bytes": 72809,
+      "rust_results": [
+        "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 523 filtered out; finished in 185.93s"
+      ]
+    },
+    {
+      "log": "target/go-published-freeze-final.log",
+      "sha256": "950fe9b0cf3cc2d5dc93fb9cce0cf0824f9b16f121eee1a851bbfde9c902aa8a",
+      "bytes": 1955,
+      "rust_results": [
+        "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.43s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+        "test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.04s"
+      ]
+    },
+    {
+      "log": "target/go-records-final-classified.log",
+      "sha256": "383e2e00ab515bf5718484815f63e2b38b0a96ede8272d0f53cbbeba1311be5b",
+      "bytes": 20066,
+      "rust_results": [
+        "test result: ok. 107 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.51s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 21 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 6.84s",
+        "test result: ok. 85 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.49s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s"
+      ]
     }
   ],
   "derived_suite": {

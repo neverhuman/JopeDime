@@ -9,7 +9,7 @@ Rust support, not a new independently implemented Go solver. See [the API/build 
 
 | Check | Observed result |
 | --- | --- |
-| Complete registry census | Five tests passed; 192 artifacts executed under both engines; every inherited refusal accounted for |
+| Complete registry census | Five tests passed with default features and again without default features; 192 artifacts executed under both engines; every inherited refusal accounted for |
 | Recipe rows | 53 executed, eight inherited Rust refusals |
 | Bound rows | 24 executed, one inherited refusal |
 | Legacy bound rows | 14 executed, 39 inherited refusals |
@@ -23,6 +23,7 @@ Rust support, not a new independently implemented Go solver. See [the API/build 
 | CLI / fitted regressions | Two and two tests passed; saved schema/codecs/ordered-tail fixtures executed |
 | Compatibility freeze | 13 passed; historical three passed; legacy three passed, one existing opt-in generator ignored |
 | Static checks | All-target check, scoped Clippy, generated-target Clippy, fmt/diff, actionlint and coverage-map validation passed |
+| Records and repository contracts | 259 tests passed; README counts and new target classification verified |
 | Evidence verifier adversarial fixtures | 21 aggregate tests passed; absent/zero/partial/filtered/missing-engine/uncovered evidence rejected |
 
 The numerical golden run used the Go-enabled 83-test body at `d5c2436` and completed

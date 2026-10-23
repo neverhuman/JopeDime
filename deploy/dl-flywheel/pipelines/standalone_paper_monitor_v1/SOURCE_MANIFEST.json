@@ -17,10 +17,10 @@
       "sha256": "e78e002677de2a47bdec6d7a59d0b7349b94c4f6fb271b99ba4892433c8fc1aa"
     },
     {
-      "bytes": 43212,
-      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed.",
+      "bytes": 43304,
+      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed. Go target: additive language, test, CI job and Python inventory counts; existing sections and numerical claims preserved.",
       "path": "README.md",
-      "sha256": "3b3f2915e5050f50646dd19f79fbf2fd0e06b0f4fe4acc63d8c8ca62d8c625f5"
+      "sha256": "6e137c62c53dc71b02a0d961e626a52122b428c1009b0d662b6630d14921cbf7"
     },
     {
       "bytes": 21263,
