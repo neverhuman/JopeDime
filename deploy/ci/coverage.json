@@ -11499,6 +11499,38 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Table contract, task inference, folds, losses, error taxonomy and device selection unit tests."
     },
+    "target:jope-runtime/test/fitted_js_qualification": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/fitted_js_qualification.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Fitted JavaScript for every transform and head in the JavaScript slice: fit in Rust, emit with fitted state, run under Node without refitting, agree with Model::predict to 1e-8*(1+|reference|); plan-mismatch refusals. Node is required under JOPE_PARITY_STRICT=1."
+    },
+    "target:jope-runtime/test/math_pipeline": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/math_pipeline.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "org.jopedime/math-pipeline/v1: decoder and exported JavaScript reproduce an external producer's predictions as identical f32 values for 78 generated rows (range, missing, boolean, infinite and unparseable cells); strict refusal of unknown fields, wrong task, bad selection, width mismatch, extra parts and missing columns. Node is required under JOPE_PARITY_STRICT=1."
+    },
     "target:jope-runtime/test/method_roster": {
       "discovery": {
         "doctest": false,

@@ -447,6 +447,43 @@ impl Run {
         Ok(())
     }
 
+    /// Predict with a `math-pipeline/v1` object. It carries no fitted header, so the receipt
+    /// records the decoder and the genome's digest as the method and leaves the task unset.
+    fn predict_math_pipeline(
+        &mut self,
+        object: &jope_runtime::model_object::ModelObject,
+        model: &Path,
+        input: &Path,
+        output: &Path,
+        started: Instant,
+    ) -> anyhow::Result<()> {
+        let pipeline = object.math_pipeline()?;
+        self.receipt.inputs.push(FileRecord {
+            role: "model",
+            path: model.display().to_string(),
+            bytes: object.manifest_bytes().len() as u64,
+            sha256: jope_runtime::sha256_hex(object.manifest_bytes()),
+        });
+        self.receipt.timings.read_seconds += started.elapsed().as_secs_f64();
+        self.receipt.method = Some(MethodRecord {
+            requested: "model".into(),
+            selected: jope_runtime::model_object::MATH_PIPELINE.into(),
+            recipe_sha256: jope_runtime::sha256_hex(pipeline.state.dsl.as_bytes()),
+        });
+        let csv = self.read_csv("input", input)?;
+        let started = Instant::now();
+        let (values, ignored) = pipeline.predict_table(&csv)?;
+        self.receipt.ignored_columns = ignored;
+        self.receipt.timings.predict_seconds = started.elapsed().as_secs_f64();
+        let started = Instant::now();
+        let bytes = api::predictions_csv(&methods::native::Predictions::Values(values))?;
+        self.receipt
+            .outputs
+            .push(io::write_atomic("predictions", output, &bytes)?);
+        self.receipt.timings.write_seconds += started.elapsed().as_secs_f64();
+        Ok(())
+    }
+
     /// Finish the receipt, write and print it, and return the exit status.
     fn finish(mut self, result: anyhow::Result<()>) -> ExitCode {
         if let Some(budget) = &self.budget {
@@ -586,6 +623,12 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
         let (_, b) = run.prepare()?;
         let started = Instant::now();
         let limit = Limits::default().max_model_bytes;
+        // Only the manifest's `format` is read here; `ModelObject::read` and `load_fitted` each
+        // verify every part, so the full read happens once, on the path that uses it.
+        if model.is_dir() && is_math_pipeline(model)? {
+            let object = jope_runtime::model_object::ModelObject::read(model, limit)?;
+            return run.predict_math_pipeline(&object, model, input, output, started);
+        }
         let fitted = jope_runtime::model_object::load_fitted(model, limit)?;
         let identity_path = if model.is_dir() {
             model.join("manifest.json")
@@ -617,6 +660,18 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
         Ok(())
     })();
     run.finish(result)
+}
+
+fn is_math_pipeline(object_dir: &Path) -> anyhow::Result<bool> {
+    use jope_runtime::model_object::{read_bounded, MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES};
+    #[derive(serde::Deserialize)]
+    struct Format {
+        format: String,
+    }
+    let bytes = read_bounded(&object_dir.join(MANIFEST), MAX_MANIFEST_BYTES)?;
+    let manifest: Format = serde_json::from_slice(&bytes)
+        .map_err(|e| Failure::integrity(format!("model manifest: {e}")))?;
+    Ok(manifest.format == MATH_PIPELINE)
 }
 
 fn run_fit_predict(
