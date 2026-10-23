@@ -22,3 +22,4 @@ cargo test --locked -p feat-math --no-default-features --test artifact_target_bi
 cargo test --locked -p jope-pipeline --test artifact_target_binding 2>&1 | tee target/typescript-evidence/pipeline.log
 cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests:: 2>&1 | tee target/typescript-evidence/cli.log
 node deploy/ci/typescript/verify.mjs
+node --test deploy/ci/typescript/evidence.test.mjs 2>&1 | tee target/typescript-evidence/receipt-controls.log

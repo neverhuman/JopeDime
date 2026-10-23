@@ -386,7 +386,7 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-Pull-request CI is `.github/workflows/ci.yml`: eleven jobs on the self-hosted `jope-ci` runners.
+Pull-request CI is `.github/workflows/ci.yml`: twelve jobs on the self-hosted `jope-ci` runners.
 Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated

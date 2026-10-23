@@ -50,6 +50,7 @@ function qualification(version) {
   assert.equal(text.split('TypeScript cjs:').length-1,cases+metadata);
   assert.match(read('contracts.log'),/pass [1-9]\d*/); assert.match(read('contracts.log'),/fail 0\b/);
   assert.match(read('contracts.log'),/model\.js\s+\|\s+100\.00\s+\|\s+100\.00\s+\|\s+100\.00/);
+  assert.match(read('receipt-controls.log'),/pass [1-9]\d*/); assert.match(read('receipt-controls.log'),/fail 0\b/);
   let browsers=[];
   if(version==='26.1.0') {
     const report=JSON.parse(read('browsers.json'));
