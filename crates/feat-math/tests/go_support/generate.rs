@@ -71,10 +71,7 @@ mod go_support { include!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/go_support
     );
     insert(
         &mut text,
-        r#####"    let py = run_python(&dir_fast, &fast);
-    let rs_fast = run_rust(&dir_fast, &fast);
-
-    let dir_ref = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(format!("fastp_{name}_ref"));
+        r#####"    let dir_ref = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(format!("fastp_{name}_ref"));
     fs::create_dir_all(&dir_ref).unwrap();
     write_csvs(&dir_ref, &x_train, &y_train, &x_test);
     let rs_default = run_rust(&dir_ref, &default);
