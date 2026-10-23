@@ -586,10 +586,10 @@
       "sha256": "e579e72d091f6c7a13f5a756c31065b15aae5b81840d61b069355aa2283c07b4"
     },
     {
-      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/nss/libnss3_3.98-1ubuntu0.2_amd64.deb",
-      "filename": "libnss3_2%3a3.98-1ubuntu0.2_amd64.deb",
-      "size": 1445132,
-      "sha256": "4254f11d782dfb970e78113519a59d440112ed43c4b56f709da0aef81da8651a"
+      "url": "https://security.ubuntu.com/ubuntu/pool/main/n/nss/libnss3_3.98-1ubuntu0.3_amd64.deb",
+      "filename": "libnss3_2%3a3.98-1ubuntu0.3_amd64.deb",
+      "size": 1444912,
+      "sha256": "e11fdf8c09a068d0f0c3fd90ed971253dfed7227cc20d3d487fd615d4771f1bb"
     },
     {
       "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libt/libthai/libthai-data_0.1.29-2build1_all.deb",

@@ -1,0 +1,10 @@
+{
+  "metric": "weighted",
+  "weights": {
+    "op": "column",
+    "name": "exposure"
+  },
+  "fitness": {
+    "metric": "poisson_deviance"
+  }
+}

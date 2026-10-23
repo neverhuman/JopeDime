@@ -1,0 +1,37 @@
+{
+  "metric": "custom",
+  "name": "process_deadband",
+  "direction": "minimize",
+  "expression": {
+    "op": "square",
+    "arg": {
+      "op": "max",
+      "left": {
+        "op": "sub",
+        "left": {
+          "op": "abs",
+          "arg": {
+            "op": "sub",
+            "left": {
+              "op": "y"
+            },
+            "right": {
+              "op": "pred"
+            }
+          }
+        },
+        "right": {
+          "op": "constant",
+          "value": 0.005
+        }
+      },
+      "right": {
+        "op": "constant",
+        "value": 0
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "mean"
+  }
+}

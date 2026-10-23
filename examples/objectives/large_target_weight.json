@@ -1,0 +1,36 @@
+{
+  "metric": "custom",
+  "name": "large_target_weight",
+  "direction": "minimize",
+  "expression": {
+    "op": "mul",
+    "left": {
+      "op": "add",
+      "left": {
+        "op": "constant",
+        "value": 1
+      },
+      "right": {
+        "op": "abs",
+        "arg": {
+          "op": "y"
+        }
+      }
+    },
+    "right": {
+      "op": "abs",
+      "arg": {
+        "op": "sub",
+        "left": {
+          "op": "y"
+        },
+        "right": {
+          "op": "pred"
+        }
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "mean"
+  }
+}

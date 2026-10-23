@@ -21,6 +21,9 @@
 //!   tasks the second class is the positive one.
 //! * Prediction input matches feature columns by name in any order. A column the model does not
 //!   know is refused, except the training target's name, which is ignored and reported.
+//! * *Auxiliary* columns named by a regression objective (prices, unit costs, exposures) must be
+//!   numeric and present in every training row. They score held-out predictions only: they are
+//!   never features, and prediction input may carry them (they are ignored and reported).
 use crate::limits::Limits;
 use crate::task::{TaskChoice, TaskKind};
 use crate::Failure;
@@ -213,6 +216,8 @@ pub struct Training {
     pub classes: Vec<String>,
     pub table: RawTable,
     pub targets: Vec<f64>,
+    /// Numeric columns read only by the selection objective, aligned with `targets`.
+    pub auxiliary: crate::fitness::Columns,
 }
 
 /// Split the target from a CSV table, infer feature kinds and the task, and encode both.
@@ -222,12 +227,53 @@ pub fn training(
     task: TaskChoice,
     limits: &Limits,
 ) -> Result<Training> {
+    training_with_auxiliary(csv, target, task, limits, &BTreeSet::new())
+}
+
+/// [`training`], with `auxiliary` columns held out of the features for the objective.
+pub fn training_with_auxiliary(
+    csv: &CsvTable,
+    target: &str,
+    task: TaskChoice,
+    limits: &Limits,
+    auxiliary: &BTreeSet<String>,
+) -> Result<Training> {
     let target_index = csv
         .headers
         .iter()
         .position(|h| h == target)
         .ok_or_else(|| Failure::input(format!("no target column {target:?} in the header")))?;
-    if csv.headers.len() < 2 {
+    if auxiliary.contains(target) {
+        return Err(Failure::input(format!(
+            "the target {target:?} cannot also be an objective column; use y in the expression"
+        )));
+    }
+    let mut auxiliary_values = crate::fitness::Columns::new();
+    for name in auxiliary {
+        let index =
+            csv.headers.iter().position(|h| h == name).ok_or_else(|| {
+                Failure::input(format!("no objective column {name:?} in the header"))
+            })?;
+        let values = csv
+            .rows
+            .iter()
+            .enumerate()
+            .map(|(row, cells)| {
+                cells[index]
+                    .as_deref()
+                    .and_then(|cell| cell.trim().parse::<f64>().ok())
+                    .filter(|v| v.is_finite())
+                    .ok_or_else(|| {
+                        Failure::input(format!(
+                            "objective column {name:?} needs a finite number in data row {}",
+                            row + 1
+                        ))
+                    })
+            })
+            .collect::<Result<Vec<f64>>>()?;
+        auxiliary_values.insert(name.clone(), values);
+    }
+    if csv.headers.len() < 2 + auxiliary.len() {
         return Err(Failure::input("the table has no feature columns"));
     }
     if csv.rows.is_empty() {
@@ -336,7 +382,7 @@ pub fn training(
     let mut columns = Vec::new();
     let mut values: Vec<Vec<Option<String>>> = vec![Vec::new(); csv.rows.len()];
     for (index, name) in csv.headers.iter().enumerate() {
-        if index == target_index {
+        if index == target_index || auxiliary.contains(name) {
             continue;
         }
         let numeric = csv
@@ -363,6 +409,7 @@ pub fn training(
         classes,
         table,
         targets,
+        auxiliary: auxiliary_values,
     })
 }
 
@@ -371,6 +418,16 @@ pub fn prediction(
     csv: &CsvTable,
     schema: &DataSchema,
     target: &str,
+) -> Result<(RawTable, Vec<String>)> {
+    prediction_ignoring(csv, schema, target, &[])
+}
+
+/// [`prediction`], also ignoring the model's auxiliary objective columns when present.
+pub fn prediction_ignoring(
+    csv: &CsvTable,
+    schema: &DataSchema,
+    target: &str,
+    auxiliary: &[String],
 ) -> Result<(RawTable, Vec<String>)> {
     let mut positions = Vec::with_capacity(schema.columns.len());
     for column in &schema.columns {
@@ -389,7 +446,7 @@ pub fn prediction(
         if known.contains(header.as_str()) {
             continue;
         }
-        if header == target {
+        if header == target || auxiliary.contains(header) {
             ignored.push(header.clone());
         } else {
             return Err(Failure::input(format!(
@@ -521,5 +578,36 @@ mod tests {
         assert!(prediction(&missing, &t.schema, "y").is_err());
         let bad_number = parse_csv(b"a,b\nseven,x\n", &limits()).unwrap();
         assert!(prediction(&bad_number, &t.schema, "y").is_err());
+    }
+
+    #[test]
+    fn objective_columns_are_numeric_never_features_and_ignored_at_prediction() {
+        let regression = || TaskChoice::Fixed(TaskKind::Regression);
+        let wanted = |name: &str| -> BTreeSet<String> { [name.to_owned()].into() };
+        let csv = parse_csv(b"a,price,y\n1,10,3\n2,12.5,4\n", &limits()).unwrap();
+        let t =
+            training_with_auxiliary(&csv, "y", regression(), &limits(), &wanted("price")).unwrap();
+        assert_eq!(t.table.headers, ["a"]);
+        assert_eq!(t.auxiliary["price"], [10.0, 12.5]);
+        let input = parse_csv(b"price,a\n9,1\n", &limits()).unwrap();
+        let (table, ignored) =
+            prediction_ignoring(&input, &t.schema, "y", &["price".to_owned()]).unwrap();
+        assert_eq!(table.headers, ["a"]);
+        assert_eq!(ignored, ["price"]);
+        assert!(prediction(&input, &t.schema, "y").is_err());
+        for (text, column) in [
+            (&b"a,price,y\n1,,3\n2,1,4\n"[..], "price"),
+            (b"a,price,y\n1,cheap,3\n2,1,4\n", "price"),
+            (b"a,y\n1,3\n2,4\n", "price"),
+            (b"a,y\n1,3\n2,4\n", "y"),
+            (b"price,y\n1,3\n2,4\n", "price"),
+        ] {
+            let csv = parse_csv(text, &limits()).unwrap();
+            assert!(
+                training_with_auxiliary(&csv, "y", regression(), &limits(), &wanted(column))
+                    .is_err(),
+                "{column}"
+            );
+        }
     }
 }

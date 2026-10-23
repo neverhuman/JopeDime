@@ -57,3 +57,11 @@ neural proposer in this repository has yet committed a first program on held-out
 labels in the text (EST, PRE, PEND) and Appendix G say which is which. Private kernel-language
 productions, token mappings and decomposition rules are not part of this release; emitted programs
 are published in full.
+
+
+The combined publication retains PR #411's task-specific objective section in
+`sections/05b-objectives.tex`, its implementation/baseline distinctions, exploratory six-table
+results and cross-objective protocol. The historical effort reference now targets Supplement S4;
+the commitment reference targets the current definition. A nonsignificant small-pilot comparison
+does not establish equivalence. Source conflicts were resolved without changing archived artifacts,
+plotted frontier inputs or the three original author commits.

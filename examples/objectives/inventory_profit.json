@@ -1,0 +1,63 @@
+{
+  "metric": "custom",
+  "name": "inventory_profit",
+  "direction": "maximize",
+  "expression": {
+    "op": "sub",
+    "left": {
+      "op": "sub",
+      "left": {
+        "op": "mul",
+        "left": {
+          "op": "constant",
+          "value": 10
+        },
+        "right": {
+          "op": "min",
+          "left": {
+            "op": "y"
+          },
+          "right": {
+            "op": "pred"
+          }
+        }
+      },
+      "right": {
+        "op": "mul",
+        "left": {
+          "op": "constant",
+          "value": 4
+        },
+        "right": {
+          "op": "pred"
+        }
+      }
+    },
+    "right": {
+      "op": "mul",
+      "left": {
+        "op": "constant",
+        "value": 2
+      },
+      "right": {
+        "op": "max",
+        "left": {
+          "op": "sub",
+          "left": {
+            "op": "y"
+          },
+          "right": {
+            "op": "pred"
+          }
+        },
+        "right": {
+          "op": "constant",
+          "value": 0
+        }
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "mean"
+  }
+}

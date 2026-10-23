@@ -1,0 +1,4 @@
+{
+  "metric": "huber",
+  "delta": 0.5
+}

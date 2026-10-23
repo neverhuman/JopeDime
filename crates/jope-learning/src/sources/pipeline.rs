@@ -79,6 +79,16 @@ pub fn identity(receipt: &jope_pipeline::Receipt) -> Result<HwmIdentity> {
         .context("the receipt names no train.csv digest")?;
     let commit = source_commit(receipt)?;
     let search = &receipt.search;
+    // The ledger and the champion bank score a champion by held-out RMSE; a search that ranked
+    // its programs by another objective chose a champion RMSE would not have, so it is never
+    // compared with them.
+    if let Some(objective) = &search.objective {
+        anyhow::bail!(
+            "the receipt's search ranked programs by the {} objective, not held-out RMSE; the \
+             high-water mark and the champion bank compare RMSE-ranked searches only",
+            objective.name
+        );
+    }
     Ok(HwmIdentity {
         task: receipt.dataset.task.clone(),
         dataset_hash: receipt.dataset.dataset_hash.clone(),

@@ -14,13 +14,13 @@ setting. For track U we built the General Regressor Challenge, a closed-world, r
 contract, and gave it to four frontier language models. They succeed: each wrote a complete,
 dependency-free Rust regressor, and on a 64-family panel the best ranks well above the rest
 (Opus~5.5 at Elo~1641 against 1342 for the weakest) and is the best of the four on 30 families ---
-yet every entrant is the best somewhere, and error magnitudes separate only the weakest. By their own
-receipts the three sessions with records kept 10--15\% of the tokens they processed and delivered
+yet every entrant is the best somewhere, and error magnitudes separate only the weakest. By their reported or estimated authoring
+receipts, the three sessions with records kept 10--15\% of the tokens they processed and delivered
 about ten tokens of algorithm a second. All four designs are variations on one textbook hybrid of
 ridge regression and gradient-boosted trees. For
 track S, a program-synthesis engine writes a different standalone program for each dataset in
-seconds; on ten datasets with identical cuts it is statistically indistinguishable from the best
-frontier entrant and above default gradient-boosting libraries. Track C has not been run, and we
+seconds; on ten datasets with identical cuts it is not significantly different from the best
+frontier entrant in this small exploratory panel and above default gradient-boosting libraries. The objective is also part of the input: implemented objective-aware selection, cross-fitted calibration and program ranking provide baselines for an objective-conditioned proposer. Track C has not been run, and we
 prove that the engine's existing catalog-bound neural policy cannot, by construction, produce a
 program outside its catalog. We therefore contribute the setting, the challenge, a frontier comparison, a pilot, a
 token-yield accounting that compares where systems explore rather than how much they print, and a

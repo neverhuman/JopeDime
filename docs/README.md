@@ -8,6 +8,7 @@ implementation before changing a subsystem.
 | --- | --- | --- |
 | Numerical operators, fitted models, code emission | `crates/feat-math/` | [Emitters](emitters.md), [parity matrix](parity/capability-matrix.md) |
 | Bounded search, evaluation, caching, worker budgets | `crates/jope-pipeline/` | [Pipeline](pipeline.md) |
+| Regression objectives, calibration, appliance API and MCP | `crates/jope-runtime/`, `crates/jope-appliance/`, `examples/objectives/` | [Regression objectives](regression-objectives.md) |
 | Distributed execution and fitted-result authority | `crates/jope-engine/`, `crates/smartcluster/` | [Architecture](architecture.md), [runbooks](runbooks/) |
 | Encoders, neural proposals, learning state | `crates/hyperion/`, `crates/jope-policy/`, `crates/jope-learning/` | [Learning](learning.md), [models](models.md) |
 | Dataset custody and access | `crates/jope-datasets/`, `catalogs/`, `datasets/` | [Datasets](datasets.md) |
