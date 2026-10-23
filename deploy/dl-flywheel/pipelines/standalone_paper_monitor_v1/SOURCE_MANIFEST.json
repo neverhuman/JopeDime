@@ -17,10 +17,10 @@
       "sha256": "e78e002677de2a47bdec6d7a59d0b7349b94c4f6fb271b99ba4892433c8fc1aa"
     },
     {
-      "bytes": 43366,
-      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed. Go integration after merged TypeScript: matching combined classifier and additive README counts; prior origins preserved. Preserve latest main research archive and count its added plotter together with the Go verifier.",
+      "bytes": 3190,
+      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed. Go integration after merged TypeScript: matching combined classifier and additive README counts; prior origins preserved. Preserve latest main research archive and count its added plotter together with the Go verifier. PR416 correction: bind the portable package README, resolved relative to this manifest; preserve all source bytes and prior origins.",
       "path": "README.md",
-      "sha256": "c6232fff8fb6d67b5060511f18c4d958cc6b1942d3ffc756ca6690c58a9ac976"
+      "sha256": "98a72f10f1267528c957570f9739cf101e807613272529eec14cdb71851994b3"
     },
     {
       "bytes": 21263,

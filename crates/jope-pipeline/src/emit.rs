@@ -578,7 +578,7 @@ mod tests {
         assert_eq!(go.artifacts.len(), 4);
         assert_eq!(
             std::fs::read_to_string(go_dir.join("targets.txt")).unwrap(),
-            "ts\n"
+            "golang\n"
         );
         assert!(temp.path().join("manifest.json").is_file());
         assert_eq!(
