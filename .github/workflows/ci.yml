@@ -107,7 +107,10 @@ jobs:
   rust-test:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # Rust subprocess/timeout contracts need native x86-64; Rosetta returns exit 127
+    # for a missing executable instead of ENOENT. Keep both complete test slices on
+    # existing native Linux slots, preserving every test and timeout.
+    runs-on: [self-hosted, linux, x64, jope-ci, "${{ matrix.shard == 1 && 'xbabe1-ci2' || 'xbabe2-ci' }}"]
     timeout-minutes: 45
     # Two deterministic nextest slices of the unchanged selection, one per jope-ci runner. Both
     # always finish so every failure is reported; the aggregate job proves (check_test_partition.py)
