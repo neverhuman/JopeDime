@@ -81,6 +81,7 @@ jope_mac_launch() { # lane, provisioned state dir, public policy JSON, optional 
   case $lane in ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12) ;; *) return 2 ;; esac
   printf '%s' "$cfg" | jq -e '
     .schema == "jope.mac-capacity/v1" and .ssh_alias == "xbabe2" and .profile == "jope-ci" and
+    .runner_label == "jope-mac-ci" and
     .colima == "/opt/homebrew/bin/colima" and .mac_hostname == "Mac-Studio.local" and
     .guest_hostname == "xbabe4" and (.image_id | test("^sha256:[0-9a-f]{64}$"))
   ' >/dev/null || return 2

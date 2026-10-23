@@ -387,6 +387,14 @@ jope_mac_launch "$2" "$fixture/state" "$(cat "$fixture/policy.json")" 20261023T1
                 self.assertNotEqual(0,result.returncode)
                 self.assertEqual('0',(root/'mint-count').read_text().strip())
 
+    def test_mac_capability_label_mismatch_refuses_before_mint(self):
+        for label in [None,'jope-ci','jope-main-guard','foreign','jope-mac-ci\nINJECTED=1']:
+            with self.subTest(label=label),self.scratch() as name:
+                root=Path(name);values=self.fixture(root);values['policy']['runner_label']=label
+                result=self.run_fixture(root,values)
+                self.assertNotEqual(0,result.returncode)
+                self.assertEqual('0',(root/'mint-count').read_text().strip())
+
     def test_mac_unknown_mint_and_ssh_outcomes_block_fresh_process_remint(self):
         import json
         for failure in ('FAIL_MINT','FAIL_SSH'):
