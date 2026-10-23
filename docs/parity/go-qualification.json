@@ -295,5 +295,7 @@
     "auto": 73,
     "interpreter": 73
   },
-  "debug_build_workaround": "Go qualification/example builds use one debug codegen unit after observed zero-length Rust archive objects in feat-math and jope-records on this host. Release and standalone Wasm compiler flags are unchanged."
+  "debug_build_workaround": "Go qualification/example builds use one debug codegen unit after observed zero-length Rust archive objects in feat-math and jope-records on this host. Release and standalone Wasm compiler flags are unchanged.",
+  "updated_main": "d8b27f6fd89f65742a8c16aa68cbe4a658187941",
+  "merged_native_reference_sha256": "035635a57cc9441871a879be7bc56bed93ae10a17baf6fa3a3186f0f9876ca46"
 }

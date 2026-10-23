@@ -40,6 +40,7 @@ pub enum Lang {
     Cpp,
     JavaScript,
     Go,
+    TypeScript,
 }
 
 pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
@@ -56,8 +57,10 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
             let end = line_end(b, i);
             doc_tokens += word_count(&src[i + 1..end]);
             i = end;
-        } else if matches!(lang, Lang::Rust | Lang::Cpp | Lang::JavaScript | Lang::Go)
-            && c == '/'
+        } else if matches!(
+            lang,
+            Lang::Rust | Lang::Cpp | Lang::JavaScript | Lang::Go | Lang::TypeScript
+        ) && c == '/'
             && i + 1 < b.len()
             && b[i + 1] == b'/'
         {
@@ -81,7 +84,11 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
             i = src[i + 1..].find('`').map_or(src.len(), |end| i + end + 2);
             code_tokens += 1;
         } else if c == '"'
-            || (c == '\'' && matches!(lang, Lang::Python | Lang::JavaScript | Lang::Go))
+            || (c == '\''
+                && matches!(
+                    lang,
+                    Lang::Python | Lang::JavaScript | Lang::Go | Lang::TypeScript
+                ))
         {
             // string literal = 1 code token
             let q = b[i];

@@ -1,0 +1,197 @@
+// Standalone typed model. Supply the compiled module bytes explicitly.
+export type NumericVector = ReadonlyArray<number> | Float64Array;
+export type NumericRows = ReadonlyArray<NumericVector>;
+export type StringRows = ReadonlyArray<ReadonlyArray<string>>;
+export type ModuleSource = Uint8Array | ArrayBuffer | WebAssembly.Module;
+const boundHeaders: ReadonlyArray<string> | null = __BOUND_HEADERS__;
+const maxElements = 16_777_216;
+const littleEndian = new Uint8Array(new Uint16Array([1]).buffer)[0] === 1;
+
+interface Kernel {
+  memory: WebAssembly.Memory;
+  model_abi_version(): number;
+  model_values(len: number): number;
+  model_labels(len: number): number;
+  model_text(len: number): number;
+  model_output(): number;
+  model_output_len(): number;
+  model_fit(rows: number, cols: number): number;
+  model_predict(rows: number, cols: number): number;
+  model_predict_text(): number;
+  model_dispose(): void;
+}
+
+function checkedSize(value: number): void {
+  if (!Number.isSafeInteger(value) || value < 0 || value > maxElements)
+    throw new RangeError("input exceeds transfer limit");
+}
+function numericShape(rows: NumericRows, width?: number): number {
+  const cols = width === undefined ? rows[0]?.length : width;
+  if (cols === undefined || cols === 0) throw new RangeError("empty feature width");
+  checkedSize(rows.length * cols);
+  for (const row of rows) {
+    if (row.length !== cols) throw new RangeError("row width mismatch");
+    for (const value of row)
+      if (typeof value !== "number") throw new TypeError("numeric features required");
+  }
+  return cols;
+}
+function quote(value: string): string {
+  return '"' + value.replace(/"/g, '""') + '"';
+}
+function finiteTargets(targets: NumericVector, count: number): void {
+  if (targets.length !== count) throw new RangeError("invalid targets");
+  // Array.some skips holes. Iteration must reject sparse JavaScript arrays too.
+  for (const value of targets)
+    if (typeof value !== "number" || !Number.isFinite(value))
+      throw new RangeError("finite numeric targets required");
+}
+
+export class Model {
+  private width: number | undefined;
+  private alive = true;
+  private constructor(private readonly kernel: Kernel) {}
+
+  static async create(source: ModuleSource): Promise<Model> {
+    const compiled = source instanceof WebAssembly.Module
+      ? source
+      : await WebAssembly.compile(source instanceof ArrayBuffer ? source : new Uint8Array(source).buffer);
+    if (WebAssembly.Module.imports(compiled).length !== 0)
+      throw new TypeError("model module must not request host imports");
+    const instance = await WebAssembly.instantiate(compiled, {});
+    const exports = instance.exports;
+    if (!(exports.memory instanceof WebAssembly.Memory))
+      throw new TypeError("model memory missing");
+    for (const name of ["model_abi_version", "model_values", "model_labels", "model_text",
+      "model_output", "model_output_len", "model_fit", "model_predict",
+      "model_predict_text", "model_dispose"])
+      if (typeof exports[name] !== "function") throw new TypeError("model ABI incomplete");
+    const kernel = exports as unknown as Kernel;
+    if (kernel.model_abi_version() !== 1) throw new TypeError("model ABI version mismatch");
+    return new Model(kernel);
+  }
+
+  private check(): void {
+    if (!this.alive) throw new Error("model disposed or trapped");
+  }
+  private call(operation: () => number): void {
+    this.check();
+    let status: number;
+    try { status = operation(); }
+    catch (error) { this.alive = false; throw error; }
+    if (status !== 0) throw new RangeError("model rejected input (status " + status + ")");
+  }
+  private copyRows(rows: NumericRows, cols: number): void {
+    const len = rows.length * cols;
+    const pointer = this.kernel.model_values(len);
+    if (len > 0 && pointer === 0) throw new RangeError("feature allocation refused");
+    if (littleEndian) {
+      const values = new Float64Array(this.kernel.memory.buffer, pointer, len);
+      let offset = 0;
+      for (const row of rows) { values.set(row, offset); offset += cols; }
+    } else {
+      const view = new DataView(this.kernel.memory.buffer, pointer, len * 8);
+      let index = 0;
+      for (const row of rows)
+        for (const value of row) { view.setFloat64(index * 8, value, true); index++; }
+    }
+  }
+  private output(expected?: number): Float64Array {
+    const length = this.kernel.model_output_len();
+    if (expected !== undefined && length !== expected) throw new Error("prediction count mismatch");
+    // Never expose a live view: the next call can allocate/grow linear memory.
+    const pointer = this.kernel.model_output();
+    if (littleEndian) return new Float64Array(this.kernel.memory.buffer, pointer, length).slice();
+    const view = new DataView(this.kernel.memory.buffer, pointer, length * 8);
+    const result = new Float64Array(length);
+    for (let i = 0; i < length; i++) result[i] = view.getFloat64(i * 8, true);
+    return result;
+  }
+
+  fit(rows: NumericRows, targets: NumericVector): this {
+    this.check();
+    if (boundHeaders !== null) throw new Error("fitted artifact cannot be refitted");
+    if (rows.length === 0) throw new RangeError("empty training rows");
+    const cols = numericShape(rows);
+    finiteTargets(targets, rows.length);
+    this.call(() => {
+      this.copyRows(rows, cols);
+      const pointer = this.kernel.model_labels(targets.length);
+      if (pointer === 0) throw new RangeError("target allocation refused");
+      if (littleEndian) {
+        new Float64Array(this.kernel.memory.buffer, pointer, targets.length).set(targets);
+      } else {
+        const view = new DataView(this.kernel.memory.buffer, pointer, targets.length * 8);
+        for (let i = 0; i < targets.length; i++) view.setFloat64(i * 8, targets[i], true);
+      }
+      return this.kernel.model_fit(rows.length, cols);
+    });
+    this.width = cols;
+    return this;
+  }
+
+  predict(rows: NumericRows): Float64Array {
+    this.check();
+    if (boundHeaders !== null) throw new Error("use predictStrings for fitted artifacts");
+    if (this.width === undefined) throw new Error("fit required before prediction");
+    const cols = numericShape(rows, this.width);
+    this.call(() => {
+      this.copyRows(rows, cols);
+      return this.kernel.model_predict(rows.length, cols);
+    });
+    return this.output(rows.length);
+  }
+
+  predictStrings(rows: StringRows): Float64Array {
+    this.check();
+    if (boundHeaders === null) throw new Error("string rows require a fitted artifact");
+    const records = [boundHeaders.map(quote).join(",")];
+    for (const row of rows) {
+      if (row.length !== boundHeaders.length) throw new RangeError("invalid string row width");
+      for (const value of row)
+        if (typeof value !== "string") throw new TypeError("string cells required");
+      records.push(row.map(quote).join(","));
+    }
+    return this.predictCsv(records.join("\n") + "\n", rows.length);
+  }
+
+  predictCsv(csv: string, expectedRows?: number): Float64Array {
+    this.check();
+    if (boundHeaders === null) throw new Error("CSV prediction requires a fitted artifact");
+    const bytes = new TextEncoder().encode(csv);
+    checkedSize(bytes.length);
+    this.call(() => {
+      const pointer = this.kernel.model_text(bytes.length);
+      if (bytes.length > 0 && pointer === 0) throw new RangeError("text allocation refused");
+      new Uint8Array(this.kernel.memory.buffer, pointer, bytes.length).set(bytes);
+      return this.kernel.model_predict_text();
+    });
+    return this.output(expectedRows);
+  }
+
+  score(rows: NumericRows, targets: NumericVector): number {
+    this.check();
+    finiteTargets(targets, rows.length);
+    const predictions = this.predict(rows);
+    if (targets.length === 0) return 0;
+    let mean = 0;
+    for (const value of targets) mean += value;
+    mean /= targets.length;
+    let residual = 0, total = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const error = targets[i] - predictions[i], centered = targets[i] - mean;
+      residual += error * error;
+      total += centered * centered;
+    }
+    return total <= 0 ? 0 : 1 - residual / total;
+  }
+
+  dispose(): void {
+    if (this.alive) {
+      try { this.kernel.model_dispose(); }
+      finally { this.alive = false; }
+    }
+  }
+}
+
+export const createModel = Model.create;

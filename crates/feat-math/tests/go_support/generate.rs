@@ -94,6 +94,10 @@ mod go_support { include!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/go_support
     }
 "#####,
     );
+    // The upstream native suite now includes optional TypeScript qualification.
+    // Preserve that module using an absolute include from this generated file.
+    assert_eq!(text.matches("mod typescript_support;").count(), 1);
+    text = text.replace("mod typescript_support;", "mod typescript_support { include!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/tests/typescript_support/mod.rs\")); }");
     // An include expansion cannot carry the original crate-level doc comments.
     text = text
         .lines()

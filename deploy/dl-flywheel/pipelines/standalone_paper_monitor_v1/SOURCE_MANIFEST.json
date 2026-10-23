@@ -2,9 +2,9 @@
   "files": [
     {
       "bytes": 190,
-      "normalization": " PR395 audit CI routing: exact current Python classifier pin; all original frozen source/fixture bytes and origin hashes preserved. Go example changes trigger required Rust/Go qualification.",
+      "normalization": " PR395 audit CI routing: exact current Python classifier pin; all original frozen source/fixture bytes and origin hashes preserved. PR412 TypeScript integration: exact classifier adds the TypeScript workflow to the Rust gate; refresh only its current adapter declaration and enclosing source pins. Original origin hashes, every fixture/module byte, source membership and refusal guards are retained. Go integration after merged TypeScript: matching combined classifier and additive README counts; prior origins preserved.",
       "path": "CI_SOURCE_PIN.json",
-      "sha256": "efbfbf68d7d6b060e44d8cca9d33c80107cd5f8aeb42fb71666dc34ac4729102"
+      "sha256": "56206bde5c72fe84966eb25a4ed921f7b1393bf23a43482fc2f52bace673b0d5"
     },
     {
       "bytes": 9280,
@@ -17,10 +17,10 @@
       "sha256": "e78e002677de2a47bdec6d7a59d0b7349b94c4f6fb271b99ba4892433c8fc1aa"
     },
     {
-      "bytes": 43304,
-      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed. Go target: additive language, test, CI job and Python inventory counts; existing sections and numerical claims preserved.",
+      "bytes": 43366,
+      "normalization": " PR394 integration after392/393: additive map/inventory union or merged README; no original entries removed. Correct the pre-existing stale README pin to the actual preserved PR394 integration bytes; no README or frozen fixture bytes changed. Go integration after merged TypeScript: matching combined classifier and additive README counts; prior origins preserved.",
       "path": "README.md",
-      "sha256": "6e137c62c53dc71b02a0d961e626a52122b428c1009b0d662b6630d14921cbf7"
+      "sha256": "6d5a8b2295ef610c232958322679774d04f3d960117a0e393696a5829c284466"
     },
     {
       "bytes": 21263,

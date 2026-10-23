@@ -409,7 +409,11 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
             // The 83 parity cases are unchanged; the pipeline emissions they cover are
             // byte-identical (deploy/ci/emitters.sh pins unchanged).
             // Previous: d8cc5d006f4ffa2e3a40840b08b13410f9ecca73f0ddad1378a3aa29296c171e
-            "25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2",
+            // PR412: conditional TypeScript/Wasm parity hooks extend every existing case.
+            // Native genomes, assertions, emissions, prediction bits, RNG and folds
+            // are preserved; owning regeneration and all 83 golden cases verify this.
+            // Previous: 25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2
+            "035635a57cc9441871a879be7bc56bed93ae10a17baf6fa3a3186f0f9876ca46",
         ),
         (
             "tests/champion_parity.rs",

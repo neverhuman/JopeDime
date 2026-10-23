@@ -36,6 +36,7 @@ pub enum Language {
     Cpp20,
     JavaScript,
     Go,
+    TypeScript,
     Cpp17Fitted,
 }
 
@@ -55,6 +56,7 @@ impl Language {
             Language::Cpp17 => "cpp17",
             Language::Cpp20 => "cpp20",
             Language::JavaScript => "javascript",
+            Language::TypeScript => "typescript",
             Language::Go => "go",
             Language::Cpp17Fitted => "cpp17-fitted",
         }
@@ -67,6 +69,7 @@ impl Language {
             "cpp17" | "c++17" => Some(Language::Cpp17),
             "cpp20" | "c++20" => Some(Language::Cpp20),
             "javascript" | "js" => Some(Language::JavaScript),
+            "typescript" | "ts" => Some(Language::TypeScript),
             "go" | "golang" => Some(Language::Go),
             "cpp17-fitted" => Some(Language::Cpp17Fitted),
             _ => None,
@@ -84,7 +87,7 @@ impl Language {
             }
             let language = Language::parse(part).with_context(|| {
                 format!(
-                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, go, cpp17-fitted or all"
+                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, ts, go, cpp17-fitted or all"
                 )
             })?;
             chosen.insert(language);
@@ -94,7 +97,7 @@ impl Language {
         }
         Ok(Language::ALL
             .into_iter()
-            .chain([Language::Go, Language::Cpp17Fitted])
+            .chain([Language::Go, Language::TypeScript, Language::Cpp17Fitted])
             .filter(|l| chosen.contains(l))
             .collect())
     }
@@ -231,6 +234,19 @@ pub fn emit_with_options(
         }
     }
 
+    if languages.contains(&Language::TypeScript) {
+        let bundle = transpile::emit_typescript(render_target, options)?;
+        artifacts.push(Artifact {
+            language: "typescript",
+            build: Some(feat_math::typescript::BUILD_COMMAND.into()),
+            ..write(directory, "model.ts", &bundle.source)?
+        });
+        artifacts.push(Artifact {
+            language: "typescript-kernel",
+            ..write(directory, "model.kernel.rs", &bundle.kernel)?
+        });
+        targets.push("ts");
+    }
     if languages.contains(&Language::Go) {
         let bundle = transpile::emit_go(render_target, options)?;
         for (path, source) in feat_math::go::sources(&bundle) {
@@ -531,6 +547,30 @@ mod tests {
         assert_eq!(
             std::fs::read_to_string(temp.path().join("targets.txt")).unwrap(),
             "py rs cpp js\n"
+        );
+        let typescript_dir = temp.path().join("typescript");
+        let typescript = emit(
+            crate::select::BOOTSTRAP_GENOME,
+            &[Language::TypeScript],
+            &typescript_dir,
+        )
+        .unwrap();
+        assert!(typescript.exclusions.is_empty());
+        assert_eq!(typescript.artifacts.len(), 2);
+        assert_eq!(
+            std::fs::read_to_string(typescript_dir.join("targets.txt")).unwrap(),
+            "ts\n"
+        );
+        assert!(temp.path().join("manifest.json").is_file());
+        assert_eq!(
+            emitted.genome_sha256,
+            hash(emitted.canonical_genome.as_bytes())
+        );
+        assert_eq!(
+            emitted.canonical_genome,
+            feat_math::genome::GenomeIr::parse(crate::select::BOOTSTRAP_GENOME)
+                .unwrap()
+                .canonical()
         );
         let go_dir = temp.path().join("go");
         let go = emit(crate::select::BOOTSTRAP_GENOME, &[Language::Go], &go_dir).unwrap();

@@ -61,7 +61,7 @@ source templates are unchanged.
 CLI `--lang v3:go`, `transpile::emit_targets_v3` and bound v3 output bind the complete four-file
 source closure: `model.go`, `model.go.kernel.rs`, `go.mod`, `go.sum`. Independent manifest pins
 are required to detect substitutions. Compiler outputs are built separately. Pipeline `--emit go`
-also records every source member. Use a separate package/directory for each generated model.
+also records every source member. Use a separate package/directory for each generated model and language target.
 
 Acceptance is `bash deploy/ci/go/qualify.sh`. It requires every registry case to execute under
 both engines or match an explicit Rust refusal, every existing golden, fitted/publication

@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|examples/go/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/go\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
+                r"^(crates/|examples/go/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/(go|typescript)\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),
@@ -288,6 +288,7 @@ mod tests {
             "crates/feat-math/src/lib.rs",
             "deploy/ci/aggregate.py",
             ".github/workflows/ci.yml",
+            ".github/workflows/typescript.yml",
         ];
         for path in ["examples/go/main.go", ".github/workflows/go.yml"] {
             let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();

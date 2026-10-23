@@ -599,6 +599,13 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
+    // TypeScript/Wasm target: identity-only successor after model-object integration.
+    let typescript = old_fixture("transitions/typescript_wasm_identity_rebaseline.v1.json");
+    let typescript_fixtures = typescript["fixtures"].as_array().unwrap();
+    assert_eq!(typescript_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(typescript_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let go_output = old_fixture("transitions/go_wasm_identity_rebaseline.v1.json");
     let go_fixtures = go_output["fixtures"].as_array().unwrap();
     assert_eq!(go_fixtures.len(), 2);
@@ -637,7 +644,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         pr398_combined,
         release_0_4_0,
         model_objects,
-        go_output,
+        typescript,
+        // The pre-main Go proposal is retained above; the merged successor follows TypeScript.
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

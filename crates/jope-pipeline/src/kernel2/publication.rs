@@ -366,6 +366,8 @@ fn v3_language(target: feat_math::artifact_manifest::Target, path: &str) -> &'st
         Target::Cpp17 => "cpp17",
         Target::Cpp20 => "cpp20",
         Target::JavaScript => "javascript",
+        Target::TypeScript if path.ends_with(".kernel.rs") => "typescript-kernel",
+        Target::TypeScript => "typescript",
         Target::Go if path.ends_with(".kernel.rs") => "go-kernel",
         Target::Go if path == "go.mod" => "go-module",
         Target::Go if path == "go.sum" => "go-checksums",
@@ -386,6 +388,10 @@ fn check_artifact_manifest(
         Some(Language::Rust) => ("model.rs", "rust"),
         Some(Language::Python) => ("model.py", "python"),
         Some(Language::JavaScript) => ("model.js", "javascript"),
+        Some(Language::TypeScript) => ("model.ts", "typescript"),
+        None if artifact.language == "typescript-kernel" => {
+            ("model.kernel.rs", "typescript-kernel")
+        }
         Some(Language::Go) => ("model.go", "go"),
         None if artifact.language == "go-module" => ("go.mod", "go-module"),
         None if artifact.language == "go-checksums" => ("go.sum", "go-checksums"),
@@ -423,7 +429,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
     let mut targets = BTreeSet::new();
     for target in retained.split_whitespace() {
         ensure!(
-            ["py", "rs", "cpp", "js", "golang", "cpp17-fitted"].contains(&target)
+            ["py", "rs", "cpp", "js", "ts", "golang", "cpp17-fitted"].contains(&target)
                 && targets.insert(target),
             "unknown or duplicate emitted target"
         );
@@ -435,6 +441,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
             "rust" => "rs",
             "cpp17" | "cpp20" => "cpp",
             "javascript" => "js",
+            "typescript" | "typescript-kernel" => "ts",
             "go" | "go-kernel" | "go-module" | "go-checksums" => "golang",
             _ => "cpp17-fitted",
         })
@@ -443,6 +450,12 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
         targets == actual,
         "artifact languages disagree with emitted targets"
     );
+    for language in ["typescript", "typescript-kernel"] {
+        ensure!(
+            languages.contains(language) == targets.contains("ts"),
+            "incomplete TypeScript artifact set"
+        );
+    }
     for language in ["go", "go-kernel", "go-module", "go-checksums"] {
         ensure!(
             languages.contains(language) == targets.contains("golang"),

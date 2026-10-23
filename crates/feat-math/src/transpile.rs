@@ -387,6 +387,18 @@ pub fn supports_javascript(genome: &GenomeIr) -> std::result::Result<(), Vec<Str
     emit_js::emit_js(&plan, &EmitOptions::default()).map(|_| ())
 }
 
+/// TypeScript facade over the standalone Rust kernel.
+pub fn emit_typescript(
+    genome: &GenomeIr,
+    opts: &EmitOptions,
+) -> Result<crate::typescript::TypeScriptEmitted> {
+    crate::typescript::emit(genome, opts)
+}
+
+pub fn supports_typescript(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
+    supports(genome)
+}
+
 /// Emit a typed Go API and its complete WebAssembly build source.
 pub fn emit_go(genome: &GenomeIr, opts: &EmitOptions) -> Result<crate::go::GoEmitted> {
     crate::go::emit(genome, opts)
@@ -510,7 +522,7 @@ fn validate_recipe_target(
 ) -> Result<()> {
     use crate::artifact_manifest::Target;
     // Go reuses the Rust numerical implementation and its admission.
-    if Target::RECIPES.contains(&target) || target == Target::Go {
+    if Target::RECIPES.contains(&target) || matches!(target, Target::Go | Target::TypeScript) {
         if let GenomeIr::Pipeline(pipe) = genome {
             for stage in &pipe.stages {
                 let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
@@ -545,6 +557,28 @@ pub fn emit_targets_v3(
     let mut sources = std::collections::BTreeMap::new();
     let mut records = Vec::new();
     for &target in requested {
+        if target == Target::TypeScript {
+            let result = validate_recipe_target(genome, target)
+                .and_then(|()| emit_typescript(genome, options));
+            match result {
+                Ok(bundle) => {
+                    records.push(TargetRecord::supported(
+                        target,
+                        "legacy_recipe",
+                        crate::typescript::EMITTER_VERSION,
+                        &[
+                            ("model.ts", &bundle.source),
+                            ("model.kernel.rs", &bundle.kernel),
+                        ],
+                        None,
+                    ));
+                    sources.insert("model.ts".into(), bundle.source);
+                    sources.insert("model.kernel.rs".into(), bundle.kernel);
+                }
+                Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
+            }
+            continue;
+        }
         if target == Target::Go {
             let result =
                 validate_recipe_target(genome, target).and_then(|()| emit_go(genome, options));
@@ -597,6 +631,7 @@ pub fn emit_targets_v3(
                         .map_err(anyhow::Error::msg)?;
                     (e.source, e.profile.into())
                 }
+                Target::TypeScript => unreachable!("handled as a complete bundle"),
                 Target::Go => unreachable!("handled as a complete bundle"),
                 Target::Cpp17Fitted => {
                     anyhow::bail!("fitted target requires explicit training rows")

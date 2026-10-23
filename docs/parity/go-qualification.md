@@ -1,6 +1,7 @@
 # Go qualification for PR #416
 
-The branch starts at main `5390576ffe98f1bea9b1378479e05fb1a141314a`.
+The branch starts at main `5390576ffe98f1bea9b1378479e05fb1a141314a` and integrates
+TypeScript main `d8b27f6fd89f65742a8c16aa68cbe4a658187941`, which landed during qualification.
 The numerical implementation is the existing standalone Rust emitter compiled to Wasm;
 Go provides the deployment API through a pinned pure Go runtime. This is build-time
 Rust support, not a new independently implemented Go solver. See [the API/build contract](../go.md).

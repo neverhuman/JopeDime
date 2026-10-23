@@ -23,6 +23,8 @@ pub enum Target {
     Cpp20,
     #[serde(rename = "javascript")]
     JavaScript,
+    #[serde(rename = "typescript")]
+    TypeScript,
     #[serde(rename = "go")]
     Go,
     Cpp17RecipeV2,
@@ -43,6 +45,7 @@ impl Target {
             "cpp17" | "c++17" => Self::Cpp17,
             "cpp20" | "c++20" => Self::Cpp20,
             "javascript" | "js" => Self::JavaScript,
+            "typescript" | "ts" => Self::TypeScript,
             "go" | "golang" => Self::Go,
             "cpp17-recipe-v2" => Self::Cpp17RecipeV2,
             "cpp17-fitted" => Self::Cpp17Fitted,
@@ -69,6 +72,7 @@ impl Target {
             Self::Rust => "model.rs",
             Self::Cpp17 | Self::Cpp20 => "model.cpp",
             Self::JavaScript => "model.js",
+            Self::TypeScript => "model.ts",
             Self::Go => "model.go",
             Self::Cpp17RecipeV2 => "cpp17-recipe-v2/model.cpp",
             Self::Cpp17Fitted => "cpp17-fitted/model.cpp",
@@ -81,6 +85,7 @@ impl Target {
             Self::Cpp17 => "cpp17",
             Self::Cpp20 => "cpp20",
             Self::JavaScript => "javascript",
+            Self::TypeScript => "typescript",
             Self::Go => "go",
             Self::Cpp17RecipeV2 => "cpp17-recipe-v2",
             Self::Cpp17Fitted => "cpp17-fitted",
@@ -89,7 +94,7 @@ impl Target {
     pub fn registry_target(self) -> &'static str {
         match self {
             Self::Python => "python_recipe",
-            Self::Rust | Self::Go => "rust_recipe",
+            Self::Rust | Self::Go | Self::TypeScript => "rust_recipe",
             Self::Cpp17 | Self::Cpp20 => "cpp17_recipe",
             Self::JavaScript => "javascript",
             Self::Cpp17RecipeV2 => "cpp17_recipe_v2",
@@ -183,6 +188,24 @@ impl BuildIdentity {
                 "script",
             ),
             Target::JavaScript => ("node".into(), "es2020-commonjs".into(), vec![], "commonjs"),
+            Target::TypeScript => (
+                "rustc+tsc".into(),
+                "typescript-es2020+wasm32".into(),
+                vec![
+                    "--edition=2021".into(),
+                    "--target=wasm32-unknown-unknown".into(),
+                    "--crate-type=cdylib".into(),
+                    "--crate-name=model_kernel".into(),
+                    "-Copt-level=3".into(),
+                    "-Cpanic=abort".into(),
+                    "--strict".into(),
+                    "--target=ES2020".into(),
+                    "--module=commonjs".into(),
+                    "--lib=ES2020,DOM".into(),
+                    "--declaration".into(),
+                ],
+                "typescript-wasm-v1",
+            ),
             Target::Go => (
                 "rustc+go".into(),
                 "go1.25+wasm32".into(),
@@ -218,7 +241,7 @@ impl BuildIdentity {
             toolchain,
             standard,
             flags,
-            backend: if target == Target::Go {
+            backend: if matches!(target, Target::Go | Target::TypeScript) {
                 "wasm32-scalar"
             } else {
                 "cpu-scalar"
@@ -384,6 +407,8 @@ impl ArtifactManifestV3 {
                             "cpp17-fitted/model.codec.json",
                             "cpp17-fitted/standalone.cpp",
                         ]
+                    } else if record.target == Target::TypeScript {
+                        vec!["model.ts", "model.kernel.rs"]
                     } else if record.target == Target::Go {
                         vec!["model.go", "model.go.kernel.rs", "go.mod", "go.sum"]
                     } else {
@@ -402,10 +427,10 @@ impl ArtifactManifestV3 {
                             && !build.toolchain.is_empty(),
                         "target build identity mismatch"
                     );
-                    if record.target == Target::Go {
+                    if matches!(record.target, Target::Go | Target::TypeScript) {
                         ensure!(
                             build.toolchain == declared.toolchain && build.flags == declared.flags,
-                            "Go build recipe mismatch"
+                            "Wasm target build recipe mismatch"
                         );
                     }
                     if matches!(

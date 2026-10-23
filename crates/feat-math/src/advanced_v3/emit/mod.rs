@@ -1527,6 +1527,14 @@ fn main() {
 }
 
 #[cfg(test)]
+mod typescript_support {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/typescript_support/mod.rs"
+    ));
+}
+
+#[cfg(test)]
 mod go_support {
     include!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -1614,6 +1622,19 @@ mod tests {
             .tempdir()
             .unwrap();
         let temp = scratch.path();
+        if super::typescript_support::enabled() {
+            let bundle =
+                crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default())
+                    .unwrap();
+            super::typescript_support::run(
+                &temp.join("typescript"),
+                &bundle.source,
+                &bundle.kernel,
+                &serde_json::json!({"rows":test.rows}),
+                &runtime,
+                true,
+            );
+        }
         if super::go_support::enabled() {
             let bundle =
                 crate::go::emit_bound(&model, &crate::transpile::EmitOptions::default()).unwrap();
@@ -1769,6 +1790,20 @@ mod quotation_regression_tests {
             &(0..12).map(|i| i as f64).collect::<Vec<_>>(),
         )
         .unwrap();
+        if super::typescript_support::enabled() {
+            let bundle =
+                crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default())
+                    .unwrap();
+            let scratch = tempfile::tempdir().unwrap();
+            super::typescript_support::run(
+                scratch.path(),
+                &bundle.source,
+                &bundle.kernel,
+                &serde_json::json!({"rows":table.rows}),
+                &model.predict_table(&table).unwrap(),
+                true,
+            );
+        }
         if super::go_support::enabled() {
             let bundle =
                 crate::go::emit_bound(&model, &crate::transpile::EmitOptions::default()).unwrap();
@@ -1856,6 +1891,22 @@ pub fn emit_bound_targets_v3(
     let mut records = Vec::new();
     let mut sources = std::collections::BTreeMap::new();
     for &target in requested {
+        if target == Target::TypeScript {
+            let bundle = crate::typescript::emit_bound(model, options)?;
+            records.push(TargetRecord::supported(
+                target,
+                "advanced_v3",
+                crate::typescript::EMITTER_VERSION,
+                &[
+                    ("model.ts", &bundle.source),
+                    ("model.kernel.rs", &bundle.kernel),
+                ],
+                Some(fitted.clone()),
+            ));
+            sources.insert("model.ts".into(), bundle.source);
+            sources.insert("model.kernel.rs".into(), bundle.kernel);
+            continue;
+        }
         if target == Target::Go {
             let bundle = crate::go::emit_bound(model, options)?;
             records.push(TargetRecord::supported(
@@ -1887,7 +1938,7 @@ pub fn emit_bound_targets_v3(
         } else {
             records.push(TargetRecord::unsupported(
                 target,
-                "bound-v2 adapter supports Python, Rust and Go".into(),
+                "bound-v2 adapter supports Python, Rust, TypeScript and Go".into(),
             ));
         }
     }

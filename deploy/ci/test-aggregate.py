@@ -235,6 +235,15 @@ class AggregateTests(unittest.TestCase):
             ['crates/jope-bench/src/task.rs'], 'pull_request')
         self.assertFalse(lanes['python'])
 
+    def test_typescript_workflow_and_tools_select_the_required_rust_gate(self):
+        for path in ('.github/workflows/typescript.yml',
+                     'deploy/ci/typescript/contract.test.cjs',
+                     'crates/jope-cli/src/kernel.rs',
+                     'crates/feat-math/src/typescript/model.ts'):
+            with self.subTest(path=path):
+                lanes, _ = aggregate.plan_module.classify([path], 'pull_request')
+                self.assertTrue(lanes['rust-check'])
+
     def test_campaign_policy_and_renderer_changes_require_inputs(self):
         for path in (
             'crates/jope-campaigns/src/spec_drift.rs',

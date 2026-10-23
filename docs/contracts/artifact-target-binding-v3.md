@@ -41,6 +41,7 @@ retain partial output after a failure for diagnosis; retry into a fresh director
 | cpp17 / c++17 | recipe v1 | model.cpp | C++17, selected compiler and flags |
 | cpp20 / c++20 | recipe v1 | model.cpp | C++20, selected compiler and flags |
 | javascript / js | recipe v1 | model.js | ES2020 CommonJS, Node |
+| typescript / ts | recipe v1 or bound predictor | model.ts + model.kernel.rs | strict TypeScript ES2020 + Rust wasm32; source binding only |
 | go / golang | recipe v1 or bound v2 | model.go, model.go.kernel.rs, go.mod, go.sum | Go 1.25+, pinned wazero, Rust Wasm |
 | cpp17-recipe-v2 | expression recipe v2 | cpp17-recipe-v2/model.cpp | C++17 |
 | cpp17-fitted | fitted predictor | cpp17-fitted/model.cpp, model.codec.json, standalone.cpp | C++17, standalone define |
