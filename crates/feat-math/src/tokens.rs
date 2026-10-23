@@ -61,7 +61,13 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
             i = end;
         } else if matches!(
             lang,
-            Lang::Rust | Lang::Cpp | Lang::C | Lang::JavaScript | Lang::Go | Lang::TypeScript | Lang::CudaCpp
+            Lang::Rust
+                | Lang::Cpp
+                | Lang::C
+                | Lang::JavaScript
+                | Lang::Go
+                | Lang::TypeScript
+                | Lang::CudaCpp
         ) && c == '/'
             && i + 1 < b.len()
             && b[i + 1] == b'/'

@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5927,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception).",
+  "count": 5933,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -8780,7 +8780,7 @@
     }
    },
    "jope-runtime": {
-    "count": 68,
+    "count": 74,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
@@ -8870,6 +8870,26 @@
        "importing_native_bytes_preserves_noncanonical_state_json_exactly",
        "prediction_csv_has_probabilities_in_class_order",
        "selection_is_deterministic"
+      ]
+     },
+     "jope-runtime::fitted_js_qualification": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "fitted_javascript_matches_rust_prediction_for_every_supported_stage",
+       "fitted_javascript_refuses_a_model_from_another_plan",
+       "fitted_javascript_refuses_contradictory_prediction_parameters"
+      ]
+     },
+     "jope-runtime::math_pipeline": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "decoder_refuses_what_it_cannot_reproduce",
+       "decoder_reproduces_the_producer_for_every_row",
+       "exported_javascript_reproduces_the_producer_for_every_row"
       ]
      }
     }
@@ -9356,7 +9376,7 @@
   }
  },
  "totals": {
-  "rust": 5927,
+  "rust": 5933,
   "python": 182
  }
 }

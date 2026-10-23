@@ -2171,3 +2171,23 @@ items were added. Independent source review and fresh exact-final-head CI remain
 The existing core fixture now runs two generations in both fitness modes and checks breeding
 output growth separately for each mode before exercising the direct APIs, closing the independent
 reviewer's nonblocking caller-coverage gap. Same test name and total count; 5,705 listed tests.
+
+## One-time owner-directed emergency integration — 2026-10-23
+
+The owner approved consolidating PRs #416, #420–#426 and then instructed completion
+after reviewing the merge-first plan. For this integration only, expensive native
+and manual matrix validation is deferred until after merge. Main is UNVERIFIED
+until actual merged-source manual CI and repairs complete. This is an explicit
+exception to the usual premerge full-run requirement, not evidence of passing CI.
+Short format, locked workspace/all-target compilation, actionlint, source
+preservation and exact-head substantive review remain admission requirements.
+The integrator may temporarily remove only required status checks in BOTH main
+protection layers for this one exact-head PR merge and must immediately restore
+and read back both complete policies, including on failure. PR/discussion/linear
+history/force-push/deletion controls remain. Preserve original branches, commits,
+authors and scientific fixtures. Ordinary PR rules resume after this merge.
+Automatic test/build triggers are paused; maintained jobs remain manually callable.
+CUDA qualification remains local/manual only. Runtime deployment requires actual
+merged source and retains separate qualification gates. Signed release publication
+waits for validation and remains assigned to the existing release owner.
+See [the source inventory](docs/internal/ci/emergency-integration-20261023.json).

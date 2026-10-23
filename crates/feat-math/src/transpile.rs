@@ -541,7 +541,10 @@ fn validate_recipe_target(
     use crate::artifact_manifest::Target;
     // Go, TypeScript, C17 and CUDA reuse the Rust numerical implementation and its admission.
     if Target::RECIPES.contains(&target)
-        || matches!(target, Target::Go | Target::TypeScript | Target::C17 | Target::Cuda)
+        || matches!(
+            target,
+            Target::Go | Target::TypeScript | Target::C17 | Target::Cuda
+        )
     {
         if let GenomeIr::Pipeline(pipe) = genome {
             for stage in &pipe.stages {

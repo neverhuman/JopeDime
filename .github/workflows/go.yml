@@ -1,17 +1,5 @@
 name: go
 on:
-  pull_request:
-    paths:
-      - 'examples/go/**'
-      - 'crates/feat-math/**'
-      - 'crates/jope-cli/**'
-      - 'crates/jope-pipeline/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - 'deploy/ci/**'
-      - '.github/workflows/go.yml'
-      - '.github/workflows/ci.yml'
   workflow_call:
   workflow_dispatch:
 permissions:
