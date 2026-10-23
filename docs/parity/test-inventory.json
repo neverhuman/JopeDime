@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5914,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
+  "count": 5922,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -42,7 +42,7 @@
     }
    },
    "feat-math": {
-    "count": 1346,
+    "count": 1352,
     "ignored": 13,
     "binaries": {
      "feat-math": {
@@ -971,10 +971,16 @@
      },
      "feat-math::golden": {
       "kind": "test",
-      "count": 83,
+      "count": 89,
       "ignored": 0,
       "tests": [
        "artifacts_are_lint_clean_and_standalone",
+       "c17_export::bundle_is_deterministic_complete_and_binds_unchanged_rust",
+       "c17_export::c17_preserves_input_bits_and_explicit_fast_runtime_options",
+       "c17_export::c17_unwinding_is_contained_and_shared_library_is_callable",
+       "c17_export::c_abi_checks_shapes_handles_lifetime_and_concurrent_predictions",
+       "c17_export::title_line_breaks_remain_metadata_and_native_callers_execute",
+       "c17_export::v3_manifest_binds_every_c_compilation_input_and_rejects_tampering",
        "class_structure_and_no_machine_smell",
        "determinism_and_token_counts",
        "emitted_score_method_runs",
@@ -7675,12 +7681,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 459,
+    "count": 461,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 367,
+      "count": 368,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7700,6 +7706,7 @@
        "emit::fitted_tests::standalone_refusals_preserve_input_and_existing_predictions",
        "emit::tests::a_head_the_cpp_and_js_emitters_do_not_cover_is_recorded_not_dropped",
        "emit::tests::a_manifest_that_disagrees_with_the_file_it_names_is_refused",
+       "emit::tests::c17_is_explicit_and_publishes_complete_native_bundle",
        "emit::tests::language_lists_parse_into_a_fixed_order",
        "emit::tests::the_bootstrap_genome_emits_every_language_and_shares_one_cpp_source",
        "emit::tests::the_reported_identity_follows_the_artifacts_not_the_request",
@@ -8054,7 +8061,7 @@
      },
      "jope-pipeline::artifact_target_binding": {
       "kind": "test",
-      "count": 18,
+      "count": 19,
       "ignored": 0,
       "tests": [
        "artifact_runtime_fixture_executes_every_supported_product",
@@ -8070,6 +8077,7 @@
        "native_publication_refuses_omitted_request_and_deleted_file",
        "native_publication_refuses_python_substitution_even_with_loose_hash_updated",
        "native_publication_refuses_rust_substitution_even_with_loose_hash_updated",
+       "native_publication_requires_every_c17_bundle_member",
        "native_publication_requires_explicit_unsupported_accounting",
        "native_publication_verifies_fitted_closure_and_refuses_codec_deletion",
        "unsupported_writer_result_never_claims_all_targets_supported",
@@ -9343,7 +9351,7 @@
   }
  },
  "totals": {
-  "rust": 5914,
+  "rust": 5922,
   "python": 182
  }
 }

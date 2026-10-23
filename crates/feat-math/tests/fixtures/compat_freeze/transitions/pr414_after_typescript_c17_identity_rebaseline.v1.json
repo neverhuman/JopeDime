@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced C17 identity-only successor after merged TypeScript/Wasm and model-object integration. Preserve the original C17 parallel announcement byte-for-byte and verify it separately; numerical behavior fixtures, prior ledgers, native templates and old default target membership remain unchanged.",
+  "plan_reference": "Human instruction to merge the PR queue with passing CI and publish a standard jope release; AGENTS.md reviewed lifecycle and ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/414",
+  "source_commit": "3ec422bf033ccc1ab196eb8dcdda5a3bee144e89",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "96d0872f5b4a8e8782d9cab54b6e31cc50becccdd4ff9d1b37c56f06bd1fd2ed",
+      "after": "81b5a37c11321a274795b6e30524010c80cba502cbf5c31eb8e60cf28790f314"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "8eb521566501dc57aacc42b618c0ceba9dac7a2e54a9b5c59fa296657b30871e",
+      "after": "f41e77c6869f457367f8f37b14b6d1ded8cdf0b11209f21169032295f96d6412"
+    }
+  ]
+}
