@@ -2,8 +2,15 @@ name: ci
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      provenance_pr:
+        description: "Optional open same-repository PR number; validate exact head and bind installed runner files to current merged main"
+        type: string
+        required: false
+        default: ""
 permissions:
   contents: read
+  pull-requests: read
 
 env:
   CARGO_BUILD_JOBS: "4"
@@ -28,6 +35,7 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
+      runner_pool: ${{ steps.provenance.outputs.runner-pool }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -35,6 +43,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Runner provenance
+        id: provenance
         uses: ./.github/actions/runner-provenance
       - name: Run declared lane and retain receipt
         id: lane
@@ -50,7 +59,9 @@ jobs:
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   hygiene:
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # Release security checks require an actually empty tool HOME. Rosetta
+    # creates .cache/rosetta when jq starts; retain the checks on native Linux.
+    runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
     # Headroom for the three bounded evidence-publication attempts, each of which can stall for
     # about two minutes on a blackholed connection before it resets.
     timeout-minutes: 20
@@ -80,7 +91,7 @@ jobs:
   rust-check:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -107,7 +118,10 @@ jobs:
   rust-test:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # Rust subprocess/timeout contracts need native x86-64; Rosetta returns exit 127
+    # for a missing executable instead of ENOENT. Keep both complete test slices on
+    # existing native Linux slots, preserving every test and timeout.
+    runs-on: [self-hosted, linux, x64, jope-ci, "${{ matrix.shard == 1 && 'xbabe1-ci2' || 'xbabe2-ci' }}"]
     timeout-minutes: 45
     # Two deterministic nextest slices of the unchanged selection, one per jope-ci runner. Both
     # always finish so every failure is reported; the aggregate job proves (check_test_partition.py)
@@ -150,7 +164,7 @@ jobs:
   emitters:
     needs: changes
     if: needs.changes.outputs.emitters == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 30
     env:
       JOPE_PARITY_STRICT: "1"
@@ -179,7 +193,7 @@ jobs:
   inputs:
     needs: changes
     if: needs.changes.outputs.inputs == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -206,7 +220,7 @@ jobs:
   python:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -233,7 +247,7 @@ jobs:
   e2e-smoke:
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -259,7 +273,7 @@ jobs:
 
   observatory-ui:
     needs: changes
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     env:
       JOPE_UI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -338,7 +352,7 @@ jobs:
   aggregate:
     needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go]
     if: always()
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout

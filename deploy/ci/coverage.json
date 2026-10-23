@@ -1162,6 +1162,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "job:.github/workflows/runner-qualification.yml/qualify": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "mac-runner-qualification"
+      ],
+      "scope": "Main-only manual operational qualification after reviewed merged deployment. All twelve exact xbabe4 roles must execute the runner and provenance contracts and verify actual kernel limits and installed-file identity. Source discovery, registration and skipped jobs do not qualify live capacity."
+    },
     "job:.github/workflows/typescript.yml/typescript-parity": {
       "discovery": {
         "kind": "workflow-job"
@@ -11905,6 +11915,16 @@
       ],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
+    "workflow:.github/workflows/runner-qualification.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "mac-runner-qualification"
+      ],
+      "scope": "Main-only manual operational qualification after reviewed merged deployment. All twelve exact xbabe4 roles must execute the runner and provenance contracts and verify actual kernel limits and installed-file identity. Source discovery, registration and skipped jobs do not qualify live capacity."
+    },
     "workflow:.github/workflows/typescript.yml": {
       "discovery": {
         "kind": "workflow"
@@ -12726,6 +12746,40 @@
       "path_applicability": "ci.yml changes.inputs",
       "requires_nonzero_tests": false,
       "result_backend": "none",
+      "stage": "execution"
+    },
+    "mac-runner-qualification": {
+      "checks": [
+        "python3 deploy/ci/test-runner.py",
+        "python3 deploy/ci/test-provenance.py"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/runner-qualification.yml",
+        "qualify"
+      ],
+      "environment": {
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only"
+      },
+      "evidence": [
+        "exact merged main SHA, run ID and attempt",
+        "all twelve distinct role job results and assigned runner identities",
+        "45 runner and 31 provenance contract tests executed per role",
+        "root admission and actual cgroup CPU, memory, swap and process limits",
+        "checkout-bound deployed scripts, immutable hooks and pinned image identity"
+      ],
+      "feature_selection": "not-applicable",
+      "inputs": [
+        "reviewed merged source SHA",
+        "installed runner policy and file digest",
+        "pinned runner image and existing SDK",
+        "twelve isolated xbabe4 Linux/Docker roles"
+      ],
+      "path_applicability": "manual runner-qualification.yml dispatch on main only, after uniform reviewed merged deployment; all twelve roles required",
+      "requires_nonzero_tests": true,
+      "result_backend": "unittest",
       "stage": "execution"
     },
     "main-guard": {
