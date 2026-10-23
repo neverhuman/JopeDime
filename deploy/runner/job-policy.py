@@ -28,6 +28,11 @@ def authorize(policy, env):
                        f"{repo}/.github/workflows/main-guard.yml@refs/heads/main": {"push"}}
             if event not in allowed.get(workflow, set()):
                 raise ValueError("workflow/event is not admitted to trusted storage")
+    elif policy["domain"] == "guard":
+        if (env.get("GITHUB_REF") != "refs/heads/main"
+                or workflow != f"{repo}/.github/workflows/main-guard.yml@refs/heads/main"
+                or event != "push"):
+            raise ValueError("guard storage admits only the exact main-guard push")
     elif policy["domain"] == "pr":
         if not workflow.startswith(f"{repo}/.github/workflows/ci.yml@") or event not in {"pull_request", "workflow_dispatch"}:
             raise ValueError("fast storage admits only ci PR/manual jobs")

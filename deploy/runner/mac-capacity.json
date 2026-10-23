@@ -1,0 +1,16 @@
+{
+  "schema": "jope.mac-capacity/v1",
+  "image_id": "sha256:093036bacc0efdddf4965722fdbd96244d127c28a7d23b0ecdc4b60c41a43f27",
+  "mac_hostname": "Mac-Studio.local",
+  "guest_hostname": "xbabe4",
+  "ssh_alias": "xbabe2",
+  "colima": "/opt/homebrew/bin/colima",
+  "profile": "jope-ci",
+  "mac_min_free_gib": 120,
+  "guest_min_root_free_gib": 50,
+  "guest_min_docker_free_gib": 120,
+  "guest_min_available_gib": 20,
+  "guest_cpus": 24,
+  "guest_min_total_gib": 90,
+  "sdk_version": "2.13.0+cu126"
+}

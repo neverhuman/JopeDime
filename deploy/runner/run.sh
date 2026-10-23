@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/runner/run.sh <ci|ci2|full> — start ONE ephemeral runner job container (called by
+# deploy/runner/run.sh <ci|ci2|ci3|ci4|guard|full> — start ONE ephemeral runner job container (called by
 # jope-runner@<lane>.service, as root, on the timer's cadence).
 #
 #   1. at most daily, trim older duplicate builds from this lane's target volume (common.sh
@@ -18,9 +18,19 @@ set -euo pipefail
 # shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
-lane=${1:?usage: run.sh <ci|ci2|full>}
+lane=${1:?usage: run.sh <ci|ci2|ci3|ci4|guard|full>}
 jope_runner_role "$JOPE_RUNNER_HOST" "$lane"
 labels=$(jope_runner_labels "$lane")
+# Only the dedicated Mac guest accepts a short-lived config from the reviewed
+# central controller. Its ordinary host policy, locks and resource guards still run.
+external_name=''
+if (( $# == 3 )) && [[ $2 == --jit-stdin && $JOPE_RUNNER_HOST == xbabe4 ]]; then
+  external_name=$3
+elif (( $# != 1 )); then
+  echo "run.sh: unsupported launch arguments" >&2; exit 2
+fi
+unset jit
+
 # Refuse unrecorded systemd overrides, including the historical per-instance budget.
 dropins=$(systemctl show "jope-runner@$lane.service" -p DropInPaths --value)
 [[ $dropins == /etc/systemd/system/jope-runner@.service.d/runtime-max.conf ]] || {
@@ -35,38 +45,46 @@ jope_runner_exclusive_cpu "$lane"
 volume_prefix="jope-$JOPE_RUNNER_DOMAIN-$lane"
 policy="$JOPE_RUNNER_STATE/$lane-policy.json"
 jq -n --arg domain "$JOPE_RUNNER_DOMAIN" --arg lane "$lane" --arg host "$JOPE_RUNNER_HOST" \
-  --arg memory "$JOPE_RUNNER_MEMORY" --arg prefix "$volume_prefix" \
-  '{domain:$domain,lane:$lane,host:$host,memory:$memory,cpus:16,volume_prefix:$prefix}' > "$policy"
+  --arg memory "$JOPE_RUNNER_MEMORY" --arg prefix "$volume_prefix" --argjson cpus "$JOPE_RUNNER_CPUS" \
+  '{domain:$domain,lane:$lane,host:$host,memory:$memory,cpus:$cpus,volume_prefix:$prefix}' > "$policy"
 chmod 0444 "$policy"
 [[ $(id -u) -eq 0 ]] || { echo "run.sh must run as root (reads $JOPE_RUNNER_PAT_FILE)" >&2; exit 2; }
 # The lane lock is held and no container of this lane runs: the one safe point to trim its cache.
 jope_runner_trim_lane "$lane" || true
 "$(dirname "${BASH_SOURCE[0]}")/disk-guard.sh"
 
-[[ -f $JOPE_RUNNER_PAT_FILE ]] || { echo "run.sh: $JOPE_RUNNER_PAT_FILE is missing (docs/runbooks/runner.md)" >&2; exit 2; }
-perms=$(stat -c '%a %U' "$JOPE_RUNNER_PAT_FILE")
-[[ $perms == "600 root" ]] || { echo "run.sh: $JOPE_RUNNER_PAT_FILE must be root:root 0600, is $perms" >&2; exit 2; }
-[[ -s $JOPE_RUNNER_PAT_FILE ]] || { echo "run.sh: $JOPE_RUNNER_PAT_FILE is empty — the owner has not registered yet" >&2; exit 2; }
+if [[ -n $external_name ]]; then
+  jope_runner_external_jit "$JOPE_RUNNER_HOST" "$lane" "$external_name"
+  name=$external_name
+  jit=$JOPE_EXTERNAL_JIT
+  unset JOPE_EXTERNAL_JIT
+  echo "run.sh: runner $name labels=$labels source=reviewed-central-jit"
+else
+  [[ -f $JOPE_RUNNER_PAT_FILE ]] || { echo "run.sh: $JOPE_RUNNER_PAT_FILE is missing (docs/runbooks/runner.md)" >&2; exit 2; }
+  perms=$(stat -c '%a %U' "$JOPE_RUNNER_PAT_FILE")
+  [[ $perms == "600 root" ]] || { echo "run.sh: $JOPE_RUNNER_PAT_FILE must be root:root 0600, is $perms" >&2; exit 2; }
+  [[ -s $JOPE_RUNNER_PAT_FILE ]] || { echo "run.sh: $JOPE_RUNNER_PAT_FILE is empty — the owner has not registered yet" >&2; exit 2; }
 
-stamp=$(date -u +%Y%m%dT%H%M%SZ)
-name="$JOPE_RUNNER_HOST-$lane-$stamp"
-# work_folder is absolute and per-lane. Absolute because entrypoint.sh copies the runner to
-# /home/runner/runner, so a relative "work" resolves inside the small /home/runner tmpfs instead
-# of the jope-work volume. Per-lane because the four lanes run concurrently against one volume:
-# a shared root means actions/checkout in one lane deletes the target/ another lane is building.
-# $lane must be passed to jq as an argument -- jq does not expand shell variables, so writing
-# "$lane" inside the program yields a literal directory named '$lane' shared by every lane.
-body=$(jq -nc --arg name "$name" --arg labels "$labels" --arg lane "$lane" \
-  '{name:$name, runner_group_id:1, labels:(["self-hosted","linux","x64"] + ($labels|split(","))), work_folder:"/home/runner/work/\($lane)"}')
-# The token goes to curl through a config file on a private fd, never on the command line.
-response=$(curl -fsS --retry 3 -X POST \
-  -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
-  -K <(printf 'header = "Authorization: Bearer %s"\n' "$(< "$JOPE_RUNNER_PAT_FILE")") \
-  "https://api.github.com/repos/$JOPE_RUNNER_REPO/actions/runners/generate-jitconfig" \
-  --data "$body") || { echo "run.sh: generate-jitconfig failed for $name" >&2; exit 1; }
-jit=$(jq -r '.encoded_jit_config // empty' <<<"$response")
-[[ -n $jit ]] || { echo "run.sh: no encoded_jit_config in the response: $(jq -c 'del(.encoded_jit_config)' <<<"$response")" >&2; exit 1; }
-echo "run.sh: runner $name id=$(jq -r '.runner.id' <<<"$response") labels=$labels"
+  stamp=$(date -u +%Y%m%dT%H%M%SZ)
+  name="$JOPE_RUNNER_HOST-$lane-$stamp"
+  # work_folder is absolute and per-lane. Absolute because entrypoint.sh copies the runner to
+  # /home/runner/runner, so a relative "work" resolves inside the small /home/runner tmpfs instead
+  # of the jope-work volume. Per-lane because the four lanes run concurrently against one volume:
+  # a shared root means actions/checkout in one lane deletes the target/ another lane is building.
+  # $lane must be passed to jq as an argument -- jq does not expand shell variables, so writing
+  # "$lane" inside the program yields a literal directory named '$lane' shared by every lane.
+  body=$(jq -nc --arg name "$name" --arg labels "$labels" --arg lane "$lane" \
+    '{name:$name, runner_group_id:1, labels:(["self-hosted","linux","x64"] + ($labels|split(","))), work_folder:"/home/runner/work/\($lane)"}')
+  # The token goes to curl through a config file on a private fd, never on the command line.
+  response=$(curl -fsS --retry 3 -X POST \
+    -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+    -K <(printf 'header = "Authorization: Bearer %s"\n' "$(< "$JOPE_RUNNER_PAT_FILE")") \
+    "https://api.github.com/repos/$JOPE_RUNNER_REPO/actions/runners/generate-jitconfig" \
+    --data "$body") || { echo "run.sh: generate-jitconfig failed for $name" >&2; exit 1; }
+  jit=$(jq -r '.encoded_jit_config // empty' <<<"$response")
+  [[ -n $jit ]] || { echo "run.sh: no encoded_jit_config in the response: $(jq -c 'del(.encoded_jit_config)' <<<"$response")" >&2; exit 1; }
+  echo "run.sh: runner $name id=$(jq -r '.runner.id' <<<"$response") labels=$labels"
+fi
 
 # Provenance injected into the job, so a lane can prove what it is running instead of assuming.
 # The script digest is recomputed from the deployed files on every launch -- reading it back from
@@ -84,7 +102,7 @@ recorded_image_id=unknown
 [[ -r $prov ]] && recorded_image_id=$(jq -r '.image_id // "unknown"' "$prov")
 
 docker_args=(
-  run --rm --init --name "$name" --label jope.runner=1 --label "jope.lane=$lane"
+  run --rm --init --platform linux/amd64 --name "$name" --label jope.runner=1 --label "jope.lane=$lane"
   --user "$JOPE_RUNNER_UID"
   --cap-drop ALL --security-opt no-new-privileges --pids-limit "$JOPE_RUNNER_PIDS"
   --memory "$JOPE_RUNNER_MEMORY" --memory-swap "$JOPE_RUNNER_MEMORY" --cpus "$JOPE_RUNNER_CPUS"

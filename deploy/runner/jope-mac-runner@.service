@@ -1,0 +1,24 @@
+[Unit]
+Description=JopeDime Mac Linux VM ephemeral PR runner (%i)
+After=network-online.target
+Wants=network-online.target
+ConditionHost=xbabe2
+
+[Service]
+Type=exec
+User=ubuntu
+Group=ubuntu
+ExecStart=/opt/jope-runner/mac-controller.sh %i
+RuntimeMaxSec=infinity
+TimeoutStopSec=90
+Restart=no
+KillMode=control-group
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/jope-mac-controller
+PrivateTmp=yes
+MemoryMax=256M
+MemorySwapMax=0
+CPUQuota=100%
+TasksMax=64

@@ -49,7 +49,7 @@ docker image inspect "$JOPE_RUNNER_IMAGE" >/dev/null 2>&1 || { echo "image $JOPE
 
 # Initialize volume root ownership only; retain all previous volumes and their evidence.
 for v in "${JOPE_VOLUMES[@]}"; do
-  docker run --rm --user 0 --network none --cap-drop ALL --cap-add CHOWN \
+  docker run --rm --platform linux/amd64 --user 0 --network none --cap-drop ALL --cap-add CHOWN \
     -v "$v:/v" --entrypoint chown "$JOPE_RUNNER_IMAGE" "$JOPE_RUNNER_UID:$JOPE_RUNNER_UID" /v
 done
 
@@ -62,7 +62,7 @@ if [[ $skip_sdk -eq 0 ]]; then
     echo "sdk volume already holds LibTorch $expected"
   else
     echo "provisioning the SDK volume from $receipt (LibTorch $expected + $(jq '.companions | length' "$receipt") companion wheels)"
-    docker run --rm --user "$JOPE_RUNNER_UID" --network host --cap-drop ALL --security-opt no-new-privileges \
+    docker run --rm --platform linux/amd64 --user "$JOPE_RUNNER_UID" --network host --cap-drop ALL --security-opt no-new-privileges \
       --entrypoint bash -v jope-sdk:/opt/jope-sdk -v "$receipt:/receipt.json:ro" -w /opt/jope-sdk \
       "$JOPE_RUNNER_IMAGE" -c '
         set -euo pipefail
@@ -83,16 +83,22 @@ fi
 
 # 4. host files: PAT location (empty, 0600), state dir, scripts, units
 install -d -m 0700 -o root -g root /etc/jope-runner
-[[ -f $JOPE_RUNNER_PAT_FILE ]] || { install -m 0600 -o root -g root /dev/null "$JOPE_RUNNER_PAT_FILE"; echo "created empty $JOPE_RUNNER_PAT_FILE — paste the fine-grained PAT (Administration: write on $JOPE_RUNNER_REPO only) into it"; }
+if [[ $JOPE_RUNNER_HOST != xbabe4 ]]; then
+  [[ -f $JOPE_RUNNER_PAT_FILE ]] || { install -m 0600 -o root -g root /dev/null "$JOPE_RUNNER_PAT_FILE"; echo "created empty $JOPE_RUNNER_PAT_FILE — paste the fine-grained PAT (Administration: write on $JOPE_RUNNER_REPO only) into it"; }
+fi
 install -d -m 0750 -o root -g root "$JOPE_RUNNER_STATE"
 install -d -m 0755 /opt/jope-runner
+if [[ $JOPE_RUNNER_HOST == xbabe2 ]]; then
+  install -d -m 0700 -o ubuntu -g ubuntu /var/lib/jope-mac-controller
+fi
 # tmpfiles creates the fixed lock after reboot without replacing an existing
 # locked inode. Never install /dev/null over a live advisory-lock file.
 install -d -m 0755 /etc/tmpfiles.d
 install -m 0644 "$here"/jope-exclusive-cpu.conf /etc/tmpfiles.d/
 systemd-tmpfiles --create /etc/tmpfiles.d/jope-exclusive-cpu.conf
-install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/trim-deps.sh "$here"/job-started.sh "$here"/job-policy.py /opt/jope-runner/
-install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service /etc/systemd/system/
+install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/trim-deps.sh "$here"/job-started.sh "$here"/job-policy.py "$here"/mac-controller.sh "$here"/mac-guest.sh /opt/jope-runner/
+install -m 0644 "$here"/mac-capacity.json /opt/jope-runner/
+install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service "$here"/jope-mac-runner@.service "$here"/jope-mac-runner@.timer /etc/systemd/system/
 # The drop-in was committed but never installed here, so a freshly provisioned host ran with the
 # upstream RuntimeMaxSec=1800 -- the mid-job SIGTERM the drop-in exists to prevent. Installed as a
 # directory so any future .conf in it is picked up without editing this line again.
