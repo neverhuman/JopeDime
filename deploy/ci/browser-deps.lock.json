@@ -118,10 +118,10 @@
       "sha256": "b67a6df2bdab61d273eabebd208bb6a3fb12618a390a067e1ee305a409ff03d9"
     },
     {
-      "url": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/z/zlib/zlib1g_1.3.dfsg-3.1ubuntu2.2_amd64.deb",
-      "filename": "zlib1g_1%3a1.3.dfsg-3.1ubuntu2.2_amd64.deb",
-      "size": 62988,
-      "sha256": "84b9cf5752b29c9f92c27cd4c4ba9bbcc70b5ccf9b1b515421a28ae23212e273"
+      "url": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/z/zlib/zlib1g_1.3.dfsg-3.1ubuntu2.3_amd64.deb",
+      "filename": "zlib1g_1%3a1.3.dfsg-3.1ubuntu2.3_amd64.deb",
+      "size": 63158,
+      "sha256": "376249c8de139568221dbb242318cc8cb8f02299e3a62b7432948e1754fbddf9"
     },
     {
       "url": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/libb/libbsd/libbsd0_0.12.1-1build1.1_amd64.deb",
