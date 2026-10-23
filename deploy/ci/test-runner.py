@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,6 +24,46 @@ container = load('verify-container')
 
 
 class RunnerTests(unittest.TestCase):
+
+    def test_cargo_target_selector_covers_the_approved_build_inventory(self):
+        inventory = """source deploy/runner/common.sh
+for host in xbabe0 xbabe1 xbabe2 xbabe3 xbabe4; do
+  for lane in $(jope_runner_lanes "$host"); do
+    jope_runner_role "$host" "$lane"
+    if [[ $JOPE_RUNNER_DOMAIN != guard ]]; then printf '%s\\n' "$lane"; fi
+  done
+done
+"""
+        roles = subprocess.run(['bash', '-ec', inventory], cwd=ROOT,
+                               capture_output=True, text=True)
+        self.assertEqual(0, roles.returncode, roles.stderr)
+        approved = set(roles.stdout.splitlines())
+        self.assertTrue(approved)
+        action = (ROOT/'.github/actions/cargo-target/action.yml').read_text()
+        marker = '      run: |\n'
+        self.assertEqual(1, action.count(marker))
+        script = textwrap.dedent(action.split(marker, 1)[1])
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='cargo-target-contract-', dir=scratch) as name:
+            output = Path(name)/'github-env'
+            for lane in sorted(approved):
+                with self.subTest(lane=lane):
+                    output.write_text('')
+                    result = subprocess.run(['bash', '-ec', script], cwd=ROOT,
+                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output)},
+                        capture_output=True, text=True)
+                    self.assertEqual(0, result.returncode, result.stderr)
+                    self.assertEqual(f'CARGO_TARGET_DIR=/var/cache/jope/target/{lane}\n',
+                                     output.read_text())
+            for lane in ('guard', 'gpu', 'ci13', '../full', '', 'ci\nINJECTED=1'):
+                with self.subTest(rejected_lane=lane):
+                    output.write_text('')
+                    result = subprocess.run(['bash', '-ec', script], cwd=ROOT,
+                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output)},
+                        capture_output=True, text=True)
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertEqual('', output.read_text())
 
     def test_guard_domain_admits_only_the_exact_main_guard_push(self):
         policy.authorize({'domain': 'guard'}, self.env('main-guard', 'push'))
@@ -63,16 +104,16 @@ class RunnerTests(unittest.TestCase):
 
     def test_mac_pr_slots_are_explicit_and_never_gain_trusted_labels(self):
         script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=xbabe4; jope_runner_labels "$1"'
-        for lane in ('ci', 'ci2', 'ci3', 'ci4'):
+        for lane in ('ci', 'ci2', 'ci3', 'ci4', 'ci5', 'ci6', 'ci7', 'ci8', 'ci9', 'ci10', 'ci11', 'ci12'):
             result = subprocess.run(['bash', '-ec', script, 'test', lane], cwd=ROOT, capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stderr)
-            self.assertEqual(f'xbabe4-{lane},jope-ci', result.stdout.strip())
+            self.assertEqual(f'xbabe4-{lane},jope-mac-ci', result.stdout.strip())
             launch = dict(host='xbabe4', lane=lane, domain='pr', memory='16g', cpus=16,
                           volume_prefix=f'jope-pr-{lane}')
             container.verify(launch, str(16*1024**3), '1600000 100000', '0', [])
             with self.assertRaises(ValueError):
                 container.verify(launch | {'domain': 'main'}, str(16*1024**3), '1600000 100000', '0', [])
-        for lane in ('full', 'guard', 'gpu', 'ci5'):
+        for lane in ('full', 'guard', 'gpu', 'ci13'):
             result = subprocess.run(['bash', '-ec', script, 'test', lane], cwd=ROOT, capture_output=True, text=True)
             self.assertNotEqual(0, result.returncode)
 
@@ -85,6 +126,12 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(0, valid.returncode, valid.stderr)
         self.assertEqual('64', valid.stdout)
         self.assertNotIn(token, valid.stdout + valid.stderr)
+        for lane in ['ci']+['ci'+str(n) for n in range(2,13)]:
+            candidate=f'xbabe4-{lane}-20261023T000000Z'
+            accepted=subprocess.run(['bash','-ec',script,'test','xbabe4',lane,candidate],cwd=ROOT,
+                                    input=token,capture_output=True,text=True)
+            self.assertEqual(0,accepted.returncode,(lane,accepted.stderr))
+            self.assertEqual('64',accepted.stdout)
         for host, lane, candidate, payload in [('xbabe2', 'ci', name, token),
                                                 ('xbabe4', 'full', name, token),
                                                 ('xbabe4', 'ci', 'xbabe4-ci2-20261023T000000Z', token),
@@ -116,6 +163,25 @@ class RunnerTests(unittest.TestCase):
                         env['GITHUB_REPOSITORY_ID'] = repository_id
                     with self.assertRaises(ValueError):
                         policy.authorize({'domain': domain}, env)
+
+    def test_mac_qualification_is_main_dispatch_and_mac_pr_storage_only(self):
+        env=self.env('runner-qualification','workflow_dispatch','refs/heads/main')
+        for lane in ['ci']+['ci'+str(n) for n in range(2,13)]:
+            with self.subTest(lane=lane):
+                policy.authorize(dict(host='xbabe4',lane=lane,domain='pr'),env)
+        for launch in [dict(domain='pr'),dict(host='xbabe1',lane='ci',domain='pr'),
+                       dict(host='xbabe4',lane='ci13',domain='pr'),
+                       dict(host='xbabe4',lane='ci',domain='main'),
+                       dict(host='xbabe4',lane='ci',domain='guard')]:
+            with self.subTest(launch=launch),self.assertRaises(ValueError):
+                policy.authorize(launch,env)
+        for key,value in [('GITHUB_EVENT_NAME','pull_request'),('GITHUB_EVENT_NAME','push'),
+                          ('GITHUB_REF','refs/heads/feature'),('GITHUB_REF','refs/tags/v0.4.1'),
+                          ('GITHUB_WORKFLOW_REF','neverhuman/JopeDime/.github/workflows/runner-qualification.yml@refs/heads/feature'),
+                          ('GITHUB_REPOSITORY','foreign/repo'),('GITHUB_REPOSITORY_ID','1'),
+                          ('GITHUB_SHA','0'*40),('GITHUB_SHA','HEAD'),('GITHUB_SHA','a'*39)]:
+            with self.subTest(key=key,value=value),self.assertRaises(ValueError):
+                policy.authorize(dict(host='xbabe4',lane='ci',domain='pr'),env|{key:value})
 
     def test_trusted_events(self):
         for workflow, event in [('full-main', 'push'), ('full-main', 'workflow_dispatch'), ('main-guard', 'push')]:
@@ -163,7 +229,7 @@ class RunnerTests(unittest.TestCase):
 
     def test_each_host_lists_exactly_its_approved_lanes(self):
         script = 'source deploy/runner/common.sh; jope_runner_lanes "$1"'
-        expected = {'xbabe1': 'ci ci2 guard', 'xbabe2': 'full ci guard', 'xbabe3': 'full ci guard', 'xbabe0': 'ci', 'xbabe4': 'ci ci2 ci3 ci4'}
+        expected = {'xbabe1': 'ci ci2 guard', 'xbabe2': 'full ci guard', 'xbabe3': 'full ci guard', 'xbabe0': 'ci', 'xbabe4': 'ci ci2 ci3 ci4 ci5 ci6 ci7 ci8 ci9 ci10 ci11 ci12'}
         for host, lanes in expected.items():
             result = subprocess.run(['bash','-ec',script,'test',host],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(0, result.returncode, result.stderr)
@@ -171,7 +237,7 @@ class RunnerTests(unittest.TestCase):
             for lane in lanes.split():
                 role = subprocess.run(['bash','-ec','source deploy/runner/common.sh; jope_runner_role "$1" "$2"','test',host,lane],cwd=ROOT,capture_output=True)
                 self.assertEqual(0, role.returncode, (host, lane))
-        self.assertEqual(14, sum(len(lanes.split()) for lanes in expected.values()))
+        self.assertEqual(22, sum(len(lanes.split()) for lanes in expected.values()))
         for host in ('xbabe5', 'xbabe2-mac', 'Mac-Studio.local', ''):
             result = subprocess.run(['bash','-c',script,'test',host],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(2, result.returncode, host)
@@ -182,7 +248,7 @@ class RunnerTests(unittest.TestCase):
             result = subprocess.run(['bash','-ec',script,'test',host,lane],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(0,result.returncode)
             self.assertEqual(expected,result.stdout.strip())
-        for host, lane in [('xbabe2','ci2'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3'),('xbabe3','ci2'),('xbabe3','gpu'),('xbabe0','ci2'),('xbabe0','full'),('xbabe0','gpu'),('xbabe4','full'),('xbabe4','guard'),('xbabe4','ci5'),('xbabe5','ci')]:
+        for host, lane in [('xbabe2','ci2'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3'),('xbabe3','ci2'),('xbabe3','gpu'),('xbabe0','ci2'),('xbabe0','full'),('xbabe0','gpu'),('xbabe4','full'),('xbabe4','guard'),('xbabe4','ci13'),('xbabe5','ci')]:
             result = subprocess.run(['bash','-ec','source deploy/runner/common.sh; jope_runner_role "$1" "$2"','test',host,lane],cwd=ROOT,capture_output=True)
             self.assertEqual(2,result.returncode)
 
@@ -245,7 +311,7 @@ class MacControllerTests(unittest.TestCase):
         cfg = json.loads((ROOT/'deploy/runner/mac-capacity.json').read_text())
         values = dict(policy=cfg, mac=dict(host='Mac-Studio.local', free_bytes=500*1024**3),
             user=dict(login='jepsontaylor'), guest=dict(host='xbabe4', architecture='aarch64',
-            cpus=24, total_gib=95, available_gib=80, root_free_gib=80, docker_free_gib=600,
+            cpus=24, total_gib=251, available_gib=80, root_free_gib=80, docker_free_gib=600,
             cgroup_version='2', cgroup_driver='systemd', image_id=cfg['image_id'],
             recorded_image_id=cfg['image_id'], image_architecture='amd64', digest='a'*64,
             recorded_digest='a'*64, sdk_version=cfg['sdk_version'], lane_idle=True,
@@ -288,7 +354,7 @@ jope_mac_launch "$2" "$fixture/state" "$(cat "$fixture/policy.json")" 20261023T1
 
     def test_mac_valid_path_uses_stdin_and_retains_only_public_state(self):
         import json
-        for lane in ('ci','ci2','ci3','ci4'):
+        for lane in ('ci', 'ci2', 'ci3', 'ci4', 'ci5', 'ci6', 'ci7', 'ci8', 'ci9', 'ci10', 'ci11', 'ci12'):
             with self.subTest(lane=lane), self.scratch() as name:
                 root=Path(name); values=self.fixture(root); result=self.run_fixture(root,values,lane)
                 self.assertEqual(0,result.returncode,result.stderr)
@@ -315,6 +381,37 @@ jope_mac_launch "$2" "$fixture/state" "$(cat "$fixture/policy.json")" 20261023T1
                 root=Path(name); values=self.fixture(root);values['guest'][key]=value
                 result=self.run_fixture(root,values)
                 self.assertNotEqual(0,result.returncode,key)
+                self.assertEqual('0',(root/'mint-count').read_text().strip())
+
+    def test_twelfth_slot_admission_and_closed_inventory(self):
+        lanes = ['ci'] + ['ci'+str(n) for n in range(2,13)]
+        with self.scratch() as name:
+            root=Path(name); values=self.fixture(root)
+            values['guest'].update(active_lanes=lanes[:-1], reserved_gib=176)
+            result=self.run_fixture(root,values,'ci12')
+            self.assertEqual(0,result.returncode,result.stderr)
+            self.assertEqual('1',(root/'mint-count').read_text().strip())
+        for active,reserved in [(lanes,192), (lanes[:-1]+['ci13'],192),
+                                (['ci2','ci2'],32), (lanes[:-1],160)]:
+            with self.subTest(active=active,reserved=reserved),self.scratch() as name:
+                root=Path(name);values=self.fixture(root)
+                values['guest'].update(active_lanes=active,reserved_gib=reserved)
+                result=self.run_fixture(root,values,'ci12')
+                self.assertNotEqual(0,result.returncode)
+                self.assertEqual('0',(root/'mint-count').read_text().strip())
+        for lane in ['ci0','ci1','ci01','ci13','ci99','guard','full','ci;id']:
+            with self.subTest(lane=lane),self.scratch() as name:
+                root=Path(name);values=self.fixture(root)
+                result=self.run_fixture(root,values,lane)
+                self.assertNotEqual(0,result.returncode)
+                self.assertEqual('0',(root/'mint-count').read_text().strip())
+
+    def test_mac_capability_label_mismatch_refuses_before_mint(self):
+        for label in [None,'jope-ci','jope-main-guard','foreign','jope-mac-ci\nINJECTED=1']:
+            with self.subTest(label=label),self.scratch() as name:
+                root=Path(name);values=self.fixture(root);values['policy']['runner_label']=label
+                result=self.run_fixture(root,values)
+                self.assertNotEqual(0,result.returncode)
                 self.assertEqual('0',(root/'mint-count').read_text().strip())
 
     def test_mac_unknown_mint_and_ssh_outcomes_block_fresh_process_remint(self):

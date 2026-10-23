@@ -1,0 +1,42 @@
+name: Mac runner qualification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  CARGO_BUILD_JOBS: "4"
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  JOPE_SOURCE_SHA: ${{ github.sha }}
+concurrency:
+  group: mac-runner-qualification-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  qualify:
+    name: mac-role (${{ matrix.lane }})
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [ci, ci2, ci3, ci4, ci5, ci6, ci7, ci8, ci9, ci10, ci11, ci12]
+    runs-on: [self-hosted, linux, x64, jope-mac-ci, "xbabe4-${{ matrix.lane }}"]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact merged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.JOPE_SOURCE_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
+      - name: Runner provenance and actual cgroup limits
+        uses: ./.github/actions/runner-provenance
+      - name: Real runner and provenance contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p target/tmp
+          export TMPDIR="$PWD/target/tmp"
+          python3 deploy/ci/test-runner.py
+          python3 deploy/ci/test-provenance.py

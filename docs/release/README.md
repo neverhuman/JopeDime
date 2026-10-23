@@ -36,7 +36,7 @@ You need `gh` (or the web UI), cosign 2.x (releases are made with v2.4.3), coreu
 1. Download the release into a directory you own. On shared hosts, do not use `/tmp`.
 
    ```sh
-   TAG=v0.4.0
+   TAG=v0.4.1
    D=$HOME/jope-release-$TAG
    gh release download "$TAG" -R neverhuman/JopeDime -D "$D"
    cd "$D"
