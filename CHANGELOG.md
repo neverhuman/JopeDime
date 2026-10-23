@@ -9,7 +9,7 @@ the commit areas (crate or lane) named in each subject line.
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.4.0` (#403, #407 and
 #412 through #415), then curated, absorbing the Unreleased entries. This tag packages the CPU CLI
-from `main` at f9543b85 for the cloud appliance. The research branches are not part of this
+from `main` at f9543b85, plus the tokio security patch below, for the cloud appliance. The research branches are not part of this
 release, and this binary release does not claim a qualified end-to-end learning flywheel.
 
 ### Pipeline
@@ -47,6 +47,10 @@ release, and this binary release does not claim a qualified end-to-end learning 
 - ci(browser-deps): `observatory-ui` retries a dropped or refused download of a pinned Ubuntu package up to 4 times with backoff (transport errors and HTTP 5xx only). A size or hash mismatch or an HTTP 4xx still fails at once, and nothing is published before verification. Two jobs failed on 2026-10-22 from single mirror drops
 - ci(full-main): the trusted-main source audit is report-only until its score reaches 85 (owner decision, 2026-10-22; 54 at `bdf9441aa`). A verified audit that fails below 85 passes the `audit` job with a warning and a `report-only.json` marker, and its reports keep the failed decision. A failed audit at or above 85 still fails the job, as do missing, inconsistent or tampered evidence and version or tool errors. The floor and policy are unchanged
 - ci(full-main): the audit no longer breaks the self-hosted runner after it. Its captured source was left read-only in the persistent workspace, so every later job on that runner failed in `actions/checkout` (`Permission denied`, then `not a git repository`). An always-run step after the evidence upload now restores write permission. The retained evidence keeps its read-only modes, so the verifier still replays on it
+
+### Security
+
+- deps: tokio 1.53.1 → 1.53.3 in the root lock and the CSV Lambda lockgraph for RUSTSEC-2026-0386 (`AsyncFd::new` and related constructors violate I/O safety). `cargo deny` failed on `main` from the advisory's publication. Announced identity-only successor `tokio_security_identity_rebaseline.v1.json` after the 0.4.1 release successor: implementation 09d29b91 → 25d93b7b, identity digest b35ac562 → 50f75477
 
 ## [0.4.0] - 2026-10-22
 

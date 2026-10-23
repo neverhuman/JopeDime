@@ -642,6 +642,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
+    // tokio 1.53.3 security patch (RUSTSEC-2026-0386): announced identity only.
+    let tokio_security = old_fixture("transitions/tokio_security_identity_rebaseline.v1.json");
+    let tokio_security_fixtures = tokio_security["fixtures"].as_array().unwrap();
+    assert_eq!(tokio_security_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(tokio_security_fixtures
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -678,6 +687,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         c17_combined,
         ctutils_security,
         release_0_4_1,
+        tokio_security,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
