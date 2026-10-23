@@ -6,6 +6,7 @@
 mod c17;
 #[path = "support/c17_export.rs"]
 mod c17_export;
+#[cfg(feature = "cuda-parity-tests")]
 #[path = "support/cuda.rs"]
 #[allow(dead_code)]
 mod cuda;
@@ -160,6 +161,7 @@ fn assert_parity_sized(name: &str, genome_src: &str, rows: usize, cols: usize, t
         "C17 parity for {name}"
     );
 
+    #[cfg(feature = "cuda-parity-tests")]
     if cuda::enabled() {
         let bundle = feat_math::transpile::emit_cuda(&genome, &opts).unwrap();
         let predictions = cuda::predictions(

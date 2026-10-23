@@ -31,7 +31,6 @@ python3 -B deploy/ci/test-vendor-security.py
 python3 deploy/ci/test-receipt.py
 python3 deploy/ci/test-results.py
 python3 deploy/ci/test-aggregate.py
-python3 deploy/ci/cuda/test_evidence.py
 python3 deploy/ci/test-status.py
 python3 deploy/ci/test-runner.py
 python3 deploy/ci/test-provenance.py

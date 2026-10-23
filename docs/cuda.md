@@ -154,8 +154,9 @@ bash deploy/ci/cuda/qualify.sh device
 ```
 
 CUDA qualification is local. This target adds no hosted CUDA job, GPU runner request,
-artifact aggregation gate or hardware merge requirement. Ordinary Rust lanes retain
-CPU-only native contract checks. Actual GPU qualification requires a fresh device-mode
+artifact aggregation gate or hardware merge requirement. CUDA-specific contract/census targets and the CUDA golden hook require the nondefault
+`cuda-parity-tests` feature. Standard Rust lanes do not select it; `qualify.sh` selects it
+explicitly. The CUDA evidence validator also runs only through local qualification. Actual GPU qualification requires a fresh device-mode
 receipt; missing hardware stays unqualified. Universal GPU execution for nonlinear/bound
 models is outside this implementation's device coverage.
 

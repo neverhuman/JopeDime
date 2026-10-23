@@ -29,11 +29,11 @@ suite() {
   cargo test --locked "$@" -- --list > "$out/$name.list"
   cargo test --locked "$@" -- --test-threads=2 --nocapture 2>&1 | tee "$out/$name.log"
 }
-suite contracts -p feat-math --no-default-features --test cuda_export
-suite census -p feat-math --no-default-features --test cuda_census
-suite golden -p feat-math --no-default-features --test golden
-suite ordered-bound -p feat-math --no-default-features --lib advanced_v3::emit::
-suite bindings -p feat-math --no-default-features --test artifact_target_binding
+suite contracts -p feat-math --no-default-features --features cuda-parity-tests --test cuda_export
+suite census -p feat-math --no-default-features --features cuda-parity-tests --test cuda_census
+suite golden -p feat-math --no-default-features --features cuda-parity-tests --test golden
+suite ordered-bound -p feat-math --no-default-features --features cuda-parity-tests --lib advanced_v3::emit::
+suite bindings -p feat-math --no-default-features --features cuda-parity-tests --test artifact_target_binding
 suite pipeline -p jope-pipeline --test artifact_target_binding
 suite cli -p jope-cli --no-default-features --lib kernel::artifact_v3_tests::
 python3 deploy/ci/cuda/test_evidence.py

@@ -11,7 +11,8 @@ Date: 2026-10-23
 Finish local hardware verification of the CUDA C++ output target. All CUDA-specific
 hosted workflows, runner requests and hardware merge gates have been removed. Keep
 hardware work local; do not add GPU CI or change runner policy. The ordinary Rust
-checks exercise the CPU native contracts without requiring CUDA.
+checks exclude the CUDA contract/census targets and CUDA golden hook. The local
+qualifier explicitly selects the nondefault `cuda-parity-tests` feature.
 
 The generated library provides every recipe accepted by the Rust emitter and every
 fitted predictor accepted by bound Rust through a shared native Rust implementation.

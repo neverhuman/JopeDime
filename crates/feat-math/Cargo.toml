@@ -10,6 +10,8 @@ description = "Model-synthesis kernel: pipeline-program DSL interpreter, Python/
 default = ["fitted-cpp"]
 # Requires exact parity and funded full-task performance qualification before use.
 gpr-scratch-reuse = []
+# Explicit local CUDA qualification only; never selected by standard CI.
+cuda-parity-tests = []
 # The fitted C++ runtime: build.rs compiles cpp/fitted_runtime.cpp with g++ into a shared library
 # that is embedded and loaded with memfd + dlopen. Default-on so every existing build keeps it.
 # The `jopedime` appliance must not carry C++ (deploy/appliance/AMENDMENTS.md A1): crates in its
@@ -19,6 +21,14 @@ fitted-cpp = []
 [[test]]
 name = "advanced_v3_fitted_cpp"
 required-features = ["fitted-cpp"]
+
+[[test]]
+name = "cuda_export"
+required-features = ["cuda-parity-tests"]
+
+[[test]]
+name = "cuda_census"
+required-features = ["cuda-parity-tests"]
 
 [dependencies]
 anyhow.workspace = true
