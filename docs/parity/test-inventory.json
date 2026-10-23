@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5922,
+  "count": 5928,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -8775,7 +8775,7 @@
     }
    },
    "jope-runtime": {
-    "count": 68,
+    "count": 74,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
@@ -8840,6 +8840,26 @@
        "table::tests::objective_columns_are_numeric_never_features_and_ignored_at_prediction",
        "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",
        "table::tests::tasks_and_class_order"
+      ]
+     },
+     "jope-runtime::fitted_js_qualification": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "fitted_javascript_matches_rust_prediction_for_every_supported_stage",
+       "fitted_javascript_refuses_a_model_from_another_plan",
+       "fitted_javascript_refuses_contradictory_prediction_parameters"
+      ]
+     },
+     "jope-runtime::math_pipeline": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "decoder_refuses_what_it_cannot_reproduce",
+       "decoder_reproduces_the_producer_for_every_row",
+       "exported_javascript_reproduces_the_producer_for_every_row"
       ]
      },
      "jope-runtime::method_roster": {
@@ -9351,7 +9371,7 @@
   }
  },
  "totals": {
-  "rust": 5922,
+  "rust": 5928,
   "python": 182
  }
 }
