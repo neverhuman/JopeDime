@@ -984,16 +984,22 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/Cargo.lock",
-      "tree_sha256": "c127462e9b3d84806f3f170ac058173548357a8956ee215282027b947c6a84db",
+      "tree_sha256": "75db3f6412ce997cb439620ec7cc96a8bee291c9de15ed97e8b5ff929320c1d9",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.1, the workspace version of this release; no other package moves",
+      "tree_change": "tokio 1.53.3 security patch for RUSTSEC-2026-0386 after the ctutils 0.4.4 patch; retain the original frozen checksum; root path dependency versions read 0.4.1",
       "version_sync_bases": [
         {
           "schema": "jope.lambda-version-sync-base/v1",
           "source_commit": "c9d9219bec1e6a80372bdf6896a6c161874d8b96",
           "tree_sha256": "4d965443dae00d25b0da240d9040c2bdf5276184961432a232f2848a8b3e1bf0",
           "tree_change": "ctutils 0.4.4 security patch for RUSTSEC-2026-0385; retain the original frozen checksum; root path dependency versions remain 0.4.0"
+        },
+        {
+          "schema": "jope.lambda-version-sync-base/v1",
+          "source_commit": "bfcd901eee5ee77677e0e7b41791767c0141a122",
+          "tree_sha256": "75db3f6412ce997cb439620ec7cc96a8bee291c9de15ed97e8b5ff929320c1d9",
+          "tree_change": "tokio 1.53.3 security patch for RUSTSEC-2026-0386 after the ctutils 0.4.4 patch; retain the original frozen checksum; root path dependency versions read 0.4.1"
         }
       ]
     },
