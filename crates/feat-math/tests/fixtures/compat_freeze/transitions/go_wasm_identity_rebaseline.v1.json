@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only Go target successor: new public module, target routing and token support change evaluator source inputs. Numerical Rust/Python templates, behavior fixtures, historical rows and prior transition edges remain unchanged.",
+  "plan_reference": "Explicit Go language target PR request; AGENTS.md and ADR-0004 identity-only procedure",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/416",
+  "source_commit": "833091a0e17c4496797b0765a4cd1f94801b15a5",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "8bd43218668e377a4b63e420e08aca22d0c09d2fcdecce5fc5e930a8e1fc2d30",
+      "after": "c31903f654c307d91f076feb344019ba4275473fcf4a873d172ac8c07c94e6fa"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "9c260a36dfe8b5744445d55db1e7677607d7980721e2cec5b6ed0e20ecedbf37",
+      "after": "281e52d17bfbca1395b478389df6911d6c399f124cc252fd04f2ea27deb49d21"
+    }
+  ]
+}

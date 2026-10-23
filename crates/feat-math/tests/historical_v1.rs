@@ -599,6 +599,12 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
+    let go_output = old_fixture("transitions/go_wasm_identity_rebaseline.v1.json");
+    let go_fixtures = go_output["fixtures"].as_array().unwrap();
+    assert_eq!(go_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(go_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -631,6 +637,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         pr398_combined,
         release_0_4_0,
         model_objects,
+        go_output,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

@@ -6,10 +6,16 @@ import re
 
 def verify(root, profile):
     logs = {}
+    # Checked minimums prevent a filtered one-test run from qualifying a lane.
+    minimums = dict(recipes=84, fitted=2, bindings=21, pipeline=18, cli=2, census=5)
     for name in ('recipes', 'fitted', 'bindings', 'pipeline', 'cli', 'census'):
         text = (root / (name + '.log')).read_text()
         counts = re.findall(r'test result: ok\. (\d+) passed; (\d+) failed', text)
-        assert counts and sum(int(p) for p, _ in counts) > 0, name + ': zero tests'
+        assert counts and sum(int(p) for p, _ in counts) >= minimums[name], name + ': incomplete tests'
+        if name == 'recipes':
+            assert 'test go_runtime_is_required ... ok' in text, 'recipes: missing Go presence gate'
+            full = re.findall(r'test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;', text)
+            assert any(int(n) >= minimums[name] for n in full), 'recipes: filtered or partial suite'
         assert all(int(f) == 0 for _, f in counts) and 'test result: FAILED' not in text
         if name in ('recipes', 'fitted', 'census'):
             assert text.count('Go 0:') == text.count('Go 1:') > 0, name + ': missing engine'
