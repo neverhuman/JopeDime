@@ -1,0 +1,130 @@
+{
+  "as_of_utc": "2026-10-22T18:37:49.633567+00:00",
+  "conclusion": "Saved key metadata supplied two catalog locator candidates; two conditional HEAD responses supplied non-null version identifiers and matching lengths/opaque ETags. This establishes metadata locators only. Object contents, original rows, transforms, GP-input identity and numeric admission remain unverified.",
+  "cost_limit": "Worker and enclosing launcher measurements overlap and must not be summed. Named control/QA costs are separate. Total interactive preparation, metadata inspection, SSH/copy/retention/custody costs are not fully measured here.",
+  "counts": {
+    "HTTP200_HEAD_responses": 2,
+    "HeadObject_SDK_calls": 2,
+    "Parquet_record_or_dataset_cells_read": 0,
+    "compressed_key_metadata_bytes_rehashed": 78496603,
+    "configured_source_bucket_denominator": 6,
+    "current_key_metadata_objects_replayed": 1166070,
+    "current_key_metadata_pages": 1169,
+    "fits": 0,
+    "full_digest_key_literal_matches": 2,
+    "historical_Parquet_file_descriptors": 24,
+    "historical_cached_inventory_report_locators": 6,
+    "historical_inventory_rows_not_new_training_rows": 35912671,
+    "identity_selected_catalog_targets": 2,
+    "key_literal_and_size_locator_candidates": 2,
+    "new_List_API_calls": 0,
+    "new_S3_ranges": 0,
+    "new_numeric_admissions": 0,
+    "non_null_version_identifiers_observed": 2,
+    "object_body_GETs": 0,
+    "observed_HEAD_SDK_retry_attempts": 0,
+    "optimizer_updates": 0,
+    "original_pilot_case_denominator": 12,
+    "partial_key_caches_excluded_unread": 1,
+    "receipt_complete_key_caches_replayed": 5,
+    "whole_Parquet_payload_hashes_verified_by_H24": 0
+  },
+  "failures_preserved": [
+    {
+      "failure": "Prospective review receipt missing from remote mirror; exact receipt copied before execution. No worker/cache/API started in that failed preflight.",
+      "phase": "lookup_launch_preflight",
+      "source_or_protocol_changed": false
+    },
+    {
+      "HEAD_worker_failed": false,
+      "additional_API_calls": 0,
+      "failure": "AttributeError in initial source-hash loop: helper expected a Path while it received a string. Failed before response validation; original source and failure retained, not rerun. Independent saved-response verifier separately passed.",
+      "phase": "HEAD_same_author_saved_response_checker",
+      "terminal_unit_failure_preserved_after_process_stop": true
+    }
+  ],
+  "limits": [
+    "Five dated current-visible-key caches of six configured source buckets were replayed. The sixth partial cache was not read; no global/current/noncurrent-version absence claim.",
+    "Six archived report locators and 24 Parquet footer/column-scan receipts were reused.35,912,671 historical inventory records are not new training examples. No full Parquet payload SHA was verified; these report generations are dated.",
+    "Catalog SHA literals in keys plus sizes are locator evidence, not object content checksum certificates. ETags are opaque preconditions, not MD5/SHA256.",
+    "The two non-null version identifiers were observed by HEAD, not body-verified. This does not establish future retention, durability, original-source identity, transform authority, GP-label admission or independent validation.",
+    "No report-body, inventory Parquet-row, dataset-cell, outcome, prediction or model-body GET occurred. No fitting, GPU work, baseline refits, optimizer updates or numeric admissions.",
+    "The next two exact metadata GETs totaling 22,032 bytes are a proposal only, requiring a new source-bound allowlist, parser review and explicit root grant."
+  ],
+  "measured_phase_costs": {
+    "HEAD_7_new_toy_controls": {
+      "CPU_seconds": 0.0006149999999999975,
+      "max_rss_OS_native_units": 22773760,
+      "scope": "seven new scope/hash-domain toy controls only; not total preparation",
+      "wall_seconds": 0.0006505828350782394
+    },
+    "HEAD_independent_saved_response_QA": {
+      "CPU_seconds": 0.0024258379999999996,
+      "max_rss_kib": 16384,
+      "wall_seconds": 0.002752381027676165
+    },
+    "HEAD_launcher_worker_phase_includes_worker": {
+      "CPU_seconds": 0.45020499999999997,
+      "exit_code": 0,
+      "max_rss_kib_children_cumulative": 50408,
+      "wall_seconds": 1.4820442660711706
+    },
+    "HEAD_same_author_checker_failed_before_response_validation": {
+      "CPU_seconds": 0.10662499999999997,
+      "exit_code": 1,
+      "max_rss_kib_children_cumulative": 50408,
+      "wall_seconds": 0.11079074395820498
+    },
+    "HEAD_worker": {
+      "CPU_seconds": 0.334868743,
+      "max_rss_kib": 50408,
+      "wall_seconds": 1.3774539900477976
+    },
+    "offline_lookup_12_toy_controls": {
+      "CPU_seconds": 0.004143000000000001,
+      "max_rss_OS_native_units": 24428544,
+      "platform": "Mac preparation interpreter",
+      "scope": "this 12-control run only; not total preparation cost",
+      "wall_seconds": 0.006132416892796755
+    },
+    "offline_lookup_independent_QA": {
+      "CPU_seconds": 18.141307836,
+      "max_rss_kib": 38720,
+      "wall_seconds": 18.176803965005092
+    },
+    "offline_lookup_launcher_total_includes_worker": {
+      "child_CPU_seconds": 18.460517,
+      "child_max_rss_kib": 19456,
+      "launcher_own_CPU_seconds": 0.0012991359999999993,
+      "launcher_wall_seconds": 18.74805492500309
+    },
+    "offline_lookup_worker": {
+      "CPU_seconds": 18.408076043,
+      "max_rss_kib": 19456,
+      "wall_seconds": 18.691556785954162
+    }
+  },
+  "new_API_operation_counts": {
+    "GetObject": 0,
+    "HeadObject": 2,
+    "ListObjectVersions": 0,
+    "ListObjectsV2": 0,
+    "other_new_S3_API": 0
+  },
+  "proposed_future_metadata_body_bytes_not_granted": 22032,
+  "receipt_sha256": {
+    "HEAD_independent_QA_sha256": "61131c8d371ac2e2ef61f70bd9c04fff2742b4d3e340d6eb1edece3d440a7a0b",
+    "HEAD_protocol_sha256": "387cef5b2b821093309995cfd65c0aa82c7b4e86e1b4c472575ccfe7b6e21098",
+    "HEAD_results_sha256": "a94076286f9973baa6e6592f4f00edd37034e9cde626bc10fee8ceadccb4b787",
+    "offline_lookup_independent_QA_sha256": "b970fff1185cb1344b7bc75f1a37212ff8d88c4830975e0d4af2dbd877689783",
+    "offline_lookup_protocol_sha256": "b2effe909fabc3326c8dfb9939bac59318c4fc65b38a2e67d117940f49a02ec0",
+    "offline_lookup_results_sha256": "ef1fdbb897106d139bd0b378629db4f1ddb50e367a721b55abfded16541d806c",
+    "same_author_checker_failure_QA_closure_sha256": "2383edb5b21f55b12c67c3959e06d37fc8e4cb26ffc1da0470411d4b8eaee5d1"
+  },
+  "schema": "h24.public-cached-catalog-locator-and-version-metadata/v1",
+  "state": "COMPLETE_INDEPENDENT_METADATA_QA_WITH_LIMITS_ZERO_ADMISSION",
+  "target_metadata_lengths_bytes": [
+    10524,
+    11508
+  ]
+}

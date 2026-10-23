@@ -1,0 +1,1440 @@
+{
+  "all_reused_development_exploratory": true,
+  "independent_lift_established": false,
+  "limits": [
+    "PASS may mean metadata/integrity, not scientific lift.",
+    "Adaptive/exposed development is not prospective independent-family confirmation.",
+    "Original5000draw and fixed100000draw stability intervals remain separate."
+  ],
+  "metric_units": "CV reductionpercent positivefavorable; rawfitness lowerbetter; no cross-objective pooled losses.",
+  "schema": "dope.early-history-aggregate-results/v1",
+  "scope": "Original corrected H01-H14 plus matched controls and unavailable/queued entries. No new tests.",
+  "studies": [
+    {
+      "arm_metrics": {
+        "current": {
+          "gate": 0.9874529485570891,
+          "ndcg5": 0.49128408726285583,
+          "selected_cv_ratio": 0.26424619620334566,
+          "top1_fitness": 0.10587935011694964,
+          "top5_cv_ratio": 0.209014135850196,
+          "winner_in5": 0.26411543287327477
+        },
+        "current_dope": {
+          "gate": 0.9912170639899623,
+          "ndcg5": 0.518906959606721,
+          "selected_cv_ratio": 0.251997655107502,
+          "top1_fitness": -0.32300585014502775,
+          "top5_cv_ratio": 0.2070389142739386,
+          "winner_in5": 0.2791718946047679
+        },
+        "current_features": {
+          "gate": 0.9893350062735258,
+          "ndcg5": 0.50107385131666,
+          "selected_cv_ratio": 0.2597626870881382,
+          "top1_fitness": -0.10261393361783107,
+          "top5_cv_ratio": 0.20682141321503597,
+          "winner_in5": 0.27352572145545795
+        }
+      },
+      "arms": 3,
+      "candidate_rows": 102016,
+      "conclusion": "Exploratory improvements on reused development. Stronger-baseline and shuffled-control stability checks prevent an established lift claim.",
+      "contexts": 1594,
+      "contrasts": {
+        "full_vs_current": {
+          "bootstrap_draws": 5000,
+          "ci_percent": [
+            1.2888366883957951,
+            8.092321366602313
+          ],
+          "confidence": 0.975,
+          "equal_family_reduction_percent": 3.148373258811077,
+          "families": 379,
+          "family_win_fraction": 0.41424802110817943,
+          "leave_one_family_out_reduction_range": [
+            3.9496288536794544,
+            5.079712852809304
+          ],
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 4.635276220369144
+        },
+        "neural_vs_features": {
+          "bootstrap_draws": 5000,
+          "ci_percent": [
+            0.8675334330866828,
+            5.399174519625029
+          ],
+          "confidence": 0.975,
+          "equal_family_reduction_percent": 2.680930650634916,
+          "families": 379,
+          "family_win_fraction": 0.44327176781002636,
+          "leave_one_family_out_reduction_range": [
+            2.3770940785165506,
+            3.1854713283988034
+          ],
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 2.9892792023673342
+        }
+      },
+      "controls": {
+        "arm_metrics": {
+          "current": {
+            "gate": 0.9874529485570891,
+            "ndcg5": 0.49128408726285583,
+            "selected_cv_ratio": 0.26424619620334566
+          },
+          "current_dope": {
+            "gate": 0.9912170639899623,
+            "ndcg5": 0.518906959606721,
+            "selected_cv_ratio": 0.251997655107502
+          },
+          "current_features": {
+            "gate": 0.9893350062735258,
+            "ndcg5": 0.50107385131666,
+            "selected_cv_ratio": 0.2597626870881382
+          },
+          "full_random": {
+            "gate": 0.9887076537013801,
+            "ndcg5": 0.5064235495720435,
+            "selected_cv_ratio": 0.2582770305251708
+          },
+          "full_shuffle": {
+            "gate": 0.9905897114178168,
+            "ndcg5": 0.5049290876686567,
+            "selected_cv_ratio": 0.25780406784597715
+          },
+          "lambda_current": {
+            "gate": 0.9868255959849436,
+            "ndcg5": 0.5420428156994058,
+            "selected_cv_ratio": 0.2615427705713781
+          },
+          "lambda_full": {
+            "gate": 0.9899623588456713,
+            "ndcg5": 0.5591328099262978,
+            "selected_cv_ratio": 0.25546243227994075
+          }
+        },
+        "contexts": 1594,
+        "contrasts": {
+          "h01_full_vs_lambda_current": {
+            "bootstrap_draws": 5000,
+            "ci_percent": [
+              -0.5456026147507008,
+              8.248993522780198
+            ],
+            "confidence": 0.975,
+            "equal_family_reduction_percent": 3.610651309306856,
+            "families": 379,
+            "family_win_fraction": 0.41952506596306066,
+            "leave_one_family_out_reduction_range": [
+              2.5991933648696564,
+              4.043093875357551
+            ],
+            "median_context_reduction_percent": 0.0,
+            "reduction_percent": 3.6495428426575716
+          },
+          "h01_full_vs_lambda_full": {
+            "bootstrap_draws": 5000,
+            "ci_percent": [
+              -4.176638086805474,
+              8.00095090252254
+            ],
+            "confidence": 0.975,
+            "equal_family_reduction_percent": 0.41145817776074844,
+            "families": 379,
+            "family_win_fraction": 0.37730870712401055,
+            "leave_one_family_out_reduction_range": [
+              -0.8117762877885459,
+              1.9548329728115155
+            ],
+            "median_context_reduction_percent": 0.0,
+            "reduction_percent": 1.3562765928111453
+          },
+          "neural_vs_random": {
+            "bootstrap_draws": 5000,
+            "ci_percent": [
+              0.04292541335498694,
+              5.049071833918619
+            ],
+            "confidence": 0.975,
+            "equal_family_reduction_percent": 2.03883559465452,
+            "families": 379,
+            "family_win_fraction": 0.40633245382585753,
+            "leave_one_family_out_reduction_range": [
+              1.813777263635452,
+              2.646027615999469
+            ],
+            "median_context_reduction_percent": 0.0,
+            "reduction_percent": 2.4312558514788085
+          },
+          "neural_vs_shuffled": {
+            "bootstrap_draws": 5000,
+            "ci_percent": [
+              0.0016265090479899097,
+              4.840192870874479
+            ],
+            "confidence": 0.975,
+            "equal_family_reduction_percent": 1.6850557094096663,
+            "families": 379,
+            "family_win_fraction": 0.38786279683377306,
+            "leave_one_family_out_reduction_range": [
+              1.6330792692259677,
+              2.466974048629278
+            ],
+            "median_context_reduction_percent": 0.0,
+            "reduction_percent": 2.2522579984828206
+          }
+        },
+        "families": 379,
+        "fits": 10,
+        "id": "H01C",
+        "seconds": 342.85805463790894,
+        "source_artifact_sha256": "3e9921cd619a27e5aa9fbf3c81a97521870a0455535cff6e4b98e0020d1dc0ed",
+        "status": "PASS"
+      },
+      "families": 379,
+      "fits": 15,
+      "fixed_100k_stability_audit": {
+        "confidence": 0.975,
+        "contrasts": {
+          "h01_full_vs_lambda_current": {
+            "bootstrap_fraction_nonpositive": 0.02904,
+            "ci_percent": [
+              -0.5957181957167177,
+              8.377008454611714
+            ],
+            "original5000_ci": [
+              -0.5456026147507008,
+              8.248993522780198
+            ],
+            "reduction_percent": 3.6495428426575716
+          },
+          "h01_full_vs_lambda_full": {
+            "bootstrap_fraction_nonpositive": 0.33894,
+            "ci_percent": [
+              -4.179721061391955,
+              8.191763537156167
+            ],
+            "original5000_ci": [
+              -4.176638086805474,
+              8.00095090252254
+            ],
+            "reduction_percent": 1.3562765928111453
+          },
+          "neural_vs_random": {
+            "bootstrap_fraction_nonpositive": 0.01075,
+            "ci_percent": [
+              0.058977826493337784,
+              5.128472305281354
+            ],
+            "original5000_ci": [
+              0.04292541335498694,
+              5.049071833918619
+            ],
+            "reduction_percent": 2.4312558514788085
+          },
+          "neural_vs_shuffled": {
+            "bootstrap_fraction_nonpositive": 0.01293,
+            "ci_percent": [
+              -0.012548339102654226,
+              4.815919266331969
+            ],
+            "original5000_ci": [
+              0.0016265090479899097,
+              4.840192870874479
+            ],
+            "reduction_percent": 2.2522579984828206
+          }
+        },
+        "draws": 100000,
+        "seed": 20261022,
+        "source_artifact_sha256": "95bbe69659bb487676c89e1874deaceb4393613d1cd5ba43ca7f449f04101309"
+      },
+      "hypothesis": "Continuous within-query centered log-CV cost instead of ordinal bins.",
+      "id": "H01",
+      "predictions_independently_rescored": 306048,
+      "seconds": 485.68659687042236,
+      "source_artifact_sha256": "f69672630a56cdff36b178e578cb8e2edefe9bafa628c7c10c466b2fae8b38f5",
+      "status": "PASS"
+    },
+    {
+      "arm_metrics": [
+        {
+          "arm": "h02__features_trained_gram",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2679,
+            2679,
+            2679,
+            2679,
+            2679
+          ],
+          "families": 379,
+          "gate": 0.9893350062735258,
+          "ndcg5": 0.5042138730666473,
+          "reduction_ci": [
+            -2.6597049944199855,
+            6.813187193023464
+          ],
+          "reduction_vs_current_percent": 1.874082203836136,
+          "selected_cv_ratio": 0.25664124405267985,
+          "spearman": 0.644419325359282,
+          "top5_cv_ratio": 0.2056819045207556,
+          "winner_in5": 0.27540777917189463
+        },
+        {
+          "arm": "h02__features_random_gram",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2679,
+            2679,
+            2679,
+            2679,
+            2679
+          ],
+          "families": 379,
+          "gate": 0.9905897114178168,
+          "ndcg5": 0.5041405918334891,
+          "reduction_ci": [
+            -2.853040009523271,
+            6.669505811596498
+          ],
+          "reduction_vs_current_percent": 1.7389098537944347,
+          "selected_cv_ratio": 0.2569947775620253,
+          "spearman": 0.6447793814449501,
+          "top5_cv_ratio": 0.2070387349116289,
+          "winner_in5": 0.27728983688833125
+        },
+        {
+          "arm": "h02__features_input_gram",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2679,
+            2679,
+            2679,
+            2679,
+            2679
+          ],
+          "families": 379,
+          "gate": 0.9905897114178168,
+          "ndcg5": 0.5050197416062258,
+          "reduction_ci": [
+            -4.0995967453236695,
+            5.911587848725043
+          ],
+          "reduction_vs_current_percent": 0.7336470093233904,
+          "selected_cv_ratio": 0.2596239698569796,
+          "spearman": 0.6445822302506771,
+          "top5_cv_ratio": 0.20593347533670814,
+          "winner_in5": 0.27352572145545795
+        },
+        {
+          "arm": "h02__full_trained_gram",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2807,
+            2807,
+            2807,
+            2807,
+            2807
+          ],
+          "families": 379,
+          "gate": 0.9918444165621079,
+          "ndcg5": 0.5208833882686091,
+          "reduction_ci": [
+            -0.08959790244234174,
+            8.928820931377784
+          ],
+          "reduction_vs_current_percent": 4.207971641204756,
+          "selected_cv_ratio": 0.2505371249561132,
+          "spearman": 0.6514972902795039,
+          "top5_cv_ratio": 0.2062131989468647,
+          "winner_in5": 0.2810539523212045
+        },
+        {
+          "arm": "h02__full_random_gram",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2807,
+            2807,
+            2807,
+            2807,
+            2807
+          ],
+          "families": 379,
+          "gate": 0.9899623588456713,
+          "ndcg5": 0.5164186400534101,
+          "reduction_ci": [
+            -1.3258552259231426,
+            7.98327504925141
+          ],
+          "reduction_vs_current_percent": 3.140819532419714,
+          "selected_cv_ratio": 0.2533281841476405,
+          "spearman": 0.651090466658095,
+          "top5_cv_ratio": 0.206101296397957,
+          "winner_in5": 0.28670012547051443
+        }
+      ],
+      "arms": 5,
+      "conclusion": "All fixed geometry contrast intervals include zero; no geometry-specific lift established.",
+      "contexts": 1594,
+      "contrasts": {
+        "features_geometry_vs_stronger_current": {
+          "ci_percent": [
+            -2.6597049944199855,
+            6.813187193023464
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 2.0324840120471976,
+          "family_win_fraction": 0.40105540897097625,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 1.874082203836125
+        },
+        "full_plus_geometry_vs_frozen_full": {
+          "ci_percent": [
+            -1.2261584001081594,
+            2.2334556694259273
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 0.8006417561905232,
+          "family_win_fraction": 0.2928759894459103,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 0.5795808499748478
+        },
+        "full_plus_geometry_vs_full_plus_random": {
+          "ci_percent": [
+            -0.6151509083056697,
+            2.8422459771663284
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 0.9276890340520927,
+          "family_win_fraction": 0.3113456464379947,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 1.101756285396427
+        },
+        "full_plus_geometry_vs_stronger_current": {
+          "ci_percent": [
+            -0.08959790244234174,
+            8.928820931377784
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 4.382384683444629,
+          "family_win_fraction": 0.42744063324538256,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 4.207971641204756
+        },
+        "geometry_vs_frozen_features": {
+          "ci_percent": [
+            -0.1456855236017212,
+            2.8242498711328405
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 1.0875411866210216,
+          "family_win_fraction": 0.2796833773087071,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 1.201651811678106
+        },
+        "geometry_vs_random": {
+          "ci_percent": [
+            -1.4676935294303404,
+            1.9313653820555108
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -0.20418999334703702,
+          "family_win_fraction": 0.31398416886543534,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 0.1375644722041769
+        },
+        "geometry_vs_screened_input": {
+          "ci_percent": [
+            -0.7181559343668098,
+            3.413554435482651
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 1.3059196178365484,
+          "family_win_fraction": 0.3007915567282322,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 1.1488637994183648
+        }
+      },
+      "families": 379,
+      "fits": 25,
+      "hypothesis": "Invariant higher-order hidden geometry.",
+      "id": "H02",
+      "predictions_independently_verified": 510080,
+      "seconds": 8.885743618011475,
+      "source_artifact_sha256": "698129b4d55bfdb59dcb8dc19435a98fb865424cb81c90bff2bbe2f1733e8d58",
+      "status": "PASS"
+    },
+    {
+      "arm_metrics": [
+        {
+          "arm": "h03__features_trained_function",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2679,
+            2679,
+            2679,
+            2679,
+            2679
+          ],
+          "families": 379,
+          "gate": 0.9899623588456713,
+          "ndcg5": 0.5204916194515901,
+          "reduction_ci": [
+            0.01750381930485131,
+            9.50556686823229
+          ],
+          "reduction_vs_current_percent": 4.555989014108519,
+          "selected_cv_ratio": 0.24962691067695095,
+          "spearman": 0.6510826980617535,
+          "top5_cv_ratio": 0.20548528290871498,
+          "winner_in5": 0.28670012547051443
+        },
+        {
+          "arm": "h03__features_random_function",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2679,
+            2679,
+            2679,
+            2679,
+            2679
+          ],
+          "families": 379,
+          "gate": 0.9918444165621079,
+          "ndcg5": 0.5052329598640222,
+          "reduction_ci": [
+            -3.0151426135998602,
+            6.6005609748493494
+          ],
+          "reduction_vs_current_percent": 1.6145934578284837,
+          "selected_cv_ratio": 0.2573199181083092,
+          "spearman": 0.6444266505083459,
+          "top5_cv_ratio": 0.2058969647419017,
+          "winner_in5": 0.27728983688833125
+        },
+        {
+          "arm": "h03__a0_cost",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            500,
+            500,
+            500,
+            500,
+            500
+          ],
+          "families": 379,
+          "gate": 0.9949811794228356,
+          "ndcg5": 0.5160201199999334,
+          "reduction_ci": [
+            -1.8316793058210072,
+            9.23011247745259
+          ],
+          "reduction_vs_current_percent": 3.8619754365155523,
+          "selected_cv_ratio": 0.25144205301592915,
+          "spearman": 0.652033554339118,
+          "top5_cv_ratio": 0.2119979138697377,
+          "winner_in5": 0.2860727728983689
+        },
+        {
+          "arm": "h03__a0_trained_function",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            564,
+            564,
+            564,
+            564,
+            564
+          ],
+          "families": 379,
+          "gate": 0.9962358845671268,
+          "ndcg5": 0.5169428014613882,
+          "reduction_ci": [
+            -2.33687708391935,
+            7.655484751669173
+          ],
+          "reduction_vs_current_percent": 2.910500537230132,
+          "selected_cv_ratio": 0.2539305668288115,
+          "spearman": 0.6565121371810766,
+          "top5_cv_ratio": 0.20583734670402662,
+          "winner_in5": 0.27603513174404015
+        },
+        {
+          "arm": "h03__a0_random_function",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            564,
+            564,
+            564,
+            564,
+            564
+          ],
+          "families": 379,
+          "gate": 0.9956085319949812,
+          "ndcg5": 0.5133183190780356,
+          "reduction_ci": [
+            -2.4801141164269667,
+            8.616809712815563
+          ],
+          "reduction_vs_current_percent": 3.2341803396088498,
+          "selected_cv_ratio": 0.25308400570589024,
+          "spearman": 0.6521156393909658,
+          "top5_cv_ratio": 0.21011921568063313,
+          "winner_in5": 0.28795483061480553
+        },
+        {
+          "arm": "h03__full_trained_function",
+          "confidence": 0.975,
+          "contexts": 1594,
+          "dimensions": [
+            2807,
+            2807,
+            2807,
+            2807,
+            2807
+          ],
+          "families": 379,
+          "gate": 0.9899623588456713,
+          "ndcg5": 0.5232492624638119,
+          "reduction_ci": [
+            -0.3231233070151513,
+            8.651281640400683
+          ],
+          "reduction_vs_current_percent": 3.9966746791459173,
+          "selected_cv_ratio": 0.2510897568848151,
+          "spearman": 0.6516886977830575,
+          "top5_cv_ratio": 0.2059469851213496,
+          "winner_in5": 0.2848180677540778
+        }
+      ],
+      "arms": 6,
+      "conclusion": "Exploratory signal versus nonstate and random; no established lift over stronger frozen A0 or benefit when added to A0.",
+      "contexts": 1594,
+      "contrasts": {
+        "a0_cost_vs_frozen_a0": {
+          "ci_percent": [
+            -8.585939220312573,
+            3.1751142248247777
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -1.3771311743817183,
+          "family_win_fraction": 0.38258575197889183,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -1.5224078046044864
+        },
+        "a0_cost_vs_lambda_current": {
+          "ci_percent": [
+            -1.8316793058210072,
+            9.23011247745259
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 3.539750105981465,
+          "family_win_fraction": 0.43007915567282323,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 3.8619754365155523
+        },
+        "a0_function_vs_a0": {
+          "ci_percent": [
+            -3.4166848467444697,
+            1.0727383267192572
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -0.849767733666007,
+          "family_win_fraction": 0.287598944591029,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -0.989696744452151
+        },
+        "a0_function_vs_frozen_a0": {
+          "ci_percent": [
+            -9.741515890092622,
+            2.4511990718457297
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -2.238601324417888,
+          "family_win_fraction": 0.37994722955145116,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -2.5271717695360962
+        },
+        "a0_function_vs_random": {
+          "ci_percent": [
+            -2.702327637180445,
+            1.521516058773294
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -0.12520718292967636,
+          "family_win_fraction": 0.32717678100263853,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -0.33449807330181436
+        },
+        "a0_random_function_vs_lambda_a0": {
+          "ci_percent": [
+            -9.304782490263364,
+            2.5598185004717426
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -2.1107513292102364,
+          "family_win_fraction": 0.39313984168865435,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -2.185363696773912
+        },
+        "a0_random_function_vs_lambda_current": {
+          "ci_percent": [
+            -2.4801141164269667,
+            8.616809712815563
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 2.8417111829789676,
+          "family_win_fraction": 0.43535620052770446,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 3.2341803396088498
+        },
+        "a0_trained_function_vs_lambda_current": {
+          "ci_percent": [
+            -2.33687708391935,
+            7.655484751669173
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 2.7200620265684927,
+          "family_win_fraction": 0.42216358839050133,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 2.910500537230132
+        },
+        "features_random_function_vs_lambda_a0": {
+          "ci_percent": [
+            -8.070152880700014,
+            0.13372534089251828
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -2.9609012270778168,
+          "family_win_fraction": 0.39050131926121373,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -3.8956584592642507
+        },
+        "features_random_function_vs_lambda_current": {
+          "ci_percent": [
+            -3.0151426135998602,
+            6.6005609748493494
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 2.0327943134078486,
+          "family_win_fraction": 0.40105540897097625,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 1.6145934578284837
+        },
+        "features_trained_function_vs_lambda_a0": {
+          "ci_percent": [
+            -4.727096189114657,
+            3.1652944759961112
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -0.3262922055899953,
+          "family_win_fraction": 0.42744063324538256,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -0.7895247464571709
+        },
+        "full_function_vs_current": {
+          "ci_percent": [
+            -0.3231233070151513,
+            8.651281640400683
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 3.9959262803360818,
+          "family_win_fraction": 0.43535620052770446,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 3.9966746791459173
+        },
+        "full_function_vs_frozen_a0": {
+          "ci_percent": [
+            -5.1946533330401685,
+            2.4186730397952054
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -0.897702270589873,
+          "family_win_fraction": 0.43799472295514513,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": -1.380164488254021
+        },
+        "full_function_vs_frozen_full": {
+          "ci_percent": [
+            -1.3838031890864804,
+            1.8159479561029899
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 0.3997069969479128,
+          "family_win_fraction": 0.36939313984168864,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 0.36028042495063195
+        },
+        "function_vs_current": {
+          "ci_percent": [
+            0.01750381930485131,
+            9.50556686823229
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 4.539622447542035,
+          "family_win_fraction": 0.42480211081794195,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 4.555989014108519
+        },
+        "function_vs_frozen_features": {
+          "ci_percent": [
+            1.692243556000627,
+            6.38028545501397
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 3.6188621529586573,
+          "family_win_fraction": 0.49076517150395776,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 3.9019370044274804
+        },
+        "function_vs_random": {
+          "ci_percent": [
+            0.7702337207060285,
+            5.395368419933761
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 2.5588441729713196,
+          "family_win_fraction": 0.41688654353562005,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 2.9896665162625014
+        }
+      },
+      "families": 379,
+      "fits": 30,
+      "hypothesis": "Readout-aware output, contribution and Jacobian/Hessian summaries.",
+      "id": "H03",
+      "predictions_independently_verified": 612096,
+      "seconds": 11.115129709243774,
+      "source_artifact_sha256": "4da33283fc32b609166f2a59bfbf93407f26428921f3f881915d32405a87df20",
+      "status": "PASS"
+    },
+    {
+      "candidate_records": 437873,
+      "completed_cv": 368185,
+      "conclusion": "Inventory only; context nonoverlap does not establish family independence, current role, original-row authority or admissible labels.",
+      "contexts": 3492,
+      "contexts_with_at_least16_completed": 2917,
+      "contexts_with_at_least64_completed": 2103,
+      "derived_table_authoritative": false,
+      "exact_context_overlap_with_old_probe": 0,
+      "fits_launched": 0,
+      "id": "H04",
+      "s3_writes": 0,
+      "scores_peeked_for_selection": false,
+      "source_artifact_sha256": "dd1c7607c9eb7a3e911470c2e2ff4b418a69bba7a189e76cc2648129f9d553a5",
+      "stage": "larger_cohort_inventory_complete_not_fit_ready",
+      "teacher_admission": false
+    },
+    {
+      "conclusion": "Conceptual direction, not a separately executed result. H07 is separately reported.",
+      "hypothesis": "Conditional residual interactions, balanced training and TRAIN-only reduction.",
+      "id": "H05",
+      "source_artifact_sha256": "9260f19d5bd4056fc6d6d25dbb52a6e6c3ea2d7d6ea2f1df6b6ba4d9999233ff",
+      "status": "CONCEPT_NO_SEPARATE_RESULT_IN_THIS_HISTORY"
+    },
+    {
+      "arm_metrics": {
+        "context_shuffle": {
+          "gate": 0.9874529485570891,
+          "ndcg5": 0.5398810963162586,
+          "selected_cv_ratio": 0.2605204711627761,
+          "winner_in5": 0.31493099121706397
+        },
+        "current_neural": {
+          "gate": 0.9924717691342535,
+          "ndcg5": 0.5617940801363083,
+          "selected_cv_ratio": 0.250783858792732,
+          "winner_in5": 0.31681304893350065
+        },
+        "current_random": {
+          "gate": 0.9899623588456713,
+          "ndcg5": 0.5419804430786944,
+          "selected_cv_ratio": 0.25251613001140044,
+          "winner_in5": 0.31493099121706397
+        }
+      },
+      "conclusion": "Both matched-control intervals include harm; no attributable lift.",
+      "contexts": 1594,
+      "contrasts": {
+        "trained_neural_vs_matched_random": {
+          "bootstrap_draws": 5000,
+          "ci_percent": [
+            -3.3209034267538815,
+            4.116699901797325
+          ],
+          "confidence": 0.975,
+          "equal_family_reduction_percent": 1.3261638675036491,
+          "families": 379,
+          "family_win_fraction": 0.44327176781002636,
+          "leave_one_family_out_reduction_range": [
+            0.22226976529853282,
+            1.5958064310292452
+          ],
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 0.6860041846000975
+        },
+        "trained_neural_vs_matched_shuffled": {
+          "bootstrap_draws": 5000,
+          "ci_percent": [
+            -0.30482037542905654,
+            7.9041318688120885
+          ],
+          "confidence": 0.975,
+          "equal_family_reduction_percent": 2.5809966655233163,
+          "families": 379,
+          "family_win_fraction": 0.46437994722955145,
+          "leave_one_family_out_reduction_range": [
+            2.49856413630698,
+            4.57376088939514
+          ],
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 3.7373694000270685
+        }
+      },
+      "families": 379,
+      "fits": 10,
+      "hypothesis": "Matched random/shuffled neural-only controls.",
+      "id": "H06",
+      "predictions_independently_rescored": 306048,
+      "seconds": 428.53409910202026,
+      "source_artifact_sha256": "f9c1b30c61792d9fcea2c81ad16557cdd0a785fb6408dbcd097c5b794e92dc0c",
+      "status": "PASS"
+    },
+    {
+      "arm_metrics": [
+        {
+          "arm": "h07__a0_interaction",
+          "chosen_lambdas": [
+            1.0,
+            1.0,
+            0.01,
+            0.01,
+            1.0
+          ],
+          "confidence": 0.975,
+          "context_width": 88,
+          "contexts": 1594,
+          "dimensions": [
+            272,
+            272,
+            272,
+            272,
+            272
+          ],
+          "families": 379,
+          "gate": 0.9868255959849436,
+          "ndcg5": 0.39778835333964957,
+          "projected_context_width": 16,
+          "reduction_ci": [
+            -43.186888289211474,
+            -14.051869490254065
+          ],
+          "reduction_vs_current_percent": -26.294792071662076,
+          "selected_cv_ratio": 0.33031489827158617,
+          "spearman": 0.4239575798540148,
+          "top5_cv_ratio": 0.26095285119043354,
+          "winner_in5": 0.198870765370138
+        },
+        {
+          "arm": "h07__a0_trained_interaction",
+          "chosen_lambdas": [
+            0.01,
+            1.0,
+            1.0,
+            0.1,
+            0.1
+          ],
+          "confidence": 0.975,
+          "context_width": 216,
+          "contexts": 1594,
+          "dimensions": [
+            528,
+            528,
+            528,
+            528,
+            528
+          ],
+          "families": 379,
+          "gate": 0.9830614805520702,
+          "ndcg5": 0.389370827241789,
+          "projected_context_width": 32,
+          "reduction_ci": [
+            -38.022995061553495,
+            -14.064993368371637
+          ],
+          "reduction_vs_current_percent": -24.451912738915095,
+          "selected_cv_ratio": 0.3254949806064323,
+          "spearman": 0.414602465002432,
+          "top5_cv_ratio": 0.24345171009759764,
+          "winner_in5": 0.19824341279799249
+        },
+        {
+          "arm": "h07__a0_random_interaction",
+          "chosen_lambdas": [
+            1.0,
+            0.01,
+            0.1,
+            1.0,
+            1.0
+          ],
+          "confidence": 0.975,
+          "context_width": 216,
+          "contexts": 1594,
+          "dimensions": [
+            528,
+            528,
+            528,
+            528,
+            528
+          ],
+          "families": 379,
+          "gate": 0.9799247176913425,
+          "ndcg5": 0.3773458348854913,
+          "projected_context_width": 32,
+          "reduction_ci": [
+            -44.35025507023426,
+            -15.071851368031027
+          ],
+          "reduction_vs_current_percent": -27.3529762753691,
+          "selected_cv_ratio": 0.3330825025557102,
+          "spearman": 0.40248955761514815,
+          "top5_cv_ratio": 0.25132888834702677,
+          "winner_in5": 0.19008782936010038
+        }
+      ],
+      "arms": 3,
+      "conclusion": "Compressed conditional Ridge underperforms tree baselines; trained-control intervals include zero.",
+      "contexts": 1594,
+      "contrasts": {
+        "a0_interaction_vs_h03_a0_cost": {
+          "ci_percent": [
+            -50.83322807225564,
+            -17.12033899126382
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -31.727763567148614,
+          "family_win_fraction": 0.28232189973614774,
+          "median_context_reduction_percent": -1.601651683282812,
+          "reduction_percent": -31.368199674483343
+        },
+        "a0_interaction_vs_lambda_a0": {
+          "ci_percent": [
+            -52.69920060482434,
+            -19.329297962219165
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -33.541827664547654,
+          "family_win_fraction": 0.24274406332453827,
+          "median_context_reduction_percent": -2.3620846293965547,
+          "reduction_percent": -33.3681593990961
+        },
+        "a0_interaction_vs_lambda_current": {
+          "ci_percent": [
+            -43.186888289211474,
+            -14.051869490254065
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -27.064929916673464,
+          "family_win_fraction": 0.2638522427440633,
+          "median_context_reduction_percent": -2.1785542507347877,
+          "reduction_percent": -26.294792071662076
+        },
+        "a0_random_interaction_vs_h03_a0_cost": {
+          "ci_percent": [
+            -51.800721977838826,
+            -18.42273452362119
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -33.109209873091274,
+          "family_win_fraction": 0.24538258575197888,
+          "median_context_reduction_percent": -2.727184230919577,
+          "reduction_percent": -32.4688923593099
+        },
+        "a0_random_interaction_vs_lambda_a0": {
+          "ci_percent": [
+            -53.726501413313,
+            -20.662476409191868
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -34.942298298226795,
+          "family_win_fraction": 0.22163588390501318,
+          "median_context_reduction_percent": -3.0177665344149895,
+          "reduction_percent": -34.48560911526115
+        },
+        "a0_random_interaction_vs_lambda_current": {
+          "ci_percent": [
+            -44.35025507023426,
+            -15.071851368031027
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -28.39747647553743,
+          "family_win_fraction": 0.23746701846965698,
+          "median_context_reduction_percent": -2.8845381512438983,
+          "reduction_percent": -27.3529762753691
+        },
+        "a0_trained_interaction_vs_h03_a0_cost": {
+          "ci_percent": [
+            -47.027011227805474,
+            -16.05356449821025
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -27.897299422204625,
+          "family_win_fraction": 0.24010554089709762,
+          "median_context_reduction_percent": -2.1143757889533488,
+          "reduction_percent": -29.451289751365394
+        },
+        "a0_trained_interaction_vs_lambda_a0": {
+          "ci_percent": [
+            -46.91830841968495,
+            -19.651091473215136
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -29.658613003740154,
+          "family_win_fraction": 0.18733509234828497,
+          "median_context_reduction_percent": -2.8283347580633,
+          "reduction_percent": -31.422066289701366
+        },
+        "a0_trained_interaction_vs_lambda_current": {
+          "ci_percent": [
+            -38.022995061553495,
+            -14.064993368371637
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -23.370054630359704,
+          "family_win_fraction": 0.24538258575197888,
+          "median_context_reduction_percent": -2.7725552004588927,
+          "reduction_percent": -24.451912738915095
+        },
+        "trained_added_to_a0": {
+          "ci_percent": [
+            -2.437070060070087,
+            6.247581493874773
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 2.9078639469889644,
+          "family_win_fraction": 0.40633245382585753,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 1.4591886985342195
+        },
+        "trained_vs_random": {
+          "ci_percent": [
+            -2.211362057252496,
+            7.307423604550025
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 3.915514528150066,
+          "family_win_fraction": 0.46965699208443273,
+          "median_context_reduction_percent": 0.0,
+          "reduction_percent": 2.2779707402999283
+        }
+      },
+      "families": 379,
+      "hypothesis": "Nested TRAIN-family conditional program-by-context Ridge.",
+      "id": "H07",
+      "inner_transformation_fits": 45,
+      "nested_inner_choices_verified": 45,
+      "outer_fits": 15,
+      "predictions_independently_verified": 306048,
+      "replay_max_abs_error": 1.7763568394002505e-15,
+      "ridge_solutions": 150,
+      "saved_models_independently_replayed": 15,
+      "seconds": 20.235912799835205,
+      "source_artifact_sha256": "dac65211fb94e04361923c5a85397aaef65e2b9babca655fd0154c1c9bf903a9",
+      "status": "PASS"
+    },
+    {
+      "arm_metrics": {
+        "a0": {
+          "ndcg5": 0.3128795661366415,
+          "selected_cv_ratio": 0.22644372822961598,
+          "top5_cv_ratio": 0.19142563705256288,
+          "winner_in5": 0.012547051442910916
+        },
+        "random_function": {
+          "ndcg5": 0.30133149734130177,
+          "selected_cv_ratio": 0.2344058106812004,
+          "top5_cv_ratio": 0.18250980343644482,
+          "winner_in5": 0.008155583437892095
+        },
+        "trained_function": {
+          "ndcg5": 0.3108778018113235,
+          "selected_cv_ratio": 0.23360706386498953,
+          "top5_cv_ratio": 0.18454561700693034,
+          "winner_in5": 0.008155583437892095
+        }
+      },
+      "candidate_rows": 1836286,
+      "conclusion": "No established trained-function advantage over random or A0. Original positive-cost v1 quarantined; corrected negative-cost scoring only.",
+      "contexts": 1594,
+      "contrasts": {
+        "a0_vs_frozen_current": {
+          "ci_percent": [
+            1.2936900837946637,
+            14.039184990734979
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 7.509469387261724,
+          "family_win_fraction": 0.5145118733509235,
+          "reduction_percent": 7.475670461603945
+        },
+        "trained_vs_a0": {
+          "ci_percent": [
+            -10.338123371877444,
+            3.009651388786988
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": -2.0587426995030134,
+          "family_win_fraction": 0.46701846965699206,
+          "reduction_percent": -3.1634065078233853
+        },
+        "trained_vs_frozen_current": {
+          "ci_percent": [
+            -1.1308511853818237,
+            10.246481427469721
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 5.605327340540378,
+          "family_win_fraction": 0.5171503957783641,
+          "reduction_percent": 4.548749799666374
+        },
+        "trained_vs_random": {
+          "ci_percent": [
+            -5.186901424219089,
+            5.727103221058462
+          ],
+          "confidence": 0.975,
+          "draws": 100000,
+          "equal_family_reduction_percent": 1.7290774272883502,
+          "family_win_fraction": 0.46437994722955145,
+          "reduction_percent": 0.3407538464552884
+        }
+      },
+      "families": 379,
+      "hypothesis": "Frozen function readouts on the full adaptive cached candidate pool.",
+      "id": "H08",
+      "new_fits": 0,
+      "outer_test_rows_decoded": 0,
+      "predictions_independently_verified": 5508858,
+      "source_artifact_sha256": "30e88a69b11d62e2a7cc4ede07a0876f2cf6bb9d95f9c01ce996531ff2211115",
+      "status": "PASS",
+      "verification_seconds": 86.21030807495117,
+      "worker_seconds": 349.57707810401917
+    },
+    {
+      "conclusion": "Explicitly queued; no H09 fits or clock started in the source record.",
+      "hypothesis": "Full DSL-preserving conditional residual around a fixed tree baseline.",
+      "id": "H09",
+      "source_artifact_sha256": "9260f19d5bd4056fc6d6d25dbb52a6e6c3ea2d7d6ea2f1df6b6ba4d9999233ff",
+      "status": "QUEUED_NOT_EXECUTED_IN_THIS_HISTORY"
+    },
+    {
+      "candidate_metric_values_read": 0,
+      "conclusion": "Stored metadata bindings improved; original-source fidelity and learning admission remained unresolved.",
+      "contexts": 56,
+      "families": 49,
+      "id": "H10",
+      "new_fits": 0,
+      "numeric_input_cells_read": 0,
+      "original_source_chain_established": 0,
+      "s3_bytes": 831054,
+      "s3_gets": 157,
+      "s3_writes": 0,
+      "seconds": 1.7243103981018066,
+      "source_artifact_sha256": "8a3b083690d19682b9f8fb28d84e0e81f885b11ce9a351ea4aff6e6e6cddf6de",
+      "source_blob_in_dataset_manifest": 56,
+      "status": "PASS_STORED_CONTEXT_BINDINGS_ONLY",
+      "stored_receipt_input_membership_recipe_bindings": 56
+    },
+    {
+      "conclusion": "No H11 result/event in the frozen early index and named result folders. This is not evidence of global nonexistence or a negative experiment.",
+      "id": "H11",
+      "result": null,
+      "source_artifact_sha256": "6575268cdb06228f0ba19e4eb775822b85719d227e7d71c669088ca8348d1dd6",
+      "status": "UNAVAILABLE_IN_BOUNDED_SAVED_HISTORY"
+    },
+    {
+      "cache_reused_objects": 155,
+      "candidate_metric_values_read": 0,
+      "conclusion": "Variable-slate metadata reserved; stored bindings are not original-row proof or independent validation.",
+      "consumed_metadata_objects": 401,
+      "contexts": 147,
+      "families": 125,
+      "full_stored_contexts": 146,
+      "full_stored_families": 124,
+      "id": "H12",
+      "metadata_bytes_consumed": 3261629,
+      "new_fits": 0,
+      "numeric_input_cells_read": 0,
+      "original_source_row_chains": 0,
+      "s3_bytes": 2480719,
+      "s3_gets": 246,
+      "s3_writes": 0,
+      "screened_contexts": 1,
+      "seconds": 25.8528950214386,
+      "source_artifact_sha256": "8d74ef2577d7be53a8fb8c044f8acd43cc1a6a1a9878d5c1dee71c76f7b2240c",
+      "status": "PASS_STORED_METADATA_ONLY"
+    },
+    {
+      "conclusion": "Partial archive qualification failed. Unsupported DSL left91 contexts/82 families from147; no lift computed. The original phase discloses a transient4+1-fit deviation.",
+      "id": "H13",
+      "lift_computed": false,
+      "new_candidate_metric_values_read": 0,
+      "new_readout_fits": 5,
+      "old_oof_max_error": 0,
+      "old_oof_predictions_replayed": 306048,
+      "original_models_reused": 15,
+      "source_artifact_sha256": "24b4b1e6d96e6c3f050de8b01c4d510995e5df88990c894c873ce2c29284b05a",
+      "status": "CLOSED_PARTIAL_ARCHIVE_QUALIFICATION_FAILED",
+      "unlabeled_candidates": 3122,
+      "unlabeled_predictions_verified": 12488,
+      "unlabeled_score_contexts": 91,
+      "unlabeled_score_families": 82
+    },
+    {
+      "candidates": 3122,
+      "conclusion": "Secondary diagnostic remains inconclusive: adaptive slates,82 families, pre-split preprocessing/source/exposure gaps and no qualified current/A0 comparator.",
+      "contexts": 91,
+      "contrasts": [
+        {
+          "ci_97_5_percent": [
+            -4.307423533208826,
+            11.540554852288167
+          ],
+          "comparator": "features",
+          "contexts": 91,
+          "equal_context_lift_percent": 1.1738612873709902,
+          "families": 82,
+          "family_mean_log_cost_delta": -0.02576774123936134,
+          "lift_percent": 2.5438586249026405,
+          "subset": "all"
+        },
+        {
+          "ci_97_5_percent": [
+            -4.350780016342435,
+            11.495753450515949
+          ],
+          "comparator": "random",
+          "contexts": 91,
+          "equal_context_lift_percent": 1.1261887970462816,
+          "families": 82,
+          "family_mean_log_cost_delta": -0.025232537888305758,
+          "lift_percent": 2.4916858111707465,
+          "subset": "all"
+        },
+        {
+          "ci_97_5_percent": [
+            -8.370144331764502,
+            5.86027782230405
+          ],
+          "comparator": "features",
+          "contexts": 52,
+          "equal_context_lift_percent": -1.7895208141427934,
+          "families": 44,
+          "family_mean_log_cost_delta": 0.00270151096274794,
+          "lift_percent": -0.2705163331719903,
+          "subset": "prefit_true"
+        },
+        {
+          "ci_97_5_percent": [
+            -8.539140173479046,
+            5.780699563298028
+          ],
+          "comparator": "random",
+          "contexts": 52,
+          "equal_context_lift_percent": -1.854901086599434,
+          "families": 44,
+          "family_mean_log_cost_delta": 0.0034603591222511928,
+          "lift_percent": -0.34663530766294404,
+          "subset": "prefit_true"
+        },
+        {
+          "ci_97_5_percent": [
+            -2.9876200959959416,
+            23.53354999714409
+          ],
+          "comparator": "features",
+          "contexts": 39,
+          "equal_context_lift_percent": 4.991272038331837,
+          "families": 38,
+          "family_mean_log_cost_delta": -0.05873213852601419,
+          "lift_percent": 5.7040682195661,
+          "subset": "prefit_false"
+        },
+        {
+          "ci_97_5_percent": [
+            -3.007892143713851,
+            23.49488927077527
+          ],
+          "comparator": "random",
+          "contexts": 39,
+          "equal_context_lift_percent": 4.96569576514939,
+          "families": 38,
+          "family_mean_log_cost_delta": -0.05845589232158221,
+          "lift_percent": 5.678015728033103,
+          "subset": "prefit_false"
+        }
+      ],
+      "cost_formula": "mean(log((cv_rmse+1e-12)/(baseline_rmse+1e-12))) + 0.2*population_sd(log_ratio)",
+      "duplicates_deduplicated": 0,
+      "families": 82,
+      "fold_rows": 9366,
+      "get_bytes": 13531171,
+      "get_count": 10,
+      "id": "H14",
+      "new_fits": 0,
+      "positive_conditional_signal": false,
+      "source_artifact_sha256": "44e01473df6689ac8c4797d48b468bd93619f6b5b4ab06ab15f073fea594b392",
+      "status": "SECONDARY_DIAGNOSTIC"
+    }
+  ]
+}

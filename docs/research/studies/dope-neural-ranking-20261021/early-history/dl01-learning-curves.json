@@ -1,0 +1,10 @@
+{
+  "dataset_optimizer_updates": 0,
+  "experiment": "DL01",
+  "reason": "Full extraction hit hostCPUguard and original preparationdeadline; no completefeatures/datasetupdates. No curve invented.",
+  "runs": [],
+  "schema": "dope.early-per-run-learning-curves/v1",
+  "snapshot_count": 0,
+  "source_report_sha256": "43e5d68167a0f0d84d00bd4e8ae59963f623f6556f3f09545ee2c40a59cf5dd5",
+  "state": "UNAVAILABLE_NO_DATASET_UPDATES"
+}

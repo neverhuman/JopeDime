@@ -1,0 +1,89 @@
+{
+  "R2_static_type_observation": {
+    "all_scalar_vector_values_and_nested_names_omitted": true,
+    "causal_exception_status": "UNRESOLVED_NO_TYPE_CONTRADICTION",
+    "contradicts_R2_constant_column_guard": false,
+    "observed_ordinal_path": [
+      10,
+      0
+    ],
+    "observed_type": "array",
+    "producer_imported_or_executed": false,
+    "static_guard_message": "constant-column descriptor list type",
+    "static_source_raise_line": 104,
+    "static_source_sha256": "7b0e45802c7a361f9968a0954d59540bbd1915a048d3e2cbaa1a80d293da9bdf"
+  },
+  "S3_durability_claim": false,
+  "assembled_utc": "2026-10-22T19:46:21.038775+00:00",
+  "cached_object_VersionId": "UNKNOWN",
+  "dataset_optimizer_updates": 0,
+  "fixed_known_fields_per_case": 13,
+  "full_metadata_byte_SHA_and_length_verified": true,
+  "gate_conclusion": {
+    "NN_TRAIN_only_fitting_and_independent_validation": "PROSPECTIVE_UNQUALIFIED",
+    "actual_GP_execution_input_and_cuts": "UNPROVEN",
+    "current_NN_roles": "Prior pinned TRAIN/included/reservation metadata only; no new source graph edges.",
+    "exact_inner_fitness_candidate_contract": "UNPROVEN",
+    "fresh_Dope_permitted_view": "PROSPECTIVE_UNQUALIFIED",
+    "transform_fit_authority": "UNPROVEN"
+  },
+  "incremental_Dope_state_lift": "NOT_ESTABLISHED_UNCHANGED_H20_RESULT",
+  "learned_volume_unchanged": {
+    "archived_context_program_outcomes": 979200,
+    "components": 162,
+    "contexts": 850
+  },
+  "metadata_potential_only": {
+    "components": 314,
+    "included_contexts": 1909,
+    "independence_proven": false,
+    "outside_known_H18_components": 154,
+    "outside_known_H18_contexts": 811
+  },
+  "metadata_structure_nodes": [
+    320,
+    354
+  ],
+  "new_GET_HEAD_provider_or_API_calls": 0,
+  "new_neural_GP_or_baseline_fits": 0,
+  "new_numeric_admissions": 0,
+  "next_branch": "H26 exact GP execution and constrained-inner-label locator feasibility; source preparation complete, locator worker not launched.",
+  "original_R0_R1_R2_failure_records_preserved": true,
+  "original_cache7_rereads": 0,
+  "original_pilot_cases": 12,
+  "prior_HEAD_version_claim_for_caches": false,
+  "reader_compatibility_assessed": false,
+  "resources": "Retained actual Ubuntu2CPU/8GiB/swap0/Tasks64/private AF_UNIX units; no compute deadline; original and QA closures separate.",
+  "scalar_vector_string_values_or_arbitrary_nested_names_projected": false,
+  "schema": "h25.public-metadata-structure-result/v1",
+  "selected_metadata_cases": 2,
+  "source_equivalence_edges": 0,
+  "source_sha256": {
+    "H26_public_source_summary": "a5b10d3123391c9483c9fe52638c257cac617e9cc33ba33f464c3d211ee8862f",
+    "H26_root_plan_review": "ef7ffd5e3aa978cdb50dca592cf0dab2422d5b6f499b3a5d0929c6877a6b4aab",
+    "H26_source_freeze": "536904ab49b9c01e4e85ce88110dcb4ad3995251d8482c02d6b043eb14296c77",
+    "R1_independent_QA": "43fbc9a891ba85c8252876aec132d04471c679c7715841cfbf1911c970222681",
+    "R1_results": "a395fd81f9d683bcb4f79ee803dae9a594e26726071501ef38d162cc876d158d",
+    "R2_original_closure": "fc15b7996ab4f187766837ae2523b67de76a9642fc86df314b6fac04c52bfa71",
+    "R2_results": "0b729eac460d1ffc3118611c867a5c4a2bef7717505927b8ab73c3cd820934ea",
+    "R3_independent_QA": "774ce299f6d2995f8fac4d966cb8e9074e396925469fbf8939a511c638818676",
+    "R3_independent_source": "ebc250b45be3d2c57e1c6a7f27739946b7596b8ebe66e8d83ecba24cda0eec3f",
+    "R3_parser": "285b4701efe443e48093c9befd3dc5234b7463b03cb32e485e4d1fa07846f847",
+    "R3_producer_closure": "ed84963931c51c1ef751ad280b081ae93c9205365ac3f95cd2c6b95edf40a480",
+    "R3_prospective_review": "450588b689230f0b13dfa976812fe0430ad33e6ce767864fd4475f7312782bff",
+    "R3_protocol": "8cf3e7374ab90b7fdec0eb27230f15ba9a10cb2cd6bacedf767563d568103996",
+    "R3_results": "e857c0a69cac848fc83e2fda76632a0a6ac3b71b8b7722a62014803f1e82324d",
+    "R3_root_grant": "b522051ba9b749d6f0755a051a1dda87fb02d33c18885fb3df27c89c297da1eb",
+    "R3_source_freeze": "691566e4855eb2944dbf1b80b2951ccdc5cf40c32437d79f2b77de23af2dee04",
+    "R3_worker": "330c58537bcaf3a806b9fa391917b071e14a0da4f8ba44a58fda6eeef6cd1c13"
+  },
+  "state": "COMPLETE_VERIFIED_STRUCTURE_ONLY_NO_NEW_NUMERICAL_ADMISSION",
+  "strict_projection_history": [
+    "R0 source review blocked before body access: unused encoding descriptor type hole.",
+    "R1 exact first metadata read; strict unknown structured field guard refused. Independent saved-copy QA confirmed the partial result.",
+    "R2 saved-copy-only replay; strict descriptor guard refused before the second original cache.",
+    "R3 separately changed output objective to value-free structure inventory. It is not a retrospective full-reader PASS."
+  ],
+  "unique_original_cached_metadata_objects_read": 2,
+  "unique_original_metadata_bytes": 22032
+}

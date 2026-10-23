@@ -1,0 +1,165 @@
+{
+  "curve_snapshots": 455,
+  "limits": [
+    "Hashes identify saved aggregate/reportJSON, not rawdataset/model/predictionarrays.",
+    "Collector snapshot reporting is not new native/model forward replay.",
+    "DL04 partialaudit didnotestablish independentweight-forward replay.",
+    "Historical integrity/status doesnotcreate clean validation."
+  ],
+  "new_fits_updates_arrays_models_individual_outcome_files_API": 0,
+  "schema": "dope.early-history-public-source-receipt/v1",
+  "scope": "Positiveprojection of saved reports/aggregates and per-run scalarcurves only.",
+  "source_artifacts": [
+    {
+      "bytes": 6714,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "43e5d68167a0f0d84d00bd4e8ae59963f623f6556f3f09545ee2c40a59cf5dd5",
+      "source_label": "early-source-00"
+    },
+    {
+      "bytes": 128226,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "9260f19d5bd4056fc6d6d25dbb52a6e6c3ea2d7d6ea2f1df6b6ba4d9999233ff",
+      "source_label": "early-source-01"
+    },
+    {
+      "bytes": 1717,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "95bbe69659bb487676c89e1874deaceb4393613d1cd5ba43ca7f449f04101309",
+      "source_label": "early-source-02"
+    },
+    {
+      "bytes": 4072,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "3e9921cd619a27e5aa9fbf3c81a97521870a0455535cff6e4b98e0020d1dc0ed",
+      "source_label": "early-source-03"
+    },
+    {
+      "bytes": 4189,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "f69672630a56cdff36b178e578cb8e2edefe9bafa628c7c10c466b2fae8b38f5",
+      "source_label": "early-source-04"
+    },
+    {
+      "bytes": 1603,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "dd1c7607c9eb7a3e911470c2e2ff4b418a69bba7a189e76cc2648129f9d553a5",
+      "source_label": "early-source-05"
+    },
+    {
+      "bytes": 2016,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "f9c1b30c61792d9fcea2c81ad16557cdd0a785fb6408dbcd097c5b794e92dc0c",
+      "source_label": "early-source-06"
+    },
+    {
+      "bytes": 700524,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "ea9f90ab0fd11aea532e73cb134eb49c4e91474a67e4636590eaed35cb0a4d6a",
+      "source_label": "early-source-07"
+    },
+    {
+      "bytes": 666402,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "85289cdf888be93ffb25334d5eec369c382bb88f84ca28fd4e5a910872cb960c",
+      "source_label": "early-source-08"
+    },
+    {
+      "bytes": 479875,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "e3dc102385cf459e1e35ec88ff44b622304d10839b82edd96fc99b902da5db73",
+      "source_label": "early-source-09"
+    },
+    {
+      "bytes": 9261,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "360a15879276fc2fa37eecaa21f728110b35636835122051ac42ea14c653253b",
+      "source_label": "early-source-10"
+    },
+    {
+      "bytes": 6491,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "7f68f0cceb0734d543bd5bd0c1dd172794d3aedac84d38589793214272d87268",
+      "source_label": "early-source-11"
+    },
+    {
+      "bytes": 5473,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "d4caea78a7bc12cb819e22d1e278164dd9073b7aa41840f390cca4a617337a2b",
+      "source_label": "early-source-12"
+    },
+    {
+      "bytes": 263452,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "d09677b9dfd0d00eaff27d7b61668f7d037d3ff9b9ec9bb2e1254f487c56e705",
+      "source_label": "early-source-13"
+    },
+    {
+      "bytes": 258600,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "2e94b32a50585d05b2b31ca78fb39ba9dfc6ea3225c9df43e65aa1d21d22bf0c",
+      "source_label": "early-source-14"
+    },
+    {
+      "bytes": 156202,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "2421704b0d562bbc1b760d19e7e141cc5b3bf520fbfc028afac2535e707e5205",
+      "source_label": "early-source-15"
+    },
+    {
+      "bytes": 15236,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "6575268cdb06228f0ba19e4eb775822b85719d227e7d71c669088ca8348d1dd6",
+      "source_label": "early-source-16"
+    },
+    {
+      "bytes": 10690,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "698129b4d55bfdb59dcb8dc19435a98fb865424cb81c90bff2bbe2f1733e8d58",
+      "source_label": "early-source-17"
+    },
+    {
+      "bytes": 14743,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "4da33283fc32b609166f2a59bfbf93407f26428921f3f881915d32405a87df20",
+      "source_label": "early-source-18"
+    },
+    {
+      "bytes": 9543,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "dac65211fb94e04361923c5a85397aaef65e2b9babca655fd0154c1c9bf903a9",
+      "source_label": "early-source-19"
+    },
+    {
+      "bytes": 5493,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "30e88a69b11d62e2a7cc4ede07a0876f2cf6bb9d95f9c01ce996531ff2211115",
+      "source_label": "early-source-20"
+    },
+    {
+      "bytes": 1916,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "8a3b083690d19682b9f8fb28d84e0e81f885b11ce9a351ea4aff6e6e6cddf6de",
+      "source_label": "early-source-21"
+    },
+    {
+      "bytes": 2223,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "8d74ef2577d7be53a8fb8c044f8acd43cc1a6a1a9878d5c1dee71c76f7b2240c",
+      "source_label": "early-source-22"
+    },
+    {
+      "bytes": 1336,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "24b4b1e6d96e6c3f050de8b01c4d510995e5df88990c894c873ce2c29284b05a",
+      "source_label": "early-source-23"
+    },
+    {
+      "bytes": 32534,
+      "kind": "savedreport/aggregate/curvesnapshot; no array ormodel",
+      "sha256": "44e01473df6689ac8c4797d48b468bd93619f6b5b4ab06ab15f073fea594b392",
+      "source_label": "early-source-24"
+    }
+  ],
+  "source_files": 25
+}

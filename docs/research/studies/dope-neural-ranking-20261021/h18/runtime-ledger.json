@@ -1,0 +1,198 @@
+{
+  "R2": {
+    "compute_deadlines_enabled": false,
+    "dataset_optimizer_updates": 4800,
+    "deadline_utc": null,
+    "initial_closure_sha256": "30521bfebf07bfe36fa76065b2bbf27e42973fdb0ffcfd9ff5d44c57123e51c1",
+    "initial_failure": "Overstrict wall-clock authority text compatibility check before pool/model reads",
+    "initial_failure_sha256": "58bc044c42fadbd167749fd2d417362ce172c452e980c7afd7c69c175b2d7eea",
+    "initial_verifier_elapsed_seconds": 0.0002002716064453125,
+    "initial_verifier_status": "FAIL",
+    "models_completed": 18,
+    "original_producer_closure": "CLOSED_INCOMPLETE",
+    "promotion": false,
+    "protocol_sha256": "34190a9861488ab990cfa7f4a63c2b6278704de656a174d51fa5a0615cabe0ef",
+    "verification_wall_limit": null
+  },
+  "costs": {
+    "CPU_local_derived_steps": 39,
+    "CPU_remote_instrumented_steps": 15,
+    "R2_dataset_optimizer_updates": 4800,
+    "R2_reused_qualification_new_synthetic_updates": 0,
+    "includes_preparation_test_helper_failures": true,
+    "later_replay_new_models": 0,
+    "later_replay_new_optimizer_updates": 0,
+    "preparation_CPU_synthetic_optimizer_steps": 54,
+    "prior_GPU_synthetic_optimizer_updates": 96
+  },
+  "historical_attempts": [
+    {
+      "GPU_synthetic_optimizer_updates": 48,
+      "attempt": "P7 original qualification",
+      "close_reserve_seconds": 15,
+      "closed_utc": "2026-10-22T13:05:39.957219+00:00",
+      "closure": "CLOSED_INCOMPLETE",
+      "closure_sha256": "ed4abfae086f10a6b0e00f2d912c85bd4155df575d1e58416159cd1836791564",
+      "completed_models": 0,
+      "dataset_optimizer_updates": 0,
+      "fit_forecast_seconds": 1375.4586147610098,
+      "model_quality_conclusion": "UNAVAILABLE: zero dataset updates",
+      "original_deadline_utc": "2026-10-22T13:35:02.207038+00:00",
+      "preflight": "REFUSED",
+      "preflight_sha256": "752617038b41a77873723ac2c8c4de80e68a489d711a50eece0eaf20f11ed5db",
+      "protocol_sha256": "e35de1a50d0a7a5335abe1a073d51ac211ac5dcaaaccb3fa4218ad45dbc13aa2",
+      "remaining_seconds": 1763.2507271766663,
+      "replay_reserve_seconds": 600,
+      "started_utc": "2026-10-22T13:05:02.207038+00:00"
+    },
+    {
+      "GPU_synthetic_optimizer_updates": 48,
+      "attempt": "P8 GPU-bank qualification",
+      "close_reserve_seconds": 15,
+      "closed_utc": "2026-10-22T13:13:52.055461+00:00",
+      "closure": "CLOSED_INCOMPLETE",
+      "closure_sha256": "d99d0861ab3ac61ca0304d39e221be492a37650d838976433ba5fd8240f2f807",
+      "completed_models": 0,
+      "dataset_optimizer_updates": 0,
+      "fit_forecast_seconds": 891.0250018844381,
+      "model_quality_conclusion": "UNAVAILABLE: zero dataset updates",
+      "original_deadline_utc": "2026-10-22T13:35:02.207038+00:00",
+      "preflight": "REFUSED",
+      "preflight_sha256": "fdc7aad92218c4c6dd8f8560241afa4471ca8c5e1343388eb172a94945e1d905",
+      "protocol_sha256": "96d368c9b418cd0a9b333ab16a62013802e41473765477d111be33e664cd1b52",
+      "remaining_seconds": 1271.3477776050568,
+      "replay_reserve_seconds": 600,
+      "started_utc": "2026-10-22T13:13:04.917493+00:00"
+    }
+  ],
+  "later_separate_admission_QA": {
+    "GPU_calls": 0,
+    "TRAIN_F_gate_pools_decoded_for_input_hashes": 372,
+    "closed_utc": "2026-10-22T13:21:38.759107+00:00",
+    "independent_outer_claim": false,
+    "input_controls_independently_rebuilt": 4,
+    "new_models": 0,
+    "new_optimizer_updates": 0,
+    "no_new_model_gradients": true,
+    "original_loss_gradient_choice_assertions_source_bound_only": true,
+    "pool_files_rehashed": 850,
+    "receipt_sha256": "f1c5b76752409917feecf50cbef3eb83d67d5186589be8575f10895c3aac5ab4",
+    "retroactive_within_budget_H18_PASS": false,
+    "seconds": 6.452152729034424,
+    "started_utc": "2026-10-22T13:21:32.306958+00:00",
+    "status": "PASS_LATER_ADMISSION_QA"
+  },
+  "later_separate_model_replay": {
+    "all_full_OOF_scores_and_program_choices_replayed": true,
+    "dataset_optimizer_updates_verified": 4800,
+    "math_and_aggregation_unchanged": true,
+    "models_replayed": 18,
+    "new_training_runs": 0,
+    "original_protocol_sha256": "34190a9861488ab990cfa7f4a63c2b6278704de656a174d51fa5a0615cabe0ef",
+    "results_sha256": "e5d89b9af4397d8b71295bf70f010b1cf44c0beebc2bf9473dee4b4ba5cd8277",
+    "seconds": 179.10769176483154,
+    "source_amendment_sha256": "a21bae53b9fb7bfd0295a0d12e9e00c9c908f0eb146f57622272d455692f0448",
+    "status": "PASS_WITH_LIMITS",
+    "verification_sha256": "ba8b5872de25b3674321f8e3a42d90b78bd3a6e6ec3512a94e5e9fe58aeb6ae8"
+  },
+  "limits": [
+    "Historically exposed TRAIN-only two-fold crossfit; not independent external validation.",
+    "Literal refused attempts and original producer verification failure remain unchanged.",
+    "Later source-amended replay verifies outputs; it does not retroactively erase failed records.",
+    "No serving promotion, new data admission, product Git publication or remote/S3 custody is asserted."
+  ],
+  "schema": "dope-ranking.h18-runtime-ledger/v2",
+  "science": {
+    "adapter_updates": 200,
+    "base_updates": 400,
+    "bootstrap": {
+      "draws": 100000,
+      "familywise": 0.975,
+      "quantiles": [
+        0.00625,
+        0.99375
+      ],
+      "seed": 20261022
+    },
+    "cohort": {
+      "CAL": {
+        "candidates": 135936,
+        "components": 29,
+        "contexts": 118,
+        "families": 29
+      },
+      "FINAL_FIT": {
+        "candidates": 979200,
+        "components": 162,
+        "contexts": 850,
+        "families": 164
+      },
+      "OLDDEV": {
+        "candidates": 243071,
+        "components": 43,
+        "contexts": 211,
+        "families": 43
+      }
+    },
+    "folds": [
+      {
+        "fold": 0,
+        "monitor": {
+          "candidates": 36864,
+          "components": 32,
+          "contexts": 32,
+          "families": 32
+        },
+        "test": {
+          "candidates": 461952,
+          "components": 81,
+          "contexts": 401,
+          "families": 81
+        },
+        "train": {
+          "candidates": 517248,
+          "components": 81,
+          "contexts": 449,
+          "families": 83
+        }
+      },
+      {
+        "fold": 1,
+        "monitor": {
+          "candidates": 36864,
+          "components": 32,
+          "contexts": 32,
+          "families": 32
+        },
+        "test": {
+          "candidates": 517248,
+          "components": 81,
+          "contexts": 449,
+          "families": 83
+        },
+        "train": {
+          "candidates": 461952,
+          "components": 81,
+          "contexts": 401,
+          "families": 81
+        }
+      }
+    ],
+    "microbatch_queries": 16,
+    "new_volume_admissions": 0,
+    "optimizer_batch_queries": 128,
+    "primary": "mean each seed selected rawfitness/context, mean contexts/component, equal162components",
+    "primary_contrasts": [
+      "trained_minus_base",
+      "trained_minus_random"
+    ],
+    "seeds": [
+      20261022,
+      20261023,
+      20261024
+    ],
+    "state_limit": "112 coordinates include readout-derived summaries; not pure activations"
+  },
+  "snapshot_observed_utc": "2026-10-22T13:49:23.323499+00:00",
+  "status": "18_MODELS_COMPLETE_WITH_LATER_SEPARATE_REPLAY"
+}

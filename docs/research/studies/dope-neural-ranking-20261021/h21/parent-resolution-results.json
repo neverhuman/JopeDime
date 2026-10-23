@@ -1,0 +1,61 @@
+{
+  "TRAIN_preprocessing_invariance_certificates": 0,
+  "all_known_reservations_preserved": true,
+  "compute_deadlines": false,
+  "contexts": 12,
+  "costs": {
+    "GPU": 0,
+    "S3_requests": 0,
+    "fits": 0,
+    "independent_QA_CPU_seconds": 4.916265018,
+    "independent_QA_wall_seconds": 5.931638280046172,
+    "new_GETs": 0,
+    "parent_input_outcome_numeric_bodies_read": 0,
+    "preparation_not_fully_instrumented": true,
+    "producer_CPU_seconds": 3.51832346,
+    "producer_wall_seconds": 3.5187014039838687,
+    "updates": 0
+  },
+  "declared_before_sampling_preprocessing_policy_contexts": 6,
+  "historically_bound_writer_algorithms": 0,
+  "independent_validation_admissions": 0,
+  "limits": [
+    "Exact typed references are metadata pointers, not parent object byte verification.",
+    "Repeated literal digests do not create independent original-source evidence.",
+    "No historical writer/logical canonicalization identity is qualified.",
+    "Original ordered typed rows/multiplicity and TRAIN-only preprocessing remain unqualified.",
+    "Declared before-sampling preprocessing policy is not proof of fit-row invariance.",
+    "Six unresolved cases mean absent in this declared local corpus, not global S3 absence.",
+    "Any follow-up body access requires a new exact-version/SHA/bytes allowlist and root grant.",
+    "No GP label/gate normalization semantics or numeric learning admission is qualified."
+  ],
+  "next_proposal": {
+    "body_access_authorized_by_this_closed_phase": false,
+    "compressed_bytes": 491782,
+    "existing_local_caches_stat_present": 6,
+    "typed_incoming_parent_objects": 6,
+    "unresolved_main_source_manifest_bytes": 19318,
+    "unresolved_main_source_manifest_objects": 6
+  },
+  "numeric_learning_admissions": 0,
+  "original_ordered_typed_row_equivalence_certificates": 0,
+  "prepared_epoch_complete_tuples_verified": 12,
+  "receipt_hashes": {
+    "independent_QA": "6c5f1a3910100bf04b6b2dae3f987478334d40fce3f9152b4c2a0c8a1b0dbf95",
+    "producer_results": "dfccb4f59d75ffa1b72ea2d2f579ca72a01898617618c9799a081b791307361d",
+    "source_manifest": "c3c88bea03498270900879d30092c083351ac1bcbfaeb2d25c75b145b7ceb9ff",
+    "study_completion": "1afcca337ac10bd95dd934dc07bace5c3aa180866ac4fe0eebbbde359d068532"
+  },
+  "schema": "h21.parent-resolution-public-aggregate/v1",
+  "source_corpus": {
+    "declared_metadata_records": 2599,
+    "declared_missing_local_metadata_records": 570,
+    "full_available_metadata_annex_bytes": 246936879,
+    "full_available_metadata_annex_records": 2029,
+    "missing_local_is_not_global_absence": true
+  },
+  "source_manifest_content_and_ref_bindings_checked": 6,
+  "status": "COMPLETE_METADATA_ONLY_INDEPENDENT_QA_PASS_WITH_LIMITS",
+  "typed_parent_references_metadata_only": 6,
+  "unresolved_main_contexts_in_inspected_corpus": 6
+}

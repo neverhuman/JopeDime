@@ -1,0 +1,109 @@
+{
+  "S3_durability_claim": false,
+  "conclusion": "R1 passed installed-runtime software controls but did not produce a usable snapshot or query result. Independent review verifies finite failure-metadata consistency only, not successful snapshot QA or scientific validation.",
+  "costs": {
+    "overlap": "Worker wall includes child-control wait; parent CPU and child CPU differ; unit CPU includes children. Never add overlapping clocks.",
+    "preparation_monitoring_mirroring_plain_review_full_session_cost": null,
+    "runtime_control_child_CPU_seconds": 0.415969,
+    "runtime_control_wall_seconds": 10.13405277300626,
+    "unit_CPU_seconds": 119.524018,
+    "unmeasured_is_not_zero": true,
+    "worker_parent_CPU_seconds": 118.96081378199999,
+    "worker_parent_wall_seconds": 129.19894769892562,
+    "worker_peak_rss_KiB": 45888
+  },
+  "created_utc": "2026-10-22T21:31:47.530533+00:00",
+  "denominators": {
+    "candidate_count": null,
+    "cases": null,
+    "fixed_selected_cases": 2,
+    "full_slate_or_inner_label_coverage": null,
+    "meaning": "UNKNOWN_NOT_QUERIED; zero emitted rows is not zero candidates in the source",
+    "original_pilot_cases": 12,
+    "program_count": null,
+    "recorded_source_attempt_rows": null,
+    "recorded_source_event_rows": null,
+    "status_coverage": null
+  },
+  "execution_accounting": {
+    "completed_backup_receipt": false,
+    "emitted_metadata_rows": 0,
+    "native_backup_attempts": 1,
+    "original_closure_JSON_reads": 0,
+    "original_named_SQL_queries_or_PRAGMAs": 0,
+    "original_readonly_connection_attempts": 1,
+    "original_readonly_connections_established": 1,
+    "original_source_content_SHA_or_remote_version_verified": false,
+    "reported_partial_destination_bytes": 0,
+    "reviewer_original_or_synthetic_database_opens": 0,
+    "reviewer_partial_database_opens_or_hashes": 0,
+    "saved_named_schema_or_real_context_queries": 0,
+    "snapshot_consistency_qualified": false
+  },
+  "failure": {
+    "SQLite_busy_restart_or_contention_confirmed": false,
+    "callback_status_trace_available": false,
+    "class": "Refusal",
+    "elapsed_deadline_or_manual_cutoff": false,
+    "frozen_source_predicate": "busy < 70",
+    "logical_process_read_counter_is_physical_unique_source_bytes": false,
+    "past_CPU_sample_series_saved": false,
+    "past_predicate_value_independently_recomputed": false,
+    "reported_reason": "HOST_CPU_GUARD"
+  },
+  "history": {
+    "R0": "Prospective BLOCKED before any original database access; source-shaped reference projection, ordinary-table and disk-reserve issues preserved.",
+    "R1": "Separate source-amended preparation received prospective GO, executed once, then self-closed on its resource guard. No patched retry or new backup.",
+    "runtime_synthetic_controls": {
+      "exit_code": 0,
+      "meaning": "software tests, not GP fits or optimizer updates",
+      "source_original_accesses_during_controls": 0,
+      "tests": 28
+    }
+  },
+  "limits": [
+    "Source database/WAL pages were accessed through the authorized read-only backup attempt; zero-byte partial output is not a zero-byte-read claim.",
+    "The saved metadata reports zero partial bytes; the failure reviewer intentionally did not reopen or hash any partial SQLite file.",
+    "Actual past host CPU samples and backup callback statuses were not saved. No lock/busy/restart cause is inferred.",
+    "H18 S1 and selected v8 two-fold contracts remain distinct. No input/evaluator/fold/fit/full-slate/inner-label gate was satisfied by this failure."
+  ],
+  "priority_next": "H26 failure is closed. H27 human-authorized TRAIN-only GP probe fingerprint research proceeds separately; any future backup needs a new frozen packet and root grant.",
+  "private_ids_paths_locators_or_raw_data_SHA_exported": false,
+  "receipt_sha256": {
+    "R0_prospective_BLOCKED": "ef679033594b44ab6d4be2fe7e5855a2aa18ad44ca8d1691401ea24516a9288e",
+    "R1_closure": "b8d9c50dc4929048a748a11492589929307621c408a775b0dc32b5d0eb042469",
+    "R1_prospective_GO": "af6c5147117ac3f299e8f10de425f8ee333512cbee96d84d6a5963d6dbe75fcd",
+    "R1_results": "95db03f9df2c5beee7867a545c13fb60c6567f7cd68cdb115f83fd5b0ba8beea",
+    "R1_source_freeze": "e9ddc9c4628413587e985699d1b4494ed70aed873a65085c69d0690735e6862d",
+    "independent_failure_metadata_review": "c7a6a3285bbdaa3594abb48383c5b3165ae0ddfc4a1cecd5d594abb821527035",
+    "independent_failure_review_closure": "7ab3ff31ea412cba2bce4c79064a071feb2d9c30500a02691c8f2cc8b60d4d4b",
+    "owned_stop_receipt": "0244df0950a5a3b13d499339032fa3b58bf65d78a2862cd38a299ee2a4d93710",
+    "retained_terminal_properties": "02951f36364c1700de0e1eea4f796e1e6ac31028ba1d80ab95886fa3f47b7ecc",
+    "runtime_control_receipt": "24c3d346163e1168a3fe42a771c0f3ba59d2b47b2d0b83dc876065e6361796c8"
+  },
+  "resources": {
+    "CPU_quota": 2,
+    "RAM_bytes": 8589934592,
+    "RuntimeMax": "infinity",
+    "User_Group": "ubuntu",
+    "failed_state_preserved_without_reset": true,
+    "owned_stop_command_returncode": 0,
+    "private_network": "AF_UNIX",
+    "readonly_source_mount_reported": true,
+    "retained_requested_caps_match": true,
+    "successful_snapshot_or_locator_PASS_claim": false,
+    "swap_bytes": 0,
+    "tasks": 64,
+    "unit_MainPID_after_stop": 0
+  },
+  "schema": "h26.l2-r1-public-failure/v1",
+  "state": "CLOSED_INCOMPLETE_HOST_CPU_GUARD_NO_SNAPSHOT_OR_LOCATOR_RESULT",
+  "zero_counters": {
+    "API_provider_or_followed_reference_accesses": 0,
+    "external_dataset_outcome_prediction_model_bodies_followed": 0,
+    "new_GP_or_baseline_fits": 0,
+    "new_numeric_admissions": 0,
+    "optimizer_updates": 0,
+    "reviewer_producer_imports_or_executions": 0
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "S3_durability_claim": false,
+  "attempt_count": null,
+  "candidate_count": null,
+  "candidate_coverage_state": "UNAVAILABLE_FROM_HIGH_WATER_CASE_MATRIX",
+  "conclusion": "Two exact declared telemetry locators found; actual GP execution/input and source-specific inner-fitness proof remain unavailable. No numerical admission or lift result.",
+  "controls": {
+    "dataset_optimizer_updates": 0,
+    "independent_synthetic_tests": 8,
+    "meaning": "software tests, not learned-model updates or observed research cases",
+    "producer_synthetic_tests": 21
+  },
+  "costs": {
+    "independent_controls_wall_seconds": 0.04518404183909297,
+    "independent_saved_metadata_QA": {
+      "CPU_seconds": 0.23497108,
+      "peak_rss_KiB": 42816,
+      "wall_seconds": 0.2542839499656111
+    },
+    "mirroring_custody_full_session": null,
+    "preparation_source_hash_and_interactive_work": null,
+    "producer_control_unittest_reported_seconds": 0.003,
+    "producer_unit_CPU_accounting_ns": 798524000,
+    "producer_worker": {
+      "CPU_seconds": 0.646499718,
+      "peak_rss_KiB": 42816,
+      "wall_seconds": 1.1432198140537366
+    },
+    "unit_overlap": "overlaps worker/prebody helper; never sum",
+    "unmeasured_cost_meaning": "not measured, not zero"
+  },
+  "counts": {
+    "blank_rows": 0,
+    "complete_declared_telemetry_locator_refs": 2,
+    "distinct_declared_contexts": 5940,
+    "duplicate_context_rows": 0,
+    "full_declared_case_identity_matches": 2,
+    "invalid_context_rows": 0,
+    "matrix_rows_reconstructed": 5940,
+    "selected_cases": 2,
+    "selected_conflicting_cases": 0,
+    "selected_missing_cases": 0,
+    "selected_rows": 2,
+    "unselected_rows": 5938
+  },
+  "created_utc": "2026-10-22T20:36:28.094834+00:00",
+  "full_slate_coverage": null,
+  "limits": {
+    "actual_execution_or_inner_fitness_proof": false,
+    "cached_S3_version": "UNKNOWN_NOT_VERIFIED",
+    "context_identity": "declared v8 context identity, distinct from context JSON byte digest",
+    "dataset_identity": "source-specific16hex identifier, distinct from64hex SHA domains",
+    "independent_external_validation": false,
+    "roles": "inherited frozen included/no-exclusion/train_fit/reservation chain; no fresh wholegraph audit"
+  },
+  "metadata_potential_only": {
+    "H18_overlap_contexts": 1098,
+    "components": 314,
+    "contexts": 1909,
+    "outside_H18_contexts": 811,
+    "outside_components": 154,
+    "outside_proven_independent": false
+  },
+  "next": "Separate exact-two-context incoming event metadata snapshot/query, preserving every status/version/attempt and missing actual-execution linkage.",
+  "original_pilot_cases": 12,
+  "other_pilot_cases_not_selected": 10,
+  "preparation_history": {
+    "draft_domain_store_view_and_ref_length_guards_corrected_before_freeze": true,
+    "matrix_decodes_during_preparation": 0,
+    "preserved_source_preparation_errors": 2,
+    "producer_execution_retries": 0,
+    "public_projection_preparation_guard_error": "Before writing files, STOPPED enum assumption was replaced by actual STOPPED_AFTER_THIS_CLOSURE and inactive-unit assertion; no scientific/source changes."
+  },
+  "private_ids_locators_or_raw_body_digests_exported": false,
+  "program_count": null,
+  "read_accounting": {
+    "execution_original_snapshot_copy_passes": 1,
+    "independent_original_reads": 0,
+    "independent_saved_metadata_decode_passes": 1,
+    "independent_saved_metadata_hash_passes": 1,
+    "known_original_full_file_passes_preparation_plus_execution": 2,
+    "preparation_original_full_file_hash_passes": 1,
+    "private_snapshot_bytes": 12982517,
+    "producer_saved_metadata_decode_passes": 1,
+    "total_saved_custody_hash_passes": "NOT_COMPREHENSIVELY_MEASURED"
+  },
+  "receipt_sha256": {
+    "independent_final_closure": "81616d8fc3b9e5c77078db0e723a06ee30c6e3a6e353e18714c9115b4cecc3c5",
+    "independent_verification": "f445e877769b44908bbf321de5dd6def6ba7385dd6010afb07f86070143c2b77",
+    "producer_closure": "73559b4fd5d7f238dd36e832999a47530344abdd22f1ca7df553062b4d0f004d",
+    "producer_results": "395be5b40f115090508cf9095360b3917716c1709b482cda50c060240deb3f2b"
+  },
+  "schema": "h26.l1-public-aggregate/v1",
+  "score_byte_and_use_boundary": {
+    "GP_result_outcome_body_refs_followed": 0,
+    "generic_JSON_decode_transiently_materializes_excluded_tokens": true,
+    "physical_exposed_score_and_winner_bytes_present": true,
+    "projection_inspects_uses_emits_or_selects_on_excluded_values": false
+  },
+  "state": "COMPLETE_INDEPENDENTLY_VERIFIED_LOCATOR_METADATA_ONLY",
+  "status_coverage": null,
+  "unchanged_training_volume": {
+    "archived_context_program_outcomes": 979200,
+    "components": 162,
+    "contexts": 850,
+    "new_numeric_admissions": 0
+  },
+  "zero_counters": {
+    "SDK_provider_API_calls": 0,
+    "SQLite_reads": 0,
+    "dataset_model_GP_result_outcome_bodies_followed": 0,
+    "fits": 0,
+    "numeric_admissions": 0,
+    "other_references_followed": 0,
+    "updates": 0
+  }
+}

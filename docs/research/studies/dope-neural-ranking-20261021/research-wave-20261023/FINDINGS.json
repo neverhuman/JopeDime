@@ -1,0 +1,298 @@
+{
+  "schema": "jope.full-research-audit-and-next-wave/v1",
+  "state": "PUBLIC_SAFE_SOURCE_AND_AGGREGATE_SUMMARY_NO_NEW_EXPERIMENT",
+  "date_utc": "2026-10-23",
+  "catalog_coverage": {
+    "experiment_records": 18,
+    "additional_groups": 9,
+    "research_source_files_matching_pinned_main": 22,
+    "main_commit": "5390576ffe98f1bea9b1378479e05fb1a141314a"
+  },
+  "historical_leads": {
+    "corrected7120_equal_lineage_R2": {
+      "DL": 0.690235,
+      "LightGBM": 0.784889,
+      "DL_minus_LightGBM_CI95": [
+        -0.132907,
+        -0.056273
+      ]
+    },
+    "EXP018_shadow_v2_R4": {
+      "features": 93,
+      "contexts": 1136,
+      "components": 255,
+      "top1_gain_over_program_prior": 0.04359586003521127,
+      "CI95_over_program_prior": [
+        0.010236,
+        0.082032
+      ],
+      "top1_gain_over_ridge_program": 0.06691857306338028,
+      "CI95_over_ridge_program": [
+        0.03006,
+        0.105549
+      ],
+      "flywheel_established": false,
+      "scope": "Historical v2 post-iteration shadow, not currentv3 validation or live improvement."
+    },
+    "LV4_routing_skip10": {
+      "compute_proxy_skipped_percent": 10.1,
+      "wins_missed_percent": 0.41,
+      "gain_missed_percent": 0.58,
+      "scope": "CV-only; compute proxy=train_rows; selectedHWM target caveat."
+    },
+    "H08_A0_over_frozen_current": {
+      "reduction_percent": 7.475670461603945,
+      "CI_percent": [
+        1.2936900837946637,
+        14.039184990734979
+      ],
+      "contexts": 1594,
+      "families": 379,
+      "scope": "Exploratory selectedCVratio, not H27 rawfitness or neural lift."
+    }
+  },
+  "H27": {
+    "state": "PASS_WITH_LIMITS_NO_ESTABLISHED_LANDMARK_LIFT",
+    "counts": {
+      "OOF_choices_replayed": 15300,
+      "archived_candidate_rows": 979200,
+      "components": 162,
+      "contexts": 850,
+      "dataset_optimizer_updates": 14400,
+      "families": 164,
+      "fixed_snapshot_observations": 180,
+      "models_trained": 36,
+      "new_fits_in_QA": 0
+    },
+    "primary_contrasts": [
+      {
+        "central98_75_interval": [
+          -0.7890362249303311,
+          0.2869843098065123
+        ],
+        "established_favorable_direction": false,
+        "lower_is_better": true,
+        "name": "real112/five8-minus-real112/zero8",
+        "raw_fitness_difference": -0.10557196510330781
+      },
+      {
+        "central98_75_interval": [
+          -0.02305955244217988,
+          0.4012829989769582
+        ],
+        "established_favorable_direction": false,
+        "lower_is_better": true,
+        "name": "real112/five8-minus-real112/one8",
+        "raw_fitness_difference": 0.1482177799823401
+      }
+    ],
+    "bootstrap": {
+      "familywise_coverage": 0.975,
+      "paired_unit": "wholecomponent",
+      "quantiles": [
+        0.00625,
+        0.99375
+      ],
+      "replicates": 100000,
+      "same_resamples_both_primaries": true,
+      "seed": 20261022
+    },
+    "arm_raw_fitness": {
+      "real112/five8": -1.0170008043720133,
+      "real112/one8": -1.1652185843543532,
+      "real112/zero8": -0.9114288392687053,
+      "zero112/five8": -0.9808861989907882,
+      "zero112/one8": -0.9468995043799787,
+      "zero112/zero8": -0.9079062798730813
+    },
+    "chosen_failure_counts_of2550": {
+      "real112/five8": 10,
+      "real112/one8": 7,
+      "real112/zero8": 9,
+      "zero112/five8": 8,
+      "zero112/one8": 9,
+      "zero112/zero8": 8
+    },
+    "curve_checks": {
+      "models": 36,
+      "observations": 180,
+      "monitor400_worse100": 31,
+      "train400_worse100": 0,
+      "monitor400_better0": 36,
+      "train400_better0": 36,
+      "steps_all_equal": [
+        0,
+        100,
+        200,
+        300,
+        400
+      ],
+      "pooled_objective_mean_computed": false
+    },
+    "limits": [
+      "All contexts are the historically exposed curated TRAIN benchmark. This is component crossfit development evidence, not a new independent-family validation result.",
+      "Independent raw two-pass gradient-only statistics, target scales, schedules and initialization were reconstructed. Frozen-model replay uses the same pinned model kernel and source; it is not an independent neural implementation or retraining.",
+      "The three fixed-seed utilities are averaged; scores are not ensembled, and no best seed or checkpoint is selected.",
+      "The Dope-zero arm zeros only the 112 retained state positions after scaling. Common native input/model features remain present in every arm; this does not test removal of all Dope features.",
+      "State effects and interaction below are secondary point estimates only; their uncertainty is not established here.",
+      "Probe CV5 fingerprints, archived S1 two-fold GP fitness, and the NN two-component-fold split are distinct contracts. No direct best-probe target-fitness graft is claimed.",
+      "Probe-target canonical overlap may remain unknown. Loss decline does not establish ranking lift."
+    ]
+  },
+  "data_breadth": {
+    "old_prefix_verified_contexts": 1604,
+    "old_recorded_families": 382,
+    "Dope_complete_case_contexts": 1594,
+    "Dope_complete_case_families": 379,
+    "current_requalification_or_extra_independent_components": "UNMEASURED_NOT_ADMITTED"
+  },
+  "training_duration": {
+    "historical_total_updates": 17773,
+    "historical_plateau_epochs": 31,
+    "historical_plateau_epoch_range": [
+      10,
+      40
+    ],
+    "historical_full_validation_L6_band": [
+      0.8968201,
+      0.8978393
+    ],
+    "no_blind_longer_training_recommendation": true
+  },
+  "H28": {
+    "state": "PASS_INDEPENDENT_SAVED_CHOICE_ARITHMETIC_WITH_LIMITS",
+    "fixed_real_state_files": 18,
+    "fixed_choices": 7650,
+    "contexts": 850,
+    "components": 162,
+    "contrasts": [
+      {
+        "name": "five-minus-zero_PRIMARY",
+        "raw_fitness_difference": -0.10557196510330782,
+        "pass_pass_additive_contribution": -0.002035987677001221,
+        "gate_transition_additive_contribution": -0.1035359774263066,
+        "largest_component_signed_contribution": -0.2056735520395758,
+        "concentration": {
+          "1": {
+            "absolute_contribution_mass": 0.2056735520395758,
+            "fraction_of_total_absolute_mass": 0.5322447136315672,
+            "signed_contribution": -0.2056735520395758
+          },
+          "5": {
+            "absolute_contribution_mass": 0.340354325857865,
+            "fraction_of_total_absolute_mass": 0.8807733853141564,
+            "signed_contribution": -0.10406056480543745
+          },
+          "10": {
+            "absolute_contribution_mass": 0.3555630525758525,
+            "fraction_of_total_absolute_mass": 0.9201307276483737,
+            "signed_contribution": -0.10549110159633743
+          }
+        }
+      },
+      {
+        "name": "five-minus-one_PRIMARY",
+        "raw_fitness_difference": 0.1482177799823401,
+        "pass_pass_additive_contribution": 0.004484623684674734,
+        "gate_transition_additive_contribution": 0.14373315629766534,
+        "largest_component_signed_contribution": 0.05267687350763447,
+        "concentration": {
+          "1": {
+            "absolute_contribution_mass": 0.05267687350763447,
+            "fraction_of_total_absolute_mass": 0.2648152793625433,
+            "signed_contribution": 0.05267687350763447
+          },
+          "5": {
+            "absolute_contribution_mass": 0.17655646727130178,
+            "fraction_of_total_absolute_mass": 0.8875783069573656,
+            "signed_contribution": 0.1440603288048005
+          },
+          "10": {
+            "absolute_contribution_mass": 0.18453467460501985,
+            "fraction_of_total_absolute_mass": 0.927686063230802,
+            "signed_contribution": 0.14928875555709262
+          }
+        }
+      },
+      {
+        "name": "one-minus-zero_EXPLORATORY",
+        "raw_fitness_difference": -0.2537897450856479,
+        "pass_pass_additive_contribution": -0.006520611361675956,
+        "gate_transition_additive_contribution": -0.24726913372397197,
+        "largest_component_signed_contribution": -0.2056735520395758,
+        "concentration": {
+          "1": {
+            "absolute_contribution_mass": 0.2056735520395758,
+            "fraction_of_total_absolute_mass": 0.6952311493244699,
+            "signed_contribution": -0.2056735520395758
+          },
+          "5": {
+            "absolute_contribution_mass": 0.26152128816888076,
+            "fraction_of_total_absolute_mass": 0.8840113079365762,
+            "signed_contribution": -0.253258332471587
+          },
+          "10": {
+            "absolute_contribution_mass": 0.2699626744457866,
+            "fraction_of_total_absolute_mass": 0.9125454321591004,
+            "signed_contribution": -0.2479753228497666
+          }
+        }
+      }
+    ],
+    "QA_cost": {
+      "wall_seconds": 1.5984095489839092,
+      "CPU_seconds": 0.25213605099999997
+    },
+    "new_fits": 0,
+    "original_two_primaries_and_CIs_unchanged": true,
+    "limits": [
+      "Arithmetic-only saved-choice replay; original18NPZ extraction/rawmodels/nativeforward not revalidated.",
+      "Historical exposedTRAIN support; posthoc descriptive decomposition is not causal or new significance."
+    ]
+  },
+  "ordered_proposals": [
+    "Finite original1604 role/source/reservation qualification.",
+    "Full412/A088 tree:zero/one/five fingerprints plus label-blind per-context permuted-one control.",
+    "Whole-component breadth\u00d7duration with nestedTRAINselection.",
+    "Failure-aware calibration/tail-risk only after separate TRAIN evidence."
+  ],
+  "this_summary_new_work": {
+    "GP_NN_Dope_fits": 0,
+    "optimizer_updates": 0,
+    "APIs": 0,
+    "raw_arrays_or_models_read": 0
+  },
+  "publication_scope": "Documentation/evidence PR; no training admission, model deployment or serving promotion.",
+  "prospective_root_method_decision": {
+    "state": "DEVELOPMENT_ONLY_NOT_EXECUTED",
+    "informed_by_prior_development_results": true,
+    "current_contexts": 850,
+    "features": {
+      "candidate_DSL": 412,
+      "A0": 88,
+      "fingerprint_padded": 8,
+      "total": 508,
+      "Dope_engine_or_state_inputs": 0
+    },
+    "arms": [
+      "zero",
+      "one",
+      "five",
+      "per_context_label_blind_permuted_one"
+    ],
+    "component_folds": 2,
+    "fixed_seeds": 3,
+    "final_ranker_fits": 24,
+    "new_GP_probe_fits_current850": 0,
+    "primary_contrasts": [
+      "one-minus-zero",
+      "one-minus-permuted-one"
+    ],
+    "five_fold_secondary": true,
+    "proposed_objective": "Source-qualified LightGBM regression on query-centered uncapped raw constrained fitness; gradientTRAIN-only global scale; component/context/slate weighting.",
+    "source_compatibility": "PENDING_SOURCE_QUALIFICATION_NOT_ASSUMED",
+    "capacity_configs_maximum_if_needed": 4,
+    "selection": "One common recipe inside nestedTRAIN only; all extra innerfits prospectively enumerated.",
+    "comparison_limit": "New noDope input contract; not a causal architecture comparison against H27."
+  }
+}

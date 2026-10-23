@@ -1,0 +1,179 @@
+{
+  "OOF_scope": "Full opposite 81-component fold; historical TRAIN families, not untouched external validation",
+  "TRAIN_scope": "One identity-selected query from each of 32 TRAIN components per fold; evaluation dropout disabled",
+  "all66_prespecified_snapshots_retained": true,
+  "columns": [
+    "fold",
+    "arm",
+    "seed",
+    "update",
+    "utc",
+    "TRAIN_loss",
+    "TRAIN_mean_selected_fitness",
+    "TRAIN_mean_fitness_regret",
+    "TRAIN_gate_fail_fraction",
+    "TRAIN_selected_failure_count",
+    "TRAIN_mean_selected_log_cv_ratio",
+    "OOF_loss",
+    "OOF_mean_selected_fitness",
+    "OOF_mean_fitness_regret",
+    "OOF_gate_fail_fraction",
+    "OOF_selected_failure_count",
+    "OOF_mean_selected_log_cv_ratio"
+  ],
+  "csv": "learning-curves.csv",
+  "csv_rows": 66,
+  "csv_sha256": "1d8894073d96689c01544f1892708be32df6a204759400adbec53cbc7cf45788",
+  "models": [
+    {
+      "arm": "base",
+      "curves_sha256": "bf09e06893cc57caeea9f9547af2b686c2b3ee8a844fcdfd6444ab353879b0d1",
+      "fold": 0,
+      "run_receipt_sha256": "7454e3ddd4b73063c5fbc46b7431ed821bf2a869cab08bc2aa12b8b27cbce3b2",
+      "seed": 20261022,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "46d71dec729c7980a22f1d8399fd1c016e41d48562ce150f09d5fb7afabf46ce",
+      "fold": 0,
+      "run_receipt_sha256": "71b5f1f871f896dcd61968fc3aed0e1f6bb1c4958d23b663faa17538606ed57c",
+      "seed": 20261023,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "cea8822825bf5c58e3a61e251c23c8e27de7380ec1c042c029fc3e677652aea5",
+      "fold": 0,
+      "run_receipt_sha256": "789e47e1d7bf461324bf6ead492d7b714b340957916b4a9356138fb72b79fb26",
+      "seed": 20261024,
+      "updates": 400
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "cd5ce39f124c91a830d92b8251127e503b0e113e708ad820309ecb26c895be04",
+      "fold": 0,
+      "run_receipt_sha256": "166781a5215f434f71d9df370d1da80d41c9afb1b7b8cd09e4736ba6498d0c9a",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "ec48653d354f317c0cc2ada05e766933a47ef40ec3b7a99e5324f77cc61ea75f",
+      "fold": 0,
+      "run_receipt_sha256": "f91bf20134e79f5cfefa6de2d93750051131d165b166e98ba547461b2c81afca",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "8e2607183d04675dd6c59fe7aef07ff41d8be28f5398fb9920a5cb878b7bd22e",
+      "fold": 0,
+      "run_receipt_sha256": "ec425daaa7d2752656e3f4a2cedf19ce6d4cfd9f1ddffc9efca20f0f2b439e16",
+      "seed": 20261024,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "c88772dbddc32c60bb11e9efbce28022dc262e7e343725c5f6f7c149f7714a64",
+      "fold": 0,
+      "run_receipt_sha256": "d4da38ff943ea60a3285b429c51af274cd4dc2ea8a269df41a95c25516f71c58",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "07fc7dd98ee3505408b0feaaf9300a32ab6647eeea80f3cf7092c8d01c550ad3",
+      "fold": 0,
+      "run_receipt_sha256": "b8e9cac2640b318a4bc5c3aa135a4d075af90f77948e9a7e522adf57c39b2e83",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "0a098f8f705b3fc6b98ee097aa455aeff497a3a41fe32245f0803f38aa9b9b23",
+      "fold": 0,
+      "run_receipt_sha256": "a40ee0d01256776872a121a6ef8d442553a97fc9def5a575bf3da3a45eefdbb7",
+      "seed": 20261024,
+      "updates": 200
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "3b10466b972104ffcfb7c90c9f11c763995d92675578baec902ff0a25f56f7bb",
+      "fold": 1,
+      "run_receipt_sha256": "1f1ff1cf9545f4dd1b04afafbd5aebb12f8764c6371000dc0534e031ee5639e3",
+      "seed": 20261022,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "4396afc79bdc0ef749569c3afa3ddeb7cfa8f2feb96a2f7a27c4f781f2639b80",
+      "fold": 1,
+      "run_receipt_sha256": "eaf8415eed8abd462cb8a26e2d885cac633f50eea47f4d031e1955e86dcf199c",
+      "seed": 20261023,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "bbeea90117ee5e49958100d9055c5b5ee980d869ecac74ce802257585501c6df",
+      "fold": 1,
+      "run_receipt_sha256": "4b890f2e1f8e54e3eae69e125ed2332b2ef76d33ad854c4c37fa90244dfd338e",
+      "seed": 20261024,
+      "updates": 400
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "1a5d40e44e44306f7e1805dd36467ddef48d54cc80444f4524c5fc0127a0d5af",
+      "fold": 1,
+      "run_receipt_sha256": "c4a99cfe2042aaead23a3dd2004573c176e3bab9baea697041836c6fc809454a",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "c6d5d7300d48f8c58eeb3a13fe7484b678ff2adb9085229312c85df2ab80c004",
+      "fold": 1,
+      "run_receipt_sha256": "840b94270dba8ae4f214fe54e59881b2096fa426112dc4b990a66b04b691c088",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "20c022d3554cca14baaff5169622afe79450d08a0c75d48f78a284fb9f6ea6f0",
+      "fold": 1,
+      "run_receipt_sha256": "05f3da044ed614aea811d6467cd30c2e781cf898b53cb72f093818096d2508f5",
+      "seed": 20261024,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "0596c755b468c6c08e5de4106ceb91b766c20dc5a13ad878ca1293059cda8b7e",
+      "fold": 1,
+      "run_receipt_sha256": "1ad06c3d15ca42dc442bb226cf8b271c381ef7e5ab2e766d0160f49dfa0ee1ca",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "301600d9b0e6a6573d26f723d5dccf90ad06f2abb2e6d1538d486cd7a58cfe83",
+      "fold": 1,
+      "run_receipt_sha256": "a0548fa6bae528fa58c9d38b36a8c3b15e39948ba4c6d233b4dac32b455b7f79",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "b52214277ca91958dbe559afeeea8b6d5fc20fd27fa02d3ed23dbff24179dd4f",
+      "fold": 1,
+      "run_receipt_sha256": "668795e4bcff21f6dc063fff5e39c9749222826cad6d8a0e3f2ef88bf52372f8",
+      "seed": 20261024,
+      "updates": 200
+    }
+  ],
+  "schema": "dope-ranking.h18-learning-curves/v1",
+  "seed_ranges_are_not_confidence_intervals": true,
+  "source_observed_utc": "2026-10-22T13:49:23.323499+00:00",
+  "source_snapshot_sha256": "6c71fb6554a1dcf60b51beb0dae6a2e9d161c08d4a2124b6608b36a0e37aadca",
+  "units": "Loss is the frozen objective; fitness/regret/logCV/gate fractions are recorded component-weighted evaluation metrics; selected_failure_count is a literal selection count.",
+  "verification_scope": "All recorded fixed snapshots retained; final OOF values checked against safe-weight replay. Intermediate checkpoints are producer observations, not separately replayed weights."
+}

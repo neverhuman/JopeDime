@@ -1,0 +1,158 @@
+{
+  "QA_cost": {
+    "CPU_seconds": 145.67228742,
+    "child_CPU_seconds": 3.60922,
+    "max_RSS_platform_units": 1200708,
+    "wall_seconds": 191.13344479294028
+  },
+  "QA_zero_work": {
+    "API_compiler_Cargo_calls": 0,
+    "NN_GP_fits": 0,
+    "optimizer_updates": 0
+  },
+  "gradient_statistics_and_schedules_state": "PASS_INDEPENDENT_GRADIENT_STATS_TARGET_SCALE_SCHEDULE_AND_MATCHED_INIT_METADATA",
+  "initialization_state": "PASS_ALL36_SAVED_INITIAL_TENSORS_FRESH_SEEDS_AND_MATCHED6ARMS",
+  "limits": [
+    "All contexts are the historically exposed curated TRAIN benchmark. This is component crossfit development evidence, not a new independent-family validation result.",
+    "Independent raw two-pass gradient-only statistics, target scales, schedules and initialization were reconstructed. Frozen-model replay uses the same pinned model kernel and source; it is not an independent neural implementation or retraining.",
+    "The three fixed-seed utilities are averaged; scores are not ensembled, and no best seed or checkpoint is selected.",
+    "The Dope-zero arm zeros only the 112 retained state positions after scaling. Common native input/model features remain present in every arm; this does not test removal of all Dope features.",
+    "State effects and interaction below are secondary point estimates only; their uncertainty is not established here.",
+    "Probe CV5 fingerprints, archived S1 two-fold GP fitness, and the NN two-component-fold split are distinct contracts. No direct best-probe target-fitness graft is claimed.",
+    "Probe-target canonical overlap may remain unknown. Loss decline does not establish ranking lift."
+  ],
+  "model_replay": {
+    "NN_GP_fits": 0,
+    "atol": 1e-06,
+    "context_choices": 15300,
+    "exact_chosen_indices": true,
+    "maximum_score_or_failure_abs_error": 0.0,
+    "models": 36,
+    "rtol": 1e-05,
+    "state": "PASS_FULL_FROZEN_MODEL_OOF_REPLAY_WITH_TOLERANCE"
+  },
+  "predeclared_result": "Neither primary interval excludes harm. Five-fold landmarks do not establish ranking lift versus zero or one-fold landmarks.",
+  "schema": "h27.public-independent-neural-factorial-verification/v1",
+  "scientific_counts": {
+    "OOF_choices_replayed": 15300,
+    "archived_candidate_rows": 979200,
+    "components": 162,
+    "contexts": 850,
+    "dataset_optimizer_updates": 14400,
+    "families": 164,
+    "fixed_snapshot_observations": 180,
+    "models_trained": 36,
+    "new_fits_in_QA": 0
+  },
+  "state": "PASS_WITH_LIMITS_NO_ESTABLISHED_LANDMARK_LIFT",
+  "statistics": {
+    "NN_GP_fits": 0,
+    "arm_raw_fitness": {
+      "real112/five8": -1.0170008043720133,
+      "real112/one8": -1.1652185843543532,
+      "real112/zero8": -0.9114288392687053,
+      "zero112/five8": -0.9808861989907882,
+      "zero112/one8": -0.9468995043799787,
+      "zero112/zero8": -0.9079062798730813
+    },
+    "arm_seed_raw_fitness": {
+      "real112/five8": {
+        "20261022": -1.0932618686930018,
+        "20261023": -0.9245791753180927,
+        "20261024": -1.033161369104945
+      },
+      "real112/one8": {
+        "20261022": -1.2102390335900324,
+        "20261023": -1.1239389267613091,
+        "20261024": -1.1614777927117186
+      },
+      "real112/zero8": {
+        "20261022": -0.9767157248837197,
+        "20261023": -1.1096065747654569,
+        "20261024": -0.647964218156939
+      },
+      "zero112/five8": {
+        "20261022": -1.1443297861542796,
+        "20261023": -0.6891901259568253,
+        "20261024": -1.1091386848612605
+      },
+      "zero112/one8": {
+        "20261022": -1.217829699535778,
+        "20261023": -0.418039580120348,
+        "20261024": -1.2048292334838104
+      },
+      "zero112/zero8": {
+        "20261022": -1.2653067043600235,
+        "20261023": -0.3067145238210915,
+        "20261024": -1.1516976114381285
+      }
+    },
+    "bootstrap": {
+      "familywise_coverage": 0.975,
+      "paired_unit": "wholecomponent",
+      "quantiles": [
+        0.00625,
+        0.99375
+      ],
+      "replicates": 100000,
+      "same_resamples_both_primaries": true,
+      "seed": 20261022
+    },
+    "candidate_rows": 979200,
+    "chosen_failure_counts_of2550": {
+      "real112/five8": 10,
+      "real112/one8": 7,
+      "real112/zero8": 9,
+      "zero112/five8": 8,
+      "zero112/one8": 9,
+      "zero112/zero8": 8
+    },
+    "components": 162,
+    "context_choices": 15300,
+    "contexts": 850,
+    "families": 164,
+    "limits": [
+      "Exposed curatedTRAINbenchmark,no new independentfamilygeneralization",
+      "Exact probe canonical-target overlap may remainUNKNOWN; no directprobe targetfitness graft",
+      "SavedscoreQAalone doesnotverify modelpredictions; separate declaredreplay isreported",
+      "Lossdecline isnotrankinglift"
+    ],
+    "models": 36,
+    "optimizer_updates": 0,
+    "primary_contrasts": [
+      {
+        "central98_75_interval": [
+          -0.7890362249303311,
+          0.2869843098065123
+        ],
+        "established_favorable_direction": false,
+        "lower_is_better": true,
+        "name": "real112/five8-minus-real112/zero8",
+        "raw_fitness_difference": -0.10557196510330781
+      },
+      {
+        "central98_75_interval": [
+          -0.02305955244217988,
+          0.4012829989769582
+        ],
+        "established_favorable_direction": false,
+        "lower_is_better": true,
+        "name": "real112/five8-minus-real112/one8",
+        "raw_fitness_difference": 0.1482177799823401
+      }
+    ],
+    "schema": "h27.nn-factorial-independent-statistics/v1",
+    "secondary_point_estimates_only": {
+      "state_effect_five8": -0.0361146053812247,
+      "state_effect_one8": -0.2183190799743746,
+      "state_effect_zero8": -0.003522559395624149,
+      "state_x_five_minus_zero": -0.032592045985600525
+    },
+    "seed_policy": "fixed3seed_mean_utilities,not_scoreensemble",
+    "state": "PASS_SAVED_CHOICES_COMPONENT_ARITHMETIC_WITH_LIMITS"
+  },
+  "verification_receipt": {
+    "bytes": 22875,
+    "sha256": "3e7b84b19a41b8dbc3270f41914541a22d05fa503fa166a4b0b7c979dd7a486b"
+  }
+}
