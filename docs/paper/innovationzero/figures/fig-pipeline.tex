@@ -1,0 +1,19 @@
+% The data-to-algorithm flow. The dark stage is the protected kernel embedding.
+\begin{tikzpicture}[node distance=5.5mm and 4.2mm]
+\node[izbox, minimum height=13mm, text width=21mm] (data) {Training rows\\[1pt]{\scriptsize target in last column;\\held-out rows never enter}};
+\node[izstage, right=of data, minimum height=13mm, text width=20mm] (enc) {Problem encoder\\[1pt]{\scriptsize Hyperion v7\\transformer}};
+\node[izbox, right=of enc, minimum height=13mm, text width=13mm, fill=izpaper] (z) {$\mathbf{z}\in\mathbb{R}^{512}$\\[1pt]{\scriptsize problem\\embedding}};
+\node[izhidden, right=of z, minimum height=13mm, text width=22mm] (k) {Kernel embedding\\[1pt]{\scriptsize $\pi_\theta(\kappa\mid\mathbf{z})$ over typed,\\total, emittable kernels}};
+\node[izbox, right=of k, minimum height=13mm, text width=17mm, fill=izpaper] (kappa) {Kernel $\kappa$\\[1pt]{\scriptsize frozen before\\any execution}};
+\node[izstage, below=8mm of kappa, text width=17mm] (fit) {Fit\\[1pt]{\scriptsize $M=\kappa.\mathrm{fit}(\text{rows})$}};
+\node[izstage, left=of fit, text width=22mm] (emit) {Emit\\[1pt]{\scriptsize Rust \textperiodcentered{} Python\\C++17 \textperiodcentered{} JavaScript\textsuperscript{\dag}}};
+\node[izstage, left=of emit, text width=22mm] (ver) {Verify\\[1pt]{\scriptsize native and emitted predictions agree (Eq.~\ref{eq:parity})}};
+\node[izbox, left=of ver, text width=25mm, draw=izaccent, line width=0.9pt] (src) {Standalone source\\[1pt]{\scriptsize standard library only;\\the dataset's own algorithm}};
+\draw[izarrow] (data) -- (enc); \draw[izarrow] (enc) -- (z); \draw[izarrow] (z) -- (k); \draw[izarrow] (k) -- (kappa);
+\draw[izarrow] (kappa) -- (fit); \draw[izarrow] (fit) -- (emit); \draw[izarrow] (emit) -- (ver); \draw[izarrow] (ver) -- (src);
+\begin{scope}[on background layer]
+\node[fit=(k), inner sep=4pt, draw=izink, dashed, rounded corners=3pt, line width=0.5pt] (box) {};
+\end{scope}
+\node[iznote, above=1.5mm of box] {protected: described by guarantees, not mechanism};
+\node[iznote, above=1.5mm of kappa] {IZ-0: one decode};
+\end{tikzpicture}

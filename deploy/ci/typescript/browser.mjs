@@ -1,3 +1,4 @@
+import {nativeWebkitOptions} from './native.mjs';
 import {chromium,firefox,webkit} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile,readdir,writeFile,mkdir} from 'node:fs/promises';
@@ -25,10 +26,12 @@ const results=[];
 const engines={chromium,firefox,webkit};
 const selected=(process.env.JOPE_TS_BROWSERS||'chromium,firefox,webkit').split(',');
 assert.ok(selected.length>0&&selected.every(name=>engines[name]),'unknown browser');
+assert.equal(new Set(selected).size,selected.length,'duplicate browser');
+if(process.env.GITHUB_ACTIONS==='true') assert.deepEqual([...selected].sort(),['chromium','firefox','webkit'],'CI must execute every engine');
 try{
   for(const name of selected){
     const engine=engines[name];
-    const browser=await engine.launch({headless:true,...(name==='chromium'&&process.env.JOPE_TS_CHROMIUM_EXECUTABLE?{executablePath:process.env.JOPE_TS_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage']}: {})});
+    const browser=await engine.launch({headless:true,...(name==='webkit'?nativeWebkitOptions(engine):{}),...(name==='chromium'&&process.env.JOPE_TS_CHROMIUM_EXECUTABLE?{executablePath:process.env.JOPE_TS_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage']}: {})});
     const version=browser.version();
     try{
       const page=await browser.newPage();await page.goto(origin+'/');

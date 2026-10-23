@@ -1,4 +1,4 @@
-//! Regenerate with `cargo run -q -p jope-pipeline --example receipt_schema`.
+//! Regenerate with `cargo run -q -p jope-pipeline --example receipt_schema [objective]`.
 fn main() {
     let schema = match std::env::args().nth(1).as_deref() {
         Some("experiment") => {
@@ -21,6 +21,7 @@ fn main() {
         ))
         .unwrap(),
         None => jope_pipeline::receipt::derived_schema(),
+        Some("objective") => jope_pipeline::receipt::derived_objective_schema(),
         Some(other) => panic!("unknown schema {other}"),
     };
     println!("{}", serde_json::to_string_pretty(&schema).unwrap());

@@ -1,0 +1,23 @@
+% Pilot same-cut ladder. Source: evidence/pilot-2026-10-22/elo-deep.csv
+% (jope-arena elo, regularized Bradley--Terry; scores.csv SHA-256 86fec779...).
+\begin{tikzpicture}
+\begin{axis}[iz,
+  width=0.74\linewidth, height=0.66\linewidth,
+  xbar=0pt, bar width=6.2pt, bar shift=0pt,
+  xmin=1300, xmax=1800, xtick={1300,1400,1500,1600,1700,1800},
+  xmajorgrids, xlabel={Elo (pilot, 18 methods, 10 datasets $\times$ 5 cuts)},
+  ytick={1,...,18}, y dir=reverse, ymin=0.4, ymax=18.6,
+  yticklabels={{Opus5p5\_Extra},{Stack, engine baseline},{GPT6p1\_Sol\_Max},{Engine, $k=256$},{Kernel ridge, engine baseline},{HistGBM2, engine baseline},{Ensemble, engine baseline},{GPT6\_Astra\_Max},{Gaussian process, engine baseline},{CatBoost 1.2.10},{Random forest 1.7.2},{HistGBM, engine baseline},{LightGBM 4.6.0},{Elastic net, engine baseline},{Ridge-GCV, engine baseline},{Ridge, engine baseline},{XGBoost 2.1.4},{Kernel smoother, engine baseline}},
+  yticklabel style={font=\sffamily\scriptsize\color{izink}},
+  axis y line*=left, axis x line*=bottom, clip=false,
+  legend style={at={(0.99,0.03)}, anchor=south east, legend columns=1, fill=white, draw=none},
+  legend cell align=left]
+\addplot+[fill=izwarm, draw=none] coordinates {(1761.4,1) (1649.0,3) (1506.2,8)};
+\addplot+[fill=izaccent, draw=none] coordinates {(1630.9,4)};
+\addplot+[fill=izgreen!80, draw=none] coordinates {(1482.2,10) (1466.2,11) (1454.1,13) (1326.0,17)};
+\addplot+[fill=izrule, draw=none] coordinates {(1691.8,2) (1573.2,5) (1532.3,6) (1522.3,7) (1490.2,9) (1460.2,12) (1383.9,14) (1375.3,15) (1368.8,16) (1326.0,18)};
+\legend{Frontier-model entrant (track U), Engine (track S), Library default, Engine single-head baseline}
+\foreach \e/\r in {1761/1,1692/2,1649/3,1631/4,1573/5,1532/6,1522/7,1506/8,1490/9,1482/10,1466/11,1460/12,1454/13,1384/14,1375/15,1369/16,1326/17,1326/18}{
+  \edef\tmp{\noexpand\node[font=\noexpand\sffamily\noexpand\tiny\noexpand\color{izgrey}, anchor=west] at (axis cs:\e,\r) {\e};}\tmp}
+\end{axis}
+\end{tikzpicture}

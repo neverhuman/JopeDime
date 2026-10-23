@@ -1,19 +1,36 @@
+% supplement.tex — InnovationZero technical supplement: context, method audit, statistical contract,
+% effort reconciliation and the organizer's red-team record. Sections are numbered S1, S2, ...
 \documentclass[11pt]{article}
-\usepackage{style}
-\hypersetup{pdftitle={InnovationZero: Methods and Evidence Supplement}}
+\usepackage{iz}
+\renewcommand\thesection{S\arabic{section}}
+\renewcommand\IZShortTitle{InnovationZero \textperiodcentered{} Technical supplement}
+\renewcommand\IZTitle{Technical Supplement}
+\renewcommand\IZSubtitle{Context, method audit, statistical contract and effort reconciliation for
+  \emph{InnovationZero: Learning to Propose Algorithms Before Testing Them}}
+\renewcommand\IZAuthors{Jepson Taylor\quad Jordan Morrow\quad Alton Alexander}
+\renewcommand\IZDate{22 October 2026 \textperiodcentered{} repository \code{neverhuman/JopeDime}}
+\renewcommand\IZStatus{SUPPLEMENTARY MATERIAL}
+\hypersetup{pdftitle={InnovationZero: Technical Supplement}, pdfauthor={Jepson Taylor, Jordan Morrow, Alton Alexander}}
+
 \begin{document}
-\supplementtitle{Methods and evidence supplement}
-\noindent This volume expands the research manuscript's methods, historical context,
-statistical contract and effort accounting. Proposed experiments remain proposed.
-The companion archival volume reproduces the complete challenge and four source artifacts;
-the machine-readable manifest identifies their exact bytes and provenance.
-\tableofcontents
+\izmaketitle
+\noindent This volume expands the paper where a reviewer needs more than the paper can hold. S1 places
+the work among its precedents and the debate it enters. S2 audits the historical native objective at
+the repository snapshot, term by term. S3 specifies the statistical and resource contract of the
+proposed experiment. S4 reconciles the frontier authoring receipts phase by phase and states the
+metering contract future sessions must follow. S5 summarizes the organizer's appendix to the
+challenge, including the sixteen attacks closed before any entrant saw it. Proposed experiments
+remain proposed. The companion archive reproduces the complete challenge, the four frontier sources
+and the ten emitted programs byte for byte.
+
+{\small\tableofcontents}
 \clearpage
-\appendix
-\input{appendices/method-details}
-\input{appendices/statistics}
-\input{appendices/effort}
-\input{appendices/context}
-\bibliographystyle{plainnat}
-\bibliography{references}
+\input{supplement/S1-context}
+\input{supplement/S2-method-details}
+\input{supplement/S3-statistics}
+\input{supplement/S4-effort}
+\input{supplement/S5-organizer}
+
+\bibliographystyle{unsrtnat}
+{\small\bibliography{references}}
 \end{document}

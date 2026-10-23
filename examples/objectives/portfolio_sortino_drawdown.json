@@ -1,0 +1,25 @@
+{
+  "metric": "composite",
+  "terms": [
+    {
+      "weight": 1.0,
+      "scale": 1.0,
+      "fitness": {
+        "metric": "sortino",
+        "max_position": 1.0,
+        "cost": 0.0005,
+        "target": 0.0,
+        "periods_per_year": 252.0
+      }
+    },
+    {
+      "weight": 1.0,
+      "scale": 0.1,
+      "fitness": {
+        "metric": "max_drawdown",
+        "max_position": 1.0,
+        "cost": 0.0005
+      }
+    }
+  ]
+}

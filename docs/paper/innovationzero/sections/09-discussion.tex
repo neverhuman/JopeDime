@@ -1,0 +1,83 @@
+% Section 9 — Discussion
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Two routes to the same artifact} The pilots suggest a picture different from the one we
+expected when we began. Frontier models, reasoning only in language and never seeing a dataset, write
+regression algorithms that work, and the best of them ranked first among eighteen methods on our
+small panel. A data-conditioned engine writes a different algorithm for each dataset and, with a few
+hundred evaluations, is about as good. These are two routes to the same kind of artifact --- a
+standalone, readable program --- with opposite economics. Route~1 pays a large cost once, in
+language, and produces a general algorithm; route~2 pays per dataset, in program evaluations, and
+produces a specific one. Neither result is a track-C result, and neither settles our question. What
+they establish is that the question is the right one: both routes already produce strong programs,
+and what remains unknown is whether the second can propose its program before testing anything.
+
+\paragraph{The wrong objective, stated carefully} The claim that language models ``chase the wrong
+objective'' is usually made too broadly. The careful version is \cref{tab:objectives}. A pretrained
+model maximizes the likelihood of text people wrote; a preference-tuned model maximizes a model of
+what people prefer \citep{christiano2017rlhf,ouyang2022instructgpt}; a reasoning-tuned model is also
+rewarded by checkers on problems whose answers can be verified \citep{openai2024o1,deepseek2025r1},
+and today's frontier models combine all three. None of these objectives refers to what a program
+does on data no one has seen, and the recipes behind the four entrants are not documented, so we
+infer nothing about them from their names. Sutton's version is that language models have no ground truth
+\citep{sutton2025dwarkesh}; Almeida's, that preference is the wrong target for systems that act on
+their own \citep{almeida2026aie}; LeCun's, that the architecture itself is the problem
+\citep{lecun2026mittr}. Our evidence is consistent with a narrower reading than any of these. Frontier
+models are not unable to produce working new algorithms; they produce the algorithm the field would
+write. Training on likelihood and preference draws them to the centre of what is known
+\citep{grinsztajn2022trees}, and the four entrants' convergence on one design is that pull, observed.
+An objective defined by measured outcome (\cref{eq:j1}) pulls toward whatever works, including what
+nobody wrote. Regression is a domain where that objective is cheap to compute --- run the program,
+measure the error --- and therefore one where it can be tested today.
+
+\paragraph{The Eureka Machine and amortized discovery} Socher's \emph{Eureka Machine}
+\citep{socher2026eureka} rests discovery on four pillars --- a map of human knowledge, a model of
+physical reality learned from measurement, high-fidelity digital twins and autonomous laboratories
+--- above which, in his words, ``millions of AI agents will coordinate like a scientific community''
+\citep{socher2026bookbite}. Recursive describes parallel research threads that propose, implement,
+run and validate experiments \citep{recursive2026firststeps}, and reports using its automated
+research system of the same name to build its Flint model \citep{recursive2026flint}; these are
+company reports of AI research and development, not independent demonstrations of the book's
+measurement, simulation and laboratory pillars, nor of unrestricted self-improvement. SwarmRSI
+likewise lets experimental feedback steer a swarm of scientific agents \citep{meng2026swarmrsi}. InnovationZero is
+complementary and, on one axis, opposite. It takes the second pillar --- measurement data --- as its
+input, and asks whether the \emph{output} of the loop, a method that works, can be produced in one
+pass for problems like those it has already seen. The loop is how a field discovers; amortization is
+how it stops paying for discovery it has already made. The two compose: an iterative research
+system produces exactly the measured history an amortized proposer learns from, and a better first
+proposal gives the loop a better place to start. The AlphaGo lineage did both: search discovered,
+the network remembered.
+
+\paragraph{The cost of invention, counted honestly} Token yield (\cref{sec:yield}) is often read as an
+efficiency score. It is better read as a map of where a system explores. The frontier sessions
+explored in text and kept a tenth of what they processed; the engine explored in program space and
+generated no text until it committed. That is a structural difference, not yet an economic one. A
+frontier model's authoring cost buys a program that serves every later dataset, and on our pilot
+those programs fitted in tenths of a second; the engine paid seconds per dataset. Whether learned
+first proposals are cheaper per useful algorithm once training is amortized is gate M6, and we have
+not measured it. Cheaper invention would also not mean less of it: Jevons observed in 1865 that more
+efficient coal engines increased the consumption of coal \citep{jevons1865}, and the same is likely
+to be true of algorithms.
+
+\paragraph{What each outcome would mean} The protocol is built so that every outcome is
+informative. If the learned proposer beats selection and retrieval over the same archive, that
+establishes a predictive advantage under that comparison; only archive exclusion and mechanism tests
+can then attribute it to construction rather than recall. If a distilled bank or retrieval matches
+it, the evidence supports amortized selection, which is useful but not invention. If a few target
+evaluations erase its advantage, the advantage belongs to the low-feedback regime alone. None of
+these results would establish new mathematics, general intelligence or scientific autonomy, and
+each answers the paper's question more clearly than a leaderboard rank.
+
+\paragraph{Limitations} The operations from which kernels are built are human-designed: ridge
+regression, Gaussian processes and gradient boosting are decades of statistics, not rules of a game.
+``New'' in this paper therefore means a new composition for a dataset, graded by the ladder in
+\cref{tab:novelty}, not new mathematics. Only regression is studied. The frontier entrants are single,
+non-pristine attempts, and every token count is an estimate. The pilots are small: ten datasets in
+one case, and in the other 64 training families with prepared inner-validation contexts, preprocessing
+fitted before the original split, and three seeds fixed after the first had been inspected. The
+engine's timings and the frontier entrants' come from different hosts. Most of the training corpus
+has unknown licence status and cannot be redistributed; the replication panels are public datasets.
+Elo is relative to the panel and the pool of opponents, and we report magnitudes beside it. Finally,
+the result this paper is about has not been run: no neural proposer in this system has yet met the
+track-C contract on held-out data.

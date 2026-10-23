@@ -1,0 +1,82 @@
+% Frontier entrants compared on quality, token yield, throughput and fitting cost.
+% Data: data/frontier-entrants.csv, transcribed from the archived receipts and checked by
+% scripts/check.sh against artifacts/benchmark/RESULTS.json (Elo), HISTORICAL_THREE_ENTRANT.json
+% and GEMINI_COSTS.json (fit time, memory) and the source byte counts in the artifact manifest.
+% Token yields and rates are the sessions' own estimates (artifacts/receipts/*); source tokens are
+% bytes / 3.5 (range 3.0--4.0). Gemini4_argon_high's values (columns sr_*) come from an authoring
+% statement supplied after integration (evidence/gemini-authoring-statement-20261022.md) that cannot be
+% reconciled with the archived source size; they are drawn open and grey.
+\pgfplotstableread[col sep=comma]{data/frontier-entrants.csv}\IZfrontier
+\begin{tikzpicture}
+\begin{groupplot}[iz,
+  group style={group size=4 by 1, horizontal sep=0.42cm, yticklabels at=edge left},
+  scale only axis, width=2.62cm, height=2.55cm,
+  ytick={1,2,3,4}, y dir=reverse, ymin=0.45, ymax=4.55,
+  yticklabels={Opus5p5\_Extra, Gemini4\_argon\_high, GPT6p1\_Sol\_Max, GPT6\_Astra\_Max},
+  yticklabel style={font=\sffamily\scriptsize\color{izink}},
+  axis y line*=left, axis x line*=bottom, xmajorgrids, clip=false,
+  title style={font=\sffamily\sbseries\footnotesize, anchor=south west, at={(0,1.0)}, align=left},
+  xlabel style={font=\sffamily\scriptsize\color{izgrey}},
+  every axis plot/.append style={only marks},
+  error bars/error bar style={line width=0.8pt},
+  error bars/error mark options={rotate=90, mark size=2.2pt},
+]
+% (a) Elo with 95% family-bootstrap interval
+\nextgroupplot[title={(a) Regression Elo}, xmin=1260, xmax=1720,
+  xtick={1300,1400,1500,1600,1700}, xticklabels={1300,,1500,,1700},
+  xlabel={95\% interval}]
+\addplot[mark=*, mark size=2.3pt, izaccent, mark options={fill=izaccent, draw=izaccent}, error bars/.cd, x dir=both, x explicit,
+  error bar style={izaccent}, error mark options={izaccent}]
+  table[x=elo, y=y, x error minus expr=\thisrow{elo}-\thisrow{elo_lo},
+        x error plus expr=\thisrow{elo_hi}-\thisrow{elo}] {\IZfrontier};
+\addplot[mark=none, point meta=explicit,
+  nodes near coords={\pgfmathprintnumber[fixed,precision=0,1000 sep={},assume math mode=true]{\pgfplotspointmeta}},
+  nodes near coords style={font=\sffamily\tiny\color{izink}, anchor=south, yshift=1.5pt}]
+  table[x=elo, y=y, meta=elo] {\IZfrontier};
+% (b) token yield: source / session content (filled); source / generated (open), Opus only
+\nextgroupplot[title={(b) Token yield}, xmin=0, xmax=85, xtick={0,20,40,60,80},
+  xticklabels={0,20,40,60,80\,\%}, xlabel={source share of tokens}]
+\addplot[mark=*, mark size=2.3pt, izaccent, mark options={fill=izaccent, draw=izaccent}, error bars/.cd, x dir=both, x explicit,
+  error bar style={izaccent}, error mark options={izaccent}]
+  table[x=ycont, y=y, x error minus expr=\thisrow{ycont}-\thisrow{ycont_lo},
+        x error plus expr=\thisrow{ycont_hi}-\thisrow{ycont}] {\IZfrontier};
+\addplot[mark=o, mark size=2.4pt, izwarm, thick, mark options={draw=izwarm, fill=white}] table[x=ygen, y=y] {\IZfrontier};
+\addplot[mark=triangle, mark size=2.6pt, izgrey, thick, mark options={draw=izgrey, fill=white}]
+  table[x=sr_ygen, y=y] {\IZfrontier};
+\node[font=\sffamily\tiny\color{izgrey}, anchor=east] at (axis cs:74,2) {self-report: ${\le}$78\%$^\dagger$};
+% (c) throughput: session content per second (filled) and frozen source per second (open)
+\nextgroupplot[title={(c) Tokens per second}, xmode=log, xmin=4, xmax=700, log basis x=10,
+  xtick={10,100}, xticklabels={10,100}, xlabel={log scale}]
+\addplot[mark=*, mark size=2.3pt, izaccent, mark options={fill=izaccent, draw=izaccent}, error bars/.cd, x dir=both, x explicit,
+  error bar style={izaccent}, error mark options={izaccent}]
+  table[x=tps, y=y, x error minus expr=\thisrow{tps}-\thisrow{tps_lo},
+        x error plus expr=\thisrow{tps_hi}-\thisrow{tps}] {\IZfrontier};
+\addplot[mark=diamond, mark size=2.8pt, izwarm, thick, mark options={draw=izwarm, fill=white}, error bars/.cd, x dir=both, x explicit,
+  error bar style={izwarm}, error mark options={izwarm}]
+  table[x=sps, y=y, x error minus expr=\thisrow{sps}-\thisrow{sps_lo},
+        x error plus expr=\thisrow{sps_hi}-\thisrow{sps}] {\IZfrontier};
+\addplot[mark=triangle, mark size=2.6pt, izgrey, thick, mark options={draw=izgrey, fill=white},
+  error bars/.cd, x dir=both, x explicit, error bar style={izgrey}, error mark options={izgrey}]
+  table[x=sr_tps, y=y, x error minus expr=\thisrow{sr_tps}-\thisrow{sr_tps_lo},
+        x error plus expr=\thisrow{sr_tps_hi}-\thisrow{sr_tps}] {\IZfrontier};
+\addplot[mark=diamond, mark size=2.8pt, izgrey, thick, mark options={draw=izgrey, fill=white},
+  error bars/.cd, x dir=both, x explicit, error bar style={izgrey, densely dotted}, error mark options={izgrey}]
+  table[x=sr_sps, y=y, x error minus expr=\thisrow{sr_sps}-\thisrow{sr_sps_lo},
+        x error plus expr=\thisrow{sr_sps_hi}-\thisrow{sr_sps}] {\IZfrontier};
+\node[font=\sffamily\tiny\color{izgrey}, anchor=east] at (axis cs:120,2) {self-report$^\dagger$};
+% (d) fitting cost of the frozen program: 576 fits, one CPU each
+\nextgroupplot[title={(d) Fit time}, xmode=log, xmin=30, xmax=4000, log basis x=10,
+  xtick={100,1000}, xticklabels={100\,s,1000\,s}, xlabel={576 fits, log scale}]
+\addplot[mark=square*, mark size=2.0pt, izink, mark options={fill=izink, draw=izink}] table[x=fit_s, y=y] {\IZfrontier};
+\node[font=\sffamily\tiny\color{izgrey}, anchor=north] at (axis cs:1985.8,2.18) {other host};
+\end{groupplot}
+% shared legend under the panels
+\node[anchor=north west, font=\sffamily\scriptsize, inner sep=0pt]
+  at ($(group c1r1.south west)+(0,-0.85cm)$) {%
+  \begin{tabular}{@{}l@{\hspace{1.2em}}l@{}}
+  \tikz\node[circle, fill=izaccent, inner sep=1.6pt]{};~session estimate, with its stated range &
+  \tikz\node[diamond, draw=izwarm, thick, inner sep=1.3pt]{};~frozen source tokens per second \\
+  \tikz\node[circle, draw=izwarm, thick, inner sep=1.5pt]{};~Opus: source share of generated tokens &
+  \tikz\node[regular polygon, regular polygon sides=3, draw=izgrey, thick, inner sep=1.1pt]{};~Gemini: self-reported, not reconcilable with its source$^\dagger$
+  \end{tabular}};
+\end{tikzpicture}

@@ -140,8 +140,7 @@ export CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-table
 npm ci --prefix deploy/ci/typescript --ignore-scripts --no-audit --no-fund
 bash deploy/ci/typescript/qualify.sh
 # Real browsers require the engine downloads and their system libraries.
-deploy/ci/typescript/node_modules/.bin/playwright install --with-deps chromium firefox webkit
-node deploy/ci/typescript/browser.mjs
+bash deploy/ci/typescript/browser-tools.sh
 ```
 
 Missing compilers, missing browser engines, zero tests and incomplete census records
@@ -170,3 +169,5 @@ coverage. Real-Wasm numerical comparisons and real-browser tests are separate fr
 fault-injected facade coverage. See [the red-team record](typescript-redteam.md) for
 observed results and remaining qualification limits. A workflow definition is not a
 passing run; use current exact-head CI before claiming hosted qualification.
+
+CI runs through the admitted self-hosted `ci.yml` workflow, including manual dispatches of `ci.yml` at the reviewed branch. It copies the pinned image’s Rustup state into task-local writable storage before adding Wasm; the image and host toolchains stay unchanged. The browser step extracts the complete checksum-pinned official Ubuntu dependency closure without package installation or maintainer scripts. Browser library paths apply only to that step. WebKit uses its SDK’s real WPE executable with the same wrapper resource settings and verified native libraries; actual dependency resolution, all corpus predictions and every module worker must pass. Both Node matrix receipts bind source and event identities, source tree, tool/lock hashes, complete logs and census, run and attempt; aggregate verifies both receipts.

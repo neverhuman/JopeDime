@@ -442,6 +442,68 @@ fn kernel2_profile_cli_publishes_v4_verifies_evidence_and_defaults_to_fitted_cpp
 }
 
 #[test]
+fn an_objective_ranked_run_records_its_objective_and_bad_objectives_are_refused_first() {
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("run");
+    for bad in [
+        vec!["--fitness", "sortino"],
+        vec!["--fitness", "no_such_objective"],
+        vec!["--fitness", "pinball:quantile=2"],
+        vec![
+            "--fitness",
+            "mae",
+            "--search-profile",
+            "kernel2-baseline",
+            "--refine-top-k",
+            "1",
+            "--refine-trials",
+            "4",
+        ],
+    ] {
+        let result = jope()
+            .args(run_args(&directory, "evaluations=4,seconds=60"))
+            .args(&bad)
+            .output()
+            .unwrap();
+        assert_eq!(
+            result.status.code(),
+            Some(2),
+            "{bad:?}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert!(!directory.exists(), "{bad:?}");
+    }
+    let result = jope()
+        .args(run_args(&directory, "evaluations=4,seconds=60"))
+        .args(["--fitness", "pinball:quantile=0.8", "--json"])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(receipt["search"]["objective"]["name"], "pinball");
+    assert_eq!(
+        receipt["search"]["objective"]["specification"]["quantile"],
+        0.8
+    );
+    assert!(receipt["search"]["best"]["validation_objective"].is_number());
+    let verified = jope()
+        .args(["pipeline", "verify-receipt", "--receipt"])
+        .arg(directory.join("receipt.json"))
+        .args(["--evidence", "--json"])
+        .output()
+        .unwrap();
+    assert!(
+        verified.status.success(),
+        "{}",
+        String::from_utf8_lossy(&verified.stderr)
+    );
+}
+
+#[test]
 fn kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds() {
     let temp = tempfile::tempdir().unwrap();
     let directory = temp.path().join("run");

@@ -18,6 +18,8 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Save, inspect, verify and export language-neutral fitted objects; or serve their MCP tools.
+    Model(crate::model::ModelArgs),
     /// Product version, source commit, runtime ABI, target and package identity.
     Version(JsonFlag),
     /// Package integrity, devices, promised methods and limits.
@@ -34,9 +36,12 @@ pub enum Command {
     Fit {
         #[command(flatten)]
         train: TrainArgs,
-        /// Fitted model file to write (atomically).
+        /// Write a legacy fitted file instead of the standard content-addressed object.
         #[arg(long)]
-        output: PathBuf,
+        output: Option<PathBuf>,
+        /// Object store root when --output is omitted.
+        #[arg(long, default_value = "models", conflicts_with = "output")]
+        model_root: PathBuf,
         #[command(flatten)]
         common: CommonArgs,
     },
@@ -64,6 +69,15 @@ pub enum Command {
         #[command(flatten)]
         common: CommonArgs,
     },
+    /// Discover, validate or evaluate regression objectives (`--fitness` specifications).
+    Fitness {
+        #[command(subcommand)]
+        command: FitnessCommand,
+    },
+    /// Serve JSON-RPC MCP tools on stdin/stdout (one JSON document per line).
+    Mcp,
+    /// Serve the same fit/evaluate API on stdin/stdout as JSON lines.
+    Api,
     /// Verify this executable's embedded package completely. A diagnostic: it cannot establish
     /// trust in a binary that may itself be modified; verify downloads with `jope-dist verify`.
     VerifySelf(JsonFlag),
@@ -98,6 +112,20 @@ pub struct TrainArgs {
     /// With `--method auto`: cross-validation folds (reduced for small tables).
     #[arg(long, default_value_t = 5)]
     pub folds: usize,
+    /// Regression objective for selection and calibration: a catalog name (`mae`), a name with
+    /// numeric overrides (`pinball:quantile=0.9`), inline JSON, or @path.json.
+    #[arg(long)]
+    pub fitness: Option<String>,
+    /// Objective-aware output calibration learned on out-of-fold predictions: auto (affine with
+    /// --fitness, otherwise none), none, shift or affine.
+    #[arg(long, default_value = "auto", value_parser = ["auto", "none", "shift", "affine"])]
+    pub calibration: String,
+    /// iid or forward (chronological expanding-window validation).
+    #[arg(long, default_value = "iid", value_parser = ["iid", "forward"])]
+    pub validation: String,
+    /// Rows excluded between each forward training window and its validation block.
+    #[arg(long, default_value_t = 0)]
+    pub gap: usize,
 }
 
 #[derive(Args, Clone)]
@@ -123,4 +151,22 @@ pub struct CommonArgs {
     /// Print the run receipt as JSON on stdout instead of a summary on stderr.
     #[arg(long)]
     pub json: bool,
+}
+
+#[derive(Subcommand)]
+pub enum FitnessCommand {
+    /// List built-in names with their exact default parameters, directions and descriptions.
+    List,
+    /// Check a specification (name, name:key=value, JSON or @path.json) and print its identity.
+    Validate {
+        /// The specification, as `--fitness` accepts it.
+        spec: String,
+    },
+    /// Score a JSON file containing {fitness, targets, predictions[, columns]}.
+    Evaluate {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    /// Print the JSON Schema of objective specifications.
+    Schema,
 }

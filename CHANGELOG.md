@@ -9,12 +9,22 @@ the commit areas (crate or lane) named in each subject line.
 
 - TypeScript: explicit `typescript` / `ts` output with a strict typed API and a WebAssembly build source reusing the complete Rust recipe implementation. Includes bound fitted-model export, CLI/pipeline/v3 source binding, token counting, and an executable CommonJS/ESM qualification lane. Build requirements, arithmetic tolerance and current qualification limits are in `docs/typescript.md`.
 
+### Regression objectives
+
+- runtime: `jopedime fit --fitness` selects native methods by a portable regression objective: 38 built-ins (quantile, newsvendor, LinEx, relative errors, Poisson/Gamma/Tweedie deviances, MASE, Sharpe, Sortino, drawdown, Calmar, Omega, expected shortfall, hit rate, normalized Gini, KGE, top-fraction capture and more), `name:key=value` overrides, and custom JSON row expressions over `y`, `pred` and numeric training columns that are never features, with weighted and composite forms. Every specification has a sha256 identity in the selection record, model file and receipt
+- runtime: objective-aware output calibration (`--calibration auto|none|shift|affine`, default affine with an objective): a monotone `max(a + b*pred, floor)` map learned on out-of-fold predictions, cross-fitted for selection, stored in `model.jope` and applied at prediction. A model whose map or objective columns disagree with its selection record does not load
+- runtime: chronological `--validation forward --gap N` for order-dependent objectives; JSON-RPC (`jopedime api`) and MCP (`jopedime mcp`; revisions 2025-11-25 back to 2024-11-05) tools `fitness_list`, `fitness_validate`, `fitness_evaluate` and `regression_fit_predict`
+- pipeline: `jope pipeline run --fitness` and `jope pipeline invent --fitness` rank candidate programs by the objective on held-out rows; observations carry `objective_loss`, receipts record `search.objective` and `validation_objective`, evidence re-derivation and sealed test scoring use the same objective. Order-dependent objectives and objectives that read columns are refused by the search
+- examples: 41 objective recipes and a real-world benchmark (`examples/objectives/real-world`) that fetches public datasets outside the checkout and compares RMSE selection, objective selection and calibrated selection on held-out rows
+
 ### Benchmarks and AutoML
 
 - automl: the owner-supplied `Gemini4_argon_high` Rust regressor joins the native registry byte-for-byte (`jope-bench run --native Gemini4_argon_high`), replacing the earlier `gemini-argon-4` candidate. The adapter now refuses a non-finite prediction instead of passing it on; the frozen source returns `inf` for some extreme finite inputs
 - automl-elo: `assets/automl-elo/v1` adds the four-entrant AutoML Elo over 64 families × 3 folds × 3 seeds. Gemini4_argon_high was fitted on all 576 cells (one CPU and 8 GiB each, no failures); the three earlier entrants' 1,728 fits are reused and the historical fit is reproduced exactly. Ratings: Opus5p5_Extra 1641, Gemini4_argon_high 1561, GPT6p1_Sol_Max 1456, GPT6_Astra_Max 1342 (95% family-bootstrap intervals in `RESULTS.json`; Gemini's RMSE differences are not significant after Holm adjustment), with Elo, pairwise and source-size figures
 
 ### CI
+
+- appliance: PR package builds use fat LTO and one codegen unit to retain the existing executable size limits with the new objective/API adapters; numerical optimization, panic recovery and the 5% size tolerance remain unchanged
 
 - runner: the daily build-cache trim keeps the newest 3 builds per crate and kind instead of 6. xbabe3's full-lane target regrew to 211 GB within a day under keep-6, its root disk fell below the 50 GB runner reserve, and both its lanes refused to start (main full-main-cpu 39770894207 cpu-1). Rolled out with the usual runner re-provisioning freeze
 - ci(browser-deps): `observatory-ui` retries a dropped or refused download of a pinned Ubuntu package up to 4 times with backoff (transport errors and HTTP 5xx only). A size or hash mismatch or an HTTP 4xx still fails at once, and nothing is published before verification. Two jobs failed on 2026-10-22 from single mirror drops

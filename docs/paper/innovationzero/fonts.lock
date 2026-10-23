@@ -1,0 +1,8 @@
+# Fonts for the InnovationZero paper. One release archive per line:
+#   <sha256-of-archive> <url> <member> [<member> ...]
+# build.sh downloads each archive once into the font cache, refuses a hash mismatch, and copies
+# the listed members (paths inside the archive) into the cache's flat font directory.
+# All three families are licensed under the SIL Open Font License 1.1.
+4d9be29b5cb380c35af8ba967abcc752ad1e07be1f738a9789c33e0dd7478c92 https://github.com/alerque/libertinus/releases/download/v7.051/Libertinus-7.051.zip Libertinus-7.051/static/OTF/LibertinusSerif-Regular.otf Libertinus-7.051/static/OTF/LibertinusSerif-Italic.otf Libertinus-7.051/static/OTF/LibertinusSerif-Semibold.otf Libertinus-7.051/static/OTF/LibertinusSerif-SemiboldItalic.otf Libertinus-7.051/static/OTF/LibertinusSerif-Bold.otf Libertinus-7.051/static/OTF/LibertinusSerif-BoldItalic.otf Libertinus-7.051/static/OTF/LibertinusSerifDisplay-Regular.otf Libertinus-7.051/static/OTF/LibertinusMath-Regular.otf
+9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip extras/otf/Inter-Regular.otf extras/otf/Inter-Italic.otf extras/otf/Inter-Medium.otf extras/otf/Inter-MediumItalic.otf extras/otf/Inter-SemiBold.otf extras/otf/Inter-SemiBoldItalic.otf extras/otf/Inter-Bold.otf
+6f6376c6ed2960ea8a963cd7387ec9d76e3f629125bc33d1fdcd7eb7012f7bbf https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip fonts/ttf/JetBrainsMono-Regular.ttf fonts/ttf/JetBrainsMono-Italic.ttf fonts/ttf/JetBrainsMono-Bold.ttf fonts/ttf/JetBrainsMono-BoldItalic.ttf fonts/ttf/JetBrainsMono-Medium.ttf

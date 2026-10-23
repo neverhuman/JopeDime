@@ -1,0 +1,34 @@
+{
+  "metric": "composite",
+  "terms": [
+    {
+      "weight": 0.7,
+      "scale": 1.0,
+      "fitness": {
+        "metric": "weighted",
+        "weights": {
+          "op": "column",
+          "name": "exposure"
+        },
+        "fitness": {
+          "metric": "tweedie_deviance",
+          "power": 1.5
+        }
+      }
+    },
+    {
+      "weight": 0.3,
+      "scale": 0.1,
+      "fitness": {
+        "metric": "weighted",
+        "weights": {
+          "op": "column",
+          "name": "exposure"
+        },
+        "fitness": {
+          "metric": "normalized_gini"
+        }
+      }
+    }
+  ]
+}

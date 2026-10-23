@@ -1,0 +1,52 @@
+{
+  "metric": "custom",
+  "name": "newsvendor_cost",
+  "direction": "minimize",
+  "expression": {
+    "op": "where",
+    "condition": {
+      "op": "sub",
+      "left": {
+        "op": "y"
+      },
+      "right": {
+        "op": "pred"
+      }
+    },
+    "then": {
+      "op": "mul",
+      "left": {
+        "op": "column",
+        "name": "unit_margin"
+      },
+      "right": {
+        "op": "sub",
+        "left": {
+          "op": "y"
+        },
+        "right": {
+          "op": "pred"
+        }
+      }
+    },
+    "else": {
+      "op": "mul",
+      "left": {
+        "op": "column",
+        "name": "holding_cost"
+      },
+      "right": {
+        "op": "sub",
+        "left": {
+          "op": "pred"
+        },
+        "right": {
+          "op": "y"
+        }
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "mean"
+  }
+}

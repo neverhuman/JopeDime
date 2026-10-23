@@ -1,0 +1,64 @@
+% Appendix A — the frontier comparison in full: where each entrant wins
+\section{The frontier comparison in full: where each entrant wins}
+\label{app:frontier}
+
+This appendix unpacks \cref{fig:frontier}a into the records it summarizes. Every number is derived
+from two archived files, \code{artifacts/benchmark/match-matrix.txt} (one row per family, one column
+per pair of entrants, holding the first entrant's seed-averaged match score) and
+\code{artifacts/benchmark/RESULTS.json}, by \code{scripts/derive-frontier.sh}; the build regenerates
+the plotted tables from those files and fails if they differ from the committed copies in
+\code{data/}. The panel, protocol and limits are those of \cref{sec:u64} \pre.
+
+\begin{figure}[h]
+\centering
+\input{figures/fig-frontier-wins}
+\caption{Where each frontier entrant wins, on the 64 families of \cref{fig:frontier}a.
+\textbf{(a)}~Head-to-head records: the row entrant's family-weighted match score against the column
+entrant, and the number of families in which it won the majority of seeds.
+\textbf{(b)}~Error magnitude: geometric-mean RMSE ratio of the first entrant to the second with its
+95\% family-bootstrap interval; left of the dashed line favours the first. Only the two intervals
+comparing Astra with Sol and with Opus exclude 1. \textbf{(c)}~Every family, one column each: shading is the number of
+matches (0--3, averaged over seeds) an entrant won against the other three, and a white dot marks the
+best of the four. Families are grouped by their best entrant; two are shared between entrants \pre.}
+\label{fig:frontier-wins}
+\end{figure}
+
+\paragraph{Head-to-head} The six pairings are decisive in direction and never unanimous
+(\cref{fig:frontier-wins}a). Opus5p5\_Extra wins the majority of seeds against Gemini4\_argon\_high
+in 39 of 64 families, against GPT6p1\_Sol\_Max in 51 and against GPT6\_Astra\_Max in 56;
+Gemini beats Sol in 45 and Astra in 49; Sol beats Astra in 47. No family produced a tie on a
+majority of seeds. The weakest entrant still wins at least eight families against the strongest.
+
+\paragraph{Every family} Panel (c) shows the same records family by family. Opus is the best of the
+four in 30 families, Gemini in 20, Sol in 7 and Astra in 5; one family is shared by Opus and Sol and
+one by Opus, Gemini and Sol. Opus wins all three of its matches on every seed in 24 families,
+Gemini in 16, Sol in 6 and Astra in 1. At the other end Astra loses every match on every seed in 30
+families, Sol in 8, Opus in 3 and Gemini in 2. A portfolio that could choose the right one of these
+four general algorithms for each family would beat each of them; choosing it requires reading the
+data, which is the step InnovationZero proposes to learn.
+
+\paragraph{Magnitude} Panel (b) repeats \cref{tab:magnitude}. The ranking by wins and the ranking by
+error magnitude agree only at the bottom: Astra's errors are 30--35\% larger than Opus's and Sol's,
+with intervals that exclude parity, while the top three cannot be separated on magnitude. Sol's
+geometric-mean error is the lowest of the four at the point estimate.
+
+\paragraph{Cost} \Cref{tab:frontier-cost} gives the resource receipts behind \cref{fig:frontier}d.
+Fit and prediction times are totals over 576 cells, each isolated to one CPU; the first three
+entrants ran on one host and Gemini on another, so its times are not a controlled comparison.
+
+\begin{table}[h]
+\caption{Resources used by the four frozen programs over 576 cells each \pre. Fit and predict are
+wall-clock totals; memory is the largest peak resident set of any cell.}
+\label{tab:frontier-cost}
+\centering\sffamily\footnotesize\lining
+\begin{tabular}{@{}lrrrrrl@{}}
+\toprule
+Entrant & Source & Fit (s) & Per fit (s) & Predict (s) & Memory & Host \\
+\midrule
+\code{Opus5p5\_Extra} & 66,536 B & 459.5 & 0.80 & 20.8 & 80.1 MB & historical \\
+\code{Gemini4\_argon\_high} & 96,694 B & 1,985.8 & 3.45 & 31.4 & 25.2 MB & second \\
+\code{GPT6p1\_Sol\_Max} & 25,011 B & 72.1 & 0.13 & 1.36 & 19.3 MB & historical \\
+\code{GPT6\_Astra\_Max} & 27,729 B & 61.9 & 0.11 & 0.70 & 28.8 MB & historical \\
+\bottomrule
+\end{tabular}
+\end{table}

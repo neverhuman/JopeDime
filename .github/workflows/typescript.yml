@@ -1,14 +1,12 @@
 name: typescript
 on:
   workflow_call:
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   typescript-parity:
-    runs-on: ubuntu-24.04
-    # The existing pure-Python wide GCV oracle is intentionally expensive;
-    # retain that fixture and allow the added complete census to finish too.
+    # Reusable under ci.yml, the existing PR/manual admission context.
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -25,19 +23,21 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
       - name: Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: ${{ matrix.node }}
-      - name: Prepare pinned compilers
-        shell: bash
+      - name: Prepare pinned compilers in task-local storage
         run: |
           set -euo pipefail
-          rustup show active-toolchain
-          rustup target add wasm32-unknown-unknown
+          test "$(node --version)" = "v${{ matrix.node }}"
+          bash deploy/ci/typescript/compiler-tools.sh
           npm ci --prefix deploy/ci/typescript --ignore-scripts --no-audit --no-fund
       - name: Formatting and complete source checks
-        shell: bash
         run: |
           set -euo pipefail
           git diff --check
@@ -45,25 +45,18 @@ jobs:
           cargo check --locked -p feat-math -p jope-cli -p jope-pipeline --no-default-features --all-targets
       - name: Complete census, golden parity, 100 percent facade coverage and publication contracts
         run: bash deploy/ci/typescript/qualify.sh
-      - name: Install real browser engines
-        if: matrix.node == '26.1.0'
-        run: deploy/ci/typescript/node_modules/.bin/playwright install --with-deps chromium firefox webkit
       - name: Every census fixture in Chromium, Firefox, WebKit and module workers
         if: matrix.node == '26.1.0'
         env:
           JOPE_TS_BROWSERS: chromium,firefox,webkit
-        run: node deploy/ci/typescript/browser.mjs
-      - name: Retain qualification logs
+        run: bash deploy/ci/typescript/browser-tools.sh
+      - name: Require complete exact-source qualification evidence
+        env:
+          JOPE_TS_EXPECTED_NODE: ${{ matrix.node }}
+        run: node deploy/ci/typescript/evidence.mjs create target/typescript-evidence
+      - name: Retain qualification logs and source-bound receipt
         if: always()
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: ./.github/actions/upload-ci-evidence
         with:
-          key: typescript-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.node }}
+          name: typescript-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.node }}
           path: target/typescript-evidence/
-      - name: Verify evidence publication
-        if: always()
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          key: typescript-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.node }}
-          path: target/typescript-evidence/
-          lookup-only: true
-          fail-on-cache-miss: true

@@ -1,23 +1,40 @@
 # Measured size budgets (SPECIFICATION.md §12.4), checked by `jope-dist size-report --budget`.
 # Baselines measured 2026-10-21 on x86_64-unknown-linux-gnu, Rust 1.97, at the commit that
 # introduced them; a change beyond the tolerance needs a reviewed budget update with attribution.
+#
+# Rebaselined 2026-10-22 for regression objectives (PR #411), Rust 1.97.1, against main at
+# 1240120d built the same way on the same host (deploy/appliance/AMENDMENTS.md A13):
+#   * Stripping fixed: `strip = "symbols"` had never reached the executable, so every build
+#     carried its symbol tables (591 KB of main's 3,738,480-byte `dist` executable, 1.75 MB of
+#     its `dist-ci` one). Stripped, main measures 3,147,304 (`dist`) and 3,684,472 (`dist-ci`).
+#   * Regression objectives: +898,952 bytes in `dist` (+28.6% over stripped main) and +928,584
+#     in `dist-ci`. Machine code is +688 KB: the objective grammar (parse, validate, evaluate)
+#     about 300 KB, the JSON-RPC/MCP adapters 80 KB, objective-aware selection and calibration
+#     45 KB, shared serde_json and core instantiations the rest; unwind tables +110 KB, read-only
+#     data +73 KB, relocations +28 KB. No dependency was added.
+# Rebaselined 2026-10-22 for model-object persistence (PR #413), amendment A14:
+#   * Same-host dist-ci executable: 4,613,056 -> 5,319,208 B (+706,152, 15.3%).
+#   * Complete object/session CLI and MCP, bounded filesystem publication, strict state JSON
+#     and the pinned serde_ignored adapter; numerical algorithms and optimization stay unchanged.
+#   * Native-only dist executable: 4,542,168 B; independently sealed size-validation package:
+#     4,561,056 B. The production signing key was not used; this is not a published appliance.
 schema = "jope.appliance-size-budgets/v1"
 tolerance_percent = 5
 
 # PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
 [profile.fixture]
-base_executable_bytes = 5429128
-final_executable_bytes = 5545586
+base_executable_bytes = 5319208
+final_executable_bytes = 5435014
 note = "dist-ci build plus 0.1 MiB of generated fixture tensors and notices"
 
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
 [profile.native-only]
-base_executable_bytes = 3713088
-final_executable_bytes = 3733648
+base_executable_bytes = 4542168
+final_executable_bytes = 4561056
 note = "native methods only; the payload is the licence and third-party notices (sealed with an independent P-256 key)"
 
 # Blocked (models.lock.json). The tensors alone are 438,062,296 bytes before lossless packing.
 [profile.full]
-base_executable_bytes = 3713088
+base_executable_bytes = 4542168
 final_executable_bytes = 460000000
 note = "provisional: replace with the first measured internal-restricted build"

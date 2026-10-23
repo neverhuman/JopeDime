@@ -1,0 +1,27 @@
+{
+  "metric": "custom",
+  "name": "imbalance_cost",
+  "direction": "minimize",
+  "expression": {
+    "op": "mul",
+    "left": {
+      "op": "column",
+      "name": "imbalance_price"
+    },
+    "right": {
+      "op": "abs",
+      "arg": {
+        "op": "sub",
+        "left": {
+          "op": "y"
+        },
+        "right": {
+          "op": "pred"
+        }
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "mean"
+  }
+}

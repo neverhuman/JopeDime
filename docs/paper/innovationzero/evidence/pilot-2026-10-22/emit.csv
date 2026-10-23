@@ -1,0 +1,11 @@
+dataset,runs,min_ms,median_ms,max_ms,rust_bytes,rust_lines,python_bytes,cpp17,javascript
+047e62b52a3f4ede,25,3.6,6.5,8.4,13690,419,10825,yes,yes
+1cb97b1d7314d43d,25,5.2,7.0,13.0,34271,913,27268,refused,refused
+21fbfe8b53dbcd60,25,4.3,6.2,8.7,37878,1010,29980,refused,refused
+30ef3eaa6d2971a9,25,4.1,6.5,9.5,15502,475,12153,yes,yes
+43b4cc3ab0ebbd97,25,4.8,6.1,10.5,16554,494,12526,refused,refused
+693890aae9dc860b,25,4.5,5.5,7.8,21899,632,17893,refused,refused
+79e600bc5fcd5da7,25,3.8,5.6,8.6,17859,532,13458,refused,refused
+b5beff4a53fa12c0,25,3.8,4.9,7.9,24418,737,19897,refused,refused
+c32fa09b48fb2f27,25,3.9,4.6,6.1,24382,703,18149,refused,refused
+c7d815714ca52bce,25,3.6,5.1,6.8,19007,559,14702,refused,refused

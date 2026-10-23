@@ -6,20 +6,6 @@ All remaining `978` tracked `.py` files (`247,596` LOC) are pure orchestration, 
 
 ## Summary by Exception Category
 
-### Publication-build exceptions added 2026-10-22
-
-The historical inventory and totals below describe the 2026-10-18 stack review.
-The following two exact-path exceptions are additive under the user's explicit
-InnovationZero publication-build assignment. They are offline document tooling;
-they do not extend the product runtime, training service, or benchmark executor.
-
-| Path | Exception Category | 1-Line Justification |
-| --- | --- | --- |
-| `docs/paper/innovationzero/scripts/check.py` | `PR-EXCEPT-PUBLICATION` | Standard-library publication validator for immutable appendix hashes, manuscript references, PDF quality, and bounded negative fixtures; no production execution or dataset access. |
-| `docs/paper/innovationzero/scripts/figures.py` | `PR-EXCEPT-PUBLICATION` | Matplotlib vector figure generation from the pinned publication evidence; produces diagrams and plots without training models or running benchmark entrants. |
-
-### Historical stack-review inventory
-
 | Exception ID | Category | Kept `.py` Files | Kept LOC | Justification Rule |
 | --- | --- | ---: | ---: | --- |
 | `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 189 | 88,621 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |

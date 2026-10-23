@@ -2,6 +2,9 @@
 //!
 //! Only programs measured on every requested cut are eligible. Among them,
 //! the lowest mean held-out RMSE wins, with canonical genome as the tie-breaker.
+//! When the search ranked by a regression objective (`--fitness`), every
+//! measurement carries that objective's held-out loss and the lowest mean loss
+//! wins instead; RMSE and R² are still reported.
 //! Partial coverage is recorded, never compared with a different cut set. If
 //! no program covers every cut, selection fails rather than emitting an
 //! unqualified partial winner.
@@ -19,6 +22,9 @@ pub use crate::search::BOOTSTRAP_GENOME;
 
 /// How the emitted program was chosen.
 pub const MIN_MEAN_VALIDATION_RMSE: &str = "all_cuts_then_min_mean_validation_rmse_then_genome";
+/// How the emitted program was chosen when the search ranked by a regression objective.
+pub const MIN_MEAN_VALIDATION_OBJECTIVE: &str =
+    "all_cuts_then_min_mean_validation_objective_then_genome";
 /// Historical v1 method; v2 refuses selection with no complete coverage.
 pub const UNMEASURED_FALLBACK: &str = "unmeasured_fallback_bootstrap_genome";
 
@@ -26,6 +32,7 @@ pub const UNMEASURED_FALLBACK: &str = "unmeasured_fallback_bootstrap_genome";
 #[derive(Clone, Copy, Debug)]
 struct Measurement {
     rmse: f64,
+    objective: Option<f64>,
     hold_r2: f64,
     train_r2: f64,
     seconds: f64,
@@ -39,6 +46,9 @@ pub struct Best {
     /// Mean held-out RMSE over the cuts this program was measured on, in the
     /// dataset's own target units.
     pub validation_rmse: f64,
+    /// With an objective: its mean held-out minimization loss over the same cuts, the value the
+    /// program was ranked by.
+    pub validation_objective: Option<f64>,
     /// Mean held-out R^2 over the same cuts.
     pub validation_r2: f64,
     /// Mean in-sample R^2, for the gap against `validation_r2`.
@@ -83,7 +93,11 @@ pub fn select_from(cuts: &[(usize, &[Observation])]) -> Result<Selection> {
         )
     });
     Ok(Selection {
-        method: MIN_MEAN_VALIDATION_RMSE,
+        method: if best.validation_objective.is_some() {
+            MIN_MEAN_VALIDATION_OBJECTIVE
+        } else {
+            MIN_MEAN_VALIDATION_RMSE
+        },
         genome: best.genome.clone(),
         program_sha256: best.program_sha256.clone(),
         best: Some(best),
@@ -149,6 +163,7 @@ fn rank(cuts: &[(usize, &[Observation])]) -> Result<Ranked> {
                 .entry(observation.cut);
             let candidate = Measurement {
                 rmse,
+                objective: observation.objective_loss,
                 hold_r2,
                 train_r2,
                 seconds: observation.seconds,
@@ -180,6 +195,17 @@ fn rank(cuts: &[(usize, &[Observation])]) -> Result<Ranked> {
         .iter()
         .filter(|c| c.measured_cuts.len() != searched)
         .count();
+    // One run ranks by one rule: either every measurement carries an objective loss or none.
+    let with_objective = measured
+        .values()
+        .flat_map(|per_cut| per_cut.values())
+        .filter(|m| m.objective.is_some())
+        .count();
+    let total: usize = measured.values().map(BTreeMap::len).sum();
+    ensure!(
+        with_objective == 0 || with_objective == total,
+        "{with_objective} of {total} measurements carry an objective loss; a run ranks by one rule"
+    );
     let mut ranked: Vec<Best> = measured
         .into_iter()
         .filter(|(_, per_cut)| per_cut.len() == searched)
@@ -189,6 +215,13 @@ fn rank(cuts: &[(usize, &[Observation])]) -> Result<Ranked> {
                 program_sha256: sha256_hex(genome.as_bytes()),
                 genome,
                 validation_rmse: per_cut.values().map(|m| m.rmse).sum::<f64>() / n,
+                validation_objective: (with_objective > 0).then(|| {
+                    per_cut
+                        .values()
+                        .map(|m| m.objective.expect("checked above"))
+                        .sum::<f64>()
+                        / n
+                }),
                 validation_r2: per_cut.values().map(|m| m.hold_r2).sum::<f64>() / n,
                 train_r2: per_cut.values().map(|m| m.train_r2).sum::<f64>() / n,
                 seconds: per_cut.values().map(|m| m.seconds).sum::<f64>(),
@@ -197,9 +230,8 @@ fn rank(cuts: &[(usize, &[Observation])]) -> Result<Ranked> {
         })
         .collect();
     ranked.sort_by(|a, b| {
-        a.validation_rmse
-            .total_cmp(&b.validation_rmse)
-            .then(a.genome.cmp(&b.genome))
+        let score = |best: &Best| best.validation_objective.unwrap_or(best.validation_rmse);
+        score(a).total_cmp(&score(b)).then(a.genome.cmp(&b.genome))
     });
     Ok((ranked, coverage, partial))
 }
@@ -228,6 +260,7 @@ mod tests {
             comparison: crate::receipt::Phase::not_requested(),
             best_validation_rmse: None,
             best_validation_r2: None,
+            best_validation_objective: None,
             best_program: None,
             migrations: Vec::new(),
             observations,
@@ -248,6 +281,7 @@ mod tests {
             train_r2: Some(0.9),
             hold_r2: Some(0.5),
             rmse: Some(rmse),
+            objective_loss: None,
             seconds: 0.5,
             status: MEASURED,
             failure: None,
@@ -258,12 +292,43 @@ mod tests {
     fn failed(genome: &str, cut: usize) -> Observation {
         Observation {
             rmse: None,
+            objective_loss: None,
             hold_r2: None,
             train_r2: None,
             status: PARSE_FAILED,
             failure: Some("unbalanced parentheses".to_owned()),
             ..measured(genome, cut, 0.0)
         }
+    }
+
+    #[test]
+    fn an_objective_ranks_programs_and_mixing_rules_is_refused() {
+        let with_loss = |genome: &str, cut: usize, rmse: f64, loss: f64| Observation {
+            objective_loss: Some(loss),
+            ..measured(genome, cut, rmse)
+        };
+        // "b" has the higher RMSE but the lower objective loss on both cuts.
+        let cuts = [
+            cut(
+                0,
+                vec![with_loss("a", 0, 1.0, 5.0), with_loss("b", 0, 2.0, 1.0)],
+            ),
+            cut(
+                1,
+                vec![with_loss("a", 1, 1.0, 5.0), with_loss("b", 1, 2.0, 3.0)],
+            ),
+        ];
+        let selection = select(&cuts).unwrap();
+        assert_eq!(selection.genome, "b");
+        assert_eq!(selection.method, MIN_MEAN_VALIDATION_OBJECTIVE);
+        let best = selection.best.unwrap();
+        assert_eq!(best.validation_objective, Some(2.0));
+        assert_eq!(best.validation_rmse, 2.0);
+        let mixed = [cut(
+            0,
+            vec![with_loss("a", 0, 1.0, 5.0), measured("b", 0, 2.0)],
+        )];
+        assert!(select(&mixed).is_err());
     }
 
     #[test]

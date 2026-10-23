@@ -1,0 +1,32 @@
+% Appendix E — the disclosure boundary
+\section{What is disclosed and what is protected}
+\label{app:disclosure}
+
+The language in which kernels are written, and the trained proposer, are proprietary. We protect them
+by describing guarantees rather than mechanism; we do not protect anything a reader needs to check a
+claim. \Cref{tab:disclosure} draws the line. The boundary does not make an unreleased component
+reproducible, and we do not call it so: claims that depend on the proposer can be checked by
+independent execution against frozen artifacts, and we will support such an audit.
+
+\begin{table}[h]
+\caption{The disclosure boundary.}
+\label{tab:disclosure}
+\centering\sffamily\footnotesize\lining
+\begin{tabularx}{\linewidth}{@{}LL@{}}
+\toprule
+Disclosed & Protected \\
+\midrule
+Input and output contracts; encoder and policy dimensions and parameter counts & the kernel language's syntax and production rules \\
+The six guarantees every kernel satisfies (\cref{sec:model}) & the operation catalog and its map to decoder tokens \\
+Losses, objectives, optimizer settings and data separation & the decoding mask and how it enforces the guarantees \\
+The game, the outcome $q$ and the incumbent rule & the teacher bank, the catalog and the search that found them \\
+Every emitted program, in full & weights, training data and the emitters' source \\
+The challenge, the entrants and every receipt & --- \\
+A catalog-membership test, without the catalog & --- \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The repository's published prose follows the same rule: the product is described as a model that reads
+data and writes a program, and how candidate programs are generated is not described. Emitted code
+necessarily reveals the computation it implements, which is why every program is published.

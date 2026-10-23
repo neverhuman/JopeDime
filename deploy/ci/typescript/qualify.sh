@@ -21,4 +21,4 @@ cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit::
 cargo test --locked -p feat-math --no-default-features --test artifact_target_binding 2>&1 | tee target/typescript-evidence/bindings.log
 cargo test --locked -p jope-pipeline --test artifact_target_binding 2>&1 | tee target/typescript-evidence/pipeline.log
 cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests:: 2>&1 | tee target/typescript-evidence/cli.log
-python3 deploy/ci/typescript/verify.py
+node deploy/ci/typescript/verify.mjs

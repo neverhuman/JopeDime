@@ -35,7 +35,7 @@ fn quiet_measurement_keeps_legacy_metric_bits_and_default_policy() {
     let e = evaluator();
     assert_eq!(e.fault_policy(), FaultPolicy::RejectHard);
     let c = data();
-    let old = crate::search::evaluate(QUIET, &c, 3, "random", Clock::Frozen);
+    let old = crate::search::evaluate(QUIET, &c, 3, "random", Clock::Frozen, None);
     let actual = measured(&e, QUIET, &c);
     assert_eq!(actual.observation, old);
     assert_eq!(actual.domain_fault_rate.to_bits(), 0.0_f64.to_bits());
@@ -50,7 +50,7 @@ fn quiet_measurement_keeps_legacy_metric_bits_and_default_policy() {
 }
 #[test]
 fn legacy_observation_json_has_no_kernel2_fields() {
-    let old = crate::search::evaluate(QUIET, &data(), 3, "random", Clock::Frozen);
+    let old = crate::search::evaluate(QUIET, &data(), 3, "random", Clock::Frozen, None);
     let expected = serde_json::json!({"genome": QUIET, "program_sha256": sha256_hex(QUIET.as_bytes()), "cut": 2, "generation": 3, "origin": "random", "train_r2": old.train_r2, "hold_r2": old.hold_r2, "rmse": old.rmse, "seconds": 0.0, "status": "measured"});
     assert_eq!(serde_json::to_value(&old).unwrap(), expected);
     let actual = serde_json::to_value(measured(&evaluator(), QUIET, &data())).unwrap();

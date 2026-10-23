@@ -1,0 +1,46 @@
+% Appendix G — claim ledger
+\section{Claim ledger}
+\label{app:claims}
+
+Every quantitative statement in the paper, the file it comes from and its status. Paths beginning
+\code{artifacts/}, \code{data/} or \code{evidence/} are relative to \code{docs/paper/innovationzero/};
+the machine-readable ledger \code{evidence/claims.json} pins the repository-reported claims to full
+revisions, paths and SHA-256 values. \est{} established:
+committed to the repository and reproducible from it. \pre{} preliminary: an unmerged branch, a
+non-qualifying host, a small panel, or an estimate. \pend{} pending. External facts are cited in the
+text and listed in the references.
+
+\begin{center}\sffamily\scriptsize\lining
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.38\linewidth}L>{\centering\arraybackslash}p{0.07\linewidth}@{}}
+\toprule
+Statement & Source & Status \\
+\midrule
+Challenge file 68,744 B; participant packet 39,747 B as archived (lines 16--541, 5,757 words, plus the newline closing its opening marker) & \code{artifacts/challenge/}, \code{evidence/artifact-manifest.json} & \est \\
+Opus entrant 66,536 B, 2,284 lines; 35/35 contract-driver cases; report C & \code{artifacts/sources/Opus5p5\_Extra.rs}, \code{artifacts/receipts/opus/} & \est \\
+Astra entrant 27,729 B, 821 lines; written at 678.5 s, frozen at 770 s; 80k (60--110k) content & \code{artifacts/receipts/astra/effort.json}, \code{provenance.json} & \est \\
+Sol entrant 25,011 B, 687 lines; 760 s; 60k (45--80k) content & \code{artifacts/receipts/sol/authorship.json} & \est \\
+Gemini entrant 96,694 B, 2,931 lines; no telemetry in its receipts & \code{artifacts/receipts/gemini/} (PR \#407, commit \code{584713e}) & \pre \\
+Gemini statement: 11,800 tokens (2,600 + 9,200) in 55--85 s, self-reported; 2.6--3.5$\times$ short of the source & \code{evidence/gemini-authoring-statement-20261022.md} & \pre \\
+Four designs share ridge + boosted trees + held-out blend & the four design documents & \est \\
+Elo 1641 / 1561 / 1456 / 1342 with intervals; six error ratios and $p$-values & \code{artifacts/benchmark/RESULTS.json}; \code{evidence/elo-summary.json} & \pre \\
+Head-to-head majorities; best of four on 30 / 20 / 7 / 5 families, 2 shared; sweeps 24 / 16 / 6 / 1 & \code{artifacts/benchmark/match-matrix.txt} via \code{scripts/derive-frontier.sh}; \code{data/frontier-*.csv} & \pre \\
+Fit 459.5 / 1,985.8 / 72.1 / 61.9 s per 576 fits; memory 19--80 MB; hosts differ & \code{artifacts/benchmark/HISTORICAL\_THREE\_ENTRANT.json}, \code{GEMINI\_COSTS.json} & \pre \\
+Token yields, session and source tokens per second (\cref{tab:yield,fig:frontier}) & receipts above; bytes / 3.5; \code{data/frontier-entrants.csv} & \pre \\
+Entrants' RMSE 2.29 / 2.21 / 2.97 times the incumbent's; 21 / 11 / 3 wins & \code{artifacts/benchmark/HISTORICAL\_THREE\_ENTRANT.json} & \pre \\
+Golden45: engine rank 31 of 304, Elo 1687.0, 42/45 coverage; test-selected envelope 2259.8 over 63,108 evaluations on 42 datasets; TabFM 1934.9, TabPFN v3 1909.5 & \code{README.md}, \code{assets/regression/} at \code{bdf9441}; \code{evidence/claims.json} IZ-E01--E02 & \est \\
+Committed same-cut run: engine third of 15, Elo 1556.6, partial coverage & \code{assets/same-cut/v2/reports/}; \code{evidence/claims.json} IZ-E03 & \est \\
+Pilot ladder (18 methods), paired tests, relative RMSE, wins & \code{evidence/pilot-2026-10-22/scores-deep.csv}, \code{elo-deep.csv}; \code{data/pilot-*.csv} & \pre \\
+Engine programs and search times on the pilot; identical to committed run & \code{evidence/pilot-2026-10-22/programs/}; \code{assets/same-cut/v2/reports/} & \est \\
+Rust and Python 10/10 compile; C\texttt{++}17 and JavaScript 2/10 & \code{evidence/pilot-2026-10-22/compile.txt}, \code{emit.csv} & \est \\
+Emission 4.6--7.0 ms median & \code{evidence/pilot-2026-10-22/emit.csv} & \pre \\
+Hyperion v7: width 512, 8 heads, 12 blocks, 6 bands & \code{crates/hyperion/src/hyperion\_v7/model.rs} & \est \\
+Policy: width 512, 6 layers, 4 heads, 27,796,494 parameters; 512+1,024+512 context & \code{crates/jope-policy/src/config.rs}, \code{release/policy-step-60000.semantic-v1.json} & \est \\
+CLOVER policy 893,957 parameters, width 128, 2 blocks; 2,051 inputs; 6,640-program catalog; outcome head 0.506 [0.441, 0.568]; surrogate +0.046 [0.040, 0.052]; 17,773 updates; plateau [0.8968, 0.8978] & \code{docs/paper/TECHNICAL\_WRITEUP.md}, \code{docs/paper/claims.json}; \code{evidence/claims.json} IZ-E04--E06 & \est \\
+Loss weights, $q$, $\varepsilon_c$, parity rule & \code{docs/paper/TECHNICAL\_WRITEUP.md} \S\S2--5; Supplement~\ref{S-sup:methods} & \est \\
+Corpus 3,859 datasets; 14,987 runs; 7,120 contexts; 1,068 lineages & \code{docs/paper/TECHNICAL\_WRITEUP.md} \S8 & \est \\
+Neural policy did not beat the non-neural proposer on held-out seeds & \code{docs/archive/CURSOR\_GITHUB\_PORT\_PLAN.md} & \est \\
+First accepted-model proposal attempt timed out & \code{docs/asm.md} & \est \\
+Track C results; $k_{\mathrm{eq}}$; Move~42 & \cref{sec:protocol} & \pend \\
+\bottomrule
+\end{tabularx}
+\end{center}

@@ -1,0 +1,30 @@
+% Learning from outcomes: milestones evenly spaced (not to time scale). Dates verified;
+% sources in the references.
+{\hfuzz=2.5pt\begin{tikzpicture}[x=0.0612\linewidth, y=1cm]
+\draw[izrule, line width=1.1pt] (-0.4,0) -- (14.4,0);
+\foreach \ix/\yr/\lab [count=\nx] in {
+  0/1898/{Thorndike:\\law of effect},
+  1/1957/{Bellman:\\dynamic\\programming},
+  2/1959/{Samuel:\\checkers\\self-play},
+  3/1961/{Michie:\\MENACE\\matchboxes},
+  4/1988/{Sutton:\\temporal\\differences},
+  5/1989/{Watkins:\\Q-learning},
+  6/1992/{Tesauro:\\TD-Gammon},
+  7/2015/{DQN:\\Atari from\\pixels},
+  8/2016/{AlphaGo:\\Move 37},
+  9/2017/{AlphaGo Zero:\\tabula rasa},
+  10/2017/{RLHF: rewards\\from human\\preference},
+  11/2022/{AlphaTensor,\\AlphaDev,\\FunSearch},
+  12/2024/{o1, R1: RL on\\verifiable\\reasoning},
+  13/2025/{AlphaEvolve;\\Turing Award},
+  14/2026/{\textbf{Innovation}\\\textbf{Zero}}}{
+  \pgfmathtruncatemacro{\up}{mod(\nx,2)}
+  \ifnum\up=1 \def\yranc{north}\def\yroff{-0.12}\def\stemA{0.12}\def\stemB{0.55}\def\labanc{south}
+  \else \def\yranc{south}\def\yroff{0.12}\def\stemA{-0.12}\def\stemB{-0.55}\def\labanc{north}\fi
+  \ifnum\ix=14 \def\dotcol{izwarm}\else\def\dotcol{izaccent}\fi
+  \fill[\dotcol] (\ix,0) circle (2pt);
+  \node[font=\sffamily\tiny\color{izgrey}, anchor=\yranc] at (\ix,\yroff) {\yr};
+  \draw[izrule, line width=0.4pt] (\ix,\stemA) -- (\ix,\stemB);
+  \node[font=\sffamily\tiny, align=center, text width=0.07\linewidth, inner sep=1pt, anchor=\labanc] at (\ix,\stemB) {\lab};
+}
+\end{tikzpicture}}
