@@ -12667,7 +12667,8 @@
         "source/check/refusal-case output in command.log",
         "three PDFs with embedded fonts and resolved references",
         "three TeX logs and build-environment.txt",
-        "jope.ci-receipt/v1 with source/checkout SHA and per-file SHA256"
+        "jope.ci-receipt/v1 with source/checkout SHA and per-file SHA256",
+        "publication source/event/checkout identities and strict reviewed-source tree equality"
       ],
       "feature_selection": "not-applicable",
       "inputs": [
@@ -12676,7 +12677,7 @@
         "latexmk, pdfLaTeX, XeLaTeX, BibTeX and Poppler versions recorded by build",
         "deploy/ci/publication-deps.lock.json; verified official Ubuntu packages, task-local XeLaTeX format"
       ],
-      "path_applicability": "All ci.yml PR/manual runs and trusted-main full-main.yml pushes/manual runs through reusable paper.yml; source head checked out explicitly",
+      "path_applicability": "All ci.yml PR/manual and trusted-main full-main.yml runs through reusable paper.yml; native event checkout must have the same tree as the reviewed source head",
       "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "execution"

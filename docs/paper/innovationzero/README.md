@@ -69,7 +69,10 @@ plotted frontier inputs or the three original author commits.
 
 CI runs the reusable `paper.yml` from the existing admitted `ci.yml` and trusted-main
 `full-main.yml` callers. Every PR/manual CI run builds all three volumes; the aggregate requires
-its exact-source receipt and verifies every retained payload hash. Main-push CPU qualification
+its source-bound receipt and verifies every retained payload hash. The paper job uses the native
+event checkout (synthetic merge on PRs), refuses unless its tree exactly matches the reviewed
+source head, and retains both commit identities and their equal trees. Full manual CI checks out
+the actual source commit. Main-push CPU qualification
 also requires the publication job. Queueing or a missing receipt fails qualification.
 `deploy/ci/publication-tools.sh COMMAND...` extracts the SHA-256/size-pinned official Ubuntu
 packages in `deploy/ci/publication-deps.lock.json` into the lane target cache and generates an

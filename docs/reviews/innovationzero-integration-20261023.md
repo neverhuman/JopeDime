@@ -59,3 +59,11 @@ main-guard. Its integration into this publication branch was conflict-free and c
 source, archive or plot input. Post-integration source/13refusal checks, coverage validation,
 paper/README numbers, actionlint and shellcheck pass. Fresh final-head PR/manual CI is still
 required; the earlier private local proofs do not substitute for it.
+
+
+The first native PR publication job120181058823 refused before creating a receipt because explicit
+head checkout differed from the synthetic merge GITHUB_SHA. The shared receipt guard remains
+unchanged. Publication now uses the native event checkout and independently requires its complete
+tree to equal the reviewed source head. Both SHA identities, equal trees, run/attempt/event are
+retained and verified by aggregate. Manual CI still uses the actual source commit. The failure and
+failed evidence publication are retained; no PDF/reference/font check was relaxed.
