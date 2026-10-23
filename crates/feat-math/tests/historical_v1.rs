@@ -651,6 +651,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             .iter()
             .any(|edge| edge["path"] == path));
     }
+    let shared_feature_join =
+        old_fixture("transitions/pr416_after_shared_capacity_release_identity_join.v1.json");
+    let feature_shared_join = old_fixture(
+        "transitions/pr416_shared_capacity_release_after_feature_identity_join.v1.json",
+    );
+    for record in [&shared_feature_join, &feature_shared_join] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
     // The capacity branch announced the same Tokio fix on the old workspace version.
     // Keep its original edge and verify the parallel join to the release identity.
     let capacity_tokio =
@@ -668,9 +676,44 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             path,
             edge["before"].as_str().unwrap(),
             &current,
-            &[capacity_tokio.clone(), capacity_release_join.clone()],
+            &[
+                capacity_tokio.clone(),
+                capacity_release_join.clone(),
+                shared_feature_join.clone(),
+            ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
+    }
+    let go_after_c17 = old_fixture("transitions/pr416_after_c17_identity_rebaseline.v1.json");
+    let go_parallel_join =
+        old_fixture("transitions/pr416_c17_after_go_identity_rebaseline.v1.json");
+    let published_go = old_fixture("transitions/go_after_typescript_identity_rebaseline.v1.json");
+    for record in [&go_after_c17, &go_parallel_join] {
+        assert_eq!(record["fixtures"].as_array().unwrap().len(), 2);
+    }
+    for edge in published_go["fixtures"].as_array().unwrap() {
+        let path = edge["path"].as_str().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        identity_transitions::verify_fixture(
+            path,
+            edge["after"].as_str().unwrap(),
+            &current,
+            &[go_parallel_join.clone(), feature_shared_join.clone()],
+        )
+        .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
+    }
+    for edge in go_after_c17["fixtures"].as_array().unwrap() {
+        let path = edge["path"].as_str().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        identity_transitions::verify_fixture(
+            path,
+            edge["before"].as_str().unwrap(),
+            &current,
+            &[go_after_c17.clone(), feature_shared_join.clone()],
+        )
+        .expect("published feature history joins shared capacity and release fixes");
     }
     let identity_chain = [
         transition,
@@ -709,6 +752,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         ctutils_security,
         release_0_4_1,
         tokio_security,
+        shared_feature_join,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
