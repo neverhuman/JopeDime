@@ -152,20 +152,53 @@ fn fitted_javascript_refuses_contradictory_prediction_parameters() {
     let train = rows(80, 3, 17);
     let y: Vec<f64> = train.iter().map(|r| r[0] + r[1]).collect();
     let cases = [
-        ("(pipe X (standardize append=true) (ridge))", "(pipe X (standardize) (ridge))", "append"),
-        ("(pipe X (step t=0.1) (ridge))", "(pipe X (step t=0.9) (ridge))", "t"),
-        ("(pipe X (cheb degree=3) (ridge))", "(pipe X (cheb degree=4) (ridge))", "degree"),
-        ("(pipe X (quantile_bins bins=4) (ridge))", "(pipe X (quantile_bins bins=8) (ridge))", "bins"),
-        ("(pipe X (bin_onehot bins=3) (ridge))", "(pipe X (bin_onehot bins=4) (ridge))", "bins"),
-        ("(pipe X (landmark_dist k=4 gamma=0.25) (ridge))", "(pipe X (landmark_dist k=4 gamma=1) (ridge))", "gamma"),
+        (
+            "(pipe X (standardize append=true) (ridge))",
+            "(pipe X (standardize) (ridge))",
+            "append",
+        ),
+        (
+            "(pipe X (step t=0.1) (ridge))",
+            "(pipe X (step t=0.9) (ridge))",
+            "t",
+        ),
+        (
+            "(pipe X (cheb degree=3) (ridge))",
+            "(pipe X (cheb degree=4) (ridge))",
+            "degree",
+        ),
+        (
+            "(pipe X (quantile_bins bins=4) (ridge))",
+            "(pipe X (quantile_bins bins=8) (ridge))",
+            "bins",
+        ),
+        (
+            "(pipe X (bin_onehot bins=3) (ridge))",
+            "(pipe X (bin_onehot bins=4) (ridge))",
+            "bins",
+        ),
+        (
+            "(pipe X (landmark_dist k=4 gamma=0.25) (ridge))",
+            "(pipe X (landmark_dist k=4 gamma=1) (ridge))",
+            "gamma",
+        ),
     ];
     for (fitted, declared, parameter) in cases {
         let model = fit(&GenomeIr::parse(fitted).unwrap(), &train, &y).unwrap();
         let error = emit(&GenomeIr::parse(declared).unwrap(), &model, 3).unwrap_err();
-        assert!(format!("{error:#}").contains(&format!("{parameter} parameter differs")), "{fitted} / {declared}: {error:#}");
+        assert!(
+            format!("{error:#}").contains(&format!("{parameter} parameter differs")),
+            "{fitted} / {declared}: {error:#}"
+        );
     }
     let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
     let model = fit(&genome, &train, &y).unwrap();
-    assert!(emit(&genome, &model, 2).is_err(), "wrong input width accepted");
-    assert!(emit(&genome, &model, 3).is_ok(), "zero-stage matching model refused");
+    assert!(
+        emit(&genome, &model, 2).is_err(),
+        "wrong input width accepted"
+    );
+    assert!(
+        emit(&genome, &model, 3).is_ok(),
+        "zero-stage matching model refused"
+    );
 }
