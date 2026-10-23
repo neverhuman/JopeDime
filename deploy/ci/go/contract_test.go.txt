@@ -33,6 +33,7 @@ type fault struct {
 	value                               uint64
 	badRead, badWrite, closed, closeErr bool
 	memory                              []byte
+	output                              []byte
 }
 
 func (k *fault) call(_ context.Context, n string, _ ...uint64) (uint64, error) {
@@ -50,7 +51,12 @@ func (k *fault) call(_ context.Context, n string, _ ...uint64) (uint64, error) {
 	}
 	return 0, nil
 }
-func (k *fault) read(_ uint32, n uint32) ([]byte, bool) { return make([]byte, n), !k.badRead }
+func (k *fault) read(_ uint32, n uint32) ([]byte, bool) {
+	if k.output != nil {
+		return k.output, !k.badRead
+	}
+	return make([]byte, n), !k.badRead
+}
 func (k *fault) write(_ uint32, b []byte) bool {
 	k.memory = append([]byte(nil), b...)
 	return !k.badWrite
@@ -232,6 +238,17 @@ func TestNumericValidationAndScore(t *testing.T) {
 		t.Fatal("R-squared", v)
 	}
 	_, e = m.Score(ctx, [][]float64{{1}, {2}}, []float64{math.MaxFloat64, math.MaxFloat64})
+	bad(t, e)
+	// A perfect prediction must still refuse an overflowed target mean.
+	k.output = make([]byte, 16)
+	for i := 0; i < 2; i++ {
+		binary.LittleEndian.PutUint64(k.output[i*8:], math.Float64bits(math.MaxFloat64))
+	}
+	_, e = m.Score(ctx, [][]float64{{1}, {2}}, []float64{math.MaxFloat64, math.MaxFloat64})
+	bad(t, e)
+	k.output = nil
+	// This mean is finite while squared residuals/variance overflow.
+	_, e = m.Score(ctx, [][]float64{{1}, {2}}, []float64{-math.MaxFloat64, math.MaxFloat64})
 	bad(t, e)
 	k.value = 0
 	v, e = m.Score(ctx, nil, nil)

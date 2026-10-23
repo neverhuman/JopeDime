@@ -38,7 +38,8 @@ Do not copy a Model or change input slices concurrently with a call using them.
 Fit requires nonempty rectangular rows and matching finite targets. Predict requires successful
 training and the same width; empty batches are valid. Non-finite features retain the numerical
 Rust implementation's handling. Score returns R-squared, zero for empty/constant targets, and
-errors for non-finite targets or overflowed scores. Transfers are capped at 16,777,216 elements
+errors for non-finite targets or overflowed scores. An overflowed target mean is refused even
+when predictions are perfect. Transfers are capped at 16,777,216 elements
 or UTF-8 bytes. CSV encoding itself is bounded before copying oversized records. Each Wasm
 instance has a 512 MiB linear-memory ceiling; allocation errors and cancellation are surfaced.
 

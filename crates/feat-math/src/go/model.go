@@ -352,6 +352,9 @@ func (m *Model) Score(ctx context.Context, x [][]float64, y []float64) (float64,
 		mean += v
 	}
 	mean /= float64(len(y))
+	if math.IsInf(mean, 0) {
+		return 0, errors.New("target mean overflow")
+	}
 	total, residual := 0.0, 0.0
 	for i, v := range y {
 		total += (v - mean) * (v - mean)
