@@ -1,0 +1,803 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1310" viewBox="0 0 1560 1310" role="img">
+<title>All 36 fixed400 TRAIN and internal-monitor curves</title>
+<desc>Every model is included. Five actual snapshots per model. Shared vertical scale across panels. These are TRAIN and internal monitor, not OOF learning curves.</desc>
+<style>text{font-family:system-ui,sans-serif;fill:#17392f} .tick{font-size:10px;fill:#60736a}.title{font-size:11px;font-weight:600}.grid{stroke:#dce5df;stroke-width:1}</style>
+<rect width="100%" height="100%" fill="#f5f8f5"/>
+<text x="20" y="28" font-size="22" font-weight="700">Composite objective · all 36 models</text>
+<text x="20" y="52" font-size="12">Five actual snapshots: 0 / 100 / 200 / 300 / 400 updates. Fixed endpoint; no checkpoint selection.</text>
+<text x="20" y="73" font-size="12" fill="#087f5b">Green: fixed TRAIN panel</text>
+<text x="270" y="73" font-size="12" fill="#7852b3">Purple: internal monitor (excluded from gradients, scalers and selection)</text>
+<text x="20" y="94" font-size="11">Within-model comparisons only: objective scales/panels differ. These are exposed-TRAIN internal monitors; final OOF curves are not fabricated.</text>
+<text class="title" x="22" y="126">f0-20261022-real state-L5</text>
+<line class="grid" x1="52" y1="275.00" x2="254" y2="275.00"/>
+<text class="tick" text-anchor="end" x="48" y="278.00">-0.0021</text>
+<line class="grid" x1="52" y1="206.50" x2="254" y2="206.50"/>
+<text class="tick" text-anchor="end" x="48" y="209.50">8.3</text>
+<line class="grid" x1="52" y1="138.00" x2="254" y2="138.00"/>
+<text class="tick" text-anchor="end" x="48" y="141.00">17</text>
+<text class="tick" text-anchor="middle" x="52.00" y="290">0</text>
+<text class="tick" text-anchor="middle" x="153.00" y="290">200</text>
+<text class="tick" text-anchor="middle" x="254.00" y="290">400</text>
+<polyline points="52.000,143.980 102.500,252.765 153.000,259.389 203.500,265.335 254.000,267.922" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="52.000" cy="143.980" r="2.0" fill="#087f5b"/>
+<circle cx="102.500" cy="252.765" r="2.0" fill="#087f5b"/>
+<circle cx="153.000" cy="259.389" r="2.0" fill="#087f5b"/>
+<circle cx="203.500" cy="265.335" r="2.0" fill="#087f5b"/>
+<circle cx="254.000" cy="267.922" r="2.0" fill="#087f5b"/>
+<polyline points="52.000,143.074 102.500,246.661 153.000,247.839 203.500,240.004 254.000,235.524" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="52.000" cy="143.074" r="2.0" fill="#7852b3"/>
+<circle cx="102.500" cy="246.661" r="2.0" fill="#7852b3"/>
+<circle cx="153.000" cy="247.839" r="2.0" fill="#7852b3"/>
+<circle cx="203.500" cy="240.004" r="2.0" fill="#7852b3"/>
+<circle cx="254.000" cy="235.524" r="2.0" fill="#7852b3"/>
+<text class="title" x="278" y="126">f0-20261022-real state-L1</text>
+<line class="grid" x1="308" y1="275.00" x2="510" y2="275.00"/>
+<text class="tick" text-anchor="end" x="304" y="278.00">-0.0021</text>
+<line class="grid" x1="308" y1="206.50" x2="510" y2="206.50"/>
+<text class="tick" text-anchor="end" x="304" y="209.50">8.3</text>
+<line class="grid" x1="308" y1="138.00" x2="510" y2="138.00"/>
+<text class="tick" text-anchor="end" x="304" y="141.00">17</text>
+<text class="tick" text-anchor="middle" x="308.00" y="290">0</text>
+<text class="tick" text-anchor="middle" x="409.00" y="290">200</text>
+<text class="tick" text-anchor="middle" x="510.00" y="290">400</text>
+<polyline points="308.000,143.942 358.500,252.738 409.000,259.297 459.500,265.009 510.000,267.623" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="308.000" cy="143.942" r="2.0" fill="#087f5b"/>
+<circle cx="358.500" cy="252.738" r="2.0" fill="#087f5b"/>
+<circle cx="409.000" cy="259.297" r="2.0" fill="#087f5b"/>
+<circle cx="459.500" cy="265.009" r="2.0" fill="#087f5b"/>
+<circle cx="510.000" cy="267.623" r="2.0" fill="#087f5b"/>
+<polyline points="308.000,143.076 358.500,246.602 409.000,247.336 459.500,242.324 510.000,237.063" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="308.000" cy="143.076" r="2.0" fill="#7852b3"/>
+<circle cx="358.500" cy="246.602" r="2.0" fill="#7852b3"/>
+<circle cx="409.000" cy="247.336" r="2.0" fill="#7852b3"/>
+<circle cx="459.500" cy="242.324" r="2.0" fill="#7852b3"/>
+<circle cx="510.000" cy="237.063" r="2.0" fill="#7852b3"/>
+<text class="title" x="534" y="126">f0-20261022-real state-L0</text>
+<line class="grid" x1="564" y1="275.00" x2="766" y2="275.00"/>
+<text class="tick" text-anchor="end" x="560" y="278.00">-0.0021</text>
+<line class="grid" x1="564" y1="206.50" x2="766" y2="206.50"/>
+<text class="tick" text-anchor="end" x="560" y="209.50">8.3</text>
+<line class="grid" x1="564" y1="138.00" x2="766" y2="138.00"/>
+<text class="tick" text-anchor="end" x="560" y="141.00">17</text>
+<text class="tick" text-anchor="middle" x="564.00" y="290">0</text>
+<text class="tick" text-anchor="middle" x="665.00" y="290">200</text>
+<text class="tick" text-anchor="middle" x="766.00" y="290">400</text>
+<polyline points="564.000,143.846 614.500,252.718 665.000,259.201 715.500,265.891 766.000,267.845" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="564.000" cy="143.846" r="2.0" fill="#087f5b"/>
+<circle cx="614.500" cy="252.718" r="2.0" fill="#087f5b"/>
+<circle cx="665.000" cy="259.201" r="2.0" fill="#087f5b"/>
+<circle cx="715.500" cy="265.891" r="2.0" fill="#087f5b"/>
+<circle cx="766.000" cy="267.845" r="2.0" fill="#087f5b"/>
+<polyline points="564.000,143.433 614.500,246.851 665.000,249.164 715.500,238.366 766.000,243.433" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="564.000" cy="143.433" r="2.0" fill="#7852b3"/>
+<circle cx="614.500" cy="246.851" r="2.0" fill="#7852b3"/>
+<circle cx="665.000" cy="249.164" r="2.0" fill="#7852b3"/>
+<circle cx="715.500" cy="238.366" r="2.0" fill="#7852b3"/>
+<circle cx="766.000" cy="243.433" r="2.0" fill="#7852b3"/>
+<text class="title" x="790" y="126">f0-20261022-zero state-L5</text>
+<line class="grid" x1="820" y1="275.00" x2="1022" y2="275.00"/>
+<text class="tick" text-anchor="end" x="816" y="278.00">-0.0021</text>
+<line class="grid" x1="820" y1="206.50" x2="1022" y2="206.50"/>
+<text class="tick" text-anchor="end" x="816" y="209.50">8.3</text>
+<line class="grid" x1="820" y1="138.00" x2="1022" y2="138.00"/>
+<text class="tick" text-anchor="end" x="816" y="141.00">17</text>
+<text class="tick" text-anchor="middle" x="820.00" y="290">0</text>
+<text class="tick" text-anchor="middle" x="921.00" y="290">200</text>
+<text class="tick" text-anchor="middle" x="1022.00" y="290">400</text>
+<polyline points="820.000,144.978 870.500,252.648 921.000,259.504 971.500,265.940 1022.000,267.844" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="820.000" cy="144.978" r="2.0" fill="#087f5b"/>
+<circle cx="870.500" cy="252.648" r="2.0" fill="#087f5b"/>
+<circle cx="921.000" cy="259.504" r="2.0" fill="#087f5b"/>
+<circle cx="971.500" cy="265.940" r="2.0" fill="#087f5b"/>
+<circle cx="1022.000" cy="267.844" r="2.0" fill="#087f5b"/>
+<polyline points="820.000,143.784 870.500,245.214 921.000,245.421 971.500,211.390 1022.000,167.750" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="820.000" cy="143.784" r="2.0" fill="#7852b3"/>
+<circle cx="870.500" cy="245.214" r="2.0" fill="#7852b3"/>
+<circle cx="921.000" cy="245.421" r="2.0" fill="#7852b3"/>
+<circle cx="971.500" cy="211.390" r="2.0" fill="#7852b3"/>
+<circle cx="1022.000" cy="167.750" r="2.0" fill="#7852b3"/>
+<text class="title" x="1046" y="126">f0-20261022-zero state-L1</text>
+<line class="grid" x1="1076" y1="275.00" x2="1278" y2="275.00"/>
+<text class="tick" text-anchor="end" x="1072" y="278.00">-0.0021</text>
+<line class="grid" x1="1076" y1="206.50" x2="1278" y2="206.50"/>
+<text class="tick" text-anchor="end" x="1072" y="209.50">8.3</text>
+<line class="grid" x1="1076" y1="138.00" x2="1278" y2="138.00"/>
+<text class="tick" text-anchor="end" x="1072" y="141.00">17</text>
+<text class="tick" text-anchor="middle" x="1076.00" y="290">0</text>
+<text class="tick" text-anchor="middle" x="1177.00" y="290">200</text>
+<text class="tick" text-anchor="middle" x="1278.00" y="290">400</text>
+<polyline points="1076.000,144.955 1126.500,252.661 1177.000,259.588 1227.500,265.928 1278.000,267.940" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1076.000" cy="144.955" r="2.0" fill="#087f5b"/>
+<circle cx="1126.500" cy="252.661" r="2.0" fill="#087f5b"/>
+<circle cx="1177.000" cy="259.588" r="2.0" fill="#087f5b"/>
+<circle cx="1227.500" cy="265.928" r="2.0" fill="#087f5b"/>
+<circle cx="1278.000" cy="267.940" r="2.0" fill="#087f5b"/>
+<polyline points="1076.000,143.744 1126.500,245.240 1177.000,245.916 1227.500,212.240 1278.000,178.864" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1076.000" cy="143.744" r="2.0" fill="#7852b3"/>
+<circle cx="1126.500" cy="245.240" r="2.0" fill="#7852b3"/>
+<circle cx="1177.000" cy="245.916" r="2.0" fill="#7852b3"/>
+<circle cx="1227.500" cy="212.240" r="2.0" fill="#7852b3"/>
+<circle cx="1278.000" cy="178.864" r="2.0" fill="#7852b3"/>
+<text class="title" x="1302" y="126">f0-20261022-zero state-L0</text>
+<line class="grid" x1="1332" y1="275.00" x2="1534" y2="275.00"/>
+<text class="tick" text-anchor="end" x="1328" y="278.00">-0.0021</text>
+<line class="grid" x1="1332" y1="206.50" x2="1534" y2="206.50"/>
+<text class="tick" text-anchor="end" x="1328" y="209.50">8.3</text>
+<line class="grid" x1="1332" y1="138.00" x2="1534" y2="138.00"/>
+<text class="tick" text-anchor="end" x="1328" y="141.00">17</text>
+<text class="tick" text-anchor="middle" x="1332.00" y="290">0</text>
+<text class="tick" text-anchor="middle" x="1433.00" y="290">200</text>
+<text class="tick" text-anchor="middle" x="1534.00" y="290">400</text>
+<polyline points="1332.000,144.755 1382.500,252.524 1433.000,259.311 1483.500,265.740 1534.000,267.885" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1332.000" cy="144.755" r="2.0" fill="#087f5b"/>
+<circle cx="1382.500" cy="252.524" r="2.0" fill="#087f5b"/>
+<circle cx="1433.000" cy="259.311" r="2.0" fill="#087f5b"/>
+<circle cx="1483.500" cy="265.740" r="2.0" fill="#087f5b"/>
+<circle cx="1534.000" cy="267.885" r="2.0" fill="#087f5b"/>
+<polyline points="1332.000,144.060 1382.500,244.785 1433.000,248.625 1483.500,223.765 1534.000,194.500" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1332.000" cy="144.060" r="2.0" fill="#7852b3"/>
+<circle cx="1382.500" cy="244.785" r="2.0" fill="#7852b3"/>
+<circle cx="1433.000" cy="248.625" r="2.0" fill="#7852b3"/>
+<circle cx="1483.500" cy="223.765" r="2.0" fill="#7852b3"/>
+<circle cx="1534.000" cy="194.500" r="2.0" fill="#7852b3"/>
+<text class="title" x="22" y="320">f0-20261023-real state-L5</text>
+<line class="grid" x1="52" y1="469.00" x2="254" y2="469.00"/>
+<text class="tick" text-anchor="end" x="48" y="472.00">-0.0021</text>
+<line class="grid" x1="52" y1="400.50" x2="254" y2="400.50"/>
+<text class="tick" text-anchor="end" x="48" y="403.50">8.3</text>
+<line class="grid" x1="52" y1="332.00" x2="254" y2="332.00"/>
+<text class="tick" text-anchor="end" x="48" y="335.00">17</text>
+<text class="tick" text-anchor="middle" x="52.00" y="484">0</text>
+<text class="tick" text-anchor="middle" x="153.00" y="484">200</text>
+<text class="tick" text-anchor="middle" x="254.00" y="484">400</text>
+<polyline points="52.000,342.137 102.500,447.920 153.000,454.727 203.500,460.266 254.000,462.037" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="52.000" cy="342.137" r="2.0" fill="#087f5b"/>
+<circle cx="102.500" cy="447.920" r="2.0" fill="#087f5b"/>
+<circle cx="153.000" cy="454.727" r="2.0" fill="#087f5b"/>
+<circle cx="203.500" cy="460.266" r="2.0" fill="#087f5b"/>
+<circle cx="254.000" cy="462.037" r="2.0" fill="#087f5b"/>
+<polyline points="52.000,339.491 102.500,441.494 153.000,443.725 203.500,441.769 254.000,432.904" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="52.000" cy="339.491" r="2.0" fill="#7852b3"/>
+<circle cx="102.500" cy="441.494" r="2.0" fill="#7852b3"/>
+<circle cx="153.000" cy="443.725" r="2.0" fill="#7852b3"/>
+<circle cx="203.500" cy="441.769" r="2.0" fill="#7852b3"/>
+<circle cx="254.000" cy="432.904" r="2.0" fill="#7852b3"/>
+<text class="title" x="278" y="320">f0-20261023-real state-L1</text>
+<line class="grid" x1="308" y1="469.00" x2="510" y2="469.00"/>
+<text class="tick" text-anchor="end" x="304" y="472.00">-0.0021</text>
+<line class="grid" x1="308" y1="400.50" x2="510" y2="400.50"/>
+<text class="tick" text-anchor="end" x="304" y="403.50">8.3</text>
+<line class="grid" x1="308" y1="332.00" x2="510" y2="332.00"/>
+<text class="tick" text-anchor="end" x="304" y="335.00">17</text>
+<text class="tick" text-anchor="middle" x="308.00" y="484">0</text>
+<text class="tick" text-anchor="middle" x="409.00" y="484">200</text>
+<text class="tick" text-anchor="middle" x="510.00" y="484">400</text>
+<polyline points="308.000,342.129 358.500,447.911 409.000,454.725 459.500,459.984 510.000,461.921" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="308.000" cy="342.129" r="2.0" fill="#087f5b"/>
+<circle cx="358.500" cy="447.911" r="2.0" fill="#087f5b"/>
+<circle cx="409.000" cy="454.725" r="2.0" fill="#087f5b"/>
+<circle cx="459.500" cy="459.984" r="2.0" fill="#087f5b"/>
+<circle cx="510.000" cy="461.921" r="2.0" fill="#087f5b"/>
+<polyline points="308.000,339.407 358.500,441.367 409.000,443.314 459.500,441.213 510.000,432.610" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="308.000" cy="339.407" r="2.0" fill="#7852b3"/>
+<circle cx="358.500" cy="441.367" r="2.0" fill="#7852b3"/>
+<circle cx="409.000" cy="443.314" r="2.0" fill="#7852b3"/>
+<circle cx="459.500" cy="441.213" r="2.0" fill="#7852b3"/>
+<circle cx="510.000" cy="432.610" r="2.0" fill="#7852b3"/>
+<text class="title" x="534" y="320">f0-20261023-real state-L0</text>
+<line class="grid" x1="564" y1="469.00" x2="766" y2="469.00"/>
+<text class="tick" text-anchor="end" x="560" y="472.00">-0.0021</text>
+<line class="grid" x1="564" y1="400.50" x2="766" y2="400.50"/>
+<text class="tick" text-anchor="end" x="560" y="403.50">8.3</text>
+<line class="grid" x1="564" y1="332.00" x2="766" y2="332.00"/>
+<text class="tick" text-anchor="end" x="560" y="335.00">17</text>
+<text class="tick" text-anchor="middle" x="564.00" y="484">0</text>
+<text class="tick" text-anchor="middle" x="665.00" y="484">200</text>
+<text class="tick" text-anchor="middle" x="766.00" y="484">400</text>
+<polyline points="564.000,342.029 614.500,447.659 665.000,455.733 715.500,460.860 766.000,462.094" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="564.000" cy="342.029" r="2.0" fill="#087f5b"/>
+<circle cx="614.500" cy="447.659" r="2.0" fill="#087f5b"/>
+<circle cx="665.000" cy="455.733" r="2.0" fill="#087f5b"/>
+<circle cx="715.500" cy="460.860" r="2.0" fill="#087f5b"/>
+<circle cx="766.000" cy="462.094" r="2.0" fill="#087f5b"/>
+<polyline points="564.000,339.291 614.500,441.921 665.000,442.586 715.500,441.194 766.000,436.100" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="564.000" cy="339.291" r="2.0" fill="#7852b3"/>
+<circle cx="614.500" cy="441.921" r="2.0" fill="#7852b3"/>
+<circle cx="665.000" cy="442.586" r="2.0" fill="#7852b3"/>
+<circle cx="715.500" cy="441.194" r="2.0" fill="#7852b3"/>
+<circle cx="766.000" cy="436.100" r="2.0" fill="#7852b3"/>
+<text class="title" x="790" y="320">f0-20261023-zero state-L5</text>
+<line class="grid" x1="820" y1="469.00" x2="1022" y2="469.00"/>
+<text class="tick" text-anchor="end" x="816" y="472.00">-0.0021</text>
+<line class="grid" x1="820" y1="400.50" x2="1022" y2="400.50"/>
+<text class="tick" text-anchor="end" x="816" y="403.50">8.3</text>
+<line class="grid" x1="820" y1="332.00" x2="1022" y2="332.00"/>
+<text class="tick" text-anchor="end" x="816" y="335.00">17</text>
+<text class="tick" text-anchor="middle" x="820.00" y="484">0</text>
+<text class="tick" text-anchor="middle" x="921.00" y="484">200</text>
+<text class="tick" text-anchor="middle" x="1022.00" y="484">400</text>
+<polyline points="820.000,342.925 870.500,447.223 921.000,455.022 971.500,460.359 1022.000,461.511" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="820.000" cy="342.925" r="2.0" fill="#087f5b"/>
+<circle cx="870.500" cy="447.223" r="2.0" fill="#087f5b"/>
+<circle cx="921.000" cy="455.022" r="2.0" fill="#087f5b"/>
+<circle cx="971.500" cy="460.359" r="2.0" fill="#087f5b"/>
+<circle cx="1022.000" cy="461.511" r="2.0" fill="#087f5b"/>
+<polyline points="820.000,339.568 870.500,439.992 921.000,441.882 971.500,438.969 1022.000,434.195" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="820.000" cy="339.568" r="2.0" fill="#7852b3"/>
+<circle cx="870.500" cy="439.992" r="2.0" fill="#7852b3"/>
+<circle cx="921.000" cy="441.882" r="2.0" fill="#7852b3"/>
+<circle cx="971.500" cy="438.969" r="2.0" fill="#7852b3"/>
+<circle cx="1022.000" cy="434.195" r="2.0" fill="#7852b3"/>
+<text class="title" x="1046" y="320">f0-20261023-zero state-L1</text>
+<line class="grid" x1="1076" y1="469.00" x2="1278" y2="469.00"/>
+<text class="tick" text-anchor="end" x="1072" y="472.00">-0.0021</text>
+<line class="grid" x1="1076" y1="400.50" x2="1278" y2="400.50"/>
+<text class="tick" text-anchor="end" x="1072" y="403.50">8.3</text>
+<line class="grid" x1="1076" y1="332.00" x2="1278" y2="332.00"/>
+<text class="tick" text-anchor="end" x="1072" y="335.00">17</text>
+<text class="tick" text-anchor="middle" x="1076.00" y="484">0</text>
+<text class="tick" text-anchor="middle" x="1177.00" y="484">200</text>
+<text class="tick" text-anchor="middle" x="1278.00" y="484">400</text>
+<polyline points="1076.000,342.964 1126.500,447.341 1177.000,455.117 1227.500,460.376 1278.000,461.540" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1076.000" cy="342.964" r="2.0" fill="#087f5b"/>
+<circle cx="1126.500" cy="447.341" r="2.0" fill="#087f5b"/>
+<circle cx="1177.000" cy="455.117" r="2.0" fill="#087f5b"/>
+<circle cx="1227.500" cy="460.376" r="2.0" fill="#087f5b"/>
+<circle cx="1278.000" cy="461.540" r="2.0" fill="#087f5b"/>
+<polyline points="1076.000,339.519 1126.500,440.050 1177.000,442.237 1227.500,439.289 1278.000,436.966" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1076.000" cy="339.519" r="2.0" fill="#7852b3"/>
+<circle cx="1126.500" cy="440.050" r="2.0" fill="#7852b3"/>
+<circle cx="1177.000" cy="442.237" r="2.0" fill="#7852b3"/>
+<circle cx="1227.500" cy="439.289" r="2.0" fill="#7852b3"/>
+<circle cx="1278.000" cy="436.966" r="2.0" fill="#7852b3"/>
+<text class="title" x="1302" y="320">f0-20261023-zero state-L0</text>
+<line class="grid" x1="1332" y1="469.00" x2="1534" y2="469.00"/>
+<text class="tick" text-anchor="end" x="1328" y="472.00">-0.0021</text>
+<line class="grid" x1="1332" y1="400.50" x2="1534" y2="400.50"/>
+<text class="tick" text-anchor="end" x="1328" y="403.50">8.3</text>
+<line class="grid" x1="1332" y1="332.00" x2="1534" y2="332.00"/>
+<text class="tick" text-anchor="end" x="1328" y="335.00">17</text>
+<text class="tick" text-anchor="middle" x="1332.00" y="484">0</text>
+<text class="tick" text-anchor="middle" x="1433.00" y="484">200</text>
+<text class="tick" text-anchor="middle" x="1534.00" y="484">400</text>
+<polyline points="1332.000,342.849 1382.500,447.189 1433.000,454.899 1483.500,460.534 1534.000,461.743" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1332.000" cy="342.849" r="2.0" fill="#087f5b"/>
+<circle cx="1382.500" cy="447.189" r="2.0" fill="#087f5b"/>
+<circle cx="1433.000" cy="454.899" r="2.0" fill="#087f5b"/>
+<circle cx="1483.500" cy="460.534" r="2.0" fill="#087f5b"/>
+<circle cx="1534.000" cy="461.743" r="2.0" fill="#087f5b"/>
+<polyline points="1332.000,339.442 1382.500,440.643 1433.000,443.904 1483.500,439.481 1534.000,430.510" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1332.000" cy="339.442" r="2.0" fill="#7852b3"/>
+<circle cx="1382.500" cy="440.643" r="2.0" fill="#7852b3"/>
+<circle cx="1433.000" cy="443.904" r="2.0" fill="#7852b3"/>
+<circle cx="1483.500" cy="439.481" r="2.0" fill="#7852b3"/>
+<circle cx="1534.000" cy="430.510" r="2.0" fill="#7852b3"/>
+<text class="title" x="22" y="514">f0-20261024-real state-L5</text>
+<line class="grid" x1="52" y1="663.00" x2="254" y2="663.00"/>
+<text class="tick" text-anchor="end" x="48" y="666.00">-0.0021</text>
+<line class="grid" x1="52" y1="594.50" x2="254" y2="594.50"/>
+<text class="tick" text-anchor="end" x="48" y="597.50">8.3</text>
+<line class="grid" x1="52" y1="526.00" x2="254" y2="526.00"/>
+<text class="tick" text-anchor="end" x="48" y="529.00">17</text>
+<text class="tick" text-anchor="middle" x="52.00" y="678">0</text>
+<text class="tick" text-anchor="middle" x="153.00" y="678">200</text>
+<text class="tick" text-anchor="middle" x="254.00" y="678">400</text>
+<polyline points="52.000,532.855 102.500,640.323 153.000,648.903 203.500,654.625 254.000,656.012" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="52.000" cy="532.855" r="2.0" fill="#087f5b"/>
+<circle cx="102.500" cy="640.323" r="2.0" fill="#087f5b"/>
+<circle cx="153.000" cy="648.903" r="2.0" fill="#087f5b"/>
+<circle cx="203.500" cy="654.625" r="2.0" fill="#087f5b"/>
+<circle cx="254.000" cy="656.012" r="2.0" fill="#087f5b"/>
+<polyline points="52.000,531.776 102.500,633.874 153.000,636.897 203.500,635.654 254.000,631.014" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="52.000" cy="531.776" r="2.0" fill="#7852b3"/>
+<circle cx="102.500" cy="633.874" r="2.0" fill="#7852b3"/>
+<circle cx="153.000" cy="636.897" r="2.0" fill="#7852b3"/>
+<circle cx="203.500" cy="635.654" r="2.0" fill="#7852b3"/>
+<circle cx="254.000" cy="631.014" r="2.0" fill="#7852b3"/>
+<text class="title" x="278" y="514">f0-20261024-real state-L1</text>
+<line class="grid" x1="308" y1="663.00" x2="510" y2="663.00"/>
+<text class="tick" text-anchor="end" x="304" y="666.00">-0.0021</text>
+<line class="grid" x1="308" y1="594.50" x2="510" y2="594.50"/>
+<text class="tick" text-anchor="end" x="304" y="597.50">8.3</text>
+<line class="grid" x1="308" y1="526.00" x2="510" y2="526.00"/>
+<text class="tick" text-anchor="end" x="304" y="529.00">17</text>
+<text class="tick" text-anchor="middle" x="308.00" y="678">0</text>
+<text class="tick" text-anchor="middle" x="409.00" y="678">200</text>
+<text class="tick" text-anchor="middle" x="510.00" y="678">400</text>
+<polyline points="308.000,532.823 358.500,640.359 409.000,648.915 459.500,654.590 510.000,656.005" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="308.000" cy="532.823" r="2.0" fill="#087f5b"/>
+<circle cx="358.500" cy="640.359" r="2.0" fill="#087f5b"/>
+<circle cx="409.000" cy="648.915" r="2.0" fill="#087f5b"/>
+<circle cx="459.500" cy="654.590" r="2.0" fill="#087f5b"/>
+<circle cx="510.000" cy="656.005" r="2.0" fill="#087f5b"/>
+<polyline points="308.000,531.843 358.500,633.729 409.000,636.223 459.500,635.764 510.000,630.295" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="308.000" cy="531.843" r="2.0" fill="#7852b3"/>
+<circle cx="358.500" cy="633.729" r="2.0" fill="#7852b3"/>
+<circle cx="409.000" cy="636.223" r="2.0" fill="#7852b3"/>
+<circle cx="459.500" cy="635.764" r="2.0" fill="#7852b3"/>
+<circle cx="510.000" cy="630.295" r="2.0" fill="#7852b3"/>
+<text class="title" x="534" y="514">f0-20261024-real state-L0</text>
+<line class="grid" x1="564" y1="663.00" x2="766" y2="663.00"/>
+<text class="tick" text-anchor="end" x="560" y="666.00">-0.0021</text>
+<line class="grid" x1="564" y1="594.50" x2="766" y2="594.50"/>
+<text class="tick" text-anchor="end" x="560" y="597.50">8.3</text>
+<line class="grid" x1="564" y1="526.00" x2="766" y2="526.00"/>
+<text class="tick" text-anchor="end" x="560" y="529.00">17</text>
+<text class="tick" text-anchor="middle" x="564.00" y="678">0</text>
+<text class="tick" text-anchor="middle" x="665.00" y="678">200</text>
+<text class="tick" text-anchor="middle" x="766.00" y="678">400</text>
+<polyline points="564.000,533.008 614.500,640.178 665.000,649.364 715.500,654.926 766.000,656.094" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="564.000" cy="533.008" r="2.0" fill="#087f5b"/>
+<circle cx="614.500" cy="640.178" r="2.0" fill="#087f5b"/>
+<circle cx="665.000" cy="649.364" r="2.0" fill="#087f5b"/>
+<circle cx="715.500" cy="654.926" r="2.0" fill="#087f5b"/>
+<circle cx="766.000" cy="656.094" r="2.0" fill="#087f5b"/>
+<polyline points="564.000,531.994 614.500,633.867 665.000,637.498 715.500,636.669 766.000,632.235" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="564.000" cy="531.994" r="2.0" fill="#7852b3"/>
+<circle cx="614.500" cy="633.867" r="2.0" fill="#7852b3"/>
+<circle cx="665.000" cy="637.498" r="2.0" fill="#7852b3"/>
+<circle cx="715.500" cy="636.669" r="2.0" fill="#7852b3"/>
+<circle cx="766.000" cy="632.235" r="2.0" fill="#7852b3"/>
+<text class="title" x="790" y="514">f0-20261024-zero state-L5</text>
+<line class="grid" x1="820" y1="663.00" x2="1022" y2="663.00"/>
+<text class="tick" text-anchor="end" x="816" y="666.00">-0.0021</text>
+<line class="grid" x1="820" y1="594.50" x2="1022" y2="594.50"/>
+<text class="tick" text-anchor="end" x="816" y="597.50">8.3</text>
+<line class="grid" x1="820" y1="526.00" x2="1022" y2="526.00"/>
+<text class="tick" text-anchor="end" x="816" y="529.00">17</text>
+<text class="tick" text-anchor="middle" x="820.00" y="678">0</text>
+<text class="tick" text-anchor="middle" x="921.00" y="678">200</text>
+<text class="tick" text-anchor="middle" x="1022.00" y="678">400</text>
+<polyline points="820.000,533.046 870.500,640.284 921.000,649.098 971.500,654.130 1022.000,655.726" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="820.000" cy="533.046" r="2.0" fill="#087f5b"/>
+<circle cx="870.500" cy="640.284" r="2.0" fill="#087f5b"/>
+<circle cx="921.000" cy="649.098" r="2.0" fill="#087f5b"/>
+<circle cx="971.500" cy="654.130" r="2.0" fill="#087f5b"/>
+<circle cx="1022.000" cy="655.726" r="2.0" fill="#087f5b"/>
+<polyline points="820.000,531.208 870.500,632.210 921.000,636.444 971.500,634.656 1022.000,634.529" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="820.000" cy="531.208" r="2.0" fill="#7852b3"/>
+<circle cx="870.500" cy="632.210" r="2.0" fill="#7852b3"/>
+<circle cx="921.000" cy="636.444" r="2.0" fill="#7852b3"/>
+<circle cx="971.500" cy="634.656" r="2.0" fill="#7852b3"/>
+<circle cx="1022.000" cy="634.529" r="2.0" fill="#7852b3"/>
+<text class="title" x="1046" y="514">f0-20261024-zero state-L1</text>
+<line class="grid" x1="1076" y1="663.00" x2="1278" y2="663.00"/>
+<text class="tick" text-anchor="end" x="1072" y="666.00">-0.0021</text>
+<line class="grid" x1="1076" y1="594.50" x2="1278" y2="594.50"/>
+<text class="tick" text-anchor="end" x="1072" y="597.50">8.3</text>
+<line class="grid" x1="1076" y1="526.00" x2="1278" y2="526.00"/>
+<text class="tick" text-anchor="end" x="1072" y="529.00">17</text>
+<text class="tick" text-anchor="middle" x="1076.00" y="678">0</text>
+<text class="tick" text-anchor="middle" x="1177.00" y="678">200</text>
+<text class="tick" text-anchor="middle" x="1278.00" y="678">400</text>
+<polyline points="1076.000,533.002 1126.500,640.201 1177.000,649.046 1227.500,653.950 1278.000,655.778" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1076.000" cy="533.002" r="2.0" fill="#087f5b"/>
+<circle cx="1126.500" cy="640.201" r="2.0" fill="#087f5b"/>
+<circle cx="1177.000" cy="649.046" r="2.0" fill="#087f5b"/>
+<circle cx="1227.500" cy="653.950" r="2.0" fill="#087f5b"/>
+<circle cx="1278.000" cy="655.778" r="2.0" fill="#087f5b"/>
+<polyline points="1076.000,531.217 1126.500,632.056 1177.000,636.558 1227.500,634.426 1278.000,633.437" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1076.000" cy="531.217" r="2.0" fill="#7852b3"/>
+<circle cx="1126.500" cy="632.056" r="2.0" fill="#7852b3"/>
+<circle cx="1177.000" cy="636.558" r="2.0" fill="#7852b3"/>
+<circle cx="1227.500" cy="634.426" r="2.0" fill="#7852b3"/>
+<circle cx="1278.000" cy="633.437" r="2.0" fill="#7852b3"/>
+<text class="title" x="1302" y="514">f0-20261024-zero state-L0</text>
+<line class="grid" x1="1332" y1="663.00" x2="1534" y2="663.00"/>
+<text class="tick" text-anchor="end" x="1328" y="666.00">-0.0021</text>
+<line class="grid" x1="1332" y1="594.50" x2="1534" y2="594.50"/>
+<text class="tick" text-anchor="end" x="1328" y="597.50">8.3</text>
+<line class="grid" x1="1332" y1="526.00" x2="1534" y2="526.00"/>
+<text class="tick" text-anchor="end" x="1328" y="529.00">17</text>
+<text class="tick" text-anchor="middle" x="1332.00" y="678">0</text>
+<text class="tick" text-anchor="middle" x="1433.00" y="678">200</text>
+<text class="tick" text-anchor="middle" x="1534.00" y="678">400</text>
+<polyline points="1332.000,533.046 1382.500,640.340 1433.000,648.927 1483.500,653.975 1534.000,655.434" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1332.000" cy="533.046" r="2.0" fill="#087f5b"/>
+<circle cx="1382.500" cy="640.340" r="2.0" fill="#087f5b"/>
+<circle cx="1433.000" cy="648.927" r="2.0" fill="#087f5b"/>
+<circle cx="1483.500" cy="653.975" r="2.0" fill="#087f5b"/>
+<circle cx="1534.000" cy="655.434" r="2.0" fill="#087f5b"/>
+<polyline points="1332.000,531.580 1382.500,632.309 1433.000,637.070 1483.500,635.647 1534.000,635.920" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1332.000" cy="531.580" r="2.0" fill="#7852b3"/>
+<circle cx="1382.500" cy="632.309" r="2.0" fill="#7852b3"/>
+<circle cx="1433.000" cy="637.070" r="2.0" fill="#7852b3"/>
+<circle cx="1483.500" cy="635.647" r="2.0" fill="#7852b3"/>
+<circle cx="1534.000" cy="635.920" r="2.0" fill="#7852b3"/>
+<text class="title" x="22" y="708">f1-20261022-real state-L5</text>
+<line class="grid" x1="52" y1="857.00" x2="254" y2="857.00"/>
+<text class="tick" text-anchor="end" x="48" y="860.00">-0.0021</text>
+<line class="grid" x1="52" y1="788.50" x2="254" y2="788.50"/>
+<text class="tick" text-anchor="end" x="48" y="791.50">8.3</text>
+<line class="grid" x1="52" y1="720.00" x2="254" y2="720.00"/>
+<text class="tick" text-anchor="end" x="48" y="723.00">17</text>
+<text class="tick" text-anchor="middle" x="52.00" y="872">0</text>
+<text class="tick" text-anchor="middle" x="153.00" y="872">200</text>
+<text class="tick" text-anchor="middle" x="254.00" y="872">400</text>
+<polyline points="52.000,765.260 102.500,842.803 153.000,847.399 203.500,849.746 254.000,850.998" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="52.000" cy="765.260" r="2.0" fill="#087f5b"/>
+<circle cx="102.500" cy="842.803" r="2.0" fill="#087f5b"/>
+<circle cx="153.000" cy="847.399" r="2.0" fill="#087f5b"/>
+<circle cx="203.500" cy="849.746" r="2.0" fill="#087f5b"/>
+<circle cx="254.000" cy="850.998" r="2.0" fill="#087f5b"/>
+<polyline points="52.000,750.340 102.500,835.682 153.000,838.526 203.500,837.040 254.000,834.760" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="52.000" cy="750.340" r="2.0" fill="#7852b3"/>
+<circle cx="102.500" cy="835.682" r="2.0" fill="#7852b3"/>
+<circle cx="153.000" cy="838.526" r="2.0" fill="#7852b3"/>
+<circle cx="203.500" cy="837.040" r="2.0" fill="#7852b3"/>
+<circle cx="254.000" cy="834.760" r="2.0" fill="#7852b3"/>
+<text class="title" x="278" y="708">f1-20261022-real state-L1</text>
+<line class="grid" x1="308" y1="857.00" x2="510" y2="857.00"/>
+<text class="tick" text-anchor="end" x="304" y="860.00">-0.0021</text>
+<line class="grid" x1="308" y1="788.50" x2="510" y2="788.50"/>
+<text class="tick" text-anchor="end" x="304" y="791.50">8.3</text>
+<line class="grid" x1="308" y1="720.00" x2="510" y2="720.00"/>
+<text class="tick" text-anchor="end" x="304" y="723.00">17</text>
+<text class="tick" text-anchor="middle" x="308.00" y="872">0</text>
+<text class="tick" text-anchor="middle" x="409.00" y="872">200</text>
+<text class="tick" text-anchor="middle" x="510.00" y="872">400</text>
+<polyline points="308.000,765.272 358.500,842.803 409.000,847.424 459.500,849.716 510.000,850.957" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="308.000" cy="765.272" r="2.0" fill="#087f5b"/>
+<circle cx="358.500" cy="842.803" r="2.0" fill="#087f5b"/>
+<circle cx="409.000" cy="847.424" r="2.0" fill="#087f5b"/>
+<circle cx="459.500" cy="849.716" r="2.0" fill="#087f5b"/>
+<circle cx="510.000" cy="850.957" r="2.0" fill="#087f5b"/>
+<polyline points="308.000,750.348 358.500,835.653 409.000,838.564 459.500,836.817 510.000,834.236" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="308.000" cy="750.348" r="2.0" fill="#7852b3"/>
+<circle cx="358.500" cy="835.653" r="2.0" fill="#7852b3"/>
+<circle cx="409.000" cy="838.564" r="2.0" fill="#7852b3"/>
+<circle cx="459.500" cy="836.817" r="2.0" fill="#7852b3"/>
+<circle cx="510.000" cy="834.236" r="2.0" fill="#7852b3"/>
+<text class="title" x="534" y="708">f1-20261022-real state-L0</text>
+<line class="grid" x1="564" y1="857.00" x2="766" y2="857.00"/>
+<text class="tick" text-anchor="end" x="560" y="860.00">-0.0021</text>
+<line class="grid" x1="564" y1="788.50" x2="766" y2="788.50"/>
+<text class="tick" text-anchor="end" x="560" y="791.50">8.3</text>
+<line class="grid" x1="564" y1="720.00" x2="766" y2="720.00"/>
+<text class="tick" text-anchor="end" x="560" y="723.00">17</text>
+<text class="tick" text-anchor="middle" x="564.00" y="872">0</text>
+<text class="tick" text-anchor="middle" x="665.00" y="872">200</text>
+<text class="tick" text-anchor="middle" x="766.00" y="872">400</text>
+<polyline points="564.000,765.320 614.500,842.645 665.000,847.354 715.500,849.781 766.000,850.960" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="564.000" cy="765.320" r="2.0" fill="#087f5b"/>
+<circle cx="614.500" cy="842.645" r="2.0" fill="#087f5b"/>
+<circle cx="665.000" cy="847.354" r="2.0" fill="#087f5b"/>
+<circle cx="715.500" cy="849.781" r="2.0" fill="#087f5b"/>
+<circle cx="766.000" cy="850.960" r="2.0" fill="#087f5b"/>
+<polyline points="564.000,750.072 614.500,835.400 665.000,838.177 715.500,836.895 766.000,837.014" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="564.000" cy="750.072" r="2.0" fill="#7852b3"/>
+<circle cx="614.500" cy="835.400" r="2.0" fill="#7852b3"/>
+<circle cx="665.000" cy="838.177" r="2.0" fill="#7852b3"/>
+<circle cx="715.500" cy="836.895" r="2.0" fill="#7852b3"/>
+<circle cx="766.000" cy="837.014" r="2.0" fill="#7852b3"/>
+<text class="title" x="790" y="708">f1-20261022-zero state-L5</text>
+<line class="grid" x1="820" y1="857.00" x2="1022" y2="857.00"/>
+<text class="tick" text-anchor="end" x="816" y="860.00">-0.0021</text>
+<line class="grid" x1="820" y1="788.50" x2="1022" y2="788.50"/>
+<text class="tick" text-anchor="end" x="816" y="791.50">8.3</text>
+<line class="grid" x1="820" y1="720.00" x2="1022" y2="720.00"/>
+<text class="tick" text-anchor="end" x="816" y="723.00">17</text>
+<text class="tick" text-anchor="middle" x="820.00" y="872">0</text>
+<text class="tick" text-anchor="middle" x="921.00" y="872">200</text>
+<text class="tick" text-anchor="middle" x="1022.00" y="872">400</text>
+<polyline points="820.000,764.964 870.500,842.543 921.000,847.163 971.500,850.078 1022.000,851.726" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="820.000" cy="764.964" r="2.0" fill="#087f5b"/>
+<circle cx="870.500" cy="842.543" r="2.0" fill="#087f5b"/>
+<circle cx="921.000" cy="847.163" r="2.0" fill="#087f5b"/>
+<circle cx="971.500" cy="850.078" r="2.0" fill="#087f5b"/>
+<circle cx="1022.000" cy="851.726" r="2.0" fill="#087f5b"/>
+<polyline points="820.000,750.663 870.500,834.337 921.000,836.369 971.500,831.174 1022.000,829.039" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="820.000" cy="750.663" r="2.0" fill="#7852b3"/>
+<circle cx="870.500" cy="834.337" r="2.0" fill="#7852b3"/>
+<circle cx="921.000" cy="836.369" r="2.0" fill="#7852b3"/>
+<circle cx="971.500" cy="831.174" r="2.0" fill="#7852b3"/>
+<circle cx="1022.000" cy="829.039" r="2.0" fill="#7852b3"/>
+<text class="title" x="1046" y="708">f1-20261022-zero state-L1</text>
+<line class="grid" x1="1076" y1="857.00" x2="1278" y2="857.00"/>
+<text class="tick" text-anchor="end" x="1072" y="860.00">-0.0021</text>
+<line class="grid" x1="1076" y1="788.50" x2="1278" y2="788.50"/>
+<text class="tick" text-anchor="end" x="1072" y="791.50">8.3</text>
+<line class="grid" x1="1076" y1="720.00" x2="1278" y2="720.00"/>
+<text class="tick" text-anchor="end" x="1072" y="723.00">17</text>
+<text class="tick" text-anchor="middle" x="1076.00" y="872">0</text>
+<text class="tick" text-anchor="middle" x="1177.00" y="872">200</text>
+<text class="tick" text-anchor="middle" x="1278.00" y="872">400</text>
+<polyline points="1076.000,764.969 1126.500,842.542 1177.000,847.113 1227.500,849.934 1278.000,851.748" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1076.000" cy="764.969" r="2.0" fill="#087f5b"/>
+<circle cx="1126.500" cy="842.542" r="2.0" fill="#087f5b"/>
+<circle cx="1177.000" cy="847.113" r="2.0" fill="#087f5b"/>
+<circle cx="1227.500" cy="849.934" r="2.0" fill="#087f5b"/>
+<circle cx="1278.000" cy="851.748" r="2.0" fill="#087f5b"/>
+<polyline points="1076.000,750.652 1126.500,834.349 1177.000,836.288 1227.500,832.024 1278.000,830.754" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1076.000" cy="750.652" r="2.0" fill="#7852b3"/>
+<circle cx="1126.500" cy="834.349" r="2.0" fill="#7852b3"/>
+<circle cx="1177.000" cy="836.288" r="2.0" fill="#7852b3"/>
+<circle cx="1227.500" cy="832.024" r="2.0" fill="#7852b3"/>
+<circle cx="1278.000" cy="830.754" r="2.0" fill="#7852b3"/>
+<text class="title" x="1302" y="708">f1-20261022-zero state-L0</text>
+<line class="grid" x1="1332" y1="857.00" x2="1534" y2="857.00"/>
+<text class="tick" text-anchor="end" x="1328" y="860.00">-0.0021</text>
+<line class="grid" x1="1332" y1="788.50" x2="1534" y2="788.50"/>
+<text class="tick" text-anchor="end" x="1328" y="791.50">8.3</text>
+<line class="grid" x1="1332" y1="720.00" x2="1534" y2="720.00"/>
+<text class="tick" text-anchor="end" x="1328" y="723.00">17</text>
+<text class="tick" text-anchor="middle" x="1332.00" y="872">0</text>
+<text class="tick" text-anchor="middle" x="1433.00" y="872">200</text>
+<text class="tick" text-anchor="middle" x="1534.00" y="872">400</text>
+<polyline points="1332.000,765.560 1382.500,842.364 1433.000,847.081 1483.500,849.881 1534.000,851.465" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1332.000" cy="765.560" r="2.0" fill="#087f5b"/>
+<circle cx="1382.500" cy="842.364" r="2.0" fill="#087f5b"/>
+<circle cx="1433.000" cy="847.081" r="2.0" fill="#087f5b"/>
+<circle cx="1483.500" cy="849.881" r="2.0" fill="#087f5b"/>
+<circle cx="1534.000" cy="851.465" r="2.0" fill="#087f5b"/>
+<polyline points="1332.000,750.335 1382.500,834.221 1433.000,836.606 1483.500,835.388 1534.000,833.427" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1332.000" cy="750.335" r="2.0" fill="#7852b3"/>
+<circle cx="1382.500" cy="834.221" r="2.0" fill="#7852b3"/>
+<circle cx="1433.000" cy="836.606" r="2.0" fill="#7852b3"/>
+<circle cx="1483.500" cy="835.388" r="2.0" fill="#7852b3"/>
+<circle cx="1534.000" cy="833.427" r="2.0" fill="#7852b3"/>
+<text class="title" x="22" y="902">f1-20261023-real state-L5</text>
+<line class="grid" x1="52" y1="1051.00" x2="254" y2="1051.00"/>
+<text class="tick" text-anchor="end" x="48" y="1054.00">-0.0021</text>
+<line class="grid" x1="52" y1="982.50" x2="254" y2="982.50"/>
+<text class="tick" text-anchor="end" x="48" y="985.50">8.3</text>
+<line class="grid" x1="52" y1="914.00" x2="254" y2="914.00"/>
+<text class="tick" text-anchor="end" x="48" y="917.00">17</text>
+<text class="tick" text-anchor="middle" x="52.00" y="1066">0</text>
+<text class="tick" text-anchor="middle" x="153.00" y="1066">200</text>
+<text class="tick" text-anchor="middle" x="254.00" y="1066">400</text>
+<polyline points="52.000,959.145 102.500,1036.612 153.000,1040.718 203.500,1043.791 254.000,1045.761" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="52.000" cy="959.145" r="2.0" fill="#087f5b"/>
+<circle cx="102.500" cy="1036.612" r="2.0" fill="#087f5b"/>
+<circle cx="153.000" cy="1040.718" r="2.0" fill="#087f5b"/>
+<circle cx="203.500" cy="1043.791" r="2.0" fill="#087f5b"/>
+<circle cx="254.000" cy="1045.761" r="2.0" fill="#087f5b"/>
+<polyline points="52.000,947.900 102.500,1027.866 153.000,1028.792 203.500,1024.377 254.000,1022.121" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="52.000" cy="947.900" r="2.0" fill="#7852b3"/>
+<circle cx="102.500" cy="1027.866" r="2.0" fill="#7852b3"/>
+<circle cx="153.000" cy="1028.792" r="2.0" fill="#7852b3"/>
+<circle cx="203.500" cy="1024.377" r="2.0" fill="#7852b3"/>
+<circle cx="254.000" cy="1022.121" r="2.0" fill="#7852b3"/>
+<text class="title" x="278" y="902">f1-20261023-real state-L1</text>
+<line class="grid" x1="308" y1="1051.00" x2="510" y2="1051.00"/>
+<text class="tick" text-anchor="end" x="304" y="1054.00">-0.0021</text>
+<line class="grid" x1="308" y1="982.50" x2="510" y2="982.50"/>
+<text class="tick" text-anchor="end" x="304" y="985.50">8.3</text>
+<line class="grid" x1="308" y1="914.00" x2="510" y2="914.00"/>
+<text class="tick" text-anchor="end" x="304" y="917.00">17</text>
+<text class="tick" text-anchor="middle" x="308.00" y="1066">0</text>
+<text class="tick" text-anchor="middle" x="409.00" y="1066">200</text>
+<text class="tick" text-anchor="middle" x="510.00" y="1066">400</text>
+<polyline points="308.000,959.160 358.500,1036.600 409.000,1040.782 459.500,1043.866 510.000,1045.674" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="308.000" cy="959.160" r="2.0" fill="#087f5b"/>
+<circle cx="358.500" cy="1036.600" r="2.0" fill="#087f5b"/>
+<circle cx="409.000" cy="1040.782" r="2.0" fill="#087f5b"/>
+<circle cx="459.500" cy="1043.866" r="2.0" fill="#087f5b"/>
+<circle cx="510.000" cy="1045.674" r="2.0" fill="#087f5b"/>
+<polyline points="308.000,947.910 358.500,1027.907 409.000,1029.193 459.500,1024.172 510.000,1020.606" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="308.000" cy="947.910" r="2.0" fill="#7852b3"/>
+<circle cx="358.500" cy="1027.907" r="2.0" fill="#7852b3"/>
+<circle cx="409.000" cy="1029.193" r="2.0" fill="#7852b3"/>
+<circle cx="459.500" cy="1024.172" r="2.0" fill="#7852b3"/>
+<circle cx="510.000" cy="1020.606" r="2.0" fill="#7852b3"/>
+<text class="title" x="534" y="902">f1-20261023-real state-L0</text>
+<line class="grid" x1="564" y1="1051.00" x2="766" y2="1051.00"/>
+<text class="tick" text-anchor="end" x="560" y="1054.00">-0.0021</text>
+<line class="grid" x1="564" y1="982.50" x2="766" y2="982.50"/>
+<text class="tick" text-anchor="end" x="560" y="985.50">8.3</text>
+<line class="grid" x1="564" y1="914.00" x2="766" y2="914.00"/>
+<text class="tick" text-anchor="end" x="560" y="917.00">17</text>
+<text class="tick" text-anchor="middle" x="564.00" y="1066">0</text>
+<text class="tick" text-anchor="middle" x="665.00" y="1066">200</text>
+<text class="tick" text-anchor="middle" x="766.00" y="1066">400</text>
+<polyline points="564.000,959.067 614.500,1036.565 665.000,1040.862 715.500,1044.013 766.000,1045.637" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="564.000" cy="959.067" r="2.0" fill="#087f5b"/>
+<circle cx="614.500" cy="1036.565" r="2.0" fill="#087f5b"/>
+<circle cx="665.000" cy="1040.862" r="2.0" fill="#087f5b"/>
+<circle cx="715.500" cy="1044.013" r="2.0" fill="#087f5b"/>
+<circle cx="766.000" cy="1045.637" r="2.0" fill="#087f5b"/>
+<polyline points="564.000,947.730 614.500,1027.920 665.000,1028.914 715.500,1022.019 766.000,1019.646" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="564.000" cy="947.730" r="2.0" fill="#7852b3"/>
+<circle cx="614.500" cy="1027.920" r="2.0" fill="#7852b3"/>
+<circle cx="665.000" cy="1028.914" r="2.0" fill="#7852b3"/>
+<circle cx="715.500" cy="1022.019" r="2.0" fill="#7852b3"/>
+<circle cx="766.000" cy="1019.646" r="2.0" fill="#7852b3"/>
+<text class="title" x="790" y="902">f1-20261023-zero state-L5</text>
+<line class="grid" x1="820" y1="1051.00" x2="1022" y2="1051.00"/>
+<text class="tick" text-anchor="end" x="816" y="1054.00">-0.0021</text>
+<line class="grid" x1="820" y1="982.50" x2="1022" y2="982.50"/>
+<text class="tick" text-anchor="end" x="816" y="985.50">8.3</text>
+<line class="grid" x1="820" y1="914.00" x2="1022" y2="914.00"/>
+<text class="tick" text-anchor="end" x="816" y="917.00">17</text>
+<text class="tick" text-anchor="middle" x="820.00" y="1066">0</text>
+<text class="tick" text-anchor="middle" x="921.00" y="1066">200</text>
+<text class="tick" text-anchor="middle" x="1022.00" y="1066">400</text>
+<polyline points="820.000,959.543 870.500,1036.832 921.000,1040.858 971.500,1043.954 1022.000,1045.644" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="820.000" cy="959.543" r="2.0" fill="#087f5b"/>
+<circle cx="870.500" cy="1036.832" r="2.0" fill="#087f5b"/>
+<circle cx="921.000" cy="1040.858" r="2.0" fill="#087f5b"/>
+<circle cx="971.500" cy="1043.954" r="2.0" fill="#087f5b"/>
+<circle cx="1022.000" cy="1045.644" r="2.0" fill="#087f5b"/>
+<polyline points="820.000,948.009 870.500,1026.527 921.000,1028.023 971.500,1024.410 1022.000,1021.532" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="820.000" cy="948.009" r="2.0" fill="#7852b3"/>
+<circle cx="870.500" cy="1026.527" r="2.0" fill="#7852b3"/>
+<circle cx="921.000" cy="1028.023" r="2.0" fill="#7852b3"/>
+<circle cx="971.500" cy="1024.410" r="2.0" fill="#7852b3"/>
+<circle cx="1022.000" cy="1021.532" r="2.0" fill="#7852b3"/>
+<text class="title" x="1046" y="902">f1-20261023-zero state-L1</text>
+<line class="grid" x1="1076" y1="1051.00" x2="1278" y2="1051.00"/>
+<text class="tick" text-anchor="end" x="1072" y="1054.00">-0.0021</text>
+<line class="grid" x1="1076" y1="982.50" x2="1278" y2="982.50"/>
+<text class="tick" text-anchor="end" x="1072" y="985.50">8.3</text>
+<line class="grid" x1="1076" y1="914.00" x2="1278" y2="914.00"/>
+<text class="tick" text-anchor="end" x="1072" y="917.00">17</text>
+<text class="tick" text-anchor="middle" x="1076.00" y="1066">0</text>
+<text class="tick" text-anchor="middle" x="1177.00" y="1066">200</text>
+<text class="tick" text-anchor="middle" x="1278.00" y="1066">400</text>
+<polyline points="1076.000,959.549 1126.500,1036.817 1177.000,1040.849 1227.500,1043.949 1278.000,1045.639" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1076.000" cy="959.549" r="2.0" fill="#087f5b"/>
+<circle cx="1126.500" cy="1036.817" r="2.0" fill="#087f5b"/>
+<circle cx="1177.000" cy="1040.849" r="2.0" fill="#087f5b"/>
+<circle cx="1227.500" cy="1043.949" r="2.0" fill="#087f5b"/>
+<circle cx="1278.000" cy="1045.639" r="2.0" fill="#087f5b"/>
+<polyline points="1076.000,948.009 1126.500,1026.628 1177.000,1027.866 1227.500,1024.150 1278.000,1022.607" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1076.000" cy="948.009" r="2.0" fill="#7852b3"/>
+<circle cx="1126.500" cy="1026.628" r="2.0" fill="#7852b3"/>
+<circle cx="1177.000" cy="1027.866" r="2.0" fill="#7852b3"/>
+<circle cx="1227.500" cy="1024.150" r="2.0" fill="#7852b3"/>
+<circle cx="1278.000" cy="1022.607" r="2.0" fill="#7852b3"/>
+<text class="title" x="1302" y="902">f1-20261023-zero state-L0</text>
+<line class="grid" x1="1332" y1="1051.00" x2="1534" y2="1051.00"/>
+<text class="tick" text-anchor="end" x="1328" y="1054.00">-0.0021</text>
+<line class="grid" x1="1332" y1="982.50" x2="1534" y2="982.50"/>
+<text class="tick" text-anchor="end" x="1328" y="985.50">8.3</text>
+<line class="grid" x1="1332" y1="914.00" x2="1534" y2="914.00"/>
+<text class="tick" text-anchor="end" x="1328" y="917.00">17</text>
+<text class="tick" text-anchor="middle" x="1332.00" y="1066">0</text>
+<text class="tick" text-anchor="middle" x="1433.00" y="1066">200</text>
+<text class="tick" text-anchor="middle" x="1534.00" y="1066">400</text>
+<polyline points="1332.000,959.706 1382.500,1036.699 1433.000,1040.782 1483.500,1043.931 1534.000,1045.678" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1332.000" cy="959.706" r="2.0" fill="#087f5b"/>
+<circle cx="1382.500" cy="1036.699" r="2.0" fill="#087f5b"/>
+<circle cx="1433.000" cy="1040.782" r="2.0" fill="#087f5b"/>
+<circle cx="1483.500" cy="1043.931" r="2.0" fill="#087f5b"/>
+<circle cx="1534.000" cy="1045.678" r="2.0" fill="#087f5b"/>
+<polyline points="1332.000,947.942 1382.500,1027.060 1433.000,1027.086 1483.500,1023.588 1534.000,1023.353" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1332.000" cy="947.942" r="2.0" fill="#7852b3"/>
+<circle cx="1382.500" cy="1027.060" r="2.0" fill="#7852b3"/>
+<circle cx="1433.000" cy="1027.086" r="2.0" fill="#7852b3"/>
+<circle cx="1483.500" cy="1023.588" r="2.0" fill="#7852b3"/>
+<circle cx="1534.000" cy="1023.353" r="2.0" fill="#7852b3"/>
+<text class="title" x="22" y="1096">f1-20261024-real state-L5</text>
+<line class="grid" x1="52" y1="1245.00" x2="254" y2="1245.00"/>
+<text class="tick" text-anchor="end" x="48" y="1248.00">-0.0021</text>
+<line class="grid" x1="52" y1="1176.50" x2="254" y2="1176.50"/>
+<text class="tick" text-anchor="end" x="48" y="1179.50">8.3</text>
+<line class="grid" x1="52" y1="1108.00" x2="254" y2="1108.00"/>
+<text class="tick" text-anchor="end" x="48" y="1111.00">17</text>
+<text class="tick" text-anchor="middle" x="52.00" y="1260">0</text>
+<text class="tick" text-anchor="middle" x="153.00" y="1260">200</text>
+<text class="tick" text-anchor="middle" x="254.00" y="1260">400</text>
+<polyline points="52.000,1151.191 102.500,1230.415 153.000,1235.514 203.500,1238.003 254.000,1239.822" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="52.000" cy="1151.191" r="2.0" fill="#087f5b"/>
+<circle cx="102.500" cy="1230.415" r="2.0" fill="#087f5b"/>
+<circle cx="153.000" cy="1235.514" r="2.0" fill="#087f5b"/>
+<circle cx="203.500" cy="1238.003" r="2.0" fill="#087f5b"/>
+<circle cx="254.000" cy="1239.822" r="2.0" fill="#087f5b"/>
+<polyline points="52.000,1136.852 102.500,1222.579 153.000,1222.445 203.500,1222.109 254.000,1220.137" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="52.000" cy="1136.852" r="2.0" fill="#7852b3"/>
+<circle cx="102.500" cy="1222.579" r="2.0" fill="#7852b3"/>
+<circle cx="153.000" cy="1222.445" r="2.0" fill="#7852b3"/>
+<circle cx="203.500" cy="1222.109" r="2.0" fill="#7852b3"/>
+<circle cx="254.000" cy="1220.137" r="2.0" fill="#7852b3"/>
+<text class="title" x="278" y="1096">f1-20261024-real state-L1</text>
+<line class="grid" x1="308" y1="1245.00" x2="510" y2="1245.00"/>
+<text class="tick" text-anchor="end" x="304" y="1248.00">-0.0021</text>
+<line class="grid" x1="308" y1="1176.50" x2="510" y2="1176.50"/>
+<text class="tick" text-anchor="end" x="304" y="1179.50">8.3</text>
+<line class="grid" x1="308" y1="1108.00" x2="510" y2="1108.00"/>
+<text class="tick" text-anchor="end" x="304" y="1111.00">17</text>
+<text class="tick" text-anchor="middle" x="308.00" y="1260">0</text>
+<text class="tick" text-anchor="middle" x="409.00" y="1260">200</text>
+<text class="tick" text-anchor="middle" x="510.00" y="1260">400</text>
+<polyline points="308.000,1151.173 358.500,1230.430 409.000,1235.532 459.500,1237.878 510.000,1239.836" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="308.000" cy="1151.173" r="2.0" fill="#087f5b"/>
+<circle cx="358.500" cy="1230.430" r="2.0" fill="#087f5b"/>
+<circle cx="409.000" cy="1235.532" r="2.0" fill="#087f5b"/>
+<circle cx="459.500" cy="1237.878" r="2.0" fill="#087f5b"/>
+<circle cx="510.000" cy="1239.836" r="2.0" fill="#087f5b"/>
+<polyline points="308.000,1136.813 358.500,1222.618 409.000,1223.056 459.500,1222.877 510.000,1220.775" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="308.000" cy="1136.813" r="2.0" fill="#7852b3"/>
+<circle cx="358.500" cy="1222.618" r="2.0" fill="#7852b3"/>
+<circle cx="409.000" cy="1223.056" r="2.0" fill="#7852b3"/>
+<circle cx="459.500" cy="1222.877" r="2.0" fill="#7852b3"/>
+<circle cx="510.000" cy="1220.775" r="2.0" fill="#7852b3"/>
+<text class="title" x="534" y="1096">f1-20261024-real state-L0</text>
+<line class="grid" x1="564" y1="1245.00" x2="766" y2="1245.00"/>
+<text class="tick" text-anchor="end" x="560" y="1248.00">-0.0021</text>
+<line class="grid" x1="564" y1="1176.50" x2="766" y2="1176.50"/>
+<text class="tick" text-anchor="end" x="560" y="1179.50">8.3</text>
+<line class="grid" x1="564" y1="1108.00" x2="766" y2="1108.00"/>
+<text class="tick" text-anchor="end" x="560" y="1111.00">17</text>
+<text class="tick" text-anchor="middle" x="564.00" y="1260">0</text>
+<text class="tick" text-anchor="middle" x="665.00" y="1260">200</text>
+<text class="tick" text-anchor="middle" x="766.00" y="1260">400</text>
+<polyline points="564.000,1151.720 614.500,1230.174 665.000,1235.577 715.500,1237.961 766.000,1239.920" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="564.000" cy="1151.720" r="2.0" fill="#087f5b"/>
+<circle cx="614.500" cy="1230.174" r="2.0" fill="#087f5b"/>
+<circle cx="665.000" cy="1235.577" r="2.0" fill="#087f5b"/>
+<circle cx="715.500" cy="1237.961" r="2.0" fill="#087f5b"/>
+<circle cx="766.000" cy="1239.920" r="2.0" fill="#087f5b"/>
+<polyline points="564.000,1136.925 614.500,1222.549 665.000,1222.929 715.500,1223.972 766.000,1222.688" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="564.000" cy="1136.925" r="2.0" fill="#7852b3"/>
+<circle cx="614.500" cy="1222.549" r="2.0" fill="#7852b3"/>
+<circle cx="665.000" cy="1222.929" r="2.0" fill="#7852b3"/>
+<circle cx="715.500" cy="1223.972" r="2.0" fill="#7852b3"/>
+<circle cx="766.000" cy="1222.688" r="2.0" fill="#7852b3"/>
+<text class="title" x="790" y="1096">f1-20261024-zero state-L5</text>
+<line class="grid" x1="820" y1="1245.00" x2="1022" y2="1245.00"/>
+<text class="tick" text-anchor="end" x="816" y="1248.00">-0.0021</text>
+<line class="grid" x1="820" y1="1176.50" x2="1022" y2="1176.50"/>
+<text class="tick" text-anchor="end" x="816" y="1179.50">8.3</text>
+<line class="grid" x1="820" y1="1108.00" x2="1022" y2="1108.00"/>
+<text class="tick" text-anchor="end" x="816" y="1111.00">17</text>
+<text class="tick" text-anchor="middle" x="820.00" y="1260">0</text>
+<text class="tick" text-anchor="middle" x="921.00" y="1260">200</text>
+<text class="tick" text-anchor="middle" x="1022.00" y="1260">400</text>
+<polyline points="820.000,1151.527 870.500,1230.095 921.000,1235.542 971.500,1238.035 1022.000,1239.926" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="820.000" cy="1151.527" r="2.0" fill="#087f5b"/>
+<circle cx="870.500" cy="1230.095" r="2.0" fill="#087f5b"/>
+<circle cx="921.000" cy="1235.542" r="2.0" fill="#087f5b"/>
+<circle cx="971.500" cy="1238.035" r="2.0" fill="#087f5b"/>
+<circle cx="1022.000" cy="1239.926" r="2.0" fill="#087f5b"/>
+<polyline points="820.000,1136.823 870.500,1221.461 921.000,1224.090 971.500,1222.600 1022.000,1218.073" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="820.000" cy="1136.823" r="2.0" fill="#7852b3"/>
+<circle cx="870.500" cy="1221.461" r="2.0" fill="#7852b3"/>
+<circle cx="921.000" cy="1224.090" r="2.0" fill="#7852b3"/>
+<circle cx="971.500" cy="1222.600" r="2.0" fill="#7852b3"/>
+<circle cx="1022.000" cy="1218.073" r="2.0" fill="#7852b3"/>
+<text class="title" x="1046" y="1096">f1-20261024-zero state-L1</text>
+<line class="grid" x1="1076" y1="1245.00" x2="1278" y2="1245.00"/>
+<text class="tick" text-anchor="end" x="1072" y="1248.00">-0.0021</text>
+<line class="grid" x1="1076" y1="1176.50" x2="1278" y2="1176.50"/>
+<text class="tick" text-anchor="end" x="1072" y="1179.50">8.3</text>
+<line class="grid" x1="1076" y1="1108.00" x2="1278" y2="1108.00"/>
+<text class="tick" text-anchor="end" x="1072" y="1111.00">17</text>
+<text class="tick" text-anchor="middle" x="1076.00" y="1260">0</text>
+<text class="tick" text-anchor="middle" x="1177.00" y="1260">200</text>
+<text class="tick" text-anchor="middle" x="1278.00" y="1260">400</text>
+<polyline points="1076.000,1151.521 1126.500,1230.085 1177.000,1235.542 1227.500,1238.014 1278.000,1239.893" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1076.000" cy="1151.521" r="2.0" fill="#087f5b"/>
+<circle cx="1126.500" cy="1230.085" r="2.0" fill="#087f5b"/>
+<circle cx="1177.000" cy="1235.542" r="2.0" fill="#087f5b"/>
+<circle cx="1227.500" cy="1238.014" r="2.0" fill="#087f5b"/>
+<circle cx="1278.000" cy="1239.893" r="2.0" fill="#087f5b"/>
+<polyline points="1076.000,1136.790 1126.500,1221.439 1177.000,1224.002 1227.500,1222.655 1278.000,1218.390" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1076.000" cy="1136.790" r="2.0" fill="#7852b3"/>
+<circle cx="1126.500" cy="1221.439" r="2.0" fill="#7852b3"/>
+<circle cx="1177.000" cy="1224.002" r="2.0" fill="#7852b3"/>
+<circle cx="1227.500" cy="1222.655" r="2.0" fill="#7852b3"/>
+<circle cx="1278.000" cy="1218.390" r="2.0" fill="#7852b3"/>
+<text class="title" x="1302" y="1096">f1-20261024-zero state-L0</text>
+<line class="grid" x1="1332" y1="1245.00" x2="1534" y2="1245.00"/>
+<text class="tick" text-anchor="end" x="1328" y="1248.00">-0.0021</text>
+<line class="grid" x1="1332" y1="1176.50" x2="1534" y2="1176.50"/>
+<text class="tick" text-anchor="end" x="1328" y="1179.50">8.3</text>
+<line class="grid" x1="1332" y1="1108.00" x2="1534" y2="1108.00"/>
+<text class="tick" text-anchor="end" x="1328" y="1111.00">17</text>
+<text class="tick" text-anchor="middle" x="1332.00" y="1260">0</text>
+<text class="tick" text-anchor="middle" x="1433.00" y="1260">200</text>
+<text class="tick" text-anchor="middle" x="1534.00" y="1260">400</text>
+<polyline points="1332.000,1151.940 1382.500,1230.092 1433.000,1235.517 1483.500,1237.739 1534.000,1239.677" fill="none" stroke="#087f5b" stroke-width="1.7"/>
+<circle cx="1332.000" cy="1151.940" r="2.0" fill="#087f5b"/>
+<circle cx="1382.500" cy="1230.092" r="2.0" fill="#087f5b"/>
+<circle cx="1433.000" cy="1235.517" r="2.0" fill="#087f5b"/>
+<circle cx="1483.500" cy="1237.739" r="2.0" fill="#087f5b"/>
+<circle cx="1534.000" cy="1239.677" r="2.0" fill="#087f5b"/>
+<polyline points="1332.000,1136.851 1382.500,1221.533 1433.000,1223.276 1483.500,1221.652 1534.000,1216.144" fill="none" stroke="#7852b3" stroke-width="1.7"/>
+<circle cx="1332.000" cy="1136.851" r="2.0" fill="#7852b3"/>
+<circle cx="1382.500" cy="1221.533" r="2.0" fill="#7852b3"/>
+<circle cx="1433.000" cy="1223.276" r="2.0" fill="#7852b3"/>
+<circle cx="1483.500" cy="1221.652" r="2.0" fill="#7852b3"/>
+<circle cx="1534.000" cy="1216.144" r="2.0" fill="#7852b3"/>
+<text x="20" y="1294" font-size="12">Lower is better. Panel metrics are component-equal aggregates. Loss decline is not evidence of landmark or Dope-state ranking lift.</text></svg>

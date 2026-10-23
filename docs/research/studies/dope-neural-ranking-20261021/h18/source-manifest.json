@@ -1,0 +1,268 @@
+{
+  "locator": "Logical artifact names and opaque digests only; exact bulk inputs/models remain with the root artifact custodian.",
+  "mathematical_function_ast_sha256": {
+    "bootstrap": "e0a7b37080754bbb5de1c841712ae227a2496e4b3019379a31ebfd7225c0765b",
+    "component_values": "3ed44a134f252b958df2bbb6169f8bdb3a9d685269560579d69406c36eedc33c",
+    "fold_moments": "1274e5ab3310b16e5ca7af58fbcdf4c1c00871bceb37712541b65fb76d3e20cf",
+    "independent_folds": "8f9baa85ad4a91ba81f0e54e890f3f2ee5ab548e3f9e2451b5209fcec2c1a316",
+    "independent_schedule": "a016cf85913eea91ec5058053f5b796e9a65e4b3e9736cd4dcced3d067fb611f",
+    "infer": "4baf4a5dce19774b55622c0140edfa959826fd914cf9cb34f4db586edd5b2a5c",
+    "metrics": "5b2dae39d9d9a26efb19eceac5ffd764befb7279cdb1275ca28457486012b8ba",
+    "objective_queries": "c3bedc11c25853b2f6b0b11758cd300aa871cb7fbe4f5af260148e7f17d4f525",
+    "param_hash": "aa74c41e1f0ca925d7ecd8f170a3237765c7bf0b89ba573a47e3543757441587",
+    "read_prediction": "e364220b54df769b4bbb16ca0bf528c4a6f0a21575e4e33ce63764b04e09bff8",
+    "self_test": "4bf50a162dcba692d8ded453302617fa004a50e2c9f7e04e4ab00eaa4bbcf8dd",
+    "state_hash": "6d8770c9d997d43e4d1a259dd9446ba341cc867d0f1681554bb3a1af1791da92"
+  },
+  "new_custody_commit": "PENDING_ROOT",
+  "original18_run_receipts": [
+    {
+      "arm": "base",
+      "curves_sha256": "bf09e06893cc57caeea9f9547af2b686c2b3ee8a844fcdfd6444ab353879b0d1",
+      "fold": 0,
+      "run_receipt_sha256": "7454e3ddd4b73063c5fbc46b7431ed821bf2a869cab08bc2aa12b8b27cbce3b2",
+      "seed": 20261022,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "46d71dec729c7980a22f1d8399fd1c016e41d48562ce150f09d5fb7afabf46ce",
+      "fold": 0,
+      "run_receipt_sha256": "71b5f1f871f896dcd61968fc3aed0e1f6bb1c4958d23b663faa17538606ed57c",
+      "seed": 20261023,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "cea8822825bf5c58e3a61e251c23c8e27de7380ec1c042c029fc3e677652aea5",
+      "fold": 0,
+      "run_receipt_sha256": "789e47e1d7bf461324bf6ead492d7b714b340957916b4a9356138fb72b79fb26",
+      "seed": 20261024,
+      "updates": 400
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "cd5ce39f124c91a830d92b8251127e503b0e113e708ad820309ecb26c895be04",
+      "fold": 0,
+      "run_receipt_sha256": "166781a5215f434f71d9df370d1da80d41c9afb1b7b8cd09e4736ba6498d0c9a",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "ec48653d354f317c0cc2ada05e766933a47ef40ec3b7a99e5324f77cc61ea75f",
+      "fold": 0,
+      "run_receipt_sha256": "f91bf20134e79f5cfefa6de2d93750051131d165b166e98ba547461b2c81afca",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "8e2607183d04675dd6c59fe7aef07ff41d8be28f5398fb9920a5cb878b7bd22e",
+      "fold": 0,
+      "run_receipt_sha256": "ec425daaa7d2752656e3f4a2cedf19ce6d4cfd9f1ddffc9efca20f0f2b439e16",
+      "seed": 20261024,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "c88772dbddc32c60bb11e9efbce28022dc262e7e343725c5f6f7c149f7714a64",
+      "fold": 0,
+      "run_receipt_sha256": "d4da38ff943ea60a3285b429c51af274cd4dc2ea8a269df41a95c25516f71c58",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "07fc7dd98ee3505408b0feaaf9300a32ab6647eeea80f3cf7092c8d01c550ad3",
+      "fold": 0,
+      "run_receipt_sha256": "b8e9cac2640b318a4bc5c3aa135a4d075af90f77948e9a7e522adf57c39b2e83",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "0a098f8f705b3fc6b98ee097aa455aeff497a3a41fe32245f0803f38aa9b9b23",
+      "fold": 0,
+      "run_receipt_sha256": "a40ee0d01256776872a121a6ef8d442553a97fc9def5a575bf3da3a45eefdbb7",
+      "seed": 20261024,
+      "updates": 200
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "3b10466b972104ffcfb7c90c9f11c763995d92675578baec902ff0a25f56f7bb",
+      "fold": 1,
+      "run_receipt_sha256": "1f1ff1cf9545f4dd1b04afafbd5aebb12f8764c6371000dc0534e031ee5639e3",
+      "seed": 20261022,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "4396afc79bdc0ef749569c3afa3ddeb7cfa8f2feb96a2f7a27c4f781f2639b80",
+      "fold": 1,
+      "run_receipt_sha256": "eaf8415eed8abd462cb8a26e2d885cac633f50eea47f4d031e1955e86dcf199c",
+      "seed": 20261023,
+      "updates": 400
+    },
+    {
+      "arm": "base",
+      "curves_sha256": "bbeea90117ee5e49958100d9055c5b5ee980d869ecac74ce802257585501c6df",
+      "fold": 1,
+      "run_receipt_sha256": "4b890f2e1f8e54e3eae69e125ed2332b2ef76d33ad854c4c37fa90244dfd338e",
+      "seed": 20261024,
+      "updates": 400
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "1a5d40e44e44306f7e1805dd36467ddef48d54cc80444f4524c5fc0127a0d5af",
+      "fold": 1,
+      "run_receipt_sha256": "c4a99cfe2042aaead23a3dd2004573c176e3bab9baea697041836c6fc809454a",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "c6d5d7300d48f8c58eeb3a13fe7484b678ff2adb9085229312c85df2ab80c004",
+      "fold": 1,
+      "run_receipt_sha256": "840b94270dba8ae4f214fe54e59881b2096fa426112dc4b990a66b04b691c088",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "random",
+      "curves_sha256": "20c022d3554cca14baaff5169622afe79450d08a0c75d48f78a284fb9f6ea6f0",
+      "fold": 1,
+      "run_receipt_sha256": "05f3da044ed614aea811d6467cd30c2e781cf898b53cb72f093818096d2508f5",
+      "seed": 20261024,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "0596c755b468c6c08e5de4106ceb91b766c20dc5a13ad878ca1293059cda8b7e",
+      "fold": 1,
+      "run_receipt_sha256": "1ad06c3d15ca42dc442bb226cf8b271c381ef7e5ab2e766d0160f49dfa0ee1ca",
+      "seed": 20261022,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "301600d9b0e6a6573d26f723d5dccf90ad06f2abb2e6d1538d486cd7a58cfe83",
+      "fold": 1,
+      "run_receipt_sha256": "a0548fa6bae528fa58c9d38b36a8c3b15e39948ba4c6d233b4dac32b455b7f79",
+      "seed": 20261023,
+      "updates": 200
+    },
+    {
+      "arm": "trained",
+      "curves_sha256": "b52214277ca91958dbe559afeeea8b6d5fc20fd27fa02d3ed23dbff24179dd4f",
+      "fold": 1,
+      "run_receipt_sha256": "668795e4bcff21f6dc063fff5e39c9749222826cad6d8a0e3f2ef88bf52372f8",
+      "seed": 20261024,
+      "updates": 200
+    }
+  ],
+  "original_protocol_sha256": "34190a9861488ab990cfa7f4a63c2b6278704de656a174d51fa5a0615cabe0ef",
+  "primary_aggregation_source_sha256": "5bd7f73f65431beab27a99d1af1aee34544198e46361b13990d1ff75a68064f8",
+  "receipts": [
+    {
+      "artifact": "deep-learning-dl07-h18/protocol.json",
+      "sha256": "e35de1a50d0a7a5335abe1a073d51ac211ac5dcaaaccb3fa4218ad45dbc13aa2"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18/preflight.json",
+      "sha256": "752617038b41a77873723ac2c8c4de80e68a489d711a50eece0eaf20f11ed5db"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18/closure.json",
+      "sha256": "ed4abfae086f10a6b0e00f2d912c85bd4155df575d1e58416159cd1836791564"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-runtime-r1/protocol.json",
+      "sha256": "96d368c9b418cd0a9b333ab16a62013802e41473765477d111be33e664cd1b52"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-runtime-r1/preflight.json",
+      "sha256": "fdc7aad92218c4c6dd8f8560241afa4471ca8c5e1343388eb172a94945e1d905"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-runtime-r1/closure.json",
+      "sha256": "d99d0861ab3ac61ca0304d39e221be492a37650d838976433ba5fd8240f2f807"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-runtime-r1/postclosure-admission-qa/audit.json",
+      "sha256": "f1c5b76752409917feecf50cbef3eb83d67d5186589be8575f10895c3aac5ab4"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/protocol.json",
+      "sha256": "34190a9861488ab990cfa7f4a63c2b6278704de656a174d51fa5a0615cabe0ef"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/verification.json",
+      "sha256": "58bc044c42fadbd167749fd2d417362ce172c452e980c7afd7c69c175b2d7eea"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/closure.json",
+      "sha256": "30521bfebf07bfe36fa76065b2bbf27e42973fdb0ffcfd9ff5d44c57123e51c1"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/runtime-no-deadline-readback.json",
+      "sha256": "189117b68b32dbbf56347075852a21cae550dc788cb84a88299866803d34a989"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-verification-authority-fix/source-amendment.json",
+      "sha256": "a21bae53b9fb7bfd0295a0d12e9e00c9c908f0eb146f57622272d455692f0448"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-verification-authority-fix/results.json",
+      "sha256": "e5d89b9af4397d8b71295bf70f010b1cf44c0beebc2bf9473dee4b4ba5cd8277"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-verification-authority-fix/verification.json",
+      "sha256": "ba8b5872de25b3674321f8e3a42d90b78bd3a6e6ec3512a94e5e9fe58aeb6ae8"
+    }
+  ],
+  "remote_S3_version_verified": false,
+  "schema": "dope-ranking.h18-public-source-manifest/v2",
+  "source_amendment_sha256": "a21bae53b9fb7bfd0295a0d12e9e00c9c908f0eb146f57622272d455692f0448",
+  "source_bodies_exported": false,
+  "source_files": [
+    {
+      "artifact": "deep-learning-dl07-h18/train_h18.py",
+      "sha256": "8e0cd1ba6ffc2ea0504332d5d98a6b9f2b02f5204cc3fdd0317e0c51e4e7b61f"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18/orchestrate_h18.py",
+      "sha256": "7bb6fb1b814ac1afe8727cabd7243e38f15731c9c779ab17ed779691600f6c25"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-runtime-r1/train_h18.py",
+      "sha256": "3e7faa8aba2c2262fc0d4c896994252cd12c6a3143945052020ca593859503fb"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-runtime-r1/orchestrate_h18.py",
+      "sha256": "3617b895fcbf836a058073950c5649f9922ee5813f234555210134e37c9d9937"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/train_h18.py",
+      "sha256": "5a02ba679c7eac562aaa3b64bde82fe08de7797061a11d526b344ac48640eb2a"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/orchestrate_h18.py",
+      "sha256": "c145819b57159747b76bbada08303555f416a8cdb99d152ded6a23da47ebd9c4"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/model_h18.py",
+      "sha256": "7acf87cae9d12f82555fea9c327a572578cf4e23dcaf590c7f2a015256c8c1c2"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-no-deadline/verify_h18.py",
+      "sha256": "31f9a6bbd3a8b0d9ba4a75b363dadf0215606f778c2bfdbe1a4e3f28740dc69a"
+    },
+    {
+      "artifact": "deep-learning-dl07-h18-verification-authority-fix/verify_h18.py",
+      "sha256": "e5fc66e396802ada8ea3d3c1664fec83f204f5e789833f59f5fe2f1c5464c3bf"
+    }
+  ],
+  "source_snapshot_observed_utc": "2026-10-22T13:49:23.323499+00:00",
+  "source_snapshot_sha256": "6c71fb6554a1dcf60b51beb0dae6a2e9d161c08d4a2124b6608b36a0e37aadca"
+}

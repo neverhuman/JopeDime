@@ -1,0 +1,10 @@
+question: Does frozen Dope neural state improve candidate selection beyond matched non-state inputs and a random-network control?
+hypothesis: Useful learned task information should reduce selected constrained GP fitness under matched initialization, sampling, capacity and training.
+controls: Identical archived candidate slates, program features, non-state Dope inputs, fitted preprocessing and seed schedules; state-zero and random-network arms.
+execution: Fresh matched models completed their fixed update budget; independent CUDA replay checked all models and source/pool bindings. Earlier incomplete and refused attempts remain separate records.
+effect: Optimization and calibration-panel losses declined. Both neural-state primary fitness contrasts have adverse point estimates and intervals including benefit and harm. Incremental ranking value is unestablished.
+stage: Exposed retrospective development only. Calibration families stay outside neural gradients, but calibration is fitted there; selection families are reused in final fitting. No independent outer or online search claim.
+changed: Experimental model files and predictions were archived locally and mirrored to another host. No production model, serving pointer or baseline fit changed.
+counterevidence: Rare failed candidate picks worsen raw utility; capped-regret diagnostics are nearly identical. Full state includes readout-derived summaries. Seed uncertainty, adaptive slates and historical family exposure remain material.
+falsifier: A prospectively fixed experiment on independently admitted families must beat non-state and random controls with paired family-level uncertainty excluding harm. New representations need exact source, row, fold and artifact provenance before fitting.
+reconstruction: See the companion study README and custody manifest. Verify the named archive digest, immutable producer JSON hashes and every source dependency; independent replay proves saved outputs within its stated limits. Full optimizer-resume and S3 durability are not promised.

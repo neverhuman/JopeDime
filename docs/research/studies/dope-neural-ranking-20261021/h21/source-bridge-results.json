@@ -1,0 +1,132 @@
+{
+  "GPU_calls": 0,
+  "H15_limit": "Only context/receipt locator metadata inspected; storage/receipt SHA domains were not relabeled raw source-byte identities.",
+  "H15_manifest_context_records": 2785,
+  "MAIN_source_cases_unread_in_this_scope": 6,
+  "S3_or_SDK_requests": 0,
+  "TRAIN_transform_fit_or_no_fit_certificates_new": 0,
+  "actual_H18_role_counts": {
+    "CAL_DEVELOPMENT_reserved_rows": 329,
+    "available_rows": 1179,
+    "eligible_components": 162,
+    "eligible_context_SHA_unique": 850,
+    "eligible_families": 164,
+    "eligible_role_counts": {
+      "FIT": 690,
+      "SELECT": 160
+    },
+    "mapping": "Explicit source_row_index->full contextSHA; available_row_index never used as eligible index.",
+    "source_index_unique": 1179,
+    "source_row_order": "DL04roles.contexts == DL03 available filtered candidate-bearing; source_row_index0..1178"
+  },
+  "admitted_raw_file_metadata_records_compared": 1548,
+  "comparison_scope": "Six incoming pilot contexts each supply train+test CSV refs:12compared parts. Original pilot denominator12 also retains sixMAIN contexts whose source pairs were not compared here.",
+  "completed_utc": "2026-10-22T17:17:12.915884+00:00",
+  "compute_deadline": null,
+  "cost_limits": "Whole-second systemd start/exit fields are preserved for failed attempts; exact failed wall time and all preparation/transfer costs were not fully measured. No failure was rewritten as PASS.",
+  "diagnostic_schema_findings": {
+    "declared_spec_local_locator": "Adjacent candidate locally absent only; no global absence claim.",
+    "diagnostic_bodies_read": 0,
+    "possible_checksum_utility": "Actual diagnostic bytes could complete a conditional sample-ID checksum, not establish native/source/transform authority.",
+    "sampler_dependency": "Declared target-feature projection/kmeans is data dependent; fixed seed/settings do not prove no-fit preprocessing.",
+    "schemas_pinned": 3,
+    "structured_acquisition_source_transform_execution_reference_channel": "Not declared by the closed diagnostic schema; extra metrics are numeric only."
+  },
+  "diagnostic_split_CSV_JTT1_cell_outcome_or_model_bodies": 0,
+  "family_overlap_limit": "The eight comprise sixMAIN and twoincoming cases. Family classification is not source/input equivalence or new independence.",
+  "fits": 0,
+  "full_SHA_and_length_matches": 0,
+  "full_SHA_matches": 0,
+  "historical_writer_identities_new": 0,
+  "incoming_source_cases_compared": 6,
+  "independent_QA_cost": {
+    "CPU_seconds": 0.23746919000000002,
+    "GPU_calls": 0,
+    "data_body_reads": 0,
+    "fits": 0,
+    "max_rss_kib": 93184,
+    "metadata_bytes_rehashed": 23258199,
+    "network_requests": 0,
+    "updates": 0,
+    "wall_seconds": 0.4457063879817724
+  },
+  "invalid_raw_file_SHA_records": 0,
+  "new_independent_validation_admissions": 0,
+  "new_numeric_admissions": 0,
+  "new_source_edges_to_propagate": 0,
+  "next_source_admission_packet": {
+    "declared_dataset_record_cache_locators_for_those_meta_SHAs": 0,
+    "exact_native_code_locator_matches_in_H18_source_map_per_case": [
+      0,
+      0
+    ],
+    "exact_stored_meta_byte_SHA_pointers": 2,
+    "identity_selected_incoming_known_family_cases": 2,
+    "inventory_route": "Root separately qualified S3Inventory configuration as a potential exact locator route. Any report/source/schema access requires its own exact source pins/grant; configuration coverage is not source authority.",
+    "limit": "Pointer/locator gaps are specific to inspected metadata, not global absence. Family identities choose candidates only.",
+    "native_exact_receipt_pointers": 2,
+    "purpose": "Resolve the smallest source/spec/receipt custody needed for a genuine GP/native typed-row/multiplicity/order/cut equivalence route; no infinite upstream ancestry or missing-literal-field requirement.",
+    "status": "PROPOSAL_ONLY_NO_FURTHER_BODY_GRANT"
+  },
+  "optimizer_updates": 0,
+  "original_case_denominator": 12,
+  "pilot_known_H18_TRAIN_family_closures": 8,
+  "pilot_outside_known_H18_TRAIN_family_closures": 4,
+  "preserved_failed_preparations": [
+    {
+      "closure_SHA": "70141f3aa6be0a45250adcb4fa2d1401c369d80ea80431f117638272970ba090",
+      "failure": "Eligible indices mistakenly mapped through available_row_index; failed before raw-source comparisons.",
+      "phase": "initial_source_bridge",
+      "raw_source_byte_comparisons": 0,
+      "recorded_unit_CPU_seconds": 2.078772,
+      "unit_exit_UTC": "Thu 2026-10-22 16:56:17 UTC",
+      "unit_start_UTC": "Thu 2026-10-22 16:56:14 UTC"
+    },
+    {
+      "closure_SHA": "ffc98f73240cb4771a7c3f739dbe306d7495fc2e67af776728d3f15b5286508c",
+      "failure": "Correct index/fold checks passed; wrong original_roles_sha256 field-domain guard compared underlyingDL04 toH18role SHA. Failed before raw-source comparisons.",
+      "phase": "source_bridge_R1",
+      "raw_source_byte_comparisons": 0,
+      "recorded_unit_CPU_seconds": 1.895472,
+      "unit_exit_UTC": "Thu 2026-10-22 17:00:13 UTC",
+      "unit_start_UTC": "Thu 2026-10-22 17:00:11 UTC"
+    }
+  ],
+  "producer_cost": {
+    "CPU_seconds": 0.174571062,
+    "compute_deadline": null,
+    "max_rss_kib": 92160,
+    "metadata_bytes_hashed": 23258199,
+    "wall_seconds": 0.38596866407897323
+  },
+  "proof_levels": [
+    "NNmeta TRAIN vs CAL/DEV/H12/outer/reserved family/component closure",
+    "GP context outer TRAIN vs TEST row cuts",
+    "GP innerCV fit/validation input/evaluator/fitness/gate/reference semantics",
+    "Dope/native encoder input row view and actual preprocessing fit stage"
+  ],
+  "publication_status": "Private exact-source custody/readback finalizing; productGit/Site publication owned by root; no S3 durability claim.",
+  "schema": "h21.public-diagnostic-schema-and-byte-bridge-complete/v1",
+  "scientific_outcome": "No exact-file-byte shortcut from these12stored source parts to any subset of the1548approved raw-file metadata records. This is not a semantic inequivalence result.",
+  "source_SHA": {
+    "minimal_R2_independent_QA": "e5c330fe01a72b0e8ba67f1c50046dd702b8793ca16d05ae9d5b2dcbfa593380",
+    "minimal_R2_producer_closure": "9ef6b8668e73bee035903c89f8670f21b5bf6c453b22613f9cb3048363a24202",
+    "minimal_R2_protocol": "47baf6e4a2650190bbc1efc1878c4ff3261574d5a2a5a4b6b5ff6e754cf7c7b4",
+    "minimal_R2_results": "f5ae31734a20e912656e160644062d3e5c70f7ff240c3e86eb25cf8c13f44ec4",
+    "minimal_R2_sources": "ce5fe78b301824b1c6c883f443185261ac4c47bfda5b48f4d5e55b4814860a68",
+    "minimal_R2_worker": "cfef18c14ba5c34e1fadb54b6319a8c32363231403709b68a6fe3f2ab8ad6f3b",
+    "next_private_code_locators": "5ec9940f676163c459238d26dd086b0e5b1dec69a946980cbe6221e1a40ce54b",
+    "next_private_source_boundary_packet": "9492ff0e91fd533f565723633c1ea2b1a9ac81c6bd14aa9c23dd47e48cd61b23",
+    "next_private_stored_metadata_locators": "a6ec7df356164b5e4edb54d9cf5e848bed2b48aaa0f108dc63a81f9eefc41433",
+    "schema_facts": "ccdfc5424171bc76710668b432249d96cc39e56bd57fa632628f891fb7fc885f",
+    "schema_report": "33c5e1c589c933abdb454a61e36afee3b1f024b94f88b224a7ca1c55b2a9b7bb",
+    "static_review_receipt": "b3165a32c8bcb3231785ef0655fd6c43f333e1c6618d89bf1cb9e545cee6298f"
+  },
+  "source_bytes_read": 0,
+  "source_or_native_row_equivalence_certificates_new": 0,
+  "split_vs_whole_file_limit": "Split-file hashes can naturally differ from whole original/native file hashes. This zero is not a typed-value/row/source semantic inequivalence result.",
+  "state": "COMPLETE_METADATA_ONLY_INDEPENDENT_QA_PASS_WITH_LIMITS",
+  "stored_source_declared_bytes": 10876871,
+  "stored_source_parts_compared": 12,
+  "unique_full_raw_file_byte_SHA": 307
+}

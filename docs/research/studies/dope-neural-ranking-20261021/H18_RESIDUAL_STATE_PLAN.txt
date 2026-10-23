@@ -1,0 +1,130 @@
+H18 prospective packet — preserve the stronger non-state neural ranker and test
+whether a small learned-state residual adds useful conditional information.
+PROPOSAL ONLY. No H18 fit, source/data admission or resource claim is implied.
+
+Objective/falsifier: matched trained-state residuals must improve raw constrained
+selected GP fitness over BOTH the frozen non-state neural base and matched
+random-state residuals. If either paired component interval includes harm, no
+established incremental state value. Loss reduction alone is insufficient.
+This tests a new mechanism after the large pooled-state models failed to add
+reliable value: learn a bounded correction while retaining a strong frozen base.
+H09's older tree/low-rank residual proposal remains recorded, not relabeled done.
+
+Research basis (analogy, not evidence of ranking lift):
+https://arxiv.org/abs/2106.09685 (LoRA) freezes a pretrained backbone and learns
+small adaptation parameters; https://arxiv.org/abs/2302.05543 (ControlNet) uses
+zero-initialized connections for added conditioning. Neither paper establishes
+utility for Dope, GP ranking, our features, or our resource budget. The test must
+earn its own result. https://proceedings.mlr.press/v130/al-shedivat21a.html studies
+supervision allocation in meta-learning; task/family coverage remains distinct
+from the number of correlated candidates. Consulted 2026-10-22.
+
+Read first:
+RTK/current human instructions; current product AGENTS/MASTER_PLAN/AGENT_CHAT,
+open PR queue and worktrees; CORRECTED_PLAN + amendments; RESEARCH_LOOP/HANDOFF;
+DL06 protocol/results/verification/closure; H15/H16 reports; H17 original failed
+admission, completed prepared execution, and separate postclosure QA. Preserve
+all observed failures and later-verification timing. Read DL04 train/model/
+calibration code and DL06 runtime/launcher as references, without changing them.
+
+Non-goals: no production/serving promotion, GP/baseline/Dope refits, S3 mutation,
+reserved or outer label reads, existing OLDDEV/CAL feedback for recipe choice,
+or claim of fresh independent families. H17 is a coverage-limited, exposed
+development benchmark with different feature/training supports; it is not a
+clean architecture/Dope ablation. Do not tune against its positive point.
+
+Data and split:
+Use only the already verified FINAL_FIT850contexts/162components from DL04 roles,
+not CAL118 or OLDDEV211. Verify source and role hashes again. Assign two whole-
+component folds deterministically: sort SHA256('h18-v1:'+component), alternate
+fold labels; save identities and disjointness before outcomes. Each context is
+scored by a fresh model trained only on the opposite component fold. Historical
+TRAIN exposure is disclosed; these are new internal cross-fitted predictions,
+not untouched external validation. Existing native/encoder pretraining exposure
+does not disappear. Fit every scaler and scale constant on that fold's TRAIN.
+
+Three seeds:20261022,20261023,20261024. Two folds, three seeds, one non-state base
+per fold/seed =6base models. Two matched residual arms per base =12adapters.
+Fixed before execution:400base updates,200adapter updates,128queries/update,
+16-query full-slate microbatches, all candidates, equal-component sampler and
+same M0 raw-constrained-regret/CE/BCE objective. No checkpoint or hyperparameter
+search. Total proposed dataset optimizer updates4800, not18x600. Report actual
+exposure and repeated draws separately from unique GP results. Do not silently
+substitute DL06 models, which trained on these proposed held-out components.
+
+Implementation under new owned evidence-only deep-learning-dl07-h18/:
+prepare.py writes protocol.json/roles.json/schedules/source pins and validates
+no CAL/OLDDEV/reserved overlap. model.py wraps the fold's frozen M0 base.
+adapter.py receives412DSL features and112masked state coordinates; true/random
+arms use identical widths, capacity, initialization, sampler and optimization.
+Use16-dimensional learned program/state projections, their elementwise product,
+then a32-wide GELU head and scalar output. Initialize its FINAL scalar layer to
+zero. delta=0.1*train_score_scale*tanh(head(product)); define train_score_scale
+prospectively as the median within-query base-score standard deviation on a
+fixed hash-selected TRAIN monitor, floor1e-6. Keep the base's non-state inputs,
+weights, failure head and buffers frozen. The bounded correction is not a
+guarantee of safe picks; retain failed candidates and report actual failures.
+Both trained/random state masks match DL06 exactly, including the limitation
+that112coordinates contain readout-derived summaries, not pure activations.
+
+Required tests before data fitting:
+Zero adapter reproduces every base score/pick exactly; base parameter/buffer
+hashes stay unchanged after synthetic adapter updates; actual adapter weights
+and outputs can change; no additive context-only term is mistaken for ranking
+interaction. Fold-role/sampler/scaler isolation, finite full-slate gradients,
+matched true/random initialization and detached base, missing/empty pools,
+source drift, immutable output collision and deadline refusal all fail closed.
+Do not write tests that merely mirror implementation. Preserve actual failing
+controls if found, then fixes and passing evidence.
+
+Runtime/ownership:
+Root scientific admission/execution owner. Evidence path only; product source,
+index, refs, foreign PRs, production models and serving remain forbidden writes.
+Only xbabe1 after actual owned-worker/headroom check; no eviction of other work.
+Prepare and review sources BEFORE a numerical clock starts. Then freeze one
+30-minute aggregate clock (all qualification/training/verification charged),
+<=600seconds per condition,4CPU aggregate,8GiB child/swap0/Tasks64/CUDA.30,
+RAM reserve4GiB/VRAM2GiB/temp<85C/hostCPU<70/evidence growth<=4GiB. Benchmark all
+needed shapes and model/adapter startup plus monitor cost; admit ALL18 models
+and independent verification reserve before any dataset updates. Refusal or
+partial execution stays such; no outcome-driven smaller successor or clock
+reset. A later saved-output audit is explicitly separate, not retrospective
+within-budget completion. Stage the verifier and protocol before the clock.
+
+Curves/evaluation:
+Fixed update snapshots0/100/200 for adapters and0/100/200/300/400 for bases.
+TRAIN monitor chosen by identity only, full held-out fold objective/utility at
+the same steps; no early stopping. Show base and adapter stages distinctly.
+Primary: for each context each seed selects one candidate; average seed utility,
+average contexts within source component, average all162components. Two primary
+raw-fitness contrasts true-base and true-random;100kpaired component bootstrap,
+seed20261022, Bonferroni97.5%familywise intervals (percontrast98.75%). Negative
+is favorable. Report gate failures, logCV, capped regret and top-k as declared
+secondary, keeping primary raw penalty intact. No favorable-seed/ensemble swap.
+Independent scorer verifies full saved program order, original archive/pool
+SHA, parameter hashes, scores/picks, component aggregation and uncertainty.
+
+Artifacts/acceptance:
+All18completed fits or literal partial/refusal; actual updated parameter proofs,
+unchanged base proofs, roles/scalers/schedules/config/source/deadline identities,
+initial/final models and predictions, observed train/OOF curves, primary and
+secondary metrics, independently replayed choices/intervals, cost/failed-attempt
+ledger and closure. Save detailed bodies outside Git; append sanitized compact
+research records and custody hashes through the existing serial Git lifecycle.
+Completion means all declared controls and verification, not an attractive
+curve. No promotion. If runtime or data qualification fails, preserve what ran
+and pursue a substantively changed, prospectively bounded packet later.
+
+Parallel packets only: model/synthetic tests, read-only role/source preparer,
+independent scorer in separate new files; root alone freezes protocol/launches/
+publishes. Do not share mutable model/roles/output ownership. Before starting,
+check whether a heartbeat already claimed this packet and actual unit status.
+
+In parallel, next data-admission packet is H15 next-trainfit-packet.json:
+245exact canonical/source-bound train_fit contexts/228families, including3H12
+reservations. After that one exclusion242/225 remain, subject to all other known
+reservations. Recover exact original rows/preprocessing and archived-label input
+binding. Prior exposure alone does not exclude TRAIN; it does limit independent
+VALIDATION claims. S1two-fold and P3three-fold contexts remain separate protocol
+domains; do not concatenate targets on dataset names or assume identical fitness
+semantics. No source repair may silently graft old GP labels onto new inputs.

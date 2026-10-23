@@ -1,0 +1,74 @@
+{
+  "schema": "h27.landmark-probe-completion-public/v1",
+  "status": "PRODUCER_COMPLETE_34000_PILOT640_INDEPENDENT_PASS_FULL_QA_PENDING",
+  "observed_utc": "2026-10-22T23:57:35.944710+00:00",
+  "unique_contexts": 850,
+  "lineage_components": 162,
+  "family_ids": 164,
+  "TRAIN_roles": {
+    "FIT": 690,
+    "SELECT": 160
+  },
+  "correlated_archived_context_program_outcomes": 979200,
+  "new_independent_cohort_admissions": 0,
+  "probes_per_context": 8,
+  "folds_per_probe": 5,
+  "counts": {
+    "attempted_new_fits": 33360,
+    "combined_fixed_fits": 34000,
+    "confirmed_new_fit_attempts": 33360,
+    "failed": 0,
+    "fold0_refits": 0,
+    "new_contexts_expected": 834,
+    "owned_empty_host_slices_stopped": 2,
+    "planned_new_fits": 33360,
+    "prior_pilot_fits_reused": 640,
+    "producer_completed_new_fits": 33360,
+    "retries": 0,
+    "slots": 32,
+    "slots_captured_and_stopped": 32,
+    "unattempted": 0,
+    "unknown": 0
+  },
+  "costs": {
+    "MemoryPeak_observations": 32,
+    "global_elapsed_note": "Slot wall sum is parallel cumulative time; monitor did not measure launch-to-completion global elapsed.",
+    "global_fleet_elapsed_seconds": null,
+    "maximum_per_slot_MemoryPeak_bytes": 283799552,
+    "per_slot_wall_seconds_max": 218.36065023578703,
+    "per_slot_wall_seconds_min": 160.6489983126521,
+    "per_slot_wall_seconds_sum": 5917.491612393409,
+    "preparation_and_monitor_overhead": "Not independently isolated as a timed benchmark; SSH/tool latency is not reported as zero.",
+    "retained_all32_unit_CPU_seconds_sum": 2332.160628,
+    "unit_CPU_observations": 32,
+    "worker_CPU_seconds_sum": 2009.874495284
+  },
+  "independent_pilot": {
+    "replayed_saved_models": 640,
+    "new_fits": 0,
+    "q_max_absolute_error": 0.0,
+    "prediction_bits": "EXACT",
+    "wall_seconds": 62.4837819240056,
+    "worker_CPU_seconds": 12.218145757,
+    "child_CPU_seconds": 3.090811
+  },
+  "NN_models": 0,
+  "landmark_routing_lift": "UNTESTED",
+  "sources": {
+    "producer_completion": "19b96b88049f09159d83767d4e0e0f5a5d75c7c12af75322a016251a0b1cfe35",
+    "full_input_QA": "4833d732c55431a9db4737baf69507e565e95ee89eccd4acad2dd278944810ce",
+    "pilot_QA": "392a3f5436e4a72c4eb778b8d52157aba67bb0cd60d32af52be9e0f50a9e496e",
+    "full_probe_source": "187d7c76698e2a704825f7433d584d0c5f7defee757c961d05d37c88165635eb"
+  },
+  "limits": [
+    "Full33360 independent model/score replay remains pending; closed producer metadata is not that replay.",
+    "Curated historical TRAIN views and adaptive archived slates are development evidence; repeated probes/seeds are not independent tasks.",
+    "ProbeCV5 features, archived S1 target fitness and neural component folds have separate contracts.",
+    "No loss, routing lift, incremental state gain, online generalization or model promotion is established."
+  ],
+  "preserved_failures": [
+    "Original empty-implicit-slice administrator refused with zero delivery/fits; separate R1 administration passed.",
+    "Original pilot QA could not execute helper on NOEXEC data drive; unexecuted mode-only R1 and separate SSD-helper R2 preserved.",
+    "Original full administrator metadata grant lacked delivery activation and refused before delivery/fits; corrected grant was a separate phase."
+  ]
+}

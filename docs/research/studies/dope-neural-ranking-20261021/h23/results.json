@@ -1,0 +1,130 @@
+{
+  "controls_and_costs": {
+    "GP_baseline_or_neural_fits": 0,
+    "R2_actual_resource_guards_verified": true,
+    "S3_API_calls": 0,
+    "compute_deadlines": false,
+    "dataset_optimizer_updates": 0,
+    "direct_metadata_worker_cpu_seconds": 0.979096498,
+    "direct_metadata_worker_wall_seconds": 1.008395713986829,
+    "independent_direct_metadata_QA_cpu_seconds": 0.852290562,
+    "independent_direct_metadata_QA_peak_RSS_KiB": 217872,
+    "independent_direct_metadata_QA_wall_seconds": 0.935892164,
+    "independent_saved_receipt_QA_cpu_seconds": 0.001190764,
+    "independent_saved_receipt_QA_peak_RSS_KiB": 16384,
+    "independent_saved_receipt_QA_wall_seconds": 0.010846725,
+    "metadata_index_domain_controls": 4,
+    "numeric_array_or_dataset_cell_bodies_read": 0,
+    "pure_parser_control_executions_by_prospective_phase": [
+      11,
+      16,
+      18
+    ],
+    "receipt_R2_peak_RSS_KiB": 38720,
+    "receipt_R2_worker_cpu_seconds": 0.0013987340000000126,
+    "receipt_R2_worker_wall_seconds": 0.0016593319596722722,
+    "source_qualification_cpu_seconds": 0.19845031900000001,
+    "source_qualification_wall_seconds": 0.5395579830510542,
+    "total_pure_parser_control_executions": 45
+  },
+  "created_utc": "2026-10-22T18:37:45.226568+00:00",
+  "direct_route_frontier": {
+    "H18_FIT": 690,
+    "H18_SELECT": 160,
+    "H18_eligible_contexts": 850,
+    "H18_reserved_CAL": 118,
+    "H18_reserved_DEVELOPMENT": 211,
+    "actual_GP_execution_input_transform_inner_fitness_authority_newly_proven": false,
+    "all1909_empty_exclusion_reasons_independently_verified": true,
+    "all_contexts_retained": 5940,
+    "components": 314,
+    "included_and_empty_exclusion_contexts": 1909,
+    "known_H18_eligible_TRAIN_family_overlap_contexts": 1098,
+    "native_family_equivalence_required_for_TRAIN": false,
+    "new_numeric_admissions": 0,
+    "outside_components": 154,
+    "outside_is_independent_generalization_evidence": false,
+    "outside_known_H18_TRAIN_family_closure_contexts": 811,
+    "prior_TRAIN_exposure_alone_bars_TRAIN": false,
+    "prior_potential_absent_from_epoch": 44,
+    "prior_potential_excluded": 15,
+    "prior_role_clean_potential_before_epoch": 1968
+  },
+  "next_gate": "Use the direct executed-GP-input route: qualify exact archived input, transformation fit dependencies, row cuts and inner-fitness/evaluator contract, then produce fresh latest-Dope encodings on the permitted outer-TRAIN view. Native-family equivalence is optional. No new body access, fits or updates authorized by this report.",
+  "no_established_incremental_neural_state_lift_claim": true,
+  "optional_native_receipt_probe": {
+    "actual_GP_execution_or_inner_fitness_contract_proven": false,
+    "ambiguous_rows": [
+      0,
+      0
+    ],
+    "exact_typed_row_order_cut_semantics_proven": false,
+    "historical_writer_source_pin_mismatches": 2,
+    "match_rows_per_receipt": [
+      2000,
+      2000
+    ],
+    "new_numeric_admissions": 0,
+    "original_pilot_cases_retained": 12,
+    "oversubscribed_rows": [
+      0,
+      0
+    ],
+    "qualified_helper_source_pins_match_per_receipt": 4,
+    "qualified_source_pins_checked_per_receipt": 5,
+    "receipt_parse_and_exact_byte_identity_pass": 2,
+    "saved_metadata_bytes": 4771,
+    "selected_receipts": 2,
+    "source_full_identity_and_catalog_reference_agreement_metadata_only": 2,
+    "tolerance_rel": 1.1920928955078125e-07,
+    "unmatched_rows": [
+      0,
+      0
+    ]
+  },
+  "preserved_failures_and_limits": [
+    {
+      "finding": "Remote proxy was absent from the remote shell PATH; launcher exited before scientific worker execution. Corrected launcher preserved separately.",
+      "phase": "Source qualification launcher",
+      "receipt_reads": 0
+    },
+    {
+      "finding": "Closed key sets permitted wrapped payload arrays under expected metadata scalar fields. Independent source review blocked execution.",
+      "phase": "Initial prospective receipt parser",
+      "receipt_reads": 0
+    },
+    {
+      "finding": "Producer and initial reviewer misread an actual writer count-map field as list pairs. Premature reviewer GO was retracted; a source-led R2 amendment corrected it.",
+      "phase": "R1 prospective receipt parser",
+      "receipt_reads": 0
+    },
+    {
+      "finding": "Producer checked included status but omitted empty exclusion_reason. Independent QA verified all actual1909 are empty; original source omission retained.",
+      "phase": "Direct metadata worker"
+    },
+    {
+      "finding": "Transient unit unloaded before post-exit query; default properties are not actual execution guard proof. Launch caps and worker affinity/address-space limits recorded; no rerun.",
+      "phase": "Direct metadata resource readback"
+    },
+    {
+      "finding": "Matching receipts declare tolerance reconstruction. Four pinned helper sources agree; the L7a writer source differs. No exact numeric semantic replay or new admission is claimed.",
+      "phase": "R2 observed metadata"
+    }
+  ],
+  "provenance": {
+    "direct_independent_QA_sha256": "d60ced36c3328de028a939bb63d31877a55f6083d7c3770bdc2ae7f976613386",
+    "direct_protocol_sha256": "6e185aa51f427952919202479dbc70dc148ace0bf012ad9d3edd4d7b49bcab25",
+    "direct_result_sha256": "f2f296982492d9afd04a40d622f0ed10b4ca6ecc6df2ee2dbd3d6c27be483c40",
+    "receipt_R2_independent_QA_sha256": "78c3c34010fa3b5893aeadc82c2e2ffff05f37291492356b161e0ffcb2776617",
+    "receipt_R2_protocol_sha256": "608fdf00785ff5fad2a335c670ba42adf0867f0415671da77454d35c92661e4f",
+    "receipt_R2_result_sha256": "9145c65525ad080ee6b31fa64f9540e98b318d27657c3ae3adaa7bd7d07066cd",
+    "receipt_R2_source_review_sha256": "2150417f08c7c958f02e2ba8302127a05a31d230306eee90613f3ae42e8a8973"
+  },
+  "schema": "h23.public-aggregate/v1",
+  "source_custody_preparation": {
+    "source_bytes": 660574,
+    "source_inspection": "Source text/AST only; historical code never imported or executed.",
+    "unique_qualified_historical_source_files": 9
+  },
+  "status": "COMPLETE_METADATA_ONLY_INDEPENDENT_QA_PASS_WITH_LIMITS"
+}
