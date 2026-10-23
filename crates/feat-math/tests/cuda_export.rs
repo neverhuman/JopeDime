@@ -148,6 +148,13 @@ fn nonlinear_symbolic_target_and_linear_recipes_match_reference_bits() {
         .map(|i| vec![i as f64 / 7.0 - 1.0, (i * i % 17) as f64 / 9.0])
         .collect();
     let y: Vec<_> = x.iter().map(|r| 1.4 * r[0] + 0.2 * r[1]).collect();
+    let mut probe = x.clone();
+    probe.extend([
+        vec![f64::NAN, f64::INFINITY],
+        vec![f64::NEG_INFINITY, -0.0],
+        vec![f64::from_bits(1), -f64::MIN_POSITIVE],
+        vec![1e100, -1e100],
+    ]);
     for (i, text) in [
         "(pipe X (ridge))",
         "(pipe X (ridge_gcv))",
@@ -160,14 +167,12 @@ fn nonlinear_symbolic_target_and_linear_recipes_match_reference_bits() {
     .enumerate()
     {
         let g = GenomeIr::parse(text).unwrap();
-        let expected = feat_math::fit_predict(&g, &x, &y, &x).unwrap();
-        let got = cuda::predictions(
-            &root(&format!("recipe-{i}")),
-            &emitter::emit(&g, &EmitOptions::default()).unwrap(),
-            &x,
-            &y,
-            &x,
-        );
+        let bundle = emitter::emit(&g, &EmitOptions::default()).unwrap();
+        let manifest: serde_json::Value =
+            serde_json::from_str(&bundle.files["cuda/manifest.json"]).unwrap();
+        assert_eq!(manifest["device"] == "linear-head-f64-v1", i < 3);
+        let expected = feat_math::fit_predict(&g, &x, &y, &probe).unwrap();
+        let got = cuda::predictions(&root(&format!("recipe-{i}")), &bundle, &x, &y, &probe);
         assert_eq!(
             got,
             expected.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
@@ -228,6 +233,9 @@ fn independently_emitted_models_link_together_with_isolated_symbols() {
     let na = ma["cpp_namespace"].as_str().unwrap();
     let nb = mb["cpp_namespace"].as_str().unwrap();
     assert_ne!(na, nb);
+    let ca = ma["cmake_target"].as_str().unwrap();
+    let cb = mb["cmake_target"].as_str().unwrap();
+    assert_ne!(ca, cb);
     let root = root("two-libraries");
     cuda::build(&root.join("a"), &a);
     cuda::build(&root.join("b"), &b);
@@ -287,6 +295,24 @@ int main(){{
         ],
     );
     cuda::command(&root, "./both", &[]);
+    // Real consumers add both generated packages to one CMake graph. Manual
+    // linking alone does not detect collisions between generated target names.
+    fs::write(
+        root.join("CMakeLists.txt"),
+        format!("cmake_minimum_required(VERSION 3.24)\nproject(two_models LANGUAGES CXX)\nadd_subdirectory(a/cuda)\nadd_subdirectory(b/cuda)\nadd_subdirectory(a/cuda duplicate)\nadd_executable(both both.cpp)\ntarget_link_libraries(both PRIVATE {ca} {cb})\n"),
+    )
+    .unwrap();
+    cuda::command(
+        &root,
+        "cmake",
+        &["-S", ".", "-B", "cmake-both", "-DJOPE_CUDA_HOST_ONLY=ON"],
+    );
+    cuda::command(
+        &root,
+        "cmake",
+        &["--build", "cmake-both", "--parallel", "2"],
+    );
+    cuda::command(&root, "./cmake-both/both", &[]);
 }
 
 #[test]
@@ -340,10 +366,12 @@ fn device_stream_and_batch_boundaries_are_strictly_qualified_when_requested() {
         &root,
         &emitter::emit(&fixture(), &EmitOptions::default()).unwrap(),
     );
-    let device = std::env::var("JOPE_CUDA_PARITY").as_deref() == Ok("device");
+    let mode = std::env::var("JOPE_CUDA_PARITY").unwrap_or_else(|_| "host".into());
+    let device = mode == "device";
     let source = format!(
-        "#define JOPE_TEST_DEVICE {}\n{}",
+        "#define JOPE_TEST_DEVICE {}\n#define JOPE_TEST_DEVICE_COMPILE {}\n{}",
         u8::from(device),
+        u8::from(mode != "host"),
         include_str!("support/cuda_device_contract.cpp")
     );
     assert_eq!(
@@ -418,12 +446,13 @@ fn caller_strings_matching_internal_symbol_templates_remain_exact_data() {
     use feat_math::advanced_v3::{
         fit_table, ColumnSpec, DataSchema, Objective, RawTable, RowSemantics, TaskSpec,
     };
-    let name = "namespace jope_cuda { jope_cuda_native_\"\n雪 __BOUND_WIDTH__ __BOUND_HEADERS__";
+    let name =
+        "namespace jope_cuda { jope_cuda_native_\"\r\n雪\0 __BOUND_WIDTH__ __BOUND_HEADERS__";
     let categories = [
         "namespace jope_cuda {",
         "jope_cuda_native_",
         "JOPE_CUDA_MODEL_HPP",
-        "quoted,\"\n雪",
+        "quoted,\"\r\n雪\0\\",
     ];
     let raw = RawTable::new(
         vec![name.into()],

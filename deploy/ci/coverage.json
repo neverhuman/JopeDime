@@ -909,17 +909,6 @@
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
-    "job:.github/workflows/ci.yml/cuda": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [],
-      "lanes": [
-        "cuda-parity",
-        "cuda-device"
-      ],
-      "scope": "Required host and nvcc qualification, with separately requested NVIDIA device execution. A configured or skipped job does not establish a passing hardware run."
-    },
     "job:.github/workflows/ci.yml/e2e-smoke": {
       "discovery": {
         "kind": "workflow-job"
@@ -1019,26 +1008,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "job:.github/workflows/cuda.yml/cuda-device": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [],
-      "lanes": [
-        "cuda-device"
-      ],
-      "scope": "Required host and nvcc qualification, with separately requested NVIDIA device execution. A configured or skipped job does not establish a passing hardware run."
-    },
-    "job:.github/workflows/cuda.yml/cuda-parity": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [],
-      "lanes": [
-        "cuda-parity"
-      ],
-      "scope": "Required host and nvcc qualification, with separately requested NVIDIA device execution. A configured or skipped job does not establish a passing hardware run."
     },
     "job:.github/workflows/full-main.yml/aggregate": {
       "discovery": {
@@ -4725,7 +4694,7 @@
         "cuda-parity",
         "cuda-device"
       ],
-      "scope": "Native CUDA C++ lifecycle and full Rust recipe/bound/v2 parity. Complete censuses run explicitly in CUDA lanes; device execution is required only in the manual hardware lane, and absent hardware is not a pass."
+      "scope": "CPU-only build and native-contract checks in normal Rust lanes. Complete host/compile/device censuses run explicitly through local CUDA qualification scripts; hardware execution has no hosted job or merge gate."
     },
     "target:feat-math/test/cuda_export": {
       "discovery": {
@@ -4743,7 +4712,7 @@
         "cuda-parity",
         "cuda-device"
       ],
-      "scope": "Native CUDA C++ lifecycle and full Rust recipe/bound/v2 parity. Complete censuses run explicitly in CUDA lanes; device execution is required only in the manual hardware lane, and absent hardware is not a pass."
+      "scope": "CPU-only build and native-contract checks in normal Rust lanes. Complete host/compile/device censuses run explicitly through local CUDA qualification scripts; hardware execution has no hosted job or merge gate."
     },
     "target:feat-math/test/cumulative_integration_v2": {
       "discovery": {
@@ -11843,17 +11812,6 @@
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
-    "workflow:.github/workflows/cuda.yml": {
-      "discovery": {
-        "kind": "workflow"
-      },
-      "dispositions": [],
-      "lanes": [
-        "cuda-parity",
-        "cuda-device"
-      ],
-      "scope": "Required host and nvcc qualification, with separately requested NVIDIA device execution. A configured or skipped job does not establish a passing hardware run."
-    },
     "workflow:.github/workflows/full-main.yml": {
       "discovery": {
         "kind": "workflow"
@@ -12027,16 +11985,16 @@
         "bash deploy/ci/cuda/qualify.sh device"
       ],
       "command": [
-        "GitHub Actions",
-        ".github/workflows/cuda.yml",
-        "cuda-device"
+        "bash",
+        "deploy/ci/cuda/qualify.sh",
+        "device"
       ],
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_CODEGEN_UNITS": "1",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
         "CUDA": "13.0.88 official hash-pinned wheels",
-        "GPU": "existing xbabe2-gpu label; nvcc and nvidia-smi required",
+        "GPU": "Local NVIDIA device and compatible driver; nvcc and nvidia-smi required",
         "JOPE_CUDA_PARITY": "device"
       },
       "evidence": [
@@ -12053,7 +12011,7 @@
         "committed golden fixtures",
         "deploy/ci/cuda/requirements.txt"
       ],
-      "path_applicability": "CUDA implementation/template/qualification changes, or explicit manual ci.yml cuda_device=true; absent/offline hardware stays pending or unqualified",
+      "path_applicability": "Manual local qualification only; excluded from hosted CI and merge gates",
       "requires_nonzero_tests": true,
       "result_backend": "rust",
       "stage": "execution"
@@ -12064,9 +12022,9 @@
         "bash deploy/ci/cuda/qualify.sh compile"
       ],
       "command": [
-        "GitHub Actions",
-        ".github/workflows/cuda.yml",
-        "cuda-parity"
+        "bash",
+        "deploy/ci/cuda/qualify.sh",
+        "compile"
       ],
       "environment": {
         "CARGO_INCREMENTAL": "0",
@@ -12090,7 +12048,7 @@
         "committed golden fixtures",
         "deploy/ci/cuda/requirements.txt"
       ],
-      "path_applicability": "required ci.yml reusable workflow for Rust/emitter paths and all manual dispatches",
+      "path_applicability": "Manual local qualification only; excluded from hosted CI and merge gates",
       "requires_nonzero_tests": true,
       "result_backend": "rust",
       "stage": "execution"

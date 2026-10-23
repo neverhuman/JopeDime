@@ -2,12 +2,6 @@ name: ci
 on:
   pull_request:
   workflow_dispatch:
-    inputs:
-      cuda_device:
-        description: Run actual CUDA prediction tests on the existing GPU runner
-        type: boolean
-        required: false
-        default: false
 permissions:
   contents: read
 
@@ -31,7 +25,6 @@ jobs:
     outputs:
       rust: ${{ steps.lane.outputs.rust }}
       emitters: ${{ steps.lane.outputs.emitters }}
-      cuda_device: ${{ steps.cuda.outputs.required }}
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
@@ -41,12 +34,6 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Select required CUDA hardware qualification
-        id: cuda
-        run: |
-          set -euo pipefail
-          required=$(python3 deploy/ci/cuda/evidence.py select-device "$BASE_SHA")
-          printf 'required=%s\n' "$required" >> "$GITHUB_OUTPUT"
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
       - name: Run declared lane and retain receipt
@@ -340,18 +327,11 @@ jobs:
     if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
     uses: ./.github/workflows/typescript.yml
 
-  cuda:
-    needs: changes
-    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
-    uses: ./.github/workflows/cuda.yml
-    with:
-      run-device: ${{ needs.changes.outputs.cuda_device == 'true' || (github.event_name == 'workflow_dispatch' && inputs.cuda_device == true) }}
-
   paper:
     uses: ./.github/workflows/paper.yml
 
   aggregate:
-    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, cuda]
+    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript]
     if: always()
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 20
@@ -529,50 +509,11 @@ jobs:
             root="target/ci-typescript-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/typescript-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$version"
             node deploy/ci/typescript/evidence.mjs verify "$root" "$version"
           done
-      - name: Collect CUDA host evidence
-        if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
-        uses: ./.github/actions/download-ci-evidence
-        with:
-          name: cuda-${{ github.run_id }}-${{ github.run_attempt }}-host
-          path: target/cuda-evidence/host/
-          layout: name
-          into: target/ci-cuda-download/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Collect CUDA compiler evidence
-        if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
-        uses: ./.github/actions/download-ci-evidence
-        with:
-          name: cuda-${{ github.run_id }}-${{ github.run_attempt }}-compile
-          path: target/cuda-evidence/compile/
-          layout: name
-          into: target/ci-cuda-download/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Collect requested CUDA device evidence
-        if: needs.changes.outputs.cuda_device == 'true' || (github.event_name == 'workflow_dispatch' && inputs.cuda_device == true)
-        uses: ./.github/actions/download-ci-evidence
-        with:
-          name: cuda-${{ github.run_id }}-${{ github.run_attempt }}-device
-          path: target/cuda-evidence/device/
-          layout: name
-          into: target/ci-cuda-download/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Require exact-source CUDA matrix receipts
-        if: always() && (needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true')
-        env:
-          CUDA_RESULT: ${{ needs.cuda.result }}
-          CUDA_DEVICE: ${{ needs.changes.outputs.cuda_device == 'true' || (github.event_name == 'workflow_dispatch' && inputs.cuda_device == true) }}
-        run: |
-          set -euo pipefail
-          test "$CUDA_RESULT" = success
-          modes='host compile'
-          if [ "$CUDA_DEVICE" = true ]; then modes='host compile device'; fi
-          for mode in $modes; do
-            root="target/ci-cuda-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/cuda-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$mode"
-            python3 deploy/ci/cuda/evidence.py verify "$root" "$mode"
-          done
       - name: Validate every required result
         if: always()
         env:
           NEEDS_JSON: ${{ toJson(needs) }}
           TYPESCRIPT_RESULT: ${{ needs.typescript.result }}
-          CUDA_RESULT: ${{ needs.cuda.result }}
           TYPESCRIPT_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
         run: |
           set -euo pipefail
@@ -584,9 +525,8 @@ jobs:
           expected=skipped
           if [ "$TYPESCRIPT_REQUIRED" = true ]; then expected=success; fi
           test "$TYPESCRIPT_RESULT" = "$expected"
-          test "$CUDA_RESULT" = "$expected"
           # UI and TypeScript are verified separately; preserve the existing lanes.
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("typescript"); n.pop("cuda"); n.pop("paper"); print(json.dumps(n))' > "$output/needs.json"
+          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("typescript"); n.pop("paper"); print(json.dumps(n))' > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once

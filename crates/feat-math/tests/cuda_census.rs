@@ -248,6 +248,7 @@ fn scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute() {
         ScalarCarrier, ScalarExpressionProgram, ScalarFunction, ScalarNode,
     };
     use feat_math::math_expr::Var;
+    use feat_math::math_expr::{BinOp, UnOp};
     if !support::enabled() {
         return;
     }
@@ -293,8 +294,86 @@ fn scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute() {
                 );
                 count += 1;
             }
+            // Function-name enumeration alone misses composite AST nodes and
+            // row-statistic variables. Exercise all binary operations, unary
+            // negation, literal bits and domain-fault behavior in both policies.
+            let mut aggregate = ScalarNode::Const(-0.0);
+            for var in [
+                Var::RowMean,
+                Var::RowSum,
+                Var::RowL1,
+                Var::RowL2,
+                Var::RowMin,
+                Var::RowMax,
+                Var::RowStd,
+                Var::Col(4),
+            ] {
+                aggregate = ScalarNode::Binary(
+                    BinOp::Add,
+                    Box::new(aggregate),
+                    Box::new(ScalarNode::Var(var)),
+                );
+            }
+            let input = ScalarNode::Var(if carrier == ScalarCarrier::Row {
+                Var::Col(0)
+            } else {
+                Var::X
+            });
+            let expression = ScalarNode::Binary(
+                BinOp::Sub,
+                Box::new(ScalarNode::Unary(
+                    UnOp::Neg,
+                    Box::new(ScalarNode::Binary(
+                        BinOp::Div,
+                        Box::new(ScalarNode::Binary(
+                            BinOp::Mul,
+                            Box::new(input),
+                            Box::new(aggregate),
+                        )),
+                        Box::new(ScalarNode::Const(0.0)),
+                    )),
+                )),
+                Box::new(ScalarNode::Binary(
+                    BinOp::Pow,
+                    Box::new(ScalarNode::Const(-2.0)),
+                    Box::new(ScalarNode::Const(0.5)),
+                )),
+            );
+            let program = ScalarExpressionProgram::new(expression)
+                .unwrap()
+                .with_numerical_policy(policy);
+            let mut edge_probe = probe.clone();
+            edge_probe.push(vec![
+                0.0,
+                -0.0,
+                f64::MIN_POSITIVE,
+                f64::from_bits(1),
+                -f64::from_bits(1),
+            ]);
+            let expected = program
+                .fit_training(&x, &y, carrier, 0.02)
+                .unwrap()
+                .predict(&edge_probe)
+                .unwrap()
+                .0;
+            support::run(
+                &root.join(format!("scalar-composition-{policy:?}-{carrier:?}")),
+                &emit_scalar(&program, carrier, 5, 0.02).unwrap(),
+                &serde_json::json!({"train":x,"targets":y,"test":edge_probe}),
+                &expected,
+                false,
+            );
+            count += 1;
         }
     }
+    let smoothing = RowStage::Savgol(
+        feat_math::kernel::savgol::Config::new(2, 58, Axis::FeatureWithinRow, 5, 2, 1, "shrink")
+            .unwrap(),
+    );
+    let frequency = RowStage::Goertzel(
+        feat_math::kernel::goertzel::Config::new(2, 61, Axis::FeatureWithinRow, &[0.0, 0.1, 0.5])
+            .unwrap(),
+    );
     for (index, stages) in [
         vec![],
         vec![RowStage::Savgol(
@@ -318,6 +397,8 @@ fn scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute() {
             )
             .unwrap(),
         )],
+        vec![smoothing.clone(), frequency.clone()],
+        vec![frequency, smoothing],
     ]
     .into_iter()
     .enumerate()
@@ -334,7 +415,7 @@ fn scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute() {
         );
         count += 1;
     }
-    assert_eq!(count, functions.len() * 2 * 2 + 3);
+    assert_eq!(count, (functions.len() + 1) * 2 * 2 + 5);
     eprintln!(
         "CUDA C++ census: {}",
         serde_json::json!({"kind":"v2","total":count,"executed":count,"unaccounted":0})

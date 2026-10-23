@@ -91,6 +91,9 @@ Each bundle has source-derived C symbols and a unique C++ namespace recorded as
 `cpp_namespace` in its manifest. To link different emitted models into one executable,
 define `JOPE_CUDA_NO_DEFAULT_NAMESPACE` before including their headers and refer to
 each recorded namespace. The default `jope_cuda` alias is convenient for one bundle.
+The manifest's `cmake_target` names that bundle's library target. Add each bundle
+with `add_subdirectory` and link its recorded target. Identical bundles reuse their
+target; the first bundle also supplies the `model` convenience alias.
 
 For an embedded fitted predictor, call `auto model = jope_cuda::Model::load()` and
 `model.predict_strings(rows)`. `predict_csv(csv, expected_rows)` verifies the exact
@@ -125,19 +128,23 @@ device-resident model state. Allocation, launch, transfer and stream errors thro
 No speedup is claimed: small batches and expensive host preprocessing may make this
 hybrid path slower. Fitting is always on the host.
 
-## Qualification and remaining hardware proof
+## Local qualification and remaining hardware proof
 
-The CI workflow requires independent host and real-`nvcc` compilation legs. Both run:
+The local scripts provide separate host, real-`nvcc` compilation and device modes.
+Host and compile modes both run:
 
 - The complete recipe registry, advanced bound registry and legacy-bound state census,
   matching every Rust acceptance or refusal and comparing prediction bits.
 - Every scalar-v2 function in both policies and both carriers, plus row-vector stages.
 - The existing golden recipe matrix, lifecycle/boundary contracts, model isolation,
   malformed-input checks and artifact/CLI/pipeline publication tests.
-- Exact-head/run/attempt receipts that refuse missing, ignored, zero-test or altered evidence.
+- C++ host callers under AddressSanitizer and UndefinedBehaviorSanitizer in host mode.
+- Discovered test selections bound to their execution counts, and exact-head/run/attempt
+  receipts that refuse partial, missing, ignored, zero-test, duplicated or altered evidence.
 
-The compile leg builds actual CUDA device code, links it and executes the host API
+Compile mode builds actual CUDA device code, links it and executes the host API
 without requiring a GPU. It **does not establish a GPU prediction pass**.
+It compiles and links the device-only contract body as well as the generated kernel.
 
 ```bash
 bash deploy/ci/cuda/qualify.sh host
@@ -146,10 +153,34 @@ JOPE_NVCC=/path/to/nvcc bash deploy/ci/cuda/qualify.sh compile
 bash deploy/ci/cuda/qualify.sh device
 ```
 
-CUDA implementation, numerical-template and qualification changes automatically require
-the device job and its receipt in aggregate. The manual `ci.yml` input `cuda_device=true`
-also requests it. Both use the existing `xbabe2-gpu` runner label. No host provisioning or admission
-policy is changed here. A missing/offline runner is pending, and a skipped device job
-is unqualified. Until a fresh exact-head device run passes, do not describe this target
-as 100% CUDA-hardware-qualified. Universal GPU execution for nonlinear/bound models
-is outside this implementation's device coverage.
+CUDA qualification is local. This target adds no hosted CUDA job, GPU runner request,
+artifact aggregation gate or hardware merge requirement. Ordinary Rust lanes retain
+CPU-only native contract checks. Actual GPU qualification requires a fresh device-mode
+receipt; missing hardware stays unqualified. Universal GPU execution for nonlinear/bound
+models is outside this implementation's device coverage.
+
+The [GPU-agent handoff](cuda-handoff.md) gives setup commands, verification status,
+remaining work and receipt collection instructions. The tool installer writes a local
+`env.sh`; it requires no GitHub Actions environment variables.
+
+## Red-team coverage and blockers
+
+The registry census covers every named operation in the Rust emitter's admission
+denominator and compares predictions on its fixtures. It does not measure source
+line/branch coverage or exhaust all compositions, parameter values, batch shapes,
+architectures and toolchains. The device fixtures include default and nonblocking
+streams, empty and block-edge batches, a larger batch, concurrent predictions,
+nonfinite source cells and floating-environment refusals. Their execution remains
+unqualified until a real device run passes.
+
+The review exposed and repaired CMake target collisions between independent bundles,
+partial-run and duplicated-census evidence acceptance, missing assertions for advertised
+device admission, split x87/SSE rounding modes, and stream transfer ordering and
+host-buffer lifetime. Reproducing failures and corrected regressions
+were retained during implementation. Device transfers, kernel work and result copies
+now share the borrowed stream, with synchronization during error unwinding.
+
+The initial proposed hardware workflow reused CPU-only runner guards. That mismatch
+was found during review. All CUDA-specific hosted workflows and merge gates were
+removed under the user's local-CI direction; runner admission policies remain unchanged.
+Device execution and hardware memory checking remain local follow-up work.

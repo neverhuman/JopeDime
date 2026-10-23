@@ -278,6 +278,9 @@ fn assemble(
         if path == "cuda/model_native.rs" {
             *source = format!("#![crate_name=\"model_native_{symbol_identity}\"]\n{source}");
         }
+        if path == "cuda/CMakeLists.txt" {
+            *source = source.replace("__CMAKE_TARGET__", &namespace);
+        }
         if path == "cuda/model.hpp" {
             *source = source.replace("JOPE_CUDA_MODEL_HPP", &format!("JOPE_CUDA_MODEL_HPP_{}",symbol_identity.to_ascii_uppercase()))
                 .replace("} // namespace jope_cuda", &format!("}} // namespace {namespace}\n#ifndef JOPE_CUDA_NO_DEFAULT_NAMESPACE\nnamespace jope_cuda = {namespace};\n#endif"));
@@ -314,7 +317,8 @@ fn assemble(
         "options":OptionsIdentity::from(options), "files":bindings, "build":BUILD,
         "host":"rust-native-full", "device":if device_linear{"linear-head-f64-v1"}else{"unsupported"},
         "device_preprocessing":"host", "device_flags":DEVICE_FLAGS, "execution":"unknown", "tokens":tokens
-        ,"cpp_namespace":namespace, "native_prefix":native_prefix, "native_crate":format!("model_native_{symbol_identity}")
+        ,"cpp_namespace":namespace, "cmake_target":namespace,
+        "native_prefix":native_prefix, "native_crate":format!("model_native_{symbol_identity}")
     });
     files.insert(
         "cuda/manifest.json".into(),

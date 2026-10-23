@@ -49,34 +49,46 @@ pub fn build(root: &Path, bundle: &Emitted) {
 pub fn consumer(root: &Path, source: &str) -> String {
     fs::write(root.join("consumer.cpp"), source).unwrap();
     let mode = std::env::var("JOPE_CUDA_PARITY").unwrap_or_else(|_| "host".into());
+    let sanitizer = std::env::var("JOPE_CUDA_SANITIZER").ok();
+    if let Some(value) = &sanitizer {
+        assert_eq!(mode, "host", "CUDA sanitizer option requires host mode");
+        assert_eq!(
+            value, "address,undefined",
+            "unsupported CUDA host sanitizer"
+        );
+    }
     match mode.as_str() {
         "host" => {
-            command(
-                root,
-                "g++",
-                &[
-                    "-x",
-                    "c++",
-                    "-std=c++17",
-                    "-O2",
-                    "-Wall",
-                    "-Wextra",
-                    "-Werror",
-                    "-DJOPE_CUDA_HOST_ONLY",
-                    "-ffp-contract=off",
-                    "-fno-fast-math",
-                    "model.cu",
-                    "consumer.cpp",
-                    "-x",
-                    "none",
-                    "libmodel_native.a",
-                    "-ldl",
-                    "-lpthread",
-                    "-lm",
-                    "-o",
-                    "consumer",
-                ],
-            );
+            let mut args = vec![
+                "-x",
+                "c++",
+                "-std=c++17",
+                "-O2",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-DJOPE_CUDA_HOST_ONLY",
+                "-ffp-contract=off",
+                "-fno-fast-math",
+                "model.cu",
+                "consumer.cpp",
+                "-x",
+                "none",
+                "libmodel_native.a",
+                "-ldl",
+                "-lpthread",
+                "-lm",
+                "-o",
+                "consumer",
+            ];
+            if sanitizer.is_some() {
+                args.extend([
+                    "-fsanitize=address,undefined",
+                    "-fno-sanitize-recover=all",
+                    "-fno-omit-frame-pointer",
+                ]);
+            }
+            command(root, "g++", &args);
         }
         "compile" | "device" => {
             let compiler = std::env::var("JOPE_NVCC").unwrap_or_else(|_| "nvcc".into());
@@ -160,6 +172,16 @@ int main(){{
     assert(a.size()==test.size());auto repeat=m.predict(test);assert(repeat.size()==a.size());
     for(std::size_t j=0;j<a.size();++j)assert(bits(a[j])==bits(repeat[j]));
     const bool supported=m.supports_cuda();
+    assert(supported=={expected_device});
+    const auto trained=m.predict(train);
+    double mean=0.0;for(double v:y)mean+=v;mean/=y.size();
+    double residual=0.0,total=0.0;
+    for(std::size_t row=0;row<y.size();++row){{
+        const double error=y[row]-trained[row],centered=y[row]-mean;
+        residual+=error*error;total+=centered*centered;
+    }}
+    const double score=total<=0.0 ? 0.0 : 1.0-residual/total;
+    assert(bits(m.score(train,y))==bits(score));
     if(supported && !test.empty()){{
         std::vector<double> tx,px;for(const auto& row:train)tx.insert(tx.end(),row.begin(),row.end());
         for(const auto& row:test)px.insert(px.end(),row.begin(),row.end());
@@ -190,7 +212,8 @@ int main(){{
         test = rows(test),
         targets = vector(y),
         device = mode == "device",
-        host = mode == "host"
+        host = mode == "host",
+        expected_device = manifest["device"] == "linear-head-f64-v1"
     );
     consumer(&root.join("cuda"), &source)
         .lines()
@@ -234,6 +257,7 @@ int main(){{
     auto b=m.predict_strings(rows);assert(b.size()==a.size());
     assert(a.empty() || std::memcmp(a.data(),b.data(),a.size()*8)==0);
     assert(m.predict_strings({{}}).empty());assert(!m.supports_cuda());
+    bool no_device=false;try{{m.predict_cuda({{}});}}catch(const jope_cuda::Error& e){{no_device=e.status==5;}}assert(no_device);
     bool bad=false;try{{m.predict_csv("wrong header\n",0);}}catch(const jope_cuda::Error& e){{bad=e.status==1;}}assert(bad);
     bad=false;try{{m.predict_csv(std::string("\377",1),0);}}catch(const jope_cuda::Error& e){{bad=e.status==1;}}assert(bad);
     bad=false;try{{m.predict_strings({{{{}}}});}}catch(const jope_cuda::Error& e){{bad=e.status==1;}}assert(bad);

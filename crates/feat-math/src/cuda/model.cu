@@ -74,6 +74,18 @@ public:
     DeviceBuffer(const DeviceBuffer&)=delete;
     DeviceBuffer& operator=(const DeviceBuffer&)=delete;
 };
+// Keep pageable host storage alive until all queued copies and work finish,
+// including while a CUDA exception unwinds the call.
+class StreamFence {
+    cudaStream_t stream_;
+    bool pending_=true;
+public:
+    explicit StreamFence(cudaStream_t stream):stream_(stream){}
+    ~StreamFence() noexcept{if(pending_)cudaStreamSynchronize(stream_);}
+    void finish(){cuda_checked(cudaStreamSynchronize(stream_));pending_=false;}
+    StreamFence(const StreamFence&)=delete;
+    StreamFence& operator=(const StreamFence&)=delete;
+};
 // One thread per row, with sequential correctly rounded multiply/add. No
 // reassociation, atomics, mixed precision, or device transcendental functions.
 __global__ void linear_head(const double* x,const double* w,double* out,std::size_t n,std::size_t p) {
@@ -152,23 +164,27 @@ std::vector<double> Model::predict_cuda(const Rows& rows,void* stream) const{
     // No fallback on an unavailable device, allocation, stream, or launch error.
     if(std::fegetround()!=FE_TONEAREST)throw Error(6,"round-to-nearest mode required");
 #if defined(__SSE2__)
+    if((_mm_getcsr() & 0x6000u)!=0)throw Error(6,"host SSE round-to-nearest mode required");
     if((_mm_getcsr() & 0x8040u)!=0)throw Error(6,"host denormal flushing must be disabled");
 #endif
     int device=0;cuda_checked(cudaGetDevice(&device));cudaDeviceProp prop{};
     cuda_checked(cudaGetDeviceProperties(&prop,device));
     if(prop.major<2)throw Error(6,"device double precision is unavailable");
-    std::vector<double> features(product(rows.size(),p)),weights(p+1),out(rows.size());
-    if(rows.empty())return out;
-    checked(jope_cuda_native_linear(handle_,x.data(),x.size(),rows.size(),width_,features.data(),features.size(),weights.data(),weights.size()));
     const auto lane=static_cast<cudaStream_t>(stream);
+    if(rows.empty()){cuda_checked(cudaStreamSynchronize(lane));return {};}
+    std::vector<double> features(product(rows.size(),p)),weights(p+1),out(rows.size());
+    checked(jope_cuda_native_linear(handle_,x.data(),x.size(),rows.size(),width_,features.data(),features.size(),weights.data(),weights.size()));
     DeviceBuffer dx(features.size()),dw(weights.size()),dy(rows.size());
-    // Synchronous copies avoid a dangling pageable host buffer on an error path.
-    if(!features.empty())cuda_checked(cudaMemcpy(dx.data,features.data(),features.size()*sizeof(double),cudaMemcpyHostToDevice));
-    cuda_checked(cudaMemcpy(dw.data,weights.data(),weights.size()*sizeof(double),cudaMemcpyHostToDevice));
+    // Default-stream staging need not finish DMA before a nonblocking stream
+    // starts. Queue transfers and work together, then wait before buffers die.
+    StreamFence fence(lane);
+    if(!features.empty())cuda_checked(cudaMemcpyAsync(dx.data,features.data(),features.size()*sizeof(double),cudaMemcpyHostToDevice,lane));
+    cuda_checked(cudaMemcpyAsync(dw.data,weights.data(),weights.size()*sizeof(double),cudaMemcpyHostToDevice,lane));
     const auto blocks=static_cast<unsigned>(std::min<std::size_t>(1+(rows.size()-1)/128,65535));
     linear_head<<<blocks,128,0,lane>>>(dx.data,dw.data,dy.data,rows.size(),p);
-    cuda_checked(cudaGetLastError());cuda_checked(cudaStreamSynchronize(lane));
-    cuda_checked(cudaMemcpy(out.data(),dy.data,out.size()*sizeof(double),cudaMemcpyDeviceToHost));
+    cuda_checked(cudaGetLastError());
+    cuda_checked(cudaMemcpyAsync(out.data(),dy.data,out.size()*sizeof(double),cudaMemcpyDeviceToHost,lane));
+    fence.finish();
     for(double v:out)if(!std::isfinite(v))throw Error(6,"nonfinite device prediction");
     return out;
 #else
