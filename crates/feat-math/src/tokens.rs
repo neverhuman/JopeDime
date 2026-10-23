@@ -41,6 +41,7 @@ pub enum Lang {
     C,
     JavaScript,
     TypeScript,
+    CudaCpp,
 }
 
 pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
@@ -59,7 +60,7 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
             i = end;
         } else if matches!(
             lang,
-            Lang::Rust | Lang::Cpp | Lang::C | Lang::JavaScript | Lang::TypeScript
+            Lang::Rust | Lang::Cpp | Lang::C | Lang::JavaScript | Lang::TypeScript | Lang::CudaCpp
         ) && c == '/'
             && i + 1 < b.len()
             && b[i + 1] == b'/'

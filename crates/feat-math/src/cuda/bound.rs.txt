@@ -1,0 +1,25 @@
+// Safe facade over the embedded raw-string predictor.
+pub(crate) struct CudaModel { pub(crate) width: usize }
+impl CudaModel {
+    pub(crate) fn fit(_x:&[Vec<f64>],_y:&[f64],_width:usize)->Result<Self,i32>{Err(5)}
+    pub(crate) fn open()->Result<Self,i32>{Ok(Self{width:__BOUND_WIDTH__})}
+    pub(crate) fn predict(&self,_x:&[Vec<f64>])->Result<Vec<f64>,i32>{Err(5)}
+    pub(crate) fn score(&self,_x:&[Vec<f64>],_y:&[f64])->Result<f64,i32>{Err(5)}
+    pub(crate) fn linear_width(&self)->Result<usize,i32>{Err(5)}
+    pub(crate) fn linear(&self,_x:&[Vec<f64>])->Result<(Vec<f64>,Vec<f64>),i32>{Err(5)}
+    pub(crate) fn predict_text(&self,csv:&str)->Result<Vec<f64>,i32>{
+        let expected:Vec<String>=__BOUND_HEADERS__;
+        let records=parse_csv(csv).map_err(|_|1)?;
+        if records.first()!=Some(&expected){return Err(1);}
+        let raw=&records[1..];
+        let mut features=Vec::with_capacity(raw.len());
+        let mut masks=Vec::with_capacity(raw.len());
+        for row in raw {
+            if row.len()!=expected.len(){return Err(1);}
+            let (values,missing)=encode(row).map_err(|_|1)?;
+            features.push(values);masks.push(missing);
+        }
+        let transformed=apply_ops(features,masks,raw).map_err(|_|1)?;
+        Ok(transformed.iter().map(|row|predict_numeric(row)).collect())
+    }
+}

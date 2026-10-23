@@ -261,7 +261,7 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
                 "duplicate emitted artifact"
             );
             ensure!(
-                language == "c17" || languages.insert(language),
+                matches!(language, "c17" | "cuda") || languages.insert(language),
                 "duplicate emitted language"
             );
             languages.insert(language);
@@ -278,6 +278,21 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
                 ensure!(
                     members.contains(&("c17", path)),
                     "incomplete C17 artifact set"
+                );
+            }
+        }
+        if languages.contains("cuda") {
+            for path in [
+                "cuda/CMakeLists.txt",
+                "cuda/manifest.json",
+                "cuda/model.cu",
+                "cuda/model.hpp",
+                "cuda/model_core.rs",
+                "cuda/model_native.rs",
+            ] {
+                ensure!(
+                    members.contains(&("cuda", path)),
+                    "incomplete CUDA artifact set"
                 );
             }
         }
@@ -389,6 +404,7 @@ fn v3_language(target: feat_math::artifact_manifest::Target, path: &str) -> &'st
         Target::Cpp20 => "cpp20",
         Target::JavaScript => "javascript",
         Target::C17 => "c17",
+        Target::Cuda => "cuda",
         Target::TypeScript if path.ends_with(".kernel.rs") => "typescript-kernel",
         Target::TypeScript => "typescript",
         Target::Cpp17RecipeV2 => "cpp17-recipe-v2",
@@ -404,6 +420,21 @@ fn check_artifact_manifest(
 ) -> Result<&'static str> {
     use crate::emit::Language;
     let (expected_path, language) = match Language::parse(&artifact.language) {
+        Some(Language::Cuda) => {
+            ensure!(
+                [
+                    "cuda/CMakeLists.txt",
+                    "cuda/manifest.json",
+                    "cuda/model.cu",
+                    "cuda/model.hpp",
+                    "cuda/model_core.rs",
+                    "cuda/model_native.rs"
+                ]
+                .contains(&artifact.path.as_str()),
+                "unknown CUDA artifact"
+            );
+            (artifact.path.as_str(), "cuda")
+        }
         Some(Language::C17) => {
             ensure!(
                 [
@@ -457,7 +488,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
     let mut targets = BTreeSet::new();
     for target in retained.split_whitespace() {
         ensure!(
-            ["py", "rs", "cpp", "js", "ts", "c17", "cpp17-fitted"].contains(&target)
+            ["py", "rs", "cpp", "js", "ts", "c17", "cuda", "cpp17-fitted"].contains(&target)
                 && targets.insert(target),
             "unknown or duplicate emitted target"
         );
@@ -470,6 +501,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
             "cpp17" | "cpp20" => "cpp",
             "javascript" => "js",
             "c17" => "c17",
+            "cuda" => "cuda",
             "typescript" | "typescript-kernel" => "ts",
             _ => "cpp17-fitted",
         })

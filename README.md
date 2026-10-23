@@ -395,7 +395,7 @@ limits and client examples](docs/program-source-stream.md).
 | Rust tests | 5,922 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 12 jobs per pull request in `ci.yml` (top-level declarations; 14 expanded jobs); 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 841 items over 28 lanes <sup>7</sup> |
+| Coverage map | 848 items over 30 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,211 `.py` files, 159 of them under `python/` <sup>10</sup> |
@@ -448,6 +448,8 @@ cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --
 cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router target/jope-router --json
 # A requested target whose emitter does not cover the selected program is reported as not
 # emitted; the receipt lists the artifacts actually written (docs/emitters.md has the coverage).
+For CUDA C++ output, use `jope emit --lang cuda`; see [the CUDA build, API and qualification contract](docs/cuda.md). Host recipe coverage matches Rust; device acceleration is explicitly limited to linear heads.
+
 cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
   --budget evaluations=8,seconds=120 --emit rust,python,cpp17,cpp20,js --policy skip --output target/e2e
 cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json

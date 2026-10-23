@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|benchmarks/|schemas/|{common}|\.github/workflows/typescript\.yml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
+                r"^(crates/|benchmarks/|schemas/|{common}|\.github/workflows/(typescript|cuda)\.yml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),
@@ -286,6 +286,7 @@ mod tests {
             "deploy/ci/aggregate.py",
             ".github/workflows/ci.yml",
             ".github/workflows/typescript.yml",
+            ".github/workflows/cuda.yml",
         ];
         let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/ci/ci-plan.py");
         let output = Command::new("python3")

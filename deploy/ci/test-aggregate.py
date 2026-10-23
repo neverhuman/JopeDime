@@ -236,7 +236,7 @@ class AggregateTests(unittest.TestCase):
         self.assertFalse(lanes['python'])
 
     def test_typescript_workflow_and_tools_select_the_required_rust_gate(self):
-        for path in ('.github/workflows/typescript.yml',
+        for path in ('.github/workflows/typescript.yml', '.github/workflows/cuda.yml',
                      'deploy/ci/typescript/contract.test.cjs',
                      'crates/jope-cli/src/kernel.rs',
                      'crates/feat-math/src/typescript/model.ts'):

@@ -6,6 +6,9 @@
 mod c17;
 #[path = "support/c17_export.rs"]
 mod c17_export;
+#[path = "support/cuda.rs"]
+#[allow(dead_code)]
+mod cuda;
 
 use feat_math::transpile::{emit, lint_vocabulary, supports, EmitOptions, Emitted};
 use feat_math::{fit_predict, GenomeIr, Pcg32};
@@ -157,6 +160,21 @@ fn assert_parity_sized(name: &str, genome_src: &str, rows: usize, cols: usize, t
         "C17 parity for {name}"
     );
 
+    if cuda::enabled() {
+        let bundle = feat_math::transpile::emit_cuda(&genome, &opts).unwrap();
+        let predictions = cuda::predictions(
+            &dir.join("cuda-target"),
+            &bundle,
+            &x_train,
+            &y_train,
+            &x_test,
+        );
+        assert_eq!(
+            predictions,
+            reference.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+            "CUDA C++ recipe parity for {name}"
+        );
+    }
     if typescript_support::enabled() {
         let artifact = feat_math::transpile::emit_typescript(&genome, &opts).unwrap();
         typescript_support::run(
