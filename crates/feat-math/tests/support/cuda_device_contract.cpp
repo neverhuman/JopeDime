@@ -1,6 +1,7 @@
 #include "model.hpp"
 #include <cassert>
 #include <cfenv>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <limits>
@@ -24,6 +25,20 @@ void device_contract(){
   assert(same(m.predict(rows),m.predict_cuda(rows,stream)));
   assert(cudaStreamQuery(stream)==cudaSuccess);
  }
+ const jope_cuda::Rows symmetric{{-1,0},{1,0},{-1,0},{1,0}};
+ const auto minimum=std::numeric_limits<double>::min();
+ jope_cuda::Model tiny;tiny.fit(symmetric,{-minimum,minimum,-minimum,minimum});
+ const jope_cuda::Rows tiny_rows{{-0.5,0},{0.5,0}};
+ const auto gradual=tiny.predict(tiny_rows);
+ assert(std::fpclassify(gradual[0])==FP_SUBNORMAL && std::fpclassify(gradual[1])==FP_SUBNORMAL);
+ assert(same(gradual,tiny.predict_cuda(tiny_rows)));
+ assert(same(gradual,tiny.predict_cuda(tiny_rows,stream)));
+ jope_cuda::Model clipped;clipped.fit(symmetric,{-1000,1000,-1000,1000});
+ const jope_cuda::Rows clip_rows{{-1,0},{1,0}};
+ const auto saturated=clipped.predict(clip_rows);
+ assert(saturated==std::vector<double>({-60,60}));
+ assert(same(saturated,clipped.predict_cuda(clip_rows)));
+ assert(same(saturated,clipped.predict_cuda(clip_rows,stream)));
  auto task=std::async(std::launch::async,[&]{return m.predict_cuda({{0.5,1},{2.5,0}},stream);});
  assert(same(m.predict({{0.5,1},{2.5,0}}),m.predict_cuda({{0.5,1},{2.5,0}})));
  assert(same(m.predict({{0.5,1},{2.5,0}}),task.get()));

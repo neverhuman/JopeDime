@@ -22,10 +22,14 @@ The existing Rust emitter's refusals remain refusals. In particular, this target
 not implement registry operations that Rust itself cannot emit, create a new fitted
 model format, or make all model families into GPU training implementations.
 
+The separate numeric-v2 fitted format and the scalar/row-vector fitted C++17
+artifact APIs have no CUDA adapter in this PR. See the [export-format scope gaps](cuda-handoff.md#export-format-scope-gaps)
+before treating the recipe census as coverage of every export format.
+
 ## Emit and build
 
 ```bash
-jope emit --genome '(pipe X (standardize) (ridge))' --lang cuda --out generated
+jope emit --genome '(pipe X (standardize) (ridge))' --lang cuda --output generated
 # Aliases: cuda-cpp and cu. Use --lang v3:cuda for a pinned artifact envelope.
 cmake -S generated/cuda -B generated/cuda/build -DCMAKE_BUILD_TYPE=Release
 cmake --build generated/cuda/build --parallel 2

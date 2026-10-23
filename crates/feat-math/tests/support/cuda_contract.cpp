@@ -4,6 +4,7 @@
 #include <cstring>
 #include <future>
 #include <iostream>
+#include <limits>
 #include <type_traits>
 #if defined(__SSE2__)
 #include <xmmintrin.h>
@@ -46,6 +47,14 @@ int main(){
 #ifndef JOPE_CUDA_COMPILED
     assert(!Model::cuda_available());rejected([&]{other.predict_cuda(test);},6);
 #endif
+    const Rows symmetric{{-1,0},{1,0},{-1,0},{1,0}};
+    const auto minimum=std::numeric_limits<double>::min();
+    Model tiny;tiny.fit(symmetric,{-minimum,minimum,-minimum,minimum});
+    const auto gradual=tiny.predict({{-0.5,0},{0.5,0}});
+    assert(gradual.size()==2 && gradual[0]<0 && gradual[1]>0);
+    assert(std::fpclassify(gradual[0])==FP_SUBNORMAL && std::fpclassify(gradual[1])==FP_SUBNORMAL);
+    Model clipped;clipped.fit(symmetric,{-1000,1000,-1000,1000});
+    assert(clipped.predict({{-1,0},{1,0}})==std::vector<double>({-60,60}));
     other.close();other.close();rejected([&]{other.predict(test);},2);
     other.fit(train,y);assert(same(before,other.predict(test)));
     std::cout<<"CUDA C++ lifecycle passed\n";

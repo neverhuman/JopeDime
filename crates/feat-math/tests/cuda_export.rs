@@ -295,6 +295,11 @@ int main(){{
         ],
     );
     cuda::command(&root, "./both", &[]);
+    if !cuda::enabled() {
+        // Manual native checks can prove two-library linkage without a
+        // CMake installation. The complete local qualifier runs both paths.
+        return;
+    }
     // Real consumers add both generated packages to one CMake graph. Manual
     // linking alone does not detect collisions between generated target names.
     fs::write(
@@ -317,6 +322,10 @@ int main(){{
 
 #[test]
 fn emitted_cmake_builds_the_declared_library_and_a_real_consumer() {
+    if !cuda::enabled() {
+        eprintln!("CMake qualification is local: run deploy/ci/cuda/qualify.sh host");
+        return;
+    }
     let root = root("cmake");
     let bundle = emitter::emit(&fixture(), &EmitOptions::default()).unwrap();
     for (path, source) in &bundle.files {
