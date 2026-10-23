@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/runner/run.sh <ci|ci2|ci3|ci4|guard|full> — start ONE ephemeral runner job container (called by
+# deploy/runner/run.sh <ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12|guard|full> — start ONE ephemeral runner job container (called by
 # jope-runner@<lane>.service, as root, on the timer's cadence).
 #
 #   1. at most daily, trim older duplicate builds from this lane's target volume (common.sh
@@ -18,7 +18,7 @@ set -euo pipefail
 # shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
-lane=${1:?usage: run.sh <ci|ci2|ci3|ci4|guard|full>}
+lane=${1:?usage: run.sh <ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12|guard|full>}
 jope_runner_role "$JOPE_RUNNER_HOST" "$lane"
 labels=$(jope_runner_labels "$lane")
 # Only the dedicated Mac guest accepts a short-lived config from the reviewed
@@ -69,7 +69,7 @@ else
   name="$JOPE_RUNNER_HOST-$lane-$stamp"
   # work_folder is absolute and per-lane. Absolute because entrypoint.sh copies the runner to
   # /home/runner/runner, so a relative "work" resolves inside the small /home/runner tmpfs instead
-  # of the jope-work volume. Per-lane because the four lanes run concurrently against one volume:
+  # of the jope-work volume. Per-lane because the twelve lanes run concurrently against one volume:
   # a shared root means actions/checkout in one lane deletes the target/ another lane is building.
   # $lane must be passed to jq as an argument -- jq does not expand shell variables, so writing
   # "$lane" inside the program yields a literal directory named '$lane' shared by every lane.

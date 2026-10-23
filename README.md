@@ -23,7 +23,7 @@ Use that returned path for `predict`, or `jopedime model` to inspect, verify and
 The extensible JSON manifest retains complete fitted state across producer languages;
 CLI and MCP use the same validator.
 
-What changed in 0.4.0, 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
+What changed in 0.4.1, 0.4.0, 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 [`docs/release/README.md`](docs/release/README.md).
 
@@ -386,16 +386,16 @@ limits and client examples](docs/program-source-stream.md).
 
 ## At a glance
 
-| What | 0.4.0 |
+| What | 0.4.1 |
 | --- | --- |
-| `jope` with no arguments | prints `jope 0.4.0` <sup>1</sup> |
-| Workspace | 32 members: 25 crates at 0.4.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| `jope` with no arguments | prints `jope 0.4.1` <sup>1</sup> |
+| Workspace | 32 members: 25 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 8: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly) and `c17` (native C17 bindings) <sup>4</sup> |
 | Rust tests | 5,928 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 12 jobs per pull request in `ci.yml` (top-level declarations; 14 expanded jobs); 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 843 items over 28 lanes <sup>7</sup> |
+| Coverage map | 845 items over 29 lanes <sup>7</sup> |
 | Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,211 `.py` files, 159 of them under `python/` <sup>10</sup> |
@@ -435,7 +435,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.4.0
+# jope 0.4.1
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -495,7 +495,7 @@ annotated tag `vX.Y.Z` and the GitHub release and reads both back. A release hol
 SPDX and CycloneDX SBOMs, the release notes, a release manifest and `SHA256SUMS`, signed with cosign
 by a release key held on xbabe2. There is no Python wheel and no provenance attestation.
 [`release.yml`](.github/workflows/release.yml) is dispatch-only and fails closed. This tree is the
-source of v0.4.0; the release exists only once `release.sh --publish` has run.
+source of v0.4.1; the release exists only once `release.sh --publish` has run.
 
 To verify one, take `signing.pub` from the tag and check its fingerprint as
 [docs/release/README.md](docs/release/README.md) describes, then check the signature and the sums:
@@ -552,7 +552,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 
 ## Further reading
 
-- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.4.0, 0.3.0 and 0.2.0
+- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.4.1, 0.4.0, 0.3.0 and 0.2.0
 - [`MASTER_PLAN.md`](MASTER_PLAN.md) — current direction and the landing record
 - [`docs/release/README.md`](docs/release/README.md) — how a release is cut, signed and verified
 - [`docs/pipeline.md`](docs/pipeline.md) — the pipeline's budget, selection, seeding, parallelism and test-split contracts

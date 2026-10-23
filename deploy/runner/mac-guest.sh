@@ -7,7 +7,7 @@ jope_mac_guest() {
   local lane=$1 policy info image recorded active='[]' cid safe running cg quota period sdk_root sdk
   local digest total available root_free docker_free lock_idle=true
   [[ $(id -u) == 0 && $(hostname -s) == xbabe4 ]] || return 2
-  case $lane in ci|ci2|ci3|ci4) ;; *) return 2 ;; esac
+  case $lane in ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12) ;; *) return 2 ;; esac
   policy=$(cat /opt/jope-runner/mac-capacity.json) || return 2
   info=$(docker info --format '{"root":{{json .DockerRootDir}},"version":{{json .CgroupVersion}},"driver":{{json .CgroupDriver}}}') || return 2
   image=$(docker image inspect --format '{"id":{{json .Id}},"arch":{{json .Architecture}}}' jope-runner:current) || return 2
@@ -20,7 +20,7 @@ jope_mac_guest() {
     safe=$(docker inspect --format \
       '{"id":{{json .Id}},"lane":{{json (index .Config.Labels "jope.lane")}},"memory":{{json .HostConfig.Memory}},"swap":{{json .HostConfig.MemorySwap}},"cpus":{{json .HostConfig.NanoCpus}},"image":{{json .Image}},"readonly":{{json .HostConfig.ReadonlyRootfs}},"caps":{{json .HostConfig.CapDrop}},"security":{{json .HostConfig.SecurityOpt}},"pids":{{json .HostConfig.PidsLimit}},"mounts":{{json .Mounts}}}' "$cid") || return 2
     printf '%s' "$safe" | jq -e --argjson p "$policy" '
-      (.lane == "ci" or .lane == "ci2" or .lane == "ci3" or .lane == "ci4") and
+      (.lane | test("^ci([2-9]|1[0-2])?$")) and
       .memory == 17179869184 and .swap == .memory and .cpus == 16000000000 and
       .image == $p.image_id and .readonly == true and .pids == 4096 and
       (.caps | index("ALL") != null) and (.security | index("no-new-privileges") != null) and

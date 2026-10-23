@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the tokio 1.53.3 security patch (RUSTSEC-2026-0386) in the root Cargo.lock, after the 0.4.1 release successor. The CSV Lambda lockgraph receives the same patch. Only tokio's version and checksum change; lineage_sources.v1.json changes only its generated_at_sha. All behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "Owner release request 2026-10-23 (signed jope v0.4.1); cargo deny advisories fails on main since RUSTSEC-2026-0386; ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/421",
+  "source_commit": "bfcd901eee5ee77677e0e7b41791767c0141a122",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "b07c55098c8bec46b3ebb0ef50d1c47c76449cabe08ba566dd84c744859a3600",
+      "after": "122547c68ddd262091dbd4718a1c2a9dfea986cd42fb13588b874783e58b4599"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "792d58dd70e0f58cb4511c6d46032e37384d3dfff1826619885f03e28dadb548",
+      "after": "2493c14ffefb5f6b45434faba3c139f973dd2aa13d204cf6c039644c08414dbc"
+    }
+  ]
+}

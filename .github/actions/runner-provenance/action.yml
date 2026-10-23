@@ -18,7 +18,15 @@ description: >-
     - pull_request: host digest must equal the digest of deploy/runner from the PR base ref
       (merged main). Hosts still run only reviewed merged code; runner-change PRs can go green
       on current hosts, then deploy after merge.
-    - push / workflow_dispatch / other: host digest must equal the checkout under test.
+    - workflow_dispatch with provenance_pr: validate the open same-repository PR, exact
+      source SHA, branch, ci.yml workflow and current-main base through the read-only API;
+      bind to that merged base as on pull_request. This qualifies candidate tests, not deployment.
+    - push / main / other dispatch: host digest must equal the checkout under test.
+
+outputs:
+  runner-pool:
+    description: Capability label from the verified merged policy; candidate labels cannot bootstrap their deployment.
+    value: ${{ steps.pool.outputs.label }}
 
 runs:
   using: composite
@@ -26,13 +34,15 @@ runs:
     - name: PR base commit readable (explicit base fetch on a shallow checkout)
       shell: bash
       env:
-        # Read-only job token, only for this one fetch; passed to git through GIT_CONFIG_*.
+        # Read-only job token for the bounded fetch and optional exact-PR API validation.
         JOPE_PROVENANCE_FETCH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         python3 deploy/runner/provenance_bind.py ensure-base
     - name: Deployed scripts, image entrypoint and image identity
       shell: bash
+      env:
+        JOPE_PROVENANCE_FETCH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         # BASE_SHA is set by ci.yml for pull_request. Fall back to the event payload so
@@ -44,4 +54,16 @@ runs:
         python3 deploy/runner/provenance_bind.py verify
     - name: Immutable admission policy and actual cgroup limits
       shell: bash
+      env:
+        JOPE_PROVENANCE_FETCH_TOKEN: ${{ github.token }}
       run: python3 deploy/runner/verify-container.py
+    - name: Capability pool from verified merged runner policy
+      id: pool
+      shell: bash
+      env:
+        JOPE_PROVENANCE_FETCH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        label=$(python3 deploy/runner/provenance_bind.py runner-pool)
+        case "$label" in jope-ci|jope-mac-ci) ;; *) exit 2 ;; esac
+        echo "label=$label" >> "$GITHUB_OUTPUT"
