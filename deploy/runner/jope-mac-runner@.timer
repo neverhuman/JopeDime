@@ -1,0 +1,12 @@
+[Unit]
+Description=JopeDime Mac PR runner cadence (%i)
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=30s
+RandomizedDelaySec=10s
+AccuracySec=1s
+Unit=jope-mac-runner@%i.service
+
+[Install]
+WantedBy=timers.target

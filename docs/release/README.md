@@ -160,6 +160,15 @@ The release PR must first merge to `main`. It carries `docs/release/signing.pub`
 - updates the `jope X.Y.Z` lines in `README.md`;
 - commits `CHANGELOG.md`, generated with git-cliff 2.14.1 from `cliff.toml` and curated by PR.
 
+A reviewed non-version change to a current Lambda lock needs its original hash and reason
+retained before later version bumps. After committing the lock change and recording it with
+`snapshot-refresh`, run `bash deploy/ci/lambda-workspaces.sh snapshot-sync-base <lock> <full-source-commit>`
+and include the resulting `version_sync_bases` record in the same PR. The source must be an
+ancestor containing the exact current lock bytes. The helper appends provenance; it preserves
+all frozen hashes and earlier origins. `sync-locks` accepts only a matching retained base and
+still refuses any change beyond the named root package version lines. An arbitrary explanation,
+missing or mismatched base, malformed metadata or uncommitted lock bytes is refused.
+
 Then, on xbabe2, from a clean registered worktree whose `HEAD` is that merge commit:
 
 ```sh

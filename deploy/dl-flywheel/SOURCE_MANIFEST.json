@@ -8,11 +8,11 @@
       "sha256": "d2a4c512ce4a4d54acc6c6b86584e7fb0acc54f64bbabc758f0df9fb856a87db"
     },
     {
-      "normalization": " PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Final PR395 additive exact NPZ target/vendor tamper control and retained upstream benchmark discovery; no prior mapping removed or floor reduced.",
+      "normalization": " PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Final PR395 additive exact NPZ target/vendor tamper control and retained upstream benchmark discovery; no prior mapping removed or floor reduced. PR414 C17 native integration: owning fast emitter lane adds required native C17 compiler contracts. All source memberships, original origin hashes and unrelated rows remain unchanged.",
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "f304595256b0c933b9f93699283daeff8bfacc1f13166694ab3bb36eb4e4e4e0"
+      "sha256": "44c7c5d260fb62385ba1e8c273d2ad7b752fdca08ac4098024d998458d700961"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",

@@ -606,31 +606,51 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(typescript_fixtures.iter().any(|edge| edge["path"] == path));
     }
-    let go_output = old_fixture("transitions/go_wasm_identity_rebaseline.v1.json");
-    let go_fixtures = go_output["fixtures"].as_array().unwrap();
-    assert_eq!(go_fixtures.len(), 2);
-    for path in changed_fixtures {
-        assert!(go_fixtures.iter().any(|edge| edge["path"] == path));
-    }
-    let combined = old_fixture("transitions/go_after_typescript_identity_rebaseline.v1.json");
-    let parallel_join = old_fixture("transitions/typescript_after_go_identity_rebaseline.v1.json");
-    for (previous, next) in [
-        (&typescript_fixtures, &combined),
-        (&go_fixtures, &parallel_join),
+    // Preserve each published Go announcement as its original closed two-fixture edge.
+    for name in [
+        "transitions/go_wasm_identity_rebaseline.v1.json",
+        "transitions/go_after_typescript_identity_rebaseline.v1.json",
+        "transitions/typescript_after_go_identity_rebaseline.v1.json",
     ] {
-        assert_eq!(next["fixtures"].as_array().unwrap().len(), 2);
-        for edge in *previous {
-            let path = edge["path"].as_str().unwrap();
-            let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-            let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+        let record = old_fixture(name);
+        let fixtures = record["fixtures"].as_array().unwrap();
+        assert_eq!(fixtures.len(), 2);
+        for edge in fixtures {
             identity_transitions::verify_fixture(
-                path,
+                edge["path"].as_str().unwrap(),
+                edge["before"].as_str().unwrap(),
                 edge["after"].as_str().unwrap(),
-                &current,
-                std::slice::from_ref(next),
+                std::slice::from_ref(&record),
             )
-            .unwrap();
+            .expect("preserved original Go identity announcement");
         }
+    }
+    // Preserve the original parallel C17 announcement; apply the combined edge below.
+    let c17_parallel = old_fixture("transitions/c17_native_identity_rebaseline.v1.json");
+    assert_eq!(c17_parallel["fixtures"].as_array().unwrap().len(), 2);
+    for edge in c17_parallel["fixtures"].as_array().unwrap() {
+        identity_transitions::verify_fixture(
+            edge["path"].as_str().unwrap(),
+            edge["before"].as_str().unwrap(),
+            edge["after"].as_str().unwrap(),
+            std::slice::from_ref(&c17_parallel),
+        )
+        .expect("preserved original C17 parallel identity announcement");
+    }
+    let c17_combined =
+        old_fixture("transitions/pr414_after_typescript_c17_identity_rebaseline.v1.json");
+    let c17_fixtures = c17_combined["fixtures"].as_array().unwrap();
+    assert_eq!(c17_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(c17_fixtures.iter().any(|edge| edge["path"] == path));
+    }
+    // ctutils security patch: identity-only successor after combined C17 integration.
+    let ctutils_security =
+        old_fixture("transitions/pr414_ctutils_security_identity_rebaseline.v1.json");
+    let security_fixtures = ctutils_security["fixtures"].as_array().unwrap();
+    assert_eq!(security_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(security_fixtures.iter().any(|edge| edge["path"] == path));
     }
     let identity_chain = [
         transition,
@@ -665,8 +685,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         release_0_4_0,
         model_objects,
         typescript,
-        // The parallel pre-main Go record is retained and verified above.
-        combined,
+        c17_combined,
+        ctutils_security,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

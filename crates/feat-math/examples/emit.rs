@@ -16,6 +16,8 @@ use feat_math::transpile::{self, EmitOptions};
 
 fn main() -> Result<()> {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
+    let c17 = args.iter().any(|arg| arg == "--c17");
+    args.retain(|arg| arg != "--c17");
     let require_all = args.iter().any(|arg| arg == "--all");
     let typescript = args
         .iter()
@@ -25,7 +27,7 @@ fn main() -> Result<()> {
         !["--all", "--go", "--golang", "--typescript", "--ts"].contains(&arg.as_str())
     });
     let [dsl, out] = args.as_slice() else {
-        bail!("usage: emit [--all] [--go] [--typescript] <program.dsl> <out-dir>");
+        bail!("usage: emit [--all] [--go] [--c17] [--typescript] <program.dsl> <out-dir>");
     };
     let (dsl, out) = (dsl.clone(), out.clone());
     let source = std::fs::read_to_string(&dsl).with_context(|| format!("read {dsl}"))?;
@@ -64,6 +66,14 @@ fn main() -> Result<()> {
             bail!("JavaScript target unsupported: {}", unsupported.join(", "))
         }
         Err(unsupported) => eprintln!("JavaScript target not emitted: {}", unsupported.join(", ")),
+    }
+    if c17 {
+        for (path, source) in transpile::emit_c17(&genome, &opts)?.files {
+            let dest = out.join(path);
+            std::fs::create_dir_all(dest.parent().context("C17 output parent")?)?;
+            std::fs::write(dest, source)?;
+        }
+        targets.push("c17");
     }
     if typescript {
         let bundle = transpile::emit_typescript(&genome, &opts)?;

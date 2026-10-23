@@ -253,11 +253,33 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
             "emitted manifest does not identify the selected program"
         );
         let mut languages = BTreeSet::new();
+        let mut members = BTreeSet::new();
         for a in &r.artifacts {
             let language = check_artifact_manifest(&manifest, a)?;
-            ensure!(languages.insert(language), "duplicate emitted language");
+            ensure!(
+                members.insert((language, a.path.as_str())),
+                "duplicate emitted artifact"
+            );
+            ensure!(
+                language == "c17" || languages.insert(language),
+                "duplicate emitted language"
+            );
+            languages.insert(language);
             let bytes = read_file(root, &Path::new("emit").join(&a.path), &a.sha256)?;
             ensure!(bytes.len() as u64 == a.bytes, "artifact length mismatch");
+        }
+        if languages.contains("c17") {
+            for path in [
+                "c17/model.h",
+                "c17/model_core.rs",
+                "c17/model_ffi.rs",
+                "c17/manifest.json",
+            ] {
+                ensure!(
+                    members.contains(&("c17", path)),
+                    "incomplete C17 artifact set"
+                );
+            }
         }
         check_artifact_targets(root, &languages)?;
     }
@@ -366,6 +388,7 @@ fn v3_language(target: feat_math::artifact_manifest::Target, path: &str) -> &'st
         Target::Cpp17 => "cpp17",
         Target::Cpp20 => "cpp20",
         Target::JavaScript => "javascript",
+        Target::C17 => "c17",
         Target::TypeScript if path.ends_with(".kernel.rs") => "typescript-kernel",
         Target::TypeScript => "typescript",
         Target::Go if path.ends_with(".kernel.rs") => "go-kernel",
@@ -385,6 +408,19 @@ fn check_artifact_manifest(
 ) -> Result<&'static str> {
     use crate::emit::Language;
     let (expected_path, language) = match Language::parse(&artifact.language) {
+        Some(Language::C17) => {
+            ensure!(
+                [
+                    "c17/model.h",
+                    "c17/model_core.rs",
+                    "c17/model_ffi.rs",
+                    "c17/manifest.json"
+                ]
+                .contains(&artifact.path.as_str()),
+                "unknown C17 artifact"
+            );
+            (artifact.path.as_str(), "c17")
+        }
         Some(Language::Rust) => ("model.rs", "rust"),
         Some(Language::Python) => ("model.py", "python"),
         Some(Language::JavaScript) => ("model.js", "javascript"),
@@ -429,7 +465,17 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
     let mut targets = BTreeSet::new();
     for target in retained.split_whitespace() {
         ensure!(
-            ["py", "rs", "cpp", "js", "ts", "golang", "cpp17-fitted"].contains(&target)
+            [
+                "py",
+                "rs",
+                "cpp",
+                "js",
+                "ts",
+                "golang",
+                "c17",
+                "cpp17-fitted"
+            ]
+            .contains(&target)
                 && targets.insert(target),
             "unknown or duplicate emitted target"
         );
@@ -441,6 +487,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
             "rust" => "rs",
             "cpp17" | "cpp20" => "cpp",
             "javascript" => "js",
+            "c17" => "c17",
             "typescript" | "typescript-kernel" => "ts",
             "go" | "go-kernel" | "go-module" | "go-checksums" => "golang",
             _ => "cpp17-fitted",

@@ -3,7 +3,7 @@
 The CPU foundation uses JIT registration and one isolated container per job. Fast CI remains
 required by the reviewed merge procedure. `full-main.yml` runs on every push to main and manual
 dispatch of main, reports all declared CPU families, and is diagnostic until the repair phase.
-Branch protection remains procedural until the API readback establishes enforcement.
+Read current branch protection and rulesets before merging; provenance and main-guard supplement their enforced checks.
 
 ## Approved allocation
 
@@ -22,10 +22,8 @@ xbabe2 and xbabe3 are untrusted pr-domain lanes beside the full lane: their own 
 volumes, never the main-full volumes, and never the exclusive CPU lock, so ASM allocations still
 wait only for the full lane. xbabe0 holds one ci lane because its free disk (169 GB on
 2026-10-22) fits one persistent Cargo target. `jope_runner_lanes` in `common.sh` is the per-host
-lane list that `provision.sh` installs. xbabe4 is a macOS host and xbabe5 offers only a legacy SSH
-host key, so neither carries a Linux container runner.
-`common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
-GPU and kernel roles. Their live qualification and persistent runner migration remain deferred.
+lane list that `provision.sh` installs. xbabe4 is a macOS host with a dedicated Colima Linux VM; its four additional PR roles and three small Linux guard roles are described below. xbabe5 remains excluded.
+`common.sh` rejects other host/lane combinations, including GPU and kernel roles. New roles require the reviewed deployment and actual live qualification below.
 The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
 
 Each domain has separate named work, Cargo registry, target and uv volumes, for example
@@ -55,7 +53,7 @@ every host-kernel exploit. See GitHub's [self-hosted hardening guidance](https:/
 
 ## Reviewed deployment and drain
 
-Before changing an installed runner, obtain independent review of the exact candidate, preserve
+Before changing an installed runner, review the exact candidate (same-agent review is authorized by the owner), preserve
 installed files and safe fingerprints outside the checkout, and record service/runner state.
 Stop the affected JopeDime timers first. Read GitHub runner `busy` state and wait for owned jobs
 to finish; then stop idle owned services and confirm no owned container remains. Never stop the
@@ -107,6 +105,76 @@ an ASM allocation. Resume the timer afterward. The controller does not alter the
 fleet. Each full host has its own lock inode and ASM check. Every runner host requires the
 same reviewed deployed-file inventory before exact-head CI can pass provenance; the new lock
 must not be used to bypass that check.
+
+## Mac Linux runners and guard lanes
+
+The declared allocation adds four PR lanes (`ci`, `ci2`, `ci3`, `ci4`) in xbabe4's dedicated
+`jope-ci` Colima Linux VM and one small `guard` lane on each of xbabe1, xbabe2 and xbabe3.
+The guard lanes have the separate `jope-main-guard` label, 2 GiB and 2 CPUs, with storage
+`jope-guard-guard-*`. Their root admission policy accepts only this repository's exact
+`main-guard.yml` push to main. They cannot execute ci.yml, full-main, release or PR jobs.
+Existing seven heavy roles, caps, labels and storage domains remain as listed above.
+
+Each Mac PR lane has its own `jope-pr-<lane>-{work,cargo,target,uv}` volumes and the normal
+16 GiB/16 CPU/no-swap container limits. The VM has 24 virtual CPUs and 96 GiB RAM, shared by
+all four lanes; the per-container CPU limits do not promise 64 physical CPUs. Admission
+requires at least 20 GiB guest memory available, 50 GiB guest root free, 120 GiB guest Docker
+storage free and 120 GiB on the Mac. All existing Jope containers must have the declared caps;
+the sum of admitted memory limits cannot exceed 64 GiB. Other Docker/Colima profiles remain
+outside this VM and outside the deployment.
+
+`mac-controller.sh` runs as the existing `ubuntu` user on the Ubuntu xbabe2 host. Its existing
+SSH alias `xbabe2` reaches `agent@192.168.68.89`, the Mac; it is not a connection back to the
+Ubuntu controller. The controller checks the actual Mac identity/disk and the guest's identity,
+geometry, cgroups, lane lock, pinned image, SDK and installed-file digest before registration.
+`mac-capacity.json` pins the image already qualified under amd64/Rosetta and the SDK receipt.
+`mac-guest.sh` is a read-only root preflight; it does not start containers or register runners.
+
+The existing `gh-role writer` account on Ubuntu creates one single-use JIT configuration.
+Only that opaque bounded value crosses SSH on stdin, through `colima ssh --profile jope-ci`,
+to the guest's reviewed `run.sh LANE --jit-stdin NAME`. The controller never places it in its command arguments, environment,
+files, receipts or journal messages. The existing image consumes it through its normal runner
+protocol; do not inspect private process arguments. The Mac needs no GitHub CLI, copied PAT, SSH agent
+forwarding or host-home mount. Normal root-installed admission hooks, per-lane locks, hardened
+container flags, domain storage and exact provenance checks still govern the job.
+
+Before the non-idempotent registration call, the controller fsyncs public state in
+`/var/lib/jope-mac-controller/<lane>.json`. A failed/timed-out mint, interrupted controller or
+uncertain SSH outcome blocks automatic reminting. Inspect that runner name/id, GitHub jobs,
+the guest's lane lock and containers, and preserve the investigation before resolving the
+public state. Never delete unresolved state to force a retry. Terminal public receipts remain
+under `history/`; they contain no JIT value. Controller output is public state only; actual
+test/build logs stay with the GitHub job.
+
+Deploy only reviewed merged files, in the existing coordinated freeze:
+
+1. Preserve installed files/receipts and live runner/job state. Pause affected **Jope** timers,
+   wait for accepted jobs, then stop only proven-idle owned listeners. Preserve unrelated
+   runners, services, Docker profiles, credentials, volumes and evidence.
+2. On existing Linux runner hosts, provision from the same exact merged source with
+   `sudo deploy/runner/provision.sh --skip-sdk --skip-image`. It installs the uniform new file
+   inventory and units, records the actual digest and enables nothing. On Ubuntu xbabe2 it
+   also creates the private controller state directory for `ubuntu`.
+3. In the existing owned `jope-ci` guest, use that exact reviewed deployment payload and
+   `sudo deploy/runner/provision.sh --skip-image`. The pinned amd64 image must already exist;
+   this initializes the four separate storage domains and provisions the SDK from its receipt.
+   It installs no GitHub credential. Keep the guest's native `jope-runner@*.timer` units disabled;
+   only the Ubuntu controller supplies its one-use configurations.
+4. On xbabe1/2/3 enable `jope-runner@guard.timer` and resume only their previously enabled heavy
+   timers. On Ubuntu xbabe2 enable `jope-mac-runner@ci.timer`, `@ci2.timer`, `@ci3.timer` and
+   `@ci4.timer`. Do not enable the Mac controller on other hosts. No daemon should start from
+   an unmerged checkout or an unrecorded unit override.
+5. Verify each new role's actual cgroup caps, swap, domain mounts, root-installed digest,
+   registration, admission and a real CI job. Confirm the guard handles a main push and refuses
+   other workflows. Confirm the full receiving checks and full manual gate at the exact source.
+   A running VM, Listener version or source unit test alone is not operational qualification.
+
+The Mac VM and image have prerequisite execution proofs. This source change does not itself
+qualify any new Mac or guard slot. The already restored xbabe3 ci/full lanes are the existing
+roles and have separate source-bound admission/job receipts. Historical deployment notes below
+describe the earlier seven-role allocation; the reviewed inventory and closed role functions
+govern the new deployment.
+
 
 ## Second full lane on xbabe3
 

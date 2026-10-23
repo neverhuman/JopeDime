@@ -38,6 +38,7 @@ pub enum Language {
     Go,
     TypeScript,
     Cpp17Fitted,
+    C17,
 }
 
 impl Language {
@@ -59,6 +60,7 @@ impl Language {
             Language::TypeScript => "typescript",
             Language::Go => "go",
             Language::Cpp17Fitted => "cpp17-fitted",
+            Language::C17 => "c17",
         }
     }
 
@@ -72,6 +74,7 @@ impl Language {
             "typescript" | "ts" => Some(Language::TypeScript),
             "go" | "golang" => Some(Language::Go),
             "cpp17-fitted" => Some(Language::Cpp17Fitted),
+            "c17" | "c" => Some(Language::C17),
             _ => None,
         }
     }
@@ -87,7 +90,7 @@ impl Language {
             }
             let language = Language::parse(part).with_context(|| {
                 format!(
-                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, ts, go, cpp17-fitted or all"
+                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, ts, go, c17, cpp17-fitted or all"
                 )
             })?;
             chosen.insert(language);
@@ -97,7 +100,12 @@ impl Language {
         }
         Ok(Language::ALL
             .into_iter()
-            .chain([Language::Go, Language::TypeScript, Language::Cpp17Fitted])
+            .chain([
+                Language::Go,
+                Language::TypeScript,
+                Language::Cpp17Fitted,
+                Language::C17,
+            ])
             .filter(|l| chosen.contains(l))
             .collect())
     }
@@ -234,6 +242,16 @@ pub fn emit_with_options(
         }
     }
 
+    if languages.contains(&Language::C17) {
+        for (path, source) in transpile::emit_c17(render_target, options)?.files {
+            artifacts.push(Artifact {
+                language: Language::C17.as_str(),
+                build: Some(format!("cd c17 && {}", feat_math::c17::BUILD)),
+                ..write(directory, &path, &source)?
+            });
+        }
+        targets.push("c17");
+    }
     if languages.contains(&Language::TypeScript) {
         let bundle = transpile::emit_typescript(render_target, options)?;
         artifacts.push(Artifact {
@@ -379,6 +397,7 @@ fn build_command(standard: CxxStd) -> String {
 
 fn write(directory: &Path, name: &str, contents: &str) -> Result<Artifact> {
     let path: PathBuf = directory.join(name);
+    std::fs::create_dir_all(path.parent().context("artifact parent")?)?;
     std::fs::write(&path, contents).with_context(|| format!("write {}", path.display()))?;
     // Hash what is on disk, not the buffer we meant to put there. A digest taken from `contents`
     // describes this function's intent; the receipt claims to describe the emitted artifact.
@@ -427,6 +446,34 @@ pub(crate) mod seam {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn c17_is_explicit_and_publishes_complete_native_bundle() {
+        assert!(!Language::parse_list("all")
+            .unwrap()
+            .contains(&Language::C17));
+        assert_eq!(Language::parse_list("c,c17").unwrap(), vec![Language::C17]);
+        let dir = tempfile::tempdir().unwrap();
+        let e = emit(
+            "(pipe X (standardize) (histgbm rounds=2))",
+            &[Language::C17],
+            dir.path(),
+        )
+        .unwrap();
+        assert_eq!(e.artifacts.len(), 4);
+        assert!(e.exclusions.is_empty());
+        for a in e.artifacts {
+            assert_eq!(a.language, "c17");
+            assert_eq!(
+                hash(&std::fs::read(dir.path().join(a.path)).unwrap()),
+                a.sha256
+            );
+        }
+        assert_eq!(
+            std::fs::read_to_string(dir.path().join("targets.txt")).unwrap(),
+            "c17\n"
+        );
+    }
 
     /// The identity `emit()` reports must describe the artifacts it wrote, not the genome it was
     /// asked for. Reported on PR #44 by the independent reviewer, who demonstrated the gap by
