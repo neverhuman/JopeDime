@@ -31,6 +31,33 @@ fn publish(e: &TargetEmission) -> (tempfile::TempDir, ExpectedArtifactV3) {
 }
 #[test]
 fn all_requested_recipe_targets_bind_exact_source_bytes() {
+    let ts = emission(&[Target::Go]);
+    assert!(ts.manifest.all_supported());
+    assert_eq!(Target::parse("golang").unwrap(), Target::Go);
+    assert_eq!(ts.sources.len(), 4);
+    for source in ts.sources.values() {
+        assert!(transpile::lint_shipped_text(source).is_empty());
+    }
+    let tokens = feat_math::tokens::count_tokens(
+        "// typed model\nconst label: string = 'ok';",
+        feat_math::tokens::Lang::Go,
+    );
+    assert_eq!(tokens.doc_tokens, 2);
+    assert!(tokens.code_tokens > 0);
+    let mut weakened = ts.manifest.clone();
+    if let TargetState::Supported { build, .. } = &mut weakened.targets[0].state {
+        build.flags.clear();
+    }
+    assert!(weakened.validate().is_err());
+    let again = emission(&[Target::Go]);
+    assert_eq!(ts.sources, again.sources);
+    let (ts_dir, ts_pin) = publish(&ts);
+    verify_directory(ts_dir.path(), "manifest.json", &ts_pin).unwrap();
+    std::fs::write(ts_dir.path().join("model.go.kernel.rs"), "tampered").unwrap();
+    assert!(verify_directory(ts_dir.path(), "manifest.json", &ts_pin).is_err());
+    let (ts_dir, ts_pin) = publish(&ts);
+    std::fs::remove_file(ts_dir.path().join("model.go.kernel.rs")).unwrap();
+    assert!(verify_directory(ts_dir.path(), "manifest.json", &ts_pin).is_err());
     let e = emission(&Target::RECIPES);
     assert!(e.manifest.all_supported(), "{:?}", e.manifest.targets);
     assert_eq!(e.manifest.targets.len(), 5);
@@ -99,7 +126,15 @@ fn missing_requested_file_refused() {
 }
 #[test]
 fn empty_duplicate_alias_and_unknown_requests_refused() {
-    for value in ["", "py,python", "cpp17,cpp17", "go", "all,rs", "rust,"] {
+    for value in [
+        "",
+        "py,python",
+        "cpp17,cpp17",
+        "unknown",
+        "go,golang",
+        "all,rs",
+        "rust,",
+    ] {
         assert!(Target::parse_list(value).is_err(), "{value}");
     }
     assert!(transpile::emit_targets_v3(
@@ -248,11 +283,26 @@ fn bound_adapter_preserves_v2_sources_and_binds_fitted_state() {
         &model,
         &g,
         &opts,
-        &[Target::Python, Target::Rust, Target::JavaScript],
+        &[Target::Python, Target::Rust, Target::JavaScript, Target::Go],
     )
     .unwrap();
     assert_eq!(e.sources["model.py"], old.python);
     assert_eq!(e.sources["model.rs"], old.rust);
+    assert!(e.sources.contains_key("model.go"));
+    assert!(e.sources.contains_key("model.go.kernel.rs"));
+    let go = e
+        .manifest
+        .targets
+        .iter()
+        .find(|r| r.target == Target::Go)
+        .unwrap();
+    assert!(matches!(
+        &go.state,
+        TargetState::Supported {
+            fitted: Some(_),
+            ..
+        }
+    ));
     assert!(!e.manifest.all_supported());
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&old.manifest).unwrap()["schema"],

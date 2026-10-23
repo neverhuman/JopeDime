@@ -8,6 +8,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+mod go_support;
+
 fn toy_data(n: usize, cols: usize, seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
     let mut rng = Pcg32::new(seed, 17);
     let mut x = Vec::new();
@@ -136,6 +138,17 @@ fn assert_parity_sized(name: &str, genome_src: &str, rows: usize, cols: usize, t
     let rs = run_rust(&dir, &artifact);
     let rs_secs = t_rs.elapsed().as_secs_f64();
 
+    if go_support::enabled() {
+        let artifact = feat_math::transpile::emit_go(&genome, &opts).unwrap();
+        go_support::run(
+            &dir.join("go"),
+            &artifact.source,
+            &artifact.kernel,
+            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test,"stress":name=="robust_ridge"}),
+            &rs,
+            false,
+        );
+    }
     let py_diff = max_abs_diff(&reference, &py);
     let rs_diff = max_abs_diff(&reference, &rs);
     assert_eq!(py_diff, 0.0, "python parity broken for {genome_src}");
@@ -641,6 +654,17 @@ fn golden_portfolio_duplicate_rows() {
     write_csvs(&dir, &x_train, &y_train, &x_test);
     let py = run_python(&dir, &artifact);
     let rs = run_rust(&dir, &artifact);
+    if go_support::enabled() {
+        let bundle = feat_math::transpile::emit_go(&genome, &EmitOptions::default()).unwrap();
+        go_support::run(
+            &dir.join("go"),
+            &bundle.source,
+            &bundle.kernel,
+            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test}),
+            &rs,
+            false,
+        );
+    }
     let py_diff = max_abs_diff(&reference, &py);
     let rs_diff = max_abs_diff(&reference, &rs);
     assert_eq!(
@@ -1185,6 +1209,17 @@ fn assert_fast_parity(name: &str, genome_src: &str) {
     fs::create_dir_all(&dir_ref).unwrap();
     write_csvs(&dir_ref, &x_train, &y_train, &x_test);
     let rs_default = run_rust(&dir_ref, &default);
+    if go_support::enabled() {
+        let bundle = feat_math::transpile::emit_go(&genome, &fast_opts()).unwrap();
+        go_support::run(
+            &dir_fast.join("go"),
+            &bundle.source,
+            &bundle.kernel,
+            &serde_json::json!({"train":x_train,"targets":y_train,"test":x_test}),
+            &rs_default,
+            false,
+        );
+    }
 
     assert_eq!(
         max_abs_diff(&reference, &py),

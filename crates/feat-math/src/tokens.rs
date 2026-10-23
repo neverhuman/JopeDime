@@ -39,6 +39,7 @@ pub enum Lang {
     Rust,
     Cpp,
     JavaScript,
+    Go,
 }
 
 pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
@@ -55,7 +56,7 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
             let end = line_end(b, i);
             doc_tokens += word_count(&src[i + 1..end]);
             i = end;
-        } else if matches!(lang, Lang::Rust | Lang::Cpp | Lang::JavaScript)
+        } else if matches!(lang, Lang::Rust | Lang::Cpp | Lang::JavaScript | Lang::Go)
             && c == '/'
             && i + 1 < b.len()
             && b[i + 1] == b'/'

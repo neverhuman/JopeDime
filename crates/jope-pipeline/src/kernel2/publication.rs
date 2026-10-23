@@ -366,6 +366,10 @@ fn v3_language(target: feat_math::artifact_manifest::Target, path: &str) -> &'st
         Target::Cpp17 => "cpp17",
         Target::Cpp20 => "cpp20",
         Target::JavaScript => "javascript",
+        Target::Go if path.ends_with(".kernel.rs") => "go-kernel",
+        Target::Go if path == "go.mod" => "go-module",
+        Target::Go if path == "go.sum" => "go-checksums",
+        Target::Go => "go",
         Target::Cpp17RecipeV2 => "cpp17-recipe-v2",
         Target::Cpp17Fitted if path.ends_with(".codec.json") => "cpp17-fitted-codec",
         Target::Cpp17Fitted if path.ends_with("standalone.cpp") => "cpp17-fitted-standalone",
@@ -382,6 +386,10 @@ fn check_artifact_manifest(
         Some(Language::Rust) => ("model.rs", "rust"),
         Some(Language::Python) => ("model.py", "python"),
         Some(Language::JavaScript) => ("model.js", "javascript"),
+        Some(Language::Go) => ("model.go", "go"),
+        None if artifact.language == "go-module" => ("go.mod", "go-module"),
+        None if artifact.language == "go-checksums" => ("go.sum", "go-checksums"),
+        None if artifact.language == "go-kernel" => ("model.go.kernel.rs", "go-kernel"),
         Some(language @ (Language::Cpp17 | Language::Cpp20)) => ("model.cpp", language.as_str()),
         Some(Language::Cpp17Fitted) => ("cpp17-fitted/model.cpp", "cpp17-fitted"),
         None if artifact.language == "cpp17-fitted-codec" => {
@@ -415,7 +423,8 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
     let mut targets = BTreeSet::new();
     for target in retained.split_whitespace() {
         ensure!(
-            ["py", "rs", "cpp", "js", "cpp17-fitted"].contains(&target) && targets.insert(target),
+            ["py", "rs", "cpp", "js", "golang", "cpp17-fitted"].contains(&target)
+                && targets.insert(target),
             "unknown or duplicate emitted target"
         );
     }
@@ -426,6 +435,7 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
             "rust" => "rs",
             "cpp17" | "cpp20" => "cpp",
             "javascript" => "js",
+            "go" | "go-kernel" | "go-module" | "go-checksums" => "golang",
             _ => "cpp17-fitted",
         })
         .collect();
@@ -433,6 +443,12 @@ fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()>
         targets == actual,
         "artifact languages disagree with emitted targets"
     );
+    for language in ["go", "go-kernel", "go-module", "go-checksums"] {
+        ensure!(
+            languages.contains(language) == targets.contains("golang"),
+            "incomplete Go artifact set"
+        );
+    }
     for language in [
         "cpp17-fitted",
         "cpp17-fitted-codec",

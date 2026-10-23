@@ -17,9 +17,10 @@ use feat_math::transpile::{self, EmitOptions};
 fn main() -> Result<()> {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
     let require_all = args.iter().any(|arg| arg == "--all");
-    args.retain(|arg| arg != "--all");
+    let go = args.iter().any(|arg| arg == "--go" || arg == "--golang");
+    args.retain(|arg| !["--all", "--go", "--golang"].contains(&arg.as_str()));
     let [dsl, out] = args.as_slice() else {
-        bail!("usage: emit [--all] <program.dsl> <out-dir>");
+        bail!("usage: emit [--all] [--go] <program.dsl> <out-dir>");
     };
     let (dsl, out) = (dsl.clone(), out.clone());
     let source = std::fs::read_to_string(&dsl).with_context(|| format!("read {dsl}"))?;
@@ -58,6 +59,13 @@ fn main() -> Result<()> {
             bail!("JavaScript target unsupported: {}", unsupported.join(", "))
         }
         Err(unsupported) => eprintln!("JavaScript target not emitted: {}", unsupported.join(", ")),
+    }
+    if go {
+        let bundle = transpile::emit_go(&genome, &opts)?;
+        for (path, source) in feat_math::go::sources(&bundle) {
+            std::fs::write(out.join(path), source)?;
+        }
+        targets.push("golang");
     }
     std::fs::write(out.join("targets.txt"), format!("{}\n", targets.join(" ")))?;
     println!("emitted {} to {}", targets.join(" "), out.display());

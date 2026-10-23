@@ -108,3 +108,6 @@ pub fn sanitize(x: &mut Rows) {
         }
     }
 }
+
+/// Go output backed by the complete Rust WebAssembly implementation.
+pub mod go;

@@ -256,6 +256,31 @@ fn emit_genome_with_options_impl(
                     emit_cpp17(&parsed, opts).context("emit C++20")?
                 }
             }
+            "go" => {
+                let bundle = feat_math::transpile::emit_go(&parsed, opts)?;
+                for (target, filename, source) in [
+                    ("go", "model.go", &bundle.source),
+                    ("go-kernel", "model.go.kernel.rs", &bundle.kernel),
+                    ("go-module", "go.mod", &feat_math::go::MODULE.to_string()),
+                    ("go-checksums", "go.sum", &feat_math::go::SUM.to_string()),
+                ] {
+                    let path = if let Some(root) = output {
+                        fs::create_dir_all(root)?;
+                        let path = root.join(filename);
+                        fs::write(&path, source)?;
+                        Some(path.display().to_string())
+                    } else {
+                        None
+                    };
+                    artifacts.push(Artifact {
+                        lang: target.into(),
+                        bytes: source.len(),
+                        sha256: digest(source),
+                        path,
+                    });
+                }
+                continue;
+            }
             "javascript" => emit_javascript(&parsed, opts).context("emit javascript")?,
             _ => unreachable!(),
         };
@@ -370,9 +395,10 @@ fn languages(lang: &str) -> Result<Vec<&'static str>> {
         "cpp17-recipe-v2" => vec!["cpp17-recipe-v2"],
         "cpp20" => vec!["cpp20"],
         "javascript" | "js" => vec!["javascript"],
+        "go" | "golang" => vec!["go"],
         "all" => vec!["python", "rust", "cpp17", "javascript"],
         other => bail!(
-            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|all)"
+            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|go|all)"
         ),
     })
 }
@@ -521,6 +547,14 @@ mod artifact_v3_tests {
         assert_eq!(report.schema, "jope.emit.v3");
         assert!(report.ok);
         assert!(report.artifacts.iter().any(|a| a.lang == "manifest-v3"));
+        for language in ["golang", "go", "v3:go"] {
+            let output = dir.path().join(language.replace(':', "-"));
+            let report = emit_genome(DEFAULT_GENOME, language, Some(&output)).unwrap();
+            assert!(report.ok);
+            assert!(output.join("model.go").is_file());
+            assert!(output.join("model.go.kernel.rs").is_file());
+            assert!(report.artifacts.iter().any(|a| a.lang == "go"));
+        }
         let refused = dir.path().join("unsupported");
         let err = emit_genome("(pipe X (histgbm))", "v3:js", Some(&refused)).unwrap_err();
         assert!(err.to_string().contains("unsupported requested targets"));

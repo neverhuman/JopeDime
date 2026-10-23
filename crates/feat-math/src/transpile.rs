@@ -387,6 +387,16 @@ pub fn supports_javascript(genome: &GenomeIr) -> std::result::Result<(), Vec<Str
     emit_js::emit_js(&plan, &EmitOptions::default()).map(|_| ())
 }
 
+/// Emit a typed Go API and its complete WebAssembly build source.
+pub fn emit_go(genome: &GenomeIr, opts: &EmitOptions) -> Result<crate::go::GoEmitted> {
+    crate::go::emit(genome, opts)
+}
+
+/// Go shares the full Rust recipe coverage.
+pub fn supports_go(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
+    supports(genome)
+}
+
 /// Banned-vocabulary lint run on every emitted artifact (emission fails on
 /// hit). Extended for v35 with `nnls` and the portfolio member registry
 /// identifiers — none of which any artifact (old or new) ever contained.
@@ -494,6 +504,25 @@ pub fn lint_shipped_text(src: &str) -> Vec<String> {
     hits
 }
 
+fn validate_recipe_target(
+    genome: &GenomeIr,
+    target: crate::artifact_manifest::Target,
+) -> Result<()> {
+    use crate::artifact_manifest::Target;
+    // Go reuses the Rust numerical implementation and its admission.
+    if Target::RECIPES.contains(&target) || target == Target::Go {
+        if let GenomeIr::Pipeline(pipe) = genome {
+            for stage in &pipe.stages {
+                let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
+                    .ok_or_else(|| anyhow::anyhow!("unregistered legacy operation {}", stage.op))?;
+                row.supports(target.registry_target())
+                    .map_err(anyhow::Error::msg)?;
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Opt-in target-complete manifest. Historical `emit` and its defaults stay unchanged.
 /// Unsupported targets remain explicit; successful rendering binds exact source bytes.
 pub fn emit_targets_v3(
@@ -516,21 +545,28 @@ pub fn emit_targets_v3(
     let mut sources = std::collections::BTreeMap::new();
     let mut records = Vec::new();
     for &target in requested {
-        let result: Result<(String, String)> = (|| {
-            // I07's declared per-stage support supplements the actual recipe gate.
-            // Expression-recipe-v2 and fitted exports keep their separate existing gates.
-            if Target::RECIPES.contains(&target) {
-                if let GenomeIr::Pipeline(pipe) = genome {
-                    for stage in &pipe.stages {
-                        let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
-                            .ok_or_else(|| {
-                                anyhow::anyhow!("unregistered legacy operation {}", stage.op)
-                            })?;
-                        row.supports(target.registry_target())
-                            .map_err(anyhow::Error::msg)?;
+        if target == Target::Go {
+            let result =
+                validate_recipe_target(genome, target).and_then(|()| emit_go(genome, options));
+            match result {
+                Ok(bundle) => {
+                    records.push(TargetRecord::supported(
+                        target,
+                        "legacy_recipe",
+                        crate::go::EMITTER_VERSION,
+                        &crate::go::sources(&bundle),
+                        None,
+                    ));
+                    for (path, source) in crate::go::sources(&bundle) {
+                        sources.insert(path.into(), source.into());
                     }
                 }
+                Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
             }
+            continue;
+        }
+        let result: Result<(String, String)> = (|| {
+            validate_recipe_target(genome, target)?;
             Ok(match target {
                 Target::Python | Target::Rust => {
                     let pair = emit(genome, options)?;
@@ -561,6 +597,7 @@ pub fn emit_targets_v3(
                         .map_err(anyhow::Error::msg)?;
                     (e.source, e.profile.into())
                 }
+                Target::Go => unreachable!("handled as a complete bundle"),
                 Target::Cpp17Fitted => {
                     anyhow::bail!("fitted target requires explicit training rows")
                 }

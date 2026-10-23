@@ -7,6 +7,8 @@ use jope_pipeline::{
     search::Budget,
 };
 use std::{fs, path::Path};
+#[path = "../../feat-math/tests/go_support/mod.rs"]
+mod go_support;
 fn scratch() -> tempfile::TempDir {
     let root = Path::new(env!("CARGO_TARGET_TMPDIR"));
     fs::create_dir_all(root).unwrap();
@@ -22,6 +24,7 @@ fn writer_reader_accounts_for_all_recipe_and_fitted_components() {
     let dir = scratch();
     let mut targets = Target::RECIPES.to_vec();
     targets.push(Target::Cpp17Fitted);
+    targets.push(Target::Go);
     let out = emit::emit_v3("(pipe X (ridge))", &targets, dir.path(), Some(&rows())).unwrap();
     assert!(out.manifest.all_supported());
     assert_eq!(
@@ -184,6 +187,12 @@ fn install_v3(
                         } else {
                             "cpp17-fitted"
                         }
+                    } else if record.target == Target::Go && f.path.ends_with(".kernel.rs") {
+                        "go-kernel"
+                    } else if record.target == Target::Go && f.path == "go.mod" {
+                        "go-module"
+                    } else if record.target == Target::Go && f.path == "go.sum" {
+                        "go-checksums"
                     } else {
                         record.target.as_str()
                     };
@@ -228,7 +237,9 @@ fn v3_run(root: &Path, requested: &[Target]) -> (Receipt, ExpectedArtifactV3) {
 fn native_publication_accepts_supported_pinned_v3_run() {
     let dir = scratch();
     let root = dir.path().join("run");
-    let (r, expected) = v3_run(&root, &Target::RECIPES);
+    let mut targets = Target::RECIPES.to_vec();
+    targets.push(Target::Go);
+    let (r, expected) = v3_run(&root, &targets);
     assert_eq!(
         publication::verify_run_v3(&root.join("receipt.json"), &expected).unwrap(),
         r
@@ -259,6 +270,8 @@ fn native_publication_refuses_cpp20_substitution_even_with_loose_hash_updated() 
 #[test]
 fn native_publication_refuses_javascript_substitution_even_with_loose_hash_updated() {
     substituted_run(Target::JavaScript, "model.js", "javascript");
+    substituted_run(Target::Go, "model.go", "go");
+    substituted_run(Target::Go, "model.go.kernel.rs", "go-kernel");
 }
 #[test]
 fn native_publication_refuses_python_substitution_even_with_loose_hash_updated() {
@@ -343,6 +356,9 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     let root = dir.path();
     let mut targets = Target::RECIPES.to_vec();
     targets.extend([Target::Cpp17RecipeV2, Target::Cpp17Fitted]);
+    if go_support::enabled() {
+        targets.push(Target::Go);
+    }
     let program = "(pipe X (ridge alpha=1.0))";
     let out = emit::emit_v3(program, &targets, root, Some(&rows())).unwrap();
     assert!(out.manifest.all_supported());
@@ -368,6 +384,20 @@ fn artifact_runtime_fixture_executes_every_supported_product() {
     for target in targets {
         let predictions = root.join(format!("{}.predictions", target.as_str()));
         match target {
+            Target::Go => {
+                // Execute the exact two sources admitted by read_identity_v3.
+                // The shared qualifier checks actual CJS/ESM predictions with
+                // the declared Wasm tolerance, rather than the native bit gate.
+                go_support::run(
+                    &root.join("verified-go"),
+                    &fs::read_to_string(root.join("model.go")).unwrap(),
+                    &fs::read_to_string(root.join("model.go.kernel.rs")).unwrap(),
+                    &serde_json::json!({"train":x,"targets":y,"test":[[0.5],[2.5]]}),
+                    &expected,
+                    false,
+                );
+                continue;
+            }
             Target::Python => execute(
                 Command::new("python3")
                     .arg(root.join("model.py"))

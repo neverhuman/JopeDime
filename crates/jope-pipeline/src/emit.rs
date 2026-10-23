@@ -35,6 +35,7 @@ pub enum Language {
     Cpp17,
     Cpp20,
     JavaScript,
+    Go,
     Cpp17Fitted,
 }
 
@@ -54,6 +55,7 @@ impl Language {
             Language::Cpp17 => "cpp17",
             Language::Cpp20 => "cpp20",
             Language::JavaScript => "javascript",
+            Language::Go => "go",
             Language::Cpp17Fitted => "cpp17-fitted",
         }
     }
@@ -65,6 +67,7 @@ impl Language {
             "cpp17" | "c++17" => Some(Language::Cpp17),
             "cpp20" | "c++20" => Some(Language::Cpp20),
             "javascript" | "js" => Some(Language::JavaScript),
+            "go" | "golang" => Some(Language::Go),
             "cpp17-fitted" => Some(Language::Cpp17Fitted),
             _ => None,
         }
@@ -81,7 +84,7 @@ impl Language {
             }
             let language = Language::parse(part).with_context(|| {
                 format!(
-                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, cpp17-fitted or all"
+                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, go, cpp17-fitted or all"
                 )
             })?;
             chosen.insert(language);
@@ -91,7 +94,7 @@ impl Language {
         }
         Ok(Language::ALL
             .into_iter()
-            .chain([Language::Cpp17Fitted])
+            .chain([Language::Go, Language::Cpp17Fitted])
             .filter(|l| chosen.contains(l))
             .collect())
     }
@@ -226,6 +229,23 @@ pub fn emit_with_options(
                 ),
             }),
         }
+    }
+
+    if languages.contains(&Language::Go) {
+        let bundle = transpile::emit_go(render_target, options)?;
+        for (path, source) in feat_math::go::sources(&bundle) {
+            artifacts.push(Artifact {
+                language: match path {
+                    "go.mod" => "go-module",
+                    "go.sum" => "go-checksums",
+                    "model.go.kernel.rs" => "go-kernel",
+                    _ => "go",
+                },
+                build: Some(feat_math::go::BUILD_COMMAND.into()),
+                ..write(directory, path, source)?
+            });
+        }
+        targets.push("golang");
     }
 
     write(
@@ -481,7 +501,7 @@ mod tests {
             Language::parse_list("rs, rs ,rust").unwrap(),
             vec![Language::Rust]
         );
-        assert!(Language::parse_list("go").is_err());
+        assert_eq!(Language::parse_list("golang").unwrap(), [Language::Go]);
         assert!(Language::parse_list(" ").is_err());
     }
 
@@ -511,6 +531,14 @@ mod tests {
         assert_eq!(
             std::fs::read_to_string(temp.path().join("targets.txt")).unwrap(),
             "py rs cpp js\n"
+        );
+        let go_dir = temp.path().join("go");
+        let go = emit(crate::select::BOOTSTRAP_GENOME, &[Language::Go], &go_dir).unwrap();
+        assert!(go.exclusions.is_empty());
+        assert_eq!(go.artifacts.len(), 4);
+        assert_eq!(
+            std::fs::read_to_string(go_dir.join("targets.txt")).unwrap(),
+            "ts\n"
         );
         assert!(temp.path().join("manifest.json").is_file());
         assert_eq!(
