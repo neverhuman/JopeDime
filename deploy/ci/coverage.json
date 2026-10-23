@@ -385,6 +385,17 @@
       ],
       "scope": "Default-on: the fitted C++17 runtime compiled by build.rs and loaded with memfd/dlopen. The jopedime appliance graph (jope-runtime, jope-policy) takes feat-math without it; deploy/appliance/dependencies-deny.toml and crates/jope-dist/tests/dependency_fence.rs keep it out."
     },
+    "feature:feat-math/go-parity-tests": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Explicit qualification only: derive Go-enabled tests from the unchanged frozen native golden source; no production runtime/API feature gate."
+    },
     "feature:feat-math/gpr-scratch-reuse": {
       "discovery": {
         "dependencies": [],
@@ -4789,6 +4800,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/go_golden": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "go-parity-tests"
+        ],
+        "source": "crates/feat-math/tests/go_golden.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Every original native golden assertion plus Go/Wasm parity; checked additive generation leaves tests/golden.rs and its frozen hash unchanged. Go runtime presence is required."
     },
     "target:feat-math/test/golden": {
       "discovery": {
@@ -12485,7 +12512,7 @@
     },
     "go-parity": {
       "checks": [
-        "bash deploy/ci/go/qualify.sh",
+        "bash deploy/ci/go/qualify.sh (including --features go-parity-tests --test go_golden)",
         "go test -mod=readonly -race ./... (generated contract package)",
         "go test -run ^$ -fuzz ^FuzzLifecycle$ -fuzztime=20s -parallel=2",
         "six pure Go cross-builds; native macOS/Windows census and contracts"

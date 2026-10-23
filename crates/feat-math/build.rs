@@ -1,3 +1,5 @@
+#[path = "tests/go_support/generate.rs"]
+mod go_golden;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -6,6 +8,7 @@ use std::process::Command;
 mod registry_codegen;
 
 fn main() {
+    go_golden::generate();
     println!("cargo:rerun-if-changed=registry/operators.toml");
     println!("cargo:rerun-if-changed=registry/codegen.rs");
     println!("cargo:rerun-if-changed=src/kernel/registry_v2/generated.rs");

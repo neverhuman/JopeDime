@@ -7,6 +7,8 @@ license.workspace = true
 description = "Model-synthesis kernel: pipeline-program DSL interpreter, Python/Rust/C++17/JavaScript code emitters, and in-process program synthesis"
 
 [features]
+# Dedicated Go qualification derives all cases from the unchanged native golden suite.
+go-parity-tests = []
 default = ["fitted-cpp"]
 # Requires exact parity and funded full-task performance qualification before use.
 gpr-scratch-reuse = []
@@ -19,6 +21,10 @@ fitted-cpp = []
 [[test]]
 name = "advanced_v3_fitted_cpp"
 required-features = ["fitted-cpp"]
+
+[[test]]
+name = "go_golden"
+required-features = ["go-parity-tests"]
 
 [dependencies]
 anyhow.workspace = true

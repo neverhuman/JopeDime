@@ -73,3 +73,9 @@ The required reusable CI matrix adds Go 1.25/1.26, race instrumentation, bounded
 fuzzing, six pure Go deployment cross-builds and native macOS/Windows census runs. A direct PR
 trigger also runs on hosted workers independently of the repository's self-hosted queue.
 Configured, pending or skipped checks are not passing execution evidence.
+
+The dedicated golden target is `JOPE_GO_PARITY=1 cargo test --locked -p feat-math
+--features go-parity-tests --test go_golden`. Build-time checked insertions add Go calls to the
+unchanged native golden source; every original native assertion remains. The feature keeps this
+expensive qualification separate from ordinary test discovery, and its runtime-presence test
+refuses a missing opt-in flag. Native golden source and takeover snapshot hashes stay unchanged.

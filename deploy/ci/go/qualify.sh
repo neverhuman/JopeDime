@@ -9,7 +9,7 @@ out=target/go-evidence
 { git rev-parse HEAD; git diff --stat; rustc -Vv; go version; date -u +%FT%TZ; sha256sum crates/feat-math/src/go/model.go crates/feat-math/src/go/{buffers,recipe,bound}.rs.txt crates/feat-math/src/go/go.{mod,sum}.txt; } > "$out/identity.log"
 cargo test --locked -p feat-math --lib go::tests:: -- --nocapture --test-threads=1 2>&1 | tee "$out/census.log"
 bash deploy/ci/go/contracts.sh 2>&1 | tee "$out/contracts.log"
-cargo test --locked -p feat-math --test golden -- --nocapture --test-threads=2 2>&1 | tee "$out/recipes.log"
+cargo test --locked -p feat-math --features go-parity-tests --test go_golden -- --nocapture --test-threads=2 2>&1 | tee "$out/recipes.log"
 cargo test --locked -p feat-math --lib advanced_v3::emit -- --nocapture --test-threads=1 2>&1 | tee "$out/fitted.log"
 cargo test --locked -p feat-math --test artifact_target_binding -- --nocapture 2>&1 | tee "$out/bindings.log"
 cargo test --locked -p jope-pipeline --test artifact_target_binding -- --nocapture 2>&1 | tee "$out/pipeline.log"
