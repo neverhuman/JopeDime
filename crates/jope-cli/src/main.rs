@@ -76,11 +76,11 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// Emit working Python / Rust / C++17 / C++20 / JavaScript, or fitted C++17 from numeric training CSV.
+    /// Emit working Python / Rust / C++17 / C++20 / JavaScript / TypeScript, or fitted C++17 from numeric training CSV.
     Emit {
         #[arg(long, default_value = DEFAULT_GENOME)]
         genome: String,
-        /// rust, python, cpp17, cpp17-recipe-v2, cpp20, javascript (or js), cpp17-fitted, or all (the four default recipes)
+        /// rust, python, cpp17, cpp17-recipe-v2, cpp20, javascript (or js), typescript (or ts), cpp17-fitted, or all (the four default recipes)
         #[arg(long)]
         lang: String,
         /// Numeric CSV with a final `target` column; required for cpp17-fitted.

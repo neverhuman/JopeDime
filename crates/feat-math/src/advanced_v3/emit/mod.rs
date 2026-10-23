@@ -1527,6 +1527,14 @@ fn main() {
 }
 
 #[cfg(test)]
+mod typescript_support {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/typescript_support/mod.rs"
+    ));
+}
+
+#[cfg(test)]
 mod tests {
     use super::super::csv::RawTable;
     use super::super::pipeline::fit_table;
@@ -1606,6 +1614,19 @@ mod tests {
             .tempdir()
             .unwrap();
         let temp = scratch.path();
+        if super::typescript_support::enabled() {
+            let bundle =
+                crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default())
+                    .unwrap();
+            super::typescript_support::run(
+                &temp.join("typescript"),
+                &bundle.source,
+                &bundle.kernel,
+                &serde_json::json!({"rows":test.rows}),
+                &runtime,
+                true,
+            );
+        }
         let csv_path = temp.join("test.csv");
         let python_path = temp.join("model.py");
         let rust_path = temp.join("model.rs");
@@ -1728,7 +1749,12 @@ mod quotation_regression_tests {
         let table = RawTable::new(
             vec!["label\u{2028}\u{301}\u{7f}".into()],
             (0..12)
-                .map(|i| vec![format!("category-{}\u{2028}\u{301}\u{7f}", i % 3)])
+                .map(|i| {
+                    vec![format!(
+                        "category-{}#![forbid(unsafe_code)]\u{2028}\u{301}\u{7f}",
+                        i % 3
+                    )]
+                })
                 .collect(),
         )
         .unwrap();
@@ -1744,6 +1770,20 @@ mod quotation_regression_tests {
             &(0..12).map(|i| i as f64).collect::<Vec<_>>(),
         )
         .unwrap();
+        if super::typescript_support::enabled() {
+            let bundle =
+                crate::typescript::emit_bound(&model, &crate::transpile::EmitOptions::default())
+                    .unwrap();
+            let scratch = tempfile::tempdir().unwrap();
+            super::typescript_support::run(
+                scratch.path(),
+                &bundle.source,
+                &bundle.kernel,
+                &serde_json::json!({"rows":table.rows}),
+                &model.predict_table(&table).unwrap(),
+                true,
+            );
+        }
         let source = emit_bound(&model, &crate::transpile::EmitOptions::default())
             .unwrap()
             .python;
@@ -1818,6 +1858,22 @@ pub fn emit_bound_targets_v3(
     let mut records = Vec::new();
     let mut sources = std::collections::BTreeMap::new();
     for &target in requested {
+        if target == Target::TypeScript {
+            let bundle = crate::typescript::emit_bound(model, options)?;
+            records.push(TargetRecord::supported(
+                target,
+                "advanced_v3",
+                crate::typescript::EMITTER_VERSION,
+                &[
+                    ("model.ts", &bundle.source),
+                    ("model.kernel.rs", &bundle.kernel),
+                ],
+                Some(fitted.clone()),
+            ));
+            sources.insert("model.ts".into(), bundle.source);
+            sources.insert("model.kernel.rs".into(), bundle.kernel);
+            continue;
+        }
         let source = match target {
             Target::Python => Some(&bound.python),
             Target::Rust => Some(&bound.rust),
@@ -1835,7 +1891,7 @@ pub fn emit_bound_targets_v3(
         } else {
             records.push(TargetRecord::unsupported(
                 target,
-                "bound-v2 adapter supports Python and Rust only".into(),
+                "bound-v2 adapter supports Python, Rust and TypeScript".into(),
             ));
         }
     }

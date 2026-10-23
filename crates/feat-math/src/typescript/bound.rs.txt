@@ -1,0 +1,35 @@
+
+#[no_mangle]
+pub extern "C" fn model_fit(_rows: usize, _cols: usize) -> u32 { 1 }
+#[no_mangle]
+pub extern "C" fn model_predict(_rows: usize, _cols: usize) -> u32 { 1 }
+#[no_mangle]
+pub extern "C" fn model_predict_text() -> u32 {
+    TS_OUTPUT.with(|b| b.borrow_mut().clear());
+    let result=(|| -> Result<Vec<f64>,String> {
+        let expected: Vec<String> = vec!__BOUND_HEADERS__.into_iter().map(str::to_string).collect();
+        let records=TS_TEXT.with(|b| {
+            let b=b.borrow();
+            let text=std::str::from_utf8(&b).map_err(|e| e.to_string())?;
+            parse_csv(text)
+        })?;
+        if records.first()!=Some(&expected) { return Err("header mismatch".into()); }
+        let raw=&records[1..];
+        let mut features=Vec::with_capacity(raw.len());
+        let mut masks=Vec::with_capacity(raw.len());
+        for row in raw {
+            if row.len()!=expected.len() { return Err("row width mismatch".into()); }
+            let (values,missing)=encode(row)?;
+            features.push(values);
+            masks.push(missing);
+        }
+        let transformed=apply_ops(features,masks,raw)?;
+        Ok(transformed.iter().map(|row| predict_numeric(row)).collect())
+    })();
+    match result {
+        Ok(output) => { TS_OUTPUT.with(|b| *b.borrow_mut()=output); 0 }
+        Err(_) => 1,
+    }
+}
+#[no_mangle]
+pub extern "C" fn model_dispose() { ts_clear_buffers(); }

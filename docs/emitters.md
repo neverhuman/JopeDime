@@ -1,4 +1,4 @@
-# Emitters: Python, Rust, C++17, C++20, JavaScript
+# Emitters: Python, Rust, C++17, C++20, JavaScript, TypeScript
 
 > **Status on `main` (2026-09-30):** `jope emit` (all five targets, `--lang cpp20` included), `jope pipeline run --emit …`, `jope models` and `jope datasets` are on `main`. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary. The generated capability matrix is machine-checked by the manifest and closure tests; the hand table below summarizes it. See the README's "What this SHA actually does".
 
@@ -14,6 +14,7 @@ bit for bit. Plan section: "Code emission"; decisions: [ADR-0002](adr/ADR-0002-f
 | Rust | `transpile::emit` → `.rust` | `model.rs`, single file, no crates (`rustc -O model.rs`) | Rust 2021 | full DSL; **bit-identical pair with Python by construction** |
 | C++17 | `transpile::emit_cpp17`, gate `supports_cpp17` | `model.cpp`, a library with a C ABI; `deploy/ci/emitters/driver.cpp` makes it a program | `-std=c++17`; also a valid C++20 program | 22 transforms, heads `ridge`, `elasticnet` |
 | C++20 | same source as C++17 | same `model.cpp` compiled with `-std=c++20` (`cxx::CxxStd::Cxx20`) | `-std=c++20` | identical to C++17: C++20 is a **compile target**, not a second emitter |
+| TypeScript | `transpile::emit_typescript`, gate `supports_typescript` | `model.ts` + `model.kernel.rs`, compiled to JavaScript + `model.wasm` | strict TypeScript ES2020, Rust wasm32 | full Rust recipe coverage; fitted coverage follows bound Rust; [build and arithmetic contract](typescript.md) |
 | JavaScript | `transpile::emit_javascript`, gate `supports_javascript` | `model.js`, ES2020/CommonJS functions; `deploy/ci/emitters/driver.js` makes it a program (`node program.js …`) | Node ≥ 20 (CI uses 26) | same 22 transforms and two heads as C++ |
 
 The `emit` example (`cargo run -p feat-math --example emit -- [--all] <program.dsl> <out-dir>`)

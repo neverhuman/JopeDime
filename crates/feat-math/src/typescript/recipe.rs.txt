@@ -1,0 +1,38 @@
+
+thread_local! {
+    static TS_MODEL: std::cell::RefCell<Option<(Model, usize)>> = const { std::cell::RefCell::new(None) };
+}
+#[no_mangle]
+pub extern "C" fn model_fit(rows: usize, cols: usize) -> u32 {
+    if rows == 0 { return 1; }
+    let Some(x)=ts_rows(rows,cols) else { return 1; };
+    TS_LABELS.with(|b| {
+        let y=b.borrow();
+        if y.len()!=rows || y.iter().any(|v| !v.is_finite()) { return 1; }
+        let model=Model::fit(&x,&y);
+        TS_MODEL.with(|s| *s.borrow_mut()=Some((model,cols)));
+        0
+    })
+}
+#[no_mangle]
+pub extern "C" fn model_predict(rows: usize, cols: usize) -> u32 {
+    TS_OUTPUT.with(|b| b.borrow_mut().clear());
+    TS_MODEL.with(|s| {
+        let s=s.borrow();
+        let Some((model,width))=s.as_ref() else { return 2; };
+        if cols!=*width { return 1; }
+        if rows==0 { return 0; }
+        let Some(x)=ts_rows(rows,cols) else { return 1; };
+        let output=model.predict(&x);
+        if output.len()!=rows { return 2; }
+        TS_OUTPUT.with(|b| *b.borrow_mut()=output);
+        0
+    })
+}
+#[no_mangle]
+pub extern "C" fn model_predict_text() -> u32 { 1 }
+#[no_mangle]
+pub extern "C" fn model_dispose() {
+    TS_MODEL.with(|s| *s.borrow_mut()=None);
+    ts_clear_buffers();
+}
