@@ -125,6 +125,13 @@ only_version_records_changed() {
   if [[ -n $bad ]]; then echo "changes beyond version records in:$bad"; return 1; fi
   echo ok
 }
+
+retained_origins_unchanged() {
+  local view='[.files[] | select(has("version_sync_bases")) | {tree_path, version_sync_bases}]'
+  cmp -s <(git -C "$tree" show HEAD:deploy/lambda/SNAPSHOT.json | jq "$view") \
+    <(jq "$view" "$tree/deploy/lambda/SNAPSHOT.json") && echo retained
+}
+
 # The nested locks that the bump changed, for the refusal cases.
 synced_locks() { git -C "$tree" diff --name-only -- 'deploy/lambda/*Cargo.lock'; }
 # Each nested lock that the bump changed has a SNAPSHOT.json tree_change that names every package
@@ -189,6 +196,7 @@ expect "the version check refuses $other" refuse "MISMATCH jope-cli $scratch != 
 expect "every Lambda workspace: cargo metadata --locked --offline, then the SNAPSHOT.json check" ok \
   'tracked files match SNAPSHOT\.json' lambda_checks
 expect "only version records changed" ok '^ok$' only_version_records_changed
+expect "all prior non-version origins survive the bump" ok '^retained$' retained_origins_unchanged
 mapfile -t locks < <(synced_locks)
 expect "the bump brought at least one Lambda lock along" ok 'Cargo\.lock' synced_locks
 expect "SNAPSHOT.json records each of them at $scratch" ok '^ok$' records_name_the_new_version
@@ -240,6 +248,42 @@ for lock in "${locks[@]}"; do
     just --justfile "$tree/justfile" --working-directory "$tree" bump "$scratch"
   expect "  and the lock is as exported, with no temporary file left" ok '^unchanged$' unchanged "$lock"
 done
+
+
+echo "# retained version-sync bases are exact and explicit"
+reset_tree
+mapfile -t origin_locks < <(jq -r '.files[] | select(has("version_sync_bases")) | .tree_path' "$tree/deploy/lambda/SNAPSHOT.json")
+for lock in "${origin_locks[@]}"; do
+  for mode in absent wrong_hash wrong_reason malformed; do
+    reset_tree
+    record=$(jq --arg p "$lock" --arg mode "$mode" '
+      (.files[] | select(.tree_path == $p)) |=
+        (if $mode == "absent" then del(.version_sync_bases)
+         elif $mode == "wrong_hash" then .version_sync_bases[-1].tree_sha256 = ("0" * 64)
+         elif $mode == "wrong_reason" then .version_sync_bases[-1].tree_change = "another change"
+         else .version_sync_bases = {} end)' "$tree/deploy/lambda/SNAPSHOT.json")
+    printf '%s\n' "$record" > "$tree/deploy/lambda/SNAPSHOT.json"
+    pattern='records another change to .*The lock is unchanged'
+    if [[ $mode == malformed ]]; then pattern='invalid version-sync bases'; fi
+    expect "refuses $mode retained origin for $lock" refuse "$pattern" bump "$scratch"
+    expect "  and leaves that lock unchanged" ok '^unchanged$' unchanged "$lock"
+  done
+  reset_tree
+  source=$(git -C "$tree" rev-parse HEAD)
+  record=$(jq --arg p "$lock" '(.files[] | select(.tree_path == $p)) |= del(.version_sync_bases)' "$tree/deploy/lambda/SNAPSHOT.json")
+  printf '%s\n' "$record" > "$tree/deploy/lambda/SNAPSHOT.json"
+  retain_origin() { (cd "$tree" && bash "$helper" snapshot-sync-base "$lock" "$1"); }
+  expect "owning command retains exact committed origin for $lock" ok 'retained version-sync base' retain_origin "$source"
+  origin_hash=$(sha256sum "$tree/deploy/lambda/SNAPSHOT.json"); origin_hash=${origin_hash%% *}
+  expect "repeating the exact origin is idempotent" ok 'already retained version-sync base' retain_origin "$source"
+  expect "  and the retained manifest is byte-identical" ok 'OK$' \
+    bash -c 'printf "%s  %s\n" "$1" "$2" | sha256sum -c --strict' check "$origin_hash" "$tree/deploy/lambda/SNAPSHOT.json"
+  expect "refuses a nonexistent origin commit" refuse 'existing ancestor' retain_origin "$(printf '%040d' 0)"
+  printf '\n# new uncommitted non-version bytes\n' >> "$tree/$lock"
+  (cd "$tree" && bash "$helper" snapshot-refresh "$lock" 'uncommitted fixture change')
+  expect "refuses to retain uncommitted lock bytes" refuse 'exact lock bytes' retain_origin "$source"
+done
+reset_tree
 
 echo "# snapshot-refresh records a file's bytes and nothing else"
 reset_tree

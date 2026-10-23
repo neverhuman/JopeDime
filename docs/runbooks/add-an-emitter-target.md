@@ -66,3 +66,11 @@ diff the arithmetic by hand before running anything.
    `jope emit --lang` enum; a line in the README quickstart if the toolchain is commonly installed.
 6. Review: a second person compiles and runs the matrix on a different machine and pastes the
    `predictions.bits` sha256 into the PR.
+
+## C17 native recipe binding
+
+The C17 target reuses the complete safe Rust numerical implementation. Extend the Rust
+recipe and its golden fixtures once; the C caller in `tests/golden.rs` then exercises that
+implementation through the ABI. Keep `src/c17/model.h`, `bridge.rs`, manifest closure and
+`tests/support/c17_export.rs` synchronized when changing the ABI. Build dependencies and fitted-format
+limits are explicit in [the C17 guide](../c17-export.md). Existing legacy defaults stay frozen.

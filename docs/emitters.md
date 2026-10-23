@@ -1,4 +1,4 @@
-# Emitters: Python, Rust, C++17, C++20, JavaScript, TypeScript
+# Emitters: Python, Rust, C++17, C++20, JavaScript, TypeScript, C17
 
 > **Status on `main` (2026-09-30):** `jope emit` (all five targets, `--lang cpp20` included), `jope pipeline run --emit …`, `jope models` and `jope datasets` are on `main`. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary. The generated capability matrix is machine-checked by the manifest and closure tests; the hand table below summarizes it. See the README's "What this SHA actually does".
 
@@ -6,12 +6,16 @@
 (`model::fit/predict`, f64) is the reference; every emitted program must reproduce its predictions
 bit for bit. Plan section: "Code emission"; decisions: [ADR-0002](adr/ADR-0002-feat-math-reconciliation.md).
 
+The opt-in [C17 native API](c17-export.md) shares the complete generated Rust recipe;
+Rust is a build dependency. It is a C binding rather than a C-only arithmetic implementation.
+
 ## Language table
 
 | Target | Entry point | Artefact | Standard / runtime | Coverage today |
 |---|---|---|---|---|
 | Python | `transpile::emit` → `.python` | `model.py`, dependency-free script (`python3 model.py train.csv test_features.csv predictions`) | CPython 3.11+ | full DSL (every planned op and head) |
 | Rust | `transpile::emit` → `.rust` | `model.rs`, single file, no crates (`rustc -O model.rs`) | Rust 2021 | full DSL; **bit-identical pair with Python by construction** |
+| C17 | `transpile::emit_c17`, gate `supports_c17` | `c17/model.h`, Rust core/boundary, source manifest | Strict C17 caller; Rust 2021 library build | same numeric recipe coverage as Python/Rust; separate fitted formats excluded |
 | C++17 | `transpile::emit_cpp17`, gate `supports_cpp17` | `model.cpp`, a library with a C ABI; `deploy/ci/emitters/driver.cpp` makes it a program | `-std=c++17`; also a valid C++20 program | 22 transforms, heads `ridge`, `elasticnet` |
 | C++20 | same source as C++17 | same `model.cpp` compiled with `-std=c++20` (`cxx::CxxStd::Cxx20`) | `-std=c++20` | identical to C++17: C++20 is a **compile target**, not a second emitter |
 | TypeScript | `transpile::emit_typescript`, gate `supports_typescript` | `model.ts` + `model.kernel.rs`, compiled to JavaScript + `model.wasm` | strict TypeScript ES2020, Rust wasm32 | full Rust recipe coverage; fitted coverage follows bound Rust; [build and arithmetic contract](typescript.md) |
@@ -35,7 +39,7 @@ The C++17 and JavaScript emitters are independently certified and narrower than 
 pair. What they do not cover today (`emit_cpp::op_cpp`/`head_supported`,
 `emit_js::op_supported`/`head_supported`):
 
-| Element | C++17 / C++20 | JavaScript | Python / Rust |
+| Element | C++17 / C++20 | JavaScript | Python / Rust / C17 recipe |
 |---|---|---|---|
 | Transforms `standardize robust_scale rank blom quantile_bins bin_onehot hinge winsor_clip cheb poly_interact rff_cos rff_sin rand_proj landmark_dist oblique_hinge row_stats pair_prod target_bin_encode sigmoid step norm_row row_diff_stats` (22) | yes | yes | yes |
 | Transforms `polar lag roll fft_mag row_spectral svd_project nystrom map_expr derive_expr symlog select_corr impute pair_ratio spline` (14) | **no** | **no** | yes |

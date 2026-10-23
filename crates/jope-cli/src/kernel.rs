@@ -230,6 +230,26 @@ fn emit_genome_with_options_impl(
     );
     let mut artifacts = Vec::new();
     for name in languages(lang)? {
+        if name == "c17" {
+            let bundle = feat_math::transpile::emit_c17(&parsed, opts)?;
+            for (file, source) in bundle.files {
+                let path = if let Some(root) = output {
+                    let path = root.join(file);
+                    fs::create_dir_all(path.parent().context("C17 output parent")?)?;
+                    fs::write(&path, &source)?;
+                    Some(path.display().to_string())
+                } else {
+                    None
+                };
+                artifacts.push(Artifact {
+                    lang: "c17".into(),
+                    bytes: source.len(),
+                    sha256: digest(&source),
+                    path,
+                });
+            }
+            continue;
+        }
         let source = match name {
             "python" | "rust" => {
                 let emitted = emit(&parsed, opts).context("emit rust/python")?;
@@ -387,6 +407,7 @@ pub(crate) fn search_validated_dataset(data: &Dataset) -> Result<SearchReport> {
 
 fn languages(lang: &str) -> Result<Vec<&'static str>> {
     Ok(match lang {
+        "c17" | "c" => vec!["c17"],
         "rust" => vec!["rust"],
         "python" => vec!["python"],
         "cpp17" => vec!["cpp17"],
@@ -396,7 +417,7 @@ fn languages(lang: &str) -> Result<Vec<&'static str>> {
         "typescript" | "ts" => vec!["typescript"],
         "all" => vec!["python", "rust", "cpp17", "javascript"],
         other => bail!(
-            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|typescript|all)"
+            "unknown language {other} (rust|python|cpp17|cpp17-recipe-v2|cpp20|javascript|typescript|c17|all)"
         ),
     })
 }
