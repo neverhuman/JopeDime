@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the ctutils 0.4.4 security patch (RUSTSEC-2026-0385) in the root Cargo.lock after combined C17 integration. The current CSV Lambda lockgraph receives the same patch. Preserve every prior transition and all numerical behavior fixtures byte-for-byte; do not promote serving models or regenerate behavior baselines.",
+  "plan_reference": "Human instruction to merge the PR queue with passing CI and publish a standard jope release; AGENTS.md reviewed lifecycle and ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/414",
+  "source_commit": "c9d9219bec1e6a80372bdf6896a6c161874d8b96",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "81b5a37c11321a274795b6e30524010c80cba502cbf5c31eb8e60cf28790f314",
+      "after": "7be6fd5683f1f4e942822c4eeddda3ac8ff5a86af02634c501ff29d8e257ba98"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "f41e77c6869f457367f8f37b14b6d1ded8cdf0b11209f21169032295f96d6412",
+      "after": "537448563fc86bff466a75967c498323b867fdfdfdc2638b78ac285b8ab11935"
+    }
+  ]
+}

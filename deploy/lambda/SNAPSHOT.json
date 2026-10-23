@@ -984,10 +984,18 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/Cargo.lock",
-      "tree_sha256": "fefd9a51865baed61b238825d99d01400c6650bccf22cbb93063ff12f715b307",
+      "tree_sha256": "4d965443dae00d25b0da240d9040c2bdf5276184961432a232f2848a8b3e1bf0",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.4.0, the workspace version of this release; no other package moves"
+      "tree_change": "ctutils 0.4.4 security patch for RUSTSEC-2026-0385; retain the original frozen checksum; root path dependency versions remain 0.4.0",
+      "version_sync_bases": [
+        {
+          "schema": "jope.lambda-version-sync-base/v1",
+          "source_commit": "c9d9219bec1e6a80372bdf6896a6c161874d8b96",
+          "tree_sha256": "4d965443dae00d25b0da240d9040c2bdf5276184961432a232f2848a8b3e1bf0",
+          "tree_change": "ctutils 0.4.4 security patch for RUSTSEC-2026-0385; retain the original frozen checksum; root path dependency versions remain 0.4.0"
+        }
+      ]
     },
     {
       "body": "csv",

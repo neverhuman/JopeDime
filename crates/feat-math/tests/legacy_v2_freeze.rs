@@ -413,7 +413,10 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
             // Native genomes, assertions, emissions, prediction bits, RNG and folds
             // are preserved; owning regeneration and all 83 golden cases verify this.
             // Previous: 25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2
-            "035635a57cc9441871a879be7bc56bed93ae10a17baf6fa3a3186f0f9876ca46",
+            // PR414: additive C17 compiler/caller parity beside all retained native and TS cases.
+            // Owning G00 regeneration must retain all43native behavior records.
+            // Previous: 035635a57cc9441871a879be7bc56bed93ae10a17baf6fa3a3186f0f9876ca46
+            "41fa308a94170150c6d694018444e06d25133fd6786b8275425951e71955c100",
         ),
         (
             "tests/champion_parity.rs",

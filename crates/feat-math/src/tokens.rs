@@ -38,6 +38,7 @@ pub enum Lang {
     Python,
     Rust,
     Cpp,
+    C,
     JavaScript,
     TypeScript,
 }
@@ -58,7 +59,7 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
             i = end;
         } else if matches!(
             lang,
-            Lang::Rust | Lang::Cpp | Lang::JavaScript | Lang::TypeScript
+            Lang::Rust | Lang::Cpp | Lang::C | Lang::JavaScript | Lang::TypeScript
         ) && c == '/'
             && i + 1 < b.len()
             && b[i + 1] == b'/'

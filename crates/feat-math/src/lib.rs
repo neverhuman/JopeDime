@@ -109,3 +109,6 @@ pub fn sanitize(x: &mut Rows) {
         }
     }
 }
+
+/// Complete native model export for C17 callers.
+pub mod c17;

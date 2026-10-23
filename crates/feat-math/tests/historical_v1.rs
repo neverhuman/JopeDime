@@ -606,6 +606,33 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(typescript_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // Preserve the original parallel C17 announcement; apply the combined edge below.
+    let c17_parallel = old_fixture("transitions/c17_native_identity_rebaseline.v1.json");
+    assert_eq!(c17_parallel["fixtures"].as_array().unwrap().len(), 2);
+    for edge in c17_parallel["fixtures"].as_array().unwrap() {
+        identity_transitions::verify_fixture(
+            edge["path"].as_str().unwrap(),
+            edge["before"].as_str().unwrap(),
+            edge["after"].as_str().unwrap(),
+            std::slice::from_ref(&c17_parallel),
+        )
+        .expect("preserved original C17 parallel identity announcement");
+    }
+    let c17_combined =
+        old_fixture("transitions/pr414_after_typescript_c17_identity_rebaseline.v1.json");
+    let c17_fixtures = c17_combined["fixtures"].as_array().unwrap();
+    assert_eq!(c17_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(c17_fixtures.iter().any(|edge| edge["path"] == path));
+    }
+    // ctutils security patch: identity-only successor after combined C17 integration.
+    let ctutils_security =
+        old_fixture("transitions/pr414_ctutils_security_identity_rebaseline.v1.json");
+    let security_fixtures = ctutils_security["fixtures"].as_array().unwrap();
+    assert_eq!(security_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(security_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -639,6 +666,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         release_0_4_0,
         model_objects,
         typescript,
+        c17_combined,
+        ctutils_security,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

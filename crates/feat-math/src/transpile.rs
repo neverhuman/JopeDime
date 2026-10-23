@@ -293,6 +293,16 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
     })
 }
 
+/// Emit a complete native C17 model API bundle backed by the full Rust recipe.
+pub fn emit_c17(genome: &GenomeIr, opts: &EmitOptions) -> Result<crate::c17::Emitted> {
+    crate::c17::emit(genome, opts)
+}
+
+/// C17 uses exactly the Rust recipe coverage, without a second arithmetic backend.
+pub fn supports_c17(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
+    supports(genome)
+}
+
 /// Check emitter coverage; Err lists unsupported ops (judge rejects such claims).
 pub fn supports(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
     match crate::spec::build_plan(genome) {
@@ -513,7 +523,7 @@ fn validate_recipe_target(
 ) -> Result<()> {
     use crate::artifact_manifest::Target;
     // TypeScript reuses the Rust numerical implementation and its admission.
-    if Target::RECIPES.contains(&target) || target == Target::TypeScript {
+    if Target::RECIPES.contains(&target) || matches!(target, Target::TypeScript | Target::C17) {
         if let GenomeIr::Pipeline(pipe) = genome {
             for stage in &pipe.stages {
                 let row = crate::kernel::registry_v2::operator("legacy_recipe", &stage.op)
@@ -548,6 +558,29 @@ pub fn emit_targets_v3(
     let mut sources = std::collections::BTreeMap::new();
     let mut records = Vec::new();
     for &target in requested {
+        if target == Target::C17 {
+            let result =
+                validate_recipe_target(genome, target).and_then(|()| emit_c17(genome, options));
+            match result {
+                Ok(bundle) => {
+                    let inputs: Vec<_> = bundle
+                        .files
+                        .iter()
+                        .map(|(p, s)| (p.as_str(), s.as_str()))
+                        .collect();
+                    records.push(TargetRecord::supported(
+                        target,
+                        "legacy_recipe",
+                        crate::c17::EMITTER,
+                        &inputs,
+                        None,
+                    ));
+                    sources.extend(bundle.files);
+                }
+                Err(error) => records.push(TargetRecord::unsupported(target, format!("{error:#}"))),
+            }
+            continue;
+        }
         if target == Target::TypeScript {
             let result = validate_recipe_target(genome, target)
                 .and_then(|()| emit_typescript(genome, options));
@@ -602,6 +635,7 @@ pub fn emit_targets_v3(
                         .map_err(anyhow::Error::msg)?;
                     (e.source, e.profile.into())
                 }
+                Target::C17 => unreachable!("multi-file target handled above"),
                 Target::TypeScript => unreachable!("handled as a complete bundle"),
                 Target::Cpp17Fitted => {
                     anyhow::bail!("fitted target requires explicit training rows")

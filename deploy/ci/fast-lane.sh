@@ -88,7 +88,7 @@ PY
 rustup show active-toolchain
     # Compilers on this runner
 set -euo pipefail
-for tool in g++ clang++ node python3 rustc; do printf '%s: ' "$tool"; "$tool" --version | head -1; done
+for tool in gcc clang g++ clang++ node python3 rustc; do printf '%s: ' "$tool"; "$tool" --version | head -1; done
     # Emitted-code matrix
 EMITTERS_OUT="$EVIDENCE/emitters" bash deploy/ci/emitters.sh
     # Strict portable parity — cxx helper unit tests
@@ -257,7 +257,7 @@ set -euo pipefail
 # Asserted, not printed. e2e-smoke.sh compiles the emitted C++ and runs the emitted
 # JavaScript and Python, so a missing toolchain here is an image defect, not a code
 # failure, and should say so rather than surfacing as a confusing script error.
-for tool in g++ clang++ node python3 rustc cargo; do
+for tool in gcc clang g++ clang++ node python3 rustc cargo; do
   command -v "$tool" >/dev/null || { echo "runner image is missing $tool" >&2; exit 1; }
   printf '%-10s %s\n' "$tool" "$("$tool" --version | head -1)"
 done
