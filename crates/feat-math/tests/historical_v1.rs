@@ -625,6 +625,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(c17_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // ctutils security patch: identity-only successor after combined C17 integration.
+    let ctutils_security =
+        old_fixture("transitions/pr414_ctutils_security_identity_rebaseline.v1.json");
+    let security_fixtures = ctutils_security["fixtures"].as_array().unwrap();
+    assert_eq!(security_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(security_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -659,6 +667,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         model_objects,
         typescript,
         c17_combined,
+        ctutils_security,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
