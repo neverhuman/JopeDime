@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,6 +24,46 @@ container = load('verify-container')
 
 
 class RunnerTests(unittest.TestCase):
+
+    def test_cargo_target_selector_covers_the_approved_build_inventory(self):
+        inventory = """source deploy/runner/common.sh
+for host in xbabe0 xbabe1 xbabe2 xbabe3 xbabe4; do
+  for lane in $(jope_runner_lanes "$host"); do
+    jope_runner_role "$host" "$lane"
+    if [[ $JOPE_RUNNER_DOMAIN != guard ]]; then printf '%s\\n' "$lane"; fi
+  done
+done
+"""
+        roles = subprocess.run(['bash', '-ec', inventory], cwd=ROOT,
+                               capture_output=True, text=True)
+        self.assertEqual(0, roles.returncode, roles.stderr)
+        approved = set(roles.stdout.splitlines())
+        self.assertTrue(approved)
+        action = (ROOT/'.github/actions/cargo-target/action.yml').read_text()
+        marker = '      run: |\n'
+        self.assertEqual(1, action.count(marker))
+        script = textwrap.dedent(action.split(marker, 1)[1])
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='cargo-target-contract-', dir=scratch) as name:
+            output = Path(name)/'github-env'
+            for lane in sorted(approved):
+                with self.subTest(lane=lane):
+                    output.write_text('')
+                    result = subprocess.run(['bash', '-ec', script], cwd=ROOT,
+                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output)},
+                        capture_output=True, text=True)
+                    self.assertEqual(0, result.returncode, result.stderr)
+                    self.assertEqual(f'CARGO_TARGET_DIR=/var/cache/jope/target/{lane}\n',
+                                     output.read_text())
+            for lane in ('guard', 'gpu', 'ci5', '../full', '', 'ci\nINJECTED=1'):
+                with self.subTest(rejected_lane=lane):
+                    output.write_text('')
+                    result = subprocess.run(['bash', '-ec', script], cwd=ROOT,
+                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output)},
+                        capture_output=True, text=True)
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertEqual('', output.read_text())
 
     def test_guard_domain_admits_only_the_exact_main_guard_push(self):
         policy.authorize({'domain': 'guard'}, self.env('main-guard', 'push'))
