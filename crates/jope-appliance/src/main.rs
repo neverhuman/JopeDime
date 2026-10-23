@@ -11,6 +11,7 @@
 mod bootstrap;
 mod cli;
 mod io;
+mod model;
 
 use clap::Parser;
 use cli::{Cli, Command, CommonArgs, TrainArgs};
@@ -324,6 +325,7 @@ impl Run {
     /// Refuse a receipt or output path that names an input, before any work. A receipt that
     /// would overwrite an input or the output is never written.
     fn refuse_aliasing(&mut self, output: &Path, inputs: &[&Path]) -> anyhow::Result<()> {
+        self.receipt_allowed = false;
         if let Some(receipt) = self.common.receipt.clone() {
             let mut protected = inputs.to_vec();
             protected.push(output);
@@ -537,17 +539,40 @@ fn summary_line(command: &str, receipt: &Receipt) {
     );
 }
 
-fn run_fit(train: &TrainArgs, output: &Path, common: &CommonArgs) -> ExitCode {
+fn run_fit(
+    train: &TrainArgs,
+    output: Option<&Path>,
+    model_root: &Path,
+    common: &CommonArgs,
+) -> ExitCode {
     let mut run = Run::new("fit", common);
     let result = (|| -> anyhow::Result<()> {
-        run.refuse_aliasing(output, &[&train.train])?;
+        if let Some(output) = output {
+            run.refuse_aliasing(output, &[&train.train])?;
+        } else {
+            if let Some(receipt) = &common.receipt {
+                io::refuse_aliasing(receipt, &[&train.train, model_root])?;
+            }
+            run.receipt_allowed = true;
+        }
         let (_, b) = run.prepare()?;
         let fitted = run.fit(train, &b)?;
         let started = Instant::now();
-        let bytes = fitted.to_bytes()?;
-        run.receipt
-            .outputs
-            .push(io::write_atomic("model", output, &bytes)?);
+        if let Some(output) = output {
+            let bytes = fitted.to_bytes()?;
+            run.receipt
+                .outputs
+                .push(io::write_atomic("model", output, &bytes)?);
+        } else {
+            let object = jope_runtime::model_object::ModelObject::from_fitted(&fitted)?;
+            let path = object.save(model_root, Limits::default().max_model_bytes)?;
+            run.receipt.outputs.push(FileRecord {
+                role: "model",
+                path: path.display().to_string(),
+                bytes: object.manifest_bytes().len() as u64,
+                sha256: jope_runtime::sha256_hex(object.manifest_bytes()),
+            });
+        }
         run.receipt.timings.write_seconds += started.elapsed().as_secs_f64();
         Ok(())
     })();
@@ -561,19 +586,13 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
         let (_, b) = run.prepare()?;
         let started = Instant::now();
         let limit = Limits::default().max_model_bytes;
-        let len = std::fs::metadata(model)
-            .map_err(|e| Failure::input(format!("{}: {e}", model.display())))?
-            .len();
-        if len > limit {
-            return Err(Failure::input(format!(
-                "{} is {len} bytes; the model limit is {limit}",
-                model.display()
-            )));
-        }
-        let bytes = std::fs::read(model)
-            .map_err(|e| Failure::input(format!("{}: {e}", model.display())))?;
-        let fitted =
-            FittedModel::from_bytes(&bytes).map_err(|e| e.context(model.display().to_string()))?;
+        let fitted = jope_runtime::model_object::load_fitted(model, limit)?;
+        let identity_path = if model.is_dir() {
+            model.join("manifest.json")
+        } else {
+            model.to_owned()
+        };
+        let bytes = jope_runtime::model_object::read_bounded(&identity_path, limit)?;
         run.receipt.inputs.push(FileRecord {
             role: "model",
             path: model.display().to_string(),
@@ -715,8 +734,10 @@ fn main() -> ExitCode {
         Command::Fit {
             train,
             output,
+            model_root,
             common,
-        } => run_fit(&train, &output, &common),
+        } => run_fit(&train, output.as_deref(), &model_root, &common),
+        Command::Model(args) => report(model::run(args)),
         Command::Predict {
             model,
             input,

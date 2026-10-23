@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for PR413: the checksum-pinned serde_ignored dependency changes Cargo.lock. Integration retains PR411 objectives and complete calibrated state. All behavior fixtures and previous transition ledgers remain byte-identical; no historical identity row is added without a real evaluation receipt.",
+  "plan_reference": "Current user request to merge all pending PRs with passing CI and publish the next version; AGENTS.md reviewed lifecycle and ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/413",
+  "source_commit": "fb7818355eb9c2043dfe82a803f5afd29d2a8797",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "622f10a106c72193029b60042c619a83c0186e836a3bd7559def2f8a01fc42a0",
+      "after": "8bd43218668e377a4b63e420e08aca22d0c09d2fcdecce5fc5e930a8e1fc2d30"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "69db12c0002555670a2f36a5d5c34d8a5a5f014dae70e2c3eb8dbe2ce60c268b",
+      "after": "9c260a36dfe8b5744445d55db1e7677607d7980721e2cec5b6ed0e20ecedbf37"
+    }
+  ]
+}

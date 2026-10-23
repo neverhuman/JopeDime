@@ -589,6 +589,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(release_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // Model-object decoder dependency: announced identity-only Cargo.lock transition.
+    let model_objects =
+        old_fixture("transitions/model_object_contract_identity_rebaseline.v1.json");
+    let model_object_fixtures = model_objects["fixtures"].as_array().unwrap();
+    assert_eq!(model_object_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(model_object_fixtures
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
     let identity_chain = [
         transition,
         successor,
@@ -620,6 +630,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         pr397_combined,
         pr398_combined,
         release_0_4_0,
+        model_objects,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
