@@ -14,7 +14,15 @@ const expectedCases=census.reduce((n,c)=>n+(c.kind==='v2'?c.executed:c.executed.
 assert.equal(cases.length,expectedCases,'browser corpus must match the completed census');
 const server=createServer(async(req,res)=>{
   try{
-    const file=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
+    const pathname=new URL(req.url,'http://localhost').pathname;
+    // A real same-origin document is required before browser module workers run.
+    // Firefox can wait indefinitely on its internal error page after a root404.
+    if(pathname==='/') {
+      res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});
+      res.end('<!doctype html><meta charset="utf-8"><title>TypeScript model qualification</title>');
+      return;
+    }
+    const file=resolve(root,'.'+decodeURIComponent(pathname));
     if(!file.startsWith(root+sep))throw new Error('path');
     const body=await readFile(file);
     res.writeHead(200,{'content-type':({'.wasm':'application/wasm','.js':'text/javascript','.json':'application/json'})[extname(file)]||'text/plain','cache-control':'no-store'});res.end(body);
@@ -34,6 +42,7 @@ try{
     const browser=await engine.launch({headless:true,...(name==='webkit'?nativeWebkitOptions(engine):{}),...(name==='chromium'&&process.env.JOPE_TS_CHROMIUM_EXECUTABLE?{executablePath:process.env.JOPE_TS_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage']}: {})});
     const version=browser.version();
     try{
+      console.log(name+' '+version+': starting complete corpus');
       const page=await browser.newPage();await page.goto(origin+'/');
       for(const fixture of cases){
         const url=origin+'/'+fixture.kind+'/'+fixture.name;
