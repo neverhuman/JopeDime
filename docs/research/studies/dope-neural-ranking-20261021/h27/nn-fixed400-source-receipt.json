@@ -1,0 +1,70 @@
+{
+  "additional_source_identities": {
+    "NN_final_OOF_producer_receipt_sha256": "4818aa482f34ecc3e48491f54d736022b907002ba56bc39b27098805712b0006",
+    "NN_independent_QA_grant_sha256": "efce9abb9a2be6b7cd9429c497e29183f6a6ed936f0969e7d73df138e9377111",
+    "data_runtime_R2_source_freeze_sha256": "0f73a9454603294c042800f240df62b03a8b22a0464d5ce8cbf8ad1054474e98",
+    "data_runtime_R2_source_peer_sha256": "64d52ed64b7333a2b21853df3adb822b5f2233eabc1aab735af08e4235642872",
+    "effective_recipe_sha256": "e08ff0d566fabeae870bf1f4a3f5fabc3dd382c0fc33176c02a889f9c3d18cdb",
+    "fresh850_native_closeout_sha256": "7388d0cd3fb2093e235e47f0d302739df00f2c42d1c7e8f3483103997228dafa",
+    "fresh850_native_producer_source_sha256": "2aaeb0973b2082bdcc2846e7c52aac7e8e7c93bc11e73cd455d4698ff7e7dca6",
+    "fresh850_saved_QA_peer_sha256": "ef4e995e1831ac4a7e82c6b4d819a410296ca8dd9914351b290e6381d094ce4a",
+    "fresh850_saved_QA_source_sha256": "03db23d52c8947d194e44014da214281c51f23c892014c81fd7ca6505d244ca1",
+    "runtime_controls_root_acceptance_sha256": "ba5fdc7ab0639df3bfbb3c68137065722397f77e13fced38285d108e493c7563"
+  },
+  "export_counter": {
+    "APIs": 0,
+    "NPZ_or_weights_read": 0,
+    "closed_curves_files": 36,
+    "closed_fold_metadata": 2,
+    "closed_model_metadata": 36,
+    "dataset_updates": 0,
+    "final_OOF_aggregate_statistics_from_verification_JSON_read": true,
+    "final_OOF_arrays_read": 0,
+    "independent_verification_JSON_read": 1,
+    "new_models_fitted": 0,
+    "paired_curve_snapshots": 180
+  },
+  "identities": {
+    "NN_implementation_source": {
+      "bytes": 3553,
+      "sha256": "07413028eecacc45bbf3ddbec6c306d9daf5785f20b85f946bcf5132d2522ec7"
+    },
+    "NN_independent_verification": {
+      "bytes": 22875,
+      "sha256": "3e7b84b19a41b8dbc3270f41914541a22d05fa503fa166a4b0b7c979dd7a486b"
+    },
+    "NN_independent_verifier_source": {
+      "bytes": 2138,
+      "sha256": "e951d80d03df123aaba1faa5e718999d264e487f4afcaad58fa323c31d000fc8"
+    },
+    "NN_sequential_supervisor_source": {
+      "bytes": 1535,
+      "sha256": "52786305a2cf87b79f15fea497a2043a6cb003532e08f18b402e9ec89c58be56"
+    },
+    "feature_materialization_root_acceptance": {
+      "bytes": 3268,
+      "sha256": "8d115555d1eaf9788714c835c9c62e8ad2e65e1ddd162dd6a0dfdfde865d75e9"
+    },
+    "first_materialize_failure_disposition": {
+      "bytes": 1323,
+      "sha256": "ed706c0c94a9c4fc634fe4b2244a0cb108f2da27065a7431cd8e5ee2114119bd"
+    },
+    "fresh850_root_acceptance": {
+      "bytes": 2315,
+      "sha256": "aaddb6e6069a768a035be1f4239b74e17b341ba24ded0905f2c3808f2fa5c3d3"
+    },
+    "root_prospective_recipe_and_state_amendment": {
+      "bytes": 3183,
+      "sha256": "7e4f00e027975be88187a78f5ae0928957ec2c4b7c491f3b26f628657d2b6373"
+    }
+  },
+  "independent_NN_QA_verdict_at_preparation": "PASS_WITH_LIMITS_NO_ESTABLISHED_LANDMARK_LIFT",
+  "privacy": "No dataset/context/family identifiers, locators, private filesystem paths, package bytes or model/data hashes are exported. Code and receipt hashes bind the private evidence.",
+  "reporting_amendment_receipt": {
+    "bytes": 1044,
+    "sha256": "01d88c19e30358f678bfdfc794618864370c0b487972a55b808e6b81314a6431"
+  },
+  "reporting_limit": "Per-model objectives are not pooled across fit-specific scales or panels. All180 original observations remain unchanged; late monitor deterioration is reported without retrospective checkpoint selection.",
+  "schema": "h27.public-neural-factorial-source-receipt/v1",
+  "scope": "Positive field projection of closed TRAIN/internal-monitor aggregate metrics, source/qualification receipts and the root-approved independent verification JSON. No weights, NPZ data or final OOF arrays were read for this export."
+}

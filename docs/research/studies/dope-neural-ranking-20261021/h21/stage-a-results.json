@@ -1,0 +1,174 @@
+{
+  "corrected_potential_cohort": {
+    "absent_epoch_contexts_unqualified": 44,
+    "component_note": "Component counts across epoch statuses are not assumed disjoint. Outside known H18 is not proof of new independent source families.",
+    "included_H18_overlap_contexts": 1098,
+    "included_H18_overlap_union_components": 160,
+    "included_epoch_contexts": 1909,
+    "included_outside_known_H18_contexts": 811,
+    "included_outside_known_H18_union_components": 154,
+    "included_union_components": 314,
+    "new_independent_validation_admissions": 0,
+    "new_numeric_admissions": 0,
+    "reservation_clean_current_role_potential_contexts_before_epoch_status": 1968,
+    "withdrawn_epoch_contexts_excluded": 15
+  },
+  "independent_review_costs": {
+    "epoch_status_correction": {
+      "CPU_affinity_count": 2,
+      "GPU_calls": 0,
+      "S3_requests": 0,
+      "fits": 0,
+      "max_rss_kib": 189292,
+      "numeric_arrays": 0,
+      "optimizer_updates": 0,
+      "wall_seconds": 0.8828301189932972
+    },
+    "graph_role_reservation_recomputation": {
+      "GPU_calls": 0,
+      "S3_requests": 0,
+      "approval_v3_used": false,
+      "approval_versions": [
+        "v1",
+        "v2"
+      ],
+      "fits": 0,
+      "max_rss_kib": 269480,
+      "optimizer_updates": 0,
+      "raw_or_prepared_input_arrays_read": 0,
+      "roster_rows": 5940,
+      "state": "PASS_INDEPENDENT_METADATA_ROLE_AND_RESERVATION_GRAPH_RECOMPUTATION",
+      "wall_seconds": 3.3157735359854996
+    }
+  },
+  "limits": [
+    "Canonical/catalog identity is not original raw-row identity. Exact prepared references do not establish original-row or scaler-fit fidelity.",
+    "Epoch status and exclusion_reason are required in addition to current family/role/reservation bindings. The original 1968 must not be called fully epoch-eligible.",
+    "Withdrawn records stay excluded unless separate new authority reverses withdrawal; absent records require exact approved epoch authority.",
+    "All archived GP contexts used exposed outer-test adaptation; no independent external validation follows. Prior training exposure alone does not bar otherwise qualified authorized TRAIN.",
+    "Membership-only pilot is a separate later phase. This packet contains no membership bodies, numeric input/outcome arrays or candidate metrics.",
+    "All Stage-A work used zero S3 requests, zero numeric array bodies, zero fits, zero GPU calls and zero optimizer updates. Preparation probes were not fully timed.",
+    "No original-row/scaler or cached GP-label numeric admission is made; global absence of stronger evidence is unproven."
+  ],
+  "membership_only_next_pilot": {
+    "current_approved_train_fit": 12,
+    "declared_total_bytes": 12506,
+    "exact_versions_frozen": true,
+    "independent_epoch_status_included": 12,
+    "input_or_outcome_body_decode_authorized_by_stage_a": false,
+    "known_reservation_clean": 12,
+    "objects": 12,
+    "pilot_component_overlap_with_withdrawn_contexts": 0,
+    "retrieval_authority": "Root separately authorized membership-only exact-version pilot after frozen code/tests.",
+    "retrieval_completion": "NOT_CLAIMED_BY_THIS_STAGE_A_PROJECTION",
+    "source_wide_withdrawal_scope": "UNRESOLVED; known withdrawal exclusion is per record only. No full-source cleanliness claim."
+  },
+  "original_same_agent_BFS_QA": {
+    "cost": {
+      "CPU_seconds": 3.552451127,
+      "GPU": 0,
+      "S3_GETs": 0,
+      "fits": 0,
+      "max_rss_kib": 391960,
+      "numeric_arrays": 0,
+      "updates": 0,
+      "wall_seconds": 3.579479256994091
+    },
+    "roster_rows_verified": 5940,
+    "scope": "Separately authored graph/BFS arithmetic executed by the Stage-A producer agent; not an independent reviewer or body replay. It missed epoch status/exclusion_reason.",
+    "source_files_rehashed": 5957,
+    "state": "PASS_WITH_LIMITS"
+  },
+  "producer_aggregate_preserved": {
+    "by_store_status": {
+      "incoming_per_fold_hwm": {
+        "POTENTIAL_TRAIN_FIT_SOURCE_UNQUALIFIED": 1198,
+        "RESERVED": 860,
+        "ROLE_UNQUALIFIED_OR_NONPOOL": 292,
+        "UNKNOWN_FAMILY": 756
+      },
+      "main_per_fold_hwm": {
+        "POTENTIAL_TRAIN_FIT_SOURCE_UNQUALIFIED": 770,
+        "RESERVED": 1460,
+        "ROLE_UNQUALIFIED_OR_NONPOOL": 559,
+        "UNKNOWN_FAMILY": 45
+      }
+    },
+    "context_counts": {
+      "POTENTIAL_TRAIN_FIT_SOURCE_UNQUALIFIED": 1968,
+      "RESERVED": 2320,
+      "ROLE_UNQUALIFIED_OR_NONPOOL": 851,
+      "UNKNOWN_FAMILY": 801,
+      "canonical_only_binding": 5139,
+      "exact_epoch_context_input_membership": 5017,
+      "exact_sample_family_binding": 5139,
+      "source_chain_numeric_qualified": 0
+    },
+    "cost": {
+      "CPU_seconds": 3.899109433,
+      "CPUs": 2,
+      "GPU_calls": 0,
+      "S3_requests": 0,
+      "address_space_cap_bytes": 8589934592,
+      "body_GETs": 0,
+      "fits": 0,
+      "max_rss_kib": 337356,
+      "metadata_bytes_read": 158492777,
+      "metadata_reads": 5957,
+      "numeric_array_bodies": 0,
+      "optimizer_updates": 0,
+      "preparation_costs": "Read-only schema probes and source freeze not fully timed; final worker costs only.",
+      "wall_seconds": 4.111152841011062
+    },
+    "created_utc": "2026-10-22T15:19:22.277695+00:00",
+    "limits": [
+      "Canonical means approved processed/catalog identity, not original raw row identity.",
+      "Full sample identity is stronger than a short dataset label; same-hash conflicts remain explicit.",
+      "Exact prepared input/membership identity does not prove original-row/scaler fidelity.",
+      "No numeric candidates, GP inner labels, baseline arrays or input cells were opened.",
+      "All contexts used exposed outer-test adaptation; no fresh-validation claim.",
+      "Unknown prior exposure alone does not bar an otherwise qualified TRAIN cohort."
+    ],
+    "new_independent_validation_admissions": 0,
+    "new_numeric_admissions": 0,
+    "population_contexts": 5940,
+    "population_dataset_labels": 1189,
+    "protocol_sha256": "a6d4308ea71e497e28a1e5d9a3f2762c1a2b68912df5516588c713d4702da11b",
+    "reservation_roster": {
+      "CAL_DEVELOPMENT_components": 72,
+      "CAL_DEVELOPMENT_contexts": 329,
+      "DL03_outer_contexts": 377,
+      "DL03_outer_families": 73,
+      "H12_families": 125
+    },
+    "role_counts_for_exact_resolved_contexts": {
+      "dev": 194,
+      "heldout": 199,
+      "sealed_excluded": 303,
+      "train_fit": 3592,
+      "train_nonpool": 851
+    },
+    "roster_sha256": "6affde6ace672ba34517a5458e4eec934be3596a436eb7dea5bf8a122dfeca64",
+    "schema": "h21.metadata-admission-stage-a-results/v1",
+    "source_manifest_sha256": "e272a64cbb9585ce68ecb8c9ff9a7eb0053c908373479a0fac5083a937e12971",
+    "state": "COMPLETE_METADATA_ONLY_ZERO_NUMERIC_ADMISSIONS",
+    "union_components_per_status": {
+      "POTENTIAL_TRAIN_FIT_SOURCE_UNQUALIFIED": 314,
+      "RESERVED": 361,
+      "ROLE_UNQUALIFIED_OR_NONPOOL": 110
+    }
+  },
+  "public_snapshot_utc": "2026-10-22T15:35:25.944994+00:00",
+  "schema": "h21.public-stage-a-corrected-results/v1",
+  "source_bindings_sha256": {
+    "independent_epoch_status_correction": "ec507cd25788f0fb7634356f5083f51772803d3f0cd33a5f0b735b30a78413c3",
+    "metadata_source_manifest": "e272a64cbb9585ce68ecb8c9ff9a7eb0053c908373479a0fac5083a937e12971",
+    "private_roster": "6affde6ace672ba34517a5458e4eec934be3596a436eb7dea5bf8a122dfeca64",
+    "same_agent_BFS_QA_source": "aacc3305561af01d06e32ef034c96cc0bee3134f25a23f09a5d77b3f08bfb705",
+    "stage_a_original_results": "7a8bccefd6d61f27f535a0c97f1d11687bc8ea77c1366feec824cc7075524b6e",
+    "stage_a_protocol": "a6d4308ea71e497e28a1e5d9a3f2762c1a2b68912df5516588c713d4702da11b",
+    "stage_a_same_agent_BFS_QA": "f444c2b3edcc5853839ca889b8b56cd2cbef29dd5705600521e03717621f5032",
+    "stage_a_worker": "29d20d7a79ee30d5750d1ff0e284583ba2d2da1546fae5b64e136abf4a2872b2"
+  },
+  "state": "CORRECTED_METADATA_POTENTIAL_ONLY_ZERO_NUMERIC_ADMISSIONS"
+}

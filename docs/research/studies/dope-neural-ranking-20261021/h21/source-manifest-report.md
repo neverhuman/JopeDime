@@ -1,0 +1,9 @@
+# Exact source manifests: original failure and separate amended success
+
+The six MAIN source manifests are now byte-verified and independently replayed: **19,318 bytes in six unique exact-version GETs**. The original run fetched one 3,221-byte object, then rejected a legitimate object-reference descriptor at `objects.data`; five objects were unattempted. That failed closure and partial saved-byte QA remain immutable.
+
+A new prospective R1 packet allowed a complete, typed five-field reference at that exact path. Negative data-payload controls remained. It reused the first saved object with zero GETs; independent cached-byte QA passed before the five remaining GETs (16,097 bytes). Later independent full saved-byte/field QA passed with limits. No object was fetched twice; no reference was followed.
+
+Forty-two typed metadata references were inventoried. All six full sample/canonical literals match the approved cases. The observed manifest schema is kept unqualified as a source-semantic authority in this protocol; object byte SHA and parent logical SHA are different domains. Known historically exposed research cases remain exposed; completeness of prior exposure history is unresolved. This is not new independent validation. Original source rows, preprocessing/scaler fit rows, writer and exact GP-input/label contracts remain unqualified: **zero new numeric admissions, fits or optimizer updates**.
+
+[Safe aggregate](source-manifest-results.json) preserves both closures, all twelve pilot identities in the denominator, costs and source hashes. The R1 producer took 1.303341 seconds wall / 0.560772 CPU; its saved-byte QA took 0.250276 / 0.194468 and the later independent full QA 0.414876 / 0.339590 CPU (see exact receipt for measured decimals). Preparation/source transfer were not fully timed. All files are mirrored outside product Git. No S3 durability or product merge claim follows.

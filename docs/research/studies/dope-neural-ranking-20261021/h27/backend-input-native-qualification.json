@@ -1,0 +1,77 @@
+{
+  "schema": "h27.public-backend-input-native-qualification/v1",
+  "observed_utc": "2026-10-22T22:44:18.258444+00:00",
+  "state": "BACKEND_AND_SELECTED_INPUTS_QUALIFIED_REAL_PILOT_NOT_YET_LAUNCHED",
+  "backend": {
+    "synthetic_GP_fit_attempts": 64,
+    "completed_fits": 64,
+    "unknown_attempts": 0,
+    "canonical_programs": 8,
+    "malformed_request_controls": 7,
+    "independent_score_input_stat_checks": 64,
+    "same_kernel_prediction_bit_replays": 64,
+    "worker_wall_seconds": 141.63591809605714,
+    "worker_CPU_seconds": 11.906326649,
+    "child_CPU_seconds": 186.151343,
+    "independent_QA_wall_seconds": 13.27168684604112,
+    "independent_QA_CPU_seconds": 0.44034937800000007,
+    "independent_QA_child_CPU_seconds": 9.474819
+  },
+  "selected_inputs": {
+    "contexts": 16,
+    "distinct_known_components": 16,
+    "TRAIN_rows": 24217,
+    "feature_range": [
+      5,
+      40
+    ],
+    "NPZ_bytes": 739175,
+    "duplicate_X_positions_diagnostic": 990,
+    "row_deletions": 0,
+    "raw_curation_new_CV5_fold_safe_certificate": false,
+    "worker_wall_seconds": 4.404211313,
+    "worker_CPU_seconds": 0.482679773,
+    "child_CPU_seconds": 0.889505
+  },
+  "native": {
+    "hosts": 2,
+    "parse_calls": 16,
+    "predict_only_calls": 16,
+    "bitwise_matches": true,
+    "new_fits": 0,
+    "scope": "Exact Linux binary compatibility PASS_WITH_LIMITS. Original post-exit-resource-limited closures preserved; live worker pre/terminal caps and bit matches passed. All native units stopped."
+  },
+  "real_pilot": {
+    "launched": false,
+    "proposed_fits": 640,
+    "proposed_concurrent_workers": 16,
+    "contexts_per_host": 8,
+    "fold0_refits": 0
+  },
+  "current_learned_support": {
+    "contexts": 850,
+    "components": 162,
+    "archived_context_program_outcomes": 979200,
+    "new_numerical_or_independent_admissions": 0
+  },
+  "NN_updates": 0,
+  "ranking_lift_claim": false,
+  "S3_GET_HEAD_provider_requests": 0,
+  "source_sha256": {
+    "backend_freeze": "345121bd1c0341c889f1787dabb8d0e1668cc5a7a07943cb92bfd32cca56c43f",
+    "backend_results": "9fa6c90acfea1437bf30a1de669629eb6f836cd3d15122ba9eed229a5ee6d733",
+    "independent_QA": "90866fff3081850ad5594ed7d19935d944e4db7b825680eb3893116d90e6b48f",
+    "exact_input_proof": "7868a6f56a5a28bd691dc817b98fe451692cf1fe4a64e1de9d73eb2b788f31a9",
+    "native_aggregate": "78f78771726c7aa18c2b35ba5bade7e86cdfdf76d66915fb04ec1aba28e401d2",
+    "root_native_limit_acceptance": "82aedda70a0fd85d00aa3e17029f5429ea575e38f266a8ea2b77a034e22f396d",
+    "driver_R1_freeze": "fe75f4e7da881f7cde8c482a3457f8408120ec83cc39dd96480414427e61cea2",
+    "driver_R1_review": "a4b4b2c4cf021be3ff6cd2d8189221b7ed9fdba1f95d1613dbe5ab3188bc6f26"
+  },
+  "limits": [
+    "Synthetic qualification and exact input provenance are not ranking lift.",
+    "Probe scores describe the existing curated TRAIN view; historical curation and duplicate-row effects are not made raw-data-independent by CV5.",
+    "Probe CV5, archived S1 two-fold target fitness and neural component folds are separate contracts.",
+    "Original pre-access source/accounting/review-binding mistakes, custody permission errors and limited native closures remain preserved.",
+    "No production changes, baseline refits, real GP probes or neural updates at this dated observation."
+  ]
+}

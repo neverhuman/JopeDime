@@ -1,0 +1,100 @@
+{
+  "CSV_JTT1_feature_target_outcome_bodies": 0,
+  "GPU_calls": 0,
+  "S3_requests": 0,
+  "TRAIN_transform_fit_or_no_fit_certificates": 0,
+  "candidate_checks_recomputed": 126,
+  "candidate_consistent_cases": 6,
+  "compressed_bytes": 491782,
+  "compressed_objects_verified": 6,
+  "compute_deadline": null,
+  "conditional_sample_identity": "Six reconstructions match using an unverified diagnostic digest pointer; diagnostic and source numeric bodies were not read.",
+  "decoded_metadata_bytes": 868025,
+  "failure_history": [
+    "Mac lacked jsonschema: initial pure controls passed but schema fixture could not run; original dependency failure preserved. Host pinned jsonschema and complete prospective 15+14 control suites passed before real decode.",
+    "Earlier separate R0/R1 provider-context refusals and StageA epoch-status correction remain unchanged; no failed phase rewritten as PASS."
+  ],
+  "fits": 0,
+  "hash_domains": {
+    "compressed_object": "Storage byte SHA256; six exact objects verified.",
+    "internal_membership": "SHA256 of candidate canonical unsigned metadata object without LF.",
+    "limits": "Source-pinned candidate reader-contract consistency does not establish archive writer identity or source-row semantics.",
+    "parent_logical": "SHA256 of candidate canonical full metadata object plus LF."
+  },
+  "historical_writer_identities_verified": 0,
+  "independent_QA_cost": {
+    "CPU_seconds": 0.28054339699999997,
+    "CSV_JTT1_feature_target_outcome_bodies": 0,
+    "GPU_calls": 0,
+    "S3_requests": 0,
+    "fits": 0,
+    "max_rss_kib": 97784,
+    "new_GETs": 0,
+    "optimizer_updates": 0,
+    "wall_seconds": 0.4242314749862999
+  },
+  "limits": [
+    "Metadata order/unique occurrence IDs are not an original typed-row/source equivalence proof.",
+    "Candidate checksum rules are reader-contract consistency, not historical writer identity.",
+    "Diagnostic and source CSV bytes were not opened; conditional sample identity uses their metadata digest pointers.",
+    "No TRAIN-only fitted-transform certificate, or actual historical identity/fixed-transform no-fit proof, was established.",
+    "All twelve historically exposed cases remain accounted for; no fresh validation or GP label-contract admission."
+  ],
+  "main_cases_unresolved_by_this_packet": 6,
+  "metadata_checks": "Strict single-member gzip EOF/CRC/no trailing bytes, bounded strict UTF8 JSON and pinned closed metadata schema; ordered unique occurrence IDs and fold hashes/partitions; full manifest policy/shape/split ref and GP context identity/cuts/counts.",
+  "network_calls": 0,
+  "new_independent_validation_admissions": 0,
+  "new_numeric_admissions": 0,
+  "next_pointer_frontier": {
+    "authority": "Stored split CSV refs are not yet original acquisition or TRAIN-transform proof.",
+    "body_access_status": "PROPOSAL_ONLY_NO_NEW_BODY_GRANT",
+    "complete_stored_source_CSV_refs": 12,
+    "diagnostic_declared_bytes": 13209,
+    "diagnostic_declared_cache_paths_stat_present": 6,
+    "diagnostic_metadata_refs": 6,
+    "parent_split_declared_bytes": 1100342,
+    "parent_split_local_paths": "Not declared in inspected materialization. No guessed cache path.",
+    "parent_split_metadata_refs": 6
+  },
+  "observed_candidate_check_failures": 0,
+  "observed_utc": "2026-10-22T16:38:14.556730+00:00",
+  "optimizer_updates": 0,
+  "original_case_denominator": 12,
+  "original_typed_row_equivalence_certificates": 0,
+  "preparation_cost_limit": "Preparation and source-transfer work were not fully timed. Synthetic controls are separate from real-body processing costs.",
+  "producer_cost": {
+    "CPU_seconds": 0.24524409700000002,
+    "address_space_cap_bytes": 8589934592,
+    "affinity_CPUs": 2,
+    "compute_deadline": null,
+    "max_rss_kib": 32576,
+    "wall_seconds": 0.5926636790391058
+  },
+  "proof_routes": "Actual historical producer/execution evidence OR independently reproducible typed row/order/multiplicity/cut equivalence against an approved source/spec can establish source semantics. Actual identity or fixed data-independent transformations can use a no-fit proof. Current metadata proves neither; no standing gate waived.",
+  "publication_status": "PRIVATE_SOURCE_CUSTODY_PENDING_READBACK; PRODUCT_GIT_IMPORT_PENDING_ROOT",
+  "schema": "h21.public-cached-parent-complete/v1",
+  "selected_incoming_objects": 6,
+  "source_sha256": {
+    "LOCAL_TEST_PREPARATION_FAILURE.json": "e820eed4f7cdca3c42933628896c66e7ba0aea8e947b96722d8111da3def21a1",
+    "NEXT_REFERENCE_CACHE_STAT_ONLY.json": "ef648ca666eac9d7b5eb4d7fce781b4d75220d82b3854eaaa03bb635962e24bf",
+    "NEXT_REFERENCE_PACKET_PRIVATE.json": "4adcdbbc97f870f6828cd476f0e6d87993d6621afbd2005d43dc67318cc033a2",
+    "PRE_EXECUTION_SOURCE_RECEIPT.json": "2904c437b57e13f7e7fa7e09a3a91d69804d803dfc4a9693ddbd81698decb241",
+    "execution-grant.json": "9749f30faa5bf6bd9ce6f688b4cfd220108685626e75a738c66748da4d9a7268",
+    "independent-execution-closure.json": "4df44b315c1b102447eb98acb95db5b1a53e907b84744a3d6ca6ff66955b7664",
+    "independent-review.md": "f4978d0cf61e8ca2eb3fbf4aff1e340d09e16f0d3bfa9e41e86c697cfa5d8978",
+    "independent-verification.json": "718b21f67937d88883a7a6777bf5897b7c1adb5986d68543cac86b6270528245",
+    "independent-verify.py": "7c737aadd29559713bd44af6a4402de5e01812bc696395ea6d0d8fdd3723a58e",
+    "metadata-allowlist.json": "1de193828c3810250d3ce06537f3ae919104af38bd92b0bb0b17136423ef2567",
+    "producer-closure.json": "64f2d8c533e240a7c736ce2bf3337f0bdc2a8b0e187e6581f910fa388944c5b4",
+    "protocol.json": "a7520b57562a80aa947441dcdfc4e34012e7b12197b8898c6bfe499fc62b33d4",
+    "results.json": "6cd0e0e911409dc3f07cc608c614cac6a5ce238b734e201f5eb0e5edd4d7111d",
+    "worker.py": "209eae88fb9b70fd66256632fefa0e4059219ffbd7f7d38d9664c0472b707e6c"
+  },
+  "state": "COMPLETE_METADATA_ONLY_INDEPENDENT_QA_PASS_WITH_LIMITS",
+  "synthetic_controls": {
+    "independent_parser_checker_tests_passed": 14,
+    "negative_fixtures": "Truncated footer, CRC corruption, concatenated/trailing gzip, expansion cap, duplicate/nonfinite/invalid UTF8 JSON, schema feature cells, wrong shape/context identities and checksum/newline domains were rejected.",
+    "producer_tests_passed": 15,
+    "real_body_negative_results": 0
+  }
+}

@@ -1,0 +1,370 @@
+{
+  "OOF_candidates": 979200,
+  "OOF_components": 162,
+  "OOF_contexts": 850,
+  "dataset_optimizer_updates": 2400,
+  "descriptive_seed_contrasts": [
+    {
+      "seed": 20261022,
+      "trained_minus_base": 0.045217316051234135,
+      "trained_minus_random": -0.03970303523713681
+    },
+    {
+      "seed": 20261023,
+      "trained_minus_base": -0.3061333445621621,
+      "trained_minus_random": 0.12456238984409751
+    },
+    {
+      "seed": 20261024,
+      "trained_minus_base": 0.33063783943486436,
+      "trained_minus_random": 0.43850113725911344
+    }
+  ],
+  "execution_and_costs": {
+    "CPU_synthetic_updates_verified": 2,
+    "GPU_synthetic_updates": 0,
+    "additional_initial_CPU_synthetic_updates": "UNOBSERVED_RANGE_0_TO_1",
+    "compute_deadlines_enabled": false,
+    "controller_elapsed_seconds_including_original_failed_QA": 268.20018805377185,
+    "dataset_optimizer_updates": 2400,
+    "final_evaluation_service_runtime_seconds": 41.29,
+    "four_fit_service_runtime_sum_seconds": 221.514,
+    "later_separate_QA1_self_elapsed_seconds": 137.77261008508503,
+    "new_adapter_models": 12,
+    "new_base_fits": 0,
+    "original_QA_self_elapsed_seconds": 0.3142250031232834,
+    "preserved_preparation_events": [
+      "Dependency-import thread-cap saturation; no dataset updates; synthetic count unknown0to1.",
+      "Local missing metadata-copy refusal before protocol.",
+      "Import-context metadata preflight failure, repaired without scientific source changes."
+    ],
+    "prior_H18_costs": "Remain in H18 ledger; six reused bases do not create new H20 base fits.",
+    "reused_frozen_bases": 6,
+    "time_scope": "Service/self wall observations, not measured GPU-active time; preparation is not fully timed."
+  },
+  "incremental_state_criterion_met": false,
+  "limits": [
+    "The independent-box diagnostic motivated this fixed range using TRAIN only; no bound search.",
+    "112 state coordinates include readout-derived summaries, not pure activations.",
+    "Frozen base failure logits; no true-gate masking or gate-policy improvement.",
+    "Historical family exposure persists despite current fold-TRAIN isolation.",
+    "Both prespecified primary intervals must be wholly favorable for internal evidence; no external lift claim."
+  ],
+  "models_completed": 12,
+  "multiple_testing": "2 prespecified contrasts;100000 paired component draws;seed20261022;q1/160,159/160;98.75% each/97.5% Bonferroni familywise",
+  "new_base_fits": 0,
+  "primary_contrasts": {
+    "trained_minus_base": {
+      "bootstrap_draws": 100000,
+      "bootstrap_seed": 20261022,
+      "components": 162,
+      "familywise_97_5_ci": [
+        -0.7472265232964711,
+        0.6894384188930911
+      ],
+      "favorable_entire_interval": false,
+      "left_minus_right": 0.023240603641311915,
+      "per_contrast_98_75_ci": [
+        -0.7472265232964711,
+        0.6894384188930911
+      ]
+    },
+    "trained_minus_random": {
+      "bootstrap_draws": 100000,
+      "bootstrap_seed": 20261022,
+      "components": 162,
+      "familywise_97_5_ci": [
+        -0.009140601361754454,
+        0.4830348439474472
+      ],
+      "favorable_entire_interval": false,
+      "left_minus_right": 0.17445349728869136,
+      "per_contrast_98_75_ci": [
+        -0.009140601361754454,
+        0.4830348439474472
+      ]
+    }
+  },
+  "primary_endpoint": "raw constrained selected GP fitness; lower is better",
+  "primary_estimand": "each seed selects; mean3 seed utility/context; equal contexts/component; equal162components",
+  "primary_seed_mean": {
+    "base": {
+      "all_failed_fallback": 0.0,
+      "capped_regret": 0.37080842829930166,
+      "gate_failure": 0.004365079365079364,
+      "raw_regret": 0.8118494501442681,
+      "selected_failure_count_across3seeds": 7,
+      "selected_log_cv_ratio": -1.666311117439613,
+      "selected_raw_fitness": -1.0365030366697972,
+      "selection_denominator": 2550,
+      "top10_oracle_regret": 0.17718641828620812,
+      "top32_oracle_regret": 0.12080871375104524,
+      "top5_oracle_regret": 0.21278567242878152,
+      "true_best_rank": 312.2571604749846
+    },
+    "random": {
+      "all_failed_fallback": 0.0,
+      "capped_regret": 0.3819115035728535,
+      "gate_failure": 0.002777777777777778,
+      "raw_regret": 0.6606365564968887,
+      "selected_failure_count_across3seeds": 6,
+      "selected_log_cv_ratio": -1.654627174685019,
+      "selected_raw_fitness": -1.1877159303171767,
+      "selection_denominator": 2550,
+      "top10_oracle_regret": 0.17326940483034833,
+      "top32_oracle_regret": 0.11946923332493048,
+      "top5_oracle_regret": 0.21507530292099217,
+      "true_best_rank": 367.41485419587275
+    },
+    "trained": {
+      "all_failed_fallback": 0.0,
+      "capped_regret": 0.3756424299266375,
+      "gate_failure": 0.004570840681951793,
+      "raw_regret": 0.83509005378558,
+      "selected_failure_count_across3seeds": 11,
+      "selected_log_cv_ratio": -1.6632537394833424,
+      "selected_raw_fitness": -1.013262433028485,
+      "selection_denominator": 2550,
+      "top10_oracle_regret": 0.16946411562177663,
+      "top32_oracle_regret": 0.11422269643352223,
+      "top5_oracle_regret": 0.20850612492647116,
+      "true_best_rank": 358.7969311038755
+    }
+  },
+  "public_provenance": {
+    "all12_adapters_and6_bases_replayed": true,
+    "covariates_predeclared_sha256": "64c6b56acfad8f3917228b0d38b9ef46276cce26dbb9c5b1f0467de88762047f",
+    "later_replay_new_fits": 0,
+    "later_replay_new_optimizer_updates": 0,
+    "later_replay_seconds": 137.77261008508503,
+    "later_separate_replay": "PASS_WITH_LIMITS",
+    "maximum_gate_replay_error": 0.0,
+    "maximum_score_replay_error": 0.0,
+    "original_producer_QA": "FAIL",
+    "original_producer_closure": "CLOSED_INCOMPLETE",
+    "pool_files_rehashed": 850,
+    "product_Git_publication": "PENDING_ROOT",
+    "source_bodies_or_arrays_exported": false,
+    "source_pin_amendment": "Adds only the already pre-fit reuse-bound covariate SHA to generic verifier admission; 13 scientific ASTs unchanged; original failure preserved.",
+    "source_sha256": {
+      "evaluation_seal": "a18c43143c9db2ebf2607e119c18530c60d834b49780fe5096d537f915662ebb",
+      "fit_seal": "d0dfe23fcc1198c95da66237e874a10387b4e98e763e4895ab77d92fb6902931",
+      "independent_results": "8adf6526b414d1b34640fdc2eb5dc08571379842e90fff72ec1090983aa5768f",
+      "independent_verifier": "4e080db652f8e9027a24f0d31b7dff4b510223111fcefc62c540c201a2614e9c",
+      "later_QA1": "ebe67423819bcdc332b2cf3115c01ed31c3ee2b0207e93ebd1fd164937fec190",
+      "later_source_pin_amendment": "bc62e22dc044c631e7b7247a9393f7c6eb4e0cb524feeadee9bf898974025875",
+      "model": "790e0b75e81cd1c421b7e9265873c93655d606f236eb444888fe8a2ad6ecb884",
+      "original_QA_failure": "25afe2634d54a122098b1b8a8bb4b9ca041a73bf71872a05567ab28a2c270e94",
+      "original_closure": "f24c1635181fda4bc121b2f4d9ba23501faaa159a2cf6e89fe72db9fbb909fd8",
+      "original_protocol": "5790989164c3d02a55248f0fa0e3253ad372893a0a0e8a1bd4629476fc7381bb",
+      "trainer": "4b8bba829ba03f889c0fd62267d80672702c990c26d50a58fd44a5be398fc1ff"
+    }
+  },
+  "reused_frozen_bases": 6,
+  "schema": "h20.independent-results/v1",
+  "scope": "Historically exposed TRAIN source; internal two-fold crossfit, not independent external validation",
+  "secondary_endpoints": "descriptive raw/capped regret,gate/logCV,top5/10/32 oracle rank metrics; no primary substitution",
+  "secondary_narrow_h18": {
+    "narrow_primary_seed_mean": {
+      "base": {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.37080842829930166,
+        "gate_failure": 0.004365079365079364,
+        "raw_regret": 0.8118494501442681,
+        "selected_failure_count_across3seeds": 7,
+        "selected_log_cv_ratio": -1.666311117439613,
+        "selected_raw_fitness": -1.0365030366697972,
+        "selection_denominator": 2550,
+        "top10_oracle_regret": 0.17718641828620812,
+        "top32_oracle_regret": 0.12080871375104524,
+        "top5_oracle_regret": 0.21278567242878152,
+        "true_best_rank": 312.2571604749846
+      },
+      "random": {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.37507683456217794,
+        "gate_failure": 0.004218106995884774,
+        "raw_regret": 0.801366512446675,
+        "selected_failure_count_across3seeds": 6,
+        "selected_log_cv_ratio": -1.661392911384467,
+        "selected_raw_fitness": -1.04698597436739,
+        "selection_denominator": 2550,
+        "top10_oracle_regret": 0.1773011577403337,
+        "top32_oracle_regret": 0.12034614034379167,
+        "top5_oracle_regret": 0.21194315614435488,
+        "true_best_rank": 321.5295078121467
+      },
+      "trained": {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.368585302707755,
+        "gate_failure": 0.003953556731334509,
+        "raw_regret": 0.7684618198609132,
+        "selected_failure_count_across3seeds": 6,
+        "selected_log_cv_ratio": -1.6689849975122133,
+        "selected_raw_fitness": -1.0798906669531516,
+        "selection_denominator": 2550,
+        "top10_oracle_regret": 0.17683544868541418,
+        "top32_oracle_regret": 0.11979878592087075,
+        "top5_oracle_regret": 0.21142459841717606,
+        "true_best_rank": 318.7679441643176
+      }
+    },
+    "scope": "Prespecified descriptive mechanism comparison only; no primary replacement or new interval",
+    "source_sha256": "e5d89b9af4397d8b71295bf70f010b1cf44c0beebc2bf9473dee4b4ba5cd8277",
+    "wide_minus_narrow": {
+      "base": {
+        "gate_failure": 0.0,
+        "raw_regret": 0.0,
+        "selected_log_cv_ratio": 0.0,
+        "selected_raw_fitness": 0.0
+      },
+      "random": {
+        "gate_failure": -0.0014403292181069962,
+        "raw_regret": -0.14072995594978632,
+        "selected_log_cv_ratio": 0.006765736699448022,
+        "selected_raw_fitness": -0.14072995594978677
+      },
+      "trained": {
+        "gate_failure": 0.0006172839506172843,
+        "raw_regret": 0.06662823392466677,
+        "selected_log_cv_ratio": 0.005731258028870867,
+        "selected_raw_fitness": 0.06662823392466666
+      }
+    }
+  },
+  "seed_results": {
+    "base": [
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.38650446714318154,
+        "gate_failure": 0.00291005291005291,
+        "raw_regret": 0.6809952374737892,
+        "seed": 20261022,
+        "selected_failure_count": 3,
+        "selected_log_cv_ratio": -1.651079845526887,
+        "selected_raw_fitness": -1.167357249340276,
+        "top10_oracle_regret": 0.18876005263126647,
+        "top32_oracle_regret": 0.11652383115797713,
+        "top5_oracle_regret": 0.2243087293972198,
+        "true_best_rank": 321.2591059746152
+      },
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.3610873044863356,
+        "gate_failure": 0.007716049382716049,
+        "raw_regret": 1.1428996599136807,
+        "seed": 20261023,
+        "selected_failure_count": 2,
+        "selected_log_cv_ratio": -1.6724348851762731,
+        "selected_raw_fitness": -0.7054528269003846,
+        "top10_oracle_regret": 0.17016348642175744,
+        "top32_oracle_regret": 0.12509121821818295,
+        "top5_oracle_regret": 0.2010699072746596,
+        "true_best_rank": 303.47550865629574
+      },
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.3648335132683878,
+        "gate_failure": 0.0024691358024691358,
+        "raw_regret": 0.611653453045334,
+        "seed": 20261024,
+        "selected_failure_count": 2,
+        "selected_log_cv_ratio": -1.6754186216156786,
+        "selected_raw_fitness": -1.2366990337687311,
+        "top10_oracle_regret": 0.1726357158056005,
+        "top32_oracle_regret": 0.12081109187697564,
+        "top5_oracle_regret": 0.21297838061446525,
+        "true_best_rank": 312.03686679404274
+      }
+    ],
+    "random": [
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.3819697525139213,
+        "gate_failure": 0.003806584362139918,
+        "raw_regret": 0.76591558876216,
+        "seed": 20261022,
+        "selected_failure_count": 3,
+        "selected_log_cv_ratio": -1.6528127110903477,
+        "selected_raw_fitness": -1.082436898051905,
+        "top10_oracle_regret": 0.173567947042607,
+        "top32_oracle_regret": 0.10982916940233549,
+        "top5_oracle_regret": 0.22481569663311776,
+        "true_best_rank": 381.82280191516304
+      },
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.38335029947272875,
+        "gate_failure": 0.0032921810699588477,
+        "raw_regret": 0.7122039255074208,
+        "seed": 20261023,
+        "selected_failure_count": 2,
+        "selected_log_cv_ratio": -1.6526819935702848,
+        "selected_raw_fitness": -1.1361485613066442,
+        "top10_oracle_regret": 0.17127818874033604,
+        "top32_oracle_regret": 0.12363912752907552,
+        "top5_oracle_regret": 0.20216391143455076,
+        "true_best_rank": 355.2330881909586
+      },
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.3804144587319104,
+        "gate_failure": 0.0012345679012345679,
+        "raw_regret": 0.503790155221085,
+        "seed": 20261024,
+        "selected_failure_count": 1,
+        "selected_log_cv_ratio": -1.658386819394424,
+        "selected_raw_fitness": -1.3445623315929802,
+        "top10_oracle_regret": 0.17496207870810193,
+        "top32_oracle_regret": 0.12493940304338044,
+        "top5_oracle_regret": 0.21824630069530795,
+        "true_best_rank": 365.18867248149655
+      }
+    ],
+    "trained": [
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.3801535119254426,
+        "gate_failure": 0.00342445620223398,
+        "raw_regret": 0.7262125535250232,
+        "seed": 20261022,
+        "selected_failure_count": 4,
+        "selected_log_cv_ratio": -1.6551957824666215,
+        "selected_raw_fitness": -1.1221399332890418,
+        "top10_oracle_regret": 0.17566516428009174,
+        "top32_oracle_regret": 0.11079399120896986,
+        "top5_oracle_regret": 0.21534108636654048,
+        "true_best_rank": 363.75704383921976
+      },
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.3824494871484565,
+        "gate_failure": 0.004526748971193416,
+        "raw_regret": 0.8367663153515184,
+        "seed": 20261023,
+        "selected_failure_count": 3,
+        "selected_log_cv_ratio": -1.6567561250852398,
+        "selected_raw_fitness": -1.0115861714625467,
+        "top10_oracle_regret": 0.16701733945407873,
+        "top32_oracle_regret": 0.11628711739088456,
+        "top5_oracle_regret": 0.20406533483897776,
+        "true_best_rank": 346.90200419436536
+      },
+      {
+        "all_failed_fallback": 0.0,
+        "capped_regret": 0.36432429070601335,
+        "gate_failure": 0.005761316872427984,
+        "raw_regret": 0.9422912924801982,
+        "seed": 20261024,
+        "selected_failure_count": 4,
+        "selected_log_cv_ratio": -1.6778093108981662,
+        "selected_raw_fitness": -0.9060611943338668,
+        "top10_oracle_regret": 0.1657098431311594,
+        "top32_oracle_regret": 0.11558698070071234,
+        "top5_oracle_regret": 0.20611195357389525,
+        "true_best_rank": 365.73174527804156
+      }
+    ]
+  },
+  "status": "COMPLETE_TRAIN_ONLY_OOF"
+}

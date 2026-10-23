@@ -1,0 +1,105 @@
+{
+  "all_exact_epoch_context_status_counts": {
+    "excluded": 144,
+    "included": 4873
+  },
+  "cost": {
+    "CPU_affinity_count": 2,
+    "GPU_calls": 0,
+    "S3_requests": 0,
+    "fits": 0,
+    "max_rss_kib": 189292,
+    "numeric_arrays": 0,
+    "optimizer_updates": 0,
+    "wall_seconds": 0.8828301189932972
+  },
+  "created_utc": "2026-10-22T15:27:58.874458+00:00",
+  "disposition": [
+    "Reject interpreting 1968 as fully epoch-eligible. Preserve original producer and BFS-QA artifacts.",
+    "1909 included records remain source-unqualified potential TRAIN, not numeric admissions.",
+    "All15 withdrawn records excluded;44 absent records lack approved epoch authority.",
+    "All12 identity-frozen membership pilot records have included status, approved train_fit and no known reservation or withdrawn-component overlap; no source-wide withdrawal proof follows.",
+    "Root owns any separate exact-version membership acquisition and later row/scaler/GP-label qualification."
+  ],
+  "epoch_status_summary": {
+    "absent": {
+      "H18_overlap_contexts": 9,
+      "H18_overlap_union_components": 3,
+      "contexts": 44,
+      "union_components": 13
+    },
+    "included": {
+      "H18_overlap_contexts": 1098,
+      "H18_overlap_union_components": 160,
+      "contexts": 1909,
+      "union_components": 314
+    },
+    "withdrawn": {
+      "H18_overlap_contexts": 0,
+      "H18_overlap_union_components": 0,
+      "contexts": 15,
+      "union_components": 1
+    }
+  },
+  "finding": "Producer and BFS QA require matching epoch context/input/membership references but omit epoch status and exclusion_reason. Fifteen context records are withdrawn;44 have no approved epoch entry.",
+  "full_population_contexts": 5940,
+  "included_outside_known_H18": {
+    "contexts": 811,
+    "independence_proven": false,
+    "union_components": 154
+  },
+  "independent_graph_review": {
+    "GPU_calls": 0,
+    "S3_requests": 0,
+    "approval_v3_used": false,
+    "approval_versions": [
+      "v1",
+      "v2"
+    ],
+    "fits": 0,
+    "max_rss_kib": 269480,
+    "optimizer_updates": 0,
+    "raw_or_prepared_input_arrays_read": 0,
+    "roster_rows": 5940,
+    "state": "PASS_INDEPENDENT_METADATA_ROLE_AND_RESERVATION_GRAPH_RECOMPUTATION",
+    "wall_seconds": 3.3157735359854996
+  },
+  "original_artifacts_unchanged": true,
+  "pilot_aggregate_proof": {
+    "approved_train_fit": 12,
+    "body_retrieval_completed": "NOT_CLAIMED",
+    "components_with_withdrawn_contexts": 0,
+    "epoch_included": 12,
+    "known_reservation_clean": 12,
+    "membership_declared_bytes": 12506,
+    "selected": 12,
+    "source_wide_withdrawal_scope": "UNRESOLVED; only explicit per-record withdrawal exclusion established."
+  },
+  "preparation_error": "One remote and one locally caught review-command syntax error before script execution; no metadata/S3/array/fit/update work from those failed attempts.",
+  "public_source_pins": {
+    "DL04_roles": {
+      "bytes": 532029,
+      "sha256": "076c4b80d9fda6ca2761dc3f67bf3ed23a22ca676f9e4d8a7284a69440652799"
+    },
+    "epoch": {
+      "bytes": 16633383,
+      "sha256": "bcfb5230bc0f5f32f6b42edbfa3a6bf76b89e0593b593b9042290e8c077a87ba"
+    }
+  },
+  "reservation_clean_role_potential_contexts": 1968,
+  "review_authority": "independent model/verification reviewer; not Stage A producer or BFS QA author",
+  "schema": "h21.public-independent-epoch-status-correction/v1",
+  "scope": "Metadata-only correction; no numeric admission, new-family claim or original-row/scaler qualification.",
+  "source_bindings_sha256": {
+    "independent_epoch_status_correction": "ec507cd25788f0fb7634356f5083f51772803d3f0cd33a5f0b735b30a78413c3",
+    "metadata_source_manifest": "e272a64cbb9585ce68ecb8c9ff9a7eb0053c908373479a0fac5083a937e12971",
+    "private_roster": "6affde6ace672ba34517a5458e4eec934be3596a436eb7dea5bf8a122dfeca64",
+    "same_agent_BFS_QA_source": "aacc3305561af01d06e32ef034c96cc0bee3134f25a23f09a5d77b3f08bfb705",
+    "stage_a_original_results": "7a8bccefd6d61f27f535a0c97f1d11687bc8ea77c1366feec824cc7075524b6e",
+    "stage_a_protocol": "a6d4308ea71e497e28a1e5d9a3f2762c1a2b68912df5516588c713d4702da11b",
+    "stage_a_same_agent_BFS_QA": "f444c2b3edcc5853839ca889b8b56cd2cbef29dd5705600521e03717621f5032",
+    "stage_a_worker": "29d20d7a79ee30d5750d1ff0e284583ba2d2da1546fae5b64e136abf4a2872b2"
+  },
+  "source_sha256": "ec507cd25788f0fb7634356f5083f51772803d3f0cd33a5f0b735b30a78413c3",
+  "state": "FAIL_FULL_EPOCH_ELIGIBILITY_INTERPRETATION_OF_1968"
+}

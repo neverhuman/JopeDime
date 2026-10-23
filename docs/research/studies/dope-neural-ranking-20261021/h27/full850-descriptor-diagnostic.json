@@ -1,0 +1,48 @@
+{
+  "schema": "h27.full-feature-descriptor-diagnostic/v1",
+  "state": "OUTCOME_BLIND_FULL850_DESCRIPTOR_DIAGNOSTIC_NOT_ROUTING_LIFT",
+  "at": "2026-10-23T00:32:06.966782+00:00",
+  "fingerprint_source_sha256": "c544d47f766b1dea941f7eb97d6d6bb035229b0a67b996ec51d280fe81d208db",
+  "full_QA_verification_sha256": "84771208d1c1e279fad35d7574d15995133c18004e135b8a5496a8d312c3c470",
+  "contexts": 850,
+  "components": 162,
+  "unique_GP_fits": 34000,
+  "probes": 8,
+  "tie_tolerance_q": 1e-08,
+  "one_vs_five_disjoint_best_probe_sets": 179,
+  "change_fraction": 0.21058823529411766,
+  "equal_component_change_fraction": 0.22775799303577082,
+  "fivefold_best_support_including_ties": {
+    "0": 40,
+    "1": 40,
+    "2": 4,
+    "3": 177,
+    "4": 80,
+    "5": 39,
+    "6": 18,
+    "7": 492
+  },
+  "raw_vs_robust_ridge_max_q_difference_over4250foldpairs": 1.2246932949155909e-06,
+  "raw_vs_robust_ridge_foldpairs_within1e_8": 4211,
+  "ridge_foldpairs": 4250,
+  "mean_absolute_one_minus_five_q_all6800features": 0.07058920053760996,
+  "fivefold_q_median_by_probe": [
+    -0.5541858033717142,
+    -0.5541858033717137,
+    -0.4124394212533934,
+    -0.5563902079179721,
+    -0.4208889519073014,
+    -0.5359116587095624,
+    -0.6974660238412596,
+    -0.8446565780994959
+  ],
+  "NN_models_updates": 0,
+  "archived_routing_outcome_reads": 0,
+  "probe_basket_or_NN_recipe_changes_from_diagnostic": 0,
+  "limits": [
+    "Descriptive feature-generation statistics on850historically exposed curatedTRAINcontexts/162components; not850independentdatasets.",
+    "Changing bestcheapprobe doesnotestablishfivefold advantage or improvedrouting.",
+    "FixedGPbasket and NNprimaries remain unchanged; nodata/performanceselectedprobe/context substitution.",
+    "ProbeCV5 scores andminimizedS1routingfitness aredistinctcontracts."
+  ]
+}

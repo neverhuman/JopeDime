@@ -1,0 +1,133 @@
+{
+  "schema": "dope-ranking.h27-public-source-receipt/v1",
+  "state": "SOURCE_PREPARATION_ONLY_PENDING_BUILD_TOYS_INPUT_PROOF_AND_GRANT",
+  "source_domains": "Only code, prospective protocol and source-review/public receipt digests below; no raw input, context, family, program or object identity is published.",
+  "source_pins": [
+    {
+      "label": "regression_fit_reference",
+      "domain": "code_bytes",
+      "sha256": "8662b33e58d5ac956fd0a858927bdf024f199938c17a4d4c816bdf6907b4a4c7"
+    },
+    {
+      "label": "fitted_pipeline_model",
+      "domain": "code_bytes",
+      "sha256": "28354e4b746dbd4700a31665a49748a8aa56041fe483bd2739d9aebd814f84cd"
+    },
+    {
+      "label": "head_implementations",
+      "domain": "code_bytes",
+      "sha256": "47fb7936a7de570582f2fcc557f49ba59d94037a139c8d544dbde77d1235069f"
+    },
+    {
+      "label": "baseline_A0_landmarker_source",
+      "domain": "code_bytes",
+      "sha256": "2b9ea218f5cbf7161edb012b69773e78faa10567362971281c5bf68461b861f2"
+    },
+    {
+      "label": "original_source_plan_preserved",
+      "domain": "prospective_protocol_text",
+      "sha256": "c5fad7a2dd9ab8545d1420f9863f302226f95845cdf875443168055f26e168b1"
+    },
+    {
+      "label": "root_decisions",
+      "domain": "prospective_protocol_text",
+      "sha256": "eb728174e69406ba0e92e1cdbb3a6473c9b747684dc7510ef63060cd061bf83d"
+    },
+    {
+      "label": "target_scaling_amendment",
+      "domain": "prospective_protocol_text",
+      "sha256": "f4c6757bf354b4616e21904430a726b10b50e10a74769139eeeb374fb16e4db7"
+    },
+    {
+      "label": "row_identity_clarification",
+      "domain": "prospective_protocol_text",
+      "sha256": "e0940c00af03cd7d130fb171a926144289bca77426ef8c364f50bfd3d420db35"
+    },
+    {
+      "label": "final_implementation_clarifications",
+      "domain": "prospective_protocol_text",
+      "sha256": "81c3f59e1f7e8f7f299dc8030780b4077b968e47c21c34dccb873c142e2fa846"
+    },
+    {
+      "label": "runtime_public_source_summary",
+      "domain": "public_source_receipt",
+      "sha256": "549d291d757e493ff39202620e5ca89dc69a739448240472540ec5fac3a12c05"
+    },
+    {
+      "label": "independent_root_amendment_review",
+      "domain": "source_protocol_review_receipt",
+      "sha256": "bf20ba496476ba7f0c54c3c9846577b9e3f31af3584d67abe5b775ebe9d85abf"
+    },
+    {
+      "label": "independent_final_clarification_review",
+      "domain": "source_protocol_review_receipt",
+      "sha256": "1e4454ed05dbdea18e073cc90f06cabf1c9c2909b9eea7b66d45fb976f5f8ebc"
+    }
+  ],
+  "source_feasibility": {
+    "kernel_code_template_registry_grammar_files_pinned": 233,
+    "source_bytes_pinned": 4782677,
+    "registry_dependency_lock_superset_packages": 31,
+    "archive_candidates_present": "stat_only",
+    "archive_checksums_or_active_feature_graph_verified": false,
+    "owned_wrapper_built": false,
+    "proposed_eight_basket_parser_or_fit_qualified": false,
+    "private_model_serialization": "source-supported, actual roundtrip pending",
+    "actual_runtime_or_model_storage_volume_measured": false
+  },
+  "TRAIN_cache_metadata": {
+    "contexts": 850,
+    "components": 162,
+    "families": 164,
+    "present_cache_bytes_stat_only": 45684663,
+    "permitted_rows_range": [
+      733,
+      1959
+    ],
+    "features_range": [
+      3,
+      100
+    ],
+    "row_subsampled_contexts_declared": 0,
+    "prior_source_binding_metadata": "PASS",
+    "fresh_array_content_or_membership_reverification": false
+  },
+  "independent_review": {
+    "state": "PASS_PROSPECTIVE_COHERENCE_WITH_EXECUTION_PREREQUISITES",
+    "blocking_source_contradictions": 0,
+    "original_errors_preserved": [
+      "raw-fitness CI direction superseded by adjusted-upper-below-zero criterion",
+      "row identity clarified as teacher TRAIN positions",
+      "raw-target proposal superseded by fold-TRAIN target normalization"
+    ],
+    "execution_prerequisites": [
+      "actual canonical basket and isolated source/binary controls",
+      "exact input/current roles/reservations/row partitions",
+      "verified permitted latest Dope state identity",
+      "fresh matched rankers, literal zero blocks after scaling",
+      "gradient-heldout monitors excluded from all ranker/scaler/selection fit",
+      "root scientific/resource freeze and execution grant"
+    ]
+  },
+  "actual_access_and_fit_counts": {
+    "builds": 0,
+    "GP_fits": 0,
+    "neural_fits": 0,
+    "dataset_optimizer_updates": 0,
+    "numerical_arrays_opened_hashed_decoded": 0,
+    "model_weight_or_GP_outcome_bodies_read": 0,
+    "provider_or_API_calls": 0
+  },
+  "cost_limit": "Interactive source copying, inspection and literature preparation were not fully metered. No total-session cost or fit-time forecast is asserted.",
+  "public_projection": {
+    "plan.md": {
+      "sha256": "52513ae0623e5dc487059ef9632958b478b7e1de00fdd2de08a880ed24ccbdd5",
+      "bytes": 10111
+    },
+    "hypothesis.json": {
+      "sha256": "277c8bff0b13bd8a1eab694abd7cbec9cd58e93f1726a930886655db976b8b42",
+      "bytes": 4675
+    }
+  },
+  "no_result_claim": true
+}

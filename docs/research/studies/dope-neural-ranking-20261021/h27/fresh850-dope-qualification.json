@@ -1,0 +1,102 @@
+{
+  "all_producer_and_saved_QA_units_closed_stopped": true,
+  "author_overlap": true,
+  "contexts": 850,
+  "costs": {
+    "CPU_scope": "Worker CPU excludes native subprocess CPU. Retained unit CPU includes descendant processes. Wall sums across parallel workers are not global elapsed time.",
+    "all_850_total_fit_cost_not_claimed": true,
+    "new_848_retained_unit_CPU_seconds_sum": 3220.122314,
+    "new_848_worker_CPU_seconds_sum": 51.010481593,
+    "new_848_worker_groups": [
+      {
+        "new_failed_unknown_unattempted": 0,
+        "new_native_fits_completed": 424,
+        "new_native_fits_created": 424,
+        "parent_empty_before_stop": true,
+        "postexit_empty_ControlGroup_preserved_as_limit": true,
+        "retained_unit_CPU_seconds_sum": 1726.5153,
+        "retained_unit_peak_memory_bytes_max": 121118720,
+        "worker_CPU_seconds_sum": 27.468265882,
+        "worker_group_ordinal": 0,
+        "worker_wall_seconds_sum_not_global_elapsed": 3232.3080179430544
+      },
+      {
+        "new_failed_unknown_unattempted": 0,
+        "new_native_fits_completed": 424,
+        "new_native_fits_created": 424,
+        "parent_empty_before_stop": true,
+        "postexit_empty_ControlGroup_preserved_as_limit": true,
+        "retained_unit_CPU_seconds_sum": 1493.607014,
+        "retained_unit_peak_memory_bytes_max": 140546048,
+        "worker_CPU_seconds_sum": 23.542215711,
+        "worker_group_ordinal": 1,
+        "worker_wall_seconds_sum_not_global_elapsed": 3005.647122776136
+      }
+    ],
+    "new_848_worker_wall_seconds_sum_not_global_elapsed": 6237.95514071919,
+    "prior_2_fit_costs_not_remeasured_here": true
+  },
+  "current_checkout": "098702ae9fb6dd9be198f95e36026c621d3b67f8",
+  "engine_tree": "7b864c1066b9832023aecf9c12ca4af5e77a1882",
+  "external_source_and_execution_peer_reviewed": true,
+  "failed_unknown_unattempted": 0,
+  "independent_native_training_or_forward_replay_claimed": false,
+  "limits": [
+    "Saved-output reconstruction uses a separate implementation authored by the producer author and externally source/execution reviewed; it is not independent native retraining or forward replay.",
+    "Native model bytes and outputs are hash bound. These checks establish saved consistency and source role, not a positive ranking result.",
+    "The 850 contexts belong to the existing curated TRAIN cohort; historical A0/input/preprocessing and family-exposure limits remain. This adds no independent validation families.",
+    "Fresh source, clean default configuration, permitted GP outer-TRAIN input views and exact row order replace reliance on legacy cached router encodings.",
+    "The qualification receipt predates the neural experiment. Its historical zero-neural-model statement does not describe the later 36-model completion."
+  ],
+  "native_binary_source_identity_sha256": "dccfb5bc0d25fe9e03b893d855f5a5ee99767314057ce2c83842f320abc4383b",
+  "native_fits_new": 848,
+  "old_cached_S3_router_encodings_reused": 0,
+  "preparation_failures": [
+    {
+      "failed_wrapper_calls": 2,
+      "meaning": "Closeout transport/preparation failures, not failed native encoding fits.",
+      "measured_cost": null,
+      "new_native_fits_in_those_calls": 0,
+      "phase": "closeout_metadata_wrappers",
+      "state": "PRESERVED_THEN_SEPARATE_METADATA_WRAPPER_AMENDMENT"
+    }
+  ],
+  "prior_fresh_qualification_fits_reused": 2,
+  "projection": {
+    "A0": 88,
+    "common_features": 240,
+    "native_input_features": 128,
+    "native_model_features": 24,
+    "native_state": 128,
+    "original_16_prefix_then_834_frozen_context_order": true,
+    "random_control": 128,
+    "source_order_bound": true,
+    "state_retained_112_positions_in_padded_128": 112
+  },
+  "saved_output_QA": {
+    "CPU_seconds": 1.011611356,
+    "all16_closed_actual_metadata_barrier": true,
+    "author_overlap_with_producer": true,
+    "independent_author_claimed": false,
+    "independent_native_model_forward_replay_claimed": false,
+    "max_RSS_KiB": 61528,
+    "new_native_GP_NN_fits_updates_APIs": 0,
+    "old_dope_state_random_rows_decoded": 0,
+    "original_NPZ_reads": 0,
+    "phase": "merge",
+    "producer_imports": 0,
+    "read_unknown": 0,
+    "rows": 850,
+    "schema": "h27.full-clean-separate-saved-verification/v1",
+    "slot": null,
+    "source_peer_review_sha256": "ef4e995e1831ac4a7e82c6b4d819a410296ca8dd9914351b290e6381d094ce4a",
+    "state": "PASS_SEPARATE_IMPLEMENTATION_SAVED_CHECK_AUTHOR_OVERLAP_REQUIRES_PEER_REVIEW",
+    "wall_seconds": 1.3023691510315984
+  },
+  "saved_output_QA_receipt": {
+    "bytes": 12627,
+    "sha256": "3dce936f92c0e1e9a789e50d44bcbf24342e2eab4f471236c99e584a9a46a18c"
+  },
+  "schema": "h27.public-fresh850-dope-qualification/v1",
+  "state": "ROOT_ACCEPTED_WITH_SAVED_OUTPUT_AUTHOR_OVERLAP_AND_NATIVE_REPLAY_LIMITS"
+}

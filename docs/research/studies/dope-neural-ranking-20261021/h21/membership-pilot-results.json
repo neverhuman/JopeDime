@@ -1,0 +1,186 @@
+{
+  "R2_producer": {
+    "GPU_calls": 0,
+    "HTTP_200": 12,
+    "JTT1_input_GETs": 0,
+    "S3_GET_invocations": 12,
+    "SDK_reported_retry_attempts": 0,
+    "allowed_bytes": 12506,
+    "allowed_objects": 12,
+    "closed_utc": "2026-10-22T15:41:54.955466+00:00",
+    "cost": {
+      "CPU_seconds": 1.014315686,
+      "CPUs": 2,
+      "address_space_cap_bytes": 8589934592,
+      "compute_deadline": null,
+      "max_rss_kib": 178560,
+      "wall_seconds": 2.536881249048747
+    },
+    "exact_declared_SHA256": 12,
+    "exact_declared_response_and_received_length": 12,
+    "exact_requested_and_response_version": 12,
+    "fits": 0,
+    "new_independent_validation_admissions": 0,
+    "new_numeric_admissions": 0,
+    "optimizer_updates": 0,
+    "original_state": "COMPLETE_METADATA_ONLY_PENDING_SAVED_BYTE_QA",
+    "successful_exact_metadata_bodies": 12,
+    "telemetry_outcome_model_prediction_GETs": 0,
+    "verified_body_bytes": 12506
+  },
+  "allowlist_sha256": "275b67a67965cb04e121ce49b1150afb2783b2c28f226fc2bc197a817f768047",
+  "digest_semantics": {
+    "limit": "The raw-body equality is a byte-binding observation. It does not define the parent logical digest algorithm, canonicalization or ordered original-row membership.",
+    "logical_writer_spec": "UNKNOWN_NO_PINNED_WRITER_SPEC",
+    "next_metadata_resolution_field_names": [
+      "sample_membership_logical_sha256",
+      "sample_identity_sha256"
+    ],
+    "parent_logical_reconstruction_proven": false,
+    "parent_object_body_resolved": false,
+    "raw_body_SHA_equals_context_declared_logical_SHA_objects": 12
+  },
+  "limits": [
+    "Field-coverage absence applies only to the queried schema in these twelve saved objects, not to the dataset collection or all possible evidence.",
+    "These objects contain fold/index hashes and inner-CV summary only; no numeric JTT1 inputs, candidate outcomes or original-row/scaler chain were decoded.",
+    "Exact version/length/SHA custody passes while original-row/source/preprocessing/scaler and cached GP-label qualification remain unresolved.",
+    "The sample membership logical digest and sample identity field names are next metadata resolution pointers, not reconstructed membership proof.",
+    "Stage-A epoch correction remains binding: included/current TRAIN/reserve-clean status is necessary but not numeric source admission. Source-wide withdrawal scope remains unresolved.",
+    "All archived contexts are exposed-test-adaptive; no new independent validation admission or global new-family claim.",
+    "R0/R1 failures remain separate and unchanged; R2 success does not relabel their closures. R0 SDK invocation count is not independently instrumented wire-request count.",
+    "No new GETs were used by saved-byte/schema QA or public projection. Producer and QA costs are separate observations; full preparation costs are not completely timed."
+  ],
+  "preserved_failed_attempts": {
+    "R0": {
+      "SDK_get_object_invocations": 1,
+      "body_deliveries": 0,
+      "closed_utc": "2026-10-22T15:36:06.386852+00:00",
+      "exception_class": "NoCredentialsError",
+      "fits": 0,
+      "optimizer_updates": 0,
+      "producer_cost": {
+        "CPU_seconds": 1.837605966,
+        "CPUs": 2,
+        "address_space_cap_bytes": 8589934592,
+        "compute_deadline": null,
+        "max_rss_kib": 178560,
+        "wall_seconds": 4.056112562073395
+      },
+      "schema_field_coverage": "UNOBSERVED, not absent: zero bodies decoded.",
+      "state": "CLOSED_DEFAULT_CREDENTIAL_CONTEXT_FAILURE_ZERO_BODIES",
+      "successful_service_responses": 0,
+      "unattempted_after_failure": 11,
+      "verified_bytes": 0,
+      "wire_request_count": "Not separately instrumented; first call NoCredentialsError has no service request ID."
+    },
+    "R1": {
+      "S3_GETs": 0,
+      "body_deliveries": 0,
+      "claim_timing_note": "Synchronized research-board append was late after preparation and zero-GET qualification launch; recorded explicitly in original closure.",
+      "closed_utc": "2026-10-22T15:38:27.556207+00:00",
+      "cost": {
+        "CPU_seconds": 0.199505541,
+        "GPU": 0,
+        "S3_GETs": 0,
+        "STS_calls": 0,
+        "body_deliveries": 0,
+        "fits": 0,
+        "list_calls": 0,
+        "updates": 0,
+        "wall_seconds": 2.285393834928982
+      },
+      "default_provider_returned_none": true,
+      "expected_system_user_confirmed": true,
+      "fits": 0,
+      "optimizer_updates": 0,
+      "schema_field_coverage": "UNOBSERVED, not absent: zero bodies decoded.",
+      "state": "CLOSED_REFUSED_DEFAULT_UBUNTU_CREDENTIAL_PROVIDER_UNAVAILABLE"
+    }
+  },
+  "provider_context": {
+    "private_profile_or_endpoint_or_credentials_exported": false,
+    "public_label": "approved-existing-audit-provider",
+    "qualification_cost": {
+      "CPU_seconds": 0.253213815,
+      "S3_GETs": 0,
+      "STS_calls": 0,
+      "list_calls": 0,
+      "wall_seconds": 0.2634632190456614
+    },
+    "qualification_state": "PASS_EXISTING_AUDITED_PROVIDER_AVAILABLE",
+    "separately_authorized_root_grant": true,
+    "source_role_or_object_changes": 0
+  },
+  "public_snapshot_utc": "2026-10-22T15:46:02.551623+00:00",
+  "saved_byte_QA": {
+    "closed_utc": "2026-10-22T15:42:10.434510+00:00",
+    "cost": {
+      "CPU_seconds": 0.19738312,
+      "GPU": 0,
+      "S3_GETs": 0,
+      "fits": 0,
+      "updates": 0,
+      "wall_seconds": 0.19740838604047894
+    },
+    "saved_byte_verifier_sha256": "e8b09d59bded3210bdaf94aff435ca13ffc528024eaf07f0ad3e89ff6614ca8a",
+    "scope": "Independent implementation of saved-byte SHA/length/ref/version/JSON/allowlist arithmetic; same agent may execute, no new remote request and no row/scaler semantic authority or numeric admission.",
+    "state": "PASS_WITH_LIMITS",
+    "successful_bodies_verified": 12,
+    "verified_bytes": 12506
+  },
+  "saved_schema_field_QA": {
+    "closed_utc": "2026-10-22T15:43:34.008554+00:00",
+    "cost": {
+      "CPU_seconds": 0.0021725330000000043,
+      "GETs": 0,
+      "arrays": 0,
+      "fits": 0,
+      "updates": 0,
+      "wall_seconds": 0.0021743259858340025
+    },
+    "objects_checked": 12,
+    "observed_schema": "jope.regression-research-gp-membership/v1",
+    "parent_membership_logical_digest_field_present": 12,
+    "queried_authority_field_coverage_objects": {
+      "fold_membership_identity": 12,
+      "original_row_identity": 0,
+      "preprocessing_reference": 0,
+      "scaler_fit_identity": 0,
+      "source_identity_reference": 0
+    },
+    "queried_original_row_or_scaler_authority_field_objects": 0,
+    "same_schema_objects": 12,
+    "schema_QA_source_sha256": "252aa4b004211e2cdad9e3c0617bc5f9e7731306f635f64421f5caf503d61c4b",
+    "scope": "Separately authored saved-byte field-name/schema checks only, no field values or row IDs emitted, no new body GETs.",
+    "state": "PASS_WITH_LIMITS",
+    "top_level_field_names": [
+      "dataset_hash",
+      "inner_cv",
+      "outer_fold",
+      "outer_repeat",
+      "outer_test_indices_sha256",
+      "outer_test_rows",
+      "outer_train_indices_sha256",
+      "outer_train_rows",
+      "sample_identity_sha256",
+      "sample_membership_logical_sha256",
+      "schema"
+    ]
+  },
+  "schema": "h21.public-membership-pilot-results/v1",
+  "scope": "Twelve preselected exact-version membership metadata objects only; separate from Stage-A census and from source/scaler/GP-label admission.",
+  "source_bindings_sha256": {
+    "R0_closure": "7ef484d7aea7807fd0180a0be958fc2100d333a375dd41ecf3156594cf18eb9c",
+    "R0_producer_results": "909feec6e66913bdc2dda6a8569a271144213ad6ae18a5372fff948a3334ffd0",
+    "R0_saved_byte_QA": "bdd4e1deb9fc2434a0b178e62c9af79081fe3478dea85efd4bfef5d23ea2fc19",
+    "R1_closure": "592938c191b168a257dce98c1cdfb4e3c933db20676d9bcd16bba79933b5011d",
+    "R1_default_provider_qualification": "b0726e55d8f9792ecbe91362359326ca61d809e4862679cdd7ddd9ae9e973c8d",
+    "R2_producer_results": "845ab76435cae5d6a3a1803c993f6f1e284cf08c2f3878a6861aafb544e876b1",
+    "R2_protocol": "d9a7594ae3ebb32aca4362bb1b152433045f84b47db2d8b06948504977aa26a3",
+    "R2_provider_qualification": "e5500e62f92a80e64adcf676acb86f394073236b5c465f1d9057f687ab211ec0",
+    "R2_saved_byte_QA": "5f0029ac968259da5116ca8dea47181fab4823003defee064a4827bdd34ba0b3",
+    "R2_schema_field_QA": "9b2dad99012873ee75cd4085d6084e326c436bb5734a4517ad798648dce9b0fb",
+    "R2_source_and_provider_proof": "a889fac7a31ca50754a7259577f643210ec4fbe58e99c82ef02f9853393ac384"
+  },
+  "state": "R2_EXACT_SAVED_MEMBERSHIP_BYTES_VERIFIED_WITH_LIMITS_ZERO_NUMERIC_ADMISSIONS"
+}
