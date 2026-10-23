@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 5909,
+  "count": 5914,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -42,12 +42,12 @@
     }
    },
    "feat-math": {
-    "count": 1341,
+    "count": 1346,
     "ignored": 13,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 534,
+      "count": 539,
       "ignored": 7,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -243,6 +243,11 @@
        "genome::tests::portfolio_form_parses_and_canonicalizes_order_preserving",
        "genome::tests::portfolio_form_rejects_bad_shapes",
        "genome::tests::symbolic_wire_form_rejects_unknown_modes_and_incomplete_delimiters",
+       "go::tests::complete_bound_registry_and_codec_modes_execute",
+       "go::tests::complete_recipe_registry_executes_or_refuses_identically",
+       "go::tests::fitted_legacy_registry_states_execute_or_match_rust_refusal",
+       "go::tests::multiline_metadata_remains_documentation",
+       "go::tests::scalar_v2_functions_policies_and_carriers_and_row_vector_stages_execute",
        "gpr::tests::composite_kernels_are_deterministic_and_learn_toy",
        "gpr::tests::composite_scratch_reuse_matches_historical_model_and_prediction_bits",
        "gpr::tests::composite_scratch_reuse_preserves_constant_fallbacks",
@@ -9338,7 +9343,7 @@
   }
  },
  "totals": {
-  "rust": 5909,
+  "rust": 5914,
   "python": 182
  }
 }

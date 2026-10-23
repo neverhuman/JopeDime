@@ -1,0 +1,119 @@
+name: go
+on:
+  pull_request:
+    paths:
+      - 'crates/feat-math/**'
+      - 'crates/jope-cli/**'
+      - 'crates/jope-pipeline/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - 'deploy/ci/**'
+      - '.github/workflows/go.yml'
+      - '.github/workflows/ci.yml'
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  go-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.25.12', '1.26.10']
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+      - name: Prepare and check complete source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup target add wasm32-unknown-unknown
+          cargo fmt --all --check
+          git diff --check
+          cargo check --locked -p feat-math -p jope-cli -p jope-pipeline --no-default-features --all-targets
+      - name: Native sanitizer contracts
+        if: matrix.go == '1.26.10'
+        run: |
+          cargo test --locked -p feat-math --lib runtime_c_abi_is_sanitizer_clean_and_fail_closed -- --nocapture
+          cargo test --locked -p feat-math --lib cpp17_numeric_abi_is_bit_exact_and_has_no_data_access -- --nocapture
+      - name: Full parity, registry census, publication and coverage
+        run: bash deploy/ci/go/qualify.sh
+      - name: Race detector on the actual emitted API
+        env:
+          CGO_ENABLED: '1'
+        run: cd target/go-contract && go test -mod=readonly -race -count=1 -timeout=180s ./...
+      - name: Bounded lifecycle fuzzing
+        env:
+          CGO_ENABLED: '0'
+          GOMAXPROCS: '2'
+        run: cd target/go-contract && go test -mod=readonly -run '^$' -fuzz '^FuzzLifecycle$' -fuzztime=20s -parallel=2
+      - name: Pure Go deployment builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target/go-contract
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            GOOS=${target%/*} GOARCH=${target#*/} CGO_ENABLED=0 go build -mod=readonly ./...
+          done
+      - name: Retain qualification evidence
+        if: always()
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}
+          path: |
+            target/go-evidence/
+            target/go-contract/coverage.out
+      - name: Verify evidence publication
+        if: always()
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}
+          path: target/go-evidence/
+          lookup-only: true
+          fail-on-cache-miss: true
+  go-platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_BUILD_JOBS: '2'
+      JOPE_GO_PARITY: '1'
+      CGO_ENABLED: '0'
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+        with:
+          go-version: '1.26.10'
+          cache: false
+      - name: Native host, both engines, complete registry and contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup target add wasm32-unknown-unknown
+          cargo test --locked -p feat-math --lib go::tests:: -- --nocapture --test-threads=1
+          bash deploy/ci/go/contracts.sh

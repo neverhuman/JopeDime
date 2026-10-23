@@ -16,6 +16,10 @@ bit for bit. Plan section: "Code emission"; decisions: [ADR-0002](adr/ADR-0002-f
 | C++20 | same source as C++17 | same `model.cpp` compiled with `-std=c++20` (`cxx::CxxStd::Cxx20`) | `-std=c++20` | identical to C++17: C++20 is a **compile target**, not a second emitter |
 | JavaScript | `transpile::emit_javascript`, gate `supports_javascript` | `model.js`, ES2020/CommonJS functions; `deploy/ci/emitters/driver.js` makes it a program (`node program.js …`) | Node ≥ 20 (CI uses 26) | same 22 transforms and two heads as C++ |
 
+| Go | `transpile::emit_go`, `go::emit_bound` | `model.go`, `model.go.kernel.rs`, `go.mod`, `go.sum` | Go 1.25+, pinned wazero, Rust Wasm build | full Rust recipe admission, existing Rust bound admission/refusals, scalar-v2 and row-vector APIs; finite native/Wasm tolerance |
+
+[Go build, API and qualification contract](go.md). The Go binding uses finite Wasm tolerance, while the native Python/Rust pair retains its bit-equality gates.
+
 The `emit` example (`cargo run -p feat-math --example emit -- [--all] <program.dsl> <out-dir>`)
 writes `model.py`/`model.rs` always, `model.cpp`/`model.js` when their gates pass, a sidecar
 `manifest.json` (sha256 and token counts of the sources, math-kernel policy) and `targets.txt`.

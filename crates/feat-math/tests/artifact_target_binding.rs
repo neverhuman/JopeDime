@@ -58,6 +58,14 @@ fn all_requested_recipe_targets_bind_exact_source_bytes() {
     let (ts_dir, ts_pin) = publish(&ts);
     std::fs::remove_file(ts_dir.path().join("model.go.kernel.rs")).unwrap();
     assert!(verify_directory(ts_dir.path(), "manifest.json", &ts_pin).is_err());
+    for path in ["model.go", "model.go.kernel.rs", "go.mod", "go.sum"] {
+        let (dir, pin) = publish(&ts);
+        std::fs::write(dir.path().join(path), "tampered").unwrap();
+        assert!(verify_directory(dir.path(), "manifest.json", &pin).is_err());
+        let (dir, pin) = publish(&ts);
+        std::fs::remove_file(dir.path().join(path)).unwrap();
+        assert!(verify_directory(dir.path(), "manifest.json", &pin).is_err());
+    }
     let e = emission(&Target::RECIPES);
     assert!(e.manifest.all_supported(), "{:?}", e.manifest.targets);
     assert_eq!(e.manifest.targets.len(), 5);

@@ -325,8 +325,13 @@ jobs:
   paper:
     uses: ./.github/workflows/paper.yml
 
+  go:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
+    uses: ./.github/workflows/go.yml
+
   aggregate:
-    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper]
+    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, go]
     if: always()
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 20
@@ -480,14 +485,19 @@ jobs:
       - name: Validate every required result
         if: always()
         env:
+          GO_RESULT: ${{ needs.go.result }}
+          GO_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
           NEEDS_JSON: ${{ toJson(needs) }}
         run: |
           set -euo pipefail
           output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           mkdir -p "$output"
           printf '%s\n' "$NEEDS_JSON" > "$output/all-needs.json"
+          expected=skipped
+          if [ "$GO_REQUIRED" = true ]; then expected=success; fi
+          test "$GO_RESULT" = "$expected"
           # UI and publication evidence are independently verified above; preserve the existing lane set.
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); print(json.dumps(n))' > "$output/needs.json"
+          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); n.pop("go"); print(json.dumps(n))' > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once

@@ -929,6 +929,16 @@
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
+    "job:.github/workflows/ci.yml/go": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
     "job:.github/workflows/ci.yml/hygiene": {
       "discovery": {
         "kind": "workflow-job"
@@ -1050,6 +1060,26 @@
         "paper"
       ],
       "scope": "Call the reusable publication build through existing full-main.yml admission; aggregate requires its successful current-source PDF/check evidence."
+    },
+    "job:.github/workflows/go.yml/go-parity": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
+    "job:.github/workflows/go.yml/go-platform": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
     },
     "job:.github/workflows/jankurai.yml/jankurai-audit": {
       "discovery": {
@@ -11768,6 +11798,16 @@
       ],
       "scope": "Push/main-manual diagnostic CPU families, independent outcomes within the declared 145-minute CPU job deadline; no merge gate or qualification claim."
     },
+    "workflow:.github/workflows/go.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "go-parity"
+      ],
+      "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
     "workflow:.github/workflows/jankurai.yml": {
       "discovery": {
         "kind": "workflow"
@@ -12441,6 +12481,47 @@
       "path_applicability": "every push to main and manual dispatch of main; diagnostic only",
       "requires_nonzero_tests": true,
       "result_backend": "nextest",
+      "stage": "execution"
+    },
+    "go-parity": {
+      "checks": [
+        "bash deploy/ci/go/qualify.sh",
+        "go test -mod=readonly -race ./... (generated contract package)",
+        "go test -run ^$ -fuzz ^FuzzLifecycle$ -fuzztime=20s -parallel=2",
+        "six pure Go cross-builds; native macOS/Windows census and contracts"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/go.yml"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CGO_ENABLED": "0; 1 for race instrumentation only",
+        "Go": "1.25.12 and 1.26.10",
+        "JOPE_GO_PARITY": "1",
+        "target": "wasm32-unknown-unknown",
+        "wazero": "v1.12.0"
+      },
+      "evidence": [
+        "source/checkout/toolchain identities",
+        "closed registry-derived executed/refused census, both engines",
+        "all golden and fitted native-reference comparisons",
+        "complete four-file closure, deletion and tamper controls",
+        "raw 100% Go facade statement counters",
+        "race, fuzz, platform and cross-build results"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "Go module/checksum closure",
+        "committed golden fixtures"
+      ],
+      "path_applicability": "required reusable CI on Rust/emitter paths, Go workflow/tools and all manual full CI; direct Go PR/dispatch trigger",
+      "requires_nonzero_tests": true,
+      "result_backend": "rust",
       "stage": "execution"
     },
     "host-real-corpus": {

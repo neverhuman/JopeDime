@@ -1,6 +1,6 @@
 {
-  "bytes": 3378,
+  "bytes": 3406,
   "path": "deploy/ci/ci-plan.py",
   "schema": "jope.standalone-monitor-ci-source-pin/v1",
-  "sha256": "1df3b00df8b9fb60986967797e8072e9b8d609fc3bf27c0ecb44df3e879dd2cd"
+  "sha256": "8a2b7a3249e8f079c960d9e3ca5d0d7e32c663cd62939eeec17b13e23eb77248"
 }

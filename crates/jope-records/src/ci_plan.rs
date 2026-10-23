@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
+                r"^(crates/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/go\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),

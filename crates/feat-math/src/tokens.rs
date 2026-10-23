@@ -77,7 +77,12 @@ pub fn count_tokens(src: &str, lang: Lang) -> TokenCount {
                 doc_tokens += word_count(rest);
                 i = src.len();
             }
-        } else if c == '"' || (c == '\'' && matches!(lang, Lang::Python | Lang::JavaScript)) {
+        } else if c == '`' && lang == Lang::Go {
+            i = src[i + 1..].find('`').map_or(src.len(), |end| i + end + 2);
+            code_tokens += 1;
+        } else if c == '"'
+            || (c == '\'' && matches!(lang, Lang::Python | Lang::JavaScript | Lang::Go))
+        {
             // string literal = 1 code token
             let q = b[i];
             let mut j = i + 1;

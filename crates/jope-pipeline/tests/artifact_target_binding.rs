@@ -272,6 +272,8 @@ fn native_publication_refuses_javascript_substitution_even_with_loose_hash_updat
     substituted_run(Target::JavaScript, "model.js", "javascript");
     substituted_run(Target::Go, "model.go", "go");
     substituted_run(Target::Go, "model.go.kernel.rs", "go-kernel");
+    substituted_run(Target::Go, "go.mod", "go-module");
+    substituted_run(Target::Go, "go.sum", "go-checksums");
 }
 #[test]
 fn native_publication_refuses_python_substitution_even_with_loose_hash_updated() {

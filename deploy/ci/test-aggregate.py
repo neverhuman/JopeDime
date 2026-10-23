@@ -334,5 +334,36 @@ class PublicationTests(unittest.TestCase):
             aggregate.load_receipts(self.root)
 
 
+
+class GoEvidenceTests(unittest.TestCase):
+    def test_missing_zero_incomplete_and_uncovered_results_are_refused(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('go_verify', aggregate.ROOT / 'deploy/ci/go/verify.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            profile = root / 'coverage.out'
+            with self.assertRaises(FileNotFoundError): module.verify(root,profile)
+            for name in ('recipes','fitted','bindings','pipeline','cli','census'):
+                (root / (name+'.log')).write_text('test result: ok. 0 passed; 0 failed\n')
+            with self.assertRaises(AssertionError): module.verify(root,profile)
+            good = 'test result: ok. 1 passed; 0 failed\nGo 0: fixture\nGo 1: fixture\n'
+            for name in ('recipes','fitted','bindings','pipeline','cli','census'):
+                (root / (name+'.log')).write_text(good)
+            census=[dict(kind=k,total=1,executed=['x'],refused=[],unaccounted=0) for k in ('recipe','bound','legacy-bound')]
+            census.append(dict(kind='v2',total=1,executed=1,unaccounted=0))
+            text = good + 'Go 0: fixture\nGo 1: fixture\n'*9 + 'Go metadata: strict heading qualified\n'
+            text += ''.join('Go census: '+json.dumps(c)+'\n' for c in census)
+            (root/'census.log').write_text(text);(root/'contracts.log').write_text('PASS\n')
+            profile.write_text('mode: atomic\njope.generated/model/model.go:1.1,2.1 1 1\n')
+            self.assertEqual(len(module.verify(root,profile)),4)
+            for wrong in ('mode: atomic\n','mode: atomic\njope.generated/model/model.go:1.1,2.1 1 0\n'):
+                profile.write_text(wrong)
+                with self.assertRaises(AssertionError): module.verify(root,profile)
+            profile.write_text('mode: atomic\njope.generated/model/model.go:1.1,2.1 1 1\n')
+            (root/'census.log').write_text(text.replace('Go 1:','missing:'))
+            with self.assertRaises(AssertionError): module.verify(root,profile)
+
 if __name__ == '__main__':
     unittest.main()

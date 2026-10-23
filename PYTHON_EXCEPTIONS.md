@@ -224,3 +224,10 @@ All remaining `978` tracked `.py` files (`247,596` LOC) are pure orchestration, 
 | `python/tests/test_training_campaign.py` | 675 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Explicit synthetic contracts. Tiny CPU optimizer proof is not real-corpus qualification.) |
 | `python/tests/test_training_comparison.py` | 116 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Pytest fixtures imported from the existing contract suite.) |
 | `python/tests/test_training_transition.py` | 127 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Pytest fixtures imported from the existing contract suite.) |
+
+
+## Go emitted-code qualification harness
+
+| Path | Exception | Justification |
+| --- | --- | --- |
+| `deploy/ci/go/verify.py` | `PR-EXCEPT-EMITTER` | Standard-library-only emitted-model test harness: refuses missing executions, incomplete registry accounting and uncovered Go facade statements; no production/runtime role. |
