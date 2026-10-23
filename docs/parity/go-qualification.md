@@ -58,6 +58,33 @@ recorded separately from a new full-suite invocation. The identity join follows 
 TypeScript and also verifies the previously published Go branch's successor, preserving both
 old transition records and every historical row. The final identity freeze has 13 passes.
 
+## Current-main C17 integration (2026-10-23)
+
+The branch now preserves main `f9543b85b356675d377e38d75c4e3ecea8b2d302`, including
+C17 and the ctutils successor. All native golden and C17 helper bytes remain identical
+to main. The Go adapter retains four checked insertion hooks and resolves the C17
+module paths back to their original files. Its original anchor-drift panic and a
+second fast-path anchor failure were retained before correction.
+
+At `f028edbd839ec2ced4e6d8202732dfd62e40feaf`, the complete derived Go binary compiles
+and lists **90 tests**; these tests have not yet been executed at this integration.
+The evidence verifier now requires at least 90 golden and 19 pipeline tests and refuses
+the earlier 84/18-test receipts. Earlier 84-test execution remains historical evidence.
+
+The preceding combined source `1e62cf894c81ae023364a0b189994654bf199251` passed all
+13 default-feature compatibility tests, all three historical tests, 21 math source-binding
+tests, 19 pipeline source-binding tests, six selected pipeline emission tests, two selected
+CLI source-binding tests, and all-target checks. Its later change affects only the owning
+Go golden adapter and evidence checks, not numerical implementation or behavior fixtures.
+The portable monitor correction also executed all 82 synthetic fixtures without skips.
+Both the 1,051 enclosing and 48 portable source pins match actual current bytes.
+
+The announced identity-only joins retain the main-line C17/security history and the
+previously published Go branch. Every earlier transition, historical object, known
+identity and numerical/emitted/model/search fixture is preserved. Full exact-head Go,
+native PR and manual CI remain mandatory; the pending Tokio security successor in
+PR #420 must be integrated before final merge qualification.
+
 ## Remaining qualification
 
 The broader feat-math library run had 525 passes and two failures in unchanged C++ sanitizer

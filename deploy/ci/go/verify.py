@@ -7,7 +7,7 @@ import re
 def verify(root, profile):
     logs = {}
     # Checked minimums prevent a filtered one-test run from qualifying a lane.
-    minimums = dict(recipes=84, fitted=2, bindings=21, pipeline=18, cli=2, census=5)
+    minimums = dict(recipes=90, fitted=2, bindings=21, pipeline=19, cli=2, census=5)
     for name in ('recipes', 'fitted', 'bindings', 'pipeline', 'cli', 'census'):
         text = (root / (name + '.log')).read_text()
         counts = re.findall(r'test result: ok\. (\d+) passed; (\d+) failed', text)

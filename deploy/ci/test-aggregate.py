@@ -359,7 +359,7 @@ class GoEvidenceTests(unittest.TestCase):
             with self.assertRaises(AssertionError): module.verify(root,profile)
             def good(name):
                 return ('test result: ok. %d passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;\nGo 0: fixture\nGo 1: fixture\n' %
-                        dict(recipes=84,fitted=2,bindings=21,pipeline=18,cli=2,census=5)[name]
+                        dict(recipes=90,fitted=2,bindings=21,pipeline=19,cli=2,census=5)[name]
                         + ('test go_runtime_is_required ... ok\n' if name == 'recipes' else ''))
             for name in ('recipes','fitted','bindings','pipeline','cli','census'):
                 (root / (name+'.log')).write_text(good(name))
@@ -372,6 +372,12 @@ class GoEvidenceTests(unittest.TestCase):
             self.assertEqual(len(module.verify(root,profile)),4)
             for name in ('recipes','fitted','bindings','pipeline','cli'):
                 (root/(name+'.log')).write_text('test result: ok. 1 passed; 0 failed\nGo 0: fixture\nGo 1: fixture\n')
+                with self.assertRaises(AssertionError): module.verify(root,profile)
+                (root/(name+'.log')).write_text(good(name))
+            # Pre-C17 receipts omit six native golden controls and one pipeline control.
+            for name, current, stale in [('recipes', 90, 84), ('pipeline', 19, 18)]:
+                (root/(name+'.log')).write_text(good(name).replace(
+                    f'{current} passed', f'{stale} passed'))
                 with self.assertRaises(AssertionError): module.verify(root,profile)
                 (root/(name+'.log')).write_text(good(name))
             (root/'recipes.log').write_text(good('recipes').replace('test go_runtime_is_required ... ok\n',''))
