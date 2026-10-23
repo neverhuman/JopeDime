@@ -155,6 +155,20 @@ class ManualPrBindTests(unittest.TestCase):
                 self.assertIsNone(bind.bind_rev_from_env(env))
                 api.assert_not_called()
 
+    def test_dispatch_without_inputs_retains_exact_head_and_wrong_types_refuse(self):
+        scratch=ROOT/'target/tmp';scratch.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=scratch) as name:
+            path=Path(name)/'event.json'
+            env=dict(GITHUB_EVENT_NAME='workflow_dispatch',GITHUB_EVENT_PATH=str(path),BASE_SHA='a'*40)
+            for payload in [{},{'inputs':None},{'inputs':{}},{'inputs':{'provenance_pr':''}}]:
+                path.write_text(json.dumps(payload))
+                with self.subTest(payload=payload),mock.patch.object(bind,'github_public_json') as api:
+                    self.assertIsNone(bind.bind_rev_from_env(env));api.assert_not_called()
+            for inputs in [False,0,'',[],['420']]:
+                path.write_text(json.dumps({'inputs':inputs}))
+                with self.subTest(inputs=inputs),self.assertRaises(ValueError):
+                    bind.bind_rev_from_env(env)
+
     def test_api_missing_token_and_failure_are_not_exact_head_fallback(self):
         with self.assertRaises(ValueError):bind.github_public_json("pulls/420",{})
         with mock.patch.object(bind,"github_public_json",side_effect=OSError("unavailable")),self.assertRaises(OSError):

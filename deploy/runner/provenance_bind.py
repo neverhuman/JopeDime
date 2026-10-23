@@ -117,7 +117,13 @@ def bind_rev_from_env(environ: Optional[Mapping[str, str]] = None) -> Optional[s
     if event == "workflow_dispatch":
         event_path = env.get("GITHUB_EVENT_PATH", "")
         payload = json.loads(Path(event_path).read_text()) if event_path else {}
-        number = payload.get("inputs", {}).get("provenance_pr", "")
+        # GitHub declares dispatch inputs as object or null (including no-input workflows).
+        inputs = payload.get("inputs")
+        if inputs is None:
+            inputs = {}
+        if not isinstance(inputs, dict):
+            raise ValueError("workflow_dispatch inputs must be an object or null")
+        number = inputs.get("provenance_pr", "")
         if number:
             return manual_pr_bind(env, number)
     base = env.get("BASE_SHA", "")
