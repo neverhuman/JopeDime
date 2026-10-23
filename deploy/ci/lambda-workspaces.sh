@@ -18,6 +18,9 @@
 #               it after any deliberate change to a tracked file under deploy/lambda/. Nothing else in
 #               SNAPSHOT.json changes, and the frozen sha256 is never written: a path with no frozen
 #               record of its own bytes (not listed, or the gzipped corpus) is refused.
+#   snapshot-sync-base <lock> <full-source-commit>
+#               Retain an explained non-version lock change whose exact bytes exist in that
+#               ancestor. Review this record in the same PR; future version sync preserves it.
 #   sync-locks  The Lambda half of `just bump`. For each workspace whose Cargo.lock holds a root
 #               workspace member as a path package (feat-math today) at a version other than the
 #               root's, runs `cargo update -p <package>... --offline` on that workspace, refuses
@@ -30,8 +33,24 @@
 set -euo pipefail
 
 readonly SNAPSHOT=deploy/lambda/SNAPSHOT.json
-# The tree_change that sync-locks writes, and the only one it replaces.
+# Automatically written version records may be replaced. A different record needs
+# an explicitly retained exact source base, which stays intact through later bumps.
 readonly SYNC_RECORD='^cargo update( -p [A-Za-z0-9_-]+)+ --offline: .*; no other package moves$'
+
+# Shared typed validation: origin metadata is source provenance, not permission to
+# change dependencies. sync_locks still compares every non-version lock byte.
+readonly SYNC_BASE_JQ='
+  def hex_string($n): if type == "string" then test("^[0-9a-f]{" + ($n|tostring) + "}$") else false end;
+  def valid_sync_base:
+    if type != "object" then false else
+      keys == ["schema", "source_commit", "tree_change", "tree_sha256"] and
+      .schema == "jope.lambda-version-sync-base/v1" and
+      (.source_commit | hex_string(40)) and (.tree_sha256 | hex_string(64)) and
+      (.tree_change | if type == "string" then length > 0 else false end)
+    end;
+  def valid_sync_bases:
+    if type != "array" then false else length > 0 and all(.[]; valid_sync_base) end;
+'
 
 fail() { printf 'lambda-workspaces.sh: %s\n' "$*" >&2; exit 1; }
 
@@ -71,6 +90,14 @@ snapshot_check() {
     | .tree_path' "$SNAPSHOT")
   [[ -z $unexplained ]] \
     || fail "SNAPSHOT.json records a changed file without a tree_change, or a tree_change for an unchanged one: ${unexplained//$'\n'/, }"
+  if ! jq -e "$SYNC_BASE_JQ"'
+    all(.files[]; if has("version_sync_bases") then
+      (.disposition == "tracked" or .disposition == "tracked-renamed") and
+      (.tree_path | if type == "string" then endswith("/Cargo.lock") else false end) and
+      (.version_sync_bases | valid_sync_bases)
+    else true end)' "$SNAPSHOT" >/dev/null; then
+    fail "invalid version-sync bases in SNAPSHOT.json"
+  fi
   echo "ok: $(wc -l <<<"$listed") tracked files match SNAPSHOT.json"
 }
 
@@ -113,6 +140,62 @@ snapshot_refresh() {
   else
     echo "recorded $path: tree_sha256 $now (tree_change: $why)"
   fi
+}
+
+
+# Record the exact already-committed non-version change explicitly. The command
+# cannot bless uncommitted lock bytes, invent an ancestor, or erase older origins.
+snapshot_sync_base() {
+  local path=$1 source=$2 now record origin tmp
+  [[ $source =~ ^[0-9a-f]{40}$ ]] || fail "source commit must be a full lower-case SHA"
+  [[ $path == deploy/lambda/*/Cargo.lock && -f $path && ! -L $path ]] \
+    || fail "version-sync base needs a regular Lambda Cargo.lock"
+  git ls-files --error-unmatch -- "$path" >/dev/null 2>&1 || fail "$path is not tracked"
+  snapshot_check
+  git merge-base --is-ancestor "$source" HEAD 2>/dev/null \
+    || fail "source commit must be an existing ancestor of HEAD"
+  now=$(sha256sum -- "$path"); now=${now%% *}
+  origin=$(git show "$source:$path" | sha256sum) \
+    || fail "source commit has no readable $path"
+  origin=${origin%% *}
+  [[ $origin == "$now" ]] || fail "source commit does not contain the exact lock bytes"
+  record=$(jq -r --arg p "$path" '.files[] | select(.tree_path == $p) | .tree_change // ""' "$SNAPSHOT")
+  [[ -n $record && ! $record =~ $SYNC_RECORD ]] \
+    || fail "version-sync base requires an explained non-version change"
+  if retained_sync_base_matches "$path" "$record"; then
+    echo "already retained version-sync base for $path"
+    return
+  fi
+  tmp=$(mktemp "$SNAPSHOT.XXXXXX")
+  # shellcheck disable=SC2064
+  trap "rm -f -- '$tmp'" EXIT
+  jq --arg p "$path" --arg h "$now" --arg why "$record" --arg source "$source" '
+    .files |= map(if .tree_path == $p then
+      .version_sync_bases = ((.version_sync_bases // []) + [{
+        schema: "jope.lambda-version-sync-base/v1", source_commit: $source,
+        tree_sha256: $h, tree_change: $why
+      }]) else . end)' "$SNAPSHOT" > "$tmp"
+  cmp -s <(jq --arg p "$path" '(.files[] | select(.tree_path == $p)) |= del(.version_sync_bases)' "$SNAPSHOT") \
+    <(jq --arg p "$path" '(.files[] | select(.tree_path == $p)) |= del(.version_sync_bases)' "$tmp") \
+    || fail "refusing to change anything except this lock's retained origins"
+  chmod --reference="$SNAPSHOT" -- "$tmp"
+  mv -f -- "$tmp" "$SNAPSHOT"
+  trap - EXIT
+  echo "retained version-sync base for $path at $source ($now)"
+}
+
+retained_sync_base_matches() {
+  local path=$1 record=$2 now
+  now=$(sha256sum -- "$path"); now=${now%% *}
+  jq -e --arg p "$path" --arg h "$now" --arg why "$record" "$SYNC_BASE_JQ
+    [.files[] | select(.tree_path == \$p)] as \$rows |
+    if (\$rows | length) != 1 then false else \$rows[0] as \$row |
+      if (\$row.version_sync_bases | valid_sync_bases) then
+        \$row.version_sync_bases[-1] as \$base |
+        \$base.tree_sha256 == \$h and \$row.tree_sha256 == \$h and
+        \$base.tree_change == \$why and \$row.tree_change == \$why
+      else false end
+    end" "$SNAPSHOT" >/dev/null
 }
 
 # lock_path_versions <lock>: "<name>\t<version>" for every package of a Cargo.lock that has no
@@ -177,7 +260,7 @@ sync_locks() {
       continue
     fi
     record=$(jq -r --arg p "$lock" '.files[] | select(.tree_path == $p) | .tree_change // ""' "$SNAPSHOT")
-    if [[ -n $record && ! $record =~ $SYNC_RECORD ]]; then
+    if [[ -n $record && ! $record =~ $SYNC_RECORD ]] && ! retained_sync_base_matches "$lock" "$record"; then
       fail "SNAPSHOT.json records another change to $lock (\"$record\"); bring it to the root versions by hand and record it (snapshot-refresh). The lock is unchanged"
     fi
     names=$(cut -f1 <<<"$stale")
@@ -241,7 +324,8 @@ case ${1-} in
   list) (( $# == 1 )) || fail "list takes no arguments"; workspaces ;;
   snapshot-check) (( $# == 1 )) || fail "snapshot-check takes no arguments"; snapshot_check ;;
   snapshot-refresh) (( $# == 2 || $# == 3 )) || fail "usage: lambda-workspaces.sh snapshot-refresh <path> [<why>]"; snapshot_refresh "$2" "${3-}" ;;
+  snapshot-sync-base) (( $# == 3 )) || fail "usage: lambda-workspaces.sh snapshot-sync-base <lock> <full-source-commit>"; snapshot_sync_base "$2" "$3" ;;
   sync-locks) (( $# == 1 )) || fail "sync-locks takes no arguments"; sync_locks ;;
   verify) (( $# == 1 )) || fail "verify takes no arguments"; verify ;;
-  *) fail "usage: lambda-workspaces.sh list | snapshot-check | snapshot-refresh <path> [<why>] | sync-locks | verify" ;;
+  *) fail "usage: lambda-workspaces.sh list | snapshot-check | snapshot-refresh <path> [<why>] | snapshot-sync-base <lock> <full-source-commit> | sync-locks | verify" ;;
 esac
