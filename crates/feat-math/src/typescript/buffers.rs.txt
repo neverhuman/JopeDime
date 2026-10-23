@@ -1,0 +1,49 @@
+
+// Private, instance-local transfer storage. Addresses are produced by the
+// allocator and are never accepted as arguments to a Rust function.
+thread_local! {
+    static TS_VALUES: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+    static TS_LABELS: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+    static TS_OUTPUT: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+    static TS_TEXT: std::cell::RefCell<Vec<u8>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+const TS_MAX_ELEMENTS: usize = 16_777_216;
+#[no_mangle]
+pub extern "C" fn model_abi_version() -> u32 { 1 }
+#[no_mangle]
+pub extern "C" fn model_values(len: usize) -> usize {
+    if len > TS_MAX_ELEMENTS { return 0; }
+    TS_VALUES.with(|b| { let mut b=b.borrow_mut(); b.resize(len,0.0); b.as_mut_ptr() as usize })
+}
+#[no_mangle]
+pub extern "C" fn model_labels(len: usize) -> usize {
+    if len > TS_MAX_ELEMENTS { return 0; }
+    TS_LABELS.with(|b| { let mut b=b.borrow_mut(); b.resize(len,0.0); b.as_mut_ptr() as usize })
+}
+#[no_mangle]
+pub extern "C" fn model_text(len: usize) -> usize {
+    if len > TS_MAX_ELEMENTS { return 0; }
+    TS_TEXT.with(|b| { let mut b=b.borrow_mut(); b.resize(len,0); b.as_mut_ptr() as usize })
+}
+#[no_mangle]
+pub extern "C" fn model_output() -> usize {
+    TS_OUTPUT.with(|b| b.borrow().as_ptr() as usize)
+}
+#[no_mangle]
+pub extern "C" fn model_output_len() -> usize {
+    TS_OUTPUT.with(|b| b.borrow().len())
+}
+fn ts_rows(rows: usize, cols: usize) -> Option<Vec<Vec<f64>>> {
+    if cols == 0 || rows.checked_mul(cols)? > TS_MAX_ELEMENTS { return None; }
+    TS_VALUES.with(|b| {
+        let b=b.borrow();
+        if b.len() != rows*cols { return None; }
+        Some(b.chunks_exact(cols).map(|row| row.to_vec()).collect())
+    })
+}
+fn ts_clear_buffers() {
+    TS_VALUES.with(|b| *b.borrow_mut()=Vec::new());
+    TS_LABELS.with(|b| *b.borrow_mut()=Vec::new());
+    TS_OUTPUT.with(|b| *b.borrow_mut()=Vec::new());
+    TS_TEXT.with(|b| *b.borrow_mut()=Vec::new());
+}

@@ -322,11 +322,16 @@ jobs:
           name: observatory-ui-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/observatory-ui/${{ github.run_id }}/${{ github.run_attempt }}/
 
+  typescript:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
+    uses: ./.github/workflows/typescript.yml
+
   paper:
     uses: ./.github/workflows/paper.yml
 
   aggregate:
-    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper]
+    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript]
     if: always()
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 20
@@ -477,17 +482,51 @@ jobs:
           rendered_root=$(python3 -c 'import pathlib,sys; p=list(pathlib.Path(sys.argv[1]).rglob("rendered-receipt.json")); assert len(p)==1, "one rendered receipt required"; print(p[0].parent)' "$root")
           # UI checks out the source head explicitly; aggregate may use a synthetic PR merge.
           python3 deploy/ci/rendered-ux-receipt.py verify --root "$rendered_root" --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --checkout-sha "$JOPE_SOURCE_SHA" --event-sha "$GITHUB_SHA"
+      - name: Collect TypeScript Node 24.19.0 evidence
+        if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
+        uses: ./.github/actions/download-ci-evidence
+        with:
+          name: typescript-${{ github.run_id }}-${{ github.run_attempt }}-24.19.0
+          path: target/typescript-evidence/
+          layout: name
+          into: target/ci-typescript-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Collect TypeScript Node 26.1.0 evidence
+        if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
+        uses: ./.github/actions/download-ci-evidence
+        with:
+          name: typescript-${{ github.run_id }}-${{ github.run_attempt }}-26.1.0
+          path: target/typescript-evidence/
+          layout: name
+          into: target/ci-typescript-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Require both exact-source TypeScript matrix receipts
+        if: always() && (needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true')
+        env:
+          TYPESCRIPT_RESULT: ${{ needs.typescript.result }}
+        run: |
+          set -euo pipefail
+          test "$TYPESCRIPT_RESULT" = success
+          for version in 24.19.0 26.1.0; do
+            root="target/ci-typescript-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/typescript-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$version"
+            node deploy/ci/typescript/evidence.mjs verify "$root" "$version"
+          done
       - name: Validate every required result
         if: always()
         env:
           NEEDS_JSON: ${{ toJson(needs) }}
+          TYPESCRIPT_RESULT: ${{ needs.typescript.result }}
+          TYPESCRIPT_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
         run: |
           set -euo pipefail
           output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           mkdir -p "$output"
           printf '%s\n' "$NEEDS_JSON" > "$output/all-needs.json"
-          # UI and publication evidence are independently verified above; preserve the existing lane set.
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); print(json.dumps(n))' > "$output/needs.json"
+          # The reusable workflow must finish both Node matrix legs, including
+          # browser/worker qualification. Missing/cancelled/failed is not success.
+          expected=skipped
+          if [ "$TYPESCRIPT_REQUIRED" = true ]; then expected=success; fi
+          test "$TYPESCRIPT_RESULT" = "$expected"
+          # UI and TypeScript are verified separately; preserve the existing lanes.
+          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("typescript"); n.pop("paper"); print(json.dumps(n))' > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once

@@ -54,6 +54,7 @@ pub mod source_stream;
 mod spec;
 pub mod tokens;
 pub mod transpile;
+pub mod typescript;
 
 // Invention: evolutionary search over pipeline genomes + token-credit accounting.
 pub mod credit;

@@ -17,9 +17,12 @@ use feat_math::transpile::{self, EmitOptions};
 fn main() -> Result<()> {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
     let require_all = args.iter().any(|arg| arg == "--all");
-    args.retain(|arg| arg != "--all");
+    let typescript = args
+        .iter()
+        .any(|arg| arg == "--typescript" || arg == "--ts");
+    args.retain(|arg| !["--all", "--typescript", "--ts"].contains(&arg.as_str()));
     let [dsl, out] = args.as_slice() else {
-        bail!("usage: emit [--all] <program.dsl> <out-dir>");
+        bail!("usage: emit [--all] [--typescript] <program.dsl> <out-dir>");
     };
     let (dsl, out) = (dsl.clone(), out.clone());
     let source = std::fs::read_to_string(&dsl).with_context(|| format!("read {dsl}"))?;
@@ -58,6 +61,12 @@ fn main() -> Result<()> {
             bail!("JavaScript target unsupported: {}", unsupported.join(", "))
         }
         Err(unsupported) => eprintln!("JavaScript target not emitted: {}", unsupported.join(", ")),
+    }
+    if typescript {
+        let bundle = transpile::emit_typescript(&genome, &opts)?;
+        std::fs::write(out.join("model.ts"), bundle.source)?;
+        std::fs::write(out.join("model.kernel.rs"), bundle.kernel)?;
+        targets.push("ts");
     }
     std::fs::write(out.join("targets.txt"), format!("{}\n", targets.join(" ")))?;
     println!("emitted {} to {}", targets.join(" "), out.display());

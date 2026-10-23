@@ -5,6 +5,10 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Model export
+
+- TypeScript: explicit `typescript` / `ts` output with a strict typed API and a WebAssembly build source reusing the complete Rust recipe implementation. Includes bound fitted-model export, CLI/pipeline/v3 source binding, token counting, and an executable CommonJS/ESM qualification lane. Build requirements, arithmetic tolerance and current qualification limits are in `docs/typescript.md`.
+
 ### Regression objectives
 
 - runtime: `jopedime fit --fitness` selects native methods by a portable regression objective: 38 built-ins (quantile, newsvendor, LinEx, relative errors, Poisson/Gamma/Tweedie deviances, MASE, Sharpe, Sortino, drawdown, Calmar, Omega, expected shortfall, hit rate, normalized Gini, KGE, top-fraction capture and more), `name:key=value` overrides, and custom JSON row expressions over `y`, `pred` and numeric training columns that are never features, with weighted and composite forms. Every specification has a sha256 identity in the selection record, model file and receipt

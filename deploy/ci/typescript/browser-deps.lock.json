@@ -1,0 +1,2533 @@
+{
+  "schema": "jope.ubuntu24.04-dependencies/v1",
+  "architecture": "amd64",
+  "source": "Ubuntu noble/noble-updates/noble-security signed InRelease and SHA256-bound Packages metadata, 2026-10-23. Empty installed status; no recommends; full Playwright 1.64.1 Chromium/Firefox/WebKit native closure. Verified extraction only; no maintainer scripts or host installation.",
+  "packages": [
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2%7e24.04.1_amd64.deb",
+      "filename": "gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "size": 51014,
+      "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.39-0ubuntu8.9_amd64.deb",
+      "filename": "libc6_2.39-0ubuntu8.9_amd64.deb",
+      "size": 3264314,
+      "sha256": "ff5557d99b51f761c4b7c92368b9cc45565eda17df9bf9eb4b134d09825008be"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2%7e24.04.1_amd64.deb",
+      "filename": "libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "size": 78392,
+      "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/b/bzip2/libbz2-1.0_1.0.8-5.1ubuntu0.1_amd64.deb",
+      "filename": "libbz2-1.0_1.0.8-5.1ubuntu0.1_amd64.deb",
+      "size": 34562,
+      "sha256": "36ee08b00b1ee5018b2fce02881b7d2d73c9b4e32990bde3388400d86c48126a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/x/xz-utils/liblzma5_5.6.1%2breally5.4.5-1ubuntu0.4_amd64.deb",
+      "filename": "liblzma5_5.6.1+really5.4.5-1ubuntu0.4_amd64.deb",
+      "size": 127704,
+      "sha256": "5bcf5da2339331e21d3f42a831e82c61c54c6b2f29804010e8d59abd0ae52167"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libm/libmd/libmd0_1.1.0-2build1.1_amd64.deb",
+      "filename": "libmd0_1.1.0-2build1.1_amd64.deb",
+      "size": 26976,
+      "sha256": "e5ba01d3c41f256aaf57ec59aa0554857162e3e7f97cdfbff1ed2c0e8d720ee7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pcre2/libpcre2-8-0_10.42-4ubuntu2.1_amd64.deb",
+      "filename": "libpcre2-8-0_10.42-4ubuntu2.1_amd64.deb",
+      "size": 226662,
+      "sha256": "110a797a57673d3ee497a141cf988199258058c57525799c63194d81822529a0"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libselinux/libselinux1_3.5-2ubuntu2.1_amd64.deb",
+      "filename": "libselinux1_3.5-2ubuntu2.1_amd64.deb",
+      "size": 79660,
+      "sha256": "6abaa6c26f46ef17764c4a753e0e84de1cdadde5634fd2987621fdc617988d19"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libz/libzstd/libzstd1_1.5.5%2bdfsg2-2build1.1_amd64.deb",
+      "filename": "libzstd1_1.5.5+dfsg2-2build1.1_amd64.deb",
+      "size": 299472,
+      "sha256": "dfcf25061e07aad7efd3f4f880ba5ad4d4d09ebe7fc8cc77ab6b8a161d6d4727"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib1g_1.3.dfsg-3.1ubuntu2.3_amd64.deb",
+      "filename": "zlib1g_1%3a1.3.dfsg-3.1ubuntu2.3_amd64.deb",
+      "size": 63158,
+      "sha256": "376249c8de139568221dbb242318cc8cb8f02299e3a62b7432948e1754fbddf9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/acl/libacl1_2.3.2-1build1.1_amd64.deb",
+      "filename": "libacl1_2.3.2-1build1.1_amd64.deb",
+      "size": 16792,
+      "sha256": "f2bfd3f8f00413d5f1f04fc723063803c56ac0f1e0efae3bc41f2d7276972ec3"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/t/tar/tar_1.35%2bdfsg-3ubuntu0.4_amd64.deb",
+      "filename": "tar_1.35+dfsg-3ubuntu0.4_amd64.deb",
+      "size": 256392,
+      "sha256": "fdf41a87936824e50c8ac11b0b22d1395aeb0754feef2dae5575b5d5a93793ec"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dpkg/dpkg_1.22.6ubuntu6.6_amd64.deb",
+      "filename": "dpkg_1.22.6ubuntu6.6_amd64.deb",
+      "size": 1282284,
+      "sha256": "ceb6aa4da59fbcb8a3b0549b4280c60b7d849b519859797c8668bdfbe378fb3b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcrypt/libcrypt1_4.4.36-4build1_amd64.deb",
+      "filename": "libcrypt1_1%3a4.4.36-4build1_amd64.deb",
+      "size": 82302,
+      "sha256": "9474785cd6f398512bf8c305c3901dbb111569dccb6f5832002373c0a8ac5832"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/perl/perl-base_5.38.2-3.2ubuntu0.6_amd64.deb",
+      "filename": "perl-base_5.38.2-3.2ubuntu0.6_amd64.deb",
+      "size": 1825574,
+      "sha256": "50e1b2c2646387a94664fbea144af1d1b16cf6e0778426baa198166ca3246697"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/i/init-system-helpers/init-system-helpers_1.66ubuntu1_all.deb",
+      "filename": "init-system-helpers_1.66ubuntu1_all.deb",
+      "size": 39402,
+      "sha256": "8eb801f9ce084dab9bf4cbc3ec0ee5ac75516a4cc1f25e3f92298c632e75b700"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/sysvinit/sysvinit-utils_3.08-6ubuntu3_amd64.deb",
+      "filename": "sysvinit-utils_3.08-6ubuntu3_amd64.deb",
+      "size": 34170,
+      "sha256": "03cf5c9c28a5d186fb7f5214e464f831ff28177695cbb61e66083237267a047e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/audit/libaudit-common_3.1.2-2.1ubuntu0.1_all.deb",
+      "filename": "libaudit-common_1%3a3.1.2-2.1ubuntu0.1_all.deb",
+      "size": 5948,
+      "sha256": "b1b6fca3f7ed86db971c073352a6741f1f60f4a94eeb2c1eb0aca8a7e4b11660"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libc/libcap-ng/libcap-ng0_0.8.4-2build2_amd64.deb",
+      "filename": "libcap-ng0_0.8.4-2build2_amd64.deb",
+      "size": 15180,
+      "sha256": "cf1e9437ac7ddf6539dbe87b68858cbdef84d78c6aac243ab3b6e564a52ed930"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/audit/libaudit1_3.1.2-2.1ubuntu0.1_amd64.deb",
+      "filename": "libaudit1_1%3a3.1.2-2.1ubuntu0.1_amd64.deb",
+      "size": 47082,
+      "sha256": "326a55fce45a620f12b98baf581fb037eb0fcea1ab3969c54cf177f51be8abfe"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/db5.3/libdb5.3t64_5.3.28%2bdfsg2-7_amd64.deb",
+      "filename": "libdb5.3t64_5.3.28+dfsg2-7_amd64.deb",
+      "size": 734100,
+      "sha256": "a78a25c8fad8fdd0b7bc6b297da5d5685579be1e57732aa47870830e4a13161e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/debconf/debconf_1.5.86ubuntu1_all.deb",
+      "filename": "debconf_1.5.86ubuntu1_all.deb",
+      "size": 124096,
+      "sha256": "bb390da466a7461bfc87aa3e6b7cd145dae84af3e26bf437f2c0c218ba226294"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pam/libpam0g_1.5.3-5ubuntu5.7_amd64.deb",
+      "filename": "libpam0g_1.5.3-5ubuntu5.7_amd64.deb",
+      "size": 68124,
+      "sha256": "1d7f54e77f0455ab5e607cd5e78b576801d8efdc66115e02cf3c6e708d093667"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap2_2.66-5ubuntu2.4_amd64.deb",
+      "filename": "libcap2_1%3a2.66-5ubuntu2.4_amd64.deb",
+      "size": 30500,
+      "sha256": "23c627c77c66552a658e62852f244f4946dc543898e0ec5428d5dc6bffde2d6a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libgpg-error/libgpg-error0_1.47-3build2.1_amd64.deb",
+      "filename": "libgpg-error0_1.47-3build2.1_amd64.deb",
+      "size": 70092,
+      "sha256": "93654ee8180a73a0363f25c51dc673d67cbabcbecd164187b8a2deb54d007aef"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libgcrypt20/libgcrypt20_1.10.3-2ubuntu0.2_amd64.deb",
+      "filename": "libgcrypt20_1.10.3-2ubuntu0.2_amd64.deb",
+      "size": 536494,
+      "sha256": "957b9eeaa83cf6f2d5d5d76dbb8aa31d3297e6781d8a02fa08dcc897ae650a0b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lz4/liblz4-1_1.9.4-1build1.1_amd64.deb",
+      "filename": "liblz4-1_1.9.4-1build1.1_amd64.deb",
+      "size": 63062,
+      "sha256": "319331270d5cc52d5ebffe51c941d7b01b432bc402c2924b557209a64d4ecbad"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/systemd/libsystemd0_255.4-1ubuntu8.18_amd64.deb",
+      "filename": "libsystemd0_255.4-1ubuntu8.18_amd64.deb",
+      "size": 436342,
+      "sha256": "2da3fa28302cf007075e89cdc3aabe6973916afcd62c3884b86f67b77c73a5b4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pam/libpam-modules-bin_1.5.3-5ubuntu5.7_amd64.deb",
+      "filename": "libpam-modules-bin_1.5.3-5ubuntu5.7_amd64.deb",
+      "size": 51866,
+      "sha256": "e6753b038042cd007843cbc79a81e732d82d0d2415bcf78ff2120c50b5e54f82"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pam/libpam-modules_1.5.3-5ubuntu5.7_amd64.deb",
+      "filename": "libpam-modules_1.5.3-5ubuntu5.7_amd64.deb",
+      "size": 286418,
+      "sha256": "c8e86ef52e3a743dc67d90f4c6654f7f529deafa6a523fe9076e809785aeea18"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/u/util-linux/libblkid1_2.39.3-9ubuntu6.6_amd64.deb",
+      "filename": "libblkid1_2.39.3-9ubuntu6.6_amd64.deb",
+      "size": 124124,
+      "sha256": "3bcf169cd65e2539059b2287924090fc629f9bf90f595fc25465a7efe950ee82"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/u/util-linux/libmount1_2.39.3-9ubuntu6.6_amd64.deb",
+      "filename": "libmount1_2.39.3-9ubuntu6.6_amd64.deb",
+      "size": 134082,
+      "sha256": "8f2c25589f187dacfdc5bb6be2af0aee6c2ba7b4d2edd1ca4b26753469f07aae"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/u/util-linux/libsmartcols1_2.39.3-9ubuntu6.6_amd64.deb",
+      "filename": "libsmartcols1_2.39.3-9ubuntu6.6_amd64.deb",
+      "size": 66282,
+      "sha256": "84f33a780d27cce20a2cd925e7ce8498daba2dbc614d433548a19fbb2c5dac18"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/u/util-linux/mount_2.39.3-9ubuntu6.6_amd64.deb",
+      "filename": "mount_2.39.3-9ubuntu6.6_amd64.deb",
+      "size": 118192,
+      "sha256": "09e929ceb9fc5d11757f28429b3151601c44db4c96e0bc5ad46c501c8d56f4f9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb",
+      "filename": "libssl3t64_3.0.13-0ubuntu3.16_amd64.deb",
+      "size": 1945300,
+      "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/apparmor/libapparmor1_4.0.1really4.0.1-0ubuntu0.24.04.9_amd64.deb",
+      "filename": "libapparmor1_4.0.1really4.0.1-0ubuntu0.24.04.9_amd64.deb",
+      "size": 51476,
+      "sha256": "75b570d7517e24c3693c4503b4691ac1fd82934d93faa91460309f22104c5617"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/argon2/libargon2-1_0%7e20190702%2bdfsg-4build1_amd64.deb",
+      "filename": "libargon2-1_0~20190702+dfsg-4build1_amd64.deb",
+      "size": 20824,
+      "sha256": "e2c50cb5c50ca598585397f4d4ce43e6f0b5e3ddc212c23b30bdb34ca4a61f66"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/systemd/libudev1_255.4-1ubuntu8.18_amd64.deb",
+      "filename": "libudev1_255.4-1ubuntu8.18_amd64.deb",
+      "size": 177836,
+      "sha256": "6de7321adcc37068f8702fe6826473662df73c36377e00f07f7acfeca2e40d4a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lvm2/libdevmapper1.02.1_1.02.185-3ubuntu3.2_amd64.deb",
+      "filename": "libdevmapper1.02.1_2%3a1.02.185-3ubuntu3.2_amd64.deb",
+      "size": 139194,
+      "sha256": "0d43a02b9030a50edbc49c9580f88f01eef2b043baad1c6200672c39643c0efe"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/j/json-c/libjson-c5_0.17-1build1_amd64.deb",
+      "filename": "libjson-c5_0.17-1build1_amd64.deb",
+      "size": 35340,
+      "sha256": "3ac608d78e9e981e14ba7ceb141a46e3dd3ae8d6dbb3a7ecafd2698fe9930584"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/u/util-linux/libuuid1_2.39.3-9ubuntu6.6_amd64.deb",
+      "filename": "libuuid1_2.39.3-9ubuntu6.6_amd64.deb",
+      "size": 36596,
+      "sha256": "7e2992d3a79fc05514dc5966558ee9c66a7214a47edf2a36017b9e2777528665"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cryptsetup/libcryptsetup12_2.7.0-1ubuntu4.2_amd64.deb",
+      "filename": "libcryptsetup12_2%3a2.7.0-1ubuntu4.2_amd64.deb",
+      "size": 266122,
+      "sha256": "f6f6a7f35104da711997b52c92ab91ce1f47dd039d276d5beb797d713447c9f2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/u/util-linux/libfdisk1_2.39.3-9ubuntu6.6_amd64.deb",
+      "filename": "libfdisk1_2.39.3-9ubuntu6.6_amd64.deb",
+      "size": 146344,
+      "sha256": "7f67b127d239f51218c1eb63c3b0c219bbf26f450349bed9ad5d9f10a6b80c1b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/k/kmod/libkmod2_31%2b20240202-2ubuntu7.2_amd64.deb",
+      "filename": "libkmod2_31+20240202-2ubuntu7.2_amd64.deb",
+      "size": 51830,
+      "sha256": "a9cbdc424bc0a5c8af3d6445488a48de76df5ff4d76b7dab8aaf88f712358bbc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libseccomp/libseccomp2_2.5.5-1ubuntu3.1_amd64.deb",
+      "filename": "libseccomp2_2.5.5-1ubuntu3.1_amd64.deb",
+      "size": 50424,
+      "sha256": "33fc96f1e008d27c042a3db9bcd16f7f4d49e866f7a3141b758a799328dbdc3f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/systemd/libsystemd-shared_255.4-1ubuntu8.18_amd64.deb",
+      "filename": "libsystemd-shared_255.4-1ubuntu8.18_amd64.deb",
+      "size": 2077180,
+      "sha256": "20210e06618cfc824b19ebc0e2163d72cd57509d947fa71aad8d53d78b808caa"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/systemd/systemd-dev_255.4-1ubuntu8.18_all.deb",
+      "filename": "systemd-dev_255.4-1ubuntu8.18_all.deb",
+      "size": 107102,
+      "sha256": "08a19c4b503e54945510fac8db363782095b7cd68f017ffc60e758f24d4c82d3"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/systemd/systemd_255.4-1ubuntu8.18_amd64.deb",
+      "filename": "systemd_255.4-1ubuntu8.18_amd64.deb",
+      "size": 3474856,
+      "sha256": "ba37e7dc1e33690d94a1063543d27f9b17c013a20791c3315b2423fbf9e7ae7b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/systemd/systemd-sysv_255.4-1ubuntu8.18_amd64.deb",
+      "filename": "systemd-sysv_255.4-1ubuntu8.18_amd64.deb",
+      "size": 11892,
+      "sha256": "6e16b759af4f32dfca76f20ce69f70a8bddf9078ad7ffb1f3469b95d93ac379c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/e/e2fsprogs/libcom-err2_1.47.0-2.4%7eexp1ubuntu4.1_amd64.deb",
+      "filename": "libcom-err2_1.47.0-2.4~exp1ubuntu4.1_amd64.deb",
+      "size": 22982,
+      "sha256": "7ab24d3057dabf86db8f771ad6e43f073ed86b6b950d6e8ba22cb9fe6707bbc9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gmp/libgmp10_6.3.0%2bdfsg-2ubuntu6.1_amd64.deb",
+      "filename": "libgmp10_2%3a6.3.0+dfsg-2ubuntu6.1_amd64.deb",
+      "size": 253460,
+      "sha256": "285f8a505dfa8e1b33f357a9d8d3477ad35bf18c0b34771a6df4c25923f3ae0d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/ncurses/libtinfo6_6.4%2b20240113-1ubuntu2.2_amd64.deb",
+      "filename": "libtinfo6_6.4+20240113-1ubuntu2.2_amd64.deb",
+      "size": 108086,
+      "sha256": "b67a6df2bdab61d273eabebd208bb6a3fb12618a390a067e1ee305a409ff03d9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/ncurses/libncursesw6_6.4%2b20240113-1ubuntu2.2_amd64.deb",
+      "filename": "libncursesw6_6.4+20240113-1ubuntu2.2_amd64.deb",
+      "size": 147816,
+      "sha256": "579c9488755d1ddd70f66480cafd2f68776f68314d15d9cf4b5449d0de0fc968"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pam/libpam-runtime_1.5.3-5ubuntu5.7_all.deb",
+      "filename": "libpam-runtime_1.5.3-5ubuntu5.7_all.deb",
+      "size": 40754,
+      "sha256": "879a23df25b1ba28801c9caf73f1ac36724bdff9834b5a0db7d0ac5ba6f8e191"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/procps/libproc2-0_4.0.4-4ubuntu3.3_amd64.deb",
+      "filename": "libproc2-0_2%3a4.0.4-4ubuntu3.3_amd64.deb",
+      "size": 58876,
+      "sha256": "8a73e2656ddcdb078e06e20abb5a92b182145e12376a9a9282db8374da34d228"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsemanage/libsemanage-common_3.5-1build5_all.deb",
+      "filename": "libsemanage-common_3.5-1build5_all.deb",
+      "size": 10144,
+      "sha256": "e10cd93f0b6941566de04b860b723df57ca3fe4a9255a73b2be0d1dc7df2850e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsepol/libsepol2_3.5-2build1_amd64.deb",
+      "filename": "libsepol2_3.5-2build1_amd64.deb",
+      "size": 302950,
+      "sha256": "47272bab0c2fcc350431f9a8ae63afc49ce6d7e71e63c914639fbda6b1ca9f6a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsemanage/libsemanage2_3.5-1build5_amd64.deb",
+      "filename": "libsemanage2_3.5-1build5_amd64.deb",
+      "size": 93178,
+      "sha256": "56102dcbd410416d03c5ffb80958f54ac63936f4d9eb3f6a98964e680a82ce37"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/shadow/passwd_4.13%2bdfsg1-4ubuntu3.2_amd64.deb",
+      "filename": "passwd_1%3a4.13+dfsg1-4ubuntu3.2_amd64.deb",
+      "size": 844580,
+      "sha256": "139b51228c8065eefa3051f649d8480eb986f1cf629448e49d2eaf9813318412"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/procps/procps_4.0.4-4ubuntu3.3_amd64.deb",
+      "filename": "procps_2%3a4.0.4-4ubuntu3.3_amd64.deb",
+      "size": 707170,
+      "sha256": "08d7baeff0285804178a8ed99b49514f210d38881bd118157cd9e222646c17a5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/adduser/adduser_3.137ubuntu1_all.deb",
+      "filename": "adduser_3.137ubuntu1_all.deb",
+      "size": 100872,
+      "sha256": "542aff2395eb912a56833e11a78076342779689d8fede7adcf08d1d6b0d0cd8b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dbus/libdbus-1-3_1.14.10-4ubuntu4.1_amd64.deb",
+      "filename": "libdbus-1-3_1.14.10-4ubuntu4.1_amd64.deb",
+      "size": 209734,
+      "sha256": "5d630480f04b4b442300ce847a3fa705ea4d14d80ba6de91f99b51a4e4953b08"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dbus/dbus-bin_1.14.10-4ubuntu4.1_amd64.deb",
+      "filename": "dbus-bin_1.14.10-4ubuntu4.1_amd64.deb",
+      "size": 39310,
+      "sha256": "0d2c7e425967039594ea099f6128231769e1ed2cc2f6fd7d895fea135c9e1964"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dbus/dbus-session-bus-common_1.14.10-4ubuntu4.1_all.deb",
+      "filename": "dbus-session-bus-common_1.14.10-4ubuntu4.1_all.deb",
+      "size": 80550,
+      "sha256": "aa88bf2f2107e7d948d0e01001b447fc6cae81b285a6e7daf33dcb62737de62f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1_2.6.1-2ubuntu0.6_amd64.deb",
+      "filename": "libexpat1_2.6.1-2ubuntu0.6_amd64.deb",
+      "size": 98940,
+      "sha256": "494b8e672f722130c6bca6a7bc4cc31a43ca891a31d60d868bfdd699a3c20b13"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dbus/dbus-daemon_1.14.10-4ubuntu4.1_amd64.deb",
+      "filename": "dbus-daemon_1.14.10-4ubuntu4.1_amd64.deb",
+      "size": 118148,
+      "sha256": "785ad36aafc8912300e44a1cea438e28ea36fb94c631f5849408aea85d2ab2bf"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dbus/dbus-system-bus-common_1.14.10-4ubuntu4.1_all.deb",
+      "filename": "dbus-system-bus-common_1.14.10-4ubuntu4.1_all.deb",
+      "size": 81648,
+      "sha256": "4db2e3e18c6abee1a1d1e2f91289e229dd862e6e1ef00463c5533c612c4f1809"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dbus/dbus_1.14.10-4ubuntu4.1_amd64.deb",
+      "filename": "dbus_1.14.10-4ubuntu4.1_amd64.deb",
+      "size": 24300,
+      "sha256": "0d59be1393d5b01552edbf16c7b9357c473bf625aa47365ce2e8eef6da1dd2e1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/systemd/libpam-systemd_255.4-1ubuntu8.18_amd64.deb",
+      "filename": "libpam-systemd_255.4-1ubuntu8.18_amd64.deb",
+      "size": 235370,
+      "sha256": "fb189407aefa51b5ac3ffde8d8e391826312067633bf8f5bb7a93e0c6f63ef6a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dbus/dbus-user-session_1.14.10-4ubuntu4.1_amd64.deb",
+      "filename": "dbus-user-session_1.14.10-4ubuntu4.1_amd64.deb",
+      "size": 9968,
+      "sha256": "e585b1694b854c3b75bfb39cc4022cafe7b14e44fd435433b613b8fb9919cb41"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/i/iso-codes/iso-codes_4.16.0-1_all.deb",
+      "filename": "iso-codes_4.16.0-1_all.deb",
+      "size": 3491500,
+      "sha256": "cafca0a3a1f07b44fbba53ab7a1f1d9755e6b80cc041173afe2b52e53bed97a7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libb/libbsd/libbsd0_0.12.1-1build1.1_amd64.deb",
+      "filename": "libbsd0_0.12.1-1build1.1_amd64.deb",
+      "size": 41238,
+      "sha256": "f3857b0863ac5cfd4263e9bf6cfb1d4be88d5321e4070d5bc2b62b0949e6c86f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap2-bin_2.66-5ubuntu2.4_amd64.deb",
+      "filename": "libcap2-bin_1%3a2.66-5ubuntu2.4_amd64.deb",
+      "size": 34134,
+      "sha256": "a8c875e1711a7a101e995814e6500c826cb658551660ef967ec15fbda79a3997"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/e/elfutils/libelf1t64_0.190-1.1ubuntu0.1_amd64.deb",
+      "filename": "libelf1t64_0.190-1.1ubuntu0.1_amd64.deb",
+      "size": 57810,
+      "sha256": "b4aee123a37472d213647594b4f7d4a0d13615b0ca2a6fd33926b768d6b232c2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libf/libffi/libffi8_3.4.6-1build1_amd64.deb",
+      "filename": "libffi8_3.4.6-1build1_amd64.deb",
+      "size": 24718,
+      "sha256": "637e6a7744de08cd331a41f4efd0d24e6ea9064843dea9d1c6ca87bdb5f038a2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/fribidi/libfribidi0_1.0.13-3build1_amd64.deb",
+      "filename": "libfribidi0_1.0.13-3build1_amd64.deb",
+      "size": 26150,
+      "sha256": "6cd50259d39ce0dfafee2632c6268538e6a02590e77161a133e9683af346dd1d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/glib2.0/libglib2.0-0t64_2.80.0-6ubuntu3.10_amd64.deb",
+      "filename": "libglib2.0-0t64_2.80.0-6ubuntu3.10_amd64.deb",
+      "size": 1547558,
+      "sha256": "ff1b650f655b36dfe202fdbae6bb02b363c7257b6dd23e4f95ab61f716190df3"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/nettle/libnettle8t64_3.9.1-2.2build1.1_amd64.deb",
+      "filename": "libnettle8t64_3.9.1-2.2build1.1_amd64.deb",
+      "size": 181636,
+      "sha256": "6d97fbc1972633083f08f51ccab433606c97bbceb897c631c66495117ca3406f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/nettle/libhogweed6t64_3.9.1-2.2build1.1_amd64.deb",
+      "filename": "libhogweed6t64_3.9.1-2.2build1.1_amd64.deb",
+      "size": 198548,
+      "sha256": "a9b5f7e9d49ba9060e1c933567046fbc6feab6096799cbf550b7214dc9b0f49b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libu/libunistring/libunistring5_1.1-2build1.1_amd64.deb",
+      "filename": "libunistring5_1.1-2build1.1_amd64.deb",
+      "size": 535554,
+      "sha256": "203d7657b5f54633fba1a9c9b784d556ef83c9f6787b3185ba55a88e07b865a3"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libi/libidn2/libidn2-0_2.3.7-2build1.1_amd64.deb",
+      "filename": "libidn2-0_2.3.7-2build1.1_amd64.deb",
+      "size": 66242,
+      "sha256": "46bfd10df095a23b65f58115de47a547c9a2d14627749bd0423ae78c14be77d3"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/p11-kit/libp11-kit0_0.25.3-4ubuntu2.2_amd64.deb",
+      "filename": "libp11-kit0_0.25.3-4ubuntu2.2_amd64.deb",
+      "size": 297270,
+      "sha256": "e7c58aeac19d89f5f1492dfaa52b8623bcd56edc40983f5243ad56d94f477bf2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libt/libtasn1-6/libtasn1-6_4.19.0-3ubuntu0.24.04.2_amd64.deb",
+      "filename": "libtasn1-6_4.19.0-3ubuntu0.24.04.2_amd64.deb",
+      "size": 44468,
+      "sha256": "f82c9ad142f952ea523bda5bfca7bb0802af3a50b8c0f0dd9ec18cdfa104bde7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gnutls28/libgnutls30t64_3.8.3-1.1ubuntu3.6_amd64.deb",
+      "filename": "libgnutls30t64_3.8.3-1.1ubuntu3.6_amd64.deb",
+      "size": 1002902,
+      "sha256": "b8944756260c5ea6b7fac019745f931f905aa7a4df0763676b1b25c911b692e2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/k/krb5/libkrb5support0_1.20.1-6ubuntu2.10_amd64.deb",
+      "filename": "libkrb5support0_1.20.1-6ubuntu2.10_amd64.deb",
+      "size": 34942,
+      "sha256": "9224ede3246a82a845ea97652ecfae57f88e8d8f520d8a186f9157167574fb34"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/k/krb5/libk5crypto3_1.20.1-6ubuntu2.10_amd64.deb",
+      "filename": "libk5crypto3_1.20.1-6ubuntu2.10_amd64.deb",
+      "size": 81944,
+      "sha256": "273f7cc95a68d927d7f71c3e78b7717a16a8d86e646a206bae7bf797150ae9db"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/k/keyutils/libkeyutils1_1.6.3-3build1_amd64.deb",
+      "filename": "libkeyutils1_1.6.3-3build1_amd64.deb",
+      "size": 9490,
+      "sha256": "0679f198b0128179e46cdf956fb2022c23c758664c00bc8efa0382d509683a8a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/k/krb5/libkrb5-3_1.20.1-6ubuntu2.10_amd64.deb",
+      "filename": "libkrb5-3_1.20.1-6ubuntu2.10_amd64.deb",
+      "size": 347568,
+      "sha256": "60b48c5a3233f1d8caba30d6573edc8e131911ab6d63adcd664f7cbe62708362"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/k/krb5/libgssapi-krb5-2_1.20.1-6ubuntu2.10_amd64.deb",
+      "filename": "libgssapi-krb5-2_1.20.1-6ubuntu2.10_amd64.deb",
+      "size": 142830,
+      "sha256": "0d4a0187bcdbbe3e6a10bfa574100087d12052d0d0ef28614fd6210021c587b2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gcc-14/libstdc%2b%2b6_14.2.0-4ubuntu2%7e24.04.1_amd64.deb",
+      "filename": "libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "size": 792064,
+      "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+      "filename": "libicu74_74.2-1ubuntu3.1_amd64.deb",
+      "size": 10860078,
+      "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/r/readline/readline-common_8.2-4build1_all.deb",
+      "filename": "readline-common_8.2-4build1_all.deb",
+      "size": 56484,
+      "sha256": "879bfd7f8a9bc4c0f7cdc777cdd8bc6de5f8c4a2ac80c060322a1b22f13504bb"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/r/readline/libreadline8t64_8.2-4build1_amd64.deb",
+      "filename": "libreadline8t64_8.2-4build1_amd64.deb",
+      "size": 152856,
+      "sha256": "563977a16df03b611f5239cc1e9a0426e86479fcc616b5c9e200ea32063119e5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/slang2/libslang2_2.3.3-3build2_amd64.deb",
+      "filename": "libslang2_2.3.3-3build2_amd64.deb",
+      "size": 505982,
+      "sha256": "352deab8d4dcb023ecffc766088d9c5420c36a3bef9ef5b1c9b173d1c3c88bd7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/sqlite3/libsqlite3-0_3.45.1-1ubuntu2.8_amd64.deb",
+      "filename": "libsqlite3-0_3.45.1-1ubuntu2.8_amd64.deb",
+      "size": 701602,
+      "sha256": "b1190bb72359f5fcc47406aa46065eaf4f1ca208085c51224a52b04bedc0b4bb"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libt/libtext-iconv-perl/libtext-iconv-perl_1.7-8build3_amd64.deb",
+      "filename": "libtext-iconv-perl_1.7-8build3_amd64.deb",
+      "size": 13478,
+      "sha256": "b5f873b2d90987a112107a17d0f91aa3234a16b78a0d48fd7b557a85c5606e08"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxml2/libxml2_2.9.14%2bdfsg-1.3ubuntu3.10_amd64.deb",
+      "filename": "libxml2_2.9.14+dfsg-1.3ubuntu3.10_amd64.deb",
+      "size": 763592,
+      "sha256": "c5a065f85c1e6f605741e365e40cad71c3ceb0e85e2791400bd35b8896e12ad1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/shared-mime-info/shared-mime-info_2.4-4_amd64.deb",
+      "filename": "shared-mime-info_2.4-4_amd64.deb",
+      "size": 473572,
+      "sha256": "7a774ea291ab99bfa987866c6b68e825531eeea7c8a732dd47d14cf480453fda"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/x/xkeyboard-config/xkb-data_2.41-2ubuntu1.1_all.deb",
+      "filename": "xkb-data_2.41-2ubuntu1.1_all.deb",
+      "size": 397328,
+      "sha256": "e99f2a0b4c56cdf35dec489e56b6a8418826cab8ce6306ec6d0bd98e2cd0014a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdrm/libdrm-common_2.4.125-1ubuntu0.1%7e24.04.2_all.deb",
+      "filename": "libdrm-common_2.4.125-1ubuntu0.1~24.04.2_all.deb",
+      "size": 9250,
+      "sha256": "0b60996bc18fa1545e60a47bb0fe1a7f360ec06fe62ba35fb8d8ba2a54e62166"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdrm/libdrm2_2.4.125-1ubuntu0.1%7e24.04.2_amd64.deb",
+      "filename": "libdrm2_2.4.125-1ubuntu0.1~24.04.2_amd64.deb",
+      "size": 41388,
+      "sha256": "4d3e858dd57be617c49d87c5ddcdb35df744a4f0a559981256ae2ba174718584"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libe/libedit/libedit2_3.1-20230828-1build1_amd64.deb",
+      "filename": "libedit2_3.1-20230828-1build1_amd64.deb",
+      "size": 97586,
+      "sha256": "3afbc8ddf835049dd4d88275b9d13680e4c4cdd59e191cbd63424152cc08e00e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libe/libevdev/libevdev2_1.13.1%2bdfsg-1build1_amd64.deb",
+      "filename": "libevdev2_1.13.1+dfsg-1build1_amd64.deb",
+      "size": 37756,
+      "sha256": "a14b1ea7b3220a063458590734920879cec8431b4fc5160eb0f044dfb8d76515"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gpm/libgpm2_1.20.7-11_amd64.deb",
+      "filename": "libgpm2_1.20.7-11_amd64.deb",
+      "size": 14104,
+      "sha256": "158b9073bf5177286474dacb87cb60aac9ceb08613fdb5a1e1643ca5d07be7cf"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/ncurses/libncurses6_6.4%2b20240113-1ubuntu2.2_amd64.deb",
+      "filename": "libncurses6_6.4+20240113-1ubuntu2.2_amd64.deb",
+      "size": 111902,
+      "sha256": "59e8527dfd14473393960bfb7c69566f1ad9d576423421dcb8b8dcdbb3e7fca1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/nghttp2/libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb",
+      "filename": "libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb",
+      "size": 74590,
+      "sha256": "73adcbb9df32cd7c9d46b1c7598bbbbcf249be705d62d966694cfc9976a15dfe"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/numactl/libnuma1_2.0.18-1ubuntu0.24.04.1_amd64.deb",
+      "filename": "libnuma1_2.0.18-1ubuntu0.24.04.1_amd64.deb",
+      "size": 23396,
+      "sha256": "f333b8edf6f0b705c19f2a67008194df66f7aab0fa2350dc98510569a033ff29"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libp/libpng1.6/libpng16-16t64_1.6.43-5ubuntu0.7_amd64.deb",
+      "filename": "libpng16-16t64_1.6.43-5ubuntu0.7_amd64.deb",
+      "size": 188998,
+      "sha256": "863d6abb089b2820ceba98e6b18f06eaacc55f9b05827001e7b4021a9a7b246c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libp/libpsl/libpsl5t64_0.21.2-1.1build1_amd64.deb",
+      "filename": "libpsl5t64_0.21.2-1.1build1_amd64.deb",
+      "size": 57072,
+      "sha256": "a6c85d1303ae90b6a3209d73c4f047f82c27cdc963c48adfd95dd7abca64f039"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lm-sensors/libsensors-config_3.6.0-9build1_all.deb",
+      "filename": "libsensors-config_1%3a3.6.0-9build1_all.deb",
+      "size": 5546,
+      "sha256": "148103a436fd273dabfe0fe41dc54873df46227b59b2c7ac7339d7e2ddfd033b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lm-sensors/libsensors5_3.6.0-9build1_amd64.deb",
+      "filename": "libsensors5_1%3a3.6.0-9build1_amd64.deb",
+      "size": 26600,
+      "sha256": "515ed1fbe2bc99926c44fe10b1beb9c3510068c344adda334303098d669ba1e5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libu/libusb-1.0/libusb-1.0-0_1.0.27-1_amd64.deb",
+      "filename": "libusb-1.0-0_2%3a1.0.27-1_amd64.deb",
+      "size": 54008,
+      "sha256": "d59e679a82ee2b724c556397e831e879936adbe8a007705872b65a5e1ec887b5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxau/libxau6_1.0.9-1build6_amd64.deb",
+      "filename": "libxau6_1%3a1.0.9-1build6_amd64.deb",
+      "size": 7160,
+      "sha256": "e40d29f1d1a62393bacaedebe0da3d9006084152a9f7e5e029293f08ce1c5c80"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxdmcp/libxdmcp6_1.1.3-0ubuntu6_amd64.deb",
+      "filename": "libxdmcp6_1%3a1.1.3-0ubuntu6_amd64.deb",
+      "size": 10254,
+      "sha256": "bcd336fce11ce2a45f34d0f95e6980af22529f22147e8f98c156e5cee8ee42bb"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb1_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb1_1.15-1ubuntu2_amd64.deb",
+      "size": 47730,
+      "sha256": "e1c6611d11ad7398326f1bf028afc34c3b14c51d917a3426b966ed4b9687fa58"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libx11/libx11-data_1.8.7-1ubuntu0.1_all.deb",
+      "filename": "libx11-data_2%3a1.8.7-1ubuntu0.1_all.deb",
+      "size": 115970,
+      "sha256": "5cb70f7a8e7178e0bae4fd49eee49feaed623d2d821caf6ea5862b66f9e9630b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libx11/libx11-6_1.8.7-1ubuntu0.1_amd64.deb",
+      "filename": "libx11-6_2%3a1.8.7-1ubuntu0.1_amd64.deb",
+      "size": 653072,
+      "sha256": "9102f73477081a9a57994c80587ca9760341f644ed51bdfa46f2248083d418b3"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxext/libxext6_1.3.4-1build2_amd64.deb",
+      "filename": "libxext6_2%3a1.3.4-1build2_amd64.deb",
+      "size": 30406,
+      "sha256": "45783969a9ece9d7b7b733b8c60981584c53c6bc5ee3b42d295d2f80d1285679"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxkbcommon/libxkbcommon0_1.6.0-1build1_amd64.deb",
+      "filename": "libxkbcommon0_1.6.0-1build1_amd64.deb",
+      "size": 121944,
+      "sha256": "2b9caeb423efb540296a1cb20b872cc630c23908407ecb5c1c787a617622d664"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gdk-pixbuf/libgdk-pixbuf2.0-common_2.42.10%2bdfsg-3ubuntu3.3_all.deb",
+      "filename": "libgdk-pixbuf2.0-common_2.42.10+dfsg-3ubuntu3.3_all.deb",
+      "size": 8302,
+      "sha256": "57f24caf1fe608d009933591bdbbf70851a4dbee8b75e9c097f68f57a9a72e07"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo8_2.1.5-2ubuntu2_amd64.deb",
+      "filename": "libjpeg-turbo8_2.1.5-2ubuntu2_amd64.deb",
+      "size": 149982,
+      "sha256": "f68b5b23bc8a1688fb787d2aed7e2cdf895a73022f6a5025e183162dac4500b2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libj/libjpeg8-empty/libjpeg8_8c-2ubuntu11_amd64.deb",
+      "filename": "libjpeg8_8c-2ubuntu11_amd64.deb",
+      "size": 2148,
+      "sha256": "4d6ed682972bddf62af158a06d68a0dda497e421423b7ca92fb450b3d9ceaac9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdeflate/libdeflate0_1.19-1build1.1_amd64.deb",
+      "filename": "libdeflate0_1.19-1build1.1_amd64.deb",
+      "size": 43914,
+      "sha256": "8e7dfa9e63a9b5058071b84da48bb2e30dea07de169e80fbc759fe0e68639269"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/j/jbigkit/libjbig0_2.1-6.1ubuntu2_amd64.deb",
+      "filename": "libjbig0_2.1-6.1ubuntu2_amd64.deb",
+      "size": 29668,
+      "sha256": "074a760a86213a1286ad60f56394c90885cf45af070626a88c480d90b78c175a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lerc/liblerc4_4.0.0%2bds-4ubuntu2_amd64.deb",
+      "filename": "liblerc4_4.0.0+ds-4ubuntu2_amd64.deb",
+      "size": 179378,
+      "sha256": "f1b9dbfa28c56564f6b544f3757f5f3f4d549ce9962f39e897812c23b0a5d0e7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libw/libwebp/libsharpyuv0_1.3.2-0.4build3_amd64.deb",
+      "filename": "libsharpyuv0_1.3.2-0.4build3_amd64.deb",
+      "size": 15786,
+      "sha256": "4e1763494e5b9d34192313aa88e38201fc67b3f13ea96ca268d26401a3002791"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libw/libwebp/libwebp7_1.3.2-0.4build3_amd64.deb",
+      "filename": "libwebp7_1.3.2-0.4build3_amd64.deb",
+      "size": 230220,
+      "sha256": "c86f6439f0bbc531f7199794654231f3b29327d6585958511b958795d51c2484"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff6_4.5.1%2bgit230720-4ubuntu2.5_amd64.deb",
+      "filename": "libtiff6_4.5.1+git230720-4ubuntu2.5_amd64.deb",
+      "size": 199612,
+      "sha256": "564cdf59dda5e1a826c51b5868ee2785fffa26ee5a7bad95bc5e8c8224c931b8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gdk-pixbuf/libgdk-pixbuf-2.0-0_2.42.10%2bdfsg-3ubuntu3.3_amd64.deb",
+      "filename": "libgdk-pixbuf-2.0-0_2.42.10+dfsg-3ubuntu3.3_amd64.deb",
+      "size": 147442,
+      "sha256": "de84e0d777d9c9e39148d8491338e6b8c62bc2d066867266b1643a7a725a86ba"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gtk%2b3.0/gtk-update-icon-cache_3.24.41-4ubuntu1.3_amd64.deb",
+      "filename": "gtk-update-icon-cache_3.24.41-4ubuntu1.3_amd64.deb",
+      "size": 51898,
+      "sha256": "bd59cdd3d08524cfbf291efa5f9bed68916375e89476cc04ac5af515eb10e33c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/h/hicolor-icon-theme/hicolor-icon-theme_0.17-2_all.deb",
+      "filename": "hicolor-icon-theme_0.17-2_all.deb",
+      "size": 9976,
+      "sha256": "9000eb98868252261978ff49501c0ace3124cb369c395e9f5015ddc556fe2ba6"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/h/humanity-icon-theme/humanity-icon-theme_0.6.16_all.deb",
+      "filename": "humanity-icon-theme_0.6.16_all.deb",
+      "size": 1281812,
+      "sha256": "a9bb76c7eb926bd97e50455a79f266de826a246b2250e1ac4aebcda013dd51c7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/u/ubuntu-themes/ubuntu-mono_24.04-0ubuntu1_all.deb",
+      "filename": "ubuntu-mono_24.04-0ubuntu1_all.deb",
+      "size": 150904,
+      "sha256": "3a58114f10170b253d2a574db854fa1c4399565888c78f28bbe53ce889894cdb"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/adwaita-icon-theme/adwaita-icon-theme_46.0-1_all.deb",
+      "filename": "adwaita-icon-theme_46.0-1_all.deb",
+      "size": 722560,
+      "sha256": "530d1991a87ffda50f35f9a6d23712ed04c10b742c3e434097840fed50b1eb4e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/at-spi2-core/at-spi2-common_2.52.0-1build1_all.deb",
+      "filename": "at-spi2-common_2.52.0-1build1_all.deb",
+      "size": 8674,
+      "sha256": "7e05959b067031468f21ae46c6653a6813f1dccd994ef12a0b5f75de0ed346b6"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dconf/libdconf1_0.40.0-4ubuntu0.1_amd64.deb",
+      "filename": "libdconf1_0.40.0-4ubuntu0.1_amd64.deb",
+      "size": 39588,
+      "sha256": "86bf3825fbaec0d5159c5e6bd88f10ade991a086c821aeef15631c510c6d9904"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dconf/dconf-service_0.40.0-4ubuntu0.1_amd64.deb",
+      "filename": "dconf-service_0.40.0-4ubuntu0.1_amd64.deb",
+      "size": 27576,
+      "sha256": "49bf5473474228d48373da639bbe3e77157b03d4467bfa2deb56168c2c03cd81"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dconf/dconf-gsettings-backend_0.40.0-4ubuntu0.1_amd64.deb",
+      "filename": "dconf-gsettings-backend_0.40.0-4ubuntu0.1_amd64.deb",
+      "size": 22074,
+      "sha256": "2e6801f955d5960380b6240be3886162343e770b1c17c919674cbcb3d13be732"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/e/emacsen-common/emacsen-common_3.0.5_all.deb",
+      "filename": "emacsen-common_3.0.5_all.deb",
+      "size": 12116,
+      "sha256": "d802bbf9167ad1d8aa633b65684439e08672379f15bf752662d7fd7b9798dce1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/dictionaries-common/dictionaries-common_1.29.7_all.deb",
+      "filename": "dictionaries-common_1.29.7_all.deb",
+      "size": 187642,
+      "sha256": "601e7cb4d662aca433785eaafd8094e51b1386aab5f5aef6572a1a565b80f21e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/b/brotli/libbrotli1_1.1.0-2build2_amd64.deb",
+      "filename": "libbrotli1_1.1.0-2build2_amd64.deb",
+      "size": 330730,
+      "sha256": "74492419b8fda803774b8c9acef6afc5d2f9ff31782635aae212906adae7b277"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/freetype/libfreetype6_2.13.2%2bdfsg-1ubuntu0.2_amd64.deb",
+      "filename": "libfreetype6_2.13.2+dfsg-1ubuntu0.2_amd64.deb",
+      "size": 402610,
+      "sha256": "8c6d3bac5a6197fa2f48b2d56f04f3ffecaa7082eeab91b0939f97a40adc88a6"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/fonts-liberation/fonts-liberation_2.1.5-3_all.deb",
+      "filename": "fonts-liberation_1%3a2.1.5-3_all.deb",
+      "size": 1603290,
+      "sha256": "065c2ab1abc9108b17d401016dc594b79750904390f095845c93bb06e1153acc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/fontconfig/fontconfig-config_2.15.0-1.1ubuntu2_amd64.deb",
+      "filename": "fontconfig-config_2.15.0-1.1ubuntu2_amd64.deb",
+      "size": 37298,
+      "sha256": "9df0579cd298a1f2b7a40efd519c849745aecd193a09733cf4d1032284a62bbf"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/fontconfig/libfontconfig1_2.15.0-1.1ubuntu2_amd64.deb",
+      "filename": "libfontconfig1_2.15.0-1.1ubuntu2_amd64.deb",
+      "size": 138572,
+      "sha256": "a2bc05cfef021fdb84285036f98eda5ebec3c4b7a378f5aa2bdba5c4d3d8d586"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/fontconfig/fontconfig_2.15.0-1.1ubuntu2_amd64.deb",
+      "filename": "fontconfig_2.15.0-1.1ubuntu2_amd64.deb",
+      "size": 180204,
+      "sha256": "ddf0aace42b13a5bc38904e848b145b787ea254cddf5213d150254bd654db6e5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/fonts-noto-color-emoji/fonts-noto-color-emoji_2.047-0ubuntu0.24.04.1_all.deb",
+      "filename": "fonts-noto-color-emoji_2.047-0ubuntu0.24.04.1_all.deb",
+      "size": 9763994,
+      "sha256": "b102b62ce6a7313315223cff5e052bdf8fc0ad162c9e961ce0dc2202bc139ce2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cyrus-sasl2/libsasl2-modules-db_2.1.28%2bdfsg1-5ubuntu3.1_amd64.deb",
+      "filename": "libsasl2-modules-db_2.1.28+dfsg1-5ubuntu3.1_amd64.deb",
+      "size": 20354,
+      "sha256": "1f13548b1774cd9c70c50b8c3267204a101334a4d2f979338896ba5a4c6f81b8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cyrus-sasl2/libsasl2-2_2.1.28%2bdfsg1-5ubuntu3.1_amd64.deb",
+      "filename": "libsasl2-2_2.1.28+dfsg1-5ubuntu3.1_amd64.deb",
+      "size": 53194,
+      "sha256": "eda097f98dcb3a08b9ce157d6191d140e4885c1cba47b683c94b8ca45e88f458"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/o/openldap/libldap2_2.6.10%2bdfsg-0ubuntu0.24.04.1_amd64.deb",
+      "filename": "libldap2_2.6.10+dfsg-0ubuntu0.24.04.1_amd64.deb",
+      "size": 197620,
+      "sha256": "7f3f8e565401256f21d5aa562c9f92dbb63537b73aaea6283e4db5264f1598f4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/r/rtmpdump/librtmp1_2.4%2b20151223.gitfa8646d.1-2build7_amd64.deb",
+      "filename": "librtmp1_2.4+20151223.gitfa8646d.1-2build7_amd64.deb",
+      "size": 56342,
+      "sha256": "967a39dbc14236d1580ede01d80fd78444668572e716734e1ac66c175052594e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libssh/libssh-4_0.10.6-2ubuntu0.5_amd64.deb",
+      "filename": "libssh-4_0.10.6-2ubuntu0.5_amd64.deb",
+      "size": 191284,
+      "sha256": "2448ce5f99e49721d12f8b227f2472dd08ed7a78184dd819fd03a42693024a16"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/curl/libcurl3t64-gnutls_8.5.0-2ubuntu10.16_amd64.deb",
+      "filename": "libcurl3t64-gnutls_8.5.0-2ubuntu10.16_amd64.deb",
+      "size": 336534,
+      "sha256": "f3993897876cd03ea10941c9b364965ff95d0226459f31f6c5f5b93562c80798"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/d/duktape/libduktape207_2.7.0%2btests-0ubuntu3_amd64.deb",
+      "filename": "libduktape207_2.7.0+tests-0ubuntu3_amd64.deb",
+      "size": 143398,
+      "sha256": "6b7df26e298b890ebe6ca7b0d87fcfddb103b728b8fd731469ba5135d0bac183"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libp/libproxy/libproxy1v5_0.5.4-4build1_amd64.deb",
+      "filename": "libproxy1v5_0.5.4-4build1_amd64.deb",
+      "size": 26508,
+      "sha256": "4fa847fdf40dfaf198d94b1534bbc616410647dd917bca95bd28aba79d3796ba"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/glib-networking/glib-networking-common_2.80.0-1build1_all.deb",
+      "filename": "glib-networking-common_2.80.0-1build1_all.deb",
+      "size": 6702,
+      "sha256": "c9bc3b5c3dc8a75e752efcf246e5ef2d3b9e80cd1301fd37fcb0c36562062931"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/glib-networking/glib-networking-services_2.80.0-1build1_amd64.deb",
+      "filename": "glib-networking-services_2.80.0-1build1_amd64.deb",
+      "size": 12830,
+      "sha256": "a8387f789fa6de0aaae9e09f56f07896a5820188ef82ee267c132b01c8a4859e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/session-migration/session-migration_0.3.9build1_amd64.deb",
+      "filename": "session-migration_0.3.9build1_amd64.deb",
+      "size": 9034,
+      "sha256": "b8be9382fba445a345d8d311240f68d7772deea6a7f6a57c2a04db8492617728"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gsettings-desktop-schemas/gsettings-desktop-schemas_46.1-0ubuntu1_all.deb",
+      "filename": "gsettings-desktop-schemas_46.1-0ubuntu1_all.deb",
+      "size": 35644,
+      "sha256": "4d15441e9197f95b29c0d2845d8fcdbf63fa4ac0c68fb221820ccd24131e3436"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/glib-networking/glib-networking_2.80.0-1build1_amd64.deb",
+      "filename": "glib-networking_2.80.0-1build1_amd64.deb",
+      "size": 64136,
+      "sha256": "25b32675dd3f8bc258cd204e9010876ed03422ab627dd7e39a5a52226e2ada98"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/aom/libaom3_3.8.2-2ubuntu0.2_amd64.deb",
+      "filename": "libaom3_3.8.2-2ubuntu0.2_amd64.deb",
+      "size": 1942126,
+      "sha256": "d1ada7141fc5eb4e3ffdcdd027da2afc1177b41c3acac40eb3a132959241cb1f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libv/libva/libva2_2.20.0-2ubuntu0.2_amd64.deb",
+      "filename": "libva2_2.20.0-2ubuntu0.2_amd64.deb",
+      "size": 66362,
+      "sha256": "a8ff8d3d16dba715cd24d67c0f8787016194fcee0dee20344a92d057577c0b40"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libv/libva/libva-drm2_2.20.0-2ubuntu0.2_amd64.deb",
+      "filename": "libva-drm2_2.20.0-2ubuntu0.2_amd64.deb",
+      "size": 7124,
+      "sha256": "7919c889e0bc8221dcfb595bc0707959354a5404cc1d9b818f85fc43914ca0d4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libx11/libx11-xcb1_1.8.7-1ubuntu0.1_amd64.deb",
+      "filename": "libx11-xcb1_2%3a1.8.7-1ubuntu0.1_amd64.deb",
+      "size": 7796,
+      "sha256": "5ce7093e58aaaf753ed0904351a4e07f209e0c282ee8ef4f5f7988d0b40dccc1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-dri3-0_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-dri3-0_1.15-1ubuntu2_amd64.deb",
+      "size": 7142,
+      "sha256": "3d3d0e95e56ae16010a84883196b8153cba62d6831f9aaee2a68c46f20c7c004"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxfixes/libxfixes3_6.0.0-2build1_amd64.deb",
+      "filename": "libxfixes3_1%3a6.0.0-2build1_amd64.deb",
+      "size": 10764,
+      "sha256": "0ee1015cccd063249e01c0cd0bf45f513c8ac9a1e5e485070c12e69192455e4a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libv/libva/libva-x11-2_2.20.0-2ubuntu0.2_amd64.deb",
+      "filename": "libva-x11-2_2.20.0-2ubuntu0.2_amd64.deb",
+      "size": 12028,
+      "sha256": "9b13aaf035c6b607885ffaa6688866cf3cb720637909c7c0c9d3bedcd1d723cf"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libv/libvdpau/libvdpau1_1.5-2build1_amd64.deb",
+      "filename": "libvdpau1_1.5-2build1_amd64.deb",
+      "size": 27836,
+      "sha256": "a071370329f6dfb954e0cd2ed28cadc17fbf1bdf30f6d1db1e178ad350844fb9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libp/libpciaccess/libpciaccess0_0.17-3ubuntu0.24.04.3_amd64.deb",
+      "filename": "libpciaccess0_0.17-3ubuntu0.24.04.3_amd64.deb",
+      "size": 19220,
+      "sha256": "87a3b1c2a09f54d229e5e1f5424adc806e8f99bbb8aa8c8dea114b727f7a5a96"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdrm/libdrm-intel1_2.4.125-1ubuntu0.1%7e24.04.2_amd64.deb",
+      "filename": "libdrm-intel1_2.4.125-1ubuntu0.1~24.04.2_amd64.deb",
+      "size": 63868,
+      "sha256": "847195765b9ef7e7886677aeae9987aa54e496758b4e6e5a4ed2cb580b252244"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/w/wayland/libwayland-client0_1.22.0-2.1build1_amd64.deb",
+      "filename": "libwayland-client0_1.22.0-2.1build1_amd64.deb",
+      "size": 26406,
+      "sha256": "6af0aed41d75149bea22fa468f01eb058ffe3e35ef07ff2f13fb88a90387881d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/o/onevpl/libvpl2_2023.3.0-1build1_amd64.deb",
+      "filename": "libvpl2_2023.3.0-1build1_amd64.deb",
+      "size": 99802,
+      "sha256": "4f5d05ce3abb95a45d7b0d1e78e137f2849548dd461feb12d9066d550da0ca70"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/o/ocl-icd/ocl-icd-libopencl1_2.3.2-1build1_amd64.deb",
+      "filename": "ocl-icd-libopencl1_2.3.2-1build1_amd64.deb",
+      "size": 38530,
+      "sha256": "6d98029b06335bc23166834719ac5e697bcb4a136b40eebc263dfe481e05839b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavutil58_6.1.1-3ubuntu5_amd64.deb",
+      "filename": "libavutil58_7%3a6.1.1-3ubuntu5_amd64.deb",
+      "size": 401184,
+      "sha256": "e57f8cc358f4b1b2af721ca6242723dc12290df543a142811ce7747e2d5b30cc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pixman/libpixman-1-0_0.42.2-1build1_amd64.deb",
+      "filename": "libpixman-1-0_0.42.2-1build1_amd64.deb",
+      "size": 279306,
+      "sha256": "d9c2931c4c424615eeab9dd5ae08bfc608b84e803c1d3ccddf319270db213421"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-render0_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-render0_1.15-1ubuntu2_amd64.deb",
+      "size": 16230,
+      "sha256": "7d83a0668b1a693b5ea2e496206e8371fb6beda4c54a2b4b3902005915c272c5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-shm0_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-shm0_1.15-1ubuntu2_amd64.deb",
+      "size": 5756,
+      "sha256": "229d1280d459f1ba44c22939d3f9b61d9d20932d9a646b3fe4ce50be4cdf2325"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxrender/libxrender1_0.9.10-1.1build1_amd64.deb",
+      "filename": "libxrender1_1%3a0.9.10-1.1build1_amd64.deb",
+      "size": 19016,
+      "sha256": "d70bd831aebe8d4834b5dd2ed98df26dd6bd27f1042c47543bd7f66df1ae22ea"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cairo/libcairo2_1.18.0-3build1_amd64.deb",
+      "filename": "libcairo2_1.18.0-3build1_amd64.deb",
+      "size": 566292,
+      "sha256": "96950b306889ff6e4248bb937b0a3b56e72dacf643fe732214ce375f0f6bbb36"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/c/codec2/libcodec2-1.2_1.2.0-2build1_amd64.deb",
+      "filename": "libcodec2-1.2_1.2.0-2build1_amd64.deb",
+      "size": 8998330,
+      "sha256": "675a16e7260cc6773a325b9688c29f29fb7089f5780bc5360154ed6136d6331b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/d/dav1d/libdav1d7_1.4.1-1build1_amd64.deb",
+      "filename": "libdav1d7_1.4.1-1build1_amd64.deb",
+      "size": 604018,
+      "sha256": "7246303bd3ed4b99a2fb98e6199950ceb2520e7572265aefa0a6e44352adb3f0"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libg/libgsm/libgsm1_1.0.22-1build1_amd64.deb",
+      "filename": "libgsm1_1.0.22-1build1_amd64.deb",
+      "size": 27810,
+      "sha256": "8cc765587a3275e861f166a98b4b79dd8d5c673f97e17967945ab4d1eb89c89a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/h/highway/libhwy1t64_1.0.7-8.1build1_amd64.deb",
+      "filename": "libhwy1t64_1.0.7-8.1build1_amd64.deb",
+      "size": 584050,
+      "sha256": "c092b1ea155d81a5985073f867e1479c48c5c6efe4adc1bfcdde27e5d2b8b89d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lcms2/liblcms2-2_2.14-2ubuntu0.1_amd64.deb",
+      "filename": "liblcms2-2_2.14-2ubuntu0.1_amd64.deb",
+      "size": 160898,
+      "sha256": "f48368ce55ac35c4723a158c74f2c48f4398570d6f3207874e3a14e1cdada71d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/j/jpeg-xl/libjxl0.7_0.7.0-10.2ubuntu6.1_amd64.deb",
+      "filename": "libjxl0.7_0.7.0-10.2ubuntu6.1_amd64.deb",
+      "size": 1001370,
+      "sha256": "dc4a6436f7ab5e887c157d70a2784494be0db43b55fbb3a00d87d6385057f51d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lame/libmp3lame0_3.100-6build1_amd64.deb",
+      "filename": "libmp3lame0_3.100-6build1_amd64.deb",
+      "size": 142342,
+      "sha256": "d739e9a3565f98b8b72a9e203a9a537bd1090af6cafb94c98adf8e27f9d3fb94"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/o/openjpeg2/libopenjp2-7_2.5.0-2ubuntu0.5_amd64.deb",
+      "filename": "libopenjp2-7_2.5.0-2ubuntu0.5_amd64.deb",
+      "size": 173572,
+      "sha256": "24b92ce9c4b306f5370e768024d35ec565792001678b510f0d40b6395b43524f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/o/opus/libopus0_1.4-1build1_amd64.deb",
+      "filename": "libopus0_1.4-1build1_amd64.deb",
+      "size": 208122,
+      "sha256": "6d8da32a832e655c9603543b47a0bc90c6f60bdee0c00fe7499bd50acad566cf"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/r/rust-rav1e/librav1e0_0.7.1-2_amd64.deb",
+      "filename": "librav1e0_0.7.1-2_amd64.deb",
+      "size": 1021698,
+      "sha256": "be10d7e2dc028d9d7791997a8710b7a9a3147151613750f0f08963fbe9ac993c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cairo/libcairo-gobject2_1.18.0-3build1_amd64.deb",
+      "filename": "libcairo-gobject2_1.18.0-3build1_amd64.deb",
+      "size": 126788,
+      "sha256": "f5483cbe43455fc9e9cba7f0e166bd0a731c02db2902ba562719848f72e8c403"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/graphite2/libgraphite2-3_1.3.14-2ubuntu0.24.04.1_amd64.deb",
+      "filename": "libgraphite2-3_1.3.14-2ubuntu0.24.04.1_amd64.deb",
+      "size": 73352,
+      "sha256": "2413ea0f6670d6610ee7c2f550551d69fa341f4b9c78e20eb397f0d1bbe914cb"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/h/harfbuzz/libharfbuzz0b_8.3.0-2build2_amd64.deb",
+      "filename": "libharfbuzz0b_8.3.0-2build2_amd64.deb",
+      "size": 468874,
+      "sha256": "d6f7eea2244f98aa0463a056680d4629476bf624767ede301560e24add686b5c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libt/libthai/libthai-data_0.1.29-2build1_all.deb",
+      "filename": "libthai-data_0.1.29-2build1_all.deb",
+      "size": 158016,
+      "sha256": "6035d4a714290b97816bed7f3bf64921c6358ddb84d1dacdddccdc1cf39bffb7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdatrie/libdatrie1_0.2.13-3build1_amd64.deb",
+      "filename": "libdatrie1_0.2.13-3build1_amd64.deb",
+      "size": 18992,
+      "sha256": "1ae164e40e413eac4fbd38ce1c6ef9591f7a03278ad9076d71fa29258727f447"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libt/libthai/libthai0_0.1.29-2build1_amd64.deb",
+      "filename": "libthai0_0.1.29-2build1_amd64.deb",
+      "size": 18914,
+      "sha256": "5ada7045c5f84a4b774e6449151800aa6470e8d01dc9d6124ef4a44ae6af5508"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pango1.0/libpango-1.0-0_1.52.1%2bds-1build1_amd64.deb",
+      "filename": "libpango-1.0-0_1.52.1+ds-1build1_amd64.deb",
+      "size": 230606,
+      "sha256": "09dfa5c881ab273ec6bc1830adcefdc407fcd619316e68fb26ca3a23d0fc9f54"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pango1.0/libpangoft2-1.0-0_1.52.1%2bds-1build1_amd64.deb",
+      "filename": "libpangoft2-1.0-0_1.52.1+ds-1build1_amd64.deb",
+      "size": 42532,
+      "sha256": "cc6bc9d86ef5f329edacaa4895232d8a9b8f95c5cbc77c3c460a3f64cecc213d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pango1.0/libpangocairo-1.0-0_1.52.1%2bds-1build1_amd64.deb",
+      "filename": "libpangocairo-1.0-0_1.52.1+ds-1build1_amd64.deb",
+      "size": 28828,
+      "sha256": "98cf5fc9076c2911fe20dfc1e41cd8f686a2bb5d539b1105fab18105b0db1376"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libr/librsvg/librsvg2-2_2.58.0%2bdfsg-1ubuntu0.1_amd64.deb",
+      "filename": "librsvg2-2_2.58.0+dfsg-1ubuntu0.1_amd64.deb",
+      "size": 2140940,
+      "sha256": "47aa51a12ecc102b6dc867fe34319fcf6fa590c44bd8a3e22a2c473f3b8dd875"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/shine/libshine3_3.1.1-2build1_amd64.deb",
+      "filename": "libshine3_3.1.1-2build1_amd64.deb",
+      "size": 23170,
+      "sha256": "88a6e24ebb4be1c085acadb7778076de6980fa7e63b82570e29cc0f8a17a516b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/snappy/libsnappy1v5_1.1.10-1build1_amd64.deb",
+      "filename": "libsnappy1v5_1.1.10-1build1_amd64.deb",
+      "size": 28634,
+      "sha256": "c44dfa3b8be7c2873efb770890cb282a36a7e59b3b1900cb50d99f92e6be2da5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/speex/libspeex1_1.2.1-2ubuntu2.24.04.1_amd64.deb",
+      "filename": "libspeex1_1.2.1-2ubuntu2.24.04.1_amd64.deb",
+      "size": 59578,
+      "sha256": "12d57caab1e3fa847cd385a21c1044f7d38209e97b0f87372fe41e346c2c17f7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/svt-av1/libsvtav1enc1d1_1.7.0%2bdfsg-2build1_amd64.deb",
+      "filename": "libsvtav1enc1d1_1.7.0+dfsg-2build1_amd64.deb",
+      "size": 2424900,
+      "sha256": "bac5f768bff928e85cecb39da8e37276a579639ef884692b089ed2de6c1cd2ad"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gcc-14/libgomp1_14.2.0-4ubuntu2%7e24.04.1_amd64.deb",
+      "filename": "libgomp1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "size": 148062,
+      "sha256": "e8a95ec58125b4933597f30ff56c2ae10edf90f287262e366d4b6edea3019144"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libs/libsoxr/libsoxr0_0.1.3-4build3_amd64.deb",
+      "filename": "libsoxr0_0.1.3-4build3_amd64.deb",
+      "size": 80038,
+      "sha256": "2ddb6d21ad8ae0c850d380b551f109fc6b50c9a9b62c64ce37607c115bd3382a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libswresample4_6.1.1-3ubuntu5_amd64.deb",
+      "filename": "libswresample4_7%3a6.1.1-3ubuntu5_amd64.deb",
+      "size": 63782,
+      "sha256": "d55afe23e07b02b2def1647181a727dfad996001f72b5172da8a99691c3fa208"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libo/libogg/libogg0_1.3.5-3build1_amd64.deb",
+      "filename": "libogg0_1.3.5-3build1_amd64.deb",
+      "size": 22686,
+      "sha256": "fbdb2fedbafb02c3f07f2c2ddeb4018b5e94e13462f93fbececdcefc06fe2ac1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libt/libtheora/libtheora0_1.1.1%2bdfsg.1-16.1build3_amd64.deb",
+      "filename": "libtheora0_1.1.1+dfsg.1-16.1build3_amd64.deb",
+      "size": 211470,
+      "sha256": "8514bf3bb1496516b3bd0b2a5fc3ac9ea061e36360dcdfde52d51fa01c437b05"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/t/twolame/libtwolame0_0.4.0-2build3_amd64.deb",
+      "filename": "libtwolame0_0.4.0-2build3_amd64.deb",
+      "size": 52338,
+      "sha256": "0dc3f4ae19623d92eb2c7a131737355cc385047fb8891a6ae380e4884e3442c0"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libv/libvorbis/libvorbis0a_1.3.7-1build3_amd64.deb",
+      "filename": "libvorbis0a_1.3.7-1build3_amd64.deb",
+      "size": 97554,
+      "sha256": "d704ac0a5dd7a9797a2f2dc86fc8333c9973023b98b3510dcd2f1cc00da3624d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libv/libvorbis/libvorbisenc2_1.3.7-1build3_amd64.deb",
+      "filename": "libvorbisenc2_1.3.7-1build3_amd64.deb",
+      "size": 80818,
+      "sha256": "866c561fe81d4430a48c820f4e62f3cd138f4c8c7664f9203f02c1ced2eb55d4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libv/libvpx/libvpx9_1.14.0-1ubuntu2.3_amd64.deb",
+      "filename": "libvpx9_1.14.0-1ubuntu2.3_amd64.deb",
+      "size": 1143252,
+      "sha256": "a8555944c01f7308f3436b6f109328ebe680969e72066eab0a1f4c82a95e1740"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libw/libwebp/libwebpmux3_1.3.2-0.4build3_amd64.deb",
+      "filename": "libwebpmux3_1.3.2-0.4build3_amd64.deb",
+      "size": 25674,
+      "sha256": "0dd0f2de0fbbda7239209332ddfe512f4383d0489dd3f9fb25398f58c1621724"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/x/x264/libx264-164_0.164.3108%2bgit31e19f9-1_amd64.deb",
+      "filename": "libx264-164_2%3a0.164.3108+git31e19f9-1_amd64.deb",
+      "size": 603814,
+      "sha256": "7a410be6797c32357a2b7f0cc68ee14ae0e3b652bb17d16cdc941e4d830c7842"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/x/x265/libx265-199_3.5-2build1_amd64.deb",
+      "filename": "libx265-199_3.5-2build1_amd64.deb",
+      "size": 1226422,
+      "sha256": "795a6ca9287cd521882178d6503703ee8f0cde955f0ffc03e5ceee9f6d084de7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/x/xvidcore/libxvidcore4_1.3.7-1build1_amd64.deb",
+      "filename": "libxvidcore4_2%3a1.3.7-1build1_amd64.deb",
+      "size": 219400,
+      "sha256": "4f70e6d3db3d3069797d84bccb082dbf6b14d6e837cbef6197519d8be8779cdd"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/z/zvbi/libzvbi-common_0.2.42-2_all.deb",
+      "filename": "libzvbi-common_0.2.42-2_all.deb",
+      "size": 42360,
+      "sha256": "c099fcdaaa1f0ccfb0551470faae76f43798150809e07ff8a08f4743fc1a8074"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/z/zvbi/libzvbi0t64_0.2.42-2_amd64.deb",
+      "filename": "libzvbi0t64_0.2.42-2_amd64.deb",
+      "size": 260558,
+      "sha256": "0a596a628331e837b5756dec8bedf69ea699a9ef5d8a050c0c9b471f833039e1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavcodec60_6.1.1-3ubuntu5_amd64.deb",
+      "filename": "libavcodec60_7%3a6.1.1-3ubuntu5_amd64.deb",
+      "size": 5851220,
+      "sha256": "970d92c1697f762235af439d72df8c6cb492be45050a1a00bbe0d0842a137f93"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libu/libunibreak/libunibreak5_5.1-2build1_amd64.deb",
+      "filename": "libunibreak5_5.1-2build1_amd64.deb",
+      "size": 25012,
+      "sha256": "62576c95652b6c0a02e3d0fe9e2da6d0666c375d71c43da9d884c77417956ae4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/liba/libass/libass9_0.17.1-2build1_amd64.deb",
+      "filename": "libass9_1%3a0.17.1-2build1_amd64.deb",
+      "size": 103874,
+      "sha256": "a3dd7b4e6fa05d0d6607739b3c1f60a305f2fb78d9f6e8b8e38d10d0b4fc4052"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libu/libudfread/libudfread0_1.1.2-1build1_amd64.deb",
+      "filename": "libudfread0_1.1.2-1build1_amd64.deb",
+      "size": 18980,
+      "sha256": "9340c4bdb5954ed98a81eb7979c25187d0c4d95b633cac29eefe1f5b31c05162"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libb/libbluray/libbluray2_1.3.4-1build1_amd64.deb",
+      "filename": "libbluray2_1%3a1.3.4-1build1_amd64.deb",
+      "size": 159390,
+      "sha256": "2cfb2a7e4b6170efcfb96e0dbe3e9321b648acc43883ab4e7c248216de18ea6f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/c/chromaprint/libchromaprint1_1.5.1-5_amd64.deb",
+      "filename": "libchromaprint1_1.5.1-5_amd64.deb",
+      "size": 30524,
+      "sha256": "ff766f8382fff4e5d3b267e4cb93f31e1805ebbb9a619cc8c805b9a2355baeea"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/g/game-music-emu/libgme0_0.6.3-7build1_amd64.deb",
+      "filename": "libgme0_0.6.3-7build1_amd64.deb",
+      "size": 134050,
+      "sha256": "a54fa608501f87f9e5064b60c75fc1bb62735c9f9ba9f7680cb804bb5eae2027"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/m/mpg123/libmpg123-0t64_1.32.5-1ubuntu1.1_amd64.deb",
+      "filename": "libmpg123-0t64_1.32.5-1ubuntu1.1_amd64.deb",
+      "size": 169494,
+      "sha256": "bbe32128e3358f141f9f58ef6e76a7bef3e07d09165203665d30fdc27372b418"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libv/libvorbis/libvorbisfile3_1.3.7-1build3_amd64.deb",
+      "filename": "libvorbisfile3_1.3.7-1build3_amd64.deb",
+      "size": 17092,
+      "sha256": "fa12c52814bbfddff78186e7300b535bed30db02e4532fafae969aa9e5a79316"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libo/libopenmpt/libopenmpt0t64_0.7.3-1.1build3_amd64.deb",
+      "filename": "libopenmpt0t64_0.7.3-1.1build3_amd64.deb",
+      "size": 647356,
+      "sha256": "512814f1ebdf8fe31b8185826ba08f7933998b7a7ac1599fac39717dbaaae6ff"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libr/librabbitmq/librabbitmq4_0.11.0-1ubuntu0.2_amd64.deb",
+      "filename": "librabbitmq4_0.11.0-1ubuntu0.2_amd64.deb",
+      "size": 38306,
+      "sha256": "37a300e68d3de6e60c98969d561adf718e3eddc388a0b4d922ce15f391fe3a22"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/c/cjson/libcjson1_1.7.17-1_amd64.deb",
+      "filename": "libcjson1_1.7.17-1_amd64.deb",
+      "size": 24762,
+      "sha256": "43d758e214612877ec9029f2384bdbb0a6eeba6e74bb2cd3e7a60f4108947c41"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/m/mbedtls/libmbedcrypto7t64_2.28.8-1_amd64.deb",
+      "filename": "libmbedcrypto7t64_2.28.8-1_amd64.deb",
+      "size": 209262,
+      "sha256": "1f0b795a2274f68edddaf2567d738fcee43383c2c4ba802d54ba3b710bbb3228"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libr/librist/librist4_0.2.10%2bdfsg-2_amd64.deb",
+      "filename": "librist4_0.2.10+dfsg-2_amd64.deb",
+      "size": 74894,
+      "sha256": "c8050889949e75064db8c9c25c7e41d4d2a79be7a60e6537f9d9ab54774495dd"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/srt/libsrt1.5-gnutls_1.5.3-1build2_amd64.deb",
+      "filename": "libsrt1.5-gnutls_1.5.3-1build2_amd64.deb",
+      "size": 316428,
+      "sha256": "77bf75aaa74be9552d5a3b05349d15dc6e00f3a854a12ad0dfffea0df3bd6523"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libssh/libssh-gcrypt-4_0.10.6-2ubuntu0.5_amd64.deb",
+      "filename": "libssh-gcrypt-4_0.10.6-2ubuntu0.5_amd64.deb",
+      "size": 225808,
+      "sha256": "ae5179eb5b44c5e258d5bec75dca8578064c0a0956dd0402762e65c8a7b9e208"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/n/norm/libnorm1t64_1.5.9%2bdfsg-3.1build1_amd64.deb",
+      "filename": "libnorm1t64_1.5.9+dfsg-3.1build1_amd64.deb",
+      "size": 153694,
+      "sha256": "0ff2047ae4ccf2d1b5f338922f98a8652344ee1c0f18dc80a419753d06582cc6"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libp/libpgm/libpgm-5.3-0t64_5.3.128%7edfsg-2.1build1_amd64.deb",
+      "filename": "libpgm-5.3-0t64_5.3.128~dfsg-2.1build1_amd64.deb",
+      "size": 166620,
+      "sha256": "9382625866a207b3da34f541799d10203a5693e5928c8d08f6d10be1c545d0a5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsodium/libsodium23_1.0.18-1ubuntu0.24.04.1_amd64.deb",
+      "filename": "libsodium23_1.0.18-1ubuntu0.24.04.1_amd64.deb",
+      "size": 161290,
+      "sha256": "74d6f8fbd65f7f71b6f4f4223bef5fb57c1c14cd4e9ce788ead2b88e8c3ee236"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/z/zeromq3/libzmq5_4.3.5-1build2_amd64.deb",
+      "filename": "libzmq5_4.3.5-1build2_amd64.deb",
+      "size": 260300,
+      "sha256": "fff197d2a164e3ec83fef23afd55bad93971b3327d7353db9a305a199d55d402"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavformat60_6.1.1-3ubuntu5_amd64.deb",
+      "filename": "libavformat60_7%3a6.1.1-3ubuntu5_amd64.deb",
+      "size": 1153444,
+      "sha256": "3a855488d50b4ebe04425e5f690e00ebd65d70e60f85c9765d5823a2f82b4969"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libb/libbs2b/libbs2b0_3.1.0%2bdfsg-7build1_amd64.deb",
+      "filename": "libbs2b0_3.1.0+dfsg-7build1_amd64.deb",
+      "size": 10556,
+      "sha256": "67d8af009d520e0b6f63e39d6d04d8c02e681f89858fb301b808a6c356068e2c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/alsa-lib/libasound2-data_1.2.11-1ubuntu0.3_all.deb",
+      "filename": "libasound2-data_1.2.11-1ubuntu0.3_all.deb",
+      "size": 21350,
+      "sha256": "0c26896193480d9dbb055e85e8ddfb9c9f34cf19afee340987cd6311e2886fc1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/alsa-lib/libasound2t64_1.2.11-1ubuntu0.3_amd64.deb",
+      "filename": "libasound2t64_1.2.11-1ubuntu0.3_amd64.deb",
+      "size": 397772,
+      "sha256": "5d17bfb5683eb99f1be951fe48e1be5bf3c52391913b6b74a8aecf9b4f5e779f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/flite/libflite1_2.2-6build3_amd64.deb",
+      "filename": "libflite1_2.2-6build3_amd64.deb",
+      "size": 13601102,
+      "sha256": "367f1d0da5cd38759a0515eafc27aa133b2d7bf99308cac34831df0212e96b75"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/serd/libserd-0-0_0.32.2-1_amd64.deb",
+      "filename": "libserd-0-0_0.32.2-1_amd64.deb",
+      "size": 43568,
+      "sha256": "5ede35e66656c136b6a803aebeac92b2c061ec4d147820a730dd9c2a1315f57a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/z/zix/libzix-0-0_0.4.2-2build1_amd64.deb",
+      "filename": "libzix-0-0_0.4.2-2build1_amd64.deb",
+      "size": 23570,
+      "sha256": "3bd3271411e9f25d03e16ca430da9551200b28e854ba9b606f819c23a4dc4992"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/sord/libsord-0-0_0.16.16-2build1_amd64.deb",
+      "filename": "libsord-0-0_0.16.16-2build1_amd64.deb",
+      "size": 15820,
+      "sha256": "a330fa014ee2eb48053395fb91fa39d95ca910e582d515254f50ef944240303c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/sratom/libsratom-0-0_0.6.16-1build1_amd64.deb",
+      "filename": "libsratom-0-0_0.6.16-1build1_amd64.deb",
+      "size": 17312,
+      "sha256": "a103c98906a7587718dabd52dfcd0af2dff6ff567781100bc8cf07de05bfc30d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/l/lilv/liblilv-0-0_0.24.22-1build1_amd64.deb",
+      "filename": "liblilv-0-0_0.24.22-1build1_amd64.deb",
+      "size": 40976,
+      "sha256": "5fd6b6861a021e8148c9086d36b70eea28a503dd4c2f2b922f56789d2967d0ad"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libm/libmysofa/libmysofa1_1.3.2%2bdfsg-2ubuntu2_amd64.deb",
+      "filename": "libmysofa1_1.3.2+dfsg-2ubuntu2_amd64.deb",
+      "size": 1157872,
+      "sha256": "a3b5bb4bcc6ce996700f0120722b1c10af08e9dd1e0d497782edcea90079d4af"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/v/vulkan-loader/libvulkan1_1.3.275.0-1build1_amd64.deb",
+      "filename": "libvulkan1_1.3.275.0-1build1_amd64.deb",
+      "size": 142010,
+      "sha256": "ccf4fe8f4461442f27ea2494c7ae650b60bd396fec2688b0c44a27d66a222f74"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libp/libplacebo/libplacebo338_6.338.2-2build1_amd64.deb",
+      "filename": "libplacebo338_6.338.2-2build1_amd64.deb",
+      "size": 2654026,
+      "sha256": "9c173df229673887df3cce7d4a26de15f7477a62cd1391f9a88c346018ecad1f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lapack/libblas3_3.12.0-3build1.1_amd64.deb",
+      "filename": "libblas3_3.12.0-3build1.1_amd64.deb",
+      "size": 237978,
+      "sha256": "1b0ef0ad0893ff77bf7d5ab75723771788e16137ea1efde557dbac7b7b83a758"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gcc-14/libgfortran5_14.2.0-4ubuntu2%7e24.04.1_amd64.deb",
+      "filename": "libgfortran5_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "size": 916316,
+      "sha256": "2b05896c477275ad3473bb63a5ac5a5b8a7e4a6ad6ed7cb23c442ccd1abc28f5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lapack/liblapack3_3.12.0-3build1.1_amd64.deb",
+      "filename": "liblapack3_3.12.0-3build1.1_amd64.deb",
+      "size": 2646422,
+      "sha256": "05ced5049d4fd393e0ae6dc71211e7c07ed0c85e8099649d679cf4b5a1aed59b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/liba/libasyncns/libasyncns0_0.8-6build4_amd64.deb",
+      "filename": "libasyncns0_0.8-6build4_amd64.deb",
+      "size": 11276,
+      "sha256": "f8483917fd216e248143eba1c80dfc9384b94fb4dac402194a98c11505674269"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/flac/libflac12t64_1.4.3%2bds-2.1ubuntu2_amd64.deb",
+      "filename": "libflac12t64_1.4.3+ds-2.1ubuntu2_amd64.deb",
+      "size": 197320,
+      "sha256": "f2396692573407b2fbc92cd83148342d4aec717d42d5e24ac64c471204a0b7a9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsndfile/libsndfile1_1.2.2-1ubuntu5.24.04.1_amd64.deb",
+      "filename": "libsndfile1_1.2.2-1ubuntu5.24.04.1_amd64.deb",
+      "size": 208508,
+      "sha256": "fe2461b27e747fa88ede157ea39c6379e2101c280a730cda9c825f566a3808e5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pulseaudio/libpulse0_16.1%2bdfsg1-2ubuntu10.1_amd64.deb",
+      "filename": "libpulse0_1%3a16.1+dfsg1-2ubuntu10.1_amd64.deb",
+      "size": 292098,
+      "sha256": "b8d52aa6c2f74ae99e749c9f98d6ad2dbf924fd422371ac469725245cdd919fc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/sphinxbase/libsphinxbase3t64_0.8%2b5prealpha%2b1-17build2_amd64.deb",
+      "filename": "libsphinxbase3t64_0.8+5prealpha+1-17build2_amd64.deb",
+      "size": 125618,
+      "sha256": "80c184d04290cd1a55d6abac7c4b9f15bbf736e43a410857f992eba16b005a4c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/p/pocketsphinx/libpocketsphinx3_0.8.0%2breal5prealpha%2b1-15ubuntu5_amd64.deb",
+      "filename": "libpocketsphinx3_0.8.0+real5prealpha+1-15ubuntu5_amd64.deb",
+      "size": 132898,
+      "sha256": "26987384225666ec8d065fa05e484be9cd5967e28ac3bda20d1f818617e2b930"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libpostproc57_6.1.1-3ubuntu5_amd64.deb",
+      "filename": "libpostproc57_7%3a6.1.1-3ubuntu5_amd64.deb",
+      "size": 49884,
+      "sha256": "f0984bf6bff85dc29a44f650841b01a0594775f628b7a4bf5dd45d85d82cb2a7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/f/fftw3/libfftw3-double3_3.3.10-1ubuntu3_amd64.deb",
+      "filename": "libfftw3-double3_3.3.10-1ubuntu3_amd64.deb",
+      "size": 838254,
+      "sha256": "ff9396076103b305efe741e9acff11d52a040c6d95527c0f2dbd11e82a11bab8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsamplerate/libsamplerate0_0.2.2-4build1_amd64.deb",
+      "filename": "libsamplerate0_0.2.2-4build1_amd64.deb",
+      "size": 1343954,
+      "sha256": "8a389d1cae81860c9fb7cd9641c3f9d38815e80c0379b3181b4317489126f738"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/r/rubberband/librubberband2_3.3.0%2bdfsg-2build1_amd64.deb",
+      "filename": "librubberband2_3.3.0+dfsg-2build1_amd64.deb",
+      "size": 129894,
+      "sha256": "96ebaf773ad933a5269859cb3b09488b7b0b58387ebfbd7b7c469dd2b32d5d8b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libswscale7_6.1.1-3ubuntu5_amd64.deb",
+      "filename": "libswscale7_7%3a6.1.1-3ubuntu5_amd64.deb",
+      "size": 192938,
+      "sha256": "2c17ae58b35112aace5179d7deea51faa20e82e04847b257f339376b11744e22"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libv/libvidstab/libvidstab1.1_1.1.0-2build1_amd64.deb",
+      "filename": "libvidstab1.1_1.1.0-2build1_amd64.deb",
+      "size": 38550,
+      "sha256": "345caabe592ee7733c2142bdfb3fe18a97da4ee7372f57d574b698d58e3fd431"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/z/zimg/libzimg2_3.0.5%2bds1-1build1_amd64.deb",
+      "filename": "libzimg2_3.0.5+ds1-1build1_amd64.deb",
+      "size": 254226,
+      "sha256": "6c3d3e87277ff906011da1ceac5e44057df3710a53df3eab59675b02eea1ff12"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavfilter9_6.1.1-3ubuntu5_amd64.deb",
+      "filename": "libavfilter9_7%3a6.1.1-3ubuntu5_amd64.deb",
+      "size": 4235172,
+      "sha256": "083b800aaf4fd1de817fb8dc12995e6a277c3500159c4a0fa21d36a76b6208ea"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/e/elfutils/libdw1t64_0.190-1.1ubuntu0.1_amd64.deb",
+      "filename": "libdw1t64_0.190-1.1ubuntu0.1_amd64.deb",
+      "size": 261194,
+      "sha256": "edaa9ce4221d95f4bd72a9805100902e313092a2f31a7a51e7186be97734714d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libu/libunwind/libunwind8_1.6.2-3build1.1_amd64.deb",
+      "filename": "libunwind8_1.6.2-3build1.1_amd64.deb",
+      "size": 55254,
+      "sha256": "825cb8724bb6b3389587e30c03ab3381f56a2422cafe3b1945f37e055c65e942"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gstreamer1.0/libgstreamer1.0-0_1.24.2-1ubuntu0.1_amd64.deb",
+      "filename": "libgstreamer1.0-0_1.24.2-1ubuntu0.1_amd64.deb",
+      "size": 1165196,
+      "sha256": "306a6a5cff08630b79b8a68e5f888da7d8e209a452e9b5e24449cca95d8e71f5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/o/orc/liborc-0.4-0t64_0.4.38-1ubuntu0.1_amd64.deb",
+      "filename": "liborc-0.4-0t64_1%3a0.4.38-1ubuntu0.1_amd64.deb",
+      "size": 207380,
+      "sha256": "a546ca6e237748693596ba469e84a2e0581bc39113abc62b718931df00a4c682"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gst-plugins-base1.0/libgstreamer-plugins-base1.0-0_1.24.2-1ubuntu0.5_amd64.deb",
+      "filename": "libgstreamer-plugins-base1.0-0_1.24.2-1ubuntu0.5_amd64.deb",
+      "size": 862170,
+      "sha256": "3c5826eee14cb5077c7e53707fbe86cc0882c787ffe79b330cad636c0009473d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/g/gst-libav1.0/gstreamer1.0-libav_1.24.1-1build1_amd64.deb",
+      "filename": "gstreamer1.0-libav_1.24.1-1build1_amd64.deb",
+      "size": 103214,
+      "sha256": "06f33e40a9e13173e0b8593f8d507dc665e9e6acc3af7fea359fb8131944553d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cdparanoia/libcdparanoia0_3.10.2%2bdebian-14build3_amd64.deb",
+      "filename": "libcdparanoia0_3.10.2+debian-14build3_amd64.deb",
+      "size": 48476,
+      "sha256": "b49131a4784d7a4b4f955071d36ea6caff73229c9821977b3f895e8ea16b820a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libv/libvisual/libvisual-0.4-0_0.4.2-2build1_amd64.deb",
+      "filename": "libvisual-0.4-0_0.4.2-2build1_amd64.deb",
+      "size": 115008,
+      "sha256": "2d64a0df6994e18d4fa21af12acce6f09db69c437ac972c622c7801fe858419f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gst-plugins-base1.0/gstreamer1.0-plugins-base_1.24.2-1ubuntu0.5_amd64.deb",
+      "filename": "gstreamer1.0-plugins-base_1.24.2-1ubuntu0.5_amd64.deb",
+      "size": 721012,
+      "sha256": "2371d7571762fb78f6ec693d2a33c601521a216144a3be2e24b4e9bec9548ed1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/aalib/libaa1_1.4p5-51.1_amd64.deb",
+      "filename": "libaa1_1.4p5-51.1_amd64.deb",
+      "size": 49938,
+      "sha256": "2648b362b9338770ba73382575859c38f49c35b5d23bd08a517b5cccfc226f57"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libr/libraw1394/libraw1394-11_2.1.2-2build3_amd64.deb",
+      "filename": "libraw1394-11_2.1.2-2build3_amd64.deb",
+      "size": 26192,
+      "sha256": "0a6c9d979bd0301175340546a832c6dd4e94164eff9c4bcabcae97fb0dcf215b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/liba/libavc1394/libavc1394-0_0.5.4-5build3_amd64.deb",
+      "filename": "libavc1394-0_0.5.4-5build3_amd64.deb",
+      "size": 15442,
+      "sha256": "28141f0e1a2011deef364a931b4a0fb9ab053416320ed7fd0b8747f251e6e5d7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libc/libcaca/libcaca0_0.99.beta20-4ubuntu0.2_amd64.deb",
+      "filename": "libcaca0_0.99.beta20-4ubuntu0.2_amd64.deb",
+      "size": 208666,
+      "sha256": "f8ba81982beda87da75bef9a1035a2ff34479d613dfea757440442ae9d58c7af"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdv/libdv4t64_1.0.0-17.1build1_amd64.deb",
+      "filename": "libdv4t64_1.0.0-17.1build1_amd64.deb",
+      "size": 63192,
+      "sha256": "7799a45a5e8a2139bb940c5db3f0b85e781a08210bf50ef148b28d8d3240a57c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gst-plugins-good1.0/libgstreamer-plugins-good1.0-0_1.24.2-1ubuntu1.8_amd64.deb",
+      "filename": "libgstreamer-plugins-good1.0-0_1.24.2-1ubuntu1.8_amd64.deb",
+      "size": 34294,
+      "sha256": "0d1c6e91d7bd051b6959315eb3cbd4da2f65acdc0356518cc9c320826f0b8407"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libgudev/libgudev-1.0-0_238-5ubuntu1_amd64.deb",
+      "filename": "libgudev-1.0-0_1%3a238-5ubuntu1_amd64.deb",
+      "size": 15906,
+      "sha256": "8bdd42c584a8d18759df2311b126dc679d438e9780038743b792cf5315f248dc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libi/libiec61883/libiec61883-0_1.2.0-6build1_amd64.deb",
+      "filename": "libiec61883-0_1.2.0-6build1_amd64.deb",
+      "size": 24546,
+      "sha256": "a47c6ec10068f1fc37a334949f6174f7ecbf0889bfde9d36baea8d403d76a727"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libshout/libshout3_2.4.6-1build2_amd64.deb",
+      "filename": "libshout3_2.4.6-1build2_amd64.deb",
+      "size": 50340,
+      "sha256": "b99146a88b414c828285435e10cb39e6ab10b299182b42c85727e2e8ec0eb156"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/t/taglib/libtag1v5-vanilla_1.13.1-1build1_amd64.deb",
+      "filename": "libtag1v5-vanilla_1.13.1-1build1_amd64.deb",
+      "size": 325994,
+      "sha256": "36efe5ed6005253c7790f5f572ac7ef52727d4ed8530c9c9a64c5589b5eaf1b2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/t/taglib/libtag1v5_1.13.1-1build1_amd64.deb",
+      "filename": "libtag1v5_1.13.1-1build1_amd64.deb",
+      "size": 11684,
+      "sha256": "dfafc78203c6aa87d852acceca7a2a8fe98c5d3fe961e09692e3578a911ba7e5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/v/v4l-utils/libv4lconvert0t64_1.26.1-4build3_amd64.deb",
+      "filename": "libv4lconvert0t64_1.26.1-4build3_amd64.deb",
+      "size": 87636,
+      "sha256": "67811cffddbf1e601f5630d733455a26c1cadb6bc28795e5b673be82b55113b4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/v/v4l-utils/libv4l-0t64_1.26.1-4build3_amd64.deb",
+      "filename": "libv4l-0t64_1.26.1-4build3_amd64.deb",
+      "size": 46892,
+      "sha256": "0cafac8bb1fca1ae042cd11d40e06412a8958e1a6faf268df421f4762989a6d9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/w/wavpack/libwavpack1_5.6.0-1build1_amd64.deb",
+      "filename": "libwavpack1_5.6.0-1build1_amd64.deb",
+      "size": 84580,
+      "sha256": "20b3bf66bdeac236db7255139d8fd2460bca90ddb9155fa30411fb05b6dfd4ec"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxdamage/libxdamage1_1.1.6-1build1_amd64.deb",
+      "filename": "libxdamage1_1%3a1.1.6-1build1_amd64.deb",
+      "size": 6150,
+      "sha256": "6891faf325e996ebd28ef53ebb9c043dc96f67327500490affc3e89d366d35ed"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lsb/lsb-base_11.6_all.deb",
+      "filename": "lsb-base_11.6_all.deb",
+      "size": 4606,
+      "sha256": "08a563e3c1984acdb295f12b77b4ec18d2ccf52fd03280a5bea29e506a3350ee"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/x/xorg/x11-common_7.7%2b23ubuntu3_all.deb",
+      "filename": "x11-common_1%3a7.7+23ubuntu3_all.deb",
+      "size": 21748,
+      "sha256": "b545fa5196dd7467ba3770d6ce575abcd7941071961ea9f7535a319d9d20fd46"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxtst/libxtst6_1.2.3-1.1ubuntu0.1_amd64.deb",
+      "filename": "libxtst6_2%3a1.2.3-1.1ubuntu0.1_amd64.deb",
+      "size": 12556,
+      "sha256": "2340688e034d5dd3f5ec180b1bed32407de16db1679ce85cec3e2d34625f50dd"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsoup3/libsoup-3.0-common_3.4.4-5ubuntu0.9_all.deb",
+      "filename": "libsoup-3.0-common_3.4.4-5ubuntu0.9_all.deb",
+      "size": 12284,
+      "sha256": "950de96545c81a4bcf9c67600c6c6b84fcf5fd680f87d4301a1e3dc1238474f0"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsoup3/libsoup-3.0-0_3.4.4-5ubuntu0.9_amd64.deb",
+      "filename": "libsoup-3.0-0_3.4.4-5ubuntu0.9_amd64.deb",
+      "size": 290828,
+      "sha256": "cd6bab2b426b0c81b0f7856df11f3633df118df33517378049545ff440751fcc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gst-plugins-good1.0/gstreamer1.0-plugins-good_1.24.2-1ubuntu1.8_amd64.deb",
+      "filename": "gstreamer1.0-plugins-good_1.24.2-1ubuntu1.8_amd64.deb",
+      "size": 2236004,
+      "sha256": "dd20dbc6143df81b4d335fb7247e2b82f03bf6ef49d5c61cd111d784ee450fd3"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/scowl/hunspell-en-us_2020.12.07-2_all.deb",
+      "filename": "hunspell-en-us_1%3a2020.12.07-2_all.deb",
+      "size": 280206,
+      "sha256": "d231c94b54792215038a4f719c562deafe8efe0a7710c0c7218974cab513330c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/abseil/libabsl20220623t64_20220623.1-3.1ubuntu3.2_amd64.deb",
+      "filename": "libabsl20220623t64_20220623.1-3.1ubuntu3.2_amd64.deb",
+      "size": 422920,
+      "sha256": "dec97687bc3bc4edbd1c26bc9182f7584e3ff1c36a9bb7ce80211951e5a5893d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/aspell/libaspell15_0.60.8.1-1build1_amd64.deb",
+      "filename": "libaspell15_0.60.8.1-1build1_amd64.deb",
+      "size": 322544,
+      "sha256": "3461b6c567898d90d2b66cb2910b24cfd46e8c27d1fbcb81a1af1f44a3c99a8f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/at-spi2-core/libatk1.0-0t64_2.52.0-1build1_amd64.deb",
+      "filename": "libatk1.0-0t64_2.52.0-1build1_amd64.deb",
+      "size": 55282,
+      "sha256": "42c5d4b00954f17c2c3c4b866844f691eb8b6d57bf08b59203e65f12dc84a4f9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxi/libxi6_1.8.1-1build1_amd64.deb",
+      "filename": "libxi6_2%3a1.8.1-1build1_amd64.deb",
+      "size": 32404,
+      "sha256": "0ea7acb5e8a8ce4d6653b30e03a319bfe136db7bfb5ee7cad34c2aa1272ea8d9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/at-spi2-core/libatspi2.0-0t64_2.52.0-1build1_amd64.deb",
+      "filename": "libatspi2.0-0t64_2.52.0-1build1_amd64.deb",
+      "size": 80548,
+      "sha256": "d686ace4080eca9c2d6ce8de69392a5ac56c846701894c0858922d4ce341a1d7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/at-spi2-core/libatk-bridge2.0-0t64_2.52.0-1build1_amd64.deb",
+      "filename": "libatk-bridge2.0-0t64_2.52.0-1build1_amd64.deb",
+      "size": 66020,
+      "sha256": "22b7d47e3c0f7953a78d3cfd309d1b20771085de9220fbe610c0989b9e808c9b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gcc-14/libatomic1_14.2.0-4ubuntu2%7e24.04.1_amd64.deb",
+      "filename": "libatomic1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "size": 10466,
+      "sha256": "fe49cbbc7be753528380c724a8eef5f1e31dffa9221f692c5069048d81c7449d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/avahi/libavahi-common-data_0.8-13ubuntu6.2_amd64.deb",
+      "filename": "libavahi-common-data_0.8-13ubuntu6.2_amd64.deb",
+      "size": 30052,
+      "sha256": "9a03de928ae470c8d127a22dcb8fb8b582922a8f9406fc3ea879f5e98a02eab4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/avahi/libavahi-common3_0.8-13ubuntu6.2_amd64.deb",
+      "filename": "libavahi-common3_0.8-13ubuntu6.2_amd64.deb",
+      "size": 23444,
+      "sha256": "edd1f7a4a21e70504d0872c429600f2e13fdff7775c0952145f1afeacede1c82"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/a/avahi/libavahi-client3_0.8-13ubuntu6.2_amd64.deb",
+      "filename": "libavahi-client3_0.8-13ubuntu6.2_amd64.deb",
+      "size": 26810,
+      "sha256": "00609b52ea5a1a9e35fcee4bfba03b6ff743a8015649026cb9109c356762f4d9"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libg/libgav1/libgav1-1_0.18.0-1build3_amd64.deb",
+      "filename": "libgav1-1_0.18.0-1build3_amd64.deb",
+      "size": 357148,
+      "sha256": "428f353f449e6b15cdcf5823215416e36adcfba75fe9f0fedc1cd132d68e6b3f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/liby/libyuv/libyuv0_0.0%7egit202401110.af6ac82-1_amd64.deb",
+      "filename": "libyuv0_0.0~git202401110.af6ac82-1_amd64.deb",
+      "size": 178208,
+      "sha256": "88bd472e50a7e45469e31f8e0ba232b4d8ed30322f5badb285c58cc1ba0d2176"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/liba/libavif/libavif16_1.0.4-1ubuntu3_amd64.deb",
+      "filename": "libavif16_1.0.4-1ubuntu3_amd64.deb",
+      "size": 91250,
+      "sha256": "b295a9954a4b756af05ff381d9808f3c0c582a111b7e4c7678cfe13de9ae8818"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/liba/libavtp/libavtp0_0.2.0-1build1_amd64.deb",
+      "filename": "libavtp0_0.2.0-1build1_amd64.deb",
+      "size": 6414,
+      "sha256": "0f246563121b41ebbb2d5488a4aba679016ce77ce0eb5239e269ccbd87fe587c"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/lzo2/liblzo2-2_2.10-2build4_amd64.deb",
+      "filename": "liblzo2-2_2.10-2build4_amd64.deb",
+      "size": 54148,
+      "sha256": "e0d13be155013138b8db4cfe68212b866080af661c78302c2eab0d2f9d0d454e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cairo/libcairo-script-interpreter2_1.18.0-3build1_amd64.deb",
+      "filename": "libcairo-script-interpreter2_1.18.0-3build1_amd64.deb",
+      "size": 60272,
+      "sha256": "e104466e7d816672a711db42746af528d210197231f12e3c712c06ac9a79b214"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/colord/libcolord2_1.4.7-1build2_amd64.deb",
+      "filename": "libcolord2_1.4.7-1build2_amd64.deb",
+      "size": 148960,
+      "sha256": "ef148eb22d566506302a133516594e455e59307aa0dc9874c15a8618268e3355"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/c/cups/libcups2t64_2.4.7-1.2ubuntu7.14_amd64.deb",
+      "filename": "libcups2t64_2.4.7-1.2ubuntu7.14_amd64.deb",
+      "size": 274470,
+      "sha256": "b815a3d936718614e403035bb4a545e1323305ea624709bff2e9d94c214f9cc4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libd/libdc1394/libdc1394-25_2.2.6-4build1_amd64.deb",
+      "filename": "libdc1394-25_2.2.6-4build1_amd64.deb",
+      "size": 90084,
+      "sha256": "0f4a0768152636f2f941d3a29d24925be77f869b3d90a13f1694fef792a89810"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libde265/libde265-0_1.0.15-1ubuntu0.2_amd64.deb",
+      "filename": "libde265-0_1.0.15-1ubuntu0.2_amd64.deb",
+      "size": 167218,
+      "sha256": "f1e81e7218569d6f8d5b31e52aa94d7a86d64afe7d3297c3ee0afe67ca894b18"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdecor-0/libdecor-0-0_0.2.2-1build2_amd64.deb",
+      "filename": "libdecor-0-0_0.2.2-1build2_amd64.deb",
+      "size": 16508,
+      "sha256": "64bf085d16e504e9ed39b91d2a46748fb8881ad7f3603fbacef6c11c04aa7064"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libglvnd/libglvnd0_1.7.0-1build1_amd64.deb",
+      "filename": "libglvnd0_1.7.0-1build1_amd64.deb",
+      "size": 69594,
+      "sha256": "33f5e07c74f73c2bfb44086ae0f9e6da52acd6c104d30ffe8fd768d8253d5e82"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-glx0_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-glx0_1.15-1ubuntu2_amd64.deb",
+      "size": 24774,
+      "sha256": "d07cde26c70fe92df7c327928371e495cc4570fed2d6518758a5db5715cb34c1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-present0_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-present0_1.15-1ubuntu2_amd64.deb",
+      "size": 5676,
+      "sha256": "2e36e6557e87dbfd64df3143cbf81a4f75c3447501a545b4730511d228b0dd17"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-xfixes0_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-xfixes0_1.15-1ubuntu2_amd64.deb",
+      "size": 10190,
+      "sha256": "0b2ab64af92a71e3d1a35e3c819880ee28d04bfac81360df68ae8d8e9663ebd2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxxf86vm/libxxf86vm1_1.1.4-1build4_amd64.deb",
+      "filename": "libxxf86vm1_1%3a1.1.4-1build4_amd64.deb",
+      "size": 9282,
+      "sha256": "48b2799f52b86505d2bc91dcb1bfa6536545635b9849cb693d274d934116a8da"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libd/libdrm/libdrm-amdgpu1_2.4.125-1ubuntu0.1%7e24.04.2_amd64.deb",
+      "filename": "libdrm-amdgpu1_2.4.125-1ubuntu0.1~24.04.2_amd64.deb",
+      "size": 21374,
+      "sha256": "aa29b7898bae596bf07e55ba178cf8d5ea698fe83688e1b34520d86010251a7a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/l/llvm-toolchain-20/libllvm20_20.1.2-0ubuntu1%7e24.04.3_amd64.deb",
+      "filename": "libllvm20_1%3a20.1.2-0ubuntu1~24.04.3_amd64.deb",
+      "size": 30574382,
+      "sha256": "f018e71c72c7a4742fb1aff9dc98b45586f42e6ea464d4918af7e3772b7f0658"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-randr0_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-randr0_1.15-1ubuntu2_amd64.deb",
+      "size": 17862,
+      "sha256": "b5cb519823a05a617b543dc9b6a9289b7648b20048244abe021caa706309835a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-sync1_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-sync1_1.15-1ubuntu2_amd64.deb",
+      "size": 9312,
+      "sha256": "14286795a258593259923619073e50c15345673befae2733f7b0577b07359aa8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxshmfence/libxshmfence1_1.3-1build5_amd64.deb",
+      "filename": "libxshmfence1_1.3-1build5_amd64.deb",
+      "size": 4764,
+      "sha256": "bc6de4bfaf9050a8ba83d4bcfb114131b081084a7972c03417f8523d52b5c742"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/m/mesa/mesa-libgallium_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "filename": "mesa-libgallium_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "size": 10783312,
+      "sha256": "0c50c3c18c1b3f3ac4243bbf1533c9202f9d7b4f646807e9ef0df4c801414256"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/m/mesa/libgbm1_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "filename": "libgbm1_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "size": 34172,
+      "sha256": "4bfe348b456db5b445a80e0a3ffb9e9a01b91499bb86e0e568ca3634b134da7e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/m/mesa/libgl1-mesa-dri_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "filename": "libgl1-mesa-dri_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "size": 37950,
+      "sha256": "2dabbe4292b201ca07b38c0672352f68dbfc55b5850f96f89ef54d3b4b6c8a59"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/m/mesa/libglx-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "filename": "libglx-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "size": 110128,
+      "sha256": "5aa6164059989d476b15caa8ade892b1dec37593934dc4f617ece7ea0d639bc0"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libglvnd/libglx0_1.7.0-1build1_amd64.deb",
+      "filename": "libglx0_1.7.0-1build1_amd64.deb",
+      "size": 38558,
+      "sha256": "aa4953182f30abde90cb5b072e83d7286b557b325769b8686196a7bd396d8795"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libglvnd/libgl1_1.7.0-1build1_amd64.deb",
+      "filename": "libgl1_1.7.0-1build1_amd64.deb",
+      "size": 101990,
+      "sha256": "e2b2fadeb883f073b566ad1d7874f6702397514d258473e96152a89d4d502a09"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libglvnd/libgles2_1.7.0-1build1_amd64.deb",
+      "filename": "libgles2_1.7.0-1build1_amd64.deb",
+      "size": 17122,
+      "sha256": "9dec2d79a2eebb80522f7cce77995f7a8ded22f0e3916f13353d066c62f97fac"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/d/directfb/libdirectfb-1.7-7t64_1.7.7-11.1ubuntu2_amd64.deb",
+      "filename": "libdirectfb-1.7-7t64_1.7.7-11.1ubuntu2_amd64.deb",
+      "size": 1035376,
+      "sha256": "0e2dbb6ab4ff322dbf3ff26bb0e8be80df1554a5bd9899d4a2c977deea0d3bfa"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libd/libdvdread/libdvdread8t64_6.1.3-1.1build1_amd64.deb",
+      "filename": "libdvdread8t64_6.1.3-1.1build1_amd64.deb",
+      "size": 54676,
+      "sha256": "0d6af5aed25a51ccdb3d0fcad5a1e85cfe9c5aa86a895e313eab30157b76eb2d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libd/libdvdnav/libdvdnav4_6.1.1-3build1_amd64.deb",
+      "filename": "libdvdnav4_6.1.1-3build1_amd64.deb",
+      "size": 39542,
+      "sha256": "09fd1de2985ade2592d4f068774b2249211880aa6d4a71a89e0b4764afe47404"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/m/mesa/libegl-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "filename": "libegl-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "size": 117224,
+      "sha256": "2b8363cb29868603c827cb569a19373a45bebb29bdca5cd34de42dce2f3c9419"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/h/hunspell/libhunspell-1.7-0_1.7.2%2breally1.7.2-10build3_amd64.deb",
+      "filename": "libhunspell-1.7-0_1.7.2+really1.7.2-10build3_amd64.deb",
+      "size": 294152,
+      "sha256": "77849069ed487a16c1dcf71122cc9578f6610542e52a85fc259aa0932a13da22"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/e/enchant-2/libenchant-2-2_2.3.3-2build2_amd64.deb",
+      "filename": "libenchant-2-2_2.3.3-2build2_amd64.deb",
+      "size": 51354,
+      "sha256": "4faecb5cee57ff00649b3ea4d83c072d9da2670797b7d2854708ff60cef17426"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libe/libepoxy/libepoxy0_1.5.10-1build1_amd64.deb",
+      "filename": "libepoxy0_1.5.10-1build1_amd64.deb",
+      "size": 220408,
+      "sha256": "e2e754da4e7fb89021476b093cb5ebe9b1859a688fa37739809e529627d39f1f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libe/libevent/libevent-2.1-7t64_2.1.12-stable-9ubuntu2.2_amd64.deb",
+      "filename": "libevent-2.1-7t64_2.1.12-stable-9ubuntu2.2_amd64.deb",
+      "size": 145930,
+      "sha256": "083ced6efb23476cb4de4e441b741af02db5653e67fa7fcd6cf7e5f7b78f6101"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/faad2/libfaad2_2.11.1-1build1_amd64.deb",
+      "filename": "libfaad2_2.11.1-1build1_amd64.deb",
+      "size": 207090,
+      "sha256": "725f4c093d6337989ec4be533f6fae240c9fdffa30a06a44a4642e361f9fa32a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libi/libinstpatch/libinstpatch-1.0-2_1.1.6-1build2_amd64.deb",
+      "filename": "libinstpatch-1.0-2_1.1.6-1build2_amd64.deb",
+      "size": 250992,
+      "sha256": "d48c40a9c428e40d5bbe8762802390322b06a062c735292767e73d1c6ea9007e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/j/jackd2/libjack-jackd2-0_1.9.21%7edfsg-3ubuntu3_amd64.deb",
+      "filename": "libjack-jackd2-0_1.9.21~dfsg-3ubuntu3_amd64.deb",
+      "size": 288676,
+      "sha256": "4fc5f4d0fbf2602df59bbed3ea504742bdcc7f899d7b32f6b2fd446ceb1fdf7d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/w/webrtc-audio-processing/libwebrtc-audio-processing1_0.3.1-0ubuntu6_amd64.deb",
+      "filename": "libwebrtc-audio-processing1_0.3.1-0ubuntu6_amd64.deb",
+      "size": 290030,
+      "sha256": "3992aae1942c96122ed29791abb125a664495816c4d4b418b200f24ba05b087d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pipewire/libspa-0.2-modules_1.0.5-1ubuntu3.3_amd64.deb",
+      "filename": "libspa-0.2-modules_1.0.5-1ubuntu3.3_amd64.deb",
+      "size": 627974,
+      "sha256": "1a19e23575b05e832f51d195c401360df11150185e86ddf3035daee2bc3ff3e2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pipewire/libpipewire-0.3-0t64_1.0.5-1ubuntu3.3_amd64.deb",
+      "filename": "libpipewire-0.3-0t64_1.0.5-1ubuntu3.3_amd64.deb",
+      "size": 252198,
+      "sha256": "225786f83ecb81075b820652038e20f38ae8f72a9787b766c4e0aa1bd7dfead8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/w/wayland/libwayland-cursor0_1.22.0-2.1build1_amd64.deb",
+      "filename": "libwayland-cursor0_1.22.0-2.1build1_amd64.deb",
+      "size": 10406,
+      "sha256": "29c20da27e8e37c984cf0518635c11cd0441f4cb6a2919a9f6eee1809171d327"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/w/wayland/libwayland-egl1_1.22.0-2.1build1_amd64.deb",
+      "filename": "libwayland-egl1_1.22.0-2.1build1_amd64.deb",
+      "size": 5628,
+      "sha256": "76cd17d2776428e0a0551b8f8fd954eeb3d39ca8ed2f88a38a5e4ce3ce3b2f16"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcursor/libxcursor1_1.2.1-1build1_amd64.deb",
+      "filename": "libxcursor1_1%3a1.2.1-1build1_amd64.deb",
+      "size": 20748,
+      "sha256": "1a4beee621454e42fe0d2f4e1633611126e43d891f0aec28e4a06744f6e9f04d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxrandr/libxrandr2_1.5.2-2build1_amd64.deb",
+      "filename": "libxrandr2_2%3a1.5.2-2build1_amd64.deb",
+      "size": 19670,
+      "sha256": "f2955a5e594f5724b58ad241d9231ea191cb36574a0d5e5ca6b661cd41d6256d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxss/libxss1_1.2.3-1build3_amd64.deb",
+      "filename": "libxss1_1%3a1.2.3-1build3_amd64.deb",
+      "size": 7204,
+      "sha256": "0ac60a2cc034ccc4bf4e2f846f38110469d7ae43b47e808d67aafc538bc3695e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsdl2/libsdl2-2.0-0_2.30.0%2bdfsg-1ubuntu3.1_amd64.deb",
+      "filename": "libsdl2-2.0-0_2.30.0+dfsg-1ubuntu3.1_amd64.deb",
+      "size": 685580,
+      "sha256": "a2e733f1339272f22cf7777d454b5d4f71e27335d89d4c99cf41e1ce1bb5c462"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/t/timgm6mb-soundfont/timgm6mb-soundfont_1.3-5_all.deb",
+      "filename": "timgm6mb-soundfont_1.3-5_all.deb",
+      "size": 5426680,
+      "sha256": "b70bc29b8f27adef8f92a2d9c1e26cee977b84c68110f0dd4326d97730a7c3ed"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/f/fluidsynth/libfluidsynth3_2.3.4-1build3_amd64.deb",
+      "filename": "libfluidsynth3_2.3.4-1build3_amd64.deb",
+      "size": 248694,
+      "sha256": "645b2c03798b6e02d289cc27f4b2b25a040db705cf527017e3a6cdbe568b3438"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libf/libfreeaptx/libfreeaptx0_0.1.1-2build1_amd64.deb",
+      "filename": "libfreeaptx0_0.1.1-2build1_amd64.deb",
+      "size": 13456,
+      "sha256": "2280d6fdd41c841701a9da6b5076b77e8a0849e5c10c9c2945f817f753575a42"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/graphene/libgraphene-1.0-0_1.10.8-3build2_amd64.deb",
+      "filename": "libgraphene-1.0-0_1.10.8-3build2_amd64.deb",
+      "size": 46224,
+      "sha256": "5276c4173bff30bd2a368cce30639227089512aad85fc4af87c284456bafe8ff"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gssdp/libgssdp-1.6-0_1.6.3-1build3_amd64.deb",
+      "filename": "libgssdp-1.6-0_1.6.3-1build3_amd64.deb",
+      "size": 40374,
+      "sha256": "49aa7c3eb2e75f55da069f5f18d3babc0376e4bf8f3bcbbf22a76d60d9f40f9e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libg/libglvnd/libegl1_1.7.0-1build1_amd64.deb",
+      "filename": "libegl1_1.7.0-1build1_amd64.deb",
+      "size": 28670,
+      "sha256": "e549f7776216f7bd3b1c216729fb40a97a562e2eb7c563cde632b4931f9a4e57"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gst-plugins-base1.0/libgstreamer-gl1.0-0_1.24.2-1ubuntu0.5_amd64.deb",
+      "filename": "libgstreamer-gl1.0-0_1.24.2-1ubuntu0.5_amd64.deb",
+      "size": 213954,
+      "sha256": "fb87a72e431d2c57c35b0b2bd4189bb6a6e771788c3ba389a9e3623886486b22"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcomposite/libxcomposite1_0.4.5-1build3_amd64.deb",
+      "filename": "libxcomposite1_1%3a0.4.5-1build3_amd64.deb",
+      "size": 6320,
+      "sha256": "a12d5d9ae70b798cbbf284080eae32b87367561fc9c24492f641b8860ac0f308"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxinerama/libxinerama1_1.1.4-3build1_amd64.deb",
+      "filename": "libxinerama1_2%3a1.1.4-3build1_amd64.deb",
+      "size": 6396,
+      "sha256": "c8c93a3efdbb06e314f41bf48af4ca3652e4a3826bab5b9e00887660e619f239"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gtk%2b3.0/libgtk-3-common_3.24.41-4ubuntu1.3_all.deb",
+      "filename": "libgtk-3-common_3.24.41-4ubuntu1.3_all.deb",
+      "size": 1425952,
+      "sha256": "193be16ae51e14f6a209de012e61916761be866c6babaa48d7faa9e641567950"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gtk%2b3.0/libgtk-3-0t64_3.24.41-4ubuntu1.3_amd64.deb",
+      "filename": "libgtk-3-0t64_3.24.41-4ubuntu1.3_amd64.deb",
+      "size": 2913080,
+      "sha256": "fd61e308234b12d243160798216d0efcb605d83af185bf3414ac99c2ed5166fc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gtk4/libgtk-4-common_4.14.5%2bds-0ubuntu0.10_all.deb",
+      "filename": "libgtk-4-common_4.14.5+ds-0ubuntu0.10_all.deb",
+      "size": 1496922,
+      "sha256": "c4a62cbed476b05663f0ed03145234dad431d25ce329863c56cc80074c0bb2ed"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gtk4/libgtk-4-1_4.14.5%2bds-0ubuntu0.10_amd64.deb",
+      "filename": "libgtk-4-1_4.14.5+ds-0ubuntu0.10_amd64.deb",
+      "size": 3295234,
+      "sha256": "2361861e33d34a26f3d6c4906935fd9e6241eb44ff30564cb493b5671111a24f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gupnp/libgupnp-1.6-0_1.6.6-1build3_amd64.deb",
+      "filename": "libgupnp-1.6-0_1.6.6-1build3_amd64.deb",
+      "size": 92722,
+      "sha256": "491670df1732d15ced827446e26bcea76326d3c9cfc4856b5806e9911dc4264f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/g/gupnp-igd/libgupnp-igd-1.6-0_1.6.0-3build3_amd64.deb",
+      "filename": "libgupnp-igd-1.6-0_1.6.0-3build3_amd64.deb",
+      "size": 16540,
+      "sha256": "e71897a39779ffc327b704ca7baef4fe079cfc6a5e1bd56819ac2ad05f8f9b86"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/h/harfbuzz/libharfbuzz-icu0_8.3.0-2build2_amd64.deb",
+      "filename": "libharfbuzz-icu0_8.3.0-2build2_amd64.deb",
+      "size": 13310,
+      "sha256": "9098670758e60b190d7edf367ad57e954bfc1b2a616def3f4e281062e036a843"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/h/hyphen/libhyphen0_2.8.8-7build3_amd64.deb",
+      "filename": "libhyphen0_2.8.8-7build3_amd64.deb",
+      "size": 26516,
+      "sha256": "b508d3a5da168ddb2ae6e79ea0521ba64cd121285db0ece438d0bd56ba628556"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/i/imath/libimath-3-1-29t64_3.1.9-3.1ubuntu2_amd64.deb",
+      "filename": "libimath-3-1-29t64_3.1.9-3.1ubuntu2_amd64.deb",
+      "size": 72248,
+      "sha256": "7b62292db74bab20ccea4db0039b5c7e720aec36aeed4a405d8da4c2c60b29c8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/j/json-glib/libjson-glib-1.0-common_1.8.0-2build2_all.deb",
+      "filename": "libjson-glib-1.0-common_1.8.0-2build2_all.deb",
+      "size": 4244,
+      "sha256": "04cd91689ac4903e260304627c0ae379f9df1c16061eed73e0cf9c91af5569ac"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/j/json-glib/libjson-glib-1.0-0_1.8.0-2build2_amd64.deb",
+      "filename": "libjson-glib-1.0-0_1.8.0-2build2_amd64.deb",
+      "size": 68034,
+      "sha256": "4310fbbd91785adf38d3e0f0d6a94527430c077af8773eb83ec02a1fcbcba089"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libl/liblc3/liblc3-1_1.0.4-3build1_amd64.deb",
+      "filename": "liblc3-1_1.0.4-3build1_amd64.deb",
+      "size": 69662,
+      "sha256": "cad9163dbd8c96060bf695a72331a0ff22adb56395af18d69e42b406482f010a"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libl/libldac/libldacbt-enc2_2.0.2.3%2bgit20200429%2bed310a0-4ubuntu2_amd64.deb",
+      "filename": "libldacbt-enc2_2.0.2.3+git20200429+ed310a0-4ubuntu2_amd64.deb",
+      "size": 27118,
+      "sha256": "3f30273311e774954455d4a6e46a750510c8cbadfe01f68befd7418ad91d16b5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxslt/libxslt1.1_1.1.39-0exp1ubuntu0.24.04.3_amd64.deb",
+      "filename": "libxslt1.1_1.1.39-0exp1ubuntu0.24.04.3_amd64.deb",
+      "size": 167806,
+      "sha256": "e716daf96ea2526cab92e5cc4708739d5f2f4b89fb76782dfda7f49283eeeb40"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/y/yajl/libyajl2_2.1.0-5build1_amd64.deb",
+      "filename": "libyajl2_2.1.0-5build1_amd64.deb",
+      "size": 20202,
+      "sha256": "faa268c632f7d2931509cf7b8b7ddd810aa775adc26ead88ea158e2ede5208f8"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/r/raptor2/libraptor2-0_2.0.16-3ubuntu0.1_amd64.deb",
+      "filename": "libraptor2-0_2.0.16-3ubuntu0.1_amd64.deb",
+      "size": 165342,
+      "sha256": "27dd8775272765954117c81b763838b62eda8cac22a74a1e190ec39a806e4a15"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libl/liblrdf/liblrdf0_0.6.1-4build1_amd64.deb",
+      "filename": "liblrdf0_0.6.1-4build1_amd64.deb",
+      "size": 18522,
+      "sha256": "470a5e0e88fd2e7dcfc024c789cd029578b110c65558ae423fd79d7bb4ef01ca"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libl/libltc/libltc11_1.3.2-1build1_amd64.deb",
+      "filename": "libltc11_1.3.2-1build1_amd64.deb",
+      "size": 13000,
+      "sha256": "92f23451cefe159faef9f255f0d24987eff50e52647dc1aa9843ad4c733ca039"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libm/libmanette/libmanette-0.2-0_0.2.7-1build2_amd64.deb",
+      "filename": "libmanette-0.2-0_0.2.7-1build2_amd64.deb",
+      "size": 30570,
+      "sha256": "8fbb67e94abf563c01398ad7458df1a6824f19a0b4337f67d61c0889771805db"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/i/intel-mediasdk/libmfx1_22.5.4-1_amd64.deb",
+      "filename": "libmfx1_22.5.4-1_amd64.deb",
+      "size": 3124450,
+      "sha256": "ba6b1bf484d70fe59b6832f7bd7c8a16d5783cd324748bd64e4fc8697ef4d1cd"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/m/mjpegtools/libmjpegutils-2.1-0t64_2.1.0%2bdebian-8.1build1_amd64.deb",
+      "filename": "libmjpegutils-2.1-0t64_1%3a2.1.0+debian-8.1build1_amd64.deb",
+      "size": 25454,
+      "sha256": "3422b9e3f7aa721a18f1738b33815a7f681fbe1ec0bafb1faf733e625dcbce85"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libm/libmodplug/libmodplug1_0.8.9.0-3build1_amd64.deb",
+      "filename": "libmodplug1_1%3a0.8.9.0-3build1_amd64.deb",
+      "size": 166234,
+      "sha256": "34b383f35def5405069ae1eb6b4e6a7f73c9adafd0d049add82285b0e1a2e1ad"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libm/libmpc/libmpcdec6_0.1%7er495-2build1_amd64.deb",
+      "filename": "libmpcdec6_2%3a0.1~r495-2build1_amd64.deb",
+      "size": 32744,
+      "sha256": "799ae221db094957eefaf778e28b9ae5089776724f89ea7b986d73a31cdcc184"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/m/mjpegtools/libmpeg2encpp-2.1-0t64_2.1.0%2bdebian-8.1build1_amd64.deb",
+      "filename": "libmpeg2encpp-2.1-0t64_1%3a2.1.0+debian-8.1build1_amd64.deb",
+      "size": 75604,
+      "sha256": "ec077a7c7fc7abd77d460813f56a9bef1dd68e53148840ef242b1795043d318e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/m/mjpegtools/libmplex2-2.1-0t64_2.1.0%2bdebian-8.1build1_amd64.deb",
+      "filename": "libmplex2-2.1-0t64_1%3a2.1.0+debian-8.1build1_amd64.deb",
+      "size": 46066,
+      "sha256": "8c4324fb9ac9b667559aeaa92e399beeb4396d0cd33627be1b1306b85a31e5e2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/n/neon27/libneon27t64_0.33.0-1.1build3_amd64.deb",
+      "filename": "libneon27t64_0.33.0-1.1build3_amd64.deb",
+      "size": 102054,
+      "sha256": "6a8c1f59cf367bc315725f7d1fd325e910f79cb77bfa33db34de98e51bcf27c2"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libn/libnice/libnice10_0.1.21-2build3_amd64.deb",
+      "filename": "libnice10_0.1.21-2build3_amd64.deb",
+      "size": 157152,
+      "sha256": "fd24e18e0d9d9ead31e192d46df04473fab2d51390ccb2a4a62cf3b90bf6f311"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/nspr/libnspr4_4.35-1.1build1_amd64.deb",
+      "filename": "libnspr4_2%3a4.35-1.1build1_amd64.deb",
+      "size": 117398,
+      "sha256": "e579e72d091f6c7a13f5a756c31065b15aae5b81840d61b069355aa2283c07b4"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/n/nss/libnss3_3.98-1ubuntu0.3_amd64.deb",
+      "filename": "libnss3_2%3a3.98-1ubuntu0.3_amd64.deb",
+      "size": 1444912,
+      "sha256": "e11fdf8c09a068d0f0c3fd90ed971253dfed7227cc20d3d487fd615d4771f1bb"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/o/openal-soft/libopenal-data_1.23.1-4build1_all.deb",
+      "filename": "libopenal-data_1%3a1.23.1-4build1_all.deb",
+      "size": 160710,
+      "sha256": "0de2f2b7a29fa337432fa044ce6c238bc511b83dac14d68a32673d9803cbab83"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/o/openexr/libopenexr-3-1-30_3.1.5-5.1build3_amd64.deb",
+      "filename": "libopenexr-3-1-30_3.1.5-5.1build3_amd64.deb",
+      "size": 1004380,
+      "sha256": "646d78a860e71d02414df08644f70125e670fb90e8f5d834a7cefd732a9eadfe"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/o/openh264/libopenh264-7_2.4.1%2bdfsg-1_amd64.deb",
+      "filename": "libopenh264-7_2.4.1+dfsg-1_amd64.deb",
+      "size": 409384,
+      "sha256": "1042d48b6827906ae689ec18db944c689beca9eb563d23b4fa8f06ce80cb9a45"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/o/openni2/libopenni2-0_2.2.0.33%2bdfsg-18_amd64.deb",
+      "filename": "libopenni2-0_2.2.0.33+dfsg-18_amd64.deb",
+      "size": 369574,
+      "sha256": "bba943fe73b2b0271ebbd6a28d0afb9e7084df75a64748fc06e3f72151ab1b76"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/q/qrencode/libqrencode4_4.1.1-1build2_amd64.deb",
+      "filename": "libqrencode4_4.1.1-1build2_amd64.deb",
+      "size": 24972,
+      "sha256": "fac6fe1444827f29ab5f6eb40e28575caaacf54eefc5c647ff178b9237a45c4e"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsecret/libsecret-common_0.21.4-1build3_all.deb",
+      "filename": "libsecret-common_0.21.4-1build3_all.deb",
+      "size": 4962,
+      "sha256": "41866e9026e451fd25a4cbe887fa56c43219f9f3eda88d1831452ba6d6b8bb5b"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsecret/libsecret-1-0_0.21.4-1build3_amd64.deb",
+      "filename": "libsecret-1-0_0.21.4-1build3_amd64.deb",
+      "size": 116332,
+      "sha256": "7d7263ffc92c33042328f99c93433a846e8d9e549876dab18ba18606e6541ecd"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/sndio/libsndio7.0_1.9.0-0.3build3_amd64.deb",
+      "filename": "libsndio7.0_1.9.0-0.3build3_amd64.deb",
+      "size": 29562,
+      "sha256": "b3944745ee48ea2c7a851fb78a617d34bb731a2f956a2c213cc9dffcaba35382"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/soundtouch/libsoundtouch1_2.3.2%2bds1-1build1_amd64.deb",
+      "filename": "libsoundtouch1_2.3.2+ds1-1build1_amd64.deb",
+      "size": 60470,
+      "sha256": "e8891d6a110838ec8b37e3fbda565c4079666e9e78157b0ef3b39b5858e281dc"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/s/spandsp/libspandsp2t64_0.0.6%2bdfsg-2.1build1_amd64.deb",
+      "filename": "libspandsp2t64_0.0.6+dfsg-2.1build1_amd64.deb",
+      "size": 311286,
+      "sha256": "107557f1f8aea7bbf23476d966bbdba7666f0e83497f3ebda8dfe21a0e29e5f5"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libs/libsrtp2/libsrtp2-1_2.5.0-3build1_amd64.deb",
+      "filename": "libsrtp2-1_2.5.0-3build1_amd64.deb",
+      "size": 41918,
+      "sha256": "c2e7ee0ae64597f046fbfb197b8f36dfc9a5159b02d27e850f3a4d14a4603d77"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/w/wayland/libwayland-server0_1.22.0-2.1build1_amd64.deb",
+      "filename": "libwayland-server0_1.22.0-2.1build1_amd64.deb",
+      "size": 33928,
+      "sha256": "edbfa4b6857691ae922cc768a753fab230eee9e956aa2ce4f2eaa8d9ad777dca"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libw/libwebp/libwebpdemux2_1.3.2-0.4build3_amd64.deb",
+      "filename": "libwebpdemux2_1.3.2-0.4build3_amd64.deb",
+      "size": 12388,
+      "sha256": "15e98f127e1fdbf0889cf4b2f5604b60a6da0b988f20bf34731c9a2307d490d6"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/w/wildmidi/libwildmidi2_0.4.3-1build3_amd64.deb",
+      "filename": "libwildmidi2_0.4.3-1build3_amd64.deb",
+      "size": 68534,
+      "sha256": "f44a3f24eb567cf104aefe6cabe2a3385185dc59dd83d64a37c1a04f0e12c771"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/w/woff2/libwoff1_1.0.2-2build1_amd64.deb",
+      "filename": "libwoff1_1.0.2-2build1_amd64.deb",
+      "size": 45252,
+      "sha256": "e23a6287ff611ff60a5a598de21f8f60f6236b6ad9443376318e6cc7914219c1"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxcb/libxcb-xkb1_1.15-1ubuntu2_amd64.deb",
+      "filename": "libxcb-xkb1_1.15-1ubuntu2_amd64.deb",
+      "size": 32302,
+      "sha256": "53bc0a58834c981fa8ce5c3ab6195387e5c8a417039d82cc7a8b49724fa53228"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libx/libxkbcommon/libxkbcommon-x11-0_1.6.0-1build1_amd64.deb",
+      "filename": "libxkbcommon-x11-0_1.6.0-1build1_amd64.deb",
+      "size": 14536,
+      "sha256": "3befe840ce612ddfc0998d8610c6eed295726722a78e75cd08520bbd75065a23"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/z/zbar/libzbar0t64_0.23.93-4build3_amd64.deb",
+      "filename": "libzbar0t64_0.23.93-4build3_amd64.deb",
+      "size": 123280,
+      "sha256": "0129f77fab0834eacfb34eaf1bff47b505fbfa3f8365fd528fcdfc9c59d6dd60"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/z/zxing-cpp/libzxing3_2.2.1-3_amd64.deb",
+      "filename": "libzxing3_2.2.1-3_amd64.deb",
+      "size": 583016,
+      "sha256": "1ca712c210883adec397a9dc3c99e59b58b7ac6d9d35bf0b922770b4d648a11f"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/g/gst-plugins-bad1.0/libgstreamer-plugins-bad1.0-0_1.24.2-1ubuntu4_amd64.deb",
+      "filename": "libgstreamer-plugins-bad1.0-0_1.24.2-1ubuntu4_amd64.deb",
+      "size": 797390,
+      "sha256": "6e8da41c0cbb2070f3477cf02360c2ce2eb55e825ba09e12b4270b3254e04f45"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/libd/libdca/libdca0_0.0.7-2build1_amd64.deb",
+      "filename": "libdca0_0.0.7-2build1_amd64.deb",
+      "size": 93828,
+      "sha256": "018867fee029b072ecb3365f5f92c0cb0530d4ab37aa13be127116b6e5c3c06d"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/o/openal-soft/libopenal1_1.23.1-4build1_amd64.deb",
+      "filename": "libopenal1_1%3a1.23.1-4build1_amd64.deb",
+      "size": 540202,
+      "sha256": "1781774a540ab7c9baccc41b49592e3b427c5820c64e390af4868d6a861ef8c7"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/s/sbc/libsbc1_2.0-1build1_amd64.deb",
+      "filename": "libsbc1_2.0-1build1_amd64.deb",
+      "size": 33918,
+      "sha256": "d4d453e7673218fc2f917dbabb2492a5a81155c2305f6fe63a37cadcaa806128"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/v/vo-aacenc/libvo-aacenc0_0.1.3-2build1_amd64.deb",
+      "filename": "libvo-aacenc0_0.1.3-2build1_amd64.deb",
+      "size": 67798,
+      "sha256": "6a0229bbf86fea043ef0d7e11c0cfe076797f976cd059862fa9b1ad13986c4ee"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/v/vo-amrwbenc/libvo-amrwbenc0_0.1.3-2build1_amd64.deb",
+      "filename": "libvo-amrwbenc0_0.1.3-2build1_amd64.deb",
+      "size": 76724,
+      "sha256": "30d260bbb56b9340319216529e72ed02a68752de62d5926ad07132ed2459af05"
+    },
+    {
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/universe/g/gst-plugins-bad1.0/gstreamer1.0-plugins-bad_1.24.2-1ubuntu4_amd64.deb",
+      "filename": "gstreamer1.0-plugins-bad_1.24.2-1ubuntu4_amd64.deb",
+      "size": 3081180,
+      "sha256": "56f47c2a6b390722416c962564da6ab5fc7315dcbaa653fe4457a8db6ed34ca6"
+    }
+  ]
+}
