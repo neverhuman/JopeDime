@@ -1,0 +1,44 @@
+% Figure — what carries the gain: component ablations per game, and shared against separate models.
+% Reads SYNTHETIC data (gaps EZ-G09, EZ-G11).
+\begin{tikzpicture}
+\begin{groupplot}[ez,
+    group style={group size=2 by 1, horizontal sep=3.1cm},
+    height=4.9cm, axis lines*=left, clip=false,
+    legend style={font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, draw=none, fill=white,
+      fill opacity=0.85, text opacity=1, cells={anchor=west}, row sep=-1.5pt},
+    error bars/error bar style={line width=0.5pt}, error bars/error mark options={rotate=90, mark size=1.4pt}]
+  % ---------------- component ablations
+  \nextgroupplot[width=0.44\linewidth, title={Removing one component},
+      xmin=-0.125, xmax=0.012, ymin=0.5, ymax=5.5, ytick={1,2,3,4,5}, scaled x ticks=false,
+      yticklabels={search-only teacher, retrieval, catalog-bound decoder, imitation only, direct decoder},
+      yticklabel style={font=\sffamily\scriptsize\color{ezink}},
+      xtick={-0.12,-0.08,-0.04,0}, xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+      xlabel={utility change against full EurekaZero}, legend pos=north west]
+    \draw[ezgrey, line width=0.5pt, densely dashed] (axis cs:0,0.5) -- (axis cs:0,5.5);
+    \addplot[only marks, mark=*, mark size=1.5pt, ezaccent, ezwhere={domain}{A},
+        error bars/.cd, x dir=both, x explicit]
+      table[col sep=comma, x=delta, y expr=\thisrow{y}+0.2, x error=err] {data/synthetic/ablations.csv};
+    \addlegendentry{A learning procedures}
+    \addplot[only marks, mark=square*, mark size=1.3pt, ezgreen, ezwhere={domain}{B},
+        error bars/.cd, x dir=both, x explicit]
+      table[col sep=comma, x=delta, y=y, x error=err] {data/synthetic/ablations.csv};
+    \addlegendentry{B1 next experiment}
+    \addplot[only marks, mark=triangle*, mark size=1.7pt, ezwarm, ezwhere={domain}{C},
+        error bars/.cd, x dir=both, x explicit]
+      table[col sep=comma, x=delta, y expr=\thisrow{y}-0.2, x error=err] {data/synthetic/ablations.csv};
+    \addlegendentry{C CAD parts}
+  % ---------------- shared against separate models
+  \nextgroupplot[width=0.38\linewidth, title={Shared minus separate models},
+      xmin=-0.035, xmax=0.025, ymin=0.5, ymax=3.5, ytick={1,2,3}, scaled x ticks=false,
+      yticklabels={C CAD parts, B1 next experiment, A learning procedures},
+      yticklabel style={font=\sffamily\scriptsize\color{ezink}},
+      xtick={-0.03,-0.015,0,0.015}, xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=3},
+      xlabel={utility difference}]
+    \fill[ezgrey, opacity=0.08] (axis cs:-0.02,0.5) rectangle (axis cs:0.02,3.5);
+    \node[font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, text=ezgrey, anchor=north] at (axis cs:0,3.48) {equivalence margin $\pm 0.02$};
+    \draw[ezgrey, line width=0.5pt, densely dashed] (axis cs:0,0.5) -- (axis cs:0,3.5);
+    \addplot[only marks, mark=*, mark size=1.6pt, ezink, error bars/.cd, x dir=both, x explicit]
+      table[col sep=comma, x=delta, y=y, x error=err] {data/synthetic/transfer.csv};
+\end{groupplot}
+\synfigtag
+\end{tikzpicture}

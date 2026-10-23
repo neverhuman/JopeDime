@@ -1,0 +1,83 @@
+% Figure — what one proposal is worth: search budget curves (A, C) and closed-loop regret (B2).
+% Reads SYNTHETIC data (gaps EZ-G02, EZ-G04, EZ-G06, EZ-G07).
+\pgfplotstableread[col sep=comma]{data/synthetic/curve-lines.csv}\ezlines
+\pgfplotstablegetelem{0}{ez}\of\ezlines\edef\ezA{\pgfplotsretval}
+\pgfplotstablegetelem{0}{ez_lo}\of\ezlines\edef\ezAlo{\pgfplotsretval}
+\pgfplotstablegetelem{0}{ez_hi}\of\ezlines\edef\ezAhi{\pgfplotsretval}
+\pgfplotstablegetelem{0}{comparator}\of\ezlines\edef\cmpA{\pgfplotsretval}
+\pgfplotstablegetelem{0}{retrieval}\of\ezlines\edef\retA{\pgfplotsretval}
+\pgfplotstablegetelem{0}{frontier}\of\ezlines\edef\frA{\pgfplotsretval}
+\pgfplotstablegetelem{1}{ez}\of\ezlines\edef\ezC{\pgfplotsretval}
+\pgfplotstablegetelem{1}{ez_lo}\of\ezlines\edef\ezClo{\pgfplotsretval}
+\pgfplotstablegetelem{1}{ez_hi}\of\ezlines\edef\ezChi{\pgfplotsretval}
+\pgfplotstablegetelem{1}{comparator}\of\ezlines\edef\cmpC{\pgfplotsretval}
+\pgfplotstablegetelem{1}{frontier}\of\ezlines\edef\frC{\pgfplotsretval}
+\begin{tikzpicture}
+\begin{groupplot}[ez,
+    group style={group size=3 by 1, horizontal sep=1.35cm},
+    width=0.34\linewidth, height=4.9cm, axis lines*=left, clip=false,
+    legend style={font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, draw=none, fill=none,
+      cells={anchor=west}, row sep=-1.5pt, at={(0.5,-0.3)}, anchor=north}]
+  % ---------------- A: utility against search budget
+  \nextgroupplot[title={A \textperiodcentered{} learning procedures}, xmode=log, log basis x=2,
+      xmin=0.8, xmax=320, ymin=0.26, ymax=0.47, xtick={1,4,16,64,256}, xticklabels={1,4,16,64,256},
+      xlabel={candidates evaluated by search}, ylabel={mean utility},
+      yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+      ]
+    \addplot[name path=hiA, draw=none, forget plot] table[col sep=comma, x=k, y=hi] {data/synthetic/curve-A.csv};
+    \addplot[name path=loA, draw=none, forget plot] table[col sep=comma, x=k, y=lo] {data/synthetic/curve-A.csv};
+    \addplot[ezgrey!25, forget plot] fill between[of=hiA and loA];
+    \addplot[ezgrey, line width=0.9pt, mark=*, mark size=1.3pt] table[col sep=comma, x=k, y=mean] {data/synthetic/curve-A.csv};
+    \addlegendentry{search at budget $k$}
+    \fill[ezwarm, opacity=0.14] (axis cs:0.8,\ezAlo) rectangle (axis cs:320,\ezAhi);
+    \addplot[ezwarm, line width=1.2pt, domain=0.8:320, samples=2] {\ezA};
+    \addlegendentry{EurekaZero, one proposal}
+    \addplot[ezaccent, line width=0.7pt, densely dashed, domain=0.8:320, samples=2] {\cmpA};
+    \addlegendentry{tree selector (comparator)}
+    \addplot[ezaccent!60, line width=0.7pt, dotted, domain=0.8:320, samples=2] {\retA};
+    \addlegendentry{retrieval}
+    \addplot[ezgreen, line width=0.7pt, dashdotted, domain=0.8:320, samples=2] {\frA};
+    \addlegendentry{best frontier model, $K=1$}
+    \draw[ezwarm, line width=0.5pt, -{Stealth[length=1.5mm]}] (axis cs:\EZbeqA,0.448) -- (axis cs:\EZbeqA,\ezA);
+    \node[font=\sffamily\fontsize{5.8pt}{6.4pt}\selectfont, text=ezwarm, anchor=south] at (axis cs:\EZbeqA,0.448) {$B_{\mathrm{eq}}=\EZbeqA$};
+  % ---------------- B2: closed-loop regret
+  \nextgroupplot[title={B2 \textperiodcentered{} closed-loop optimization}, ymode=log, xmin=0, xmax=50,
+      ymin=0.03, ymax=1.0, xlabel={evaluations}, ylabel={median normalized regret},
+      ytick={0.05,0.1,0.2,0.5,1}, yticklabels={0.05,0.1,0.2,0.5,1}, legend columns=2, legend style={column sep=3pt}]
+    \addplot[ezwarm, line width=1.2pt] table[col sep=comma, x=t, y=ez] {data/synthetic/regret-B2.csv};
+    \addlegendentry{EurekaZero (SEQ)}
+    \addplot[ezgreen, line width=0.7pt] table[col sep=comma, x=t, y=zeroshot] {data/synthetic/regret-B2.csv};
+    \addlegendentry{ZeroShotOpt-class}
+    \addplot[ezgreen!55, line width=0.7pt, densely dashed] table[col sep=comma, x=t, y=optformer] {data/synthetic/regret-B2.csv};
+    \addlegendentry{OptFormer-class}
+    \addplot[ezaccent, line width=0.8pt] table[col sep=comma, x=t, y=gpei] {data/synthetic/regret-B2.csv};
+    \addlegendentry{Gaussian-process EI}
+    \addplot[ezaccent!55, line width=0.7pt, densely dashed] table[col sep=comma, x=t, y=tpe] {data/synthetic/regret-B2.csv};
+    \addlegendentry{TPE}
+    \addplot[ezamber, line width=0.7pt, densely dotted] table[col sep=comma, x=t, y=cmaes] {data/synthetic/regret-B2.csv};
+    \addlegendentry{CMA-ES}
+    \addplot[ezgrey, line width=0.7pt] table[col sep=comma, x=t, y=random] {data/synthetic/regret-B2.csv};
+    \addlegendentry{random}
+    \draw[ezrule, line width=0.4pt, densely dashed] (axis cs:0,0.15) -- (axis cs:50,0.15);
+  % ---------------- C: utility against simulation budget
+  \nextgroupplot[title={C \textperiodcentered{} CAD parts}, xmode=log, log basis x=2,
+      xmin=0.8, xmax=320, ymin=-0.12, ymax=0.32, xtick={1,4,16,64,256}, xticklabels={1,4,16,64,256},
+      xlabel={simulations spent by search}, ylabel={mean utility},
+      yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=1}]
+    \addplot[name path=hiC, draw=none, forget plot] table[col sep=comma, x=k, y=hi] {data/synthetic/curve-C.csv};
+    \addplot[name path=loC, draw=none, forget plot] table[col sep=comma, x=k, y=lo] {data/synthetic/curve-C.csv};
+    \addplot[ezgrey!25, forget plot] fill between[of=hiC and loC];
+    \addplot[ezgrey, line width=0.9pt, mark=*, mark size=1.3pt] table[col sep=comma, x=k, y=mean] {data/synthetic/curve-C.csv};
+    \addlegendentry{topology optimization at $k$}
+    \fill[ezwarm, opacity=0.14] (axis cs:0.8,\ezClo) rectangle (axis cs:320,\ezChi);
+    \addplot[ezwarm, line width=1.2pt, domain=0.8:320, samples=2] {\ezC};
+    \addlegendentry{EurekaZero, one proposal}
+    \addplot[ezaccent, line width=0.7pt, densely dashed, domain=0.8:320, samples=2] {\cmpC};
+    \addlegendentry{retrieval + adaptation}
+    \addplot[ezgreen, line width=0.7pt, dashdotted, domain=0.8:320, samples=2] {\frC};
+    \addlegendentry{best frontier model, $K=1$}
+    \draw[ezwarm, line width=0.5pt, -{Stealth[length=1.5mm]}] (axis cs:\EZbeqC,0.29) -- (axis cs:\EZbeqC,\ezC);
+    \node[font=\sffamily\fontsize{5.8pt}{6.4pt}\selectfont, text=ezwarm, anchor=south] at (axis cs:\EZbeqC,0.29) {$B_{\mathrm{eq}}=\EZbeqC$};
+\end{groupplot}
+\synfigtag
+\end{tikzpicture}

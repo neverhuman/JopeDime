@@ -1,0 +1,33 @@
+% Appendix H — Compute ledger (SYNTHETIC)
+\section{Compute ledger}
+\label{app:compute}
+
+\paragraph{Metering} Teacher searches, training and proposals are metered separately. CPU time is the
+sum over processes of user and system time; GPU time is device-occupied wall time. A measurement
+nested in another (a verifier call inside a search, say) is recorded once, at the innermost level.
+Frontier-model calls are metered by the provider's usage report.
+
+\begin{table}[h]
+\caption{Compute by game and stage, with break-even at the declared GPU conversion rate and at half
+and twice that rate. Synthetic (gap EZ-G18).}
+\label{tab:compute}
+\centering\tablesf
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+ & A Learning procedures & B Next experiment & C CAD parts \\
+\midrule
+Teacher search (CPU-hours) & \syn[EZ-G18]{\EZteachA} & \syn[EZ-G18]{\EZteachB} & \syn[EZ-G18]{\EZteachC} \\
+Training share (GPU-hours) & \syn[EZ-G18]{\EZgpuA} & \syn[EZ-G18]{\EZgpuB} & \syn[EZ-G18]{\EZgpuC} \\
+Proposal latency, median (s) & \syn[EZ-G18]{\EZlatA} & \syn[EZ-G18]{\EZlatB} & \syn[EZ-G18]{\EZlatC} \\
+Search at $B_{\mathrm{eq}}$ per problem (CPU-hours) & \syn[EZ-G18]{\EZsearchPerA} & --- & \syn[EZ-G18]{\EZsearchPerC} \\
+\midrule
+Break-even, GPU rate $\times 0.5$ (problems) & \syn[EZ-G18]{\EZbreakAhalf} & --- & \syn[EZ-G18]{\EZbreakChalf} \\
+Break-even, declared rate & \syn[EZ-G18]{\EZbreakA} & --- & \syn[EZ-G18]{\EZbreakC} \\
+Break-even, GPU rate $\times 2$ & \syn[EZ-G18]{\EZbreakAdouble} & --- & \syn[EZ-G18]{\EZbreakCdouble} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Rebound} Cheaper proposals can raise total compute if they are used far more often, as
+cheaper coal raised coal consumption \citep{jevons1865}. Break-even counts are therefore statements
+about cost per problem at matched quality, not about total spending.

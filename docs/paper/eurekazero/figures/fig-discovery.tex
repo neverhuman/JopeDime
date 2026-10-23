@@ -1,0 +1,37 @@
+% Figure — the novelty ladder as a funnel (A and C) and the two dossier interventions.
+% Reads SYNTHETIC data (gaps EZ-G15, EZ-G16, EZ-G17).
+\begin{tikzpicture}
+\begin{groupplot}[ez,
+    group style={group size=2 by 1, horizontal sep=3.0cm},
+    height=5.2cm, axis lines*=left, clip=false,
+    legend style={font=\sffamily\fontsize{5.6pt}{6.4pt}\selectfont, draw=none, fill=white,
+      fill opacity=0.85, text opacity=1, cells={anchor=west}, row sep=-1.5pt}]
+  % ---------------- novelty funnel
+  \nextgroupplot[width=0.42\linewidth, title={From committed to replicated},
+      xbar, bar width=2.6pt, xmode=log, xmin=0.6, xmax=9000, ymin=0.4, ymax=8.6,
+      ytick={1,...,8}, yticklabels={N6 replicated, N5 mechanism supported, dossier opportunity,
+        N4 useful outside archive, N2 outside archive, N1 structurally new, valid, committed},
+      yticklabel style={font=\sffamily\scriptsize\color{ezink}},
+      xtick={1,10,100,1000}, xticklabels={1,10,100,1000}, xlabel={first proposals (log scale)},
+      legend pos=south east, nodes near coords, nodes near coords style={font=\sffamily\fontsize{5.2pt}{6pt}\selectfont, text=ezgrey},
+      point meta=x]
+    \addplot[fill=ezaccent!60, draw=ezaccent] table[col sep=comma, x=A, y expr=\thisrow{y}+0.15] {data/synthetic/funnel.csv};
+    \addlegendentry{A learning procedures}
+    \addplot[fill=ezwarm!60, draw=ezwarm] table[col sep=comma, x=C, y expr=\thisrow{y}-0.15] {data/synthetic/funnel.csv};
+    \addlegendentry{C CAD parts}
+  % ---------------- dossier interventions
+  \nextgroupplot[width=0.33\linewidth, title={Dossier interventions},
+      xmin=-0.12, xmax=0.01, ymin=0.5, ymax=4.5, ytick={1,2,3,4},
+      yticklabels={D-C1 nearest known, D-C1 remove feature, D-A1 nearest known, D-A1 remove component},
+      yticklabel style={font=\sffamily\scriptsize\color{ezink}},
+      xtick={-0.1,-0.05,0}, xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+      xlabel={utility change on 60 reserved problems},
+      error bars/error bar style={line width=0.5pt}, error bars/error mark options={rotate=90, mark size=1.4pt}]
+    \draw[ezgrey, line width=0.5pt, densely dashed] (axis cs:0,0.5) -- (axis cs:0,4.5);
+    \addplot[only marks, mark=*, mark size=1.6pt, ezaccent, ezwhere={case}{D-A1}, error bars/.cd, x dir=both, x explicit]
+      table[col sep=comma, x=delta, y=y, x error=err] {data/synthetic/dossier.csv};
+    \addplot[only marks, mark=triangle*, mark size=1.8pt, ezwarm, ezwhere={case}{D-C1}, error bars/.cd, x dir=both, x explicit]
+      table[col sep=comma, x=delta, y=y, x error=err] {data/synthetic/dossier.csv};
+\end{groupplot}
+\synfigtag
+\end{tikzpicture}

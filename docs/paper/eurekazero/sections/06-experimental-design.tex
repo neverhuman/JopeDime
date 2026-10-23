@@ -1,0 +1,141 @@
+% Section 6 — Experimental design
+\section{Experimental design}
+\label{sec:design}
+
+\subsection{Three games}
+
+The three games were chosen so that the move, the verifier and the output role all change
+(\cref{tab:domains}).
+
+\paragraph{A: learning procedures (C0, artifact)} The state is a training table---at most 4,096 rows
+and 256 features in the information-matched packet---with a declared objective and fit/predict
+budget. The move is a complete, standalone fit/predict procedure. The verifier fits it on the
+training rows and scores it on held-out rows over three split seeds and three folds. Objectives cover
+squared and absolute error, the 0.9 quantile and exposure-weighted Poisson deviance for regression,
+and log loss for binary and multiclass classification; regression with many objectives counts as
+breadth within one game, not as several games.
+
+\paragraph{B: next-experiment decisions (CH and SEQ, action)} The state is a search space and a
+history of evaluated points with outcomes, feasibility, cost and remaining horizon. In \textbf{B1}
+(CH) histories are built by a predeclared behaviour policy that is independent of every compared
+method, each method emits exactly one point, and the verifier evaluates it. In \textbf{B2} (SEQ)
+every method starts from the same initial observations and chooses its own 50 points. Families are
+held-out structural function classes from the COCO/BBOB suite \citep{hansen2021coco}, held-out real
+tuning tasks from HPO-B \citep{pineda2021hpob}, and reaction-condition tables from high-throughput
+experimentation \citep{ahneman2018cn,shields2021reaction}, whose discrete action sets we label as such.
+
+\paragraph{C: engineering specifications to CAD (C0, artifact)} The state is a structured
+specification of a single-piece bracket, mount or clamp: interfaces, keep-out regions, load cases,
+material and process. The move is an editable construction program in a bounded CAD language
+\citep{cadquery2024}, exported to STEP. The verifier builds the solid, checks geometry and
+specification compliance, meshes it \citep{geuzaine2009gmsh} and runs a converged linear-elastic
+finite-element analysis; a predeclared subset is re-evaluated by an independently configured solver,
+and a prospective subset is fabricated and load-tested. Public load cases from a jet-engine bracket
+dataset anchor the generated specifications to a known engineering problem \citep{whalen2021simjeb}.
+
+\begin{table}[t]
+\caption{Domains, output roles and sealed confirmation rosters. Roster sizes are synthetic targets
+(gap EZ-G20) to be fixed by development-only power analysis.}
+\label{tab:domains}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}LLLl@{}}
+\toprule
+Game & State & Move & Verifier & Sealed families \\
+\midrule
+A Learning procedures & training rows, objective, budget & fit/predict program & fit, held-out loss, $3\times3$ splits & \syn[EZ-G20]{\EZnA} \\
+B1 Next experiment & frozen history, bounds, horizon & one query & objective value & \syn[EZ-G20]{\EZnB} in \syn[EZ-G20]{\EZcompB} components \\
+B2 Closed loop & initial observations & 50 queries & final regret & same families \\
+C CAD part & interfaces, loads, material, process & construction program & build, checks, FEA, tests & \syn[EZ-G20]{\EZnC} (\syn[EZ-G20]{\EZspecC} proposals) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Splits and contamination}
+
+Splits are made by dependency component before rows, folds, transformations or parameter variants
+exist: original data source for learning tasks, generating mechanism or underlying real objective for
+optimization, and source design and topology lineage for CAD. Every family carries its exposure
+history, and families the JopeDime program has already used for training or development are never
+relabelled as confirmation (\cref{app:history}). The protocol has four levels (\cref{tab:splits}). The
+locked confirmation set, its dependency graph, the archive of complete training artifacts and every
+preprocessing rule are hashed and registered before any confirmation outcome is opened; a renamed file
+does not make a new family.
+
+\begin{table}[t]
+\caption{Split hierarchy.}
+\label{tab:splits}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}LL@{}}
+\toprule
+Level & Purpose & Permitted use \\
+\midrule
+Training & fit parameters; generate teacher experience & iteration allowed and logged \\
+Development & choose architecture, losses, checkpoints, comparator, utility scale & adaptive research, labelled development \\
+Locked confirmation & test predeclared claims once & no tuning, repair or selection from results \\
+Independent replication & reproduce central results with separate execution or implementation & state exactly what is shared \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Controls}
+
+Every way the result could be explained without learned proposal competence has its own control
+(\cref{tab:arms}). The primary comparator in each game is the strongest \emph{non-search} control on
+development data, named before confirmation; for learning procedures it is a gradient-boosted tree
+selector over the complete-program archive, the control that the program's own studies found hardest
+to beat \citep{jopedime2026h27}. Some baselines have a different output object---TabPFN predicts rather
+than writing a procedure \citep{hollmann2025tabpfn,qu2025tabicl}---and are reported as performance
+references, not forced into the primary.
+
+\begin{table}[t]
+\caption{Arms. All strict-track arms commit one candidate under the same resource card; A9 and A10
+spend declared search budgets.}
+\label{tab:arms}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.27\linewidth}lL@{}}
+\toprule
+Arm & Track & What it isolates \\
+\midrule
+A1 EurekaZero & C0/CH & the treatment \\
+A1n EurekaZero-Native & C0 & the contribution of third-party pretrained encoders (A only) \\
+A2 Catalog-bound decoder & C0/CH & selection within the complete-artifact archive (\cref{prop:closed}) \\
+A3 Retrieval & C0/CH & nearest training state's incumbent, with a fixed adaptation rule for CAD \\
+A4 Best single solution & U & one solution for every problem \\
+A5 Distilled bank + selector & C0/CH & a portfolio of EurekaZero's own past moves; composition versus portfolio \\
+A6 Shuffled state & C0/CH & does the proposer read the state? \\
+A7 Direct decoder & C0/CH & state to typed decoder without the solution embedding, matched capacity \\
+A8 Frontier, conditional & C0/CH & three frontier models, byte-identical packet, no tools, one attempt \\
+A9 Search at budget $k$ & S & the curve, $k\in\{1,2,\ldots,256\}$, with and without A1 as a seed \\
+A10 Domain standard tools & S & tuned libraries; Gaussian-process EI, TPE, SMAC, CMA-ES; topology optimization \\
+A11 Amortized literature models & C0/CH & TabPFN, TabICL; OptFormer, PFNs4BO, POM, ZeroShotOpt, RIBBO; text-to-CAD \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Estimands and statistics}
+
+For each game $d$ the primary estimand is the family-weighted paired difference in failure-inclusive
+utility against the locked comparator,
+\begin{equation}
+\Delta_d=\mathbb E_{F\sim p_d}\bigl[\,\overline U_F(\text{EurekaZero})-\overline U_F(\text{comparator})\,\bigr],
+\label{eq:delta}
+\end{equation}
+averaging folds, seeds and repeated contexts within the dependency unit first. Intervals are 95\%
+paired cluster bootstraps (BCa, 10,000 resamples, fixed seed) \citep{efron1987bca}; the three primary
+claims are Holm-adjusted at a familywise 5\% level \citep{holm1979}, and a benefit ``in all three
+games'' requires all three. The superiority margin is 0.02 utility units. B1 and B2 are different
+estimands and are never pooled. The descriptive \emph{search-equivalent budget}
+\begin{equation}
+B_{\mathrm{eq}}=\min\bigl\{B:\ \mu_{\mathrm{search}}(B)\ \ge\ \mu_{\mathrm{EurekaZero}}(1)\bigr\}
+\label{eq:beq}
+\end{equation}
+is estimated jointly on the measured grid; if no measured budget reaches the proposer we report a
+bound, never an extrapolation. Sample sizes come from development-only variance and failure prevalence
+(\cref{app:statistics}); a game that cannot reach adequate power is declared a pilot in advance.
+
+\subsection{Reproducibility and measurement}
+
+Every result row binds family, component, method, checkpoint, state hash, candidate hash, seeds,
+counters, raw metrics, failure class, cost and evaluator identity. Frontier-model usage is metered by
+the provider; wall time and summed CPU or GPU time are reported separately, and nested measurements are
+never added. \Cref{app:repro} states which of five reproduction tiers each result reaches.

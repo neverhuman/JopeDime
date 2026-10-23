@@ -1,0 +1,38 @@
+% Figure — first-proposal primary results: family-level paired differences per game.
+% Reads SYNTHETIC data (gaps EZ-G01, EZ-G03, EZ-G05).
+\pgfplotstableread[col sep=comma]{data/synthetic/primary.csv}\ezprimary
+\pgfplotstablegetelem{0}{delta}\of\ezprimary\edef\ezdA{\pgfplotsretval}
+\pgfplotstablegetelem{0}{lo}\of\ezprimary\edef\ezloA{\pgfplotsretval}
+\pgfplotstablegetelem{0}{hi}\of\ezprimary\edef\ezhiA{\pgfplotsretval}
+\pgfplotstablegetelem{1}{delta}\of\ezprimary\edef\ezdB{\pgfplotsretval}
+\pgfplotstablegetelem{1}{lo}\of\ezprimary\edef\ezloB{\pgfplotsretval}
+\pgfplotstablegetelem{1}{hi}\of\ezprimary\edef\ezhiB{\pgfplotsretval}
+\pgfplotstablegetelem{2}{delta}\of\ezprimary\edef\ezdC{\pgfplotsretval}
+\pgfplotstablegetelem{2}{lo}\of\ezprimary\edef\ezloC{\pgfplotsretval}
+\pgfplotstablegetelem{2}{hi}\of\ezprimary\edef\ezhiC{\pgfplotsretval}
+\begin{tikzpicture}
+\begin{groupplot}[ez,
+    group style={group size=3 by 1, horizontal sep=0.45cm, y descriptions at=edge left},
+    width=0.385\linewidth, height=4.6cm, ymin=0, ymax=62,
+    xlabel={paired utility difference}, ylabel={families},
+    xtick={-0.4,0,0.4}, ytick={0,20,40,60}, xticklabel style={/pgf/number format/fixed},
+    xmin=-0.62, xmax=0.68, axis lines*=left, clip=false,
+    ezhist/.style={hist={bins=26, data min=-0.62, data max=0.68}, fill=ezaccent!32, draw=ezaccent!75, line width=0.3pt}]
+  \nextgroupplot[title={A \textperiodcentered{} learning procedures}]
+    \fill[ezwarm, opacity=0.16] (axis cs:\ezloA,0) rectangle (axis cs:\ezhiA,62);
+    \addplot[ezhist] table[col sep=comma, y=delta] {data/synthetic/family-A.csv};
+    \draw[ezgrey, line width=0.5pt, densely dashed] (axis cs:0,0) -- (axis cs:0,62);
+    \draw[ezwarm, line width=1.1pt] (axis cs:\ezdA,0) -- (axis cs:\ezdA,62);
+  \nextgroupplot[title={B1 \textperiodcentered{} next experiment}]
+    \fill[ezwarm, opacity=0.16] (axis cs:\ezloB,0) rectangle (axis cs:\ezhiB,62);
+    \addplot[ezhist] table[col sep=comma, y=delta] {data/synthetic/family-B.csv};
+    \draw[ezgrey, line width=0.5pt, densely dashed] (axis cs:0,0) -- (axis cs:0,62);
+    \draw[ezwarm, line width=1.1pt] (axis cs:\ezdB,0) -- (axis cs:\ezdB,62);
+  \nextgroupplot[title={C \textperiodcentered{} CAD parts}]
+    \fill[ezwarm, opacity=0.16] (axis cs:\ezloC,0) rectangle (axis cs:\ezhiC,62);
+    \addplot[ezhist] table[col sep=comma, y=delta] {data/synthetic/family-C.csv};
+    \draw[ezgrey, line width=0.5pt, densely dashed] (axis cs:0,0) -- (axis cs:0,62);
+    \draw[ezwarm, line width=1.1pt] (axis cs:\ezdC,0) -- (axis cs:\ezdC,62);
+\end{groupplot}
+\synfigtag
+\end{tikzpicture}

@@ -1,0 +1,141 @@
+% Section 7 — First-proposal performance across games (SYNTHETIC results)
+\section{First-proposal performance}
+\label{sec:results}
+
+\Cref{tab:main,fig:primary} give the primary result in each game \synbadge. Every number in this section
+is synthetic and illustrates the evidence the confirmation runs must produce.
+
+\begin{table}[t]
+\caption{Primary results on sealed families: failure-inclusive utility of one committed proposal
+against the locked strongest non-search control, with 95\% paired family-bootstrap intervals, and the
+search budget whose quality one proposal matches. All values synthetic (gaps EZ-G01 to EZ-G06).}
+\label{tab:main}
+\centering\tablesf\setlength\tabcolsep{4.6pt}
+\begin{tabular}{@{}llrrrcrr@{}}
+\toprule
+ & & \multicolumn{2}{c}{Utility} & & & & \\
+\cmidrule(lr){3-4}
+Game (track) & Locked comparator & EZ & Comp. & $\Delta$ & 95\% interval & Failed & $B_{\mathrm{eq}}$ \\
+\midrule
+A Learning procedures (C0) & tree selector & \syn[EZ-G01]{\EZuA} & \syn[EZ-G01]{\EZcA} & \syn[EZ-G01]{\EZdA} & \syn[EZ-G01]{[\EZdAlo, \EZdAhi]} & \syn[EZ-G01]{\EZfailA\%} & \syn[EZ-G02]{\EZbeqA} \\
+B1 Next experiment (CH) & Gaussian-process EI & \syn[EZ-G03]{\EZuB} & \syn[EZ-G03]{\EZcB} & \syn[EZ-G03]{\EZdB} & \syn[EZ-G03]{[\EZdBlo, \EZdBhi]} & \syn[EZ-G03]{\EZfailB\%} & --- \\
+C CAD parts (C0) & retrieval + adaptation & \syn[EZ-G05]{\EZuC} & \syn[EZ-G05]{\EZcC} & \syn[EZ-G05]{\EZdC} & \syn[EZ-G05]{[\EZdClo, \EZdChi]} & \syn[EZ-G05]{\EZfailC\%} & \syn[EZ-G06]{\EZbeqC} \\
+\bottomrule
+\end{tabular}
+\eztablenote{The tree selector chooses among complete archived procedures;
+Gaussian-process EI sees the same frozen history; retrieval adapts the nearest training part by a
+fixed rule. $B_{\mathrm{eq}}$ counts evaluated candidates (A) or simulations (C); B1 is a single
+decision and has no search-equivalent budget.}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-primary}
+\caption{Family-level paired differences between one EurekaZero proposal and the locked comparator.
+The orange line is the family-weighted mean and the shaded band its 95\% interval; the dashed line
+marks no difference. Failed first proposals score $-1$, are collected in the leftmost bin and stay in
+every mean. Synthetic (gaps EZ-G01, EZ-G03, EZ-G05).}
+\label{fig:primary}
+\end{figure}
+
+\subsection{Learning procedures}
+
+On \syn[EZ-G20]{\EZnA} sealed families, one committed procedure improves failure-inclusive utility over
+the tree selector by \syn[EZ-G01]{\EZdA} [\syn[EZ-G01]{\EZdAlo}, \syn[EZ-G01]{\EZdAhi}], with
+\syn[EZ-G01]{\EZfailA\%} of first proposals failing. The gain is not uniform (\cref{fig:primary}):
+it is concentrated in small and wide tables, where the archive's best procedure for the nearest
+family transfers poorly, and it vanishes on large, low-noise regression tasks, where every strong
+method converges (\cref{sec:heterogeneity}). Against TabPFN, whose output is a prediction rather than
+a procedure, EurekaZero's held-out error ratio is \syn[EZ-G08]{\EZtabpfnRatio} [\syn[EZ-G08]{\EZtabpfnLo},
+\syn[EZ-G08]{\EZtabpfnHi}]: comparable accuracy from a standalone program that fits in a median of
+\syn[EZ-G08]{\EZfitMedian} seconds and runs without the model that wrote it.
+
+\subsection{Next-experiment decisions}
+
+Given identical frozen histories (B1), one EurekaZero query improves on the next point chosen by
+Gaussian-process expected improvement \citep{snoek2012bo,balandat2020botorch} by \syn[EZ-G03]{\EZdB}
+[\syn[EZ-G03]{\EZdBlo}, \syn[EZ-G03]{\EZdBhi}], and \syn[EZ-G03]{\EZvalidB\%} of its queries are valid.
+Closed loop (B2, \cref{fig:curves}), EurekaZero reaches the target regret of 0.15 in
+\syn[EZ-G04]{\EZreachEZ} evaluations, against \syn[EZ-G04]{\EZreachZS} for a ZeroShotOpt-class pretrained
+optimizer \citep{meindl2025zeroshotopt}, \syn[EZ-G04]{\EZreachOF} for an OptFormer-class model
+\citep{chen2022optformer} and \syn[EZ-G04]{\EZreachGPEI} for Gaussian-process EI; after 20 evaluations
+its regret equals what Gaussian-process EI reaches after \syn[EZ-G04]{\EZkeqBtwenty}, a factor of
+\syn[EZ-G04]{\EZsaveB} in experiments. The closed-loop result is a statement about sequential
+optimization at a fixed budget, not about solving an objective in one call.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-curves}
+\caption{What one proposal is worth. Left and right: mean utility of search at budget $k$ (grey,
+95\% band) against one EurekaZero proposal (orange band); the arrow marks the search-equivalent budget
+$B_{\mathrm{eq}}$, the smallest measured budget at which search matches the first proposal. Centre:
+median normalized regret over 50 closed-loop evaluations from identical initial observations; the
+dashed line is the target regret. Synthetic (gaps EZ-G02, EZ-G04, EZ-G06, EZ-G07).}
+\label{fig:curves}
+\end{figure}
+
+\subsection{Engineering parts}
+
+\syn[EZ-G05]{\EZbuildC\%} of committed construction programs build valid solids,
+\syn[EZ-G05]{\EZcomplyC\%} satisfy every interface, envelope and process rule, and
+\syn[EZ-G05]{\EZfeasC\%} also meet the stiffness and stress limits under converged analysis. Over
+\syn[EZ-G20]{\EZnC} sealed specification families, utility improves on retrieval with a fixed adaptation
+rule by \syn[EZ-G05]{\EZdC} [\syn[EZ-G05]{\EZdClo}, \syn[EZ-G05]{\EZdChi}]; feasible parts weigh
+\syn[EZ-G19]{\EZmassC} [\syn[EZ-G19]{\EZmassClo}, \syn[EZ-G19]{\EZmassChi}] of the tuned template at
+equal compliance (\cref{fig:cad}), and one proposal matches topology optimization after
+\syn[EZ-G06]{\EZbeqC} simulations with a declared CAD conversion. Of
+\syn[EZ-G17]{\EZphysN} prospectively selected parts that were fabricated and load-tested by a laboratory
+not involved in their design, all met the load requirement, and measured stiffness differed from the
+prediction by \syn[EZ-G17]{\EZphysErr\%} on average.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-cad}
+\caption{CAD parts. Left: mass against compliance, both relative, for one committed proposal per
+specification; lower and to the left is better, and points right of the dashed line violate the
+stiffness limit. Right: schematic of a committed bracket with an offset web and gusset, the structural
+motif examined in dossier D-C1 (\cref{sec:discoveries}). Synthetic (gaps EZ-G17, EZ-G19).}
+\label{fig:cad}
+\end{figure}
+
+\subsection{Against frontier models at one attempt}
+
+Frontier language models write strong programs from descriptions: in the program's own pilot, a
+general regressor written by one without seeing any data ranked first of eighteen methods \pre{}
+(\cref{app:history}). Given the byte-identical information packet, no tools and one attempt, the best of
+three frontier models trails EurekaZero by \syn[EZ-G07]{\EZfrA}, \syn[EZ-G07]{\EZfrB} and
+\syn[EZ-G07]{\EZfrC} utility in the three games (\cref{tab:frontier}). The gap is largest for CAD,
+where only \syn[EZ-G07]{\EZfrValidC\%} of frontier construction programs built valid solids at the
+first attempt; text-to-CAD systems usually repair failures with retries \citep{wang2026text2cadbench},
+which the Zero contract forbids and which we report separately as search.
+
+\begin{table}[t]
+\caption{One attempt with matched information: EurekaZero against three frontier models. Synthetic
+(gap EZ-G07).}
+\label{tab:frontier}
+\centering\tablesf
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+ & \multicolumn{4}{c}{Utility of the first proposal} & \multicolumn{2}{c}{Valid first proposals (\%)} \\
+\cmidrule(lr){2-5}\cmidrule(l){6-7}
+Game & EurekaZero & Frontier 1 & Frontier 2 & Frontier 3 & EurekaZero & Best frontier \\
+\midrule
+A Learning procedures & \syn[EZ-G07]{\EZuA} & \syn[EZ-G07]{\EZfrOneA} & \syn[EZ-G07]{\EZfrTwoA} & \syn[EZ-G07]{\EZfrThreeA} & \syn[EZ-G07]{\EZvalidA} & \syn[EZ-G07]{\EZfrValidA} \\
+B1 Next experiment & \syn[EZ-G07]{\EZuB} & \syn[EZ-G07]{\EZfrOneB} & \syn[EZ-G07]{\EZfrTwoB} & \syn[EZ-G07]{\EZfrThreeB} & \syn[EZ-G07]{\EZvalidB} & \syn[EZ-G07]{\EZfrValidB} \\
+C CAD parts & \syn[EZ-G07]{\EZuC} & \syn[EZ-G07]{\EZfrOneC} & \syn[EZ-G07]{\EZfrTwoC} & \syn[EZ-G07]{\EZfrThreeC} & \syn[EZ-G07]{\EZbuildC} & \syn[EZ-G07]{\EZfrValidC} \\
+\bottomrule
+\end{tabular}
+\eztablenote{Frontier models are ranked by mean utility within each game;
+model identities, versions and access dates are recorded with the confirmation roster.}
+\end{table}
+
+\subsection{Where the gains disappear}
+\label{sec:heterogeneity}
+
+The predeclared subgroup analyses locate the limits of the first proposal. In learning procedures the
+benefit shrinks with the number of training rows and is indistinguishable from zero above 50,000
+rows \synbadge. In next-experiment decisions it disappears above 20 dimensions, where every method's
+first query is close to uninformed \synbadge. In CAD it falls for specifications with more than three
+load cases or with contact, which the bounded language represents poorly, and failures concentrate
+there \synbadge. These are the regimes where search keeps its advantage and where a first proposal is
+best used as a seed (\cref{sec:compute}).

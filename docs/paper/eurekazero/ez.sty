@@ -1,0 +1,301 @@
+% ez.sty — typography and layout for the EurekaZero north-star paper (adapted from iz.sty).
+% XeLaTeX only. Fonts are fetched and hash-checked by build.sh (see fonts.lock).
+%   Text: Libertinus Serif   Math: Libertinus Math   Display/sans: Inter   Code: JetBrains Mono
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ez}[2026/10/23 EurekaZero paper style]
+
+% ---------------------------------------------------------------- page geometry
+\RequirePackage[letterpaper,
+  textwidth=6.05in, textheight=8.95in,
+  top=1.0in, headsep=0.32in, footskip=0.42in,
+  hmarginratio=1:1]{geometry}
+
+% ---------------------------------------------------------------- fonts
+\RequirePackage{amsmath,mathtools}
+\RequirePackage{fontspec}
+\RequirePackage[math-style=TeX,bold-style=TeX]{unicode-math}
+\providecommand\EZFontDir{./fonts/}
+\setmainfont{LibertinusSerif}[
+  Path=\EZFontDir, Extension=.otf,
+  UprightFont=*-Regular, ItalicFont=*-Italic,
+  BoldFont=*-Semibold, BoldItalicFont=*-SemiboldItalic,
+  Numbers={Proportional,OldStyle}, Ligatures=TeX]
+\setsansfont{Inter}[
+  Path=\EZFontDir, Extension=.otf,
+  UprightFont=*-Regular, ItalicFont=*-Italic,
+  BoldFont=*-SemiBold, BoldItalicFont=*-SemiBoldItalic,
+  FontFace={m}{n}{*-Regular}, FontFace={sb}{n}{*-SemiBold},
+  FontFace={mb}{n}{*-Medium},
+  Scale=MatchLowercase, Numbers=Lining]
+\setmonofont{JetBrainsMono}[
+  Path=\EZFontDir, Extension=.ttf,
+  UprightFont=*-Regular, BoldFont=*-Bold,
+  ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic, FontFace={sb}{n}{*-Medium},
+  Scale=0.84, Contextuals=Alternate]
+\setmathfont{LibertinusMath-Regular.otf}[Path=\EZFontDir]
+\newfontfamily\EZdisplay{LibertinusSerifDisplay}[Path=\EZFontDir, Extension=.otf, UprightFont=*-Regular]
+\newcommand\lining{\addfontfeatures{Numbers={Lining,Monospaced}}}
+\newcommand\sbseries{\fontseries{sb}\selectfont}
+\newcommand\mdseries@inter{\fontseries{mb}\selectfont}
+\linespread{1.075}
+\RequirePackage[protrusion=true, final]{microtype}
+
+\frenchspacing
+\setlength\emergencystretch{1.6em}
+
+% ---------------------------------------------------------------- colour
+\RequirePackage[dvipsnames]{xcolor}
+\definecolor{ezink}{HTML}{1B1F27}      % text
+\definecolor{ezaccent}{HTML}{1F5AA6}   % deep blue
+\definecolor{ezaccentsoft}{HTML}{E8EFF8}
+\definecolor{ezwarm}{HTML}{B4501E}     % burnt orange, second series
+\definecolor{ezgreen}{HTML}{2E7D4F}
+\definecolor{ezamber}{HTML}{A86A00}
+\definecolor{ezgrey}{HTML}{6B7280}
+\definecolor{ezrule}{HTML}{C9CED6}
+\definecolor{ezpaper}{HTML}{F6F7F9}
+\color{ezink}
+
+% ---------------------------------------------------------------- maths and units
+\RequirePackage{siunitx}
+\sisetup{group-minimum-digits=4, group-separator={,}, detect-all=false,
+  text-family-to-math=false}
+
+% ---------------------------------------------------------------- headings
+\RequirePackage[explicit]{titlesec}
+\titleformat{\section}
+  {\sffamily\sbseries\Large\color{ezink}}
+  {\llap{\color{ezaccent}\thesection\hspace{0.7em}}}{0pt}{#1}
+\titleformat{\subsection}
+  {\sffamily\sbseries\large\color{ezink}}
+  {\llap{\color{ezaccent}\thesubsection\hspace{0.6em}}}{0pt}{#1}
+\titleformat{\subsubsection}[runin]
+  {\sffamily\sbseries\normalsize\color{ezink}}
+  {}{0pt}{#1.}
+\titleformat{\paragraph}[runin]
+  {\normalfont\itshape}{}{0pt}{#1.}
+\titlespacing*{\section}{0pt}{2.1ex plus .6ex minus .2ex}{1.0ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.7ex plus .5ex minus .2ex}{0.7ex plus .1ex}
+\titlespacing*{\subsubsection}{0pt}{1.1ex plus .3ex minus .2ex}{0.6em}
+\titlespacing*{\paragraph}{0pt}{0.8ex plus .2ex}{0.5em}
+
+% ---------------------------------------------------------------- running heads
+\RequirePackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand\headrulewidth{0pt}
+\fancyhead[L]{\sffamily\footnotesize\color{ezgrey}\EZShortTitle}
+\fancyhead[R]{\sffamily\footnotesize\color{ezgrey}\nouppercase{\leftmark}}
+\fancyfoot[C]{\sffamily\footnotesize\color{ezgrey}\thepage}
+\renewcommand\sectionmark[1]{\markboth{\thesection\enspace #1}{}}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\sffamily\footnotesize\color{ezgrey}\thepage}}
+\providecommand\EZShortTitle{EurekaZero}
+
+% ---------------------------------------------------------------- lists, captions, floats
+\RequirePackage{enumitem}
+\setlist{itemsep=0.25ex, topsep=0.6ex, parsep=0.2ex, leftmargin=1.4em}
+\setlist[enumerate]{label=\textsf{\small\arabic*}., leftmargin=1.6em}
+\RequirePackage{caption}
+\DeclareCaptionFont{ezlabel}{\sffamily\sbseries\color{ezaccent}}
+\captionsetup{font={small,sf}, labelfont=ezlabel, labelsep=period,
+  justification=justified, singlelinecheck=false, skip=6pt, width=\linewidth}
+\captionsetup[table]{position=top, skip=4pt}
+\RequirePackage{subcaption}
+\RequirePackage{booktabs, tabularx, multirow, array, colortbl}
+\setlength\heavyrulewidth{0.09em}
+\setlength\lightrulewidth{0.05em}
+\setlength\cmidrulewidth{0.04em}
+\renewcommand\arraystretch{1.12}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\newcommand\tablesf{\sffamily\small\lining}
+\newcommand\eztablenote[1]{\par\smallskip{\raggedright\footnotesize\color{ezgrey}#1\par}}
+\RequirePackage{float}
+\setlength\textfloatsep{14pt plus 4pt minus 4pt}
+\setlength\floatsep{12pt plus 4pt minus 4pt}
+\setlength\intextsep{12pt plus 4pt minus 4pt}
+
+% ---------------------------------------------------------------- graphics
+\RequirePackage{graphicx}
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds,shapes.geometric,shapes.misc,decorations.pathreplacing,patterns,shadows}
+\RequirePackage{pgfplots}
+\RequirePackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots,fillbetween}
+\pgfplotsset{
+  ez/.style={
+    width=\linewidth, height=0.42\linewidth,
+    axis line style={ezrule}, tick style={ezrule},
+    every tick label/.append style={font=\sffamily\scriptsize\color{ezgrey}},
+    label style={font=\sffamily\footnotesize},
+    title style={font=\sffamily\sbseries\small},
+    legend style={font=\sffamily\scriptsize, draw=none, fill=none},
+    grid style={ezrule!60, line width=0.3pt},
+    major grid style={ezrule!60},
+  }}
+\tikzset{
+  ezbox/.style={draw=ezrule, fill=white, rounded corners=2.5pt, line width=0.6pt,
+    font=\sffamily\small, align=center, inner sep=5pt},
+  ezstage/.style={ezbox, fill=ezaccentsoft, draw=ezaccent!55},
+  ezhidden/.style={ezbox, fill=ezink, text=white, draw=ezink},
+  ezarrow/.style={-{Stealth[length=2.6mm,width=1.8mm]}, line width=0.7pt, color=ezgrey},
+  eznote/.style={font=\sffamily\scriptsize\color{ezgrey}, align=center},
+}
+
+% ---------------------------------------------------------------- boxes: definitions, claims
+\RequirePackage[most]{tcolorbox}
+\newtcolorbox{ezdef}[1]{enhanced, breakable, colback=ezpaper, colframe=ezpaper,
+  borderline west={2.2pt}{0pt}{ezaccent}, arc=0pt, outer arc=0pt,
+  left=10pt, right=8pt, top=6pt, bottom=6pt, before skip=10pt, after skip=10pt,
+  fontupper=\normalsize,
+  title={\sffamily\sbseries\small\color{ezaccent}#1}, coltitle=ezaccent,
+  attach title to upper={\par\smallskip}}
+\newtcolorbox{ezquestion}{enhanced, colback=white, colframe=ezaccent, boxrule=0.7pt,
+  arc=2pt, left=12pt, right=12pt, top=9pt, bottom=9pt, before skip=12pt, after skip=12pt,
+  fontupper=\large\itshape}
+\newtcolorbox{ezabstract}{enhanced, colback=ezpaper, colframe=ezpaper, arc=0pt, fontupper=\small,
+  left=14pt, right=14pt, top=10pt, bottom=10pt, before skip=6pt, after skip=10pt}
+
+% Evidence badges: every empirical sentence that is not textbook fact carries one.
+\DeclareRobustCommand\ezbadge[2]{\kern1pt\raisebox{0.12ex}{\tikz[baseline]\node[anchor=base,
+  font=\sffamily\sbseries\fontsize{6pt}{6pt}\selectfont\color{white}, fill=#1,
+  rounded corners=1.4pt, inner xsep=2.1pt, inner ysep=1.4pt]{#2};}\kern1pt}
+\DeclareRobustCommand\est{\ezbadge{ezgreen}{EST}}
+\DeclareRobustCommand\pre{\ezbadge{ezamber}{PRE}}
+\DeclareRobustCommand\pend{\ezbadge{ezgrey}{PEND}}
+
+% ---------------------------------------------------------------- code listings
+\RequirePackage{fvextra}
+\RequirePackage{listings}
+\lstdefinelanguage{Rust}{
+  morekeywords={as,break,const,continue,crate,else,enum,extern,false,fn,for,if,impl,in,let,
+    loop,match,mod,move,mut,pub,ref,return,self,Self,static,struct,super,trait,true,type,
+    unsafe,use,where,while,dyn},
+  morekeywords=[2]{f64,f32,u8,u16,u32,u64,usize,i32,i64,isize,bool,char,str,String,Vec,Option,
+    Result,Box,Some,None,Ok,Err},
+  sensitive=true,
+  morecomment=[l]{//}, morecomment=[s]{/*}{*/},
+  morestring=[b]", }
+\lstset{
+  basicstyle=\ttfamily\fontsize{7.2pt}{8.6pt}\selectfont\color{ezink},
+  keywordstyle=\color{ezaccent}\bfseries,
+  keywordstyle=[2]\color{ezwarm},
+  commentstyle=\color{ezgrey}\itshape,
+  stringstyle=\color{ezgreen},
+  numbers=left, numberstyle=\ttfamily\fontsize{5.6pt}{6pt}\selectfont\color{ezrule},
+  numbersep=7pt, stepnumber=1,
+  breaklines=true, breakatwhitespace=false, postbreak=\mbox{\textcolor{ezrule}{$\hookrightarrow$}\space},
+  columns=fullflexible, keepspaces=true, showstringspaces=false, tabsize=4,
+  frame=none, xleftmargin=16pt, aboveskip=4pt, belowskip=4pt,
+  upquote=true, extendedchars=true, inputencoding=utf8,
+  literate={–}{{\textendash}}1 {—}{{\textemdash}}1 {’}{{\textquoteright}}1 {‘}{{\textquoteleft}}1 {“}{{\textquotedblleft}}1 {”}{{\textquotedblright}}1
+           {≤}{{$\le$}}1 {≥}{{$\ge$}}1 {×}{{$\times$}}1 {·}{{$\cdot$}}1 {→}{{$\to$}}1
+           {−}{{-}}1 {∈}{{$\in$}}1 {≈}{{$\approx$}}1 {…}{{...}}1 {²}{{$^2$}}1 {√}{{$\surd$}}1
+           {\\(}{{\\(}}2 {\\)}{{\\)}}2 {∑}{{$\sum$}}1 {∫}{{$\int$}}1 {π}{{$\pi$}}1 {ε}{{$\varepsilon$}}1
+           {λ}{{$\lambda$}}1 {μ}{{$\mu$}}1 {σ}{{$\sigma$}}1 {α}{{$\alpha$}}1 {β}{{$\beta$}}1
+           {≠}{{$\ne$}}1 {∞}{{$\infty$}}1 {⌊}{{$\lfloor$}}1 {⌋}{{$\rfloor$}}1 {±}{{$\pm$}}1
+           {é}{{\'e}}1 {°}{{$^\circ$}}1 {∣}{{$\mid$}}1 {⇒}{{$\Rightarrow$}}1 {←}{{$\leftarrow$}}1}
+\lstdefinestyle{prompt}{language={}, numbers=none, xleftmargin=0pt,
+  basicstyle=\ttfamily\fontsize{6.9pt}{8.3pt}\selectfont\color{ezink},
+  keywordstyle={}, commentstyle={}, stringstyle={}}
+
+% ---------------------------------------------------------------- references and links
+\RequirePackage[numbers,sort&compress]{natbib}
+\setlength\bibsep{2.2pt plus 1pt}
+\renewcommand\bibfont{\small}
+\RequirePackage[hyphens]{url}
+\RequirePackage{xr-hyper}
+\RequirePackage[pdfusetitle, colorlinks=true, linkcolor=ezaccent, citecolor=ezaccent,
+  urlcolor=ezaccent, bookmarksnumbered=true, bookmarksopen=true, pdfdisplaydoctitle=true,
+  pdfstartview=FitH]{hyperref}
+\RequirePackage[capitalise, noabbrev, nameinlink]{cleveref}
+\crefname{ezdefinition}{Definition}{Definitions}
+
+% ---------------------------------------------------------------- numbered definitions
+\newcounter{ezdefinition}
+\newenvironment{definition}[1]{\refstepcounter{ezdefinition}%
+  \begin{ezdef}{Definition~\theezdefinition\quad\normalfont\sffamily\color{ezink}#1}}{\end{ezdef}}
+
+\newcounter{ezproposition}
+\newenvironment{proposition}[1]{\refstepcounter{ezproposition}%
+  \begin{ezdef}{Proposition~\theezproposition\quad\normalfont\sffamily\color{ezink}#1}}{\end{ezdef}}
+\crefname{ezproposition}{Proposition}{Propositions}
+
+% ---------------------------------------------------------------- small helpers
+\newcommand\EZ{EurekaZero}
+\newcommand\IZ{InnovationZero}
+\ExplSyntaxOn
+\tl_new:N \l__ez_code_tl
+\NewDocumentCommand\code{m}{\texttt{
+  \tl_set:Nn \l__ez_code_tl {#1}
+  \regex_replace_all:nnN { / } { /\c{allowbreak} } \l__ez_code_tl
+  \regex_replace_all:nnN { \c{_} } { \c{_}\c{allowbreak} } \l__ez_code_tl
+  \regex_replace_all:nnN { \- } { \-\c{allowbreak} } \l__ez_code_tl
+  \regex_replace_all:nnN { \. } { \.\c{allowbreak} } \l__ez_code_tl
+  \tl_use:N \l__ez_code_tl}}
+\ExplSyntaxOff
+\newcommand\kz{\ensuremath{k}}
+\newcommand\TY{\mathrm{TY}}
+\newcommand\eg{e.g.,\ }
+\newcommand\ie{i.e.,\ }
+\newcommand\marginnote[1]{}
+\newcommand\sidenote[1]{\footnote{#1}}
+\renewcommand\footnoterule{\kern-3pt{\color{ezrule}\hrule width 1.4in height 0.4pt}\kern 2.6pt}
+\setlength\footnotesep{8pt}
+
+% ---------------------------------------------------------------- title block
+\newcommand\EZTitle{}\newcommand\EZSubtitle{}\newcommand\EZAuthors{}\newcommand\EZDate{}\newcommand\EZStatus{}
+\newcommand\ezmaketitle{%
+  \thispagestyle{plain}%
+  \begingroup
+  \vspace*{-0.35in}%
+  {\sffamily\footnotesize\color{\ifEZsynthetic ezsyn\else ezaccent\fi}\sbseries\EZStatus\par}\vspace{10pt}%
+  {\raggedright\EZdisplay\fontsize{28pt}{32pt}\selectfont\color{ezink}\EZTitle\par}\vspace{9pt}%
+  {\raggedright\sffamily\large\color{ezgrey}\EZSubtitle\par}\vspace{12pt}%
+  {\sffamily\normalsize\color{ezink}\EZAuthors\par}\vspace{3pt}%
+  {\sffamily\footnotesize\color{ezgrey}\EZDate\par}\vspace{10pt}%
+  \noindent{\color{ezrule}\rule{\linewidth}{0.5pt}}\par\vspace{6pt}%
+  \endgroup}
+
+% ================================================================ north-star (synthetic) machinery
+% The north-star draft shows the intended finished paper with SYNTHETIC, illustrative results.
+% Four mechanisms keep every synthetic element visible and traceable, and scripts/check.sh
+% enforces them:
+%   \syn[EZ-Gnn]{value}  a synthetic number: purple, hyperlinked to its row in the gap ledger
+%                        (Appendix K), whose work package must replace it with a sealed result;
+%   \synbadge            a SYN badge beside synthetic prose claims, like EST/PRE/PEND;
+%   \synfigtag           a SYNTHETIC tag drawn inside every figure that plots synthetic data;
+%   watermark            every page carries a diagonal NORTH-STAR DRAFT mark and a footer line.
+% \EZsyntheticfalse removes none of them silently: check.sh --submission refuses any remaining
+% \syn, \synbadge or \synfigtag, any input of data/synthetic or generated/numbers.tex.
+\newif\ifEZsynthetic \EZsynthetictrue
+\definecolor{ezsyn}{HTML}{7A2CB8}      % synthetic-result purple
+\definecolor{ezsynsoft}{HTML}{F3ECFA}
+\NewDocumentCommand\syn{o m}{%
+  \IfNoValueTF{#1}{\PackageError{ez}{\string\syn\space needs a gap id, e.g. \string\syn[EZ-G01]{...}}{}}{%
+    \hyperlink{gap.#1}{\textcolor{ezsyn}{#2}}}}
+\DeclareRobustCommand\synbadge{\ezbadge{ezsyn}{SYN}}
+\newcommand\synfigtag[1][SYNTHETIC \textperiodcentered{} ILLUSTRATIVE]{%
+  \node[anchor=south east, inner xsep=3pt, inner ysep=1.8pt, rounded corners=1.4pt, fill=ezsyn,
+    text=white, font=\sffamily\sbseries\fontsize{5.6pt}{6pt}\selectfont]
+    at ([yshift=2pt]current bounding box.north east) {#1};}
+\newtcolorbox{ezsynnote}{enhanced, breakable, colback=ezsynsoft, colframe=ezsyn, boxrule=0.6pt,
+  arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt, before skip=8pt, after skip=10pt,
+  fontupper=\small}
+\pgfplotsset{table/comment chars={\#}}
+% Plot only the rows of a table whose column #1 equals #2 (string comparison).
+\pgfplotsset{ezwhere/.style 2 args={x filter/.append code={%
+  \edef\ezcell{\thisrow{#1}}\edef\ezwant{#2}\ifx\ezcell\ezwant\else\def\pgfmathresult{nan}\fi}}}
+\RequirePackage{eso-pic}
+\AddToShipoutPictureBG{\ifEZsynthetic
+  \AtPageCenter{\makebox(0,0){\rotatebox{52}{\sffamily\sbseries\fontsize{58pt}{58pt}\selectfont
+    \color{ezsyn!7}NORTH-STAR DRAFT}}}%
+  \AtPageLowerLeft{\raisebox{0.32in}{\makebox[\paperwidth]{\sffamily\fontsize{6.4pt}{7pt}\selectfont
+    \color{ezsyn}North-star draft \textperiodcentered{} results in purple are SYNTHETIC and illustrative
+    \textperiodcentered{} not for submission \textperiodcentered{} gap ledger: Appendix K}}}\fi}
+
+% A protected component is shown, never opened: dark box, contract on the outside.
+\tikzset{ezprotected/.style={ezhidden}}
+
+\endinput

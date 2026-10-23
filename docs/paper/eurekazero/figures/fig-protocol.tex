@@ -1,0 +1,49 @@
+% Figure — the information and commitment boundary, with the four tracks. Conceptual; no data.
+\begin{tikzpicture}[x=1cm, y=1cm,
+  st/.style={ezbox, font=\sffamily\scriptsize, text width=1.75cm, minimum height=0.85cm, inner sep=2.5pt},
+  sg/.style={ezstage, font=\sffamily\scriptsize, text width=1.75cm, minimum height=0.85cm, inner sep=2.5pt},
+  lane/.style={font=\sffamily\sbseries\scriptsize, text=ezaccent, anchor=west},
+  note/.style={font=\sffamily\scriptsize, text=ezgrey, anchor=south west, inner sep=1.5pt},
+  dot/.style={circle, fill=ezink, inner sep=0pt, minimum size=4pt},
+  run/.style={ezink, line width=0.7pt, -{Stealth[length=2mm]}}]
+  % backdrops
+  \fill[ezaccentsoft, rounded corners=3pt] (-0.15,0.85) rectangle (7.05,-4.35);
+  \fill[ezpaper, rounded corners=3pt] (7.35,0.85) rectangle (14.95,-4.35);
+  \node[font=\sffamily\sbseries\scriptsize, text=ezaccent, anchor=north west] at (-0.05,0.8) {known to the player};
+  \node[font=\sffamily\sbseries\scriptsize, text=ezgrey, anchor=north east] at (14.85,0.8) {verification only};
+  % generic pipeline
+  \node[st] (s) at (0.95,-0.4) {state $s$\\spec, data, history};
+  \node[sg] (e) at (3.05,-0.4) {encode\\$z=E_{\phi,d}(s)$};
+  \node[sg] (p) at (5.25,-0.4) {propose\\$h\to a$, one path};
+  \node[st] (x) at (9.0,-0.4) {execute\\fit, run, build};
+  \node[st] (v) at (11.1,-0.4) {verify $V_d$\\withheld data};
+  \node[st] (o) at (13.3,-0.4) {outcome\\$(v,y,c)$, $U$};
+  \draw[ezarrow] (s) -- (e); \draw[ezarrow] (e) -- (p); \draw[ezarrow] (p) -- (x);
+  \draw[ezarrow] (x) -- (v); \draw[ezarrow] (v) -- (o);
+  % commitment line
+  \draw[ezwarm, line width=1pt] (7.2,1.05) -- (7.2,-4.5);
+  \node[font=\sffamily\sbseries\scriptsize, text=ezwarm, fill=white, inner sep=1.5pt] at (7.2,1.05) {commit: hash, freeze};
+  % lanes
+  \foreach \y in {-1.55,-2.3,-3.05,-3.95} \draw[ezrule, line width=0.3pt] (0.0,\y) -- (14.8,\y);
+  % C0
+  \node[lane] at (0.0,-1.4) {C0};
+  \node[dot] at (1.6,-1.55) {}; \draw[run] (1.6,-1.55) -- (13.0,-1.55);
+  \node[note] at (1.75,-1.55) {specification and authorized observations; no new probes};
+  % CH
+  \node[lane] at (0.0,-2.15) {CH};
+  \filldraw[fill=ezamber!25, draw=ezamber, line width=0.4pt] (0.78,-2.42) rectangle (1.42,-2.18);
+  \node[dot] at (1.6,-2.3) {}; \draw[run] (1.6,-2.3) -- (13.0,-2.3);
+  \node[note] at (1.75,-2.3) {frozen history $H_t$, identical for every method, charged to its workflow};
+  % SEQ
+  \node[lane] at (0.0,-2.9) {SEQ};
+  \node[dot] at (1.6,-3.05) {}; \draw[run] (1.6,-3.05) -- (13.0,-3.05);
+  \draw[ezink, line width=0.55pt, dashed, -{Stealth[length=1.8mm]}] (13.15,-3.05) -- (13.15,-3.42) -- (1.6,-3.42) -- (1.6,-3.13);
+  \node[note] at (1.75,-3.05) {one move per step};
+  \node[font=\sffamily\scriptsize, text=ezgrey, fill=ezpaper, inner sep=1.2pt] at (10.2,-3.42) {$s_{t+1}=s_t\oplus(a_t,v_t,y_t,c_t)$};
+  % S
+  \node[lane] at (0.0,-3.8) {S};
+  \node[dot] at (1.6,-3.95) {}; \draw[run] (1.6,-3.95) -- (13.0,-3.95);
+  \draw[ezgrey, line width=0.55pt, rounded corners=2pt, -{Stealth[length=1.5mm]}] (8.4,-3.95) -- (8.4,-3.72) -- (6.0,-3.72) -- (6.0,-3.9);
+  \node[note] at (1.75,-3.95) {$B$ candidates scored};
+  \node[note, anchor=south west] at (8.55,-3.95) {up to $B$ returns, each one counted};
+\end{tikzpicture}

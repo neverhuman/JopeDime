@@ -1,0 +1,415 @@
+{
+  "schema": "eurekazero.gaps/v1",
+  "note": "Every synthetic number, figure and table in the north-star draft is listed here. A gap closes only when a sealed, receipt-bound measurement replaces its synthetic content, the \\syn tags and SYNTHETIC tags for it are removed, and its claims are re-graded. Unknown or failed outcomes are reported, never filled in.",
+  "gaps": [
+    {
+      "id": "EZ-G01",
+      "title": "Learning procedures: first-proposal primary",
+      "domain": "A: learning procedures (C0, artifact)",
+      "kind": "number, figure, table",
+      "replaces": [
+        "the learning-procedure primary difference and its interval",
+        "mean utilities and failure rate",
+        "family histogram in the primary figure",
+        "results-table row A"
+      ],
+      "files": [
+        "data/synthetic/family-A.csv",
+        "data/synthetic/primary.csv"
+      ],
+      "work_package": "WP4 open synthesis in the existing domain; WP9 lock confirmation; WP10 run confirmation",
+      "acceptance": "Locked confirmation on sealed families: family-weighted paired difference against the predeclared strongest non-search control (tree selector over the complete-program archive), 95% BCa family bootstrap with 10,000 resamples, failures retained, registered before the look.",
+      "claims": [
+        "EZ-C04"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G02",
+      "title": "Learning procedures: search-equivalent budget",
+      "domain": "A: learning procedures",
+      "kind": "number, figure",
+      "replaces": [
+        "the learning-procedure search-equivalent budget and its interval",
+        "search-budget curve panel A"
+      ],
+      "files": [
+        "data/synthetic/curve-A.csv",
+        "data/synthetic/curve-lines.csv"
+      ],
+      "work_package": "WP3 strong controls; WP10 run confirmation",
+      "acceptance": "Search arm run at k in {1,2,...,256} on the same sealed families and resource card; joint family bootstrap of the crossing; report a bound when no measured budget reaches the proposer.",
+      "claims": [
+        "EZ-C11"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G03",
+      "title": "Next experiment: frozen-history decision primary",
+      "domain": "B: next-experiment decisions (CH, action)",
+      "kind": "number, figure, table",
+      "replaces": [
+        "the next-experiment primary difference and its interval",
+        "family histogram panel B",
+        "results-table row B1"
+      ],
+      "files": [
+        "data/synthetic/family-B.csv",
+        "data/synthetic/primary.csv"
+      ],
+      "work_package": "WP5 next-experiment adapter; WP9; WP10",
+      "acceptance": "Histories built by a predeclared behaviour policy independent of every compared method; each method emits exactly one point; paired family-level comparison against the predeclared strongest control with dependence retained.",
+      "claims": [
+        "EZ-C05"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G04",
+      "title": "Next experiment: closed-loop optimization",
+      "domain": "B: sequential controller (SEQ)",
+      "kind": "number, figure",
+      "replaces": [
+        "evaluations to reach target regret",
+        "savings ratio at t = 20",
+        "closed-loop regret panel"
+      ],
+      "files": [
+        "data/synthetic/regret-B2.csv"
+      ],
+      "work_package": "WP5; WP10",
+      "acceptance": "Equal initial observations and evaluation budgets for every method; simple regret against a qualified reference; censored and failed runs retained; learned-optimizer baselines run from their released implementations where compatible.",
+      "claims": [
+        "EZ-C05",
+        "EZ-C11"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G05",
+      "title": "Specification to CAD: first-proposal primary",
+      "domain": "C: engineering specifications to CAD (C0, artifact)",
+      "kind": "number, figure, table",
+      "replaces": [
+        "the CAD primary difference and its interval",
+        "build validity, compliance and feasibility rates",
+        "family histogram panel C",
+        "results-table row C"
+      ],
+      "files": [
+        "data/synthetic/family-C.csv",
+        "data/synthetic/primary.csv"
+      ],
+      "work_package": "WP6 CAD adapter and verifier; WP9; WP10",
+      "acceptance": "Sealed specification families split by design lineage; build, geometric and specification checks before converged finite-element evaluation; failed builds in every denominator; independent solver on a predeclared subset.",
+      "claims": [
+        "EZ-C06"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G06",
+      "title": "Specification to CAD: search-equivalent simulation budget",
+      "domain": "C: engineering specifications to CAD",
+      "kind": "number, figure",
+      "replaces": [
+        "the CAD search-equivalent budget and its interval",
+        "search-budget curve panel C"
+      ],
+      "files": [
+        "data/synthetic/curve-C.csv",
+        "data/synthetic/curve-lines.csv"
+      ],
+      "work_package": "WP6; WP10",
+      "acceptance": "Topology optimization followed by a fixed, declared CAD conversion, and template parameter search, each at k simulations on the same specifications; every simulation counted.",
+      "claims": [
+        "EZ-C11"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G07",
+      "title": "Frontier language models at one attempt",
+      "domain": "A, B, C",
+      "kind": "number, table",
+      "replaces": [
+        "EurekaZero minus best frontier model, per domain",
+        "frontier validity rates"
+      ],
+      "files": [
+        "data/synthetic/frontier.csv"
+      ],
+      "work_package": "WP3 strong controls; WP10",
+      "acceptance": "Three frontier models receive the byte-identical information packet, no tools, no retries, one attempt; all attempts reported with metered usage and provider model identities.",
+      "claims": [
+        "EZ-C04",
+        "EZ-C05",
+        "EZ-C06"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G08",
+      "title": "Amortized baselines from the literature",
+      "domain": "A, B, C",
+      "kind": "number",
+      "replaces": [
+        "TabPFN error ratio",
+        "OptFormer-class and ZeroShotOpt-class evaluations to target",
+        "text-to-CAD validity"
+      ],
+      "files": [],
+      "work_package": "WP3 strong controls",
+      "acceptance": "Released implementations run under their licences on the same sealed tasks; incompatible output contracts labelled as such rather than forced into the primary.",
+      "claims": [
+        "EZ-C04",
+        "EZ-C05"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G09",
+      "title": "Representation and training ablations",
+      "domain": "A, B, C",
+      "kind": "number, figure",
+      "replaces": [
+        "direct-decoder, imitation-only, catalog, retrieval and search-only-teacher deltas",
+        "shuffled-state collapse"
+      ],
+      "files": [
+        "data/synthetic/ablations.csv"
+      ],
+      "work_package": "WP7 outcome and latent ablations",
+      "acceptance": "Matched capacity, data and training compute for every arm; deltas against full EurekaZero on development families, then confirmed once.",
+      "claims": [
+        "EZ-C07"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G10",
+      "title": "Objective and constraint interventions",
+      "domain": "A, C",
+      "kind": "number",
+      "replaces": [
+        "rate of appropriate change under objective swaps",
+        "rate under shuffled objectives"
+      ],
+      "files": [],
+      "work_package": "WP7",
+      "acceptance": "Observations held fixed while objectives or constraints change by a predeclared rule; appropriateness judged by the verifier under the new objective, not by inspection.",
+      "claims": [
+        "EZ-C07"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G11",
+      "title": "Shared versus separate models",
+      "domain": "A, B, C",
+      "kind": "number, figure",
+      "replaces": [
+        "shared-minus-separate deltas per domain"
+      ],
+      "files": [
+        "data/synthetic/transfer.csv"
+      ],
+      "work_package": "WP8 shared-model study",
+      "acceptance": "Joint and separate models with matched total data and compute; adapters counted; negative transfer reported.",
+      "claims": [
+        "EZ-C08"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G12",
+      "title": "EurekaZero-Native encoder",
+      "domain": "A",
+      "kind": "number, figure",
+      "replaces": [
+        "delta of the native-encoder model against the full model"
+      ],
+      "files": [
+        "data/synthetic/ablations.csv"
+      ],
+      "work_package": "WP4; WP7",
+      "acceptance": "A state encoder trained inside the project with no third-party pretrained weights, otherwise identical recipe; same sealed families.",
+      "claims": [
+        "EZ-C04"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G13",
+      "title": "Experience scaling",
+      "domain": "A, B, C",
+      "kind": "figure",
+      "replaces": [
+        "search-equivalent budget against the fraction of training history"
+      ],
+      "files": [
+        "data/synthetic/history.csv"
+      ],
+      "work_package": "WP7; WP10",
+      "acceptance": "Identical recipe trained on nested fractions of the frozen training history; each fraction evaluated on the same development panel, then the predeclared fractions on confirmation.",
+      "claims": [
+        "EZ-C09"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G14",
+      "title": "Controlled improvement rounds",
+      "domain": "A",
+      "kind": "figure",
+      "replaces": [
+        "search-equivalent budget by improvement round, with static-teacher control"
+      ],
+      "files": [
+        "data/synthetic/generations.csv"
+      ],
+      "work_package": "WP7 (Stage D)",
+      "acceptance": "Fresh verified training examples produced each round; equal-compute static-data and static-teacher controls; confirmation families never enter the loop.",
+      "claims": [
+        "EZ-C09"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G15",
+      "title": "Novelty ladder and discovery opportunities",
+      "domain": "A, C",
+      "kind": "number, figure",
+      "replaces": [
+        "N0 to N6 counts and rates",
+        "useful out-of-archive rate and interval",
+        "dossier and mechanism counts"
+      ],
+      "files": [
+        "data/synthetic/funnel.csv"
+      ],
+      "work_package": "WP10 confirmation and dossiers",
+      "acceptance": "Frozen complete-artifact archive and enumerated rewrite rules before unblinding; blinded structural review; every attempt in the denominator.",
+      "claims": [
+        "EZ-C03",
+        "EZ-C10"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G16",
+      "title": "Discovery dossier D-A1 (learning procedure)",
+      "domain": "A",
+      "kind": "number, figure, text",
+      "replaces": [
+        "the illustrative mechanism description",
+        "removal and replacement effects on 60 reserved families"
+      ],
+      "files": [
+        "data/synthetic/dossier.csv"
+      ],
+      "work_package": "WP10",
+      "acceptance": "Case chosen by the predeclared lowest-eligible-hash rule; removal and nearest-known replacement at matched capacity on 60 reserved families; lower interval bound above zero; prior-work review.",
+      "claims": [
+        "EZ-C10"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G17",
+      "title": "Discovery dossier D-C1 and physical validation",
+      "domain": "C",
+      "kind": "number, figure, text",
+      "replaces": [
+        "the illustrative structural feature",
+        "mass penalty of removal",
+        "physical test count and error"
+      ],
+      "files": [
+        "data/synthetic/dossier.csv"
+      ],
+      "work_package": "WP10; WP11",
+      "acceptance": "Feature removal with other design freedoms controlled; a second evaluation setup; fabricated parts tested by a laboratory not involved in design.",
+      "claims": [
+        "EZ-C06",
+        "EZ-C10"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G18",
+      "title": "Compute ledger and break-even",
+      "domain": "A, B, C",
+      "kind": "number, figure",
+      "replaces": [
+        "teacher-search, training and proposal costs",
+        "break-even deployment counts",
+        "cost panel"
+      ],
+      "files": [
+        "data/synthetic/cost.csv"
+      ],
+      "work_package": "WP10; WP11",
+      "acceptance": "Metered costs with nested measurements never added twice; quality-matched comparison; amortization volume stated.",
+      "claims": [
+        "EZ-C11"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G19",
+      "title": "CAD mass and compliance trade-off",
+      "domain": "C",
+      "kind": "number, figure",
+      "replaces": [
+        "relative mass at the compliance limit and its interval",
+        "mass-compliance scatter"
+      ],
+      "files": [
+        "data/synthetic/cad-pareto.csv"
+      ],
+      "work_package": "WP6; WP10",
+      "acceptance": "Domain-native metrics from converged finite-element evaluation for every method, infeasible designs shown, not dropped.",
+      "claims": [
+        "EZ-C06"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G20",
+      "title": "Confirmation rosters and registration",
+      "domain": "A, B, C",
+      "kind": "number",
+      "replaces": [
+        "family, component and specification counts",
+        "context and proposal counts"
+      ],
+      "files": [],
+      "work_package": "WP9 lock confirmation",
+      "acceptance": "Power from development-only variance; rosters, dependency graph and hashes frozen and registered publicly before any confirmation outcome is opened.",
+      "claims": [
+        "EZ-C02"
+      ],
+      "status": "synthetic"
+    },
+    {
+      "id": "EZ-G21",
+      "title": "Model dimensions",
+      "domain": "all",
+      "kind": "number",
+      "replaces": [
+        "shared-proposer parameters",
+        "adapter sizes",
+        "latent slot count and width"
+      ],
+      "files": [],
+      "work_package": "WP7 development comparison of latent forms",
+      "acceptance": "Dimensions fixed by a capacity- and compute-matched development comparison (128, 256 and 512 widths and a slot sequence), then frozen with the checkpoint identity.",
+      "claims": [
+        "EZ-C07"
+      ],
+      "status": "synthetic"
+    }
+  ]
+}

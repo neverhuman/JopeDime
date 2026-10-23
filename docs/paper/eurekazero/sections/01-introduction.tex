@@ -1,0 +1,98 @@
+% Section 1 — Introduction
+\section{Introduction}
+\label{sec:intro}
+
+\paragraph{The raw network} In 2016 AlphaGo won with a move that its own imitation network rated at
+about one chance in ten thousand; the move came from search, paid for at the moment of play
+\citep{silver2016alphago,hassabis2016seoul}. A year later AlphaGo Zero learned Go from self-play
+alone, and its paper contains a quieter result that matters more here. Playing the network's
+preferred move with no search at all, AlphaGo Zero rated about 3,000 Elo---close to the version that
+had first beaten a professional---against 5,185 with search \citep{silver2017zero}. Much of what search
+had discovered across millions of games had been \emph{amortized} into a single proposal. AlphaZero
+and MuZero carried the recipe to other games and to learned rules
+\citep{silver2018alphazero,schrittwieser2020muzero}.
+
+\paragraph{Innovation still pays at the moment of the problem} Machine discovery has since moved from
+games to science and engineering, and it has kept paying for search per problem. AlphaTensor found a
+47-multiplication scheme for $4\times4$ matrices in arithmetic modulo 2 \citep{fawzi2022alphatensor};
+AlphaDev found sorting routines merged into the LLVM C\texttt{++} library \citep{mankowitz2023alphadev};
+FunSearch improved bounds on cap sets by pairing a language model with an evaluator
+\citep{romeraparedes2024funsearch}; AlphaEvolve extended that loop to matrix multiplication,
+scheduling and, by 2026, to cache policies, circuit design and commercial optimization
+\citep{novikov2025alphaevolve,deepmind2026alphaevolve}. Automated research systems close the loop
+around whole experiments \citep{lu2024aiscientist,recursive2026flint}, and Socher's \emph{Eureka
+Machine} describes swarms of agents proposing and testing ideas across all of science
+\citep{socher2026eureka}. Engineering and laboratory practice look the same: a bracket is found by
+topology optimization over hundreds of simulations \citep{sigmund2001topopt}, and a reaction
+condition by Bayesian optimization over a campaign of experiments
+\citep{snoek2012bo,shields2021reaction}. Each system is powerful. Each starts every new problem from
+its search, not from what earlier searches learned.
+
+\paragraph{Innovation as a game} This paper begins from an observation and a hypothesis. The
+observation is that many innovation problems already have the anatomy of a game
+(\cref{fig:game}). There is a \emph{state}: the requirements, observations and budget that define the
+problem. There are \emph{moves}: complete candidate solutions written in a typed language---a learning
+procedure, a next experiment, a CAD construction program. There are \emph{rules}: the language's
+guarantees and the problem's hard constraints. There is an \emph{outcome}, measured by an independent
+verifier rather than by anyone's opinion. And there is an \emph{opponent} worth beating: the best
+verified solution known for that problem, which rises every time it is beaten. The hypothesis is that
+whatever can be posed this way can be learned the way AlphaGo Zero learned Go: search plays the
+games, the outcomes train a network, and the network's first move improves until much of the search
+it learned from is no longer needed when the next problem arrives. We call a problem posed this way
+an \emph{innovation game} (\cref{sec:formulation}), and we call the claim that a single kind of
+learner can play many of them the \emph{innovation-game hypothesis}.
+
+\begin{ezquestion}
+Can a model that has watched search solve thousands of innovation games propose a useful solution to
+a game it has never seen---in one move, before testing anything? And how many experiments is that
+first move worth?
+\end{ezquestion}
+
+\paragraph{EurekaZero} We introduce EurekaZero, a proposer that plays innovation games with one
+interface (\cref{fig:network,sec:architecture}):
+\begin{equation}
+\underbrace{z = E_{\phi,d}(s)}_{\code{game\_state\_encoding}}
+\qquad\longrightarrow\qquad
+\underbrace{h \sim P_\theta(\,\cdot \mid z)}_{\code{solution\_embedding}}
+\qquad\longrightarrow\qquad
+\underbrace{a = D_{\psi,d}(h)}_{\code{solution}} .
+\label{eq:interface}
+\end{equation}
+A domain adapter encodes the game state $s$, a shared proposer maps it to a solution embedding, and
+a typed decoder writes one complete candidate. \emph{Zero} names a protocol, not an absence of
+knowledge: the candidate is committed before any candidate-specific execution, scoring or revision,
+and only then does an independent verifier evaluate it (\cref{sec:protocol}). Zero does not mean zero
+training, zero prior knowledge or zero verification. It means the move is made before the board
+answers.
+
+\paragraph{Contributions} We make four contributions, each paired with the evidence that supports it.
+\begin{enumerate}
+\item \textbf{The innovation game and a commitment protocol} (\cref{sec:formulation,sec:protocol}).
+A formulation in which data, histories and specifications are states and programs, decisions and
+designs are moves; three output roles; and an auditable boundary---one candidate, no
+candidate-specific feedback, no revision---with tracks that separate first proposals from
+history-conditioned decisions, sequential control and search.
+\item \textbf{EurekaZero} (\cref{sec:architecture,sec:training}). A learned proposer with domain
+state adapters, a shared solution embedding and typed decoders with open generative support, trained
+by imitation of verified search and then directly on the utility of its first proposal.
+\item \textbf{A controlled three-domain evaluation} (\cref{sec:design,sec:results,sec:mechanisms}).
+Sealed problem families for learning procedures, next-experiment decisions and engineering parts;
+retrieval, catalog, direct-generation, search, learned-baseline and frontier-model controls;
+failures retained; complete compute accounting. One proposal improves on the strongest non-search
+control in all three domains by \syn[EZ-G01]{\EZdA} to \syn[EZ-G05]{\EZdC} utility and is worth
+\syn[EZ-G02]{\EZbeqA} evaluations of search for learning procedures.
+\item \textbf{Verified discoveries} (\cref{sec:discoveries}). A novelty ladder from new bytes to
+independently replicated mechanisms, and prospective dossiers in which \syn[EZ-G15]{\EZnFive}
+proposed mechanisms survive removal and replacement on reserved problems.
+\end{enumerate}
+
+\paragraph{What we do not claim} We do not claim that every invention has a machine-readable
+specification or a reliable verifier, that EurekaZero discovers new mathematics, that a first
+proposal replaces later experiments, or that absence from our archive proves absence from all prior
+knowledge. The innovation-game hypothesis is a research program; this paper tests it in three games
+(\cref{sec:limits}).
+
+\paragraph{Evidence status} The formulation, protocol, architecture and historical evidence in this
+draft are real. The EurekaZero results are synthetic placeholders that show the paper we intend to
+earn; \cref{app:gaps} lists the experiment that must replace each one, and \cref{app:history}
+reports what the JopeDime program has actually measured so far, including its null results.

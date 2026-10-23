@@ -1,0 +1,20 @@
+% Appendix M — Claims ledger. Generated from evidence/claims.json by scripts/check.sh --prepare.
+\section{Claims ledger}
+\label{app:claims}
+
+Every claim the paper makes, the minimum evidence it needs, its present status and the gaps that
+block it. \emph{Protocol} claims are true by construction and checked by code; \emph{synthetic north
+star} claims are what the experiments must establish; a \emph{do not assert} claim must not be made
+however the experiments come out.
+
+\newcommand\claimentry[5]{%
+  \par\smallskip\noindent
+  \begin{tcolorbox}[enhanced, breakable, colback=ezpaper, colframe=ezpaper, arc=1.5pt,
+      left=7pt, right=7pt, top=4pt, bottom=4pt, before skip=3pt, after skip=3pt, fontupper=\small]
+  {\sffamily\sbseries\color{ezaccent}#1}\quad #2\hfill{\sffamily\footnotesize\color{ezgrey}#4}\par
+  {\footnotesize\sffamily
+  \textcolor{ezgrey}{Minimum evidence}\enspace #3\par
+  \textcolor{ezgrey}{Blocked by}\enspace #5}
+  \end{tcolorbox}}
+
+\input{claim-ledger}

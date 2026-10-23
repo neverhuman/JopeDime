@@ -1,0 +1,65 @@
+% main.tex — Learning to Innovate in a Single Proposal: EurekaZero (north-star draft).
+% Build: make -C docs/paper/eurekazero (scripts/build.sh). One file per section under sections/ and
+% appendices/. Every synthetic number is written \syn[EZ-Gnn]{\macro}: the macro comes from
+% generated/numbers.tex (scripts/synthesize.sh) and the gap id from northstar/gaps.json, whose
+% ledger is typeset as Appendix K. Nothing synthetic may reach a submission: check.sh --submission
+% refuses it.
+\documentclass[11pt]{article}
+\usepackage{ez}
+
+\input{generated/numbers}
+
+\renewcommand\EZShortTitle{EurekaZero \textperiodcentered{} north-star draft}
+\renewcommand\EZTitle{Learning to Innovate in a Single Proposal:\\[3pt]EurekaZero}
+\renewcommand\EZSubtitle{Amortizing verified search into first proposals for learning procedures,
+  experiments and engineering designs}
+\renewcommand\EZAuthors{Jepson Taylor\quad Jordan Morrow\quad Alton Alexander\par\smallskip
+  {\footnotesize\textcolor{ezgrey}{Correspondence: Jepson Taylor, Veox AI \textperiodcentered{} \href{mailto:jepson@veox.ai}{jepson@veox.ai}}}}
+\renewcommand\EZDate{North-star draft \textperiodcentered{} 23 October 2026 \textperiodcentered{}
+  \href{https://github.com/neverhuman/JopeDime/tree/main/docs/paper/eurekazero}{github.com/neverhuman/JopeDime}}
+\renewcommand\EZStatus{NORTH-STAR DRAFT \textperiodcentered{} SYNTHETIC ILLUSTRATIVE RESULTS
+  \textperiodcentered{} NOT FOR SUBMISSION \textperiodcentered{} VERSION 0.1}
+
+\hypersetup{pdftitle={Learning to Innovate in a Single Proposal: EurekaZero (north-star draft, synthetic results)},
+  pdfauthor={Jepson Taylor, Jordan Morrow, Alton Alexander},
+  pdfsubject={North-star draft with synthetic illustrative results; not a report of experiments},
+  pdfkeywords={amortized search, first proposal, program synthesis, learned optimization, inverse design,
+    verifiable outcomes, EurekaZero}}
+
+\begin{document}
+\ezmaketitle
+\input{sections/00-abstract}
+\input{sections/01-introduction}
+\input{sections/02-formulation}
+\input{sections/03-commitment-protocol}
+\input{sections/04-architecture}
+\input{sections/05-training}
+\input{sections/06-experimental-design}
+\input{sections/07-results}
+\input{sections/08-representations-and-transfer}
+\input{sections/09-verified-discoveries}
+\input{sections/10-compute-and-scaling}
+\input{sections/11-related-work}
+\input{sections/12-limitations}
+\input{sections/13-conclusion}
+
+\bibliographystyle{unsrtnat}
+{\small\bibliography{references}}
+
+\clearpage
+\appendix
+\renewcommand\thesection{\Alph{section}}
+\input{appendices/A-formal-definitions}
+\input{appendices/B-model}
+\input{appendices/C-training-corpus}
+\input{appendices/D-benchmarks}
+\input{appendices/E-statistics}
+\input{appendices/F-full-outcomes}
+\input{appendices/G-dossiers}
+\input{appendices/H-compute}
+\input{appendices/I-historical-evidence}
+\input{appendices/J-disclosure}
+\input{appendices/K-gap-ledger}
+\input{appendices/L-reproducibility}
+\input{appendices/M-claims}
+\end{document}

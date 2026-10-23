@@ -1,0 +1,33 @@
+% Appendix C — Training experience
+\section{Training experience}
+\label{app:corpus}
+
+\paragraph{What counts as experience} A unit of experience is a tuple
+$(s,a,y,\mathrm{receipt})$: a state, a complete committed candidate, its verified outcome and a
+receipt binding the source commit, evaluator identity, input hashes and resource use
+(\cref{sec:training}). Candidates without a receipt, outcomes computed on confirmation families and
+outcomes whose evaluator identity differs from the declared comparison identity are excluded. Every
+exclusion is counted.
+
+\paragraph{Learning procedures (existing)} The program's corpus holds 14,987 verified runs over 3,003
+dataset versions, 7,120 contexts and 1,068 parent lineages, drawn from a real tier of 3,859 datasets
+\est{} (\cref{app:history}). Outer test folds and sealed meta-test families are outside the input
+closure of every training worker. Dataset labels are kept intact; derived targets are separate
+versions in the same family.
+
+\paragraph{Next-experiment decisions (proposed)} Optimization histories from public tuning
+benchmarks \citep{pineda2021hpob}, from the standard black-box suite \citep{hansen2021coco} under
+declared instance transformations, and from published reaction-optimization data
+\citep{shields2021reaction,ahneman2018cn}. Histories are produced by every A10 tool at declared
+budgets, so the frozen histories of track CH are not authored by EurekaZero.
+
+\paragraph{CAD parts (proposed)} Specification families generated procedurally from bracket, mount
+and clamp templates with randomized envelopes, interfaces, loads and processes, plus families derived
+from public engineering parts with simulation \citep{whalen2021simjeb}. Every part in the experience
+store was built, meshed and analysed by the declared verifier \citep{geuzaine2009gmsh}, and failed
+attempts are retained as negative experience.
+
+\paragraph{Teacher searches} Each game's teacher is a verified search procedure run at declared
+budgets on training families only. Its outputs enter the store as experience; its internals are
+protected (\cref{app:disclosure}). An arm whose teacher searches are not seeded by the model (the
+search-only teacher, \cref{fig:ablation}) bounds what seeding contributes.

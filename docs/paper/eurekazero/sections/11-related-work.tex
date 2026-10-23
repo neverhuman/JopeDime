@@ -1,0 +1,65 @@
+% Section 11 — Related work
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Search distilled into a network} AlphaGo, AlphaGo Zero and AlphaZero trained policies on
+the outcomes of their own search and showed that the raw network alone plays strong moves
+\citep{silver2016alphago,silver2017zero,silver2018alphazero}; MuZero learned the model of the game as
+well \citep{schrittwieser2020muzero}. Expert Iteration names the general recipe of a search expert
+and an apprentice network \citep{anthony2017exit}, and Ranked Reward turns a single-player
+optimization problem into a game against the player's own recent performance
+\citep{laterre2018ranked}, the mechanism behind our rising bar. EurekaZero applies this recipe where
+each game is a new problem drawn from a family the player has not seen, and evaluates the apprentice
+on its first move.
+
+\paragraph{Discovery framed as a game or a search} AlphaTensor and AlphaDev cast the discovery of
+matrix multiplication and sorting algorithms as single-player games and found new algorithms by
+search with learned guidance \citep{fawzi2022alphatensor,mankowitz2023alphadev}. FunSearch and
+AlphaEvolve pair language models with automatic evaluators in long search loops and have produced
+new constructions, algorithms and infrastructure improvements
+\citep{romeraparedes2024funsearch,novikov2025alphaevolve,deepmind2026alphaevolve}; AlphaCode
+generated and filtered very large samples of programs \citep{li2022alphacode}. The AI Scientist and
+recent efforts toward automated discovery systems extend the loop to hypotheses, experiments and
+papers \citep{lu2024aiscientist,socher2026eureka,recursive2026firststeps}. These systems spend search
+at the moment of the problem, and their results are reported as products of search. We ask a
+complementary question---how much of that search can be paid for in advance---and report first
+proposals and search separately, with budgets.
+
+\paragraph{Learning algorithms and procedures} AutoML-Zero searched for learning algorithms from
+basic mathematical operations \citep{real2020automlzero}; DreamCoder and DeepCoder learned to guide
+program synthesis \citep{ellis2021dreamcoder,balog2017deepcoder}, and the Latent Programmer first predicts a
+discrete latent plan and then decodes a program from it \citep{hong2021latent}, the closest precedent for our
+encoder--embedding--decoder structure; AutoML systems select and tune
+pipelines by search \citep{feurer2015autosklearn}. Prior-fitted networks such as TabPFN and TabICL
+amortize Bayesian inference over tabular tasks and predict in one forward pass
+\citep{hollmann2025tabpfn,qu2025tabicl}, and benchmark suites such as TabArena make these
+comparisons reproducible \citep{erickson2025tabarena}. Hypernetworks and HyperFast generate model
+weights from a task \citep{ha2017hypernetworks,bonet2024hyperfast}. EurekaZero differs in its output
+object: a standalone, inspectable procedure that runs without the model that wrote it.
+
+\paragraph{Amortized and learned optimization} Amortized optimization learns to predict the
+solutions of a family of optimization problems \citep{amos2023amortized}. OptFormer, PFNs4BO,
+POM, ZeroShotOpt, RIBBO and Algorithm Distillation learn optimizers or acquisition behaviour from
+many optimization histories
+\citep{chen2022optformer,muller2023pfns4bo,li2024pom,meindl2025zeroshotopt,song2025ribbo,laskin2023ad},
+evaluated on suites such as HPO-B and COCO \citep{pineda2021hpob,hansen2021coco} against Gaussian-process,
+TPE, SMAC and CMA-ES baselines
+\citep{snoek2012bo,balandat2020botorch,bergstra2011tpe,lindauer2022smac,hansen2019pycma}. Our
+next-experiment game is this setting; our contribution there is the frozen-history track, which
+separates the quality of one decision from the quality of a trajectory, and a shared interface with
+two other games.
+
+\paragraph{Generative engineering design} Topology optimization is the established route from loads
+and constraints to structure \citep{bendsoe2003topology,sigmund2001topopt}. DeepCAD and Text2CAD
+learn to generate construction sequences \citep{wu2021deepcad,khan2024text2cad}; CADFS and
+Text2CAD-Bench evaluate generated CAD, the latter allowing several repair attempts
+\citep{pyatov2026cadfs,wang2026text2cadbench}; SimJEB provides engineering parts with simulation
+\citep{whalen2021simjeb}. Our CAD game asks for one executable construction program meeting a
+specification and evaluated by meshing and analysis \citep{cadquery2024,geuzaine2009gmsh}.
+
+\paragraph{The name} ``Eureka'' has been used for language-model reward design
+\citep{ma2024eureka}, multimodal reasoning \citep{meng2025mmeureka} and an industrial vision of an
+automated discovery machine \citep{socher2026eureka}; ``Zero'' has named systems learning without
+human examples \citep{silver2017zero,real2020automlzero,zhao2025absolutezero}. We use EurekaZero for
+the specific claim tested here: a verified eureka from one committed proposal, under a protocol
+that makes ``one'' auditable.

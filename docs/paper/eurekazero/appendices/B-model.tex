@@ -1,0 +1,50 @@
+% Appendix B — Model details
+\section{Model}
+\label{app:model}
+
+\paragraph{Adapters} Each game has a state adapter that maps its state to a variable-length set of
+tokens of width \syn[EZ-G21]{\EZslotDim}, with the invariances of \cref{tab:adapters}. Numbers enter
+through Fourier features of their standardized values, and every token carries a type embedding.
+
+\begin{table}[h]
+\caption{State adapters. The learning-procedure adapter is specified as built in the program today;
+the other two are proposed.}
+\label{tab:adapters}
+\centering\tablesf
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}LL@{}}
+\toprule
+Game & Tokens & Invariances and normalization \\
+\midrule
+A Learning procedures & dataset summary block (a native encoder, today a dimension-128 checkpoint pooled to 512 values), a 1,024-value foundation encoding derived from a pretrained tabular model, and a 512-value target encoding \est{}; specification tokens for metric, latency and memory limits & row and feature permutation; affine rescaling of features and target \\
+B Next experiment & one token per evaluated point (parameters, outcome, constraint values, cost), search-space tokens, remaining-budget token & permutation of past evaluations; affine rescaling of each parameter and of the objective \\
+C CAD parts & envelope and keep-out tokens, interface tokens (positions, diameters, mating faces), load-case tokens, material and process tokens, objective token; optional point cloud of the envelope & rigid motions of the whole specification; non-dimensionalization by envelope size, load and stiffness \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Shared proposer and solution embedding} The proposer maps adapter tokens to a solution
+embedding $h$ of \syn[EZ-G21]{\EZslots} slots of width \syn[EZ-G21]{\EZslotDim} by latent cross-attention: the
+learned slots attend to the state tokens and to each other. The internal construction of the stage
+that turns these slots into a solution plan is protected (\cref{app:disclosure}). Its contract is
+public and tested: (i) $h$ is a deterministic function of the state and the declared random seed;
+(ii) every typed decoder accepts every $h$ and returns a well-typed candidate or a declared refusal;
+(iii) no part of $h$ is computed from the verifier or from any candidate's outcome; and (iv)
+interventions on $h$ change the decoded candidate (\cref{sec:mechanisms}).
+
+\paragraph{Typed decoders} Each decoder writes one complete candidate in its game's language under a
+grammar mask that admits only well-typed continuations. Learning procedures are written in a bounded
+procedure language with declared data, preprocessing, model and output stages and emitted as Rust or
+Python source; next experiments as one JSON query inside the declared search space; parts as a typed
+subset of CadQuery operations (sketches, extrusions, rotational sweeps, shells, fillets, Boolean
+operations and patterns) emitted as a STEP solid \citep{cadquery2024}. Interfaces are constructed
+first, so every part contains them.
+
+\paragraph{Parameters} \Cref{tab:params} gives the parameter budget. The shared proposer has
+\syn[EZ-G21]{\EZparamShared}M parameters and each adapter--decoder pair
+\syn[EZ-G21]{\EZparamAdapters}M. The program's current release policy has width 512, 6 layers, 4 heads
+and 27,796,494 parameters \est{} and is the proposed starting point for the learning-procedure decoder.
+
+\paragraph{Third-party weights} The foundation encoding in game A is derived from third-party
+pretrained weights whose provenance is pending and whose redistribution is prohibited under their
+current terms \est{}. They are excluded from any release, and the EurekaZero-Native arm
+(\cref{sec:mechanisms}) uses encoders trained only on the program's own corpus.
