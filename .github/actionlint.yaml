@@ -4,6 +4,7 @@ self-hosted-runner:
     - xbabe2-kernel
     # Fixed CPU host roles are enforced in deploy/runner/common.sh.
     - jope-ci
+    - jope-mac-ci
     - xbabe1-ci
     - jope-full-cpu
     - jope-main-guard
