@@ -16,6 +16,7 @@ pub const INSPECTION_SCHEMA: &str = "jope.model-object-inspection/v1";
 pub const SCHEMA: &str = "jope.model-object/v1";
 pub const APPLIANCE: &str = "org.jopedime/appliance-fitted/v1";
 pub const BOUND: &str = "org.jopedime/battle-artifact/v2";
+pub const MATH_PIPELINE: &str = "org.jopedime/math-pipeline/v1";
 pub const MANIFEST: &str = "manifest.json";
 pub const DEFAULT_ROOT: &str = "models";
 pub const MAX_MANIFEST_BYTES: u64 = 1 << 20;
@@ -312,7 +313,10 @@ impl ModelObject {
 
     fn unsupported(&self) -> Vec<String> {
         let mut out = self.manifest.required_capabilities.clone();
-        if !matches!(self.manifest.format.as_str(), APPLIANCE | BOUND) {
+        if !matches!(
+            self.manifest.format.as_str(),
+            APPLIANCE | BOUND | MATH_PIPELINE
+        ) {
             out.push(format!("decoder:{}", self.manifest.format));
         }
         out
@@ -330,6 +334,11 @@ impl ModelObject {
 
     pub fn bound(&self) -> Result<feat_math::advanced_v3::BoundModel> {
         self.require_executable()?;
+        if self.manifest.format == MATH_PIPELINE {
+            return Err(Failure::backend(
+                "a math-pipeline object has no bound state; export object or javascript instead",
+            ));
+        }
         if self.manifest.format == APPLIANCE {
             let fitted = self.fitted()?;
             if fitted
@@ -352,8 +361,32 @@ impl ModelObject {
         Ok(model)
     }
 
+    /// Decode a `math-pipeline/v1` object: a fitted feat-math pipeline behind a numeric input
+    /// contract. See [`crate::math_pipeline`].
+    pub fn math_pipeline(&self) -> Result<crate::math_pipeline::MathPipeline> {
+        self.require_executable()?;
+        if self.manifest.format != MATH_PIPELINE {
+            return Err(Failure::backend(
+                "this command needs a math-pipeline object",
+            ));
+        }
+        crate::math_pipeline::MathPipeline::decode(&self.parts, &self.manifest.primary)
+    }
+
     /// Lower a loaded model using the existing portable emitter's explicit coverage gate.
     pub fn export_source(&self, language: &str) -> Result<Vec<u8>> {
+        if self.manifest.format == MATH_PIPELINE {
+            let pipeline = self.math_pipeline()?;
+            return match language {
+                "javascript" => pipeline.export_javascript(),
+                "python" | "rust" => Err(Failure::backend(format!(
+                    "{language} export is not implemented for {MATH_PIPELINE}"
+                ))),
+                _ => Err(Failure::input(
+                    "source language must be python, rust or javascript",
+                )),
+            };
+        }
         let model = self.bound()?;
         let reason = feat_math::advanced_v3::fitted_portable_unsupported(&model)
             .map_err(|e| Failure::integrity(e.to_string()))?;
@@ -394,6 +427,8 @@ impl ModelObject {
         self.require_executable()?;
         if self.manifest.format == APPLIANCE {
             self.fitted()?;
+        } else if self.manifest.format == MATH_PIPELINE {
+            self.math_pipeline()?;
         } else {
             self.bound()?;
         }

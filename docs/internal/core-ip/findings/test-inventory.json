@@ -4554,6 +4554,19 @@
         "preparation"
       ]
     },
+    "target:jope-runtime/test/fitted_js_qualification": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:jope-runtime/test/math_pipeline": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "evidence"
+      ]
+    },
     "target:jope-runtime/test/method_roster": {
       "role": "regression",
       "subsystems": [

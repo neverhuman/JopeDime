@@ -91,6 +91,7 @@ version number have separate meanings. Changing one does not implicitly migrate 
 | --- | --- | --- | --- |
 | `org.jopedime/appliance-fitted/v1` | Complete `model.jope` | Native CLI/MCP table inference and Rust API | Existing native fitted file, with its header, section checksums and bound state |
 | `org.jopedime/battle-artifact/v2` | Complete `state.json` | Typed Rust `BoundModel` API; no CLI CSV adapter | Existing serde representation of the full bound state, parsed with float roundtrip |
+| `org.jopedime/math-pipeline/v1` | Complete `pipeline.json` and `input.json` | CLI `predict`, Rust API, `model export --format javascript` | Fitted `feat_math::model::Model` behind an f32 numeric input contract; see [below](#math-pipeline-v1) |
 | Unknown decoder or any unknown required capability | Exact opaque parts | Refused, reported in inspection | Defined by the owning decoder, never guessed |
 
 For known JSON state, the reader refuses unknown nested fields instead of silently dropping
@@ -119,6 +120,50 @@ across languages. Keep foreign payloads as bytes. A future codec can define litt
 IEEE-754 buffers and shape descriptors without changing this envelope. Require that decoder
 before interpretation. No arbitrary code, dynamic library or remote dependency is loaded by
 the container reader. Decoder registration is a source change with its own conformance proof.
+
+## math-pipeline v1
+
+`org.jopedime/math-pipeline/v1` holds a regression pipeline fitted outside the native
+appliance, so its producer's numbers can be reproduced without that producer. It has exactly
+two parts and `primary` is `pipeline.json`; any other part is refused.
+
+`pipeline.json` is `{"dsl", "model"}`: the program text and the fitted
+`feat_math::model::Model` in its serde form. `input.json` is the input contract:
+
+| Field | Meaning |
+| --- | --- |
+| `task` | `regression`; v1 refuses every other task |
+| `columns` | Encoded columns in order: `name`, f32 `min` and `max`, and `constant` |
+| `selected` | Distinct indices into `columns`, in the order the pipeline reads them |
+| `target` | `name`, f32 `min` and f32 `scale` that map pipeline output back to target units |
+
+Both parts are decoded strictly: an unknown field anywhere, including a retained training
+sample, is refused. The fitted pipeline must accept exactly `selected.len()` columns
+(`feat_math::kernel::width::check_input_width`). Prediction is, per cell and in f32:
+
+1. Trim (Rust `char::is_whitespace`). `""`, `na`, `n/a`, `null`, `none`, `nan`, `?` and
+   `#n/a` (ASCII case-insensitive) are missing. `true`/`yes` read as 1 and `false`/`no` as 0.
+   Otherwise parse as f64; a non-finite value, one outside the f32 range or unparseable text
+   is missing. Parsed values are rounded to f32.
+2. A missing cell or a `constant` column encodes as 0. Otherwise
+   `((v - min) / (max - min)).clamp(0, 1)`.
+3. The `selected` columns, widened to f64, go to `Model::predict`.
+4. Each output is rounded to f32 (non-finite becomes 0) and mapped back as `min + v * scale`,
+   or `min` when `scale <= 1e-12`.
+
+Values outside a column's range therefore predict as the range's edge, and a missing cell
+predicts as the column minimum. `jopedime predict` matches columns by name in any order and
+reports the others as ignored. `model export --format javascript` writes the program's ES2020
+recipe, the fitted state, and `predictRows(rows)` over raw cells in `MODEL_COLUMNS` order with
+the same f32 steps (`Math.fround`), within the JavaScript emitter's transform and head slice.
+Python and Rust source export, `bound-json` and `fitted` are refused for this decoder.
+
+`crates/jope-runtime/tests/math_pipeline.rs` holds the acceptance case: a fitted pipeline from
+an external producer and that producer's predictions for 78 generated rows covering in-range,
+out-of-range, missing, boolean, infinite and unparseable cells. The decoder and the exported
+JavaScript must each reproduce every prediction as the same f32.
+`crates/jope-runtime/tests/fitted_js_qualification.rs` checks the fitted JavaScript against
+`Model::predict` for every transform and head in the JavaScript slice.
 
 ## Publication, recovery and trust
 
@@ -151,3 +196,8 @@ Native tests cover all current 26 appliance recipes, additional bound program fo
 refusal and local concurrency. Every additional language executor still needs independent
 fit/save/process-exit/load/inference fixtures and malformed-state/resource tests. A shared
 container does not establish cross-platform numerical parity.
+
+Fitted JavaScript export validates input width and all prediction-time recipe literals
+against fitted state: every append flag, bin counts, Chebyshev degree, landmark gamma
+and step threshold. A contradictory declaration refuses export. Learned arrays remain
+authoritative; fit-only seeds and regularization are not reconstructed or refitted.
