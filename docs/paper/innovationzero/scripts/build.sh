@@ -43,7 +43,8 @@ while read -r digest url members; do
   fi
   echo "$digest  $archive" | sha256sum -c --status || { echo "build.sh: SHA-256 mismatch for $url" >&2; exit 3; }
   for m in $members; do
-    [ -f "$cache/fonts/$(basename "$m")" ] || unzip -o -q -j "$archive" "$m" -d "$cache/fonts"
+    # Re-extract from the verified archive, so a modified cached font cannot be reused.
+    unzip -o -q -j "$archive" "$m" -d "$cache/fonts"
   done
 done < "$paper/fonts.lock"
 

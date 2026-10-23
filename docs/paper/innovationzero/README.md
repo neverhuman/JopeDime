@@ -65,3 +65,14 @@ results and cross-objective protocol. The historical effort reference now target
 the commitment reference targets the current definition. A nonsignificant small-pilot comparison
 does not establish equivalence. Source conflicts were resolved without changing archived artifacts,
 plotted frontier inputs or the three original author commits.
+
+
+CI runs the reusable `paper.yml` from the existing admitted `ci.yml` and trusted-main
+`full-main.yml` callers. Every PR/manual CI run builds all three volumes; the aggregate requires
+its exact-source receipt and verifies every retained payload hash. Main-push CPU qualification
+also requires the publication job. Queueing or a missing receipt fails qualification.
+`deploy/ci/publication-tools.sh COMMAND...` extracts the SHA-256/size-pinned official Ubuntu
+packages in `deploy/ci/publication-deps.lock.json` into the lane target cache and generates an
+English XeLaTeX format in separate writable state. It needs no sudo, host package installation,
+maintainer scripts, runner-image changes, corpus access or credentials. Existing Chromium lock
+callers keep their original default. The package cache and extracted runtime are verified on reuse.

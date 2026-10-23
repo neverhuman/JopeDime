@@ -322,8 +322,11 @@ jobs:
           name: observatory-ui-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/observatory-ui/${{ github.run_id }}/${{ github.run_attempt }}/
 
+  paper:
+    uses: ./.github/workflows/paper.yml
+
   aggregate:
-    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui]
+    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper]
     if: always()
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 20
@@ -391,6 +394,47 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-e2e-smoke
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/e2e-smoke/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Collect publication evidence
+        uses: ./.github/actions/download-ci-evidence
+        with:
+          name: paper-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/paper/
+          into: target/ci-paper-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Require exact-head complete publication evidence
+        if: always()
+        env:
+          PAPER_RESULT: ${{ needs.paper.result }}
+        run: |
+          set -euo pipefail
+          test "$PAPER_RESULT" = success
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          root = pathlib.Path('target/ci-paper-download') / os.environ['GITHUB_RUN_ID'] / os.environ['GITHUB_RUN_ATTEMPT']
+          paths = list(root.rglob('receipt.json'))
+          assert len(paths) == 1, 'one publication receipt required'
+          path = paths[0]; r = json.loads(path.read_text())
+          assert r['schema'] == 'jope.ci-receipt/v1' and r['lane'] == 'paper'
+          assert r['source_sha'] == r['checkout_sha'] == os.environ['JOPE_SOURCE_SHA']
+          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and r['attempt'] == int(os.environ['GITHUB_RUN_ATTEMPT'])
+          assert r['event'] == os.environ['GITHUB_EVENT_NAME']
+          assert r['status'] == 'passed' and r['exit_status'] == 0 and not r.get('diagnostic')
+          assert r['dirty_source'] == r['dirty_source_after'] == []
+          assert r['command'] == ['make', '-C', 'docs/paper/innovationzero', 'check', 'self-test', 'pdf']
+          names = ['InnovationZero', 'InnovationZero-Supplement', 'InnovationZero-Archive']
+          required = {'command.log', 'evidence/build-environment.txt', 'evidence/dependencies.json', 'evidence/format.log'}
+          required.update('evidence/' + n + ext for n in names for ext in ('.pdf', '.log'))
+          assert required <= set(r['evidence'])
+          actual = {str(p.relative_to(path.parent)) for p in path.parent.rglob('*') if p.is_file() and p != path}
+          assert actual == set(r['evidence'])
+          for name, sha in r['evidence'].items():
+              member = path.parent / name
+              assert not pathlib.Path(name).is_absolute() and '..' not in pathlib.Path(name).parts
+              assert not member.is_symlink() and member.resolve().is_relative_to(path.parent.resolve())
+              assert hashlib.sha256(member.read_bytes()).hexdigest() == sha
+          native = json.loads((path.parent / 'evidence/dependencies.json').read_text())
+          assert native['lock_sha256'] == hashlib.sha256(pathlib.Path('deploy/ci/publication-deps.lock.json').read_bytes()).hexdigest()
+          print('Exact-head publication, three PDFs, TeX logs, refusal checks and verified toolchain retained')
+          PY
       - name: Collect frontend evidence
         uses: ./.github/actions/download-ci-evidence
         with:
@@ -433,8 +477,8 @@ jobs:
           output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           mkdir -p "$output"
           printf '%s\n' "$NEEDS_JSON" > "$output/all-needs.json"
-          # UI is independently verified above; preserve the strict existing eight-lane set.
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); print(json.dumps(n))' > "$output/needs.json"
+          # UI and publication evidence are independently verified above; preserve the existing lane set.
+          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); print(json.dumps(n))' > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once

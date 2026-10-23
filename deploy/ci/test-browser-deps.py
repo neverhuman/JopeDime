@@ -62,6 +62,27 @@ class BrowserDependencies(unittest.TestCase):
         self.assertEqual((runtime / self.payload).read_bytes(), b"bounded fixture library bytes")
         self.assertEqual(runtime, self.prepare("proof-reused.json"))
 
+    def test_explicit_generic_lock_preserves_default_and_verifies_payload(self):
+        explicit = self.root / "publication.json"
+        data = json.loads(MODULE.LOCK.read_text())
+        data["schema"] = "jope.ubuntu24.04-dependencies/v1"
+        explicit.write_text(json.dumps(data))
+        with contextlib.redirect_stdout(io.StringIO()):
+            MODULE.prepare(self.cache, self.root / "generic.json", explicit)
+        proof = json.loads((self.root / "generic.json").read_text())
+        self.assertEqual(proof["lock_sha256"], MODULE.digest(explicit))
+        self.assertEqual((Path(proof["runtime"]) / self.payload).read_bytes(), b"bounded fixture library bytes")
+        self.assertEqual(json.loads(MODULE.LOCK.read_text())["schema"], "jope.chromium-ubuntu24.04-dependencies/v1")
+        for field, value in (("schema", "unknown"), ("architecture", "arm64")):
+            bad = {**data, field: value}
+            explicit.write_text(json.dumps(bad))
+            with self.assertRaisesRegex(ValueError, "unsupported"):
+                MODULE.prepare(self.cache, self.root / "bad-generic.json", explicit)
+        data["packages"][0]["url"] = "https://example.invalid/ubuntu/pool/fixture.deb"
+        explicit.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError, "official Ubuntu"):
+            MODULE.prepare(self.cache, self.root / "bad-mirror.json", explicit)
+
     def test_corrupt_download_cache_is_refused(self):
         self.cached.write_bytes(b"corrupt archive")
         with self.assertRaisesRegex(ValueError, "cached package differs"):
