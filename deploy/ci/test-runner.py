@@ -56,7 +56,7 @@ done
                     self.assertEqual(0, result.returncode, result.stderr)
                     self.assertEqual(f'CARGO_TARGET_DIR=/var/cache/jope/target/{lane}\n',
                                      output.read_text())
-            for lane in ('guard', 'gpu', 'ci5', '../full', '', 'ci\nINJECTED=1'):
+            for lane in ('guard', 'gpu', 'ci13', '../full', '', 'ci\nINJECTED=1'):
                 with self.subTest(rejected_lane=lane):
                     output.write_text('')
                     result = subprocess.run(['bash', '-ec', script], cwd=ROOT,
@@ -104,7 +104,7 @@ done
 
     def test_mac_pr_slots_are_explicit_and_never_gain_trusted_labels(self):
         script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=xbabe4; jope_runner_labels "$1"'
-        for lane in ('ci', 'ci2', 'ci3', 'ci4'):
+        for lane in ('ci', 'ci2', 'ci3', 'ci4', 'ci5', 'ci6', 'ci7', 'ci8', 'ci9', 'ci10', 'ci11', 'ci12'):
             result = subprocess.run(['bash', '-ec', script, 'test', lane], cwd=ROOT, capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertEqual(f'xbabe4-{lane},jope-ci', result.stdout.strip())
@@ -113,7 +113,7 @@ done
             container.verify(launch, str(16*1024**3), '1600000 100000', '0', [])
             with self.assertRaises(ValueError):
                 container.verify(launch | {'domain': 'main'}, str(16*1024**3), '1600000 100000', '0', [])
-        for lane in ('full', 'guard', 'gpu', 'ci5'):
+        for lane in ('full', 'guard', 'gpu', 'ci13'):
             result = subprocess.run(['bash', '-ec', script, 'test', lane], cwd=ROOT, capture_output=True, text=True)
             self.assertNotEqual(0, result.returncode)
 
@@ -204,7 +204,7 @@ done
 
     def test_each_host_lists_exactly_its_approved_lanes(self):
         script = 'source deploy/runner/common.sh; jope_runner_lanes "$1"'
-        expected = {'xbabe1': 'ci ci2 guard', 'xbabe2': 'full ci guard', 'xbabe3': 'full ci guard', 'xbabe0': 'ci', 'xbabe4': 'ci ci2 ci3 ci4'}
+        expected = {'xbabe1': 'ci ci2 guard', 'xbabe2': 'full ci guard', 'xbabe3': 'full ci guard', 'xbabe0': 'ci', 'xbabe4': 'ci ci2 ci3 ci4 ci5 ci6 ci7 ci8 ci9 ci10 ci11 ci12'}
         for host, lanes in expected.items():
             result = subprocess.run(['bash','-ec',script,'test',host],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(0, result.returncode, result.stderr)
@@ -212,7 +212,7 @@ done
             for lane in lanes.split():
                 role = subprocess.run(['bash','-ec','source deploy/runner/common.sh; jope_runner_role "$1" "$2"','test',host,lane],cwd=ROOT,capture_output=True)
                 self.assertEqual(0, role.returncode, (host, lane))
-        self.assertEqual(14, sum(len(lanes.split()) for lanes in expected.values()))
+        self.assertEqual(22, sum(len(lanes.split()) for lanes in expected.values()))
         for host in ('xbabe5', 'xbabe2-mac', 'Mac-Studio.local', ''):
             result = subprocess.run(['bash','-c',script,'test',host],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(2, result.returncode, host)
@@ -223,7 +223,7 @@ done
             result = subprocess.run(['bash','-ec',script,'test',host,lane],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(0,result.returncode)
             self.assertEqual(expected,result.stdout.strip())
-        for host, lane in [('xbabe2','ci2'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3'),('xbabe3','ci2'),('xbabe3','gpu'),('xbabe0','ci2'),('xbabe0','full'),('xbabe0','gpu'),('xbabe4','full'),('xbabe4','guard'),('xbabe4','ci5'),('xbabe5','ci')]:
+        for host, lane in [('xbabe2','ci2'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3'),('xbabe3','ci2'),('xbabe3','gpu'),('xbabe0','ci2'),('xbabe0','full'),('xbabe0','gpu'),('xbabe4','full'),('xbabe4','guard'),('xbabe4','ci13'),('xbabe5','ci')]:
             result = subprocess.run(['bash','-ec','source deploy/runner/common.sh; jope_runner_role "$1" "$2"','test',host,lane],cwd=ROOT,capture_output=True)
             self.assertEqual(2,result.returncode)
 
@@ -286,7 +286,7 @@ class MacControllerTests(unittest.TestCase):
         cfg = json.loads((ROOT/'deploy/runner/mac-capacity.json').read_text())
         values = dict(policy=cfg, mac=dict(host='Mac-Studio.local', free_bytes=500*1024**3),
             user=dict(login='jepsontaylor'), guest=dict(host='xbabe4', architecture='aarch64',
-            cpus=24, total_gib=95, available_gib=80, root_free_gib=80, docker_free_gib=600,
+            cpus=24, total_gib=251, available_gib=80, root_free_gib=80, docker_free_gib=600,
             cgroup_version='2', cgroup_driver='systemd', image_id=cfg['image_id'],
             recorded_image_id=cfg['image_id'], image_architecture='amd64', digest='a'*64,
             recorded_digest='a'*64, sdk_version=cfg['sdk_version'], lane_idle=True,
@@ -329,7 +329,7 @@ jope_mac_launch "$2" "$fixture/state" "$(cat "$fixture/policy.json")" 20261023T1
 
     def test_mac_valid_path_uses_stdin_and_retains_only_public_state(self):
         import json
-        for lane in ('ci','ci2','ci3','ci4'):
+        for lane in ('ci', 'ci2', 'ci3', 'ci4', 'ci5', 'ci6', 'ci7', 'ci8', 'ci9', 'ci10', 'ci11', 'ci12'):
             with self.subTest(lane=lane), self.scratch() as name:
                 root=Path(name); values=self.fixture(root); result=self.run_fixture(root,values,lane)
                 self.assertEqual(0,result.returncode,result.stderr)
@@ -356,6 +356,29 @@ jope_mac_launch "$2" "$fixture/state" "$(cat "$fixture/policy.json")" 20261023T1
                 root=Path(name); values=self.fixture(root);values['guest'][key]=value
                 result=self.run_fixture(root,values)
                 self.assertNotEqual(0,result.returncode,key)
+                self.assertEqual('0',(root/'mint-count').read_text().strip())
+
+    def test_twelfth_slot_admission_and_closed_inventory(self):
+        lanes = ['ci'] + ['ci'+str(n) for n in range(2,13)]
+        with self.scratch() as name:
+            root=Path(name); values=self.fixture(root)
+            values['guest'].update(active_lanes=lanes[:-1], reserved_gib=176)
+            result=self.run_fixture(root,values,'ci12')
+            self.assertEqual(0,result.returncode,result.stderr)
+            self.assertEqual('1',(root/'mint-count').read_text().strip())
+        for active,reserved in [(lanes,192), (lanes[:-1]+['ci13'],192),
+                                (['ci2','ci2'],32), (lanes[:-1],160)]:
+            with self.subTest(active=active,reserved=reserved),self.scratch() as name:
+                root=Path(name);values=self.fixture(root)
+                values['guest'].update(active_lanes=active,reserved_gib=reserved)
+                result=self.run_fixture(root,values,'ci12')
+                self.assertNotEqual(0,result.returncode)
+                self.assertEqual('0',(root/'mint-count').read_text().strip())
+        for lane in ['ci0','ci1','ci01','ci13','ci99','guard','full','ci;id']:
+            with self.subTest(lane=lane),self.scratch() as name:
+                root=Path(name);values=self.fixture(root)
+                result=self.run_fixture(root,values,lane)
+                self.assertNotEqual(0,result.returncode)
                 self.assertEqual('0',(root/'mint-count').read_text().strip())
 
     def test_mac_unknown_mint_and_ssh_outcomes_block_fresh_process_remint(self):

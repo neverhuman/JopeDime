@@ -9,7 +9,7 @@ runs:
         set -euo pipefail
         lane=${JOPE_RUNNER_LANE:?runner did not identify its lane}
         case "$lane" in
-          ci|ci2|ci3|ci4|full) ;;
+          ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12|full) ;;
           *) echo "unsupported CPU runner lane: $lane" >&2; exit 1 ;;
         esac
         echo "CARGO_TARGET_DIR=/var/cache/jope/target/$lane" >> "$GITHUB_ENV"

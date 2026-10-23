@@ -22,7 +22,7 @@ xbabe2 and xbabe3 are untrusted pr-domain lanes beside the full lane: their own 
 volumes, never the main-full volumes, and never the exclusive CPU lock, so ASM allocations still
 wait only for the full lane. xbabe0 holds one ci lane because its free disk (169 GB on
 2026-10-22) fits one persistent Cargo target. `jope_runner_lanes` in `common.sh` is the per-host
-lane list that `provision.sh` installs. xbabe4 is a macOS host with a dedicated Colima Linux VM; its four additional PR roles and three small Linux guard roles are described below. xbabe5 remains excluded.
+lane list that `provision.sh` installs. xbabe4 is a macOS host with a dedicated Colima Linux VM; its twelve additional PR roles and three small Linux guard roles are described below. xbabe5 remains excluded.
 `common.sh` rejects other host/lane combinations, including GPU and kernel roles. New roles require the reviewed deployment and actual live qualification below.
 The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
 
@@ -71,8 +71,16 @@ operational delivery. `--skip-image` requires an existing correctly built image.
 The provenance action binds host runner files to reviewed merged code. On `pull_request`
 events it compares the host digest (and mounted admission hooks / image entrypoint) to the
 digest computed from the PR **base** ref, not the PR head — so runner-change PRs can go green
-on current hosts, merge, then deploy in a short post-merge freeze. Push / workflow_dispatch /
-main runs still require an exact match to the commit under test. On a shallow checkout the
+on current hosts, merge, then deploy in a short post-merge freeze. Push, main and ordinary workflow_dispatch runs still require an exact match to the commit
+under test. A full manual candidate run may explicitly pass `-f provenance_pr=NUMBER` to
+`gh-role writer workflow run ci.yml --ref BRANCH`. The provenance action reads that dispatch
+input and uses the read-only GitHub API to require an open same-repository PR targeting main,
+the exact dispatched head/branch/ci.yml workflow and a base equal to current remote main.
+Only then does it bind installed files to that merged base, as native PR CI does. A moved
+head, fork, wrong workflow, stale base, closed PR or unavailable API fails closed. This tests
+all candidate jobs on reviewed installed policy; it does not qualify a new installation.
+Merge first, drain and deploy only merged files, then run exact-main receiving checks and
+qualify every new role with actual registration, admission and a successful real job. On a shallow checkout the
 action first fetches exactly the PR base commit (`provenance_bind.py ensure-base`, depth 1,
 read-only job token), so no job depends on a reused workspace already holding it. A `BASE_SHA`
 that is not exactly 40 lowercase hex characters is refused before git runs, the fetch is bounded
@@ -108,7 +116,7 @@ must not be used to bypass that check.
 
 ## Mac Linux runners and guard lanes
 
-The declared allocation adds four PR lanes (`ci`, `ci2`, `ci3`, `ci4`) in xbabe4's dedicated
+The declared allocation provides twelve PR lanes (`ci`, `ci2` through `ci12`) in xbabe4's dedicated
 `jope-ci` Colima Linux VM and one small `guard` lane on each of xbabe1, xbabe2 and xbabe3.
 The guard lanes have the separate `jope-main-guard` label, 2 GiB and 2 CPUs, with storage
 `jope-guard-guard-*`. Their root admission policy accepts only this repository's exact
@@ -116,11 +124,11 @@ The guard lanes have the separate `jope-main-guard` label, 2 GiB and 2 CPUs, wit
 Existing seven heavy roles, caps, labels and storage domains remain as listed above.
 
 Each Mac PR lane has its own `jope-pr-<lane>-{work,cargo,target,uv}` volumes and the normal
-16 GiB/16 CPU/no-swap container limits. The VM has 24 virtual CPUs and 96 GiB RAM, shared by
-all four lanes; the per-container CPU limits do not promise 64 physical CPUs. Admission
-requires at least 20 GiB guest memory available, 50 GiB guest root free, 120 GiB guest Docker
+16 GiB/16 CPU/no-swap container limits. The VM has 24 virtual CPUs and 256 GiB RAM, shared by
+all twelve lanes; the per-container CPU limits share those 24 virtual CPUs. Admission
+requires at least 250 GiB total and 20 GiB guest memory available, 50 GiB guest root free, 120 GiB guest Docker
 storage free and 120 GiB on the Mac. All existing Jope containers must have the declared caps;
-the sum of admitted memory limits cannot exceed 64 GiB. Other Docker/Colima profiles remain
+the sum of admitted memory limits cannot exceed 192 GiB. Other Docker/Colima profiles remain
 outside this VM and outside the deployment.
 
 `mac-controller.sh` runs as the existing `ubuntu` user on the Ubuntu xbabe2 host. Its existing
@@ -157,12 +165,11 @@ Deploy only reviewed merged files, in the existing coordinated freeze:
    also creates the private controller state directory for `ubuntu`.
 3. In the existing owned `jope-ci` guest, use that exact reviewed deployment payload and
    `sudo deploy/runner/provision.sh --skip-image`. The pinned amd64 image must already exist;
-   this initializes the four separate storage domains and provisions the SDK from its receipt.
+   this initializes the twelve separate storage domains and provisions the SDK from its receipt.
    It installs no GitHub credential. Keep the guest's native `jope-runner@*.timer` units disabled;
    only the Ubuntu controller supplies its one-use configurations.
 4. On xbabe1/2/3 enable `jope-runner@guard.timer` and resume only their previously enabled heavy
-   timers. On Ubuntu xbabe2 enable `jope-mac-runner@ci.timer`, `@ci2.timer`, `@ci3.timer` and
-   `@ci4.timer`. Do not enable the Mac controller on other hosts. No daemon should start from
+   timers. On Ubuntu xbabe2 enable `jope-mac-runner@ci.timer` and `@ci2.timer` through `@ci12.timer`. Do not enable the Mac controller on other hosts. No daemon should start from
    an unmerged checkout or an unrecorded unit override.
 5. Verify each new role's actual cgroup caps, swap, domain mounts, root-installed digest,
    registration, admission and a real CI job. Confirm the guard handles a main push and refuses

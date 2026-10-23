@@ -11,6 +11,6 @@
   "guest_min_docker_free_gib": 120,
   "guest_min_available_gib": 20,
   "guest_cpus": 24,
-  "guest_min_total_gib": 90,
+  "guest_min_total_gib": 250,
   "sdk_version": "2.13.0+cu126"
 }

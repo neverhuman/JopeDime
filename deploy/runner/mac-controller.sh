@@ -68,16 +68,16 @@ jope_mac_validate_guest() { # public facts, policy, lane, expected installed dig
     .digest == $digest and .recorded_digest == $digest and .sdk_version == $p.sdk_version and
     .lane_idle == true and (.active_lanes | type == "array") and
     (.active_lanes | index($lane) == null) and
-    (.active_lanes | all(. == "ci" or . == "ci2" or . == "ci3" or . == "ci4")) and
+    (.active_lanes | all(test("^ci([2-9]|1[0-2])?$"))) and
     (.active_lanes | length == (unique | length)) and
-    .reserved_gib == ((.active_lanes | length) * 16) and (.reserved_gib + 16 <= 64)
+    .reserved_gib == ((.active_lanes | length) * 16) and (.reserved_gib + 16 <= 192)
   ' >/dev/null
 }
 
 jope_mac_launch() { # lane, provisioned state dir, public policy JSON, optional test timestamp
   local lane=$1 state_dir=$2 cfg=$3 stamp=${4:-} digest mac guest user name current history state start request response='' encoded='' id labels
   export -n response encoded
-  case $lane in ci|ci2|ci3|ci4) ;; *) return 2 ;; esac
+  case $lane in ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12) ;; *) return 2 ;; esac
   printf '%s' "$cfg" | jq -e '
     .schema == "jope.mac-capacity/v1" and .ssh_alias == "xbabe2" and .profile == "jope-ci" and
     .colima == "/opt/homebrew/bin/colima" and .mac_hostname == "Mac-Studio.local" and

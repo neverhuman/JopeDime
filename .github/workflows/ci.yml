@@ -2,8 +2,15 @@ name: ci
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      provenance_pr:
+        description: "Optional open same-repository PR number; validate exact head and bind installed runner files to current merged main"
+        type: string
+        required: false
+        default: ""
 permissions:
   contents: read
+  pull-requests: read
 
 env:
   CARGO_BUILD_JOBS: "4"

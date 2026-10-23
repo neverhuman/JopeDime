@@ -87,13 +87,13 @@ jope_runner_pin_swap() { # <container name>
 }
 
 # Human allocation, 2026-10-23: retain the seven reviewed heavy slots and add
-# four PR-only slots in the dedicated xbabe4 Linux Docker VM plus a small guard
+# twelve PR-only slots in the dedicated xbabe4 Linux Docker VM plus a small guard
 # slot on xbabe1/2/3. Guard slots run metadata-only main-guard, never Rust/full CI.
 # Existing full slots retain the owner-authorized jope-ci label. Each lane has
 # separate volumes; only full takes the host-local ASM allocation lock.
 jope_runner_role() { # <host> <lane>; callers use actual hostname, never a job variable
   case "$1/$2" in
-    xbabe1/ci|xbabe1/ci2|xbabe2/ci|xbabe3/ci|xbabe0/ci|xbabe4/ci|xbabe4/ci2|xbabe4/ci3|xbabe4/ci4) JOPE_RUNNER_DOMAIN="pr"; JOPE_RUNNER_MEMORY=16g; JOPE_RUNNER_CPUS=16 ;;
+    xbabe1/ci|xbabe1/ci2|xbabe2/ci|xbabe3/ci|xbabe0/ci|xbabe4/ci|xbabe4/ci2|xbabe4/ci3|xbabe4/ci4|xbabe4/ci5|xbabe4/ci6|xbabe4/ci7|xbabe4/ci8|xbabe4/ci9|xbabe4/ci10|xbabe4/ci11|xbabe4/ci12) JOPE_RUNNER_DOMAIN="pr"; JOPE_RUNNER_MEMORY=16g; JOPE_RUNNER_CPUS=16 ;;
     xbabe2/full|xbabe3/full) JOPE_RUNNER_DOMAIN=main; JOPE_RUNNER_MEMORY=48g; JOPE_RUNNER_CPUS=16 ;;
     xbabe1/guard|xbabe2/guard|xbabe3/guard) JOPE_RUNNER_DOMAIN=guard; JOPE_RUNNER_MEMORY=2g; JOPE_RUNNER_CPUS=2 ;;
     *) echo "unapproved runner host/lane: $1/$2" >&2; return 2 ;;
@@ -108,7 +108,7 @@ jope_runner_external_jit() { # <actual host> <lane> <public runner name>, encode
   export -n payload JOPE_EXTERNAL_JIT
   JOPE_EXTERNAL_JIT=''
   case "$host/$lane" in
-    xbabe4/ci|xbabe4/ci2|xbabe4/ci3|xbabe4/ci4) ;;
+    xbabe4/ci|xbabe4/ci2|xbabe4/ci3|xbabe4/ci4|xbabe4/ci5|xbabe4/ci6|xbabe4/ci7|xbabe4/ci8|xbabe4/ci9|xbabe4/ci10|xbabe4/ci11|xbabe4/ci12) ;;
     *) echo "external JIT is not approved for this host/lane" >&2; return 2 ;;
   esac
   [[ $name == "$host-$lane-"* && $name =~ ^xbabe4-ci(2|3|4)?-[0-9]{8}T[0-9]{6}Z$ ]] || {
@@ -129,7 +129,7 @@ jope_runner_lanes() { # <host>
     xbabe1) echo "ci ci2 guard" ;;
     xbabe2|xbabe3) echo "full ci guard" ;;
     xbabe0) echo "ci" ;;
-    xbabe4) echo "ci ci2 ci3 ci4" ;;
+    xbabe4) echo "ci ci2 ci3 ci4 ci5 ci6 ci7 ci8 ci9 ci10 ci11 ci12" ;;
     *) echo "unapproved CPU runner host: $1" >&2; return 2 ;;
   esac
 }
@@ -137,7 +137,7 @@ jope_runner_lanes() { # <host>
 jope_runner_labels() {
   jope_runner_role "$JOPE_RUNNER_HOST" "$1" || return
   case $1 in
-    ci|ci2|ci3|ci4) echo "$JOPE_RUNNER_HOST-$1,jope-ci" ;;
+    ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12) echo "$JOPE_RUNNER_HOST-$1,jope-ci" ;;
     full) echo "$JOPE_RUNNER_HOST-full,jope-full-cpu,jope-ci" ;;
     guard) echo "$JOPE_RUNNER_HOST-guard,jope-main-guard" ;;
   esac
@@ -151,7 +151,7 @@ jope_runner_check_existing() { # requested lane; docker failure is never an empt
   while read -r id running; do
     [[ -n $id ]] || continue
     case "$JOPE_RUNNER_HOST/$running" in
-      xbabe1/ci|xbabe1/ci2|xbabe1/guard|xbabe2/full|xbabe2/ci|xbabe2/guard|xbabe3/full|xbabe3/ci|xbabe3/guard|xbabe0/ci|xbabe4/ci|xbabe4/ci2|xbabe4/ci3|xbabe4/ci4) ;;
+      xbabe1/ci|xbabe1/ci2|xbabe1/guard|xbabe2/full|xbabe2/ci|xbabe2/guard|xbabe3/full|xbabe3/ci|xbabe3/guard|xbabe0/ci|xbabe4/ci|xbabe4/ci2|xbabe4/ci3|xbabe4/ci4|xbabe4/ci5|xbabe4/ci6|xbabe4/ci7|xbabe4/ci8|xbabe4/ci9|xbabe4/ci10|xbabe4/ci11|xbabe4/ci12) ;;
       *) echo "unapproved existing JopeDime container: $id lane=$running" >&2; return 2 ;;
     esac
     [[ $running != "$1" ]] || { echo "existing container owns lane $1: $id" >&2; return 2; }
