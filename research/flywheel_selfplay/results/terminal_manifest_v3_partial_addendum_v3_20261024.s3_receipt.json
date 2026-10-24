@@ -1,0 +1,14 @@
+{
+  "local_path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_addendum_v3_20261024.json",
+  "s3_uri": "s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/terminal_manifest_v3_partial_addendum_v3_20261024.json",
+  "s3_key": "experiments/flywheel-selfplay-20261023/terminal_manifest_v3_partial_addendum_v3_20261024.json",
+  "local_sha256": "97c89af3b32aae95f12813f8fc938382d2ee4ca08759c3b87eae3d03edbef577",
+  "remote_get_sha256": "97c89af3b32aae95f12813f8fc938382d2ee4ca08759c3b87eae3d03edbef577",
+  "sha256_verified": true,
+  "size_bytes": 1864,
+  "content_length": 1864,
+  "version_id": "rArhd10PM3WdTOgMjY2V5WxPQVd0pi6U",
+  "etag": "1d909120b3c9b2af406cf11dbc50c5ca",
+  "last_modified": "2026-10-24T11:02:26+00:00",
+  "post_publication_total_wall_seconds": 21.75
+}
