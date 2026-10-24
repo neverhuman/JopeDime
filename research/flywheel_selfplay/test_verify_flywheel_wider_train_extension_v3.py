@@ -1,41 +1,59 @@
 #!/usr/bin/env python3
 """
-Deterministic Stub Unit Tests for `verify_flywheel_wider_train_extension_v3.py`
-===============================================================================
-Verifies the four source-replay audit requirements from
-`/home/ubuntu/.codex-screen-monitor/jope-source-replay-audit-20261024T101652Z.txt`
+Deterministic Stub & Child-Process Unit Tests for `verify_flywheel_wider_train_extension_v3.py`
+===============================================================================================
+Verifies all source-replay audit and comparator/process-deadline requirements from:
+- `/home/ubuntu/.codex-screen-monitor/jope-source-replay-audit-20261024T101652Z.txt`
+- `/home/ubuntu/.codex-screen-monitor/jope-comparator-and-process-deadline-20261024T103653Z.txt`
 with zero dataset/training/evaluation campaign compute (< 3s wall-clock):
 
-1. `test_resume_eval_only_call_graph_zero_evolution_training_or_writes`:
+1. `test_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag`:
    Proves `main(["--resume-eval-from-saved-checkpoints", "--authorize-post-deadline-resume-budget-s", "60"])`
-   verifies recorded immutable SHA-256 hashes of `corpus_v3_manifest.json`, materialized `.npz` pools,
-   and saved checkpoints, and executes ZERO calls to `run_bounded_256_context_winner_generation()`,
-   `build_versioned_v3_strict_train_pools()`, `train_matched_430_steps_strict_train()`,
-   `np.savez_compressed()`, or `torch.save()`, while leaving `corpus_v3_manifest.json` and `.npz`
-   files byte-for-byte untouched. Also verifies tamper detection on pool and checkpoint hashes.
-2. `test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization`:
+   fails closed with `RuntimeError` when `--baseline-430-checkpoint` is absent and
+   `--allow-v2a-intervention-comparator` is not passed, refusing to silently substitute
+   `WINNER_POOL_V2A_TRAIN_ONLY_430` as `BASELINE_FROZEN_POOL_TRAIN_ONLY_430`.
+2. `test_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline`:
+   Proves that passing `--allow-v2a-intervention-comparator` verifies the SHA-256 of
+   `flywheel_winner_pool_v2a_train_only_430.pt`, executes ZERO evolution/pool-materialization/training/write
+   calls, labels the comparator arm strictly as `WINNER_POOL_V2A_TRAIN_ONLY_430` (`comparator_is_frozen_pool_baseline=False`),
+   emits `WINNER_POOL_V3A_Q25_430_minus_WINNER_POOL_V2A_TRAIN_ONLY_430` and
+   `WINNER_POOL_V3B_MEDIAN_430_minus_WINNER_POOL_V2A_TRAIN_ONLY_430` contrasts, emits zero
+   `BASELINE_FROZEN_POOL_TRAIN_ONLY_430` keys in `training_telemetry`, `arm_means`, `contrasts`, or
+   `step6_programmatic_terminal_conclusion`, and includes `comparator_causal_interpretation_guard`.
+3. `test_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels`:
+   Proves that passing `--baseline-430-checkpoint` and `--baseline-430-checkpoint-sha256` verifies the
+   supplied frozen-pool baseline checkpoint, sets `comparator_arm_tag == "BASELINE_FROZEN_POOL_TRAIN_ONLY_430"`
+   (`comparator_is_frozen_pool_baseline=True`), and emits `v3a_q25_vs_baseline_status` /
+   `v3b_median_vs_baseline_status` with zero training calls.
+4. `test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization`:
    Proves that when `flywheel_phase7_partial_and_expired_deadline_receipt.json` records an exhausted
    original budget (`1643.0s > 1080.0s`), calling `--resume-eval-from-saved-checkpoints` without
    `--authorize-post-deadline-resume-budget-s` raises `DeadlineExpiredError` immediately before
    loading pools or running any stage.
-3. `test_slow_blocking_evaluator_preempted_at_hard_deadline`:
-   Simulates a slow/blocking evaluator (`sleep(5.0)`) after context 0 completes (`0.01s`) under a
-   tight hard deadline (`effective_cap_s = 15.18s`, `reserve_s = 15.0s` -> `0.18s` budget). Proves
-   `run_bounded_256_context_winner_generation()` preempts via `concurrent.futures.wait` +
-   `ex.shutdown(wait=False, cancel_futures=True)` in `< 0.6s` (without waiting `5.0s` on threadpool
-   shutdown) and preserves completed partial context 0 (`contexts_completed == 1`).
-4. `test_dynamic_unknown_interpretation_and_post_publication_wall_accounting`:
-   Proves `build_dynamic_evidence_bound_conclusion()` records incomplete evaluation strictly as
-   `UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE` with zero prewritten architectural/null claims, and proves
-   `main()` computes `post_publication_total_wall_seconds` and `within_finite_wall_stop` AFTER
-   publication so S3 publication latency is included in deadline accounting.
+5. `test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes`:
+   Spawns a real isolated child Python process (`subprocess.Popen`) under `hard_cap_s = 15.35s`
+   (`0.35s` effective budget with `reserve_s = 15.0s`) where context 0 finishes in `0.02s` and context 1's
+   worker records its OS `worker_pid`, sleeps `3.0s` (ignoring `timeout_s`), and attempts a late file write
+   (`late_write_after_deadline.txt`). Proves:
+   - The child Python process exits completely within `< 0.90s` (never hanging `3.0s` at interpreter exit).
+   - The spawned worker OS process (`worker_pid`) is dead (`os.kill(worker_pid, 0)` raises `ProcessLookupError`).
+   - Even after waiting an additional `0.5s`, `late_write_after_deadline.txt` does NOT exist.
+   - Partial completed context 0 (`contexts_completed == 1`) is preserved and incomplete evaluation is
+     recorded as `UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE`.
+6. `test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline`:
+   Proves a blocked `evaluate_episode_rollout_context` call (`time.sleep(2.5)`) inside
+   `run_matched_v3_acceptance_test()` is preempted by `controller.itimer_guard` (`SIGALRM`) in `< 0.45s`
+   and recorded as `UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE`.
 """
 from __future__ import annotations
 
-import copy
+import contextlib
 import json
+import os
 import shutil
+import subprocess
 import sys
+import textwrap
 import time
 import unittest
 from pathlib import Path
@@ -95,6 +113,35 @@ def _make_synthetic_pool_entry(cid: str, dl_split: str, source_split: str, idx: 
         "pids": pids,
         "prior_cost": fit.copy(),
         "scale": 1.0,
+    }
+
+
+def _fast_eval_stub(cid, p, c_scaled, s_map, m_obj, device, arm, **kwargs):
+    return {
+        "context_sha256": cid,
+        "component": p["rec"]["family_id"],
+        "union_component": p["rec"]["family_id"],
+        "arm": arm,
+        "utility": -1.1,
+        "best_F_by_budget": {"8": -0.9, "16": -1.0, "32": -1.1, "64": -1.4},
+        "rollout_gate_failure_counts": {"8": 0, "16": 0, "32": 0, "64": 0},
+        "gate_failure_fraction_by_budget": {"8": 0.0, "16": 0.0, "32": 0.0, "64": 0.0},
+    }
+
+
+def _fast_bootstrap_stub(rows, arms, reference_arms, seed=20261022):
+    contrasts = {}
+    for a in arms:
+        for ref in reference_arms:
+            if a != ref:
+                contrasts[f"{a}_minus_{ref}"] = {
+                    "mean": 0.0,
+                    "CI_central_98_75": [-0.01, 0.01],
+                }
+    return {
+        "n_contexts": len({r["context_sha256"] for r in rows}),
+        "arm_means": {a: -1.1 for a in arms},
+        "contrasts": contrasts,
     }
 
 
@@ -214,6 +261,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                 ckpt_dir / "flywheel_winner_pool_v3b_median_train_only_430.pt"
             ),
         }
+        v2a_sha = v3.sha256_file(ckpt_dir / "flywheel_winner_pool_v2a_train_only_430.pt")
 
         partial_receipt_path = res_dir / "flywheel_phase7_partial_and_expired_deadline_receipt.json"
         partial_receipt_path.write_text(
@@ -240,6 +288,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             "manifest_v3_path": manifest_v3_path,
             "partial_receipt_path": partial_receipt_path,
             "expected_partial": expected_partial,
+            "v2a_sha": v2a_sha,
             "pools_frozen": pools_frozen,
             "ctx_raw_584": np.zeros((3, 584), dtype=np.float32),
         }
@@ -261,72 +310,93 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             self.assertEqual(spy_build.call_count, 0)
             self.assertEqual(spy_train.call_count, 0)
 
-    def test_resume_eval_only_call_graph_zero_evolution_training_or_writes(self) -> None:
+    def test_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag(self) -> None:
         fix = self._build_fixture_env()
-        manifest_sha_before = v3.sha256_file(fix["manifest_v3_path"])
-        v3a_sha_before = v3.sha256_file(fix["v3a_npz"])
-        v3b_sha_before = v3.sha256_file(fix["v3b_npz"])
-
-        def _fast_eval_stub(cid, p, c_scaled, s_map, m_obj, device, arm, **kwargs):
-            return {
-                "context_sha256": cid,
-                "component": p["rec"]["family_id"],
-                "union_component": p["rec"]["family_id"],
-                "arm": arm,
-                "utility": -1.1,
-                "best_F_by_budget": {"8": -0.9, "16": -1.0, "32": -1.1, "64": -1.4},
-                "rollout_gate_failure_counts": {"8": 0, "16": 0, "32": 0, "64": 0},
-                "gate_failure_fraction_by_budget": {"8": 0.0, "16": 0.0, "32": 0.0, "64": 0.0},
-            }
-
-        def _fast_bootstrap_stub(rows, arms, reference_arms, seed=20261022):
-            contrasts = {}
-            for a in arms:
-                for ref in reference_arms:
-                    if a != ref:
-                        contrasts[f"{a}_minus_{ref}"] = {
-                            "mean": 0.0,
-                            "CI_central_98_75": [-0.01, 0.01],
-                        }
-            return {
-                "n_contexts": len({r["context_sha256"] for r in rows}),
-                "arm_means": {a: -1.1 for a in arms},
-                "contrasts": contrasts,
-            }
-
         with (
             mock.patch.object(v3, "CHECKPOINTS_DIR", fix["ckpt_dir"]),
             mock.patch.object(v3, "RESULTS_DIR", fix["res_dir"]),
             mock.patch.object(v3, "CORPUS_V3_DIR", fix["v3_dir"]),
             mock.patch.object(v3, "CORPUS_V3_MANIFEST_PATH", fix["manifest_v3_path"]),
-            mock.patch.object(v3, "PHASE7_REPORT_PATH", fix["res_dir"] / "report.json"),
-            mock.patch.object(v3, "TERMINAL_V3_RECEIPT_PATH", fix["res_dir"] / "receipt.json"),
             mock.patch.object(v3, "PARTIAL_RECEIPT_PATH", fix["partial_receipt_path"]),
             mock.patch.object(v3, "IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS", fix["expected_partial"]),
+            mock.patch.object(v3, "IMMUTABLE_V2A_CHECKPOINT_SHA256", fix["v2a_sha"]),
             mock.patch.object(v3, "verify_authority_and_immutable_artifacts", return_value={"ok": True}),
             mock.patch.object(
                 v3,
                 "load_all_pools_and_features",
                 return_value=([], [], fix["ctx_raw_584"], {}, fix["pools_frozen"]),
             ),
-            mock.patch.object(v3, "evaluate_episode_rollout_context", side_effect=_fast_eval_stub),
-            mock.patch.object(v3, "compute_component_bootstrap_summary", side_effect=_fast_bootstrap_stub),
-            mock.patch.object(
-                v3,
-                "publish_phase7_artifacts_and_terminal_manifest_v3",
-                side_effect=lambda **kw: (time.sleep(0.05) or {"local_sha256": "abc", "s3_version_id": "v1"}),
-            ),
-            mock.patch.object(v3, "run_bounded_256_context_winner_generation") as spy_evo,
-            mock.patch.object(v3, "build_versioned_v3_strict_train_pools") as spy_build,
+            mock.patch.object(v3, "evaluate_episode_rollout_context") as spy_eval,
             mock.patch.object(v3, "train_matched_430_steps_strict_train") as spy_train,
-            mock.patch("numpy.savez_compressed") as spy_savez,
             mock.patch("torch.save") as spy_torch_save,
         ):
+            with self.assertRaises(RuntimeError) as ctx:
+                v3.main(
+                    [
+                        "--resume-eval-from-saved-checkpoints",
+                        "--authorize-post-deadline-resume-budget-s",
+                        "60",
+                    ]
+                )
+            self.assertIn(
+                "Refusing to substitute WINNER_POOL_V2A_TRAIN_ONLY_430 silently as BASELINE_FROZEN_POOL_TRAIN_ONLY_430",
+                str(ctx.exception),
+            )
+            self.assertEqual(spy_eval.call_count, 0)
+            self.assertEqual(spy_train.call_count, 0)
+            self.assertEqual(spy_torch_save.call_count, 0)
+
+    def test_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline(self) -> None:
+        fix = self._build_fixture_env()
+        manifest_sha_before = v3.sha256_file(fix["manifest_v3_path"])
+        v3a_sha_before = v3.sha256_file(fix["v3a_npz"])
+        v3b_sha_before = v3.sha256_file(fix["v3b_npz"])
+
+        with contextlib.ExitStack() as stack:
+            for attr, val in (
+                ("CHECKPOINTS_DIR", fix["ckpt_dir"]),
+                ("RESULTS_DIR", fix["res_dir"]),
+                ("CORPUS_V3_DIR", fix["v3_dir"]),
+                ("CORPUS_V3_MANIFEST_PATH", fix["manifest_v3_path"]),
+                ("PHASE7_REPORT_PATH", fix["res_dir"] / "report.json"),
+                ("TERMINAL_V3_RECEIPT_PATH", fix["res_dir"] / "receipt.json"),
+                ("PARTIAL_RECEIPT_PATH", fix["partial_receipt_path"]),
+                ("IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS", fix["expected_partial"]),
+                ("IMMUTABLE_V2A_CHECKPOINT_SHA256", fix["v2a_sha"]),
+            ):
+                stack.enter_context(mock.patch.object(v3, attr, val))
+            stack.enter_context(
+                mock.patch.object(v3, "verify_authority_and_immutable_artifacts", return_value={"ok": True})
+            )
+            stack.enter_context(
+                mock.patch.object(
+                    v3,
+                    "load_all_pools_and_features",
+                    return_value=([], [], fix["ctx_raw_584"], {}, fix["pools_frozen"]),
+                )
+            )
+            stack.enter_context(mock.patch.object(v3, "evaluate_episode_rollout_context", side_effect=_fast_eval_stub))
+            stack.enter_context(
+                mock.patch.object(v3, "compute_component_bootstrap_summary", side_effect=_fast_bootstrap_stub)
+            )
+            stack.enter_context(
+                mock.patch.object(
+                    v3,
+                    "publish_phase7_artifacts_and_terminal_manifest_v3",
+                    side_effect=lambda **kw: (time.sleep(0.05) or {"local_sha256": "abc", "s3_version_id": "v1"}),
+                )
+            )
+            spy_evo = stack.enter_context(mock.patch.object(v3, "run_bounded_256_context_winner_generation"))
+            spy_build = stack.enter_context(mock.patch.object(v3, "build_versioned_v3_strict_train_pools"))
+            spy_train = stack.enter_context(mock.patch.object(v3, "train_matched_430_steps_strict_train"))
+            spy_savez = stack.enter_context(mock.patch("numpy.savez_compressed"))
+            spy_torch_save = stack.enter_context(mock.patch("torch.save"))
             report = v3.main(
                 [
                     "--resume-eval-from-saved-checkpoints",
                     "--authorize-post-deadline-resume-budget-s",
                     "60",
+                    "--allow-v2a-intervention-comparator",
                 ]
             )
             # Zero evolution, zero pool materialization, zero training, zero pool/checkpoint writes
@@ -341,6 +411,38 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             self.assertEqual(v3.sha256_file(fix["v3a_npz"]), v3a_sha_before)
             self.assertEqual(v3.sha256_file(fix["v3b_npz"]), v3b_sha_before)
 
+            # Verify comparator labels are strictly WINNER_POOL_V2A_TRAIN_ONLY_430 and NEVER BASELINE_FROZEN_POOL_TRAIN_ONLY_430
+            step5 = report["step5_matched_430_step_acceptance_test"]
+            self.assertEqual(step5["evaluation_status"], "COMPLETED")
+            self.assertEqual(step5["comparator_arm_tag"], "WINNER_POOL_V2A_TRAIN_ONLY_430")
+            self.assertFalse(step5["comparator_is_frozen_pool_baseline"])
+            self.assertIn("WINNER_POOL_V2A_TRAIN_ONLY_430", step5["training_telemetry"])
+            self.assertNotIn("BASELINE_FROZEN_POOL_TRAIN_ONLY_430", step5["training_telemetry"])
+
+            for split_key in ("dl_val_91_contexts_summary", "dl_holdout_93_contexts_summary"):
+                split_summary = step5[split_key]
+                self.assertIn("WINNER_POOL_V2A_TRAIN_ONLY_430", split_summary["arm_means"])
+                self.assertNotIn("BASELINE_FROZEN_POOL_TRAIN_ONLY_430", split_summary["arm_means"])
+                self.assertIn(
+                    "WINNER_POOL_V3A_Q25_430_minus_WINNER_POOL_V2A_TRAIN_ONLY_430",
+                    split_summary["contrasts"],
+                )
+                self.assertIn(
+                    "WINNER_POOL_V3B_MEDIAN_430_minus_WINNER_POOL_V2A_TRAIN_ONLY_430",
+                    split_summary["contrasts"],
+                )
+                for k_contrast in split_summary["contrasts"]:
+                    self.assertNotIn("BASELINE_FROZEN_POOL_TRAIN_ONLY_430", k_contrast)
+
+            step6 = report["step6_programmatic_terminal_conclusion"]
+            self.assertEqual(step6["comparator_arm_tag"], "WINNER_POOL_V2A_TRAIN_ONLY_430")
+            self.assertFalse(step6["comparator_is_frozen_pool_baseline"])
+            self.assertIn("v3a_q25_vs_v2a_intervention_comparator_status", step6)
+            self.assertIn("v3b_median_vs_v2a_intervention_comparator_status", step6)
+            self.assertIn("comparator_causal_interpretation_guard", step6)
+            self.assertNotIn("v3a_q25_vs_baseline_status", step6)
+            self.assertNotIn("v3b_median_vs_baseline_status", step6)
+
             # Verify post-publication wall accounting is strictly >= pre-publication wall accounting
             acct = report["resource_and_cost_accounting"]
             self.assertGreaterEqual(
@@ -349,10 +451,6 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             )
             self.assertEqual(acct["total_wall_seconds"], acct["post_publication_total_wall_seconds"])
             self.assertTrue(acct["within_finite_wall_stop"])
-            self.assertEqual(
-                report["step5_matched_430_step_acceptance_test"]["evaluation_status"],
-                "COMPLETED",
-            )
 
         # Verify tamper detection on materialized pool .npz
         fix["v3a_npz"].write_bytes(b"corrupted_npz_payload")
@@ -364,119 +462,288 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                 v3.load_verified_immutable_v3_pools_and_manifest(fix["pools_frozen"])
             self.assertIn("mismatch", str(ctx_tamper.exception))
 
-    def test_slow_blocking_evaluator_preempted_at_hard_deadline(self) -> None:
+    def test_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels(self) -> None:
         fix = self._build_fixture_env()
-        cid0 = "a" * 64
-        cid1 = "d" * 64
-        p0 = fix["pools_frozen"][cid0]
-        p1 = copy.deepcopy(p0)
-        p1["rec"] = dict(p0["rec"], context_sha256=cid1, index=1)
-        pools = {cid0: p0, cid1: p1}
-        selected_records = [p0["rec"], p1["rec"]]
-        champ_bank = [
-            {
-                "context_sha256": cid0,
-                "dl_split": "DL-Train",
-                "split": "train",
-                "dsl": "v0 | head",
-                "program_sha256": "1" * 64,
-            },
-            {
-                "context_sha256": cid1,
-                "dl_split": "DL-Train",
-                "split": "train",
-                "dsl": "v0 | head",
-                "program_sha256": "2" * 64,
-            },
-        ]
-        lm48_all = np.zeros((3, 48), dtype=np.float32)
+        baseline_ckpt = fix["ckpt_dir"] / "flywheel_baseline_frozen_pool_train_only_430.pt"
+        shutil.copy2(fix["ckpt_dir"] / "flywheel_round_1_full_corpus.pt", baseline_ckpt)
+        baseline_sha = v3.sha256_file(baseline_ckpt)
 
-        def _fake_propose(crec, **kwargs):
-            return [{"dsl": "v0 | head", "program_sha256": "9" * 64, "operator": "edit_zero", "parents": []}]
+        with contextlib.ExitStack() as stack:
+            for attr, val in (
+                ("CHECKPOINTS_DIR", fix["ckpt_dir"]),
+                ("RESULTS_DIR", fix["res_dir"]),
+                ("CORPUS_V3_DIR", fix["v3_dir"]),
+                ("CORPUS_V3_MANIFEST_PATH", fix["manifest_v3_path"]),
+                ("PHASE7_REPORT_PATH", fix["res_dir"] / "report_base.json"),
+                ("TERMINAL_V3_RECEIPT_PATH", fix["res_dir"] / "receipt_base.json"),
+                ("PARTIAL_RECEIPT_PATH", fix["partial_receipt_path"]),
+                ("IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS", fix["expected_partial"]),
+                ("IMMUTABLE_V2A_CHECKPOINT_SHA256", fix["v2a_sha"]),
+            ):
+                stack.enter_context(mock.patch.object(v3, attr, val))
+            stack.enter_context(
+                mock.patch.object(v3, "verify_authority_and_immutable_artifacts", return_value={"ok": True})
+            )
+            stack.enter_context(
+                mock.patch.object(
+                    v3,
+                    "load_all_pools_and_features",
+                    return_value=([], [], fix["ctx_raw_584"], {}, fix["pools_frozen"]),
+                )
+            )
+            stack.enter_context(mock.patch.object(v3, "evaluate_episode_rollout_context", side_effect=_fast_eval_stub))
+            stack.enter_context(
+                mock.patch.object(v3, "compute_component_bootstrap_summary", side_effect=_fast_bootstrap_stub)
+            )
+            stack.enter_context(
+                mock.patch.object(
+                    v3,
+                    "publish_phase7_artifacts_and_terminal_manifest_v3",
+                    return_value={"local_sha256": "abc", "s3_version_id": "v1"},
+                )
+            )
+            spy_train = stack.enter_context(mock.patch.object(v3, "train_matched_430_steps_strict_train"))
+            report = v3.main(
+                [
+                    "--resume-eval-from-saved-checkpoints",
+                    "--authorize-post-deadline-resume-budget-s",
+                    "60",
+                    "--baseline-430-checkpoint",
+                    str(baseline_ckpt),
+                    "--baseline-430-checkpoint-sha256",
+                    baseline_sha,
+                ]
+            )
+            self.assertEqual(spy_train.call_count, 0)
+            step5 = report["step5_matched_430_step_acceptance_test"]
+            self.assertEqual(step5["comparator_arm_tag"], "BASELINE_FROZEN_POOL_TRAIN_ONLY_430")
+            self.assertTrue(step5["comparator_is_frozen_pool_baseline"])
+            self.assertIn("BASELINE_FROZEN_POOL_TRAIN_ONLY_430", step5["training_telemetry"])
+            step6 = report["step6_programmatic_terminal_conclusion"]
+            self.assertTrue(step6["comparator_is_frozen_pool_baseline"])
+            self.assertIn("v3a_q25_vs_baseline_status", step6)
+            self.assertIn("v3b_median_vs_baseline_status", step6)
+            self.assertNotIn("comparator_causal_interpretation_guard", step6)
 
-        def _fake_strat300(teacher_jtt1_gz_path, candidates, max_train_rows, max_workers, timeout_s):
-            return [
-                {
-                    "dsl": c["dsl"],
-                    "program_sha256": c["program_sha256"],
-                    "fitness": -0.95,
-                    "logratio": -0.6,
-                    "cv_geomean_rmse_ratio": 0.9,
-                    "cv_gate_passed": True,
-                }
-                for c in candidates
+    def test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes(self) -> None:
+        fix = self._build_fixture_env()
+        worker_pid_file = SCRATCH_TEST_ROOT / "worker_pid.txt"
+        late_write_file = SCRATCH_TEST_ROOT / "late_write_after_deadline.txt"
+        child_summary_file = SCRATCH_TEST_ROOT / "child_summary.json"
+
+        child_script = textwrap.dedent(
+            f"""
+            import copy
+            import json
+            import os
+            import sys
+            import time
+            from pathlib import Path
+            from unittest import mock
+            import numpy as np
+
+            sys.path.insert(0, {repr(str(THIS_DIR))})
+            import verify_flywheel_wider_train_extension_v3 as v3
+
+            orig_npz = Path({repr(str(fix["v3a_npz"]))})
+            d = np.load(orig_npz, allow_pickle=False)
+            p0 = {{
+                "rec": {{
+                    "index": 0,
+                    "context_sha256": "a" * 64,
+                    "dataset_id": "ds_0",
+                    "view_id": "view_0",
+                    "family_id": "fam_0",
+                    "source_split": "train",
+                    "dl_split": "DL-Train",
+                    "pool_path": str(orig_npz),
+                    "teacher_jtt1_path": str(orig_npz),
+                    "n_candidates": int(d["program"].shape[0]),
+                }},
+                "program": d["program"],
+                "proj16": np.zeros((d["program"].shape[0], 16), dtype=np.float64),
+                "struct_sig": np.zeros((d["program"].shape[0], 24), dtype=np.float32),
+                "fitness": d["fitness"],
+                "logratio": d["logratio"],
+                "gate": d["gate"],
+                "pids": [s.decode("ascii") for s in d["program_sha256"]],
+                "prior_cost": d["fitness"].copy(),
+                "scale": 1.0,
+            }}
+            p1 = copy.deepcopy(p0)
+            p1["rec"] = dict(p0["rec"], context_sha256="d" * 64, index=1)
+            pools = {{"a" * 64: p0, "d" * 64: p1}}
+            selected_records = [p0["rec"], p1["rec"]]
+            champ_bank = [
+                {{"context_sha256": "a" * 64, "dl_split": "DL-Train", "split": "train", "dsl": "v0 | head", "program_sha256": "1" * 64}},
+                {{"context_sha256": "d" * 64, "dl_split": "DL-Train", "split": "train", "dsl": "v0 | head", "program_sha256": "2" * 64}},
             ]
+            lm48_all = np.zeros((3, 48), dtype=np.float32)
 
-        call_counter = {"n": 0}
+            def _fake_propose(crec, **kwargs):
+                return [{{"dsl": "v0 | head", "program_sha256": "9" * 64, "operator": "edit_zero", "parents": []}}]
 
-        def _fake_full_jtt1(teacher_jtt1_gz_path, candidates, run_outer_test, max_workers, timeout_s):
-            call_counter["n"] += 1
-            if call_counter["n"] >= 2:
-                # Simulate a hung/blocking evaluator that ignores timeout_s and sleeps 1.5s
-                time.sleep(1.5)
-            return [
-                {
-                    "dsl": c["dsl"],
-                    "program_sha256": c["program_sha256"],
-                    "fitness": -0.95,
-                    "logratio": -0.6,
-                    "cv_geomean_rmse_ratio": 0.9,
-                    "cv_gate_passed": True,
-                }
-                for c in candidates
-            ]
+            def _fake_strat300(teacher_jtt1_gz_path, candidates, max_train_rows, max_workers, timeout_s):
+                return [
+                    {{
+                        "dsl": c["dsl"],
+                        "program_sha256": c["program_sha256"],
+                        "fitness": -0.95,
+                        "logratio": -0.6,
+                        "cv_geomean_rmse_ratio": 0.9,
+                        "cv_gate_passed": True,
+                    }}
+                    for c in candidates
+                ]
 
-        # Set hard_cap_s = 15.15s (with reserve_s = 15.0s inside evolution -> 0.15s remaining budget)
+            def _fake_full_jtt1(teacher_jtt1_gz_path, candidates, run_outer_test, max_workers, timeout_s):
+                # Distinguish context 0 vs context 1 by inspecting the parent worker stack frame's crec
+                import inspect
+                frame = inspect.currentframe()
+                cid = ""
+                while frame is not None:
+                    if "crec" in frame.f_locals and isinstance(frame.f_locals["crec"], dict):
+                        cid = frame.f_locals["crec"].get("context_sha256", "")
+                        break
+                    frame = frame.f_back
+                if cid == "d" * 64:
+                    Path({repr(str(worker_pid_file))}).write_text(str(os.getpid()))
+                    # Sleep 4.0s ignoring timeout_s, then attempt a late write after deadline
+                    time.sleep(4.0)
+                    Path({repr(str(late_write_file))}).write_text("LATE_WRITE_HAPPENED")
+                else:
+                    time.sleep(0.02)
+                return [
+                    {{
+                        "dsl": c["dsl"],
+                        "program_sha256": c["program_sha256"],
+                        "fitness": -0.95,
+                        "logratio": -0.6,
+                        "cv_geomean_rmse_ratio": 0.9,
+                        "cv_gate_passed": True,
+                    }}
+                    for c in candidates
+                ]
+
+            t_start = time.monotonic()
+            print("CHILD_IMPORT_COMPLETE", flush=True)
+            # With reserve_s=15.0 inside run_bounded_256_context_winner_generation, hard_cap_s=15.30 gives 0.30s budget
+            controller = v3.DeadlineController(
+                script_t0=t_start,
+                hard_cap_s=15.30,
+                persisted_receipt_path=None,
+            )
+            with (
+                mock.patch.object(v3, "propose_6_novel_candidates_for_strict_train_context", side_effect=_fake_propose),
+                mock.patch.object(v3, "evaluate_gp_batch_rust_strat300", side_effect=_fake_strat300),
+                mock.patch.object(v3, "evaluate_gp_batch_rust", side_effect=_fake_full_jtt1),
+            ):
+                winners, evo_summary = v3.run_bounded_256_context_winner_generation(
+                    selected_256_records=selected_records,
+                    pools_frozen=pools,
+                    champ_bank=champ_bank,
+                    lm48_all=lm48_all,
+                    script_t0=controller,
+                    chunk_size=1,
+                )
+            manifest_doc = json.loads(Path({repr(str(fix["manifest_v3_path"]))}).read_text())
+            concl = v3.build_dynamic_evidence_bound_conclusion(
+                cohort_spec=manifest_doc["cohort_256_selection_spec"],
+                evolution_summary=evo_summary,
+                corpus_v3_manifest=manifest_doc,
+                exp_results={{
+                    "evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
+                    "deadline_expired_reason": "Hard wall-clock deadline reached",
+                }},
+            )
+            Path({repr(str(child_summary_file))}).write_text(
+                json.dumps(
+                    {{
+                        "elapsed_s": time.monotonic() - t_start,
+                        "winners_len": len(winners),
+                        "evo_summary": evo_summary,
+                        "conclusion": concl,
+                    }},
+                    indent=2,
+                )
+            )
+            """
+        )
+
+        proc = subprocess.Popen(
+            [sys.executable, "-u", "-c", child_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        assert proc.stdout is not None
+        ready_line = proc.stdout.readline().strip()
+        self.assertEqual(ready_line, "CHILD_IMPORT_COMPLETE")
+
+        # Start post-import execution + interpreter-exit clock
+        t0 = time.monotonic()
+        stdout_rest, stderr = proc.communicate(timeout=2.5)
+        child_wall_s = time.monotonic() - t0
+
+        self.assertEqual(proc.returncode, 0, msg=f"Child failed:\nSTDOUT:\n{stdout_rest}\nSTDERR:\n{stderr}")
+        # Child OS process must execute, SIGKILL the 4.0s worker, and exit the OS process in < 1.50s (well before 4.0s)
+        self.assertLess(child_wall_s, 1.50)
+
+        # Verify worker OS process recorded its PID and is now dead (SIGKILLed)
+        self.assertTrue(worker_pid_file.exists())
+        worker_pid = int(worker_pid_file.read_text().strip())
+        with self.assertRaises(ProcessLookupError):
+            os.kill(worker_pid, 0)
+
+        # Wait an extra 0.4s to prove no background worker can perform a late write
+        time.sleep(0.4)
+        self.assertFalse(late_write_file.exists())
+
+        summary = json.loads(child_summary_file.read_text())
+        self.assertLess(summary["elapsed_s"], 0.45)
+        self.assertTrue(summary["evo_summary"]["stopped_early_by_wall_cap"])
+        self.assertEqual(summary["evo_summary"]["contexts_completed"], 1)
+        self.assertEqual(summary["winners_len"], 1)
+        self.assertEqual(
+            summary["conclusion"]["matched_430_step_evaluation_status"],
+            "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
+        )
+
+    def test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline(self) -> None:
+        fix = self._build_fixture_env()
+
+        def _blocking_eval_stub(*args, **kwargs):
+            time.sleep(2.5)
+            return {}
+
         t_start = time.monotonic()
+        # With reserve_s=10.0 inside run_matched_v3_acceptance_test, hard_cap_s=10.18 gives 0.18s budget
         controller = v3.DeadlineController(
             script_t0=t_start,
-            hard_cap_s=15.15,
+            hard_cap_s=10.18,
             persisted_receipt_path=None,
         )
         with (
-            mock.patch.object(v3, "propose_6_novel_candidates_for_strict_train_context", side_effect=_fake_propose),
-            mock.patch.object(v3, "evaluate_gp_batch_rust_strat300", side_effect=_fake_strat300),
-            mock.patch.object(v3, "evaluate_gp_batch_rust", side_effect=_fake_full_jtt1),
+            mock.patch.object(v3, "CHECKPOINTS_DIR", fix["ckpt_dir"]),
+            mock.patch.object(v3, "IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS", fix["expected_partial"]),
+            mock.patch.object(v3, "IMMUTABLE_V2A_CHECKPOINT_SHA256", fix["v2a_sha"]),
+            mock.patch.object(v3, "evaluate_episode_rollout_context", side_effect=_blocking_eval_stub),
         ):
-            winners, evo_summary = v3.run_bounded_256_context_winner_generation(
-                selected_256_records=selected_records,
-                pools_frozen=pools,
-                champ_bank=champ_bank,
-                lm48_all=lm48_all,
+            res = v3.run_matched_v3_acceptance_test(
+                pools_frozen=fix["pools_frozen"],
+                pools_v3a=fix["pools_frozen"],
+                pools_v3b=fix["pools_frozen"],
+                ctx_raw_584=fix["ctx_raw_584"],
+                device=torch.device("cpu"),
                 script_t0=controller,
+                reuse_saved_checkpoints=True,
+                allow_v2a_intervention_comparator=True,
             )
         elapsed = time.monotonic() - t_start
-        # Must preempt in < 0.45s (never waiting 1.5s for the hung thread on shutdown!)
         self.assertLess(elapsed, 0.45)
-        self.assertTrue(evo_summary["stopped_early_by_wall_cap"])
-        self.assertEqual(evo_summary["contexts_completed"], 1)
-        self.assertEqual(len(winners), 1)
-
-    def test_dynamic_unknown_interpretation_and_post_publication_wall_accounting(self) -> None:
-        fix = self._build_fixture_env()
-        manifest_doc = json.loads(fix["manifest_v3_path"].read_text())
-        cohort_spec = manifest_doc["cohort_256_selection_spec"]
-        evo_sum = manifest_doc["phase7_256_context_evolution_summary"]
-
-        concl_unknown = v3.build_dynamic_evidence_bound_conclusion(
-            cohort_spec=cohort_spec,
-            evolution_summary=evo_sum,
-            corpus_v3_manifest=manifest_doc,
-            exp_results={
-                "evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
-                "deadline_expired_reason": "Hard wall-clock deadline reached",
-            },
-        )
-        self.assertEqual(
-            concl_unknown["matched_430_step_evaluation_status"],
-            "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
-        )
-        self.assertNotIn("v3a_q25_vs_baseline_status", concl_unknown)
-        self.assertNotIn("v3b_median_vs_baseline_status", concl_unknown)
-        self.assertEqual(
-            concl_unknown["partial_cohort_coverage_qualification"]["untested_strict_train_contexts"],
-            760,
-        )
+        self.assertEqual(res["evaluation_status"], "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE")
+        self.assertEqual(res["comparator_arm_tag"], "WINNER_POOL_V2A_TRAIN_ONLY_430")
+        self.assertFalse(res["comparator_is_frozen_pool_baseline"])
 
 
 if __name__ == "__main__":

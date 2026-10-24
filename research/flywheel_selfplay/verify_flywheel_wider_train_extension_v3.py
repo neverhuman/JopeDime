@@ -42,14 +42,20 @@ os.environ["MKL_NUM_THREADS"] = "1"
 
 from collections import defaultdict
 import concurrent.futures
+import contextlib
 import copy
 import hashlib
 import json
 import math
+import multiprocessing
 from pathlib import Path
+import pickle
 import random
 import resource
+import select
+import signal
 import subprocess
+import threading
 import time
 
 import numpy as np
@@ -115,6 +121,8 @@ MAX_EVOLUTION_WALL_S = 600.0
 
 PARTIAL_RECEIPT_PATH = RESULTS_DIR / "flywheel_phase7_partial_and_expired_deadline_receipt.json"
 
+IMMUTABLE_V2A_CHECKPOINT_SHA256 = "35b0f08af4f30ed763397e22f8471d0719356a2bee30cf0730ea466470cd0f3f"
+
 IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS = {
     str(CORPUS_V3_MANIFEST_PATH): "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
     str(CHECKPOINTS_DIR / "flywheel_winner_pool_v3a_q25_train_only_430.pt"): "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
@@ -126,11 +134,44 @@ class DeadlineExpiredError(RuntimeError):
     """Raised when the hard wall-clock deadline is reached or prior budget is exhausted without explicit renewal."""
 
 
+def _forked_worker_entry(w_fd: int, r_fd: int, worker_fn, item) -> None:
+    """
+    Entry point for a forked OS worker process.
+    Places itself in a dedicated process group (`os.setpgrp()`) so `os.killpg(pid, signal.SIGKILL)`
+    terminates both this worker and any child subprocesses immediately upon deadline expiry.
+    """
+    try:
+        os.close(r_fd)
+    except OSError:
+        pass
+    try:
+        os.setpgrp()
+    except OSError:
+        pass
+    try:
+        res = worker_fn(item)
+        payload = pickle.dumps(("OK", res), protocol=pickle.HIGHEST_PROTOCOL)
+    except DeadlineExpiredError as exc:
+        payload = pickle.dumps(("DEADLINE", str(exc)), protocol=pickle.HIGHEST_PROTOCOL)
+    except BaseException as exc:
+        payload = pickle.dumps(("ERR", f"{type(exc).__name__}: {exc}"), protocol=pickle.HIGHEST_PROTOCOL)
+    try:
+        with os.fdopen(w_fd, "wb", closefd=True) as wf:
+            wf.write(payload)
+            wf.flush()
+    except OSError:
+        pass
+    os._exit(0)
+
+
 class DeadlineController:
     """
-    Hard wall-clock deadline controller across all blocking stages (Rust evaluator calls,
-    ThreadPoolExecutor waits/shutdowns, PyTorch rollouts, and S3 publication subprocesses),
-    plus persisted deadline-state checking across resumes.
+    Hard wall-clock deadline controller across all blocking stages:
+      - Forked OS worker processes (`run_batch_in_killable_workers`) with process-group `SIGKILL`
+        (`os.killpg(pid, signal.SIGKILL)`) so no worker or subprocess can survive or write files
+        after the deadline or delay Python process exit.
+      - Kernel `ITIMER_REAL` (`itimer_guard`) to preempt blocked in-process rollout/training calls.
+      - Persisted deadline-state checking across resumes.
     """
 
     def __init__(
@@ -148,6 +189,8 @@ class DeadlineController:
         self.prior_campaign_elapsed_s = 0.0
         self.prior_campaign_exhausted = False
         self.separate_authorization_granted = False
+        self.expired = False
+        self._active_worker_pids: set[int] = set()
 
     def verify_resume_budget_authorization(self, is_resume: bool) -> dict:
         if self.persisted_receipt_path is not None and self.persisted_receipt_path.exists():
@@ -188,7 +231,9 @@ class DeadlineController:
         elapsed = self.elapsed_s()
         limit = self.effective_cap_s - float(reserve_s)
         rem = limit - elapsed
-        if rem <= 0.0:
+        if self.expired or rem <= 0.0:
+            self.expired = True
+            self.kill_all_active_workers()
             raise DeadlineExpiredError(
                 f"Finite wall-clock stop reached during {stage_name}: elapsed={elapsed:.3f}s >= "
                 f"limit={limit:.3f}s (effective_cap_s={self.effective_cap_s:.3f}s, reserve_s={reserve_s:.3f}s)"
@@ -204,6 +249,168 @@ class DeadlineController:
     ) -> float:
         rem = self.remaining_s(stage_name, reserve_s=reserve_s)
         return max(float(min_timeout_s), min(float(requested_timeout_s), rem))
+
+    def kill_all_active_workers(self) -> None:
+        for pid in list(self._active_worker_pids):
+            for sig_fn in (
+                lambda p: os.killpg(p, signal.SIGKILL),
+                lambda p: os.kill(p, signal.SIGKILL),
+            ):
+                try:
+                    sig_fn(pid)
+                except OSError:
+                    pass
+            self._active_worker_pids.discard(pid)
+
+    @contextlib.contextmanager
+    def itimer_guard(self, stage_name: str, reserve_s: float = 0.0):
+        """
+        Arms kernel `ITIMER_REAL` in the main thread so a blocked rollout or training call
+        is interrupted immediately when `remaining_s(stage_name, reserve_s)` expires.
+        """
+        rem = self.remaining_s(stage_name, reserve_s=reserve_s)
+        if threading.current_thread() is not threading.main_thread():
+            yield
+            return
+
+        prev_handler = signal.getsignal(signal.SIGALRM)
+
+        def _on_sigalrm(_signum, _frame):
+            self.expired = True
+            self.kill_all_active_workers()
+            raise DeadlineExpiredError(
+                f"Kernel ITIMER_REAL deadline expired during {stage_name}: "
+                f"elapsed={self.elapsed_s():.3f}s, effective_cap_s={self.effective_cap_s:.3f}s, reserve_s={reserve_s:.3f}s"
+            )
+
+        signal.signal(signal.SIGALRM, _on_sigalrm)
+        signal.setitimer(signal.ITIMER_REAL, max(0.01, rem))
+        try:
+            yield
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0.0)
+            signal.signal(signal.SIGALRM, prev_handler)
+
+    def run_batch_in_killable_workers(
+        self,
+        worker_fn,
+        batch_items: list,
+        max_workers: int = 2,
+        stage_name: str = "worker_batch",
+        reserve_s: float = 15.0,
+        max_stage_elapsed_s: float | None = None,
+    ) -> tuple[list, bool]:
+        """
+        Executes `worker_fn(item)` across `batch_items` using forked OS child processes (`os.setpgrp()`).
+        If the deadline (`effective_cap_s - reserve_s` or `max_stage_elapsed_s`) expires while workers
+        are running, immediately sends `SIGKILL` to every running worker process group (`os.killpg`),
+        reaps the child PIDs (`proc.join`), and returns `(completed_results_in_order, True)`.
+        """
+        mp_ctx = multiprocessing.get_context("fork")
+        results_by_pos: dict[int, object] = {}
+        next_pos = 0
+        n_total = len(batch_items)
+        active: dict[int, tuple[int, multiprocessing.Process, bytearray]] = {}
+        expired = False
+
+        def _terminate_active() -> None:
+            for r_fd, (_pos, proc, _buf) in list(active.items()):
+                pid = proc.pid
+                if pid is not None:
+                    for sig_fn in (
+                        lambda p: os.killpg(p, signal.SIGKILL),
+                        lambda p: os.kill(p, signal.SIGKILL),
+                    ):
+                        try:
+                            sig_fn(pid)
+                        except OSError:
+                            pass
+                    self._active_worker_pids.discard(pid)
+                try:
+                    proc.join(timeout=0.2)
+                except Exception:
+                    pass
+                try:
+                    os.close(r_fd)
+                except OSError:
+                    pass
+                active.pop(r_fd, None)
+
+        try:
+            while next_pos < n_total or active:
+                now_el = self.elapsed_s()
+                rem_hard = (self.effective_cap_s - float(reserve_s)) - now_el
+                rem_stage = (
+                    (float(max_stage_elapsed_s) - now_el)
+                    if max_stage_elapsed_s is not None
+                    else rem_hard
+                )
+                rem = min(rem_hard, rem_stage)
+                if self.expired or rem <= 0.0:
+                    expired = True
+                    _terminate_active()
+                    break
+
+                while next_pos < n_total and len(active) < max_workers:
+                    r_fd, w_fd = os.pipe()
+                    item = batch_items[next_pos]
+                    proc = mp_ctx.Process(
+                        target=_forked_worker_entry,
+                        args=(w_fd, r_fd, worker_fn, item),
+                        daemon=True,
+                    )
+                    proc.start()
+                    os.close(w_fd)
+                    if proc.pid is not None:
+                        self._active_worker_pids.add(proc.pid)
+                    active[r_fd] = (next_pos, proc, bytearray())
+                    next_pos += 1
+
+                if not active:
+                    break
+
+                wait_step = max(0.005, min(0.03, rem))
+                ready_fds, _, _ = select.select(list(active.keys()), [], [], wait_step)
+                for r_fd in ready_fds:
+                    if r_fd not in active:
+                        continue
+                    pos, proc, buf = active[r_fd]
+                    try:
+                        chunk = os.read(r_fd, 65536)
+                    except OSError:
+                        chunk = b""
+                    if chunk:
+                        buf.extend(chunk)
+                    else:
+                        # EOF reached: worker closed pipe
+                        try:
+                            os.close(r_fd)
+                        except OSError:
+                            pass
+                        active.pop(r_fd, None)
+                        if proc.pid is not None:
+                            self._active_worker_pids.discard(proc.pid)
+                        proc.join(timeout=0.2)
+                        if buf:
+                            status, payload = pickle.loads(bytes(buf))
+                            if status == "OK":
+                                results_by_pos[pos] = payload
+                            elif status == "DEADLINE":
+                                expired = True
+                                _terminate_active()
+                                break
+                            else:
+                                _terminate_active()
+                                raise RuntimeError(f"Worker failed in {stage_name}: {payload}")
+                        else:
+                            expired = True
+                            _terminate_active()
+                            break
+        finally:
+            _terminate_active()
+
+        ordered = [results_by_pos[i] for i in sorted(results_by_pos.keys())]
+        return ordered, expired
 
 
 def check_wall_deadline(
@@ -552,6 +759,7 @@ def run_bounded_256_context_winner_generation(
     champ_bank: list[dict],
     lm48_all: np.ndarray,
     script_t0: float | DeadlineController,
+    chunk_size: int = 16,
 ) -> tuple[list[dict], dict]:
     """
     Execute fixed-budget Stage-1 (`Stratified300JTT1`, 6 candidates/context) + Stage-2 (`Full-JTT1`,
@@ -700,11 +908,10 @@ def run_bounded_256_context_winner_generation(
             "verified_candidates": ctx_winners,
         }
 
-    # Process in chunks of 16 contexts with explicit non-blocking ThreadPoolExecutor shutdown on deadline expiry
-    chunk_size = 16
+    # Process in chunks using forked OS worker processes (SIGKILL on deadline expiry)
     for c_start in range(0, len(selected_256_records), chunk_size):
         try:
-            rem_hard = controller.remaining_s(f"evolution_chunk_{c_start}", reserve_s=15.0)
+            controller.remaining_s(f"evolution_chunk_{c_start}", reserve_s=15.0)
         except DeadlineExpiredError as exc:
             stopped_early_by_wall_cap = True
             print(f"[Phase 7] {exc}; stopping evolution before chunk {c_start}.")
@@ -719,38 +926,23 @@ def run_bounded_256_context_winner_generation(
             (i, selected_256_records[i])
             for i in range(c_start, min(c_start + chunk_size, len(selected_256_records)))
         ]
-        ex = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        futs = [ex.submit(_process_one_context, item) for item in batch_items]
-        chunk_timeout = max(0.02, min(rem_hard, rem_evo))
-        done, not_done = concurrent.futures.wait(
-            futs,
-            timeout=chunk_timeout,
-            return_when=concurrent.futures.FIRST_EXCEPTION,
+        chunk_outcomes, chunk_expired = controller.run_batch_in_killable_workers(
+            worker_fn=_process_one_context,
+            batch_items=batch_items,
+            max_workers=2,
+            stage_name=f"evolution_chunk_{c_start}",
+            reserve_s=15.0,
+            max_stage_elapsed_s=MAX_EVOLUTION_WALL_S,
         )
-
-        # Harvest completed futures in deterministic order; if any timed out or raised DeadlineExpiredError,
-        # shut down the pool with wait=False, cancel_futures=True so a slow/blocking worker never hangs exit.
-        chunk_expired = bool(len(not_done) > 0)
-        for f in futs:
-            if f in done and not f.cancelled():
-                try:
-                    out_ctx = f.result(timeout=0.0)
-                    context_outcomes.append(out_ctx)
-                    for w in out_ctx["verified_candidates"]:
-                        if w["verified_full_jtt1_cv_gate_passed"]:
-                            qualified_novel_winners.append(w)
-                except DeadlineExpiredError as exc:
-                    chunk_expired = True
-                    print(f"[Phase 7] {exc}; preserving {len(context_outcomes)} completed contexts.")
-                except Exception:
-                    ex.shutdown(wait=False, cancel_futures=True)
-                    raise
+        for out_ctx in chunk_outcomes:
+            context_outcomes.append(out_ctx)
+            for w in out_ctx["verified_candidates"]:
+                if w["verified_full_jtt1_cv_gate_passed"]:
+                    qualified_novel_winners.append(w)
         if chunk_expired:
-            ex.shutdown(wait=False, cancel_futures=True)
             stopped_early_by_wall_cap = True
+            print(f"[Phase 7] Hard deadline reached during chunk {c_start}; worker processes SIGKILL-terminated; preserved {len(context_outcomes)} completed contexts.")
             break
-        else:
-            ex.shutdown(wait=True)
 
         done_n = len(context_outcomes)
         if done_n % 32 == 0 or done_n == len(selected_256_records):
@@ -1308,225 +1500,285 @@ def run_matched_v3_acceptance_test(
     script_t0: float | DeadlineController,
     reuse_saved_checkpoints: bool = False,
     baseline_430_ckpt_path: Path | None = None,
+    baseline_430_ckpt_sha256: str | None = None,
+    allow_v2a_intervention_comparator: bool = False,
 ) -> dict:
     """
     Execute the matched `430`-step comparison on the `1,016` `source_split == 'train'` (`DL-Train`)
     contexts and evaluate once on frozen `DL-Val` (`91` contexts) and frozen `DL-Holdout` (`93` contexts).
-    When `reuse_saved_checkpoints=True`, verifies saved checkpoint SHA-256 hashes and executes ZERO
-    training calls and ZERO checkpoint writes.
+    When `reuse_saved_checkpoints=True`:
+      - Verifies saved checkpoint SHA-256 hashes and executes ZERO training calls and ZERO checkpoint writes.
+      - Fails closed (`RuntimeError`) if `baseline_430_ckpt_path` is None unless
+        `allow_v2a_intervention_comparator=True` is explicitly passed.
+      - When `allow_v2a_intervention_comparator=True`, verifies `flywheel_winner_pool_v2a_train_only_430.pt`
+        (`SHA256: 35b0f08a...`) and propagates the distinct comparator label `"WINNER_POOL_V2A_TRAIN_ONLY_430"`
+        through every rollout row, `arm_list`, `ref_arms`, bootstrap contrast, and conclusion (never labeling
+        `v2a` as `"BASELINE_FROZEN_POOL_TRAIN_ONLY_430"`).
     """
-    check_wall_deadline(script_t0, "matched_acceptance_test_init", reserve_s=15.0)
-    dl_train_cids = sorted([cid for cid, p in pools_frozen.items() if p["rec"]["dl_split"] == "DL-Train"])
-    dl_val_cids = sorted([cid for cid, p in pools_frozen.items() if p["rec"]["dl_split"] == "DL-Val"])
-    dl_holdout_cids = sorted([cid for cid, p in pools_frozen.items() if p["rec"]["dl_split"] == "DL-Holdout"])
-    strict_train_cids = sorted([cid for cid in dl_train_cids if pools_frozen[cid]["rec"]["source_split"] == "train"])
-
-    f_mask_all = np.ones(584, dtype=np.float32)
-    med_st, iqr_st, m_st = fit_fold_safe_context_scaler(strict_train_cids, pools_frozen, ctx_raw_584, f_mask_all)
-    ctx_scaled_st = transform_context_features(ctx_raw_584, med_st, iqr_st, m_st)
-
-    check_wall_deadline(script_t0, "sos_st_frozen_build", reserve_s=15.0)
-    sos_st_frozen = build_fold_safe_sos_priors(strict_train_cids, dl_val_cids + dl_holdout_cids, pools_frozen)
-    check_wall_deadline(script_t0, "sos_st_v3a_build", reserve_s=15.0)
-    sos_st_v3a = build_fold_safe_sos_priors(strict_train_cids, dl_val_cids + dl_holdout_cids, pools_v3a)
-    check_wall_deadline(script_t0, "sos_st_v3b_build", reserve_s=15.0)
-    sos_st_v3b = build_fold_safe_sos_priors(strict_train_cids, dl_val_cids + dl_holdout_cids, pools_v3b)
-
-    ckpt_v3a_path = CHECKPOINTS_DIR / "flywheel_winner_pool_v3a_q25_train_only_430.pt"
-    ckpt_v3b_path = CHECKPOINTS_DIR / "flywheel_winner_pool_v3b_median_train_only_430.pt"
-    ckpt_v2a_path = CHECKPOINTS_DIR / "flywheel_winner_pool_v2a_train_only_430.pt"
-
-    if reuse_saved_checkpoints:
-        # Pure evaluation-only path: verify saved checkpoint SHA-256s and NEVER train or write checkpoints.
-        for p_ckpt in (ckpt_v3a_path, ckpt_v3b_path):
-            exp_sha = IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS.get(str(p_ckpt))
-            if not p_ckpt.exists():
-                raise RuntimeError(f"Saved checkpoint missing in evaluation-only resume mode: {p_ckpt}")
-            act_sha = sha256_file(p_ckpt)
-            if exp_sha and act_sha != exp_sha:
-                raise RuntimeError(f"Saved checkpoint SHA-256 mismatch for {p_ckpt}: {act_sha} != {exp_sha}")
-
-        m_v3a_430 = FlywheelGameNet(ctx_dim=584, prog_dim=412, proj_dim=16, d_model=128).to(device)
-        m_v3a_430.load_state_dict(torch.load(ckpt_v3a_path, map_location=device))
-        m_v3a_430.eval()
-        tel_v3a_430 = {
-            "arm_tag": "WINNER_POOL_V3A_Q25_430",
-            "reused_saved_checkpoint": True,
-            "optimizer_steps_executed_on_resume": 0,
-            "checkpoint_path": str(ckpt_v3a_path),
-            "checkpoint_sha256": sha256_file(ckpt_v3a_path),
-        }
-
-        m_v3b_430 = FlywheelGameNet(ctx_dim=584, prog_dim=412, proj_dim=16, d_model=128).to(device)
-        m_v3b_430.load_state_dict(torch.load(ckpt_v3b_path, map_location=device))
-        m_v3b_430.eval()
-        tel_v3b_430 = {
-            "arm_tag": "WINNER_POOL_V3B_MEDIAN_430",
-            "reused_saved_checkpoint": True,
-            "optimizer_steps_executed_on_resume": 0,
-            "checkpoint_path": str(ckpt_v3b_path),
-            "checkpoint_sha256": sha256_file(ckpt_v3b_path),
-        }
-
-        ref_430_ckpt = baseline_430_ckpt_path if baseline_430_ckpt_path is not None else ckpt_v2a_path
-        if not ref_430_ckpt.exists():
-            raise RuntimeError(
-                f"Reference 430-step checkpoint not found at {ref_430_ckpt}; evaluation-only resume "
-                f"never trains models from scratch."
-            )
-        m_base_430 = FlywheelGameNet(ctx_dim=584, prog_dim=412, proj_dim=16, d_model=128).to(device)
-        m_base_430.load_state_dict(torch.load(ref_430_ckpt, map_location=device))
-        m_base_430.eval()
-        tel_base_430 = {
-            "arm_tag": (
-                "BASELINE_FROZEN_POOL_TRAIN_ONLY_430"
-                if baseline_430_ckpt_path is not None
-                else "WINNER_POOL_V2A_TRAIN_ONLY_430_REFERENCE"
-            ),
-            "reused_saved_checkpoint": True,
-            "optimizer_steps_executed_on_resume": 0,
-            "checkpoint_path": str(ref_430_ckpt),
-            "checkpoint_sha256": sha256_file(ref_430_ckpt),
-        }
-    else:
-        r1_sd = torch.load(CHECKPOINTS_DIR / "flywheel_round_1_full_corpus.pt", map_location=device)
-        m_base_430, tel_base_430 = train_matched_430_steps_strict_train(
-            strict_train_cids=strict_train_cids,
-            pools_dict=pools_frozen,
-            ctx_scaled_st=ctx_scaled_st,
-            sos_by_cid=sos_st_frozen,
-            init_state_dict=r1_sd,
-            device=device,
-            script_t0=script_t0,
-            epochs=10,
-            batch_size=24,
-            seed=20265000,
-            tag="BASELINE_FROZEN_POOL_TRAIN_ONLY_430",
-        )
-        m_v3a_430, tel_v3a_430 = train_matched_430_steps_strict_train(
-            strict_train_cids=strict_train_cids,
-            pools_dict=pools_v3a,
-            ctx_scaled_st=ctx_scaled_st,
-            sos_by_cid=sos_st_v3a,
-            init_state_dict=r1_sd,
-            device=device,
-            script_t0=script_t0,
-            epochs=10,
-            batch_size=24,
-            seed=20265000,
-            tag="WINNER_POOL_V3A_Q25_430",
-        )
-        m_v3b_430, tel_v3b_430 = train_matched_430_steps_strict_train(
-            strict_train_cids=strict_train_cids,
-            pools_dict=pools_v3b,
-            ctx_scaled_st=ctx_scaled_st,
-            sos_by_cid=sos_st_v3b,
-            init_state_dict=r1_sd,
-            device=device,
-            script_t0=script_t0,
-            epochs=10,
-            batch_size=24,
-            seed=20265000,
-            tag="WINNER_POOL_V3B_MEDIAN_430",
-        )
-        torch.save({k: v.detach().cpu().clone() for k, v in m_v3a_430.state_dict().items()}, ckpt_v3a_path)
-        torch.save({k: v.detach().cpu().clone() for k, v in m_v3b_430.state_dict().items()}, ckpt_v3b_path)
-        tel_v3a_430["checkpoint_path"] = str(ckpt_v3a_path)
-        tel_v3a_430["checkpoint_sha256"] = sha256_file(ckpt_v3a_path)
-        tel_v3b_430["checkpoint_path"] = str(ckpt_v3b_path)
-        tel_v3b_430["checkpoint_sha256"] = sha256_file(ckpt_v3b_path)
-
-    zero_ctx = np.zeros(584, dtype=np.float32)
-    val_rows = []
-    hold_rows = []
-
-    for base_arm in ("STATIC", "SHUFFLED", "W1"):
-        for cid in dl_val_cids:
-            check_wall_deadline(script_t0, f"eval_{base_arm}_val_{cid[:8]}", reserve_s=10.0)
-            p = pools_frozen[cid]
-            val_rows.append(
-                evaluate_episode_rollout_context(cid, p, zero_ctx, np.zeros((len(p["pids"]), 2), dtype=np.float32), None, device, base_arm)
-            )
-        for cid in dl_holdout_cids:
-            check_wall_deadline(script_t0, f"eval_{base_arm}_hold_{cid[:8]}", reserve_s=10.0)
-            p = pools_frozen[cid]
-            hold_rows.append(
-                evaluate_episode_rollout_context(cid, p, zero_ctx, np.zeros((len(p["pids"]), 2), dtype=np.float32), None, device, base_arm)
-            )
-
-    eval_configs = [
-        ("BASELINE_FROZEN_POOL_TRAIN_ONLY_430", m_base_430, ctx_scaled_st, sos_st_frozen),
-        ("WINNER_POOL_V3A_Q25_430", m_v3a_430, ctx_scaled_st, sos_st_v3a),
-        ("WINNER_POOL_V3A_WEIGHTS_ONLY_430", m_v3a_430, ctx_scaled_st, sos_st_frozen),
-        ("WINNER_POOL_V3B_MEDIAN_430", m_v3b_430, ctx_scaled_st, sos_st_v3b),
-        ("WINNER_POOL_V3B_WEIGHTS_ONLY_430", m_v3b_430, ctx_scaled_st, sos_st_frozen),
-    ]
-
-    for arm_name, m_obj, c_scaled, s_map in eval_configs:
-        for cid in dl_val_cids:
-            check_wall_deadline(script_t0, f"eval_{arm_name}_val_{cid[:8]}", reserve_s=10.0)
-            p = pools_frozen[cid]
-            r = evaluate_episode_rollout_context(
-                cid, p, c_scaled[p["rec"]["index"]], s_map[cid], m_obj, device, "ROUND_2",
-                enable_struct_kernel=True, enable_cross_attn=True, enable_ucb=False,
-            )
-            r["arm"] = arm_name
-            val_rows.append(r)
-        for cid in dl_holdout_cids:
-            check_wall_deadline(script_t0, f"eval_{arm_name}_hold_{cid[:8]}", reserve_s=10.0)
-            p = pools_frozen[cid]
-            r = evaluate_episode_rollout_context(
-                cid, p, c_scaled[p["rec"]["index"]], s_map[cid], m_obj, device, "ROUND_2",
-                enable_struct_kernel=True, enable_cross_attn=True, enable_ucb=False,
-            )
-            r["arm"] = arm_name
-            hold_rows.append(r)
-
-    arm_list = [
-        "STATIC",
-        "SHUFFLED",
-        "W1",
-        "BASELINE_FROZEN_POOL_TRAIN_ONLY_430",
-        "WINNER_POOL_V3A_Q25_430",
-        "WINNER_POOL_V3A_WEIGHTS_ONLY_430",
-        "WINNER_POOL_V3B_MEDIAN_430",
-        "WINNER_POOL_V3B_WEIGHTS_ONLY_430",
-    ]
-    ref_arms = (
-        "STATIC",
-        "SHUFFLED",
-        "W1",
-        "BASELINE_FROZEN_POOL_TRAIN_ONLY_430",
+    controller = (
+        script_t0
+        if isinstance(script_t0, DeadlineController)
+        else DeadlineController(float(script_t0))
     )
-    val_summary = compute_component_bootstrap_summary(val_rows, arm_list, ref_arms)
-    hold_summary = compute_component_bootstrap_summary(hold_rows, arm_list, ref_arms)
+    comparator_arm_tag = (
+        "WINNER_POOL_V2A_TRAIN_ONLY_430"
+        if (reuse_saved_checkpoints and baseline_430_ckpt_path is None and allow_v2a_intervention_comparator)
+        else "BASELINE_FROZEN_POOL_TRAIN_ONLY_430"
+    )
+    comparator_is_frozen_pool_baseline = bool(comparator_arm_tag == "BASELINE_FROZEN_POOL_TRAIN_ONLY_430")
+    try:
+        with controller.itimer_guard("matched_acceptance_test", reserve_s=10.0):
+            controller.remaining_s("matched_acceptance_test_init", reserve_s=10.0)
+            dl_train_cids = sorted([cid for cid, p in pools_frozen.items() if p["rec"]["dl_split"] == "DL-Train"])
+            dl_val_cids = sorted([cid for cid, p in pools_frozen.items() if p["rec"]["dl_split"] == "DL-Val"])
+            dl_holdout_cids = sorted([cid for cid, p in pools_frozen.items() if p["rec"]["dl_split"] == "DL-Holdout"])
+            strict_train_cids = sorted([cid for cid in dl_train_cids if pools_frozen[cid]["rec"]["source_split"] == "train"])
 
-    return {
-        "evaluation_status": "COMPLETED",
-        "reused_saved_checkpoints_only": bool(reuse_saved_checkpoints),
-        "frozen_budget_protocol": {
-            "epistemic_classification": "development_learning_loop_validation (development_diagnostic; reused evaluation splits DL-Val 91 and DL-Holdout 93 with frozen evaluation pools; single evaluation pass, no repeated selection on holdout)",
-            "initial_checkpoint_path": str(CHECKPOINTS_DIR / "flywheel_round_1_full_corpus.pt"),
-            "initial_checkpoint_sha256": sha256_file(CHECKPOINTS_DIR / "flywheel_round_1_full_corpus.pt"),
-            "train_cohort": "DL-Train with source_split == 'train'",
-            "train_context_count": len(strict_train_cids),
-            "epochs": 10,
-            "batch_size": 24,
-            "optimizer_steps": 430,
-            "candidate_slate_cap": 192,
-            "use_cv_test_gate": False,
-            "enable_evo_queue": False,
-            "eval_enable_ucb": False,
-            "seed": 20265000,
-        },
-        "training_telemetry": {
-            "BASELINE_FROZEN_POOL_TRAIN_ONLY_430": tel_base_430,
-            "WINNER_POOL_V3A_Q25_430": tel_v3a_430,
-            "WINNER_POOL_V3B_MEDIAN_430": tel_v3b_430,
-        },
-        "dl_val_91_contexts_summary": val_summary,
-        "dl_holdout_93_contexts_summary": hold_summary,
-    }
+            f_mask_all = np.ones(584, dtype=np.float32)
+            med_st, iqr_st, m_st = fit_fold_safe_context_scaler(strict_train_cids, pools_frozen, ctx_raw_584, f_mask_all)
+            ctx_scaled_st = transform_context_features(ctx_raw_584, med_st, iqr_st, m_st)
+
+            controller.remaining_s("sos_st_frozen_build", reserve_s=10.0)
+            sos_st_frozen = build_fold_safe_sos_priors(strict_train_cids, dl_val_cids + dl_holdout_cids, pools_frozen)
+            controller.remaining_s("sos_st_v3a_build", reserve_s=10.0)
+            sos_st_v3a = build_fold_safe_sos_priors(strict_train_cids, dl_val_cids + dl_holdout_cids, pools_v3a)
+            controller.remaining_s("sos_st_v3b_build", reserve_s=10.0)
+            sos_st_v3b = build_fold_safe_sos_priors(strict_train_cids, dl_val_cids + dl_holdout_cids, pools_v3b)
+
+            ckpt_v3a_path = CHECKPOINTS_DIR / "flywheel_winner_pool_v3a_q25_train_only_430.pt"
+            ckpt_v3b_path = CHECKPOINTS_DIR / "flywheel_winner_pool_v3b_median_train_only_430.pt"
+            ckpt_v2a_path = CHECKPOINTS_DIR / "flywheel_winner_pool_v2a_train_only_430.pt"
+
+            if reuse_saved_checkpoints:
+                # Pure evaluation-only path: verify saved checkpoint SHA-256s and NEVER train or write checkpoints.
+                for p_ckpt in (ckpt_v3a_path, ckpt_v3b_path):
+                    exp_sha = IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS.get(str(p_ckpt))
+                    if not p_ckpt.exists():
+                        raise RuntimeError(f"Saved checkpoint missing in evaluation-only resume mode: {p_ckpt}")
+                    act_sha = sha256_file(p_ckpt)
+                    if exp_sha and act_sha != exp_sha:
+                        raise RuntimeError(f"Saved checkpoint SHA-256 mismatch for {p_ckpt}: {act_sha} != {exp_sha}")
+
+                if baseline_430_ckpt_path is not None:
+                    if not baseline_430_ckpt_path.exists():
+                        raise RuntimeError(f"Explicit --baseline-430-checkpoint not found: {baseline_430_ckpt_path}")
+                    if baseline_430_ckpt_sha256:
+                        act_base_sha = sha256_file(baseline_430_ckpt_path)
+                        if act_base_sha != baseline_430_ckpt_sha256:
+                            raise RuntimeError(
+                                f"Baseline 430 checkpoint SHA-256 mismatch for {baseline_430_ckpt_path}: "
+                                f"{act_base_sha} != {baseline_430_ckpt_sha256}"
+                            )
+                    comparator_arm_tag = "BASELINE_FROZEN_POOL_TRAIN_ONLY_430"
+                    comparator_is_frozen_pool_baseline = True
+                    ref_430_ckpt = baseline_430_ckpt_path
+                else:
+                    if not allow_v2a_intervention_comparator:
+                        raise RuntimeError(
+                            "Frozen-pool baseline checkpoint (BASELINE_FROZEN_POOL_TRAIN_ONLY_430) was not saved to disk "
+                            "during task-1067/task-1153. Refusing to substitute WINNER_POOL_V2A_TRAIN_ONLY_430 silently "
+                            "as BASELINE_FROZEN_POOL_TRAIN_ONLY_430. Either supply a verified "
+                            "--baseline-430-checkpoint <path> or explicitly pass --allow-v2a-intervention-comparator "
+                            "to evaluate v3 against WINNER_POOL_V2A_TRAIN_ONLY_430 under distinct v2a comparator labels."
+                        )
+                    if not ckpt_v2a_path.exists():
+                        raise RuntimeError(f"Saved v2a intervention checkpoint missing: {ckpt_v2a_path}")
+                    exp_v2a_sha = IMMUTABLE_PHASE7_PARTIAL_ARTIFACTS.get(
+                        str(ckpt_v2a_path), IMMUTABLE_V2A_CHECKPOINT_SHA256
+                    )
+                    act_v2a_sha = sha256_file(ckpt_v2a_path)
+                    if exp_v2a_sha and act_v2a_sha != exp_v2a_sha:
+                        raise RuntimeError(
+                            f"Saved v2a checkpoint SHA-256 mismatch for {ckpt_v2a_path}: {act_v2a_sha} != {exp_v2a_sha}"
+                        )
+                    comparator_arm_tag = "WINNER_POOL_V2A_TRAIN_ONLY_430"
+                    comparator_is_frozen_pool_baseline = False
+                    ref_430_ckpt = ckpt_v2a_path
+
+                m_v3a_430 = FlywheelGameNet(ctx_dim=584, prog_dim=412, proj_dim=16, d_model=128).to(device)
+                m_v3a_430.load_state_dict(torch.load(ckpt_v3a_path, map_location=device))
+                m_v3a_430.eval()
+                tel_v3a_430 = {
+                    "arm_tag": "WINNER_POOL_V3A_Q25_430",
+                    "reused_saved_checkpoint": True,
+                    "optimizer_steps_executed_on_resume": 0,
+                    "checkpoint_path": str(ckpt_v3a_path),
+                    "checkpoint_sha256": sha256_file(ckpt_v3a_path),
+                }
+
+                m_v3b_430 = FlywheelGameNet(ctx_dim=584, prog_dim=412, proj_dim=16, d_model=128).to(device)
+                m_v3b_430.load_state_dict(torch.load(ckpt_v3b_path, map_location=device))
+                m_v3b_430.eval()
+                tel_v3b_430 = {
+                    "arm_tag": "WINNER_POOL_V3B_MEDIAN_430",
+                    "reused_saved_checkpoint": True,
+                    "optimizer_steps_executed_on_resume": 0,
+                    "checkpoint_path": str(ckpt_v3b_path),
+                    "checkpoint_sha256": sha256_file(ckpt_v3b_path),
+                }
+
+                m_comp_430 = FlywheelGameNet(ctx_dim=584, prog_dim=412, proj_dim=16, d_model=128).to(device)
+                m_comp_430.load_state_dict(torch.load(ref_430_ckpt, map_location=device))
+                m_comp_430.eval()
+                tel_comp_430 = {
+                    "arm_tag": comparator_arm_tag,
+                    "comparator_is_frozen_pool_baseline": comparator_is_frozen_pool_baseline,
+                    "reused_saved_checkpoint": True,
+                    "optimizer_steps_executed_on_resume": 0,
+                    "checkpoint_path": str(ref_430_ckpt),
+                    "checkpoint_sha256": sha256_file(ref_430_ckpt),
+                }
+            else:
+                comparator_arm_tag = "BASELINE_FROZEN_POOL_TRAIN_ONLY_430"
+                comparator_is_frozen_pool_baseline = True
+                r1_sd = torch.load(CHECKPOINTS_DIR / "flywheel_round_1_full_corpus.pt", map_location=device)
+                m_comp_430, tel_comp_430 = train_matched_430_steps_strict_train(
+                    strict_train_cids=strict_train_cids,
+                    pools_dict=pools_frozen,
+                    ctx_scaled_st=ctx_scaled_st,
+                    sos_by_cid=sos_st_frozen,
+                    init_state_dict=r1_sd,
+                    device=device,
+                    script_t0=controller,
+                    epochs=10,
+                    batch_size=24,
+                    seed=20265000,
+                    tag="BASELINE_FROZEN_POOL_TRAIN_ONLY_430",
+                )
+                m_v3a_430, tel_v3a_430 = train_matched_430_steps_strict_train(
+                    strict_train_cids=strict_train_cids,
+                    pools_dict=pools_v3a,
+                    ctx_scaled_st=ctx_scaled_st,
+                    sos_by_cid=sos_st_v3a,
+                    init_state_dict=r1_sd,
+                    device=device,
+                    script_t0=controller,
+                    epochs=10,
+                    batch_size=24,
+                    seed=20265000,
+                    tag="WINNER_POOL_V3A_Q25_430",
+                )
+                m_v3b_430, tel_v3b_430 = train_matched_430_steps_strict_train(
+                    strict_train_cids=strict_train_cids,
+                    pools_dict=pools_v3b,
+                    ctx_scaled_st=ctx_scaled_st,
+                    sos_by_cid=sos_st_v3b,
+                    init_state_dict=r1_sd,
+                    device=device,
+                    script_t0=controller,
+                    epochs=10,
+                    batch_size=24,
+                    seed=20265000,
+                    tag="WINNER_POOL_V3B_MEDIAN_430",
+                )
+                torch.save({k: v.detach().cpu().clone() for k, v in m_v3a_430.state_dict().items()}, ckpt_v3a_path)
+                torch.save({k: v.detach().cpu().clone() for k, v in m_v3b_430.state_dict().items()}, ckpt_v3b_path)
+                tel_v3a_430["checkpoint_path"] = str(ckpt_v3a_path)
+                tel_v3a_430["checkpoint_sha256"] = sha256_file(ckpt_v3a_path)
+                tel_v3b_430["checkpoint_path"] = str(ckpt_v3b_path)
+                tel_v3b_430["checkpoint_sha256"] = sha256_file(ckpt_v3b_path)
+
+            zero_ctx = np.zeros(584, dtype=np.float32)
+            val_rows = []
+            hold_rows = []
+
+            for base_arm in ("STATIC", "SHUFFLED", "W1"):
+                for cid in dl_val_cids:
+                    controller.remaining_s(f"eval_{base_arm}_val_{cid[:8]}", reserve_s=10.0)
+                    p = pools_frozen[cid]
+                    val_rows.append(
+                        evaluate_episode_rollout_context(cid, p, zero_ctx, np.zeros((len(p["pids"]), 2), dtype=np.float32), None, device, base_arm)
+                    )
+                for cid in dl_holdout_cids:
+                    controller.remaining_s(f"eval_{base_arm}_hold_{cid[:8]}", reserve_s=10.0)
+                    p = pools_frozen[cid]
+                    hold_rows.append(
+                        evaluate_episode_rollout_context(cid, p, zero_ctx, np.zeros((len(p["pids"]), 2), dtype=np.float32), None, device, base_arm)
+                    )
+
+            eval_configs = [
+                (comparator_arm_tag, m_comp_430, ctx_scaled_st, sos_st_frozen),
+                ("WINNER_POOL_V3A_Q25_430", m_v3a_430, ctx_scaled_st, sos_st_v3a),
+                ("WINNER_POOL_V3A_WEIGHTS_ONLY_430", m_v3a_430, ctx_scaled_st, sos_st_frozen),
+                ("WINNER_POOL_V3B_MEDIAN_430", m_v3b_430, ctx_scaled_st, sos_st_v3b),
+                ("WINNER_POOL_V3B_WEIGHTS_ONLY_430", m_v3b_430, ctx_scaled_st, sos_st_frozen),
+            ]
+
+            for arm_name, m_obj, c_scaled, s_map in eval_configs:
+                for cid in dl_val_cids:
+                    controller.remaining_s(f"eval_{arm_name}_val_{cid[:8]}", reserve_s=10.0)
+                    p = pools_frozen[cid]
+                    r = evaluate_episode_rollout_context(
+                        cid, p, c_scaled[p["rec"]["index"]], s_map[cid], m_obj, device, "ROUND_2",
+                        enable_struct_kernel=True, enable_cross_attn=True, enable_ucb=False,
+                    )
+                    r["arm"] = arm_name
+                    val_rows.append(r)
+                for cid in dl_holdout_cids:
+                    controller.remaining_s(f"eval_{arm_name}_hold_{cid[:8]}", reserve_s=10.0)
+                    p = pools_frozen[cid]
+                    r = evaluate_episode_rollout_context(
+                        cid, p, c_scaled[p["rec"]["index"]], s_map[cid], m_obj, device, "ROUND_2",
+                        enable_struct_kernel=True, enable_cross_attn=True, enable_ucb=False,
+                    )
+                    r["arm"] = arm_name
+                    hold_rows.append(r)
+
+            arm_list = [
+                "STATIC",
+                "SHUFFLED",
+                "W1",
+                comparator_arm_tag,
+                "WINNER_POOL_V3A_Q25_430",
+                "WINNER_POOL_V3A_WEIGHTS_ONLY_430",
+                "WINNER_POOL_V3B_MEDIAN_430",
+                "WINNER_POOL_V3B_WEIGHTS_ONLY_430",
+            ]
+            ref_arms = (
+                "STATIC",
+                "SHUFFLED",
+                "W1",
+                comparator_arm_tag,
+            )
+            val_summary = compute_component_bootstrap_summary(val_rows, arm_list, ref_arms)
+            hold_summary = compute_component_bootstrap_summary(hold_rows, arm_list, ref_arms)
+
+            return {
+                "evaluation_status": "COMPLETED",
+                "reused_saved_checkpoints_only": bool(reuse_saved_checkpoints),
+                "comparator_arm_tag": comparator_arm_tag,
+                "comparator_is_frozen_pool_baseline": bool(comparator_is_frozen_pool_baseline),
+                "frozen_budget_protocol": {
+                    "epistemic_classification": "development_learning_loop_validation (development_diagnostic; reused evaluation splits DL-Val 91 and DL-Holdout 93 with frozen evaluation pools; single evaluation pass, no repeated selection on holdout)",
+                    "initial_checkpoint_path": str(CHECKPOINTS_DIR / "flywheel_round_1_full_corpus.pt"),
+                    "initial_checkpoint_sha256": sha256_file(CHECKPOINTS_DIR / "flywheel_round_1_full_corpus.pt"),
+                    "train_cohort": "DL-Train with source_split == 'train'",
+                    "train_context_count": len(strict_train_cids),
+                    "epochs": 10,
+                    "batch_size": 24,
+                    "optimizer_steps": 430,
+                    "candidate_slate_cap": 192,
+                    "use_cv_test_gate": False,
+                    "enable_evo_queue": False,
+                    "eval_enable_ucb": False,
+                    "seed": 20265000,
+                },
+                "training_telemetry": {
+                    comparator_arm_tag: tel_comp_430,
+                    "WINNER_POOL_V3A_Q25_430": tel_v3a_430,
+                    "WINNER_POOL_V3B_MEDIAN_430": tel_v3b_430,
+                },
+                "dl_val_91_contexts_summary": val_summary,
+                "dl_holdout_93_contexts_summary": hold_summary,
+            }
+    except DeadlineExpiredError as exc:
+        controller.kill_all_active_workers()
+        return {
+            "evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
+            "deadline_expired_reason": str(exc),
+            "comparator_arm_tag": comparator_arm_tag,
+            "comparator_is_frozen_pool_baseline": bool(comparator_is_frozen_pool_baseline),
+        }
 
 
 def classify_contrast_status(c: dict) -> str:
@@ -1554,6 +1806,9 @@ def build_dynamic_evidence_bound_conclusion(
     If `exp_results["evaluation_status"] != "COMPLETED"`, records matched rollout evaluation as
     `UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE` (never negative or positive) and makes zero unmeasured
     architectural claims.
+    When `comparator_is_frozen_pool_baseline` is False (e.g. `comparator_arm_tag == "WINNER_POOL_V2A_TRAIN_ONLY_430"`),
+    propagates the distinct comparator label and explicitly forbids interpreting `v3`-vs-`v2a` as a
+    causal `v3`-vs-original-frozen-pool-baseline contrast.
     """
     n_aug_v3a = corpus_v3_manifest["revisions"]["v3a_strict_train_q25"]["augmented_context_count"]
     n_win_v3a = corpus_v3_manifest["revisions"]["v3a_strict_train_q25"]["admitted_winner_count"]
@@ -1598,31 +1853,57 @@ def build_dynamic_evidence_bound_conclusion(
         )
         return base_summary
 
+    comp_tag = exp_results.get("comparator_arm_tag", "BASELINE_FROZEN_POOL_TRAIN_ONLY_430")
+    is_base = bool(
+        exp_results.get(
+            "comparator_is_frozen_pool_baseline",
+            comp_tag == "BASELINE_FROZEN_POOL_TRAIN_ONLY_430",
+        )
+    )
     val_s = exp_results["dl_val_91_contexts_summary"]
     hold_s = exp_results["dl_holdout_93_contexts_summary"]
 
-    v3a_vs_base_val = val_s["contrasts"]["WINNER_POOL_V3A_Q25_430_minus_BASELINE_FROZEN_POOL_TRAIN_ONLY_430"]
-    v3a_vs_base_hold = hold_s["contrasts"]["WINNER_POOL_V3A_Q25_430_minus_BASELINE_FROZEN_POOL_TRAIN_ONLY_430"]
-    v3b_vs_base_val = val_s["contrasts"]["WINNER_POOL_V3B_MEDIAN_430_minus_BASELINE_FROZEN_POOL_TRAIN_ONLY_430"]
-    v3b_vs_base_hold = hold_s["contrasts"]["WINNER_POOL_V3B_MEDIAN_430_minus_BASELINE_FROZEN_POOL_TRAIN_ONLY_430"]
+    v3a_vs_comp_val = val_s["contrasts"][f"WINNER_POOL_V3A_Q25_430_minus_{comp_tag}"]
+    v3a_vs_comp_hold = hold_s["contrasts"][f"WINNER_POOL_V3A_Q25_430_minus_{comp_tag}"]
+    v3b_vs_comp_val = val_s["contrasts"][f"WINNER_POOL_V3B_MEDIAN_430_minus_{comp_tag}"]
+    v3b_vs_comp_hold = hold_s["contrasts"][f"WINNER_POOL_V3B_MEDIAN_430_minus_{comp_tag}"]
 
     base_summary["matched_430_step_evaluation_status"] = "COMPLETED"
-    base_summary["v3a_q25_vs_baseline_status"] = {
-        "dl_val_classification": classify_contrast_status(v3a_vs_base_val),
-        "dl_holdout_classification": classify_contrast_status(v3a_vs_base_hold),
-        "dl_val_contrast": v3a_vs_base_val,
-        "dl_holdout_contrast": v3a_vs_base_hold,
+    base_summary["comparator_arm_tag"] = comp_tag
+    base_summary["comparator_is_frozen_pool_baseline"] = is_base
+
+    v3a_block = {
+        "comparator_arm_tag": comp_tag,
+        "dl_val_classification": classify_contrast_status(v3a_vs_comp_val),
+        "dl_holdout_classification": classify_contrast_status(v3a_vs_comp_hold),
+        "dl_val_contrast": v3a_vs_comp_val,
+        "dl_holdout_contrast": v3a_vs_comp_hold,
         "augmented_contexts": n_aug_v3a,
         "admitted_winners": n_win_v3a,
     }
-    base_summary["v3b_median_vs_baseline_status"] = {
-        "dl_val_classification": classify_contrast_status(v3b_vs_base_val),
-        "dl_holdout_classification": classify_contrast_status(v3b_vs_base_hold),
-        "dl_val_contrast": v3b_vs_base_val,
-        "dl_holdout_contrast": v3b_vs_base_hold,
+    v3b_block = {
+        "comparator_arm_tag": comp_tag,
+        "dl_val_classification": classify_contrast_status(v3b_vs_comp_val),
+        "dl_holdout_classification": classify_contrast_status(v3b_vs_comp_hold),
+        "dl_val_contrast": v3b_vs_comp_val,
+        "dl_holdout_contrast": v3b_vs_comp_hold,
         "augmented_contexts": n_aug_v3b,
         "admitted_winners": n_win_v3b,
     }
+
+    if is_base:
+        base_summary["v3a_q25_vs_baseline_status"] = v3a_block
+        base_summary["v3b_median_vs_baseline_status"] = v3b_block
+    else:
+        base_summary["v3a_q25_vs_v2a_intervention_comparator_status"] = v3a_block
+        base_summary["v3b_median_vs_v2a_intervention_comparator_status"] = v3b_block
+        base_summary["comparator_causal_interpretation_guard"] = (
+            f"Evaluated comparator is {comp_tag} (Phase 6 5/1,016 strict-train winner-pool intervention "
+            f"checkpoint), NOT BASELINE_FROZEN_POOL_TRAIN_ONLY_430 (whose weights were not saved to disk "
+            f"during task-1067/task-1153). These contrasts compare wider (241/1,016 and 254/1,016) vs "
+            f"narrower (5/1,016) winner-pool interventions and must never be interpreted as a causal "
+            f"v3-vs-original-frozen-pool baseline contrast."
+        )
     return base_summary
 
 
@@ -1775,10 +2056,12 @@ def publish_phase7_artifacts_and_terminal_manifest_v3(
     return receipt
 
 
-def _parse_cli_options(argv: list[str]) -> tuple[bool, float | None, Path | None]:
+def _parse_cli_options(argv: list[str]) -> tuple[bool, float | None, Path | None, str | None, bool]:
     reuse_ckpt = "--resume-eval-from-saved-checkpoints" in argv
+    allow_v2a_comp = "--allow-v2a-intervention-comparator" in argv
     explicit_budget_s: float | None = None
     baseline_ckpt_path: Path | None = None
+    baseline_ckpt_sha256: str | None = None
     for i, arg in enumerate(argv):
         if arg == "--authorize-post-deadline-resume-budget-s" and i + 1 < len(argv):
             explicit_budget_s = float(argv[i + 1])
@@ -1788,14 +2071,24 @@ def _parse_cli_options(argv: list[str]) -> tuple[bool, float | None, Path | None
             baseline_ckpt_path = Path(argv[i + 1])
         elif arg.startswith("--baseline-430-checkpoint="):
             baseline_ckpt_path = Path(arg.split("=", 1)[1])
-    return reuse_ckpt, explicit_budget_s, baseline_ckpt_path
+        elif arg == "--baseline-430-checkpoint-sha256" and i + 1 < len(argv):
+            baseline_ckpt_sha256 = str(argv[i + 1]).strip()
+        elif arg.startswith("--baseline-430-checkpoint-sha256="):
+            baseline_ckpt_sha256 = str(arg.split("=", 1)[1]).strip()
+    return reuse_ckpt, explicit_budget_s, baseline_ckpt_path, baseline_ckpt_sha256, allow_v2a_comp
 
 
 def main(argv: list[str] | None = None) -> dict:
     cli_args = argv if argv is not None else sys.argv[1:]
     script_t0 = time.monotonic()
     script_cpu_t0 = time.process_time()
-    reuse_ckpt, explicit_resume_budget_s, baseline_430_ckpt_path = _parse_cli_options(cli_args)
+    (
+        reuse_ckpt,
+        explicit_resume_budget_s,
+        baseline_430_ckpt_path,
+        baseline_430_ckpt_sha256,
+        allow_v2a_comp,
+    ) = _parse_cli_options(cli_args)
 
     controller = DeadlineController(
         script_t0=script_t0,
@@ -1812,137 +2105,144 @@ def main(argv: list[str] | None = None) -> dict:
         f"effective wall stop={controller.effective_cap_s}s, reuse_ckpt={reuse_ckpt})..."
     )
 
-    step1_audit = verify_authority_and_immutable_artifacts()
-    manifest, champ_bank, ctx_raw_584, _h30_scales, pools_frozen = load_all_pools_and_features()
+    try:
+        step1_audit = verify_authority_and_immutable_artifacts()
+        manifest, champ_bank, ctx_raw_584, _h30_scales, pools_frozen = load_all_pools_and_features()
 
-    if reuse_ckpt:
-        # True evaluation-only resume path: verifies recorded SHA-256s of corpus_v3_manifest.json,
-        # all 241 v3a .npz pools, all 254 v3b .npz pools, and saved checkpoints; NEVER calls
-        # run_bounded_256_context_winner_generation() or build_versioned_v3_strict_train_pools().
-        (
-            pools_v3a,
-            pools_v3b,
-            corpus_v3_manifest,
-            cohort_spec,
-            evolution_summary,
-        ) = load_verified_immutable_v3_pools_and_manifest(pools_frozen=pools_frozen)
-    else:
-        ctx_npz = np.load(CORPUS_DIR / "context_features.npz")
-        lm48_all = ctx_npz["landmark_v2_48"]
-        selected_256_records, cohort_spec = select_deterministic_256_strict_train_cohort(manifest, pools_frozen)
-        phase7_new_winners, evolution_summary = run_bounded_256_context_winner_generation(
-            selected_256_records=selected_256_records,
-            pools_frozen=pools_frozen,
-            champ_bank=champ_bank,
-            lm48_all=lm48_all,
-            script_t0=controller,
-        )
-        pools_v3a, pools_v3b, corpus_v3_manifest = build_versioned_v3_strict_train_pools(
-            pools_frozen=pools_frozen,
-            phase7_new_winners=phase7_new_winners,
-            evolution_summary=evolution_summary,
+        if reuse_ckpt:
+            # True evaluation-only resume path: verifies recorded SHA-256s of corpus_v3_manifest.json,
+            # all 241 v3a .npz pools, all 254 v3b .npz pools, and saved checkpoints; NEVER calls
+            # run_bounded_256_context_winner_generation() or build_versioned_v3_strict_train_pools().
+            (
+                pools_v3a,
+                pools_v3b,
+                corpus_v3_manifest,
+                cohort_spec,
+                evolution_summary,
+            ) = load_verified_immutable_v3_pools_and_manifest(pools_frozen=pools_frozen)
+        else:
+            ctx_npz = np.load(CORPUS_DIR / "context_features.npz")
+            lm48_all = ctx_npz["landmark_v2_48"]
+            selected_256_records, cohort_spec = select_deterministic_256_strict_train_cohort(manifest, pools_frozen)
+            phase7_new_winners, evolution_summary = run_bounded_256_context_winner_generation(
+                selected_256_records=selected_256_records,
+                pools_frozen=pools_frozen,
+                champ_bank=champ_bank,
+                lm48_all=lm48_all,
+                script_t0=controller,
+            )
+            pools_v3a, pools_v3b, corpus_v3_manifest = build_versioned_v3_strict_train_pools(
+                pools_frozen=pools_frozen,
+                phase7_new_winners=phase7_new_winners,
+                evolution_summary=evolution_summary,
+                cohort_spec=cohort_spec,
+            )
+
+        try:
+            exp_results = run_matched_v3_acceptance_test(
+                pools_frozen=pools_frozen,
+                pools_v3a=pools_v3a,
+                pools_v3b=pools_v3b,
+                ctx_raw_584=ctx_raw_584,
+                device=device,
+                script_t0=controller,
+                reuse_saved_checkpoints=reuse_ckpt,
+                baseline_430_ckpt_path=baseline_430_ckpt_path,
+                baseline_430_ckpt_sha256=baseline_430_ckpt_sha256,
+                allow_v2a_intervention_comparator=allow_v2a_comp,
+            )
+        except DeadlineExpiredError as exc:
+            controller.kill_all_active_workers()
+            print(f"[Phase 7] {exc}; recording matched evaluation status as UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE.")
+            exp_results = {
+                "evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
+                "deadline_expired_reason": str(exc),
+            }
+
+        n_aug_v3a = corpus_v3_manifest["revisions"]["v3a_strict_train_q25"]["augmented_context_count"]
+        n_win_v3a = corpus_v3_manifest["revisions"]["v3a_strict_train_q25"]["admitted_winner_count"]
+        n_aug_v3b = corpus_v3_manifest["revisions"]["v3b_strict_train_median"]["augmented_context_count"]
+        n_win_v3b = corpus_v3_manifest["revisions"]["v3b_strict_train_median"]["admitted_winner_count"]
+
+        pre_pub_wall_s = round(controller.elapsed_s(), 2)
+        total_cpu_s = round(time.process_time() - script_cpu_t0, 2)
+        cpu_guard_summary = GLOBAL_CPU_GUARD.summary()
+        post_resources = sample_host_resources()
+
+        programmatic_terminal_conclusion = build_dynamic_evidence_bound_conclusion(
             cohort_spec=cohort_spec,
+            evolution_summary=evolution_summary,
+            corpus_v3_manifest=corpus_v3_manifest,
+            exp_results=exp_results,
         )
 
-    try:
-        exp_results = run_matched_v3_acceptance_test(
-            pools_frozen=pools_frozen,
-            pools_v3a=pools_v3a,
-            pools_v3b=pools_v3b,
-            ctx_raw_584=ctx_raw_584,
-            device=device,
-            script_t0=controller,
-            reuse_saved_checkpoints=reuse_ckpt,
-            baseline_430_ckpt_path=baseline_430_ckpt_path,
-        )
-    except DeadlineExpiredError as exc:
-        print(f"[Phase 7] {exc}; recording matched evaluation status as UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE.")
-        exp_results = {
-            "evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
-            "deadline_expired_reason": str(exc),
+        resource_and_cost_accounting = {
+            "pre_publication_wall_seconds": pre_pub_wall_s,
+            "total_wall_seconds": pre_pub_wall_s,
+            "finite_wall_stop_cap_seconds": controller.effective_cap_s,
+            "within_finite_wall_stop": bool(pre_pub_wall_s <= controller.effective_cap_s),
+            "deadline_authorization_state": deadline_auth_state,
+            "parent_python_process_cpu_seconds": total_cpu_s,
+            "cpu_throttle_guard": cpu_guard_summary,
+            "whole_host_cpu_soft_target_50pct_satisfied": bool(cpu_guard_summary["mean_host_cpu_pct"] <= 50.0),
+            "whole_host_cpu_hard_ceiling_85pct_satisfied": bool(cpu_guard_summary["peak_host_cpu_pct"] <= 85.0),
+            "post_run_host_resources": post_resources,
+            "s3_and_compute_cost_accounting": {
+                "new_cloud_instances_or_paid_apis_provisioned": 0,
+                "incremental_compute_spend_usd": 0.0,
+                "s3_put_requests": 2 if reuse_ckpt else 3,
+                "s3_get_head_list_requests": 5 if reuse_ckpt else 7,
+                "estimated_s3_request_and_storage_cost_usd": 0.0001,
+            },
         }
 
-    n_aug_v3a = corpus_v3_manifest["revisions"]["v3a_strict_train_q25"]["augmented_context_count"]
-    n_win_v3a = corpus_v3_manifest["revisions"]["v3a_strict_train_q25"]["admitted_winner_count"]
-    n_aug_v3b = corpus_v3_manifest["revisions"]["v3b_strict_train_median"]["augmented_context_count"]
-    n_win_v3b = corpus_v3_manifest["revisions"]["v3b_strict_train_median"]["admitted_winner_count"]
-
-    pre_pub_wall_s = round(controller.elapsed_s(), 2)
-    total_cpu_s = round(time.process_time() - script_cpu_t0, 2)
-    cpu_guard_summary = GLOBAL_CPU_GUARD.summary()
-    post_resources = sample_host_resources()
-
-    programmatic_terminal_conclusion = build_dynamic_evidence_bound_conclusion(
-        cohort_spec=cohort_spec,
-        evolution_summary=evolution_summary,
-        corpus_v3_manifest=corpus_v3_manifest,
-        exp_results=exp_results,
-    )
-
-    resource_and_cost_accounting = {
-        "pre_publication_wall_seconds": pre_pub_wall_s,
-        "total_wall_seconds": pre_pub_wall_s,
-        "finite_wall_stop_cap_seconds": controller.effective_cap_s,
-        "within_finite_wall_stop": bool(pre_pub_wall_s <= controller.effective_cap_s),
-        "deadline_authorization_state": deadline_auth_state,
-        "parent_python_process_cpu_seconds": total_cpu_s,
-        "cpu_throttle_guard": cpu_guard_summary,
-        "whole_host_cpu_soft_target_50pct_satisfied": bool(cpu_guard_summary["mean_host_cpu_pct"] <= 50.0),
-        "whole_host_cpu_hard_ceiling_85pct_satisfied": bool(cpu_guard_summary["peak_host_cpu_pct"] <= 85.0),
-        "post_run_host_resources": post_resources,
-        "s3_and_compute_cost_accounting": {
-            "new_cloud_instances_or_paid_apis_provisioned": 0,
-            "incremental_compute_spend_usd": 0.0,
-            "s3_put_requests": 2 if reuse_ckpt else 3,
-            "s3_get_head_list_requests": 5 if reuse_ckpt else 7,
-            "estimated_s3_request_and_storage_cost_usd": 0.0001,
-        },
-    }
-
-    phase7_report = {
-        "schema": "jope.flywheel-wider-train-extension-v3-report/v1",
-        "completed_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "resource_and_cost_accounting": resource_and_cost_accounting,
-        "step1_authority_and_immutable_artifacts_audit": step1_audit,
-        "step2_cohort_256_selection_spec": cohort_spec,
-        "step3_bounded_256_context_evolution_summary": evolution_summary,
-        "step4_corpus_v3_manifest_summary": {
-            "corpus_v3_manifest_path": str(CORPUS_V3_MANIFEST_PATH),
-            "corpus_v3_manifest_sha256": sha256_file(CORPUS_V3_MANIFEST_PATH),
-            "combined_strict_train_winner_union_summary": corpus_v3_manifest["combined_strict_train_winner_union_summary"],
-            "v3a_augmented_context_count": n_aug_v3a,
-            "v3a_admitted_winner_count": n_win_v3a,
-            "v3b_augmented_context_count": n_aug_v3b,
-            "v3b_admitted_winner_count": n_win_v3b,
-        },
-        "step5_matched_430_step_acceptance_test": exp_results,
-        "step6_programmatic_terminal_conclusion": programmatic_terminal_conclusion,
-    }
-
-    PHASE7_REPORT_PATH.write_text(json.dumps(phase7_report, indent=2) + "\n")
-    try:
-        term_v3_receipt = publish_phase7_artifacts_and_terminal_manifest_v3(
-            controller=controller,
-            is_resume_eval_only=reuse_ckpt,
-        )
-    except DeadlineExpiredError as exc:
-        term_v3_receipt = {
-            "publication_status": "STOPPED_AT_DEADLINE_DURING_PUBLICATION",
-            "deadline_expired_reason": str(exc),
+        phase7_report = {
+            "schema": "jope.flywheel-wider-train-extension-v3-report/v1",
+            "completed_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "resource_and_cost_accounting": resource_and_cost_accounting,
+            "step1_authority_and_immutable_artifacts_audit": step1_audit,
+            "step2_cohort_256_selection_spec": cohort_spec,
+            "step3_bounded_256_context_evolution_summary": evolution_summary,
+            "step4_corpus_v3_manifest_summary": {
+                "corpus_v3_manifest_path": str(CORPUS_V3_MANIFEST_PATH),
+                "corpus_v3_manifest_sha256": sha256_file(CORPUS_V3_MANIFEST_PATH),
+                "combined_strict_train_winner_union_summary": corpus_v3_manifest["combined_strict_train_winner_union_summary"],
+                "v3a_augmented_context_count": n_aug_v3a,
+                "v3a_admitted_winner_count": n_win_v3a,
+                "v3b_augmented_context_count": n_aug_v3b,
+                "v3b_admitted_winner_count": n_win_v3b,
+            },
+            "step5_matched_430_step_acceptance_test": exp_results,
+            "step6_programmatic_terminal_conclusion": programmatic_terminal_conclusion,
         }
-    post_pub_wall_s = round(controller.elapsed_s(), 2)
-    resource_and_cost_accounting["post_publication_total_wall_seconds"] = post_pub_wall_s
-    resource_and_cost_accounting["total_wall_seconds"] = post_pub_wall_s
-    resource_and_cost_accounting["within_finite_wall_stop"] = bool(post_pub_wall_s <= controller.effective_cap_s)
-    term_v3_receipt["post_publication_total_wall_seconds"] = post_pub_wall_s
-    term_v3_receipt["within_finite_wall_stop"] = bool(post_pub_wall_s <= controller.effective_cap_s)
-    if TERMINAL_V3_RECEIPT_PATH.exists():
-        TERMINAL_V3_RECEIPT_PATH.write_text(json.dumps(term_v3_receipt, indent=2) + "\n")
 
-    print(
-        f"[Phase 7] Finished in {post_pub_wall_s:.2f}s (eval_status={exp_results.get('evaluation_status')})."
-    )
-    return phase7_report
+        PHASE7_REPORT_PATH.write_text(json.dumps(phase7_report, indent=2) + "\n")
+        try:
+            term_v3_receipt = publish_phase7_artifacts_and_terminal_manifest_v3(
+                controller=controller,
+                is_resume_eval_only=reuse_ckpt,
+            )
+        except DeadlineExpiredError as exc:
+            term_v3_receipt = {
+                "publication_status": "STOPPED_AT_DEADLINE_DURING_PUBLICATION",
+                "deadline_expired_reason": str(exc),
+            }
+        post_pub_wall_s = round(controller.elapsed_s(), 2)
+        resource_and_cost_accounting["post_publication_total_wall_seconds"] = post_pub_wall_s
+        resource_and_cost_accounting["total_wall_seconds"] = post_pub_wall_s
+        resource_and_cost_accounting["within_finite_wall_stop"] = bool(post_pub_wall_s <= controller.effective_cap_s)
+        PHASE7_REPORT_PATH.write_text(json.dumps(phase7_report, indent=2) + "\n")
+        term_v3_receipt["post_publication_total_wall_seconds"] = post_pub_wall_s
+        term_v3_receipt["within_finite_wall_stop"] = bool(post_pub_wall_s <= controller.effective_cap_s)
+        if TERMINAL_V3_RECEIPT_PATH.exists():
+            TERMINAL_V3_RECEIPT_PATH.write_text(json.dumps(term_v3_receipt, indent=2) + "\n")
+
+        print(
+            f"[Phase 7] Finished in {post_pub_wall_s:.2f}s (eval_status={exp_results.get('evaluation_status')})."
+        )
+        return phase7_report
+    finally:
+        controller.kill_all_active_workers()
 
 
 if __name__ == "__main__":

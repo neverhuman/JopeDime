@@ -1,0 +1,117 @@
+{
+  "schema": "jope.flywheel_phase7_partial_and_expired_deadline_receipt_addendum.v3",
+  "created_at_utc": "2026-10-24T11:02:16Z",
+  "directive_addressed": "/home/ubuntu/.codex-screen-monitor/jope-comparator-and-process-deadline-20261024T103653Z.txt",
+  "parent_partial_receipt_v1_path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt.json",
+  "parent_partial_receipt_v1_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+  "parent_partial_receipt_addendum_v2_path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v2.json",
+  "parent_partial_receipt_addendum_v2_sha256": "24a261bba53e5d9b970fee3a767b34a0c799c6be90e30a700adadb1089356c05",
+  "parent_terminal_manifest_v3_partial_addendum_v2_path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_addendum_v2_20261024.json",
+  "parent_terminal_manifest_v3_partial_addendum_v2_sha256": "252988fd1b3fe2f4b0b182424de08b492f3d23afb806c869f98353cf87ec9a8d",
+  "immutable_v1_and_v2_artifacts_verified": [
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt.json",
+      "expected_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+      "actual_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+      "size_bytes": 9168,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_20261024.json",
+      "expected_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+      "actual_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+      "size_bytes": 4798,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v2.json",
+      "expected_sha256": "24a261bba53e5d9b970fee3a767b34a0c799c6be90e30a700adadb1089356c05",
+      "actual_sha256": "24a261bba53e5d9b970fee3a767b34a0c799c6be90e30a700adadb1089356c05",
+      "size_bytes": 9343,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_addendum_v2_20261024.json",
+      "expected_sha256": "252988fd1b3fe2f4b0b182424de08b492f3d23afb806c869f98353cf87ec9a8d",
+      "actual_sha256": "252988fd1b3fe2f4b0b182424de08b492f3d23afb806c869f98353cf87ec9a8d",
+      "size_bytes": 1569,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "expected_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "actual_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "size_bytes": 718858,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v2a_train_only_430.pt",
+      "expected_sha256": "35b0f08af4f30ed763397e22f8471d0719356a2bee30cf0730ea466470cd0f3f",
+      "actual_sha256": "35b0f08af4f30ed763397e22f8471d0719356a2bee30cf0730ea466470cd0f3f",
+      "size_bytes": 2105530,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3a_q25_train_only_430.pt",
+      "expected_sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+      "actual_sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+      "size_bytes": 2105950,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3b_median_train_only_430.pt",
+      "expected_sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+      "actual_sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+      "size_bytes": 2106169,
+      "immutable_verified": true
+    }
+  ],
+  "stopped_head_source_review_fixes_v3": {
+    "issue_1_comparator_identity_and_fail_closed_guard": {
+      "prior_bug_in_51e6ec4d": "In commit 51e6ec4d, run_matched_v3_acceptance_test() fell back to flywheel_winner_pool_v2a_train_only_430.pt when --baseline-430-checkpoint was not supplied, but still labeled the evaluated arm, arm_list, ref_arms, bootstrap contrasts (WINNER_POOL_V3A_Q25_430_minus_BASELINE_FROZEN_POOL_TRAIN_ONLY_430, WINNER_POOL_V3B_MEDIAN_430_minus_BASELINE_FROZEN_POOL_TRAIN_ONLY_430), and build_dynamic_evidence_bound_conclusion() as BASELINE_FROZEN_POOL_TRAIN_ONLY_430.",
+      "fix_implemented": "Updated run_matched_v3_acceptance_test(), build_dynamic_evidence_bound_conclusion(), and _parse_cli_options() in verify_flywheel_wider_train_extension_v3.py so that: (1) when reuse_saved_checkpoints=True and --baseline-430-checkpoint is absent, run_matched_v3_acceptance_test() fails closed with RuntimeError ('Refusing to substitute WINNER_POOL_V2A_TRAIN_ONLY_430 silently as BASELINE_FROZEN_POOL_TRAIN_ONLY_430') unless --allow-v2a-intervention-comparator is explicitly passed; (2) when --allow-v2a-intervention-comparator is passed, it verifies the SHA-256 of flywheel_winner_pool_v2a_train_only_430.pt (35b0f08a...) and sets comparator_arm_tag = 'WINNER_POOL_V2A_TRAIN_ONLY_430' and comparator_is_frozen_pool_baseline = False across every rollout row, arm_list, ref_arms, training_telemetry, bootstrap contrast (WINNER_POOL_V3A_Q25_430_minus_WINNER_POOL_V2A_TRAIN_ONLY_430 and WINNER_POOL_V3B_MEDIAN_430_minus_WINNER_POOL_V2A_TRAIN_ONLY_430), and step6_programmatic_terminal_conclusion (v3a_q25_vs_v2a_intervention_comparator_status, v3b_median_vs_v2a_intervention_comparator_status, and comparator_causal_interpretation_guard), emitting zero BASELINE_FROZEN_POOL_TRAIN_ONLY_430 keys; and (3) when a verified --baseline-430-checkpoint <path> (and optional --baseline-430-checkpoint-sha256 <sha256>) is supplied, it uses BASELINE_FROZEN_POOL_TRAIN_ONLY_430 with comparator_is_frozen_pool_baseline = True."
+    },
+    "issue_2_os_worker_process_deadline_termination_and_interpreter_exit": {
+      "prior_bug_in_51e6ec4d": "In commit 51e6ec4d, run_bounded_256_context_winner_generation() used ThreadPoolExecutor with ex.shutdown(wait=False, cancel_futures=True). In Python, shutdown(wait=False) does not stop running threads, and Python's threading._shutdown waits for non-daemon ThreadPoolExecutor threads at interpreter exit; furthermore, a single blocked rollout call in run_matched_v3_acceptance_test() was only checked between contexts.",
+      "fix_implemented": "Replaced ThreadPoolExecutor in verify_flywheel_wider_train_extension_v3.py with DeadlineController.run_batch_in_killable_workers(), which spawns forked OS worker processes (multiprocessing.get_context('fork').Process) placed in dedicated process groups (os.setpgrp()). Upon deadline expiry, _terminate_active() immediately sends SIGKILL to the worker process group (os.killpg(pid, signal.SIGKILL)) and worker PID (os.kill(pid, signal.SIGKILL)) and reaps the child (proc.join), guaranteeing zero surviving background workers, zero late file writes after deadline, and immediate Python interpreter exit. Also added DeadlineController.itimer_guard() (using kernel signal.setitimer(signal.ITIMER_REAL, ...)) around run_matched_v3_acceptance_test() so a blocked in-process rollout call is preempted at the hard deadline."
+    }
+  },
+  "corrected_source_bound_resume_protocol": {
+    "mode_a_fail_closed_default_without_baseline_checkpoint": {
+      "command": "python3 -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py --resume-eval-from-saved-checkpoints --authorize-post-deadline-resume-budget-s <AUTHORIZED_SECONDS>",
+      "behavior": "Fails closed with RuntimeError refusing to silently substitute WINNER_POOL_V2A_TRAIN_ONLY_430 as BASELINE_FROZEN_POOL_TRAIN_ONLY_430 because BASELINE_FROZEN_POOL_TRAIN_ONLY_430 weights were not saved to disk during task-1067/task-1153."
+    },
+    "mode_b_explicit_v2a_intervention_comparator_evaluation": {
+      "command": "python3 -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py --resume-eval-from-saved-checkpoints --authorize-post-deadline-resume-budget-s <AUTHORIZED_SECONDS> --allow-v2a-intervention-comparator",
+      "behavior": "Evaluates saved v3a/v3b checkpoints against saved WINNER_POOL_V2A_TRAIN_ONLY_430 (35b0f08a...) with 0 training calls, labeling all comparator metrics, contrasts, and conclusions strictly as WINNER_POOL_V2A_TRAIN_ONLY_430 (comparator_is_frozen_pool_baseline=False)."
+    },
+    "mode_c_explicit_verified_frozen_pool_baseline_checkpoint": {
+      "command": "python3 -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py --resume-eval-from-saved-checkpoints --authorize-post-deadline-resume-budget-s <AUTHORIZED_SECONDS> --baseline-430-checkpoint <PATH_TO_FROZEN_BASELINE_430_PT> --baseline-430-checkpoint-sha256 <EXPECTED_SHA256>",
+      "behavior": "Verifies the supplied frozen-pool baseline checkpoint SHA-256 and evaluates v3a/v3b against BASELINE_FROZEN_POOL_TRAIN_ONLY_430 (comparator_is_frozen_pool_baseline=True) with 0 training calls."
+    },
+    "stage_5b_matched_rollout_evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE"
+  },
+  "deterministic_stub_and_child_process_unit_test_verification": {
+    "test_script_path": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py",
+    "test_script_sha256": "ee96db67ae111dd007d5fe851afb0568466f35ac19cf52e42e46c226e1ba69e9",
+    "verified_target_script_path": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py",
+    "verified_target_script_sha256": "5278e38ae91b27773ff5cb37d8ac29b2bd79288f9fcc04d825730147e98bd9d0",
+    "command": "/usr/bin/python3 -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py",
+    "exit_code": 0,
+    "tests_collected": 6,
+    "tests_executed": 6,
+    "tests_passed": 6,
+    "tests_failed": 0,
+    "wall_clock_seconds": 8.669,
+    "test_cases": [
+      "test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline",
+      "test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes",
+      "test_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag",
+      "test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization",
+      "test_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels",
+      "test_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline"
+    ],
+    "combined_output": "[Phase 7] Starting Bounded 256-Context Strict-Train Extension on cuda:0 (CPU soft cap=45.0% <= 50%, hard cap=85.0%, effective wall stop=60.0s, reuse_ckpt=True)...\n[Phase 7] Starting Bounded 256-Context Strict-Train Extension on cuda:0 (CPU soft cap=45.0% <= 50%, hard cap=85.0%, effective wall stop=60.0s, reuse_ckpt=True)...\n[Phase 7] Finished in 0.34s (eval_status=COMPLETED).\n[Phase 7] Starting Bounded 256-Context Strict-Train Extension on cuda:0 (CPU soft cap=45.0% <= 50%, hard cap=85.0%, effective wall stop=60.0s, reuse_ckpt=True)...\n[Phase 7] Finished in 0.16s (eval_status=COMPLETED).\n\ntest_blocked_rollout_call_preempted_by_itimer_at_hard_deadline (__main__.TestPhase7SourceReplayAudit.test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline) ... ok\ntest_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes (__main__.TestPhase7SourceReplayAudit.test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes) ... ok\ntest_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag (__main__.TestPhase7SourceReplayAudit.test_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag) ... ok\ntest_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization (__main__.TestPhase7SourceReplayAudit.test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization) ... ok\ntest_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels (__main__.TestPhase7SourceReplayAudit.test_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels) ... ok\ntest_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline (__main__.TestPhase7SourceReplayAudit.test_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 5.195s\n\nOK",
+    "explicit_limitations": "These 6 unit tests use deterministic synthetic fixtures, stubs, and an isolated child Python process (subprocess.Popen + forked OS worker processes) with zero campaign compute to verify: (1) fail-closed refusal when --baseline-430-checkpoint is absent without --allow-v2a-intervention-comparator; (2) strict propagation of WINNER_POOL_V2A_TRAIN_ONLY_430 labels and zero BASELINE_FROZEN_POOL_TRAIN_ONLY_430 keys when --allow-v2a-intervention-comparator is passed; (3) BASELINE_FROZEN_POOL_TRAIN_ONLY_430 labeling when an explicit verified --baseline-430-checkpoint is provided; (4) expired-deadline refusal without explicit authorization; (5) actual OS worker SIGKILL termination (os.kill(worker_pid, 0) -> ProcessLookupError), zero late file writes after deadline, and bounded child interpreter exit (<1.50s vs 4.0s worker sleep); and (6) kernel ITIMER_REAL preemption of a blocked rollout call. They do NOT execute Stage 5B rollout evaluation on the real 91 DL-Val and 93 DL-Holdout contexts, which remains UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE."
+  }
+}
