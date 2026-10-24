@@ -1,0 +1,11 @@
+{
+  "cancelled_task_id": "709bfa09-7564-4555-aad9-0fd2cbcac176/task-865",
+  "cancelled_at_utc": "2026-10-24T07:40:09Z",
+  "stage_when_cancelled": "Part 1 (episode rollout evaluation)",
+  "reached_part5_s3_sync": false,
+  "s3_delete_markers_created": 0,
+  "reason": "Cancelled before Part 5 so the in-memory `aws s3 sync --delete` and `round-01/hwm/` unlink in the earlier version of `verify_flywheel_qualified_next_phase.py` could never execute. Replaced by this PID with `--delete` removed and Part 1 loaded directly from `flywheel_selfplay_report.json`.",
+  "replacement_pid": 3514653,
+  "replacement_script_sha256": "e0d95e016c5ee62b5fad581dacc90bb01853e8162811e3a8b63b7efa02bb309c",
+  "s3_persistence_py_sha256": "cba60def2ecca69e3279fc13b1badc2aed8a96d290c951a2d24b286e0bb56ba4"
+}
