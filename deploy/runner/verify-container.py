@@ -60,6 +60,8 @@ def main():
     )
     # Hooks use the same PR-base / exact-head bind as the scripts digest.
     provenance_bind.verify_hooks(Path(".").resolve(), Path("/opt/jope-runner"))
+    if policy["host"] == "xbabe4":
+        provenance_bind.verify_mac_git(Path(".").resolve(), Path("/opt/jope-runner"))
     print(
         json.dumps(
             {

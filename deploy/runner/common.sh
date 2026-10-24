@@ -40,6 +40,7 @@ JOPE_RUNNER_DEPLOYED=(
   /opt/jope-runner/job-policy.py
   /opt/jope-runner/mac-controller.sh
   /opt/jope-runner/mac-guest.sh
+  /opt/jope-runner/mac-git-entrypoint.sh
   /opt/jope-runner/mac-capacity.json
   /etc/systemd/system/jope-mac-runner@.service
   /etc/systemd/system/jope-mac-runner@.timer
