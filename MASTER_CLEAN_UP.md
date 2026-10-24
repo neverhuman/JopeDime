@@ -1382,3 +1382,14 @@ reused target and newly claimed ASM contract branch. No panel/training run start
 
 Completed: both merged lanes and generated restorations are absent; only the canonical
 product checkout remains registered. Immutable custody and local source refs remain.
+
+
+## 2026-10-24T04:30:08Z — Antigravity 709bfa09 (`jopedime-flywheel`) — Custody-verified reclamation of 21 retired `~/jope*` trees on xbabe2
+
+Under explicit user direction ("study `~/jope*/` folders if they are not directly related to the current work we need for `~/JopeDime/` please remove them"), audited all 30 `/home/ubuntu/jope*` entries on `xbabe2`. Protected all 9 Category A directories (`~/JopeDime`, `~/jope-dime` symlink, `~/jope-evidence`, `~/jope-preservation`, `~/jope-flywheel`, `~/jope`, `~/jope-node-mirror`, `~/jope-test-adaptive`, `~/jope-rescue-20260921`).
+
+For all 21 Category B retired/historical paths (`jope_bundle_20260706.tar.gz`, `jope_bundle_20260708.tar.gz`, `jope_bundle_build`, `jope-data`, `jope-dime-cache-evidence`, `jope-dime-experiments`, `jope-dime-recovery`, `jope-dime-scream`, `jope-dime-snapshots`, `jope-golden42`, `jope-gpu-fifo`, `jope-health-validation-20260920`, `jope-lime`, `jope-migration-evidence`, `jope-port-evidence`, `jope-prime`, `jope-pr-resolution`, `jope-recovery`, `jope-runner-deploy`, `jope-runner-rollback`, `jope-scratch`, `jope-slime`):
+1. Verified zero active process file descriptors (`lsof`) and zero external git object alternates pointing into any of the 21 paths.
+2. Preserved all git repositories with `git bundle create --all` into `/mnt/jope-archive/custody-20261023/bundles/`, restored each bundle into an independent bare repository (`git clone --no-local --bare` under `/mnt/jope-archive/custody-20261023/bare-verify/`), and verified every ref SHA and unpushed commit (`git log --all --not --remotes`) present (`jope-health-validation-20260920`: 6 unpushed; `jope-migration-evidence`: 2 unpushed; `jope-prime`: 7 unpushed; `jope-recovery`: 5 unpushed; `jope-slime`: 108 unpushed).
+3. Synced all non-Cargo files (`rsync -a`, excluding only verified `CACHEDIR.TAG` / `.rustc_info.json` build caches) into `/mnt/jope-archive/custody-20261023/trees/` and verified directory sync completion before removing the 21 original paths from `/home/ubuntu/`.
+4. Durable receipt: `/mnt/jope-archive/custody-20261023/CLEANUP_RECEIPT_20261023.json`. Root filesystem free space increased from `333,453,762,560` bytes to `444,812,394,496` bytes (`+111,358,631,936` bytes / **`+103.71 GiB`** net reclaimed on `/`).
