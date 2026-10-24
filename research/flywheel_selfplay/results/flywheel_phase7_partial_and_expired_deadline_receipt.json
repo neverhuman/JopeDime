@@ -1,0 +1,155 @@
+{
+  "schema": "jope.flywheel_phase7_partial_and_expired_deadline_receipt.v1",
+  "created_at_utc": "2026-10-24T10:09:50Z",
+  "git_branch": "research/flywheel-selfplay-20261023",
+  "git_head_before_commit": "faab205ab14a89dfb86b466ad16fc8c945bfd19a",
+  "directives_addressed": [
+    "/home/ubuntu/.codex-screen-monitor/jope-bounded-continuation-20261024T091646Z.txt",
+    "/home/ubuntu/.codex-screen-monitor/jope-cap-and-interpretation-20261024T093848Z.txt",
+    "/home/ubuntu/.codex-screen-monitor/jope-expired-deadline-20261024T095604Z.txt"
+  ],
+  "expired_deadline_accounting": {
+    "task_id": "task-1153",
+    "pid_stopped": 2216018,
+    "script": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py",
+    "started_at_utc": "2026-10-24T09:29:11Z",
+    "declared_wall_clock_cap_s": 1080.0,
+    "declared_deadline_utc": "2026-10-24T09:47:11Z",
+    "stopped_at_utc": "2026-10-24T09:56:34Z",
+    "actual_elapsed_wall_clock_s": 1643.0,
+    "overrun_past_declared_cap_s": 563.0,
+    "within_declared_1080s_cap": false,
+    "terminal_disposition": "CANCELED_AT_EXPIRED_DEADLINE",
+    "stop_method": "manage_task(Action='kill', TaskId='task-1153') after verifying exact PID 2216018 command line and parent chain; zero other owners' processes affected",
+    "why_overrun_occurred": "The initial version of verify_flywheel_wider_train_extension_v3.py only checked FINITE_WALL_STOP_S = 1080.0 at the end of main(), and MAX_EVOLUTION_WALL_S = 390.0 between 16-context evolution batches. During Stage 5B rollout evaluation (736 model x dataset evaluations across 4 checkpoints x 184 contexts), background DOPE activity on xbabe2 raised whole-host CPU to ~80%, slowing per-dataset PyTorch rollout evaluation without an intra-loop deadline check.",
+    "source_enforcement_fix_applied": "verify_flywheel_wider_train_extension_v3.py now enforces check_wall_deadline(script_t0, ...) inside every evolution batch and inside every rollout evaluation loop, raising DeadlineExpiredError immediately at the cap and writing a structured partial receipt rather than overrunning."
+  },
+  "cohort_and_scope_accounting": {
+    "strict_train_population_contexts": 1016,
+    "strict_train_population_families": 170,
+    "evolved_cohort_contexts": 256,
+    "evolved_cohort_fraction_of_strict_train": 0.25196850393700787,
+    "unevolved_strict_train_contexts": 760,
+    "unevolved_strict_train_fraction": 0.7480314960629921,
+    "evolved_cohort_families": 123,
+    "evolved_cohort_family_fraction_of_strict_train": 0.7235294117647059,
+    "selection_criterion": "256 source_split=='train' (DL-Train) contexts with smallest teacher.jtt1.gz (5008..64094 bytes)",
+    "cohort_scope_classification": "PARTIAL_COHORT_256_OF_1016_STRICT_TRAIN_CONTEXTS",
+    "val_family_overlap": 0,
+    "holdout_family_overlap": 0,
+    "outer_test_folds_accessed_during_selection": false
+  },
+  "completed_partial_stages": {
+    "stage_1_and_2_and_3_two_stage_evolution": {
+      "status": "COMPLETED",
+      "evolution_wall_s": 252.61,
+      "parent_python_cpu_s": 9.71,
+      "mean_host_cpu_pct_during_evolution": 15.2,
+      "hard_cap_85_violations": 0,
+      "stage1_stratified300_candidates_evaluated": 1536,
+      "stage1_stratified300_cv_gate_passes": 1330,
+      "stage2_full_jtt1_candidates_evaluated": 512,
+      "stage2_full_jtt1_cv_gate_passes": 511,
+      "unique_program_sha256_count": 503,
+      "contexts_with_qualified_winner": 256,
+      "strict_incumbent_best_beats": 60,
+      "contexts_with_strict_incumbent_best_beat": 54,
+      "q25_beats": 406,
+      "contexts_with_q25_beat": 238,
+      "median_beats": 477,
+      "contexts_with_median_beat": 251,
+      "combined_strict_train_winner_union_summary": {
+        "phase6_strict_train_winners_count": 28,
+        "phase7_new_strict_train_winners_count": 511,
+        "combined_unique_context_program_pairs": 539,
+        "combined_unique_program_sha256": 531,
+        "combined_unique_strict_train_contexts_with_gate_pass": 259,
+        "combined_strictly_beating_incumbent_best": 63,
+        "combined_strictly_beating_q25": 430,
+        "combined_strictly_beating_median": 504
+      }
+    },
+    "stage_4_materialized_pool_variants": {
+      "status": "COMPLETED",
+      "original_pools_mutated": false,
+      "v3a_strict_train_q25": {
+        "description": "Augments `source_split == 'train'` (`DL-Train`) contexts with `Full-JTT1`-verified novel winners strictly beating their frozen-pool top quartile (`Q25`).",
+        "augmented_context_count": 241,
+        "fraction_of_1016_strict_train_augmented": 0.2372,
+        "admitted_winner_count": 430,
+        "pools_dir": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/pools_v3a_strict_train_q25",
+        "pool_directory_integrity": {
+          "dir_path": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/pools_v3a_strict_train_q25",
+          "file_count": 241,
+          "total_bytes": 32175779,
+          "tree_sha256": "74d3e59a28907e5c7dc9b436a5fb19ede4231a1551132602dc7f1737cadf6ede"
+        }
+      },
+      "v3b_strict_train_median": {
+        "description": "Augments `source_split == 'train'` (`DL-Train`) contexts with `Full-JTT1`-verified novel winners strictly beating their frozen-pool median (`Median`).",
+        "augmented_context_count": 254,
+        "fraction_of_1016_strict_train_augmented": 0.25,
+        "admitted_winner_count": 504,
+        "pools_dir": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/pools_v3b_strict_train_median",
+        "pool_directory_integrity": {
+          "dir_path": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/pools_v3b_strict_train_median",
+          "file_count": 254,
+          "total_bytes": 33919110,
+          "tree_sha256": "6a5aa754521dcd11f2a910dff67f6faad20b87892c30654bd715ae8f445f9271"
+        }
+      }
+    },
+    "stage_5a_matched_frozen_budget_training": {
+      "status": "COMPLETED",
+      "steps": 430,
+      "seed": 20265000,
+      "enable_evo_queue": false,
+      "use_cv_test_gate": false,
+      "checkpoints_saved": {
+        "WINNER_POOL_V3A_Q25_TRAIN_ONLY_430": {
+          "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3a_q25_train_only_430.pt",
+          "sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+          "size_bytes": 2105950
+        },
+        "WINNER_POOL_V3B_MEDIAN_TRAIN_ONLY_430": {
+          "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3b_median_train_only_430.pt",
+          "sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+          "size_bytes": 2106169
+        }
+      }
+    },
+    "stage_5b_matched_rollout_evaluation": {
+      "status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
+      "evaluated_splits_completed": 0,
+      "interpretation": "Stage 5B matched rollout evaluation on DL-Val (91 contexts) and DL-Holdout (93 contexts) did not complete before task-1153 was stopped at its expired deadline (2026-10-24T09:56:34Z). Accordingly, the downstream policy lift of WINNER_POOL_V3A_Q25_TRAIN_ONLY_430 and WINNER_POOL_V3B_MEDIAN_TRAIN_ONLY_430 relative to BASELINE_FROZEN_POOL_TRAIN_ONLY_430 and WINNER_POOL_V2A_TRAIN_ONLY_430 is strictly UNKNOWN (neither a negative/null result nor a positive result).",
+      "prewritten_source_claims_withdrawn": true,
+      "withdrawal_note": "All prewritten architectural/null conclusion strings in the earlier draft of verify_flywheel_wider_train_extension_v3.py have been removed from source and replaced with build_dynamic_evidence_bound_conclusion()."
+    }
+  },
+  "preserved_local_artifacts": {
+    "corpus_v3_manifest": {
+      "path": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "size_bytes": 718858
+    },
+    "task_1153_expired_deadline_log": {
+      "path": "/mnt/jope-archive/flywheel-20261023/results/task-1153-expired-deadline-stop.log",
+      "sha256": "9a862d67eeb47f1604a70c025e3c9415fd65d684a95ff0973a3aa997229c4a46",
+      "size_bytes": 2232
+    },
+    "checkpoint_v3a_q25_430": {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3a_q25_train_only_430.pt",
+      "sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+      "size_bytes": 2105950
+    },
+    "checkpoint_v3b_median_430": {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3b_median_train_only_430.pt",
+      "sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+      "size_bytes": 2106169
+    }
+  },
+  "reproducible_resume_protocol_if_future_compute_authorized": {
+    "command": "python3 -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py --resume-eval-from-saved-checkpoints",
+    "note": "Not executed in this turn per jope-expired-deadline-20261024T095604Z.txt (no new compute grant or renewed deadline)."
+  }
+}
