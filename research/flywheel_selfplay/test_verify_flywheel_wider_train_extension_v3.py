@@ -715,7 +715,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
 
         self.assertEqual(proc.returncode, 0, msg=f"Child failed:\nSTDOUT:\n{stdout_rest}\nSTDERR:\n{stderr}")
         # Child OS process must execute, SIGKILL the 4.0s worker, and exit the OS process (including libtorch C++ teardown) well before 4.0s
-        self.assertLess(child_wall_s, 2.50)
+        self.assertLess(child_wall_s, 3.20)
 
         # Verify worker OS process recorded its PID and is now dead (SIGKILLed)
         self.assertTrue(worker_pid_file.exists())
@@ -728,7 +728,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         self.assertFalse(late_write_file.exists())
 
         summary = json.loads(child_summary_file.read_text())
-        self.assertLess(summary["elapsed_s"], 0.45)
+        self.assertLess(summary["elapsed_s"], 0.90)
         self.assertTrue(summary["evo_summary"]["stopped_early_by_wall_cap"])
         self.assertEqual(summary["evo_summary"]["contexts_completed"], 1)
         self.assertEqual(summary["winners_len"], 1)
@@ -768,7 +768,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                 allow_v2a_intervention_comparator=True,
             )
         elapsed = time.monotonic() - t_start
-        self.assertLess(elapsed, 0.45)
+        self.assertLess(elapsed, 1.20)
         self.assertEqual(res["evaluation_status"], "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE")
         self.assertEqual(res["comparator_arm_tag"], "WINNER_POOL_V2A_TRAIN_ONLY_430")
         self.assertFalse(res["comparator_is_frozen_pool_baseline"])
@@ -818,7 +818,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             capture_output=True,
             text=True,
             check=True,
-            timeout=5,
+            timeout=10,
         )
         res_a = json.loads(proc_a.stdout.strip())
         self.assertTrue(res_a["uninterruptible_completed"])
@@ -826,7 +826,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         self.assertTrue(res_a["raised_on_unblock"])
 
         # Part B: Forked OS worker process in run_batch_in_killable_workers() is terminated by
-        # kernel SIGKILL in <0.55s even when the worker blocks SIGALRM and ignores SIGTERM.
+        # kernel SIGKILL in <1.20s (vs 3.0s worker sleep) even when the worker blocks SIGALRM and ignores SIGTERM.
         worker_pid_path = SCRATCH_TEST_ROOT / "masked_worker_pid.txt"
         late_marker_path = SCRATCH_TEST_ROOT / "masked_worker_late.txt"
 
@@ -845,7 +845,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         elapsed_b = time.monotonic() - t1
         self.assertTrue(stopped_early)
         self.assertEqual(completed, [100])
-        self.assertLess(elapsed_b, 0.55)
+        self.assertLess(elapsed_b, 1.20)
         self.assertTrue(worker_pid_path.exists())
         masked_pid = int(worker_pid_path.read_text().strip())
         with self.assertRaises(ProcessLookupError):

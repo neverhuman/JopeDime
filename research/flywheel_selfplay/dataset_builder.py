@@ -39,7 +39,10 @@ import numpy as np
 # Add corrected-study to sys.path (with dont_write_bytecode=True to never touch __pycache__)
 sys.dont_write_bytecode = True
 sys.path.insert(0, "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study")
-from rank_prepare import features as dsl_features_dict
+try:
+    from rank_prepare import features as dsl_features_dict
+except ModuleNotFoundError:
+    dsl_features_dict = None
 
 CORPUS_OUT_DIR = Path("/mnt/jope-archive/flywheel-20261023/corpus")
 OUTER_POOL_DIR = Path("/mnt/jope-archive/flywheel-20261023/outer_pools")

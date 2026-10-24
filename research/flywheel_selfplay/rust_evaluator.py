@@ -39,7 +39,10 @@ import numpy as np
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study")
-from rank_prepare import features as dsl_features_dict
+try:
+    from rank_prepare import features as dsl_features_dict
+except ModuleNotFoundError:
+    dsl_features_dict = None
 
 WORKER_BIN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/binaries/bootstrap.s1main")
 WORKER_SHA256 = "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
@@ -155,6 +158,10 @@ def get_w1_sign_matrix() -> np.ndarray:
 
 def featurize_dsl_412(dsl: str) -> tuple[np.ndarray, np.ndarray]:
     """Return (feat412 float32, proj16 float64) for any GP DSL string."""
+    if dsl_features_dict is None:
+        raise RuntimeError(
+            "rank_prepare.features requires host custody /home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study/rank_prepare.py"
+        )
     fnames = get_feat_names()
     d = dsl_features_dict(dsl)
     f412 = np.asarray([float(d.get(k, 0.0)) for k in fnames], dtype=np.float32)
