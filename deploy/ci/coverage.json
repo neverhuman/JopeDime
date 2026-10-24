@@ -4259,6 +4259,16 @@
       ],
       "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
     },
+    "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Executed offline CPU synthetic/stub unit checks for Phase 7 flywheel v3 comparator labels, fail-closed S3/checkpoint guards, and OS worker SIGKILL vs CPython ITIMER_REAL deadline boundaries in the Python lane; research flywheel outside the reviewed product baseline."
+    },
     "target:battle-gpu/lib/battle_gpu": {
       "discovery": {
         "doctest": true,
@@ -13019,7 +13029,8 @@
         "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt \"$EVIDENCE/onpolicy-offline.json\"",
         "uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --output \"$EVIDENCE/flywheel-v2-offline\"",
         "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py --receipt \"$EVIDENCE/r25-knnce-offline.json\"",
-        "python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py --receipt \"$EVIDENCE/multiseed-offline.json\""
+        "python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py --receipt \"$EVIDENCE/multiseed-offline.json\"",
+        "uv run --project python --no-sync python -B research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py"
       ],
       "command": [
         "bash",
