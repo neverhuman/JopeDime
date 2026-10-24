@@ -38,10 +38,12 @@ from pathlib import Path
 import numpy as np
 
 sys.dont_write_bytecode = True
-sys.path.insert(0, "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study")
+_CORRECTED_STUDY_DIR = "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study"
+if os.access(_CORRECTED_STUDY_DIR, os.R_OK | os.X_OK):
+    sys.path.insert(0, _CORRECTED_STUDY_DIR)
 try:
     from rank_prepare import features as dsl_features_dict
-except ModuleNotFoundError:
+except (ModuleNotFoundError, PermissionError, OSError):
     dsl_features_dict = None
 
 WORKER_BIN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/binaries/bootstrap.s1main")

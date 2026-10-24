@@ -38,10 +38,12 @@ import numpy as np
 
 # Add corrected-study to sys.path (with dont_write_bytecode=True to never touch __pycache__)
 sys.dont_write_bytecode = True
-sys.path.insert(0, "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study")
+_CORRECTED_STUDY_DIR = "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study"
+if os.access(_CORRECTED_STUDY_DIR, os.R_OK | os.X_OK):
+    sys.path.insert(0, _CORRECTED_STUDY_DIR)
 try:
     from rank_prepare import features as dsl_features_dict
-except ModuleNotFoundError:
+except (ModuleNotFoundError, PermissionError, OSError):
     dsl_features_dict = None
 
 CORPUS_OUT_DIR = Path("/mnt/jope-archive/flywheel-20261023/corpus")
