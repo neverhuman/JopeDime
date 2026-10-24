@@ -3657,12 +3657,12 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     "python:research/flywheel_selfplay/dataset_builder.py": {
-      "bytes": 40872,
+      "bytes": 41003,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "fe15dacb3c68f1ede2957acf9e99af2ec6da2a7bc52f54fc6f35533c7e18854c"
+      "sha256": "2cdddffc905d540e8ac1a19606d330780de356fabce54588d69f83cefec5c2a0"
     },
     "python:research/flywheel_selfplay/evo_batch_queue.py": {
       "bytes": 23934,
@@ -3721,12 +3721,12 @@
       "sha256": "a41eb02e405da6af3fd9747be3468697ce53ca8d3ff3f780a1693bdaa9370fe9"
     },
     "python:research/flywheel_selfplay/rust_evaluator.py": {
-      "bytes": 48554,
+      "bytes": 48685,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "2f1873923ff1f8f5997069ff694cdbe9eb6b904b5fad0fa1483f096ec61ed85b"
+      "sha256": "abf45d68c8befd16edbedc8a3253d9907eae27269b4167eb4b541f787d5e1a39"
     },
     "python:research/flywheel_selfplay/s3_persistence.py": {
       "bytes": 11144,

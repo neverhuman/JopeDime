@@ -79,12 +79,7 @@ from model import FlywheelGameNet
 
 
 def _resolve_scratch_test_root() -> Path:
-    """Return a non-/tmp scratch directory that works on both the host and CI runner containers."""
-    host_scratch = Path(
-        "/home/ubuntu/.gemini/antigravity-cli/brain/709bfa09-7564-4555-aad9-0fd2cbcac176/scratch"
-    )
-    if host_scratch.parent.exists():
-        return host_scratch / f"phase7_unit_tests_{os.getpid()}"
+    """Return a non-/tmp scratch directory inside the repository target directory."""
     repo_target = THIS_DIR.parents[1] / "target"
     return repo_target / f"phase7_unit_tests_{os.getpid()}"
 
