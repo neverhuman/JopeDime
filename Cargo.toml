@@ -75,7 +75,7 @@ hex = "0.4"
 nix = { version = "0.29", features = ["fs", "process", "signal", "socket", "term", "user"] }
 postcard = { version = "1", default-features = false, features = ["use-std"] }
 # Appliance package signatures (pure Rust): ECDSA P-256 over SHA-256, cosign-compatible (jope-assets).
-p256 = { version = "0.13", default-features = false, features = ["ecdsa", "pem", "std"] }
+p256 = { version = "0.14", default-features = false, features = ["ecdsa", "pem", "std"] }
 proptest = "1"
 rand = "0.8"
 rayon = "1"

@@ -119,7 +119,7 @@ pub fn verify<'k>(
         .find(|k| k.id == claimed)
         .ok_or_else(|| AssetError::UntrustedKey(claimed.to_string()))?;
     let signature = Signature::from_slice(signature).map_err(|_| AssetError::Signature)?;
-    if signature.normalize_s().is_some() {
+    if signature.normalize_s() != signature {
         // A high S is valid ECDSA but not the encoding a sealed file carries.
         return Err(AssetError::Signature);
     }
@@ -133,7 +133,7 @@ pub fn verify<'k>(
 /// package carries. Go's `crypto/ecdsa` does not normalize S; `(r, n - s)` verifies the same.
 pub fn normalize_der(der: &[u8]) -> Result<[u8; 64], AssetError> {
     let signature = Signature::from_der(der).map_err(|_| AssetError::Signature)?;
-    let signature = signature.normalize_s().unwrap_or(signature);
+    let signature = signature.normalize_s();
     Ok(signature.to_bytes().into())
 }
 
@@ -180,7 +180,7 @@ mod tests {
         let keys = [development_key()];
         let id = keys[0].id;
         let low: Signature = development_signing_key().sign(b"m");
-        let low = low.normalize_s().unwrap_or(low);
+        let low = low.normalize_s();
         let (r, s) = low.split_scalars();
         let high = Signature::from_scalars(r, -*s).unwrap();
         // cosign may emit either; sealing normalizes to the low form.
