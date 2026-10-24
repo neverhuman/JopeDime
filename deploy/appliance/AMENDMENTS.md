@@ -270,3 +270,42 @@ no full/neural package or release-host integration is qualified by this measurem
 
 Raw build, signature, verification, old-budget failure, ELF-section and refusal receipts:
 `/home/ubuntu/jope-evidence/pr-release-drive-20261022T2319Z/413-SIZE-ATTRIBUTION.json`.
+
+
+## A15 — Fixture size attribution for the fitted math-pipeline decoder
+
+The postmerge manual run of PR #427 (`f35bf5102445cec8d0ac71e9ab2808f9f25eb9a9`,
+run `40033940797`, attempt 1) built, development-signed and fully verified its fixture
+package, then correctly refused the old 5% size budget. It measured 5,843,568 B of code
+and 5,959,302 B packaged, versus A14 baselines 5,319,208 / 5,435,014 B. The fixture
+tensor identities are unchanged and `gpu_library_bytes` remains zero.
+
+A same-host comparison on xbabe2 used immutable premerge-main `f9543b85b356675d377e38d75c4e3ecea8b2d302`
+and merged-main sources, the same SDK image `093036bacc0efdddf4965722fdbd96244d127c28a7d23b0ecdc4b60c41a43f27`,
+Rust 1.97.1, source path, `dist-ci` profile and `embedded,dev-keys` features. It reused
+one target with 4 CPUs, 12 GiB memory and no swap or network, and completed in 111 seconds
+without OOM. Executables measure 5,319,832 and 5,843,120 B: +523,288 B (+9.84%).
+ELF section deltas are 392,272 B `.text`, 47,552 B `.rodata`, 45,132 B `.eh_frame`,
+5,440 B `.eh_frame_hdr`, 23,124 B `.gcc_except_table`, 4,848 B `.rela.dyn`,
+4,848 B `.data.rel.ro`, 104 B `.got` and 1,000 B relocation padding. These are
+whole-feature section measurements; per-function attribution is not claimed.
+
+An unpublished diagnostic tree `0dc890110e71a503fb939a9874791e940fe67e93`
+(commit `d72709e8eb2b30053dfde8c3e3aa6fe527cf2898`) restores only the three premerge
+decoder/export entrypoints: `jope-appliance/src/main.rs`, `jope-runtime/src/model_object.rs`
+and `jope-runtime/src/lib.rs`. All other merged files, including Go/CUDA emitters,
+security pins and release versions, remain. Built identically, it measures 5,321,296 B,
+so the decoder and fitted portable export account for 521,824 B of the observed increase;
+the remaining merged changes contribute 1,464 B. That diagnostic removes the feature only
+to measure it and is not the product fix. The decoder, export behavior and all source
+from the eight integrated PRs remain enabled in the product.
+
+The fixture baseline now uses the larger actual CI measurements. Standalone and CI code
+differ by 448 B, so they are not presented as byte-identical reproductions. No numerical
+fixture, optimization setting, dependency, signature check or 5% tolerance is relaxed.
+The unmeasured `native-only` and blocked `full` budgets stay unchanged; this measurement
+does not qualify a production-signed or neural package.
+
+Raw source manifests, build/section/cost receipts and the original failing CI report are
+retained under `/home/ubuntu/jope-evidence/pr-all-clearance-20261023/qualification/size-comparison-20261023`,
+`qualification/decoder-size-ablation-20261023` and `emergency-execution/ci8-public-appliance-readback.json`.

@@ -119,6 +119,17 @@ docker_args=(
   -e "JOPE_RUNNER_IMAGE_ID=$image_id" -e "JOPE_RUNNER_IMAGE_ID_RECORDED=$recorded_image_id"
   -i
 )
+if [[ $JOPE_RUNNER_HOST == xbabe4 ]]; then
+  git_volume=$(jq -er '.git_emulation.volume | select(test("^jope-git-emulation-[0-9a-f]{12}$"))' /opt/jope-runner/mac-capacity.json)
+  # Never create an empty tool volume implicitly at job launch; preflight proves it.
+  docker volume inspect "$git_volume" >/dev/null
+  docker_args+=(
+    --mount "type=volume,src=$git_volume,dst=/opt/jope-git-emulation,readonly"
+    -v /opt/jope-runner/mac-git-entrypoint.sh:/opt/jope-runner/mac-git-entrypoint.sh:ro
+    -v /opt/jope-runner/mac-capacity.json:/opt/jope-runner/mac-capacity.json:ro
+    --entrypoint /opt/jope-runner/mac-git-entrypoint.sh
+  )
+fi
 docker_args+=("$JOPE_RUNNER_IMAGE")
 # Record swap=0 in systemd once the scope exists (common.sh). Beside, not before, the docker
 # CLI so its signal forwarding is unchanged; lock fds 8/9 are closed so it never holds a lane.

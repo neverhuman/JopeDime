@@ -164,6 +164,54 @@ public state. Never delete unresolved state to force a retry. Terminal public re
 under `history/`; they contain no JIT value. Controller output is public state only; actual
 test/build logs stay with the GitHub job.
 
+### Git-only emulation in the Mac guest
+
+The dedicated Linux VM retains Rosetta for the Actions runner, Rust, Node and the rest
+of each job. The kernel-wide QEMU x86-64 handler must be disabled or absent. Only the
+image's Git and its ELF Git-core helpers run through a separate native ARM64 QEMU binary.
+The shim preserves the original argument vector, working directory and stdin; preparation
+runs before the original image entrypoint without reading its opaque one-use JIT input.
+Every lane creates its own shims in its disposable home. No host home or credential is mounted.
+
+`mac-capacity.json` pins the ordinary public image
+`tonistiigi/binfmt:qemu-v10.0.4-56@sha256:30cc9a4d03765acac9be2ed0afc23af1ad018aed2c28ea4be8c2eb9afe03fbd1`.
+Extract `/usr/bin/qemu-x86_64` from a **never-started** ARM64 container of that image using
+`docker create --platform linux/arm64` and `docker cp`. Use a fresh owned extraction name;
+inspect an uncertain prior creation before retrying. Do not start the image, use a privileged
+binfmt installer, replace system QEMU binaries or change another Colima profile.
+The extracted public binary must be exactly 8,121,056 bytes with SHA-256
+`ae2d5ac0ce319e8c55e2fcb5e1831dbffa7d1a612f208d575879685cc02f222c`.
+Retain the extraction and digest receipt; it contains no credential.
+
+On the Mac guest, the first merged-source provisioning uses
+`sudo deploy/runner/provision.sh --skip-sdk --skip-image --git-emulator=/absolute/path/to/qemu-x86_64`.
+Provisioning validates the public bytes before changes and creates the content-addressed
+`jope-git-emulation-ae2d5ac0ce31` volume, whose root and sole binary are root:root 0555.
+A subsequent provision may omit the public input only when that volume already validates.
+Unknown nonempty contents are refused and preserved. Native hosts install the uniform source
+inventory but do not create a tool volume or change their launch command.
+
+Each Mac job mounts the tool volume, the new entrypoint and the capacity policy read-only.
+Guest preflight checks the exact eleven mounts, tool digest/version/permissions and working
+Rosetta engine before the controller mints a JIT configuration. The in-job provenance check
+also binds both mounted sidecars and the actual read-only binary to the reviewed base.
+The image, SDK, twelve 16-GiB budgets and 48 private writable cache/work domains stay fixed.
+
+Historical qualification had nine Rosetta role passes and three Git SIGSEGV failures.
+Whole-process QEMU then failed real runner lifecycle; a newer whole-process QEMU also failed
+Rust CPU detection. Those results are retained and are not twelve-slot qualification.
+Private Git-only tests alone are also insufficient: after this source is reviewed, merged
+and uniformly deployed, require all twelve actual `runner-qualification.yml` jobs, their
+provenance/admission/kernel proofs, the full exact-main CI matrix and receiving checks.
+Until that passes, use manual `ci.yml` input `runner_pool=native`; create draft PRs and mark
+ready only at a frozen head to produce the separate eligible PR checks. Both full matrices
+must pass at the same candidate head before a protected merge.
+
+For rollback, pause only future owned Mac timers and wait for accepted jobs. Preserve public
+controller states, installed files and the tool volume. Restore a previously reviewed merged
+uniform deployment only after fresh idle proofs; do not reset uncertain JIT state or enable
+whole-process QEMU to make admission pass. A rollback is not permission to prune volumes.
+
 Deploy only reviewed merged files, in the existing coordinated freeze:
 
 1. Preserve installed files/receipts and live runner/job state. Pause affected **Jope** timers,
@@ -174,7 +222,7 @@ Deploy only reviewed merged files, in the existing coordinated freeze:
    inventory and units, records the actual digest and enables nothing. On Ubuntu xbabe2 it
    also creates the private controller state directory for `ubuntu`.
 3. In the existing owned `jope-ci` guest, use that exact reviewed deployment payload and
-   `sudo deploy/runner/provision.sh --skip-image`. The pinned amd64 image must already exist;
+   `sudo deploy/runner/provision.sh --skip-image --git-emulator=/absolute/path/to/qemu-x86_64`. The pinned amd64 image must already exist;
    this initializes the twelve separate storage domains and provisions the SDK from its receipt.
    It installs no GitHub credential. Keep the guest's native `jope-runner@*.timer` units disabled;
    only the Ubuntu controller supplies its one-use configurations.
@@ -193,9 +241,8 @@ Deploy only reviewed merged files, in the existing coordinated freeze:
    it refuses native/full/guard roles, other refs/events/workflows and missing source identity.
    All twelve jobs must succeed. Retain source SHA, run ID/attempt, runner names/IDs and actual
    mounts/caps; missing, skipped or cancelled jobs are not passes. Also dispatch normal
-   `ci.yml --ref main` and require all fourteen physical execution jobs, plus receiving checks.
-   The operational workflow adds no conditional placeholder to pull-request CI: its twelve
-   declared job families (fourteen executions after matrices) and README trace stay intact.
+   `ci.yml --ref main` and require all eighteen physical execution jobs, plus receiving checks.
+   The operational workflow adds no conditional placeholder to pull-request CI: the complete required matrix stays separate (currently eighteen executions after matrices).
 
 The Mac VM and image have prerequisite execution proofs. This source change does not itself
 qualify any new Mac or guard slot. The already restored xbabe3 ci/full lanes are the existing

@@ -18,13 +18,19 @@
 #     and the pinned serde_ignored adapter; numerical algorithms and optimization stay unchanged.
 #   * Native-only dist executable: 4,542,168 B; independently sealed size-validation package:
 #     4,561,056 B. The production signing key was not used; this is not a published appliance.
+# Rebaselined 2026-10-23 after integrated PR427, amendment A15:
+#   * Same-host paired dist-ci code: 5,319,832 -> 5,843,120 B (+523,288, 9.84%).
+#   * A three-entrypoint decoder/export ablation retains every other merged change and
+#     measures 5,321,296 B, attributing 521,824 B of the increase to the new feature.
+#   * Fixture values below use the larger actual CI measurement: 5,843,568 B code and
+#     5,959,302 B package. The 5% tolerance and unmeasured release budgets are unchanged.
 schema = "jope.appliance-size-budgets/v1"
 tolerance_percent = 5
 
 # PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
 [profile.fixture]
-base_executable_bytes = 5319208
-final_executable_bytes = 5435014
+base_executable_bytes = 5843568
+final_executable_bytes = 5959302
 note = "dist-ci build plus 0.1 MiB of generated fixture tensors and notices"
 
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.

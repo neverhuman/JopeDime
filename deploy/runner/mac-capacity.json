@@ -13,5 +13,13 @@
   "guest_cpus": 24,
   "guest_min_total_gib": 250,
   "sdk_version": "2.13.0+cu126",
-  "runner_label": "jope-mac-ci"
+  "runner_label": "jope-mac-ci",
+  "git_emulation": {
+    "schema": "jope.mac-git/v1",
+    "image": "tonistiigi/binfmt:qemu-v10.0.4-56@sha256:30cc9a4d03765acac9be2ed0afc23af1ad018aed2c28ea4be8c2eb9afe03fbd1",
+    "version": "10.0.4",
+    "binary_sha256": "ae2d5ac0ce319e8c55e2fcb5e1831dbffa7d1a612f208d575879685cc02f222c",
+    "binary_bytes": 8121056,
+    "volume": "jope-git-emulation-ae2d5ac0ce31"
+  }
 }

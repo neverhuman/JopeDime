@@ -606,6 +606,25 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(typescript_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // Preserve each published Go announcement as its original closed two-fixture edge.
+    for name in [
+        "transitions/go_wasm_identity_rebaseline.v1.json",
+        "transitions/go_after_typescript_identity_rebaseline.v1.json",
+        "transitions/typescript_after_go_identity_rebaseline.v1.json",
+    ] {
+        let record = old_fixture(name);
+        let fixtures = record["fixtures"].as_array().unwrap();
+        assert_eq!(fixtures.len(), 2);
+        for edge in fixtures {
+            identity_transitions::verify_fixture(
+                edge["path"].as_str().unwrap(),
+                edge["before"].as_str().unwrap(),
+                edge["after"].as_str().unwrap(),
+                std::slice::from_ref(&record),
+            )
+            .expect("preserved original Go identity announcement");
+        }
+    }
     // Preserve the original parallel C17 announcement; apply the combined edge below.
     let c17_parallel = old_fixture("transitions/c17_native_identity_rebaseline.v1.json");
     assert_eq!(c17_parallel["fixtures"].as_array().unwrap().len(), 2);
@@ -653,6 +672,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     }
     let integration_join =
         old_fixture("transitions/emergency_20261023_after_go_identity_join.v1.json");
+    // Signature dependency security update: extend only the two announced identity files.
+    let signature_security =
+        old_fixture("transitions/pr429_signature_security_identity_rebaseline.v1.json");
+    let signature_fixtures = signature_security["fixtures"].as_array().unwrap();
+    assert_eq!(signature_fixtures.len(), 2);
+    for path in changed_fixtures {
+        assert!(signature_fixtures.iter().any(|edge| edge["path"] == path));
+    }
     let shared_feature_join =
         old_fixture("transitions/pr416_after_shared_capacity_release_identity_join.v1.json");
     let feature_shared_join = old_fixture(
@@ -683,6 +710,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 capacity_release_join.clone(),
                 shared_feature_join.clone(),
                 integration_join.clone(),
+                signature_security.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -706,6 +734,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 go_parallel_join.clone(),
                 feature_shared_join.clone(),
                 integration_join.clone(),
+                signature_security.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -722,13 +751,30 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 go_after_c17.clone(),
                 feature_shared_join.clone(),
                 integration_join.clone(),
+                signature_security.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
     }
     // Preserve CUDA's independently announced history through the combined identity.
     let cuda_cpp = old_fixture("transitions/cuda_cpp_identity_rebaseline.v1.json");
+    assert_eq!(cuda_cpp["fixtures"].as_array().unwrap().len(), 2);
+    for path in changed_fixtures {
+        assert!(cuda_cpp["fixtures"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
     let cuda_local_only = old_fixture("transitions/cuda_local_only_ci_identity_rebaseline.v1.json");
+    assert_eq!(cuda_local_only["fixtures"].as_array().unwrap().len(), 2);
+    for path in changed_fixtures {
+        assert!(cuda_local_only["fixtures"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|edge| edge["path"] == path));
+    }
     let cuda_feature_shared_join = old_fixture(
         "transitions/pr422_shared_capacity_release_after_feature_identity_join.v1.json",
     );
@@ -753,6 +799,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 cuda_local_only.clone(),
                 cuda_feature_shared_join.clone(),
                 cuda_integration_join.clone(),
+                signature_security.clone(),
             ],
         ),
         (
@@ -760,6 +807,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             vec![
                 cuda_shared_feature_join.clone(),
                 cuda_integration_join.clone(),
+                signature_security.clone(),
             ],
         ),
     ] {
@@ -815,6 +863,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         tokio_security,
         shared_feature_join,
         integration_join,
+        signature_security,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

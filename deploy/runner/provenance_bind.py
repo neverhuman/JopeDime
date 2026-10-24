@@ -454,6 +454,32 @@ def verify_hooks(
         require_hook_match(name, actual, hook_digest(repo, rev, name))
 
 
+def verify_mac_git(
+    repo: Path, host_hook_dir: Path, environ: Optional[Mapping[str, str]] = None
+) -> None:
+    """Bind Mac-only sidecars and the actual immutable tool to the reviewed base.
+
+    Call only after verifying host=xbabe4 from the immutable six-field launch policy,
+    never from a job-controlled environment variable.
+    """
+    rev = bind_rev_from_env(environ)
+    for name in ("mac-git-entrypoint.sh", "mac-capacity.json"):
+        actual = hashlib.sha256((host_hook_dir / name).read_bytes()).hexdigest()
+        expected = hashlib.sha256(file_bytes(repo, rev, f"deploy/runner/{name}")).hexdigest()
+        require_hook_match(name, actual, expected)
+    policy = json.loads(file_bytes(repo, rev, "deploy/runner/mac-capacity.json"))["git_emulation"]
+    result = subprocess.run(
+        ["/bin/bash", str(host_hook_dir / "mac-git-entrypoint.sh"), "--inspect-tool",
+         str(host_hook_dir / "mac-capacity.json"), "/opt/jope-git-emulation/qemu-x86_64"],
+        check=True, text=True, capture_output=True, timeout=20,
+    )
+    expected = dict(binary_sha256=policy["binary_sha256"], binary_bytes=policy["binary_bytes"],
+                    architecture="aarch64", uid=0, gid=0, mode="0555",
+                    volume=policy["volume"], version=policy["version"])
+    if json.loads(result.stdout) != expected:
+        raise ValueError("Mac Git tool facts differ from the reviewed policy")
+
+
 def runner_pool(repo: Path, environ: Optional[Mapping[str, str]] = None) -> str:
     """Select only a capability pool declared by the provenance-bound merged policy.
 
