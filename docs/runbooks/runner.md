@@ -185,7 +185,7 @@ Retain the extraction and digest receipt; it contains no credential.
 
 On the Mac guest, the first merged-source provisioning uses
 `sudo deploy/runner/provision.sh --skip-sdk --skip-image --git-emulator=/absolute/path/to/qemu-x86_64`.
-Provisioning validates the public bytes before mutations and creates the content-addressed
+Provisioning validates the public bytes before changes and creates the content-addressed
 `jope-git-emulation-ae2d5ac0ce31` volume, whose root and sole binary are root:root 0555.
 A subsequent provision may omit the public input only when that volume already validates.
 Unknown nonempty contents are refused and preserved. Native hosts install the uniform source
