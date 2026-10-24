@@ -67,6 +67,10 @@ jope_mac_validate_guest() { # public facts, policy, lane, expected installed dig
     .cgroup_version == "2" and .cgroup_driver == "systemd" and .image_id == $p.image_id and
     .recorded_image_id == $p.image_id and .image_architecture == "amd64" and
     .digest == $digest and .recorded_digest == $digest and .sdk_version == $p.sdk_version and
+    .rosetta_enabled == true and .kernel_qemu_enabled == false and
+    .git_emulation == ($p.git_emulation | {
+      binary_sha256:.binary_sha256,binary_bytes:.binary_bytes,architecture:"aarch64",
+      uid:0,gid:0,mode:"0555",volume:.volume,version:.version}) and
     .lane_idle == true and (.active_lanes | type == "array") and
     (.active_lanes | index($lane) == null) and
     (.active_lanes | all(test("^ci([2-9]|1[0-2])?$"))) and
@@ -82,6 +86,10 @@ jope_mac_launch() { # lane, provisioned state dir, public policy JSON, optional 
   printf '%s' "$cfg" | jq -e '
     .schema == "jope.mac-capacity/v1" and .ssh_alias == "xbabe2" and .profile == "jope-ci" and
     .runner_label == "jope-mac-ci" and
+    .git_emulation.schema == "jope.mac-git/v1" and
+    (.git_emulation.binary_sha256 | type == "string" and test("^[0-9a-f]{64}$")) and
+    (.git_emulation.binary_bytes | type == "number" and . >= 20 and . <= 67108864) and
+    .git_emulation.volume == ("jope-git-emulation-" + .git_emulation.binary_sha256[0:12]) and
     .colima == "/opt/homebrew/bin/colima" and .mac_hostname == "Mac-Studio.local" and
     .guest_hostname == "xbabe4" and (.image_id | test("^sha256:[0-9a-f]{64}$"))
   ' >/dev/null || return 2

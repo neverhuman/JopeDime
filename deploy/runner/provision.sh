@@ -6,7 +6,7 @@
 # creates the PAT file location. It registers NOTHING with GitHub: registration happens per job,
 # from the JIT config that run.sh requests with the PAT the owner places in the 0600 file.
 #
-# Usage: deploy/runner/provision.sh [--skip-sdk] [--skip-image]
+# Usage: deploy/runner/provision.sh [--skip-sdk] [--skip-image] [--git-emulator=/absolute/public/binary]
 set -euo pipefail
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../.." && pwd)
@@ -14,11 +14,12 @@ repo=$(cd "$here/../.." && pwd)
 # shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$here/common.sh"
 
-skip_sdk=0; skip_image=0
+skip_sdk=0; skip_image=0; git_emulator=''
 for arg in "$@"; do
   case $arg in
     --skip-sdk) skip_sdk=1 ;;
     --skip-image) skip_image=1 ;;
+    --git-emulator=*) git_emulator=${arg#--git-emulator=} ;;
     *) echo "unknown argument $arg" >&2; exit 2 ;;
   esac
 done
@@ -26,6 +27,13 @@ done
 for tool in docker jq curl unzip sha256sum systemctl; do
   command -v "$tool" >/dev/null || { echo "missing tool: $tool" >&2; exit 2; }
 done
+# Only this guest needs the pinned public Git emulator. Validate input and initialize
+# its content-addressed, root-owned tool volume before other provisioning mutations.
+if [[ $JOPE_RUNNER_HOST == xbabe4 ]]; then
+  /bin/bash "$here/mac-git-entrypoint.sh" --provision-tool "$here/mac-capacity.json" "$git_emulator"
+elif [[ -n $git_emulator ]]; then
+  echo 'Git emulator input is approved only for xbabe4' >&2; exit 2
+fi
 lanes_text=$(jope_runner_lanes "$JOPE_RUNNER_HOST") || exit 2
 read -ra lanes <<< "$lanes_text"
 JOPE_VOLUMES=(jope-sdk)
@@ -98,7 +106,7 @@ fi
 install -d -m 0755 /etc/tmpfiles.d
 install -m 0644 "$here"/jope-exclusive-cpu.conf /etc/tmpfiles.d/
 systemd-tmpfiles --create /etc/tmpfiles.d/jope-exclusive-cpu.conf
-install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/trim-deps.sh "$here"/job-started.sh "$here"/job-policy.py "$here"/mac-controller.sh "$here"/mac-guest.sh /opt/jope-runner/
+install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/trim-deps.sh "$here"/job-started.sh "$here"/job-policy.py "$here"/mac-controller.sh "$here"/mac-guest.sh "$here"/mac-git-entrypoint.sh /opt/jope-runner/
 install -m 0644 "$here"/mac-capacity.json /opt/jope-runner/
 install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service "$here"/jope-mac-runner@.service "$here"/jope-mac-runner@.timer /etc/systemd/system/
 # The drop-in was committed but never installed here, so a freshly provisioned host ran with the
