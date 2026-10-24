@@ -1796,6 +1796,10 @@
         "training"
       ]
     },
+    "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
+      "reason": "Executed offline CPU synthetic/stub unit checks for Phase 7 flywheel v3 comparator labels, fail-closed S3/checkpoint guards, and OS worker SIGKILL vs CPython ITIMER_REAL deadline boundaries in the Python lane; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
     "target:battle-gpu/lib/battle_gpu": {
       "role": "regression",
       "subsystems": [
@@ -1992,6 +1996,14 @@
       "subsystems": [
         "gp",
         "fitting"
+      ]
+    },
+    "target:feat-math/test/go_golden": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/go_golden.rs",
+      "subsystems": [
+        "fitting",
+        "export"
       ]
     },
     "target:feat-math/test/golden": {
@@ -4654,14 +4666,6 @@
       "role": "regression",
       "subsystems": [
         "encoders"
-      ]
-    },
-    "target:feat-math/test/go_golden": {
-      "role": "regression",
-      "source": "crates/feat-math/tests/go_golden.rs",
-      "subsystems": [
-        "fitting",
-        "export"
       ]
     }
   },

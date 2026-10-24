@@ -1,6 +1,4 @@
 {
-  "schema": "jope.flywheel-research-source-classification/v1",
-  "scope": "Non-test research source roles and exact source hashes. Native jope-records test inventory permits only test-bearing CI coverage families; these source records are not exclusions or claimed tests.",
   "items": {
     "python:deploy/dl-flywheel/_successor_fixture_runner.py": {
       "bytes": 7749,
@@ -10,6 +8,177 @@
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
       "sha256": "d8c7dbf9c9a0033271d65711f6395cec95186ce906e37ce3b305d2fef667f822"
+    },
+    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/boundary.py": {
+      "bytes": 49588,
+      "classification": {
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "cf624b71d26eabb04e514e65692ab3783207d64154a1fdce64618cf30a692f13"
+    },
+    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/run_offline.py": {
+      "bytes": 3583,
+      "classification": {
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "51565dad0bee7a0cb0321a69991d75b0b226450e21a46d385cace414473188f3"
+    },
+    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/harness.py": {
+      "bytes": 12624,
+      "classification": {
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e8342e95b9a9b2060eb379d46c74388210a32b3e33a136daf998c9ebf3027a09"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/anchored_step.py": {
+      "bytes": 9330,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "fc05ee4d3d861107b9401dade3706e4f55a34523c4b79f96949c25ce327867bf"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/cli_v6.py": {
+      "bytes": 24236,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "59d0017dee39c0f40c6c75a7cc8a810ae22a8239d75f8cfe3de9506b65bc1911"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/custody_v6.py": {
+      "bytes": 15179,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "6d2ea58d4e0fc8eb1c6b855a711a6f3324a5448ab759d0b321a429ae812d356e"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/genesis.py": {
+      "bytes": 16255,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "dab86bf0a66124e657d19e52b698c760a6823970c23fbc16f5767ac1b168f8ca"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py": {
+      "bytes": 21929,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py": {
+      "bytes": 18310,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "a4a20a03298ba4a2f4eb06e746c023b5b9471ff9d4e4d915a2e222919d6af142"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/resume_v6.py": {
+      "bytes": 8095,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "861e92c151ba7a7365e6b1e95963933a8269357f0b50161b19e6f95dcd6609d7"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/runner_v6.py": {
+      "bytes": 52884,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "23f4677f2945d0522cef524c7ef7937e4e1580d1175e74931f8cfd0f45582a8f"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/__init__.py": {
+      "bytes": 118,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "782fc19537cf6e8e1c253a593f378897e97a02128cf2ae682fd0bf4426ca711b"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py": {
+      "bytes": 6840,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "f4a424b360d5ba6306d65ef14874f307779664ecb9d2ac3ff9ab415778f1028f"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py": {
+      "bytes": 7481,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "9740fc788ddf63e5630d876703fcd79495aa3246583b5279451d538c03e9cc38"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_rebased_exit_objective.py": {
+      "bytes": 5100,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "0b6be567135fcb7d83786a4532d1e09e0b2707420f22b390a142c9f294f3caf2"
     },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/campaign.py": {
       "bytes": 741,
@@ -649,6 +818,78 @@
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
       "sha256": "cdfd97c873105220e0febc3d57c9390efa9c11fd1f7bb3a99a17c92c1a7e73e7"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/capture.py": {
+      "bytes": 48985,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "d1649bfaacd594b0af5eaee45698d4dccb6e735edc06116f6054af790acf054a"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/fault_injection.py": {
+      "bytes": 12410,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "92d34969903068e8882b2758fbce0d05894e5300cb65413adcb7d7cd65c75d7c"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/measure.py": {
+      "bytes": 5331,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "89a444fca010f6e147dd3caf84d352e823e4b0bf8ef3f5a6454738113a73007a"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/probe.py": {
+      "bytes": 9962,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "01d84301cc52a833263c1a2a721482686c0083ebfe2709dd55a963963db69b94"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/run_offline.py": {
+      "bytes": 8176,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "f216ffc30404bac11fbbc16cb2203b5b3b288813371281842b6bdb5b9389e903"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/world.py": {
+      "bytes": 14421,
+      "classification": {
+        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "07c26bd883abba31011d369079136b13de118c550d82e6edc158e8e452df55e1"
     },
     "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/operations/cold_prepare_controller.py": {
       "bytes": 5299,
@@ -2133,6 +2374,69 @@
       },
       "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
     },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/offline.py": {
+      "bytes": 7167,
+      "classification": {
+        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "cfb5d7c4188e60611db79d0924e845f002c87af71e929e7cd18ff95f6d84dc30"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/preparation.py": {
+      "bytes": 41143,
+      "classification": {
+        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "7d6e438c358e59d09ffcb3505309e8f12f7ab01ce9eac145b2386384a95669dd"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/run_offline.py": {
+      "bytes": 5509,
+      "classification": {
+        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "bb4fac1d7f5db06b45909c7f225d08577997d40503cddddd68c467c25665eb17"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/world.py": {
+      "bytes": 9318,
+      "classification": {
+        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "8a017e11e85d91d47443582b62d025b0de33709fd1ee482ba726f8de0f6285d9"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/worker.py": {
+      "bytes": 14904,
+      "classification": {
+        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "64aa6e94671cee39fc1c148cb8d1c99146b87c957d3aec5027a92571aa6af515"
+    },
     "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/__init__.py": {
       "bytes": 68,
       "classification": {
@@ -2499,6 +2803,105 @@
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
       "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288"
     },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/__init__.py": {
+      "bytes": 1461,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "1a70a30358f3927b07558ef7e08180820efa7466ce1f09e6f7af9990953678d8"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py": {
+      "bytes": 31007,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "9b46611dfcbf6d6a3553af01e0555304ce4fb709c2e942a6262ae5ebf14d29f4"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/common.py": {
+      "bytes": 13725,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "39f21f29315eaad1c52921f49da459ac2a513564e972868ffa8eac206419f51d"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/labels_overlay.py": {
+      "bytes": 4874,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "4de070493d88e1311892593f54c2d32f6cf9a7f9ad6d074bbe7c6a5f716fab9b"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/loader.py": {
+      "bytes": 13539,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "bf8dc6532b1b6bf2ce143e876e62ba4a2fb803e06646bf46b4605a34979bb155"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/offline.py": {
+      "bytes": 7760,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py": {
+      "bytes": 37549,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "5a2ba71ce9291c8a7248f9ed1faf040c6e10001eb5701da2486bd90140e184f0"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py": {
+      "bytes": 5560,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e42e5bc76041539bb3dac061c155128714bb04a53a2e7da43c89e8adb9c49688"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py": {
+      "bytes": 0,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/world.py": {
+      "bytes": 26680,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "82099d4f29df5612ac46d200933727e73fa4a5e277f8c08edba386577f8287a6"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/verify.py": {
+      "bytes": 22162,
+      "classification": {
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd"
+    },
     "python:deploy/dl-flywheel/pipelines/rl_spec_audit/audit_math.py": {
       "bytes": 3853,
       "classification": {
@@ -2507,224 +2910,6 @@
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "ed3cf280dcf0565970266f90646b47aa1f25678a7675f5498cef38a86689eaf0"
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/__init__.py": {
-      "bytes": 231,
-      "classification": {
-        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e257af8f540fd7b84c84e4be5e9c617310dc3bf3807aea55eed98ce74c9c919c"
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/s3_lifecycle.py": {
-      "bytes": 14409,
-      "classification": {
-        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "3674c2174b266b641f5ab5a5f1538c4d350b502a23addb323dbde8f4cf1e9d74"
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/score_cache.py": {
-      "bytes": 6963,
-      "classification": {
-        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "a0b0f3a905c5ea86b9d21c988a6803c44291c4d9236880bbf5fc4703f78de922"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
-      "bytes": 17268,
-      "classification": {
-        "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py": {
-      "bytes": 5352,
-      "classification": {
-        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "88495db8b75290103e26a69bc0afd382d9e198d29977eb04a68d4436a92de95a"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/prepare_config.py": {
-      "bytes": 1676,
-      "classification": {
-        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "345baae54ac798542c151fa7a20f869ad8279436884b066e83def324215144e7"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/read_prior.py": {
-      "bytes": 3779,
-      "classification": {
-        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "e2a89841496d672713831c430462902230b2157398ea4048dd3145024980ab08"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py": {
-      "bytes": 17268,
-      "classification": {
-        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py": {
-      "bytes": 20376,
-      "classification": {
-        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/launch_v3.py": {
-      "bytes": 5941,
-      "classification": {
-        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
-        "role": "research"
-      },
-      "sha256": "494ecc4085fdb8ae81bc1c9fb21d001a7ce00ea8b055efaddecef03e03a2a82c"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/prepare_config.py": {
-      "bytes": 2731,
-      "classification": {
-        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
-        "role": "research"
-      },
-      "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py": {
-      "bytes": 17268,
-      "classification": {
-        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
-        "role": "research"
-      },
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py": {
-      "bytes": 20376,
-      "classification": {
-        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
-        "role": "research"
-      },
-      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
-    },
-    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v3.py": {
-      "bytes": 20806,
-      "classification": {
-        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
-        "role": "research"
-      },
-      "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
-    },
-    "python:deploy/dl-flywheel/run_callback_targets_offline.py": {
-      "bytes": 8370,
-      "classification": {
-        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
-        "role": "research"
-      },
-      "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
-    },
-    "python:deploy/dl-flywheel/run_fresh32_offline.py": {
-      "bytes": 4380,
-      "classification": {
-        "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "274218da9b4ef0ac159c4adb1165761b244c0dcf8bbd53be1a2f27c128a07bb9"
-    },
-    "python:deploy/dl-flywheel/run_fresh_gp_offline.py": {
-      "bytes": 4276,
-      "classification": {
-        "reason": "Frozen fresh GP permanent-registry revision3 support or provenance. Test-bearing files are classified separately; source import does not establish native fitting, input qualification, score publication or admission.",
-        "role": "research"
-      },
-      "origin": "Byte-exact revision3 cold source or additive isolated test runner; numeric worker and all runtime modules preserved.",
-      "sha256": "64cb10359751aae6e05e7ada345199d34dfdd35a03964cc4e2f8b65b8874d825"
-    },
-    "python:deploy/dl-flywheel/run_native_pool_offline.py": {
-      "bytes": 2807,
-      "classification": {
-        "reason": "Reviewed native pool orchestration or data-free mathematical/source audit support; not a test-bearing family. No runtime admission, actor implementation or scientific promotion from source import.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "1bc20cda01ebeacff9ca96f395238dc39aa2d5b89310e05966f76b82c38a08cb"
-    },
-    "python:deploy/dl-flywheel/run_native_v5_offline.py": {
-      "bytes": 3950,
-      "classification": {
-        "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "f4d09fc60c19876a2a2806f7570b0847db1f6cb124e47e8a758660fab82b7501"
-    },
-    "python:deploy/dl-flywheel/run_next128_offline.py": {
-      "bytes": 169,
-      "classification": {
-        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6"
-    },
-    "python:deploy/dl-flywheel/run_rl_math_offline.py": {
-      "bytes": 2789,
-      "classification": {
-        "reason": "Reviewed native pool orchestration or data-free mathematical/source audit support; not a test-bearing family. No runtime admission, actor implementation or scientific promotion from source import.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "48c3cfc7d39fed3b742f46f051bf44976c3dc42c21c3312f9e306ac27ee193d8"
-    },
-    "python:deploy/dl-flywheel/run_telemetry_offline.py": {
-      "bytes": 3163,
-      "classification": {
-        "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "8a99d35c387c8feff93f5658372e1c739c1a7d24563922feadf82a27bb9aeb00"
-    },
-    "python:deploy/dl-flywheel/run_trace_v2_offline.py": {
-      "bytes": 170,
-      "classification": {
-        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
-        "role": "research"
-      },
-      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "0e0cc1f68eed9a1666cd775b09ac7627bc6901c0166f414475b8e94ab6959556"
-    },
-    "python:deploy/dl-flywheel/run_trace_v3_offline.py": {
-      "bytes": 5415,
-      "classification": {
-        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
-        "role": "research"
-      },
-      "sha256": "60b23b47ca4b1c78d8a5ca63c9a4651e51b8bcdecdeaaf27ad894b14760e14fa"
-    },
-    "python:deploy/dl-flywheel/verify_source_inventory.py": {
-      "bytes": 4100,
-      "classification": {
-        "reason": "Reviewed native pool orchestration or data-free mathematical/source audit support; not a test-bearing family. No runtime admission, actor implementation or scientific promotion from source import.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/__init__.py": {
       "bytes": 155,
@@ -2852,70 +3037,6 @@
       "migration": "New supporting research source; the test family is classified separately. No source or test removed.",
       "sha256": "72923d713354130f9a2e0e1f384f00f75e3e03474a3bd77cda3f1de06060b1ff"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/__init__.py": {
-      "bytes": 79,
-      "sha256": "adfc129026c6cc08ccd5e16fd12d0920c3116a56fd159a65b72348f4529f41c6",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/collector.py": {
-      "bytes": 3670,
-      "sha256": "35b8a71c729890d0b7aba5ec21d7f977ab9a88ccf2f36abb7d9d975d98b2781a",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/groups.py": {
-      "bytes": 7789,
-      "sha256": "f94ed5b3db5b9c80a02fc4b658d0066edc7e158bad6818146e33445b6fc636f9",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/objective.py": {
-      "bytes": 8256,
-      "sha256": "4934c449eaff686a493d5abc2e6cd567fba661c658120aefc43ddd77d58fd44c",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py": {
-      "bytes": 4352,
-      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/sampling.py": {
-      "bytes": 7141,
-      "sha256": "720c8e16405d7ca5e98f569ea925189e8128109497920b1ed80c4b9629efe95d",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/__init__.py": {
-      "bytes": 61,
-      "sha256": "ef9af334f79974023be00e8e46970159fc43879191a20191a62875c85603e7df",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/fixtures.py": {
-      "bytes": 3298,
-      "sha256": "14e614367b19fe003f90a51d4d6b018f78c8f43a94872547b8e3a42d94db1369",
-      "classification": {
-        "role": "research",
-        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
-      }
-    },
     "python:deploy/dl-flywheel/pipelines/rlfw/kv_decode.py": {
       "bytes": 12102,
       "classification": {
@@ -2923,6 +3044,190 @@
         "role": "research"
       },
       "sha256": "f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/__init__.py": {
+      "bytes": 74,
+      "classification": {
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "ab51a80abdd48d981cc65e231d931b1c330a22cbcc09b446c56675d41c509032"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/analysis.py": {
+      "bytes": 13237,
+      "classification": {
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "3ed91409b65e1d7b0114f85f4c13389216fb39b3a1da5d71877255e621053821"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py": {
+      "bytes": 2720,
+      "classification": {
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "8f403f9834f410d63c3271e59e49938f63fe9af4bda6b08298fe0922a7f0f3b8"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/__init__.py": {
+      "bytes": 70,
+      "classification": {
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "d30ccdbde0723da097dbfacd89e3a31db1eeed8e13728567680f76e6188ddff9"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/__init__.py": {
+      "bytes": 79,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "adfc129026c6cc08ccd5e16fd12d0920c3116a56fd159a65b72348f4529f41c6"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py": {
+      "bytes": 6648,
+      "classification": {
+        "reason": "CX-OP GB-03 pure verified-q archive target / frozen in-memory actor update library. CPU synthetic fixtures only; no production q closure, durable optimizer CAS, live launch or improvement qualification.",
+        "role": "research"
+      },
+      "sha256": "f0c74484765d5d46cedff540ef066c2b7384bec25e122f974ad54ab03c6271c3"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/collector.py": {
+      "bytes": 3670,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "35b8a71c729890d0b7aba5ec21d7f977ab9a88ccf2f36abb7d9d975d98b2781a"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py": {
+      "bytes": 4662,
+      "classification": {
+        "reason": "CX-OP GB-03 pure verified-q archive target / frozen in-memory actor update library. CPU synthetic fixtures only; no production q closure, durable optimizer CAS, live launch or improvement qualification.",
+        "role": "research"
+      },
+      "sha256": "9eda8b846c3faf1b7b346e29d9bb098c5e04bf8a4beeed1ba506628c034288cc"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/groups.py": {
+      "bytes": 7789,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "f94ed5b3db5b9c80a02fc4b658d0066edc7e158bad6818146e33445b6fc636f9"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/objective.py": {
+      "bytes": 8256,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "4934c449eaff686a493d5abc2e6cd567fba661c658120aefc43ddd77d58fd44c"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py": {
+      "bytes": 4352,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/sampling.py": {
+      "bytes": 7141,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "720c8e16405d7ca5e98f569ea925189e8128109497920b1ed80c4b9629efe95d"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/__init__.py": {
+      "bytes": 61,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "ef9af334f79974023be00e8e46970159fc43879191a20191a62875c85603e7df"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/fixtures.py": {
+      "bytes": 3298,
+      "classification": {
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim.",
+        "role": "research"
+      },
+      "sha256": "14e614367b19fe003f90a51d4d6b018f78c8f43a94872547b8e3a42d94db1369"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/__init__.py": {
+      "bytes": 99,
+      "classification": {
+        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim.",
+        "role": "research"
+      },
+      "sha256": "ed001383e72a65095b694f548fdcb1163f9659d23988ffe5e6271ec57ba585cb"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/qhead.py": {
+      "bytes": 7878,
+      "classification": {
+        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim.",
+        "role": "research"
+      },
+      "sha256": "2721f9055c878de19e3d81723aebcac10dd690f4c786beb9e1910448011dc078"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/tests/__init__.py": {
+      "bytes": 45,
+      "classification": {
+        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim.",
+        "role": "research"
+      },
+      "sha256": "4da15abc71ab51f163cdbed2701076836b70bb7ac8993f43ae952e65fa6fe227"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/__init__.py": {
+      "bytes": 105,
+      "classification": {
+        "reason": "R25-kNN-CE package marker. NON-QUALIFYING scratch arm source.",
+        "role": "research"
+      },
+      "sha256": "62c8b7b2c24bb87d3335919de5962080f81317b49bc994e5c9adc308ffcaa0d9"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/knn_table.py": {
+      "bytes": 4848,
+      "classification": {
+        "reason": "R25-kNN-CE neighbour table and verifier (ENG:watcher sign-off 2026-10-13T07:42:55Z): cosine kNN over the L6 train roster with held-out/validation/same-lineage exclusions. CPU fixtures only; NON-QUALIFYING scratch arm source.",
+        "role": "research"
+      },
+      "sha256": "e26735a4035e291e16be6b3aa93efc14e547fa8d04acc4da2a1858e2b3ab741b"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_data_v4.py": {
+      "bytes": 11966,
+      "classification": {
+        "reason": "Host-configurable sha-pinned input paths for the R22/R25 scratch harness (unchanged revision 4 data module). NON-QUALIFYING scratch source.",
+        "role": "research"
+      },
+      "sha256": "e65aed59d67a269024ef3ff74e3e8f0d17b90809de15a8d87f38e6ba4660c745"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_train_v7.py": {
+      "bytes": 69384,
+      "classification": {
+        "reason": "R22/R25 scratch torch training harness revision 7 (revision 6 plus the kNN-CE term and max_updates). Needs host-local snapshot, sealed v1 capture and a GPU; never run in CI; NON-QUALIFYING, no promotion or live use.",
+        "role": "research"
+      },
+      "sha256": "f67089b6f0b8ba8504933d7d8550ea85ea57a3edbff22ab61653e2b085e4099f"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py": {
+      "bytes": 2798,
+      "classification": {
+        "reason": "Runner binding the exact R25-kNN-CE CPU fixture identities and source hashes into a receipt. No training or evaluation result.",
+        "role": "research"
+      },
+      "sha256": "bfd7633caf03e577c32fbde946b77cc70d28031ec6d270f6bd40ec41f2b1641d"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/__init__.py": {
+      "bytes": 64,
+      "classification": {
+        "reason": "R25-kNN-CE package marker. NON-QUALIFYING scratch arm source.",
+        "role": "research"
+      },
+      "sha256": "6303397b00db10f069bc60043531b7b352d71017ae07011200abbf8672454255"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py": {
       "bytes": 2297,
@@ -2939,6 +3244,33 @@
         "role": "research"
       },
       "sha256": "2aa2c692edd40dd439a1f5df67170d49e2e562399908b79145e0ca5ab664e5a6"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/__init__.py": {
+      "bytes": 231,
+      "classification": {
+        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e257af8f540fd7b84c84e4be5e9c617310dc3bf3807aea55eed98ce74c9c919c"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/s3_lifecycle.py": {
+      "bytes": 14409,
+      "classification": {
+        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "3674c2174b266b641f5ab5a5f1538c4d350b502a23addb323dbde8f4cf1e9d74"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/score_cache.py": {
+      "bytes": 6963,
+      "classification": {
+        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "a0b0f3a905c5ea86b9d21c988a6803c44291c4d9236880bbf5fc4703f78de922"
     },
     "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py": {
       "bytes": 6277,
@@ -3124,356 +3456,187 @@
       },
       "sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6"
     },
-    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/__init__.py": {
-      "bytes": 0,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
+      "bytes": 17268,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
     },
-    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/boundary.py": {
-      "bytes": 49588,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py": {
+      "bytes": 5352,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "cf624b71d26eabb04e514e65692ab3783207d64154a1fdce64618cf30a692f13"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "88495db8b75290103e26a69bc0afd382d9e198d29977eb04a68d4436a92de95a"
     },
-    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/run_offline.py": {
-      "bytes": 3583,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/prepare_config.py": {
+      "bytes": 1676,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "51565dad0bee7a0cb0321a69991d75b0b226450e21a46d385cace414473188f3"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "345baae54ac798542c151fa7a20f869ad8279436884b066e83def324215144e7"
     },
-    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/__init__.py": {
-      "bytes": 0,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/read_prior.py": {
+      "bytes": 3779,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "e2a89841496d672713831c430462902230b2157398ea4048dd3145024980ab08"
     },
-    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/harness.py": {
-      "bytes": 12624,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py": {
+      "bytes": 17268,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e8342e95b9a9b2060eb379d46c74388210a32b3e33a136daf998c9ebf3027a09"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/__init__.py": {
-      "bytes": 0,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py": {
+      "bytes": 20376,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/cli_v6.py": {
-      "bytes": 24236,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/launch_v3.py": {
+      "bytes": 5941,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "59d0017dee39c0f40c6c75a7cc8a810ae22a8239d75f8cfe3de9506b65bc1911"
+      "sha256": "494ecc4085fdb8ae81bc1c9fb21d001a7ce00ea8b055efaddecef03e03a2a82c"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/custody_v6.py": {
-      "bytes": 15179,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/prepare_config.py": {
+      "bytes": 2731,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "6d2ea58d4e0fc8eb1c6b855a711a6f3324a5448ab759d0b321a429ae812d356e"
+      "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/genesis.py": {
-      "bytes": 16255,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py": {
+      "bytes": 17268,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "dab86bf0a66124e657d19e52b698c760a6823970c23fbc16f5767ac1b168f8ca"
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py": {
-      "bytes": 18310,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py": {
+      "bytes": 20376,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "a4a20a03298ba4a2f4eb06e746c023b5b9471ff9d4e4d915a2e222919d6af142"
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/resume_v6.py": {
-      "bytes": 8095,
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v3.py": {
+      "bytes": 20806,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "861e92c151ba7a7365e6b1e95963933a8269357f0b50161b19e6f95dcd6609d7"
+      "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/runner_v6.py": {
-      "bytes": 52884,
+    "python:deploy/dl-flywheel/run_callback_targets_offline.py": {
+      "bytes": 8370,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "23f4677f2945d0522cef524c7ef7937e4e1580d1175e74931f8cfd0f45582a8f"
+      "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/__init__.py": {
-      "bytes": 0,
+    "python:deploy/dl-flywheel/run_fresh32_offline.py": {
+      "bytes": 4380,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "274218da9b4ef0ac159c4adb1165761b244c0dcf8bbd53be1a2f27c128a07bb9"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/__init__.py": {
-      "bytes": 0,
+    "python:deploy/dl-flywheel/run_fresh_gp_offline.py": {
+      "bytes": 4276,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Frozen fresh GP permanent-registry revision3 support or provenance. Test-bearing files are classified separately; source import does not establish native fitting, input qualification, score publication or admission.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "origin": "Byte-exact revision3 cold source or additive isolated test runner; numeric worker and all runtime modules preserved.",
+      "sha256": "64cb10359751aae6e05e7ada345199d34dfdd35a03964cc4e2f8b65b8874d825"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/capture.py": {
-      "bytes": 48985,
+    "python:deploy/dl-flywheel/run_native_pool_offline.py": {
+      "bytes": 2807,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Reviewed native pool orchestration or data-free mathematical/source audit support; not a test-bearing family. No runtime admission, actor implementation or scientific promotion from source import.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "d1649bfaacd594b0af5eaee45698d4dccb6e735edc06116f6054af790acf054a"
+      "sha256": "1bc20cda01ebeacff9ca96f395238dc39aa2d5b89310e05966f76b82c38a08cb"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/fault_injection.py": {
-      "bytes": 12410,
+    "python:deploy/dl-flywheel/run_native_v5_offline.py": {
+      "bytes": 3950,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "92d34969903068e8882b2758fbce0d05894e5300cb65413adcb7d7cd65c75d7c"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "f4d09fc60c19876a2a2806f7570b0847db1f6cb124e47e8a758660fab82b7501"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/measure.py": {
-      "bytes": 5331,
+    "python:deploy/dl-flywheel/run_next128_offline.py": {
+      "bytes": 169,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "89a444fca010f6e147dd3caf84d352e823e4b0bf8ef3f5a6454738113a73007a"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/probe.py": {
-      "bytes": 9962,
+    "python:deploy/dl-flywheel/run_rl_math_offline.py": {
+      "bytes": 2789,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Reviewed native pool orchestration or data-free mathematical/source audit support; not a test-bearing family. No runtime admission, actor implementation or scientific promotion from source import.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "01d84301cc52a833263c1a2a721482686c0083ebfe2709dd55a963963db69b94"
+      "sha256": "48c3cfc7d39fed3b742f46f051bf44976c3dc42c21c3312f9e306ac27ee193d8"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/run_offline.py": {
-      "bytes": 8176,
+    "python:deploy/dl-flywheel/run_telemetry_offline.py": {
+      "bytes": 3163,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "f216ffc30404bac11fbbc16cb2203b5b3b288813371281842b6bdb5b9389e903"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "8a99d35c387c8feff93f5658372e1c739c1a7d24563922feadf82a27bb9aeb00"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/__init__.py": {
-      "bytes": 0,
+    "python:deploy/dl-flywheel/run_trace_v2_offline.py": {
+      "bytes": 170,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
+      "sha256": "0e0cc1f68eed9a1666cd775b09ac7627bc6901c0166f414475b8e94ab6959556"
     },
-    "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/world.py": {
-      "bytes": 14421,
+    "python:deploy/dl-flywheel/run_trace_v3_offline.py": {
+      "bytes": 5415,
       "classification": {
-        "reason": "Research read-only final capture (W10 revision 2) with 32 isolated CPU fixtures through its own pinned runner, wired by run_v2_offline.py, additive to prior812. Source only; live capture is a separate receipt.",
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "07c26bd883abba31011d369079136b13de118c550d82e6edc158e8e452df55e1"
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/__init__.py": {
-      "bytes": 0,
-      "classification": {
-        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/offline.py": {
-      "bytes": 7167,
-      "classification": {
-        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "cfb5d7c4188e60611db79d0924e845f002c87af71e929e7cd18ff95f6d84dc30"
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/preparation.py": {
-      "bytes": 41143,
-      "classification": {
-        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "7d6e438c358e59d09ffcb3505309e8f12f7ab01ce9eac145b2386384a95669dd"
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/run_offline.py": {
-      "bytes": 5509,
-      "classification": {
-        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "bb4fac1d7f5db06b45909c7f225d08577997d40503cddddd68c467c25665eb17"
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/__init__.py": {
-      "bytes": 0,
-      "classification": {
-        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/world.py": {
-      "bytes": 9318,
-      "classification": {
-        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "8a017e11e85d91d47443582b62d025b0de33709fd1ee482ba726f8de0f6285d9"
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/worker.py": {
-      "bytes": 14904,
-      "classification": {
-        "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "64aa6e94671cee39fc1c148cb8d1c99146b87c957d3aec5027a92571aa6af515"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/__init__.py": {
-      "bytes": 1461,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "1a70a30358f3927b07558ef7e08180820efa7466ce1f09e6f7af9990953678d8"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py": {
-      "bytes": 31007,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "9b46611dfcbf6d6a3553af01e0555304ce4fb709c2e942a6262ae5ebf14d29f4"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/common.py": {
-      "bytes": 13725,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "39f21f29315eaad1c52921f49da459ac2a513564e972868ffa8eac206419f51d"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/labels_overlay.py": {
-      "bytes": 4874,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "4de070493d88e1311892593f54c2d32f6cf9a7f9ad6d074bbe7c6a5f716fab9b"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/loader.py": {
-      "bytes": 13539,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "bf8dc6532b1b6bf2ce143e876e62ba4a2fb803e06646bf46b4605a34979bb155"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/offline.py": {
-      "bytes": 7760,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py": {
-      "bytes": 37549,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "5a2ba71ce9291c8a7248f9ed1faf040c6e10001eb5701da2486bd90140e184f0"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py": {
-      "bytes": 5560,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e42e5bc76041539bb3dac061c155128714bb04a53a2e7da43c89e8adb9c49688"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py": {
-      "bytes": 0,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/world.py": {
-      "bytes": 26680,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "82099d4f29df5612ac46d200933727e73fa4a5e277f8c08edba386577f8287a6"
-    },
-    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/verify.py": {
-      "bytes": 22162,
-      "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
-        "role": "research"
-      },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd"
+      "sha256": "60b23b47ca4b1c78d8a5ca63c9a4651e51b8bcdecdeaaf27ad894b14760e14fa"
     },
     "python:deploy/dl-flywheel/run_v2_offline.py": {
       "bytes": 21405,
@@ -3484,179 +3647,144 @@
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "4036f762bc412217d1fb681a13457c191ab38bc7dca75474f5e29a00a4e7512f"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/anchored_step.py": {
-      "bytes": 9330,
+    "python:deploy/dl-flywheel/verify_source_inventory.py": {
+      "bytes": 4100,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Reviewed native pool orchestration or data-free mathematical/source audit support; not a test-bearing family. No runtime admission, actor implementation or scientific promotion from source import.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "fc05ee4d3d861107b9401dade3706e4f55a34523c4b79f96949c25ce327867bf"
+      "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py": {
-      "bytes": 21929,
+    "python:research/flywheel_selfplay/dataset_builder.py": {
+      "bytes": 40806,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
+      "sha256": "9d93603b5dfbe699f4d4f3515231238d01edb87f9d114423c8b3d22e3ea4c2dd"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/__init__.py": {
-      "bytes": 118,
+    "python:research/flywheel_selfplay/evo_batch_queue.py": {
+      "bytes": 23934,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "782fc19537cf6e8e1c253a593f378897e97a02128cf2ae682fd0bf4426ca711b"
+      "sha256": "9b9f0933675b6b98f39662f0c0334655aeb6d306e054c7dd5e37360655723b1e"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py": {
-      "bytes": 6840,
+    "python:research/flywheel_selfplay/model.py": {
+      "bytes": 24938,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "f4a424b360d5ba6306d65ef14874f307779664ecb9d2ac3ff9ab415778f1028f"
+      "sha256": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py": {
-      "bytes": 7481,
+    "python:research/flywheel_selfplay/post_audit_phase7_cap_and_interpretation.py": {
+      "bytes": 21948,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "9740fc788ddf63e5630d876703fcd79495aa3246583b5279451d538c03e9cc38"
+      "sha256": "f497299e4b356d2975797f3057bd5c166a3b211c07ca1c29d69cab654673e740"
     },
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_rebased_exit_objective.py": {
-      "bytes": 5100,
+    "python:research/flywheel_selfplay/publish_phase7_addendum_v2.py": {
+      "bytes": 16988,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "0b6be567135fcb7d83786a4532d1e09e0b2707420f22b390a142c9f294f3caf2"
+      "sha256": "fa59c8d36ada413c388f10737036a82c14b96720a5a2df8e9ad418168ed774ca"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py": {
-      "bytes": 6648,
-      "sha256": "f0c74484765d5d46cedff540ef066c2b7384bec25e122f974ad54ab03c6271c3",
+    "python:research/flywheel_selfplay/publish_phase7_addendum_v3.py": {
+      "bytes": 21858,
       "classification": {
-        "role": "research",
-        "reason": "CX-OP GB-03 pure verified-q archive target / frozen in-memory actor update library. CPU synthetic fixtures only; no production q closure, durable optimizer CAS, live launch or improvement qualification."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "0f747bf94bf6247af67d2ee4523d1c34b20f57310d9020a4a092693b836b3e1c"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py": {
-      "bytes": 4662,
-      "sha256": "9eda8b846c3faf1b7b346e29d9bb098c5e04bf8a4beeed1ba506628c034288cc",
+    "python:research/flywheel_selfplay/publish_phase7_addendum_v4.py": {
+      "bytes": 22778,
       "classification": {
-        "role": "research",
-        "reason": "CX-OP GB-03 pure verified-q archive target / frozen in-memory actor update library. CPU synthetic fixtures only; no production q closure, durable optimizer CAS, live launch or improvement qualification."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "a0ba7ec0f01c9b000884196dc7914781ed2eb5846361b422032b59ac05aab90b"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/__init__.py": {
-      "bytes": 105,
-      "sha256": "62c8b7b2c24bb87d3335919de5962080f81317b49bc994e5c9adc308ffcaa0d9",
+    "python:research/flywheel_selfplay/reconcile_provenance_audit.py": {
+      "bytes": 14512,
       "classification": {
-        "role": "research",
-        "reason": "R25-kNN-CE package marker. NON-QUALIFYING scratch arm source."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "a41eb02e405da6af3fd9747be3468697ce53ca8d3ff3f780a1693bdaa9370fe9"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/knn_table.py": {
-      "bytes": 4848,
-      "sha256": "e26735a4035e291e16be6b3aa93efc14e547fa8d04acc4da2a1858e2b3ab741b",
+    "python:research/flywheel_selfplay/rust_evaluator.py": {
+      "bytes": 48280,
       "classification": {
-        "role": "research",
-        "reason": "R25-kNN-CE neighbour table and verifier (ENG:watcher sign-off 2026-10-13T07:42:55Z): cosine kNN over the L6 train roster with held-out/validation/same-lineage exclusions. CPU fixtures only; NON-QUALIFYING scratch arm source."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "8259696eb8bea8426b18c08c30d986431e7a3623cee8838b09163a11da94da78"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_train_v7.py": {
-      "bytes": 69384,
-      "sha256": "f67089b6f0b8ba8504933d7d8550ea85ea57a3edbff22ab61653e2b085e4099f",
+    "python:research/flywheel_selfplay/s3_persistence.py": {
+      "bytes": 11144,
       "classification": {
-        "role": "research",
-        "reason": "R22/R25 scratch torch training harness revision 7 (revision 6 plus the kNN-CE term and max_updates). Needs host-local snapshot, sealed v1 capture and a GPU; never run in CI; NON-QUALIFYING, no promotion or live use."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "3e72363e87806f99774cc195f8623975b2f7df4ead8ad909f237d8bbfb7be86f"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_data_v4.py": {
-      "bytes": 11966,
-      "sha256": "e65aed59d67a269024ef3ff74e3e8f0d17b90809de15a8d87f38e6ba4660c745",
+    "python:research/flywheel_selfplay/selfplay_loop.py": {
+      "bytes": 78216,
       "classification": {
-        "role": "research",
-        "reason": "Host-configurable sha-pinned input paths for the R22/R25 scratch harness (unchanged revision 4 data module). NON-QUALIFYING scratch source."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "c4b79895395440343422ee6966531cb2ad0a2addd27cc680f46e616e6f423694"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py": {
-      "bytes": 2798,
-      "sha256": "bfd7633caf03e577c32fbde946b77cc70d28031ec6d270f6bd40ec41f2b1641d",
+    "python:research/flywheel_selfplay/verify_flywheel_audit.py": {
+      "bytes": 14864,
       "classification": {
-        "role": "research",
-        "reason": "Runner binding the exact R25-kNN-CE CPU fixture identities and source hashes into a receipt. No training or evaluation result."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "f288016c30694bdb0523cf666fad2df05d8ff49627a64bdb0301b6803d748532"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/__init__.py": {
-      "bytes": 64,
-      "sha256": "6303397b00db10f069bc60043531b7b352d71017ae07011200abbf8672454255",
+    "python:research/flywheel_selfplay/verify_flywheel_closure_and_mechanism.py": {
+      "bytes": 45613,
       "classification": {
-        "role": "research",
-        "reason": "R25-kNN-CE package marker. NON-QUALIFYING scratch arm source."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "2e883675dbd1b4538a76a276dbcee5bd72f77502da8073f16f5dcd0323cdf0c2"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/pools/__init__.py": {
-      "bytes": 99,
-      "sha256": "ed001383e72a65095b694f548fdcb1163f9659d23988ffe5e6271ec57ba585cb",
+    "python:research/flywheel_selfplay/verify_flywheel_qualified_next_phase.py": {
+      "bytes": 45097,
       "classification": {
-        "role": "research",
-        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "e0d95e016c5ee62b5fad581dacc90bb01853e8162811e3a8b63b7efa02bb309c"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/pools/qhead.py": {
-      "bytes": 7878,
-      "sha256": "2721f9055c878de19e3d81723aebcac10dd690f4c786beb9e1910448011dc078",
+    "python:research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py": {
+      "bytes": 110958,
       "classification": {
-        "role": "research",
-        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "feabff0733e68662bd7d871ec51a530e8deedf8c86bce1911fb4bdb35ec394e1"
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/pools/tests/__init__.py": {
-      "bytes": 45,
-      "sha256": "4da15abc71ab51f163cdbed2701076836b70bb7ac8993f43ae952e65fa6fe227",
+    "python:research/flywheel_selfplay/verify_flywheel_winner_pool_integration_v2.py": {
+      "bytes": 63915,
       "classification": {
-        "role": "research",
-        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/__init__.py": {
-      "bytes": 74,
-      "sha256": "ab51a80abdd48d981cc65e231d931b1c330a22cbcc09b446c56675d41c509032",
-      "classification": {
-        "role": "research",
-        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/analysis.py": {
-      "bytes": 13237,
-      "sha256": "3ed91409b65e1d7b0114f85f4c13389216fb39b3a1da5d71877255e621053821",
-      "classification": {
-        "role": "research",
-        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py": {
-      "bytes": 2720,
-      "sha256": "8f403f9834f410d63c3271e59e49938f63fe9af4bda6b08298fe0922a7f0f3b8",
-      "classification": {
-        "role": "research",
-        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
-      }
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/__init__.py": {
-      "bytes": 70,
-      "sha256": "d30ccdbde0723da097dbfacd89e3a31db1eeed8e13728567680f76e6188ddff9",
-      "classification": {
-        "role": "research",
-        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
-      }
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "15e0476ef50cebbe33421627c2a4a0292b14d0d8df6b60cd7c6331e23c23379f"
     }
-  }
+  },
+  "schema": "jope.flywheel-research-source-classification/v1",
+  "scope": "Non-test research source roles and exact source hashes. Native jope-records test inventory permits only test-bearing CI coverage families; these source records are not exclusions or claimed tests."
 }
