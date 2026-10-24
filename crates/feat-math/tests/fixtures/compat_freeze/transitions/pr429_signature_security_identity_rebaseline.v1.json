@@ -1,0 +1,20 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for RUSTSEC-2026-0387: p256 0.14.0 and crypto-bigint 0.7.6 update Cargo.lock. The ADR-0004 evaluator identity was regenerated at the committed dependency change; lineage changes only generated_at_sha. Extend every historical path that checks the current two identity fixtures through this closed edge. Preserve all historical pins, transition ledgers, behavioral fixtures, strict checks and serving-known identity rows.",
+  "plan_reference": "AGENTS.md exact-head protected integration; ADR-0004 and compat_freeze identity-only procedure",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/429",
+  "source_commit": "96664907d1247c65a5ea8505a7523cd9b83e9353",
+  "fixture_commit": "856600137b12d8d42eb6cc2348a6b0b9398e8232",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "8053eb02ce8c87ec15956e0ae3ecbbb7ddcaffbe6476045a72722e7a77f6687c",
+      "after": "a569a7171862937e3eecb26ea6c4b647e731045d41e8f7076ad785a2d0b6c13e"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "d1889d2812726e7099420c5a0c4c67e10617e40783993821d02f7aa7e4577ec8",
+      "after": "a71fd767acb755750e2054f00be92ee36d6e196d27c4cfe85b04780ee4d8c72a"
+    }
+  ]
+}
