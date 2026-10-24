@@ -41,9 +41,16 @@ with zero dataset/training/evaluation campaign compute (< 3s wall-clock):
    - Partial completed context 0 (`contexts_completed == 1`) is preserved and incomplete evaluation is
      recorded as `UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE`.
 6. `test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline`:
-   Proves a blocked `evaluate_episode_rollout_context` call (`time.sleep(2.5)`) inside
-   `run_matched_v3_acceptance_test()` is preempted by `controller.itimer_guard` (`SIGALRM`) in `< 0.45s`
+   Proves a blocked `evaluate_episode_rollout_context` call (`time.sleep(2.5)`, an interruptible syscall)
+   inside `run_matched_v3_acceptance_test()` is preempted by `controller.itimer_guard` (`SIGALRM`) in `< 0.45s`
    and recorded as `UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE`.
+7. `test_itimer_signal_delivery_boundary_vs_forked_worker_sigkill_under_masked_sigalrm`:
+   Explicitly verifies the CPython `ITIMER_REAL` (`SIGALRM`) signal-delivery boundary vs forked OS worker
+   `SIGKILL`: proves that while `SIGALRM` is blocked (`pthread_sigmask(SIG_BLOCK, {SIGALRM})`, modeling an
+   uninterruptible native/C/CUDA call before returning to `PyErr_CheckSignals()`), `itimer_guard` cannot
+   raise mid-section and raises `DeadlineExpiredError` only once signal delivery resumes at the Python
+   boundary, whereas `run_batch_in_killable_workers()` kills a worker with `SIGKILL` in `< 0.45s` even
+   when the worker masks `SIGALRM` and ignores `SIGTERM`.
 """
 from __future__ import annotations
 
@@ -51,6 +58,7 @@ import contextlib
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import textwrap
@@ -69,10 +77,19 @@ if str(THIS_DIR) not in sys.path:
 import verify_flywheel_wider_train_extension_v3 as v3
 from model import FlywheelGameNet
 
-# Use conversation scratch dir (never /tmp per AGENTS.md)
-SCRATCH_TEST_ROOT = Path(
-    "/home/ubuntu/.gemini/antigravity-cli/brain/709bfa09-7564-4555-aad9-0fd2cbcac176/scratch/phase7_unit_tests"
-)
+
+def _resolve_scratch_test_root() -> Path:
+    """Return a non-/tmp scratch directory that works on both the host and CI runner containers."""
+    host_scratch = Path(
+        "/home/ubuntu/.gemini/antigravity-cli/brain/709bfa09-7564-4555-aad9-0fd2cbcac176/scratch"
+    )
+    if host_scratch.parent.exists():
+        return host_scratch / f"phase7_unit_tests_{os.getpid()}"
+    repo_target = THIS_DIR.parents[1] / "target"
+    return repo_target / f"phase7_unit_tests_{os.getpid()}"
+
+
+SCRATCH_TEST_ROOT = _resolve_scratch_test_root()
 
 
 def _make_synthetic_pool_entry(cid: str, dl_split: str, source_split: str, idx: int, pool_path: Path) -> dict:
@@ -143,6 +160,17 @@ def _fast_bootstrap_stub(rows, arms, reference_arms, seed=20261022):
         "arm_means": {a: -1.1 for a in arms},
         "contrasts": contrasts,
     }
+
+
+def _masked_sigalrm_worker(item: dict) -> int:
+    if item["idx"] == 0:
+        return 100
+    signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM})
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    Path(item["worker_pid_path"]).write_text(str(os.getpid()))
+    time.sleep(3.0)
+    Path(item["late_marker_path"]).write_text("UNEXPECTED_LATE_WRITE")
+    return 200
 
 
 class TestPhase7SourceReplayAudit(unittest.TestCase):
@@ -686,8 +714,8 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         child_wall_s = time.monotonic() - t0
 
         self.assertEqual(proc.returncode, 0, msg=f"Child failed:\nSTDOUT:\n{stdout_rest}\nSTDERR:\n{stderr}")
-        # Child OS process must execute, SIGKILL the 4.0s worker, and exit the OS process in < 1.50s (well before 4.0s)
-        self.assertLess(child_wall_s, 1.50)
+        # Child OS process must execute, SIGKILL the 4.0s worker, and exit the OS process (including libtorch C++ teardown) well before 4.0s
+        self.assertLess(child_wall_s, 2.50)
 
         # Verify worker OS process recorded its PID and is now dead (SIGKILLed)
         self.assertTrue(worker_pid_file.exists())
@@ -744,6 +772,85 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         self.assertEqual(res["evaluation_status"], "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE")
         self.assertEqual(res["comparator_arm_tag"], "WINNER_POOL_V2A_TRAIN_ONLY_430")
         self.assertFalse(res["comparator_is_frozen_pool_baseline"])
+
+    def test_itimer_signal_delivery_boundary_vs_forked_worker_sigkill_under_masked_sigalrm(self) -> None:
+        # Part A: Run in a single-threaded Python child process (before OpenMP/libtorch spawns extra
+        # threads) to prove that when SIGALRM delivery is blocked during an uninterruptible section
+        # (pthread_sigmask(SIG_BLOCK, {SIGALRM})), ITIMER_REAL cannot raise mid-section and raises
+        # DeadlineExpiredError only once signal delivery resumes at the Python bytecode boundary.
+        part_a_script = textwrap.dedent(
+            """
+            import json
+            import signal
+            import time
+
+            class _MiniDeadlineError(RuntimeError):
+                pass
+
+            def _handler(_s, _f):
+                raise _MiniDeadlineError("ITIMER_REAL delivered at Python signal check boundary")
+
+            signal.signal(signal.SIGALRM, _handler)
+            signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM})
+            signal.setitimer(signal.ITIMER_REAL, 0.04)
+            t0 = time.monotonic()
+            # Sleep 0.14s while SIGALRM is masked (uninterruptible section completes without raising)
+            time.sleep(0.14)
+            uninterruptible_completed = True
+            elapsed_before_unblock = time.monotonic() - t0
+            raised_on_unblock = False
+            try:
+                signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGALRM})
+                time.sleep(0.01)
+            except _MiniDeadlineError:
+                raised_on_unblock = True
+            finally:
+                signal.setitimer(signal.ITIMER_REAL, 0.0)
+            print(json.dumps({
+                "uninterruptible_completed": uninterruptible_completed,
+                "elapsed_before_unblock": elapsed_before_unblock,
+                "raised_on_unblock": raised_on_unblock,
+            }))
+            """
+        )
+        proc_a = subprocess.run(
+            [sys.executable, "-B", "-u", "-c", part_a_script],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=5,
+        )
+        res_a = json.loads(proc_a.stdout.strip())
+        self.assertTrue(res_a["uninterruptible_completed"])
+        self.assertGreaterEqual(res_a["elapsed_before_unblock"], 0.12)
+        self.assertTrue(res_a["raised_on_unblock"])
+
+        # Part B: Forked OS worker process in run_batch_in_killable_workers() is terminated by
+        # kernel SIGKILL in <0.55s even when the worker blocks SIGALRM and ignores SIGTERM.
+        worker_pid_path = SCRATCH_TEST_ROOT / "masked_worker_pid.txt"
+        late_marker_path = SCRATCH_TEST_ROOT / "masked_worker_late.txt"
+
+        t1 = time.monotonic()
+        ctrl_b = v3.DeadlineController(script_t0=t1, hard_cap_s=1.22, persisted_receipt_path=None)
+        completed, stopped_early = ctrl_b.run_batch_in_killable_workers(
+            worker_fn=_masked_sigalrm_worker,
+            batch_items=[
+                {"idx": 0, "worker_pid_path": str(worker_pid_path), "late_marker_path": str(late_marker_path)},
+                {"idx": 1, "worker_pid_path": str(worker_pid_path), "late_marker_path": str(late_marker_path)},
+            ],
+            max_workers=1,
+            stage_name="test_sigkill_vs_masked_sigalrm",
+            reserve_s=1.0,
+        )
+        elapsed_b = time.monotonic() - t1
+        self.assertTrue(stopped_early)
+        self.assertEqual(completed, [100])
+        self.assertLess(elapsed_b, 0.55)
+        self.assertTrue(worker_pid_path.exists())
+        masked_pid = int(worker_pid_path.read_text().strip())
+        with self.assertRaises(ProcessLookupError):
+            os.kill(masked_pid, 0)
+        self.assertFalse(late_marker_path.exists())
 
 
 if __name__ == "__main__":

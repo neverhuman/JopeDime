@@ -168,9 +168,15 @@ class DeadlineController:
     """
     Hard wall-clock deadline controller across all blocking stages:
       - Forked OS worker processes (`run_batch_in_killable_workers`) with process-group `SIGKILL`
-        (`os.killpg(pid, signal.SIGKILL)`) so no worker or subprocess can survive or write files
-        after the deadline or delay Python process exit.
-      - Kernel `ITIMER_REAL` (`itimer_guard`) to preempt blocked in-process rollout/training calls.
+        (`os.killpg(pid, signal.SIGKILL)`) as the primary hard wall-clock preemption mechanism,
+        terminating worker processes immediately at the OS kernel level even inside uninterruptible
+        C/Rust/CUDA extensions or when `SIGALRM` is blocked/delayed, so no worker or subprocess can
+        survive or write files after the deadline or delay Python process exit.
+      - Kernel `ITIMER_REAL` (`itimer_guard`) as a secondary parent-side fallback in the main thread:
+        in CPython, `SIGALRM` sets a pending signal flag delivered at Python bytecode evaluation
+        boundaries (`PyErr_CheckSignals()`) or when an interruptible OS syscall returns `EINTR`
+        (and cannot preempt an uninterruptible native/CUDA extension mid-call without returning to
+        the Python eval loop or an interruptible syscall).
       - Persisted deadline-state checking across resumes.
     """
 
@@ -265,8 +271,12 @@ class DeadlineController:
     @contextlib.contextmanager
     def itimer_guard(self, stage_name: str, reserve_s: float = 0.0):
         """
-        Arms kernel `ITIMER_REAL` in the main thread so a blocked rollout or training call
-        is interrupted immediately when `remaining_s(stage_name, reserve_s)` expires.
+        Arms kernel `ITIMER_REAL` in the main thread as a secondary parent-side fallback so a
+        rollout or training call blocked at an interruptible syscall (`EINTR`) or Python bytecode
+        evaluation boundary (`PyErr_CheckSignals()`) raises `DeadlineExpiredError` when
+        `remaining_s(stage_name, reserve_s)` expires. Note: in CPython, `SIGALRM` does not preempt
+        an uninterruptible C/Rust/CUDA extension mid-call; hard preemption of native worker work
+        is enforced by forked OS worker process groups via `run_batch_in_killable_workers()` (`SIGKILL`).
         """
         rem = self.remaining_s(stage_name, reserve_s=reserve_s)
         if threading.current_thread() is not threading.main_thread():
