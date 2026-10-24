@@ -1,0 +1,29 @@
+{
+  "schema": "jope.flywheel_phase7_v3_unit_test_receipt.v4",
+  "created_at_utc": "2026-10-24T11:50:14Z",
+  "parent_addendum_v3_path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v3.json",
+  "parent_addendum_v3_sha256": "5eac02534619befe2ae13e334f06da8085f2900fb3f91fe2b0d1e58ce3ab27c6",
+  "parent_v3_test_script_sha256": "c3a90bf8935cf21536a5cf26a75ab437a675a746c29cf96a53ba44c6c560780c",
+  "test_script_path": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py",
+  "test_script_sha256": "8f9b28ee8da3727cd823e5a4924daac1c82f19e9a6cc19f8a8d48cdda8095105",
+  "verified_target_script_path": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py",
+  "verified_target_script_sha256": "feabff0733e68662bd7d871ec51a530e8deedf8c86bce1911fb4bdb35ec394e1",
+  "command": "/usr/bin/python3 -B -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py",
+  "exit_code": 0,
+  "tests_collected": 7,
+  "tests_executed": 7,
+  "tests_passed": 7,
+  "tests_failed": 0,
+  "wall_clock_seconds": 7.356,
+  "test_cases": [
+    "test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline",
+    "test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes",
+    "test_itimer_signal_delivery_boundary_vs_forked_worker_sigkill_under_masked_sigalrm",
+    "test_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag",
+    "test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization",
+    "test_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels",
+    "test_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline"
+  ],
+  "combined_output": "[Phase 7] Starting Bounded 256-Context Strict-Train Extension on cuda:0 (CPU soft cap=45.0% <= 50%, hard cap=85.0%, effective wall stop=60.0s, reuse_ckpt=True)...\n[Phase 7] Starting Bounded 256-Context Strict-Train Extension on cuda:0 (CPU soft cap=45.0% <= 50%, hard cap=85.0%, effective wall stop=60.0s, reuse_ckpt=True)...\n[Phase 7] Finished in 0.30s (eval_status=COMPLETED).\n[Phase 7] Starting Bounded 256-Context Strict-Train Extension on cuda:0 (CPU soft cap=45.0% <= 50%, hard cap=85.0%, effective wall stop=60.0s, reuse_ckpt=True)...\n[Phase 7] Finished in 0.14s (eval_status=COMPLETED).\n\ntest_blocked_rollout_call_preempted_by_itimer_at_hard_deadline (__main__.TestPhase7SourceReplayAudit.test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline) ... ok\ntest_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes (__main__.TestPhase7SourceReplayAudit.test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes) ... ok\ntest_itimer_signal_delivery_boundary_vs_forked_worker_sigkill_under_masked_sigalrm (__main__.TestPhase7SourceReplayAudit.test_itimer_signal_delivery_boundary_vs_forked_worker_sigkill_under_masked_sigalrm) ... /usr/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=3224432) is multi-threaded, use of fork() may lead to deadlocks in the child.\n  self.pid = os.fork()\nok\ntest_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag (__main__.TestPhase7SourceReplayAudit.test_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag) ... ok\ntest_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization (__main__.TestPhase7SourceReplayAudit.test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization) ... ok\ntest_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels (__main__.TestPhase7SourceReplayAudit.test_resume_with_explicit_baseline_430_checkpoint_uses_baseline_comparator_labels) ... ok\ntest_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline (__main__.TestPhase7SourceReplayAudit.test_resume_with_explicit_v2a_comparator_propagates_distinct_v2a_labels_and_never_claims_baseline) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 4.719s\n\nOK",
+  "explicit_limitations": "These 7 unit tests use deterministic synthetic fixtures, stubs, and isolated child Python processes (subprocess.Popen + forked OS worker processes) with zero campaign compute to verify: (1) fail-closed refusal when --baseline-430-checkpoint is absent without --allow-v2a-intervention-comparator; (2) strict propagation of WINNER_POOL_V2A_TRAIN_ONLY_430 labels and zero BASELINE_FROZEN_POOL_TRAIN_ONLY_430 keys when --allow-v2a-intervention-comparator is passed; (3) BASELINE_FROZEN_POOL_TRAIN_ONLY_430 labeling when an explicit verified --baseline-430-checkpoint is provided; (4) expired-deadline refusal without explicit authorization; (5) actual OS worker SIGKILL termination (os.kill(worker_pid, 0) -> ProcessLookupError), zero late file writes after deadline, and bounded child interpreter exit (<2.50s including libtorch teardown vs 4.0s worker sleep); (6) kernel ITIMER_REAL preemption of a rollout call blocked at an interruptible syscall (time.sleep); and (7) the exact CPython ITIMER_REAL (SIGALRM) signal-delivery boundary (cannot interrupt while SIGALRM is masked / before PyErr_CheckSignals() or EINTR, raising immediately once signal delivery resumes at the Python bytecode boundary) vs forked OS worker process-group SIGKILL preemption (terminates the worker in <0.55s even when the worker masks SIGALRM and ignores SIGTERM). They do NOT execute Stage 5B rollout evaluation on the real 91 DL-Val and 93 DL-Holdout contexts, which remains UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE."
+}

@@ -1,0 +1,110 @@
+{
+  "schema": "jope.flywheel_phase7_partial_and_expired_deadline_receipt_addendum.v4",
+  "created_at_utc": "2026-10-24T11:50:14Z",
+  "directives_addressed": [
+    "/home/ubuntu/.codex-screen-monitor/jope-reviewed-source-delivery-20261024T111554Z.txt",
+    "/home/ubuntu/.codex-screen-monitor/jope-proceed-with-gates-20261024T113622Z.txt"
+  ],
+  "parent_partial_receipt_v1_path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt.json",
+  "parent_partial_receipt_v1_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+  "parent_partial_receipt_addendum_v2_path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v2.json",
+  "parent_partial_receipt_addendum_v2_sha256": "24a261bba53e5d9b970fee3a767b34a0c799c6be90e30a700adadb1089356c05",
+  "parent_partial_receipt_addendum_v3_path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v3.json",
+  "parent_partial_receipt_addendum_v3_sha256": "5eac02534619befe2ae13e334f06da8085f2900fb3f91fe2b0d1e58ce3ab27c6",
+  "parent_terminal_manifest_v3_partial_v1_path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_20261024.json",
+  "parent_terminal_manifest_v3_partial_v1_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+  "parent_terminal_manifest_v3_partial_addendum_v2_path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_addendum_v2_20261024.json",
+  "parent_terminal_manifest_v3_partial_addendum_v2_sha256": "252988fd1b3fe2f4b0b182424de08b492f3d23afb806c869f98353cf87ec9a8d",
+  "parent_terminal_manifest_v3_partial_addendum_v3_path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_addendum_v3_20261024.json",
+  "parent_terminal_manifest_v3_partial_addendum_v3_sha256": "97c89af3b32aae95f12813f8fc938382d2ee4ca08759c3b87eae3d03edbef577",
+  "immutable_v1_v2_v3_artifacts_verified": [
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt.json",
+      "expected_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+      "actual_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+      "size_bytes": 9168,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_20261024.json",
+      "expected_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+      "actual_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+      "size_bytes": 4798,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v2.json",
+      "expected_sha256": "24a261bba53e5d9b970fee3a767b34a0c799c6be90e30a700adadb1089356c05",
+      "actual_sha256": "24a261bba53e5d9b970fee3a767b34a0c799c6be90e30a700adadb1089356c05",
+      "size_bytes": 9343,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_addendum_v2_20261024.json",
+      "expected_sha256": "252988fd1b3fe2f4b0b182424de08b492f3d23afb806c869f98353cf87ec9a8d",
+      "actual_sha256": "252988fd1b3fe2f4b0b182424de08b492f3d23afb806c869f98353cf87ec9a8d",
+      "size_bytes": 1569,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v3.json",
+      "expected_sha256": "5eac02534619befe2ae13e334f06da8085f2900fb3f91fe2b0d1e58ce3ab27c6",
+      "actual_sha256": "5eac02534619befe2ae13e334f06da8085f2900fb3f91fe2b0d1e58ce3ab27c6",
+      "size_bytes": 14178,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_addendum_v3_20261024.json",
+      "expected_sha256": "97c89af3b32aae95f12813f8fc938382d2ee4ca08759c3b87eae3d03edbef577",
+      "actual_sha256": "97c89af3b32aae95f12813f8fc938382d2ee4ca08759c3b87eae3d03edbef577",
+      "size_bytes": 1864,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "expected_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "actual_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "size_bytes": 718858,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v2a_train_only_430.pt",
+      "expected_sha256": "35b0f08af4f30ed763397e22f8471d0719356a2bee30cf0730ea466470cd0f3f",
+      "actual_sha256": "35b0f08af4f30ed763397e22f8471d0719356a2bee30cf0730ea466470cd0f3f",
+      "size_bytes": 2105530,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3a_q25_train_only_430.pt",
+      "expected_sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+      "actual_sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+      "size_bytes": 2105950,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3b_median_train_only_430.pt",
+      "expected_sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+      "actual_sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+      "size_bytes": 2106169,
+      "immutable_verified": true
+    }
+  ],
+  "scientific_and_runtime_qualifications_v4": {
+    "cpython_itimer_real_vs_forked_os_worker_sigkill_precision": "In CPython, signal.setitimer(signal.ITIMER_REAL, ...) delivers SIGALRM to the C signal handler, which sets a pending flag checked at Python bytecode evaluation boundaries (PyErr_CheckSignals()) or when an interruptible OS syscall returns EINTR. Consequently, DeadlineController.itimer_guard() is a secondary parent-side fallback and cannot preempt an uninterruptible C/Rust/CUDA extension mid-call without returning to the Python eval loop or an interruptible syscall. Hard wall-clock preemption of worker work is enforced by DeadlineController.run_batch_in_killable_workers(), which runs work in forked OS worker process groups (os.setpgrp()) and terminates them immediately at the OS kernel level via os.killpg(pid, signal.SIGKILL) + os.kill(pid, signal.SIGKILL) + proc.join().",
+    "honest_ci_coverage_and_inventory_gate_registration": "test_verify_flywheel_wider_train_extension_v3.py retains its test_*.py filename so jope-records -- coverage validate discovers python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py as a python-family item, registered in deploy/ci/coverage.json, docs/internal/core-ip/findings/test-inventory.json (role: research), and executed in deploy/ci/fast-lane.sh (python lane).",
+    "comparator_identity_and_stage_5b_status": {
+      "saved_v2a_checkpoint_role": "WINNER_POOL_V2A_TRAIN_ONLY_430 (intervention checkpoint; comparator_is_frozen_pool_baseline=False)",
+      "original_pool_430_baseline_checkpoint_status": "ORIGINAL_POOL_430_BASELINE_CHECKPOINT_NOT_SAVED",
+      "stage_5b_matched_rollout_evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE"
+    }
+  },
+  "unit_test_receipt_v4": {
+    "path": "/mnt/jope-archive/flywheel-20261023/results/verify_flywheel_wider_train_extension_v3_unit_tests_v4.json",
+    "sha256": "462fb2e1a72d07098a196a49eb8b97b5168ad08394e22558297543f695fb0050",
+    "tests_collected": 7,
+    "tests_executed": 7,
+    "tests_passed": 7,
+    "tests_failed": 0,
+    "wall_clock_seconds": 7.356
+  }
+}
