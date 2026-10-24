@@ -1,0 +1,83 @@
+{
+  "schema": "jope.flywheel_phase7_partial_and_expired_deadline_receipt_addendum.v2",
+  "created_at_utc": "2026-10-24T10:32:17Z",
+  "directive_addressed": "/home/ubuntu/.codex-screen-monitor/jope-source-replay-audit-20261024T101652Z.txt",
+  "parent_partial_receipt_v1_path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt.json",
+  "parent_partial_receipt_v1_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+  "parent_terminal_manifest_v3_partial_v1_path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_20261024.json",
+  "parent_terminal_manifest_v3_partial_v1_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+  "immutable_v1_artifacts_verified": [
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt.json",
+      "expected_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+      "actual_sha256": "fd0ad3c62691332b33493ad61a143181564cc5944741f308cf9be1a2c39748ca",
+      "size_bytes": 9168,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/terminal_manifest_v3_partial_20261024.json",
+      "expected_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+      "actual_sha256": "f4944ffbf94cbf17a4393f097eaa7404abbe6bd04859e5aac0dcf0297743d682",
+      "size_bytes": 4798,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "expected_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "actual_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "size_bytes": 718858,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3a_q25_train_only_430.pt",
+      "expected_sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+      "actual_sha256": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+      "size_bytes": 2105950,
+      "immutable_verified": true
+    },
+    {
+      "path": "/mnt/jope-archive/flywheel-20261023/checkpoints/flywheel_winner_pool_v3b_median_train_only_430.pt",
+      "expected_sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+      "actual_sha256": "68753e869c8ac1cf482249f3e367d7903a4add63491eaf5ffc769294dd3804b6",
+      "size_bytes": 2106169,
+      "immutable_verified": true
+    }
+  ],
+  "stopped_head_source_review_fixes": {
+    "issue_1_true_evaluation_only_resume_path": {
+      "prior_bug_in_262db3237": "In commit 262db3237, main() set reuse_ckpt from --resume-eval-from-saved-checkpoints but still unconditionally called run_bounded_256_context_winner_generation() and build_versioned_v3_strict_train_pools() before passing reuse_ckpt into run_matched_v3_acceptance_test(), and run_matched_v3_acceptance_test() still called train_matched_430_steps_strict_train() for BASELINE_FROZEN_POOL_TRAIN_ONLY_430.",
+      "fix_implemented": "Added load_verified_immutable_v3_pools_and_manifest() and updated main() and run_matched_v3_acceptance_test() in verify_flywheel_wider_train_extension_v3.py so --resume-eval-from-saved-checkpoints: (1) checks persisted deadline state first and refuses to run when the original 1,080s budget is exhausted unless explicit separate authorization (--authorize-post-deadline-resume-budget-s <seconds>) is passed; (2) verifies the recorded SHA-256 hashes of corpus_v3_manifest.json (701affc6...), all 241 v3a .npz pools, all 254 v3b .npz pools, and saved checkpoints flywheel_winner_pool_v3a_q25_train_only_430.pt (6f1646af...) and flywheel_winner_pool_v3b_median_train_only_430.pt (68753e86...); and (3) loads pools and checkpoints strictly read-only with ZERO calls to evolution, pool materialization, training, np.savez_compressed, or torch.save."
+    },
+    "issue_2_hard_deadline_across_blocking_stages_and_post_publication_accounting": {
+      "prior_bug_in_262db3237": "Boundary checks with reserve_s did not preempt an in-flight evaluator call, ThreadPoolExecutor.__exit__ (which calls shutdown(wait=True)), or fixed-timeout S3 calls, and total_wall_s was recorded before S3 publication.",
+      "fix_implemented": "Added DeadlineController in verify_flywheel_wider_train_extension_v3.py which: (1) clamps per-call timeouts passed to evaluate_gp_batch_rust_strat300, evaluate_gp_batch_rust, and S3 subprocesses to controller.clamped_timeout(...); (2) replaces ThreadPoolExecutor context-manager exit with explicit concurrent.futures.wait(..., timeout=chunk_timeout) followed by ex.shutdown(wait=False, cancel_futures=True) on deadline expiry so a slow/blocking worker cannot delay shutdown; and (3) records post_publication_total_wall_seconds and within_finite_wall_stop AFTER S3 publication."
+    }
+  },
+  "corrected_source_bound_resume_protocol": {
+    "command_requiring_explicit_post_deadline_authorization": "python3 -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py --resume-eval-from-saved-checkpoints --authorize-post-deadline-resume-budget-s <AUTHORIZED_SECONDS>",
+    "behavior_without_authorization_flag": "Raises DeadlineExpiredError immediately (0 evolution, 0 training, 0 evaluation calls) because flywheel_phase7_partial_and_expired_deadline_receipt.json records that the original 1,080.0s campaign budget was exhausted at 1,643.0s.",
+    "baseline_430_checkpoint_limitation_note": "During task-1067 and task-1153, checkpoints were saved for flywheel_winner_pool_v2a_train_only_430.pt, flywheel_winner_pool_v3a_q25_train_only_430.pt, and flywheel_winner_pool_v3b_median_train_only_430.pt, whereas BASELINE_FROZEN_POOL_TRAIN_ONLY_430 weights were not saved to disk (only its evaluation summaries were saved in flywheel_winner_pool_integration_v2_report.json). Accordingly, pure evaluation-only resume never retrains BASELINE_FROZEN_POOL_TRAIN_ONLY_430; it uses flywheel_winner_pool_v2a_train_only_430.pt as the saved 430-step reference checkpoint unless an explicit --baseline-430-checkpoint <path> is supplied.",
+    "stage_5b_matched_rollout_evaluation_status": "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE"
+  },
+  "deterministic_stub_unit_test_verification": {
+    "test_script_path": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py",
+    "test_script_sha256": "638c5deaf330a48d56f626c477f757646b1a0bc9cbb363845e7d97066437e46f",
+    "verified_target_script_path": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py",
+    "verified_target_script_sha256": "ffb4ef919c3c8ffc881639c2c82c2550762b867a392b4eec9dbcb3591eed4b9c",
+    "command": "/usr/bin/python3 -u /home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py",
+    "exit_code": 0,
+    "tests_collected": 4,
+    "tests_executed": 4,
+    "tests_passed": 4,
+    "tests_failed": 0,
+    "wall_clock_seconds": 5.032,
+    "test_cases": [
+      "test_dynamic_unknown_interpretation_and_post_publication_wall_accounting",
+      "test_resume_eval_only_call_graph_zero_evolution_training_or_writes",
+      "test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization",
+      "test_slow_blocking_evaluator_preempted_at_hard_deadline"
+    ],
+    "combined_output": "[Phase 7] Starting Bounded 256-Context Strict-Train Extension on cuda:0 (CPU soft cap=45.0% <= 50%, hard cap=85.0%, effective wall stop=60.0s, reuse_ckpt=True)...\n[Phase 7] Finished in 0.45s (eval_status=COMPLETED).\n\ntest_dynamic_unknown_interpretation_and_post_publication_wall_accounting (__main__.TestPhase7SourceReplayAudit.test_dynamic_unknown_interpretation_and_post_publication_wall_accounting) ... ok\ntest_resume_eval_only_call_graph_zero_evolution_training_or_writes (__main__.TestPhase7SourceReplayAudit.test_resume_eval_only_call_graph_zero_evolution_training_or_writes) ... ok\ntest_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization (__main__.TestPhase7SourceReplayAudit.test_resume_refuses_when_original_deadline_exhausted_without_explicit_authorization) ... ok\ntest_slow_blocking_evaluator_preempted_at_hard_deadline (__main__.TestPhase7SourceReplayAudit.test_slow_blocking_evaluator_preempted_at_hard_deadline) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.785s\n\nOK",
+    "explicit_limitations": "These 4 unit tests use deterministic synthetic fixtures and stubs (3 synthetic contexts, 0 real dataset evaluations, 0 training steps) to verify call-graph invariants, SHA-256 tamper rejection, expired-deadline refusal without explicit authorization, non-blocking ThreadPoolExecutor preemption on a slow/blocking evaluator, and post-publication wall accounting. They do NOT execute Stage 5B rollout evaluation on the real 91 DL-Val and 93 DL-Holdout contexts, so the empirical Stage 5B matched rollout comparison remains UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE."
+  }
+}
