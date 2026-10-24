@@ -5,7 +5,7 @@ Deterministic Stub & Child-Process Unit Tests for `verify_flywheel_wider_train_e
 Verifies all source-replay audit and comparator/process-deadline requirements from:
 - `/home/ubuntu/.codex-screen-monitor/jope-source-replay-audit-20261024T101652Z.txt`
 - `/home/ubuntu/.codex-screen-monitor/jope-comparator-and-process-deadline-20261024T103653Z.txt`
-with zero dataset/training/evaluation campaign compute (< 3s wall-clock):
+with zero dataset/training/evaluation campaign compute:
 
 1. `test_resume_fails_closed_when_frozen_baseline_checkpoint_missing_without_explicit_v2a_flag`:
    Proves `main(["--resume-eval-from-saved-checkpoints", "--authorize-post-deadline-resume-budget-s", "60"])`
@@ -31,13 +31,13 @@ with zero dataset/training/evaluation campaign compute (< 3s wall-clock):
    `--authorize-post-deadline-resume-budget-s` raises `DeadlineExpiredError` immediately before
    loading pools or running any stage.
 5. `test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes`:
-   Spawns a real isolated child Python process (`subprocess.Popen`) under `hard_cap_s = 15.35s`
-   (`0.35s` effective budget with `reserve_s = 15.0s`) where context 0 finishes in `0.02s` and context 1's
-   worker records its OS `worker_pid`, sleeps `3.0s` (ignoring `timeout_s`), and attempts a late file write
+   Spawns a real isolated child Python process (`subprocess.Popen`) under `hard_cap_s = 15.30s`
+   (`0.30s` effective budget with `reserve_s = 15.0s`) where context 0 finishes in `0.02s` and context 1's
+   worker records its OS `worker_pid`, sleeps `4.0s` (ignoring `timeout_s`), and attempts a late file write
    (`late_write_after_deadline.txt`). Proves:
-   - The child Python process exits completely within `< 0.90s` (never hanging `3.0s` at interpreter exit).
+   - The child reports controller work within `< 0.45s` and exits within `< 2.50s`, including interpreter teardown.
    - The spawned worker OS process (`worker_pid`) is dead (`os.kill(worker_pid, 0)` raises `ProcessLookupError`).
-   - Even after waiting an additional `0.5s`, `late_write_after_deadline.txt` does NOT exist.
+   - Even after waiting an additional `0.4s`, `late_write_after_deadline.txt` does NOT exist.
    - Partial completed context 0 (`contexts_completed == 1`) is preserved and incomplete evaluation is
      recorded as `UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE`.
 6. `test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline`:
@@ -49,7 +49,7 @@ with zero dataset/training/evaluation campaign compute (< 3s wall-clock):
    `SIGKILL`: proves that while `SIGALRM` is blocked (`pthread_sigmask(SIG_BLOCK, {SIGALRM})`, modeling an
    uninterruptible native/C/CUDA call before returning to `PyErr_CheckSignals()`), `itimer_guard` cannot
    raise mid-section and raises `DeadlineExpiredError` only once signal delivery resumes at the Python
-   boundary, whereas `run_batch_in_killable_workers()` kills a worker with `SIGKILL` in `< 0.45s` even
+   boundary, whereas `run_batch_in_killable_workers()` kills a worker with `SIGKILL` in `< 0.55s` even
    when the worker masks `SIGALRM` and ignores `SIGTERM`.
 """
 from __future__ import annotations
@@ -710,7 +710,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
 
         self.assertEqual(proc.returncode, 0, msg=f"Child failed:\nSTDOUT:\n{stdout_rest}\nSTDERR:\n{stderr}")
         # Child OS process must execute, SIGKILL the 4.0s worker, and exit the OS process (including libtorch C++ teardown) well before 4.0s
-        self.assertLess(child_wall_s, 3.20)
+        self.assertLess(child_wall_s, 2.50)
 
         # Verify worker OS process recorded its PID and is now dead (SIGKILLed)
         self.assertTrue(worker_pid_file.exists())
@@ -723,7 +723,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         self.assertFalse(late_write_file.exists())
 
         summary = json.loads(child_summary_file.read_text())
-        self.assertLess(summary["elapsed_s"], 0.90)
+        self.assertLess(summary["elapsed_s"], 0.45)
         self.assertTrue(summary["evo_summary"]["stopped_early_by_wall_cap"])
         self.assertEqual(summary["evo_summary"]["contexts_completed"], 1)
         self.assertEqual(summary["winners_len"], 1)
@@ -763,7 +763,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                 allow_v2a_intervention_comparator=True,
             )
         elapsed = time.monotonic() - t_start
-        self.assertLess(elapsed, 1.20)
+        self.assertLess(elapsed, 0.45)
         self.assertEqual(res["evaluation_status"], "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE")
         self.assertEqual(res["comparator_arm_tag"], "WINNER_POOL_V2A_TRAIN_ONLY_430")
         self.assertFalse(res["comparator_is_frozen_pool_baseline"])
@@ -821,7 +821,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         self.assertTrue(res_a["raised_on_unblock"])
 
         # Part B: Forked OS worker process in run_batch_in_killable_workers() is terminated by
-        # kernel SIGKILL in <1.20s (vs 3.0s worker sleep) even when the worker blocks SIGALRM and ignores SIGTERM.
+        # kernel SIGKILL in <0.55s (vs 3.0s worker sleep) even when the worker blocks SIGALRM and ignores SIGTERM.
         worker_pid_path = SCRATCH_TEST_ROOT / "masked_worker_pid.txt"
         late_marker_path = SCRATCH_TEST_ROOT / "masked_worker_late.txt"
 
@@ -840,7 +840,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         elapsed_b = time.monotonic() - t1
         self.assertTrue(stopped_early)
         self.assertEqual(completed, [100])
-        self.assertLess(elapsed_b, 1.20)
+        self.assertLess(elapsed_b, 0.55)
         self.assertTrue(worker_pid_path.exists())
         masked_pid = int(worker_pid_path.read_text().strip())
         with self.assertRaises(ProcessLookupError):
