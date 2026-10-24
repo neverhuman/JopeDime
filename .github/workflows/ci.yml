@@ -1,5 +1,9 @@
 name: ci
 on:
+  # Deliberate PR event: manual-dispatch job checks do not satisfy PR rulesets.
+  # Mark a draft PR ready after freezing its source to run this full matrix.
+  pull_request:
+    types: [ready_for_review]
   workflow_dispatch:
     inputs:
       provenance_pr:
@@ -41,9 +45,9 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
-      # The helper still verifies and reports merged capability. The manual choice
-      # selects only the already-deployed native pool; no caller-supplied label is used.
-      runner_pool: ${{ inputs.runner_pool == 'native' && 'jope-ci' || steps.provenance.outputs.runner-pool }}
+      # Keep deliberate PR CI on qualified native workers during Mac recovery.
+      # The helper still verifies merged capability; no arbitrary label is accepted.
+      runner_pool: ${{ (github.event_name == 'pull_request' || inputs.runner_pool == 'native') && 'jope-ci' || steps.provenance.outputs.runner-pool }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
