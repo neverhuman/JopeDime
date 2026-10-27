@@ -1,6 +1,6 @@
 {
   "schema": "jope.optional-landmarks-qualification/v1",
-  "recorded_at": "2026-10-27T16:21:31.373499+00:00",
+  "recorded_at": "2026-10-27T17:30:08.315599+00:00",
   "code_candidate": "2c103d9389f681c343d6c119918454a665b7c2a1",
   "dope_candidate": "f49ac60b75578eb9cd2dd5568bd12ae9753084d2",
   "dope_pin_publication": "development candidate; final published immutable pin pending",
@@ -85,7 +85,7 @@
     "note": "QA owns full matched matrix; no component result establishes this gate."
   },
   "quality_gate": {
-    "status": "QA_results_available_pending_immutable_publication_and_combined_pin",
+    "status": "not_qualified; independent trained-candidate paired102 study complete, ten wide multiclass datasets unavailable",
     "roster": "112 dev_val_ablation datasets",
     "primary_paired_seeds": [
       20261024,
@@ -94,7 +94,7 @@
     "required_subsample_300_retention_ratio": 0.95,
     "maximum_zero_relative_loss": 0.08,
     "default_progressive_n": 300,
-    "adapter_training": "now required by binding addendum; baseline results precede training",
+    "adapter_training": "Binding addendum training complete for first candidate; independent source custody/preparation/product quality qualification remain open.",
     "observed_primary": {
       "zero_full_ratio": 0.9826,
       "zero_ratio_ci95": [
@@ -127,7 +127,8 @@
         "zero_full_ratio": 1.026,
         "sub300_full_ratio": 1.001
       }
-    }
+    },
+    "baseline_protocol_warning": "Historical pooled112/110 estimates below are retained observations, not qualification: evaluator-wide feature mismatch failures became chance scores. Use the independently verified common102 roster for the new candidate stage gate; owner must repair all-arm wide-table/error propagation."
   },
   "policy": "Dope/fusion tensor plumbing; existing pretrained policy and search behavior unchanged.",
   "evidence_location": "Raw logs retained under the claimed worktree target/landmarks; final draft PR records exact heads and remaining qualification.",
@@ -147,7 +148,7 @@
   },
   "binding_addendum": {
     "status": "implementation_and_baseline_execution_proven;training_quality_live_health_incomplete",
-    "mask_dropout_training": "Claude owns trainer; admission and tensor-parity audit blockers sent; fresh role-filtered native evidence available; no reviewed trained checkpoint yet",
+    "mask_dropout_training": "Completed initial8-epoch714-cell candidate with360 optimizer updates; independent quality and source/preparation qualification remain open.",
     "same_pinned_weights_all_masks": true,
     "optional_consumers": [
       "Dope encoding directly",
@@ -155,7 +156,7 @@
     ],
     "flywheel_live_and_regression": {
       "regression": "26 passed: production admission with nine real Rust output fixtures and snapshot pin/CAS negatives",
-      "live_health": "unknown; no current deployed Rust PID/runtime hash and fresh heartbeat/progress proof supplied",
+      "live_health": "unmet on this host: Gemini17:19 reports zero deployed Rust flywheel/appliance processes; source tests do not establish live health",
       "publication_authority": "Only test implementations of LocalSnapshotAuthority/SnapshotEvidenceVerifier found; successful production publication not established"
     },
     "inference": "100% Rust; Python training/research only",
@@ -192,7 +193,12 @@
       "ignored": 0,
       "log": "addendum-flywheel-tests2.log",
       "log_sha256": "9426b0662a0e655dde47b36bcc0564b630332f579e5912fa2c623d94bb5686ac",
-      "scope": "19 replay admission +7 snapshot contracts; production admission and test authority only"
+      "scope": "19 replay admission +7 snapshot contracts; production admission and test authority only",
+      "final_rerun": {
+        "passed": 26,
+        "failed": 0,
+        "log": "addendum-final-flywheel-tests.log"
+      }
     },
     "receipt_schema": {
       "passed": 4,
@@ -240,6 +246,42 @@
       "ignored": 0,
       "log": "dependency-fence-repair.log",
       "log_sha256": "332c9588dffbefaa497fd3f71ee6c6ff5abc86c58655fe16ed4781f2d955185d"
+    },
+    "candidate_cpu": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "candidate-cpu-parity.log",
+      "log_sha256": "aac1d77235102c3a7e4c7acf82e267445faf9c27a23241e40c4851824848c000"
+    },
+    "candidate_cuda": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "candidate-cuda-parity.log",
+      "log_sha256": "f4cdd36e77329cf0bbdeea14a137fa7ed12ceb30421bcce2a049dc06e7fba9b9"
+    },
+    "candidate_clippy": {
+      "status": "passed",
+      "log": "candidate-parity-clippy.log"
+    },
+    "candidate_native_cuda": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "candidate-native-cuda-parity.log",
+      "log_sha256": "63c9c43d23268db7752880d22745c0ef15c2de625878862ccdcdd643cccad025",
+      "window_receipt": "candidate-native-cuda-window.json",
+      "seconds": 12.895831966074184,
+      "scope": "Actual trained candidate GPU native sessions on three tasks, both optional consumers and synchronousfull equality; not downstream predictive qualification"
+    },
+    "candidate_native_cpu": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "candidate-native-cpu-parity.log",
+      "log_sha256": "ef21ba8c052d91c858aef2dbc3ac378ebbb41639e546ae55d3dc1e070aecba96",
+      "scope": "Latest device-aware harness; trained candidate three-task native sessions, both actual consumers, exact terminal/full"
     }
   },
   "addendum_scoped_cuda_clippy": {
@@ -316,10 +358,33 @@
     "dope_revision": "972685cd78ad1c1f25b592e49583d716cffb1f12",
     "log": "published-gpu-package-build.log",
     "directory": "target/dope-appliance-published",
-    "packaging": "Sealed development-key GPU profile; normal build.sh completed including verification/notices/fences/SBOM/size. Runtime smoke on this new binary pending GPU reservation."
+    "packaging": "Sealed development-key GPU profile; normal build.sh completed including verification/notices/fences/SBOM/size. Runtime smoke on this new binary pending GPU reservation.",
+    "final_fixed_source": "1c05c9e1de83b792c162bd95001bb36ef2eea819",
+    "final_fixed_directory": "target/dope-appliance-bounded",
+    "final_fixed_build_log": "bounded-gpu-package-build.log",
+    "runtime_smoke": "passed actual RTX3090 expanded harness; bounded-gpu-package-smoke.log",
+    "source_model": "released d0; separate from trained candidate",
+    "size": [
+      {
+        "budget": 19258792,
+        "bytes": 19360488,
+        "note": "measured GPU edition dist-ci; 1,782,874 model/license bytes and selected dependency notices; no bundled CUDA runtime",
+        "pass": true,
+        "tolerance_percent": 5,
+        "what": "base_executable_bytes"
+      },
+      {
+        "budget": 20792951,
+        "bytes": 20895351,
+        "note": "measured GPU edition dist-ci; 1,782,874 model/license bytes and selected dependency notices; no bundled CUDA runtime",
+        "pass": true,
+        "tolerance_percent": 5,
+        "what": "final_executable_bytes"
+      }
+    ]
   },
   "cpu_packaged_pool_boundary": {
-    "status": "fix_compiled_pending_sealed_retest",
+    "status": "passed_on_fixed_sealed_package",
     "old_source": "758aed1b7ef28324d2d7dc0de31ebf5f52fd67b5",
     "old_package_sha256": "19ca9f94a3c2c7419265b9deaa06df4b351e72de77349f58c87d5ec2ef5896fd",
     "reproduction": {
@@ -344,6 +409,1332 @@
       "failed": 0,
       "log": "cpu-loader-appliance-tests.log"
     },
-    "coverage_map_items": 863
+    "coverage_map_items": 863,
+    "fixed_source": "1c05c9e1de83b792c162bd95001bb36ef2eea819",
+    "fixed_package_sha256": "a45ab5b87642b76d62224b4a15a349fbfe0517b43f1aec26a61406be40b5fd18",
+    "fixed_peak_threads_by_task": {
+      "regression": 4,
+      "binary": 3,
+      "multiclass": 4
+    },
+    "affinity": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "paired_regression_embedding": "bit-identical to preceding sealed package, including conditioning digest",
+    "fixed_proof": "cpu-thread-fixed-affinity/receipt.json",
+    "ordinary_affinity_fixed_proof": "not measured; earlier unbounded baseline retained"
+  },
+  "mask_dropout_candidate": {
+    "status": "trained_unqualified_candidate",
+    "identity": {
+      "schema": "jope.dope-candidate-movement-proof/v1",
+      "weights_sha256": "ecded0225fca7c6e13c413b0e39b1040bf95f7694940b2809f1ce2ce2abf7bd9",
+      "parent_weights_sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+      "training_receipt_sha256": "5be7ca4319bb87b56f9a3c9a3b51f5b468b2df737ebec8b7f8c33df6836f5874",
+      "tensor_count": 56,
+      "parameter_count": 444168,
+      "changed_total": 56,
+      "active_count": 40,
+      "changed_active": 40,
+      "active_l2_delta": 2.2959711592381464,
+      "all_l2_delta": 2.9439380831681183,
+      "qualification": "independent raw-checkpoint comparison; does not certify retention or admission"
+    },
+    "training_receipt": "5be7ca4319bb87b56f9a3c9a3b51f5b468b2df737ebec8b7f8c33df6836f5874",
+    "provenance_receipt": "26789e70427f1e2d9a97251907e74f819a5cdf620df9e70ea88417356527b699",
+    "training": {
+      "epochs": 8,
+      "optimizer_steps": 360,
+      "cells": {
+        "regression": 319,
+        "binary": 199,
+        "multiclass": 196
+      },
+      "total_cells": 714,
+      "native_n300_cells": 495,
+      "unknown_query_labels_masked": 7,
+      "training_k_ge_33_cells": 0,
+      "source": "owner training receipt; raw parameter movement independently verified"
+    },
+    "numerical_parity": {
+      "cpu_max_abs": 1.907348633e-06,
+      "cuda_max_abs": 1.907348633e-06,
+      "tolerance": 3e-05,
+      "shape629": [
+        4,
+        629
+      ],
+      "shape512": [
+        4,
+        512
+      ],
+      "python_reference": "dope_dropout_candidate_reference.json; synthetic operator buffers, no native coverage claim",
+      "cpu_log": "candidate-cpu-parity.log",
+      "cuda_log": "candidate-cuda-parity.log",
+      "cpu_three_task_consumers": "pass: direct/JopeDL, changing partial observations, terminal/full exact equality; K3 multiclass only",
+      "qualification_tests": "Explicit ignored artifact tests invoked by exact name with --ignored; missing artifact or governed bundle fails the requested qualification, not silently passes",
+      "cuda_three_task_consumers": "pass on actual RTX3090: native none/macro/larger/terminal, direct/JopeDL on shared device, deep-copy isolation and exact terminal/full; K3multiclass only",
+      "cuda_native_context_max_abs": 7.390975952e-06,
+      "cuda_native_log": "candidate-native-cuda-parity.log"
+    },
+    "remaining": [
+      "Repair wide-table/error propagation, audit pre-open role filtering, then qualify complete original mask/N arms;102paired none/macro/full development observations are now retained",
+      "Same-cut H/A/B predictive comparison with a supported multiclass readout",
+      "Published explicit lossless class-preparation lineage preserving old cap32 semantics under the released identity",
+      "Exact frozen training source custody: current provenance integration commit differs from frozen trainer/test hashes; imported conditioning helper not yet pinned",
+      "Approved registration and product packaging of the new candidate; currently loaded only through explicit unqualified SDK API"
+    ],
+    "independent_development_stage1": {
+      "status": "complete_exploratory_not_qualified",
+      "source_evidence_directory": "/home/ubuntu/jope_plan/evidence/candidate-dev112/stage1-20261027",
+      "summary_sha256": "8cec31f96fbd7bc3e68643645f6b0790ab31d6c55aeecefd3ae47e719b05d0ee",
+      "results_sha256": "9de9229b667d2ac21b6f9de68be6c8958cd21478b49b0def7594ae8618ef94ed",
+      "roster_sha256": "ce971e893c3f4130de755e123c6fb6594ce53f07ab68c43f1a2867b17dd2ed40",
+      "source_snapshot_sha256": "777b94a83224f2ef6131b6448042b36040de8fe7fbf0a209e484d0ff018b592e",
+      "verification_sha256": "2a9409ff0013e1579e0bd6581ee502c42ff31a8e2d19ad7f1622ba47f8e5aba2",
+      "paired_fi_sha256": "9f22458bd4385779eeb7114a5bf9e6b32bf7d4b90767ef01bcabfd7a807e10b9",
+      "requested_datasets": 112,
+      "complete_paired_datasets": 102,
+      "explicit_unavailable_datasets": 10,
+      "unavailable_reason": "raw features exceed64; no synthesis-vs-full-width shape failure converted to a numeric score",
+      "requested_arm_seed_rows": 1344,
+      "complete_arm_seed_rows": 1224,
+      "unavailable_arm_seed_rows": 120,
+      "failures": 0,
+      "auditor_failures": 0,
+      "elapsed_seconds": 158.730386,
+      "arms": [
+        "none",
+        "macro",
+        "full"
+      ],
+      "checkpoints": [
+        "released d0b69603",
+        "candidate ecded022"
+      ],
+      "paired_seeds": [
+        20261024,
+        20261025
+      ],
+      "aggregation": "mean paired seeds within dataset first; equal dataset weights;2000 paired dataset bootstraps",
+      "metric_limits": [
+        "Existing research transfer metrics only; no JopeDL or production-search ablation.",
+        "Auditor score fields are existing helper outputs: regression R2 is clipped[-1,1] then floored at0 before retention; binary usesAUROC; multiclass usesaccuracy. They are not unbounded raw scores.",
+        "R uses chance adjustment and declared denominator floors, clipped[0,1.25]; unclipped_R and clipping/floor flags are retained.",
+        "102 complete datasets of112 requested;10 multiclass tables exceed64feature contract and are explicitunavailable.",
+        "Development bootstrap CIs are exploratory, without multiple-comparison adjustment; not sealed qualification or95percent retention evidence."
+      ],
+      "tasks": {
+        "classification": {
+          "requested": 17,
+          "paired_complete": 17,
+          "excluded_ids": {},
+          "means": {
+            "candidate/full": {
+              "clipped_R": 0.5336368235294119,
+              "syn_score": 0.5327354411764706,
+              "real_score": 0.5418012941176471,
+              "fi_spearman": 0.47595558860509257
+            },
+            "candidate/macro": {
+              "clipped_R": 0.5321273823529411,
+              "syn_score": 0.5346071764705883,
+              "real_score": 0.5418012941176471,
+              "fi_spearman": 0.43630770332945434
+            },
+            "candidate/none": {
+              "clipped_R": 0.5618166764705882,
+              "syn_score": 0.5333916470588235,
+              "real_score": 0.5418012941176471,
+              "fi_spearman": 0.4527894726555433
+            },
+            "released/full": {
+              "clipped_R": 0.5107555,
+              "syn_score": 0.5325291176470588,
+              "real_score": 0.5418012941176471,
+              "fi_spearman": 0.4488631229617947
+            },
+            "released/macro": {
+              "clipped_R": 0.5352021176470588,
+              "syn_score": 0.5324506764705881,
+              "real_score": 0.5418012941176471,
+              "fi_spearman": 0.44303891841635873
+            },
+            "released/none": {
+              "clipped_R": 0.471328294117647,
+              "syn_score": 0.5271419117647058,
+              "real_score": 0.5418012941176471,
+              "fi_spearman": 0.42398021212519266
+            }
+          },
+          "denominator_floor_datasets": 11,
+          "comparisons": {
+            "candidate_full_vs_released_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.05611299632352941,
+                  0.1340488147058823
+                ],
+                "datasets": 17,
+                "mean": 0.022881323529411763
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.004099800735294089,
+                  0.006269157352941189
+                ],
+                "datasets": 17,
+                "mean": 0.00020632352941178412
+              },
+              "mean_R_ratio": 1.0447989762800634,
+              "ratio_bootstrap_ci95": [
+                0.8840836933662182,
+                1.2935865240394877
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_macro_vs_released_macro": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.04915470955882351,
+                  0.03970122058823528
+                ],
+                "datasets": 17,
+                "mean": -0.0030747352941176273
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.0003928066176470558,
+                  0.00499411249999996
+                ],
+                "datasets": 17,
+                "mean": 0.002156500000000002
+              },
+              "mean_R_ratio": 0.9942550016288513,
+              "ratio_bootstrap_ci95": [
+                0.9093672435866524,
+                1.0781043718768264
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_none_vs_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.053724680882352924,
+                  0.10539666691176466
+                ],
+                "datasets": 17,
+                "mean": 0.028179852941176458
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.003985885294117686,
+                  0.004964661029411732
+                ],
+                "datasets": 17,
+                "mean": 0.0006562058823529141
+              },
+              "mean_R_ratio": 1.0528071746526,
+              "ratio_bootstrap_ci95": [
+                0.9130979361244036,
+                1.260195706507447
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_none_vs_released_none": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  0.020690284558823522,
+                  0.16790403455882352
+                ],
+                "datasets": 17,
+                "mean": 0.09048838235294117
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  0.0013877632352940685,
+                  0.012096619117647027
+                ],
+                "datasets": 17,
+                "mean": 0.00624973529411762
+              },
+              "mean_R_ratio": 1.1919858906886558,
+              "ratio_bootstrap_ci95": [
+                1.0442250967051032,
+                1.4182368442596789
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "released_none_vs_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.10639215735294118,
+                  0.021691862499999985
+                ],
+                "datasets": 17,
+                "mean": -0.03942720588235294
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.012528227941176435,
+                  0.00013499632352941554
+                ],
+                "datasets": 17,
+                "mean": -0.0053872058823529224
+              },
+              "mean_R_ratio": 0.9228061060872511,
+              "ratio_bootstrap_ci95": [
+                0.7923442386497962,
+                1.0456533958454308
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            }
+          },
+          "paired_feature_importance": {
+            "candidate_full_vs_released_full": {
+              "bootstrap_ci95": [
+                -0.01608578598903672,
+                0.07132334956272027
+              ],
+              "datasets": 17,
+              "excluded_from_R_roster_for_undefined_FI": [],
+              "mean_delta_fi_spearman": 0.02709246564329786,
+              "paired_ids": [
+                "019f38834bb2c955",
+                "0988959ee16e8e57",
+                "0a7ac6cad02ac75e",
+                "18bc5293a43e8e59",
+                "2e21cf4a317650cc",
+                "44f09e2a99a942d2",
+                "45c0ee09687d67d8",
+                "4a5449b6c87dadb0",
+                "4a75c1299bbdd907",
+                "7003ef76febb30b1",
+                "a94ffe1dc1facc1f",
+                "acc2ea3fc610315f",
+                "b1f919b028156179",
+                "c5b4a99c3ba90388",
+                "d2665060352f668d",
+                "e6f4769cf8a3200d",
+                "f828e01ad3b0de01"
+              ]
+            },
+            "candidate_macro_vs_released_macro": {
+              "bootstrap_ci95": [
+                -0.06608341915995844,
+                0.05071364909600202
+              ],
+              "datasets": 17,
+              "excluded_from_R_roster_for_undefined_FI": [],
+              "mean_delta_fi_spearman": -0.006731215086904421,
+              "paired_ids": [
+                "019f38834bb2c955",
+                "0988959ee16e8e57",
+                "0a7ac6cad02ac75e",
+                "18bc5293a43e8e59",
+                "2e21cf4a317650cc",
+                "44f09e2a99a942d2",
+                "45c0ee09687d67d8",
+                "4a5449b6c87dadb0",
+                "4a75c1299bbdd907",
+                "7003ef76febb30b1",
+                "a94ffe1dc1facc1f",
+                "acc2ea3fc610315f",
+                "b1f919b028156179",
+                "c5b4a99c3ba90388",
+                "d2665060352f668d",
+                "e6f4769cf8a3200d",
+                "f828e01ad3b0de01"
+              ]
+            },
+            "candidate_none_vs_full": {
+              "bootstrap_ci95": [
+                -0.07905433042098266,
+                0.03485523254200044
+              ],
+              "datasets": 17,
+              "excluded_from_R_roster_for_undefined_FI": [],
+              "mean_delta_fi_spearman": -0.023166115949549242,
+              "paired_ids": [
+                "019f38834bb2c955",
+                "0988959ee16e8e57",
+                "0a7ac6cad02ac75e",
+                "18bc5293a43e8e59",
+                "2e21cf4a317650cc",
+                "44f09e2a99a942d2",
+                "45c0ee09687d67d8",
+                "4a5449b6c87dadb0",
+                "4a75c1299bbdd907",
+                "7003ef76febb30b1",
+                "a94ffe1dc1facc1f",
+                "acc2ea3fc610315f",
+                "b1f919b028156179",
+                "c5b4a99c3ba90388",
+                "d2665060352f668d",
+                "e6f4769cf8a3200d",
+                "f828e01ad3b0de01"
+              ]
+            },
+            "candidate_none_vs_released_none": {
+              "bootstrap_ci95": [
+                -0.07617771236845751,
+                0.14084807246660838
+              ],
+              "datasets": 17,
+              "excluded_from_R_roster_for_undefined_FI": [],
+              "mean_delta_fi_spearman": 0.028809260530350683,
+              "paired_ids": [
+                "019f38834bb2c955",
+                "0988959ee16e8e57",
+                "0a7ac6cad02ac75e",
+                "18bc5293a43e8e59",
+                "2e21cf4a317650cc",
+                "44f09e2a99a942d2",
+                "45c0ee09687d67d8",
+                "4a5449b6c87dadb0",
+                "4a75c1299bbdd907",
+                "7003ef76febb30b1",
+                "a94ffe1dc1facc1f",
+                "acc2ea3fc610315f",
+                "b1f919b028156179",
+                "c5b4a99c3ba90388",
+                "d2665060352f668d",
+                "e6f4769cf8a3200d",
+                "f828e01ad3b0de01"
+              ]
+            },
+            "released_none_vs_full": {
+              "bootstrap_ci95": [
+                -0.13736056218422243,
+                0.0844993478268518
+              ],
+              "datasets": 17,
+              "excluded_from_R_roster_for_undefined_FI": [],
+              "mean_delta_fi_spearman": -0.02488291083660207,
+              "paired_ids": [
+                "019f38834bb2c955",
+                "0988959ee16e8e57",
+                "0a7ac6cad02ac75e",
+                "18bc5293a43e8e59",
+                "2e21cf4a317650cc",
+                "44f09e2a99a942d2",
+                "45c0ee09687d67d8",
+                "4a5449b6c87dadb0",
+                "4a75c1299bbdd907",
+                "7003ef76febb30b1",
+                "a94ffe1dc1facc1f",
+                "acc2ea3fc610315f",
+                "b1f919b028156179",
+                "c5b4a99c3ba90388",
+                "d2665060352f668d",
+                "e6f4769cf8a3200d",
+                "f828e01ad3b0de01"
+              ]
+            }
+          }
+        },
+        "multiclass": {
+          "requested": 54,
+          "paired_complete": 44,
+          "excluded_ids": {
+            "29e760030fe4622f": "features_exceed_encoder64",
+            "38659e9b7e744cb8": "features_exceed_encoder64",
+            "481394bbda5c7ecf": "features_exceed_encoder64",
+            "56582be6fc6e427f": "features_exceed_encoder64",
+            "6e9eb73cb7824200": "features_exceed_encoder64",
+            "8347f9a4deae3b56": "features_exceed_encoder64",
+            "90d107891d7233c4": "features_exceed_encoder64",
+            "9fae85f32c65decb": "features_exceed_encoder64",
+            "a640139a646e34ca": "features_exceed_encoder64",
+            "c7675358b8b651cc": "features_exceed_encoder64"
+          },
+          "means": {
+            "candidate/full": {
+              "clipped_R": 0.9022855795454544,
+              "syn_score": 0.6377628181818182,
+              "real_score": 0.6814401136363637,
+              "fi_spearman": 0.8176334388595179
+            },
+            "candidate/macro": {
+              "clipped_R": 0.8927124772727274,
+              "syn_score": 0.6370659204545454,
+              "real_score": 0.6814401136363637,
+              "fi_spearman": 0.8039601485036272
+            },
+            "candidate/none": {
+              "clipped_R": 0.8977600340909091,
+              "syn_score": 0.6370356022727273,
+              "real_score": 0.6814401136363637,
+              "fi_spearman": 0.7718911985386535
+            },
+            "released/full": {
+              "clipped_R": 0.8893856022727271,
+              "syn_score": 0.633269340909091,
+              "real_score": 0.6814401136363637,
+              "fi_spearman": 0.8174286835970948
+            },
+            "released/macro": {
+              "clipped_R": 0.8850924318181819,
+              "syn_score": 0.6340174886363638,
+              "real_score": 0.6814401136363637,
+              "fi_spearman": 0.7877956002166325
+            },
+            "released/none": {
+              "clipped_R": 0.9120557386363636,
+              "syn_score": 0.637711931818182,
+              "real_score": 0.6814401136363637,
+              "fi_spearman": 0.7616512064979175
+            }
+          },
+          "denominator_floor_datasets": 1,
+          "comparisons": {
+            "candidate_full_vs_released_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.008504258238636354,
+                  0.0328816548295454
+                ],
+                "datasets": 44,
+                "mean": 0.012899977272727275
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.0010664826704545355,
+                  0.010529182670454542
+                ],
+                "datasets": 44,
+                "mean": 0.004493477272727281
+              },
+              "mean_R_ratio": 1.0145043693531386,
+              "ratio_bootstrap_ci95": [
+                0.9909484828005389,
+                1.0390962184702226
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_macro_vs_released_macro": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.005510605681818183,
+                  0.02060840142045453
+                ],
+                "datasets": 44,
+                "mean": 0.007620045454545449
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.0004369448863636253,
+                  0.006724917613636374
+                ],
+                "datasets": 44,
+                "mean": 0.003048431818181827
+              },
+              "mean_R_ratio": 1.0086093216715142,
+              "ratio_bootstrap_ci95": [
+                0.9939898380309812,
+                1.0237568740326912
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_none_vs_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.03290279460227273,
+                  0.018035367613636364
+                ],
+                "datasets": 44,
+                "mean": -0.004525545454545466
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.005878044034090904,
+                  0.004651316193181817
+                ],
+                "datasets": 44,
+                "mean": -0.0007272159090909056
+              },
+              "mean_R_ratio": 0.9949843535604047,
+              "ratio_bootstrap_ci95": [
+                0.9623724708344776,
+                1.0204988296803246
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_none_vs_released_none": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.039158890340909094,
+                  0.007531632102272696
+                ],
+                "datasets": 44,
+                "mean": -0.014295704545454556
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.007542846022727254,
+                  0.0060885431818181925
+                ],
+                "datasets": 44,
+                "mean": -0.0006763295454545339
+              },
+              "mean_R_ratio": 0.9843258433230974,
+              "ratio_bootstrap_ci95": [
+                0.9571565837635511,
+                1.0084112972200403
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "released_none_vs_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.013983994886363642,
+                  0.0668531079545455
+                ],
+                "datasets": 44,
+                "mean": 0.022670136363636365
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.00181302272727273,
+                  0.01129259034090909
+                ],
+                "datasets": 44,
+                "mean": 0.004442590909090909
+              },
+              "mean_R_ratio": 1.025489659722066,
+              "ratio_bootstrap_ci95": [
+                0.9846802588630497,
+                1.0796352430468714
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            }
+          },
+          "paired_feature_importance": {
+            "candidate_full_vs_released_full": {
+              "bootstrap_ci95": [
+                -0.01187170189847686,
+                0.013783745967614947
+              ],
+              "datasets": 42,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "9377d41ffa9d8909",
+                "c9445143a7c22e40"
+              ],
+              "mean_delta_fi_spearman": 0.00020475526242335544,
+              "paired_ids": [
+                "00b383718f6f4fd8",
+                "0a81e109e22e052e",
+                "1107f21476f92e1d",
+                "116e0c4981a4f33d",
+                "136567994f3710d6",
+                "168f272eb65f2bf6",
+                "211a6e9a83657eba",
+                "217e2ee09d25511c",
+                "2aeaba5779b2e176",
+                "2f3fa4b3c250c1c1",
+                "3542303f82ab9068",
+                "42e47bff9a9f26b4",
+                "494d3b84e45c37e2",
+                "4f8793723a3148b5",
+                "509b9654776f2be3",
+                "535db42338500ac5",
+                "5373a2e61f9027e3",
+                "5a14ec6f461cec84",
+                "5ec7eabbff56307b",
+                "61e91c310710fd3b",
+                "7f93cab1441ef541",
+                "8109bebfdbe9e621",
+                "852a47002bd3ef59",
+                "88545d7732317010",
+                "8f776a4452a5bf23",
+                "917605e9fd6ad22f",
+                "91d868941a603cf0",
+                "a1995b690048f63c",
+                "a7484f6f1235b31d",
+                "b631888b56df097f",
+                "c5f722f7817dbf59",
+                "c6b15b7a6c0a5fdc",
+                "ca012a92658ea083",
+                "d2522c66e706e300",
+                "d5d795370d5c571f",
+                "df23b8acc038703b",
+                "e3a8c9879f02b850",
+                "e7ed111d2a7d05e1",
+                "f0322958c556c445",
+                "f0785516b50a588d",
+                "fe2afc23a2484493",
+                "fe8f9a02c3e20845"
+              ]
+            },
+            "candidate_macro_vs_released_macro": {
+              "bootstrap_ci95": [
+                -0.008928413141347806,
+                0.057166628840293776
+              ],
+              "datasets": 42,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "9377d41ffa9d8909",
+                "c9445143a7c22e40"
+              ],
+              "mean_delta_fi_spearman": 0.016164548286994658,
+              "paired_ids": [
+                "00b383718f6f4fd8",
+                "0a81e109e22e052e",
+                "1107f21476f92e1d",
+                "116e0c4981a4f33d",
+                "136567994f3710d6",
+                "168f272eb65f2bf6",
+                "211a6e9a83657eba",
+                "217e2ee09d25511c",
+                "2aeaba5779b2e176",
+                "2f3fa4b3c250c1c1",
+                "3542303f82ab9068",
+                "42e47bff9a9f26b4",
+                "494d3b84e45c37e2",
+                "4f8793723a3148b5",
+                "509b9654776f2be3",
+                "535db42338500ac5",
+                "5373a2e61f9027e3",
+                "5a14ec6f461cec84",
+                "5ec7eabbff56307b",
+                "61e91c310710fd3b",
+                "7f93cab1441ef541",
+                "8109bebfdbe9e621",
+                "852a47002bd3ef59",
+                "88545d7732317010",
+                "8f776a4452a5bf23",
+                "917605e9fd6ad22f",
+                "91d868941a603cf0",
+                "a1995b690048f63c",
+                "a7484f6f1235b31d",
+                "b631888b56df097f",
+                "c5f722f7817dbf59",
+                "c6b15b7a6c0a5fdc",
+                "ca012a92658ea083",
+                "d2522c66e706e300",
+                "d5d795370d5c571f",
+                "df23b8acc038703b",
+                "e3a8c9879f02b850",
+                "e7ed111d2a7d05e1",
+                "f0322958c556c445",
+                "f0785516b50a588d",
+                "fe2afc23a2484493",
+                "fe8f9a02c3e20845"
+              ]
+            },
+            "candidate_none_vs_full": {
+              "bootstrap_ci95": [
+                -0.09895148150137884,
+                -0.005804212103055665
+              ],
+              "datasets": 42,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "9377d41ffa9d8909",
+                "c9445143a7c22e40"
+              ],
+              "mean_delta_fi_spearman": -0.045742240320864484,
+              "paired_ids": [
+                "00b383718f6f4fd8",
+                "0a81e109e22e052e",
+                "1107f21476f92e1d",
+                "116e0c4981a4f33d",
+                "136567994f3710d6",
+                "168f272eb65f2bf6",
+                "211a6e9a83657eba",
+                "217e2ee09d25511c",
+                "2aeaba5779b2e176",
+                "2f3fa4b3c250c1c1",
+                "3542303f82ab9068",
+                "42e47bff9a9f26b4",
+                "494d3b84e45c37e2",
+                "4f8793723a3148b5",
+                "509b9654776f2be3",
+                "535db42338500ac5",
+                "5373a2e61f9027e3",
+                "5a14ec6f461cec84",
+                "5ec7eabbff56307b",
+                "61e91c310710fd3b",
+                "7f93cab1441ef541",
+                "8109bebfdbe9e621",
+                "852a47002bd3ef59",
+                "88545d7732317010",
+                "8f776a4452a5bf23",
+                "917605e9fd6ad22f",
+                "91d868941a603cf0",
+                "a1995b690048f63c",
+                "a7484f6f1235b31d",
+                "b631888b56df097f",
+                "c5f722f7817dbf59",
+                "c6b15b7a6c0a5fdc",
+                "ca012a92658ea083",
+                "d2522c66e706e300",
+                "d5d795370d5c571f",
+                "df23b8acc038703b",
+                "e3a8c9879f02b850",
+                "e7ed111d2a7d05e1",
+                "f0322958c556c445",
+                "f0785516b50a588d",
+                "fe2afc23a2484493",
+                "fe8f9a02c3e20845"
+              ]
+            },
+            "candidate_none_vs_released_none": {
+              "bootstrap_ci95": [
+                -0.007916597316874129,
+                0.030253279485673662
+              ],
+              "datasets": 42,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "9377d41ffa9d8909",
+                "c9445143a7c22e40"
+              ],
+              "mean_delta_fi_spearman": 0.010239992040735984,
+              "paired_ids": [
+                "00b383718f6f4fd8",
+                "0a81e109e22e052e",
+                "1107f21476f92e1d",
+                "116e0c4981a4f33d",
+                "136567994f3710d6",
+                "168f272eb65f2bf6",
+                "211a6e9a83657eba",
+                "217e2ee09d25511c",
+                "2aeaba5779b2e176",
+                "2f3fa4b3c250c1c1",
+                "3542303f82ab9068",
+                "42e47bff9a9f26b4",
+                "494d3b84e45c37e2",
+                "4f8793723a3148b5",
+                "509b9654776f2be3",
+                "535db42338500ac5",
+                "5373a2e61f9027e3",
+                "5a14ec6f461cec84",
+                "5ec7eabbff56307b",
+                "61e91c310710fd3b",
+                "7f93cab1441ef541",
+                "8109bebfdbe9e621",
+                "852a47002bd3ef59",
+                "88545d7732317010",
+                "8f776a4452a5bf23",
+                "917605e9fd6ad22f",
+                "91d868941a603cf0",
+                "a1995b690048f63c",
+                "a7484f6f1235b31d",
+                "b631888b56df097f",
+                "c5f722f7817dbf59",
+                "c6b15b7a6c0a5fdc",
+                "ca012a92658ea083",
+                "d2522c66e706e300",
+                "d5d795370d5c571f",
+                "df23b8acc038703b",
+                "e3a8c9879f02b850",
+                "e7ed111d2a7d05e1",
+                "f0322958c556c445",
+                "f0785516b50a588d",
+                "fe2afc23a2484493",
+                "fe8f9a02c3e20845"
+              ]
+            },
+            "released_none_vs_full": {
+              "bootstrap_ci95": [
+                -0.1111982359082663,
+                -0.01517599700692304
+              ],
+              "datasets": 42,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "9377d41ffa9d8909",
+                "c9445143a7c22e40"
+              ],
+              "mean_delta_fi_spearman": -0.055777477099177124,
+              "paired_ids": [
+                "00b383718f6f4fd8",
+                "0a81e109e22e052e",
+                "1107f21476f92e1d",
+                "116e0c4981a4f33d",
+                "136567994f3710d6",
+                "168f272eb65f2bf6",
+                "211a6e9a83657eba",
+                "217e2ee09d25511c",
+                "2aeaba5779b2e176",
+                "2f3fa4b3c250c1c1",
+                "3542303f82ab9068",
+                "42e47bff9a9f26b4",
+                "494d3b84e45c37e2",
+                "4f8793723a3148b5",
+                "509b9654776f2be3",
+                "535db42338500ac5",
+                "5373a2e61f9027e3",
+                "5a14ec6f461cec84",
+                "5ec7eabbff56307b",
+                "61e91c310710fd3b",
+                "7f93cab1441ef541",
+                "8109bebfdbe9e621",
+                "852a47002bd3ef59",
+                "88545d7732317010",
+                "8f776a4452a5bf23",
+                "917605e9fd6ad22f",
+                "91d868941a603cf0",
+                "a1995b690048f63c",
+                "a7484f6f1235b31d",
+                "b631888b56df097f",
+                "c5f722f7817dbf59",
+                "c6b15b7a6c0a5fdc",
+                "ca012a92658ea083",
+                "d2522c66e706e300",
+                "d5d795370d5c571f",
+                "df23b8acc038703b",
+                "e3a8c9879f02b850",
+                "e7ed111d2a7d05e1",
+                "f0322958c556c445",
+                "f0785516b50a588d",
+                "fe2afc23a2484493",
+                "fe8f9a02c3e20845"
+              ]
+            }
+          }
+        },
+        "regression": {
+          "requested": 41,
+          "paired_complete": 41,
+          "excluded_ids": {},
+          "means": {
+            "candidate/full": {
+              "clipped_R": 0.40125808536585356,
+              "syn_score": 0.10766717073170733,
+              "real_score": 0.13874682926829268,
+              "fi_spearman": 0.5666925413647373
+            },
+            "candidate/macro": {
+              "clipped_R": 0.4043759024390243,
+              "syn_score": 0.10740586585365855,
+              "real_score": 0.13874682926829268,
+              "fi_spearman": 0.5433090323242483
+            },
+            "candidate/none": {
+              "clipped_R": 0.38674246341463414,
+              "syn_score": 0.10402741463414632,
+              "real_score": 0.13874682926829268,
+              "fi_spearman": 0.5344952719282388
+            },
+            "released/full": {
+              "clipped_R": 0.4027080731707316,
+              "syn_score": 0.1079554756097561,
+              "real_score": 0.13874682926829268,
+              "fi_spearman": 0.555626245136412
+            },
+            "released/macro": {
+              "clipped_R": 0.4053905853658537,
+              "syn_score": 0.10815171951219511,
+              "real_score": 0.13874682926829268,
+              "fi_spearman": 0.5543310004670507
+            },
+            "released/none": {
+              "clipped_R": 0.3674721585365854,
+              "syn_score": 0.10271496341463413,
+              "real_score": 0.13874682926829268,
+              "fi_spearman": 0.5076835052994574
+            }
+          },
+          "denominator_floor_datasets": 24,
+          "comparisons": {
+            "candidate_full_vs_released_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.015253327134146339,
+                  0.010796014329268298
+                ],
+                "datasets": 41,
+                "mean": -0.001449987804878045
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.003210803353658538,
+                  0.0031567847560975584
+                ],
+                "datasets": 41,
+                "mean": -0.0002883048780487834
+              },
+              "mean_R_ratio": 0.9963994071599769,
+              "ratio_bootstrap_ci95": [
+                0.964920226348481,
+                1.0295212133470508
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_macro_vs_released_macro": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.01433868963414635,
+                  0.01082368841463414
+                ],
+                "datasets": 41,
+                "mean": -0.0010146829268292724
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.0027572536585365928,
+                  0.0011933301829268235
+                ],
+                "datasets": 41,
+                "mean": -0.0007458536585365897
+              },
+              "mean_R_ratio": 0.9974970239481175,
+              "ratio_bootstrap_ci95": [
+                0.967069470487806,
+                1.0323901138260436
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_none_vs_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.045591771646341456,
+                  0.0117898094512195
+                ],
+                "datasets": 41,
+                "mean": -0.014515621951219514
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.01008409268292684,
+                  0.0015562850609756019
+                ],
+                "datasets": 41,
+                "mean": -0.00363975609756098
+              },
+              "mean_R_ratio": 0.9638247240850373,
+              "ratio_bootstrap_ci95": [
+                0.8863077611969591,
+                1.031692243273716
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "candidate_none_vs_released_none": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.0010825963414634093,
+                  0.04441760487804877
+                ],
+                "datasets": 41,
+                "mean": 0.019270304878048778
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.0021062743902439092,
+                  0.004615873780487803
+                ],
+                "datasets": 41,
+                "mean": 0.0013124512195121904
+              },
+              "mean_R_ratio": 1.0524401765695406,
+              "ratio_bootstrap_ci95": [
+                0.997438426544765,
+                1.1440063069733877
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            },
+            "released_none_vs_full": {
+              "delta_clipped_R": {
+                "bootstrap_ci95": [
+                  -0.08344441280487805,
+                  0.005871460060975522
+                ],
+                "datasets": 41,
+                "mean": -0.03523591463414634
+              },
+              "delta_syn_score": {
+                "bootstrap_ci95": [
+                  -0.015703806402439027,
+                  0.0032875942073170685
+                ],
+                "datasets": 41,
+                "mean": -0.005240512195121955
+              },
+              "mean_R_ratio": 0.9125025869068991,
+              "ratio_bootstrap_ci95": [
+                0.7920497877358432,
+                1.0154998933093884
+              ],
+              "ratio_bootstrap_valid_draws": 2000
+            }
+          },
+          "paired_feature_importance": {
+            "candidate_full_vs_released_full": {
+              "bootstrap_ci95": [
+                -0.03679404149427673,
+                0.06430714571216037
+              ],
+              "datasets": 33,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "15791bb4aa106cd5",
+                "6f34c9885af09c4f",
+                "7d0688370b3cd58f",
+                "9824f279fe9623c7",
+                "99185eea972e77e8",
+                "9e6189205082b5f2",
+                "eb5a7c08a54c0f05",
+                "ec797dbaf144c421"
+              ],
+              "mean_delta_fi_spearman": 0.011066296228325284,
+              "paired_ids": [
+                "00709d315efacf0c",
+                "0aac24963f2da0f8",
+                "0ac99631b621cd3f",
+                "0b6f888d0129a9e6",
+                "0f12f7f17b5ba81f",
+                "1b2370755c5fab00",
+                "1d0c0501a7b368af",
+                "1ff2c6eed60a461f",
+                "24255b2f62334115",
+                "28d95f196cef98d7",
+                "2a919e8c971db1eb",
+                "424ba7700a3892d7",
+                "43b4cc3ab0ebbd97",
+                "4af60fe0572c79eb",
+                "4c562924720c9e19",
+                "4f118539d1a4c08c",
+                "5329ac31cbd57ce3",
+                "5d7672eb0402965a",
+                "6213dc5320e7212f",
+                "710f6b1131b39840",
+                "7c0547ffe04c2729",
+                "7e729f757c5124d7",
+                "867aee89ab7030b4",
+                "9ce6d61e6080423f",
+                "9fb18f0ea9bce6ac",
+                "a2bfe6b3e6680404",
+                "a3771b97564b9163",
+                "be18e1586f1f6c5a",
+                "d0bfa3de51772956",
+                "d1f4f39c66223260",
+                "d6004163122a03bc",
+                "ec86a16b41539813",
+                "efbe406c8295dde0"
+              ]
+            },
+            "candidate_macro_vs_released_macro": {
+              "bootstrap_ci95": [
+                -0.05305483610894532,
+                0.023788161342513398
+              ],
+              "datasets": 33,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "15791bb4aa106cd5",
+                "6f34c9885af09c4f",
+                "7d0688370b3cd58f",
+                "9824f279fe9623c7",
+                "99185eea972e77e8",
+                "9e6189205082b5f2",
+                "eb5a7c08a54c0f05",
+                "ec797dbaf144c421"
+              ],
+              "mean_delta_fi_spearman": -0.011021968142802515,
+              "paired_ids": [
+                "00709d315efacf0c",
+                "0aac24963f2da0f8",
+                "0ac99631b621cd3f",
+                "0b6f888d0129a9e6",
+                "0f12f7f17b5ba81f",
+                "1b2370755c5fab00",
+                "1d0c0501a7b368af",
+                "1ff2c6eed60a461f",
+                "24255b2f62334115",
+                "28d95f196cef98d7",
+                "2a919e8c971db1eb",
+                "424ba7700a3892d7",
+                "43b4cc3ab0ebbd97",
+                "4af60fe0572c79eb",
+                "4c562924720c9e19",
+                "4f118539d1a4c08c",
+                "5329ac31cbd57ce3",
+                "5d7672eb0402965a",
+                "6213dc5320e7212f",
+                "710f6b1131b39840",
+                "7c0547ffe04c2729",
+                "7e729f757c5124d7",
+                "867aee89ab7030b4",
+                "9ce6d61e6080423f",
+                "9fb18f0ea9bce6ac",
+                "a2bfe6b3e6680404",
+                "a3771b97564b9163",
+                "be18e1586f1f6c5a",
+                "d0bfa3de51772956",
+                "d1f4f39c66223260",
+                "d6004163122a03bc",
+                "ec86a16b41539813",
+                "efbe406c8295dde0"
+              ]
+            },
+            "candidate_none_vs_full": {
+              "bootstrap_ci95": [
+                -0.08143599486899855,
+                0.008702287688835852
+              ],
+              "datasets": 33,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "15791bb4aa106cd5",
+                "6f34c9885af09c4f",
+                "7d0688370b3cd58f",
+                "9824f279fe9623c7",
+                "99185eea972e77e8",
+                "9e6189205082b5f2",
+                "eb5a7c08a54c0f05",
+                "ec797dbaf144c421"
+              ],
+              "mean_delta_fi_spearman": -0.0321972694364986,
+              "paired_ids": [
+                "00709d315efacf0c",
+                "0aac24963f2da0f8",
+                "0ac99631b621cd3f",
+                "0b6f888d0129a9e6",
+                "0f12f7f17b5ba81f",
+                "1b2370755c5fab00",
+                "1d0c0501a7b368af",
+                "1ff2c6eed60a461f",
+                "24255b2f62334115",
+                "28d95f196cef98d7",
+                "2a919e8c971db1eb",
+                "424ba7700a3892d7",
+                "43b4cc3ab0ebbd97",
+                "4af60fe0572c79eb",
+                "4c562924720c9e19",
+                "4f118539d1a4c08c",
+                "5329ac31cbd57ce3",
+                "5d7672eb0402965a",
+                "6213dc5320e7212f",
+                "710f6b1131b39840",
+                "7c0547ffe04c2729",
+                "7e729f757c5124d7",
+                "867aee89ab7030b4",
+                "9ce6d61e6080423f",
+                "9fb18f0ea9bce6ac",
+                "a2bfe6b3e6680404",
+                "a3771b97564b9163",
+                "be18e1586f1f6c5a",
+                "d0bfa3de51772956",
+                "d1f4f39c66223260",
+                "d6004163122a03bc",
+                "ec86a16b41539813",
+                "efbe406c8295dde0"
+              ]
+            },
+            "candidate_none_vs_released_none": {
+              "bootstrap_ci95": [
+                -0.021090511066628983,
+                0.0869156583102079
+              ],
+              "datasets": 33,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "15791bb4aa106cd5",
+                "6f34c9885af09c4f",
+                "7d0688370b3cd58f",
+                "9824f279fe9623c7",
+                "99185eea972e77e8",
+                "9e6189205082b5f2",
+                "eb5a7c08a54c0f05",
+                "ec797dbaf144c421"
+              ],
+              "mean_delta_fi_spearman": 0.026811766628781264,
+              "paired_ids": [
+                "00709d315efacf0c",
+                "0aac24963f2da0f8",
+                "0ac99631b621cd3f",
+                "0b6f888d0129a9e6",
+                "0f12f7f17b5ba81f",
+                "1b2370755c5fab00",
+                "1d0c0501a7b368af",
+                "1ff2c6eed60a461f",
+                "24255b2f62334115",
+                "28d95f196cef98d7",
+                "2a919e8c971db1eb",
+                "424ba7700a3892d7",
+                "43b4cc3ab0ebbd97",
+                "4af60fe0572c79eb",
+                "4c562924720c9e19",
+                "4f118539d1a4c08c",
+                "5329ac31cbd57ce3",
+                "5d7672eb0402965a",
+                "6213dc5320e7212f",
+                "710f6b1131b39840",
+                "7c0547ffe04c2729",
+                "7e729f757c5124d7",
+                "867aee89ab7030b4",
+                "9ce6d61e6080423f",
+                "9fb18f0ea9bce6ac",
+                "a2bfe6b3e6680404",
+                "a3771b97564b9163",
+                "be18e1586f1f6c5a",
+                "d0bfa3de51772956",
+                "d1f4f39c66223260",
+                "d6004163122a03bc",
+                "ec86a16b41539813",
+                "efbe406c8295dde0"
+              ]
+            },
+            "released_none_vs_full": {
+              "bootstrap_ci95": [
+                -0.07796429073909833,
+                -0.018555376141836805
+              ],
+              "datasets": 33,
+              "excluded_from_R_roster_for_undefined_FI": [
+                "15791bb4aa106cd5",
+                "6f34c9885af09c4f",
+                "7d0688370b3cd58f",
+                "9824f279fe9623c7",
+                "99185eea972e77e8",
+                "9e6189205082b5f2",
+                "eb5a7c08a54c0f05",
+                "ec797dbaf144c421"
+              ],
+              "mean_delta_fi_spearman": -0.04794273983695458,
+              "paired_ids": [
+                "00709d315efacf0c",
+                "0aac24963f2da0f8",
+                "0ac99631b621cd3f",
+                "0b6f888d0129a9e6",
+                "0f12f7f17b5ba81f",
+                "1b2370755c5fab00",
+                "1d0c0501a7b368af",
+                "1ff2c6eed60a461f",
+                "24255b2f62334115",
+                "28d95f196cef98d7",
+                "2a919e8c971db1eb",
+                "424ba7700a3892d7",
+                "43b4cc3ab0ebbd97",
+                "4af60fe0572c79eb",
+                "4c562924720c9e19",
+                "4f118539d1a4c08c",
+                "5329ac31cbd57ce3",
+                "5d7672eb0402965a",
+                "6213dc5320e7212f",
+                "710f6b1131b39840",
+                "7c0547ffe04c2729",
+                "7e729f757c5124d7",
+                "867aee89ab7030b4",
+                "9ce6d61e6080423f",
+                "9fb18f0ea9bce6ac",
+                "a2bfe6b3e6680404",
+                "a3771b97564b9163",
+                "be18e1586f1f6c5a",
+                "d0bfa3de51772956",
+                "d1f4f39c66223260",
+                "d6004163122a03bc",
+                "ec86a16b41539813",
+                "efbe406c8295dde0"
+              ]
+            }
+          }
+        }
+      },
+      "parallel_study_reconciliation_sha256": "6533a12085bf40c182b5abb5cf1c64fbc5956f2180d4c78ae462bce8e9a8f4b3",
+      "parallel_study_reconciliation": "Common1224probe/FI rows exactlymatch; percheckpoint5376requested,5232stored,144absent,384invalidwide,528formalunavailable,4848passwidthguard. Actual parallel launch entrypoint unrecorded; no inference of forbiddenreads."
+    }
   }
 }

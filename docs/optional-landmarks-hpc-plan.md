@@ -13,8 +13,7 @@ flywheel regression/liveness, per-task quality, and entirely Rust inference.
 
 ## Ownership and coordination
 
-Codex owns cross-repository acceptance and the JopeDime optional-landmarks checkout. Claude owns
-the Dope integration checkout. Claude-Code owns native quality/performance qualification. Gemini
+Codex owns cross-repository acceptance and the JopeDime optional-landmarks checkout. Claude-Code is the sole writer/pusher of Dope PR #340; Claude/AGY owns the separate training source checkout. Claude-Code also owns native quality/performance qualification. Gemini
 owns proposed preparation/kernel optimizations in its own claimed checkout. The separate Codex
 Micro-import owner retains the prepared JopeDime import packet; the optional-landmarks writer
 will not independently apply that overlapping packet. Read-only reviewers inspect shared
@@ -74,7 +73,7 @@ The dependency sequence is:
 | C4 — Codex | Finish CLI/appliance output protection, error mapping, receipt reference and actual generated schema validation | Weights/input/output alias refusals preserve bytes; event-output errors retain output failure class; generated run and encoding receipts validate | Expanded sealed baseline package proof passed; trained-candidate package rerun pending |
 | C5 — Claude + Codex | Fix Dope raw-table CUDA CLI to call resident tensor forward and bound its explicit CPU reference pool; published immutable Dope pin; reviewed Candle source reconciliation; released whole checkpoint and license packaged | Actual RTX 3090 numerical parity and residency, CPU-only and CUDA feature builds, dependency fences/security provenance, sealed appliance fit/fit-predict with no runtime download | Jope pins published `972685cd`; baseline package passed; trained candidate/new final package pending |
 | C6 — Codex | Qualify GPU runtime portability separately from weight packaging; retain documented host-library requirement until supported CUDA runtime libraries are packaged with reviewed licenses/loader paths | Clean driver-only host/container, offline startup and GPU fit/fit-predict, tamper refusal, library/driver compatibility matrix and SBOM; existing native-only package remains portable | Open; current GPU profile requires host CUDA libraries |
-| Q1 — Claude-Code | Real native retention and feature-importance comparison on the available 112 development datasets | Zero, macro, macro+larger, full, N=100/200/300/500/1000; fixed paired seeds; dataset exclusions/errors and per-dataset metrics; zero relative retention loss, progressive changes, N300/full ratio, smallest tested N meeting 95% | Native study returned; zero regression loses8.7% (FAIL), binary7.7%; macro restores retention; N300 point estimates≥95% but binary CI wide; existing policy unqualified |
+| Q1 — Claude-Code | Real native retention and feature-importance comparison on the available 112 development datasets | Zero, macro, macro+larger, full, N=100/200/300/500/1000; fixed paired seeds; dataset exclusions/errors and per-dataset metrics; zero relative retention loss, progressive changes, N300/full ratio, smallest tested N meeting 95% | Trained candidate paired stage:102complete/112requested,10wideMC unavailable; none/full point ratios .9638 regression/1.0528 binary/.9950MC, with unresolved uncertainty. Parallel all-arm wide-table metrics invalid; owner repair pending. Existing policy unqualified |
 | Q2 — Claude-Code + Codex | Matched latency matrix on real fixtures and synthetic 1k/10k/50k tables | Real fixtures plus synthetic 1k/10k/50k × p10/64/200; ≥15 repeats; p50/p95 public encode time, native evidence separately, full preparation included; CPU and CUDA weight-cold/resident timings, thread/device/commit/checkpoint identities and resource sampling | Old baseline CUDA cold 7/7 measured synthetic cells FAIL 5× (2.0–4.9×); eight CUDA cells unmeasured/quarantined; post-H1/training rerun required |
 | Q3 — both integration owners | Full required suites and compatibility audit on final heads | Dope engine/fast/check gates; Jope `just required`, relevant feature combinations, historical receipts, checkpoint loading, frozen Hyperion assembly and Python/Rust tolerances | Focused suites pass; full gates have explicit unresolved failures |
 
@@ -112,9 +111,7 @@ measured auxiliary targets separate from masked inputs. A functional loader/one-
 must prove forbidden-open sentinels, finite gradients, positive real updates, active encoder
 parameter changes and accurate task×view counters. Syntax checks cannot establish these facts.
 
-J1's Rust SDK execution proof now passes both consumers on all three task inputs. The optional
-CUDA context MLP uses real device kernels; its maximum difference from the scalar CPU oracle
-was 7.16e-6 at tolerance 3e-5 on RTX 3090. Resident product fields are opaque, public exports copy
+J1's Rust SDK execution proof now passes both consumers on all three task inputs with released and trained-candidate weights. The candidate also executes native progressive sessions and exact terminal/full equality on RTX3090. Its real CUDA context kernels differ from the scalar CPU oracle by at most 7.40e-6 at tolerance 3e-5. Resident product fields are opaque, public exports copy
 device storage, and mutation-isolation tests pass. Caller-supplied pins are explicitly
 unqualified. Predictive ablation and CLI/appliance consumer selection still remain.
 
@@ -136,17 +133,16 @@ F1 has 26 passing admission/snapshot regression tests, including nine frozen rea
 rules and unchanged authority/remote state on incompatible updates. These are contract proofs.
 `LocalSnapshotAuthority` and `SnapshotEvidenceVerifier` currently have only test implementations;
 a production evidence verifier/store binding and fresh deployed PID/runtime/heartbeat/progress
-observations are still required. Retired Python units and stale healthy receipts cannot satisfy
-the live-green requirement. Preserve current services while the owner supplies that boundary.
+observations are still required. Gemini confirmed zero deployed Rust flywheel/appliance processes on this host at17:19UTC. Retired Python units and stale healthy receipts cannot satisfy the live-green requirement. Keep existing services untouched while the owner supplies the deployment boundary.
+
+The first candidate has completed a safe paired development stage:112requested,102complete,10wideMC explicitly unavailable. None/full point retention is .9638 regression,1.0528 binary and .9950 multiclass, but confidence intervals do not establish the target across tasks. The independent102cohort exactly matches1,224 common rows from the parallel study; that study's extra wideMC values need quarantine because synthesis/evaluation widths differ and failures were converted to chance scores. Training source custody and lossless class-preparation lineage also remain open. See [the trained-candidate evidence and ordered owner handoff](qualification/optional-landmarks-dropout-candidate.md). Do not promote from pooled retention or tensor parity.
 
 ## HPC integration waves
 
 Prioritize elapsed public-call cost and CPU work. Port as many applicable improvements as pass
 parity, resource and end-to-end benefit checks; component speed alone does not qualify a port.
 Micro's correlation-based landmark reports cannot substitute for genuine native CV evidence.
-Dope PR [#339](https://github.com/neverhuman/dope/pull/339) is a separately owned native ridge/basis
-optimization draft; it is distinct from the optional-landmarks integration draft. Its measured
-component gains require a combined-head rerun before product attribution.
+Dope PR [#339](https://github.com/neverhuman/dope/pull/339) is closed and its native ridge/basis work has been folded into [#340](https://github.com/neverhuman/dope/pull/340). Claude-Code remains that PR's sole writer. Gemini's phase2 port `3793ba31a3dc93a138ccee4234b3a4f9ec755ed5` is available on the split baseline25d1785c with75 focused tests/Clippy and exact conditioning goldens passing; it is not yet the published Jope dependency. Component gains still require a combined-head timing rerun before product attribution.
 
 | Wave / proposed owner | Work in Dope / JopeDime | Admission and completion test |
 | --- | --- | --- |
@@ -199,8 +195,8 @@ shared log and hold `jope_plan/qualification.lock` during timed latency runs; co
 and benchmarks through the same reservation. Host load near 240 is unsuitable for promotion
 claims: reschedule unstable measurements rather than treating load logging as isolation.
 Consider an upstream Dope512 tensor API that shares the existing hidden-state computation and
-skips only output heads unused by the first512 coordinates. Retain the complete checkpoint and
-legacy629 APIs. Require bit-identical first512 equality at B1/8/64/256 on CPU/CUDA and measured
+skips only output heads unused by the first 512 coordinates. Retain the complete checkpoint and
+legacy629 APIs. Require bit-identical first 512 equality at B1/8/64/256 on CPU/CUDA and measured
 benefit before adoption; this candidate avoids graph lifetime complexity.
 
 Persistent/captured buffers must not mutate an already published snapshot: retain its tensor
@@ -228,11 +224,7 @@ requires the actual existing transfer metrics, not landmark cosine, latent cosin
 scores. Report uncertainty and paired changes; a progressive quality regression beyond noise
 is a gap even if the implementation is deterministic.
 
-Run focused suites first, then the required gates. Current JopeDime qualification records four
-existing RustSec advisories also present on unchanged main and unchanged smartcluster Clippy
-failures with the locked Tokio version. Preserve those exact failures; do not suppress them or
-claim the aggregate gate passes. Coordinate their remediation with the owning maintenance
-agent before promotion. Dope's earlier aggregate fast run likewise has a retained pilot-fixture
+Run focused suites first, then the required gates. Current JopeDime qualification retains four existing RustSec advisories also present on unchanged main and unchanged smartcluster Clippy failures with the locked Tokio version. A separately reviewable repair in Codex's own lane upgrades only the packer zstd graph and migrates two encapsulated ownedFile registrations to Tokio's sound API. Keep global unsafe-code denial with narrowly documented registration exceptions. Preserve prior failures and require fresh security/fence/I/O-safety review and aggregate gates; source edits alone do not establish a pass. Dope's earlier aggregate fast run likewise has a retained pilot-fixture
 failure despite an isolated passing rerun. Neither result is an aggregate pass.
 
 Expand the package harness beyond its initial none-mode fit: execute fit-predict, progressive
@@ -268,3 +260,33 @@ The final linked draft PRs must contain concrete behavior, exact acceptance comm
 results, published dependency identity and remaining gaps. Canonical checkouts retain foreign
 dirty work; integration proceeds through reviewed PR branches, without an automatic merge,
 release, service rollout or promotion of unqualified HPC results.
+
+## Candidate and package handoff, 27 October 2026
+
+The first dropout candidate is `ecded0225fca7c6e13c413b0e39b1040bf95f7694940b2809f1ce2ce2abf7bd9`.
+Its receipt records eight epochs, 360 optimizer steps and 714 training cells (319 regression,
+199 binary, 196 multiclass), with 495 sampled native arms. Independent raw-file comparison
+confirms all 40 encoder-active tensors changed, among 56 finite FP32 tensors/444,168 parameters.
+This is an initial capped training run, not exposure to every eligible training table.
+
+Rust CPU and actual RTX 3090 full 629/first 512 numerical comparisons both pass against the Python
+CPU reference at maximum absolute error 1.91e-6 (tolerance 3e-5). Both Rust consumers also pass
+none/partial/terminal execution and terminal/full equality for the candidate on three tasks.
+These are numerical and execution results; the synthetic operator fixture does not establish
+native coverage or retained quality. The candidate remains explicitly unqualified pending Q4.
+
+The currently published Dope972 preparation retains its 32-class cap. Preserve that released
+behavior and its old goldens, and introduce a separately identified lossless FIT-class policy
+for the new product rather than silently changing historical full outputs. It must pass both
+backends for K3/32/33, fractional/nearby labels, label permutations and unknown labels. The
+training source archive also needs exact byte custody: the integration commit includes later
+trainer/test fixes and differs from two pre-run file hashes; pin imported conditioning helpers
+as well. Do not relabel an integration commit as the exact original training source.
+
+Sealed package source `1c05c9e1de83b792c162bd95001bb36ef2eea819` passes the expanded actual GPU
+smoke and packaging checks with the released checkpoint. A fresh-process CPU probe found and
+fixed global Rayon initialization in asset-frame decoding before the Dope pool existed. With
+thread environment overrides removed and CPU affinity 16–23, fixed fast-mode peaks are 4/3/4
+threads across regression/binary/multiclass; the old package reached 10 under that affinity and
+104–105 with ordinary host affinity. Paired regression encodings remain bit-identical. This is
+resource evidence, separate from the unmet 5× cold latency gate.
