@@ -104,6 +104,24 @@ fn landmark_companion_receipt_schema_and_derived_coverage_are_explicit() {
         "device":"Cuda(0)","version":0
     });
     valid("jope.landmark-encoding.v1.schema.json", &value);
+    let mut candidate = value.clone();
+    candidate["embedding_identity"] = serde_json::json!(
+        "dope-mlcv3-unqualified-candidate-high-f32-descriptor256-task128-dist128/v1"
+    );
+    candidate["weights_sha256"] = serde_json::json!("c".repeat(64));
+    assert!(!jope_datasets::schema::validate(
+        &schema("jope.landmark-encoding.v1.schema.json"),
+        &candidate
+    )
+    .is_empty());
+    candidate["training_receipt_sha256"] = serde_json::json!("d".repeat(64));
+    valid("jope.landmark-encoding.v1.schema.json", &candidate);
+    candidate["weights_sha256"] = value["weights_sha256"].clone();
+    assert!(!jope_datasets::schema::validate(
+        &schema("jope.landmark-encoding.v1.schema.json"),
+        &candidate
+    )
+    .is_empty());
     let mut malformed = value;
     malformed["status"] = serde_json::json!({"partial":23});
     assert!(!jope_datasets::schema::validate(

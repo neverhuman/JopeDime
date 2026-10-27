@@ -82,3 +82,15 @@ All three modes must produce valid, deterministic encodings that the pre-trained
 ## Deliverable
 
 A detailed engineering specification that an implementation agent can execute end-to-end, covering both repositories, exact files, data structures, APIs, test plans, and verification criteria.
+
+---
+
+## ADDENDUM — Jepson requirements (Oct 27 2026, binding)
+
+1. **Landmarks are optional by training, not just by plumbing.** Train the Dope encoder with landmark dropout / random partial masks (none, partial, full) so it produces a strong encoding with zero landmarks and gets better when they are present. Report quality at each mask level.
+2. **Pinned encoder contract.** JopeDime depends on a pinned Dope encoding layer. The same pinned weights must accept a bundle with or without landmarks; fixed output dimension either way.
+3. **JopeDime choice (evaluate both, keep both optional):** (a) consume only the Dope encoding (landmark benefit flows through Dope), and/or (b) also feed the same encodings into JopeDime's own deep-learning model. Ablate and document.
+4. **Flywheel must keep working.** The self-play/data flywheel stays live and green through every PR; add a flywheel regression test.
+5. **Fast inference with no landmarks** is a first-class JopeDime mode, with a latency target and test.
+6. **World-class binary, regression, and multi-class** support, with tests and benchmarks for each.
+7. **Inference is 100% Rust, no Python.** Weights ship as safetensors and load in Rust. Python is allowed for training/research only.

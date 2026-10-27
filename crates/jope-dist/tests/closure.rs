@@ -167,3 +167,68 @@ fn limits_toml_matches_the_compiled_bounds() {
     assert_eq!(int(&i["max_classes"]), r.max_classes as u64);
     assert_eq!(int(&i["max_model_bytes"]), r.max_model_bytes);
 }
+
+#[test]
+fn notices_include_dependencies_enabled_only_by_the_selected_feature() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = dir.path().join("app");
+    let optional = dir.path().join("optional");
+    for path in [&app, &optional] {
+        std::fs::create_dir_all(path.join("src")).unwrap();
+    }
+    std::fs::write(app.join("src/lib.rs"), "").unwrap();
+    std::fs::write(optional.join("src/lib.rs"), "").unwrap();
+    std::fs::write(
+        app.join("Cargo.toml"),
+        r#"[package]
+name = "notice-app"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+[features]
+extra = ["dep:notice-optional"]
+[dependencies]
+notice-optional = { path = "../optional", optional = true }
+"#,
+    )
+    .unwrap();
+    std::fs::write(
+        optional.join("Cargo.toml"),
+        r#"[package]
+name = "notice-optional"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+"#,
+    )
+    .unwrap();
+    std::fs::write(optional.join("LICENSE"), "MIT License (test fixture)\n").unwrap();
+    let manifest = app.join("Cargo.toml");
+    assert!(
+        std::process::Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()))
+            .args(["generate-lockfile", "--offline", "--manifest-path"])
+            .arg(&manifest)
+            .status()
+            .unwrap()
+            .success()
+    );
+    let collect = |features| {
+        jope_dist::notices::collect(
+            &manifest,
+            "notice-app",
+            "x86_64-unknown-linux-gnu",
+            features,
+        )
+        .unwrap()
+    };
+    let without = collect(&[]);
+    assert!(!without.crates.iter().any(|c| c.name == "notice-optional"));
+    let with = collect(&["extra".into()]);
+    let dependency = with
+        .crates
+        .iter()
+        .find(|c| c.name == "notice-optional")
+        .unwrap();
+    assert_eq!(dependency.license, "MIT");
+    assert!(with.texts.contains_key(&dependency.files["LICENSE"]));
+}

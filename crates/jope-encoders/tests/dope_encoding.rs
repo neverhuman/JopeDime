@@ -1,8 +1,11 @@
-use candle_core::{DType, Tensor};
-use starforge::dope_encoder::{Dope512, DopeDevice, DopeEncoder, FusionComponents};
+use candle_core::Tensor;
+use starforge::dope_encoder::{DopeDevice, DopeEncoder, FusionComponents};
 
 const WEIGHTS: &[u8] =
     include_bytes!("../../../deploy/appliance/assets/dope-mlc-v3/model.safetensors");
+
+#[path = "support/dope_consumers.rs"]
+mod consumers;
 
 #[test]
 fn whole_checkpoint_checksum_and_cpu_reference_projection() {
@@ -57,26 +60,40 @@ fn actual_cuda_projection_stays_on_device_and_matches_whole_model_reference() {
 
 #[test]
 fn alternative_fusion_uses_its_own_identity_and_checks_scope() {
-    let embedding = Dope512 {
-        tensor: Tensor::zeros((1, 512), DType::F32, &DopeDevice::Cpu).unwrap(),
-        source_digest: "a".repeat(64),
-        conditioning_digest: "b".repeat(64),
+    use starforge::dope_encoder::{
+        prepare_table_with_ids, LandmarkOptions, LandmarkScope, PrepTask,
     };
+    let encoder = DopeEncoder::from_bytes(WEIGHTS, &DopeDevice::Cpu).unwrap();
+    let x = (0..8).map(|i| vec![i as f64]).collect::<Vec<_>>();
+    let y = (0..8).map(|i| (i * i) as f64).collect::<Vec<_>>();
+    let prepared = prepare_table_with_ids(&x, &y, PrepTask::Regression, (0..8).collect()).unwrap();
+    let scope = LandmarkScope::for_source_digest(
+        &LandmarkOptions::default(),
+        None,
+        prepared.source_rows_digest(),
+    );
+    let embedding = encoder.encode(&prepared, None, &scope).unwrap();
     let mut components = FusionComponents {
-        source_digest: "a".repeat(64),
+        source_digest: embedding.source_digest().into(),
         recipe: "supplied-foundation-target/v1".into(),
         foundation1024: vec![1.; 1024],
         target512: vec![2.; 512],
     };
     let resident = embedding.assemble(&components).unwrap();
-    assert_eq!(resident.dataset1536.dims(), [1, 1536]);
+    assert_eq!(resident.dataset1536_copy().unwrap().dims(), [1, 1536]);
     let fused = resident.to_export().unwrap();
     assert_eq!(fused.dataset1536.len(), 1536);
     assert_eq!(fused.policy2048.len(), 2048);
-    assert!(fused.dataset1536[..512].iter().all(|v| *v == 0.));
+    assert_eq!(fused.dataset1536[..512], embedding.to_vec().unwrap());
     assert!(fused.policy2048[512..1536].iter().all(|v| *v == 1.));
     assert!(fused.policy2048[1536..].iter().all(|v| *v == 2.));
     assert!(fused.recipe.starts_with("dope512-"));
+    // A Tensor clone shares mutable storage; only independent copies cross the public API.
+    embedding.tensor_copy().unwrap().zero_set().unwrap();
+    resident.dataset1536_copy().unwrap().zero_set().unwrap();
+    resident.policy2048_copy().unwrap().zero_set().unwrap();
+    assert_eq!(embedding.to_vec().unwrap(), fused.dataset1536[..512]);
+    assert_eq!(resident.to_export().unwrap().policy2048, fused.policy2048);
     components.source_digest = "c".repeat(64);
     assert!(embedding.assemble(&components).is_err());
 }
@@ -152,7 +169,10 @@ fn progressive_terminal_equals_full_and_publishes_supplied_fusion() {
     let mut observed = Vec::new();
     let progressive = collect(session, |s| {
         assert!(s.fusion.is_some());
-        assert_eq!(s.fusion.as_ref().unwrap().policy2048.dims(), [1, 2048]);
+        assert_eq!(
+            s.fusion.as_ref().unwrap().policy2048_copy().unwrap().dims(),
+            [1, 2048]
+        );
         observed.push(s.receipt.conditioning_digest.clone());
         Ok(())
     })
@@ -250,5 +270,18 @@ fn external_csv_identity_does_not_erase_task_or_row_scope() {
     assert_ne!(
         binary.initial().receipt.source_digest,
         different_rows.initial().receipt.source_digest
+    );
+}
+
+#[test]
+fn checkpoint_pin_is_verified_before_loading_and_legacy_identity_is_preserved() {
+    use starforge::dope_encoder::DopeCheckpointIdentity;
+    let wrong =
+        DopeCheckpointIdentity::unqualified_candidate("a".repeat(64), "b".repeat(64)).unwrap();
+    assert!(DopeEncoder::from_pinned_bytes(WEIGHTS, &DopeDevice::Cpu, wrong).is_err());
+    let encoder = DopeEncoder::from_bytes(WEIGHTS, &DopeDevice::Cpu).unwrap();
+    assert_eq!(
+        encoder.checkpoint_identity(),
+        &DopeCheckpointIdentity::ReleasedV1
     );
 }

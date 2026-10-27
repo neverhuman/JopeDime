@@ -228,10 +228,7 @@ pub fn start_training_with_options(
         ))?);
         prepared = prepared.with_source_digest(bound);
     }
-    let options = LandmarkOptions {
-        work_budget: 2_000_000_000_000,
-        ..Default::default()
-    };
+    let options = LandmarkOptions::mlc_v3_training();
     let sub = args
         .subsample()
         .map(|n| SubsampleSpec::new(n, options.seed));

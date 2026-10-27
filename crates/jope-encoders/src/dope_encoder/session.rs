@@ -74,6 +74,17 @@ impl Publisher {
         if self.cancelled() {
             return Ok(false);
         }
+        ensure!(
+            next.receipt.source_digest == next.embedding.source_digest
+                && next.receipt.conditioning_digest == next.embedding.conditioning_digest
+                && next.receipt.weights_sha256
+                    == next.embedding.checkpoint_identity.weights_sha256()
+                && next.receipt.embedding_identity
+                    == next.embedding.checkpoint_identity.embedding_recipe()
+                && next.receipt.training_receipt_sha256.as_deref()
+                    == next.embedding.checkpoint_identity.training_receipt_sha256(),
+            "encoding receipt differs from resident embedding"
+        );
         {
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
             ensure!(
@@ -82,6 +93,13 @@ impl Publisher {
             );
             let unchanged =
                 next.receipt.conditioning_digest == state.last.receipt.conditioning_digest;
+            ensure!(
+                next.receipt.weights_sha256 == state.last.receipt.weights_sha256
+                    && next.receipt.embedding_identity == state.last.receipt.embedding_identity
+                    && next.receipt.training_receipt_sha256
+                        == state.last.receipt.training_receipt_sha256,
+                "encoding checkpoint cannot change within a session"
+            );
             if unchanged && next.receipt.mask == state.last.receipt.mask {
                 return Ok(false);
             }
@@ -253,6 +271,7 @@ mod tests {
     fn snapshot(digest: &str) -> EncodingSnapshot {
         EncodingSnapshot {
             embedding: Dope512 {
+                checkpoint_identity: Default::default(),
                 tensor: Tensor::zeros((1, 512), DType::F32, &Device::Cpu).unwrap(),
                 source_digest: "a".repeat(64),
                 conditioning_digest: digest.into(),
@@ -267,6 +286,7 @@ mod tests {
                 options_digest: None,
                 work_budget: None,
                 weights_sha256: DOPE_WEIGHTS_SHA256.into(),
+                training_receipt_sha256: None,
                 embedding_identity: DOPE512_RECIPE.into(),
                 device: "cpu".into(),
                 version: 0,
@@ -327,6 +347,32 @@ mod tests {
         assert_eq!(last.receipt.status, LandmarkStatus::Partial(2));
         assert_eq!(last.receipt.version, 1);
         assert_eq!(outcome, SessionOutcome::Complete);
+    }
+
+    #[test]
+    fn checkpoint_switch_and_forged_receipt_fail_before_duplicate_elision() {
+        for consistent in [false, true] {
+            let session = EncodingSession::spawn(snapshot("same"), move |publisher| {
+                let mut next = snapshot("same");
+                let pin = super::super::DopeCheckpointIdentity::unqualified_candidate(
+                    "c".repeat(64),
+                    "d".repeat(64),
+                )?;
+                next.receipt.weights_sha256 = pin.weights_sha256().into();
+                next.receipt.training_receipt_sha256 =
+                    pin.training_receipt_sha256().map(str::to_owned);
+                next.receipt.embedding_identity = pin.embedding_recipe().into();
+                if consistent {
+                    next.embedding.checkpoint_identity = pin;
+                }
+                publisher.publish(next)?;
+                Ok(())
+            });
+            let (last, outcome) = session.finish(|_| Ok(())).unwrap();
+            assert_eq!(last.receipt.version, 0);
+            assert_eq!(last.receipt.weights_sha256, DOPE_WEIGHTS_SHA256);
+            assert!(matches!(outcome, SessionOutcome::Failed { .. }));
+        }
     }
 
     #[test]

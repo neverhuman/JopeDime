@@ -96,6 +96,8 @@ pub fn collect(
     let mut command = cargo();
     command.args([
         "metadata",
+        // Inventory all optional packages, then retain only the exact selected closure above.
+        "--all-features",
         "--locked",
         "--offline",
         "--format-version",
