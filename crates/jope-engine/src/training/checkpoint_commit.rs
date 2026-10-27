@@ -233,6 +233,7 @@ pub struct Expectation<'a> {
     /// Refuse checkpoints written before the complete commit format.
     pub require_complete: bool,
     /// Optional caller-pinned successor lineage and intent identities.
+    /// Any lineage, intent, attempt or window expectation requires the successor format.
     pub lineage_sha256: Option<&'a str>,
     pub intent_sha256: Option<&'a str>,
     pub attempt_id: Option<&'a str>,
@@ -454,6 +455,14 @@ pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> R
         );
         Format::Legacy
     };
+    ensure!(
+        (expect.lineage_sha256.is_none()
+            && expect.intent_sha256.is_none()
+            && expect.attempt_id.is_none()
+            && expect.window_id.is_none())
+            || format == Format::Successor,
+        "checkpoint identity expectations require successor commit format"
+    );
     Ok(Committed {
         dir: dir.to_path_buf(),
         step,
