@@ -1,6 +1,6 @@
 {
   "schema": "jope.optional-landmarks-qualification/v1",
-  "recorded_at": "2026-10-27T17:30:08.315599+00:00",
+  "recorded_at": "2026-10-27T17:56:53.483824+00:00",
   "code_candidate": "2c103d9389f681c343d6c119918454a665b7c2a1",
   "dope_candidate": "f49ac60b75578eb9cd2dd5568bd12ae9753084d2",
   "dope_pin_publication": "development candidate; final published immutable pin pending",
@@ -54,6 +54,39 @@
       "sources": "pass",
       "other_hygiene_checks": "pass",
       "note": "Does not establish full ci-pr pass; stops at hygiene before workspace Clippy/nextest."
+    },
+    "maintenance_repair": {
+      "status": "security_workspace_clippy_focused_tests_pass;aggregate_required_pending",
+      "source_commit": "e65022eee1ecfc397993f34d94aa6a093eea1b82",
+      "zstd_versions": {
+        "zstd": "0.14.3",
+        "zstd-safe": "8.2.0",
+        "zstd-sys": "2.1.2+zstd.1.5.7"
+      },
+      "scope": "Fixed packer graph only;7unrelated Windows dependency reselections restored. Two private ownedFile AsyncFd registrations use sound TokioAPI with individually reviewed statement-scoped unsafe_code exceptions; globalunsafe denial remains. No advisory ignores or deprecated-API allowances.",
+      "focused_tests": {
+        "passed": 177,
+        "failed": 0,
+        "ignored": 1,
+        "log": "gate-maintenance-focused.log",
+        "sha256": "9d6732774f177c8f4b1b71a54e7d5a75e6c7bed842745c191e8e57b8ef6e0dc7"
+      },
+      "security": {
+        "status": "pass",
+        "advisories": "pass",
+        "bans": "pass",
+        "licenses": "pass",
+        "sources": "pass",
+        "npm_vulnerabilities": 0,
+        "log": "gate-maintenance-security.log",
+        "sha256": "626b084a534c98e374987fdb383e4b8c2c653ffc306513f6d8c216057067b43a"
+      },
+      "workspace_default_all_target_clippy": {
+        "status": "pass",
+        "log": "gate-maintenance-workspace-clippy-fixed.log",
+        "sha256": "98a14afdf3203af389f794d9480194c9e91351101b3c13e65087b0594dd71319"
+      },
+      "review": "Root child dope_gpu read-only review of actualsource/graph: no blocking I/O-safety, source, feature or lock findings. Statement-scoped exceptions only; no get_mut/replacement/close escape."
     }
   },
   "gpu_appliance": {
@@ -128,7 +161,16 @@
         "sub300_full_ratio": 1.001
       }
     },
-    "baseline_protocol_warning": "Historical pooled112/110 estimates below are retained observations, not qualification: evaluator-wide feature mismatch failures became chance scores. Use the independently verified common102 roster for the new candidate stage gate; owner must repair all-arm wide-table/error propagation."
+    "baseline_protocol_warning": "Historical pooled112/110 estimates below are retained observations, not qualification: evaluator-wide feature mismatch failures became chance scores. Use the independently verified common102 roster for the new candidate stage gate; owner must repair all-arm wide-table/error propagation.",
+    "sampled_conditioning_defect": {
+      "status": "verified_source_partition_mismatch;quality_magnitude_unmeasured",
+      "description": "Q3samplednativereport+fullFITarrays; PythonBBusesfullrows, servedRustBBusesactualselectedpositions. FixPythonpositionAPI/gather, bindpositions, pairedconditioningparity beforeNrERUN.",
+      "true_sub300_reductions": 72,
+      "true_sub300_reductions_after_width_guard": 66,
+      "source_audit_sha256": "5afec89a824af017f967807f38f1a4d034a48a463c6395db421645bf86e3d56b",
+      "source_audit_path": "/home/ubuntu/jope_plan/evidence/candidate-dev112/stage1-20261027/q3-narm-bb-source-audit.json",
+      "unaffected": "SeparatetrainerN300slicing and independent102none/macro/fullstage1; do not invalidate or qualify one usingtheother"
+    }
   },
   "policy": "Dope/fusion tensor plumbing; existing pretrained policy and search behavior unchanged.",
   "evidence_location": "Raw logs retained under the claimed worktree target/landmarks; final draft PR records exact heads and remaining qualification.",
@@ -168,8 +210,34 @@
     "consumer_product_surface": "Both optional Rust SDK consumers implemented; CLI/appliance consumer selection and predictive ablation pending",
     "multiclass_quality": "Finite Rust CPU/CUDA context execution proven. Governed Gen31 policy vocabulary is binary/regression only; supported multiclass readout and predictive benchmark remain required."
   },
-  "current_dope_code_pin": "972685cd78ad1c1f25b592e49583d716cffb1f12",
-  "current_dope_publication": "Published immutable GitHub commit on open draft Dope PR340; normal network Cargo fetch succeeded. Earlier packaged baseline remains bound to f49/2c103d93.",
+  "current_dope_code_pin": "25d1785c823e0a401b8775306666924e407ccd9f",
+  "current_dope_publication": {
+    "repository": "neverhuman/dope",
+    "pull_request": 340,
+    "url": "https://github.com/neverhuman/dope/pull/340",
+    "published_head": "25d1785c823e0a401b8775306666924e407ccd9f",
+    "draft": true,
+    "ci": "in_progress_at_pin",
+    "jope_source_pin_commit": "83e09f42ea6dd2378994a72721d1c44e575c9d10",
+    "note": "Published source split/QA/full-report-v1 identity rename; model/native numeric code unchanged. H1port3793 excluded after26/285 full differences. No performance/quality promotion from pin.",
+    "ci_snapshot": {
+      "read_at": "2026-10-27T17:56:53.483824+00:00",
+      "head": "25d1785c823e0a401b8775306666924e407ccd9f",
+      "counts": {
+        "IN_PROGRESS": 2,
+        "SKIPPED": 2,
+        "SUCCESS": 19
+      },
+      "pending": [
+        "cpu",
+        "paper-clean"
+      ],
+      "failed": [],
+      "log": "closeout-plan-dope-pr340.json",
+      "sha256": "384bd97f3da88fcb5787daf3f57cbe25287a9d4a45a3994acdefde94be3d7c6b",
+      "note": "19success,2inprogress,2intentionalworkflow-skipped; notCIfullygreen"
+    }
+  },
   "addendum_suites": {
     "published_pin_consumers": {
       "passed": 10,
@@ -488,7 +556,6 @@
       "Repair wide-table/error propagation, audit pre-open role filtering, then qualify complete original mask/N arms;102paired none/macro/full development observations are now retained",
       "Same-cut H/A/B predictive comparison with a supported multiclass readout",
       "Published explicit lossless class-preparation lineage preserving old cap32 semantics under the released identity",
-      "Exact frozen training source custody: current provenance integration commit differs from frozen trainer/test hashes; imported conditioning helper not yet pinned",
       "Approved registration and product packaging of the new candidate; currently loaded only through explicit unqualified SDK API"
     ],
     "independent_development_stage1": {
@@ -1735,6 +1802,142 @@
       },
       "parallel_study_reconciliation_sha256": "6533a12085bf40c182b5abb5cf1c64fbc5956f2180d4c78ae462bce8e9a8f4b3",
       "parallel_study_reconciliation": "Common1224probe/FI rows exactlymatch; percheckpoint5376requested,5232stored,144absent,384invalidwide,528formalunavailable,4848passwidthguard. Actual parallel launch entrypoint unrecorded; no inference of forbiddenreads."
+    },
+    "source_custody": {
+      "status": "exact_source_bytes_recovered_and_archive_verified;helper_launch_owner_attested",
+      "launch_source_commit": "4e095b742e2da22139b20aef420e3e7b2dbe1df5",
+      "post_training_integration_commit": "52619c78e0b85e9be836b024d442d8ae332f457f",
+      "owner_companion_sha256": "856b341a30c6aa0deda35e6abc93ec3134c85118226c420cfd172b049db80342",
+      "owner_archive_sha256": "ed992dbc878ea0262ddab22e5c7e416fb522abe177d72db939f2aea937334c29",
+      "independent_verification_sha256": "d6c1b4cccad167e30f9b9f487cfb704301155a2e99d07960299b0b695039c62a",
+      "files": 19,
+      "checks": "All19 archive members match Git/extractedtree/receipt/hash/bytes/lines; independent AST closure exactly19; original5 pre-run pins match; historical training/provenance/manifest/weights unchanged. Permanent owner branch retains4e095.",
+      "attestation_limit": "Observed-conditioning helper was absent from original pre-run hash map. Launch use is owner-attested at17:35 and corroborated by pre-launch parentf199, not an independently captured execution trace. Original receipt unchanged.",
+      "owner_erratum_sha256": "c930355ed541370ed653049cb4c9d07666e0a8634d9f48b62bb6a223b6ec60cf"
     }
+  },
+  "evaluator_identity_gate_repair_transition": {
+    "source_commit": "e65022eee1ecfc397993f34d94aa6a093eea1b82",
+    "old": {
+      "implementation_sha256": "95d3e019b8ed2dfdb5b028661d1288c55450f8f0cb7f4fd4068ded90488baeb0",
+      "cargo_lock_sha256": "1e33b0f02db50282014933621f69920485f284c7774304f7463cbae508f168f3",
+      "identity_digest": "1aa42477fd648f0c1cf92a89c613d6a1c7314c9a3a8ed10e0caa62bc4480af57"
+    },
+    "new": {
+      "implementation_sha256": "8c6aad4f669de25306a617dfaa1ee65489453e8441c6ebfa768b0a3062373ef2",
+      "cargo_lock_sha256": "6d5517cf0c5526aaaac4f220da7bf22aa821948b42986d008611e9c6c066af1a",
+      "identity_digest": "ed9d5b8ca75f79d4826cae89c2268fd76c71b1aabd1f2b0760258a8943282413"
+    },
+    "regeneration_passed": 13,
+    "comparison_passed": 13,
+    "known_identity_table_changed": false,
+    "behavior_fixtures_rebaselined": false,
+    "regeneration_log": "gate-maintenance-identity-rebaseline.log",
+    "comparison_log": "gate-maintenance-identity-compare.log"
+  },
+  "dope_pr_policy": {
+    "path": "/home/ubuntu/gb_dope_pr_policy_1514.md",
+    "sha256": "e1c1603c33afb15cfd521c2ad634aece9694842d98ffdb4db370c9c6881c42ff",
+    "reaffirmed_by_user": true,
+    "rule": "339closed/folded340; oneopenDopePRperlane; latestmain/rebasebeforepush; nostacking;340solelandmarks; newworkon340orwait; exactheadCIfullygreen\u2192ready\u2192neverhumanbot exactheadapproval/mergehandoff/rebasemerge",
+    "owner": "Claude-Code solewriter/pusher"
+  },
+  "final_pin_sdk_acceptance": {
+    "jope_source_commit": "83e09f42ea6dd2378994a72721d1c44e575c9d10",
+    "dope_pin": "25d1785c823e0a401b8775306666924e407ccd9f",
+    "ordinary_target": {
+      "passed": 10,
+      "failed": 0,
+      "ignored": 2,
+      "log": "final-pin-gpu-sdk.log",
+      "sha256": "acb112d6872bccbaa96f9c7c670e0cf41f041511fd9b27c2b4514f05a2c0a118"
+    },
+    "explicit_candidate_cpu": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "final-pin-candidate-native-cpu.log",
+      "sha256": "7e6cdffb1d2b5f6c8e21c4afaebc7b80eb23ba605528b74ea93df13e21fc143b"
+    },
+    "explicit_candidate_gpu": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "final-pin-candidate-native-cuda.log",
+      "sha256": "eda73f8baa339a3018cfad7d64411722b6c21055d9e03607c6b40a89bbd2b98e"
+    },
+    "scope": "All12uniqueSDKtestIDsexecutedacross3runs. Bothpins/consumers/3tasks/nativeprogressivefull,residency/copy/scope; noquality/latencypromotion.",
+    "gpu_window": "final-pin-gpu-window.json",
+    "gpu_released": "2026-10-27T17:40:20.294976+00:00"
+  },
+  "evaluator_identity_final_pin_transition": {
+    "source_commit": "83e09f42ea6dd2378994a72721d1c44e575c9d10",
+    "old": {
+      "implementation_sha256": "8c6aad4f669de25306a617dfaa1ee65489453e8441c6ebfa768b0a3062373ef2",
+      "cargo_lock_sha256": "6d5517cf0c5526aaaac4f220da7bf22aa821948b42986d008611e9c6c066af1a",
+      "identity_digest": "ed9d5b8ca75f79d4826cae89c2268fd76c71b1aabd1f2b0760258a8943282413"
+    },
+    "new": {
+      "implementation_sha256": "63e0cbc85d1ad226d386dc69ea48cfcd80fefdc8a9832dff21c4897c494c4971",
+      "cargo_lock_sha256": "e6ac0054e9832e35bd67de6c571a337038d1f4c5e366397e384e7d4b410063b4",
+      "identity_digest": "c56f45a5ddca4357951433c05382724453bba418b92eecc575687273c2106006"
+    },
+    "regeneration_passed": 13,
+    "comparison_passed": 13,
+    "known_identity_table_changed": false,
+    "behavior_fixtures_rebaselined": false,
+    "regeneration_log": "final-pin-identity-rebaseline.log",
+    "comparison_log": "final-pin-identity-compare.log"
+  },
+  "final_pin_focused_checks": {
+    "feature_clippy": {
+      "source_commit": "83e09f42ea6dd2378994a72721d1c44e575c9d10",
+      "dope_pin": "25d1785c823e0a401b8775306666924e407ccd9f",
+      "log": "final-pin-feature-clippy.log",
+      "sha256": "5f98fbc91e3444801e4995e5da47690e50f6a97241945c6204f44dce990a3090",
+      "scope": "sixconsumercrates/alltargets/allDopeCUDAfeatures",
+      "status": "passed"
+    },
+    "flywheel_contracts": {
+      "source_commit": "83e09f42ea6dd2378994a72721d1c44e575c9d10",
+      "dope_pin": "25d1785c823e0a401b8775306666924e407ccd9f",
+      "log": "final-pin-flywheel-contracts.log",
+      "sha256": "06b1e656d0695c2d75fe1075c7ab2690f72ff7da272153504b34900196b1225c",
+      "scope": "productionadmission+snapshotcontracts;NOTlivehealth",
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0
+    },
+    "schemas": {
+      "source_commit": "83e09f42ea6dd2378994a72721d1c44e575c9d10",
+      "dope_pin": "25d1785c823e0a401b8775306666924e407ccd9f",
+      "log": "final-pin-schemas.log",
+      "sha256": "1d03d5faa2b61fb0ca7085f18b3512ce3e29a824c8e47cebddb811a94d2815ed",
+      "scope": "actualcommittedreceipt/model-lock/header schemas",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "closeout_plan": {
+    "path": "docs/optional-landmarks-hpc-plan.md",
+    "phases": [
+      "P0freeze/policy",
+      "P1losslessclasspreparation",
+      "P2qualificationwidth/failure/sampleBBrepair",
+      "P3trainedmaskquality/registration",
+      "P4productconsumers/projectedassets",
+      "P5predictiveAB/genuineMCreadout",
+      "P6productionauthority/liveflywheel",
+      "P7cold/residentperformance/sealedpackage",
+      "P8exactheadgates/PRpolicy"
+    ],
+    "critical_external_dependencies": [
+      "ConfirmedliveRustdeployment/authorityowner",
+      "Genuinesupportedmulticlassdownstreamreadoutowner",
+      "ApprovedprojectedJainbundleandadmissiblecomponentprovider"
+    ],
+    "full_aggregate_status": "pending;notlaunchedorclaimedpassedfromfocusedchecks",
+    "policy": "340soleDopePR;latestmain/rebase;greenexactheadCI\u2192ready\u2192neverhumanbotexactheadapproval/rebasemergehandoff;nostacks; no release fromthisturn"
   }
 }
