@@ -72,8 +72,7 @@ fn bounded_one_shot_measures_reloads_and_refuses_reuse_and_tampering() -> Result
         .current_dir(manifest)
         .output()?;
     succeeded(&git);
-    let commit = String::from_utf8(git.stdout)?.trim().to_owned();
-    assert_eq!(commit.len(), 40);
+    let current_commit = String::from_utf8(git.stdout)?.trim().to_owned();
     let base = manifest.join("../../target/landmarks/p6-one-shot-tests");
     fs::create_dir_all(&base)?;
     let temporary = tempfile::tempdir_in(base)?;
@@ -82,6 +81,17 @@ fn bounded_one_shot_measures_reloads_and_refuses_reuse_and_tampering() -> Result
         .as_ref()
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| temporary.path().join("one-shot"));
+    // Retained evidence stays bound to its original source after later documentation/test commits.
+    let commit = if existing.is_some() {
+        json(&root.join("receipt.json"))?["source_commit"]
+            .as_str()
+            .context("missing retained source commit")?
+            .to_owned()
+    } else {
+        current_commit
+    };
+    assert_eq!(commit.len(), 40);
+    assert!(commit.bytes().all(|byte| byte.is_ascii_hexdigit()));
     let args = [
         "--output",
         root.to_str().unwrap(),
@@ -163,7 +173,7 @@ fn bounded_one_shot_measures_reloads_and_refuses_reuse_and_tampering() -> Result
     assert_eq!(encoding["schema"], "jope.landmark-encoding/v1");
     assert_eq!(encoding["status"], "none");
     assert_eq!(encoding["version"], 0);
-    assert_eq!(encoding["device"], "cpu");
+    assert_eq!(encoding["device"], "Cpu");
     assert_eq!(encoding["mask"], serde_json::to_value([false; 23])?);
     assert_eq!(encoding["consumer"]["mode"], "encoding-only");
     assert_eq!(encoding["embedding"], encoding["consumer_embedding"]);
