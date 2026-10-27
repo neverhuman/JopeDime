@@ -176,6 +176,11 @@ pub struct SearchOptions {
     /// once set, nothing new starts, in-flight fits finish, and the search returns
     /// [`crate::parallel::Cancelled`] without publishing the interrupted cut.
     pub cancel: Option<Arc<AtomicBool>>,
+    /// Set by a *finish* request ([`crate::parallel::finish_flag`]): from then on every cut's
+    /// generations end as if its seconds bound had passed (generation 0's exempt head still
+    /// runs), and the phase records [`STOPPED_BY_SECONDS`]. Unlike `cancel`, the search completes:
+    /// the comparison still re-measures the finalists and every cut is published.
+    pub finish: Option<Arc<AtomicBool>>,
     /// Additive sidecar recording. Disable only for observational parity/control runs.
     pub record_events: bool,
     /// Original run/role/profile bindings, when supplied by the admitted caller.
@@ -204,6 +209,7 @@ impl SearchOptions {
             migration_interval: DEFAULT_MIGRATION_INTERVAL,
             clock: Clock::Wall,
             cancel: None,
+            finish: None,
             record_events: true,
             event_binding: None,
             progress: None,
@@ -220,6 +226,18 @@ impl SearchOptions {
         self.cancel
             .as_ref()
             .is_some_and(|flag| flag.load(Ordering::SeqCst))
+    }
+
+    /// Whether a finish was requested ([`SearchOptions::finish`]).
+    pub fn finishing(&self) -> bool {
+        self.finish
+            .as_ref()
+            .is_some_and(|flag| flag.load(Ordering::SeqCst))
+    }
+
+    /// The seconds bound, as every check reads it: passed, or ended early by a finish request.
+    fn out_of_time(&self, started: Stamp, deadline: Duration) -> bool {
+        self.finishing() || started.elapsed() >= deadline
     }
 
     fn check_cancelled(&self) -> Result<()> {
@@ -1096,7 +1114,8 @@ fn evaluate_admitted(
     let clock = options.clock;
     // A stop request is honoured exactly where the seconds bound is: before a fit starts.
     let may_start = |origin: &str| {
-        !options.cancelled() && (seconds_exempt(generation, origin) || started.elapsed() < deadline)
+        !options.cancelled()
+            && (seconds_exempt(generation, origin) || !options.out_of_time(started, deadline))
     };
     match pool {
         None => {
@@ -1289,7 +1308,7 @@ fn run_cut_allocated(
                 admission(recorder, &draw, STOPPED_BY_EVALUATIONS);
                 break;
             }
-            if !seconds_exempt(generation, origin) && started.elapsed() >= deadline {
+            if !seconds_exempt(generation, origin) && options.out_of_time(started, deadline) {
                 bound = Some(STOPPED_BY_SECONDS);
                 admission(recorder, &draw, STOPPED_BY_SECONDS);
                 break;

@@ -250,6 +250,11 @@ pub enum Cmd {
         /// `pipeline run --fitness` accepts it).
         #[arg(long)]
         fitness: Option<String>,
+        /// Finish early when this file appears: start nothing new, then rank and print what was
+        /// measured (exit 0, `finished_early` in --json). SIGUSR1 does the same. SIGTERM still
+        /// cancels without output.
+        #[arg(long)]
+        stop_file: Option<PathBuf>,
     },
 }
 
@@ -574,6 +579,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             json,
             events,
             fitness,
+            stop_file,
         } => {
             let outcome = Budget::parse(&budget).and_then(|budget| {
                 let objective = fitness.as_deref().map(load_objective).transpose()?;
@@ -590,6 +596,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     cpu_ceiling_millicores: parallel.cpu_ceiling,
                     source_commit,
                     cancel: Some(crate::parallel::termination_flag()?),
+                    finish: Some(crate::parallel::finish_flag(stop_file.as_deref())?),
                     events,
                     ..crate::invent::InventOptions::new(train, target, work_dir)
                 };
