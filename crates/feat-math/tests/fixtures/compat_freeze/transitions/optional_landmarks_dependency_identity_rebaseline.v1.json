@@ -1,0 +1,20 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Preserve the exact already-published PR431 dependency/Candle identity successor recorded in 1c05c9e1. Append an identity-only edge after the PR429 security identity; no old transition, behavioral fixture, source manifest, known identity row or receipt is rewritten.",
+  "plan_reference": "compat_freeze.rs identity-only mode; ADR-0004; PR431 user-authorized optional landmarks integration",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/431",
+  "source_commit": "758aed1b7ef28324d2d7dc0de31ebf5f52fd67b5",
+  "fixture_commit": "1c05c9e1de83b792c162bd95001bb36ef2eea819",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "a569a7171862937e3eecb26ea6c4b647e731045d41e8f7076ad785a2d0b6c13e",
+      "after": "58dcab42f426642f51369a9383b9315644a0a0fa6df6a1ae88752986bbbfc996"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a71fd767acb755750e2054f00be92ee36d6e196d27c4cfe85b04780ee4d8c72a",
+      "after": "7617d1031b9daf9af12bd17938d30d54b0b0eb9293a0ec8a60ba32b40d010059"
+    }
+  ]
+}

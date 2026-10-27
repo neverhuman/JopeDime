@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced PR431 product-scope dependency-edge additions change Cargo.lock without changing any evaluator arithmetic input or listed lineage source. Regenerate only the two announced identity fixtures through the owning Rust identity mode; preserve all historical fixture bytes, known identity rows and existing closed transitions.",
+  "plan_reference": "compat_freeze.rs identity-only mode; ADR-0004; PR431 user-authorized optional landmarks integration",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/431",
+  "source_commit": "a9cb739732d94814228408f1bee3209456224080",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "b23e36e02d60facfcd5ae8cfaa99dc92487342354cc59904ef296696b59af8c0",
+      "after": "e1a8c755539ba9bc206a6faf8e9ff07cfe42828ba010e14ad1a9c78776a6e20e"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "c83241edaacf238231de8e835ab1f5af7f596ec7241c6f1ad5983027e4c53a0a",
+      "after": "a2486eea095ca2c8b977d6c3d937a2bad1ae7ca82f16b095cd64e93463342fef"
+    }
+  ]
+}

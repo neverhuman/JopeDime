@@ -1,0 +1,20 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Preserve the exact already-published final Dope-pin identity successor recorded in 69826081, including the reviewed dependency/native-I/O repair. Intermediate uncommitted identity declarations remain in the qualification record; this edge asserts only these exact two committed fixture states. Behavior fixtures, known identity rows and existing ledgers remain unchanged.",
+  "plan_reference": "compat_freeze.rs identity-only mode; ADR-0004; PR431 user-authorized optional landmarks integration",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/431",
+  "source_commit": "83e09f42ea6dd2378994a72721d1c44e575c9d10",
+  "fixture_commit": "69826081670ac4b0ceec0ff352599e06e8bb8ce3",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "58dcab42f426642f51369a9383b9315644a0a0fa6df6a1ae88752986bbbfc996",
+      "after": "b23e36e02d60facfcd5ae8cfaa99dc92487342354cc59904ef296696b59af8c0"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "7617d1031b9daf9af12bd17938d30d54b0b0eb9293a0ec8a60ba32b40d010059",
+      "after": "c83241edaacf238231de8e835ab1f5af7f596ec7241c6f1ad5983027e4c53a0a"
+    }
+  ]
+}
