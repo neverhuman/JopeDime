@@ -27,15 +27,17 @@ pub use dope_core::{
 mod components;
 mod consumer;
 mod consumer_session;
+mod preparation;
 mod product;
 pub use components::{
     AuthenticatedFusionComponents, ComponentAdmissionIdentity, ComponentInputs, FitScope,
-    FusionComponentArtifact, FUSION_COMPONENT_RECIPE,
+    FusionComponentArtifact, FUSION_COMPONENT_RECIPE, LOSSLESS_PREPARATION_RECIPE,
 };
 pub use consumer::{
     DopeConsumedEncoding, DopeConsumer, DopeConsumerExport, DopeConsumerMode, DopeConsumerProduct,
     DopeConsumerReceipt, JopeContext512,
 };
+pub use preparation::{prepare_product_training_input, prepare_training_input};
 pub use product::{
     component_authority_root, product_session_options, product_session_options_with_assets,
 };
@@ -47,8 +49,8 @@ mod session;
 mod workflow;
 pub use session::{EncodingSession, EncodingSnapshot, SessionOutcome};
 pub use workflow::{
-    collect, encode_training, prepare_training_input, start_training, start_training_with_options,
-    write_events, write_snapshot, EncodingRun, SessionOptions, TrainingInput,
+    collect, encode_training, start_training, start_training_with_options, write_events,
+    write_snapshot, EncodingRun, SessionOptions, TrainingInput,
 };
 
 pub use candle_core::Device as DopeDevice;

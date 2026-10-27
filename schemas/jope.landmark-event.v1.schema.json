@@ -105,6 +105,9 @@
           "type": "string",
           "pattern": "^[0-9a-f]{40}$"
         },
+        "preparation_recipe": {
+          "const": "jope.dope-product-preparation/lossless-v1"
+        },
         "source_digest": {
           "$ref": "#/$defs/sha256"
         },

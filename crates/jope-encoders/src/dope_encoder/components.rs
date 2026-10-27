@@ -1,7 +1,7 @@
 //! FIT-scoped components admitted by the shared controller verifier, never by request claims.
 use super::{sha256, FusionComponents, TrainingInput};
 use anyhow::{ensure, Context, Result};
-use dope_core::prepare::PreparedTable;
+use dope_core::prepare::{ClassVocabPolicy, PreparedTable};
 use jope_records::replay_admission::{AdmissionVerifier, FitAdmission};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -13,15 +13,19 @@ mod authority;
 mod tests;
 use authority::{read_input, ControllerStore};
 
-const PREPARATION_SOURCE: &str = "25d1785c823e0a401b8775306666924e407ccd9f";
+const PREPARATION_SOURCE: &str = "2535a36c0e7ced2a17a0b06818efaeb17f7a2d47";
 /// Already projected/normalized by the authenticated producer; fusion adds no normalizer.
 pub const FUSION_COMPONENT_RECIPE: &str = "foundation1024-target512-supplied-normalized/v1";
+/// Explicit product preparation; model weights and coordinate recipes remain unchanged.
+pub const LOSSLESS_PREPARATION_RECIPE: &str = "jope.dope-product-preparation/lossless-v1";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FitScope {
     pub schema: String,
     pub preparation_source: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preparation_recipe: Option<String>,
     pub source_digest: String,
     pub physical_rows_sha256: String,
     pub rows: usize,
@@ -38,6 +42,10 @@ impl FitScope {
         Ok(Self {
             schema: "jope.dope-fit-scope/v1".into(),
             preparation_source: PREPARATION_SOURCE.into(),
+            preparation_recipe: match prepared.transform.class_vocab_policy {
+                ClassVocabPolicy::Cap32V1 => None,
+                ClassVocabPolicy::LosslessV1 => Some(LOSSLESS_PREPARATION_RECIPE.into()),
+            },
             source_digest: prepared.source_rows_digest(),
             physical_rows_sha256: sha256(&serde_json::to_vec(&input.ids)?),
             rows: input.ids.len(),

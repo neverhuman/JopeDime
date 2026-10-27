@@ -113,7 +113,7 @@ impl TrainingInput {
         }
     }
 
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         let width = self.categories.len();
         ensure!(
             !self.y.is_empty()
@@ -167,69 +167,6 @@ pub struct SessionOptions {
     pub native_gate: Option<std::sync::Arc<std::sync::Mutex<()>>>,
 }
 
-/// Shared train-only preparation for controller producers and product consumers. No native work.
-pub fn prepare_training_input(input: &TrainingInput) -> Result<dope_core::prepare::PreparedTable> {
-    use dope_core::prepare::{prepare_table_mixed, prepare_table_with_ids, PrepTask};
-    input.validate()?;
-    let task = match input.head {
-        super::Head::Regression => PrepTask::Regression,
-        super::Head::Binary => PrepTask::Classification,
-        super::Head::Multiclass(_) => PrepTask::Multiclass,
-    };
-    let mut prepared = if input.categories.iter().any(Option::is_some) {
-        let cells = input.raw_cells.clone().unwrap_or_else(|| {
-            input
-                .x
-                .iter()
-                .map(|row| {
-                    row.iter()
-                        .enumerate()
-                        .map(|(j, v)| {
-                            if !v.is_finite() {
-                                String::new()
-                            } else if input.categories[j].is_some() {
-                                format!("category:{:020}", *v as usize)
-                            } else {
-                                v.to_string()
-                            }
-                        })
-                        .collect()
-                })
-                .collect::<Vec<Vec<String>>>()
-        });
-        let kinds = input
-            .categories
-            .iter()
-            .map(|c| {
-                if c.is_some() {
-                    dope_core::prepare::scaling::ColumnKind::Categorical
-                } else {
-                    dope_core::prepare::scaling::ColumnKind::Numeric
-                }
-            })
-            .collect::<Vec<_>>();
-        prepare_table_mixed(
-            &cells,
-            &input.y,
-            Some(&kinds),
-            task,
-            Some(input.ids.clone()),
-        )?
-    } else {
-        prepare_table_with_ids(&input.x, &input.y, task, input.ids.clone())?
-    };
-    if let Some(digest) = &input.source_digest {
-        // External file identity supplements the fitting task/rows; it must never replace them.
-        let bound = jope_runtime::sha256_hex(&serde_json::to_vec(&(
-            "jope.dope-fitting-source/v1",
-            prepared.source_rows_digest(),
-            digest,
-        ))?);
-        prepared = prepared.with_source_digest(bound);
-    }
-    Ok(prepared)
-}
-
 pub fn start_training_with_options(
     input: TrainingInput,
     encoder: super::DopeEncoder,
@@ -249,10 +186,11 @@ pub fn start_training_with_options(
         super::LandmarkMode::Progressive => LandmarkMode::Progressive,
         super::LandmarkMode::Full => LandmarkMode::Full,
     };
-    let mut prepared = prepare_training_input(&input)?;
-    if args.landmark_consumer.is_some() {
-        require_lossless_product_classes(&input, &prepared)?;
-    }
+    let mut prepared = if args.landmark_consumer.is_some() {
+        super::prepare_product_training_input(&input)?
+    } else {
+        super::prepare_training_input(&input)?
+    };
     let fit_scope = super::FitScope::from_prepared(&input, &prepared)?;
     if let Some(inputs) = &session_options.component_inputs {
         ensure!(
@@ -411,32 +349,4 @@ pub fn start_training_with_options(
             })
         },
     ))
-}
-
-/// Refuse capping/rounded vocabulary until the new lossless preparation lineage is pinned.
-/// Historical callers keep their existing preparation; this guard applies to explicit products.
-fn require_lossless_product_classes(
-    input: &TrainingInput,
-    prepared: &dope_core::prepare::PreparedTable,
-) -> Result<()> {
-    if matches!(input.head, super::Head::Regression) {
-        return Ok(());
-    }
-    ensure!(
-        input.y.iter().all(|v| v.is_finite()),
-        "product class labels must be finite"
-    );
-    let mut classes = input.y.clone();
-    classes.sort_by(f64::total_cmp);
-    classes.dedup_by(|a, b| *a == *b);
-    match input.head {
-        super::Head::Binary => ensure!(classes.len() == 2, "binary product requires two FIT classes"),
-        super::Head::Multiclass(k) => ensure!(
-            k >= 3 && classes.len() == k && prepared.classes == k
-                && prepared.transform.target.class_labels == classes,
-            "product requires lossless FIT class preparation; this vocabulary needs the pending Dope preparation lineage"
-        ),
-        super::Head::Regression => unreachable!(),
-    }
-    Ok(())
 }
