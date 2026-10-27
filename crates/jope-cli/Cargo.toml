@@ -49,3 +49,8 @@ inference-cuda = ["jope-bench/inference-cuda"]
 
 [lints]
 workspace = true
+
+[[example]]
+name = "landmark_one_shot"
+path = "examples/landmark_one_shot.rs"
+required-features = ["dope-encoding"]

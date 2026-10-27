@@ -599,3 +599,7 @@ fn train_step_writes_router_and_route_fits_a_ridge_genome() {
 #[cfg(feature = "dope-encoding")]
 #[path = "support/landmark_product.rs"]
 mod landmark_product;
+
+#[cfg(all(feature = "dope-encoding", target_os = "linux"))]
+#[path = "support/landmark_one_shot.rs"]
+mod landmark_one_shot;
