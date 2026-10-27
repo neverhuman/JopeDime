@@ -51,8 +51,8 @@ and behavior fixtures remain unchanged. Retained logs are
 
 The final published Dope code pin25d1785c is announced by Jope source commit
 `83e09f42ea6dd2378994a72721d1c44e575c9d10`. Only the Dope Git source line changed in
-Cargo.lock for this final pin; unrelated Windows dependency choices were preserved. This is
-the current fixture identity, superseding the intermediate identities above.
+Cargo.lock for this pin; unrelated Windows dependency choices were preserved. This records
+the published-pin checkpoint before the product-scope transition below.
 
 | Field | Final published-pin identity |
 | --- | --- |
@@ -62,3 +62,22 @@ the current fixture identity, superseding the intermediate identities above.
 
 `final-pin-identity-rebaseline.log` and `final-pin-identity-compare.log` each record13 passing
 compatibility tests. No behavior fixture or known historical identity row changed.
+
+The product-scope dependency additions are recorded by source
+`a9cb739732d94814228408f1bee3209456224080`. The lockfile adds Rust package dependency edges;
+the evaluator arithmetic, DSL ABI, known identity rows and listed lineage sources are unchanged.
+The current fixture identity is:
+
+| Field | Product-scope identity |
+| --- | --- |
+| `implementation_sha256` | `e80975f16e53370b3c1cba2dae3bff2e6853126f0afc44e96564420fecd6f7d4` |
+| `cargo_lock_sha256` | `b6af27b4bf0b90a9c2746ba819fe5f882e5e442b68434c32bc6576f5891d6d6b` |
+| `identity_digest` | `aec263812b16a3038cd52d123b76aecba1952895d7a2e60a607c92ab015912cc` |
+
+[Draft PR431](https://github.com/neverhuman/JopeDime/pull/431) announces the old/new identity.
+The owning identity-only regeneration and separate comparison each pass all 13 tests;
+the historical test passes all 3 cases. Three append-only transitions retain the original
+dependency, published-pin and product-scope fixture bytes in each existing history chain.
+Retained logs are `target/landmarks/pr431-product-identity-regenerate.log`,
+`target/landmarks/pr431-product-identity-compare.log` and
+`target/landmarks/pr431-identity-historical.log`. No behavior fixture was regenerated.

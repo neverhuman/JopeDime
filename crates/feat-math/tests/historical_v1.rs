@@ -680,6 +680,24 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for path in changed_fixtures {
         assert!(signature_fixtures.iter().any(|edge| edge["path"] == path));
     }
+    // Keep all committed optional-landmark identity successors as closed edges.
+    let optional_landmarks_dependency =
+        old_fixture("transitions/optional_landmarks_dependency_identity_rebaseline.v1.json");
+    let optional_landmarks_pin =
+        old_fixture("transitions/optional_landmarks_published_pin_identity_rebaseline.v1.json");
+    let optional_landmarks_product =
+        old_fixture("transitions/optional_landmarks_product_scope_identity_rebaseline.v1.json");
+    for record in [
+        &optional_landmarks_dependency,
+        &optional_landmarks_pin,
+        &optional_landmarks_product,
+    ] {
+        let fixtures = record["fixtures"].as_array().unwrap();
+        assert_eq!(fixtures.len(), 2);
+        for (edge, path) in fixtures.iter().zip(changed_fixtures) {
+            assert_eq!(edge["path"], path);
+        }
+    }
     let shared_feature_join =
         old_fixture("transitions/pr416_after_shared_capacity_release_identity_join.v1.json");
     let feature_shared_join = old_fixture(
@@ -711,6 +729,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 shared_feature_join.clone(),
                 integration_join.clone(),
                 signature_security.clone(),
+                optional_landmarks_dependency.clone(),
+                optional_landmarks_pin.clone(),
+                optional_landmarks_product.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -735,6 +756,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 feature_shared_join.clone(),
                 integration_join.clone(),
                 signature_security.clone(),
+                optional_landmarks_dependency.clone(),
+                optional_landmarks_pin.clone(),
+                optional_landmarks_product.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -752,6 +776,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 feature_shared_join.clone(),
                 integration_join.clone(),
                 signature_security.clone(),
+                optional_landmarks_dependency.clone(),
+                optional_landmarks_pin.clone(),
+                optional_landmarks_product.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -800,6 +827,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 cuda_feature_shared_join.clone(),
                 cuda_integration_join.clone(),
                 signature_security.clone(),
+                optional_landmarks_dependency.clone(),
+                optional_landmarks_pin.clone(),
+                optional_landmarks_product.clone(),
             ],
         ),
         (
@@ -808,6 +838,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 cuda_shared_feature_join.clone(),
                 cuda_integration_join.clone(),
                 signature_security.clone(),
+                optional_landmarks_dependency.clone(),
+                optional_landmarks_pin.clone(),
+                optional_landmarks_product.clone(),
             ],
         ),
     ] {
@@ -864,6 +897,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         shared_feature_join,
         integration_join,
         signature_security,
+        optional_landmarks_dependency,
+        optional_landmarks_pin,
+        optional_landmarks_product,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
