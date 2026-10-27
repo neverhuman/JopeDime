@@ -55,6 +55,10 @@ pub struct InventOptions {
     pub cpu_ceiling_millicores: Option<u64>,
     pub source_commit: Option<String>,
     pub cancel: Option<Arc<AtomicBool>>,
+    /// A finish request ([`crate::parallel::finish_flag`]): the search stops starting new work,
+    /// completes, and the candidates measured so far are ranked and returned as usual, with
+    /// [`Candidates::finished_early`] set.
+    pub finish: Option<Arc<AtomicBool>>,
     pub clock: Clock,
     /// Write `jope.invent.progress.v1` records to this file (created or truncated) while the
     /// search runs ([`crate::progress`]); `None` writes none. It may not alias `train` or lie
@@ -85,6 +89,7 @@ impl InventOptions {
             cpu_ceiling_millicores: None,
             source_commit: None,
             cancel: None,
+            finish: None,
             clock: Clock::Wall,
             events: None,
             objective: None,
@@ -114,6 +119,11 @@ pub struct Candidates {
     /// Of those, programs with a stage jain-math cannot execute.
     pub excluded_not_executable: usize,
     pub elapsed_seconds: f64,
+    /// A finish request ended the search before its budget did (`--stop-file` / SIGUSR1). The
+    /// candidates are still ranked on every cut; only fewer programs were tried. Omitted when
+    /// false, so a run nobody stopped prints the same document as before.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub finished_early: bool,
     /// The regression objective candidates were ranked by; absent means held-out RMSE.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub objective: Option<crate::receipt::Objective>,
@@ -501,6 +511,7 @@ fn invent_observed(
         migration_interval: options.migration_interval,
         clock: options.clock,
         cancel: options.cancel.clone(),
+        finish: options.finish.clone(),
         progress: event_file.map(|file| {
             Arc::new(crate::progress::Progress::file(
                 file,
@@ -620,6 +631,10 @@ fn invent_observed(
         ranked,
         excluded_not_executable,
         elapsed_seconds: started.elapsed().as_secs_f64(),
+        finished_early: options
+            .finish
+            .as_ref()
+            .is_some_and(|flag| flag.load(Ordering::SeqCst)),
         objective: options
             .objective
             .as_ref()
@@ -866,6 +881,58 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("--work-dir"));
+    }
+
+    #[test]
+    fn a_finish_request_ranks_what_was_measured_and_says_it_finished_early() {
+        let dir = tempfile::tempdir().unwrap();
+        let train = write_csv(dir.path(), 120);
+        let budget = search::Budget {
+            evaluations: 24,
+            seconds: 600,
+        };
+        // Asked to finish before the first generation: only generation 0's exempt head is fitted
+        // on each cut, the comparison still measures it on every cut, and it is ranked as usual.
+        let mut options = InventOptions::new(&train, "y", dir.path().join("finished"));
+        options.budget = budget;
+        options.cuts = 2;
+        options.top_k = 4;
+        options.finish = Some(Arc::new(AtomicBool::new(true)));
+        let finished = invent(&options).unwrap();
+        assert!(finished.ok, "{finished:?}");
+        assert!(finished.finished_early);
+        assert!(!finished.candidates.is_empty());
+        assert!(finished.candidates.iter().all(|c| c.cuts_measured == 2));
+        // The cut record's `stopped_by` is the comparison's outcome, as on any run; what shows
+        // the finish is how little each cut tried.
+        for cut in &finished.searches {
+            assert!(
+                cut.completed_evaluations < budget.evaluations as u64,
+                "{cut:?}"
+            );
+        }
+        let document = serde_json::to_value(&finished).unwrap();
+        assert_eq!(document["finished_early"], true);
+
+        // Nobody asked: the flag stays down and the document has no such key.
+        let mut options = InventOptions::new(&train, "y", dir.path().join("full"));
+        options.budget = budget;
+        options.cuts = 2;
+        options.top_k = 4;
+        options.finish = Some(Arc::new(AtomicBool::new(false)));
+        let full = invent(&options).unwrap();
+        assert!(!full.finished_early);
+        assert!(serde_json::to_value(&full)
+            .unwrap()
+            .get("finished_early")
+            .is_none());
+        let tried = |c: &Candidates| {
+            c.searches
+                .iter()
+                .map(|s| s.completed_evaluations)
+                .sum::<u64>()
+        };
+        assert!(tried(&finished) < tried(&full));
     }
 
     #[test]

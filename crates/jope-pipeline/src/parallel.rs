@@ -65,6 +65,41 @@ pub fn termination_flag() -> Result<std::sync::Arc<std::sync::atomic::AtomicBool
     )))
 }
 
+/// How often [`finish_flag`] looks for its stop file.
+pub const STOP_FILE_POLL: std::time::Duration = std::time::Duration::from_millis(250);
+
+/// A flag that asks a search to *finish*, as distinct from [`termination_flag`]'s cancel: nothing
+/// new starts, in-flight fits complete, and the run then ranks and reports what it has measured,
+/// exactly as when its seconds budget runs out. SIGUSR1 sets it (on Linux), and so does
+/// `stop_file` coming into existence, which a watcher thread checks every [`STOP_FILE_POLL`].
+/// Setting it twice, or after the search ended, changes nothing.
+pub fn finish_flag(
+    stop_file: Option<&std::path::Path>,
+) -> Result<std::sync::Arc<std::sync::atomic::AtomicBool>> {
+    use std::sync::atomic::Ordering;
+    let flag = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    #[cfg(target_os = "linux")]
+    signal_hook::flag::register(signal_hook::consts::SIGUSR1, flag.clone())
+        .context("register the finish signal")?;
+    if let Some(path) = stop_file {
+        let path = path.to_path_buf();
+        let watched = flag.clone();
+        std::thread::Builder::new()
+            .name("stop-file".to_owned())
+            .spawn(move || {
+                while !watched.load(Ordering::SeqCst) {
+                    if path.exists() {
+                        watched.store(true, Ordering::SeqCst);
+                        break;
+                    }
+                    std::thread::sleep(STOP_FILE_POLL);
+                }
+            })
+            .context("start the stop-file watcher")?;
+    }
+    Ok(flag)
+}
+
 /// CPUs in this process's affinity mask.
 #[cfg(target_os = "linux")]
 pub fn affinity_cpus() -> Result<usize> {
@@ -142,6 +177,25 @@ pub fn on_evaluation_stack<T: Send>(work: impl FnOnce() -> T + Send) -> Result<T
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_stop_file_sets_the_finish_flag_and_its_absence_does_not() {
+        use std::sync::atomic::Ordering;
+        let dir = tempfile::tempdir().unwrap();
+        let stop = dir.path().join("stop");
+        let flag = finish_flag(Some(&stop)).unwrap();
+        std::thread::sleep(STOP_FILE_POLL * 3);
+        assert!(!flag.load(Ordering::SeqCst), "no stop file, no finish");
+        std::fs::write(&stop, b"").unwrap();
+        let waited = std::time::Instant::now();
+        while !flag.load(Ordering::SeqCst) {
+            assert!(
+                waited.elapsed() < STOP_FILE_POLL * 20,
+                "the watcher never saw the stop file"
+            );
+            std::thread::sleep(STOP_FILE_POLL / 5);
+        }
+    }
 
     #[test]
     fn one_worker_is_admitted_and_oversubscription_is_refused() {
