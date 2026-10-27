@@ -187,7 +187,11 @@ fn spawn_cgroup_watcher(
                 return;
             }
         };
-        let file = match AsyncFd::with_interest(file, Interest::PRIORITY) {
+        // SAFETY: this task transfers its owned File into AsyncFd and only borrows it through
+        // get_ref/ready below. It never replaces/closes the inner descriptor; drop deregisters it.
+        #[allow(unsafe_code)]
+        let registered = unsafe { AsyncFd::register_with_interest(file, Interest::PRIORITY) };
+        let file = match registered {
             Ok(file) => file,
             Err(error) => {
                 tracing::error!(path = %path.display(), %error, "cannot register adopted cgroup readiness");

@@ -85,7 +85,7 @@ impl JopePolicyModel {
         Ok(JopePolicyContext(encoded))
     }
 
-    #[cfg(feature = "dope-encoding")]
+    #[cfg(feature = "dope")]
     pub(crate) fn context_tensor<'a>(&self, context: &'a JopePolicyContext) -> &'a Tensor {
         &context.0
     }
