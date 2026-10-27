@@ -21,6 +21,7 @@ pub mod error;
 pub mod fitness;
 pub mod fitted;
 pub mod fitted_js;
+pub mod landmark_args;
 pub mod limits;
 pub mod math_pipeline;
 pub mod methods;

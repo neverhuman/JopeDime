@@ -120,6 +120,7 @@ pub fn run(options: &Options) -> Result<Receipt> {
     let root = r.output.canonicalize()?;
     let preparation = partition.write(&root.join("prepared"))?;
     stages.record("prepare", "passed", None, started);
+    let encodings = crate::landmark_encoding::start(r, &preparation, &root)?;
     eprintln!(
         "jope pipeline: propose stage SKIPPED - {}",
         run::PROPOSE_SKIP_REASON
@@ -202,6 +203,8 @@ pub fn run(options: &Options) -> Result<Receipt> {
     };
     receipt::validate_value(&serde_json::to_value(&receipt)?)?;
     run::check_cancelled(r)?;
+    encodings.finish()?;
+    crate::run::check_cancelled(r)?;
     let path = root.join("receipt.json");
     std::fs::write(&path, serde_json::to_vec_pretty(&receipt)?)?;
     if !ok {

@@ -28,10 +28,12 @@ use crate::limits::Limits;
 use crate::task::{TaskChoice, TaskKind};
 use crate::Failure;
 use anyhow::{ensure, Context, Result};
-use feat_math::advanced_v3::{ColumnKind, ColumnSpec, DataSchema, RawTable, RowSemantics};
+use feat_math::advanced_v3::{ColumnSpec, DataSchema, RawTable, RowSemantics};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
+
+pub use feat_math::advanced_v3::ColumnKind;
 
 /// Fitted envelopes must retain this policy and replay `raw_table` at inference.
 pub const RAW_CELL_ENCODING: &str = "jope.raw-cell-encoding/v1";

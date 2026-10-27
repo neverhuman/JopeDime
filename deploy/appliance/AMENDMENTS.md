@@ -309,3 +309,26 @@ does not qualify a production-signed or neural package.
 Raw source manifests, build/section/cost receipts and the original failing CI report are
 retained under `/home/ubuntu/jope-evidence/pr-all-clearance-20261023/qualification/size-comparison-20261023`,
 `qualification/decoder-size-ablation-20261023` and `emergency-execution/ci8-public-appliance-readback.json`.
+
+## A16 — Opt-in Dope GPU encoding and a separate package profile
+
+The `dope-cuda` feature adds GPU Dope512 companion encodings to native fitting. The native
+feature sets and their dependency fence remain unchanged. `dope-gpu` is a development-signed
+profile containing the whole released MIT MLC-v3 checkpoint and its license, authenticated by
+`jope-assets` and checked against the canonical checkpoint digest again by `DopeEncoder`.
+There are no runtime model downloads. Native methods continue to fit on CPU.
+
+The reviewed Candle manifest switches cudarc from `dynamic-linking` to `dynamic-loading`.
+Its source pin is recorded in `vendor/security/PROVENANCE.json`. This enables startup before
+CUDA is selected. Explicit CUDA initialization failures are backend errors; they do not select
+CPU. This profile requires an installed NVIDIA driver and compatible CUDA libraries when GPU
+inference is requested. This change does not bundle the CUDA toolkit libraries or claim
+qualification on a driver-only host.
+
+`dependencies-dope-gpu.toml` audits the separate GPU feature combinations, permits Candle's
+mandatory reviewed tokenizer/Oniguruma build dependencies, and forbids network/training crates,
+packer code, fitted C++, cuDNN, NCCL, `ug`, and eager CUDA linking. The package build retains its
+ELF `DT_NEEDED` gate. `test-dope-gpu.sh` checks the actual sealed package, finite CUDA encoding,
+companion receipt, device-hidden startup and an explicit unavailable-device refusal. These
+checks must pass before package qualification is reported. Historical CPU-only claims above
+remain observations of their original builds.

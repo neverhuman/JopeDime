@@ -5,9 +5,9 @@
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
 use jope_cli::{
-    emit_genome_with_train, encode_dataset, fit_dataset, generate_fixtures, load_router,
-    local_champions, local_train_step, refuse_s3, resolve_root, route_dataset, search_dataset,
-    verify_inputs, write_json, Verification, DEFAULT_GENOME,
+    emit_genome_with_train, fit_dataset, generate_fixtures, load_router, local_champions,
+    local_train_step, refuse_s3, resolve_root, route_dataset, search_dataset, verify_inputs,
+    write_json, Verification, DEFAULT_GENOME,
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -62,6 +62,10 @@ enum Command {
     },
     /// Encode one admitted dataset with CPU Hyperion. Needs HYPERION_V7_WEIGHTS; does not download.
     Encode {
+        #[command(flatten)]
+        landmarks: jope_runtime::landmark_args::LandmarkArgs,
+        #[arg(long, default_value = "cuda:0")]
+        device: String,
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
@@ -140,7 +144,7 @@ enum Command {
     /// Dataset catalog: ingest, fetch, verify and link content-addressed datasets.
     Datasets(jope_datasets::cli::Cli),
     /// Product pipeline: dataset, prepared cuts, GP search, emitted code and a receipt.
-    Pipeline(jope_pipeline::cli::Cli),
+    Pipeline(Box<jope_pipeline::cli::Cli>),
     /// Reusable program fragments kept in a private table, with exact expansion checks.
     /// Hidden from the default help until the capability is published (owner decision,
     /// 2026-09-24); `jope motifs --help` still works.
@@ -232,13 +236,18 @@ fn main() -> ExitCode {
         Command::Optimize(cli) => return jope_bench::panel::optimize_cli::execute(cli),
         Command::Models(cli) => return jope_models::cli::exec(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
-        Command::Pipeline(cli) => return jope_pipeline::cli::exec(cli),
+        Command::Pipeline(cli) => return jope_pipeline::cli::exec(*cli),
         Command::Motifs(cli) => return jope_motifs::cli::exec(cli),
         command => command,
     };
     match &command {
-        Command::Encode { input, json } => {
-            return match encode_dataset(input) {
+        Command::Encode {
+            input,
+            json,
+            landmarks,
+            device,
+        } => {
+            return match jope_cli::encode_dataset_with_landmarks(input, landmarks, device) {
                 Ok(report) => print_json(*json, &report, || {
                     format!(
                         "Encoded {} ({} train rows → {} cols).",

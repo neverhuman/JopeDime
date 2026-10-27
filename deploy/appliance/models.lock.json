@@ -1,6 +1,67 @@
 {
   "schema": "jope.appliance-model-lock/v1",
   "profiles": {
+    "dope-gpu": {
+      "profile_sha256": "3b9c95bdacf11e93205a2ebf07c74378b39a244fa5d875907d4f87c96234e0ae",
+      "scope": "development",
+      "status": "ready",
+      "blockers": [],
+      "methods": [
+        "auto",
+        "rust.elasticnet",
+        "rust.ensemble",
+        "rust.extra_trees",
+        "rust.gam_boost",
+        "rust.gpr",
+        "rust.gpr.rbf_linear",
+        "rust.histgbm",
+        "rust.histgbm2",
+        "rust.hurdle2",
+        "rust.krr",
+        "rust.ksmooth",
+        "rust.logit_ridge",
+        "rust.multiclass_diagonal_lda",
+        "rust.multiclass_nearest_centroid",
+        "rust.multiclass_ovr_logistic",
+        "rust.multiclass_ridge",
+        "rust.pls",
+        "rust.portfolio",
+        "rust.ridge",
+        "rust.ridge_gcv",
+        "rust.stack",
+        "rust.tab_boost"
+      ],
+      "components": [
+        {
+          "id": "dope-mlc-v3",
+          "role": "model",
+          "bundle_id": "dope-mlc-v3",
+          "bundle_manifest_sha256": "aaf780d99e08355e764944e0f8f32bc48315c6b57a6e2338b978d0f052351073",
+          "backends": [
+            "cuda"
+          ],
+          "files": [
+            {
+              "path": "model.safetensors",
+              "sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+              "bytes": 1781800,
+              "kind": "model",
+              "spdx": "MIT",
+              "redistribution": "permitted"
+            },
+            {
+              "path": "LICENSE",
+              "sha256": "9caa806154ad72c6afe2183419f92b169d66d46bfc3bf2de0cada1af2b765bd9",
+              "bytes": 1074,
+              "kind": "config",
+              "spdx": "MIT",
+              "redistribution": "permitted"
+            }
+          ]
+        }
+      ],
+      "total_bytes": 1782874
+    },
     "fixture": {
       "profile_sha256": "c6c219d35dd765f1b11e6f0d0c325052ebe18ec7d245b9588e11095b4e099b16",
       "scope": "development",

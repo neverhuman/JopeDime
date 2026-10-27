@@ -93,3 +93,22 @@ fn a_fitted_header_matches_its_schema() {
         &serde_json::to_value(&outcome.fitted.header).unwrap(),
     );
 }
+
+#[test]
+fn landmark_companion_receipt_schema_and_derived_coverage_are_explicit() {
+    let value = serde_json::json!({
+        "schema":"jope.landmark-encoding/v1", "status":"none", "mask":vec![false;23],
+        "subsample_n":300,"source_digest":"a".repeat(64),"conditioning_digest":"b".repeat(64),
+        "weights_sha256":"d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+        "embedding_identity":"dope-mlcv3-high-f32-descriptor256-task128-dist128/v1",
+        "device":"Cuda(0)","version":0
+    });
+    valid("jope.landmark-encoding.v1.schema.json", &value);
+    let mut malformed = value;
+    malformed["status"] = serde_json::json!({"partial":23});
+    assert!(!jope_datasets::schema::validate(
+        &schema("jope.landmark-encoding.v1.schema.json"),
+        &malformed
+    )
+    .is_empty());
+}

@@ -12,6 +12,8 @@ name = "jope"
 path = "src/main.rs"
 
 [dependencies]
+jope-runtime = { path = "../jope-runtime" }
+starforge = { path = "../jope-encoders", optional = true, features = ["dope"] }
 anyhow.workspace = true
 clap.workspace = true
 feat-math = { path = "../feat-math" }
@@ -38,6 +40,8 @@ tempfile.workspace = true
 
 [features]
 default = ["qualified-training-context"]
+dope-encoding = ["dep:starforge", "jope-pipeline/dope-encoding"]
+dope-cuda = ["dope-encoding", "starforge/dope-cuda", "jope-pipeline/dope-cuda"]
 qualified-training-context = ["jope-pipeline/qualified-context", "dep:jope-policy"]
 asm = ["jope-bench/asm"]
 

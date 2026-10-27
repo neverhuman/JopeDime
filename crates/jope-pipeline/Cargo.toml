@@ -12,11 +12,14 @@ path = "src/lib.rs"
 
 [features]
 default = []
+dope-encoding = ["dep:starforge", "starforge/dope"]
+dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
 timing-study = ["neural-search"]
 neural-search = ["dep:jope-policy"]
 qualified-context = ["neural-search", "jope-policy/context-producer"]
 
 [dependencies]
+starforge = { path = "../jope-encoders", optional = true }
 anyhow.workspace = true
 clap.workspace = true
 feat-math = { path = "../feat-math" }

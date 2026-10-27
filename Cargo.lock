@@ -43,6 +43,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloc-no-stdlib"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc7bb162ec39d46ab1ca8c77bf72e890535becd1751bb45f64c597edb4c8c6b3"
+
+[[package]]
+name = "alloc-stdlib"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e76a019e91224d279006ff972f1e984179a6e9feb050adba6ce8274aef23195"
+dependencies = [
+ "alloc-no-stdlib",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -299,6 +314,27 @@ checksum = "d2f6c7dbe95a6ed67ad9f18e57daf93a2f034c524b99fd2b76d18fdfeb6660aa"
 dependencies = [
  "hybrid-array",
  "zeroize",
+]
+
+[[package]]
+name = "brotli"
+version = "8.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cc91aac060a7a1e25823bdccbfb6af1875b88f17c6daac97894eed8207166b3"
+dependencies = [
+ "alloc-no-stdlib",
+ "alloc-stdlib",
+ "brotli-decompressor",
+]
+
+[[package]]
+name = "brotli-decompressor"
+version = "5.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a32acac15fe1967bc3986b2a6347dffc965602354ea6f450ad07e8bfd253583"
+dependencies = [
+ "alloc-no-stdlib",
+ "alloc-stdlib",
 ]
 
 [[package]]
@@ -1103,6 +1139,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
 dependencies = [
  "litrs",
+]
+
+[[package]]
+name = "dope-core"
+version = "1.1.0"
+source = "git+https://github.com/neverhuman/dope?rev=f49ac60b75578eb9cd2dd5568bd12ae9753084d2#f49ac60b75578eb9cd2dd5568bd12ae9753084d2"
+dependencies = [
+ "brotli",
+ "candle-core",
+ "candle-nn",
+ "csv",
+ "half",
+ "rayon",
+ "safetensors 0.7.0",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror 2.0.20",
 ]
 
 [[package]]
@@ -2338,6 +2392,7 @@ dependencies = [
  "jope-runtime",
  "serde",
  "serde_json",
+ "starforge",
  "tempfile",
 ]
 
@@ -2433,11 +2488,13 @@ dependencies = [
  "jope-motifs",
  "jope-pipeline",
  "jope-policy",
+ "jope-runtime",
  "nix 0.29.0",
  "rustix 1.1.4",
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "starforge",
  "tempfile",
 ]
 
@@ -2628,6 +2685,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "signal-hook",
+ "starforge",
  "tempfile",
 ]
 
@@ -2668,6 +2726,7 @@ name = "jope-runtime"
 version = "0.4.1"
 dependencies = [
  "anyhow",
+ "clap",
  "csv",
  "feat-math",
  "hex",
@@ -4052,6 +4111,17 @@ dependencies = [
 
 [[package]]
 name = "safetensors"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "675656c1eabb620b921efea4f9199f97fc86e36dd6ffd1fbbe48d0f59a4987f5"
+dependencies = [
+ "hashbrown 0.16.1",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "safetensors"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79b079b829cb27a1c3c374341345ed2e8b2c0c839034522cee576c140bd7f846"
@@ -4493,8 +4563,11 @@ dependencies = [
  "candle-nn",
  "clap",
  "csv",
+ "dope-core",
+ "jope-runtime",
  "ordered-float",
  "proptest",
+ "rayon",
  "rustix 1.1.4",
  "ruzstd",
  "serde",

@@ -63,6 +63,8 @@ pub(crate) const PROPOSE_SKIP_REASON: &str =
 
 #[derive(Clone, Debug)]
 pub struct RunOptions {
+    pub landmarks: jope_runtime::landmark_args::LandmarkArgs,
+    pub encode_device: String,
     /// A 16-hex catalog id or a dataset directory.
     pub dataset: String,
     pub output: PathBuf,
@@ -105,6 +107,8 @@ impl RunOptions {
     /// Defaults matching `jope pipeline run` with only `--dataset` and `--output` given.
     pub fn new(dataset: impl Into<String>, output: impl Into<PathBuf>) -> Self {
         RunOptions {
+            landmarks: Default::default(),
+            encode_device: "cuda:0".into(),
             dataset: dataset.into(),
             output: output.into(),
             budget: Budget::default(),
@@ -152,6 +156,8 @@ pub(crate) fn is_commit(value: &str) -> bool {
 /// partition), the budget, the policy and the parallelism this host admits. Returns the worker
 /// count.
 pub fn preflight(options: &RunOptions) -> Result<usize> {
+    options.landmarks.validate()?;
+    crate::landmark_encoding::preflight(options)?;
     // The whole range the preparation accepts, not just a positive count: a count it refuses
     // after `evolve` has created `round-001/` blocks the corrected retry.
     prepare::check_cuts(options.cuts)?;
@@ -177,11 +183,25 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
     if let Some(objective) = &options.objective {
         check_objective(objective)?;
     }
-    crate::parallel::admit(
+    let workers = crate::parallel::admit(
         options.threads,
         options.islands,
         options.cpu_ceiling_millicores,
-    )
+    )?;
+    if options.landmarks.enabled()
+        && matches!(
+            options.landmarks.mode(),
+            jope_runtime::landmark_args::LandmarkMode::Full
+                | jope_runtime::landmark_args::LandmarkMode::Progressive
+        )
+    {
+        let total = workers
+            .checked_add(1)
+            .context("encoding worker count overflows")?;
+        crate::parallel::admit(total, 1, options.cpu_ceiling_millicores)
+            .context("native landmark encoding requires one CPU in addition to search workers")?;
+    }
+    Ok(workers)
 }
 
 /// The objectives a program search can rank by: valid, scored from targets and predictions
@@ -351,6 +371,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         .with_context(|| format!("resolve {}", output.display()))?;
     let preparation = partition.write(&root.join("prepared"))?;
     stages.record("prepare", "passed", None, started);
+    let encodings = crate::landmark_encoding::start(options, &preparation, &root)?;
 
     let started = clock.start();
     // Never let a skipped stage pass unseen.
@@ -478,6 +499,8 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     // The last point a stop request is honoured: after this the receipt exists and the run
     // counts as completed.
     check_cancelled(options)?;
+    encodings.finish()?;
+    crate::run::check_cancelled(options)?;
     let path = root.join("receipt.json");
     std::fs::write(&path, serde_json::to_vec_pretty(&receipt)?)
         .with_context(|| format!("write {}", path.display()))?;

@@ -46,6 +46,7 @@ pub mod front_door;
 pub mod invent;
 pub mod islands;
 pub mod kernel2;
+pub mod landmark_encoding;
 pub mod lineage;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;

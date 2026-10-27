@@ -1,0 +1,21 @@
+# Development-signed native appliance with opt-in GPU Dope encoding and packaged MIT weights.
+schema = "jope.appliance-profile/v1"
+name = "dope-gpu"
+description = "Native fitting plus GPU Dope512 companion encodings; whole released checkpoint."
+scope = "development"
+redistribution = ["permitted"]
+methods = ["native"]
+bundles = "deploy/appliance/dope-bundles"
+max_payload_mib = 8
+
+[codec]
+name = "shuffle+zstd"
+level = 19
+frame_mib = 1
+
+[[component]]
+id = "dope-mlc-v3"
+bundle = "dope-mlc-v3"
+files = ["model.safetensors", "LICENSE"]
+role = "model"
+backends = ["cuda"]

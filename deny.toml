@@ -19,7 +19,9 @@ allow-wildcard-paths = true
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
-allow-git = []
+required-git-spec = "rev"
+# The shared Dope contract/encoder is consumed only through a published immutable revision.
+allow-git = ["https://github.com/neverhuman/dope"]
 
 # object_store 0.14 → reqwest (rustls) → rustls-platform-verifier → webpki-root-certs, a wasm32-only
 # target dependency (never compiled here) whose root-store data is CDLA-Permissive-2.0. Scoped to

@@ -48,6 +48,11 @@ pub struct ParallelArgs {
 /// What a search runs on and with, shared by `run` and `evolve`.
 #[derive(Args, Clone, Debug)]
 pub struct SearchArgs {
+    #[command(flatten)]
+    pub landmarks: jope_runtime::landmark_args::LandmarkArgs,
+    /// Device for opt-in Dope encoding. Explicit CUDA never falls back.
+    #[arg(long = "device", default_value = "cuda:0")]
+    pub encode_device: String,
     /// A 16-hex catalog id resolved in the local cache, or a dataset directory.
     #[arg(long)]
     pub dataset: String,
@@ -84,6 +89,8 @@ impl SearchArgs {
     pub fn options(&self, output: PathBuf, signals: bool) -> Result<RunOptions> {
         let policy = &self.policy;
         Ok(RunOptions {
+            landmarks: self.landmarks.clone(),
+            encode_device: self.encode_device.clone(),
             budget: Budget::parse(&self.budget)?,
             seed: self.seed,
             rng_seed: self.rng_seed,
