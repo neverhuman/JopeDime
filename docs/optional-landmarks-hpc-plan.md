@@ -22,6 +22,29 @@ is the preserved 17:40 observation; it is not a claim that product selection is 
 Preparation/P1, sampled evaluation/P2, final trained identity, governed package approval,
 production authority/liveness and the final quality/latency/aggregate gates remain open.
 
+## 19:26 UTC draft and bounded-execution update
+
+[JopeDime draft #431](https://github.com/neverhuman/JopeDime/pull/431) is published under
+the explicit 19:03 user direction to push the checkpoint and run CI. This updates the earlier
+local-gate-before-publication sequence for this draft; final qualification remains required.
+The initial run at `c4a66e608` exposed documentation and identity-ledger failures. Local repairs
+preserve numerical/emission fixtures and record the dependency identities as closed historical
+transitions. A fresh run is required at the next pushed head.
+
+P6 now has one actual authorized Rust execution at `a9cb739732d94814228408f1bee3209456224080`:
+two native measurements on fresh synthetic TRAIN data, zero-landmark Dope512, diagnostic HWM
+ingest/archive/checkpoint, separate-process reload and stale-CAS refusal. Both processes exited;
+no daemon remains. This CPU reference run establishes bounded execution and durability.
+It does not establish production admission, model training, predictive quality or continuous
+flywheel health. The [P6 record](qualification/optional-landmarks-p6.md) binds the source,
+binary, checkpoint, resource limits and saved-run verification. No second acquisition is planned.
+
+A durable `StateSnapshotAuthority` storage implementation and eight tests are complete.
+Authenticated evidence verification and a deployment/authority owner still gate accepted
+Snapshot publication and ongoing rounds. P1/P2 remain with the existing Dope writer; the next
+integration step is a reviewed immutable published source and preparation identity, followed
+by final package, latency, predictive and aggregate gates. No merge or release is authorized.
+
 ## Closeout decision and current snapshot
 
 This is an implemented Rust/CUDA integration with an initial trained candidate, not a completed
@@ -515,9 +538,12 @@ provider must fit inside the declared outer fold and bind its training provenanc
 F1 has 26 passing admission/snapshot regression tests, including nine frozen real Rust outputs
 (three tasks × none/macro/terminal), protected-ancestor refusal, missing labels, duplicate/pin
 rules and unchanged authority/remote state on incompatible updates. These are contract proofs.
-`LocalSnapshotAuthority` and `SnapshotEvidenceVerifier` currently have only test implementations;
-a production evidence verifier/store binding and fresh deployed PID/runtime/heartbeat/progress
-observations are still required. Gemini confirmed zero deployed Rust flywheel/appliance processes on this host at17:19UTC. Retired Python units and stale healthy receipts cannot satisfy the live-green requirement. Keep existing services untouched while the owner supplies the deployment boundary.
+At the 17:40 snapshot, both authority traits had only test implementations. The 19:26 update
+above records the completed durable `StateSnapshotAuthority` storage port and diagnostic run.
+A production evidence verifier/store binding and fresh deployed PID/runtime/heartbeat/progress
+observations are still required. Gemini confirmed zero deployed Rust flywheel/appliance processes
+on this host at 17:19 UTC. Retired Python units and stale healthy receipts cannot satisfy the
+live-green requirement. Keep existing services untouched while the owner supplies the deployment boundary.
 
 The first candidate has completed a safe paired development stage:112requested,102complete,10wideMC explicitly unavailable. None/full point retention is .9638 regression,1.0528 binary and .9950 multiclass, but confidence intervals do not establish the target across tasks. The independent102cohort exactly matches1,224 common rows from the parallel study; that study's extra wideMC values need quarantine because synthesis/evaluation widths differ and failures were converted to chance scores. Exact training source custody is now recovered and independently verified, with helper use at launch owner-attested. Lossless class-preparation lineage remains open. See [the trained-candidate evidence and ordered owner handoff](qualification/optional-landmarks-dropout-candidate.md). Do not promote from pooled retention or tensor parity.
 
