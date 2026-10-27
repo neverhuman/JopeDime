@@ -1566,3 +1566,116 @@ fn calibrated_object_model_mcp_accepts_auxiliary_columns_like_cli_prediction() {
     );
     assert_eq!(responses[2]["result"]["isError"], false, "{}", responses[2]);
 }
+
+#[test]
+fn landmark_flags_preserve_input_when_companion_receipt_aliases_training_csv() {
+    let dir = tempfile::tempdir().unwrap();
+    train_csv(dir.path());
+    let before = std::fs::read(dir.path().join("train.csv")).unwrap();
+    let output = run(
+        Path::new(BIN),
+        dir.path(),
+        &[
+            "fit",
+            "--train",
+            "train.csv",
+            "--target",
+            "y",
+            "--method",
+            "ridge",
+            "--output",
+            "fitted.jope",
+            "--landmark-mode",
+            "none",
+            "--landmark-receipt",
+            "train.csv",
+            "--json",
+        ],
+    );
+    assert_eq!(
+        code(&output),
+        2,
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    assert_eq!(std::fs::read(dir.path().join("train.csv")).unwrap(), before);
+    assert!(!dir.path().join("fitted.jope").exists());
+}
+
+#[cfg(not(feature = "dope-encoding"))]
+#[test]
+fn explicit_landmark_options_require_a_dope_build_and_keep_native_default() {
+    let dir = tempfile::tempdir().unwrap();
+    train_csv(dir.path());
+    let output = run(
+        Path::new(BIN),
+        dir.path(),
+        &[
+            "fit",
+            "--train",
+            "train.csv",
+            "--target",
+            "y",
+            "--output",
+            "fitted.jope",
+            "--landmark-mode",
+            "none",
+            "--json",
+        ],
+    );
+    assert_eq!(
+        code(&output),
+        4,
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    assert!(!dir.path().join("fitted.jope").exists());
+}
+
+#[test]
+fn landmark_weights_cannot_be_replaced_by_main_outputs() {
+    let dir = tempfile::tempdir().unwrap();
+    train_csv(dir.path());
+    let weights = dir.path().join("model.safetensors");
+    let before = b"protected checkpoint bytes";
+    std::fs::write(&weights, before).unwrap();
+    for arguments in [
+        vec!["fit", "--output", "model.safetensors"],
+        vec![
+            "fit",
+            "--output",
+            "fitted.jope",
+            "--receipt",
+            "model.safetensors",
+        ],
+        vec![
+            "fit-predict",
+            "--input",
+            "rows.csv",
+            "--output",
+            "model.safetensors",
+        ],
+    ] {
+        let mut arguments = arguments;
+        arguments.extend([
+            "--train",
+            "train.csv",
+            "--target",
+            "y",
+            "--landmark-mode",
+            "none",
+            "--dope-weights",
+            "model.safetensors",
+            "--json",
+        ]);
+        let output = run(Path::new(BIN), dir.path(), &arguments);
+        assert_eq!(
+            code(&output),
+            2,
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        assert_eq!(std::fs::read(&weights).unwrap(), before);
+    }
+    assert!(!dir.path().join("fitted.jope").exists());
+}

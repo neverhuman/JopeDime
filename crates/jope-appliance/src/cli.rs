@@ -94,6 +94,8 @@ pub struct JsonFlag {
 
 #[derive(Args, Clone)]
 pub struct TrainArgs {
+    #[command(flatten)]
+    pub landmarks: jope_runtime::landmark_args::LandmarkArgs,
     /// Training CSV (header row first).
     #[arg(long)]
     pub train: PathBuf,

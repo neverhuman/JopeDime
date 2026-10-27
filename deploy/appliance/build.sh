@@ -34,6 +34,7 @@ case $out in /tmp | /tmp/*) echo "$0: never build under /tmp (AGENTS.md)" >&2; e
 scope=$(sed -n 's/^scope = "\(.*\)"$/\1/p' "$profile_file")
 features=embedded
 [ "$scope" = development ] && features=embedded,dev-keys
+[ "$profile" != dope-gpu ] || features=$features,dope-cuda
 mkdir -p "$out"
 
 dist() { cargo run -q --locked -p jope-dist -- "$@"; }
@@ -46,6 +47,9 @@ cargo fetch --locked
 echo "== lock and dependency fence"
 dist lock --check
 dist audit
+if [ "$profile" = dope-gpu ]; then
+  dist audit --policy deploy/appliance/dependencies-dope-gpu.toml
+fi
 
 echo "== build jopedime ($cargo_profile, features $features, source $source_sha)"
 code=$(JOPE_BUILD_SOURCE_SHA=$source_sha cargo run -q --locked -p jope-ci -- cargo-artifact build \
@@ -67,7 +71,10 @@ dist notices --out "$out/notices.json" --features "$features"
 
 if [ -z "$models" ]; then
   models=$out/models
-  if [ "$scope" = development ]; then
+  if [ "$profile" = dope-gpu ]; then
+    mkdir -p "$models/bundles/dope-mlc-v3"
+    cp deploy/appliance/assets/dope-mlc-v3/model.safetensors deploy/appliance/assets/dope-mlc-v3/LICENSE "$models/bundles/dope-mlc-v3/"
+  elif [ "$scope" = development ]; then
     dist fixture --models "$models"
   else
     mkdir -p "$models"

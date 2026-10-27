@@ -5,7 +5,7 @@
       "archive_sha256": "5ecb245093b0f791b89d3420c3df9c6d49c60ab63ba54db896bf8a3baf486706",
       "archive_url": "https://static.crates.io/crates/candle-core/candle-core-0.11.0.crate",
       "directory": "candle-core-0.11.0",
-      "manifest_candidate_sha256": "541e2593e1dd278e074e81de4d374de85fd933a0c8564ec9c300bdf2cd551111",
+      "manifest_candidate_sha256": "e33342ccc39bdc63d309959dbf452aa4cef177c7397873a32e33b502f541331c",
       "manifest_upstream_sha256": "b0557a816df73784924576be4e8f2686957f9906c8080b5543c4bf2cd40f8859",
       "name": "candle-core",
       "repository": "https://github.com/huggingface/candle",
@@ -579,7 +579,7 @@
     },
     {
       "bytes": 4921,
-      "candidate_sha256": "541e2593e1dd278e074e81de4d374de85fd933a0c8564ec9c300bdf2cd551111",
+      "candidate_sha256": "e33342ccc39bdc63d309959dbf452aa4cef177c7397873a32e33b502f541331c",
       "changed": true,
       "path": "vendor/security/candle-core-0.11.0/Cargo.toml",
       "upstream_sha256": "b0557a816df73784924576be4e8f2686957f9906c8080b5543c4bf2cd40f8859"

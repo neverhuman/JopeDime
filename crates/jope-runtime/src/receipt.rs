@@ -21,6 +21,8 @@ pub struct Receipt {
     pub budget: crate::budget::BudgetRecord,
     pub timings: Timings,
     pub selection: Option<crate::automl::Selection>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub landmark_encoding: Option<FileRecord>,
     pub outcome: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<ErrorRecord>,

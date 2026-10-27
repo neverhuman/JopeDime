@@ -1,0 +1,27 @@
+{
+  "schema": "jope.model-bundle/v2",
+  "bundle_id": "dope-mlc-v3",
+  "description": "Whole released DOPE MLC-v3 checkpoint; 56 F32 tensors / 444168 parameters. Source code is pinned independently in Cargo.lock.",
+  "files": [
+    {
+      "path": "model.safetensors",
+      "kind": "model",
+      "bytes": 1781800,
+      "sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+      "license": {
+        "redistribution": "permitted",
+        "spdx_expression": "MIT"
+      }
+    },
+    {
+      "path": "LICENSE",
+      "kind": "config",
+      "bytes": 1074,
+      "sha256": "9caa806154ad72c6afe2183419f92b169d66d46bfc3bf2de0cada1af2b765bd9",
+      "license": {
+        "redistribution": "permitted",
+        "spdx_expression": "MIT"
+      }
+    }
+  ]
+}
