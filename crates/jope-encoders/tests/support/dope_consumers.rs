@@ -11,6 +11,8 @@ use starforge::jope_policy::JopePolicyModel;
 use std::io::Write;
 use std::sync::Arc;
 
+#[path = "dope_candidate.rs"]
+mod candidate;
 #[path = "models_root.rs"]
 mod models_root;
 
@@ -105,11 +107,23 @@ fn both_consumers_execute_three_tasks_and_preserve_scope_and_pins() -> anyhow::R
     let Some(root) = models_root::bundle_root("both_dope_consumers") else {
         return Ok(());
     };
-    let bundle = LoadedModelBundle::load(&root)?;
-    let model = Arc::new(JopePolicyModel::load_bundle(&bundle, Device::Cpu)?);
+    let encoder = DopeEncoder::from_bytes(super::WEIGHTS, &Device::Cpu)?;
+    run_consumers(encoder, &root)
+}
+
+fn run_consumers(encoder: DopeEncoder, root: &std::path::Path) -> anyhow::Result<()> {
+    let bundle = LoadedModelBundle::load(root)?;
+    let model = Arc::new(JopePolicyModel::load_bundle_on_device(
+        &bundle,
+        encoder.device().clone(),
+    )?);
+    let oracle = if encoder.device().is_cuda() {
+        Arc::new(JopePolicyModel::load_bundle(&bundle, Device::Cpu)?)
+    } else {
+        model.clone()
+    };
     let learned = DopeConsumer::jope_dl(model.clone())?;
     let direct = DopeConsumer::encoding_only();
-    let encoder = DopeEncoder::from_bytes(super::WEIGHTS, &Device::Cpu)?;
     let pool = rayon::ThreadPoolBuilder::new().num_threads(1).build()?;
     for (head, task) in [
         (Head::Regression, PrepTask::Regression),
@@ -180,6 +194,8 @@ fn both_consumers_execute_three_tasks_and_preserve_scope_and_pins() -> anyhow::R
             }
             let a = direct.consume_snapshot(snapshot)?;
             let b = learned.consume_snapshot(snapshot)?;
+            assert!(a.tensor_copy()?.device().same_device(encoder.device()));
+            assert!(b.tensor_copy()?.device().same_device(encoder.device()));
             assert_eq!(a.receipt().mode, DopeConsumerMode::EncodingOnly);
             assert_eq!(b.receipt().mode, DopeConsumerMode::JopeDl);
             assert_eq!(a.to_vec()?, snapshot.embedding.to_vec()?);
@@ -197,14 +213,30 @@ fn both_consumers_execute_three_tasks_and_preserve_scope_and_pins() -> anyhow::R
             );
             let exported = snapshot.fusion.as_ref().unwrap().to_export()?;
             let expected = pool.install(|| -> anyhow::Result<_> {
-                let context = model.context(&exported.dataset1536, &exported.policy2048[1536..])?;
-                model.context_values(&context)
+                let context =
+                    oracle.context(&exported.dataset1536, &exported.policy2048[1536..])?;
+                oracle.context_values(&context)
             })?;
-            assert_eq!(b.to_vec()?, expected);
+            let before = b.to_vec()?;
+            assert_eq!(before.len(), expected.len());
+            if encoder.device().is_cuda() {
+                let error = before
+                    .iter()
+                    .zip(&expected)
+                    .map(|(a, b)| (a - b).abs())
+                    .fold(0f32, f32::max);
+                eprintln!(
+                    "candidate native {head:?} mask={:?} CUDA context max_abs={error:.9e}",
+                    snapshot.receipt.status
+                );
+                assert!(error < 3e-5, "native CUDA context/CPU oracle: {error}");
+            } else {
+                assert_eq!(before, expected);
+            }
             a.tensor_copy()?.zero_set()?;
             b.tensor_copy()?.zero_set()?;
             assert_eq!(a.to_vec()?, snapshot.embedding.to_vec()?);
-            assert_eq!(b.to_vec()?, expected);
+            assert_eq!(b.to_vec()?, before);
             assert!(learned.consume(&snapshot.embedding, None).is_err());
             let mut changed = components.clone();
             changed.target512[0] += 1.;
