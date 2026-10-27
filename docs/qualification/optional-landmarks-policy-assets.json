@@ -1,0 +1,313 @@
+{
+  "dope_source_pin": "25d1785c823e0a401b8775306666924e407ccd9f",
+  "excluded_model_assets": [
+    {
+      "path": "artifacts/foundation/tabicl-classifier-v2-chimera-shuffled.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader; prohibited redistribution and ineligible policy",
+      "sha256": "6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3"
+    },
+    {
+      "path": "artifacts/foundation/tabicl-regressor-v2-20260212.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader; prohibited redistribution and ineligible policy",
+      "sha256": "90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30"
+    },
+    {
+      "path": "artifacts/model-bundle/hyperion_v5_arm_b.manifest.json",
+      "reason": "Outside fixed projection; never opened by projection loader",
+      "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef"
+    },
+    {
+      "path": "artifacts/model-bundle/hyperion_v5_arm_b.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader",
+      "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be"
+    },
+    {
+      "path": "artifacts/model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader",
+      "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    {
+      "path": "artifacts/model-bundle/target_encoder_fused_v1.meta.json",
+      "reason": "Outside fixed projection; never opened by projection loader",
+      "sha256": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043"
+    },
+    {
+      "path": "artifacts/starforge/chimera_classification_attnfusion.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader",
+      "sha256": "1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488"
+    },
+    {
+      "path": "artifacts/starforge/chimera_classification_expert_a.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader",
+      "sha256": "1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b"
+    },
+    {
+      "path": "artifacts/starforge/chimera_stackfusionreg.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader",
+      "sha256": "57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2"
+    },
+    {
+      "path": "artifacts/starforge/starlight_core_regressor.safetensors",
+      "reason": "Outside fixed projection; never opened by projection loader; prohibited redistribution and ineligible policy",
+      "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128"
+    }
+  ],
+  "governed_asset_bytes_copied": false,
+  "licence_and_authority_boundary": {
+    "approval_owner": null,
+    "approved_release_bundle": null,
+    "condition": "Redistribution is permitted only as part of an approved Jain release bundle.",
+    "eligible_default_model_policy": true,
+    "eligible_open_only_policy": false,
+    "foundation_target_input_boundary": "External vectors avoid distributing/executing prohibited foundation weights. Component source/recipe/FIT/fold ancestry and allowed use still require separately controller-adopted admission; matching digests do not grant rights.",
+    "governed_notice": "docs/notices/jain-governed-models.txt",
+    "governed_notice_sha256": "18769bbb5c4d1ab9b9cbae5f280a9761f5e251662c3e1dae01131c8c61e4023e",
+    "selected_asset_licence": "LicenseRef-Jain-Internal-Model",
+    "verification_grants_distribution_approval": false
+  },
+  "model_inference_or_build_executed": false,
+  "owner_decisions_requested": [
+    "Confirm the exact selected six-entry layout and governed licence/notice scope for a new approved Jain release bundle",
+    "Name the release/model owner and retain explicit approval or refusal keyed to this proposal and exact asset/projection digests before any distribution",
+    "Confirm permitted producer/ancestry for external FIT-scoped foundation1024 and target512 artifacts; no Starlight weight inclusion or invented component values",
+    "Approve or revise the separate profile/raw payload ceiling after reviewing the final concrete generated lock and SBOM; no automatic default or candidate promotion"
+  ],
+  "parent_bundle_id": "jope-prime-gen31-v2",
+  "parent_manifest_sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+  "projection_digest_evidence": "Derived from current Rust-declared serde field order and pinned metadata only; compare with VerifiedJopePolicyAssets::reviewed_layout() in focused Rust verification before packaging.",
+  "projection_identity": {
+    "parent_manifest_sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+    "policy_sha256": "2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+    "projection_digest": "eeae7b5b7e35f4976db4bd0b424685eb6e5d4a42152e16c92d7d6b088485217c",
+    "schema": "jope.policy-assets-projection/v1"
+  },
+  "proposed_profile": {
+    "backends": [
+      "cpu",
+      "cuda"
+    ],
+    "component_id": "jope-policy-projection",
+    "entry_role": "model",
+    "governed_projection_bundle_id": "jope-policy-projection",
+    "max_payload_mib": 128,
+    "methods": [
+      "native"
+    ],
+    "name": "dope-jope-dl-gpu",
+    "payload_limit_note": "128MiB is a proposed raw-asset ceiling, not measured compression, executable size, a five-percent size acceptance result, or approved redistribution.",
+    "redistribution": [
+      "permitted"
+    ],
+    "requires": [
+      "Existing released Dope MIT checkpoint and licence, unchanged separate identity",
+      "Explicit external authenticated foundation1024 and target512 artifact; no bundled foundation/target model weights"
+    ],
+    "scope": "development",
+    "status": "metadata proposal; no profile installed and no package produced"
+  },
+  "raw_policy_closure_bytes": 117501806,
+  "raw_projection_bytes_including_parent_and_notice": 117524724,
+  "recorded_at": "2026-10-27T18:40:10.306992+00:00",
+  "required_verification": [
+    "Fixed selected reads only; original full LoadedModelBundle remains complete and unchanged",
+    "Exact parent/selected hashes, tensor inventories, actual 1103-token vocabulary/registry/config and selected notice",
+    "Unrelated/prohibited absent or sentinel assets never opened; selected missing/tamper/symlink refusal",
+    "Projection CPU frozen-oracle parity; explicit CUDA context parity/residency and immutable exports under an admitted GPU window",
+    "All learned product inputs use complete FIT/fold/preparation/producer/controller-admission ancestry with fresh final authorization",
+    "Generated direct/learned event and companion JSON validate; omitted options preserve old event/receipt fields",
+    "Protect projection/controller/component files and model outputs from aliases; no prohibited weight copying",
+    "No runtime downloads, Python inference, training, deployment, or qualified-candidate identity inferred from this proposal"
+  ],
+  "sbom_draft": {
+    "files": [
+      {
+        "bytes": 22649,
+        "kind": "reviewed_parent_manifest",
+        "licence_concluded": "NOASSERTION",
+        "licence_declared": "NOASSERTION",
+        "path": "model-bundle.v1.json",
+        "sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+        "source_record": "crates/jope-encoders/artifacts/model-bundle.v1.json"
+      },
+      {
+        "bytes": 108846812,
+        "kind": "jope_policy_gen31",
+        "licence_concluded": "NOASSERTION",
+        "licence_declared": "LicenseRef-Jain-Internal-Model",
+        "path": "artifacts/model-bundle/jope_policy.safetensors",
+        "sha256": "2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+        "source_record": "model-bundle/jope_policy.safetensors"
+      },
+      {
+        "bytes": 169165,
+        "kind": "jope_policy_metadata",
+        "licence_concluded": "NOASSERTION",
+        "licence_declared": "LicenseRef-Jain-Internal-Model",
+        "path": "artifacts/model-bundle/jope_policy.meta.json",
+        "sha256": "fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+        "source_record": "model-bundle/jope_policy.meta.json"
+      },
+      {
+        "bytes": 8409600,
+        "kind": "jope_preprocessing",
+        "licence_concluded": "NOASSERTION",
+        "licence_declared": "LicenseRef-Jain-Internal-Model",
+        "path": "artifacts/model-bundle/preprocessing.safetensors",
+        "sha256": "dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+        "source_record": "model-bundle/preprocessing.safetensors"
+      },
+      {
+        "bytes": 76229,
+        "kind": "jope_operator_registry",
+        "licence_concluded": "NOASSERTION",
+        "licence_declared": "LicenseRef-Jain-Internal-Model",
+        "path": "artifacts/model-bundle/operator_registry.json",
+        "sha256": "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+        "source_record": "model-bundle/operator_registry.json"
+      },
+      {
+        "bytes": 269,
+        "kind": "required_governed_notice",
+        "licence_concluded": "NOASSERTION",
+        "licence_declared": "NOASSERTION",
+        "path": "docs/notices/jain-governed-models.txt",
+        "sha256": "18769bbb5c4d1ab9b9cbae5f280a9761f5e251662c3e1dae01131c8c61e4023e",
+        "source_record": "models/bundles/jope-prime-gen31-v2.json#notices"
+      }
+    ],
+    "integration_required": [
+      "Retain exact notice and selected source licence/eligibility records; do not relabel as open weights",
+      "Bind final Cargo.lock and exact dope-cuda normal dependency closure, selected third-party notices, package source and signing identity",
+      "Retain current host CUDA-library requirement; no bundled toolkit/runtime library claim",
+      "Record authenticated package entry stored/decoded hashes, codec, raw/stored sizes and approved release-bundle decision"
+    ],
+    "missing_measurements": [
+      "Final profile lock and source/dependency identities",
+      "Encoded frame sizes, final executable size and size budget",
+      "Reproducible final package and actual positive/tamper/offline GPU smoke"
+    ],
+    "package_component": "jope-policy-projection",
+    "status": "METADATA_ONLY_DRAFT_NOT_A_VALIDATED_OR_SHIPPED_SBOM",
+    "target_format": "SPDX-2.3 or repository-selected existing package inventory"
+  },
+  "schema": "jope.p4-policy-assets-owner-review/v1",
+  "selected_assets": [
+    {
+      "bytes": 22649,
+      "kind": "reviewed_parent_manifest",
+      "license_record": "Original parent metadata; no substitute model licence asserted",
+      "logical_path": "model-bundle.v1.json",
+      "package_entry": "model/jope-policy-projection/model-bundle.v1.json",
+      "sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+      "source_record": "crates/jope-encoders/artifacts/model-bundle.v1.json"
+    },
+    {
+      "bytes": 108846812,
+      "kind": "jope_policy_gen31",
+      "license_class": "eligible_non_open",
+      "license_spdx": "LicenseRef-Jain-Internal-Model",
+      "logical_path": "artifacts/model-bundle/jope_policy.safetensors",
+      "package_entry": "model/jope-policy-projection/artifacts/model-bundle/jope_policy.safetensors",
+      "policy_eligibility": {
+        "eligible": true,
+        "open_only": false
+      },
+      "redistribution": "permitted",
+      "required_notices": [
+        "docs/notices/jain-governed-models.txt"
+      ],
+      "sha256": "2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+      "source_blob_id": "blobs/sha256/2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+      "source_bundle_id": "jope-prime-gen31-v2",
+      "source_catalog_path": "model-bundle/jope_policy.safetensors",
+      "tensor_count": 123,
+      "tensor_inventory_sha256": "407c384f6291539400866faad990328464dbe1e4445f016be150e16476991c45"
+    },
+    {
+      "bytes": 169165,
+      "kind": "jope_policy_metadata",
+      "license_class": "eligible_non_open",
+      "license_spdx": "LicenseRef-Jain-Internal-Model",
+      "logical_path": "artifacts/model-bundle/jope_policy.meta.json",
+      "package_entry": "model/jope-policy-projection/artifacts/model-bundle/jope_policy.meta.json",
+      "policy_eligibility": {
+        "eligible": true,
+        "open_only": false
+      },
+      "redistribution": "permitted",
+      "required_notices": [
+        "docs/notices/jain-governed-models.txt"
+      ],
+      "sha256": "fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+      "source_blob_id": "blobs/sha256/fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+      "source_bundle_id": "jope-prime-gen31-v2",
+      "source_catalog_path": "model-bundle/jope_policy.meta.json",
+      "tensor_count": 0,
+      "tensor_inventory_sha256": null
+    },
+    {
+      "bytes": 8409600,
+      "kind": "jope_preprocessing",
+      "license_class": "eligible_non_open",
+      "license_spdx": "LicenseRef-Jain-Internal-Model",
+      "logical_path": "artifacts/model-bundle/preprocessing.safetensors",
+      "package_entry": "model/jope-policy-projection/artifacts/model-bundle/preprocessing.safetensors",
+      "policy_eligibility": {
+        "eligible": true,
+        "open_only": false
+      },
+      "redistribution": "permitted",
+      "required_notices": [
+        "docs/notices/jain-governed-models.txt"
+      ],
+      "sha256": "dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+      "source_blob_id": "blobs/sha256/dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+      "source_bundle_id": "jope-prime-gen31-v2",
+      "source_catalog_path": "model-bundle/preprocessing.safetensors",
+      "tensor_count": 6,
+      "tensor_inventory_sha256": "ee7a4f41722b434c4d02630b2ad0988b28bf3e413bd57563baac9dc7cdad88a4"
+    },
+    {
+      "bytes": 76229,
+      "kind": "jope_operator_registry",
+      "license_class": "eligible_non_open",
+      "license_spdx": "LicenseRef-Jain-Internal-Model",
+      "logical_path": "artifacts/model-bundle/operator_registry.json",
+      "package_entry": "model/jope-policy-projection/artifacts/model-bundle/operator_registry.json",
+      "policy_eligibility": {
+        "eligible": true,
+        "open_only": false
+      },
+      "redistribution": "permitted",
+      "required_notices": [
+        "docs/notices/jain-governed-models.txt"
+      ],
+      "sha256": "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+      "source_blob_id": "blobs/sha256/62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+      "source_bundle_id": "jope-prime-gen31-v2",
+      "source_catalog_path": "model-bundle/operator_registry.json",
+      "tensor_count": 0,
+      "tensor_inventory_sha256": null
+    },
+    {
+      "bytes": 269,
+      "kind": "required_governed_notice",
+      "license_record": "Exact existing notice; not an approval record",
+      "logical_path": "docs/notices/jain-governed-models.txt",
+      "package_entry": "model/jope-policy-projection/docs/notices/jain-governed-models.txt",
+      "sha256": "18769bbb5c4d1ab9b9cbae5f280a9761f5e251662c3e1dae01131c8c61e4023e",
+      "source_record": "models/bundles/jope-prime-gen31-v2.json#notices"
+    }
+  ],
+  "source_catalog_sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+  "source_checkpoint_sha256": "6a20443443d4d7edc75aa18ef2825c3f240ea92b02f09573c6f53c41e76f60d0",
+  "source_head": "69826081670ac4b0ceec0ff352599e06e8bb8ce3",
+  "status": "PROPOSAL_ONLY_NOT_DISTRIBUTION_APPROVAL",
+  "working_tree_source_sha256": {
+    "crates/jope-appliance/src/landmarks.rs": "6ee5e978f7baf78590b7931800fd430f0d6330e4fe20b3bb5620bd4b2d49bcd0",
+    "crates/jope-encoders/src/bundle/projection.rs": "cc4ce33d47dba15f1c996d2922939dc995105aa03aefa00ae5b7b676bb9f74ff",
+    "crates/jope-encoders/src/dope_encoder/components.rs": "7e442e7ebd8895b63762b883970ee157456ea3e9a366bf6b6a4b0e297cdc555a",
+    "crates/jope-encoders/src/dope_encoder/product.rs": "53e25cbc2195db6ae8a8b64ed6f13f73fbb9edebcbe3401b1e53d8d6ce2eda0c",
+    "crates/jope-runtime/src/output_safety.rs": "5f910efc0d32150944d84b80a70d9850306ae28095f9437d532ab3f30b13161d"
+  }
+}

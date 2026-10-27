@@ -627,13 +627,13 @@ fn run_fit(
 ) -> ExitCode {
     let mut run = Run::new("fit", common);
     let result = (|| -> anyhow::Result<()> {
+        let landmark_inputs = train.landmarks.protected_inputs();
         let mut protected = vec![train.train.as_path()];
-        if train.landmarks.enabled() {
-            protected.extend(train.landmarks.dope_weights.as_deref());
-        }
+        protected.extend(landmark_inputs.iter().map(std::path::PathBuf::as_path));
         if let Some(output) = output {
             run.refuse_aliasing(output, &protected)?;
         } else {
+            jope_runtime::output_safety::refuse_directory_aliasing(model_root, &protected)?;
             protected.push(model_root);
             if let Some(receipt) = &common.receipt {
                 io::refuse_aliasing(receipt, &protected)?;
@@ -731,10 +731,9 @@ fn run_fit_predict(
 ) -> ExitCode {
     let mut run = Run::new("fit-predict", common);
     let result = (|| -> anyhow::Result<()> {
+        let landmark_inputs = train.landmarks.protected_inputs();
         let mut protected = vec![train.train.as_path(), input];
-        if train.landmarks.enabled() {
-            protected.extend(train.landmarks.dope_weights.as_deref());
-        }
+        protected.extend(landmark_inputs.iter().map(std::path::PathBuf::as_path));
         run.refuse_aliasing(output, &protected)?;
         landmarks::refuse_aliasing(train, common, &[input, output])?;
         let b = run.prepare(train.landmarks.enabled())?;

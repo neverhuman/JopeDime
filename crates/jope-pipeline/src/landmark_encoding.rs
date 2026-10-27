@@ -24,6 +24,21 @@ pub fn preflight(options: &RunOptions) -> Result<()> {
         options.landmarks.dope_weights.is_some(),
         "Dope weights required (--dope-weights or DOPE_WEIGHTS)"
     );
+    let protected = options.landmarks.protected_inputs();
+    let inputs = protected
+        .iter()
+        .map(std::path::PathBuf::as_path)
+        .collect::<Vec<_>>();
+    jope_runtime::output_safety::refuse_directory_aliasing(&options.output, &inputs)?;
+    for output in [
+        &options.landmarks.landmark_events,
+        &options.landmarks.landmark_receipt,
+    ]
+    .into_iter()
+    .flatten()
+    {
+        jope_runtime::output_safety::refuse_aliasing(output, &inputs)?;
+    }
     Ok(())
 }
 
@@ -79,8 +94,8 @@ pub fn start(
     {
         use anyhow::Context;
         use starforge::dope_encoder::{
-            collect, start_training_with_options, write_snapshot, DopeDevice, DopeEncoder, Head,
-            SessionOptions, TrainingInput,
+            collect, product_session_options, start_training_with_options, write_snapshot,
+            DopeDevice, DopeEncoder, Head, TrainingInput,
         };
         let device = if options.encode_device == "cpu" {
             DopeDevice::Cpu
@@ -101,6 +116,7 @@ pub fn start(
                 .context("missing Dope weights")?,
             &device,
         )?;
+        let product_options = product_session_options(&options.landmarks, &encoder)?;
         let directory = root.join("encoding");
         std::fs::create_dir(&directory)?;
         let mut result = RunEncodings::default();
@@ -111,22 +127,20 @@ pub fn start(
                 .filter(|r| !held.contains(r))
                 .map(|r| r as u64)
                 .collect();
-            let input = TrainingInput::numeric(
+            let mut input = TrainingInput::numeric(
                 cut.train_x.clone(),
                 cut.train_y.clone(),
                 ids,
                 Head::Regression,
             );
-            let session = start_training_with_options(
-                input,
-                encoder.clone(),
-                &options.landmarks,
-                SessionOptions {
-                    cancel: options.cancel.clone(),
-                    components: None,
-                    native_gate: Some(native_gate.clone()),
-                },
-            )?;
+            input.fold = Some(format!("pipeline-cut-{}", cut.index));
+            let session =
+                start_training_with_options(input, encoder.clone(), &options.landmarks, {
+                    let mut bound = product_options.clone();
+                    bound.cancel = options.cancel.clone();
+                    bound.native_gate = Some(native_gate.clone());
+                    bound
+                })?;
             result.cancellations.push(session.cancellation_token());
             let events = if preparation.cuts.len() == 1 {
                 options

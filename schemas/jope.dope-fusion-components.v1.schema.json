@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.dope-fusion-components.v1.schema.json",
+  "title": "Retained FIT component subject; schema validity does not grant admission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "fit_scope",
+    "episode",
+    "permitted_use",
+    "recipe",
+    "producer_inputs",
+    "foundation1024_le_f32",
+    "target512_le_f32"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.dope-fusion-components/v1"
+    },
+    "fit_scope": {
+      "$ref": "#/$defs/fitScope"
+    },
+    "episode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "permitted_use": {
+      "const": "episode_fit"
+    },
+    "recipe": {
+      "const": "foundation1024-target512-supplied-normalized/v1"
+    },
+    "producer_inputs": {
+      "type": "object",
+      "required": [
+        "foundation",
+        "target"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/sha256"
+      }
+    },
+    "foundation1024_le_f32": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8192}$"
+    },
+    "target512_le_f32": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{4096}$"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "fitScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "preparation_source",
+        "source_digest",
+        "physical_rows_sha256",
+        "rows",
+        "columns",
+        "task",
+        "fold"
+      ],
+      "properties": {
+        "schema": {
+          "const": "jope.dope-fit-scope/v1"
+        },
+        "preparation_source": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "source_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "physical_rows_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "task": {
+          "type": "string",
+          "pattern": "^(Regression|Binary|Multiclass\\([0-9]+\\))$"
+        },
+        "fold": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

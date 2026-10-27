@@ -27,6 +27,7 @@ pub mod math_pipeline;
 pub mod methods;
 pub mod model_object;
 pub mod model_session;
+pub mod output_safety;
 pub mod receipt;
 pub mod service;
 pub mod table;

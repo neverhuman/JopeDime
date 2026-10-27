@@ -8,37 +8,7 @@ use jope_runtime::Failure;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-fn identity(path: &Path) -> Option<PathBuf> {
-    let parent = match path.parent() {
-        Some(p) if !p.as_os_str().is_empty() => p,
-        _ => Path::new("."),
-    };
-    Some(std::fs::canonicalize(parent).ok()?.join(path.file_name()?))
-}
-
-/// Refuse an output path that is also an input.
-pub fn refuse_aliasing(output: &Path, inputs: &[&Path]) -> anyhow::Result<()> {
-    let out = identity(output).ok_or_else(|| {
-        Failure::output(format!(
-            "{}: the output directory does not exist",
-            output.display()
-        ))
-    })?;
-    for input in inputs {
-        let resolved = |p: &Path| std::fs::canonicalize(p).ok();
-        let same = identity(input).is_some_and(|i| i == out)
-            || resolved(input).is_some_and(|i| {
-                resolved(output) == Some(i.clone()) || (input.is_dir() && out.starts_with(i))
-            });
-        if same {
-            return Err(Failure::input(format!(
-                "output {} is also an input",
-                output.display()
-            )));
-        }
-    }
-    Ok(())
-}
+pub use jope_runtime::output_safety::refuse_aliasing;
 
 /// Write `bytes` to `path` atomically and return its record.
 pub fn write_atomic(role: &'static str, path: &Path, bytes: &[u8]) -> anyhow::Result<FileRecord> {

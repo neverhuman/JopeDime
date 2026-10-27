@@ -111,6 +111,12 @@ impl Revocations {
         self.by_digest.is_empty()
     }
 
+    /// All locally imported revoked digests, in stable order. This iterator cannot mutate
+    /// or clear revocation state and makes no claim about revocations not imported here.
+    pub fn digests(&self) -> impl Iterator<Item = &str> + '_ {
+        self.by_digest.keys().map(String::as_str)
+    }
+
     /// The revocation that covers `digest`, if any.
     pub fn revoked(&self, digest: &str) -> Option<&RevocationRecord> {
         self.by_digest.get(digest)

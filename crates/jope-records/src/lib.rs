@@ -58,6 +58,7 @@ pub mod py;
 pub mod pycsv;
 pub mod pyjson;
 pub mod readme;
+pub mod replay_admission;
 pub mod repo_layout;
 pub mod research;
 pub mod scope_check;

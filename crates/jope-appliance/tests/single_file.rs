@@ -1679,3 +1679,7 @@ fn landmark_weights_cannot_be_replaced_by_main_outputs() {
     }
     assert!(!dir.path().join("fitted.jope").exists());
 }
+
+#[cfg(feature = "dope-encoding")]
+#[path = "support/landmark_product.rs"]
+mod landmark_product;

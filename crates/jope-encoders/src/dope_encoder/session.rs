@@ -22,6 +22,7 @@ pub struct EncodingSnapshot {
     pub receipt: LandmarkEncodingReceipt,
     pub embedding: Dope512,
     pub fusion: Option<DopeFusion>,
+    pub consumer: Option<super::DopeConsumedEncoding>,
 }
 
 impl EncodingSnapshot {
@@ -51,6 +52,7 @@ pub struct EncodingSession {
     state: Arc<Mutex<State>>,
     cancelled: Arc<AtomicBool>,
     worker: Option<JoinHandle<()>>,
+    admission: Option<Arc<super::AuthenticatedFusionComponents>>,
 }
 
 pub(crate) struct Publisher {
@@ -58,6 +60,7 @@ pub(crate) struct Publisher {
     state: Arc<Mutex<State>>,
     cancelled: Arc<AtomicBool>,
     external_cancel: Option<Arc<AtomicBool>>,
+    admission: Option<Arc<super::AuthenticatedFusionComponents>>,
 }
 
 impl Publisher {
@@ -74,6 +77,9 @@ impl Publisher {
         if self.cancelled() {
             return Ok(false);
         }
+        if let Some(admission) = &self.admission {
+            admission.require_active()?;
+        }
         ensure!(
             next.receipt.source_digest == next.embedding.source_digest
                 && next.receipt.conditioning_digest == next.embedding.conditioning_digest
@@ -85,12 +91,29 @@ impl Publisher {
                     == next.embedding.checkpoint_identity.training_receipt_sha256(),
             "encoding receipt differs from resident embedding"
         );
+        match (&next.consumer, &next.receipt.consumer) {
+            (Some(consumer), Some(_)) => {
+                consumer.require_snapshot(&next.embedding, &next.receipt)?
+            }
+            (None, None) => {}
+            _ => anyhow::bail!("consumer receipt and resident product differ"),
+        }
         {
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
             ensure!(
                 next.receipt.source_digest == state.last.receipt.source_digest,
                 "incompatible encoding source/options scope"
             );
+            ensure!(
+                next.receipt.fit_scope == state.last.receipt.fit_scope,
+                "consumer physical FIT/fold preparation scope cannot change within a session"
+            );
+            // Validate the fixed product binding before duplicate elision.
+            match (&state.last.consumer, &next.consumer) {
+                (Some(previous), Some(current)) => previous.require_same_binding(current)?,
+                (None, None) => {}
+                _ => anyhow::bail!("consumer selection cannot change within a session"),
+            }
             let unchanged =
                 next.receipt.conditioning_digest == state.last.receipt.conditioning_digest;
             ensure!(
@@ -116,6 +139,9 @@ impl Publisher {
             };
             if self.cancelled() {
                 return Ok(false);
+            }
+            if let Some(admission) = &self.admission {
+                admission.require_active()?;
             }
             state.last = next.clone();
         }
@@ -144,9 +170,19 @@ impl EncodingSession {
         Self::spawn_with_cancel(initial, None, worker)
     }
 
+    #[cfg(test)]
     pub(crate) fn spawn_with_cancel(
         initial: EncodingSnapshot,
         external_cancel: Option<Arc<AtomicBool>>,
+        worker: impl FnOnce(Publisher) -> Result<()> + Send + 'static,
+    ) -> Self {
+        Self::spawn_with_admission(initial, external_cancel, None, worker)
+    }
+
+    pub(crate) fn spawn_with_admission(
+        initial: EncodingSnapshot,
+        external_cancel: Option<Arc<AtomicBool>>,
+        admission: Option<Arc<super::AuthenticatedFusionComponents>>,
         worker: impl FnOnce(Publisher) -> Result<()> + Send + 'static,
     ) -> Self {
         let (tx, events) = mpsc::sync_channel(4);
@@ -162,6 +198,7 @@ impl EncodingSession {
             state: state.clone(),
             cancelled: cancelled.clone(),
             external_cancel: external_cancel.clone(),
+            admission: admission.clone(),
         };
         let worker_state = state.clone();
         let worker_cancelled = cancelled.clone();
@@ -196,6 +233,7 @@ impl EncodingSession {
             state,
             cancelled,
             worker: Some(handle),
+            admission,
         }
     }
 
@@ -241,13 +279,38 @@ impl EncodingSession {
         mut self,
         mut on_snapshot: impl FnMut(EncodingSnapshot) -> Result<()>,
     ) -> Result<(EncodingSnapshot, SessionOutcome)> {
+        let mut authorization_failure = None;
         while let Some(snapshot) = self.recv() {
+            if let Err(error) = self.require_active() {
+                authorization_failure = Some(format!("{error:#}"));
+                self.cancelled.store(true, Ordering::Release);
+                break;
+            }
             on_snapshot(snapshot)?;
+            if let Err(error) = self.require_active() {
+                authorization_failure = Some(format!("{error:#}"));
+                self.cancelled.store(true, Ordering::Release);
+                break;
+            }
         }
         if let Some(worker) = self.worker.take() {
             let _ = worker.join();
         }
+        if let Err(error) = self.require_active() {
+            authorization_failure = Some(format!("{error:#}"));
+        }
+        if let Some(message) = authorization_failure {
+            self.state.lock().unwrap_or_else(|e| e.into_inner()).outcome =
+                SessionOutcome::Failed { message };
+        }
         Ok((self.last(), self.outcome()))
+    }
+
+    fn require_active(&self) -> Result<()> {
+        if let Some(admission) = &self.admission {
+            admission.require_active()?;
+        }
+        Ok(())
     }
 }
 
@@ -261,176 +324,5 @@ impl Drop for EncodingSession {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::dope_encoder::{
-        LandmarkStatus, DOPE512_RECIPE, DOPE_WEIGHTS_SHA256, ENCODING_RECEIPT_SCHEMA,
-    };
-    use candle_core::{DType, Device, Tensor};
-
-    fn snapshot(digest: &str) -> EncodingSnapshot {
-        EncodingSnapshot {
-            embedding: Dope512 {
-                checkpoint_identity: Default::default(),
-                tensor: Tensor::zeros((1, 512), DType::F32, &Device::Cpu).unwrap(),
-                source_digest: "a".repeat(64),
-                conditioning_digest: digest.into(),
-            },
-            receipt: LandmarkEncodingReceipt {
-                schema: ENCODING_RECEIPT_SCHEMA.into(),
-                status: LandmarkStatus::None,
-                mask: [false; 23],
-                subsample_n: Some(300),
-                source_digest: "a".repeat(64),
-                conditioning_digest: digest.into(),
-                options_digest: None,
-                work_budget: None,
-                weights_sha256: DOPE_WEIGHTS_SHA256.into(),
-                training_receipt_sha256: None,
-                embedding_identity: DOPE512_RECIPE.into(),
-                device: "cpu".into(),
-                version: 0,
-                outcome: None,
-                embedding: None,
-            },
-            fusion: None,
-        }
-    }
-
-    #[test]
-    fn initial_precedes_worker_completion_and_updates_are_ordered_idempotent() {
-        let barrier = Arc::new(std::sync::Barrier::new(2));
-        let worker_barrier = barrier.clone();
-        let session = EncodingSession::spawn(snapshot("zero"), move |publisher| {
-            worker_barrier.wait();
-            assert!(publisher.publish(snapshot("macro"))?);
-            assert!(!publisher.publish(snapshot("macro"))?);
-            assert!(publisher.publish(snapshot("full"))?);
-            Ok(())
-        });
-        assert_eq!(session.initial().receipt.version, 0);
-        assert_eq!(session.recv().unwrap().receipt.conditioning_digest, "zero");
-        barrier.wait();
-        let mut versions = Vec::new();
-        let (last, outcome) = session
-            .finish(|s| {
-                versions.push(s.receipt.version);
-                Ok(())
-            })
-            .unwrap();
-        assert_eq!(versions, vec![1, 2]);
-        assert_eq!(last.receipt.version, 2);
-        assert_eq!(outcome, SessionOutcome::Complete);
-    }
-
-    #[test]
-    fn new_coverage_is_published_without_advancing_an_unchanged_encoding() {
-        let session = EncodingSession::spawn(snapshot("zero"), |publisher| {
-            let mut macro_snapshot = snapshot("macro");
-            macro_snapshot.receipt.mask[0] = true;
-            macro_snapshot.receipt.status = LandmarkStatus::Partial(1);
-            assert!(publisher.publish(macro_snapshot.clone())?);
-            macro_snapshot.receipt.mask[17] = true;
-            macro_snapshot.receipt.status = LandmarkStatus::Partial(2);
-            assert!(publisher.publish(macro_snapshot.clone())?);
-            assert!(!publisher.publish(macro_snapshot)?);
-            Ok(())
-        });
-        let mut versions = Vec::new();
-        let (last, outcome) = session
-            .finish(|s| {
-                versions.push(s.receipt.version);
-                Ok(())
-            })
-            .unwrap();
-        assert_eq!(versions, vec![0, 1, 1]);
-        assert_eq!(last.receipt.status, LandmarkStatus::Partial(2));
-        assert_eq!(last.receipt.version, 1);
-        assert_eq!(outcome, SessionOutcome::Complete);
-    }
-
-    #[test]
-    fn checkpoint_switch_and_forged_receipt_fail_before_duplicate_elision() {
-        for consistent in [false, true] {
-            let session = EncodingSession::spawn(snapshot("same"), move |publisher| {
-                let mut next = snapshot("same");
-                let pin = super::super::DopeCheckpointIdentity::unqualified_candidate(
-                    "c".repeat(64),
-                    "d".repeat(64),
-                )?;
-                next.receipt.weights_sha256 = pin.weights_sha256().into();
-                next.receipt.training_receipt_sha256 =
-                    pin.training_receipt_sha256().map(str::to_owned);
-                next.receipt.embedding_identity = pin.embedding_recipe().into();
-                if consistent {
-                    next.embedding.checkpoint_identity = pin;
-                }
-                publisher.publish(next)?;
-                Ok(())
-            });
-            let (last, outcome) = session.finish(|_| Ok(())).unwrap();
-            assert_eq!(last.receipt.version, 0);
-            assert_eq!(last.receipt.weights_sha256, DOPE_WEIGHTS_SHA256);
-            assert!(matches!(outcome, SessionOutcome::Failed { .. }));
-        }
-    }
-
-    #[test]
-    fn incompatible_scope_and_worker_panic_preserve_last_valid_snapshot() {
-        for panic in [false, true] {
-            let session = EncodingSession::spawn(snapshot("zero"), move |publisher| {
-                publisher.publish(snapshot("macro"))?;
-                if panic {
-                    panic!("injected worker failure");
-                }
-                let mut wrong = snapshot("other");
-                wrong.receipt.source_digest = "b".repeat(64);
-                publisher.publish(wrong)?;
-                Ok(())
-            });
-            let (last, outcome) = session.finish(|_| Ok(())).unwrap();
-            assert_eq!(last.receipt.conditioning_digest, "macro");
-            assert_eq!(last.receipt.version, 1);
-            assert!(matches!(outcome, SessionOutcome::Failed { .. }));
-        }
-    }
-
-    #[test]
-    fn cancellation_keeps_last_published_embedding() {
-        let barrier = Arc::new(std::sync::Barrier::new(2));
-        let worker_barrier = barrier.clone();
-        let session = EncodingSession::spawn(snapshot("zero"), move |publisher| {
-            worker_barrier.wait();
-            assert!(publisher.cancelled());
-            assert!(!publisher.publish(snapshot("late"))?);
-            Ok(())
-        });
-        session.cancel();
-        barrier.wait();
-        let (last, outcome) = session.finish(|_| Ok(())).unwrap();
-        assert_eq!(last.receipt.version, 0);
-        assert_eq!(outcome, SessionOutcome::Cancelled);
-    }
-    #[test]
-    fn external_cancellation_is_observed_before_late_publication() {
-        let barrier = Arc::new(std::sync::Barrier::new(2));
-        let worker_barrier = barrier.clone();
-        let cancel = Arc::new(AtomicBool::new(false));
-        let session = EncodingSession::spawn_with_cancel(
-            snapshot("zero"),
-            Some(cancel.clone()),
-            move |publisher| {
-                worker_barrier.wait();
-                assert!(publisher.cancelled());
-                assert!(!publisher.publish(snapshot("late"))?);
-                Ok(())
-            },
-        );
-        assert_eq!(session.recv().unwrap().receipt.version, 0);
-        cancel.store(true, Ordering::Release);
-        barrier.wait();
-        let (last, outcome) = session.finish(|_| Ok(())).unwrap();
-        assert_eq!(last.receipt.version, 0);
-        assert_eq!(outcome, SessionOutcome::Cancelled);
-    }
-}
+#[path = "session_tests.rs"]
+mod tests;

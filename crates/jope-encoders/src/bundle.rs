@@ -16,8 +16,13 @@ use std::os::fd::AsFd;
 use std::path::{Component, Path, PathBuf};
 
 mod integrity;
-mod loading;
+pub(crate) mod loading;
+mod projection;
 mod validation;
+
+pub use projection::{
+    JopePolicyAssetsIdentity, JopePolicyProjectionLayout, VerifiedJopePolicyAssets,
+};
 
 use integrity::*;
 use validation::{verify_jope_metadata, verify_operator_registry, verify_target_metadata};

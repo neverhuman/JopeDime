@@ -4,7 +4,7 @@
 //! the decoder with unbound metadata or weights. The attention projection stays
 //! packed, matching PyTorch's `MultiheadAttention` fp32 evaluation order.
 
-use crate::bundle::LoadedModelBundle;
+use crate::bundle::{JopePolicyAssetsIdentity, LoadedModelBundle, VerifiedJopePolicyAssets};
 use anyhow::{bail, Context, Result};
 use candle_core::{Device, IndexOp, Tensor, D};
 
@@ -22,6 +22,7 @@ pub struct JopePolicyContext(Tensor);
 
 pub struct JopePolicyModel {
     weights_sha256: String,
+    projection_identity: Option<JopePolicyAssetsIdentity>,
     weights: Weights,
     config: JopePolicyConfig,
     device: Device,
@@ -42,16 +43,49 @@ impl JopePolicyModel {
             bail!("optional JOPE inference supports CPU or CUDA");
         }
         let metadata_bytes = bundle.read_verified(POLICY_METADATA)?;
+        let weight_bytes = bundle.read_verified(POLICY_WEIGHTS)?;
+        Self::from_verified_policy_bytes(&metadata_bytes, &weight_bytes, device, None)
+    }
+
+    pub fn load_policy_assets(assets: &VerifiedJopePolicyAssets, device: Device) -> Result<Self> {
+        if !device.is_cpu() {
+            bail!("JOPE policy inference is CPU-only");
+        }
+        Self::load_policy_assets_on_device(assets, device)
+    }
+
+    /// Context-only CUDA seam using the reviewed selected closure, without foundation access.
+    pub fn load_policy_assets_on_device(
+        assets: &VerifiedJopePolicyAssets,
+        device: Device,
+    ) -> Result<Self> {
+        Self::from_verified_policy_bytes(
+            assets.metadata_bytes(),
+            assets.policy_bytes(),
+            device,
+            Some(assets.identity().clone()),
+        )
+    }
+
+    fn from_verified_policy_bytes(
+        metadata_bytes: &[u8],
+        weight_bytes: &[u8],
+        device: Device,
+        projection_identity: Option<JopePolicyAssetsIdentity>,
+    ) -> Result<Self> {
+        if !(device.is_cpu() || device.is_cuda()) {
+            bail!("optional JOPE inference supports CPU or CUDA");
+        }
         let metadata: PolicyMetadata =
-            serde_json::from_slice(&metadata_bytes).context("decode verified JOPE metadata")?;
+            serde_json::from_slice(metadata_bytes).context("decode verified JOPE metadata")?;
         if metadata.model_version != "policy_v3.2" {
             bail!("unsupported JOPE policy version {}", metadata.model_version);
         }
         validate_config(&metadata.config)?;
-        let weight_bytes = bundle.read_verified(POLICY_WEIGHTS)?;
-        let weights = Weights::load_buffer(&weight_bytes, &device)?;
+        let weights = Weights::load_buffer(weight_bytes, &device)?;
         Ok(Self {
-            weights_sha256: jope_runtime::sha256_hex(&weight_bytes),
+            weights_sha256: jope_runtime::sha256_hex(weight_bytes),
+            projection_identity,
             weights,
             config: metadata.config,
             device,
@@ -60,6 +94,10 @@ impl JopePolicyModel {
 
     pub fn weights_sha256(&self) -> &str {
         &self.weights_sha256
+    }
+
+    pub fn projection_identity(&self) -> Option<&JopePolicyAssetsIdentity> {
+        self.projection_identity.as_ref()
     }
 
     pub fn config(&self) -> &JopePolicyConfig {

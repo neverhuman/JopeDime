@@ -13,6 +13,33 @@ pub struct Job {
     cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
 
+#[cfg(feature = "dope-encoding")]
+fn packaged_policy_assets(
+    package: &Package,
+) -> Result<starforge::bundle::VerifiedJopePolicyAssets> {
+    use starforge::bundle::VerifiedJopePolicyAssets;
+    let layout = VerifiedJopePolicyAssets::reviewed_layout()?;
+    let prefix = "model/jope-policy-projection/";
+    let parent = package.read_entry(&format!("{prefix}model-bundle.v1.json"))?;
+    let entries = layout
+        .files
+        .iter()
+        .map(|f| f.path.clone())
+        .chain(layout.notices.keys().cloned())
+        .map(|path| {
+            Ok((
+                path.clone(),
+                package.read_entry(&format!("{prefix}{path}"))?,
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let borrowed = entries
+        .iter()
+        .map(|(path, bytes)| (path.as_str(), bytes.bytes()))
+        .collect::<Vec<_>>();
+    VerifiedJopePolicyAssets::from_entries(parent.bytes(), &borrowed)
+}
+
 pub fn start(
     train: &TrainArgs,
     common: &CommonArgs,
@@ -38,7 +65,8 @@ pub fn start(
         jope_runtime::budget::Budget::new(None, 1).install(|| {
             use anyhow::{ensure, Context};
             use starforge::dope_encoder::{
-                collect, start_training, write_events, DopeDevice, DopeEncoder, Head, TrainingInput,
+                collect, product_session_options_with_assets, start_training_with_options,
+                write_events, DopeDevice, DopeEncoder, Head, TrainingInput,
             };
             let device = if common.device == "cpu" {
                 DopeDevice::Cpu
@@ -137,6 +165,7 @@ pub fn start(
                 categories,
                 head,
                 raw_cells: Some(training.table.rows.clone()),
+                fold: Some("appliance-fit".into()),
                 source_digest: Some(jope_runtime::sha256_hex(&serde_json::to_vec(&(
                     "jope.appliance-dope-source/v1",
                     source_digest,
@@ -146,7 +175,22 @@ pub fn start(
                     &training.classes,
                 ))?)),
             };
-            let session = start_training(input, encoder, &train.landmarks)?;
+            let projected = if train.landmarks.landmark_consumer
+                == Some(jope_runtime::landmark_args::LandmarkConsumer::JopeDl)
+                && train.landmarks.jope_policy_assets.is_none()
+            {
+                Some(packaged_policy_assets(package.context(
+                    "jope-dl requires --jope-policy-assets or a reviewed packaged projection",
+                )?)?)
+            } else {
+                None
+            };
+            let options = product_session_options_with_assets(
+                &train.landmarks,
+                &encoder,
+                projected.as_ref(),
+            )?;
+            let session = start_training_with_options(input, encoder, &train.landmarks, options)?;
             let cancel = session.cancellation_token();
             let events = train.landmarks.landmark_events.clone();
             let receipt = train.landmarks.landmark_receipt.clone().unwrap_or_else(|| {
@@ -220,11 +264,10 @@ pub fn refuse_aliasing(
             .unwrap_or(&train.train)
             .with_extension("landmark-encoding.json")
     });
+    let landmark_inputs = train.landmarks.protected_inputs();
     let mut protected = vec![train.train.as_path()];
+    protected.extend(landmark_inputs.iter().map(std::path::PathBuf::as_path));
     protected.extend_from_slice(outputs);
-    if let Some(weights) = &train.landmarks.dope_weights {
-        protected.push(weights);
-    }
     if let Some(path) = &common.receipt {
         protected.push(path);
     }
@@ -234,10 +277,8 @@ pub fn refuse_aliasing(
     crate::io::refuse_aliasing(&receipt, &protected)?;
     if let Some(path) = &train.landmarks.landmark_events {
         let mut protected = vec![train.train.as_path(), receipt.as_path()];
+        protected.extend(landmark_inputs.iter().map(std::path::PathBuf::as_path));
         protected.extend_from_slice(outputs);
-        if let Some(weights) = &train.landmarks.dope_weights {
-            protected.push(weights);
-        }
         if let Some(path) = &common.receipt {
             protected.push(path);
         }
