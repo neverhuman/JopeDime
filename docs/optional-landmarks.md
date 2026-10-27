@@ -89,7 +89,7 @@ deep device copies because Candle tensors permit mutation through shared referen
 Caller-supplied checkpoint pins remain `UnqualifiedCandidateV1`. A checksum or a supplied training
 receipt digest proves neither dropout training nor admitted ancestry. Register the trained
 product only after reviewing the real optimizer/export manifest. The released checkpoint and
-its fixtures remain separate. The current immutable Dope code pin is `972685cd78ad1c1f25b592e49583d716cffb1f12`,
+its fixtures remain separate. The current immutable Dope code pin is `25d1785c823e0a401b8775306666924e407ccd9f`,
 published in [Dope draft #340](https://github.com/neverhuman/dope/pull/340).
 
 Execution proof covers both consumers on regression, binary and multiclass inputs, sampled
@@ -97,7 +97,7 @@ progressive/full equality, CPU oracle compatibility and actual CUDA context/copy
 These tests do not establish predictive quality. The governed Gen31 policy vocabulary supports
 binary and regression; its multiclass context execution is an experimental surface requiring a
 supported downstream readout and its own quality benchmark. CLI/appliance consumer selection
-and the trained-candidate ablation remain open. See the [qualification record](qualification/optional-landmarks.json).
+and predictive consumer ablations remain open. A trained-candidate development stage and real CUDA session proof are recorded in the [candidate qualification](qualification/optional-landmarks-dropout-candidate.md); the candidate remains unqualified. See the [qualification record](qualification/optional-landmarks.json).
 
 The sealed loader also bounds asset-frame decompression before the encoder pool exists. Its
 regression runs fresh Rust processes with thread environment overrides removed, across all
