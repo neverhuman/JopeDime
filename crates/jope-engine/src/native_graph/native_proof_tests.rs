@@ -138,3 +138,29 @@ fn readonly_match_never_stages_a_file_and_mutable_retention_keeps_its_original_b
         "mutable replay must retain its existing immutable-conflict evidence"
     );
 }
+
+#[test]
+fn readonly_matching_proof_through_a_symlinked_parent_is_refused_without_mutation() {
+    use std::os::unix::fs::symlink;
+    let (_temporary, graph) = fixture(true);
+    let tasks = graph.directory.join("tasks");
+    fs::create_dir(&tasks).unwrap();
+    let physical = graph.root.join("proof-elsewhere");
+    fs::create_dir(&physical).unwrap();
+    fs::write(physical.join("native-proof-7.json"), b"retained proof").unwrap();
+    symlink(&physical, tasks.join("fixture")).unwrap();
+    let path = tasks.join("fixture/native-proof-7.json");
+    let before = inventory(&graph.root);
+    // The prior retention path rejected a symlinked task directory before staging.
+    assert!(immutable(&path, b"retained proof").is_err());
+    assert_eq!(inventory(&graph.root), before);
+    assert!(
+        graph.retain_native_proof(&path, b"retained proof").is_err(),
+        "read-only verification followed a symlinked task-state parent"
+    );
+    assert_eq!(inventory(&graph.root), before);
+    assert_eq!(
+        fs::read(physical.join("native-proof-7.json")).unwrap(),
+        b"retained proof"
+    );
+}
