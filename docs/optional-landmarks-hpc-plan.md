@@ -131,7 +131,7 @@ and adopts the published API in JopeDime. This precedes final candidate registra
    regression. Never use query/evaluation labels to select classes or fit vocabularies.
 4. Preserve fractional, noncontiguous and nearby distinct labels; remove accidental rounding
    collapse from the new lineage. Keep unknown query classes explicit and correctly masked.
-5. Add Python/Rust parity fixtures for K=3/32/33, fractional/close labels, permutations,
+5. Add Python/Rust parity fixtures for K=3/32/33, fractional/close labels, class-order reindexings,
    absent classes, unknown labels and physical-row scope. Sampling must preserve full-FIT base
    descriptors and sample only declared evidence work.
 6. Recheck derived features at each mask and hierarchy level: confidence, stability,
@@ -496,7 +496,7 @@ must prove forbidden-open sentinels, finite gradients, positive real updates, ac
 parameter changes and accurate task×view counters. Syntax checks cannot establish these facts.
 
 J1's Rust SDK execution proof now passes both consumers on all three task inputs with released and trained-candidate weights. The candidate also executes native progressive sessions and exact terminal/full equality on RTX3090. Its real CUDA context kernels differ from the scalar CPU oracle by at most 7.40e-6 at tolerance 3e-5. Resident product fields are opaque, public exports copy
-device storage, and mutation-isolation tests pass. Caller-supplied pins are explicitly
+device storage, and independent-storage tests pass. Caller-supplied pins are explicitly
 unqualified. Predictive ablation and CLI/appliance consumer selection still remain.
 
 For the consumer ablation, reuse outcome-free frozen program views and actual policy reward
@@ -530,7 +530,7 @@ Dope PR [#339](https://github.com/neverhuman/dope/pull/339) is closed and its na
 
 | Wave / proposed owner | Work in Dope / JopeDime | Admission and completion test |
 | --- | --- | --- |
-| H1 — Gemini, integrated by Claude-Code | Rust preparation candidate `7a5cffa9c1ef17ba47c91bf3b3dd340762be435e`: reuse sorted columns/ranks, inverse permutations, scratch buffers, fused exact descriptor/building-block reductions; profile parse, scaler and descriptor spans separately | Existing full/parity goldens and real-table conditioning digests identical; measured 1k/10k/50k preparation improvement; deterministic 1/multiple-thread reductions |
+| H1 — Gemini, integrated by Claude-Code | Rust preparation candidate `7a5cffa9c1ef17ba47c91bf3b3dd340762be435e`: reuse sorted columns/ranks, inverse index maps, scratch buffers, fused exact descriptor/building-block reductions; profile parse, scaler and descriptor spans separately | Existing full/parity goldens and real-table conditioning digests identical; measured 1k/10k/50k preparation improvement; deterministic 1/multiple-thread reductions |
 | H2 — Codex + GPU specialist | Preserve resident whole-model CUDA inference; add bounded batched encoding where consumers can batch, reuse input/output buffers, measure allocation/transfer bytes and owned stream lifetimes | Actual GPU numerical parity, bounded concurrent sessions, retained snapshot tensor immutability, B=1/8/64/256 throughput and p95; no per-update weight reload/hash; host copies only at requested export |
 | H3 — Claude-Code | Reuse full-panel preparation/folds/bases and exact Rust kernel optimizations (PR #339 ridge/basis, then claimed `eval/gbdt.rs` allocation reuse and separate net/spectrum work); evaluate applicable C++17/20 kernels behind explicit backend selection | Same native reports/coverage within a backend, FFI ownership/error tests, sanitizer and package/dependency checks, paired full-path speedup; preserve legacy portable backend |
 | H4 — Micro-import owner + Gemini | Focused JopeDime feat-math ports: contiguous Jacobi, width-512 no-op/pre-capping, sort cache, exact HistGBM constant/duplicate filtering and reusable partitions, ksmooth selection | Frozen source/state/prediction parity, tie-order and edge cases, unchanged default emitter identity; opt-in recipe identity for changed generated code; Rust plus C++17/20 emitted-program compile/run tests |
@@ -668,7 +668,7 @@ native coverage or retained quality. The candidate remains explicitly unqualifie
 The currently published Dope 25d1785c preparation retains its 32-class cap. Preserve that released
 behavior and its old goldens, and introduce a separately identified lossless FIT-class policy
 for the new product rather than silently changing historical full outputs. It must pass both
-backends for K3/32/33, fractional/nearby labels, label permutations and unknown labels. The
+backends for K3/32/33, fractional/nearby labels, class-order reindexings and unknown labels. The
 training source archive is now independently verified at original4e095b74. Preserve the distinction from post-training integration52619c78 and the retrospective helper attestation; do not rewrite historical hashes or claim that all19 files were independently pinned before launch.
 
 Sealed package source `1c05c9e1de83b792c162bd95001bb36ef2eea819` passes the expanded actual GPU
