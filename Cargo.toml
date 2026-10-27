@@ -96,7 +96,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ulid = { version = "1", features = ["serde"] }
 zeroize = "1"
 # zstd encoder for the appliance packer only (jope-dist); never linked into `jopedime`.
-zstd = "0.13"
+zstd = "0.14.3"
 
 # Hashing sits on every authority/witness path (the engine hashes its own ~220 MB debug binary and
 # the worker binary at startup). Unoptimised sha2 made the 30 s readiness deadline of the
