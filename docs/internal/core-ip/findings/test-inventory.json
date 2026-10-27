@@ -442,6 +442,13 @@
         "evaluation"
       ]
     },
+    "python:deploy/appliance/test-dope-cpu-threads.py": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "preparation"
+      ]
+    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "reason": "CUDA qualification receipt integrity; collection and execution remain distinct from hardware qualification.",
       "role": "infrastructure"

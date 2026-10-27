@@ -43,7 +43,18 @@
       "RUSTSEC-2026-0410"
     ],
     "other_observed_blocker": "Unchanged smartcluster AsyncFd::with_interest Clippy failures with the locked Tokio version. No advisory ignores added.",
-    "final_rerun": "required-final.log failed solely at existing advisories; bans/licenses/sources pass; remaining hygiene checks pass"
+    "final_rerun": "required-final.log failed solely at existing advisories; bans/licenses/sources pass; remaining hygiene checks pass",
+    "latest_rerun": {
+      "status": "failed",
+      "log": "addendum-required.log",
+      "source_commit": "758aed1b7ef28324d2d7dc0de31ebf5f52fd67b5",
+      "same_four_advisories": true,
+      "bans": "pass",
+      "licenses": "pass",
+      "sources": "pass",
+      "other_hygiene_checks": "pass",
+      "note": "Does not establish full ci-pr pass; stops at hygiene before workspace Clippy/nextest."
+    }
   },
   "gpu_appliance": {
     "status": "pass_on_development_candidate",
@@ -255,7 +266,7 @@
       "uncached_offline_feature_dependency": 1,
       "announced_lockfile_evaluator_identity_change": 1
     },
-    "repair_status": "Four inventory/CLI failures repaired and focused4 tests passed; uncached feature closure repaired and both fence tests passed. Announced evaluator identity still requires source commit then identity-only rebaseline. No blanket rerun pass claimed."
+    "repair_status": "All six initial failures repaired with focused reruns: inventory/CLI4, dependency fence2 (one originally failed), and13 frozen compatibility comparisons after the announced identity-only rebaseline. Aggregate full suite not rerun on the new source yet."
   },
   "latency_baseline_update": {
     "status": "not_passed",
@@ -280,5 +291,59 @@
     "reg_bin_full_unavailable": 2,
     "multiclass_partitions": 197,
     "qualification": "Owner-produced measurements; trainer must verify all report/bundle hashes and scope before use. No training qualification asserted."
+  },
+  "evaluator_identity_transition": {
+    "source_commit": "758aed1b7ef28324d2d7dc0de31ebf5f52fd67b5",
+    "old": {
+      "implementation_sha256": "99f9159ec5a64f83487a81bcc9639ab1a70383d00eb221ad8b842afb11799be2",
+      "cargo_lock_sha256": "8f1baae9469fb8ee76332aba2a968e9c41222c2be6a45a1e22bb7e4d095e1782",
+      "identity_digest": "c9f85a94ab86aa1f8313cb51b7f2626c7caafe32c8cf0f81eccb046fd8ea0aff"
+    },
+    "new": {
+      "implementation_sha256": "95d3e019b8ed2dfdb5b028661d1288c55450f8f0cb7f4fd4068ded90488baeb0",
+      "cargo_lock_sha256": "1e33b0f02db50282014933621f69920485f284c7774304f7463cbae508f168f3",
+      "identity_digest": "1aa42477fd648f0c1cf92a89c613d6a1c7314c9a3a8ed10e0caa62bc4480af57"
+    },
+    "regeneration_passed": 13,
+    "comparison_passed": 13,
+    "known_identity_table_changed": false,
+    "behavior_fixtures_rebaselined": false,
+    "note": "Explicit ADR-0004 lockfile identity change; all other frozen behavior comparisons pass."
+  },
+  "published_gpu_appliance_build": {
+    "status": "passed",
+    "source_commit": "758aed1b7ef28324d2d7dc0de31ebf5f52fd67b5",
+    "dope_revision": "972685cd78ad1c1f25b592e49583d716cffb1f12",
+    "log": "published-gpu-package-build.log",
+    "directory": "target/dope-appliance-published",
+    "packaging": "Sealed development-key GPU profile; normal build.sh completed including verification/notices/fences/SBOM/size. Runtime smoke on this new binary pending GPU reservation."
+  },
+  "cpu_packaged_pool_boundary": {
+    "status": "fix_compiled_pending_sealed_retest",
+    "old_source": "758aed1b7ef28324d2d7dc0de31ebf5f52fd67b5",
+    "old_package_sha256": "19ca9f94a3c2c7419265b9deaa06df4b351e72de77349f58c87d5ec2ef5896fd",
+    "reproduction": {
+      "ordinary_affinity_peak_threads": 104,
+      "explicit_16_to_23_affinity_peak_threads": 10,
+      "native_ridge_control_peak_threads": 2,
+      "overrides_removed": true,
+      "threads_argument": 1,
+      "device": "cpu",
+      "mode": "fast",
+      "logs": [
+        "cpu-thread-repro-affinity.log",
+        "cpu-thread-proof-published/controls.json"
+      ]
+    },
+    "cause": "Packaged weights decode_entry uses Rayon before the encoder pool exists",
+    "fix": "Bound the enabled loading/preparation path with Budget::new(None,1).install; retain private forward pool and native fitting behavior",
+    "manual_regression": "deploy/appliance/test-dope-cpu-threads.py",
+    "clippy": "cpu-loader-bound-clippy.log passed",
+    "appliance_tests": {
+      "passed": 17,
+      "failed": 0,
+      "log": "cpu-loader-appliance-tests.log"
+    },
+    "coverage_map_items": 863
   }
 }
