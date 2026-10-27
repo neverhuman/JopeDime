@@ -98,3 +98,16 @@ These tests do not establish predictive quality. The governed Gen31 policy vocab
 binary and regression; its multiclass context execution is an experimental surface requiring a
 supported downstream readout and its own quality benchmark. CLI/appliance consumer selection
 and the trained-candidate ablation remain open. See the [qualification record](qualification/optional-landmarks.json).
+
+The sealed loader also bounds asset-frame decompression before the encoder pool exists. Its
+regression runs fresh Rust processes with thread environment overrides removed, across all
+three task types:
+
+```bash
+python3 deploy/appliance/test-dope-cpu-threads.py \
+  target/dope-appliance-published/jopedime target/dope-cpu-pool-proof
+```
+
+This is a process resource check, separate from the latency gate. The earlier sealed baseline
+reproduced an unbounded global Rayon pool during asset loading; the qualification record retains
+that failure and the fixed-package result separately.

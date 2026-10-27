@@ -1768,6 +1768,16 @@
       ],
       "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
     },
+    "python:deploy/appliance/test-dope-cpu-threads.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "gpu"
+      ],
+      "lanes": [],
+      "scope": "Manual post-build regression for the sealed Dope GPU edition: fresh Rust CPU fast inference on all three tasks, cleared thread environment and sampled process thread bounds. Execution needs no GPU; building the packaged edition requires the CUDA feature toolchain. Static mapping is not execution or latency evidence."
+    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "discovery": {
         "kind": "python-family"

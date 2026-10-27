@@ -33,136 +33,144 @@ pub fn start(
     }
     #[cfg(feature = "dope-encoding")]
     {
-        use anyhow::{ensure, Context};
-        use starforge::dope_encoder::{
-            collect, start_training, write_events, DopeDevice, DopeEncoder, Head, TrainingInput,
-        };
-        let device = if common.device == "cpu" {
-            DopeDevice::Cpu
-        } else {
-            let index = if common.device == "auto" {
-                0
-            } else {
-                common
-                    .device
-                    .strip_prefix("cuda:")
-                    .context("device must be cpu, auto or cuda:N")?
-                    .parse()?
+        // Asset frame decoding uses Rayon too. Bound it before loading weights, rather than
+        // creating the process-global pool before the encoder's own pool exists.
+        jope_runtime::budget::Budget::new(None, 1).install(|| {
+            use anyhow::{ensure, Context};
+            use starforge::dope_encoder::{
+                collect, start_training, write_events, DopeDevice, DopeEncoder, Head, TrainingInput,
             };
-            DopeEncoder::cuda(index)
-                .map_err(|e| jope_runtime::Failure::backend(format!("{e:#}")))?
-        };
-        let encoder = if let Some(package) = package {
-            let bytes = package
-                .read_entry("model/dope-mlc-v3/model.safetensors")
-                .map_err(|e| match e {
-                    jope_assets::AssetError::EntryMissing(_) => {
-                        jope_runtime::Failure::backend("package does not contain Dope weights")
-                    }
-                    e => crate::bootstrap::integrity(e),
-                })?;
-            DopeEncoder::from_bytes(bytes.bytes(), &device).map_err(|e| {
-                jope_runtime::Failure::integrity(format!("packaged Dope model validation: {e:#}"))
-            })?
-        } else {
-            DopeEncoder::load(
-                train
-                    .landmarks
-                    .dope_weights
-                    .as_ref()
-                    .context("Dope weights required (--dope-weights or DOPE_WEIGHTS)")?,
-                &device,
-            )?
-        };
-        let width = training.schema.columns.len();
-        let mut maps = Vec::new();
-        let mut categories = Vec::new();
-        for (j, column) in training.schema.columns.iter().enumerate() {
-            let categorical = column.kind == jope_runtime::table::ColumnKind::Categorical;
-            let map: std::collections::BTreeMap<_, _> = if categorical {
-                training
-                    .table
-                    .rows
-                    .iter()
-                    .filter(|r| !r[j].is_empty())
-                    .map(|r| r[j].clone())
-                    .collect::<std::collections::BTreeSet<_>>()
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, v)| (v, i))
-                    .collect()
+            let device = if common.device == "cpu" {
+                DopeDevice::Cpu
             } else {
-                Default::default()
+                let index = if common.device == "auto" {
+                    0
+                } else {
+                    common
+                        .device
+                        .strip_prefix("cuda:")
+                        .context("device must be cpu, auto or cuda:N")?
+                        .parse()?
+                };
+                DopeEncoder::cuda(index)
+                    .map_err(|e| jope_runtime::Failure::backend(format!("{e:#}")))?
             };
-            categories.push(categorical.then_some(map.len()));
-            maps.push(map);
-        }
-        let x = training
-            .table
-            .rows
-            .iter()
-            .map(|r| {
-                (0..width)
-                    .map(|j| {
-                        if categories[j].is_some() {
-                            maps[j].get(&r[j]).map_or(f64::NAN, |v| *v as f64)
-                        } else {
-                            r[j].parse::<f64>().unwrap_or(f64::NAN)
+            let encoder = if let Some(package) = package {
+                let bytes = package
+                    .read_entry("model/dope-mlc-v3/model.safetensors")
+                    .map_err(|e| match e {
+                        jope_assets::AssetError::EntryMissing(_) => {
+                            jope_runtime::Failure::backend("package does not contain Dope weights")
                         }
-                    })
-                    .collect()
-            })
-            .collect();
-        let head = match training.kind {
-            jope_runtime::task::TaskKind::Regression | jope_runtime::task::TaskKind::Timeseries => {
-                Head::Regression
-            }
-            jope_runtime::task::TaskKind::Binary => Head::Binary,
-            jope_runtime::task::TaskKind::Multiclass => Head::Multiclass(training.classes.len()),
-        };
-        ensure!(
-            training.targets.len() == training.table.rows.len(),
-            "Dope target alignment"
-        );
-        let input = TrainingInput {
-            x,
-            y: training.targets.clone(),
-            ids: (0..training.targets.len() as u64).collect(),
-            categories,
-            head,
-            raw_cells: Some(training.table.rows.clone()),
-            source_digest: Some(jope_runtime::sha256_hex(&serde_json::to_vec(&(
-                "jope.appliance-dope-source/v1",
-                source_digest,
-                training.kind,
-                &training.target,
-                &training.schema,
-                &training.classes,
-            ))?)),
-        };
-        let session = start_training(input, encoder, &train.landmarks)?;
-        let cancel = session.cancellation_token();
-        let events = train.landmarks.landmark_events.clone();
-        let receipt = train.landmarks.landmark_receipt.clone().unwrap_or_else(|| {
-            common
-                .receipt
-                .as_ref()
-                .unwrap_or(&train.train)
-                .with_extension("landmark-encoding.json")
-        });
-        let worker = std::thread::spawn(move || {
-            if let Some(path) = events {
-                write_events(session, &path)
-                    .map_err(|e| jope_runtime::Failure::output(format!("encoding events: {e:#}")))
+                        e => crate::bootstrap::integrity(e),
+                    })?;
+                DopeEncoder::from_bytes(bytes.bytes(), &device).map_err(|e| {
+                    jope_runtime::Failure::integrity(format!(
+                        "packaged Dope model validation: {e:#}"
+                    ))
+                })?
             } else {
-                collect(session, |_| Ok(()))
+                DopeEncoder::load(
+                    train
+                        .landmarks
+                        .dope_weights
+                        .as_ref()
+                        .context("Dope weights required (--dope-weights or DOPE_WEIGHTS)")?,
+                    &device,
+                )?
+            };
+            let width = training.schema.columns.len();
+            let mut maps = Vec::new();
+            let mut categories = Vec::new();
+            for (j, column) in training.schema.columns.iter().enumerate() {
+                let categorical = column.kind == jope_runtime::table::ColumnKind::Categorical;
+                let map: std::collections::BTreeMap<_, _> = if categorical {
+                    training
+                        .table
+                        .rows
+                        .iter()
+                        .filter(|r| !r[j].is_empty())
+                        .map(|r| r[j].clone())
+                        .collect::<std::collections::BTreeSet<_>>()
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, v)| (v, i))
+                        .collect()
+                } else {
+                    Default::default()
+                };
+                categories.push(categorical.then_some(map.len()));
+                maps.push(map);
             }
-        });
-        Ok(Some(Job {
-            worker,
-            receipt,
-            cancel,
-        }))
+            let x = training
+                .table
+                .rows
+                .iter()
+                .map(|r| {
+                    (0..width)
+                        .map(|j| {
+                            if categories[j].is_some() {
+                                maps[j].get(&r[j]).map_or(f64::NAN, |v| *v as f64)
+                            } else {
+                                r[j].parse::<f64>().unwrap_or(f64::NAN)
+                            }
+                        })
+                        .collect()
+                })
+                .collect();
+            let head = match training.kind {
+                jope_runtime::task::TaskKind::Regression
+                | jope_runtime::task::TaskKind::Timeseries => Head::Regression,
+                jope_runtime::task::TaskKind::Binary => Head::Binary,
+                jope_runtime::task::TaskKind::Multiclass => {
+                    Head::Multiclass(training.classes.len())
+                }
+            };
+            ensure!(
+                training.targets.len() == training.table.rows.len(),
+                "Dope target alignment"
+            );
+            let input = TrainingInput {
+                x,
+                y: training.targets.clone(),
+                ids: (0..training.targets.len() as u64).collect(),
+                categories,
+                head,
+                raw_cells: Some(training.table.rows.clone()),
+                source_digest: Some(jope_runtime::sha256_hex(&serde_json::to_vec(&(
+                    "jope.appliance-dope-source/v1",
+                    source_digest,
+                    training.kind,
+                    &training.target,
+                    &training.schema,
+                    &training.classes,
+                ))?)),
+            };
+            let session = start_training(input, encoder, &train.landmarks)?;
+            let cancel = session.cancellation_token();
+            let events = train.landmarks.landmark_events.clone();
+            let receipt = train.landmarks.landmark_receipt.clone().unwrap_or_else(|| {
+                common
+                    .receipt
+                    .as_ref()
+                    .unwrap_or(&train.train)
+                    .with_extension("landmark-encoding.json")
+            });
+            let worker = std::thread::spawn(move || {
+                if let Some(path) = events {
+                    write_events(session, &path).map_err(|e| {
+                        jope_runtime::Failure::output(format!("encoding events: {e:#}"))
+                    })
+                } else {
+                    collect(session, |_| Ok(()))
+                }
+            });
+            Ok(Some(Job {
+                worker,
+                receipt,
+                cancel,
+            }))
+        })?
     }
 }
 
