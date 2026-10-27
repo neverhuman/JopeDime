@@ -47,6 +47,30 @@ by final package, latency, predictive and aggregate gates. No merge or release i
 
 ## Closeout decision and current snapshot
 
+The 20:27 UTC implementation update supersedes the older snapshot rows below. Jope source
+`64db44cc11f791c0e8442acaae4e9360d0628ad4` adopts published P1/P2 Dope
+`2535a36c0e7ced2a17a0b06818efaeb17f7a2d47`. Explicit products now use uncapped preparation,
+check exact class codes/physical IDs and bind original targets into their scope. Legacy Cap32
+and low-level model recipes remain unchanged. CPU K=33 encoding, selected learned consumers,
+CLI/appliance propagation, schemas, dependency fences and seven-package Clippy pass. The actual
+RTX 3090 three-task run passes 21 CPU-oracle comparisons (maximum `6.914138794e-6`, tolerance
+`3e-5`) and terminal progressive/full equality. See the
+[P1/P6 hardening record](qualification/optional-landmarks-p1-p6-hardening.md).
+
+Two P6 verifier defects are also fixed: old checkpoint formats no longer ignore requested
+successor identities, and read-only graph verification no longer creates proof/staging/conflict
+files. Both have demonstrated failing regressions followed by passing suites. Production snapshot
+publication remains incomplete: the actual trainer emits v2, and no v3 committed-credit producer
+or complete authenticated input/provenance/pin mapping is wired. Keys alone do not close this gap.
+
+The Dope owner has frozen the P1/P2 code pin. H1's measured 1.04–1.11× improvement and the
+Python transcendental-tail parity repair remain separate follow-up work; they are not silently
+included here. Candidate `ecded022` meets the reported owner N=300 point rule on its available
+paired cohort. Its final owner registration/export/preparation/rights record is still needed;
+CLI, pipeline and appliance currently load ReleasedV1 while the candidate is SDK-only.
+Stale candidate retention metadata has been relayed to the Dope owner. Predictive consumer
+quality, wider multiclass support, the final trained package and the latency gate remain open.
+
 This is an implemented Rust/CUDA integration with an initial trained candidate, not a completed
 quality-qualified product. The remaining critical work is preparation/evaluation correctness,
 real product consumer selection and predictive validation, a production flywheel, final packaging,
@@ -309,9 +333,13 @@ that owner immediately, in parallel with P1/P2; do not leave this discovery unti
    resource budget, admitted data and key/authority boundary. Current host inspection found no
    live Rust flywheel; other deployment health is not established. Retired Python units remain
    untouched. Source test success cannot certify a running service.
-2. Implement/integrate durable `LocalSnapshotAuthority` and authenticated
-   `SnapshotEvidenceVerifier` using controller-adopted artifact/admission/lineage/witness/input
-   evidence. Memory authorities and64-character-string verifiers remain test scaffolds.
+2. The durable `StateSnapshotAuthority` storage port is implemented. Complete authenticated
+   `SnapshotEvidenceVerifier` integration using controller-adopted artifact/admission/lineage/
+   witness/input evidence. The production trainer currently writes v2; implement an actual v3
+   committed-credit producer before accepting successor lineage/intent proofs. Bind source and
+   command receipts, every compatibility pin, the artifact chain and the numeric epoch-to-digest
+   mapping explicitly. A committed fit receipt proves a fit, not an optimizer update. Memory
+   authorities and hash-shaped strings remain test scaffolds.
 3. Add a production-path encoder→round→ingest→checkpoint→reload/CAS/publication regression.
    Include none/partial/full, duplicate updates, scope/pin mismatch, protected ancestors,
    missing labels, cancellation/failure, conflicting writers, retained previous state and
@@ -327,8 +355,9 @@ that owner immediately, in parallel with P1/P2; do not leave this discovery unti
    do not enable privileged execution of untrusted PR code to obtain live evidence.
 
 **Exit:** real production rounds continue with valid provenance and fresh observed progress,
-and the runtime reload/publication regression passes. This phase is currently blocked on an
-identified deployment/authority owner, not solved by the 26 contract tests.
+and the runtime reload/publication regression passes. The diagnostic round, durable storage
+and verifier hardening are complete prerequisites. A production credit producer, authenticated
+mapping contracts and an identified deployment/authority owner remain required.
 
 ### P7 — Finish measured performance and a sealed, usable package
 

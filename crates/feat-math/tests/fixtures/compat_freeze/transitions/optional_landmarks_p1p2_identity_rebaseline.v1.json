@@ -1,0 +1,20 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Append the fourth PR431 identity-only successor for the published Dope preparation/conditioning code repin. Exactly one Cargo.lock Git source line changes; evaluator arithmetic inputs, DSL ABI, known historical identity rows, behavior fixtures and all three earlier closed PR431 transition records remain unchanged. Product preparation remains explicit. Scientific quality, latency, training and live-authority qualification remain separate.",
+  "plan_reference": "compat_freeze.rs identity-only owning proof lane; ADR-0004; PR431 optional-landmarks continuation",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/431",
+  "source_commit": "64db44cc11f791c0e8442acaae4e9360d0628ad4",
+  "dope_source_commit": "2535a36c0e7ced2a17a0b06818efaeb17f7a2d47",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "e1a8c755539ba9bc206a6faf8e9ff07cfe42828ba010e14ad1a9c78776a6e20e",
+      "after": "9adeeebb824352464505927834a64ce3cdf71aa4610906823f51446684c32e10"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a2486eea095ca2c8b977d6c3d937a2bad1ae7ca82f16b095cd64e93463342fef",
+      "after": "a05f34cddfc215a3675aee058c699da5e42b6b27bb4ebb3a8a13282bdfa9b294"
+    }
+  ]
+}

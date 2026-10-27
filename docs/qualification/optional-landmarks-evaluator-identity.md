@@ -66,7 +66,7 @@ compatibility tests. No behavior fixture or known historical identity row change
 The product-scope dependency additions are recorded by source
 `a9cb739732d94814228408f1bee3209456224080`. The lockfile adds Rust package dependency edges;
 the evaluator arithmetic, DSL ABI, known identity rows and listed lineage sources are unchanged.
-The current fixture identity is:
+The product-scope checkpoint identity was:
 
 | Field | Product-scope identity |
 | --- | --- |
@@ -81,3 +81,21 @@ dependency, published-pin and product-scope fixture bytes in each existing histo
 Retained logs are `target/landmarks/pr431-product-identity-regenerate.log`,
 `target/landmarks/pr431-product-identity-compare.log` and
 `target/landmarks/pr431-identity-historical.log`. No behavior fixture was regenerated.
+
+The published P1/P2 pin is recorded by source
+`64db44cc11f791c0e8442acaae4e9360d0628ad4`. Exactly one Cargo.lock Git source line changes
+from Dope `25d1785c` to `2535a36c`; unrelated Windows dependency choices are preserved.
+The current fixture identity is:
+
+| Field | Published P1/P2 identity |
+| --- | --- |
+| `implementation_sha256` | `e0c41b1af055ff5b0af844a2077c2431d474769280c83a599483fed1b5bdeb3f` |
+| `cargo_lock_sha256` | `e7e8edc191cc38636be3968f537782f609d82acc07d5bda33a140613e4920cb9` |
+| `identity_digest` | `61185b72188ffeaad4abce1eb08773c00c0b6fa899aff866f3ab93219240a2c5` |
+
+The owning identity-only regeneration and separate comparison each pass all 13 tests.
+The fourth append-only PR431 transition extends every existing historical chain; the first
+three transition records remain byte-identical. ABI, known identity rows, listed lineage
+inputs, numerical/emission fixtures and seeded outputs remain unchanged. Retained logs are
+`target/landmarks/p1-identity-regenerate.log`, `target/landmarks/p1-identity-compare.log` and
+`target/landmarks/p1-identity-historical.log`. The PR body announces this transition.

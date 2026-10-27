@@ -687,10 +687,13 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/optional_landmarks_published_pin_identity_rebaseline.v1.json");
     let optional_landmarks_product =
         old_fixture("transitions/optional_landmarks_product_scope_identity_rebaseline.v1.json");
+    let optional_landmarks_p1p2 =
+        old_fixture("transitions/optional_landmarks_p1p2_identity_rebaseline.v1.json");
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
         &optional_landmarks_product,
+        &optional_landmarks_p1p2,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -732,6 +735,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 optional_landmarks_dependency.clone(),
                 optional_landmarks_pin.clone(),
                 optional_landmarks_product.clone(),
+                optional_landmarks_p1p2.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -759,6 +763,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 optional_landmarks_dependency.clone(),
                 optional_landmarks_pin.clone(),
                 optional_landmarks_product.clone(),
+                optional_landmarks_p1p2.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -779,6 +784,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 optional_landmarks_dependency.clone(),
                 optional_landmarks_pin.clone(),
                 optional_landmarks_product.clone(),
+                optional_landmarks_p1p2.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -830,6 +836,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 optional_landmarks_dependency.clone(),
                 optional_landmarks_pin.clone(),
                 optional_landmarks_product.clone(),
+                optional_landmarks_p1p2.clone(),
             ],
         ),
         (
@@ -841,6 +848,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 optional_landmarks_dependency.clone(),
                 optional_landmarks_pin.clone(),
                 optional_landmarks_product.clone(),
+                optional_landmarks_p1p2.clone(),
             ],
         ),
     ] {
@@ -900,6 +908,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         optional_landmarks_dependency,
         optional_landmarks_pin,
         optional_landmarks_product,
+        optional_landmarks_p1p2,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
