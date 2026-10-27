@@ -11,6 +11,9 @@ use std::path::{Path, PathBuf};
 
 const NOW: u64 = 500;
 
+#[path = "support/optional_dope.rs"]
+mod optional_dope;
+
 fn purposes() -> BTreeSet<Purpose> {
     [
         Purpose::GlobalPolicyTraining,

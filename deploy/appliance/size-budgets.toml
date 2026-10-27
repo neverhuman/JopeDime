@@ -44,3 +44,11 @@ note = "native methods only; the payload is the licence and third-party notices 
 base_executable_bytes = 4542168
 final_executable_bytes = 460000000
 note = "provisional: replace with the first measured internal-restricted build"
+
+# Measured 2026-10-27, Rust 1.97.1, x86_64, dist-ci, embedded/dev-keys/dope-cuda,
+# source 2c103d9389f681c343d6c119918454a665b7c2a1. Development-signed proof only;
+# whole released checkpoint + complete selected dependency notices, host CUDA libraries required.
+[profile.dope-gpu]
+base_executable_bytes = 19258792
+final_executable_bytes = 20792951
+note = "measured GPU edition dist-ci; 1,782,874 model/license bytes and selected dependency notices; no bundled CUDA runtime"

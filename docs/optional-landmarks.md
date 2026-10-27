@@ -69,3 +69,32 @@ and any remaining gaps.
 
 The [coordinated completion and HPC plan](optional-landmarks-hpc-plan.md) names remaining
 gaps, owners, integration order and acceptance evidence across both repositories.
+
+Jepson’s binding mission addendum requires a newly trained mask-aware checkpoint and both
+optional Jope consumer ablations. The original released-checkpoint path described above is
+a compatibility baseline. Training may use Python; product inference remains entirely Rust.
+The trained checkpoint must have its own pin/recipe, pass per-task mask-level evaluation, and
+keep the live flywheel and its new regression test green. See the completion plan’s T1/T2/J1/F1/Q4 rows.
+
+The optional Rust SDK has two consumers: `DopeConsumer::encoding_only()` returns Dope512,
+and `DopeConsumer::jope_dl(model)` applies Jope's learned context encoder to the same Dope512
+plus supplied foundation/target components. Call `consume_snapshot` for each ordered session
+update. Load the optional Jope model on `encoder.device().clone()` with
+`JopePolicyModel::load_bundle_on_device`. Its CUDA context path uses device matmul,
+normalization and GELU; the existing scalar CPU oracle remains separate. Consumer receipts bind
+the actual loaded Jope weight bytes, Dope checkpoint, source, effective conditioning and component
+float bytes. CPU and CUDA context arithmetic have distinct recipes. Public tensor exports use
+deep device copies because Candle tensors permit mutation through shared references.
+
+Caller-supplied checkpoint pins remain `UnqualifiedCandidateV1`. A checksum or a supplied training
+receipt digest proves neither dropout training nor admitted ancestry. Register the trained
+product only after reviewing the real optimizer/export manifest. The released checkpoint and
+its fixtures remain separate. The current immutable Dope code pin is `972685cd78ad1c1f25b592e49583d716cffb1f12`,
+published in [Dope draft #340](https://github.com/neverhuman/dope/pull/340).
+
+Execution proof covers both consumers on regression, binary and multiclass inputs, sampled
+progressive/full equality, CPU oracle compatibility and actual CUDA context/copy isolation.
+These tests do not establish predictive quality. The governed Gen31 policy vocabulary supports
+binary and regression; its multiclass context execution is an experimental surface requiring a
+supported downstream readout and its own quality benchmark. CLI/appliance consumer selection
+and the trained-candidate ablation remain open. See the [qualification record](qualification/optional-landmarks.json).

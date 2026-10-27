@@ -4,7 +4,7 @@ use anyhow::{bail, Result};
 
 #[path = "support/models_root.rs"]
 mod models_root;
-use candle_core::Device;
+use candle_core::{Device, Tensor};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use starforge::bundle::LoadedModelBundle;
@@ -137,6 +137,12 @@ fn gen31_policy_matches_frozen_full_oracle() -> Result<()> {
     let model = JopePolicyModel::load_bundle(&bundle, Device::Cpu)?;
     let context = model.context(&fixture.embedding_1536, &fixture.target_512)?;
     let context_values = model.context_values(&context)?;
+    let resident_embedding =
+        Tensor::from_vec(fixture.embedding_1536.clone(), (1, 1536), &Device::Cpu)?;
+    let resident_target = Tensor::from_vec(fixture.target_512.clone(), (1, 512), &Device::Cpu)?;
+    let resident_context = model.context_tensors(&resident_embedding, &resident_target)?;
+    assert_eq!(model.context_values(&resident_context)?, context_values);
+    assert_eq!(model.weights_sha256().len(), 64);
     let (context_error, context_index) = max_abs(&context_values, &fixture.z_512)?;
     eprintln!("Gen31 JOPE context max_abs={context_error:.9e} index={context_index}");
     assert!(

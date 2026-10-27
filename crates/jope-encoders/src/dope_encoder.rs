@@ -24,6 +24,12 @@ pub use dope_core::{
     target::Head,
 };
 
+mod consumer;
+pub use consumer::{DopeConsumedEncoding, DopeConsumer, DopeConsumerMode, DopeConsumerReceipt};
+
+mod checkpoint;
+pub use checkpoint::{DopeCheckpointIdentity, CANDIDATE512_RECIPE};
+
 mod session;
 mod workflow;
 pub use session::{EncodingSession, EncodingSnapshot, SessionOutcome};
@@ -46,12 +52,26 @@ pub(crate) fn sha256(bytes: &[u8]) -> String {
 /// The device tensor has shape [1,512]. It uses no Hyperion normalization or identity.
 #[derive(Clone, Debug)]
 pub struct Dope512 {
-    pub tensor: Tensor,
-    pub source_digest: String,
-    pub conditioning_digest: String,
+    checkpoint_identity: DopeCheckpointIdentity,
+    tensor: Tensor,
+    source_digest: String,
+    conditioning_digest: String,
 }
 
 impl Dope512 {
+    /// Explicit deep device export: Candle tensors allow mutation even through shared borrows.
+    pub fn tensor_copy(&self) -> Result<Tensor> {
+        Ok(self.tensor.copy()?)
+    }
+    pub fn checkpoint_identity(&self) -> &DopeCheckpointIdentity {
+        &self.checkpoint_identity
+    }
+    pub fn source_digest(&self) -> &str {
+        &self.source_digest
+    }
+    pub fn conditioning_digest(&self) -> &str {
+        &self.conditioning_digest
+    }
     pub fn to_vec(&self) -> Result<Vec<f32>> {
         ensure!(
             self.tensor.dims() == [1, 512],
@@ -78,7 +98,9 @@ impl Dope512 {
         let dataset1536 = Tensor::cat(&[&self.tensor, &components.foundation1024], 1)?;
         let policy2048 = Tensor::cat(&[&dataset1536, &components.target512], 1)?;
         Ok(DopeFusion {
-            recipe: "dope512-foundation1024-target512/v1".into(),
+            recipe: self.checkpoint_identity.fusion_recipe().into(),
+            checkpoint_identity: self.checkpoint_identity.clone(),
+            components_digest: components.digest.clone(),
             component_recipe: components.recipe.clone(),
             source_digest: self.source_digest.clone(),
             conditioning_digest: self.conditioning_digest.clone(),
@@ -115,6 +137,15 @@ impl FusionComponents {
         Ok(ResidentFusionComponents {
             source_digest: self.source_digest.clone(),
             recipe: self.recipe.clone(),
+            digest: {
+                let mut hash = Sha256::new();
+                hash.update(b"jope.dope-fusion-components/v1\0");
+                hash.update(serde_json::to_vec(&(&self.source_digest, &self.recipe))?);
+                for v in self.foundation1024.iter().chain(&self.target512) {
+                    hash.update(v.to_le_bytes());
+                }
+                format!("{:x}", hash.finalize())
+            },
             foundation1024: Tensor::from_slice(&self.foundation1024, (1, 1024), device)?,
             target512: Tensor::from_slice(&self.target512, (1, 512), device)?,
         })
@@ -123,25 +154,32 @@ impl FusionComponents {
 
 #[derive(Clone, Debug)]
 pub struct ResidentFusionComponents {
-    pub source_digest: String,
-    pub recipe: String,
+    digest: String,
+    source_digest: String,
+    recipe: String,
     foundation1024: Tensor,
     target512: Tensor,
 }
 
 #[derive(Clone, Debug)]
 pub struct DopeFusion {
-    pub recipe: String,
-    pub component_recipe: String,
-    pub source_digest: String,
-    pub conditioning_digest: String,
-    pub dataset1536: Tensor,
-    pub policy2048: Tensor,
+    components_digest: String,
+    checkpoint_identity: DopeCheckpointIdentity,
+    recipe: String,
+    component_recipe: String,
+    source_digest: String,
+    conditioning_digest: String,
+    dataset1536: Tensor,
+    policy2048: Tensor,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DopeFusionExport {
+    #[serde(default)]
+    pub components_digest: String,
+    #[serde(default)]
+    pub checkpoint_identity: DopeCheckpointIdentity,
     pub recipe: String,
     pub component_recipe: String,
     pub source_digest: String,
@@ -151,9 +189,17 @@ pub struct DopeFusionExport {
 }
 
 impl DopeFusion {
+    pub fn dataset1536_copy(&self) -> Result<Tensor> {
+        Ok(self.dataset1536.copy()?)
+    }
+    pub fn policy2048_copy(&self) -> Result<Tensor> {
+        Ok(self.policy2048.copy()?)
+    }
     /// Explicit host serialization boundary; the session product stays on its original device.
     pub fn to_export(&self) -> Result<DopeFusionExport> {
         Ok(DopeFusionExport {
+            components_digest: self.components_digest.clone(),
+            checkpoint_identity: self.checkpoint_identity.clone(),
             recipe: self.recipe.clone(),
             component_recipe: self.component_recipe.clone(),
             source_digest: self.source_digest.clone(),
@@ -179,6 +225,8 @@ pub struct LandmarkEncodingReceipt {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub work_budget: Option<u64>,
     pub weights_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub training_receipt_sha256: Option<String>,
     pub embedding_identity: String,
     pub device: String,
     pub version: u64,
@@ -190,27 +238,48 @@ pub struct LandmarkEncodingReceipt {
 
 #[derive(Clone)]
 pub struct DopeEncoder {
+    checkpoint_identity: DopeCheckpointIdentity,
     model: std::sync::Arc<MlcV3Model>,
     cpu_pool: Option<std::sync::Arc<rayon::ThreadPool>>,
 }
 
 impl DopeEncoder {
     pub fn load(path: &Path, device: &Device) -> Result<Self> {
+        Self::load_pinned(path, device, DopeCheckpointIdentity::ReleasedV1)
+    }
+
+    pub fn load_pinned(
+        path: &Path,
+        device: &Device,
+        identity: DopeCheckpointIdentity,
+    ) -> Result<Self> {
+        identity.validate()?;
         let meta = std::fs::symlink_metadata(path)?;
         ensure!(
             meta.is_file() && !meta.file_type().is_symlink(),
             "Dope weights must be a regular file"
         );
         ensure!(meta.len() <= 32 << 20, "Dope weights exceed size bound");
-        Self::from_bytes(&std::fs::read(path)?, device)
+        Self::from_pinned_bytes(&std::fs::read(path)?, device, identity)
     }
 
     pub fn from_bytes(bytes: &[u8], device: &Device) -> Result<Self> {
+        Self::from_pinned_bytes(bytes, device, DopeCheckpointIdentity::ReleasedV1)
+    }
+
+    pub fn from_pinned_bytes(
+        bytes: &[u8],
+        device: &Device,
+        identity: DopeCheckpointIdentity,
+    ) -> Result<Self> {
+        identity.validate()?;
+        ensure!(bytes.len() <= 32 << 20, "Dope weights exceed size bound");
         ensure!(
-            sha256(bytes) == DOPE_WEIGHTS_SHA256,
+            sha256(bytes) == identity.weights_sha256(),
             "Dope weight checksum mismatch"
         );
         Ok(Self {
+            checkpoint_identity: identity,
             model: std::sync::Arc::new(MlcV3Model::from_safetensors_bytes_on_device(
                 bytes, device,
             )?),
@@ -222,6 +291,10 @@ impl DopeEncoder {
                 None
             },
         })
+    }
+
+    pub fn checkpoint_identity(&self) -> &DopeCheckpointIdentity {
+        &self.checkpoint_identity
     }
 
     pub fn device(&self) -> &Device {
@@ -306,6 +379,7 @@ impl DopeEncoder {
         let columns = Tensor::from_vec(columns, (1, 64, 17), self.device())?;
         let tensor = self.encode_tensors(&descriptor, &columns)?;
         Ok(Dope512 {
+            checkpoint_identity: self.checkpoint_identity.clone(),
             tensor,
             source_digest: input.bundle.source_digest.clone(),
             conditioning_digest: conditioning_digest(input),
@@ -328,8 +402,12 @@ impl DopeEncoder {
             conditioning_digest: embedding.conditioning_digest.clone(),
             options_digest: None,
             work_budget: None,
-            weights_sha256: DOPE_WEIGHTS_SHA256.into(),
-            embedding_identity: DOPE512_RECIPE.into(),
+            weights_sha256: self.checkpoint_identity.weights_sha256().into(),
+            training_receipt_sha256: self
+                .checkpoint_identity
+                .training_receipt_sha256()
+                .map(str::to_owned),
+            embedding_identity: self.checkpoint_identity.embedding_recipe().into(),
             device: format!("{:?}", self.device().location()),
             version,
             outcome: None,

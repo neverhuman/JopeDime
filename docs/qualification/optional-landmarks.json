@@ -1,0 +1,284 @@
+{
+  "schema": "jope.optional-landmarks-qualification/v1",
+  "recorded_at": "2026-10-27T16:21:31.373499+00:00",
+  "code_candidate": "2c103d9389f681c343d6c119918454a665b7c2a1",
+  "dope_candidate": "f49ac60b75578eb9cd2dd5568bd12ae9753084d2",
+  "dope_pin_publication": "development candidate; final published immutable pin pending",
+  "checkpoint_sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+  "gpu": "NVIDIA GeForce RTX 3090, cuda:0",
+  "focused_consumer_suite": {
+    "status": "pass",
+    "passed": 399,
+    "ignored": 3,
+    "failed": 0,
+    "log": "final-gpu-consumer-tests.log",
+    "log_sha256": "a25306660cac2d6dd5afb641c50e3246478def84cda0c117a25137f2f641c0d1",
+    "includes": [
+      "actual CUDA first512 parity and residency",
+      "sampled progressive/full equality and supplied fusion",
+      "same external CSV with different task or physical row IDs has incompatible scope",
+      "appliance companion and model-weight output alias protection",
+      "receipt schemas and native/GPU dependency fences",
+      "pipeline native admission, sibling joining and existing search regression tests"
+    ]
+  },
+  "coverage_only_session_suite": {
+    "status": "pass",
+    "passed": 5,
+    "failed": 0,
+    "log": "coverage-only-session.log",
+    "note": "Overlaps prior session tests; not additive unique coverage. New observation mask can advance with unchanged embedding version."
+  },
+  "scoped_cuda_clippy": {
+    "status": "pass",
+    "log": "final-scoped-clippy4.log",
+    "note": "Before final alias protection and coverage-only publication changes; final rerun pending."
+  },
+  "required_gate": {
+    "status": "not_passed",
+    "same_advisories_on_unchanged_main": [
+      "RUSTSEC-2026-0391",
+      "RUSTSEC-2026-0398",
+      "RUSTSEC-2026-0403",
+      "RUSTSEC-2026-0410"
+    ],
+    "other_observed_blocker": "Unchanged smartcluster AsyncFd::with_interest Clippy failures with the locked Tokio version. No advisory ignores added.",
+    "final_rerun": "required-final.log failed solely at existing advisories; bans/licenses/sources pass; remaining hygiene checks pass"
+  },
+  "gpu_appliance": {
+    "status": "pass_on_development_candidate",
+    "profile": "dope-gpu",
+    "cargo_profile": "dist-ci",
+    "log": "gpu-package-build.log",
+    "portability": "Requires compatible host CUDA libraries and driver; driver-only host unqualified.",
+    "base_executable_bytes": 19258792,
+    "final_executable_bytes": 20792951,
+    "proof": "target/dope-package-proof",
+    "cases": [
+      "GPU fit none/progressive/full",
+      "GPU fit-predict fast",
+      "mixed missing binary/multiclass",
+      "sampled progressive/full exact digest and embedding equality",
+      "actual run and encoding JSON Schema validation",
+      "tampered packaged Dope weight frame integrity exit3",
+      "unavailable GPU backend exit4",
+      "device-hidden startup",
+      "C-runtime-only ELF dependencies",
+      "weights/model-license/SBOM/notice inventory and 5% size budget"
+    ]
+  },
+  "latency_gate": {
+    "status": "not_qualified",
+    "required_fast_full_ratio": 5,
+    "cold_resident_separate": true,
+    "note": "QA owns full matched matrix; no component result establishes this gate."
+  },
+  "quality_gate": {
+    "status": "QA_results_available_pending_immutable_publication_and_combined_pin",
+    "roster": "112 dev_val_ablation datasets",
+    "primary_paired_seeds": [
+      20261024,
+      20261025
+    ],
+    "required_subsample_300_retention_ratio": 0.95,
+    "maximum_zero_relative_loss": 0.08,
+    "default_progressive_n": 300,
+    "adapter_training": "now required by binding addendum; baseline results precede training",
+    "observed_primary": {
+      "zero_full_ratio": 0.9826,
+      "zero_ratio_ci95": [
+        0.9397,
+        1.0279
+      ],
+      "valid_zero_full_datasets": 110,
+      "roster_size": 112,
+      "roster_sha256": "c3cc1dc2500c3baa7eb99ee339948501cf7d8d83561d0a72ea051581b6e6353a",
+      "note": "Six-auditor clipped R, High, paired two-seed equal-weight study. Source binary from Dope a5a03553; do not infer existing Jope policy quality."
+    },
+    "zero_mode_task_gate": "FAIL: regression relative loss 8.7%; binary loss7.7%. Pooled1.7% does not establish per-task quality.",
+    "observed_by_task": {
+      "regression": {
+        "n": 41,
+        "zero_full_ratio": 0.913,
+        "sub300_full_ratio": 1.014
+      },
+      "binary": {
+        "n": 17,
+        "zero_full_ratio": 0.923,
+        "sub300_full_ratio": 0.987,
+        "sub300_ratio_ci95": [
+          0.908,
+          1.064
+        ]
+      },
+      "multiclass": {
+        "n": 52,
+        "zero_full_ratio": 1.026,
+        "sub300_full_ratio": 1.001
+      }
+    }
+  },
+  "policy": "Dope/fusion tensor plumbing; existing pretrained policy and search behavior unchanged.",
+  "evidence_location": "Raw logs retained under the claimed worktree target/landmarks; final draft PR records exact heads and remaining qualification.",
+  "cli_pipeline": {
+    "status": "pass_on_development_candidate",
+    "proof": "target/cli-pipeline-proof",
+    "cases": [
+      "actualGPU CLI none/progressive/full",
+      "sampled terminal digest+embedding equality",
+      "two-cut progressive GPU pipeline",
+      "unchanged final encode stdoutschema and frozen pipeline v3 key/schema compatibility"
+    ],
+    "proof_command_completions_utc": [
+      "2026-10-27T14:52:16.750052+00:00",
+      "2026-10-27T14:52:24.906193+00:00"
+    ]
+  },
+  "binding_addendum": {
+    "status": "implementation_and_baseline_execution_proven;training_quality_live_health_incomplete",
+    "mask_dropout_training": "Claude owns trainer; admission and tensor-parity audit blockers sent; fresh role-filtered native evidence available; no reviewed trained checkpoint yet",
+    "same_pinned_weights_all_masks": true,
+    "optional_consumers": [
+      "Dope encoding directly",
+      "same Dope encoding into Jope DL model"
+    ],
+    "flywheel_live_and_regression": {
+      "regression": "26 passed: production admission with nine real Rust output fixtures and snapshot pin/CAS negatives",
+      "live_health": "unknown; no current deployed Rust PID/runtime hash and fresh heartbeat/progress proof supplied",
+      "publication_authority": "Only test implementations of LocalSnapshotAuthority/SnapshotEvidenceVerifier found; successful production publication not established"
+    },
+    "inference": "100% Rust; Python training/research only",
+    "per_task_qualification": [
+      "regression",
+      "binary",
+      "multiclass"
+    ],
+    "consumer_product_surface": "Both optional Rust SDK consumers implemented; CLI/appliance consumer selection and predictive ablation pending",
+    "multiclass_quality": "Finite Rust CPU/CUDA context execution proven. Governed Gen31 policy vocabulary is binary/regression only; supported multiclass readout and predictive benchmark remain required."
+  },
+  "current_dope_code_pin": "972685cd78ad1c1f25b592e49583d716cffb1f12",
+  "current_dope_publication": "Published immutable GitHub commit on open draft Dope PR340; normal network Cargo fetch succeeded. Earlier packaged baseline remains bound to f49/2c103d93.",
+  "addendum_suites": {
+    "published_pin_consumers": {
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "log": "published-pin-consumer-tests.log",
+      "log_sha256": "9d37a0e857aff3aab5328b9445f2055cc3904ab1ca6be9224b63389ac204bf53",
+      "scope": "8 Dope integration +2 real governed JOPE full-oracle tests; same CPU resident/host context; no SKIPPED"
+    },
+    "session_and_checkpoint": {
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "log": "addendum-session-pin-tests.log",
+      "log_sha256": "7d5180832cdecffc771b3d0e0863fbb582c4289ae4c1854fd13446b2d81481ea",
+      "scope": "Duplicate/coverage versioning, cancellation/failure, checkpoint switch and forged receipt refusal"
+    },
+    "flywheel_admission_and_snapshot": {
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0,
+      "log": "addendum-flywheel-tests2.log",
+      "log_sha256": "9426b0662a0e655dde47b36bcc0564b630332f579e5912fa2c623d94bb5686ac",
+      "scope": "19 replay admission +7 snapshot contracts; production admission and test authority only"
+    },
+    "receipt_schema": {
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "log": "addendum-receipt-schemas.log",
+      "log_sha256": "de9dc76473c488aadf19e4cf121439d4103e65f1b1650ad1e917d183a8aff321",
+      "scope": "Baseline/candidate identity and receipt reference schemas"
+    },
+    "inventory_repair": {
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "log": "inventory-repair.log",
+      "log_sha256": "aac77ce030b4fb3fac2a0c34c1ff9f90cece2e1de744823252233a3be9f8d18d",
+      "scope": "Dope integration target explicitly classified"
+    },
+    "actual_cuda_context": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "addendum-actual-gpu-context.log",
+      "log_sha256": "aca45fe5b9ae36d8394b433ec19bda7c03b677009f175396d47c150f70258701",
+      "scope": "3 tasks, actual resident context kernels, deep-copy mutation isolation; execution parity only",
+      "max_abs_by_task": {
+        "regression": 5.722045898e-06,
+        "binary": 7.152557373e-06,
+        "multiclass3": 5.24520874e-06
+      },
+      "tolerance": 3e-05,
+      "seconds": 2.88399299,
+      "gpu_lock_released_at": "2026-10-27T16:12:44.833333Z",
+      "numeric_recipe": "dope512-foundation1024-target512-jope-dl512-cuda-f32/v1"
+    },
+    "records_cli_repair": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "records-cli-repair.log",
+      "log_sha256": "1da2cd6154231dcb03c105047d25ddd8d8d1dca398cf609c1f553e453c68347a"
+    },
+    "dependency_fence_repair": {
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "log": "dependency-fence-repair.log",
+      "log_sha256": "332c9588dffbefaa497fd3f71ee6c6ff5abc86c58655fe16ed4781f2d955185d"
+    }
+  },
+  "addendum_scoped_cuda_clippy": {
+    "status": "passed",
+    "log": "addendum-scoped-clippy.log",
+    "scope": "Six changed consumer crates; all targets; actual CUDA feature combination. Later scalar-helper fail-fast guards require final focused rerun.",
+    "final_rerun": {
+      "status": "passed",
+      "log": "addendum-final-clippy.log",
+      "log_sha256": "75c74b06d6b81727717ef93b437b035d4a741d92872ca9e66fc915938ac22fdd",
+      "scope": "starforge, jope-learning, jope-dist all targets, starforge/dope-cuda; includes final scalar-helper CUDA refusal guards"
+    }
+  },
+  "default_pr_suite_initial": {
+    "command": "just test-pr",
+    "executed": 3707,
+    "passed": 3701,
+    "failed": 6,
+    "skipped": 37,
+    "seconds": 4077.344,
+    "log": "test-pr-final.log",
+    "failed_causes": {
+      "test_inventory_missing_dope_target": 4,
+      "uncached_offline_feature_dependency": 1,
+      "announced_lockfile_evaluator_identity_change": 1
+    },
+    "repair_status": "Four inventory/CLI failures repaired and focused4 tests passed; uncached feature closure repaired and both fence tests passed. Announced evaluator identity still requires source commit then identity-only rebaseline. No blanket rerun pass claimed."
+  },
+  "latency_baseline_update": {
+    "status": "not_passed",
+    "scope": "PRE-TRAINING BASELINE; before Gemini551575e5",
+    "synthetic_cold_cuda_measured": 7,
+    "passed_5x": 0,
+    "failed_5x": 7,
+    "speedup_range": [
+      2.0,
+      4.9
+    ],
+    "remaining_cuda_cells": 8,
+    "source": "Claude-Code coordination record2026-10-27T16:00Z; Dope QA commitaf019c97"
+  },
+  "training_input_manifests": {
+    "roster_sha256": "66d2a63c3e4b84e69a554af212a2f9f63081d59f366cd1f4b796bfc7eea39bdd",
+    "reg_bin_partition_sha256": "c8d8e5ab6b3822254dd3df4e1ace3d8f23d7663dc909e4510dd41fcaac3bd68e",
+    "multiclass_partition_sha256": "2f7c5ccfc666d305a4423458c42983f70d76776c6f88a0bdf467bcf52cc304c9",
+    "reg_bin_native_evidence_sha256": "6814da066cb058576d88167695f2a7ada573ca3ae7679afeed6a9b2f79ed3cc9",
+    "multiclass_native_evidence_sha256": "aaec7871cc544affdb472ac1324fd80b70701f0eaa14f81d6e3ad6f701cbfa12",
+    "reg_bin_full_valid": 1999,
+    "reg_bin_full_unavailable": 2,
+    "multiclass_partitions": 197,
+    "qualification": "Owner-produced measurements; trainer must verify all report/bundle hashes and scope before use. No training qualification asserted."
+  }
+}

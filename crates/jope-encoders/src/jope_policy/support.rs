@@ -51,6 +51,9 @@ impl Weights {
 }
 
 fn projection(x: &Tensor, weight: &Tensor, bias: Option<&Tensor>) -> Result<Tensor> {
+    if !x.device().is_cpu() {
+        bail!("JOPE scalar projection supports CPU only; CUDA supports context encoding");
+    }
     let input_width = *x.dims().last().context("JOPE linear input needs a rank")?;
     let (output_width, weight_width) = weight.dims2()?;
     if weight_width != input_width
@@ -98,6 +101,9 @@ pub(super) fn layer_norm(
     bias: &Tensor,
     epsilon: f64,
 ) -> Result<Tensor> {
+    if !x.device().is_cpu() {
+        bail!("JOPE scalar normalization supports CPU only; CUDA supports context encoding");
+    }
     let dimensions = x.dims();
     let width = *dimensions.last().context("JOPE layer norm needs a rank")?;
     let input = x.flatten_all()?.to_vec1::<f32>()?;

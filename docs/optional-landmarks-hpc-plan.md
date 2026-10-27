@@ -6,6 +6,11 @@ the user's subsequent requests for GPU Dope features, Micro HPC reuse, and coord
 in both repositories. The attached source documents preserve their wording; trailing Markdown
 spaces are normalized for repository hygiene. Implementation and qualification are separate milestones.
 
+**Binding update:** Jepson’s ADDENDUM in the mission supersedes this plan’s earlier no-training
+assumption. The current old-checkpoint implementation is a compatibility baseline. Completion
+now additionally requires trained mask robustness, both optional Jope consumption paths,
+flywheel regression/liveness, per-task quality, and entirely Rust inference.
+
 ## Ownership and coordination
 
 Codex owns cross-repository acceptance and the JopeDime optional-landmarks checkout. Claude owns
@@ -14,8 +19,9 @@ owns proposed preparation/kernel optimizations in its own claimed checkout. The 
 Micro-import owner retains the prepared JopeDime import packet; the optional-landmarks writer
 will not independently apply that overlapping packet. Read-only reviewers inspect shared
 contracts and lifecycle behavior. Claude-Code acknowledged Q1/Q2 ownership in the shared log at
-14:32Z; the full quality study follows a validated three-table smoke run. Other proposed owners
-remain pending acknowledgement.
+14:32Z; the full quality study follows a validated three-table smoke run. Gemini acknowledged H1/G1 preparation work at 14:36Z; Claude has committed the named training
+options and resident CLI fix at `82cea8c48f9194322a6c4f71ae7cea4d2202b986`. The Micro import
+owner retains its checkout handoff dependency.
 
 Use append-only `jope_plan/comms.md` for contract decisions, claims, exact commits, benchmark
 reservations and stopped-head handoffs. JopeDime claims additionally use `AGENT_CHAT.md` under
@@ -27,9 +33,13 @@ Micro experiments are required: integration and new qualification happen in Dope
 The dependency sequence is:
 
 1. Close contract/lifecycle defects and freeze shared fixtures.
-2. Publish Dope draft, pin its published immutable head in JopeDime, and qualify the combined path.
-3. Publish the linked JopeDime draft with actual package, compatibility and quality evidence.
-4. Integrate focused HPC changes through their existing owners, rerun the same acceptance matrix,
+2. Train and qualify one mask-aware Dope checkpoint using training-only data; preserve the old
+   checkpoint as a separately identified compatibility baseline.
+3. Export safetensors, verify Python/Rust CPU/CUDA parity, evaluate both optional Jope consumer
+   paths, and prove the flywheel remains live and passes its regression test.
+4. Publish Dope draft, pin its published immutable code/checkpoint identity in JopeDime, then
+   publish the linked JopeDime draft with package, compatibility and per-task quality evidence.
+5. Integrate focused HPC changes through their existing owners, rerun the same acceptance matrix,
    and update the drafts or use linked focused follow-ups. No merge or release is authorized by
    this plan.
 
@@ -59,19 +69,75 @@ The dependency sequence is:
 | ID / owner | Concrete work | Required evidence | Current state |
 | --- | --- | --- | --- |
 | C1 — Claude + Codex | Freeze bundle JSON, sanitation, sentinel, merge scopes and shared fixtures; bind source to task, targets, schema, labels and physical training IDs | Same fixture parsed in Python, Dope Rust and JopeDime; NaN/Inf, measured zero, single-squash, scope rejection and stable-hash tests | Implemented; final combined rerun pending |
-| C2 — Claude | Expose named MLC-v3 training options with work budget 2e12; leave legacy Default unchanged; use named options in both product paths | Options digest and budget in receipts; real/wide tables demonstrate genuine native coverage; legacy full bytes unchanged | Correction requested; Jope currently sets the matching value explicitly |
+| C2 — Claude | Expose named MLC-v3 training options with work budget 2e12; leave legacy Default unchanged; use named options in both product paths | Options digest and budget in receipts; real/wide tables demonstrate genuine native coverage; legacy full bytes unchanged | Dope helper/CLI verified at 82cea8c4; Jope adopts helper on published `972685cd` |
 | C3 — Codex | One admitted native CPU shared across pipeline cuts; cancellation-aware sessions; bounded updates; join all workers on output failure | Initial event precedes worker completion, duplicate idempotency, sibling-join failure test, CPU-ceiling admission test, cancellation/panic preserving last snapshot | Implemented; final rerun pending |
-| C4 — Codex | Finish CLI/appliance output protection, error mapping, receipt reference and actual generated schema validation | Weights/input/output alias refusals preserve bytes; event-output errors retain output failure class; generated run and encoding receipts validate | Reviewer defects fixed; positive package proof pending |
-| C5 — Claude + Codex | Fix Dope raw-table CUDA CLI to call resident tensor forward and bound its explicit CPU reference pool; published immutable Dope pin; reviewed Candle source reconciliation; released whole checkpoint and license packaged | Actual RTX 3090 numerical parity and residency, CPU-only and CUDA feature builds, dependency fences/security provenance, sealed appliance fit/fit-predict with no runtime download | Combined GPU tests passed on development candidate; final published pin/package pending |
-| C6 — packaging owner, pending ACK | Qualify GPU runtime portability separately from weight packaging; retain documented host-library requirement until supported CUDA runtime libraries are packaged with reviewed licenses/loader paths | Clean driver-only host/container, offline startup and GPU fit/fit-predict, tamper refusal, library/driver compatibility matrix and SBOM; existing native-only package remains portable | Open; current GPU profile requires host CUDA libraries |
-| Q1 — Claude-Code | Real native retention and feature-importance comparison on the available 112 development datasets | Zero, macro, macro+larger, full, N=100/200/300/500/1000; fixed paired seeds; dataset exclusions/errors and per-dataset metrics; zero relative retention loss, progressive changes, N300/full ratio, smallest tested N meeting 95% | Outstanding; gain-vector cosine/ranking proxies do not close it |
-| Q2 — Claude-Code + Codex | Matched latency matrix on real fixtures and synthetic 1k/10k/50k tables | Real fixtures plus synthetic 1k/10k/50k × p10/64/200; ≥15 repeats; p50/p95 public encode time, native evidence separately, full preparation included; CPU and CUDA weight-cold/resident timings, thread/device/commit/checkpoint identities and resource sampling | Partial CPU/device studies exist; full product gate outstanding |
+| C4 — Codex | Finish CLI/appliance output protection, error mapping, receipt reference and actual generated schema validation | Weights/input/output alias refusals preserve bytes; event-output errors retain output failure class; generated run and encoding receipts validate | Expanded sealed baseline package proof passed; trained-candidate package rerun pending |
+| C5 — Claude + Codex | Fix Dope raw-table CUDA CLI to call resident tensor forward and bound its explicit CPU reference pool; published immutable Dope pin; reviewed Candle source reconciliation; released whole checkpoint and license packaged | Actual RTX 3090 numerical parity and residency, CPU-only and CUDA feature builds, dependency fences/security provenance, sealed appliance fit/fit-predict with no runtime download | Jope pins published `972685cd`; baseline package passed; trained candidate/new final package pending |
+| C6 — Codex | Qualify GPU runtime portability separately from weight packaging; retain documented host-library requirement until supported CUDA runtime libraries are packaged with reviewed licenses/loader paths | Clean driver-only host/container, offline startup and GPU fit/fit-predict, tamper refusal, library/driver compatibility matrix and SBOM; existing native-only package remains portable | Open; current GPU profile requires host CUDA libraries |
+| Q1 — Claude-Code | Real native retention and feature-importance comparison on the available 112 development datasets | Zero, macro, macro+larger, full, N=100/200/300/500/1000; fixed paired seeds; dataset exclusions/errors and per-dataset metrics; zero relative retention loss, progressive changes, N300/full ratio, smallest tested N meeting 95% | Native study returned; zero regression loses8.7% (FAIL), binary7.7%; macro restores retention; N300 point estimates≥95% but binary CI wide; existing policy unqualified |
+| Q2 — Claude-Code + Codex | Matched latency matrix on real fixtures and synthetic 1k/10k/50k tables | Real fixtures plus synthetic 1k/10k/50k × p10/64/200; ≥15 repeats; p50/p95 public encode time, native evidence separately, full preparation included; CPU and CUDA weight-cold/resident timings, thread/device/commit/checkpoint identities and resource sampling | Old baseline CUDA cold 7/7 measured synthetic cells FAIL 5× (2.0–4.9×); eight CUDA cells unmeasured/quarantined; post-H1/training rerun required |
 | Q3 — both integration owners | Full required suites and compatibility audit on final heads | Dope engine/fast/check gates; Jope `just required`, relevant feature combinations, historical receipts, checkpoint loading, frozen Hyperion assembly and Python/Rust tolerances | Focused suites pass; full gates have explicit unresolved failures |
 
 Do not silently change the N=300 default in response to an ablation. Report the smallest tested
-N meeting the target and distinguish it from this version's agreed default. Do not train an
-adapter without a separate decision. Singleton-class sampling currently fails explicitly;
+N meeting the target and distinguish it from this version's agreed default. The binding ADDENDUM authorizes and requires mask-aware training; this supersedes the earlier
+no-training restriction. Train against the actual optional-conditioning recipe, not a leaked
+full-report feature vector with only its first46 entries masked. Singleton-class sampling currently fails explicitly;
 preserve the last snapshot and document that restriction rather than silently switching modes.
+
+## Binding addendum phase: trained optional landmarks and live consumers
+
+| ID / owner | Implementation | Acceptance evidence |
+| --- | --- | --- |
+| T1 — Claude, Dope training writer (ACK 16:10Z) | Fine-tune the released MLC-v3 encoder on an authenticated training-only roster with deterministic task-balanced none, progressive-group, random-partial and full masks. Rebuild gains/masks/ranks/contrasts/interactions/confidence/column/spectrum/building-block availability exactly as product conditioning permits. Keep the full input dimension and output layout fixed. | Frozen roster/exposure hash, seed/schedule/configuration, source/checkpoint identity, real optimizer steps/losses; tests proving withheld evidence cannot leak through derived inputs. The112 development roster and outer/sealed families are evaluation-only. |
+| T2 — Claude + Codex | Export one mask-aware safetensors checkpoint and a checksummed model/recipe manifest. Every mask mode uses that same pin. Preserve the historical d0 checkpoint and its legacy recipe/tests instead of overwriting them. | Strict Rust load of expected tensors/dtypes/shapes; finite CPU/CUDA none/partial/full output; Python/Rust tolerances for the trained weights; fixed512/629 dimensions; no Python process, LibTorch or runtime weight download in product inference. New trained weights have a new identity; historical full outputs remain frozen under the historical identity. |
+| J1 — Codex, Jope product writer | Implement and keep optional both consumers: Dope encoding directly through the product encoding/fusion surface, and the same encoding into JopeDime’s own DL model. Bind input recipe/checkpoint/mask scope; keep accepted legacy defaults available. | Run and document matched ablations: legacy baseline, Dope-only, Dope plus Jope DL; same splits/seeds/budgets and per-task downstream metrics. Actual model invocation/learning receipts are required; tensor assembly alone does not close this row. |
+| F1 — Codex + current flywheel owner | Establish current live flywheel health without interrupting its services. Add a regression test exercising the production self-play/data path with the optional encoder, updates and pinned identity, and run it for every PR head. | Existing rounds continue, checkpoint/receipt provenance remains valid, no poisoned/held-out rows enter training, none/partial/full paths stay finite and dimensionally compatible, checkpoint reload/resume works. Record live observations separately from unit-test success. A green historical service receipt does not establish current health. |
+| Q4 — Claude-Code | Repeat quality and latency qualification with the trained candidate and both optional consumers; report each mask level and regression/binary/multiclass separately. | Existing task-appropriate metrics/baselines, paired seeds/CIs and explicit regressions, per-task fast latency test, N ablation and feature importance. Old-checkpoint Q1/Q2 remain baseline evidence. “World-class” is not claimed from plumbing or pooled averages. |
+
+Training/research may use Python and CUDA; **product inference is100% Rust**. This includes
+conditioning/preparation, Dope forward, progressive updates and optional Jope DL inference.
+The new training mandate does not authorize a Python production fallback, a live service
+restart, training on development/outer-test families, or silently promoting a checkpoint.
+Coordinate GPU0 reservations before any training run. Start with a small reproducible gradient
+smoke, then run the declared balanced schedule and retain the full learning/evaluation receipts.
+
+The training admission roster has 2,199 gradient datasets (1,623 regression, 378 binary, 198
+multiclass). Fresh manifests contain 2,001 reg/bin and 197 valid multiclass partitions; one
+multiclass table has only one FIT class and is explicitly excluded. Filter the pinned roster
+before opening any blob. Never deserialize the mixed-role tensor cache or full report archive
+in the trainer. Preserve full FIT separately from capped optimizer episodes; static descriptors
+and class vocabulary use complete FIT, and native/BB evidence uses the declared sample. Bind
+report hashes to exact physical FIT/query IDs. Cache column conditioning per level; keep full
+measured auxiliary targets separate from masked inputs. A functional loader/one-update smoke
+must prove forbidden-open sentinels, finite gradients, positive real updates, active encoder
+parameter changes and accurate task×view counters. Syntax checks cannot establish these facts.
+
+J1's Rust SDK execution proof now passes both consumers on all three task inputs. The optional
+CUDA context MLP uses real device kernels; its maximum difference from the scalar CPU oracle
+was 7.16e-6 at tolerance 3e-5 on RTX 3090. Resident product fields are opaque, public exports copy
+device storage, and mutation-isolation tests pass. Caller-supplied pins are explicitly
+unqualified. Predictive ablation and CLI/appliance consumer selection still remain.
+
+For the consumer ablation, reuse outcome-free frozen program views and actual policy reward
+inference for a shadow TRAIN-pool diagnostic. The existing external-score harness records
+provenance but does not authenticate it; require the context-to-FIT mapping, native/checkpoint
+ancestry, evaluator identity and exact 1103-token vocabulary. Do not relabel development data
+to satisfy the TRAIN-only pool guard. Actual development prediction needs a fixed program bank
+and same-cut evaluator where each arm selects its program from FIT-only inputs, then refits and
+scores untouched rows. A and B compare complete consumer recipes; B additionally uses
+foundation/target components, so add a component-matched control before attributing a difference
+solely to its MLP. The governed Gen31 policy supports binary/regression only. Multiclass needs
+a genuinely supported downstream readout; finite context execution cannot qualify that task.
+Do not replace the flywheel's target-free ID features with global Dope vectors: any learned
+provider must fit inside the declared outer fold and bind its training provenance.
+
+F1 has 26 passing admission/snapshot regression tests, including nine frozen real Rust outputs
+(three tasks × none/macro/terminal), protected-ancestor refusal, missing labels, duplicate/pin
+rules and unchanged authority/remote state on incompatible updates. These are contract proofs.
+`LocalSnapshotAuthority` and `SnapshotEvidenceVerifier` currently have only test implementations;
+a production evidence verifier/store binding and fresh deployed PID/runtime/heartbeat/progress
+observations are still required. Retired Python units and stale healthy receipts cannot satisfy
+the live-green requirement. Preserve current services while the owner supplies that boundary.
 
 ## HPC integration waves
 
@@ -94,12 +160,16 @@ component gains require a combined-head rerun before product attribution.
 H4/H5 overlap the existing 149-file Micro import packet. The import owner will split and
 register applicable source, workspace, tests, assets and CI changes; this checkout will not
 apply the separate feat-math patch independently. Coordinate the final Dope dependency and
-shared runtime/feature changes before merging any integration branches.
+shared runtime/feature changes before merging any integration branches. The packet currently includes a copied Python `MultiLevelLandmarkModel`
+and stat-keyed hash helpers. Preserve them as historical/reproduction evidence if needed, but
+route new product execution through the immutable Dope dependency and shared bundle contract.
+Do not introduce a second live model implementation or replace strict checkpoint verification
+with the historical stat cache.
 
-The policy integration currently publishes compatible-size Dope/fusion tensors; the pretrained
-policy has not been qualified on their changed distribution. Call this plumbing in PRs. Actual
-policy use and any ranking changes require quality evidence and a separate behavior decision;
-current search remains unchanged.
+The current baseline publishes compatible-size Dope/fusion tensors; the pretrained policy has
+not been qualified on their changed distribution. Call that baseline plumbing in PRs. The
+binding addendum now requires the optional actual DL-consumer ablation (J1); do not call it
+complete until the model executes and its task-specific quality is measured.
 
 A C++ native kernel backend and C++17/20 generated-program execution are separate surfaces.
 Pin C++ compiler/libm/ISA and strict floating-point flags (`-ffp-contract=off`, no fast-math
@@ -111,8 +181,9 @@ Preserve its existing pure-Rust fitting closure.
 Keep full checkpoint SHA verification on every load. Existing measured hashing cost is small
 for this checkpoint; resident sessions already amortize it. Do not introduce a stat-only trust
 cache. Preserve FP32 inference and exact CPU arithmetic for compatibility-preserving waves;
-FP16/TF32/fast-math, alternate solvers, synthesized evidence and changed search policies need
-separate accuracy/quality decisions.
+FP16/TF32/fast-math, alternate solvers and synthesized evidence need separate accuracy/quality
+decisions. The addendum requires evaluating optional neural consumers; retain legacy defaults
+and use separate identities/configuration for those experiments.
 
 ## Measurement and gate protocol
 
@@ -142,9 +213,9 @@ Keep singleton/wide-table failures in the roster with per-arm availability, not 
 `v3_ledger_replay` retention R and RF feature-importance Spearman protocol, with paired generation
 seeds 20261024 and 20261025. Average paired seeds per table before equal-weight dataset
 aggregation. Publish numerator/denominator, valid/failed counts, mean/median and paired confidence
-intervals. For nonpositive full-R baselines report absolute changes and mark relative loss
+intervals, separately for regression, binary and multiclass as well as pooled. For nonpositive full-R baselines report absolute changes and mark relative loss
 undefined, without silently dropping the table. The primary relative result is the ratio of
-paired mean R over the same valid roster; include per-table ratios and regressions. Zero-mode
+paired mean R over the same valid roster; a pooled pass must not hide a failing task; include per-table ratios and regressions. Zero-mode
 loss must be at most 8% (also report the 5% threshold); N300/full must reach 95% before either
 claim passes. Every progressive transition, including macro+larger, needs a paired comparison.
 

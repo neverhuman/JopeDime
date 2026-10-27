@@ -4638,6 +4638,13 @@
         "policy"
       ]
     },
+    "target:starforge/test/dope_encoding": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
     "target:starforge/test/foundation_parity": {
       "role": "regression",
       "subsystems": [

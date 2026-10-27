@@ -18,7 +18,7 @@ use std::thread;
 #[derive(Default)]
 struct MemoryAuthority(Mutex<MemoryState>);
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct MemoryState {
     root: Option<SnapshotRoot>,
     candidates: BTreeMap<String, Vec<u8>>,
@@ -213,6 +213,59 @@ fn candidate(id: &str, vocabulary: u8) -> Snapshot {
             },
         },
     }
+}
+
+#[test]
+fn optional_encoding_pin_changes_leave_authority_and_remote_untouched() -> Result<()> {
+    struct MustNotVerify;
+    impl SnapshotEvidenceVerifier for MustNotVerify {
+        fn verify_candidate(&self, _: &Snapshot) -> Result<()> {
+            panic!("incompatible encoding pin reached evidence verifier")
+        }
+    }
+    let local = MemoryAuthority::default();
+    let retired = RetiredVersions::default();
+    let remote = TestRemote::new(false)?;
+    // Existing contract fixture establishes a parent; this is not production admission proof.
+    let mut parent = candidate("encoding-parent", b'0');
+    parent.pins.checkpoint_sha256 =
+        "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c".into();
+    AuthorityAdapter::new(&local, Some(&remote), &retired, &FixtureVerifier).publish(&parent)?;
+    let before = local.state().clone();
+    let remote_before = remote
+        .list("")?
+        .into_iter()
+        .map(|key| {
+            let bytes = remote.get(&key);
+            bytes.map(|bytes| (key, bytes))
+        })
+        .collect::<Result<BTreeMap<_, _>>>()?;
+    for field in ["checkpoint", "replay", "physical-version"] {
+        let mut child = parent.clone();
+        child.candidate_id = format!("encoding-{field}");
+        child.previous_root = Some(parent.digest()?);
+        child.expected_generation = 1;
+        match field {
+            "checkpoint" => child.pins.checkpoint_sha256 = digest(b'9'),
+            "replay" => child.pins.replay_sha256 = digest(b'8'),
+            _ => child.pins.physical_versions[0].version_id = "different-object-version".into(),
+        }
+        let error = AuthorityAdapter::new(&local, Some(&remote), &retired, &MustNotVerify)
+            .publish(&child)
+            .unwrap_err();
+        assert!(error.to_string().contains("compatibility pins differ"));
+        assert_eq!(*local.state(), before);
+        let remote_after = remote
+            .list("")?
+            .into_iter()
+            .map(|key| {
+                let bytes = remote.get(&key);
+                bytes.map(|bytes| (key, bytes))
+            })
+            .collect::<Result<BTreeMap<_, _>>>()?;
+        assert_eq!(remote_after, remote_before);
+    }
+    Ok(())
 }
 
 #[test]
