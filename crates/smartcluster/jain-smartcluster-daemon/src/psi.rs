@@ -115,7 +115,11 @@ impl PsiTrigger {
             source,
         })?;
         file.seek(SeekFrom::Start(0))?;
-        let file = AsyncFd::with_interest(file, Interest::PRIORITY)?;
+        // SAFETY: the owned File stays inside this private AsyncFd until deregistration/drop.
+        // PsiTrigger exposes no mutable access and never replaces or closes its inner file.
+        #[allow(unsafe_code)]
+        let file = unsafe { AsyncFd::register_with_interest(file, Interest::PRIORITY) }
+            .map_err(std::io::Error::from)?;
         Ok(Self {
             resource,
             level,
