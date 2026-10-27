@@ -1000,7 +1000,9 @@
     "feature:starforge/dope": {
       "discovery": {
         "dependencies": [
-          "dep:dope-core"
+          "dep:dope-core",
+          "dep:jope-paths",
+          "dep:jope-records"
         ],
         "kind": "feature"
       },
@@ -6825,6 +6827,23 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
+    "target:jope-cli/example/landmark_one_shot": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "dope-encoding"
+        ],
+        "source": "crates/jope-cli/examples/landmark_one_shot.rs",
+        "test": false
+      },
+      "dispositions": [
+        "cpu-qualification",
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "Opt-in dope-encoding example compiled by explicit local all-target feature Clippy; default CI does not select this feature. Runtime execution requires the ignored artifact test or an explicitly budgeted nice-15 one-shot invocation. Build/check does not establish neural training, production snapshot admission, or a continuous learning service."
     },
     "target:jope-cli/lib/jope_cli": {
       "discovery": {
