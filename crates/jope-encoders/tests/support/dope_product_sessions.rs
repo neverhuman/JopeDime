@@ -1,8 +1,9 @@
 //! Explicit product selection and serialization; no native probes or external assets are needed.
 use starforge::dope_encoder::{
-    collect, start_training_with_options, write_snapshot, DopeConsumer, DopeConsumerProduct,
-    DopeDevice, DopeEncoder, Head, LandmarkArgs, LandmarkConsumer, LandmarkMode, SessionOptions,
-    SessionOutcome, TrainingInput,
+    collect, prepare_product_training_input, start_training_with_options, write_snapshot,
+    DopeConsumer, DopeConsumerProduct, DopeDevice, DopeEncoder, FitScope, Head, LandmarkArgs,
+    LandmarkConsumer, LandmarkMode, SessionOptions, SessionOutcome, TrainingInput,
+    LOSSLESS_PREPARATION_RECIPE,
 };
 use std::sync::Arc;
 
@@ -93,43 +94,108 @@ fn omitted_consumer_keeps_historical_event_and_receipt_fields() -> anyhow::Resul
     Ok(())
 }
 
+fn multiclass_input(labels: &[f64]) -> TrainingInput {
+    let rows = labels.len() * 4;
+    TrainingInput::numeric(
+        (0..rows).map(|i| vec![i as f64, (i % 5) as f64]).collect(),
+        (0..rows).map(|i| labels[i % labels.len()]).collect(),
+        (0..rows).map(|i| 1000 + i as u64 * 7).collect(),
+        Head::Multiclass(labels.len()),
+    )
+}
+
 #[test]
-fn explicit_products_refuse_class_capping_or_label_rounding_before_component_admission(
+fn explicit_direct_none_k33_preserves_full_fit_vocabulary_and_emits_finite512() -> anyhow::Result<()>
+{
+    let labels = (0..33).map(|n| n as f64).collect::<Vec<_>>();
+    let input = multiclass_input(&labels);
+    let prepared = prepare_product_training_input(&input)?;
+    assert_eq!(prepared.classes, 33);
+    assert_eq!(prepared.transform.target.class_labels, labels);
+    assert_eq!(prepared.row_ids, input.ids);
+    for (i, code) in prepared.y_scaled.iter().enumerate() {
+        assert_eq!(*code, (i % 33) as f64);
+    }
+    let expected_scope = FitScope::from_prepared(&input, &prepared)?;
+    assert_eq!(
+        expected_scope.preparation_recipe.as_deref(),
+        Some(LOSSLESS_PREPARATION_RECIPE)
+    );
+    let encoder = DopeEncoder::from_bytes(super::WEIGHTS, &DopeDevice::Cpu)?;
+    let args = LandmarkArgs {
+        landmark_mode: Some(LandmarkMode::None),
+        landmark_consumer: Some(LandmarkConsumer::Direct),
+        ..Default::default()
+    };
+    let session = start_training_with_options(
+        input,
+        encoder,
+        &args,
+        SessionOptions {
+            consumer: Some(Arc::new(DopeConsumer::encoding_only())),
+            ..Default::default()
+        },
+    )?;
+    let run = collect(session, |_| Ok(()))?;
+    assert_eq!(run.outcome, SessionOutcome::Complete);
+    let snapshot = &run.final_snapshot;
+    assert!(matches!(
+        snapshot.consumer.as_ref().unwrap().product(),
+        DopeConsumerProduct::Direct(_)
+    ));
+    let values = snapshot.embedding.to_vec()?;
+    assert_eq!(values.len(), 512);
+    assert!(values.iter().all(|v| v.is_finite()));
+    assert_eq!(snapshot.receipt.embedding.as_ref(), Some(&values));
+    assert_eq!(snapshot.receipt.consumer_embedding.as_ref(), Some(&values));
+    assert_eq!(snapshot.receipt.fit_scope.as_ref(), Some(&expected_scope));
+    assert_eq!(
+        snapshot.receipt.fit_scope.as_ref().unwrap().task,
+        "Multiclass(33)"
+    );
+    assert_eq!(snapshot.receipt.mask, [false; 23]);
+    assert_eq!(snapshot.receipt.version, 0);
+    Ok(())
+}
+
+#[test]
+fn explicit_products_refuse_rounded_or_colliding_classes_before_component_admission(
 ) -> anyhow::Result<()> {
     let encoder = DopeEncoder::from_bytes(super::WEIGHTS, &DopeDevice::Cpu)?;
     for labels in [
-        (0..33).map(|n| n as f64).collect::<Vec<_>>(),
         vec![0., 0.0000001, 1.],
+        vec![0.1000001, 0.2000001, 0.3000001],
     ] {
-        let k = labels.len();
-        let input = TrainingInput::numeric(
-            (0..k).map(|n| vec![n as f64]).collect(),
-            labels,
-            (0..k as u64).collect(),
-            Head::Multiclass(k),
-        );
-        let args = LandmarkArgs {
-            landmark_mode: Some(LandmarkMode::None),
-            landmark_consumer: Some(LandmarkConsumer::Direct),
-            ..Default::default()
-        };
-        let result = start_training_with_options(
-            input,
-            encoder.clone(),
-            &args,
-            SessionOptions {
-                consumer: Some(Arc::new(DopeConsumer::encoding_only())),
+        for selected in [LandmarkConsumer::Direct, LandmarkConsumer::JopeDl] {
+            let args = LandmarkArgs {
+                landmark_mode: Some(LandmarkMode::None),
+                landmark_consumer: Some(selected),
+                landmark_components: (selected == LandmarkConsumer::JopeDl)
+                    .then(|| "unopened-components.json".into()),
                 ..Default::default()
-            },
-        );
-        let error = match result {
-            Ok(_) => anyhow::bail!("lossy product preparation admitted"),
-            Err(e) => e,
-        };
-        assert!(
-            error.to_string().contains("lossless FIT class preparation"),
-            "{error}"
-        );
+            };
+            // The learned selection deliberately lacks projected assets/admitted components.
+            // Class refusal must happen before any consumer binding or component admission.
+            let result = start_training_with_options(
+                multiclass_input(&labels),
+                encoder.clone(),
+                &args,
+                SessionOptions {
+                    consumer: Some(Arc::new(DopeConsumer::encoding_only())),
+                    ..Default::default()
+                },
+            );
+            let error = match result {
+                Ok(_) => anyhow::bail!("lossy product preparation admitted"),
+                Err(e) => e,
+            };
+            assert!(
+                error
+                    .to_string()
+                    .contains("exact uncapped FIT class vocabulary"),
+                "{selected:?}: {error}"
+            );
+        }
     }
     Ok(())
 }

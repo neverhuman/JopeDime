@@ -4,8 +4,8 @@ use candle_core::Device;
 use serde_json::Value;
 use starforge::bundle::VerifiedJopePolicyAssets;
 use starforge::dope_encoder::{
-    collect, prepare_training_input, start_training_with_options, ComponentInputs, DopeConsumer,
-    DopeConsumerProduct, DopeEncoder, EncodingSnapshot, FitScope, Head, LandmarkArgs,
+    collect, prepare_product_training_input, start_training_with_options, ComponentInputs,
+    DopeConsumer, DopeConsumerProduct, DopeEncoder, EncodingSnapshot, FitScope, Head, LandmarkArgs,
     LandmarkConsumer, LandmarkMode, SessionOptions, SessionOutcome, TrainingInput,
 };
 use starforge::jope_policy::JopePolicyModel;
@@ -88,7 +88,7 @@ fn input(head: Head) -> TrainingInput {
     input
 }
 fn fixture(input: &TrainingInput, label: &str) -> Result<ComponentFixture> {
-    let prepared = prepare_training_input(input)?;
+    let prepared = prepare_product_training_input(input)?;
     install_for_scope(
         &fixture_root(label)?,
         FitScope::from_prepared(input, &prepared)?,
