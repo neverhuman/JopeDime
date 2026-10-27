@@ -129,7 +129,7 @@ See the [consumer receipt schema](../schemas/jope.dope-consumer.v1.schema.json),
 [event schema](../schemas/jope.landmark-event.v1.schema.json),
 [component subject schema](../schemas/jope.dope-fusion-components.v1.schema.json) and
 [request schema](../schemas/jope.fusion-component-requests.v1.schema.json).
-Public tensor exports use deep device copies because Candle tensors permit mutation through
+Public tensor exports use deep device copies because Candle tensors permit in-place writes through
 shared references. Event/receipt serialization is an explicit host-copy boundary.
 
 Caller-supplied checkpoint pins remain `UnqualifiedCandidateV1`. A checksum or a supplied training
