@@ -1,0 +1,245 @@
+{
+  "schema": "jope.optional-landmarks-p1-p6-hardening/v1",
+  "recorded_at": "2026-10-27T20:26:38.637282+00:00",
+  "implementation_commit": "64db44cc11f791c0e8442acaae4e9360d0628ad4",
+  "checkpoint_fix_commit": "5d449917d8bc7a0b28cbbe2733c0613e52a9c685",
+  "readonly_fix_commit": "80571c58baf53dba5de928cc6b6683b3722f1d27",
+  "published_dope_pin": "2535a36c0e7ced2a17a0b06818efaeb17f7a2d47",
+  "preparation_recipe": "jope.dope-product-preparation/lossless-v1",
+  "changes": [
+    "Explicit product consumers select uncapped LosslessV1; legacy Cap32 remains unchanged",
+    "Exact raw class vocabulary, row codes, physical IDs and ordered original target bits bind product scope",
+    "Four schemas gain optional recipe marker; low-level checkpoint/embedding/consumer recipes unchanged",
+    "Any requested successor lineage/intent/attempt/window refuses legacy/v2 checkpoints",
+    "Read-only native proof verification exact-reads retained bytes and never stages/creates conflict evidence"
+  ],
+  "gpu": {
+    "source_commit": "64db44cc11f791c0e8442acaae4e9360d0628ad4",
+    "dope_pin": "2535a36c0e7ced2a17a0b06818efaeb17f7a2d47",
+    "executable": "/home/ubuntu/JopeDime/.agent/worktrees/optional-landmarks/target/debug/deps/dope_encoding-d8ca274936ecfece",
+    "executable_sha256": "89bb56b3fe3d3fcbd2c229d54a83fc3e55ce49d0ec6c47c43479bddae9ec0b71",
+    "classification": "bounded actual CUDA execution/oracle; not latency/retention/production authority",
+    "resources": "nice15 CPU16-23 oneGPU0 test1 math1 60s watchdog",
+    "started": "2026-10-27T20:21:58.754001+00:00",
+    "exit": 0,
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=5s",
+      "60s",
+      "nice",
+      "-n",
+      "15",
+      "taskset",
+      "-c",
+      "16-23",
+      "/home/ubuntu/JopeDime/.agent/worktrees/optional-landmarks/target/debug/deps/dope_encoding-d8ca274936ecfece",
+      "--exact",
+      "learned_product::admitted_cuda_product_three_tasks_matches_cpu_oracle_and_terminal_full",
+      "--ignored",
+      "--nocapture"
+    ],
+    "finished": "2026-10-27T20:22:11.308744+00:00",
+    "seconds": 12.554816137067974,
+    "outcome": "pass",
+    "comparisons": 21,
+    "max_abs": 6.914138794e-06,
+    "tolerance": 3e-05
+  },
+  "evidence": [
+    {
+      "path": "target/landmarks/p6-checkpoint-expected-red-runtime.log",
+      "sha256": "d285f681737d32390c2b5c96325de1296c4773009f1ac18f5aa57eef9d8c911b",
+      "results": [
+        {
+          "passed": 0,
+          "failed": 1,
+          "ignored": 0
+        }
+      ],
+      "role": "expected_failure_before_fix"
+    },
+    {
+      "path": "target/landmarks/p6-checkpoint-fixed-suite.log",
+      "sha256": "585b76d1c34bb4345eef92746bbd56e9922fdbe9f8bf6f519683746d2f0f39c6",
+      "results": [
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p6-native-proof-expected-red.log",
+      "sha256": "e37cfdd3d4c676e75086b4ec06745f826ec940cec251bd9bb9c54fb3debc41fc",
+      "results": [
+        {
+          "passed": 0,
+          "failed": 3,
+          "ignored": 0
+        }
+      ],
+      "role": "expected_failure_before_fix"
+    },
+    {
+      "path": "target/landmarks/p6-native-proof-fixed-suite.log",
+      "sha256": "1bfc38b3b2bd7b2e808f1bce77f9cd75bdd2338ce94236c01bdd3f24f26d6d53",
+      "results": [
+        {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-product-cpu-suite.log",
+      "sha256": "9d26eb2e21aeda94d1837787484a99f69d7da4db4076205e6e4407fc9ec91606",
+      "results": [
+        {
+          "passed": 79,
+          "failed": 0,
+          "ignored": 1
+        },
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 5
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-selected-assets-and-schemas.log",
+      "sha256": "725773237fff43dface6173ef2916f75216098c482801191dc81c5a075aa7eb8",
+      "results": [
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-product-cli-appliance-fences.log",
+      "sha256": "561cba6dcfc077e24aa6bfde5b6f954522b75e4aff5699b2ba7e0bb17faa116d",
+      "results": [
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-product-cpu-clippy.log",
+      "sha256": "78ca9786883c170141801e66f125c6518ab42cada0545bfdd5c58aa50636afa1",
+      "results": [],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-actual-cuda.log",
+      "sha256": "cc7cf69fe6f719c328fce59b3348d1260ee5cfe8f2fd19da9aea5f516f31790f",
+      "results": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-cuda-window.json",
+      "sha256": "3a338def9654507a819abc69b9afd7706cf48234d183c321ba2236ac2896cffc",
+      "results": [],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-identity-regenerate.log",
+      "sha256": "c1b2ad7d0d4d42a0524d9dbb53bc31cc940c4099451864b14dd73ec9a32477bf",
+      "results": [
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-identity-compare.log",
+      "sha256": "fabe2bf47de2f9778a76646612c9ce7704dca306a958036e556b9906cb58ebbd",
+      "results": [
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    },
+    {
+      "path": "target/landmarks/p1-identity-historical.log",
+      "sha256": "a843065c32d50e209fbd54bc1fa955a11322b57171d7800dd87ad5f88298eb3b",
+      "results": [
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "role": "verification"
+    }
+  ],
+  "counts_policy": "Distinct suite counts overlap; not summed. Ordinary guarded skips do not establish qualification; selected learned/projection artifact tests were run separately. Historical whole-bundle candidate test remains outside this execution.",
+  "one_shot": "Original A9 diagnostic run retained; no second P6 acquisition or daemon. New checkpoint fixtures perform no optimizer updates.",
+  "weights": "ReleasedV1 product remains d0b69603; trained ecded022 remains UnqualifiedCandidateV1 SDK only, not promoted or distributed.",
+  "remaining": [
+    "Full local required aggregate and exact-head CI/review after checkpoint push",
+    "Production v3 committed-credit producer and authenticated I27/controller/execution proof mappings",
+    "Owner-registered trained selector/export/preparation/rights record; no caller digest may manufacture registration",
+    "Predictive consumer/multiclass qualification, final sealed trained package, matched latency gate"
+  ],
+  "registration_packet": {
+    "path": "/home/ubuntu/jope_plan/evidence/ecded022-registration-review-20261027/registration-review.json",
+    "sha256": "05943efb2630d5b99c145c0c223af03721a760194d8472767c9011f815bc9401",
+    "owner_point_rule": "PASS on reported available paired cohort; not a lower-CI gate",
+    "metadata_reconciliation": "stale sampled partition text and missing candidate role manifest relayed to Dope owner"
+  },
+  "identity_transition": {
+    "implementation_sha256": "e0c41b1af055ff5b0af844a2077c2431d474769280c83a599483fed1b5bdeb3f",
+    "cargo_lock_sha256": "e7e8edc191cc38636be3968f537782f609d82acc07d5bda33a140613e4920cb9",
+    "identity_digest": "61185b72188ffeaad4abce1eb08773c00c0b6fa899aff866f3ab93219240a2c5",
+    "regeneration": 13,
+    "comparison": 13,
+    "historical": 3,
+    "prior_closed_ledgers_preserved": 3,
+    "behavior_rebaseline": false
+  }
+}
