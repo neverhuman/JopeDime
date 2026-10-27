@@ -375,6 +375,8 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
                         "--exact",
                         "gp_probe",
                         "--nocapture",
+                        // Pretty single-thread status otherwise prefixes the first V record.
+                        "--format=terse",
                     ])),
                 )]
             }
