@@ -2572,6 +2572,7 @@ dependencies = [
  "jope-pipeline",
  "jope-records",
  "rusqlite",
+ "rustix 1.1.4",
  "schemars",
  "serde",
  "serde_json",
@@ -2711,10 +2712,13 @@ dependencies = [
 name = "jope-records"
 version = "0.4.1"
 dependencies = [
+ "anyhow",
  "clap",
  "flate2",
  "regex",
  "ruzstd",
+ "serde",
+ "serde_json",
  "sha2 0.10.9",
  "tempfile",
  "toml",
@@ -2730,6 +2734,7 @@ dependencies = [
  "csv",
  "feat-math",
  "hex",
+ "jope-paths",
  "rayon",
  "serde",
  "serde_ignored",
@@ -4564,6 +4569,8 @@ dependencies = [
  "clap",
  "csv",
  "dope-core",
+ "jope-paths",
+ "jope-records",
  "jope-runtime",
  "ordered-float",
  "proptest",

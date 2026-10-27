@@ -11,6 +11,17 @@ assumption. The current old-checkpoint implementation is a compatibility baselin
 now additionally requires trained mask robustness, both optional Jope consumption paths,
 flywheel regression/liveness, per-task quality, and entirely Rust inference.
 
+## P4 continuation update
+
+The user-authorized focused continuation now implements explicit direct/learned product
+consumers, scoped controller admission, a selected-only policy projection, typed context
+semantics, CLI/appliance/pipeline propagation and companion schemas. The
+[P4 implementation record](qualification/optional-landmarks-p4.md) describes the changes,
+focused verification, asset-owner review packet and remaining acceptance. The snapshot below
+is the preserved 17:40 observation; it is not a claim that product selection is still absent.
+Preparation/P1, sampled evaluation/P2, final trained identity, governed package approval,
+production authority/liveness and the final quality/latency/aggregate gates remain open.
+
 ## Closeout decision and current snapshot
 
 This is an implemented Rust/CUDA integration with an initial trained candidate, not a completed

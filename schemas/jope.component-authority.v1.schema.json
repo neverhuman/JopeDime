@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.component-authority.v1.schema.json",
+  "title": "Controller-owned review snapshot; never request supplied or automatically installed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "adoption_sha256",
+    "revocation_files",
+    "revoked_digests"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.component-authority/v1"
+    },
+    "adoption_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "revocation_files": {
+      "type": "object",
+      "maxProperties": 4096,
+      "additionalProperties": {
+        "$ref": "#/$defs/sha256"
+      }
+    },
+    "revoked_digests": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/sha256"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

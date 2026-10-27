@@ -76,15 +76,61 @@ a compatibility baseline. Training may use Python; product inference remains ent
 The trained checkpoint must have its own pin/recipe, pass per-task mask-level evaluation, and
 keep the live flywheel and its new regression test green. See the completion plan’s T1/T2/J1/F1/Q4 rows.
 
-The optional Rust SDK has two consumers: `DopeConsumer::encoding_only()` returns Dope512,
-and `DopeConsumer::jope_dl(model)` applies Jope's learned context encoder to the same Dope512
-plus supplied foundation/target components. Call `consume_snapshot` for each ordered session
-update. Load the optional Jope model on `encoder.device().clone()` with
-`JopePolicyModel::load_bundle_on_device`. Its CUDA context path uses device matmul,
-normalization and GELU; the existing scalar CPU oracle remains separate. Consumer receipts bind
-the actual loaded Jope weight bytes, Dope checkpoint, source, effective conditioning and component
-float bytes. CPU and CUDA context arithmetic have distinct recipes. Public tensor exports use
-deep device copies because Candle tensors permit mutation through shared references.
+Explicit `--landmark-consumer direct` selects raw Dope512. Explicit
+`--landmark-consumer jope-dl` selects a learned Jope context512 and requires
+`--landmark-components requests.json` plus `--jope-policy-assets selected-policy/` (or a
+reviewed sealed projection). Both selectors activate encoding; omitting the selector preserves
+the existing landmark-only path. None/fast, progressive and full apply to either consumer.
+The selectors propagate through raw encode, pipeline and appliance fit/fit-predict. The learned
+output already passed through the context MLP. Its opaque `JopeContext512` can bridge to the
+current Rust CPU decoder without another MLP pass; it cannot enter Dope fusion. Decoder and
+reward execution remain CPU-only. Dope and the context MLP share the selected owned CUDA device.
+
+The request file contains only FIT-scope, component subject, exposure-receipt and episode
+references. Authority comes from the separately configured `JOPE_STATE` controller store and
+its adopted replay policy; a request cannot supply its own issuer, policy pin, authority root or
+admission Boolean. `ComponentInputs::load_with_controller` is a trusted host SDK adapter, not a
+candidate-controlled selector. A controller owner must provide the existing authority snapshot;
+`jope_learning::replay::admission::component_authority_snapshot` produces a read-only review
+artifact and never installs it, adopts policy, repairs a ledger or signs a new grant.
+No production controller installation or live flywheel authority is established by fixture tests.
+
+`FusionComponentArtifact` binds original physical FIT rows, prepared source, fold, task,
+preparation source, supported component recipe and producer ancestry. Foundation1024/target512
+must already have their producer's projection/normalization; fusion applies no Hyperion
+normalizer. The supported assembly recipe is
+`foundation1024-target512-supplied-normalized/v1`. Component values use exact finite little-endian
+f32 hex bytes. Every ancestor must be admitted for this episode's FIT-only training purpose;
+protected metadata is refused before subject/target payloads open. Known prohibited model
+payloads are also refused before opening. Unknown, capped or rounded multiclass vocabularies
+are refused by explicit products until the new lossless preparation lineage is pinned. This
+keeps the P1 requirement open; it does not establish large-class support.
+
+Direct companion receipts expose `fit_scope` for controller producers. That scope remains
+static across masks/subsamples of the same FIT preparation, while the landmark conditioning
+scope changes with options/evidence. Replaying an artifact against another fold or physical row
+roster fails. Admission, policy time, retained bytes and revocations are rechecked during
+updates and final collection, including none/fast. Failure retains the last valid snapshot and
+records a failed outcome. These guards add no retrieval, policy-training or global-use grant.
+
+Product sessions load `VerifiedJopePolicyAssets`, then
+`JopePolicyModel::load_policy_assets_on_device(assets, encoder.device().clone())`. The projection
+opens only the pinned original manifest, four selected policy verification files and required
+notice; the full-bundle loader remains strict. Content verification does not approve
+redistribution. The [concrete asset review](qualification/optional-landmarks-policy-assets.md)
+contains layout, exact checksums, draft SBOM and the release/model owner's unresolved decision.
+No governed projection is added to an appliance release profile in this phase.
+
+Consumer receipts bind the actual loaded Jope weight bytes and verified projection, Dope
+checkpoint, component admission, physical FIT scope, effective conditioning and component float
+bytes. CPU and CUDA context arithmetic have distinct recipes. Events contain both raw encoding
+and explicitly selected consumer output; final stdout and pipeline receipt v3 stay unchanged.
+See the [consumer receipt schema](../schemas/jope.dope-consumer.v1.schema.json),
+[event schema](../schemas/jope.landmark-event.v1.schema.json),
+[component subject schema](../schemas/jope.dope-fusion-components.v1.schema.json) and
+[request schema](../schemas/jope.fusion-component-requests.v1.schema.json).
+Public tensor exports use deep device copies because Candle tensors permit mutation through
+shared references. Event/receipt serialization is an explicit host-copy boundary.
 
 Caller-supplied checkpoint pins remain `UnqualifiedCandidateV1`. A checksum or a supplied training
 receipt digest proves neither dropout training nor admitted ancestry. Register the trained
@@ -96,8 +142,7 @@ Execution proof covers both consumers on regression, binary and multiclass input
 progressive/full equality, CPU oracle compatibility and actual CUDA context/copy isolation.
 These tests do not establish predictive quality. The governed Gen31 policy vocabulary supports
 binary and regression; its multiclass context execution is an experimental surface requiring a
-supported downstream readout and its own quality benchmark. CLI/appliance consumer selection
-and predictive consumer ablations remain open. A trained-candidate development stage and real CUDA session proof are recorded in the [candidate qualification](qualification/optional-landmarks-dropout-candidate.md); the candidate remains unqualified. See the [qualification record](qualification/optional-landmarks.json).
+supported downstream readout and its own quality benchmark. Product selection is implemented; predictive consumer ablations, production component authority and governed package approval remain open. A trained-candidate development stage and real CUDA session proof are recorded in the [candidate qualification](qualification/optional-landmarks-dropout-candidate.md); the candidate remains unqualified. See the [qualification record](qualification/optional-landmarks.json).
 
 The sealed loader also bounds asset-frame decompression before the encoder pool exists. Its
 regression runs fresh Rust processes with thread environment overrides removed, across all

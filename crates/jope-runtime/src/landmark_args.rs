@@ -13,8 +13,24 @@ pub enum LandmarkMode {
     Full,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum LandmarkConsumer {
+    Direct,
+    JopeDl,
+}
+
 #[derive(Args, Clone, Debug, Default)]
 pub struct LandmarkArgs {
+    /// Select the raw Dope encoding or the learned Jope context. Explicit selection opts in.
+    #[arg(long, value_enum)]
+    pub landmark_consumer: Option<LandmarkConsumer>,
+    /// References to controller-admitted, FIT-scoped foundation and target components.
+    #[arg(long)]
+    pub landmark_components: Option<PathBuf>,
+    /// Verified policy-only asset directory; no runtime download or full-bundle loading.
+    #[arg(long)]
+    pub jope_policy_assets: Option<PathBuf>,
     /// Opt into Dope512 encoding. Progressive starts without landmarks and defaults to 300 rows.
     #[arg(long, value_enum)]
     pub landmark_mode: Option<LandmarkMode>,
@@ -34,7 +50,9 @@ pub struct LandmarkArgs {
 
 impl LandmarkArgs {
     pub fn enabled(&self) -> bool {
-        self.landmark_mode.is_some() || self.landmark_subsample.is_some()
+        self.landmark_mode.is_some()
+            || self.landmark_subsample.is_some()
+            || self.landmark_consumer.is_some()
     }
 
     pub fn mode(&self) -> LandmarkMode {
@@ -48,6 +66,15 @@ impl LandmarkArgs {
     }
 
     pub fn validate(&self) -> Result<()> {
+        let learned = self.landmark_consumer == Some(LandmarkConsumer::JopeDl);
+        ensure!(
+            learned || (self.landmark_components.is_none() && self.jope_policy_assets.is_none()),
+            "component and policy asset inputs require --landmark-consumer jope-dl"
+        );
+        ensure!(
+            !learned || self.landmark_components.is_some(),
+            "jope-dl requires --landmark-components with controller-admitted FIT inputs"
+        );
         ensure!(
             self.enabled() || (self.landmark_events.is_none() && self.landmark_receipt.is_none()),
             "landmark output paths require a landmark mode or subsample"
@@ -57,6 +84,23 @@ impl LandmarkArgs {
             "landmark subsample must be at least 2"
         );
         Ok(())
+    }
+
+    pub fn protected_inputs(&self) -> Vec<PathBuf> {
+        if !self.enabled() {
+            return Vec::new();
+        }
+        let mut paths = self
+            .dope_weights
+            .iter()
+            .chain(&self.landmark_components)
+            .chain(&self.jope_policy_assets)
+            .cloned()
+            .collect::<Vec<_>>();
+        if self.landmark_consumer == Some(LandmarkConsumer::JopeDl) {
+            paths.push(jope_paths::jope_state());
+        }
+        paths
     }
 }
 
@@ -77,6 +121,7 @@ mod tests {
             ..Default::default()
         };
         assert!(!options.enabled());
+        assert!(options.protected_inputs().is_empty());
         options.validate().unwrap();
     }
 
@@ -102,5 +147,34 @@ mod tests {
         assert_eq!(full.mode(), LandmarkMode::Full);
         assert_eq!(full.subsample(), Some(100));
         assert!(Cli::try_parse_from(["test", "--landmark-subsample", "0"]).is_err());
+    }
+
+    #[test]
+    fn explicit_consumers_activate_encoding_and_require_scoped_inputs() {
+        let direct = Cli::try_parse_from(["test", "--landmark-consumer", "direct"])
+            .unwrap()
+            .options;
+        assert!(direct.enabled());
+        assert_eq!(direct.mode(), LandmarkMode::Full);
+        assert_eq!(direct.subsample(), None);
+        direct.validate().unwrap();
+        let mut learned = Cli::try_parse_from(["test", "--landmark-consumer", "jope-dl"])
+            .unwrap()
+            .options;
+        assert!(learned.enabled());
+        assert!(learned.validate().is_err());
+        learned.landmark_components = Some("components.json".into());
+        learned.jope_policy_assets = Some("selected-assets".into());
+        learned.validate().unwrap();
+        assert!(learned
+            .protected_inputs()
+            .contains(&jope_paths::jope_state()));
+        assert!(learned
+            .protected_inputs()
+            .contains(&"components.json".into()));
+        for selector in [None, Some(LandmarkConsumer::Direct)] {
+            learned.landmark_consumer = selector;
+            assert!(learned.validate().is_err());
+        }
     }
 }

@@ -7,6 +7,15 @@ const WEIGHTS: &[u8] =
 #[path = "support/dope_consumers.rs"]
 mod consumers;
 
+#[path = "support/dope_product_sessions.rs"]
+mod product_sessions;
+
+#[path = "support/dope_learned_product.rs"]
+mod learned_product;
+
+#[path = "support/dope_projection.rs"]
+mod projection;
+
 #[test]
 fn whole_checkpoint_checksum_and_cpu_reference_projection() {
     assert!(DopeEncoder::from_bytes(b"wrong checkpoint", &DopeDevice::Cpu).is_err());

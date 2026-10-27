@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 
-pub use crate::landmark_args::{LandmarkArgs, LandmarkMode};
+pub use crate::landmark_args::{LandmarkArgs, LandmarkConsumer, LandmarkMode};
 pub use dope_core::landmark::bundle::{
     BundleScope, LandmarkBundle, LandmarkGroup, LandmarkScope, LandmarkStatus, SubsampleSpec,
 };
@@ -24,8 +24,21 @@ pub use dope_core::{
     target::Head,
 };
 
+mod components;
 mod consumer;
-pub use consumer::{DopeConsumedEncoding, DopeConsumer, DopeConsumerMode, DopeConsumerReceipt};
+mod consumer_session;
+mod product;
+pub use components::{
+    AuthenticatedFusionComponents, ComponentAdmissionIdentity, ComponentInputs, FitScope,
+    FusionComponentArtifact, FUSION_COMPONENT_RECIPE,
+};
+pub use consumer::{
+    DopeConsumedEncoding, DopeConsumer, DopeConsumerExport, DopeConsumerMode, DopeConsumerProduct,
+    DopeConsumerReceipt, JopeContext512,
+};
+pub use product::{
+    component_authority_root, product_session_options, product_session_options_with_assets,
+};
 
 mod checkpoint;
 pub use checkpoint::{DopeCheckpointIdentity, CANDIDATE512_RECIPE};
@@ -34,8 +47,8 @@ mod session;
 mod workflow;
 pub use session::{EncodingSession, EncodingSnapshot, SessionOutcome};
 pub use workflow::{
-    collect, encode_training, start_training, start_training_with_options, write_events,
-    write_snapshot, EncodingRun, SessionOptions, TrainingInput,
+    collect, encode_training, prepare_training_input, start_training, start_training_with_options,
+    write_events, write_snapshot, EncodingRun, SessionOptions, TrainingInput,
 };
 
 pub use candle_core::Device as DopeDevice;
@@ -234,6 +247,12 @@ pub struct LandmarkEncodingReceipt {
     pub outcome: Option<SessionOutcome>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedding: Option<Vec<f32>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub consumer: Option<DopeConsumerReceipt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub consumer_embedding: Option<Vec<f32>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fit_scope: Option<FitScope>,
 }
 
 #[derive(Clone)]
@@ -412,6 +431,9 @@ impl DopeEncoder {
             version,
             outcome: None,
             embedding: None,
+            consumer: None,
+            consumer_embedding: None,
+            fit_scope: None,
         }
     }
 }

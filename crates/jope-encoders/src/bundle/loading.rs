@@ -13,7 +13,7 @@ pub(super) fn verify_notices(root: &File, manifest: &ModelBundleV1) -> Result<()
     Ok(())
 }
 
-pub(super) fn open_bundle_root(root: &Path) -> Result<(PathBuf, File)> {
+pub(crate) fn open_bundle_root(root: &Path) -> Result<(PathBuf, File)> {
     let descriptor = open(
         root,
         OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC,
@@ -49,12 +49,12 @@ pub(super) fn read_manifest(root: &File) -> Result<Vec<u8>> {
     bail!("model bundle manifest is missing")
 }
 
-pub(super) fn read_regular_bytes(root: &File, relative: &str, max_bytes: u64) -> Result<Vec<u8>> {
+pub(crate) fn read_regular_bytes(root: &File, relative: &str, max_bytes: u64) -> Result<Vec<u8>> {
     read_regular_bytes_optional(root, relative, max_bytes)?
         .with_context(|| format!("model bundle path missing: {relative}"))
 }
 
-pub(super) fn read_regular_bytes_optional(
+pub(crate) fn read_regular_bytes_optional(
     root: &File,
     relative: &str,
     max_bytes: u64,

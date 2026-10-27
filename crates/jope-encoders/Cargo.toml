@@ -14,7 +14,7 @@ path = "src/main.rs"
 [features]
 default = []
 cuda = ["candle-core/cuda", "candle-nn/cuda", "dope-core?/cuda"]
-dope = ["dep:dope-core"]
+dope = ["dep:dope-core", "dep:jope-records", "dep:jope-paths"]
 dope-cuda = ["dope", "cuda"]
 
 [dependencies]
@@ -38,6 +38,8 @@ zip = { version = "9.0.5", default-features = false, features = ["deflate"] }
 ruzstd = "0.9.1"
 
 dope-core = { git = "https://github.com/neverhuman/dope", rev = "25d1785c823e0a401b8775306666924e407ccd9f", optional = true }
+jope-records = { path = "../jope-records", optional = true }
+jope-paths = { path = "../jope-paths", optional = true }
 
 [dev-dependencies]
 proptest.workspace = true

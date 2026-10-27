@@ -114,8 +114,25 @@ fn dope_encode_dataset(
     device: &str,
 ) -> Result<EncodeReport> {
     use starforge::dope_encoder::{
-        encode_training, start_training, DopeEncoder, Head, TrainingInput,
+        encode_training, product_session_options, start_training_with_options, DopeEncoder, Head,
+        TrainingInput,
     };
+    let companion = landmarks
+        .landmark_receipt
+        .clone()
+        .unwrap_or_else(|| path.with_extension("landmark-encoding.json"));
+    let protected = landmarks.protected_inputs();
+    let mut inputs = vec![path];
+    inputs.extend(protected.iter().map(std::path::PathBuf::as_path));
+    if let Some(events) = &landmarks.landmark_events {
+        inputs.push(events);
+    }
+    jope_runtime::output_safety::refuse_aliasing(&companion, &inputs)?;
+    if let Some(events) = &landmarks.landmark_events {
+        let mut inputs = vec![path, companion.as_path()];
+        inputs.extend(protected.iter().map(std::path::PathBuf::as_path));
+        jope_runtime::output_safety::refuse_aliasing(events, &inputs)?;
+    }
     let data = read_dataset(path)?;
     let rows: Vec<_> = data
         .rows
@@ -208,6 +225,7 @@ fn dope_encode_dataset(
                 })
                 .collect(),
         ),
+        fold: Some("encode-fit".into()),
         source_digest: Some(jope_runtime::sha256_hex(&serde_json::to_vec(&(
             data.task,
             data.columns
@@ -231,7 +249,8 @@ fn dope_encode_dataset(
         DopeEncoder::cuda(index)?
     };
     let encoder = DopeEncoder::load(weights, &selected)?;
-    let session = start_training(input, encoder, landmarks)?;
+    let options = product_session_options(landmarks, &encoder)?;
+    let session = start_training_with_options(input, encoder, landmarks, options)?;
     let result = encode_training(session, landmarks.landmark_events.as_deref())?;
     let companion = landmarks
         .landmark_receipt

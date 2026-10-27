@@ -1939,5 +1939,12 @@
     ],
     "full_aggregate_status": "pending;notlaunchedorclaimedpassedfromfocusedchecks",
     "policy": "340soleDopePR;latestmain/rebase;greenexactheadCI\u2192ready\u2192neverhumanbotexactheadapproval/rebasemergehandoff;nostacks; no release fromthisturn"
+  },
+  "p4_continuation": {
+    "record": "optional-landmarks-p4.json",
+    "implementation": "optional-landmarks-p4.md",
+    "status": "focused CPU/CUDA/product/schema/security checks pass; final qualification pending",
+    "governed_asset_review": "optional-landmarks-policy-assets.json",
+    "no_distribution_or_promotion": true
   }
 }

@@ -218,6 +218,12 @@ fn run_consumers(encoder: DopeEncoder, root: &std::path::Path) -> anyhow::Result
                 oracle.context_values(&context)
             })?;
             let before = b.to_vec()?;
+            let starforge::dope_encoder::DopeConsumerProduct::JopeDl(derived) = b.product() else {
+                anyhow::bail!("learned consumer returned raw features");
+            };
+            // The decoder seam copies the already-derived context; it must not run the MLP again.
+            let decoder_context = derived.decoder_context(&oracle)?;
+            assert_eq!(oracle.context_values(&decoder_context)?, before);
             assert_eq!(before.len(), expected.len());
             if encoder.device().is_cuda() {
                 let error = before

@@ -16,6 +16,8 @@ pub struct EncodingEvent<'a> {
     pub embedding: Vec<f32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fusion: Option<super::DopeFusionExport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub consumer: Option<super::DopeConsumerExport>,
 }
 
 pub fn write_snapshot(writer: &mut impl Write, snapshot: &EncodingSnapshot) -> Result<()> {
@@ -28,6 +30,11 @@ pub fn write_snapshot(writer: &mut impl Write, snapshot: &EncodingSnapshot) -> R
                 .fusion
                 .as_ref()
                 .map(super::DopeFusion::to_export)
+                .transpose()?,
+            consumer: snapshot
+                .consumer
+                .as_ref()
+                .map(super::DopeConsumedEncoding::to_export)
                 .transpose()?,
         },
     )?;
@@ -57,6 +64,11 @@ pub fn collect(
     })?;
     last.receipt.outcome = Some(outcome.clone());
     last.receipt.embedding = Some(last.embedding.to_vec()?);
+    last.receipt.consumer_embedding = last
+        .consumer
+        .as_ref()
+        .map(super::DopeConsumedEncoding::to_vec)
+        .transpose()?;
     Ok(EncodingRun {
         final_snapshot: last,
         receipts,
@@ -83,6 +95,7 @@ pub struct TrainingInput {
     pub head: super::Head,
     pub raw_cells: Option<Vec<Vec<String>>>,
     pub source_digest: Option<String>,
+    pub fold: Option<String>,
 }
 
 impl TrainingInput {
@@ -96,6 +109,7 @@ impl TrainingInput {
             head,
             raw_cells: None,
             source_digest: None,
+            fold: None,
         }
     }
 
@@ -146,32 +160,17 @@ pub fn start_training(
 pub struct SessionOptions {
     pub cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
     pub components: Option<super::FusionComponents>,
+    pub consumer: Option<std::sync::Arc<super::DopeConsumer>>,
+    pub authenticated_components: Option<std::sync::Arc<super::AuthenticatedFusionComponents>>,
+    pub component_inputs: Option<std::sync::Arc<super::ComponentInputs>>,
     /// Serializes native evidence workers sharing an admitted CPU (for example, pipeline cuts).
     pub native_gate: Option<std::sync::Arc<std::sync::Mutex<()>>>,
 }
 
-pub fn start_training_with_options(
-    input: TrainingInput,
-    encoder: super::DopeEncoder,
-    args: &super::LandmarkArgs,
-    session_options: SessionOptions,
-) -> Result<EncodingSession> {
-    use dope_core::landmark::{
-        bundle::{BundleScope, LandmarkGroup, LandmarkMode, LandmarkScope, SubsampleSpec},
-        LandmarkOptions, ProgressiveLandmarks,
-    };
-    use dope_core::prepare::{
-        build_conditioning, build_conditioning_sampled, prepare_table_mixed,
-        prepare_table_with_ids, PrepTask,
-    };
-    args.validate()?;
+/// Shared train-only preparation for controller producers and product consumers. No native work.
+pub fn prepare_training_input(input: &TrainingInput) -> Result<dope_core::prepare::PreparedTable> {
+    use dope_core::prepare::{prepare_table_mixed, prepare_table_with_ids, PrepTask};
     input.validate()?;
-    let mode = match args.mode() {
-        super::LandmarkMode::None => LandmarkMode::None,
-        super::LandmarkMode::Fast => LandmarkMode::Fast,
-        super::LandmarkMode::Progressive => LandmarkMode::Progressive,
-        super::LandmarkMode::Full => LandmarkMode::Full,
-    };
     let task = match input.head {
         super::Head::Regression => PrepTask::Regression,
         super::Head::Binary => PrepTask::Classification,
@@ -219,7 +218,7 @@ pub fn start_training_with_options(
     } else {
         prepare_table_with_ids(&input.x, &input.y, task, input.ids.clone())?
     };
-    if let Some(digest) = input.source_digest {
+    if let Some(digest) = &input.source_digest {
         // External file identity supplements the fitting task/rows; it must never replace them.
         let bound = jope_runtime::sha256_hex(&serde_json::to_vec(&(
             "jope.dope-fitting-source/v1",
@@ -228,6 +227,41 @@ pub fn start_training_with_options(
         ))?);
         prepared = prepared.with_source_digest(bound);
     }
+    Ok(prepared)
+}
+
+pub fn start_training_with_options(
+    input: TrainingInput,
+    encoder: super::DopeEncoder,
+    args: &super::LandmarkArgs,
+    mut session_options: SessionOptions,
+) -> Result<EncodingSession> {
+    use dope_core::landmark::{
+        bundle::{BundleScope, LandmarkGroup, LandmarkMode, LandmarkScope, SubsampleSpec},
+        LandmarkOptions, ProgressiveLandmarks,
+    };
+    use dope_core::prepare::{build_conditioning, build_conditioning_sampled};
+    args.validate()?;
+    input.validate()?;
+    let mode = match args.mode() {
+        super::LandmarkMode::None => LandmarkMode::None,
+        super::LandmarkMode::Fast => LandmarkMode::Fast,
+        super::LandmarkMode::Progressive => LandmarkMode::Progressive,
+        super::LandmarkMode::Full => LandmarkMode::Full,
+    };
+    let mut prepared = prepare_training_input(&input)?;
+    if args.landmark_consumer.is_some() {
+        require_lossless_product_classes(&input, &prepared)?;
+    }
+    let fit_scope = super::FitScope::from_prepared(&input, &prepared)?;
+    if let Some(inputs) = &session_options.component_inputs {
+        ensure!(
+            session_options.authenticated_components.is_none(),
+            "ambiguous component admission inputs"
+        );
+        session_options.authenticated_components =
+            Some(std::sync::Arc::new(inputs.resolve(&fit_scope)?));
+    }
     let options = LandmarkOptions::mlc_v3_training();
     let sub = args
         .subsample()
@@ -235,6 +269,13 @@ pub fn start_training_with_options(
     let source_digest = prepared.source_rows_digest();
     prepared.set_source_digest(source_digest.clone());
     let scope = LandmarkScope::for_source_digest(&options, sub, source_digest.clone());
+    let mut consumer = super::consumer_session::ConsumerSession::new(
+        args,
+        &session_options,
+        &encoder,
+        &fit_scope,
+        &scope.digest(),
+    )?;
     let zero = super::LandmarkBundle::from_squashed(
         &[0.; 23],
         &[false; 23],
@@ -246,20 +287,18 @@ pub fn start_training_with_options(
         receipt: encoder.receipt(&embedding, &zero, 0),
         embedding,
         fusion: None,
+        consumer: None,
     };
     initial.receipt.options_digest = Some(scope.options_digest.clone());
     initial.receipt.work_budget = Some(options.work_budget);
-    let components = session_options
-        .components
-        .as_ref()
-        .map(|c| c.to_device(encoder.device()))
-        .transpose()?;
-    if let Some(components) = &components {
-        initial = initial.with_resident_components(components)?;
+    if args.landmark_consumer.is_some() {
+        initial.receipt.fit_scope = Some(fit_scope.clone());
     }
-    Ok(EncodingSession::spawn_with_cancel(
+    let initial = consumer.apply(initial)?;
+    Ok(EncodingSession::spawn_with_admission(
         initial,
         session_options.cancel,
+        session_options.authenticated_components.clone(),
         move |publisher| {
             if mode.is_landmark_free() || publisher.cancelled() {
                 return Ok(());
@@ -275,6 +314,7 @@ pub fn start_training_with_options(
             if publisher.cancelled() {
                 return Ok(());
             }
+            consumer.require_active()?;
             let frame = prepared.to_landmark_frame()?;
             let panel_pool = rayon::ThreadPoolBuilder::new().num_threads(1).build()?;
             panel_pool.install(|| -> Result<()> {
@@ -316,20 +356,22 @@ pub fn start_training_with_options(
                     let mut receipt = encoder.receipt(&embedding, &bundle, 0);
                     receipt.options_digest = Some(scope.options_digest.clone());
                     receipt.work_budget = Some(options.work_budget);
-                    let mut snapshot = EncodingSnapshot {
+                    if session_options.consumer.is_some() {
+                        receipt.fit_scope = Some(fit_scope.clone());
+                    }
+                    let snapshot = EncodingSnapshot {
                         embedding,
                         receipt,
                         fusion: None,
+                        consumer: None,
                     };
-                    if let Some(components) = &components {
-                        snapshot = snapshot.with_resident_components(components)?;
-                    }
-                    publisher.publish(snapshot)?;
+                    publisher.publish(consumer.apply(snapshot)?)?;
                 } else {
                     for &group in groups {
                         if publisher.cancelled() {
                             break;
                         }
+                        consumer.require_active()?;
                         let (bundle, report) = panel_pool.install(|| -> Result<_> {
                             let (bundle, report) = evidence.next_group(group)?;
                             Ok((
@@ -353,19 +395,48 @@ pub fn start_training_with_options(
                         let mut receipt = encoder.receipt(&embedding, &bundle, 0);
                         receipt.options_digest = Some(scope.options_digest.clone());
                         receipt.work_budget = Some(options.work_budget);
-                        let mut snapshot = EncodingSnapshot {
+                        if session_options.consumer.is_some() {
+                            receipt.fit_scope = Some(fit_scope.clone());
+                        }
+                        let snapshot = EncodingSnapshot {
                             embedding,
                             receipt,
                             fusion: None,
+                            consumer: None,
                         };
-                        if let Some(components) = &components {
-                            snapshot = snapshot.with_resident_components(components)?;
-                        }
-                        publisher.publish(snapshot)?;
+                        publisher.publish(consumer.apply(snapshot)?)?;
                     }
                 }
                 Ok(())
             })
         },
     ))
+}
+
+/// Refuse capping/rounded vocabulary until the new lossless preparation lineage is pinned.
+/// Historical callers keep their existing preparation; this guard applies to explicit products.
+fn require_lossless_product_classes(
+    input: &TrainingInput,
+    prepared: &dope_core::prepare::PreparedTable,
+) -> Result<()> {
+    if matches!(input.head, super::Head::Regression) {
+        return Ok(());
+    }
+    ensure!(
+        input.y.iter().all(|v| v.is_finite()),
+        "product class labels must be finite"
+    );
+    let mut classes = input.y.clone();
+    classes.sort_by(f64::total_cmp);
+    classes.dedup_by(|a, b| *a == *b);
+    match input.head {
+        super::Head::Binary => ensure!(classes.len() == 2, "binary product requires two FIT classes"),
+        super::Head::Multiclass(k) => ensure!(
+            k >= 3 && classes.len() == k && prepared.classes == k
+                && prepared.transform.target.class_labels == classes,
+            "product requires lossless FIT class preparation; this vocabulary needs the pending Dope preparation lineage"
+        ),
+        super::Head::Regression => unreachable!(),
+    }
+    Ok(())
 }

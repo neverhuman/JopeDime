@@ -130,3 +130,66 @@ fn landmark_companion_receipt_schema_and_derived_coverage_are_explicit() {
     )
     .is_empty());
 }
+
+#[test]
+fn explicit_consumer_schemas_keep_raw_and_learned_semantics_distinct() {
+    let digest = "a".repeat(64);
+    let mut consumer = serde_json::json!({
+        "mode":"encoding-only", "recipe":"dope512-direct-consumer/v1",
+        "checkpoint_identity":{"lineage":"released-v1"},
+        "jope_weights_sha256":null,"components_digest":null,
+        "source_digest":digest,"input_conditioning_digest":digest,"conditioning_digest":digest
+    });
+    let name = "jope.dope-consumer.v1.schema.json";
+    valid(name, &consumer);
+    consumer["mode"] = "jope-dl".into();
+    assert!(!jope_datasets::schema::validate(&schema(name), &consumer).is_empty());
+    consumer["recipe"] = "dope512-foundation1024-target512-jope-dl512/v1".into();
+    consumer["jope_weights_sha256"] = digest.clone().into();
+    consumer["components_digest"] = digest.clone().into();
+    consumer["projection_identity"] = serde_json::json!({
+        "schema":"jope.policy-assets-projection/v1","parent_manifest_sha256":digest,
+        "projection_digest":digest,"policy_sha256":digest
+    });
+    consumer["component_admission"] = serde_json::json!({
+        "schema":"jope.component-admission/v1","subject_sha256":digest,
+        "exposure_receipt_sha256":digest,"policy_sha256":digest,"authority_sha256":digest,
+        "fit_scope_digest":digest,"episode":"isolated-fixture","purpose":"episode_fit"
+    });
+    valid(name, &consumer);
+    consumer["component_admission"]["eligible"] = true.into();
+    assert!(!jope_datasets::schema::validate(&schema(name), &consumer).is_empty());
+    for other in [
+        "jope.landmark-encoding.v1.schema.json",
+        "jope.landmark-event.v1.schema.json",
+    ] {
+        assert_eq!(
+            schema(name)["$defs"]["consumer"],
+            schema(other)["$defs"]["consumer"]
+        );
+        assert_eq!(
+            schema(name)["$defs"]["fitScope"],
+            schema(other)["$defs"]["fitScope"]
+        );
+    }
+}
+
+#[test]
+fn component_request_schema_cannot_select_its_own_authority_or_admission() {
+    let name = "jope.fusion-component-requests.v1.schema.json";
+    let request = serde_json::json!({"schema":"jope.fusion-component-requests/v1",
+        "entries":[{"fit_scope_digest":"a".repeat(64),"subject_sha256":"b".repeat(64),
+            "exposure_receipt_sha256":"c".repeat(64),"episode":"isolated-fixture"}]});
+    valid(name, &request);
+    for key in [
+        "authority_root",
+        "issuer",
+        "policy_sha256",
+        "eligible",
+        "authenticated",
+    ] {
+        let mut forged = request.clone();
+        forged[key] = "caller-controlled".into();
+        assert!(!jope_datasets::schema::validate(&schema(name), &forged).is_empty());
+    }
+}
