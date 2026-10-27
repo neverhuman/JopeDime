@@ -47,6 +47,14 @@ by final package, latency, predictive and aggregate gates. No merge or release i
 
 ## Closeout decision and current snapshot
 
+The 21:18 UTC [verification checkpoint](qualification/optional-landmarks-closeout-checkpoint.md)
+records a further physical-parent retention regression/fix and the single-thread compiler-probe
+harness repair. Nineteen native-graph tests and the first real compiler shard pass. The first
+full local gate failed and was interrupted; its partial results are retained. A complete required
+rerun gates the next push; fresh exact-head CI then gates review readiness. The checkpoint records
+immutable journal-prefix and acyclic predecessor/resulting-lineage requirements for the missing
+production v3 emitter. No authority or scientific qualification is inferred from these fixes.
+
 The 20:27 UTC implementation update supersedes the older snapshot rows below. Jope source
 `64db44cc11f791c0e8442acaae4e9360d0628ad4` adopts published P1/P2 Dope
 `2535a36c0e7ced2a17a0b06818efaeb17f7a2d47`. Explicit products now use uncapped preparation,
