@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution.",
-  "count": 5987,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28).",
+  "count": 5991,
   "ignored": 75,
   "packages": {
    "battle-gpu": {
@@ -6172,7 +6172,7 @@
     }
    },
    "jope-narrator": {
-    "count": 20,
+    "count": 21,
     "ignored": 0,
     "binaries": {
      "jope-narrator": {
@@ -6187,7 +6187,7 @@
      },
      "jope-narrator::core": {
       "kind": "test",
-      "count": 17,
+      "count": 18,
       "ignored": 0,
       "tests": [
        "automatic_capture_sessions_are_bounded_per_process",
@@ -6196,6 +6196,7 @@
        "durable_watermark_distinguishes_capture_closure_loss_and_source_status",
        "finish_racing_producer_drains_every_accepted_record_and_closes_retained_taps",
        "forged_claim_or_text_fails_even_after_recomputing_content_hash",
+       "golden_v1::retained_v1_journal_pins_every_fact_kind_and_grammar_variant",
        "metrics_refuse_mismatched_scope_and_nonfinite_values",
        "native_links_roundtrip_and_recording_collector_keeps_concurrent_inputs",
        "ordered_duplicates_and_general_edits_replay_with_preconditions",
@@ -6212,7 +6213,7 @@
     }
    },
    "jope-observatory": {
-    "count": 36,
+    "count": 38,
     "ignored": 0,
     "binaries": {
      "jope-observatory": {
@@ -6292,10 +6293,12 @@
      },
      "jope-observatory::narration": {
       "kind": "test",
-      "count": 13,
+      "count": 15,
       "ignored": 0,
       "tests": [
+       "cli_distinguishes_integrity_and_completion_and_follow_stops_at_terminal_capture",
        "complete_corruption_wrong_run_and_oversize_tail_fail_closed",
+       "concurrent_commits_never_poison_a_healthy_live_index",
        "http_monitor_has_strict_origin_policy_and_finite_page",
        "mcp_binary_emits_only_finite_jsonrpc_lines",
        "mcp_lifecycle_finite_tools_and_stdout_framing_are_clean",
@@ -8863,12 +8866,12 @@
     }
    },
    "jope-runtime": {
-    "count": 85,
+    "count": 86,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
       "kind": "lib",
-      "count": 62,
+      "count": 63,
       "ignored": 0,
       "tests": [
        "automl::fitness_tests::a_selection_without_an_objective_keeps_the_v1_record_shape",
@@ -8922,6 +8925,7 @@
        "model_session::tests::corrupt_history_missing_models_and_path_traversal_are_refused",
        "model_session::tests::versions_rollback_and_continue_keep_every_object_and_selection",
        "output_safety::tests::inode_aliases_and_new_descendants_are_refused_without_touching_input",
+       "prediction_narration::tests::prediction_binding_preserves_every_nonfinite_and_signed_zero_payload",
        "service::tests::api_mcp_and_rust_evaluation_have_identical_scores",
        "service::tests::fit_predict_reads_objective_columns_from_training_and_ignores_them_in_input",
        "service::tests::fit_predict_transport_runs_the_custom_objective_and_binds_it_to_the_model",
@@ -9477,7 +9481,7 @@
   }
  },
  "totals": {
-  "rust": 5987,
+  "rust": 5991,
   "python": 182
  }
 }

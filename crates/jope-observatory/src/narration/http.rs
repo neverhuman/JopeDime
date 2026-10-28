@@ -311,7 +311,11 @@ async fn replay_socket(
                     return;
                 };
                 let health=tokio::task::spawn_blocking(move ||->Result<Status>{let _job = job; shared.lock().map_err(|_|anyhow::anyhow!("index unavailable"))?.status()}).await;
-                let Ok(Ok(health))=health else{return;};
+                let Ok(Ok(health))=health else{
+                    let _=send(&mut socket,Message::Text(json!({"schema":"jope.narration-error/v1","code":"journal_unavailable","message":"Journal integrity or read failed"}).to_string().into())).await;
+                    let _=send(&mut socket,Message::Close(None)).await;
+                    return;
+                };
                 let frame=json!({"schema":"jope.narration-heartbeat/v1","run_id":health.run_id,"last_sequence":health.last_sequence,"partial_tail":health.partial_tail,"indexed_bytes":health.indexed_bytes,"observed_bytes":health.observed_bytes,"capture":health.capture,"scope":"transport health; no new reasoning event"});
                 if !send(&mut socket,Message::Text(frame.to_string().into())).await{return;}
             },

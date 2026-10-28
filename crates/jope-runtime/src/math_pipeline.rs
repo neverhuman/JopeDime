@@ -114,11 +114,11 @@ impl MathPipeline {
             || {
                 Ok((
                     crate::prediction_narration::identity(
-                        b"jope.math-prediction-model/v1",
+                        b"jope.math-prediction-model/v2",
                         &(&self.input, &self.state),
                     )?,
                     crate::prediction_narration::identity(
-                        b"jope.math-prediction-table/v1",
+                        b"jope.math-prediction-table/v2",
                         &(&table.headers, &table.rows),
                     )?,
                 ))
@@ -160,11 +160,11 @@ impl MathPipeline {
                 || {
                     Ok((
                         crate::prediction_narration::identity(
-                            b"jope.math-prediction-model/v1",
+                            b"jope.math-prediction-model/v2",
                             &(&self.input, &self.state),
                         )?,
                         crate::prediction_narration::identity(
-                            b"jope.math-prediction-cells/v1",
+                            b"jope.math-prediction-cells/v2",
                             &rows,
                         )?,
                     ))

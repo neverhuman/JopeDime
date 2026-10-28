@@ -82,13 +82,15 @@ narrator. An observer can still add time, so time-budget searches have no promis
 of identical decisions.
 
 Automatic environment capture permits at most 64 session attempts per process;
-subsequent attempts report an observer error and preserve the source result.
+The first rejected attempt reports an observer error; later attempts stay disabled
+without repeated warnings and preserve the source result.
 Retention across process restarts remains an operator responsibility.
 
 Capture defaults to at most 1,000,000 events and 1 GiB of journal data. The
-writer validates, renders once, writes a full record, syncs bounded batches of journal data, then
+writer constructs one retained wording, validates it by rederivation, writes a full record, syncs bounded batches of journal data, then
 atomically publishes a synced commit watermark. All reader transports expose
-only that committed prefix. Keep the journal and watermark together. Readers
+only that committed prefix. Keep the journal and watermark together. Versioned renderer v1 and its golden
+transcript remain available for retained replay; unsupported revisions are explicit errors. Readers
 withhold bytes beyond the watermark after a crash, even when they contain a
 newline. Corruption inside the committed prefix fails closed.
 
@@ -112,3 +114,8 @@ Exact-head hosted CI, long-duration load, latency/overhead targets, human qualit
 evaluation, deployment and additional-engine coverage require separate evidence.
 See the [engineering specification](coordination/search-narration-engineering-spec.md)
 for the acceptance and follow-on qualification matrix.
+
+Use `verify --require-complete` when the caller needs capture completeness as well
+as prefix integrity. `follow` stops at terminal closure, returning an error for a
+lossy or failed capture. Prediction identities use a streaming typed encoding
+with exact float bits, including non-finite payloads.

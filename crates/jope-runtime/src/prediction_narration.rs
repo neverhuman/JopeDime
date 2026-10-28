@@ -4,32 +4,22 @@ use anyhow::Result;
 use feat_math::advanced_v3::RawTable;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
-use std::io::{self, Write};
+mod typed_hash;
 
-struct HashWriter(Sha256);
-impl Write for HashWriter {
-    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
-        self.0.update(bytes);
-        Ok(bytes.len())
-    }
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
 pub(crate) fn identity(domain: &[u8], value: &impl Serialize) -> Result<String> {
-    let mut writer = HashWriter(Sha256::new());
-    writer.write_all(domain)?;
-    writer.write_all(&[0])?;
-    serde_json::to_writer(&mut writer, value)?;
-    Ok(format!("{:x}", writer.0.finalize()))
+    let mut hash = Sha256::new();
+    hash.update(domain);
+    hash.update([0]);
+    value.serialize(&mut typed_hash::Encoder(&mut hash))?;
+    Ok(format!("{:x}", hash.finalize()))
 }
 pub(crate) fn bindings(fitted: &FittedModel, input: &RawTable) -> Result<(String, String)> {
     Ok((
         identity(
-            b"jope.prediction-model/v1",
+            b"jope.prediction-model/v2",
             &(&fitted.header, &fitted.model),
         )?,
-        identity(b"jope.prediction-input/v1", input)?,
+        identity(b"jope.prediction-input/v2", input)?,
     ))
 }
 
@@ -95,4 +85,33 @@ pub(crate) fn observe<T>(
         seconds: Some(start.elapsed().as_secs_f64()),
     });
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn prediction_binding_preserves_every_nonfinite_and_signed_zero_payload() {
+        let values = [
+            0.0,
+            -0.0,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            f64::from_bits(0x7ff8_0000_0000_0042),
+            f64::from_bits(0x7ff8_0000_0000_0043),
+        ];
+        let hashes = values
+            .iter()
+            .map(|v| identity(b"typed-test", v).unwrap())
+            .collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(hashes.len(), values.len());
+        assert_ne!(
+            identity(b"typed-test", &["a", "bc"]).unwrap(),
+            identity(b"typed-test", &["ab", "c"]).unwrap()
+        );
+        assert_ne!(
+            identity(b"typed-test", &1u64).unwrap(),
+            identity(b"typed-test", &1i64).unwrap()
+        );
+    }
 }

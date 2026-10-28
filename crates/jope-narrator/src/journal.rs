@@ -22,6 +22,8 @@ pub const DIR_ENV: &str = "JOPE_NARRATION_DIR";
 /// Explicit `FactJournal::create` remains controlled by its caller.
 pub const MAX_ENV_SESSIONS: u64 = 64;
 static ENV_SESSIONS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+static ENV_LIMIT_REPORTED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -58,10 +60,6 @@ impl Envelope {
     ) -> Result<()> {
         ensure!(self.schema == SCHEMA, "unsupported narration schema");
         ensure!(
-            self.renderer == crate::render::RENDERER,
-            "unsupported renderer revision; use its retained versioned reader"
-        );
-        ensure!(
             !run_id.is_empty()
                 && run_id.len() <= 256
                 && self.run_id == run_id
@@ -89,8 +87,13 @@ impl Envelope {
             "unsafe rendered control character"
         );
         let evidence = format!("{run_id}:{expected_sequence}");
-        let expected =
-            Renderer::rederive(&self.fact, &self.links, &evidence, self.narration.variant)?;
+        let expected = crate::render::rederive(
+            &self.renderer,
+            &self.fact,
+            &self.links,
+            &evidence,
+            self.narration.variant,
+        )?;
         if self.narration != expected {
             let frame = self
                 .narration
@@ -406,13 +409,19 @@ pub fn journal_from_env() -> Result<Option<(Tap, FactJournal)>> {
     else {
         return Ok(None);
     };
-    ENV_SESSIONS
+    if ENV_SESSIONS
         .fetch_update(
             std::sync::atomic::Ordering::AcqRel,
             std::sync::atomic::Ordering::Acquire,
             |n| (n < MAX_ENV_SESSIONS).then_some(n + 1),
         )
-        .map_err(|_| anyhow::anyhow!("automatic narration session limit reached"))?;
+        .is_err()
+    {
+        if !ENV_LIMIT_REPORTED.swap(true, std::sync::atomic::Ordering::AcqRel) {
+            anyhow::bail!("automatic narration session limit reached; further captures disabled for this process");
+        }
+        return Ok(None);
+    }
     let root = PathBuf::from(root);
     fs::create_dir_all(&root)?;
     let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();

@@ -28,8 +28,9 @@ print(f"narration-contract {label}: {counts}; log={path}")
 assert counts['passed']>=minimum and counts['failed']==0, f"{label}: expected at least {minimum} executed passing tests"
 PYCOUNT
 }
-contract 20 core cargo test --locked -p jope-narrator
+contract 21 core cargo test --locked -p jope-narrator
 contract 5 pipeline-internal cargo test --locked -p jope-pipeline --lib narration_
 contract 4 pipeline-public cargo test --locked -p jope-pipeline --test search_narration
-contract 13 transport cargo test --locked -p jope-observatory --test narration
+contract 15 transport cargo test --locked -p jope-observatory --test narration
 contract 6 prediction cargo test --locked -p jope-runtime --test prediction_narration
+contract 1 prediction-codec cargo test --locked -p jope-runtime --lib prediction_narration::tests

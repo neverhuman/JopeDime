@@ -29,7 +29,11 @@ struct Args {
 #[derive(Subcommand)]
 enum Command {
     /// Validate the complete retained prefix and print its boundary/status.
-    Verify,
+    Verify {
+        /// Also require loss-free capture closure, separately from prefix integrity.
+        #[arg(long)]
+        require_complete: bool,
+    },
     /// Print a finite page as JSONL (or terminal-safe text).
     Replay {
         #[arg(long, default_value = "0")]
@@ -69,14 +73,20 @@ async fn main() -> Result<()> {
         },
     )?;
     match args.command {
-        Command::Verify => {
+        Command::Verify { require_complete } => {
             let status = index.status()?;
             ensure!(
                 !status.partial_tail,
-                "journal has an incomplete trailing record; live follow may wait for it"
+                "journal has uncommitted trailing bytes; capture status is {}",
+                status.capture.status
             );
             serde_json::to_writer(io::stdout().lock(), &status)?;
             println!();
+            ensure!(
+                !require_complete || status.capture.status == "complete",
+                "capture is {}; complete capture required",
+                status.capture.status
+            );
         }
         Command::Replay { after, limit, text } => {
             narration::sequence(&after)?;
@@ -107,6 +117,19 @@ async fn main() -> Result<()> {
                     &mut io::stdout().lock(),
                 )?;
                 cursor = page.next;
+                if !page.more {
+                    let status = index.status()?;
+                    if status.capture.status != "capturing"
+                        && cursor.sequence == status.last_sequence
+                    {
+                        ensure!(
+                            status.capture.status == "complete",
+                            "capture closed with status {}",
+                            status.capture.status
+                        );
+                        break;
+                    }
+                }
                 tokio::select! {
                     _ = &mut stop => break,
                     _ = tokio::time::sleep(if page.more {Duration::ZERO} else {Duration::from_millis(100)}) => {},

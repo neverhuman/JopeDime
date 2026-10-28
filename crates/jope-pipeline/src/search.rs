@@ -616,14 +616,14 @@ struct DrawAt {
 fn measured_fact(
     cut: usize,
     phase: &str,
-    island: Option<usize>,
+    _island: Option<usize>,
     observation: &Observation,
 ) -> LineageFact {
     LineageFact::Measured {
         cut,
         phase: phase.to_owned(),
         generation: observation.generation,
-        island,
+        island: observation.island,
         program_sha256: observation.program_sha256.clone(),
         origin: observation.origin.to_owned(),
         status: observation.status.to_owned(),
