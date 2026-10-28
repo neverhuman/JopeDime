@@ -67,6 +67,22 @@ Four evaluations are a smoke example and may contain only initial candidates.
 A fresh run with a larger evaluation budget can reach later generations; the
 presence of a journal alone does not prove later-generation edit coverage.
 
+To see later-generation changes, repeat the producer with a fresh directory and a
+larger budget (then repeat journal discovery and the reader commands):
+
+```sh
+edit_dir="$(mktemp -d "$PWD/target/narration-edits.XXXXXX")"
+JOPE_NARRATION_DIR="$edit_dir/narration" \
+  cargo run --locked -p jope-cli --bin jope -- pipeline run \
+    --dataset datasets/test/pmlb-229-pwlinear \
+    --budget evaluations=20,seconds=120 \
+    --rng-seed 11 --seed 7 --threads 2 --islands 1 --device cpu \
+    --cuts 1 --policy skip --emit rust \
+    --source-commit "$(git rev-parse HEAD)" --output "$edit_dir/run" --json
+journal="$(find "$edit_dir/narration" -maxdepth 1 -type f -name '*.jsonl' -print -quit)"
+run_id="$(jq -er '.run_id' "$journal.commit")"
+```
+
 ## Read the retained stream
 
 The quickstart assigns `$journal` and `$run_id` from the selected capture.
@@ -156,7 +172,8 @@ For an explicit custom target directory, resolve its actual executable instead.
 | --- | --- |
 | `jope.reasoning-event/v1` | Journal envelope and event delivered by all readers |
 | `jope.lineage-fact/v1` | Owned source-fact contract; envelope `fact` uses a `kind` tag |
-| `controlled-search-commentary/1` | Retained renderer revision |
+| `controlled-search-commentary/2` | Current writer renderer; explicit admission/refusal wording |
+| `controlled-search-commentary/1` | Retained reader for earlier journals |
 | `jope.narration-page/v1` | Finite page with `events`, `next`, `more`, `partial_tail` |
 | `jope.narration-status/v1` | Validated boundary and capture state |
 | `jope.narration-heartbeat/v1` | WebSocket transport health |
@@ -205,8 +222,10 @@ Retention across process restarts remains an operator responsibility.
 Capture defaults to at most 1,000,000 events and 1 GiB of journal data. The
 writer constructs one retained wording, validates it by rederivation, writes a full record, syncs bounded batches of journal data, then
 atomically publishes a synced commit watermark. All reader transports expose
-only that committed prefix. Keep the journal and watermark together. Versioned renderer v1 and its golden
-transcript remain available for retained replay; unsupported revisions are explicit errors. Readers
+only that committed prefix. Keep the journal and watermark together. The current
+writer uses renderer v2. Renderer v1 and its original two golden transcripts remain
+available for retained replay; v2 has a separate create-only transcript, including
+every admission disposition. Unsupported revisions are explicit errors. Readers
 withhold bytes beyond the watermark after a crash, even when they contain a
 newline. Corruption inside the committed prefix fails closed.
 
@@ -226,7 +245,8 @@ stderr and preserve the authoritative result.
 | Valid prefix, incomplete capture | Inspect watermark status and gap counts; do not treat it as complete coverage. |
 | `capturing` after producer disappears | Closure is unknown. Preserve both files and interrupt a waiting reader when needed. |
 | Wrong-run/future cursor | Use the selected watermark identity and a sequence within the retained boundary. |
-| HTTP 503 | Inspect storage and committed-record integrity; this is a journal/read failure. |
+| HTTP 503 | Read `error.code`: `journal_unavailable` means a storage/integrity failure; `request_limit` or `client_limit` means capacity is busy. Reconnect with the retained cursor. |
+| HTTP 403 `forbidden_origin` | Use the exact printed numeric host and port, such as `127.0.0.1:9877`; `localhost` is a different Host value. |
 
 The native single-island observation omits its island field; a measurement can
 therefore say “island unavailable” even when the draw/start coordinate is island
@@ -253,5 +273,6 @@ for the acceptance and follow-on qualification matrix.
 
 Use `verify --require-complete` when the caller needs capture completeness as well
 as prefix integrity. `follow` stops at terminal closure, returning an error for a
-lossy or failed capture. Prediction identities use a streaming typed encoding
+lossy or failed capture. Ctrl-C exits `follow` with status 0 without certifying
+capture closure; inspect `verify --require-complete` separately. Prediction identities use a streaming typed encoding
 with exact float bits, including non-finite payloads.

@@ -133,43 +133,13 @@ fn facts() -> Vec<LineageFact> {
 #[test]
 fn retained_v1_journal_pins_every_fact_kind_and_grammar_variant() {
     branch_fixture();
+    current_fixture();
+    assert!(
+        std::env::var_os("JOPE_NARRATION_CREATE_V1_GOLDEN").is_none(),
+        "v1 goldens are frozen; create a new renderer revision"
+    );
     let fixture =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/renderer-v1.jsonl");
-    if std::env::var_os("JOPE_NARRATION_CREATE_V1_GOLDEN").is_some() {
-        let dir = scratch();
-        let path = dir.path().join("v1.jsonl");
-        let (tap, writer) =
-            FactJournal::create(&path, "synthetic-renderer-v1", Limits::default()).unwrap();
-        for fact in facts() {
-            assert_eq!(tap.emit(fact), EmitStatus::Queued);
-        }
-        writer.finish().unwrap();
-        fs::create_dir_all(fixture.parent().unwrap()).unwrap();
-        for (from, to) in [
-            (&path, fixture.clone()),
-            (
-                &jope_narrator::commit_path(&path),
-                jope_narrator::commit_path(&fixture),
-            ),
-        ] {
-            let bytes = fs::read(from).unwrap();
-            if to.exists() {
-                assert_eq!(
-                    fs::read(&to).unwrap(),
-                    bytes,
-                    "v1 golden is immutable; introduce a new renderer revision"
-                );
-            } else {
-                std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(to)
-                    .unwrap()
-                    .write_all(&bytes)
-                    .unwrap();
-            }
-        }
-    }
     let page = read_journal(&fixture, None, 1024, 16 << 20).unwrap();
     assert!(!page.partial_tail);
     let kinds = page
@@ -350,41 +320,6 @@ fn branch_facts() -> Vec<(LineageFact, Links)> {
 fn branch_fixture() {
     let fixture =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/renderer-v1-branches.jsonl");
-    if std::env::var_os("JOPE_NARRATION_CREATE_V1_GOLDEN").is_some() {
-        let dir = scratch();
-        let path = dir.path().join("branches.jsonl");
-        let (tap, writer) =
-            FactJournal::create(&path, "synthetic-renderer-v1-branches", Limits::default())
-                .unwrap();
-        for (fact, links) in branch_facts() {
-            assert_eq!(tap.emit_linked(fact, links), EmitStatus::Queued);
-        }
-        writer.finish().unwrap();
-        for (from, to) in [
-            (&path, fixture.clone()),
-            (
-                &jope_narrator::commit_path(&path),
-                jope_narrator::commit_path(&fixture),
-            ),
-        ] {
-            let bytes = fs::read(from).unwrap();
-            if to.exists() {
-                assert_eq!(
-                    fs::read(&to).unwrap(),
-                    bytes,
-                    "v1 branch golden is immutable; introduce a new renderer revision"
-                );
-            } else {
-                fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(to)
-                    .unwrap()
-                    .write_all(&bytes)
-                    .unwrap();
-            }
-        }
-    }
     let page = read_journal(&fixture, None, 1024, 16 << 20).unwrap();
     assert!(!page.partial_tail);
     assert_eq!(page.events.len(), branch_facts().len());
@@ -425,4 +360,153 @@ fn branch_fixture() {
         jope_narrator::read_commit(&fixture).unwrap().records,
         page.events.len().to_string()
     );
+}
+
+fn current_fixture() {
+    let fixture =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/renderer-v2.jsonl");
+    let mut rows = facts()
+        .into_iter()
+        .map(|f| (f, Links::default()))
+        .collect::<Vec<_>>();
+    rows.extend(branch_facts());
+    for disposition in [
+        "admitted",
+        "duplicate",
+        "evaluations",
+        "seconds",
+        "cancelled",
+    ] {
+        rows.push((
+            LineageFact::Admitted {
+                cut: 0,
+                generation: 0,
+                island: 0,
+                program_sha256: program("(pipe X (ridge))").sha256,
+                disposition: disposition.into(),
+            },
+            Links::default(),
+        ));
+    }
+    for reason in [
+        "evaluations",
+        "seconds",
+        "cancelled",
+        "search_space_exhausted",
+    ] {
+        rows.push((
+            LineageFact::ExplorationStopped {
+                cut: 0,
+                reason: reason.into(),
+                evaluations: 4,
+                generations: 1,
+            },
+            Links::default(),
+        ));
+    }
+    if std::env::var_os("JOPE_NARRATION_CREATE_V2_GOLDEN").is_some() {
+        let dir = scratch();
+        let path = dir.path().join("v2.jsonl");
+        let (tap, writer) =
+            FactJournal::create(&path, "synthetic-renderer-v2", Limits::default()).unwrap();
+        for (fact, links) in &rows {
+            assert_eq!(
+                tap.emit_linked(fact.clone(), links.clone()),
+                EmitStatus::Queued
+            );
+        }
+        writer.finish().unwrap();
+        for (from, to) in [
+            (&path, fixture.clone()),
+            (
+                &jope_narrator::commit_path(&path),
+                jope_narrator::commit_path(&fixture),
+            ),
+        ] {
+            let bytes = fs::read(from).unwrap();
+            if to.exists() {
+                assert_eq!(
+                    fs::read(&to).unwrap(),
+                    bytes,
+                    "v2 golden is immutable; introduce a new renderer revision"
+                );
+            } else {
+                fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(to)
+                    .unwrap()
+                    .write_all(&bytes)
+                    .unwrap();
+            }
+        }
+    }
+    let page = read_journal(&fixture, None, 1024, 16 << 20).unwrap();
+    assert!(!page.partial_tail);
+    assert_eq!(page.events.len(), 114);
+    assert_eq!(
+        page.events
+            .iter()
+            .map(|e| e.fact.kind())
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        16
+    );
+    assert_eq!(
+        page.events
+            .iter()
+            .filter_map(|e| e.narration.variant)
+            .collect::<std::collections::BTreeSet<_>>(),
+        (0..8).collect()
+    );
+    assert!(page
+        .events
+        .iter()
+        .all(|e| e.renderer == "controlled-search-commentary/2"));
+    let text = page
+        .events
+        .iter()
+        .map(|e| e.narration.text.as_str())
+        .collect::<Vec<_>>()
+        .join("\n");
+    for clause in [
+        "admitted for evaluation",
+        "duplicate; not admitted for a new evaluation",
+        "not admitted: the per-cut evaluation bound was reached",
+        "not admitted: the active-seconds bound was reached",
+        "cancelled; this decision does not establish a physical evaluation start",
+        "1 exact endpoint edit is retained",
+        "A random proposal",
+        "Construction returned no program",
+        "The captured program is unchanged",
+        "The program changed;",
+        "The recorded recipe is available;",
+        "the evaluation bound was reached",
+        "the active-seconds bound was reached",
+        "the source run was cancelled",
+        "the recorded distinct-candidate attempts were exhausted",
+    ] {
+        assert!(text.contains(clause), "v2 golden missing {clause}");
+    }
+    assert!(!text.contains("1 exact endpoint edits"));
+    for event in &page.events {
+        let (predicate, key, token) = match &event.fact {
+            LineageFact::Admitted { disposition, .. } => ("admission", "disposition", disposition),
+            LineageFact::ExplorationStopped { reason, .. } => {
+                ("exploration_stopped", "reason", reason)
+            }
+            _ => continue,
+        };
+        let claim = event
+            .narration
+            .claims
+            .iter()
+            .find(|claim| claim.predicate == predicate)
+            .unwrap();
+        assert_eq!(
+            claim.details[key],
+            token.as_str(),
+            "exact source decision token must remain in claims"
+        );
+    }
 }
