@@ -1705,4 +1705,65 @@ modelUnload(fitted.handle);
         }
         assert_eq!(case_index, 44);
     }
+
+    #[test]
+    fn micro_winner_heads_cpp17_and_javascript_match_rust_bits() {
+        let dsls = [
+            "(pipe X (standardize) (winsor_clip q=0.05) (cheb degree=3 append=true) (histgbm rounds=120 depth=4 lr=0.08 lambda=2 bins=64 min_leaf=8))",
+            "(pipe X (standardize) (pair_prod topk=12 append=true) (histgbm rounds=200 depth=4 lr=0.06 lambda=2 bins=64 min_leaf=10))",
+            "(pipe X (standardize) (poly_interact append=true) (hinge knots=5 append=true) (ridge_gcv))",
+            "(pipe X (rank) (winsor_clip q=0.05) (histgbm rounds=250 depth=3 lr=0.05 lambda=3 bins=64 min_leaf=12))",
+            "(pipe X (standardize) (hinge knots=5 append=true) (ridge_gcv))",
+            "(pipe X (standardize) (ksmooth k=5 gamma=0.5))",
+            "(pipe X (robust_scale) (gbm rounds=15 depth=3 lr=0.1 lambda=1 bins=16 min_leaf=2))",
+        ];
+        let train = vec![
+            vec![-2.0, 0.5, 1.25],
+            vec![-1.0, -0.25, 2.0],
+            vec![0.0, 1.5, -1.0],
+            vec![0.75, -2.0, 0.25],
+            vec![1.5, 0.25, -0.5],
+            vec![3.0, 2.0, 1.5],
+            vec![-0.75, 0.75, 3.0],
+            vec![2.25, -1.5, -2.0],
+            vec![-1.5, 1.25, 0.75],
+            vec![0.25, -0.75, -1.25],
+        ];
+        let targets = vec![
+            -4.25, -1.375, -0.75, 3.5, 2.875, 5.0, -2.0, 4.25, -1.125, 0.625,
+        ];
+        let test = vec![
+            vec![-0.5, 0.0, 1.0],
+            vec![1.25, -1.0, 0.5],
+            vec![2.5, 3.0, -1.5],
+        ];
+        let options = EmitOptions {
+            math_kernel: MathKernel::Portable,
+            ..EmitOptions::default()
+        };
+        for (idx, dsl) in dsls.iter().enumerate() {
+            let genome = GenomeIr::parse(dsl).expect("Micro winner DSL parses");
+            assert!(supports_cpp17(&genome).is_ok(), "supports_cpp17 for {dsl}");
+            assert!(
+                supports_javascript(&genome).is_ok(),
+                "supports_javascript for {dsl}"
+            );
+            let rust_preds = crate::model::fit(&genome, &train, &targets)
+                .expect("Rust fit")
+                .predict(&test)
+                .expect("Rust predict");
+            let cpp_hex = run_cpp17_fixture(100 + idx, &genome, &options, &train, &targets, &test);
+            let js_hex = run_javascript_fixture(&genome, &options, &train, &targets, &test);
+            assert_eq!(js_hex, cpp_hex, "JS vs C++17 Portable bits for {dsl}");
+            for (row_idx, (cpp_line, &rs_val)) in cpp_hex.lines().zip(rust_preds.iter()).enumerate()
+            {
+                let cpp_bits = u64::from_str_radix(cpp_line.trim(), 16).unwrap();
+                let cpp_val = f64::from_bits(cpp_bits);
+                assert!(
+                    (cpp_val - rs_val).abs() <= 1e-12,
+                    "C++17/JS vs Rust parity for {dsl} row {row_idx}: {cpp_val} vs {rs_val}"
+                );
+            }
+        }
+    }
 }

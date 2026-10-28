@@ -47,22 +47,35 @@ pub fn emit_js(plan: &Plan, opts: &EmitOptions) -> Result<String, Vec<String>> {
         source.push_str(PLATFORM_MATH_BINDINGS);
     }
     source.push('\n');
-    if opts.partition_point_quantile_bounds {
+    let mut core = if opts.partition_point_quantile_bounds {
         let needle = "function lowerBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<v)lo=mid+1;else hi=mid;}return lo;}\nfunction upperBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<=v)lo=mid+1;else hi=mid;}return lo;}";
         assert_eq!(
             CORE.matches(needle).count(),
             1,
             "CORE template must contain the legacy lowerBound/upperBound needle exactly once"
         );
-        let core = CORE.replacen(
+        CORE.replacen(
             needle,
             "function lowerBound(s,v){let size=s.length;if(size===0)return 0;let base=0;while(size>1){const half=Math.trunc(size/2),mid=base+half;if(s[mid]<v)base=mid;size-=half;}return base+(s[base]<v?1:0);}\nfunction upperBound(s,v){let size=s.length;if(size===0)return 0;let base=0;while(size>1){const half=Math.trunc(size/2),mid=base+half;if(s[mid]<=v)base=mid;size-=half;}return base+(s[base]<=v?1:0);}",
             1,
-        );
-        source.push_str(&core);
+        )
     } else {
-        source.push_str(CORE);
+        CORE.to_owned()
+    };
+    if matches!(
+        head,
+        PlannedHead::RidgeGcv | PlannedHead::Gbm(_) | PlannedHead::Ksmooth { .. }
+    ) {
+        let head_dispatch_needle = r#"function fitHead(spec,x,y){if(spec.kind==="ridge")return ridgeFit(x,y,spec.lambdaFrac);if(spec.kind==="elasticnet")return elasticFit(x,y,spec.alpha,spec.l1Ratio,spec.sweeps);throw new RangeError("unsupported fitted head");}
+function predictHead(spec,state,x){if(spec.kind==="ridge")return ridgePredict(state,x);if(spec.kind==="elasticnet")return elasticPredict(state,x);throw new RangeError("unsupported applied head");}"#;
+        assert_eq!(
+            core.matches(head_dispatch_needle).count(),
+            1,
+            "CORE template must contain the legacy fitHead/predictHead needle exactly once"
+        );
+        core = core.replacen(head_dispatch_needle, EXTRA_HEADS_JS, 1);
     }
+    source.push_str(&core);
     source.push('\n');
     source.push_str(&model_js(stages, head));
     source.push('\n');
@@ -146,7 +159,11 @@ fn op_label(op: &PlannedOp) -> &'static str {
 fn head_supported(head: &PlannedHead) -> bool {
     matches!(
         head,
-        PlannedHead::Ridge { .. } | PlannedHead::ElasticNet { .. }
+        PlannedHead::Ridge { .. }
+            | PlannedHead::RidgeGcv
+            | PlannedHead::ElasticNet { .. }
+            | PlannedHead::Gbm(_)
+            | PlannedHead::Ksmooth { .. }
     )
 }
 
@@ -227,6 +244,7 @@ fn model_js(stages: &[PlannedStage], head: &PlannedHead) -> String {
         PlannedHead::Ridge { lambda_frac } => {
             format!(r#"{{kind:"ridge",lambdaFrac:{}}}"#, fmt_f64(*lambda_frac))
         }
+        PlannedHead::RidgeGcv => r#"{kind:"ridge_gcv"}"#.to_owned(),
         PlannedHead::ElasticNet {
             alpha,
             l1_ratio,
@@ -235,6 +253,20 @@ fn model_js(stages: &[PlannedStage], head: &PlannedHead) -> String {
             r#"{{kind:"elasticnet",alpha:{},l1Ratio:{},sweeps:{sweeps}}}"#,
             fmt_f64(*alpha),
             fmt_f64(*l1_ratio)
+        ),
+        PlannedHead::Gbm(g) => format!(
+            r#"{{kind:"gbm",rounds:{},depth:{},lr:{},lambda:{},bins:{},minLeaf:{},maxFeatures:{}}}"#,
+            g.rounds,
+            g.depth,
+            fmt_f64(g.lr),
+            fmt_f64(g.lambda),
+            g.bins,
+            g.min_leaf,
+            g.max_features
+        ),
+        PlannedHead::Ksmooth { k, gamma } => format!(
+            r#"{{kind:"ksmooth",k:{k},gamma:{}}}"#,
+            fmt_f64(*gamma)
         ),
         _ => unreachable!("model_js called after the support gate"),
     };
@@ -501,6 +533,274 @@ function applyStage(spec,state,x){
 function fitHead(spec,x,y){if(spec.kind==="ridge")return ridgeFit(x,y,spec.lambdaFrac);if(spec.kind==="elasticnet")return elasticFit(x,y,spec.alpha,spec.l1Ratio,spec.sweeps);throw new RangeError("unsupported fitted head");}
 function predictHead(spec,state,x){if(spec.kind==="ridge")return ridgePredict(state,x);if(spec.kind==="elasticnet")return elasticPredict(state,x);throw new RangeError("unsupported applied head");}
 "#;
+
+const EXTRA_HEADS_JS: &str = r#"function meanOf(values,n){const lim=Math.min(values.length,n);if(lim===0)return 0.0;let total=0.0;for(let i=0;i<lim;i++)total+=values[i];return total/lim;}
+function jacobiEigen(a,p){
+  const v=new Array(p*p).fill(0.0);for(let i=0;i<p;i++)v[i*p+i]=1.0;
+  let scale=0.0;for(let i=0;i<p;i++)scale+=a[i*p+i];const limit=(scale*1e-12)*(scale*1e-12);
+  for(let sweep=0;sweep<20;sweep++){
+    let off=0.0;for(let i=0;i<p;i++)for(let j=i+1;j<p;j++)off+=a[i*p+j]*a[i*p+j];
+    if(off<=limit)break;
+    for(let i=0;i<p;i++)for(let j=i+1;j<p;j++){
+      const apq=a[i*p+j];if(apq===0.0)continue;
+      const theta=(a[j*p+j]-a[i*p+i])/(2.0*apq);
+      const t=theta>=0.0?1.0/(theta+Math.sqrt(theta*theta+1.0)):-1.0/(Math.sqrt(theta*theta+1.0)-theta);
+      const c=1.0/Math.sqrt(t*t+1.0),s=t*c;
+      for(let k=0;k<p;k++)if(k!==i&&k!==j){
+        const aki=a[k*p+i],akj=a[k*p+j];
+        a[k*p+i]=c*aki-s*akj;a[i*p+k]=a[k*p+i];
+        a[k*p+j]=s*aki+c*akj;a[j*p+k]=a[k*p+j];
+      }
+      const aii=a[i*p+i],ajj=a[j*p+j];
+      a[i*p+i]=c*c*aii-2.0*s*c*apq+s*s*ajj;
+      a[j*p+j]=s*s*aii+2.0*s*c*apq+c*c*ajj;
+      a[i*p+j]=0.0;a[j*p+i]=0.0;
+      for(let k=0;k<p;k++){const vki=v[k*p+i],vkj=v[k*p+j];v[k*p+i]=c*vki-s*vkj;v[k*p+j]=s*vki+c*vkj;}
+    }
+  }
+  const e=new Array(p).fill(0.0);for(let i=0;i<p;i++)e[i]=a[i*p+i];
+  return [e,v];
+}
+function ridgeGcvFit(x,y){
+  const n=Math.min(x.length,y.length);let p=x[0].length;
+  let {means,scales}=stdFit(x);
+  for(let j=0;j<scales.length;j++)if(scales[j]<=1e-9)scales[j]=1.0;
+  let yMean=0.0;for(let i=0;i<n;i++)yMean+=y[i];yMean/=Math.max(n,1);
+  let yVar=0.0;for(let i=0;i<n;i++){const d=y[i]-yMean;yVar+=d*d;}
+  let cols=new Array(p);for(let j=0;j<p;j++)cols[j]=j;
+  if(n<2||p===0||Math.sqrt(yVar/Math.max(n,1))<1e-12){
+    const w=new Array(p+1).fill(0.0);w[0]=yMean;return {cols,means,scales,w};
+  }
+  if(Math.min(n,p)>384){
+    const score=new Array(p).fill(0.0);
+    for(let r=0;r<n;r++){const row=x[r],yr=y[r]-yMean;for(let j=0;j<p;j++)score[j]+=((row[j]-means[j])/scales[j])*yr;}
+    for(let j=0;j<p;j++)if(score[j]<0.0)score[j]=-score[j];
+    const used=new Array(p).fill(false),sel=[];
+    for(let k=0;k<384;k++){
+      let bestJ=0,bestS=-1.0;
+      for(let j=0;j<p;j++)if(!used[j]&&score[j]>bestS){bestS=score[j];bestJ=j;}
+      used[bestJ]=true;sel.push(bestJ);
+    }
+    sel.sort((a,b)=>a-b);cols=sel;p=cols.length;
+    means=cols.map(j=>means[j]);scales=cols.map(j=>scales[j]);
+  }
+  const lambdas=[
+    1e-05,2.1544346900318823e-05,4.641588833612782e-05,0.0001,0.00021544346900318823,
+    0.00046415888336127773,0.001,0.002154434690031882,0.004641588833612777,0.01,
+    0.021544346900318822,0.046415888336127774,0.1,0.21544346900318823,0.46415888336127725,
+    1.0,2.154434690031882,4.641588833612772,10.0,21.54434690031882,
+    46.41588833612773,100.0,215.44346900318823,464.1588833612773,1000.0
+  ];
+  const nf=n;
+  if(n<p){
+    const xs=new Array(n*p).fill(0.0);
+    for(let r=0;r<n;r++){const row=x[r];for(let j=0;j<p;j++)xs[r*p+j]=(row[cols[j]]-means[j])/scales[j];}
+    const yc=new Array(n).fill(0.0);let yty=0.0;
+    for(let r=0;r<n;r++){yc[r]=y[r]-yMean;yty+=yc[r]*yc[r];}
+    const km=new Array(n*n).fill(0.0);
+    for(let r=0;r<n;r++)for(let s=r;s<n;s++){let acc=0.0;for(let j=0;j<p;j++)acc+=xs[r*p+j]*xs[s*p+j];km[r*n+s]=acc;}
+    for(let i=0;i<n;i++)for(let j=0;j<i;j++)km[i*n+j]=km[j*n+i];
+    const [e,q]=jacobiEigen(km,n);
+    let eMax=0.0;for(let i=0;i<n;i++)if(e[i]>eMax)eMax=e[i];
+    for(let i=0;i<n;i++)if(e[i]<eMax*1e-12)e[i]=0.0;
+    const u=new Array(n).fill(0.0);
+    for(let i=0;i<n;i++){let s=0.0;for(let r=0;r<n;r++)s+=q[r*n+i]*yc[r];u[i]=s;}
+    let bestLambda=lambdas[0],bestGcv=Infinity;
+    for(const lam of lambdas){
+      let rss=yty,tr=0.0;
+      for(let i=0;i<n;i++)if(e[i]>0.0){const c=u[i]/(e[i]+lam),f=e[i]*c;rss+=f*f-2.0*f*u[i];tr+=e[i]/(e[i]+lam);}
+      if(rss<0.0)rss=0.0;
+      let denom=1.0-tr/nf;if(denom<1e-3)denom=1e-3;
+      const gcv=(rss/nf)/(denom*denom);
+      if(gcv<bestGcv){bestGcv=gcv;bestLambda=lam;}
+    }
+    const t=new Array(n).fill(0.0);
+    for(let r=0;r<n;r++){let s=0.0;for(let i=0;i<n;i++)if(e[i]>0.0)s+=q[r*n+i]*(u[i]/(e[i]+bestLambda));t[r]=s;}
+    const w=[yMean];
+    for(let j=0;j<p;j++){let s=0.0;for(let r=0;r<n;r++)s+=xs[r*p+j]*t[r];w.push(s);}
+    return {cols,means,scales,w};
+  }
+  const g=new Array(p*p).fill(0.0),b=new Array(p).fill(0.0),xsRow=new Array(p).fill(0.0);
+  let yty=0.0;
+  for(let r=0;r<n;r++){
+    const row=x[r];for(let j=0;j<p;j++)xsRow[j]=(row[cols[j]]-means[j])/scales[j];
+    const yr=y[r]-yMean;yty+=yr*yr;
+    for(let i=0;i<p;i++){const xi=xsRow[i];b[i]+=xi*yr;for(let j=i;j<p;j++)g[i*p+j]+=xi*xsRow[j];}
+  }
+  for(let i=0;i<p;i++)for(let j=0;j<i;j++)g[i*p+j]=g[j*p+i];
+  const [e,v]=jacobiEigen(g,p);
+  let eMax=0.0;for(let i=0;i<p;i++)if(e[i]>eMax)eMax=e[i];
+  for(let i=0;i<p;i++)if(e[i]<eMax*1e-12)e[i]=0.0;
+  const bt=new Array(p).fill(0.0);
+  for(let i=0;i<p;i++){let s=0.0;for(let j=0;j<p;j++)s+=v[j*p+i]*b[j];bt[i]=s;}
+  let bestLambda=lambdas[0],bestGcv=Infinity;
+  for(const lam of lambdas){
+    let rss=yty,tr=0.0;
+    for(let i=0;i<p;i++)if(e[i]>0.0){const c=bt[i]/(e[i]+lam);rss+=c*c*e[i]-2.0*c*bt[i];tr+=e[i]/(e[i]+lam);}
+    if(rss<0.0)rss=0.0;
+    let denom=1.0-tr/nf;if(denom<1e-3)denom=1e-3;
+    const gcv=(rss/nf)/(denom*denom);
+    if(gcv<bestGcv){bestGcv=gcv;bestLambda=lam;}
+  }
+  const w=[yMean];
+  for(let j=0;j<p;j++){let s=0.0;for(let i=0;i<p;i++)if(e[i]>0.0)s+=v[j*p+i]*(bt[i]/(e[i]+bestLambda));w.push(s);}
+  return {cols,means,scales,w};
+}
+function ridgeGcvPredict(s,x){
+  return x.map(row=>{
+    let z=s.w[0];
+    for(let k=0;k<s.cols.length;k++){const j=s.cols[k];if(j<row.length)z+=s.w[k+1]*((row[j]-s.means[k])/s.scales[k]);}
+    return clampRange(z,-60.0,60.0);
+  });
+}
+function treeBinEdges(x,f,n,bins){
+  const vals=new Array(n);for(let r=0;r<n;r++)vals[r]=x[r][f];
+  vals.sort(totalCompare);
+  const edges=[];
+  for(let q=1;q<bins;q++){
+    const idx=Math.trunc(vals.length*(q/bins));
+    const v=vals[Math.min(idx,vals.length-1)];
+    if(edges.length===0||edges[edges.length-1]!==v)edges.push(v);
+  }
+  return edges;
+}
+function treeBinRows(x,rows,nFeat,edges){
+  const out=new Int32Array(rows*nFeat);
+  for(let r=0;r<rows;r++)for(let f=0;f<nFeat;f++){
+    const v=f<x[r].length?x[r][f]:0.0;
+    out[r*nFeat+f]=lowerBound(edges[f],v);
+  }
+  return out;
+}
+function growTree(bins,grad,hess,rows,nFeat,nbins,maxDepth,minLeaf,lam,depth,tree,leafOf){
+  let g=0.0,h=0.0;
+  for(const i of rows){g+=grad[i];h+=hess[i];}
+  const leafValue=-g/(h+lam);
+  if(depth>=maxDepth||rows.length<2*minLeaf){
+    const idx=tree.length;
+    tree.push({feature:-1,threshold:0,left:0,right:0,value:leafValue});
+    for(const i of rows)leafOf[i]=idx;
+    return idx;
+  }
+  let bestGain=0.0,bestFeat=-1,bestThr=0;
+  const parent=g*g/(h+lam);
+  for(let f=0;f<nFeat;f++){
+    const gh=new Array(nbins).fill(0.0),hh=new Array(nbins).fill(0.0);
+    for(const i of rows){const b=bins[i*nFeat+f];gh[b]+=grad[i];hh[b]+=hess[i];}
+    let gl=0.0,hl=0.0;
+    for(let b=0;b<nbins-1;b++){
+      gl+=gh[b];hl+=hh[b];
+      const gr=g-gl,hr=h-hl;
+      if(hl<1.0||hr<1.0)continue;
+      const gain=gl*gl/(hl+lam)+gr*gr/(hr+lam)-parent;
+      if(gain>bestGain){bestGain=gain;bestFeat=f;bestThr=b;}
+    }
+  }
+  if(bestFeat<0||bestGain<=1e-9){
+    const idx=tree.length;
+    tree.push({feature:-1,threshold:0,left:0,right:0,value:leafValue});
+    for(const i of rows)leafOf[i]=idx;
+    return idx;
+  }
+  const leftRows=[],rightRows=[];
+  for(const i of rows){if(bins[i*nFeat+bestFeat]<=bestThr)leftRows.push(i);else rightRows.push(i);}
+  if(leftRows.length<minLeaf||rightRows.length<minLeaf){
+    const idx=tree.length;
+    tree.push({feature:-1,threshold:0,left:0,right:0,value:leafValue});
+    for(const i of rows)leafOf[i]=idx;
+    return idx;
+  }
+  const idx=tree.length;
+  tree.push({feature:-1,threshold:0,left:0,right:0,value:0.0});
+  const left=growTree(bins,grad,hess,leftRows,nFeat,nbins,maxDepth,minLeaf,lam,depth+1,tree,leafOf);
+  const right=growTree(bins,grad,hess,rightRows,nFeat,nbins,maxDepth,minLeaf,lam,depth+1,tree,leafOf);
+  tree[idx]={feature:bestFeat,threshold:bestThr,left,right,value:0.0};
+  return idx;
+}
+function routeTree(tree,bins,r,nFeat){
+  let idx=0;
+  for(;;){
+    const node=tree[idx];
+    if(node.feature<0)return node.value;
+    idx=bins[r*nFeat+node.feature]<=node.threshold?node.left:node.right;
+  }
+}
+function gbmFit(x,y,rounds,maxDepth,lr,lam,bins,minLeaf,maxFeatures){
+  const n=Math.min(x.length,y.length),cols=x[0].length,nFeat=Math.min(cols,maxFeatures);
+  if(n<4||nFeat===0){
+    const m=meanOf(y,Math.min(Math.max(n,1),y.length));
+    return {edges:[],trees:[],init:m,lr,nFeat:0,fallback:m};
+  }
+  const edges=new Array(nFeat);for(let f=0;f<nFeat;f++)edges[f]=treeBinEdges(x,f,n,bins);
+  const trainBins=treeBinRows(x,n,nFeat,edges),init=meanOf(y,n),fTrain=new Array(n).fill(init),trees=[];
+  const allRows=new Array(n);for(let i=0;i<n;i++)allRows[i]=i;
+  for(let r=0;r<rounds;r++){
+    const grad=new Array(n);for(let i=0;i<n;i++)grad[i]=fTrain[i]-y[i];
+    const hess=new Array(n).fill(1.0),tree=[],trainLeaf=new Array(n).fill(0);
+    growTree(trainBins,grad,hess,allRows,nFeat,bins,maxDepth,minLeaf,lam,0,tree,trainLeaf);
+    for(let i=0;i<n;i++)fTrain[i]+=lr*tree[trainLeaf[i]].value;
+    trees.push(tree);
+  }
+  return {edges,trees,init,lr,nFeat,fallback:init};
+}
+function gbmPredict(s,x){
+  if(s.nFeat===0)return new Array(x.length).fill(s.fallback);
+  const bins=treeBinRows(x,x.length,s.nFeat,s.edges),out=new Array(x.length);
+  for(let r=0;r<x.length;r++){
+    let val=s.init;
+    for(const tree of s.trees)val+=s.lr*routeTree(tree,bins,r,s.nFeat);
+    out[r]=val;
+  }
+  return out;
+}
+function ksmoothFit(x,y){
+  const n=Math.min(x.length,y.length),p=x[0].length,{means,scales}=stdFit(x);
+  let yMean=0.0;for(let i=0;i<n;i++)yMean+=y[i];yMean/=Math.max(n,1);
+  if(n<8||p===0)return {means,scales,z:[],ys:[],yMean};
+  const z=new Array(n);
+  for(let r=0;r<n;r++){const row=new Array(p);for(let j=0;j<p;j++)row[j]=(x[r][j]-means[j])/scales[j];z[r]=row;}
+  return {means,scales,z,ys:y.slice(0,n),yMean};
+}
+function ksmoothPredict(s,x,k,gamma){
+  const p=s.means.length;
+  if(s.z.length===0)return new Array(x.length).fill(clampRange(s.yMean,-60.0,60.0));
+  const pf=p,kk=Math.min(k,s.z.length);
+  return x.map(row=>{
+    const lim=Math.min(p,row.length),zr=new Array(lim);
+    for(let j=0;j<lim;j++)zr[j]=(row[j]-s.means[j])/s.scales[j];
+    const d2s=new Array(s.z.length);
+    for(let i=0;i<s.z.length;i++){
+      const zb=s.z[i],dLim=Math.min(zr.length,zb.length);
+      let d2=0.0;for(let d=0;d<dLim;d++){const t=zr[d]-zb[d];d2+=t*t;}
+      d2s[i]=d2;
+    }
+    const order=new Array(s.z.length);for(let i=0;i<s.z.length;i++)order[i]=i;
+    order.sort((a,b)=>{const c=totalCompare(d2s[a],d2s[b]);return c!==0?c:a-b;});
+    const base=d2s[order[0]];
+    let num=0.0,den=0.0;
+    for(let q=0;q<kk;q++){
+      const i=order[q],w=mExp(-gamma*(d2s[i]-base)/pf);
+      num+=w*s.ys[i];den+=w;
+    }
+    return clampRange(num/den,-60.0,60.0);
+  });
+}
+function fitHead(spec,x,y){
+  if(spec.kind==="ridge")return ridgeFit(x,y,spec.lambdaFrac);
+  if(spec.kind==="ridge_gcv")return ridgeGcvFit(x,y);
+  if(spec.kind==="elasticnet")return elasticFit(x,y,spec.alpha,spec.l1Ratio,spec.sweeps);
+  if(spec.kind==="gbm")return gbmFit(x,y,spec.rounds,spec.depth,spec.lr,spec.lambda,spec.bins,spec.minLeaf,spec.maxFeatures);
+  if(spec.kind==="ksmooth")return ksmoothFit(x,y);
+  throw new RangeError("unsupported fitted head");
+}
+function predictHead(spec,state,x){
+  if(spec.kind==="ridge")return ridgePredict(state,x);
+  if(spec.kind==="ridge_gcv")return ridgeGcvPredict(state,x);
+  if(spec.kind==="elasticnet")return elasticPredict(state,x);
+  if(spec.kind==="gbm")return gbmPredict(state,x);
+  if(spec.kind==="ksmooth")return ksmoothPredict(state,x,spec.k,spec.gamma);
+  throw new RangeError("unsupported applied head");
+}"#;
 
 const NUMERIC_BOUNDARY: &str = r#"
 function shapeIsSafe(n){return Number.isSafeInteger(n)&&n>=0;}

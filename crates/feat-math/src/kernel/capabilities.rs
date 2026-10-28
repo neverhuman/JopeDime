@@ -999,7 +999,15 @@ fn op_emitters(name: &str, kind: OpKind, lifecycle: Option<RegistryLifecycle>) -
     let cpp17_recipe = if CPP_TRANSFORMS.contains(&name)
         || matches!(
             name,
-            "norm_features" | "winsor_moments" | "ridge" | "logistic" | "elasticnet"
+            "norm_features"
+                | "winsor_moments"
+                | "ridge"
+                | "logistic"
+                | "elasticnet"
+                | "ridge_gcv"
+                | "ksmooth"
+                | "histgbm"
+                | "gbm"
         ) {
         YES
     } else if matches!(name, "map" | "derive") {
@@ -1013,12 +1021,6 @@ fn op_emitters(name: &str, kind: OpKind, lifecycle: Option<RegistryLifecycle>) -
         "polar" | "lag" | "roll" | "fft_mag" | "row_spectral" | "svd_project" | "nystrom"
     ) {
         Support::Planned { slice: "X2d" }
-    } else if name == "ridge_gcv" {
-        Support::Planned { slice: "X2e" }
-    } else if name == "ksmooth" {
-        Support::Planned { slice: "X2f" }
-    } else if name == "histgbm" || name == "gbm" {
-        Support::Planned { slice: "X2g" }
     } else if name == "histgbm2" {
         Support::Planned { slice: "X2h" }
     } else if name == "gpr" {

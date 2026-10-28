@@ -213,7 +213,10 @@ fn op_label(op: &PlannedOp) -> String {
 fn head_label(head: &PlannedHead) -> String {
     match head {
         PlannedHead::Ridge { .. } => "ridge".into(),
+        PlannedHead::RidgeGcv => "ridge_gcv".into(),
         PlannedHead::ElasticNet { .. } => "elasticnet".into(),
+        PlannedHead::Gbm(_) => "gbm".into(),
+        PlannedHead::Ksmooth { .. } => "ksmooth".into(),
         other => format!("{other:?}"),
     }
 }
@@ -221,7 +224,11 @@ fn head_label(head: &PlannedHead) -> String {
 fn head_supported(head: &PlannedHead) -> bool {
     matches!(
         head,
-        PlannedHead::Ridge { .. } | PlannedHead::ElasticNet { .. }
+        PlannedHead::Ridge { .. }
+            | PlannedHead::RidgeGcv
+            | PlannedHead::ElasticNet { .. }
+            | PlannedHead::Gbm(_)
+            | PlannedHead::Ksmooth { .. }
     )
 }
 
@@ -229,7 +236,10 @@ fn head_supported(head: &PlannedHead) -> bool {
 fn head_src_cpp(head: &PlannedHead) -> &'static str {
     match head {
         PlannedHead::Ridge { .. } => HEAD_RIDGE,
+        PlannedHead::RidgeGcv => HEAD_RIDGE_GCV,
         PlannedHead::ElasticNet { .. } => HEAD_ELASTICNET,
+        PlannedHead::Gbm(_) => HEAD_GBM,
+        PlannedHead::Ksmooth { .. } => HEAD_KSMOOTH,
         _ => unreachable!("head_src_cpp only reached for a supported head"),
     }
 }
@@ -241,6 +251,11 @@ fn head_calls_cpp(head: &PlannedHead) -> (String, String, &'static str) {
             format!("ridge_regression_fit(x, y, {})", fmt_f64(*lambda_frac)),
             "ridge_regression_predict(head, x)".into(),
             "RidgeRegression",
+        ),
+        PlannedHead::RidgeGcv => (
+            "gcv_ridge_regression_fit(x, y)".into(),
+            "gcv_ridge_regression_predict(head, x)".into(),
+            "GcvRidgeRegression",
         ),
         PlannedHead::ElasticNet {
             alpha,
@@ -254,6 +269,28 @@ fn head_calls_cpp(head: &PlannedHead) -> (String, String, &'static str) {
             ),
             "elastic_net_predict(head, x)".into(),
             "ElasticNet",
+        ),
+        PlannedHead::Gbm(g) => (
+            format!(
+                "gradient_boosted_trees_fit(x, y, {}, {}, {}, {}, {}, {}, {})",
+                g.rounds,
+                g.depth,
+                fmt_f64(g.lr),
+                fmt_f64(g.lambda),
+                g.bins,
+                g.min_leaf,
+                g.max_features
+            ),
+            "gradient_boosted_trees_predict(head, x)".into(),
+            "GradientBoostedTrees",
+        ),
+        PlannedHead::Ksmooth { k, gamma } => (
+            "nadaraya_watson_regression_fit(x, y)".into(),
+            format!(
+                "nadaraya_watson_regression_predict(head, x, {k}, {})",
+                fmt_f64(*gamma)
+            ),
+            "NadarayaWatsonRegression",
         ),
         _ => unreachable!("head_calls_cpp only reached for a supported head"),
     }
@@ -296,6 +333,9 @@ fn helper_cpp(helper: Helper, partition_point_bounds: bool) -> &'static str {
         Helper::Pearson => H_PEARSON,
         Helper::SoftThreshold => H_SOFT_THRESHOLD,
         Helper::RbfRow => H_RBF_ROW,
+        Helper::MeanOf => H_MEAN_OF,
+        Helper::JacobiEigen => H_JACOBI_EIGEN,
+        Helper::TreeCore => H_TREE_CORE,
         _ => "",
     }
 }
@@ -1890,6 +1930,637 @@ static std::vector<double> ridge_regression_predict(const RidgeRegression& state
             z += state.w[j + 1] * xs;
         }
         predictions.push_back(clamp_range(z, -60.0, 60.0));
+    }
+    return predictions;
+}"#;
+
+const H_MEAN_OF: &str = r#"// Arithmetic mean over the first n elements, 0.0 for an empty slice.
+static double mean_of(const std::vector<double>& values, std::size_t n) {
+    std::size_t lim = std::min(values.size(), n);
+    if (lim == 0) return 0.0;
+    double total = 0.0;
+    for (std::size_t i = 0; i < lim; ++i) total += values[i];
+    return total / static_cast<double>(lim);
+}"#;
+
+const H_JACOBI_EIGEN: &str = r#"// Eigendecomposition of the symmetric p x p matrix a (flattened row-major,
+// overwritten) by cyclic Jacobi rotations (Jacobi, 1846).
+static void jacobi_eigen(std::vector<double>& a, std::size_t p, std::vector<double>& e, std::vector<double>& v) {
+    v.assign(p * p, 0.0);
+    for (std::size_t i = 0; i < p; ++i) v[i * p + i] = 1.0;
+    double scale = 0.0;
+    for (std::size_t i = 0; i < p; ++i) scale += a[i * p + i];
+    double limit = (scale * 1e-12) * (scale * 1e-12);
+    for (std::size_t sweep = 0; sweep < 20; ++sweep) {
+        double off = 0.0;
+        for (std::size_t i = 0; i < p; ++i) {
+            for (std::size_t j = i + 1; j < p; ++j) {
+                off += a[i * p + j] * a[i * p + j];
+            }
+        }
+        if (off <= limit) break;
+        for (std::size_t i = 0; i < p; ++i) {
+            for (std::size_t j = i + 1; j < p; ++j) {
+                double apq = a[i * p + j];
+                if (apq == 0.0) continue;
+                double theta = (a[j * p + j] - a[i * p + i]) / (2.0 * apq);
+                double t = (theta >= 0.0)
+                    ? (1.0 / (theta + std::sqrt(theta * theta + 1.0)))
+                    : (-1.0 / (std::sqrt(theta * theta + 1.0) - theta));
+                double c = 1.0 / std::sqrt(t * t + 1.0);
+                double s = t * c;
+                for (std::size_t k = 0; k < p; ++k) {
+                    if (k != i && k != j) {
+                        double aki = a[k * p + i];
+                        double akj = a[k * p + j];
+                        a[k * p + i] = c * aki - s * akj;
+                        a[i * p + k] = a[k * p + i];
+                        a[k * p + j] = s * aki + c * akj;
+                        a[j * p + k] = a[k * p + j];
+                    }
+                }
+                double aii = a[i * p + i];
+                double ajj = a[j * p + j];
+                a[i * p + i] = c * c * aii - 2.0 * s * c * apq + s * s * ajj;
+                a[j * p + j] = s * s * aii + 2.0 * s * c * apq + c * c * ajj;
+                a[i * p + j] = 0.0;
+                a[j * p + i] = 0.0;
+                for (std::size_t k = 0; k < p; ++k) {
+                    double vki = v[k * p + i];
+                    double vkj = v[k * p + j];
+                    v[k * p + i] = c * vki - s * vkj;
+                    v[k * p + j] = s * vki + c * vkj;
+                }
+            }
+        }
+    }
+    e.assign(p, 0.0);
+    for (std::size_t i = 0; i < p; ++i) e[i] = a[i * p + i];
+}"#;
+
+const H_TREE_CORE: &str = r#"// One node of a regression tree; feature -1 marks a leaf holding value.
+struct TreeNode {
+    std::int64_t feature;
+    std::int64_t threshold;
+    std::size_t left;
+    std::size_t right;
+    double value;
+};
+
+static std::vector<double> tree_bin_edges(const std::vector<std::vector<double>>& x, std::size_t f, std::size_t n, std::size_t bins) {
+    std::vector<double> vals;
+    vals.reserve(n);
+    for (std::size_t r = 0; r < n; ++r) vals.push_back(x[r][f]);
+    std::sort(vals.begin(), vals.end(), total_less);
+    std::vector<double> edges;
+    for (std::size_t q = 1; q < bins; ++q) {
+        std::size_t idx = static_cast<std::size_t>(static_cast<double>(vals.size()) * (static_cast<double>(q) / static_cast<double>(bins)));
+        edges.push_back(vals[std::min(idx, vals.size() - 1)]);
+    }
+    edges.erase(std::unique(edges.begin(), edges.end()), edges.end());
+    return edges;
+}
+
+static std::vector<std::int64_t> tree_bin_rows(const std::vector<std::vector<double>>& x, std::size_t rows, std::size_t n_feat, const std::vector<std::vector<double>>& edges) {
+    std::vector<std::int64_t> out(rows * n_feat, 0);
+    for (std::size_t r = 0; r < rows; ++r) {
+        for (std::size_t f = 0; f < n_feat; ++f) {
+            double v = (f < x[r].size()) ? x[r][f] : 0.0;
+            out[r * n_feat + f] = static_cast<std::int64_t>(lower_bound(edges[f], v));
+        }
+    }
+    return out;
+}
+
+static std::size_t grow_tree(
+    const std::vector<std::int64_t>& bins,
+    const std::vector<double>& grad,
+    const std::vector<double>& hess,
+    const std::vector<std::size_t>& rows,
+    std::size_t n_feat,
+    std::size_t nbins,
+    std::size_t max_depth,
+    std::size_t min_leaf,
+    double lam,
+    std::size_t depth,
+    std::vector<TreeNode>& tree,
+    std::vector<std::size_t>& leaf_of
+) {
+    double g = 0.0;
+    for (std::size_t i : rows) g += grad[i];
+    double h = 0.0;
+    for (std::size_t i : rows) h += hess[i];
+    double leaf_value = -g / (h + lam);
+    if (depth >= max_depth || rows.size() < 2 * min_leaf) {
+        std::size_t idx = tree.size();
+        tree.push_back(TreeNode{-1, 0, 0, 0, leaf_value});
+        for (std::size_t i : rows) leaf_of[i] = idx;
+        return idx;
+    }
+    double best_gain = 0.0;
+    std::int64_t best_feat = -1;
+    std::int64_t best_thr = 0;
+    double parent = g * g / (h + lam);
+    for (std::size_t f = 0; f < n_feat; ++f) {
+        std::vector<double> gh(nbins, 0.0);
+        std::vector<double> hh(nbins, 0.0);
+        for (std::size_t i : rows) {
+            std::size_t b = static_cast<std::size_t>(bins[i * n_feat + f]);
+            gh[b] += grad[i];
+            hh[b] += hess[i];
+        }
+        double gl = 0.0;
+        double hl = 0.0;
+        for (std::size_t b = 0; b + 1 < nbins; ++b) {
+            gl += gh[b];
+            hl += hh[b];
+            double gr = g - gl;
+            double hr = h - hl;
+            if (hl < 1.0 || hr < 1.0) continue;
+            double gain = gl * gl / (hl + lam) + gr * gr / (hr + lam) - parent;
+            if (gain > best_gain) {
+                best_gain = gain;
+                best_feat = static_cast<std::int64_t>(f);
+                best_thr = static_cast<std::int64_t>(b);
+            }
+        }
+    }
+    if (best_feat < 0 || best_gain <= 1e-9) {
+        std::size_t idx = tree.size();
+        tree.push_back(TreeNode{-1, 0, 0, 0, leaf_value});
+        for (std::size_t i : rows) leaf_of[i] = idx;
+        return idx;
+    }
+    std::vector<std::size_t> left_rows;
+    std::vector<std::size_t> right_rows;
+    for (std::size_t i : rows) {
+        if (bins[i * n_feat + static_cast<std::size_t>(best_feat)] <= best_thr) {
+            left_rows.push_back(i);
+        } else {
+            right_rows.push_back(i);
+        }
+    }
+    if (left_rows.size() < min_leaf || right_rows.size() < min_leaf) {
+        std::size_t idx = tree.size();
+        tree.push_back(TreeNode{-1, 0, 0, 0, leaf_value});
+        for (std::size_t i : rows) leaf_of[i] = idx;
+        return idx;
+    }
+    std::size_t idx = tree.size();
+    tree.push_back(TreeNode{-1, 0, 0, 0, 0.0});
+    std::size_t left = grow_tree(bins, grad, hess, left_rows, n_feat, nbins, max_depth, min_leaf, lam, depth + 1, tree, leaf_of);
+    std::size_t right = grow_tree(bins, grad, hess, right_rows, n_feat, nbins, max_depth, min_leaf, lam, depth + 1, tree, leaf_of);
+    tree[idx] = TreeNode{best_feat, best_thr, left, right, 0.0};
+    return idx;
+}
+
+static double route_tree(const std::vector<TreeNode>& tree, const std::vector<std::int64_t>& bins, std::size_t r, std::size_t n_feat) {
+    std::size_t idx = 0;
+    for (;;) {
+        const TreeNode& node = tree[idx];
+        if (node.feature < 0) return node.value;
+        idx = (bins[r * n_feat + static_cast<std::size_t>(node.feature)] <= node.threshold) ? node.left : node.right;
+    }
+}"#;
+
+const HEAD_RIDGE_GCV: &str = r#"struct GcvRidgeRegression {
+    std::vector<std::size_t> cols;
+    std::vector<double> means;
+    std::vector<double> scales;
+    std::vector<double> w;
+};
+
+// Ridge regression on standardized features with generalized cross-validation
+// over the fixed 25-point logarithmic penalty grid (Golub, Heath & Wahba, 1979).
+static GcvRidgeRegression gcv_ridge_regression_fit(const std::vector<std::vector<double>>& x, const std::vector<double>& y) {
+    std::size_t n = std::min(x.size(), y.size());
+    std::size_t p = x[0].size();
+    std::vector<double> means;
+    std::vector<double> scales;
+    std_fit(x, means, scales);
+    for (double& s : scales) {
+        if (s <= 1e-9) s = 1.0;
+    }
+    double y_mean = 0.0;
+    for (std::size_t i = 0; i < n; ++i) y_mean += y[i];
+    y_mean /= static_cast<double>(std::max<std::size_t>(n, 1));
+    double y_var = 0.0;
+    for (std::size_t i = 0; i < n; ++i) {
+        double d = y[i] - y_mean;
+        y_var += d * d;
+    }
+    std::vector<std::size_t> cols(p);
+    for (std::size_t j = 0; j < p; ++j) cols[j] = j;
+    if (n < 2 || p == 0 || std::sqrt(y_var / static_cast<double>(std::max<std::size_t>(n, 1))) < 1e-12) {
+        std::vector<double> w(p + 1, 0.0);
+        w[0] = y_mean;
+        return GcvRidgeRegression{std::move(cols), std::move(means), std::move(scales), std::move(w)};
+    }
+    if (std::min(n, p) > 384) {
+        std::vector<double> score(p, 0.0);
+        for (std::size_t r = 0; r < n; ++r) {
+            const auto& row = x[r];
+            double yr = y[r] - y_mean;
+            for (std::size_t j = 0; j < p; ++j) {
+                score[j] += ((row[j] - means[j]) / scales[j]) * yr;
+            }
+        }
+        for (double& s : score) {
+            if (s < 0.0) s = -s;
+        }
+        std::vector<bool> used(p, false);
+        std::vector<std::size_t> sel;
+        sel.reserve(384);
+        for (std::size_t k = 0; k < 384; ++k) {
+            std::size_t best_j = 0;
+            double best_s = -1.0;
+            for (std::size_t j = 0; j < p; ++j) {
+                if (!used[j] && score[j] > best_s) {
+                    best_s = score[j];
+                    best_j = j;
+                }
+            }
+            used[best_j] = true;
+            sel.push_back(best_j);
+        }
+        std::sort(sel.begin(), sel.end());
+        cols = std::move(sel);
+        p = cols.size();
+        std::vector<double> kept_means;
+        std::vector<double> kept_scales;
+        kept_means.reserve(p);
+        kept_scales.reserve(p);
+        for (std::size_t j : cols) {
+            kept_means.push_back(means[j]);
+            kept_scales.push_back(scales[j]);
+        }
+        means = std::move(kept_means);
+        scales = std::move(kept_scales);
+    }
+    const double lambdas[25] = {
+        1e-05,
+        2.1544346900318823e-05,
+        4.641588833612782e-05,
+        0.0001,
+        0.00021544346900318823,
+        0.00046415888336127773,
+        0.001,
+        0.002154434690031882,
+        0.004641588833612777,
+        0.01,
+        0.021544346900318822,
+        0.046415888336127774,
+        0.1,
+        0.21544346900318823,
+        0.46415888336127725,
+        1.0,
+        2.154434690031882,
+        4.641588833612772,
+        10.0,
+        21.54434690031882,
+        46.41588833612773,
+        100.0,
+        215.44346900318823,
+        464.1588833612773,
+        1000.0
+    };
+    double nf = static_cast<double>(n);
+    if (n < p) {
+        std::vector<double> xs(n * p, 0.0);
+        for (std::size_t r = 0; r < n; ++r) {
+            const auto& row = x[r];
+            for (std::size_t j = 0; j < p; ++j) {
+                xs[r * p + j] = (row[cols[j]] - means[j]) / scales[j];
+            }
+        }
+        std::vector<double> yc(n, 0.0);
+        double yty = 0.0;
+        for (std::size_t r = 0; r < n; ++r) {
+            yc[r] = y[r] - y_mean;
+            yty += yc[r] * yc[r];
+        }
+        std::vector<double> km(n * n, 0.0);
+        for (std::size_t r = 0; r < n; ++r) {
+            for (std::size_t s = r; s < n; ++s) {
+                double acc = 0.0;
+                for (std::size_t j = 0; j < p; ++j) {
+                    acc += xs[r * p + j] * xs[s * p + j];
+                }
+                km[r * n + s] = acc;
+            }
+        }
+        for (std::size_t i = 0; i < n; ++i) {
+            for (std::size_t j = 0; j < i; ++j) {
+                km[i * n + j] = km[j * n + i];
+            }
+        }
+        std::vector<double> e;
+        std::vector<double> q;
+        jacobi_eigen(km, n, e, q);
+        double e_max = 0.0;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (e[i] > e_max) e_max = e[i];
+        }
+        for (std::size_t i = 0; i < n; ++i) {
+            if (e[i] < e_max * 1e-12) e[i] = 0.0;
+        }
+        std::vector<double> u(n, 0.0);
+        for (std::size_t i = 0; i < n; ++i) {
+            double s = 0.0;
+            for (std::size_t r = 0; r < n; ++r) {
+                s += q[r * n + i] * yc[r];
+            }
+            u[i] = s;
+        }
+        double best_lambda = lambdas[0];
+        double best_gcv = std::numeric_limits<double>::infinity();
+        for (double lam : lambdas) {
+            double rss = yty;
+            double tr = 0.0;
+            for (std::size_t i = 0; i < n; ++i) {
+                if (e[i] > 0.0) {
+                    double c = u[i] / (e[i] + lam);
+                    double f = e[i] * c;
+                    rss += f * f - 2.0 * f * u[i];
+                    tr += e[i] / (e[i] + lam);
+                }
+            }
+            if (rss < 0.0) rss = 0.0;
+            double denom = 1.0 - tr / nf;
+            if (denom < 1e-3) denom = 1e-3;
+            double gcv = (rss / nf) / (denom * denom);
+            if (gcv < best_gcv) {
+                best_gcv = gcv;
+                best_lambda = lam;
+            }
+        }
+        std::vector<double> t(n, 0.0);
+        for (std::size_t r = 0; r < n; ++r) {
+            double s = 0.0;
+            for (std::size_t i = 0; i < n; ++i) {
+                if (e[i] > 0.0) {
+                    s += q[r * n + i] * (u[i] / (e[i] + best_lambda));
+                }
+            }
+            t[r] = s;
+        }
+        std::vector<double> w;
+        w.reserve(p + 1);
+        w.push_back(y_mean);
+        for (std::size_t j = 0; j < p; ++j) {
+            double s = 0.0;
+            for (std::size_t r = 0; r < n; ++r) {
+                s += xs[r * p + j] * t[r];
+            }
+            w.push_back(s);
+        }
+        return GcvRidgeRegression{std::move(cols), std::move(means), std::move(scales), std::move(w)};
+    }
+    std::vector<double> g(p * p, 0.0);
+    std::vector<double> b(p, 0.0);
+    double yty = 0.0;
+    std::vector<double> xs_row(p, 0.0);
+    for (std::size_t r = 0; r < n; ++r) {
+        const auto& row = x[r];
+        for (std::size_t j = 0; j < p; ++j) {
+            xs_row[j] = (row[cols[j]] - means[j]) / scales[j];
+        }
+        double yr = y[r] - y_mean;
+        yty += yr * yr;
+        for (std::size_t i = 0; i < p; ++i) {
+            double xi = xs_row[i];
+            b[i] += xi * yr;
+            for (std::size_t j = i; j < p; ++j) {
+                g[i * p + j] += xi * xs_row[j];
+            }
+        }
+    }
+    for (std::size_t i = 0; i < p; ++i) {
+        for (std::size_t j = 0; j < i; ++j) {
+            g[i * p + j] = g[j * p + i];
+        }
+    }
+    std::vector<double> e;
+    std::vector<double> v;
+    jacobi_eigen(g, p, e, v);
+    double e_max = 0.0;
+    for (std::size_t i = 0; i < p; ++i) {
+        if (e[i] > e_max) e_max = e[i];
+    }
+    for (std::size_t i = 0; i < p; ++i) {
+        if (e[i] < e_max * 1e-12) e[i] = 0.0;
+    }
+    std::vector<double> bt(p, 0.0);
+    for (std::size_t i = 0; i < p; ++i) {
+        double s = 0.0;
+        for (std::size_t j = 0; j < p; ++j) {
+            s += v[j * p + i] * b[j];
+        }
+        bt[i] = s;
+    }
+    double best_lambda = lambdas[0];
+    double best_gcv = std::numeric_limits<double>::infinity();
+    for (double lam : lambdas) {
+        double rss = yty;
+        double tr = 0.0;
+        for (std::size_t i = 0; i < p; ++i) {
+            if (e[i] > 0.0) {
+                double c = bt[i] / (e[i] + lam);
+                rss += c * c * e[i] - 2.0 * c * bt[i];
+                tr += e[i] / (e[i] + lam);
+            }
+        }
+        if (rss < 0.0) rss = 0.0;
+        double denom = 1.0 - tr / nf;
+        if (denom < 1e-3) denom = 1e-3;
+        double gcv = (rss / nf) / (denom * denom);
+        if (gcv < best_gcv) {
+            best_gcv = gcv;
+            best_lambda = lam;
+        }
+    }
+    std::vector<double> w;
+    w.reserve(p + 1);
+    w.push_back(y_mean);
+    for (std::size_t j = 0; j < p; ++j) {
+        double s = 0.0;
+        for (std::size_t i = 0; i < p; ++i) {
+            if (e[i] > 0.0) {
+                s += v[j * p + i] * (bt[i] / (e[i] + best_lambda));
+            }
+        }
+        w.push_back(s);
+    }
+    return GcvRidgeRegression{std::move(cols), std::move(means), std::move(scales), std::move(w)};
+}
+
+static std::vector<double> gcv_ridge_regression_predict(const GcvRidgeRegression& state, const std::vector<std::vector<double>>& x) {
+    std::vector<double> predictions;
+    predictions.reserve(x.size());
+    for (const auto& row : x) {
+        double z = state.w[0];
+        for (std::size_t k = 0; k < state.cols.size(); ++k) {
+            std::size_t j = state.cols[k];
+            if (j < row.size()) {
+                z += state.w[k + 1] * ((row[j] - state.means[k]) / state.scales[k]);
+            }
+        }
+        predictions.push_back(clamp_range(z, -60.0, 60.0));
+    }
+    return predictions;
+}"#;
+
+const HEAD_GBM: &str = r#"struct GradientBoostedTrees {
+    std::vector<std::vector<double>> edges;
+    std::vector<std::vector<TreeNode>> trees;
+    double init;
+    double lr;
+    std::size_t n_feat;
+    double fallback;
+};
+
+// Gradient boosted regression trees with histogram splits on training quantile bins.
+static GradientBoostedTrees gradient_boosted_trees_fit(
+    const std::vector<std::vector<double>>& x,
+    const std::vector<double>& y,
+    std::size_t rounds,
+    std::size_t max_depth,
+    double lr,
+    double lam,
+    std::size_t bins,
+    std::size_t min_leaf,
+    std::size_t max_features
+) {
+    std::size_t n = std::min(x.size(), y.size());
+    std::size_t cols = x[0].size();
+    std::size_t n_feat = std::min(cols, max_features);
+    if (n < 4 || n_feat == 0) {
+        double m = mean_of(y, std::min(std::max<std::size_t>(n, 1), y.size()));
+        return GradientBoostedTrees{{}, {}, m, lr, 0, m};
+    }
+    std::vector<std::vector<double>> edges;
+    edges.reserve(n_feat);
+    for (std::size_t f = 0; f < n_feat; ++f) {
+        edges.push_back(tree_bin_edges(x, f, n, bins));
+    }
+    std::vector<std::int64_t> train_bins = tree_bin_rows(x, n, n_feat, edges);
+    double init = mean_of(y, n);
+    std::vector<double> f_train(n, init);
+    std::vector<std::vector<TreeNode>> trees;
+    trees.reserve(rounds);
+    std::vector<std::size_t> all_rows(n);
+    for (std::size_t i = 0; i < n; ++i) all_rows[i] = i;
+    for (std::size_t r = 0; r < rounds; ++r) {
+        std::vector<double> grad(n, 0.0);
+        for (std::size_t i = 0; i < n; ++i) grad[i] = f_train[i] - y[i];
+        std::vector<double> hess(n, 1.0);
+        std::vector<TreeNode> tree;
+        std::vector<std::size_t> train_leaf(n, 0);
+        grow_tree(train_bins, grad, hess, all_rows, n_feat, bins, max_depth, min_leaf, lam, 0, tree, train_leaf);
+        for (std::size_t i = 0; i < n; ++i) {
+            f_train[i] += lr * tree[train_leaf[i]].value;
+        }
+        trees.push_back(std::move(tree));
+    }
+    return GradientBoostedTrees{std::move(edges), std::move(trees), init, lr, n_feat, init};
+}
+
+static std::vector<double> gradient_boosted_trees_predict(const GradientBoostedTrees& state, const std::vector<std::vector<double>>& x) {
+    if (state.n_feat == 0) {
+        return std::vector<double>(x.size(), state.fallback);
+    }
+    std::vector<std::int64_t> bins = tree_bin_rows(x, x.size(), state.n_feat, state.edges);
+    std::vector<double> predictions;
+    predictions.reserve(x.size());
+    for (std::size_t r = 0; r < x.size(); ++r) {
+        double value = state.init;
+        for (const auto& tree : state.trees) {
+            value += state.lr * route_tree(tree, bins, r, state.n_feat);
+        }
+        predictions.push_back(value);
+    }
+    return predictions;
+}"#;
+
+const HEAD_KSMOOTH: &str = r#"struct NadarayaWatsonRegression {
+    std::vector<double> means;
+    std::vector<double> scales;
+    std::vector<std::vector<double>> z;
+    std::vector<double> ys;
+    double y_mean;
+};
+
+// Nadaraya-Watson kernel-weighted nearest-neighbor smoother in standardized feature space.
+static NadarayaWatsonRegression nadaraya_watson_regression_fit(const std::vector<std::vector<double>>& x, const std::vector<double>& y) {
+    std::size_t n = std::min(x.size(), y.size());
+    std::size_t p = x[0].size();
+    std::vector<double> means;
+    std::vector<double> scales;
+    std_fit(x, means, scales);
+    double y_mean = 0.0;
+    for (std::size_t i = 0; i < n; ++i) y_mean += y[i];
+    y_mean /= static_cast<double>(std::max<std::size_t>(n, 1));
+    if (n < 8 || p == 0) {
+        return NadarayaWatsonRegression{std::move(means), std::move(scales), {}, {}, y_mean};
+    }
+    std::vector<std::vector<double>> z;
+    z.reserve(n);
+    for (std::size_t r = 0; r < n; ++r) {
+        std::vector<double> row;
+        row.reserve(p);
+        for (std::size_t j = 0; j < p; ++j) {
+            row.push_back((x[r][j] - means[j]) / scales[j]);
+        }
+        z.push_back(std::move(row));
+    }
+    std::vector<double> ys(y.begin(), y.begin() + n);
+    return NadarayaWatsonRegression{std::move(means), std::move(scales), std::move(z), std::move(ys), y_mean};
+}
+
+static std::vector<double> nadaraya_watson_regression_predict(const NadarayaWatsonRegression& state, const std::vector<std::vector<double>>& x, std::size_t k, double gamma) {
+    std::size_t p = state.means.size();
+    if (state.z.empty()) {
+        return std::vector<double>(x.size(), clamp_range(state.y_mean, -60.0, 60.0));
+    }
+    double pf = static_cast<double>(p);
+    std::size_t kk = std::min(k, state.z.size());
+    std::vector<double> predictions;
+    predictions.reserve(x.size());
+    for (const auto& row : x) {
+        std::size_t lim = std::min(p, row.size());
+        std::vector<double> zr;
+        zr.reserve(lim);
+        for (std::size_t j = 0; j < lim; ++j) {
+            zr.push_back((row[j] - state.means[j]) / state.scales[j]);
+        }
+        std::vector<double> d2s;
+        d2s.reserve(state.z.size());
+        for (const auto& zb : state.z) {
+            double d2 = 0.0;
+            std::size_t d_lim = std::min(zr.size(), zb.size());
+            for (std::size_t d = 0; d < d_lim; ++d) {
+                double t = zr[d] - zb[d];
+                d2 += t * t;
+            }
+            d2s.push_back(d2);
+        }
+        std::vector<std::size_t> order(state.z.size());
+        for (std::size_t i = 0; i < state.z.size(); ++i) order[i] = i;
+        std::sort(order.begin(), order.end(), [&](std::size_t a, std::size_t b) {
+            if (total_less(d2s[a], d2s[b])) return true;
+            if (total_less(d2s[b], d2s[a])) return false;
+            return a < b;
+        });
+        double base = d2s[order[0]];
+        double num = 0.0;
+        double den = 0.0;
+        for (std::size_t q = 0; q < kk; ++q) {
+            std::size_t i = order[q];
+            double w = std::exp(-gamma * (d2s[i] - base) / pf);
+            num += w * state.ys[i];
+            den += w;
+        }
+        predictions.push_back(clamp_range(num / den, -60.0, 60.0));
     }
     return predictions;
 }"#;
