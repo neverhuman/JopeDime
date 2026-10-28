@@ -378,27 +378,25 @@ impl DopeEncoder {
     pub fn encode_tensors(&self, descriptor: &Tensor, columns: &Tensor) -> Result<Tensor> {
         let run = || {
             self.model
-                .encode_features_629_tensor(descriptor, columns, "high")
+                .encode_features_512_tensor(descriptor, columns, "high")
         };
-        let full = if let Some(pool) = &self.cpu_pool {
+        Ok(if let Some(pool) = &self.cpu_pool {
             pool.install(run)?
         } else {
             run()?
-        };
-        Ok(full.narrow(1, 0, 512)?.contiguous()?)
+        })
     }
 
     pub fn encode_conditioning(&self, input: &DopeConditioning) -> Result<Dope512> {
         ensure!(input.vec256.len() == 256, "Dope descriptor width differs");
-        let mut columns = vec![0f32; 64 * 17];
-        for (i, column) in input.col_landmarks.iter().take(64).enumerate() {
-            for (j, value) in column.iter().take(17).enumerate() {
-                columns[i * 17 + j] = *value;
-            }
-        }
         let descriptor = Tensor::from_slice(&input.vec256, (1, 256), self.device())?;
-        let columns = Tensor::from_vec(columns, (1, 64, 17), self.device())?;
-        let tensor = self.encode_tensors(&descriptor, &columns)?;
+        // Columns remain in the conditioning digest; these 512 coordinates need no upload.
+        let run = || self.model.encode_descriptor_512_tensor(&descriptor, "high");
+        let tensor = if let Some(pool) = &self.cpu_pool {
+            pool.install(run)?
+        } else {
+            run()?
+        };
         Ok(Dope512 {
             checkpoint_identity: self.checkpoint_identity.clone(),
             tensor,
