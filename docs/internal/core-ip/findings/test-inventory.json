@@ -3601,6 +3601,24 @@
         "gp"
       ]
     },
+    "target:jope-narrator/lib/jope_narrator": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "evidence",
+        "storage"
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+    },
+    "target:jope-narrator/test/core": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "evidence",
+        "storage"
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+    },
     "target:jope-observatory/bin/collect-datasets": {
       "role": "regression",
       "subsystems": [
@@ -3615,6 +3633,11 @@
     "target:jope-observatory/bin/collect-storage": {
       "reason": "No unit cases in this CLI harness; bounded metadata collector behavior requires its own observer receipt, never inferred from compilation.",
       "role": "infrastructure"
+    },
+    "target:jope-observatory/bin/gp-narration-stream": {
+      "role": "infrastructure",
+      "scope": "Read-only narration CLI is built/checked here and launched by narration integration MCP framing tests; no unit-test count inferred for the binary.",
+      "reason": "Reader CLI has no separate unit cases; its real stdio protocol and read-only routes are exercised by target:jope-observatory/test/narration."
     },
     "target:jope-observatory/bin/gp-source-stream": {
       "role": "regression",
@@ -3648,6 +3671,15 @@
         "evidence",
         "storage"
       ]
+    },
+    "target:jope-observatory/test/narration": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "evidence",
+        "storage"
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:jope-parallel/bin/jope-build-receipt": {
       "role": "regression",
@@ -4400,6 +4432,15 @@
         "orchestration"
       ]
     },
+    "target:jope-pipeline/test/search_narration": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "evidence",
+        "storage"
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+    },
     "target:jope-pipeline/test/seed_set_v2": {
       "role": "regression",
       "source": "crates/jope-pipeline/tests/seed_set_v2.rs",
@@ -4599,6 +4640,15 @@
         "preparation",
         "export"
       ]
+    },
+    "target:jope-runtime/test/prediction_narration": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "export",
+        "evidence"
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
