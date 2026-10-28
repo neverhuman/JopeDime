@@ -133,6 +133,7 @@ fn facts() -> Vec<LineageFact> {
 #[test]
 fn retained_v1_journal_pins_every_fact_kind_and_grammar_variant() {
     branch_fixture();
+    retained_v2_fixture();
     current_fixture();
     assert!(
         std::env::var_os("JOPE_NARRATION_CREATE_V1_GOLDEN").is_none(),
@@ -362,9 +363,29 @@ fn branch_fixture() {
     );
 }
 
-fn current_fixture() {
+fn retained_v2_fixture() {
+    assert!(
+        std::env::var_os("JOPE_NARRATION_CREATE_V2_GOLDEN").is_none(),
+        "v2 golden is frozen; create a new renderer revision"
+    );
     let fixture =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/renderer-v2.jsonl");
+    let page = read_journal(&fixture, None, 1024, 16 << 20).unwrap();
+    assert_eq!(page.events.len(), 114);
+    assert!(!page.partial_tail);
+    assert!(page
+        .events
+        .iter()
+        .all(|e| e.renderer == "controlled-search-commentary/2"));
+    assert_eq!(
+        jope_narrator::read_commit(&fixture).unwrap().records,
+        page.events.len().to_string()
+    );
+}
+
+fn current_fixture() {
+    let fixture =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/renderer-v3.jsonl");
     let mut rows = facts()
         .into_iter()
         .map(|f| (f, Links::default()))
@@ -404,11 +425,11 @@ fn current_fixture() {
             Links::default(),
         ));
     }
-    if std::env::var_os("JOPE_NARRATION_CREATE_V2_GOLDEN").is_some() {
+    if std::env::var_os("JOPE_NARRATION_CREATE_V3_GOLDEN").is_some() {
         let dir = scratch();
-        let path = dir.path().join("v2.jsonl");
+        let path = dir.path().join("v3.jsonl");
         let (tap, writer) =
-            FactJournal::create(&path, "synthetic-renderer-v2", Limits::default()).unwrap();
+            FactJournal::create(&path, "synthetic-renderer-v3", Limits::default()).unwrap();
         for (fact, links) in &rows {
             assert_eq!(
                 tap.emit_linked(fact.clone(), links.clone()),
@@ -428,7 +449,7 @@ fn current_fixture() {
                 assert_eq!(
                     fs::read(&to).unwrap(),
                     bytes,
-                    "v2 golden is immutable; introduce a new renderer revision"
+                    "v3 golden is immutable; introduce a new renderer revision"
                 );
             } else {
                 fs::OpenOptions::new()
@@ -462,7 +483,7 @@ fn current_fixture() {
     assert!(page
         .events
         .iter()
-        .all(|e| e.renderer == "controlled-search-commentary/2"));
+        .all(|e| e.renderer == "controlled-search-commentary/3"));
     let text = page
         .events
         .iter()
@@ -472,7 +493,7 @@ fn current_fixture() {
     for clause in [
         "admitted for evaluation",
         "duplicate; not admitted for a new evaluation",
-        "not admitted: the per-cut evaluation bound was reached",
+        "not admitted: the evaluation bound was reached",
         "not admitted: the active-seconds bound was reached",
         "cancelled; this decision does not establish a physical evaluation start",
         "1 exact endpoint edit is retained",
@@ -484,9 +505,9 @@ fn current_fixture() {
         "the evaluation bound was reached",
         "the active-seconds bound was reached",
         "the source run was cancelled",
-        "the recorded distinct-candidate attempts were exhausted",
+        "consecutive generations spent no evaluations",
     ] {
-        assert!(text.contains(clause), "v2 golden missing {clause}");
+        assert!(text.contains(clause), "v3 golden missing {clause}");
     }
     assert!(!text.contains("1 exact endpoint edits"));
     for event in &page.events {
