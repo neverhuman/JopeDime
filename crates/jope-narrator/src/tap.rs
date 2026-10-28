@@ -12,6 +12,8 @@ use std::sync::{
 pub const DEFAULT_MAX_FACTS: usize = 8192;
 pub const DEFAULT_MAX_BYTES: usize = 4 * 1024 * 1024;
 pub const MAX_FRAME_BYTES: usize = 1024 * 1024;
+pub const MIN_FRAME_BYTES: usize = 8 * 1024;
+const ENVELOPE_HEADROOM_BYTES: usize = 4 * 1024;
 
 #[derive(Clone, Debug)]
 pub struct Limits {
@@ -39,7 +41,7 @@ impl Limits {
                 && self.max_facts <= 1_000_000
                 && self.max_bytes > 0
                 && self.max_bytes <= 1024 * 1024 * 1024
-                && self.max_frame_bytes >= 4096
+                && self.max_frame_bytes >= MIN_FRAME_BYTES
                 && self.max_frame_bytes <= MAX_FRAME_BYTES
                 && (1..=1_000_000).contains(&self.max_records)
                 && (1..=16 * 1024 * 1024 * 1024).contains(&self.max_journal_bytes),
@@ -113,7 +115,10 @@ impl Tap {
             .and_then(|()| {
                 crate::encode_bounded(
                     &(&fact, &links),
-                    self.shared.limits.max_frame_bytes.saturating_sub(4096),
+                    self.shared
+                        .limits
+                        .max_frame_bytes
+                        .saturating_sub(ENVELOPE_HEADROOM_BYTES),
                 )
             }) {
             Ok(bytes) => bytes,

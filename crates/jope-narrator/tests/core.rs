@@ -5,7 +5,7 @@ use feat_math::{
 use jope_narrator::{
     diff_programs, fact_channel, read_journal, spawn_journal, AtomicEdit, Cursor, EmitStatus,
     Envelope, FactJournal, Limits, LineageFact, Links, Metric, ProgramRef, ProgramSnapshot,
-    RecordingTap,
+    RecordingTap, MAX_FRAME_BYTES, MIN_FRAME_BYTES,
 };
 use std::{collections::BTreeMap, fs, io::Write, path::PathBuf};
 
@@ -159,6 +159,53 @@ fn unsupported_representations_have_exact_whole_snapshot_patch() {
 
 #[test]
 fn queue_count_bytes_and_frame_bounds_produce_explicit_gaps() {
+    let dir = scratch();
+    let limits = |max_frame_bytes| Limits {
+        max_frame_bytes,
+        ..Limits::default()
+    };
+    for bound in [0, 4096, MIN_FRAME_BYTES - 1, MAX_FRAME_BYTES + 1] {
+        let path = dir.path().join(format!("unsupported-frame-{bound}.jsonl"));
+        assert!(FactJournal::create(&path, "unsupported-frame", limits(bound)).is_err());
+        assert!(!path.exists(), "refuse before creating a journal");
+        assert!(!jope_narrator::commit_path(&path).exists());
+    }
+    let path = dir.path().join("minimum-frame.jsonl");
+    let (tap, writer) =
+        FactJournal::create(&path, "minimum-frame", limits(MIN_FRAME_BYTES)).unwrap();
+    assert_eq!(tap.emit(stop(1)), EmitStatus::Queued);
+    let summary = writer.finish().unwrap();
+    assert_eq!(summary.status, "complete");
+    assert_eq!(summary.dropped, "0");
+    let page = read_journal(&path, None, 10, MAX_FRAME_BYTES).unwrap();
+    assert_eq!(page.events.len(), 1);
+    assert_eq!(page.events[0].fact, stop(1));
+    assert!(fs::read(&path).unwrap().len() <= MIN_FRAME_BYTES + 1);
+
+    let path = dir.path().join("minimum-frame-loss.jsonl");
+    let (tap, writer) =
+        FactJournal::create(&path, "minimum-frame-loss", limits(MIN_FRAME_BYTES)).unwrap();
+    assert_eq!(tap.emit(stop(2)), EmitStatus::Queued);
+    assert_eq!(
+        tap.emit(LineageFact::RunStopped {
+            status: "x".repeat(MIN_FRAME_BYTES),
+        }),
+        EmitStatus::Invalid
+    );
+    let summary = writer.finish().unwrap();
+    assert_eq!(summary.status, "incomplete");
+    assert_eq!(summary.dropped, "1");
+    let page = read_journal(&path, None, 10, MAX_FRAME_BYTES).unwrap();
+    assert_eq!(page.events.len(), 2);
+    assert!(page
+        .events
+        .iter()
+        .any(|e| e.fact == LineageFact::TapDropped { dropped: 1 }));
+    assert!(fs::read_to_string(&path)
+        .unwrap()
+        .lines()
+        .all(|line| line.len() <= MIN_FRAME_BYTES));
+
     let (tap, mut recv) = fact_channel(2, 1024 * 1024);
     assert_eq!(tap.emit(stop(0)), EmitStatus::Queued);
     assert_eq!(tap.emit(stop(1)), EmitStatus::Queued);

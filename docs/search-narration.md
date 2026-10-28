@@ -210,7 +210,10 @@ equal predictions or unchanged fitted state. Outcomes report their actual cut
 and metric. A partial-cut measurement is not an all-cut selection result.
 
 The producer queue defaults to 8,192 records and 4 MiB of owned serialized
-payload, with a 1 MiB frame bound. Admission can drop on record/byte saturation or oversize; aggregate gap events disclose losses with approximate position.
+payload, with a 1 MiB frame bound. Custom `Limits` accept frame bounds from 8 KiB
+through 1 MiB, reserving 4 KiB for the envelope; smaller bounds are refused before
+a journal is created. Admission can drop on record/byte saturation or oversize;
+aggregate gap events disclose losses with approximate position.
 No search RNG draws, evaluation budgets or controller decisions come from the
 narrator. An observer can still add time, so time-budget searches have no promise
 of identical decisions.
