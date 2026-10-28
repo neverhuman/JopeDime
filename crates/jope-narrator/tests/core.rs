@@ -546,6 +546,7 @@ fn automatic_capture_sessions_are_bounded_per_process() {
             assert_eq!(writer.finish().unwrap().status, "complete");
         }
         assert!(jope_narrator::journal_from_env().is_err());
+        assert!(jope_narrator::journal_from_env().unwrap().is_none());
         let root = std::path::PathBuf::from(std::env::var_os(jope_narrator::DIR_ENV).unwrap());
         assert_eq!(
             fs::read_dir(root).unwrap().count(),

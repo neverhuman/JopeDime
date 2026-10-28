@@ -670,6 +670,42 @@ fn concurrent_commits_never_poison_a_healthy_live_index() {
             std::thread::yield_now();
         }
     });
+    // A quiet reader must accept any already committed cursor after a burst,
+    // including boundaries beyond the former 2,048-record refresh turn.
+    let burst_path = dir.path().join("committed-burst.jsonl");
+    let (tap, journal) =
+        FactJournal::create(&burst_path, "run-a", jope_narrator::Limits::default()).unwrap();
+    let mut status_reader = index(&burst_path);
+    let mut cursor_reader = index(&burst_path);
+    for n in 0..3100 {
+        assert_eq!(
+            tap.emit(LineageFact::ExplorationStopped {
+                cut: 0,
+                reason: "synthetic_burst".into(),
+                generations: 1,
+                evaluations: n,
+            }),
+            jope_narrator::EmitStatus::Queued
+        );
+    }
+    assert_eq!(journal.finish().unwrap().status, "complete");
+    let status = status_reader.status().unwrap();
+    assert_eq!(status.last_sequence, "3100");
+    assert_eq!(status.last_sequence, status.capture.records);
+    let page = cursor_reader
+        .page(
+            &Cursor {
+                run_id: "run-a".into(),
+                sequence: "3090".into(),
+            },
+            20,
+            MAX_PAGE_BYTES,
+        )
+        .expect("committed burst cursor must be valid on the first request");
+    assert_eq!(page.events.len(), 10);
+    assert_eq!(page.events[0].sequence, "3091");
+    assert_eq!(page.next.sequence, "3100");
+    assert!(!page.more);
     assert_eq!(reader.status().unwrap().last_sequence, "512");
     assert_eq!(
         reader

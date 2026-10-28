@@ -439,6 +439,9 @@ pub struct ReadPage {
 
 /// Bounded offline reader. Live services maintain their own validated offset index using
 /// `Envelope::validate`, so polling a stream never requires rescanning historical records.
+/// This helper validates through the returned page; the terminal watermark count/hash
+/// is checked only when the read reaches that watermark. Use the observatory index
+/// for full committed-prefix validation before serving a finite page.
 pub fn read_journal(
     path: &Path,
     after: Option<&Cursor>,
