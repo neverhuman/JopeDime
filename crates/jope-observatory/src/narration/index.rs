@@ -10,7 +10,6 @@ use std::{
 pub const MAX_RECORD_BYTES: usize = 1024 * 1024;
 pub const MAX_PAGE_BYTES: usize = 4 * 1024 * 1024;
 pub const MAX_PAGE_RECORDS: usize = 256;
-const REFRESH_RECORDS: usize = 2048;
 const PAGE_OVERHEAD_BYTES: usize = 8192;
 pub(super) const MIN_PAGE_BYTES: usize = MAX_RECORD_BYTES + 1 + PAGE_OVERHEAD_BYTES;
 
@@ -153,7 +152,7 @@ impl Index {
             limits,
             poisoned: false,
         };
-        while result.refresh()? == REFRESH_RECORDS {}
+        result.refresh()?;
         Ok(result)
     }
     pub fn refresh(&mut self) -> Result<usize> {
@@ -198,10 +197,9 @@ impl Index {
         self.reader.seek(SeekFrom::Start(self.offset))?;
         self.partial_tail = metadata.len() > committed_bytes;
         let mut added = 0;
-        for _ in 0..REFRESH_RECORDS {
-            if self.offset == committed_bytes {
-                break;
-            }
+        // Drain this fixed, quota-bounded watermark before validating cursors or
+        // reporting capture closure. Do not chase markers published during this read.
+        while self.offset < committed_bytes {
             let start = self.offset;
             let Some(bytes) = complete_line(
                 &mut self.reader,

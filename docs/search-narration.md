@@ -22,10 +22,55 @@ do not acquire narration coverage from these adapters. Symbolic and portfolio
 program differences retain a verified whole-program replacement; recursive
 explanations remain unqualified.
 
+## End-to-end quickstart
+
+Run these commands from the repository root with the repository Rust toolchain,
+`jq`, and ordinary POSIX utilities installed. The bundled small dataset is local;
+this example uses CPU execution. Keep the lane's existing Cargo target directory.
+
+```sh
+export CARGO_INCREMENTAL=0
+export CARGO_PROFILE_DEV_DEBUG=line-tables-only
+mkdir -p target
+demo_dir="$(mktemp -d "$PWD/target/narration-demo.XXXXXX")"
+
+JOPE_NARRATION_DIR="$demo_dir/narration" \
+  cargo run --locked -p jope-cli --bin jope -- pipeline run \
+    --dataset datasets/test/pmlb-229-pwlinear \
+    --budget evaluations=4,seconds=120 \
+    --rng-seed 11 --seed 7 --threads 2 --islands 1 --device cpu \
+    --cuts 1 --policy skip --emit rust \
+    --source-commit "$(git rev-parse HEAD)" \
+    --output "$demo_dir/run" --json
+
+journal="$(find "$demo_dir/narration" -maxdepth 1 -type f -name '*.jsonl' -print -quit)"
+test -n "$journal"
+run_id="$(jq -er '.run_id' "$journal.commit")"
+printf 'Journal: %s\nRun: %s\nReceipt: %s\n' \
+  "$journal" "$run_id" "$demo_dir/run/receipt.json"
+
+cargo run --locked -p jope-observatory --bin gp-narration-stream -- \
+  --journal "$journal" --run-id "$run_id" verify --require-complete
+cargo run --locked -p jope-observatory --bin gp-narration-stream -- \
+  --journal "$journal" --run-id "$run_id" replay --after 0 --limit 64 --text
+cargo run --locked -p jope-observatory --bin gp-narration-stream -- \
+  --journal "$journal" --run-id "$run_id" serve --listen 127.0.0.1:9877
+```
+
+Open **http://127.0.0.1:9877/monitor**. The final command stays in the foreground;
+Ctrl-C stops this reader. Keep the printed journal and run identity for the
+commands below, or use another terminal with those variables assigned. A fresh
+demo directory ensures the discovery step selects this one run. When opening an
+existing capture directory, explicitly select the intended journal.
+
+Four evaluations are a smoke example and may contain only initial candidates.
+A fresh run with a larger evaluation budget can reach later generations; the
+presence of a journal alone does not prove later-generation edit coverage.
+
 ## Read the retained stream
 
-Obtain the run identity from the selected journal's `.commit` file. Start the
-Rust reader against that fixed journal and identity:
+The quickstart assigns `$journal` and `$run_id` from the selected capture.
+For later inspection, start the Rust reader against that same pair:
 
 ```sh
 cargo run --locked -p jope-observatory --bin gp-narration-stream -- \
@@ -56,11 +101,82 @@ Wrong-run, malformed and future cursors are errors. HTTP client errors are 400;
 unavailable or corrupt journals are 503. Binding is restricted to loopback with
 exact Host/Origin checks. Network requests cannot select a filesystem path.
 
-For MCP, invoke the same binary with `mcp` instead of `serve`. It implements a
-finite newline-delimited JSON-RPC compatibility profile for protocol 2025-11-25:
+For a finite HTTP page from another terminal:
+
+```sh
+curl --fail --get http://127.0.0.1:9877/api/v1/gp/reasoning/events \
+  --data-urlencode "run_id=$run_id" \
+  --data-urlencode after=0 --data-urlencode limit=64
+```
+
+A WebSocket client connects to
+`ws://127.0.0.1:9877/api/v1/gp/reasoning?run_id=RUN_ID&after=0`, replacing
+`RUN_ID` with the printed identity. Reconnect with the same run and the last
+fully handled event's decimal sequence. Heartbeat and error frames are transport
+messages; do not advance the event cursor from them.
+
+For MCP, launch the same reader as a separate stdio process:
+
+```sh
+cargo run --locked -p jope-observatory --bin gp-narration-stream -- \
+  --journal "$journal" --run-id "$run_id" mcp
+```
+
+It implements a finite newline-delimited JSON-RPC compatibility profile for protocol 2025-11-25:
 initialize, send `notifications/initialized`, then call `narration_read` or
 `narration_inspect`. Stdout contains protocol frames only. This is a separate
 reader process, not a search-control tool.
+
+For clients accepting the common `mcpServers` JSON shape, the executable and
+arguments are:
+
+```json
+{
+  "mcpServers": {
+    "jope_narration": {
+      "command": "/absolute/repo/target/debug/gp-narration-stream",
+      "args": [
+        "--journal", "/absolute/repo/target/narration-demo.EXAMPLE/narration/SELECTED.jsonl",
+        "--run-id", "ACTUAL_RUN_ID",
+        "mcp"
+      ]
+    }
+  }
+}
+```
+
+Replace every placeholder with the printed paths/identity. Client configuration
+keys vary; the native executable and argument list are the portable contract.
+The preceding Cargo command builds the binary in the ordinary target location.
+For an explicit custom target directory, resolve its actual executable instead.
+
+## Stored and wire schemas
+
+| Identifier | Meaning |
+| --- | --- |
+| `jope.reasoning-event/v1` | Journal envelope and event delivered by all readers |
+| `jope.lineage-fact/v1` | Owned source-fact contract; envelope `fact` uses a `kind` tag |
+| `controlled-search-commentary/1` | Retained renderer revision |
+| `jope.narration-page/v1` | Finite page with `events`, `next`, `more`, `partial_tail` |
+| `jope.narration-status/v1` | Validated boundary and capture state |
+| `jope.narration-heartbeat/v1` | WebSocket transport health |
+| `jope.narration-error/v1` | WebSocket read/limit failure |
+
+An event retains `schema`, `renderer`, `run_id`, decimal `sequence`, run-scoped
+`cursor`, `fact`, `links`, `narration`, `previous_sha256` and `sha256`.
+`narration` retains text, category, checked claims, exact delta when available,
+and the presentation variant. Source RNG seeds are decimal strings too. Keep
+these strings intact instead of coercing them through JavaScript `Number`.
+The adjacent watermark retains `run_id`, `records`, `dropped`, `sha256`,
+`bytes`, `status` and `error`. Integrity hashes are hexadecimal SHA-256 values.
+
+The reader CLI's global `--max-records` and `--max-journal-bytes` limit its
+index/input; they do not change producer retention. Defaults are 1,000,000 records
+and 1 GiB. Accepted reader limits are 1..=1,000,000 records and 1..=16 GiB.
+Finite pages contain at most 256 records / 4 MiB. WebSocket `serve --max-clients`
+defaults to 32, accepts 1..=128, and shares at most 64 concurrent read jobs.
+Writes time out after 10 seconds; quiet heartbeats arrive about every 5 seconds.
+MCP accepts at most 64 KiB per request and 16 MiB per response.
 
 ## Exactness and limits
 
@@ -81,7 +197,7 @@ No search RNG draws, evaluation budgets or controller decisions come from the
 narrator. An observer can still add time, so time-budget searches have no promise
 of identical decisions.
 
-Automatic environment capture permits at most 64 session attempts per process;
+Automatic environment capture permits at most 64 session attempts per process.
 The first rejected attempt reports an observer error; later attempts stay disabled
 without repeated warnings and preserve the source result.
 Retention across process restarts remains an operator responsibility.
@@ -100,8 +216,21 @@ drained with no queue loss; `incomplete` means queue losses occurred; `failed` o
 not prove the process is alive: after a crash or unpersistable I/O error, closure
 is unknown. `RunStopped` describes only the source run. `finish` closes admission
 even with retained tap clones, drains accepted work and returns writer errors.
-Public search/prediction entrypoints report observer startup/finish errors on
+A stale `capturing` marker makes `follow` wait until interrupted; readers cannot
+infer producer death from silence. Public search/prediction entrypoints report observer startup/finish errors on
 stderr and preserve the authoritative result.
+
+| Symptom | Action |
+| --- | --- |
+| No journal | Check capture env, stderr startup error, directory access and process session cap. The source result remains authoritative. |
+| Valid prefix, incomplete capture | Inspect watermark status and gap counts; do not treat it as complete coverage. |
+| `capturing` after producer disappears | Closure is unknown. Preserve both files and interrupt a waiting reader when needed. |
+| Wrong-run/future cursor | Use the selected watermark identity and a sequence within the retained boundary. |
+| HTTP 503 | Inspect storage and committed-record integrity; this is a journal/read failure. |
+
+The native single-island observation omits its island field; a measurement can
+therefore say “island unavailable” even when the draw/start coordinate is island
+0. This reflects the retained observation field, without guessing a missing ref.
 
 Hashes detect internal inconsistency; they do not authenticate the author.
 Transport heartbeats describe delivery health, not scientific progress.
@@ -110,7 +239,14 @@ Transport heartbeats describe delivery health, not scientific progress.
 
 `bash ops/ci/narration.sh` runs strict Clippy and the focused core, producer,
 transport and prediction contracts. Maintained Rust CI calls that same script.
-Exact-head hosted CI, long-duration load, latency/overhead targets, human quality
+The focused contracts currently execute 52 tests: core 21, pipeline internal 5,
+public producer 4, transport 15, prediction 6 and prediction codec 1. This count
+is local contract coverage, separate from the full repository gate and hosted CI.
+
+No representative latency/overhead benchmark is qualified by these contracts.
+Provisional research targets are p95 difference/planning below 2 ms, p95 event
+visibility below 250 ms and fixed-count overhead below 2%; these are unmeasured
+targets. Exact-head hosted CI, long-duration load, human quality
 evaluation, deployment and additional-engine coverage require separate evidence.
 See the [engineering specification](coordination/search-narration-engineering-spec.md)
 for the acceptance and follow-on qualification matrix.

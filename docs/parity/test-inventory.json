@@ -5,9 +5,9 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28).",
-  "count": 5991,
-  "ignored": 75,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.",
+  "count": 6012,
+  "ignored": 81,
   "packages": {
    "battle-gpu": {
     "count": 19,
@@ -9073,8 +9073,8 @@
     }
    },
    "starforge": {
-    "count": 57,
-    "ignored": 1,
+    "count": 78,
+    "ignored": 7,
     "binaries": {
      "starforge": {
       "kind": "lib",
@@ -9139,6 +9139,34 @@
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "starforge::dope_encoding": {
+      "kind": "test",
+      "count": 21,
+      "ignored": 6,
+      "tests": [
+       "alternative_fusion_uses_its_own_identity_and_checks_scope",
+       "checkpoint_pin_is_verified_before_loading_and_legacy_identity_is_preserved",
+       "consumers::both_consumers_execute_three_tasks_and_preserve_scope_and_pins",
+       "consumers::candidate::candidate_cpu_parity_and_three_task_consumers",
+       "external_csv_identity_does_not_erase_task_or_row_scope",
+       "learned_product::admitted_authority_change_before_native_work_keeps_last_valid_learned_product",
+       "learned_product::admitted_learned_product_three_tasks_matches_oracle_and_terminal_full",
+       "learned_product::admitted_none_callback_authority_change_cannot_finalize_complete",
+       "none_and_fast_retain_small_table_descriptors_without_native_admission",
+       "product_sessions::direct_session_emits_raw_product_and_companion_values",
+       "product_sessions::explicit_consumer_and_bound_consumer_must_match",
+       "product_sessions::explicit_direct_none_k33_preserves_full_fit_vocabulary_and_emits_finite512",
+       "product_sessions::explicit_products_refuse_rounded_or_colliding_classes_before_component_admission",
+       "product_sessions::omitted_consumer_keeps_historical_event_and_receipt_fields",
+       "progressive_terminal_equals_full_and_publishes_supplied_fusion",
+       "projection::minimal_projection_verifies_without_opening_unrelated_assets",
+       "resident512::benchmark_released_resident512_matched",
+       "resident512::released_cpu_host_conditioning_preserves_legacy_pack_and_identity",
+       "resident512::released_cpu_resident512_matches_full629_contract",
+       "shared_bundle_serialization_fixture_uses_the_upstream_contract",
+       "whole_checkpoint_checksum_and_cpu_reference_projection"
+      ]
      },
      "starforge::foundation_parity": {
       "kind": "test",
@@ -9481,7 +9509,7 @@
   }
  },
  "totals": {
-  "rust": 5991,
+  "rust": 6012,
   "python": 182
  }
 }

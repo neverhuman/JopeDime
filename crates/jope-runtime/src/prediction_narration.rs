@@ -92,6 +92,20 @@ mod tests {
     use super::*;
     #[test]
     fn prediction_binding_preserves_every_nonfinite_and_signed_zero_payload() {
+        // Known answers independently constructed from the documented v2 framing:
+        // domain + NUL + 'd' + LE64(8) + exact little-endian float payload.
+        assert_eq!(
+            identity(b"jope.prediction-input/v2", &-0.0_f64).unwrap(),
+            "a2892b841704d4d43ece736d26045ef47a55017cd8af8e5e8fa7827608724618"
+        );
+        assert_eq!(
+            identity(
+                b"jope.prediction-input/v2",
+                &f64::from_bits(0x7ff8_0000_0000_0042)
+            )
+            .unwrap(),
+            "b4ecb45bc7539ddb5abfb5451653c0f2762e29c8be4fafd5bb56607ad781dfad"
+        );
         let values = [
             0.0,
             -0.0,

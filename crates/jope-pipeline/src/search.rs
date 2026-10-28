@@ -613,12 +613,7 @@ struct DrawAt {
 }
 
 /// One finished evaluation as a lineage fact.
-fn measured_fact(
-    cut: usize,
-    phase: &str,
-    _island: Option<usize>,
-    observation: &Observation,
-) -> LineageFact {
+fn measured_fact(cut: usize, phase: &str, observation: &Observation) -> LineageFact {
     LineageFact::Measured {
         cut,
         phase: phase.to_owned(),
@@ -674,7 +669,6 @@ fn narration_measured(
     draw: &Option<String>,
     cut: usize,
     phase: &str,
-    island: Option<usize>,
     observation: &Observation,
 ) {
     if let Some(tap) = tap {
@@ -684,7 +678,7 @@ fn narration_measured(
                 .ok()
                 .map(|bytes| sha256_hex(&bytes));
         }
-        tap.emit_linked(measured_fact(cut, phase, island, observation), links);
+        tap.emit_linked(measured_fact(cut, phase, observation), links);
     }
 }
 
@@ -1631,15 +1625,7 @@ fn run_cut_allocated(
                 });
             }
             observation.island = multi.then_some(island);
-            narration_measured(
-                tap,
-                recorder,
-                &draw,
-                cut.index,
-                "exploration",
-                Some(island),
-                &observation,
-            );
+            narration_measured(tap, recorder, &draw, cut.index, "exploration", &observation);
             observations.push(observation);
         }
         // Another island's draw of a genome this generation measured joins that island with
@@ -2129,15 +2115,7 @@ fn remeasure_cut(
             let observation = record_evaluation(recorder, &draw, clock, || {
                 evaluate_candidate(genome, cut, search.generations as usize, REMEASURE)
             });
-            narration_measured(
-                tap,
-                recorder,
-                &draw,
-                cut.index,
-                "comparison",
-                None,
-                &observation,
-            );
+            narration_measured(tap, recorder, &draw, cut.index, "comparison", &observation);
             search.completed_evaluations += 1;
             search.comparison.completed_evaluations += 1;
             if observation.measured() {
