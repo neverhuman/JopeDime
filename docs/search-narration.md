@@ -17,7 +17,7 @@ observed through `jope_runtime::api::predict` and the shipped
 `org.jopedime/math-pipeline/v1` table/cell prediction methods. Prediction events
 bind actual fitted state and inputs by digest without publishing input cells.
 
-Kernel2, neural proposal traces, advanced-engine evolution and training workers
+Additional program builders, proposal traces and training workers
 do not acquire narration coverage from these adapters. Symbolic and portfolio
 program differences retain a verified whole-program replacement; recursive
 explanations remain unqualified.
@@ -67,8 +67,8 @@ reader process, not a search-control tool.
 Pipeline edits replay onto the retained parent and must reproduce the exact
 child codec. Integer and float values retain their types and bits. Historical
 printed programs preserve only the precision their producer printed. An endpoint
-diff describes the net change; it does not prove which internal mutation arm or
-crossover cut ran. Ordered equal parents remain two roles.
+diff describes the net change; it does not prove which internal edit operation or
+parent splice ran. Ordered equal parents remain two roles.
 
 Some legacy defaults, aliases and scalar clamps have explicit implementation
 notes. These describe requested versus resolved parameters, without promising
