@@ -94,18 +94,18 @@ impl Tap {
         self.emit_linked(fact, Links::default())
     }
     pub fn emit_linked(&self, fact: LineageFact, links: Links) -> EmitStatus {
-        if self.shared.closing.load(Ordering::Acquire) {
+        if self.shared.closing.load(Ordering::SeqCst) {
             return EmitStatus::Closed;
         }
-        self.shared.active.fetch_add(1, Ordering::AcqRel);
+        self.shared.active.fetch_add(1, Ordering::SeqCst);
         struct Admission<'a>(&'a Shared);
         impl Drop for Admission<'_> {
             fn drop(&mut self) {
-                self.0.active.fetch_sub(1, Ordering::Release);
+                self.0.active.fetch_sub(1, Ordering::SeqCst);
             }
         }
         let _admission = Admission(&self.shared);
-        if self.shared.closing.load(Ordering::Acquire) {
+        if self.shared.closing.load(Ordering::SeqCst) {
             return EmitStatus::Closed;
         }
         let bytes = match validate_fact(&fact)
@@ -168,7 +168,7 @@ impl Tap {
         self.shared.dropped.load(Ordering::Relaxed)
     }
     pub fn close(&self) {
-        self.shared.closing.store(true, Ordering::Release);
+        self.shared.closing.store(true, Ordering::SeqCst);
     }
 }
 pub struct FactReceiver {
@@ -179,10 +179,12 @@ pub struct FactReceiver {
 impl FactReceiver {
     pub(crate) fn recv_linked(&mut self) -> anyhow::Result<Option<(LineageFact, Links)>> {
         loop {
+            // SeqCst orders producer registration/check and receiver closure/check
+            // across both atomics; Acquire/Release alone permits store buffering.
             // Snapshot closure before inspecting the queue. Once no admitted producer is
             // active, an empty queue cannot race a previously accepted in-flight send.
-            let closed = self.shared.closing.load(Ordering::Acquire)
-                && self.shared.active.load(Ordering::Acquire) == 0;
+            let closed = self.shared.closing.load(Ordering::SeqCst)
+                && self.shared.active.load(Ordering::SeqCst) == 0;
             let total = self.shared.dropped.load(Ordering::Acquire);
             if total > self.reported {
                 let dropped = total - self.reported;
@@ -229,7 +231,7 @@ impl FactReceiver {
         self.shared.dropped.load(Ordering::Relaxed)
     }
     pub fn close(&self) {
-        self.shared.closing.store(true, Ordering::Release);
+        self.shared.closing.store(true, Ordering::SeqCst);
     }
 }
 impl Drop for FactReceiver {

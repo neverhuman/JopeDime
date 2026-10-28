@@ -47,8 +47,6 @@ pub struct Index {
     limits: Limits,
     poisoned: bool,
     capture: JournalSummary,
-    observed_length: u64,
-    observed_modified: Option<std::time::SystemTime>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -148,8 +146,6 @@ impl Index {
             run_id: run_id.into(),
             reader: BufReader::new(file),
             capture: read_commit(path)?,
-            observed_length: metadata.len(),
-            observed_modified: metadata.modified().ok(),
             opened_metadata: metadata,
             entries: Vec::new(),
             offset: 0,
@@ -172,6 +168,9 @@ impl Index {
         result
     }
     fn refresh_inner(&mut self) -> Result<usize> {
+        // A committed prefix is data-synced before its marker is published. Read
+        // that marker before stat: reversing these reads races an ordinary append.
+        let capture = read_commit(&self.path)?;
         let metadata = fs::symlink_metadata(&self.path)?;
         ensure!(
             metadata.is_file()
@@ -184,14 +183,6 @@ impl Index {
             metadata.len() <= self.limits.max_journal_bytes,
             "journal byte cap reached"
         );
-        ensure!(
-            metadata.len() != self.observed_length
-                || metadata.modified().ok() == self.observed_modified,
-            "journal modified without append"
-        );
-        self.observed_length = metadata.len();
-        self.observed_modified = metadata.modified().ok();
-        let capture = read_commit(&self.path)?;
         ensure!(capture.run_id == self.run_id, "watermark run mismatch");
         let committed_bytes = sequence(&capture.bytes)?;
         let committed_records = sequence(&capture.records)?;

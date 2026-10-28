@@ -569,3 +569,6 @@ fn automatic_capture_sessions_are_bounded_per_process() {
         String::from_utf8_lossy(&result.stdout)
     );
 }
+
+#[path = "support/golden_v1.rs"]
+mod golden_v1;
