@@ -24,7 +24,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 26 | 0 | 26 | 0 | 0 | 0 |
+| new-bin | 27 | 0 | 27 | 0 | 0 | 0 |
 | new-example | 8 | 0 | 8 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **835** | **353** | **72** | **1** | **402** | **7** |
+| **total** | **836** | **353** | **73** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 300.
 
@@ -885,6 +885,7 @@ you saw.
 | new-bin | (new) research observatory | crates/jope-observatory/src/bin/collect-storage.rs (collect-storage) | none | new | Explicit bounded S3 daily metadata refresh; original account/scope checks; no payload enumeration. |
 | new-bin | (new) research observatory | crates/jope-observatory/src/main.rs (jope-observatory) | jope-observatory::bin/jope-observatory (2 tests) | new | Read-only loopback training API and static React delivery; offline HTTP boundary fixtures do not grant training admission. |
 
+| new-bin | (new) search commentary stream | crates/jope-observatory/src/bin/gp-narration-stream.rs (gp-narration-stream) | jope-observatory::narration (13 tests) | new | Opt-in committed-prefix commentary, native evidence/cursors, real WebSocket and finite MCP tests; fixed inference separately observed; no additional-engine or deployment qualification. |
 | new-bin | (new) complete program source stream | crates/jope-observatory/src/bin/gp-source-stream.rs (gp-source-stream) | jope-observatory::gp_source websocket_delivers_full_sources_checks_and_cursor_replay | new | Opt-in durable complete-source WebSocket/replay and compile-qualified token accounting; actual four-language/compiler/error contracts, no live deployment or predictive-quality claim. |
 | new-bin | (new) single-file appliance | crates/jope-appliance/src/main.rs (jopedime) | jope-appliance::single_file (8 tests) | new | The signed `jopedime` executable (deploy/appliance): `version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses` over the native roster with bounded selection, exit statuses 2-7 and run receipts. CPU only; the e2e-smoke lane packs the fixture profile and runs it alone. Not published; no neural or GPU method. |
 | new-bin | (new) appliance packer | crates/jope-dist/src/main.rs (jope-dist) | jope-dist::reproducible_pack (3 tests) | new | Build-time only: `lock`, `fixture`, `notices`, `audit`, `pack`, `seal`, `verify`, `inspect`, `size-report`, `sbom-models`, `provenance` for jopedime packages; holds no signing key (release scopes stop at a stage for the release host's cosign step). |

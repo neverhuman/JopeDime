@@ -83,6 +83,7 @@ use crate::{
     },
     sha256_hex,
 };
+use jope_narrator::{LineageFact, Links, ProgramRef, Survivor as FactSurvivor, Tap};
 
 /// The search implementation, named in the receipt.
 pub const SEARCH_ENGINE: &str = "feat-math canonical-pipeline GP (in-process)";
@@ -188,6 +189,12 @@ pub struct SearchOptions {
     /// `None` ranks by held-out RMSE. RMSE and R² are measured either way; under an objective a
     /// candidate whose held-out predictions the objective cannot score is a score failure.
     pub objective: Option<Fitness>,
+    /// Lineage facts for search narration ([`jope_narrator`]); `None` emits nothing and costs a
+    /// branch. Observational only: a tap never blocks the search and nothing flows back, so every
+    /// numerical decision is unchanged under a nonbinding time budget. Frozen-clock parity
+    /// covers published bytes (`narration_tap_changes_no_published_byte`); live observation
+    /// overhead can affect admission when the wall deadline binds.
+    pub narration: Option<Tap>,
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -208,6 +215,7 @@ impl SearchOptions {
             event_binding: None,
             progress: None,
             objective: None,
+            narration: None,
         }
     }
 
@@ -586,6 +594,100 @@ struct Island {
     survivors: Vec<Scored>,
 }
 
+/// A program as a lineage fact names it: its digest and canonical text.
+fn program_ref(genome: &str) -> ProgramRef {
+    ProgramRef {
+        sha256: sha256_hex(genome.as_bytes()),
+        canonical: genome.to_owned(),
+    }
+}
+
+/// Where a draw lands, for its lineage fact. Unused when no tap is attached.
+#[derive(Clone, Copy, Debug)]
+struct DrawAt {
+    cut: usize,
+    generation: usize,
+    island: usize,
+    slot: Option<usize>,
+    attempt: Option<u32>,
+}
+
+/// One finished evaluation as a lineage fact.
+fn measured_fact(
+    cut: usize,
+    phase: &str,
+    island: Option<usize>,
+    observation: &Observation,
+) -> LineageFact {
+    LineageFact::Measured {
+        cut,
+        phase: phase.to_owned(),
+        generation: observation.generation,
+        island,
+        program_sha256: observation.program_sha256.clone(),
+        origin: observation.origin.to_owned(),
+        status: observation.status.to_owned(),
+        rmse: observation.rmse,
+        hold_r2: observation.hold_r2,
+        train_r2: observation.train_r2,
+        objective_loss: observation.objective_loss,
+        seconds: observation.seconds,
+        failure: observation
+            .failure
+            .as_ref()
+            .map(|_| observation.status.to_owned()),
+    }
+}
+
+fn narration_links(recorder: Option<&Recorder>, draw: &Option<String>, stage: &str) -> Links {
+    recorder.map_or_else(Links::default, |r| r.narration_links(draw, stage))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn narration_started(
+    tap: Option<&Tap>,
+    recorder: Option<&Recorder>,
+    draw: &Option<String>,
+    cut: usize,
+    phase: &str,
+    generation: usize,
+    island: Option<usize>,
+    genome: &str,
+) {
+    if let Some(tap) = tap {
+        tap.emit_linked(
+            LineageFact::Started {
+                cut,
+                phase: phase.to_owned(),
+                generation,
+                island,
+                program_sha256: sha256_hex(genome.as_bytes()),
+            },
+            narration_links(recorder, draw, "started"),
+        );
+    }
+}
+
+fn narration_measured(
+    tap: Option<&Tap>,
+    recorder: Option<&Recorder>,
+    draw: &Option<String>,
+    cut: usize,
+    phase: &str,
+    island: Option<usize>,
+    observation: &Observation,
+) {
+    if let Some(tap) = tap {
+        let mut links = narration_links(recorder, draw, "finished");
+        if links.observation_sha256.is_none() {
+            links.observation_sha256 = serde_json::to_vec(observation)
+                .ok()
+                .map(|bytes| sha256_hex(&bytes));
+        }
+        tap.emit_linked(measured_fact(cut, phase, island, observation), links);
+    }
+}
+
 /// Carry each island's top-1 into every other island's elites. The receiving island keeps the
 /// best [`ELITES`] of its own elites and the migrants ([`next_seeds`]), so a migrant enters only
 /// when it beats one of them; either way the event is recorded. Pure in the islands' state:
@@ -596,6 +698,7 @@ fn migrate(
     after_generation: usize,
     events: &mut Vec<crate::receipt::Migration>,
     recorder: Option<&Recorder>,
+    tap: Option<&Tap>,
 ) {
     let tops: Vec<(usize, Champion)> = islands
         .iter()
@@ -619,6 +722,14 @@ fn migrate(
                 && island.survivors.iter().any(|c| c.genome == champion.genome);
             record_draw(
                 recorder,
+                tap,
+                DrawAt {
+                    cut,
+                    generation: after_generation,
+                    island: to,
+                    slot: None,
+                    attempt: None,
+                },
                 format!("migration/{after_generation}/{from}/{to}"),
                 "migration",
                 Some(&champion.genome),
@@ -631,6 +742,17 @@ fn migrate(
                 },
                 None,
             );
+            if let Some(tap) = tap {
+                tap.emit(LineageFact::Migrated {
+                    cut,
+                    after_generation,
+                    from_island: *from,
+                    to_island: to,
+                    program_sha256: sha256_hex(champion.genome.as_bytes()),
+                    rmse: champion.rmse,
+                    admitted,
+                });
+            }
             events.push(crate::receipt::Migration {
                 cut: cut as u64,
                 after_generation: after_generation as u64,
@@ -786,8 +908,9 @@ fn offspring(
     generation: usize,
     slot: usize,
 ) -> (String, &'static str) {
-    let (genome, origin, _) =
-        offspring_recorded(parents, seen, rng_seed, cut, generation, slot, 0, None);
+    let (genome, origin, _) = offspring_recorded(
+        parents, seen, rng_seed, cut, generation, slot, 0, None, None,
+    );
     (genome, origin)
 }
 
@@ -801,13 +924,23 @@ fn offspring_recorded(
     slot: usize,
     island: usize,
     recorder: Option<&Recorder>,
+    tap: Option<&Tap>,
 ) -> (String, &'static str, Option<String>) {
     let coordinate = |attempt| format!("exploration/{generation}/{island}/{slot}/{attempt}");
+    let at = |attempt: usize| DrawAt {
+        cut,
+        generation,
+        island,
+        slot: Some(slot),
+        attempt: Some(attempt as u32),
+    };
     if parents.is_empty() {
         let seed = stream(rng_seed, cut, generation, slot, 0);
         let genome = evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS);
         let draw = record_draw(
             recorder,
+            tap,
+            at(0),
             coordinate(0),
             "random",
             Some(&genome),
@@ -841,6 +974,8 @@ fn offspring_recorded(
                 let duplicate = seen.contains(&child);
                 let draw = record_draw(
                     recorder,
+                    tap,
+                    at(attempt),
                     coordinate(attempt),
                     origin,
                     Some(&child),
@@ -856,6 +991,8 @@ fn offspring_recorded(
             Err(error) => {
                 record_draw(
                     recorder,
+                    tap,
+                    at(attempt),
                     coordinate(attempt),
                     origin,
                     None,
@@ -871,6 +1008,8 @@ fn offspring_recorded(
     let genome = evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS);
     let draw = record_draw(
         recorder,
+        tap,
+        at(DISTINCT_CHILD_ATTEMPTS),
         coordinate(DISTINCT_CHILD_ATTEMPTS),
         "random_fallback",
         Some(&genome),
@@ -885,6 +1024,8 @@ fn offspring_recorded(
 #[allow(clippy::too_many_arguments)]
 fn record_draw(
     recorder: Option<&Recorder>,
+    tap: Option<&Tap>,
+    at: DrawAt,
     coordinate: String,
     source: &str,
     genome: Option<&str>,
@@ -900,7 +1041,7 @@ fn record_draw(
             program
         );
     }
-    recorder.and_then(|recorder| recorder.update(|log| {
+    let recorded = recorder.and_then(|recorder| recorder.update(|log| {
         let canonical = genome.and_then(search_events::canonical_recipe);
         let program = genome.map(|g| sha256_hex(g.as_bytes()));
         let request_id = program.as_ref().map(|g| log.request_id(g, &canonical)).transpose()?;
@@ -919,11 +1060,35 @@ fn record_draw(
                 parents: parent_hashes, parent_canonical_sha256: parents.iter().map(|p| search_events::canonical_recipe(p)).collect(),
                 sibling_group: coordinate.rsplit_once('/').map(|(group,_)| group).unwrap_or(&coordinate).into(), operator: source.into(),
                 parameters: [("max_transforms".into(), MAX_TRANSFORMS.to_string()), ("stream_seed_hex".into(), seed.map(|s| format!("{s:016x}")).unwrap_or_default())].into(),
-                post_canonical_sha256: canonical.clone(), legal: canonical.is_some(), refusal: if canonical.is_none() { Some(detail.unwrap_or_else(|| "parser refused operator output".into())) } else { None },
+                post_canonical_sha256: canonical.clone(), legal: canonical.is_some(), refusal: if canonical.is_none() { Some(detail.clone().unwrap_or_else(|| "parser refused operator output".into())) } else { None },
             } })?;
         }
         Ok(draw)
-    }))
+    }));
+    // Before anything about the child is measured: the narrator's hypotheses rest on this.
+    if let Some(tap) = tap {
+        tap.emit_linked(
+            LineageFact::Drawn {
+                cut: at.cut,
+                phase: coordinate.split('/').next().unwrap_or_default().to_owned(),
+                coordinate: coordinate.clone(),
+                generation: at.generation,
+                island: at.island,
+                slot: at.slot,
+                attempt: at.attempt,
+                origin: source.to_owned(),
+                seed,
+                parents: parents.iter().map(|p| program_ref(p)).collect(),
+                child: genome.map(program_ref),
+                outcome: outcome.to_owned(),
+                detail: detail
+                    .as_ref()
+                    .map(|_| "operator rejected candidate".to_owned()),
+            },
+            narration_links(recorder, &recorded, "draw"),
+        );
+    }
+    recorded
 }
 
 fn admission(recorder: Option<&Recorder>, draw: &Option<String>, disposition: &str) {
@@ -1051,6 +1216,19 @@ pub fn run_cuts_with(
     options: &SearchOptions,
     output: &Path,
 ) -> Result<Vec<CutSearch>> {
+    crate::narration::with_tap(
+        options.narration.clone(),
+        |_| run_cuts_observed(cuts, options, output),
+        || options.cancelled(),
+    )
+}
+
+/// Shared observer session: the enclosing pipeline owns its terminal event after emission.
+pub(crate) fn run_cuts_observed(
+    cuts: &[Cut],
+    options: &SearchOptions,
+    output: &Path,
+) -> Result<Vec<CutSearch>> {
     let pool = crate::parallel::pool(options.workers())?;
     let concurrent = (options.workers() > 1).then_some(&pool);
     pool.install(|| {
@@ -1073,6 +1251,30 @@ pub fn run_cuts_with(
         }
         Ok(searches)
     })
+}
+
+/// [`run_cuts_with`], journaling narration under `$JOPE_NARRATION_DIR` when it is set and
+/// no tap is attached already (the opt-in convention of `JOPE_GP_SOURCE_DIR`). Narration never
+/// fails or changes a search: a journal that cannot be opened or completed is reported on stderr
+/// and the search's own result is returned unchanged.
+pub fn run_cuts_with_env_narration(
+    cuts: &[Cut],
+    options: &SearchOptions,
+    output: &Path,
+) -> Result<Vec<CutSearch>> {
+    if options.narration.is_some() {
+        return run_cuts_with(cuts, options, output);
+    }
+    crate::narration::from_env(
+        |tap| {
+            let narrated = SearchOptions {
+                narration: tap.cloned(),
+                ..options.clone()
+            };
+            run_cuts_observed(cuts, &narrated, output)
+        },
+        || options.cancelled(),
+    )
 }
 
 /// Evaluate `admitted` in order. Each candidate starts only while the cut's seconds bound
@@ -1105,6 +1307,16 @@ fn evaluate_admitted(
                 if !may_start(origin) {
                     break;
                 }
+                narration_started(
+                    options.narration.as_ref(),
+                    recorder,
+                    draw,
+                    cut.index,
+                    "exploration",
+                    generation,
+                    Some(*island),
+                    genome,
+                );
                 results.push(Some(record_evaluation(recorder, draw, clock, || {
                     let mut observation = evaluate(
                         genome,
@@ -1129,8 +1341,18 @@ fn evaluate_admitted(
             let evaluated: Vec<Option<(Observation, Option<f64>)>> = pool.install(|| {
                 admitted
                     .par_iter()
-                    .map(|(island, genome, origin, _)| {
+                    .map(|(island, genome, origin, draw)| {
                         may_start(origin).then(|| {
+                            narration_started(
+                                options.narration.as_ref(),
+                                recorder,
+                                draw,
+                                cut.index,
+                                "exploration",
+                                generation,
+                                Some(*island),
+                                genome,
+                            );
                             let started = recorder.map(|_| clock.start());
                             let mut observation = evaluate(
                                 genome,
@@ -1203,6 +1425,26 @@ fn run_cut_allocated(
     let mut evaluations = 0usize;
     let mut generation = 0usize;
     let mut barren = 0usize;
+    let tap = options.narration.as_ref();
+    if let Some(tap) = tap {
+        tap.emit(LineageFact::SearchStarted {
+            cut: cut.index,
+            engine: SEARCH_ENGINE.to_owned(),
+            train_rows: cut.train_rows(),
+            hold_rows: cut.hold_rows(),
+            features: cut.train_x.first().map_or(0, Vec::len),
+            population: POPULATION,
+            elites: ELITES,
+            max_transforms: MAX_TRANSFORMS,
+            islands: island_count,
+            migration_interval: options.migration_interval,
+            exploration_evaluations: evaluation_limit,
+            exploration_seconds: seconds_limit,
+            rng_seed,
+            objective: options.objective.as_ref().map(|o| o.name().to_string()),
+            incumbents: options.seeds.len(),
+        });
+    }
 
     let stopped_by: &'static str = 'search: loop {
         // Generation 0 is the bootstrap plus grammar-random draws; later
@@ -1215,6 +1457,14 @@ fn run_cut_allocated(
             if generation == 0 {
                 let draw = record_draw(
                     recorder,
+                    tap,
+                    DrawAt {
+                        cut: cut.index,
+                        generation: 0,
+                        island: index,
+                        slot: None,
+                        attempt: None,
+                    },
                     format!("exploration/0/{index}/bootstrap"),
                     BOOTSTRAP,
                     Some(BOOTSTRAP_GENOME),
@@ -1230,6 +1480,14 @@ fn run_cut_allocated(
                 candidates.extend(options.seeds.iter().enumerate().map(|(slot, g)| {
                     let draw = record_draw(
                         recorder,
+                        tap,
+                        DrawAt {
+                            cut: cut.index,
+                            generation: 0,
+                            island: index,
+                            slot: None,
+                            attempt: None,
+                        },
                         format!("exploration/0/{index}/incumbent/{slot}"),
                         INCUMBENT,
                         Some(g),
@@ -1245,6 +1503,14 @@ fn run_cut_allocated(
                     let genome = evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS);
                     let draw = record_draw(
                         recorder,
+                        tap,
+                        DrawAt {
+                            cut: cut.index,
+                            generation: 0,
+                            island: index,
+                            slot: Some(slot),
+                            attempt: Some(0),
+                        },
                         format!("exploration/0/{index}/{slot}/0"),
                         "random",
                         Some(&genome),
@@ -1266,6 +1532,7 @@ fn run_cut_allocated(
                         slot,
                         index,
                         recorder,
+                        tap,
                     );
                     (index, genome, origin, draw)
                 }));
@@ -1282,34 +1549,65 @@ fn run_cut_allocated(
         // candidates with its existing score instead of being fitted again.
         let mut shared: Vec<(usize, String)> = Vec::new();
         let mut bound = None;
+        let admitted_fact =
+            |island: usize, genome: &str, draw: &Option<String>, disposition: &str| {
+                if let Some(tap) = tap {
+                    tap.emit_linked(
+                        LineageFact::Admitted {
+                            cut: cut.index,
+                            generation,
+                            island,
+                            program_sha256: sha256_hex(genome.as_bytes()),
+                            disposition: disposition.to_owned(),
+                        },
+                        narration_links(recorder, draw, "admission"),
+                    );
+                }
+            };
         let mut candidates = candidates.into_iter();
         for (island, genome, origin, draw) in candidates.by_ref() {
             if evaluations + admitted.len() >= evaluation_limit {
                 bound = Some(STOPPED_BY_EVALUATIONS);
                 admission(recorder, &draw, STOPPED_BY_EVALUATIONS);
+                admitted_fact(island, &genome, &draw, STOPPED_BY_EVALUATIONS);
                 break;
             }
             if !seconds_exempt(generation, origin) && started.elapsed() >= deadline {
                 bound = Some(STOPPED_BY_SECONDS);
                 admission(recorder, &draw, STOPPED_BY_SECONDS);
+                admitted_fact(island, &genome, &draw, STOPPED_BY_SECONDS);
                 break;
             }
             if !seen.insert(genome.clone()) {
                 admission(recorder, &draw, "duplicate");
+                admitted_fact(island, &genome, &draw, "duplicate");
                 if multi {
                     shared.push((island, genome));
                 }
                 continue;
             }
             admission(recorder, &draw, "admitted");
+            admitted_fact(island, &genome, &draw, "admitted");
             admitted.push((island, genome, origin, draw));
         }
-        for (_, _, _, draw) in candidates {
-            admission(recorder, &draw, bound.unwrap_or("cancelled"));
+        for (island, genome, _, draw) in candidates {
+            let disposition = bound.unwrap_or("cancelled");
+            admission(recorder, &draw, disposition);
+            admitted_fact(island, &genome, &draw, disposition);
         }
         if options.cancelled() {
             if let Some(recorder) = recorder {
                 recorder.publish(output)?;
+            }
+        }
+        if options.cancelled() {
+            if let Some(tap) = tap {
+                tap.emit(LineageFact::ExplorationStopped {
+                    cut: cut.index,
+                    reason: "cancelled".to_owned(),
+                    generations: generation + 1,
+                    evaluations,
+                });
             }
         }
         options.check_cancelled()?;
@@ -1319,7 +1617,7 @@ fn run_cut_allocated(
         // The fold, in slot order: survivors and observations never depend on which worker
         // finished first.
         let mut late = false;
-        for ((island, genome, _, _), result) in admitted.into_iter().zip(results) {
+        for ((island, genome, _, draw), result) in admitted.into_iter().zip(results) {
             let Some(mut observation) = result else {
                 late = true;
                 continue;
@@ -1333,6 +1631,15 @@ fn run_cut_allocated(
                 });
             }
             observation.island = multi.then_some(island);
+            narration_measured(
+                tap,
+                recorder,
+                &draw,
+                cut.index,
+                "exploration",
+                Some(island),
+                &observation,
+            );
             observations.push(observation);
         }
         // Another island's draw of a genome this generation measured joins that island with
@@ -1378,6 +1685,16 @@ fn run_cut_allocated(
                 recorder.publish(output)?;
             }
         }
+        if options.cancelled() {
+            if let Some(tap) = tap {
+                tap.emit(LineageFact::ExplorationStopped {
+                    cut: cut.index,
+                    reason: "cancelled".to_owned(),
+                    generations: generation + 1,
+                    evaluations,
+                });
+            }
+        }
         options.check_cancelled()?;
         if late {
             break 'search STOPPED_BY_SECONDS;
@@ -1400,8 +1717,26 @@ fn run_cut_allocated(
 
         // Keep the best ELITES by held-out RMSE; ties on the canonical genome so
         // the surviving set is a function of the measurements alone.
-        for island in &mut islands {
+        for (index, island) in islands.iter_mut().enumerate() {
             island.survivors = next_seeds(&island.survivors, ELITES);
+            if let Some(tap) = tap {
+                tap.emit(LineageFact::GenerationClosed {
+                    cut: cut.index,
+                    generation,
+                    island: index,
+                    survivors: island
+                        .survivors
+                        .iter()
+                        .map(|s| FactSurvivor {
+                            program_sha256: sha256_hex(s.genome.as_bytes()),
+                            rmse: s.rmse,
+                            score: s.score,
+                        })
+                        .collect(),
+                    evaluations,
+                    barren,
+                });
+            }
         }
         if multi
             && options.migration_interval > 0
@@ -1413,11 +1748,20 @@ fn run_cut_allocated(
                 generation,
                 &mut migrations,
                 recorder,
+                tap,
             );
         }
         generation += 1;
     };
 
+    if let Some(tap) = tap {
+        tap.emit(LineageFact::ExplorationStopped {
+            cut: cut.index,
+            reason: stopped_by.to_owned(),
+            generations: generation + 1,
+            evaluations,
+        });
+    }
     let seconds = started.elapsed().as_secs_f64();
     if let Some(progress) = &options.progress {
         progress.cut_done(generation as u64 + 1);
@@ -1530,6 +1874,12 @@ fn remeasure_in(
         return Ok(());
     };
     let recorders = comparison_recorders(searches)?;
+    if let Some(tap) = &options.narration {
+        tap.emit(LineageFact::ComparisonStarted {
+            cuts: cuts.iter().map(|c| c.index).collect(),
+            program_sha256s: genomes.iter().map(|g| sha256_hex(g.as_bytes())).collect(),
+        });
+    }
     let clock = options.clock;
     let stop = || options.cancelled();
     let progress = options.progress.as_deref();
@@ -1560,6 +1910,7 @@ fn remeasure_in(
                     clock,
                     &stop,
                     recorder.as_ref(),
+                    options.narration.as_ref(),
                     &mut |g, c, n, o| evaluate_counted(position, g, c, n, o),
                 );
             }
@@ -1577,6 +1928,7 @@ fn remeasure_in(
                         clock,
                         &stop,
                         recorder.as_ref(),
+                        options.narration.as_ref(),
                         &mut |g, c, n, o| evaluate_counted(position, g, c, n, o),
                     )
                 })
@@ -1610,6 +1962,7 @@ fn remeasure_with(
             Clock::Wall,
             &|| false,
             recorder.as_ref(),
+            None,
             &mut evaluate_candidate,
         );
         if let Some(recorder) = recorder {
@@ -1708,6 +2061,7 @@ fn remeasure_cut(
     clock: Clock,
     stop: &(dyn Fn() -> bool + Sync),
     recorder: Option<&Recorder>,
+    tap: Option<&Tap>,
     evaluate_candidate: &mut dyn FnMut(&str, &Cut, usize, &'static str) -> Observation,
 ) {
     for (slot, genome) in pool.iter().enumerate() {
@@ -1720,6 +2074,14 @@ fn remeasure_cut(
         let elapsed = search.seconds + started.secs();
         let draw = record_draw(
             recorder,
+            tap,
+            DrawAt {
+                cut: cut.index,
+                generation: search.generations as usize,
+                island: 0,
+                slot: Some(slot),
+                attempt: None,
+            },
             format!("comparison/{slot}"),
             REMEASURE,
             Some(genome),
@@ -1738,13 +2100,44 @@ fn remeasure_cut(
             "admitted"
         };
         admission(recorder, &draw, disposition);
+        if let Some(tap) = tap {
+            tap.emit_linked(
+                LineageFact::Admitted {
+                    cut: cut.index,
+                    generation: search.generations as usize,
+                    island: 0,
+                    program_sha256: sha256_hex(genome.as_bytes()),
+                    disposition: disposition.to_owned(),
+                },
+                narration_links(recorder, &draw, "admission"),
+            );
+        }
         if !already
             && search.completed_evaluations < search.budget.evaluations as u64
             && elapsed < search.budget.seconds as f64
         {
+            narration_started(
+                tap,
+                recorder,
+                &draw,
+                cut.index,
+                "comparison",
+                search.generations as usize,
+                None,
+                genome,
+            );
             let observation = record_evaluation(recorder, &draw, clock, || {
                 evaluate_candidate(genome, cut, search.generations as usize, REMEASURE)
             });
+            narration_measured(
+                tap,
+                recorder,
+                &draw,
+                cut.index,
+                "comparison",
+                None,
+                &observation,
+            );
             search.completed_evaluations += 1;
             search.comparison.completed_evaluations += 1;
             if observation.measured() {
@@ -2275,6 +2668,502 @@ mod tests {
         assert!(one.iter().all(|s| s.comparison.completed_evaluations > 0));
     }
 
+    /// Every byte a search publishes, its search-event log included.
+    type PublishedCut = (usize, Vec<u8>, Vec<u8>, Vec<u8>);
+    fn published_with_events(searches: &[CutSearch]) -> Vec<PublishedCut> {
+        searches
+            .iter()
+            .map(|s| {
+                (
+                    s.cut,
+                    std::fs::read(s.output.join("search.json")).unwrap(),
+                    std::fs::read(s.output.join("observations.json")).unwrap(),
+                    std::fs::read(s.output.join("search-events.json")).unwrap(),
+                )
+            })
+            .collect()
+    }
+
+    /// Narration observes and decides nothing. With a tap attached, a search publishes exactly
+    /// the bytes it publishes without one (search.json, observations.json and search-events.json,
+    /// with one island and with migrating islands), and the facts it emitted are complete and
+    /// exact: they join the published evidence one to one, every measurement follows its draw,
+    /// and every mutation and crossover child replays from the parents and seed in its fact.
+    #[test]
+    fn narration_tap_changes_no_published_byte() {
+        use jope_narrator::RecordingTap;
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "narration",
+            7,
+            3,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        for islands in [1usize, 2] {
+            let run = |narration: Option<Tap>, name: &str| {
+                let options = SearchOptions {
+                    threads: if narration.is_some() { 2 } else { 1 },
+                    islands,
+                    migration_interval: 2,
+                    clock: Clock::Frozen,
+                    narration,
+                    // Two islands need a second generation on every cut to migrate.
+                    ..SearchOptions::new(
+                        Budget {
+                            evaluations: if islands > 1 { 96 } else { 48 },
+                            seconds: 600,
+                        },
+                        11,
+                    )
+                };
+                run_cuts_with(&preparation.cuts, &options, &temp.path().join(name)).unwrap()
+            };
+            let recording = RecordingTap::default();
+            let plain = run(None, &format!("plain-{islands}"));
+            let narrated = run(Some(recording.tap()), &format!("narrated-{islands}"));
+            assert_eq!(
+                published_with_events(&plain),
+                published_with_events(&narrated),
+                "a tap changed published evidence ({islands} island(s))"
+            );
+            let facts = recording.facts();
+
+            for search in &narrated {
+                let cut = search.cut;
+                // Measurements: one fact per observation, same order, same numbers.
+                let measured: Vec<(&String, &String, &Option<f64>, &String)> = facts
+                    .iter()
+                    .filter_map(|f| match f {
+                        LineageFact::Measured {
+                            cut: c,
+                            program_sha256,
+                            status,
+                            rmse,
+                            origin,
+                            ..
+                        } if *c == cut => Some((program_sha256, status, rmse, origin)),
+                        _ => None,
+                    })
+                    .collect();
+                let mut observations: Vec<_> = search.observations.iter().collect();
+                let mut measured_sorted = measured.clone();
+                // Comparison facts of different cuts may interleave; compare per cut as a multiset.
+                observations.sort_by(|a, b| {
+                    a.program_sha256
+                        .cmp(&b.program_sha256)
+                        .then(a.origin.cmp(b.origin))
+                });
+                measured_sorted.sort_by(|a, b| a.0.cmp(b.0).then(a.3.cmp(b.3)));
+                assert_eq!(observations.len(), measured_sorted.len(), "cut {cut}");
+                for (o, (sha, status, rmse, origin)) in observations.iter().zip(&measured_sorted) {
+                    assert_eq!(
+                        (&o.program_sha256, o.status, &o.rmse, o.origin),
+                        (*sha, status.as_str(), *rmse, origin.as_str())
+                    );
+                }
+
+                // Draws: every exploration, migration and comparison draw in the event log.
+                let log: serde_json::Value = serde_json::from_slice(
+                    &std::fs::read(search.output.join("search-events.json")).unwrap(),
+                )
+                .unwrap();
+                let records = log["events"].as_array().unwrap();
+                let mut logged: Vec<String> = records
+                    .iter()
+                    .filter(|r| r["event"]["kind"] == "draw")
+                    .map(|r| {
+                        r["event"]["decision"]["coordinate"]
+                            .as_str()
+                            .unwrap()
+                            .to_owned()
+                    })
+                    .collect();
+                let drawn: Vec<&LineageFact> = facts
+                    .iter()
+                    .filter(|f| matches!(f, LineageFact::Drawn { cut: c, .. } if *c == cut))
+                    .collect();
+                let mut tapped: Vec<String> = drawn
+                    .iter()
+                    .map(|f| match f {
+                        LineageFact::Drawn { coordinate, .. } => coordinate.clone(),
+                        _ => unreachable!(),
+                    })
+                    .collect();
+                logged.sort();
+                tapped.sort();
+                assert_eq!(
+                    logged, tapped,
+                    "cut {cut}: tapped draws differ from the event log"
+                );
+
+                // Parents: the same digests, in the same order, as each edit transition.
+                let coordinate_of: std::collections::BTreeMap<&str, &str> = records
+                    .iter()
+                    .filter(|r| r["event"]["kind"] == "draw")
+                    .map(|r| {
+                        (
+                            r["event_id"].as_str().unwrap(),
+                            r["event"]["decision"]["coordinate"].as_str().unwrap(),
+                        )
+                    })
+                    .collect();
+                let mut edits = 0;
+                for record in records.iter().filter(|r| r["event"]["kind"] == "edit") {
+                    let transition = &record["event"]["transition"];
+                    let coordinate = coordinate_of[transition["draw_id"].as_str().unwrap()];
+                    let fact = drawn
+                        .iter()
+                        .find(|f| matches!(f, LineageFact::Drawn { coordinate: c, .. } if c == coordinate))
+                        .unwrap();
+                    let LineageFact::Drawn { parents, .. } = fact else {
+                        unreachable!()
+                    };
+                    let digests: Vec<&str> = parents.iter().map(|p| p.sha256.as_str()).collect();
+                    let logged: Vec<&str> = transition["parents"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|p| p.as_str().unwrap())
+                        .collect();
+                    assert_eq!(digests, logged, "{coordinate}");
+                    edits += 1;
+                }
+                assert!(edits > 0, "cut {cut}: the search made no edit to check");
+
+                // Replay: each mutation and crossover child is a pure function of its fact.
+                let mut replayed = (0, 0);
+                for fact in &drawn {
+                    let LineageFact::Drawn {
+                        origin,
+                        seed,
+                        parents,
+                        child: Some(child),
+                        ..
+                    } = fact
+                    else {
+                        continue;
+                    };
+                    assert_eq!(child.sha256, sha256_hex(child.canonical.as_bytes()));
+                    match origin.as_str() {
+                        "mutate" => {
+                            let again = evolve::mutate_canonical_pipeline(
+                                &parents[0].canonical,
+                                seed.unwrap(),
+                                MAX_TRANSFORMS,
+                            )
+                            .unwrap();
+                            assert_eq!(again, child.canonical);
+                            replayed.0 += 1;
+                        }
+                        "crossover" => {
+                            let again = evolve::crossover_canonical_pipelines(
+                                &parents[0].canonical,
+                                &parents[1].canonical,
+                                seed.unwrap(),
+                                MAX_TRANSFORMS,
+                            )
+                            .unwrap();
+                            assert_eq!(again, child.canonical);
+                            replayed.1 += 1;
+                        }
+                        _ => {}
+                    }
+                }
+                assert!(replayed.0 > 0 && replayed.1 > 0, "cut {cut}: {replayed:?}");
+
+                // Temporal order: every measured program was drawn earlier in the stream.
+                for (index, fact) in facts.iter().enumerate() {
+                    if let LineageFact::Measured {
+                        cut: c,
+                        phase,
+                        program_sha256,
+                        ..
+                    } = fact
+                    {
+                        if *c != cut || phase != "exploration" {
+                            continue;
+                        }
+                        assert!(
+                            facts[..index].iter().any(|f| matches!(
+                                f,
+                                LineageFact::Drawn { cut: c, child: Some(child), .. }
+                                    if *c == cut && &child.sha256 == program_sha256
+                            )),
+                            "cut {cut}: a measurement preceded its draw"
+                        );
+                    }
+                }
+
+                // The cut's stop and its migrations.
+                assert!(facts.iter().any(|f| matches!(
+                    f,
+                    LineageFact::ExplorationStopped { cut: c, reason, generations, .. }
+                        if *c == cut
+                            && reason == &search.exploration.stopped_by
+                            && *generations as u64 == search.generations
+                )));
+                let migrated = facts
+                    .iter()
+                    .filter(|f| matches!(f, LineageFact::Migrated { cut: c, .. } if *c == cut))
+                    .count();
+                assert_eq!(migrated, search.migrations.len());
+                if islands > 1 {
+                    assert!(migrated > 0, "cut {cut}: no migration exercised");
+                }
+            }
+            assert!(facts
+                .iter()
+                .any(|f| matches!(f, LineageFact::ComparisonStarted { .. })));
+            let source_records: std::collections::BTreeMap<String, SearchEvent> = narrated
+                .iter()
+                .flat_map(|search| {
+                    SearchEventLog::from_bytes(
+                        &std::fs::read(search.output.join("search-events.json")).unwrap(),
+                    )
+                    .unwrap()
+                    .events
+                })
+                .map(|record| (record.event_id, record.event))
+                .collect();
+            let linked = recording.linked_facts();
+            let mut observed_ids = BTreeSet::new();
+            let mut comparison_measured = 0;
+            for (index, (fact, links)) in linked.iter().enumerate() {
+                let expected_kind = match fact {
+                    LineageFact::Drawn { .. } => Some("draw"),
+                    LineageFact::Admitted { .. } => Some("admission"),
+                    LineageFact::Started { .. } => Some("started"),
+                    LineageFact::Measured { .. } => Some("finished"),
+                    _ => None,
+                };
+                let Some(kind) = expected_kind else { continue };
+                let id = links
+                    .search_event_id
+                    .as_ref()
+                    .expect("missing exact source event ID");
+                assert!(
+                    observed_ids.insert(id.clone()),
+                    "source event narrated twice: {id}"
+                );
+                let source = source_records
+                    .get(id)
+                    .expect("narration names absent source event");
+                match (kind, source) {
+                    ("draw", SearchEvent::Draw { decision }) => {
+                        assert_eq!(links.draw_id.as_ref(), Some(id));
+                        assert_eq!(links.request_id, decision.request_id);
+                    }
+                    ("admission", SearchEvent::Admission { draw_id, .. }) => {
+                        assert_eq!(links.draw_id.as_ref(), Some(draw_id));
+                    }
+                    (
+                        "started",
+                        SearchEvent::Started {
+                            draw_id,
+                            request_id,
+                            attempt_id,
+                            ..
+                        },
+                    ) => {
+                        assert_eq!(links.draw_id.as_ref(), Some(draw_id));
+                        assert_eq!(links.request_id.as_ref(), Some(request_id));
+                        assert_eq!(links.attempt_id.as_ref(), Some(attempt_id));
+                    }
+                    (
+                        "finished",
+                        SearchEvent::Finished {
+                            attempt_id,
+                            observation_sha256,
+                            ..
+                        },
+                    ) => {
+                        assert_eq!(links.attempt_id.as_ref(), Some(attempt_id));
+                        assert_eq!(&links.observation_sha256, observation_sha256);
+                        assert!(
+                            linked[..index]
+                                .iter()
+                                .any(|(earlier, earlier_links)| matches!(
+                                    earlier,
+                                    LineageFact::Started { .. }
+                                ) && earlier_links.attempt_id
+                                    == links.attempt_id),
+                            "result appeared before physical-start fact"
+                        );
+                        if matches!(fact, LineageFact::Measured { phase, .. } if phase == "comparison")
+                        {
+                            comparison_measured += 1;
+                        }
+                    }
+                    _ => panic!("narration source kind mismatch: {kind}"),
+                }
+            }
+            let expected_ids: BTreeSet<_> = source_records
+                .iter()
+                .filter_map(|(id, event)| {
+                    (!matches!(event, SearchEvent::Edit { .. })).then_some(id.clone())
+                })
+                .collect();
+            assert_eq!(
+                observed_ids, expected_ids,
+                "every source lifecycle event has one fact"
+            );
+            assert!(comparison_measured > 0, "comparison path was not measured");
+            assert!(
+                matches!(facts.last(), Some(LineageFact::RunStopped { status }) if status == "completed")
+            );
+        }
+    }
+
+    #[test]
+    fn narration_real_journal_preserves_same_thread_fixed_clock_search() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(60),
+            "narration-real",
+            7,
+            2,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let options = SearchOptions {
+            threads: 2,
+            islands: 2,
+            clock: Clock::Frozen,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 16,
+                    seconds: 600,
+                },
+                11,
+            )
+        };
+        let plain = run_cuts_with(&preparation.cuts, &options, &temp.path().join("plain")).unwrap();
+        let path = temp.path().join("narration.jsonl");
+        let (tap, journal) = jope_narrator::FactJournal::create(
+            &path,
+            "real-parity",
+            jope_narrator::Limits::default(),
+        )
+        .unwrap();
+        let narrated = run_cuts_with(
+            &preparation.cuts,
+            &SearchOptions {
+                narration: Some(tap),
+                ..options
+            },
+            &temp.path().join("narrated"),
+        )
+        .unwrap();
+        let summary = journal.finish().unwrap();
+        assert_eq!(summary.status, "complete");
+        assert_eq!(summary.dropped, "0");
+        assert_eq!(
+            published_with_events(&plain),
+            published_with_events(&narrated)
+        );
+        let page = jope_narrator::read_journal(&path, None, 1024, 16 << 20).unwrap();
+        assert_eq!(page.events.len().to_string(), summary.records);
+        let measurements = page
+            .events
+            .iter()
+            .filter(|e| matches!(e.fact, LineageFact::Measured { .. }))
+            .count();
+        assert_eq!(
+            measurements,
+            narrated.iter().map(|c| c.observations.len()).sum::<usize>()
+        );
+        assert!(measurements > 0);
+    }
+
+    #[test]
+    fn narration_cancelled_run_has_terminal_and_no_physical_start() {
+        let temp = tempfile::tempdir().unwrap();
+        let cut = one_cut(&temp.path().join("prepared"), "narration-cancel");
+        let recording = jope_narrator::RecordingTap::default();
+        let options = SearchOptions {
+            narration: Some(recording.tap()),
+            cancel: Some(Arc::new(AtomicBool::new(true))),
+            clock: Clock::Frozen,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 4,
+                    seconds: 600,
+                },
+                11,
+            )
+        };
+        assert!(run_cuts_with(&[cut], &options, &temp.path().join("run")).is_err());
+        let facts = recording.facts();
+        assert!(facts.iter().any(|f| matches!(f, LineageFact::Drawn { .. })));
+        assert!(!facts.iter().any(|f| matches!(
+            f,
+            LineageFact::Started { .. } | LineageFact::Measured { .. }
+        )));
+        assert!(facts.iter().any(
+            |f| matches!(f, LineageFact::ExplorationStopped { reason, .. } if reason == "cancelled")
+        ));
+        assert!(
+            matches!(facts.last(), Some(LineageFact::RunStopped { status }) if status == "cancelled")
+        );
+    }
+
+    #[test]
+    fn narration_without_search_event_recording_reports_absent_source_refs() {
+        let temp = tempfile::tempdir().unwrap();
+        let cut = one_cut(&temp.path().join("prepared"), "narration-no-events");
+        let recording = jope_narrator::RecordingTap::default();
+        let options = SearchOptions {
+            narration: Some(recording.tap()),
+            record_events: false,
+            clock: Clock::Frozen,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 2,
+                    seconds: 600,
+                },
+                11,
+            )
+        };
+        let searched = run_cuts_with(&[cut], &options, &temp.path().join("run")).unwrap();
+        assert!(!searched[0].output.join("search-events.json").exists());
+        let linked = recording.linked_facts();
+        for (fact, links) in &linked {
+            assert!(
+                links.draw_id.is_none()
+                    && links.request_id.is_none()
+                    && links.attempt_id.is_none()
+                    && links.search_event_id.is_none()
+            );
+            if let LineageFact::Measured { program_sha256, .. } = fact {
+                let observation = searched[0]
+                    .observations
+                    .iter()
+                    .find(|o| &o.program_sha256 == program_sha256)
+                    .unwrap();
+                assert_eq!(
+                    links.observation_sha256,
+                    Some(sha256_hex(&serde_json::to_vec(observation).unwrap()))
+                );
+            }
+        }
+        assert_eq!(
+            linked
+                .iter()
+                .filter(|(fact, _)| matches!(fact, LineageFact::Measured { .. }))
+                .count(),
+            2
+        );
+        assert_eq!(
+            linked
+                .iter()
+                .filter(|(fact, _)| matches!(fact, LineageFact::Started { .. }))
+                .count(),
+            2
+        );
+    }
+
     fn island_options(islands: usize, threads: usize, rng_seed: u64) -> SearchOptions {
         SearchOptions {
             threads,
@@ -2474,7 +3363,7 @@ mod tests {
             },
         ];
         let mut events = Vec::new();
-        migrate(&mut islands, 0, 3, &mut events, None);
+        migrate(&mut islands, 0, 3, &mut events, None, None);
         assert_eq!(events.len(), 2);
         // `c` (0.5) enters island 0; `a` (1.0) is worse than all of island 1's four elites.
         let into_zero = events.iter().find(|e| e.to_island == 0).unwrap();
@@ -2833,8 +3722,17 @@ mod tests {
             }
         }
         let expected = offspring(&parents, &seen, 7, cut.index, 1, 1);
-        let (genome, origin, _) =
-            offspring_recorded(&parents, &seen, 7, cut.index, 1, 1, 0, Some(&recorder));
+        let (genome, origin, _) = offspring_recorded(
+            &parents,
+            &seen,
+            7,
+            cut.index,
+            1,
+            1,
+            0,
+            Some(&recorder),
+            None,
+        );
         assert_eq!((genome.clone(), origin), expected);
         assert_eq!(
             genome,
@@ -2850,8 +3748,17 @@ mod tests {
         let invalid = vec![Scored::by_rmse("invalid-parent", 1.)];
         let recorder = search_recorder(&cut, &options).unwrap().unwrap();
         let expected = offspring(&invalid, &seen, 7, cut.index, 2, 1);
-        let (genome, origin, _) =
-            offspring_recorded(&invalid, &seen, 7, cut.index, 2, 1, 0, Some(&recorder));
+        let (genome, origin, _) = offspring_recorded(
+            &invalid,
+            &seen,
+            7,
+            cut.index,
+            2,
+            1,
+            0,
+            Some(&recorder),
+            None,
+        );
         assert_eq!((genome, origin), expected);
         recorder.publish(&temp.path().join("invalid")).unwrap();
         let log = SearchEventLog::from_bytes(

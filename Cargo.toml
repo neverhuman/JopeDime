@@ -23,6 +23,7 @@ members = [
   "crates/jope-models",
   "crates/jope-learning",
   "crates/jope-motifs",
+  "crates/jope-narrator",
   "crates/jope-paths",
   "crates/jope-pipeline",
   "crates/jope-records",
@@ -50,6 +51,7 @@ default-members = [
   "crates/jope-datasets",
   "crates/jope-models",
   "crates/jope-motifs",
+  "crates/jope-narrator",
   "crates/jope-pipeline",
   "crates/jope-policy",
 ]
