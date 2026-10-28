@@ -689,8 +689,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/optional_landmarks_product_scope_identity_rebaseline.v1.json");
     let optional_landmarks_p1p2 =
         old_fixture("transitions/optional_landmarks_p1p2_identity_rebaseline.v1.json");
-    let dope_main_repin =
-        old_fixture("transitions/dope_main_repin_identity_rebaseline.v1.json");
+    let dope_main_repin = old_fixture("transitions/dope_main_repin_identity_rebaseline.v1.json");
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
