@@ -16,6 +16,9 @@ mod learned_product;
 #[path = "support/dope_projection.rs"]
 mod projection;
 
+#[path = "support/dope_resident512.rs"]
+mod resident512;
+
 #[test]
 fn whole_checkpoint_checksum_and_cpu_reference_projection() {
     assert!(DopeEncoder::from_bytes(b"wrong checkpoint", &DopeDevice::Cpu).is_err());
