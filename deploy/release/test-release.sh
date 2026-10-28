@@ -441,6 +441,11 @@ printf '#!/bin/sh\nprintf "jope 0.2.0-dirty\\n"\n' > "$scratch/jope-bad" && chmo
 printf '#!/bin/sh\nexit 3\n' > "$scratch/jope-fail" && chmod +x "$scratch/jope-fail"
 expect "binary prints 'jope 0.2.0' first" ok '^jope 0\.2\.0$' unit 'binary_prints_version "$1" 0.2.0 "$2"' "$scratch/jope-good" "$scratch/run"
 expect "binary printing 'jope 0.2.0-dirty' is refused" refuse 'jope 0\.2\.0-dirty' unit 'binary_prints_version "$1" 0.2.0 "$2"' "$scratch/jope-bad" "$scratch/run"
+printf '#!/bin/sh\n[ "$1" = version ] && printf "jopedime 0.2.0\\n" || printf "usage\\n"\n' > "$scratch/jopedime-good" && chmod +x "$scratch/jopedime-good"
+expect "jopedime version prints 'jopedime 0.2.0' first" ok '^jopedime 0\.2\.0$' \
+  unit 'binary_prints_version "$1" 0.2.0 "$2" jopedime version' "$scratch/jopedime-good" "$scratch/run"
+expect "jopedime without its version argument is refused" refuse '^usage$' \
+  unit 'binary_prints_version "$1" 0.2.0 "$2" jopedime' "$scratch/jopedime-good" "$scratch/run"
 expect "binary exiting non-zero is refused" refuse '^rc=1$' unit 'rc=0; binary_prints_version "$1" 0.2.0 "$2" || rc=$?; echo "rc=$rc"; exit "$rc"' "$scratch/jope-fail" "$scratch/run"
 printf '#!/bin/sh\necho "jope 0.2.0"\necho "tmpdir=${TMPDIR-unset}"\n' > "$scratch/jope-tmpdir" && chmod +x "$scratch/jope-tmpdir"
 expect "env -i: the binary check hands the binary the pinned TMPDIR by name" ok "^tmpdir=$TMPDIR\$" \
@@ -1023,16 +1028,19 @@ expect "the release manifest records the pinned syft and cosign" ok '^ok$' \
 echo "# containers carry the run's temporary directory (sourced build_jope, check_binary, make_receipt; docker and objdump stood in by functions)"
 { art /src/crates/jope-cli/Cargo.toml jope '"/target/release/jope"' false; jq -nc '{reason: "build-finished", success: true}'; } \
   > "$scratch/dk-build.jsonl"
+{ art /src/crates/jope-appliance/Cargo.toml jopedime '"/target/release/jopedime"' false
+  jq -nc '{reason: "build-finished", success: true}'; } > "$scratch/dk-build-jopedime.jsonl"
 { art /src/crates/jope-engine/Cargo.toml jope-build-receipt '"/target/release/jope-build-receipt"' false
   jq -nc '{reason: "build-finished", success: true}'; } > "$scratch/dk-receipt-tool.jsonl"
 # $1 dir, $2 commit, $3 cargo metadata, $4 build messages, $5 receipt-tool build messages. The
 # docker stand-in logs each argv (fields joined by \x1f) and answers as the builder would.
 CONTAINERS=$(cat <<'EOF'
 tag=v0.2.0 version=0.2.0 sha=$2 run_dir=$1/run target_root=$1/target
-dist=$run_dir/dist src_dir=$run_dir/src log=$1/docker.log meta=$3 build_msgs=$4 receipt_msgs=$5
+dist=$run_dir/dist src_dir=$run_dir/src log=$1/docker.log meta=$3 build_msgs=$4 receipt_msgs=$5 app_msgs=$6
 mkdir -p "$run_dir/tmp" "$run_dir/home" "$dist" "$src_dir" "$target_root/cargo-home" "$target_root/release"
 printf '#!/bin/sh\necho "jope 0.2.0"\n' > "$target_root/release/jope"
-chmod 0755 "$target_root/release/jope"
+printf '#!/bin/sh\n[ "$1" = version ] && echo "jopedime 0.2.0"\n' > "$target_root/release/jopedime"
+chmod 0755 "$target_root/release/jope" "$target_root/release/jopedime"
 : > "$log"
 docker() {
   local line i img=-1 out=''
@@ -1050,11 +1058,14 @@ docker() {
     cargo)
       if [[ ${cmd[1]} == metadata ]]; then cat "$meta"
       elif [[ " ${cmd[*]} " == *" jope-build-receipt "* ]]; then cat "$receipt_msgs"
+      elif [[ " ${cmd[*]} " == *" jope-appliance "* ]]; then cat "$app_msgs"
       else cat "$build_msgs"; fi ;;
+    /dist/jopedime-*) [[ ${cmd[1]-} == version ]] && printf 'jopedime 0.2.0\n' ;;
     /dist/*) printf 'jope 0.2.0\n' ;;
     /target/release/jope-build-receipt)
-      for i in "${!cmd[@]}"; do [[ ${cmd[i]} != --output ]] || out=${cmd[i+1]}; done
-      jq -n --arg bin "$(sha256_of "$dist/jope-$tag-$TARGET_TRIPLE")" \
+      local b=''
+      for i in "${!cmd[@]}"; do [[ ${cmd[i]} != --output ]] || out=${cmd[i+1]}; [[ ${cmd[i]} != --binary ]] || b=${cmd[i+1]}; done
+      jq -n --arg bin "$(sha256_of "$dist/${b##*/}-$tag-$TARGET_TRIPLE")" \
         --arg toml "$(blob_sha256 "$sha" Cargo.toml)" --arg lock "$(blob_sha256 "$sha" Cargo.lock)" '
         {bounds: {passed: true}, binary_sha256: $bin, links_cuda_or_torch: false,
          glibc_max_needed: "GLIBC_2.34", cargo_toml_sha256: $toml, cargo_lock_sha256: $lock, git: null}' \
@@ -1089,12 +1100,14 @@ while IFS= read -r line; do
     attributed=$((attributed + 1))
   fi
 done < "$log"
-printf 'runs=%s;carrying_tmp=%s;container_tmp_mode=%s;bounded=%s;attributed=%s\n' "$runs" "$carried" "$(stat -c %a "$ctmp" 2>/dev/null || echo missing)" "$bounded" "$attributed"
+receipts=$(cd "$dist" && ls -- *.build-receipt.json | sed 's/-v0\.2\.0\.build-receipt\.json$//' | paste -sd, -)
+printf 'runs=%s;carrying_tmp=%s;container_tmp_mode=%s;bounded=%s;attributed=%s;receipts=%s\n' "$runs" "$carried" "$(stat -c %a "$ctmp" 2>/dev/null || echo missing)" "$bounded" "$attributed" "$receipts"
 EOF
 )
 expect "every build/check/receipt container carries private TMPDIR, fixed CPU/RAM/Cargo limits and run attribution" ok \
-  '^runs=7;carrying_tmp=7;container_tmp_mode=700;bounded=7;attributed=7$' \
-  unit "$CONTAINERS" "$scratch/containers" "$c1" "$work/meta-ok.json" "$scratch/dk-build.jsonl" "$scratch/dk-receipt-tool.jsonl"
+  '^runs=10;carrying_tmp=10;container_tmp_mode=700;bounded=10;attributed=10;receipts=jope,jopedime$' \
+  unit "$CONTAINERS" "$scratch/containers" "$c1" "$work/meta-ok.json" "$scratch/dk-build.jsonl" "$scratch/dk-receipt-tool.jsonl" \
+  "$scratch/dk-build-jopedime.jsonl"
 # The same rule, read from the source, so that a new docker run cannot bypass builder_container.
 expect "static: every docker run in release.sh is in builder_container" ok '^sites=builder_container\(\)$' \
   unit 'sites=$(awk "/^[A-Za-z_][A-Za-z0-9_]*\\(\\) [{(]\$/ { f = \$1 }

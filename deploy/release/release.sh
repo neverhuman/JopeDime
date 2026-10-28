@@ -259,6 +259,9 @@ readonly DOCKER_SOCKET=unix:///var/run/docker.sock
 TEST_ROOT=''
 readonly MANIFEST_SCHEMA=jope.release-manifest/v1
 readonly BUILD_COMMAND="cargo build --release --locked -p jope-cli --bin jope --message-format=json-render-diagnostics"
+# The model-object CLI (`jopedime model import|verify|export`, including `--format javascript`). It is
+# built from the same export in the same builder and goes through every check jope does.
+readonly APPLIANCE_BUILD_COMMAND="cargo build --release --locked -p jope-appliance --bin jopedime --message-format=json-render-diagnostics"
 # The same prefixes as GPU_LIBRARY_PREFIXES in crates/jope-engine/src/build_receipt.rs (lowercase).
 readonly -a GPU_LIBRARY_PREFIXES=(libcuda libcudart libcudnn libcublas libcurand libcusparse
   libcufft libcusolver libcupti libcufile libcutensor libnpp libnvjpeg libnccl libnvrtc
@@ -307,6 +310,7 @@ tag='' sha='' version='' publish=0 mode=dryrun test_mode=0 stamp=''
 remote=$REPO_URL cargo_bin=$HOST_CARGO key_dir=$KEY_DIR out_root=$EVIDENCE_ROOT
 repo_root='' release_root='' run_dir='' target_root='' dist='' stage=init
 metadata_json='' notes_text='' bin='' bin_container='' observed_glibc='' tee_pid=''
+app_bin='' app_bin_container='' app_glibc='' link_glibc=''
 tag_object='' release_url='' checks_file='' src_dir='' src_tree='' last_check_ok=''
 syft_bin=$SYFT syft_report='' cosign_report=''
 early_log=()
@@ -583,15 +587,16 @@ map_target_path() {
   printf '%s/%s\n' "$target_root" "${p#/target/}"
 }
 
-# Runs binary $1 without arguments, with an empty environment except PATH and TMPDIR (env -i drops
-# the exported TMPDIR, so it is passed on by name) and $3 as the working directory. It prints the
-# output and succeeds only when the first line is exactly "jope $2", which is the line the README
-# cites for a bare `jope`.
+# Runs binary $1 (with arguments $5..., none by default), with an empty environment except PATH and
+# TMPDIR (env -i drops the exported TMPDIR, so it is passed on by name) and $3 as the working
+# directory. It prints the output and succeeds only when the first line is exactly "$4 $2" ($4 is
+# jope by default), which is the line the README cites for a bare `jope` and the first line of
+# `jopedime version`.
 binary_prints_version() {
-  local out
-  out=$(cd "$3" && env -i PATH=/usr/bin:/bin TMPDIR="${TMPDIR:?}" timeout 60 "$1" </dev/null) || return 1
+  local out name=${4:-jope}
+  out=$(cd "$3" && env -i PATH=/usr/bin:/bin TMPDIR="${TMPDIR:?}" timeout 60 "$1" "${@:5}" </dev/null) || return 1
   printf '%s\n' "$out"
-  [[ ${out%%$'\n'*} == "jope $2" ]]
+  [[ ${out%%$'\n'*} == "$name $2" ]]
 }
 
 # The sha256 of the committed blob $1:$2, or nothing when the path is absent at that commit.
@@ -1192,7 +1197,7 @@ docker_run() {
 
 build_jope() {
   stage=build
-  local bdir=$run_dir/builder exe bin_host
+  local bdir=$run_dir/builder exe
   mkdir -p -- "$bdir"
   step "builder image $BUILDER_IMAGE"
   if ! docker image inspect "$BUILDER_IMAGE" >/dev/null 2>&1; then docker pull -q "$BUILDER_IMAGE"; fi
@@ -1216,29 +1221,54 @@ build_jope() {
   exe=$(select_executable "$run_dir/build.jsonl" /src/crates/jope-cli/Cargo.toml jope) \
     || die "could not select the jope executable from $run_dir/build.jsonl"
   bin_container=$exe
-  bin_host=$(map_target_path "$exe")
-  [[ -f $bin_host && -x $bin_host && ! -L $bin_host ]] || die "cargo reported $exe, but $bin_host is not an executable file"
   bin=$dist/jope-$tag-$TARGET_TRIPLE
-  install -m 0755 -- "$bin_host" "$bin"
-  printf 'binary %s <- %s (sha256 %s)\n' "$bin" "$bin_host" "$(sha256_of "$bin")"
+  install_binary "$exe" "$bin"
+
+  step "$APPLIANCE_BUILD_COMMAND (in $BUILDER_IMAGE_NAME)"
+  # shellcheck disable=SC2086  # APPLIANCE_BUILD_COMMAND is a fixed word list
+  docker_run -- $APPLIANCE_BUILD_COMMAND > "$run_dir/build-jopedime.jsonl"
+  exe=$(select_executable "$run_dir/build-jopedime.jsonl" /src/crates/jope-appliance/Cargo.toml jopedime) \
+    || die "could not select the jopedime executable from $run_dir/build-jopedime.jsonl"
+  app_bin_container=$exe
+  app_bin=$dist/jopedime-$tag-$TARGET_TRIPLE
+  install_binary "$exe" "$app_bin"
+}
+
+# install_binary <container path> <dist path>: copies the executable cargo reported into dist.
+install_binary() {
+  local host
+  host=$(map_target_path "$1")
+  [[ -f $host && -x $host && ! -L $host ]] || die "cargo reported $1, but $host is not an executable file"
+  install -m 0755 -- "$host" "$2"
+  printf 'binary %s <- %s (sha256 %s)\n' "$2" "$host" "$(sha256_of "$2")"
+}
+
+# link_checks <binary> <dir> <file prefix>: glibc <= MAX_GLIBC and no GPU library in NEEDED. Sets
+# link_glibc to the highest GLIBC_ version the binary needs.
+link_checks() {
+  local b=$1 cdir=$2 pre=$3 gpu
+  objdump -T "$b" > "$cdir/${pre}objdump-T.txt"
+  objdump -p "$b" > "$cdir/${pre}objdump-p.txt"
+  link_glibc=$(cat "$cdir/${pre}objdump-T.txt" "$cdir/${pre}objdump-p.txt" | max_glibc)
+  [[ -n $link_glibc ]] || die "no GLIBC_ symbol versions found in $b"
+  version_le "$link_glibc" "$MAX_GLIBC" || die "binary needs GLIBC_$link_glibc, above the $MAX_GLIBC ceiling"
+  printf 'max GLIBC needed: %s (ceiling %s)\n' "$link_glibc" "$MAX_GLIBC"
+  needed_libs < "$cdir/${pre}objdump-p.txt" > "$cdir/${pre}needed.txt"
+  [[ -s $cdir/${pre}needed.txt ]] || die "no NEEDED entries in $b; cannot prove it links no GPU library"
+  gpu=$(gpu_libs < "$cdir/${pre}needed.txt")
+  [[ -z $gpu ]] || die "binary links GPU libraries: $gpu"
+  printf 'NEEDED: %s\n' "$(tr '\n' ' ' < "$cdir/${pre}needed.txt")"
 }
 
 check_binary() {
   stage=check
-  local cdir=$run_dir/checks gpu out
+  local cdir=$run_dir/checks out
   mkdir -p -- "$cdir/run"
-  step "binary checks: glibc <= $MAX_GLIBC, no GPU libraries, prints 'jope $version'"
-  objdump -T "$bin" > "$cdir/objdump-T.txt"
-  objdump -p "$bin" > "$cdir/objdump-p.txt"
-  observed_glibc=$(cat "$cdir/objdump-T.txt" "$cdir/objdump-p.txt" | max_glibc)
-  [[ -n $observed_glibc ]] || die "no GLIBC_ symbol versions found in $bin"
-  version_le "$observed_glibc" "$MAX_GLIBC" || die "binary needs GLIBC_$observed_glibc, above the $MAX_GLIBC ceiling"
-  printf 'max GLIBC needed: %s (ceiling %s)\n' "$observed_glibc" "$MAX_GLIBC"
-  needed_libs < "$cdir/objdump-p.txt" > "$cdir/needed.txt"
-  [[ -s $cdir/needed.txt ]] || die "no NEEDED entries in $bin; cannot prove it links no GPU library"
-  gpu=$(gpu_libs < "$cdir/needed.txt")
-  [[ -z $gpu ]] || die "binary links GPU libraries: $gpu"
-  printf 'NEEDED: %s\n' "$(tr '\n' ' ' < "$cdir/needed.txt")"
+  step "binary checks: glibc <= $MAX_GLIBC, no GPU libraries, prints 'jope $version' / 'jopedime $version'"
+  link_checks "$bin" "$cdir" ''
+  observed_glibc=$link_glibc
+  link_checks "$app_bin" "$cdir" jopedime-
+  app_glibc=$link_glibc
   binary_prints_version "$bin" "$version" "$cdir/run" > "$cdir/version-host.txt" \
     || die "the binary does not print 'jope $version' first (see $cdir/version-host.txt)"
   out=$(builder_container --network none -v "$dist:/dist:ro" -w / -- "/dist/${bin##*/}" </dev/null) \
@@ -1246,22 +1276,38 @@ check_binary() {
   printf '%s\n' "$out" > "$cdir/version-bookworm.txt"
   [[ ${out%%$'\n'*} == "jope $version" ]] || die "inside $BUILDER_IMAGE_NAME the binary printed '${out%%$'\n'*}'"
   printf 'runs on the host and inside %s: jope %s\n' "$BUILDER_IMAGE_NAME" "$version"
+  binary_prints_version "$app_bin" "$version" "$cdir/run" jopedime version > "$cdir/jopedime-version-host.txt" \
+    || die "jopedime version does not print 'jopedime $version' first (see $cdir/jopedime-version-host.txt)"
+  out=$(builder_container --network none -v "$dist:/dist:ro" -w / -- "/dist/${app_bin##*/}" version </dev/null) \
+    || die "jopedime did not run inside $BUILDER_IMAGE_NAME"
+  printf '%s\n' "$out" > "$cdir/jopedime-version-bookworm.txt"
+  [[ ${out%%$'\n'*} == "jopedime $version" ]] || die "inside $BUILDER_IMAGE_NAME jopedime printed '${out%%$'\n'*}'"
+  printf 'runs on the host and inside %s: jopedime %s\n' "$BUILDER_IMAGE_NAME" "$version"
 }
 
 make_receipt() {
   stage=receipt
-  local tool name=jope-$tag.build-receipt.json
+  local tool
   step "jope-build-receipt (crates/jope-engine, package jope-parallel)"
   docker_run -- cargo build --locked -p jope-parallel --bin jope-build-receipt \
     --message-format=json-render-diagnostics > "$run_dir/receipt-tool.jsonl"
   tool=$(select_executable "$run_dir/receipt-tool.jsonl" /src/crates/jope-engine/Cargo.toml jope-build-receipt) \
     || die "could not select jope-build-receipt from $run_dir/receipt-tool.jsonl"
   mkdir -p -- "$run_dir/receipt"
+  receipt_for "$tool" "$bin" "$bin_container" "jope-$tag.build-receipt.json" "jope-cli-$tag" "$BUILD_COMMAND" "$observed_glibc"
+  receipt_for "$tool" "$app_bin" "$app_bin_container" "jopedime-$tag.build-receipt.json" "jope-appliance-$tag" \
+    "$APPLIANCE_BUILD_COMMAND" "$app_glibc"
+}
+
+# receipt_for <tool> <dist binary> <container binary> <receipt name> <lineage> <build command> <glibc>:
+# one receipt per released binary, each bound to that binary, its glibc/GPU bounds and the commit.
+receipt_for() {
+  local tool=$1 bin=$2 bin_container=$3 name=$4 lineage=$5 command=$6 observed_glibc=$7
   docker_run -v "$run_dir/builder:/builder:ro" -v "$run_dir/receipt:/out" -- \
     "$tool" --binary "$bin_container" --source-dir /src --output "/out/$name" \
-    --lineage "jope-cli-$tag" --rustc-vv /builder/rustc-vV.txt \
+    --lineage "$lineage" --rustc-vv /builder/rustc-vV.txt \
     --rustup-toolchain /builder/rustup-toolchain.txt --profile release \
-    --command "docker run $BUILDER_IMAGE ($(cat "$run_dir/builder/builder-libc.txt")): $BUILD_COMMAND" \
+    --command "docker run $BUILDER_IMAGE ($(cat "$run_dir/builder/builder-libc.txt")): $command" \
     --builder-image "$BUILDER_IMAGE" --max-glibc "$MAX_GLIBC" --forbid-gpu-libraries \
     || die "jope-build-receipt rejected the binary (see $run_dir/receipt/$name)"
   jq -e --arg bin "$(sha256_of "$bin")" --arg glibc "GLIBC_$observed_glibc" \
