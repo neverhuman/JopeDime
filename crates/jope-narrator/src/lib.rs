@@ -17,7 +17,7 @@ pub use program::{
 pub use render::{Claim, Metric, Narration};
 pub use tap::{
     fact_channel, EmitStatus, FactReceiver, Limits, Links, Tap, DEFAULT_MAX_BYTES,
-    DEFAULT_MAX_FACTS, MAX_FRAME_BYTES,
+    DEFAULT_MAX_FACTS, MAX_FRAME_BYTES, MIN_FRAME_BYTES,
 };
 
 pub(crate) fn digest(bytes: &[u8]) -> String {
