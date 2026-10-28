@@ -132,3 +132,29 @@ before writing either identity fixture (11 passed, 2 source guards failed). That
 log is retained separately. The successful invocation reads the full source ID from
 Git and is retained in `target/dope-main-repin-20261028/identity-regenerate-a2.{log,json}`.
 No behavior rebaseline or scientific/release qualification is implied.
+
+## Tagged Dope engine 1.1.0 re-pin, 28 October 2026
+
+Source `ea994457b48ace78035ec1e6ef7bad292efe4299` pins Dope
+`15e12aa3dc33851655580f6aa7c9c66353143f23`, the commit named by the annotated tag
+`dope-engine-v1.1.0` (tag object `7712722c2e08d65d873a3b8234e5cddcfa0bcfbc`), whose signed
+engine release run 40680335064 passed. Since the previous pin `e2243e59`, Dope added the
+additive 512D resident encoder API (#344) and documentation (#345, #346). The 629D outputs
+JopeDime consumes are byte-identical (570/570 `mlc-v3 encode` records). Weights, output
+dimensions and numerical recipes are unchanged. The FIT preparation-source marker follows the
+new pin; components admitted for the old source cannot be silently relabeled.
+
+| Field | Before re-pin | After re-pin |
+| --- | --- | --- |
+| `implementation_sha256` | `8780fd935368ae7a16cf4021c0949e665ea28421159d83d6289e407d864e38fa` | `ece0df30227e680e9e5eb9ced76f20279840d1b65ae41f7db65d3352729ff41f` |
+| `cargo_lock_sha256` | `c25699fa0c2e23a4897ac36f73bbbaa3c510376acea01eb3ec6d16348e6d066d` | `a88a224d781ab7b23ff478134217bc17b4ef2ad9ce054bb6e1eadd973128926d` |
+| `identity_digest` | `0a092f968c9d43d7bcf31b20847290ee4ee269caf47c8f440397a172bb9c40ae` | `6ce509f8671d7d0c50af6d8690d9aad96dbbb4c0b775f6edc91e112a1ab37729` |
+
+Exactly one `Cargo.lock` Git source line changes and no other dependency edge moves;
+`cargo metadata --locked --offline` accepts the graph. The official identity-only
+regeneration passes all 13 compatibility tests. Only the evaluator identity and lineage
+source-commit header change; the DSL ABI, known identity rows, listed lineage inputs,
+numerical/emission/seeded fixtures and the five prior transition records remain unchanged.
+A sixth append-only transition extends every historical identity chain. The regeneration log
+is retained in `target/repin-v110-identity-regenerate.log`. No behavior rebaseline or
+scientific/release qualification is implied.

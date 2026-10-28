@@ -1,0 +1,21 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Append the tagged-Dope identity-only successor after the merged-Dope-main re-pin. Exactly one Cargo.lock Git source line changes, to the commit the annotated tag dope-engine-v1.1.0 names; no other lock edge moves. The explicit preparation-source marker follows that immutable revision. Existing 629-prefix APIs, weights, recipes, DSL ABI, known identity rows, behavior fixtures and all five earlier optional-landmark transition records remain unchanged. Source/preparation scope is refreshed, not silently relabeled.",
+  "plan_reference": "Owner 2026-10-28 11:30 tagged-commit re-pin assignment; compat_freeze.rs owning identity lane; ADR-0004",
+  "source_commit": "ea994457b48ace78035ec1e6ef7bad292efe4299",
+  "source_reference": "https://github.com/neverhuman/JopeDime/commit/ea994457b48ace78035ec1e6ef7bad292efe4299",
+  "dope_source_commit": "15e12aa3dc33851655580f6aa7c9c66353143f23",
+  "dope_reference": "https://github.com/neverhuman/dope/commit/15e12aa3dc33851655580f6aa7c9c66353143f23",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "2615345bfe3bc63660e5a51cbfbaee311b67629d3849a86f219d523552d997c7",
+      "after": "3672ca2a5780cab0a313251280e37117529b1220bed6e6633743764cbc34d54d"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "dbb97403415322960c7c76bc1326031aadba7f9aa5d346a51392d57f6666892d",
+      "after": "a0454c55a8c4694d4727d71116578bc0dd22470641d4fc6bea816ce8d382a032"
+    }
+  ]
+}
