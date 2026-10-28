@@ -8,7 +8,7 @@ the commit areas (crate or lane) named in each subject line.
 ### Encoders and optional landmarks
 
 - encoders, starforge: optional and progressive Rust/CUDA Dope encoding sessions (`Dope512 = descriptor256 + task128 + dist128`) with explicit `--landmark-mode` (`none`, `fast`, `progressive`, `full`) and `--landmark-subsample` flags across the CLI, pipeline and appliance. `none` and `fast` skip native landmark probes; `progressive` reuses fold preparation and completed groups, emits an immediate zero-landmark snapshot and publishes bounded ordered updates while preserving frozen pipeline receipt v3 and existing default behavior (#431)
-- encoders: direct Dope encoding/fusion (`1536`-D) and Jope DL context projection (`2048`-D) product consumers with distinct `Dope512` and derived-context types, scoped controller admission, uncapped `LosslessV1` FIT preparation for `K >= 33` tables, exact class/code/physical-row checks, and a source identity binding every original target while keeping legacy `Cap32V1` unchanged (#431)
+- encoders: direct Dope encoding/fusion (`1536`-D) and Jope DL context projection (`2048`-D) product consumers with distinct `Dope512` and derived-context types, scoped controller admission, uncapped `LosslessV1` FIT preparation for the product consumers (tables with `K >= 33` classes keep every class), exact class/code/physical-row checks, and a source identity binding every original target while keeping legacy `Cap32V1` unchanged (#431)
 - encoders: pin `dope-core` to the signed, tagged `dope-engine-v1.1.0` commit (`15e12aa3dc33851655580f6aa7c9c66353143f23`, tag object `7712722c`) after the intermediate landmark-preparation re-pin (`e2243e59`), updating `PREPARATION_SOURCE` and recording closed append-only ADR-0004 evaluator identity transitions (#431, #434, #435)
 
 ### Campaigns, self-play and learning
@@ -18,7 +18,7 @@ the commit areas (crate or lane) named in each subject line.
 
 ### CI, build and release
 
-- appliance: bound Rayon pool initialization during packaged Dope asset decoding (#431), consolidate thin-LTO CLI code generation into one codegen unit, and optimize cold record verification so the `dope-gpu` `dist-ci` build fits within the existing binary and sealed-package size caps (#433)
+- appliance: bound Rayon pool initialization during packaged Dope asset decoding (#431), and build the `jope-appliance` CLI/receipt glue with `opt-level = "s"`, one codegen unit and stripped symbols in the thin-LTO `dist-ci` profile only (numerical crates keep `opt-level` 3; the production `dist` profile is unchanged), so the `dope-gpu` `dist-ci` package fits its existing size caps (#433)
 - ci(runners): isolate ARM64 QEMU emulation on the twelve `xbabe4` Mac Linux workers to Git and ELF `git-core` subprocesses via a content-addressed public tool volume and source-bound entrypoint while keeping the runner, Rust and Node on Rosetta (#429)
 
 ### Security
