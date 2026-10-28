@@ -1,0 +1,41 @@
+# The appliance dependency fence (SPECIFICATION.md §14.1), checked by `jope-dist audit` and
+# crates/jope-dist/tests/dependency_fence.rs for every listed feature set of the shipped package.
+schema = "jope.appliance-dependency-policy/v1"
+package = "jope-appliance"
+target = "x86_64-unknown-linux-gnu"
+feature_sets = [["dope-cuda"], ["embedded", "dope-cuda"], ["embedded", "dev-keys", "dope-cuda"]]
+
+# Never in the normal or build closure of `jopedime`.
+deny = [
+  # Python, LibTorch and external ML runtimes.
+  "tch", "torch-sys", "pyo3*", "ort", "ort-sys", "onnxruntime*",
+  # Research, training, benchmark, cluster and cloud crates.
+  "jope-parallel", "jope-learning", "jope-campaigns", "jope-bench", "jope-pipeline",
+  "jope-datasets", "jope-models", "jope-arena", "jope-engine", "jope-ci", "jope-dist",
+  "jain-*", "scq", "hyperion",
+  # Network clients and TLS: the appliance never fetches anything.
+  "object_store", "reqwest", "hyper", "ureq", "rustls", "aws-*", "openssl*", "native-tls",
+  # The zstd C library is the packer's encoder only; the appliance decodes with ruzstd.
+  "zstd", "zstd-safe", "zstd-sys",
+  # The opt-in GPU edition uses reviewed Candle and CUDA bindings with lazy library loading.
+  "cudnn*", "nccl*",
+]
+
+# Crates that compile or link non-Rust code. Each must be an approved exception to appear.
+native = [
+  "candle-kernels", "cudaforge",
+  "cc", "cmake", "bindgen", "pkg-config", "zstd-sys", "libsqlite3-sys", "onig_sys", "openssl-sys",
+  "ring", "aws-lc-sys", "libz-sys", "bzip2-sys", "lzma-sys", "cudarc", "nccl*",
+]
+
+# Features that must stay off even though their crate is allowed: feature unification could
+# otherwise switch them on without adding a package (AMENDMENTS.md A1).
+denied_features = ["feat-math/fitted-cpp", "jope-assets/pack", "candle-core/ug", "candle-core/cudnn", "candle-core/nccl", "cudarc/dynamic-linking", "cudarc/cudnn", "cudarc/nccl"]
+
+[native_allowed]
+cudarc = "CUDA FFI generated Rust bindings; libraries loaded when CUDA is selected"
+cc = "Oniguruma build dependency already present through reviewed Candle/tokenizers"
+pkg-config = "Oniguruma system-library probe; bundled build remains source pinned"
+onig_sys = "Mandatory reviewed Candle tokenizer dependency, unused by Dope inference"
+candle-kernels = "Pinned Candle CUDA kernels compiled into embedded PTX at build time"
+cudaforge = "Pinned build wrapper invoking CUDA compiler for Candle PTX; no runtime downloads"

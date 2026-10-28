@@ -20,6 +20,8 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+#[cfg(test)]
+mod native_proof_tests;
 mod transport;
 use transport::Transport;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -174,6 +176,23 @@ fn immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 impl Graph {
+    fn retain_native_proof(&self, path: &Path, bytes: &[u8]) -> Result<()> {
+        if self.read_only {
+            let parent = path.parent().context("graph record parent")?;
+            ensure!(
+                fs::symlink_metadata(parent)?.is_dir(),
+                "graph directory must be physical"
+            );
+            ensure!(
+                read(path).context("read-only native proof must already be retained")? == bytes,
+                "read-only native proof differs from retained evidence"
+            );
+            Ok(())
+        } else {
+            immutable(path, bytes)
+        }
+    }
+
     pub fn open(
         root: &Path,
         directory_path: &Path,
@@ -680,7 +699,7 @@ impl Graph {
             }
         }
         let proof = self.native_proof(client, result.native_attempt).await?;
-        immutable(
+        self.retain_native_proof(
             &state.join(format!(
                 "native-proof-{}.json",
                 result.native_attempt.fence.get()

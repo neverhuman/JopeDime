@@ -13,10 +13,14 @@ path = "src/main.rs"
 
 [features]
 default = []
-cuda = ["candle-core/cuda", "candle-nn/cuda"]
+cuda = ["candle-core/cuda", "candle-nn/cuda", "dope-core?/cuda"]
+dope = ["dep:dope-core", "dep:jope-records", "dep:jope-paths"]
+dope-cuda = ["dope", "cuda"]
 
 [dependencies]
+jope-runtime = { path = "../jope-runtime" }
 anyhow.workspace = true
+rayon.workspace = true
 clap.workspace = true
 serde.workspace = true
 # Bundle content hashes must not depend on another workspace crate enabling this.
@@ -33,5 +37,14 @@ zip = { version = "9.0.5", default-features = false, features = ["deflate"] }
 # transparently decompress `*.safetensors.zst` weights in-memory at load time.
 ruzstd = "0.9.1"
 
+dope-core = { git = "https://github.com/neverhuman/dope", rev = "2535a36c0e7ced2a17a0b06818efaeb17f7a2d47", optional = true }
+jope-records = { path = "../jope-records", optional = true }
+jope-paths = { path = "../jope-paths", optional = true }
+
 [dev-dependencies]
 proptest.workspace = true
+
+[[test]]
+name = "dope_encoding"
+path = "tests/dope_encoding.rs"
+required-features = ["dope"]

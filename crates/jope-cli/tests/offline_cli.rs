@@ -595,3 +595,11 @@ fn train_step_writes_router_and_route_fits_a_ridge_genome() {
     assert!(report["genome"].as_str().unwrap().contains("ridge"));
     assert!(report["hold_r2"].as_f64().unwrap().is_finite());
 }
+
+#[cfg(feature = "dope-encoding")]
+#[path = "support/landmark_product.rs"]
+mod landmark_product;
+
+#[cfg(all(feature = "dope-encoding", target_os = "linux"))]
+#[path = "support/landmark_one_shot.rs"]
+mod landmark_one_shot;

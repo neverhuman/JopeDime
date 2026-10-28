@@ -442,6 +442,13 @@
         "evaluation"
       ]
     },
+    "python:deploy/appliance/test-dope-cpu-threads.py": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "preparation"
+      ]
+    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "reason": "CUDA qualification receipt integrity; collection and execution remain distinct from hardware qualification.",
       "role": "infrastructure"
@@ -4632,6 +4639,13 @@
       ]
     },
     "target:starforge/lib/starforge": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
+    "target:starforge/test/dope_encoding": {
       "role": "regression",
       "subsystems": [
         "encoders",

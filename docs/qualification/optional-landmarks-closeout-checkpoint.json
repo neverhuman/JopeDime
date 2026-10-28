@@ -1,0 +1,115 @@
+{
+  "recorded_at": "2026-10-27T21:19:10.710548+00:00",
+  "implementation_source": "6b396365d7b0663501d6694c4ffc2167087e484b",
+  "code_commits": [
+    "6eed5fcc2c0fe12c96f54c99d5be495838fe9a09",
+    "6b396365d7b0663501d6694c4ffc2167087e484b"
+  ],
+  "dope_source": "2535a36c0e7ced2a17a0b06818efaeb17f7a2d47",
+  "changes": {
+    "proof_retention": "Restore the former physical immediate-parent guard using read-only metadata; no creation/staging/fsync. Static public-entry symlinks were already refused; this restores the helper point-of-retention invariant across awaited work, not an atomic path-race or authority guarantee.",
+    "scalar_probe": "Request terse libtest output; emitted model bytes, parser, fault/value cardinality and numerical acceptance remain unchanged."
+  },
+  "verification": {
+    "native_graph": {
+      "red_exit": 101,
+      "red_pass": 0,
+      "red_fail": 1,
+      "fixed_exit": 0,
+      "fixed_pass": 19,
+      "fixed_fail": 0,
+      "ignored": 0
+    },
+    "scalar_probe_same_binary": {
+      "rust_test_threads": 1,
+      "expected_values": 120,
+      "pretty_parsed": 119,
+      "terse_parsed": 120,
+      "terse_exact_expected_bits": true
+    },
+    "scalar_probe_first_shard": {
+      "exit": 0,
+      "tests_pass": 1,
+      "programs": 11,
+      "implementations": [
+        "native reference",
+        "Rust",
+        "Python",
+        "g++ C++17",
+        "clang++ C++17"
+      ],
+      "all_eight_shards": "pending full required rerun"
+    }
+  },
+  "historical_required_failure": {
+    "source": "16fcf9ef0a7c120b3aa3173641f9fc00d35e4ff4",
+    "hygiene_security_fmt_workspace_clippy": "passed",
+    "rust_selected": 3736,
+    "rust_executed": 956,
+    "passed": 946,
+    "assertion_failures": 8,
+    "interrupted": 2,
+    "unrun": 2780,
+    "skipped": 37,
+    "actual_just_exit": 100,
+    "classification": "failed and gracefully interrupted; no aggregate success"
+  },
+  "evidence": [
+    {
+      "path": "target/landmarks/p1-required-gate.log",
+      "sha256": "5c86a87d6d488a5d0af039cf1b314b54280f16bccebf3630240fe56851809568"
+    },
+    {
+      "path": "target/landmarks/p1-required-recovered-exit.log",
+      "sha256": "05ffe1af7cd33d54ba429f37423b72d9a175fbb624ada9a9d32755c28c330687"
+    },
+    {
+      "path": "target/landmarks/gp-probe-single-thread-reproduction.json",
+      "sha256": "611742d809f1e559f25e107b969c8d2f442f33099050a179852e2b03ecd9ba71"
+    },
+    {
+      "path": "target/landmarks/gp-probe-single-thread-fixed-shard.log",
+      "sha256": "62955397f01f5c919f9d353f7bf0a5642c964a34d5b02447f0d749b127974753"
+    },
+    {
+      "path": "target/landmarks/p6-parent-physical-red.log",
+      "sha256": "f44db4d0c90213bfb0c8bb51a65a8ce5067b8a45ee7ee06c4ebf233eed85ce20"
+    },
+    {
+      "path": "target/landmarks/p6-parent-physical-fixed-suite.log",
+      "sha256": "3a8872ac8c766c81eff8346fb757453cecb9664c3a2975a5ee9d2082a267abb9"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "crates/jope-engine/src/native_graph.rs",
+      "sha256": "cc593adc2d8e1ee3b3732cb9b079a6f0bc76e84d8da58f0fec30b8f88f7084f4"
+    },
+    {
+      "path": "crates/jope-engine/src/native_graph/native_proof_tests.rs",
+      "sha256": "ea6579b0fc48091e5f7599910615e4fc64333765b54ccecfa222f900135d30f2"
+    },
+    {
+      "path": "crates/feat-math/tests/gp_emitter_determinism.rs",
+      "sha256": "cc83b1af73bb512f933068b36ae8da87ba27b2a01233ea26f924f80f19efc273"
+    }
+  ],
+  "source_only_handoffs": {
+    "v3_producer_sha256": "797793dbd02f3040e55836dc4c66ef33cafc602b5226f698a47c5abedc077ad1",
+    "exact16_review_sha256": "5212e4686d2474ecfadda86c8fe3179275ab3b1bd0e51418992bb5abfa473076",
+    "review_finding": "Physical-parent retention guard addressed by demonstrated regression and fix; no blanket production/scientific approval"
+  },
+  "pending": [
+    "Full just required at final clean source and fresh exact-head CI",
+    "Released-only sealed CPU/CUDA package at final source; trained package remains separate",
+    "Registered trained checkpoint/export/preparation/rights and both-consumer predictive qualification",
+    "Matched cold/resident latency; historical >=5x failures remain explicit",
+    "Authenticated v3 committed-credit producer, controller/execution/source/pin mappings and continuous flywheel health"
+  ],
+  "limits": [
+    "No new acquisition, training campaign, keys, grants, adoption, service or production root",
+    "CPU handles preparation/native landmarks/conditioning; neural forward and optional fusion/context use CUDA",
+    "No authority/predictive/latency/promotion/distribution/release claim",
+    "No evaluator identity or behavior fixture changes in these two fixes"
+  ]
+}

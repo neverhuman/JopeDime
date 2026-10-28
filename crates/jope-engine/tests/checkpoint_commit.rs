@@ -707,3 +707,6 @@ fn a_stale_writer_fence_cannot_publish_latest() {
         "unpublished state was not quarantined"
     );
 }
+
+#[path = "checkpoint_commit/successor_expectations.rs"]
+mod successor_expectations;

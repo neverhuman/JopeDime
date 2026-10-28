@@ -28,6 +28,8 @@ jope-paths = { path = "../jope-paths" }
 # instead of re-implementing the claim rules.
 jope-records = { path = "../jope-records" }
 rusqlite = { version = "0.32", features = ["bundled"] }
+# Nofollow descriptor-relative controller evidence reads; this version is already in the graph.
+rustix = { version = "1.1.4", features = ["fs"] }
 schemars = "1"
 serde.workspace = true
 # float_roundtrip matches jope-engine: champion event hashes are recomputed from re-parsed f64s.

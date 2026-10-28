@@ -508,6 +508,33 @@
       ],
       "scope": "Forwards jope-assets/dev-keys for the fixture appliance in the e2e-smoke lane. Never in a release build."
     },
+    "feature:jope-appliance/dope-cuda": {
+      "discovery": {
+        "dependencies": [
+          "dope-encoding",
+          "starforge/dope-cuda"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "gpu"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
+    },
+    "feature:jope-appliance/dope-encoding": {
+      "discovery": {
+        "dependencies": [
+          "dep:starforge"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope API and reference CPU comparisons; default behavior remains unchanged. Local focused tests do not establish retained quality or latency qualification."
+    },
     "feature:jope-appliance/embedded": {
       "discovery": {
         "dependencies": [],
@@ -664,6 +691,35 @@
       ],
       "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
     },
+    "feature:jope-cli/dope-cuda": {
+      "discovery": {
+        "dependencies": [
+          "dope-encoding",
+          "jope-pipeline/dope-cuda",
+          "starforge/dope-cuda"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "gpu"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
+    },
+    "feature:jope-cli/dope-encoding": {
+      "discovery": {
+        "dependencies": [
+          "dep:starforge",
+          "jope-pipeline/dope-encoding"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope API and reference CPU comparisons; default behavior remains unchanged. Local focused tests do not establish retained quality or latency qualification."
+    },
     "feature:jope-cli/inference-cuda": {
       "discovery": {
         "dependencies": [
@@ -772,6 +828,34 @@
         "full-default"
       ],
       "scope": "Empty package-default marker; qualified-context separately selected."
+    },
+    "feature:jope-pipeline/dope-cuda": {
+      "discovery": {
+        "dependencies": [
+          "dope-encoding",
+          "starforge/dope-cuda"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "gpu"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
+    },
+    "feature:jope-pipeline/dope-encoding": {
+      "discovery": {
+        "dependencies": [
+          "dep:starforge",
+          "starforge/dope"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope API and reference CPU comparisons; default behavior remains unchanged. Local focused tests do not establish retained quality or latency qualification."
     },
     "feature:jope-pipeline/neural-search": {
       "discovery": {
@@ -889,7 +973,8 @@
       "discovery": {
         "dependencies": [
           "candle-core/cuda",
-          "candle-nn/cuda"
+          "candle-nn/cuda",
+          "dope-core?/cuda"
         ],
         "kind": "feature"
       },
@@ -911,6 +996,35 @@
         "full-default"
       ],
       "scope": "Default feature graph in PR selection and the full workspace main profile."
+    },
+    "feature:starforge/dope": {
+      "discovery": {
+        "dependencies": [
+          "dep:dope-core",
+          "dep:jope-paths",
+          "dep:jope-records"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope API and reference CPU comparisons; default behavior remains unchanged. Local focused tests do not establish retained quality or latency qualification."
+    },
+    "feature:starforge/dope-cuda": {
+      "discovery": {
+        "dependencies": [
+          "cuda",
+          "dope"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "gpu"
+      ],
+      "lanes": [],
+      "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
     },
     "job:.github/workflows/ci.yml/aggregate": {
       "discovery": {
@@ -1655,6 +1769,16 @@
         "python"
       ],
       "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
+    },
+    "python:deploy/appliance/test-dope-cpu-threads.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "gpu"
+      ],
+      "lanes": [],
+      "scope": "Manual post-build regression for the sealed Dope GPU edition: fresh Rust CPU fast inference on all three tasks, cleared thread environment and sampled process thread bounds. Execution needs no GPU; building the packaged edition requires the CUDA feature toolchain. Static mapping is not execution or latency evidence."
     },
     "python:deploy/ci/cuda/test_evidence.py": {
       "discovery": {
@@ -6703,6 +6827,23 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
+    "target:jope-cli/example/landmark_one_shot": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "dope-encoding"
+        ],
+        "source": "crates/jope-cli/examples/landmark_one_shot.rs",
+        "test": false
+      },
+      "dispositions": [
+        "cpu-qualification",
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "Opt-in dope-encoding example compiled by explicit local all-target feature Clippy; default CI does not select this feature. Runtime execution requires the ignored artifact test or an explicitly budgeted nice-15 one-shot invocation. Build/check does not establish neural training, production snapshot admission, or a continuous learning service."
     },
     "target:jope-cli/lib/jope_cli": {
       "discovery": {
@@ -11811,6 +11952,22 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:starforge/test/dope_encoding": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "dope"
+        ],
+        "source": "crates/jope-encoders/tests/dope_encoding.rs",
+        "test": true
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Explicit dope/dope-cuda feature suites compare the actual first512 coordinates against the whole-checkpoint PyTorch CUDA reference, verify device residency and separate fusion scope. Default CI does not select this target."
     },
     "target:starforge/test/foundation_parity": {
       "discovery": {

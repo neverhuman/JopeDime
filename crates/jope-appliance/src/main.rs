@@ -11,6 +11,7 @@
 mod bootstrap;
 mod cli;
 mod io;
+mod landmarks;
 mod model;
 
 use clap::Parser;
@@ -82,6 +83,7 @@ fn version_value() -> Value {
             "embedded": bootstrap::EMBEDDED,
             "dev_keys": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
             "cuda": backend::CUDA_COMPILED,
+            "dope_cuda": cfg!(feature = "dope-cuda"),
         },
         "trusts_development_key": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
         "package": package,
@@ -125,6 +127,7 @@ fn doctor() -> anyhow::Result<(Value, bool)> {
         "unexecutable_promised_methods": unexecutable,
         "devices": backend::probe(),
         "native_device": "cpu",
+        "dope_cuda_compiled": cfg!(feature = "dope-cuda"),
         "limits": Limits::default(),
         "cache": "none: packaged assets are authenticated and decoded in memory when a method \
                   needs them; this build keeps no derived cache",
@@ -241,6 +244,7 @@ struct Run {
     started: Instant,
     common: CommonArgs,
     receipt: Receipt,
+    encoding_package: Option<Package>,
     /// The run's budget once prepared, so a failed run still records what it consumed.
     budget: Option<Budget>,
     /// Whether `--receipt` names no input or output (checked before any work).
@@ -255,6 +259,7 @@ impl Run {
             common: common.clone(),
             budget: None,
             receipt_allowed: false,
+            encoding_package: None,
             receipt: Receipt {
                 schema: jope_runtime::receipt::SCHEMA,
                 command: command.to_owned(),
@@ -275,6 +280,7 @@ impl Run {
                 budget: Budget::new(None, 1).record(),
                 timings: Timings::default(),
                 selection: None,
+                landmark_encoding: None,
                 outcome: "failed",
                 error: None,
             },
@@ -301,7 +307,7 @@ impl Run {
     }
 
     /// Authenticate the package and select the device: the preamble of every run.
-    fn prepare(&mut self) -> anyhow::Result<(Option<Package>, Budget)> {
+    fn prepare(&mut self, landmark_encoding: bool) -> anyhow::Result<Budget> {
         let request = DeviceRequest::parse(&self.common.device)
             .ok_or_else(|| Failure::input(format!("unknown device {:?}", self.common.device)))?;
         let package = bootstrap::open()?;
@@ -315,11 +321,25 @@ impl Run {
                 signer_role: s.signer_role,
             });
         }
-        self.receipt.device = backend::select(request)?;
+        self.receipt.device = if landmark_encoding {
+            if !cfg!(feature = "dope-encoding") {
+                return Err(Failure::backend(
+                    "landmark encoding requires a dope-cuda build",
+                ));
+            }
+            backend::DeviceChoice {
+                requested: request.as_string(),
+                selected: "none",
+                reason: "Dope initialization pending; native fitting uses CPU".into(),
+            }
+        } else {
+            backend::select(request)?
+        };
         let budget = self.budget()?;
         self.receipt.budget = budget.record();
         self.budget = Some(budget.clone());
-        Ok((package, budget))
+        self.encoding_package = package;
+        Ok(budget)
     }
 
     /// Refuse a receipt or output path that names an input, before any work. A receipt that
@@ -408,7 +428,30 @@ impl Run {
                 jope_runtime::automl::Validation::Iid {}
             },
         };
-        let outcome = api::fit(&training, &options, budget, &csv.sha256, self.created_by())?;
+        let encoding = landmarks::start(
+            train,
+            &self.common,
+            &training,
+            self.encoding_package.as_ref(),
+            &csv.sha256,
+        )?;
+        if train.landmarks.enabled() {
+            self.receipt.device = backend::DeviceChoice {
+                requested: self.common.device.clone(),
+                selected: if self.common.device == "cpu" {
+                    "cpu"
+                } else {
+                    "cuda"
+                },
+                reason: "Dope inference on selected device; native fitting on CPU".into(),
+            };
+        }
+        let fitted = api::fit(&training, &options, budget, &csv.sha256, self.created_by());
+        if fitted.is_err() {
+            landmarks::cancel(&encoding);
+        }
+        self.receipt.landmark_encoding = landmarks::finish(encoding)?;
+        let outcome = fitted?;
         self.receipt.timings.select_seconds = outcome.select_seconds;
         self.receipt.timings.fit_seconds = outcome.fit_seconds;
         self.receipt.method = Some(MethodRecord {
@@ -584,15 +627,21 @@ fn run_fit(
 ) -> ExitCode {
     let mut run = Run::new("fit", common);
     let result = (|| -> anyhow::Result<()> {
+        let landmark_inputs = train.landmarks.protected_inputs();
+        let mut protected = vec![train.train.as_path()];
+        protected.extend(landmark_inputs.iter().map(std::path::PathBuf::as_path));
         if let Some(output) = output {
-            run.refuse_aliasing(output, &[&train.train])?;
+            run.refuse_aliasing(output, &protected)?;
         } else {
+            jope_runtime::output_safety::refuse_directory_aliasing(model_root, &protected)?;
+            protected.push(model_root);
             if let Some(receipt) = &common.receipt {
-                io::refuse_aliasing(receipt, &[&train.train, model_root])?;
+                io::refuse_aliasing(receipt, &protected)?;
             }
             run.receipt_allowed = true;
         }
-        let (_, b) = run.prepare()?;
+        landmarks::refuse_aliasing(train, common, &[output.unwrap_or(model_root)])?;
+        let b = run.prepare(train.landmarks.enabled())?;
         let fitted = run.fit(train, &b)?;
         let started = Instant::now();
         if let Some(output) = output {
@@ -620,7 +669,7 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
     let mut run = Run::new("predict", common);
     let result = (|| -> anyhow::Result<()> {
         run.refuse_aliasing(output, &[model, input])?;
-        let (_, b) = run.prepare()?;
+        let b = run.prepare(false)?;
         let started = Instant::now();
         let limit = Limits::default().max_model_bytes;
         // Only the manifest's `format` is read here; `ModelObject::read` and `load_fitted` each
@@ -682,8 +731,12 @@ fn run_fit_predict(
 ) -> ExitCode {
     let mut run = Run::new("fit-predict", common);
     let result = (|| -> anyhow::Result<()> {
-        run.refuse_aliasing(output, &[&train.train, input])?;
-        let (_, b) = run.prepare()?;
+        let landmark_inputs = train.landmarks.protected_inputs();
+        let mut protected = vec![train.train.as_path(), input];
+        protected.extend(landmark_inputs.iter().map(std::path::PathBuf::as_path));
+        run.refuse_aliasing(output, &protected)?;
+        landmarks::refuse_aliasing(train, common, &[input, output])?;
+        let b = run.prepare(train.landmarks.enabled())?;
         let fitted = run.fit(train, &b)?;
         run.predict(&fitted, input, output, &b)?;
         Ok(())

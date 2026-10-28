@@ -8,7 +8,9 @@ rust-version.workspace = true
 description = "Appliance runtime: native method roster, table ingress, local fit and prediction, bounded selection and fitted state"
 
 [dependencies]
+clap.workspace = true
 anyhow.workspace = true
+jope-paths = { path = "../jope-paths" }
 csv = "1.4"
 # No `fitted-cpp`: the appliance carries no C++ (deploy/appliance/AMENDMENTS.md A1).
 feat-math = { path = "../feat-math", default-features = false }

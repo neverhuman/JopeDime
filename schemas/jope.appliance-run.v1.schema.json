@@ -27,12 +27,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["requested", "selected", "reason"],
-      "properties": {"requested": {"type": "string"}, "selected": {"enum": ["cpu", "none"]}, "reason": {"type": "string"}}
+      "properties": {"requested": {"type": "string"}, "selected": {"enum": ["cpu", "none", "cuda"]}, "reason": {"type": "string"}}
     },
     "task": {"type": ["object", "null"]},
     "method": {"type": ["object", "null"]},
     "inputs": {"type": "array", "items": {"$ref": "#/$defs/file"}},
     "outputs": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+    "landmark_encoding": {"$ref": "#/$defs/file"},
     "ignored_columns": {"type": "array", "items": {"type": "string"}},
     "budget": {
       "type": "object",

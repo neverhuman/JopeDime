@@ -4,10 +4,11 @@
 //! the decoder with unbound metadata or weights. The attention projection stays
 //! packed, matching PyTorch's `MultiheadAttention` fp32 evaluation order.
 
-use crate::bundle::LoadedModelBundle;
+use crate::bundle::{JopePolicyAssetsIdentity, LoadedModelBundle, VerifiedJopePolicyAssets};
 use anyhow::{bail, Context, Result};
 use candle_core::{Device, IndexOp, Tensor, D};
 
+mod context;
 mod support;
 
 pub use support::JopePolicyConfig;
@@ -16,10 +17,12 @@ use support::{causal_mask, layer_norm, linear, validate_config, PolicyMetadata, 
 const POLICY_METADATA: &str = "artifacts/model-bundle/jope_policy.meta.json";
 const POLICY_WEIGHTS: &str = "artifacts/model-bundle/jope_policy.safetensors";
 
-/// Opaque encoded dataset/target context tied to the model that produced it.
+/// Opaque dataset/target context. The caller retains its associated model identity.
 pub struct JopePolicyContext(Tensor);
 
 pub struct JopePolicyModel {
+    weights_sha256: String,
+    projection_identity: Option<JopePolicyAssetsIdentity>,
     weights: Weights,
     config: JopePolicyConfig,
     device: Device,
@@ -31,20 +34,70 @@ impl JopePolicyModel {
         if !matches!(&device, Device::Cpu) {
             bail!("JOPE policy inference is CPU-only");
         }
+        Self::load_bundle_on_device(bundle, device)
+    }
+
+    /// Explicit context-encoder device path. CUDA decoding/reward heads remain unsupported.
+    pub fn load_bundle_on_device(bundle: &LoadedModelBundle, device: Device) -> Result<Self> {
+        if !(device.is_cpu() || device.is_cuda()) {
+            bail!("optional JOPE inference supports CPU or CUDA");
+        }
         let metadata_bytes = bundle.read_verified(POLICY_METADATA)?;
+        let weight_bytes = bundle.read_verified(POLICY_WEIGHTS)?;
+        Self::from_verified_policy_bytes(&metadata_bytes, &weight_bytes, device, None)
+    }
+
+    pub fn load_policy_assets(assets: &VerifiedJopePolicyAssets, device: Device) -> Result<Self> {
+        if !device.is_cpu() {
+            bail!("JOPE policy inference is CPU-only");
+        }
+        Self::load_policy_assets_on_device(assets, device)
+    }
+
+    /// Context-only CUDA seam using the reviewed selected closure, without foundation access.
+    pub fn load_policy_assets_on_device(
+        assets: &VerifiedJopePolicyAssets,
+        device: Device,
+    ) -> Result<Self> {
+        Self::from_verified_policy_bytes(
+            assets.metadata_bytes(),
+            assets.policy_bytes(),
+            device,
+            Some(assets.identity().clone()),
+        )
+    }
+
+    fn from_verified_policy_bytes(
+        metadata_bytes: &[u8],
+        weight_bytes: &[u8],
+        device: Device,
+        projection_identity: Option<JopePolicyAssetsIdentity>,
+    ) -> Result<Self> {
+        if !(device.is_cpu() || device.is_cuda()) {
+            bail!("optional JOPE inference supports CPU or CUDA");
+        }
         let metadata: PolicyMetadata =
-            serde_json::from_slice(&metadata_bytes).context("decode verified JOPE metadata")?;
+            serde_json::from_slice(metadata_bytes).context("decode verified JOPE metadata")?;
         if metadata.model_version != "policy_v3.2" {
             bail!("unsupported JOPE policy version {}", metadata.model_version);
         }
         validate_config(&metadata.config)?;
-        let weight_bytes = bundle.read_verified(POLICY_WEIGHTS)?;
-        let weights = Weights::load_buffer(&weight_bytes, &device)?;
+        let weights = Weights::load_buffer(weight_bytes, &device)?;
         Ok(Self {
+            weights_sha256: jope_runtime::sha256_hex(weight_bytes),
+            projection_identity,
             weights,
             config: metadata.config,
             device,
         })
+    }
+
+    pub fn weights_sha256(&self) -> &str {
+        &self.weights_sha256
+    }
+
+    pub fn projection_identity(&self) -> Option<&JopePolicyAssetsIdentity> {
+        self.projection_identity.as_ref()
     }
 
     pub fn config(&self) -> &JopePolicyConfig {
@@ -53,76 +106,6 @@ impl JopePolicyModel {
 
     fn weight(&self, name: &str) -> Result<Tensor> {
         Ok(self.weights.get(name)?.clone())
-    }
-
-    /// Encode the 1536-value dataset embedding and 512-value target summary.
-    pub fn context(&self, embedding: &[f32], target: &[f32]) -> Result<JopePolicyContext> {
-        if embedding.len() != self.config.dataset_dim || target.len() != self.config.target_dim {
-            bail!(
-                "JOPE context dimensions must be ({}, {}), got ({}, {})",
-                self.config.dataset_dim,
-                self.config.target_dim,
-                embedding.len(),
-                target.len()
-            );
-        }
-        if !embedding
-            .iter()
-            .chain(target)
-            .all(|value| value.is_finite())
-        {
-            bail!("JOPE context inputs must be finite");
-        }
-        let mut values = Vec::with_capacity(embedding.len() + target.len());
-        values.extend_from_slice(embedding);
-        values.extend_from_slice(target);
-        let x = Tensor::from_vec(
-            values,
-            (1, self.config.dataset_dim + self.config.target_dim),
-            &self.device,
-        )?;
-        let epsilon = self.config.layernorm_eps;
-        let hidden = linear(
-            &x,
-            &self.weight("encoder.0.weight")?,
-            &self.weight("encoder.0.bias")?,
-        )?
-        .gelu_erf()?;
-        let hidden = layer_norm(
-            &hidden,
-            &self.weight("encoder.2.weight")?,
-            &self.weight("encoder.2.bias")?,
-            epsilon,
-        )?;
-        let hidden = linear(
-            &hidden,
-            &self.weight("encoder.4.weight")?,
-            &self.weight("encoder.4.bias")?,
-        )?
-        .gelu_erf()?;
-        let encoded = layer_norm(
-            &hidden,
-            &self.weight("encoder.6.weight")?,
-            &self.weight("encoder.6.bias")?,
-            epsilon,
-        )?;
-        Ok(JopePolicyContext(encoded))
-    }
-
-    pub fn context_values(&self, context: &JopePolicyContext) -> Result<Vec<f32>> {
-        Ok(context.0.i(0)?.to_vec1::<f32>()?)
-    }
-
-    /// Construct the decoder seam from a previously qualified 512-value context.
-    pub fn context_from_values(&self, values: &[f32]) -> Result<JopePolicyContext> {
-        if values.len() != self.config.d_model || !values.iter().all(|value| value.is_finite()) {
-            bail!("JOPE encoded context must contain 512 finite values");
-        }
-        Ok(JopePolicyContext(Tensor::from_vec(
-            values.to_vec(),
-            (1, self.config.d_model),
-            &self.device,
-        )?))
     }
 
     /// Return logits for the next token after a fully valid prefix.
@@ -180,6 +163,9 @@ impl JopePolicyModel {
     }
 
     fn tied_projection(&self, hidden: &Tensor) -> Result<Tensor> {
+        if !self.device.is_cpu() {
+            bail!("JOPE scalar vocabulary projection supports CPU only");
+        }
         let (batch, sequence, dimension) = hidden.dims3()?;
         if dimension != self.config.d_model {
             bail!("JOPE tied projection hidden dimension changed");

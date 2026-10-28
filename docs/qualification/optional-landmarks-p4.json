@@ -1,0 +1,287 @@
+{
+  "schema": "jope.optional-landmarks-p4-verification/v1",
+  "recorded_at": "2026-10-27T18:54:47.344201+00:00",
+  "parent_head": "69826081670ac4b0ceec0ff352599e06e8bb8ce3",
+  "source_sha256": {
+    "Cargo.lock": "b6af27b4bf0b90a9c2746ba819fe5f882e5e442b68434c32bc6576f5891d6d6b",
+    "crates/jope-appliance/src/io.rs": "052e429fdd3a813e3b456ab25ca586e0cfae08a472b5733a4c8eb7cc8939fbb0",
+    "crates/jope-appliance/src/landmarks.rs": "6ee5e978f7baf78590b7931800fd430f0d6330e4fe20b3bb5620bd4b2d49bcd0",
+    "crates/jope-appliance/src/main.rs": "5268a6bafa5957240c590338a10253c514933ace9ae084b2b2ca43048ff1cfba",
+    "crates/jope-appliance/tests/single_file.rs": "4ba2b52dcceff482a5d583548faff508038fe85773e200257a78f72734633e05",
+    "crates/jope-appliance/tests/support/landmark_product.rs": "8b92c1f761c7e2b7e78124c1f47790e3f7bcdd77fb53b6859b0dbc4e42e61ab9",
+    "crates/jope-cli/src/encode.rs": "b9b8ae353da46cebd7472a9431a173ff4a2d93ecb7e8d497a0172cda975f4ccf",
+    "crates/jope-cli/tests/offline_cli.rs": "f2ec82f1ea5343b1c5323d08d60a0cb52b75d1a223e14a75abdcdb7ac9721ea7",
+    "crates/jope-cli/tests/support/landmark_product.rs": "d1efc170adcf08ba9fe7cd9e78b142cd17e24c654abdf9caa8eefcf571deb28b",
+    "crates/jope-dist/tests/schemas.rs": "fbeec9f1d4a331c0c4508153aada13355adcd8b10cd3a7f4614a277a1ae5845f",
+    "crates/jope-encoders/Cargo.toml": "cf7022883ca0f88a39560ba2f9495a24dc217976d373ebcf960cd850e3bc57d7",
+    "crates/jope-encoders/src/bundle.rs": "e646f2f1acd229f2f4e073aae14c55b45b6cfd5868ef374751ad15a3738f4ea9",
+    "crates/jope-encoders/src/bundle/loading.rs": "7a0a41e1b49b67f11366f07d95ad385419d12d740af2a38270dd4f50c31ba56c",
+    "crates/jope-encoders/src/bundle/projection.rs": "cc4ce33d47dba15f1c996d2922939dc995105aa03aefa00ae5b7b676bb9f74ff",
+    "crates/jope-encoders/src/bundle/projection/tests.rs": "5e8eb954f496621a3ed8d1a90861c6df80c625ababf9ed5cb1343cc364718dcf",
+    "crates/jope-encoders/src/dope_encoder.rs": "e0a057989e871f35fdede01dfb84fa3769a6dd8dde7a267d882d554670cab047",
+    "crates/jope-encoders/src/dope_encoder/components.rs": "d19ea4a95a79f943ed39de60676dabecb62374001ff2b29a0b7e0db24007d72c",
+    "crates/jope-encoders/src/dope_encoder/components/authority.rs": "8c465caecdb7e51717ed8bf0dc90c02dcd9154a802a0ffb8fe8158c2926cab85",
+    "crates/jope-encoders/src/dope_encoder/components/tests.rs": "66a5164c2072d20a06c055df3f368211e885e19357077b78bac3d093bed8cfa6",
+    "crates/jope-encoders/src/dope_encoder/components/tests/fixture.rs": "7f07fbb7b879f2cc706e74cfdbbec4237f389425592007a07f2860eaa2698b6f",
+    "crates/jope-encoders/src/dope_encoder/consumer.rs": "bdf07563df3d7ccfdb0e735e728515f97bcc2c431992186e7f0513a01344b6b6",
+    "crates/jope-encoders/src/dope_encoder/consumer_session.rs": "240ded8fbf4c87a4c5fb1966090f8ab8ca9526c395dd6548ddd719b89703c852",
+    "crates/jope-encoders/src/dope_encoder/product.rs": "53e25cbc2195db6ae8a8b64ed6f13f73fbb9edebcbe3401b1e53d8d6ce2eda0c",
+    "crates/jope-encoders/src/dope_encoder/session.rs": "b07b205e94ee9b9828b0d6a9767965ab872a6c3c62b9edaf0af41cc655e74e6a",
+    "crates/jope-encoders/src/dope_encoder/session_tests.rs": "e574d23b4ea66b03a77450ce7972d41f193e78125d13691723e63a0002770424",
+    "crates/jope-encoders/src/dope_encoder/workflow.rs": "d29e68bea447706cc48d8c5a880ed7e5e83c5f30265ff03c438e17ff1a014399",
+    "crates/jope-encoders/src/jope_policy.rs": "d3997c568adda8d02e808928325866afb19b74749137ba7c2611cac678369b79",
+    "crates/jope-encoders/tests/dope_encoding.rs": "66fa507491cf8a7e5727c0d72a7d68576d5788be33c2c4d4d5bc5fc54caf1e5a",
+    "crates/jope-encoders/tests/support/dope_consumers.rs": "2af9054491225f7c13c572e2d31aa54b98815689a7ac814470f8ef7dba32cc0d",
+    "crates/jope-encoders/tests/support/dope_learned_product.rs": "d547e88d89d88f799aea7bd8ca38c6c50ffcdf9c59804a274296ad36f652c29d",
+    "crates/jope-encoders/tests/support/dope_product_sessions.rs": "c03e830407ddf71b015c6674273ba56927b0bb1d617803be3730014c7ff88b8a",
+    "crates/jope-encoders/tests/support/dope_projection.rs": "ee5eba7ad747e0de822f3c93cf2c591566f8e10cd891643d3a2b98a8f07f231a",
+    "crates/jope-learning/Cargo.toml": "c65f3309ad358a198822746329f8a916c097049cb4a44af8ab6d573b827e07a8",
+    "crates/jope-learning/src/replay/admission.rs": "bd0fbdcfd1ee2e38fabed0799d61a37e05e53a34edc93a111c04d2796c8ac423",
+    "crates/jope-learning/src/replay/admission/component_authority.rs": "fa344d0f817cf46c81361a585973dc836fc527fb358389d2369d4cefa9bd4ae0",
+    "crates/jope-learning/src/revocation.rs": "fea97895e10a67ca00baeca9c4497694cd8ce987fc3d28f40b14c920ef1ab1cc",
+    "crates/jope-pipeline/src/landmark_encoding.rs": "a96c4d91f465472b8eaffe1d56ec739d9404318788a775d8c34c3813532776c2",
+    "crates/jope-records/Cargo.toml": "f0edc34292417045f7f80aadc237528e82155506d0b6435a6271f2065bb8da95",
+    "crates/jope-records/src/lib.rs": "b4ce246649f06820173214699b8f27a2a3d99607680c2f5eeab3b53da496baac",
+    "crates/jope-records/src/replay_admission/core.rs": "d753c387a433c10dc1d245d7fe5f99f4f3f43fa410b95936f7e97b76fe7623cb",
+    "crates/jope-records/src/replay_admission/labels.rs": "692c6818e6ecbedfe1879078793b0f371d32199689754e5edcc5aa814d6531a2",
+    "crates/jope-records/src/replay_admission/mod.rs": "955f99439f6885689cca5495d2820bc92c515ae888fa21de7210c7ac61585620",
+    "crates/jope-records/src/replay_admission/tests.rs": "62f5a100fc88aac7a23f8a6bec79f3506bdb2bf1cc024f80e9ee296e934eda6b",
+    "crates/jope-records/src/replay_admission/types.rs": "f47366f394ead38cf8e6d155e4826b6e2b2d697cce88974e97b277fd6e9ec6a7",
+    "crates/jope-runtime/Cargo.toml": "f051cee629ccdda389f0b9074ccfadb7cce35b962fe582ac4f0d7b2b2d101dd6",
+    "crates/jope-runtime/src/landmark_args.rs": "a635a5306880c408458cf10e0c71ff81ad94e494ed321ea4b8f70e3ce5e5b9bd",
+    "crates/jope-runtime/src/lib.rs": "b2a02eb35082c1f19e672b96ff028cdb36c8fc96ab9f95374994aad2605d3d3f",
+    "crates/jope-runtime/src/output_safety.rs": "5f910efc0d32150944d84b80a70d9850306ae28095f9437d532ab3f30b13161d",
+    "test-support/dope_components.rs": "5da2085c24bd879c5d22b271518cfeee990352a7f0f2621a66fe2c57d79c7c19"
+  },
+  "dope_pin": "25d1785c823e0a401b8775306666924e407ccd9f",
+  "checkpoint": "released-v1",
+  "checkpoint_sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+  "scientific_qualification": "pending; these are execution and admission tests with synthetic FIT component vectors",
+  "suites": [
+    {
+      "log": "target/landmarks/p4-final-starforge-cpu.log",
+      "sha256": "90119076008b453e608b5550a1496c7aa9ed7676d8674730679497f4b339c741",
+      "results": [
+        {
+          "passed": 71,
+          "failed": 0,
+          "ignored": 1
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 5
+        }
+      ],
+      "guarded_skips": 5
+    },
+    {
+      "log": "target/landmarks/p4-final-records-doc.log",
+      "sha256": "c075c1dbbed3b6269863b33b6431b950ca0ce406d208d61ea4b18dba335f643c",
+      "results": [
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-final-controller-snapshot.log",
+      "sha256": "7cfcf39d26833a897770aa12470799660aab8a514944e4b49e8b01b9dd2121f2",
+      "results": [
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-final-learning-admission.log",
+      "sha256": "24b34607a4f9ebc05bdd66c024a00d205695190987e0510edf83f6182ee8567d",
+      "results": [
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 19,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-final-runtime.log",
+      "sha256": "5b5bbf9d0852e8864c6413fb0d9fb031712dd47e6d0d071572c0ecab33e7e31d",
+      "results": [
+        {
+          "passed": 62,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-final-schemas.log",
+      "sha256": "0d61f6bb2dc66a539d0d62973ed23d36a777b6103ae2228eae6284715d37bbca",
+      "results": [
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-final-pipeline.log",
+      "sha256": "a261d1b67a46af4b7e6e3123120203e7d95ffa0d651dc824e5f4c56976108b87",
+      "results": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-cli-fixed.log",
+      "sha256": "6200ad55cc32a8fce85d3d0408bbbc3fbacad77401b4f0ad4508597715d07131",
+      "results": [
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-final-appliance.log",
+      "sha256": "9927468d0763f84fafbc3342c75209eb62cb548d7f4796bdba771512c9758c8b",
+      "results": [
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-final-selected-assets.log",
+      "sha256": "3effeb98cae96ddac2ac15abea3d70f74ce9a29475c99e25273169a5b374052e",
+      "results": [
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-native-compatibility.log",
+      "sha256": "f060d51f6da1005eff006620b91ff97f1af00aca76ce6189ef74151552e6d8ce",
+      "results": [
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-records-admission-lint-fixed.log",
+      "sha256": "7c55439573ad0b6b8a3d28ba5dcfc6b9eba55005f891b4e679bd4a0053e7aa27",
+      "results": [
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    },
+    {
+      "log": "target/landmarks/p4-admitted-cuda.log",
+      "sha256": "7881430d1e32fd0c3cd40bd6e495fedcfe224f91f189cd270bff59c4db0bd4f4",
+      "results": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "guarded_skips": 0
+    }
+  ],
+  "counting": "Suites overlap; counts are not additive. Starforge library has four historical artifact-guarded skips; ordinary target has one such skip. Selected projection tests were explicitly executed without full-bundle loading. The ignored historical candidate/whole-bundle tests are not new P4 qualification.",
+  "gpu": {
+    "start": "2026-10-27T18:53:04.795282+00:00",
+    "end": "2026-10-27T18:53:17.294070+00:00",
+    "seconds": 12.460234052035958,
+    "exit": 0,
+    "command": [
+      "taskset",
+      "-c",
+      "16-23",
+      "/home/ubuntu/JopeDime/.agent/worktrees/optional-landmarks/target/debug/deps/dope_encoding-d476ee9ad842733f",
+      "--exact",
+      "learned_product::admitted_cuda_product_three_tasks_matches_cpu_oracle_and_terminal_full",
+      "--ignored",
+      "--nocapture"
+    ],
+    "gpu": "RTX3090 cuda:0",
+    "reservation": "qualification.lock acquired nonblocking; empty computePID list",
+    "threads": "affinity16-23,test1,Rayon/math1; one owneddevice/stream",
+    "classification": "execution/oracle only, not latency orquality",
+    "max_context_abs_error": 7.390975952e-06,
+    "tolerance": 3e-05,
+    "comparisons": 21,
+    "tasks": [
+      "regression",
+      "binary",
+      "multiclass-K3"
+    ],
+    "terminal_progressive_full": "exact",
+    "resident_products": [
+      "Dope512",
+      "dataset1536",
+      "policy2048",
+      "JopeContext512"
+    ]
+  },
+  "checks": {
+    "target/landmarks/p4-scoped-cuda-clippy-fixed.log": "327ff64a4d3f5c659d431cfa8f5d4ce2c10a0435685e866646e2f443887cab6d",
+    "target/landmarks/p4-dependency-security.log": "152392281c6d9a39bdd2af42fc183beff7572f111bd27886d53a1d814131a1b6",
+    "target/landmarks/p4-model-manifests.log": "9b8f41efeab3759785f4510e40a2df73a96370878cca635fe7c950e7e2ac898b",
+    "target/landmarks/p4-dependency-identity.json": "8380f02fd007d9e1f074ae935b12d2838f9cdf9275fc148ae6f98839574e4ed9",
+    "target/landmarks/p4-fmt-check.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/landmarks/p4-gpu-window.json": "8a147f5610a0bcea2a167d95b62ec3977d154ce668e99215e51894aee40ceb78",
+    "target/landmarks/p4-repo-layout.log": "58528030e853a67c62821b06e57e1410b0ea180e1b98a85305b29d48acf783f3"
+  },
+  "required_aggregate": "pending stable P1/P2 and final preparation/weight identity; no push",
+  "final_package_latency": "pending stable pin and governed asset approval; no >=5x claim",
+  "asset_review": "optional-landmarks-policy-assets.json",
+  "asset_approval": "not granted; no governed release profile/distribution",
+  "production_authority": "not installed; fixture proofs and read-only generator do not certify live flywheel",
+  "retained_failures": [
+    "target/landmarks/p4-starforge-authenticated.log (move borrow compile, fixed)",
+    "target/landmarks/p4-cli-authenticated-tests.log (source/manifest compile race, fixed before final matrix)",
+    "target/landmarks/p4-lockfile-preflight-failure/ (ambiguous rustix entry, Cargo offline metadata resolved)",
+    "target/landmarks/p4-cli-receipt-field-regression.log (test used wrong receipt field; corrected to search.selected_program_sha256)",
+    "target/landmarks/p4-scoped-cuda-clippy.log (four unit-test clone lints; fixed without waiver)"
+  ],
+  "resources": "affinity16-23,buildjobs4,test2 orartifact1,Rayon/math1,oneGPUreserved12.46s; host sampled busy<85%; <=6workers; GPUreleased",
+  "status": "bounded implementation verified; final scientific/package/liveness qualification pending"
+}

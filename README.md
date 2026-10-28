@@ -395,10 +395,10 @@ limits and client examples](docs/program-source-stream.md).
 | Rust tests | 5,933 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 13 jobs per pull request configured in `ci.yml` (automatic triggering paused; dispatch manually) (top-level declarations; 18 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 853 items over 32 lanes <sup>7</sup> |
-| Capability matrix | 834 rows: 353 moved, 71 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Coverage map | 864 items over 32 lanes <sup>7</sup> |
+| Capability matrix | 835 rows: 353 moved, 72 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,231 `.py` files, 159 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,232 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -573,6 +573,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 - [Private maintainer manual](docs/asm-maintainer-manual.md) — detailed PDF, section Markdown, current evidence, dataset inventories and acceptance checklist
 - [`docs/quickstart.md`](docs/quickstart.md) — the ASM build and the feat-math quickstart (timings measured at `4235db6`, not this SHA)
 - [`docs/adr/`](docs/adr/) — architecture decision records 0001–0006
+- [`docs/optional-landmarks.md`](docs/optional-landmarks.md) — opt-in GPU Dope512 encodings, progressive evidence and companion receipts
 - [`docs/archive/`](docs/archive/) — retired plans and the restore manifests of removed files
 - [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 

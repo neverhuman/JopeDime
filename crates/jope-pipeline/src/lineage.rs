@@ -394,6 +394,8 @@ fn check_output(output: &Path) -> Result<()> {
 
 /// Run the lineage. Returns it as written after the last completed round.
 pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
+    ensure!(options.run.landmarks.landmark_events.is_none() && options.run.landmarks.landmark_receipt.is_none(),
+        "evolve uses per-round encoding output directories; explicit landmark output files would be reused");
     ensure!(
         (1..=MAX_ROUNDS).contains(&options.rounds),
         "--rounds must be 1..={MAX_ROUNDS}, got {}",

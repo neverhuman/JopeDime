@@ -12,6 +12,7 @@ name = "jopedime"
 path = "src/main.rs"
 
 [dependencies]
+starforge = { path = "../jope-encoders", optional = true, features = ["dope"] }
 anyhow.workspace = true
 clap = { workspace = true, features = ["derive"] }
 jope-assets = { path = "../jope-assets" }
@@ -29,6 +30,8 @@ tempfile.workspace = true
 
 [features]
 default = []
+dope-encoding = ["dep:starforge"]
+dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
 # The executable refuses to run without its sealed package: every release build sets it, so a
 # release binary separated from its payload stops instead of running unauthenticated.
 embedded = []

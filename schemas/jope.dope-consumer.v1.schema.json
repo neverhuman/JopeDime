@@ -1,0 +1,424 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.dope-consumer.v1.schema.json",
+  "title": "Explicit product consumer receipt (integrity and scope; no quality or distribution approval)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode",
+    "recipe",
+    "checkpoint_identity",
+    "jope_weights_sha256",
+    "components_digest",
+    "source_digest",
+    "input_conditioning_digest",
+    "conditioning_digest"
+  ],
+  "properties": {
+    "mode": {
+      "enum": [
+        "encoding-only",
+        "jope-dl"
+      ]
+    },
+    "recipe": {
+      "enum": [
+        "dope512-direct-consumer/v1",
+        "dope512-foundation1024-target512-jope-dl512/v1",
+        "dope512-foundation1024-target512-jope-dl512-cuda-f32/v1"
+      ]
+    },
+    "checkpoint_identity": {
+      "$ref": "#/$defs/checkpoint"
+    },
+    "jope_weights_sha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "components_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "input_conditioning_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "conditioning_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "projection_identity": {
+      "$ref": "#/$defs/projection"
+    },
+    "component_admission": {
+      "$ref": "#/$defs/admission"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "encoding-only"
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "recipe": {
+            "const": "dope512-direct-consumer/v1"
+          },
+          "jope_weights_sha256": {
+            "type": "null"
+          },
+          "components_digest": {
+            "type": "null"
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "projection_identity"
+              ]
+            },
+            {
+              "required": [
+                "component_admission"
+              ]
+            }
+          ]
+        }
+      },
+      "else": {
+        "properties": {
+          "recipe": {
+            "enum": [
+              "dope512-foundation1024-target512-jope-dl512/v1",
+              "dope512-foundation1024-target512-jope-dl512-cuda-f32/v1"
+            ]
+          },
+          "jope_weights_sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "components_digest": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "required": [
+          "projection_identity",
+          "component_admission"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "embedding512": {
+      "type": "array",
+      "minItems": 512,
+      "maxItems": 512,
+      "items": {
+        "type": "number"
+      }
+    },
+    "checkpoint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lineage"
+          ],
+          "properties": {
+            "lineage": {
+              "const": "released-v1"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lineage",
+            "weights_sha256",
+            "training_receipt_sha256"
+          ],
+          "properties": {
+            "lineage": {
+              "const": "unqualified-candidate-v1"
+            },
+            "weights_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "training_receipt_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      ]
+    },
+    "fitScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "preparation_source",
+        "source_digest",
+        "physical_rows_sha256",
+        "rows",
+        "columns",
+        "task",
+        "fold"
+      ],
+      "properties": {
+        "schema": {
+          "const": "jope.dope-fit-scope/v1"
+        },
+        "preparation_source": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "preparation_recipe": {
+          "const": "jope.dope-product-preparation/lossless-v1"
+        },
+        "source_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "physical_rows_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "task": {
+          "type": "string",
+          "pattern": "^(Regression|Binary|Multiclass\\([0-9]+\\))$"
+        },
+        "fold": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "parent_manifest_sha256",
+        "projection_digest",
+        "policy_sha256"
+      ],
+      "properties": {
+        "schema": {
+          "const": "jope.policy-assets-projection/v1"
+        },
+        "parent_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "projection_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "subject_sha256",
+        "exposure_receipt_sha256",
+        "policy_sha256",
+        "authority_sha256",
+        "fit_scope_digest",
+        "episode",
+        "purpose"
+      ],
+      "properties": {
+        "schema": {
+          "const": "jope.component-admission/v1"
+        },
+        "subject_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "exposure_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "authority_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "fit_scope_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "episode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "const": "episode_fit"
+        }
+      }
+    },
+    "consumer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "recipe",
+        "checkpoint_identity",
+        "jope_weights_sha256",
+        "components_digest",
+        "source_digest",
+        "input_conditioning_digest",
+        "conditioning_digest"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "encoding-only",
+            "jope-dl"
+          ]
+        },
+        "recipe": {
+          "enum": [
+            "dope512-direct-consumer/v1",
+            "dope512-foundation1024-target512-jope-dl512/v1",
+            "dope512-foundation1024-target512-jope-dl512-cuda-f32/v1"
+          ]
+        },
+        "checkpoint_identity": {
+          "$ref": "#/$defs/checkpoint"
+        },
+        "jope_weights_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "components_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "input_conditioning_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "conditioning_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "projection_identity": {
+          "$ref": "#/$defs/projection"
+        },
+        "component_admission": {
+          "$ref": "#/$defs/admission"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "encoding-only"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "recipe": {
+                "const": "dope512-direct-consumer/v1"
+              },
+              "jope_weights_sha256": {
+                "type": "null"
+              },
+              "components_digest": {
+                "type": "null"
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "projection_identity"
+                  ]
+                },
+                {
+                  "required": [
+                    "component_admission"
+                  ]
+                }
+              ]
+            }
+          },
+          "else": {
+            "properties": {
+              "recipe": {
+                "enum": [
+                  "dope512-foundation1024-target512-jope-dl512/v1",
+                  "dope512-foundation1024-target512-jope-dl512-cuda-f32/v1"
+                ]
+              },
+              "jope_weights_sha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "components_digest": {
+                "$ref": "#/$defs/sha256"
+              }
+            },
+            "required": [
+              "projection_identity",
+              "component_admission"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

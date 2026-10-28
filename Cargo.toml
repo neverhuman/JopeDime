@@ -184,3 +184,8 @@ ratatui_0_29_0 = { package = "ratatui", path = "vendor/security/ratatui-0.29.0" 
 tch_0_26_0 = { package = "tch", path = "vendor/security/tch-0.26.0" }
 tokenizers_0_22_2 = { package = "tokenizers", path = "vendor/security/tokenizers-0.22.2" }
 torch_sys_0_26_0 = { package = "torch-sys", path = "vendor/security/torch-sys-0.26.0" }
+
+# Reconcile Dope's pinned Candle source with the reviewed workspace security backports.
+[patch."https://github.com/eveselove/planly-candle"]
+candle-core = { path = "vendor/security/candle-core-0.11.0" }
+candle-nn = { version = "=0.11.0" }

@@ -1,0 +1,98 @@
+{
+  "schema": "jope.optional-landmarks-p6-execution/v1",
+  "recorded_at": "2026-10-27T19:23:56.759210+00:00",
+  "source_commit": "a9cb739732d94814228408f1bee3209456224080",
+  "binary_sha256": "0f5baebea11d8191220c31f4cbc06f0f140695473d4103d0865cedab6e5d42a3",
+  "checkpoint_sha256": "978a4301a2b84952b3cb5796c5eb726907673191c813d7a8b66e31c4beafa5c8",
+  "run_count": 1,
+  "nice": 15,
+  "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "GPU_used": false,
+  "classification": "explicit CPU reference for bounded local execution and durability; not latency, retention, production admission or continuous liveness",
+  "processes": {
+    "parent": 3392925,
+    "reload_child": 3394168,
+    "both_reaped": true,
+    "daemon_left_running": false
+  },
+  "input": {
+    "grade": "fresh_synthetic_train_only",
+    "rows": 80,
+    "features": 3,
+    "outer_test_rows": 0,
+    "generated_inside_new_store": true,
+    "existing_protected_data_opened": false,
+    "train_sha256": "41fd06c112fc21e617494b930ad528a699a53497c13729372b660711bed71d32",
+    "physical_fit_scope": {
+      "columns": 3,
+      "fold": "pipeline-cut-0",
+      "physical_rows_sha256": "fe0d62d67bea2a06945fe0433e21c1574219998999f5e79c94ba2ca163979a83",
+      "preparation_source": "25d1785c823e0a401b8775306666924e407ccd9f",
+      "rows": 63,
+      "schema": "jope.dope-fit-scope/v1",
+      "source_digest": "484b8b3f06f6582643796ae7d670581ff73f2eff1fa91d9c55ce3c2c30496b6e",
+      "task": "Regression"
+    }
+  },
+  "measurement": {
+    "evaluations": 2,
+    "successful": 2,
+    "selected_genome": "(pipe X (ridge))",
+    "validation_rmse": 0.3479287778256347,
+    "purpose": "fresh synthetic local diagnostic measurement only"
+  },
+  "durability": {
+    "hwm_events": 1,
+    "initialized": 1,
+    "improved": 0,
+    "archive_records": 1,
+    "fresh_process_reload": true,
+    "stale_pointer_CAS_refused_and_preserved": true,
+    "checkpoint_sha_namespace": "raw bytes, distinct from Snapshot envelope/domain identity"
+  },
+  "encoding": {
+    "consumer": "direct",
+    "mode": "none",
+    "width": 512,
+    "observed_mask_cells": 0,
+    "device": "Cpu",
+    "weights_sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+    "version": 0,
+    "native_landmark_evidence_computed": false
+  },
+  "local_snapshot_backend": {
+    "implemented": true,
+    "storage_tests_passed": 8,
+    "authenticated_evidence_verifier_implemented": false,
+    "used_to_publish_actual_run": false,
+    "reason": "one-shot uses existing diagnostic HWM archive; storage port alone grants no authority"
+  },
+  "remaining": {
+    "production_snapshot_publication": "held_missing_authenticated_evidence",
+    "continuous_service_demonstrated": false,
+    "teaching_eligible": false,
+    "promotion": false,
+    "remote_global_mutations": false,
+    "trained_model_or_retention_qualification": false
+  },
+  "evidence_sha256": {
+    "target/landmarks/p6-one-shot-execution/run-001/receipt.json": "e82a5b8d67fc79b386078ac9563572ff2be2550383dfb64ba93ab79b9d1848df",
+    "target/landmarks/p6-one-shot-execution/run-001/checkpoint.json": "978a4301a2b84952b3cb5796c5eb726907673191c813d7a8b66e31c4beafa5c8",
+    "target/landmarks/p6-one-shot-execution/execution.json": "6c45240cc6ae1f75f5623b43a2ae44e0c01ba12f162864736eba9e76b85ecc16",
+    "target/landmarks/p6-local-authority-tests.log": "86fd0d4c8d7d839f9549dd9df8348bc5acab18baed1202230bb8fc02b3e00d88",
+    "target/landmarks/p6-local-clippy.log": "9fadecf409992693b6bb212b75e741f370bb055919017487a158ad20f73e2dc7",
+    "target/landmarks/p6-one-shot-artifact-test-fixed.log": "8318160f9831279388525b1483b5d8ef9384bab56eb7b4c14b6af43c01b78f87",
+    "target/landmarks/p6-parity-matrix-count-fixed.log": "f07875fc3deb8860ab6facf9a260d7c2816d705fa4c96488a64ff623781ae5d5",
+    "target/landmarks/p6-one-shot-retained-source-test.log": "92038fa6734f2972c5278954f5d4b71afaa9f12b484a5548c7ef91b68df610d5"
+  },
+  "test_notes": "Explicit integration verification reused JOPE_ONE_SHOT_RUN; no second acquisition. Initial test expected lowercase cpu instead of existing Cpu receipt spelling; corrected test passes, initial log retained. Retained verification resolves the recorded source commit rather than relabeling historical evidence with later HEADs."
+}

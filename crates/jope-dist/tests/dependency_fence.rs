@@ -32,3 +32,11 @@ fn the_policy_catches_a_research_crate() {
     let packer = closure(&repo.join("Cargo.toml"), "jope-dist", &policy.target, &[]).unwrap();
     assert!(packer.contains("zstd-sys"));
 }
+
+#[test]
+fn the_dope_gpu_appliance_closure_obeys_its_separate_policy() {
+    let repo = jope_dist::repo_root();
+    let policy = Policy::load(&repo.join("deploy/appliance/dependencies-dope-gpu.toml")).unwrap();
+    let violations = audit(&repo.join("Cargo.toml"), &policy).unwrap();
+    assert!(violations.is_empty(), "{violations:#?}");
+}
