@@ -154,10 +154,10 @@ inherits = "dist"
 lto = "thin"
 codegen-units = 16
 
-# Admission and canonical-record verification are cold control-plane glue. Keep numerical
-# crates at opt-level 3; size this verifier for the thin-LTO appliance build.
-[profile.dist-ci.package.jope-records]
-opt-level = "s"
+# The appliance is CLI/receipt glue; keep its thin-LTO code small without changing the
+# opt-level 3 numerical crates or the production `dist` profile.
+[profile.dist-ci.package.jope-appliance]
+opt-level = "z"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
