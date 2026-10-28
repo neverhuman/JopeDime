@@ -99,3 +99,36 @@ three transition records remain byte-identical. ABI, known identity rows, listed
 inputs, numerical/emission fixtures and seeded outputs remain unchanged. Retained logs are
 `target/landmarks/p1-identity-regenerate.log`, `target/landmarks/p1-identity-compare.log` and
 `target/landmarks/p1-identity-historical.log`. The PR body announces this transition.
+
+
+## Merged Dope main re-pin, 28 October 2026
+
+Source `91b7aabf124e4acf5ebe7fbee78ea8effc2ca132` pins published Dope main
+`e2243e597c38f90ce600b306a3112b7b4d650516`, after Dope PRs #341 (exact preparation
+speedups), #342 (lossless/preparation tests) and #343 (CHANGELOG). The existing
+Dope629-prefix API is retained, independently of the forthcoming 512D API PR. Weights,
+output dimensions and numerical recipes are unchanged. The FIT preparation-source marker
+follows the new pin; components admitted for the old source cannot be silently relabeled.
+
+| Field | Before re-pin | After re-pin |
+| --- | --- | --- |
+| `implementation_sha256` | `e0c41b1af055ff5b0af844a2077c2431d474769280c83a599483fed1b5bdeb3f` | `8780fd935368ae7a16cf4021c0949e665ea28421159d83d6289e407d864e38fa` |
+| `cargo_lock_sha256` | `e7e8edc191cc38636be3968f537782f609d82acc07d5bda33a140613e4920cb9` | `c25699fa0c2e23a4897ac36f73bbbaa3c510376acea01eb3ec6d16348e6d066d` |
+| `identity_digest` | `61185b72188ffeaad4abce1eb08773c00c0b6fa899aff866f3ab93219240a2c5` | `0a092f968c9d43d7bcf31b20847290ee4ee269caf47c8f440397a172bb9c40ae` |
+
+Cargo generated six unrelated Windows dependency-edge changes while resolving this pin.
+The owning lock reconciliation preserves those edges and validates the complete graph
+with `cargo metadata --locked --offline`; exactly one Git source line changes.
+
+The official identity-only regeneration passes all 13 compatibility tests. Only the
+evaluator identity and lineage source-commit header change; the DSL ABI, known identity
+rows, listed lineage inputs, numerical/emission/seeded fixtures and the four prior
+transition records remain unchanged. A fifth append-only transition extends every
+historical identity chain. Separate comparison, history, product and package results
+are recorded in the re-pin PR when executed.
+
+An initial generator invocation supplied an incorrect full source ID and was refused
+before writing either identity fixture (11 passed, 2 source guards failed). That failed
+log is retained separately. The successful invocation reads the full source ID from
+Git and is retained in `target/dope-main-repin-20261028/identity-regenerate-a2.{log,json}`.
+No behavior rebaseline or scientific/release qualification is implied.

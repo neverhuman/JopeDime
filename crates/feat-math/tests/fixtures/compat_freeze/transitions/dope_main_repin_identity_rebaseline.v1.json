@@ -1,0 +1,21 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Append the merged-Dope-main identity-only successor after PR433. Exactly one Cargo.lock Git source line changes; six unrelated Windows edges are retained. The explicit preparation-source marker follows that immutable revision. Existing 629-prefix APIs, weights, recipes, DSL ABI, known identity rows, behavior fixtures and all four earlier optional-landmark transition records remain unchanged. Source/preparation scope is refreshed, not silently relabeled.",
+  "plan_reference": "Owner 2026-10-28 05:50 repin assignment; compat_freeze.rs owning identity lane; ADR-0004",
+  "source_commit": "91b7aabf124e4acf5ebe7fbee78ea8effc2ca132",
+  "source_reference": "https://github.com/neverhuman/JopeDime/commit/91b7aabf124e4acf5ebe7fbee78ea8effc2ca132",
+  "dope_source_commit": "e2243e597c38f90ce600b306a3112b7b4d650516",
+  "dope_reference": "https://github.com/neverhuman/dope/commit/e2243e597c38f90ce600b306a3112b7b4d650516",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "9adeeebb824352464505927834a64ce3cdf71aa4610906823f51446684c32e10",
+      "after": "2615345bfe3bc63660e5a51cbfbaee311b67629d3849a86f219d523552d997c7"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a05f34cddfc215a3675aee058c699da5e42b6b27bb4ebb3a8a13282bdfa9b294",
+      "after": "dbb97403415322960c7c76bc1326031aadba7f9aa5d346a51392d57f6666892d"
+    }
+  ]
+}
