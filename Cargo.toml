@@ -154,6 +154,13 @@ inherits = "dist"
 lto = "thin"
 codegen-units = 16
 
+# Keep CLI/receipt glue in one codegen unit; numerical crates retain parallel codegen
+# and opt-level 3. The production `dist` profile is unchanged.
+[profile.dist-ci.package.jope-appliance]
+opt-level = "s"
+codegen-units = 1
+strip = "symbols"
+
 [workspace.lints.rust]
 unsafe_code = "deny"
 
