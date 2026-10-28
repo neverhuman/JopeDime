@@ -1144,7 +1144,7 @@ dependencies = [
 [[package]]
 name = "dope-core"
 version = "1.1.0"
-source = "git+https://github.com/neverhuman/dope?rev=2535a36c0e7ced2a17a0b06818efaeb17f7a2d47#2535a36c0e7ced2a17a0b06818efaeb17f7a2d47"
+source = "git+https://github.com/neverhuman/dope?rev=e2243e597c38f90ce600b306a3112b7b4d650516#e2243e597c38f90ce600b306a3112b7b4d650516"
 dependencies = [
  "brotli",
  "candle-core",
