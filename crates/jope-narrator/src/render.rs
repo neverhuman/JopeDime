@@ -6,10 +6,11 @@
 )]
 mod v1;
 mod v2;
+mod v3;
 use crate::{LineageFact, Links};
 pub use v1::{Claim, Metric, Narration};
-pub(crate) use v2::Renderer;
-pub use v2::RENDERER;
+pub(crate) use v3::Renderer;
+pub use v3::RENDERER;
 
 pub(crate) fn rederive(
     revision: &str,
@@ -19,8 +20,9 @@ pub(crate) fn rederive(
     variant: Option<u8>,
 ) -> anyhow::Result<Narration> {
     match revision {
-        "controlled-search-commentary/1" => v1::Renderer::rederive(fact, links, evidence, variant),
-        "controlled-search-commentary/2" => v2::Renderer::rederive(fact, links, evidence, variant),
+        v1::RENDERER => v1::Renderer::rederive(fact, links, evidence, variant),
+        v2::RENDERER => v2::Renderer::rederive(fact, links, evidence, variant),
+        v3::RENDERER => v3::Renderer::rederive(fact, links, evidence, variant),
         _ => anyhow::bail!("unsupported renderer revision"),
     }
 }

@@ -172,7 +172,8 @@ For an explicit custom target directory, resolve its actual executable instead.
 | --- | --- |
 | `jope.reasoning-event/v1` | Journal envelope and event delivered by all readers |
 | `jope.lineage-fact/v1` | Owned source-fact contract; envelope `fact` uses a `kind` tag |
-| `controlled-search-commentary/2` | Current writer renderer; explicit admission/refusal wording |
+| `controlled-search-commentary/3` | Current writer renderer; evaluation-bound and progress scope |
+| `controlled-search-commentary/2` | Retained reader with earlier admission/refusal wording |
 | `controlled-search-commentary/1` | Retained reader for earlier journals |
 | `jope.narration-page/v1` | Finite page with `events`, `next`, `more`, `partial_tail` |
 | `jope.narration-status/v1` | Validated boundary and capture state |
@@ -223,9 +224,12 @@ Capture defaults to at most 1,000,000 events and 1 GiB of journal data. The
 writer constructs one retained wording, validates it by rederivation, writes a full record, syncs bounded batches of journal data, then
 atomically publishes a synced commit watermark. All reader transports expose
 only that committed prefix. Keep the journal and watermark together. The current
-writer uses renderer v2. Renderer v1 and its original two golden transcripts remain
-available for retained replay; v2 has a separate create-only transcript, including
-every admission disposition. Unsupported revisions are explicit errors. Readers
+writer uses renderer v3. Renderer v1 and its original two golden transcripts remain
+available for retained replay, together with the separate v2 transcript. V3 has
+its own create-only transcript, including every admission disposition and stop
+reason. V2 wording can overstate the bound reached by multi-cut exploration;
+v3 uses a phase-neutral bound and describes exhaustion as consecutive generations
+with no evaluation progress. Unsupported revisions are explicit errors. Readers
 withhold bytes beyond the watermark after a crash, even when they contain a
 newline. Corruption inside the committed prefix fails closed.
 
@@ -245,7 +249,7 @@ stderr and preserve the authoritative result.
 | Valid prefix, incomplete capture | Inspect watermark status and gap counts; do not treat it as complete coverage. |
 | `capturing` after producer disappears | Closure is unknown. Preserve both files and interrupt a waiting reader when needed. |
 | Wrong-run/future cursor | Use the selected watermark identity and a sequence within the retained boundary. |
-| HTTP 503 | Read `error.code`: `journal_unavailable` means a storage/integrity failure; `request_limit` or `client_limit` means capacity is busy. Reconnect with the retained cursor. |
+| HTTP 503 | Read `error.code`: inspect storage/integrity for `journal_unavailable`. For `request_limit` or `client_limit`, capacity is busy; reconnect with the retained cursor. |
 | HTTP 403 `forbidden_origin` | Use the exact printed numeric host and port, such as `127.0.0.1:9877`; `localhost` is a different Host value. |
 
 The native single-island observation omits its island field; a measurement can
