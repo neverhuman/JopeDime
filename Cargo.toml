@@ -154,10 +154,12 @@ inherits = "dist"
 lto = "thin"
 codegen-units = 16
 
-# The appliance is CLI/receipt glue; keep its thin-LTO code small without changing the
-# opt-level 3 numerical crates or the production `dist` profile.
+# Keep CLI/receipt glue in one codegen unit; numerical crates retain parallel codegen
+# and opt-level 3. The production `dist` profile is unchanged.
 [profile.dist-ci.package.jope-appliance]
-opt-level = "z"
+opt-level = "s"
+codegen-units = 1
+strip = "symbols"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
