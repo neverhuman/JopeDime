@@ -37,7 +37,7 @@ zip = { version = "9.0.5", default-features = false, features = ["deflate"] }
 # transparently decompress `*.safetensors.zst` weights in-memory at load time.
 ruzstd = "0.9.1"
 
-dope-core = { git = "https://github.com/neverhuman/dope", rev = "e2243e597c38f90ce600b306a3112b7b4d650516", optional = true }
+dope-core = { git = "https://github.com/neverhuman/dope", rev = "15e12aa3dc33851655580f6aa7c9c66353143f23", optional = true }
 jope-records = { path = "../jope-records", optional = true }
 jope-paths = { path = "../jope-paths", optional = true }
 
