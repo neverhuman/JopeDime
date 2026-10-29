@@ -5,24 +5,37 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Numerical kernels and code generation
+
+- feat-math, compat: port bit-exact W1–W9 HPC hotpaths (`ops.rs`, `ksmooth.rs`, `heads.rs`, `model.rs`, `advanced_v3`, `emit_rs`, and `transpile.rs`) into `crates/feat-math` with 0-ULP numerical and multi-language codegen parity, opt-in `hpc_v1`/`hpc_v2` emission, omitted default-false `hpc_v1`/`hpc_v2` fields in `OptionsIdentity` serde, and a closed ADR-0004 identity-only transition (`feat_math_hpc_w1_w9_identity_rebaseline.v1.json`) (#440)
+
 ### Encoders and optional landmarks
 
+- encoders: route `DopeEncoder::encode_tensors` through released `MlcV3Model::encode_features_512_tensor` and `DopeEncoder::encode_conditioning` through `MlcV3Model::encode_descriptor_512_tensor`, avoiding the 629-D crop/copy and unused 64x17 column upload while preserving two-input shape/dtype/device validation, `DopeConditioning::digest` column scope, full checkpoint checksum verification, and 0-ULP `[0..512]` parity on CPU and CUDA (`docs/qualification/dope-resident512-adoption.md`) (#437)
 - encoders, starforge: optional and progressive Rust/CUDA Dope encoding sessions (`Dope512 = descriptor256 + task128 + dist128`) with explicit `--landmark-mode` (`none`, `fast`, `progressive`, `full`) and `--landmark-subsample` flags across the CLI, pipeline and appliance. `none` and `fast` skip native landmark probes; `progressive` reuses fold preparation and completed groups, emits an immediate zero-landmark snapshot and publishes bounded ordered updates while preserving frozen pipeline receipt v3 and existing default behavior (#431)
 - encoders: direct Dope encoding/fusion (`1536`-D) and Jope DL context projection (`2048`-D) product consumers with distinct `Dope512` and derived-context types, scoped controller admission, uncapped `LosslessV1` FIT preparation for the product consumers (tables with `K >= 33` classes keep every class), exact class/code/physical-row checks, and a source identity binding every original target while keeping legacy `Cap32V1` unchanged (#431)
 - encoders: pin `dope-core` to the signed, tagged `dope-engine-v1.1.0` commit (`15e12aa3dc33851655580f6aa7c9c66353143f23`, tag object `7712722c`) after the intermediate landmark-preparation re-pin (`e2243e59`), updating `PREPARATION_SOURCE` and recording closed append-only ADR-0004 evaluator identity transitions (#431, #434, #435)
 
+### Pipeline and narration
+
+- pipeline: allow `jope pipeline invent` to finish early via `--stop-file PATH` or `SIGUSR1` while keeping and ranking what it already measured across cuts, emitting `finished_early: true` when triggered and preserving byte-identical output when not triggered (#432)
+- narration: retain evidence-grounded search and prediction commentary across the CLI, pipeline and observatory with versioned replay, committed burst cursors, custom frame-bound validation, and a closed ADR-0004 evaluator identity transition (#438)
+
 ### Campaigns, self-play and learning
 
 - campaigns, hwm: durable local `StateSnapshotAuthority` storage and a bounded one-shot diagnostic landmark round (`P6`), plus verifier fixes enforcing requested successor checkpoint identities on legacy/v2 loaders and keeping read-only native proof verification free of staging writes while preserving physical proof parent checks (#431)
-- research(flywheel): Phase 1–7 self-play RL + search flywheel research harness (`research/flywheel_selfplay/`), family-disjoint split audit (`1,016` `DL-Train`, `91` `DL-Val`, `93` `DL-Holdout` contexts), S3 version custody, cross-round winner pool v2/v3 integration, comparator identity guards, and forked OS worker process-group `SIGKILL` deadline preemption (#430)
+- research(flywheel): Phase 1–7 self-play RL + search flywheel research harness (`research/flywheel_selfplay/`), family-disjoint split audit (`1,016` `DL-Train`, `91` `DL-Val`, `93` `DL-Holdout` contexts), S3 version custody, cross-round winner pool v2/v3 integration, comparator identity guards, forked OS worker process-group `SIGKILL` deadline preemption, and deterministic deadline-dispatch vs worker-cleanup separation in Phase 7 tests (#430, #438)
 
 ### CI, build and release
 
+- ci: resolve `deploy/ci/aggregate.py` job evidence across prior workflow run attempts (`--run-attempt`) with fail-closed SHA-256/receipt verification on partial reruns, and wrap `go.yml` Go cache archive publication in a 3-attempt retry helper covered by `deploy/ci/test-aggregate.py` and `deploy/ci/test-runner.py` (#439)
+- appliance: rebaseline the `dist-ci` fixture size budget with same-host attributions in `size-budgets.toml` and `AMENDMENTS.md` for search narration (`A17`: `6,579,256 B` code / `6,696,997 B` package, #438) and `feat-math` W1–W9 HPC hotpaths (`A18`: `7,073,600 B` code / `7,188,517 B` package, #440) at unchanged 5% tolerance (#438, #440)
 - appliance: bound Rayon pool initialization during packaged Dope asset decoding (#431), and build the `jope-appliance` CLI/receipt glue with `opt-level = "s"`, one codegen unit and stripped symbols in the thin-LTO `dist-ci` profile only (numerical crates keep `opt-level` 3; the production `dist` profile is unchanged), so the `dope-gpu` `dist-ci` package fits its existing size caps (#433)
 - ci(runners): isolate ARM64 QEMU emulation on the twelve `xbabe4` Mac Linux workers to Git and ELF `git-core` subprocesses via a content-addressed public tool volume and source-bound entrypoint while keeping the runner, Rust and Node on Rosetta (#429)
 
 ### Security
 
+- deps: update `zstd` to `0.14.3` (`zstd-safe 8.2.0`, `zstd-sys 2.1.2+zstd.1.5.7`) in `Cargo.lock` for RUSTSEC-2026-0391, RUSTSEC-2026-0398, RUSTSEC-2026-0403 and RUSTSEC-2026-0410 while retaining the source-bound evaluator identity (#432)
 - deps: update `p256` to `0.14` and `crypto-bigint` to `0.7.6` for RUSTSEC-2026-0387, retaining high-S signature rejection and canonical sealing with a closed historical evaluator identity transition (#429)
 
 ## [0.4.1] - 2026-10-23
