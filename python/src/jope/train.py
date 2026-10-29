@@ -215,6 +215,20 @@ def train_active_v2_from_jsonl(
     if metrics_path is not None and distributed.is_rank0:
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
     started = time.time()
+    step_telemetry = _open_step_telemetry(
+        device=resolved_device,
+        rank=distributed.rank,
+        metadata={
+            "trainer": "python.active_v2",
+            "device": resolved_device,
+            "batch_size": batch_size,
+            "epochs": max(1, epochs),
+            "seed": seed,
+            "world_size": distributed.world_size,
+            "data_identity": "unavailable_without_extra_input_read",
+        },
+    )
+    telemetry_step = 0
     for epoch in range(1, max(1, epochs) + 1):
         epoch_started = time.time()
         epoch_loss_profile = _epoch_loss_profile(loss_profile, epoch=epoch, epochs=max(1, epochs))
@@ -239,17 +253,39 @@ def train_active_v2_from_jsonl(
         steps = 0
         component_totals: dict[str, float] = {}
         for batch_rows in _dataset_grouped_batches(epoch_train_rows, batch_size, rng):
+            telemetry_timer = step_telemetry[2] if step_telemetry is not None else None
+            if telemetry_timer is not None:
+                telemetry_timer.begin()
             batch = rows_to_active_v2_batch(batch_rows, base_model.vocab, device=resolved_device)
+            if telemetry_timer is not None:
+                telemetry_timer.mark(step_telemetry[3]["step.span.data"])
             out = model(batch.embedding, batch.target_summary, batch.genome_features)
             components = base_model.loss_components_from_output(out, batch)
             loss = base_model.weighted_loss(components, profile_weights=profile_weights)
+            if telemetry_timer is not None:
+                telemetry_timer.mark(step_telemetry[3]["step.span.fwd"])
             opt.zero_grad()
             loss.backward()
+            if telemetry_timer is not None:
+                telemetry_timer.mark(step_telemetry[3]["step.span.bwd"])
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             opt.step()
-            total += float(loss.detach().cpu())
+            loss_host = float(loss.detach().cpu())
+            total += loss_host
+            if telemetry_timer is not None:
+                batch_obj, _, _, column = step_telemetry
+                batch_obj.put(column["train.loss"], loss_host)
             for name, value in components.items():
-                component_totals[name] = component_totals.get(name, 0.0) + float(value.detach().cpu())
+                value_host = float(value.detach().cpu())
+                component_totals[name] = component_totals.get(name, 0.0) + value_host
+                if telemetry_timer is not None:
+                    batch_obj.put(step_telemetry[4][name], value_host)
+            if telemetry_timer is not None:
+                telemetry_timer.mark(step_telemetry[3]["step.span.opt"])
+                batch_obj.put(column["optim.lr.group"], float(opt.param_groups[0]["lr"]))
+                telemetry_timer.end(column["step.wall"], column["step.unattributed"])
+                telemetry_step += 1
+                batch_obj.commit(telemetry_step)
             steps += 1
         train_loss, train_loss_components, global_steps = _aggregate_loss_totals(
             total,
@@ -348,6 +384,8 @@ def train_active_v2_from_jsonl(
         if metrics_path is not None and distributed.is_rank0:
             with metrics_path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(row, sort_keys=True) + "\n")
+        if step_telemetry is not None:
+            step_telemetry[0].flush()
 
     if checkpoint is not None and distributed.is_rank0:
         out = Path(checkpoint)
@@ -379,6 +417,7 @@ def train_active_v2_from_jsonl(
         )
     _distributed_barrier(distributed)
     _destroy_distributed(distributed)
+    telemetry_manifest = step_telemetry[1].close() if step_telemetry is not None else None
     return {
         "rows": len(rows),
         "input_rows": input_rows,
@@ -404,7 +443,64 @@ def train_active_v2_from_jsonl(
         "checkpoint_metric": checkpoint_metric,
         "best_checkpoint_metric_value": best_metric_value,
         "best_checkpoint_epoch": best_epoch,
+        "telemetry": telemetry_manifest,
     }
+
+
+def _open_step_telemetry(*, device: str, rank: int, metadata: dict[str, Any]):
+    """Initialize the optional PyO3 recorder only when the caller explicitly opts in."""
+    run_dir = os.environ.get("JOPE_TELEMETRY_RUN_DIR")
+    if not run_dir or rank != 0:
+        return None
+    from .telemetry import GpSession, Recorder, metric_registry
+    from .telemetry.train_hooks import StepBatch, StepTimer
+
+    if GpSession is None or metric_registry is None:
+        raise RuntimeError("jope telemetry PyO3 extension is unavailable")
+    component_names = tuple(sorted(ACTIVE_V2_LOSS_COMPONENTS))
+    columns = (
+        "train.loss",
+        *(f"train.loss.component/{name}" for name in component_names),
+        "optim.lr.group",
+        "step.span.data",
+        "step.span.fwd",
+        "step.span.bwd",
+        "step.span.opt",
+        "step.wall",
+        "step.unattributed",
+    )
+    registry = {name: (metric_id, grouped) for metric_id, name, _, _, grouped in metric_registry()}
+    layout: list[tuple[int, int]] = []
+    column_ids: dict[str, int] = {}
+    component_columns: dict[str, int] = {}
+    for col, name in enumerate(columns):
+        if name.startswith("train.loss.component/"):
+            component_name = name.split("/", 1)[1]
+            base, group = "train.loss.component", component_names.index(component_name)
+            component_columns[component_name] = col
+        elif name == "optim.lr.group":
+            base, group = name, 0
+        else:
+            base, group = name, 0
+        metric_id, grouped = registry[base]
+        if group and not grouped:
+            raise RuntimeError(f"telemetry metric {base} is not declared grouped")
+        layout.append((metric_id, group))
+        column_ids[name] = col
+    metric_groups = {
+        str(registry["train.loss.component"][0]): {
+            str(group): name for group, name in enumerate(component_names)
+        },
+        str(registry["optim.lr.group"][0]): {"0": "optimizer_group_0"},
+    }
+    recorder = Recorder(
+        run_dir,
+        ["python-trainer"],
+        {**metadata, "device": device, "metric_groups": metric_groups},
+    )
+    recorder.set_metric_layout(0, layout)
+    batch = StepBatch(columns, lambda steps, values, rows: recorder.submit(0, steps, values, rows))
+    return batch, recorder, StepTimer(batch), column_ids, component_columns
 
 
 def _dataset_grouped_batches(

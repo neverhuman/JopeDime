@@ -418,6 +418,8 @@ def compute_directional_evo_loss(
     model: FlywheelGameNet,
     evo_batch: dict[str, torch.Tensor] | None,
     device: torch.device,
+    telemetry_h2d=None,
+    telemetry_step: int = 0,
 ) -> dict[str, torch.Tensor]:
     r"""
     Compute the **Directional Evolutionary Gradient Attribution Loss** (`DirectionalEvoLoss`)
@@ -440,6 +442,16 @@ def compute_directional_evo_loss(
     if evo_batch is None or evo_batch.get("n_transitions", 0) == 0:
         return {"total_evo_loss": zero, "dir_margin_loss": zero, "evo_val_loss": zero}
 
+    h2d_slot = -1
+    if telemetry_h2d is not None and telemetry_h2d.will_sample(telemetry_step):
+        transfer_bytes = sum(
+            evo_batch[key].numel() * evo_batch[key].element_size()
+            for key in ("trans_ctx_584", "parent_feat412", "child_feat412", "parent_proj16", "child_proj16", "delta_f300", "scale", "child_gate")
+        )
+    else:
+        transfer_bytes = 0
+    if telemetry_h2d is not None:
+        h2d_slot = telemetry_h2d.begin(telemetry_step, transfer_bytes)
     t_ctx = evo_batch["trans_ctx_584"].to(device)            # [K, 584]
     p_f412 = evo_batch["parent_feat412"].to(device)          # [K, 1, 412]
     c_f412 = evo_batch["child_feat412"].to(device)           # [K, 1, 412]
@@ -448,6 +460,8 @@ def compute_directional_evo_loss(
     delta_f300 = evo_batch["delta_f300"].to(device)          # [K] (negative = child improved)
     scale_k = evo_batch["scale"].to(device).clamp(min=0.1)   # [K]
     c_gate = evo_batch["child_gate"].to(device)              # [K]
+    if telemetry_h2d is not None:
+        telemetry_h2d.end(h2d_slot)
 
     k_trans = t_ctx.shape[0]
     both_f412 = torch.cat([p_f412, c_f412], dim=1)           # [K, 2, 412]
@@ -484,7 +498,12 @@ def compute_directional_evo_loss(
     ctx_parent = ctx_emb
     prog_parent = prog_emb[:, 0, :]
     pred_evo_gain = F.softplus(model.evolvability_head(torch.cat([ctx_parent, prog_parent], dim=-1)).squeeze(-1))
-    true_evo_gain = evo_batch["parent_evo_gain"].to(device) / scale_k
+    gain = evo_batch["parent_evo_gain"]
+    gain_bytes = gain.numel() * gain.element_size() if telemetry_h2d is not None and telemetry_h2d.will_sample(telemetry_step) else 0
+    gain_slot = telemetry_h2d.begin(telemetry_step, gain_bytes) if telemetry_h2d is not None else -1
+    true_evo_gain = gain.to(device) / scale_k
+    if telemetry_h2d is not None:
+        telemetry_h2d.end(gain_slot)
     evo_val_loss = F.smooth_l1_loss(pred_evo_gain, true_evo_gain.clamp(min=0.0, max=1.5), beta=0.10)
 
     total_evo = 0.25 * dir_margin_loss + 0.15 * evo_val_loss + 0.10 * child_gate_loss

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling>=1.25"]
-build-backend = "hatchling.build"
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
 
 [project]
 name = "jope"
@@ -58,6 +58,12 @@ torch = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jope"]
+
+[tool.maturin]
+manifest-path = "../crates/jope-telemetry/Cargo.toml"
+python-source = "src"
+module-name = "jope._telemetry"
+features = ["python"]
 
 [tool.ruff]
 line-length = 110

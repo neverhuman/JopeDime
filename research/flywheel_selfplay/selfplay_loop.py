@@ -26,6 +26,7 @@ import hashlib
 import json
 import math
 import os
+import uuid
 
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -61,7 +62,6 @@ from rust_evaluator import (
     verify_rust_compilation,
 )
 from s3_persistence import apply_smart_retention_filter, persist_round_artifacts_to_s3, sync_directory_to_s3
-
 CORPUS_DIR = Path("/mnt/jope-archive/flywheel-20261023/corpus")
 RESULTS_DIR = Path("/mnt/jope-archive/flywheel-20261023/results")
 CHECKPOINTS_DIR = Path("/mnt/jope-archive/flywheel-20261023/checkpoints")
@@ -71,6 +71,17 @@ SEEDS = (20261101, 20261102, 20261103)
 BUDGETS = (8, 16, 32, 64)
 WARM = 4
 W1_PREFIX = b"jope-w1-adaptive-replay-v1\0"
+IO_STARTUP_READS = None
+if os.environ.get("JOPE_TELEMETRY_RUN_DIR"):
+    from jope.telemetry.io_hooks import LocalReadObserver
+
+    IO_STARTUP_READS = LocalReadObserver()
+
+
+def _open_startup_npz(path: Path):
+    if IO_STARTUP_READS is not None:
+        return IO_STARTUP_READS.open_npz(path)
+    return np.load(path, allow_pickle=False)
 
 
 def warmstart_indices(context_sha256: str, pids: list[str], seed: int) -> list[int]:
@@ -101,9 +112,17 @@ def shuffled_raw_f_map(context_sha256: str, obs_pids: list[str], obs_f: list[flo
 def load_all_pools_and_features():
     """Load corpus manifest, context features, H30 priors, and candidate pools into RAM."""
     t0 = time.monotonic()
-    manifest = json.loads((CORPUS_DIR / "corpus_manifest.json").read_text())
-    champ_bank = json.loads((CORPUS_DIR / "champion_dsl_bank.json").read_text())
-    with np.load(CORPUS_DIR / "context_features.npz", allow_pickle=False) as cf:
+    manifest_path = CORPUS_DIR / "corpus_manifest.json"
+    bank_path = CORPUS_DIR / "champion_dsl_bank.json"
+    if IO_STARTUP_READS is not None:
+        manifest_text = IO_STARTUP_READS.read(manifest_path, manifest_path.read_text)
+        bank_text = IO_STARTUP_READS.read(bank_path, bank_path.read_text)
+    else:
+        manifest_text = manifest_path.read_text()
+        bank_text = bank_path.read_text()
+    manifest = json.loads(manifest_text)
+    champ_bank = json.loads(bank_text)
+    with _open_startup_npz(CORPUS_DIR / "context_features.npz") as cf:
         a0 = cf["a0"]                  # (1780, 88)
         dope112 = cf["dope112"]        # (1780, 112)
         mm_proj = cf["mm_proj"]        # (1780, 320)
@@ -116,7 +135,7 @@ def load_all_pools_and_features():
 
     h30_priors = {}
     h30_scales = {0: 0.37918042500067195, 1: 0.46251714075224865}
-    with np.load(CORPUS_DIR / "h30_zero_priors_850.npz", allow_pickle=False) as hp:
+    with _open_startup_npz(CORPUS_DIR / "h30_zero_priors_850.npz") as hp:
         scales_arr = hp["scales"]
         h30_scales = {0: float(scales_arr[0]), 1: float(scales_arr[1])}
         for k in hp.files:
@@ -132,7 +151,7 @@ def load_all_pools_and_features():
         p_path = Path(rec["pool_path"])
         if not p_path.exists():
             return None
-        with np.load(p_path, allow_pickle=False) as pz:
+        with _open_startup_npz(p_path) as pz:
             prog = pz["program"].astype(np.float32)
             fitness = pz["fitness"].astype(np.float64)
             logratio = pz["logratio"].astype(np.float64)
@@ -339,6 +358,7 @@ def train_flywheel_model_for_round(
     valid_train_cids = [c for c in train_cids if c in pools and len(pools[c]["pids"]) >= 32]
     total_steps = max(1, epochs * ((len(valid_train_cids) + batch_size - 1) // batch_size))
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_steps, eta_min=1e-4)
+    step_telemetry = _open_flywheel_step_telemetry(round_idx, seed, batch_size, str(device))
 
     evo_queue = None
     if enable_evo_queue:
@@ -380,6 +400,9 @@ def train_flywheel_model_for_round(
                 bsz = len(batch_cids)
                 if bsz == 0:
                     continue
+                telemetry_timer = step_telemetry[2] if step_telemetry is not None else None
+                if telemetry_timer is not None:
+                    telemetry_timer.begin()
 
                 if evo_queue is not None:
                     # Grab the OLDEST evolved batch from the background queue (`popleft()`)
@@ -393,6 +416,18 @@ def train_flywheel_model_for_round(
                         round_idx=round_idx,
                         use_cv_test_gate=use_cv_test_gate,
                     )
+                if telemetry_timer is not None:
+                    data_ms = telemetry_timer.mark(step_telemetry[3]["step.span.data"])
+                    batch_arrays_bytes = step_telemetry[5].record(
+                        opt_steps + 1,
+                        batch_dict,
+                        float(batch_dict.get("_telemetry_prep_ms", data_ms)),
+                        evo_queue,
+                        data_ms,
+                    )
+                    h2d_slot = step_telemetry[6].begin(opt_steps + 1, batch_arrays_bytes)
+                else:
+                    h2d_slot = -1
 
                 ctx_t = torch.from_numpy(batch_dict["ctx_b"]).to(device)
                 prog_t = torch.from_numpy(batch_dict["prog_b"]).to(device)
@@ -405,6 +440,9 @@ def train_flywheel_model_for_round(
                 rev_idx_t = torch.from_numpy(batch_dict["rev_idx_b"]).to(device)
                 rev_f_t = torch.from_numpy(batch_dict["rev_f_b"]).to(device)
                 rev_gate_t = torch.from_numpy(batch_dict["rev_gate_b"]).to(device)
+                if telemetry_timer is not None:
+                    telemetry_timer.mark(step_telemetry[3]["step.span.h2d"])
+                    step_telemetry[6].end(h2d_slot)
 
                 out = model.predict_costs(
                     ctx_feat=ctx_t,
@@ -455,19 +493,41 @@ def train_flywheel_model_for_round(
                     model=model,
                     evo_batch=batch_dict.get("evo_batch"),
                     device=device,
+                    telemetry_h2d=step_telemetry[7] if step_telemetry is not None else None,
+                    telemetry_step=opt_steps + 1,
                 )
+                dir_margin_value = None
+                evo_val_value = None
                 if batch_dict.get("evo_batch") is not None:
-                    dir_margin_losses.append(float(evo_loss_dict["dir_margin_loss"].detach().cpu().item()))
-                    evo_val_losses.append(float(evo_loss_dict["evo_val_loss"].detach().cpu().item()))
+                    dir_margin_value = float(evo_loss_dict["dir_margin_loss"].detach().cpu().item())
+                    evo_val_value = float(evo_loss_dict["evo_val_loss"].detach().cpu().item())
+                    dir_margin_losses.append(dir_margin_value)
+                    evo_val_losses.append(evo_val_value)
 
                 loss = rank_loss + 0.35 * huber_loss + 0.20 * gate_loss + evo_loss_dict["total_evo_loss"]
-                ep_loss_vals.append(float(loss.detach().cpu().item()))
+                loss_host = float(loss.detach().cpu().item())
+                ep_loss_vals.append(loss_host)
+                if telemetry_timer is not None:
+                    telemetry_timer.mark(step_telemetry[3]["step.span.fwd"])
                 optimizer.zero_grad()
                 loss.backward()
+                if telemetry_timer is not None:
+                    telemetry_timer.mark(step_telemetry[3]["step.span.bwd"])
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                lr_host = float(optimizer.param_groups[0]["lr"])
                 optimizer.step()
                 scheduler.step()
                 opt_steps += 1
+                if telemetry_timer is not None:
+                    batch_obj, _, _, column, component_column = step_telemetry[:5]
+                    telemetry_timer.mark(column["step.span.opt"])
+                    batch_obj.put(column["train.loss"], loss_host)
+                    batch_obj.put(column["optim.lr.group"], lr_host)
+                    if dir_margin_value is not None:
+                        batch_obj.put(component_column["dir_margin"], dir_margin_value)
+                        batch_obj.put(component_column["evo_val"], evo_val_value)
+                    telemetry_timer.end(column["step.wall"], column["step.unattributed"])
+                    batch_obj.commit(opt_steps)
             if ep_loss_vals:
                 epoch_losses.append(float(np.mean(ep_loss_vals)))
     finally:
@@ -497,8 +557,142 @@ def train_flywheel_model_for_round(
     queue_stats["changed_tensors"] = int(changed_tensors)
     queue_stats["mean_dir_margin_loss"] = round(float(np.mean(dir_margin_losses)) if dir_margin_losses else 0.0, 5)
     queue_stats["mean_evo_val_loss"] = round(float(np.mean(evo_val_losses)) if evo_val_losses else 0.0, 5)
+    if step_telemetry is not None:
+        step_telemetry[0].flush()
+        h2d_synchronized = step_telemetry[6].flush(synchronize=True)
+        step_telemetry[7].flush(synchronize=not h2d_synchronized)
+        queue_stats["h2d_event_sample_drops"] = (
+            step_telemetry[6].dropped_samples + step_telemetry[7].dropped_samples
+        )
+        step_telemetry[1].emit("jope.telemetry.evo-queue/v1", {
+            "round": round_idx,
+            **queue_stats,
+        })
+        queue_stats["telemetry"] = step_telemetry[1].close()
     model.eval()
     return model, queue_stats
+
+
+def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, device: str):
+    run_root = os.environ.get("JOPE_TELEMETRY_RUN_DIR")
+    if not run_root:
+        return None
+    from jope.telemetry import GpSession, Recorder, metric_registry
+    from jope.telemetry.io_hooks import BatchIOStats, H2DEventSampler, H2D_COLUMNS, IO_COLUMNS
+    from jope.telemetry.train_hooks import StepBatch, StepTimer
+
+    if GpSession is None or metric_registry is None:
+        raise RuntimeError("jope telemetry PyO3 extension is unavailable")
+    startup = IO_STARTUP_READS.take_snapshot() if IO_STARTUP_READS is not None else {"enabled": False}
+    components = ("dir_margin", "evo_val")
+    columns = (
+        "train.loss",
+        "train.loss.component/dir_margin",
+        "train.loss.component/evo_val",
+        "optim.lr.group",
+        "step.span.data",
+        "step.span.h2d",
+        "step.span.fwd",
+        "step.span.bwd",
+        "step.span.opt",
+        "step.wall",
+        "step.unattributed",
+        *IO_COLUMNS,
+    )
+    registry = {name: (metric_id, grouped) for metric_id, name, _, _, grouped in metric_registry()}
+    component_columns = {}
+    column_ids = {}
+    layout = []
+    for col, name in enumerate(columns):
+        if name.startswith("train.loss.component/"):
+            group_name = name.split("/", 1)[1]
+            metric_name, group = "train.loss.component", components.index(group_name)
+            component_columns[group_name] = col
+        elif name == "optim.lr.group":
+            metric_name, group = name, 0
+        else:
+            metric_name, group = name, 0
+        metric_id, _ = registry[metric_name]
+        layout.append((metric_id, group))
+        column_ids[name] = col
+    run_dir = Path(run_root) / f"w-step-r{round_idx}-s{seed}-{uuid.uuid4().hex}"
+    metric_groups = {
+        str(registry["train.loss.component"][0]): {"0": components[0], "1": components[1]},
+        str(registry["optim.lr.group"][0]): {"0": "optimizer_group_0"},
+        str(registry["io.batch_prep"][0]): {"0": "batch_supply"},
+    }
+    h2d_columns = H2D_COLUMNS
+    h2d_layout = [(registry[name][0], 0) for name in h2d_columns]
+    metric_groups.update({
+        str(registry["host.cpu.core_util"][0]): {
+            str(index): f"cpu_{index}" for index in range(os.cpu_count() or 1)
+        },
+    })
+    for metric_name in h2d_columns:
+        metric_groups[str(registry[metric_name][0])] = {"0": "main_batch", "1": "evolution_batch"}
+    recorder = Recorder(str(run_dir), ["flywheel-trainer", "h2d-events", "h2d-evo-events", "host-probe"], {
+        "trainer": "research.flywheel_selfplay",
+        "round": round_idx,
+        "seed": seed,
+        "batch_size": batch_size,
+        "device": device,
+        "evo_queue": "enabled_or_disabled_per_run",
+        "data_identity": "unavailable_without_extra_input_read",
+        "not_fused_dope_training": True,
+        "host": os.uname().nodename,
+        "io_startup_reads": startup,
+        "s3_get_capability": False,
+        "object_cache_capability": False,
+        "pin_memory_capability": False,
+        "h2d_event_capability": bool(str(device).startswith("cuda") and torch.cuda.is_available()),
+        "h2d_sample_stride": 64,
+        "startup_io_capability": bool(IO_STARTUP_READS is not None),
+        "metric_groups": metric_groups,
+    })
+    recorder.set_metric_layout(0, layout)
+    recorder.set_metric_layout(1, h2d_layout)
+    recorder.set_metric_layout(2, [(registry[name][0], 1) for name in h2d_columns])
+    batch = StepBatch(columns, lambda steps, values, rows: recorder.submit(0, steps, values, rows))
+    h2d_batch = StepBatch(h2d_columns, lambda steps, values, rows: recorder.submit(1, steps, values, rows))
+    evo_h2d_batch = StepBatch(h2d_columns, lambda steps, values, rows: recorder.submit(2, steps, values, rows))
+    main_h2d_sampler = H2DEventSampler(torch, device, h2d_batch)
+    evo_h2d_sampler = H2DEventSampler(torch, device, evo_h2d_batch)
+    if startup["enabled"]:
+        recorder.emit_scalar(0, registry["io.local.bytes"][0], 0, 0, float(startup["logical_bytes"]))
+        recorder.emit_scalar(0, registry["io.local.read"][0], 0, 0, float(startup["read_ms"]))
+        if startup["read_ms"] > 0:
+            read_mib_s = float(startup["logical_bytes"]) / (1024.0 * 1024.0) / (float(startup["read_ms"]) / 1000.0)
+            recorder.emit_scalar(0, registry["io.local.read_mib_s"][0], 0, 0, read_mib_s)
+        else:
+            recorder.emit_unavailable(0, registry["io.local.read_mib_s"][0], 0, 0, 8)
+    else:
+        for metric_name in ("io.local.bytes", "io.local.read", "io.local.read_mib_s"):
+            recorder.emit_unavailable(0, registry[metric_name][0], 0, 0, 11)
+    for metric_name in ("io.s3.get", "io.s3.bytes", "io.s3.retries"):
+        recorder.emit_unavailable(0, registry[metric_name][0], 0, 0, 3)
+    for metric_name in ("io.cache.hit", "io.cache.miss"):
+        recorder.emit_unavailable(0, registry[metric_name][0], 0, 0, 4)
+    if not str(device).startswith("cuda") or not torch.cuda.is_available():
+        for metric_name in h2d_columns:
+            recorder.emit_unavailable(1, registry[metric_name][0], 0, 0, 7)
+            recorder.emit_unavailable(2, registry[metric_name][0], 1, 0, 7)
+    elif not main_h2d_sampler.enabled or not evo_h2d_sampler.enabled:
+        for metric_name in h2d_columns:
+            if not main_h2d_sampler.enabled:
+                recorder.emit_unavailable(1, registry[metric_name][0], 0, 0, 12)
+            if not evo_h2d_sampler.enabled:
+                recorder.emit_unavailable(2, registry[metric_name][0], 1, 0, 12)
+    recorder.emit_unavailable(0, registry["throughput.tokens_per_s"][0], 0, 0, 10)
+    return (
+        batch,
+        recorder,
+        StepTimer(batch),
+        column_ids,
+        component_columns,
+        BatchIOStats(batch, column_ids),
+        main_h2d_sampler,
+        evo_h2d_sampler,
+    )
 
 
 @torch.no_grad()
