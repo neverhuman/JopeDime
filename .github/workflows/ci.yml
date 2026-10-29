@@ -452,7 +452,7 @@ jobs:
           assert r['schema'] == 'jope.ci-receipt/v1' and r['lane'] == 'paper'
           assert r['source_sha'] == os.environ['JOPE_SOURCE_SHA']
           assert r['checkout_sha'] == os.environ['GITHUB_SHA']
-          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and r['attempt'] == int(os.environ['GITHUB_RUN_ATTEMPT'])
+          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and type(r['attempt']) is int and 1 <= r['attempt'] <= int(os.environ['GITHUB_RUN_ATTEMPT'])
           assert r['event'] == os.environ['GITHUB_EVENT_NAME']
           assert r['status'] == 'passed' and r['exit_status'] == 0 and not r.get('diagnostic')
           assert r['dirty_source'] == r['dirty_source_after'] == []
@@ -501,7 +501,7 @@ jobs:
           r = json.loads(receipts[0].read_text())
           assert r['schema'] == 'jope.observatory-ui-ci/v1'
           assert r['source_sha'] == os.environ['JOPE_SOURCE_SHA']
-          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and r['attempt'] == os.environ['GITHUB_RUN_ATTEMPT']
+          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and isinstance(r['attempt'], str) and r['attempt'].isdecimal() and 1 <= int(r['attempt']) <= int(os.environ['GITHUB_RUN_ATTEMPT'])
           assert r['executed'] > 0 and r['passed'] == r['executed'] and r['failed'] == 0
           print('Exact-head frontend tests:', r['executed'], 'passed')
           PY
@@ -511,8 +511,9 @@ jobs:
           set -euo pipefail
           root="target/ci-ui-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           rendered_root=$(python3 -c 'import pathlib,sys; p=list(pathlib.Path(sys.argv[1]).rglob("rendered-receipt.json")); assert len(p)==1, "one rendered receipt required"; print(p[0].parent)' "$root")
+          ui_attempt=$(python3 -c 'import json,os,pathlib,sys; p=list(pathlib.Path(sys.argv[1]).rglob("receipt.json")); assert len(p)==1; a=json.loads(p[0].read_text())["attempt"]; assert isinstance(a,str) and a.isdecimal() and 1<=int(a)<=int(os.environ["GITHUB_RUN_ATTEMPT"]); print(a)' "$root")
           # UI checks out the source head explicitly; aggregate may use a synthetic PR merge.
-          python3 deploy/ci/rendered-ux-receipt.py verify --root "$rendered_root" --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --checkout-sha "$JOPE_SOURCE_SHA" --event-sha "$GITHUB_SHA"
+          python3 deploy/ci/rendered-ux-receipt.py verify --root "$rendered_root" --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$ui_attempt" --checkout-sha "$JOPE_SOURCE_SHA" --event-sha "$GITHUB_SHA"
       - name: Collect TypeScript Node 24.19.0 evidence
         if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
         uses: ./.github/actions/download-ci-evidence

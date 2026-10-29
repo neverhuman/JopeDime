@@ -66,7 +66,9 @@ jobs:
             GOOS=${target%/*} GOARCH=${target#*/} CGO_ENABLED=0 go build -mod=readonly -o "../go-executables/${target%/*}-${target#*/}" .
           done
       - name: Retain qualification evidence
-        if: always()
+        id: save-1
+        if: ${{ !cancelled() }}
+        continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}
@@ -74,7 +76,9 @@ jobs:
             target/go-evidence/
             target/go-contract/coverage.out
       - name: Verify evidence publication
-        if: always()
+        id: first
+        if: ${{ !cancelled() }}
+        continue-on-error: true
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}
@@ -83,6 +87,62 @@ jobs:
             target/go-contract/coverage.out
           lookup-only: true
           fail-on-cache-miss: true
+      - name: Retain qualification evidence (attempt 2)
+        id: save-2
+        if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}-pub-2
+          path: |
+            target/go-evidence/
+            target/go-contract/coverage.out
+      - name: Verify evidence publication (attempt 2)
+        id: second
+        if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
+        continue-on-error: true
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}-pub-2
+          restore-keys: |
+            go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}
+          path: |
+            target/go-evidence/
+            target/go-contract/coverage.out
+          lookup-only: true
+          fail-on-cache-miss: true
+      - name: Retain qualification evidence (attempt 3)
+        id: save-3
+        if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}-pub-3
+          path: |
+            target/go-evidence/
+            target/go-contract/coverage.out
+      - name: Verify evidence publication (attempt 3)
+        id: third
+        if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
+        continue-on-error: true
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}-pub-3
+          restore-keys: |
+            go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}
+          path: |
+            target/go-evidence/
+            target/go-contract/coverage.out
+          lookup-only: true
+          fail-on-cache-miss: true
+      - name: Require successful evidence publication
+        if: always()
+        shell: bash
+        env:
+          FIRST: ${{ steps.first.outcome }}
+          SECOND: ${{ steps.second.outcome }}
+          THIRD: ${{ steps.third.outcome }}
+        run: bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"
   go-platform:
     strategy:
       fail-fast: false
