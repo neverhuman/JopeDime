@@ -92,3 +92,43 @@ budget, original CPU/GPU/storage limits and Phase2/sealed-data exclusions persis
 Gentle accepted LRs persist; later rejected proposals get another bounded reduction
 and a new round seed. This protects dev utility while permitting real parameter
 progress rather than repeating the rejected full-sized move.
+
+Round89 also accepted a distinct parameter proposal (b24e9c46bcca6b181e2cae32535927464b2b40b19010164a04d15efdb0dd30b2) at retained LR2.5e-5, with two updates and protected dev2.267816. It produced one more strict GP promotion: cumulative promotions since the escape fix are2 across rounds88–89. The loop has progressed beyond round40; best-dev pointer now references round89.
+
+
+## 17:40Z margin diagnosis and projected-optimizer fix
+
+CPU replay at best95 measures cost(A=1d7c9ff6…)=-2.8880329132 and
+cost(B=0046fb9c…)=-2.8879978657, so B−A=+3.5047531e-5. Rejected112 has
+B−A=−5.0067902e-6 at LR1e-6. This supports a knife edge relative to the
+actual optimizer direction, not the claim that EVERY mathematical move flips it.
+
+Raw argmin and the dev cohort remain unchanged. The new optimizer projects only
+violated low-margin incumbent rankings (global activation threshold1e-3, half of
+the pinned initial margin retained). Two contexts qualify; there is no hardcoded
+context8 branch. At most two small projection passes are part of each of the
+original max2 optimizer steps; GP retains its64-evaluation cap and runs even if
+projection fails. LR is no longer shrunk when these constraints are active.
+
+This is explicit development-feature prediction-stability tuning: reference
+choices come from the anchor model, not held-out candidate utility gradient
+targets. The diagnostic is therefore not independent validation; outer/sealed
+families remain excluded. No score overriding, selection hysteresis or metric
+change is used. DOPE remains bit-identical and only the adapter moves.
+
+First live result129: raw context8 margin before projection−2.7656555e-5,
+after+1.8358231e-5 (pinned floor1.7404556e-5); dev2.267816067 retained, optimizer
+219→220 accepted, parameter update L2=.0004647599. The correction itself was
+only.0000112713 L2, leaving substantial movement in other parameter directions.
+The selected context8 program retains utility10.61473568. No rollback to95 was
+needed; the accepted adapter actually advanced. Full live proof follows in the
+round receipts and committed projected-margin evidence.
+
+
+Independent CPU raw-argmin replay of accepted checkpoints129/130 confirms the
+original context8 winner and utility10.61473568 with mean2.267816067. Optimizer
+steps advance219→220→222 and accepted model movement is.00046476 then.00092217
+L2; no checkpoint rollback was used. The complete non-adapter state and DOPE
+remain identical to95. Both live steps satisfy the pinned margin constraints.
+Thirty focused tests pass, including repeated projection that preserves the
+ranking while continuing progress along an unconstrained parameter direction.
