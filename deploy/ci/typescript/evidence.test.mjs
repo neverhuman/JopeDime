@@ -38,8 +38,9 @@ test('matrix evidence rejects stale identities, missing engines, omitted cases, 
     const run=(mode,extra={})=>spawnSync(process.execPath,[verifier,mode,root,...(mode==='verify'?[version]:[])],{cwd:dir,env:{...env,...extra},encoding:'utf8'});
     let result=run('create');assert.equal(result.status,0,result.stderr);
     result=run('verify');assert.equal(result.status,0,result.stderr);
+    result=run('verify',{GITHUB_RUN_ATTEMPT:'2'});assert.equal(result.status,0,result.stderr);
     const original=JSON.parse(readFileSync(join(dir,root,'receipt.json'),'utf8'));
-    for(const mutation of [r=>r.source_sha='a'.repeat(40),r=>r.event_sha='b'.repeat(40),r=>r.attempt=2,r=>r.node='0.0.0',r=>r.dirty_source=['edited'],r=>delete r.files['census.log']]) {
+    for(const mutation of [r=>r.source_sha='a'.repeat(40),r=>r.event_sha='b'.repeat(40),r=>r.attempt=0,r=>r.attempt=2,r=>r.node='0.0.0',r=>r.dirty_source=['edited'],r=>delete r.files['census.log']]) {
       const r=structuredClone(original);mutation(r);json(`${root}/receipt.json`,r);assert.notEqual(run('verify').status,0);
     }
     const rejectContent=(name,value)=>{

@@ -134,8 +134,16 @@ class AggregateTests(unittest.TestCase):
         self.assertTrue(any('manifest differs' in error for error in self.verify()['errors']))
 
     def test_wrong_source_checkout_attempt_and_run_fail(self):
-        for field, wrong in [('source_sha','c'*40),('checkout_sha','c'*40),('attempt',1),('run_id','41')]:
-            with self.subTest(field=field):
+        self.plan['attempt'] = 1
+        for unit, candidates in self.receipts.items():
+            if unit != 'rust-test-2':
+                candidates[0][1]['attempt'] = 1
+        self.assertEqual([], self.verify()['errors'])
+        self.plan['attempt'] = 2
+        for candidates in self.receipts.values():
+            candidates[0][1]['attempt'] = 2
+        for field, wrong in [('source_sha','c'*40),('checkout_sha','c'*40),('attempt',0),('attempt',3),('attempt',True),('run_id','41')]:
+            with self.subTest(field=field, wrong=wrong):
                 receipt = self.receipts['rust-test-2'][0][1]
                 old = receipt[field]
                 receipt[field] = wrong
@@ -300,7 +308,7 @@ class PublicationTests(unittest.TestCase):
         self.needs['python']['result'] = 'failure'
         self.assertEqual('failed', aggregate.verify(self.mapping, self.plan, self.needs, received, self.expected)['status'])
         self.needs['python']['result'] = 'success'
-        changed = dict(self.expected, attempt=3)
+        changed = dict(self.expected, attempt=1)
         self.assertEqual('failed', aggregate.verify(self.mapping, self.plan, self.needs, received, changed)['status'])
 
     def test_divergent_or_unbounded_publications_refuse(self):

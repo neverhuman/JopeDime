@@ -47,6 +47,8 @@ def load_receipts(root, publications=None):
             continue
         signatures = []
         numbers = set()
+        if len({receipt.get("attempt") for _, receipt in candidates}) != 1:
+            raise ValueError(f"{lane}: ambiguous execution receipts, not publication retries")
         for path, receipt in candidates:
             base = f"ci-{receipt['run_id']}-{receipt['attempt']}-{lane}-pub-"
             name = path.parent.name
@@ -76,11 +78,17 @@ def lane_units(lane):
     return [f"{lane}-{shard}" for shard in range(1, RUST_TEST_SHARDS + 1)] if lane == "rust-test" else [lane]
 
 
+def valid_attempt(actual, expected_attempt):
+    return type(actual) is int and 1 <= actual <= expected_attempt
+
+
 def verify_receipt(mapping, lane, unit, path, receipt, expected, reject):
     """Every check one lane receipt must pass; returns its recorded counts."""
-    for field in ("source_sha", "checkout_sha", "run_id", "attempt", "event"):
+    for field in ("source_sha", "checkout_sha", "run_id", "event"):
         if receipt.get(field) != expected[field]:
             reject(f"{unit}: {field} mismatch")
+    if not valid_attempt(receipt.get("attempt"), expected["attempt"]):
+        reject(f"{unit}: attempt mismatch")
     if receipt.get("schema") != "jope.ci-receipt/v1" or receipt.get("lane") != lane:
         reject(f"{unit}: receipt schema/lane mismatch")
     if receipt.get("status") != "passed" or receipt.get("exit_status") != 0 or receipt.get("diagnostic"):
@@ -143,8 +151,10 @@ def verify(mapping, plan, needs, receipts, expected):
     def reject(message):
         errors.append(message)
     for field, value in expected.items():
-        if field in ("source_sha", "checkout_sha", "run_id", "attempt", "event") and plan.get(field) != value:
+        if field in ("source_sha", "checkout_sha", "run_id", "event") and plan.get(field) != value:
             reject(f"plan {field} mismatch")
+    if not valid_attempt(plan.get("attempt"), expected["attempt"]):
+        reject("plan attempt mismatch")
     if plan.get("schema") != "jope.ci-plan/v1":
         reject("unsupported path plan")
     try:

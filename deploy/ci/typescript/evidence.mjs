@@ -88,9 +88,12 @@ if(mode==='create') {
   writeFileSync(join(root,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
 } else {
   const r=JSON.parse(read('receipt.json'));
+  const identity=Object.fromEntries(read('identity.txt').trim().split('\n').map(s=>s.split('=')));
   assert.equal(r.schema,'jope.typescript-qualification/v1');
   assert.equal(r.source_sha,source); assert.equal(r.checkout_sha,source); assert.equal(r.event_sha,process.env.GITHUB_SHA);
-  assert.equal(r.run_id,run); assert.equal(r.attempt,attempt); assert.equal(r.event,process.env.GITHUB_EVENT_NAME); assert.equal(r.node,version);
+  assert.equal(r.run_id,run); assert.ok(Number.isInteger(r.attempt) && r.attempt>=1 && r.attempt<=attempt);
+  assert.equal(identity.source,source); assert.equal(identity.run,run); assert.equal(Number(identity.attempt),r.attempt);
+  assert.equal(r.event,process.env.GITHUB_EVENT_NAME); assert.equal(r.node,version);
   assert.deepEqual(r.dirty_source,[]);
   assert.equal(r.source_tree,git('rev-parse','HEAD^{tree}'));
   assert.deepEqual(Object.keys(r.inputs).sort(),[...inputs].sort());

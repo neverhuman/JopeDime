@@ -917,6 +917,12 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertEqual(3, action.count('actions/cache/save@'))
         self.assertIn('deploy/ci/retain-local-evidence.sh', action)
         self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', action)
+        go_workflow = (ROOT/'.github/workflows/go.yml').read_text()
+        self.assertEqual(3, go_workflow.count('actions/cache/save@'))
+        self.assertEqual(3, go_workflow.count('actions/cache/restore@'))
+        self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', go_workflow)
+        download_action = (ROOT/'.github/actions/download-ci-evidence/action.yml').read_text()
+        self.assertIn('Resolve prior attempts of this run', download_action)
 
     def test_no_workflow_depends_on_github_artifact_storage(self):
         paths = sorted(p for p in (ROOT/'.github').rglob('*') if p.suffix in ('.yml', '.yaml'))
