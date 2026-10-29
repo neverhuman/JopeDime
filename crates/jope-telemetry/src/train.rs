@@ -133,6 +133,10 @@ pub fn metric(id: u16) -> Option<&'static MetricDef> {
     METRICS.iter().find(|m| m.id == id)
 }
 
+pub fn metric_by_name(name: &str) -> Option<&'static MetricDef> {
+    METRICS.iter().find(|m| m.name == name)
+}
+
 /// Column layout of one device stats ring slot: `[rows, columns.len()]` float32, row-major.
 /// Each column is a metric id plus a group id for grouped metrics (for example, the loss
 /// component index). Step numbers are not in the block: float32 is exact only up to 2^24, so

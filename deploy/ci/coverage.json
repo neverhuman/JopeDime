@@ -4427,7 +4427,7 @@
       ],
       "scope": "Tiny CPU fixtures for required artifact pins, verified-snapshot loading and producer report/manifest pin emission; no model training, real checkpoint loading or producer-authentication qualification."
     },
-    "python:python/tests/test_telemetry_dope_guard.py": {
+    "python:python/tests/test_telemetry_smoke.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4437,67 +4437,7 @@
         "full-default",
         "full-python"
       ],
-      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
-    },
-    "python:python/tests/test_telemetry_eval_hooks.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-default",
-        "full-python"
-      ],
-      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
-    },
-    "python:python/tests/test_telemetry_gp_hooks.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-default",
-        "full-python"
-      ],
-      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
-    },
-    "python:python/tests/test_telemetry_io_hooks.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-default",
-        "full-python"
-      ],
-      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use local NPZ fixtures and fake CUDA/queue interfaces; they do not qualify live training or overhead."
-    },
-    "python:python/tests/test_telemetry_train_hooks.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-default",
-        "full-python"
-      ],
-      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
-    },
-    "python:python/tests/test_telemetry_val_hooks.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-default",
-        "full-python"
-      ],
-      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
+      "scope": "Telemetry smoke pytest family; PR Python lane and full-main Python selection. Skips unless the jope._telemetry extension is installed; the logic is tested by cargo test -p jope-telemetry. Does not qualify live training or overhead."
     },
     "python:python/tests/test_test_exact_campaign.py": {
       "discovery": {
@@ -5903,7 +5843,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {

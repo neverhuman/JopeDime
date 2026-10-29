@@ -26,7 +26,6 @@ import hashlib
 import json
 import math
 import os
-import uuid
 
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -73,14 +72,14 @@ WARM = 4
 W1_PREFIX = b"jope-w1-adaptive-replay-v1\0"
 IO_STARTUP_READS = None
 if os.environ.get("JOPE_TELEMETRY_RUN_DIR"):
-    from jope.telemetry.io_hooks import LocalReadObserver
+    from jope.telemetry import LocalReads
 
-    IO_STARTUP_READS = LocalReadObserver()
+    IO_STARTUP_READS = LocalReads()
 
 
 def _open_startup_npz(path: Path):
     if IO_STARTUP_READS is not None:
-        return IO_STARTUP_READS.open_npz(path)
+        return IO_STARTUP_READS.open(path, lambda: np.load(path, allow_pickle=False))
     return np.load(path, allow_pickle=False)
 
 
@@ -319,7 +318,6 @@ def transform_context_features(
 
 def _interrupt_flywheel_step_telemetry(
     step_telemetry: tuple | None,
-    round_idx: int,
     optimizer_steps: int,
     queue_stats: dict,
     original_error: BaseException,
@@ -327,45 +325,18 @@ def _interrupt_flywheel_step_telemetry(
     """Flush bounded telemetry buffers and finalize an incomplete run without masking its error."""
     if step_telemetry is None:
         return
-
-    batch, recorder, _, _, _, _, main_sampler, evo_sampler = step_telemetry
-
-    def note_failure(operation: str, error: BaseException) -> None:
-        original_error.add_note(f"telemetry {operation} failed ({type(error).__name__})")
-
+    tel, main_h2d, evo_h2d = step_telemetry
+    sync_attempted = bool(tel.h2d_enabled(1))
     try:
-        batch.flush()
+        sync_attempted = bool(main_h2d.flush(synchronize=True)) or sync_attempted
     except BaseException as error:
-        note_failure("step batch flush", error)
-
-    sync_attempted = bool(main_sampler.enabled)
+        original_error.add_note(f"telemetry main H2D flush failed ({type(error).__name__})")
     try:
-        sync_attempted = bool(main_sampler.flush(synchronize=True)) or sync_attempted
+        evo_h2d.flush(synchronize=not sync_attempted)
     except BaseException as error:
-        note_failure("main H2D flush", error)
-    try:
-        evo_sampler.flush(synchronize=not sync_attempted)
-    except BaseException as error:
-        note_failure("evolution H2D flush", error)
-
-    try:
-        recorder.emit(
-            "jope.telemetry.evo-queue/v1",
-            {
-                "round": round_idx,
-                **queue_stats,
-                "optimizer_steps": int(optimizer_steps),
-                "h2d_event_sample_drops": main_sampler.dropped_samples + evo_sampler.dropped_samples,
-                "interrupted": True,
-            },
-        )
-    except BaseException as error:
-        note_failure("interrupted round record", error)
-
-    try:
-        recorder.interrupt()
-    except BaseException as error:
-        note_failure("interrupted recorder finalization", error)
+        original_error.add_note(f"telemetry evolution H2D flush failed ({type(error).__name__})")
+    for note in tel.interrupt_round(int(optimizer_steps), queue_stats):
+        original_error.add_note(note)
 
 
 def train_flywheel_model_for_round(
@@ -410,6 +381,7 @@ def train_flywheel_model_for_round(
     total_steps = max(1, epochs * ((len(valid_train_cids) + batch_size - 1) // batch_size))
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_steps, eta_min=1e-4)
     step_telemetry = _open_flywheel_step_telemetry(round_idx, seed, batch_size, str(device))
+    tel, main_h2d, evo_h2d = step_telemetry if step_telemetry is not None else (None, None, None)
 
     evo_queue = None
     queue_stats = {"enabled": False}
@@ -429,9 +401,7 @@ def train_flywheel_model_for_round(
                 )
         if step_telemetry is not None and not telemetry_closed:
             try:
-                _interrupt_flywheel_step_telemetry(
-                    step_telemetry, round_idx, opt_steps, queue_stats, original_error
-                )
+                _interrupt_flywheel_step_telemetry(step_telemetry, opt_steps, queue_stats, original_error)
             except BaseException as cleanup_error:
                 original_error.add_note(
                     f"telemetry interrupted-run cleanup failed ({type(cleanup_error).__name__})"
@@ -482,9 +452,8 @@ def train_flywheel_model_for_round(
                 bsz = len(batch_cids)
                 if bsz == 0:
                     continue
-                telemetry_timer = step_telemetry[2] if step_telemetry is not None else None
-                if telemetry_timer is not None:
-                    telemetry_timer.begin()
+                if tel is not None:
+                    tel.begin()
 
                 if evo_queue is not None:
                     # Grab the OLDEST evolved batch from the background queue (`popleft()`)
@@ -498,18 +467,12 @@ def train_flywheel_model_for_round(
                         round_idx=round_idx,
                         use_cv_test_gate=use_cv_test_gate,
                     )
-                if telemetry_timer is not None:
-                    data_ms = telemetry_timer.mark(step_telemetry[3]["step.span.data"])
-                    batch_arrays_bytes = step_telemetry[5].record(
-                        opt_steps + 1,
-                        batch_dict,
-                        float(batch_dict.get("_telemetry_prep_ms", data_ms)),
-                        evo_queue,
-                        data_ms,
+                if tel is not None:
+                    data_ms = tel.mark("step.span.data")
+                    batch_arrays_bytes = tel.record_io(
+                        batch_dict, float(batch_dict.get("_telemetry_prep_ms", data_ms)), evo_queue, data_ms
                     )
-                    h2d_slot = step_telemetry[6].begin(
-                        opt_steps + 1, batch_arrays_bytes, data_wait_ms=data_ms
-                    )
+                    h2d_slot = main_h2d.begin(opt_steps + 1, batch_arrays_bytes, data_wait_ms=data_ms)
                 else:
                     h2d_slot = -1
 
@@ -524,9 +487,9 @@ def train_flywheel_model_for_round(
                 rev_idx_t = torch.from_numpy(batch_dict["rev_idx_b"]).to(device)
                 rev_f_t = torch.from_numpy(batch_dict["rev_f_b"]).to(device)
                 rev_gate_t = torch.from_numpy(batch_dict["rev_gate_b"]).to(device)
-                if telemetry_timer is not None:
-                    telemetry_timer.mark(step_telemetry[3]["step.span.h2d"])
-                    step_telemetry[6].end(h2d_slot)
+                if tel is not None:
+                    tel.mark("step.span.h2d")
+                    main_h2d.end(h2d_slot)
 
                 out = model.predict_costs(
                     ctx_feat=ctx_t,
@@ -577,12 +540,12 @@ def train_flywheel_model_for_round(
                     model=model,
                     evo_batch=batch_dict.get("evo_batch"),
                     device=device,
-                    telemetry_h2d=step_telemetry[7] if step_telemetry is not None else None,
+                    telemetry_h2d=evo_h2d,
                     telemetry_step=opt_steps + 1,
                 )
-                if telemetry_timer is not None:
+                if tel is not None:
                     # Host enqueue of the forward pass only; the read-backs below get their own span.
-                    telemetry_timer.mark(step_telemetry[3]["step.span.fwd"])
+                    tel.mark("step.span.fwd")
                 dir_margin_value = None
                 evo_val_value = None
                 if batch_dict.get("evo_batch") is not None:
@@ -594,29 +557,28 @@ def train_flywheel_model_for_round(
                 loss = rank_loss + 0.35 * huber_loss + 0.20 * gate_loss + evo_loss_dict["total_evo_loss"]
                 loss_host = float(loss.detach().cpu().item())
                 ep_loss_vals.append(loss_host)
-                if telemetry_timer is not None:
+                if tel is not None:
                     # The existing evo-loss and loss read-backs: the host waits here for all queued
                     # GPU work, including the previous step's backward and optimizer kernels.
-                    telemetry_timer.mark(step_telemetry[3]["step.span.readback"])
+                    tel.mark("step.span.readback")
                 optimizer.zero_grad()
                 loss.backward()
-                if telemetry_timer is not None:
-                    telemetry_timer.mark(step_telemetry[3]["step.span.bwd"])
+                if tel is not None:
+                    tel.mark("step.span.bwd")
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                lr_host = float(optimizer.param_groups[0]["lr"]) if telemetry_timer is not None else None
+                lr_host = float(optimizer.param_groups[0]["lr"]) if tel is not None else None
                 optimizer.step()
                 scheduler.step()
                 opt_steps += 1
-                if telemetry_timer is not None:
-                    batch_obj, _, _, column, component_column = step_telemetry[:5]
-                    telemetry_timer.mark(column["step.span.opt"])
-                    batch_obj.put(column["train.loss"], loss_host)
-                    batch_obj.put(column["optim.lr.group"], lr_host)
+                if tel is not None:
+                    tel.mark("step.span.opt")
+                    tel.put("train.loss", loss_host)
+                    tel.put("optim.lr.group", lr_host)
                     if dir_margin_value is not None:
-                        batch_obj.put(component_column["dir_margin"], dir_margin_value)
-                        batch_obj.put(component_column["evo_val"], evo_val_value)
-                    telemetry_timer.end(column["step.wall"], column["step.unattributed"])
-                    batch_obj.commit(opt_steps)
+                        tel.put("train.loss.component/dir_margin", dir_margin_value)
+                        tel.put("train.loss.component/evo_val", evo_val_value)
+                    tel.end()
+                    tel.commit(opt_steps)
             if ep_loss_vals:
                 epoch_losses.append(float(np.mean(ep_loss_vals)))
     except BaseException as error:
@@ -658,18 +620,10 @@ def train_flywheel_model_for_round(
         queue_stats["changed_tensors"] = int(changed_tensors)
         queue_stats["mean_dir_margin_loss"] = round(float(np.mean(dir_margin_losses)) if dir_margin_losses else 0.0, 5)
         queue_stats["mean_evo_val_loss"] = round(float(np.mean(evo_val_losses)) if evo_val_losses else 0.0, 5)
-        if step_telemetry is not None:
-            step_telemetry[0].flush()
-            h2d_synchronized = step_telemetry[6].flush(synchronize=True)
-            step_telemetry[7].flush(synchronize=not h2d_synchronized)
-            queue_stats["h2d_event_sample_drops"] = (
-                step_telemetry[6].dropped_samples + step_telemetry[7].dropped_samples
-            )
-            step_telemetry[1].emit("jope.telemetry.evo-queue/v1", {
-                "round": round_idx,
-                **queue_stats,
-            })
-            queue_stats["telemetry"] = step_telemetry[1].close()
+        if tel is not None:
+            h2d_synchronized = main_h2d.flush(synchronize=True)
+            evo_h2d.flush(synchronize=not h2d_synchronized)
+            tel.finish_round(queue_stats)
             telemetry_closed = True
         model.eval()
         return model, queue_stats
@@ -682,130 +636,13 @@ def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, de
     run_root = os.environ.get("JOPE_TELEMETRY_RUN_DIR")
     if not run_root:
         return None
-    from jope.telemetry import GpSession, Recorder, metric_registry
-    from jope.telemetry.io_hooks import BatchIOStats, END_TO_END_COLUMN, H2DEventSampler, H2D_COLUMNS, IO_COLUMNS
-    from jope.telemetry.train_hooks import StepBatch, StepTimer
+    from jope.telemetry import open_flywheel_step
+    from jope.telemetry.cuda_events import CudaH2D
 
-    if GpSession is None or metric_registry is None:
-        raise RuntimeError("jope telemetry PyO3 extension is unavailable")
-    startup = IO_STARTUP_READS.take_snapshot() if IO_STARTUP_READS is not None else {"enabled": False}
-    components = ("dir_margin", "evo_val")
-    columns = (
-        "train.loss",
-        "train.loss.component/dir_margin",
-        "train.loss.component/evo_val",
-        "optim.lr.group",
-        "step.span.data",
-        "step.span.h2d",
-        "step.span.fwd",
-        "step.span.readback",
-        "step.span.bwd",
-        "step.span.opt",
-        "step.wall",
-        "step.unattributed",
-        *IO_COLUMNS,
+    tel = open_flywheel_step(
+        run_root, round_idx, seed, batch_size, device, torch.cuda.is_available(), IO_STARTUP_READS
     )
-    registry = {name: (metric_id, grouped) for metric_id, name, _, _, grouped in metric_registry()}
-    component_columns = {}
-    column_ids = {}
-    layout = []
-    for col, name in enumerate(columns):
-        if name.startswith("train.loss.component/"):
-            group_name = name.split("/", 1)[1]
-            metric_name, group = "train.loss.component", components.index(group_name)
-            component_columns[group_name] = col
-        elif name == "optim.lr.group":
-            metric_name, group = name, 0
-        else:
-            metric_name, group = name, 0
-        metric_id, _ = registry[metric_name]
-        layout.append((metric_id, group))
-        column_ids[name] = col
-    run_dir = Path(run_root) / f"w-step-r{round_idx}-s{seed}-{uuid.uuid4().hex}"
-    metric_groups = {
-        str(registry["train.loss.component"][0]): {"0": components[0], "1": components[1]},
-        str(registry["optim.lr.group"][0]): {"0": "optimizer_group_0"},
-        str(registry["io.batch_prep"][0]): {"0": "batch_supply"},
-    }
-    h2d_columns = H2D_COLUMNS
-    h2d_batch_columns = (*h2d_columns, END_TO_END_COLUMN)
-    h2d_layout = [(registry[name][0], 0) for name in h2d_columns]
-    h2d_layout.append((registry[END_TO_END_COLUMN][0], 0))
-    evo_h2d_layout = [(registry[name][0], 1) for name in h2d_columns]
-    evo_h2d_layout.append((registry[END_TO_END_COLUMN][0], 0))
-    metric_groups.update({
-        str(registry["host.cpu.core_util"][0]): {
-            str(index): f"cpu_{index}" for index in range(os.cpu_count() or 1)
-        },
-    })
-    for metric_name in h2d_columns:
-        metric_groups[str(registry[metric_name][0])] = {"0": "main_batch", "1": "evolution_batch"}
-    recorder = Recorder(str(run_dir), ["flywheel-trainer", "h2d-events", "h2d-evo-events", "host-probe"], {
-        "trainer": "research.flywheel_selfplay",
-        "round": round_idx,
-        "seed": seed,
-        "batch_size": batch_size,
-        "device": device,
-        "evo_queue": "enabled_or_disabled_per_run",
-        "data_identity": "unavailable_without_extra_input_read",
-        "not_fused_dope_training": True,
-        "host": os.uname().nodename,
-        "io_startup_reads": startup,
-        "s3_get_capability": False,
-        "object_cache_capability": False,
-        "pin_memory_capability": False,
-        "h2d_event_capability": bool(str(device).startswith("cuda") and torch.cuda.is_available()),
-        "h2d_sample_stride": 64,
-        "startup_io_capability": bool(IO_STARTUP_READS is not None),
-        "metric_groups": metric_groups,
-    })
-    recorder.set_metric_layout(0, layout)
-    recorder.set_metric_layout(1, h2d_layout)
-    recorder.set_metric_layout(2, evo_h2d_layout)
-    batch = StepBatch(columns, lambda steps, values, rows: recorder.submit(0, steps, values, rows))
-    h2d_batch = StepBatch(h2d_batch_columns, lambda steps, values, rows: recorder.submit(1, steps, values, rows))
-    evo_h2d_batch = StepBatch(h2d_batch_columns, lambda steps, values, rows: recorder.submit(2, steps, values, rows))
-    main_h2d_sampler = H2DEventSampler(torch, device, h2d_batch, end_to_end_col=len(h2d_columns))
-    evo_h2d_sampler = H2DEventSampler(torch, device, evo_h2d_batch)
-    if startup["enabled"]:
-        recorder.emit_scalar(0, registry["io.local.bytes"][0], 0, 0, float(startup["logical_bytes"]))
-        recorder.emit_scalar(0, registry["io.local.read"][0], 0, 0, float(startup["read_ms"]))
-        if startup["read_ms"] > 0:
-            read_mib_s = float(startup["logical_bytes"]) / (1024.0 * 1024.0) / (float(startup["read_ms"]) / 1000.0)
-            recorder.emit_scalar(0, registry["io.local.read_mib_s"][0], 0, 0, read_mib_s)
-        else:
-            recorder.emit_unavailable(0, registry["io.local.read_mib_s"][0], 0, 0, 8)
-    else:
-        for metric_name in ("io.local.bytes", "io.local.read", "io.local.read_mib_s"):
-            recorder.emit_unavailable(0, registry[metric_name][0], 0, 0, 11)
-    for metric_name in ("io.s3.get", "io.s3.bytes", "io.s3.retries"):
-        recorder.emit_unavailable(0, registry[metric_name][0], 0, 0, 3)
-    for metric_name in ("io.cache.hit", "io.cache.miss"):
-        recorder.emit_unavailable(0, registry[metric_name][0], 0, 0, 4)
-    if not str(device).startswith("cuda") or not torch.cuda.is_available():
-        for metric_name in h2d_columns:
-            recorder.emit_unavailable(1, registry[metric_name][0], 0, 0, 7)
-            recorder.emit_unavailable(2, registry[metric_name][0], 1, 0, 7)
-        recorder.emit_unavailable(1, registry[END_TO_END_COLUMN][0], 0, 0, 7)
-    elif not main_h2d_sampler.enabled or not evo_h2d_sampler.enabled:
-        for metric_name in h2d_columns:
-            if not main_h2d_sampler.enabled:
-                recorder.emit_unavailable(1, registry[metric_name][0], 0, 0, 12)
-            if not evo_h2d_sampler.enabled:
-                recorder.emit_unavailable(2, registry[metric_name][0], 1, 0, 12)
-        if not main_h2d_sampler.enabled:
-            recorder.emit_unavailable(1, registry[END_TO_END_COLUMN][0], 0, 0, 12)
-    recorder.emit_unavailable(0, registry["throughput.tokens_per_s"][0], 0, 0, 10)
-    return (
-        batch,
-        recorder,
-        StepTimer(batch),
-        column_ids,
-        component_columns,
-        BatchIOStats(batch, column_ids),
-        main_h2d_sampler,
-        evo_h2d_sampler,
-    )
+    return tel, CudaH2D(torch, device, tel, 1), CudaH2D(torch, device, tel, 2)
 
 
 @torch.no_grad()

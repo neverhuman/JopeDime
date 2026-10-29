@@ -3,7 +3,8 @@
 //! Module owners:
 //! - luna_tel_io: the event core, collectors, sinks, the PyO3 binding and `jtel tail`/`diff`
 //!   (not yet staged).
-//! - luna_tel_train: `train`, `gp`, `flywheel`, `alarm`, `import` and the `record` interface.
+//! - luna_tel_train: `train`, `gp`, `flywheel`, `alarm`, `import`, the `record` interface and
+//!   `hooks` (the trainer-side hooks ported from the former Python `jope.telemetry` package).
 
 pub mod alarm;
 pub mod api;
@@ -12,6 +13,7 @@ pub mod core;
 pub mod event;
 pub mod flywheel;
 pub mod gp;
+pub mod hooks;
 pub mod import;
 pub mod manifest;
 pub mod record;

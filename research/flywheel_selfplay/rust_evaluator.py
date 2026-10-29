@@ -148,21 +148,22 @@ _GP_TELEMETRY_STATE = {"generation": {}, "failures": 0}
 _GP_TELEMETRY_LOCK = threading.Lock()
 
 
-def set_flywheel_telemetry(eval_emit=None, gp_session=None, gp_emit=None, bank_shas=()):
-    """Install telemetry sinks: `eval_emit(kind, record)` gets one record per evaluator batch;
-    `gp_session` (a `jope_telemetry` GpSession) and `gp_emit` get one summary per generation."""
+def set_flywheel_telemetry(eval_sink=None, gp_session=None, gp_sink=None, bank_shas=()):
+    """Install telemetry sinks (`Recorder.record_sink()` handles, safe from worker threads):
+    `eval_sink` gets one record per evaluator batch; `gp_session` (a `jope.telemetry.GpSession`)
+    and `gp_sink` get one summary per generation."""
     global _EVAL_TELEMETRY_EMIT, _GP_TELEMETRY
-    _EVAL_TELEMETRY_EMIT = eval_emit
-    _GP_TELEMETRY = (gp_session, gp_emit, frozenset(bank_shas)) if gp_session is not None else None
+    _EVAL_TELEMETRY_EMIT = eval_sink
+    _GP_TELEMETRY = (gp_session, gp_sink, frozenset(bank_shas)) if gp_session is not None else None
 
 
 def _new_eval_telemetry():
     # One instance per batch: under the evo queue several batches run at once in one process.
     if _EVAL_TELEMETRY_EMIT is None:
         return None
-    from jope.telemetry.eval_hooks import EvalBatchTelemetry
+    from jope.telemetry import EvalBatch
 
-    return EvalBatchTelemetry(emit=_EVAL_TELEMETRY_EMIT)
+    return EvalBatch(_EVAL_TELEMETRY_EMIT)
 
 
 def get_feat_names() -> list[str]:
@@ -966,12 +967,12 @@ def evolve_context_slate_generations(
 
     gp_recorder = None
     if _GP_TELEMETRY is not None:
-        from jope.telemetry.gp_hooks import GenerationRecorder
+        from jope.telemetry import GenerationRecorder
 
-        gp_session, gp_emit, bank_shas = _GP_TELEMETRY
+        gp_session, gp_sink, bank_shas = _GP_TELEMETRY
         context = hashlib.sha256(teacher_jtt1_gz_path.encode()).hexdigest()[:16]
         # This call site doesn't know the flywheel round; round 0 here means "not recorded".
-        gp_recorder = GenerationRecorder(gp_session, context, 0, emit=gp_emit, bank_shas=bank_shas)
+        gp_recorder = GenerationRecorder(gp_session, context, 0, sink=gp_sink, bank_shas=bank_shas)
         with _GP_TELEMETRY_LOCK:
             gen_base = _GP_TELEMETRY_STATE["generation"].get(context, 0)
             _GP_TELEMETRY_STATE["generation"][context] = gen_base + n_generations
@@ -1043,9 +1044,10 @@ def evolve_context_slate_generations(
             if gp_recorder is not None:
                 rc = getattr(_EVAL_RC, "by_sha", {}).get(c_sha)
                 gp_recorder.add(
-                    ce if rc is None else {**ce, "rc": rc},
+                    ce,
                     parent_dsl=parent_rec["dsl"],
                     improved=bool(ce["cv_gate_passed"] and c_f300 < p_f300),
+                    rc=rc,
                 )
 
         if gp_recorder is not None:

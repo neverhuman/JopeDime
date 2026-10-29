@@ -1784,40 +1784,10 @@
         "storage"
       ]
     },
-    "python:python/tests/test_telemetry_dope_guard.py": {
-      "role": "regression",
-      "subsystems": [
-        "training"
-      ]
-    },
-    "python:python/tests/test_telemetry_eval_hooks.py": {
+    "python:python/tests/test_telemetry_smoke.py": {
       "role": "regression",
       "subsystems": [
         "gp",
-        "training"
-      ]
-    },
-    "python:python/tests/test_telemetry_gp_hooks.py": {
-      "role": "regression",
-      "subsystems": [
-        "gp"
-      ]
-    },
-    "python:python/tests/test_telemetry_io_hooks.py": {
-      "role": "regression",
-      "subsystems": [
-        "training"
-      ]
-    },
-    "python:python/tests/test_telemetry_train_hooks.py": {
-      "role": "regression",
-      "subsystems": [
-        "training"
-      ]
-    },
-    "python:python/tests/test_telemetry_val_hooks.py": {
-      "role": "regression",
-      "subsystems": [
         "training"
       ]
     },
