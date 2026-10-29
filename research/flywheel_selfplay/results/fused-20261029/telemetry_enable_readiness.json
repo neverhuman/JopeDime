@@ -1,0 +1,30 @@
+{
+  "observed_utc": "2026-10-29T21:24:51.167515+00:00",
+  "state": {
+    "state": "waiting_for_fixed_wheel",
+    "utc": "2026-10-29T21:21:44.999232+00:00",
+    "directory": "/home/ubuntu/wheels",
+    "live_pid": 441927
+  },
+  "source_implementation": "fe8353fcfbf541b423e43669bd1d04bdf33c97e1",
+  "native_wheel": "not yet installed/provided; no restart before fixed-wheel smoke passes",
+  "guide_copy": "/home/ubuntu/jope_plan/TELEMETRY_ENABLE.md",
+  "guide_sha256": "7037933bd9bc6357ed15b1d2ee9a96fcdbc65526d8471ebed1ed6cd66ddf03c2",
+  "live_round": 322,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_checksum_match": true,
+  "trainable_params": 29211,
+  "live_worker_pid": 441927,
+  "enabler_pid": 1550947,
+  "target_template": "/mnt/amphora-backup/jope-telemetry/xbabe1/<UTC>-flywheel",
+  "verification": {
+    "focused_tests_passed": 53,
+    "ruff": "pass",
+    "paper_trace": "pass",
+    "static_product_inventory": "227 unchanged; new tests research-only",
+    "native_live": "pending fixed-wheel readiness",
+    "overhead_qualification": "not established"
+  },
+  "pool_custody": "Enabler records exact completed checkpoint and best pointer plus journal prefix; verifies actual startup ordered IDs,fitness/gate hashes,DOPE and two completed telemetry-on sinks before reporting enabled.",
+  "no_restarts_yet": true
+}
