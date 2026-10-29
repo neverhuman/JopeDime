@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.",
-  "count": 6012,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored",
+  "count": 6051,
   "ignored": 81,
   "packages": {
    "battle-gpu": {
@@ -8999,6 +8999,71 @@
      }
     }
    },
+   "jope-telemetry": {
+    "count": 39,
+    "ignored": 0,
+    "binaries": {
+     "jope-telemetry": {
+      "kind": "lib",
+      "count": 37,
+      "ignored": 0,
+      "tests": [
+       "alarm::tests::collapse_needs_consecutive_generations_per_context",
+       "alarm::tests::dope_guard_fails_closed",
+       "alarm::tests::grad_spike_needs_consecutive_steps_and_nonfinite_fires_at_once",
+       "alarm::tests::heartbeat_uses_median_step_time_with_floor",
+       "alarm::tests::utc_format",
+       "api::tests::alarm_session_dispatches_and_reports_fail_closed",
+       "api::tests::generation_round_trip_never_echoes_dsl",
+       "core::tests::producer_is_nonblocking_bounded_and_counted",
+       "core::tests::record_lane_is_bounded_and_reports_oversize",
+       "event::tests::event_layout_is_fixed_and_nonfinite_is_preserved",
+       "flywheel::tests::contender_digest_is_order_free",
+       "flywheel::tests::gate_matches_ns_predicate",
+       "flywheel::tests::missing_roster_is_flagged",
+       "gp::tests::candidate_genome_and_behavior_bounds_are_enforced",
+       "gp::tests::interner_is_bounded_and_overflow_ids_stay_distinct",
+       "gp::tests::levenshtein_and_spearman",
+       "gp::tests::parse_matches_python_reference_cases",
+       "gp::tests::quantiles_match_numpy_linear",
+       "gp::tests::sampled_pairs_are_distinct_and_seeded",
+       "import::tests::engine_rows_map_and_validation_is_deduplicated",
+       "import::tests::hwm_consistency_flags_beats_from_an_earlier_run",
+       "import::tests::hwm_lists_missing_identity_and_drops_dsl",
+       "import::tests::parse_utc_known_values",
+       "import::tests::retained_scores_summary_has_no_provenance_claim",
+       "record::bounded_tests::bounded_record_encoder_writes_one_jsonl_envelope",
+       "record::bounded_tests::oversized_record_is_refused_before_queueing",
+       "record::bounded_tests::typed_and_encoded_records_are_bounded",
+       "sink::jsonl::tests::recovery_completes_valid_json_and_rejects_malformed_complete_lines",
+       "sink::jsonl::tests::recovery_truncates_only_a_malformed_unterminated_tail",
+       "sink::jsonl::tests::writes_finite_and_nonfinite_values_without_fabricating_zero",
+       "sink::parquet::tests::rollup_is_readable_and_ignores_low_rate_records",
+       "summary::tests::summary_reports_spans_diminishing_deltas_and_missing",
+       "train::tests::cosine_schedule_endpoints",
+       "train::tests::dope_param_classification",
+       "train::tests::ids_and_names_are_unique",
+       "train::tests::partition_labels",
+       "train::tests::ring_decode_counts_nonfinite_and_keeps_exact_steps"
+      ]
+     },
+     "jope-telemetry::bin/jtel": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-telemetry::train_gp_tracker": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "collapsed_population_raises_a2_after_three_generations",
+       "summary_counts_duplicates_sentinels_parents_and_stagnation"
+      ]
+     }
+    }
+   },
    "numpy-pcg64": {
     "count": 24,
     "ignored": 1,
@@ -9222,10 +9287,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 182,
+  "count": 202,
   "packages": {
    "jope": {
-    "count": 182,
+    "count": 202,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9411,6 +9476,41 @@
        "tests/test_target_artifact_pins.py::test_manifest_producer_pins_all_joblib_paths"
       ]
      },
+     "tests/test_telemetry_dope_guard.py": {
+      "count": 9,
+      "tests": [
+       "tests/test_telemetry_dope_guard.py::test_clean_head_only_epoch_passes_and_records",
+       "tests/test_telemetry_dope_guard.py::test_digests_match_ns3_reference",
+       "tests/test_telemetry_dope_guard.py::test_dope_param_in_a_later_optimizer_group_fails",
+       "tests/test_telemetry_dope_guard.py::test_golden_tensor_digest",
+       "tests/test_telemetry_dope_guard.py::test_nested_dropout_in_train_mode_fails",
+       "tests/test_telemetry_dope_guard.py::test_no_trainable_jope_params_fails",
+       "tests/test_telemetry_dope_guard.py::test_requires_grad_and_leaked_grad_fail",
+       "tests/test_telemetry_dope_guard.py::test_root_parameters_are_counted_and_reconciled",
+       "tests/test_telemetry_dope_guard.py::test_weight_drift_names_the_changed_tensor"
+      ]
+     },
+     "tests/test_telemetry_gp_hooks.py": {
+      "count": 2,
+      "tests": [
+       "tests/test_telemetry_gp_hooks.py::test_marshals_result_dicts_and_resets_after_finish",
+       "tests/test_telemetry_gp_hooks.py::test_status_and_bits_edge_cases"
+      ]
+     },
+     "tests/test_telemetry_train_hooks.py": {
+      "count": 9,
+      "tests": [
+       "tests/test_telemetry_train_hooks.py::test_failing_sink_is_counted_not_raised",
+       "tests/test_telemetry_train_hooks.py::test_frozen_memory_bounds_are_enforced_at_construction",
+       "tests/test_telemetry_train_hooks.py::test_layout_validation",
+       "tests/test_telemetry_train_hooks.py::test_missing_value_uses_the_rust_batch_sentinel_bits",
+       "tests/test_telemetry_train_hooks.py::test_rows_submit_in_blocks_and_missing_values_stay_nan",
+       "tests/test_telemetry_train_hooks.py::test_steady_state_put_commit_does_not_grow_with_steps",
+       "tests/test_telemetry_train_hooks.py::test_steps_above_float32_precision_are_exact",
+       "tests/test_telemetry_train_hooks.py::test_timer_spans_are_exclusive_and_unattributed_is_the_rest",
+       "tests/test_telemetry_train_hooks.py::test_w_shaped_loop_records_existing_host_values_only"
+      ]
+     },
      "tests/test_test_exact_campaign.py": {
       "count": 25,
       "tests": [
@@ -9510,6 +9610,6 @@
  },
  "totals": {
   "rust": 6012,
-  "python": 182
+  "python": 202
  }
 }

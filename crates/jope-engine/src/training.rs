@@ -1808,6 +1808,51 @@ fn rank_impl(
     } else {
         None
     };
+    #[cfg(feature = "telemetry")]
+    let mut telemetry = if rank == 0 {
+        std::env::var_os("JOPE_TELEMETRY_RUN_DIR").and_then(|run_dir| {
+            let metadata = jope_telemetry::manifest::RunMetadata {
+                metric_groups: std::collections::BTreeMap::from([(
+                    jope_telemetry::train::TRAIN_LOSS_COMPONENT,
+                    std::collections::BTreeMap::from([
+                        (0, "sequence_nll".to_owned()),
+                        (1, "ranking_bt".to_owned()),
+                        (2, "ranking_listwise".to_owned()),
+                        (3, "runtime_huber".to_owned()),
+                        (4, "contextfree_bt".to_owned()),
+                    ]),
+                )]),
+                metadata: [
+                    ("trainer".to_owned(), json!("jope-engine")),
+                    ("corpus_sha256".to_owned(), json!(corpus_hash)),
+                    ("world_size".to_owned(), json!(world)),
+                    ("global_batch".to_owned(), json!(global_batch)),
+                    ("microbatch".to_owned(), json!(micro)),
+                    ("seed".to_owned(), json!(seed)),
+                    ("device".to_owned(), json!(format!("{:?}", device))),
+                ]
+                .into_iter()
+                .collect(),
+                ..Default::default()
+            };
+            let mut builder = jope_telemetry::core::RecorderBuilder::new(run_dir, metadata);
+            if let Err(error) = builder.add_producer("jope-engine") {
+                eprintln!("jope-telemetry producer setup failed: {error:#}");
+                return None;
+            }
+            match builder.start() {
+                Ok((recorder, mut producers)) => {
+                    producers.pop().map(|producer| (recorder, producer))
+                }
+                Err(error) => {
+                    eprintln!("jope-telemetry initialization failed: {error:#}");
+                    None
+                }
+            }
+        })
+    } else {
+        None
+    };
     let mut last_checkpoint = Instant::now();
     let mut validation_metrics = Value::Null;
     let mut latest: Value = if run.join("latest.json").is_file() {
@@ -2103,6 +2148,41 @@ fn rank_impl(
             }
             let seconds = begun.elapsed().as_secs_f64();
             measured_step_seconds += seconds;
+            #[cfg(feature = "telemetry")]
+            if let Some((_, producer)) = telemetry.as_mut() {
+                let at = (step + 1) as u64;
+                use jope_telemetry::train as tm;
+                producer.emit_scalar(tm::TRAIN_LOSS, 0, at, totals[0] as f64, false);
+                for (group, metric_index) in (1_u16..=5).zip(1_usize..=5) {
+                    producer.emit_scalar(
+                        tm::TRAIN_LOSS_COMPONENT,
+                        group - 1,
+                        at,
+                        totals[metric_index] as f64,
+                        false,
+                    );
+                }
+                producer.emit_scalar(tm::GRAD_NORM_GLOBAL, 0, at, norm, false);
+                producer.emit_scalar(tm::GRAD_CLIPPED, 0, at, (norm > 1.0) as u8 as f64, false);
+                producer.emit_scalar(
+                    tm::GRAD_CLIP_COEF,
+                    0,
+                    at,
+                    if norm > 1.0 { 1.0 / norm } else { 1.0 },
+                    false,
+                );
+                producer.emit_scalar(tm::STEP_WALL_MS, 0, at, seconds * 1e3, false);
+                producer.emit_scalar(
+                    tm::SAMPLES_PER_S,
+                    0,
+                    at,
+                    global_batch as f64 / seconds.max(f64::MIN_POSITIVE),
+                    false,
+                );
+                let nonfinite = totals.iter().filter(|v| !v.is_finite()).count()
+                    + usize::from(!norm.is_finite());
+                producer.emit_scalar(tm::TRAIN_NONFINITE, 0, at, nonfinite as f64, false);
+            }
             let mut state = json!({"schema":"parallel.neural_training.v1","phase":"training on real GP teaching corpus","status":"active","run":run.strip_prefix(root)?,"latest_receipt":run.join("latest.json").strip_prefix(root)?,"checkpoint":latest["checkpoint"],"checkpoint_step":latest["step"],"rank":rank,"world":world,"step":step+1,"steps":steps,"epoch":(step+1) as f64/epoch_steps as f64,"microbatch":micro,"accumulation":accumulation,"global_batch":global_batch,"loss":totals[0],"sequence_nll":totals[1],"ranking_bt":totals[2],"ranking_listwise":totals[3],"runtime_huber":totals[4],"contextfree_bt":totals[5],"weighted_losses":objective::weighted_losses(&totals[1..]),"inactive_objectives":["stability","loss_log_vars"],"gradient_clipped":norm>1.0,"validation":validation_metrics,"gradient_norm":norm,"step_seconds":seconds,"communication_seconds":communication_seconds,"examples_per_second":global_batch as f64/seconds,"elapsed_seconds":started.elapsed().as_secs_f64(),"timestamp":now(),"corpus_sha256":corpus_hash,"training_families":families.len(),"sampler_id":SAMPLER_ID,"teacher_in_each_comparison":true,"qualification":true,"fresh_initialization":initialization["kind"] == "fresh","initialization":initialization,"autocast_cache_lifetime":"scoped_v2"});
             if policy.is_some() {
                 state["sampler_id"] = json!(active_sampler_id(replay.as_ref()));
@@ -2296,6 +2376,13 @@ fn rank_impl(
             complete["execution_partition"] = execution.record().clone();
         }
         write_json(&launch.join(format!("complete-{rank}.json")), &complete)?;
+        #[cfg(feature = "telemetry")]
+        if let Some((recorder, producer)) = telemetry.take() {
+            drop(producer);
+            if let Err(error) = recorder.close() {
+                eprintln!("jope-telemetry finalization failed: {error:#}");
+            }
+        }
         Ok(())
     })();
     if let Err(error) = &outcome {

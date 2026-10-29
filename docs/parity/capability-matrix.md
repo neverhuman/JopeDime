@@ -24,8 +24,8 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 27 | 0 | 27 | 0 | 0 | 0 |
-| new-example | 8 | 0 | 8 | 0 | 0 | 0 |
+| new-bin | 28 | 0 | 28 | 0 | 0 | 0 |
+| new-example | 9 | 0 | 9 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
@@ -42,9 +42,9 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **836** | **353** | **73** | **1** | **402** | **7** |
+| **total** | **838** | **353** | **75** | **1** | **402** | **7** |
 
-`moved`/`new` rows without a covering test: 300.
+`moved`/`new` rows without a covering test: 302.
 
 ## Rows
 
@@ -889,5 +889,7 @@ you saw.
 | new-bin | (new) complete program source stream | crates/jope-observatory/src/bin/gp-source-stream.rs (gp-source-stream) | jope-observatory::gp_source websocket_delivers_full_sources_checks_and_cursor_replay | new | Opt-in durable complete-source WebSocket/replay and compile-qualified token accounting; actual four-language/compiler/error contracts, no live deployment or predictive-quality claim. |
 | new-bin | (new) single-file appliance | crates/jope-appliance/src/main.rs (jopedime) | jope-appliance::single_file (8 tests) | new | The signed `jopedime` executable (deploy/appliance): `version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `verify-self`, `licenses` over the native roster with bounded selection, exit statuses 2-7 and run receipts. CPU only; the e2e-smoke lane packs the fixture profile and runs it alone. Not published; no neural or GPU method. |
 | new-bin | (new) appliance packer | crates/jope-dist/src/main.rs (jope-dist) | jope-dist::reproducible_pack (3 tests) | new | Build-time only: `lock`, `fixture`, `notices`, `audit`, `pack`, `seal`, `verify`, `inspect`, `size-report`, `sbom-models`, `provenance` for jopedime packages; holds no signing key (release scopes stop at a stage for the release host's cosign step). |
+| new-bin | (new) telemetry run inspector | crates/jope-telemetry/src/bin/jtel.rs (jtel) | none | new | `tail`, `import`, `parquet`, `recover`, `summary`, and `diff` for bounded run artifacts; build and unit tests do not claim live-run qualification. |
 
 | new-example | (new) bounded local landmark round | crates/jope-cli/examples/landmark_one_shot.rs (landmark_one_shot) | jope-cli::offline_cli landmark_one_shot::bounded_one_shot_measures_reloads_and_refuses_reuse_and_tampering | new | Explicit diagnostic execution on a fresh synthetic TRAIN-only table: native measurement, raw Dope encoding, local HWM ingest, archive and fresh-process readback. Requires dope-encoding; no production admission, promotion or continuous-service claim. |
+| new-example | (new) telemetry GP probe | crates/jope-telemetry/examples/train_gp_probe.rs (train_gp_probe) | none | new | Bounded synthetic GP tracker probe; does not establish live GP coverage or performance. |

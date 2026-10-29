@@ -829,6 +829,19 @@
       ],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
     },
+    "feature:jope-parallel/telemetry": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-telemetry"
+        ]
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check"
+      ],
+      "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; jope-parallel telemetry feature is checked without enabling the neural/LibTorch feature."
+    },
     "feature:jope-pipeline/default": {
       "discovery": {
         "dependencies": [],
@@ -981,6 +994,30 @@
         "full-policy"
       ],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
+    },
+    "feature:jope-telemetry/default": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check"
+      ],
+      "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; jope-parallel telemetry feature is checked without enabling the neural/LibTorch feature."
+    },
+    "feature:jope-telemetry/python": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:pyo3"
+        ]
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check"
+      ],
+      "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; jope-parallel telemetry feature is checked without enabling the neural/LibTorch feature."
     },
     "feature:starforge/cuda": {
       "discovery": {
@@ -1726,6 +1763,20 @@
       "discovery": {
         "kind": "package",
         "manifest": "crates/jope-runtime/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-telemetry": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-telemetry/Cargo.toml"
       },
       "dispositions": [],
       "lanes": [
@@ -4343,6 +4394,42 @@
       ],
       "scope": "Tiny CPU fixtures for required artifact pins, verified-snapshot loading and producer report/manifest pin emission; no model training, real checkpoint loading or producer-authentication qualification."
     },
+    "python:python/tests/test_telemetry_dope_guard.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
+    },
+    "python:python/tests/test_telemetry_gp_hooks.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
+    },
+    "python:python/tests/test_telemetry_train_hooks.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
+    },
     "python:python/tests/test_test_exact_campaign.py": {
       "discovery": {
         "kind": "python-family"
@@ -5717,7 +5804,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -11943,6 +12030,70 @@
         "full-default"
       ],
       "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
+    },
+    "target:jope-telemetry/bin/jtel": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-telemetry/src/bin/jtel.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "full-default",
+        "rust-test"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. CLI/example runtime behavior and live telemetry qualification are not claimed by compilation."
+    },
+    "target:jope-telemetry/example/train_gp_probe": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-telemetry/examples/train_gp_probe.rs",
+        "test": false,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. CLI/example runtime behavior and live telemetry qualification are not claimed by compilation."
+    },
+    "target:jope-telemetry/rlib+cdylib/jope_telemetry": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-telemetry/src/lib.rs",
+        "test": true,
+        "doctest": true,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "full-default",
+        "rust-test",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. CLI/example runtime behavior and live telemetry qualification are not claimed by compilation."
+    },
+    "target:jope-telemetry/test/train_gp_tracker": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-telemetry/tests/train_gp_tracker.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "full-default",
+        "rust-test"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. CLI/example runtime behavior and live telemetry qualification are not claimed by compilation."
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {
