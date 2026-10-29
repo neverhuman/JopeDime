@@ -158,3 +158,25 @@ numerical/emission/seeded fixtures and the five prior transition records remain 
 A sixth append-only transition extends every historical identity chain. The regeneration log
 is retained in `target/repin-v110-identity-regenerate.log`. No behavior rebaseline or
 scientific/release qualification is implied.
+
+## `feat-math` W1-W9 bit-exact HPC hotpaths port, 29 October 2026
+
+Source `f91ce131a9f7e4a68136ba1699450e2255a1f46d` ports the bit-exact W1-W9 HPC hotpaths
+(`ops.rs`, `ksmooth.rs`, `heads.rs`, `model.rs`, `advanced_v3.rs`, `advanced_v3/input.rs`,
+`advanced_v3/pipeline.rs`, `advanced_v3/emit/mod.rs`, `emit_rs.rs`, `emit_rs/recipe_bundle.rs`,
+and `transpile.rs`) from `JopeDimeMicro` into `crates/feat-math`. All numerical evaluations,
+serialized model payloads, emitted C++/Rust/JS/TS/Go/Python artifact bytes, vocabulary/registry
+pins, and seeded generator/search streams remain bit-identical (`0 ULP`). Because ADR-0004 hashes
+the `crates/feat-math/src/*` implementation files in `evaluator_identity.v1.json`, this commit
+announces an identity-only transition chaining after `search_narration_identity_rebaseline.v1.json`.
+
+| Field | Before W1-W9 port | After W1-W9 port |
+| --- | --- | --- |
+| `implementation_sha256` | `6fe4aec834dc7ffae6fc856842111990f0b7ed39c2945e1d306fe1784aad7bd7` | `7a6bbcb34aec5fb57a174d333f10cfb78fac67954bb03663803c5650b8351f8a` |
+| `cargo_lock_sha256` | `186e9ab64fbe50c507685c0f57af905045576fabc10e31988a595879bbe7a78d` | `186e9ab64fbe50c507685c0f57af905045576fabc10e31988a595879bbe7a78d` |
+| `identity_digest` | `0da79c46a83bf6b639ef97a51a6fc210612cdac279b13a24c5d8298ce74d6d1c` | `55e339f33ee14cbeb21cef1943e8d7b79494939597d91928b855f8c0c221b054` |
+| `dsl_abi_sha256` | `c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389` | `c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389` |
+
+`Cargo.lock` and `dsl_abi_sha256` are unchanged. The identity-only regeneration and subsequent
+comparison mode both pass all 13 `compat_freeze` tests and all 3 `historical_v1` tests without
+modifying any behavior fixture.
