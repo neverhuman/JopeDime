@@ -81,6 +81,7 @@ metrics! {
     RING_SLOT_BUSY_DROPS = 0x0126, "ring.slot_busy_drops", "count", "T1", Step, false;
     SPAN_DATA_MS = 0x0127, "step.span.data", "ms", "T11", Step, false;
     SPAN_H2D_MS = 0x0128, "step.span.h2d", "ms", "T11", Step, false;
+    SPAN_READBACK_MS = 0x0129, "step.span.readback", "ms", "T11", Step, false;
     DOPE_HASH_EQUAL = 0x0201, "dope.freeze.equal", "bool", "D1", Epoch, false;
     PARAMS_TRAINABLE = 0x0202, "params.count.trainable", "count", "D2", Epoch, true;
     PARAMS_FROZEN = 0x0203, "params.count.frozen", "count", "D2", Epoch, true;

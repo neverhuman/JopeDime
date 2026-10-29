@@ -276,7 +276,7 @@ pub struct Config {
     /// What the behavior vectors are, which decides the pairwise distance.
     pub behavior_kind: BehaviorKind,
     /// Behavior archive bound. With `max_behavior_len`, this caps a tracker's archive at
-    /// `archive_capacity × max_behavior_len × 8` bytes (128 KiB at the defaults).
+    /// `archive_capacity × max_behavior_len × 8` bytes (64 KiB at the defaults).
     pub archive_capacity: usize,
     /// Behavior vectors longer than this are truncated to their first `max_behavior_len` components.
     pub max_behavior_len: usize,
@@ -296,7 +296,7 @@ impl Default for Config {
             behavior_quantum: 1e-3,
             behavior_kind: BehaviorKind::ErrorProfile,
             min_common_positions: 3,
-            archive_capacity: 512,
+            archive_capacity: 256,
             max_behavior_len: 32,
             max_candidates: 1024,
             knn_k: 5,

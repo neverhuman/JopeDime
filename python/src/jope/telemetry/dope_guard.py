@@ -1,7 +1,7 @@
 """DOPE freeze guard for fused JopeDime + frozen DOPE training (TELEMETRY_SPEC rows D1-D5).
 
-This is the product-tree port of the NS3 reference guard
-(`/home/ubuntu/jope_plan/ns/dope_freeze_guard.py`). It hashes tensors the same way, so its
+This is the product-tree port of the North Star NS3 reference guard (``ns/dope_freeze_guard.py``
+in the plan workspace). It hashes tensors the same way, so its
 digests are comparable with NS3's. It also closes the two gaps the NS3 spot-check found:
 
 * every DOPE submodule's ``training`` flag is checked, not only the root's, so a nested

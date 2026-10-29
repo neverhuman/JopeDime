@@ -5,7 +5,7 @@
 //! data is reported as missing, with its reason when one was recorded; nothing is filled in.
 
 use crate::alarm::{Alarm, Severity};
-use crate::flywheel::RoundRecord;
+use crate::flywheel::{EloSnapshot, RoundRecord, TaskType, ELO_SCHEMA};
 use crate::gp::{GenSummary, GEN_SCHEMA};
 use crate::import::{HwmConsistency, Retention, HWM_CONSISTENCY_SCHEMA, RETENTION_SCHEMA};
 use serde::Serialize;
@@ -118,9 +118,94 @@ pub struct Summary {
     pub gp: BTreeMap<String, GpContextSummary>,
     pub evolution: EvolutionSummary,
     pub alarms: AlarmSummary,
+    /// The latest Elo snapshot, read against the method panel (row F2).
+    pub elo: Option<EloSummary>,
     /// Metrics that were looked for and not found, with the recorded reason when there is one.
     pub missing: BTreeMap<String, String>,
     pub unparsed_records: u64,
+}
+
+/// Elo against methods for one task type, from one fit.
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct EloTaskSummary {
+    pub contenders: u32,
+    /// The best-rated flywheel generation (`ROUND_k` contenders), its Elo and 1-based rank.
+    pub flywheel: Option<(String, f64, u32)>,
+    /// The best-rated method that is not a flywheel generation.
+    pub best_method: Option<(String, f64)>,
+    pub delta_vs_best_method: Option<f64>,
+    pub top: Vec<(String, f64)>,
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct EloSummary {
+    pub round: u32,
+    pub fit_digest: String,
+    pub snapshots_seen: u32,
+    pub tasks: BTreeMap<TaskType, EloTaskSummary>,
+    /// Why these ratings aren't qualified yet (missing roster, incomplete panel, ...).
+    pub caveats: Vec<String>,
+}
+
+/// Contenders named like this are flywheel generations; every other contender is a method.
+pub fn is_flywheel_contender(name: &str) -> bool {
+    name.starts_with("ROUND_") || name.starts_with("flywheel")
+}
+
+fn elo_summary(snap: &EloSnapshot, seen: u32) -> EloSummary {
+    let mut tasks = BTreeMap::new();
+    for (task, ratings) in &snap.ratings {
+        let mut ranked: Vec<(String, f64)> =
+            ratings.iter().map(|(k, r)| (k.clone(), r.elo)).collect();
+        ranked.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        let flywheel = ranked
+            .iter()
+            .enumerate()
+            .find(|(_, (n, _))| is_flywheel_contender(n))
+            .map(|(i, (n, e))| (n.clone(), *e, i as u32 + 1));
+        let best_method = ranked
+            .iter()
+            .find(|(n, _)| !is_flywheel_contender(n))
+            .cloned();
+        let delta = flywheel
+            .as_ref()
+            .zip(best_method.as_ref())
+            .map(|(f, m)| f.1 - m.1);
+        tasks.insert(
+            *task,
+            EloTaskSummary {
+                contenders: ranked.len() as u32,
+                flywheel,
+                best_method,
+                delta_vs_best_method: delta,
+                top: ranked.into_iter().take(5).collect(),
+            },
+        );
+    }
+    let mut caveats = Vec::new();
+    if let Some(a) = &snap.availability {
+        caveats.push(a.clone());
+    }
+    if snap.panel_complete == Some(false) {
+        caveats.push("incomplete_panel".into());
+    }
+    if snap.solver_version.is_none() {
+        caveats.push("solver_version_unrecorded".into());
+    }
+    if snap
+        .family_source
+        .as_deref()
+        .is_none_or(|f| f != "authoritative_roster")
+    {
+        caveats.push("family_source_not_authoritative".into());
+    }
+    EloSummary {
+        round: snap.round,
+        fit_digest: snap.fit_digest.clone(),
+        snapshots_seen: seen,
+        tasks,
+        caveats,
+    }
 }
 
 const HOST_SPANS: &[&str] = &[
@@ -204,6 +289,8 @@ pub fn summarize<'a>(
     }
 
     let mut target: BTreeMap<String, Vec<(u32, f64)>> = BTreeMap::new();
+    let mut latest_elo: Option<EloSnapshot> = None;
+    let mut elo_seen = 0u32;
     for (kind, body) in records {
         let ok = match kind {
             GEN_SCHEMA => serde_json::from_value::<GenSummary>(body.clone()).map(|g| {
@@ -241,6 +328,13 @@ pub fn summarize<'a>(
                         }
                     }
                 }),
+            ELO_SCHEMA => serde_json::from_value::<EloSnapshot>(body.clone()).map(|e| {
+                elo_seen += 1;
+                // The trend lives inside one fit, so only the latest snapshot is summarized.
+                if latest_elo.as_ref().is_none_or(|l| e.round >= l.round) {
+                    latest_elo = Some(e);
+                }
+            }),
             crate::alarm::ALARM_SCHEMA => serde_json::from_value::<Alarm>(body.clone()).map(|a| {
                 *out.alarms.by_code.entry(a.code.clone()).or_default() += 1;
                 if a.severity == Severity::FailClosed {
@@ -293,6 +387,11 @@ pub fn summarize<'a>(
             }
         }
         out.evolution.target_deltas.insert(k, series);
+    }
+    out.elo = latest_elo.as_ref().map(|e| elo_summary(e, elo_seen));
+    if out.elo.is_none() {
+        out.missing
+            .insert("fly.elo".into(), "no Elo snapshot records".into());
     }
     if out.dope.guard_records == 0 {
         out.missing.insert(
@@ -400,6 +499,31 @@ impl Summary {
                 .collect();
             let _ = writeln!(s, "retention {}", r.join(" "));
         }
+        if let Some(e) = &self.elo {
+            let short: String = e.fit_digest.chars().take(12).collect();
+            let _ = writeln!(
+                s,
+                "== Elo vs methods (round {}, fit {short}, {} snapshots)",
+                e.round, e.snapshots_seen
+            );
+            for (task, t) in &e.tasks {
+                let fly = t.flywheel.as_ref().map_or("-".to_owned(), |(n, v, r)| {
+                    format!("{n} {v:.1} (rank {r}/{})", t.contenders)
+                });
+                let best = t
+                    .best_method
+                    .as_ref()
+                    .map_or("-".to_owned(), |(n, v)| format!("{n} {v:.1}"));
+                let _ = writeln!(
+                    s,
+                    "{task:?}: flywheel {fly}; best method {best}; delta {}",
+                    opt(t.delta_vs_best_method)
+                );
+            }
+            if !e.caveats.is_empty() {
+                let _ = writeln!(s, "caveats: {}", e.caveats.join(", "));
+            }
+        }
         let _ = writeln!(s, "== alarms {:?}", self.alarms.by_code);
         for f in &self.alarms.fail_closed {
             let _ = writeln!(s, "FAIL-CLOSED {f}");
@@ -487,5 +611,53 @@ mod tests {
         assert!(s.missing.contains_key("val.loss") && !s.missing.contains_key("dope.freeze"));
         let text = s.render_text();
         assert!(text.contains("DIMINISHING") && text.contains("step.span.fwd"));
+        assert!(s.elo.is_none() && s.missing.contains_key("fly.elo"));
+    }
+
+    #[test]
+    fn elo_is_read_against_methods_in_the_latest_snapshot() {
+        use crate::flywheel::{EloFitId, EloSolver, Rating};
+        let fit = EloFitId {
+            solver: EloSolver::NsFamilyBt,
+            contender_set_sha256: "c".into(),
+            cohort_sha256: "h".into(),
+            family_roster_sha256: None,
+            fold_map_sha256: None,
+            anchor: Some("H38".into()),
+            tie_rule: "abs:1e-4".into(),
+        };
+        let snap = |round: u32, fly: f64| {
+            let mut e = EloSnapshot::new(round, fit.clone(), 10, 4);
+            let r = |elo| Rating {
+                elo,
+                ci95: None,
+                wins: None,
+                ties: None,
+                losses: None,
+            };
+            e.ratings.insert(
+                TaskType::Regression,
+                [
+                    ("H38".to_owned(), r(1500.0)),
+                    ("tabpfn".to_owned(), r(1610.0)),
+                    ("ROUND_2".to_owned(), r(fly)),
+                ]
+                .into(),
+            );
+            serde_json::to_value(e).unwrap()
+        };
+        let (old, new) = (snap(1, 1400.0), snap(2, 1550.0));
+        let s = summarize(std::iter::empty(), [(ELO_SCHEMA, &new), (ELO_SCHEMA, &old)]);
+        let e = s.elo.unwrap();
+        assert_eq!(
+            (e.round, e.snapshots_seen),
+            (2, 2),
+            "latest round wins regardless of order"
+        );
+        let t = &e.tasks[&TaskType::Regression];
+        assert_eq!(t.flywheel, Some(("ROUND_2".to_owned(), 1550.0, 2)));
+        assert_eq!(t.best_method, Some(("tabpfn".to_owned(), 1610.0)));
+        assert_eq!(t.delta_vs_best_method, Some(-60.0));
+        assert!(e.caveats.contains(&"no_frozen_family_roster".to_owned()));
     }
 }

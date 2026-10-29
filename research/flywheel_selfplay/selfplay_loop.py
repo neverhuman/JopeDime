@@ -580,6 +580,9 @@ def train_flywheel_model_for_round(
                     telemetry_h2d=step_telemetry[7] if step_telemetry is not None else None,
                     telemetry_step=opt_steps + 1,
                 )
+                if telemetry_timer is not None:
+                    # Host enqueue of the forward pass only; the read-backs below get their own span.
+                    telemetry_timer.mark(step_telemetry[3]["step.span.fwd"])
                 dir_margin_value = None
                 evo_val_value = None
                 if batch_dict.get("evo_batch") is not None:
@@ -592,13 +595,15 @@ def train_flywheel_model_for_round(
                 loss_host = float(loss.detach().cpu().item())
                 ep_loss_vals.append(loss_host)
                 if telemetry_timer is not None:
-                    telemetry_timer.mark(step_telemetry[3]["step.span.fwd"])
+                    # The existing evo-loss and loss read-backs: the host waits here for all queued
+                    # GPU work, including the previous step's backward and optimizer kernels.
+                    telemetry_timer.mark(step_telemetry[3]["step.span.readback"])
                 optimizer.zero_grad()
                 loss.backward()
                 if telemetry_timer is not None:
                     telemetry_timer.mark(step_telemetry[3]["step.span.bwd"])
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                lr_host = float(optimizer.param_groups[0]["lr"])
+                lr_host = float(optimizer.param_groups[0]["lr"]) if telemetry_timer is not None else None
                 optimizer.step()
                 scheduler.step()
                 opt_steps += 1
@@ -693,6 +698,7 @@ def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, de
         "step.span.data",
         "step.span.h2d",
         "step.span.fwd",
+        "step.span.readback",
         "step.span.bwd",
         "step.span.opt",
         "step.wall",
