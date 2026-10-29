@@ -249,3 +249,16 @@ input/cost parity and35 focused tests passed. Each round retained raw dev
 2.267816,2 optimizer updates,64 native evaluations and unchanged DOPE.
 See `results/fused-20261029/dev-regression/device_cache_live_proof.json`.
 Historical Oct23–24 GP-only133–211s has a different scope.
+
+GP promotion-drought escape (1935 nudge): accepted adapter ties previously
+disabled exploration indefinitely because its trigger watched only rejections.
+The independent GP clock now requires18 consecutive completed, evaluated rounds
+with zero promotions. It schedules3 exploration rounds, then3 ranked-only
+cooldown rounds; only actual completed rounds with this policy advance its
+phase. Promotion or missing/unknown/evaluation-free history resets the drought.
+The existing proposal generator produces16/context during exploration, and
+`gp_selection_indices` chooses two ranked plus two seeded random alternatives.
+Max4 native evaluations/context,64/round; training/LR/dev/DOPE unchanged.
+Pre-outcome policy: `results/fused-20261029/dev-regression/gp_exploration_preregistration.json`.
+Full per-round/per-context audit: `results/fused-20261029/dev-regression/gp_plateau_audit.md`.
+No promotion or dev improvement is promised by exploration.

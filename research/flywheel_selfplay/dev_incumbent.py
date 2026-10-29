@@ -110,6 +110,34 @@ def proposal_plan(
         if streak
         else 0
     )
+    # GP progress is independent of adapter admission. Accepted dev ties must
+    # not disable the GP escape path indefinitely. Unknown/missing rounds do not
+    # count as completed zero-promotion rounds.
+    gp_drought = 0
+    gp_policy_rounds = 0
+    expected_round = round_idx - 1
+    for row in sorted(history, key=lambda r: r["round"], reverse=True):
+        if (
+            row["round"] != expected_round
+            or row.get("promotions") != 0
+            or row.get("GP", {}).get("evaluated", 0) <= 0
+        ):
+            break
+        gp_drought += 1
+        prior_policy = row.get("proposal_plan", {}).get("gp_drought_policy", {})
+        if (
+            prior_policy.get("version") == "promotion-drought-burst/v1"
+            and prior_policy.get("phase") is not None
+        ):
+            gp_policy_rounds += 1
+        expected_round -= 1
+    threshold, burst, cooldown = 18, 3, 3
+    # Historical rounds before installation did not execute this protocol;
+    # advance the burst/cooldown clock only for its actual completed rounds.
+    burst_phase = gp_policy_rounds % (burst + cooldown)
+    drought_exploration = gp_drought >= threshold and burst_phase < burst
+    rejection_exploration = same >= k or streak >= k
+    explore = rejection_exploration or drought_exploration
     return {
         "version": "rejection-escape/v1",
         "round_seed": seed + round_idx * 104729,
@@ -120,8 +148,21 @@ def proposal_plan(
         "steps": min(max_steps, 1) if streak else max_steps,
         "minimum_lr": 1e-6,
         "training_rotation": round_idx,
-        "gp_exploration": same >= k or streak >= k,
-        "gp_generated_per_context": 16 if same >= k or streak >= k else 8,
+        "gp_exploration": explore,
+        "gp_exploration_reason": "adapter_rejection"
+        if rejection_exploration
+        else "promotion_drought_burst"
+        if drought_exploration
+        else "ranked_exploitation",
+        "gp_drought_policy": {
+            "version": "promotion-drought-burst/v1",
+            "threshold_rounds": threshold,
+            "burst_rounds": burst,
+            "cooldown_rounds": cooldown,
+            "completed_zero_promotion_rounds": gp_drought,
+            "phase": burst_phase if gp_drought >= threshold else None,
+        },
+        "gp_generated_per_context": 16 if explore else 8,
         "gp_max_evaluated_per_context": 4,
         "reason": "smaller_lr_one_step_and_new_seed_after_rejection"
         if streak

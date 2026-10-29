@@ -638,8 +638,20 @@ def main():
         },
     }
     manifest["executed_source_hashes"] = {
-        str(p): sha(p) for p in [Path(__file__), HERE / "automatic_promotion.py"]
+        str(p): sha(p)
+        for p in [
+            Path(__file__),
+            HERE / "automatic_promotion.py",
+            HERE / "dev_incumbent.py",
+            HERE / "device_pool_cache.py",
+        ]
     }
+    preregistration = args.output / "gp_exploration_preregistration.json"
+    manifest["gp_exploration_preregistration"] = (
+        {"path": str(preregistration), "sha256": sha(preregistration)}
+        if preregistration.exists()
+        else None
+    )
     manifest["resume_checkpoint"] = (
         {"path": str(args.resume), "sha256": sha(args.resume)} if args.resume else None
     )

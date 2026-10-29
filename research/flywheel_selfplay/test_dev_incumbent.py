@@ -176,3 +176,78 @@ def test_projection_refuses_frozen_parameters():
     p = torch.nn.Parameter(torch.tensor([0.1]), requires_grad=False)
     with pytest.raises(ValueError):
         project_score_margins([p], [])
+
+
+def gp_drought_history(count):
+    return [
+        {
+            "round": n,
+            "adapter_admission": {"accepted": True},
+            "candidate_dev_utility": {"mean": 2.267816},
+            "promotions": 0,
+            "GP": {"evaluated": 64},
+        }
+        for n in range(1, count + 1)
+    ]
+
+
+def test_gp_drought_explores_despite_accepted_adapter_ties():
+    from dev_incumbent import proposal_plan
+
+    plan = proposal_plan(42, 19, gp_drought_history(18))
+    assert plan["gp_exploration"]
+    assert plan["steps"] == 2 and plan["lr_factor"] == 1
+    assert plan["gp_generated_per_context"] == 16
+    assert plan["gp_max_evaluated_per_context"] == 4
+
+
+@pytest.mark.parametrize(
+    ("count", "explore"),
+    [
+        (17, False),
+        (18, True),
+        (19, True),
+        (20, True),
+        (21, False),
+        (23, False),
+        (24, True),
+    ],
+)
+def test_gp_drought_bursts_and_cooldown_are_bounded(count, explore):
+    from dev_incumbent import proposal_plan
+
+    history = gp_drought_history(count)
+    for index, row in enumerate(history):
+        row["proposal_plan"] = proposal_plan(42, row["round"], history[:index])
+    plan = proposal_plan(42, count + 1, history)
+    assert plan["gp_exploration"] is explore
+    assert plan["gp_drought_policy"]["completed_zero_promotion_rounds"] == count
+    assert plan["gp_max_evaluated_per_context"] == 4
+    assert plan["gp_generated_per_context"] == (16 if explore else 8)
+
+
+@pytest.mark.parametrize(
+    "interruption", ["promotion", "missing", "no_evaluations", "gap"]
+)
+def test_gp_drought_resets_on_promotion_or_unknown_outcome(interruption):
+    from dev_incumbent import proposal_plan
+
+    history = gp_drought_history(18)
+    if interruption == "promotion":
+        history[-1]["promotions"] = 1
+    elif interruption == "missing":
+        del history[-1]["promotions"]
+    elif interruption == "no_evaluations":
+        history[-1]["GP"]["evaluated"] = 0
+    else:
+        history.pop()
+    plan = proposal_plan(42, 19, history)
+    assert not plan["gp_exploration"]
+    assert plan["gp_drought_policy"]["completed_zero_promotion_rounds"] == 0
+
+
+def test_first_gp_policy_installation_does_not_invent_past_exploration_rounds():
+    from dev_incumbent import proposal_plan
+
+    plan = proposal_plan(42, 24, gp_drought_history(23))
+    assert plan["gp_exploration"] and plan["gp_drought_policy"]["phase"] == 0
