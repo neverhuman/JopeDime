@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
 
@@ -12,7 +13,10 @@ import torch.nn as nn
 
 from jope.telemetry import dope_guard as g
 
-NS3 = Path("/home/ubuntu/jope_plan/ns/dope_freeze_guard.py")
+# The NS3 reference guard lives outside the product tree; point this at it to run the
+# digest cross-check, which is skipped otherwise.
+_NS3_ENV = os.environ.get("JOPE_NS3_DOPE_GUARD")
+NS3 = Path(_NS3_ENV) if _NS3_ENV else None
 
 
 class Fused(nn.Module):
@@ -54,7 +58,11 @@ def test_golden_tensor_digest() -> None:
     )
 
 
-@pytest.mark.skipif(not NS3.exists(), reason="NS3 reference guard is outside the product tree")
+# os.path.isfile, not Path.is_file: in CI containers an unreadable parent directory makes
+# Python 3.12's Path methods raise PermissionError instead of returning False.
+@pytest.mark.skipif(
+    NS3 is None or not os.path.isfile(NS3), reason="set JOPE_NS3_DOPE_GUARD to the NS3 reference guard"
+)
 def test_digests_match_ns3_reference() -> None:
     ns3 = _load_ns3()
     net, _ = frozen()

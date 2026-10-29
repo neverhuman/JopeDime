@@ -278,6 +278,20 @@ impl PyRecorder {
         let manifest = recorder.close().map_err(runtime_error)?;
         serde_json::to_string(&manifest).map_err(runtime_error)
     }
+
+    fn interrupt(&mut self) -> PyResult<String> {
+        if let Some(collector) = &mut self.host_collector {
+            collector.stop();
+        }
+        self.host_collector.take();
+        self.producers.clear();
+        let recorder = self
+            .recorder
+            .take()
+            .ok_or_else(|| PyRuntimeError::new_err("recorder is already closed"))?;
+        let manifest = recorder.interrupt().map_err(runtime_error)?;
+        serde_json::to_string(&manifest).map_err(runtime_error)
+    }
 }
 
 fn parse_metric_groups(value: Value) -> PyResult<BTreeMap<u16, BTreeMap<u16, String>>> {

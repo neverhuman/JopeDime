@@ -1587,6 +1587,10 @@
         "training"
       ]
     },
+    "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
+      "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
+      "role": "infrastructure"
+    },
     "python:python/src/jope/research/test_exact_accept.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
@@ -1738,6 +1742,19 @@
         "policy"
       ]
     },
+    "python:python/tests/test_fused_hpc_accelerator.py": {
+      "role": "regression",
+      "subsystems": [
+        "performance"
+      ]
+    },
+    "python:python/tests/test_north_star_flywheel_guards.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "evaluation"
+      ]
+    },
     "python:python/tests/test_optional_task_readiness.py": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
@@ -1765,6 +1782,43 @@
       "subsystems": [
         "encoders",
         "storage"
+      ]
+    },
+    "python:python/tests/test_telemetry_dope_guard.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:python/tests/test_telemetry_eval_hooks.py": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "training"
+      ]
+    },
+    "python:python/tests/test_telemetry_gp_hooks.py": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "python:python/tests/test_telemetry_io_hooks.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:python/tests/test_telemetry_train_hooks.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:python/tests/test_telemetry_val_hooks.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
       ]
     },
     "python:python/tests/test_test_exact_campaign.py": {
@@ -1802,6 +1856,18 @@
       "subsystems": [
         "training"
       ]
+    },
+    "python:research/flywheel_selfplay/test_automatic_promotion.py": {
+      "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/test_dev_incumbent.py": {
+      "reason": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/test_device_pool_cache.py": {
+      "reason": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline.",
+      "role": "research"
     },
     "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
       "reason": "Executed offline CPU synthetic/stub unit checks for Phase 7 flywheel v3 comparator labels, fail-closed S3/checkpoint guards, and OS worker SIGKILL vs CPython ITIMER_REAL deadline boundaries in the Python lane; research flywheel outside the reviewed product baseline.",
@@ -4649,6 +4715,23 @@
         "evidence"
       ],
       "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+    },
+    "target:jope-telemetry/bin/jtel": {
+      "reason": "Telemetry inspection and export CLI; operational tooling that supports training runs without exercising a regression subsystem",
+      "role": "infrastructure"
+    },
+    "target:jope-telemetry/rlib+cdylib/jope_telemetry": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "target:jope-telemetry/test/train_gp_tracker": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "gp"
+      ]
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",

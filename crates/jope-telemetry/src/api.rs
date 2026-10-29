@@ -17,14 +17,15 @@ use anyhow::{bail, Context, Result};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
-/// Upper bound on trackers (contexts) per GP session. With `gp::Config`'s archive bound this
-/// keeps a session's archives under 16 × 128 KiB = 2 MiB.
-pub const MAX_TRACKERS: usize = 16;
+/// Upper bound on trackers (contexts) per GP session. The real flywheel evolves up to 29
+/// contexts per round (R1, 2026-10-24), so 16 was too few. With `gp::Config`'s archive bound
+/// this keeps a session's archives under 64 × 64 KiB = 4 MiB.
+pub const MAX_TRACKERS: usize = 64;
 /// The op vocabulary is small (the stage and head pools), so its interner is bounded tighter.
 pub const OPS_MAX_ENTRIES: usize = 1024;
 /// Largest generation payload accepted. A real flywheel generation (about 16 candidates) is
 /// under 10 KB, so this only bounds a pathological caller.
-pub const MAX_GENERATION_JSON_BYTES: usize = 2 * 1024 * 1024;
+pub const MAX_GENERATION_JSON_BYTES: usize = 1024 * 1024;
 pub const OPS_MAX_BYTES: usize = 64 * 1024;
 
 /// One evaluated candidate as the Python recorder sends it. Field names follow the flywheel
@@ -323,6 +324,28 @@ mod tests {
         assert_eq!(dict["ops"].as_array().unwrap().len(), 3);
         assert!(s
             .summarize_json(&gen.to_string().replace("\"novel\"", "\"mystery\""))
+            .is_err());
+    }
+
+    #[test]
+    fn tracker_cap_covers_a_real_round_and_refuses_beyond_it() {
+        let mut s = GpSession::new(None, None, false);
+        let gen = |ctx: usize| {
+            json!({"context": format!("c{ctx}"), "round": 0, "generation": 0, "candidates": [
+                {"dsl": "(pipe X (h))", "status": "completed", "fitness": -1.0, "provenance": "novel"}
+            ]})
+            .to_string()
+        };
+        for ctx in 0..MAX_TRACKERS {
+            s.summarize_json(&gen(ctx)).unwrap();
+        }
+        assert!(
+            s.summarize_json(&gen(0)).is_ok(),
+            "an existing context is still accepted"
+        );
+        assert!(s.summarize_json(&gen(MAX_TRACKERS)).is_err());
+        assert!(s
+            .summarize_json(&"x".repeat(MAX_GENERATION_JSON_BYTES + 1))
             .is_err());
     }
 

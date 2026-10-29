@@ -136,6 +136,34 @@ class CPUThrottleGuard:
 
 GLOBAL_CPU_GUARD = CPUThrottleGuard(max_cpu_pct=80.0, hard_cap_pct=85.0)
 
+# Optional telemetry (TELEMETRY_SPEC rows E5-E7 and G1-G12). Both stay None unless a caller
+# installs them with `set_flywheel_telemetry`; while None, nothing below imports, creates or calls
+# any telemetry code. Evaluator result dicts, and so every persisted output, are unchanged either way.
+_EVAL_TELEMETRY_EMIT = None
+_GP_TELEMETRY = None
+_EVAL_RC = threading.local()
+# Generation numbers keep counting across calls for one context; telemetry failures are counted
+# here and never raised into the evolution loop.
+_GP_TELEMETRY_STATE = {"generation": {}, "failures": 0}
+_GP_TELEMETRY_LOCK = threading.Lock()
+
+
+def set_flywheel_telemetry(eval_emit=None, gp_session=None, gp_emit=None, bank_shas=()):
+    """Install telemetry sinks: `eval_emit(kind, record)` gets one record per evaluator batch;
+    `gp_session` (a `jope_telemetry` GpSession) and `gp_emit` get one summary per generation."""
+    global _EVAL_TELEMETRY_EMIT, _GP_TELEMETRY
+    _EVAL_TELEMETRY_EMIT = eval_emit
+    _GP_TELEMETRY = (gp_session, gp_emit, frozenset(bank_shas)) if gp_session is not None else None
+
+
+def _new_eval_telemetry():
+    # One instance per batch: under the evo queue several batches run at once in one process.
+    if _EVAL_TELEMETRY_EMIT is None:
+        return None
+    from jope.telemetry.eval_hooks import EvalBatchTelemetry
+
+    return EvalBatchTelemetry(emit=_EVAL_TELEMETRY_EMIT)
+
 
 def get_feat_names() -> list[str]:
     global _FEAT_NAMES
@@ -332,8 +360,24 @@ def compute_s1_metrics_from_inner_cv(dsl: str, inner_cv: list[dict]) -> dict:
 
 
 def _eval_single_dsl_worker(args: tuple) -> dict:
-    slot_id, s1_input_path, outer_input_path, dsl, operator, parents, run_outer_test, timeout_s = args
+    tel = args[8] if len(args) > 8 else None
+    if tel is None:
+        return _eval_single_dsl_worker_impl(args, None, 0)
+    ti = args[0] % 1000
+    tel.worker_start(ti)
+    try:
+        return _eval_single_dsl_worker_impl(args, tel, ti)
+    finally:
+        tel.worker_end(ti)
+
+
+def _eval_single_dsl_worker_impl(args: tuple, tel, ti: int) -> dict:
+    slot_id, s1_input_path, outer_input_path, dsl, operator, parents, run_outer_test, timeout_s = args[:8]
+    if tel is not None:
+        g0 = time.perf_counter_ns()
     GLOBAL_CPU_GUARD.wait_for_headroom(max_wait_s=1.0)
+    if tel is not None:
+        tel.guard_wait(ti, time.perf_counter_ns() - g0)
     EVAL_SCRATCH_ROOT.mkdir(parents=True, exist_ok=True)
     slot_dir = EVAL_SCRATCH_ROOT / f"slot-{os.getpid()}-{threading.get_ident()}-{slot_id}"
     slot_dir.mkdir(parents=True, exist_ok=True)
@@ -359,6 +403,8 @@ def _eval_single_dsl_worker(args: tuple) -> dict:
         "HOME": str(slot_dir),
     }
     t0 = time.monotonic()
+    if tel is not None:
+        f0 = time.perf_counter_ns()
     try:
         rc = subprocess.run(
             ["nice", "-n", "10", str(WORKER_BIN), "--fit-s1", str(s1_input_path), str(cand_path), str(out_path)],
@@ -369,6 +415,8 @@ def _eval_single_dsl_worker(args: tuple) -> dict:
         ).returncode
     except subprocess.TimeoutExpired:
         rc = -1
+    if tel is not None:
+        tel.fit_done(ti, time.perf_counter_ns() - f0, rc)
 
     wall_s = round(time.monotonic() - t0, 4)
     f412, proj16 = featurize_dsl_412(dsl)
@@ -406,7 +454,12 @@ def _eval_single_dsl_worker(args: tuple) -> dict:
     test_ratio = None
     cv_test_agreed = False
     if run_outer_test and outer_input_path is not None and s1_res["status"] == "completed":
+        if tel is not None:
+            g0 = time.perf_counter_ns()
         GLOBAL_CPU_GUARD.wait_for_headroom(max_wait_s=0.8)
+        if tel is not None:
+            tel.guard_wait(ti, time.perf_counter_ns() - g0)
+            o0 = time.perf_counter_ns()
         out_test_path = slot_dir / "eval_outer.json"
         out_test_path.unlink(missing_ok=True)
         try:
@@ -433,6 +486,8 @@ def _eval_single_dsl_worker(args: tuple) -> dict:
         except Exception:
             pass
 
+    if tel is not None and run_outer_test and outer_input_path is not None and s1_res["status"] == "completed":
+        tel.outer_done(ti, time.perf_counter_ns() - o0)
     s1_res.update({
         "dsl": dsl,
         "program_sha256": prog_sha,
@@ -490,10 +545,21 @@ def evaluate_gp_batch_rust(
         for i, c in enumerate(candidates)
     ]
 
+    tel = _new_eval_telemetry()
+    if tel is not None:
+        tasks = [t + (tel,) for t in tasks]
+        tel.batch_begin("full", len(tasks), max_workers, eff_workers)
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(eff_workers, len(tasks))) as ex:
         for res in ex.map(_eval_single_dsl_worker, tasks):
             results.append(res)
+    if tel is not None:
+        try:
+            tel.batch_end()
+            _EVAL_RC.by_sha = {r["program_sha256"]: tel.rc_of(i) for i, r in enumerate(results)}
+        except Exception:
+            with _GP_TELEMETRY_LOCK:
+                _GP_TELEMETRY_STATE["failures"] += 1
     return results
 
 
@@ -525,10 +591,21 @@ def evaluate_gp_batch_rust_strat300(
         )
         for i, c in enumerate(candidates)
     ]
+    tel = _new_eval_telemetry()
+    if tel is not None:
+        tasks = [t + (tel,) for t in tasks]
+        tel.batch_begin("strat300", len(tasks), max_workers, eff_workers)
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(eff_workers, len(tasks))) as ex:
         for res in ex.map(_eval_single_dsl_worker, tasks):
             results.append(res)
+    if tel is not None:
+        try:
+            tel.batch_end()
+            _EVAL_RC.by_sha = {r["program_sha256"]: tel.rc_of(i) for i, r in enumerate(results)}
+        except Exception:
+            with _GP_TELEMETRY_LOCK:
+                _GP_TELEMETRY_STATE["failures"] += 1
     return results
 
 
@@ -887,6 +964,18 @@ def evolve_context_slate_generations(
     best_descendant_f300_by_root = {pe["program_sha256"]: float(pe["fitness"]) for pe in parent_evals}
     root_of_sha = {pe["program_sha256"]: pe["program_sha256"] for pe in parent_evals}
 
+    gp_recorder = None
+    if _GP_TELEMETRY is not None:
+        from jope.telemetry.gp_hooks import GenerationRecorder
+
+        gp_session, gp_emit, bank_shas = _GP_TELEMETRY
+        context = hashlib.sha256(teacher_jtt1_gz_path.encode()).hexdigest()[:16]
+        # This call site doesn't know the flywheel round; round 0 here means "not recorded".
+        gp_recorder = GenerationRecorder(gp_session, context, 0, emit=gp_emit, bank_shas=bank_shas)
+        with _GP_TELEMETRY_LOCK:
+            gen_base = _GP_TELEMETRY_STATE["generation"].get(context, 0)
+            _GP_TELEMETRY_STATE["generation"][context] = gen_base + n_generations
+
     for gen_idx in range(n_generations):
         props = propose_flywheel_candidates(
             parent_programs=active_parents,
@@ -951,6 +1040,20 @@ def evolve_context_slate_generations(
 
             if ce["cv_gate_passed"] and c_f300 < p_f300:
                 next_parents.append(ce)
+            if gp_recorder is not None:
+                rc = getattr(_EVAL_RC, "by_sha", {}).get(c_sha)
+                gp_recorder.add(
+                    ce if rc is None else {**ce, "rc": rc},
+                    parent_dsl=parent_rec["dsl"],
+                    improved=bool(ce["cv_gate_passed"] and c_f300 < p_f300),
+                )
+
+        if gp_recorder is not None:
+            try:
+                gp_recorder.finish(gen_base + gen_idx)
+            except Exception:
+                with _GP_TELEMETRY_LOCK:
+                    _GP_TELEMETRY_STATE["failures"] += 1
 
         # Keep top-3 lowest-fitness parents for next generation
         next_parents.sort(key=lambda x: (float(x["fitness"]), x["program_sha256"]))
