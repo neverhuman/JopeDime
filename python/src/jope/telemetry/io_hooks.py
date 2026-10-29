@@ -26,8 +26,17 @@ IO_COLUMNS = (
 )
 H2D_COLUMNS = ("io.h2d.bytes", "io.h2d", "io.h2d_gb_s")
 ARRAY_KEYS = (
-    "ctx_b", "prog_b", "proj_b", "prior_b", "scale_b", "sos_b", "target_f_b",
-    "gate_b", "rev_idx_b", "rev_f_b", "rev_gate_b",
+    "ctx_b",
+    "prog_b",
+    "proj_b",
+    "prior_b",
+    "scale_b",
+    "sos_b",
+    "target_f_b",
+    "gate_b",
+    "rev_idx_b",
+    "rev_f_b",
+    "rev_gate_b",
 )
 
 
@@ -48,7 +57,9 @@ class LocalReadObserver:
         with self._lock:
             self.bytes += size
             self.read_operation_ms += (finished - started) / 1e6
-            self._first_read_ns = started if self._first_read_ns is None else min(self._first_read_ns, started)
+            self._first_read_ns = (
+                started if self._first_read_ns is None else min(self._first_read_ns, started)
+            )
             self._last_read_ns = finished if self._last_read_ns is None else max(self._last_read_ns, finished)
             self.read_ms = (self._last_read_ns - self._first_read_ns) / 1e6
             self.reads += 1
@@ -138,7 +149,9 @@ class BatchIOStats:
 class H2DEventSampler:
     """Sample CUDA copy events without synchronizing; completed events are read lazily."""
 
-    def __init__(self, torch_module: Any, device: str, batch: StepBatch, stride: int = 64, slots: int = 4) -> None:
+    def __init__(
+        self, torch_module: Any, device: str, batch: StepBatch, stride: int = 64, slots: int = 4
+    ) -> None:
         self.batch = batch
         self.stride = max(1, int(stride))
         self.events = []
@@ -154,7 +167,10 @@ class H2DEventSampler:
                 with torch_module.cuda.device(device):
                     self.stream = torch_module.cuda.current_stream(device)
                     self.events = [
-                        (torch_module.cuda.Event(enable_timing=True), torch_module.cuda.Event(enable_timing=True))
+                        (
+                            torch_module.cuda.Event(enable_timing=True),
+                            torch_module.cuda.Event(enable_timing=True),
+                        )
                         for _ in range(slots)
                     ]
             except Exception:
