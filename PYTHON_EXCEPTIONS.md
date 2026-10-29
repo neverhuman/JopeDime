@@ -8,12 +8,12 @@ All remaining `978` tracked `.py` files (`247,596` LOC) are pure orchestration, 
 
 | Exception ID | Category | Kept `.py` Files | Kept LOC | Justification Rule |
 | --- | --- | ---: | ---: | --- |
-| `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 194 | 90,432 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
+| `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 197 | 91,684 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI shim | 3 | 886 | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. |
 | `PR-EXCEPT-EXT-ML` | External third-party Python ML baseline adapters (LightGBM/XGBoost/CatBoost/TabPFN) | 16 | 8,092 | External third-party Python ML baseline adapter (LightGBM/XGBoost/CatBoost/TabPFN parity harness). |
-| **Total Kept** | **All Authorized Python Exceptions** | **213** | **99,410** | **Strict 1-line justification per file below** |
+| **Total Kept** | **All Authorized Python Exceptions** | **216** | **100,662** | **Strict 1-line justification per file below** |
 
-## Per-File 1-Line Justifications (`213` Files)
+## Per-File 1-Line Justifications (`216` Files)
 
 | Path | LOC | Exception Category | 1-Line Justification |
 | --- | ---: | --- | --- |
@@ -190,6 +190,8 @@ All remaining `978` tracked `.py` files (`247,596` LOC) are pure orchestration, 
 | `python/src/jope/dime_score/train.py` | 1822 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Module `train` in `python/src/jope/dime_score`) |
 | `python/src/jope/elo_bench.py` | 436 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Standing Elo benchmark: place the policy's proposals on the 97-algorithm regression ladder.) |
 | `python/src/jope/encoders/foundation.py` | 147 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Foundation-expert dataset encoder (V6 Lane A).) |
+| `python/src/jope/fused_hpc/__init__.py` | 57 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (NS11 Phase E fused-path HPC speed-ups package exports.) |
+| `python/src/jope/fused_hpc/accelerator.py` | 903 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (NS11 Phase E fused-path HPC speed-ups #1-#5: batched fold-cov, fused standardized-X, template dedup, multi-word bitmask, 2D (P, N_tr) bucketing.) |
 | `python/src/jope/gp_factory.py` | 1002 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (jain-GP champion factory: run the REAL feat-math GP per dataset on xbabe1's spare) |
 | `python/src/jope/loop.py` | 552 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Closed-loop runner: sample -> surrogate-rank -> budgeted real CV -> learn.) |
 | `python/src/jope/model.py` | 1063 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Module `model` in `python/src/jope`) |
@@ -225,6 +227,7 @@ All remaining `978` tracked `.py` files (`247,596` LOC) are pure orchestration, 
 | `python/src/jope/validation_gp_study.py` | 970 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Validation-only Jain GP study runner.) |
 | `python/tests/test_experimental_proposal.py` | 383 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Pure boundaries plus separately collected actual CPU checkpoint proposal proof.) |
 | `python/tests/test_frozen_vocabulary_training.py` | 134 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Explicit synthetic full-table training; never accepted checkpoint promotion.) |
+| `python/tests/test_fused_hpc_accelerator.py` | 292 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Parity and speed-up unit tests for the NS11 Phase E fused-path HPC speed-ups #1-#5.) |
 | `python/tests/test_north_star_flywheel_guards.py` | 224 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Tests for the NS3/NS4/NS5/NS7 flywheel training guards.) |
 | `python/tests/test_policy_training_contract.py` | 660 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Synthetic CPU fixtures; no real dataset admission or model-quality claim.) |
 | `python/tests/test_training_campaign.py` | 675 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Explicit synthetic contracts. Tiny CPU optimizer proof is not real-corpus qualification.) |
