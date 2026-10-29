@@ -13,6 +13,7 @@
 
 use crate::heads::std_fit;
 use crate::Rows;
+use rayon::prelude::*;
 
 /// Default neighbor count.
 pub const DEFAULT_K: usize = 32;
@@ -75,28 +76,115 @@ impl KsmoothModel {
         if self.z.is_empty() {
             return x.iter().map(|_| self.y_mean.clamp(-60.0, 60.0)).collect();
         }
+        let n = self.z.len();
         let pf = p as f64;
-        let kk = self.k.min(self.z.len());
+        let kk = self.k.min(n);
+        let uniform_z = p > 0 && self.z.iter().all(|zb| zb.len() == p);
+        let zt: Vec<f64> = if uniform_z {
+            let mut buf = vec![0.0_f64; p * n];
+            for (i, zb) in self.z.iter().enumerate() {
+                for (d, &val) in zb.iter().enumerate() {
+                    buf[d * n + i] = val;
+                }
+            }
+            buf
+        } else {
+            Vec::new()
+        };
+        if crate::is_parallel_enabled() && x.len() * n * p.max(1) >= 65_536 {
+            return x
+                .par_iter()
+                .map_init(
+                    || {
+                        (
+                            Vec::with_capacity(p),
+                            Vec::with_capacity(n),
+                            Vec::with_capacity(n),
+                        )
+                    },
+                    |(zr, d2s, order), row| {
+                        zr.clear();
+                        zr.extend(
+                            (0..p.min(row.len()))
+                                .map(|j| (row[j] - self.means[j]) / self.scales[j]),
+                        );
+                        d2s.clear();
+                        if uniform_z {
+                            d2s.resize(n, 0.0);
+                            for (d, &zrd) in zr.iter().enumerate() {
+                                let col = &zt[d * n..(d + 1) * n];
+                                for (d2, &zbd) in d2s.iter_mut().zip(col.iter()) {
+                                    let t = zrd - zbd;
+                                    *d2 += t * t;
+                                }
+                            }
+                        } else {
+                            for zb in &self.z {
+                                let mut d2 = 0.0;
+                                for d in 0..zr.len().min(zb.len()) {
+                                    let t = zr[d] - zb[d];
+                                    d2 += t * t;
+                                }
+                                d2s.push(d2);
+                            }
+                        }
+                        order.clear();
+                        order.extend(0..n);
+                        let compare =
+                            |&a: &usize, &b: &usize| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b));
+                        if kk > 0 && kk < order.len() {
+                            order.select_nth_unstable_by(kk, compare);
+                        }
+                        order[..kk].sort_unstable_by(compare);
+                        let base = d2s[order[0]];
+                        let mut num = 0.0;
+                        let mut den = 0.0;
+                        for &i in order.iter().take(kk) {
+                            let w = (-self.gamma * (d2s[i] - base) / pf).exp();
+                            num += w * self.ys[i];
+                            den += w;
+                        }
+                        let den = if kk == 0 {
+                            std::hint::black_box(den)
+                        } else {
+                            den
+                        };
+                        (num / den).clamp(-60.0, 60.0)
+                    },
+                )
+                .collect();
+        }
         // Scratch belongs to this prediction call, not to a global pool or the model. Reuse it
         // across query rows, so concurrent callers remain independent without per-row allocation.
         let mut zr = Vec::with_capacity(p);
-        let mut d2s = Vec::with_capacity(self.z.len());
-        let mut order = Vec::with_capacity(self.z.len());
+        let mut d2s = Vec::with_capacity(n);
+        let mut order = Vec::with_capacity(n);
         x.iter()
             .map(|row| {
                 zr.clear();
                 zr.extend((0..p.min(row.len())).map(|j| (row[j] - self.means[j]) / self.scales[j]));
                 d2s.clear();
-                for zb in &self.z {
-                    let mut d2 = 0.0;
-                    for d in 0..zr.len().min(zb.len()) {
-                        let t = zr[d] - zb[d];
-                        d2 += t * t;
+                if uniform_z {
+                    d2s.resize(n, 0.0);
+                    for (d, &zrd) in zr.iter().enumerate() {
+                        let col = &zt[d * n..(d + 1) * n];
+                        for (d2, &zbd) in d2s.iter_mut().zip(col.iter()) {
+                            let t = zrd - zbd;
+                            *d2 += t * t;
+                        }
                     }
-                    d2s.push(d2);
+                } else {
+                    for zb in &self.z {
+                        let mut d2 = 0.0;
+                        for d in 0..zr.len().min(zb.len()) {
+                            let t = zr[d] - zb[d];
+                            d2 += t * t;
+                        }
+                        d2s.push(d2);
+                    }
                 }
                 order.clear();
-                order.extend(0..self.z.len());
+                order.extend(0..n);
                 let compare = |&a: &usize, &b: &usize| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b));
                 // Select the same k rows as the full sort, then sort only that prefix. The row
                 // index makes this a total order even for ties; accumulation order stays exact.
@@ -112,6 +200,11 @@ impl KsmoothModel {
                     num += w * self.ys[i];
                     den += w;
                 }
+                let den = if kk == 0 {
+                    std::hint::black_box(den)
+                } else {
+                    den
+                };
                 (num / den).clamp(-60.0, 60.0)
             })
             .collect()

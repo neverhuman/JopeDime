@@ -4,11 +4,17 @@
 use crate::dsl::Stage;
 use crate::folds::fold_of;
 use crate::genome::GenomeIr;
-use crate::heads::{fit_head, is_head_op, FittedHead, RidgeModel};
+use crate::heads::{
+    fit_head, fit_head_and_predict_train_with_cache, fit_head_with_cache, is_head_op, FittedHead,
+    RidgeModel,
+};
 use crate::kernel::width::{reject_zero_width_rows, WidthMismatch};
 use crate::math_expr::MathExpr;
 use crate::metrics::r2;
-use crate::ops::{apply_op, apply_op_train, fit_op, FittedOp};
+use crate::ops::{
+    apply_op, apply_op_train, fit_op, fit_op_with_cache, is_append_noop_at_max_width, op_append,
+    FittedOp, SortedColumnsCache,
+};
 use crate::target_transform::{fit_target, is_target_op, FittedTarget};
 use crate::{sanitize, Rows};
 use anyhow::{bail, Result};
@@ -58,13 +64,24 @@ pub fn fit(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Model> {
             };
             let mut cur = x.clone();
             sanitize(&mut cur);
+            let mut sorted_cache = SortedColumnsCache::new();
             let mut ops = Vec::with_capacity(transform_stages.len());
             for stage in transform_stages {
-                let op = fit_op(stage, &cur, y_eff)?;
-                cur = apply_op_train(&op, &cur)?;
+                let in_cols = cur.first().map_or(0, Vec::len);
+                let op = fit_op_with_cache(stage, &cur, y_eff, &mut sorted_cache)?;
+                if !is_append_noop_at_max_width(&op, &cur, true) {
+                    cur = apply_op_train(&op, &cur)?;
+                }
+                let new_width = cur.first().map_or(0, Vec::len);
+                sorted_cache.on_stage_complete(op_append(&op), in_cols, new_width);
                 ops.push(op);
             }
-            let head = Box::new(fit_head(&head_stage, &cur, y_eff)?);
+            let head = Box::new(fit_head_with_cache(
+                &head_stage,
+                &cur,
+                y_eff,
+                &mut sorted_cache,
+            )?);
             Ok(Model::Pipeline { target, ops, head })
         }
         GenomeIr::Portfolio(pir) => {
@@ -114,6 +131,65 @@ pub fn fit(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Model> {
                 a,
                 b,
             })
+        }
+    }
+}
+
+/// Fits a `Model` and returns both the fitted `Model` and the training predictions
+/// computed directly from the already-transformed training feature matrix `cur`
+/// (avoiding a second redundant pass through `ops` in `model.predict(tx)`).
+/// Bit-identical (`to_bits()`) to calling `fit(genome, x, y)` followed by `model.predict(x)`.
+pub fn fit_and_predict_train(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<(Model, Vec<f64>)> {
+    if x.is_empty() || y.len() < x.len() {
+        bail!("training data is empty or target is short");
+    }
+    reject_zero_width_rows(x)?;
+    match genome {
+        GenomeIr::Pipeline(dsl) => {
+            let (target_stage, rest) = split_target(&dsl.stages)?;
+            let (transform_stages, head_stage) = split_stages(rest);
+            let target = match target_stage {
+                Some(stage) => Some(fit_target(stage, y)?),
+                None => None,
+            };
+            let y_owned: Vec<f64>;
+            let y_eff: &[f64] = match &target {
+                Some(t) => {
+                    y_owned = t.forward_all(y);
+                    &y_owned
+                }
+                None => y,
+            };
+            let mut cur = x.clone();
+            sanitize(&mut cur);
+            let mut sorted_cache = SortedColumnsCache::new();
+            let mut ops = Vec::with_capacity(transform_stages.len());
+            for stage in transform_stages {
+                let in_cols = cur.first().map_or(0, Vec::len);
+                let op = fit_op_with_cache(stage, &cur, y_eff, &mut sorted_cache)?;
+                if !is_append_noop_at_max_width(&op, &cur, true) {
+                    cur = apply_op_train(&op, &cur)?;
+                }
+                let new_width = cur.first().map_or(0, Vec::len);
+                sorted_cache.on_stage_complete(op_append(&op), in_cols, new_width);
+                ops.push(op);
+            }
+            let (head_val, raw_preds) =
+                fit_head_and_predict_train_with_cache(&head_stage, &cur, y_eff, &mut sorted_cache)?;
+            let head = Box::new(head_val);
+            let tr_preds = match &target {
+                None => raw_preds,
+                Some(t) => raw_preds
+                    .iter()
+                    .map(|p| t.final_clamp(t.inverse(*p)))
+                    .collect(),
+            };
+            Ok((Model::Pipeline { target, ops, head }, tr_preds))
+        }
+        _ => {
+            let model = fit(genome, x, y)?;
+            let tr_preds = model.predict(x)?;
+            Ok((model, tr_preds))
         }
     }
 }
@@ -184,10 +260,12 @@ impl Model {
                 let mut cur = x.clone();
                 sanitize(&mut cur);
                 for (stage, op) in ops.iter().enumerate() {
-                    cur = apply_op(op, &cur).map_err(|mut error| {
-                        error.stage = stage;
-                        error
-                    })?;
+                    if !is_append_noop_at_max_width(op, &cur, false) {
+                        cur = apply_op(op, &cur).map_err(|mut error| {
+                            error.stage = stage;
+                            error
+                        })?;
+                    }
                 }
                 let preds = head.predict(&cur)?;
                 match target {

@@ -12,6 +12,8 @@ use crate::spec::{
 };
 use crate::transpile::EmitOptions;
 
+pub mod recipe_bundle;
+
 pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
     // B05–B07: retain the explicit old-operation numerical contract.
     assert!(
@@ -42,8 +44,10 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
     } else {
         out.push("#![forbid(unsafe_code)]\n#![allow(dead_code)]");
     }
+    let hpc_v1 = opts.hpc_v1 || opts.hpc_v2;
+    let hpc_v2 = opts.hpc_v2;
     for h in helper_set(plan) {
-        let src = helper_src(h, opts.partition_point_quantile_bounds);
+        let src = helper_src(h, opts.partition_point_quantile_bounds, hpc_v1, hpc_v2);
         if !src.is_empty() {
             out.push(src);
         }
@@ -95,17 +99,17 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
                         let name = op_fn_name(op);
                         if !seen.contains(&name) {
                             seen.push(name);
-                            out.push(&op_src(op));
+                            out.push(&op_src(op, hpc_v1, hpc_v2));
                         }
                     }
                 }
             }
             if let PlannedHead::Portfolio(pp) = head {
-                for src in portfolio_srcs(pp, &mut seen) {
+                for src in portfolio_srcs(pp, &mut seen, hpc_v1, hpc_v2) {
                     out.push(&src);
                 }
             } else {
-                for src in head_srcs(head) {
+                for src in head_srcs(head, hpc_v1, hpc_v2) {
                     out.push(&src);
                 }
             }
@@ -113,7 +117,9 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
                 target.as_ref(),
                 stages,
                 head,
-                opts.fast_runtime,
+                opts.fast_runtime || hpc_v1,
+                hpc_v1,
+                hpc_v2,
                 opts.guard_zero_width_roll
                     && stages
                         .iter()
@@ -126,16 +132,21 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
             affine,
         } => {
             out.push(&expression_fn(source, expr));
-            out.push(&model_symbolic(*affine, opts.fast_runtime));
+            out.push(&model_symbolic(
+                *affine,
+                opts.fast_runtime || hpc_v1,
+                hpc_v1,
+            ));
         }
     }
+    let io_block = if hpc_v2 { IO_BLOCK_HPC_V2 } else { IO_BLOCK };
     if scalar_emit::raw_input(plan) {
         out.push(
-            &crate::kernel::scalar_program::io::io_source(ScalarLanguage::Rust, IO_BLOCK)
+            &crate::kernel::scalar_program::io::io_source(ScalarLanguage::Rust, io_block)
                 .expect("scalar IO template"),
         );
     } else {
-        out.push(IO_BLOCK);
+        out.push(io_block);
     }
     out.finish()
 }
@@ -170,10 +181,9 @@ fn module_doc(plan: &Plan, opts: &EmitOptions) -> String {
     lines.join("\n")
 }
 
-/// The row-parallel `predict` wrapper emitted by the fast-runtime profile.
-/// Contiguous chunks in input order, each running the exact sequential
-/// per-row pipeline, so results are bit-identical to the sequential path.
-fn rs_fast_predict_wrapper() -> Vec<String> {
+/// The row-parallel `predict` wrapper emitted by the legacy fast-runtime profile
+/// (`fast_runtime = true, hpc_v1 = false`). Preserved byte-for-byte (`767173b0...`).
+fn rs_fast_predict_wrapper_legacy() -> Vec<String> {
     [
         "    /// Row-parallel predict: contiguous chunks in input order, each running",
         "    /// the exact sequential per-row pipeline, so results are bit-identical.",
@@ -201,9 +211,51 @@ fn rs_fast_predict_wrapper() -> Vec<String> {
     .collect()
 }
 
+/// The bounded row-parallel `predict` wrapper emitted by `hpc_v1 = true`
+/// (`artifact_variant = "hpc_v1"`). Respects `JOPE_CPU_THREADS` (`1..=6`) and
+/// executes the final chunk on the calling thread.
+fn rs_fast_predict_wrapper_hpc_v1() -> Vec<String> {
+    [
+        "    /// Row-parallel predict: contiguous chunks in input order, each running",
+        "    /// the exact sequential per-row pipeline, so results are bit-identical.",
+        "    fn predict(&self, x: &[Vec<f64>]) -> Vec<f64> {",
+        "        let workers = std::env::var(\"JOPE_CPU_THREADS\")",
+        "            .ok()",
+        "            .and_then(|s| s.parse::<usize>().ok())",
+        "            .unwrap_or(1)",
+        "            .clamp(1, 6);",
+        "        if workers <= 1 || x.len() <= 64 {",
+        "            return self.predict_rows(x);",
+        "        }",
+        "        let chunk = (x.len() + workers - 1) / workers;",
+        "        let mut out: Vec<f64> = Vec::with_capacity(x.len());",
+        "        let chunks: Vec<&[Vec<f64>]> = x.chunks(chunk).collect();",
+        "        if chunks.len() <= 1 {",
+        "            return self.predict_rows(x);",
+        "        }",
+        "        let (spawn_chunks, local_chunks) = chunks.split_at(chunks.len() - 1);",
+        "        std::thread::scope(|scope| {",
+        "            let mut parts = Vec::with_capacity(spawn_chunks.len());",
+        "            for rows in spawn_chunks {",
+        "                parts.push(scope.spawn(move || self.predict_rows(rows)));",
+        "            }",
+        "            let local_part = self.predict_rows(local_chunks[0]);",
+        "            for part in parts {",
+        "                out.extend(part.join().expect(\"prediction thread\"));",
+        "            }",
+        "            out.extend(local_part);",
+        "        });",
+        "        out",
+        "    }",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect()
+}
+
 // -------------------------------- helpers ---------------------------------
 
-fn helper_src(h: Helper, partition_point_bounds: bool) -> &'static str {
+fn helper_src(h: Helper, partition_point_bounds: bool, hpc_v1: bool, hpc_v2: bool) -> &'static str {
     match h {
         // Python-only guards; Rust uses the native f64 methods, which already
         // carry the reference semantics.
@@ -456,7 +508,39 @@ fn sanitize(x: &[Vec<f64>]) -> Vec<Vec<f64>> {
 }"#
         }
         Helper::FinishStage => {
-            r#"/// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.
+            if hpc_v2 {
+                r#"/// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.
+fn finish_stage(x: &[Vec<f64>], mut out: Vec<Vec<f64>>, append: bool) -> Vec<Vec<f64>> {
+    if append && out.is_empty() {
+        out = x.to_vec();
+    } else if append {
+        for (i, row) in out.iter_mut().enumerate() {
+            let keep = (x[i].len() + row.len()).min(512);
+            let mut merged = Vec::with_capacity(keep);
+            let prefix = x[i].len().min(512);
+            merged.extend_from_slice(&x[i][..prefix]);
+            let rem = 512usize.saturating_sub(prefix).min(row.len());
+            merged.extend_from_slice(&row[..rem]);
+            *row = merged;
+        }
+    }
+    for row in out.iter_mut() {
+        if row.len() > 512 {
+            row.truncate(512);
+        }
+        for v in row.iter_mut() {
+            if !v.is_finite() {
+                *v = 0.0;
+            }
+        }
+        if row.is_empty() {
+            row.push(0.0);
+        }
+    }
+    out
+}"#
+            } else {
+                r#"/// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.
 fn finish_stage(x: &[Vec<f64>], mut out: Vec<Vec<f64>>, append: bool) -> Vec<Vec<f64>> {
     if append {
         for (i, row) in out.iter_mut().enumerate() {
@@ -480,6 +564,7 @@ fn finish_stage(x: &[Vec<f64>], mut out: Vec<Vec<f64>>, append: bool) -> Vec<Vec
     }
     out
 }"#
+            }
         }
         Helper::SortedColumn => {
             r#"/// Column j of x in ascending order.
@@ -575,12 +660,35 @@ fn upper_bound(sorted_values: &[f64], v: f64) -> usize {
             }
         }
         Helper::MidRank => {
-            r#"/// Average of the strict and non-strict ranks of v, scaled to [0, 1].
+            if hpc_v1 {
+                r#"/// Average of the strict and non-strict ranks of v, scaled to [0, 1].
+fn mid_rank(sorted_values: &[f64], v: f64) -> f64 {
+    let n = sorted_values.len();
+    let lb = lower_bound(sorted_values, v);
+    let ub = if lb < n {
+        let slb = sorted_values[lb];
+        if slb > v {
+            lb
+        } else if slb == v && (lb + 1 == n || sorted_values[lb + 1] > v) {
+            lb + 1
+        } else {
+            upper_bound(sorted_values, v)
+        }
+    } else if n == 0 || sorted_values[n - 1] < v {
+        n
+    } else {
+        upper_bound(sorted_values, v)
+    };
+    (lb + ub) as f64 / (2.0 * n as f64)
+}"#
+            } else {
+                r#"/// Average of the strict and non-strict ranks of v, scaled to [0, 1].
 fn mid_rank(sorted_values: &[f64], v: f64) -> f64 {
     let lb = lower_bound(sorted_values, v);
     let ub = upper_bound(sorted_values, v);
     (lb + ub) as f64 / (2.0 * sorted_values.len() as f64)
 }"#
+            }
         }
         Helper::Probit => {
             r#"/// Standard normal quantile function via Acklam's rational approximation.
@@ -611,7 +719,24 @@ fn probit(p: f64) -> f64 {
 }"#
         }
         Helper::QuantileEdges => {
-            r#"/// Interior quantile cut points (1/bins .. (bins-1)/bins) for every column.
+            if hpc_v2 {
+                r#"/// Interior quantile cut points (1/bins .. (bins-1)/bins) for the first max_cols columns.
+fn quantile_edges_capped(x: &[Vec<f64>], bins: usize, max_cols: usize) -> Vec<Vec<f64>> {
+    let cols = x[0].len().min(max_cols);
+    let mut edges = Vec::with_capacity(cols);
+    for j in 0..cols {
+        let s = sorted_column(x, j);
+        edges.push((1..bins).map(|b| quantile(&s, b as f64 / bins as f64)).collect());
+    }
+    edges
+}
+
+/// Interior quantile cut points (1/bins .. (bins-1)/bins) for every column.
+fn quantile_edges(x: &[Vec<f64>], bins: usize) -> Vec<Vec<f64>> {
+    quantile_edges_capped(x, bins, x[0].len())
+}"#
+            } else {
+                r#"/// Interior quantile cut points (1/bins .. (bins-1)/bins) for every column.
 fn quantile_edges(x: &[Vec<f64>], bins: usize) -> Vec<Vec<f64>> {
     let mut edges = Vec::new();
     for j in 0..x[0].len() {
@@ -620,6 +745,7 @@ fn quantile_edges(x: &[Vec<f64>], bins: usize) -> Vec<Vec<f64>> {
     }
     edges
 }"#
+            }
         }
         Helper::Dot => {
             r#"/// Inner product over the shorter of the two vectors.
@@ -826,7 +952,109 @@ fn cholesky_solve(a: &mut [f64], b: &[f64], p: usize) -> Vec<f64> {
 }"#
         }
         Helper::JacobiEigen => {
-            r#"/// Eigendecomposition of the symmetric p x p matrix `a` (flattened row-major,
+            if hpc_v2 {
+                r#"/// Eigendecomposition of the symmetric p x p matrix `a` (flattened row-major,
+/// overwritten) by cyclic Jacobi rotations (Jacobi, 1846): returns
+/// (eigenvalues, eigenvectors) with the eigenvectors flattened row-major so
+/// column i holds the unit vector of eigenvalue i. Deterministic: fixed sweep
+/// order, at most 20 sweeps, stopping as soon as a whole-matrix check finds
+/// the off-diagonal mass under a 1e-12-of-trace threshold.
+fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
+    let mut vt = vec![0.0; p * p];
+    for i in 0..p {
+        vt[i * p + i] = 1.0;
+    }
+    let mut scale = 0.0;
+    for i in 0..p {
+        scale += a[i * p + i];
+    }
+    let limit = (scale * 1e-12) * (scale * 1e-12);
+    for _ in 0..20 {
+        let mut off = 0.0;
+        for i in 0..p {
+            for j in (i + 1)..p {
+                off += a[i * p + j] * a[i * p + j];
+            }
+        }
+        if off <= limit {
+            break;
+        }
+        for i in 0..p {
+            for j in (i + 1)..p {
+                let apq = a[i * p + j];
+                if apq == 0.0 {
+                    continue;
+                }
+                let theta = (a[j * p + j] - a[i * p + i]) / (2.0 * apq);
+                let t = if theta >= 0.0 {
+                    1.0 / (theta + (theta * theta + 1.0).sqrt())
+                } else {
+                    -1.0 / ((theta * theta + 1.0).sqrt() - theta)
+                };
+                let c = 1.0 / (t * t + 1.0).sqrt();
+                let s = t * c;
+                {
+                    let (head_a, tail_a) = a.split_at_mut(j * p);
+                    let ai = &mut head_a[i * p..(i + 1) * p];
+                    let aj = &mut tail_a[..p];
+                    for (aik, ajk) in ai[..i].iter_mut().zip(aj[..i].iter_mut()) {
+                        let (old_i, old_j) = (*aik, *ajk);
+                        *aik = c * old_i - s * old_j;
+                        *ajk = s * old_i + c * old_j;
+                    }
+                    for (aik, ajk) in ai[(j + 1)..p].iter_mut().zip(aj[(j + 1)..p].iter_mut()) {
+                        let (old_i, old_j) = (*aik, *ajk);
+                        *aik = c * old_i - s * old_j;
+                        *ajk = s * old_i + c * old_j;
+                    }
+                }
+                for k in (i + 1)..j {
+                    let old_i = a[i * p + k];
+                    let old_j = a[k * p + j];
+                    let new_i = c * old_i - s * old_j;
+                    let new_j = s * old_i + c * old_j;
+                    a[i * p + k] = new_i;
+                    a[k * p + j] = new_j;
+                }
+                let aii = a[i * p + i];
+                let ajj = a[j * p + j];
+                a[i * p + i] = c * c * aii - 2.0 * s * c * apq + s * s * ajj;
+                a[j * p + j] = s * s * aii + 2.0 * s * c * apq + c * c * ajj;
+                a[i * p + j] = 0.0;
+                a[j * p + i] = 0.0;
+                let (head_v, tail_v) = vt.split_at_mut(j * p);
+                let vi = &mut head_v[i * p..(i + 1) * p];
+                let vj = &mut tail_v[..p];
+                for (vki, vkj) in vi.iter_mut().zip(vj.iter_mut()) {
+                    let (old_i, old_j) = (*vki, *vkj);
+                    *vki = c * old_i - s * old_j;
+                    *vkj = s * old_i + c * old_j;
+                }
+            }
+            for col in (i + 1)..p {
+                a[col * p + i] = a[i * p + col];
+            }
+        }
+        for r in 1..p {
+            for col in 0..r {
+                a[col * p + r] = a[r * p + col];
+            }
+        }
+    }
+    let mut e = vec![0.0; p];
+    for i in 0..p {
+        e[i] = a[i * p + i];
+    }
+    let mut v = vec![0.0; p * p];
+    for col in 0..p {
+        for k in 0..p {
+            v[k * p + col] = vt[col * p + k];
+        }
+    }
+    (e, v)
+}"#
+            } else {
+                r#"/// Eigendecomposition of the symmetric p x p matrix `a` (flattened row-major,
 /// overwritten) by cyclic Jacobi rotations (Jacobi, 1846): returns
 /// (eigenvalues, eigenvectors) with the eigenvectors flattened row-major so
 /// column i holds the unit vector of eigenvalue i. Deterministic: fixed sweep
@@ -897,6 +1125,7 @@ fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
     }
     (e, v)
 }"#
+            }
         }
         Helper::SoftThreshold => {
             r#"/// Shrink v toward zero by t (the lasso proximal step).
@@ -910,9 +1139,301 @@ fn soft_threshold(v: f64, t: f64) -> f64 {
     }
 }"#
         }
-        Helper::TreeCore => TREE_CORE,
+        Helper::TreeCore => {
+            if hpc_v1 {
+                TREE_CORE_HPC_V1
+            } else {
+                TREE_CORE
+            }
+        }
     }
 }
+
+const TREE_CORE_HPC_V1: &str = r#"/// One node of a regression tree; feature -1 marks a leaf holding `value`.
+struct TreeNode {
+    feature: i64,
+    threshold: i64,
+    left: usize,
+    right: usize,
+    value: f64,
+}
+
+/// Quantile cut points for one feature, consecutive duplicates collapsed.
+fn tree_bin_edges(x: &[Vec<f64>], f: usize, n: usize, bins: usize) -> Vec<f64> {
+    if n == 0 {
+        return Vec::new();
+    }
+    let first = x[0][f];
+    let mut vals: Vec<f64> = Vec::with_capacity(n);
+    let mut all_same = true;
+    for r in 0..n {
+        let v = x[r][f];
+        if v.to_bits() != first.to_bits() {
+            all_same = false;
+        }
+        vals.push(v);
+    }
+    if all_same {
+        return Vec::new();
+    }
+    vals.sort_by(|a, b| a.total_cmp(b));
+    let mut edges = Vec::with_capacity(bins.saturating_sub(1));
+    for q in 1..bins {
+        let idx = ((vals.len() as f64) * (q as f64 / bins as f64)) as usize;
+        edges.push(vals[idx.min(vals.len() - 1)]);
+    }
+    edges.dedup();
+    edges
+}
+
+/// Histogram split search over L1D-adaptive live columns (row-major `rb` when `n_live <= 80`,
+/// feature-major `fm` when `n_live > 80`; unit hessians kept as exact counts).
+fn grow_tree(rb: &[u16], fm: &[u16], n_rows: usize, live: &[usize], top: &[usize], grad: &[f64], rows: &[usize],
+             rows_pool: &mut [usize], right_tmp: &mut [usize], nbins: usize, max_depth: usize,
+             min_leaf: usize, lam: f64, depth: usize, tree: &mut Vec<TreeNode>,
+             leaf_of: &mut [usize], gh: &mut [f64], cnt: &mut [usize]) -> usize {
+    let is_root = depth == 0;
+    let node_len = if is_root { n_rows } else { rows.len() };
+    let mut g = 0.0;
+    if is_root {
+        for i in 0..n_rows {
+            g += grad[i];
+        }
+    } else {
+        for &i in rows {
+            g += grad[i];
+        }
+    }
+    let h = node_len as f64;
+    let leaf_value = -g / (h + lam);
+    if depth >= max_depth || node_len < 2 * min_leaf || live.is_empty() {
+        let idx = tree.len();
+        tree.push(TreeNode { feature: -1, threshold: 0, left: 0, right: 0, value: leaf_value });
+        if is_root {
+            for v in &mut leaf_of[..n_rows] {
+                *v = idx;
+            }
+        } else {
+            for &i in rows {
+                leaf_of[i] = idx;
+            }
+        }
+        return idx;
+    }
+    let mut best_gain = 0.0;
+    let mut best_feat: i64 = -1;
+    let mut best_thr: i64 = 0;
+    let mut best_kb = 0usize;
+    let parent = g * g / (h + lam);
+    let n_live = live.len();
+    let use_rb = !rb.is_empty();
+    if use_rb {
+        let stride = nbins.max(1);
+        for k in 0..n_live {
+            let base = k * stride;
+            for b in 0..=top[k].min(nbins.saturating_sub(1)) {
+                gh[base + b] = 0.0;
+                cnt[base + b] = 0;
+            }
+        }
+        if is_root {
+            for i in 0..n_rows {
+                let gi = grad[i];
+                let row = &rb[i * n_live..(i + 1) * n_live];
+                for k in 0..n_live {
+                    let at = k * stride + row[k] as usize;
+                    gh[at] += gi;
+                    cnt[at] += 1;
+                }
+            }
+        } else {
+            for &i in rows {
+                let gi = grad[i];
+                let row = &rb[i * n_live..(i + 1) * n_live];
+                for k in 0..n_live {
+                    let at = k * stride + row[k] as usize;
+                    gh[at] += gi;
+                    cnt[at] += 1;
+                }
+            }
+        }
+        for (k, &f) in live.iter().enumerate() {
+            let base = k * stride;
+            let limit = nbins.saturating_sub(1).min(top[k]);
+            let mut gl = 0.0;
+            let mut nl = 0usize;
+            for b in 0..limit {
+                gl += gh[base + b];
+                nl += cnt[base + b];
+                if cnt[base + b] == 0 {
+                    continue;
+                }
+                let hl = nl as f64;
+                let gr = g - gl;
+                let hr = h - hl;
+                if hl < 1.0 || hr < 1.0 {
+                    continue;
+                }
+                let gain = gl * gl / (hl + lam) + gr * gr / (hr + lam) - parent;
+                if gain > best_gain {
+                    best_gain = gain;
+                    best_kb = k;
+                    best_feat = f as i64;
+                    best_thr = b as i64;
+                }
+            }
+        }
+    } else {
+        for (k, &f) in live.iter().enumerate() {
+            let limit_hi = top[k].min(nbins.saturating_sub(1));
+            for b in 0..=limit_hi {
+                gh[b] = 0.0;
+                cnt[b] = 0;
+            }
+            let col = &fm[k * n_rows..(k + 1) * n_rows];
+            if is_root {
+                for i in 0..n_rows {
+                    let b = col[i] as usize;
+                    gh[b] += grad[i];
+                    cnt[b] += 1;
+                }
+            } else {
+                for &i in rows {
+                    let b = col[i] as usize;
+                    gh[b] += grad[i];
+                    cnt[b] += 1;
+                }
+            }
+            let limit = nbins.saturating_sub(1).min(top[k]);
+            let mut gl = 0.0;
+            let mut nl = 0usize;
+            for b in 0..limit {
+                gl += gh[b];
+                nl += cnt[b];
+                if cnt[b] == 0 {
+                    continue;
+                }
+                let hl = nl as f64;
+                let gr = g - gl;
+                let hr = h - hl;
+                if hl < 1.0 || hr < 1.0 {
+                    continue;
+                }
+                let gain = gl * gl / (hl + lam) + gr * gr / (hr + lam) - parent;
+                if gain > best_gain {
+                    best_gain = gain;
+                    best_kb = k;
+                    best_feat = f as i64;
+                    best_thr = b as i64;
+                }
+            }
+        }
+    }
+    if best_feat < 0 || best_gain <= 1e-9 {
+        let idx = tree.len();
+        tree.push(TreeNode { feature: -1, threshold: 0, left: 0, right: 0, value: leaf_value });
+        if is_root {
+            for v in &mut leaf_of[..n_rows] {
+                *v = idx;
+            }
+        } else {
+            for &i in rows {
+                leaf_of[i] = idx;
+            }
+        }
+        return idx;
+    }
+    let (here, deeper_pool) = rows_pool.split_at_mut(node_len);
+    let thr_u16 = best_thr as u16;
+    let mut l_len = 0usize;
+    let mut r_len = 0usize;
+    if use_rb {
+        if is_root {
+            for i in 0..n_rows {
+                if rb[i * n_live + best_kb] <= thr_u16 {
+                    here[l_len] = i;
+                    l_len += 1;
+                } else {
+                    right_tmp[r_len] = i;
+                    r_len += 1;
+                }
+            }
+        } else {
+            for &i in rows {
+                if rb[i * n_live + best_kb] <= thr_u16 {
+                    here[l_len] = i;
+                    l_len += 1;
+                } else {
+                    right_tmp[r_len] = i;
+                    r_len += 1;
+                }
+            }
+        }
+    } else {
+        let col = &fm[best_kb * n_rows..(best_kb + 1) * n_rows];
+        if is_root {
+            for i in 0..n_rows {
+                if col[i] <= thr_u16 {
+                    here[l_len] = i;
+                    l_len += 1;
+                } else {
+                    right_tmp[r_len] = i;
+                    r_len += 1;
+                }
+            }
+        } else {
+            for &i in rows {
+                if col[i] <= thr_u16 {
+                    here[l_len] = i;
+                    l_len += 1;
+                } else {
+                    right_tmp[r_len] = i;
+                    r_len += 1;
+                }
+            }
+        }
+    }
+    if l_len < min_leaf || r_len < min_leaf {
+        let idx = tree.len();
+        tree.push(TreeNode { feature: -1, threshold: 0, left: 0, right: 0, value: leaf_value });
+        if is_root {
+            for v in &mut leaf_of[..n_rows] {
+                *v = idx;
+            }
+        } else {
+            for &i in rows {
+                leaf_of[i] = idx;
+            }
+        }
+        return idx;
+    }
+    here[l_len..l_len + r_len].copy_from_slice(&right_tmp[..r_len]);
+    let (left_rows, right_rows) = here[..l_len + r_len].split_at(l_len);
+    let idx = tree.len();
+    tree.push(TreeNode { feature: -1, threshold: 0, left: 0, right: 0, value: 0.0 });
+    let left = grow_tree(rb, fm, n_rows, live, top, grad, left_rows, deeper_pool, right_tmp, nbins,
+                         max_depth, min_leaf, lam, depth + 1, tree, leaf_of, gh, cnt);
+    let right = grow_tree(rb, fm, n_rows, live, top, grad, right_rows, deeper_pool, right_tmp, nbins,
+                          max_depth, min_leaf, lam, depth + 1, tree, leaf_of, gh, cnt);
+    tree[idx] = TreeNode { feature: best_feat, threshold: best_thr, left, right, value: 0.0 };
+    idx
+}
+
+/// Follow split nodes to a leaf and return its value.
+fn route_tree(tree: &[TreeNode], row_bins: &[i64]) -> f64 {
+    let mut idx = 0usize;
+    loop {
+        let node = &tree[idx];
+        if node.feature < 0 {
+            return node.value;
+        }
+        idx = if row_bins[node.feature as usize] <= node.threshold {
+            node.left
+        } else {
+            node.right
+        };
+    }
+}"#;
 
 const TREE_CORE: &str = r#"/// One node of a regression tree; feature -1 marks a leaf holding `value`.
 struct TreeNode {
@@ -1239,7 +1760,7 @@ fn doc_comment(text: &str) -> String {
         .join("\n")
 }
 
-fn op_src(op: &PlannedOp) -> String {
+fn op_src(op: &PlannedOp, hpc_v1: bool, hpc_v2: bool) -> String {
     let doc = doc_comment(&format!("This transform {}", crate::spec::op_doc(op)));
     let body: &str = match op {
         PlannedOp::ScalarV2 { .. } => "",
@@ -1360,7 +1881,44 @@ fn blom_normal_scores_apply(state: &BlomNormalScores, x: &[Vec<f64>], append: bo
 }"#
         }
         PlannedOp::QuantileBins { .. } => {
-            r#"struct QuantileBinIndexer {
+            if hpc_v2 {
+                r#"struct QuantileBinIndexer {
+    edges: Vec<Vec<f64>>,
+}
+
+{DOC}
+fn quantile_bin_indexer_fit(x: &[Vec<f64>], bins: usize, append: bool) -> QuantileBinIndexer {
+    let max_cols = if append {
+        512usize.saturating_sub(x[0].len())
+    } else {
+        512usize
+    };
+    QuantileBinIndexer { edges: quantile_edges_capped(x, bins, max_cols) }
+}
+
+fn quantile_bin_indexer_apply(state: &QuantileBinIndexer, x: &[Vec<f64>], bins: usize, append: bool) -> Vec<Vec<f64>> {
+    if append && x[0].len() >= 512 {
+        return finish_stage(x, Vec::new(), true);
+    }
+    let out: Vec<Vec<f64>> = x
+        .iter()
+        .map(|row| {
+            let cap = if append {
+                512usize.saturating_sub(row.len())
+            } else {
+                512usize
+            };
+            row.iter()
+                .take(cap.min(state.edges.len()))
+                .enumerate()
+                .map(|(j, v)| lower_bound(&state.edges[j], *v) as f64 / (bins as f64 - 1.0))
+                .collect()
+        })
+        .collect();
+    finish_stage(x, out, append)
+}"#
+            } else {
+                r#"struct QuantileBinIndexer {
     edges: Vec<Vec<f64>>,
 }
 
@@ -1381,6 +1939,7 @@ fn quantile_bin_indexer_apply(state: &QuantileBinIndexer, x: &[Vec<f64>], bins: 
         .collect();
     finish_stage(x, out, append)
 }"#
+            }
         }
         PlannedOp::BinOnehot { .. } => {
             r#"struct QuantileOnehotEncoder {
@@ -1406,7 +1965,55 @@ fn quantile_onehot_encoder_apply(state: &QuantileOnehotEncoder, x: &[Vec<f64>], 
 }"#
         }
         PlannedOp::Hinge { .. } => {
-            r#"struct HingeBasis {
+            if hpc_v2 {
+                r#"struct HingeBasis {
+    knots: Vec<Vec<f64>>,
+}
+
+{DOC}
+fn hinge_basis_fit(x: &[Vec<f64>], knots: usize, append: bool) -> HingeBasis {
+    let cols = x[0].len();
+    let needed_cols = if append {
+        let rem = 512usize.saturating_sub(cols);
+        (rem + knots.max(1) - 1) / knots.max(1)
+    } else {
+        (512usize + knots.max(1) - 1) / knots.max(1)
+    };
+    let fit_cols = cols.min(needed_cols);
+    let mut fitted = Vec::with_capacity(fit_cols);
+    for j in 0..fit_cols {
+        let s = sorted_column(x, j);
+        fitted.push((1..(knots + 1)).map(|i| quantile(&s, i as f64 / (knots + 1) as f64)).collect());
+    }
+    HingeBasis { knots: fitted }
+}
+
+fn hinge_basis_apply(state: &HingeBasis, x: &[Vec<f64>], append: bool) -> Vec<Vec<f64>> {
+    if (append && x[0].len() >= 512) || state.knots.is_empty() {
+        return finish_stage(x, Vec::new(), append);
+    }
+    let mut out = Vec::with_capacity(x.len());
+    for row in x {
+        let cap = if append {
+            512usize.saturating_sub(row.len())
+        } else {
+            512usize
+        };
+        let mut values = Vec::with_capacity((row.len() * state.knots[0].len()).min(cap));
+        'outer: for (j, v) in row.iter().take(state.knots.len()).enumerate() {
+            for t in &state.knots[j] {
+                if values.len() >= cap {
+                    break 'outer;
+                }
+                values.push((v - t).max(0.0));
+            }
+        }
+        out.push(values);
+    }
+    finish_stage(x, out, append)
+}"#
+            } else {
+                r#"struct HingeBasis {
     knots: Vec<Vec<f64>>,
 }
 
@@ -1433,6 +2040,7 @@ fn hinge_basis_apply(state: &HingeBasis, x: &[Vec<f64>], append: bool) -> Vec<Ve
     }
     finish_stage(x, out, append)
 }"#
+            }
         }
         PlannedOp::WinsorClip { .. } => {
             r#"struct WinsorLimiter {
@@ -1469,7 +2077,40 @@ fn winsor_limiter_apply(state: &WinsorLimiter, x: &[Vec<f64>], append: bool) -> 
 }"#
         }
         PlannedOp::Cheb { .. } => {
-            r#"{DOC}
+            if hpc_v2 {
+                r#"{DOC}
+fn chebyshev_basis_apply(x: &[Vec<f64>], degree: usize, append: bool) -> Vec<Vec<f64>> {
+    if append && x[0].len() >= 512 {
+        return finish_stage(x, Vec::new(), true);
+    }
+    let mut out = Vec::with_capacity(x.len());
+    for row in x {
+        let cap = if append {
+            512usize.saturating_sub(row.len())
+        } else {
+            512usize
+        };
+        let mut values = Vec::with_capacity((row.len() * degree).min(cap));
+        'outer: for v in row {
+            let u = (2.0 * v - 1.0).clamp(-1.0, 1.0);
+            let mut t_prev = 1.0;
+            let mut t_cur = u;
+            for _ in 0..degree {
+                if values.len() >= cap {
+                    break 'outer;
+                }
+                values.push(t_cur);
+                let t_next = 2.0 * u * t_cur - t_prev;
+                t_prev = t_cur;
+                t_cur = t_next;
+            }
+        }
+        out.push(values);
+    }
+    finish_stage(x, out, append)
+}"#
+            } else {
+                r#"{DOC}
 fn chebyshev_basis_apply(x: &[Vec<f64>], degree: usize, append: bool) -> Vec<Vec<f64>> {
     let mut out = Vec::new();
     for row in x {
@@ -1489,9 +2130,58 @@ fn chebyshev_basis_apply(x: &[Vec<f64>], degree: usize, append: bool) -> Vec<Vec
     }
     finish_stage(x, out, append)
 }"#
+            }
         }
         PlannedOp::PolyInteract => {
-            r#"struct PairwiseProducts {
+            if hpc_v1 {
+                r#"struct PairwiseProducts {
+    pairs: Vec<(usize, usize)>,
+}
+
+{DOC}
+fn pairwise_products_fit(x: &[Vec<f64>]) -> PairwiseProducts {
+    let cols = x[0].len();
+    let mut pairs: Vec<(usize, usize)> = (0..cols).map(|i| (i, i)).collect();
+    let mut full = false;
+    for i in 0..cols {
+        if full {
+            break;
+        }
+        for j in (i + 1)..cols {
+            if pairs.len() >= 512 {
+                full = true;
+                break;
+            }
+            pairs.push((i, j));
+        }
+    }
+    PairwiseProducts { pairs }
+}
+
+fn pairwise_products_apply(state: &PairwiseProducts, x: &[Vec<f64>], append: bool) -> Vec<Vec<f64>> {
+    if append && x[0].len() >= 512 {
+        return finish_stage(x, Vec::new(), true);
+    }
+    let out: Vec<Vec<f64>> = x
+        .iter()
+        .map(|row| {
+            let cap = if append {
+                512usize.saturating_sub(row.len())
+            } else {
+                512usize
+            };
+            state
+                .pairs
+                .iter()
+                .take(cap)
+                .map(|&(a, b)| row[a] * row[b])
+                .collect()
+        })
+        .collect();
+    finish_stage(x, out, append)
+}"#
+            } else {
+                r#"struct PairwiseProducts {
     pairs: Vec<(usize, usize)>,
 }
 
@@ -1522,6 +2212,7 @@ fn pairwise_products_apply(state: &PairwiseProducts, x: &[Vec<f64>], append: boo
         .collect();
     finish_stage(x, out, append)
 }"#
+            }
         }
         PlannedOp::RffCos { .. } => {
             r#"struct RandomFourierCosineFeatures {
@@ -2426,23 +3117,29 @@ fn derive_src(n: usize, source: &str, expr: &crate::mathexpr::MathAst) -> String
 
 // --------------------------------- heads -----------------------------------
 
-fn head_srcs(head: &PlannedHead) -> Vec<String> {
+fn head_srcs(head: &PlannedHead, hpc_v1: bool, hpc_v2: bool) -> Vec<String> {
     let doc = doc_comment(&format!("This head is {}", crate::spec::head_doc(head)));
-    head_srcs_with_doc(head, &doc)
+    head_srcs_with_doc(head, &doc, hpc_v1, hpc_v2)
 }
 
-fn head_srcs_with_doc(head: &PlannedHead, doc: &str) -> Vec<String> {
+fn head_srcs_with_doc(head: &PlannedHead, doc: &str, hpc_v1: bool, hpc_v2: bool) -> Vec<String> {
+    let gbm_src = if hpc_v1 { GBM_SRC_HPC_V1 } else { GBM_SRC };
+    let ksmooth_src = if hpc_v2 {
+        KSMOOTH_SRC_HPC_V2
+    } else {
+        KSMOOTH_SRC
+    };
     match head {
         PlannedHead::Ridge { .. } => vec![RIDGE_SRC.replace("{DOC}", doc)],
         PlannedHead::RidgeGcv => vec![GCV_RIDGE_SRC.replace("{DOC}", doc)],
         PlannedHead::ElasticNet { .. } => vec![ELASTIC_SRC.replace("{DOC}", doc)],
-        PlannedHead::Gbm(_) => vec![GBM_SRC.replace("{DOC}", doc)],
+        PlannedHead::Gbm(_) => vec![gbm_src.replace("{DOC}", doc)],
         PlannedHead::Blend { .. } => vec![
             RIDGE_SRC.replace(
                 "{DOC}",
                 "/// Ridge regression member of the blend (see blended_regression_fit).",
             ),
-            GBM_SRC.replace(
+            gbm_src.replace(
                 "{DOC}",
                 "/// Boosted-trees member of the blend (see blended_regression_fit).",
             ),
@@ -2452,7 +3149,7 @@ fn head_srcs_with_doc(head: &PlannedHead, doc: &str) -> Vec<String> {
         PlannedHead::Krr { .. } => vec![KRR_SRC.replace("{DOC}", doc)],
         PlannedHead::Gpr { .. } => vec![GPR_SRC.replace("{DOC}", doc)],
         PlannedHead::GprKernel { .. } => vec![GPRK_SRC.replace("{DOC}", doc)],
-        PlannedHead::Ksmooth { .. } => vec![KSMOOTH_SRC.replace("{DOC}", doc)],
+        PlannedHead::Ksmooth { .. } => vec![ksmooth_src.replace("{DOC}", doc)],
         PlannedHead::Stack => vec![
             RIDGE_SRC.replace(
                 "{DOC}",
@@ -2493,7 +3190,12 @@ fn stack_src() -> String {
 /// Every section the compact portfolio head needs, in deterministic order
 /// (the exact twin of emit_py::portfolio_srcs; both mirror portfolio.rs
 /// statement by statement).
-fn portfolio_srcs(pp: &crate::spec::PortfolioPlan, seen: &mut Vec<&'static str>) -> Vec<String> {
+fn portfolio_srcs(
+    pp: &crate::spec::PortfolioPlan,
+    seen: &mut Vec<&'static str>,
+    hpc_v1: bool,
+    hpc_v2: bool,
+) -> Vec<String> {
     use crate::spec::PlannedMemberKind;
     let mut out: Vec<String> = Vec::new();
     for member in &pp.members {
@@ -2502,7 +3204,7 @@ fn portfolio_srcs(pp: &crate::spec::PortfolioPlan, seen: &mut Vec<&'static str>)
                 let name = op_fn_name(&stage.op);
                 if !seen.contains(&name) {
                     seen.push(name);
-                    out.push(op_src(&stage.op));
+                    out.push(op_src(&stage.op, hpc_v1, hpc_v2));
                 }
             }
         }
@@ -2516,7 +3218,7 @@ fn portfolio_srcs(pp: &crate::spec::PortfolioPlan, seen: &mut Vec<&'static str>)
     let proj_name = op_fn_name(&proj_op);
     if !seen.contains(&proj_name) {
         seen.push(proj_name);
-        out.push(op_src(&proj_op));
+        out.push(op_src(&proj_op, hpc_v1, hpc_v2));
     }
     let mut seen_heads: Vec<&'static str> = Vec::new();
     let mut seen_aux: Vec<&'static str> = Vec::new();
@@ -2528,7 +3230,7 @@ fn portfolio_srcs(pp: &crate::spec::PortfolioPlan, seen: &mut Vec<&'static str>)
                 let doc = "/// Component model of the internally validated ensemble (see \
                            internally_validated_ensemble_fit)."
                     .to_string();
-                for src in head_srcs_with_doc(head, &doc) {
+                for src in head_srcs_with_doc(head, &doc, hpc_v1, hpc_v2) {
                     out.push(rs_strip_dup_aux(src, &mut seen_aux));
                 }
             }
@@ -2544,7 +3246,7 @@ fn portfolio_srcs(pp: &crate::spec::PortfolioPlan, seen: &mut Vec<&'static str>)
         out.push(PF_DUP_AVERAGE_SRC.to_string());
     }
     for (i, member) in pp.members.iter().enumerate() {
-        out.push(rs_component_src(i + 1, member));
+        out.push(rs_component_src(i + 1, member, hpc_v2));
     }
     out.push(rs_component_dispatch(pp));
     out.push(rs_portfolio_driver(pp));
@@ -2607,7 +3309,7 @@ fn rs_member_title(member: &crate::spec::PlannedMember) -> String {
     }
 }
 
-fn rs_component_src(cid: usize, member: &crate::spec::PlannedMember) -> String {
+fn rs_component_src(cid: usize, member: &crate::spec::PlannedMember, hpc_v2: bool) -> String {
     use crate::spec::PlannedMemberKind;
     let title = rs_member_title(member);
     let mut lines: Vec<String> = Vec::new();
@@ -2646,10 +3348,11 @@ fn rs_component_src(cid: usize, member: &crate::spec::PlannedMember) -> String {
             lines.push("    let x = sanitize(x);".to_string());
             for (i, stage) in stages.iter().enumerate() {
                 let n = i + 1;
-                let (fit_call, apply_call) = op_calls(&stage.op, n);
+                let (fit_call, apply_call) = op_calls(&stage.op, n, hpc_v2);
                 let state = format!("stage{n}");
                 if let Some(fit_call) = fit_call {
-                    lines.push(format!("    let {state} = {fit_call};"));
+                    let fit = fit_call.replace("{append}", rs_bool(stage.append));
+                    lines.push(format!("    let {state} = {fit};"));
                 }
                 let apply = apply_call
                     .replace("{state_val}", &state)
@@ -2671,7 +3374,7 @@ fn rs_component_src(cid: usize, member: &crate::spec::PlannedMember) -> String {
             lines.push("    let x = sanitize(x);".to_string());
             for (i, stage) in stages.iter().enumerate() {
                 let n = i + 1;
-                let (_, apply_call) = op_calls(&stage.op, n);
+                let (_, apply_call) = op_calls(&stage.op, n, hpc_v2);
                 let apply = apply_call
                     .replace("{state_val}", &format!("state.stage{n}"))
                     .replace("{state}", &format!("&state.stage{n}"))
@@ -3705,6 +4408,187 @@ fn elastic_net_predict(state: &ElasticNet, x: &[Vec<f64>]) -> Vec<f64> {
             z += state.w[j] * xs;
         }
         predictions.push(z.clamp(-60.0, 60.0));
+    }
+    predictions
+}"#;
+
+const GBM_SRC_HPC_V1: &str = r#"struct GradientBoostedTrees {
+    edges: Vec<Vec<f64>>,
+    trees: Vec<Vec<TreeNode>>,
+    used_features: Vec<usize>,
+    init: f64,
+    lr: f64,
+    n_feat: usize,
+    fallback: f64,
+}
+
+{DOC}
+fn gradient_boosted_trees_fit(x: &[Vec<f64>], y: &[f64], rounds: usize, max_depth: usize, lr: f64,
+                              lam: f64, bins: usize, min_leaf: usize, max_features: usize) -> GradientBoostedTrees {
+    let n = x.len().min(y.len());
+    let cols = x[0].len();
+    let n_feat = cols.min(max_features);
+    if n < 4 || n_feat == 0 {
+        let m = mean_of(&y[..n.max(1).min(y.len())]);
+        return GradientBoostedTrees {
+            edges: Vec::new(),
+            trees: Vec::new(),
+            used_features: Vec::new(),
+            init: m,
+            lr,
+            n_feat: 0,
+            fallback: m,
+        };
+    }
+    let workers = std::env::var("JOPE_CPU_THREADS")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(1)
+        .clamp(1, 6);
+    let edges: Vec<Vec<f64>> = if workers > 1 && n_feat >= 32 && n * n_feat >= 16384 {
+        let chunk = (n_feat + workers - 1) / workers;
+        let f_all: Vec<usize> = (0..n_feat).collect();
+        let chunks: Vec<&[usize]> = f_all.chunks(chunk).collect();
+        if chunks.len() <= 1 {
+            (0..n_feat).map(|f| tree_bin_edges(x, f, n, bins)).collect()
+        } else {
+            let mut out = Vec::with_capacity(n_feat);
+            let (spawn_chunks, local_chunks) = chunks.split_at(chunks.len() - 1);
+            std::thread::scope(|scope| {
+                let mut handles = Vec::with_capacity(spawn_chunks.len());
+                for fs in spawn_chunks {
+                    handles.push(scope.spawn(move || {
+                        fs.iter().map(|&f| tree_bin_edges(x, f, n, bins)).collect::<Vec<_>>()
+                    }));
+                }
+                let local_part: Vec<Vec<f64>> = local_chunks[0]
+                    .iter()
+                    .map(|&f| tree_bin_edges(x, f, n, bins))
+                    .collect();
+                for h in handles {
+                    out.extend(h.join().expect("tree_bin_edges thread"));
+                }
+                out.extend(local_part);
+            });
+            out
+        }
+    } else {
+        (0..n_feat).map(|f| tree_bin_edges(x, f, n, bins)).collect()
+    };
+    let mut live: Vec<usize> = Vec::with_capacity(n_feat);
+    let mut top: Vec<usize> = Vec::with_capacity(n_feat);
+    let mut live_hashes: Vec<u64> = Vec::with_capacity(n_feat);
+    let mut fm: Vec<u16> = Vec::with_capacity(n_feat * n);
+    let mut col = vec![0u16; n];
+    for f in 0..n_feat {
+        let ef = &edges[f];
+        if ef.is_empty() {
+            continue;
+        }
+        let mut first = 0u16;
+        let mut all_same = true;
+        let mut max_bin = 0u16;
+        let mut h64: u64 = 0xcbf29ce484222325;
+        for r in 0..n {
+            let v = if f < x[r].len() { x[r][f] } else { 0.0 };
+            let b = lower_bound(ef, v) as u16;
+            if r == 0 {
+                first = b;
+            } else if b != first {
+                all_same = false;
+            }
+            if b > max_bin {
+                max_bin = b;
+            }
+            h64 ^= b as u64;
+            h64 = h64.wrapping_mul(0x100000001b3);
+            col[r] = b;
+        }
+        if all_same {
+            continue;
+        }
+        let mut is_dup = false;
+        for (k_prev, &h_prev) in live_hashes.iter().enumerate() {
+            if h_prev == h64 && fm[k_prev * n..(k_prev + 1) * n] == col[..] {
+                is_dup = true;
+                break;
+            }
+        }
+        if is_dup {
+            continue;
+        }
+        live.push(f);
+        top.push(max_bin as usize);
+        live_hashes.push(h64);
+        fm.extend_from_slice(&col);
+    }
+    let n_live = live.len();
+    let stride = bins.max(1);
+    let mut rb: Vec<u16> = Vec::new();
+    let (mut gh, mut cnt) = if n_live > 0 && n_live * stride <= 2560 {
+        rb.resize(n * n_live, 0u16);
+        for k in 0..n_live {
+            let src = &fm[k * n..(k + 1) * n];
+            for r in 0..n {
+                rb[r * n_live + k] = src[r];
+            }
+        }
+        fm.clear();
+        (vec![0.0; n_live * stride], vec![0usize; n_live * stride])
+    } else {
+        (vec![0.0; stride], vec![0usize; stride])
+    };
+    let init = mean_of(&y[..n]);
+    let mut f_train = vec![init; n];
+    let mut grad = vec![0.0; n];
+    let mut leaf_of = vec![0usize; n];
+    let mut rows_pool = vec![0usize; max_depth.max(1) * n];
+    let mut right_tmp = vec![0usize; n];
+    let mut trees = Vec::with_capacity(rounds);
+    for _ in 0..rounds {
+        for i in 0..n {
+            grad[i] = f_train[i] - y[i];
+        }
+        let mut tree: Vec<TreeNode> = Vec::with_capacity((1usize << (max_depth + 1)).min(64));
+        grow_tree(&rb, &fm, n, &live, &top, &grad, &[], &mut rows_pool, &mut right_tmp, bins,
+                  max_depth, min_leaf, lam, 0, &mut tree, &mut leaf_of, &mut gh, &mut cnt);
+        for i in 0..n {
+            f_train[i] += lr * tree[leaf_of[i]].value;
+        }
+        trees.push(tree);
+    }
+    let mut seen_feat = vec![false; n_feat];
+    let mut used_features = Vec::new();
+    for tree in &trees {
+        for node in tree {
+            if node.feature >= 0 {
+                let f = node.feature as usize;
+                if f < n_feat && !seen_feat[f] {
+                    seen_feat[f] = true;
+                    used_features.push(f);
+                }
+            }
+        }
+    }
+    GradientBoostedTrees { edges, trees, used_features, init, lr, n_feat, fallback: init }
+}
+
+fn gradient_boosted_trees_predict(state: &GradientBoostedTrees, x: &[Vec<f64>]) -> Vec<f64> {
+    if state.n_feat == 0 {
+        return vec![state.fallback; x.len()];
+    }
+    let mut predictions = Vec::with_capacity(x.len());
+    let mut row_bins = vec![0i64; state.n_feat];
+    for row in x {
+        for &f in &state.used_features {
+            let v = if f < row.len() { row[f] } else { 0.0 };
+            row_bins[f] = lower_bound(&state.edges[f], v) as i64;
+        }
+        let mut value = state.init;
+        for tree in &state.trees {
+            value += state.lr * route_tree(tree, &row_bins);
+        }
+        predictions.push(value);
     }
     predictions
 }"#;
@@ -5094,6 +5978,110 @@ fn nadaraya_watson_regression_predict(state: &NadarayaWatsonRegression, x: &[Vec
     predictions
 }"#;
 
+const KSMOOTH_SRC_HPC_V2: &str = r#"struct NadarayaWatsonRegression {
+    means: Vec<f64>,
+    scales: Vec<f64>,
+    z: Vec<Vec<f64>>,
+    ys: Vec<f64>,
+    y_mean: f64,
+}
+
+{DOC}
+fn nadaraya_watson_regression_fit(x: &[Vec<f64>], y: &[f64]) -> NadarayaWatsonRegression {
+    let n = x.len().min(y.len());
+    let p = x[0].len();
+    let (means, scales) = std_fit(x);
+    let mut y_mean = 0.0;
+    for i in 0..n {
+        y_mean += y[i];
+    }
+    y_mean /= n.max(1) as f64;
+    if n < 8 || p == 0 {
+        return NadarayaWatsonRegression {
+            means,
+            scales,
+            z: Vec::new(),
+            ys: Vec::new(),
+            y_mean,
+        };
+    }
+    let z: Vec<Vec<f64>> = x[..n]
+        .iter()
+        .map(|row| (0..p).map(|j| (row[j] - means[j]) / scales[j]).collect())
+        .collect();
+    let ys: Vec<f64> = y[..n].to_vec();
+    NadarayaWatsonRegression { means, scales, z, ys, y_mean }
+}
+
+fn nadaraya_watson_regression_predict(state: &NadarayaWatsonRegression, x: &[Vec<f64>],
+                                      k: usize, gamma: f64) -> Vec<f64> {
+    let p = state.means.len();
+    if state.z.is_empty() {
+        return x.iter().map(|_| state.y_mean.clamp(-60.0, 60.0)).collect();
+    }
+    let n = state.z.len();
+    let pf = p as f64;
+    let kk = k.min(n);
+    let uniform_z = p > 0 && state.z.iter().all(|zb| zb.len() == p);
+    let zt: Vec<f64> = if uniform_z {
+        let mut buf = vec![0.0_f64; p * n];
+        for (i, zb) in state.z.iter().enumerate() {
+            for (d, &val) in zb.iter().enumerate() {
+                buf[d * n + i] = val;
+            }
+        }
+        buf
+    } else {
+        Vec::new()
+    };
+    let mut zr = Vec::with_capacity(p);
+    let mut d2s = Vec::with_capacity(n);
+    let mut order = Vec::with_capacity(n);
+    let mut predictions = Vec::with_capacity(x.len());
+    for row in x {
+        zr.clear();
+        zr.extend((0..p.min(row.len())).map(|j| (row[j] - state.means[j]) / state.scales[j]));
+        d2s.clear();
+        if uniform_z {
+            d2s.resize(n, 0.0);
+            for (d, &zrd) in zr.iter().enumerate() {
+                let col = &zt[d * n..(d + 1) * n];
+                for (d2, &zbd) in d2s.iter_mut().zip(col.iter()) {
+                    let t = zrd - zbd;
+                    *d2 += t * t;
+                }
+            }
+        } else {
+            for zb in &state.z {
+                let mut d2 = 0.0;
+                for d in 0..zr.len().min(zb.len()) {
+                    let t = zr[d] - zb[d];
+                    d2 += t * t;
+                }
+                d2s.push(d2);
+            }
+        }
+        order.clear();
+        order.extend(0..n);
+        let compare = |&a: &usize, &b: &usize| d2s[a].total_cmp(&d2s[b]).then(a.cmp(&b));
+        if kk > 0 && kk < order.len() {
+            order.select_nth_unstable_by(kk, compare);
+        }
+        order[..kk].sort_unstable_by(compare);
+        let base = d2s[order[0]];
+        let mut num = 0.0;
+        let mut den = 0.0;
+        for q in 0..kk {
+            let i = order[q];
+            let w = (-gamma * (d2s[i] - base) / pf).exp();
+            num += w * state.ys[i];
+            den += w;
+        }
+        predictions.push((num / den).clamp(-60.0, 60.0));
+    }
+    predictions
+}"#;
+
 const STACK_SRC: &str = r#"struct GreedyEnsembleSelection {
     weights: Vec<f64>,
     ridge_a: Option<RidgeRegression>,
@@ -5272,7 +6260,7 @@ fn rs_kernel_terms(spec: &crate::gpr::KernelSpec) -> String {
 /// `{state}` placeholder becomes `&stageN` / `&self.stageN`; `{state_val}`
 /// becomes the bare Copy value (used for the usize-state fourier stage).
 /// `n` is the 1-based stage index (used by the per-stage formula functions).
-fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
+fn op_calls(op: &PlannedOp, n: usize, hpc_v2: bool) -> (Option<String>, String) {
     match op {
         PlannedOp::ScalarV2 { .. } => (None, format!("scalar_stage{n}_apply(&x, {{append}})")),
         PlannedOp::RowVectorInputV2 { width } => (
@@ -5303,7 +6291,11 @@ fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
             "blom_normal_scores_apply({state}, &x, {append})".into(),
         ),
         PlannedOp::QuantileBins { bins } => (
-            Some(format!("quantile_bin_indexer_fit(&x, {bins})")),
+            Some(if hpc_v2 {
+                format!("quantile_bin_indexer_fit(&x, {bins}, {{append}})")
+            } else {
+                format!("quantile_bin_indexer_fit(&x, {bins})")
+            }),
             format!("quantile_bin_indexer_apply({{state}}, &x, {bins}, {{append}})"),
         ),
         PlannedOp::BinOnehot { bins } => (
@@ -5311,7 +6303,11 @@ fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
             format!("quantile_onehot_encoder_apply({{state}}, &x, {bins}, {{append}})"),
         ),
         PlannedOp::Hinge { knots } => (
-            Some(format!("hinge_basis_fit(&x, {knots})")),
+            Some(if hpc_v2 {
+                format!("hinge_basis_fit(&x, {knots}, {{append}})")
+            } else {
+                format!("hinge_basis_fit(&x, {knots})")
+            }),
             "hinge_basis_apply({state}, &x, {append})".into(),
         ),
         PlannedOp::WinsorClip { q } => (
@@ -5558,7 +6554,32 @@ fn model_pipeline(
     stages: &[PlannedStage],
     head: &PlannedHead,
     fast: bool,
+    hpc_v1: bool,
+    hpc_v2: bool,
     guard_zero_width_roll: bool,
+) -> String {
+    model_pipeline_impl(
+        target,
+        stages,
+        head,
+        fast,
+        hpc_v1,
+        hpc_v2,
+        guard_zero_width_roll,
+        false,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn model_pipeline_impl(
+    target: Option<&PlannedTarget>,
+    stages: &[PlannedStage],
+    head: &PlannedHead,
+    fast: bool,
+    hpc_v1: bool,
+    hpc_v2: bool,
+    guard_zero_width_roll: bool,
+    bundle: bool,
 ) -> String {
     let (head_fit, head_predict, head_ty) = head_calls(head);
     let mut lines: Vec<String> = Vec::new();
@@ -5640,17 +6661,34 @@ fn model_pipeline(
     }
     for (i, stage) in stages.iter().enumerate() {
         let n = i + 1;
-        let (fit_call, apply_call) = op_calls(&stage.op, n);
+        let (fit_call, apply_call) = op_calls(&stage.op, n, hpc_v2);
         let state = format!("stage{n}");
         if let Some(fit_call) = fit_call {
-            lines.push(format!("        let {state} = {fit_call};"));
+            let fit = fit_call.replace("{append}", rs_bool(stage.append));
+            lines.push(format!("        let {state} = {fit};"));
             field_names.push(state.clone());
         }
         let apply = apply_call
             .replace("{state_val}", &state)
             .replace("{state}", &format!("&{state}"))
             .replace("{append}", rs_bool(stage.append));
-        lines.push(format!("        let x = {apply};"));
+        let can_skip_at_512 = hpc_v2
+            && stage.append
+            && i > 0
+            && !matches!(
+                stage.op,
+                PlannedOp::Impute { .. }
+                    | PlannedOp::RowVectorInputV2 { .. }
+                    | PlannedOp::RowVectorV2 { .. }
+                    | PlannedOp::ScalarV2 { .. }
+            );
+        if can_skip_at_512 {
+            lines.push(format!(
+                "        let x = if x[0].len() >= 512 {{ x }} else {{ {apply} }};"
+            ));
+        } else {
+            lines.push(format!("        let x = {apply};"));
+        }
     }
     lines.push(format!("        let head = {head_fit};"));
     if raw_scalar && matches!(head, PlannedHead::Ridge { .. }) {
@@ -5688,12 +6726,28 @@ fn model_pipeline(
     );
     for (i, stage) in stages.iter().enumerate() {
         let n = i + 1;
-        let (_, apply_call) = op_calls(&stage.op, n);
+        let (_, apply_call) = op_calls(&stage.op, n, hpc_v2);
         let apply = apply_call
             .replace("{state_val}", &format!("self.stage{n}"))
             .replace("{state}", &format!("&self.stage{n}"))
             .replace("{append}", rs_bool(stage.append));
-        lines.push(format!("        let x = {apply};"));
+        let can_skip_at_512 = hpc_v2
+            && stage.append
+            && i > 0
+            && !matches!(
+                stage.op,
+                PlannedOp::Impute { .. }
+                    | PlannedOp::RowVectorInputV2 { .. }
+                    | PlannedOp::RowVectorV2 { .. }
+                    | PlannedOp::ScalarV2 { .. }
+            );
+        if can_skip_at_512 {
+            lines.push(format!(
+                "        let x = if x[0].len() >= 512 {{ x }} else {{ {apply} }};"
+            ));
+        } else {
+            lines.push(format!("        let x = {apply};"));
+        }
     }
     match target {
         None => lines.push(format!("        {head_predict}")),
@@ -5731,14 +6785,24 @@ fn model_pipeline(
     }
     if fast {
         lines.push(String::new());
-        lines.extend(rs_fast_predict_wrapper());
+        if bundle {
+            lines.push("    fn predict(&self, x: &[Vec<f64>]) -> Vec<f64> {".into());
+            lines.push("        jope_recipe_ops::bounded_predict(self, x)".into());
+            lines.push("    }".into());
+        } else if hpc_v1 {
+            lines.extend(rs_fast_predict_wrapper_hpc_v1());
+        } else {
+            lines.extend(rs_fast_predict_wrapper_legacy());
+        }
     }
     // B05–B07: public prediction faults on the typed one-stage recipe.
     if raw_scalar && stages.len() == 1 && target.is_none() {
         lines.push("    fn predict_with_faults(&self, x: &[Vec<f64>]) -> (Vec<f64>,Vec<u32>) {let (_,faults)=scalar_stage1_values(x);(self.predict(x),faults)}".to_string());
     }
     lines.push(String::new());
-    lines.extend(rs_score_method());
+    if !bundle {
+        lines.extend(rs_score_method());
+    }
     lines.push("}".to_string());
     lines.join("\n")
 }
@@ -5822,7 +6886,7 @@ fn expression_fn(source: &str, expr: &crate::mathexpr::MathAst) -> String {
     lines.join("\n")
 }
 
-fn model_symbolic(affine: bool, fast: bool) -> String {
+fn model_symbolic(affine: bool, fast: bool, hpc_v1: bool) -> String {
     let mut lines: Vec<String> = Vec::new();
     if affine {
         lines.push(
@@ -5899,7 +6963,11 @@ fn model_symbolic(affine: bool, fast: bool) -> String {
     lines.push("    }".to_string());
     if fast {
         lines.push(String::new());
-        lines.extend(rs_fast_predict_wrapper());
+        if hpc_v1 {
+            lines.extend(rs_fast_predict_wrapper_hpc_v1());
+        } else {
+            lines.extend(rs_fast_predict_wrapper_legacy());
+        }
     }
     lines.push(String::new());
     lines.extend(rs_score_method());
@@ -6004,6 +7072,122 @@ fn main() {
     }
     let mut x_test: Vec<Vec<f64>> = Vec::new();
     for row in read_csv(&args[2]) {
+        x_test.push(pad(row, width));
+    }
+    let model = Model::fit(&x_train, &y_train);
+    let predictions = model.predict(&x_test);
+    write_predictions(&args[3], &predictions);
+}"#;
+
+const IO_BLOCK_HPC_V2: &str = r#"/// Parse one CSV cell; blank, malformed, or non-finite cells become 0.0.
+fn parse_cell(cell: &str) -> f64 {
+    let text = cell.trim();
+    if text.is_empty() || text.contains('_') {
+        return 0.0;
+    }
+    match text.parse::<f64>() {
+        Ok(value) => {
+            if value.is_finite() {
+                value
+            } else {
+                0.0
+            }
+        }
+        Err(_) => 0.0,
+    }
+}
+
+fn looks_numeric(cell: &str) -> bool {
+    let text = cell.trim();
+    text.is_empty() || (!text.contains('_') && text.parse::<f64>().is_ok())
+}
+
+/// Read CSV rows of floats in a single pass, skipping blank lines and one header line if present.
+fn read_csv(path: &str) -> Vec<Vec<f64>> {
+    let text = match std::fs::read_to_string(path) {
+        Ok(text) => text,
+        Err(err) => {
+            eprintln!("cannot read {}: {}", path, err);
+            std::process::exit(2);
+        }
+    };
+    let mut rows: Vec<Vec<f64>> = Vec::new();
+    let mut checked_header = false;
+    let mut expected_cols = 0usize;
+    for line in text.lines() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        if line.split(',').all(|cell| cell.trim().is_empty()) {
+            continue;
+        }
+        if !checked_header {
+            checked_header = true;
+            if !line.split(',').all(looks_numeric) {
+                continue;
+            }
+        }
+        let mut row = Vec::with_capacity(expected_cols);
+        for cell in line.split(',') {
+            row.push(parse_cell(cell));
+        }
+        if row.len() > expected_cols {
+            expected_cols = row.len();
+        }
+        rows.push(row);
+    }
+    rows
+}
+
+/// Pad short rows with 0.0 (and trim long ones) to the training feature width.
+fn pad(mut row: Vec<f64>, width: usize) -> Vec<f64> {
+    if row.len() < width {
+        row.resize(width, 0.0);
+    } else if row.len() > width {
+        row.truncate(width);
+    }
+    row
+}
+
+/// One shortest round-trip decimal per line (matches Python's repr()).
+fn write_predictions(path: &str, predictions: &[f64]) {
+    let mut out = String::with_capacity(predictions.len() * 24);
+    for value in predictions {
+        let _ = std::fmt::Write::write_fmt(&mut out, format_args!("{:?}\n", value));
+    }
+    if let Err(err) = std::fs::write(path, out) {
+        eprintln!("cannot write {}: {}", path, err);
+        std::process::exit(2);
+    }
+}
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 4 {
+        eprintln!("usage: model train.csv test_features.csv predictions.csv");
+        std::process::exit(2);
+    }
+    let mut train_rows = read_csv(&args[1]);
+    if train_rows.is_empty() {
+        eprintln!("training data is empty");
+        std::process::exit(2);
+    }
+    let mut y_train: Vec<f64> = Vec::with_capacity(train_rows.len());
+    let mut width = 0usize;
+    for row in &mut train_rows {
+        let y = row.pop().unwrap_or(0.0);
+        y_train.push(y);
+        if row.len() > width {
+            width = row.len();
+        }
+    }
+    let mut x_train: Vec<Vec<f64>> = Vec::with_capacity(train_rows.len());
+    for row in train_rows {
+        x_train.push(pad(row, width));
+    }
+    let test_rows = read_csv(&args[2]);
+    let mut x_test: Vec<Vec<f64>> = Vec::with_capacity(test_rows.len());
+    for row in test_rows {
         x_test.push(pad(row, width));
     }
     let model = Model::fit(&x_train, &y_train);

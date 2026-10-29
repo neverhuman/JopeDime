@@ -205,6 +205,50 @@ impl BoundModel {
     pub fn predict_labels_table(&self, table: &RawTable) -> Result<Vec<i64>> {
         Ok(self.predict_multiclass_table(table)?.labels)
     }
+
+    /// Fast-path numeric matrix prediction for compatibility-bound legacy models
+    /// when the caller already holds validated finite `f64` rows (`&[Vec<f64>]`),
+    /// avoiding `f64 -> String -> f64` table formatting and parsing while preserving
+    /// full binding validation and `0 ulp` prediction identity.
+    pub fn predict_numeric_rows(&self, x: &[Vec<f64>]) -> Result<Vec<f64>> {
+        self.validate_binding()?;
+        if x.is_empty() {
+            bail!("table has no data rows");
+        }
+        let width = self.schema.columns.len();
+        if x.iter().any(|row| row.len() != width) {
+            bail!("numeric matrix column width does not match bound schema");
+        }
+        let values = self.input.transform_numeric_rows(x)?;
+        let mut predictions = match &self.predictor {
+            BoundPredictor::Legacy(model) => model.predict(&values)?,
+            _ => bail!("predict_numeric_rows requires a legacy bound predictor"),
+        };
+        match self.task.kind {
+            TaskKind::Regression | TaskKind::Timeseries => {
+                for value in &mut predictions {
+                    *value = finite(*value);
+                }
+            }
+            TaskKind::Binary => {
+                for value in &mut predictions {
+                    *value = if value.is_finite() {
+                        value.clamp(0.0, 1.0)
+                    } else {
+                        0.5
+                    };
+                }
+            }
+            TaskKind::Multiclass => {
+                for value in &mut predictions {
+                    if !value.is_finite() || value.fract() != 0.0 {
+                        bail!("multiclass head returned a non-integer class label");
+                    }
+                }
+            }
+        }
+        Ok(predictions)
+    }
 }
 
 pub fn predict_table(model: &BoundModel, table: &RawTable) -> Result<Vec<f64>> {
@@ -285,6 +329,406 @@ pub fn fit_legacy_numeric_bound(
         input,
         predictor,
     })
+}
+
+/// Bind an already-fitted legacy `crate::model::Model` directly into the V3
+/// `BoundModel` envelope without re-running `crate::model::fit` or formatting
+/// `x` to strings. Produces a `BoundModel` byte-for-byte identical to
+/// [`fit_legacy_numeric_bound`].
+pub fn bound_from_retained_legacy_model(
+    genome: &GenomeIr,
+    x: &[Vec<f64>],
+    y: &[f64],
+    retained_model: crate::model::Model,
+) -> Result<BoundModel> {
+    if x.is_empty() || x.len() != y.len() {
+        bail!("training matrix is empty or target length differs from row count");
+    }
+    let width = x[0].len();
+    if width == 0 || x.iter().any(|row| row.len() != width) {
+        bail!("legacy numeric training matrix is empty or ragged");
+    }
+    if x.iter().flatten().any(|value| !value.is_finite())
+        || y.iter().any(|value| !value.is_finite())
+    {
+        bail!("legacy numeric bound models require finite inputs and targets");
+    }
+    let schema = DataSchema {
+        columns: (0..width)
+            .map(|index| super::schema::ColumnSpec::numeric(format!("c{index}")))
+            .collect(),
+        row_semantics: RowSemantics::Iid,
+    };
+    let task = TaskSpec::regression(super::types::Objective::Rmse)?;
+    let input = FittedInput::compatibility_numeric(width);
+    let predictor = BoundPredictor::Legacy(retained_model);
+    Ok(BoundModel {
+        artifact_schema: ARTIFACT_SCHEMA.to_string(),
+        task_sha256: stable_hash(&task)?,
+        schema_sha256: schema.sha256()?,
+        vocabulary_sha256: stable_hash(&input)?,
+        genome_sha256: text_hash(&genome.canonical()),
+        threshold: 0.5,
+        task,
+        schema,
+        input,
+        predictor,
+    })
+}
+
+/// When a pipeline uses only compatibility numeric input, legacy non-OOF transforms
+/// within the 512-column dense cap, and a legacy regression head, its `BoundPredictor::Pipeline`
+/// state is identical to the already-fitted `crate::model::Model::Pipeline`.
+/// Returns `Ok(Some(BoundModel))` when that fast path applies, or `Ok(None)` when `fit_table`
+/// should be executed.
+pub fn try_bound_pipeline_from_retained_legacy_model(
+    genome: &GenomeIr,
+    task: &TaskSpec,
+    schema: &DataSchema,
+    retained_model: &crate::model::Model,
+) -> Result<Option<BoundModel>> {
+    if task.validate().is_err()
+        || schema.validate().is_err()
+        || validate_v3_genome(genome, task, schema).is_err()
+    {
+        return Ok(None);
+    }
+    if task.kind != TaskKind::Regression || schema.row_semantics != RowSemantics::Iid {
+        return Ok(None);
+    }
+    if !schema
+        .columns
+        .iter()
+        .all(|c| c.kind == super::schema::ColumnKind::Numeric)
+    {
+        return Ok(None);
+    }
+    let GenomeIr::Pipeline(dsl) = genome else {
+        return Ok(None);
+    };
+    let parsed = split_v3_pipeline(dsl)?;
+    if parsed.input.is_some() {
+        return Ok(None);
+    }
+    for stage in parsed.transforms {
+        if matches!(
+            stage.op.as_str(),
+            "maxabs_scale"
+                | "power_transform"
+                | "piecewise_linear"
+                | "corr_screen"
+                | "pls_project"
+                | "lag"
+                | "roll"
+                | "spline"
+                | "impute"
+        ) {
+            return Ok(None);
+        }
+        if stage.op == "target_bin_encode" && stage.params.contains_key("oof") {
+            return Ok(None);
+        }
+    }
+    let head_op = parsed.head.map_or("ridge", |s| s.op.as_str());
+    if !crate::heads::is_head_op(head_op) {
+        return Ok(None);
+    }
+    let crate::model::Model::Pipeline { target, ops, head } = retained_model else {
+        return Ok(None);
+    };
+    if ops.len() != parsed.transforms.len() {
+        return Ok(None);
+    }
+    let width = schema.columns.len();
+    if crate::kernel::width::check_input_width(retained_model, width).is_err() {
+        return Ok(None);
+    }
+    let input = FittedInput::compatibility_numeric(width);
+    let v3_ops: Vec<V3Op> = ops.iter().cloned().map(V3Op::Legacy).collect();
+    let v3_head = V3Head::Legacy((**head).clone());
+
+    let probe_table = RawTable {
+        headers: schema.columns.iter().map(|c| c.name.clone()).collect(),
+        rows: vec![vec!["0.0".to_string(); width]],
+    };
+    let Ok(mut probe_block) = input.transform(&probe_table) else {
+        return Ok(None);
+    };
+    let mut legacy_rows = vec![vec![0.0; width]];
+    for ((stage, v3_op), leg_op) in parsed.transforms.iter().zip(v3_ops.iter()).zip(ops.iter()) {
+        if crate::kernel::width::stage_name(leg_op) != stage.op.as_str() {
+            return Ok(None);
+        }
+        if v3_op.validate_fitted_state(schema).is_err() {
+            return Ok(None);
+        }
+        let Ok(next_block) = v3_op.apply_block(&probe_block, &probe_table) else {
+            return Ok(None);
+        };
+        let Ok(next_legacy) = crate::ops::apply_op(leg_op, &legacy_rows) else {
+            return Ok(None);
+        };
+        let v3_w = next_block.values.first().map_or(0, Vec::len);
+        let leg_w = next_legacy.first().map_or(0, Vec::len);
+        if v3_w == 0 || v3_w > crate::MAX_WIDTH || v3_w != leg_w {
+            return Ok(None);
+        }
+        probe_block = next_block;
+        legacy_rows = next_legacy;
+    }
+    let final_w = probe_block.values.first().map_or(0, Vec::len);
+    if !crate::kernel::width::required_head_width(head).admits(final_w) {
+        return Ok(None);
+    }
+    let Ok(v3_pred) = v3_head.predict(&probe_block.values) else {
+        return Ok(None);
+    };
+    let Ok(leg_pred) = head.predict(&legacy_rows) else {
+        return Ok(None);
+    };
+    if v3_pred.len() != 1 || leg_pred.len() != 1 || v3_pred[0].to_bits() != leg_pred[0].to_bits() {
+        return Ok(None);
+    }
+
+    let bound = BoundModel {
+        artifact_schema: ARTIFACT_SCHEMA.to_string(),
+        task_sha256: stable_hash(task)?,
+        schema_sha256: schema.sha256()?,
+        vocabulary_sha256: stable_hash(&input)?,
+        genome_sha256: text_hash(&genome.canonical()),
+        threshold: 0.5,
+        task: task.clone(),
+        schema: schema.clone(),
+        input,
+        predictor: BoundPredictor::Pipeline {
+            target: target.clone(),
+            ops: v3_ops,
+            head: v3_head,
+            calibration: CalibrationModel::None,
+            missing_aware: false,
+        },
+    };
+    if bound.validate_binding().is_err() {
+        return Ok(None);
+    }
+    Ok(Some(bound))
+}
+
+/// Static preflight check for direct `fit_table` + `emit_bound` support on an
+/// all-numeric IID schema. Returns `Err((true, msg))` if `fit_table` will fail
+/// closed (e.g. `generated dense width ... exceeds 512`) or `Err((false, msg))`
+/// if `emit_bound` will fail closed (e.g. unsupported legacy head or transform),
+/// avoiding a doomed redundant model fit while preserving exact error strings.
+pub fn check_direct_bound_emission_support(
+    genome: &GenomeIr,
+    task: &TaskSpec,
+    schema: &DataSchema,
+) -> std::result::Result<(), (bool, String)> {
+    if let Err(e) = validate_v3_genome(genome, task, schema) {
+        return Err((true, format!("{e:#}")));
+    }
+    let GenomeIr::Pipeline(dsl) = genome else {
+        return Err((
+            false,
+            "bound emission currently requires a v3 pipeline model".to_string(),
+        ));
+    };
+    let parsed = match split_v3_pipeline(dsl) {
+        Ok(p) => p,
+        Err(e) => return Err((true, format!("{e:#}"))),
+    };
+    let input_cfg = match InputConfig::from_stage(parsed.input) {
+        Ok(c) => c,
+        Err(e) => return Err((true, format!("{e:#}"))),
+    };
+    if schema
+        .columns
+        .iter()
+        .all(|c| c.kind == super::schema::ColumnKind::Numeric)
+    {
+        let mut cols = schema.columns.len();
+        if parsed.input.is_some() {
+            // Check if missing indicator is enabled via InputConfig serialization or stage param
+            let _ = &input_cfg;
+            if let Some(stage) = parsed.input {
+                if matches!(str_param(stage, "missing", "indicator"), Ok("indicator")) {
+                    cols *= 2;
+                }
+            }
+        }
+        let mut generated_dense = 0usize;
+        let max_dense = super::feature_block::MAX_GENERATED_DENSE_WIDTH;
+        for stage in parsed.transforms {
+            let append = matches!(stage.params.get("append"), Some(ParamValue::Bool(true)))
+                || stage.get_usize("append", 0) == 1;
+            match stage.op.as_str() {
+                "maxabs_scale" | "power_transform" | "standardize" | "norm_features"
+                | "robust_scale" | "target_bin_encode" | "sigmoid" | "step" | "norm_row"
+                | "winsor_clip" | "winsor_moments" => {
+                    if append {
+                        generated_dense += cols;
+                        cols += cols;
+                        if generated_dense > max_dense {
+                            return Err((
+                                true,
+                                format!(
+                                    "generated dense width {generated_dense} exceeds {max_dense}"
+                                ),
+                            ));
+                        }
+                    }
+                }
+                "corr_screen" => {
+                    let req = stage.get_usize("k", 32).min(cols);
+                    if append {
+                        generated_dense += req;
+                        cols += req;
+                        if generated_dense > max_dense {
+                            return Err((
+                                true,
+                                format!(
+                                    "generated dense width {generated_dense} exceeds {max_dense}"
+                                ),
+                            ));
+                        }
+                    } else {
+                        cols = req;
+                    }
+                }
+                "select_corr" => {
+                    let k = stage.get_usize("k", 32).clamp(1, 512).min(cols);
+                    if append {
+                        generated_dense += k;
+                        cols += k;
+                        if generated_dense > max_dense {
+                            return Err((
+                                true,
+                                format!(
+                                    "generated dense width {generated_dense} exceeds {max_dense}"
+                                ),
+                            ));
+                        }
+                    } else {
+                        cols = k;
+                    }
+                }
+                "piecewise_linear" => {
+                    let bins = stage.get_usize("bins", 8);
+                    let gen_w = cols.saturating_mul(bins);
+                    if gen_w > max_dense {
+                        return Err((
+                            true,
+                            format!("piecewise_linear derived width {gen_w} exceeds {max_dense}"),
+                        ));
+                    }
+                    generated_dense = (if append { generated_dense } else { 0 }) + gen_w;
+                    if generated_dense > max_dense {
+                        return Err((
+                            true,
+                            format!("generated dense width {generated_dense} exceeds {max_dense}"),
+                        ));
+                    }
+                    cols = (if append { cols } else { 0 }) + gen_w;
+                }
+                "spline" | "impute" | "lag" | "roll" => {
+                    // Data-dependent width or table row op; defer to fit_table if needed
+                }
+                other => {
+                    let gen_w = match other {
+                        "pls_project" => stage.get_usize("k", 8),
+                        "cheb" => cols * stage.get_usize("degree", 4).clamp(1, 8),
+                        "poly_interact" => {
+                            (cols + cols * cols.saturating_sub(1) / 2).min(crate::MAX_WIDTH)
+                        }
+                        "rand_proj" => stage.get_usize("k", 16).clamp(1, 256),
+                        "rff_cos" | "rff_sin" | "oblique_hinge" => {
+                            stage.get_usize("n", 32).clamp(1, 256)
+                        }
+                        "landmark_dist" | "nystrom" => stage.get_usize("k", 16).clamp(1, 128),
+                        "svd_project" => stage.get_usize("k", 8).clamp(1, 64).min(cols),
+                        "pair_prod" => {
+                            let m = stage.get_usize("topk", 8).clamp(2, 24).min(cols);
+                            m * m.saturating_sub(1) / 2
+                        }
+                        "pair_ratio" => {
+                            let m = cols.min(32);
+                            let max_p = m * m.saturating_sub(1);
+                            stage.get_usize("topk", 8).clamp(1, 64).min(max_p)
+                        }
+                        "row_stats" => 10,
+                        "row_spectral" | "row_diff_stats" => 4,
+                        "fft_mag" => stage.get_usize("k", 8).clamp(1, (cols / 2).max(1)),
+                        "polar" => (cols / 2) * 2,
+                        "hinge" => cols * stage.get_usize("knots", 4).clamp(1, 16),
+                        "quantile_bins" | "rank" | "blom" | "symlog" | "map" => cols,
+                        "bin_onehot" => cols * stage.get_usize("bins", 6).clamp(2, 32),
+                        "derive" => 1,
+                        _ => 0,
+                    };
+                    if gen_w > 0 {
+                        generated_dense = (if append { generated_dense } else { 0 }) + gen_w;
+                        if generated_dense > max_dense {
+                            return Err((
+                                true,
+                                format!(
+                                    "generated dense width {generated_dense} exceeds {max_dense}"
+                                ),
+                            ));
+                        }
+                        cols = (if append { cols } else { 0 }) + gen_w;
+                    }
+                }
+            }
+        }
+    }
+
+    // Check head support in emit_bound_python order
+    let head_op = parsed.head.map_or(
+        match task.kind {
+            TaskKind::Binary => "logit_ridge",
+            TaskKind::Multiclass => "multiclass_ridge",
+            TaskKind::Regression | TaskKind::Timeseries => "ridge",
+        },
+        |stage| stage.op.as_str(),
+    );
+    match head_op {
+        "logit_ridge" | "tab_boost" | "extra_trees" | "gam_boost" | "pls" | "portfolio"
+        | "ridge" => {}
+        "multiclass_ridge"
+        | "multiclass_ovr_logistic"
+        | "multiclass_diagonal_lda"
+        | "multiclass_nearest_centroid" => {
+            return Err((
+                false,
+                "multiclass probability matrices are not supported by scalar bound emission"
+                    .to_string(),
+            ));
+        }
+        _ => {
+            return Err((
+                false,
+                "this fitted legacy head is not supported by bound emission".to_string(),
+            ));
+        }
+    }
+
+    // Check transform support in emit_bound_rust order
+    for stage in parsed.transforms {
+        match stage.op.as_str() {
+            "maxabs_scale" | "power_transform" | "piecewise_linear" | "corr_screen"
+            | "pls_project" | "lag" | "roll" | "standardize" | "norm_features" | "robust_scale"
+            | "target_bin_encode" | "sigmoid" | "step" | "norm_row" | "select_corr"
+            | "winsor_clip" | "winsor_moments" | "impute" => {}
+            _ => {
+                return Err((
+                    false,
+                    "this legacy transform is not supported by bound emission".to_string(),
+                ));
+            }
+        }
+    }
+
+    Ok(())
 }
 
 /// Fit a schema-bound v3 model. The leading `(input ...)` pseudo-stage is
@@ -632,4 +1076,173 @@ fn oof_head_predictions(
         }
     }
     Ok(predictions)
+}
+
+#[cfg(test)]
+mod h4_retained_shortcut_tests {
+    use super::*;
+    use crate::advanced_v3::schema::ColumnSpec;
+    use crate::advanced_v3::types::Objective;
+
+    fn numeric_schema(width: usize) -> DataSchema {
+        DataSchema {
+            columns: (0..width)
+                .map(|idx| ColumnSpec::numeric(format!("c{idx}")))
+                .collect(),
+            row_semantics: RowSemantics::Iid,
+        }
+    }
+
+    fn rows_to_table(x: &[Vec<f64>]) -> RawTable {
+        let width = x[0].len();
+        let headers = (0..width).map(|idx| format!("c{idx}")).collect();
+        let rows = x
+            .iter()
+            .map(|row| row.iter().map(|v| format!("{v:?}")).collect())
+            .collect();
+        RawTable::new(headers, rows).unwrap()
+    }
+
+    #[test]
+    fn retained_legacy_shortcut_declines_v3_overwidth_hinge_and_mismatched_state() {
+        let genome = GenomeIr::parse("(pipe X (hinge knots=4 append=true) (ridge))").unwrap();
+        let task = TaskSpec::regression(Objective::Rmse).unwrap();
+
+        // 200 columns: legacy caps at 512 total columns, whereas V3 generates 200*4 = 800 > 512.
+        let x200: Vec<Vec<f64>> = (0..16)
+            .map(|r| {
+                (0..200)
+                    .map(|c| ((r * 17 + c * 13) as f64 * 0.07).sin())
+                    .collect()
+            })
+            .collect();
+        let y: Vec<f64> = (0..16).map(|r| (r as f64 * 0.19).cos()).collect();
+        let retained_200 = crate::model::fit(&genome, &x200, &y).unwrap();
+        let schema_200 = numeric_schema(200);
+        assert!(
+            try_bound_pipeline_from_retained_legacy_model(
+                &genome,
+                &task,
+                &schema_200,
+                &retained_200
+            )
+            .unwrap()
+            .is_none(),
+            "200-column hinge (800 generated dense > 512) must be declined by retained shortcut"
+        );
+
+        // 120 columns: generated_dense = 480 <= 512, but V3 total width = 600 > 512 while legacy capped at 512.
+        let x120: Vec<Vec<f64>> = x200.iter().map(|row| row[..120].to_vec()).collect();
+        let retained_120 = crate::model::fit(&genome, &x120, &y).unwrap();
+        let schema_120 = numeric_schema(120);
+        assert!(
+            try_bound_pipeline_from_retained_legacy_model(
+                &genome,
+                &task,
+                &schema_120,
+                &retained_120
+            )
+            .unwrap()
+            .is_none(),
+            "120-column hinge (600 total > 512 legacy cap) must be declined by retained shortcut"
+        );
+
+        // Width-mismatched retained model (fitted on 4 columns, queried on 8-column schema).
+        let x4: Vec<Vec<f64>> = x200.iter().map(|row| row[..4].to_vec()).collect();
+        let retained_4 = crate::model::fit(&genome, &x4, &y).unwrap();
+        let schema_8 = numeric_schema(8);
+        assert!(
+            try_bound_pipeline_from_retained_legacy_model(&genome, &task, &schema_8, &retained_4)
+                .unwrap()
+                .is_none(),
+            "width-mismatched retained model must be declined by retained shortcut"
+        );
+
+        // No-transform pipeline `(pipe X (ridge))` fitted on 4 columns, queried on 8-column schema (H4-R1-WIDTH).
+        let ridge_only_genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let retained_ridge_4 = crate::model::fit(&ridge_only_genome, &x4, &y).unwrap();
+        assert!(
+            try_bound_pipeline_from_retained_legacy_model(
+                &ridge_only_genome,
+                &task,
+                &schema_8,
+                &retained_ridge_4
+            )
+            .unwrap()
+            .is_none(),
+            "no-transform retained ridge fitted on 4 columns must be declined on 8-column schema"
+        );
+        // Matching 4-column schema is accepted and matches fit_table bit-for-bit.
+        let schema_4 = numeric_schema(4);
+        let train_table_4 = rows_to_table(&x4);
+        let shortcut_ridge_4 = try_bound_pipeline_from_retained_legacy_model(
+            &ridge_only_genome,
+            &task,
+            &schema_4,
+            &retained_ridge_4,
+        )
+        .unwrap()
+        .expect("matching 4-column no-transform ridge should be accepted");
+        let full_ridge_4 =
+            fit_table(&ridge_only_genome, &task, &schema_4, &train_table_4, &y).unwrap();
+        assert_eq!(
+            serde_json::to_string(&shortcut_ridge_4).unwrap(),
+            serde_json::to_string(&full_ridge_4).unwrap()
+        );
+    }
+
+    #[test]
+    fn retained_legacy_shortcut_matches_fit_table_bit_for_bit_when_eligible() {
+        let genome = GenomeIr::parse(
+            "(pipe X (standardize append=true) (hinge knots=3 append=true) (ridge))",
+        )
+        .unwrap();
+        let task = TaskSpec::regression(Objective::Rmse).unwrap();
+        let x_train: Vec<Vec<f64>> = (0..24)
+            .map(|r| {
+                (0..8)
+                    .map(|c| ((r * 11 + c * 7) as f64 * 0.13).sin())
+                    .collect()
+            })
+            .collect();
+        let y_train: Vec<f64> = (0..24)
+            .map(|r| x_train[r][0] * 0.6 - x_train[r][1] * 0.3 + (r as f64 * 0.05).cos())
+            .collect();
+        let x_hold: Vec<Vec<f64>> = (0..12)
+            .map(|r| {
+                (0..8)
+                    .map(|c| ((r * 19 + c * 5) as f64 * 0.11).cos())
+                    .collect()
+            })
+            .collect();
+
+        let schema = numeric_schema(8);
+        let train_table = rows_to_table(&x_train);
+        let hold_table = rows_to_table(&x_hold);
+
+        let retained = crate::model::fit(&genome, &x_train, &y_train).unwrap();
+        let shortcut_bound =
+            try_bound_pipeline_from_retained_legacy_model(&genome, &task, &schema, &retained)
+                .unwrap()
+                .expect("eligible within-512 pipeline should use retained shortcut");
+        let full_bound = fit_table(&genome, &task, &schema, &train_table, &y_train).unwrap();
+
+        assert_eq!(
+            serde_json::to_string(&shortcut_bound).unwrap(),
+            serde_json::to_string(&full_bound).unwrap()
+        );
+        let shortcut_preds: Vec<u64> = shortcut_bound
+            .predict_table(&hold_table)
+            .unwrap()
+            .into_iter()
+            .map(f64::to_bits)
+            .collect();
+        let full_preds: Vec<u64> = full_bound
+            .predict_table(&hold_table)
+            .unwrap()
+            .into_iter()
+            .map(f64::to_bits)
+            .collect();
+        assert_eq!(shortcut_preds, full_preds);
+    }
 }

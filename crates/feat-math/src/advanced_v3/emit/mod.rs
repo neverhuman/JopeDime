@@ -188,6 +188,55 @@ pub fn emit_bound(
     })
 }
 
+/// Fast-path Rust-only bound emitter for `jope-micro`: emits and lints the
+/// standalone Rust prediction program (`bound_model.rs`) without generating or
+/// linting the unused Python twin.
+pub fn emit_bound_rust_only(
+    model: &BoundModel,
+    options: &crate::transpile::EmitOptions,
+) -> Result<BoundEmitted> {
+    crate::transpile::validate_math_kernel(options)?;
+    model.validate_binding()?;
+    let BoundPredictor::Pipeline { ops, head, .. } = &model.predictor else {
+        bail!("bound emission currently requires a v3 pipeline model");
+    };
+    for op in ops {
+        op.validate_fitted_state(&model.schema)?;
+    }
+    let portfolio = matches!(head, V3Head::ClassificationPortfolio(_));
+    let user = user_text(model);
+    let start = std::time::Instant::now();
+    let rust = emit_bound_rust(model)?;
+    let elapsed = start.elapsed().as_nanos().max(1);
+    let hits = lint_shipped_masked(&rust, &user, portfolio);
+    if !hits.is_empty() {
+        bail!(
+            "banned vocabulary in bound Rust artifact: {}",
+            hits.join(", ")
+        );
+    }
+    let py_tokens = crate::transpile::TokenCount {
+        code_tokens: 0,
+        doc_tokens: 0,
+        bytes: 0,
+    };
+    let rs_tokens = crate::tokens::count_tokens(&rust, crate::tokens::Lang::Rust);
+    let rs_total = rs_tokens.code_tokens + rs_tokens.doc_tokens;
+    Ok(BoundEmitted {
+        python: String::new(),
+        rust,
+        manifest: String::new(),
+        py_tokens,
+        rs_tokens,
+        timing: crate::transpile::EmitTiming {
+            emit_ns: elapsed,
+            py_tokens: 0,
+            rs_tokens: rs_total,
+            tokens_per_sec: rs_total as f64 / (elapsed as f64 / 1e9),
+        },
+    })
+}
+
 fn emit_bound_python(model: &BoundModel, partition_point_quantile_bounds: bool) -> Result<String> {
     let BoundPredictor::Pipeline {
         target,
