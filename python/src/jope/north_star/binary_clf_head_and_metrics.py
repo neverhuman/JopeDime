@@ -31,21 +31,19 @@ both continuous Regression and Binary Classification without modifying frozen DO
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Tuple
 
 import torch
-import torch.nn.functional as F
 
 
 @dataclass
 class BatchedTaskDetection:
-    is_binary: torch.Tensor        # [B] bool
-    y0_val: torch.Tensor           # [B, 1] float32 (negative class original value)
-    y1_val: torch.Tensor           # [B, 1] float32 (positive class original value)
-    y_bin_01: torch.Tensor         # [B, N] float32 in {0.0, 1.0} for binary tables
-    pos_rate: torch.Tensor         # [B, 1] float32 in (0, 1)
+    is_binary: torch.Tensor  # [B] bool
+    y0_val: torch.Tensor  # [B, 1] float32 (negative class original value)
+    y1_val: torch.Tensor  # [B, 1] float32 (positive class original value)
+    y_bin_01: torch.Tensor  # [B, N] float32 in {0.0, 1.0} for binary tables
+    pos_rate: torch.Tensor  # [B, 1] float32 in (0, 1)
 
 
 def _sanitize_masked(x: torch.Tensor, mask: torch.Tensor, fill: float = 0.0) -> torch.Tensor:
@@ -110,7 +108,7 @@ def fit_batched_platt_calibration_gpu(
     valid_mask_tr: torch.Tensor,
     l2_reg: float = 1e-2,
     n_iters: int = 6,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Fits a 2-parameter Platt / logistic link `p = sigmoid(a * raw_score + b)` per table `[B]`
     using 6 batched Newton-Raphson (IRLS) steps on GPU (`2x2` closed-form solve, zero host sync).
@@ -166,7 +164,9 @@ def batched_roc_auc_gpu(
     """
     B, N = prob_pred.shape
     req_mask = valid_mask.bool()
-    has_nonfinite_req = ((~torch.isfinite(prob_pred) | ~torch.isfinite(y_bin_true)) & req_mask).any(dim=1, keepdim=True)
+    has_nonfinite_req = ((~torch.isfinite(prob_pred) | ~torch.isfinite(y_bin_true)) & req_mask).any(
+        dim=1, keepdim=True
+    )
     zero_coverage = req_mask.sum(dim=1, keepdim=True) == 0
     invalid_table = has_nonfinite_req | zero_coverage
 
@@ -210,7 +210,7 @@ def evaluate_unified_regression_and_binary_batched_gpu(
     y_te: torch.Tensor,
     mask_te: torch.Tensor,
     reject_nonfinite_eval: bool = False,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """
     Evaluates both Regression and Binary Classification tables in a single batched GPU pass:
     - Sanitizes all masked-out (`mask == False`) entries before arithmetic so padded NaNs/Infs
@@ -368,9 +368,7 @@ def run_self_test() -> dict:
     raw_tr[3] = -0.9 * x_tr[3]
     raw_te[3] = -0.9 * x_te[3]
 
-    res = evaluate_unified_regression_and_binary_batched_gpu(
-        raw_tr, y_tr, mask_tr, raw_te, y_te, mask_te
-    )
+    res = evaluate_unified_regression_and_binary_batched_gpu(raw_tr, y_tr, mask_tr, raw_te, y_te, mask_te)
     assert res["is_binary"].tolist() == [False, False, True, True]
     assert float(res["regression_r2"][0]) > 0.90
     assert float(res["roc_auc"][2]) > 0.80
@@ -389,7 +387,9 @@ def run_self_test() -> dict:
     p_scores = torch.tensor([[0.1, 0.5, 0.5, 0.9], [0.9, 0.5, 0.5, 0.1]], dtype=torch.float32)
     p_labels = torch.tensor([[0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 0.0, 0.0]], dtype=torch.float32)
     p_aucs = batched_roc_auc_gpu(p_scores, p_labels, tied_mask)
-    assert torch.allclose(p_aucs, torch.tensor([0.875, 0.875]), atol=1e-6), f"Partial-tie AUC failed: {p_aucs}"
+    assert torch.allclose(p_aucs, torch.tensor([0.875, 0.875]), atol=1e-6), (
+        f"Partial-tie AUC failed: {p_aucs}"
+    )
 
     # Codex Counterexample #3: Masked-out NaN / Inf in padded positions must match finite padding exactly
     raw_tr_pad_fin = torch.cat([raw_tr, torch.zeros(B, 16)], dim=1)
@@ -416,7 +416,9 @@ def run_self_test() -> dict:
     )
     for k in ("unified_r2_score", "regression_r2", "brier_r2", "roc_auc", "log_loss", "balanced_accuracy"):
         assert torch.isfinite(res_nan[k]).all(), f"NaN leaked into {k}: {res_nan[k]}"
-        assert torch.allclose(res_fin[k], res_nan[k], atol=1e-6), f"Padding mismatch on {k}: {res_fin[k]} vs {res_nan[k]}"
+        assert torch.allclose(res_fin[k], res_nan[k], atol=1e-6), (
+            f"Padding mismatch on {k}: {res_fin[k]} vs {res_nan[k]}"
+        )
 
     # Codex Counterexample #4 (13:41:58Z): 2 holdout rows explicitly marked valid and BOTH predictions NaN
     # Must NEVER silently drop required evaluation rows or award unified_r2=1.0 / regression_r2=1.0!
@@ -432,7 +434,9 @@ def run_self_test() -> dict:
     )
     assert res_c4["valid_eval_mask"].tolist() == [False]
     for k in ("unified_r2_score", "regression_r2", "brier_r2", "roc_auc", "log_loss", "balanced_accuracy"):
-        assert bool(torch.isnan(res_c4[k]).all()), f"Expected NaN on valid-mask NaN predictions for {k}, got {res_c4[k]}"
+        assert bool(torch.isnan(res_c4[k]).all()), (
+            f"Expected NaN on valid-mask NaN predictions for {k}, got {res_c4[k]}"
+        )
 
     try:
         evaluate_unified_regression_and_binary_batched_gpu(
@@ -474,9 +478,7 @@ def run_self_test() -> dict:
             "zero_holdout_coverage_returns_nan_never_1": True,
         },
     }
-    (Path(__file__).resolve().parent / "ns4_binary_clf_receipt.json").write_text(
-        json.dumps(out, indent=2)
-    )
+    (Path(__file__).resolve().parent / "ns4_binary_clf_receipt.json").write_text(json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
     return out
 

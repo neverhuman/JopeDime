@@ -115,7 +115,9 @@ def test_ns4_binary_clf_metrics_and_valid_mask_nan_counterexample() -> None:
     assert bool(ev_fin["valid_eval_mask"][0].item())
     assert bool(ev_nan["valid_eval_mask"][0].item())
     assert abs(float(ev_fin["roc_auc"][0].item()) - float(ev_nan["roc_auc"][0].item())) < 1e-6
-    assert abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item())) < 1e-6
+    assert (
+        abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item())) < 1e-6
+    )
 
     # Codex 13:41:58Z counterexample: 2 valid holdout rows with BOTH predictions NaN
     # Must NEVER return 1.0; must mark valid_eval_mask=False and return NaN (or raise on reject_nonfinite_eval=True)
@@ -162,7 +164,7 @@ def test_ns5_rust_fitness_target() -> None:
         sd_tr=sd,
         is_binary=False,
     )
-    assert "pub unsafe extern \"C\" fn predict_batch_f64" in rs_src
+    assert 'pub unsafe extern "C" fn predict_batch_f64' in rs_src
     res = compile_and_eval_rust_fitness(rs_src, X, y_reg, is_binary=False)
     assert abs(float(res["fitness_r2"]) - 1.0) < 1e-6
 
@@ -177,12 +179,8 @@ def test_ns7_elo_tracker_and_null_family_rejection() -> None:
         DatasetEvalRecord(f"d1_clone_{k}", "fam_1", "regression", {"M_A": 0.90, "M_B": 0.70})
         for k in range(5)
     ]
-    res_base = compute_family_grouped_bradley_terry_elo(
-        base_records, anchor_contender="M_B"
-    )["ratings"]
-    res_dup = compute_family_grouped_bradley_terry_elo(
-        dup_records, anchor_contender="M_B"
-    )["ratings"]
+    res_base = compute_family_grouped_bradley_terry_elo(base_records, anchor_contender="M_B")["ratings"]
+    res_dup = compute_family_grouped_bradley_terry_elo(dup_records, anchor_contender="M_B")["ratings"]
     assert abs(float(res_base["M_A"]) - 1500.0) < 1e-4
     assert abs(float(res_dup["M_A"]) - 1500.0) < 1e-4
 

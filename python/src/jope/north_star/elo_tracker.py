@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -34,7 +34,7 @@ class DatasetEvalRecord:
     dataset_id: str
     family_id: str
     task_type: str  # "regression" or "binary_classification"
-    scores_by_contender: Dict[str, float]
+    scores_by_contender: dict[str, float]
 
 
 def require_finite_score(row: Mapping[str, object], field_name: str) -> float:
@@ -43,7 +43,9 @@ def require_finite_score(row: Mapping[str, object], field_name: str) -> float:
     Never substitutes fallback values like `-1.0`.
     """
     if field_name not in row:
-        raise KeyError(f"Required score field {field_name!r} is missing from record keys={sorted(row.keys())}")
+        raise KeyError(
+            f"Required score field {field_name!r} is missing from record keys={sorted(row.keys())}"
+        )
     raw = row[field_name]
     if raw is None or isinstance(raw, bool):
         raise ValueError(f"Score field {field_name!r} has invalid value {raw!r}")
@@ -62,7 +64,7 @@ def _is_unresolved_family_id(val: object) -> bool:
 
 def load_authoritative_s3_metadata(
     inventory_path: Path = S3_INVENTORY_PATH,
-) -> Dict[str, Dict[str, object]]:
+) -> dict[str, dict[str, object]]:
     """
     Loads authoritative `family_key`, `task`, `origin`, and `has_meta_test` metadata per dataset ID
     from `s3_manifest_inventory.json` (NS1).
@@ -72,11 +74,11 @@ def load_authoritative_s3_metadata(
         raise FileNotFoundError(f"Authoritative S3 manifest inventory not found at {inventory_path}")
     data = json.loads(inventory_path.read_text(encoding="utf-8"))
     items = data.get("items", [])
-    meta: Dict[str, Dict[str, object]] = {}
+    meta: dict[str, dict[str, object]] = {}
     for item in items:
         did = str(item["id"])
         raw_fk = item.get("family_key")
-        fam_id: Optional[str] = None if _is_unresolved_family_id(raw_fk) else str(raw_fk).strip()
+        fam_id: str | None = None if _is_unresolved_family_id(raw_fk) else str(raw_fk).strip()
         meta[did] = {
             "family_id": fam_id,
             "task_type": str(item["task"]),
@@ -89,7 +91,7 @@ def load_authoritative_s3_metadata(
 def resolve_authoritative_family_and_task(
     dataset_id: str,
     s3_meta: Mapping[str, Mapping[str, object]],
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """
     Resolves `(family_id, task_type)` from authoritative S3 metadata and enforces:
       - `dataset_id` must exist in `s3_meta`
@@ -103,7 +105,9 @@ def resolve_authoritative_family_and_task(
     if info.get("origin") != "real":
         raise ValueError(f"Dataset {dataset_id!r} has non-real origin={info.get('origin')!r}")
     if bool(info.get("has_meta_test", False)):
-        raise ValueError(f"Dataset {dataset_id!r} is flagged has_meta_test=True (sealed meta-test forbidden).")
+        raise ValueError(
+            f"Dataset {dataset_id!r} is flagged has_meta_test=True (sealed meta-test forbidden)."
+        )
     raw_fam_id = info.get("family_id")
     if _is_unresolved_family_id(raw_fam_id):
         raise ValueError(
@@ -111,10 +115,21 @@ def resolve_authoritative_family_and_task(
         )
     fam_id = str(raw_fam_id).strip()
     task_type = str(info["task_type"])
-    allowed_tasks = ("regression", "binary", "binary_classification", "classification", "multi_label", "timeseries")
+    allowed_tasks = (
+        "regression",
+        "binary",
+        "binary_classification",
+        "classification",
+        "multi_label",
+        "timeseries",
+    )
     if task_type not in allowed_tasks:
         raise ValueError(f"Dataset {dataset_id!r} has unsupported task_type={task_type!r}")
-    norm_task = "binary_classification" if task_type in ("binary", "binary_classification", "classification") else task_type
+    norm_task = (
+        "binary_classification"
+        if task_type in ("binary", "binary_classification", "classification")
+        else task_type
+    )
     return fam_id, norm_task
 
 
@@ -126,7 +141,7 @@ def compute_family_grouped_bradley_terry_elo(
     n_iters: int = 400,
     prior: float = 0.0,
     allow_incomplete_panel: bool = False,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """
     Computes exact stationary Bradley-Terry Elo ratings (`1500 + 400 * log10(gamma)`) with
     family-grouped weighting:
@@ -150,14 +165,14 @@ def compute_family_grouped_bradley_terry_elo(
 
     # Validate records and count eligible family members per ordered pair (ia, ib, family_id)
     all_families = set()
-    pair_fam_counts: Dict[Tuple[int, int, str], int] = {}
-    valid_contenders_per_record: List[List[str]] = []
+    pair_fam_counts: dict[tuple[int, int, str], int] = {}
+    valid_contenders_per_record: list[list[str]] = []
 
     for r in records:
         if _is_unresolved_family_id(r.family_id):
             raise ValueError(f"Record {r.dataset_id!r} has unresolved/null family_id={r.family_id!r}.")
         all_families.add(r.family_id)
-        avail: List[str] = []
+        avail: list[str] = []
         for c in contenders:
             if c not in r.scores_by_contender:
                 if not allow_incomplete_panel:
@@ -186,7 +201,7 @@ def compute_family_grouped_bradley_terry_elo(
     # contributes total weight 1.0 split evenly across its eligible (a,b) member tables.
     W = np.zeros((M, M), dtype=np.float64)
     N_games = np.zeros((M, M), dtype=np.float64)
-    raw_wtl: Dict[str, Dict[str, List[int]]] = {
+    raw_wtl: dict[str, dict[str, list[int]]] = {
         a: {b: [0, 0, 0] for b in contenders if b != a} for a in contenders
     }
 
@@ -240,8 +255,7 @@ def compute_family_grouped_bradley_terry_elo(
         gamma = new_gamma
 
     ratings = {
-        c: round(anchor_elo + 400.0 * math.log10(max(float(gamma[c_to_idx[c]]), 1e-9)), 2)
-        for c in contenders
+        c: round(anchor_elo + 400.0 * math.log10(max(float(gamma[c_to_idx[c]]), 1e-9)), 2) for c in contenders
     }
     return {
         "ratings": ratings,
@@ -266,14 +280,18 @@ def check_phase_d_elo_gate(
     regression_ratings: Mapping[str, float],
     binary_ratings: Mapping[str, float],
     h_baseline_name: str,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """
     Verifies NORTH_STAR Phase D gate:
       - `len(round_names) >= 3`
       - Final flywheel Elo >= `h_baseline_name` Elo on overall, regression, and binary classification
       - Monotonically trending up over `>= 3` rounds on both task types.
     """
-    if h_baseline_name not in overall_ratings or h_baseline_name not in regression_ratings or h_baseline_name not in binary_ratings:
+    if (
+        h_baseline_name not in overall_ratings
+        or h_baseline_name not in regression_ratings
+        or h_baseline_name not in binary_ratings
+    ):
         raise KeyError(f"Baseline {h_baseline_name!r} missing from ratings dictionaries.")
     reg_seq = [float(regression_ratings[r]) for r in round_names]
     bin_seq = [float(binary_ratings[r]) for r in round_names]
@@ -300,7 +318,7 @@ def check_phase_d_elo_gate(
     }
 
 
-def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
+def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
     """
     1. Runs regression tests for all codex 12:47:16Z spot-check counterexamples:
        - Complete-panel 2-table winning family vs 1-table losing family balances at 1500.00
@@ -314,7 +332,7 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
        and `task` from `/home/ubuntu/jope_plan/ns/s3_manifest_inventory.json` and validated score fields.
        (Explicitly labeled as a Phase 1 diagnostic baseline, NOT a Phase D 3-round flywheel pass.)
     """
-    codex_checks: Dict[str, object] = {}
+    codex_checks: dict[str, object] = {}
 
     # Check 1: 2-table winning family vs 1-table losing family -> exact 1500.0
     bal_records = [
@@ -322,7 +340,9 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
         DatasetEvalRecord("d2", "fam_win_2", "regression", {"anchor": 0.72, "challenger": 0.82}),
         DatasetEvalRecord("d3", "fam_lose_1", "regression", {"anchor": 0.85, "challenger": 0.65}),
     ]
-    bal_elo = compute_family_grouped_bradley_terry_elo(bal_records, anchor_contender="anchor", anchor_elo=1500.0)
+    bal_elo = compute_family_grouped_bradley_terry_elo(
+        bal_records, anchor_contender="anchor", anchor_elo=1500.0
+    )
     assert abs(bal_elo["ratings"]["challenger"] - 1500.0) < 1e-6, f"Expected 1500.0, got {bal_elo}"
     codex_checks["balanced_2table_vs_1table_family_elo"] = bal_elo["ratings"]["challenger"]
 
@@ -361,7 +381,9 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
 
     # Check 4: Missing score field (`landmarks_off_hold_r2`) must raise KeyError
     try:
-        require_finite_score({"dataset_id": "x", "gpu_nolm_exact_ridge_hold_r2": 0.5}, "landmarks_off_hold_r2")
+        require_finite_score(
+            {"dataset_id": "x", "gpu_nolm_exact_ridge_hold_r2": 0.5}, "landmarks_off_hold_r2"
+        )
         codex_checks["missing_score_field_rejected"] = False
     except KeyError:
         codex_checks["missing_score_field_rejected"] = True
@@ -374,7 +396,9 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
     # must stay `None` (never coerced to literal `"None"`) and must be rejected by both
     # `resolve_authoritative_family_and_task` and `compute_family_grouped_bradley_terry_elo`.
     for null_did in ("dbc501fc7f6a40b5", "4c562924720c9e19", "a76d20c7ab4f79b3"):
-        assert s3_meta[null_did]["family_id"] is None, f"Expected None family_id for {null_did}, got {s3_meta[null_did]}"
+        assert s3_meta[null_did]["family_id"] is None, (
+            f"Expected None family_id for {null_did}, got {s3_meta[null_did]}"
+        )
         try:
             resolve_authoritative_family_and_task(null_did, s3_meta)
             codex_checks[f"null_family_rejected_{null_did}"] = False
@@ -394,8 +418,8 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
         assert codex_checks[f"elo_solver_rejected_bad_family_{bad_fam.strip() or 'empty'}"] is True
 
     q10_path = Path("/home/ubuntu/gpu_bench/fused/quick10_and_parity_report.json")
-    q10_records: List[DatasetEvalRecord] = []
-    q10_excluded_unresolved_ids: List[str] = []
+    q10_records: list[DatasetEvalRecord] = []
+    q10_excluded_unresolved_ids: list[str] = []
     if q10_path.exists():
         q10 = json.loads(q10_path.read_text(encoding="utf-8"))
         q10_rows = q10.get("quick10_parity_and_fitter_accuracy", {}).get("rows", [])
@@ -412,8 +436,12 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
                     task_type=task_type,
                     scores_by_contender={
                         "H40b_Chained_Ref": require_finite_score(row, "chained_hold_r2"),
-                        "Fused_LM_CPU_Exact_SameDSL": require_finite_score(row, "fused_lm_cpu_exact_eval_hold_r2"),
-                        "Fused_Phase1_LandmarksOn_Stage3Surrogate": require_finite_score(row, "gpu_exact_ridge_hold_r2"),
+                        "Fused_LM_CPU_Exact_SameDSL": require_finite_score(
+                            row, "fused_lm_cpu_exact_eval_hold_r2"
+                        ),
+                        "Fused_Phase1_LandmarksOn_Stage3Surrogate": require_finite_score(
+                            row, "gpu_exact_ridge_hold_r2"
+                        ),
                         "Fused_Phase1_LandmarksOff_Stage3Surrogate": require_finite_score(
                             row, "gpu_nolm_exact_ridge_hold_r2"
                         ),
@@ -431,15 +459,19 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
     q10_elo["by_task_type"] = {
         "regression": compute_family_grouped_bradley_terry_elo(
             q10_reg_records, anchor_contender="H40b_Chained_Ref", anchor_elo=1500.0, prior=0.01
-        ) if q10_reg_records else {"status": "0_verified_family_datasets_in_subset"},
+        )
+        if q10_reg_records
+        else {"status": "0_verified_family_datasets_in_subset"},
         "binary_classification": compute_family_grouped_bradley_terry_elo(
             q10_bin_records, anchor_contender="H40b_Chained_Ref", anchor_elo=1500.0, prior=0.01
-        ) if q10_bin_records else {"status": "0_verified_family_datasets_in_subset"},
+        )
+        if q10_bin_records
+        else {"status": "0_verified_family_datasets_in_subset"},
     }
 
     # Cohort915 diagnostic comparison on the verified non-null family_key subset ONLY
     # (432 datasets with resolved family_key; 483 null-family_key datasets explicitly excluded and not pooled)
-    c915_records: List[DatasetEvalRecord] = []
+    c915_records: list[DatasetEvalRecord] = []
     c915_excluded_unresolved_count = 0
     on_jsonl = Path("/home/ubuntu/gpu_bench/fused/cohort915_landmarks_on_runs.jsonl")
     off_jsonl = Path("/home/ubuntu/gpu_bench/fused/cohort915_landmarks_off_runs.jsonl")
@@ -477,7 +509,7 @@ def evaluate_current_real_s3_baseline_elo() -> Dict[str, object]:
         c915_records, anchor_contender="Fused_Phase1_LandmarksOn", anchor_elo=1500.0, prior=0.01
     )
     c915_elo["excluded_null_family_count"] = c915_excluded_unresolved_count
-    c915_by_task: Dict[str, object] = {}
+    c915_by_task: dict[str, object] = {}
     for t_name in sorted({r.task_type for r in c915_records}):
         sub_recs = [r for r in c915_records if r.task_type == t_name]
         c915_by_task[t_name] = compute_family_grouped_bradley_terry_elo(

@@ -21,7 +21,6 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -133,7 +132,7 @@ def compile_and_eval_rust_fitness(
     X_val: np.ndarray,
     y_val: np.ndarray,
     is_binary: bool = False,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """
     Compiles `rust_src` with `rustc --crate-type cdylib -O` into a temporary shared library,
     evaluates `predict_batch_f64` on `X_val`, and computes exact fitness (`hold_r2` for
