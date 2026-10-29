@@ -160,3 +160,24 @@ recovery batch is 8192 with `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
 The runner now returns unused cached segments between rounds, writes explicit
 failure status on exceptions, and reports continuous next-round ETA correctly.
 The failed log and manifests remain in custody; no other jobs were interrupted.
+
+## Development adapter admission (16:35Z owner nudge)
+
+`dev_incumbent.DevIncumbent` preserves the best development utility under a fixed
+comparison identity. The runner first resumes the latest logical round, then
+restores the highest-utility historical adapter and AdamW state (most recent tie:
+round40). Training proposals that reduce utility are saved under `rejected/`;
+both model and optimizer are restored before GP ranking. Equal scores may advance
+training, preventing long argmin plateaus from suppressing every optimizer update.
+`best_dev_checkpoint.json` binds the incumbent checkpoint hash, fixed development
+identity and utility; `adapter_admissions.jsonl` records each acceptance/rollback.
+The pointer is published after a durable accepted-state checkpoint. Old files and
+rejected proposals are retained within the original10GiB campaign ceiling.
+
+Paired CPU replay at identical inputs reproduces the round41 regression exactly;
+all non-adapter tensors remain identical. See the committed dev-regression receipt.
+The static process command's round13 resume argument described one startup load,
+not a per-round reset: AdamW steps206/210/212/250 at rounds38/40/41/60 demonstrate
+continued optimization. Keep LR1e-4 and two steps while guarding dev; do not infer
+that more updates or higher LR will fix a misaligned training objective. New
+receipts log update norms, gradient norms, actual optimizer steps and phase timings.

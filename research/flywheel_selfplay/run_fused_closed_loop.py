@@ -47,6 +47,7 @@ sys.modules[spec.name] = guard
 spec.loader.exec_module(guard)
 sys.path.insert(0, str(HERE))
 from automatic_promotion import promote, replay, training_cv_envelope, training_indices
+from dev_incumbent import DevIncumbent
 
 
 def sha(path):
@@ -131,6 +132,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--resume", type=Path)
     ap.add_argument("--continuous", action="store_true")
+    ap.add_argument("--best-checkpoint", type=Path)
     args = ap.parse_args()
     if min(args.rounds, args.steps, args.batch_size, args.slate_size) <= 0:
         raise ValueError("positive bounds required")
@@ -242,6 +244,8 @@ def main():
     start_round = 1
     if args.resume:
         state = torch.load(args.resume, map_location=device, weights_only=True)
+        if state.get("admission") == "rejected":
+            raise ValueError("cannot resume a rejected adapter proposal")
         net.load_state_dict(state["state_dict"], strict=True)
         opt.load_state_dict(state["optimizer"])
         guard.verify_dope_frozen_unchanged(net, before)
@@ -360,7 +364,115 @@ def main():
             "scope": "family-disjoint development subset of DL-Train; not sealed generalization",
         }
 
-    initial = utility()
+    resumed_stats = utility()
+    eval_contract = {
+        "protocol": "fixed-dev-cost-argmin-negative-fitness/v1",
+        "selected_packet_sha256": sha(args.input / "selected.json"),
+        "dope_sha256": before.composite_sha256,
+        "source_sha256": sha(source),
+        "model_source_sha256": sha(MICRO / "python/model.py"),
+        "adapter_source_sha256": sha(MICRO / "python/phase12_multimodal_model.py"),
+        "contexts": [
+            {
+                "cid": c,
+                "pool_sha256": pools[c]["rec"]["pool_sha256"],
+                "training_table_sha256": pools[c]["rec"]["train_only_jtt1_sha256"],
+            }
+            for c in dev
+        ],
+    }
+    evaluation_identity = hashlib.sha256(
+        json.dumps(eval_contract, sort_keys=True).encode()
+    ).hexdigest()
+    historical_best = None
+    if args.best_checkpoint:
+        best_path = args.best_checkpoint
+        historical_best = json.loads(best_path.with_suffix(".json").read_text())
+    else:
+        history = [
+            json.loads(path.read_text()) for path in args.output.glob("round-*.json")
+        ]
+        eligible = [
+            row
+            for row in history
+            if (args.output / f"round-{row['round']:02d}.pt").exists()
+        ]
+        # Most recent tied best permits continued training without lowering dev utility.
+        historical_best = (
+            max(eligible, key=lambda row: (row["dev_utility"]["mean"], row["round"]))
+            if eligible
+            else None
+        )
+        best_path = (
+            args.output / f"round-{historical_best['round']:02d}.pt"
+            if historical_best
+            else args.resume
+        )
+    pointer_path = args.output / "best_dev_checkpoint.json"
+    if pointer_path.exists():
+        prior_best = json.loads(pointer_path.read_text())
+        if prior_best["evaluation_identity"] != evaluation_identity:
+            raise ValueError("persisted best-dev evaluation identity changed")
+        prior_path = Path(prior_best["best_checkpoint"])
+        if sha(prior_path) != prior_best["checkpoint_sha256"]:
+            raise ValueError("persisted best-dev checkpoint hash mismatch")
+        if historical_best is None or (
+            prior_best["best_utility"],
+            prior_best["best_round"],
+        ) >= (historical_best["dev_utility"]["mean"], historical_best["round"]):
+            historical_best = {
+                "round": prior_best["best_round"],
+                "dev_utility": prior_best["utility"],
+            }
+            best_path = prior_path
+    if historical_best:
+        best_state = torch.load(best_path, map_location=device, weights_only=True)
+        net.load_state_dict(best_state["state_dict"], strict=True)
+        opt.load_state_dict(best_state["optimizer"])
+        guard.verify_dope_frozen_unchanged(net, before)
+        initial = utility()
+        if initial != historical_best["dev_utility"]:
+            raise ValueError(
+                "historical best does not replay on the current fixed dev evaluator"
+            )
+        best_round = int(historical_best["round"])
+    else:
+        initial = resumed_stats
+        best_round = start_round - 1
+    incumbent = DevIncumbent(
+        net,
+        opt,
+        initial,
+        evaluation_identity,
+        str(best_path or "initial_model"),
+        best_round,
+    )
+    best_metadata = {
+        "evaluation_identity": evaluation_identity,
+        "evaluation_contract": eval_contract,
+        "best_checkpoint": incumbent.best_checkpoint,
+        "best_round": incumbent.best_round,
+        "best_utility": incumbent.best_utility,
+        "utility": incumbent.best_stats,
+        "checkpoint_sha256": sha(best_path) if best_path else None,
+    }
+    write_json(args.output / "best_dev_checkpoint.json", best_metadata)
+    if resumed_stats["mean"] < initial["mean"]:
+        with (args.output / "adapter_admissions.jsonl").open("a") as admission_log:
+            admission_log.write(
+                json.dumps(
+                    {
+                        "action": "startup_restore_best",
+                        "round": start_round,
+                        "resumed_utility": resumed_stats["mean"],
+                        "best_utility": initial["mean"],
+                        "best_checkpoint": str(best_path),
+                        "evaluation_identity": evaluation_identity,
+                        "timestamp": time.time(),
+                    }
+                )
+                + "\n"
+            )
     manifest = {
         "node": socket.gethostname(),
         "source_sha": __import__("subprocess")
@@ -376,6 +488,8 @@ def main():
         "phase2_kernel_used": False,
         "prep_wall_seconds": prep_wall,
         "initial_dev": initial,
+        "resumed_dev": resumed_stats,
+        "best_dev": best_metadata,
         "input_hashes": {
             p.name: sha(p)
             for p in (args.input / "selected.json", args.input / "winners.json", source)
@@ -433,16 +547,37 @@ def main():
         start = time.monotonic()
         torch.cuda.reset_peak_memory_stats()
         losses = []
+        phase = {
+            k: 0.0
+            for k in (
+                "headroom_wait",
+                "slate_assembly",
+                "forward_and_targets",
+                "backward_and_step",
+                "dev_gate",
+                "gp",
+            )
+        }
+        grad_norms = []
+        optimizer_step_before = max(
+            (int(v["step"]) for v in opt.state.values() if "step" in v), default=0
+        )
+        effective_lr = [g["lr"] for g in opt.param_groups]
         net.train()
         snap = {
             n: p.detach().clone() for n, p in net.named_parameters() if p.requires_grad
         }
         for step in range(args.steps):
+            phase_start = time.monotonic()
             headroom()
+            phase["headroom_wait"] += time.monotonic() - phase_start
+            phase_start = time.monotonic()
             cids = random.choices(train, k=args.batch_size)
             selections = []
             for c in cids:
                 selections.append(training_indices(pools[c], args.slate_size))
+            phase["slate_assembly"] += time.monotonic() - phase_start
+            phase_start = time.monotonic()
             opt.zero_grad(set_to_none=True)
             pred = predict(cids, selections)
             target = torch.as_tensor(
@@ -462,10 +597,19 @@ def main():
             )
             if not torch.isfinite(loss):
                 raise RuntimeError("nonfinite loss")
+            torch.cuda.synchronize()
+            phase["forward_and_targets"] += time.monotonic() - phase_start
+            phase_start = time.monotonic()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(opt.param_groups[0]["params"], 1.0)
+            grad_norms.append(
+                float(
+                    torch.nn.utils.clip_grad_norm_(opt.param_groups[0]["params"], 1.0)
+                )
+            )
             opt.step()
             losses.append(float(loss.detach()))
+            torch.cuda.synchronize()
+            phase["backward_and_step"] += time.monotonic() - phase_start
         torch.cuda.synchronize()
         train_wall = time.monotonic() - start
         guard.verify_dope_frozen_unchanged(net, before)
@@ -474,7 +618,55 @@ def main():
         )
         if not changed:
             raise RuntimeError("no parameter update")
+        update_l2 = float(
+            torch.sqrt(
+                sum(
+                    torch.sum((p.detach() - snap[n]) ** 2)
+                    for n, p in net.named_parameters()
+                    if n in snap
+                )
+            )
+        )
+        optimizer_step_candidate = max(
+            (int(v["step"]) for v in opt.state.values() if "step" in v), default=0
+        )
+        phase_start = time.monotonic()
+        candidate_dev = utility()
+        if candidate_dev["mean"] < incumbent.best_utility:
+            rejected = args.output / "rejected" / f"round-{rnd:02d}.pt"
+            rejected.parent.mkdir(exist_ok=True)
+            rejected_tmp = rejected.with_suffix(".pt.new")
+            torch.save(
+                {
+                    "state_dict": net.state_dict(),
+                    "optimizer": opt.state_dict(),
+                    "round": rnd,
+                    "admission": "rejected",
+                    "dev_utility": candidate_dev,
+                    "dope_sha256": before.composite_sha256,
+                },
+                rejected_tmp,
+            )
+            rejected_tmp.replace(rejected)
+        adapter_admission = incumbent.decide(
+            net,
+            opt,
+            candidate_dev,
+            evaluation_identity,
+            str(args.output / f"round-{rnd:02d}.pt"),
+            rnd,
+        )
+        guard.verify_dope_frozen_unchanged(net, before)
         dev_stats = utility()
+        if dev_stats != incumbent.best_stats:
+            raise RuntimeError("incumbent restore did not reproduce best-dev selection")
+        adapter_admission["timestamp"] = time.time()
+        with (args.output / "adapter_admissions.jsonl").open("a") as admission_log:
+            admission_log.write(json.dumps(adapter_admission) + "\n")
+            admission_log.flush()
+            os.fsync(admission_log.fileno())
+        phase["dev_gate"] = time.monotonic() - phase_start
+        gp_start = time.monotonic()
         seen_before_round = {pid for c in train for pid in pools[c]["pids"]}
         generated = []
         events = []
@@ -571,6 +763,7 @@ def main():
                             "landmark_summary": landmark[c][:12].tolist(),
                         }
                     )
+        phase["gp"] = time.monotonic() - gp_start
         guard.verify_dope_frozen_unchanged(net, before)
         checkpoint_tmp = args.output / f"round-{rnd:02d}.pt.new"
         torch.save(
@@ -579,12 +772,27 @@ def main():
                 "optimizer": opt.state_dict(),
                 "round": rnd,
                 "dope_sha256": before.composite_sha256,
+                "admission": "incumbent",
+                "best_dev_round": incumbent.best_round,
+                "evaluation_identity": evaluation_identity,
             },
             checkpoint_tmp,
         )
         with checkpoint_tmp.open("rb") as checkpoint_stream:
             os.fsync(checkpoint_stream.fileno())
         checkpoint_tmp.replace(args.output / f"round-{rnd:02d}.pt")
+        write_json(
+            args.output / "best_dev_checkpoint.json",
+            {
+                "evaluation_identity": evaluation_identity,
+                "evaluation_contract": eval_contract,
+                "best_checkpoint": incumbent.best_checkpoint,
+                "best_round": incumbent.best_round,
+                "best_utility": incumbent.best_utility,
+                "utility": incumbent.best_stats,
+                "checkpoint_sha256": sha(incumbent.best_checkpoint),
+            },
+        )
         wall = time.monotonic() - start
         row = {
             "round": rnd,
@@ -603,6 +811,15 @@ def main():
             "tokens_count": token_count,
             "tokens_scope": "evaluated GP DSL tokens (cl100k_base) per full round wall second; not emitted target-language code",
             "dev_utility": dev_stats,
+            "candidate_dev_utility": candidate_dev,
+            "adapter_admission": adapter_admission,
+            "evaluation_identity": evaluation_identity,
+            "phase_wall_seconds": phase,
+            "learning_rate": effective_lr,
+            "optimizer_step_before": optimizer_step_before,
+            "optimizer_step_candidate": optimizer_step_candidate,
+            "parameter_update_l2": update_l2,
+            "gradient_norms_before_clip": grad_norms,
             "initial_dev_utility": initial,
             "loss_first": losses[0],
             "loss_last": losses[-1],
@@ -641,8 +858,12 @@ def main():
         status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
         status.write_text(
             "# Fused flywheel status\n\n"
-            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nRemaining rounds: {remaining}; ETA: {eta}.\n"
+            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nEffective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
         )
+        findings = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_FINDINGS.md"
+        if findings.exists():
+            with status.open("a") as status_stream:
+                status_stream.write("\n" + findings.read_text())
         if generated and failed == len(generated):
             raise RuntimeError(
                 "all GP evaluations failed; round retained as unqualified, stopping continuation"
