@@ -35,3 +35,18 @@ are not an equivalent full-round speed comparison.
 
 DOPE remains c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814;
 Phase2 kernels and sealed/outer rows remain outside the loop.
+
+### Live guarded-round proof
+
+Round69's proposed utility1.147988 was rejected. Accepted utility was restored to
+2.267816. CPU readback proves BOTH the saved model and AdamW state in round69.pt
+are bit-identical to round40.pt; rejected/round69.pt preserves the different
+proposal. Candidate step212 rolled back to incumbent step210. Future rejected
+rounds may intentionally repeat those counters under this guard; that is logged
+rollback, not reloading round13 each iteration.
+
+Round69 phase timings: headroom0.50s, slate assembly0.67s, forward/input/targets
+28.35s, backward+optimizer0.18s, dev gate0.17s, GP40.96s; total70.92s. The new
+measurement localizes training overhead to forward/input/target handling. It does
+not separate CPU input packing/H2D from GPU forward kernels, so attributing the
+historical drift specifically to host contention remains unproven.
