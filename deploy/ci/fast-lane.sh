@@ -72,6 +72,9 @@ rustup show active-toolchain
     # Search commentary contracts: exact diffs, producer parity and real streaming.
 bash ops/ci/narration.sh
 cargo check --workspace --all-targets --locked
+    # Telemetry's optional native Python ABI and engine feature gates are part of the crate contract.
+cargo check -p jope-telemetry --features python --all-targets --locked
+cargo check -p jope-parallel --features telemetry --locked
     # Rendered systemd units resolve under the rendered roots
 cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
     # Workspace MSRV (decision 8: at most 1.97.1)

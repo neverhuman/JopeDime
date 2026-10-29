@@ -18,7 +18,7 @@
 # are genuinely untested on pull requests, which this file states rather than hides.
 set -euo pipefail
 
-product=(jope-narrator jope-observatory feat-math jope-pipeline jope-cli jope-datasets jope-models starforge jope-policy hyperion numpy-pcg64 jope-paths battle-gpu jope-arena jope-bench jope-automl jope-learning jope-motifs jope-records jope-ci jope-assets jope-runtime jope-appliance jope-dist)
+product=(jope-narrator jope-observatory feat-math jope-pipeline jope-cli jope-datasets jope-models starforge jope-policy hyperion numpy-pcg64 jope-paths battle-gpu jope-arena jope-bench jope-automl jope-learning jope-motifs jope-records jope-ci jope-assets jope-runtime jope-telemetry jope-appliance jope-dist)
 deferred=(jope-parallel jope-dime-regressor jain-smartcluster jain-smartcluster-core jain-smartcluster-fabric jain-smartcluster-daemon jain-worker jainnode scq)
 
 # deploy/ci/check.sh asserts that product + deferred is exactly the workspace, so a crate added

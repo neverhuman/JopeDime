@@ -29,6 +29,7 @@ Key Capabilities:
 """
 
 import collections
+import os
 import random
 import threading
 import time
@@ -39,6 +40,8 @@ from rust_evaluator import (
     GLOBAL_CPU_GUARD,
     evolve_context_slate_generations,
 )
+
+IO_TELEMETRY_ENABLED = bool(os.environ.get("JOPE_TELEMETRY_RUN_DIR"))
 
 
 def build_base_gpu_slate_batch(
@@ -381,6 +384,9 @@ class AsyncEvoBatchQueue:
         self.total_transitions_supplied = 0
         self.popped_batch_ages_ms = []
         self.gpu_starvation_wait_ms = 0.0
+        self.last_queue_depth = 0
+        self.last_queue_wait_ms = 0.0
+        self.last_pop_fallback = 0
 
     def start(self, prefill_batches: int = 4):
         """Pre-fill initial evolved batches and start background evolutionary batch producer threads."""
@@ -390,6 +396,7 @@ class AsyncEvoBatchQueue:
                 b_cids = list(self.train_cids)
             else:
                 b_cids = rng.sample(self.train_cids, self.batch_size)
+            prep_started = time.perf_counter() if IO_TELEMETRY_ENABLED else None
             b_dict = build_base_gpu_slate_batch(
                 batch_cids=b_cids,
                 pools=self.pools,
@@ -414,6 +421,8 @@ class AsyncEvoBatchQueue:
                 naive_label_grafting=self.naive_label_grafting,
                 seed=self.seed + p_idx * 31,
             )
+            if prep_started is not None:
+                b_dict["_telemetry_prep_ms"] = (time.perf_counter() - prep_started) * 1000.0
             with self.deque_lock:
                 self.ready_deque.append(b_dict)
                 self.batches_enqueued += 1
@@ -439,6 +448,7 @@ class AsyncEvoBatchQueue:
             else:
                 b_cids = rng.sample(self.train_cids, self.batch_size)
 
+            prep_started = time.perf_counter() if IO_TELEMETRY_ENABLED else None
             b_dict = build_base_gpu_slate_batch(
                 batch_cids=b_cids,
                 pools=self.pools,
@@ -463,6 +473,8 @@ class AsyncEvoBatchQueue:
                 naive_label_grafting=self.naive_label_grafting,
                 seed=self.seed + worker_id * 5000 + step_counter,
             )
+            if prep_started is not None:
+                b_dict["_telemetry_prep_ms"] = (time.perf_counter() - prep_started) * 1000.0
             step_counter += 1
             if self.stop_event.is_set():
                 break
@@ -480,9 +492,18 @@ class AsyncEvoBatchQueue:
         t0 = time.monotonic()
         popped = None
         with self.deque_lock:
+            if IO_TELEMETRY_ENABLED:
+                lock_acquired = time.monotonic()
+                self.last_queue_wait_ms = (lock_acquired - t0) * 1000.0
+                self.last_queue_depth = len(self.ready_deque)
             if len(self.ready_deque) > 0:
                 popped = self.ready_deque.popleft()
                 self.batches_popped_from_queue += 1
+                if IO_TELEMETRY_ENABLED:
+                    self.last_pop_fallback = 0
+            else:
+                if IO_TELEMETRY_ENABLED:
+                    self.last_pop_fallback = 1
 
         if popped is not None:
             age_ms = (time.monotonic() - popped["enqueued_at"]) * 1000.0
@@ -490,6 +511,7 @@ class AsyncEvoBatchQueue:
         else:
             # Instant zero-wait fallback using cached evolutionary transitions so GPU never stalls
             self.batches_instant_fallback += 1
+            prep_started = time.perf_counter() if IO_TELEMETRY_ENABLED else None
             popped = build_base_gpu_slate_batch(
                 batch_cids=fallback_cids,
                 pools=self.pools,
@@ -514,6 +536,8 @@ class AsyncEvoBatchQueue:
                 allow_live_rust_eval=False,
                 seed=self.seed + self.batches_instant_fallback,
             )
+            if prep_started is not None:
+                popped["_telemetry_prep_ms"] = (time.perf_counter() - prep_started) * 1000.0
 
         self.total_evolved_children_injected += int(popped.get("evolved_children_injected", 0))
         self.total_improved_children += int(popped.get("improved_children_count", 0))
