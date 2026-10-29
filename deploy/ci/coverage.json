@@ -160,16 +160,6 @@
     }
   },
   "items": {
-    "python:research/flywheel_selfplay/test_fused_telemetry.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested native telemetry adapter regression proof for the frozen-DOPE fused research worker: disabled/missing-wheel refusal, byte-rate scope, unavailable token/H2D metrics and interrupt finalization; outside product baseline."
-    },
     "benchmark:crates/feat-math/examples/expression_benchmark.rs": {
       "discovery": {
         "kind": "benchmark-source"

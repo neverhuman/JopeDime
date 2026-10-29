@@ -54,7 +54,6 @@ from dev_incumbent import (
     proposal_plan,
 )
 from device_pool_cache import DevicePoolCache
-from fused_telemetry import emit_step, finish_round, interrupt_active, open_round
 
 
 def sha(path):
@@ -645,7 +644,6 @@ def main():
             HERE / "automatic_promotion.py",
             HERE / "dev_incumbent.py",
             HERE / "device_pool_cache.py",
-            HERE / "fused_telemetry.py",
         ]
     }
     preregistration = args.output / "gp_exploration_preregistration.json"
@@ -654,23 +652,6 @@ def main():
         if preregistration.exists()
         else None
     )
-    manifest["promotion_replay"] = {
-        "journal_sha256": sha(journal),
-        "journal_events": len(journal.read_text().splitlines()),
-        "train_pools": {
-            c: {
-                "programs": len(pools[c]["pids"]),
-                "ordered_program_ids_sha256": hashlib.sha256(
-                    json.dumps(pools[c]["pids"], separators=(",", ":")).encode()
-                ).hexdigest(),
-                "fitness_sha256": hashlib.sha256(
-                    pools[c]["fitness"].tobytes()
-                ).hexdigest(),
-                "gate_sha256": hashlib.sha256(pools[c]["gate"].tobytes()).hexdigest(),
-            }
-            for c in train
-        },
-    }
     manifest["resume_checkpoint"] = (
         {"path": str(args.resume), "sha256": sha(args.resume)} if args.resume else None
     )
@@ -713,16 +694,6 @@ def main():
         # Return unused cached segments between rounds to limit fragmentation.
         torch.cuda.empty_cache()
         start = time.monotonic()
-        telemetry = open_round(
-            rnd,
-            plan["round_seed"],
-            {
-                "source_sha": manifest["source_sha"],
-                "dope_sha256": before.composite_sha256,
-                "evaluation_identity": evaluation_identity,
-                "budget": manifest["budget"],
-            },
-        )
         torch.cuda.reset_peak_memory_stats()
         losses = []
         phase = {
@@ -742,7 +713,6 @@ def main():
             "device_pack_seconds": 0.0,
             "model_forward_target_seconds": 0.0,
             "cpu_index_bytes": 0,
-            "host_to_device_bytes": 0,
             "avoided_cpu_feature_slate_bytes": 0,
         }
         transfers_before = device_pool_cache.transfers
@@ -757,7 +727,6 @@ def main():
             n: p.detach().clone() for n, p in net.named_parameters() if p.requires_grad
         }
         for step in range(plan["steps"]):
-            step_started = time.monotonic()
             phase_start = time.monotonic()
             headroom()
             phase["headroom_wait"] += time.monotonic() - phase_start
@@ -766,16 +735,13 @@ def main():
             selections = []
             for c in cids:
                 selections.append(training_indices(pools[c], args.slate_size))
-            assembly_seconds = time.monotonic() - phase_start
-            phase["slate_assembly"] += assembly_seconds
+            phase["slate_assembly"] += time.monotonic() - phase_start
             phase_start = time.monotonic()
             opt.zero_grad(set_to_none=True)
             pack_start = time.monotonic()
             packed = device_pool_cache.pack(pools, cids, selections)
             torch.cuda.synchronize()
-            pack_seconds = time.monotonic() - pack_start
-            batch_profile["device_pack_seconds"] += pack_seconds
-            batch_profile["host_to_device_bytes"] += packed["host_to_device_bytes"]
+            batch_profile["device_pack_seconds"] += time.monotonic() - pack_start
             batch_profile["cpu_index_bytes"] += packed["cpu_index_bytes"]
             batch_profile["avoided_cpu_feature_slate_bytes"] += packed[
                 "avoided_cpu_feature_slate_bytes"
@@ -821,17 +787,6 @@ def main():
             losses.append(float(loss.detach()))
             torch.cuda.synchronize()
             phase["backward_and_step"] += time.monotonic() - phase_start
-            emit_step(
-                telemetry,
-                step=optimizer_step_before + executed_steps,
-                loss=losses[-1],
-                lr=effective_lr[0],
-                grad_norm=grad_norms[-1],
-                samples=args.batch_size,
-                wall_s=time.monotonic() - step_started,
-                host_bytes=packed["host_to_device_bytes"],
-                delivery_s=assembly_seconds + pack_seconds,
-            )
             del packed  # release the large slate before the next gather/GP phase
             if projection_failed:
                 break
@@ -1126,13 +1081,6 @@ def main():
             "gpu_peak_allocated_bytes": torch.cuda.max_memory_allocated(),
             "gpu_peak_reserved_bytes": torch.cuda.max_memory_reserved(),
         }
-        finalize_start = time.monotonic()
-        row["telemetry"] = finish_round(row)
-        row["telemetry_finalize_wall_seconds"] = time.monotonic() - finalize_start
-        wall = time.monotonic() - start
-        row["wall_seconds"] = wall
-        row["round_contexts_per_second"] = len(train) / wall
-        row["tokens_per_second"] = token_count / wall
         write_json(args.output / f"round-{rnd:02d}.json", row)
         proposal_history.append(row)
         remaining = (
@@ -1183,8 +1131,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except BaseException as error:
-        interrupt_active()
+    except Exception as error:
         status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
         prior = status.read_text() if status.exists() else "# Fused flywheel status\n"
         status.write_text(
