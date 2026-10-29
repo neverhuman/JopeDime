@@ -134,6 +134,11 @@ impl GpSession {
             );
         }
         let g: GenerationIn = serde_json::from_str(json).context("generation JSON")?;
+        Ok(serde_json::to_string(&self.summarize(&g)?)?)
+    }
+
+    /// Summarize one generation already in typed form (the PyO3 `GenerationRecorder` path).
+    pub fn summarize(&mut self, g: &GenerationIn) -> Result<gp::GenSummary> {
         let keep = g.candidates.len().min(self.cfg.max_candidates);
         let excess = (g.candidates.len() - keep) as u32;
         let mut cands = Vec::with_capacity(keep);
@@ -175,7 +180,7 @@ impl GpSession {
         };
         let mut summary = tracker.summarize(g.round, g.generation, &cands, dedup);
         summary.candidates_truncated += excess;
-        Ok(serde_json::to_string(&summary)?)
+        Ok(summary)
     }
 
     /// The clause and op dictionaries for the manifest, plus overflow counts.

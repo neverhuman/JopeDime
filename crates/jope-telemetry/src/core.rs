@@ -456,32 +456,100 @@ impl Recorder {
 
 impl RecordSink for Recorder {
     fn record_line(&self, _kind: &str, line: Vec<u8>) -> bool {
-        self.record_in_flight.fetch_add(1, Ordering::AcqRel);
-        let _in_flight = AtomicCountGuard(&self.record_in_flight);
-        if line.len() > MAX_RECORD_BYTES || line.last() != Some(&b'\n') {
-            self.oversized_record_drops.fetch_add(1, Ordering::Relaxed);
-            self.record_drops.fetch_add(1, Ordering::Relaxed);
-            return false;
-        }
-        if self.stopping.load(Ordering::Relaxed) {
-            self.record_drops.fetch_add(1, Ordering::Relaxed);
-            return false;
-        }
-        match self.record_tx.try_send(line) {
-            Ok(()) => true,
-            Err(TrySendError::Full(_)) | Err(TrySendError::Disconnected(_)) => {
-                self.record_drops.fetch_add(1, Ordering::Relaxed);
-                false
-            }
-        }
+        queue_record_line(
+            &self.record_tx,
+            &self.stopping,
+            &self.record_drops,
+            &self.record_in_flight,
+            &self.oversized_record_drops,
+            line,
+        )
     }
 
     fn record_encoding_error(&self, oversized: bool) {
-        if oversized {
-            self.oversized_record_drops.fetch_add(1, Ordering::Relaxed);
-        }
-        self.record_drops.fetch_add(1, Ordering::Relaxed);
+        note_record_encoding_error(&self.record_drops, &self.oversized_record_drops, oversized);
     }
+}
+
+/// A cloneable, `Send + Sync` handle on a run's record queue, for record producers on other
+/// threads (evaluator workers, a background evolution queue). It shares the recorder's drop and
+/// in-flight counters, so `close` still waits for records in flight. After close every record is
+/// counted as a drop.
+#[derive(Clone)]
+pub struct RecordHandle {
+    record_tx: SyncSender<Vec<u8>>,
+    stopping: Arc<AtomicBool>,
+    record_drops: Arc<AtomicU64>,
+    record_in_flight: Arc<AtomicU64>,
+    oversized_record_drops: Arc<AtomicU64>,
+}
+
+impl Recorder {
+    pub fn record_handle(&self) -> RecordHandle {
+        RecordHandle {
+            record_tx: self.record_tx.clone(),
+            stopping: self.stopping.clone(),
+            record_drops: self.record_drops.clone(),
+            record_in_flight: self.record_in_flight.clone(),
+            oversized_record_drops: self.oversized_record_drops.clone(),
+        }
+    }
+}
+
+impl RecordSink for RecordHandle {
+    fn record_line(&self, _kind: &str, line: Vec<u8>) -> bool {
+        queue_record_line(
+            &self.record_tx,
+            &self.stopping,
+            &self.record_drops,
+            &self.record_in_flight,
+            &self.oversized_record_drops,
+            line,
+        )
+    }
+
+    fn record_encoding_error(&self, oversized: bool) {
+        note_record_encoding_error(&self.record_drops, &self.oversized_record_drops, oversized);
+    }
+}
+
+fn queue_record_line(
+    record_tx: &SyncSender<Vec<u8>>,
+    stopping: &AtomicBool,
+    record_drops: &AtomicU64,
+    record_in_flight: &AtomicU64,
+    oversized_record_drops: &AtomicU64,
+    line: Vec<u8>,
+) -> bool {
+    record_in_flight.fetch_add(1, Ordering::AcqRel);
+    let _in_flight = AtomicCountGuard(record_in_flight);
+    if line.len() > MAX_RECORD_BYTES || line.last() != Some(&b'\n') {
+        oversized_record_drops.fetch_add(1, Ordering::Relaxed);
+        record_drops.fetch_add(1, Ordering::Relaxed);
+        return false;
+    }
+    if stopping.load(Ordering::Relaxed) {
+        record_drops.fetch_add(1, Ordering::Relaxed);
+        return false;
+    }
+    match record_tx.try_send(line) {
+        Ok(()) => true,
+        Err(TrySendError::Full(_)) | Err(TrySendError::Disconnected(_)) => {
+            record_drops.fetch_add(1, Ordering::Relaxed);
+            false
+        }
+    }
+}
+
+fn note_record_encoding_error(
+    record_drops: &AtomicU64,
+    oversized_record_drops: &AtomicU64,
+    oversized: bool,
+) {
+    if oversized {
+        oversized_record_drops.fetch_add(1, Ordering::Relaxed);
+    }
+    record_drops.fetch_add(1, Ordering::Relaxed);
 }
 
 pub const MISSING_VALUE_BITS: u64 = 0x7ff8_4a4f_5045_5445;
