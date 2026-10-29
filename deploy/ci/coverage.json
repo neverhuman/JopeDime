@@ -4418,6 +4418,18 @@
       ],
       "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
     },
+    "python:python/tests/test_telemetry_io_hooks.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use local NPZ fixtures and fake CUDA/queue interfaces; they do not qualify live training or overhead."
+    },
     "python:python/tests/test_telemetry_train_hooks.py": {
       "discovery": {
         "kind": "python-family"

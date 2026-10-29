@@ -9287,10 +9287,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 202,
+  "count": 206,
   "packages": {
    "jope": {
-    "count": 202,
+    "count": 206,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9497,6 +9497,15 @@
        "tests/test_telemetry_gp_hooks.py::test_status_and_bits_edge_cases"
       ]
      },
+     "tests/test_telemetry_io_hooks.py": {
+      "count": 4,
+      "tests": [
+       "tests/test_telemetry_io_hooks.py::test_batch_io_stats_write_batch_and_queue_values",
+       "tests/test_telemetry_io_hooks.py::test_disabled_read_observer_does_not_stat_path",
+       "tests/test_telemetry_io_hooks.py::test_h2d_sampler_is_inert_without_cuda",
+       "tests/test_telemetry_io_hooks.py::test_local_read_observer_counts_logical_file_bytes_and_npz_reads"
+      ]
+     },
      "tests/test_telemetry_train_hooks.py": {
       "count": 9,
       "tests": [
@@ -9609,7 +9618,7 @@
   }
  },
  "totals": {
-  "rust": 6012,
-  "python": 202
+  "rust": 6051,
+  "python": 206
  }
 }

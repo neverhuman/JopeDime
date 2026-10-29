@@ -38,13 +38,32 @@ def test_disabled_read_observer_does_not_stat_path():
 
 def test_batch_io_stats_write_batch_and_queue_values():
     submitted = []
-    batch = StepBatch(IO_COLUMNS, lambda steps, values, rows: submitted.append((list(steps[:rows]), list(values[:rows * len(IO_COLUMNS)]), rows)), rows=1)
+    batch = StepBatch(
+        IO_COLUMNS,
+        lambda steps, values, rows: submitted.append(
+            (list(steps[:rows]), list(values[: rows * len(IO_COLUMNS)]), rows)
+        ),
+        rows=1,
+    )
     columns = {name: index for index, name in enumerate(IO_COLUMNS)}
     stats = BatchIOStats(batch, columns)
-    arrays = {key: np.zeros((2, 4), dtype=np.float32) for key in (
-        "ctx_b", "prog_b", "proj_b", "prior_b", "scale_b", "sos_b", "target_f_b",
-        "gate_b", "rev_idx_b", "rev_f_b", "rev_gate_b",
-    )}
+    arrays = {
+        key: np.zeros((2, 4), dtype=np.float32)
+        for key in (
+            "ctx_b",
+            "prog_b",
+            "proj_b",
+            "prior_b",
+            "scale_b",
+            "sos_b",
+            "target_f_b",
+            "gate_b",
+            "rev_idx_b",
+            "rev_f_b",
+            "rev_gate_b",
+        )
+    }
+
     class Queue:
         last_queue_depth = 3
         last_queue_wait_ms = 0.25

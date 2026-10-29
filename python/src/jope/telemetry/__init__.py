@@ -12,7 +12,8 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 try:
-    from jope._telemetry import GpSession, Recorder as _NativeRecorder, metric_registry
+    from jope._telemetry import GpSession, metric_registry
+    from jope._telemetry import Recorder as _NativeRecorder
 except ImportError:  # source-only installs can still use the guards and test sinks
     _NativeRecorder = None
     GpSession = None
@@ -46,10 +47,14 @@ class Recorder:
     def submit(self, source: int, steps: memoryview, values: memoryview, rows: int) -> int:
         return self._native.submit(source, steps, values, rows)
 
-    def emit_scalar(self, source: int, metric_id: int, group_id: int, step: int, value: float, sampled: bool = True) -> bool:
+    def emit_scalar(
+        self, source: int, metric_id: int, group_id: int, step: int, value: float, sampled: bool = True
+    ) -> bool:
         return self._native.emit_scalar(source, metric_id, group_id, step, value, sampled)
 
-    def emit_unavailable(self, source: int, metric_id: int, group_id: int, step: int, reason_id: int, sampled: bool = True) -> bool:
+    def emit_unavailable(
+        self, source: int, metric_id: int, group_id: int, step: int, reason_id: int, sampled: bool = True
+    ) -> bool:
         return self._native.emit_unavailable(source, metric_id, group_id, step, reason_id, sampled)
 
     def emit(self, kind: str, record: Mapping[str, Any]) -> bool:

@@ -130,7 +130,12 @@ class EvalBatchTelemetry:
         workers = self._workers[1] or 1
 
         def q(v: list[float]) -> dict[str, float | None]:
-            return {"p50": _quantile(v, 0.5), "p95": _quantile(v, 0.95), "p99": _quantile(v, 0.99), "max": v[-1] if v else None}
+            return {
+                "p50": _quantile(v, 0.5),
+                "p95": _quantile(v, 0.95),
+                "p99": _quantile(v, 0.99),
+                "max": v[-1] if v else None,
+            }
 
         rec: dict[str, Any] = {
             "kind": self._kind,
@@ -144,7 +149,9 @@ class EvalBatchTelemetry:
             "latency_hist_log2_ms": hist,
             "executor_queue_wait_ms": q(queue_ms),
             "cpu_guard_wait_ms": q(guard_ms),
-            "cpu_guard_wait_share": (sum(guard_ms) / sum(total_ms)) if total_ms and sum(total_ms) > 0 else None,
+            "cpu_guard_wait_share": (sum(guard_ms) / sum(total_ms))
+            if total_ms and sum(total_ms) > 0
+            else None,
             "fit_s1_ms": q(fit_ms),
             "outer_fit_ms": q(outer_ms),
             "timeouts": timeouts,
