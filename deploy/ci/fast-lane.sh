@@ -69,12 +69,14 @@ bash deploy/ci/test-bump.sh
     # Toolchain (from rust-toolchain.toml)
 rustup show active-toolchain
     # cargo check --workspace --all-targets --locked
+    # Search commentary contracts: exact diffs, producer parity and real streaming.
+bash ops/ci/narration.sh
 cargo check --workspace --all-targets --locked
     # Rendered systemd units resolve under the rendered roots
 cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
     # Workspace MSRV (decision 8: at most 1.97.1)
 set -euo pipefail
-cargo metadata --no-deps --locked --format-version 1 > $EVIDENCE/metadata.json
+cargo metadata --no-deps --locked --format-version 1 > "$EVIDENCE/metadata.json"
 python3 - <<'PY'
 import json, os
 packages = json.load(open(os.environ['JOPE_LANE_EVIDENCE'] + '/metadata.json'))['packages']
@@ -193,7 +195,7 @@ python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py --r
 uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py --receipt "$EVIDENCE/rlfw-analytics-offline.json"
     # New ingest data contracts use copied fixtures; no S3 credentials or traffic.
 uv run --project python --no-sync python deploy/dl-flywheel/ingest_joined_roster/run_offline.py --receipt "$EVIDENCE/ingest-offline.json"
-    # Phase 7 flywheel v3 offline CPU synthetic/stub unit checks (7 tests; no GPU, S3, or campaign compute).
+    # Phase 7 flywheel v3 offline CPU synthetic/stub unit checks (9 tests; no GPU, S3, or campaign compute).
 CUDA_VISIBLE_DEVICES="" AWS_EC2_METADATA_DISABLED=true \
   uv run --project python --no-sync python -B \
   research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py

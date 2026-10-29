@@ -100,6 +100,35 @@ impl MathPipeline {
     /// Predict every row of a table. Columns are matched by name in any order; the target and any
     /// other column the contract does not name are ignored and returned.
     pub fn predict_table(&self, table: &CsvTable) -> Result<(Vec<f64>, Vec<String>)> {
+        crate::prediction_narration::from_env(|tap| self.predict_table_with_narration(table, tap))
+    }
+
+    /// Explicit observer for the same shipped GP prediction path.
+    pub fn predict_table_with_narration(
+        &self,
+        table: &CsvTable,
+        tap: Option<&jope_narrator::Tap>,
+    ) -> Result<(Vec<f64>, Vec<String>)> {
+        crate::prediction_narration::observe(
+            tap,
+            || {
+                Ok((
+                    crate::prediction_narration::identity(
+                        b"jope.math-prediction-model/v2",
+                        &(&self.input, &self.state),
+                    )?,
+                    crate::prediction_narration::identity(
+                        b"jope.math-prediction-table/v2",
+                        &(&table.headers, &table.rows),
+                    )?,
+                ))
+            },
+            table.rows.len(),
+            || self.predict_table_plain(table),
+        )
+    }
+
+    fn predict_table_plain(&self, table: &CsvTable) -> Result<(Vec<f64>, Vec<String>)> {
         let mut at = Vec::with_capacity(self.input.columns.len());
         for column in &self.input.columns {
             let index = table
@@ -120,11 +149,33 @@ impl MathPipeline {
             .iter()
             .map(|row| at.iter().map(|&i| row[i].as_deref()).collect())
             .collect();
-        Ok((self.predict_cells(&rows)?, ignored))
+        Ok((self.predict_cells_plain(&rows)?, ignored))
     }
 
     /// Predict rows of raw cells given in `columns` order; `None` is a missing cell.
     pub fn predict_cells(&self, rows: &[Vec<Option<&str>>]) -> Result<Vec<f64>> {
+        crate::prediction_narration::from_env(|tap| {
+            crate::prediction_narration::observe(
+                tap,
+                || {
+                    Ok((
+                        crate::prediction_narration::identity(
+                            b"jope.math-prediction-model/v2",
+                            &(&self.input, &self.state),
+                        )?,
+                        crate::prediction_narration::identity(
+                            b"jope.math-prediction-cells/v2",
+                            &rows,
+                        )?,
+                    ))
+                },
+                rows.len(),
+                || self.predict_cells_plain(rows),
+            )
+        })
+    }
+
+    fn predict_cells_plain(&self, rows: &[Vec<Option<&str>>]) -> Result<Vec<f64>> {
         if rows.is_empty() {
             return Ok(Vec::new());
         }

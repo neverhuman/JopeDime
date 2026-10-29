@@ -35,7 +35,10 @@ with zero dataset/training/evaluation campaign compute:
    (`0.30s` effective budget with `reserve_s = 15.0s`) where context 0 finishes in `0.02s` and context 1's
    worker records its OS `worker_pid`, sleeps `4.0s` (ignoring `timeout_s`), and attempts a late file write
    (`late_write_after_deadline.txt`). Proves:
-   - The child reports controller work within `< 0.45s` and exits within `< 2.50s`, including interpreter teardown.
+   - Real SIGKILL requests target the blocked worker between expiry and `< 0.45s`.
+     Worker exit is checked immediately after the controller returns, before interpreter teardown.
+     Work, cleanup and reporting take `< 0.65s` (0.30s work + one 0.20s bounded reap + 0.15s slack);
+     the child exits within `< 2.50s`, including interpreter teardown.
    - The spawned worker OS process (`worker_pid`) is dead (`os.kill(worker_pid, 0)` raises `ProcessLookupError`).
    - Even after waiting an additional `0.4s`, `late_write_after_deadline.txt` does NOT exist.
    - Partial completed context 0 (`contexts_completed == 1`) is preserved and incomplete evaluation is
@@ -51,6 +54,12 @@ with zero dataset/training/evaluation campaign compute:
    raise mid-section and raises `DeadlineExpiredError` only once signal delivery resumes at the Python
    boundary, whereas `run_batch_in_killable_workers()` kills a worker with `SIGKILL` in `< 0.55s` even
    when the worker masks `SIGALRM` and ignores `SIGTERM`.
+8. `test_worker_deadline_dispatch_and_admission_use_the_remaining_budget`:
+   Calls the actual controller with controlled OS/process/clock seams: an admitted worker is
+   SIGKILL-targeted at expiry, pending work is not started, and an already-expired call starts none.
+9. `test_noop_worker_termination_is_rejected_by_exit_evidence`:
+   Deliberately suppresses termination of one owned blocked worker and proves the same exit-evidence
+   assertion rejects it. Unpatched cleanup kills and joins only that test's Process handle.
 """
 from __future__ import annotations
 
@@ -166,6 +175,11 @@ def _masked_sigalrm_worker(item: dict) -> int:
     time.sleep(3.0)
     Path(item["late_marker_path"]).write_text("UNEXPECTED_LATE_WRITE")
     return 200
+
+
+def _deadline_waiting_worker(item: dict) -> None:
+    Path(item["ready_path"]).write_text("ready")
+    time.sleep(4.0)
 
 
 class TestPhase7SourceReplayAudit(unittest.TestCase):
@@ -548,17 +562,160 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             self.assertIn("v3b_median_vs_baseline_status", step6)
             self.assertNotIn("comparator_causal_interpretation_guard", step6)
 
+    def _assert_sigkill_and_worker_exit(self, worker_pid: int, requests: list[dict], states: list[dict]) -> list[dict]:
+        worker_requests = [r for r in requests if r["pid"] == worker_pid]
+        self.assertEqual({r["api"] for r in worker_requests}, {"killpg", "kill"})
+        self.assertTrue(all(r["signal"] == signal.SIGKILL for r in worker_requests))
+        state = next(s for s in states if s["pid"] == worker_pid)
+        self.assertFalse(state["alive"], "worker still alive when controller returned")
+        self.assertEqual(state["exitcode"], -signal.SIGKILL)
+        with self.assertRaises(ProcessLookupError):
+            os.kill(worker_pid, 0)
+        return worker_requests
+
+    def test_worker_deadline_dispatch_and_admission_use_the_remaining_budget(self) -> None:
+        # Exercise the real controller, not a copy of its deadline loop. OS/process seams
+        # cannot launch work or signal a real PID; select advances only the controlled clock.
+        work_budget = 15.30 - 15.0
+        for initial_elapsed in (0.0, work_budget):
+            with self.subTest(initial_elapsed=initial_elapsed):
+                now = [initial_elapsed]
+                waits = []
+                admitted = []
+                requests = []
+                fake_pid = 987654321
+                process = mock.Mock(pid=fake_pid)
+                process.start.side_effect = lambda: admitted.append((0, now[0]))
+                context = mock.Mock()
+                context.Process.return_value = process
+                worker = mock.Mock(side_effect=AssertionError("fake process must not execute work"))
+
+                def select_step(readers, writers, errors, timeout):
+                    self.assertEqual(readers, [101])
+                    self.assertEqual((writers, errors), ([], []))
+                    self.assertGreater(timeout, 0.0)
+                    self.assertLessEqual(timeout, work_budget - now[0] + 0.005)
+                    waits.append(timeout)
+                    self.assertLess(len(waits), 32, "controller did not stop at expiry")
+                    now[0] += timeout
+                    return [], [], []
+
+                with (
+                    mock.patch.object(v3.time, "monotonic", side_effect=lambda: now[0]),
+                    mock.patch.object(v3.multiprocessing, "get_context", return_value=context),
+                    mock.patch.object(v3.os, "pipe", return_value=(101, 102)),
+                    mock.patch.object(v3.os, "close"),
+                    mock.patch.object(v3.os, "killpg", side_effect=lambda pid, sig: requests.append(("killpg", pid, sig, now[0]))),
+                    mock.patch.object(v3.os, "kill", side_effect=lambda pid, sig: requests.append(("kill", pid, sig, now[0]))),
+                    mock.patch.object(v3.select, "select", side_effect=select_step),
+                ):
+                    controller = v3.DeadlineController(script_t0=0.0, hard_cap_s=15.30, persisted_receipt_path=None)
+                    results, expired = controller.run_batch_in_killable_workers(
+                        worker, [0, 1], max_workers=1, reserve_s=15.0,
+                    )
+                self.assertTrue(expired)
+                self.assertEqual(results, [])
+                worker.assert_not_called()
+                if initial_elapsed == 0.0:
+                    self.assertEqual(admitted, [(0, 0.0)])
+                    context.Process.assert_called_once()
+                    self.assertEqual(context.Process.call_args.kwargs["args"][-1], 0)
+                    self.assertEqual([(api, pid, sig) for api, pid, sig, _ in requests], [
+                        ("killpg", fake_pid, signal.SIGKILL),
+                        ("kill", fake_pid, signal.SIGKILL),
+                    ])
+                    for _, _, _, dispatch_time in requests:
+                        self.assertGreaterEqual(dispatch_time, work_budget)
+                        self.assertLessEqual(dispatch_time, work_budget + 0.005)
+                    process.join.assert_called_once()
+                    self.assertGreater(process.join.call_args.kwargs["timeout"], 0.0)
+                else:
+                    self.assertEqual(admitted, [])
+                    context.Process.assert_not_called()
+                    self.assertEqual(requests, [])
+                    self.assertEqual(waits, [])
+
+    def test_noop_worker_termination_is_rejected_by_exit_evidence(self) -> None:
+        # Keep handles to our own children. Never clean up a PID obtained from a file or
+        # global process listing, and never leave the intentionally blocked worker behind.
+        context = v3.multiprocessing.get_context("fork")
+        ready_path = SCRATCH_TEST_ROOT / "negative_worker_ready.txt"
+        processes = []
+        requests = []
+        factory = mock.Mock()
+
+        def create_process(**kwargs):
+            process = context.Process(**kwargs)
+            processes.append(process)
+            return process
+
+        def suppress_signal(api, pid, sig):
+            self.assertIn(pid, {p.pid for p in processes})
+            self.assertEqual(sig, signal.SIGKILL)
+            requests.append({"api": api, "pid": pid, "signal": sig})
+
+        factory.Process.side_effect = create_process
+        try:
+            with (
+                mock.patch.object(v3.multiprocessing, "get_context", return_value=factory),
+                mock.patch.object(v3.os, "killpg", side_effect=lambda pid, sig: suppress_signal("killpg", pid, sig)),
+                mock.patch.object(v3.os, "kill", side_effect=lambda pid, sig: suppress_signal("kill", pid, sig)),
+            ):
+                controller = v3.DeadlineController(script_t0=time.monotonic(), hard_cap_s=15.30, persisted_receipt_path=None)
+                results, expired = controller.run_batch_in_killable_workers(
+                    _deadline_waiting_worker, [{"ready_path": str(ready_path)}],
+                    max_workers=1, reserve_s=15.0,
+                )
+            self.assertTrue(expired)
+            self.assertEqual(results, [])
+            self.assertEqual(len(processes), 1)
+            self.assertTrue(ready_path.exists(), "owned worker did not reach its blocking call")
+            self.assertTrue(processes[0].is_alive(), "no-op termination must leave the control alive")
+            self.assertEqual({r["api"] for r in requests}, {"killpg", "kill"})
+            # Both requests were recorded, but actual exit is absent: the positive test's
+            # evidence validator must reject this broken termination implementation.
+            with self.assertRaisesRegex(AssertionError, "worker still alive"):
+                self._assert_sigkill_and_worker_exit(processes[0].pid, requests, [{
+                    "pid": processes[0].pid,
+                    "alive": processes[0].is_alive(),
+                    "exitcode": processes[0].exitcode,
+                }])
+            print("PHASE7_NOOP_TERMINATION_REJECTED", json.dumps({
+                "worker_pid": processes[0].pid, "alive_at_return": True,
+                "signal_requests": requests,
+            }, sort_keys=True))
+        finally:
+            # Signal patches have exited. Cleanup touches only retained child handles.
+            # A finite sleeper avoids shared synchronization locks abandoned by SIGKILL.
+            try:
+                for process in processes:
+                    if process.is_alive():
+                        process.kill()
+            finally:
+                for process in processes:
+                    if process.pid is not None:
+                        process.join(timeout=2.5)
+                        self.assertFalse(process.is_alive(), "negative control leaked its worker")
+                    process.close()
+
     def test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes(self) -> None:
+        for controlled_reap in (False, True):
+            with self.subTest(controlled_reap=controlled_reap):
+                self._run_isolated_deadline_case(controlled_reap)
+
+    def _run_isolated_deadline_case(self, controlled_reap: bool) -> None:
         fix = self._build_fixture_env()
-        worker_pid_file = SCRATCH_TEST_ROOT / "worker_pid.txt"
-        late_write_file = SCRATCH_TEST_ROOT / "late_write_after_deadline.txt"
-        child_summary_file = SCRATCH_TEST_ROOT / "child_summary.json"
+        worker_pid_file = SCRATCH_TEST_ROOT / f"worker_pid_{controlled_reap}.txt"
+        late_write_file = SCRATCH_TEST_ROOT / f"late_write_after_deadline_{controlled_reap}.txt"
+        child_summary_file = SCRATCH_TEST_ROOT / f"child_summary_{controlled_reap}.json"
 
         child_script = textwrap.dedent(
             f"""
+            import contextlib
             import copy
             import json
             import os
+            import signal
             import sys
             import time
             from pathlib import Path
@@ -648,6 +805,53 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                     for c in candidates
                 ]
 
+            signal_requests = []
+            real_killpg, real_kill = os.killpg, os.kill
+            context = v3.multiprocessing.get_context("fork")
+            processes, controlled_reaps = [], []
+            factory = mock.Mock()
+
+            def _create_process(**kwargs):
+                process = context.Process(**kwargs)
+                processes.append(process)
+                real_join = process.join
+
+                def _join(timeout=None):
+                    pid_file = Path({repr(str(worker_pid_file))})
+                    if {controlled_reap!r} and timeout == 0.2 and pid_file.exists() and int(pid_file.read_text()) == process.pid:
+                        # Model the full existing reap allowance after SIGKILL. The old
+                        # total <0.45s oracle rejects this even with on-time termination.
+                        controlled_reaps.append(timeout)
+                        time.sleep(timeout)
+                        return real_join(timeout=0.0)
+                    return real_join(timeout=timeout)
+
+                process.join = _join
+                return process
+
+            factory.Process.side_effect = _create_process
+
+            def _cleanup_owned_children():
+                for process in processes:
+                    if process.pid is not None:
+                        if process.is_alive():
+                            for send in (real_killpg, real_kill):
+                                try:
+                                    send(process.pid, signal.SIGKILL)
+                                except ProcessLookupError:
+                                    pass
+                        process.join(timeout=2.5)
+                        if process.is_alive():
+                            raise RuntimeError("isolated test leaked its owned child")
+                    process.close()
+
+            def _record_signal(api, send, pid, sig):
+                signal_requests.append({{
+                    "api": api, "pid": pid, "signal": sig,
+                    "elapsed_s": time.monotonic() - t_start,
+                }})
+                return send(pid, sig)
+
             t_start = time.monotonic()
             print("CHILD_IMPORT_COMPLETE", flush=True)
             # With reserve_s=15.0 inside run_bounded_256_context_winner_generation, hard_cap_s=15.30 gives 0.30s budget
@@ -657,10 +861,15 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                 persisted_receipt_path=None,
             )
             with (
+                contextlib.ExitStack() as cleanup,
+                mock.patch.object(v3.multiprocessing, "get_context", return_value=factory),
+                mock.patch.object(v3.os, "killpg", side_effect=lambda pid, sig: _record_signal("killpg", real_killpg, pid, sig)),
+                mock.patch.object(v3.os, "kill", side_effect=lambda pid, sig: _record_signal("kill", real_kill, pid, sig)),
                 mock.patch.object(v3, "propose_6_novel_candidates_for_strict_train_context", side_effect=_fake_propose),
                 mock.patch.object(v3, "evaluate_gp_batch_rust_strat300", side_effect=_fake_strat300),
                 mock.patch.object(v3, "evaluate_gp_batch_rust", side_effect=_fake_full_jtt1),
             ):
+                cleanup.callback(_cleanup_owned_children)
                 winners, evo_summary = v3.run_bounded_256_context_winner_generation(
                     selected_256_records=selected_records,
                     pools_frozen=pools,
@@ -669,6 +878,12 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                     script_t0=controller,
                     chunk_size=1,
                 )
+                # Capture before our cleanup or Python's daemon-child exit finalizer
+                # could hide a controller that merely requested a kill but left work alive.
+                worker_states = [
+                    {{"pid": p.pid, "alive": p.is_alive(), "exitcode": p.exitcode}}
+                    for p in processes
+                ]
             manifest_doc = json.loads(Path({repr(str(fix["manifest_v3_path"]))}).read_text())
             concl = v3.build_dynamic_evidence_bound_conclusion(
                 cohort_spec=manifest_doc["cohort_256_selection_spec"],
@@ -683,6 +898,10 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                 json.dumps(
                     {{
                         "elapsed_s": time.monotonic() - t_start,
+                        "deadline_s": controller.effective_cap_s - 15.0,
+                        "signal_requests": signal_requests,
+                        "worker_states_at_return": worker_states,
+                        "controlled_reaps_s": controlled_reaps,
                         "winners_len": len(winners),
                         "evo_summary": evo_summary,
                         "conclusion": concl,
@@ -705,7 +924,12 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
 
         # Start post-import execution + interpreter-exit clock
         t0 = time.monotonic()
-        stdout_rest, stderr = proc.communicate(timeout=2.5)
+        try:
+            stdout_rest, stderr = proc.communicate(timeout=2.5)
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+                proc.communicate(timeout=2.5)
         child_wall_s = time.monotonic() - t0
 
         self.assertEqual(proc.returncode, 0, msg=f"Child failed:\nSTDOUT:\n{stdout_rest}\nSTDERR:\n{stderr}")
@@ -715,15 +939,24 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         # Verify worker OS process recorded its PID and is now dead (SIGKILLed)
         self.assertTrue(worker_pid_file.exists())
         worker_pid = int(worker_pid_file.read_text().strip())
-        with self.assertRaises(ProcessLookupError):
-            os.kill(worker_pid, 0)
+        summary = json.loads(child_summary_file.read_text())
+        requests = self._assert_sigkill_and_worker_exit(
+            worker_pid, summary["signal_requests"], summary["worker_states_at_return"],
+        )
+        for request in requests:
+            self.assertGreaterEqual(request["elapsed_s"], summary["deadline_s"])
+            self.assertLess(request["elapsed_s"], summary["deadline_s"] + 0.15)
 
         # Wait an extra 0.4s to prove no background worker can perform a late write
         time.sleep(0.4)
         self.assertFalse(late_write_file.exists())
 
-        summary = json.loads(child_summary_file.read_text())
-        self.assertLess(summary["elapsed_s"], 0.45)
+        # Retain the original 0.15s scheduling/reporting slack, separately from the
+        # existing 0.20s join allowance for the one blocked worker. No work budget changes.
+        self.assertLess(summary["elapsed_s"], summary["deadline_s"] + 0.2 + 0.15)
+        self.assertEqual(summary["controlled_reaps_s"], [0.2] if controlled_reap else [])
+        if controlled_reap:
+            self.assertGreaterEqual(summary["elapsed_s"], summary["deadline_s"] + 0.2)
         self.assertTrue(summary["evo_summary"]["stopped_early_by_wall_cap"])
         self.assertEqual(summary["evo_summary"]["contexts_completed"], 1)
         self.assertEqual(summary["winners_len"], 1)
@@ -731,6 +964,15 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             summary["conclusion"]["matched_430_step_evaluation_status"],
             "UNKNOWN_NOT_COMPLETED_BEFORE_DEADLINE",
         )
+        print("PHASE7_DEADLINE_EVIDENCE", json.dumps({
+            "controlled_reap": controlled_reap, "worker_pid": worker_pid,
+            "deadline_s": summary["deadline_s"], "signal_requests": requests,
+            "worker_states_at_return": summary["worker_states_at_return"],
+            "elapsed_s": summary["elapsed_s"], "child_wall_s": child_wall_s,
+            "contexts_completed": summary["evo_summary"]["contexts_completed"],
+            "winners_len": summary["winners_len"],
+            "evaluation_status": summary["conclusion"]["matched_430_step_evaluation_status"],
+        }, sort_keys=True))
 
     def test_blocked_rollout_call_preempted_by_itimer_at_hard_deadline(self) -> None:
         fix = self._build_fixture_env()

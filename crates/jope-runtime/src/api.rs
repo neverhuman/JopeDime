@@ -189,7 +189,25 @@ pub fn predict(
     table: &feat_math::advanced_v3::RawTable,
     budget: &Budget,
 ) -> Result<Predictions> {
-    budget.install(|| crate::error::contain("prediction", || fitted.predict(table)))?
+    crate::prediction_narration::from_env(|tap| predict_with_narration(fitted, table, budget, tap))
+}
+
+/// Predict with an explicit, bounded observer. This observes the fixed model and input;
+/// it does not fit, propose, or alter the prediction algorithm.
+pub fn predict_with_narration(
+    fitted: &FittedModel,
+    table: &feat_math::advanced_v3::RawTable,
+    budget: &Budget,
+    narration: Option<&jope_narrator::Tap>,
+) -> Result<Predictions> {
+    budget.install(|| {
+        crate::prediction_narration::observe(
+            narration,
+            || crate::prediction_narration::bindings(fitted, table),
+            table.rows.len(),
+            || crate::error::contain("prediction", || fitted.predict(table)),
+        )
+    })?
 }
 
 /// Predictions as CSV: one `prediction` column for regression; one `p_<class>` column per class

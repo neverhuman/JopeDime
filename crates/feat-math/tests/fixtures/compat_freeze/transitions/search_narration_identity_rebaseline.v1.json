@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announce the search commentary workspace member and its dependency edges. This changes Cargo.lock and the ADR-0004 evaluator identity only; the lineage-source fixture header follows the committed source. All mathematical operators, DSL ABI, known identity rows, historical pins and behavioral fixture payloads remain unchanged. Full compat_freeze identity-mode proof passed 13 of 13 at the source commit.",
+  "plan_reference": "Search narration owner-1; compat_freeze.rs identity mode and ADR-0004",
+  "source_commit": "4704b6197a49fe532e61915fac96b22f06b9e4f1",
+  "source_reference": "https://github.com/neverhuman/JopeDime/commit/4704b6197a49fe532e61915fac96b22f06b9e4f1",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "3672ca2a5780cab0a313251280e37117529b1220bed6e6633743764cbc34d54d",
+      "after": "f48b40803781754d90c6c2a5bb5920de69050a3cb41225b4d638e2877691bad6"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a0454c55a8c4694d4727d71116578bc0dd22470641d4fc6bea816ce8d382a032",
+      "after": "12079baea76937721874a5bcb246c9b1972006b071e128dc8c72b345646d3f22"
+    }
+  ]
+}

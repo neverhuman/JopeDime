@@ -332,3 +332,45 @@ ELF `DT_NEEDED` gate. `test-dope-gpu.sh` checks the actual sealed package, finit
 companion receipt, device-hidden startup and an explicit unavailable-device refusal. These
 checks must pass before package qualification is reported. Historical CPU-only claims above
 remain observations of their original builds.
+
+## A17 — Fixture size attribution for runtime Search commentary
+
+PR #438's manual run `40764758400`, attempt 1, source
+`aff0e9532f10bdd2eabd2883a9f22ec21638debb`, passed the pipeline smoke and built,
+development-signed and verified the fixture package. Its size report correctly
+refused the previous 5% budget: 6,579,256 B of code and 6,696,997 B packaged, versus
+5,843,568 / 5,959,302 B. The increases are 735,688 / 737,695 B. The three generated
+fixture tensor/config identities and their 103,220 raw bytes are unchanged;
+`gpu_library_bytes` is zero. The retained package was independently verified on xbabe2.
+
+A controlled xbabe2 comparison uses Rust 1.97.1, the same source path, reused lane
+target, `dist-ci` profile, `embedded,dev-keys` features, source stamp and dependency
+graph, with four build workers and one math thread. The full executable is
+6,579,064 B. Restoring only the pre-feature runtime observer entrypoint files
+(`jope-runtime/src/api.rs`, `math_pipeline.rs` and `lib.rs`) from main
+`7c78fcff77da69660835b9fbb7acfadad3eea5d3` produces 5,878,648 B: the reachable
+runtime observation code accounts for 700,416 B. Restoring the exact product files
+and rebuilding reproduces the full binary byte for byte, SHA-256
+`22cdb8356d8b79bbe44c6ccfd9daf0f4bac652bd083d250c4908b354b553d7a0`.
+The diagnostic source change is preserved as a patch and is not the product fix.
+
+The entrypoint-ablation ELF section deltas include 541,152 B `.text`, 27,200 B `.rodata`,
+62,916 B `.eh_frame`, 9,304 B `.eh_frame_hdr`, 30,364 B `.gcc_except_table`,
+17,304 B `.rela.dyn` and 11,664 B `.data.rel.ro`. These are section measurements,
+not per-function attribution. The diagnostic retains the current dependency
+graph and all other branch source; it is not a full pre-feature main checkout.
+Its remaining 35,080 B over the historical code baseline is not separately
+attributed and is within the old code budget's tolerance.
+
+The fixture baseline uses the larger actual CI sizes. CI and the standalone full
+build differ by 192 B and are not presented as byte-identical reproductions.
+The 5% tolerance, signature checks, numerical fixtures, optimization settings and
+all other profile budgets remain unchanged. This evidence qualifies the fixture
+profile; production-signed, neural and GPU packages retain their separate gates.
+
+Raw CI artifacts, their independent verification, the source snapshots and ablation
+patch, compiler/dependency inventories, ELF sections and all three build receipts
+are retained under `/home/ubuntu/jope_plan/search-narration-20261028/evidence/`:
+`appliance-size-aff0e-ci/`, `appliance-size-ablation-source/`,
+`appliance-size-pair-artifacts/`, `appliance-size-attribution-aff0e.json` and
+`local-checks/size-{full,observer-off,full-restored}-aff0e-a1.{json,log}`.

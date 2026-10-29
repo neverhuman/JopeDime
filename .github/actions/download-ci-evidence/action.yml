@@ -40,6 +40,86 @@ runs:
       with:
         key: ${{ inputs.name }}-pub-3
         path: ${{ inputs.path }}
+    - name: Resolve prior attempts of this run
+      id: prior
+      if: ${{ github.run_attempt != '1' && steps.first.outputs.cache-matched-key == '' && steps.second.outputs.cache-matched-key == '' && steps.third.outputs.cache-matched-key == '' }}
+      shell: bash
+      env:
+        NAME: ${{ inputs.name }}
+        SRC: ${{ inputs.path }}
+      run: |
+        set -euo pipefail
+        for idx in 1 2 3; do
+          prev=$((GITHUB_RUN_ATTEMPT - idx))
+          if (( prev >= 1 )); then
+            prev_name="${NAME/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/${GITHUB_RUN_ID}-${prev}}"
+            prev_path="${SRC/\/${GITHUB_RUN_ID}\/${GITHUB_RUN_ATTEMPT}\//\/${GITHUB_RUN_ID}\/${prev}\/}"
+            printf 'name_%d=%s\npath_%d=%s\n' "$idx" "$prev_name" "$idx" "$prev_path" >> "$GITHUB_OUTPUT"
+          fi
+        done
+    - name: Restore prior attempt 1 publication 1
+      id: prior-1-first
+      if: ${{ steps.prior.outputs.name_1 != '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_1 }}-pub-1
+        path: ${{ steps.prior.outputs.path_1 }}
+    - name: Restore prior attempt 1 publication 2
+      id: prior-1-second
+      if: ${{ steps.prior.outputs.name_1 != '' && steps.prior-1-first.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_1 }}-pub-2
+        path: ${{ steps.prior.outputs.path_1 }}
+    - name: Restore prior attempt 1 publication 3
+      id: prior-1-third
+      if: ${{ steps.prior.outputs.name_1 != '' && steps.prior-1-first.outputs.cache-matched-key == '' && steps.prior-1-second.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_1 }}-pub-3
+        path: ${{ steps.prior.outputs.path_1 }}
+    - name: Restore prior attempt 2 publication 1
+      id: prior-2-first
+      if: ${{ steps.prior.outputs.name_2 != '' && steps.prior-1-first.outputs.cache-matched-key == '' && steps.prior-1-second.outputs.cache-matched-key == '' && steps.prior-1-third.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_2 }}-pub-1
+        path: ${{ steps.prior.outputs.path_2 }}
+    - name: Restore prior attempt 2 publication 2
+      id: prior-2-second
+      if: ${{ steps.prior.outputs.name_2 != '' && steps.prior-1-first.outputs.cache-matched-key == '' && steps.prior-1-second.outputs.cache-matched-key == '' && steps.prior-1-third.outputs.cache-matched-key == '' && steps.prior-2-first.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_2 }}-pub-2
+        path: ${{ steps.prior.outputs.path_2 }}
+    - name: Restore prior attempt 2 publication 3
+      id: prior-2-third
+      if: ${{ steps.prior.outputs.name_2 != '' && steps.prior-1-first.outputs.cache-matched-key == '' && steps.prior-1-second.outputs.cache-matched-key == '' && steps.prior-1-third.outputs.cache-matched-key == '' && steps.prior-2-first.outputs.cache-matched-key == '' && steps.prior-2-second.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_2 }}-pub-3
+        path: ${{ steps.prior.outputs.path_2 }}
+    - name: Restore prior attempt 3 publication 1
+      id: prior-3-first
+      if: ${{ steps.prior.outputs.name_3 != '' && steps.prior-1-first.outputs.cache-matched-key == '' && steps.prior-1-second.outputs.cache-matched-key == '' && steps.prior-1-third.outputs.cache-matched-key == '' && steps.prior-2-first.outputs.cache-matched-key == '' && steps.prior-2-second.outputs.cache-matched-key == '' && steps.prior-2-third.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_3 }}-pub-1
+        path: ${{ steps.prior.outputs.path_3 }}
+    - name: Restore prior attempt 3 publication 2
+      id: prior-3-second
+      if: ${{ steps.prior.outputs.name_3 != '' && steps.prior-1-first.outputs.cache-matched-key == '' && steps.prior-1-second.outputs.cache-matched-key == '' && steps.prior-1-third.outputs.cache-matched-key == '' && steps.prior-2-first.outputs.cache-matched-key == '' && steps.prior-2-second.outputs.cache-matched-key == '' && steps.prior-2-third.outputs.cache-matched-key == '' && steps.prior-3-first.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_3 }}-pub-2
+        path: ${{ steps.prior.outputs.path_3 }}
+    - name: Restore prior attempt 3 publication 3
+      id: prior-3-third
+      if: ${{ steps.prior.outputs.name_3 != '' && steps.prior-1-first.outputs.cache-matched-key == '' && steps.prior-1-second.outputs.cache-matched-key == '' && steps.prior-1-third.outputs.cache-matched-key == '' && steps.prior-2-first.outputs.cache-matched-key == '' && steps.prior-2-second.outputs.cache-matched-key == '' && steps.prior-2-third.outputs.cache-matched-key == '' && steps.prior-3-first.outputs.cache-matched-key == '' && steps.prior-3-second.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ steps.prior.outputs.name_3 }}-pub-3
+        path: ${{ steps.prior.outputs.path_3 }}
     - name: Place restored evidence
       shell: bash
       env:
@@ -47,10 +127,25 @@ runs:
         SRC: ${{ inputs.path }}
         INTO: ${{ inputs.into }}
         LAYOUT: ${{ inputs.layout }}
-        KEY: ${{ steps.first.outputs.cache-matched-key || steps.second.outputs.cache-matched-key || steps.third.outputs.cache-matched-key }}
+        CUR_KEY: ${{ steps.first.outputs.cache-matched-key || steps.second.outputs.cache-matched-key || steps.third.outputs.cache-matched-key }}
+        P1_KEY: ${{ steps.prior-1-first.outputs.cache-matched-key || steps.prior-1-second.outputs.cache-matched-key || steps.prior-1-third.outputs.cache-matched-key }}
+        P2_KEY: ${{ steps.prior-2-first.outputs.cache-matched-key || steps.prior-2-second.outputs.cache-matched-key || steps.prior-2-third.outputs.cache-matched-key }}
+        P3_KEY: ${{ steps.prior-3-first.outputs.cache-matched-key || steps.prior-3-second.outputs.cache-matched-key || steps.prior-3-third.outputs.cache-matched-key }}
+        P1_SRC: ${{ steps.prior.outputs.path_1 }}
+        P2_SRC: ${{ steps.prior.outputs.path_2 }}
+        P3_SRC: ${{ steps.prior.outputs.path_3 }}
       run: |
         set -euo pipefail
         mkdir -p "$INTO"
+        if [ -n "$CUR_KEY" ]; then
+          KEY=$CUR_KEY
+        elif [ -n "$P1_KEY" ]; then
+          KEY=$P1_KEY; SRC=$P1_SRC
+        elif [ -n "$P2_KEY" ]; then
+          KEY=$P2_KEY; SRC=$P2_SRC
+        else
+          KEY=$P3_KEY; SRC=$P3_SRC
+        fi
         if [ -z "$KEY" ]; then echo "no published evidence for $NAME"; exit 0; fi
         case "$LAYOUT" in key) dir=$KEY ;; name) dir=$NAME ;; *) echo "bad layout $LAYOUT" >&2; exit 1 ;; esac
         [ ! -e "$INTO/$dir" ] || { echo "duplicate evidence $dir" >&2; exit 1; }

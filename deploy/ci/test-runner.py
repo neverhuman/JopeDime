@@ -917,6 +917,78 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertEqual(3, action.count('actions/cache/save@'))
         self.assertIn('deploy/ci/retain-local-evidence.sh', action)
         self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', action)
+        go_workflow = (ROOT/'.github/workflows/go.yml').read_text()
+        self.assertEqual(3, go_workflow.count('actions/cache/save@'))
+        self.assertEqual(3, go_workflow.count('actions/cache/restore@'))
+        self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', go_workflow)
+        download_action = (ROOT/'.github/actions/download-ci-evidence/action.yml').read_text()
+        self.assertIn('Resolve prior attempts of this run', download_action)
+
+    def test_go_cache_publication_retries_and_download_prior_attempt_fallback(self):
+        go_workflow = (ROOT/'.github/workflows/go.yml').read_text()
+        base_key = 'go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}'
+        for step_id in ('save-1', 'first', 'save-2', 'second', 'save-3', 'third'):
+            self.assertIn(f'id: {step_id}\n', go_workflow)
+        self.assertEqual(2, go_workflow.count(f'key: {base_key}\n'))
+        self.assertEqual(2, go_workflow.count(f'key: {base_key}-pub-2\n'))
+        self.assertEqual(2, go_workflow.count(f'key: {base_key}-pub-3\n'))
+        self.assertEqual(2, go_workflow.count("if: ${{ !cancelled() && steps.first.outcome == 'failure' }}\n"))
+        self.assertEqual(2, go_workflow.count("if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}\n"))
+        self.assertEqual(2, go_workflow.count(f'restore-keys: |\n            {base_key}\n'))
+        self.assertEqual(3, go_workflow.count('lookup-only: true\n          fail-on-cache-miss: true\n'))
+        self.assertIn('FIRST: ${{ steps.first.outcome }}\n          SECOND: ${{ steps.second.outcome }}\n          THIRD: ${{ steps.third.outcome }}\n        run: bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', go_workflow)
+        download_action = (ROOT/'.github/actions/download-ci-evidence/action.yml').read_text()
+        for attempt_idx in (1, 2, 3):
+            for pub_idx, pub_name in [(1, 'first'), (2, 'second'), (3, 'third')]:
+                self.assertIn(f'id: prior-{attempt_idx}-{pub_name}\n', download_action)
+                self.assertIn(f'key: ${{{{ steps.prior.outputs.name_{attempt_idx} }}}}-pub-{pub_idx}\n', download_action)
+        resolve_script = textwrap.dedent(
+            download_action.split('id: prior\n', 1)[1].split('      run: |\n', 1)[1].split('    - name: Restore prior attempt 1 publication 1\n', 1)[0]
+        )
+        place_script = textwrap.dedent(
+            download_action.split('    - name: Place restored evidence\n', 1)[1].split('      run: |\n', 1)[1]
+        )
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='download-fallback-', dir=scratch) as name:
+            root = Path(name)
+            gh_out = root / 'github-output'
+            gh_out.write_text('')
+            env = dict(
+                os.environ,
+                GITHUB_RUN_ID='42',
+                GITHUB_RUN_ATTEMPT='2',
+                NAME='ci-42-2-python',
+                SRC=str(root / 'target/ci-evidence/42/2/python/'),
+                GITHUB_OUTPUT=str(gh_out),
+            )
+            res = subprocess.run(['bash', '-ec', resolve_script], cwd=ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(0, res.returncode, res.stderr)
+            outputs = dict(line.split('=', 1) for line in gh_out.read_text().splitlines())
+            self.assertEqual('ci-42-1-python', outputs['name_1'])
+            self.assertEqual(str(root / 'target/ci-evidence/42/1/python/'), outputs['path_1'])
+            self.assertNotIn('name_2', outputs)
+            p1_src = Path(outputs['path_1'])
+            p1_src.mkdir(parents=True)
+            (p1_src / 'receipt.json').write_text('{"attempt":1}\n')
+            into = root / 'downloaded'
+            place_env = dict(
+                os.environ,
+                NAME='ci-42-2-python',
+                SRC=str(root / 'target/ci-evidence/42/2/python/'),
+                INTO=str(into),
+                LAYOUT='key',
+                CUR_KEY='',
+                P1_KEY='ci-42-1-python-pub-1',
+                P2_KEY='',
+                P3_KEY='',
+                P1_SRC=str(p1_src),
+                P2_SRC='',
+                P3_SRC='',
+            )
+            placed = subprocess.run(['bash', '-ec', place_script], cwd=ROOT, env=place_env, capture_output=True, text=True)
+            self.assertEqual(0, placed.returncode, placed.stderr)
+            self.assertEqual('{"attempt":1}\n', (into / 'ci-42-1-python-pub-1' / 'receipt.json').read_text())
 
     def test_no_workflow_depends_on_github_artifact_storage(self):
         paths = sorted(p for p in (ROOT/'.github').rglob('*') if p.suffix in ('.yml', '.yaml'))

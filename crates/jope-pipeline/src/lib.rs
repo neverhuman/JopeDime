@@ -48,6 +48,7 @@ pub mod islands;
 pub mod kernel2;
 pub mod landmark_encoding;
 pub mod lineage;
+mod narration;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;
 pub mod parallel;
@@ -72,7 +73,7 @@ pub mod synthesized_recipe;
 pub mod test_score;
 
 pub use receipt::{Receipt, OBJECTIVE_SCHEMA_ID, RECEIPT_SCHEMA_ID};
-pub use run::{run, Policy, RunOptions};
+pub use run::{run, run_with_narration, Policy, RunOptions};
 
 /// Version stamped into every receipt.
 pub const TOOL_VERSION: &str = concat!("jope-pipeline/", env!("CARGO_PKG_VERSION"));

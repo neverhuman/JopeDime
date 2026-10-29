@@ -24,14 +24,21 @@
 #     measures 5,321,296 B, attributing 521,824 B of the increase to the new feature.
 #   * Fixture values below use the larger actual CI measurement: 5,843,568 B code and
 #     5,959,302 B package. The 5% tolerance and unmeasured release budgets are unchanged.
+# Rebaselined 2026-10-28 for runtime Search commentary (PR #438), amendment A17:
+#   * Actual CI fixture: 6,579,256 B code and 6,696,997 B package; verification passes.
+#   * Same-host runtime entrypoint ablation: 6,579,064 -> 5,878,648 B (-700,416 B).
+#     Restoring all three files reproduces the full executable's SHA-256 exactly.
+#   * The diagnostic retains the current dependency graph; its remaining 35,080 B over
+#     the historical code baseline is not separately attributed and fits the old 5% gate.
+#   * Only this measured fixture baseline changes; tolerance remains 5%.
 schema = "jope.appliance-size-budgets/v1"
 tolerance_percent = 5
 
 # PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
 [profile.fixture]
-base_executable_bytes = 5843568
-final_executable_bytes = 5959302
-note = "dist-ci build plus 0.1 MiB of generated fixture tensors and notices"
+base_executable_bytes = 6579256
+final_executable_bytes = 6696997
+note = "dist-ci runtime Search commentary plus 0.1 MiB of generated fixture tensors and notices (A17)"
 
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
 [profile.native-only]

@@ -778,6 +778,19 @@
       "lanes": [],
       "scope": "GPU feature not selected in CPU CI."
     },
+    "feature:jope-narrator/testing": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Test-only validated collector, activated by dev-dependencies in test graphs. Absent from ordinary production builds; no runtime callback API."
+    },
     "feature:jope-parallel/default": {
       "discovery": {
         "dependencies": [],
@@ -1611,6 +1624,20 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-narrator": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-narrator/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
     },
     "package:jope-observatory": {
       "discovery": {
@@ -9399,6 +9426,39 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-narrator/lib/jope_narrator": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-narrator/src/lib.rs",
+        "test": true,
+        "doctest": true,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
+    },
+    "target:jope-narrator/test/core": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-narrator/tests/core.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
+    },
     "target:jope-observatory/bin/collect-datasets": {
       "discovery": {
         "doctest": false,
@@ -9452,6 +9512,24 @@
         "full-default"
       ],
       "scope": "Default-feature product check and deterministic offline tests in hosted product selection. Operational AWS/SSH behavior requires separate observer proof; no training or promotion authority inferred."
+    },
+    "target:jope-observatory/bin/gp-narration-stream": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-observatory/src/bin/gp-narration-stream.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Build/check reader CLI. The narration integration target launches real MCP subprocess framing and tests actual WebSocket/HTTP routers. Deployment and sustained-load qualification remain separate."
     },
     "target:jope-observatory/bin/gp-source-stream": {
       "discovery": {
@@ -9523,6 +9601,22 @@
         "full-emitters"
       ],
       "scope": "Complete GP source capture/stream contract. Real four-language compilation, loss/pending/restart accounting and WebSocket cursor replay execute in the emitters lane; no numerical quality or live research qualification is inferred."
+    },
+    "target:jope-observatory/test/narration": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-observatory/tests/narration.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
     },
     "target:jope-parallel/bin/jope-build-receipt": {
       "discovery": {
@@ -11343,6 +11437,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-pipeline/test/search_narration": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/search_narration.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
+    },
     "target:jope-pipeline/test/seed_set_v2": {
       "discovery": {
         "doctest": false,
@@ -11817,6 +11927,22 @@
         "full-default"
       ],
       "scope": "Every native recipe for all three tasks: CSV fit, model.jope save, reload and bit-identical prediction; bounded selection by out-of-fold loss, determinism across thread counts, budget exhaustion, and integrity refusal of damaged or re-checksummed foreign model files. CPU only."
+    },
+    "target:jope-runtime/test/prediction_narration": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-runtime/tests/prediction_narration.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {

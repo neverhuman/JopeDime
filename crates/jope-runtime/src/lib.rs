@@ -28,6 +28,7 @@ pub mod methods;
 pub mod model_object;
 pub mod model_session;
 pub mod output_safety;
+mod prediction_narration;
 pub mod receipt;
 pub mod service;
 pub mod table;
