@@ -317,6 +317,57 @@ def transform_context_features(
     return (scaled * mask).astype(np.float32)
 
 
+def _interrupt_flywheel_step_telemetry(
+    step_telemetry: tuple | None,
+    round_idx: int,
+    optimizer_steps: int,
+    queue_stats: dict,
+    original_error: BaseException,
+) -> None:
+    """Flush bounded telemetry buffers and finalize an incomplete run without masking its error."""
+    if step_telemetry is None:
+        return
+
+    batch, recorder, _, _, _, _, main_sampler, evo_sampler = step_telemetry
+
+    def note_failure(operation: str, error: BaseException) -> None:
+        original_error.add_note(f"telemetry {operation} failed ({type(error).__name__})")
+
+    try:
+        batch.flush()
+    except BaseException as error:
+        note_failure("step batch flush", error)
+
+    sync_attempted = bool(main_sampler.enabled)
+    try:
+        sync_attempted = bool(main_sampler.flush(synchronize=True)) or sync_attempted
+    except BaseException as error:
+        note_failure("main H2D flush", error)
+    try:
+        evo_sampler.flush(synchronize=not sync_attempted)
+    except BaseException as error:
+        note_failure("evolution H2D flush", error)
+
+    try:
+        recorder.emit(
+            "jope.telemetry.evo-queue/v1",
+            {
+                "round": round_idx,
+                **queue_stats,
+                "optimizer_steps": int(optimizer_steps),
+                "h2d_event_sample_drops": main_sampler.dropped_samples + evo_sampler.dropped_samples,
+                "interrupted": True,
+            },
+        )
+    except BaseException as error:
+        note_failure("interrupted round record", error)
+
+    try:
+        recorder.interrupt()
+    except BaseException as error:
+        note_failure("interrupted recorder finalization", error)
+
+
 def train_flywheel_model_for_round(
     round_idx: int,
     train_cids: list[str],
@@ -361,27 +412,58 @@ def train_flywheel_model_for_round(
     step_telemetry = _open_flywheel_step_telemetry(round_idx, seed, batch_size, str(device))
 
     evo_queue = None
-    if enable_evo_queue:
-        evo_queue = AsyncEvoBatchQueue(
-            train_cids=valid_train_cids,
-            pools=pools,
-            ctx_scaled_584=ctx_scaled_584,
-            landmark_v2_48=landmark_v2_48,
-            sos_by_cid=sos_by_cid,
-            champ_bank=champ_bank,
-            round_idx=round_idx,
-            use_cv_test_gate=use_cv_test_gate,
-            batch_size=batch_size,
-            max_queue_size=24,
-            num_bg_threads=2,
-            n_evo_targets_per_batch=1,
-            n_generations=2,
-            children_per_gen=3,
-            naive_label_grafting=naive_label_grafting,
-            shared_evo_cache=shared_evo_cache,
-            seed=seed + round_idx * 307,
-        )
-        evo_queue.start(prefill_batches=3)
+    queue_stats = {"enabled": False}
+    queue_stopped = False
+    telemetry_closed = step_telemetry is None
+    opt_steps = 0
+
+    def failure_cleanup(original_error: BaseException) -> None:
+        nonlocal queue_stats, queue_stopped, telemetry_closed
+        if evo_queue is not None and not queue_stopped:
+            queue_stopped = True
+            try:
+                queue_stats = evo_queue.stop()
+            except BaseException as cleanup_error:
+                original_error.add_note(
+                    f"evolution queue shutdown failed ({type(cleanup_error).__name__})"
+                )
+        if step_telemetry is not None and not telemetry_closed:
+            try:
+                _interrupt_flywheel_step_telemetry(
+                    step_telemetry, round_idx, opt_steps, queue_stats, original_error
+                )
+            except BaseException as cleanup_error:
+                original_error.add_note(
+                    f"telemetry interrupted-run cleanup failed ({type(cleanup_error).__name__})"
+                )
+            finally:
+                telemetry_closed = True
+
+    try:
+        if enable_evo_queue:
+            evo_queue = AsyncEvoBatchQueue(
+                train_cids=valid_train_cids,
+                pools=pools,
+                ctx_scaled_584=ctx_scaled_584,
+                landmark_v2_48=landmark_v2_48,
+                sos_by_cid=sos_by_cid,
+                champ_bank=champ_bank,
+                round_idx=round_idx,
+                use_cv_test_gate=use_cv_test_gate,
+                batch_size=batch_size,
+                max_queue_size=24,
+                num_bg_threads=2,
+                n_evo_targets_per_batch=1,
+                n_generations=2,
+                children_per_gen=3,
+                naive_label_grafting=naive_label_grafting,
+                shared_evo_cache=shared_evo_cache,
+                seed=seed + round_idx * 307,
+            )
+            evo_queue.start(prefill_batches=3)
+    except BaseException as error:
+        failure_cleanup(error)
+        raise
 
     dir_margin_losses = []
     evo_val_losses = []
@@ -425,7 +507,9 @@ def train_flywheel_model_for_round(
                         evo_queue,
                         data_ms,
                     )
-                    h2d_slot = step_telemetry[6].begin(opt_steps + 1, batch_arrays_bytes)
+                    h2d_slot = step_telemetry[6].begin(
+                        opt_steps + 1, batch_arrays_bytes, data_wait_ms=data_ms
+                    )
                 else:
                     h2d_slot = -1
 
@@ -530,47 +614,63 @@ def train_flywheel_model_for_round(
                     batch_obj.commit(opt_steps)
             if ep_loss_vals:
                 epoch_losses.append(float(np.mean(ep_loss_vals)))
-    finally:
-        queue_stats = evo_queue.stop() if evo_queue is not None else {"enabled": False}
+    except BaseException as error:
+        failure_cleanup(error)
+        raise
+    else:
+        if evo_queue is not None:
+            queue_stopped = True
+            try:
+                queue_stats = evo_queue.stop()
+            except BaseException as error:
+                failure_cleanup(error)
+                raise
+        else:
+            queue_stopped = True
 
-    # Compute exact parameter L2 norm and step update L2 norm ||theta_final - theta_init||_2
-    final_sd = model.state_dict()
-    param_sq = 0.0
-    delta_sq = 0.0
-    changed_tensors = 0
-    for k, v in final_sd.items():
-        if torch.is_floating_point(v):
-            vf = v.detach().cpu().float()
-            param_sq += float(torch.sum(vf * vf).item())
-            if k in init_state_snap:
-                df = vf - init_state_snap[k]
-                dsq = float(torch.sum(df * df).item())
-                delta_sq += dsq
-                if dsq > 1e-12:
-                    changed_tensors += 1
+    try:
+        # Compute exact parameter L2 norm and step update L2 norm ||theta_final - theta_init||_2
+        final_sd = model.state_dict()
+        param_sq = 0.0
+        delta_sq = 0.0
+        changed_tensors = 0
+        for k, v in final_sd.items():
+            if torch.is_floating_point(v):
+                vf = v.detach().cpu().float()
+                param_sq += float(torch.sum(vf * vf).item())
+                if k in init_state_snap:
+                    df = vf - init_state_snap[k]
+                    dsq = float(torch.sum(df * df).item())
+                    delta_sq += dsq
+                    if dsq > 1e-12:
+                        changed_tensors += 1
 
-    queue_stats["optimizer_steps"] = int(opt_steps)
-    queue_stats["initial_epoch_loss"] = round(epoch_losses[0], 5) if epoch_losses else 0.0
-    queue_stats["final_epoch_loss"] = round(epoch_losses[-1], 5) if epoch_losses else 0.0
-    queue_stats["param_l2_norm"] = round(math.sqrt(param_sq), 5)
-    queue_stats["param_update_l2_norm"] = round(math.sqrt(delta_sq), 5)
-    queue_stats["changed_tensors"] = int(changed_tensors)
-    queue_stats["mean_dir_margin_loss"] = round(float(np.mean(dir_margin_losses)) if dir_margin_losses else 0.0, 5)
-    queue_stats["mean_evo_val_loss"] = round(float(np.mean(evo_val_losses)) if evo_val_losses else 0.0, 5)
-    if step_telemetry is not None:
-        step_telemetry[0].flush()
-        h2d_synchronized = step_telemetry[6].flush(synchronize=True)
-        step_telemetry[7].flush(synchronize=not h2d_synchronized)
-        queue_stats["h2d_event_sample_drops"] = (
-            step_telemetry[6].dropped_samples + step_telemetry[7].dropped_samples
-        )
-        step_telemetry[1].emit("jope.telemetry.evo-queue/v1", {
-            "round": round_idx,
-            **queue_stats,
-        })
-        queue_stats["telemetry"] = step_telemetry[1].close()
-    model.eval()
-    return model, queue_stats
+        queue_stats["optimizer_steps"] = int(opt_steps)
+        queue_stats["initial_epoch_loss"] = round(epoch_losses[0], 5) if epoch_losses else 0.0
+        queue_stats["final_epoch_loss"] = round(epoch_losses[-1], 5) if epoch_losses else 0.0
+        queue_stats["param_l2_norm"] = round(math.sqrt(param_sq), 5)
+        queue_stats["param_update_l2_norm"] = round(math.sqrt(delta_sq), 5)
+        queue_stats["changed_tensors"] = int(changed_tensors)
+        queue_stats["mean_dir_margin_loss"] = round(float(np.mean(dir_margin_losses)) if dir_margin_losses else 0.0, 5)
+        queue_stats["mean_evo_val_loss"] = round(float(np.mean(evo_val_losses)) if evo_val_losses else 0.0, 5)
+        if step_telemetry is not None:
+            step_telemetry[0].flush()
+            h2d_synchronized = step_telemetry[6].flush(synchronize=True)
+            step_telemetry[7].flush(synchronize=not h2d_synchronized)
+            queue_stats["h2d_event_sample_drops"] = (
+                step_telemetry[6].dropped_samples + step_telemetry[7].dropped_samples
+            )
+            step_telemetry[1].emit("jope.telemetry.evo-queue/v1", {
+                "round": round_idx,
+                **queue_stats,
+            })
+            queue_stats["telemetry"] = step_telemetry[1].close()
+            telemetry_closed = True
+        model.eval()
+        return model, queue_stats
+    except BaseException as error:
+        failure_cleanup(error)
+        raise
 
 
 def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, device: str):
@@ -578,7 +678,7 @@ def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, de
     if not run_root:
         return None
     from jope.telemetry import GpSession, Recorder, metric_registry
-    from jope.telemetry.io_hooks import BatchIOStats, H2DEventSampler, H2D_COLUMNS, IO_COLUMNS
+    from jope.telemetry.io_hooks import BatchIOStats, END_TO_END_COLUMN, H2DEventSampler, H2D_COLUMNS, IO_COLUMNS
     from jope.telemetry.train_hooks import StepBatch, StepTimer
 
     if GpSession is None or metric_registry is None:
@@ -622,7 +722,11 @@ def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, de
         str(registry["io.batch_prep"][0]): {"0": "batch_supply"},
     }
     h2d_columns = H2D_COLUMNS
+    h2d_batch_columns = (*h2d_columns, END_TO_END_COLUMN)
     h2d_layout = [(registry[name][0], 0) for name in h2d_columns]
+    h2d_layout.append((registry[END_TO_END_COLUMN][0], 0))
+    evo_h2d_layout = [(registry[name][0], 1) for name in h2d_columns]
+    evo_h2d_layout.append((registry[END_TO_END_COLUMN][0], 0))
     metric_groups.update({
         str(registry["host.cpu.core_util"][0]): {
             str(index): f"cpu_{index}" for index in range(os.cpu_count() or 1)
@@ -651,11 +755,11 @@ def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, de
     })
     recorder.set_metric_layout(0, layout)
     recorder.set_metric_layout(1, h2d_layout)
-    recorder.set_metric_layout(2, [(registry[name][0], 1) for name in h2d_columns])
+    recorder.set_metric_layout(2, evo_h2d_layout)
     batch = StepBatch(columns, lambda steps, values, rows: recorder.submit(0, steps, values, rows))
-    h2d_batch = StepBatch(h2d_columns, lambda steps, values, rows: recorder.submit(1, steps, values, rows))
-    evo_h2d_batch = StepBatch(h2d_columns, lambda steps, values, rows: recorder.submit(2, steps, values, rows))
-    main_h2d_sampler = H2DEventSampler(torch, device, h2d_batch)
+    h2d_batch = StepBatch(h2d_batch_columns, lambda steps, values, rows: recorder.submit(1, steps, values, rows))
+    evo_h2d_batch = StepBatch(h2d_batch_columns, lambda steps, values, rows: recorder.submit(2, steps, values, rows))
+    main_h2d_sampler = H2DEventSampler(torch, device, h2d_batch, end_to_end_col=len(h2d_columns))
     evo_h2d_sampler = H2DEventSampler(torch, device, evo_h2d_batch)
     if startup["enabled"]:
         recorder.emit_scalar(0, registry["io.local.bytes"][0], 0, 0, float(startup["logical_bytes"]))
@@ -676,12 +780,15 @@ def _open_flywheel_step_telemetry(round_idx: int, seed: int, batch_size: int, de
         for metric_name in h2d_columns:
             recorder.emit_unavailable(1, registry[metric_name][0], 0, 0, 7)
             recorder.emit_unavailable(2, registry[metric_name][0], 1, 0, 7)
+        recorder.emit_unavailable(1, registry[END_TO_END_COLUMN][0], 0, 0, 7)
     elif not main_h2d_sampler.enabled or not evo_h2d_sampler.enabled:
         for metric_name in h2d_columns:
             if not main_h2d_sampler.enabled:
                 recorder.emit_unavailable(1, registry[metric_name][0], 0, 0, 12)
             if not evo_h2d_sampler.enabled:
                 recorder.emit_unavailable(2, registry[metric_name][0], 1, 0, 12)
+        if not main_h2d_sampler.enabled:
+            recorder.emit_unavailable(1, registry[END_TO_END_COLUMN][0], 0, 0, 12)
     recorder.emit_unavailable(0, registry["throughput.tokens_per_s"][0], 0, 0, 10)
     return (
         batch,

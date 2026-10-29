@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::mpsc::{self, Receiver, SyncSender, TrySendError};
+use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
@@ -417,8 +417,19 @@ impl Recorder {
         }
     }
 
-    pub fn close(mut self) -> Result<RunManifest> {
-        self.close_requested.store(true, Ordering::Release);
+    pub fn close(self) -> Result<RunManifest> {
+        self.stop_and_finalize(true)
+    }
+
+    /// Stop the drain and finalize a run whose producer exited before normal completion.
+    pub fn interrupt(self) -> Result<RunManifest> {
+        self.stop_and_finalize(false)
+    }
+
+    fn stop_and_finalize(mut self, complete: bool) -> Result<RunManifest> {
+        if complete {
+            self.close_requested.store(true, Ordering::Release);
+        }
         self.stopping.store(true, Ordering::Release);
         let mut outcome = self
             .join
@@ -548,19 +559,24 @@ fn drain_loop(
             }
         }
 
-        while let Ok(line) = record_rx.try_recv() {
-            worked = true;
-            if !sink_failed {
-                match writer.append_record_line(&line) {
-                    Ok(()) => {
-                        manifest.records_written += 1;
-                        wrote_anything = true;
-                    }
-                    Err(error) => {
-                        sink_failed = true;
-                        note_sink_error(&mut manifest, &sink_errors, error);
+        loop {
+            match record_rx.try_recv() {
+                Ok(line) => {
+                    worked = true;
+                    if !sink_failed {
+                        match writer.append_record_line(&line) {
+                            Ok(()) => {
+                                manifest.records_written += 1;
+                                wrote_anything = true;
+                            }
+                            Err(error) => {
+                                sink_failed = true;
+                                note_sink_error(&mut manifest, &sink_errors, error);
+                            }
+                        }
                     }
                 }
+                Err(TryRecvError::Empty | TryRecvError::Disconnected) => break,
             }
         }
 
@@ -702,5 +718,18 @@ mod tests {
         assert_eq!(manifest.record_drops, 1);
         let text = fs::read_to_string(dir.path().join("run/events.jsonl")).unwrap();
         assert!(text.is_empty());
+    }
+    #[test]
+    fn interrupt_finalizes_manifest_as_interrupted() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut builder = RecorderBuilder::new(dir.path().join("run"), RunMetadata::default());
+        builder.add_producer("test").unwrap();
+        let (recorder, mut producers) = builder.start().unwrap();
+        assert!(producers[0].emit_scalar(crate::train::TRAIN_LOSS, 0, 0, 1.0, false));
+
+        let manifest = recorder.interrupt().unwrap();
+
+        assert!(matches!(manifest.status, RunStatus::Interrupted));
+        assert!(dir.path().join("run/metrics.parquet").exists());
     }
 }

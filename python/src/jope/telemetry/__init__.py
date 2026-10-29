@@ -64,5 +64,9 @@ class Recorder:
     def close(self) -> dict[str, Any]:
         return json.loads(self._native.close())
 
+    def interrupt(self) -> dict[str, Any]:
+        """Finalize an incomplete run as interrupted after flushing its producers."""
+        return json.loads(self._native.interrupt())
+
 
 __all__ = ["GpSession", "Recorder", "metric_registry"]
