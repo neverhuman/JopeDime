@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError};
+use std::sync::mpsc::{self, Receiver, SyncSender, TrySendError};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
@@ -559,24 +559,19 @@ fn drain_loop(
             }
         }
 
-        loop {
-            match record_rx.try_recv() {
-                Ok(line) => {
-                    worked = true;
-                    if !sink_failed {
-                        match writer.append_record_line(&line) {
-                            Ok(()) => {
-                                manifest.records_written += 1;
-                                wrote_anything = true;
-                            }
-                            Err(error) => {
-                                sink_failed = true;
-                                note_sink_error(&mut manifest, &sink_errors, error);
-                            }
-                        }
+        while let Ok(line) = record_rx.try_recv() {
+            worked = true;
+            if !sink_failed {
+                match writer.append_record_line(&line) {
+                    Ok(()) => {
+                        manifest.records_written += 1;
+                        wrote_anything = true;
+                    }
+                    Err(error) => {
+                        sink_failed = true;
+                        note_sink_error(&mut manifest, &sink_errors, error);
                     }
                 }
-                Err(TryRecvError::Empty | TryRecvError::Disconnected) => break,
             }
         }
 
