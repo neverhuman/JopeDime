@@ -18,7 +18,7 @@ Repository operation remains serialized: read the current queue/ledger, claim pa
 
 ## Worktrees and builds
 
-Extra copies belong under `<repo>/.agent/worktrees/`, at most four lanes. `.claude/worktrees` stays a symlink into that shared root. Verify it before worktree operations and keep `.agent/` locally excluded from Git status.
+Extra copies belong under `<repo>/.agent/worktrees/`, at most eight lanes. `.claude/worktrees` stays a symlink into that shared root. Verify it before worktree operations and keep `.agent/` locally excluded from Git status.
 
 Each lane reuses its own `target/`. Before Cargo:
 

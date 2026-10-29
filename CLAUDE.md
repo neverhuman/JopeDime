@@ -26,7 +26,7 @@ See [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md) for the full record.
 3. **Worktrees go in `<repo>/.agent/worktrees/` — nowhere else.** Owner ruling 2026-09-21: one
    shared directory for Claude, Codex and Grok, instead of a per-tool location each.
    `.claude/worktrees` is a **symlink** to it so the `EnterWorktree` tool lands there without
-   configuration. Max 4 lanes; remove with `git worktree remove` when the PR closes. **Never
+   configuration. Max 8 lanes; remove with `git worktree remove` when the PR closes. **Never
    `/tmp`.** Follow the fresh-checkout bootstrap in `AGENTS.md` before `EnterWorktree`;
    Git does not create the ignored symlink. Verify its type and resolved target every time.
 4. **`target/health/` is evidence.** Never `rm -rf target`. The helper reports Cargo candidates only;

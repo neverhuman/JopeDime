@@ -58,7 +58,7 @@ clones** of this repository, including commits that existed nowhere else and wer
 being lost permanently. Use the reusable bare verification directory under custody for independent restoration.
 
 **After its PR closes, preserve and restore-verify unique source and evidence, then remove the lane.**
-**At most 4 concurrent lanes.**
+**At most 8 concurrent lanes.**
 
 **Worktrees live in exactly one place: `<repo>/.agent/worktrees/`** — owner ruling, 2026-09-21.
 One shared directory for every agent (Claude, Codex, Grok) rather than a per-tool location each.
@@ -77,7 +77,7 @@ preservation and reconciliation before proceeding; never replace it with `ln -f`
 Its absence or wrong type is invisible to `git status` because `.claude/` is ignored.
 
 - **Never `/tmp`** — not worktrees, not clones, not build output. It is emptied at boot.
-- **At most 4 concurrent lanes per repository**, one build directory each, reused.
+- **At most 8 concurrent lanes per repository**, one build directory each, reused.
 - **Remove a lane when its PR closes** with `git worktree remove`, never `rm -rf` (which orphans
   the admin entry).
 
@@ -135,7 +135,7 @@ on `main` belongs to a merged pull request; it does not certify review quality.
 
 Before starting new implementation work, check the open pull-request queue. If a PR is awaiting
 review, checks, correction, or merge, resolve it before opening another lane. The current delivery
-plan uses one implementation PR at a time; the four-lane ceiling is not a concurrency target.
+plan uses one implementation PR at a time; the eight-lane ceiling is not a concurrency target.
 
 Each focused PR states the behavior it changes, the acceptance command, and the evidence produced.
 For behavioral fixes, preserve a reproducing failure and prove the corrected behavior; refusing
@@ -336,7 +336,7 @@ untracked-file rescue walk them.
 
 One writer per checkout. Use the canonical checkout or a claimed, registered
 worktree under `<repo>/.agent/worktrees/`; no sibling clones or tool-specific roots.
-Preserve `.claude/worktrees` as the symlink to that shared root. At most four managed
+Preserve `.claude/worktrees` as the symlink to that shared root. At most eight managed
 lanes per repository, each with one reused build directory. No clones, worktrees
 or build output under `/tmp`. Bulk data stays outside working trees.
 
