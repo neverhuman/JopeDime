@@ -173,9 +173,9 @@ Because ADR-0004 hashes the `crates/feat-math/src/*` implementation files in
 
 | Field | Before W1-W9 port | After W1-W9 port |
 | --- | --- | --- |
-| `implementation_sha256` | `6fe4aec834dc7ffae6fc856842111990f0b7ed39c2945e1d306fe1784aad7bd7` | `1bb3cdca8154d26d248fe535ace33260554d9ad01969f7214336587e725270c6` |
+| `implementation_sha256` | `6fe4aec834dc7ffae6fc856842111990f0b7ed39c2945e1d306fe1784aad7bd7` | `e50c8bbaf46bd559ec3f2a6bcf56a1a4732dbf29e68de7946fd962680058bdc8` |
 | `cargo_lock_sha256` | `186e9ab64fbe50c507685c0f57af905045576fabc10e31988a595879bbe7a78d` | `186e9ab64fbe50c507685c0f57af905045576fabc10e31988a595879bbe7a78d` |
-| `identity_digest` | `0da79c46a83bf6b639ef97a51a6fc210612cdac279b13a24c5d8298ce74d6d1c` | `dd90cced8a45c2906a6259ce19ea1c61815c77deca9d7da7b180280eaf10c163` |
+| `identity_digest` | `0da79c46a83bf6b639ef97a51a6fc210612cdac279b13a24c5d8298ce74d6d1c` | `0523027b6e356862d99ddce894ee81bc5c3728594dad6fe654e3bbb1c81a3f28` |
 | `dsl_abi_sha256` | `c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389` | `c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389` |
 
 `Cargo.lock` and `dsl_abi_sha256` are unchanged. The identity-only regeneration and subsequent
