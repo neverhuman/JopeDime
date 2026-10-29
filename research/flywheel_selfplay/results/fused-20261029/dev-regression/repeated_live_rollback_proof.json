@@ -1,0 +1,409 @@
+{
+  "schema": "jope.best-dev-repeated-rollback-proof/v1",
+  "source_sha": "a3090769647737060fadd102e0a4299dd808b2bb",
+  "reproducing_failure": "repeated-rollback-red.log: second rejection retained step2 rather than best step1",
+  "test_green": "24 focused tests pass",
+  "legacy_round70_optimizer_identical_to_round40": false,
+  "legacy_round70_optimizer_step": 212,
+  "correction": "pre-fix rounds70-77 did not restore immutable AdamW state; weights/dev utility stayed protected; preserve those receipts as historical, not passing optimizer-rollback evidence",
+  "verified_rounds": [
+    {
+      "round": 78,
+      "model_bit_identical_to_round40": true,
+      "optimizer_bit_identical_to_round40": true,
+      "rejected_model_differs": true,
+      "saved_optimizer_step": 210,
+      "candidate_optimizer_step": 212,
+      "round_receipt": {
+        "round": 78,
+        "node": "xbabe1",
+        "path": "cpu_exact_landmarks+frozen_dope+GPU_adapter",
+        "optimizer_steps": 2,
+        "changed_tensors": 41,
+        "trainable_params": 29211,
+        "parameter_counts": {
+          "__root_direct__": {
+            "trainable_params": 0,
+            "frozen_params": 0,
+            "total_params": 0,
+            "training_mode": false
+          },
+          "dope_model": {
+            "trainable_params": 0,
+            "frozen_params": 444168,
+            "total_params": 444168,
+            "training_mode": false
+          },
+          "gamenet_anchor": {
+            "trainable_params": 0,
+            "frozen_params": 520785,
+            "total_params": 520785,
+            "training_mode": false
+          },
+          "adapter_10tok": {
+            "trainable_params": 29211,
+            "frozen_params": 520785,
+            "total_params": 549996,
+            "training_mode": false
+          },
+          "landmark_bridge": {
+            "trainable_params": 0,
+            "frozen_params": 65792,
+            "total_params": 65792,
+            "training_mode": false
+          },
+          "nolm_bridge": {
+            "trainable_params": 0,
+            "frozen_params": 65792,
+            "total_params": 65792,
+            "training_mode": false
+          },
+          "dope_to_lm48": {
+            "trainable_params": 0,
+            "frozen_params": 30240,
+            "total_params": 30240,
+            "training_mode": false
+          },
+          "__global_total__": {
+            "trainable_params": 29211,
+            "frozen_params": 1126777,
+            "total_params": 1155988,
+            "training_mode": false
+          }
+        },
+        "dope_checksum_match": true,
+        "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "training_context_presentations": 16384,
+        "training_contexts_per_second": 547.0119759702176,
+        "round_contexts_per_second": 0.19992724987181665,
+        "tokens_per_second": 34.025118837559795,
+        "tokens_count": 2723,
+        "tokens_scope": "evaluated GP DSL tokens (cl100k_base) per full round wall second; not emitted target-language code",
+        "dev_utility": {
+          "mean": 2.267816067203105,
+          "per_context": [
+            0.4595724478760325,
+            1.1321918041103844,
+            1.6493666422408813,
+            0.3804703956781366,
+            2.876232122429703,
+            0.8377046659779932,
+            0.19225477831682752,
+            10.614735680994883
+          ],
+          "selected_programs": [
+            "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+            "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+            "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+            "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+            "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+            "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+            "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+            "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+          ],
+          "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+        },
+        "candidate_dev_utility": {
+          "mean": 1.1479877577970279,
+          "per_context": [
+            0.4595724478760325,
+            1.1321918041103844,
+            1.6493666422408813,
+            0.3804703956781366,
+            2.876232122429703,
+            0.8377046659779932,
+            0.19225477831682752,
+            1.6561092057462654
+          ],
+          "selected_programs": [
+            "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+            "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+            "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+            "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+            "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+            "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+            "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+            "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e"
+          ],
+          "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+        },
+        "adapter_admission": {
+          "round": 78,
+          "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+          "candidate_utility": 1.1479877577970279,
+          "previous_best_utility": 2.267816067203105,
+          "accepted": false,
+          "action": "restore_best_model_and_optimizer",
+          "best_utility": 2.267816067203105,
+          "best_round": 40,
+          "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-40.pt",
+          "timestamp": 1793292987.1015155
+        },
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "phase_wall_seconds": {
+          "headroom_wait": 0.5024631973356009,
+          "slate_assembly": 0.6782033257186413,
+          "forward_and_targets": 28.594049273058772,
+          "backward_and_step": 0.17240038327872753,
+          "dev_gate": 0.16608102060854435,
+          "gp": 49.843245189636946
+        },
+        "learning_rate": [
+          0.0001
+        ],
+        "optimizer_step_before": 210,
+        "optimizer_step_candidate": 212,
+        "parameter_update_l2": 0.06099990755319595,
+        "gradient_norms_before_clip": [
+          0.4016132950782776,
+          0.39977872371673584
+        ],
+        "initial_dev_utility": {
+          "mean": 2.267816067203105,
+          "per_context": [
+            0.4595724478760325,
+            1.1321918041103844,
+            1.6493666422408813,
+            0.3804703956781366,
+            2.876232122429703,
+            0.8377046659779932,
+            0.19225477831682752,
+            10.614735680994883
+          ],
+          "selected_programs": [
+            "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+            "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+            "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+            "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+            "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+            "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+            "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+            "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+          ],
+          "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+        },
+        "loss_first": 3.2034428119659424,
+        "loss_last": 3.1334431171417236,
+        "GP": {
+          "evaluated": 64,
+          "passing": 64,
+          "failed": 0,
+          "unique": 57,
+          "unique_fraction": 0.890625,
+          "novelty": 0.8245614035087719,
+          "collapse": false
+        },
+        "promotions": 0,
+        "train_wall_seconds": 29.951812244951725,
+        "wall_seconds": 80.0291106402874,
+        "old_live_expansion_baseline_seconds": [
+          183.26,
+          133.06,
+          211.24
+        ],
+        "baseline_comparability": "different scope: old GP-only 16 contexts, now training + GP; no speedup claim",
+        "gpu_peak_allocated_bytes": 17082604544,
+        "gpu_peak_reserved_bytes": 18884853760
+      }
+    },
+    {
+      "round": 79,
+      "model_bit_identical_to_round40": true,
+      "optimizer_bit_identical_to_round40": true,
+      "rejected_model_differs": true,
+      "saved_optimizer_step": 210,
+      "candidate_optimizer_step": 212,
+      "round_receipt": {
+        "round": 79,
+        "node": "xbabe1",
+        "path": "cpu_exact_landmarks+frozen_dope+GPU_adapter",
+        "optimizer_steps": 2,
+        "changed_tensors": 41,
+        "trainable_params": 29211,
+        "parameter_counts": {
+          "__root_direct__": {
+            "trainable_params": 0,
+            "frozen_params": 0,
+            "total_params": 0,
+            "training_mode": false
+          },
+          "dope_model": {
+            "trainable_params": 0,
+            "frozen_params": 444168,
+            "total_params": 444168,
+            "training_mode": false
+          },
+          "gamenet_anchor": {
+            "trainable_params": 0,
+            "frozen_params": 520785,
+            "total_params": 520785,
+            "training_mode": false
+          },
+          "adapter_10tok": {
+            "trainable_params": 29211,
+            "frozen_params": 520785,
+            "total_params": 549996,
+            "training_mode": false
+          },
+          "landmark_bridge": {
+            "trainable_params": 0,
+            "frozen_params": 65792,
+            "total_params": 65792,
+            "training_mode": false
+          },
+          "nolm_bridge": {
+            "trainable_params": 0,
+            "frozen_params": 65792,
+            "total_params": 65792,
+            "training_mode": false
+          },
+          "dope_to_lm48": {
+            "trainable_params": 0,
+            "frozen_params": 30240,
+            "total_params": 30240,
+            "training_mode": false
+          },
+          "__global_total__": {
+            "trainable_params": 29211,
+            "frozen_params": 1126777,
+            "total_params": 1155988,
+            "training_mode": false
+          }
+        },
+        "dope_checksum_match": true,
+        "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "training_context_presentations": 16384,
+        "training_contexts_per_second": 676.0031019394629,
+        "round_contexts_per_second": 0.2073848253751706,
+        "tokens_per_second": 36.17569047638133,
+        "tokens_count": 2791,
+        "tokens_scope": "evaluated GP DSL tokens (cl100k_base) per full round wall second; not emitted target-language code",
+        "dev_utility": {
+          "mean": 2.267816067203105,
+          "per_context": [
+            0.4595724478760325,
+            1.1321918041103844,
+            1.6493666422408813,
+            0.3804703956781366,
+            2.876232122429703,
+            0.8377046659779932,
+            0.19225477831682752,
+            10.614735680994883
+          ],
+          "selected_programs": [
+            "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+            "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+            "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+            "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+            "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+            "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+            "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+            "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+          ],
+          "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+        },
+        "candidate_dev_utility": {
+          "mean": 1.1479877577970279,
+          "per_context": [
+            0.4595724478760325,
+            1.1321918041103844,
+            1.6493666422408813,
+            0.3804703956781366,
+            2.876232122429703,
+            0.8377046659779932,
+            0.19225477831682752,
+            1.6561092057462654
+          ],
+          "selected_programs": [
+            "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+            "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+            "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+            "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+            "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+            "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+            "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+            "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e"
+          ],
+          "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+        },
+        "adapter_admission": {
+          "round": 79,
+          "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+          "candidate_utility": 1.1479877577970279,
+          "previous_best_utility": 2.267816067203105,
+          "accepted": false,
+          "action": "restore_best_model_and_optimizer",
+          "best_utility": 2.267816067203105,
+          "best_round": 40,
+          "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-40.pt",
+          "timestamp": 1793293061.8495188
+        },
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "phase_wall_seconds": {
+          "headroom_wait": 0.5020532328635454,
+          "slate_assembly": 0.669327512383461,
+          "forward_and_targets": 22.937047217041254,
+          "backward_and_step": 0.1253704819828272,
+          "dev_gate": 0.16779756359755993,
+          "gp": 52.632502507418394
+        },
+        "learning_rate": [
+          0.0001
+        ],
+        "optimizer_step_before": 210,
+        "optimizer_step_candidate": 212,
+        "parameter_update_l2": 0.060998670756816864,
+        "gradient_norms_before_clip": [
+          0.39970138669013977,
+          0.40220195055007935
+        ],
+        "initial_dev_utility": {
+          "mean": 2.267816067203105,
+          "per_context": [
+            0.4595724478760325,
+            1.1321918041103844,
+            1.6493666422408813,
+            0.3804703956781366,
+            2.876232122429703,
+            0.8377046659779932,
+            0.19225477831682752,
+            10.614735680994883
+          ],
+          "selected_programs": [
+            "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+            "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+            "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+            "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+            "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+            "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+            "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+            "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+          ],
+          "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+        },
+        "loss_first": 3.1728222370147705,
+        "loss_last": 3.1549034118652344,
+        "GP": {
+          "evaluated": 64,
+          "passing": 63,
+          "failed": 0,
+          "unique": 57,
+          "unique_fraction": 0.890625,
+          "novelty": 0.8245614035087719,
+          "collapse": false
+        },
+        "promotions": 0,
+        "train_wall_seconds": 24.23657517693937,
+        "wall_seconds": 77.15125719085336,
+        "old_live_expansion_baseline_seconds": [
+          183.26,
+          133.06,
+          211.24
+        ],
+        "baseline_comparability": "different scope: old GP-only 16 contexts, now training + GP; no speedup claim",
+        "gpu_peak_allocated_bytes": 17082840576,
+        "gpu_peak_reserved_bytes": 18360565760
+      }
+    }
+  ]
+}

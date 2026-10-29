@@ -62,3 +62,12 @@ rejection test reproduces the failure (step2 instead of1 on the second rejection
 The fix deep-copies optimizer state on EVERY restore and makes the persisted best
 pointer authoritative over equal-score logical checkpoint copies at restart.
 All old checkpoints/receipts are preserved; do not treat them as corrected proof.
+
+
+Repeated-rollback verification now passes in live rounds78 AND79: both saved
+model states and complete AdamW states are bit-identical to round40, both raw
+rejected optimizers reached212, and both accepted-state checkpoints retained210.
+Retained dev utility remains2.267816 and DOPE is unchanged. The focused suite now
+has24 passing tests, including the must-fail-before-fix repeated-rejection case.
+The loop is running under the corrected guard; no learning-rate/step budget or
+other owner's job was changed.
