@@ -199,3 +199,27 @@ adapter proposal is rejected. Replayed/newly promoted champions explicitly carry
 DL-Train eligibility for family-disjoint retrieval. All changes and actual
 native evaluation/promotion counts are in the round receipt; improvements are
 measured, never guaranteed. DOPE, Phase2 exclusions and resource ceilings persist.
+
+## Low-margin projected updates (17:40Z owner nudge)
+
+At best checkpoint95, context8's raw predicted costs differ by only3.50475e-5;
+rejected round112 reverses that margin to−5.00679e-6 even at LR1e-6. This is a
+small but real ranking boundary, not an exactly equal floating-point tie.
+
+The optimizer now preserves label-free prediction margins for uncertain incumbent
+rankings. A fixed global activation threshold1e-3 identifies low-margin cases
+(two in this cohort); each retains at least half its anchor-checkpoint margin.
+After each AdamW step, at most two small gradient-projection passes repair violated
+score margins by moving only trainable adapter parameters. Other parameter
+directions remain free to learn. Reference IDs/floors are pinned in
+adapter_margin_constraints.json and checkpoint payloads, rather than recalculated
+and relaxed at each restart. Further rejection-driven LR shrinking is disabled
+while these constraints are active. Failed projection retains the best model and
+lets GP continue; no optimizer/native-evaluation ceiling is increased.
+
+This explicitly uses existing development feature slates for prediction-stability
+tuning and the prior model's choices as references. Candidate CV utilities are
+not gradient targets. The cohort and RAW ARGMIN evaluation rule remain unchanged;
+there is no context-specific score override, routing fallback or metric relabeling.
+Consequently this development diagnostic is not independent validation. Outer and
+sealed families remain outside the input closure; DOPE remains frozen.

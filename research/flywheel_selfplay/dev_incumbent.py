@@ -35,6 +35,10 @@ class DevIncumbent:
             raise ValueError("non-finite development utility")
         return value
 
+    def restore(self, model, optimizer):
+        model.load_state_dict(self.model_state, strict=True)
+        optimizer.load_state_dict(copy.deepcopy(self.optimizer_state))
+
     def decide(
         self,
         model,
@@ -58,8 +62,7 @@ class DevIncumbent:
             self.model_state = copy.deepcopy(model.state_dict())
             self.optimizer_state = copy.deepcopy(optimizer.state_dict())
         else:
-            model.load_state_dict(self.model_state, strict=True)
-            optimizer.load_state_dict(copy.deepcopy(self.optimizer_state))
+            self.restore(model, optimizer)
         return {
             "round": round_idx,
             "evaluation_identity": identity,
@@ -136,3 +139,65 @@ def gp_selection_indices(costs, seed: int, explore: bool):
     chosen = order[:2]
     chosen.extend(random.Random(seed).sample(order[2:], min(2, len(order) - 2)))
     return chosen
+
+
+def project_score_margins(parameters, constraints, max_passes=2, tolerance=1e-6):
+    """Project an optimizer step onto label-free incumbent score-margin constraints.
+
+    Each constraint is (name, differentiable margin callback, minimum margin).
+    Only the supplied trainable parameters move; the prediction/evaluation rule
+    stays raw argmin. This is part of the optimizer step, not a score override.
+    """
+    import torch
+
+    params = list(parameters)
+    if not params or any(not p.requires_grad for p in params):
+        raise ValueError("projection accepts only trainable adapter parameters")
+    corrections = []
+    for pass_idx in range(max_passes):
+        repaired = False
+        for name, margin_fn, floor in constraints:
+            margin = margin_fn()
+            value = float(margin.detach())
+            if not math.isfinite(value) or not math.isfinite(floor) or floor < 0:
+                raise ValueError("non-finite or negative margin constraint")
+            if value >= floor:
+                continue
+            grads = torch.autograd.grad(margin, params, allow_unused=True)
+            norm_sq = sum(
+                float((g.detach() ** 2).sum()) for g in grads if g is not None
+            )
+            if not math.isfinite(norm_sq) or norm_sq <= 1e-20:
+                raise RuntimeError(
+                    "violated score margin has no usable adapter gradient"
+                )
+            amount = (floor + min(tolerance, max(floor * 0.1, 1e-8)) - value) / norm_sq
+            with torch.no_grad():
+                for p, g in zip(params, grads):
+                    if g is not None:
+                        p.add_(g, alpha=amount)
+            corrections.append(
+                {
+                    "constraint": name,
+                    "pass": pass_idx,
+                    "before": value,
+                    "floor": floor,
+                    "correction_l2": abs(amount) * math.sqrt(norm_sq),
+                }
+            )
+            repaired = True
+        if not repaired:
+            break
+    with torch.no_grad():
+        after = [
+            {"constraint": name, "margin": float(fn()), "floor": floor}
+            for name, fn, floor in constraints
+        ]
+    return {
+        "corrections": corrections,
+        "after": after,
+        "satisfied": all(
+            math.isfinite(v["margin"]) and v["margin"] >= v["floor"] - tolerance
+            for v in after
+        ),
+    }

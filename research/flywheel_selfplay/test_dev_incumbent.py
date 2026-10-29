@@ -140,3 +140,39 @@ def test_stalled_gp_selection_is_reproducible_and_reserves_exploration():
     assert a == gp_selection_indices(costs, 42, True)
     assert a != gp_selection_indices(costs, 43, True)
     assert gp_selection_indices(costs, 42, False) == [0, 1, 2, 3]
+
+
+def test_margin_projection_preserves_ranking_and_allows_real_progress():
+    from dev_incumbent import project_score_margins
+
+    p = torch.nn.Parameter(torch.tensor([3.5e-5, 0.0]))
+    frozen = torch.nn.Parameter(torch.tensor([7.0]), requires_grad=False)
+    opt = torch.optim.AdamW([p], lr=1e-3, weight_decay=0)
+    for _ in range(3):
+        opt.zero_grad()
+        loss = p[0] - p[1]
+        loss.backward()
+        opt.step()
+        assert p[0] < 0  # reproduces raw winner flip before projection
+        report = project_score_margins([p], [("near_tie", lambda: p[0], 1.75e-5)])
+        assert report["satisfied"] and p[0] >= 1.75e-5
+    assert p[1] > 0.002 and frozen.item() == 7
+    assert int(opt.state[p]["step"]) == 3
+
+
+def test_projection_does_not_move_a_satisfied_model():
+    from dev_incumbent import project_score_margins
+
+    p = torch.nn.Parameter(torch.tensor([0.1, 0.2]))
+    before = p.detach().clone()
+    report = project_score_margins([p], [("safe", lambda: p[0], 0.01)])
+    assert report["satisfied"] and not report["corrections"]
+    assert torch.equal(p, before)
+
+
+def test_projection_refuses_frozen_parameters():
+    from dev_incumbent import project_score_margins
+
+    p = torch.nn.Parameter(torch.tensor([0.1]), requires_grad=False)
+    with pytest.raises(ValueError):
+        project_score_margins([p], [])

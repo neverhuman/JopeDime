@@ -47,7 +47,12 @@ sys.modules[spec.name] = guard
 spec.loader.exec_module(guard)
 sys.path.insert(0, str(HERE))
 from automatic_promotion import promote, replay, training_cv_envelope, training_indices
-from dev_incumbent import DevIncumbent, gp_selection_indices, proposal_plan
+from dev_incumbent import (
+    DevIncumbent,
+    gp_selection_indices,
+    project_score_margins,
+    proposal_plan,
+)
 
 
 def sha(path):
@@ -474,6 +479,74 @@ def main():
                 )
                 + "\n"
             )
+    # Preserve only uncertain incumbent rankings, using prediction margins, not
+    # held-out candidate utilities as gradient targets. Raw-argmin evaluation stays unchanged.
+    constraint_path = args.output / "adapter_margin_constraints.json"
+    if constraint_path.exists():
+        margin_policy = json.loads(constraint_path.read_text())
+        if margin_policy["evaluation_identity"] != evaluation_identity:
+            raise ValueError("margin constraint evaluation identity changed")
+        if (
+            sha(margin_policy["anchor_checkpoint"])
+            != margin_policy["anchor_checkpoint_sha256"]
+        ):
+            raise ValueError("margin anchor checkpoint changed")
+    elif historical_best and best_state.get("margin_projection"):
+        margin_policy = best_state["margin_projection"]
+        if margin_policy["evaluation_identity"] != evaluation_identity:
+            raise ValueError("checkpoint margin constraint identity changed")
+        write_json(constraint_path, margin_policy)
+    else:
+        anchors = []
+        with torch.no_grad():
+            for c, pid in zip(dev, initial["selected_programs"]):
+                costs = predict([c], [np.arange(len(pools[c]["pids"]))])[0]
+                ref = pools[c]["pids"].index(pid)
+                others = torch.cat([costs[:ref], costs[ref + 1 :]])
+                gap = float(others.min() - costs[ref])
+                if 0 <= gap < 1e-3:
+                    anchors.append(
+                        {
+                            "context_sha256": c,
+                            "reference_program": pid,
+                            "initial_margin": gap,
+                            "minimum_margin": 0.5 * gap,
+                        }
+                    )
+        margin_policy = {
+            "version": "projected-low-margin-ranking/v1",
+            "evaluation_identity": evaluation_identity,
+            "anchor_checkpoint": str(best_path),
+            "anchor_checkpoint_sha256": sha(best_path),
+            "activation_margin": 1e-3,
+            "retained_fraction": 0.5,
+            "max_passes_per_step": 2,
+            "anchors": anchors,
+            "scope": "development-feature prediction-stability tuning; no candidate utility gradient targets; not independent validation",
+        }
+        write_json(constraint_path, margin_policy)
+    if margin_policy["version"] != "projected-low-margin-ranking/v1":
+        raise ValueError("unknown margin constraint policy")
+    if (
+        sha(margin_policy["anchor_checkpoint"])
+        != margin_policy["anchor_checkpoint_sha256"]
+    ):
+        raise ValueError("margin anchor checkpoint changed")
+    constraint_functions = []
+    for anchor in margin_policy["anchors"]:
+        cid = anchor["context_sha256"]
+        if cid not in dev:
+            raise ValueError(
+                "margin anchor is outside the unchanged development cohort"
+            )
+        ref = pools[cid]["pids"].index(anchor["reference_program"])
+
+        def margin_fn(cid=cid, ref=ref):
+            values = predict([cid], [np.arange(len(pools[cid]["pids"]))])[0]
+            return torch.cat([values[:ref], values[ref + 1 :]]).min() - values[ref]
+
+        constraint_functions.append((cid, margin_fn, anchor["minimum_margin"]))
+
     manifest = {
         "node": socket.gethostname(),
         "source_sha": __import__("subprocess")
@@ -491,6 +564,7 @@ def main():
         "initial_dev": initial,
         "resumed_dev": resumed_stats,
         "best_dev": best_metadata,
+        "margin_projection": margin_policy,
         "input_hashes": {
             p.name: sha(p)
             for p in (args.input / "selected.json", args.input / "winners.json", source)
@@ -547,6 +621,10 @@ def main():
                 "completed round exists; use a new run with explicit checkpoint resume"
             )
         plan = proposal_plan(args.seed, rnd, proposal_history, args.steps)
+        if constraint_functions:
+            plan["lr_factor"] = 1.0
+            plan["reason"] = "projected_score_margin_step_not_further_lr_decay"
+            plan["margin_projection"] = True
         random.seed(plan["round_seed"])
         np.random.seed(plan["round_seed"] % (2**32))
         torch.manual_seed(plan["round_seed"])
@@ -571,6 +649,9 @@ def main():
             )
         }
         grad_norms = []
+        margin_projections = []
+        projection_failed = False
+        executed_steps = 0
         optimizer_step_before = max(
             (int(v["step"]) for v in opt.state.values() if "step" in v), default=0
         )
@@ -619,16 +700,31 @@ def main():
                 )
             )
             opt.step()
+            executed_steps += 1
+            if constraint_functions:
+                net.eval()
+                projected = project_score_margins(
+                    [p for p in net.parameters() if p.requires_grad],
+                    constraint_functions,
+                    max_passes=margin_policy["max_passes_per_step"],
+                )
+                margin_projections.append(projected)
+                if not projected["satisfied"]:
+                    projection_failed = True
+                    incumbent.restore(net, opt)
+                net.train()
             losses.append(float(loss.detach()))
             torch.cuda.synchronize()
             phase["backward_and_step"] += time.monotonic() - phase_start
+            if projection_failed:
+                break
         torch.cuda.synchronize()
         train_wall = time.monotonic() - start
         guard.verify_dope_frozen_unchanged(net, before)
         changed = sum(
             not torch.equal(snap[n], p) for n, p in net.named_parameters() if n in snap
         )
-        if not changed:
+        if not changed and not projection_failed:
             raise RuntimeError("no parameter update")
         update_l2 = float(
             torch.sqrt(
@@ -668,14 +764,27 @@ def main():
                 rejected_tmp,
             )
             rejected_tmp.replace(rejected)
-        adapter_admission = incumbent.decide(
-            net,
-            opt,
-            candidate_dev,
-            evaluation_identity,
-            str(args.output / f"round-{rnd:02d}.pt"),
-            rnd,
-        )
+        if projection_failed:
+            adapter_admission = {
+                "round": rnd,
+                "evaluation_identity": evaluation_identity,
+                "candidate_utility": candidate_dev["mean"],
+                "previous_best_utility": incumbent.best_utility,
+                "accepted": False,
+                "action": "projection_failed_keep_incumbent_and_continue_GP",
+                "best_utility": incumbent.best_utility,
+                "best_round": incumbent.best_round,
+                "best_checkpoint": incumbent.best_checkpoint,
+            }
+        else:
+            adapter_admission = incumbent.decide(
+                net,
+                opt,
+                candidate_dev,
+                evaluation_identity,
+                str(args.output / f"round-{rnd:02d}.pt"),
+                rnd,
+            )
         guard.verify_dope_frozen_unchanged(net, before)
         dev_stats = utility()
         if dev_stats != incumbent.best_stats:
@@ -819,6 +928,7 @@ def main():
                 "admission": "incumbent",
                 "best_dev_round": incumbent.best_round,
                 "evaluation_identity": evaluation_identity,
+                "margin_projection": margin_policy,
             },
             checkpoint_tmp,
         )
@@ -842,7 +952,10 @@ def main():
             "round": rnd,
             "node": socket.gethostname(),
             "path": manifest["path"],
-            "optimizer_steps": plan["steps"],
+            "optimizer_steps": executed_steps,
+            "margin_projection_policy": margin_policy["version"],
+            "margin_projections": margin_projections,
+            "projection_failed": projection_failed,
             "proposal_plan": plan,
             "candidate_parameter_sha256": candidate_parameter_sha256,
             "changed_tensors": changed,
@@ -850,7 +963,7 @@ def main():
             "parameter_counts": counts,
             "dope_checksum_match": True,
             "dope_sha256": before.composite_sha256,
-            "training_context_presentations": plan["steps"] * args.batch_size,
+            "training_context_presentations": executed_steps * args.batch_size,
             "training_contexts_per_second": plan["steps"]
             * args.batch_size
             / train_wall,
