@@ -31,14 +31,21 @@
 #   * The diagnostic retains the current dependency graph; its remaining 35,080 B over
 #     the historical code baseline is not separately attributed and fits the old 5% gate.
 #   * Only this measured fixture baseline changes; tolerance remains 5%.
+# Rebaselined 2026-10-29 for feat-math W1-W9 HPC hotpaths (PR #440), amendment A18:
+#   * Measured dist-ci fixture: 7,073,600 B code and 7,188,517 B package; verification
+#     and network-isolated clean-host checks pass.
+#   * Same-host crates/feat-math/src ablation against main 2f85b953f: 7,073,600 -> 6,579,064 B
+#     (-494,536 B, matching A17's 6,579,064 B xbabe2 baseline with 0 B unattributed delta).
+#     Restoring crates/feat-math/src reproduces the full executable's SHA-256 exactly.
+#   * Only this measured fixture baseline changes; tolerance remains 5%.
 schema = "jope.appliance-size-budgets/v1"
 tolerance_percent = 5
 
 # PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
 [profile.fixture]
-base_executable_bytes = 6579256
-final_executable_bytes = 6696997
-note = "dist-ci runtime Search commentary plus 0.1 MiB of generated fixture tensors and notices (A17)"
+base_executable_bytes = 7073600
+final_executable_bytes = 7188517
+note = "dist-ci runtime Search commentary + feat-math W1-W9 HPC hotpaths plus 0.1 MiB of generated fixture tensors and notices (A18)"
 
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
 [profile.native-only]
