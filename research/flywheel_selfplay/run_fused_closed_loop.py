@@ -428,6 +428,8 @@ def main():
             raise ValueError(
                 "completed round exists; use a new run with explicit checkpoint resume"
             )
+        # Return unused cached segments between rounds to limit fragmentation.
+        torch.cuda.empty_cache()
         start = time.monotonic()
         torch.cuda.reset_peak_memory_stats()
         losses = []
@@ -628,10 +630,18 @@ def main():
             if args.continuous
             else str(start_round + args.rounds - 1 - rnd)
         )
+        round_target = (
+            "continuous" if args.continuous else str(start_round + args.rounds - 1)
+        )
+        eta = (
+            f"next round approximately {wall:.0f}s"
+            if args.continuous
+            else f"remaining approximately {(start_round + args.rounds - 1 - rnd) * wall:.0f}s"
+        )
         status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
         status.write_text(
             "# Fused flywheel status\n\n"
-            + f"Node {row['node']}; completed round {rnd}/{start_round + args.rounds - 1}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nRemaining rounds: {remaining}; ETA based on this round {(start_round + args.rounds - 1 - rnd) * wall:.0f}s.\n"
+            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nRemaining rounds: {remaining}; ETA: {eta}.\n"
         )
         if generated and failed == len(generated):
             raise RuntimeError(
@@ -657,4 +667,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as error:
+        status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
+        prior = status.read_text() if status.exists() else "# Fused flywheel status\n"
+        status.write_text(
+            prior
+            + f"\nWorker stopped: {type(error).__name__}: {error}\nResume only from the last complete checkpoint; incomplete round outcome is unknown.\n"
+        )
+        raise

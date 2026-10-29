@@ -152,3 +152,11 @@ not novelty against the pool; the final runner records both metrics separately.
 Committed compact evidence and full promotion journal live in
 `research/flywheel_selfplay/results/fused-20261029/`; tables and checkpoints remain
 outside Git. Continuation resumes the same journal and checkpoint lineage.
+
+Continuation completed round13 before allocator fragmentation caused a CUDA OOM
+in the next incomplete round. That partial optimizer outcome remains unknown;
+resume uses the last fully written checkpoint and the durable journal. The
+recovery batch is 8192 with `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
+The runner now returns unused cached segments between rounds, writes explicit
+failure status on exceptions, and reports continuous next-round ETA correctly.
+The failed log and manifests remain in custody; no other jobs were interrupted.
