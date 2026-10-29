@@ -17,6 +17,8 @@ All remaining `978` tracked `.py` files (`247,596` LOC) are pure orchestration, 
 
 | Path | LOC | Exception Category | 1-Line Justification |
 | --- | ---: | --- | --- |
+| `ops/s3_shard_cache/s3_shard_cache.py` | 190 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Bounded S3 training-shard cache on data drives feeding the Python trainers; Rust port tracked in PY_TO_RUST_PLAN.) |
+| `ops/s3_shard_cache/test_s3_shard_cache.py` | 45 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Offline unit tests for the shard cache.) |
 | `crates/jope-bench/adapters/catboost_adapter.py` | 47 | `PR-EXCEPT-EXT-ML` | External third-party Python ML baseline adapter (LightGBM/XGBoost/CatBoost/TabPFN parity harness). (jope-bench adapter: CatBoost with library defaults, seed 0, one thread, no logging.) |
 | `crates/jope-bench/adapters/lightgbm_adapter.py` | 47 | `PR-EXCEPT-EXT-ML` | External third-party Python ML baseline adapter (LightGBM/XGBoost/CatBoost/TabPFN parity harness). (jope-bench adapter: LightGBM with library defaults, `deterministic=True`, seed 0, one thread.) |
 | `crates/jope-bench/adapters/xgboost_adapter.py` | 47 | `PR-EXCEPT-EXT-ML` | External third-party Python ML baseline adapter (LightGBM/XGBoost/CatBoost/TabPFN parity harness). (jope-bench adapter: XGBoost with library defaults, `tree_method=hist`, seed 0, one thread.) |
