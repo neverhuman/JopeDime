@@ -190,7 +190,13 @@ pub fn emit_bound(
 
 /// Fast-path Rust-only bound emitter for `jope-micro`: emits and lints the
 /// standalone Rust prediction program (`bound_model.rs`) without generating or
-/// linting the unused Python twin.
+/// linting the unused Python twin or JSON manifest.
+///
+/// Contract note: because Python emission, Python vocabulary linting, and
+/// manifest construction are intentionally skipped (`python` and `manifest` are
+/// returned empty), this function validates only the bound Rust artifact and
+/// can succeed on models where [`emit_bound`] would fail closed in the Python
+/// emitter or Python linter.
 pub fn emit_bound_rust_only(
     model: &BoundModel,
     options: &crate::transpile::EmitOptions,

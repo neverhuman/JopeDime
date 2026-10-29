@@ -376,15 +376,22 @@ pub fn bound_from_retained_legacy_model(
     })
 }
 
-/// When a pipeline uses only compatibility numeric input, legacy non-OOF transforms
-/// within the 512-column dense cap, and a legacy regression head, its `BoundPredictor::Pipeline`
-/// state is identical to the already-fitted `crate::model::Model::Pipeline`.
-/// Returns `Ok(Some(BoundModel))` when that fast path applies, or `Ok(None)` when `fit_table`
-/// should be executed.
+/// When a pipeline uses only compatibility numeric input on an all-finite
+/// training matrix `x` and target vector `y` (with no missing or non-finite cells),
+/// legacy non-OOF transforms within the 512-column dense cap, and a legacy
+/// regression head, its `BoundPredictor::Pipeline` state is identical to the
+/// already-fitted `crate::model::Model::Pipeline`.
+///
+/// If any training cell in `x` or target in `y` is non-finite (including `NaN`
+/// used for missing cells before `model::fit`), or if `x` is empty or does not
+/// match `schema` and `y`, returns `Ok(None)` so [`fit_table`] is executed with
+/// its per-stage missingness mask semantics.
 pub fn try_bound_pipeline_from_retained_legacy_model(
     genome: &GenomeIr,
     task: &TaskSpec,
     schema: &DataSchema,
+    x: &[Vec<f64>],
+    y: &[f64],
     retained_model: &crate::model::Model,
 ) -> Result<Option<BoundModel>> {
     if task.validate().is_err()
@@ -400,6 +407,16 @@ pub fn try_bound_pipeline_from_retained_legacy_model(
         .columns
         .iter()
         .all(|c| c.kind == super::schema::ColumnKind::Numeric)
+    {
+        return Ok(None);
+    }
+    let width = schema.columns.len();
+    if x.is_empty()
+        || x.len() != y.len()
+        || width == 0
+        || x.iter().any(|row| row.len() != width)
+        || x.iter().flatten().any(|value| !value.is_finite())
+        || y.iter().any(|value| !value.is_finite())
     {
         return Ok(None);
     }
@@ -439,7 +456,6 @@ pub fn try_bound_pipeline_from_retained_legacy_model(
     if ops.len() != parsed.transforms.len() {
         return Ok(None);
     }
-    let width = schema.columns.len();
     if crate::kernel::width::check_input_width(retained_model, width).is_err() {
         return Ok(None);
     }
@@ -1124,6 +1140,8 @@ mod h4_retained_shortcut_tests {
                 &genome,
                 &task,
                 &schema_200,
+                &x200,
+                &y,
                 &retained_200
             )
             .unwrap()
@@ -1140,6 +1158,8 @@ mod h4_retained_shortcut_tests {
                 &genome,
                 &task,
                 &schema_120,
+                &x120,
+                &y,
                 &retained_120
             )
             .unwrap()
@@ -1149,12 +1169,20 @@ mod h4_retained_shortcut_tests {
 
         // Width-mismatched retained model (fitted on 4 columns, queried on 8-column schema).
         let x4: Vec<Vec<f64>> = x200.iter().map(|row| row[..4].to_vec()).collect();
+        let x8: Vec<Vec<f64>> = x200.iter().map(|row| row[..8].to_vec()).collect();
         let retained_4 = crate::model::fit(&genome, &x4, &y).unwrap();
         let schema_8 = numeric_schema(8);
         assert!(
-            try_bound_pipeline_from_retained_legacy_model(&genome, &task, &schema_8, &retained_4)
-                .unwrap()
-                .is_none(),
+            try_bound_pipeline_from_retained_legacy_model(
+                &genome,
+                &task,
+                &schema_8,
+                &x8,
+                &y,
+                &retained_4
+            )
+            .unwrap()
+            .is_none(),
             "width-mismatched retained model must be declined by retained shortcut"
         );
 
@@ -1166,6 +1194,8 @@ mod h4_retained_shortcut_tests {
                 &ridge_only_genome,
                 &task,
                 &schema_8,
+                &x8,
+                &y,
                 &retained_ridge_4
             )
             .unwrap()
@@ -1179,6 +1209,8 @@ mod h4_retained_shortcut_tests {
             &ridge_only_genome,
             &task,
             &schema_4,
+            &x4,
+            &y,
             &retained_ridge_4,
         )
         .unwrap()
@@ -1188,6 +1220,79 @@ mod h4_retained_shortcut_tests {
         assert_eq!(
             serde_json::to_string(&shortcut_ridge_4).unwrap(),
             serde_json::to_string(&full_ridge_4).unwrap()
+        );
+    }
+
+    #[test]
+    fn retained_legacy_shortcut_declines_missing_and_non_finite_training_inputs() {
+        let genome = GenomeIr::parse("(pipe X (standardize) (ridge))").unwrap();
+        let task = TaskSpec::regression(Objective::Rmse).unwrap();
+        let schema = numeric_schema(4);
+        let mut x: Vec<Vec<f64>> = (0..16)
+            .map(|r| {
+                (0..4)
+                    .map(|c| ((r * 13 + c * 7) as f64 * 0.11).sin() + 2.0)
+                    .collect()
+            })
+            .collect();
+        let y: Vec<f64> = (0..16).map(|r| (r as f64 * 0.19).cos()).collect();
+        let retained_finite = crate::model::fit(&genome, &x, &y).unwrap();
+
+        // Missing numeric cell represented as NaN (or empty cell in RawTable):
+        // fit_table re-masks masked cells to 0.0 after standardize, whereas legacy model::fit
+        // replaces NaN with 0.0 before standardize. The shortcut must decline (return Ok(None)).
+        x[3][1] = f64::NAN;
+        let retained_nan = crate::model::fit(&genome, &x, &y).unwrap();
+        assert!(
+            try_bound_pipeline_from_retained_legacy_model(
+                &genome,
+                &task,
+                &schema,
+                &x,
+                &y,
+                &retained_nan
+            )
+            .unwrap()
+            .is_none(),
+            "NaN/missing training cell must be declined so fit_table applies per-stage masks"
+        );
+        let mut table_with_empty = rows_to_table(&x);
+        table_with_empty.rows[3][1] = String::new();
+        let v3_bound = fit_table(&genome, &task, &schema, &table_with_empty, &y).unwrap();
+        assert!(v3_bound.validate_binding().is_ok());
+
+        // Infinite cell in x must also be declined.
+        x[3][1] = f64::INFINITY;
+        assert!(
+            try_bound_pipeline_from_retained_legacy_model(
+                &genome,
+                &task,
+                &schema,
+                &x,
+                &y,
+                &retained_finite
+            )
+            .unwrap()
+            .is_none(),
+            "infinite training cell must be declined by retained shortcut"
+        );
+
+        // Non-finite target y must also be declined (and refused by fit_table).
+        x[3][1] = 1.25;
+        let mut y_nan = y.clone();
+        y_nan[2] = f64::NAN;
+        assert!(
+            try_bound_pipeline_from_retained_legacy_model(
+                &genome,
+                &task,
+                &schema,
+                &x,
+                &y_nan,
+                &retained_finite
+            )
+            .unwrap()
+            .is_none(),
+            "non-finite target y must be declined by retained shortcut"
         );
     }
 
@@ -1221,10 +1326,11 @@ mod h4_retained_shortcut_tests {
         let hold_table = rows_to_table(&x_hold);
 
         let retained = crate::model::fit(&genome, &x_train, &y_train).unwrap();
-        let shortcut_bound =
-            try_bound_pipeline_from_retained_legacy_model(&genome, &task, &schema, &retained)
-                .unwrap()
-                .expect("eligible within-512 pipeline should use retained shortcut");
+        let shortcut_bound = try_bound_pipeline_from_retained_legacy_model(
+            &genome, &task, &schema, &x_train, &y_train, &retained,
+        )
+        .unwrap()
+        .expect("eligible within-512 pipeline should use retained shortcut");
         let full_bound = fit_table(&genome, &task, &schema, &train_table, &y_train).unwrap();
 
         assert_eq!(

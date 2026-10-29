@@ -238,6 +238,9 @@ pub fn emit_glue(plan: &Plan, opts: &EmitOptions) -> Result<String, String> {
     if !opts.hpc_v2 {
         return Err("hpc_bundle_v2 requires the hpc_v2 numerical recipe".into());
     }
+    if !opts.partition_point_quantile_bounds {
+        return Err("hpc_bundle_v2 requires partition_point_quantile_bounds = true".into());
+    }
     let Plan::Pipeline {
         target,
         stages,
@@ -370,14 +373,26 @@ mod tests {
         };
         let opts = EmitOptions {
             hpc_v2: true,
+            partition_point_quantile_bounds: true,
             ..EmitOptions::default()
         };
         assert!(emit_glue(&plan, &opts).unwrap_err().contains("symbolic"));
 
         let valid_genome = crate::GenomeIr::parse("(pipe X (standardize) (ridge))").unwrap();
         let valid_plan = crate::spec::build_plan(&valid_genome).unwrap();
+        let no_pp_opts = EmitOptions {
+            hpc_v2: true,
+            partition_point_quantile_bounds: false,
+            ..EmitOptions::default()
+        };
+        let no_pp_err = emit_glue(&valid_plan, &no_pp_opts).unwrap_err();
+        assert!(
+            no_pp_err.contains("partition_point_quantile_bounds"),
+            "unexpected error: {no_pp_err}"
+        );
         let portable_opts = EmitOptions {
             hpc_v2: true,
+            partition_point_quantile_bounds: true,
             math_kernel: crate::transpile::MathKernel::Portable,
             ..EmitOptions::default()
         };
@@ -534,8 +549,17 @@ mod tests {
         fs::write(directory.join("hold.csv"), wide_hold).unwrap();
         let wide_programs = [
             "(pipe X (poly_interact) (hinge knots=3 append=true) (quantile_bins bins=6 append=true) (cheb degree=2 append=true) (ridge_gcv))",
+            "(pipe X (poly_interact) (poly_interact append=true) (hinge knots=3 append=true) (quantile_bins bins=6 append=true) (cheb degree=2 append=true) (ridge_gcv))",
             "(pipe X (poly_interact) (hinge knots=3 append=true) (quantile_bins bins=6 append=true) (cheb degree=2 append=true) (histgbm rounds=6 depth=3))",
         ];
+        let opts_leg = EmitOptions {
+            hpc_v1: false,
+            hpc_v2: false,
+            fast_runtime: false,
+            partition_point_quantile_bounds: true,
+            guard_zero_width_roll: true,
+            ..EmitOptions::default()
+        };
         let opts_v1 = EmitOptions {
             hpc_v1: true,
             hpc_v2: false,
@@ -555,9 +579,14 @@ mod tests {
                 .collect();
             let plan = crate::spec::build_plan(&genome).unwrap();
             let glue = emit_glue(&plan, &opts).unwrap();
+            fs::write(directory.join("whole_leg.rs"), emit_rust(&plan, &opts_leg)).unwrap();
             fs::write(directory.join("whole_v1.rs"), emit_rust(&plan, &opts_v1)).unwrap();
             fs::write(directory.join("whole_v2.rs"), emit_rust(&plan, &opts)).unwrap();
             fs::write(directory.join("glue.rs"), glue).unwrap();
+            rustc(
+                &directory,
+                &["-C", "opt-level=3", "whole_leg.rs", "-o", "whole_leg"],
+            );
             rustc(
                 &directory,
                 &["-C", "opt-level=3", "whole_v1.rs", "-o", "whole_v1"],
@@ -578,6 +607,8 @@ mod tests {
                     "glue",
                 ],
             );
+            let leg_bits = predictions(&directory, "whole_leg", "1");
+            assert_eq!(leg_bits, ref_bits, "legacy vs ref on {dsl}");
             let v1_bits = predictions(&directory, "whole_v1", "1");
             assert_eq!(v1_bits, ref_bits, "v1 vs ref on {dsl}");
             for grant in ["1", "3"] {
@@ -592,6 +623,121 @@ mod tests {
                     "v2 glue vs ref (grant {grant}) on {dsl}"
                 );
             }
+        }
+
+        // Empty holdout (0 prediction rows) under legacy, hpc_v1, hpc_v2 whole, and hpc_v2 glue (R5)
+        fs::write(directory.join("hold.csv"), "").unwrap();
+        for bin in ["whole_leg", "whole_v1", "whole_v2", "glue"] {
+            assert!(
+                predictions(&directory, bin, "1").is_empty(),
+                "empty holdout must produce 0 predictions without panicking for {bin}"
+            );
+        }
+
+        // Partial pre-cap path (0 < cap < generated width): 31 input cols -> poly_interact produces
+        // 31 + 31*30/2 = 496 cols, leaving cap = 512 - 496 = 16 cols for the next append=true stage.
+        let mut partial_train = String::new();
+        let mut x_partial_train = Vec::new();
+        let mut y_partial_train = Vec::new();
+        for i in 0..32 {
+            let row: Vec<f64> = (0..31)
+                .map(|j| ((i * 9 + j * 7) as f64 * 0.13).sin() + (j as f64) * 0.02)
+                .collect();
+            let y = row[0] * 0.4 - row[1] * 0.25 + row[2] * 0.15;
+            let mut line = row
+                .iter()
+                .map(|v| format!("{v:?}"))
+                .collect::<Vec<_>>()
+                .join(",");
+            line.push_str(&format!(",{y:?}\n"));
+            partial_train.push_str(&line);
+            x_partial_train.push(row);
+            y_partial_train.push(y);
+        }
+        let mut partial_hold = String::new();
+        let mut x_partial_hold = Vec::new();
+        for i in 0..16 {
+            let row: Vec<f64> = (0..31)
+                .map(|j| ((i * 5 + j * 11) as f64 * 0.17).cos() - (j as f64) * 0.01)
+                .collect();
+            let line = row
+                .iter()
+                .map(|v| format!("{v:?}"))
+                .collect::<Vec<_>>()
+                .join(",")
+                + "\n";
+            partial_hold.push_str(&line);
+            x_partial_hold.push(row);
+        }
+        fs::write(directory.join("train.csv"), partial_train).unwrap();
+        fs::write(directory.join("hold.csv"), partial_hold).unwrap();
+        for stage in [
+            "poly_interact append=true",
+            "hinge knots=3 append=true",
+            "cheb degree=2 append=true",
+            "quantile_bins bins=6 append=true",
+        ] {
+            let dsl = format!("(pipe X (poly_interact) ({stage}) (ridge))");
+            let genome = crate::GenomeIr::parse(&dsl).unwrap();
+            let model_ref = crate::model::fit(&genome, &x_partial_train, &y_partial_train).unwrap();
+            let ref_bits: Vec<u64> = model_ref
+                .predict(&x_partial_hold)
+                .unwrap()
+                .into_iter()
+                .map(f64::to_bits)
+                .collect();
+            let plan = crate::spec::build_plan(&genome).unwrap();
+            fs::write(directory.join("p_leg.rs"), emit_rust(&plan, &opts_leg)).unwrap();
+            fs::write(directory.join("p_v1.rs"), emit_rust(&plan, &opts_v1)).unwrap();
+            fs::write(directory.join("p_v2.rs"), emit_rust(&plan, &opts)).unwrap();
+            rustc(
+                &directory,
+                &["-C", "opt-level=2", "p_leg.rs", "-o", "p_leg"],
+            );
+            rustc(&directory, &["-C", "opt-level=2", "p_v1.rs", "-o", "p_v1"]);
+            rustc(&directory, &["-C", "opt-level=2", "p_v2.rs", "-o", "p_v2"]);
+            assert_eq!(
+                predictions(&directory, "p_leg", "1"),
+                ref_bits,
+                "partial leg: {dsl}"
+            );
+            assert_eq!(
+                predictions(&directory, "p_v1", "1"),
+                ref_bits,
+                "partial v1: {dsl}"
+            );
+            assert_eq!(
+                predictions(&directory, "p_v2", "1"),
+                ref_bits,
+                "partial v2: {dsl}"
+            );
+        }
+
+        // Zero-width input rows for hinge with append=false and append=true under hpc_v2 vs legacy (R4)
+        let zero_w_train = "1.0\n2.0\n3.0\n4.0\n";
+        let zero_w_hold = "0.0\n0.0\n0.0\n";
+        fs::write(directory.join("train.csv"), zero_w_train).unwrap();
+        fs::write(directory.join("hold.csv"), zero_w_hold).unwrap();
+        for dsl in [
+            "(pipe X (hinge knots=3) (ridge))",
+            "(pipe X (hinge knots=3 append=true) (ridge))",
+        ] {
+            let genome = crate::GenomeIr::parse(dsl).unwrap();
+            let plan = crate::spec::build_plan(&genome).unwrap();
+            fs::write(directory.join("zw_leg.rs"), emit_rust(&plan, &opts_leg)).unwrap();
+            fs::write(directory.join("zw_v2.rs"), emit_rust(&plan, &opts)).unwrap();
+            rustc(
+                &directory,
+                &["-C", "opt-level=1", "zw_leg.rs", "-o", "zw_leg"],
+            );
+            rustc(
+                &directory,
+                &["-C", "opt-level=1", "zw_v2.rs", "-o", "zw_v2"],
+            );
+            let leg_zw = predictions(&directory, "zw_leg", "1");
+            let v2_zw = predictions(&directory, "zw_v2", "1");
+            assert_eq!(leg_zw.len(), 3);
+            assert_eq!(v2_zw, leg_zw, "zero-width hinge parity on {dsl}");
         }
     }
 }

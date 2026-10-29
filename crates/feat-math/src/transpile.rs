@@ -266,7 +266,7 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
             )
         });
     let has_clip_safety = helpers.contains(&crate::spec::Helper::MathClip);
-    let emitter_version = match (
+    let base_emitter_version = match (
         has_roll_guard,
         has_quantile_partition_point,
         has_clip_safety,
@@ -281,6 +281,13 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         (false, false, true) => "feat-math-clip-safety-v2",
         (false, false, false) => EMITTER_VERSION,
     };
+    let emitter_version: String = if opts.hpc_v2 {
+        format!("{base_emitter_version}+hpc-v2")
+    } else if opts.hpc_v1 {
+        format!("{base_emitter_version}+hpc-v1")
+    } else {
+        base_emitter_version.to_string()
+    };
     let manifest = serde_json::to_string(&Manifest {
         schema: "battle-artifact-v1",
         program: canonical.clone(),
@@ -288,7 +295,7 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         genome_sha256: sha256_hex(&canonical),
         dsl: canonical,
         flavor,
-        emitter_version,
+        emitter_version: &emitter_version,
         py_sha256: sha256_hex(&python),
         rs_sha256: sha256_hex(&rust),
     })?;
@@ -1718,5 +1725,45 @@ modelUnload(fitted.handle);
             }
         }
         assert_eq!(case_index, 44);
+    }
+
+    #[test]
+    fn hpc_options_are_recorded_in_emitter_version_and_options_identity() {
+        let genome = GenomeIr::parse("(pipe X (standardize) (ridge))").unwrap();
+        let default_emitted = emit(&genome, &EmitOptions::default()).unwrap();
+        let default_manifest: serde_json::Value =
+            serde_json::from_str(&default_emitted.manifest).unwrap();
+        assert_eq!(default_manifest["emitter_version"], EMITTER_VERSION);
+
+        let v1_opts = EmitOptions {
+            hpc_v1: true,
+            ..EmitOptions::default()
+        };
+        let v1_emitted = emit(&genome, &v1_opts).unwrap();
+        let v1_manifest: serde_json::Value = serde_json::from_str(&v1_emitted.manifest).unwrap();
+        assert_eq!(
+            v1_manifest["emitter_version"],
+            format!("{EMITTER_VERSION}+hpc-v1")
+        );
+
+        let v2_opts = EmitOptions {
+            hpc_v2: true,
+            ..EmitOptions::default()
+        };
+        let v2_emitted = emit(&genome, &v2_opts).unwrap();
+        let v2_manifest: serde_json::Value = serde_json::from_str(&v2_emitted.manifest).unwrap();
+        assert_eq!(
+            v2_manifest["emitter_version"],
+            format!("{EMITTER_VERSION}+hpc-v2")
+        );
+
+        let id_default = crate::artifact_manifest::OptionsIdentity::from(&EmitOptions::default());
+        let id_v1 = crate::artifact_manifest::OptionsIdentity::from(&v1_opts);
+        let id_v2 = crate::artifact_manifest::OptionsIdentity::from(&v2_opts);
+        assert!(!id_default.hpc_v1 && !id_default.hpc_v2);
+        assert!(id_v1.hpc_v1 && !id_v1.hpc_v2);
+        assert!(!id_v2.hpc_v1 && id_v2.hpc_v2);
+        assert_ne!(id_default, id_v1);
+        assert_ne!(id_v1, id_v2);
     }
 }

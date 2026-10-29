@@ -508,7 +508,7 @@ fn sanitize(x: &[Vec<f64>]) -> Vec<Vec<f64>> {
 }"#
         }
         Helper::FinishStage => {
-            if hpc_v2 {
+            if hpc_v1 {
                 r#"/// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.
 fn finish_stage(x: &[Vec<f64>], mut out: Vec<Vec<f64>>, append: bool) -> Vec<Vec<f64>> {
     if append && out.is_empty() {
@@ -1897,7 +1897,7 @@ fn quantile_bin_indexer_fit(x: &[Vec<f64>], bins: usize, append: bool) -> Quanti
 }
 
 fn quantile_bin_indexer_apply(state: &QuantileBinIndexer, x: &[Vec<f64>], bins: usize, append: bool) -> Vec<Vec<f64>> {
-    if append && x[0].len() >= 512 {
+    if append && x.first().map_or(false, |r| r.len() >= 512) {
         return finish_stage(x, Vec::new(), true);
     }
     let out: Vec<Vec<f64>> = x
@@ -1989,9 +1989,10 @@ fn hinge_basis_fit(x: &[Vec<f64>], knots: usize, append: bool) -> HingeBasis {
 }
 
 fn hinge_basis_apply(state: &HingeBasis, x: &[Vec<f64>], append: bool) -> Vec<Vec<f64>> {
-    if (append && x[0].len() >= 512) || state.knots.is_empty() {
-        return finish_stage(x, Vec::new(), append);
+    if append && x.first().map_or(false, |r| r.len() >= 512) {
+        return finish_stage(x, Vec::new(), true);
     }
+    let knot_width = state.knots.first().map_or(0, Vec::len);
     let mut out = Vec::with_capacity(x.len());
     for row in x {
         let cap = if append {
@@ -1999,7 +2000,7 @@ fn hinge_basis_apply(state: &HingeBasis, x: &[Vec<f64>], append: bool) -> Vec<Ve
         } else {
             512usize
         };
-        let mut values = Vec::with_capacity((row.len() * state.knots[0].len()).min(cap));
+        let mut values = Vec::with_capacity((row.len() * knot_width).min(cap));
         'outer: for (j, v) in row.iter().take(state.knots.len()).enumerate() {
             for t in &state.knots[j] {
                 if values.len() >= cap {
@@ -2080,7 +2081,7 @@ fn winsor_limiter_apply(state: &WinsorLimiter, x: &[Vec<f64>], append: bool) -> 
             if hpc_v2 {
                 r#"{DOC}
 fn chebyshev_basis_apply(x: &[Vec<f64>], degree: usize, append: bool) -> Vec<Vec<f64>> {
-    if append && x[0].len() >= 512 {
+    if append && x.first().map_or(false, |r| r.len() >= 512) {
         return finish_stage(x, Vec::new(), true);
     }
     let mut out = Vec::with_capacity(x.len());
@@ -2159,7 +2160,7 @@ fn pairwise_products_fit(x: &[Vec<f64>]) -> PairwiseProducts {
 }
 
 fn pairwise_products_apply(state: &PairwiseProducts, x: &[Vec<f64>], append: bool) -> Vec<Vec<f64>> {
-    if append && x[0].len() >= 512 {
+    if append && x.first().map_or(false, |r| r.len() >= 512) {
         return finish_stage(x, Vec::new(), true);
     }
     let out: Vec<Vec<f64>> = x
@@ -6684,7 +6685,7 @@ fn model_pipeline_impl(
             );
         if can_skip_at_512 {
             lines.push(format!(
-                "        let x = if x[0].len() >= 512 {{ x }} else {{ {apply} }};"
+                "        let x = if x.first().map_or(false, |r| r.len() >= 512) {{ x }} else {{ {apply} }};"
             ));
         } else {
             lines.push(format!("        let x = {apply};"));
@@ -6743,7 +6744,7 @@ fn model_pipeline_impl(
             );
         if can_skip_at_512 {
             lines.push(format!(
-                "        let x = if x[0].len() >= 512 {{ x }} else {{ {apply} }};"
+                "        let x = if x.first().map_or(false, |r| r.len() >= 512) {{ x }} else {{ {apply} }};"
             ));
         } else {
             lines.push(format!("        let x = {apply};"));

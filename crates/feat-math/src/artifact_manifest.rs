@@ -139,6 +139,8 @@ pub struct OptionsIdentity {
     pub math_policy: String,
     pub guard_zero_width_roll: bool,
     pub partition_point_quantile_bounds: bool,
+    pub hpc_v1: bool,
+    pub hpc_v2: bool,
 }
 impl From<&EmitOptions> for OptionsIdentity {
     fn from(o: &EmitOptions) -> Self {
@@ -150,6 +152,8 @@ impl From<&EmitOptions> for OptionsIdentity {
             math_policy: o.math_kernel.policy_id().into(),
             guard_zero_width_roll: o.guard_zero_width_roll,
             partition_point_quantile_bounds: o.partition_point_quantile_bounds,
+            hpc_v1: o.hpc_v1,
+            hpc_v2: o.hpc_v2,
         }
     }
 }
