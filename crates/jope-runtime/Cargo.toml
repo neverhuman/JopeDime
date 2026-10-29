@@ -8,6 +8,7 @@ rust-version.workspace = true
 description = "Appliance runtime: native method roster, table ingress, local fit and prediction, bounded selection and fitted state"
 
 [dependencies]
+jope-narrator = { path = "../jope-narrator" }
 clap.workspace = true
 anyhow.workspace = true
 jope-paths = { path = "../jope-paths" }
@@ -24,6 +25,7 @@ sha2.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+jope-narrator = { path = "../jope-narrator", features = ["testing"] }
 tempfile.workspace = true
 
 [lints]

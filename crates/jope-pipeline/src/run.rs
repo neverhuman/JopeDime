@@ -330,6 +330,35 @@ impl Stages {
 
 /// Run the pipeline and write `<output>/receipt.json`.
 pub fn run(options: &RunOptions) -> Result<Receipt> {
+    crate::narration::from_env(
+        |tap| run_observed(options, tap),
+        || {
+            options
+                .cancel
+                .as_ref()
+                .is_some_and(|flag| flag.load(std::sync::atomic::Ordering::SeqCst))
+        },
+    )
+}
+
+/// Run with an explicit observer. Narration failure never changes the pipeline result.
+pub fn run_with_narration(
+    options: &RunOptions,
+    narration: Option<jope_narrator::Tap>,
+) -> Result<Receipt> {
+    crate::narration::with_tap(
+        narration,
+        |tap| run_observed(options, tap),
+        || {
+            options
+                .cancel
+                .as_ref()
+                .is_some_and(|flag| flag.load(std::sync::atomic::Ordering::SeqCst))
+        },
+    )
+}
+
+fn run_observed(options: &RunOptions, narration: Option<&jope_narrator::Tap>) -> Result<Receipt> {
     preflight(options)?;
     let clock = options.clock;
 
@@ -392,9 +421,11 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         clock,
         cancel: options.cancel.clone(),
         objective: options.objective.clone(),
+        narration: narration.cloned(),
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
-    let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
+    let searched =
+        search::run_cuts_observed(&preparation.cuts, &search_options, &root.join("search"))?;
     let successful: u64 = searched.iter().map(|c| c.successful_measurements).sum();
     let failed: u64 = searched
         .iter()
@@ -420,6 +451,12 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
 
     let started = clock.start();
     let selection = select::select(&searched)?;
+    if let Some(tap) = narration {
+        tap.emit(jope_narrator::LineageFact::Selected {
+            program_sha256: selection.program_sha256.clone(),
+            rule: selection.method.to_owned(),
+        });
+    }
     if let Some(reason) = &selection.reason {
         eprintln!("jope pipeline: select - {reason}");
     }
@@ -456,6 +493,16 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         emitted.genome_sha256 == selection.program_sha256,
         "the emitted genome is not the selected one"
     );
+    if let Some(tap) = narration {
+        tap.emit(jope_narrator::LineageFact::Emitted {
+            program_sha256: emitted.genome_sha256.clone(),
+            languages: emitted
+                .artifacts
+                .iter()
+                .map(|artifact| artifact.language.to_owned())
+                .collect(),
+        });
+    }
     for exclusion in &emitted.exclusions {
         eprintln!(
             "jope pipeline: emit - {} not emitted: {}",
@@ -780,6 +827,36 @@ pub(crate) mod tests {
             policy: Policy::Skip,
             ..RunOptions::new(committed_dataset(), output)
         }
+    }
+
+    #[test]
+    fn narration_covers_selection_and_emission_before_run_terminal() {
+        let temp = tempfile::tempdir().unwrap();
+        let recording = jope_narrator::RecordingTap::default();
+        let mut options = small(&temp.path().join("run"), 1);
+        options.cuts = 1;
+        options.clock = Clock::Frozen;
+        let receipt = run_with_narration(&options, Some(recording.tap())).unwrap();
+        let facts = recording.facts();
+        let selected = facts.iter().position(|fact| matches!(fact,
+            jope_narrator::LineageFact::Selected { program_sha256, rule }
+                if program_sha256 == &receipt.search.selected_program_sha256 && rule == &receipt.search.selection
+        )).expect("missing actual selection");
+        let emitted = facts.iter().position(|fact| matches!(fact,
+            jope_narrator::LineageFact::Emitted { program_sha256, languages }
+                if program_sha256 == &receipt.search.selected_program_sha256 && languages == &["rust".to_owned()]
+        )).expect("missing completed emission");
+        assert!(selected < emitted);
+        assert!(
+            matches!(facts.last(), Some(jope_narrator::LineageFact::RunStopped { status }) if status == "completed")
+        );
+        assert_eq!(
+            facts
+                .iter()
+                .filter(|fact| matches!(fact, jope_narrator::LineageFact::RunStopped { .. }))
+                .count(),
+            1
+        );
     }
 
     /// What a run decided, without the wall clock: genome, generation, origin, status, scores.

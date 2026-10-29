@@ -433,6 +433,38 @@ fn open_events(_events: &Path, _train: &Path, _work_dir: &Path) -> Result<std::f
 
 /// Search the CSV and return the ranked genomes jain-math can execute.
 pub fn invent(options: &InventOptions) -> Result<Candidates> {
+    crate::narration::from_env(
+        |tap| invent_observed(options, tap),
+        || {
+            options
+                .cancel
+                .as_ref()
+                .is_some_and(|flag| flag.load(Ordering::SeqCst))
+        },
+    )
+}
+
+/// Explicit observer entrypoint. Offers are distinct from a consuming engine's final selection.
+pub fn invent_with_narration(
+    options: &InventOptions,
+    narration: Option<jope_narrator::Tap>,
+) -> Result<Candidates> {
+    crate::narration::with_tap(
+        narration,
+        |tap| invent_observed(options, tap),
+        || {
+            options
+                .cancel
+                .as_ref()
+                .is_some_and(|flag| flag.load(Ordering::SeqCst))
+        },
+    )
+}
+
+fn invent_observed(
+    options: &InventOptions,
+    narration: Option<&jope_narrator::Tap>,
+) -> Result<Candidates> {
     preflight(options)?;
     if let Some(objective) = &options.objective {
         crate::run::check_objective(objective)?;
@@ -477,9 +509,11 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
             ))
         }),
         objective: options.objective.clone(),
+        narration: narration.cloned(),
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
-    let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
+    let searched =
+        search::run_cuts_observed(&preparation.cuts, &search_options, &root.join("search"))?;
     if options
         .cancel
         .as_ref()
@@ -534,6 +568,22 @@ pub fn invent(options: &InventOptions) -> Result<Candidates> {
         })
         .collect::<Vec<_>>();
 
+    if let Some(tap) = narration {
+        tap.emit(jope_narrator::LineageFact::CandidatesOffered {
+            program_sha256s: candidates
+                .iter()
+                .map(|candidate| candidate.program_sha256.clone())
+                .collect(),
+            rule: format!(
+                "rank_then_executable_filter_then_top_k:{}",
+                if options.objective.is_some() {
+                    select::MIN_MEAN_VALIDATION_OBJECTIVE
+                } else {
+                    select::MIN_MEAN_VALIDATION_RMSE
+                }
+            ),
+        });
+    }
     Ok(Candidates {
         schema: SCHEMA,
         ok: !candidates.is_empty(),

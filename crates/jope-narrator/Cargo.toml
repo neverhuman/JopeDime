@@ -1,0 +1,24 @@
+[package]
+name = "jope-narrator"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+publish = false
+license = "Apache-2.0"
+
+[features]
+testing = []
+
+[dependencies]
+anyhow = "1"
+feat-math = { path = "../feat-math", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+sha2 = "0.10"
+
+[dev-dependencies]
+jope-narrator = { path = ".", features = ["testing"] }
+tempfile = "3"
+
+[lints.rust]
+unsafe_code = "forbid"

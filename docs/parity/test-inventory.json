@@ -5,9 +5,9 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception).",
-  "count": 5933,
-  "ignored": 75,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.",
+  "count": 6012,
+  "ignored": 81,
   "packages": {
    "battle-gpu": {
     "count": 19,
@@ -6171,8 +6171,49 @@
      }
     }
    },
+   "jope-narrator": {
+    "count": 21,
+    "ignored": 0,
+    "binaries": {
+     "jope-narrator": {
+      "kind": "lib",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "facts::tests::facts_round_trip_with_their_kind_tag",
+       "facts::tests::unknown_fields_are_refused",
+       "tap::tests::malformed_owned_frame_is_an_error_not_clean_closure"
+      ]
+     },
+     "jope-narrator::core": {
+      "kind": "test",
+      "count": 18,
+      "ignored": 0,
+      "tests": [
+       "automatic_capture_sessions_are_bounded_per_process",
+       "corrupt_complete_records_refuse_partial_tails_wait_and_cursor_scope_is_strict",
+       "deterministic_journal_finishes_with_live_tap_and_preserves_prefix",
+       "durable_watermark_distinguishes_capture_closure_loss_and_source_status",
+       "finish_racing_producer_drains_every_accepted_record_and_closes_retained_taps",
+       "forged_claim_or_text_fails_even_after_recomputing_content_hash",
+       "golden_v1::retained_v1_journal_pins_every_fact_kind_and_grammar_variant",
+       "metrics_refuse_mismatched_scope_and_nonfinite_values",
+       "native_links_roundtrip_and_recording_collector_keeps_concurrent_inputs",
+       "ordered_duplicates_and_general_edits_replay_with_preconditions",
+       "patches_reconstruct_ten_thousand_real_operator_transitions",
+       "queue_count_bytes_and_frame_bounds_produce_explicit_gaps",
+       "readable_stage_details_clamps_aliases_and_ordered_equal_parents_are_grounded",
+       "real_bounded_queue_preserves_parallel_producers_below_capacity",
+       "terminal_controls_are_inert_and_clamped_parameter_scope_is_narrow",
+       "typed_snapshot_preserves_signed_zero_adjacent_floats_and_large_integers",
+       "unsupported_representations_have_exact_whole_snapshot_patch",
+       "watermark_failure_never_acknowledges_unsynced_or_uncommitted_line"
+      ]
+     }
+    }
+   },
    "jope-observatory": {
-    "count": 23,
+    "count": 38,
     "ignored": 0,
     "binaries": {
      "jope-observatory": {
@@ -6203,6 +6244,12 @@
       "tests": []
      },
      "jope-observatory::bin/collect-storage": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-observatory::bin/gp-narration-stream": {
       "kind": "bin",
       "count": 0,
       "ignored": 0,
@@ -6242,6 +6289,28 @@
        "shared_emission_matches_legacy_source_bytes_errors_and_token_rules",
        "unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens",
        "websocket_delivers_full_sources_checks_and_cursor_replay"
+      ]
+     },
+     "jope-observatory::narration": {
+      "kind": "test",
+      "count": 15,
+      "ignored": 0,
+      "tests": [
+       "cli_distinguishes_integrity_and_completion_and_follow_stops_at_terminal_capture",
+       "complete_corruption_wrong_run_and_oversize_tail_fail_closed",
+       "concurrent_commits_never_poison_a_healthy_live_index",
+       "http_monitor_has_strict_origin_policy_and_finite_page",
+       "mcp_binary_emits_only_finite_jsonrpc_lines",
+       "mcp_lifecycle_finite_tools_and_stdout_framing_are_clean",
+       "mcp_refuses_unbounded_or_incomplete_requests_and_terminal_controls",
+       "partial_live_tail_waits_then_yields_same_original_event",
+       "real_durable_journal_is_read_without_rerendering",
+       "retained_pages_use_exclusive_run_scoped_decimal_cursors",
+       "symlink_journals_are_refused",
+       "truncation_replacement_and_record_caps_are_explicit_errors",
+       "websocket_reconnect_is_exclusive_and_ping_survives_replay",
+       "websocket_rejects_wrong_run_future_cursor_origin_and_client_overflow",
+       "websocket_waits_for_complete_live_append_and_preserves_text"
       ]
      }
     }
@@ -7686,12 +7755,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 461,
+    "count": 471,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 368,
+      "count": 374,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -7911,6 +7980,7 @@
        "kernel2::tests::profile_scope_zero_width_and_parse_refusals_spend_measurement_budget",
        "kernel2::tests::quiet_measurement_keeps_legacy_metric_bits_and_default_policy",
        "kernel2::tests::ranking_uses_anchored_fault_ties_and_excludes_failures",
+       "landmark_encoding::tests::writer_failure_cancels_and_joins_siblings",
        "lineage::tests::a_non_empty_output_is_refused_before_writing_and_the_emptied_one_runs",
        "lineage::tests::a_refused_cut_count_leaves_nothing_and_the_corrected_retry_runs",
        "lineage::tests::a_refused_lineage_writes_nothing_and_the_corrected_retry_runs",
@@ -7996,6 +8066,7 @@
        "run::tests::an_objective_run_ranks_programs_by_it_records_it_and_reverifies",
        "run::tests::classification_is_refused_before_writing_a_regression_run",
        "run::tests::islands_times_threads_above_the_ceiling_is_refused",
+       "run::tests::narration_covers_selection_and_emission_before_run_terminal",
        "run::tests::one_thread_and_eight_threads_write_byte_identical_runs",
        "run::tests::policies_parse",
        "run::tests::require_fails_closed_before_the_output_directory_is_touched",
@@ -8020,6 +8091,10 @@
        "search::tests::event_logging_preserves_retry_streams_duplicates_and_random_fallback",
        "search::tests::event_persistence_failure_refuses_success_publication",
        "search::tests::islands_migrate_record_and_replay_on_any_worker_count",
+       "search::tests::narration_cancelled_run_has_terminal_and_no_physical_start",
+       "search::tests::narration_real_journal_preserves_same_thread_fixed_clock_search",
+       "search::tests::narration_tap_changes_no_published_byte",
+       "search::tests::narration_without_search_event_recording_reports_absent_source_refs",
        "search::tests::no_candidate_is_fitted_twice_on_one_cut",
        "search::tests::one_island_is_the_plain_search",
        "search::tests::population_snapshot_includes_shared_draws_on_every_path",
@@ -8236,6 +8311,17 @@
        "reordered_and_duplicate_deliveries_keep_original_counts_and_ids",
        "strict_new_version_dispatch_rejects_duplicate_keys_and_unknown_fields",
        "unknown_cost_is_retained_and_context_changes_request_identity"
+      ]
+     },
+     "jope-pipeline::search_narration": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "actual_single_evaluation_has_draw_start_result_selection_emission_and_terminal",
+       "detached_consumer_does_not_fail_or_change_the_pipeline",
+       "invent_reports_ranked_offers_without_claiming_consumer_selection_or_emission",
+       "preflight_failure_is_terminal_and_does_not_claim_a_measurement"
       ]
      },
      "jope-pipeline::seed_set_v2": {
@@ -8780,12 +8866,12 @@
     }
    },
    "jope-runtime": {
-    "count": 74,
+    "count": 86,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
       "kind": "lib",
-      "count": 57,
+      "count": 63,
       "ignored": 0,
       "tests": [
        "automl::fitness_tests::a_selection_without_an_objective_keeps_the_v1_record_shape",
@@ -8818,6 +8904,10 @@
        "fitness::tests::shorthand_overrides_numeric_defaults_and_refuses_unknown_parameters",
        "fitness::tests::standard_metrics_match_independent_hand_calculations",
        "fitness::tests::weights_reweight_rows_and_refuse_bad_values",
+       "landmark_args::tests::explicit_consumers_activate_encoding_and_require_scoped_inputs",
+       "landmark_args::tests::explicit_sample_selects_dope_and_overrides_progressive_default",
+       "landmark_args::tests::full_is_unsampled_and_progressive_defaults_to_300",
+       "landmark_args::tests::omitted_options_do_not_select_a_new_encoder",
        "model_object::tests::an_interrupted_publication_resumes_without_overwriting_retained_parts",
        "model_object::tests::atomic_create_only_exports_preserve_existing_files",
        "model_object::tests::concurrent_identical_publication_and_conflicting_recovery_preserve_bytes",
@@ -8834,6 +8924,8 @@
        "model_session::tests::competing_updates_fail_without_losing_a_version",
        "model_session::tests::corrupt_history_missing_models_and_path_traversal_are_refused",
        "model_session::tests::versions_rollback_and_continue_keep_every_object_and_selection",
+       "output_safety::tests::inode_aliases_and_new_descendants_are_refused_without_touching_input",
+       "prediction_narration::tests::prediction_binding_preserves_every_nonfinite_and_signed_zero_payload",
        "service::tests::api_mcp_and_rust_evaluation_have_identical_scores",
        "service::tests::fit_predict_reads_objective_columns_from_training_and_ignores_them_in_input",
        "service::tests::fit_predict_transport_runs_the_custom_objective_and_binds_it_to_the_model",
@@ -8845,6 +8937,26 @@
        "table::tests::objective_columns_are_numeric_never_features_and_ignored_at_prediction",
        "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",
        "table::tests::tasks_and_class_order"
+      ]
+     },
+     "jope-runtime::fitted_js_qualification": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "fitted_javascript_matches_rust_prediction_for_every_supported_stage",
+       "fitted_javascript_refuses_a_model_from_another_plan",
+       "fitted_javascript_refuses_contradictory_prediction_parameters"
+      ]
+     },
+     "jope-runtime::math_pipeline": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "decoder_refuses_what_it_cannot_reproduce",
+       "decoder_reproduces_the_producer_for_every_row",
+       "exported_javascript_reproduces_the_producer_for_every_row"
       ]
      },
      "jope-runtime::method_roster": {
@@ -8872,24 +8984,17 @@
        "selection_is_deterministic"
       ]
      },
-     "jope-runtime::fitted_js_qualification": {
+     "jope-runtime::prediction_narration": {
       "kind": "test",
-      "count": 3,
+      "count": 6,
       "ignored": 0,
       "tests": [
-       "fitted_javascript_matches_rust_prediction_for_every_supported_stage",
-       "fitted_javascript_refuses_a_model_from_another_plan",
-       "fitted_javascript_refuses_contradictory_prediction_parameters"
-      ]
-     },
-     "jope-runtime::math_pipeline": {
-      "kind": "test",
-      "count": 3,
-      "ignored": 0,
-      "tests": [
-       "decoder_refuses_what_it_cannot_reproduce",
-       "decoder_reproduces_the_producer_for_every_row",
-       "exported_javascript_reproduces_the_producer_for_every_row"
+       "bindings_change_with_real_inputs_and_fitted_state_independently",
+       "detached_observer_does_not_change_prediction",
+       "environment_capture_observes_shipped_gp_and_startup_failure_is_best_effort",
+       "fixed_prediction_narration_preserves_bytes_and_binds_actual_inputs",
+       "prediction_failures_are_retained_without_claiming_completion",
+       "shipped_gp_path_preserves_prediction_bits_and_binds_model_and_cells"
       ]
      }
     }
@@ -8968,8 +9073,8 @@
     }
    },
    "starforge": {
-    "count": 57,
-    "ignored": 1,
+    "count": 78,
+    "ignored": 7,
     "binaries": {
      "starforge": {
       "kind": "lib",
@@ -9034,6 +9139,34 @@
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "starforge::dope_encoding": {
+      "kind": "test",
+      "count": 21,
+      "ignored": 6,
+      "tests": [
+       "alternative_fusion_uses_its_own_identity_and_checks_scope",
+       "checkpoint_pin_is_verified_before_loading_and_legacy_identity_is_preserved",
+       "consumers::both_consumers_execute_three_tasks_and_preserve_scope_and_pins",
+       "consumers::candidate::candidate_cpu_parity_and_three_task_consumers",
+       "external_csv_identity_does_not_erase_task_or_row_scope",
+       "learned_product::admitted_authority_change_before_native_work_keeps_last_valid_learned_product",
+       "learned_product::admitted_learned_product_three_tasks_matches_oracle_and_terminal_full",
+       "learned_product::admitted_none_callback_authority_change_cannot_finalize_complete",
+       "none_and_fast_retain_small_table_descriptors_without_native_admission",
+       "product_sessions::direct_session_emits_raw_product_and_companion_values",
+       "product_sessions::explicit_consumer_and_bound_consumer_must_match",
+       "product_sessions::explicit_direct_none_k33_preserves_full_fit_vocabulary_and_emits_finite512",
+       "product_sessions::explicit_products_refuse_rounded_or_colliding_classes_before_component_admission",
+       "product_sessions::omitted_consumer_keeps_historical_event_and_receipt_fields",
+       "progressive_terminal_equals_full_and_publishes_supplied_fusion",
+       "projection::minimal_projection_verifies_without_opening_unrelated_assets",
+       "resident512::benchmark_released_resident512_matched",
+       "resident512::released_cpu_host_conditioning_preserves_legacy_pack_and_identity",
+       "resident512::released_cpu_resident512_matches_full629_contract",
+       "shared_bundle_serialization_fixture_uses_the_upstream_contract",
+       "whole_checkpoint_checksum_and_cpu_reference_projection"
+      ]
      },
      "starforge::foundation_parity": {
       "kind": "test",
@@ -9376,7 +9509,7 @@
   }
  },
  "totals": {
-  "rust": 5933,
+  "rust": 6012,
   "python": 182
  }
 }

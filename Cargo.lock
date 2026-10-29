@@ -2615,6 +2615,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-narrator"
+version = "0.4.1"
+dependencies = [
+ "anyhow",
+ "feat-math",
+ "jope-narrator",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+]
+
+[[package]]
 name = "jope-observatory"
 version = "0.4.1"
 dependencies = [
@@ -2624,6 +2637,7 @@ dependencies = [
  "clap",
  "feat-math",
  "futures-util",
+ "jope-narrator",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -2676,6 +2690,7 @@ dependencies = [
  "csv",
  "feat-math",
  "jope-datasets",
+ "jope-narrator",
  "jope-paths",
  "jope-policy",
  "jope-runtime",
@@ -2734,6 +2749,7 @@ dependencies = [
  "csv",
  "feat-math",
  "hex",
+ "jope-narrator",
  "jope-paths",
  "rayon",
  "serde",

@@ -625,3 +625,6 @@ mod tests {
 
 /// Complete GP source emission, validation and durable delivery.
 pub mod gp_source;
+
+/// Read-only retained search commentary transports.
+pub mod narration;

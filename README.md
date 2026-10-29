@@ -389,14 +389,14 @@ limits and client examples](docs/program-source-stream.md).
 | What | 0.4.1 |
 | --- | --- |
 | `jope` with no arguments | prints `jope 0.4.1` <sup>1</sup> |
-| Workspace | 32 members: 25 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| Workspace | 33 members: 26 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
-| Rust tests | 5,933 listed in 32 packages, 75 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 6,012 listed in 33 packages, 81 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 13 jobs per pull request configured in `ci.yml` (automatic triggering paused; dispatch manually) (top-level declarations; 18 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 864 items over 32 lanes <sup>7</sup> |
-| Capability matrix | 835 rows: 353 moved, 72 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Coverage map | 872 items over 32 lanes <sup>7</sup> |
+| Capability matrix | 836 rows: 353 moved, 73 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 1,232 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
@@ -535,12 +535,12 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Layout (this SHA)
 
-The 32 workspace members, by directory under `crates/`; the package name follows where it differs.
+The 33 workspace members, by directory under `crates/`; the package name follows where it differs.
 [docs/architecture.md](docs/architecture.md#crate-graph) describes each crate.
 
 | Group | Crates | Role |
 | --- | --- | --- |
-| Default build | `jope-cli` (binary `jope`), `feat-math`, `jope-pipeline`, `jope-bench`, `jope-datasets`, `jope-models`, `jope-motifs`, `jope-policy` | The workspace `default-members`, what a bare `cargo build` selects: the `jope` binary and its direct workspace dependencies except `hyperion` and `jope-learning`, which it still builds as dependencies (`Cargo.toml` says why). Programs, fit and emitters; the pipeline; the same-cut benchmark; dataset and model stores; program fragments; the proposal policy. |
+| Default build | `jope-cli` (binary `jope`), `feat-math`, `jope-pipeline`, `jope-bench`, `jope-datasets`, `jope-models`, `jope-motifs`, `jope-policy`, `jope-narrator` | The workspace `default-members`, what a bare `cargo build` selects: the `jope` binary and its direct workspace dependencies except `hyperion` and `jope-learning`, which it still builds as dependencies (`Cargo.toml` says why). Programs, fit and emitters; the pipeline; the same-cut benchmark; dataset and model stores; program fragments; the proposal policy. |
 | Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders, Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
 | Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max` and `Gemini4_argon_high`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md). |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
@@ -561,6 +561,7 @@ The 32 workspace members, by directory under `crates/`; the package name follows
 - [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.4.1, 0.4.0, 0.3.0 and 0.2.0
 - [`MASTER_PLAN.md`](MASTER_PLAN.md) — current direction and the landing record
 - [`docs/release/README.md`](docs/release/README.md) — how a release is cut, signed and verified
+- [`docs/search-narration.md`](docs/search-narration.md) — retained commentary, evidence inspection, prediction traces and live monitoring
 - [`docs/pipeline.md`](docs/pipeline.md) — the pipeline's budget, selection, seeding, parallelism and test-split contracts
 - [`docs/architecture.md`](docs/architecture.md) — crates, contracts and the intended pipeline
 - [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the emitters
