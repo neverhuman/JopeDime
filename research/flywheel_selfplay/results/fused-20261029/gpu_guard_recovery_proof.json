@@ -1,0 +1,146 @@
+{
+  "utc": "2026-10-29T22:12:17.526632+00:00",
+  "runtime_source": "a81bf0bb1c02fcfaeda925ce0c16ecfee0ddec6c",
+  "pid": 2080699,
+  "telemetry": "off",
+  "resume_round": 360,
+  "logical_batch_size": 8192,
+  "checkpoint_optimizer_step": 471,
+  "checkpoint_sha256_verified": "2fda9f6ccc8fa13b6e64327308427bf82dde67bc086dba389b10802312225e0e",
+  "best_pointer_sha256_verified": "f19c500fae4b7748c2724a1c1ed86c369a29c0de4ec35aeca1215c4e49138e89",
+  "promotion_journal_prefix_sha256_verified": "c5e4c42b67be7efca7cffeaf938945d266fa32a5811d8d8e048c0370c6341448",
+  "promotion_journal_prefix_bytes": 598753,
+  "input_pool_integrity": "Pinned selected packet/pool hashes checked by unchanged load_packet; full historical journal replay and original bank recovery retained",
+  "guard": {
+    "minimum_free_bytes": 21474836480,
+    "backoff_seconds": 5,
+    "locations": [
+      "startup after qualification lock",
+      "before each round"
+    ],
+    "tests": "busy\u2192busy\u2192ready waits twice; insufficient hardware refuses",
+    "limitation": "Pre-round checks do not provide atomic exclusion against launchers using a different lock."
+  },
+  "local_tests_passed": 50,
+  "rounds": [
+    {
+      "round": 361,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_checksum_match": true,
+      "trainable_params": 29211,
+      "changed_tensors": 41,
+      "optimizer_steps": 1,
+      "optimizer_step_before": 471,
+      "optimizer_step_candidate": 472,
+      "parameter_update_l2": 0.0002703917270991951,
+      "dev_utility": {
+        "mean": 2.267816067203105,
+        "per_context": [
+          0.4595724478760325,
+          1.1321918041103844,
+          1.6493666422408813,
+          0.3804703956781366,
+          2.876232122429703,
+          0.8377046659779932,
+          0.19225477831682752,
+          10.614735680994883
+        ],
+        "selected_programs": [
+          "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+        ],
+        "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+      },
+      "adapter_admission": {
+        "round": 361,
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "candidate_utility": 2.2562596084931466,
+        "previous_best_utility": 2.267816067203105,
+        "accepted": false,
+        "action": "restore_best_model_and_optimizer",
+        "best_utility": 2.267816067203105,
+        "best_round": 256,
+        "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-256.pt",
+        "timestamp": 1793311610.1404402
+      },
+      "promotions": 1,
+      "wall_seconds": 50.06888269819319,
+      "train_wall_seconds": 1.1569764912128448,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.25104342587292194,
+        "slate_assembly": 0.3381400890648365,
+        "forward_and_targets": 0.3281030170619488,
+        "backward_and_step": 0.23742392659187317,
+        "dev_gate": 0.16156857647001743,
+        "gp": 48.6921016164124
+      },
+      "native_evaluations": 64
+    },
+    {
+      "round": 362,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_checksum_match": true,
+      "trainable_params": 29211,
+      "changed_tensors": 41,
+      "optimizer_steps": 1,
+      "optimizer_step_before": 471,
+      "optimizer_step_candidate": 472,
+      "parameter_update_l2": 0.00027041390421800315,
+      "dev_utility": {
+        "mean": 2.267816067203105,
+        "per_context": [
+          0.4595724478760325,
+          1.1321918041103844,
+          1.6493666422408813,
+          0.3804703956781366,
+          2.876232122429703,
+          0.8377046659779932,
+          0.19225477831682752,
+          10.614735680994883
+        ],
+        "selected_programs": [
+          "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+        ],
+        "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+      },
+      "adapter_admission": {
+        "round": 362,
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "candidate_utility": 2.2562596084931466,
+        "previous_best_utility": 2.267816067203105,
+        "accepted": false,
+        "action": "restore_best_model_and_optimizer",
+        "best_utility": 2.267816067203105,
+        "best_round": 256,
+        "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-256.pt",
+        "timestamp": 1793311660.7578523
+      },
+      "promotions": 0,
+      "wall_seconds": 52.22429410368204,
+      "train_wall_seconds": 1.0167171228677034,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.2510082572698593,
+        "slate_assembly": 0.3342347890138626,
+        "forward_and_targets": 0.3124372772872448,
+        "backward_and_step": 0.11657718010246754,
+        "dev_gate": 0.15778530575335026,
+        "gp": 50.99177526682615
+      },
+      "native_evaluations": 64
+    }
+  ],
+  "budget": "original CPU/GPU/steps/native-eval/storage limits and deadline retained"
+}

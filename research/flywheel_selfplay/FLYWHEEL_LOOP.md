@@ -279,3 +279,25 @@ tests and a direct extension smoke test,no new GitHub CI dispatch. Then install
 the compatible native wheel and perform the original completed-checkpoint
 handoff,preserving the pool/promotions,optimizer and frozen DOPE. Until then,
 do not restart with the superseded Python adapter or resurrect its enabler.
+
+Priority2205 recovery uses the unchanged logical batch8192/checkpoint360,with
+telemetry off while the Rust API is developed. `wait_for_gpu_headroom` is DL
+allocation control: release unused own cache,wait for20GiBfree,back off5s at
+startup and before each round. The measured training peak is about17GiB.
+This check cannot replace a common exclusion lock across all GPU launchers.
+Two guard tests cover busy→busy→ready and insufficient hardware. Actual
+rounds361/362 completed50.07/52.22s,with unchanged DOPE and64 native evaluations
+each. Full checkpoint/best-pointer/journal-prefix verification is in
+`results/fused-20261029/gpu_guard_recovery_proof.json`.
+
+Native port integration handoff (reviewed uncommitted P1 API on xbabe2):
+`Recorder.begin/mark/put/end/commit` and `open_flywheel_step` are being added.
+The latter currently targets the older W trainer and `record_io` requires the
+legacy resident-NumPy batch dictionary. The fused worker instead delivers
+cached GPU pool gathers plus CPU indices/cold-pool payload. Confirm native
+fused/frozen-DOPE metadata and a compatible native IO path before adopting the
+factory. Never reconstruct the eliminated multi-GB CPU slates to fit an IO
+API. Rust must count bytes,compute rates,aggregate and write sinks; Python
+passes existing DL values/buffers with one-line calls. Unsupported IO timing
+must remain unavailable rather than fabricated. Use only the landed,locally
+qualified API/wheel; the in-progress owned Rust checkout is not a stable ABI.
