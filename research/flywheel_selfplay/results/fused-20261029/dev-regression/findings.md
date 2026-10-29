@@ -71,3 +71,24 @@ Retained dev utility remains2.267816 and DOPE is unchanged. The focused suite no
 has24 passing tests, including the must-fail-before-fix repeated-rejection case.
 The loop is running under the corrected guard; no learning-rate/step budget or
 other owner's job was changed.
+
+
+## 17:05Z fixed-point escape — first live result
+
+Round88 is the first alternative proposal: seed29477181, one optimizer
+update at LR2.5e-05, training order rotation88.
+Its dev mean is2.267816067, different from the repeated
+1.147987758 rejection; it was accepted as a tie to the protected best. Parameter
+SHA-256 is fd27311bffda8a2a757182d72337393a1383691aaef8a0667a7d35efebd4085c; update L2 is0.00760390.
+DOPE checksum remains c51a56d0… and only the adapter trains.
+
+GP stagnation mode generated16 candidates/context, rotated parents, discarded
+pool duplicates, and selected two model-ranked plus two seeded exploration
+candidates for the same max4 native evaluations/context. Actual native evaluations
+64, gate passes62, new strict promotions1.
+GP used the retained/admitted incumbent and ran independently of adapter rejection.
+Round88 wall was58.39s. The maximum two-update/64-native-evaluation
+budget, original CPU/GPU/storage limits and Phase2/sealed-data exclusions persist.
+Gentle accepted LRs persist; later rejected proposals get another bounded reduction
+and a new round seed. This protects dev utility while permitting real parameter
+progress rather than repeating the rejected full-sized move.
