@@ -138,7 +138,21 @@ fn read_regular(path: &Path, limit: u64) -> Result<Vec<u8>> {
         meta.is_file() && !meta.file_type().is_symlink() && meta.len() <= limit,
         "regular bounded input required"
     );
-    std::fs::read(path).map_err(|_| anyhow!("input read failed"))
+    use std::io::Read;
+    let file = std::fs::File::open(path).map_err(|_| anyhow!("input open failed"))?;
+    let opened = file
+        .metadata()
+        .map_err(|_| anyhow!("input metadata unavailable"))?;
+    ensure!(
+        opened.is_file() && opened.len() <= limit,
+        "regular bounded input required"
+    );
+    let mut bytes = Vec::new();
+    file.take(limit + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| anyhow!("input read failed"))?;
+    ensure!(bytes.len() as u64 <= limit, "input grew beyond read limit");
+    Ok(bytes)
 }
 #[derive(Debug, serde::Serialize)]
 struct Summary {
