@@ -93,7 +93,7 @@ impl PyRecorder {
         if producer_names.iter().any(|name| name == "host-probe") {
             if let Ok(nvml) = nvml_wrapper::Nvml::init() {
                 if let Ok(count) = nvml.device_count() {
-                    let labels = (0..count.min(4096))
+                    let labels: BTreeMap<u16, String> = (0..count.min(4096))
                         .map(|index| (index as u16, format!("nvml_device_{index}")))
                         .collect();
                     metric_groups.insert(crate::train::GPU_UTIL, labels.clone());
