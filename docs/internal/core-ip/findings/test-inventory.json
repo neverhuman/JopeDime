@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/test_fused_telemetry.py": {
+      "reason": "Owner-requested native telemetry adapter regression proof for the frozen-DOPE fused research worker: disabled/missing-wheel refusal, byte-rate scope, unavailable token/H2D metrics and interrupt finalization; outside product baseline.",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [

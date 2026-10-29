@@ -262,3 +262,24 @@ Max4 native evaluations/context,64/round; training/LR/dev/DOPE unchanged.
 Pre-outcome policy: `results/fused-20261029/dev-regression/gp_exploration_preregistration.json`.
 Full per-round/per-context audit: `results/fused-20261029/dev-regression/gp_plateau_audit.md`.
 No promotion or dev improvement is promised by exploration.
+
+Owner-ordered native telemetry: set `JOPE_TELEMETRY_RUN_DIR` only after the fixed
+`jope._telemetry` wheel is installed in the actual fused venv and registers
+`io.batch_gb_s`. The fused runner now has its own optional adapter (the guide's
+`selfplay_loop.py` hooks do not instrument this worker). Unset opens no native
+sink/thread. Each round gets a fresh native recorder with a1s host probe, loss,
+LR, gradient norm, step latency, sample rate and DOPE-guard result. Finalization
+is counted in full-round wall time; its cost is separately recorded. Interrupted
+rounds flush as interrupted. No extra tensor readback or CUDA sync is added.
+
+For this cached-device path, IO rates count actual host payload: transferred
+slate indices plus cold/replaced pool arrays, divided by CPU slate assembly and
+completed device packing (including GPU gathers). They are not PCIe bandwidth
+or the eliminated multi-GB logical feature slates. Pure H2D-event bandwidth is
+unavailable,reason12; tabular text tokens/s unavailable,reason10. GP DSL token
+counts stay separate. Telemetry overhead is unqualified; no <=1–2% claim.
+
+At a safe boundary, retain full checkpoint/best pointer, journal prefix and
+ordered pool/fitness/gate hashes before setting the switch. Startup manifests
+record the actual replayed pool identities and wheel-backed sink path; verify
+those identities plus the frozen DOPE hash in completed telemetry-on rounds.

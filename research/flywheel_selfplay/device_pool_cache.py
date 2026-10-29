@@ -20,6 +20,7 @@ class DevicePoolCache:
         self.device = torch.device(device)
         self.entries = {}
         self.transfers = 0
+        self.host_to_device_bytes = 0
 
     def _get(self, cid, pool):
         sources = tuple(pool[field] for field in self.FIELDS)
@@ -35,10 +36,13 @@ class DevicePoolCache:
         }
         self.entries[cid] = (sources, values)
         self.transfers += 1
+        if self.device.type == "cuda":
+            self.host_to_device_bytes += sum(value.nbytes for value in sources)
         return values
 
     def pack(self, pools, cids, selections):
         start = time.monotonic()
+        transferred_before = self.host_to_device_bytes
         if not cids or len(cids) != len(selections):
             raise ValueError("empty or mismatched slate batch")
         unique = list(dict.fromkeys(cids))
@@ -62,6 +66,11 @@ class DevicePoolCache:
             field: torch.cat([values[c][field] for c in unique], dim=0)[index_tensor]
             for field in self.FIELDS
         }
+        packed["host_to_device_bytes"] = (
+            self.host_to_device_bytes
+            - transferred_before
+            + (flat.nbytes if self.device.type == "cuda" else 0)
+        )
         packed["packing_cpu_wall_seconds"] = time.monotonic() - start
         packed["cpu_index_bytes"] = flat.nbytes
         packed["avoided_cpu_feature_slate_bytes"] = (
