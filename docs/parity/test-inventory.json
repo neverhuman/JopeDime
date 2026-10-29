@@ -9290,10 +9290,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 225,
+  "count": 227,
   "packages": {
    "jope": {
-    "count": 225,
+    "count": 227,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9398,13 +9398,15 @@
       ]
      },
      "tests/test_fused_hpc_accelerator.py": {
-      "count": 5,
+      "count": 7,
       "tests": [
+       "tests/test_fused_hpc_accelerator.py::test_exact_host_device_transcendentals_parity",
        "tests/test_fused_hpc_accelerator.py::test_hpc1_batched_champion_retrieval_and_table_seed",
        "tests/test_fused_hpc_accelerator.py::test_hpc2_radix_sort_and_monotone_order_reuse",
        "tests/test_fused_hpc_accelerator.py::test_hpc3_fused_14_probe_corrs_parity",
        "tests/test_fused_hpc_accelerator.py::test_hpc4_pinned_pool_parallel_loader_and_out_of_loop_tokens",
-       "tests/test_fused_hpc_accelerator.py::test_hpc5_2d_bucketing_multigpu_sharding_and_network_patch"
+       "tests/test_fused_hpc_accelerator.py::test_hpc5_2d_bucketing_multigpu_sharding_and_network_patch",
+       "tests/test_fused_hpc_accelerator.py::test_hpc6_persistent_winner_workspace_and_block256_slate"
       ]
      },
      "tests/test_north_star_flywheel_guards.py": {
@@ -9661,6 +9663,6 @@
  },
  "totals": {
   "rust": 6054,
-  "python": 225
+  "python": 227
  }
 }

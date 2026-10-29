@@ -15,12 +15,21 @@ import torch
 from torch import nn
 
 from jope.fused_hpc import (
+    BUILD_LIVE_96_SLATE_BLOCK256_CUDA_SOURCE,
+    EXACT_HOST_DEVICE_TRANSCENDENTALS_CUDA_HEADER,
     FusedStageCudaGraphRunner,
+    Phase2WinnerWorkspace,
     PinnedBatchBufferPool,
     bucket_tables_2d_by_p_tier_and_ntr,
+    build_live_96_slate_block256,
     count_rust_tokens_out_of_loop,
     erf_approx_f64,
+    exact_box_muller_f64,
     exact_corr_with_yz_f64,
+    exact_cos_f64,
+    exact_exp_f64,
+    exact_log_f64,
+    exact_sin_f64,
     fused_14_probe_corrs_with_yz_f64,
     parallel_load_dataset_splits,
     patch_fused_network_hpc,
@@ -293,3 +302,82 @@ def test_hpc5_2d_bucketing_multigpu_sharding_and_network_patch() -> None:
     r_a, r_b = runner.run_stage1a_neural(torch.ones(2, 4), torch.ones(2, 4))
     assert torch.allclose(r_a, torch.full((2, 4), 2.0))
     assert torch.allclose(r_b, torch.full((2, 4), 2.0))
+
+
+def test_hpc6_persistent_winner_workspace_and_block256_slate() -> None:
+    # 1. Phase2WinnerWorkspace non-aliasing and zero-realloc pool verification
+    ws = Phase2WinnerWorkspace(max_winners=16, max_rows=256)
+    layout = ws.verify_non_aliasing(n_winners=12, n_rows=200)
+    assert layout["families_ok"] is True
+    assert layout["rbuf_stride"] == 260 * 200
+    assert layout["ibuf_stride"] == 268 * 200 + 2048
+    assert ws.acquire_count == 1
+    assert ws.realloc_count == 0
+
+    rbuf_v, ibuf_v = ws.ensure_capacity(n_winners=16, n_rows=256)
+    assert rbuf_v.shape == (16, 260 * 256)
+    assert ibuf_v.shape == (16, 268 * 256 + 2048)
+    assert ws.realloc_count == 0
+
+    # Dynamic expansion when exceeding initial capacity
+    rbuf_big, ibuf_big = ws.ensure_capacity(n_winners=20, n_rows=300)
+    assert rbuf_big.shape == (20, 260 * 300)
+    assert ibuf_big.shape == (20, 268 * 300 + 2048)
+    assert ws.realloc_count == 1
+
+    # 2. Part B HPC #1: 256-thread block live-96 slate builder parity
+    rng = np.random.default_rng(2026)
+    x_tr = rng.standard_normal((128, 12), dtype=np.float32)
+    x_tr[3, 5] = np.nan
+    y_tr = rng.standard_normal(128, dtype=np.float32)
+
+    torch.manual_seed(2026)
+    lm48 = torch.randn(48, dtype=torch.float32)
+    lm48_z = torch.randn(48, dtype=torch.float32)
+    champ_lm48_z = torch.randn(64, 48, dtype=torch.float32)
+    champ_t_norms = torch.linalg.norm(champ_lm48_z, dim=1).clamp_min(1e-6)
+    champ_lm12_128 = torch.randn(32, 12, dtype=torch.float32)
+    champ_embs_881 = rng.integers(-50, 50, size=(64, 4, 24), dtype=np.int32)
+    champ_embs_128 = rng.integers(-50, 50, size=(32, 24), dtype=np.int32)
+
+    slate = build_live_96_slate_block256(
+        x_tr=x_tr,
+        y_tr=y_tr,
+        lm48=lm48,
+        lm48_z=lm48_z,
+        champ_lm48_z=champ_lm48_z,
+        champ_t_norms=champ_t_norms,
+        champ_lm12_128=champ_lm12_128,
+        champ_embs_881=champ_embs_881,
+        champ_embs_128=champ_embs_128,
+    )
+    assert 0 <= slate["table_seed_u32"] < (1 << 32)
+    assert slate["lane_hashes_u64"].shape == (256,)
+    assert slate["slate_embs"].shape == (96, 24)
+    assert slate["slate_keys_u64"].shape == (96,)
+    assert slate["slate_key_idx"].shape == (96,)
+    assert np.all(slate["slate_key_idx"] >= 0)
+    assert "__launch_bounds__(256)" in BUILD_LIVE_96_SLATE_BLOCK256_CUDA_SOURCE
+
+
+def test_exact_host_device_transcendentals_parity() -> None:
+    xs = np.linspace(-50.0, 50.0, 2001, dtype=np.float64)
+    sin_err = np.max(np.abs(exact_sin_f64(xs) - np.sin(xs)))
+    cos_err = np.max(np.abs(exact_cos_f64(xs) - np.cos(xs)))
+    assert sin_err < 1e-14
+    assert cos_err < 1e-14
+
+    exp_xs = np.linspace(-40.0, 40.0, 1001, dtype=np.float64)
+    exp_rel = np.max(np.abs(exact_exp_f64(exp_xs) - np.exp(exp_xs)) / np.exp(exp_xs))
+    assert exp_rel < 1e-14
+
+    log_xs = np.geomspace(1e-12, 1e12, 1001, dtype=np.float64)
+    log_err = np.max(np.abs(exact_log_f64(log_xs) - np.log(log_xs)))
+    assert log_err < 1e-14
+
+    u1 = np.linspace(1e-6, 1.0 - 1e-6, 257, dtype=np.float64)
+    u2 = np.linspace(1e-6, 1.0 - 1e-6, 257, dtype=np.float64)[::-1]
+    bm = exact_box_muller_f64(u1, u2)
+    bm_ref = np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * math.pi * u2)
+    assert np.max(np.abs(bm - bm_ref)) < 1e-13
+    assert "jope_exact_sincos_reduce_f64" in EXACT_HOST_DEVICE_TRANSCENDENTALS_CUDA_HEADER
