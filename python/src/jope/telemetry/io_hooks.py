@@ -130,13 +130,11 @@ class BatchIOStats:
         elapsed = max(now - self._last_at, 1e-9)
         self._last_at = now
         n = int(batch["ctx_b"].shape[0])
-        queue_depth = getattr(queue, "last_queue_depth", 0) if queue is not None else 0
-        queue_wait_ms = getattr(queue, "last_queue_wait_ms", 0.0) if queue is not None else 0.0
-        fallback = getattr(queue, "last_pop_fallback", 0) if queue is not None else 0
         self.batch.put(self.columns["io.batch_prep"], prep_ms)
-        self.batch.put(self.columns["io.queue.depth"], float(queue_depth))
-        self.batch.put(self.columns["io.queue.wait"], float(queue_wait_ms))
-        self.batch.put(self.columns["io.queue.fallback"], float(fallback))
+        if queue is not None:
+            self.batch.put(self.columns["io.queue.depth"], float(queue.last_queue_depth))
+            self.batch.put(self.columns["io.queue.wait"], float(queue.last_queue_wait_ms))
+            self.batch.put(self.columns["io.queue.fallback"], float(queue.last_pop_fallback))
         self.batch.put(self.columns["io.data_wait"], data_wait_ms)
         self.batch.put(self.columns["io.batches_per_s"], 1.0 / elapsed)
         self.batch.put(self.columns["io.samples_per_s"], n / elapsed)

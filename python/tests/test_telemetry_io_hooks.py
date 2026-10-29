@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from jope.telemetry.io_hooks import (
@@ -80,6 +82,46 @@ def test_batch_io_stats_write_batch_and_queue_values():
     assert values[columns["io.queue.fallback"]] == 1.0
     assert values[columns["io.data_wait"]] == 2.5
     assert values[columns["io.batch.bytes"]] == float(size)
+
+
+def test_batch_io_stats_leaves_queue_metrics_missing_when_queue_is_disabled():
+    submitted = []
+    batch = StepBatch(
+        IO_COLUMNS,
+        lambda steps, values, rows: submitted.append(list(values[: rows * len(IO_COLUMNS)])),
+        rows=1,
+    )
+    columns = {name: index for index, name in enumerate(IO_COLUMNS)}
+    stats = BatchIOStats(batch, columns)
+    arrays = {
+        key: np.zeros((1, 1), dtype=np.float32)
+        for key in (
+            "ctx_b",
+            "prog_b",
+            "proj_b",
+            "prior_b",
+            "scale_b",
+            "sos_b",
+            "target_f_b",
+            "gate_b",
+            "rev_idx_b",
+            "rev_f_b",
+            "rev_gate_b",
+        )
+    }
+
+    stats.record(1, arrays, 0.5, None, 1.0)
+    batch.commit(1)
+
+    values = submitted[0]
+    assert all(
+        math.isnan(values[columns[name]])
+        for name in (
+            "io.queue.depth",
+            "io.queue.wait",
+            "io.queue.fallback",
+        )
+    )
 
 
 def test_h2d_sampler_is_inert_without_cuda():
