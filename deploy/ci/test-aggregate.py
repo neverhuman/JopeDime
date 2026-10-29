@@ -150,6 +150,41 @@ class AggregateTests(unittest.TestCase):
                 self.assertTrue(any(field in error for error in self.verify()['errors']))
                 receipt[field] = old
 
+    def test_rerun_accepts_prior_attempt_receipts_and_fails_closed_on_latest_failure(self):
+        self.plan['attempt'] = 1
+        self.rewrite('changes', 'plan.json', json.dumps(self.plan))
+        for unit, candidates in self.receipts.items():
+            path, receipt = candidates[0]
+            receipt['attempt'] = 2 if unit == 'rust-test-2' else 1
+            path.write_text(json.dumps(receipt))
+            pub_dir = path.parent.with_name(f"ci-42-{receipt['attempt']}-{unit}-pub-1")
+            path.parent.rename(pub_dir)
+            candidates[0] = (pub_dir / 'receipt.json', receipt)
+        # Core safety property: a passing attempt-1 receipt paired with expected['attempt'] == 2
+        # and a latest-attempt needs result of 'failure' must fail closed.
+        self.assertEqual(1, self.receipts['python'][0][1]['attempt'])
+        self.assertEqual('passed', self.receipts['python'][0][1]['status'])
+        self.assertEqual(2, self.expected['attempt'])
+        self.needs['python']['result'] = 'failure'
+        failed_report = self.verify()
+        self.assertEqual('failed', failed_report['status'])
+        self.assertIn('python: job result failure', failed_report['errors'])
+        self.needs['python']['result'] = 'success'
+        publications = {}
+        discovered = aggregate.load_receipts(self.root, publications)
+        passed_report = aggregate.verify(self.mapping, self.plan, self.needs, discovered, self.expected)
+        self.assertEqual('passed', passed_report['status'])
+        self.assertEqual([], passed_report['errors'])
+        self.assertEqual(['ci-42-1-python-pub-1'], publications['python'])
+        self.assertEqual(['ci-42-2-rust-test-2-pub-1'], publications['rust-test-2'])
+        shutil.copytree(self.root / 'ci-42-1-python-pub-1', self.root / 'ci-42-2-python-pub-2')
+        with self.assertRaisesRegex(ValueError, 'invalid publication attempt name'):
+            aggregate.load_receipts(self.root)
+        mixed_receipt = dict(self.receipts['python'][0][1], attempt=2)
+        (self.root / 'ci-42-2-python-pub-2' / 'receipt.json').write_text(json.dumps(mixed_receipt))
+        with self.assertRaisesRegex(ValueError, 'ambiguous execution receipts'):
+            aggregate.load_receipts(self.root)
+
     def test_cancelled_failed_missing_and_unavailable_never_pass(self):
         for status in ('cancelled','failure','skipped','missing'):
             self.needs['python']['result'] = status
