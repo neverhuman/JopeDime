@@ -181,3 +181,21 @@ not a per-round reset: AdamW steps206/210/212/250 at rounds38/40/41/60 demonstra
 continued optimization. Keep LR1e-4 and two steps while guarding dev; do not infer
 that more updates or higher LR will fix a misaligned training objective. New
 receipts log update norms, gradient norms, actual optimizer steps and phase timings.
+
+## Rejection fixed-point escape (17:05Z owner nudge)
+
+Each logical round gets its own logged Python/NumPy/Torch seed and training-order
+rotation. A rejected adapter triggers a one-step proposal at one-quarter of the
+retained optimizer's LR; repeated failed alternatives reduce further, bounded at
+LR1e-6 and at most the original two optimizer updates. Accepted gentle LRs persist
+in the incumbent optimizer. Model/AdamW rollback and the best-dev score gate remain.
+Candidate parameter hashes distinguish actual proposals from identical dev argmins.
+
+After K=3 repeated rejections, GP generates16 proposals instead of8, rotates
+mutation parents, excludes programs already in the context pool, and allocates
+its unchanged four native evaluations to two model-ranked plus two seeded
+exploration candidates. GP always runs on the retained incumbent even when an
+adapter proposal is rejected. Replayed/newly promoted champions explicitly carry
+DL-Train eligibility for family-disjoint retrieval. All changes and actual
+native evaluation/promotion counts are in the round receipt; improvements are
+measured, never guaranteed. DOPE, Phase2 exclusions and resource ceilings persist.

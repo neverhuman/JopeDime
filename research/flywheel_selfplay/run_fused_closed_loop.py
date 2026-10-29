@@ -47,7 +47,7 @@ sys.modules[spec.name] = guard
 spec.loader.exec_module(guard)
 sys.path.insert(0, str(HERE))
 from automatic_promotion import promote, replay, training_cv_envelope, training_indices
-from dev_incumbent import DevIncumbent
+from dev_incumbent import DevIncumbent, gp_selection_indices, proposal_plan
 
 
 def sha(path):
@@ -297,6 +297,7 @@ def main():
                 {
                     "context_sha256": key[0],
                     "family_id": ev["family_id"],
+                    "dl_split": "DL-Train",
                     "dsl": ev["dsl"],
                     "program_sha256": key[1],
                     "feat412": ev["feat412"],
@@ -527,6 +528,9 @@ def main():
         if args.continuous
         else range(start_round, start_round + args.rounds)
     )
+    proposal_history = [
+        json.loads(path.read_text()) for path in args.output.glob("round-*.json")
+    ]
     for rnd in round_indices:
         used_bytes = sum(
             p.stat().st_size for p in args.output.rglob("*") if p.is_file()
@@ -542,6 +546,14 @@ def main():
             raise ValueError(
                 "completed round exists; use a new run with explicit checkpoint resume"
             )
+        plan = proposal_plan(args.seed, rnd, proposal_history, args.steps)
+        random.seed(plan["round_seed"])
+        np.random.seed(plan["round_seed"] % (2**32))
+        torch.manual_seed(plan["round_seed"])
+        for group in opt.param_groups:
+            group["lr"] = max(plan["minimum_lr"], group["lr"] * plan["lr_factor"])
+        rotation = plan["training_rotation"] % len(train)
+        round_train = train[rotation:] + train[:rotation]
         # Return unused cached segments between rounds to limit fragmentation.
         torch.cuda.empty_cache()
         start = time.monotonic()
@@ -567,12 +579,12 @@ def main():
         snap = {
             n: p.detach().clone() for n, p in net.named_parameters() if p.requires_grad
         }
-        for step in range(args.steps):
+        for step in range(plan["steps"]):
             phase_start = time.monotonic()
             headroom()
             phase["headroom_wait"] += time.monotonic() - phase_start
             phase_start = time.monotonic()
-            cids = random.choices(train, k=args.batch_size)
+            cids = random.choices(round_train, k=args.batch_size)
             selections = []
             for c in cids:
                 selections.append(training_indices(pools[c], args.slate_size))
@@ -632,6 +644,14 @@ def main():
         )
         phase_start = time.monotonic()
         candidate_dev = utility()
+        candidate_hash = hashlib.sha256()
+        for name, parameter in sorted(net.named_parameters()):
+            if parameter.requires_grad:
+                candidate_hash.update(name.encode())
+                candidate_hash.update(
+                    parameter.detach().cpu().contiguous().numpy().tobytes()
+                )
+        candidate_parameter_sha256 = candidate_hash.hexdigest()
         if candidate_dev["mean"] < incumbent.best_utility:
             rejected = args.output / "rejected" / f"round-{rnd:02d}.pt"
             rejected.parent.mkdir(exist_ok=True)
@@ -668,6 +688,7 @@ def main():
         phase["dev_gate"] = time.monotonic() - phase_start
         gp_start = time.monotonic()
         seen_before_round = {pid for c in train for pid in pools[c]["pids"]}
+        gp_proposal_changes = []
         generated = []
         events = []
         passed = 0
@@ -681,14 +702,23 @@ def main():
             headroom()
             p = pools[c]
             parents = [r for r in bank if r["context_sha256"] == c]
+            parent_offset = (rnd + i) % len(parents) if parents else 0
+            parents = parents[parent_offset:] + parents[:parent_offset]
             proposals = evaluator.propose_flywheel_candidates(
                 parents,
                 landmark[c],
                 bank,
                 p["rec"]["family_id"],
-                n_proposals=8,
-                seed=args.seed + rnd * 1000 + i,
+                n_proposals=plan["gp_generated_per_context"],
+                seed=plan["round_seed"] + i,
             )
+            generated_count = len(proposals)
+            known_pids = set(p["pids"])
+            proposals = [
+                candidate
+                for candidate in proposals
+                if candidate["program_sha256"] not in known_pids
+            ]
             # Fused head ranks actual proposed ASTs before exact Rust CV scoring.
             if proposals:
                 f = np.stack(
@@ -708,9 +738,22 @@ def main():
                         .numpy()
                     )
                 pools[c] = p
-                chosen = [proposals[int(j)] for j in np.argsort(rank)[:4]]
+                selected_indices = gp_selection_indices(
+                    rank, plan["round_seed"] + i, plan["gp_exploration"]
+                )
+                chosen = [proposals[j] for j in selected_indices]
             else:
                 chosen = []
+            gp_proposal_changes.append(
+                {
+                    "context_sha256": c,
+                    "parent_rotation": parent_offset,
+                    "generated": generated_count,
+                    "novel_after_pool_dedup": len(proposals),
+                    "exploration": plan["gp_exploration"],
+                    "selected_programs": [v["program_sha256"] for v in chosen],
+                }
+            )
             gz = args.output / "train_inputs" / f"{c}.jtt1.gz"
             gz.parent.mkdir(exist_ok=True)
             gz.write_bytes(
@@ -756,6 +799,7 @@ def main():
                         {
                             "context_sha256": c,
                             "family_id": p["rec"]["family_id"],
+                            "dl_split": "DL-Train",
                             "dsl": r["dsl"],
                             "program_sha256": r["program_sha256"],
                             "feat412": r["feat412"].tolist(),
@@ -798,14 +842,18 @@ def main():
             "round": rnd,
             "node": socket.gethostname(),
             "path": manifest["path"],
-            "optimizer_steps": args.steps,
+            "optimizer_steps": plan["steps"],
+            "proposal_plan": plan,
+            "candidate_parameter_sha256": candidate_parameter_sha256,
             "changed_tensors": changed,
             "trainable_params": counts["__global_total__"]["trainable_params"],
             "parameter_counts": counts,
             "dope_checksum_match": True,
             "dope_sha256": before.composite_sha256,
-            "training_context_presentations": args.steps * args.batch_size,
-            "training_contexts_per_second": args.steps * args.batch_size / train_wall,
+            "training_context_presentations": plan["steps"] * args.batch_size,
+            "training_contexts_per_second": plan["steps"]
+            * args.batch_size
+            / train_wall,
             "round_contexts_per_second": len(train) / wall,
             "tokens_per_second": token_count / wall,
             "tokens_count": token_count,
@@ -824,6 +872,7 @@ def main():
             "loss_first": losses[0],
             "loss_last": losses[-1],
             "GP": {
+                "proposal_changes": gp_proposal_changes,
                 "evaluated": len(generated),
                 "passing": passed,
                 "failed": failed,
@@ -842,6 +891,7 @@ def main():
             "gpu_peak_reserved_bytes": torch.cuda.max_memory_reserved(),
         }
         write_json(args.output / f"round-{rnd:02d}.json", row)
+        proposal_history.append(row)
         remaining = (
             "continuous"
             if args.continuous
@@ -858,7 +908,7 @@ def main():
         status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
         status.write_text(
             "# Fused flywheel status\n\n"
-            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nEffective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
+            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nProposal seed {plan['round_seed']}; retry level {plan['retry_level']}; actual updates {plan['steps']}; GP exploration {plan['gp_exploration']}. Effective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
         )
         findings = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_FINDINGS.md"
         if findings.exists():

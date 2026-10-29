@@ -89,3 +89,54 @@ def test_repeated_rejections_never_mutate_saved_optimizer_state():
                 assert torch.equal(opt.state_dict()["state"][key][name], value)
                 assert torch.equal(gate.optimizer_state["state"][key][name], value)
         assert opt.param_groups[0]["lr"] == original["param_groups"][0]["lr"]
+
+
+def test_rejection_escape_changes_lr_steps_seed_and_enables_gp_after_k():
+    from dev_incumbent import proposal_plan
+
+    history = [
+        {
+            "round": n,
+            "adapter_admission": {"accepted": False},
+            "candidate_dev_utility": {"mean": 1, "selected_programs": ["same"]},
+        }
+        for n in range(1, 4)
+    ]
+    plan = proposal_plan(42, 4, history)
+    assert plan["steps"] == 1 and plan["lr_factor"] == 0.25
+    assert plan["same_candidate_streak"] == 3 and plan["gp_exploration"]
+    assert plan["gp_max_evaluated_per_context"] == 4
+    history.append(
+        {
+            "round": 4,
+            "adapter_admission": {"accepted": False},
+            "candidate_dev_utility": {"mean": 1, "selected_programs": ["same"]},
+            "proposal_plan": plan,
+        }
+    )
+    retry = proposal_plan(42, 5, history)
+    assert (
+        retry["lr_factor"] < plan["lr_factor"]
+        and retry["round_seed"] != plan["round_seed"]
+    )
+
+
+def test_acceptance_resets_retry_but_round_seed_keeps_changing():
+    from dev_incumbent import proposal_plan
+
+    history = [{"round": 3, "adapter_admission": {"accepted": True}}]
+    a = proposal_plan(42, 4, history)
+    b = proposal_plan(42, 5, history)
+    assert a["retry_level"] == 0 and a["steps"] == 2 and not a["gp_exploration"]
+    assert a["round_seed"] != b["round_seed"]
+
+
+def test_stalled_gp_selection_is_reproducible_and_reserves_exploration():
+    from dev_incumbent import gp_selection_indices
+
+    costs = list(range(16))
+    a = gp_selection_indices(costs, 42, True)
+    assert a[:2] == [0, 1] and len(a) == len(set(a)) == 4
+    assert a == gp_selection_indices(costs, 42, True)
+    assert a != gp_selection_indices(costs, 43, True)
+    assert gp_selection_indices(costs, 42, False) == [0, 1, 2, 3]
