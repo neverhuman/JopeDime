@@ -53,7 +53,7 @@ from dev_incumbent import (
     project_score_margins,
     proposal_plan,
 )
-from device_pool_cache import DevicePoolCache
+from device_pool_cache import DevicePoolCache, wait_for_gpu_headroom
 
 
 def sha(path):
@@ -145,6 +145,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     lock = open(Path.home() / "jope_plan/qualification.lock", "a")  # noqa: SIM115 -- held for process lifetime
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    wait_for_gpu_headroom(torch.device("cuda"))
     torch.set_num_threads(4)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -692,7 +693,7 @@ def main():
         rotation = plan["training_rotation"] % len(train)
         round_train = train[rotation:] + train[:rotation]
         # Return unused cached segments between rounds to limit fragmentation.
-        torch.cuda.empty_cache()
+        wait_for_gpu_headroom(device)
         start = time.monotonic()
         torch.cuda.reset_peak_memory_stats()
         losses = []
