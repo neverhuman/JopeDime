@@ -137,3 +137,18 @@ slates reaches approximately 80–90% device memory with the 90% allocator cap.
 This is repeated training presentation of 16 unique contexts, not 9,216 unique
 new datasets. Per-round GP DSL token rates use actual cl100k_base counts; they do
 not assert Rust/all-language emission throughput.
+
+## First corrected real-data rounds
+
+Round 4: 64 native CV evaluations, 63 passing, 2 strict promotions, 41 changed
+head tensors; 125.83s wall, 275.25 training presentations/s, 20.27 GP DSL tokens/s.
+Round 5: 64 evaluations, 62 passing, 3 strict promotions, 41 changed tensors;
+99.06s wall, 462.95 presentations/s, 25.54 GP DSL tokens/s. Both used batch9216
+and 2 optimizer updates; these repeat stochastic views of 16 contexts. DOPE
+composite SHA-256 remained c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814.
+Development utility fell from 2.24815246 to 2.18063793; there is no quality-gain
+claim. Older round4/5 `GP.novelty` denotes unique/evaluated fraction (0.891/0.875),
+not novelty against the pool; the final runner records both metrics separately.
+Committed compact evidence and full promotion journal live in
+`research/flywheel_selfplay/results/fused-20261029/`; tables and checkpoints remain
+outside Git. Continuation resumes the same journal and checkpoint lineage.

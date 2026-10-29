@@ -1,0 +1,48 @@
+{
+  "schema": "jope.fused-flywheel-restart/v1",
+  "node": "xbabe1",
+  "historical_admissions": 90,
+  "historical_ordered_promotions": 5,
+  "new_strict_promotions_round4_5": 5,
+  "sealed_meta_test_read": false,
+  "outer_rows_in_input": 0,
+  "path": "CPU-exact landmarks + frozen DOPE + GPU JopeDime adapter",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "failed_attempts": [
+    {
+      "rounds": [
+        1,
+        2
+      ],
+      "GP_status": "all failed: nq=0 native shape admission",
+      "training_optimizer_steps": 128
+    },
+    {
+      "rounds": [
+        3
+      ],
+      "GP_status": "all failed: stale s1-input cache from nq=0 attempt",
+      "training_optimizer_steps": 8
+    }
+  ],
+  "metric_correction": "round4/5 GP.novelty records unique/evaluated fraction; interpret as unique_fraction, not novelty against prior pool. Final source reports these separately.",
+  "evidence_root": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029",
+  "source_receipts": {
+    "attempt3": {
+      "automatic_promotion.py": "0257183ba2e594cbc280c81029547a81843f1fc92da7dc8954267955657a12fd",
+      "run_fused_closed_loop.py": "721e7ca3bb08b5dde4decf53eb3e41bc38e0233b8d311dea5669711385f2dfa0"
+    },
+    "round4_5": {
+      "automatic_promotion.py": "7241636d04c3da3f6b371b82625b80a22d5247f263e4dd61e81b42eaac11395e",
+      "run_fused_closed_loop.py": "0293e160184f35a33f3676e8c9a84a2ecccc8757dfe8190ef1419e48da8dac37"
+    }
+  },
+  "validation": {
+    "promotion_pytest_passed": 13,
+    "NS3_suite_passed": 4,
+    "full_local_required": "unavailable: just not installed",
+    "hosted_CI": "pending"
+  },
+  "quality_finding": "dev utility 2.2481524625770315 -> 2.180637925280284, no improvement established",
+  "continuation": "requested; final committed source will resume from round5 under same journal/DOPE hash/resource bounds"
+}
