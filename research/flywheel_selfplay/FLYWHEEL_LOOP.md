@@ -242,3 +242,10 @@ real repeated-context slates. Large gathered slates are released before the next
 step. Receipts expose device packing, model/target timings, index bytes, avoided
 host-feature bytes and cache transfers; these are nested within the existing
 forward/input total. Raw argmin, margin projection, budgets and DOPE freeze persist.
+
+Live qualification: rounds162–164 took57.54/59.20/63.77s total and
+2.110/2.001/1.996s training; device packs.070/.060/.056s. Exact startup
+input/cost parity and35 focused tests passed. Each round retained raw dev
+2.267816,2 optimizer updates,64 native evaluations and unchanged DOPE.
+See `results/fused-20261029/dev-regression/device_cache_live_proof.json`.
+Historical Oct23–24 GP-only133–211s has a different scope.

@@ -132,3 +132,26 @@ L2; no checkpoint rollback was used. The complete non-adapter state and DOPE
 remain identical to95. Both live steps satisfy the pinned margin constraints.
 Thirty focused tests pass, including repeated projection that preserves the
 ranking while continuing progress along an unconstrained parameter direction.
+
+
+2026-10-29 18:35 nudge — allocation slowdown and exact device cache.
+Read-only live profile156–158: 2,642,384 minor faults, 35.31s kernel CPU,
+zero major faults/read bytes/process swap over127.55s. Legacy training rebuilt
+2.592GB feature slates per step, plus temporary copies and CPU→GPU transfer.
+DevicePoolCache now retains context rows and gathers identical slate indices
+on-device; promotions/replacements invalidate the affected context. No score,
+target, RNG or selection changes. Startup real-data fields and predicted costs
+are bit-identical (maximum cost delta0). Own worker resumed completed161 only.
+Rounds162/163/164: total57.54/59.20/63.77s; training2.110/2.001/1.996s;
+packing.070/.060/.056s. Immediately before: rounds160/161 total99.88/103.24s,
+training38.05/37.14s; r154 training56.48s. Input/forward now.60–.62s,
+CPU index transfers25.17MB versus5.184GB avoided feature slates per round.
+All three rounds:2 optimizer steps,41 changed tensors,positive update norm,
+64 native evaluations,raw dev2.267816067203105,DOPE c51a56d0 unchanged.
+Post profile (includes startup)127.58s:286,999 minor faults,2.17s kernel CPU,
+14 major faults/2.87MB reads,zero process swap; peakRSS in durable receipt.
+Current training overhead is flat across these three observed rounds; GP wall
+variation remains. Oct23–24 baseline183.26/133.06/211.24s covered GP-only;
+current totals include training+GP, so no matched speedup is asserted.
+35 focused tests pass (five cache tests), ruff/check/format,diff,paper-trace pass.
+Loop continues with unchanged campaign budgets; no Phase2 or xbabe0 access.
