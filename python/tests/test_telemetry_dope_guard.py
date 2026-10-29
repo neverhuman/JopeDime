@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
 
@@ -54,7 +55,9 @@ def test_golden_tensor_digest() -> None:
     )
 
 
-@pytest.mark.skipif(not NS3.exists(), reason="NS3 reference guard is outside the product tree")
+# os.path.exists, not Path.exists: CI containers cannot traverse /home/ubuntu, and there
+# Python 3.12's Path.exists raises PermissionError instead of returning False.
+@pytest.mark.skipif(not os.path.exists(NS3), reason="NS3 reference guard is outside the product tree")
 def test_digests_match_ns3_reference() -> None:
     ns3 = _load_ns3()
     net, _ = frozen()
