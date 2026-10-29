@@ -2,18 +2,18 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Append the feat-math W1-W9 bit-exact HPC hotpaths identity-only successor after the search narration identity rebaseline. Only crates/feat-math/src/* implementation files change; Cargo.lock, DSL ABI, known identity rows, numerical/emission/seeded behavior fixtures, and all prior transition records remain unchanged.",
   "plan_reference": "Wave H4 JopeDimeMicro W1-W9 bit-exact HPC hotpaths port; compat_freeze.rs owning identity lane; ADR-0004",
-  "source_commit": "f91ce131a9f7e4a68136ba1699450e2255a1f46d",
-  "source_reference": "https://github.com/neverhuman/JopeDime/commit/f91ce131a9f7e4a68136ba1699450e2255a1f46d",
+  "source_commit": "0626fec997e8eb03f7db9acb02ae6e273b9cd72f",
+  "source_reference": "https://github.com/neverhuman/JopeDime/commit/0626fec997e8eb03f7db9acb02ae6e273b9cd72f",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "f48b40803781754d90c6c2a5bb5920de69050a3cb41225b4d638e2877691bad6",
-      "after": "73e875bbdb79b25757b0066948bf314f096b5daba5dc9cec34b09a1593cb1352"
+      "after": "86276be70177a556514bc1e4a2cad05d421062c606fcdd2210a7c7d06a60a826"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "12079baea76937721874a5bcb246c9b1972006b071e128dc8c72b345646d3f22",
-      "after": "9e57b5e1faa1606a00545aff189d8a894f4ce86613c9d7a27bfc0a140a266e97"
+      "after": "6489808ec03fc443fb43aca36c10d933868d4500f23d75da82e677e9afcf1f4d"
     }
   ]
 }

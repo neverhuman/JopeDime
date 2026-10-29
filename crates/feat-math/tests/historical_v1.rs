@@ -701,7 +701,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/feat_math_hpc_w1_w9_identity_rebaseline.v1.json");
     assert_eq!(
         feat_math_hpc_w1_w9["source_commit"],
-        "f91ce131a9f7e4a68136ba1699450e2255a1f46d"
+        "0626fec997e8eb03f7db9acb02ae6e273b9cd72f"
     );
     for record in [
         &optional_landmarks_dependency,
