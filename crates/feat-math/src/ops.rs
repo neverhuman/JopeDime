@@ -228,8 +228,9 @@ pub fn sorted_col(x: &Rows, j: usize) -> Vec<f64> {
 /// sorted in an earlier stage (or reused by a downstream `histgbm` head) can reuse its
 /// `total_cmp`-sorted vector without re-extracting or re-sorting `x[..][j]`.
 #[derive(Clone, Debug, Default)]
-pub struct SortedColumnsCache {
+pub(crate) struct SortedColumnsCache {
     cols: Vec<Option<std::sync::Arc<Vec<f64>>>>,
+    row_count: Option<usize>,
     pub cache_hits: usize,
     pub cache_misses: usize,
 }
@@ -242,6 +243,10 @@ impl SortedColumnsCache {
     pub fn ensure_cols(&mut self, x: &Rows, cols: usize) {
         if x.is_empty() || cols == 0 {
             return;
+        }
+        if self.row_count != Some(x.len()) {
+            self.cols.clear();
+            self.row_count = Some(x.len());
         }
         if self.cols.len() < cols {
             self.cols.resize(cols, None);
@@ -461,7 +466,7 @@ pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
     fit_op_with_cache(stage, x, y, &mut cache)
 }
 
-pub fn fit_op_with_cache(
+pub(crate) fn fit_op_with_cache(
     stage: &Stage,
     x: &Rows,
     y: &[f64],
@@ -1088,13 +1093,14 @@ pub fn apply_op(op: &FittedOp, x: &Rows) -> std::result::Result<Rows, WidthMisma
                 .collect()
         }),
         FittedOp::Hinge { knots, append } if x.iter().all(|r| r.len() == knots.len()) => {
+            let knot_width = knots.first().map_or(0, Vec::len);
             map_rows(x, |r| {
                 let cap = if *append {
                     crate::MAX_WIDTH.saturating_sub(r.len())
                 } else {
                     crate::MAX_WIDTH
                 };
-                let mut o = Vec::with_capacity((r.len() * knots[0].len()).min(cap));
+                let mut o = Vec::with_capacity((r.len() * knot_width).min(cap));
                 'outer: for (j, v) in r.iter().enumerate() {
                     for t in &knots[j] {
                         if o.len() >= cap {
@@ -2219,5 +2225,84 @@ mod tests {
         }
         assert_eq!(cache.cache_misses, crate::MAX_WIDTH);
         assert_eq!(cache.cache_hits, 3 * crate::MAX_WIDTH);
+    }
+
+    #[test]
+    fn mid_rank_fast_path_matches_reference_bounds_on_ties_and_nans() {
+        fn mid_rank_ref(s: &[f64], v: f64) -> f64 {
+            let n = s.len() as f64;
+            let lo = lower_bound(s, v) as f64;
+            let hi = upper_bound(s, v) as f64;
+            (lo + hi) / (2.0 * n)
+        }
+        let mut slices: Vec<Vec<f64>> = vec![
+            vec![0.0],
+            vec![-0.0, 0.0],
+            vec![1.0, 1.0, 1.0, 1.0],
+            vec![-2.0, -1.0, -1.0, 0.0, 0.0, 0.0, 3.5, 3.5],
+            vec![f64::NEG_INFINITY, -1.0, 0.0, 1.0, f64::INFINITY],
+            vec![-1.0, 0.0, 0.0, 2.0, f64::NAN, f64::NAN],
+        ];
+        for s in &mut slices {
+            s.sort_by(|a, b| a.total_cmp(b));
+        }
+        let queries = [
+            f64::NEG_INFINITY,
+            -3.0,
+            -2.0,
+            -1.0,
+            -0.5,
+            -0.0,
+            0.0,
+            0.5,
+            1.0,
+            2.0,
+            3.5,
+            4.0,
+            f64::INFINITY,
+            f64::NAN,
+        ];
+        for s in &slices {
+            for &q in &queries {
+                let got = mid_rank(s, q);
+                let exp = mid_rank_ref(s, q);
+                assert_eq!(
+                    got.to_bits(),
+                    exp.to_bits(),
+                    "mid_rank mismatch for slice={s:?}, q={q:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn parallel_map_rows_and_finish_above_65536_cells_match_reference() {
+        // 256 rows x 300 cols = 76,800 > 65,536 cells exercises the parallel branches in
+        // map_rows, finish (append=true and append=false), and SortedColumnsCache::ensure_cols.
+        let (mut x, y) = toy(256, 300);
+        x[17][42] = f64::NAN;
+        x[129][211] = f64::INFINITY;
+        let mut cache = SortedColumnsCache::new();
+        for src in [
+            "(quantile_bins bins=8 append=false)",
+            "(quantile_bins bins=8 append=true)",
+            "(hinge knots=2 append=true)",
+        ] {
+            let st = stage(src);
+            let op_fit = fit_op_with_cache(&st, &x, &y, &mut cache).unwrap();
+            let out_fast = apply_op(&op_fit, &x).unwrap();
+            let out_ref = finish(&op_fit, &x, apply_op_generated(&op_fit, &x));
+            assert_eq!(out_fast.len(), out_ref.len());
+            for (rf, rr) in out_fast.iter().zip(&out_ref) {
+                assert_eq!(rf.len(), rr.len());
+                for (&vf, &vr) in rf.iter().zip(rr) {
+                    assert_eq!(vf.to_bits(), vr.to_bits());
+                }
+            }
+        }
+        // Changing row count invalidates SortedColumnsCache automatically.
+        let (x_short, _) = toy(16, 300);
+        cache.ensure_cols(&x_short, 4);
+        assert_eq!(cache.col_slice(0).len(), 16);
     }
 }

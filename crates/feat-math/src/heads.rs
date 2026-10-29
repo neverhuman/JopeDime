@@ -192,7 +192,7 @@ pub fn fit_head_and_predict_train(
     fit_head_and_predict_train_with_cache(stage, x, y, &mut cache)
 }
 
-pub fn fit_head_with_cache(
+pub(crate) fn fit_head_with_cache(
     stage: &Stage,
     x: &Rows,
     y: &[f64],
@@ -211,7 +211,7 @@ pub fn fit_head_with_cache(
     fit_head(stage, x, y)
 }
 
-pub fn fit_head_and_predict_train_with_cache(
+pub(crate) fn fit_head_and_predict_train_with_cache(
     stage: &Stage,
     x: &Rows,
     y: &[f64],
@@ -1482,7 +1482,7 @@ impl GbmModel {
         Self::fit_with_train_preds(x, y, cfg).0
     }
 
-    pub fn fit_with_cache(
+    pub(crate) fn fit_with_cache(
         x: &Rows,
         y: &[f64],
         cfg: &GbmParams,
@@ -1495,7 +1495,7 @@ impl GbmModel {
         Self::fit_with_train_preds_and_cache(x, y, cfg, None)
     }
 
-    pub fn fit_with_train_preds_and_cache(
+    pub(crate) fn fit_with_train_preds_and_cache(
         x: &Rows,
         y: &[f64],
         cfg: &GbmParams,
