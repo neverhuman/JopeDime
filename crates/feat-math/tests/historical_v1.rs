@@ -697,6 +697,12 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         search_narration["source_commit"],
         "4704b6197a49fe532e61915fac96b22f06b9e4f1"
     );
+    let feat_math_hpc_w1_w9 =
+        old_fixture("transitions/feat_math_hpc_w1_w9_identity_rebaseline.v1.json");
+    assert_eq!(
+        feat_math_hpc_w1_w9["source_commit"],
+        "f91ce131a9f7e4a68136ba1699450e2255a1f46d"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -705,6 +711,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &dope_main_repin,
         &dope_engine_v1_1_0_repin,
         &search_narration,
+        &feat_math_hpc_w1_w9,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -750,6 +757,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dope_main_repin.clone(),
                 dope_engine_v1_1_0_repin.clone(),
                 search_narration.clone(),
+                feat_math_hpc_w1_w9.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -781,6 +789,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dope_main_repin.clone(),
                 dope_engine_v1_1_0_repin.clone(),
                 search_narration.clone(),
+                feat_math_hpc_w1_w9.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -805,6 +814,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dope_main_repin.clone(),
                 dope_engine_v1_1_0_repin.clone(),
                 search_narration.clone(),
+                feat_math_hpc_w1_w9.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -860,6 +870,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dope_main_repin.clone(),
                 dope_engine_v1_1_0_repin.clone(),
                 search_narration.clone(),
+                feat_math_hpc_w1_w9.clone(),
             ],
         ),
         (
@@ -875,6 +886,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dope_main_repin.clone(),
                 dope_engine_v1_1_0_repin.clone(),
                 search_narration.clone(),
+                feat_math_hpc_w1_w9.clone(),
             ],
         ),
     ] {
@@ -938,6 +950,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         dope_main_repin,
         dope_engine_v1_1_0_repin,
         search_narration,
+        feat_math_hpc_w1_w9,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
