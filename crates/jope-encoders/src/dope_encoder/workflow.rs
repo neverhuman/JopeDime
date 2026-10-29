@@ -171,7 +171,18 @@ pub fn start_training_with_options(
     input: TrainingInput,
     encoder: super::DopeEncoder,
     args: &super::LandmarkArgs,
+    session_options: SessionOptions,
+) -> Result<EncodingSession> {
+    start_training_observed(input, encoder, args, session_options, || {})
+}
+
+// Keep timing instrumentation at the real preparation boundary without preparing twice.
+fn start_training_observed(
+    input: TrainingInput,
+    encoder: super::DopeEncoder,
+    args: &super::LandmarkArgs,
     mut session_options: SessionOptions,
+    after_prepare: impl FnOnce(),
 ) -> Result<EncodingSession> {
     use dope_core::landmark::{
         bundle::{BundleScope, LandmarkGroup, LandmarkMode, LandmarkScope, SubsampleSpec},
@@ -191,6 +202,7 @@ pub fn start_training_with_options(
     } else {
         super::prepare_training_input(&input)?
     };
+    after_prepare();
     let fit_scope = super::FitScope::from_prepared(&input, &prepared)?;
     if let Some(inputs) = &session_options.component_inputs {
         ensure!(
@@ -350,3 +362,6 @@ pub fn start_training_with_options(
         },
     ))
 }
+
+#[cfg(test)]
+mod resident_release_tests;
