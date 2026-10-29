@@ -139,7 +139,9 @@ pub struct OptionsIdentity {
     pub math_policy: String,
     pub guard_zero_width_roll: bool,
     pub partition_point_quantile_bounds: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub hpc_v1: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub hpc_v2: bool,
 }
 impl From<&EmitOptions> for OptionsIdentity {
