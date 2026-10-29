@@ -21,15 +21,13 @@ import hashlib
 import json
 import sys
 import types
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import torch
 import torch.nn as nn
 
-DOPE_NORMALIZER_BUFFERS: Tuple[str, ...] = (
+DOPE_NORMALIZER_BUFFERS: tuple[str, ...] = (
     "step2_lm_mean_1x256",
     "step2_lm_std_1x256",
     "step2_svd_basis_256x48",
@@ -57,8 +55,8 @@ class DopeFreezeSnapshot:
     num_param_elements: int
     num_buffer_tensors: int
     num_buffer_elements: int
-    tensor_hashes: Dict[str, str]
-    tensor_shapes: Dict[str, List[int]]
+    tensor_hashes: dict[str, str]
+    tensor_shapes: dict[str, list[int]]
 
 
 def _tensor_le_sha256(t: torch.Tensor) -> str:
@@ -66,7 +64,7 @@ def _tensor_le_sha256(t: torch.Tensor) -> str:
     if arr.dtype.byteorder == ">":
         arr = arr.byteswap().newbyteorder("<")
     h = hashlib.sha256()
-    h.update(f"{arr.dtype.str}:{list(arr.shape)}:".encode("utf-8"))
+    h.update(f"{arr.dtype.str}:{list(arr.shape)}:".encode())
     h.update(arr.tobytes(order="C"))
     return h.hexdigest()
 
@@ -124,7 +122,7 @@ def lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
 
     if not getattr(fused_net, "_dope_freeze_train_hook_installed", False):
         fused_net.train = types.MethodType(_safe_fused_train, fused_net)
-        setattr(fused_net, "_dope_freeze_train_hook_installed", True)
+        fused_net._dope_freeze_train_hook_installed = True
 
 
 def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
@@ -144,8 +142,8 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
                 f"DOPE freeze violation: `{label}.training` is True (all DOPE submodules must stay False / eval)."
             )
 
-    tensor_hashes: Dict[str, str] = {}
-    tensor_shapes: Dict[str, List[int]] = {}
+    tensor_hashes: dict[str, str] = {}
+    tensor_shapes: dict[str, list[int]] = {}
     h_params = hashlib.sha256()
     h_buffers = hashlib.sha256()
 
@@ -164,7 +162,7 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
         th = _tensor_le_sha256(p)
         tensor_hashes[full_name] = th
         tensor_shapes[full_name] = list(p.shape)
-        h_params.update(f"{full_name}={th}\n".encode("utf-8"))
+        h_params.update(f"{full_name}={th}\n".encode())
         num_param_tensors += 1
         num_param_elements += int(p.numel())
 
@@ -178,7 +176,7 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
         th = _tensor_le_sha256(b)
         tensor_hashes[full_name] = th
         tensor_shapes[full_name] = list(b.shape)
-        h_buffers.update(f"{full_name}={th}\n".encode("utf-8"))
+        h_buffers.update(f"{full_name}={th}\n".encode())
         num_buffer_tensors += 1
         num_buffer_elements += int(b.numel())
 
@@ -190,14 +188,14 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
             th = _tensor_le_sha256(b)
             tensor_hashes[full_name] = th
             tensor_shapes[full_name] = list(b.shape)
-            h_buffers.update(f"{full_name}={th}\n".encode("utf-8"))
+            h_buffers.update(f"{full_name}={th}\n".encode())
             num_buffer_tensors += 1
             num_buffer_elements += int(b.numel())
 
     params_sha = h_params.hexdigest()
     buffers_sha = h_buffers.hexdigest()
     h_comp = hashlib.sha256()
-    h_comp.update(f"params:{params_sha}|buffers:{buffers_sha}".encode("utf-8"))
+    h_comp.update(f"params:{params_sha}|buffers:{buffers_sha}".encode())
     composite_sha = h_comp.hexdigest()
 
     return DopeFreezeSnapshot(
@@ -216,7 +214,7 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
 def verify_dope_frozen_unchanged(
     fused_net: nn.Module,
     before: DopeFreezeSnapshot,
-) -> Tuple[bool, DopeFreezeSnapshot]:
+) -> tuple[bool, DopeFreezeSnapshot]:
     """
     Re-computes the DOPE snapshot after a flywheel training step/epoch and asserts
     zero drift in any parameter tensor, normalizer buffer, `requires_grad` flag, or `.eval()` state.
@@ -235,7 +233,7 @@ def verify_dope_frozen_unchanged(
     return True, after
 
 
-def get_trainable_param_counts_by_submodule(fused_net: nn.Module) -> Dict[str, Dict[str, int]]:
+def get_trainable_param_counts_by_submodule(fused_net: nn.Module) -> dict[str, dict[str, int]]:
     """
     Per Jepson's 08:25 EDT HARD REQUIREMENT in NORTH_STAR.md:
     Logs trainable, frozen, and total parameter counts by top-level submodule,
@@ -253,7 +251,7 @@ def get_trainable_param_counts_by_submodule(fused_net: nn.Module) -> Dict[str, D
                 f"DOPE freeze violation: `{label}.training` is True inside get_trainable_param_counts_by_submodule."
             )
 
-    counts: Dict[str, Dict[str, int]] = {}
+    counts: dict[str, dict[str, int]] = {}
 
     # 1. Direct root parameters (`recurse=False`) so root-level nn.Parameters are never omitted
     root_direct_params = list(fused_net.parameters(recurse=False))
@@ -317,7 +315,6 @@ def assert_optimizer_excludes_dope(
                     f"DOPE freeze violation: DOPE parameter found in optimizer.param_groups[{g_idx}]!"
                 )
     return True
-
 
 
 def run_self_test() -> dict:
@@ -439,7 +436,7 @@ def run_self_test() -> dict:
     # Because `lock_dope_weights_and_eval_mode` installed `_locked_eval_train` on every nested submodule,
     # `target_nested.train(True)` must keep `target_nested.training == False`:
     assert not target_nested.training, "Nested DOPE submodule `.train(True)` escaped eval lock!"
-    tamper_results["nested_submodule_train_call_blocked"] = (not target_nested.training)
+    tamper_results["nested_submodule_train_call_blocked"] = not target_nested.training
 
     # Even if code bypasses `.train()` and directly assigns `target_nested.training = True`,
     # `snapshot_dope_weights` and `get_trainable_param_counts_by_submodule` must catch it:
@@ -497,7 +494,9 @@ def run_self_test() -> dict:
     }
     out_path = Path(__file__).resolve().parent / "ns3_dope_freeze_receipt.json"
     out_path.write_text(json.dumps(report, indent=2))
-    print(json.dumps({k: v for k, v in report.items() if k not in ("tensor_hashes", "tensor_shapes")}, indent=2))
+    print(
+        json.dumps({k: v for k, v in report.items() if k not in ("tensor_hashes", "tensor_shapes")}, indent=2)
+    )
     return report
 
 
