@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored",
-  "count": 6051,
+  "count": 6054,
   "ignored": 81,
   "packages": {
    "battle-gpu": {
@@ -9000,12 +9000,12 @@
     }
    },
    "jope-telemetry": {
-    "count": 39,
+    "count": 42,
     "ignored": 0,
     "binaries": {
      "jope-telemetry": {
       "kind": "lib",
-      "count": 37,
+      "count": 40,
       "ignored": 0,
       "tests": [
        "alarm::tests::collapse_needs_consecutive_generations_per_context",
@@ -9015,6 +9015,8 @@
        "alarm::tests::utc_format",
        "api::tests::alarm_session_dispatches_and_reports_fail_closed",
        "api::tests::generation_round_trip_never_echoes_dsl",
+       "api::tests::tracker_cap_covers_a_real_round_and_refuses_beyond_it",
+       "core::tests::interrupt_finalizes_manifest_as_interrupted",
        "core::tests::producer_is_nonblocking_bounded_and_counted",
        "core::tests::record_lane_is_bounded_and_reports_oversize",
        "event::tests::event_layout_is_fixed_and_nonfinite_is_preserved",
@@ -9039,6 +9041,7 @@
        "sink::jsonl::tests::recovery_truncates_only_a_malformed_unterminated_tail",
        "sink::jsonl::tests::writes_finite_and_nonfinite_values_without_fabricating_zero",
        "sink::parquet::tests::rollup_is_readable_and_ignores_low_rate_records",
+       "summary::tests::elo_is_read_against_methods_in_the_latest_snapshot",
        "summary::tests::summary_reports_spans_diminishing_deltas_and_missing",
        "train::tests::cosine_schedule_endpoints",
        "train::tests::dope_param_classification",
@@ -9287,10 +9290,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 211,
+  "count": 225,
   "packages": {
    "jope": {
-    "count": 211,
+    "count": 225,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9392,6 +9395,16 @@
       "tests": [
        "tests/test_frozen_vocabulary_training.py::test_actual_full_table_optimizer_reload_and_continuation",
        "tests/test_frozen_vocabulary_training.py::test_frozen_table_never_rebuilds_token_ids_from_parsing_views"
+      ]
+     },
+     "tests/test_fused_hpc_accelerator.py": {
+      "count": 5,
+      "tests": [
+       "tests/test_fused_hpc_accelerator.py::test_hpc1_batched_champion_retrieval_and_table_seed",
+       "tests/test_fused_hpc_accelerator.py::test_hpc2_radix_sort_and_monotone_order_reuse",
+       "tests/test_fused_hpc_accelerator.py::test_hpc3_fused_14_probe_corrs_parity",
+       "tests/test_fused_hpc_accelerator.py::test_hpc4_pinned_pool_parallel_loader_and_out_of_loop_tokens",
+       "tests/test_fused_hpc_accelerator.py::test_hpc5_2d_bucketing_multigpu_sharding_and_network_patch"
       ]
      },
      "tests/test_north_star_flywheel_guards.py": {
@@ -9499,6 +9512,14 @@
        "tests/test_telemetry_dope_guard.py::test_weight_drift_names_the_changed_tensor"
       ]
      },
+     "tests/test_telemetry_eval_hooks.py": {
+      "count": 3,
+      "tests": [
+       "tests/test_telemetry_eval_hooks.py::test_batch_record_splits_latency_and_counts_rc",
+       "tests/test_telemetry_eval_hooks.py::test_bucket_edges",
+       "tests/test_telemetry_eval_hooks.py::test_overlap_and_slot_bounds_are_reported"
+      ]
+     },
      "tests/test_telemetry_gp_hooks.py": {
       "count": 2,
       "tests": [
@@ -9507,11 +9528,12 @@
       ]
      },
      "tests/test_telemetry_io_hooks.py": {
-      "count": 5,
+      "count": 6,
       "tests": [
        "tests/test_telemetry_io_hooks.py::test_batch_io_stats_leaves_queue_metrics_missing_when_queue_is_disabled",
        "tests/test_telemetry_io_hooks.py::test_batch_io_stats_write_batch_and_queue_values",
        "tests/test_telemetry_io_hooks.py::test_disabled_read_observer_does_not_stat_path",
+       "tests/test_telemetry_io_hooks.py::test_end_to_end_gb_s_uses_data_wait_plus_completed_h2d_span",
        "tests/test_telemetry_io_hooks.py::test_h2d_sampler_is_inert_without_cuda",
        "tests/test_telemetry_io_hooks.py::test_local_read_observer_counts_logical_file_bytes_and_npz_reads"
       ]
@@ -9528,6 +9550,16 @@
        "tests/test_telemetry_train_hooks.py::test_steps_above_float32_precision_are_exact",
        "tests/test_telemetry_train_hooks.py::test_timer_spans_are_exclusive_and_unattributed_is_the_rest",
        "tests/test_telemetry_train_hooks.py::test_w_shaped_loop_records_existing_host_values_only"
+      ]
+     },
+     "tests/test_telemetry_val_hooks.py": {
+      "count": 5,
+      "tests": [
+       "tests/test_telemetry_val_hooks.py::test_bounds_validation_and_reset",
+       "tests/test_telemetry_val_hooks.py::test_family_weighting_differs_from_dataset_weighting",
+       "tests/test_telemetry_val_hooks.py::test_sealed_label_fails_closed_and_missing_label_is_counted",
+       "tests/test_telemetry_val_hooks.py::test_selection_concentration_and_prediction_spread",
+       "tests/test_telemetry_val_hooks.py::test_without_roster_or_family_ids_nothing_is_presented_as_family_grouped"
       ]
      },
      "tests/test_test_exact_campaign.py": {
@@ -9628,7 +9660,7 @@
   }
  },
  "totals": {
-  "rust": 6051,
-  "python": 211
+  "rust": 6054,
+  "python": 225
  }
 }

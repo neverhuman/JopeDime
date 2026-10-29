@@ -270,6 +270,8 @@ def train_active_v2_from_jsonl(
                 telemetry_timer.mark(step_telemetry[3]["step.span.bwd"])
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             opt.step()
+            if telemetry_timer is not None:
+                telemetry_timer.mark(step_telemetry[3]["step.span.opt"])
             loss_host = float(loss.detach().cpu())
             total += loss_host
             if telemetry_timer is not None:
@@ -281,7 +283,9 @@ def train_active_v2_from_jsonl(
                 if telemetry_timer is not None:
                     batch_obj.put(step_telemetry[4][name], value_host)
             if telemetry_timer is not None:
-                telemetry_timer.mark(step_telemetry[3]["step.span.opt"])
+                # The existing loss and component read-backs: the host waits here for the whole
+                # step's queued GPU work, so this span, not `opt`, carries the GPU drain.
+                telemetry_timer.mark(step_telemetry[3]["step.span.readback"])
                 batch_obj.put(column["optim.lr.group"], float(opt.param_groups[0]["lr"]))
                 telemetry_timer.end(column["step.wall"], column["step.unattributed"])
                 telemetry_step += 1
@@ -466,6 +470,7 @@ def _open_step_telemetry(*, device: str, rank: int, metadata: dict[str, Any]):
         "step.span.fwd",
         "step.span.bwd",
         "step.span.opt",
+        "step.span.readback",
         "step.wall",
         "step.unattributed",
     )

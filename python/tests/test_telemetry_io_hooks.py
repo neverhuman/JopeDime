@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import math
+from contextlib import nullcontext
 
 import numpy as np
 
 from jope.telemetry.io_hooks import (
+    END_TO_END_COLUMN,
+    H2D_COLUMNS,
     IO_COLUMNS,
     BatchIOStats,
     H2DEventSampler,
@@ -140,3 +143,59 @@ def test_h2d_sampler_is_inert_without_cuda():
     assert sampler.begin(64, 1024) == -1
     sampler.end(-1)
     sampler.flush()
+
+
+def test_end_to_end_gb_s_uses_data_wait_plus_completed_h2d_span():
+    submitted = []
+
+    class Event:
+        def record(self, _stream):
+            pass
+
+        def query(self):
+            return True
+
+        def elapsed_time(self, _end):
+            return 2.0
+
+    class Stream:
+        def synchronize(self):
+            pass
+
+    class Cuda:
+        @staticmethod
+        def is_available():
+            return True
+
+        @staticmethod
+        def device(_device):
+            return nullcontext()
+
+        @staticmethod
+        def current_stream(_device):
+            return Stream()
+
+        @staticmethod
+        def Event(enable_timing=True):
+            assert enable_timing is True
+            return Event()
+
+    class Torch:
+        cuda = Cuda()
+
+    columns = (*H2D_COLUMNS, END_TO_END_COLUMN)
+    batch = StepBatch(
+        columns,
+        lambda steps, values, rows: submitted.append(
+            (list(steps[:rows]), list(values[: rows * len(columns)]), rows)
+        ),
+    )
+    sampler = H2DEventSampler(Torch, "cuda:0", batch, stride=1, slots=1, end_to_end_col=3)
+    slot = sampler.begin(7, 1_000_000, data_wait_ms=10.0)
+    sampler.end(slot)
+    sampler.flush(synchronize=False)
+
+    steps, values, rows = submitted[0]
+    assert (steps, rows) == ([7], 1)
+    assert values[2] == 0.5
+    assert values[3] == 1_000_000 / (12.0 * 1e6)

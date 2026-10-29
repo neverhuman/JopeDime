@@ -22,9 +22,9 @@ IO_COLUMNS = (
     "io.samples_per_s",
     "io.batch.bytes",
     "io.batch_bytes_per_s",
-    "io.batch_gb_s",
 )
 H2D_COLUMNS = ("io.h2d.bytes", "io.h2d", "io.h2d_gb_s")
+END_TO_END_COLUMN = "io.batch_gb_s"
 ARRAY_KEYS = (
     "ctx_b",
     "prog_b",
@@ -140,7 +140,6 @@ class BatchIOStats:
         self.batch.put(self.columns["io.samples_per_s"], n / elapsed)
         self.batch.put(self.columns["io.batch.bytes"], float(arrays_bytes))
         self.batch.put(self.columns["io.batch_bytes_per_s"], arrays_bytes / elapsed)
-        self.batch.put(self.columns["io.batch_gb_s"], arrays_bytes / (elapsed * 1e9))
         return arrays_bytes
 
 
@@ -148,7 +147,13 @@ class H2DEventSampler:
     """Sample CUDA copy events without synchronizing; completed events are read lazily."""
 
     def __init__(
-        self, torch_module: Any, device: str, batch: StepBatch, stride: int = 64, slots: int = 4
+        self,
+        torch_module: Any,
+        device: str,
+        batch: StepBatch,
+        stride: int = 64,
+        slots: int = 4,
+        end_to_end_col: int | None = None,
     ) -> None:
         self.batch = batch
         self.stride = max(1, int(stride))
@@ -156,6 +161,8 @@ class H2DEventSampler:
         self.pending = [False] * slots
         self.steps = [0] * slots
         self.byte_counts = [0] * slots
+        self.data_wait_ms: list[float | None] = [None] * slots
+        self.end_to_end_col = end_to_end_col
         self.next_slot = 0
         self.dropped_samples = 0
         self.enabled = str(device).startswith("cuda") and torch_module.cuda.is_available()
@@ -188,14 +195,20 @@ class H2DEventSampler:
                 self.batch.put(0, float(size))
                 self.batch.put(1, elapsed_ms)
                 self.batch.put(2, size / (elapsed_ms * 1e6) if elapsed_ms > 0 else NAN)
+                data_wait_ms = self.data_wait_ms[slot]
+                if self.end_to_end_col is not None and data_wait_ms is not None:
+                    total_ms = data_wait_ms + elapsed_ms
+                    value = size / (total_ms * 1e6) if total_ms > 0 else NAN
+                    self.batch.put(self.end_to_end_col, value)
                 self.batch.commit(self.steps[slot])
                 self.pending[slot] = False
+                self.data_wait_ms[slot] = None
             except Exception:
                 self.dropped_samples += 1
                 self.pending[slot] = False
                 self.enabled = False
 
-    def begin(self, step: int, size_bytes: int) -> int:
+    def begin(self, step: int, size_bytes: int, data_wait_ms: float | None = None) -> int:
         if not self.enabled:
             return -1
         self._poll()
@@ -209,6 +222,7 @@ class H2DEventSampler:
                 self.next_slot = (slot + 1) % len(self.pending)
                 self.steps[slot] = step
                 self.byte_counts[slot] = size_bytes
+                self.data_wait_ms[slot] = data_wait_ms
                 try:
                     self.events[slot][0].record(self.stream)
                 except Exception:

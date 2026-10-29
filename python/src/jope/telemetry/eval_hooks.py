@@ -13,8 +13,9 @@ nonzero exits are counted separately; the evaluator's own result dicts fold both
 
 Workers write into preallocated per-slot arrays, each slot written only by its own task, so no
 lock is needed. ``batch_end`` builds one record per batch, off the evaluation path.
-RUSAGE_CHILDREN is process-wide: when batches overlap in one process, their CPU is mixed, and the
-record says so through ``cpu_overlapping_batches``.
+Use one instance per concurrently running batch stream. A ``batch_begin`` while a batch is still
+active shares the per-slot arrays and the process-wide RUSAGE_CHILDREN counter, so that record is
+marked ``overlapping_batches`` and its slot timings and CPU figures are unreliable.
 """
 
 from __future__ import annotations
@@ -159,7 +160,7 @@ class EvalBatchTelemetry:
             "timeout_rate": timeouts / len(done) if done else None,
             "cpu_s_per_candidate": cpu_s / len(done) if done else None,
             "worker_efficiency": cpu_s / (wall_s * workers) if wall_s > 0 else None,
-            "cpu_overlapping_batches": self._overlapped,
+            "overlapping_batches": self._overlapped,
             "slots_dropped_total": self.slots_dropped,
         }
         self._active = max(0, self._active - 1)
