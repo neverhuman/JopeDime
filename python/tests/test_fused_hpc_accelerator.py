@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import types
 from pathlib import Path
 from typing import Any
@@ -217,7 +218,9 @@ def test_hpc4_pinned_pool_parallel_loader_and_out_of_loop_tokens() -> None:
 def test_hpc5_2d_bucketing_multigpu_sharding_and_network_patch() -> None:
     # 1. Verify 2D (P_tier, N_tr) shape bucketing on cohort915 manifest if present, plus synthetic cohort
     manifest_path = Path("/home/ubuntu/gpu_bench/infer_real_cohort_no_friedman_manifest.json")
-    if manifest_path.is_file():
+    # os.path.isfile, not Path.is_file: on Python 3.12 the latter raises PermissionError in CI
+    # containers, which cannot traverse /home/ubuntu.
+    if os.path.isfile(manifest_path):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         shapes = [(int(d["rows"]), int(d["features"])) for d in manifest["datasets"]]
     else:

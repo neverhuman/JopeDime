@@ -161,7 +161,7 @@ class BrowserDependencies(unittest.TestCase):
 
     def test_content_mismatch_and_client_errors_are_not_retried(self):
         archive = self.archive.read_bytes()
-        for outcome, error in ((archive + b"x", ValueError), (archive[:-1] + b"x", ValueError),
+        for outcome, error in ((archive + b"x", ValueError), (archive[:-1] + bytes([archive[-1] ^ 0xFF]), ValueError),
                                (urllib.error.HTTPError("u", 404, "missing", {}, None), urllib.error.HTTPError)):
             with self.subTest(outcome=type(outcome).__name__), self.assertRaises(error):
                 shutil.copyfile(self.archive, self.cached)

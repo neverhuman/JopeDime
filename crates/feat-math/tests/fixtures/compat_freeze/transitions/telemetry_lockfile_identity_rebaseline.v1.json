@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the root Cargo.lock change from the jope-telemetry crate (#445: new workspace member and its optional pyo3, arrow, parquet and nvml dependencies), after the feat-math W1-W9 HPC hotpaths identity. No crates/feat-math source changes; only Cargo.lock's hash, the implementation_sha256 and identity digest it feeds, and both fixtures' generated_at_sha move. All behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "NORTH STAR Phase B/C follow-up: #445 was force-merged without its identity rebaseline, failing feat-math::compat_freeze on main; repaired in the single follow-up fix PR #450; ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/450",
+  "source_commit": "c4974e5a77fff40d135809ab5d2f49a8d9b353e2",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "ead718f7c5434152a827e2b4fe551f60b454ae89439220275e3ba32eeec12d29",
+      "after": "01d28ef3bb62d72ca19833939c594996cf0ac97a315e961cb2691d3f65c7c27a"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "d05aa4ff4c4bf39ca384280599f798f259660219de5658a68d09d15bcf110386",
+      "after": "ac6597b6eb81d1b4204f26c20cd6f76a90248e28e169e7e10f2261ec23cc67dd"
+    }
+  ]
+}

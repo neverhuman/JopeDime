@@ -143,13 +143,14 @@ impl RunManifest {
         let temp = temp_sibling(path);
         let result = (|| {
             let mut file = File::create(&temp)?;
-            let mut capped = CappedWriter {
-                inner: &mut file,
-                written: 0,
-            };
-            serde_json::to_writer_pretty(&mut capped, self).map_err(io::Error::other)?;
-            capped.write_all(b"\n")?;
-            drop(capped);
+            {
+                let mut capped = CappedWriter {
+                    inner: &mut file,
+                    written: 0,
+                };
+                serde_json::to_writer_pretty(&mut capped, self).map_err(io::Error::other)?;
+                capped.write_all(b"\n")?;
+            }
             file.sync_all()?;
             fs::rename(&temp, path)?;
             if let Ok(dir) = File::open(parent) {

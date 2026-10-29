@@ -45,3 +45,13 @@ allow = ["CDLA-Permissive-2.0"]
 name = "libbz2-rs-sys"
 version = "=0.2.5"
 allow = ["bzip2-1.0.6"]
+
+# jope-telemetry's optional `python` feature (#445) uses pyo3, whose build script depends on
+# pyo3-build-config -> target-lexicon. target-lexicon is Apache-2.0 WITH LLVM-exception (OSI
+# approved; the exception only widens Apache-2.0). The default build does not enable `python`;
+# cargo-deny sees it through --all-features. Scoped to this crate and version; the global allow
+# list is unchanged.
+[[licenses.exceptions]]
+name = "target-lexicon"
+version = "=0.13.5"
+allow = ["Apache-2.0 WITH LLVM-exception"]
