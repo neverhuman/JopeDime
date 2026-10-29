@@ -73,3 +73,19 @@ def test_identity_change_refused():
     gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1)
     with pytest.raises(ValueError):
         gate.decide(model, opt, {"mean": 3}, "different-dev", "bad.pt", 2)
+
+
+def test_repeated_rejections_never_mutate_saved_optimizer_state():
+    model, opt = setup()
+    original = copy.deepcopy(opt.state_dict())
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "best.pt", 1)
+    for rnd in range(2, 5):
+        opt.zero_grad()
+        model(torch.ones(1, 1)).sum().backward()
+        opt.step()
+        gate.decide(model, opt, {"mean": 1}, "fixed-dev", f"bad-{rnd}.pt", rnd)
+        for key, state in original["state"].items():
+            for name, value in state.items():
+                assert torch.equal(opt.state_dict()["state"][key][name], value)
+                assert torch.equal(gate.optimizer_state["state"][key][name], value)
+        assert opt.param_groups[0]["lr"] == original["param_groups"][0]["lr"]

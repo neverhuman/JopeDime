@@ -416,10 +416,10 @@ def main():
         prior_path = Path(prior_best["best_checkpoint"])
         if sha(prior_path) != prior_best["checkpoint_sha256"]:
             raise ValueError("persisted best-dev checkpoint hash mismatch")
-        if historical_best is None or (
-            prior_best["best_utility"],
-            prior_best["best_round"],
-        ) >= (historical_best["dev_utility"]["mean"], historical_best["round"]):
+        if (
+            historical_best is None
+            or prior_best["best_utility"] >= historical_best["dev_utility"]["mean"]
+        ):
             historical_best = {
                 "round": prior_best["best_round"],
                 "dev_utility": prior_best["utility"],

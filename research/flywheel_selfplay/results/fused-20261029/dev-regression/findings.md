@@ -50,3 +50,15 @@ Round69 phase timings: headroom0.50s, slate assembly0.67s, forward/input/targets
 measurement localizes training overhead to forward/input/target handling. It does
 not separate CPU input packing/H2D from GPU forward kernels, so attributing the
 historical drift specifically to host contention remains unproven.
+
+### Repeated-rollback correction
+
+The round69 single-rollback proof was correct, but later step counters exposed
+optimizer-state aliasing: load_state_dict reused the cached AdamW tensors, and
+subsequent opt.step calls mutated the saved snapshot. Later pre-fix admission
+rows describe the intended rollback; exact optimizer restoration after the first
+was not established. Model weights/dev utility remained protected. A new repeated
+rejection test reproduces the failure (step2 instead of1 on the second rejection).
+The fix deep-copies optimizer state on EVERY restore and makes the persisted best
+pointer authoritative over equal-score logical checkpoint copies at restart.
+All old checkpoints/receipts are preserved; do not treat them as corrected proof.

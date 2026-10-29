@@ -259,4 +259,4 @@ Historical inventory totals above are dated and are not recomputed by this entry
 | `research/flywheel_selfplay/test_automatic_promotion.py` | 140 | `OWNER-FLYWHEEL-20261029` | Owner-requested pytest proof covers promotion, next-round targets, replay and training-only parser adaptation. |
 
 | `research/flywheel_selfplay/dev_incumbent.py` | 77 | `PR-EXCEPT-TORCH` | Owner-nudged development-only adapter/AdamW incumbent ratchet; restores rejected candidates without changing DOPE. |
-| `research/flywheel_selfplay/test_dev_incumbent.py` | 75 | `PR-EXCEPT-TORCH` | Regression proof for model/optimizer rollback, equal-score progress and evaluation-identity refusal at the PyTorch boundary. |
+| `research/flywheel_selfplay/test_dev_incumbent.py` | 91 | `PR-EXCEPT-TORCH` | Regression proof for model/optimizer rollback, equal-score progress and evaluation-identity refusal at the PyTorch boundary. |

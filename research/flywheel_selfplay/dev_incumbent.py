@@ -59,7 +59,7 @@ class DevIncumbent:
             self.optimizer_state = copy.deepcopy(optimizer.state_dict())
         else:
             model.load_state_dict(self.model_state, strict=True)
-            optimizer.load_state_dict(self.optimizer_state)
+            optimizer.load_state_dict(copy.deepcopy(self.optimizer_state))
         return {
             "round": round_idx,
             "evaluation_identity": identity,
