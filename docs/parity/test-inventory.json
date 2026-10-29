@@ -9287,10 +9287,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 207,
+  "count": 211,
   "packages": {
    "jope": {
-    "count": 207,
+    "count": 211,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9392,6 +9392,15 @@
       "tests": [
        "tests/test_frozen_vocabulary_training.py::test_actual_full_table_optimizer_reload_and_continuation",
        "tests/test_frozen_vocabulary_training.py::test_frozen_table_never_rebuilds_token_ids_from_parsing_views"
+      ]
+     },
+     "tests/test_north_star_flywheel_guards.py": {
+      "count": 4,
+      "tests": [
+       "tests/test_north_star_flywheel_guards.py::test_ns3_dope_freeze_guard_and_counterexamples",
+       "tests/test_north_star_flywheel_guards.py::test_ns4_binary_clf_metrics_and_valid_mask_nan_counterexample",
+       "tests/test_north_star_flywheel_guards.py::test_ns5_rust_fitness_target",
+       "tests/test_north_star_flywheel_guards.py::test_ns7_elo_tracker_and_null_family_rejection"
       ]
      },
      "tests/test_optional_task_readiness.py": {
@@ -9620,6 +9629,6 @@
  },
  "totals": {
   "rust": 6051,
-  "python": 207
+  "python": 211
  }
 }

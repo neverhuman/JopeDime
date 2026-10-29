@@ -99,13 +99,6 @@ metrics! {
     VAL_BRIER_FAMILY_TASK = 0x0314, "val.brier.family_task", "loss", "V3", Validation, true;
     VAL_ACC_FAMILY_TASK = 0x0315, "val.acc.family_task", "fraction", "V3", Validation, true;
     VAL_ECE_FAMILY_TASK = 0x0316, "val.ece.family_task", "fraction", "V3", Validation, true;
-    VAL_LOSS_FAMILY_TASK = 0x0310, "val.loss.family_task", "loss", "V1", Validation, true;
-    VAL_R2_FAMILY_TASK = 0x0311, "val.r2.family_task", "r2", "V2", Validation, true;
-    VAL_AUC_FAMILY_TASK = 0x0312, "val.auc.family_task", "auc", "V3", Validation, true;
-    VAL_LOGLOSS_FAMILY_TASK = 0x0313, "val.logloss.family_task", "loss", "V3", Validation, true;
-    VAL_BRIER_FAMILY_TASK = 0x0314, "val.brier.family_task", "loss", "V3", Validation, true;
-    VAL_ACC_FAMILY_TASK = 0x0315, "val.acc.family_task", "fraction", "V3", Validation, true;
-    VAL_ECE_FAMILY_TASK = 0x0316, "val.ece.family_task", "fraction", "V3", Validation, true;
     IO_LOCAL_BYTES = 0x0401, "io.local.bytes", "bytes", "I1", Run, false;
     IO_LOCAL_READ_MS = 0x0402, "io.local.read", "ms", "I1", Sampled, false;
     IO_LOCAL_READ_MIB_S = 0x0403, "io.local.read_mib_s", "MiB/s", "I1", Sampled, false;

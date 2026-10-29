@@ -4442,6 +4442,18 @@
       ],
       "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
     },
+    "python:python/tests/test_north_star_flywheel_guards.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
+    },
     "python:python/tests/test_test_exact_campaign.py": {
       "discovery": {
         "kind": "python-family"
