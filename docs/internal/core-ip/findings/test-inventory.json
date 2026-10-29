@@ -1857,6 +1857,18 @@
         "training"
       ]
     },
+    "python:research/flywheel_selfplay/test_automatic_promotion.py": {
+      "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/test_dev_incumbent.py": {
+      "reason": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/test_device_pool_cache.py": {
+      "reason": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
       "reason": "Executed offline CPU synthetic/stub unit checks for Phase 7 flywheel v3 comparator labels, fail-closed S3/checkpoint guards, and OS worker SIGKILL vs CPython ITIMER_REAL deadline boundaries in the Python lane; research flywheel outside the reviewed product baseline.",
       "role": "research"

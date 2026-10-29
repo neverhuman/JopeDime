@@ -1,0 +1,9 @@
+{
+  "expected": 90,
+  "admitted": 90,
+  "new_admissions_this_start": 0,
+  "strict_promotions": 5,
+  "note": "ordered ratchet against current incumbent; six beat frozen original best in later audit",
+  "sealed_meta_test_read": false,
+  "outer_rows_in_packet": 0
+}

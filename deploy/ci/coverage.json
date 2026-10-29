@@ -4345,6 +4345,18 @@
       ],
       "scope": "CPU unit and parity tests for the NS11 Phase E fused-path HPC speed-ups (batched champion retrieval, radix-sort order reuse, fused probe correlations, pinned-pool loader, 2D bucketing and sharding) on seeded CPU torch tensors; no GPU throughput or real-data qualification."
     },
+    "python:python/tests/test_north_star_flywheel_guards.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
+    },
     "python:python/tests/test_optional_task_readiness.py": {
       "discovery": {
         "kind": "python-family"
@@ -4487,18 +4499,6 @@
       ],
       "scope": "Maintained telemetry pytest family; PR Python lane and full-main Python selection. Tests use in-memory/fake sinks and do not qualify live training or overhead."
     },
-    "python:python/tests/test_north_star_flywheel_guards.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-default",
-        "full-python"
-      ],
-      "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
-    },
     "python:python/tests/test_test_exact_campaign.py": {
       "discovery": {
         "kind": "python-family"
@@ -4565,6 +4565,36 @@
         "full-python"
       ],
       "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
+    },
+    "python:research/flywheel_selfplay/test_automatic_promotion.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline."
+    },
+    "python:research/flywheel_selfplay/test_dev_incumbent.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline."
+    },
+    "python:research/flywheel_selfplay/test_device_pool_cache.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline."
     },
     "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
       "discovery": {
@@ -5873,7 +5903,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
