@@ -1729,11 +1729,37 @@ modelUnload(fitted.handle);
 
     #[test]
     fn hpc_options_are_recorded_in_emitter_version_and_options_identity() {
+        use crate::artifact_manifest::{
+            read_manifest, Domain, ExpectedArtifactV3, OptionsIdentity, Target,
+        };
+
         let genome = GenomeIr::parse("(pipe X (standardize) (ridge))").unwrap();
         let default_emitted = emit(&genome, &EmitOptions::default()).unwrap();
         let default_manifest: serde_json::Value =
             serde_json::from_str(&default_emitted.manifest).unwrap();
         assert_eq!(default_manifest["emitter_version"], EMITTER_VERSION);
+
+        let default_target =
+            emit_targets_v3(&genome, &EmitOptions::default(), &[Target::Rust]).unwrap();
+        let default_bytes = default_target
+            .manifest
+            .envelope_bytes(Domain::Native)
+            .unwrap();
+        let default_text = std::str::from_utf8(&default_bytes).unwrap();
+        assert!(
+            !default_text.contains("hpc_v1") && !default_text.contains("hpc_v2"),
+            "default emission manifest must omit hpc_v1/hpc_v2 keys for byte-identical compatibility"
+        );
+        let default_expected =
+            ExpectedArtifactV3::from_emission(&default_bytes, &default_target.manifest);
+        let parsed_default = read_manifest(&default_bytes, &default_expected).unwrap();
+        assert!(!parsed_default.options.hpc_v1 && !parsed_default.options.hpc_v2);
+
+        let legacy_options_json = r#"{"title":null,"feature_names":[],"context":null,"fast_runtime":true,"math_policy":"rust-libm-default-v1","guard_zero_width_roll":true,"partition_point_quantile_bounds":true}"#;
+        let legacy_options: OptionsIdentity = serde_json::from_str(legacy_options_json).unwrap();
+        assert!(!legacy_options.hpc_v1 && !legacy_options.hpc_v2);
+        let reserialized = serde_json::to_value(&legacy_options).unwrap();
+        assert!(reserialized.get("hpc_v1").is_none() && reserialized.get("hpc_v2").is_none());
 
         let v1_opts = EmitOptions {
             hpc_v1: true,
@@ -1745,6 +1771,14 @@ modelUnload(fitted.handle);
             v1_manifest["emitter_version"],
             format!("{EMITTER_VERSION}+hpc-v1")
         );
+        let v1_target = emit_targets_v3(&genome, &v1_opts, &[Target::Rust]).unwrap();
+        let v1_bytes = v1_target.manifest.envelope_bytes(Domain::Native).unwrap();
+        let v1_expected = ExpectedArtifactV3::from_emission(&v1_bytes, &v1_target.manifest);
+        let parsed_v1 = read_manifest(&v1_bytes, &v1_expected).unwrap();
+        assert!(parsed_v1.options.hpc_v1 && !parsed_v1.options.hpc_v2);
+        let v1_val = serde_json::to_value(&parsed_v1.options).unwrap();
+        assert_eq!(v1_val.get("hpc_v1"), Some(&serde_json::Value::Bool(true)));
+        assert!(v1_val.get("hpc_v2").is_none());
 
         let v2_opts = EmitOptions {
             hpc_v2: true,
@@ -1756,10 +1790,18 @@ modelUnload(fitted.handle);
             v2_manifest["emitter_version"],
             format!("{EMITTER_VERSION}+hpc-v2")
         );
+        let v2_target = emit_targets_v3(&genome, &v2_opts, &[Target::Rust]).unwrap();
+        let v2_bytes = v2_target.manifest.envelope_bytes(Domain::Native).unwrap();
+        let v2_expected = ExpectedArtifactV3::from_emission(&v2_bytes, &v2_target.manifest);
+        let parsed_v2 = read_manifest(&v2_bytes, &v2_expected).unwrap();
+        assert!(!parsed_v2.options.hpc_v1 && parsed_v2.options.hpc_v2);
+        let v2_val = serde_json::to_value(&parsed_v2.options).unwrap();
+        assert!(v2_val.get("hpc_v1").is_none());
+        assert_eq!(v2_val.get("hpc_v2"), Some(&serde_json::Value::Bool(true)));
 
-        let id_default = crate::artifact_manifest::OptionsIdentity::from(&EmitOptions::default());
-        let id_v1 = crate::artifact_manifest::OptionsIdentity::from(&v1_opts);
-        let id_v2 = crate::artifact_manifest::OptionsIdentity::from(&v2_opts);
+        let id_default = OptionsIdentity::from(&EmitOptions::default());
+        let id_v1 = OptionsIdentity::from(&v1_opts);
+        let id_v2 = OptionsIdentity::from(&v2_opts);
         assert!(!id_default.hpc_v1 && !id_default.hpc_v2);
         assert!(id_v1.hpc_v1 && !id_v1.hpc_v2);
         assert!(!id_v2.hpc_v1 && id_v2.hpc_v2);
