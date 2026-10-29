@@ -11,6 +11,7 @@ use crate::ksmooth::KsmoothModel;
 use crate::stack::StackModel;
 use crate::Rows;
 use anyhow::{bail, Result};
+use rayon::prelude::*;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum FittedHead {
@@ -180,6 +181,51 @@ pub fn fit_head(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedHead> {
         }
         other => bail!("unsupported head: {other}"),
     }
+}
+
+pub fn fit_head_and_predict_train(
+    stage: &Stage,
+    x: &Rows,
+    y: &[f64],
+) -> Result<(FittedHead, Vec<f64>)> {
+    let mut cache = crate::ops::SortedColumnsCache::new();
+    fit_head_and_predict_train_with_cache(stage, x, y, &mut cache)
+}
+
+pub fn fit_head_with_cache(
+    stage: &Stage,
+    x: &Rows,
+    y: &[f64],
+    cache: &mut crate::ops::SortedColumnsCache,
+) -> Result<FittedHead> {
+    crate::kernel::width::reject_zero_width_rows(x)?;
+    if matches!(stage.op.as_str(), "histgbm" | "gbm") {
+        let params = GbmParams::from(stage);
+        return Ok(FittedHead::Gbm(GbmModel::fit_with_cache(
+            x,
+            y,
+            &params,
+            Some(cache),
+        )));
+    }
+    fit_head(stage, x, y)
+}
+
+pub fn fit_head_and_predict_train_with_cache(
+    stage: &Stage,
+    x: &Rows,
+    y: &[f64],
+    cache: &mut crate::ops::SortedColumnsCache,
+) -> Result<(FittedHead, Vec<f64>)> {
+    crate::kernel::width::reject_zero_width_rows(x)?;
+    if matches!(stage.op.as_str(), "histgbm" | "gbm") && x.len() <= y.len() {
+        let cfg = GbmParams::from(stage);
+        let (gbm, f_train) = GbmModel::fit_with_train_preds_and_cache(x, y, &cfg, Some(cache));
+        return Ok((FittedHead::Gbm(gbm), f_train));
+    }
+    let head = fit_head_with_cache(stage, x, y, cache)?;
+    let tr_preds = head.predict(x)?;
+    Ok((head, tr_preds))
 }
 
 impl FittedHead {
@@ -493,16 +539,29 @@ impl RidgeModel {
     /// legacy ridge path retains its historical absolute safety clamp.
     fn predict_unclamped(&self, x: &Rows) -> Vec<f64> {
         let p = self.means.len();
-        x.iter()
-            .map(|r| {
-                let mut z = self.w[0];
-                for (j, &value) in r.iter().take(p).enumerate() {
-                    let xs = ((value - self.means[j]) / self.scales[j]).clamp(-20.0, 20.0);
-                    z += self.w[j + 1] * xs;
-                }
-                z
-            })
-            .collect()
+        if x.len() * p >= 4096 && crate::is_parallel_enabled() {
+            x.par_iter()
+                .map(|r| {
+                    let mut z = self.w[0];
+                    for (j, &value) in r.iter().take(p).enumerate() {
+                        let xs = ((value - self.means[j]) / self.scales[j]).clamp(-20.0, 20.0);
+                        z += self.w[j + 1] * xs;
+                    }
+                    z
+                })
+                .collect()
+        } else {
+            x.iter()
+                .map(|r| {
+                    let mut z = self.w[0];
+                    for (j, &value) in r.iter().take(p).enumerate() {
+                        let xs = ((value - self.means[j]) / self.scales[j]).clamp(-20.0, 20.0);
+                        z += self.w[j + 1] * xs;
+                    }
+                    z
+                })
+                .collect()
+        }
     }
 }
 
@@ -1077,6 +1136,11 @@ impl RidgeGcvModel {
 /// converges quadratically, so well-conditioned inputs exit long before the
 /// cap). Same algorithm, same order, in the emitted artifacts.
 pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
+    let is_bitwise_symmetric =
+        (1..p).all(|r| (0..r).all(|col| a[r * p + col].to_bits() == a[col * p + r].to_bits()));
+    if !is_bitwise_symmetric {
+        return jacobi_eigen_scalar_reference(a, p);
+    }
     // The rotations update eigenvector columns i and j; accumulating V transposed
     // (`vt[col * p + k]`) makes both updates contiguous instead of stride-p. Each element sees
     // the same operations in the same order, and V is transposed back on return.
@@ -1113,15 +1177,28 @@ pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
                 };
                 let c = 1.0 / (t * t + 1.0).sqrt();
                 let s = t * c;
-                for k in 0..p {
-                    if k != i && k != j {
-                        let aki = a[k * p + i];
-                        let akj = a[k * p + j];
-                        a[k * p + i] = c * aki - s * akj;
-                        a[i * p + k] = a[k * p + i];
-                        a[k * p + j] = s * aki + c * akj;
-                        a[j * p + k] = a[k * p + j];
+                {
+                    let (head_a, tail_a) = a.split_at_mut(j * p);
+                    let ai = &mut head_a[i * p..(i + 1) * p];
+                    let aj = &mut tail_a[..p];
+                    for (aik, ajk) in ai[..i].iter_mut().zip(aj[..i].iter_mut()) {
+                        let (old_i, old_j) = (*aik, *ajk);
+                        *aik = c * old_i - s * old_j;
+                        *ajk = s * old_i + c * old_j;
                     }
+                    for (aik, ajk) in ai[(j + 1)..p].iter_mut().zip(aj[(j + 1)..p].iter_mut()) {
+                        let (old_i, old_j) = (*aik, *ajk);
+                        *aik = c * old_i - s * old_j;
+                        *ajk = s * old_i + c * old_j;
+                    }
+                }
+                for k in (i + 1)..j {
+                    let old_i = a[i * p + k];
+                    let old_j = a[k * p + j];
+                    let new_i = c * old_i - s * old_j;
+                    let new_j = s * old_i + c * old_j;
+                    a[i * p + k] = new_i;
+                    a[k * p + j] = new_j;
                 }
                 let aii = a[i * p + i];
                 let ajj = a[j * p + j];
@@ -1138,6 +1215,14 @@ pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
                     *vkj = s * old_i + c * old_j;
                 }
             }
+            for col in (i + 1)..p {
+                a[col * p + i] = a[i * p + col];
+            }
+        }
+        for r in 1..p {
+            for col in 0..r {
+                a[col * p + r] = a[r * p + col];
+            }
         }
     }
     let mut e = vec![0.0f64; p];
@@ -1149,6 +1234,74 @@ pub fn jacobi_eigen(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
         for k in 0..p {
             v[k * p + col] = vt[col * p + k];
         }
+    }
+    (e, v)
+}
+
+fn jacobi_eigen_scalar_reference(a: &mut [f64], p: usize) -> (Vec<f64>, Vec<f64>) {
+    let mut v = vec![0.0f64; p * p];
+    for i in 0..p {
+        v[i * p + i] = 1.0;
+    }
+    let mut scale = 0.0;
+    for i in 0..p {
+        scale += a[i * p + i];
+    }
+    let limit = (scale * 1e-12) * (scale * 1e-12);
+    for _ in 0..20 {
+        let mut off = 0.0;
+        for i in 0..p {
+            for j in (i + 1)..p {
+                off += a[i * p + j] * a[i * p + j];
+            }
+        }
+        if off <= limit {
+            break;
+        }
+        for i in 0..p {
+            for j in (i + 1)..p {
+                let apq = a[i * p + j];
+                if apq == 0.0 {
+                    continue;
+                }
+                let theta = (a[j * p + j] - a[i * p + i]) / (2.0 * apq);
+                let t = if theta >= 0.0 {
+                    1.0 / (theta + (theta * theta + 1.0).sqrt())
+                } else {
+                    -1.0 / ((theta * theta + 1.0).sqrt() - theta)
+                };
+                let c = 1.0 / (t * t + 1.0).sqrt();
+                let s = t * c;
+                for k in 0..p {
+                    if k != i && k != j {
+                        let aik = a[k * p + i];
+                        let ajk = a[k * p + j];
+                        let new_i = c * aik - s * ajk;
+                        let new_j = s * aik + c * ajk;
+                        a[k * p + i] = new_i;
+                        a[i * p + k] = new_i;
+                        a[k * p + j] = new_j;
+                        a[j * p + k] = new_j;
+                    }
+                }
+                let aii = a[i * p + i];
+                let ajj = a[j * p + j];
+                a[i * p + i] = c * c * aii - 2.0 * s * c * apq + s * s * ajj;
+                a[j * p + j] = s * s * aii + 2.0 * s * c * apq + c * c * ajj;
+                a[i * p + j] = 0.0;
+                a[j * p + i] = 0.0;
+                for k in 0..p {
+                    let vki = v[k * p + i];
+                    let vkj = v[k * p + j];
+                    v[k * p + i] = c * vki - s * vkj;
+                    v[k * p + j] = s * vki + c * vkj;
+                }
+            }
+        }
+    }
+    let mut e = vec![0.0f64; p];
+    for i in 0..p {
+        e[i] = a[i * p + i];
     }
     (e, v)
 }
@@ -1326,47 +1479,154 @@ pub struct GbmModel {
 
 impl GbmModel {
     pub fn fit(x: &Rows, y: &[f64], cfg: &GbmParams) -> GbmModel {
+        Self::fit_with_train_preds(x, y, cfg).0
+    }
+
+    pub fn fit_with_cache(
+        x: &Rows,
+        y: &[f64],
+        cfg: &GbmParams,
+        cache: Option<&mut crate::ops::SortedColumnsCache>,
+    ) -> GbmModel {
+        Self::fit_with_train_preds_and_cache(x, y, cfg, cache).0
+    }
+
+    pub fn fit_with_train_preds(x: &Rows, y: &[f64], cfg: &GbmParams) -> (GbmModel, Vec<f64>) {
+        Self::fit_with_train_preds_and_cache(x, y, cfg, None)
+    }
+
+    pub fn fit_with_train_preds_and_cache(
+        x: &Rows,
+        y: &[f64],
+        cfg: &GbmParams,
+        mut cache: Option<&mut crate::ops::SortedColumnsCache>,
+    ) -> (GbmModel, Vec<f64>) {
         let n = x.len().min(y.len());
         let cols = x[0].len();
         let n_feat = cols.min(cfg.max_features);
         if n < 4 || n_feat == 0 {
             let m = mean(&y[..n.max(1).min(y.len())]);
-            return GbmModel {
-                edges: Vec::new(),
-                trees: Vec::new(),
-                init: m,
-                lr: cfg.lr,
-                n_feat: 0,
-                constant_value: m,
-            };
+            let f_train = vec![m; x.len()];
+            return (
+                GbmModel {
+                    edges: Vec::new(),
+                    trees: Vec::new(),
+                    init: m,
+                    lr: cfg.lr,
+                    n_feat: 0,
+                    constant_value: m,
+                },
+                f_train,
+            );
         }
-        let edges: Vec<Vec<f64>> = (0..n_feat).map(|f| bin_edges(x, f, n, cfg.bins)).collect();
+        if n == x.len() {
+            if let Some(c) = cache.as_deref_mut() {
+                c.record_probe_counts(n_feat);
+            }
+        }
+        let cache_ref = cache.as_deref();
+        let edges_and_const: Vec<(Vec<f64>, bool)> =
+            if n_feat >= 32 && n_feat * n >= 16_384 && crate::is_parallel_enabled() {
+                (0..n_feat)
+                    .into_par_iter()
+                    .map(|f| {
+                        if n == x.len() {
+                            if let Some(vals) = cache_ref.and_then(|c| c.get_col_slice(f)) {
+                                if vals.len() == n {
+                                    return bin_edges_from_sorted(vals, x[0][f], cfg.bins);
+                                }
+                            }
+                        }
+                        bin_edges_with_const(x, f, n, cfg.bins)
+                    })
+                    .collect()
+            } else {
+                (0..n_feat)
+                    .map(|f| {
+                        if n == x.len() {
+                            if let Some(vals) = cache_ref.and_then(|c| c.get_col_slice(f)) {
+                                if vals.len() == n {
+                                    return bin_edges_from_sorted(vals, x[0][f], cfg.bins);
+                                }
+                            }
+                        }
+                        bin_edges_with_const(x, f, n, cfg.bins)
+                    })
+                    .collect()
+            };
+        let mut edges: Vec<Vec<f64>> = Vec::with_capacity(n_feat);
+        let mut is_const_col: Vec<bool> = Vec::with_capacity(n_feat);
+        for (e, c) in edges_and_const {
+            edges.push(e);
+            is_const_col.push(c);
+        }
         // Training bins are only read one feature at a time (histograms, split partition), so
         // store them feature-major: a node's histogram then walks one contiguous column instead
         // of striding `n_feat` entries per row. Same bin values, same per-bin summation order.
-        let train_cols = bin_columns(x, n, n_feat, &edges);
+        let train_cols = bin_columns_filtered(x, n, n_feat, &edges, &is_const_col);
         let init = mean(&y[..n]);
         let mut f_train = vec![init; n];
         let nbins = cfg.bins as u16;
+        // Exact dead/duplicate feature elimination:
+        // 1. A feature column whose training bins are all equal has `hl == h` (`hr == 0 < 1.0`)
+        //    on every node and can never split.
+        // 2. A feature `f2 > f1` whose training bin column `train_cols[f2*n..(f2+1)*n]` is identical
+        //    to an earlier feature `f1` produces the exact same histogram and gain on every node,
+        //    and can never win the strict `gain > best_gain` tie against `f1`.
+        let mut active_features: Vec<(usize, usize)> = Vec::with_capacity(n_feat);
+        let mut active_hashes: Vec<u64> = Vec::with_capacity(n_feat);
+        for f in 0..n_feat {
+            if is_const_col[f] {
+                continue;
+            }
+            let col = &train_cols[f * n..(f + 1) * n];
+            let first = col[0];
+            let mut all_same = true;
+            let mut h64: u64 = 0xcbf29ce484222325;
+            for &b in col {
+                if b != first {
+                    all_same = false;
+                }
+                h64 ^= b as u64;
+                h64 = h64.wrapping_mul(0x100000001b3);
+            }
+            if all_same {
+                continue;
+            }
+            let is_dup =
+                active_features
+                    .iter()
+                    .zip(active_hashes.iter())
+                    .any(|(&(f_prev, _), &h_prev)| {
+                        h_prev == h64 && train_cols[f_prev * n..(f_prev + 1) * n] == *col
+                    });
+            if !is_dup {
+                let f_nbins = (edges[f].len() + 1).min(nbins as usize).max(2);
+                active_features.push((f, f_nbins));
+                active_hashes.push(h64);
+            }
+        }
         let mut trees = Vec::with_capacity(cfg.rounds);
-        // Reusable (grad, leaf map, histogram) buffers, allocated once per fit instead of once
-        // per round / per node and feature. Squared loss has a unit hessian, so `build_tree`
-        // counts rows where a general booster would sum hessians.
+        // Reusable (grad, leaf map, histogram, row-partition) buffers, allocated once per fit
+        // instead of once per round / per node and feature. Squared loss has a unit hessian, so
+        // `build_tree` counts rows where a general booster would sum hessians.
         let mut grad = vec![0.0f64; n];
         let mut train_leaf = vec![0usize; n];
-        let mut scratch = HistScratch::new(nbins as usize);
+        let mut scratch = HistScratch::new(nbins as usize, cfg.depth, n);
+        let mut rows_pool = vec![0usize; cfg.depth.max(1) * n];
         for _ in 0..cfg.rounds {
             for i in 0..n {
                 grad[i] = f_train[i] - y[i];
             }
             train_leaf.fill(0);
-            let mut tree: Vec<GbmNode> = Vec::new();
+            let mut tree: Vec<GbmNode> = Vec::with_capacity((1usize << (cfg.depth + 1)).min(64));
             build_tree(
                 &train_cols,
                 n,
                 &grad,
-                (0..n).collect(),
-                n_feat,
+                &[],
+                &mut rows_pool,
+                &active_features,
                 nbins,
                 cfg,
                 0,
@@ -1381,55 +1641,123 @@ impl GbmModel {
             }
             trees.push(tree);
         }
-        GbmModel {
-            edges,
-            trees,
-            init,
-            lr: cfg.lr,
-            n_feat,
-            constant_value: init,
-        }
+        (
+            GbmModel {
+                edges,
+                trees,
+                init,
+                lr: cfg.lr,
+                n_feat,
+                constant_value: init,
+            },
+            f_train,
+        )
     }
 
     pub fn predict(&self, x: &Rows) -> Vec<f64> {
         if self.n_feat == 0 {
             return vec![self.constant_value; x.len()];
         }
-        let bins = bin_rows(x, x.len(), self.n_feat, &self.edges);
-        (0..x.len())
-            .map(|r| {
+        let mut used = vec![false; self.n_feat];
+        for tree in &self.trees {
+            for node in tree {
+                if let GbmNode::Split { feature, .. } = node {
+                    if *feature < self.n_feat {
+                        used[*feature] = true;
+                    }
+                }
+            }
+        }
+        let used_features: Vec<usize> = (0..self.n_feat).filter(|&f| used[f]).collect();
+        let predict_row = |row: &Vec<f64>| -> f64 {
+            let mut row_bins = [0u16; 512];
+            if self.n_feat <= 512 {
+                for &f in &used_features {
+                    let v = if f < row.len() { row[f] } else { 0.0 };
+                    row_bins[f] = self.edges[f].partition_point(|e| *e < v) as u16;
+                }
+                let row_slice = &row_bins[..self.n_feat];
                 let mut f = self.init;
                 for tree in &self.trees {
-                    f += self.lr * route(tree, &bins, r, self.n_feat);
+                    f += self.lr * route(tree, row_slice, 0, self.n_feat);
                 }
                 f
-            })
-            .collect()
+            } else {
+                let mut dyn_bins = vec![0u16; self.n_feat];
+                for &f in &used_features {
+                    let v = if f < row.len() { row[f] } else { 0.0 };
+                    dyn_bins[f] = self.edges[f].partition_point(|e| *e < v) as u16;
+                }
+                let mut f = self.init;
+                for tree in &self.trees {
+                    f += self.lr * route(tree, &dyn_bins, 0, self.n_feat);
+                }
+                f
+            }
+        };
+        if x.len() * self.trees.len().max(1) >= 32_768 && crate::is_parallel_enabled() {
+            x.par_iter().map(predict_row).collect()
+        } else {
+            x.iter().map(predict_row).collect()
+        }
     }
 }
 
-/// Reused per-feature histogram buffers for [`build_tree`]: gradient sum and row count per bin.
+/// Reused per-feature histogram and row-partition scratch buffers for [`build_tree`].
 struct HistScratch {
     gh: Vec<f64>,
-    count: Vec<f64>,
+    count: Vec<u32>,
+    right_tmp: Vec<usize>,
 }
 
 impl HistScratch {
-    fn new(nbins: usize) -> Self {
+    fn new(nbins: usize, _max_depth: usize, n_rows: usize) -> Self {
         HistScratch {
             gh: vec![0.0; nbins],
-            count: vec![0.0; nbins],
+            count: vec![0u32; nbins],
+            right_tmp: vec![0usize; n_rows],
         }
     }
 }
 
 /// Direct feature-major training bins, avoiding a temporary row-major matrix.
+#[cfg_attr(not(test), allow(dead_code))]
 fn bin_columns(x: &Rows, rows: usize, n_feat: usize, edges: &[Vec<f64>]) -> Vec<u16> {
+    let is_const_col = vec![false; n_feat];
+    bin_columns_filtered(x, rows, n_feat, edges, &is_const_col)
+}
+
+/// Direct feature-major training bins, skipping constant columns before binary search.
+fn bin_columns_filtered(
+    x: &Rows,
+    rows: usize,
+    n_feat: usize,
+    edges: &[Vec<f64>],
+    is_const_col: &[bool],
+) -> Vec<u16> {
     let mut out = vec![0u16; rows * n_feat];
-    for r in 0..rows {
-        for f in 0..n_feat {
-            let v = if f < x[r].len() { x[r][f] } else { 0.0 };
-            out[f * rows + r] = edges[f].partition_point(|e| *e < v) as u16;
+    if n_feat >= 32 && rows * n_feat >= 16_384 && rows > 0 && crate::is_parallel_enabled() {
+        out.par_chunks_mut(rows).enumerate().for_each(|(f, col)| {
+            if is_const_col[f] {
+                return;
+            }
+            let ef = &edges[f];
+            for r in 0..rows {
+                let v = if f < x[r].len() { x[r][f] } else { 0.0 };
+                col[r] = ef.partition_point(|e| *e < v) as u16;
+            }
+        });
+    } else {
+        for r in 0..rows {
+            let row = &x[r];
+            let rlen = row.len();
+            for f in 0..n_feat {
+                if is_const_col[f] {
+                    continue;
+                }
+                let v = if f < rlen { row[f] } else { 0.0 };
+                out[f * rows + r] = edges[f].partition_point(|e| *e < v) as u16;
+            }
         }
     }
     out
@@ -1445,8 +1773,9 @@ fn build_tree(
     cols: &[u16],
     n_rows: usize,
     grad: &[f64],
-    rows: Vec<usize>,
-    n_feat: usize,
+    rows: &[usize],
+    rows_pool: &mut [usize],
+    active_features: &[(usize, usize)],
     nbins: u16,
     cfg: &GbmParams,
     depth: usize,
@@ -1454,72 +1783,179 @@ fn build_tree(
     leaf_of: &mut [usize],
     scratch: &mut HistScratch,
 ) -> usize {
-    let g: f64 = rows.iter().map(|&i| grad[i]).sum();
-    let h: f64 = rows.iter().map(|_| 1.0f64).sum();
-    let leaf_value = -g / (h + cfg.lambda);
-    let make_leaf = |out: &mut Vec<GbmNode>, leaf_of: &mut [usize], rows: &[usize]| -> usize {
-        let idx = out.len();
-        out.push(GbmNode::Leaf(leaf_value));
-        for &i in rows {
-            leaf_of[i] = idx;
-        }
-        idx
+    let is_root = depth == 0;
+    let node_len = if is_root { n_rows } else { rows.len() };
+    assert!(
+        node_len <= u32::MAX as usize,
+        "GBM node row count {node_len} exceeds u32::MAX"
+    );
+    let g: f64 = if is_root {
+        grad[..n_rows].iter().copied().sum()
+    } else {
+        rows.iter().map(|&i| grad[i]).sum()
     };
-    if depth >= cfg.depth || rows.len() < 2 * cfg.min_leaf {
-        return make_leaf(out, leaf_of, &rows);
+    let h: f64 = node_len as f64;
+    let leaf_value = -g / (h + cfg.lambda);
+    let make_leaf =
+        |out: &mut Vec<GbmNode>, leaf_of: &mut [usize], rows: &[usize], is_root: bool| -> usize {
+            let idx = out.len();
+            out.push(GbmNode::Leaf(leaf_value));
+            if is_root {
+                leaf_of[..n_rows].fill(idx);
+            } else {
+                for &i in rows {
+                    leaf_of[i] = idx;
+                }
+            }
+            idx
+        };
+    if depth >= cfg.depth || node_len < 2 * cfg.min_leaf || active_features.is_empty() {
+        return make_leaf(out, leaf_of, rows, is_root);
     }
-    let mut best_gain = 0.0f64;
-    let mut best_feat = usize::MAX;
-    let mut best_thr = 0u16;
     let parent = g * g / (h + cfg.lambda);
-    for f in 0..n_feat {
-        let col = &cols[f * n_rows..(f + 1) * n_rows];
-        let (gh, count) = (&mut scratch.gh, &mut scratch.count);
-        gh.fill(0.0);
-        count.fill(0.0);
-        for &i in &rows {
-            let b = col[i] as usize;
-            gh[b] += grad[i];
-            count[b] += 1.0;
+    let n_active = active_features.len();
+    let (best_gain, best_feat, best_thr) = if n_active >= 16
+        && n_active * node_len >= 8_192
+        && (nbins as usize) <= 256
+        && crate::is_parallel_enabled()
+    {
+        active_features
+            .par_iter()
+            .map(|&(f, f_nbins)| {
+                let col = &cols[f * n_rows..(f + 1) * n_rows];
+                let mut gh = [0.0f64; 256];
+                let mut count = [0u32; 256];
+                let gh_s = &mut gh[..f_nbins];
+                let count_s = &mut count[..f_nbins];
+                if is_root {
+                    for i in 0..n_rows {
+                        let b = col[i] as usize;
+                        gh_s[b] += grad[i];
+                        count_s[b] += 1;
+                    }
+                } else {
+                    for &i in rows {
+                        let b = col[i] as usize;
+                        gh_s[b] += grad[i];
+                        count_s[b] += 1;
+                    }
+                }
+                let mut f_best_gain = 0.0f64;
+                let mut f_best_thr = 0u16;
+                let (mut gl, mut hl) = (0.0f64, 0.0f64);
+                for b in 0..(f_nbins - 1) {
+                    gl += gh_s[b];
+                    let cb = count_s[b];
+                    hl += cb as f64;
+                    if cb == 0 {
+                        continue;
+                    }
+                    let gr = g - gl;
+                    let hr = h - hl;
+                    if hl < 1.0 || hr < 1.0 {
+                        continue;
+                    }
+                    let gain = gl * gl / (hl + cfg.lambda) + gr * gr / (hr + cfg.lambda) - parent;
+                    if gain > f_best_gain {
+                        f_best_gain = gain;
+                        f_best_thr = b as u16;
+                    }
+                }
+                if f_best_gain > 0.0 {
+                    (f_best_gain, f, f_best_thr)
+                } else {
+                    (0.0f64, usize::MAX, 0u16)
+                }
+            })
+            .reduce(
+                || (0.0f64, usize::MAX, 0u16),
+                |left, right| {
+                    if right.0 > left.0 {
+                        right
+                    } else {
+                        left
+                    }
+                },
+            )
+    } else {
+        let mut best_gain = 0.0f64;
+        let mut best_feat = usize::MAX;
+        let mut best_thr = 0u16;
+        for &(f, f_nbins) in active_features {
+            let col = &cols[f * n_rows..(f + 1) * n_rows];
+            let gh = &mut scratch.gh[..f_nbins];
+            let count = &mut scratch.count[..f_nbins];
+            gh.fill(0.0);
+            count.fill(0);
+            if is_root {
+                for i in 0..n_rows {
+                    let b = col[i] as usize;
+                    gh[b] += grad[i];
+                    count[b] += 1;
+                }
+            } else {
+                for &i in rows {
+                    let b = col[i] as usize;
+                    gh[b] += grad[i];
+                    count[b] += 1;
+                }
+            }
+            let (mut gl, mut hl) = (0.0f64, 0.0f64);
+            for b in 0..(f_nbins - 1) {
+                gl += gh[b];
+                let cb = count[b];
+                hl += cb as f64;
+                if cb == 0 {
+                    continue;
+                }
+                let gr = g - gl;
+                let hr = h - hl;
+                if hl < 1.0 || hr < 1.0 {
+                    continue;
+                }
+                let gain = gl * gl / (hl + cfg.lambda) + gr * gr / (hr + cfg.lambda) - parent;
+                if gain > best_gain {
+                    best_gain = gain;
+                    best_feat = f;
+                    best_thr = b as u16;
+                }
+            }
         }
-        let (mut gl, mut hl) = (0.0f64, 0.0f64);
-        for b in 0..(nbins as usize - 1) {
-            gl += gh[b];
-            hl += count[b];
-            // An empty bin leaves (gl, hl) where the previous bin left them, so its candidate
-            // gain equals that bin's and can never pass the strict `>` below: skip it.
-            if count[b] == 0.0 {
-                continue;
-            }
-            let gr = g - gl;
-            let hr = h - hl;
-            if hl < 1.0 || hr < 1.0 {
-                continue;
-            }
-            let gain = gl * gl / (hl + cfg.lambda) + gr * gr / (hr + cfg.lambda) - parent;
-            if gain > best_gain {
-                best_gain = gain;
-                best_feat = f;
-                best_thr = b as u16;
-            }
-        }
-    }
+        (best_gain, best_feat, best_thr)
+    };
     if best_feat == usize::MAX || best_gain <= 1e-9 {
-        return make_leaf(out, leaf_of, &rows);
+        return make_leaf(out, leaf_of, rows, is_root);
     }
-    let mut left_rows = Vec::new();
-    let mut right_rows = Vec::new();
+    let (curr_dest, deeper_pool) = rows_pool.split_at_mut(n_rows);
     let split_col = &cols[best_feat * n_rows..(best_feat + 1) * n_rows];
-    for &i in &rows {
-        if split_col[i] <= best_thr {
-            left_rows.push(i);
-        } else {
-            right_rows.push(i);
+    let mut n_left = 0usize;
+    let mut n_right = 0usize;
+    if is_root {
+        for (i, &val) in split_col.iter().enumerate().take(n_rows) {
+            if val <= best_thr {
+                curr_dest[n_left] = i;
+                n_left += 1;
+            } else {
+                scratch.right_tmp[n_right] = i;
+                n_right += 1;
+            }
+        }
+    } else {
+        for &i in rows {
+            if split_col[i] <= best_thr {
+                curr_dest[n_left] = i;
+                n_left += 1;
+            } else {
+                scratch.right_tmp[n_right] = i;
+                n_right += 1;
+            }
         }
     }
-    if left_rows.len() < cfg.min_leaf || right_rows.len() < cfg.min_leaf {
-        return make_leaf(out, leaf_of, &rows);
+    if n_left < cfg.min_leaf || n_right < cfg.min_leaf {
+        return make_leaf(out, leaf_of, rows, is_root);
     }
+    curr_dest[n_left..n_left + n_right].copy_from_slice(&scratch.right_tmp[..n_right]);
+    let (left_rows, right_rows) = curr_dest[..n_left + n_right].split_at(n_left);
     let idx = out.len();
     out.push(GbmNode::Leaf(0.0)); // temporary leaf, overwritten below
     let left = build_tree(
@@ -1527,7 +1963,8 @@ fn build_tree(
         n_rows,
         grad,
         left_rows,
-        n_feat,
+        deeper_pool,
+        active_features,
         nbins,
         cfg,
         depth + 1,
@@ -1540,7 +1977,8 @@ fn build_tree(
         n_rows,
         grad,
         right_rows,
-        n_feat,
+        deeper_pool,
+        active_features,
         nbins,
         cfg,
         depth + 1,
@@ -1578,27 +2016,41 @@ fn route(tree: &[GbmNode], bins: &[u16], row: usize, n_feat: usize) -> f64 {
     }
 }
 
-fn bin_edges(x: &Rows, f: usize, n: usize, bins: usize) -> Vec<f64> {
-    let mut vals: Vec<f64> = (0..n).map(|r| x[r][f]).collect();
-    vals.sort_by(|a, b| a.total_cmp(b));
+fn bin_edges_from_sorted(vals: &[f64], first: f64, bins: usize) -> (Vec<f64>, bool) {
+    if vals.is_empty() {
+        return (Vec::new(), true);
+    }
+    if vals[0].to_bits() == vals[vals.len() - 1].to_bits() {
+        if bins <= 1 {
+            return (Vec::new(), true);
+        }
+        return (vec![first], true);
+    }
     let mut edges = Vec::with_capacity(bins.saturating_sub(1));
     for q in 1..bins {
         let idx = ((vals.len() as f64) * (q as f64 / bins as f64)) as usize;
         edges.push(vals[idx.min(vals.len() - 1)]);
     }
     edges.dedup();
-    edges
+    let is_const = edges.is_empty();
+    (edges, is_const)
 }
 
-fn bin_rows(x: &Rows, rows: usize, n_feat: usize, edges: &[Vec<f64>]) -> Vec<u16> {
-    let mut out = vec![0u16; rows * n_feat];
-    for r in 0..rows {
-        for f in 0..n_feat {
-            let v = if f < x[r].len() { x[r][f] } else { 0.0 };
-            out[r * n_feat + f] = edges[f].partition_point(|e| *e < v) as u16;
-        }
+fn bin_edges_with_const(x: &Rows, f: usize, n: usize, bins: usize) -> (Vec<f64>, bool) {
+    if n == 0 {
+        return (Vec::new(), true);
     }
-    out
+    let first = x[0][f];
+    let first_bits = first.to_bits();
+    if (1..n).all(|r| x[r][f].to_bits() == first_bits) {
+        if bins <= 1 {
+            return (Vec::new(), true);
+        }
+        return (vec![first], true);
+    }
+    let mut vals: Vec<f64> = (0..n).map(|r| x[r][f]).collect();
+    vals.sort_by(|a, b| a.total_cmp(b));
+    bin_edges_from_sorted(&vals, first, bins)
 }
 
 fn mean(v: &[f64]) -> f64 {
@@ -1809,6 +2261,17 @@ mod tests {
                 }
             }
         }
+    }
+
+    fn bin_rows(x: &Rows, rows: usize, n_feat: usize, edges: &[Vec<f64>]) -> Vec<u16> {
+        let mut out = vec![0u16; rows * n_feat];
+        for r in 0..rows {
+            for (f, edge) in edges.iter().enumerate().take(n_feat) {
+                let v = if f < x[r].len() { x[r][f] } else { 0.0 };
+                out[r * n_feat + f] = edge.partition_point(|e| *e < v) as u16;
+            }
+        }
+        out
     }
 
     #[test]
@@ -2188,5 +2651,121 @@ mod tests {
         println!("ridge_gcv perf: n=62/p=130 fit {secs_a:.3}s; n=1000/p=512 fit {secs_b:.3}s");
         assert!(secs_a < 2.0, "n=62/p=130 too slow: {secs_a:.3}s");
         assert!(secs_b < 2.0, "n=1000/p=512 too slow: {secs_b:.3}s");
+    }
+
+    #[test]
+    fn jacobi_eigen_contiguous_range3_matches_scalar_reference_bits() {
+        let mut rng = Pcg32::new(0x9a37_79b9, 19);
+        for p in [0usize, 1, 2, 3, 8, 17, 36] {
+            let mut a_sym = vec![0.0f64; p * p];
+            for i in 0..p {
+                for j in i..p {
+                    let v = rng.gaussian();
+                    a_sym[i * p + j] = v;
+                    a_sym[j * p + i] = v;
+                }
+            }
+            let mut a_got = a_sym.clone();
+            let mut a_ref = a_sym.clone();
+            let (e_got, v_got) = jacobi_eigen(&mut a_got, p);
+            let (e_ref, v_ref) = jacobi_eigen_scalar_reference(&mut a_ref, p);
+            for (x, y) in e_got.iter().zip(&e_ref) {
+                assert_eq!(
+                    x.to_bits(),
+                    y.to_bits(),
+                    "eigenvalue bits mismatch at p={p}"
+                );
+            }
+            for (x, y) in v_got.iter().zip(&v_ref) {
+                assert_eq!(
+                    x.to_bits(),
+                    y.to_bits(),
+                    "eigenvector bits mismatch at p={p}"
+                );
+            }
+            for (x, y) in a_got.iter().zip(&a_ref) {
+                assert_eq!(
+                    x.to_bits(),
+                    y.to_bits(),
+                    "overwritten matrix bits mismatch at p={p}"
+                );
+            }
+
+            // Asymmetric entry fallback check
+            if p >= 3 {
+                let mut a_asym = a_sym.clone();
+                a_asym[p] += 1e-7; // break bitwise symmetry at (1, 0)
+                let mut a_asym_got = a_asym.clone();
+                let mut a_asym_ref = a_asym.clone();
+                let (ea_got, va_got) = jacobi_eigen(&mut a_asym_got, p);
+                let (ea_ref, va_ref) = jacobi_eigen_scalar_reference(&mut a_asym_ref, p);
+                for (x, y) in ea_got.iter().zip(&ea_ref) {
+                    assert_eq!(
+                        x.to_bits(),
+                        y.to_bits(),
+                        "asym fallback e mismatch at p={p}"
+                    );
+                }
+                for (x, y) in va_got.iter().zip(&va_ref) {
+                    assert_eq!(
+                        x.to_bits(),
+                        y.to_bits(),
+                        "asym fallback v mismatch at p={p}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn gbm_zero_alloc_partition_and_const_skip_preserve_exact_bits() {
+        let mut rng = Pcg32::new(0x7157_624d, 31);
+        let n = 96usize;
+        let mut x: Rows = Vec::with_capacity(n);
+        let mut y: Vec<f64> = Vec::with_capacity(n);
+        for i in 0..n {
+            let f0 = rng.gaussian();
+            let f1 = 4.25; // constant column
+            let f2 = (i as f64 * 0.13).sin();
+            let f3 = f0; // duplicate of f0
+            let f4 = rng.gaussian();
+            x.push(vec![f0, f1, f2, f3, f4]);
+            y.push(1.5 * f0 - 0.8 * f2 + 0.4 * f4 * f4 + 0.1 * rng.gaussian());
+        }
+        let cfg = GbmParams {
+            rounds: 25,
+            lr: 0.1,
+            depth: 3,
+            bins: 16,
+            lambda: 1.0,
+            min_leaf: 3,
+            max_features: 64,
+        };
+        let (m1, tr1) = GbmModel::fit_with_train_preds(&x, &y, &cfg);
+        let (m2, tr2) = GbmModel::fit_with_train_preds(&x, &y, &cfg);
+        assert_eq!(
+            serde_json::to_vec(&m1).unwrap(),
+            serde_json::to_vec(&m2).unwrap()
+        );
+        for (a, b) in tr1.iter().zip(&tr2) {
+            assert_eq!(a.to_bits(), b.to_bits());
+        }
+        // Constant column f1 has exact 1-element edge vector [4.25] and is never chosen as split
+        assert_eq!(m1.edges[1], vec![4.25]);
+        // Duplicate column f3 is never chosen over f0
+        for tree in &m1.trees {
+            for node in tree {
+                if let GbmNode::Split { feature, .. } = node {
+                    assert_ne!(*feature, 1);
+                    assert_ne!(*feature, 3);
+                }
+            }
+        }
+        let preds = m1.predict(&x);
+        assert_eq!(preds.len(), n);
+        assert!(preds.iter().all(|v| v.is_finite()));
+        for (a, b) in preds.iter().zip(&tr1) {
+            assert!((a - b).abs() < 1e-12);
+        }
     }
 }

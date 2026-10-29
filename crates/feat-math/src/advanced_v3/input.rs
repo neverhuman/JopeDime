@@ -227,6 +227,21 @@ pub(super) struct FittedInput {
 }
 
 impl FittedInput {
+    pub(super) fn compatibility_numeric(width: usize) -> Self {
+        Self {
+            config: InputConfig::compatibility(),
+            columns: vec![
+                FittedColumn::Numeric {
+                    fill: 0.0,
+                    indicator: false,
+                };
+                width
+            ],
+            row_order: FittedRowOrder::Iid,
+            historical: vec![None; width],
+        }
+    }
+
     pub(super) fn fit_transform(
         config: InputConfig,
         schema: &DataSchema,
@@ -355,6 +370,39 @@ impl FittedInput {
 
     pub(super) fn transform(&self, table: &RawTable) -> Result<FeatureBlock> {
         self.transform_impl(table, None)
+    }
+
+    pub(super) fn transform_numeric_rows(&self, x: &[Vec<f64>]) -> Result<Vec<Vec<f64>>> {
+        let mut out_width = 0usize;
+        for fitted in &self.columns {
+            match fitted {
+                FittedColumn::Numeric { indicator, .. } => {
+                    out_width += 1 + usize::from(*indicator);
+                }
+                FittedColumn::Categorical { .. } => {
+                    bail!("transform_numeric_rows requires all-numeric fitted columns");
+                }
+            }
+        }
+        let mut values: Vec<Vec<f64>> = (0..x.len())
+            .map(|_| Vec::with_capacity(out_width))
+            .collect();
+        for (j, fitted) in self.columns.iter().enumerate() {
+            let FittedColumn::Numeric { fill, indicator } = fitted else {
+                unreachable!();
+            };
+            for (r, row) in x.iter().enumerate() {
+                let v = row[j];
+                values[r].push(if v.is_finite() { v } else { *fill });
+            }
+            if *indicator {
+                for (r, row) in x.iter().enumerate() {
+                    let v = row[j];
+                    values[r].push(if v.is_finite() { 0.0 } else { 1.0 });
+                }
+            }
+        }
+        Ok(values)
     }
 
     fn transform_impl(&self, table: &RawTable, train_y: Option<&[f64]>) -> Result<FeatureBlock> {

@@ -19,6 +19,19 @@ use crate::math_expr::MathExpr;
 use crate::rng::Pcg32;
 use crate::Rows;
 use anyhow::{bail, Result};
+use rayon::prelude::*;
+
+fn map_rows<F>(x: &Rows, f: F) -> Rows
+where
+    F: Fn(&Vec<f64>) -> Vec<f64> + Sync + Send,
+{
+    let width = x.first().map_or(0, Vec::len);
+    if x.len() * width.max(1) >= 65_536 && crate::is_parallel_enabled() {
+        x.par_iter().map(f).collect()
+    } else {
+        x.iter().map(f).collect()
+    }
+}
 
 const PI2: f64 = std::f64::consts::PI * 2.0;
 
@@ -208,6 +221,107 @@ pub fn sorted_col(x: &Rows, j: usize) -> Vec<f64> {
     v
 }
 
+/// Prefix-preserving cache of sorted training columns across pipeline stages (`G-8`).
+///
+/// Whenever a transform stage runs with `append = true`, `finish` preserves the input prefix
+/// `0..in_cols.min(MAX_WIDTH)` verbatim (once sanitized to finite `f64`). Thus any column
+/// sorted in an earlier stage (or reused by a downstream `histgbm` head) can reuse its
+/// `total_cmp`-sorted vector without re-extracting or re-sorting `x[..][j]`.
+#[derive(Clone, Debug, Default)]
+pub struct SortedColumnsCache {
+    cols: Vec<Option<std::sync::Arc<Vec<f64>>>>,
+    pub cache_hits: usize,
+    pub cache_misses: usize,
+}
+
+impl SortedColumnsCache {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn ensure_cols(&mut self, x: &Rows, cols: usize) {
+        if x.is_empty() || cols == 0 {
+            return;
+        }
+        if self.cols.len() < cols {
+            self.cols.resize(cols, None);
+        }
+        let mut missing = Vec::new();
+        for j in 0..cols {
+            if self.cols[j].is_some() {
+                self.cache_hits += 1;
+            } else {
+                self.cache_misses += 1;
+                missing.push(j);
+            }
+        }
+        if missing.is_empty() {
+            return;
+        }
+        if missing.len() >= 16 && x.len() * missing.len() >= 16_384 && crate::is_parallel_enabled()
+        {
+            let computed: Vec<(usize, std::sync::Arc<Vec<f64>>)> = missing
+                .into_par_iter()
+                .map(|j| (j, std::sync::Arc::new(sorted_col(x, j))))
+                .collect();
+            for (j, s) in computed {
+                self.cols[j] = Some(s);
+            }
+        } else {
+            for j in missing {
+                self.cols[j] = Some(std::sync::Arc::new(sorted_col(x, j)));
+            }
+        }
+    }
+
+    pub fn col_slice(&self, j: usize) -> &[f64] {
+        self.cols[j]
+            .as_deref()
+            .expect("column must be ensured in SortedColumnsCache before reading")
+    }
+
+    pub fn get_col_slice(&self, j: usize) -> Option<&[f64]> {
+        self.cols
+            .get(j)
+            .and_then(|s| s.as_deref().map(Vec::as_slice))
+    }
+
+    pub fn record_probe_counts(&mut self, cols: usize) {
+        for j in 0..cols {
+            if self.get_col_slice(j).is_some() {
+                self.cache_hits += 1;
+            } else {
+                self.cache_misses += 1;
+            }
+        }
+    }
+
+    pub fn col_vec(&self, j: usize) -> Vec<f64> {
+        self.col_slice(j).to_vec()
+    }
+
+    pub fn on_stage_complete(&mut self, append: bool, in_cols: usize, new_width: usize) {
+        if !append {
+            self.cols.clear();
+            return;
+        }
+        let keep_prefix = in_cols.min(new_width).min(crate::MAX_WIDTH);
+        self.cols.truncate(keep_prefix);
+        for slot in &mut self.cols {
+            if let Some(s) = slot {
+                let all_finite = s.first().is_none_or(|v| v.is_finite())
+                    && s.last().is_none_or(|v| v.is_finite());
+                if !all_finite {
+                    *slot = None;
+                }
+            }
+        }
+        if self.cols.len() < new_width {
+            self.cols.resize(new_width, None);
+        }
+    }
+}
+
 /// Interpolated quantile on a sorted slice (numpy 'linear' convention).
 pub fn quantile_sorted(s: &[f64], q: f64) -> f64 {
     if s.is_empty() {
@@ -232,9 +346,23 @@ pub fn upper_bound(s: &[f64], v: f64) -> usize {
 
 /// Mid-rank of v against sorted train values, scaled to [0,1].
 pub fn mid_rank(s: &[f64], v: f64) -> f64 {
-    let lb = lower_bound(s, v) as f64;
-    let ub = upper_bound(s, v) as f64;
-    (lb + ub) / (2.0 * s.len() as f64)
+    let n = s.len();
+    let lb = lower_bound(s, v);
+    let ub = if lb < n {
+        let slb = s[lb];
+        if slb > v {
+            lb
+        } else if slb == v && (lb + 1 == n || s[lb + 1] > v) {
+            lb + 1
+        } else {
+            upper_bound(s, v)
+        }
+    } else if n == 0 || s[n - 1] < v {
+        n
+    } else {
+        upper_bound(s, v)
+    };
+    (lb + ub) as f64 / (2.0 * n as f64)
 }
 
 /// Acklam's rational approximation to the standard normal quantile function.
@@ -286,13 +414,18 @@ pub fn probit(p: f64) -> f64 {
     }
 }
 
-fn quantile_edges(x: &Rows, bins: usize) -> Vec<Vec<f64>> {
+fn quantile_edges_with_cache(
+    x: &Rows,
+    bins: usize,
+    cache: &mut SortedColumnsCache,
+) -> Vec<Vec<f64>> {
     let cols = x[0].len();
+    cache.ensure_cols(x, cols);
     (0..cols)
         .map(|j| {
-            let s = sorted_col(x, j);
+            let s = cache.col_slice(j);
             (1..bins)
-                .map(|b| quantile_sorted(&s, b as f64 / bins as f64))
+                .map(|b| quantile_sorted(s, b as f64 / bins as f64))
                 .collect()
         })
         .collect()
@@ -324,6 +457,16 @@ pub(crate) fn get_append(stage: &Stage) -> bool {
 // ---------------------------------- fit ----------------------------------
 
 pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
+    let mut cache = SortedColumnsCache::new();
+    fit_op_with_cache(stage, x, y, &mut cache)
+}
+
+pub fn fit_op_with_cache(
+    stage: &Stage,
+    x: &Rows,
+    y: &[f64],
+    cache: &mut SortedColumnsCache,
+) -> Result<FittedOp> {
     if x.is_empty() || x[0].is_empty() {
         bail!("empty input to stage {}", stage.op);
     }
@@ -355,12 +498,13 @@ pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
             }
         }
         "robust_scale" => {
+            cache.ensure_cols(x, cols);
             let mut medians = vec![0.0; cols];
             let mut scales = vec![1.0; cols];
             for j in 0..cols {
-                let s = sorted_col(x, j);
-                medians[j] = quantile_sorted(&s, 0.5);
-                let iqr = quantile_sorted(&s, 0.75) - quantile_sorted(&s, 0.25);
+                let s = cache.col_slice(j);
+                medians[j] = quantile_sorted(s, 0.5);
+                let iqr = quantile_sorted(s, 0.75) - quantile_sorted(s, 0.25);
                 scales[j] = iqr.max(1e-9);
             }
             FittedOp::RobustScale {
@@ -369,18 +513,24 @@ pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
                 append,
             }
         }
-        "rank" => FittedOp::Rank {
-            sorted_cols: (0..cols).map(|j| sorted_col(x, j)).collect(),
-            append,
-        },
-        "blom" => FittedOp::Blom {
-            sorted_cols: (0..cols).map(|j| sorted_col(x, j)).collect(),
-            append,
-        },
+        "rank" => {
+            cache.ensure_cols(x, cols);
+            FittedOp::Rank {
+                sorted_cols: (0..cols).map(|j| cache.col_vec(j)).collect(),
+                append,
+            }
+        }
+        "blom" => {
+            cache.ensure_cols(x, cols);
+            FittedOp::Blom {
+                sorted_cols: (0..cols).map(|j| cache.col_vec(j)).collect(),
+                append,
+            }
+        }
         "quantile_bins" => {
             let bins = stage.get_usize("bins", 8).clamp(2, 64);
             FittedOp::QuantileBins {
-                edges: quantile_edges(x, bins),
+                edges: quantile_edges_with_cache(x, bins, cache),
                 bins,
                 append,
             }
@@ -388,18 +538,19 @@ pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
         "bin_onehot" => {
             let bins = stage.get_usize("bins", 6).clamp(2, 32);
             FittedOp::BinOnehot {
-                edges: quantile_edges(x, bins),
+                edges: quantile_edges_with_cache(x, bins, cache),
                 bins,
                 append,
             }
         }
         "hinge" => {
             let k = stage.get_usize("knots", 4).clamp(1, 16);
+            cache.ensure_cols(x, cols);
             let knots = (0..cols)
                 .map(|j| {
-                    let s = sorted_col(x, j);
+                    let s = cache.col_slice(j);
                     (1..=k)
-                        .map(|i| quantile_sorted(&s, i as f64 / (k + 1) as f64))
+                        .map(|i| quantile_sorted(s, i as f64 / (k + 1) as f64))
                         .collect()
                 })
                 .collect();
@@ -407,12 +558,13 @@ pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
         }
         "winsor_clip" | "winsor_moments" => {
             let q = stage.get_f64("q", 0.05).clamp(0.0, 0.25);
+            cache.ensure_cols(x, cols);
             let mut lo = vec![0.0; cols];
             let mut hi = vec![0.0; cols];
             for j in 0..cols {
-                let s = sorted_col(x, j);
-                lo[j] = quantile_sorted(&s, q);
-                hi[j] = quantile_sorted(&s, 1.0 - q).max(lo[j]);
+                let s = cache.col_slice(j);
+                lo[j] = quantile_sorted(s, q);
+                hi[j] = quantile_sorted(s, 1.0 - q).max(lo[j]);
             }
             FittedOp::WinsorClip { lo, hi, append }
         }
@@ -535,7 +687,7 @@ pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
         "target_bin_encode" => {
             let bins = stage.get_usize("bins", 8).clamp(2, 32);
             let prior = stage.get_f64("prior", 10.0).max(0.0);
-            let edges = quantile_edges(x, bins);
+            let edges = quantile_edges_with_cache(x, bins, cache);
             let y_mean = y.iter().sum::<f64>() / y.len().max(1) as f64;
             let mut enc = Vec::with_capacity(cols);
             for j in 0..cols {
@@ -656,11 +808,12 @@ pub fn fit_op(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedOp> {
         "spline" => {
             // Same knot placement as hinge: interior quantiles i/(k+1).
             let k = stage.get_usize("knots", 5).clamp(3, 12);
+            cache.ensure_cols(x, cols);
             let knots = (0..cols)
                 .map(|j| {
-                    let s = sorted_col(x, j);
+                    let s = cache.col_slice(j);
                     (1..=k)
-                        .map(|i| quantile_sorted(&s, i as f64 / (k + 1) as f64))
+                        .map(|i| quantile_sorted(s, i as f64 / (k + 1) as f64))
                         .collect()
                 })
                 .collect();
@@ -883,6 +1036,20 @@ fn normalize(v: &mut [f64]) {
     }
 }
 
+/// Returns `true` when `op` has `append = true`, `x` is already sanitized to finite values,
+/// and every row of `x` has width `== MAX_WIDTH`. Under those conditions `apply_op(op, x)` is
+/// the identity transform on `x` (`G-6`).
+pub(crate) fn is_append_noop_at_max_width(
+    op: &FittedOp,
+    x: &Rows,
+    x_already_sanitized: bool,
+) -> bool {
+    op_append(op)
+        && x_already_sanitized
+        && !x.is_empty()
+        && x.iter().all(|r| r.len() == crate::MAX_WIDTH)
+}
+
 /// Training-pass variant of `apply_op`. Ops whose train-time output must
 /// differ from their inference output (e.g. leave-one-out target encoders)
 /// get dedicated arms here; every other op forwards to `apply_op`, so the
@@ -895,7 +1062,86 @@ pub fn apply_op(op: &FittedOp, x: &Rows) -> std::result::Result<Rows, WidthMisma
     if matches!(op, FittedOp::Roll { .. }) {
         reject_zero_width_rows(x)?;
     }
-    Ok(finish(op, x, apply_op_generated(op, x)))
+    if op_append(op) && !x.is_empty() && x.iter().all(|r| r.len() >= crate::MAX_WIDTH) {
+        if x.iter()
+            .all(|r| r.len() == crate::MAX_WIDTH && r.iter().all(|v| v.is_finite()))
+        {
+            return Ok(x.clone());
+        }
+        return Ok(finish(op, x, vec![Vec::new(); x.len()]));
+    }
+    let generated = match op {
+        FittedOp::QuantileBins {
+            edges,
+            bins,
+            append,
+        } if x.iter().all(|r| r.len() == edges.len()) => map_rows(x, |r| {
+            let cap = if *append {
+                crate::MAX_WIDTH.saturating_sub(r.len())
+            } else {
+                crate::MAX_WIDTH
+            };
+            r.iter()
+                .take(cap)
+                .enumerate()
+                .map(|(j, v)| lower_bound(&edges[j], *v) as f64 / (*bins as f64 - 1.0))
+                .collect()
+        }),
+        FittedOp::Hinge { knots, append } if x.iter().all(|r| r.len() == knots.len()) => {
+            map_rows(x, |r| {
+                let cap = if *append {
+                    crate::MAX_WIDTH.saturating_sub(r.len())
+                } else {
+                    crate::MAX_WIDTH
+                };
+                let mut o = Vec::with_capacity((r.len() * knots[0].len()).min(cap));
+                'outer: for (j, v) in r.iter().enumerate() {
+                    for t in &knots[j] {
+                        if o.len() >= cap {
+                            break 'outer;
+                        }
+                        o.push((v - t).max(0.0));
+                    }
+                }
+                o
+            })
+        }
+        FittedOp::Cheb { degree, append } => map_rows(x, |r| {
+            let cap = if *append {
+                crate::MAX_WIDTH.saturating_sub(r.len())
+            } else {
+                crate::MAX_WIDTH
+            };
+            let mut o = Vec::with_capacity((r.len() * degree).min(cap));
+            'outer: for v in r {
+                let u = (2.0 * v - 1.0).clamp(-1.0, 1.0);
+                let mut t_prev = 1.0;
+                let mut t_cur = u;
+                for _ in 0..*degree {
+                    if o.len() >= cap {
+                        break 'outer;
+                    }
+                    o.push(t_cur);
+                    let t_next = 2.0 * u * t_cur - t_prev;
+                    t_prev = t_cur;
+                    t_cur = t_next;
+                }
+            }
+            o
+        }),
+        FittedOp::PolyInteract { pairs, append } | FittedOp::PairProd { pairs, append } => {
+            map_rows(x, |r| {
+                let cap = if *append {
+                    crate::MAX_WIDTH.saturating_sub(r.len())
+                } else {
+                    crate::MAX_WIDTH
+                };
+                pairs.iter().take(cap).map(|(a, b)| r[*a] * r[*b]).collect()
+            })
+        }
+        _ => apply_op_generated(op, x),
+    };
+    Ok(finish(op, x, generated))
 }
 
 /// The existing transform kernel before the legacy append/width/sanitize epilogue.
@@ -903,361 +1149,274 @@ pub fn apply_op(op: &FittedOp, x: &Rows) -> std::result::Result<Rows, WidthMisma
 /// it must validate generated width before any information can be truncated.
 pub(crate) fn apply_op_generated(op: &FittedOp, x: &Rows) -> Rows {
     match op {
-        FittedOp::Standardize { means, scales, .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .enumerate()
-                    .map(|(j, v)| ((v - means[j]) / scales[j]).clamp(-20.0, 20.0))
-                    .collect()
-            })
-            .collect(),
+        FittedOp::Standardize { means, scales, .. } => map_rows(x, |r| {
+            r.iter()
+                .enumerate()
+                .map(|(j, v)| ((v - means[j]) / scales[j]).clamp(-20.0, 20.0))
+                .collect()
+        }),
         FittedOp::RobustScale {
             medians, scales, ..
-        } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .enumerate()
-                    .map(|(j, v)| (v - medians[j]) / scales[j])
-                    .collect()
-            })
-            .collect(),
-        FittedOp::Rank { sorted_cols, .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .enumerate()
-                    .map(|(j, v)| mid_rank(&sorted_cols[j], *v))
-                    .collect()
-            })
-            .collect(),
-        FittedOp::Blom { sorted_cols, .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .enumerate()
-                    .map(|(j, v)| {
-                        let n = sorted_cols[j].len() as f64;
-                        let mid = mid_rank(&sorted_cols[j], *v) * n;
-                        probit((mid + 0.125) / (n + 0.25))
-                    })
-                    .collect()
-            })
-            .collect(),
-        FittedOp::QuantileBins { edges, bins, .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .enumerate()
-                    .map(|(j, v)| lower_bound(&edges[j], *v) as f64 / (*bins as f64 - 1.0))
-                    .collect()
-            })
-            .collect(),
-        FittedOp::BinOnehot { edges, bins, .. } => x
-            .iter()
-            .map(|r| {
-                let mut o = vec![0.0; r.len() * bins];
-                for (j, v) in r.iter().enumerate() {
-                    let b = lower_bound(&edges[j], *v).min(bins - 1);
-                    o[j * bins + b] = 1.0;
+        } => map_rows(x, |r| {
+            r.iter()
+                .enumerate()
+                .map(|(j, v)| (v - medians[j]) / scales[j])
+                .collect()
+        }),
+        FittedOp::Rank { sorted_cols, .. } => map_rows(x, |r| {
+            r.iter()
+                .enumerate()
+                .map(|(j, v)| mid_rank(&sorted_cols[j], *v))
+                .collect()
+        }),
+        FittedOp::Blom { sorted_cols, .. } => map_rows(x, |r| {
+            r.iter()
+                .enumerate()
+                .map(|(j, v)| {
+                    let n = sorted_cols[j].len() as f64;
+                    let mid = mid_rank(&sorted_cols[j], *v) * n;
+                    probit((mid + 0.125) / (n + 0.25))
+                })
+                .collect()
+        }),
+        FittedOp::QuantileBins { edges, bins, .. } => map_rows(x, |r| {
+            r.iter()
+                .enumerate()
+                .map(|(j, v)| lower_bound(&edges[j], *v) as f64 / (*bins as f64 - 1.0))
+                .collect()
+        }),
+        FittedOp::BinOnehot { edges, bins, .. } => map_rows(x, |r| {
+            let mut o = vec![0.0; r.len() * bins];
+            for (j, v) in r.iter().enumerate() {
+                let b = lower_bound(&edges[j], *v).min(bins - 1);
+                o[j * bins + b] = 1.0;
+            }
+            o
+        }),
+        FittedOp::Hinge { knots, .. } => map_rows(x, |r| {
+            let mut o = Vec::with_capacity(r.len() * knots[0].len());
+            for (j, v) in r.iter().enumerate() {
+                for t in &knots[j] {
+                    o.push((v - t).max(0.0));
                 }
-                o
-            })
-            .collect(),
-        FittedOp::Hinge { knots, .. } => x
-            .iter()
-            .map(|r| {
-                let mut o = Vec::with_capacity(r.len() * knots[0].len());
-                for (j, v) in r.iter().enumerate() {
-                    for t in &knots[j] {
-                        o.push((v - t).max(0.0));
-                    }
+            }
+            o
+        }),
+        FittedOp::WinsorClip { lo, hi, .. } => map_rows(x, |r| {
+            r.iter()
+                .enumerate()
+                .map(|(j, v)| v.clamp(lo[j], hi[j]))
+                .collect()
+        }),
+        FittedOp::Cheb { degree, .. } => map_rows(x, |r| {
+            let mut o = Vec::with_capacity(r.len() * degree);
+            for v in r {
+                let u = (2.0 * v - 1.0).clamp(-1.0, 1.0);
+                let mut t_prev = 1.0;
+                let mut t_cur = u;
+                for _ in 0..*degree {
+                    o.push(t_cur);
+                    let t_next = 2.0 * u * t_cur - t_prev;
+                    t_prev = t_cur;
+                    t_cur = t_next;
                 }
-                o
-            })
-            .collect(),
-        FittedOp::WinsorClip { lo, hi, .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .enumerate()
-                    .map(|(j, v)| v.clamp(lo[j], hi[j]))
-                    .collect()
-            })
-            .collect(),
-        FittedOp::Cheb { degree, .. } => x
-            .iter()
-            .map(|r| {
-                let mut o = Vec::with_capacity(r.len() * degree);
-                for v in r {
-                    let u = (2.0 * v - 1.0).clamp(-1.0, 1.0);
-                    let mut t_prev = 1.0;
-                    let mut t_cur = u;
-                    for _ in 0..*degree {
-                        o.push(t_cur);
-                        let t_next = 2.0 * u * t_cur - t_prev;
-                        t_prev = t_cur;
-                        t_cur = t_next;
-                    }
-                }
-                o
-            })
-            .collect(),
-        FittedOp::PolyInteract { pairs, .. } | FittedOp::PairProd { pairs, .. } => x
-            .iter()
-            .map(|r| pairs.iter().map(|(a, b)| r[*a] * r[*b]).collect())
-            .collect(),
-        FittedOp::RffCos { w, b, .. } => x
-            .iter()
-            .map(|r| {
-                let scale = (2.0 / w.len() as f64).sqrt();
-                (0..w.len())
-                    .map(|i| scale * (dot(&w[i], r) + b[i]).cos())
-                    .collect()
-            })
-            .collect(),
-        FittedOp::RffSin { w, b, .. } => x
-            .iter()
-            .map(|r| {
-                let scale = (2.0 / w.len() as f64).sqrt();
-                (0..w.len())
-                    .map(|i| scale * (dot(&w[i], r) + b[i]).sin())
-                    .collect()
-            })
-            .collect(),
-        FittedOp::RandProj { w, .. } => x
-            .iter()
-            .map(|r| {
-                let inv = 1.0 / (w.len() as f64).sqrt();
-                (0..w.len()).map(|i| dot(&w[i], r) * inv).collect()
-            })
-            .collect(),
+            }
+            o
+        }),
+        FittedOp::PolyInteract { pairs, .. } | FittedOp::PairProd { pairs, .. } => {
+            map_rows(x, |r| pairs.iter().map(|(a, b)| r[*a] * r[*b]).collect())
+        }
+        FittedOp::RffCos { w, b, .. } => map_rows(x, |r| {
+            let scale = (2.0 / w.len() as f64).sqrt();
+            (0..w.len())
+                .map(|i| scale * (dot(&w[i], r) + b[i]).cos())
+                .collect()
+        }),
+        FittedOp::RffSin { w, b, .. } => map_rows(x, |r| {
+            let scale = (2.0 / w.len() as f64).sqrt();
+            (0..w.len())
+                .map(|i| scale * (dot(&w[i], r) + b[i]).sin())
+                .collect()
+        }),
+        FittedOp::RandProj { w, .. } => map_rows(x, |r| {
+            let inv = 1.0 / (w.len() as f64).sqrt();
+            (0..w.len()).map(|i| dot(&w[i], r) * inv).collect()
+        }),
         FittedOp::LandmarkDist {
             landmarks, gamma, ..
         }
         | FittedOp::Nystrom {
             landmarks, gamma, ..
-        } => x
-            .iter()
-            .map(|r| {
-                landmarks
-                    .iter()
-                    .map(|l| {
-                        let mut d2 = 0.0;
-                        for j in 0..l.len().min(r.len()) {
-                            let d = r[j] - l[j];
-                            d2 += d * d;
-                        }
-                        (-gamma * d2).exp()
-                    })
-                    .collect()
-            })
-            .collect(),
-        FittedOp::ObliqueHinge { w, t, .. } => x
-            .iter()
-            .map(|r| {
-                (0..w.len())
-                    .map(|i| (dot(&w[i], r) - t[i]).max(0.0))
-                    .collect()
-            })
-            .collect(),
-        FittedOp::RowStats { .. } => x.iter().map(|r| row_stats(r)).collect(),
-        FittedOp::TargetBinEncode { edges, enc, .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .enumerate()
-                    .map(|(j, v)| {
-                        let bins = enc[j].len();
-                        enc[j][lower_bound(&edges[j], *v).min(bins - 1)]
-                    })
-                    .collect()
-            })
-            .collect(),
+        } => map_rows(x, |r| {
+            landmarks
+                .iter()
+                .map(|l| {
+                    let mut d2 = 0.0;
+                    for j in 0..l.len().min(r.len()) {
+                        let d = r[j] - l[j];
+                        d2 += d * d;
+                    }
+                    (-gamma * d2).exp()
+                })
+                .collect()
+        }),
+        FittedOp::ObliqueHinge { w, t, .. } => map_rows(x, |r| {
+            (0..w.len())
+                .map(|i| (dot(&w[i], r) - t[i]).max(0.0))
+                .collect()
+        }),
+        FittedOp::RowStats { .. } => map_rows(x, |r| row_stats(r)),
+        FittedOp::TargetBinEncode { edges, enc, .. } => map_rows(x, |r| {
+            r.iter()
+                .enumerate()
+                .map(|(j, v)| {
+                    let bins = enc[j].len();
+                    enc[j][lower_bound(&edges[j], *v).min(bins - 1)]
+                })
+                .collect()
+        }),
         // Same clamp as MathExpr's sigmoid: keeps Python's math.exp overflow-free.
-        FittedOp::Sigmoid { .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .map(|v| 1.0 / (1.0 + (-v.clamp(-30.0, 30.0)).exp()))
-                    .collect()
-            })
-            .collect(),
+        FittedOp::Sigmoid { .. } => map_rows(x, |r| {
+            r.iter()
+                .map(|v| 1.0 / (1.0 + (-v.clamp(-30.0, 30.0)).exp()))
+                .collect()
+        }),
         // Hard indicator per cell: 1.0 when v > t else 0.0 (NaN => 0.0). The
         // explicit conditional mirrors the emitted Python/Rust exactly.
-        FittedOp::Step { t, .. } => x
-            .iter()
-            .map(|r| r.iter().map(|v| if *v > *t { 1.0 } else { 0.0 }).collect())
-            .collect(),
-        FittedOp::NormRow { .. } => x
-            .iter()
-            .map(|r| {
-                let mut s = 0.0;
-                for v in r {
-                    s += v * v;
-                }
-                let inv = 1.0 / s.sqrt().max(1e-9);
-                r.iter().map(|v| v * inv).collect()
-            })
-            .collect(),
+        FittedOp::Step { t, .. } => map_rows(x, |r| {
+            r.iter().map(|v| if *v > *t { 1.0 } else { 0.0 }).collect()
+        }),
+        FittedOp::NormRow { .. } => map_rows(x, |r| {
+            let mut s = 0.0;
+            for v in r {
+                s += v * v;
+            }
+            let inv = 1.0 / s.sqrt().max(1e-9);
+            r.iter().map(|v| v * inv).collect()
+        }),
         // Per consecutive pair (0,1),(2,3),..: radius then angle atan2(b, a);
         // an odd trailing column passes through unchanged (width preserved).
-        FittedOp::Polar { .. } => x
-            .iter()
-            .map(|r| {
-                let d = r.len();
-                let mut o = Vec::with_capacity(d);
-                let mut j = 0;
-                while j + 1 < d {
-                    let (a, b) = (r[j], r[j + 1]);
-                    o.push((a * a + b * b).sqrt());
-                    o.push(b.atan2(a));
-                    j += 2;
-                }
-                if d % 2 == 1 {
-                    o.push(r[d - 1]);
-                }
-                o
-            })
-            .collect(),
+        FittedOp::Polar { .. } => map_rows(x, |r| {
+            let d = r.len();
+            let mut o = Vec::with_capacity(d);
+            let mut j = 0;
+            while j + 1 < d {
+                let (a, b) = (r[j], r[j + 1]);
+                o.push((a * a + b * b).sqrt());
+                o.push(b.atan2(a));
+                j += 2;
+            }
+            if d % 2 == 1 {
+                o.push(r[d - 1]);
+            }
+            o
+        }),
         // Row-internal shift: out[j] = x[j-k] for j >= k else 0.0 (k >= d ⇒ zeros).
-        FittedOp::Lag { k, .. } => x
-            .iter()
-            .map(|r| {
-                (0..r.len())
-                    .map(|j| if j >= *k { r[j - *k] } else { 0.0 })
-                    .collect()
-            })
-            .collect(),
+        FittedOp::Lag { k, .. } => map_rows(x, |r| {
+            (0..r.len())
+                .map(|j| if j >= *k { r[j - *k] } else { 0.0 })
+                .collect()
+        }),
         // Circular shift: out[j] = x[(j - k) mod d].
-        FittedOp::Roll { k, .. } => x
-            .iter()
-            .map(|r| {
-                let d = r.len();
-                if d == 0 {
-                    Vec::new()
-                } else {
-                    let s = *k % d;
-                    (0..d).map(|j| r[(j + d - s) % d]).collect()
-                }
-            })
-            .collect(),
-        FittedOp::FftMag { k, .. } => x.iter().map(|r| dft_mags(r, *k)).collect(),
-        FittedOp::RowSpectral { .. } => x.iter().map(|r| row_spectral(r)).collect(),
-        FittedOp::RowDiffStats { .. } => x.iter().map(|r| row_diff_stats(r)).collect(),
+        FittedOp::Roll { k, .. } => map_rows(x, |r| {
+            let d = r.len();
+            if d == 0 {
+                Vec::new()
+            } else {
+                let s = *k % d;
+                (0..d).map(|j| r[(j + d - s) % d]).collect()
+            }
+        }),
+        FittedOp::FftMag { k, .. } => map_rows(x, |r| dft_mags(r, *k)),
+        FittedOp::RowSpectral { .. } => map_rows(x, |r| row_spectral(r)),
+        FittedOp::RowDiffStats { .. } => map_rows(x, |r| row_diff_stats(r)),
         FittedOp::SvdProject {
             means, components, ..
-        } => x
-            .iter()
-            .map(|r| {
-                components
-                    .iter()
-                    .map(|c| {
-                        let mut s = 0.0;
-                        for j in 0..means.len().min(r.len()) {
-                            s += (r[j] - means[j]) * c[j];
-                        }
-                        s
-                    })
-                    .collect()
-            })
-            .collect(),
+        } => map_rows(x, |r| {
+            components
+                .iter()
+                .map(|c| {
+                    let mut s = 0.0;
+                    for j in 0..means.len().min(r.len()) {
+                        s += (r[j] - means[j]) * c[j];
+                    }
+                    s
+                })
+                .collect()
+        }),
         // Elementwise with row context: out[i][j] = expr(x = r[j], row = r).
         FittedOp::MapExpr { expr, .. } => match expr.compile() {
-            Ok(compiled) if compiled.uses_row_summaries() => {
-                x.iter().map(|r| compiled.map_row(r)).collect()
-            }
+            Ok(compiled) if compiled.uses_row_summaries() => map_rows(x, |r| compiled.map_row(r)),
             // The same-source benchmark finds no benefit for simple formulas
             // without row reductions. Retain their direct execution path.
-            Ok(_) => x
-                .iter()
-                .map(|r| {
-                    r.iter()
-                        .map(|v| expr.eval_element(*v, r).unwrap_or(0.0))
-                        .collect()
-                })
-                .collect(),
+            Ok(_) => map_rows(x, |r| {
+                r.iter()
+                    .map(|v| expr.eval_element(*v, r).unwrap_or(0.0))
+                    .collect()
+            }),
             Err(_) => x.iter().map(|r| vec![0.0; r.len()]).collect(),
         },
         // One derived column per row: out[i] = [expr(row = r)].
         FittedOp::DeriveExpr { expr, .. } => match expr.compile() {
-            Ok(compiled) if compiled.uses_row_summaries() => x
-                .iter()
-                .map(|r| vec![compiled.eval_row(r).unwrap_or(0.0)])
-                .collect(),
-            Ok(_) => x
-                .iter()
-                .map(|r| vec![expr.eval_row(r).unwrap_or(0.0)])
-                .collect(),
+            Ok(compiled) if compiled.uses_row_summaries() => {
+                map_rows(x, |r| vec![compiled.eval_row(r).unwrap_or(0.0)])
+            }
+            Ok(_) => map_rows(x, |r| vec![expr.eval_row(r).unwrap_or(0.0)]),
             Err(_) => vec![vec![0.0]; x.len()],
         },
-        FittedOp::Symlog { c, .. } => x
-            .iter()
-            .map(|r| r.iter().map(|v| asinh_stable(v / c)).collect())
-            .collect(),
-        FittedOp::SelectCorr { indices, .. } => x
-            .iter()
-            .map(|r| indices.iter().map(|&j| r[j]).collect())
-            .collect(),
+        FittedOp::Symlog { c, .. } => {
+            map_rows(x, |r| r.iter().map(|v| asinh_stable(v / c)).collect())
+        }
+        FittedOp::SelectCorr { indices, .. } => {
+            map_rows(x, |r| indices.iter().map(|&j| r[j]).collect())
+        }
         FittedOp::Impute {
             fill,
             indicator_cols,
             ..
-        } => {
-            let mut out: Rows = Vec::new();
-            for r in x {
-                let mut vals: Vec<f64> = (0..r.len())
-                    .map(|j| if r[j] == 0.0 { fill[j] } else { r[j] })
-                    .collect();
-                for &j in indicator_cols.iter() {
-                    vals.push(if r[j] == 0.0 { 1.0 } else { 0.0 });
-                }
-                out.push(vals);
+        } => map_rows(x, |r| {
+            let mut vals: Vec<f64> = (0..r.len())
+                .map(|j| if r[j] == 0.0 { fill[j] } else { r[j] })
+                .collect();
+            for &j in indicator_cols.iter() {
+                vals.push(if r[j] == 0.0 { 1.0 } else { 0.0 });
             }
-            out
-        }
-        FittedOp::PairRatio { pairs, eps, .. } => x
-            .iter()
-            .map(|r| {
-                pairs
-                    .iter()
-                    .zip(eps)
-                    .map(|(&(a, b), e)| r[a] * r[b] / (r[b] * r[b] + e))
-                    .collect()
-            })
-            .collect(),
+            vals
+        }),
+        FittedOp::PairRatio { pairs, eps, .. } => map_rows(x, |r| {
+            pairs
+                .iter()
+                .zip(eps)
+                .map(|(&(a, b), e)| r[a] * r[b] / (r[b] * r[b] + e))
+                .collect()
+        }),
         // Truncated-power natural cubic basis; like hinge, over-wide output
         // relies on the shared MAX_WIDTH truncation in `finish`.
-        FittedOp::Spline { knots, .. } => x
-            .iter()
-            .map(|r| {
-                let mut o = Vec::new();
-                for (j, v) in r.iter().enumerate() {
-                    let xi = &knots[j];
-                    let k = xi.len();
-                    if xi[k - 1] - xi[0] < 1e-9 {
-                        o.push(*v);
-                    } else {
-                        o.push(*v);
-                        let pl = (v - xi[k - 1]).max(0.0);
-                        let pk = (v - xi[k - 2]).max(0.0);
-                        let dlast =
-                            (pk * pk * pk - pl * pl * pl) / (xi[k - 1] - xi[k - 2]).max(1e-9);
-                        for t in 0..(k - 2) {
-                            let pt = (v - xi[t]).max(0.0);
-                            let d = (pt * pt * pt - pl * pl * pl) / (xi[k - 1] - xi[t]).max(1e-9);
-                            o.push(d - dlast);
-                        }
+        FittedOp::Spline { knots, .. } => map_rows(x, |r| {
+            let mut o = Vec::new();
+            for (j, v) in r.iter().enumerate() {
+                let xi = &knots[j];
+                let k = xi.len();
+                if xi[k - 1] - xi[0] < 1e-9 {
+                    o.push(*v);
+                } else {
+                    o.push(*v);
+                    let pl = (v - xi[k - 1]).max(0.0);
+                    let pk = (v - xi[k - 2]).max(0.0);
+                    let dlast = (pk * pk * pk - pl * pl * pl) / (xi[k - 1] - xi[k - 2]).max(1e-9);
+                    for t in 0..(k - 2) {
+                        let pt = (v - xi[t]).max(0.0);
+                        let d = (pt * pt * pt - pl * pl * pl) / (xi[k - 1] - xi[t]).max(1e-9);
+                        o.push(d - dlast);
                     }
                 }
-                o
-            })
-            .collect(),
+            }
+            o
+        }),
     }
 }
 
-fn op_append(op: &FittedOp) -> bool {
+pub(crate) fn op_append(op: &FittedOp) -> bool {
     match op {
         FittedOp::Standardize { append, .. }
         | FittedOp::RobustScale { append, .. }
@@ -1302,29 +1461,54 @@ fn op_append(op: &FittedOp) -> bool {
 /// every transform function).
 fn finish(op: &FittedOp, input: &Rows, mut out: Rows) -> Rows {
     let append = op_append(op);
-    for (i, row) in out.iter_mut().enumerate() {
-        if append {
-            // `input ++ row`, cut to the width cap, built once at its final size: the cap would
-            // otherwise truncate a longer allocation and keep all of its capacity.
-            let keep = (input[i].len() + row.len()).min(crate::MAX_WIDTH);
-            let from_input = input[i].len().min(keep);
-            let mut merged = Vec::with_capacity(keep);
-            merged.extend_from_slice(&input[i][..from_input]);
-            merged.extend_from_slice(&row[..keep - from_input]);
-            *row = merged;
-        } else if row.len() > crate::MAX_WIDTH {
-            // Expanding ops (one-hot, hinge, Chebyshev, products, splines) can generate several
-            // times the cap; release the dropped tail so cached blocks hold only what they keep.
-            row.truncate(crate::MAX_WIDTH);
-            row.shrink_to_fit();
-        }
-        for v in row.iter_mut() {
-            if !v.is_finite() {
-                *v = 0.0;
+    let width = out.first().map_or(0, Vec::len);
+    if out.len() * width.max(1) >= 65_536 && crate::is_parallel_enabled() {
+        out.par_iter_mut().enumerate().for_each(|(i, row)| {
+            if append {
+                let keep = (input[i].len() + row.len()).min(crate::MAX_WIDTH);
+                let from_input = input[i].len().min(keep);
+                let mut merged = Vec::with_capacity(keep);
+                merged.extend_from_slice(&input[i][..from_input]);
+                merged.extend_from_slice(&row[..keep - from_input]);
+                *row = merged;
+            } else if row.len() > crate::MAX_WIDTH {
+                row.truncate(crate::MAX_WIDTH);
+                row.shrink_to_fit();
             }
-        }
-        if row.is_empty() {
-            row.push(0.0);
+            for v in row.iter_mut() {
+                if !v.is_finite() {
+                    *v = 0.0;
+                }
+            }
+            if row.is_empty() {
+                row.push(0.0);
+            }
+        });
+    } else {
+        for (i, row) in out.iter_mut().enumerate() {
+            if append {
+                // `input ++ row`, cut to the width cap, built once at its final size: the cap would
+                // otherwise truncate a longer allocation and keep all of its capacity.
+                let keep = (input[i].len() + row.len()).min(crate::MAX_WIDTH);
+                let from_input = input[i].len().min(keep);
+                let mut merged = Vec::with_capacity(keep);
+                merged.extend_from_slice(&input[i][..from_input]);
+                merged.extend_from_slice(&row[..keep - from_input]);
+                *row = merged;
+            } else if row.len() > crate::MAX_WIDTH {
+                // Expanding ops (one-hot, hinge, Chebyshev, products, splines) can generate several
+                // times the cap; release the dropped tail so cached blocks hold only what they keep.
+                row.truncate(crate::MAX_WIDTH);
+                row.shrink_to_fit();
+            }
+            for v in row.iter_mut() {
+                if !v.is_finite() {
+                    *v = 0.0;
+                }
+            }
+            if row.is_empty() {
+                row.push(0.0);
+            }
         }
     }
     out
@@ -1992,5 +2176,48 @@ mod tests {
         let rep = cv_r2(&g, &x, &y, 5, "toy").unwrap();
         assert!(rep.oof_r2.is_finite());
         assert!(rep.oof_r2 > 0.5, "oof_r2={}", rep.oof_r2);
+    }
+
+    #[test]
+    fn g6_append_at_width_512_is_identity_and_g8_cache_reuses_sorted_prefix() {
+        let (x, y) = toy(48, crate::MAX_WIDTH);
+        let mut cache = SortedColumnsCache::new();
+        for src in [
+            "(quantile_bins bins=8 append=true)",
+            "(hinge knots=3 append=true)",
+            "(quantile_bins bins=12 append=true)",
+            "(hinge knots=4 append=true)",
+            "(cheb degree=3 append=true)",
+        ] {
+            let st = stage(src);
+            let op_uncached = fit_op(&st, &x, &y).unwrap();
+            let op_cached = fit_op_with_cache(&st, &x, &y, &mut cache).unwrap();
+            assert_eq!(
+                serde_json::to_string(&op_uncached).unwrap(),
+                serde_json::to_string(&op_cached).unwrap(),
+                "G-8 SortedColumnsCache must produce byte-identical FittedOp JSON for {src}"
+            );
+            let out_fast = apply_op(&op_cached, &x).unwrap();
+            let out_ref = finish(&op_uncached, &x, apply_op_generated(&op_uncached, &x));
+            assert_eq!(out_fast.len(), x.len());
+            for (r_idx, ((rf, rr), rx)) in out_fast.iter().zip(&out_ref).zip(&x).enumerate() {
+                assert_eq!(rf.len(), crate::MAX_WIDTH);
+                for c_idx in 0..crate::MAX_WIDTH {
+                    assert_eq!(
+                        rf[c_idx].to_bits(),
+                        rr[c_idx].to_bits(),
+                        "G-6 apply_op mismatch vs reference at ({r_idx}, {c_idx})"
+                    );
+                    assert_eq!(
+                        rf[c_idx].to_bits(),
+                        rx[c_idx].to_bits(),
+                        "append=true at width 512 must be identity at ({r_idx}, {c_idx})"
+                    );
+                }
+            }
+            cache.on_stage_complete(true, crate::MAX_WIDTH, crate::MAX_WIDTH);
+        }
+        assert_eq!(cache.cache_misses, crate::MAX_WIDTH);
+        assert_eq!(cache.cache_hits, 3 * crate::MAX_WIDTH);
     }
 }

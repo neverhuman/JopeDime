@@ -48,10 +48,10 @@ pub mod target_transform;
 
 // Standalone-code emitters (genome -> full Python + full Rust).
 mod emit_py;
-mod emit_rs;
+pub mod emit_rs;
 mod mathexpr;
 pub mod source_stream;
-mod spec;
+pub mod spec;
 pub mod tokens;
 pub mod transpile;
 pub mod typescript;
@@ -62,14 +62,16 @@ pub mod evolve;
 pub mod explain;
 
 pub use advanced_v3::{
-    balanced_accuracy_at, crossover_candidates, deterministic_seed_enumeration, emit_bound,
+    balanced_accuracy_at, bound_from_retained_legacy_model, check_direct_bound_emission_support,
+    crossover_candidates, deterministic_seed_enumeration, emit_bound, emit_bound_rust_only,
     emit_fitted_cpp17, fit_legacy_numeric_bound, fit_table, initial_population, macro_f1,
     multiclass_accuracy, mutate_candidate, next_generation, predict_labels_table,
     predict_multiclass_table, predict_probabilities_table, predict_table, supports_fitted_cpp17,
-    BoundEmitted, BoundModel, ColumnKind, ColumnSpec, DataSchema, FeatureBlock, FeatureLineage,
-    FeatureOrigin, FeatureRole, FeatureWidths, FittedCppArtifact, MulticlassPrediction, Objective,
-    RawTable, RowSemantics, TaskKind, TaskSpec, V3Archive, V3Candidate, V3EvolutionConfig,
-    V3ScoredCandidate, MAX_GENERATED_DENSE_WIDTH, MULTICLASS_MAX_TRANSFORMED_FEATURES,
+    try_bound_pipeline_from_retained_legacy_model, BoundEmitted, BoundModel, ColumnKind,
+    ColumnSpec, DataSchema, FeatureBlock, FeatureLineage, FeatureOrigin, FeatureRole,
+    FeatureWidths, FittedCppArtifact, MulticlassPrediction, Objective, RawTable, RowSemantics,
+    TaskKind, TaskSpec, V3Archive, V3Candidate, V3EvolutionConfig, V3ScoredCandidate,
+    MAX_GENERATED_DENSE_WIDTH, MULTICLASS_MAX_TRANSFORMED_FEATURES,
 };
 /// The fitted C++ runtime and its codec (feature `fitted-cpp`, default-on).
 #[cfg(feature = "fitted-cpp")]
@@ -83,7 +85,7 @@ pub use metrics::{
     accuracy_at, auc, average_precision, best_f1_threshold, brier, f1_at, lift_at, logloss, mae,
     pearson, r2, rmse, youden_threshold, LOGLOSS_EPS,
 };
-pub use model::{cv_r2, fit, fit_predict, CvReport, Model};
+pub use model::{cv_r2, fit, fit_and_predict_train, fit_predict, CvReport, Model};
 pub use rng::Pcg32;
 
 /// The reigning vendored champion genome (honest 5-fold CV r2 = 0.924 on its
@@ -116,3 +118,17 @@ pub mod c17;
 pub mod cuda;
 /// Go output backed by the complete Rust WebAssembly implementation.
 pub mod go;
+
+static PARALLEL_ENABLED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+
+/// Enable or disable internal Rayon parallelism inside `feat_math` transforms and heads.
+/// When set to `false` before any Rayon call, `feat_math` executes strictly on the calling
+/// OS thread without initializing or waking a background Rayon thread pool.
+pub fn set_parallel_enabled(enabled: bool) {
+    PARALLEL_ENABLED.store(enabled, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[inline]
+pub fn is_parallel_enabled() -> bool {
+    PARALLEL_ENABLED.load(std::sync::atomic::Ordering::Relaxed)
+}

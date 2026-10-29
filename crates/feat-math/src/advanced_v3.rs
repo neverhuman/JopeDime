@@ -27,7 +27,7 @@ mod transforms;
 mod types;
 
 pub use csv::RawTable;
-pub use emit::{emit_bound, BoundEmitted};
+pub use emit::{emit_bound, emit_bound_rust_only, BoundEmitted};
 pub use evolution::{
     crossover_candidates, deterministic_seed_enumeration, initial_population, mutate_candidate,
     next_generation, V3Archive, V3Candidate, V3EvolutionConfig, V3ScoredCandidate,
@@ -52,9 +52,10 @@ pub use fitted_portable::{
 };
 pub use heads::MULTICLASS_MAX_TRANSFORMED_FEATURES;
 pub use pipeline::{
+    bound_from_retained_legacy_model, check_direct_bound_emission_support,
     fit_legacy_numeric_bound, fit_table, predict_labels_table, predict_multiclass_table,
-    predict_probabilities_table, predict_table, validate_v3_genome, BoundModel,
-    MulticlassPrediction,
+    predict_probabilities_table, predict_table, try_bound_pipeline_from_retained_legacy_model,
+    validate_v3_genome, BoundModel, MulticlassPrediction,
 };
 pub use schema::{ColumnKind, ColumnSpec, DataSchema, RowSemantics};
 pub use types::{

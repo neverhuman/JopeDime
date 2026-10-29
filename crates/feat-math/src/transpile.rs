@@ -113,6 +113,20 @@ pub struct EmitOptions {
     /// helpers. The legacy default (`false`) keeps its source bytes and
     /// `emitter_version` labels for already pinned artifacts.
     pub partition_point_quantile_bounds: bool,
+    /// Versioned opt-in HPC-v1 recipe profile (`artifact_variant = "hpc_v1"`).
+    /// Emits feature-major `u16` training bins, exact dead/duplicate bin-column
+    /// elimination, stack-allocated histogram buffers, unit-hessian row counts,
+    /// `mid_rank` single-tie fast path, width-512 pairwise-product pre-capping,
+    /// and bounded `JOPE_CPU_THREADS` (`1..=6`) row-parallel prediction.
+    /// Default `false` preserves legacy `fast_runtime = false` and legacy
+    /// `fast_runtime = true` bytes bit-for-bit.
+    pub hpc_v1: bool,
+    /// Versioned opt-in HPC-v2 recipe profile (`artifact_variant = "hpc_v2"`).
+    /// Includes all `hpc_v1` optimizations plus row-major contiguous `jacobi_eigen`,
+    /// dimension-major `ksmooth` distance accumulation + `select_nth_unstable_by`,
+    /// and width-512 `append = true` pre-capping for `quantile_bins`, `hinge`, and `cheb`.
+    /// Default `false` preserves `legacy` and `hpc_v1` source bytes bit-for-bit.
+    pub hpc_v2: bool,
 }
 
 #[derive(Clone, Debug, Serialize)]
