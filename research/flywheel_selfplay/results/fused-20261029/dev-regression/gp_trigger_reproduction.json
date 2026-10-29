@@ -1,0 +1,49 @@
+{
+  "source_before": "e0cbd089b834fd0c2f7687b64886c96398684ac4",
+  "source_after": "2547632664f196d676ad1bbbc6c0c61baa174b6a",
+  "history_rounds": [
+    187,
+    205
+  ],
+  "history_all_adapter_admissions_accepted": true,
+  "before": {
+    "version": "rejection-escape/v1",
+    "round_seed": 41835203,
+    "consecutive_rejections": 0,
+    "same_candidate_streak": 0,
+    "retry_level": 0,
+    "lr_factor": 1.0,
+    "steps": 2,
+    "minimum_lr": 1e-06,
+    "training_rotation": 206,
+    "gp_exploration": false,
+    "gp_generated_per_context": 8,
+    "gp_max_evaluated_per_context": 4,
+    "reason": "new_round_seed"
+  },
+  "after": {
+    "version": "rejection-escape/v1",
+    "round_seed": 41835203,
+    "consecutive_rejections": 0,
+    "same_candidate_streak": 0,
+    "retry_level": 0,
+    "lr_factor": 1.0,
+    "steps": 2,
+    "minimum_lr": 1e-06,
+    "training_rotation": 206,
+    "gp_exploration": true,
+    "gp_exploration_reason": "promotion_drought_burst",
+    "gp_drought_policy": {
+      "version": "promotion-drought-burst/v1",
+      "threshold_rounds": 18,
+      "burst_rounds": 3,
+      "cooldown_rounds": 3,
+      "completed_zero_promotion_rounds": 19,
+      "phase": 0
+    },
+    "gp_generated_per_context": 16,
+    "gp_max_evaluated_per_context": 4,
+    "reason": "new_round_seed"
+  },
+  "reproduced": "GP drought does not trigger existing exploration when adapter ties are accepted; new trigger leaves training/seed/evaluation cap unchanged"
+}

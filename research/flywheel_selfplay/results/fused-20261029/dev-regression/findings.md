@@ -155,3 +155,53 @@ variation remains. Oct23–24 baseline183.26/133.06/211.24s covered GP-only;
 current totals include training+GP, so no matched speedup is asserted.
 35 focused tests pass (five cache tests), ruff/check/format,diff,paper-trace pass.
 Loop continues with unchanged campaign budgets; no Phase2 or xbabe0 access.
+
+
+1935 nudge — GP promotion drought audit and independent exploration trigger.
+Audited187–205:128 proposals/round,125–128 survive pool dedup,64 native CV
+evaluations/round. All1216 completed:1211 worse than current incumbent,one
+tie within1e-6,four CV failures. No eligible strict improvement was suppressed.
+Per-context best utility/incumbent/reasons and candidate-level classifications
+are retained in plateau-audit/round187-205.json; compact full context tables
+are committed in gp_plateau_audit.md/json. Incumbents reconstructed from
+passing original pools plus chronological journal; selected IDs matched scores.
+Pool dedup does not retain rejected candidates, so repeated evaluations remain
+a search-efficiency limitation. Training device cache is outside native GP
+admission, and invalidation after185/186 is visible in next-round transfers.
+
+Native GP dominates200/201 spikes:100.56/91.11s of103.09/96.43s total.
+Same-context/same-DSL matched wall times rose1.61x/1.73x (20/23 matches).
+Round201 CPU slate assembly.67→2.45s,device packing.055→.279s; model/targets
+only.54→.62s. Consistent with temporary shared-host scheduling/CPU contention;
+no historical host samples identify a particular consumer. Recovered afterward.
+
+Reproduced policy liveness defect: accepted adapter ties always reset the only
+GP exploration trigger (which watched rejections), even with18+ GP rounds
+without promotions. Fix separates GP progress from adapter admission. Before
+new outcomes, preregistered18-round threshold,3 exploration/3 cooldown rounds,
+using existing16-proposal generator/two ranked+two seeded random choices.
+Only actually completed policy rounds advance phase; historical rounds do not
+invent exploration. Promotion/unknown/missing/zero-evaluation history resets
+the drought. Evaluation cap4/context,64/round and max2 updates unchanged.
+No DOPE,raw-dev,LR,Phase2,sealed/outer or other-job change.48 focused tests
+pass,including reproduced failure,burst/cooldown,reset and installation clocks.
+Installation uses one own-worker completed-checkpoint handoff; live proof to
+follow without promising promotions or independent quality improvement.
+
+
+Live GP-drought fix qualified on source2547632664f196d676ad1bbbc6c0c61baa174b6a.
+Own boundary resume210→211 under existing campaign lock. Startup cached/legacy
+fields and costs bit-identical; preregistration hash retained in source manifest.
+211/212 explore at policy phases0/1:256 proposals,64 native evaluations each,
+wall54.57/63.25s.211 has no promotion;212 admits one strict train-CV improvement
+in context0411fbc1:utility.18569920995→.18586409938 (+.00016488943),from
+seeded-exploration slot2 (zero-based),program0b0d5658b3da5ed63b89bf0d4e8b22c7582e1ca526ecbd6adda28f2c5f269def.
+No confidence interval or independent validation is available for this gain.
+213 resets drought to0 and returns to128 proposals/ranked selection,64 evaluations,
+wall60.41s. Its one device-pool transfer confirms invalidation after promotion.
+All three:2 optimizer steps,41 changed tensors,29,211 trainable parameters,
+positive adapter movement,rawdev2.267816067203105 and DOPE c51a56d0 unchanged.
+The existing adapter-rejection escape remains separate; the3-round cooldown
+applies to the new drought trigger.48 focused tests/ruff/format/paper-trace pass;
+full hosted CI is unqualified (prior run has failed jobs),not a merge gate pass.
+Live worker continues PID441927,log continuation-gp-drought.log.
