@@ -1,0 +1,365 @@
+{
+  "runtime_source": "3f34f4162d8dc5b0d1442698114b4a2eaaa9d538",
+  "resume_checkpoint": "round-161.pt",
+  "parity": {
+    "fields_bit_identical": {
+      "program": true,
+      "proj16": true,
+      "fitness": true,
+      "gate": true
+    },
+    "predicted_costs_bit_identical": true,
+    "max_abs_cost_delta": 0.0,
+    "contexts": [
+      "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+      "004a7438dc815b62c821976ac64379b7bf9a1a138d3ca441a9fb5a5e0e5dfb24",
+      "00b7692ce5e864f099ac12b387892cd6d223478677c0aa6673d99a3ccc1b1b94",
+      "010cc1caaa0743330780528c3ca1f644150d171717bf75e81ff9e9fa681ca31b",
+      "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031"
+    ]
+  },
+  "before": [
+    {
+      "round": 143,
+      "wall_seconds": 75.25245203636587,
+      "train_wall_seconds": 24.06211298890412,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.5020151436328888,
+        "slate_assembly": 0.6683283522725105,
+        "forward_and_targets": 22.649744872003794,
+        "backward_and_step": 0.23953567445278168,
+        "dev_gate": 0.13794538192451,
+        "gp": 50.99524750933051
+      }
+    },
+    {
+      "round": 154,
+      "wall_seconds": 106.02603836171329,
+      "train_wall_seconds": 56.47537144087255,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.5022981837391853,
+        "slate_assembly": 0.6725624073296785,
+        "forward_and_targets": 55.05711325444281,
+        "backward_and_step": 0.2404948901385069,
+        "dev_gate": 0.1488533802330494,
+        "gp": 49.33783411234617
+      }
+    },
+    {
+      "round": 160,
+      "wall_seconds": 99.87928713671863,
+      "train_wall_seconds": 38.04846054688096,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.5021218117326498,
+        "slate_assembly": 0.6617714017629623,
+        "forward_and_targets": 36.64760697633028,
+        "backward_and_step": 0.23455279134213924,
+        "dev_gate": 0.13951785489916801,
+        "gp": 61.6282346509397
+      }
+    },
+    {
+      "round": 161,
+      "wall_seconds": 103.24184552021325,
+      "train_wall_seconds": 37.143910406157374,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.5023176930844784,
+        "slate_assembly": 0.6676300596445799,
+        "forward_and_targets": 35.730542562901974,
+        "backward_and_step": 0.24096539430320263,
+        "dev_gate": 0.13842086866497993,
+        "gp": 65.90185099467635
+      }
+    }
+  ],
+  "after": [
+    {
+      "round": 162,
+      "wall_seconds": 57.53587714768946,
+      "train_wall_seconds": 2.110122801735997,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.5018368475139141,
+        "slate_assembly": 0.6651721261441708,
+        "forward_and_targets": 0.6156742125749588,
+        "backward_and_step": 0.325072780251503,
+        "dev_gate": 0.13536200858652592,
+        "gp": 55.23145955055952
+      },
+      "batch_profile": {
+        "device_pack_seconds": 0.06985718384385109,
+        "model_forward_target_seconds": 0.5449975878000259,
+        "cpu_index_bytes": 25165824,
+        "avoided_cpu_feature_slate_bytes": 5184159744,
+        "pool_transfers_this_round": 12
+      },
+      "optimizer_steps": 2,
+      "optimizer_step_before": 284,
+      "optimizer_step_candidate": 286,
+      "parameter_update_l2": 0.0006713413749821484,
+      "changed_tensors": 41,
+      "trainable_params": 29211,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_checksum_match": true,
+      "dev_utility": {
+        "mean": 2.267816067203105,
+        "per_context": [
+          0.4595724478760325,
+          1.1321918041103844,
+          1.6493666422408813,
+          0.3804703956781366,
+          2.876232122429703,
+          0.8377046659779932,
+          0.19225477831682752,
+          10.614735680994883
+        ],
+        "selected_programs": [
+          "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+        ],
+        "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+      },
+      "adapter_admission": {
+        "round": 162,
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "candidate_utility": 2.267816067203105,
+        "previous_best_utility": 2.267816067203105,
+        "accepted": true,
+        "action": "accept_tie",
+        "best_utility": 2.267816067203105,
+        "best_round": 162,
+        "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-162.pt",
+        "timestamp": 1793299752.799624
+      },
+      "promotions": 0,
+      "gpu_peak_allocated_bytes": 17129933824,
+      "gpu_peak_reserved_bytes": 18639486976,
+      "receipt_sha256": "f7827f882430a01ce8925f23e47a0348e0e8541fc482f1d110b9c89cbf17f1ff",
+      "gp": {
+        "evaluated": 64,
+        "passing": 64,
+        "failed": 0,
+        "unique": 59,
+        "unique_fraction": 0.921875,
+        "novelty": 0.864406779661017,
+        "collapse": false
+      }
+    },
+    {
+      "round": 163,
+      "wall_seconds": 59.19703591801226,
+      "train_wall_seconds": 2.0013204105198383,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.502130663022399,
+        "slate_assembly": 0.6630676798522472,
+        "forward_and_targets": 0.6015624050050974,
+        "backward_and_step": 0.23179946839809418,
+        "dev_gate": 0.13651391677558422,
+        "gp": 57.00185257010162
+      },
+      "batch_profile": {
+        "device_pack_seconds": 0.059739213436841965,
+        "model_forward_target_seconds": 0.541178897023201,
+        "cpu_index_bytes": 25165824,
+        "avoided_cpu_feature_slate_bytes": 5184159744,
+        "pool_transfers_this_round": 0
+      },
+      "optimizer_steps": 2,
+      "optimizer_step_before": 286,
+      "optimizer_step_candidate": 288,
+      "parameter_update_l2": 0.000667512824293226,
+      "changed_tensors": 41,
+      "trainable_params": 29211,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_checksum_match": true,
+      "dev_utility": {
+        "mean": 2.267816067203105,
+        "per_context": [
+          0.4595724478760325,
+          1.1321918041103844,
+          1.6493666422408813,
+          0.3804703956781366,
+          2.876232122429703,
+          0.8377046659779932,
+          0.19225477831682752,
+          10.614735680994883
+        ],
+        "selected_programs": [
+          "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+        ],
+        "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+      },
+      "adapter_admission": {
+        "round": 163,
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "candidate_utility": 2.267816067203105,
+        "previous_best_utility": 2.267816067203105,
+        "accepted": true,
+        "action": "accept_tie",
+        "best_utility": 2.267816067203105,
+        "best_round": 163,
+        "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-163.pt",
+        "timestamp": 1793299810.7517457
+      },
+      "promotions": 0,
+      "gpu_peak_allocated_bytes": 17129933824,
+      "gpu_peak_reserved_bytes": 19079888896,
+      "receipt_sha256": "eb010e71436f7b5238a7b68d4a6989effe3b84ea7845a118e426109ebe73f3cf",
+      "gp": {
+        "evaluated": 64,
+        "passing": 64,
+        "failed": 0,
+        "unique": 59,
+        "unique_fraction": 0.921875,
+        "novelty": 0.847457627118644,
+        "collapse": false
+      }
+    },
+    {
+      "round": 164,
+      "wall_seconds": 63.765463564544916,
+      "train_wall_seconds": 1.9961465485394,
+      "phase_wall_seconds": {
+        "headroom_wait": 0.5018679052591324,
+        "slate_assembly": 0.6637757830321789,
+        "forward_and_targets": 0.5980924423784018,
+        "backward_and_step": 0.22969023697078228,
+        "dev_gate": 0.13694067485630512,
+        "gp": 61.571527341380715
+      },
+      "batch_profile": {
+        "device_pack_seconds": 0.05632089078426361,
+        "model_forward_target_seconds": 0.5412313006818295,
+        "cpu_index_bytes": 25165824,
+        "avoided_cpu_feature_slate_bytes": 5184159744,
+        "pool_transfers_this_round": 0
+      },
+      "optimizer_steps": 2,
+      "optimizer_step_before": 288,
+      "optimizer_step_candidate": 290,
+      "parameter_update_l2": 0.0006635612226091325,
+      "changed_tensors": 41,
+      "trainable_params": 29211,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_checksum_match": true,
+      "dev_utility": {
+        "mean": 2.267816067203105,
+        "per_context": [
+          0.4595724478760325,
+          1.1321918041103844,
+          1.6493666422408813,
+          0.3804703956781366,
+          2.876232122429703,
+          0.8377046659779932,
+          0.19225477831682752,
+          10.614735680994883
+        ],
+        "selected_programs": [
+          "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+        ],
+        "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+      },
+      "adapter_admission": {
+        "round": 164,
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "candidate_utility": 2.267816067203105,
+        "previous_best_utility": 2.267816067203105,
+        "accepted": true,
+        "action": "accept_tie",
+        "best_utility": 2.267816067203105,
+        "best_round": 164,
+        "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-164.pt",
+        "timestamp": 1793299870.481267
+      },
+      "promotions": 0,
+      "gpu_peak_allocated_bytes": 17129933824,
+      "gpu_peak_reserved_bytes": 18115198976,
+      "receipt_sha256": "974ae249a97972739efcdb03d2029a6565c4a8c9cb361b07e1dada4584b2a929",
+      "gp": {
+        "evaluated": 64,
+        "passing": 64,
+        "failed": 0,
+        "unique": 58,
+        "unique_fraction": 0.90625,
+        "novelty": 0.8275862068965517,
+        "collapse": false
+      }
+    }
+  ],
+  "old_oct23_24_gp_only_seconds": [
+    183.26,
+    133.06,
+    211.24
+  ],
+  "baseline_comparability": "different scopes: historical GP-only; current adapter training plus GP, not matched speedup",
+  "bounds": {
+    "native_evaluations_per_round": 64,
+    "max_optimizer_steps": 2,
+    "batch_size": 8192,
+    "cpu_hard_percent": 85,
+    "gpu_allocator_fraction": 0.9,
+    "run_gib": 10,
+    "minimum_free_gib": 50
+  },
+  "qualification": "three completed real-data rounds; exact legacy input and prediction parity; frozen DOPE and raw-dev gate unchanged",
+  "post_profile": {
+    "elapsed_seconds": 127.57548069953918,
+    "rounds": [
+      161,
+      163
+    ],
+    "delta": {
+      "minor_faults": 286999,
+      "major_faults": 14,
+      "read_bytes": 2867200,
+      "cpu_user": 12.45,
+      "cpu_system": 2.17
+    },
+    "peak_rss_bytes": 1641644032,
+    "swap_kib_range": [
+      0,
+      0
+    ],
+    "includes_startup": true
+  },
+  "verification": {
+    "focused_pytest": {
+      "collected": 35,
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0,
+      "exit_status": 0
+    },
+    "ruff_check": 0,
+    "ruff_format_check": 0,
+    "paper_trace": 0,
+    "full_manual_ci": "pending dispatch at final evidence head",
+    "environment": {
+      "python": "/home/ubuntu/.venvs/flywheel-gp-fused/bin/python",
+      "OMP_NUM_THREADS": 4,
+      "OPENBLAS_NUM_THREADS": 1,
+      "MKL_NUM_THREADS": 4,
+      "allocator": "expandable_segments:True"
+    }
+  },
+  "recorded_utc": "2026-10-29T18:52:55.549382+00:00"
+}

@@ -1,0 +1,135 @@
+{
+  "round": 5,
+  "node": "xbabe1",
+  "path": "cpu_exact_landmarks+frozen_dope+GPU_adapter",
+  "optimizer_steps": 2,
+  "changed_tensors": 41,
+  "trainable_params": 29211,
+  "parameter_counts": {
+    "__root_direct__": {
+      "trainable_params": 0,
+      "frozen_params": 0,
+      "total_params": 0,
+      "training_mode": false
+    },
+    "dope_model": {
+      "trainable_params": 0,
+      "frozen_params": 444168,
+      "total_params": 444168,
+      "training_mode": false
+    },
+    "gamenet_anchor": {
+      "trainable_params": 0,
+      "frozen_params": 520785,
+      "total_params": 520785,
+      "training_mode": false
+    },
+    "adapter_10tok": {
+      "trainable_params": 29211,
+      "frozen_params": 520785,
+      "total_params": 549996,
+      "training_mode": false
+    },
+    "landmark_bridge": {
+      "trainable_params": 0,
+      "frozen_params": 65792,
+      "total_params": 65792,
+      "training_mode": false
+    },
+    "nolm_bridge": {
+      "trainable_params": 0,
+      "frozen_params": 65792,
+      "total_params": 65792,
+      "training_mode": false
+    },
+    "dope_to_lm48": {
+      "trainable_params": 0,
+      "frozen_params": 30240,
+      "total_params": 30240,
+      "training_mode": false
+    },
+    "__global_total__": {
+      "trainable_params": 29211,
+      "frozen_params": 1126777,
+      "total_params": 1155988,
+      "training_mode": false
+    }
+  },
+  "dope_checksum_match": true,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "training_context_presentations": 18432,
+  "training_contexts_per_second": 462.9472743290659,
+  "round_contexts_per_second": 0.16152600275192552,
+  "tokens_per_second": 25.541299185148223,
+  "tokens_count": 2530,
+  "tokens_scope": "evaluated GP DSL tokens (cl100k_base) per full round wall second; not emitted target-language code",
+  "dev_utility": {
+    "mean": 2.180637925280284,
+    "per_context": [
+      0.4595724478760325,
+      1.1321918041103844,
+      1.5845094749119621,
+      0.3804703956781366,
+      2.876232122429703,
+      0.20513669792434283,
+      0.19225477831682752,
+      10.614735680994883
+    ],
+    "selected_programs": [
+      "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+      "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+      "01fc48ec5f92b27ef99ae2c9d1baec3f093934993633b6016684e016d2c56e03",
+      "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+      "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+      "9f4730b3400bde569f9e9c237c29d778d003d26a1bb69b8913531122df84bdef",
+      "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+      "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+    ],
+    "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+  },
+  "initial_dev_utility": {
+    "mean": 2.180637925280284,
+    "per_context": [
+      0.4595724478760325,
+      1.1321918041103844,
+      1.5845094749119621,
+      0.3804703956781366,
+      2.876232122429703,
+      0.20513669792434283,
+      0.19225477831682752,
+      10.614735680994883
+    ],
+    "selected_programs": [
+      "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+      "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+      "01fc48ec5f92b27ef99ae2c9d1baec3f093934993633b6016684e016d2c56e03",
+      "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+      "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+      "9f4730b3400bde569f9e9c237c29d778d003d26a1bb69b8913531122df84bdef",
+      "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+      "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+    ],
+    "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+  },
+  "loss_first": 3.1814699172973633,
+  "loss_last": 3.1592259407043457,
+  "GP": {
+    "evaluated": 64,
+    "passing": 62,
+    "failed": 0,
+    "unique": 56,
+    "novelty": 0.875,
+    "collapse": false
+  },
+  "promotions": 3,
+  "train_wall_seconds": 39.81446921080351,
+  "wall_seconds": 99.05525876581669,
+  "old_live_expansion_baseline_seconds": [
+    183.26,
+    133.06,
+    211.24
+  ],
+  "baseline_comparability": "different scope: old GP-only 16 contexts, now training + GP; no speedup claim",
+  "gpu_peak_allocated_bytes": 19201293312,
+  "gpu_peak_reserved_bytes": 22584229888
+}

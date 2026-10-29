@@ -1,0 +1,20 @@
+{
+  "source": "read-only live process profile; worker never stopped for profiling",
+  "pid": 3184347,
+  "rounds": [
+    156,
+    158
+  ],
+  "elapsed_seconds": 127.5486147403717,
+  "minor_faults": 2642384,
+  "major_faults": 0,
+  "process_read_bytes": 0,
+  "cpu_user_seconds": 8.199999999999989,
+  "cpu_system_seconds": 35.309999999999945,
+  "peak_rss_bytes": 6719926272,
+  "swap_kib_range": [
+    0,
+    0
+  ],
+  "conclusion": "repeated multi-GB host slate allocations create page-fault/kernel overhead; no major faults/read I/O/swap in observed interval; projection/backward steady, replay/GP not the train-path cause"
+}

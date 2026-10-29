@@ -1,0 +1,31 @@
+{
+  "schema": "jope.gp-promotion-drought-preregistration/v1",
+  "registered_utc": "2026-10-29T19:39:31.581538+00:00",
+  "diagnosis_rounds": [
+    187,
+    205
+  ],
+  "old_source": "e0cbd089b834fd0c2f7687b64886c96398684ac4",
+  "policy": "promotion-drought-burst/v1",
+  "threshold_completed_rounds": 18,
+  "exploration_burst_rounds": 3,
+  "ranked_cooldown_rounds": 3,
+  "reset": "promotion or unknown/missing/zero-evaluation history",
+  "proposals_per_context": 16,
+  "selection": "two lowest predicted costs plus two seeded random remaining candidates",
+  "native_evaluations_per_context": 4,
+  "native_evaluations_per_round": 64,
+  "optimizer_steps_max": 2,
+  "batch_size": 8192,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+  "success_criteria": "trigger activates independently of accepted adapter ties; proposal/selection changes execute within cap; all exact CV outcomes retained whether promotion succeeds or not; raw dev and frozen-DOPE gates remain",
+  "no_quality_guarantee": true,
+  "phase2": false,
+  "sealed_or_outer_inputs": false,
+  "cpu_hard_percent": 85,
+  "gpu_allocator_fraction": 0.9,
+  "storage_run_gib": 10,
+  "free_reserve_gib": 50,
+  "cycle_clock": "Only actual completed rounds carrying this policy advance the burst/cooldown phase; old rounds do not invent historical exploration."
+}

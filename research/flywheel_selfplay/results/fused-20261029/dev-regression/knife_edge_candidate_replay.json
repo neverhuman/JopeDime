@@ -1,0 +1,231 @@
+{
+  "identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+  "reference_round": 95,
+  "results": [
+    {
+      "round": 95,
+      "checkpoint_sha256": "4d7b5c7fe364cf10946727f9fab08b8cc5e659e6d1268296ac0d2405d73a48cd",
+      "evaluation_identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "selected_program": "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "utility": 0.4595724478760325,
+          "top2_cost_margin": 0.03702712059020996,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "selected_program": "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "utility": 1.1321918041103844,
+          "top2_cost_margin": 0.0030548572540283203,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "selected_program": "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "utility": 1.6493666422408813,
+          "top2_cost_margin": 0.024817466735839844,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "selected_program": "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "utility": 0.3804703956781366,
+          "top2_cost_margin": 0.0006468296051025391,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "selected_program": "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "utility": 2.876232122429703,
+          "top2_cost_margin": 0.00363922119140625,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "selected_program": "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "utility": 0.8377046659779932,
+          "top2_cost_margin": 0.03697609901428223,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "selected_program": "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "utility": 0.19225477831682752,
+          "top2_cost_margin": 0.14340361952781677,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "selected_program": "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522",
+          "utility": 10.614735680994883,
+          "top2_cost_margin": 3.504753112792969e-05,
+          "named_pair_scores": {
+            "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522": -2.888032913208008,
+            "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e": -2.88799786567688
+          }
+        }
+      ],
+      "optimizer_lr": [
+        1.5625e-06
+      ],
+      "optimizer_steps": [
+        219
+      ],
+      "nonadapter_tensors_equal_reference": true,
+      "mean": 2.267816067203105
+    },
+    {
+      "round": 96,
+      "checkpoint_sha256": "a592832b2e67e4ed46710fcf8d010a151708586bb8f0bf124d3f93d2c4757484",
+      "evaluation_identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "selected_program": "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "utility": 0.4595724478760325,
+          "top2_cost_margin": 0.03703808784484863,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "selected_program": "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "utility": 1.1321918041103844,
+          "top2_cost_margin": 0.0030434131622314453,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "selected_program": "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "utility": 1.6493666422408813,
+          "top2_cost_margin": 0.024966716766357422,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "selected_program": "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "utility": 0.3804703956781366,
+          "top2_cost_margin": 0.0006444454193115234,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "selected_program": "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "utility": 2.876232122429703,
+          "top2_cost_margin": 0.0036382675170898438,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "selected_program": "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "utility": 0.8377046659779932,
+          "top2_cost_margin": 0.03700757026672363,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "selected_program": "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "utility": 0.19225477831682752,
+          "top2_cost_margin": 0.1434096097946167,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "selected_program": "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e",
+          "utility": 1.6561092057462654,
+          "top2_cost_margin": 9.250640869140625e-05,
+          "named_pair_scores": {
+            "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522": -2.887960195541382,
+            "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e": -2.8880527019500732
+          }
+        }
+      ],
+      "optimizer_lr": [
+        1.5625e-06
+      ],
+      "optimizer_steps": [
+        221
+      ],
+      "nonadapter_tensors_equal_reference": true,
+      "mean": 1.1479877577970279
+    },
+    {
+      "round": 112,
+      "checkpoint_sha256": "19e1d8ad91b0c3d9b6d3ceb94e62e24dd392afe7787efa0ec157bf0e144991f3",
+      "evaluation_identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "selected_program": "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "utility": 0.4595724478760325,
+          "top2_cost_margin": 0.03702998161315918,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "selected_program": "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "utility": 1.1321918041103844,
+          "top2_cost_margin": 0.003051280975341797,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "selected_program": "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "utility": 1.6493666422408813,
+          "top2_cost_margin": 0.02486562728881836,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "selected_program": "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "utility": 0.3804703956781366,
+          "top2_cost_margin": 0.0006458759307861328,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "selected_program": "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "utility": 2.876232122429703,
+          "top2_cost_margin": 0.0036382675170898438,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "selected_program": "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "utility": 0.8377046659779932,
+          "top2_cost_margin": 0.03698539733886719,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "selected_program": "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "utility": 0.19225477831682752,
+          "top2_cost_margin": 0.14340627193450928,
+          "named_pair_scores": {}
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "selected_program": "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e",
+          "utility": 1.6561092057462654,
+          "top2_cost_margin": 5.0067901611328125e-06,
+          "named_pair_scores": {
+            "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522": -2.888010025024414,
+            "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e": -2.888015031814575
+          }
+        }
+      ],
+      "optimizer_lr": [
+        1e-06
+      ],
+      "optimizer_steps": [
+        220
+      ],
+      "nonadapter_tensors_equal_reference": true,
+      "mean": 1.1479877577970279
+    }
+  ]
+}

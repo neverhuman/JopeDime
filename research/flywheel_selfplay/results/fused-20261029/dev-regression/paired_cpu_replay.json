@@ -1,0 +1,261 @@
+{
+  "identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+  "results": [
+    {
+      "round": 38,
+      "checkpoint_sha256": "8bc60abf635d0046f6f95e22871618694023e520abe1004c6772acdd4bddd808",
+      "evaluation_identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "selected_program": "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "utility": 0.4595724478760325,
+          "top2_cost_margin": 0.03523612022399902
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "selected_program": "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "utility": 1.1321918041103844,
+          "top2_cost_margin": 0.0043354034423828125
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "selected_program": "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "utility": 1.6493666422408813,
+          "top2_cost_margin": 0.0062122344970703125
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "selected_program": "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "utility": 0.3804703956781366,
+          "top2_cost_margin": 0.001063227653503418
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "selected_program": "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "utility": 2.876232122429703,
+          "top2_cost_margin": 0.0035915374755859375
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "selected_program": "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "utility": 0.8377046659779932,
+          "top2_cost_margin": 0.03314018249511719
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "selected_program": "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "utility": 0.19225477831682752,
+          "top2_cost_margin": 0.13935494422912598
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "selected_program": "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522",
+          "utility": 10.614735680994883,
+          "top2_cost_margin": 0.020895957946777344
+        }
+      ],
+      "optimizer_lr": [
+        0.0001
+      ],
+      "optimizer_steps": [
+        206
+      ],
+      "nonadapter_tensors_equal_round38": true,
+      "mean": 2.267816067203105
+    },
+    {
+      "round": 40,
+      "checkpoint_sha256": "79bca8d5d0f353429c50a610f5901e415b1cd0a6883ee7f1f3b9b96460588934",
+      "evaluation_identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "selected_program": "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "utility": 0.4595724478760325,
+          "top2_cost_margin": 0.03667783737182617
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "selected_program": "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "utility": 1.1321918041103844,
+          "top2_cost_margin": 0.0033464431762695312
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "selected_program": "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "utility": 1.6493666422408813,
+          "top2_cost_margin": 0.021095752716064453
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "selected_program": "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "utility": 0.3804703956781366,
+          "top2_cost_margin": 0.0007293224334716797
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "selected_program": "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "utility": 2.876232122429703,
+          "top2_cost_margin": 0.003635406494140625
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "selected_program": "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "utility": 0.8377046659779932,
+          "top2_cost_margin": 0.036217331886291504
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "selected_program": "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "utility": 0.19225477831682752,
+          "top2_cost_margin": 0.14284777641296387
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "selected_program": "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522",
+          "utility": 10.614735680994883,
+          "top2_cost_margin": 0.004075050354003906
+        }
+      ],
+      "optimizer_lr": [
+        0.0001
+      ],
+      "optimizer_steps": [
+        210
+      ],
+      "nonadapter_tensors_equal_round38": true,
+      "mean": 2.267816067203105
+    },
+    {
+      "round": 41,
+      "checkpoint_sha256": "2be129127470d0cf978d3b43fd4d93584849432a7778c61a143f1bbcac99e270",
+      "evaluation_identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "selected_program": "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "utility": 0.4595724478760325,
+          "top2_cost_margin": 0.0374758243560791
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "selected_program": "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "utility": 1.1321918041103844,
+          "top2_cost_margin": 0.002689361572265625
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "selected_program": "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "utility": 1.6493666422408813,
+          "top2_cost_margin": 0.029531478881835938
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "selected_program": "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "utility": 0.3804703956781366,
+          "top2_cost_margin": 0.0005307197570800781
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "selected_program": "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "utility": 2.876232122429703,
+          "top2_cost_margin": 0.0036487579345703125
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "selected_program": "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "utility": 0.8377046659779932,
+          "top2_cost_margin": 0.03786337375640869
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "selected_program": "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "utility": 0.19225477831682752,
+          "top2_cost_margin": 0.1442444622516632
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "selected_program": "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e",
+          "utility": 1.6561092057462654,
+          "top2_cost_margin": 0.005190372467041016
+        }
+      ],
+      "optimizer_lr": [
+        0.0001
+      ],
+      "optimizer_steps": [
+        212
+      ],
+      "nonadapter_tensors_equal_round38": true,
+      "mean": 1.1479877577970279
+    },
+    {
+      "round": 60,
+      "checkpoint_sha256": "0f21cdebe197568229441fbb15063464e001acd91aa1dfbf51df6919769fd88c",
+      "evaluation_identity": "40b00fe3074d239b46c791724e4ae69b396de1841b3537a2abb83d5e45ffe436",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "selected_program": "e1b927dfa0ed5ca1983e83f1f95d292953cd0df84e85cadac88bfa1e00de8f6b",
+          "utility": 0.7580759875645878,
+          "top2_cost_margin": 0.05900883674621582
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "selected_program": "f06596cff90d502d6fe3ba7edd130cda5609ce15e8633683d6002599e6332c26",
+          "utility": 1.0716227657751127,
+          "top2_cost_margin": 8.58306884765625e-06
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "selected_program": "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "utility": 1.6493666422408813,
+          "top2_cost_margin": 0.41493892669677734
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "selected_program": "6f4dd79a8fde5b77a224b34cdbd22c092dcea5d71350c4273a951893e0d0852a",
+          "utility": 0.10010216171004442,
+          "top2_cost_margin": 0.0061424970626831055
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "selected_program": "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "utility": 2.876232122429703,
+          "top2_cost_margin": 0.0036306381225585938
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "selected_program": "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "utility": 0.8377046659779932,
+          "top2_cost_margin": 0.001487135887145996
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "selected_program": "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "utility": 0.19225477831682752,
+          "top2_cost_margin": 0.11784398555755615
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "selected_program": "0046fb9c387165b0ddfa34f233338451953ae7e155b81f41d9a47d8010f7ff3e",
+          "utility": 1.6561092057462654,
+          "top2_cost_margin": 0.3679928779602051
+        }
+      ],
+      "optimizer_lr": [
+        0.0001
+      ],
+      "optimizer_steps": [
+        250
+      ],
+      "nonadapter_tensors_equal_round38": true,
+      "mean": 1.142683541220177
+    }
+  ]
+}

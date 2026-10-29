@@ -1,0 +1,153 @@
+{
+  "node": "xbabe1",
+  "source_sha": "9483d5854fd9b2976feebc39924b7b8b6820b39a",
+  "command": [
+    "research/flywheel_selfplay/run_fused_closed_loop.py",
+    "--input",
+    "/home/ubuntu/jope-data/flywheel-gp-fused/input",
+    "--output",
+    "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029",
+    "--rounds",
+    "2",
+    "--steps",
+    "2",
+    "--batch-size",
+    "9216",
+    "--resume",
+    "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-03.pt"
+  ],
+  "seed": 20261029,
+  "train_contexts": [
+    "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "004a7438dc815b62c821976ac64379b7bf9a1a138d3ca441a9fb5a5e0e5dfb24",
+    "00b7692ce5e864f099ac12b387892cd6d223478677c0aa6673d99a3ccc1b1b94",
+    "010cc1caaa0743330780528c3ca1f644150d171717bf75e81ff9e9fa681ca31b",
+    "03fe267990a5ed2d0f9b8a6baa4895d406a49e9babb5bdccbd9845d92e1b418f",
+    "0411fbc1445973c4ee205339084f952291d4bed570c58b46ff6110c96c9d13c0",
+    "044c8b2650ce60be2122b493fbc10ba3c50dbb06bfbe7a75bf1b505a42590f4c",
+    "047fd901175c6117d668083c5e430f7db2917999462ba94178835573dc7f3c9e",
+    "0530b29c1f6c648819084193afef3d16b3d53bdea7a9bd5d61e3c4aa5c123e33",
+    "06f153275b07b4fb0910b5d52064c494f9dee502819388905776bdcdced047ff",
+    "07103ad960ef0fdfa9a471029e4d4050ec3ef39fc6e3f89e758f84752ff6d667",
+    "073aac000e9e9c9f8e0c55007a4a48df687876c3b483ce2ed056105831368cde",
+    "08142b7ca8f302ba3225ea4016a4bfb5a6231bb340cb8e397f4c26c7b02e8d04",
+    "08a778ed43141256dd7591245ca41443463a9e0f556ab34213c7b04234bd1d4b",
+    "0a19ef312ecb52b928f5226e4cab0b61c76f9489e05ddb96018fab26aec8c804",
+    "0b1f79eb273902df39ec01d9b8027598383b153c6fcb033839bf8681231ab352"
+  ],
+  "dev_contexts": [
+    "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+    "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+    "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+    "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+    "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+    "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+    "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+    "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e"
+  ],
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "parameter_counts": {
+    "__root_direct__": {
+      "trainable_params": 0,
+      "frozen_params": 0,
+      "total_params": 0,
+      "training_mode": false
+    },
+    "dope_model": {
+      "trainable_params": 0,
+      "frozen_params": 444168,
+      "total_params": 444168,
+      "training_mode": false
+    },
+    "gamenet_anchor": {
+      "trainable_params": 0,
+      "frozen_params": 520785,
+      "total_params": 520785,
+      "training_mode": false
+    },
+    "adapter_10tok": {
+      "trainable_params": 29211,
+      "frozen_params": 520785,
+      "total_params": 549996,
+      "training_mode": false
+    },
+    "landmark_bridge": {
+      "trainable_params": 0,
+      "frozen_params": 65792,
+      "total_params": 65792,
+      "training_mode": false
+    },
+    "nolm_bridge": {
+      "trainable_params": 0,
+      "frozen_params": 65792,
+      "total_params": 65792,
+      "training_mode": false
+    },
+    "dope_to_lm48": {
+      "trainable_params": 0,
+      "frozen_params": 30240,
+      "total_params": 30240,
+      "training_mode": false
+    },
+    "__global_total__": {
+      "trainable_params": 29211,
+      "frozen_params": 1126777,
+      "total_params": 1155988,
+      "training_mode": false
+    }
+  },
+  "path": "cpu_exact_landmarks+frozen_dope+GPU_adapter",
+  "phase2_kernel_used": false,
+  "prep_wall_seconds": 7.081486938521266,
+  "initial_dev": {
+    "mean": 2.180637925280284,
+    "per_context": [
+      0.4595724478760325,
+      1.1321918041103844,
+      1.5845094749119621,
+      0.3804703956781366,
+      2.876232122429703,
+      0.20513669792434283,
+      0.19225477831682752,
+      10.614735680994883
+    ],
+    "selected_programs": [
+      "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+      "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+      "01fc48ec5f92b27ef99ae2c9d1baec3f093934993633b6016684e016d2c56e03",
+      "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+      "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+      "9f4730b3400bde569f9e9c237c29d778d003d26a1bb69b8913531122df84bdef",
+      "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+      "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+    ],
+    "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+  },
+  "input_hashes": {
+    "selected.json": "47cf3714ab2ca5713fff5347f7fe952009e468003f555f4a82c5923b7796f9b5",
+    "winners.json": "05af9e5930092ab41587b96ce9029f10bf84557ff45b9ceac94348e8e8e510c8",
+    "cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab"
+  },
+  "external_sources": {
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952"
+  },
+  "budget": {
+    "rounds": 2,
+    "steps_per_round": 2,
+    "batch_size": 9216,
+    "slate_size": 192,
+    "cpu_cap_pct": 85,
+    "gpu_memory_fraction_cap": 0.9
+  },
+  "executed_source_hashes": {
+    "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-gp-fused/research/flywheel_selfplay/run_fused_closed_loop.py": "0293e160184f35a33f3676e8c9a84a2ecccc8757dfe8190ef1419e48da8dac37",
+    "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-gp-fused/research/flywheel_selfplay/automatic_promotion.py": "7241636d04c3da3f6b371b82625b80a22d5247f263e4dd61e81b42eaac11395e"
+  },
+  "resume_checkpoint": {
+    "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-03.pt",
+    "sha256": "7839fcf5ea3d5813a251f8d4a6806907e1a0d8019a2b51186c9b83d705fd6ced"
+  }
+}
