@@ -195,7 +195,7 @@ python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py --r
 uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py --receipt "$EVIDENCE/rlfw-analytics-offline.json"
     # New ingest data contracts use copied fixtures; no S3 credentials or traffic.
 uv run --project python --no-sync python deploy/dl-flywheel/ingest_joined_roster/run_offline.py --receipt "$EVIDENCE/ingest-offline.json"
-    # Phase 7 flywheel v3 offline CPU synthetic/stub unit checks (7 tests; no GPU, S3, or campaign compute).
+    # Phase 7 flywheel v3 offline CPU synthetic/stub unit checks (9 tests; no GPU, S3, or campaign compute).
 CUDA_VISIBLE_DEVICES="" AWS_EC2_METADATA_DISABLED=true \
   uv run --project python --no-sync python -B \
   research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py
