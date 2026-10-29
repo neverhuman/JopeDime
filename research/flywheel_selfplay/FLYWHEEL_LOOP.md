@@ -223,3 +223,22 @@ not gradient targets. The cohort and RAW ARGMIN evaluation rule remain unchanged
 there is no context-specific score override, routing fallback or metric relabeling.
 Consequently this development diagnostic is not independent validation. Outer and
 sealed families remain outside the input closure; DOPE remains frozen.
+
+## Flat-time training input cache (18:35Z owner nudge)
+
+Live profiling without stopping the worker observed2.64million minor faults and
+35.31s kernel CPU over127.55s spanning completed rounds156–158, with no major
+faults, process read I/O or swap. Projection/backward stayed about.24s while
+forward/input/targets grew22.65→55.06s. The old batch8192×192×412 path materialized
+roughly2.6GB of NumPy features per step plus temporary copies and host transfers.
+
+`DevicePoolCache` retains original per-context tensor rows on the GPU and gathers
+by context offsets plus exact slate indices. No arithmetic or selection formula
+changes. Promotion/array replacement invalidates only that context's cache.
+Training labels, gates and revealed observations use the same gathered indices;
+single-context GP/dev/projection calls retain their existing path. Each startup
+requires bit-identical legacy/cached features, targets and predicted costs on
+real repeated-context slates. Large gathered slates are released before the next
+step. Receipts expose device packing, model/target timings, index bytes, avoided
+host-feature bytes and cache transfers; these are nested within the existing
+forward/input total. Raw argmin, margin projection, budgets and DOPE freeze persist.

@@ -253,10 +253,14 @@ Historical inventory totals above are dated and are not recomputed by this entry
 
 | Path | LOC | Exception Category | 1-Line Justification |
 | --- | ---: | --- | --- |
-| `research/flywheel_selfplay/run_fused_closed_loop.py` | 1063 | `PR-EXCEPT-TORCH` | PyTorch optimizer/checkpoint and frozen-DOPE boundary for the owner-directed fused learning restart. |
+| `research/flywheel_selfplay/run_fused_closed_loop.py` | 1129 | `PR-EXCEPT-TORCH` | PyTorch optimizer/checkpoint and frozen-DOPE boundary for the owner-directed fused learning restart. |
 | `research/flywheel_selfplay/automatic_promotion.py` | 170 | `OWNER-FLYWHEEL-20261029` | Temporary tensor-pool admission/replay bridge required to close the existing Python learning loop; migrate pure journal logic under PORT-RUST-01. |
 | `research/flywheel_selfplay/prepare_training_packet.py` | 45 | `OWNER-FLYWHEEL-20261029` | Read-only host custody exporter strips outer rows before transfer for the explicitly requested real-data restart; migrate under PORT-RUST-01. |
 | `research/flywheel_selfplay/test_automatic_promotion.py` | 140 | `OWNER-FLYWHEEL-20261029` | Owner-requested pytest proof covers promotion, next-round targets, replay and training-only parser adaptation. |
 
 | `research/flywheel_selfplay/dev_incumbent.py` | 203 | `PR-EXCEPT-TORCH` | Owner-nudged development-only adapter/AdamW incumbent ratchet; restores rejected candidates without changing DOPE. |
 | `research/flywheel_selfplay/test_dev_incumbent.py` | 178 | `PR-EXCEPT-TORCH` | Regression proof for model/optimizer rollback, equal-score progress and evaluation-identity refusal at the PyTorch boundary. |
+
+| `research/flywheel_selfplay/device_pool_cache.py` | 72 | `PR-EXCEPT-TORCH` | PyTorch device-resident pool gathers avoid repeated multi-GB host slates while preserving exact inputs and own-target alignment. |
+
+| `research/flywheel_selfplay/test_device_pool_cache.py` | 67 | `PR-EXCEPT-TORCH` | Parity and promotion/replacement invalidation proofs for the tensor training-input boundary. |

@@ -53,6 +53,7 @@ from dev_incumbent import (
     project_score_margins,
     proposal_plan,
 )
+from device_pool_cache import DevicePoolCache
 
 
 def sha(path):
@@ -312,24 +313,17 @@ def main():
             )
             known_bank.add(key)
 
-    def predict(cids, selections):
+    device_pool_cache = DevicePoolCache(device)
+
+    def predict(cids, selections, packed=None):
         b = len(cids)
         m = len(selections[0])
-        prog = np.stack([pools[c]["program"][s] for c, s in zip(cids, selections)])
-        proj = np.stack([pools[c]["proj16"][s] for c, s in zip(cids, selections)])
-        return net.adapter_10tok.predict_costs(
-            ctx_feat=torch.zeros((b, 584), device=device),
-            prog_412=torch.as_tensor(prog, device=device),
-            proj_16=torch.as_tensor(proj, device=device),
-            base_prior_cost=torch.zeros((b, m), device=device),
-            scale=torch.full((b,), 0.4208, device=device),
-            sos_prior=torch.zeros((b, m, 2), device=device),
-            mm_tokens_10x32=torch.stack([token[c] for c in cids]),
-            mm_mask_10=torch.stack([mask[c] for c in cids]),
-            revealed_indices=torch.arange(min(4, m), device=device)
-            .reshape(1, -1)
-            .expand(b, -1),
-            revealed_raw_f=torch.as_tensor(
+        if packed is None:
+            prog = np.stack([pools[c]["program"][s] for c, s in zip(cids, selections)])
+            proj = np.stack([pools[c]["proj16"][s] for c, s in zip(cids, selections)])
+            prog_tensor = torch.as_tensor(prog, device=device)
+            proj_tensor = torch.as_tensor(proj, device=device)
+            history_f = torch.as_tensor(
                 np.stack(
                     [
                         pools[c]["fitness"][idx[: min(4, m)]]
@@ -338,8 +332,8 @@ def main():
                 ),
                 dtype=torch.float32,
                 device=device,
-            ),
-            revealed_gate=torch.as_tensor(
+            )
+            history_gate = torch.as_tensor(
                 np.stack(
                     [
                         pools[c]["gate"][idx[: min(4, m)]]
@@ -348,7 +342,26 @@ def main():
                 ),
                 dtype=torch.float32,
                 device=device,
-            ),
+            )
+        else:
+            prog_tensor = packed["program"]
+            proj_tensor = packed["proj16"]
+            history_f = packed["fitness"][:, : min(4, m)].float()
+            history_gate = packed["gate"][:, : min(4, m)].float()
+        return net.adapter_10tok.predict_costs(
+            ctx_feat=torch.zeros((b, 584), device=device),
+            prog_412=prog_tensor,
+            proj_16=proj_tensor,
+            base_prior_cost=torch.zeros((b, m), device=device),
+            scale=torch.full((b,), 0.4208, device=device),
+            sos_prior=torch.zeros((b, m, 2), device=device),
+            mm_tokens_10x32=torch.stack([token[c] for c in cids]),
+            mm_mask_10=torch.stack([mask[c] for c in cids]),
+            revealed_indices=torch.arange(min(4, m), device=device)
+            .reshape(1, -1)
+            .expand(b, -1),
+            revealed_raw_f=history_f,
+            revealed_gate=history_gate,
         )["total_cost"].float()
 
     def utility():
@@ -369,6 +382,40 @@ def main():
             "selected_programs": choices,
             "scope": "family-disjoint development subset of DL-Train; not sealed generalization",
         }
+
+    # Exact parity on real, repeated-context slates before enabling the fast path.
+    parity_cids = train[:4] + train[:1]
+    parity_rng = np.random.default_rng(args.seed)
+    parity_selections = [
+        parity_rng.integers(0, len(pools[c]["pids"]), size=args.slate_size)
+        for c in parity_cids
+    ]
+    parity_pack = device_pool_cache.pack(pools, parity_cids, parity_selections)
+    parity_fields = {}
+    for field in device_pool_cache.FIELDS:
+        expected = torch.as_tensor(
+            np.stack(
+                [pools[c][field][idx] for c, idx in zip(parity_cids, parity_selections)]
+            ),
+            device=device,
+        )
+        parity_fields[field] = bool(torch.equal(expected, parity_pack[field]))
+    net.eval()
+    with torch.no_grad():
+        legacy_cost = predict(parity_cids, parity_selections)
+        cached_cost = predict(parity_cids, parity_selections, parity_pack)
+    parity = {
+        "fields_bit_identical": parity_fields,
+        "predicted_costs_bit_identical": bool(torch.equal(legacy_cost, cached_cost)),
+        "max_abs_cost_delta": float((legacy_cost - cached_cost).abs().max()),
+        "contexts": parity_cids,
+    }
+    if not all(parity_fields.values()) or not parity["predicted_costs_bit_identical"]:
+        raise RuntimeError("device pool cache changed legacy inputs/predicted costs")
+    write_json(
+        args.output / f"device_pool_cache_parity_round{start_round:02d}.json", parity
+    )
+    del parity_pack, expected, legacy_cost, cached_cost
 
     resumed_stats = utility()
     eval_contract = {
@@ -650,6 +697,13 @@ def main():
         }
         grad_norms = []
         margin_projections = []
+        batch_profile = {
+            "device_pack_seconds": 0.0,
+            "model_forward_target_seconds": 0.0,
+            "cpu_index_bytes": 0,
+            "avoided_cpu_feature_slate_bytes": 0,
+        }
+        transfers_before = device_pool_cache.transfers
         projection_failed = False
         executed_steps = 0
         optimizer_step_before = max(
@@ -672,16 +726,18 @@ def main():
             phase["slate_assembly"] += time.monotonic() - phase_start
             phase_start = time.monotonic()
             opt.zero_grad(set_to_none=True)
-            pred = predict(cids, selections)
-            target = torch.as_tensor(
-                np.stack([pools[c]["fitness"][s] for c, s in zip(cids, selections)]),
-                dtype=torch.float32,
-                device=device,
-            )
-            gates = torch.as_tensor(
-                np.stack([pools[c]["gate"][s] for c, s in zip(cids, selections)]),
-                device=device,
-            )
+            pack_start = time.monotonic()
+            packed = device_pool_cache.pack(pools, cids, selections)
+            torch.cuda.synchronize()
+            batch_profile["device_pack_seconds"] += time.monotonic() - pack_start
+            batch_profile["cpu_index_bytes"] += packed["cpu_index_bytes"]
+            batch_profile["avoided_cpu_feature_slate_bytes"] += packed[
+                "avoided_cpu_feature_slate_bytes"
+            ]
+            model_start = time.monotonic()
+            pred = predict(cids, selections, packed)
+            target = packed["fitness"].float()
+            gates = packed["gate"]
             target = torch.where(gates, target, torch.full_like(target, 2.0))
             loss = F.smooth_l1_loss(pred, target) + 0.1 * F.kl_div(
                 F.log_softmax(-pred / 0.2, dim=-1),
@@ -692,6 +748,9 @@ def main():
                 raise RuntimeError("nonfinite loss")
             torch.cuda.synchronize()
             phase["forward_and_targets"] += time.monotonic() - phase_start
+            batch_profile["model_forward_target_seconds"] += (
+                time.monotonic() - model_start
+            )
             phase_start = time.monotonic()
             loss.backward()
             grad_norms.append(
@@ -716,6 +775,7 @@ def main():
             losses.append(float(loss.detach()))
             torch.cuda.synchronize()
             phase["backward_and_step"] += time.monotonic() - phase_start
+            del packed  # release the large slate before the next gather/GP phase
             if projection_failed:
                 break
         torch.cuda.synchronize()
@@ -976,6 +1036,12 @@ def main():
             "adapter_admission": adapter_admission,
             "evaluation_identity": evaluation_identity,
             "phase_wall_seconds": phase,
+            "batch_profile": {
+                **batch_profile,
+                "pool_transfers_this_round": device_pool_cache.transfers
+                - transfers_before,
+            },
+            "device_pool_cache_parity": parity,
             "learning_rate": effective_lr,
             "optimizer_step_before": optimizer_step_before,
             "optimizer_step_candidate": optimizer_step_candidate,
@@ -1021,7 +1087,7 @@ def main():
         status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
         status.write_text(
             "# Fused flywheel status\n\n"
-            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nProposal seed {plan['round_seed']}; retry level {plan['retry_level']}; actual updates {plan['steps']}; GP exploration {plan['gp_exploration']}. Effective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
+            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; training {train_wall:.2f}s; device packing {batch_profile['device_pack_seconds']:.2f}s; model/targets {batch_profile['model_forward_target_seconds']:.2f}s. Old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nProposal seed {plan['round_seed']}; retry level {plan['retry_level']}; actual updates {plan['steps']}; GP exploration {plan['gp_exploration']}. Effective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
         )
         findings = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_FINDINGS.md"
         if findings.exists():

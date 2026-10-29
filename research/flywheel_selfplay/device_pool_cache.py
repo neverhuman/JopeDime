@@ -1,0 +1,72 @@
+"""Exact device gathers for repeated training slates; no scoring/math changes.
+
+Pools use append/replacement updates. Array identity invalidates the cache after
+promotion; no full slates are materialized on the CPU. Single-context inference
+can retain its existing path independently.
+"""
+
+from __future__ import annotations
+
+import time
+
+import numpy as np
+import torch
+
+
+class DevicePoolCache:
+    FIELDS = ("program", "proj16", "fitness", "gate")
+
+    def __init__(self, device):
+        self.device = torch.device(device)
+        self.entries = {}
+        self.transfers = 0
+
+    def _get(self, cid, pool):
+        sources = tuple(pool[field] for field in self.FIELDS)
+        previous = self.entries.get(cid)
+        if previous is not None and all(a is b for a, b in zip(previous[0], sources)):
+            return previous[1]
+        size = len(sources[0])
+        if not size or any(len(a) != size for a in sources):
+            raise ValueError("unaligned or empty device pool")
+        values = {
+            name: torch.as_tensor(np.ascontiguousarray(value), device=self.device)
+            for name, value in zip(self.FIELDS, sources)
+        }
+        self.entries[cid] = (sources, values)
+        self.transfers += 1
+        return values
+
+    def pack(self, pools, cids, selections):
+        start = time.monotonic()
+        if not cids or len(cids) != len(selections):
+            raise ValueError("empty or mismatched slate batch")
+        unique = list(dict.fromkeys(cids))
+        values = {c: self._get(c, pools[c]) for c in unique}
+        offsets = {}
+        offset = 0
+        for c in unique:
+            offsets[c] = offset
+            offset += len(values[c]["program"])
+        indices = np.stack(selections).astype(np.int64, copy=False)
+        sizes = np.asarray([len(values[c]["program"]) for c in cids], dtype=np.int64)
+        if (
+            indices.ndim != 2
+            or (indices < 0).any()
+            or (indices >= sizes[:, None]).any()
+        ):
+            raise ValueError("slate index outside its context pool")
+        flat = indices + np.asarray([offsets[c] for c in cids], dtype=np.int64)[:, None]
+        index_tensor = torch.as_tensor(flat, device=self.device)
+        packed = {
+            field: torch.cat([values[c][field] for c in unique], dim=0)[index_tensor]
+            for field in self.FIELDS
+        }
+        packed["packing_cpu_wall_seconds"] = time.monotonic() - start
+        packed["cpu_index_bytes"] = flat.nbytes
+        packed["avoided_cpu_feature_slate_bytes"] = (
+            indices.size
+            * pools[cids[0]]["program"].shape[1]
+            * pools[cids[0]]["program"].dtype.itemsize
+        )
+        return packed
