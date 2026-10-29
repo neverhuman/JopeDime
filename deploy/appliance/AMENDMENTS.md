@@ -374,3 +374,56 @@ are retained under `/home/ubuntu/jope_plan/search-narration-20261028/evidence/`:
 `appliance-size-aff0e-ci/`, `appliance-size-ablation-source/`,
 `appliance-size-pair-artifacts/`, `appliance-size-attribution-aff0e.json` and
 `local-checks/size-{full,observer-off,full-restored}-aff0e-a1.{json,log}`.
+
+## A18 — Fixture size attribution for feat-math W1-W9 HPC hotpaths (PR #440)
+
+PR #440's PR CI run `40852221193` (job `123374364946`) and full `workflow_dispatch`
+run `40852222525` (job `123374415516`) at source `ddbc1516a162b115cc5407295f305bf0afde2005`
+passed the e2e pipeline smoke (`34 rows; programs agree: python rs`), dependency fence
+(`3 feature set(s)`), ELF `DT_NEEDED` gate (`libc.so.6`, `libgcc_s.so.1`, `libm.so.6`),
+and third-party notices generation, then refused the previous 5% fixture size budget
+during `pack and sign (development key)`.
+Building `deploy/appliance/build.sh --profile fixture --cargo-profile dist-ci` at
+`ddbc1516a162b115cc5407295f305bf0afde2005` on xbabe2 development-signed and verified the
+fixture package (`verify.json`: `ok = true`) and measured 7,073,600 B of code
+(SHA-256 `7e4cde137fcc46897e6b1a27cdea7f0992a3e2c3cb3764ef49b51a3bd6db4eee`) and
+7,188,517 B packaged (SHA-256 `49fc0a96b146b5ebd060da0bdd749f98c15535c3b76742d9df1580b9f1a55878`),
+versus A17 baselines 6,579,256 / 6,696,997 B (+494,344 B code / +491,520 B packaged vs A17
+CI baseline; +494,536 B vs A17's 6,579,064 B xbabe2 standalone code baseline). The three
+generated fixture tensor/config identities (103,220 raw bytes) and two notice entries are
+unchanged; `gpu_library_bytes` is zero. Clean-host network-isolated execution
+(`test-clean-host.sh`) passed (`ok = true`).
+
+A controlled xbabe2 three-phase comparison uses Rust 1.97.1, the same source path, reused
+lane target, `dist-ci` profile, `embedded,dev-keys` features, source stamp and dependency
+graph. The `full` executable at `ddbc1516a162b115cc5407295f305bf0afde2005` measures
+7,073,600 B (`7e4cde137fcc46897e6b1a27cdea7f0992a3e2c3cb3764ef49b51a3bd6db4eee`). Restoring
+only `crates/feat-math/src` from pre-H4 main `2f85b953f6776d566c2170216c4821e526ba7b60`
+(`feat-math-off`) produces 6,579,064 B
+(`0243e7583200d2af2c2418235d844e5db425826325365b090cb6c2b7a23e803b`), matching A17's
+6,579,064 B xbabe2 executable with 0 B unattributed difference: the `crates/feat-math/src`
+W1–W9 hotpath additions account for all 494,536 B of the same-host code increase. Restoring
+the exact H4 `crates/feat-math/src` files and rebuilding (`full-restored`) reproduces the
+7,073,600 B binary byte for byte, SHA-256
+`7e4cde137fcc46897e6b1a27cdea7f0992a3e2c3cb3764ef49b51a3bd6db4eee`. The diagnostic source
+change is preserved as a patch (`SHA-256: 3bc89eaf45516c8d964e9dcfbfdd5d43a51ffbfbc8b7fbf72986fe2c9cdbbe92`)
+and is not the product fix.
+
+The `crates/feat-math/src` ablation ELF section deltas (`full` minus `feat-math-off`) are
+359,728 B `.text`, 66,572 B `.eh_frame`, 53,348 B `.gcc_except_table`, 7,040 B `.eh_frame_hdr`,
+3,144 B `.rela.dyn`, 3,112 B `.data.rel.ro`, 1,536 B `.rodata`, 1,088 B `.relro_padding`,
+56 B `.got`, and 8 B `.data`. These are whole-crate section measurements; per-function
+attribution is not claimed.
+
+The fixture baseline in `size-budgets.toml` now records the measured 7,073,600 B code and
+7,188,517 B package sizes. The 5% tolerance, signature checks, numerical fixtures,
+optimization settings and all other profile budgets (`native-only`, `full`, `dope-gpu`)
+remain unchanged. This evidence qualifies the fixture profile; production-signed, neural
+and GPU packages retain their separate gates.
+
+Raw build/verification/size/clean-host receipts, the ablation patch, compiler/dependency
+inventories, ELF sections and the three paired phase artifacts are retained under
+`/home/ubuntu/jope_plan/evidence/h4-appliance-size-ddbc1516a-20261029/`:
+`build-fixture-ddbc1516a/`, `clean-host-ddbc1516a/`, `ablation-source/`,
+`pair-artifacts/{full,feat-math-off,full-restored}/`, and
+`appliance-size-attribution-ddbc1516a.json`.
