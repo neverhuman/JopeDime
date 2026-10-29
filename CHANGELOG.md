@@ -28,14 +28,14 @@ the commit areas (crate or lane) named in each subject line.
 
 ### CI, build and release
 
-- ci: resolve `deploy/ci/aggregate.py` job evidence across prior workflow run attempts (`--run-attempt`) with fail-closed SHA-256/receipt verification on partial reruns, and wrap `go.yml` Go cache archive publication in a 3-attempt retry helper covered by `deploy/ci/test-aggregate.py` and `deploy/ci/test-runner.py` (#439)
+- ci: let `aggregate` pass after **Re-run failed jobs** by restoring each lane's published evidence from earlier attempts of the same run and head (`.github/actions/download-ci-evidence`), and by accepting receipts whose recorded attempt is at most the current one; a lane whose latest attempt failed still fails through its `needs` result. `go.yml` Go evidence publication becomes a bounded three-step save/verify sequence (`deploy/ci/publication-status.sh`). Covered by `deploy/ci/test-aggregate.py` and `deploy/ci/test-runner.py` (#439)
 - appliance: rebaseline the `dist-ci` fixture size budget with same-host attributions in `size-budgets.toml` and `AMENDMENTS.md` for search narration (`A17`: `6,579,256 B` code / `6,696,997 B` package, #438) and `feat-math` W1–W9 HPC hotpaths (`A18`: `7,073,600 B` code / `7,188,517 B` package, #440) at unchanged 5% tolerance (#438, #440)
 - appliance: bound Rayon pool initialization during packaged Dope asset decoding (#431), and build the `jope-appliance` CLI/receipt glue with `opt-level = "s"`, one codegen unit and stripped symbols in the thin-LTO `dist-ci` profile only (numerical crates keep `opt-level` 3; the production `dist` profile is unchanged), so the `dope-gpu` `dist-ci` package fits its existing size caps (#433)
 - ci(runners): isolate ARM64 QEMU emulation on the twelve `xbabe4` Mac Linux workers to Git and ELF `git-core` subprocesses via a content-addressed public tool volume and source-bound entrypoint while keeping the runner, Rust and Node on Rosetta (#429)
 
 ### Security
 
-- deps: update `zstd` to `0.14.3` (`zstd-safe 8.2.0`, `zstd-sys 2.1.2+zstd.1.5.7`) in `Cargo.lock` for RUSTSEC-2026-0391, RUSTSEC-2026-0398, RUSTSEC-2026-0403 and RUSTSEC-2026-0410 while retaining the source-bound evaluator identity (#432)
+- deps: update `zstd` to `0.14.3` (`zstd-safe 8.2.0`, `zstd-sys 2.1.2+zstd.1.5.7`) in `Cargo.lock`, clearing the RUSTSEC-2026-0391, RUSTSEC-2026-0398, RUSTSEC-2026-0403 and RUSTSEC-2026-0410 advisories that blocked the required dependency gate (#431)
 - deps: update `p256` to `0.14` and `crypto-bigint` to `0.7.6` for RUSTSEC-2026-0387, retaining high-S signature rejection and canonical sealing with a closed historical evaluator identity transition (#429)
 
 ## [0.4.1] - 2026-10-23
