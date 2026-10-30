@@ -53,7 +53,7 @@ from dev_incumbent import (
     project_score_margins,
     proposal_plan,
 )
-from device_pool_cache import DevicePoolCache, wait_for_gpu_headroom
+from device_pool_cache import DevicePoolCache, release_gpu_round, wait_for_gpu_headroom
 
 
 def sha(path):
@@ -665,7 +665,9 @@ def main():
     proposal_history = [
         json.loads(path.read_text()) for path in args.output.glob("round-*.json")
     ]
+    release_gpu_round(lock)  # startup qualification is complete
     for rnd in round_indices:
+        fcntl.flock(lock, fcntl.LOCK_EX)
         used_bytes = sum(
             p.stat().st_size for p in args.output.rglob("*") if p.is_file()
         )
@@ -1127,6 +1129,8 @@ def main():
             ),
             flush=True,
         )
+        release_gpu_round(lock)
+        time.sleep(1)  # give waiting xbabe1 jobs an inter-round handoff window
 
 
 if __name__ == "__main__":

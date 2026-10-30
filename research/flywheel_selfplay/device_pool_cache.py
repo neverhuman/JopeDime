@@ -7,6 +7,7 @@ can retain its existing path independently.
 
 from __future__ import annotations
 
+import fcntl
 import time
 
 import numpy as np
@@ -88,3 +89,12 @@ def wait_for_gpu_headroom(device, minimum_free_bytes=20 * 1024**3, pause_seconds
         if free >= minimum_free_bytes:
             return
         time.sleep(pause_seconds)
+
+
+def release_gpu_round(lock):
+    """Finish queued GPU work and release cache before admitting another job."""
+    try:
+        torch.cuda.synchronize()
+        torch.cuda.empty_cache()
+    finally:
+        fcntl.flock(lock, fcntl.LOCK_UN)
