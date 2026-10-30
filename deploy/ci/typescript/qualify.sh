@@ -2,7 +2,9 @@
 set -euo pipefail
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only JOPE_TYPESCRIPT_PARITY=1
 export JOPE_TSC="$PWD/deploy/ci/typescript/node_modules/.bin/tsc"
+export JOPE_TYPESCRIPT_BUNDLE_CONSUMER=1
 mkdir -p target/typescript-evidence target/typescript-tmp
+export JOPE_TS_BUNDLE_EVIDENCE_DIR="$PWD/target/typescript-evidence/fitted-bundle"
 export TMPDIR="$PWD/target/typescript-tmp"
 source_sha=$(git rev-parse HEAD)
 test "$source_sha" = "${JOPE_SOURCE_SHA:-$source_sha}"
@@ -10,6 +12,9 @@ printf 'source=%s\nrun=%s\nattempt=%s\n' "$source_sha" "${GITHUB_RUN_ID:-local}"
 rustc --version > target/typescript-evidence/toolchains.txt
 node --version >> target/typescript-evidence/toolchains.txt
 "$JOPE_TSC" --version >> target/typescript-evidence/toolchains.txt
+nice -n 10 cargo test --locked -p jope-service --lib \
+  export::bundle::tests::typescript_bundle_consumer_compiles_and_calls_named_predictors \
+  -- --exact --nocapture 2>&1 | tee target/typescript-evidence/fitted-bundle-consumer.log
 node deploy/ci/typescript/prepare-contract.mjs
 JOPE_TS_CONTRACT_SOURCE="$PWD/target/typescript-contract/model.js" node --test --experimental-test-coverage \
   --test-coverage-include='**/typescript-contract/model.js' \
@@ -21,5 +26,5 @@ cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit::
 cargo test --locked -p feat-math --no-default-features --test artifact_target_binding 2>&1 | tee target/typescript-evidence/bindings.log
 cargo test --locked -p jope-pipeline --test artifact_target_binding 2>&1 | tee target/typescript-evidence/pipeline.log
 cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests:: 2>&1 | tee target/typescript-evidence/cli.log
-node deploy/ci/typescript/verify.mjs
+node deploy/ci/typescript/verify.mjs --require-fitted-bundle
 node --test deploy/ci/typescript/evidence.test.mjs 2>&1 | tee target/typescript-evidence/receipt-controls.log

@@ -31,6 +31,17 @@ test('matrix evidence rejects stale identities, missing engines, omitted cases, 
     write(`${root}/receipt-controls.log`,'pass 1\nfail 0\n');
     write(`${root}/identity.txt`,`source=${sha}\nrun=123\nattempt=1\n`);
     write(`${root}/toolchains.txt`,`rustc 1.97.1 (fixture)\nv${version}\nVersion 7.0.2\n`);
+    const declaration='export interface PredictorRow { readonly "age": number | null; readonly "region": string | null; readonly "quote\\"field": number | null; }\nexport declare function predict(row: PredictorRow): number;\nexport declare function predictBatch(rows: readonly PredictorRow[]): number[];\n';
+    const module='export function predict(row) { return 1; }\nexport function predictBatch(rows) { return rows.map(() => 1); }\n';
+    const fitted=`${root}/fitted-bundle`;
+    write(`${root}/fitted-bundle-consumer.log`,'running 1 test\ntest export::bundle::tests::typescript_bundle_consumer_compiles_and_calls_named_predictors ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n');
+    write(`${fitted}/predictor.mjs`,module);
+    write(`${fitted}/predictor.d.ts`,declaration);
+    write(`${fitted}/predictor.d.mts`,declaration);
+    write(`${fitted}/fitted-consumer.mts`,'import { predict, predictBatch, type PredictorRow } from "./predictor.mjs";\nconst row: PredictorRow = { age: null, region: "north", \'quote"field\': 2 };\nconst one: number = predict(row); const many: number[] = predictBatch([row]);\nvoid one; void many;\n');
+    write(`${fitted}/tsc.log`,'command: tsc --strict --noEmit --target ES2020 --module NodeNext --moduleResolution NodeNext fitted-consumer.mts\nstatus: exit status: 0\nstdout:\nstderr:\n');
+    write(`${fitted}/node-runtime.log`,'node exercised exported predict and predictBatch with the same fitted row; result finite and equal\n');
+    json(`${fitted}/manifest.json`,{entries:{'src/typescript/predictor.mjs':hash(module),'src/typescript/predictor.d.ts':hash(declaration),'src/typescript/predictor.d.mts':hash(declaration)}});
     const cases=Array.from({length:9},(_,i)=>({kind:'recipe',name:'fixture-'+i}));
     const browsers={source:sha,cases,results:['chromium','firefox','webkit'].flatMap(browser=>cases.map(c=>({browser,version:'fixture',...c,predictions:1,worker:true})))};
     json(`${root}/browsers.json`,browsers);
@@ -51,6 +62,8 @@ test('matrix evidence rejects stale identities, missing engines, omitted cases, 
     rejectContent('cli.log','test result: ok. 0 passed; 0 failed\n');
     rejectContent('contracts.log','pass 7\nfail 0\nmodel.js | 99.99 | 100.00 | 100.00\n');
     rejectContent('receipt-controls.log','pass 0\nfail 0\n');
+    rejectContent('fitted-bundle/tsc.log','command: tsc --strict\nstatus: exit status: 2\n');
+    rejectContent('fitted-bundle/predictor.d.ts',declaration+'// altered after archive creation\n');
     if(version==='26.1.0') {
       rejectContent('browsers.json',JSON.stringify({...browsers,results:browsers.results.filter(r=>r.browser!=='webkit')}));
       rejectContent('browsers.json',JSON.stringify({...browsers,results:browsers.results.slice(1)}));

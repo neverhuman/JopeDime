@@ -1,5 +1,8 @@
+#[cfg(feature = "mcp")]
 pub mod events;
+#[cfg(feature = "mcp")]
 pub mod run;
+#[cfg(feature = "mcp")]
 pub(crate) use crate::common;
 #[cfg(feature = "mcp")]
 pub(crate) mod dataset;
@@ -10,9 +13,10 @@ pub(crate) mod gc;
 #[cfg(feature = "mcp")]
 pub(crate) mod objective;
 pub mod serve;
+#[cfg(feature = "mcp")]
 pub mod status;
 
-#[cfg(feature = "engine")]
+#[cfg(all(feature = "mcp", feature = "engine"))]
 pub fn client() -> anyhow::Result<jope_client::Http> {
     use jope_service::daemon_file::DaemonFileStatus;
     let home = jope_paths::jopedime_home();
@@ -26,7 +30,7 @@ pub fn client() -> anyhow::Result<jope_client::Http> {
         .map_err(|error| anyhow::anyhow!("engine is unreachable: {error}"))
 }
 
-#[cfg(not(feature = "engine"))]
+#[cfg(all(feature = "mcp", not(feature = "engine")))]
 pub fn client() -> anyhow::Result<jope_client::Http> {
     anyhow::bail!("engine is unavailable in this build")
 }
