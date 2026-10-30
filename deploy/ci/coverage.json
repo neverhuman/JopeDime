@@ -4536,6 +4536,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline."
     },
+    "python:research/flywheel_selfplay/h46/test_analyze.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline."
+    },
     "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
       "discovery": {
         "kind": "python-family"

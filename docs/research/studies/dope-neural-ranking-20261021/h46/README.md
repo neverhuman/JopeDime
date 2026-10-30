@@ -1,6 +1,6 @@
 # H46 — Gradient smoothing to break the DL-Val91 regression plateau (overnight wave 1)
 
-Status: **PLANNED / RUNNING** (opened 2026-10-30 00:35 MDT). Results are appended by a follow-up PR.
+Status: **RUNNING** (opened 2026-10-30 00:35 MDT; xbabe2 execution began 2026-10-30 00:34 MDT). Results are appended by a follow-up PR.
 Owner ask: Jepson, 2026-10-30 00:02 MDT (overnight H46+ waves, 3 seeds, offline on a checkpoint COPY).
 
 ## Symptom (evidence from live summary.jsonl, rounds 775–844, xbabe1 run-20261030)
@@ -38,7 +38,15 @@ Owner ask: Jepson, 2026-10-30 00:02 MDT (overnight H46+ waves, 3 seeds, offline 
   adapter params train. Abort the arm on mismatch.
 - Seeds: 0, 1, 2 (batch shuffle + init of EMA). Report per arm: median val utility across seeds, 95% bootstrap CI,
   per-family deltas, number of contexts improved/worsened, regression Elo vs r785 (no AUC).
-- GPU: hold `~/jope_plan/qualification.lock` (flock) per seed run; release between runs. CPU ≤85%, watch swap.
+- GPU: hold `~/jope_plan/qualification.lock` (flock) per seed run; release between runs. CPU ≤85%, watch swap. Addendum: if that lock remains busy for more than 20 minutes, use CPU for every comparison with ≤16 threads, `nice -n 10`, host CPU ≤85%, and at least 20 GiB available RAM. Comparisons stay on one device.
+
+## Execution record
+
+- Runner: `research/flywheel_selfplay/h46/run.py`; serialized launcher: `research/flywheel_selfplay/h46/run_wave.sh`; result aggregation: `research/flywheel_selfplay/h46/analyze.py`.
+- Uses the copied checkpoint and approved input packet, the pinned CPU-exact fused network, and the same `predict_costs` path as the full-cohort runner. Utility is the native reporter's fixed-cohort formula: `-fitness` for a passing gate, `-2` for a failed gate. No score-history sink is enabled.
+- Device is `cuda:0`; the GPU lock is acquired per run and released between runs. DOPE guard is checked before training and before/after each validation. The 29,211 trainable-parameter guard passed.
+- The control is 16 rounds × 2 steps, restoring the incumbent after every rejected validation. A/B/C each run 64 continuous steps, with EMA validation every 8 steps. All seed outputs are written under `~/jope-data/h46/runs/`; the wave status is maintained in `~/jope_plan/ns/H46_STATUS.md`.
+- At 2026-10-30 00:46 MDT, H46-0 seeds 0 and 1 completed. Seed 2's first attempt completed training but failed in final utility batching because training pools have different sizes; no result was accepted. Evaluation now groups by pool size and the retry is queued behind another GPU lock holder. Seeds 0 and 1 both reached maximum candidate utility 1.135534 (Δ −0.002061). These are interim control observations, not an arm verdict. See the external status file for current lock/device and progress.
 
 ## Success criterion
 An arm "beats the plateau" only if its median Δ vs r785 across 3 seeds is > 0 and the seed-pooled bootstrap lower
