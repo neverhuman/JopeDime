@@ -1,0 +1,568 @@
+{
+  "schema": "jopedime.reference-datasets/v1",
+  "source_policy": "real S3 corpus objects only; no external public or synthetic datasets",
+  "bucket": "s3://veox-jopedime-datasets-use2",
+  "entries": [
+    {
+      "slug": "d2-regression",
+      "categories": [
+        "d2-regression"
+      ],
+      "dataset_hash": "21fbfe8b53dbcd60",
+      "origin": "real",
+      "catalog_task": "regression",
+      "source_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/telemonitoring/parkinsons_updrs.data",
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_manifest": {
+        "key": "datasets/21fbfe8b53dbcd60/manifest.json",
+        "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
+        "size_bytes": 1545
+      },
+      "files": [
+        {
+          "path": "d2-regression/train.csv",
+          "sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+          "size_bytes": 259938,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+          "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+        },
+        {
+          "path": "d2-regression/test.csv",
+          "sha256": "9786badb9d822cd0dc34b730019c13feff1fd02fe85da61a59c00a27e461f61c",
+          "size_bytes": 259696,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/9786badb9d822cd0dc34b730019c13feff1fd02fe85da61a59c00a27e461f61c",
+          "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+        },
+        {
+          "path": "d2-regression/meta.json",
+          "sha256": "a509377436c726ed518b201553c47d52a66ae682923a8a17df9a3fd063610be0",
+          "size_bytes": 7566,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/a509377436c726ed518b201553c47d52a66ae682923a8a17df9a3fd063610be0",
+          "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+        },
+        {
+          "path": "d2-regression/source-manifest.json",
+          "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
+          "size_bytes": 1545,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/21fbfe8b53dbcd60/manifest.json",
+          "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+        },
+        {
+          "path": "d2-regression/README.md",
+          "sha256": "c6c598f43811a1547d735e60e2310c64b57666c40426fd9c2b5c3efb091ec834",
+          "size_bytes": 1572,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/21fbfe8b53dbcd60/manifest.json",
+          "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+        }
+      ]
+    },
+    {
+      "slug": "binary-loanapp",
+      "categories": [
+        "binary"
+      ],
+      "dataset_hash": "02d7a557213d8979",
+      "origin": "real",
+      "catalog_task": "binary",
+      "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/loanapp.csv",
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_manifest": {
+        "key": "datasets/02d7a557213d8979/manifest.json",
+        "sha256": "2f54b0f17271f56b383a6c349b673cb772073981ed2f576d7bb502f4811df24c",
+        "size_bytes": 1302
+      },
+      "files": [
+        {
+          "path": "binary-loanapp/train.csv",
+          "sha256": "207128b39ec2054af2712c102c628a01d7eb9b78f4b8fc208c2f0fc428921c4d",
+          "size_bytes": 472990,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/207128b39ec2054af2712c102c628a01d7eb9b78f4b8fc208c2f0fc428921c4d",
+          "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+        },
+        {
+          "path": "binary-loanapp/test.csv",
+          "sha256": "dda2c3bbd41fa0f60c7ad66e1b902e2f081f5118c8c226bfbb6b3ca9c15c2ac0",
+          "size_bytes": 118772,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/dda2c3bbd41fa0f60c7ad66e1b902e2f081f5118c8c226bfbb6b3ca9c15c2ac0",
+          "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+        },
+        {
+          "path": "binary-loanapp/meta.json",
+          "sha256": "67b0fc1e5110cbae222e9947457ccfaada328df70ec30d7d5cf4274c0f2dc819",
+          "size_bytes": 9956,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/67b0fc1e5110cbae222e9947457ccfaada328df70ec30d7d5cf4274c0f2dc819",
+          "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+        },
+        {
+          "path": "binary-loanapp/source-manifest.json",
+          "sha256": "2f54b0f17271f56b383a6c349b673cb772073981ed2f576d7bb502f4811df24c",
+          "size_bytes": 1302,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/02d7a557213d8979/manifest.json",
+          "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+        },
+        {
+          "path": "binary-loanapp/README.md",
+          "sha256": "57eff80aa9bd2f6a87c6b2d78359107a6b5e6c49605485dcacc66d9fa79ca342",
+          "size_bytes": 1522,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/02d7a557213d8979/manifest.json",
+          "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+        }
+      ]
+    },
+    {
+      "slug": "multiclass-skillcraft",
+      "categories": [
+        "multiclass"
+      ],
+      "dataset_hash": "e7ed111d2a7d05e1",
+      "origin": "real",
+      "catalog_task": "multi_label",
+      "source_url": "https://archive.ics.uci.edu/dataset/272",
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_manifest": {
+        "key": "datasets/e7ed111d2a7d05e1/manifest.json",
+        "sha256": "590f497edc15da9bb804cf2a11afae658497dea41b6789f78ff5669cdf2e171c",
+        "size_bytes": 1287
+      },
+      "files": [
+        {
+          "path": "multiclass-skillcraft/train.csv",
+          "sha256": "dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
+          "size_bytes": 560730,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
+          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+        },
+        {
+          "path": "multiclass-skillcraft/test.csv",
+          "sha256": "56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
+          "size_bytes": 139711,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
+          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+        },
+        {
+          "path": "multiclass-skillcraft/meta.json",
+          "sha256": "4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
+          "size_bytes": 5579,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
+          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+        },
+        {
+          "path": "multiclass-skillcraft/source-manifest.json",
+          "sha256": "590f497edc15da9bb804cf2a11afae658497dea41b6789f78ff5669cdf2e171c",
+          "size_bytes": 1287,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
+          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+        },
+        {
+          "path": "multiclass-skillcraft/README.md",
+          "sha256": "bf95f14e1c773d5516a152dd2727806e5d78b17b5ff6309327d04334dbdb1bbb",
+          "size_bytes": 1505,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
+          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+        }
+      ]
+    },
+    {
+      "slug": "grouped-time-series-prisonlf",
+      "categories": [
+        "grouped",
+        "time-ordered"
+      ],
+      "dataset_hash": "05f1f3e17ca435fb",
+      "origin": "real",
+      "catalog_task": "timeseries",
+      "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/fpp2/prisonLF.csv",
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_manifest": {
+        "key": "datasets/05f1f3e17ca435fb/manifest.json",
+        "sha256": "1b22512dd69135592ae8396c25408c3af08aa7a467b7679b0cc7d358f5b12130",
+        "size_bytes": 1278
+      },
+      "files": [
+        {
+          "path": "grouped-time-series-prisonlf/train.csv",
+          "sha256": "539dec765cd7ba40cb85b81776572f991624f2748e7b29822206c4366cba07ab",
+          "size_bytes": 74505,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/539dec765cd7ba40cb85b81776572f991624f2748e7b29822206c4366cba07ab",
+          "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+        },
+        {
+          "path": "grouped-time-series-prisonlf/test.csv",
+          "sha256": "5368e1f0e44ef362464db8ef0d7f29d5602a4c393547efa1f35d95a85ec06d19",
+          "size_bytes": 12477,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/5368e1f0e44ef362464db8ef0d7f29d5602a4c393547efa1f35d95a85ec06d19",
+          "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+        },
+        {
+          "path": "grouped-time-series-prisonlf/meta.json",
+          "sha256": "d9afe8a606c2bb9ac5293a07cb02ccce440c2ff32a235cbbd4bfb801b225bcf6",
+          "size_bytes": 4687,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/d9afe8a606c2bb9ac5293a07cb02ccce440c2ff32a235cbbd4bfb801b225bcf6",
+          "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+        },
+        {
+          "path": "grouped-time-series-prisonlf/source-manifest.json",
+          "sha256": "1b22512dd69135592ae8396c25408c3af08aa7a467b7679b0cc7d358f5b12130",
+          "size_bytes": 1278,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/05f1f3e17ca435fb/manifest.json",
+          "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+        },
+        {
+          "path": "grouped-time-series-prisonlf/README.md",
+          "sha256": "a9de8015d59f9e31110948fb96053a7c80d401e3679ee8fa2db58dee2f104446",
+          "size_bytes": 1550,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/05f1f3e17ca435fb/manifest.json",
+          "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+        }
+      ]
+    },
+    {
+      "slug": "tiny-30-row-table",
+      "categories": [
+        "tiny-30-row-table"
+      ],
+      "dataset_hash": "21fbfe8b53dbcd60",
+      "origin": "real",
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_manifest": {
+        "key": "datasets/21fbfe8b53dbcd60/manifest.json",
+        "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
+        "size_bytes": 1545
+      },
+      "files": [
+        {
+          "path": "tiny-30-row-table/table.csv",
+          "sha256": "97e96179d0764c24dc8b4614159e3204656a5616b837940f33b89dcc2d716c2f",
+          "size_bytes": 7774,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+          "source_sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+          "source_size_bytes": 259938,
+          "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+        },
+        {
+          "path": "tiny-30-row-table/README.md",
+          "sha256": "00405b0881467091426d5f8efb1e49f2305c097d8587f7328ab964d51b0b676b",
+          "size_bytes": 906,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+          "source_s3_manifest": {
+            "key": "datasets/21fbfe8b53dbcd60/manifest.json",
+            "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
+            "size_bytes": 1545
+          }
+        }
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "category": "messy-csv-like",
+      "status": "GAP",
+      "reason": "The inspected canonical real S3 corpus entries store normalized headerless train/test CSVs and metadata; no selected canonical S3 object preserves a messy source CSV with quoted fields, missing values, and Unicode headers. No public or synthetic substitute was added."
+    }
+  ],
+  "files": [
+    {
+      "path": "d2-regression/train.csv",
+      "sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+      "size_bytes": 259938,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+      "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+    },
+    {
+      "path": "d2-regression/test.csv",
+      "sha256": "9786badb9d822cd0dc34b730019c13feff1fd02fe85da61a59c00a27e461f61c",
+      "size_bytes": 259696,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/9786badb9d822cd0dc34b730019c13feff1fd02fe85da61a59c00a27e461f61c",
+      "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+    },
+    {
+      "path": "d2-regression/meta.json",
+      "sha256": "a509377436c726ed518b201553c47d52a66ae682923a8a17df9a3fd063610be0",
+      "size_bytes": 7566,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/a509377436c726ed518b201553c47d52a66ae682923a8a17df9a3fd063610be0",
+      "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+    },
+    {
+      "path": "d2-regression/source-manifest.json",
+      "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
+      "size_bytes": 1545,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/21fbfe8b53dbcd60/manifest.json",
+      "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+    },
+    {
+      "path": "d2-regression/README.md",
+      "sha256": "c6c598f43811a1547d735e60e2310c64b57666c40426fd9c2b5c3efb091ec834",
+      "size_bytes": 1572,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/21fbfe8b53dbcd60/manifest.json",
+      "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+    },
+    {
+      "path": "binary-loanapp/train.csv",
+      "sha256": "207128b39ec2054af2712c102c628a01d7eb9b78f4b8fc208c2f0fc428921c4d",
+      "size_bytes": 472990,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/207128b39ec2054af2712c102c628a01d7eb9b78f4b8fc208c2f0fc428921c4d",
+      "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+    },
+    {
+      "path": "binary-loanapp/test.csv",
+      "sha256": "dda2c3bbd41fa0f60c7ad66e1b902e2f081f5118c8c226bfbb6b3ca9c15c2ac0",
+      "size_bytes": 118772,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/dda2c3bbd41fa0f60c7ad66e1b902e2f081f5118c8c226bfbb6b3ca9c15c2ac0",
+      "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+    },
+    {
+      "path": "binary-loanapp/meta.json",
+      "sha256": "67b0fc1e5110cbae222e9947457ccfaada328df70ec30d7d5cf4274c0f2dc819",
+      "size_bytes": 9956,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/67b0fc1e5110cbae222e9947457ccfaada328df70ec30d7d5cf4274c0f2dc819",
+      "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+    },
+    {
+      "path": "binary-loanapp/source-manifest.json",
+      "sha256": "2f54b0f17271f56b383a6c349b673cb772073981ed2f576d7bb502f4811df24c",
+      "size_bytes": 1302,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/02d7a557213d8979/manifest.json",
+      "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+    },
+    {
+      "path": "binary-loanapp/README.md",
+      "sha256": "57eff80aa9bd2f6a87c6b2d78359107a6b5e6c49605485dcacc66d9fa79ca342",
+      "size_bytes": 1522,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/02d7a557213d8979/manifest.json",
+      "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
+    },
+    {
+      "path": "multiclass-skillcraft/train.csv",
+      "sha256": "dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
+      "size_bytes": 560730,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
+      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+    },
+    {
+      "path": "multiclass-skillcraft/test.csv",
+      "sha256": "56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
+      "size_bytes": 139711,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
+      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+    },
+    {
+      "path": "multiclass-skillcraft/meta.json",
+      "sha256": "4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
+      "size_bytes": 5579,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
+      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+    },
+    {
+      "path": "multiclass-skillcraft/source-manifest.json",
+      "sha256": "590f497edc15da9bb804cf2a11afae658497dea41b6789f78ff5669cdf2e171c",
+      "size_bytes": 1287,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
+      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+    },
+    {
+      "path": "multiclass-skillcraft/README.md",
+      "sha256": "bf95f14e1c773d5516a152dd2727806e5d78b17b5ff6309327d04334dbdb1bbb",
+      "size_bytes": 1505,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
+      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+    },
+    {
+      "path": "grouped-time-series-prisonlf/train.csv",
+      "sha256": "539dec765cd7ba40cb85b81776572f991624f2748e7b29822206c4366cba07ab",
+      "size_bytes": 74505,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/539dec765cd7ba40cb85b81776572f991624f2748e7b29822206c4366cba07ab",
+      "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+    },
+    {
+      "path": "grouped-time-series-prisonlf/test.csv",
+      "sha256": "5368e1f0e44ef362464db8ef0d7f29d5602a4c393547efa1f35d95a85ec06d19",
+      "size_bytes": 12477,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/5368e1f0e44ef362464db8ef0d7f29d5602a4c393547efa1f35d95a85ec06d19",
+      "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+    },
+    {
+      "path": "grouped-time-series-prisonlf/meta.json",
+      "sha256": "d9afe8a606c2bb9ac5293a07cb02ccce440c2ff32a235cbbd4bfb801b225bcf6",
+      "size_bytes": 4687,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/d9afe8a606c2bb9ac5293a07cb02ccce440c2ff32a235cbbd4bfb801b225bcf6",
+      "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+    },
+    {
+      "path": "grouped-time-series-prisonlf/source-manifest.json",
+      "sha256": "1b22512dd69135592ae8396c25408c3af08aa7a467b7679b0cc7d358f5b12130",
+      "size_bytes": 1278,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/05f1f3e17ca435fb/manifest.json",
+      "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+    },
+    {
+      "path": "grouped-time-series-prisonlf/README.md",
+      "sha256": "a9de8015d59f9e31110948fb96053a7c80d401e3679ee8fa2db58dee2f104446",
+      "size_bytes": 1550,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/05f1f3e17ca435fb/manifest.json",
+      "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
+    },
+    {
+      "path": "tiny-30-row-table/table.csv",
+      "sha256": "97e96179d0764c24dc8b4614159e3204656a5616b837940f33b89dcc2d716c2f",
+      "size_bytes": 7774,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+      "source_sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+      "source_size_bytes": 259938,
+      "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+    },
+    {
+      "path": "tiny-30-row-table/README.md",
+      "sha256": "00405b0881467091426d5f8efb1e49f2305c097d8587f7328ab964d51b0b676b",
+      "size_bytes": 906,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+      "source_s3_manifest": {
+        "key": "datasets/21fbfe8b53dbcd60/manifest.json",
+        "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
+        "size_bytes": 1545
+      }
+    }
+  ],
+  "total_file_bytes_excluding_this_manifest": 1946848
+}

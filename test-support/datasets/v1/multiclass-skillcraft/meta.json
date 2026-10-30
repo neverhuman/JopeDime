@@ -1,0 +1,273 @@
+{
+  "acquisition": {
+    "acquired_at": "2026-09-08T17:05:41+00:00",
+    "family": "uci-272-skillcraft",
+    "source_url": "https://archive.ics.uci.edu/dataset/272",
+    "tool": "expansion_v1"
+  },
+  "counts": {
+    "dropped_feature_count": 0,
+    "n_features": 18,
+    "original_columns": 19,
+    "original_rows": 3395,
+    "rows_after_target_cleanup": 3395,
+    "selected_rows": 3395,
+    "test_rows": 678,
+    "train_rows": 2717
+  },
+  "created_at": "2026-09-08T17:05:41+00:00",
+  "dataset_hash": "e7ed111d2a7d05e1",
+  "dropped_feature_columns": [],
+  "expansion_extra": {},
+  "feature_columns": [
+    "Age",
+    "HoursPerWeek",
+    "TotalHours",
+    "APM",
+    "SelectByHotkeys",
+    "AssignToHotkeys",
+    "UniqueHotkeys",
+    "MinimapAttacks",
+    "MinimapRightClicks",
+    "NumberOfPACs",
+    "GapBetweenPACs",
+    "ActionLatency",
+    "ActionsInPAC",
+    "TotalMapExplored",
+    "WorkersMade",
+    "UniqueUnitsMade",
+    "ComplexUnitsMade",
+    "ComplexAbilitiesUsed"
+  ],
+  "feature_encodings": {
+    "APM": {
+      "impute_value": 107.4966,
+      "kind": "numeric"
+    },
+    "ActionLatency": {
+      "impute_value": 61.1307,
+      "kind": "numeric"
+    },
+    "ActionsInPAC": {
+      "impute_value": 5.0944,
+      "kind": "numeric"
+    },
+    "Age": {
+      "impute_value": 21.0,
+      "kind": "numeric"
+    },
+    "AssignToHotkeys": {
+      "impute_value": 0.0003509719,
+      "kind": "numeric"
+    },
+    "ComplexAbilitiesUsed": {
+      "impute_value": 2.0282e-05,
+      "kind": "numeric"
+    },
+    "ComplexUnitsMade": {
+      "impute_value": 0.0,
+      "kind": "numeric"
+    },
+    "GapBetweenPACs": {
+      "impute_value": 36.9912,
+      "kind": "numeric"
+    },
+    "HoursPerWeek": {
+      "impute_value": 12.0,
+      "kind": "numeric"
+    },
+    "MinimapAttacks": {
+      "impute_value": 4.08163265306122e-05,
+      "kind": "numeric"
+    },
+    "MinimapRightClicks": {
+      "impute_value": 0.0002796421,
+      "kind": "numeric"
+    },
+    "NumberOfPACs": {
+      "impute_value": 0.0033796426,
+      "kind": "numeric"
+    },
+    "SelectByHotkeys": {
+      "impute_value": 0.0024635193,
+      "kind": "numeric"
+    },
+    "TotalHours": {
+      "impute_value": 500.0,
+      "kind": "numeric"
+    },
+    "TotalMapExplored": {
+      "impute_value": 22.0,
+      "kind": "numeric"
+    },
+    "UniqueHotkeys": {
+      "impute_value": 4.0,
+      "kind": "numeric"
+    },
+    "UniqueUnitsMade": {
+      "impute_value": 6.0,
+      "kind": "numeric"
+    },
+    "WorkersMade": {
+      "impute_value": 0.00090462,
+      "kind": "numeric"
+    }
+  },
+  "feature_scaling": {
+    "constant_columns": [],
+    "max": [
+      44.0,
+      168.0,
+      1000000.0,
+      389.8314,
+      0.043088364,
+      0.0017521902,
+      10.0,
+      0.0030193465,
+      0.0040408028,
+      0.0077803632,
+      237.1429,
+      176.3721,
+      18.5581,
+      58.0,
+      0.0051493,
+      13.0,
+      0.0009022744,
+      0.0030837
+    ],
+    "method": "minmax over training rows only",
+    "min": [
+      16.0,
+      0.0,
+      10.0,
+      22.0596,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0006789964,
+      6.6667,
+      24.0936,
+      2.2037,
+      5.0,
+      7.6982e-05,
+      2.0,
+      0.0,
+      0.0
+    ],
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "hash_algorithm": "sha256:first16",
+  "headers_removed_from_csv": true,
+  "n_features": 18,
+  "origin": "real",
+  "original_headers": [
+    "Age",
+    "HoursPerWeek",
+    "TotalHours",
+    "APM",
+    "SelectByHotkeys",
+    "AssignToHotkeys",
+    "UniqueHotkeys",
+    "MinimapAttacks",
+    "MinimapRightClicks",
+    "NumberOfPACs",
+    "GapBetweenPACs",
+    "ActionLatency",
+    "ActionsInPAC",
+    "TotalMapExplored",
+    "WorkersMade",
+    "UniqueUnitsMade",
+    "ComplexUnitsMade",
+    "ComplexAbilitiesUsed",
+    "LeagueIndex"
+  ],
+  "output_headers": [
+    "Age",
+    "HoursPerWeek",
+    "TotalHours",
+    "APM",
+    "SelectByHotkeys",
+    "AssignToHotkeys",
+    "UniqueHotkeys",
+    "MinimapAttacks",
+    "MinimapRightClicks",
+    "NumberOfPACs",
+    "GapBetweenPACs",
+    "ActionLatency",
+    "ActionsInPAC",
+    "TotalMapExplored",
+    "WorkersMade",
+    "UniqueUnitsMade",
+    "ComplexUnitsMade",
+    "ComplexAbilitiesUsed",
+    "LeagueIndex"
+  ],
+  "retrieved_at": "2026-09-08T17:05:41+00:00",
+  "sampling": {
+    "final_max_rows": 50000,
+    "method": "quota stratified by target / grouped / native split",
+    "seed": 20260908,
+    "split": "stratified"
+  },
+  "sha256": "e7ed111d2a7d05e171e57b369fc7a1d6e4f1416b42b9b7c0c4384dccb8368a07",
+  "source_file": "uci-272-skillcraft.csv",
+  "source_path": "/home/ubuntu/hyper/data/tabular/expansion_v3/uci-272-skillcraft.csv",
+  "source_real_data": true,
+  "source_size_bytes": 506059,
+  "source_url": "https://archive.ics.uci.edu/dataset/272",
+  "target_column": "LeagueIndex",
+  "target_is_final_column": true,
+  "target_names": [
+    "LeagueIndex"
+  ],
+  "target_scaling": {
+    "class_to_code": {
+      "1": 5,
+      "2": 2,
+      "3": 1,
+      "4": 3,
+      "5": 4,
+      "6": 0,
+      "7": 6,
+      "8": 7
+    },
+    "classes": [
+      "6",
+      "3",
+      "2",
+      "4",
+      "5",
+      "1",
+      "7",
+      "8"
+    ],
+    "mode": "classification",
+    "n_classes": 8,
+    "range": [
+      0.0,
+      1.0
+    ],
+    "scaled_code_formula": "code / max(1, n_classes - 1)"
+  },
+  "target_source_encoding": {
+    "kind": "categorical_codes",
+    "mapping": {
+      "1": 5,
+      "2": 2,
+      "3": 1,
+      "4": 3,
+      "5": 4,
+      "6": 0,
+      "7": 6,
+      "8": 7
+    }
+  },
+  "task_type": "multi_label",
+  "test_rows": 678,
+  "train_rows": 2717
+}
