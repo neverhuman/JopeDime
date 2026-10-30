@@ -3,10 +3,29 @@
 
 from __future__ import annotations
 
+import fcntl
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+
+# Support read-only sandboxes (e.g., codex exec --sandbox read-only) where
+# torch.distributed.nn.jit.instantiator calls tempfile.TemporaryDirectory() on AdamW import.
+try:
+    tempfile.gettempdir()
+except FileNotFoundError:
+    class _InMemoryTempDir:
+        def __init__(self, *args, **kwargs):
+            self.name = "/dev/shm"
+        def cleanup(self) -> None:
+            pass
+        def __enter__(self) -> str:
+            return self.name
+        def __exit__(self, exc_type, exc, tb) -> None:
+            pass
+    tempfile.TemporaryDirectory = _InMemoryTempDir  # type: ignore[misc,assignment]
+    tempfile.tempdir = "/dev/shm"
 
 import numpy as np
 import torch
@@ -16,6 +35,7 @@ sys.path.insert(0, str(ROOT / "research/flywheel_selfplay"))
 sys.path.insert(0, str(ROOT / "research/flywheel_selfplay/h58"))
 sys.path.insert(0, str(ROOT / "python/src"))
 
+import prepare_cache as h58_prep  # noqa: E402
 import runner as h58  # noqa: E402
 
 
@@ -51,9 +71,16 @@ class TestH58Fixes(unittest.TestCase):
         pool = make_synthetic_pool(256, seed=7)
         rng = np.random.default_rng(101)
 
-        # In Arm A, slot 0 is deterministically the global best passing candidate (17)
+        # In Arm A, slot 0 is deterministically the global best candidate (17), and top-48 are placed at 0..47
         slate_a = h58.sample_slate_arm(pool, 64, rng, arm="A")
         self.assertEqual(int(slate_a[0]), 17)
+        self.assertEqual(len(slate_a), 64)
+        order_all = np.argsort(pool["fitness"])
+        self.assertEqual(list(slate_a[:48]), list(order_all[:48]))
+        # Also verify slate_size=32 edge case in Arm A returns length 32
+        slate_a_32 = h58.sample_slate_arm(pool, 32, rng, arm="A")
+        self.assertEqual(len(slate_a_32), 32)
+        self.assertEqual(list(slate_a_32), list(order_all[:32]))
 
         # In Arms B, C, D, slots 0..3 are ALWAYS [0, 1, 2, 3], and slots 4..63 are permuted
         first_unrev_slots = set()
@@ -129,7 +156,13 @@ class TestH58Fixes(unittest.TestCase):
         self.assertFalse(h58.admit_gp_candidate_to_pool(pool_a, gate_fail_rec, arm="B"))
         self.assertEqual(len(pool_a["pids"]), 128)
 
-        # Arm C/D admits both and records their indices in pool["hard_negatives"]
+        # Execution failures (status != "completed") are NEVER admitted in ANY arm
+        exec_fail_rec = dict(gate_fail_rec, program_sha256="exec_fail_prog", status="failed")
+        for arm in ("A", "B", "C", "D"):
+            self.assertFalse(h58.admit_gp_candidate_to_pool(pool_c, exec_fail_rec, arm=arm))
+        self.assertEqual(len(pool_c["pids"]), 128)
+
+        # Arm C/D admits completed non-HWM and completed CV gate failures and records their indices in pool["hard_negatives"]
         self.assertTrue(h58.admit_gp_candidate_to_pool(pool_c, non_hwm_rec, arm="C"))
         self.assertTrue(h58.admit_gp_candidate_to_pool(pool_c, gate_fail_rec, arm="C"))
         self.assertEqual(len(pool_c["pids"]), 130)
@@ -141,6 +174,17 @@ class TestH58Fixes(unittest.TestCase):
         slate_c = h58.sample_slate_arm(pool_c, 96, np.random.default_rng(55), arm="C")
         hn_in_slate = len(set(slate_c[4:].tolist()) & pool_c["hard_negatives"])
         self.assertGreaterEqual(hn_in_slate, 16)
+
+        # Verify select_gp_proposal_indices preserves exploration within max_eval_per_ctx
+        costs = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6], dtype=np.float32)
+        sel2 = h58.select_gp_proposal_indices(costs, seed=12345, max_eval_per_ctx=2, explore=True)
+        self.assertEqual(len(sel2), 2)
+        self.assertEqual(sel2[0], 0)
+        self.assertIn(sel2[1], {2, 3, 4, 5}, "second pick under max_eval_per_ctx=2, explore=True must be an exploration pick from order[2:]")
+        sel4 = h58.select_gp_proposal_indices(costs, seed=12345, max_eval_per_ctx=4, explore=True)
+        self.assertEqual(len(sel4), 4)
+        self.assertEqual(sel4[:2], [0, 1])
+        self.assertTrue(all(idx in {2, 3, 4, 5} for idx in sel4[2:]))
 
     def test_rank3_shift_invariance_and_gradient_alignment(self) -> None:
         torch.manual_seed(99)
@@ -178,24 +222,22 @@ class TestH58Fixes(unittest.TestCase):
         self.assertGreater(float(grad_row[5]), 0.0, "oracle best candidate must receive positive dL/dpred so its predicted cost decreases")
         self.assertLess(float(grad_row[20:].mean()), 0.0, "gate-failing candidates must receive negative dL/dpred so their predicted cost increases")
 
+        # Verify equal-cost passing candidates in Arm D produce zero pairwise loss and zero opposing gradients
+        p_tie = torch.zeros((1, 20), dtype=torch.float32, requires_grad=True)
+        t_tie = torch.full((1, 20), -1.0, dtype=torch.float32)
+        g_tie = torch.ones((1, 20), dtype=torch.bool)
+        l_tie = h58.compute_loss_arm("D", p_tie, t_tie, g_tie)
+        l_tie.backward()
+        self.assertAlmostEqual(float(p_tie.grad.abs().max()), 0.0, places=6)
+
     def test_bug3_and_bug4_on_real_network(self) -> None:
         input_dir = Path.home() / "jope-data/h50/input"
-        checkpoint = Path.home() / "jope-data/h50/ckpt/round-785.pt"
         spec = importlib.util.spec_from_file_location("h58_test_fused", input_dir / "cpu_exact_fused.py")
         self.assertIsNotNone(spec)
         fused = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(fused)
         device = torch.device("cpu")
         net = fused.FusedJopeNetwork(device=device, adapter_variant="h40b")
-        ckpt = torch.load(checkpoint, map_location=device, weights_only=True)
-        backbone_state = {
-            k: v
-            for k, v in ckpt["state_dict"].items()
-            if not k.startswith("adapter_10tok.")
-            or k.startswith("adapter_10tok.anchor.")
-            or k in ("adapter_10tok.prog_mean", "adapter_10tok.prog_std")
-        }
-        net.load_state_dict(backbone_state, strict=False)
 
         # Arm A: 29,211 trainable params (parent_delta_net trainable)
         tr_a = h58.reset_adapter_fold_clean(net, seed=12, freeze_parent_delta=False, scale=0.1)
@@ -233,7 +275,19 @@ class TestH58Fixes(unittest.TestCase):
         pred_b = h58.make_predictor_arm(net, pools, ctx_cache, device, "B")(["cid_42"], [np.arange(32)])
         self.assertGreater(float((pred_a - pred_b).abs().max()), 1e-3)
 
-        # Verify end-to-end run_training_cell for all four arms (A, B, C, D) on a 6-context cohort
+        # Verify _ensure_jtt1_gz_for_pool fails closed when jtt1_gz_path or jtt1_gz_sha256 is missing/mismatched
+        with self.assertRaises(RuntimeError):
+            h58._ensure_jtt1_gz_for_pool("nonexistent_cid", make_synthetic_pool(32, seed=99))
+        fixture_cid = "89033749285b8be2b0ded865cb81e244e65bd5da25e22e62dbc11ef1d71fb8c0"
+        fixture_gz = Path.home() / "jope-data/h58/cache/jtt1_gz" / f"{fixture_cid}.jtt1.gz"
+        fixture_gz_sha = h58.sha256(fixture_gz)
+        bad_pool = make_synthetic_pool(32, seed=100)
+        bad_pool["jtt1_gz_path"] = fixture_gz
+        bad_pool["jtt1_gz_sha256"] = "0" * 64
+        with self.assertRaises(RuntimeError):
+            h58._ensure_jtt1_gz_for_pool("bad_sha_cid", bad_pool)
+
+        # Verify end-to-end run_training_cell for all four arms (A, B, C, D) with live GP proposal + Rust evaluation
         base_pools = {}
         ctx_cache_multi = {}
         family_by_cid = {}
@@ -242,6 +296,8 @@ class TestH58Fixes(unittest.TestCase):
             fam = f"fam_{i % 3}"
             p = make_synthetic_pool(64, seed=500 + i)
             p["rec"] = {"context_sha256": cid, "family_id": fam}
+            p["jtt1_gz_path"] = fixture_gz
+            p["jtt1_gz_sha256"] = fixture_gz_sha
             base_pools[cid] = p
             family_by_cid[cid] = fam
             ctx_cache_multi[cid] = {
@@ -287,11 +343,132 @@ class TestH58Fixes(unittest.TestCase):
             self.assertEqual(res["dope_sha256_after"], h58.DOPE_SHA)
             self.assertGreater(res["update_l2_from_init"], 0.0)
             self.assertEqual(res["trainable_params"], 29_211 if arm == "A" else 23_546)
+            self.assertEqual(res["terminal_eval_sweeps"], 1)
+            self.assertGreaterEqual(res["gp_proposer_calls"], 2)
+            self.assertGreaterEqual(res["gp_evaluator_calls"], 2)
+            self.assertGreaterEqual(res["gp_evaluated_completed"], 2)
+            self.assertEqual(res["gp_execution_failed"], 0)
             if arm in ("A", "B"):
                 self.assertEqual(res["journal_admitted"], 0)
+                self.assertEqual(res["gp_admitted_gate_fails"] + res["gp_admitted_non_hwm"], 0)
             else:
                 self.assertEqual(res["journal_admitted"], 1)
+                self.assertGreater(res["gp_admitted"], 0)
                 self.assertGreater(res["initial_hard_negatives"], 0)
+
+        # Verify run_training_cell fails closed if native evaluations return only status="failed"
+        real_eval_rust = h58.base.evaluator.evaluate_gp_batch_rust
+        try:
+            def _always_failed_eval(_gz_path, chosen, **_kwargs):
+                return [
+                    {
+                        "program_sha256": c["program_sha256"],
+                        "dsl": c["dsl"],
+                        "status": "failed",
+                        "cv_gate_passed": False,
+                        "fitness": 10.0,
+                        "logratio": 10.0,
+                        "feat412": [0.0] * 412,
+                        "proj16": [0.0] * 16,
+                    }
+                    for c in chosen
+                ]
+            h58.base.evaluator.evaluate_gp_batch_rust = _always_failed_eval
+            with self.assertRaises(RuntimeError):
+                h58.run_training_cell(
+                    arm="C",
+                    seed=12,
+                    cell_id=1,
+                    net=net,
+                    base_pools=base_pools,
+                    fit_cids=fit_cids,
+                    eval_cids=eval_cids,
+                    family_by_cid=family_by_cid,
+                    ctx_cache=ctx_cache_multi,
+                    journal_by_cid=journal_by_cid,
+                    rounds=2,
+                    steps_per_round=1,
+                    batch_size=4,
+                    slate_size=32,
+                    device=device,
+                )
+        finally:
+            h58.base.evaluator.evaluate_gp_batch_rust = real_eval_rust
+
+        # Also test cold-cache feature extraction on `net`
+        X = np.random.default_rng(7).normal(size=(64, 6)).astype(np.float64)
+        y = np.random.default_rng(8).normal(size=64).astype(np.float64)
+        ws = h58_prep.base.FusedLandmarkWorkspace()
+        t10, m10, d629, lm48, ctx584 = h58_prep.extract_single_table_features(net, ws, X, y, device)
+        self.assertEqual(t10.shape, (10, 32))
+        self.assertEqual(m10.shape, (10,))
+        self.assertEqual(d629.shape, (629,))
+        self.assertEqual(lm48.shape, (48,))
+        self.assertEqual(ctx584.shape, (584,))
+        self.assertTrue(bool(m10[0]) and bool(m10[1]) and bool(m10[2]))
+
+    def test_lock_check_and_single_pass_dual_eval(self) -> None:
+        # Test verify_qualification_lock_held fails when unlocked, fails when held by an unrelated child
+        # process, and passes ONLY when held by an open file descriptor of this process
+        import subprocess
+        lock_file = Path("/dev/shm/h58_test_qual.lock")
+        lock_file.touch(exist_ok=True)
+        try:
+            with self.assertRaises(RuntimeError):
+                h58.verify_qualification_lock_held(lock_file)
+
+            child = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-c",
+                    "import fcntl, sys; f=open(sys.argv[1],'rb'); fcntl.flock(f, fcntl.LOCK_EX); print('locked', flush=True); sys.stdin.read(1)",
+                    str(lock_file),
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                self.assertEqual(child.stdout.readline().strip(), "locked")
+                with self.assertRaises(RuntimeError):
+                    h58.verify_qualification_lock_held(lock_file)
+            finally:
+                child.communicate("x", timeout=5)
+
+            with lock_file.open("r+") as fh:
+                fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                h58.verify_qualification_lock_held(lock_file)
+                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        finally:
+            lock_file.unlink(missing_ok=True)
+
+        # Test evaluate_utility_both_modes executes exactly 1 forward pass per batch
+        pool = make_synthetic_pool(64, seed=77)
+        pools = {"cid_77": pool}
+        calls = []
+
+        def counting_predict(cids, ixs):
+            calls.append(len(cids))
+            row = np.ones((len(cids), len(ixs[0])), dtype=np.float32)
+            row[:, 0] = -999.0
+            row[:, 17] = -5.0
+            return torch.as_tensor(row)
+
+        nat, unrev = h58.evaluate_utility_both_modes(["cid_77"], pools, counting_predict, arm="A")
+        self.assertEqual(len(calls), 1)
+        self.assertAlmostEqual(unrev["mean"], 1.0, places=6)
+        self.assertLess(nat["mean"], 0.90)
+
+        # Test _spearman_rank_corr handles constant predictions (returns 0.0) and tied ranks
+        self.assertEqual(h58._spearman_rank_corr(np.ones(8), np.arange(8, dtype=np.float64)), 0.0)
+        self.assertEqual(h58._spearman_rank_corr(np.arange(8, dtype=np.float64), np.full(8, -2.5)), 0.0)
+        tied_x = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float64)
+        tied_y = np.array([10.0, 20.0, 30.0, 40.0], dtype=np.float64)
+        self.assertAlmostEqual(
+            h58._spearman_rank_corr(tied_x, tied_y),
+            float(np.corrcoef([0.5, 0.5, 2.0, 3.0], [0.0, 1.0, 2.0, 3.0])[0, 1]),
+            places=6,
+        )
 
     def test_t537_bootstrap_and_elo(self) -> None:
         # Positive mean and non-negative median passes
