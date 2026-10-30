@@ -1056,22 +1056,19 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         rnk01_bundle_loader["fixtures"][1]["path"],
         changed_fixtures[1]
     );
-    let clt03_files = old_fixture("transitions/clt03_files_lockfile_identity_rebaseline.v1.json");
+    let mcp02_rmcp = old_fixture("transitions/mcp02_rmcp_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
-        clt03_files["source_commit"],
-        "16d5515837971c26a1176284b2be5f55ed50d4e6"
+        mcp02_rmcp["source_commit"],
+        "6790a10355c67f2993a4c00c43c96015166be3af"
     );
     assert_eq!(
-        clt03_files["base_commit"],
-        "0757055e515d5293478e1315c47293516a5492c8"
+        mcp02_rmcp["base_commit"],
+        "dee223831e1462d9d097389ee45f4cc829c304fa"
     );
     assert_eq!(
-        clt03_files["before_identity_digest"],
+        mcp02_rmcp["before_identity_digest"],
         rnk01_bundle_loader["after_identity_digest"]
     );
-    assert_eq!(clt03_files["fixtures"].as_array().unwrap().len(), 2);
-    assert_eq!(clt03_files["fixtures"][0]["path"], changed_fixtures[0]);
-    assert_eq!(clt03_files["fixtures"][1]["path"], changed_fixtures[1]);
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1111,7 +1108,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &tui01_terminal,
         &wrk01_worker_pool,
         &rnk01_bundle_loader,
-        &clt03_files,
+        &mcp02_rmcp,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1187,7 +1184,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui01_terminal.clone(),
                 wrk01_worker_pool.clone(),
                 rnk01_bundle_loader.clone(),
-                clt03_files.clone(),
+                mcp02_rmcp.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1249,7 +1246,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui01_terminal.clone(),
                 wrk01_worker_pool.clone(),
                 rnk01_bundle_loader.clone(),
-                clt03_files.clone(),
+                mcp02_rmcp.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1304,7 +1301,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui01_terminal.clone(),
                 wrk01_worker_pool.clone(),
                 rnk01_bundle_loader.clone(),
-                clt03_files.clone(),
+                mcp02_rmcp.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1390,7 +1387,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui01_terminal.clone(),
                 wrk01_worker_pool.clone(),
                 rnk01_bundle_loader.clone(),
-                clt03_files.clone(),
+                mcp02_rmcp.clone(),
             ],
         ),
         (
@@ -1436,7 +1433,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui01_terminal.clone(),
                 wrk01_worker_pool.clone(),
                 rnk01_bundle_loader.clone(),
-                clt03_files.clone(),
+                mcp02_rmcp.clone(),
             ],
         ),
     ] {
@@ -1530,7 +1527,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         tui01_terminal,
         wrk01_worker_pool,
         rnk01_bundle_loader,
-        clt03_files,
+        mcp02_rmcp,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

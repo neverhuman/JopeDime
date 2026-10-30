@@ -16,6 +16,9 @@ starforge = { path = "../jope-encoders", optional = true, features = ["dope"] }
 anyhow.workspace = true
 clap = { workspace = true, features = ["derive"] }
 jope-api = { path = "../jope-api" }
+jope-client = { path = "../jope-client" }
+rmcp = { version = "=3.8.0", default-features = false, features = ["server", "transport-io"], optional = true }
+tokio = { workspace = true, optional = true }
 jope-assets = { path = "../jope-assets" }
 jope-runtime = { path = "../jope-runtime" }
 jope-service = { path = "../jope-service", optional = true }
@@ -36,7 +39,8 @@ portable-pty = "0.9"
 tempfile.workspace = true
 
 [features]
-default = ["engine"]
+default = ["engine", "mcp"]
+mcp = ["dep:rmcp", "dep:tokio"]
 engine = ["dep:jope-service"]
 dope-encoding = ["dep:starforge"]
 dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
