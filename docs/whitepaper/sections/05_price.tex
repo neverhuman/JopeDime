@@ -9,18 +9,22 @@
 % Core points advanced: 3 (search = 1) and 2 (search length is the
 %   reciprocal of taste); supports 1 (cheap replay is what invention lacks).
 % Exhibits: Equation 2 (eq:bill), Table 5 (tab:price), Figure 4 (fig:price), Box 3.
-% Every number that is not cited comes from scripts/cost_model.py.
+% Numerical scenarios are retained from the supplied Section 5 source drafts.
+% A reproducible calculation artifact remains pending.
 
-Can anyone afford to play the innovation game? Yes: we project that a full
-training run with a 30B-class open-weight program writer costs about \$12,000
-in GPU time, and that wasted moves, not token prices, set the bill. Cheap
+What would it cost to play the innovation game? Under the planning
+assumptions below, generation and updates for a 30B-class open-weight writer
+cost about \$12,000 in GPU time. This is a partial compute projection, not
+an observed price for a complete training run. Encoding, input tokens,
+repairs and referee execution must be added to the ledger. Cheap
 replay is the one property of Go that invention lacks (\cref{sec:game}). Here
-we price it, and \cref{sec:results} sets a measurement beside each projection.
+we separate planning assumptions from the measurements still required in
+\cref{sec:results}.
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
-A win costs what an attempt costs, repairs included, divided by the chance
-that an attempt wins:
+For repeated attempts with a fixed win probability, expected cost per win
+is mean cost per attempt, repairs included, divided by that probability:
 \begin{equation}
   C_{\text{win}} = \frac{C_{\text{attempt}} + \mathbb{E}[r]\,C_{\text{repair}}}{q}.
   \label{eq:bill}
@@ -33,36 +37,38 @@ tries also sets the price. It factors as $q = q_{\text{run}}\,q_{\text{beat}}$,
 the share of moves that run times the share of those that win. A move that
 runs and loses still costs money, so we divide by $q$, not by the survival
 rate. Generating a token costs about 2~FLOPs per active parameter, and
-training on one about~6 \citep{kaplan2020scaling}. We price every run both
-self-hosted and at API list prices, each dated (\cref{sub:price-run}).
+training on one about~6 \citep{kaplan2020scaling}. We give self-hosted
+projections and dated API-price examples (\cref{sub:price-run}).
 
-The bill has two ledgers. Training pays \cref{eq:bill} millions of times;
-game day pays for one attempt and one fit, with no repair, whatever $q$ is. Agent swarms buy
-judgment by the try on every new problem, while self-play pays for it once,
-and \cref{sec:results} measures where the two ledgers cross.
+The bill has two ledgers. Training pays for every attempted candidate,
+including failures; deployment pays for encoding, one proposal and its
+fitting procedure, with no repair. Fixed-weight agent loops instead buy
+evaluation during task-specific search; a trained proposer may amortize
+some of that work across later tasks. Whether the saving repays training
+requires a measured crossover, still pending in \cref{sec:results}.
 
 \subsection{Wasted moves}\label{sub:price-waste}
 
-Most moves are wasted, in two ways. A stillborn move never competes: it fails
+An attempt can fail before or after it becomes a valid competitor.
+A stillborn move never competes: it fails
 to parse or type-check, crashes, times out or returns degenerate output. An
-also-ran runs and loses. \Cref{fig:price}a follows pilot moves through four
-gates and records the compute spent on the moves that stop at each. At 90\%
-waste, every useful program costs ten attempts. A typed program language
+also-ran runs and loses. The planned funnel in \cref{fig:price}a traces
+those stages and the compute spent before each failed attempt stops. If 90\% of attempts fail to improve the incumbent, the independent-try
+model requires ten attempts per improvement in expectation. A typed program language
 removes many stillborn moves by construction (\cref{sec:game}), and those
-that remain usually fail before the costly fit. We therefore expect also-rans
-to dominate, leaving $q_{\text{beat}}$, the factor only taste can raise.
+that remain usually fail before the costly fit. Whether also-rans dominate is a pilot question. Learning, a changed search
+procedure or a changed opponent can affect the measured win rate; isolate
+the effect attributed to the writer.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig4_price.pdf}
-  \caption{\textbf{Most moves are wasted, and \TBD{the cost-per-win optimum
-  sits at \ldots}.} (a)~Survival funnel: the share of moves from \TBD{n}
-  pilot games on development families that run, score, beat the incumbent
-  and survive re-verification, and the compute spent on moves that stop at
-  each gate. (b)~Cost per win (log color scale) by writer size and reasoning
-  effort; outlined, the measured minimum; hatched, no win. Error bars: 95\%
-  bootstrap intervals over problems, \TBD{k} seeds. Drawn by
-  \texttt{figures/fig4\_price.py} from logged pilot data.}
+  \caption{\textbf{Pilot cost measurements pending.} Planned panels:
+  (a)~the share of development proposals that run, score, beat the incumbent
+  and survive re-verification, with the compute spent at each stage;
+  (b)~cost per verified win by writer size and reasoning effort.
+  \TBD{Supply pilot data, seeds and family-level uncertainty; identify
+  settings with no verified win without assigning a finite cost per win.}}
   \label{fig:price}
 \end{figure}
 
@@ -119,9 +125,10 @@ and AlphaZero played 44 million games of chess in about nine hours
 problems, 100 rounds and 8 attempts gives 8 million attempts, the same order.
 It counts work, not learning: problem families matter more, and pilot
 learning curves decide, read only within their measured range.
-\textbf{Test problems to prove the claim:} on 150 independent problems, a win
-rate near 60\% carries a 95\% interval of about $\pm 8$ points. We count
-families, not datasets.
+\textbf{Precision to plan the test:} illustratively, 150 independent
+units at a win rate near 60\% give an approximate 95\% interval of
+$\pm 8$ points. The actual study must compute uncertainty over independent
+families, rather than treating every dataset as an independent observation.
 
 \subsection{A run, priced}\label{sub:price-run}
 
@@ -136,9 +143,9 @@ all of them: 1T one-byte weights fill at least 13 H100s.
 
 \begin{table}[t]
   \centering
-  \caption{\textbf{A full self-play run costs about \$12,000 with a 30B-class
-  writer and about \$570,000 with a dense 1.5T writer; how many wins it buys
-  depends on waste.} Projections before pilots; [low-cost, high-cost] in
+  \caption{\textbf{Projected generation and update costs for a fixed
+  attempt budget.} These totals exclude other components of a full run;
+  the number of verified wins remains to be measured. Projections before pilots; [low-cost, high-cost] in
   brackets. Base: 8 million attempts of 5,000 generated tokens; \$2.92 per
   H100-hour on 29 October 2026 \citep{ornn2026ocpi} [\$2.50, \$4.17;
   \citealp{thunder2026gpu}]; 989.5 dense BF16 TFLOP/s per GPU
@@ -146,7 +153,8 @@ all of them: 1T one-byte weights fill at least 13 H100s.
   [20\%, 7\%] for memory-bound mixture-of-experts (MoE) writers; updates on
   10\% of tokens at 40\% of peak [50\%, 30\%]. The 1.5T rows are scenarios.
   Excludes input tokens, repairs and the referee. \$k: thousands of dollars;
-  source \texttt{scripts/cost\_model.py}.}
+  assumptions and numerical scenarios from the supplied cost drafts.
+  \TBD{Supply a reproducible calculation artifact before publication.}}
   \label{tab:price}
   \small
   \begin{tabular}{@{}l l S[table-format=2.2] S[table-format=2.2] l l@{}}
@@ -175,8 +183,8 @@ for the same model. The running example's single game cost \TBD{\$c}:
 \TBD{t} generated tokens and \TBD{s} CPU-seconds of referee time.
 
 \begin{keyidea}
-  The cheapest way to make invention affordable is not cheaper tokens.
-  It is fewer wasted moves.
+  Cost per verified improvement depends on both the cost of an attempt
+  and the probability that it wins.
 \end{keyidea}
 
 The table prices a fixed number of attempts, not a fixed number of wins.
