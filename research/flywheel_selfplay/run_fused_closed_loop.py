@@ -529,15 +529,14 @@ def main():
         prior_path = Path(prior_best["best_checkpoint"])
         if sha(prior_path) != prior_best["checkpoint_sha256"]:
             raise ValueError("persisted best-dev checkpoint hash mismatch")
-        if (
-            historical_best is None
-            or prior_best["best_utility"] >= historical_best["dev_utility"]["mean"]
-        ):
-            historical_best = {
-                "round": prior_best["best_round"],
-                "dev_utility": prior_best["utility"],
-            }
-            best_path = prior_path
+        # This identity/hash-validated pointer is the committed admission state.
+        # Scientific round receipts are observations; older writers may differ
+        # by a JSON parsing ULP and must never supersede the committed pointer.
+        historical_best = {
+            "round": prior_best["best_round"],
+            "dev_utility": prior_best["utility"],
+        }
+        best_path = prior_path
     if historical_best:
         best_state = torch.load(best_path, map_location=device, weights_only=True)
         net.load_state_dict(best_state["state_dict"], strict=True)
@@ -730,6 +729,12 @@ def main():
             HERE / "device_pool_cache.py",
         ]
     }
+    if full:
+        native_path = Path(sys.modules["jope._telemetry"].__file__)
+        manifest["native_telemetry_extension"] = {
+            "path": str(native_path),
+            "sha256": sha(native_path),
+        }
     preregistration = args.output / "gp_exploration_preregistration.json"
     manifest["gp_exploration_preregistration"] = (
         {"path": str(preregistration), "sha256": sha(preregistration)}

@@ -551,4 +551,20 @@ mod tests {
             1
         );
     }
+    #[test]
+    fn scientific_receipt_floats_round_trip_bit_exactly() {
+        for original in [
+            1.1073772627425547_f64,
+            1.2591052389885997_f64,
+            0.9088130596333871_f64,
+        ] {
+            let text = serde_json::to_string(&original).unwrap();
+            let parsed: Value = serde_json::from_str(&text).unwrap();
+            assert_eq!(
+                parsed.as_f64().unwrap().to_bits(),
+                original.to_bits(),
+                "{text}"
+            );
+        }
+    }
 }
