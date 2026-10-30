@@ -116,6 +116,10 @@ def main() -> None:
                 "r882_baseline_dl_val_utility": float(cell["r882_baseline_utility"]),
                 "gap_vs_r882": best_utility - float(cell["r882_baseline_utility"]),
                 "elo_vs_r882_diagnostic": elo,
+                "dl_val_curve_by_round_diagnostic": [
+                    {"round": int(point["round"]), "family_utility": float(point["family_utility"])}
+                    for point in trajectory
+                ],
                 "family_mean_gain_vs_r882_diagnostic": cell["family_bootstrap"]["mean_gain"],
                 "family_one_sided_mean_lcb95_diagnostic": cell["family_bootstrap"]["mean_lcb_one_sided_95"],
                 "family_median_gain_vs_r882_diagnostic": cell["family_bootstrap"]["median_gain"],
@@ -198,7 +202,6 @@ def main() -> None:
             "runner": "706915ca58afc31fa4dcac311b6336a8fd461867",
             "coordinator": "2ddb26aec55a99d0a87003dcde5215a9f337e6e0",
             "integrity_replay_runner_and_coordinator": "f4a381380d730842baa62df50552cc8e6fca3cd8",
-            "audit_builder": "pending",
         },
         "input_manifest_identity": MANIFEST_ID,
         "input_manifest_file_sha256": MANIFEST_SHA,

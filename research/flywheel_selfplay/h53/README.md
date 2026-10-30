@@ -6,7 +6,7 @@ A randomly initialized 29,211-parameter outer adapter, trained from scratch agai
 
 ## Cohort and arms
 
-Use the pinned offline cohort only: 1,219 DL-Train contexts in 205 families and 91 DL-Val contexts in 19 disjoint families. Do not read sealed/holdout or outer payloads and do not access a live loop. Arms are seeds 12, 13, and 14 crossed with default class initialization and a 0.1x scale applied only to the freshly initialized trainable adapter. The architecture, fixed source program, and split are identical across arms. No r882 or DOPE adapter state is transferred into the trainable adapter; DOPE c51a56d0 remains frozen and is checksummed before and after each cell. The r882 checkpoint is used only as a separately scored comparison baseline and is not loaded into the candidate adapter.
+Use the pinned offline cohort only: 1,219 DL-Train contexts in 205 families and 91 DL-Val contexts in 19 disjoint families. Do not read sealed/holdout or outer payloads and do not access a live loop. Arms are seeds 12, 13, and 14 crossed with default class initialization and a 0.1x scale applied only to the freshly initialized trainable adapter. The architecture, fixed source program, and split are identical across arms. No r882 or DOPE adapter state is transferred into the trainable adapter; DOPE c51a56d0 remains frozen and is checksummed before and after each cell. The r882 checkpoint is scored as a comparator, then its outer adapter is replaced wholesale before candidate updates; only the frozen architecture anchor remains as fixed scaffold.
 
 The first pilot is capped at 30 minutes total. It uses three training rounds per cell, one optimizer update per round, family-balanced batches, and per-round DL-Val scoring. The DL-Val curve is diagnostic-only and cannot select a seed, scale, checkpoint, or continuation. All six cells are reported; no best-seed selection. Later training is a separate decision after the pilot and requires a new explicit wave record.
 
@@ -20,4 +20,4 @@ Report every seed/scale's DL-Val utility curve by round, round reaching utility 
 
 ## Pilot status
 
-Preregistration only. No H53 training outputs have been read at commit time.
+Pilot complete. See [`SUMMARY.md`](SUMMARY.md) for per-seed outcomes, diagnostic-only limits, integrity replay and verdict. No admission; no longer H53 run is warranted from these results.
