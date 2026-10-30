@@ -1148,11 +1148,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/dsc08_heuristic_loop_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         dsc08_heuristic["source_commit"],
-        "92672d9685f76b048d713437d3443cd59e4bcfaf"
+        "62473fb5ed12333e705ed1b0ce332051e0960c21"
     );
     assert_eq!(
         dsc08_heuristic["base_commit"],
-        "dbbba6cc836426ea8dfcbce83ed2f0475ec8c81b"
+        "6697c1402249ede99db9b290a50b3808c1e8bba6"
     );
     assert_eq!(
         dsc08_heuristic["before_identity_digest"],
