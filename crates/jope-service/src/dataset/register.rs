@@ -7,7 +7,9 @@ use jope_api::{
 };
 use jope_runtime::{limits::Limits, table};
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, fs::File, io::Read, path::Path};
+#[cfg(unix)]
+use std::os::unix::fs::OpenOptionsExt;
+use std::{collections::BTreeSet, fs::OpenOptions, io::Read, path::Path};
 
 #[derive(Clone, Debug)]
 pub struct RegistrationLimits {
@@ -197,11 +199,20 @@ pub fn register_file(
     path: &Path,
     limits: &RegistrationLimits,
 ) -> Result<RegisteredDataset> {
-    let file = File::open(path).map_err(StoreError::from)?;
-    if !file.metadata().map_err(StoreError::from)?.is_file() {
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    options.custom_flags(libc::O_NONBLOCK);
+
+    // A blocking read-open on a FIFO without a writer never returns. Open
+    // nonblocking on Unix, then inspect the opened handle to avoid a path
+    // check/open race. Other platforms retain their existing open behavior.
+    let file = options.open(path).map_err(StoreError::from)?;
+    let metadata = file.metadata().map_err(StoreError::from)?;
+    if !metadata.file_type().is_file() {
         return Err(invalid("csv"));
     }
-    if file.metadata().map_err(StoreError::from)?.len() > limits.max_dataset_bytes {
+    if metadata.len() > limits.max_dataset_bytes {
         return Err(invalid("max_dataset_bytes"));
     }
     register(store, file, limits)
@@ -322,6 +333,69 @@ mod tests {
             .get(&RecordKey::Dataset(first.id))
             .unwrap()
             .is_some());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn fifo_without_writer_returns_dataset_invalid_promptly() {
+        use std::{
+            process::{Command, Stdio},
+            time::{Duration, Instant},
+        };
+
+        const CHILD: &str = "JOPE_SVC11_F02_FIFO_CHILD";
+        const TEST_DIR: &str = "JOPE_SVC11_F02_TEST_DIR";
+        let test_name = std::thread::current().name().unwrap().to_owned();
+
+        if std::env::var_os(CHILD).is_some() {
+            let dir = std::path::PathBuf::from(std::env::var_os(TEST_DIR).unwrap());
+            let store = Store::open(dir.join("store")).unwrap();
+            let error = register_file(
+                &store,
+                &dir.join("input.fifo"),
+                &RegistrationLimits::default(),
+            )
+            .unwrap_err();
+            assert!(matches!(
+                error,
+                RegistrationError::Invalid(problem) if problem.code == ErrorCode::DatasetInvalid
+            ));
+            return;
+        }
+
+        let temp = tempfile::tempdir().unwrap();
+        let fifo = temp.path().join("input.fifo");
+        nix::unistd::mkfifo(
+            &fifo,
+            nix::sys::stat::Mode::S_IRUSR | nix::sys::stat::Mode::S_IWUSR,
+        )
+        .unwrap();
+
+        let mut child = Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", &test_name])
+            .env(CHILD, "1")
+            .env(TEST_DIR, temp.path())
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            if let Some(status) = child.try_wait().unwrap() {
+                assert!(
+                    status.success(),
+                    "bounded FIFO registration child failed: {status}"
+                );
+                break;
+            }
+            if Instant::now() >= deadline {
+                child.kill().expect("timed-out FIFO child is still running");
+                let _ = child.wait();
+                panic!("register_file did not refuse an unwritten FIFO within 5 seconds");
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
     }
 
     #[test]

@@ -4701,6 +4701,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest proofs for the flywheel Phase 3 fail-closed gatekeeper (#459): round qualification and comparison, deterministic verification sampling and miss-to-training-pair conversion; research flywheel outside the reviewed product baseline."
     },
+    "python:research/flywheel_selfplay/test_rotate_flywheel_logs.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested local fixture proof for S3-verified summary/log tail rotation, preservation on custody failure, round-lock exclusion and open O_APPEND descriptor continuity. Research maintenance outside the reviewed product baseline; real S3 and live-worker qualification have separate host receipts."
+    },
     "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
       "discovery": {
         "kind": "python-family"

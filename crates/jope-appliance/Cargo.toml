@@ -19,11 +19,14 @@ jope-api = { path = "../jope-api" }
 jope-assets = { path = "../jope-assets" }
 jope-runtime = { path = "../jope-runtime" }
 jope-service = { path = "../jope-service", optional = true }
+ratatui = { version = "=0.29.0", default-features = false, features = ["crossterm"] }
+signal-hook = "=0.3.18"
 serde.workspace = true
 serde_json.workspace = true
 ulid.workspace = true
 
 [dev-dependencies]
+jope-client = { path = "../jope-client", features = ["fake"] }
 # Test builds of `jopedime` pack fixture packages and trust the development key. Release builds
 # (no dev-dependencies) get neither.
 jope-assets = { path = "../jope-assets", features = ["pack", "dev-keys"] }

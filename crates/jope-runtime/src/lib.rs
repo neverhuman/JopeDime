@@ -22,6 +22,8 @@ pub mod fitness;
 pub mod fitness_classification;
 pub mod fitted;
 pub mod fitted_js;
+pub mod fitted_py;
+pub mod fitted_rs;
 pub mod landmark_args;
 pub mod limits;
 pub mod math_pipeline;

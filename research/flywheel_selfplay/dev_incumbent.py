@@ -681,17 +681,31 @@ def project_score_margins(parameters, constraints, max_passes=2, tolerance=1e-6)
 def warm_restart_adapter(model, optimizer, seed, round_idx):
     """Perturb only trainable adapter tensors; reset LR independently of restored LR.
 
-    A private generator makes consecutive rejected proposals differ without changing
-    frozen DOPE or its anchor. Adam state still comes from the complete incumbent.
+    Restart scales use a fixed round-keyed schedule, never development scores.
+    The old four-phase scale table produced four update-size clusters despite
+    changing batch/noise seeds. Keep its bounds, remove that short cycle, and
+    retain the complete incumbent's Adam moments/step. DOPE/anchor stay frozen.
     """
+    import hashlib
+
     import torch
 
     params = [p for p in model.parameters() if p.requires_grad]
     if not params:
         raise ValueError("no trainable adapter")
     generator = torch.Generator(device=params[0].device).manual_seed(seed)
-    sigma = (1e-5, 3e-5, 1e-4, 3e-4)[round_idx % 4]
-    lr = (1e-4, 3e-4, 2.5e-5, 1e-4)[round_idx % 4]
+    digest = hashlib.sha256(
+        f"adapter-restart-scales/v2:{seed}:{round_idx}".encode()
+    ).digest()
+    # Independent 53-bit fractions are exactly representable; no global RNG use.
+    sigma_fraction = (int.from_bytes(digest[:8], "little") >> 11) / 2**53
+    lr_fraction = (int.from_bytes(digest[8:16], "little") >> 11) / 2**53
+    sigma = min(
+        3e-4, max(1e-5, math.exp(math.log(1e-5) + sigma_fraction * math.log(30.0)))
+    )
+    lr = min(
+        3e-4, max(2.5e-5, math.exp(math.log(2.5e-5) + lr_fraction * math.log(12.0)))
+    )
     with torch.no_grad():
         for p in params:
             p.add_(
@@ -703,7 +717,11 @@ def warm_restart_adapter(model, optimizer, seed, round_idx):
     for group in optimizer.param_groups:
         group["lr"] = lr
     return {
-        "version": "seeded-adapter-warm-restart/v1",
+        "version": "seeded-adapter-warm-restart/v2",
+        "scale_policy": "round-hash-loguniform/v1",
+        "round": round_idx,
+        "lr_bounds": [2.5e-5, 3e-4],
+        "sigma_bounds": [1e-5, 3e-4],
         "seed": seed,
         "sigma": sigma,
         "lr": lr,
