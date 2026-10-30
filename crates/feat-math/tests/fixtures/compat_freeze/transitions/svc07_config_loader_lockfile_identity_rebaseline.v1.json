@@ -2,18 +2,18 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Announced SVC-07 adds only the already-locked toml dependency edge to jope-service in Cargo.lock. Append this lockfile-only ADR-0004 identity and lineage fixture edge after API-06; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
   "plan_reference": "SVC-07; owner-authority lanes_0810 2026-10-30 08:10Z",
-  "source_commit": "0b91d7bc30c325e4e1d75f6a0f47caad0bc363e1",
+  "source_commit": "cd7ee2356000092c8b2200211b123148b5c04a96",
   "base_commit": "f11f6f474a5f457692d9e4ab6b4fb31860575a91",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "7653d5b8040a6c68124f4bcc086b639a1e0d1221dc56abce4df86e4baa3a2fc3",
-      "after": "b578bb225427d3fcc232bf40f464b9007cb45f7a907572018b7a665e8ed07c79"
+      "after": "f4ac4ab5867d1704bbad8f53c1c7b8f0c6c98507a0abcad86ee9c864036607f7"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "105214196577e85ace635f5ddc3d41099db9ed90b8762e0501887d200697b471",
-      "after": "bac6df49a65c894964f5d83ef0c20dd78d7fed87cdda381259d9598c2f9cc426"
+      "after": "77a4d10766494e22e0d399e0e31f9c3145c13ed09eba73a9ae1ee2bfe6aa20b9"
     }
   ],
   "before_identity_digest": "0ecbbbd7738fdc7b2fedb67aba2aa556d04532006fcf444792e097320f3df883",
