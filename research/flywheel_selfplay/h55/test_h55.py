@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import importlib.util
+from pathlib import Path
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -21,6 +24,7 @@ def module(name: str, path: Path):
 audit = module("h55_test_audit", HERE / "audit.py")
 metrics = module("h55_test_metrics", HERE / "build_metrics.py")
 wave = module("h55_test_wave", HERE / "run_wave.py")
+runner = module("h55_test_runner", HERE / "runner.py")
 
 
 class H55PolicyTests(unittest.TestCase):
@@ -74,6 +78,13 @@ class H55PolicyTests(unittest.TestCase):
         self.assertAlmostEqual(wave.remaining_lock_wait_seconds(prior),
                                wave.MAX_LOCK_WAIT_SECONDS - prior)
         self.assertEqual(wave.remaining_lock_wait_seconds(wave.MAX_LOCK_WAIT_SECONDS), 0.0)
+
+    def test_outcome_runner_has_no_unregistered_timing_flag(self):
+        args = SimpleNamespace(seed=12, arm="swa8", device="cuda:0", lock_held=True,
+                               mode="outcome", input=Path("unused"), checkpoint=Path("unused"))
+        with mock.patch.object(runner, "prepare_training", side_effect=LookupError("stop before data")):
+            with self.assertRaisesRegex(LookupError, "stop before data"):
+                runner.train_and_score(args)
 
 
 if __name__ == "__main__":

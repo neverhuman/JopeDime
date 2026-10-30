@@ -462,8 +462,6 @@ def train_and_score(args) -> dict:
         raise RuntimeError("outcome/timing cells require cuda:0 with qualification.lock held")
     if args.mode == "timing" and (args.arm, args.seed) != ("ema25", 12):
         raise RuntimeError("only EMA-25 seed12 is preregistered as timing-only")
-    if args.mode == "outcome" and args.timing_only:
-        raise RuntimeError("timing-only flag is incompatible with outcome mode")
     torch.set_num_threads(1)
     random.seed(args.seed)
     np.random.seed(args.seed)

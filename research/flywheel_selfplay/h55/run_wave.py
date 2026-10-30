@@ -39,6 +39,16 @@ class LockWaitTimeout(TimeoutError):
         super().__init__(f"qualification.lock wait exceeded 3h; cumulative={cumulative_wait_seconds:.1f}s")
 
 
+class RunnerExitError(RuntimeError):
+    def __init__(self, key: str, code: int, log_path: Path, wait_seconds: float,
+                 wall_seconds: float, preflight: dict):
+        self.wait_seconds = wait_seconds
+        self.wall_seconds = wall_seconds
+        self.preflight = preflight
+        self.log_path = log_path
+        super().__init__(f"{key} runner exited {code}; log={log_path}")
+
+
 def remaining_lock_wait_seconds(cumulative_wait_seconds: float) -> float:
     return max(0.0, MAX_LOCK_WAIT_SECONDS - cumulative_wait_seconds)
 
@@ -216,11 +226,11 @@ def run_locked_cell(
         note(status_path, f"START {key}; CUDA free={free_mib} MiB; lock_wait={wait_seconds:.1f}s; preflight={json.dumps(preflight, sort_keys=True)}")
         log_path = RUN_ROOT / "logs" / f"{key.replace('/', '-')}.log"
         code, wall, max_rss, max_cpu = run_child(cmd, log_path, timeout, status_path)
-        if code != 0:
-            raise RuntimeError(f"{key} runner exited {code}; log={log_path}")
         preflight["child_max_rss_kib"] = max_rss
         preflight["child_max_host_cpu_observed_percent"] = max_cpu
         preflight["cell_wall_seconds"] = wall
+        if code != 0:
+            raise RunnerExitError(key, code, log_path, wait_seconds, wall, preflight)
         summary_path = (output_dir if key.startswith("val/") else
                         output_dir / ("timing.json" if key == "timing" else "summary.json"))
         if summary_path.is_file():
@@ -302,7 +312,8 @@ def amendment_cap(path: Path) -> int:
     raise RuntimeError("dated amendment is missing total_gpu_wall_cap_seconds")
 
 
-def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0) -> dict:
+def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0,
+                 prior_gpu_wall_seconds: float = 0.0) -> dict:
     cap = amendment_cap(amendment)
     status_path = RUN_ROOT / "H55_STATUS.log"
     outcome_root = RUN_ROOT / "outcomes"
@@ -315,7 +326,7 @@ def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0) -> dict:
     start = time.monotonic()
     cells = []
     wait_total = prior_lock_wait_seconds
-    gpu_wall_total = 0.0
+    gpu_wall_total = prior_gpu_wall_seconds
     reason = None
     for index, (arm, seed) in enumerate(CELL_ORDER, 1):
         remaining = cap - gpu_wall_total
@@ -336,8 +347,17 @@ def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0) -> dict:
             reason = f"infra-void/stopped at {arm}/seed{seed}: {type(exc).__name__}: {exc}"
             if isinstance(exc, LockWaitTimeout):
                 wait_total = exc.cumulative_wait_seconds
-            cells.append({"key": f"{arm}/seed{seed}", "status": "infra_void", "error": reason,
-                          "lock_wait_seconds": exc.wait_seconds if isinstance(exc, LockWaitTimeout) else 0.0})
+                cells.append({"key": f"{arm}/seed{seed}", "status": "infra_void", "error": reason,
+                              "lock_wait_seconds": exc.wait_seconds})
+            elif isinstance(exc, RunnerExitError):
+                wait_total += exc.wait_seconds
+                gpu_wall_total += exc.wall_seconds
+                cells.append({"key": f"{arm}/seed{seed}", "status": "infra_void", "error": reason,
+                              "lock_wait_seconds": exc.wait_seconds, "preflight": exc.preflight,
+                              "log": str(exc.log_path)})
+            else:
+                cells.append({"key": f"{arm}/seed{seed}", "status": "infra_void", "error": reason,
+                              "lock_wait_seconds": 0.0})
             break
     completed = len(cells) == len(CELL_ORDER) and all(c["status"] == "complete" for c in cells)
     wave = {
@@ -348,6 +368,7 @@ def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0) -> dict:
         "cells": cells, "stop_reason": reason, "wall_seconds": time.monotonic() - start,
         "total_gpu_cell_wall_seconds": gpu_wall_total,
         "prior_lock_wait_seconds": prior_lock_wait_seconds,
+        "prior_gpu_wall_seconds": prior_gpu_wall_seconds,
         "lock_wait_seconds": wait_total, "terminal_val_reads": 0,
     }
     atomic_json(wave_path, wave)
@@ -422,6 +443,7 @@ def main() -> None:
     modes.add_argument("--terminal-val", action="store_true")
     parser.add_argument("--amendment", type=Path)
     parser.add_argument("--prior-lock-wait-seconds", type=float, default=0.0)
+    parser.add_argument("--prior-gpu-wall-seconds", type=float, default=0.0)
     args = parser.parse_args()
     usage = shutil.disk_usage("/")
     disk_percent = 100.0 * (usage.total - usage.free) / usage.total
@@ -436,7 +458,10 @@ def main() -> None:
             raise RuntimeError("outcome cells require the committed dated execution amendment")
         if not 0.0 <= args.prior_lock_wait_seconds < MAX_LOCK_WAIT_SECONDS:
             raise RuntimeError("prior lock wait must be nonnegative and below the three-hour limit")
-        result = run_outcomes(args.amendment, args.prior_lock_wait_seconds)
+        if not 0.0 <= args.prior_gpu_wall_seconds < 1800.0:
+            raise RuntimeError("prior locked-cell wall must be nonnegative and below the 1,800-second cap")
+        result = run_outcomes(args.amendment, args.prior_lock_wait_seconds,
+                              args.prior_gpu_wall_seconds)
     else:
         result = run_terminal_val()
     mode = "dry-run" if args.dry_run else "timing" if args.timing else "outcomes" if args.outcomes else "terminal-val"
