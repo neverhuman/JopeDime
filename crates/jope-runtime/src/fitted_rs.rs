@@ -4,6 +4,7 @@
 //! math-pipeline input contract (raw cells, selected columns and target units). Categorical
 //! encodings are not present in that contract; unsupported model forms fail closed.
 
+use crate::calibration::OutputTransform;
 use crate::math_pipeline::{InputContract, MathPipeline, F64_PREDICTION_VERSION};
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::genome::GenomeIr;
@@ -25,7 +26,7 @@ pub struct CheckRow {
 /// Emit a single Rust module with `predict_numeric(&[Vec<f64>]) -> Result<Vec<f64>, String>`.
 /// Rows must have exactly `width` finite cells. Constants round-trip every fitted f64 bit.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
-    emit_with_checks(genome, model, width, &[])
+    emit_calibrated(genome, model, width, None)
 }
 
 /// Emit a predictor with up to 64 caller-supplied engine check rows.
@@ -33,6 +34,27 @@ pub fn emit_with_checks(
     genome: &GenomeIr,
     model: &Model,
     width: usize,
+    checks: &[CheckRow],
+) -> Result<String> {
+    emit_calibrated_with_checks(genome, model, width, None, checks)
+}
+
+/// Emit std-only Rust with the optional fitted regression output transform.
+pub fn emit_calibrated(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
+) -> Result<String> {
+    emit_calibrated_with_checks(genome, model, width, output_transform, &[])
+}
+
+/// Emit std-only Rust with calibration and caller-supplied engine check rows.
+pub fn emit_calibrated_with_checks(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
     checks: &[CheckRow],
 ) -> Result<String> {
     ensure!(
@@ -105,15 +127,40 @@ pub fn emit_with_checks(
         }
         _ => bail!("fitted Rust target differs from recipe"),
     }
+    let output_transform = output_transform
+        .copied()
+        .filter(|t| !is_identity_transform(t));
+    let calibrated_prediction = if let Some(transform) = output_transform {
+        ensure!(
+            transform.intercept.is_finite()
+                && transform.slope.is_finite()
+                && transform.lower.is_none_or(f64::is_finite),
+            "non-finite regression output transform"
+        );
+        let code = if let Some(lower) = transform.lower {
+            format!(
+                "let predictions: Vec<f64> = predictions.into_iter().map(|pred| ({} + {} * pred).max({})).collect();",
+                transform.intercept, transform.slope, lower
+            )
+        } else {
+            format!(
+                "let predictions: Vec<f64> = predictions.into_iter().map(|pred| {} + {} * pred).collect();",
+                transform.intercept, transform.slope
+            )
+        };
+        code
+    } else {
+        String::new()
+    };
     source.push_str(&format!(
         "\n// Fitted state: prediction only. Emitter {EMITTER_VERSION}.\n\
          fn fitted_model() -> Model {{ Model {{ {} }} }}\n\
          pub fn predict_numeric(rows: &[Vec<f64>]) -> Result<Vec<f64>, String> {{\n\
          if rows.iter().any(|r| r.len() != {width} || r.iter().any(|v| !v.is_finite())) {{ return Err(\"invalid numeric row\".into()); }}\n\
          if rows.is_empty() {{ return Ok(Vec::new()); }}\n\
-         let predictions = fitted_model().predict(rows);\n\
+         let predictions = fitted_model().predict(rows);\n{calibrated_prediction}\n\
          if predictions.len() != rows.len() || predictions.iter().any(|v| !v.is_finite()) {{ return Err(\"prediction failed: non-finite fitted prediction\".into()); }}\n\
-         Ok(predictions)\n}}\n", fields.join(", ")
+         Ok(predictions)\n}}\n", fields.join(", "), calibrated_prediction=calibrated_prediction
     ));
     let rows = checks
         .iter()
@@ -138,7 +185,7 @@ const SELF_CHECK_REL_TOL: f64 = 1e-10;
 fn self_check() {{
     let rows: Vec<(Vec<f64>, f64)> = vec![{rows}];
     for (index, (inputs, expected)) in rows.iter().enumerate() {{
-        let actual = fitted_model().predict(std::slice::from_ref(inputs))[0];
+        let actual = predict_numeric(std::slice::from_ref(inputs)).unwrap()[0];
         assert!((expected.is_nan() && actual.is_nan()) || (actual.is_finite() && (actual-expected).abs() <= SELF_CHECK_ABS_TOL + SELF_CHECK_REL_TOL*expected.abs()), "self_check failed at row {{index}}");
     }}
 }}
@@ -210,6 +257,10 @@ fn no_null(value: &Value) -> bool {
         Value::Object(fields) => fields.values().all(no_null),
         _ => true,
     }
+}
+
+fn is_identity_transform(transform: &OutputTransform) -> bool {
+    transform.intercept == 0.0 && transform.slope == 1.0 && transform.lower.is_none()
 }
 
 fn pipeline_fields(
@@ -1201,5 +1252,140 @@ mod tests {
             .unwrap()
             .success());
         assert!(!Command::new(&rs_test).status().unwrap().success());
+    }
+
+    #[test]
+    fn calibrated_emitters_match_engine_and_binding_floor() {
+        let (train, targets) = training();
+        let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let model = feat_math::model::fit(&genome, &train, &targets).unwrap();
+        let raw = model.predict(&train).unwrap();
+        let affine: Vec<_> = raw.iter().map(|v| 0.7 + 1.2 * v).collect();
+        let (low_index, low_value) = affine
+            .iter()
+            .enumerate()
+            .min_by(|a, b| a.1.total_cmp(b.1))
+            .unwrap();
+        let (high_index, high_value) = affine
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.total_cmp(b.1))
+            .unwrap();
+        let lower = (low_value + high_value) / 2.0;
+        let transform = OutputTransform {
+            intercept: 0.7,
+            slope: 1.2,
+            lower: Some(lower),
+        };
+        let input_rows = [train[low_index].clone(), train[high_index].clone()];
+        let checks_js: Vec<_> = input_rows
+            .iter()
+            .zip([low_index, high_index])
+            .map(|(inputs, index)| crate::fitted_js::CheckRow {
+                inputs: inputs.clone(),
+                expected: transform.apply(raw[index]),
+            })
+            .collect();
+        let checks_py: Vec<_> = input_rows
+            .iter()
+            .zip([low_index, high_index])
+            .map(|(inputs, index)| crate::fitted_py::CheckRow {
+                inputs: inputs.clone(),
+                expected: transform.apply(raw[index]),
+            })
+            .collect();
+        let checks_rs: Vec<_> = input_rows
+            .iter()
+            .zip([low_index, high_index])
+            .map(|(inputs, index)| CheckRow {
+                inputs: inputs.clone(),
+                expected: transform.apply(raw[index]),
+            })
+            .collect();
+        assert!(transform.apply(raw[low_index]) == lower);
+        assert!(transform.apply(raw[high_index]) > lower);
+
+        assert_eq!(
+            crate::fitted_js::emit(&genome, &model, 12).unwrap(),
+            crate::fitted_js::emit_calibrated(
+                &genome,
+                &model,
+                12,
+                Some(&OutputTransform::IDENTITY)
+            )
+            .unwrap()
+        );
+        assert_eq!(
+            crate::fitted_py::emit(&genome, &model, 12).unwrap(),
+            crate::fitted_py::emit_calibrated(
+                &genome,
+                &model,
+                12,
+                Some(&OutputTransform::IDENTITY)
+            )
+            .unwrap()
+        );
+        assert_eq!(
+            emit(&genome, &model, 12).unwrap(),
+            emit_calibrated(&genome, &model, 12, Some(&OutputTransform::IDENTITY)).unwrap()
+        );
+
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../target/fitted-calibration-proof");
+        std::fs::create_dir_all(&root).unwrap();
+        let js_path = root.join("predictor.mjs");
+        std::fs::write(
+            &js_path,
+            crate::fitted_js::emit_calibrated_with_checks(
+                &genome,
+                &model,
+                12,
+                Some(&transform),
+                &checks_js,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert!(Command::new("node")
+            .arg(&js_path)
+            .arg("--self-check")
+            .status()
+            .unwrap()
+            .success());
+        let py_path = root.join("predictor.py");
+        std::fs::write(
+            &py_path,
+            crate::fitted_py::emit_calibrated_with_checks(
+                &genome,
+                &model,
+                12,
+                Some(&transform),
+                &checks_py,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert!(Command::new("python3")
+            .arg(&py_path)
+            .arg("--self-check")
+            .status()
+            .unwrap()
+            .success());
+        let rs_path = root.join("predictor.rs");
+        let rs_test = root.join("predictor-test");
+        std::fs::write(
+            &rs_path,
+            emit_calibrated_with_checks(&genome, &model, 12, Some(&transform), &checks_rs).unwrap(),
+        )
+        .unwrap();
+        assert!(Command::new("rustc")
+            .args(["--edition=2021", "--test"])
+            .arg(&rs_path)
+            .arg("-o")
+            .arg(&rs_test)
+            .status()
+            .unwrap()
+            .success());
+        assert!(Command::new(&rs_test).status().unwrap().success());
     }
 }

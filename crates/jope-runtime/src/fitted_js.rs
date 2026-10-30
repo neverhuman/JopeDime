@@ -6,6 +6,7 @@
 //! stage must carry the same kind in the same position, and is written in the shape that kind's
 //! `applyStage` branch reads. Anything outside the recipe's slice is refused by name.
 
+use crate::calibration::OutputTransform;
 use crate::error::Failure;
 use anyhow::Result;
 use feat_math::genome::GenomeIr;
@@ -24,7 +25,7 @@ pub struct CheckRow {
 
 /// Emit standalone ES2020 that predicts with `model`, fitted from `genome` on rows `width` wide.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
-    emit_with_checks(genome, model, width, &[])
+    emit_calibrated(genome, model, width, None)
 }
 
 /// Emit a predictor with up to 64 caller-supplied engine check rows.
@@ -32,6 +33,27 @@ pub fn emit_with_checks(
     genome: &GenomeIr,
     model: &Model,
     width: usize,
+    checks: &[CheckRow],
+) -> Result<String> {
+    emit_calibrated_with_checks(genome, model, width, None, checks)
+}
+
+/// Emit standalone JavaScript with the optional fitted regression output transform.
+pub fn emit_calibrated(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
+) -> Result<String> {
+    emit_calibrated_with_checks(genome, model, width, output_transform, &[])
+}
+
+/// Emit standalone JavaScript with calibration and caller-supplied engine check rows.
+pub fn emit_calibrated_with_checks(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
     checks: &[CheckRow],
 ) -> Result<String> {
     if checks.len() > 64 || checks.iter().any(|row| row.inputs.len() != width) {
@@ -102,7 +124,27 @@ pub fn emit_with_checks(
     if !states.iter().all(|s| s.is_null() || all_finite(s)) || !all_finite(&head_state) {
         return Err(Failure::integrity("non-finite fitted state"));
     }
-    source.push_str(&format!(
+    let output_transform = output_transform
+        .copied()
+        .filter(|t| !is_identity_transform(t));
+    if let Some(transform) = output_transform {
+        if !transform.intercept.is_finite()
+            || !transform.slope.is_finite()
+            || transform.lower.is_some_and(|lower| !lower.is_finite())
+        {
+            return Err(Failure::integrity("non-finite regression output transform"));
+        }
+        let lower = transform
+            .lower
+            .map_or("null".to_owned(), |v| format!("{v:?}"));
+        source.push_str(&format!(r#"
+// Fitted state: prediction only. Regression output calibration.
+const FITTED_STATES=Object.freeze({});
+const FITTED_HEAD=Object.freeze({});
+function modelFittedHandle(){{const base=new Model(FITTED_STATES,FITTED_HEAD);return {{model:{{predict(rows){{return base.predict(rows).map(pred=>{{const value={intercept:?}+{slope:?}*pred;return {lower}===null?value:(Number.isNaN(value)?{lower}:Math.max(value,{lower}));}});}}}},width:{width}}};}}
+"#, serde_json::to_string(&Value::Array(states))?, serde_json::to_string(&head_state)?, intercept=transform.intercept, slope=transform.slope, lower=lower, width=width));
+    } else {
+        source.push_str(&format!(
         "\n// Fitted state. Prediction only: these constants are what the pipeline learned.\n\
          const FITTED_STATES=Object.freeze({});\n\
          const FITTED_HEAD=Object.freeze({});\n\
@@ -110,6 +152,7 @@ pub fn emit_with_checks(
         serde_json::to_string(&Value::Array(states))?,
         serde_json::to_string(&head_state)?,
     ));
+    }
     let rows = checks
         .iter()
         .map(|row| {
@@ -297,4 +340,8 @@ fn all_finite(value: &Value) -> bool {
         Value::Null => false,
         _ => true,
     }
+}
+
+fn is_identity_transform(transform: &OutputTransform) -> bool {
+    transform.intercept == 0.0 && transform.slope == 1.0 && transform.lower.is_none()
 }
