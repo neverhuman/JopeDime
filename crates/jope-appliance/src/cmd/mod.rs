@@ -4,6 +4,8 @@ pub mod code;
 pub mod control;
 #[cfg(feature = "mcp")]
 pub mod events;
+#[cfg(feature = "mcp")]
+pub mod mcp_entry;
 #[cfg(feature = "client")]
 pub mod restart;
 #[cfg(feature = "mcp")]
