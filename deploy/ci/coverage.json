@@ -484,7 +484,9 @@
     },
     "feature:jope-appliance/default": {
       "discovery": {
-        "dependencies": [],
+        "dependencies": [
+          "engine"
+        ],
         "kind": "feature"
       },
       "dispositions": [],
@@ -545,6 +547,21 @@
         "e2e-smoke"
       ],
       "scope": "Release behaviour: refuse to run without the sealed package. Built and executed by the e2e-smoke fixture appliance step; release builds always set it."
+    },
+    "feature:jope-appliance/engine": {
+      "discovery": {
+        "dependencies": [
+          "dep:jope-service"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default engine feature includes the isolated worker runtime. Covered by appliance and service default-package lanes; platform and native-evaluator qualification remain separately recorded."
     },
     "feature:jope-arena/default": {
       "discovery": {

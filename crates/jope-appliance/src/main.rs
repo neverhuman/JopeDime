@@ -17,6 +17,8 @@ mod landmarks;
 mod model;
 #[path = "terminal/theme.rs"]
 pub mod terminal;
+#[cfg(feature = "engine")]
+mod worker;
 
 use clap::Parser;
 use cli::{Cli, Command, CommonArgs, TrainArgs};
@@ -779,6 +781,8 @@ fn main() -> ExitCode {
     }
     let cli = Cli::parse();
     match cli.command {
+        #[cfg(feature = "engine")]
+        Command::Worker { protocol } => report(worker::run(protocol)),
         Command::Version(flag) => {
             if flag.json {
                 print_json(&version_value());
