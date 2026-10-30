@@ -63,7 +63,9 @@ move lowers to readable Python and Rust.
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
-The map reads a program as $z_w=\encS(w)$, the mean of learned token embeddings. It combines $z_w$
+The map reads a program as $z_w=\encS(w)$, the mean of learned token
+embeddings. Pooling discards token order, limiting the map's ability to
+distinguish compositions built from the same tokens. It combines $z_w$
 with $z_p$ three ways (as is, gated by the problem, and as a distance from a projection of it) and
 averages four heads into a score $\mapv(z_p,z_w)$. It learns from lists: for each problem $p$ with
 at least eight scored programs, $G_p$ holds them and $\rho_w\in[0,1]$ is a program's percentile, 1
