@@ -1,0 +1,146 @@
+{
+  "schema": "jope.mcp-spike-recheck/v1",
+  "utc": "2026-10-30T03:28:55.029026+00:00",
+  "source_head": "3346ae2c00d86e7d6b52d6048ca3a87d4ad7bb20",
+  "environment": {
+    "CARGO_BUILD_JOBS": "8",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+    "CARGO_TARGET_DIR": "/home/ubuntu/JopeDime/.agent/worktrees/mcp-01/target",
+    "TMPDIR": "/home/ubuntu/JopeDime/.agent/worktrees/mcp-01/target/tmp"
+  },
+  "nice": 10,
+  "checks": [
+    {
+      "name": "runtime-fmt",
+      "command": "cargo fmt -p jope-runtime -- --check",
+      "exit_code": 0,
+      "wall_seconds": 0.2074752375483513,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_head": [],
+      "output_tail": []
+    },
+    {
+      "name": "runtime-clippy",
+      "command": "cargo clippy -p jope-runtime --all-targets --locked -- -D warnings",
+      "exit_code": 0,
+      "wall_seconds": 0.3405045922845602,
+      "log_sha256": "5604fc8f0c276397a55db4bd7008236712075c0ad37d3b3a0f1fe362b1b85a36",
+      "output_head": [
+        "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.24s"
+      ],
+      "output_tail": [
+        "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.24s"
+      ]
+    },
+    {
+      "name": "runtime-nextest",
+      "command": "cargo nextest run -P pr --locked -p jope-runtime",
+      "exit_code": 0,
+      "wall_seconds": 10.246080659329891,
+      "log_sha256": "63228020e54a264cd202a67f3ea12956bbb47accca61b91b1eafbda514a4cca3",
+      "output_head": [
+        "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        " Nextest run ID ad378c32-979f-4540-a901-a0615593c349 with nextest profile: pr"
+      ],
+      "output_tail": [
+        "        PASS [   0.071s] (69/86) jope-runtime::fitted_js_qualification fitted_javascript_refuses_contradictory_prediction_parameters",
+        "        PASS [   0.085s] (70/86) jope-runtime::offline_fit_predict importing_native_bytes_preserves_noncanonical_state_json_exactly",
+        "        PASS [   0.091s] (71/86) jope-runtime::math_pipeline decoder_reproduces_the_producer_for_every_row",
+        "        PASS [   0.097s] (72/86) jope-runtime::offline_fit_predict calibrated_object_round_trip_preserves_predictions_and_refuses_lossy_lowering",
+        "        PASS [   0.100s] (73/86) jope-runtime model_session::tests::competing_updates_fail_without_losing_a_version",
+        "        PASS [   0.120s] (74/86) jope-runtime calibration::tests::calibration_never_worsens_the_fitted_rows_and_honors_the_domain_floor",
+        "        PASS [   0.125s] (75/86) jope-runtime model_object::tests::truncation_substitution_wrong_directory_and_uncommitted_store_are_refused",
+        "        PASS [   0.098s] (76/86) jope-runtime::math_pipeline exported_javascript_reproduces_the_producer_for_every_row",
+        "        PASS [   0.118s] (77/86) jope-runtime model_session::tests::corrupt_history_missing_models_and_path_traversal_are_refused",
+        "        PASS [   0.127s] (78/86) jope-runtime::prediction_narration prediction_failures_are_retained_without_claiming_completion",
+        "        PASS [   0.131s] (79/86) jope-runtime::prediction_narration fixed_prediction_narration_preserves_bytes_and_binds_actual_inputs",
+        "        PASS [   0.146s] (80/86) jope-runtime::prediction_narration environment_capture_observes_shipped_gp_and_startup_failure_is_best_effort",
+        "        PASS [   0.139s] (81/86) jope-runtime::offline_fit_predict bound_programs_keep_symbolic_target_and_ordered_input_state_on_disk",
+        "        PASS [   0.239s] (82/86) jope-runtime model_session::tests::versions_rollback_and_continue_keep_every_object_and_selection",
+        "        PASS [   1.284s] (83/86) jope-runtime::fitted_js_qualification fitted_javascript_matches_rust_prediction_for_every_supported_stage",
+        "        PASS [   6.829s] (84/86) jope-runtime::offline_fit_predict auto_selects_by_out_of_fold_loss_and_records_every_candidate",
+        "        PASS [   8.317s] (85/86) jope-runtime::offline_fit_predict selection_is_deterministic",
+        "        PASS [   9.330s] (86/86) jope-runtime::offline_fit_predict every_native_method_fits_saves_reloads_and_predicts_identically",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "     Summary [   9.346s] 86 tests run: 86 passed, 0 skipped"
+      ]
+    },
+    {
+      "name": "workspace-deny",
+      "command": "cargo deny check",
+      "exit_code": 0,
+      "wall_seconds": 2.373053589835763,
+      "log_sha256": "7952e6190aa76b6783dc8e8014d0108850907e5fa27c8567cfb0165503ba0ce0",
+      "output_head": [
+        "warning[unmatched-source]: allowed source was not encountered",
+        "   \u250c\u2500 /home/ubuntu/JopeDime/.agent/worktrees/mcp-01/deny.toml:24:15",
+        "   \u2502"
+      ],
+      "output_tail": [
+        "          \u251c\u2500\u2500 icu_provider v2.3.1",
+        "          \u2502   \u251c\u2500\u2500 icu_normalizer v2.3.0 (*)",
+        "          \u2502   \u2514\u2500\u2500 icu_properties v2.3.0 (*)",
+        "          \u251c\u2500\u2500 zerotrie v0.2.5",
+        "          \u2502   \u251c\u2500\u2500 icu_properties v2.3.0 (*)",
+        "          \u2502   \u2514\u2500\u2500 icu_provider v2.3.1 (*)",
+        "          \u2514\u2500\u2500 zerovec v0.11.8",
+        "              \u251c\u2500\u2500 icu_collections v2.3.0 (*)",
+        "              \u251c\u2500\u2500 icu_locale_core v2.3.0",
+        "              \u2502   \u251c\u2500\u2500 icu_properties v2.3.0 (*)",
+        "              \u2502   \u2514\u2500\u2500 icu_provider v2.3.1 (*)",
+        "              \u251c\u2500\u2500 icu_normalizer v2.3.0 (*)",
+        "              \u251c\u2500\u2500 icu_properties v2.3.0 (*)",
+        "              \u251c\u2500\u2500 icu_provider v2.3.1 (*)",
+        "              \u251c\u2500\u2500 potential_utf v0.1.6",
+        "              \u2502   \u2514\u2500\u2500 icu_collections v2.3.0 (*)",
+        "              \u2514\u2500\u2500 tinystr v0.8.4",
+        "                  \u2514\u2500\u2500 icu_locale_core v2.3.0 (*)",
+        "",
+        "advisories ok, bans ok, licenses ok, sources ok"
+      ]
+    },
+    {
+      "name": "spike-fmt",
+      "command": "cargo fmt --manifest-path research/mcp-spike/Cargo.toml --all -- --check",
+      "exit_code": 0,
+      "wall_seconds": 0.0887994896620512,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_head": [],
+      "output_tail": []
+    },
+    {
+      "name": "spike-clippy",
+      "command": "cargo clippy --manifest-path research/mcp-spike/Cargo.toml --workspace --all-targets --locked -- -D warnings",
+      "exit_code": 0,
+      "wall_seconds": 0.2005615569651127,
+      "log_sha256": "22e0df986057b9ba5be07526ac5fb348862a3dedef42108383cc3e088acbb889",
+      "output_head": [
+        "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s"
+      ],
+      "output_tail": [
+        "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s"
+      ]
+    },
+    {
+      "name": "spike-deny",
+      "command": "cargo deny --manifest-path research/mcp-spike/Cargo.toml --disable-fetch check --config deny.toml",
+      "exit_code": 2,
+      "wall_seconds": 0.052358098328113556,
+      "log_sha256": "107f40cfde480915070461bc7fa958a0bbbcb678b9a29e8f635cc7b3a811f035",
+      "output_head": [
+        "error: unexpected argument '--disable-fetch' found",
+        "",
+        "Usage: cargo-deny --manifest-path <MANIFEST_PATH> <COMMAND>"
+      ],
+      "output_tail": [
+        "error: unexpected argument '--disable-fetch' found",
+        "",
+        "Usage: cargo-deny --manifest-path <MANIFEST_PATH> <COMMAND>",
+        "",
+        "For more information, try '--help'."
+      ]
+    }
+  ]
+}

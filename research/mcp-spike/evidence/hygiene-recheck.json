@@ -1,0 +1,15 @@
+{
+  "command": "just hygiene",
+  "source_head": "3346ae2c00d86e7d6b52d6048ca3a87d4ad7bb20",
+  "exit_code": 1,
+  "environment": "lane-local runner-pinned just 1.58.0, cargo-deny 0.20.2, Node 26.1.0/npm 11.13.0; nice 10, Cargo jobs 8, incremental 0, dev debug line-tables-only, one reused lane target and TMPDIR",
+  "log_sha256": "0debfd005832c1f88c7e65f875e393d0acb0720dcdb1dc727b4381c26192f715",
+  "blocking_outputs": [
+    "unassigned addition: python:research/flywheel_selfplay/test_phase3_gates.py",
+    "{\"counts\": {\"benchmark-source\": 19, \"feature\": 52, \"package\": 34, \"python-family\": 268, \"target\": 478, \"workflow\": 10, \"workflow-job\": 27}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}",
+    "secret scan requires full HEAD history; fetch complete history before scanning",
+    "README.md: \"| Python still tracked |\" must say \"1,261 `.py` files, 173 of them under `python/`\"",
+    "paper-trace: FAIL"
+  ],
+  "scope": "untracked spike files are not included by Git-based source inventories"
+}

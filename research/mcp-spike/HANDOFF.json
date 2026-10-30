@@ -1,0 +1,203 @@
+{
+  "task": "MCP-01",
+  "status": "READY_FOR_REVIEW",
+  "utc": "2026-10-30T04:23:51.810427+00:00",
+  "branch": "v1/mcp-01-conformance-spike-rmcp-vs-exis",
+  "base_sha": "5b72f953cbdc987a12528c50e0f45ff388331908",
+  "source_state": "spike and handoff are committed together; resolve candidate SHA with git rev-parse HEAD after bundle import",
+  "ownership": "worker completes local commit/bundle; ENG:watcher owns push and PR on xbabe2; lane/evidence retained for two-reviewer lifecycle",
+  "owner_ruling": {
+    "authority": "Jepson-approved t526u",
+    "source": "~/nudges/scope_2218.md",
+    "decision": "rmcp 3.8.0",
+    "known_main_failures": "KI-1/2/3 recorded, not blockers",
+    "receipt": "research/mcp-spike/evidence/owner-ruling.json"
+  },
+  "delivery": {
+    "command": "git bundle create ~/nudges/mcp01.bundle origin/main..HEAD",
+    "bundle": "~/nudges/mcp01.bundle",
+    "publisher": "ENG:watcher on xbabe2",
+    "worker_push": false,
+    "worker_pr_create": false,
+    "worker_merge": false,
+    "github_ci": false
+  },
+  "known_limits": [
+    "product gate A4 and modern-version shipping qualification remain with MCP-02",
+    "historical hygiene/audit failures remain failed; no candidate no-regression comparison claimed",
+    "SDK malformed-input diagnostics remain visible",
+    "one PR and two COMPLEX reviewer passes pending with publisher/reviewers"
+  ],
+  "files": [
+    {
+      "path": "research/mcp-spike/.gitignore",
+      "bytes": 30,
+      "sha256": "f8d818292cfa6afa288f5b00a6e89a2646c46d9de000442e2be92221f13e5116"
+    },
+    {
+      "path": "research/mcp-spike/COMMIT_MESSAGE.txt",
+      "bytes": 467,
+      "sha256": "706fc1c27662c04153fcc0c657074465721fd1a1ada60a85088e70f1617155e3"
+    },
+    {
+      "path": "research/mcp-spike/Cargo.lock",
+      "bytes": 18834,
+      "sha256": "482e68c4ddb49a586c680d7e12e63f2826525e5a92fb8969a9ca7b24016aa86d"
+    },
+    {
+      "path": "research/mcp-spike/Cargo.toml",
+      "bytes": 272,
+      "sha256": "eaac6877533664c903fb159c1d427d7ee3afb1c879e82bb7db690c20bbecd0af"
+    },
+    {
+      "path": "research/mcp-spike/DESIGN.md",
+      "bytes": 2103,
+      "sha256": "3dc134d4b678ee338b4f3c14ad6c71c40a6b74c9a00da934159ba27233672b54"
+    },
+    {
+      "path": "research/mcp-spike/FOLLOW_UPS.md",
+      "bytes": 2279,
+      "sha256": "e981247eed1277336e43fdd8d46547292f4abca1aa8463c27f33b610d0d35a43"
+    },
+    {
+      "path": "research/mcp-spike/PR_BODY.md",
+      "bytes": 10241,
+      "sha256": "19801b7e4a514218cc6cf2409b2567bdcffbc869786ed9b0dcf4da58dde9efbf"
+    },
+    {
+      "path": "research/mcp-spike/README.md",
+      "bytes": 1847,
+      "sha256": "582f438d108bc60014651ea8a966f800199cdeb08f9e09dd5b03880b6e402978"
+    },
+    {
+      "path": "research/mcp-spike/REPORT.md",
+      "bytes": 10310,
+      "sha256": "462c9c86bc7e5ab72177ded1d26c868ef07be9b249e69875f362ee780994e5dd"
+    },
+    {
+      "path": "research/mcp-spike/check-dependencies.py",
+      "bytes": 2651,
+      "sha256": "c06854c39556e4d84c69e3709d7b316b73cfacce09c4505b39f0ad5c17945df0"
+    },
+    {
+      "path": "research/mcp-spike/check-local.py",
+      "bytes": 4496,
+      "sha256": "945b0aea884a71281765027297e356238aa2bb8aaf6ab3fd90c2227c8aa7be66"
+    },
+    {
+      "path": "research/mcp-spike/conformance.py",
+      "bytes": 19817,
+      "sha256": "86f89641fc317b5f453b21a368c0949b37cb9ae8d47daae96763ec8cbb84a2b9"
+    },
+    {
+      "path": "research/mcp-spike/dispatcher/Cargo.toml",
+      "bytes": 217,
+      "sha256": "4cc52a31cdf120c41ecee4d12f6d91245684fef54ea2b49839e1147b93caa236"
+    },
+    {
+      "path": "research/mcp-spike/dispatcher/src/main.rs",
+      "bytes": 4463,
+      "sha256": "92e63390f7a55dd499c21a730efdb5b293fbdfc4e733d70e1ec19a3691118c72"
+    },
+    {
+      "path": "research/mcp-spike/evidence/baseline-audit-verification.json",
+      "bytes": 1097,
+      "sha256": "8a39dbd1516838ed2c12630a4968ee6e9815e99cddb1023ec1e8536d177e350c"
+    },
+    {
+      "path": "research/mcp-spike/evidence/checks.json",
+      "bytes": 23398,
+      "sha256": "bea82fec95984637a4d292213420c71c8dd9fab7f90dac857d7a5baf79306fce"
+    },
+    {
+      "path": "research/mcp-spike/evidence/dependencies.json",
+      "bytes": 9817,
+      "sha256": "be66bec1da7b0f23ba4c90060d04123002031e3e568999c71b5674ced7164148"
+    },
+    {
+      "path": "research/mcp-spike/evidence/dispatcher-ldd.txt",
+      "bytes": 230,
+      "sha256": "c8f30b88db9f8aed1bc9a62475aad9f1861786247919d85330413d093625e5f4"
+    },
+    {
+      "path": "research/mcp-spike/evidence/dispatcher-tree.txt",
+      "bytes": 422,
+      "sha256": "c88c0343a0f2f6285edf05552ccbe070fd90d8be47c8a00d5ae4f1558e12f64d"
+    },
+    {
+      "path": "research/mcp-spike/evidence/hygiene-latest.json",
+      "bytes": 719,
+      "sha256": "e6c699c84d613773fd12390075720372bc3a10d0086c086abb44444068677716"
+    },
+    {
+      "path": "research/mcp-spike/evidence/hygiene-recheck.json",
+      "bytes": 1027,
+      "sha256": "74fbf4a7e43c85d038029417b87dd7101d10696c5c3758c2ffa335f802bced36"
+    },
+    {
+      "path": "research/mcp-spike/evidence/owner-ruling.json",
+      "bytes": 1567,
+      "sha256": "33daa6c29ff88035df856f358e2a55c0fc37b34766279fa27383c78bad34824e"
+    },
+    {
+      "path": "research/mcp-spike/evidence/recheck.json",
+      "bytes": 7949,
+      "sha256": "b404ed22118b1a4006fbbc3a28eba78c4841d576df0f61b8fc8f574e477a4eee"
+    },
+    {
+      "path": "research/mcp-spike/evidence/references.json",
+      "bytes": 1920,
+      "sha256": "b891344c6c421210b86b08c690a500beaf616ad4aeba5f99e4a8405a0c9e4ac1"
+    },
+    {
+      "path": "research/mcp-spike/evidence/replay.json",
+      "bytes": 50625,
+      "sha256": "1fe7596e7493d2115b07ae2a36238d3442f9686bd0087bf0ba3fbd298f26043f"
+    },
+    {
+      "path": "research/mcp-spike/evidence/replay.jsonl",
+      "bytes": 323541,
+      "sha256": "94b25b99526581a009b2619fdb63a1f86673d790dc80c8c8327449a98d730d42"
+    },
+    {
+      "path": "research/mcp-spike/evidence/rmcp3-ldd.txt",
+      "bytes": 230,
+      "sha256": "069097568bc91047804698d93f6c179ec66f9d29179aa3bdf3eae256def796a1"
+    },
+    {
+      "path": "research/mcp-spike/evidence/rmcp3-tree.txt",
+      "bytes": 5236,
+      "sha256": "59e5901b6c7ac716d124c3cee68705679ecc3e76301fce8d35fb5f1a192ea3ed"
+    },
+    {
+      "path": "research/mcp-spike/evidence/spike-deny.json",
+      "bytes": 3631,
+      "sha256": "3dcdbbcd0c7f6f291f46a9a37e08e83f1f63f2fa92225d0de2fbb4e146737505"
+    },
+    {
+      "path": "research/mcp-spike/rmcp3/Cargo.toml",
+      "bytes": 370,
+      "sha256": "7adbf9afaeb1a8bb8475c34aeff54ddcc6e41fde1b9e9bf9335c96d5148b5d6f"
+    },
+    {
+      "path": "research/mcp-spike/rmcp3/src/main.rs",
+      "bytes": 2426,
+      "sha256": "bd46105ec15c53bcd04fa6a058d0372089b3c789224fce33a0cacb328ee8bc4d"
+    },
+    {
+      "path": "research/mcp-spike/run.sh",
+      "bytes": 892,
+      "sha256": "be5c0173cbd3dd4f9d496359072eab42671e194e5cb5f04820fb42775d735414"
+    },
+    {
+      "path": "research/mcp-spike/tools/Cargo.toml",
+      "bytes": 179,
+      "sha256": "2e7997a2ca63a3c699d837e87ce2aee871d6fc6789411b19bfa55930b7432760"
+    },
+    {
+      "path": "research/mcp-spike/tools/src/lib.rs",
+      "bytes": 2275,
+      "sha256": "5d42cbc7af8b476c2536707b189860b9c067736c706afa8c5911096643a6b152"
+    }
+  ]
+}

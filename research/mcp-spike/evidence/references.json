@@ -1,0 +1,42 @@
+{
+  "schemas": [
+    {
+      "version": "2024-11-05",
+      "url": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/84d845729393f79b3fd3d392aa17cb86f5b6f95c/schema/2024-11-05/schema.ts",
+      "commit": "84d845729393f79b3fd3d392aa17cb86f5b6f95c",
+      "sha256": "8e87348b6c1a9de1ec7ac136f407b687521bcdeb357adedbf5367bfc19c18d38",
+      "bytes": 31186
+    },
+    {
+      "version": "2025-06-18",
+      "url": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/84d845729393f79b3fd3d392aa17cb86f5b6f95c/schema/2025-06-18/schema.ts",
+      "commit": "84d845729393f79b3fd3d392aa17cb86f5b6f95c",
+      "sha256": "7d7f4cc6f3adb76e3fd5e1eee6bab8b1e183cfaf719da66d2aa5661737ca9539",
+      "bytes": 42430
+    },
+    {
+      "version": "2025-11-25",
+      "url": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/84d845729393f79b3fd3d392aa17cb86f5b6f95c/schema/2025-11-25/schema.ts",
+      "commit": "84d845729393f79b3fd3d392aa17cb86f5b6f95c",
+      "sha256": "e74b56e73b2e37bdb595f74ba22e428ad7f07aa3519355ba661d681298ed38ac",
+      "bytes": 66671
+    },
+    {
+      "version": "2026-07-28",
+      "url": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/84d845729393f79b3fd3d392aa17cb86f5b6f95c/schema/2026-07-28/schema.ts",
+      "commit": "84d845729393f79b3fd3d392aa17cb86f5b6f95c",
+      "sha256": "742750af0bb8c716e7030c4977c992b55d1adc4407e9e66997db5846baedc2cd",
+      "bytes": 98426
+    }
+  ],
+  "rmcp": {
+    "crate_version": "3.8.0",
+    "crate_sha256": "f8be15815186873ea063bf005011d16c356804973489e40c39116ae3a2878d1f",
+    "crate_url": "https://crates.io/api/v1/crates/rmcp/3.8.0/download"
+  },
+  "dispatcher": {
+    "path": "crates/jope-runtime/src/service.rs",
+    "commit": "5c8a16711632b4b8c588c9a16679a585abc0f135",
+    "sha256": "1b499452b3bb2e0da2ad23892bbeb31731d2d935019a1be752655231be9f0583"
+  }
+}
