@@ -313,11 +313,7 @@ fn complete_source(
             filtered(values.iter().copied(), prefix, CompletionSource::Enum)
         }
         ValueSource::Languages => complete_languages(prefix),
-        ValueSource::Column => filtered(
-            data.columns.iter().map(String::as_str),
-            prefix,
-            CompletionSource::Column,
-        ),
+        ValueSource::Column => complete_columns(prefix, data),
         ValueSource::RunId => filtered(
             data.run_ids.iter().map(String::as_str),
             prefix,
@@ -352,29 +348,71 @@ fn complete_languages(prefix: &str) -> Vec<Suggestion> {
         .collect()
 }
 
+fn complete_columns(prefix: &str, data: &CompletionData<'_>) -> Vec<Suggestion> {
+    let (list_prefix, active_prefix) = prefix
+        .rsplit_once(',')
+        .map(|(list_prefix, active_prefix)| {
+            let selected = list_prefix
+                .split(',')
+                .map(serialize_token)
+                .collect::<Vec<_>>()
+                .join(",");
+            (format!("{selected},"), active_prefix)
+        })
+        .unwrap_or_else(|| (String::new(), prefix));
+    data.columns
+        .iter()
+        .filter(|column| column.starts_with(active_prefix))
+        .map(|column| Suggestion {
+            insert: format!("{list_prefix}{}", serialize_token(column)),
+            source: CompletionSource::Column,
+        })
+        .collect()
+}
+
 fn complete_paths(prefix: &str, marker: &str, data: &CompletionData<'_>) -> Vec<Suggestion> {
     let Some(cwd) = data.working_directory else {
         return Vec::new();
     };
+    let mut match_prefix = prefix;
+    while let Some(remainder) = match_prefix.strip_prefix("./") {
+        match_prefix = remainder;
+    }
+    let spelling_prefix = &prefix[..prefix.len() - match_prefix.len()];
     data.paths
         .iter()
         .filter_map(|path| {
             let relative = path.strip_prefix(cwd).ok()?;
             let relative = relative.to_string_lossy();
-            relative.starts_with(prefix).then(|| Suggestion {
-                insert: format!("{marker}{}", quote_path(&relative)),
+            relative.starts_with(match_prefix).then(|| Suggestion {
+                insert: format!(
+                    "{marker}{}",
+                    serialize_token(&format!("{spelling_prefix}{relative}"))
+                ),
                 source: CompletionSource::Path,
             })
         })
         .collect()
 }
 
-fn quote_path(path: &str) -> String {
-    if path.chars().any(char::is_whitespace) {
-        format!("\"{path}\"")
-    } else {
-        path.to_owned()
+fn serialize_token(value: &str) -> String {
+    if !value
+        .chars()
+        .any(|character| character.is_whitespace() || matches!(character, '\'' | '"'))
+    {
+        return value.to_owned();
     }
+
+    let mut serialized = String::with_capacity(value.len() + 2);
+    serialized.push('"');
+    for character in value.chars() {
+        if matches!(character, '\\' | '"') {
+            serialized.push('\\');
+        }
+        serialized.push(character);
+    }
+    serialized.push('"');
+    serialized
 }
 
 fn filtered<'a>(
@@ -399,9 +437,20 @@ fn split_before_cursor(input: &str) -> (Vec<String>, String) {
     let mut current = String::new();
     let mut quote = None;
     let mut started = false;
+    let mut characters = input.chars().peekable();
 
-    for character in input.chars() {
+    while let Some(character) = characters.next() {
         match (quote, character) {
+            (Some('"'), '\\') => match characters.peek().copied() {
+                Some('"' | '\\') => {
+                    current.push(characters.next().expect("peeked escape character"));
+                    started = true;
+                }
+                _ => {
+                    current.push('\\');
+                    started = true;
+                }
+            },
             (None, '"' | '\'') => {
                 quote = Some(character);
                 started = true;
@@ -496,7 +545,12 @@ mod tests {
 
     #[test]
     fn column_run_and_algorithm_sources_use_supplied_context() {
-        let columns = vec!["median price".to_owned(), "region".to_owned()];
+        let columns = vec![
+            "age".to_owned(),
+            "income".to_owned(),
+            "median price".to_owned(),
+            "region".to_owned(),
+        ];
         let run_ids = vec!["run_01ABC".to_owned()];
         let algorithm_ids = vec!["alg_0007".to_owned()];
         let data = CompletionData {
@@ -507,16 +561,20 @@ mod tests {
         };
 
         let suggestions = complete("\\target med", 11, &data);
-        assert_eq!(suggestions[0].insert, "median price");
+        assert_eq!(suggestions[0].insert, "\"median price\"");
         for line in [
             "\\target --ignore med",
             "\\target --group med",
             "\\target --time med",
         ] {
             let suggestions = complete(line, line.len(), &data);
-            assert_eq!(suggestions[0].insert, "median price", "{line}");
+            assert_eq!(suggestions[0].insert, "\"median price\"", "{line}");
             assert_eq!(suggestions[0].source, CompletionSource::Column, "{line}");
         }
+        let line = "\\target target --ignore age,inc";
+        let suggestions = complete(line, line.len(), &data);
+        assert_eq!(suggestions[0].insert, "age,income");
+        assert_eq!(suggestions[0].source, CompletionSource::Column);
         let suggestions = complete("\\status run_", 12, &data);
         assert_eq!(suggestions[0].source, CompletionSource::RunId);
         let suggestions = complete("\\attach run_", 12, &data);
@@ -538,8 +596,10 @@ mod tests {
         let folder = temp.path().join("données space");
         std::fs::create_dir_all(&folder).expect("create unicode path");
         let file = folder.join("house price.csv");
+        let dot_file = temp.path().join("data.csv");
         std::fs::write(&file, "").expect("create path candidate");
-        let paths = vec![file];
+        std::fs::write(&dot_file, "").expect("create ./ path candidate");
+        let paths = vec![file, dot_file];
         let data = CompletionData {
             paths: &paths,
             working_directory: Some(temp.path()),
@@ -555,6 +615,18 @@ mod tests {
         assert_eq!(suggestions[0].insert, "@\"données space/house price.csv\"");
 
         for line in [
+            "\\open ./dat",
+            "\\predict --input ./dat",
+            "\\export --out ./dat",
+        ] {
+            let suggestions = complete(line, line.len(), &data);
+            assert!(
+                suggestions.iter().any(|item| item.insert == "./data.csv"),
+                "{line}: {suggestions:?}"
+            );
+        }
+
+        for line in [
             "\\predict --input données",
             "\\predict --output données",
             "\\export --out données",
@@ -565,6 +637,41 @@ mod tests {
                 "{line}"
             );
             assert_eq!(suggestions[0].source, CompletionSource::Path, "{line}");
+        }
+    }
+
+    #[test]
+    fn quoted_path_suggestions_round_trip_quotes_and_backslashes() {
+        let temp = temp_dir();
+        let quoted = temp.path().join("data \"v2\".csv");
+        let backslash = temp.path().join("folder\\name space.csv");
+        std::fs::write(&quoted, "").expect("create quoted path candidate");
+        std::fs::write(&backslash, "").expect("create backslash path candidate");
+        let paths = vec![quoted, backslash];
+        let data = CompletionData {
+            paths: &paths,
+            working_directory: Some(temp.path()),
+            ..CompletionData::default()
+        };
+
+        let initial = complete("\\open ", "\\open ".len(), &data);
+        assert!(initial
+            .iter()
+            .any(|item| item.insert == "\"data \\\"v2\\\".csv\""));
+        assert!(initial
+            .iter()
+            .any(|item| item.insert == "\"folder\\\\name space.csv\""));
+
+        for suggestion in initial {
+            let command = format!("\\open {}", suggestion.insert);
+            let round_trip = complete(&command, command.len(), &data);
+            assert!(
+                round_trip
+                    .iter()
+                    .any(|item| item.insert == suggestion.insert),
+                "{} -> {round_trip:?}",
+                suggestion.insert
+            );
         }
     }
 
