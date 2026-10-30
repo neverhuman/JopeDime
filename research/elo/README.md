@@ -1,5 +1,7 @@
 # HWV-01: H-wave Golden45 CPU preparation
 
+[CPU-PREPARATION.json](CPU-PREPARATION.json) records the native baseline replay: all 304 ratings reproduce with maximum absolute Elo difference 0.0.
+
 No H38 or r782 Golden45 rating is claimed yet. The existing Jope Dime Regressor
 reference is **1687.0 Elo, rank 31, coverage 42/45**; it is a different entrant.
 
