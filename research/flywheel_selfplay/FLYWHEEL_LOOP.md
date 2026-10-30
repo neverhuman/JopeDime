@@ -392,3 +392,30 @@ all1068 checkpoint bodies/modes,and protected best/anchor/journal hashes. Only
 verified old nonbest checkpoints were pruned; all score/round receipts and
 scratch remain. Run size fell10.753GB→2.749GB under the unchanged10GiB ceiling.
 Telemetry-off resumed661;662/663 verified frozen DOPE and journal continuity.
+
+### Restart scale cycle correction (owner1645)
+
+A read-only audit of rounds1341–1360 found20distinct candidate parameter hashes
+and40distinct batch seeds/orders, with20distinct update norms clustered by four
+phases and only4development selection vectors. The full-cohort path already uses
+round/step-hashed seeds and family-shuffled batches; `training_rotation` is not its
+batch selector. The cause of the short scale cycle is the explicit `round % 4` LR
+and sigma tables in warm restart. Restoring Adam step479 from best882 is deliberate
+incumbent rollback, and the full-cohort path overrides generic retry LR/steps.
+
+`seeded-adapter-warm-restart/v2` replaces only that four-phase scale table with a
+deterministic round/seed hash. Independent log-uniform LR and sigma values stay
+within the existing bounds: LR2.5e-5..3e-4, sigma1e-5..3e-4. The policy is fixed
+before its new development outcomes, uses no development metrics, and logs its
+version/bounds/actual scales per round. Noise uses the existing private generator;
+Adam moments/step, two optimizer updates, model lineage, DOPE freeze, corpus and
+admission rule remain unchanged. Replay with the same round/seed/state is exact.
+
+This removes the programmed scale period; it does not guarantee new hard-argmin
+selection vectors or better validation utility. Repeatedly observed DL-Val91 is a
+selection cohort, so its gains would remain adaptive development observations, not
+unbiased generalization evidence. Do not choose bounds or retain proposals by
+post-hoc validation tuning. Existing sealed/outer folds remain outside the worker.
+H52 runs its separately preregistered copies; this change launches no copy/grid
+experiment. Runtime qualification measures proposal scales/update norms and hard
+selections separately, and reports a persistent functional plateau if it remains.
