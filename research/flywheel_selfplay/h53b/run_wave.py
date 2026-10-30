@@ -5,7 +5,8 @@ import fcntl, json, os, subprocess, sys, time
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3]
-RUNS=Path.home()/"jope-data/h53b/runs"
+RUNS=Path(os.environ.get('H53B_RUN_ROOT',str(Path.home()/'jope-data/h53b/runs')))
+WAVE_START_UTC="2026-10-30T18:48:50+00:00"
 STATUS=Path.home()/"jope_plan/ns/H53b_STATUS.md"
 LOCK=Path.home()/"jope_plan/qualification.lock"
 CELLS=[(s,x) for x in (1.0,.1) for s in (12,13,14)]
@@ -60,7 +61,8 @@ def wait_cpu_guard(deadline):
  return None
 
 def run_cell(i,seed,scale,overall_deadline,wall_cap):
- cell_deadline=min(overall_deadline,time.monotonic()+CELL_LIMIT)
+ cell_started=time.monotonic()
+ cell_deadline=min(overall_deadline,cell_started+wall_cap)
  guard=wait_cpu_guard(cell_deadline)
  if guard is None: note(f"STOP before cell {i}: total/cell deadline while waiting for CPU/memory guard"); return None
  h,fallback=lock_gpu(cell_deadline)
@@ -79,7 +81,7 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
  cmd=[sys.executable,str(ROOT/'research/flywheel_selfplay/h53b/runner.py'),'--seed',str(seed),'--scale',str(scale),
       '--max-rounds','300','--wall-seconds',str(wall_cap),'--device',device,'--out',str(out)]
  if h is not None: cmd.append('--lock-held')
- env=os.environ.copy(); env.update({'OMP_NUM_THREADS':'8','MKL_NUM_THREADS':'8','OPENBLAS_NUM_THREADS':'1','CARGO_INCREMENTAL':'0','CARGO_PROFILE_DEV_DEBUG':'line-tables-only'})
+ env=os.environ.copy(); env.update({'OMP_NUM_THREADS':'8','MKL_NUM_THREADS':'8','OPENBLAS_NUM_THREADS':'8','CARGO_INCREMENTAL':'0','CARGO_PROFILE_DEV_DEBUG':'line-tables-only'})
  start=time.monotonic(); note(f"START cell {i}/6 seed={seed} scale={scale:g} device={device} wall_cap={wall_cap}; guard={json.dumps(guard,sort_keys=True)}")
  log=out/'run.log'; code=None; fail=None
  with log.open('w') as f:
@@ -100,7 +102,9 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
 
 def main():
  RUNS.mkdir(parents=True,exist_ok=False)
- started=time.monotonic(); deadline=started+TOTAL_LIMIT
+ from datetime import datetime,timezone
+ started=time.monotonic(); fixed_end=datetime.fromisoformat(WAVE_START_UTC).replace(tzinfo=timezone.utc).timestamp()+TOTAL_LIMIT
+ deadline=started+max(0.0,fixed_end-time.time())
  note('H53b wave start; preregistration commit precedes all cells; six cells, seeds 12/13/14 × scales 1.0/0.1; 300 update units or 20m/cell; pilot <=10m')
  completed=[]
  first=run_cell(1,12,1.0,deadline,PILOT_LIMIT)

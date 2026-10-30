@@ -38,3 +38,8 @@ The wave folder will contain `SUMMARY.md`, `metrics.json` (<50 KB), and per-cell
 ## Amendment before any cell — source and sampler pins
 
 The fully prepared cell runner/coordinator/audit and exact source dependencies are pinned in `code-manifest.sha256` before cell 1. In particular, `run_fused_closed_loop.py` defines the live objective and limits full-cohort updates to at most two optimizer steps; `dev_incumbent.py` defines `batch_seed`; `automatic_promotion.py` defines `training_indices`. H53b fixes k=2, LR=1e-4, B=1219, slate=192, and uses these pinned routines. This is an offline fixed-roster application of the live sampler, not a claim that live data grew at the same rate.
+
+
+## Dated pre-training correction (2026-10-30)
+
+Pilot attempt 01 acquired CUDA but reached its 10-minute wall cap while preparing the model/packet; it completed **zero optimizer updates** and produced no score receipt. Its empty per-cell log and `wave.json` are preserved under `~/jope-data/h53b/runs/`. The child was stopped by its owner after observing the coordinator's pilot timeout bug. Before any training update, the coordinator was amended so the pilot's 10-minute cap includes CPU/memory checks, lock wait, setup, and execution; each later cell's 20-minute cap likewise includes setup and lock wait. The original wave deadline remains fixed at 2026-10-30T21:18:50Z (150 minutes from the first coordinator start); it is not reset by this retry. Phase timing is printed as setup proceeds. The OpenBLAS thread limit is eight (within the OMP<=8 rule); the process remains nice 10 from the coordinator (the child inherits a lower priority). Current source hashes are pinned in `code-manifest.sha256` and this amendment is committed before any retry.

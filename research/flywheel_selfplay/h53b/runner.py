@@ -94,6 +94,8 @@ def main():
     ap.add_argument('--out',type=Path,required=True)
     ap.add_argument('--lock-held',action='store_true')
     a=ap.parse_args()
+    started=time.monotonic()
+    deadline=started+a.wall_seconds
     if a.max_rounds!=300 or not 1<=a.wall_seconds<=1200: raise RuntimeError('cell budget violates preregistration')
     if a.device=='cuda:0' and not a.lock_held: raise RuntimeError('CUDA cell requires qualification.lock')
     if sha256(a.input/'source_manifest.json')!=INPUT_SHA or sha256(a.checkpoint)!=R882_SHA: raise RuntimeError('pinned input identity mismatch')
@@ -103,15 +105,21 @@ def main():
     h49=import_module('h53b_h49_score',H49_SCORE_PATH)
     dev=import_module('h53b_dev_incumbent',DEV_PATH)
     training=import_module('h53b_training_indices',TRAINING_PATH)
+    print('phase: build model and offline train packet',flush=True)
     selected,train_pools,train_ids,family_by_cid,net,trainable,tokens,masks,guard=h48.build_model(a.input,a.checkpoint,device)
+    print(f'phase complete: build model in {time.monotonic()-started:.1f}s',flush=True)
     if len(train_ids)!=1219 or len({family_by_cid[c] for c in train_ids})!=205: raise RuntimeError('pinned train roster mismatch')
+    phase_started=time.monotonic(); print('phase: load pinned DL-Val packet',flush=True)
     selected_val,val_pools,val_tables=h49.load_validation_packet(a.input)
+    print(f'phase complete: load DL-Val in {time.monotonic()-phase_started:.1f}s',flush=True)
     if selected_val!=selected['dev']: raise RuntimeError('DL-Val roster mismatch')
     val_tokens,val_masks=h48.h46.make_tokens(net,val_tables,device)
     val_ids=[row['context_sha256'] for row in selected_val]
     val_families={row['context_sha256']:row['family_id'] for row in selected_val}
     val_predict=h48.make_predictor(net,val_pools,val_tokens,val_masks,device)
+    phase_started=time.monotonic(); print('phase: score harness r882 baseline',flush=True)
     baseline=h48.evaluate_utility(val_ids,val_pools,val_predict)
+    print(f'phase complete: baseline score in {time.monotonic()-phase_started:.1f}s',flush=True)
     baseline_context,baseline_family=baseline['per_context'],baseline['per_family']
     r882_adapter_sha=adapter_sha(net)
     trainable=reset_adapter(net,a.scale,a.seed); init_sha=adapter_sha(net)
@@ -120,8 +128,9 @@ def main():
     train_predict=h48.make_predictor(net,train_pools,tokens,masks,device)
     optimizer=torch.optim.AdamW(trainable,lr=LEARNING_RATE,weight_decay=WEIGHT_DECAY)
     h48.h46.base.guard.assert_optimizer_excludes_dope(optimizer,net)
-    started=time.monotonic(); deadline=started+a.wall_seconds
+    if time.monotonic()>=deadline: raise RuntimeError('wall cap reached during model/packet setup before training')
     net.eval(); initial=h48.evaluate_utility(val_ids,val_pools,val_predict)
+    print(f'phase complete: fresh adapter initialized and initial score recorded at {time.monotonic()-started:.1f}s',flush=True)
     trajectory=[{'round':0,'family_utility':initial['mean'],'context_utility':initial['context_mean'],
                  'per_family_utility':initial['per_family'],'per_context_utility':initial['per_context'],
                  'adapter_sha256':init_sha,'diagnostic_only':True}]
