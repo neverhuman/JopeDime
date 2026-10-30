@@ -127,7 +127,9 @@ pub fn serve(
         output.write_all(&bytes)?;
         output.flush()?;
         if retire {
-            return Ok(());
+            // Distinguish planned retirement from any unexpected exit, including exit(0).
+            // The complete response is already in the pipe; this process holds no store effects.
+            std::process::exit(process::RETIRE_EXIT_CODE);
         }
     }
     Ok(())

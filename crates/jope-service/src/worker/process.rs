@@ -1,5 +1,8 @@
 //! Owned process lifetime and platform containment. No foreign PIDs are killed.
 
+// Private lifetime marker: written only after a complete response has been flushed.
+pub(crate) const RETIRE_EXIT_CODE: i32 = 73;
+
 use std::{
     io,
     process::{Child, Command},

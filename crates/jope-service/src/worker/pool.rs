@@ -211,11 +211,26 @@ impl WorkerPool {
                     return response;
                 }
                 Err(WorkerFailure::ProcessExited) if previously_healthy && !retried_idle_exit => {
-                    // A worker may retire immediately after its last successful reply. A send
-                    // can race that exit. Retry once on a replacement, within the ORIGINAL
-                    // deadline and fence. Evaluators are stateless and have no store effects.
-                    // Timeout/RSS/panic/protocol failures are never retried here.
+                    // A send can race CLEAN retirement after the preceding response. Only
+                    // that verified retirement may retransmit the pending request. A crash must
+                    // fail this attempt so the controller allocates a fresh attempt number.
+                    // Waiting for the exit and retransmission share the ORIGINAL deadline.
+                    let clean = process.retired_after_reply(
+                        started,
+                        Duration::from_millis(request.limits.wall_ms),
+                    );
                     lease.process = None;
+                    if !clean {
+                        let failure = if !self.current(&request.attempt) {
+                            WorkerFailure::StaleAttempt
+                        } else if started.elapsed() >= Duration::from_millis(request.limits.wall_ms)
+                        {
+                            WorkerFailure::Timeout
+                        } else {
+                            WorkerFailure::ProcessExited
+                        };
+                        return Response::failed(request.attempt.clone(), failure, elapsed());
+                    }
                     retried_idle_exit = true;
                 }
                 Err(failure) => {
@@ -327,6 +342,21 @@ struct Process {
 }
 
 impl Process {
+    fn retired_after_reply(&mut self, started: Instant, deadline: Duration) -> bool {
+        let waiting = Instant::now();
+        loop {
+            match self.child.try_wait() {
+                Ok(Some(status)) => return status.code() == Some(process::RETIRE_EXIT_CODE),
+                Err(_) => return false,
+                Ok(None) => {}
+            }
+            if waiting.elapsed() >= SAMPLE_INTERVAL || started.elapsed() >= deadline {
+                return false;
+            }
+            thread::sleep(Duration::from_millis(1));
+        }
+    }
+
     fn spawn(config: &PoolConfig, request: &Request) -> io::Result<Self> {
         let mut command = Command::new(&config.executable);
         #[cfg(test)]

@@ -113,6 +113,16 @@ fn child_helper() {
                     page[0] = 2;
                 }
             }
+            "crash" | "exit_zero" => {
+                let path = request.fold_spec["execution_marker"].as_str().unwrap();
+                let mut marker = fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(path)
+                    .unwrap();
+                marker.write_all(b"x").unwrap();
+                std::process::exit(if request.dsl == "exit_zero" { 0 } else { 70 });
+            }
             "panic" => panic!("candidate fixture panic"),
             "nan" => {
                 return Ok(Scores {
@@ -532,5 +542,31 @@ fn killing_parent_leaves_no_worker_process() {
             "worker survived parent death"
         );
         thread::sleep(Duration::from_millis(10));
+    }
+}
+
+#[test]
+fn crash_is_not_reexecuted_under_the_same_controller_attempt() {
+    let _guard = PROCESS_TESTS.lock().unwrap();
+    let file = matrix();
+    let pool = pool(1);
+    let dir = tempfile::tempdir().unwrap();
+    for mode in ["crash", "exit_zero"] {
+        assert!(pool
+            .evaluate(&request(file.path(), 0, 1, "ok"))
+            .failure
+            .is_none());
+        let marker = dir.path().join(mode);
+        let mut value = request(file.path(), 1, 1, mode);
+        value.fold_spec = serde_json::json!({"execution_marker": marker});
+        assert_eq!(
+            pool.evaluate(&value).failure,
+            Some(WorkerFailure::ProcessExited)
+        );
+        assert_eq!(
+            fs::read(&marker).unwrap(),
+            b"x",
+            "a crashed evaluation must not be retried under its old attempt: {mode}"
+        );
     }
 }
