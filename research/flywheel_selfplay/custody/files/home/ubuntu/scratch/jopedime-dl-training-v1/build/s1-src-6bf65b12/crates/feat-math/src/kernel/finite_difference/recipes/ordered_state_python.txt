@@ -1,0 +1,348 @@
+# Versioned ordered continuation; no labels enter this state.
+import json
+
+def _ordered_blank(value):
+    return all(ord(ch) in (9, 10, 11, 12, 13, 32, 0x85, 0xa0, 0x1680, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000) or 0x2000 <= ord(ch) <= 0x200a for ch in value)
+
+class OrderedError(ValueError):
+    def __init__(self, kind):
+        super().__init__(kind)
+        self.kind = kind
+
+def _ordered_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError, OverflowError):
+        raise OrderedError('domain')
+
+def _word(value):
+    if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value < 1 << 64:
+        raise OrderedError('bounds')
+    return struct.pack('<Q', value)
+
+def _ordered_utf8(value):
+    try:
+        return value.encode('utf-8')
+    except UnicodeError:
+        raise OrderedError('domain')
+
+def _text(value):
+    value = _ordered_utf8(value)
+    return _word(len(value)) + value
+
+def _json(value):
+    return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+
+class _OrderedObject(list):
+    pass
+
+def _ordered_ignored_json(text, at, decoder):
+    states = [0]
+    while states:
+        state = states.pop()
+        while at < len(text) and text[at] in ' \t\r\n':
+            at += 1
+        if at == len(text):
+            raise ValueError()
+        if state == 0:
+            if text[at] in '[{':
+                states.append(1 if text[at] == '[' else 4)
+                at += 1
+            else:
+                _, at = decoder.raw_decode(text, at)
+        elif state in (1, 2):
+            if text[at] == ']':
+                at += 1
+            else:
+                if state == 2:
+                    if text[at] != ',':
+                        raise ValueError()
+                    at += 1
+                states.extend((2, 0))
+        elif state in (4, 5):
+            if text[at] == '}' and state == 4:
+                at += 1
+                continue
+            if state == 5:
+                if text[at] == '}':
+                    at += 1
+                    continue
+                if text[at] != ',':
+                    raise ValueError()
+                at += 1
+            while at < len(text) and text[at] in ' \t\r\n':
+                at += 1
+            key, at = decoder.raw_decode(text, at)
+            if not isinstance(key, str):
+                raise ValueError()
+            while at < len(text) and text[at] in ' \t\r\n':
+                at += 1
+            if at == len(text) or text[at] != ':':
+                raise ValueError()
+            at += 1
+            states.extend((5, 0))
+    return at
+
+def _ordered_metadata_json(text, fields):
+    decoder = json.JSONDecoder(object_pairs_hook=_OrderedObject,
+        parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+    def unsigned_integer(value):
+        if value.startswith('-'):
+            raise ValueError()
+        return int(value)
+    known_decoder = json.JSONDecoder(object_pairs_hook=_OrderedObject,
+        parse_int=unsigned_integer,
+        parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+    at = 0
+    while at < len(text) and text[at] in ' \t\r\n':
+        at += 1
+    if at == len(text):
+        raise ValueError()
+    if text[at] != '{':
+        value, at = known_decoder.raw_decode(text, at)
+    else:
+        at += 1
+        value = _OrderedObject()
+        while True:
+            while at < len(text) and text[at] in ' \t\r\n':
+                at += 1
+            if at < len(text) and text[at] == '}' and not value:
+                at += 1
+                break
+            key, at = decoder.raw_decode(text, at)
+            if not isinstance(key, str):
+                raise ValueError()
+            key.encode('utf-8')
+            while at < len(text) and text[at] in ' \t\r\n':
+                at += 1
+            if at == len(text) or text[at] != ':':
+                raise ValueError()
+            at += 1
+            while at < len(text) and text[at] in ' \t\r\n':
+                at += 1
+            if key in fields:
+                child, at = known_decoder.raw_decode(text, at)
+            else:
+                child, at = None, _ordered_ignored_json(text, at, decoder)
+            value.append((key, child))
+            while at < len(text) and text[at] in ' \t\r\n':
+                at += 1
+            if at == len(text):
+                raise ValueError()
+            if text[at] == '}':
+                at += 1
+                break
+            if text[at] != ',':
+                raise ValueError()
+            at += 1
+    if any(ch not in ' \t\r\n' for ch in text[at:]):
+        raise ValueError()
+    return value
+
+def _ordered_metadata(text, kind):
+    fields = (
+        ('version', 'axis', 'causality', 'fit_scope'),
+        ('version', 'group_key_column', 'timestamp_column', 'tie_policy'),
+        ('cut_id', 'train_end', 'total_rows'),
+    )[kind]
+    try:
+        value = _ordered_metadata_json(text, fields)
+        if isinstance(value, _OrderedObject):
+            selected = [(k, v) for k, v in value if k in fields]
+            if len(selected) != len(fields) or len({k for k, _ in selected}) != len(fields):
+                raise ValueError()
+            result = dict(selected)
+        elif isinstance(value, list) and len(value) == len(fields):
+            result = dict(zip(fields, value))
+        else:
+            raise ValueError()
+        for key in fields:
+            v = result[key]
+            if key in ('axis', 'causality', 'fit_scope', 'tie_policy') and isinstance(v, _OrderedObject) and len(v) == 1 and v[0][1] is None:
+                v = result[key] = v[0][0]
+            if key in ('version', 'train_end', 'total_rows'):
+                limit = 1 << (16 if key == 'version' else 64)
+                if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v < limit:
+                    raise ValueError()
+            else:
+                if not isinstance(v, str):
+                    raise ValueError()
+                v.encode('utf-8')
+        choices = {'axis': ('feature_within_row', 'sample_time', 'iid_row'),
+            'causality': ('causal', 'offline'), 'fit_scope': ('train_fold', 'stateless'),
+            'tie_policy': ('stable_input_order',)}
+        for key, values in choices.items():
+            if key in result and result[key] not in values:
+                raise ValueError()
+        return result
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        raise OrderedError('syntax')
+
+def _group(value):
+    if not isinstance(value, tuple) or len(value) != 2:
+        raise OrderedError('domain')
+    tag, payload = value
+    if tag == 0:
+        x = struct.unpack('<d', _word(payload))[0]
+        if not math.isfinite(x):
+            raise OrderedError('domain')
+        return (0, 0 if x == 0.0 else payload)
+    if tag == 1 and isinstance(payload, str) and not _ordered_blank(payload):
+        _ordered_utf8(payload)
+        return value
+    raise OrderedError('domain')
+
+def _write_group(group):
+    return bytes([group[0]]) + (_word(group[1]) if group[0] == 0 else _text(group[1]))
+
+class _OrderedReader:
+    def __init__(self, data):
+        if len(data) > 16 * 1024 * 1024:
+            raise OrderedError('resource')
+        self.data = data
+        self.at = 0
+    def take(self, n):
+        if n > len(self.data) - self.at:
+            raise OrderedError('syntax')
+        value = self.data[self.at:self.at+n]
+        self.at += n
+        return value
+    def word(self):
+        return struct.unpack('<Q', self.take(8))[0]
+    def count(self):
+        n = self.word()
+        if n > len(self.data) - self.at:
+            raise OrderedError('bounds')
+        return n
+    def text(self):
+        try:
+            return self.take(self.count()).decode('utf-8')
+        except UnicodeDecodeError:
+            raise OrderedError('syntax')
+    def group(self):
+        tag = self.take(1)[0]
+        if tag not in (0, 1):
+            raise OrderedError('unsupported')
+        value = (tag, self.word() if tag == 0 else self.text())
+        if _group(value) != value:
+            raise OrderedError('domain')
+        return value
+    def finish(self):
+        if self.at != len(self.data):
+            raise OrderedError('syntax')
+
+class DifferenceState:
+    def __init__(self, order, step, width, task, input_identity, cut, train_end, total_rows):
+        if task not in ('ordered', 'forecasting'):
+            raise OrderedError('unsupported')
+        step = _ordered_float(step)
+        if not isinstance(order, int) or isinstance(order, bool) or not 1 <= order <= 4 or not math.isfinite(step) or step <= 0:
+            raise OrderedError('domain')
+        if not isinstance(width, int) or isinstance(width, bool) or not 1 <= width <= 512:
+            raise OrderedError('shape')
+        if input_identity.get('version') != 1 or input_identity.get('tie_policy') != 'stable_input_order':
+            raise OrderedError('unsupported')
+        group = input_identity.get('group_key_column')
+        time = input_identity.get('timestamp_column')
+        if not isinstance(group, str) or not isinstance(time, str) or _ordered_blank(group) or _ordered_blank(time) or group == time:
+            raise OrderedError('shape')
+        if not isinstance(cut, str) or _ordered_blank(cut) or not isinstance(train_end, int) or isinstance(train_end, bool) or not isinstance(total_rows, int) or isinstance(total_rows, bool) or not 0 < train_end <= total_rows < 1 << 64:
+            raise OrderedError('bounds')
+        for value in (group, time, cut):
+            _ordered_utf8(value)
+        self.order, self.step, self.width = order, step, width
+        self.input = {'version': 1, 'group_key_column': group, 'timestamp_column': time, 'tie_policy': 'stable_input_order'}
+        self.fold = {'cut_id': cut, 'train_end': train_end, 'total_rows': total_rows}
+        self.ordinal = 0
+        self.groups = {}
+        self.history = {}
+
+    def _metadata_values(self):
+        stage = {'version': 1, 'axis': 'sample_time', 'causality': 'causal', 'fit_scope': 'stateless'}
+        return (stage, self.input, self.fold)
+
+    def _metadata(self):
+        return b''.join(_text(_json(v)) for v in self._metadata_values())
+
+    def push(self, group, timestamp, row):
+        if len(row) != self.width:
+            raise OrderedError('shape')
+        group = _group(group)
+        if self.ordinal >= self.fold['total_rows']:
+            raise OrderedError('bounds')
+        timestamp = _ordered_float(timestamp)
+        if not math.isfinite(timestamp):
+            raise OrderedError('domain')
+        previous = self.groups.get(group)
+        if previous is not None and timestamp < previous[0]:
+            raise OrderedError('domain')
+        window = self.history.get(group, []) + [[_ordered_float(value) for value in row]]
+        result = finite_difference_v2(2, 59, self.order, self.step, window)
+        prior = 0 if previous is None else previous[1]
+        train = 0 if previous is None else previous[2]
+        self.groups[group] = (timestamp, prior + 1, train + int(self.ordinal < self.fold['train_end']))
+        self.history[group] = window[-self.order:]
+        self.ordinal += 1
+        return result
+
+    def to_bytes(self):
+        cursor = b'FMKCUR\x00\x01' + self._metadata() + _word(self.ordinal) + _word(len(self.groups))
+        for group, (time, prior, train) in sorted(self.groups.items()):
+            cursor += _write_group(group) + struct.pack('<d', time) + _word(prior) + _word(train)
+        data = b'FMKDIFF\x02' + bytes([self.order]) + struct.pack('<d', self.step) + _word(self.width) + _word(len(cursor)) + cursor + _word(len(self.history))
+        for group, rows in sorted(self.history.items()):
+            data += _write_group(group) + _word(len(rows))
+            for row in rows:
+                data += b''.join(struct.pack('<d', value) for value in row)
+        if len(data) > 16 * 1024 * 1024:
+            raise OrderedError('resource')
+        return data
+
+    @classmethod
+    def from_bytes(cls, data, task, input_identity, cut, train_end, total_rows):
+        reader = _OrderedReader(data)
+        if reader.take(8) != b'FMKDIFF\x02':
+            raise OrderedError('unsupported')
+        order = reader.take(1)[0]
+        step = struct.unpack('<d', reader.take(8))[0]
+        state = cls(order, step, reader.word(), task, input_identity, cut, train_end, total_rows)
+        cursor = _OrderedReader(reader.take(reader.count()))
+        if cursor.take(8) != b'FMKCUR\x00\x01':
+            raise OrderedError('unsupported')
+        metadata = [cursor.text() for _ in range(3)]
+        if [_ordered_metadata(v, i) for i, v in enumerate(metadata)] != list(state._metadata_values()):
+            raise OrderedError('domain')
+        state.ordinal = cursor.word()
+        if state.ordinal > total_rows:
+            raise OrderedError('bounds')
+        count = cursor.count()
+        if count > state.ordinal:
+            raise OrderedError('bounds')
+        previous = None
+        for _ in range(count):
+            group = cursor.group()
+            time = struct.unpack('<d', cursor.take(8))[0]
+            prior, train = cursor.word(), cursor.word()
+            if (previous is not None and previous >= group) or not math.isfinite(time) or not 0 < prior <= state.ordinal or train > prior:
+                raise OrderedError('domain')
+            state.groups[group] = (time, prior, train)
+            previous = group
+        cursor.finish()
+        if sum(v[1] for v in state.groups.values()) != state.ordinal or sum(v[2] for v in state.groups.values()) != min(state.ordinal, train_end):
+            raise OrderedError('domain')
+        if metadata != [_json(v) for v in state._metadata_values()]:
+            raise OrderedError('syntax')
+        if reader.count() != count:
+            raise OrderedError('domain')
+        for group, progress in sorted(state.groups.items()):
+            if reader.group() != group or reader.count() != min(order, progress[1]):
+                raise OrderedError('domain')
+            state.history[group] = [[struct.unpack('<d', reader.take(8))[0] for _ in range(state.width)] for _ in range(min(order, progress[1]))]
+        reader.finish()
+        if state.to_bytes() != data:
+            raise OrderedError('syntax')
+        return state
+
+    def finish(self):
+        if self.ordinal != self.fold['total_rows']:
+            raise OrderedError('bounds')

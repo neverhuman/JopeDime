@@ -1,7 +1,15 @@
+#[cfg(feature = "client")]
+pub mod code;
+#[cfg(feature = "client")]
+pub mod control;
 #[cfg(feature = "mcp")]
 pub mod events;
+#[cfg(feature = "client")]
+pub mod restart;
 #[cfg(feature = "mcp")]
 pub mod run;
+#[cfg(feature = "client")]
+pub mod runs;
 #[cfg(feature = "mcp")]
 pub(crate) use crate::common;
 #[cfg(feature = "mcp")]

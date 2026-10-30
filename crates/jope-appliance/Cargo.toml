@@ -40,11 +40,11 @@ portable-pty = "0.9"
 tempfile.workspace = true
 
 [features]
-default = ["engine", "mcp"]
-mcp = ["dep:jope-client", "dep:rmcp", "dep:tokio"]
+default = ["engine", "mcp", "client"]
+mcp = ["client", "dep:rmcp", "dep:tokio"]
 engine = ["dep:jope-service"]
-# Build the client surface without the default engine feature.
-client = []
+# Build service client commands without requiring the embedded engine.
+client = ["dep:jope-client"]
 dope-encoding = ["dep:starforge"]
 dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
 # The executable refuses to run without its sealed package: every release build sets it, so a

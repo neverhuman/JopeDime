@@ -932,7 +932,9 @@ fn report(result: anyhow::Result<()>) -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("jopedime: {error:#}");
-            ExitCode::from(kind_of(&error).exit_code())
+            ExitCode::from(
+                common::report_exit_code(&error).unwrap_or_else(|| kind_of(&error).exit_code()),
+            )
         }
     }
 }
@@ -1046,6 +1048,31 @@ fn main() -> ExitCode {
             let client = cmd::client()?;
             cmd::events::run(args, &client)
         })()),
+        #[cfg(feature = "client")]
+        Command::Control {
+            run,
+            action,
+            body,
+            idempotency_key,
+        } => report(cmd::control::run(run, action, body, idempotency_key)),
+        #[cfg(feature = "client")]
+        Command::Restart {
+            run,
+            new_seed,
+            warm,
+            body,
+            idempotency_key,
+        } => report(cmd::restart::run(
+            run,
+            new_seed,
+            warm,
+            body,
+            idempotency_key,
+        )),
+        #[cfg(feature = "client")]
+        Command::Runs { command } => report(cmd::runs::run(command)),
+        #[cfg(feature = "client")]
+        Command::Code { run, alg, lang } => report(cmd::code::run(run, alg, lang)),
         #[cfg(feature = "mcp")]
         Command::Export {
             run,

@@ -78,6 +78,49 @@ pub enum Command {
     /// Read or follow run events as NDJSON.
     #[cfg(feature = "mcp")]
     Events(crate::cmd::events::EventsArgs),
+    /// Control a run through the local JopeDime service.
+    #[cfg(feature = "client")]
+    Control {
+        run: String,
+        #[command(subcommand)]
+        action: ControlAction,
+        /// Raw JSON request body file, or `-` for stdin.
+        #[arg(long)]
+        body: Option<String>,
+        /// Reuse this key when retrying the same mutation.
+        #[arg(long)]
+        idempotency_key: Option<String>,
+    },
+    /// Fork a run with the requested restart options.
+    #[cfg(feature = "client")]
+    Restart {
+        run: String,
+        #[arg(long)]
+        new_seed: bool,
+        #[arg(long)]
+        warm: bool,
+        /// Raw JSON request body file, or `-` for stdin.
+        #[arg(long)]
+        body: Option<String>,
+        /// Reuse this key when retrying the same mutation.
+        #[arg(long)]
+        idempotency_key: Option<String>,
+    },
+    /// List, delete or export feedback from service runs.
+    #[cfg(feature = "client")]
+    Runs {
+        #[command(subcommand)]
+        command: RunsCommand,
+    },
+    /// Read source for an algorithm from a run.
+    #[cfg(feature = "client")]
+    Code {
+        run: String,
+        #[arg(long)]
+        alg: Option<String>,
+        #[arg(long)]
+        lang: Option<String>,
+    },
     /// Product version, source commit, runtime ABI, target and package identity.
     Version(JsonFlag),
     /// Package integrity, devices, promised methods and limits.
@@ -151,6 +194,34 @@ pub enum Command {
     VerifySelf(JsonFlag),
     /// Print the embedded licence and notice inventory.
     Licenses(JsonFlag),
+}
+
+#[cfg(feature = "client")]
+#[derive(Subcommand)]
+pub enum ControlAction {
+    Pause,
+    Continue,
+    Cancel,
+    Effort {
+        #[arg(value_parser = ["fast", "medium", "high", "ultra"])]
+        level: String,
+    },
+}
+
+#[cfg(feature = "client")]
+#[derive(Subcommand)]
+pub enum RunsCommand {
+    List,
+    Delete {
+        run: String,
+        #[arg(long)]
+        idempotency_key: Option<String>,
+    },
+    ExportFeedback {
+        run: String,
+        #[arg(long)]
+        out: PathBuf,
+    },
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -293,6 +364,10 @@ pub enum FitnessCommand {
     Schema,
 }
 
+#[cfg(all(test, feature = "engine"))]
+#[path = "serve.rs"]
+mod serve_lifecycle_tests;
+
 #[cfg(test)]
 mod serve_tests {
     use super::{Cli, Command};
@@ -374,5 +449,45 @@ mod batch_cli_tests {
             .command,
             Command::Export { .. }
         ));
+    }
+}
+
+#[cfg(all(test, feature = "client"))]
+mod batch_run_tests {
+    use super::{Cli, Command};
+    use clap::Parser;
+
+    #[test]
+    fn bat03_commands_parse_all_card_subcommands() {
+        let run = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV";
+        for args in [
+            vec!["jopedime", "control", run, "pause"],
+            vec!["jopedime", "control", run, "continue"],
+            vec!["jopedime", "control", run, "cancel"],
+            vec!["jopedime", "control", run, "effort", "high"],
+            vec!["jopedime", "restart", run, "--new-seed", "--warm"],
+            vec!["jopedime", "runs", "list"],
+            vec!["jopedime", "runs", "delete", run],
+            vec![
+                "jopedime",
+                "runs",
+                "export-feedback",
+                run,
+                "--out",
+                "feedback.jsonl",
+            ],
+            vec![
+                "jopedime", "code", run, "--alg", "alg_0001", "--lang", "python",
+            ],
+        ] {
+            let cli = Cli::try_parse_from(args).unwrap();
+            assert!(matches!(
+                cli.command,
+                Command::Control { .. }
+                    | Command::Restart { .. }
+                    | Command::Runs { .. }
+                    | Command::Code { .. }
+            ));
+        }
     }
 }
