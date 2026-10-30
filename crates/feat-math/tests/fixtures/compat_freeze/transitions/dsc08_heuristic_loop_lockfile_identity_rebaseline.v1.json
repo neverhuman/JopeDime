@@ -8,12 +8,12 @@
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "303c3abf590493eb88ed9fa240830a6ee6d2485952a664454cdfeeba0fb16846",
-      "after": "709f59626276a55266c934ca0293bf060388c33faee7d10181cc8679b773f983"
+      "after": "25a03e076b1f19ded532a011f23b14946102f537fe2f9ea1351a67979a4bca34"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "1a60d37244a9fa30ab4f1730535608e7d6590370c42af8815873e381a8392ec7",
-      "after": "820610ee0eaaffac259a6f148aba783938e9bca4f29e212ca8e56aa29aa22768"
+      "after": "3552426eece0da80af3610ebef34a6c595ac6472a3e7c214f53ca4581b3475e1"
     }
   ],
   "before_identity_digest": "a5ec46b83045f5186016325ae166a250201f0d5bbf9f9e032875296ea935f892",
