@@ -72,13 +72,16 @@ impl PartialFeatures {
         &self.values
     }
 
-    pub fn require_complete(self) -> Result<[f64; FEATURE_COUNT]> {
+    /// The reference wrapper rounds to FP32 before lifting into FP64 proj16.
+    pub fn require_complete(self) -> Result<[f32; FEATURE_COUNT]> {
         let missing = self.values.iter().filter(|v| v.is_none()).count();
         ensure!(
             missing == 0,
             "incomplete feat412: {missing} coordinates missing"
         );
-        let values = self.values.map(|v| v.expect("all coordinates present"));
+        let values = self
+            .values
+            .map(|v| v.expect("all coordinates present") as f32);
         ensure!(
             values.iter().all(|v| v.is_finite()),
             "nonfinite feat412 value"
@@ -222,6 +225,21 @@ mod tests {
             [1.0; FEATURE_COUNT]
         );
         values.insert("steps".into(), f64::INFINITY);
+        assert!(f.project(&values).require_complete().is_err());
+    }
+
+    #[test]
+    fn complete_input_rounds_to_fp32_before_projection_and_refuses_cast_overflow() {
+        let f = Featurizer::default();
+        let name = "parameter.ridge.lambda_frac.sum";
+        let index = FEATURE_NAMES.iter().position(|&n| n == name).unwrap();
+        let mut values: BTreeMap<_, _> = FEATURE_NAMES.iter().map(|&n| (n.into(), 0.0)).collect();
+        let unrounded = 1.0 + 2.0_f64.powi(-25);
+        assert_ne!(unrounded, 1.0);
+        values.insert(name.into(), unrounded);
+        let complete = f.project(&values).require_complete().unwrap();
+        assert_eq!(f64::from(complete[index]), 1.0);
+        values.insert(name.into(), f64::MAX);
         assert!(f.project(&values).require_complete().is_err());
     }
 }
