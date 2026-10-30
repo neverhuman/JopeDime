@@ -1,0 +1,536 @@
+#!/usr/bin/env python3
+"""Build and verify the metadata-only QLT-02 regression cohort."""
+
+from __future__ import annotations
+
+import argparse
+import concurrent.futures
+import hashlib
+import json
+import re
+import subprocess
+import sys
+import unittest
+from collections import Counter, defaultdict
+from pathlib import Path, PurePosixPath
+from typing import Any, Callable
+
+
+ROOT = Path(__file__).resolve().parents[3]
+FID_DOMAIN = b"jope.dl-family-id/v1\0"
+DATASET_BUCKET = "veox-jopedime-datasets-use2"
+DENY_ASSIGNMENTS = {"sealed_excluded", "heldout", "dev"}
+SEALED_EXCLUSION = (
+    "conservative deny-list union (holdout.json sealed_excluded + catalog sealed-name matches + "
+    "sealed bucket + all BeyondArena-derived)"
+)
+AUTHORITATIVE_SEALED_ROSTER = "not supplied; QLT-02-F02 filed"
+HEX64 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def sha256_bytes(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load_json(path: Path) -> Any:
+    with path.open("r", encoding="utf-8") as stream:
+        return json.load(stream)
+
+
+def _strings(value: Any):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for key, child in value.items():
+            yield from _strings(key)
+            yield from _strings(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _strings(child)
+
+
+def _has_beyondarena(record: dict[str, Any]) -> bool:
+    fields = (record.get("name"), record.get("source_url"), record.get("source_file"), record.get("relpath"))
+    return any("beyondarena" in value.casefold() for field in fields for value in _strings(field))
+
+
+def _has_sealed_bucket_or_key(record: dict[str, Any]) -> bool:
+    bucket = str(record.get("s3_bucket") or "").casefold()
+    if "sealed" in bucket:
+        return True
+    for value in _strings(record.get("s3_objects", {})):
+        normalized = value.replace("\\", "/").casefold()
+        if "research/beyondarena/" in normalized and "/sealed/" in normalized:
+            return True
+        if "/sealed/" in normalized and ("s3://" in normalized or normalized.startswith("sealed/")):
+            return True
+    return False
+
+
+def _srcfile_group(record: dict[str, Any]) -> str | None:
+    derived = record.get("family_key_derived")
+    if isinstance(derived, str) and derived.startswith("srcfile:"):
+        return derived
+    source_file = record.get("source_file")
+    if isinstance(source_file, str) and source_file:
+        stem = PurePosixPath(source_file.replace("\\", "/")).stem.casefold()
+        return f"srcfile:{stem}" if stem else None
+    return None
+
+
+def family_id(group: list[dict[str, Any]]) -> str:
+    """Mint the P2/P3 family ID from the minimum canonical item identity."""
+    identities = []
+    for record in group:
+        canonical = record.get("canonical_sha256")
+        if not isinstance(canonical, str) or not HEX64.fullmatch(canonical):
+            raise ValueError("catalog record has an invalid canonical_sha256")
+        identities.append(f"item:{canonical}")
+    anchor = min(identities)
+    return "fam-" + hashlib.sha256(FID_DOMAIN + anchor.encode("utf-8")).hexdigest()
+
+
+def derive_candidates(
+    catalog: dict[str, Any],
+    res01_manifest: dict[str, Any],
+    holdout: dict[str, Any],
+    *,
+    minimum_families: int = 40,
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    training = set(res01_manifest["training_corpus"]["train_family_ids"])
+    family_assignment = holdout["assignment"]
+    member_assignment = holdout["member_assignment"]
+    denied_families = {family for family, role in family_assignment.items() if role in DENY_ASSIGNMENTS}
+    denied_members = {member for member, role in member_assignment.items() if role in DENY_ASSIGNMENTS}
+    catalog_excluded_ids = set(catalog["inventory"]["sealed_name_matches_excluded"])
+
+    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    srcfile_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    skipped_unkeyed = 0
+    skipped_derived = 0
+    for record in catalog["datasets"]:
+        if record.get("task") != "regression":
+            continue
+        srcfile_key = _srcfile_group(record)
+        if srcfile_key:
+            srcfile_groups[srcfile_key].append(record)
+        key = record.get("family_key")
+        if not key:
+            skipped_unkeyed += 1
+            if record.get("family_key_derived"):
+                skipped_derived += 1
+            continue
+        source = str(record.get("family_key_source") or "").casefold()
+        if record.get("family_key_derived") or "derived" in source or "unreviewed" in source:
+            skipped_derived += 1
+            continue
+        groups[str(key)].append(record)
+
+    counts: Counter[str] = Counter()
+    counts["regression_family_key_groups"] = len(groups)
+    counts["regression_unkeyed_records_skipped"] = skipped_unkeyed
+    counts["derived_family_records_skipped"] = skipped_derived
+    counts["training_families_in_res01"] = len(training)
+    counts["deny_families_in_holdout_metadata"] = len(denied_families)
+    counts["deny_members_in_holdout_metadata"] = len(denied_members)
+    counts["sealed_name_catalog_ids"] = len(catalog_excluded_ids)
+    counts["catalog_sealed_ids_present_in_records"] = sum(
+        record.get("id") in catalog_excluded_ids for group in groups.values() for record in group
+    )
+
+    for reason in (
+        "training_family",
+        "holdout_family",
+        "holdout_member",
+        "sealed_catalog_id",
+        "sealed_bucket_or_key",
+        "beyondarena",
+        "srcfile_group",
+    ):
+        counts[f"excluded_{reason}_groups"] = 0
+
+    denied_srcfile_groups = set()
+    for src_key, group in srcfile_groups.items():
+        fid = family_id(group)
+        member_ids = {
+            identity
+            for record in group
+            for identity in (f"item:{record['canonical_sha256']}", f"item:{record['id']}")
+        }
+        if (
+            fid in training
+            or fid in denied_families
+            or bool(member_ids & denied_members)
+            or any(record.get("id") in catalog_excluded_ids for record in group)
+            or any(_has_sealed_bucket_or_key(record) or _has_beyondarena(record) for record in group)
+        ):
+            denied_srcfile_groups.add(src_key)
+    counts["srcfile_groups_denied"] = len(denied_srcfile_groups)
+
+    candidates: list[dict[str, Any]] = []
+    for key, group in sorted(groups.items()):
+        fid = family_id(group)
+        member_ids = {
+            identity
+            for record in group
+            for identity in (f"item:{record['canonical_sha256']}", f"item:{record['id']}")
+        }
+        reasons = set()
+        if fid in training:
+            reasons.add("training_family")
+        if fid in denied_families:
+            reasons.add("holdout_family")
+        if member_ids & denied_members:
+            reasons.add("holdout_member")
+        if any(record.get("id") in catalog_excluded_ids for record in group):
+            reasons.add("sealed_catalog_id")
+        if any(_has_sealed_bucket_or_key(record) for record in group):
+            reasons.add("sealed_bucket_or_key")
+        if any(_has_beyondarena(record) for record in group):
+            reasons.add("beyondarena")
+        if any(_srcfile_group(record) in denied_srcfile_groups for record in group):
+            reasons.add("srcfile_group")
+        for reason in reasons:
+            counts[f"excluded_{reason}_groups"] += 1
+        if reasons:
+            counts["excluded_groups_union"] += 1
+            continue
+
+        record = min(group, key=lambda item: (item["canonical_sha256"], item["id"]))
+        s3_object = record.get("s3_objects", {}).get("manifest.json")
+        if not isinstance(s3_object, dict) or not all(s3_object.get(k) is not None for k in ("key", "bytes", "etag")):
+            raise ValueError(f"dataset {record['id']} lacks its catalogued S3 manifest object")
+        bucket = record.get("s3_bucket")
+        if bucket != DATASET_BUCKET:
+            raise ValueError(f"dataset {record['id']} is outside the approved canonical dataset bucket")
+        candidates.append(
+            {
+                "dataset_id": record["id"],
+                "family_id": fid,
+                "family_key": key,
+                "rows": record["rows"],
+                "columns": record["cols"],
+                "features": record["features"],
+                "sha256": record["canonical_sha256"],
+                "license_status": record.get("license_status", "unknown"),
+                "s3_bucket": bucket,
+                "s3_manifest_key": s3_object["key"],
+                "s3_manifest_bytes": s3_object["bytes"],
+                "s3_manifest_etag": str(s3_object["etag"]).strip('"'),
+            }
+        )
+
+    candidates.sort(key=lambda item: item["family_id"])
+    counts["eligible_families"] = len(candidates)
+    counts["eligible_datasets"] = len(candidates)
+    if len(candidates) < minimum_families:
+        raise ValueError(f"only {len(candidates)} eligible keyed regression families; minimum is {minimum_families}")
+    if len({item["family_id"] for item in candidates}) != len(candidates):
+        raise ValueError("cohort must have exactly one dataset per family")
+    return candidates, dict(sorted(counts.items()))
+
+
+def read_s3_manifest(candidate: dict[str, Any]) -> tuple[dict[str, Any], bytes]:
+    bucket = candidate["s3_bucket"]
+    key = candidate["s3_manifest_key"]
+    if (
+        bucket != DATASET_BUCKET
+        or "sealed" in bucket.casefold()
+        or not key.startswith("datasets/")
+        or ".." in Path(key).parts
+        or "sealed" in key.casefold()
+    ):
+        raise ValueError("refusing S3 access outside the canonical datasets bucket")
+    uri = f"s3://{bucket}/{key}"
+    result = subprocess.run(
+        ["aws", "s3", "cp", uri, "-", "--no-progress"],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode:
+        raise RuntimeError(f"S3 manifest GET failed for dataset {candidate['dataset_id']} (exit {result.returncode})")
+    raw = result.stdout
+    if len(raw) != int(candidate["s3_manifest_bytes"]):
+        raise ValueError(f"S3 manifest byte count mismatch for dataset {candidate['dataset_id']}")
+    etag = candidate["s3_manifest_etag"].lower()
+    if re.fullmatch(r"[0-9a-f]{32}", etag) and hashlib.md5(raw).hexdigest() != etag:
+        raise ValueError(f"S3 manifest ETag mismatch for dataset {candidate['dataset_id']}")
+    try:
+        manifest = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"invalid S3 dataset manifest for dataset {candidate['dataset_id']}") from error
+    return manifest, raw
+
+
+def _verified_dataset(candidate: dict[str, Any], fetcher: Callable = read_s3_manifest) -> dict[str, Any]:
+    manifest, raw = fetcher(candidate)
+    shape = manifest.get("shape", {})
+    provenance = manifest.get("provenance", {})
+    license_info = provenance.get("license") or {"status": "unknown"}
+    if isinstance(license_info, str):
+        license_info = {"status": license_info}
+    checks = {
+        "id": manifest.get("id") == candidate["dataset_id"],
+        "canonical_sha256": manifest.get("canonical_sha256") == candidate["sha256"],
+        "dataset_hash": manifest.get("dataset_hash") == candidate["dataset_id"],
+        "origin": manifest.get("origin") == "real",
+        "task": manifest.get("task") == "regression",
+        "family_key": provenance.get("dedupe_fingerprint") == candidate["family_key"],
+        "rows": shape.get("rows") == candidate["rows"],
+        "columns": shape.get("columns") == candidate["columns"],
+        "features": shape.get("features") == candidate["features"],
+        "license_status": license_info.get("status", "unknown") == candidate["license_status"],
+    }
+    failed = [key for key, ok in checks.items() if not ok]
+    if failed:
+        raise ValueError(f"S3 manifest metadata mismatch for dataset {candidate['dataset_id']}: {','.join(failed)}")
+    return {
+        **{key: value for key, value in candidate.items() if key not in {"license_status", "s3_bucket", "s3_manifest_bytes", "s3_manifest_etag"}},
+        "license": license_info,
+        "s3_manifest_sha256": sha256_bytes(raw),
+        "s3_manifest_etag": candidate["s3_manifest_etag"],
+    }
+
+
+def build_document(
+    catalog: dict[str, Any],
+    res01_manifest: dict[str, Any],
+    holdout: dict[str, Any],
+    *,
+    catalog_sha256: str,
+    res01_sha256: str,
+    holdout_sha256: str,
+    workers: int = 8,
+    fetcher: Callable = read_s3_manifest,
+) -> dict[str, Any]:
+    candidates, counts = derive_candidates(catalog, res01_manifest, holdout)
+    if workers < 1 or workers > 8:
+        raise ValueError("workers must be between 1 and 8")
+    datasets = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(_verified_dataset, candidate, fetcher) for candidate in candidates]
+        for finished, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+            datasets.append(future.result())
+            if finished % 250 == 0 or finished == len(futures):
+                print(f"verified S3 manifests: {finished}/{len(futures)}", file=sys.stderr, flush=True)
+    datasets.sort(key=lambda item: item["family_id"])
+    return {
+        "schema": "jope.q1.held-out-cohort/v1",
+        "source": {
+            "catalog": "S3 catalog v246",
+            "catalog_sha256": catalog_sha256,
+            "res01_manifest_sha256": res01_sha256,
+            "holdout_metadata_sha256": holdout_sha256,
+            "s3_verification": "streamed each catalogued dataset manifest; checked object byte count, ETag, canonical_sha256, family key, shape, task and license status",
+        },
+        "sealed_exclusion": SEALED_EXCLUSION,
+        "authoritative_sealed_roster": AUTHORITATIVE_SEALED_ROSTER,
+        "exclusions": counts,
+        "family_count": len(datasets),
+        "dataset_count": len(datasets),
+        "datasets": datasets,
+    }
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _test_record(dataset_id: str, canonical: str, key: str | None, **extra: Any) -> dict[str, Any]:
+    record = {
+        "id": dataset_id,
+        "task": "regression",
+        "family_key": key,
+        "family_key_derived": None,
+        "family_key_source": "recorded",
+        "canonical_sha256": canonical,
+        "rows": 100,
+        "cols": 4,
+        "features": 3,
+        "license_status": "unknown",
+        "s3_bucket": DATASET_BUCKET,
+        "s3_objects": {
+            "manifest.json": {
+                "key": f"datasets/{dataset_id}/manifest.json",
+                "bytes": 12,
+                "etag": "0123456789abcdef0123456789abcdef",
+            }
+        },
+    }
+    record.update(extra)
+    return record
+
+
+def _test_minted(canonical: str) -> str:
+    anchor = f"item:{canonical}"
+    return "fam-" + hashlib.sha256(FID_DOMAIN + anchor.encode("utf-8")).hexdigest()
+
+
+class CohortSelectionTests(unittest.TestCase):
+    def setUp(self):
+        self.a = _test_record("0000000000000001", "1" * 64, "family-a")
+        self.b1 = _test_record("0000000000000002", "2" * 64, "family-b")
+        self.b2 = _test_record("0000000000000003", "3" * 64, "family-b")
+        self.training = _test_record("0000000000000004", "4" * 64, "family-training")
+        self.sealed = _test_record("0000000000000005", "5" * 64, "family-sealed")
+        self.member = _test_record("0000000000000006", "6" * 64, "family-member")
+        self.dev = _test_record("0000000000000007", "7" * 64, "family-dev")
+        self.beyond = _test_record(
+            "0000000000000008", "8" * 64, "family-beyond", source_url="https://example.invalid/BeyondArena/data.csv"
+        )
+        self.unkeyed = _test_record("0000000000000009", "9" * 64, None, family_key_derived="srcfile:derived")
+        self.catalog = {
+            "inventory": {"sealed_name_matches_excluded": [self.sealed["id"]]},
+            "datasets": [
+                self.a,
+                self.b1,
+                self.b2,
+                self.training,
+                self.sealed,
+                self.member,
+                self.dev,
+                self.beyond,
+                self.unkeyed,
+            ],
+        }
+        self.res01 = {
+            "training_corpus": {"train_family_ids": [_test_minted(self.training["canonical_sha256"])]}
+        }
+        self.holdout = {
+            "assignment": {
+                _test_minted(self.sealed["canonical_sha256"]): "sealed_excluded",
+                _test_minted(self.dev["canonical_sha256"]): "dev",
+                _test_minted(self.training["canonical_sha256"]): "train_fit",
+            },
+            "member_assignment": {
+                f"item:{self.member['canonical_sha256']}": "heldout",
+                f"item:{self.a['canonical_sha256']}": "train_fit",
+            },
+        }
+
+    def test_family_id_uses_authoritative_anchor_formula(self):
+        self.assertEqual(family_id([self.a]), _test_minted(self.a["canonical_sha256"]))
+
+    def test_deny_union_skips_training_holdout_dev_sealed_and_beyondarena(self):
+        rows, counts = derive_candidates(self.catalog, self.res01, self.holdout, minimum_families=1)
+        self.assertEqual({row["family_key"] for row in rows}, {"family-a", "family-b"})
+        self.assertEqual(counts["excluded_training_family_groups"], 1)
+        self.assertEqual(counts["excluded_sealed_catalog_id_groups"], 1)
+        self.assertEqual(counts["excluded_holdout_member_groups"], 1)
+        self.assertEqual(counts["excluded_holdout_family_groups"], 2)
+        self.assertEqual(counts["excluded_beyondarena_groups"], 1)
+        self.assertEqual(counts["regression_unkeyed_records_skipped"], 1)
+
+    def test_family_group_uses_smallest_dataset_sha(self):
+        rows, _ = derive_candidates(self.catalog, self.res01, self.holdout, minimum_families=1)
+        family_b = next(row for row in rows if row["family_key"] == "family-b")
+        self.assertEqual(family_b["dataset_id"], self.b1["id"])
+
+    def test_sealed_bucket_is_excluded(self):
+        catalog = {
+            "inventory": {"sealed_name_matches_excluded": []},
+            "datasets": [
+                _test_record(
+                    "0000000000000010",
+                    "a" * 64,
+                    "sealed-bucket",
+                    s3_bucket="jopedime-714044927654-us-east-2-sealed",
+                )
+            ],
+        }
+        rows, counts = derive_candidates(
+            catalog,
+            {"training_corpus": {"train_family_ids": []}},
+            {"assignment": {}, "member_assignment": {}},
+            minimum_families=0,
+        )
+        self.assertEqual(rows, [])
+        self.assertEqual(counts["excluded_sealed_bucket_or_key_groups"], 1)
+
+    def test_denied_srcfile_group_excludes_keyed_family_alias(self):
+        keyed = _test_record("0000000000000011", "b" * 64, "family-keyed", source_file="shared.csv")
+        unkeyed = _test_record(
+            "0000000000000012",
+            "c" * 64,
+            None,
+            family_key_derived="srcfile:shared",
+            source_file="shared.csv",
+        )
+        catalog = {"inventory": {"sealed_name_matches_excluded": []}, "datasets": [keyed, unkeyed]}
+        holdout = {
+            "assignment": {},
+            "member_assignment": {f"item:{unkeyed['canonical_sha256']}": "dev"},
+        }
+        rows, counts = derive_candidates(
+            catalog,
+            {"training_corpus": {"train_family_ids": []}},
+            holdout,
+            minimum_families=0,
+        )
+        self.assertEqual(rows, [])
+        self.assertEqual(counts["srcfile_groups_denied"], 1)
+        self.assertEqual(counts["excluded_srcfile_group_groups"], 1)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--catalog", type=Path, default=Path.home() / "jope_plan/master/source/S3_DATASET_CATALOG.json")
+    parser.add_argument("--res01", type=Path, default=ROOT / "research/flywheel_selfplay/custody/MANIFEST.json")
+    parser.add_argument("--holdout", type=Path, default=Path("/home/ubuntu/scratch/jopedime-dl-training-v1/holdout/holdout.json"))
+    parser.add_argument("--cohort", type=Path, default=Path(__file__).with_name("cohort.json"))
+    parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--write", action="store_true", help="write the verified cohort to --cohort")
+    parser.add_argument("--self-test", action="store_true", help="run offline deny-list and family-ID unit tests")
+    args = parser.parse_args(argv)
+    if args.self_test:
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(CohortSelectionTests)
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
+        return 0 if result.wasSuccessful() else 1
+    try:
+        catalog = load_json(args.catalog)
+        res01_manifest = load_json(args.res01)
+        holdout = load_json(args.holdout)
+        document = build_document(
+            catalog,
+            res01_manifest,
+            holdout,
+            catalog_sha256=_sha256_file(args.catalog),
+            res01_sha256=_sha256_file(args.res01),
+            holdout_sha256=_sha256_file(args.holdout),
+            workers=args.workers,
+        )
+        rendered = json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+        if args.write:
+            args.cohort.parent.mkdir(parents=True, exist_ok=True)
+            args.cohort.write_text(rendered, encoding="utf-8")
+        else:
+            actual = load_json(args.cohort)
+            if actual != document:
+                raise ValueError("cohort.json differs from the verified source-derived cohort")
+        print(
+            json.dumps(
+                {
+                    "verdict": "PASS",
+                    "families": document["family_count"],
+                    "datasets": document["dataset_count"],
+                    "training_overlap": 0,
+                    "sealed_holdout_dev_overlap": 0,
+                    "s3_manifests_verified": document["dataset_count"],
+                    "catalog_sha256": document["source"]["catalog_sha256"],
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
+    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError) as error:
+        print(f"QLT-02 verification failed: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
