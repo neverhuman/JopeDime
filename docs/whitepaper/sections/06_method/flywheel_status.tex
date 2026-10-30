@@ -1,39 +1,58 @@
-% Auto-included at the end of Section 6. Every number below is read from
-% figures/data/*.csv (derived by figures/scripts/extract_flywheel.py).
+% Snapshot description derived from figures/data/admissions.csv and rounds.csv.
+% These tables report development observations, not sealed evaluation results.
 \subsection{Where training stands}\label{sec:method-status}
-We report the live training loop as it is, not as we hope it will be.
-\Cref{fig:fw-validation} shows every candidate the adapter proposed over
-695 consecutive rounds (rounds 775--1469). Only 4 were admitted; the best
-validation utility, 1.1378, has not been exceeded since. \Cref{fig:fw-trainval}
-shows the reason we treat this as a plateau rather than a pause: on every
-logged round, training utility sits 0.282--0.290 above validation utility, a
-generalization gap that further adapter steps have not closed. The frozen
-encoder's checksum matched on every round; only the adapter trains.
-\Cref{fig:fw-telemetry} gives the loop's operating envelope.
+
+What does the retained training record establish? These CSVs describe a
+later adapter-training snapshot, separate from the historical reference
+checkpoint above. Here an adapter is the trainable adjustment evaluated by
+the admission loop; the utilities alone do not identify its relationship to
+the historical writer and map. Utility denotes the logged scalar score,
+with larger values treated as better in the admission record.
+\TBD{Document the adapter's architecture, score normalization and evaluation
+population before comparing this snapshot with other models.}
+
+The admission log contains
+695 consecutive rounds. Four rows are marked accepted, but only two strictly
+increase the recorded best validation utility within this window. Its final
+value is 1.1378, with no later increase in the retained interval
+(\cref{fig:fw-validation}). Acceptance flags and improvements in that value
+are therefore distinct counts.
+
+The more detailed summaries cover only 25 of those rounds. In that subset,
+training utility exceeds validation utility by 0.282--0.290
+(\cref{fig:fw-trainval}). This is a difference between reported aggregates
+on separate training and validation contexts; it does not isolate a cause
+or establish behavior in the missing summaries. The late validation plateau
+is evidence to explain, rather than proof of useful transfer. Encoder
+integrity and parameter updates require their own receipts; the plotted
+utility tables do not establish either.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_validation.pdf}
-  \caption{\textbf{Validation utility has plateaued.} Grey: each round's
-  candidate adapter on the validation families. Blue: best admitted model.
-  Stars: the four admitted candidates (rounds 775--1469).}
+  \caption{\textbf{Recorded validation trajectory.} Grey: candidate adapter
+  utility. Blue: recorded best utility. Stars: the four rows flagged accepted;
+  only two increase the recorded best within the displayed interval.}
   \label{fig:fw-validation}
 \end{figure}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_train_val.pdf}
-  \caption{\textbf{Train and validation utility, with the gap shown.} Only
-  rounds whose full summaries are retained are plotted (25 rounds between
-  1342 and 1469); the line joins non-consecutive rounds across the gap.}
+  \caption{\textbf{Train and validation aggregates on retained summaries.}
+  The 25 observations span rounds 1342--1469. Missing rounds are unobserved;
+  the gap is reported only for these summaries.}
   \label{fig:fw-trainval}
 \end{figure}
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_telemetry.pdf}
-  \caption{\textbf{Loop telemetry.} Left: datasets evaluated per second.
-  Middle: wall time between consecutive rounds. Right: programs promoted into
-  the pools per hour. The run directory occupied 290\,MB at the snapshot.}
+  \caption{\textbf{Operating measurements from the retained snapshot.}
+  Throughput and promotion rate describe the logged training loop. They
+  do not establish the accuracy or cost of one-proposal deployment.}
   \label{fig:fw-telemetry}
 \end{figure*}
+
+\Cref{sec:results} separates this development record from the independent
+comparisons needed to evaluate the invention claim.
