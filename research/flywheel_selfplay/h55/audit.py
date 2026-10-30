@@ -170,6 +170,12 @@ def audit_outcomes(root: Path) -> dict:
     wave = load(root / "outcomes" / "wave.json")
     check(wave.get("schema") == "jope.h55.outcome-wave/v1" and wave.get("complete") is True,
           "outcome wave is incomplete")
+    measured_gpu_wall = sum(float(c.get("preflight", {}).get("cell_wall_seconds", 0.0))
+                            for c in wave.get("cells", []))
+    check(abs(float(wave.get("total_gpu_cell_wall_seconds", -1.0)) - measured_gpu_wall) < 1e-6,
+          "outcome wave GPU-cell wall total does not match immutable cell receipts")
+    check(measured_gpu_wall <= float(wave.get("total_gpu_wall_cap_seconds", 0.0)),
+          "outcome wave exceeded the preregistered total GPU-cell wall cap")
     expected_order = [{"arm": a, "seed": s} for a, s in ORDER]
     check(wave.get("planned_order") == expected_order and len(wave.get("cells", [])) == len(ORDER),
           "outcome cell order/count differs from preregistration")

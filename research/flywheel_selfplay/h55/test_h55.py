@@ -69,9 +69,11 @@ class H55PolicyTests(unittest.TestCase):
         self.assertEqual(len(reads), 3)
         self.assertEqual({seed for _, seed in reads}, {12, 13, 14})
 
-    def test_lock_wait_consumes_wave_deadline(self):
-        self.assertEqual(wave.deadline_remaining(100.0, now=65.0), 35.0)
-        self.assertLessEqual(wave.deadline_remaining(100.0, now=100.0), 0.0)
+    def test_prior_lock_wait_is_carried_across_attempts(self):
+        prior = 903.6
+        self.assertAlmostEqual(wave.remaining_lock_wait_seconds(prior),
+                               wave.MAX_LOCK_WAIT_SECONDS - prior)
+        self.assertEqual(wave.remaining_lock_wait_seconds(wave.MAX_LOCK_WAIT_SECONDS), 0.0)
 
 
 if __name__ == "__main__":
