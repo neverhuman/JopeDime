@@ -756,7 +756,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/wrk02_frame_codec_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         wrk02_identity["source_commit"],
-        "bc5bf9d1cff3f346e294810a8f4b30a7d77ed88e"
+        "8a79f0e1e00fa214ffdc8031b4c5a72712b00144"
     );
     assert_eq!(wrk02_identity["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(wrk02_identity["fixtures"][0]["path"], changed_fixtures[0]);
