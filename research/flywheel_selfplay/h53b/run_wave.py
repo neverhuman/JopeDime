@@ -176,7 +176,7 @@ def main():
      result={'complete':len(completed)==6 and all(x['status']=='complete' for x in completed),
              'completed':completed,'planned':[{'seed':s,'scale':x} for s,x in CELLS],
              'stop_reason':stop,'wall_seconds':time.monotonic()-started,'projected_total_seconds':projected_total}
- result['schema']='jope.h53b.wave/v1'; result['prereg_commit']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(); result['wave_start_utc']=wave_start_utc; result['wave_deadline_utc']=wave_deadline_utc; result['total_budget_seconds']=TOTAL_LIMIT
+ result['schema']='jope.h53b.wave/v1'; result['prereg_commit']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(); result['wave_start_utc']=wave_start_utc; result['wave_deadline_utc']=wave_deadline_utc; result['total_budget_seconds']=TOTAL_LIMIT; result['wave_start_utc']=wave_start_utc; result['wave_deadline_utc']=wave_deadline_utc; result['total_budget_seconds']=TOTAL_LIMIT
  (RUNS/'wave.json').write_text(json.dumps(result,sort_keys=True,indent=2)+'\n')
  note(f"H53b wave stopped/complete {len(completed)}/6; receipt={RUNS/'wave.json'}")
 if __name__=='__main__': main()
