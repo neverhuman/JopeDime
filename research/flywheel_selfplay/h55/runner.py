@@ -8,6 +8,7 @@ import hashlib
 import importlib.util
 import json
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -38,6 +39,16 @@ SWA_MEMBERS = 8
 EMA_ROUNDS = 25
 EMA_DECAY = 0.9
 R882_HARNESS_UTILITY = 1.1536152769912449
+MIN_DISK_FREE_BYTES = 1024 * 1024 * 1024
+
+
+def check_disk_budget() -> None:
+    usage = shutil.disk_usage("/")
+    used_percent = 100.0 * (usage.total - usage.free) / usage.total
+    if usage.free < MIN_DISK_FREE_BYTES or used_percent >= 95.0:
+        raise RuntimeError(
+            f"unsafe filesystem / before H55 write: free={usage.free} bytes used={used_percent:.2f}%"
+        )
 
 
 def import_module(name: str, path: Path):
@@ -80,6 +91,7 @@ def source_hashes(input_dir: Path) -> dict[str, str]:
 
 
 def atomic_json(path: Path, payload: dict) -> None:
+    check_disk_budget()
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".new")
     tmp.write_text(json.dumps(payload, sort_keys=True, indent=2, allow_nan=False) + "\n")
@@ -500,6 +512,7 @@ def train_and_score(args) -> dict:
         training_report = {"rounds": training["rounds"]}
     # Persist the final registered candidate before fold B opens.
     out_artifact = args.out / "candidate_adapter.pt"
+    check_disk_budget()
     ctx["h48"].save_adapter_snapshot(out_artifact, admission_state, R882_SHA)
     scored = score_fold_b(ctx, candidate_states, admission_state)
     baseline = scored["baseline"]
@@ -654,6 +667,7 @@ def main() -> None:
             raise RuntimeError("timing/outcome modes require arm and seed")
         if args.out.exists():
             raise RuntimeError("refusing to overwrite a cell receipt directory")
+        check_disk_budget()
         args.out.mkdir(parents=True, exist_ok=False)
         result = train_and_score(args)
         if args.mode == "timing":

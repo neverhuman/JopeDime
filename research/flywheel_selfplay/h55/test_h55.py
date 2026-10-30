@@ -7,7 +7,6 @@ from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest import mock
-from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 
@@ -85,6 +84,12 @@ class H55PolicyTests(unittest.TestCase):
         with mock.patch.object(runner, "prepare_training", side_effect=LookupError("stop before data")):
             with self.assertRaisesRegex(LookupError, "stop before data"):
                 runner.train_and_score(args)
+
+    def test_runner_checks_disk_before_writes(self):
+        usage = SimpleNamespace(total=1000, free=49)
+        with mock.patch.object(runner.shutil, "disk_usage", return_value=usage):
+            with self.assertRaisesRegex(RuntimeError, "unsafe filesystem / before H55 write"):
+                runner.check_disk_budget()
 
 
 if __name__ == "__main__":
