@@ -1,0 +1,80 @@
+name: lite-client
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lite-client-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lite-client:
+    runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_BUILD_JOBS: '8'
+      RAYON_NUM_THREADS: '8'
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Build the lite executable and verify its normal graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          mkdir -p "$evidence"
+          git rev-parse HEAD > "$evidence/source-sha.txt"
+          nice -n 10 cargo build --locked -p jope-appliance --no-default-features --features client 2>&1 | tee "$evidence/lite-build.log"
+          nice -n 10 cargo tree --locked -p jope-appliance --no-default-features --features client -e normal --prefix none --format '{p}' > "$evidence/lite-cargo-tree.txt"
+          python3 - "$evidence/lite-cargo-tree.txt" <<'PY'
+          import pathlib
+          import sys
+          packages = {line.split()[0] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.split()}
+          banned = {"jope-service", "candle-core", "tokio", "dope-core", "onig", "onig_sys", "esaxx-rs", "tch", "torch-sys", "rusqlite", "libsqlite3-sys", "pyo3", "openssl-sys", "aws-lc-sys", "syntect"}
+          found = sorted(packages & banned)
+          if found:
+              raise SystemExit(f"lite normal graph contains forbidden packages: {found}")
+          if "jope-client" not in packages:
+              raise SystemExit("lite normal graph does not contain the HTTP client")
+          print("lite graph: HTTP client present; engine and forbidden packages absent")
+          PY
+      - name: Run transport contracts against the background fixture engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          # Only the test process enables engine. The already-built lite binary and
+          # its recorded normal dependency graph keep the client-only selection.
+          nice -n 10 cargo nextest run -P pr --locked -p jope-client --features engine --test contract --build-jobs 8 --test-threads 1 --no-tests=fail 2>&1 | tee "$evidence/transport-contract.log"
+          python3 - "$evidence" <<'PY'
+          import os
+          import pathlib
+          import shutil
+          import sys
+          import xml.etree.ElementTree as ET
+          source = pathlib.Path(os.environ["CARGO_TARGET_DIR"]) / "nextest/pr/junit.xml"
+          cases = list(ET.parse(source).getroot().iter("testcase"))
+          if not cases or any(case.find(tag) is not None for case in cases for tag in ("failure", "error", "skipped")):
+              raise SystemExit("contract suite requires nonzero executed cases with no failures or skips")
+          shutil.copyfile(source, pathlib.Path(sys.argv[1]) / "contract-junit.xml")
+          print(f"transport contract: {len(cases)} executed cases")
+          PY
+      - name: Retain source-bound lite build and contract evidence
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: lite-client-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
