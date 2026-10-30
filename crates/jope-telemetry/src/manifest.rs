@@ -17,6 +17,7 @@ pub const REASON_PROCFS_UNAVAILABLE: u16 = 8;
 pub const REASON_NO_TEXT_TOKEN_PATH: u16 = 10;
 pub const REASON_STARTUP_READS_NOT_OBSERVED: u16 = 11;
 pub const REASON_CUDA_EVENT_UNAVAILABLE: u16 = 12;
+pub const REASON_NO_LANGUAGE_MODEL: u16 = 14;
 use ulid::Ulid;
 
 pub const MANIFEST_SCHEMA: &str = "jope.telemetry.manifest/v1";
@@ -121,6 +122,7 @@ impl RunManifest {
                 (11, "startup_reads_not_observed".to_owned()),
                 (12, "cuda_event_unavailable".to_owned()),
                 (13, "no_family_grouped_validation_producer".to_owned()),
+                (14, "no_language_model".to_owned()),
             ]),
             event_queue_capacity: 0,
             event_queue_producers: 0,

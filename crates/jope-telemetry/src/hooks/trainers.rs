@@ -6,8 +6,8 @@
 use crate::core::ProducerHandle;
 use crate::hooks::io::{ReadSnapshot, END_TO_END_COLUMN, H2D_COLUMNS, IO_COLUMNS};
 use crate::manifest::{
-    REASON_CUDA_EVENT_UNAVAILABLE, REASON_NO_NVML_OR_GPU, REASON_NO_TEXT_TOKEN_PATH,
-    REASON_PROCFS_UNAVAILABLE, REASON_STARTUP_READS_NOT_OBSERVED,
+    REASON_CUDA_EVENT_UNAVAILABLE, REASON_NO_LANGUAGE_MODEL, REASON_NO_NVML_OR_GPU,
+    REASON_NO_TEXT_TOKEN_PATH, REASON_PROCFS_UNAVAILABLE, REASON_STARTUP_READS_NOT_OBSERVED,
 };
 use crate::train::{self, metric_by_name};
 use anyhow::{anyhow, bail, Result};
@@ -198,6 +198,14 @@ pub fn emit_flywheel_startup(main: &mut ProducerHandle, startup: Option<&ReadSna
     ] {
         main.emit_unavailable(id(name), 0, 0, REASON_NO_TEXT_TOKEN_PATH, true);
     }
+    // No language model generates reasoning in the flywheel's GP loop.
+    main.emit_unavailable(
+        train::REASONING_TOK_PER_S,
+        0,
+        0,
+        REASON_NO_LANGUAGE_MODEL,
+        false,
+    );
 }
 
 /// H2D columns of one source are unavailable: no CUDA device (`no_gpu`) or no CUDA events.

@@ -245,6 +245,11 @@ impl ProducerHandle {
         self.source_id
     }
 
+    /// Wall-clock seconds since the recorder started, on the clock behind `monotonic_ns`.
+    pub fn run_elapsed_s(&self) -> f64 {
+        self.started.elapsed().as_secs_f64()
+    }
+
     pub fn set_metric_layout(&mut self, columns: Vec<(u16, u16)>) -> Result<()> {
         if columns.len() > 4096 {
             bail!("metric layout exceeds the 4,096-column registry cap");
