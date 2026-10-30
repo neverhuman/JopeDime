@@ -4022,6 +4022,16 @@
       ],
       "scope": "Direct stdlib unittest execution of fixed-equal S1 continuation, attempt reservation, failure accounting, deadline and recovery; synthetic only."
     },
+    "python:deploy/qualification/q1/harness/test_q1.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "discovery": {
         "kind": "python-family"
@@ -6686,6 +6696,22 @@
         "rust-test"
       ],
       "scope": "Build script executed by Cargo builds, not a standalone test family. Records the target triple."
+    },
+    "target:jope-appliance/test/pty_smoke": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/pty_smoke.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-appliance/test/single_file": {
       "discovery": {
