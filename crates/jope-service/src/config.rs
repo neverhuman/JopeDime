@@ -166,24 +166,32 @@ impl Config {
 
         Ok(Self {
             defaults: Defaults {
-                effort: resolve_string(
+                effort: validate_choice(
                     "defaults.effort",
-                    "--effort",
-                    "JOPEDIME_DEFAULTS_EFFORT",
-                    "medium",
-                    &document,
-                    flags,
-                    environment,
+                    resolve_string(
+                        "defaults.effort",
+                        "--effort",
+                        "JOPEDIME_DEFAULTS_EFFORT",
+                        "medium",
+                        &document,
+                        flags,
+                        environment,
+                    )?,
+                    &["fast", "medium", "high", "ultra"],
                 )?,
                 languages: resolve_languages(&document, flags, environment)?,
-                reasoning: resolve_string(
+                reasoning: validate_choice(
                     "defaults.reasoning",
-                    "--reasoning",
-                    "JOPEDIME_DEFAULTS_REASONING",
-                    "concise",
-                    &document,
-                    flags,
-                    environment,
+                    resolve_string(
+                        "defaults.reasoning",
+                        "--reasoning",
+                        "JOPEDIME_DEFAULTS_REASONING",
+                        "concise",
+                        &document,
+                        flags,
+                        environment,
+                    )?,
+                    &["off", "concise", "detailed"],
                 )?,
                 workers: resolve_workers(&document, flags, environment)?,
                 device: resolve_string(
@@ -551,7 +559,7 @@ fn select_value(
     if let Some(value) = environment.get(env) {
         return Ok((overlay_value(key, value)?, Origin::Environment));
     }
-    if let Some(value) = get_path(file, key) {
+    if let Some(value) = get_path(file, key)? {
         return Ok((value.clone(), Origin::File));
     }
     Ok((default, Origin::BuiltInDefault))
@@ -574,9 +582,26 @@ fn overlay_value(key: &str, value: &str) -> Result<Value, ConfigError> {
     Ok(result)
 }
 
-fn get_path<'a>(value: &'a Value, path: &str) -> Option<&'a Value> {
-    path.split('.')
-        .try_fold(value, |node, component| node.as_table()?.get(component))
+fn get_path<'a>(value: &'a Value, path: &str) -> Result<Option<&'a Value>, ConfigError> {
+    let mut node = value;
+    let mut parent = String::new();
+    for component in path.split('.') {
+        let Some(table) = node.as_table() else {
+            return Err(ConfigError {
+                key: parent,
+                message: "expected a table".into(),
+            });
+        };
+        let Some(child) = table.get(component) else {
+            return Ok(None);
+        };
+        if !parent.is_empty() {
+            parent.push('.');
+        }
+        parent.push_str(component);
+        node = child;
+    }
+    Ok(Some(node))
 }
 
 fn unknown_key_warnings(document: &Value) -> Vec<ConfigWarning> {
@@ -740,9 +765,9 @@ mod tests {
     fn each_key_obeys_flag_environment_file_default_precedence_and_origin() {
         let file = r#"
 [defaults]
-effort = "low"
+effort = "fast"
 languages = ["rust"]
-reasoning = "full"
+reasoning = "off"
 workers = 2
 device = "cpu"
 [limits]
@@ -763,7 +788,7 @@ theme = "dark"
                 "--effort",
                 "JOPEDIME_DEFAULTS_EFFORT",
                 "high",
-                "low",
+                "fast",
             ),
             (
                 "defaults.languages",
@@ -776,8 +801,8 @@ theme = "dark"
                 "defaults.reasoning",
                 "--reasoning",
                 "JOPEDIME_DEFAULTS_REASONING",
-                "brief",
-                "full",
+                "detailed",
+                "off",
             ),
             (
                 "defaults.workers",
@@ -907,6 +932,61 @@ theme = "dark"
         )
         .unwrap_err();
         assert!(error.to_string().contains("limits.max_dataset_bytes"));
+
+        for (key, file) in [
+            ("defaults.effort", "[defaults]\neffort = \"banana\""),
+            ("defaults.reasoning", "[defaults]\nreasoning = \"banana\""),
+            ("limits", "limits = 123"),
+            ("defaults", "defaults = 123"),
+            ("engine", "engine = 123"),
+            ("ui", "ui = 123"),
+        ] {
+            let error =
+                Config::from_sources(Some(file), &BTreeMap::new(), &BTreeMap::new()).unwrap_err();
+            assert_eq!(error.key, key, "{file}");
+            assert!(error.to_string().contains(key), "{file}");
+        }
+    }
+
+    #[test]
+    fn invalid_enum_values_are_rejected_at_each_precedence_source() {
+        for (key, flag, env, file) in [
+            (
+                "defaults.effort",
+                "--effort",
+                "JOPEDIME_DEFAULTS_EFFORT",
+                "[defaults]\neffort = \"banana\"",
+            ),
+            (
+                "defaults.reasoning",
+                "--reasoning",
+                "JOPEDIME_DEFAULTS_REASONING",
+                "[defaults]\nreasoning = \"banana\"",
+            ),
+        ] {
+            let error =
+                Config::from_sources(Some(file), &BTreeMap::new(), &BTreeMap::new()).unwrap_err();
+            assert_eq!(error.key, key, "{file}");
+
+            let error =
+                Config::from_sources(None, &BTreeMap::new(), &map(&[(env, "banana")])).unwrap_err();
+            assert_eq!(error.key, key, "{env}");
+
+            let error = Config::from_sources(None, &map(&[(flag, "banana")]), &BTreeMap::new())
+                .unwrap_err();
+            assert_eq!(error.key, key, "{flag}");
+        }
+    }
+
+    #[test]
+    fn valid_flag_override_wins_over_invalid_lower_priority_file_value() {
+        let file = "[defaults]\neffort = \"banana\"\nreasoning = \"banana\"";
+        let flags = map(&[("--effort", "high"), ("--reasoning", "detailed")]);
+        let config = Config::from_sources(Some(file), &flags, &BTreeMap::new()).unwrap();
+        assert_eq!(config.defaults.effort.value, "high");
+        assert_eq!(config.defaults.effort.origin, Origin::Flag);
+        assert_eq!(config.defaults.reasoning.value, "detailed");
+        assert_eq!(config.defaults.reasoning.origin, Origin::Flag);
     }
 
     #[test]
