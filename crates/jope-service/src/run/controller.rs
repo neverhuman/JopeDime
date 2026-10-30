@@ -88,6 +88,7 @@ pub struct RunController {
     view: ControllerSnapshot,
     checkpoint_phase: RunPhase,
     rounds: BTreeMap<u64, Round>,
+    replay_effort: BTreeMap<u64, Effort>,
     committed: Vec<CommittedRound>,
 }
 
@@ -112,6 +113,7 @@ impl RunController {
             },
             checkpoint_phase: RunPhase::Preparing,
             rounds: BTreeMap::new(),
+            replay_effort: BTreeMap::new(),
             committed: Vec::new(),
         }
     }
@@ -174,7 +176,7 @@ impl RunController {
                     return Ok(());
                 }
                 let revision = self.next_revision()?;
-                if self.rounds.is_empty() {
+                if self.rounds.is_empty() && self.replay_effort.is_empty() {
                     self.view.effort = effort;
                     self.view.pending_effort = None;
                 } else {
@@ -188,6 +190,7 @@ impl RunController {
         let revision = self.next_revision()?;
         if target == RunState::Cancelled {
             self.rounds.clear();
+            self.replay_effort.clear();
             self.view.pending_slots = 0;
             self.view.pending_effort = None;
         }
@@ -207,11 +210,16 @@ impl RunController {
                 | (RunPhase::Seeding, RunPhase::Searching)
                 | (RunPhase::Searching, RunPhase::Finalizing)
         );
-        if self.view.state != RunState::Running || !self.rounds.is_empty() || !valid {
+        if self.view.state != RunState::Running
+            || !self.rounds.is_empty()
+            || !self.replay_effort.is_empty()
+            || !valid
+        {
             return Err(self.invalid("phase must advance at a quiescent running boundary"));
         }
         let revision = self.next_revision()?;
         self.view.phase = phase;
+        self.checkpoint_phase = phase;
         self.view.revision = revision;
         Ok(())
     }
@@ -247,8 +255,13 @@ impl RunController {
             .attempt_high_water
             .checked_add(1)
             .ok_or_else(|| self.invalid("attempt counter exhausted"))?;
+        let effort = self
+            .replay_effort
+            .get(&round)
+            .copied()
+            .unwrap_or(self.view.effort);
         let pending = self.rounds.entry(round).or_insert_with(|| Round {
-            effort: self.view.effort,
+            effort,
             slots: BTreeMap::new(),
         });
         let request = EvaluationRequest {
@@ -289,7 +302,7 @@ impl RunController {
                 return Err(self.invalid("evaluation score must be finite"))
             }
             EvaluationOutcome::DiscardedAtPauseDeadline => {
-                return Err(self.invalid("only the controller may revoke a pause-deadline attempt"))
+                return Err(self.invalid("pause-deadline markers are not evaluation results"))
             }
             _ => {}
         }
@@ -307,14 +320,29 @@ impl RunController {
         if self.view.state != RunState::Pausing {
             return Err(self.invalid("pause deadline requires pausing"));
         }
-        let mut revoked = Vec::new();
-        for round in self.rounds.values_mut() {
-            for pending in round.slots.values_mut().filter(|p| p.outcome.is_none()) {
-                revoked.push(pending.request.key.clone());
-                pending.outcome = Some(EvaluationOutcome::DiscardedAtPauseDeadline);
-            }
-        }
+        let revision = self.next_revision()?;
+        let revoked = self
+            .rounds
+            .values()
+            .flat_map(|round| round.slots.values())
+            .filter(|pending| pending.outcome.is_none())
+            .map(|pending| pending.request.key.clone())
+            .collect();
+        self.rollback_uncommitted();
+        self.view.state = RunState::Paused;
+        self.view.revision = revision;
         Ok(revoked)
+    }
+
+    fn rollback_uncommitted(&mut self) {
+        self.replay_effort.extend(
+            self.rounds
+                .iter()
+                .map(|(&round, work)| (round, work.effort)),
+        );
+        self.rounds.clear();
+        self.view.pending_slots = 0;
+        self.view.phase = self.checkpoint_phase;
     }
 
     /// Call in the owning store transaction. Never publishes events itself.
@@ -358,6 +386,7 @@ impl RunController {
             self.view.state = RunState::Paused;
         }
         if !committed.evaluations.is_empty() {
+            self.replay_effort.remove(&round_id);
             self.committed.push(committed.clone());
         }
         Ok(committed)
@@ -367,6 +396,7 @@ impl RunController {
         if self.view.state != RunState::Running
             || self.view.phase != RunPhase::Finalizing
             || !self.rounds.is_empty()
+            || !self.replay_effort.is_empty()
         {
             return Err(self.invalid("completion requires quiescent running finalization"));
         }
@@ -384,6 +414,7 @@ impl RunController {
         }
         let revision = self.next_revision()?;
         self.rounds.clear();
+        self.replay_effort.clear();
         self.view.pending_slots = 0;
         self.view.pending_effort = None;
         self.view.state = RunState::Failed;
@@ -399,12 +430,7 @@ impl RunController {
             return Ok(false);
         }
         let revision = self.next_revision()?;
-        self.rounds.clear();
-        self.view.pending_slots = 0;
-        self.view.phase = self.checkpoint_phase;
-        if let Some(effort) = self.view.pending_effort.take() {
-            self.view.effort = effort;
-        }
+        self.rollback_uncommitted();
         self.view.state = RunState::Paused;
         self.view.interrupted = true;
         self.view.revision = revision;

@@ -22,7 +22,7 @@ pub struct EvaluationRequest {
 pub enum EvaluationOutcome {
     Scored(f64),
     Failed(ErrorCode),
-    /// Controller-generated receipt: outcome unknown, never a zero score.
+    /// Reserved interruption marker; rejected as a result and never committed.
     DiscardedAtPauseDeadline,
 }
 

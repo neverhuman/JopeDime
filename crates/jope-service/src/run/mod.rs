@@ -5,6 +5,11 @@
 //! that retained controller state; it is not a disk loader. SVC-04 owns publishing,
 //! DSC-05/08 own admission budgets/discovery, and WRK-01 owns worker supervision.
 //! No dataset rows, model fitting, store transactions or HTTP handlers live here.
+//!
+//! A pause deadline rolls back every uncommitted round, including buffered results.
+//! Continue must redispatch those round/slot seeds with new attempts. Captured round
+//! effort survives pause/crash rollback; later effort changes apply to future rounds.
+//! Quiescent phase advances are checkpoint boundaries and survive recovery.
 
 mod controller;
 mod evaluator;
