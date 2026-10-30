@@ -87,6 +87,40 @@ pub struct ModelObject {
     parts: BTreeMap<String, Vec<u8>>,
 }
 
+/// What [`ModelObject::predict`] reads for a Platt-calibrated object: the head's input schema,
+/// plus the fitted header when the object is in appliance format (bound heads have none).
+pub struct CalibratedInput {
+    pub schema: feat_math::advanced_v3::DataSchema,
+    pub genome_sha256: String,
+    pub header: Option<crate::fitted::Header>,
+}
+
+impl CalibratedInput {
+    /// Load a prediction table, ignoring the fitted target and auxiliary columns like a fitted
+    /// model does. A bound head records neither, so every non-feature column is refused.
+    pub fn table(
+        &self,
+        csv: &crate::table::CsvTable,
+    ) -> Result<(feat_math::advanced_v3::RawTable, Vec<String>)> {
+        match &self.header {
+            Some(h) => crate::table::prediction_ignoring(
+                csv,
+                &self.schema,
+                &h.target,
+                &h.auxiliary_columns,
+            ),
+            None => {
+                if let Some(column) = csv.headers.iter().find(|h| h.is_empty()) {
+                    return Err(Failure::input(format!(
+                        "input column {column:?} is not a feature of this model"
+                    )));
+                }
+                crate::table::prediction_ignoring(csv, &self.schema, "", &[])
+            }
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct Inspection {
     pub schema: &'static str,
@@ -421,6 +455,25 @@ impl ModelObject {
             parts,
             crate::limits::Limits::default().max_model_bytes,
         )
+    }
+
+    /// The input contract of a Platt-calibrated object, or `None` when it has no calibration.
+    /// It exposes no executable head, so prediction still goes through [`Self::predict`].
+    pub fn calibrated_input(&self) -> Result<Option<CalibratedInput>> {
+        let Some(calibration) = self.platt_calibration()? else {
+            return Ok(None);
+        };
+        self.require_executable()?;
+        let head = self.platt_head(&calibration)?;
+        let header = match self.manifest.format.as_str() {
+            APPLIANCE => Some(FittedModel::from_bytes(&self.parts[&self.manifest.primary])?.header),
+            _ => None,
+        };
+        Ok(Some(CalibratedInput {
+            schema: head.schema,
+            genome_sha256: head.genome_sha256,
+            header,
+        }))
     }
 
     /// Predict through the complete object. Calibrated binary rows retain explicit class order.
@@ -969,6 +1022,37 @@ mod tests {
             serde_json::to_vec(&legacy.predict(&query).unwrap()).unwrap(),
             serde_json::to_vec(&raw).unwrap()
         );
+    }
+
+    #[test]
+    fn calibrated_input_reports_the_head_contract_without_exporting_it() {
+        use crate::{limits::Limits, table};
+        let (fitted, query) = binary_fixture();
+        let calibration = platt_fixture();
+        let legacy = ModelObject::from_fitted(&fitted).unwrap();
+        assert!(legacy.calibrated_input().unwrap().is_none());
+        let csv = table::parse_csv(b"x\n0\n3\n6\n9\n", &Limits::default()).unwrap();
+        let labelled = table::parse_csv(b"x,y\n0,no\n", &Limits::default()).unwrap();
+        for (object, appliance) in [
+            (ModelObject::from_fitted(&fitted).unwrap(), true),
+            (ModelObject::from_bound(&fitted.model).unwrap(), false),
+        ] {
+            let calibrated = object.with_platt_calibration(calibration.clone()).unwrap();
+            let input = calibrated.calibrated_input().unwrap().unwrap();
+            assert_eq!(input.schema, fitted.model.schema);
+            assert_eq!(input.genome_sha256, fitted.model.genome_sha256);
+            assert_eq!(input.header.as_ref(), appliance.then_some(&fitted.header));
+            let (table, ignored) = input.table(&csv).unwrap();
+            assert!(ignored.is_empty());
+            assert_eq!(
+                serde_json::to_vec(&calibrated.predict(&table).unwrap()).unwrap(),
+                serde_json::to_vec(&calibrated.predict(&query).unwrap()).unwrap()
+            );
+            match input.table(&labelled) {
+                Ok((_, ignored)) => assert!(appliance && ignored == ["y"]),
+                Err(_) => assert!(!appliance, "an appliance head ignores its target"),
+            }
+        }
     }
 
     #[test]
