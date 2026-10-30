@@ -362,7 +362,10 @@ function jopePredictRows(rows){{
     const row=rows[i];
     if(row===null || typeof row!=="object" || Array.isArray(row))throw new TypeError("predict expects a row object");
     for(let j=0;j<columns;j++){{
-      const value=row[JOPE_PREDICTOR_COLUMNS[j]];
+      const name=JOPE_PREDICTOR_COLUMNS[j],value=row[name];
+      // The fitted runtime is numeric: null is the missing sentinel, and anything else that is
+      // not a number (a category string, a missing key) is refused rather than read as NaN.
+      if(value!==null && typeof value!=="number")throw new TypeError(`column ${{JSON.stringify(name)}} must be a number or null; this fitted predictor takes numeric inputs only`);
       flat[i*columns+j]=value===null?Number.NaN:value;
     }}
   }}
@@ -805,7 +808,7 @@ mod tests {
         let runtime = dir.path().join("exercise.mjs");
         std::fs::write(
             &runtime,
-            "import {predict,predictBatch} from './predictor.mjs';\nconst row={age:1,region:2,'quote\\\"field':3};\nconst single=predict(row),batch=predictBatch([row]);\nif(!Number.isFinite(single)||batch.length!==1||batch[0]!==single)throw Error('predict API mismatch');\n",
+            "import {predict,predictBatch} from './predictor.mjs';\nconst row={age:1,region:2,'quote\\\"field':3};\nconst single=predict(row),batch=predictBatch([row]);\nif(!Number.isFinite(single)||batch.length!==1||batch[0]!==single)throw Error('predict API mismatch');\nfor(const bad of [{...row,region:'north'},{age:1,'quote\\\"field':3}]){let refused=false;try{predict(bad);}catch(error){refused=error instanceof TypeError;}if(!refused)throw Error('non-numeric or missing input was not refused: '+JSON.stringify(bad));}\n",
         )
         .unwrap();
         let output = Command::new("node").arg(runtime).output().unwrap();
