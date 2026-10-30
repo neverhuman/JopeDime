@@ -1,0 +1,23 @@
+{
+  "schema": "jopedime.mcp-client-scenarios/v1",
+  "clients": {
+    "claude_code": {
+      "name": "Claude Code",
+      "version": "2.1.314",
+      "verified": true,
+      "verification": "locally verified (mock scenario run); live client not launched"
+    },
+    "gemini_cli": {
+      "name": "Gemini CLI",
+      "version": null,
+      "verified": false,
+      "verification": "documented config; not locally verified; no client binary available"
+    },
+    "codex_cli": {
+      "name": "Codex CLI",
+      "version": null,
+      "verified": false,
+      "verification": "documented config; not locally verified; no client binary available"
+    }
+  }
+}

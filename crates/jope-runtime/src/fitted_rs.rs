@@ -5,6 +5,7 @@
 //! encodings are not present in that contract; unsupported model forms fail closed.
 
 use crate::calibration::OutputTransform;
+use crate::fitted_js::ExportCalibration;
 use crate::math_pipeline::{InputContract, MathPipeline, F64_PREDICTION_VERSION};
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::genome::GenomeIr;
@@ -26,7 +27,7 @@ pub struct CheckRow {
 /// Emit a single Rust module with `predict_numeric(&[Vec<f64>]) -> Result<Vec<f64>, String>`.
 /// Rows must have exactly `width` finite cells. Constants round-trip every fitted f64 bit.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
-    emit_calibrated(genome, model, width, None)
+    emit_with_platt(genome, model, width, &ExportCalibration::default())
 }
 
 /// Emit a predictor with up to 64 caller-supplied engine check rows.
@@ -36,7 +37,56 @@ pub fn emit_with_checks(
     width: usize,
     checks: &[CheckRow],
 ) -> Result<String> {
-    emit_calibrated_with_checks(genome, model, width, None, checks)
+    emit_with_checks_and_platt(genome, model, width, &ExportCalibration::default(), checks)
+}
+
+/// Emit std-only Rust with the shared optional regression and Platt calibration.
+pub fn emit_with_platt(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    calibration: &ExportCalibration,
+) -> Result<String> {
+    emit_with_checks_and_platt(genome, model, width, calibration, &[])
+}
+
+/// Emit Rust with shared calibration and caller-supplied engine check rows.
+pub fn emit_with_checks_and_platt(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    calibration: &ExportCalibration,
+    checks: &[CheckRow],
+) -> Result<String> {
+    let mut source =
+        emit_calibrated_with_checks(genome, model, width, calibration.output.as_ref(), checks)?;
+    if let Some(platt) = &calibration.platt {
+        platt.validate().context("invalid Platt calibration")?;
+        let sigmoid = &platt.sigmoid;
+        source.push_str(&format!(
+            "\npub const PLATT_CLASS_ORDER: [&str; 2] = [{:?}, {:?}];\n\
+             pub fn fitted_platt(score: f64) -> Result<[f64; 2], String> {{\n\
+                 if !score.is_finite() || !(0.0..=1.0).contains(&score) {{ return Err(\"invalid Platt score\".into()); }}\n\
+                 let z = if {} == 0.0 {{ {} }} else {{ {} + {} * (score / {} - {}) }};\n\
+                 let p = if z >= 0.0 {{ 1.0 / (1.0 + (-z).exp()) }} else {{ let e = z.exp(); e / (1.0 + e) }};\n\
+                 Ok([1.0 - p, p])\n\
+             }}\n",
+            platt.class_order[0],
+            platt.class_order[1],
+            rs_number(sigmoid.slope),
+            rs_number(sigmoid.intercept),
+            rs_number(sigmoid.intercept),
+            rs_number(sigmoid.slope),
+            rs_number(sigmoid.scale),
+            rs_number(sigmoid.center),
+        ));
+    }
+    lint(&source)?;
+    Ok(source)
+}
+
+fn rs_number(value: f64) -> String {
+    format!("{value:?}")
 }
 
 /// Emit std-only Rust with the optional fitted regression output transform.
@@ -1387,5 +1437,122 @@ mod tests {
             .unwrap()
             .success());
         assert!(Command::new(&rs_test).status().unwrap().success());
+    }
+
+    #[test]
+    fn platt_emitters_match_engine_probabilities_in_node_python_and_rustc() {
+        let (genome, model) = fitted("(pipe X (ridge))");
+        let mut calibration = crate::model_object::calibration_platt::cross_fit(
+            &[0.1, 0.2, 0.8, 0.9],
+            &["cold", "cold", "hot", "hot"],
+            ["cold", "hot"],
+            &[0, 1, 0, 1],
+        )
+        .unwrap()
+        .calibration;
+        calibration.sigmoid.scale = 0.7;
+        calibration.sigmoid.center = 0.1;
+        let scores = [0.0, 0.2, 0.75, 1.0];
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../target/fitted-platt-proof");
+        std::fs::create_dir_all(&dir).unwrap();
+        let no_calibration = ExportCalibration::default();
+        assert_eq!(
+            crate::fitted_js::emit_with_platt(&genome, &model, 12, &no_calibration).unwrap(),
+            crate::fitted_js::emit(&genome, &model, 12).unwrap()
+        );
+        assert_eq!(
+            crate::fitted_py::emit_with_platt(&genome, &model, 12, &no_calibration).unwrap(),
+            crate::fitted_py::emit(&genome, &model, 12).unwrap()
+        );
+        assert_eq!(
+            crate::fitted_rs::emit_with_platt(&genome, &model, 12, &no_calibration).unwrap(),
+            crate::fitted_rs::emit(&genome, &model, 12).unwrap()
+        );
+
+        for (intercept, slope) in [(-0.35, 2.4), (1000.0, 2.4), (-1000.0, 0.0)] {
+            calibration.sigmoid.intercept = intercept;
+            calibration.sigmoid.slope = slope;
+            let expected = scores
+                .iter()
+                .map(|score| calibration.apply(*score).unwrap())
+                .collect::<Vec<_>>();
+            let export = ExportCalibration {
+                output: None,
+                platt: Some(calibration.clone()),
+            };
+
+            let mut js = crate::fitted_js::emit_with_platt(&genome, &model, 12, &export).unwrap();
+            assert!(js.contains("const PLATT_CLASS_ORDER=Object.freeze([\"cold\",\"hot\"])"));
+            js.push_str(
+                "\nfor(const s of [0,0.2,0.75,1]) console.log(JSON.stringify(fittedPlatt(s)));\n",
+            );
+            let js_path = dir.join("predictor.js");
+            std::fs::write(&js_path, js).unwrap();
+            let js_output = Command::new("node").arg(&js_path).output().unwrap();
+            assert!(
+                js_output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&js_output.stderr)
+            );
+            assert_probability_pairs(&String::from_utf8_lossy(&js_output.stdout), &expected);
+
+            let py = crate::fitted_py::emit_with_platt(&genome, &model, 12, &export).unwrap();
+            assert!(py.contains("PLATT_CLASS_ORDER = [\"cold\",\"hot\"]"));
+            let py_path = dir.join("predictor.py");
+            std::fs::write(&py_path, py).unwrap();
+            let py_output = Command::new("python3")
+                .args([
+                    "-c",
+                    "import runpy,sys; m=runpy.run_path(sys.argv[1],run_name='platt_test'); [print(repr(m['fitted_platt'](s))) for s in [0,0.2,0.75,1]]",
+                ])
+                .arg(&py_path)
+                .output()
+                .unwrap();
+            assert!(
+                py_output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&py_output.stderr)
+            );
+            assert_probability_pairs(&String::from_utf8_lossy(&py_output.stdout), &expected);
+
+            let mut rs = crate::fitted_rs::emit_with_platt(&genome, &model, 12, &export).unwrap();
+            assert!(rs.contains("pub const PLATT_CLASS_ORDER: [&str; 2] = [\"cold\", \"hot\"]"));
+            rs.push_str("\nfn main() { for s in [0.0,0.2,0.75,1.0] { let p=fitted_platt(s).unwrap(); println!(\"{:?}\",p); } }\n");
+            let rs_path = dir.join("predictor.rs");
+            let rs_binary = dir.join("predictor");
+            std::fs::write(&rs_path, rs).unwrap();
+            let compile = Command::new("rustc")
+                .args(["--edition=2021", "-D", "warnings"])
+                .arg(&rs_path)
+                .arg("-o")
+                .arg(&rs_binary)
+                .output()
+                .unwrap();
+            assert!(
+                compile.status.success(),
+                "{}",
+                String::from_utf8_lossy(&compile.stderr)
+            );
+            let rs_output = Command::new(&rs_binary).output().unwrap();
+            assert!(rs_output.status.success());
+            assert_probability_pairs(&String::from_utf8_lossy(&rs_output.stdout), &expected);
+        }
+    }
+
+    fn assert_probability_pairs(output: &str, expected_positive: &[f64]) {
+        let rows = output.lines().collect::<Vec<_>>();
+        assert_eq!(rows.len(), expected_positive.len(), "{output}");
+        for (line, expected) in rows.iter().zip(expected_positive) {
+            let values: Vec<f64> = line
+                .trim_matches(|ch| ch == '[' || ch == ']' || ch == '(' || ch == ')')
+                .split(|ch: char| ch == ',' || ch.is_whitespace())
+                .filter(|part| !part.is_empty())
+                .map(|part| part.parse().unwrap())
+                .collect();
+            assert_eq!(values.len(), 2, "{line}");
+            assert!((values[0] - (1.0 - expected)).abs() < 1e-14, "{line}");
+            assert!((values[1] - expected).abs() < 1e-14, "{line}");
+        }
     }
 }

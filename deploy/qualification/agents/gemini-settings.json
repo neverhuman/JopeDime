@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jopedime": {
+      "command": "/absolute/path/to/jopedime",
+      "args": ["mcp"]
+    }
+  }
+}

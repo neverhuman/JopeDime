@@ -17,8 +17,9 @@ Can a machine create knowledge that no human has written down? The strongest
 skeptics say no: a model trained on the record of human knowledge can only
 recombine it. Go suggests another answer. AlphaGo Zero, taught by a referee
 instead of a record, went beyond the best human play without seeing a human
-game \citep{silver2017mastering}. We test whether invention
-can do the same.
+game \citep{silver2017mastering}. We ask whether a similar training signal
+can improve algorithm invention: can learning from past evaluations make
+the first proposal on a new problem more useful?
 
 \paragraph{The skeptics' challenge.}
 In March 2025, Yann LeCun argued that language models retrieve existing
@@ -31,10 +32,11 @@ memorized'' that had not made ``a single new connection that has led to a
 discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
 the hardest version as a benchmark for general intelligence: today's systems
 ``can play a game of Go at a world champion level. But could a system invent
-Go?'' \citep{hassabis2025bigtech}. The skeptics have found a real limit. A
-model trained to imitate inherits the judgment of the record it imitates, so
-its sense of what will work next is history's sense. That is a claim about the
-training signal, not the network (\cref{sec:anatomy}).
+Go?'' \citep{hassabis2025bigtech}. These challenges separate producing an
+unfamiliar idea from learning which ideas will work. Predicting historical
+text does not directly reward improvement over an incumbent. That motivates
+a different training signal; it does not establish a ceiling on what a
+pretrained model can discover (\cref{sec:anatomy}).
 
 \paragraph{Humans are bounded by history too.}
 Research effort keeps rising while its productivity
@@ -45,24 +47,22 @@ break with the past \citep{park2023disruptive}, and fields open to outsiders
 when their leading scientists die \citep{azoulay2019funeral}. The bottleneck is
 not a shortage of minds. It is the gravity of what we already know.
 
-\paragraph{Everyone is scaling search.}
-The field's answer to both limits has been more tries. Andrej Karpathy's
-autoresearch, released in March 2026, runs about 100 training experiments
-overnight and keeps each change only if it helps
-\citep{karpathy2026autoresearch}. The AI Scientist \citep{lu2024aiscientist}
-and the AI co-scientist \citep{gottweis2025coscientist} run agentic research
-loops, and AlphaEvolve evolves programs against automated evaluators
-\citep{novikov2025alphaevolve}. Richard Socher's \emph{Eureka Machine} imagines
-``millions of AI agents'' that ``critique each other's ideas''
-\citep{socher2026bookbite,socher2026eureka}, and his company, Recursive, raised
-\$650 million to automate the research cycle \citep{recursive2026techcrunch}.
-These systems work, and their evaluators are exactly the referees our game
-needs. But each pays for judgment at test time, one try at a time, and pays
-again on the next problem. What a search learns stays mostly in its outputs,
-not in the model that proposes the next idea.
+\paragraph{From search to learning.}
+Automated research systems already couple proposals to tests. The AI
+Scientist \citep{lu2024aiscientist} and the AI co-scientist
+\citep{gottweis2025coscientist} run agentic research loops; AlphaEvolve evolves
+programs against automated evaluators \citep{novikov2025alphaevolve}; and
+Karpathy's autoresearch retains training changes that improve a measured
+objective \citep{karpathy2026autoresearch}. Socher's \emph{Eureka Machine}
+extends this vision to agents working with simulators and autonomous
+laboratories \citep{socher2026bookbite,socher2026eureka}. These systems make
+judgment executable. Our question is what their evaluations can teach the
+system that proposes the next idea. Keeping a winning program preserves an
+output; training a proposer on those outcomes may preserve a capability that
+transfers to a new problem.
 
 \begin{keyidea}
-Everyone else is buying judgment by the try. We learn it once.
+Can judgment bought during training improve the first proposal at deployment?
 \end{keyidea}
 
 \paragraph{The Zero move.}
@@ -71,11 +71,13 @@ expert games and searched heavily at every move \citep{silver2016mastering}.
 AlphaGo Zero learned only from games against itself, and its network alone,
 with no search, rated 3,055 Elo. That is close to the 3,144 of AlphaGo Fan, the
 version that beat the European champion Fan Hui
-\citep{silver2016mastering,silver2017mastering}. Search had been distilled into
-intuition. Can invention have its own Zero moment? Make innovation a game,
-learn judgment once by self-play, then invent in one move: \searchone{}
-(\hyperref[box:searchone]{Box~1}). \Cref{fig:emptysquare} places this in the
-one square that Go has filled and invention has not.
+\citep{silver2016mastering,silver2017mastering}. This motivates an analogous
+goal for invention: learn from repeated program evaluations during training,
+then deploy a writer with a single candidate budget, \searchone{}
+(\hyperref[box:searchone]{Box~1}). The budget is a test condition, not a
+promise that every first proposal wins. \Cref{fig:emptysquare} summarizes
+the distinction between spending search at deployment and learning from it
+in advance.
 
 \begin{explainer}{Box 1: What ``search = 1'' means}
 \phantomsection\label{box:searchone}%
@@ -89,42 +91,50 @@ one square that Go has filled and invention has not.
     data like any learning algorithm; fitting sets parameters, never chooses
     programs. Training search is priced in \cref{sec:price}.
 \end{itemize}
-\textbf{Zero search, not zero knowledge:} the writer starts from pretraining and
-human ideas.
+\textbf{A single candidate, with prior knowledge:} the writer starts from
+pretraining and human ideas. The Zero analogy concerns the training signal;
+it does not imply that the system starts without human knowledge.
 \end{explainer}
 
-\paragraph{What we show.}
-We make innovation a game: the encoded problem is the board, a complete program
-is the move, a verifier is the referee and the best known algorithm is the
-opponent (\cref{sec:game}). \EZ{} plays it with a program writer that
-proposes moves and a problem--program map that judges them, like AlphaGo's
-policy and value networks, trained by self-play (\cref{sec:method}). The
-contest is narrow by design. On \TBD{M} unseen problems spanning binary and
-multiclass classification and regression, one inference \TBD{beats} the
-algorithms that Claude, Codex and Gemini invented when asked for a generally
-competitive machine-learning method,\footnote{Model versions, dates, the
-verbatim prompt and every invented algorithm are published in the appendix.}
-winning \TBD{K} of \TBD{M} (\cref{tab:headtohead}). It also \TBD{beats}
-the foundation model KumoRFM \citep{kumorfm2025}, at an Elo of \TBD{E} (\cref{fig:leaderboard}). The best frontier model, run as an
-agent with validation feedback, needs \TBD{R} tries to match it
-(\cref{fig:searchone}). The problem--program map cuts wasted moves from
-\TBD{X}\% to \TBD{Y}\% (\cref{tab:ablation}). Our contributions are five:
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.88\linewidth}{\TBD{Conceptual diagram: distinguish search
+  during training from the candidate budget at deployment.}}}
+  \caption{\textbf{Learning before deployment and searching during it.}
+  A conceptual comparison is pending; no measured \EZ{} advantage is implied.}
+  \label{fig:emptysquare}
+\end{figure}
+
+\paragraph{The proposal and its test.}
+We formulate algorithm invention as a game: the encoded problem is the board,
+a complete program is the move, a verifier is the referee and the incumbent
+algorithm is the opponent (\cref{sec:game}). \EZ{} combines a program writer
+with a problem--program map intended to guide learning from those contests
+(\cref{sec:method}). The central hypothesis is that this training improves
+first proposals on unseen problems. The current learning record is reported
+separately from the proposed deployment comparisons.
+
+\Cref{sec:results} specifies the evidence needed to test that hypothesis:
+paired comparisons against algorithms proposed by Claude, Codex and Gemini;
+a comparison with KumoRFM \citep{kumorfm2025}; a performance curve against
+agents allowed repeated attempts; and an ablation of the problem--program
+map. \TBD{Complete these comparisons and document task coverage, model
+versions, prompts, budgets and uncertainty before claiming an advantage.}
+The paper develops five elements:
 \begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
-    judgment and retention), and the observation that search length is the
-    reciprocal of taste, judgment learned in advance (\cref{sec:anatomy}).
+    judgment and retention), with an idealized relation between proposal
+    quality and the number of attempts (\cref{sec:anatomy}).
   \item \textbf{The innovation game:} rules that make invention playable on
     many boards (\cref{sec:game}).
-  \item \textbf{The economics of algorithmic self-play,} from 8B to 1.5T
-    parameters (\cref{sec:price}).
-  \item \textbf{\EZ{}:} a program writer and a problem--program map that learn
-    taste (\cref{sec:method}).
-  \item \textbf{Evidence:} one inference against frontier-invented algorithms
-    and KumoRFM on unseen problems, and the tries an agent needs to match it
-    (\cref{sec:results}).
+  \item \textbf{The economics of algorithmic self-play:} an accounting of
+    training cost and the cost per verified improvement (\cref{sec:price}).
+  \item \textbf{\EZ{}:} a writer and a problem--program map designed to learn
+    from referee feedback (\cref{sec:method}).
+  \item \textbf{An evaluation plan:} tests of first-proposal quality,
+    deployment search and the map's contribution (\cref{sec:results}).
 \end{enumerate}
 \Cref{sec:road} traces each pillar's history in AI; \cref{sec:meaning} asks
 what changes and where the claim stops.
 
-To see why a referee changes everything, we first ask what innovation is made
-of.
+To see what the referee can teach, we first separate the parts of innovation.
