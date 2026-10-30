@@ -9,6 +9,50 @@ use std::process::{Command, Output};
 
 const BIN: &str = env!("CARGO_BIN_EXE_jopedime");
 
+#[cfg(feature = "engine")]
+#[test]
+fn serve_exit_codes_follow_the_catalog() {
+    let dir = tempfile::tempdir().unwrap();
+    let home = dir.path().join("absent-engine");
+    for (args, expected) in [
+        (vec!["serve", "--idle-exit", "0s"], 2),
+        (vec!["serve", "--stop"], 9),
+        (vec!["serve", "--status"], 0),
+    ] {
+        let output = Command::new(BIN)
+            .args(&args)
+            .env_clear()
+            .env("JOPEDIME_HOME", &home)
+            .output()
+            .unwrap();
+        assert_eq!(
+            output.status.code(),
+            Some(expected),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    assert!(!home.exists(), "these cases must not start an engine");
+}
+
+#[cfg(not(feature = "engine"))]
+#[test]
+fn serve_requires_an_engine_in_client_only_builds() {
+    let dir = tempfile::tempdir().unwrap();
+    let output = Command::new(BIN)
+        .args(["serve", "--status"])
+        .env_clear()
+        .env("JOPEDIME_HOME", dir.path().join("absent-engine"))
+        .output()
+        .unwrap();
+    assert_eq!(
+        output.status.code(),
+        Some(9),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
 fn package(dir: &Path, methods: &[&str]) -> PathBuf {
     let code = std::fs::read(BIN).unwrap();
     let notice = EntryInput {

@@ -869,4 +869,46 @@ mod tests {
             1
         );
     }
+
+    #[test]
+    fn in_process_handoff_retains_ownership_through_store_close() {
+        let home = tempfile::tempdir().unwrap();
+        drop(InProcessEngine::open(home.path()).unwrap());
+        let barrier = Arc::new(Barrier::new(3));
+        let mut threads = Vec::new();
+        for _ in 0..2 {
+            let home = home.path().to_path_buf();
+            let barrier = Arc::clone(&barrier);
+            threads.push(std::thread::spawn(move || {
+                barrier.wait();
+                let deadline = std::time::Instant::now() + Duration::from_secs(2);
+                let mut starts = 0;
+                let mut unexpected = Vec::new();
+                while std::time::Instant::now() < deadline {
+                    match InProcessEngine::open(&home) {
+                        Ok(engine) => {
+                            starts += 1;
+                            drop(engine);
+                        }
+                        Err(EngineError::Busy { .. }) => {}
+                        Err(error) => unexpected.push(error.to_string()),
+                    }
+                }
+                (starts, unexpected)
+            }));
+        }
+        barrier.wait();
+        let mut starts = 0;
+        let mut unexpected = Vec::new();
+        for thread in threads {
+            let (count, errors) = thread.join().unwrap();
+            starts += count;
+            unexpected.extend(errors);
+        }
+        assert!(starts > 0, "the probe must open an engine");
+        assert!(
+            unexpected.is_empty(),
+            "advisory ownership ended before Store closed: {unexpected:?}"
+        );
+    }
 }
