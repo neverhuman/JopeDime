@@ -270,6 +270,8 @@ mod tests {
             .arg("--exact")
             .arg("sampler::tests::helper_process")
             .arg("--nocapture")
+            // Keep libtest's name prefix off the READY/DONE protocol lines.
+            .arg("--quiet")
             .env("JOPE_SAMPLER_HELPER", "1")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
