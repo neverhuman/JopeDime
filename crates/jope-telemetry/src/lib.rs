@@ -11,6 +11,7 @@ pub mod alarm;
 pub mod api;
 pub mod collectors;
 pub mod core;
+pub mod cpu_quota;
 pub mod event;
 pub mod fleet;
 pub mod flywheel;
