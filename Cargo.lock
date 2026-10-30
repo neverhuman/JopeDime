@@ -2587,8 +2587,15 @@ dependencies = [
 name = "jope-client"
 version = "0.4.1"
 dependencies = [
+ "axum",
+ "http-body-util",
  "jope-api",
+ "jope-service",
+ "serde",
  "serde_json",
+ "tokio",
+ "tower",
+ "ureq",
 ]
 
 [[package]]

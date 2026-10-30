@@ -752,12 +752,26 @@
       ],
       "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
     },
-    "feature:jope-client/fake": {
+    "feature:jope-client/engine": {
       "discovery": {
         "dependencies": [
-          "dep:jope-api",
-          "dep:serde_json"
+          "dep:axum",
+          "dep:http-body-util",
+          "dep:jope-service",
+          "dep:tokio",
+          "dep:tower"
         ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Optional CLT-01 in-process transport using the actual engine router. Execute explicitly with jope-client --features engine; default and no-default-features client graphs must remain free of tokio. Hosted execution remains deferred pending its owning CI lane."
+    },
+    "feature:jope-client/fake": {
+      "discovery": {
+        "dependencies": [],
         "kind": "feature"
       },
       "dispositions": [
