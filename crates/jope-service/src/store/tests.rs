@@ -93,6 +93,10 @@ fn seven_tables_and_all_key_kinds_reopen_losslessly() {
     drop(store);
     let reopened = Store::open(dir.path()).unwrap();
     assert_eq!(reopened.store_id(), store_id);
+    assert_eq!(
+        fs::read(reopened.cas.path(&blob)).unwrap(),
+        b"fixture blob\0with exact bytes"
+    );
     for (k, record) in keys.iter().zip(records) {
         assert_eq!(reopened.get(k).unwrap(), Some(record));
     }
@@ -421,6 +425,7 @@ fn crash_child() {
 #[cfg(feature = "failpoints")]
 #[test]
 fn actual_process_crash_at_every_publication_boundary_recovers_without_dangling_records() {
+    use sha2::Digest;
     use std::process::Command;
     for point in [
         "after_write",
@@ -464,6 +469,26 @@ fn actual_process_crash_at_every_publication_boundary_recovers_without_dangling_
         );
         let reopened = Store::open(dir.path()).unwrap();
         assert_eq!(reopened.get(&key(0)).unwrap(), Some(baseline));
+        let expected_blob = BlobRef {
+            sha256: sha2::Sha256::digest(CHILD_DATA).into(),
+            bytes: CHILD_DATA.len() as u64,
+        };
+        let renamed = matches!(
+            point,
+            "after_rename" | "after_directory_sync" | "after_commit"
+        );
+        assert_eq!(
+            reopened.cas.path(&expected_blob).exists(),
+            renamed,
+            "{point}"
+        );
+        if renamed {
+            reopened.verify_blob(&expected_blob).unwrap();
+            assert_eq!(
+                fs::read(reopened.cas.path(&expected_blob)).unwrap(),
+                CHILD_DATA
+            );
+        }
         for key in crash_keys() {
             let row = reopened.get(&key).unwrap();
             assert_eq!(row.is_some(), point == "after_commit", "{point}: {key:?}");
