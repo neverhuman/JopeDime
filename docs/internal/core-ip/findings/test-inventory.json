@@ -1863,6 +1863,10 @@
       "reason": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
+      "reason": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_device_pool_cache.py": {
       "reason": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline.",
       "role": "research"
