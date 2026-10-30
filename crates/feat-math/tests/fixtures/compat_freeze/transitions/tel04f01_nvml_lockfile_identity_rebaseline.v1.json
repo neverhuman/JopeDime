@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced TEL-04-F01 lockfile identity successor: jope-service gains nvml-wrapper and jope-telemetry (default-features = false) edges, both packages already locked; no evaluator input version/feature or evaluator behavior changed. Chained after the current tip by super_merge_claude under Watcher merge_1930.",
+  "plan_reference": "TEL-04-F01; merge_1930 (owner-authorized); ADR-0004",
+  "source_commit": "decef104718a27e235d641bd2f5a91ec0bdced81",
+  "base_commit": "b22b932f869d1f9d87882ac7bf506299fd5dce35",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "a4ec715fcb49878fac3193d75557d1a09c95ef24cd86dcaa2d6db921afb86bde",
+      "after": "8d33346eb6d089bac5db0139f987eba63aa71b4e619ea06438b9b3097ede6385"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "eb52fc022bcc0e79e12f5fa0b64ad8840751849def8a2c5dcc10c06a35fd7e83",
+      "after": "5c5203118c3d88ba471a0b11972d1a4bca4335c60f2877ab5a48b833c1f42e8f"
+    }
+  ],
+  "before_identity_digest": "b74651b6f25d2276682af1a8c97636a44346c07a3ee3d46459282c41c4f36a2e",
+  "after_identity_digest": "b8a02f9ea4d87183ae387c7c5c6292a6044f3a588ce1c246e0d4bf9016c6c76d",
+  "before_implementation_sha256": "bd94aff9d36165c43f9ddc91f835d5b8dd15b8714770e79d2106225cd8f5caf8",
+  "after_implementation_sha256": "c0d36508de092890c474760fc6feeecd6a0a09f3d74121ce09611ec4a7c13d83",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
