@@ -1,11 +1,14 @@
 //! Registry-driven local router (spec §3.1, §4). Engine handlers are separate
 //! integrations; registered operations currently return an explicit capability error.
 
-use super::auth::{authenticate, problem, BearerToken, LocalAuth};
+use super::{
+    auth::{authenticate, problem, BearerToken, LocalAuth},
+    system,
+};
 use axum::{
     extract::DefaultBodyLimit,
     middleware,
-    routing::{on, MethodFilter},
+    routing::{get, on, MethodFilter},
     Router,
 };
 use jope_api::{
@@ -26,20 +29,24 @@ pub fn router(auth: LocalAuth) -> Router {
             HttpMethod::Delete => MethodFilter::DELETE,
         };
         for path in operation.paths {
-            app = app.route(
-                path,
-                on(method, move || async move {
-                    problem(
-                        ErrorCode::CapabilityUnavailable,
-                        &format!(
-                            "Operation {} is not implemented in this build.",
-                            operation.name
-                        ),
-                        "Use a build with this operation implemented.",
-                        None,
-                    )
-                }),
-            );
+            app = if operation.name == "system_info" {
+                app.route(path, get(system::get))
+            } else {
+                app.route(
+                    path,
+                    on(method, move || async move {
+                        problem(
+                            ErrorCode::CapabilityUnavailable,
+                            &format!(
+                                "Operation {} is not implemented in this build.",
+                                operation.name
+                            ),
+                            "Use a build with this operation implemented.",
+                            None,
+                        )
+                    }),
+                )
+            };
         }
     }
     app.fallback(|| async {
@@ -115,26 +122,46 @@ mod tests {
                     .oneshot(request(method.clone(), &path))
                     .await
                     .unwrap();
-                assert_eq!(
-                    response.status(),
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                    "{method} {path}"
-                );
-                assert_eq!(
-                    response.headers()[header::CONTENT_TYPE],
-                    Problem::CONTENT_TYPE
-                );
                 assert_eq!(response.headers()["jope-api-version"], "1.0");
                 assert!(!response
                     .headers()
                     .keys()
                     .any(|k| k.as_str().starts_with("access-control-")));
-                let doc: Problem =
-                    serde_json::from_slice(&to_bytes(response.into_body(), 8192).await.unwrap())
-                        .unwrap();
-                assert_eq!(doc.code, ErrorCode::CapabilityUnavailable);
-                assert_eq!(doc.status, 422);
-                assert!(doc.detail.contains(operation.name));
+                if operation.name == "system_info" {
+                    assert_eq!(response.status(), StatusCode::OK, "{method} {path}");
+                    assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
+                    let doc: jope_api::SystemInfo = serde_json::from_slice(
+                        &to_bytes(response.into_body(), 8192).await.unwrap(),
+                    )
+                    .unwrap();
+                    assert_eq!(doc.version, env!("CARGO_PKG_VERSION"));
+                    assert_eq!(doc.api_version, "1.0");
+                    assert_eq!(doc.health, "ok");
+                    assert!(doc.local_paths);
+                    assert!(doc.capabilities.tasks.is_empty());
+                    assert!(doc.capabilities.languages.is_empty());
+                    assert!(doc.capabilities.devices.is_empty());
+                    assert!(!doc.capabilities.learned_guidance);
+                    assert!(doc.warnings.is_empty());
+                    assert!(doc.telemetry.is_empty());
+                } else {
+                    assert_eq!(
+                        response.status(),
+                        StatusCode::UNPROCESSABLE_ENTITY,
+                        "{method} {path}"
+                    );
+                    assert_eq!(
+                        response.headers()[header::CONTENT_TYPE],
+                        Problem::CONTENT_TYPE
+                    );
+                    let doc: Problem = serde_json::from_slice(
+                        &to_bytes(response.into_body(), 8192).await.unwrap(),
+                    )
+                    .unwrap();
+                    assert_eq!(doc.code, ErrorCode::CapabilityUnavailable);
+                    assert_eq!(doc.status, 422);
+                    assert!(doc.detail.contains(operation.name));
+                }
                 count += 1;
             }
         }
@@ -192,14 +219,25 @@ mod tests {
                 let mut response = Vec::new();
                 socket.read_to_end(&mut response).await.unwrap();
                 let response = String::from_utf8(response).unwrap();
-                assert!(response.starts_with(if authorized {
-                    "HTTP/1.1 422"
+                if authorized {
+                    assert!(response.starts_with("HTTP/1.1 200"));
+                    assert!(response
+                        .to_lowercase()
+                        .contains("content-type: application/json"));
+                    let body = response.split_once("\r\n\r\n").unwrap().1;
+                    let doc: jope_api::SystemInfo = serde_json::from_str(body).unwrap();
+                    assert_eq!(doc.version, env!("CARGO_PKG_VERSION"));
+                    assert_eq!(doc.api_version, "1.0");
+                    assert_eq!(doc.health, "ok");
+                    assert!(doc.local_paths);
+                    assert!(doc.warnings.is_empty());
+                    assert!(doc.telemetry.is_empty());
                 } else {
-                    "HTTP/1.1 401"
-                }));
-                assert!(response
-                    .to_lowercase()
-                    .contains("content-type: application/problem+json"));
+                    assert!(response.starts_with("HTTP/1.1 401"));
+                    assert!(response
+                        .to_lowercase()
+                        .contains("content-type: application/problem+json"));
+                }
                 assert!(response.to_lowercase().contains("jope-api-version: 1.0"));
                 assert!(!response.to_lowercase().contains("access-control-"));
             }
