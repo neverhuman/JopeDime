@@ -15,8 +15,28 @@ use feat_math::ops::FittedOp;
 use feat_math::transpile::{emit_javascript, lint_shipped_text, EmitOptions};
 use serde_json::{json, Value};
 
+/// Engine output for one caller-supplied parity row.
+#[derive(Clone, Debug)]
+pub struct CheckRow {
+    pub inputs: Vec<f64>,
+    pub expected: f64,
+}
+
 /// Emit standalone ES2020 that predicts with `model`, fitted from `genome` on rows `width` wide.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
+    emit_with_checks(genome, model, width, &[])
+}
+
+/// Emit a predictor with up to 64 caller-supplied engine check rows.
+pub fn emit_with_checks(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    checks: &[CheckRow],
+) -> Result<String> {
+    if checks.len() > 64 || checks.iter().any(|row| row.inputs.len() != width) {
+        return Err(Failure::integrity("invalid JavaScript self-check rows"));
+    }
     let Model::Pipeline {
         target: None,
         ops,
@@ -90,6 +110,42 @@ pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
         serde_json::to_string(&Value::Array(states))?,
         serde_json::to_string(&head_state)?,
     ));
+    let rows = checks
+        .iter()
+        .map(|row| {
+            let inputs = row
+                .inputs
+                .iter()
+                .map(|v| format!("0x{:016x}n", v.to_bits()))
+                .collect::<Vec<_>>()
+                .join(",");
+            format!(
+                "{{inputs:[{inputs}],expected:0x{:016x}n}}",
+                row.expected.to_bits()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    source.push_str(&format!(r#"
+const SELF_CHECK_ROWS=[{rows}];
+const SELF_CHECK_ABS_TOL=1e-9, SELF_CHECK_REL_TOL=1e-7;
+function self_check() {{
+  if(SELF_CHECK_ROWS.length===0) return true;
+  const buffer=new ArrayBuffer(8), view=new DataView(buffer);
+  const fromBits=(bits)=>{{view.setBigUint64(0,bits);return view.getFloat64(0);}};
+  const h=modelFittedHandle(), flat=new Float64Array(SELF_CHECK_ROWS.flatMap(r=>r.inputs.map(fromBits)));
+  const out=new Float64Array(SELF_CHECK_ROWS.length);
+  const status=modelPredictNumericBatch(h,flat,flat.length,SELF_CHECK_ROWS.length,{width},null,0,out,out.length);
+  for(let i=0;i<SELF_CHECK_ROWS.length;i++){{
+    const expected=fromBits(SELF_CHECK_ROWS[i].expected), actual=out[i];
+    if(status!==0 || !(Number.isNaN(expected)&&Number.isNaN(actual)) &&
+       !(Number.isFinite(actual)&&Math.abs(actual-expected)<=SELF_CHECK_ABS_TOL+SELF_CHECK_REL_TOL*Math.abs(expected)))
+      throw new Error(`self_check failed at row ${{i}}`);
+  }}
+  return true;
+}}
+  if(typeof process!=="undefined" && process.argv?.[2]==="--self-check") {{ self_check(); }}
+"#, width = width));
     let hits = lint_shipped_text(&source);
     if !hits.is_empty() {
         return Err(Failure::integrity(format!(
