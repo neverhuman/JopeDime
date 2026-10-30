@@ -299,6 +299,128 @@
       ],
       "total_bytes": 438126124
     },
+    "fused-cpu": {
+      "profile_sha256": "307fea3a755563b50ce3085680e6155f20f24399468fd4502a03431ff791d523",
+      "scope": "development",
+      "status": "ready",
+      "blockers": [],
+      "methods": [
+        "auto",
+        "rust.elasticnet",
+        "rust.ensemble",
+        "rust.extra_trees",
+        "rust.gam_boost",
+        "rust.gpr",
+        "rust.gpr.rbf_linear",
+        "rust.histgbm",
+        "rust.histgbm2",
+        "rust.hurdle2",
+        "rust.krr",
+        "rust.ksmooth",
+        "rust.logit_ridge",
+        "rust.multiclass_diagonal_lda",
+        "rust.multiclass_nearest_centroid",
+        "rust.multiclass_ovr_logistic",
+        "rust.multiclass_ridge",
+        "rust.pls",
+        "rust.portfolio",
+        "rust.ridge",
+        "rust.ridge_gcv",
+        "rust.stack",
+        "rust.tab_boost"
+      ],
+      "components": [
+        {
+          "id": "fused-ranker",
+          "role": "model",
+          "bundle_id": "fixture-fused-ranker",
+          "bundle_manifest_sha256": "1bbb4acaaddff3ceb6900af3960458f2ec531fb5aac6d4ee208c43b53b790aee",
+          "backends": [
+            "cpu"
+          ],
+          "files": [
+            {
+              "path": "ranker.safetensors",
+              "sha256": "9721c1e4eb3ff19786b80006bc34e0a19393f32b0d6dbf70bf0a09bd09963dc4",
+              "bytes": 12959,
+              "kind": "model",
+              "spdx": "LicenseRef-Jope-Fixture",
+              "redistribution": "permitted"
+            },
+            {
+              "path": "fused.config.json",
+              "sha256": "9a7dafeab0176910d0bb7aa8e299ab55012eb1c5e14018ac0afa0c7731cae8b5",
+              "bytes": 81,
+              "kind": "config",
+              "spdx": "LicenseRef-Jope-Fixture",
+              "redistribution": "permitted"
+            }
+          ]
+        }
+      ],
+      "total_bytes": 13040
+    },
+    "fused-cuda": {
+      "profile_sha256": "8521c588ab831b6f307754166bf0bb92e81822e335e472e03f8f92bda12ca6a4",
+      "scope": "development",
+      "status": "ready",
+      "blockers": [],
+      "methods": [
+        "auto",
+        "rust.elasticnet",
+        "rust.ensemble",
+        "rust.extra_trees",
+        "rust.gam_boost",
+        "rust.gpr",
+        "rust.gpr.rbf_linear",
+        "rust.histgbm",
+        "rust.histgbm2",
+        "rust.hurdle2",
+        "rust.krr",
+        "rust.ksmooth",
+        "rust.logit_ridge",
+        "rust.multiclass_diagonal_lda",
+        "rust.multiclass_nearest_centroid",
+        "rust.multiclass_ovr_logistic",
+        "rust.multiclass_ridge",
+        "rust.pls",
+        "rust.portfolio",
+        "rust.ridge",
+        "rust.ridge_gcv",
+        "rust.stack",
+        "rust.tab_boost"
+      ],
+      "components": [
+        {
+          "id": "fused-ranker",
+          "role": "model",
+          "bundle_id": "fixture-fused-ranker",
+          "bundle_manifest_sha256": "1bbb4acaaddff3ceb6900af3960458f2ec531fb5aac6d4ee208c43b53b790aee",
+          "backends": [
+            "cuda"
+          ],
+          "files": [
+            {
+              "path": "ranker.safetensors",
+              "sha256": "9721c1e4eb3ff19786b80006bc34e0a19393f32b0d6dbf70bf0a09bd09963dc4",
+              "bytes": 12959,
+              "kind": "model",
+              "spdx": "LicenseRef-Jope-Fixture",
+              "redistribution": "permitted"
+            },
+            {
+              "path": "fused.config.json",
+              "sha256": "9a7dafeab0176910d0bb7aa8e299ab55012eb1c5e14018ac0afa0c7731cae8b5",
+              "bytes": 81,
+              "kind": "config",
+              "spdx": "LicenseRef-Jope-Fixture",
+              "redistribution": "permitted"
+            }
+          ]
+        }
+      ],
+      "total_bytes": 13040
+    },
     "native-only": {
       "profile_sha256": "f44efaec01ce4a4fbc0eb44235aafde03322d16e389ce3122d9d2d2fa552cbc8",
       "scope": "public",
