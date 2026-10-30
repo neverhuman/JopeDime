@@ -376,6 +376,16 @@
       "lanes": [],
       "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
     },
+    "benchmark:research/flywheel_selfplay/custody/files/usr/lib/python3/dist-packages/torch/utils/throughput_benchmark.py": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Vendored RES-02 custody source; not a collected test or performance proof."
+    },
     "feature:feat-math/cuda-parity-tests": {
       "discovery": {
         "dependencies": [],

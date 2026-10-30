@@ -1,0 +1,2503 @@
+{
+  "append_ids": [
+    50,
+    51,
+    52
+  ],
+  "counters": {},
+  "engine_heads": {
+    "featmath": [
+      206,
+      215,
+      216,
+      245,
+      257,
+      273,
+      286,
+      301,
+      306,
+      315,
+      370,
+      372
+    ]
+  },
+  "engine_ids": {
+    "featmath": 3
+  },
+  "engine_transforms": {
+    "featmath": [
+      53,
+      59,
+      60,
+      66,
+      67,
+      72,
+      78,
+      83,
+      84,
+      85,
+      86,
+      97,
+      105,
+      110,
+      111,
+      116,
+      122,
+      132,
+      133,
+      148,
+      163,
+      164,
+      165,
+      166,
+      167,
+      168,
+      169,
+      174,
+      186,
+      195,
+      201
+    ]
+  },
+  "engines": [
+    "featmath"
+  ],
+  "expr": {
+    "const_ids": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+    ],
+    "const_values": [
+      -2.0,
+      -1.0,
+      -0.5,
+      -0.25,
+      -0.1,
+      0.0,
+      0.05,
+      0.1,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      3.0,
+      5.0,
+      10.0,
+      20.0
+    ],
+    "end_id": 49,
+    "func_arity": {
+      "34": 1,
+      "35": 1,
+      "36": 1,
+      "37": 1,
+      "38": 1,
+      "39": 1,
+      "40": 1,
+      "41": 2,
+      "42": 2,
+      "43": 2,
+      "44": 3,
+      "45": 2,
+      "46": 2,
+      "47": 2,
+      "48": 2
+    },
+    "is_binop": {
+      "34": false,
+      "35": false,
+      "36": false,
+      "37": false,
+      "38": false,
+      "39": false,
+      "40": false,
+      "41": false,
+      "42": false,
+      "43": false,
+      "44": false,
+      "45": true,
+      "46": true,
+      "47": true,
+      "48": true
+    },
+    "max_depth": 4,
+    "max_nodes": 15,
+    "symbol": {
+      "10": "col(0)",
+      "11": "col(1)",
+      "12": "col(2)",
+      "13": "col(3)",
+      "14": "col(4)",
+      "15": "col(5)",
+      "16": "col(6)",
+      "17": "col(7)",
+      "18": "-2",
+      "19": "-1",
+      "20": "-0.5",
+      "21": "-0.25",
+      "22": "-0.1",
+      "23": "0",
+      "24": "0.05",
+      "25": "0.1",
+      "26": "0.25",
+      "27": "0.5",
+      "28": "1",
+      "29": "2",
+      "30": "3",
+      "31": "5",
+      "32": "10",
+      "33": "20",
+      "34": "abs",
+      "35": "sqrt",
+      "36": "log1p",
+      "37": "sin",
+      "38": "cos",
+      "39": "tanh",
+      "4": "x",
+      "40": "sigmoid",
+      "41": "min",
+      "42": "max",
+      "43": "step",
+      "44": "clip",
+      "45": "+",
+      "46": "-",
+      "47": "*",
+      "48": "/",
+      "5": "row_mean",
+      "6": "row_std",
+      "7": "row_min",
+      "8": "row_max",
+      "9": "row_l2"
+    },
+    "var_col_ids": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "var_common_ids": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "var_map_ids": [
+      4
+    ]
+  },
+  "head_tasks": {
+    "206": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "215": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "216": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "245": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "257": [
+      "regression",
+      "timeseries"
+    ],
+    "273": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "286": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "301": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "306": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "315": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "370": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ],
+    "372": [
+      "regression",
+      "binary",
+      "timeseries",
+      "multiclass"
+    ]
+  },
+  "index": {
+    "APPEND=0": 51,
+    "APPEND=1": 52,
+    "APPEND=<ABSENT>": 50,
+    "BOS": 1,
+    "ENGINE=featmath": 3,
+    "EOS": 2,
+    "EXPR_BINOP=*": 47,
+    "EXPR_BINOP=+": 45,
+    "EXPR_BINOP=-": 46,
+    "EXPR_BINOP=/": 48,
+    "EXPR_CONST=-0.1": 22,
+    "EXPR_CONST=-0.25": 21,
+    "EXPR_CONST=-0.5": 20,
+    "EXPR_CONST=-1": 19,
+    "EXPR_CONST=-2": 18,
+    "EXPR_CONST=0": 23,
+    "EXPR_CONST=0.05": 24,
+    "EXPR_CONST=0.1": 25,
+    "EXPR_CONST=0.25": 26,
+    "EXPR_CONST=0.5": 27,
+    "EXPR_CONST=1": 28,
+    "EXPR_CONST=10": 32,
+    "EXPR_CONST=2": 29,
+    "EXPR_CONST=20": 33,
+    "EXPR_CONST=3": 30,
+    "EXPR_CONST=5": 31,
+    "EXPR_END": 49,
+    "EXPR_FUNC=abs": 34,
+    "EXPR_FUNC=clip": 44,
+    "EXPR_FUNC=cos": 38,
+    "EXPR_FUNC=log1p": 36,
+    "EXPR_FUNC=max": 42,
+    "EXPR_FUNC=min": 41,
+    "EXPR_FUNC=sigmoid": 40,
+    "EXPR_FUNC=sin": 37,
+    "EXPR_FUNC=sqrt": 35,
+    "EXPR_FUNC=step": 43,
+    "EXPR_FUNC=tanh": 39,
+    "EXPR_VAR=col0": 10,
+    "EXPR_VAR=col1": 11,
+    "EXPR_VAR=col2": 12,
+    "EXPR_VAR=col3": 13,
+    "EXPR_VAR=col4": 14,
+    "EXPR_VAR=col5": 15,
+    "EXPR_VAR=col6": 16,
+    "EXPR_VAR=col7": 17,
+    "EXPR_VAR=row_l2": 9,
+    "EXPR_VAR=row_max": 8,
+    "EXPR_VAR=row_mean": 5,
+    "EXPR_VAR=row_min": 7,
+    "EXPR_VAR=row_std": 6,
+    "EXPR_VAR=x": 4,
+    "OP=featmath:bin_onehot": 53,
+    "OP=featmath:blom": 59,
+    "OP=featmath:cheb": 60,
+    "OP=featmath:derive": 66,
+    "OP=featmath:elasticnet": 206,
+    "OP=featmath:ensemble": 215,
+    "OP=featmath:ensemble_ridge_gbm": 216,
+    "OP=featmath:extra_trees": 217,
+    "OP=featmath:fft_mag": 67,
+    "OP=featmath:gam_boost": 230,
+    "OP=featmath:gbm": 245,
+    "OP=featmath:gpr": 257,
+    "OP=featmath:hinge": 72,
+    "OP=featmath:histgbm": 273,
+    "OP=featmath:histgbm2": 286,
+    "OP=featmath:krr": 301,
+    "OP=featmath:ksmooth": 306,
+    "OP=featmath:landmark_dist": 78,
+    "OP=featmath:logistic": 315,
+    "OP=featmath:logit_ridge": 316,
+    "OP=featmath:map": 83,
+    "OP=featmath:multiclass_diagonal_lda": 324,
+    "OP=featmath:multiclass_nearest_centroid": 335,
+    "OP=featmath:multiclass_ovr_logistic": 341,
+    "OP=featmath:multiclass_ridge": 354,
+    "OP=featmath:norm_features": 84,
+    "OP=featmath:norm_row": 85,
+    "OP=featmath:nystrom": 86,
+    "OP=featmath:oblique_hinge": 97,
+    "OP=featmath:pair_prod": 105,
+    "OP=featmath:polar": 110,
+    "OP=featmath:poly_interact": 111,
+    "OP=featmath:portfolio": 369,
+    "OP=featmath:quantile_bins": 116,
+    "OP=featmath:rand_proj": 122,
+    "OP=featmath:rank": 132,
+    "OP=featmath:rff_cos": 133,
+    "OP=featmath:rff_sin": 148,
+    "OP=featmath:ridge": 370,
+    "OP=featmath:ridge_gcv": 371,
+    "OP=featmath:robust_scale": 163,
+    "OP=featmath:row_diff_stats": 164,
+    "OP=featmath:row_spectral": 165,
+    "OP=featmath:row_stats": 166,
+    "OP=featmath:sigmoid": 167,
+    "OP=featmath:stack": 372,
+    "OP=featmath:standardize": 168,
+    "OP=featmath:step": 169,
+    "OP=featmath:svd_project": 174,
+    "OP=featmath:tab_boost": 373,
+    "OP=featmath:target_bin_encode": 186,
+    "OP=featmath:winsor_clip": 195,
+    "OP=featmath:winsor_moments": 201,
+    "PAD": 0,
+    "TASK=binary": 398,
+    "TASK=multiclass": 400,
+    "TASK=regression": 397,
+    "TASK=timeseries": 399,
+    "VAL=featmath:bin_onehot:bins=12": 56,
+    "VAL=featmath:bin_onehot:bins=16": 57,
+    "VAL=featmath:bin_onehot:bins=4": 54,
+    "VAL=featmath:bin_onehot:bins=8": 55,
+    "VAL=featmath:bin_onehot:bins=<ABSENT>": 58,
+    "VAL=featmath:cheb:degree=2": 61,
+    "VAL=featmath:cheb:degree=3": 62,
+    "VAL=featmath:cheb:degree=4": 63,
+    "VAL=featmath:cheb:degree=6": 64,
+    "VAL=featmath:cheb:degree=<ABSENT>": 65,
+    "VAL=featmath:elasticnet:alpha=0.0005": 207,
+    "VAL=featmath:elasticnet:alpha=0.001": 208,
+    "VAL=featmath:elasticnet:alpha=0.01": 209,
+    "VAL=featmath:elasticnet:alpha=<ABSENT>": 210,
+    "VAL=featmath:elasticnet:l1_ratio=0.2": 211,
+    "VAL=featmath:elasticnet:l1_ratio=0.5": 212,
+    "VAL=featmath:elasticnet:l1_ratio=0.8": 213,
+    "VAL=featmath:elasticnet:l1_ratio=<ABSENT>": 214,
+    "VAL=featmath:extra_trees:depth=10": 220,
+    "VAL=featmath:extra_trees:depth=6": 218,
+    "VAL=featmath:extra_trees:depth=8": 219,
+    "VAL=featmath:extra_trees:depth=<ABSENT>": 221,
+    "VAL=featmath:extra_trees:min_leaf=10": 224,
+    "VAL=featmath:extra_trees:min_leaf=3": 222,
+    "VAL=featmath:extra_trees:min_leaf=5": 223,
+    "VAL=featmath:extra_trees:min_leaf=<ABSENT>": 225,
+    "VAL=featmath:extra_trees:trees=32": 226,
+    "VAL=featmath:extra_trees:trees=64": 227,
+    "VAL=featmath:extra_trees:trees=96": 228,
+    "VAL=featmath:extra_trees:trees=<ABSENT>": 229,
+    "VAL=featmath:fft_mag:k=16": 70,
+    "VAL=featmath:fft_mag:k=4": 68,
+    "VAL=featmath:fft_mag:k=8": 69,
+    "VAL=featmath:fft_mag:k=<ABSENT>": 71,
+    "VAL=featmath:gam_boost:bins=16": 232,
+    "VAL=featmath:gam_boost:bins=24": 233,
+    "VAL=featmath:gam_boost:bins=32": 234,
+    "VAL=featmath:gam_boost:bins=8": 231,
+    "VAL=featmath:gam_boost:bins=<ABSENT>": 235,
+    "VAL=featmath:gam_boost:lr=0.05": 236,
+    "VAL=featmath:gam_boost:lr=0.1": 237,
+    "VAL=featmath:gam_boost:lr=0.2": 238,
+    "VAL=featmath:gam_boost:lr=<ABSENT>": 239,
+    "VAL=featmath:gam_boost:rounds=100": 243,
+    "VAL=featmath:gam_boost:rounds=40": 240,
+    "VAL=featmath:gam_boost:rounds=60": 241,
+    "VAL=featmath:gam_boost:rounds=80": 242,
+    "VAL=featmath:gam_boost:rounds=<ABSENT>": 244,
+    "VAL=featmath:gbm:depth=2": 246,
+    "VAL=featmath:gbm:depth=3": 247,
+    "VAL=featmath:gbm:depth=4": 248,
+    "VAL=featmath:gbm:depth=<ABSENT>": 249,
+    "VAL=featmath:gbm:lr=0.05": 250,
+    "VAL=featmath:gbm:lr=0.1": 251,
+    "VAL=featmath:gbm:lr=<ABSENT>": 252,
+    "VAL=featmath:gbm:rounds=150": 254,
+    "VAL=featmath:gbm:rounds=240": 255,
+    "VAL=featmath:gbm:rounds=80": 253,
+    "VAL=featmath:gbm:rounds=<ABSENT>": 256,
+    "VAL=featmath:gpr:kernel=<ABSENT>": 266,
+    "VAL=featmath:gpr:kernel=linear": 260,
+    "VAL=featmath:gpr:kernel=periodic": 261,
+    "VAL=featmath:gpr:kernel=periodic+linear": 265,
+    "VAL=featmath:gpr:kernel=rbf": 258,
+    "VAL=featmath:gpr:kernel=rbf*periodic": 264,
+    "VAL=featmath:gpr:kernel=rbf+linear": 262,
+    "VAL=featmath:gpr:kernel=rq": 259,
+    "VAL=featmath:gpr:kernel=rq+linear": 263,
+    "VAL=featmath:gpr:m=300": 267,
+    "VAL=featmath:gpr:m=400": 268,
+    "VAL=featmath:gpr:m=<ABSENT>": 269,
+    "VAL=featmath:gpr:steps=30": 270,
+    "VAL=featmath:gpr:steps=40": 271,
+    "VAL=featmath:gpr:steps=<ABSENT>": 272,
+    "VAL=featmath:hinge:knots=2": 73,
+    "VAL=featmath:hinge:knots=4": 74,
+    "VAL=featmath:hinge:knots=6": 75,
+    "VAL=featmath:hinge:knots=8": 76,
+    "VAL=featmath:hinge:knots=<ABSENT>": 77,
+    "VAL=featmath:histgbm2:bags=3": 298,
+    "VAL=featmath:histgbm2:bags=5": 299,
+    "VAL=featmath:histgbm2:bags=<ABSENT>": 300,
+    "VAL=featmath:histgbm2:leaves=15": 287,
+    "VAL=featmath:histgbm2:leaves=31": 288,
+    "VAL=featmath:histgbm2:leaves=63": 289,
+    "VAL=featmath:histgbm2:leaves=<ABSENT>": 290,
+    "VAL=featmath:histgbm2:lr=0.03": 291,
+    "VAL=featmath:histgbm2:lr=0.05": 292,
+    "VAL=featmath:histgbm2:lr=0.08": 293,
+    "VAL=featmath:histgbm2:lr=<ABSENT>": 294,
+    "VAL=featmath:histgbm2:rounds=300": 295,
+    "VAL=featmath:histgbm2:rounds=500": 296,
+    "VAL=featmath:histgbm2:rounds=<ABSENT>": 297,
+    "VAL=featmath:histgbm:depth=2": 274,
+    "VAL=featmath:histgbm:depth=3": 275,
+    "VAL=featmath:histgbm:depth=4": 276,
+    "VAL=featmath:histgbm:depth=<ABSENT>": 277,
+    "VAL=featmath:histgbm:lr=0.05": 278,
+    "VAL=featmath:histgbm:lr=0.1": 279,
+    "VAL=featmath:histgbm:lr=0.15": 280,
+    "VAL=featmath:histgbm:lr=<ABSENT>": 281,
+    "VAL=featmath:histgbm:rounds=120": 283,
+    "VAL=featmath:histgbm:rounds=180": 284,
+    "VAL=featmath:histgbm:rounds=80": 282,
+    "VAL=featmath:histgbm:rounds=<ABSENT>": 285,
+    "VAL=featmath:krr:m=1000": 304,
+    "VAL=featmath:krr:m=200": 302,
+    "VAL=featmath:krr:m=600": 303,
+    "VAL=featmath:krr:m=<ABSENT>": 305,
+    "VAL=featmath:ksmooth:gamma=0.5": 311,
+    "VAL=featmath:ksmooth:gamma=1.0": 312,
+    "VAL=featmath:ksmooth:gamma=2.0": 313,
+    "VAL=featmath:ksmooth:gamma=<ABSENT>": 314,
+    "VAL=featmath:ksmooth:k=16": 307,
+    "VAL=featmath:ksmooth:k=32": 308,
+    "VAL=featmath:ksmooth:k=64": 309,
+    "VAL=featmath:ksmooth:k=<ABSENT>": 310,
+    "VAL=featmath:landmark_dist:k=16": 80,
+    "VAL=featmath:landmark_dist:k=32": 81,
+    "VAL=featmath:landmark_dist:k=8": 79,
+    "VAL=featmath:landmark_dist:k=<ABSENT>": 82,
+    "VAL=featmath:logit_ridge:class_weight=<ABSENT>": 318,
+    "VAL=featmath:logit_ridge:class_weight=balanced": 317,
+    "VAL=featmath:logit_ridge:l2=0.005": 319,
+    "VAL=featmath:logit_ridge:l2=0.02": 320,
+    "VAL=featmath:logit_ridge:l2=0.1": 321,
+    "VAL=featmath:logit_ridge:l2=0.5": 322,
+    "VAL=featmath:logit_ridge:l2=<ABSENT>": 323,
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=128": 327,
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=256": 328,
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=32": 325,
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=64": 326,
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=<ABSENT>": 329,
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.001": 330,
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.01": 331,
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.1": 332,
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.5": 333,
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=<ABSENT>": 334,
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=128": 338,
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=256": 339,
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=32": 336,
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=64": 337,
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=<ABSENT>": 340,
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=128": 344,
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=256": 345,
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=32": 342,
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=64": 343,
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=<ABSENT>": 346,
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.0001": 347,
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.001": 348,
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.01": 349,
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.1": 350,
+    "VAL=featmath:multiclass_ovr_logistic:l2=1.0": 351,
+    "VAL=featmath:multiclass_ovr_logistic:l2=10.0": 352,
+    "VAL=featmath:multiclass_ovr_logistic:l2=<ABSENT>": 353,
+    "VAL=featmath:multiclass_ridge:class_weight=<ABSENT>": 368,
+    "VAL=featmath:multiclass_ridge:class_weight=balanced": 367,
+    "VAL=featmath:multiclass_ridge:feature_budget=128": 357,
+    "VAL=featmath:multiclass_ridge:feature_budget=256": 358,
+    "VAL=featmath:multiclass_ridge:feature_budget=32": 355,
+    "VAL=featmath:multiclass_ridge:feature_budget=64": 356,
+    "VAL=featmath:multiclass_ridge:feature_budget=<ABSENT>": 359,
+    "VAL=featmath:multiclass_ridge:l2=0.0001": 360,
+    "VAL=featmath:multiclass_ridge:l2=0.001": 361,
+    "VAL=featmath:multiclass_ridge:l2=0.01": 362,
+    "VAL=featmath:multiclass_ridge:l2=0.1": 363,
+    "VAL=featmath:multiclass_ridge:l2=1.0": 364,
+    "VAL=featmath:multiclass_ridge:l2=10.0": 365,
+    "VAL=featmath:multiclass_ridge:l2=<ABSENT>": 366,
+    "VAL=featmath:nystrom:gamma=0.25": 91,
+    "VAL=featmath:nystrom:gamma=0.5": 92,
+    "VAL=featmath:nystrom:gamma=1.0": 93,
+    "VAL=featmath:nystrom:gamma=<ABSENT>": 94,
+    "VAL=featmath:nystrom:k=16": 88,
+    "VAL=featmath:nystrom:k=32": 89,
+    "VAL=featmath:nystrom:k=8": 87,
+    "VAL=featmath:nystrom:k=<ABSENT>": 90,
+    "VAL=featmath:nystrom:seed=7": 95,
+    "VAL=featmath:nystrom:seed=<ABSENT>": 96,
+    "VAL=featmath:oblique_hinge:n=16": 99,
+    "VAL=featmath:oblique_hinge:n=32": 100,
+    "VAL=featmath:oblique_hinge:n=8": 98,
+    "VAL=featmath:oblique_hinge:n=<ABSENT>": 101,
+    "VAL=featmath:oblique_hinge:seed=19": 103,
+    "VAL=featmath:oblique_hinge:seed=7": 102,
+    "VAL=featmath:oblique_hinge:seed=<ABSENT>": 104,
+    "VAL=featmath:pair_prod:topk=12": 108,
+    "VAL=featmath:pair_prod:topk=4": 106,
+    "VAL=featmath:pair_prod:topk=8": 107,
+    "VAL=featmath:pair_prod:topk=<ABSENT>": 109,
+    "VAL=featmath:poly_interact:topk=12": 114,
+    "VAL=featmath:poly_interact:topk=4": 112,
+    "VAL=featmath:poly_interact:topk=8": 113,
+    "VAL=featmath:poly_interact:topk=<ABSENT>": 115,
+    "VAL=featmath:quantile_bins:bins=16": 119,
+    "VAL=featmath:quantile_bins:bins=32": 120,
+    "VAL=featmath:quantile_bins:bins=4": 117,
+    "VAL=featmath:quantile_bins:bins=8": 118,
+    "VAL=featmath:quantile_bins:bins=<ABSENT>": 121,
+    "VAL=featmath:rand_proj:k=16": 124,
+    "VAL=featmath:rand_proj:k=32": 125,
+    "VAL=featmath:rand_proj:k=64": 126,
+    "VAL=featmath:rand_proj:k=8": 123,
+    "VAL=featmath:rand_proj:k=<ABSENT>": 127,
+    "VAL=featmath:rand_proj:seed=17": 129,
+    "VAL=featmath:rand_proj:seed=31": 130,
+    "VAL=featmath:rand_proj:seed=7": 128,
+    "VAL=featmath:rand_proj:seed=<ABSENT>": 131,
+    "VAL=featmath:rff_cos:gamma=0.5": 139,
+    "VAL=featmath:rff_cos:gamma=1.0": 140,
+    "VAL=featmath:rff_cos:gamma=2.0": 141,
+    "VAL=featmath:rff_cos:gamma=<ABSENT>": 142,
+    "VAL=featmath:rff_cos:n=16": 135,
+    "VAL=featmath:rff_cos:n=32": 136,
+    "VAL=featmath:rff_cos:n=64": 137,
+    "VAL=featmath:rff_cos:n=8": 134,
+    "VAL=featmath:rff_cos:n=<ABSENT>": 138,
+    "VAL=featmath:rff_cos:seed=11": 145,
+    "VAL=featmath:rff_cos:seed=2": 143,
+    "VAL=featmath:rff_cos:seed=23": 146,
+    "VAL=featmath:rff_cos:seed=7": 144,
+    "VAL=featmath:rff_cos:seed=<ABSENT>": 147,
+    "VAL=featmath:rff_sin:gamma=0.5": 154,
+    "VAL=featmath:rff_sin:gamma=1.0": 155,
+    "VAL=featmath:rff_sin:gamma=2.0": 156,
+    "VAL=featmath:rff_sin:gamma=<ABSENT>": 157,
+    "VAL=featmath:rff_sin:n=16": 150,
+    "VAL=featmath:rff_sin:n=32": 151,
+    "VAL=featmath:rff_sin:n=64": 152,
+    "VAL=featmath:rff_sin:n=8": 149,
+    "VAL=featmath:rff_sin:n=<ABSENT>": 153,
+    "VAL=featmath:rff_sin:seed=13": 160,
+    "VAL=featmath:rff_sin:seed=29": 161,
+    "VAL=featmath:rff_sin:seed=3": 158,
+    "VAL=featmath:rff_sin:seed=5": 159,
+    "VAL=featmath:rff_sin:seed=<ABSENT>": 162,
+    "VAL=featmath:step:t=0.25": 170,
+    "VAL=featmath:step:t=0.5": 171,
+    "VAL=featmath:step:t=0.75": 172,
+    "VAL=featmath:step:t=<ABSENT>": 173,
+    "VAL=featmath:svd_project:iters=16": 181,
+    "VAL=featmath:svd_project:iters=24": 182,
+    "VAL=featmath:svd_project:iters=8": 180,
+    "VAL=featmath:svd_project:iters=<ABSENT>": 183,
+    "VAL=featmath:svd_project:k=16": 177,
+    "VAL=featmath:svd_project:k=32": 178,
+    "VAL=featmath:svd_project:k=4": 175,
+    "VAL=featmath:svd_project:k=8": 176,
+    "VAL=featmath:svd_project:k=<ABSENT>": 179,
+    "VAL=featmath:svd_project:seed=7": 184,
+    "VAL=featmath:svd_project:seed=<ABSENT>": 185,
+    "VAL=featmath:tab_boost:bins=128": 377,
+    "VAL=featmath:tab_boost:bins=16": 374,
+    "VAL=featmath:tab_boost:bins=32": 375,
+    "VAL=featmath:tab_boost:bins=64": 376,
+    "VAL=featmath:tab_boost:bins=<ABSENT>": 378,
+    "VAL=featmath:tab_boost:lambda=0.5": 379,
+    "VAL=featmath:tab_boost:lambda=1.0": 380,
+    "VAL=featmath:tab_boost:lambda=5.0": 381,
+    "VAL=featmath:tab_boost:lambda=<ABSENT>": 382,
+    "VAL=featmath:tab_boost:lr=0.05": 383,
+    "VAL=featmath:tab_boost:lr=0.1": 384,
+    "VAL=featmath:tab_boost:lr=0.2": 385,
+    "VAL=featmath:tab_boost:lr=<ABSENT>": 386,
+    "VAL=featmath:tab_boost:min_leaf=10": 389,
+    "VAL=featmath:tab_boost:min_leaf=3": 387,
+    "VAL=featmath:tab_boost:min_leaf=5": 388,
+    "VAL=featmath:tab_boost:min_leaf=<ABSENT>": 390,
+    "VAL=featmath:tab_boost:rounds=100": 394,
+    "VAL=featmath:tab_boost:rounds=120": 395,
+    "VAL=featmath:tab_boost:rounds=40": 391,
+    "VAL=featmath:tab_boost:rounds=60": 392,
+    "VAL=featmath:tab_boost:rounds=80": 393,
+    "VAL=featmath:tab_boost:rounds=<ABSENT>": 396,
+    "VAL=featmath:target_bin_encode:bins=16": 189,
+    "VAL=featmath:target_bin_encode:bins=4": 187,
+    "VAL=featmath:target_bin_encode:bins=8": 188,
+    "VAL=featmath:target_bin_encode:bins=<ABSENT>": 190,
+    "VAL=featmath:target_bin_encode:prior=1": 191,
+    "VAL=featmath:target_bin_encode:prior=10": 193,
+    "VAL=featmath:target_bin_encode:prior=5": 192,
+    "VAL=featmath:target_bin_encode:prior=<ABSENT>": 194,
+    "VAL=featmath:winsor_clip:q=0.01": 196,
+    "VAL=featmath:winsor_clip:q=0.02": 197,
+    "VAL=featmath:winsor_clip:q=0.05": 198,
+    "VAL=featmath:winsor_clip:q=0.1": 199,
+    "VAL=featmath:winsor_clip:q=<ABSENT>": 200,
+    "VAL=featmath:winsor_moments:q=0.02": 202,
+    "VAL=featmath:winsor_moments:q=0.05": 203,
+    "VAL=featmath:winsor_moments:q=0.1": 204,
+    "VAL=featmath:winsor_moments:q=<ABSENT>": 205
+  },
+  "max_expr_stages": {
+    "featmath": 3
+  },
+  "max_transforms": {
+    "featmath": 6
+  },
+  "ops": {
+    "105": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "pair_prod",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 109,
+          "bin_texts": [
+            "4",
+            "8",
+            "12"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "topk",
+          "required": false,
+          "val_ids": [
+            106,
+            107,
+            108
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 105
+    },
+    "110": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "polar",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 110
+    },
+    "111": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "poly_interact",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 115,
+          "bin_texts": [
+            "4",
+            "8",
+            "12"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "topk",
+          "required": false,
+          "val_ids": [
+            112,
+            113,
+            114
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 111
+    },
+    "116": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "quantile_bins",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 121,
+          "bin_texts": [
+            "4",
+            "8",
+            "16",
+            "32"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "bins",
+          "required": false,
+          "val_ids": [
+            117,
+            118,
+            119,
+            120
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 116
+    },
+    "122": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "rand_proj",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 127,
+          "bin_texts": [
+            "8",
+            "16",
+            "32",
+            "64"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "k",
+          "required": false,
+          "val_ids": [
+            123,
+            124,
+            125,
+            126
+          ]
+        },
+        {
+          "absent_id": 131,
+          "bin_texts": [
+            "7",
+            "17",
+            "31"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "seed",
+          "required": false,
+          "val_ids": [
+            128,
+            129,
+            130
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 122
+    },
+    "132": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "rank",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 132
+    },
+    "133": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "rff_cos",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 138,
+          "bin_texts": [
+            "8",
+            "16",
+            "32",
+            "64"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "n",
+          "required": false,
+          "val_ids": [
+            134,
+            135,
+            136,
+            137
+          ]
+        },
+        {
+          "absent_id": 142,
+          "bin_texts": [
+            "0.5",
+            "1.0",
+            "2.0"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "gamma",
+          "required": false,
+          "val_ids": [
+            139,
+            140,
+            141
+          ]
+        },
+        {
+          "absent_id": 147,
+          "bin_texts": [
+            "2",
+            "7",
+            "11",
+            "23"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "seed",
+          "required": false,
+          "val_ids": [
+            143,
+            144,
+            145,
+            146
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 133
+    },
+    "148": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "rff_sin",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 153,
+          "bin_texts": [
+            "8",
+            "16",
+            "32",
+            "64"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "n",
+          "required": false,
+          "val_ids": [
+            149,
+            150,
+            151,
+            152
+          ]
+        },
+        {
+          "absent_id": 157,
+          "bin_texts": [
+            "0.5",
+            "1.0",
+            "2.0"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "gamma",
+          "required": false,
+          "val_ids": [
+            154,
+            155,
+            156
+          ]
+        },
+        {
+          "absent_id": 162,
+          "bin_texts": [
+            "3",
+            "5",
+            "13",
+            "29"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "seed",
+          "required": false,
+          "val_ids": [
+            158,
+            159,
+            160,
+            161
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 148
+    },
+    "163": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "robust_scale",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 163
+    },
+    "164": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "row_diff_stats",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 164
+    },
+    "165": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "row_spectral",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 165
+    },
+    "166": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "row_stats",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 166
+    },
+    "167": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "sigmoid",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 167
+    },
+    "168": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "standardize",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 168
+    },
+    "169": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "step",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 173,
+          "bin_texts": [
+            "0.25",
+            "0.5",
+            "0.75"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "t",
+          "required": false,
+          "val_ids": [
+            170,
+            171,
+            172
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 169
+    },
+    "174": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "svd_project",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 179,
+          "bin_texts": [
+            "4",
+            "8",
+            "16",
+            "32"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "k",
+          "required": false,
+          "val_ids": [
+            175,
+            176,
+            177,
+            178
+          ]
+        },
+        {
+          "absent_id": 183,
+          "bin_texts": [
+            "8",
+            "16",
+            "24"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "iters",
+          "required": false,
+          "val_ids": [
+            180,
+            181,
+            182
+          ]
+        },
+        {
+          "absent_id": 185,
+          "bin_texts": [
+            "7"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "seed",
+          "required": false,
+          "val_ids": [
+            184
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 174
+    },
+    "186": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "target_bin_encode",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 190,
+          "bin_texts": [
+            "4",
+            "8",
+            "16"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "bins",
+          "required": false,
+          "val_ids": [
+            187,
+            188,
+            189
+          ]
+        },
+        {
+          "absent_id": 194,
+          "bin_texts": [
+            "1",
+            "5",
+            "10"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "prior",
+          "required": false,
+          "val_ids": [
+            191,
+            192,
+            193
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 186
+    },
+    "195": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "winsor_clip",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 200,
+          "bin_texts": [
+            "0.01",
+            "0.02",
+            "0.05",
+            "0.1"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "q",
+          "required": false,
+          "val_ids": [
+            196,
+            197,
+            198,
+            199
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 195
+    },
+    "201": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "winsor_moments",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 205,
+          "bin_texts": [
+            "0.02",
+            "0.05",
+            "0.1"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "q",
+          "required": false,
+          "val_ids": [
+            202,
+            203,
+            204
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 201
+    },
+    "206": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "elasticnet",
+      "role": "head",
+      "slots": [
+        {
+          "absent_id": 210,
+          "bin_texts": [
+            "0.0005",
+            "0.001",
+            "0.01"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "alpha",
+          "required": false,
+          "val_ids": [
+            207,
+            208,
+            209
+          ]
+        },
+        {
+          "absent_id": 214,
+          "bin_texts": [
+            "0.2",
+            "0.5",
+            "0.8"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "l1_ratio",
+          "required": false,
+          "val_ids": [
+            211,
+            212,
+            213
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 206
+    },
+    "215": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "ensemble",
+      "role": "head",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 215
+    },
+    "216": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "ensemble_ridge_gbm",
+      "role": "head",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 216
+    },
+    "245": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "gbm",
+      "role": "head",
+      "slots": [
+        {
+          "absent_id": 249,
+          "bin_texts": [
+            "2",
+            "3",
+            "4"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "depth",
+          "required": false,
+          "val_ids": [
+            246,
+            247,
+            248
+          ]
+        },
+        {
+          "absent_id": 252,
+          "bin_texts": [
+            "0.05",
+            "0.1"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "lr",
+          "required": false,
+          "val_ids": [
+            250,
+            251
+          ]
+        },
+        {
+          "absent_id": 256,
+          "bin_texts": [
+            "80",
+            "150",
+            "240"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "rounds",
+          "required": false,
+          "val_ids": [
+            253,
+            254,
+            255
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 245
+    },
+    "257": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "gpr",
+      "role": "head",
+      "slots": [
+        {
+          "absent_id": 266,
+          "bin_texts": [
+            "rbf",
+            "rq",
+            "linear",
+            "periodic",
+            "rbf+linear",
+            "rq+linear",
+            "rbf*periodic",
+            "periodic+linear"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "str",
+          "param": "kernel",
+          "required": false,
+          "val_ids": [
+            258,
+            259,
+            260,
+            261,
+            262,
+            263,
+            264,
+            265
+          ]
+        },
+        {
+          "absent_id": 269,
+          "bin_texts": [
+            "300",
+            "400"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "m",
+          "required": false,
+          "val_ids": [
+            267,
+            268
+          ]
+        },
+        {
+          "absent_id": 272,
+          "bin_texts": [
+            "30",
+            "40"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "steps",
+          "required": false,
+          "val_ids": [
+            270,
+            271
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 257
+    },
+    "273": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "histgbm",
+      "role": "head",
+      "slots": [
+        {
+          "absent_id": 277,
+          "bin_texts": [
+            "2",
+            "3",
+            "4"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "depth",
+          "required": false,
+          "val_ids": [
+            274,
+            275,
+            276
+          ]
+        },
+        {
+          "absent_id": 281,
+          "bin_texts": [
+            "0.05",
+            "0.1",
+            "0.15"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "lr",
+          "required": false,
+          "val_ids": [
+            278,
+            279,
+            280
+          ]
+        },
+        {
+          "absent_id": 285,
+          "bin_texts": [
+            "80",
+            "120",
+            "180"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "rounds",
+          "required": false,
+          "val_ids": [
+            282,
+            283,
+            284
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 273
+    },
+    "286": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "histgbm2",
+      "role": "head",
+      "slots": [
+        {
+          "absent_id": 290,
+          "bin_texts": [
+            "15",
+            "31",
+            "63"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "leaves",
+          "required": false,
+          "val_ids": [
+            287,
+            288,
+            289
+          ]
+        },
+        {
+          "absent_id": 294,
+          "bin_texts": [
+            "0.03",
+            "0.05",
+            "0.08"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "lr",
+          "required": false,
+          "val_ids": [
+            291,
+            292,
+            293
+          ]
+        },
+        {
+          "absent_id": 297,
+          "bin_texts": [
+            "300",
+            "500"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "rounds",
+          "required": false,
+          "val_ids": [
+            295,
+            296
+          ]
+        },
+        {
+          "absent_id": 300,
+          "bin_texts": [
+            "3",
+            "5"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "bags",
+          "required": false,
+          "val_ids": [
+            298,
+            299
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 286
+    },
+    "301": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "krr",
+      "role": "head",
+      "slots": [
+        {
+          "absent_id": 305,
+          "bin_texts": [
+            "200",
+            "600",
+            "1000"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "m",
+          "required": false,
+          "val_ids": [
+            302,
+            303,
+            304
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 301
+    },
+    "306": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "ksmooth",
+      "role": "head",
+      "slots": [
+        {
+          "absent_id": 310,
+          "bin_texts": [
+            "16",
+            "32",
+            "64"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "k",
+          "required": false,
+          "val_ids": [
+            307,
+            308,
+            309
+          ]
+        },
+        {
+          "absent_id": 314,
+          "bin_texts": [
+            "0.5",
+            "1.0",
+            "2.0"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "gamma",
+          "required": false,
+          "val_ids": [
+            311,
+            312,
+            313
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 306
+    },
+    "315": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "logistic",
+      "role": "head",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 315
+    },
+    "370": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "ridge",
+      "role": "head",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 370
+    },
+    "372": {
+      "allow_append": false,
+      "engine": "featmath",
+      "generate": true,
+      "name": "stack",
+      "role": "head",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 372
+    },
+    "53": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "bin_onehot",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 58,
+          "bin_texts": [
+            "4",
+            "8",
+            "12",
+            "16"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "bins",
+          "required": false,
+          "val_ids": [
+            54,
+            55,
+            56,
+            57
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 53
+    },
+    "59": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "blom",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 59
+    },
+    "60": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "cheb",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 65,
+          "bin_texts": [
+            "2",
+            "3",
+            "4",
+            "6"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "degree",
+          "required": false,
+          "val_ids": [
+            61,
+            62,
+            63,
+            64
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 60
+    },
+    "66": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "derive",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": null,
+          "bin_texts": [],
+          "default": "row_mean",
+          "is_expr": true,
+          "kind": "expr",
+          "param": "expr",
+          "required": true,
+          "val_ids": []
+        }
+      ],
+      "takes_expr": true,
+      "token_id": 66
+    },
+    "67": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "fft_mag",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 71,
+          "bin_texts": [
+            "4",
+            "8",
+            "16"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "k",
+          "required": false,
+          "val_ids": [
+            68,
+            69,
+            70
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 67
+    },
+    "72": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "hinge",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 77,
+          "bin_texts": [
+            "2",
+            "4",
+            "6",
+            "8"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "knots",
+          "required": false,
+          "val_ids": [
+            73,
+            74,
+            75,
+            76
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 72
+    },
+    "78": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "landmark_dist",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 82,
+          "bin_texts": [
+            "8",
+            "16",
+            "32"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "k",
+          "required": false,
+          "val_ids": [
+            79,
+            80,
+            81
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 78
+    },
+    "83": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "map",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": null,
+          "bin_texts": [],
+          "default": "tanh(x)",
+          "is_expr": true,
+          "kind": "expr",
+          "param": "expr",
+          "required": true,
+          "val_ids": []
+        }
+      ],
+      "takes_expr": true,
+      "token_id": 83
+    },
+    "84": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "norm_features",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 84
+    },
+    "85": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "norm_row",
+      "role": "transform",
+      "slots": [],
+      "takes_expr": false,
+      "token_id": 85
+    },
+    "86": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "nystrom",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 90,
+          "bin_texts": [
+            "8",
+            "16",
+            "32"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "k",
+          "required": false,
+          "val_ids": [
+            87,
+            88,
+            89
+          ]
+        },
+        {
+          "absent_id": 94,
+          "bin_texts": [
+            "0.25",
+            "0.5",
+            "1.0"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "float",
+          "param": "gamma",
+          "required": false,
+          "val_ids": [
+            91,
+            92,
+            93
+          ]
+        },
+        {
+          "absent_id": 96,
+          "bin_texts": [
+            "7"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "seed",
+          "required": false,
+          "val_ids": [
+            95
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 86
+    },
+    "97": {
+      "allow_append": true,
+      "engine": "featmath",
+      "generate": true,
+      "name": "oblique_hinge",
+      "role": "transform",
+      "slots": [
+        {
+          "absent_id": 101,
+          "bin_texts": [
+            "8",
+            "16",
+            "32"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "n",
+          "required": false,
+          "val_ids": [
+            98,
+            99,
+            100
+          ]
+        },
+        {
+          "absent_id": 104,
+          "bin_texts": [
+            "7",
+            "19"
+          ],
+          "default": null,
+          "is_expr": false,
+          "kind": "int",
+          "param": "seed",
+          "required": false,
+          "val_ids": [
+            102,
+            103
+          ]
+        }
+      ],
+      "takes_expr": false,
+      "token_id": 97
+    }
+  },
+  "restriction": {
+    "base_version": "featmath:featmath.v3",
+    "base_vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "executable_ops_sha256": "21c194e2d2c162e29d3893877bc2a2944ce33815db09f21626b5a99371d398aa",
+    "jain_math_registry_hash": "8173b07f37fde39bdc8bbf2dfe2e496aa5ccaeb4e0274843c235ec1fc6972c62",
+    "jain_math_registry_path": "crates/feat-math/src/registry.rs",
+    "jain_math_repository": "https://git.neverhuman.org/git/veox/jain-math.git",
+    "jain_math_rev": "9fa594e2eedb1916cc0e1ef4038c79adeccd6832",
+    "removed_ops": [
+      {
+        "name": "extra_trees",
+        "token_id": 217
+      },
+      {
+        "name": "gam_boost",
+        "token_id": 230
+      },
+      {
+        "name": "logit_ridge",
+        "token_id": 316
+      },
+      {
+        "name": "multiclass_diagonal_lda",
+        "token_id": 324
+      },
+      {
+        "name": "multiclass_nearest_centroid",
+        "token_id": 335
+      },
+      {
+        "name": "multiclass_ovr_logistic",
+        "token_id": 341
+      },
+      {
+        "name": "multiclass_ridge",
+        "token_id": 354
+      },
+      {
+        "name": "portfolio",
+        "token_id": 369
+      },
+      {
+        "name": "ridge_gcv",
+        "token_id": 371
+      },
+      {
+        "name": "tab_boost",
+        "token_id": 373
+      }
+    ],
+    "rule": "keep a head/transform op only if jain-math's feat-math registry marks it executable and not quarantined",
+    "schema": "parallel.vocab_restriction.v1",
+    "token_table": "unchanged"
+  },
+  "schema": "parallel.action_vocab.v1",
+  "source_sha256": {
+    "jope/grammars/featmath.py": "cefbcd3a4eca503e35fce63eb8a46fdfb45dc0073d9479de054bca886fecfe15",
+    "jope/policy/automaton.py": "23bef2683f7f7385209429eae43df5ccd535ca0cda8193346d3eafcfaefd1be6",
+    "jope/policy/tokens.py": "079165f5522a1968916428666a98d0efe768c6e91404ef3acf2396c1a1aed019",
+    "parallel/assets/grammar/featmath.json": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "parallel/assets/grammar/jain-math-executable-9fa594e2.json": "21c194e2d2c162e29d3893877bc2a2944ce33815db09f21626b5a99371d398aa"
+  },
+  "task_ids": {
+    "binary": 398,
+    "multiclass": 400,
+    "regression": 397,
+    "timeseries": 399
+  },
+  "tasks": [
+    "regression",
+    "binary",
+    "timeseries",
+    "multiclass"
+  ],
+  "tokens": [
+    "PAD",
+    "BOS",
+    "EOS",
+    "ENGINE=featmath",
+    "EXPR_VAR=x",
+    "EXPR_VAR=row_mean",
+    "EXPR_VAR=row_std",
+    "EXPR_VAR=row_min",
+    "EXPR_VAR=row_max",
+    "EXPR_VAR=row_l2",
+    "EXPR_VAR=col0",
+    "EXPR_VAR=col1",
+    "EXPR_VAR=col2",
+    "EXPR_VAR=col3",
+    "EXPR_VAR=col4",
+    "EXPR_VAR=col5",
+    "EXPR_VAR=col6",
+    "EXPR_VAR=col7",
+    "EXPR_CONST=-2",
+    "EXPR_CONST=-1",
+    "EXPR_CONST=-0.5",
+    "EXPR_CONST=-0.25",
+    "EXPR_CONST=-0.1",
+    "EXPR_CONST=0",
+    "EXPR_CONST=0.05",
+    "EXPR_CONST=0.1",
+    "EXPR_CONST=0.25",
+    "EXPR_CONST=0.5",
+    "EXPR_CONST=1",
+    "EXPR_CONST=2",
+    "EXPR_CONST=3",
+    "EXPR_CONST=5",
+    "EXPR_CONST=10",
+    "EXPR_CONST=20",
+    "EXPR_FUNC=abs",
+    "EXPR_FUNC=sqrt",
+    "EXPR_FUNC=log1p",
+    "EXPR_FUNC=sin",
+    "EXPR_FUNC=cos",
+    "EXPR_FUNC=tanh",
+    "EXPR_FUNC=sigmoid",
+    "EXPR_FUNC=min",
+    "EXPR_FUNC=max",
+    "EXPR_FUNC=step",
+    "EXPR_FUNC=clip",
+    "EXPR_BINOP=+",
+    "EXPR_BINOP=-",
+    "EXPR_BINOP=*",
+    "EXPR_BINOP=/",
+    "EXPR_END",
+    "APPEND=<ABSENT>",
+    "APPEND=0",
+    "APPEND=1",
+    "OP=featmath:bin_onehot",
+    "VAL=featmath:bin_onehot:bins=4",
+    "VAL=featmath:bin_onehot:bins=8",
+    "VAL=featmath:bin_onehot:bins=12",
+    "VAL=featmath:bin_onehot:bins=16",
+    "VAL=featmath:bin_onehot:bins=<ABSENT>",
+    "OP=featmath:blom",
+    "OP=featmath:cheb",
+    "VAL=featmath:cheb:degree=2",
+    "VAL=featmath:cheb:degree=3",
+    "VAL=featmath:cheb:degree=4",
+    "VAL=featmath:cheb:degree=6",
+    "VAL=featmath:cheb:degree=<ABSENT>",
+    "OP=featmath:derive",
+    "OP=featmath:fft_mag",
+    "VAL=featmath:fft_mag:k=4",
+    "VAL=featmath:fft_mag:k=8",
+    "VAL=featmath:fft_mag:k=16",
+    "VAL=featmath:fft_mag:k=<ABSENT>",
+    "OP=featmath:hinge",
+    "VAL=featmath:hinge:knots=2",
+    "VAL=featmath:hinge:knots=4",
+    "VAL=featmath:hinge:knots=6",
+    "VAL=featmath:hinge:knots=8",
+    "VAL=featmath:hinge:knots=<ABSENT>",
+    "OP=featmath:landmark_dist",
+    "VAL=featmath:landmark_dist:k=8",
+    "VAL=featmath:landmark_dist:k=16",
+    "VAL=featmath:landmark_dist:k=32",
+    "VAL=featmath:landmark_dist:k=<ABSENT>",
+    "OP=featmath:map",
+    "OP=featmath:norm_features",
+    "OP=featmath:norm_row",
+    "OP=featmath:nystrom",
+    "VAL=featmath:nystrom:k=8",
+    "VAL=featmath:nystrom:k=16",
+    "VAL=featmath:nystrom:k=32",
+    "VAL=featmath:nystrom:k=<ABSENT>",
+    "VAL=featmath:nystrom:gamma=0.25",
+    "VAL=featmath:nystrom:gamma=0.5",
+    "VAL=featmath:nystrom:gamma=1.0",
+    "VAL=featmath:nystrom:gamma=<ABSENT>",
+    "VAL=featmath:nystrom:seed=7",
+    "VAL=featmath:nystrom:seed=<ABSENT>",
+    "OP=featmath:oblique_hinge",
+    "VAL=featmath:oblique_hinge:n=8",
+    "VAL=featmath:oblique_hinge:n=16",
+    "VAL=featmath:oblique_hinge:n=32",
+    "VAL=featmath:oblique_hinge:n=<ABSENT>",
+    "VAL=featmath:oblique_hinge:seed=7",
+    "VAL=featmath:oblique_hinge:seed=19",
+    "VAL=featmath:oblique_hinge:seed=<ABSENT>",
+    "OP=featmath:pair_prod",
+    "VAL=featmath:pair_prod:topk=4",
+    "VAL=featmath:pair_prod:topk=8",
+    "VAL=featmath:pair_prod:topk=12",
+    "VAL=featmath:pair_prod:topk=<ABSENT>",
+    "OP=featmath:polar",
+    "OP=featmath:poly_interact",
+    "VAL=featmath:poly_interact:topk=4",
+    "VAL=featmath:poly_interact:topk=8",
+    "VAL=featmath:poly_interact:topk=12",
+    "VAL=featmath:poly_interact:topk=<ABSENT>",
+    "OP=featmath:quantile_bins",
+    "VAL=featmath:quantile_bins:bins=4",
+    "VAL=featmath:quantile_bins:bins=8",
+    "VAL=featmath:quantile_bins:bins=16",
+    "VAL=featmath:quantile_bins:bins=32",
+    "VAL=featmath:quantile_bins:bins=<ABSENT>",
+    "OP=featmath:rand_proj",
+    "VAL=featmath:rand_proj:k=8",
+    "VAL=featmath:rand_proj:k=16",
+    "VAL=featmath:rand_proj:k=32",
+    "VAL=featmath:rand_proj:k=64",
+    "VAL=featmath:rand_proj:k=<ABSENT>",
+    "VAL=featmath:rand_proj:seed=7",
+    "VAL=featmath:rand_proj:seed=17",
+    "VAL=featmath:rand_proj:seed=31",
+    "VAL=featmath:rand_proj:seed=<ABSENT>",
+    "OP=featmath:rank",
+    "OP=featmath:rff_cos",
+    "VAL=featmath:rff_cos:n=8",
+    "VAL=featmath:rff_cos:n=16",
+    "VAL=featmath:rff_cos:n=32",
+    "VAL=featmath:rff_cos:n=64",
+    "VAL=featmath:rff_cos:n=<ABSENT>",
+    "VAL=featmath:rff_cos:gamma=0.5",
+    "VAL=featmath:rff_cos:gamma=1.0",
+    "VAL=featmath:rff_cos:gamma=2.0",
+    "VAL=featmath:rff_cos:gamma=<ABSENT>",
+    "VAL=featmath:rff_cos:seed=2",
+    "VAL=featmath:rff_cos:seed=7",
+    "VAL=featmath:rff_cos:seed=11",
+    "VAL=featmath:rff_cos:seed=23",
+    "VAL=featmath:rff_cos:seed=<ABSENT>",
+    "OP=featmath:rff_sin",
+    "VAL=featmath:rff_sin:n=8",
+    "VAL=featmath:rff_sin:n=16",
+    "VAL=featmath:rff_sin:n=32",
+    "VAL=featmath:rff_sin:n=64",
+    "VAL=featmath:rff_sin:n=<ABSENT>",
+    "VAL=featmath:rff_sin:gamma=0.5",
+    "VAL=featmath:rff_sin:gamma=1.0",
+    "VAL=featmath:rff_sin:gamma=2.0",
+    "VAL=featmath:rff_sin:gamma=<ABSENT>",
+    "VAL=featmath:rff_sin:seed=3",
+    "VAL=featmath:rff_sin:seed=5",
+    "VAL=featmath:rff_sin:seed=13",
+    "VAL=featmath:rff_sin:seed=29",
+    "VAL=featmath:rff_sin:seed=<ABSENT>",
+    "OP=featmath:robust_scale",
+    "OP=featmath:row_diff_stats",
+    "OP=featmath:row_spectral",
+    "OP=featmath:row_stats",
+    "OP=featmath:sigmoid",
+    "OP=featmath:standardize",
+    "OP=featmath:step",
+    "VAL=featmath:step:t=0.25",
+    "VAL=featmath:step:t=0.5",
+    "VAL=featmath:step:t=0.75",
+    "VAL=featmath:step:t=<ABSENT>",
+    "OP=featmath:svd_project",
+    "VAL=featmath:svd_project:k=4",
+    "VAL=featmath:svd_project:k=8",
+    "VAL=featmath:svd_project:k=16",
+    "VAL=featmath:svd_project:k=32",
+    "VAL=featmath:svd_project:k=<ABSENT>",
+    "VAL=featmath:svd_project:iters=8",
+    "VAL=featmath:svd_project:iters=16",
+    "VAL=featmath:svd_project:iters=24",
+    "VAL=featmath:svd_project:iters=<ABSENT>",
+    "VAL=featmath:svd_project:seed=7",
+    "VAL=featmath:svd_project:seed=<ABSENT>",
+    "OP=featmath:target_bin_encode",
+    "VAL=featmath:target_bin_encode:bins=4",
+    "VAL=featmath:target_bin_encode:bins=8",
+    "VAL=featmath:target_bin_encode:bins=16",
+    "VAL=featmath:target_bin_encode:bins=<ABSENT>",
+    "VAL=featmath:target_bin_encode:prior=1",
+    "VAL=featmath:target_bin_encode:prior=5",
+    "VAL=featmath:target_bin_encode:prior=10",
+    "VAL=featmath:target_bin_encode:prior=<ABSENT>",
+    "OP=featmath:winsor_clip",
+    "VAL=featmath:winsor_clip:q=0.01",
+    "VAL=featmath:winsor_clip:q=0.02",
+    "VAL=featmath:winsor_clip:q=0.05",
+    "VAL=featmath:winsor_clip:q=0.1",
+    "VAL=featmath:winsor_clip:q=<ABSENT>",
+    "OP=featmath:winsor_moments",
+    "VAL=featmath:winsor_moments:q=0.02",
+    "VAL=featmath:winsor_moments:q=0.05",
+    "VAL=featmath:winsor_moments:q=0.1",
+    "VAL=featmath:winsor_moments:q=<ABSENT>",
+    "OP=featmath:elasticnet",
+    "VAL=featmath:elasticnet:alpha=0.0005",
+    "VAL=featmath:elasticnet:alpha=0.001",
+    "VAL=featmath:elasticnet:alpha=0.01",
+    "VAL=featmath:elasticnet:alpha=<ABSENT>",
+    "VAL=featmath:elasticnet:l1_ratio=0.2",
+    "VAL=featmath:elasticnet:l1_ratio=0.5",
+    "VAL=featmath:elasticnet:l1_ratio=0.8",
+    "VAL=featmath:elasticnet:l1_ratio=<ABSENT>",
+    "OP=featmath:ensemble",
+    "OP=featmath:ensemble_ridge_gbm",
+    "OP=featmath:extra_trees",
+    "VAL=featmath:extra_trees:depth=6",
+    "VAL=featmath:extra_trees:depth=8",
+    "VAL=featmath:extra_trees:depth=10",
+    "VAL=featmath:extra_trees:depth=<ABSENT>",
+    "VAL=featmath:extra_trees:min_leaf=3",
+    "VAL=featmath:extra_trees:min_leaf=5",
+    "VAL=featmath:extra_trees:min_leaf=10",
+    "VAL=featmath:extra_trees:min_leaf=<ABSENT>",
+    "VAL=featmath:extra_trees:trees=32",
+    "VAL=featmath:extra_trees:trees=64",
+    "VAL=featmath:extra_trees:trees=96",
+    "VAL=featmath:extra_trees:trees=<ABSENT>",
+    "OP=featmath:gam_boost",
+    "VAL=featmath:gam_boost:bins=8",
+    "VAL=featmath:gam_boost:bins=16",
+    "VAL=featmath:gam_boost:bins=24",
+    "VAL=featmath:gam_boost:bins=32",
+    "VAL=featmath:gam_boost:bins=<ABSENT>",
+    "VAL=featmath:gam_boost:lr=0.05",
+    "VAL=featmath:gam_boost:lr=0.1",
+    "VAL=featmath:gam_boost:lr=0.2",
+    "VAL=featmath:gam_boost:lr=<ABSENT>",
+    "VAL=featmath:gam_boost:rounds=40",
+    "VAL=featmath:gam_boost:rounds=60",
+    "VAL=featmath:gam_boost:rounds=80",
+    "VAL=featmath:gam_boost:rounds=100",
+    "VAL=featmath:gam_boost:rounds=<ABSENT>",
+    "OP=featmath:gbm",
+    "VAL=featmath:gbm:depth=2",
+    "VAL=featmath:gbm:depth=3",
+    "VAL=featmath:gbm:depth=4",
+    "VAL=featmath:gbm:depth=<ABSENT>",
+    "VAL=featmath:gbm:lr=0.05",
+    "VAL=featmath:gbm:lr=0.1",
+    "VAL=featmath:gbm:lr=<ABSENT>",
+    "VAL=featmath:gbm:rounds=80",
+    "VAL=featmath:gbm:rounds=150",
+    "VAL=featmath:gbm:rounds=240",
+    "VAL=featmath:gbm:rounds=<ABSENT>",
+    "OP=featmath:gpr",
+    "VAL=featmath:gpr:kernel=rbf",
+    "VAL=featmath:gpr:kernel=rq",
+    "VAL=featmath:gpr:kernel=linear",
+    "VAL=featmath:gpr:kernel=periodic",
+    "VAL=featmath:gpr:kernel=rbf+linear",
+    "VAL=featmath:gpr:kernel=rq+linear",
+    "VAL=featmath:gpr:kernel=rbf*periodic",
+    "VAL=featmath:gpr:kernel=periodic+linear",
+    "VAL=featmath:gpr:kernel=<ABSENT>",
+    "VAL=featmath:gpr:m=300",
+    "VAL=featmath:gpr:m=400",
+    "VAL=featmath:gpr:m=<ABSENT>",
+    "VAL=featmath:gpr:steps=30",
+    "VAL=featmath:gpr:steps=40",
+    "VAL=featmath:gpr:steps=<ABSENT>",
+    "OP=featmath:histgbm",
+    "VAL=featmath:histgbm:depth=2",
+    "VAL=featmath:histgbm:depth=3",
+    "VAL=featmath:histgbm:depth=4",
+    "VAL=featmath:histgbm:depth=<ABSENT>",
+    "VAL=featmath:histgbm:lr=0.05",
+    "VAL=featmath:histgbm:lr=0.1",
+    "VAL=featmath:histgbm:lr=0.15",
+    "VAL=featmath:histgbm:lr=<ABSENT>",
+    "VAL=featmath:histgbm:rounds=80",
+    "VAL=featmath:histgbm:rounds=120",
+    "VAL=featmath:histgbm:rounds=180",
+    "VAL=featmath:histgbm:rounds=<ABSENT>",
+    "OP=featmath:histgbm2",
+    "VAL=featmath:histgbm2:leaves=15",
+    "VAL=featmath:histgbm2:leaves=31",
+    "VAL=featmath:histgbm2:leaves=63",
+    "VAL=featmath:histgbm2:leaves=<ABSENT>",
+    "VAL=featmath:histgbm2:lr=0.03",
+    "VAL=featmath:histgbm2:lr=0.05",
+    "VAL=featmath:histgbm2:lr=0.08",
+    "VAL=featmath:histgbm2:lr=<ABSENT>",
+    "VAL=featmath:histgbm2:rounds=300",
+    "VAL=featmath:histgbm2:rounds=500",
+    "VAL=featmath:histgbm2:rounds=<ABSENT>",
+    "VAL=featmath:histgbm2:bags=3",
+    "VAL=featmath:histgbm2:bags=5",
+    "VAL=featmath:histgbm2:bags=<ABSENT>",
+    "OP=featmath:krr",
+    "VAL=featmath:krr:m=200",
+    "VAL=featmath:krr:m=600",
+    "VAL=featmath:krr:m=1000",
+    "VAL=featmath:krr:m=<ABSENT>",
+    "OP=featmath:ksmooth",
+    "VAL=featmath:ksmooth:k=16",
+    "VAL=featmath:ksmooth:k=32",
+    "VAL=featmath:ksmooth:k=64",
+    "VAL=featmath:ksmooth:k=<ABSENT>",
+    "VAL=featmath:ksmooth:gamma=0.5",
+    "VAL=featmath:ksmooth:gamma=1.0",
+    "VAL=featmath:ksmooth:gamma=2.0",
+    "VAL=featmath:ksmooth:gamma=<ABSENT>",
+    "OP=featmath:logistic",
+    "OP=featmath:logit_ridge",
+    "VAL=featmath:logit_ridge:class_weight=balanced",
+    "VAL=featmath:logit_ridge:class_weight=<ABSENT>",
+    "VAL=featmath:logit_ridge:l2=0.005",
+    "VAL=featmath:logit_ridge:l2=0.02",
+    "VAL=featmath:logit_ridge:l2=0.1",
+    "VAL=featmath:logit_ridge:l2=0.5",
+    "VAL=featmath:logit_ridge:l2=<ABSENT>",
+    "OP=featmath:multiclass_diagonal_lda",
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=32",
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=64",
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=128",
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=256",
+    "VAL=featmath:multiclass_diagonal_lda:feature_budget=<ABSENT>",
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.001",
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.01",
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.1",
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=0.5",
+    "VAL=featmath:multiclass_diagonal_lda:shrinkage=<ABSENT>",
+    "OP=featmath:multiclass_nearest_centroid",
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=32",
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=64",
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=128",
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=256",
+    "VAL=featmath:multiclass_nearest_centroid:feature_budget=<ABSENT>",
+    "OP=featmath:multiclass_ovr_logistic",
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=32",
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=64",
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=128",
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=256",
+    "VAL=featmath:multiclass_ovr_logistic:feature_budget=<ABSENT>",
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.0001",
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.001",
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.01",
+    "VAL=featmath:multiclass_ovr_logistic:l2=0.1",
+    "VAL=featmath:multiclass_ovr_logistic:l2=1.0",
+    "VAL=featmath:multiclass_ovr_logistic:l2=10.0",
+    "VAL=featmath:multiclass_ovr_logistic:l2=<ABSENT>",
+    "OP=featmath:multiclass_ridge",
+    "VAL=featmath:multiclass_ridge:feature_budget=32",
+    "VAL=featmath:multiclass_ridge:feature_budget=64",
+    "VAL=featmath:multiclass_ridge:feature_budget=128",
+    "VAL=featmath:multiclass_ridge:feature_budget=256",
+    "VAL=featmath:multiclass_ridge:feature_budget=<ABSENT>",
+    "VAL=featmath:multiclass_ridge:l2=0.0001",
+    "VAL=featmath:multiclass_ridge:l2=0.001",
+    "VAL=featmath:multiclass_ridge:l2=0.01",
+    "VAL=featmath:multiclass_ridge:l2=0.1",
+    "VAL=featmath:multiclass_ridge:l2=1.0",
+    "VAL=featmath:multiclass_ridge:l2=10.0",
+    "VAL=featmath:multiclass_ridge:l2=<ABSENT>",
+    "VAL=featmath:multiclass_ridge:class_weight=balanced",
+    "VAL=featmath:multiclass_ridge:class_weight=<ABSENT>",
+    "OP=featmath:portfolio",
+    "OP=featmath:ridge",
+    "OP=featmath:ridge_gcv",
+    "OP=featmath:stack",
+    "OP=featmath:tab_boost",
+    "VAL=featmath:tab_boost:bins=16",
+    "VAL=featmath:tab_boost:bins=32",
+    "VAL=featmath:tab_boost:bins=64",
+    "VAL=featmath:tab_boost:bins=128",
+    "VAL=featmath:tab_boost:bins=<ABSENT>",
+    "VAL=featmath:tab_boost:lambda=0.5",
+    "VAL=featmath:tab_boost:lambda=1.0",
+    "VAL=featmath:tab_boost:lambda=5.0",
+    "VAL=featmath:tab_boost:lambda=<ABSENT>",
+    "VAL=featmath:tab_boost:lr=0.05",
+    "VAL=featmath:tab_boost:lr=0.1",
+    "VAL=featmath:tab_boost:lr=0.2",
+    "VAL=featmath:tab_boost:lr=<ABSENT>",
+    "VAL=featmath:tab_boost:min_leaf=3",
+    "VAL=featmath:tab_boost:min_leaf=5",
+    "VAL=featmath:tab_boost:min_leaf=10",
+    "VAL=featmath:tab_boost:min_leaf=<ABSENT>",
+    "VAL=featmath:tab_boost:rounds=40",
+    "VAL=featmath:tab_boost:rounds=60",
+    "VAL=featmath:tab_boost:rounds=80",
+    "VAL=featmath:tab_boost:rounds=100",
+    "VAL=featmath:tab_boost:rounds=120",
+    "VAL=featmath:tab_boost:rounds=<ABSENT>",
+    "TASK=regression",
+    "TASK=binary",
+    "TASK=timeseries",
+    "TASK=multiclass"
+  ],
+  "version": "featmath:featmath.v3+jain-math-9fa594e2"
+}

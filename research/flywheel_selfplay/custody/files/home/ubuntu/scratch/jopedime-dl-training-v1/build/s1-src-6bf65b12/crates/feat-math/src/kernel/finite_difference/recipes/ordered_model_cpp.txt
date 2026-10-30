@@ -1,0 +1,30 @@
+struct OrderedRow {OrderedGroup group;double timestamp;std::vector<double> values;};
+struct DifferenceModel {
+    DifferenceState state;Model predictor;unsigned task;
+    std::pair<std::vector<double>,std::vector<std::vector<std::uint32_t>>> predict(const std::vector<OrderedRow>& rows) {
+        if(rows.empty()) return {{},{}};auto next=state;std::vector<std::vector<double>> transformed;std::vector<std::vector<std::uint32_t>> faults;
+        for(const auto& row:rows) {const auto result=next.push(row.group,row.timestamp,row.values);transformed.push_back(result.first);faults.push_back(result.second);}
+        auto values=predictor.predict(transformed);for(auto& value:values) if(!std::isfinite(value)) value=0.0;if(values.size()!=rows.size()) throw OrderedError("shape");state=std::move(next);return {values,faults};
+    }
+    OrderedBytes state_bytes() const {return state.to_bytes();}
+    void replace_state(const OrderedBytes& bytes) {
+        auto next=DifferenceState::from_bytes(bytes,task,state.input,state.cut,state.train_end,state.total_rows);
+        if(next.order!=state.order || ordered_bits(next.step)!=ordered_bits(state.step) || next.width!=state.width || next.ordinal<next.train_end) throw OrderedError("domain");state=std::move(next);
+    }
+    void finish() const {state.finish();}
+};
+static DifferenceModel fit_ordered(const std::vector<OrderedRow>& rows,const std::vector<double>& labels,unsigned task,const std::string& cut,std::size_t train_end,std::size_t total_rows) {
+    if(rows.size()!=train_end || labels.size()!=train_end || std::any_of(labels.begin(),labels.end(),[](double v){return !std::isfinite(v);})) throw OrderedError("shape");
+    DifferenceState state(@ORDER@,@STEP@,@WIDTH@,task,@INPUT@,cut,train_end,total_rows);std::vector<std::vector<double>> transformed;
+    for(const auto& row:rows) transformed.push_back(state.push(row.group,row.timestamp,row.values).first);
+    auto predictor=Model::fit(transformed,labels);
+    if(std::all_of(labels.begin(),labels.end(),[](double v){return ordered_bits(v)==ordered_bits(-0.0);})) predictor.head.w[0]=-0.0;
+    const auto& head=predictor.head;
+    if(head.means.size()!=state.width || head.scales.size()!=state.width || head.w.size()!=state.width+1 || std::any_of(head.means.begin(),head.means.end(),[](double v){return !std::isfinite(v);}) || std::any_of(head.scales.begin(),head.scales.end(),[](double v){return !std::isfinite(v) || v<=0.0;}) || std::any_of(head.w.begin(),head.w.end(),[](double v){return !std::isfinite(v);})) throw OrderedError("domain");
+    OrderedBytes bytes;try {bytes=state.to_bytes();} catch(const OrderedError&) {throw OrderedError("domain");}
+    std::size_t array=2+(bytes.empty()?0:bytes.size()-1);for(auto v:bytes) array+=std::to_string(v).size();
+    const auto word_array=[](const std::vector<double>& values) {std::size_t n=2+(values.empty()?0:values.size()-1);for(double v:values) n+=13+std::to_string(ordered_bits(v)).size();return n;};
+    const auto fold="{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train_end)+",\"total_rows\":"+std::to_string(total_rows)+"}";
+    if(@MODEL_BASE_BYTES@+fold.size()+array+word_array(head.means)+word_array(head.scales)+word_array(head.w)>16*1024*1024) throw OrderedError("domain");
+    return {std::move(state),std::move(predictor),task};
+}
