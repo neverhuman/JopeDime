@@ -147,6 +147,13 @@ families, rather than treating every dataset as an independent observation.
 
 \subsection{Pricing evidence still required}\label{sub:price-run}
 
+Mixture-of-experts writers use compute on active parameters but need memory
+for all parameters: Kimi~K2 has 32B active of 1T, while DeepSeek-V3 has 37B
+active of 671B \citep{kimiteam2025k2,deepseekv3}. Resident one-byte weights
+for 1T parameters alone require at least 13 H100 SXM GPUs with 80~GB each
+\citep{nvidia2026h100}; runtime state needs additional memory. This memory
+floor is separate from the cost estimates omitted below.
+
 A cost projection needs a pinned model and hardware configuration, dated
 prices, measured or justified utilization, a reproducible calculation, and
 an explicit accounting boundary. Those inputs are not yet recorded for the
@@ -162,17 +169,16 @@ from any future scaling projection.
   and the probability that it wins.
 \end{keyidea}
 
-The table prices a fixed number of attempts, not a fixed number of wins.
-Converting those totals to cost per win requires a measured win rate;
-comparisons require a common task mix, incumbent standard and verification
-rule. Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$
-halves expected cost per win only if mean cost per attempt stays fixed.
+Any future projection of a fixed attempt budget must be converted to cost
+per win using a measured win rate and compared under a common task mix,
+incumbent standard and verification rule. Under \cref{eq:bill}'s
+fixed-probability model, doubling $\winprob$ halves expected cost per win
+only if mean cost per attempt stays fixed.
 
-The scaling scenarios in this section concern 8B--1.5T language-model
-writers producing 5,000 tokens per attempt; they do not price the reference
-checkpoint in \cref{sec:method}. That checkpoint uses a compact network with 27.8 million parameters and at most 128 grammar-constrained tokens, with no repair
-in the proposed single-candidate deployment protocol. Its measured costs
-must be reported separately from the scaling projections.
+The reference checkpoint in \cref{sec:method} uses a compact network with
+27.8 million parameters and at most 128 grammar-constrained tokens, with no
+repair in the proposed single-candidate deployment protocol. Its measured
+costs must be reported separately from any future scaling projection.
 
 The method's job is to improve proposal quality; whether it does so must be
 measured under the stated deployment budget.
