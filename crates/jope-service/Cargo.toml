@@ -9,7 +9,15 @@ repository.workspace = true
 description = "JopeDime v1 engine service"
 
 [dependencies]
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+jope-api = { path = "../jope-api" }
+subtle = "=2.6.1"
+tokio = { workspace = true }
 toml = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+tower = { version = "=0.5.3", default-features = false, features = ["util"] }
 
 [lints]
 workspace = true
