@@ -1871,6 +1871,10 @@
       "reason": "Executed offline CPU synthetic/stub unit checks for Phase 7 flywheel v3 comparator labels, fail-closed S3/checkpoint guards, and OS worker SIGKILL vs CPython ITIMER_REAL deadline boundaries in the Python lane; research flywheel outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/h-followups/h09/test_run.py": {
+      "reason": "Pytest proofs for the HWV-04 / H09 conditional DSL-residual-around-tree experiment harness (protocol, arms and result-record shape); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "target:battle-gpu/lib/battle_gpu": {
       "role": "regression",
       "subsystems": [
