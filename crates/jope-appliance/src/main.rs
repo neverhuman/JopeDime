@@ -1044,7 +1044,13 @@ fn main() -> ExitCode {
         } => run_fit(&train, output.as_deref(), &model_root, &common),
         Command::Model(args) => report(model::run(args)),
         #[cfg(feature = "mcp")]
-        Command::Run(args) => report(cmd::run::dispatch(args)),
+        Command::Run(args) => match cmd::run::dispatch(args) {
+            Err(error) => match cmd::run::interrupted_exit_code(&error) {
+                Some(code) => ExitCode::from(code),
+                None => report(Err(error)),
+            },
+            result => report(result),
+        },
         #[cfg(feature = "mcp")]
         Command::Status(args) => report((|| {
             let client = cmd::client()?;

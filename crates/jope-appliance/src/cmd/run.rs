@@ -6,15 +6,39 @@ use jope_api::{
 use jope_client::{transport::Request, RunResult, Transport};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
-use std::{
-    io::Write,
-    path::PathBuf,
-    str::FromStr,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-};
+use std::{io::Write, path::PathBuf, str::FromStr};
+
+#[cfg(not(windows))]
+type RunInterrupts = super::inproc::Interrupts;
+
+// Keep the existing Windows request-boundary behavior, with a scoped registration.
+// Two-signal pause/cancel qualification remains with the platform implementation.
+#[cfg(windows)]
+struct RunInterrupts {
+    flag: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    registration: signal_hook::SigId,
+}
+
+#[cfg(windows)]
+impl RunInterrupts {
+    fn install() -> std::io::Result<Self> {
+        let flag = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let registration =
+            signal_hook::flag::register(signal_hook::consts::SIGINT, std::sync::Arc::clone(&flag))?;
+        Ok(Self { flag, registration })
+    }
+
+    fn requested(&self) -> bool {
+        self.flag.load(std::sync::atomic::Ordering::SeqCst)
+    }
+}
+
+#[cfg(windows)]
+impl Drop for RunInterrupts {
+    fn drop(&mut self) {
+        signal_hook::low_level::unregister(self.registration);
+    }
+}
 
 #[derive(Args, Debug)]
 pub struct RunArgs {
@@ -128,6 +152,45 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
     run(args, &client)
 }
 
+/// Only a direct, acknowledged interruption may select exit130. A surrounding
+/// cleanup/IO failure remains an error even if its cause was an interruption.
+pub fn interrupted_exit_code(error: &anyhow::Error) -> Option<u8> {
+    #[cfg(not(windows))]
+    {
+        let top: &(dyn std::error::Error + 'static) = error.as_ref();
+        top.downcast_ref::<super::inproc::Interrupted>()
+            .map(super::inproc::Interrupted::exit_code)
+    }
+    #[cfg(windows)]
+    {
+        let _ = error;
+        None
+    }
+}
+
+fn finish_interrupt<T: Transport>(
+    transport: &T,
+    current: &RunSnapshot,
+    interrupts: &RunInterrupts,
+    stderr: &mut impl Write,
+) -> anyhow::Result<()> {
+    if !interrupts.requested() {
+        return Ok(());
+    }
+    write_run_id(stderr, &current.run_id)?;
+    #[cfg(not(windows))]
+    if let Some(acknowledged) = interrupts.finish(transport, current.clone())? {
+        return Err(acknowledged.into());
+    }
+    #[cfg(windows)]
+    {
+        let _ = transport;
+        anyhow::bail!("interrupted");
+    }
+    #[cfg(not(windows))]
+    Ok(())
+}
+
 #[cfg(feature = "engine")]
 fn run_m1(args: &RunArgs) -> anyhow::Result<()> {
     use jope_runtime::Failure;
@@ -217,19 +280,35 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
         }
         RunResult::Started(snapshot) => {
             let mut current = *snapshot;
-            let interrupted = Arc::new(AtomicBool::new(false));
-            signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&interrupted))?;
+            let interrupts = RunInterrupts::install()?;
             if args.events.as_deref() == Some("ndjson") {
-                let events = transport.follow_events(
+                let mut events = transport.follow_events(
                     current.run_id.clone(),
                     parse_after(args.after_event.as_deref())?,
                 )?;
-                for event in events {
-                    if interrupted.load(Ordering::Relaxed) {
-                        write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
-                        anyhow::bail!("interrupted");
+                loop {
+                    if interrupts.requested() {
+                        // Drop the response reader before requesting committed control.
+                        drop(events);
+                        finish_interrupt(
+                            transport,
+                            &current,
+                            &interrupts,
+                            &mut std::io::stderr().lock(),
+                        )?;
+                        break;
                     }
-                    let event = event?;
+                    let Some(event) = events.next() else { break };
+                    let event = match event {
+                        Ok(event) => event,
+                        Err(error) => {
+                            if interrupts.requested() {
+                                let _ =
+                                    write_run_id(&mut std::io::stderr().lock(), &current.run_id);
+                            }
+                            return Err(error.into());
+                        }
+                    };
                     println!("{}", serde_json::to_string(&event_json(&event)?)?);
                 }
             }
@@ -237,10 +316,12 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                 current.state,
                 RunState::Completed | RunState::Cancelled | RunState::Failed
             ) {
-                if interrupted.load(Ordering::Relaxed) {
-                    write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
-                    anyhow::bail!("interrupted");
-                }
+                finish_interrupt(
+                    transport,
+                    &current,
+                    &interrupts,
+                    &mut std::io::stderr().lock(),
+                )?;
                 let status: anyhow::Result<RunSnapshot> = if args.wait == 0 {
                     transport.run_status(&current.run_id).map_err(Into::into)
                 } else {
@@ -249,22 +330,30 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                 current = match status {
                     Ok(snapshot) => snapshot,
                     Err(error) => {
-                        if interrupted.load(Ordering::Relaxed) {
-                            write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
+                        if interrupts.requested() {
+                            let _ = write_run_id(&mut std::io::stderr().lock(), &current.run_id);
                         }
                         return Err(error);
                     }
                 };
             }
-            if interrupted.load(Ordering::Relaxed) {
-                write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
-                anyhow::bail!("interrupted");
-            }
+            finish_interrupt(
+                transport,
+                &current,
+                &interrupts,
+                &mut std::io::stderr().lock(),
+            )?;
             let manifest = args
                 .out
                 .as_deref()
                 .map(|directory| export_best(transport, &current, &spec, directory))
                 .transpose()?;
+            finish_interrupt(
+                transport,
+                &current,
+                &interrupts,
+                &mut std::io::stderr().lock(),
+            )?;
             if args.events.as_deref() == Some("ndjson") || manifest.is_some() {
                 write_json(&receipt_value(&current, manifest))
             } else {
@@ -360,6 +449,91 @@ mod tests {
     struct Args {
         #[command(subcommand)]
         command: crate::cli::Command,
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn request_boundary_requires_acknowledged_pause_or_cancel_and_preserves_control_errors() {
+        use jope_client::{
+            transport::{header, HeaderMap},
+            Request, Response,
+        };
+        use std::{io::Cursor, sync::Mutex};
+        struct Control {
+            current: Mutex<RunSnapshot>,
+            actions: Mutex<Vec<String>>,
+            refuse: bool,
+        }
+        impl Transport for Control {
+            fn execute(&self, request: Request) -> jope_client::Result<Response> {
+                let mut current = self.current.lock().unwrap();
+                if request.method().as_str() == "POST" {
+                    if self.refuse {
+                        return Err(jope_client::Error::Protocol(
+                            "unknown control commit outcome",
+                        ));
+                    }
+                    let value: Value = serde_json::from_slice(request.body()).unwrap();
+                    let action = value["action"].as_str().unwrap();
+                    self.actions.lock().unwrap().push(action.into());
+                    current.state = match action {
+                        "pause" => RunState::Paused,
+                        "cancel" => RunState::Cancelled,
+                        _ => panic!("unexpected action"),
+                    };
+                    current.revision.0 += 1;
+                }
+                let mut headers = HeaderMap::new();
+                headers.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
+                headers.insert("jope-api-version", "1.0".parse().unwrap());
+                Ok(Response::new(
+                    200,
+                    headers,
+                    Cursor::new(serde_json::to_vec(&*current).unwrap()),
+                ))
+            }
+        }
+        let snapshot: RunSnapshot = serde_json::from_value(json!({
+            "run_id":"run_01JBD8Q6N4V2T5Y8K3M7P9R1S0", "revision":"1",
+            "state":"running", "phase":"searching", "pending":null, "effort":"fast",
+            "budget_used":{"evaluations":"1","wall_seconds":"1"},
+            "budget_total":{"evaluations":"128","wall_seconds":"60"}, "best":null,
+            "event_watermark":"0", "warnings":[], "completion_reason":null
+        }))
+        .unwrap();
+        for (count, refused, action) in [(1, false, "pause"), (2, false, "cancel"), (1, true, "")] {
+            let control = Control {
+                current: Mutex::new(snapshot.clone()),
+                actions: Mutex::new(vec![]),
+                refuse: refused,
+            };
+            let interrupts = RunInterrupts::delivered_for_test(count);
+            let mut stderr = vec![];
+            let error =
+                finish_interrupt(&control, &snapshot, &interrupts, &mut stderr).unwrap_err();
+            assert_eq!(stderr, format!("{}\n", snapshot.run_id).as_bytes());
+            if refused {
+                assert!(error.to_string().contains("unknown control commit outcome"));
+                assert_eq!(interrupted_exit_code(&error), None);
+                assert!(control.actions.lock().unwrap().is_empty());
+            } else {
+                assert_eq!(interrupted_exit_code(&error), Some(130));
+                assert_eq!(*control.actions.lock().unwrap(), [action]);
+            }
+        }
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn cleanup_failure_around_an_acknowledgment_does_not_become_exit130() {
+        let acknowledged: anyhow::Error = super::super::inproc::Interrupted {
+            run_id: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+            state: RunState::Paused,
+        }
+        .into();
+        assert_eq!(interrupted_exit_code(&acknowledged), Some(130));
+        let error = acknowledged.context("response reader shutdown failed");
+        assert_eq!(interrupted_exit_code(&error), None);
     }
 
     fn m1_argv(path: &std::path::Path) -> Vec<String> {
