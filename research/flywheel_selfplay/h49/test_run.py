@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from h49.run import SWA_CYCLE_UPDATES
+from h49.run import SWA_CYCLE_UPDATES, choose_swa_candidate
 from h49.sel import (
     STRICT_MARGIN,
     accept_family_bootstrap_lower_bound,
@@ -16,6 +16,12 @@ from h49.score import arm_seeds
 
 def test_swa_is_one_full_32_update_cycle() -> None:
     assert SWA_CYCLE_UPDATES == 32
+
+
+def test_swa_keeps_incumbent_when_averaged_candidate_does_not_improve_inner_cv() -> None:
+    assert not choose_swa_candidate(1.2, 1.19)
+    assert not choose_swa_candidate(1.2, 1.2)
+    assert choose_swa_candidate(1.2, 1.200001)
 
 
 def test_sel_margin_is_strict_and_rejects_ties_and_noise() -> None:

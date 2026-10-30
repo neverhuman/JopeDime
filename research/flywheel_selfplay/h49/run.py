@@ -32,6 +32,11 @@ SWA_CYCLE_UPDATES = ROUNDS * UPDATES_PER_ROUND
 SOURCE_MANIFEST_SHA = "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3"
 
 
+def choose_swa_candidate(baseline_utility: float, candidate_utility: float) -> bool:
+    """Select the averaged candidate only when it strictly beats the incumbent on inner CV."""
+    return candidate_utility > baseline_utility
+
+
 def _sam_update(args, net, optimizer, trainable, pools, family_by_cid, predict, batch, indexes):
     """One persistent ASAM update with rho=.05 and H46-0 Huber+KL objective."""
     optimizer.zero_grad(set_to_none=True)
@@ -165,7 +170,12 @@ def train_sam_swa(args) -> dict:
                 candidate_weights = {name: value / avg_count for name, value in avg.items()}
                 h48.load_adapter_snapshot(net, candidate_weights)
                 candidate_eval = h48.evaluate_utility(held, pools, predict)
-                best_round = "full-cycle"
+                if choose_swa_candidate(base_eval["mean"], candidate_eval["mean"]):
+                    best_eval = candidate_eval
+                    best_weights = candidate_weights
+                    best_round = "full-cycle"
+                else:
+                    best_round = 0
             else:
                 candidate_eval = h48.evaluate_utility(held, pools, predict)
                 candidate_weights = h48.parameter_snapshot(net)
@@ -184,14 +194,14 @@ def train_sam_swa(args) -> dict:
                     "elapsed_seconds": time.monotonic() - t0,
                 })
         if args.arm == "SWA":
-            best_eval = candidate_eval
-            best_weights = candidate_weights
             trajectory.append({
                 "round": ROUNDS,
                 "updates": SWA_CYCLE_UPDATES,
                 "schedule": "one full triangular cyclic-LR cycle; average all 32 post-update adapter states",
-                "inner_cv_family_utility": best_eval["mean"],
-                "inner_cv_context_utility": best_eval["context_mean"],
+                "candidate_inner_cv_family_utility": candidate_eval["mean"],
+                "candidate_inner_cv_context_utility": candidate_eval["context_mean"],
+                "selected_inner_cv_family_utility": best_eval["mean"],
+                "selected_delta_vs_baseline": best_eval["mean"] - base_eval["mean"],
                 "elapsed_seconds": time.monotonic() - t0,
             })
         h48.save_adapter_snapshot(args.output / f"fold{fold_i}-selected.pt", best_weights, h48.digest(args.checkpoint))
