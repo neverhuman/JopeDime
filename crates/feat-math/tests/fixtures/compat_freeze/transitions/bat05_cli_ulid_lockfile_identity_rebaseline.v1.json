@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced BAT-05 lockfile identity successor after merging main cd3bf1f43: only this PR's dependency edges change Cargo.lock; no evaluator input version/feature or evaluator behavior changed. Re-chained at its queue slot by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "BAT-05; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "942a9fd7e59022fbf0faedd14129818604bd5fcb",
+  "base_commit": "cd3bf1f432ece683eba47984e788225dc2a17ff9",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "99b7b6c28fc4d8aff0d33a1b2b0dc24a555f0a72103cfb69ac26eb49b0fee678",
+      "after": "9a3785a9870587e9e43a22426f5772db4c16a718421c00a556a053b59ae9d193"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "fc1a2896ed22d62d82f437e5c44500157913c1e11d7c812fb9f5d0fa2a09bc72",
+      "after": "31d855adc5b46ec1930ebce4bad7c9bf7b2bce73c6a9e1c3668f5f8e2dc11164"
+    }
+  ],
+  "before_identity_digest": "7a0c318b019568e5fe07db1acaa35b1c8626d22471cc90878ea4fe67f87e85f1",
+  "after_identity_digest": "d3b110dbce261918e906eb893d2b2a2686a186e6e6a99656df1d33bcf3c378f1",
+  "before_implementation_sha256": "76e0e7ada402ec15e33f75a3e1c7d5d95581cc458dc681dbd52689f2e2f6195f",
+  "after_implementation_sha256": "1447984c1e9bf55b83cf565011d5701fc8d331f18089107ccb0bcdecf9cfe550",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

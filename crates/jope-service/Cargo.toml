@@ -9,15 +9,28 @@ repository.workspace = true
 description = "JopeDime v1 engine service"
 
 [dependencies]
+anyhow.workspace = true
+jope-runtime = { path = "../jope-runtime" }
+jope-api = { path = "../jope-api" }
+sha2 = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+subtle = "=2.6.1"
+tokio = { workspace = true }
 toml = { workspace = true }
-
-[target.'cfg(unix)'.dependencies]
-nix = { workspace = true }
+serde_json.workspace = true
 
 [dev-dependencies]
+proptest.workspace = true
 tempfile = { workspace = true }
+tower = { version = "=0.5.3", default-features = false, features = ["util"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.189"
+nix = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_ProcessStatus", "Win32_System_Threading"] }
 
 [lints]
 workspace = true
