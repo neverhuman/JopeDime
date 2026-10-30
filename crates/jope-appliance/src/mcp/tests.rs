@@ -346,6 +346,16 @@ async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
             if version == "2026-07-28" {
                 assert_eq!(result["result"]["resultType"], "complete");
             }
+            if matches!(name, "algorithm_get" | "model_predict") {
+                let content = result["result"]["content"].as_array().unwrap();
+                assert_eq!(content.len(), 2);
+                if version == "2024-11-05" {
+                    assert!(content[1]["text"].as_str().unwrap().contains("jope://"));
+                } else {
+                    assert_eq!(content[1]["type"], "resource_link");
+                    assert!(content[1]["uri"].as_str().unwrap().starts_with("jope://"));
+                }
+            }
             if name == "model_predict" {
                 assert_eq!(result["result"]["structuredContent"]["rows"], "2");
                 prediction_uri = result["result"]["structuredContent"]["resource"]
@@ -742,11 +752,20 @@ async fn generated_input_and_success_error_output_schemas_validate_actual_wire_v
         let errors = jope_datasets::schema::validate(&schema["inputSchema"], &args);
         assert!(errors.is_empty(), "{name} input: {errors:?}");
         let result = wire.tool(name, args).await;
-        let errors = jope_datasets::schema::validate(
-            &schema["outputSchema"],
-            &result["result"]["structuredContent"],
-        );
-        assert!(errors.is_empty(), "{name} success: {errors:?}");
+        if let Some(output_schema) = schema.get("outputSchema") {
+            let errors = jope_datasets::schema::validate(
+                output_schema,
+                &result["result"]["structuredContent"],
+            );
+            assert!(errors.is_empty(), "{name} success: {errors:?}");
+        } else {
+            assert_eq!(name, "algorithm_get");
+            assert_eq!(schema["_meta"]["jope/schemaQualified"], false);
+            assert!(schema["_meta"]["jope/missingCanonicalSchemas"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("AlgorithmPage")));
+        }
     }
     wire.backend.fail.store(true, Ordering::SeqCst);
     let result = wire.tool("system_info", json!({})).await;

@@ -134,8 +134,38 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
             };
             let result = match outcome {
                 dispatch::Outcome::Success(value) => {
+                    let mut links = Vec::new();
+                    if op.id == 12 {
+                        let prefix = format!(
+                            "jope://runs/{}/algorithms/{}/source/",
+                            args["run_id"].as_str().unwrap_or_default(),
+                            value["algorithm_id"].as_str().unwrap_or_default()
+                        );
+                        links = self
+                            .resources
+                            .list()
+                            .map_err(|e| ErrorData::internal_error(e, None))?
+                            .into_iter()
+                            .filter(|(uri, _, _)| uri.starts_with(&prefix))
+                            .collect();
+                    } else if op.id == 15 {
+                        if let Some(uri) = value["resource"].as_str() {
+                            links.push((uri.to_owned(), "text/csv".into(), 0));
+                        }
+                    }
                     let mut result = CallToolResult::structured(value);
                     result.content = vec![ContentBlock::text(format!("{} completed", op.name))];
+                    for (uri, mime, _) in links {
+                        if context.protocol_version() == Some(ProtocolVersion::V_2024_11_05) {
+                            result
+                                .content
+                                .push(ContentBlock::text(format!("Full content: {uri}")));
+                        } else {
+                            result.content.push(ContentBlock::resource_link(
+                                Resource::new(uri.clone(), uri).with_mime_type(mime),
+                            ));
+                        }
+                    }
                     result
                 }
                 dispatch::Outcome::Failure(value) => CallToolResult::structured_error(value),
