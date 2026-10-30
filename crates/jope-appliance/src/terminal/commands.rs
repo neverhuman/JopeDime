@@ -28,6 +28,8 @@ pub enum ParseError {
     UnknownCommand(String),
     /// A quoted argument has no matching closing delimiter.
     UnterminatedQuote(char),
+    /// An inline objective object is not valid JSON.
+    InvalidObjectiveJson(String),
     /// `--json` was used with a client-only or draft-only command.
     JsonNotSupported,
     /// `--json` was repeated.
@@ -44,6 +46,7 @@ impl fmt::Display for ParseError {
             Self::UnterminatedQuote(quote) => {
                 write!(f, "unterminated {quote} quote in command arguments")
             }
+            Self::InvalidObjectiveJson(detail) => write!(f, "invalid objective JSON: {detail}"),
             Self::JsonNotSupported => {
                 f.write_str("`--json` is only valid for engine-backed commands")
             }
@@ -56,7 +59,7 @@ impl std::error::Error for ParseError {}
 
 /// Parse one terminal command. Argument words use single or double quotes;
 /// backslashes in unquoted arguments are ordinary characters, so Windows paths
-/// remain intact.
+/// remain intact. Inline objective JSON remains one unchanged argument.
 pub fn parse(input: &str) -> Result<ParsedCommand, ParseError> {
     let input = input.trim_start();
     if input.is_empty() {
@@ -79,7 +82,7 @@ pub fn parse(input: &str) -> Result<ParsedCommand, ParseError> {
     let entered_name = &input[..prefix.len_utf8() + name_end];
     let command = terminal_command(entered_name)
         .ok_or_else(|| ParseError::UnknownCommand(entered_name.to_owned()))?;
-    let mut arguments = tokenize(&after_prefix[name_end..])?;
+    let mut arguments = tokenize(&after_prefix[name_end..], command.name == r"\objective")?;
 
     let mut json = false;
     let mut index = 0;
@@ -105,18 +108,37 @@ pub fn parse(input: &str) -> Result<ParsedCommand, ParseError> {
     })
 }
 
-fn tokenize(input: &str) -> Result<Vec<String>, ParseError> {
+fn tokenize(input: &str, objective_json: bool) -> Result<Vec<String>, ParseError> {
     let mut arguments = Vec::new();
     let mut word = String::new();
     let mut started = false;
     let mut quote = None;
-    let mut chars = input.chars().peekable();
+    let mut chars = input.char_indices().peekable();
 
-    while let Some(ch) = chars.next() {
+    while let Some((offset, ch)) = chars.next() {
+        if objective_json && quote.is_none() && !started && ch == '{' {
+            let mut values = serde_json::Deserializer::from_str(&input[offset..])
+                .into_iter::<serde::de::IgnoredAny>();
+            values
+                .next()
+                .expect("an opening brace starts a JSON value")
+                .map_err(|error| ParseError::InvalidObjectiveJson(error.to_string()))?;
+            let end = offset + values.byte_offset();
+            while chars.peek().is_some_and(|(index, _)| *index < end) {
+                chars.next();
+            }
+            if chars.peek().is_some_and(|(_, ch)| !ch.is_whitespace()) {
+                return Err(ParseError::InvalidObjectiveJson(
+                    "separate arguments after the object with whitespace".to_owned(),
+                ));
+            }
+            arguments.push(input[offset..end].to_owned());
+            continue;
+        }
         match quote {
             Some(delimiter) if ch == delimiter => quote = None,
-            Some('"') if ch == '\\' => match chars.peek().copied() {
-                Some('"' | '\\') => word.push(chars.next().expect("peeked character")),
+            Some('"') if ch == '\\' => match chars.peek().map(|(_, ch)| *ch) {
+                Some('"' | '\\') => word.push(chars.next().expect("peeked character").1),
                 _ => word.push(ch),
             },
             Some(_) => word.push(ch),
@@ -195,6 +217,41 @@ mod tests {
 
         let parsed = parse(r#"\objective "@objectives/Q1 objective.json""#).unwrap();
         assert_eq!(parsed.arguments, ["@objectives/Q1 objective.json"]);
+    }
+
+    #[test]
+    fn inline_json_objectives_preserve_syntax_for_all_aliases() {
+        let payload = r#"{
+  "name": "rmse", "nested": {"label": "温度 \"quoted\"", "weights": [1, 2]}
+}"#;
+        for command in [r"\objective", "/objective", r"\fitness", "/fitness"] {
+            let parsed = parse(&format!("{command} {payload}")).unwrap();
+            assert_eq!(parsed.command.name, r"\objective");
+            assert_eq!(parsed.arguments, [payload]);
+            assert!(!parsed.json);
+        }
+    }
+
+    #[test]
+    fn json_output_flag_does_not_change_inline_objective_strings() {
+        let payload = r#"{"name":"--json","nested":{"value":"two words"}}"#;
+        for input in [
+            format!(r"\objective --json {payload}"),
+            format!(r"\objective {payload} --json"),
+        ] {
+            let parsed = parse(&input).unwrap();
+            assert_eq!(parsed.arguments, [payload]);
+            assert!(parsed.json);
+        }
+    }
+
+    #[test]
+    fn malformed_inline_objective_json_has_a_specific_error() {
+        for payload in [r#"{"name":"#, r#"{name:"rmse"}"#, "{}suffix"] {
+            let error = parse(&format!(r"\objective {payload}")).unwrap_err();
+            assert!(matches!(error, ParseError::InvalidObjectiveJson(_)));
+            assert!(error.to_string().starts_with("invalid objective JSON:"));
+        }
     }
 
     #[test]
