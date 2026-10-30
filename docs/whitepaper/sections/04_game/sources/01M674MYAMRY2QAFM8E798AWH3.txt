@@ -1,0 +1,179 @@
+% ==============================================================================
+% File: sections/04_game.tex
+% Section 4: Innovation Is a Game
+% Reader question: Can invention be played like Go, and what must a machine learn?
+% Core points advanced: (1) Innovation is a game; (2) Novelty is free, judgment is
+% the inventor; (3) Search = 1.
+% ==============================================================================
+
+% Fallback macro guards so this file compiles under both macros.tex variants
+\providecommand{\EZ}{EurekaZero}
+\providecommand{\searchone}{search\,=\,1}
+\providecommand{\TBD}[1]{\textcolor{red}{\textbf{[#1]}}}
+\providecommand{\citeneeded}[1]{\textcolor{red}{[\textit{cite: #1}]}}
+\providecommand{\Prob}{\mathcal{P}}
+\providecommand{\Sol}{\mathcal{S}}
+\providecommand{\encP}{\phi_P}
+\providecommand{\encS}{\phi_S}
+\providecommand{\referee}{V}
+\providecommand{\reward}{R}
+\providecommand{\opp}{\mathcal{O}}
+\providecommand{\Game}{\mathcal{G}}
+\providecommand{\writer}{\pi_\theta}
+\providecommand{\mapv}{v_\psi}
+\providecommand{\inc}[1]{w^{\star}_{#1}}
+
+\section{Innovation Is a Game}\label{sec:game}
+% Reader question: Can invention be played like Go?
+% One-sentence answer: Yes. The problem is the board, an algorithm is the move,
+% a verifier is the referee and the best known algorithm is the opponent, and
+% one set of rules covers many boards.
+
+Can invention be played like Go? Yes: once a problem becomes the board, a program becomes the move, a verifier becomes the referee, and the best known algorithm becomes the opponent, one set of rules covers many boards.
+
+\subsection{Why games came first}\label{sub:game-first}
+
+Board games were artificial intelligence's first proving ground because they supply four ingredients at once \citep{shannon1950chess, samuel1959checkers}. They have fixed rules, an impartial referee, an unambiguous winner, and cheap replay. Together, those four properties generate unlimited experience and score every attempt honestly \citep{silver2017mastering}.
+
+Human institutions scale judgment through the same four ingredients. Science and engineering rely on controlled experiments, shared benchmarks, prizes, and sealed leaderboards to separate working ideas from plausible failures. In machine learning, the common task framework turned algorithm design into a public contest with a shared dataset, enrolled competitors, and a referee holding a locked test split \citep{donoho2017fifty}. In biochemistry, Foldit and EteRNA turned protein folding and RNA synthesis into multiplayer games whose referees were physical energy functions and wet-lab assays \citep{cooper2010foldit, lee2014eterna}.
+
+Algorithmic innovation already possesses the first three ingredients whenever the problem and the candidate solution are written down in executable form. The fourth ingredient, cheap replay, is an economic question that \cref{sec:price} addresses directly.
+
+\subsection{The rules of the innovation game}\label{sub:game-rules}
+
+\begin{table}[t]
+  \caption{\textbf{Invention has every part of a board game, except cheap moves.} Each element of Go maps directly to an executable counterpart in algorithmic innovation.}
+  \label{tab:game-rules}
+  \centering
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Game element & Go & Innovation \\
+    \midrule
+    Board & Stones on a $19\times 19$ grid & The encoded problem plus the reigning algorithm \\
+    Move & Place one stone & Write one complete program \\
+    Legal move & An empty point, no suicide & Parses, type-checks, runs within limits \\
+    Illegal move & Not allowed & Stillborn: an automatic loss \\
+    Referee & The rules of Go & The verifier, on hidden folds \\
+    Win & More territory & Valid, and beats the incumbent \\
+    Opponent & A past self & The incumbent, a past self \\
+    Rating & Elo & Win rate and Elo across problems \\
+    Moves per game & Hundreds, cheap & One, expensive \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\Cref{tab:game-rules} aligns the rules of Go with the rules of algorithmic innovation. On a given turn, the player observes the board—an encoded description of the problem alongside its reigning incumbent algorithm—and writes one complete program as its move. A move is legal if it parses, type-checks, and finishes within strict time and memory limits; otherwise it is a stillborn algorithm and suffers an automatic loss. If the move is legal, the referee fits the program on training folds and scores its predictions on hidden validation folds against the incumbent.
+
+We formalize the innovation game as a seven-tuple,
+\begin{equation}
+  \Game = \bigl(\Prob,\ \encP,\ \Sol,\ \encS,\ \referee,\ \reward,\ \opp\bigr),
+  \label{eq:game-tuple}
+\end{equation}
+where $\Prob$ is the space of problems, $\encP$ is the problem encoder, $\Sol$ is the space of executable programs, $\encS$ is the program encoder, $\referee$ is the referee, $\reward$ is the reward function, and $\opp$ is the opponent process that maintains the incumbent $\inc{p}$ for each problem $p \in \Prob$. During play, the player maps a problem $p$ to an embedding $z_p = \encP(p)$ and samples a complete program $w \sim \writer(\cdot \mid z_p)$ from the program writer. A one-move game of this form is a contextual bandit over structured programs \citep{lattimore2020bandit}, while a multi-move variant allows sequential edits to the incumbent program.
+
+The analogy carries one central asymmetry. Go has hundreds of cheap moves per game, whereas the innovation game has one expensive move whose evaluation requires fitting and testing an algorithm on data. \Cref{fig:game-loop} illustrates how \EZ{} separates the full training loop from game day: training pays for the referee, the incumbent pool, and the weight updates, while deployment executes a single move at \searchone{}.
+
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}[
+    font=\small\sffamily,
+    node distance=0.6cm and 0.9cm,
+    box/.style={draw=black!75, rounded corners=2pt, minimum height=0.85cm, minimum width=2.2cm, align=center, fill=white, line width=0.6pt},
+    ezboxnode/.style={draw=ezaccent, rounded corners=2pt, minimum height=0.85cm, minimum width=2.4cm, align=center, fill=ezaccent!10, line width=0.9pt, font=\small\sffamily\bfseries},
+    trainbox/.style={draw=black!60, rounded corners=2pt, minimum height=0.85cm, minimum width=2.3cm, align=center, fill=gray!8, line width=0.6pt},
+    arrow/.style={->, >=stealth, line width=0.8pt, draw=black!80},
+    trainarrow/.style={->, >=stealth, line width=0.7pt, draw=black!65, dashed}
+  ]
+    % Top row: Game day (Search = 1)
+    \node[box] (prob) {Problem $p$\\ \scriptsize (Board)};
+    \node[box, right=0.8cm of prob] (enc) {Encoder $\encP$\\ \scriptsize $z_p = \encP(p)$};
+    \node[ezboxnode, right=0.8cm of enc] (writer) {Program Writer $\writer$\\ \scriptsize (One Move $w$)};
+    \node[box, right=0.8cm of writer] (fit) {Fit \& Predict\\ \scriptsize (\searchone{})};
+
+    \draw[arrow] (prob) -- (enc);
+    \draw[arrow] (enc) -- (writer);
+    \draw[arrow] (writer) -- (fit);
+
+    \node[above=0.18cm of enc.north west, anchor=west, font=\scriptsize\sffamily\bfseries, text=ezaccent] {GAME DAY PATH (DEPLOYMENT: ONE MOVE, NO RETRIES)};
+
+    % Dashed box: Training only
+    \node[trainbox, below=1.25cm of writer] (ref) {Referee $\referee$\\ \scriptsize (Hidden Folds)};
+    \node[trainbox, right=0.75cm of ref] (inc) {Incumbent Pool $\opp$\\ \scriptsize (Ratchet $\inc{p}$)};
+    \node[trainbox, left=0.75cm of ref] (learn) {Learner \& Map $\mapv$\\ \scriptsize (Weight Updates)};
+
+    \draw[rounded corners=4pt, dashed, draw=black!50, line width=0.7pt]
+      ([xshift=-0.35cm, yshift=0.42cm]learn.north west) rectangle ([xshift=0.35cm, yshift=-0.35cm]inc.south east);
+    \node[ below=0.92cm of enc.south west, anchor=west, font=\scriptsize\sffamily\bfseries, text=black!65] {TRAINING ONLY (ALGORITHMIC SELF-PLAY)};
+
+    % Training arrows
+    \draw[trainarrow] (writer.south) -- node[right, font=\scriptsize] {$w$} (ref.north);
+    \draw[trainarrow] (inc.west) -- node[above, font=\scriptsize] {$\inc{p}$} (ref.east);
+    \draw[trainarrow] (ref. north east) to[bend left=18] node[above, font=\scriptsize] {Promote $w^+$} (inc.north west);
+    \draw[trainarrow] (ref.west) -- node[above, font=\scriptsize] {$w^+, w^-, \tilde{w}$} (learn.east);
+    \draw[trainarrow] (learn.north) to[bend left=20] node[left, font=\scriptsize] {Update $\theta, \psi$} (writer.south west);
+  \end{tikzpicture}
+  \caption{\textbf{Training plays the whole game; game day plays one move.} Schematic of the innovation game. On game day (top row, solid arrows), the player encodes the problem once, writes one complete program $w \sim \writer(\cdot \mid z_p)$, and fits it to the training data. During self-play training (bottom box, dashed arrows), the referee $\referee$ scores candidate moves on hidden folds against the incumbent $\inc{p}$, promotes clear winners, and recycles winning ($w^+$), also-ran ($w^-$), and stillborn ($\tilde{w}$) moves to update the writer $\writer$ and the problem--program map $\mapv$.}
+  \label{fig:game-loop}
+\end{figure}
+
+\subsection{The board: problem encoding is the aim, made machine-readable}\label{sub:game-board}
+
+To choose an algorithm without trial-and-error execution at deployment, the player must read the structure of the problem from the board alone. The encoder $\encP$ maps a raw problem $p$ to a fixed-width representation $z_p$ that summarizes three things: statistical and structural landmarks of the training data (using multi-level dataset features and a measured-versus-missing mask), the task objective and evaluation metric, and the operational resource limits.
+
+A valid problem encoding must satisfy four properties. First, it must be informative enough to distinguish problems whose best algorithms differ. Second, it must be canonical, so permuting rows or reordering feature columns leaves $z_p$ unchanged. Third, it must be strictly leak-free: $\encP$ touches only permitted training splits and never observes validation or test outcomes. Fourth, it must be cheap, running in a fraction of the time required to fit a candidate model.
+
+Whoever writes the board writes the aim. In \EZ{}, people still choose which problem to solve and how success is measured, while the machine learns how to answer that specification.
+
+\begin{explainer}{The Running Example on the Board}
+When a tabular problem $p$ arrives—such as our running sealed example, \TBD{dataset-slug}, a \TBD{task-type} task with \TBD{N-rows} training rows and \TBD{N-cols} features—the encoder $\encP$ extracts sample size, class balance or target skewness, missingness rates, feature-type ratios, and lightweight landmark probes on training subsamples. It bundles those descriptors with the target metric (\TBD{metric-name}), the memory ceiling (\qty{16}{\giga\byte}), and the fit-time budget (\qty{60}{\second}) into a single vector $z_p = \encP(p)$ without reading a single test label.
+\end{explainer}
+
+\subsection{The move: solution encoding is the language of invention}\label{sub:game-move}
+
+A move in the innovation game is an executable program $w \in \Sol$ expressed in a typed domain-specific language over machine-learning primitives, in the lineage of genetic programming \citep{koza1992genetic} and grammar-constrained synthesis \citep{kusner2017grammar}. Each program specifies data preprocessing, feature transformations, estimator architecture, loss formulation, and fitting schedule, and compiles deterministically into readable Python code. Before the program encoder $\encS$ embeds a move as $z_w = \encS(w)$, a canonicalizer normalizes variable names, dead branches, and commutative operations so that two syntactic spellings of the same algorithm map to one representation.
+
+This representation differs from choosing among a fixed list of existing estimators. Because the grammar permits arbitrary valid compositions of primitives, the program writer can construct algorithms that do not exist in its starting archive.
+
+Designing $\Sol$ entails a direct trade-off between reliability and reach. A strictly typed language eliminates syntax crashes and cuts the stillborn rate, whereas unconstrained free-form code can express any mechanism at the cost of frequent runtime failures. In the taxonomy of \citet{boden1990creative, boden1998creativity}, the grammar defines the boundaries of exploratory creativity: the player can discover any algorithm expressible within the rules of $\Sol$, while inventing primitives outside $\Sol$ requires a transformational change to the language itself.
+
+\subsection{The referee and the opponent}\label{sub:game-referee}
+
+The referee $\referee$ executes each candidate move $w$ inside an isolated sandbox on $K$ hidden cross-validation folds of problem $p$ and compares its out-of-fold score against the reigning incumbent $\inc{p}$. To turn that comparison into a learning signal, the reward function $\reward(p, w)$ imposes a strict preference ordering over outcomes,
+\begin{equation}
+  \reward(p, w) =
+  \begin{cases}
+    -1 & \text{if } w \text{ is stillborn } (\tilde{w}),\\
+    -1 + \sigma(\kappa\,\Delta) & \text{if } w \text{ is an also-ran } (w^-,\ \Delta \le 0),\\
+    \Delta + \lambda_{\text{div}} D(w) - \lambda_{\text{comp}} C(w) & \text{if } w \text{ is a win } (w^+,\ \Delta > 0),
+  \end{cases}
+  \label{eq:reward}
+\end{equation}
+where $\Delta$ is the normalized validation improvement of $w$ over $\inc{p}$, $\sigma(\cdot)$ is the logistic function with slope $\kappa > 0$, $D(w)$ measures structural distance from the archive, and $C(w)$ measures program length and complexity, scaled so that $\lambda_{\text{comp}} C(w) < \tfrac{1}{2}\Delta$ for every winning move. Under \cref{eq:reward}, every stillborn move $\tilde{w}$ scores below every valid also-ran $w^-$, and every also-ran scores below every winning move $w^+$. Validity acts as a hard gate, ties among winners favor the simpler program, and structural diversity pays a bonus only inside a win—an unfamiliar loser remains a loser.
+
+The opponent $\opp$ is a ratcheting incumbent pool. At the start of training, $\inc{p}$ is seeded with a standard reference algorithm; whenever a candidate $w^+$ beats $\inc{p}$ by more than a promotion margin $\delta > 0$ across folds and passes an independent re-verification split, $w^+$ becomes the new incumbent $\inc{p}$. This promotion gate mirrors AlphaGo Zero, which replaced its reigning champion only when a challenger won at least \qty{55}{\percent} of evaluation games \citep{silver2017mastering}, and tracks progress across problems using Elo ratings \citep{elo1978rating, balduzzi2018reevaluating}.
+
+A skeptic might ask why competing against a ratcheting incumbent counts as self-play rather than ordinary optimization against a fixed baseline. Subtracting a constant baseline score from a reward does not change which move is best, so a static baseline is not self-play. What makes \EZ{} algorithmic self-play is what the evolving opponent changes over time: as winning moves become the new incumbents $\inc{p}$, they raise the promotion bar required for future rewards, reshape the negative examples in the replay buffer, and shift the curriculum toward problems where the current writer still loses.
+
+\subsection{One game, many boards}\label{sub:game-many-boards}
+
+Prior systems that framed algorithm discovery as a single-player game built a separate game for each target task: AlphaTensor's TensorGame was wired to matrix multiplication \citep{fawzi2022alphatensor}, and AlphaDev's AssemblyGame was wired to short sorting networks \citep{mankowitz2023alphadev}. Because \EZ{} makes the encoded problem $z_p = \encP(p)$ part of the board, a single set of game rules covers any problem family that supplies a data encoding and a verifier. Within machine learning, switching from binary classification to multiclass classification, regression, ranking, or forecasting changes only the board encoding and the metric inside $\referee$.
+
+This conditioning takes the generality of self-play one step further. AlphaZero used one learning algorithm to master three distinct games—chess, shogi, and Go—by training a separate network for each board \citep{silver2018general}. \EZ{} trains a single player across a distribution of boards because the problem specification enters as an input to the network. While the trained weights $\theta$ transfer across unseen problems within the trained domain, the game tuple $\Game$ itself is a portable recipe for classical algorithms, GPU kernels, mathematical constructions, and engineering design (\cref{sec:meaning}).
+
+\begin{keyidea}
+Every discipline with a referee is a game no one has played yet.
+\end{keyidea}
+
+\subsection{One game played, and where the analogy breaks}\label{sub:game-limits}
+
+To see the full game in motion, trace one round on our running example (\TBD{dataset-slug}). During training, the player encodes the dataset into $z_p = \encP(p)$, and the writer proposes a candidate program $w \sim \writer(\cdot \mid z_p)$. The sandbox parses and type-checks $w$, fits it across hidden training folds, and scores its out-of-fold predictions against the incumbent $\inc{p}$. If $w$ crashes, it is logged as a stillborn negative $\tilde{w}$; if it runs but trails $\inc{p}$, it is logged as an also-ran $w^-$; if it clears the promotion margin $\delta$, it replaces $\inc{p}$ as the new champion $w^+$, and the learner updates $\writer$ and $\mapv$ from all three outcomes. On game day, the dashed training loop in \cref{fig:game-loop} disappears: \EZ{} computes $z_p$, emits one algorithm $w$, and fits it to the task's training data.
+
+The board-game analogy also has four clear limits:
+\begin{enumerate}[leftmargin=1.8em, itemsep=2pt, topsep=4pt]
+  \item \textbf{The referee is noisy.} Unlike the exact terminal rules of Go, validation scores on finite data carry sampling variance, so $\referee$ can misrank close contenders.
+  \item \textbf{Moves are expensive.} Evaluating a move requires fitting a learning algorithm across data folds, costing seconds to minutes of compute rather than microseconds.
+  \item \textbf{Judges can be gamed.} Any automated verifier is vulnerable to Goodhart's law and reward hacking if a program exploits leakage or evaluation quirks \citep{goodhart1975, manheim2018categorizing}.
+  \item \textbf{No algorithm wins everywhere.} By the no-free-lunch theorems \citep{wolpert1996nfl}, no single move is universally superior across all possible data distributions, which is precisely why the player must condition its move on the board $z_p$.
+\end{enumerate}
+
+A game anyone can play is only useful if someone can afford to play it.

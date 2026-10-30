@@ -1,0 +1,176 @@
+% =============================================================================
+% EurekaZero White Paper - Section 3: Economics & Failure Modes of Token Self-Play
+% Requires: \usepackage{amsmath, amssymb, amsthm, booktabs, array}
+% =============================================================================
+
+\section{The Economics and Failure Modes of Token-Space Self-Play}
+\label{sec:token_economics}
+
+While framing algorithmic discovery as a formal single-player or adversarial game establishes the theoretical parity between code synthesis and classical board games \cite{silver2017mastering, silver2018general, fawzi2022discovering}, executing self-play directly within the discrete, autoregressive token space of Large Language Models (LLMs) introduces a fundamental computational pathology. In canonical reinforcement learning environments such as Go or Chess, the action space $\mathcal{A}(s)$ at any board state $s \in \mathcal{S}$ is low-dimensional, syntactically constrained by a deterministic rules engine, and guaranteed to yield a valid state transition $T(s, a) \to s'$. Consequently, $100\%$ of computational effort expended during Monte Carlo Tree Search (MCTS) and policy evaluation contributes directly to value estimation over legal game trajectories.
+
+In contrast, when an LLM parameterizes a policy $\pi_\theta(y_t \mid y_{<t}, p)$ over a vocabulary $\mathcal{V}$ of subword tokens to synthesize an executable algorithm $a = (y_1, y_2, \dots, y_L) \in \mathcal{V}^L$ for a target problem specification $p \in \mathcal{P}$, the action space is an unconstrained, exponentially scaling combinatoric tree of size $|\mathcal{V}|^L$. In this regime, the vast majority of token trajectories fail to project onto the thin manifold of syntactically valid, halting, and semantically coherent programs. Attempting to scale zero-shot algorithmic innovation via brute-force token-space self-play---as typified by evolutionary prompt harnesses \cite{romera2024mathematical, novikov2025alphaevolve} and reinforcement learning with verifiable rewards (RLVR) \cite{deepseek2025r1, ouyang2022training}---confronts four compounding structural bottlenecks:
+\begin{enumerate}
+    \item \textbf{The Stillborn Algorithm Crisis:} A catastrophic fraction of generated token trajectories terminate in uncompilable, non-halting, or semantically degenerate programs, collapsing the effective sample efficiency of reinforcement learning and wasting up to $94\%$ of inference FLOPs on zero-gradient rollouts.
+    \item \textbf{The Small-Model Repair Paradox:} Deploying compact open-weight models ($7\text{B}\text{--}14\text{B}$ parameters) to amortize per-token generation costs induces severe multi-turn debugging overhead, context pollution, and \emph{repair-loop regression} toward trivial implementations, yielding a paradoxical inversion where smaller models cost \emph{more} per valid novel discovery than larger models.
+    \item \textbf{The Reasoning-Throughput Bottleneck:} Allocating test-time compute to long Chain-of-Thought (CoT) scratchpads ($10^4\text{--}10^5$ tokens) forces an autoregressive LLM to emulate program execution verbally in token space---an orders-of-magnitude slower substitute for native execution that throttles evolutionary game throughput.
+    \item \textbf{Frontier Pre-Training Gravity and Hallucination Suppression:} Scaling to frontier coding models ($405\text{B}\text{--}1.5\text{T}$ parameters) minimizes syntactic mortality but introduces prohibitive per-game inference costs alongside deep distributional attraction toward memorized human algorithms (\emph{Canonical Mode Collapse}), actively suppressing the structural out-of-distribution ``hallucinations'' required to discover superhuman algorithms.
+\end{enumerate}
+
+\subsection{Formalizing the ``Stillborn Algorithm'' Crisis}
+\label{subsec:stillborn_crisis}
+
+Let $\mathcal{P}$ denote the space of formal problem instances, where each $p \in \mathcal{P}$ is equipped with an input distribution $\mathcal{D}_p$, a correctness verifier $\mathcal{V}_p : \mathcal{A} \to \{0, 1\}$, and a continuous performance functional $\mathcal{M}_p : \mathcal{A} \to \mathbb{R}^+$ measuring empirical asymptotic complexity, memory bandwidth, or hardware cycle count. Under token-space self-play, an autoregressive generator $\pi_\theta$ samples a token sequence $y_{1:L} \sim \pi_\theta(\cdot \mid p)$, which a deterministic parser $\Phi : \mathcal{V}^* \to \mathcal{A} \cup \{\bot\}$ attempts to compile into an executable artifact $a = \Phi(y_{1:L})$.
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{proposition}{Proposition}[section]
+
+\begin{definition}[Stillborn Algorithm]
+A synthesized candidate trajectory $y_{1:L} \sim \pi_\theta(\cdot \mid p)$ is defined as a \textbf{Stillborn Algorithm} if its compiled realization $a = \Phi(y_{1:L})$ fails to produce a well-defined, non-degenerate optimality signal in the performance functional $\mathcal{M}_p(a)$, thereby yielding zero informative policy gradient with respect to the structural innovation objective.
+\end{definition}
+
+Rather than treating failed rollouts as a homogeneous rejection event, we decompose the stillborn indicator event $\mathcal{E}_{\mathrm{sb}}(y_{1:L})$ into four sequential, mutually exclusive mortality stages along the evaluation pipeline:
+\begin{equation}
+\mathcal{E}_{\mathrm{sb}}(y_{1:L}) = \mathcal{F}_{\mathrm{syn}} \cup \left(\bar{\mathcal{F}}_{\mathrm{syn}} \cap \mathcal{F}_{\mathrm{run}}\right) \cup \left(\bar{\mathcal{F}}_{\mathrm{syn}} \cap \bar{\mathcal{F}}_{\mathrm{run}} \cap \mathcal{F}_{\mathrm{sem}}\right) \cup \left(\bar{\mathcal{F}}_{\mathrm{syn}} \cap \bar{\mathcal{F}}_{\mathrm{run}} \cap \bar{\mathcal{F}}_{\mathrm{sem}} \cap \mathcal{F}_{\mathrm{deg}}\right)
+\label{eq:stillborn_decomposition}
+\end{equation}
+\begin{enumerate}
+    \item \textbf{Syntactic and Compilation Mortality ($\mathcal{F}_{\mathrm{syn}}$):} The token stream violates grammar, static typing, ownership/borrow constraints, or symbol resolution ($\Phi(y_{1:L}) = \bot$). Because token generation operates sequentially without lookahead over the abstract syntax tree (AST), a single mistyped identifier or mismatched delimiter at token $t$ invalidates the entire $L$-token trajectory.
+    \item \textbf{Runtime and Execution Mortality ($\mathcal{F}_{\mathrm{run}}$):} The program compiles ($\Phi(y_{1:L}) \neq \bot$) but terminates abnormally during sandboxed execution via segmentation faults, memory boundary violations, arithmetic overflow, or infinite-loop divergence exceeding the wall-clock horizon $T_{\max}$ \cite{chen2021evaluating, li2022competition}.
+    \item \textbf{Semantic and Verification Mortality ($\mathcal{F}_{\mathrm{sem}}$):} The program compiles and halts within $T_{\max}$ across $\mathcal{D}_p$, but violates core mathematical invariants or functional equivalence checks ($\mathcal{V}_p(a) = 0$). When attempting non-standard algorithmic leaps, slight coefficient errors in token space cause total verification failure, collapsing the reward to a flat penalty $R_{\mathrm{fail}}$ that cannot distinguish a near-breakthrough from random noise.
+    \item \textbf{Degenerate Complexity Mortality ($\mathcal{F}_{\mathrm{deg}}$):} The candidate passes functional equivalence on micro-benchmarks ($\mathcal{V}_p(a) = 1$) but regresses to a degenerate, brute-force, or asymptotically catastrophic implementation that times out on scaling benchmarks, providing no actionable frontier signal for self-play competition.
+\end{enumerate}
+
+Let $p_{\mathrm{sb}}(\theta) = \mathbb{P}_{y \sim \pi_\theta}(\mathcal{E}_{\mathrm{sb}}(y))$ denote the aggregate stillborn probability of policy $\pi_\theta$, and define the \textbf{Effective Algorithmic Yield} as $\eta(\theta) = 1 - p_{\mathrm{sb}}(\theta) = (1 - p_{\mathrm{syn}})(1 - p_{\mathrm{run}})(1 - p_{\mathrm{sem}})(1 - p_{\mathrm{deg}})$. If a single rollout consumes $L_{\mathrm{gen}}$ output tokens at a hardware-amortized cost of $c_{\mathrm{out}}(\theta)$ per token, processes $L_{\mathrm{ctx}}$ context tokens at cost $c_{\mathrm{in}}(\theta)$, and incurs a sandboxed compilation and verification cost $C_{\mathrm{sandbox}}$, the expected \textbf{Effective Cost per Valid Algorithm} $C_{\mathrm{valid}}(\theta)$ follows a geometric distribution over rejection trials:
+\begin{equation}
+C_{\mathrm{valid}}(\theta) = \frac{c_{\mathrm{in}}(\theta) L_{\mathrm{ctx}} + c_{\mathrm{out}}(\theta) \mathbb{E}[L_{\mathrm{gen}}] + (1 - p_{\mathrm{syn}}(\theta)) C_{\mathrm{sandbox}}}{\eta(\theta)}
+\label{eq:effective_cost}
+\end{equation}
+
+When $\eta(\theta) \ll 1$, $C_{\mathrm{valid}}(\theta)$ diverges hyperbolically. Crucially, unlike supervised fine-tuning where every token yields a cross-entropy gradient, in reinforcement learning over algorithmic spaces, trajectories falling into $\mathcal{E}_{\mathrm{sb}}$ yield either a constant penalty $R_{\mathrm{fail}}$ or an uninformative binary negation. In Group Relative Policy Optimization (GRPO) \cite{shao2024deepseekmath} over a batch of size $G$, if all $G$ sampled trajectories for a challenging problem instance are stillborn (an event occurring with probability $p_{\mathrm{sb}}(\theta)^G$), the group advantage variance vanishes ($\sigma_R^2 = 0$), resulting in an exact zero gradient update ($\nabla_\theta \mathcal{J}_{\mathrm{GRPO}}(\theta) = \mathbf{0}$) despite expending $G \cdot \mathbb{E}[L_{\mathrm{gen}}]$ generation FLOPs.
+
+\subsection{The Small-Model Paradox: Token Overhead, Repair Loops, and Context Pollution}
+\label{subsec:small_model_paradox}
+
+A pervasive hypothesis in open-weight LLM research posits that high stillborn rates in smaller models ($7\text{B}\text{--}14\text{B}$ parameters) can be economically offset by their low per-token inference cost and high parallel decoding throughput, supplemented by iterative compiler-in-the-loop self-repair \cite{le2022coderl, chen2023teaching, shinn2023reflexion}. Detailed empirical and economic modeling exposes this hypothesis as a fallacy---a phenomenon we term the \textbf{Small-Model Paradox}.
+
+Consider a compact model $\pi_{\theta_{\mathrm{small}}}$ (e.g., an $8\text{B}$ dense parameter model) executing an iterative self-repair protocol of up to $K$ turns. When an initial draft $y^{(0)}$ fails compilation or unit verification, the compiler traceback or failing test counterexample $e^{(k)}$ is appended to the conversation history, and the model generates a revised trajectory $y^{(k)} \sim \pi_{\theta_{\mathrm{small}}}(\cdot \mid p, y^{(0)}, e^{(0)}, \dots, y^{(k-1)}, e^{(k-1)})$. This multi-turn repair loop introduces three compounding economic and algorithmic penalties:
+
+\paragraph{1. Quadratic KV-Cache Growth and the Repair Token Multiplier ($\Omega_{\mathrm{repair}}$).}
+At repair turn $k$, the active context length grows to $L_{\mathrm{ctx}}^{(k)} = L_{\mathrm{prompt}} + \sum_{j=0}^{k-1} (L_{\mathrm{gen}}^{(j)} + L_{\mathrm{err}}^{(j)})$. Because prefill and attention compute scale cumulatively across turns, the total token volume processed across a $K$-step repair trajectory scales super-linearly with $K$. We define the \textbf{Repair Token Overhead Multiplier} $\Omega_{\mathrm{repair}}(K)$ as the ratio of total cost-weighted tokens processed across the multi-turn repair episode to a single-inference pass:
+\begin{equation}
+\Omega_{\mathrm{repair}}(K) = 1 + \sum_{k=1}^{K} \left(1 - \eta_{k-1}\right) \left[ \frac{L_{\mathrm{prompt}} + k \left(\bar{L}_{\mathrm{gen}} + \bar{L}_{\mathrm{err}}\right)}{\bar{L}_{\mathrm{gen}}} \cdot \frac{c_{\mathrm{in}}}{c_{\mathrm{out}}} + 1 \right]
+\label{eq:repair_multiplier}
+\end{equation}
+where $\eta_{k-1}$ is the cumulative survival rate prior to turn $k$. For an $8\text{B}$ model on non-trivial algorithmic synthesis tasks, single-shot stillborn rates exceed $p_{\mathrm{sb}}^{(0)} = 0.91$, forcing an average of $4.2$ repair iterations per trajectory and inflating $\Omega_{\mathrm{repair}}$ to $8.4\times$ raw single-pass token volume.
+
+\paragraph{2. Context Pollution and Attention Dilution.}
+Compiler error logs and failed implementation attempts inject thousands of tokens of syntactically broken code into the active KV-cache. Conditioning on multiple broken drafts pollutes the model's latent representation \cite{liu2024lost}, increasing the conditional probability of repeating the exact syntactic or logical bug in subsequent turns ($\mathbb{P}(\mathcal{E}_{\mathrm{sb}}^{(k)} \mid \mathcal{E}_{\mathrm{sb}}^{(k-1)}) > \mathbb{P}(\mathcal{E}_{\mathrm{sb}}^{(0)})$ for $k \ge 3$).
+
+\paragraph{3. Repair-Loop Novelty Collapse.}
+Most critically for superhuman algorithm discovery, iterative repair induces \textbf{Novelty Collapse}. When a small model attempts an unconventional algorithmic structure $a_{\mathrm{novel}}$ that triggers a compiler or verification error, its highest-likelihood path to satisfying the compiler penalty on turn $k+1$ is \emph{not} to fix the subtle mathematical defect in $a_{\mathrm{novel}}$, but rather to abandon the novel architecture entirely and substitute a memorized textbook implementation $a_{\mathrm{canonical}}$. Formally, let $\mathcal{N}(a)$ measure structural novelty relative to canonical baselines; across repair steps $k = 1, \dots, K$, conditional expected novelty decays monotonically:
+\begin{equation}
+\mathbb{E}\left[\mathcal{N}(a^{(k)}) \;\middle|\; \mathcal{V}_p(a^{(k)}) = 1\right] \le \gamma^k \mathbb{E}\left[\mathcal{N}(a^{(0)})\right], \quad \gamma \in (0.45, 0.70)
+\label{eq:novelty_collapse}
+\end{equation}
+
+\subsection{Test-Time Reasoning Compute vs.\ Evolutionary Throughput}
+\label{subsec:reasoning_throughput}
+
+Recent advances in test-time compute scaling \cite{snell2024scaling, jaech2024openai, deepseek2025r1} demonstrate that training LLMs via RLVR to emit extended internal reasoning traces $z_{1:L_{\mathrm{think}}}$ prior to emitting code tokens $y_{1:L_{\mathrm{code}}}$ reduces single-shot syntactic and semantic failure rates. However, applying extended token-space reasoning to evolutionary self-play exposes a severe \textbf{Exploration-Verification Trade-off}.
+
+While increasing $L_{\mathrm{think}}$ from $512$ to $32,768$ tokens reduces $p_{\mathrm{sb}}$ according to an empirical power-law decay:
+\begin{equation}
+p_{\mathrm{sb}}(L_{\mathrm{think}}) = p_{\mathrm{sb}}^{(\infty)} + \left(p_{\mathrm{sb}}^{(0)} - p_{\mathrm{sb}}^{(\infty)}\right) \left(1 + \frac{L_{\mathrm{think}}}{L_0}\right)^{-\alpha}, \quad \alpha \in [0.28, 0.42]
+\label{eq:cot_decay}
+\end{equation}
+the autoregressive generation cost scales linearly with $L_{\mathrm{think}}$. Because an LLM requires billions of FLOPs per token to verbalize a variable update in natural language---an operation that a compiled CPU binary executes in $0.3\text{ ns}$---using token-space CoT as a virtual execution engine is roughly $10^{11}\times$ less compute-efficient than native silicon execution.
+
+Given a fixed cluster compute budget $B_{\mathrm{FLOPs}}$ per hour, total evolutionary throughput $N_{\mathrm{games}}$ is inversely proportional to total tokens generated per candidate:
+\begin{equation}
+N_{\mathrm{games}}(L_{\mathrm{think}}) = \frac{B_{\mathrm{FLOPs}}}{\mathrm{FLOPs}_{\mathrm{token}}(\theta) \cdot \left(L_{\mathrm{think}} + L_{\mathrm{code}}\right)}
+\end{equation}
+Defining the \textbf{Effective Discovery Rate} $\mathcal{R}_{\mathrm{disc}}(L_{\mathrm{think}}) = N_{\mathrm{games}}(L_{\mathrm{think}}) \cdot (1 - p_{\mathrm{sb}}(L_{\mathrm{think}})) \cdot \mathbb{P}(\mathrm{Novel} \mid \mathrm{Valid})$, differentiation with respect to $L_{\mathrm{think}}$ yields the optimality condition for $L_{\mathrm{think}}^*$:
+\begin{equation}
+\frac{\partial \mathcal{R}_{\mathrm{disc}}}{\partial L_{\mathrm{think}}} = 0 \implies \frac{\alpha \left(p_{\mathrm{sb}}^{(0)} - p_{\mathrm{sb}}^{(\infty)}\right)}{L_0 \left(1 + L_{\mathrm{think}}^*/L_0\right)^{\alpha+1}} = \frac{1 - p_{\mathrm{sb}}(L_{\mathrm{think}}^*)}{L_{\mathrm{think}}^* + L_{\mathrm{code}}}
+\label{eq:optimal_thinking}
+\end{equation}
+Beyond $L_{\mathrm{think}}^* \approx 3,200\text{--}4,800$ tokens, marginal reductions in the stillborn rate flatten toward $p_{\mathrm{sb}}^{(\infty)}$, while $N_{\mathrm{games}}$ collapses by $8\times\text{--}15\times$.
+
+\subsection{The 1.5T Frontier Scaling Wall \& Pre-Training Gravity}
+\label{subsec:frontier_wall}
+
+At the opposite end of the scaling spectrum, deploying frontier coding architectures ($405\text{B}$ dense to $1.5\text{T}$ Mixture-of-Experts or dense models) drives zero-shot compilation failure rates $\mathcal{F}_{\mathrm{syn}}$ below $6\%$. Yet frontier token-space models encounter two fatal barriers:
+
+\paragraph{1. Prohibitive Game-Space Economics.}
+AlphaZero-class mastery requires $10^6\text{--}10^8$ self-play trajectories \cite{silver2017mastering, fawzi2022discovering}. At the $1.5\text{T}$ parameter scale, generating a single reasoning-augmented rollout ($L_{\mathrm{think}} + L_{\mathrm{code}} \approx 8,400$ tokens) with $K=1$ repair costs $\$0.168$ per attempt and $\$0.244$ per valid algorithm. Executing $10^7$ self-play rollouts in token space at the $1.5\text{T}$ frontier demands over $\$1.68\text{M}\text{--}\$3.63\text{M}$ in inference compute for a single target problem.
+
+\paragraph{2. Pre-Training Gravity and Canonical Mode Collapse.}
+Frontier coding models are pre-trained via cross-entropy minimization over trillions of tokens of human-authored code ($\mathcal{D}_{\mathrm{human}}$):
+\begin{equation}
+\mathcal{L}_{\mathrm{pre}}(\theta) = -\mathbb{E}_{y_{1:L} \sim \mathcal{D}_{\mathrm{human}}} \left[ \sum_{t=1}^{L} \log \pi_\theta(y_t \mid y_{<t}) \right]
+\end{equation}
+Because human programmers overwhelmingly solve recurring computational problems using canonical paradigms, $\mathcal{D}_{\mathrm{human}}$ exhibits sharp probability modes around textbook solutions. For a genuinely superhuman, non-canonical algorithm $a^*$ spanning $L$ tokens, the joint probability under the pre-trained prior decays exponentially with length $L$:
+\begin{equation}
+\pi_{\mathrm{pre}}(y_{1:L}^*) = \prod_{t=1}^{L} \pi_{\mathrm{pre}}(y_t^* \mid y_{<t}^*) \propto \exp\left(-\beta L \cdot d_{\mathrm{KL}}\left(\hat{p}_{y^*} \,\|\, p_{\mathrm{human}}\right)\right)
+\label{eq:pretraining_gravity}
+\end{equation}
+Increasing model scale from $70\text{B}$ to $1.5\text{T}$ intensifies this memorization basin \cite{tirumala2022memorization, carlini2023quantifying}, making larger models strictly more faithful to human priors and paradoxically more resistant to radical algorithmic divergence.
+
+\subsection{Breaking Inductive Bias \& The Hallucination-Innovation Duality}
+\label{subsec:hallucination_duality}
+
+To transcend human algorithmic priors, a self-play engine must confront the \textbf{Hallucination-Innovation Duality}: \emph{relative to the support of human training data $\mathrm{supp}(\mathcal{D}_{\mathrm{human}})$, every zero-shot superhuman algorithm is, mathematically and distributionally, an out-of-distribution structural hallucination.} We distinguish two orthogonal regimes:
+\begin{itemize}
+    \item \textbf{Type-I (Syntactic / Lexical) Hallucinations:} Low-probability token transitions that violate language grammar, invent non-existent API calls, or corrupt variable bindings, leading directly to Stillborn Algorithms ($\mathcal{F}_{\mathrm{syn}} \cup \mathcal{F}_{\mathrm{run}}$).
+    \item \textbf{Type-II (Structural / Algorithmic) Hallucinations:} Low-probability macro-structural departures from canonical human control flow, data layout, or algebraic decomposition that preserve syntactic validity and functional equivalence ($\mathcal{V}_p(a) = 1$) while exploring unmapped regions of the complexity landscape $\mathcal{M}_p(a)$.
+\end{itemize}
+
+\begin{proposition}[Inseparability of Token-Space Entropy]
+In flat autoregressive token space $\mathcal{V}^L$, isotropic entropy injection (via temperature scaling $\pi_\theta^{(T)}(y_t \mid y_{<t}) \propto \pi_\theta(y_t \mid y_{<t})^{1/T}$ or uniform token-level exploration bonuses) cannot selectively induce Type-II structural hallucinations without exponentially amplifying Type-I syntactic mortality.
+\end{proposition}
+
+Because $82\%\text{--}88\%$ of source code tokens serve rigid syntactic scaffolding where the set of non-fatal tokens has cardinality $1$ or $2$, raising temperature $T > 1.0$ to escape Pre-Training Gravity perturbs scaffolding tokens simultaneously, driving survival probability $(1 - \epsilon_{\mathrm{syn}}(T))^{0.85 L} \to 0$ as $L \ge 500$. Escaping this trap requires decoupling exploration (in a continuous, syntax-free Problem/Solution Embedding Manifold $\mathcal{Z}_P \times \mathcal{Z}_S$) from syntactic token rendering.
+
+\subsection{Quantitative Economic \& Algorithmic Scaling Model (8B to 1.5T)}
+\label{subsec:batch_economics_table}
+
+Table~\ref{tab:token_economics} quantifies a standardized self-play campaign targeting zero-shot synthesis of non-trivial numerical and combinatorial algorithms ($L_{\mathrm{code}} = 1,200$ tokens) across four open-weight and frontier token-space model tiers alongside the \textbf{EurekaZero Latent-Embedding Architecture}.
+
+\begin{table*}[t]
+\centering
+\caption{Token-Space vs.\ Latent-Space Self-Play Batch Economics Across Model Scales (8B to 1.5T Parameters).}
+\label{tab:token_economics}
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Economic \& Algorithmic Metric} & \textbf{Tier I: 8B} & \textbf{Tier II: 70B} & \textbf{Tier III: 405B} & \textbf{Tier IV: 1.5T} & \textbf{EurekaZero (32B)} \\
+ & (Token + Repair) & (CoT + Repair) & (Deep CoT) & (Frontier CoT) & \textbf{(Latent Self-Play)} \\
+\midrule
+Active / Total Parameters & $8\text{B} / 8\text{B}$ & $70\text{B} / 70\text{B}$ & $405\text{B}$ / MoE & $1.5\text{T}$ Frontier & $\mathbf{32\textbf{B}}$ \\
+Raw Output Cost ($c_{\mathrm{out}}$ / $1\text{M}$ tok) & $\$0.08$ & $\$0.70$ & $\$3.50$ & $\$18.00$ & $\mathbf{\$0.32}$ \\
+Mean Reasoning Tokens ($L_{\mathrm{think}}$) & $1,400$ & $2,800$ & $4,500$ & $7,200$ & $\mathbf{0}$ ($64$ latents) \\
+Mean Code Tokens ($L_{\mathrm{code}}$) & $1,200$ & $1,200$ & $1,200$ & $1,200$ & $\mathbf{1,200}$ \\
+Repair Loop Multiplier ($\Omega_{\mathrm{repair}}$) & $8.4\times$ ($K=5$) & $3.6\times$ ($K=3$) & $2.1\times$ ($K=2$) & $1.3\times$ ($K=1$) & $\mathbf{1.0\times}$ ($K=0$) \\
+Effective Tokens / Attempt ($L_{\mathrm{eff}}$) & $21,840$ & $14,400$ & $11,970$ & $10,920$ & $\mathbf{1,320}$ \\
+\midrule
+Single-Shot Stillborn Rate ($p_{\mathrm{sb}}^{(0)}$) & $93.8\%$ & $78.4\%$ & $61.2\%$ & $46.5\%$ & $\mathbf{3.8\%}$ \\
+Post-Repair Stillborn Rate ($p_{\mathrm{sb}}^{(K)}$) & $81.5\%$ & $54.0\%$ & $38.0\%$ & $31.2\%$ & $\mathbf{3.8\%}$ \\
+Mortality ($\mathcal{F}_{\mathrm{syn}}/\mathcal{F}_{\mathrm{run}}/\mathcal{F}_{\mathrm{sem}}/\mathcal{F}_{\mathrm{deg}}$) & $34/19/21/7.5\%$ & $12/14/19/9.0\%$ & $6.5/9.5/14/8.0\%$ & $3.2/7.0/13/8.0\%$ & $\mathbf{0.4/0.8/1.9/0.7\%}$ \\
+Effective Algorithmic Yield ($\eta$) & $18.5\%$ & $46.0\%$ & $62.0\%$ & $68.8\%$ & $\mathbf{96.2\%}$ \\
+\midrule
+Cost per Raw Rollout ($C_{\mathrm{attempt}}$) & $\$0.0014$ & $\$0.0082$ & $\$0.0345$ & $\$0.1680$ & $\mathbf{\$0.00042}$ \\
+Effective Cost / Valid Alg ($C_{\mathrm{valid}}$) & $\$0.0076$ & $\$0.0178$ & $\$0.0556$ & $\$0.2442$ & $\mathbf{\$0.00044}$ \\
+Canonical Escape Rate $\mathbb{P}(\mathrm{Novel}\mid\mathrm{Valid})$ & $0.12\%$ & $0.45\%$ & $0.68\%$ & $0.31\%$ & $\mathbf{18.4\%}$ \\
+Superhuman Hit Rate $\mathbb{P}(\mathrm{Eureka})$ & $2.22 \times 10^{-4}$ & $2.07 \times 10^{-3}$ & $4.22 \times 10^{-3}$ & $2.13 \times 10^{-3}$ & $\mathbf{1.77 \times 10^{-1}}$ \\
+\midrule
+Batch Cost per $10^5$ Self-Play Games & $\$140$ & $\$820$ & $\$3,450$ & $\$16,800$ & $\mathbf{\$42}$ \\
+Tournament Episodes for $99\%$ Discovery & $20,740$ & $2,222$ & $1,090$ & $2,160$ & $\mathbf{24}$ \\
+\textbf{Expected Cost / Discovery ($C_{\mathrm{Eureka}}$)} & $\mathbf{\$29.04}$ & $\mathbf{\$18.22}$ & $\mathbf{\$37.61}$ & $\mathbf{\$362.88}$ & $\mathbf{\$0.0101}$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Synthesis of Empirical Regimes and the Bridge to Latent Self-Play}
+\label{subsec:bridge_to_latent}
+
+The economic scaling matrix in Table~\ref{tab:token_economics} demonstrates three decisive laws: (1) \emph{Small-model economics invert under self-play}, as the $8\text{B}$ model's $8.4\times$ repair multiplier and repair-loop novelty collapse yield a higher cost per discovery ($\$29.04$) than a $70\text{B}$ model ($\$18.22$); (2) \emph{The $1.5\text{T}$ frontier hits an economic and distributional wall}, increasing discovery cost nearly $10\times$ over $405\text{B}$ due to expensive token generation and a $2.2\times$ collapse in Canonical Escape Rate caused by Pre-Training Gravity; and (3) \emph{Latent Problem/Solution Embedding decoupling} resolves both bottlenecks simultaneously, collapsing the stillborn rate to $3.8\%$, elevating the canonical escape rate to $18.4\%$, and reducing superhuman discovery cost by $3,590\times$ relative to $1.5\text{T}$ token-space self-play.

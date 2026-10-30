@@ -1,0 +1,27 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[margin=0.75in,columnsep=0.25in]{geometry}
+\usepackage[T1]{fontenc}\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{amsmath,amssymb,booktabs,array,tabularx,graphicx,xcolor,enumitem,siunitx,caption,subcaption}
+\usepackage{algorithm}\usepackage[noend]{algpseudocode}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+\usepackage[most]{tcolorbox}
+\input{macros}
+\title{\textbf{EurekaZero: Learning to Invent by Self-Play}}
+\author{JopeDime Team}
+\date{Draft --- \today}
+\begin{document}
+\maketitle
+\input{sections/01_introduction}
+\input{sections/02_anatomy}
+\input{sections/03_road}
+\input{sections/04_game}
+\input{sections/05_price}
+\input{sections/06_method}
+\appendix
+\input{sections/appendix_stubs}
+\bibliographystyle{plainnat}
+\bibliography{refs}
+\end{document}

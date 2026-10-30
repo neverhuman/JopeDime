@@ -1,0 +1,734 @@
+% =====================================================================
+% refs.bib -- Section 3 fragment ("The Road to Zero")
+% Keys follow "EurekaZero -- Final Paper Plan", Section 3 brief, so the
+% editor can merge this file into the shared refs.bib without renaming.
+% New keys not in the brief: muller2025mothernet (Table 3, one-pass neighbor).
+% 2025-26 entries were checked against arXiv, Crossref or the publisher
+% on 2026-10-30; classic entries against their DOI or proceedings records.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% 3.1 Deep learning gave variation a voice
+% ---------------------------------------------------------------------
+@article{lecun2015deep,
+  author  = {LeCun, Yann and Bengio, Yoshua and Hinton, Geoffrey},
+  title   = {Deep learning},
+  journal = {Nature},
+  volume  = {521},
+  number  = {7553},
+  pages   = {436--444},
+  year    = {2015},
+  doi     = {10.1038/nature14539}
+}
+
+@inproceedings{krizhevsky2012imagenet,
+  author    = {Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E.},
+  title     = {{ImageNet} Classification with Deep Convolutional Neural Networks},
+  booktitle = {Advances in Neural Information Processing Systems 25 (NeurIPS 2012)},
+  pages     = {1097--1105},
+  year      = {2012},
+  url       = {https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks}
+}
+
+@inproceedings{vaswani2017attention,
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, {\L}ukasz and Polosukhin, Illia},
+  title     = {Attention Is All You Need},
+  booktitle = {Advances in Neural Information Processing Systems 30 (NeurIPS 2017)},
+  pages     = {5998--6008},
+  year      = {2017},
+  eprint    = {1706.03762},
+  archivePrefix = {arXiv}
+}
+
+@misc{kaplan2020scaling,
+  author = {Kaplan, Jared and McCandlish, Sam and Henighan, Tom and Brown, Tom B. and Chess, Benjamin and Child, Rewon and Gray, Scott and Radford, Alec and Wu, Jeffrey and Amodei, Dario},
+  title  = {Scaling Laws for Neural Language Models},
+  year   = {2020},
+  eprint = {2001.08361},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2001.08361}
+}
+
+@inproceedings{hoffmann2022chinchilla,
+  author    = {Hoffmann, Jordan and Borgeaud, Sebastian and Mensch, Arthur and Buchatskaya, Elena and Cai, Trevor and Rutherford, Eliza and others},
+  title     = {Training Compute-Optimal Large Language Models},
+  booktitle = {Advances in Neural Information Processing Systems 35 (NeurIPS 2022)},
+  year      = {2022},
+  eprint    = {2203.15556},
+  archivePrefix = {arXiv}
+}
+
+@misc{sutton2019bitter,
+  author       = {Sutton, Richard S.},
+  title        = {The Bitter Lesson},
+  year         = {2019},
+  month        = {13~March},
+  howpublished = {Essay},
+  url          = {http://www.incompleteideas.net/IncIdeas/BitterLesson.html}
+}
+
+@misc{chen2021codex,
+  author = {Chen, Mark and Tworek, Jerry and Jun, Heewoo and Yuan, Qiming and Pinto, Henrique Ponde de Oliveira and Kaplan, Jared and others},
+  title  = {Evaluating Large Language Models Trained on Code},
+  year   = {2021},
+  eprint = {2107.03374},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2107.03374},
+  note   = {Abstract: Codex solves 28.8\% of HumanEval with one sample and 70.2\% with 100 samples per problem}
+}
+
+@misc{brooks2024sora,
+  author       = {Brooks, Tim and Peebles, Bill and Holmes, Connor and DePue, Will and Guo, Yufei and Jing, Li and Schnurr, David and Taylor, Joe and Luhman, Troy and Luhman, Eric and Ng, Clarence and Wang, Ricky and Ramesh, Aditya},
+  title        = {Video Generation Models as World Simulators},
+  year         = {2024},
+  month        = feb,
+  howpublished = {OpenAI technical report},
+  url          = {https://openai.com/index/video-generation-models-as-world-simulators/}
+}
+
+@inproceedings{radford2021clip,
+  author    = {Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya},
+  title     = {Learning Transferable Visual Models From Natural Language Supervision},
+  booktitle = {Proceedings of the 38th International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {139},
+  pages     = {8748--8763},
+  year      = {2021},
+  url       = {https://proceedings.mlr.press/v139/radford21a.html}
+}
+
+@article{jumper2021alphafold,
+  author  = {Jumper, John and Evans, Richard and Pritzel, Alexander and Green, Tim and Figurnov, Michael and Ronneberger, Olaf and others},
+  title   = {Highly accurate protein structure prediction with {AlphaFold}},
+  journal = {Nature},
+  volume  = {596},
+  number  = {7873},
+  pages   = {583--589},
+  year    = {2021},
+  doi     = {10.1038/s41586-021-03819-2}
+}
+
+@article{merchant2023gnome,
+  author  = {Merchant, Amil and Batzner, Simon and Schoenholz, Samuel S. and Aykol, Muratahan and Cheon, Gowoon and Cubuk, Ekin Dogus},
+  title   = {Scaling deep learning for materials discovery},
+  journal = {Nature},
+  volume  = {624},
+  number  = {7990},
+  pages   = {80--85},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06735-9}
+}
+
+@article{stokes2020halicin,
+  author  = {Stokes, Jonathan M. and Yang, Kevin and Swanson, Kyle and Jin, Wengong and Cubillos-Ruiz, Andres and Donghia, Nina M. and others},
+  title   = {A Deep Learning Approach to Antibiotic Discovery},
+  journal = {Cell},
+  volume  = {180},
+  number  = {4},
+  pages   = {688--702.e13},
+  year    = {2020},
+  doi     = {10.1016/j.cell.2020.01.021}
+}
+
+% ---------------------------------------------------------------------
+% 3.2 Machines that invent algorithms
+% ---------------------------------------------------------------------
+@article{friedberg1958learning,
+  author  = {Friedberg, R. M.},
+  title   = {A Learning Machine: Part {I}},
+  journal = {IBM Journal of Research and Development},
+  volume  = {2},
+  number  = {1},
+  pages   = {2--13},
+  year    = {1958},
+  doi     = {10.1147/rd.21.0002}
+}
+
+@book{holland1975adaptation,
+  author    = {Holland, John H.},
+  title     = {Adaptation in Natural and Artificial Systems},
+  publisher = {University of Michigan Press},
+  address   = {Ann Arbor, MI},
+  year      = {1975}
+}
+
+@phdthesis{lenat1976am,
+  author = {Lenat, Douglas B.},
+  title  = {{AM}: An Artificial Intelligence Approach to Discovery in Mathematics as Heuristic Search},
+  school = {Stanford University},
+  year   = {1976},
+  note   = {Stanford AI Lab Memo AIM-286; report STAN-CS-76-570}
+}
+
+@article{lenat1983eurisko,
+  author  = {Lenat, Douglas B.},
+  title   = {{EURISKO}: A program that learns new heuristics and domain concepts. {The} nature of heuristics {III}: Program design and results},
+  journal = {Artificial Intelligence},
+  volume  = {21},
+  number  = {1--2},
+  pages   = {61--98},
+  year    = {1983},
+  doi     = {10.1016/S0004-3702(83)80005-8}
+}
+
+@book{koza1992genetic,
+  author    = {Koza, John R.},
+  title     = {Genetic Programming: On the Programming of Computers by Means of Natural Selection},
+  publisher = {MIT Press},
+  address   = {Cambridge, MA},
+  year      = {1992}
+}
+
+@inproceedings{massalin1987superoptimizer,
+  author    = {Massalin, Henry},
+  title     = {Superoptimizer: A Look at the Smallest Program},
+  booktitle = {Proceedings of the Second International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS II)},
+  pages     = {122--126},
+  year      = {1987},
+  doi       = {10.1145/36206.36194}
+}
+
+@inproceedings{gulwani2011flashfill,
+  author    = {Gulwani, Sumit},
+  title     = {Automating String Processing in Spreadsheets Using Input-Output Examples},
+  booktitle = {Proceedings of the 38th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages (POPL)},
+  pages     = {317--330},
+  year      = {2011},
+  doi       = {10.1145/1926385.1926423}
+}
+
+@inproceedings{balog2017deepcoder,
+  author    = {Balog, Matej and Gaunt, Alexander L. and Brockschmidt, Marc and Nowozin, Sebastian and Tarlow, Daniel},
+  title     = {{DeepCoder}: Learning to Write Programs},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2017},
+  eprint    = {1611.01989},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{ellis2021dreamcoder,
+  author    = {Ellis, Kevin and Wong, Catherine and Nye, Maxwell and Sabl{\'e}-Meyer, Mathias and Morales, Lucas and Hewitt, Luke and Cary, Luc and Solar-Lezama, Armando and Tenenbaum, Joshua B.},
+  title     = {{DreamCoder}: Bootstrapping Inductive Program Synthesis with Wake-Sleep Library Learning},
+  booktitle = {Proceedings of the 42nd ACM SIGPLAN International Conference on Programming Language Design and Implementation (PLDI)},
+  pages     = {835--850},
+  year      = {2021},
+  doi       = {10.1145/3453483.3454080}
+}
+
+@inproceedings{zoph2017nas,
+  author    = {Zoph, Barret and Le, Quoc V.},
+  title     = {Neural Architecture Search with Reinforcement Learning},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2017},
+  eprint    = {1611.01578},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{real2020automlzero,
+  author    = {Real, Esteban and Liang, Chen and So, David R. and Le, Quoc V.},
+  title     = {{AutoML-Zero}: Evolving Machine Learning Algorithms From Scratch},
+  booktitle = {Proceedings of the 37th International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {119},
+  pages     = {8007--8019},
+  year      = {2020},
+  url       = {https://proceedings.mlr.press/v119/real20a.html}
+}
+
+@article{romeraparedes2024funsearch,
+  author  = {Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and Balog, Matej and Kumar, M. Pawan and Dupont, Emilien and Ruiz, Francisco J. R. and Ellenberg, Jordan S. and Wang, Pengming and Fawzi, Omar and Kohli, Pushmeet and Fawzi, Alhussein},
+  title   = {Mathematical discoveries from program search with large language models},
+  journal = {Nature},
+  volume  = {625},
+  number  = {7995},
+  pages   = {468--475},
+  year    = {2024},
+  doi     = {10.1038/s41586-023-06924-6}
+}
+
+@inproceedings{chen2023lion,
+  author    = {Chen, Xiangning and Liang, Chen and Huang, Da and Real, Esteban and Wang, Kaiyuan and Pham, Hieu and Dong, Xuanyi and Luong, Thang and Hsieh, Cho-Jui and Lu, Yifeng and Le, Quoc V.},
+  title     = {Symbolic Discovery of Optimization Algorithms},
+  booktitle = {Advances in Neural Information Processing Systems 36 (NeurIPS 2023)},
+  year      = {2023},
+  eprint    = {2302.06675},
+  archivePrefix = {arXiv},
+  note      = {Abstract: deployed in production systems such as the Google search ads CTR model}
+}
+
+@misc{novikov2025alphaevolve,
+  author = {Novikov, Alexander and V{\~u}, Ng{\^a}n and Eisenberger, Marvin and Dupont, Emilien and Huang, Po-Sen and Wagner, Adam Zsolt and others},
+  title  = {{AlphaEvolve}: A coding agent for scientific and algorithmic discovery},
+  year   = {2025},
+  eprint = {2506.13131},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2506.13131},
+  note   = {48-multiplication $4\times4$ complex matrix result in the abstract; 23\% kernel speedup and 1\% Gemini training-time reduction in Sec.~3.3.2}
+}
+
+@misc{mlevolve2026,
+  author = {Du, Shangheng and Yan, Xiangchao and Shi, Jinxin and Cao, Zongsheng and Feng, Shiyang and Liang, Zichen and Sun, Boyuan and Peng, Tianshuo and Zhou, Yifan and Li, Xin and Zhou, Jie and He, Liang and Zhang, Bo and Bai, Lei},
+  title  = {{MLEvolve}: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery},
+  year   = {2026},
+  month  = jun,
+  eprint = {2606.06473},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2606.06473}
+}
+
+% ---------------------------------------------------------------------
+% 3.3 Reinforcement learning
+% ---------------------------------------------------------------------
+@book{bellman1957dp,
+  author    = {Bellman, Richard},
+  title     = {Dynamic Programming},
+  publisher = {Princeton University Press},
+  address   = {Princeton, NJ},
+  year      = {1957}
+}
+
+@article{samuel1959checkers,
+  author  = {Samuel, A. L.},
+  title   = {Some Studies in Machine Learning Using the Game of Checkers},
+  journal = {IBM Journal of Research and Development},
+  volume  = {3},
+  number  = {3},
+  pages   = {210--229},
+  year    = {1959},
+  doi     = {10.1147/rd.33.0210}
+}
+
+@article{tesauro1995tdgammon,
+  author  = {Tesauro, Gerald},
+  title   = {Temporal Difference Learning and {TD-Gammon}},
+  journal = {Communications of the ACM},
+  volume  = {38},
+  number  = {3},
+  pages   = {58--68},
+  year    = {1995},
+  doi     = {10.1145/203330.203343}
+}
+
+@article{mnih2015dqn,
+  author  = {Mnih, Volodymyr and Kavukcuoglu, Koray and Silver, David and Rusu, Andrei A. and Veness, Joel and Bellemare, Marc G. and others},
+  title   = {Human-level control through deep reinforcement learning},
+  journal = {Nature},
+  volume  = {518},
+  number  = {7540},
+  pages   = {529--533},
+  year    = {2015},
+  doi     = {10.1038/nature14236}
+}
+
+@article{silver2016mastering,
+  author  = {Silver, David and Huang, Aja and Maddison, Chris J. and Guez, Arthur and Sifre, Laurent and van den Driessche, George and others},
+  title   = {Mastering the game of {Go} with deep neural networks and tree search},
+  journal = {Nature},
+  volume  = {529},
+  number  = {7587},
+  pages   = {484--489},
+  year    = {2016},
+  doi     = {10.1038/nature16961}
+}
+
+@article{silver2017mastering,
+  author  = {Silver, David and Schrittwieser, Julian and Simonyan, Karen and Antonoglou, Ioannis and Huang, Aja and Guez, Arthur and others},
+  title   = {Mastering the game of {Go} without human knowledge},
+  journal = {Nature},
+  volume  = {550},
+  number  = {7676},
+  pages   = {354--359},
+  year    = {2017},
+  doi     = {10.1038/nature24270}
+}
+
+@article{silver2018general,
+  author  = {Silver, David and Hubert, Thomas and Schrittwieser, Julian and Antonoglou, Ioannis and Lai, Matthew and Guez, Arthur and others},
+  title   = {A general reinforcement learning algorithm that masters chess, shogi, and {Go} through self-play},
+  journal = {Science},
+  volume  = {362},
+  number  = {6419},
+  pages   = {1140--1144},
+  year    = {2018},
+  doi     = {10.1126/science.aar6404}
+}
+
+@article{schrittwieser2020muzero,
+  author  = {Schrittwieser, Julian and Antonoglou, Ioannis and Hubert, Thomas and Simonyan, Karen and Sifre, Laurent and Schmitt, Simon and others},
+  title   = {Mastering {Atari}, {Go}, chess and shogi by planning with a learned model},
+  journal = {Nature},
+  volume  = {588},
+  number  = {7839},
+  pages   = {604--609},
+  year    = {2020},
+  doi     = {10.1038/s41586-020-03051-4}
+}
+
+@article{vinyals2019alphastar,
+  author  = {Vinyals, Oriol and Babuschkin, Igor and Czarnecki, Wojciech M. and Mathieu, Micha{\"e}l and Dudzik, Andrew and Chung, Junyoung and others},
+  title   = {Grandmaster level in {StarCraft II} using multi-agent reinforcement learning},
+  journal = {Nature},
+  volume  = {575},
+  number  = {7782},
+  pages   = {350--354},
+  year    = {2019},
+  doi     = {10.1038/s41586-019-1724-z}
+}
+
+@inproceedings{anthony2017expert,
+  author    = {Anthony, Thomas and Tian, Zheng and Barber, David},
+  title     = {Thinking Fast and Slow with Deep Learning and Tree Search},
+  booktitle = {Advances in Neural Information Processing Systems 30 (NeurIPS 2017)},
+  year      = {2017},
+  eprint    = {1705.08439},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{christiano2017preferences,
+  author    = {Christiano, Paul F. and Leike, Jan and Brown, Tom B. and Martic, Miljan and Legg, Shane and Amodei, Dario},
+  title     = {Deep Reinforcement Learning from Human Preferences},
+  booktitle = {Advances in Neural Information Processing Systems 30 (NeurIPS 2017)},
+  year      = {2017},
+  eprint    = {1706.03741},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{ouyang2022instructgpt,
+  author    = {Ouyang, Long and Wu, Jeff and Jiang, Xu and Almeida, Diogo and Wainwright, Carroll L. and Mishkin, Pamela and others},
+  title     = {Training language models to follow instructions with human feedback},
+  booktitle = {Advances in Neural Information Processing Systems 35 (NeurIPS 2022)},
+  year      = {2022},
+  eprint    = {2203.02155},
+  archivePrefix = {arXiv}
+}
+
+@article{guo2025deepseekr1,
+  author  = {Guo, Daya and Yang, Dejian and Zhang, Haowei and Song, Junxiao and Wang, Peiyi and Zhu, Qihao and others},
+  title   = {{DeepSeek-R1} incentivizes reasoning in {LLMs} through reinforcement learning},
+  journal = {Nature},
+  volume  = {645},
+  number  = {8081},
+  pages   = {633--638},
+  year    = {2025},
+  doi     = {10.1038/s41586-025-09422-z}
+}
+
+% ---------------------------------------------------------------------
+% 3.4 Gamification
+% ---------------------------------------------------------------------
+@article{shannon1950chess,
+  author  = {Shannon, Claude E.},
+  title   = {Programming a Computer for Playing Chess},
+  journal = {Philosophical Magazine},
+  volume  = {41},
+  number  = {314},
+  pages   = {256--275},
+  year    = {1950},
+  doi     = {10.1080/14786445008521796}
+}
+
+@article{donoho2017fifty,
+  author  = {Donoho, David},
+  title   = {50 Years of Data Science},
+  journal = {Journal of Computational and Graphical Statistics},
+  volume  = {26},
+  number  = {4},
+  pages   = {745--766},
+  year    = {2017},
+  doi     = {10.1080/10618600.2017.1384734}
+}
+
+@inproceedings{bennett2007netflix,
+  author    = {Bennett, James and Lanning, Stan},
+  title     = {The {Netflix} Prize},
+  booktitle = {Proceedings of KDD Cup and Workshop 2007},
+  year      = {2007}
+}
+
+@article{russakovsky2015imagenet,
+  author  = {Russakovsky, Olga and Deng, Jia and Su, Hao and Krause, Jonathan and Satheesh, Sanjeev and Ma, Sean and others},
+  title   = {{ImageNet} Large Scale Visual Recognition Challenge},
+  journal = {International Journal of Computer Vision},
+  volume  = {115},
+  number  = {3},
+  pages   = {211--252},
+  year    = {2015},
+  doi     = {10.1007/s11263-015-0816-y}
+}
+
+@article{cooper2010foldit,
+  author  = {Cooper, Seth and Khatib, Firas and Treuille, Adrien and Barbero, Janos and Lee, Jeehyung and Beenen, Michael and others},
+  title   = {Predicting protein structures with a multiplayer online game},
+  journal = {Nature},
+  volume  = {466},
+  number  = {7307},
+  pages   = {756--760},
+  year    = {2010},
+  doi     = {10.1038/nature09304}
+}
+
+@article{khatib2011protease,
+  author  = {Khatib, Firas and DiMaio, Frank and {Foldit Contenders Group} and {Foldit Void Crushers Group} and Cooper, Seth and others},
+  title   = {Crystal structure of a monomeric retroviral protease solved by protein folding game players},
+  journal = {Nature Structural \& Molecular Biology},
+  volume  = {18},
+  number  = {10},
+  pages   = {1175--1177},
+  year    = {2011},
+  doi     = {10.1038/nsmb.2119}
+}
+
+@article{lee2014eterna,
+  author  = {Lee, Jeehyung and Kladwang, Wipapat and Lee, Minjae and Cantu, Daniel and Azizyan, Martin and Kim, Hanjoo and Limpaecher, Alex and Yoon, Sungroh and Treuille, Adrien and Das, Rhiju and {EteRNA Participants}},
+  title   = {{RNA} design rules from a massive open laboratory},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {111},
+  number  = {6},
+  pages   = {2122--2127},
+  year    = {2014},
+  doi     = {10.1073/pnas.1313039111}
+}
+
+@article{fawzi2022alphatensor,
+  author  = {Fawzi, Alhussein and Balog, Matej and Huang, Aja and Hubert, Thomas and Romera-Paredes, Bernardino and Barekatain, Mohammadamin and others},
+  title   = {Discovering faster matrix multiplication algorithms with reinforcement learning},
+  journal = {Nature},
+  volume  = {610},
+  number  = {7930},
+  pages   = {47--53},
+  year    = {2022},
+  doi     = {10.1038/s41586-022-05172-4}
+}
+
+@article{mankowitz2023alphadev,
+  author  = {Mankowitz, Daniel J. and Michi, Andrea and Zhernov, Anton and Gelmi, Marco and Selvi, Marco and Paduraru, Cosmin and others},
+  title   = {Faster sorting algorithms discovered using deep reinforcement learning},
+  journal = {Nature},
+  volume  = {618},
+  number  = {7964},
+  pages   = {257--263},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06004-9}
+}
+
+@article{trinh2024alphageometry,
+  author  = {Trinh, Trieu H. and Wu, Yuhuai and Le, Quoc V. and He, He and Luong, Thang},
+  title   = {Solving olympiad geometry without human demonstrations},
+  journal = {Nature},
+  volume  = {625},
+  number  = {7995},
+  pages   = {476--482},
+  year    = {2024},
+  doi     = {10.1038/s41586-023-06747-5}
+}
+
+@article{hubert2026alphaproof,
+  author  = {Hubert, Thomas and Mehta, Rishi and Sartran, Laurent and Horv{\'a}th, Mikl{\'o}s Z. and {\v{Z}}u{\v{z}}i{\'c}, Goran and Wieser, Eric and others},
+  title   = {Olympiad-level formal mathematical reasoning with reinforcement learning},
+  journal = {Nature},
+  volume  = {651},
+  number  = {8106},
+  pages   = {607--613},
+  year    = {2026},
+  doi     = {10.1038/s41586-025-09833-y},
+  note    = {Published online 12 November 2025}
+}
+
+% ---------------------------------------------------------------------
+% 3.5 The race for self-improvement
+% ---------------------------------------------------------------------
+@incollection{good1966speculations,
+  author    = {Good, Irving John},
+  title     = {Speculations Concerning the First Ultraintelligent Machine},
+  booktitle = {Advances in Computers},
+  editor    = {Alt, Franz L. and Rubinoff, Morris},
+  volume    = {6},
+  pages     = {31--88},
+  publisher = {Academic Press},
+  year      = {1966},
+  doi       = {10.1016/S0065-2458(08)60418-0}
+}
+
+@misc{schmidhuber2003goedel,
+  author = {Schmidhuber, J{\"u}rgen},
+  title  = {G{\"o}del Machines: Self-Referential Universal Problem Solvers Making Provably Optimal Self-Improvements},
+  year   = {2003},
+  eprint = {cs/0309048},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:cs/0309048}
+}
+
+@inproceedings{zelikman2024stop,
+  author    = {Zelikman, Eric and Lorch, Eliana and Mackey, Lester and Kalai, Adam Tauman},
+  title     = {Self-Taught Optimizer ({STOP}): Recursively Self-Improving Code Generation},
+  booktitle = {Conference on Language Modeling (COLM)},
+  year      = {2024},
+  eprint    = {2310.02304},
+  archivePrefix = {arXiv}
+}
+
+@misc{zhang2025dgm,
+  author = {Zhang, Jenny and Hu, Shengran and Lu, Cong and Lange, Robert and Clune, Jeff},
+  title  = {Darwin {G}{\"o}del Machine: Open-Ended Evolution of Self-Improving Agents},
+  year   = {2025},
+  eprint = {2505.22954},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2505.22954}
+}
+
+@inproceedings{chen2024spin,
+  author    = {Chen, Zixiang and Deng, Yihe and Yuan, Huizhuo and Ji, Kaixuan and Gu, Quanquan},
+  title     = {Self-Play Fine-Tuning Converts Weak Language Models to Strong Language Models},
+  booktitle = {Proceedings of the 41st International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {235},
+  year      = {2024},
+  eprint    = {2401.01335},
+  archivePrefix = {arXiv}
+}
+
+@misc{zhao2025absolutezero,
+  author = {Zhao, Andrew and Wu, Yiran and Yue, Yang and Wu, Tong and Xu, Quentin and Lin, Matthieu and Wang, Shenzhi and Wu, Qingyun and Zheng, Zilong and Huang, Gao},
+  title  = {Absolute Zero: Reinforced Self-play Reasoning with Zero Data},
+  year   = {2025},
+  eprint = {2505.03335},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2505.03335}
+}
+
+@inproceedings{dong2025stp,
+  author    = {Dong, Kefan and Ma, Tengyu},
+  title     = {{STP}: Self-play {LLM} Theorem Provers with Iterative Conjecturing and Proving},
+  booktitle = {Proceedings of the 42nd International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {267},
+  year      = {2025},
+  url       = {https://proceedings.mlr.press/v267/dong25h.html},
+  eprint    = {2502.00212},
+  archivePrefix = {arXiv}
+}
+
+@misc{bailey2026sgs,
+  author = {Bailey, Luke and Wen, Kaiyue and Dong, Kefan and Hashimoto, Tatsunori and Ma, Tengyu},
+  title  = {Scaling Self-Play with Self-Guidance},
+  year   = {2026},
+  month  = apr,
+  eprint = {2604.20209},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2604.20209}
+}
+
+@misc{evotune2025,
+  author = {Surina, Anja and Mansouri, Amin and Quaedvlieg, Lars and Seddas, Amal and Viazovska, Maryna and Abbe, Emmanuel and Gulcehre, Caglar},
+  title  = {Algorithm Discovery With {LLMs}: Evolutionary Search Meets Reinforcement Learning},
+  year   = {2025},
+  eprint = {2504.05108},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2504.05108},
+  note   = {Introduces EvoTune}
+}
+
+@misc{eft2026,
+  author = {Lee, Young-Jun and Kim, Seungone and Kang, Minki and Chuen, Alistair Cheong Liang and Chen, Zerui and Han, Seungho and Jung, Taehee and Kang, Dongyeop},
+  title  = {Evolution Fine-Tuning: Learning to Discover Across 371 Optimization Tasks},
+  year   = {2026},
+  month  = jun,
+  eprint = {2606.29082},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2606.29082}
+}
+
+@inproceedings{tttdiscover2026,
+  author    = {Yuksekgonul, Mert and Koceja, Daniel and Li, Xinhao and Bianchi, Federico and McCaleb, Jed and Wang, Xiaolong and Kautz, Jan and Choi, Yejin and Zou, James and Guestrin, Carlos and Sun, Yu},
+  title     = {Learning to Discover at Test Time},
+  booktitle = {Proceedings of the 43rd International Conference on Machine Learning (ICML)},
+  year      = {2026},
+  eprint    = {2601.16175},
+  archivePrefix = {arXiv},
+  note      = {Introduces TTT-Discover}
+}
+
+@article{oh2025discorl,
+  author  = {Oh, Junhyuk and Farquhar, Gregory and Kemaev, Iurii and Calian, Dan A. and Hessel, Matteo and Zintgraf, Luisa and Singh, Satinder and van Hasselt, Hado and Silver, David},
+  title   = {Discovering state-of-the-art reinforcement learning algorithms},
+  journal = {Nature},
+  volume  = {648},
+  number  = {8093},
+  pages   = {312--319},
+  year    = {2025},
+  doi     = {10.1038/s41586-025-09761-x}
+}
+
+@article{lu2024aiscientist,
+  author  = {Lu, Chris and Lu, Cong and Lange, Robert Tjarko and Yamada, Yutaro and Hu, Shengran and Foerster, Jakob and Ha, David and Clune, Jeff},
+  title   = {Towards end-to-end automation of {AI} research},
+  journal = {Nature},
+  volume  = {651},
+  number  = {8107},
+  pages   = {914--919},
+  year    = {2026},
+  doi     = {10.1038/s41586-026-10265-5},
+  note    = {The AI Scientist. Preprint: arXiv:2408.06292 (2024)}
+}
+
+@article{gottweis2025coscientist,
+  author  = {Gottweis, Juraj and Weng, Wei-Hung and Daryin, Alexander and Tu, Tao and Sirkovic, Petar and others},
+  title   = {Accelerating scientific discovery with {Co-Scientist}},
+  journal = {Nature},
+  volume  = {655},
+  number  = {8122},
+  pages   = {487--496},
+  year    = {2026},
+  doi     = {10.1038/s41586-026-10644-y},
+  note    = {Preprint: arXiv:2502.18864 (2025), ``Towards an AI co-scientist''}
+}
+
+@misc{karpathy2026autoresearch,
+  author       = {Karpathy, Andrej},
+  title        = {autoresearch},
+  year         = {2026},
+  month        = mar,
+  howpublished = {GitHub repository},
+  url          = {https://github.com/karpathy/autoresearch}
+}
+
+@misc{recursive2026techcrunch,
+  author       = {Brandom, Russell},
+  title        = {What happens when {AI} starts building itself?},
+  year         = {2026},
+  month        = {14~May},
+  howpublished = {TechCrunch},
+  url          = {https://techcrunch.com/2026/05/14/what-happens-when-ai-starts-building-itself/}
+}
+
+% ---------------------------------------------------------------------
+% Table 3 neighbors
+% ---------------------------------------------------------------------
+@article{hollmann2025tabpfn,
+  author  = {Hollmann, Noah and M{\"u}ller, Samuel and Purucker, Lennart and Krishnakumar, Arjun and K{\"o}rfer, Max and Hoo, Shi Bin and Schirrmeister, Robin Tibor and Hutter, Frank},
+  title   = {Accurate predictions on small data with a tabular foundation model},
+  journal = {Nature},
+  volume  = {637},
+  number  = {8045},
+  pages   = {319--326},
+  year    = {2025},
+  doi     = {10.1038/s41586-024-08328-6}
+}
+
+@inproceedings{muller2025mothernet,
+  author    = {M{\"u}ller, Andreas and Curino, Carlo and Ramakrishnan, Raghu},
+  title     = {{MotherNet}: Fast Training and Inference via Hyper-Network Transformers},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2025},
+  eprint    = {2312.08598},
+  archivePrefix = {arXiv}
+}
+
+@misc{kumorfm2025,
+  author       = {Fey, Matthias and Kocijan, Vid and Lopez, Federico and Lenssen, Jan Eric and Leskovec, Jure},
+  title        = {{KumoRFM}: A Relational Foundation Model},
+  year         = {2025},
+  month        = may,
+  howpublished = {Technical report, Kumo},
+  url          = {https://docs.nvidia.com/sdgm/research/concepts-models/kumorfm-paper}
+}

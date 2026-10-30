@@ -1,0 +1,219 @@
+% =====================================================================
+%  EurekaZero -- bibliography fragment for Section 5, "The Price of Play"
+%  Merge into the shared refs.bib. Keys marked NEW are not in the plan's
+%  key list. Every entry was checked against the linked primary record
+%  on 30 October 2026, except where a VERIFY note says otherwise.
+% =====================================================================
+
+% ---- Self-play scale (game counts) ----------------------------------
+
+@article{silver2017mastering,
+  author    = {Silver, David and Schrittwieser, Julian and Simonyan, Karen and
+               Antonoglou, Ioannis and Huang, Aja and Guez, Arthur and
+               Hubert, Thomas and Baker, Lucas and Lai, Matthew and
+               Bolton, Adrian and Chen, Yutian and Lillicrap, Timothy and
+               Hui, Fan and Sifre, Laurent and van den Driessche, George and
+               Graepel, Thore and Hassabis, Demis},
+  title     = {Mastering the game of {Go} without human knowledge},
+  journal   = {Nature},
+  volume    = {550},
+  number    = {7676},
+  pages     = {354--359},
+  year      = {2017},
+  doi       = {10.1038/nature24270},
+  note      = {Supports: 4.9 million self-play games over about three days}
+}
+
+% NEW. The Science version (silver2018general) reports training time but
+% not game counts; the game counts are in this preprint's Table S3.
+@misc{silver2017chess,
+  author       = {Silver, David and Hubert, Thomas and Schrittwieser, Julian and
+                  Antonoglou, Ioannis and Lai, Matthew and Guez, Arthur and
+                  Lanctot, Marc and Sifre, Laurent and Kumaran, Dharshan and
+                  Graepel, Thore and Lillicrap, Timothy and Simonyan, Karen and
+                  Hassabis, Demis},
+  title        = {Mastering Chess and Shogi by Self-Play with a General
+                  Reinforcement Learning Algorithm},
+  year         = {2017},
+  howpublished = {arXiv:1712.01815},
+  url          = {https://arxiv.org/abs/1712.01815},
+  note         = {Table S3: 44 million training games for chess in 9 hours}
+}
+
+@article{silver2018general,
+  author    = {Silver, David and Hubert, Thomas and Schrittwieser, Julian and
+               Antonoglou, Ioannis and Lai, Matthew and Guez, Arthur and
+               Lanctot, Marc and Sifre, Laurent and Kumaran, Dharshan and
+               Graepel, Thore and Lillicrap, Timothy and Simonyan, Karen and
+               Hassabis, Demis},
+  title     = {A general reinforcement learning algorithm that masters chess,
+               shogi, and {Go} through self-play},
+  journal   = {Science},
+  volume    = {362},
+  number    = {6419},
+  pages     = {1140--1144},
+  year      = {2018},
+  doi       = {10.1126/science.aar6404},
+  note      = {Supports: chess training lasted about 9 hours}
+}
+
+% ---- Compute rules and model sizes ------------------------------------
+
+@misc{kaplan2020scaling,
+  author       = {Kaplan, Jared and McCandlish, Sam and Henighan, Tom and
+                  Brown, Tom B. and Chess, Benjamin and Child, Rewon and
+                  Gray, Scott and Radford, Alec and Wu, Jeffrey and
+                  Amodei, Dario},
+  title        = {Scaling Laws for Neural Language Models},
+  year         = {2020},
+  howpublished = {arXiv:2001.08361},
+  url          = {https://arxiv.org/abs/2001.08361},
+  note         = {Supports: about $2N$ FLOPs per token forward and $6N$ per
+                  training token (Section 2.1)}
+}
+
+@misc{deepseekv3,
+  author       = {{DeepSeek-AI}},
+  title        = {{DeepSeek-V3} Technical Report},
+  year         = {2024},
+  howpublished = {arXiv:2412.19437},
+  url          = {https://arxiv.org/abs/2412.19437},
+  note         = {Supports: 671B total parameters, 37B activated per token}
+}
+
+% NEW.
+@misc{kimiteam2025k2,
+  author       = {{Kimi Team}},
+  title        = {{Kimi K2}: Open Agentic Intelligence},
+  year         = {2025},
+  howpublished = {arXiv:2507.20534},
+  url          = {https://arxiv.org/abs/2507.20534},
+  note         = {Supports: 1 trillion total parameters, 32 billion activated}
+}
+
+% NEW. Undated product page; year is the model's release year.
+@misc{openai2025gptoss,
+  author       = {{OpenAI}},
+  title        = {gpt-oss-120b},
+  year         = {2025},
+  howpublished = {OpenAI developer documentation},
+  url          = {https://developers.openai.com/api/docs/models/gpt-oss-120b},
+  note         = {117B parameters, 5.1B active. Accessed 30 October 2026}
+}
+
+% NEW. NVIDIA lists 1,979 TFLOPS BF16 "with sparsity"; dense is half.
+@misc{nvidia2026h100,
+  author       = {{NVIDIA}},
+  title        = {{NVIDIA H100} Tensor Core {GPU}: specifications},
+  year         = {2026},
+  url          = {https://www.nvidia.com/en-us/data-center/h100/},
+  note         = {H100 SXM: BF16 Tensor Core 1,979 TFLOPS with sparsity
+                  (989.5 dense), 80 GB, 3.35 TB/s. Accessed 30 October 2026}
+}
+
+% ---- Pretraining scale ------------------------------------------------
+
+% Key kept from the plan for compatibility. Epoch's own suggested citation
+% for this continuously updated dataset gives the year 2026.
+@misc{epoch2024data,
+  author       = {{Epoch AI}},
+  title        = {Data on {AI} Models},
+  year         = {2026},
+  url          = {https://epoch.ai/data/ai-models},
+  note         = {Continuously updated dataset. Accessed 30 October 2026}
+}
+
+% NEW.
+@misc{rahman2025over30,
+  author       = {Rahman, Robi and Heindrich, Lovis and Owen, David and
+                  Emberson, Luke},
+  title        = {Over 30 {AI} models have been trained at the scale of {GPT-4}},
+  year         = {2025},
+  howpublished = {Epoch AI data insight, published 30 January 2025,
+                  updated 6 June 2025},
+  url          = {https://epoch.ai/data-insights/models-over-1e25-flop},
+  note         = {Supports: over 30 public models from 12 developers trained
+                  above $10^{25}$ FLOP as of June 2025}
+}
+
+% ---- Dated prices (all accessed 30 October 2026) ---------------------
+
+% NEW.
+@misc{ornn2026ocpi,
+  author       = {{Ornn}},
+  title        = {Ornn Compute Price Index ({OCPI}): live {GPU} rental prices},
+  year         = {2026},
+  url          = {https://data.ornn.com/},
+  note         = {H100 SXM \$2.92 per GPU-hour, settled 29 October 2026.
+                  Accessed 30 October 2026}
+}
+
+% NEW.
+@misc{thunder2026gpu,
+  author       = {{Thunder Compute}},
+  title        = {{AI GPU} Rental Market Trends (October 2026): Complete
+                  Industry Analysis},
+  year         = {2026},
+  url          = {https://www.thundercompute.com/blog/ai-gpu-rental-market-trends},
+  note         = {Dated 1 October 2026. H100 80GB: median \$4.17/h on
+                  dedicated GPU clouds, \$7.89/h on hyperscalers; tracked
+                  range \$2.50--\$10.98/h. Accessed 30 October 2026}
+}
+
+% NEW. VERIFY: a "Batch API price" label sits above the first serverless
+% table; confirm whether these are batch or real-time rates.
+@misc{together2026pricing,
+  author       = {{Together AI}},
+  title        = {Pricing},
+  year         = {2026},
+  url          = {https://www.together.ai/pricing},
+  note         = {Serverless: gpt-oss-120B \$0.60 and Llama 3 8B Instruct
+                  Lite \$0.14 per million output tokens. Accessed 30 October 2026}
+}
+
+% NEW. Third-party mirror of AWS prices; the page carries no as-of date.
+@misc{doit2026c7i,
+  author       = {{DoiT}},
+  title        = {{AWS EC2} c7i.large: Spot, On-Demand and Savings Plan
+                  Pricing in us-east-1},
+  year         = {2026},
+  url          = {https://www.doit.com/compute/spot/us-east-1/c7i.large},
+  note         = {2 vCPU; on-demand \$0.0892/h, lowest spot \$0.0300/h.
+                  Accessed 30 October 2026}
+}
+
+% ---- Exploration and quality diversity -------------------------------
+
+@article{lehman2011novelty,
+  author    = {Lehman, Joel and Stanley, Kenneth O.},
+  title     = {Abandoning Objectives: Evolution Through the Search for
+               Novelty Alone},
+  journal   = {Evolutionary Computation},
+  volume    = {19},
+  number    = {2},
+  pages     = {189--223},
+  year      = {2011},
+  doi       = {10.1162/EVCO_a_00025}
+}
+
+@misc{mouret2015mapelites,
+  author       = {Mouret, Jean-Baptiste and Clune, Jeff},
+  title        = {Illuminating search spaces by mapping elites},
+  year         = {2015},
+  howpublished = {arXiv:1504.04909},
+  url          = {https://arxiv.org/abs/1504.04909}
+}
+
+% ---- Move 37 ----------------------------------------------------------
+
+% VERIFY: carried from the plan's checked list. wired.com was blocked from
+% this environment, so the date and the one-in-ten-thousand passage were
+% not re-opened here.
+@misc{metz2016twomoves,
+  author       = {Metz, Cade},
+  title        = {In Two Moves, {AlphaGo} and {Lee Sedol} Redefined the Future},
+  howpublished = {Wired},
+  year         = {2016},
+  month        = mar,
+  url          = {https://www.wired.com/2016/03/two-moves-alphago-lee-sedol-redefined-future/}
+}
