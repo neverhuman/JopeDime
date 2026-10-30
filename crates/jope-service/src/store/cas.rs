@@ -13,8 +13,10 @@ pub(super) fn sync_dir(path: &Path) -> Result<()> {
     #[cfg(windows)]
     let file = {
         use std::os::windows::fs::OpenOptionsExt;
+        // FlushFileBuffers requires GENERIC_WRITE, including for a directory handle.
         OpenOptions::new()
             .read(true)
+            .write(true)
             .custom_flags(0x02000000)
             .open(path)?
     };
