@@ -1,15 +1,16 @@
 """Arithmetic and refusal controls only; these fixtures are not scientific data."""
 
 import copy
+import importlib.machinery
 import importlib.util
 import math
-from pathlib import Path
 
 import pytest
 
-spec = importlib.util.spec_from_file_location(
-    "h27_analysis", Path(__file__).with_name("analyze.py")
+loader = importlib.machinery.SourceFileLoader(
+    "h27_analysis", "research/h-followups/h27-ablation/analyze"
 )
+spec = importlib.util.spec_from_loader(loader.name, loader)
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
 

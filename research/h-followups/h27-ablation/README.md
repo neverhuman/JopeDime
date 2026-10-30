@@ -49,11 +49,11 @@ contexts and 67/91 matching DL-Val contexts, with 24 validation contexts absent.
 Historical source roles are 690 FIT and 160 SELECT; none of the matched historical
 components crosses the current train/dev boundary. No feature/pool/table payload
 was opened. This is metadata coverage, not numerical or source qualification.
-`qualify_inputs.py` reproduces the receipt from the pinned materialization manifest
+`qualify-inputs` reproduces the receipt from the pinned materialization manifest
 and the current packet's `selected.json`, without opening any referenced payload.
 Execution remains **BLOCKED_INPUT_QUALIFICATION**, with null Elo/CI/verdict.
 
-`analyze.py` validates paired selection coverage and computes the frozen endpoint;
+`analyze` validates paired selection coverage and computes the frozen endpoint;
 it does not train models or independently verify the producer's input provenance,
 gradient isolation, matched schedules, model hashes or optimizer updates. Review
 those receipts before interpreting its verdict. No analysis output is present yet.
@@ -67,7 +67,7 @@ Each object has `status: ok` with finite raw constrained `fitness`, or explicit
 `status: failed` with null fitness. Missing/unknown outcomes stop the analysis.
 
 ```sh
-python3 research/h-followups/h27-ablation/analyze.py \
+research/h-followups/h27-ablation/analyze \
   --manifest QUALIFIED_MANIFEST.json --pairs PAIRED_SELECTIONS.json --output NEW_RESULT.json
 pytest research/h-followups/h27-ablation -q
 just hygiene
