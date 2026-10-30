@@ -2,12 +2,15 @@
 
 use std::env;
 
+pub mod app;
 pub mod cards;
 pub mod commands;
 pub mod complete;
 
 #[path = "highlight.rs"]
 pub mod highlight;
+pub mod line_mode;
+pub mod restore;
 pub mod status;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
