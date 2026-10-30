@@ -6,6 +6,7 @@ pub mod dataset;
 pub mod discover;
 pub mod events;
 pub mod export;
+pub mod governor;
 pub mod http;
 pub mod idempotency;
 pub mod lex;
