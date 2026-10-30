@@ -46,7 +46,7 @@ Run serially in this order; all arms use fresh seeds 9–11 and the same five-fo
 4. **CLIP + SMOOTH** — run both preregistered objective variants as separately identified subarms. CLIP caps each per-context objective delta to `[-0.5, +0.5]` while preserving the failure floor of `-2.0`, with genuinely family-balanced minibatches. SMOOTH uses temperature-softened ranks at `tau ∈ {0.1, 0.3}`, minibatch AdamW, and an SWA tail. Select only by the fixed family-CV rule above.
 5. **NULL** — best-of-N random adapter directions at compute matched to the trained candidate arm, using identical folds, candidate counting, family aggregation, bootstrap, and selection. Report N, direction radii, fold-level results, and selection procedure; do not compare a one-fold maximum with a five-fold trained-candidate aggregate.
 
-Do not add DEEP-ES in this preregistration: it is omitted unless the available per-seed wall budget can first be shown to fit at least eight generations (about 900 seconds/seed) without weakening the guards or other arm protocols.
+DEEP-ES is omitted from this H51 preregistration. The earlier conditional suggestion to add it if eight generations fit is superseded by the later instruction to add no H51 arms; no DEEP-ES arm is planned in this wave.
 
 ## Compute and safety guards
 
@@ -68,6 +68,12 @@ Record per candidate the compact summary fields above and retain full per-family
 - Due to xbabe2 swap being full (19/19 GiB), keep each run's RSS below approximately 6 GiB in addition to the existing RAM/CPU/GPU guards; continue to cap OMP/MKL at 8 and run at nice 15. Use targeted checks only; do not run `just required` for H51.
 
 ## Findings (interim, 2026-10-30)
+
+### H50 red-team carryover and H51 protocol reconciliation
+
+H50's bounded conclusion is “no candidate cleared family-bootstrap LB > 0.001 within two generations,” not “ES/CMA cannot work.” Its runner's `elapsed + 150 < 282s` condition ended each seed after two 32-candidate generations; with `SIGMA0=0.001` (nominal adapter L2 about 0.171) and ES displacement `0.05*sigma`, this was a short search near r785, with little time for CMA covariance adaptation and only two iterates in ESEMA. The H50 README and compact metrics retain each generation's candidate mean-delta min/median/max beside the H50-S best-of-64 null at radii 0.1 and 0.3. CMA seed6 generation1 had median +0.001189 and maximum +0.012021 but zero admitted candidates. The inner-CV reference 1.386373 and historical, unrescored DL-Val reference 1.137595 use different splits and are not a direct comparison. All nine H50 candidates were rejected: terminal DL-Val reads were zero and Elo is N/A (no candidate).
+
+An earlier H50 red-team note proposed CLIP/SMOOTH before other H51 arms and conditional DEEP-ES. H51 is already running under the later controlling preregistration: finish STEPS lr=1e-4, then DATA, CLIP + SMOOTH, and NULL; add no H51 arms. H50's earlier proposal is superseded on this sequencing point. Compare seeds using persisted inner-CV results and adapter identities; do not demand distinct terminal validation utilities when admission fails. Terminal reads remain admission-gated, and Elo is N/A for rejected candidates.
 
 ### CONTROL: training moves weights; utility is step-like
 
