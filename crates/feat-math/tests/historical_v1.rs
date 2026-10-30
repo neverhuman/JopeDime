@@ -917,6 +917,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         svc06_daemon_file["base_commit"],
         "0fb9dc3ab27714f42f3385d109d68be2bde5ccd5"
     );
+    let svc01_store = old_fixture("transitions/svc01_store_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        svc01_store["source_commit"],
+        "f2baa1a33814ef92bb3623e32dc8b1aed1746ecb"
+    );
+    assert_eq!(
+        svc01_store["base_commit"],
+        "cf6078317fbcb8afdb5a235490521cb4c98e0566"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -946,6 +955,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &svc05_http_router,
         &bat05_cli_ulid,
         &svc06_daemon_file,
+        &svc01_store,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1012,6 +1022,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc05_http_router.clone(),
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1064,6 +1075,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc05_http_router.clone(),
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1109,6 +1121,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc05_http_router.clone(),
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1185,6 +1198,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc05_http_router.clone(),
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         ),
         (
@@ -1221,6 +1235,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc05_http_router.clone(),
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         ),
     ] {
@@ -1305,6 +1320,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         svc05_http_router,
         bat05_cli_ulid,
         svc06_daemon_file,
+        svc01_store,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

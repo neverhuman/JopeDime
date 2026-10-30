@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "2012b7637a28f7252e84431a013a1ab1c2e7e68d",
+  "generated_at_sha": "f2baa1a33814ef92bb3623e32dc8b1aed1746ecb",
   "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
@@ -32,7 +32,7 @@
     {
       "label": "Cargo.lock",
       "path": "Cargo.lock",
-      "sha256": "aaed0d75234190fdcc9a93c9e32a9430650325a457f994456928dc01a8436015"
+      "sha256": "0cbb2c7fc025679f52256137b1ed45e9ae1002ce265f9dc43e60b4b4276e9704"
     },
     {
       "label": "vendor/feat-math/Cargo.toml",
@@ -195,10 +195,10 @@
       "sha256": "28a1a997d73a9a6981c20c53cafbf80f06d5b212f6d6d3d25292eeafef5ffeed"
     }
   ],
-  "implementation_sha256": "81d7a3c088f947464d016d1e901633886625c4c7b37c7389e2b1d75a2bf3da72",
+  "implementation_sha256": "de589d75e8de5de2cde4716532cb40a511ce499c5d52eab0c3d5a855cee5c8cf",
   "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389",
-  "cargo_lock_sha256": "aaed0d75234190fdcc9a93c9e32a9430650325a457f994456928dc01a8436015",
-  "identity_digest": "0c4a34be5df72af69ab1f637c823d32a49dfa63a41e3e373a79d997da7aa3509",
+  "cargo_lock_sha256": "0cbb2c7fc025679f52256137b1ed45e9ae1002ce265f9dc43e60b4b4276e9704",
+  "identity_digest": "ea72a331ffc5b0bae4dcfe48bf4ed2160f3eeb6348e8d6111ca04706e96db6f0",
   "known_identities_sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "known_identity_rows": 2
 }

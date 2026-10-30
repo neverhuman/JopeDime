@@ -2865,6 +2865,7 @@ dependencies = [
  "libc",
  "nix 0.29.0",
  "proptest",
+ "redb",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -2873,6 +2874,7 @@ dependencies = [
  "tokio",
  "toml",
  "tower",
+ "ulid",
  "windows-sys 0.61.2",
 ]
 
