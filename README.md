@@ -389,16 +389,16 @@ limits and client examples](docs/program-source-stream.md).
 | What | 0.4.1 |
 | --- | --- |
 | `jope` with no arguments | prints `jope 0.4.1` <sup>1</sup> |
-| Workspace | 34 members: 27 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
+| Workspace | 37 members: 30 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 6,094 listed in 34 packages, 81 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 202, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 13 jobs per pull request configured in `ci.yml` (automatic triggering paused; dispatch manually) (top-level declarations; 18 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 887 items over 32 lanes <sup>7</sup> |
+| Coverage map | 888 items over 32 lanes <sup>7</sup> |
 | Capability matrix | 838 rows: 353 moved, 75 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 1,265 `.py` files, 173 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,271 `.py` files, 173 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -535,7 +535,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Layout (this SHA)
 
-The 34 workspace members, by directory under `crates/`; the package name follows where it differs.
+The 37 workspace members, by directory under `crates/`; the package name follows where it differs.
 [docs/architecture.md](docs/architecture.md#crate-graph) describes each crate.
 
 | Group | Crates | Role |

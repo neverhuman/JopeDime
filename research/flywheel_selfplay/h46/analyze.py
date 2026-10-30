@@ -35,6 +35,29 @@ def bootstrap_ci(rows, seed, n=2000):
     return [float(np.quantile(samples, 0.025)), float(np.quantile(samples, 0.975))]
 
 
+def bootstrap_family_interval_of_median_seed_metric(rows, metric, seed, n=2000):
+    families = sorted({row["family"] for row in rows})
+    by_family = {
+        family: [row for row in rows if row["family"] == family] for family in families
+    }
+    seeds = sorted({row["seed"] for row in rows})
+    rng = np.random.default_rng(seed)
+    samples = np.empty(n, dtype=np.float64)
+    for index in range(n):
+        draw = rng.choice(families, size=len(families), replace=True)
+        seed_means = []
+        for current_seed in seeds:
+            values = [
+                row[metric]
+                for family in draw
+                for row in by_family[family]
+                if row["seed"] == current_seed
+            ]
+            seed_means.append(float(np.mean(values)))
+        samples[index] = np.median(seed_means)
+    return [float(np.quantile(samples, 0.025)), float(np.quantile(samples, 0.975))]
+
+
 def make_rows(contexts, baseline, candidate):
     return [
         {
@@ -90,6 +113,9 @@ def main():
     output = {
         "schema": "jope.h46.results/v1",
         "device": None,
+        "seed_dependence_note": "Each seed uses the full 1,219-context training batch; seeds only alter the sampled slate portion. Observed final outputs are near-pseudoreplicates (effective seed count approximately 1 per arm), so no interval is presented as seed-noise uncertainty. Arm-level intervals resample the 19 DL-Val families and summarize the median seed metric.",
+        "selection_protocol": "H46 evaluated every checkpoint on DL-Val and therefore did not use inner family-grouped train CV; checkpoint trajectory findings are exploratory, and no H46 arm can qualify as a selected win.",
+        "winner_curse_note": "H46-C step48 was the best-of-5-arms-by-8-checkpoints DL-Val selection (40 looks); its positive point and per-checkpoint CI are exploratory without multiplicity correction. Final C is negative.",
         "baseline": {
             "checkpoint": "round-785.pt",
             "val_utility": 1.1375952947484103,
@@ -98,10 +124,10 @@ def main():
         "arms": {},
     }
 
-    for arm in ("0", "A", "B", "C"):
+    for arm in ("0", "A", "B", "C", "D"):
         per_seed = []
-        pooled = []
-        elo_records = []
+        seed_rows = []
+        final_values = []
         for seed in range(3):
             data, val, train_utility = load_run(args.runs, arm, seed, baseline_train)
             if output["device"] is None:
@@ -121,6 +147,32 @@ def main():
                 families.setdefault(r["family"], []).append(r["delta"])
             family_delta = {f: float(np.mean(v)) for f, v in sorted(families.items())}
             accepted = accept_h46_s(mean_delta, ci)
+            trajectory = []
+            for evaluation in data["evaluations"]:
+                ev_rows = make_rows(dev, base_values, evaluation["val"]["per_context"])
+                ev_delta = float(np.mean([row["delta"] for row in ev_rows]))
+                ev_ci = bootstrap_ci(
+                    ev_rows, 47000 + seed * 100 + ord(arm) + evaluation["step"]
+                )
+                artifact = (
+                    args.runs
+                    / f"H46-{arm}"
+                    / f"seed{seed}"
+                    / f"adapter-step{evaluation['step']:04d}.pt"
+                )
+                trajectory.append(
+                    {
+                        "step": evaluation["step"],
+                        "val_utility": evaluation["val"]["mean"],
+                        "delta": ev_delta,
+                        "family_bootstrap_95_ci": ev_ci,
+                        "h46_s_accept": accept_h46_s(ev_delta, ev_ci),
+                        "dope_sha256": evaluation["dope_sha256"],
+                        "adapter_artifact": str(artifact.relative_to(args.runs))
+                        if artifact.exists()
+                        else None,
+                    }
+                )
             per_seed.append(
                 {
                     "seed": seed,
@@ -135,40 +187,76 @@ def main():
                     "train_utility": train_utility["mean"],
                     "train_val_gap": train_utility["mean"] - val["mean"],
                     "h46_s_accept": accepted,
+                    "h46_s_trajectory": trajectory,
+                    "final_adapter_artifact": str(
+                        (
+                            args.runs
+                            / f"H46-{arm}"
+                            / f"seed{seed}"
+                            / "adapter-final.pt"
+                        ).relative_to(args.runs)
+                    )
+                    if (
+                        args.runs / f"H46-{arm}" / f"seed{seed}" / "adapter-final.pt"
+                    ).exists()
+                    else None,
                     "device": data["device"],
                     "wall_seconds": data["wall_seconds"],
                     "dope_sha256": data["dope_sha256"],
                 }
             )
-            pooled.extend(rows)
-            for row in rows:
-                elo_records.append(
-                    elo.DatasetEvalRecord(
-                        dataset_id=row["context"],
-                        family_id=row["family"],
-                        task_type="regression",
-                        scores_by_contender={
-                            "r785": row["baseline"],
-                            f"H46-{arm}": row["candidate"],
-                        },
-                    )
+            seed_rows.append(rows)
+            final_values.append(np.asarray(val["per_context"], dtype=np.float64))
+        family_metric_rows = []
+        for index, context in enumerate(dev):
+            for seed, rows in enumerate(seed_rows):
+                family_metric_rows.append(
+                    {
+                        "family": context["family_id"],
+                        "seed": seed,
+                        "candidate": rows[index]["candidate"],
+                        "delta": rows[index]["delta"],
+                    }
                 )
-        pooled_ci = bootstrap_ci(pooled, 46100 + ord(arm))
+        family_delta_ci = bootstrap_family_interval_of_median_seed_metric(
+            family_metric_rows, "delta", 46100 + ord(arm)
+        )
+        family_utility_ci = bootstrap_family_interval_of_median_seed_metric(
+            family_metric_rows, "candidate", 46200 + ord(arm)
+        )
         median_delta = float(np.median([x["delta"] for x in per_seed]))
         median_utility = float(np.median([x["val_utility"] for x in per_seed]))
         min_loco = min(x["leave_one_context_out_min_delta"] for x in per_seed)
-        success = median_delta > 0 and pooled_ci[0] > 0 and min_loco > 0
+        success = median_delta > 0 and family_delta_ci[0] > 0
+        median_context_values = np.median(np.stack(final_values), axis=0)
+        elo_records = [
+            elo.DatasetEvalRecord(
+                dataset_id=row["context"],
+                family_id=row["family"],
+                task_type="regression",
+                scores_by_contender={
+                    "r785": row["baseline"],
+                    f"H46-{arm}": float(median_context_values[index]),
+                },
+            )
+            for index, row in enumerate(seed_rows[0])
+        ]
         ratings = elo.compute_family_grouped_bradley_terry_elo(
             elo_records, anchor_contender="r785", anchor_elo=1500.0
         )
         output["arms"][f"H46-{arm}"] = {
             "seeds": per_seed,
             "median_val_utility": median_utility,
+            "family_bootstrap_95_ci_of_median_seed_utility": family_utility_ci,
             "median_delta": median_delta,
-            "seed_pooled_family_bootstrap_95_ci": pooled_ci,
+            "family_bootstrap_95_ci_of_median_seed_delta": family_delta_ci,
             "minimum_leave_one_context_out_delta": min_loco,
+            "effective_seed_replicates_approx": 1,
+            "seed_final_val_utilities": [row["val_utility"] for row in per_seed],
             "regression_elo": ratings,
-            "beats_plateau": success,
+            "family_effect_evidence_passes": success,
+            "beats_plateau": False,
+            "beats_plateau_reason": "No H46 arm used inner family-grouped CV for checkpoint selection; the required selection protocol was not met.",
         }
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -1,6 +1,6 @@
 {
   "wave": "H46",
-  "status": "running",
+  "status": "complete",
   "baseline": {
     "checkpoint": "round-785.pt",
     "sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
@@ -22,24 +22,2612 @@
     "H46-A",
     "H46-B",
     "H46-C",
-    "H46-S"
+    "H46-D"
   ],
+  "selection_rule": "H46-S",
   "seeds": [
     0,
     1,
     2
   ],
-  "results": null,
+  "results": {
+    "H46-0": {
+      "seeds": [
+        {
+          "seed": 0,
+          "val_utility": 1.1375952947484103,
+          "delta": 0.0,
+          "family_bootstrap_95_ci": [
+            0.0,
+            0.0
+          ],
+          "improved_contexts": 0,
+          "worsened_contexts": 0,
+          "ties": 91,
+          "leave_one_context_out_min_delta": 0.0,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": 0.0,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.0,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.0,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.0,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.0,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": 0.0,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.0,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.0,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.0,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.0,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4251559330611108,
+          "train_val_gap": 0.2875606383127005,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 2,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.006691837235238637,
+                0.0016897084958061258
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 4,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.007290123838730161,
+                0.0018822361766996708
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 6,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.00711390999969716,
+                0.0017050632922348044
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 8,
+              "val_utility": 1.1355344400915894,
+              "delta": -0.0020608546568206708,
+              "family_bootstrap_95_ci": [
+                -0.006923876733153429,
+                0.0018809488747639248
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 10,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.011442897803118288,
+                0.000979324743234508
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 12,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.011146178924042847,
+                0.00148308103564477
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 14,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010983783370474159,
+                0.0014587714617249718
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010999012225593185,
+                0.0015566338882231864
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 18,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.011153891965655733,
+                0.0015697881320295066
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 20,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010495195581483749,
+                0.0016134859034708793
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 22,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010916429655087698,
+                0.0014778932754078446
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.011071257694535269,
+                0.0014108654692741949
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 26,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.0111590445000179,
+                0.0016298392344503362
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 28,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.01092909593432397,
+                0.0017718190411717108
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 30,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.011294586016164312,
+                0.0012964370327668937
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010780610516693065,
+                0.0014337962520106972
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 125.0937704059761,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 1,
+          "val_utility": 1.1375952947484103,
+          "delta": 0.0,
+          "family_bootstrap_95_ci": [
+            0.0,
+            0.0
+          ],
+          "improved_contexts": 0,
+          "worsened_contexts": 0,
+          "ties": 91,
+          "leave_one_context_out_min_delta": 0.0,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": 0.0,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.0,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.0,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.0,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.0,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": 0.0,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.0,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.0,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.0,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.0,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4251559330611108,
+          "train_val_gap": 0.2875606383127005,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 2,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.006713740147237163,
+                0.0017564507307731678
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 4,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.006969336700722276,
+                0.0017456603487549275
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 6,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.007230214910477398,
+                0.0018154016625944952
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 8,
+              "val_utility": 1.1355344400915894,
+              "delta": -0.0020608546568206708,
+              "family_bootstrap_95_ci": [
+                -0.006783644225421726,
+                0.0018034844294684148
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 10,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.011163742223341577,
+                0.0008060158084224934
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 12,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010996019151349762,
+                0.0015565214447746372
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 14,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.011140340506624172,
+                0.001082213915290541
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010554356931708241,
+                0.0015347048173810218
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 18,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010650988478967277,
+                0.001766005930316053
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 20,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.011283964305555706,
+                0.0015920810746430263
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 22,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.01102925930062748,
+                0.0013812717954917466
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010863332976494989,
+                0.0016642801212701796
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 26,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010928176723290802,
+                0.0017491479249775164
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 28,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010877130635803825,
+                0.001616287621528799
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 30,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010601334003881703,
+                0.0014540791022802512
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010721201173226039,
+                0.0015404352397584405
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 76.19638192187995,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 2,
+          "val_utility": 1.1375952947484103,
+          "delta": 0.0,
+          "family_bootstrap_95_ci": [
+            0.0,
+            0.0
+          ],
+          "improved_contexts": 0,
+          "worsened_contexts": 0,
+          "ties": 91,
+          "leave_one_context_out_min_delta": 0.0,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": 0.0,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.0,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.0,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.0,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.0,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": 0.0,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.0,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.0,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.0,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.0,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4250418441311836,
+          "train_val_gap": 0.28744654938277336,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 2,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.007042138448989967,
+                0.0016601593177836542
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 4,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.007011230332252074,
+                0.0017074721993579735
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 6,
+              "val_utility": 1.1354387884248622,
+              "delta": -0.002156506323547936,
+              "family_bootstrap_95_ci": [
+                -0.007210401433107682,
+                0.0016172028945187487
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 8,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.010703304665729168,
+                0.0009791560661956738
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 10,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.010917072233534157,
+                0.0008437772685575741
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 12,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.01115973793063142,
+                0.0014643569746352993
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 14,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010830114277213664,
+                0.0015400197927730483
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.01081629518430275,
+                0.0016004476263270849
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 18,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.011167679336676391,
+                0.0014430883274892913
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 20,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.01090667836712994,
+                0.0015687210777690188
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 22,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010972252199534117,
+                0.0014822646954617737
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010756752981101498,
+                0.0016625184840848902
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 26,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010818385473274678,
+                0.0016107004696274117
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 28,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010959592028700083,
+                0.0014934544962242901
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 30,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010906102811673804,
+                0.001463366190824286
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.133508523562618,
+              "delta": -0.004086771185792037,
+              "family_bootstrap_95_ci": [
+                -0.010573933699738317,
+                0.0014469685138629265
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 128.43024153099395,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        }
+      ],
+      "median_val_utility": 1.1375952947484103,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.7200785038342934,
+        1.65304738981184
+      ],
+      "median_delta": 0.0,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        0.0,
+        0.0
+      ],
+      "minimum_leave_one_context_out_delta": 0.0,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_val_utilities": [
+        1.1375952947484103,
+        1.1375952947484103,
+        1.1375952947484103
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H46-0": 1500.0,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H46-0": {
+            "wins": 0,
+            "ties": 91,
+            "losses": 0,
+            "elo_delta_vs_anchor": 0.0
+          }
+        }
+      },
+      "family_effect_evidence_passes": false,
+      "beats_plateau": false,
+      "beats_plateau_reason": "No H46 arm used inner family-grouped CV for checkpoint selection; the required selection protocol was not met."
+    },
+    "H46-A": {
+      "seeds": [
+        {
+          "seed": 0,
+          "val_utility": 1.0367669973748173,
+          "delta": -0.10082829737359314,
+          "family_bootstrap_95_ci": [
+            -0.1848320041051368,
+            -0.03142288731559896
+          ],
+          "improved_contexts": 17,
+          "worsened_contexts": 35,
+          "ties": 39,
+          "leave_one_context_out_min_delta": -0.1082321284546547,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.16507765338904554,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.01054055816317967,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.48758707884025065,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0052635968555973635,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.00024929232798440724,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5535552074120512,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.2893668804750143,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.12600943182667518,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.354526955895818,
+          "train_val_gap": 0.3177599585210007,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1355769726640486,
+              "delta": -0.0020183220843616517,
+              "family_bootstrap_95_ci": [
+                -0.006963450839621558,
+                0.0012395576520020553
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.011225327697994173,
+                0.0010467072572877992
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.12808063861827,
+              "delta": -0.009514656130140199,
+              "family_bootstrap_95_ci": [
+                -0.023086902145792614,
+                0.0016856710211986502
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.0843777338725886,
+              "delta": -0.05321756087582148,
+              "family_bootstrap_95_ci": [
+                -0.1227948463607163,
+                -0.005140690730511091
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0778148134840568,
+              "delta": -0.05978048126435326,
+              "family_bootstrap_95_ci": [
+                -0.1324697153917933,
+                -0.005482993302395978
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0733186342027863,
+              "delta": -0.06427666054562389,
+              "family_bootstrap_95_ci": [
+                -0.14209565594773288,
+                -0.0020461986539479678
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 56,
+              "val_utility": 1.0200844940891527,
+              "delta": -0.11751080065925748,
+              "family_bootstrap_95_ci": [
+                -0.21593121850144945,
+                -0.03748964600987149
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 64,
+              "val_utility": 1.0367669973748173,
+              "delta": -0.10082829737359314,
+              "family_bootstrap_95_ci": [
+                -0.1841385845082722,
+                -0.031493594334800874
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 219.35814279690385,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 1,
+          "val_utility": 1.0377593796422038,
+          "delta": -0.09983591510620644,
+          "family_bootstrap_95_ci": [
+            -0.18433423544219338,
+            -0.03164451570913535
+          ],
+          "improved_contexts": 18,
+          "worsened_contexts": 35,
+          "ties": 38,
+          "leave_one_context_out_min_delta": -0.10722871971763034,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.14701629612260758,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.01054055816317967,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.48758707884025065,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0052635968555973635,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.00024929232798440724,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5535552074120512,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.2893668804750143,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.12600943182667518,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.352207421026418,
+          "train_val_gap": 0.31444804138421434,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1355769726640486,
+              "delta": -0.0020183220843616517,
+              "family_bootstrap_95_ci": [
+                -0.006828398765826838,
+                0.0012380847484595359
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.011319107304945918,
+                0.0009258944762926976
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.12808063861827,
+              "delta": -0.009514656130140199,
+              "family_bootstrap_95_ci": [
+                -0.023386732485607416,
+                0.001129234360975202
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.0843777338725886,
+              "delta": -0.05321756087582148,
+              "family_bootstrap_95_ci": [
+                -0.12378696114029912,
+                -0.005293406997773802
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0776231942246006,
+              "delta": -0.059972100523809524,
+              "family_bootstrap_95_ci": [
+                -0.13447230581221117,
+                -0.005336520583842617
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0683345168677976,
+              "delta": -0.06926077788061243,
+              "family_bootstrap_95_ci": [
+                -0.14168792011875758,
+                -0.009424457914090852
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 56,
+              "val_utility": 1.019543968938801,
+              "delta": -0.11805132580960909,
+              "family_bootstrap_95_ci": [
+                -0.21458945957205477,
+                -0.0351476661181894
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 64,
+              "val_utility": 1.0377593796422038,
+              "delta": -0.09983591510620644,
+              "family_bootstrap_95_ci": [
+                -0.18093948052514267,
+                -0.03028425991520533
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 129.44049033592455,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 2,
+          "val_utility": 1.0367669973748173,
+          "delta": -0.10082829737359314,
+          "family_bootstrap_95_ci": [
+            -0.18289611509497308,
+            -0.028380230619309953
+          ],
+          "improved_contexts": 17,
+          "worsened_contexts": 35,
+          "ties": 39,
+          "leave_one_context_out_min_delta": -0.1082321284546547,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.16507765338904554,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.01054055816317967,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.48758707884025065,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0052635968555973635,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.00024929232798440724,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5535552074120512,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.2893668804750143,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.12600943182667518,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.3551082873128348,
+          "train_val_gap": 0.3183412899380176,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1355769726640486,
+              "delta": -0.0020183220843616517,
+              "family_bootstrap_95_ci": [
+                -0.006963450839621558,
+                0.0013183585908025086
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.01117953460757322,
+                0.0011841969097574983
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.12808063861827,
+              "delta": -0.009514656130140199,
+              "family_bootstrap_95_ci": [
+                -0.02328967117591765,
+                0.001103902440363905
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.0843777338725886,
+              "delta": -0.05321756087582148,
+              "family_bootstrap_95_ci": [
+                -0.11753137184247117,
+                -0.004641594963347377
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0778148134840568,
+              "delta": -0.05978048126435326,
+              "family_bootstrap_95_ci": [
+                -0.13132768356889263,
+                -0.006792411265049497
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0431712007572131,
+              "delta": -0.09442409399119703,
+              "family_bootstrap_95_ci": [
+                -0.18089831422066907,
+                -0.02197840753047319
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 56,
+              "val_utility": 1.0200844940891527,
+              "delta": -0.11751080065925748,
+              "family_bootstrap_95_ci": [
+                -0.21866327447636366,
+                -0.03707482265968407
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 64,
+              "val_utility": 1.0367669973748173,
+              "delta": -0.10082829737359314,
+              "family_bootstrap_95_ci": [
+                -0.18382703435707223,
+                -0.03404066581962654
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 132.3182347449474,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        }
+      ],
+      "median_val_utility": 1.0367669973748173,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.6118153126438787,
+        1.5277908434658591
+      ],
+      "median_delta": -0.10082829737359314,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.18254986513257548,
+        -0.027973927836577775
+      ],
+      "minimum_leave_one_context_out_delta": -0.1082321284546547,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_val_utilities": [
+        1.0367669973748173,
+        1.0377593796422038,
+        1.0367669973748173
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H46-A": 1448.42,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H46-A": {
+            "wins": 17,
+            "ties": 39,
+            "losses": 35,
+            "elo_delta_vs_anchor": -51.58
+          }
+        }
+      },
+      "family_effect_evidence_passes": false,
+      "beats_plateau": false,
+      "beats_plateau_reason": "No H46 arm used inner family-grouped CV for checkpoint selection; the required selection protocol was not met."
+    },
+    "H46-B": {
+      "seeds": [
+        {
+          "seed": 0,
+          "val_utility": 1.053521328283799,
+          "delta": -0.0840739664646111,
+          "family_bootstrap_95_ci": [
+            -0.1623076379987308,
+            -0.020895647811836643
+          ],
+          "improved_contexts": 18,
+          "worsened_contexts": 26,
+          "ties": 47,
+          "leave_one_context_out_min_delta": -0.09129163831335062,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.1633602139779148,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": 0.003637785511100511,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.34561578759773154,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.06900778031205317,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03458807715265105,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": -0.004211043306691364,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.002577928840508781,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.011438455509311085,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5895877542517901,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.2401739680365241,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.009352137786309101,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.11259658241940058,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.358874311004642,
+          "train_val_gap": 0.305352982720843,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1374506857830633,
+              "delta": -0.00014460896534695833,
+              "family_bootstrap_95_ci": [
+                -0.001813518867915623,
+                0.0014921594482030147
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.011369084510979689,
+                0.0008797808752895915
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.1276282062643368,
+              "delta": -0.009967088484073265,
+              "family_bootstrap_95_ci": [
+                -0.023332679701744845,
+                0.0009413545803719413
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.1168101089349383,
+              "delta": -0.020785185813471798,
+              "family_bootstrap_95_ci": [
+                -0.051488734728850835,
+                -0.0010781036539228058
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0855543739465037,
+              "delta": -0.0520409208019065,
+              "family_bootstrap_95_ci": [
+                -0.12422586824678211,
+                -0.002698180838368429
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0759766299400568,
+              "delta": -0.06161866480835343,
+              "family_bootstrap_95_ci": [
+                -0.13991738074987037,
+                -0.007581877150883809
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 56,
+              "val_utility": 1.0677758291932107,
+              "delta": -0.06981946555519934,
+              "family_bootstrap_95_ci": [
+                -0.14337770300111655,
+                -0.009645940832478014
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 64,
+              "val_utility": 1.053521328283799,
+              "delta": -0.0840739664646111,
+              "family_bootstrap_95_ci": [
+                -0.16592311601585363,
+                -0.02170418081484209
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 183.23771537700668,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 1,
+          "val_utility": 1.076777882176238,
+          "delta": -0.06081741257217216,
+          "family_bootstrap_95_ci": [
+            -0.11423687685008284,
+            -0.01594454140234816
+          ],
+          "improved_contexts": 18,
+          "worsened_contexts": 26,
+          "ties": 47,
+          "leave_one_context_out_min_delta": -0.06777667826655126,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.1633602139779148,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": 0.003637785511100511,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.34561578759773154,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.06900778031205317,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03458807715265105,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": -0.004211043306691364,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.002577928840508781,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.011438455509311085,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.16631847340940165,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.2401739680365241,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.009352137786309101,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.11259658241940058,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.3630874588653392,
+          "train_val_gap": 0.2863095766891013,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1374506857830633,
+              "delta": -0.00014460896534695833,
+              "family_bootstrap_95_ci": [
+                -0.0016566650052152793,
+                0.0014473433900906467
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.010997676474994335,
+                0.0012778482623050774
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.1276282062643368,
+              "delta": -0.009967088484073265,
+              "family_bootstrap_95_ci": [
+                -0.02285379502655871,
+                0.0008704146142218896
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.1168101089349383,
+              "delta": -0.020785185813471798,
+              "family_bootstrap_95_ci": [
+                -0.05111638583350856,
+                -0.0009143613278817169
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0855543739465037,
+              "delta": -0.0520409208019065,
+              "family_bootstrap_95_ci": [
+                -0.12283382584159402,
+                -0.00281605135875203
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0759766299400568,
+              "delta": -0.06161866480835343,
+              "family_bootstrap_95_ci": [
+                -0.13518959253449828,
+                -0.006652634765887718
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 56,
+              "val_utility": 1.0677758291932107,
+              "delta": -0.06981946555519934,
+              "family_bootstrap_95_ci": [
+                -0.14695922932315605,
+                -0.008948848566217235
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 64,
+              "val_utility": 1.076777882176238,
+              "delta": -0.06081741257217216,
+              "family_bootstrap_95_ci": [
+                -0.11468288047735678,
+                -0.018500295834721372
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 187.1860767758917,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 2,
+          "val_utility": 1.053521328283799,
+          "delta": -0.0840739664646111,
+          "family_bootstrap_95_ci": [
+            -0.16581611042934372,
+            -0.02029451284590851
+          ],
+          "improved_contexts": 18,
+          "worsened_contexts": 26,
+          "ties": 47,
+          "leave_one_context_out_min_delta": -0.09129163831335062,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.1633602139779148,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": 0.003637785511100511,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.34561578759773154,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.06900778031205317,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03458807715265105,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": -0.004211043306691364,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.002577928840508781,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.011438455509311085,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5895877542517901,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.2401739680365241,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.009352137786309101,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.11259658241940058,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.360785742552088,
+          "train_val_gap": 0.307264414268289,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1374506857830633,
+              "delta": -0.00014460896534695833,
+              "family_bootstrap_95_ci": [
+                -0.001804135465026878,
+                0.001447288055773336
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1330456436405512,
+              "delta": -0.0045496511078589935,
+              "family_bootstrap_95_ci": [
+                -0.011311464628934073,
+                0.0008051504066610279
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.1276282062643368,
+              "delta": -0.009967088484073265,
+              "family_bootstrap_95_ci": [
+                -0.023327712248134517,
+                0.0004907654486118968
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.1168101089349383,
+              "delta": -0.020785185813471798,
+              "family_bootstrap_95_ci": [
+                -0.05143997136849954,
+                0.0001348272164295051
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0855543739465037,
+              "delta": -0.0520409208019065,
+              "family_bootstrap_95_ci": [
+                -0.1241473826588965,
+                -0.0037080258881189315
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0758822651372473,
+              "delta": -0.06171302961116281,
+              "family_bootstrap_95_ci": [
+                -0.13705937085237233,
+                -0.008109039691489187
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 56,
+              "val_utility": 1.0633821985408471,
+              "delta": -0.07421309620756313,
+              "family_bootstrap_95_ci": [
+                -0.15189741740402898,
+                -0.017275558806424614
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 64,
+              "val_utility": 1.053521328283799,
+              "delta": -0.0840739664646111,
+              "family_bootstrap_95_ci": [
+                -0.1573682251909982,
+                -0.02289767378223326
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 269.53537674993277,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        }
+      ],
+      "median_val_utility": 1.053521328283799,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.6157213464386055,
+        1.5674062256987173
+      ],
+      "median_delta": -0.0840739664646111,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.1593238979356194,
+        -0.02264998311785966
+      ],
+      "minimum_leave_one_context_out_delta": -0.09129163831335062,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_val_utilities": [
+        1.053521328283799,
+        1.076777882176238,
+        1.053521328283799
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H46-B": 1485.36,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H46-B": {
+            "wins": 18,
+            "ties": 47,
+            "losses": 26,
+            "elo_delta_vs_anchor": -14.64
+          }
+        }
+      },
+      "family_effect_evidence_passes": false,
+      "beats_plateau": false,
+      "beats_plateau_reason": "No H46 arm used inner family-grouped CV for checkpoint selection; the required selection protocol was not met."
+    },
+    "H46-C": {
+      "seeds": [
+        {
+          "seed": 0,
+          "val_utility": 1.1213603268681975,
+          "delta": -0.016234967880212677,
+          "family_bootstrap_95_ci": [
+            -0.09379135718847897,
+            0.03237070580567022
+          ],
+          "improved_contexts": 20,
+          "worsened_contexts": 11,
+          "ties": 60,
+          "leave_one_context_out_min_delta": -0.020250238115586697,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0835858054974036,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.01228590978909887,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.06595851603423435,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.0181076731877571,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.011994072967165415,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.022530969479934805,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": -0.008353482506059152,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.010991038966960876,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.04749588740823053,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.0418902266937629,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": -0.6244826897645088,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.10603181277408254,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0034870372714238262,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.03256440117530128,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4537223183396695,
+          "train_val_gap": 0.33236199147147194,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1372487782867533,
+              "delta": -0.00034651646165678973,
+              "family_bootstrap_95_ci": [
+                -0.0017209983182515597,
+                0.000812320710803455
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1386046479848353,
+              "delta": 0.0010093532364251233,
+              "family_bootstrap_95_ci": [
+                -0.0009700084986169065,
+                0.0033095590290840816
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 24,
+              "val_utility": 1.141970255653832,
+              "delta": 0.004374960905421786,
+              "family_bootstrap_95_ci": [
+                -0.0008932481832481228,
+                0.01212569663501508
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 32,
+              "val_utility": 1.145205879036192,
+              "delta": 0.007610584287781971,
+              "family_bootstrap_95_ci": [
+                0.0011162545584146198,
+                0.01622642056531136
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 40,
+              "val_utility": 1.1484722154711986,
+              "delta": 0.010876920722788504,
+              "family_bootstrap_95_ci": [
+                0.002418188963622615,
+                0.020930127190542106
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 48,
+              "val_utility": 1.1548471870758,
+              "delta": 0.017251892327389814,
+              "family_bootstrap_95_ci": [
+                0.00678729183481622,
+                0.028067426634861246
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 56,
+              "val_utility": 1.119706659689489,
+              "delta": -0.01788863505892126,
+              "family_bootstrap_95_ci": [
+                -0.09146167319440499,
+                0.0251317322090528
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            },
+            {
+              "step": 64,
+              "val_utility": 1.1213603268681975,
+              "delta": -0.016234967880212677,
+              "family_bootstrap_95_ci": [
+                -0.09622674001441586,
+                0.03339768461734355
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": null
+            }
+          ],
+          "final_adapter_artifact": null,
+          "device": "cuda:0",
+          "wall_seconds": 339.33963437913917,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 1,
+          "val_utility": 1.1209801270553728,
+          "delta": -0.016615167693037333,
+          "family_bootstrap_95_ci": [
+            -0.09621356810381425,
+            0.03200516047287577
+          ],
+          "improved_contexts": 19,
+          "worsened_contexts": 11,
+          "ties": 61,
+          "leave_one_context_out_min_delta": -0.020634662370776078,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0835858054974036,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.01228590978909887,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.06595851603423435,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.0181076731877571,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.005692039615693534,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.022530969479934805,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": -0.008353482506059152,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.010373435725023961,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.04749588740823053,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.0418902266937629,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": -0.6244826897645088,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.10603181277408254,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0034870372714238262,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.03256440117530128,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4543566804246297,
+          "train_val_gap": 0.333376553369257,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1372487782867533,
+              "delta": -0.00034651646165678973,
+              "family_bootstrap_95_ci": [
+                -0.0017599382540265005,
+                0.000812320710803455
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0008.pt"
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1386046479848353,
+              "delta": 0.0010093532364251233,
+              "family_bootstrap_95_ci": [
+                -0.0010867449553927484,
+                0.003336388178581591
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0016.pt"
+            },
+            {
+              "step": 24,
+              "val_utility": 1.1425374503525856,
+              "delta": 0.00494215560417545,
+              "family_bootstrap_95_ci": [
+                7.475580748611188e-05,
+                0.012250398516705426
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0024.pt"
+            },
+            {
+              "step": 32,
+              "val_utility": 1.1452301834238816,
+              "delta": 0.00763488867547137,
+              "family_bootstrap_95_ci": [
+                0.0009287608330591192,
+                0.015747432400264858
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0032.pt"
+            },
+            {
+              "step": 40,
+              "val_utility": 1.1484722154711986,
+              "delta": 0.010876920722788504,
+              "family_bootstrap_95_ci": [
+                0.0024127025116606384,
+                0.020411592568275884
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0040.pt"
+            },
+            {
+              "step": 48,
+              "val_utility": 1.1548471870758,
+              "delta": 0.017251892327389814,
+              "family_bootstrap_95_ci": [
+                0.006970076425318537,
+                0.028467489076021882
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0048.pt"
+            },
+            {
+              "step": 56,
+              "val_utility": 1.119706659689489,
+              "delta": -0.01788863505892126,
+              "family_bootstrap_95_ci": [
+                -0.09364784934941559,
+                0.02523053454572931
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0056.pt"
+            },
+            {
+              "step": 64,
+              "val_utility": 1.1209801270553728,
+              "delta": -0.016615167693037333,
+              "family_bootstrap_95_ci": [
+                -0.09842378170847066,
+                0.03137321844299075
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed1/adapter-step0064.pt"
+            }
+          ],
+          "final_adapter_artifact": "H46-C/seed1/adapter-final.pt",
+          "device": "cuda:0",
+          "wall_seconds": 228.3837662260048,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 2,
+          "val_utility": 1.1210322021456598,
+          "delta": -0.01656309260275037,
+          "family_bootstrap_95_ci": [
+            -0.09723745106565698,
+            0.031425026773729194
+          ],
+          "improved_contexts": 20,
+          "worsened_contexts": 11,
+          "ties": 60,
+          "leave_one_context_out_min_delta": -0.020582008668374813,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0835858054974036,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.01228590978909887,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.06595851603423435,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.0181076731877571,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.011994072967165415,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.022530969479934805,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": -0.01032294351731669,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.006988630028032405,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.04749588740823053,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.0418902266937629,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": -0.6244826897645088,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.10603181277408254,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0034870372714238262,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.03256440117530128,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.453634417099389,
+          "train_val_gap": 0.3326022149537291,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1372487782867533,
+              "delta": -0.00034651646165678973,
+              "family_bootstrap_95_ci": [
+                -0.0016553970765862981,
+                0.0007532474721502445
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0008.pt"
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1386046479848353,
+              "delta": 0.0010093532364251233,
+              "family_bootstrap_95_ci": [
+                -0.001040751576860574,
+                0.003213174551182799
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0016.pt"
+            },
+            {
+              "step": 24,
+              "val_utility": 1.1425374503525856,
+              "delta": 0.00494215560417545,
+              "family_bootstrap_95_ci": [
+                -3.475129014958174e-05,
+                0.012208822579159204
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0024.pt"
+            },
+            {
+              "step": 32,
+              "val_utility": 1.1452301834238816,
+              "delta": 0.00763488867547137,
+              "family_bootstrap_95_ci": [
+                0.0011472616355816358,
+                0.016023266468765684
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0032.pt"
+            },
+            {
+              "step": 40,
+              "val_utility": 1.1484722154711986,
+              "delta": 0.010876920722788504,
+              "family_bootstrap_95_ci": [
+                0.002332401801621946,
+                0.02144040628889925
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0040.pt"
+            },
+            {
+              "step": 48,
+              "val_utility": 1.1549434945464057,
+              "delta": 0.01734819979799555,
+              "family_bootstrap_95_ci": [
+                0.007439225181615886,
+                0.02835651559784101
+              ],
+              "h46_s_accept": true,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0048.pt"
+            },
+            {
+              "step": 56,
+              "val_utility": 1.119706659689489,
+              "delta": -0.01788863505892126,
+              "family_bootstrap_95_ci": [
+                -0.09284736746057562,
+                0.025739995399736783
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0056.pt"
+            },
+            {
+              "step": 64,
+              "val_utility": 1.1210322021456598,
+              "delta": -0.01656309260275037,
+              "family_bootstrap_95_ci": [
+                -0.09239343391279835,
+                0.03161052381950261
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-C/seed2/adapter-step0064.pt"
+            }
+          ],
+          "final_adapter_artifact": "H46-C/seed2/adapter-final.pt",
+          "device": "cuda:0",
+          "wall_seconds": 265.216191874817,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        }
+      ],
+      "median_val_utility": 1.1210322021456598,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.7008034023940285,
+        1.6265094724283269
+      ],
+      "median_delta": -0.01656309260275037,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.09566266332206183,
+        0.032492881510437076
+      ],
+      "minimum_leave_one_context_out_delta": -0.020634662370776078,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_val_utilities": [
+        1.1213603268681975,
+        1.1209801270553728,
+        1.1210322021456598
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H46-C": 1533.01,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H46-C": {
+            "wins": 20,
+            "ties": 60,
+            "losses": 11,
+            "elo_delta_vs_anchor": 33.01
+          }
+        }
+      },
+      "family_effect_evidence_passes": false,
+      "beats_plateau": false,
+      "beats_plateau_reason": "No H46 arm used inner family-grouped CV for checkpoint selection; the required selection protocol was not met."
+    },
+    "H46-D": {
+      "seeds": [
+        {
+          "seed": 0,
+          "val_utility": 1.034436497530176,
+          "delta": -0.10315879721823401,
+          "family_bootstrap_95_ci": [
+            -0.186140600876961,
+            -0.030639684016151827
+          ],
+          "improved_contexts": 19,
+          "worsened_contexts": 34,
+          "ties": 38,
+          "leave_one_context_out_min_delta": -0.11058852274201379,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.14701629612260758,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.008563255263717595,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.48758707884025065,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0052635968555973635,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.005044890669130641,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5535552074120512,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.35661623615452454,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.12600943182667518,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.354699717192223,
+          "train_val_gap": 0.32026321966204696,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1355769726640486,
+              "delta": -0.0020183220843616517,
+              "family_bootstrap_95_ci": [
+                -0.006794217979059774,
+                0.0011873657508651267
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0008.pt"
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.010936010034621607,
+                0.0010338481642782468
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0016.pt"
+            },
+            {
+              "step": 24,
+              "val_utility": 1.12808063861827,
+              "delta": -0.009514656130140199,
+              "family_bootstrap_95_ci": [
+                -0.023172165550423993,
+                0.0009780999175009323
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0024.pt"
+            },
+            {
+              "step": 32,
+              "val_utility": 1.109012810273927,
+              "delta": -0.028582484474483173,
+              "family_bootstrap_95_ci": [
+                -0.0604633562475129,
+                -0.00412467687026791
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0032.pt"
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0773527936145677,
+              "delta": -0.06024250113384241,
+              "family_bootstrap_95_ci": [
+                -0.1350923659982673,
+                -0.003622266592929409
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0040.pt"
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0682810898897397,
+              "delta": -0.06931420485867038,
+              "family_bootstrap_95_ci": [
+                -0.1470567124115826,
+                -0.009611975677880386
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0048.pt"
+            },
+            {
+              "step": 56,
+              "val_utility": 1.0193517363396583,
+              "delta": -0.11824355840875198,
+              "family_bootstrap_95_ci": [
+                -0.21289391559142345,
+                -0.03468374724641705
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0056.pt"
+            },
+            {
+              "step": 64,
+              "val_utility": 1.034436497530176,
+              "delta": -0.10315879721823401,
+              "family_bootstrap_95_ci": [
+                -0.18456956584169995,
+                -0.031614904689397615
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed0/adapter-step0064.pt"
+            }
+          ],
+          "final_adapter_artifact": "H46-D/seed0/adapter-final.pt",
+          "device": "cuda:0",
+          "wall_seconds": 216.29098285804503,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 1,
+          "val_utility": 1.034436497530176,
+          "delta": -0.10315879721823401,
+          "family_bootstrap_95_ci": [
+            -0.18523361740560723,
+            -0.0329920202056962
+          ],
+          "improved_contexts": 19,
+          "worsened_contexts": 34,
+          "ties": 38,
+          "leave_one_context_out_min_delta": -0.11058852274201379,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.14701629612260758,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.008563255263717595,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.48758707884025065,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0052635968555973635,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.005044890669130641,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5535552074120512,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.35661623615452454,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.05745251491707495,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.12600943182667518,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.3511603697914008,
+          "train_val_gap": 0.31672387226122467,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1355769726640486,
+              "delta": -0.0020183220843616517,
+              "family_bootstrap_95_ci": [
+                -0.006995854537235906,
+                0.0012483190916146372
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0008.pt"
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1331412953072784,
+              "delta": -0.004453999441131728,
+              "family_bootstrap_95_ci": [
+                -0.010970313585418895,
+                0.000844714646068755
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0016.pt"
+            },
+            {
+              "step": 24,
+              "val_utility": 1.12808063861827,
+              "delta": -0.009514656130140199,
+              "family_bootstrap_95_ci": [
+                -0.023421695424211634,
+                0.001507368297833169
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0024.pt"
+            },
+            {
+              "step": 32,
+              "val_utility": 1.109012810273927,
+              "delta": -0.028582484474483173,
+              "family_bootstrap_95_ci": [
+                -0.06472700441174387,
+                -0.004286200943895663
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0032.pt"
+            },
+            {
+              "step": 40,
+              "val_utility": 1.1006093475070065,
+              "delta": -0.03698594724140348,
+              "family_bootstrap_95_ci": [
+                -0.07453859886924874,
+                -0.0037386288512720805
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0040.pt"
+            },
+            {
+              "step": 48,
+              "val_utility": 1.0682810898897397,
+              "delta": -0.06931420485867038,
+              "family_bootstrap_95_ci": [
+                -0.14428334744936588,
+                -0.010242296300970375
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0048.pt"
+            },
+            {
+              "step": 56,
+              "val_utility": 1.019615230754007,
+              "delta": -0.11798006399440328,
+              "family_bootstrap_95_ci": [
+                -0.21120333265939928,
+                -0.03733725154885509
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0056.pt"
+            },
+            {
+              "step": 64,
+              "val_utility": 1.034436497530176,
+              "delta": -0.10315879721823401,
+              "family_bootstrap_95_ci": [
+                -0.18489709766559084,
+                -0.030381794100798297
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed1/adapter-step0064.pt"
+            }
+          ],
+          "final_adapter_artifact": "H46-D/seed1/adapter-final.pt",
+          "device": "cuda:0",
+          "wall_seconds": 57.46178128803149,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        },
+        {
+          "seed": 2,
+          "val_utility": 1.0402311358533802,
+          "delta": -0.09736415889503004,
+          "family_bootstrap_95_ci": [
+            -0.18026074085567456,
+            -0.0257478264461325
+          ],
+          "improved_contexts": 22,
+          "worsened_contexts": 31,
+          "ties": 38,
+          "leave_one_context_out_min_delta": -0.10472949954855203,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.14701629612260758,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.006474656583863636,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.001016300003997639,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0001000469261265069,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.48758707884025065,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0052635968555973635,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.005044890669130641,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5535552074120512,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.35661623615452454,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.02886780528699271,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.05667867923416518,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.03588084189817851
+          },
+          "train_utility": 1.3544323641242535,
+          "train_val_gap": 0.31420122827087327,
+          "h46_s_accept": false,
+          "h46_s_trajectory": [
+            {
+              "step": 8,
+              "val_utility": 1.1355769726640486,
+              "delta": -0.0020183220843616517,
+              "family_bootstrap_95_ci": [
+                -0.006644541674240313,
+                0.0012281891423788257
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0008.pt"
+            },
+            {
+              "step": 16,
+              "val_utility": 1.1330456436405512,
+              "delta": -0.0045496511078589935,
+              "family_bootstrap_95_ci": [
+                -0.011584570742379128,
+                0.0010656981412767142
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0016.pt"
+            },
+            {
+              "step": 24,
+              "val_utility": 1.12808063861827,
+              "delta": -0.009514656130140199,
+              "family_bootstrap_95_ci": [
+                -0.023175178805767926,
+                0.0010008119173283824
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0024.pt"
+            },
+            {
+              "step": 32,
+              "val_utility": 1.109012810273927,
+              "delta": -0.028582484474483173,
+              "family_bootstrap_95_ci": [
+                -0.06068984685655449,
+                -0.0033279663648252632
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0032.pt"
+            },
+            {
+              "step": 40,
+              "val_utility": 1.0773527936145677,
+              "delta": -0.06024250113384241,
+              "family_bootstrap_95_ci": [
+                -0.13575742371957403,
+                -0.005422075514787028
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0040.pt"
+            },
+            {
+              "step": 48,
+              "val_utility": 1.068559542992782,
+              "delta": -0.069035751755628,
+              "family_bootstrap_95_ci": [
+                -0.14437645437367397,
+                -0.006647633662829495
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0048.pt"
+            },
+            {
+              "step": 56,
+              "val_utility": 1.019615230754007,
+              "delta": -0.11798006399440328,
+              "family_bootstrap_95_ci": [
+                -0.2154614597303413,
+                -0.03599754395508629
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0056.pt"
+            },
+            {
+              "step": 64,
+              "val_utility": 1.0402311358533802,
+              "delta": -0.09736415889503004,
+              "family_bootstrap_95_ci": [
+                -0.1915388034048726,
+                -0.0260152760924382
+              ],
+              "h46_s_accept": false,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "adapter_artifact": "H46-D/seed2/adapter-step0064.pt"
+            }
+          ],
+          "final_adapter_artifact": "H46-D/seed2/adapter-final.pt",
+          "device": "cuda:0",
+          "wall_seconds": 222.4914565961808,
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        }
+      ],
+      "median_val_utility": 1.034436497530176,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.6098252232903455,
+        1.585219429426156
+      ],
+      "median_delta": -0.10315879721823401,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.18502062536031977,
+        -0.03300945295928122
+      ],
+      "minimum_leave_one_context_out_delta": -0.11058852274201379,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_val_utilities": [
+        1.034436497530176,
+        1.034436497530176,
+        1.0402311358533802
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H46-D": 1459.59,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H46-D": {
+            "wins": 19,
+            "ties": 38,
+            "losses": 34,
+            "elo_delta_vs_anchor": -40.41
+          }
+        }
+      },
+      "family_effect_evidence_passes": false,
+      "beats_plateau": false,
+      "beats_plateau_reason": "No H46 arm used inner family-grouped CV for checkpoint selection; the required selection protocol was not met."
+    }
+  },
   "execution": {
     "host": "xbabe2",
     "device": "cuda:0",
     "completed_runs": [
       "H46-0/seed0",
-      "H46-0/seed1"
+      "H46-0/seed1",
+      "H46-0/seed2",
+      "H46-A/seed0",
+      "H46-A/seed1",
+      "H46-A/seed2",
+      "H46-B/seed0",
+      "H46-B/seed1",
+      "H46-B/seed2",
+      "H46-C/seed0",
+      "H46-C/seed1",
+      "H46-C/seed2",
+      "H46-D/seed0",
+      "H46-D/seed1",
+      "H46-D/seed2"
     ],
     "interim_control_max_candidate_utility": 1.1355344400915894,
     "interim_control_delta_vs_r785": -0.002060854656820821,
-    "interim_verdict": "pending_all_arms_and_seeds",
+    "interim_verdict": "complete_no_selected_wins",
     "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "trainable_params": 29211,
     "approved_contexts": {
@@ -50,5 +2638,95 @@
       "H46-0/seed2: training completed but final validation batching failed on variable candidate-pool sizes; rerun queued; no metrics accepted"
     ],
     "results_path": "~/jope-data/h46/runs/"
-  }
+  },
+  "red_team": {
+    "cohort_audit": {
+      "train_contexts": 1219,
+      "validation_contexts": 91,
+      "train_families": 205,
+      "validation_families": 19,
+      "context_overlap": 0,
+      "family_overlap": 0,
+      "excluded_dl_holdout_count": 93,
+      "excluded_payloads_opened": 0,
+      "outer_rows_delivered": 0
+    },
+    "integrity": {
+      "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "trainable_params": 29211
+    },
+    "seed_dependence": "Final results are near-pseudoreplicates, with bit-identical final deltas in several seeds/arms; effective seed count is approximately 1 per arm. Do not report a three-seed noise interval. Use family bootstrap and leave-one-context-out evidence over the 19 validation families.",
+    "selection_bias": "H46-C step48 was chosen as best among five arms and eight checkpoints using DL-Val (40 looks); its per-checkpoint CI is unadjusted and exploratory. Final C is negative.",
+    "arm_win_rule": "Median FINAL delta > 0 and family-bootstrap 95% CI lower bound > 0; checkpoint selection must use inner family-grouped CV on training families. H46 did not meet the selection-protocol requirement because it evaluated checkpoints on DL-Val.",
+    "h47_comparison": "H47 remains queued for comparability. Its full-batch default also makes seeds near-pseudoreplicates; report that limitation and compare against H46-0 last attempted candidate delta -0.004087 (accepted restore-on-reject incumbent remains r785 at delta 0) and H46-A under the same EMA protocol. H47 has no in-wave control because arm == '0' is dead code.",
+    "h48_proposal": {
+      "queue_after": "H47",
+      "checkpoint": "offline round-785 copy",
+      "arms": {
+        "0": "H46-0 control",
+        "P": "persistent AdamW and EMA state across rounds; no reset to r785 on reject",
+        "PC": "P plus per-context clipped/normalized loss; cap the -2.0 gate-failure contexts",
+        "PF": "P plus family-balanced minibatches of 256 with seed-varied sampling"
+      },
+      "selection": "inner family-grouped CV over training families; score DL-Val91 once at the end",
+      "report": [
+        "median utility",
+        "family-bootstrap CI",
+        "regression Elo",
+        "train/validation gap",
+        "wall time",
+        "DOPE/checkpoint checksums"
+      ]
+    }
+  },
+  "analysis_protocol": {
+    "device": "cuda:0",
+    "seed_dependence_note": "Each seed uses the full 1,219-context training batch; seeds only alter the sampled slate portion. Observed final outputs are near-pseudoreplicates (effective seed count approximately 1 per arm), so no interval is presented as seed-noise uncertainty. Arm-level intervals resample the 19 DL-Val families and summarize the median seed metric.",
+    "selection_protocol": "H46 evaluated every checkpoint on DL-Val and therefore did not use inner family-grouped train CV; checkpoint trajectory findings are exploratory, and no H46 arm can qualify as a selected win.",
+    "winner_curse_note": "H46-C step48 was the best-of-5-arms-by-8-checkpoints DL-Val selection (40 looks); its positive point and per-checkpoint CI are exploratory without multiplicity correction. Final C is negative.",
+    "arm_win_rule": "Median final delta > 0 and family-bootstrap 95% CI lower bound > 0, with selection using inner family-grouped cross-validation over train families. H46 fails the selection-protocol requirement; no arm is a selected win."
+  },
+  "early_findings": {
+    "objective_mismatch": "A/B training loss falls while train utility and DL-Val utility both fall; consistent with objective mismatch, not ordinary overfitting.",
+    "A_seed0": {
+      "train_loss_first_eval": 3.6665337085723877,
+      "train_loss_final_eval": 3.359318494796753,
+      "train_utility": 1.354526955895818,
+      "baseline_train_utility": 1.4251559330611108,
+      "val_utility": 1.0367669973748173,
+      "val_delta": -0.100828297373593,
+      "family_bootstrap_95_ci": [
+        -0.1885387784559686,
+        -0.033021634286896404
+      ],
+      "leave_one_out_min_delta": -0.1082321284546547,
+      "leave_one_out_max_delta": -0.07300302706629115
+    },
+    "A_seed_final_val_utility": [
+      1.0367669973748173,
+      1.0377593796422038,
+      1.0367669973748173
+    ],
+    "seed_dependence": "Full 1,219-context batch each step; seeds only alter random portions of training slates. Near-pseudoreplicates; family-bootstrap intervals are conditional context/family uncertainty, not independent-seed noise.",
+    "hopeless_rule": "A seed0 operational rule chosen after observation: upper family-bootstrap CI < 0 and all leave-one-context-out deltas < 0.",
+    "next_arm": "H46-D family-balanced per-context Huber/KL loss; queued after 0/A/B/C.",
+    "C_seed0_trajectory": {
+      "step32_delta": 0.00761058428778197,
+      "step48_delta": 0.017251573490953,
+      "step48_family_bootstrap_95_ci": [
+        0.006787,
+        0.028067
+      ],
+      "step48_h46_s_per_checkpoint_accept": true,
+      "step56_delta": -0.017889,
+      "step56_family_bootstrap_95_ci": [
+        -0.091462,
+        0.025132
+      ],
+      "final_step64_delta": -0.016234967880212725,
+      "multiplicity_adjustment": "none; per-checkpoint gate is exploratory and not an arm-level win"
+    }
+  },
+  "early_findings_note": "Preserved as contemporaneous observations; final arm synthesis is in results."
 }
