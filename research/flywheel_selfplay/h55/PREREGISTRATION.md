@@ -1,6 +1,6 @@
 # H55 preregistration — r882 adapter averaging
 
-**Status: preregistered design; no H55 outcome cell has run.** This is the preregistration-only change. Runner implementation and GPU work begin only after this PR is merged. H53b closeout PR #648 is merged.
+**Status: preregistered design; timing-only cell passed, no H55 outcome cell has run.** H53b closeout PR #648 is merged.
 
 ## Question and scope
 
@@ -52,3 +52,13 @@ Before any training cell, require host CPU utilization at or below 85%, `MemAvai
 ## Closeout
 
 Keep implementation, audit, and focused tests under `research/flywheel_selfplay/h55/`. Closeout requires a README, `metrics.json` under 50 KB, an index row, immutable per-cell receipts, and an independent audit. Report the no-admission result as such; do not present a diagnostic or matched control as a win. Run focused local checks on touched files, open one small closeout PR, and use the authorized squash-admin flow. Append results to `~/jope_plan/ns/H55_STATUS.md` and `~/jope_plan/comms.md`. H57 remains gated by its merged preregistration until H55 closes.
+
+## Dated execution amendment — 2026-10-30 (before outcome cells)
+
+The committed implementation at `d5bf0c7406e566065aab43440cb015fa6d7b46ed` passed the focused four-test suite, the two-context CPU dry run, and its independent dry-run audit before timing. The timing-only EMA-25 seed-12 cell then completed under `~/jope_plan/qualification.lock`; it is excluded from outcomes and supplied no weights, scores, controls, or fold-B/DL-Val reads.
+
+Timing receipt: source commit `d5bf0c7406e566065aab43440cb015fa6d7b46ed`; source SHA map in `~/jope-data/h55/h55-wave/timing/ema25-seed12/timing.json`; fold assignment SHA-256 `9bb81404798c697a8fe385a0b3ffa63e40fc7613157699939d01e175e191fe45`; 25 rounds / 50 optimizer updates; cell wall 225.689 s, coordinator wall 230.237 s; maximum coordinator-observed process RSS 4,875,624 KiB; maximum observed host CPU 51.43%; CUDA 0 free memory after lock 24,124 MiB; lock wait 0.028 s; DOPE SHA-256 before and after `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`; holdout and outer counts zero. The independent `audit-timing.json` reports PASS. The fixed training projection is 4.8 × coordinator timing wall = 1,105.1 s (three EMA cells plus three SWA cells at 16/50 of the measured update horizon, with 20% allowance).
+
+For the six outcome cells, set one immutable **total GPU-wave wall cap** of 1,800 seconds, including cell startup/scoring and lock waiting. This is the hard ceiling, not an efficacy-based extension; if it is reached, stop between cells and mark the wave incomplete/infra-void. Preserve all registered training budgets exactly: SWA-8 remains eight independent one-round, k=2 members per seed and EMA remains one 25-round, 50-update trajectory per seed; seeds remain 12–14; training remains fold A only; admission remains one fold-B scoring pass as described above. No outcome-driven extension is permitted. The measured update projection is below the cap; the remaining budget is reserved for fold-B loading/scoring and fixed cell setup.
+
+Apply the red-team terminal-read limit: at most one terminal DL-Val read per seed across all admitted arms. If both arms pass fold-B admission, use the preregistered fixed order SWA-8 then EMA-25 and read only the first admitted arm, once for each seed. Freeze admission before these reads; DL-Val cannot affect admission or arm order. If neither arm admits, read no DL-Val. Every cell remains gated on `qualification.lock`, CUDA 0 free memory ≥6 GiB, pre-cell host CPU ≤85%, `MemAvailable` ≥20 GiB, process RSS strictly below 6 GiB, filesystem `/` below 95% full with at least 1 GiB free, and before/after DOPE hash equality. CPU fallback remains forbidden. No outcome cell may start unless this dated amendment is committed and the timing audit remains passing.
