@@ -37,7 +37,8 @@ the problem, because a move can only win against something.
   \label{tab:go-vs-innovation}
   \centering
   \small
-  \begin{tabular}{@{}p{0.16\linewidth}p{0.33\linewidth}p{0.43\linewidth}@{}}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}>{\raggedright\arraybackslash}p{0.42\linewidth}@{}}
     \toprule
                    & Go                              & The innovation game \\
     \midrule
@@ -71,7 +72,7 @@ verdict as reward \citep{lattimore2020bandit}. It earns the name through an
 opponent that improves as the player does. The honest asymmetry is in the
 moves: Go offers about 250 legal moves per turn over about 150 turns, each free
 to check \citep{silver2016mastering}, while this game offers one move, costly to
-judge. Taste, which raises the chance $q$ that one try wins (\cref{eq:taste}),
+judge. Taste, which raises the chance $\winprob$ that one try wins (\cref{eq:taste}),
 therefore decides it.
 
 \begin{figure}[t]
