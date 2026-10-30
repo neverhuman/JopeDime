@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced PUB-05 phrase-renderer identity successor after TUI-07 on d60ec583c. The only lock change is a test-only jope-service dependency on the reviewed feat-math public-name catalogs; the phrase renderer and tests do not change evaluator behavior or add a normal dependency. No shipped receipt exists for this new identity, so the known identity table is unchanged.",
+  "plan_reference": "T042/PUB-05; scope_1430; scope_1445; ADR-0004",
+  "source_commit": "7e55a0f9d5f3e5bdda33ff0eff67500dcdc6807f",
+  "base_commit": "d60ec583c5fd12b357722f5fe6d30e9f8dc9b25d",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "5727762114e44c75b654caa4b566ad9ed733c8e6411cfd159bb3b132126b46f2",
+      "after": "787111f68b020899289857bc19aad61e2d2fa5aeb715d076351cb220b9d979d6"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "f6a58ecce49a06105fa452310802b0f637a45c20dba5c209ab3066aaa2d70f95",
+      "after": "d200495d1e5ce45e8b67607cb93f9601ee69655576a92be95bbbd08d6a6039fe"
+    }
+  ],
+  "before_identity_digest": "ea72a331ffc5b0bae4dcfe48bf4ed2160f3eeb6348e8d6111ca04706e96db6f0",
+  "after_identity_digest": "c82443ae79473c7899f1abe76b214c3fa600858d70fb22468384c79353f428a8",
+  "before_implementation_sha256": "de589d75e8de5de2cde4716532cb40a511ce499c5d52eab0c3d5a855cee5c8cf",
+  "after_implementation_sha256": "1ea51e44c33ad884306cb40a686e34d527f80fb6f57220730df484c36baa97de",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
