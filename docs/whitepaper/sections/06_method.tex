@@ -57,9 +57,11 @@ tokens: up to six transforms from a set of 31, feeding one of 22 prediction head
 forbidden token at each step, the valid-only decoding of grammar-constrained generators
 \citep{kusner2017grammar,dai2018sdvae}, so every finished program is grammatical. We credit that to
 the grammar, not to taste; taste must remove the moves that parse and then crash or lose. A program's
-identity is the SHA-256 hash of its canonical form, so two spellings count once, and a hash of its
-predictions on fixed training probes flags different programs that compute the same function. Every
-move lowers to readable Python and Rust.
+identity is the SHA-256 hash of its canonical form. A separate hash of
+predictions on fixed training probes flags matching observed outputs.
+Those matches do not establish equivalence on other inputs. Without probe
+evidence, this behavior check reports novelty as unknown. Every move lowers to
+readable Python and Rust.
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
