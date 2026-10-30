@@ -2502,6 +2502,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-api"
+version = "0.4.1"
+dependencies = [
+ "schemars",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "jope-appliance"
 version = "0.4.1"
 dependencies = [
