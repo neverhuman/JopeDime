@@ -18,11 +18,12 @@ use serde_json::{json, Value};
 
 /// Calibration options shared by the fitted language emitters.
 ///
-/// The output transform is used for regression predictions. Binary Platt
-/// calibration may be added by the emitter that owns that interface.
+/// The output transform is used for regression predictions; Platt maps native
+/// positive-class probabilities and retains their explicit class order.
 #[derive(Clone, Debug, Default)]
 pub struct ExportCalibration {
     pub output: Option<OutputTransform>,
+    pub platt: Option<crate::model_object::calibration_platt::Calibration>,
 }
 
 /// Engine output for one caller-supplied parity row.
@@ -34,7 +35,7 @@ pub struct CheckRow {
 
 /// Emit standalone ES2020 that predicts with `model`, fitted from `genome` on rows `width` wide.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
-    emit_calibrated(genome, model, width, None)
+    emit_with_platt(genome, model, width, &ExportCalibration::default())
 }
 
 /// Emit a predictor with up to 64 caller-supplied engine check rows.
@@ -44,7 +45,59 @@ pub fn emit_with_checks(
     width: usize,
     checks: &[CheckRow],
 ) -> Result<String> {
-    emit_calibrated_with_checks(genome, model, width, None, checks)
+    emit_with_checks_and_platt(genome, model, width, &ExportCalibration::default(), checks)
+}
+
+/// Emit standalone JavaScript with the shared optional regression and Platt calibration.
+pub fn emit_with_platt(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    calibration: &ExportCalibration,
+) -> Result<String> {
+    emit_with_checks_and_platt(genome, model, width, calibration, &[])
+}
+
+/// Emit JavaScript with shared calibration and caller-supplied engine check rows.
+pub fn emit_with_checks_and_platt(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    calibration: &ExportCalibration,
+    checks: &[CheckRow],
+) -> Result<String> {
+    let mut source =
+        emit_calibrated_with_checks(genome, model, width, calibration.output.as_ref(), checks)?;
+    if let Some(platt) = &calibration.platt {
+        platt
+            .validate()
+            .map_err(|e| Failure::integrity(format!("invalid Platt calibration: {e:#}")))?;
+        let sigmoid = &platt.sigmoid;
+        source.push_str(&format!(
+            "\nconst PLATT_CLASS_ORDER=Object.freeze({});\n\
+             function fittedPlatt(score) {{\n\
+               if(!Number.isFinite(score) || score<0 || score>1) throw new Error(\"invalid Platt score\");\n\
+               const z={}===0 ? {} : {} + {}*(score/{} - {});\n\
+               let p; if(z>=0) p=1/(1+Math.exp(-z)); else {{const e=Math.exp(z); p=e/(1+e);}}\n\
+               return [1-p,p];\n\
+             }}\n",
+            serde_json::to_string(&platt.class_order)?,
+            js_number(sigmoid.slope),
+            js_number(sigmoid.intercept),
+            js_number(sigmoid.intercept),
+            js_number(sigmoid.slope),
+            js_number(sigmoid.scale),
+            js_number(sigmoid.center),
+        ));
+    }
+    let hits = lint_shipped_text(&source);
+    if !hits.is_empty() {
+        return Err(Failure::integrity(format!(
+            "banned vocabulary in JavaScript artifact: {}",
+            hits.join(", ")
+        )));
+    }
+    Ok(source)
 }
 
 /// Emit standalone JavaScript with the optional fitted regression output transform.
