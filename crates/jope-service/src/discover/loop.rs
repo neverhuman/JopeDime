@@ -1103,11 +1103,16 @@ struct Indices {
 /// Existing WRK-01 callback. It reads only its supplied FIT mapping and returns
 /// three finite values: M1 RMSE surrogate, minimization objective, user value.
 /// This heuristic surrogate is explicit; it is not qualified as bundle R0/M3.
-pub fn evaluate_native<B: AsRef<[u8]>>(
+pub fn evaluate_native<B: AsRef<[u8]> + Sync>(
     request: &Request,
     matrix: &Matrix<B>,
 ) -> std::result::Result<worker::Scores, WorkerFailure> {
-    native_scores(request, matrix).map_err(|error| {
+    // A dedicated numerical pool overrides ambient Rayon settings. The binary's
+    // fixed one-thread fits do not change when live worker capacity changes.
+    let result = jope_runtime::budget::Budget::new(None, 1)
+        .install(|| native_scores(request, matrix))
+        .map_err(|_| WorkerFailure::Unavailable)?;
+    result.map_err(|error| {
         if error.is::<UndefinedFitness>() {
             WorkerFailure::NonFinite
         } else {
@@ -1368,9 +1373,11 @@ fn fit_artifact<B: AsRef<[u8]>>(
         features,
         &(0..matrix.rows()).collect::<Vec<_>>(),
     )?;
-    Ok(serde_json::to_vec(&NativeModel::fit(
-        features, dsl, &x, &y,
-    )?)?)
+    jope_runtime::budget::Budget::new(None, 1).install(|| -> Result<Vec<u8>> {
+        Ok(serde_json::to_vec(&NativeModel::fit(
+            features, dsl, &x, &y,
+        )?)?)
+    })?
 }
 
 /// Hidden M1 adapter. The plan is immutable and contains a FIT-only mapping;
@@ -1409,6 +1416,7 @@ pub fn run_m1(path: &Path, executable: &Path) -> Result<Value> {
         json!({"stage":"search_finished", "completion_reason":discovery.completed(),
         "budget_bound_by":discovery.budget_bound_by(),
         "fitting":"selection_only",
+        "threads_per_worker":1,
         "champion":discovery.champion(), "snapshot":discovery.snapshot(),
         "nondeterminism":discovery.nondeterminism(), "projection":discovery.projection()?,
         "qualification":"M1 heuristic numeric regression; finalization/export and bundle-surrogate parity remain separate gates"}),
