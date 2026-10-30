@@ -959,6 +959,14 @@ mod platform {
 mod tests {
     use super::*;
 
+    /// A fresh, empty store directory removed on drop.
+    fn test_store() -> tempfile::TempDir {
+        tempfile::Builder::new()
+            .prefix("jope-telemetry-")
+            .tempdir()
+            .unwrap()
+    }
+
     const ENGINE: u32 = 1;
 
     #[derive(Clone, Default)]
@@ -1359,7 +1367,8 @@ mod tests {
 
     #[test]
     fn gpu_less_system_sensors_report_a_reason() {
-        let mut sensors = SystemSensors::without_gpu(std::env::temp_dir());
+        let store = test_store();
+        let mut sensors = SystemSensors::without_gpu(store.path());
         assert_eq!(sensors.gpus(), Err("gpu_sampling_disabled".to_owned()));
     }
 
@@ -1574,10 +1583,11 @@ mod tests {
         let off = search();
         let (_dir, log, snapshot) = crate::events::tests::fixture();
         let mut frames = log.subscribe_telemetry();
+        let store = test_store();
         let service = TelemetryService::spawn(
             snapshot.run_id,
             log,
-            Box::new(SystemSensors::without_gpu(std::env::temp_dir())),
+            Box::new(SystemSensors::without_gpu(store.path())),
             Arc::new(Counters::default()),
             Instant::now(),
             Duration::from_millis(1),
@@ -1602,7 +1612,8 @@ mod tests {
     fn real_sensor_tick_cost_is_below_two_percent_of_the_interval() {
         let counters = Counters::default();
         counters.set_workers(&[std::process::id()]);
-        let mut sensors = SystemSensors::without_gpu(std::env::temp_dir());
+        let store = test_store();
+        let mut sensors = SystemSensors::without_gpu(store.path());
         let mut telemetry = Telemetry::new(std::process::id(), Instant::now());
         let ticks = 200;
         let start = Instant::now();
@@ -1635,10 +1646,11 @@ mod tests {
         work();
         let off: Duration = (0..3).map(|_| work()).min().unwrap();
         let (_dir, log, snapshot) = crate::events::tests::fixture();
+        let store = test_store();
         let service = TelemetryService::spawn(
             snapshot.run_id,
             log,
-            Box::new(SystemSensors::without_gpu(std::env::temp_dir())),
+            Box::new(SystemSensors::without_gpu(store.path())),
             Arc::new(Counters::default()),
             Instant::now(),
             DEFAULT_INTERVAL,

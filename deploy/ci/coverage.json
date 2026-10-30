@@ -514,7 +514,9 @@
     },
     "feature:jope-appliance/client": {
       "discovery": {
-        "dependencies": [],
+        "dependencies": [
+          "dep:jope-client"
+        ],
         "kind": "feature"
       },
       "dispositions": [],
@@ -526,6 +528,7 @@
     "feature:jope-appliance/default": {
       "discovery": {
         "dependencies": [
+          "client",
           "engine",
           "mcp"
         ],
@@ -608,7 +611,7 @@
     "feature:jope-appliance/mcp": {
       "discovery": {
         "dependencies": [
-          "dep:jope-client",
+          "client",
           "dep:rmcp",
           "dep:tokio"
         ],
