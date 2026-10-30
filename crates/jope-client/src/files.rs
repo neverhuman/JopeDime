@@ -406,6 +406,82 @@ mod tests {
         ));
     }
     #[test]
+    fn download_collision_preserves_existing_directory() {
+        const CHILD: &str = "JOPE_CLIENT_DOWNLOAD_COLLISION_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            // A fresh process isolates the staging counter from parallel tests.
+            let output = std::process::Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "files::tests::download_collision_preserves_existing_directory",
+                    "--nocapture",
+                    "--test-threads=1",
+                ])
+                .env(CHILD, "1")
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "collision child failed:\n{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            return;
+        }
+
+        let root = temp_dir();
+        let existing = root.join(format!(".out.download-{}-0", std::process::id()));
+        fs::create_dir(&existing).unwrap();
+        fs::write(existing.join("keep"), b"existing data").unwrap();
+        let bytes = zip(&[("new", b"downloaded data")]);
+        let result = download_artifact(
+            &Fake {
+                bytes: bytes.clone(),
+            },
+            &artifact_id(),
+            &digest(&bytes),
+            &root.join("out"),
+            false,
+        );
+        assert!(
+            matches!(result, Err(FileError::Io(error)) if error.kind() == io::ErrorKind::AlreadyExists)
+        );
+        assert_eq!(
+            fs::read(existing.join("keep")).ok().as_deref(),
+            Some(b"existing data".as_slice()),
+            "exclusive-create failure removed a pre-existing directory"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn download_archive_is_cleaned_after_success_and_publish_refusal() {
+        let root = temp_dir();
+        let out = root.join("out");
+        let bytes = zip(&[("new", b"downloaded data")]);
+        let transport = Fake {
+            bytes: bytes.clone(),
+        };
+        let expected = digest(&bytes);
+        download_artifact(&transport, &artifact_id(), &expected, &out, false).unwrap();
+        let download_archives = || {
+            fs::read_dir(&root)
+                .unwrap()
+                .map(|entry| entry.unwrap().file_name())
+                .filter(|name| name.to_string_lossy().contains(".download-"))
+                .count()
+        };
+        assert_eq!(download_archives(), 0, "successful download leaked its ZIP");
+        assert!(matches!(
+            download_artifact(&transport, &artifact_id(), &expected, &out, false),
+            Err(FileError::OutputExists)
+        ));
+        assert_eq!(download_archives(), 0, "refused publication leaked its ZIP");
+        assert_eq!(fs::read(out.join("new")).unwrap(), b"downloaded data");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn verified_zip_is_extracted_and_force_backs_up_existing_output() {
         let root = temp_dir();
         let out = root.join("out");
