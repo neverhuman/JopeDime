@@ -183,6 +183,7 @@ impl<'a> Lexer<'a> {
         if self.language == SourceLanguage::Rust && self.rust_prefix()? {
             return Ok(true);
         }
+        let mut formatted = false;
         if self.language == SourceLanguage::Python {
             for prefix in ["br", "rb", "fr", "rf", "r", "b", "u", "f"] {
                 if self
@@ -195,6 +196,7 @@ impl<'a> Lexer<'a> {
                         .get(prefix.len())
                         .is_some_and(|b| matches!(b, b'\'' | b'"'))
                 {
+                    formatted = prefix.contains('f');
                     self.pos += prefix.len();
                     break;
                 }
@@ -202,7 +204,7 @@ impl<'a> Lexer<'a> {
         }
         let quote = self.rest().as_bytes()[0];
         if matches!(quote, b'\'' | b'"') {
-            self.quoted(start, quote)?;
+            self.quoted(start, quote, formatted)?;
             return Ok(true);
         }
         if self.language == SourceLanguage::JavaScript && quote == b'`' {
@@ -264,7 +266,7 @@ impl<'a> Lexer<'a> {
         Ok(false)
     }
 
-    fn quoted(&mut self, start: usize, quote: u8) -> Result<(), LexError> {
+    fn quoted(&mut self, start: usize, quote: u8, formatted: bool) -> Result<(), LexError> {
         let triple = self.language == SourceLanguage::Python
             && self.rest().as_bytes().starts_with(&[quote; 3]);
         let width = if triple { 3 } else { 1 };
@@ -274,15 +276,68 @@ impl<'a> Lexer<'a> {
                 self.pos += width;
                 return Ok(());
             }
+            if formatted && self.rest().starts_with("{{") {
+                self.pos += 2;
+                continue;
+            }
+            if formatted && self.rest().starts_with('{') {
+                self.pos += 1;
+                self.python_field(start)?;
+                continue;
+            }
             if self.rest().starts_with('\\') {
                 self.pos += 1;
                 if self.pos == self.source.len() {
                     break;
                 }
+                // A backslash in an f-string does not escape a replacement field.
+                if formatted && self.rest().starts_with('{') {
+                    continue;
+                }
             }
             self.pos += self.rest().chars().next().unwrap().len_utf8();
         }
         Err(self.error(start, "unterminated string or character literal"))
+    }
+
+    fn python_field(&mut self, start: usize) -> Result<(), LexError> {
+        if self.template_depth == 128 {
+            return Err(self.error(start, "formatted-string nesting exceeds v1 limit"));
+        }
+        self.template_depth += 1;
+        let mut brackets = 0_usize;
+        loop {
+            self.trivia()?;
+            if brackets == 0 && self.rest().starts_with('}') {
+                self.pos += 1;
+                self.template_depth -= 1;
+                return Ok(());
+            }
+            if brackets == 0 && self.rest().starts_with(':') {
+                self.pos += 1;
+                self.python_format(start)?;
+                self.template_depth -= 1;
+                return Ok(());
+            }
+            match self.next()? {
+                Some("(" | "[" | "{") => brackets += 1,
+                Some(")" | "]" | "}") if brackets > 0 => brackets -= 1,
+                Some(_) => {}
+                None => return Err(self.error(start, "unterminated formatted-string field")),
+            }
+        }
+    }
+
+    fn python_format(&mut self, start: usize) -> Result<(), LexError> {
+        while let Some(c) = self.rest().chars().next() {
+            self.pos += c.len_utf8();
+            match c {
+                '}' => return Ok(()),
+                '{' => self.python_field(start)?,
+                _ => {}
+            }
+        }
+        Err(self.error(start, "unterminated formatted-string format specifier"))
     }
 
     fn number(&mut self) {
@@ -308,12 +363,12 @@ impl<'a> Lexer<'a> {
                 self.pos += 1;
             }
             if bytes.get(self.pos) == Some(&b'.')
-                && bytes.get(self.pos + 1) != Some(&b'.')
                 && (self.language != SourceLanguage::Rust
-                    || !self.source[self.pos + 1..]
-                        .chars()
-                        .next()
-                        .is_some_and(|c| identifier_start(c, self.language)))
+                    || (bytes.get(self.pos + 1) != Some(&b'.')
+                        && !self.source[self.pos + 1..]
+                            .chars()
+                            .next()
+                            .is_some_and(|c| identifier_start(c, self.language))))
             {
                 self.pos += 1;
                 while bytes
@@ -613,6 +668,36 @@ mod tests {
         ] {
             assert_eq!(count_tokens(JavaScript, source), Ok(1), "{source}");
         }
+    }
+
+    #[test]
+    fn python_formatted_fields_keep_same_delimiter_and_nested_literals_opaque() {
+        for source in [
+            r#"f"{data["key"]}""#,
+            r#"f'{data['key']}'"#,
+            r#"f"{f"{value}"}""#,
+            r#"Fr"{data["key"]}""#,
+            r#"f"{data["key"]!r:>{width}}""#,
+            r#"f"{x:'>10}""#,
+            r#"f"{x:{width}.{precision}f}""#,
+            r#"f"{{literal}} {data["key"]}""#,
+            r#"f"\{data["key"]}""#,
+            "f\"\"\"{data[\"\"\"key\"\"\"]}\"\"\"",
+        ] {
+            assert_eq!(count_tokens(Python, source), Ok(1), "{source}");
+        }
+        assert!(count_tokens(Python, r#"f"{data["key"]""#).is_err());
+    }
+
+    #[test]
+    fn python_trailing_decimal_point_precedes_attribute_dot() {
+        // NUMBER 1. / OP . / NAME real; Rust retains its range operator.
+        assert_eq!(count_tokens(Python, "1..real"), Ok(3));
+        assert_eq!(count_tokens(Python, "1..real + 2..imag"), Ok(7));
+        assert_eq!(count_tokens(Python, "1. .real"), Ok(3));
+        assert_eq!(count_tokens(Python, "..."), Ok(1));
+        assert_eq!(count_tokens(Rust, "1..real"), Ok(3));
+        assert_eq!(count_tokens(JavaScript, "1..toString()"), Ok(5));
     }
 
     #[test]
