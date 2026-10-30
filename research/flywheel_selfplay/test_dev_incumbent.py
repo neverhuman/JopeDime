@@ -10,6 +10,26 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dev_incumbent import DevIncumbent
 
 
+@pytest.fixture(autouse=True)
+def retention_fixture_publisher(request, tmp_path, monkeypatch):
+    if "retention" not in request.node.name:
+        return
+    import shutil
+
+    import dev_incumbent
+
+    remote = tmp_path / "fixture-remote-store"
+    remote.mkdir()
+
+    def publish(path, prefix, profile="fixture"):
+        destination = remote / Path(path).name
+        shutil.copyfile(path, destination)
+        assert destination.read_bytes() == Path(path).read_bytes()
+        return {"uri": "fixture://" + destination.name, "readback_verified": True}
+
+    monkeypatch.setattr(dev_incumbent, "publish_checkpoint_archive", publish)
+
+
 def retention_fixture(tmp_path, count=6, best=1):
     root = tmp_path / "run"
     root.mkdir()
@@ -55,8 +75,8 @@ def test_retention_archives_then_prunes_and_preserves_best_resume_recent_receipt
     )
     for n in {best, resume, 5, 6}:
         assert (root / f"round-{n:02d}.pt").read_bytes() == f"root-{n}".encode()
-    assert (root / "rejected/round-05.pt").exists()
-    assert (root / "rejected/round-06.pt").exists()
+    assert not (root / "rejected/round-05.pt").exists()
+    assert not (root / "rejected/round-06.pt").exists()
     assert not (root / "rejected/round-03.pt").exists()
     assert not (root / "rust_eval_round3/input.jtt1").exists()
     assert (root / "rust_eval_round3/unknown.bin").exists()
@@ -131,6 +151,7 @@ def test_retention_actual_runner_prelude_preserves_resume_and_operator_pin(tmp_p
         best_checkpoint=None,
         checkpoint_archive_dir=archives,
         checkpoint_keep_last=2,
+        retention_s3_prefix="s3://veox-jopedime-learning-use2/experiments/fixture/",
         retain_checkpoint=[Path("round-03.pt")],
     )
 
@@ -290,6 +311,62 @@ def test_retention_free_space_refusal_preserves_sources(tmp_path, monkeypatch):
             root, archives, [root / "round-02.pt"], keep_last=2, minimum_free_bytes=1
         )
     assert (root / "round-03.pt").exists() and not archives.exists()
+
+
+def test_retention_s3_failure_cannot_delete_or_rotate(tmp_path, monkeypatch):
+    import dev_incumbent
+
+    root, archives = retention_fixture(tmp_path)
+    before = {
+        str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()
+    }
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("independent S3 readback failed")
+
+    monkeypatch.setattr(dev_incumbent, "publish_checkpoint_archive", fail)
+    with pytest.raises(RuntimeError, match="S3"):
+        dev_incumbent.retain_checkpoint_payloads(
+            root,
+            archives,
+            [root / "round-02.pt"],
+            keep_last=2,
+            minimum_free_bytes=0,
+            rotate_bytes=1,
+        )
+    assert before == {
+        str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()
+    }
+
+
+def test_retention_t533_keeps_accepted_lineage_and_rotates_only_verified_logs(tmp_path):
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+    for n in range(1, 7):
+        (root / f"round-{n:02d}.json").write_text(
+            json.dumps({"round": n, "adapter_admission": {"accepted": n in (1, 3)}})
+        )
+    (root / "closed.log").write_bytes(b"log receipt")
+    result = retain_checkpoint_payloads(
+        root,
+        archives,
+        [root / "round-02.pt"],
+        keep_last=2,
+        minimum_free_bytes=0,
+        scored_round=6,
+        rotate_bytes=1,
+    )
+    for n in (1, 2, 3, 6):
+        assert (root / f"round-{n:02d}.pt").exists()
+    assert not (root / "round-05.pt").exists()
+    assert not list((root / "rejected").glob("*.pt"))
+    assert (root / "summary.jsonl").read_bytes() == b"" and (
+        root / "closed.log"
+    ).read_bytes() == b""
+    assert (root / "promotions.jsonl").read_text() == "{}\n"
+    assert (root / "round-03-scores.jsonl").exists()
+    assert result["s3_archive"] and result["s3_manifest"]
 
 
 def setup():
@@ -642,3 +719,93 @@ def test_consecutive_restored_candidates_have_distinct_parameter_shas():
         for name in ("0.weight", "0.bias"):
             assert torch.equal(model.state_dict()[name], baseline[name])
     assert candidates[0] != candidates[1]
+
+
+@pytest.mark.parametrize("upload_fails", [False, True])
+def test_retention_actual_after_scoring_hook_archives_each_round(
+    tmp_path, upload_fails
+):
+    import ast
+    import subprocess
+    import tarfile
+    from types import SimpleNamespace
+
+    import dev_incumbent
+    from automatic_promotion import write_tree_shard
+
+    root, archives = retention_fixture(tmp_path)
+    before = {str(p): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
+    main = next(
+        n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main"
+    )
+    loop = next(
+        n
+        for n in main.body
+        if isinstance(n, ast.For)
+        and isinstance(n.target, ast.Name)
+        and n.target.id == "rnd"
+    )
+    hook = next(
+        n
+        for n in loop.body
+        if isinstance(n, ast.Try)
+        and any(
+            isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Name)
+            and call.func.id == "write_tree_shard"
+            for call in ast.walk(n)
+        )
+    )
+    calls = []
+
+    def publish(path, prefix):
+        calls.append("tree-upload")
+        if upload_fails:
+            raise RuntimeError("injected tree upload failure")
+        return dev_incumbent.publish_checkpoint_archive(path, prefix)
+
+    def retain(*args, **kwargs):
+        calls.append(("cleanup", kwargs["scored_round"]))
+        return dev_incumbent.retain_checkpoint_payloads(
+            *args, **kwargs, minimum_free_bytes=0
+        )
+
+    env = {
+        "args": SimpleNamespace(
+            output=root,
+            campaign_prior_output=[],
+            resume=root / "round-02.pt",
+            best_checkpoint=None,
+            checkpoint_archive_dir=archives,
+            checkpoint_keep_last=2,
+            retain_checkpoint=[],
+            retention_s3_prefix="s3://veox-jopedime-learning-use2/experiments/fixture/",
+        ),
+        "rnd": 6,
+        "tree_records": [{"dsl": "(add 1 2)", "fitness": 1.0, "pool_accepted": False}],
+        "incumbent": SimpleNamespace(best_checkpoint=str(root / "round-01.pt")),
+        "margin_policy": {},
+        "Path": Path,
+        "write_tree_shard": write_tree_shard,
+        "publish_checkpoint_archive": publish,
+        "retain_checkpoint_payloads": retain,
+        "subprocess": subprocess,
+        "tarfile": tarfile,
+    }
+    exec(  # noqa: S102 -- checked-in maintenance hook against CPU fixtures.
+        compile(
+            ast.Module(body=[hook], type_ignores=[]), "actual-post-scoring-hook", "exec"
+        ),
+        env,
+    )
+    if upload_fails:
+        assert calls == ["tree-upload"]
+        assert env["cleanup"]["pruned_files"] is None
+        assert all(Path(p).read_bytes() == body for p, body in before.items())
+    else:
+        assert calls == ["tree-upload", ("cleanup", 6)]
+        assert env["cleanup"]["pruned_files"] > 0
+        for n in [1, 2, 5, 6]:
+            assert (root / f"round-{n:02d}.pt").exists()
+        assert not list((root / "rejected").glob("*.pt"))

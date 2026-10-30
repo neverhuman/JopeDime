@@ -49,7 +49,13 @@ guard = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = guard
 spec.loader.exec_module(guard)
 sys.path.insert(0, str(HERE))
-from automatic_promotion import promote, replay, training_cv_envelope, training_indices
+from automatic_promotion import (
+    promote,
+    replay,
+    training_cv_envelope,
+    training_indices,
+    write_tree_shard,
+)
 from dev_incumbent import (
     CandidateNovelty,
     DevIncumbent,
@@ -58,6 +64,7 @@ from dev_incumbent import (
     gp_selection_indices,
     project_score_margins,
     proposal_plan,
+    publish_checkpoint_archive,
     retain_checkpoint_payloads,
     warm_restart_adapter,
 )
@@ -163,6 +170,10 @@ def main():
     ap.add_argument("--campaign-prior-output", type=Path, action="append", default=[])
     ap.add_argument("--best-checkpoint", type=Path)
     ap.add_argument("--checkpoint-keep-last", type=int, default=20)
+    ap.add_argument(
+        "--retention-s3-prefix",
+        default="s3://veox-jopedime-learning-use2/experiments/flywheel-full-20261030/run-20261030/retention/",
+    )
     ap.add_argument(
         "--checkpoint-archive-dir",
         type=Path,
@@ -791,7 +802,6 @@ def main():
         evaluation_identity, [*proposal_history, *admission_history]
     )
     release_gpu_round(lock)  # startup qualification is complete
-    last_retention_attempt = None
     for rnd in round_indices:
         if reporter:
             reporter.begin()
@@ -807,17 +817,7 @@ def main():
             for p in root.rglob("*")
             if p.is_file()
         )
-        if (
-            rnd == start_round
-            or rnd % 50 == 0
-            or (
-                used_bytes > 9 * 1024**3
-                and (
-                    last_retention_attempt is None or rnd - last_retention_attempt >= 5
-                )
-            )
-        ):
-            last_retention_attempt = rnd
+        if rnd == start_round:
             retention_started = time.monotonic()
             protected = [
                 p.resolve()
@@ -841,6 +841,7 @@ def main():
                     protected,
                     keep_last=args.checkpoint_keep_last,
                     guarded_roots=args.campaign_prior_output,
+                    s3_prefix=args.retention_s3_prefix,
                 )
             except (
                 OSError,
@@ -1140,6 +1141,7 @@ def main():
         seen_before_round = {pid for c in train for pid in pools[c]["pids"]}
         gp_proposal_changes = []
         generated = []
+        tree_records = []
         events = []
         passed = 0
         failed = 0
@@ -1167,6 +1169,22 @@ def main():
             )
             generated_count = len(proposals)
             known_pids = set(p["pids"])
+            for proposal in proposals:
+                if proposal["program_sha256"] in known_pids:
+                    previous_index = p["pids"].index(proposal["program_sha256"])
+                    tree_records.append(
+                        {
+                            "dsl": proposal["dsl"],
+                            "program_sha256": proposal["program_sha256"],
+                            "context_sha256": c,
+                            "round": rnd,
+                            "status": "pool_duplicate",
+                            "fitness": float(p["fitness"][previous_index]),
+                            "cv_gate_passed": bool(p["gate"][previous_index]),
+                            "score_source": "existing_train_pool",
+                            "pool_accepted": False,
+                        }
+                    )
             proposals = [
                 candidate
                 for candidate in proposals
@@ -1197,6 +1215,7 @@ def main():
                 chosen = [proposals[j] for j in selected_indices]
             else:
                 chosen = []
+                rank = []
             gp_proposal_changes.append(
                 {
                     "context_sha256": c,
@@ -1217,6 +1236,20 @@ def main():
                     mtime=0,
                 )
             )
+            chosen_ids = {v["program_sha256"] for v in chosen}
+            for proposal, predicted_cost in zip(proposals, rank):
+                if proposal["program_sha256"] not in chosen_ids:
+                    tree_records.append(
+                        {
+                            "dsl": proposal["dsl"],
+                            "program_sha256": proposal["program_sha256"],
+                            "context_sha256": c,
+                            "round": rnd,
+                            "status": "not_selected",
+                            "predicted_cost": float(predicted_cost),
+                            "pool_accepted": False,
+                        }
+                    )
             results = evaluator.evaluate_gp_batch_rust(
                 str(gz), chosen, run_outer_test=False, max_workers=2, timeout_s=25
             )
@@ -1256,6 +1289,7 @@ def main():
                     "protocol": "jope.s1-two-fold/v1",
                 }
                 ev = promote(p, r, journal, rnd)
+                tree_records.append({**r, "round": rnd, "pool_accepted": bool(ev)})
                 if ev:
                     events.append(ev)
                     bank.append(
@@ -1388,6 +1422,59 @@ def main():
             row = reporter.finish(row)
         else:
             write_json(args.output / f"round-{rnd:02d}.json", row)
+        try:
+            shard = write_tree_shard(
+                tree_records,
+                args.output / "tree-shards" / f"trees-round-{rnd}.jsonl.zst",
+            )
+            shard["s3"] = publish_checkpoint_archive(
+                Path(shard["path"]), args.retention_s3_prefix + "trees/"
+            )
+            protected = [
+                p.resolve()
+                for p in [args.resume, args.best_checkpoint]
+                if p is not None
+            ]
+            protected += [
+                Path(incumbent.best_checkpoint).resolve(),
+                args.output.resolve() / f"round-{rnd:02d}.pt",
+            ]
+            protected += [
+                p if p.is_absolute() else args.output.resolve() / p
+                for p in args.retain_checkpoint
+            ]
+            if margin_policy.get("anchor_checkpoint"):
+                protected.append(Path(margin_policy["anchor_checkpoint"]).resolve())
+            cleanup = retain_checkpoint_payloads(
+                args.output,
+                args.checkpoint_archive_dir,
+                protected,
+                keep_last=args.checkpoint_keep_last,
+                guarded_roots=args.campaign_prior_output,
+                s3_prefix=args.retention_s3_prefix,
+                scored_round=rnd,
+            )
+            cleanup["trees"] = shard
+        except (
+            OSError,
+            ValueError,
+            RuntimeError,
+            subprocess.SubprocessError,
+            tarfile.TarError,
+        ) as error:
+            cleanup = {"pruned_files": None, "deferred": str(error)}
+        cleanup["round"] = rnd
+        cleanup["run_bytes_after"] = sum(
+            p.stat().st_size for p in args.output.rglob("*") if p.is_file()
+        )
+        cleanup["combined_bytes_after"] = sum(
+            p.stat().st_size
+            for root in [args.output, *args.campaign_prior_output]
+            for p in root.rglob("*")
+            if p.is_file()
+        )
+        write_json(args.output / f"retention-round-{rnd}.json", cleanup)
+        print(json.dumps({"after_scored_round": rnd, "retention": cleanup}), flush=True)
         proposal_history.append(row)
         remaining = (
             "continuous"

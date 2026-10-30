@@ -10,6 +10,72 @@ sys.path.insert(0, str(Path(__file__).parent))
 from automatic_promotion import promote, replay
 
 
+@pytest.mark.parametrize(
+    "dsl",
+    [
+        "(pipe X (ridge alpha=1))",
+        " (pipe X\n (winsor_clip q=+0.0500) (ridge_gcv)) \n",
+        '(pipe X (select name="a (b) \\"c\\"") (histgbm lr=1e-3 rounds=100))',
+        "(pipe X (poly_interact append=true) (ridge alpha=-.5))",
+        "()",
+    ],
+)
+def test_postfix_tree_rebuild_is_lossless(dsl):
+    from automatic_promotion import encode_program, rebuild_program
+
+    tree = encode_program(dsl)
+    assert tree["tokens"] and "constants" in tree
+    assert rebuild_program(json.loads(json.dumps(tree))).encode() == dsl.encode()
+    tree["program_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="identity"):
+        rebuild_program(tree)
+
+
+def test_tree_shard_keeps_accepted_rejected_scores_without_model_payloads(tmp_path):
+    import subprocess
+
+    from automatic_promotion import rebuild_program, write_tree_shard
+
+    records = [
+        {
+            "dsl": "(pipe X (ridge alpha=1))",
+            "fitness": value,
+            "pool_accepted": accepted,
+            "compiled_program": "forbidden",
+            "state_dict": {"weights": [1]},
+            "feat412": [1],
+        }
+        for value, accepted in [(0.25, True), (100.0, False)]
+    ]
+    path = tmp_path / "trees.jsonl.zst"
+    receipt = write_tree_shard(records, path)
+    raw = subprocess.run(
+        ["zstd", "-dc", str(path)], capture_output=True, check=True
+    ).stdout
+    restored = [json.loads(line) for line in raw.splitlines()]
+    assert receipt["records"] == 2
+    for original, stored in zip(records, restored):
+        assert rebuild_program(stored["tree"]) == original["dsl"]
+        assert stored["fitness"] == original["fitness"]
+        assert stored["pool_accepted"] is original["pool_accepted"]
+        assert not {"compiled_program", "state_dict", "feat412"} & stored.keys()
+
+
+def test_invalid_program_is_retained_as_a_failed_source_receipt(tmp_path):
+    import subprocess
+
+    from automatic_promotion import write_tree_shard
+
+    path = tmp_path / "invalid.jsonl.zst"
+    write_tree_shard([{"dsl": "(unclosed", "status": "failed", "fitness": 100}], path)
+    row = json.loads(
+        subprocess.run(
+            ["zstd", "-dc", str(path)], capture_output=True, check=True
+        ).stdout
+    )
+    assert row["invalid_source"] == "(unclosed" and row["fitness"] == 100
+
+
 def pool():
     return {
         "rec": {
