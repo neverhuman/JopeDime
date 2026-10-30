@@ -12767,6 +12767,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested H49 offline tests for the strict-margin SEL admission rule, known-noise audit, and SWA cycle contract."
+    },
+    "python:research/h-followups/h09/test_run.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "HWV-04 H09 CPU experiment safety, family-role separation, DSL-preserving residual features, paired CI and append-only phase receipt fixture tests; run explicitly with pytest research/h-followups/h09 -q."
     }
   },
   "lanes": {
