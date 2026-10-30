@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "RNK-01 adds only two already-locked jope-service dependency edges: p256 and safetensors 0.8.0. No package version/source/checksum, evaluator behavior fixture, known identity table or lineage body changes. The portable signed-context/tensor verifier and its module wiring are outside the hashed evaluator inputs.",
+  "plan_reference": "RNK-01; lanes1645 approved exact patch SHA2566b23d35f2d1fe195bf8daadae3d21ce3bc66f92b1c53be137bbc39e287859f93; ruling0840(a); ADR-0004; successor after actual merged WRK01/TUI01",
+  "source_commit": "a6d96eeca2a1bace9b3dd323d10816a9d1356439",
+  "base_commit": "993ce5f700a45a25f668aecfd461b214013e4d85",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "7c8449b92a48ff08645c84e6c1e96f75d034231538fe824738fc9c691a412069",
+      "after": "82f99b5e4c8f1774e082958c7bbb6ae3cfb3db973f90ee80bcd62c81f1419a0c"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "6f56d13e1cc655d11b0b4ab54a90b72432a851367ac5e8d05c15c48535225a81",
+      "after": "36643024b3ebe16e448345aaeb43a5f67fc04442fc2532928e9bec0f5a2a6633"
+    }
+  ],
+  "before_identity_digest": "2cda2a7cd87e914c9419be2ebf8d94b6218fb8472a7aa61eb3c4397d7f22b544",
+  "after_identity_digest": "2cbeefc0fe4fa27ab1d61c81be7b0e16dbfd8e90691af5e58304f0c1cab1ec2e",
+  "before_implementation_sha256": "2198914f1918bdb18d5381d021ca18e26ab3cab07d96cdb841e04f98dca81c56",
+  "after_implementation_sha256": "b36e7601865cafa5fa96b88e20c04509d7c109ec61bef0e10466443058a6282b",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
