@@ -71,12 +71,20 @@ fn main() -> Result<()> {
             output,
         } => import_file(&input, format, output.as_deref()),
         Command::Parquet { run_dir } => {
-            let rows = jope_telemetry::sink::parquet::regenerate(
-                &run_dir.join("events.jsonl"),
-                &run_dir.join("metrics.parquet"),
-            )?;
-            println!("regenerated metrics.parquet from {rows} event rows");
-            Ok(())
+            #[cfg(feature = "parquet")]
+            {
+                let rows = jope_telemetry::sink::parquet::regenerate(
+                    &run_dir.join("events.jsonl"),
+                    &run_dir.join("metrics.parquet"),
+                )?;
+                println!("regenerated metrics.parquet from {rows} event rows");
+                Ok(())
+            }
+            #[cfg(not(feature = "parquet"))]
+            {
+                let _ = run_dir;
+                bail!("parquet sink not compiled in; rebuild with --features parquet")
+            }
         }
         Command::Recover { run_dir } => recover(&run_dir),
         Command::Summary { run_dir, text } => summary(&run_dir, text),
@@ -94,27 +102,37 @@ fn main() -> Result<()> {
 }
 
 fn recover(run_dir: &Path) -> Result<()> {
-    let event_path = run_dir.join("events.jsonl");
-    let truncated = jope_telemetry::sink::jsonl::recover_final_line(&event_path)?;
-    if truncated > 0 {
-        let manifest_path = run_dir.join("manifest.json");
-        let mut manifest: Value = serde_json::from_slice(&fs::read(&manifest_path)?)?;
-        let old = manifest
-            .get("recovery_truncated_bytes")
-            .and_then(Value::as_u64)
-            .unwrap_or(0);
-        manifest["recovery_truncated_bytes"] = Value::from(old.saturating_add(truncated));
-        let temp = run_dir.join(format!(".manifest.json.{}.tmp", std::process::id()));
-        let mut file = File::create(&temp)?;
-        serde_json::to_writer_pretty(&mut file, &manifest)?;
-        file.write_all(b"\n")?;
-        file.sync_all()?;
-        fs::rename(temp, manifest_path)?;
+    #[cfg(not(feature = "parquet"))]
+    {
+        let _ = run_dir;
+        bail!("parquet sink not compiled in; rebuild with --features parquet")
     }
-    let rows =
-        jope_telemetry::sink::parquet::regenerate(&event_path, &run_dir.join("metrics.parquet"))?;
-    println!("recovered event tail: truncated {truncated} bytes; Parquet has {rows} events");
-    Ok(())
+    #[cfg(feature = "parquet")]
+    {
+        let event_path = run_dir.join("events.jsonl");
+        let truncated = jope_telemetry::sink::jsonl::recover_final_line(&event_path)?;
+        if truncated > 0 {
+            let manifest_path = run_dir.join("manifest.json");
+            let mut manifest: Value = serde_json::from_slice(&fs::read(&manifest_path)?)?;
+            let old = manifest
+                .get("recovery_truncated_bytes")
+                .and_then(Value::as_u64)
+                .unwrap_or(0);
+            manifest["recovery_truncated_bytes"] = Value::from(old.saturating_add(truncated));
+            let temp = run_dir.join(format!(".manifest.json.{}.tmp", std::process::id()));
+            let mut file = File::create(&temp)?;
+            serde_json::to_writer_pretty(&mut file, &manifest)?;
+            file.write_all(b"\n")?;
+            file.sync_all()?;
+            fs::rename(temp, manifest_path)?;
+        }
+        let rows = jope_telemetry::sink::parquet::regenerate(
+            &event_path,
+            &run_dir.join("metrics.parquet"),
+        )?;
+        println!("recovered event tail: truncated {truncated} bytes; Parquet has {rows} events");
+        Ok(())
+    }
 }
 
 fn tail(run_dir: &Path, count: usize) -> Result<()> {
