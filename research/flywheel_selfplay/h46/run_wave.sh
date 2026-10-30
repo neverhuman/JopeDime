@@ -6,7 +6,7 @@ DEVICE="${H46_DEVICE:-cuda:0}"
 ROOT="${H46_RUN_ROOT:-$HOME/jope-data/h46/runs}"
 LOCK="$HOME/jope_plan/qualification.lock"
 PY="$PWD/research/flywheel_selfplay/h46/run.py"
-for arm in 0 A B C; do
+for arm in 0 A B C D; do
   for seed in 0 1 2; do
     out="$ROOT/H46-$arm/seed$seed"
     if [[ -f "$out/result.json" ]]; then
@@ -36,6 +36,7 @@ for arm in 0 A B C; do
       echo "complete H46-$arm seed $seed"
       continue
     fi
+    lock_wait_start=$(date +%s)
     while true; do
       avail_kb=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)
       if (( avail_kb < 20971520 )); then
@@ -71,6 +72,11 @@ for arm in 0 A B C; do
       fi
       exec {lockfd}>&-
       echo "qualification.lock busy; waiting for H46-$arm seed $seed"
+      now=$(date +%s)
+      if (( now - lock_wait_start >= 1200 )); then
+        echo "qualification.lock remained busy for 20 minutes; restarting the full comparison on CPU"
+        exec env H46_DEVICE=cpu H46_RUN_ROOT="$HOME/jope-data/h46/runs/cpu" "$0"
+      fi
       sleep 30
     done
   done
