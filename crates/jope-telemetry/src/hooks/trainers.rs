@@ -191,13 +191,13 @@ pub fn emit_flywheel_startup(main: &mut ProducerHandle, startup: Option<&ReadSna
             true,
         );
     }
-    main.emit_unavailable(
-        id("throughput.tokens_per_s"),
-        0,
-        0,
-        REASON_NO_TEXT_TOKEN_PATH,
-        true,
-    );
+    for name in [
+        "throughput.tokens_per_s",
+        "throughput.tokens_per_s.rust",
+        "throughput.tokens_per_s.all_languages",
+    ] {
+        main.emit_unavailable(id(name), 0, 0, REASON_NO_TEXT_TOKEN_PATH, true);
+    }
 }
 
 /// H2D columns of one source are unavailable: no CUDA device (`no_gpu`) or no CUDA events.

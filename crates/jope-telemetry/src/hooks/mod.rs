@@ -175,7 +175,13 @@ mod pipeline_tests {
         // Every second step was sampled; end-to-end GB/s is bytes / (wait + copy) = 2 GB/s.
         assert_eq!(per_metric[&id("io.h2d_gb_s")], (20, 0));
         assert_eq!(per_metric[&id("io.batch_gb_s")], (20, 0));
-        assert_eq!(per_metric[&id("throughput.tokens_per_s")], (0, 1));
+        for tok_s in [
+            "throughput.tokens_per_s",
+            "throughput.tokens_per_s.rust",
+            "throughput.tokens_per_s.all_languages",
+        ] {
+            assert_eq!(per_metric[&id(tok_s)], (0, 1));
+        }
         assert_eq!(per_metric[&id("io.local.read_mib_s")], (0, 1));
         assert!(text.contains("\"body\":{\"kind\":\"strat300\"}"));
     }

@@ -8,8 +8,11 @@
 //! * [`rates`] turns a step's raw counters into tok/s and GB/s for loops without a step layout.
 
 use crate::hooks::step::{missing, StepBatch};
-use crate::train::{IO_BATCH_BYTES_PER_S, IO_BATCH_GB_S, IO_H2D_GB_S, SAMPLES_PER_S, TOKENS_PER_S};
-use anyhow::{anyhow, Result};
+use crate::train::{
+    IO_BATCH_BYTES_PER_S, IO_BATCH_GB_S, IO_H2D_GB_S, SAMPLES_PER_S, TOKENS_PER_S_ALL_LANGUAGES,
+    TOKENS_PER_S_RUST, TOKENS_RUST_TIMED_ALONE,
+};
+use anyhow::{anyhow, bail, Result};
 use serde::Serialize;
 use std::time::Instant;
 
@@ -276,7 +279,12 @@ impl ReadStats {
 /// One step's raw counters for [`rates`]; `None` skips that metric.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct RateCounters {
-    pub tokens: Option<f64>,
+    /// Tokens of the Rust output. tok/s is two metrics, so this and `all_tokens` come together.
+    pub rust_tokens: Option<f64>,
+    /// Tokens of every language's output, Rust included.
+    pub all_tokens: Option<f64>,
+    /// Time spent on the Rust output alone; the step time when absent.
+    pub rust_seconds: Option<f64>,
     pub samples: Option<f64>,
     pub batch_bytes: Option<f64>,
     pub h2d_bytes: Option<f64>,
@@ -284,8 +292,9 @@ pub struct RateCounters {
     pub h2d_seconds: Option<f64>,
 }
 
-/// `(metric id, value)` per-step throughput: `throughput.tokens_per_s`,
-/// `throughput.samples_per_s`, `io.batch_bytes_per_s` with `io.batch_gb_s`, and `io.h2d_gb_s`.
+/// `(metric id, value)` per-step throughput: `throughput.tokens_per_s.rust` with
+/// `.rust_timed_alone` and `throughput.tokens_per_s.all_languages`, `throughput.samples_per_s`,
+/// `io.batch_bytes_per_s` with `io.batch_gb_s`, and `io.h2d_gb_s`.
 pub fn rates(seconds: f64, c: &RateCounters) -> Result<Vec<(u16, f64)>> {
     let positive = |what: &str, s: f64| {
         if s.is_finite() && s > 0.0 {
@@ -295,9 +304,20 @@ pub fn rates(seconds: f64, c: &RateCounters) -> Result<Vec<(u16, f64)>> {
         }
     };
     let seconds = positive("seconds", seconds)?;
-    let mut out = Vec::with_capacity(5);
-    if let Some(tokens) = c.tokens {
-        out.push((TOKENS_PER_S, tokens / seconds));
+    let mut out = Vec::with_capacity(7);
+    match (c.rust_tokens, c.all_tokens) {
+        (Some(rust), Some(all)) => {
+            if !(0.0 <= rust && rust <= all && all.is_finite()) {
+                bail!("need finite 0 <= rust_tokens ({rust}) <= all_tokens ({all})");
+            }
+            let rust_seconds = positive("rust_seconds", c.rust_seconds.unwrap_or(seconds))?;
+            out.push((TOKENS_PER_S_RUST, rust / rust_seconds));
+            out.push((TOKENS_PER_S_ALL_LANGUAGES, all / seconds));
+            let alone = if c.rust_seconds.is_some() { 1.0 } else { 0.0 };
+            out.push((TOKENS_RUST_TIMED_ALONE, alone));
+        }
+        (None, None) if c.rust_seconds.is_none() => {}
+        _ => bail!("tok/s is two metrics: pass rust_tokens and all_tokens together"),
     }
     if let Some(samples) = c.samples {
         out.push((SAMPLES_PER_S, samples / seconds));
@@ -374,7 +394,9 @@ mod tests {
     #[test]
     fn rates_from_raw_counters() {
         let c = RateCounters {
-            tokens: Some(9_000.0),
+            rust_tokens: Some(300.0),
+            all_tokens: Some(9_000.0),
+            rust_seconds: None,
             samples: Some(64.0),
             batch_bytes: Some(3e9),
             h2d_bytes: Some(1e9),
@@ -383,7 +405,9 @@ mod tests {
         assert_eq!(
             rates(1.5, &c).unwrap(),
             vec![
-                (TOKENS_PER_S, 6_000.0),
+                (TOKENS_PER_S_RUST, 200.0),
+                (TOKENS_PER_S_ALL_LANGUAGES, 6_000.0),
+                (TOKENS_RUST_TIMED_ALONE, 0.0),
                 (SAMPLES_PER_S, 64.0 / 1.5),
                 (IO_BATCH_BYTES_PER_S, 2e9),
                 (IO_BATCH_GB_S, 2.0),
@@ -402,5 +426,53 @@ mod tests {
             ..c
         };
         assert!(rates(1.0, &bad_copy).is_err());
+    }
+
+    #[test]
+    fn tok_s_is_always_the_labeled_pair() {
+        let timed = RateCounters {
+            rust_tokens: Some(300.0),
+            all_tokens: Some(9_000.0),
+            rust_seconds: Some(0.5),
+            ..RateCounters::default()
+        };
+        assert_eq!(
+            rates(1.5, &timed).unwrap(),
+            vec![
+                (TOKENS_PER_S_RUST, 600.0),
+                (TOKENS_PER_S_ALL_LANGUAGES, 6_000.0),
+                (TOKENS_RUST_TIMED_ALONE, 1.0),
+            ]
+        );
+        for half in [
+            RateCounters {
+                rust_tokens: Some(1.0),
+                ..RateCounters::default()
+            },
+            RateCounters {
+                all_tokens: Some(1.0),
+                ..RateCounters::default()
+            },
+            RateCounters {
+                rust_seconds: Some(1.0),
+                ..RateCounters::default()
+            },
+            RateCounters {
+                rust_tokens: Some(2.0),
+                all_tokens: Some(1.0),
+                ..RateCounters::default()
+            },
+            RateCounters {
+                rust_tokens: Some(f64::NAN),
+                all_tokens: Some(1.0),
+                ..RateCounters::default()
+            },
+            RateCounters {
+                rust_seconds: Some(0.0),
+                ..timed
+            },
+        ] {
+            assert!(rates(1.0, &half).is_err(), "{half:?}");
+        }
     }
 }

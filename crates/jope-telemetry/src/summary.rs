@@ -70,6 +70,39 @@ pub struct TrainingSummary {
     pub generalization_gap_last: Option<f64>,
 }
 
+/// tok/s as the two labeled metrics every report shows (Jepson ruling 2026-10-29 19:18 MDT):
+/// Rust-only, the headline, and all languages. Legacy unlabeled values are kept apart.
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct TokSummary {
+    pub rust_only: Dist,
+    pub all_languages: Dist,
+    /// Steps whose Rust-only rate was timed on the Rust output alone, or on the shared span.
+    pub rust_timed_alone_steps: u64,
+    pub rust_shared_span_steps: u64,
+    /// `throughput.tokens_per_s` from producers that predate the pair; not either metric.
+    pub legacy_unlabeled: Option<Dist>,
+}
+
+pub const TOK_S_RUST: &str = "throughput.tokens_per_s.rust";
+pub const TOK_S_ALL_LANGUAGES: &str = "throughput.tokens_per_s.all_languages";
+pub const TOK_S_RUST_TIMED_ALONE: &str = "throughput.tokens_per_s.rust_timed_alone";
+pub const TOK_S_LEGACY: &str = "throughput.tokens_per_s";
+/// The labels every report prints next to the two tok/s metrics, Rust-only first.
+pub const TOK_S_LABELS: [(&str, &str); 2] = [
+    (TOK_S_RUST, "Rust-only tok/s (headline)"),
+    (TOK_S_ALL_LANGUAGES, "all-languages tok/s"),
+];
+
+/// How the Rust-only rate was timed, from its `rust_timed_alone` step counts.
+pub fn rust_timing(alone: u64, shared: u64) -> String {
+    match (alone, shared) {
+        (0, 0) => "timing basis unrecorded".into(),
+        (_, 0) => "timed on the Rust output alone".into(),
+        (0, _) => "timed on the shared all-languages span".into(),
+        (a, b) => format!("timed on the Rust output alone in {a} of {} steps", a + b),
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct DopeSummary {
     pub guard_records: u64,
@@ -114,6 +147,7 @@ pub struct AlarmSummary {
 pub struct Summary {
     pub schema: String,
     pub training: TrainingSummary,
+    pub tok_s: TokSummary,
     pub dope: DopeSummary,
     pub gp: BTreeMap<String, GpContextSummary>,
     pub evolution: EvolutionSummary,
@@ -288,6 +322,33 @@ pub fn summarize<'a>(
         }
     }
 
+    let k = &mut out.tok_s;
+    k.rust_only = Dist::of(&vals(TOK_S_RUST));
+    k.all_languages = Dist::of(&vals(TOK_S_ALL_LANGUAGES));
+    for v in vals(TOK_S_RUST_TIMED_ALONE) {
+        if v == 1.0 {
+            k.rust_timed_alone_steps += 1;
+        } else if v == 0.0 {
+            k.rust_shared_span_steps += 1;
+        }
+    }
+    let legacy = vals(TOK_S_LEGACY);
+    k.legacy_unlabeled = legacy
+        .iter()
+        .any(|v| v.is_finite())
+        .then(|| Dist::of(&legacy));
+    for (metric, dist) in [TOK_S_RUST, TOK_S_ALL_LANGUAGES]
+        .into_iter()
+        .zip([&out.tok_s.rust_only, &out.tok_s.all_languages])
+    {
+        if dist.p50.is_none() {
+            out.missing.insert(
+                metric.into(),
+                "no values (unavailable or not emitted)".into(),
+            );
+        }
+    }
+
     let mut target: BTreeMap<String, Vec<(u32, f64)>> = BTreeMap::new();
     let mut latest_elo: Option<EloSnapshot> = None;
     let mut elo_seen = 0u32;
@@ -447,6 +508,35 @@ impl Summary {
             opt(t.val_loss.min),
             opt(t.generalization_gap_last)
         );
+        let k = &self.tok_s;
+        let _ = writeln!(s, "== tok/s");
+        let timing = format!(
+            "  ({})",
+            rust_timing(k.rust_timed_alone_steps, k.rust_shared_span_steps)
+        );
+        for ((_, label), (d, note)) in TOK_S_LABELS
+            .iter()
+            .zip([(&k.rust_only, timing.as_str()), (&k.all_languages, "")])
+        {
+            let state = if d.p50.is_none() { "  unavailable" } else { "" };
+            let _ = writeln!(
+                s,
+                "{label:<26} p50/p95/last {}/{}/{}  n {}{state}{note}",
+                opt(d.p50),
+                opt(d.p95),
+                opt(d.last),
+                d.n - d.nonfinite
+            );
+        }
+        if let Some(d) = &k.legacy_unlabeled {
+            let _ = writeln!(
+                s,
+                "{:<26} p50 {}  n {}  (legacy {TOK_S_LEGACY}; neither of the two above)",
+                "unlabeled tok/s",
+                opt(d.p50),
+                d.n - d.nonfinite
+            );
+        }
         let d = &self.dope;
         let _ = writeln!(s, "== DOPE freeze");
         let _ = writeln!(
@@ -612,6 +702,47 @@ mod tests {
         let text = s.render_text();
         assert!(text.contains("DIMINISHING") && text.contains("step.span.fwd"));
         assert!(s.elo.is_none() && s.missing.contains_key("fly.elo"));
+        for (metric, label) in TOK_S_LABELS {
+            assert!(s.missing.contains_key(metric));
+            assert!(text.contains(label), "{label} prints even without values");
+        }
+    }
+
+    #[test]
+    fn tok_s_is_the_labeled_pair_with_its_timing_basis() {
+        let sc = [
+            (TOK_S_RUST, 1, 100.0),
+            (TOK_S_RUST, 2, 300.0),
+            (TOK_S_ALL_LANGUAGES, 1, 1_000.0),
+            (TOK_S_ALL_LANGUAGES, 2, 3_000.0),
+            (TOK_S_RUST_TIMED_ALONE, 1, 1.0),
+            (TOK_S_RUST_TIMED_ALONE, 2, 0.0),
+            (TOK_S_LEGACY, 1, 7.0),
+        ]
+        .map(|(metric, step, value)| ScalarIn {
+            metric,
+            group: None,
+            step: Some(step),
+            value,
+        });
+        let s = summarize(sc, std::iter::empty());
+        let k = &s.tok_s;
+        assert_eq!(
+            (k.rust_only.p50, k.all_languages.p50),
+            (Some(200.0), Some(2_000.0))
+        );
+        assert_eq!((k.rust_timed_alone_steps, k.rust_shared_span_steps), (1, 1));
+        assert_eq!(k.legacy_unlabeled.as_ref().map(|d| d.n), Some(1));
+        assert!(
+            !s.missing.contains_key(TOK_S_RUST) && !s.missing.contains_key(TOK_S_ALL_LANGUAGES)
+        );
+        let text = s.render_text();
+        let rust = text
+            .lines()
+            .find(|l| l.starts_with("Rust-only tok/s (headline)"));
+        assert!(rust.is_some_and(|l| l.contains("200.0000")
+            && l.ends_with("(timed on the Rust output alone in 1 of 2 steps)")));
+        assert!(text.contains("all-languages tok/s") && text.contains("unlabeled tok/s"));
     }
 
     #[test]

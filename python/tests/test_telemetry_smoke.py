@@ -27,9 +27,11 @@ def _ids() -> dict[str, int]:
 
 def test_registry_keeps_frozen_names() -> None:
     ids = _ids()
-    assert len(ids) == 86
+    assert len(ids) == 89
     assert ids["io.batch_gb_s"] == 0x041B
     assert tel.metric_id("throughput.tokens_per_s") == 0x0119
+    assert ids["throughput.tokens_per_s.rust"] == 0x012A
+    assert ids["throughput.tokens_per_s.all_languages"] == 0x012B
 
 
 def test_python_trainer_step_rows(tmp_path: Path) -> None:
@@ -118,7 +120,12 @@ def test_flywheel_round_on_cpu(tmp_path: Path) -> None:
         if e["kind"] == "event" and e["event"].get("availability_reason_id")
     }
     assert unavailable[ids["io.batch_gb_s"]] == 7
-    assert unavailable[ids["throughput.tokens_per_s"]] == 10
+    for tok_s in (
+        "throughput.tokens_per_s",
+        "throughput.tokens_per_s.rust",
+        "throughput.tokens_per_s.all_languages",
+    ):
+        assert unavailable[ids[tok_s]] == 10
     kinds = [e["kind"] for e in rows if e["kind"] != "event"]
     assert "jope.telemetry.evo-queue/v1" in kinds and "jope.telemetry.eval-batch/v1" in kinds
 
@@ -268,10 +275,20 @@ def test_dime_hardware_monitor_and_ratchet_live(tmp_path: Path) -> None:
 
 def test_emit_rates_divides_in_rust(tmp_path: Path) -> None:
     rec = tel.Recorder(str(tmp_path / "f"), ["fused-phase2"], {"smoke": True})
-    counters = {"tokens": 9000.0, "samples": 64.0, "batch_bytes": 3e9, "h2d_bytes": 1e9, "h2d_seconds": 0.25}
-    assert rec.emit_rates(0, 1, 1.5, **counters) == 5
+    counters = {
+        "rust_tokens": 300.0,
+        "all_tokens": 9000.0,
+        "samples": 64.0,
+        "batch_bytes": 3e9,
+        "h2d_bytes": 1e9,
+    }
+    assert rec.emit_rates(0, 1, 1.5, rust_seconds=0.5, h2d_seconds=0.25, **counters) == 7
     with pytest.raises(ValueError):
-        rec.emit_rates(0, 2, 0.0, tokens=1.0)
+        rec.emit_rates(0, 2, 0.0, samples=1.0)
+    with pytest.raises(ValueError):
+        rec.emit_rates(0, 2, 1.0, all_tokens=1.0)  # tok/s is the Rust-only + all-languages pair
+    with pytest.raises(TypeError):
+        rec.emit_rates(0, 2, 1.0, tokens=1.0)  # the unlabeled form is gone
     assert rec.close()["status"] == "complete"
     ids = _ids()
     got = {
@@ -279,5 +296,8 @@ def test_emit_rates_divides_in_rust(tmp_path: Path) -> None:
         for e in _events(tmp_path / "f")
         if e["kind"] == "event" and e["event"]["step"] == 1
     }
-    assert got[ids["throughput.tokens_per_s"]] == 6000.0
+    assert ids["throughput.tokens_per_s"] not in got
+    assert got[ids["throughput.tokens_per_s.rust"]] == 600.0
+    assert got[ids["throughput.tokens_per_s.all_languages"]] == 6000.0
+    assert got[ids["throughput.tokens_per_s.rust_timed_alone"]] == 1.0
     assert got[ids["io.batch_gb_s"]] == 2.0 and got[ids["io.h2d_gb_s"]] == 4.0
