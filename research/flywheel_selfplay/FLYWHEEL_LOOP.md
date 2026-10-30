@@ -198,6 +198,27 @@ archive manifests/receipts retain the recovery route. Maintenance adds time beyo
 the existing measured training/GP window. Preparation and offline proofs do not
 update the running process: the watcher owns deployment at a safe restart.
 
+The maintenance companion `rotate_flywheel_logs.py` additionally bounds the local
+summary and direct `custody/*.log` files to `--keep-rows` (default20). Run it from
+merged source with `--run`, `--custody`, `--archive-root`, `--round-lock` and the
+actual Python `--writer-pid`. It takes the existing qualification lock between
+rounds, stores full original bytes in zstd, verifies independent decompression and
+S3 exact-version downloads of archive plus manifest, then rewrites only the tail.
+It preserves the inode for append-mode stdout/stderr, including incomplete final
+rows. Unknown readers/writers, non-append descriptors, changed sources and failed
+custody checks defer that file without truncation. Archives live outside the run,
+custody directory and checkout; the50GiB free-space reserve remains in force.
+
+This companion runs without primary-source changes or a restart when stdout/stderr
+already use append mode (`>>`). It polls every30seconds and waits for a locked round
+boundary, rotating at most4eligible files per boundary (summary first); simultaneous companions cannot run. A primary PID change stops the
+companion. Start it again with the new PID after any later primary restart. It
+never changes checkpoints, training inputs, scores, promotion/admission journals
+or DOPE. Summary/log bytes are bounded; retained round/score/tree receipts still
+grow and must be included when reporting whole-run growth. Full rotation receipts
+and source hashes accompany the immutable archives. This is custody maintenance,
+not Python telemetry computation or collection.
+
 `dev_incumbent.DevIncumbent` preserves the best development utility under a fixed
 comparison identity. The runner first resumes the latest logical round, then
 restores the highest-utility historical adapter and AdamW state (most recent tie:
