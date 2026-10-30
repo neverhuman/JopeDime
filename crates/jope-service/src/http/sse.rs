@@ -7,7 +7,10 @@ use crate::{
     store::{Result, StoreError},
 };
 use axum::{
-    extract::{rejection::QueryRejection, Path, Query, State},
+    extract::{
+        rejection::{PathRejection, QueryRejection},
+        Path, Query, State,
+    },
     http::{header, HeaderMap},
     middleware,
     response::{
@@ -119,10 +122,13 @@ async fn read_page(
 
 async fn deliver_events(
     State(log): State<Arc<EventLog>>,
-    Path(id): Path<String>,
+    path: std::result::Result<Path<String>, PathRejection>,
     query: std::result::Result<Query<EventsQuery>, QueryRejection>,
     headers: HeaderMap,
 ) -> Response {
+    let Ok(Path(id)) = path else {
+        return invalid("Invalid run path.", Some("run_id"));
+    };
     let Ok(run) = id.parse::<RunId>() else {
         return invalid("Invalid run ID.", Some("run_id"));
     };
@@ -141,9 +147,20 @@ async fn deliver_events(
         .and_then(|v| v.to_str().ok())
         .is_some_and(|v| {
             v.split(',').any(|part| {
-                part.split(';')
+                let mut fields = part.split(';');
+                fields
                     .next()
-                    .is_some_and(|mime| mime.trim() == "text/event-stream")
+                    .is_some_and(|mime| mime.trim().eq_ignore_ascii_case("text/event-stream"))
+                    && fields.all(|parameter| {
+                        let Some((name, value)) = parameter.split_once('=') else {
+                            return true;
+                        };
+                        !name.trim().eq_ignore_ascii_case("q")
+                            || value
+                                .trim()
+                                .parse::<f32>()
+                                .is_ok_and(|quality| quality > 0.0 && quality <= 1.0)
+                    })
             })
         });
     let mut header_ids = headers.get_all("last-event-id").iter();
@@ -198,9 +215,12 @@ async fn deliver_events(
 
 async fn long_poll_status(
     State(log): State<Arc<EventLog>>,
-    Path(id): Path<String>,
+    path: std::result::Result<Path<String>, PathRejection>,
     query: std::result::Result<Query<StatusQuery>, QueryRejection>,
 ) -> Response {
+    let Ok(Path(id)) = path else {
+        return invalid("Invalid run path.", Some("run_id"));
+    };
     let Ok(run) = id.parse::<RunId>() else {
         return invalid("Invalid run ID.", Some("run_id"));
     };
@@ -636,6 +656,36 @@ mod tests {
                 .status(),
             StatusCode::BAD_REQUEST
         );
+    }
+
+    #[tokio::test]
+    async fn undecodable_path_parameters_keep_the_problem_json_contract() {
+        let (_dir, log, _snapshot) = fixture();
+        for path in ["/v1/runs/%FF", "/v1/runs/%FF/events"] {
+            let response = app(Arc::clone(&log))
+                .oneshot(request(path, false, None))
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+            assert_eq!(
+                response.headers()[header::CONTENT_TYPE],
+                Problem::CONTENT_TYPE
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn an_explicitly_unacceptable_sse_media_type_returns_the_json_page() {
+        let (_dir, log, snapshot) = fixture();
+        let mut req = request(&format!("/v1/runs/{}/events", snapshot.run_id), true, None);
+        req.headers_mut().insert(
+            header::ACCEPT,
+            "application/json, text/event-stream;q=0".parse().unwrap(),
+        );
+        let response = app(log).oneshot(req).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
+        assert_eq!(document(response).await["next_after"], "0");
     }
 
     #[tokio::test]
