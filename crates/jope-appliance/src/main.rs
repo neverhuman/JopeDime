@@ -13,6 +13,8 @@ mod cli;
 mod io;
 mod landmarks;
 mod model;
+#[path = "terminal/theme.rs"]
+pub mod terminal;
 
 use clap::Parser;
 use cli::{Cli, Command, CommonArgs, TrainArgs};
