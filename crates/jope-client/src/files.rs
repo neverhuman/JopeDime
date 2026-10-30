@@ -293,11 +293,8 @@ mod tests {
         io::{BufRead, BufReader, Cursor, Read},
         net::TcpListener,
         thread,
-        time::{SystemTime, UNIX_EPOCH},
     };
     use zip::{write::SimpleFileOptions, ZipWriter};
-
-    static TEST_TEMP_ID: AtomicU64 = AtomicU64::new(0);
 
     struct Fake {
         bytes: Vec<u8>,
@@ -310,38 +307,30 @@ mod tests {
             Ok(Response::new(200, headers, Cursor::new(self.bytes.clone())))
         }
     }
-    struct TestTempDir(PathBuf);
+    /// A fresh test directory, removed on drop by `tempfile`.
+    struct TestTempDir(tempfile::TempDir);
 
     impl std::ops::Deref for TestTempDir {
         type Target = Path;
 
         fn deref(&self) -> &Self::Target {
-            &self.0
+            self.0.path()
         }
     }
 
     impl AsRef<Path> for TestTempDir {
         fn as_ref(&self) -> &Path {
-            &self.0
-        }
-    }
-
-    impl Drop for TestTempDir {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
+            self.0.path()
         }
     }
 
     fn temp_dir() -> TestTempDir {
-        let n = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let id = TEST_TEMP_ID.fetch_add(1, Ordering::Relaxed);
-        let path =
-            std::env::temp_dir().join(format!("jope-client-files-{}-{n}-{id}", std::process::id()));
-        fs::create_dir(&path).unwrap();
-        TestTempDir(path)
+        TestTempDir(
+            tempfile::Builder::new()
+                .prefix("jope-client-files-")
+                .tempdir()
+                .unwrap(),
+        )
     }
     fn zip(entries: &[(&str, &[u8])]) -> Vec<u8> {
         let cursor = Cursor::new(Vec::new());

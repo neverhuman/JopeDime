@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Lockfile identity successor: jope-client gains a tempfile dev-dependency edge (tempfile already locked) so its file tests stop using std::env::temp_dir (last repo-layout temp-dir finding); no evaluator input version/feature or evaluator behavior changed. Chained after the current tip by super_merge_claude under merge_policy_t543.",
+  "plan_reference": "repo-layout temp-dir hygiene; merge_policy_t543; ADR-0004",
+  "source_commit": "900ea63e88a1af154fa3bcbc6dc6ef559e54a179",
+  "base_commit": "4e6a834794d0bacb7d792a6ff3e1b9172fa435af",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "25a03e076b1f19ded532a011f23b14946102f537fe2f9ea1351a67979a4bca34",
+      "after": "6333ec2cbbd489272f874567e1030bdf4ad014f87a03aaa6a70a7c1e6427950b"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "3552426eece0da80af3610ebef34a6c595ac6472a3e7c214f53ca4581b3475e1",
+      "after": "337c3b524a786f8b61e8bc6bf626212cd403f6c438bf4b5fee52adeeb6602ded"
+    }
+  ],
+  "before_identity_digest": "9e2a05183e2f416d6f6a6db5b8dcd461691dbd66a9576caad7c5c8f84e276a05",
+  "after_identity_digest": "e496d2ad46a1c9c423e05d23eb4325ef3515b23b3b02f5980af51f25cab6a4aa",
+  "before_implementation_sha256": "0c4fe57817737cc233bd3ea1cec7a133650ca6fe7ba84afe2d4bc50ac4793e48",
+  "after_implementation_sha256": "54c23d9d478dfca5ee2a5e6915fb3b8fe5f7328a467c5a20ac9a9f46513ae6c8",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
