@@ -771,6 +771,12 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         api03_id_newtypes["fixtures"][1]["path"],
         changed_fixtures[1]
     );
+    let dsc04_lockfile =
+        old_fixture("transitions/dsc04_elite_pool_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        dsc04_lockfile["source_commit"],
+        "c970b647c2ae67b98a0891a4dd0637902b344e0b"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -787,6 +793,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &api06_lockfile,
         &tui10_identity,
         &api03_id_newtypes,
+        &dsc04_lockfile,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -841,6 +848,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
                 api03_id_newtypes.clone(),
+                dsc04_lockfile.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -881,6 +889,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
                 api03_id_newtypes.clone(),
+                dsc04_lockfile.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -914,6 +923,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
                 api03_id_newtypes.clone(),
+                dsc04_lockfile.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -978,6 +988,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
                 api03_id_newtypes.clone(),
+                dsc04_lockfile.clone(),
             ],
         ),
         (
@@ -1002,6 +1013,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
                 api03_id_newtypes.clone(),
+                dsc04_lockfile.clone(),
             ],
         ),
     ] {
@@ -1074,6 +1086,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         api06_lockfile,
         tui10_identity,
         api03_id_newtypes,
+        dsc04_lockfile,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

@@ -1,24 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Ruling 0840(a) authorizes the DSC-04 lockfile-only identity transition. Cargo.lock only adds existing locked serde/serde_json dependency names to jope-service; no package/version/source/checksum or behavioral fixture changes. Chain after the latest main identity represented by the before fixture hashes. Preserve all historical identities.",
-  "plan_reference": "DSC-04 / T009; owner scope rulings 0810 and 0840, 2026-10-30",
-  "source_commit": "413ce3d08f815491bf2be40038a0acb01814d6a6",
-  "base_commit": "8f417243b4073cd40eb2d80aaeeb491411ec245a",
+  "plan_reference": "DSC-04 / T009; owner scope rulings 0810, 0840 and 0945, 2026-10-30",
+  "source_commit": "c970b647c2ae67b98a0891a4dd0637902b344e0b",
+  "base_commit": "4444374af032717cb48f3c63991d4e36f72fee70",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526",
-      "after": "1001880bc5cfe8641ccd168a0e645281aabadf1e210b23b1237e6a03ae0a8cc2"
+      "before": "42ca1a5bd891c28527de3d6d2d3380cb036f01a7b0dd9561c5994fe2ba16e250",
+      "after": "1d7e0d8ac5c1876515bef815b9cee26b7e77dc9efe7f93fe9464a4e27c0f643a"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de",
-      "after": "cf90103c1076903f7275dae660669cdd0687c23d866bec8da8d69e3f50287df7"
+      "before": "ea15dcbc112197d3e02fd9589dde8b6617a5ac96b3686ad30e19b2f5a6e70ac1",
+      "after": "fe1e988c659eed0ab061dbb5c68768ecd3e4c82d6f807b6e25e6223c29cd9098"
     }
   ],
-  "before_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b",
-  "after_identity_digest": "855edb3d546643a72de24deaf1f19cbd05fcdc43fbc561bd0e132f37bdb9b424",
-  "before_implementation_sha256": "3337743e65bd3186aa9f56a62f6144ab8201da1365a3e2d103df787d0af9940c",
-  "after_implementation_sha256": "782af500e88944b3363ca73b3b65d6c815ab619b55a6abb3c02c0caaaeec75ce",
+  "before_identity_digest": "a7367494259ac52d7c2453b3f12215cf5f895bb75bda0e2ca260c49c0421f41b",
+  "after_identity_digest": "578359b323c7aadebc722b9638493af3089b714fdc99016418344406bc5b03e4",
+  "before_implementation_sha256": "bba7ac4a8bf9690894a2416a01f7ca40c67568186913c78a26e3db98934f2271",
+  "after_implementation_sha256": "8fa08b9856f004213a8bc79fc502019fdce5bddf34740fe05f23dad6582b0de9",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }
