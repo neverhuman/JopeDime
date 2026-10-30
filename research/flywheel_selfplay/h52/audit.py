@@ -14,6 +14,10 @@ import numpy as np
 SEEDS = (12, 13, 14)
 DRAWS = 10_000
 MARGIN = 0.001
+R882_SHA = "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+DOPE_SHA = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+MANIFEST_ID = "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3"
+MANIFEST_FILE_SHA = "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
 CONFIGS = {
     "FOCUS-tau0.1": ("FOCUS", "tau0.1", "CONTROL-k16-lr1e-4"),
     "FOCUS-tau0.5": ("FOCUS", "tau0.5", "CONTROL-k16-lr1e-4"),
@@ -73,6 +77,21 @@ def summarize(values: np.ndarray) -> dict:
         "zero_count": int(values.size - nonzero),
         "sign_test_two_sided_p": sign_test(positive, negative),
     }
+
+
+def verify_identity(summary: dict, label: str) -> None:
+    expected = {
+        "checkpoint_sha256": R882_SHA,
+        "input_manifest_identity": MANIFEST_ID,
+        "input_manifest_file_sha256": MANIFEST_FILE_SHA,
+        "dope_sha256_before": DOPE_SHA,
+        "dope_sha256_after": DOPE_SHA,
+    }
+    for key, value in expected.items():
+        if summary.get(key) != value:
+            raise RuntimeError(f"{label}: {key} does not match pinned value")
+    if summary["validation_scored"] or summary["validation_payloads_opened"]:
+        raise RuntimeError(f"{label}: unexpected terminal validation read")
 
 
 def clustered_pooled(
@@ -143,6 +162,8 @@ def main() -> None:
     live_vectors = [entry[1]["family_gains_vs_r882"] for entry in live_control]
     for control_name in CONTROL_CONFIGS:
         entries = [load_cell(args.runs, control_name, seed) for seed in SEEDS]
+        for seed, (summary, _) in zip(SEEDS, entries, strict=True):
+            verify_identity(summary, f"{control_name} seed{seed}")
         control_cache[control_name] = entries
         vectors = [entry[1]["family_gains_vs_r882"] for entry in entries]
         family_ids = sorted(vectors[0])
@@ -188,10 +209,29 @@ def main() -> None:
             ),
         }
 
+    control_seed12 = control_cache["CONTROL-k16-lr1e-4"][0][0]
+    focus_seed12, _ = load_cell(args.runs, "FOCUS-tau0.1", 12)
+    control_slates = [
+        fold["training_slate_sha256_by_step"] for fold in control_seed12["folds"]
+    ]
+    focus_slates = [
+        fold["training_slate_sha256_by_step"] for fold in focus_seed12["folds"]
+    ]
+    if control_slates != focus_slates:
+        raise RuntimeError("CONTROL/FOCUS seed12 training slate hashes differ")
+    result["matched_slate_proof"] = {
+        "control": "CONTROL-k16-lr1e-4 seed12",
+        "candidate": "FOCUS-tau0.1 seed12",
+        "identical": True,
+        "folds": len(control_slates),
+        "steps_per_fold": [len(row) for row in control_slates],
+    }
+
     for label, (arm, config, control_name) in CONFIGS.items():
         candidate_rows, paired_rows, summaries = [], [], {}
         for seed in SEEDS:
             summary, detail = load_cell(args.runs, f"{arm}-{config}", seed)
+            verify_identity(summary, f"{label} seed{seed}")
             control_summary, control_detail = control_cache[control_name][
                 SEEDS.index(seed)
             ]
