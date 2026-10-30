@@ -1984,3 +1984,10 @@ Own924785 startuprefusedhistoricalreplay beforetraining; all775/184rows intact. 
 
 ## 2026-10-30T05:11:16.561105+00:00 — Precision fix failure/correction proof
 Nativebitroundtripfixture reproduced1ULP failure(exit101) beforefeature; afterserde_json float_roundtrip88native testspass,PythonfeatureClippy/Rustfmtpass,57learningtests/Ruff/format/diffpass. Installedfreshnativewheel--no-deps, actualmetadataf64bitsmoke/full1219coverage/io1051 pass,0drops/0sinkerrors,Torch2.6.0+cu124 unchanged. Sourcehonorsidentity/hashvalidatedpointer andrecordsactualnative.SOsha inrunmanifest. Securityreview: featureonly,no dependencyversions/lockfilechanges,newparserpreservesoriginalf64bits; keepold775receiptimmutable. Logs/home/ubuntu/jope-data/flywheel-full-20261030/custody/precision-*. Preparingexactreview/adminmerge/noCIthenretry775/journal184.
+
+## 2026-10-30T13:38:28Z — H50 closeout / H51 root-cause follow-through
+Checkout: /home/ubuntu/JopeDime/.agent/worktrees/h50-sensitivity
+Branch: research/h50-wave
+HEAD: 70639d0ac13180f7687fedfd271dc34c7d50aef1
+Owner: Codex
+Scope: docs/research/studies/dope-neural-ranking-20261021/h50/README.md, metrics.json, overnight-hwave-index.md; follow with exact-head PR review, targeted H50 tests/Ruff/py_compile/coverage/inventory/paper-trace, and user-directed squash merge. H50 coordinator exited; all nine train results rejected; no terminal DL-Val reads. H51 preregistration and launch remain deferred until H50 closeout PR merges. Pinned input/checkpoint/DOPE and resource limits recorded in ~/jope_plan/ns/H50_STATUS.md; no GPU work planned.

@@ -12767,6 +12767,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested H49 offline tests for the strict-margin SEL admission rule, known-noise audit, and SWA cycle contract."
+    },
+    "python:research/flywheel_selfplay/h50/test_sensitivity.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H50 offline proofs for seeded unit directions, adapter flattening, antithetic population generation, deterministic rank shaping, and finite strict-JSON rejection metadata."
     }
   },
   "lanes": {
