@@ -55,3 +55,20 @@ append-only known-identity table gains no row.
 ## Current identity transition: EXP-09 deterministic export bundles (2026-10-30)
 
 EXP-09 promotes `feat-math` to a normal `jope-service` dependency and adds the pinned `zip` dependency so the service can emit fitted language sources and publish deterministic ZIP bundles. These Cargo.lock edges advance implementation hash `a22a4aaa5d0a14da93376135f459d5bf041c683e248d1e4e811006e8b01412ce` to `bd94aff9d36165c43f9ddc91f835d5b8dd15b8714770e79d2106225cd8f5caf8`; Cargo.lock hash `13f796f7f7c025f5c759c8c1a93314e4c8ebc588c9eb748c1ebb575e3f6d6893` advances to `1add5155961c4df9751699019ec46d477f3fa4066f56e3b239c190c46e6455c8`; evaluator identity digest `37d8ae7cde8427da99c687fd34f12b8f99d3567f22ad6d7f2364dd14eb75d481` advances to `b74651b6f25d2276682af1a8c97636a44346c07a3ee3d46459282c41c4f36a2e`. Evaluator calculations and DSL ABI are unchanged. The identity transition is recorded in `exp09_bundle_lockfile_identity_rebaseline.v1.json`; no known-identity row is added because this change has no shipped historical receipt proving the new identity existed.
+
+
+## Current identity transition: BAT-02 run commands (2026-10-30)
+
+BAT-02 adds `jope-paths` as a direct `jope-appliance` dependency so run/status/events resolve
+the owner-scoped daemon record through `jope_paths::jopedime_home()`. The normal
+`jope-appliance -> jope-client` and `jope-service -> jope-paths` edges are already present;
+BAT-02's only new lock edge is `jope-appliance -> jope-paths`. Chained after `svc09_engine`
+(SVC-09), implementation hash
+`d015e8339171917e4922c2d3116a608e79fb63d87846ce1e0891c19e4f0925e7` advances to
+`0cbc80f8cfa08921b517dbd211321a92ab2606c33067ab72e9f3f5ef9e2c153e`; Cargo.lock hash
+`dba7ae05208ccfd96594b162a3d95b2ca23c3fb8d3676f07e79a12d13083d86e` advances to
+`ecfa4d1858fc0d4237d1356a34b6c5ce52a5408844229ea01ab7df5359a55a12`; and identity digest
+`bd4f9b4d9708122c42e917dec0264811134f59873c0b74569a21800edd5265fc` advances to
+`a5ec46b83045f5186016325ae166a250201f0d5bbf9f9e032875296ea935f892`. Evaluator calculations
+and DSL ABI are unchanged. No known-identity row is added because this task supplies no shipped
+receipt. The transition is registered in `bat02_jope_paths_lockfile_identity_rebaseline.v1.json`.
