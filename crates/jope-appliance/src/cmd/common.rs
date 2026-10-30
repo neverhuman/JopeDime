@@ -1,11 +1,103 @@
 //! Shared batch-command helpers.
 #![allow(dead_code)] // Command handlers consume these shared helpers in their own task scopes.
 
+#[cfg(all(feature = "client", not(feature = "engine")))]
+use serde::Deserialize;
 use serde::Serialize;
 use serde_json::{Map, Value};
 use std::fmt::Display;
+#[cfg(feature = "client")]
+use std::io::Read;
 use std::io::{self, Write};
+#[cfg(feature = "client")]
+use std::path::Path;
 use ulid::Ulid;
+
+#[cfg(feature = "client")]
+/// Resolve the running local service from the owner-only daemon record.
+pub(crate) fn resolve_client() -> anyhow::Result<jope_client::Http> {
+    resolve_client_at(&jope_paths::jopedime_home())
+}
+
+#[cfg(feature = "client")]
+fn resolve_client_at(home: &Path) -> anyhow::Result<jope_client::Http> {
+    #[cfg(feature = "engine")]
+    let (url, token) = {
+        use jope_service::daemon_file::DaemonFileStatus;
+        match jope_service::daemon_file::read_daemon_file(home) {
+            Ok(DaemonFileStatus::Running(record) | DaemonFileStatus::Unknown(record)) => {
+                (record.url, record.token)
+            }
+            Ok(DaemonFileStatus::Stale(_)) | Err(_) => {
+                return Err(CommandError::unreachable("engine is not running").into());
+            }
+        }
+    };
+    #[cfg(not(feature = "engine"))]
+    let (url, token) = {
+        #[derive(Deserialize)]
+        struct DaemonFile {
+            url: String,
+            token: String,
+        }
+        let bytes = std::fs::read(home.join("daemon.json"))
+            .map_err(|_| CommandError::unreachable("engine is not running"))?;
+        let record: DaemonFile = serde_json::from_slice(&bytes)
+            .map_err(|_| CommandError::unreachable("engine is not running"))?;
+        (record.url, record.token)
+    };
+    jope_client::Http::new(&url, &token)
+        .map_err(|_| CommandError::unreachable("engine is not running").into())
+}
+
+#[cfg(feature = "client")]
+#[derive(Debug)]
+struct CommandError {
+    code: u8,
+    message: &'static str,
+}
+
+#[cfg(feature = "client")]
+impl std::fmt::Display for CommandError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(self.message)
+    }
+}
+
+#[cfg(feature = "client")]
+impl std::error::Error for CommandError {}
+
+#[cfg(feature = "client")]
+impl CommandError {
+    fn unreachable(message: &'static str) -> Self {
+        Self { code: 9, message }
+    }
+}
+
+/// Return an existing API process code for typed service errors or resolver failures.
+pub(crate) fn report_exit_code(error: &anyhow::Error) -> Option<u8> {
+    #[cfg(feature = "client")]
+    {
+        error.chain().find_map(|cause| {
+            if let Some(command) = cause.downcast_ref::<CommandError>() {
+                return Some(command.code);
+            }
+            if let Some(client) = cause.downcast_ref::<jope_client::Error>() {
+                return match client {
+                    jope_client::Error::Problem(problem) => error_exit_code(problem.code),
+                    jope_client::Error::Http(_) => Some(9),
+                    _ => None,
+                };
+            }
+            None
+        })
+    }
+    #[cfg(not(feature = "client"))]
+    {
+        let _ = error;
+        None
+    }
+}
 
 /// Use the supplied idempotency key or generate a CLI-scoped ULID key.
 pub(crate) fn resolve_idempotency_key(key: Option<&str>) -> String {
@@ -51,12 +143,57 @@ pub(crate) fn write_idempotency_key(writer: &mut impl Write, key: &str) -> io::R
     writeln!(writer, "idempotency-key: {key}")
 }
 
+pub(crate) fn announce_generated_key(supplied: Option<&str>, key: &str) -> anyhow::Result<()> {
+    if supplied.is_none() {
+        write_idempotency_key(&mut io::stderr().lock(), key)
+            .map_err(|error| jope_runtime::Failure::output(error.to_string()))?;
+    }
+    Ok(())
+}
+
 /// Serialize a receipt as pretty JSON followed by a newline.
 pub(crate) fn write_receipt<T: Serialize>(writer: &mut impl Write, receipt: &T) -> io::Result<()> {
     let json = serde_json::to_vec_pretty(receipt)
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
     writer.write_all(&json)?;
     writer.write_all(b"\n")
+}
+
+pub(crate) fn print_json<T: Serialize>(value: &T) -> anyhow::Result<()> {
+    write_receipt(&mut io::stdout().lock(), value)
+        .map_err(|error| jope_runtime::Failure::output(error.to_string()))
+}
+
+/// Read an optional raw API JSON body from a named file or stdin (`-`).
+#[cfg(feature = "client")]
+pub(crate) fn read_json_body(path: Option<&str>) -> anyhow::Result<Option<Value>> {
+    let Some(path) = path else {
+        return Ok(None);
+    };
+    let mut bytes = Vec::new();
+    if path == "-" {
+        io::stdin()
+            .take((jope_client::transport::MAX_JSON_BYTES + 1) as u64)
+            .read_to_end(&mut bytes)
+            .map_err(|error| jope_runtime::Failure::input(error.to_string()))?;
+    } else {
+        std::fs::File::open(path)
+            .map_err(|error| jope_runtime::Failure::input(error.to_string()))?
+            .take((jope_client::transport::MAX_JSON_BYTES + 1) as u64)
+            .read_to_end(&mut bytes)
+            .map_err(|error| jope_runtime::Failure::input(error.to_string()))?;
+    }
+    if bytes.len() > jope_client::transport::MAX_JSON_BYTES {
+        return Err(jope_runtime::Failure::input("request body exceeds 8 MiB"));
+    }
+    let value: Value = serde_json::from_slice(&bytes)
+        .map_err(|error| jope_runtime::Failure::input(error.to_string()))?;
+    if !value.is_object() {
+        return Err(jope_runtime::Failure::input(
+            "request body must be a JSON object",
+        ));
+    }
+    Ok(Some(value))
 }
 
 #[cfg(test)]
@@ -133,5 +270,86 @@ mod tests {
         write_receipt(&mut output, &receipt).unwrap();
         assert!(output.ends_with(b"\n"));
         assert_eq!(serde_json::from_slice::<Value>(&output).unwrap(), receipt);
+    }
+
+    #[cfg(feature = "client")]
+    #[test]
+    fn daemon_record_resolves_a_client_and_missing_or_stale_is_unreachable() {
+        let home = tempfile::tempdir().unwrap();
+        #[cfg(feature = "engine")]
+        jope_service::daemon_file::write_daemon_file(
+            home.path(),
+            "http://127.0.0.1:43123",
+            "test",
+            "1.0",
+            "now",
+        )
+        .unwrap();
+        #[cfg(not(feature = "engine"))]
+        std::fs::write(
+            home.path().join("daemon.json"),
+            serde_json::to_vec(&json!({
+                "url":"http://127.0.0.1:43123",
+                "token":"ab".repeat(32),
+                "pid":1,
+                "version":"test",
+                "api_version":"1.0",
+                "started_at":"now"
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        assert!(super::resolve_client_at(home.path()).is_ok());
+
+        let missing = tempfile::tempdir().unwrap();
+        let error = super::resolve_client_at(missing.path()).unwrap_err();
+        assert_eq!(super::report_exit_code(&error), Some(9));
+        assert_eq!(error.to_string(), "engine is not running");
+    }
+
+    #[cfg(all(feature = "client", feature = "engine"))]
+    #[test]
+    fn stale_daemon_record_uses_existing_unreachable_code() {
+        let home = tempfile::tempdir().unwrap();
+        let record = jope_service::daemon_file::DaemonFile {
+            url: "http://127.0.0.1:43123".into(),
+            token: "ab".repeat(32),
+            pid: u32::MAX,
+            version: "test".into(),
+            api_version: "1.0".into(),
+            started_at: "now".into(),
+        };
+        std::fs::write(
+            home.path().join("daemon.json"),
+            serde_json::to_vec(&record).unwrap(),
+        )
+        .unwrap();
+        let error = super::resolve_client_at(home.path()).unwrap_err();
+        assert_eq!(super::report_exit_code(&error), Some(9));
+    }
+
+    #[cfg(feature = "client")]
+    #[test]
+    fn api_problem_uses_catalogued_conflict_and_not_found_codes() {
+        use jope_api::error::{ErrorCode, Problem};
+
+        for (code, status, expected) in [
+            (ErrorCode::RevisionConflict, 409, 8),
+            (ErrorCode::NotFound, 404, 2),
+        ] {
+            let problem = Problem {
+                r#type: "about:blank".into(),
+                title: "request failed".into(),
+                status,
+                detail: "golden detail".into(),
+                instance: None,
+                code,
+                retriable: false,
+                remedy: "none".into(),
+                field: None,
+            };
+            let error: anyhow::Error = jope_client::Error::Problem(Box::new(problem)).into();
+            assert_eq!(super::report_exit_code(&error), Some(expected));
+        }
     }
 }
