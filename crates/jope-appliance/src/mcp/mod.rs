@@ -145,7 +145,7 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
                 .len()
                 > MAX_FRAME / 2
             {
-                return Ok(CallToolResult::error(vec![ContentBlock::text("Result exceeds the bounded MCP response limit; use a resource or a smaller request.")]));
+                return Ok(CallToolResult::structured_error(serde_json::to_value(dispatch::problem(jope_api::error::ErrorCode::InvalidInput,"Result exceeds the bounded MCP response limit; use a resource or a smaller request.")).expect("Problem JSON")));
             }
             // The API long-poll is split into <=20s requests because Http has a 30s receive
             // timeout. A recorded after_event controls whether another slice is necessary.

@@ -82,7 +82,9 @@ pub fn problem(
         detail: detail.into(),
         instance: None,
         code,
-        retriable: code.retriable().unwrap_or(false),
+        retriable: code
+            .retriable()
+            .unwrap_or(code == jope_api::error::ErrorCode::IoFailure),
         remedy: if code == jope_api::error::ErrorCode::IoFailure {
             "Check the connection; retry mutations with their original idempotency key."
         } else {

@@ -14,6 +14,8 @@ mod cli;
 mod common;
 mod io;
 mod landmarks;
+#[cfg(feature = "mcp")]
+pub mod mcp;
 mod model;
 #[path = "terminal/theme.rs"]
 pub mod terminal;
