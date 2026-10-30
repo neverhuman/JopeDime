@@ -11,6 +11,7 @@ use cas::{sync_dir, Cas};
 use jope_api::RunState;
 pub use record::*;
 use redb::{Database, Durability, ReadableTable, TableDefinition, TableHandle};
+use sha2::{Digest, Sha256};
 use std::{collections::HashSet, fs, io::Read, path::Path, sync::Mutex};
 
 pub const SCHEMA_VERSION: u64 = 1;
@@ -188,6 +189,42 @@ impl Store {
         self.cas.verify(reference)
     }
 
+    /// Read an immutable CAS blob and verify its complete content identity on the bytes returned.
+    pub fn read_blob(&self, reference: &BlobRef) -> Result<Vec<u8>> {
+        let digest: String = reference
+            .sha256
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect();
+        let path = self
+            .cas
+            .home
+            .join("cas/sha256")
+            .join(&digest[..2])
+            .join(&digest[2..4])
+            .join(&digest[4..]);
+        for parent in [
+            self.cas.home.join("cas"),
+            self.cas.home.join("cas/sha256"),
+            path.parent().unwrap().parent().unwrap().to_path_buf(),
+            path.parent().unwrap().to_path_buf(),
+        ] {
+            if !fs::symlink_metadata(parent)?.file_type().is_dir() {
+                return Err(StoreError::Integrity("CAS parent is not a real directory"));
+            }
+        }
+        let metadata = fs::symlink_metadata(&path)?;
+        if !metadata.file_type().is_file() || metadata.len() != reference.bytes {
+            return Err(StoreError::Integrity("blob hash/size mismatch"));
+        }
+        let bytes = fs::read(path)?;
+        let digest: [u8; 32] = Sha256::digest(&bytes).into();
+        if bytes.len() as u64 != reference.bytes || digest != reference.sha256 {
+            return Err(StoreError::Integrity("blob hash/size mismatch"));
+        }
+        Ok(bytes)
+    }
+
     /// Record references are verified before insertion. A closure error aborts metadata.
     /// A commit IO error has an unknown outcome; reopen/read back before retrying.
     pub fn transaction<T>(&self, action: impl FnOnce(&mut Write<'_>) -> Result<T>) -> Result<T> {
@@ -317,3 +354,44 @@ impl Write<'_> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod blob_read_tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn read_blob_returns_exact_bytes_and_refuses_identity_mismatch_or_corruption() {
+        let root = tempfile::tempdir().unwrap();
+        let store = Store::open(root.path()).unwrap();
+        let expected = b"stored model object bytes";
+        let reference = store.publish_blob(Cursor::new(expected)).unwrap();
+        assert_eq!(store.read_blob(&reference).unwrap(), expected);
+
+        let wrong_size = BlobRef {
+            sha256: reference.sha256,
+            bytes: reference.bytes + 1,
+        };
+        assert!(matches!(
+            store.read_blob(&wrong_size),
+            Err(StoreError::Integrity(_))
+        ));
+
+        let digest: String = reference
+            .sha256
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect();
+        let path = root
+            .path()
+            .join("cas/sha256")
+            .join(&digest[..2])
+            .join(&digest[2..4])
+            .join(&digest[4..]);
+        fs::write(&path, b"stored model object bytex").unwrap();
+        assert!(matches!(
+            store.read_blob(&reference),
+            Err(StoreError::Integrity(_))
+        ));
+    }
+}

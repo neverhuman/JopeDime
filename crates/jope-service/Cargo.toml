@@ -18,6 +18,7 @@ chrono = "=0.4.45"
 futures-util.workspace = true
 anyhow.workspace = true
 jope-runtime = { path = "../jope-runtime" }
+feat-math = { path = "../feat-math" }
 memmap2 = "=0.9.11"
 jope-api = { path = "../jope-api" }
 redb = { workspace = true }
@@ -29,9 +30,9 @@ tokio = { workspace = true }
 toml = { workspace = true }
 serde_json.workspace = true
 ulid = { workspace = true }
+zip = { version = "=9.0.5", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
-feat-math = { path = "../feat-math" }
 proptest.workspace = true
 tempfile = { workspace = true }
 tower = { version = "=0.5.3", default-features = false, features = ["util"] }

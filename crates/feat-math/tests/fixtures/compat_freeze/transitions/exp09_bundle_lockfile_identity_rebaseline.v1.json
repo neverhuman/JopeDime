@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "EXP-09 adds the authorized jope-service dependency edges feat-math and zip to Cargo.lock. The lockfile changes the evaluator implementation identity inputs; no evaluator source or known identity table entries change.",
+  "plan_reference": "EXP-09 export bundle assembly; owner ruling lanes_t542_1850; ADR-0004 successor after CLT-03",
+  "source_commit": "acb0f4ef374498745a7ea9560ee98c2c11fc6521",
+  "base_commit": "62327dd06f1f5eb2d8504be73fcdc593349a601d",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "222d9a71626f87b88b1c70280b7ce9d73a96d6a0458c5ce56526e51e82c6e7d4",
+      "after": "a4ec715fcb49878fac3193d75557d1a09c95ef24cd86dcaa2d6db921afb86bde"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "25c9eaadf1e4cee878f973e801a5fe5656f58d27b040dca85b73f6edeb3452e7",
+      "after": "eb52fc022bcc0e79e12f5fa0b64ad8840751849def8a2c5dcc10c06a35fd7e83"
+    }
+  ],
+  "before_identity_digest": "37d8ae7cde8427da99c687fd34f12b8f99d3567f22ad6d7f2364dd14eb75d481",
+  "after_identity_digest": "b74651b6f25d2276682af1a8c97636a44346c07a3ee3d46459282c41c4f36a2e",
+  "before_implementation_sha256": "a22a4aaa5d0a14da93376135f459d5bf041c683e248d1e4e811006e8b01412ce",
+  "after_implementation_sha256": "bd94aff9d36165c43f9ddc91f835d5b8dd15b8714770e79d2106225cd8f5caf8",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
