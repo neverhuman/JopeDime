@@ -66,17 +66,27 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
  resource_deadline=min(overall_deadline,cell_started+20*60)
  guard=wait_cpu_guard(resource_deadline)
  if guard is None: note(f"STOP before cell {i}: total/pilot deadline while waiting for CPU/memory guard"); return None
- h,fallback=lock_gpu(resource_deadline)
- if time.monotonic()>=resource_deadline and not fallback: note(f"STOP before cell {i}: deadline waiting on GPU lock"); return None
+ gpu_free=gpu_free_mib()
+ guard['gpu_free_mib']=gpu_free
+ if gpu_free<20*1024:
+  # The device is already occupied; do not wait on its owner's lock or attach to it.
+  h=None; fallback=True; guard['fallback_reason']='GPU busy: less than 20 GiB free before lock acquisition'
+  note(f"GPU busy before cell {i}: {gpu_free} MiB free; selecting guarded CPU fallback without touching the holder")
+ else:
+  h,fallback=lock_gpu(resource_deadline)
+  if time.monotonic()>=resource_deadline and not fallback: note(f"STOP before cell {i}: deadline waiting on GPU lock"); return None
+  if h is not None:
+   gpu_free=gpu_free_mib(); guard['gpu_free_mib_after_lock']=gpu_free
+   if gpu_free<20*1024:
+    fcntl.flock(h,fcntl.LOCK_UN); h.close(); h=None; fallback=True
+    guard['fallback_reason']='GPU became busy while acquiring qualification.lock'
  device='cpu' if fallback else 'cuda:0'
- if device=='cuda:0':
-  guard['gpu_free_mib']=gpu_free_mib()
-  if guard['gpu_free_mib']<20*1024:
-   fcntl.flock(h,fcntl.LOCK_UN); h.close(); h=None; fallback=True; device='cpu'
  if device=='cpu':
-  guard=wait_cpu_guard(overall_deadline)
-  if guard is None: note(f"STOP before cell {i}: CPU fallback guard failed"); return None
-  guard['fallback_reason']='GPU qualification lock busy >20m or <20GiB free'
+  cpu_guard=wait_cpu_guard(overall_deadline)
+  if cpu_guard is None: note(f"STOP before cell {i}: CPU fallback guard failed"); return None
+  guard.update(cpu_guard)
+  guard['swap_total_kib']=next(int(x.split()[1]) for x in Path('/proc/meminfo').read_text().splitlines() if x.startswith('SwapTotal:'))
+  guard['swap_free_kib']=next(int(x.split()[1]) for x in Path('/proc/meminfo').read_text().splitlines() if x.startswith('SwapFree:'))
  training_started=time.monotonic()
  cell_deadline=min(overall_deadline,training_started+wall_cap)
  if time.monotonic()>=cell_deadline: note(f"STOP before cell {i}: cell execution budget unavailable after resource acquisition"); return None

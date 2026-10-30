@@ -60,3 +60,8 @@ Pure implementation optimization: `training_indices` sorts each immutable contex
 ## Pilot outcome and remaining-cell handoff (2026-10-30T19:26Z)
 
 The corrected time-only pilot is also the preregistered cell 1 (seed12, scale1.0); it completed 93 full rounds/186 AdamW steps in 516.1s coordinator wall and discarded one partial next-round step. No outcome-based stopping or arm selection occurred. It reached the 10-minute pilot cap; its round-93 final score is retained as that cell's terminal score, with its shorter budget disclosed. Measured average training time was about 4.9s/round; 300 rounds therefore exceed 20 minutes, so the remaining five cells use their fixed 20-minute wall caps and report actual completed rounds. A separate continuation coordinator copies and hash-verifies cell1's compact summary; cells2–6 keep the original order. The original 21:18:50Z wave end remains fixed; if it arrives before all cells finish, remaining arms are reported incomplete with no reordering or cap extension.
+
+
+## GPU occupancy fallback rule clarification (2026-10-30T19:28Z)
+
+Before waiting on `qualification.lock`, query current free GPU memory. If less than 20 GiB is free, treat the GPU as busy and use the preregistered guarded CPU fallback immediately without waiting on or disturbing the lock holder. Otherwise acquire the lock, then recheck free memory; if occupancy rises below 20 GiB, release the lock and fall back. If the GPU has headroom but its lock remains held, retain the original 20-minute busy-lock wait before CPU fallback. CPU guard receipt includes `SwapTotal`/`SwapFree`; RSS remains capped at 6 GiB. This changes coordinator resource routing only, not any arm/update/metric protocol.
