@@ -2908,6 +2908,7 @@ dependencies = [
  "feat-math",
  "futures-util",
  "jope-api",
+ "jope-paths",
  "jope-runtime",
  "jope-telemetry",
  "libc",

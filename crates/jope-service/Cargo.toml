@@ -22,6 +22,7 @@ feat-math = { path = "../feat-math" }
 memmap2 = "=0.9.11"
 nvml-wrapper.workspace = true
 jope-api = { path = "../jope-api" }
+jope-paths = { path = "../jope-paths" }
 jope-telemetry = { path = "../jope-telemetry", default-features = false }
 redb = { workspace = true }
 sha2 = { workspace = true }

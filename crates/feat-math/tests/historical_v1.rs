@@ -1111,6 +1111,22 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         tel04f01_nvml["base_commit"],
         "b22b932f869d1f9d87882ac7bf506299fd5dce35"
     );
+    let svc09_engine = old_fixture("transitions/svc09_engine_lock_identity_rebaseline.v1.json");
+    assert_eq!(
+        svc09_engine["source_commit"],
+        "8ff0c4476957e500349792f4f87484ed7db6d775"
+    );
+    assert_eq!(
+        svc09_engine["base_commit"],
+        "9fe8c6753919cfaaac05ccb0d7ad125ff281dac4"
+    );
+    assert_eq!(
+        svc09_engine["before_identity_digest"],
+        tel04f01_nvml["after_identity_digest"]
+    );
+    assert_eq!(svc09_engine["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(svc09_engine["fixtures"][0]["path"], changed_fixtures[0]);
+    assert_eq!(svc09_engine["fixtures"][1]["path"], changed_fixtures[1]);
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1154,6 +1170,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &clt03_files,
         &exp09_bundle,
         &tel04f01_nvml,
+        &svc09_engine,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1233,6 +1250,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clt03_files.clone(),
                 exp09_bundle.clone(),
                 tel04f01_nvml.clone(),
+                svc09_engine.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1298,6 +1316,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clt03_files.clone(),
                 exp09_bundle.clone(),
                 tel04f01_nvml.clone(),
+                svc09_engine.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1356,6 +1375,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clt03_files.clone(),
                 exp09_bundle.clone(),
                 tel04f01_nvml.clone(),
+                svc09_engine.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1445,6 +1465,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clt03_files.clone(),
                 exp09_bundle.clone(),
                 tel04f01_nvml.clone(),
+                svc09_engine.clone(),
             ],
         ),
         (
@@ -1494,6 +1515,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clt03_files.clone(),
                 exp09_bundle.clone(),
                 tel04f01_nvml.clone(),
+                svc09_engine.clone(),
             ],
         ),
     ] {
@@ -1591,6 +1613,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         clt03_files,
         exp09_bundle,
         tel04f01_nvml,
+        svc09_engine,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
