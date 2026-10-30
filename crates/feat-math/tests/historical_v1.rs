@@ -1112,7 +1112,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         "b22b932f869d1f9d87882ac7bf506299fd5dce35"
     );
     let svc09_engine = old_fixture("transitions/svc09_engine_lock_identity_rebaseline.v1.json");
-    assert_eq!(svc09_engine["source_commit"], "PENDING_SOURCE_COMMIT");
+    assert_eq!(
+        svc09_engine["source_commit"],
+        "8ff0c4476957e500349792f4f87484ed7db6d775"
+    );
     assert_eq!(
         svc09_engine["base_commit"],
         "9fe8c6753919cfaaac05ccb0d7ad125ff281dac4"
