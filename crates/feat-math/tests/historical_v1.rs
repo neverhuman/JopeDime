@@ -867,6 +867,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         svc03_identity["base_commit"],
         "123349f752780968a8750e77c44ea4da4016c45a"
     );
+    let wrk03_sampler =
+        old_fixture("transitions/wrk03_sampler_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        wrk03_sampler["source_commit"],
+        "eb170b9e22605de75bff6d5a0d6727a2509f394c"
+    );
+    assert_eq!(
+        wrk03_sampler["base_commit"],
+        "47a35eda5a2e87d2e46fea327f526d4a0857e4c9"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -891,6 +901,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &tui11_fake_transport,
         &tui03_command_parser,
         &svc03_identity,
+        &wrk03_sampler,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -952,6 +963,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui11_fake_transport.clone(),
                 tui03_command_parser.clone(),
                 svc03_identity.clone(),
+                wrk03_sampler.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -999,6 +1011,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui11_fake_transport.clone(),
                 tui03_command_parser.clone(),
                 svc03_identity.clone(),
+                wrk03_sampler.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1039,6 +1052,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui11_fake_transport.clone(),
                 tui03_command_parser.clone(),
                 svc03_identity.clone(),
+                wrk03_sampler.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1110,6 +1124,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui11_fake_transport.clone(),
                 tui03_command_parser.clone(),
                 svc03_identity.clone(),
+                wrk03_sampler.clone(),
             ],
         ),
         (
@@ -1141,6 +1156,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 tui11_fake_transport.clone(),
                 tui03_command_parser.clone(),
                 svc03_identity.clone(),
+                wrk03_sampler.clone(),
             ],
         ),
     ] {
@@ -1220,6 +1236,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         tui11_fake_transport,
         tui03_command_parser,
         svc03_identity,
+        wrk03_sampler,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
