@@ -6,7 +6,6 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3]
 RUNS=Path(os.environ.get('H53B_RUN_ROOT',str(Path.home()/'jope-data/h53b/runs')))
-WAVE_START_UTC="2026-10-30T18:48:50+00:00"
 STATUS=Path.home()/"jope_plan/ns/H53b_STATUS.md"
 LOCK=Path.home()/"jope_plan/qualification.lock"
 CELLS=[(s,x) for x in (1.0,.1) for s in (12,13,14)]
@@ -122,9 +121,11 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
 def main():
  RUNS.mkdir(parents=True,exist_ok=False)
  from datetime import datetime,timezone
- started=time.monotonic(); fixed_end=datetime.fromisoformat(WAVE_START_UTC).replace(tzinfo=timezone.utc).timestamp()+TOTAL_LIMIT
- deadline=started+max(0.0,fixed_end-time.time())
- note('H53b wave start; preregistration commit precedes all cells; six cells, seeds 12/13/14 × scales 1.0/0.1; 300 update units or 20m/cell; pilot <=10m')
+ started=time.monotonic(); started_wall=time.time(); fixed_end=started_wall+TOTAL_LIMIT
+ deadline=started+TOTAL_LIMIT
+ wave_start_utc=datetime.fromtimestamp(started_wall,timezone.utc).isoformat()
+ wave_deadline_utc=datetime.fromtimestamp(fixed_end,timezone.utc).isoformat()
+ note(f'H53b equal-budget wave start={wave_start_utc}; deadline={wave_deadline_utc} (+150m); six fresh cells, preregistered order, 300 units or 20m/cell')
  completed=[]
  if os.environ.get('H53B_TIMING_PILOT_DONE')=='1':
   prior_text=os.environ.get('H53B_PRIOR_CELL_SUMMARY')
@@ -175,7 +176,7 @@ def main():
      result={'complete':len(completed)==6 and all(x['status']=='complete' for x in completed),
              'completed':completed,'planned':[{'seed':s,'scale':x} for s,x in CELLS],
              'stop_reason':stop,'wall_seconds':time.monotonic()-started,'projected_total_seconds':projected_total}
- result['schema']='jope.h53b.wave/v1'; result['prereg_commit']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+ result['schema']='jope.h53b.wave/v1'; result['prereg_commit']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(); result['wave_start_utc']=wave_start_utc; result['wave_deadline_utc']=wave_deadline_utc; result['total_budget_seconds']=TOTAL_LIMIT
  (RUNS/'wave.json').write_text(json.dumps(result,sort_keys=True,indent=2)+'\n')
  note(f"H53b wave stopped/complete {len(completed)}/6; receipt={RUNS/'wave.json'}")
 if __name__=='__main__': main()

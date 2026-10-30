@@ -68,3 +68,14 @@ Before waiting on `qualification.lock`, query current free GPU memory. If less t
 
 
 The coordinator records the child process's observed Linux nice value (the host parent is already nice 15, and the child adds 10, so it may appear as NI 19). It continues to enforce host CPU <=85%, OMP/MKL <=8, MemAvailable >=20 GiB, and RSS <6 GiB; CPU fallback also records swap occupancy.
+
+
+## Owner GO amendment — equal-budget six-cell wave (2026-10-30T19:30Z)
+
+This amendment supersedes the earlier pilot-as-cell and prior fixed-deadline text. Citing original prereg commits `8940054927087db70e9edb5c1e3913f77112540d` (author date 2026-10-30T18:47:08Z) and `a41d61a9140e166e2fd945d8705508f88ec0c09e` (author date 2026-10-30T18:48:41Z): the 10-minute seed12/scale1.0 run is **timing-only** and excluded from H53b wave outcomes. Attempts 01–03 and the interrupted continuation cell2 were infrastructure-only, with no completed endpoint. Run all six wave cells fresh at equal per-cell budgets, in order: seeds12/13/14 at scale1.0, then seeds12/13/14 at scale0.1; each up to 300 rounds or 20 minutes. Cell1 is a fresh seed12/scale1.0 initialization; do not reuse or transfer the timing pilot's adapter or optimizer state. Use the full runner cap-minus-90s terminalization margin and coordinator hard cap at20m. Do not reorder or extend a cell.
+
+The new overall deadline is anchored to the **new six-cell coordinator start plus 150 minutes**. The coordinator records its actual UTC start and deadline in `wave.json`; no prior failed-attempt time is charged to this re-anchored budget. The owner-provided approximate finish `21:35Z` is a planning estimate; the literal +150m deadline is authoritative (a 19:30Z start gives 22:00Z). Projected six-cell compute at the measured 20m caps is about 121m, under the 150m limit.
+
+Final-round family utility remains primary. Round-25 reads are diagnostic only; the separate timing pilot's curve (rounds0/25/50/75/93: 1.091686/1.092344/1.132931/1.106626/1.136392) demonstrates substantial read-to-read swing, so never select a best round. Ties fail. For every cell, preserve final family mean gain and family LCB alongside Elo and per-context W/T/L; a positive Elo with a negative mean must be reported together with the families driving the loss.
+
+Separate timing-pilot diagnostic (not part of H53b seed bootstrap): final mean family gain vs harness r882 -0.0172231, mean-LCB95 -0.0836601, median gain 0.000000; Elo +29.33, W/T/L 27/45/19. Worst family gains are `fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f` -0.6236002, `fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8` -0.0380964, `fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564` -0.0307308, `fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f` -0.0159064, and `fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103` -0.0156955. These are family utility gains, not per-context scores.
