@@ -155,7 +155,9 @@ pretraining run, a scale more than 30 public models had reached by mid-2025
 \citep{rahman2025over30,epoch2024data}. Mixture-of-experts (MoE) writers pay
 compute on their active parameters, such as the 32B of 1T in Kimi~K2 \citep{kimiteam2025k2}
 or the 37B of 671B in DeepSeek-V3 \citep{deepseekv3}. They need memory for
-all of them: 1T one-byte weights fill at least 13 H100s.
+all of them. Resident one-byte weights for 1T parameters alone require
+at least 13 H100 SXM GPUs with 80~GB each \citep{nvidia2026h100}; runtime
+state requires additional memory.
 
 \begin{table*}[t]
   \centering
@@ -164,7 +166,7 @@ all of them: 1T one-byte weights fill at least 13 H100s.
   the number of verified wins remains to be measured. Projections before pilots; [low-cost, high-cost] in
   brackets. Base: 8 million attempts of 5,000 generated tokens; \$2.92 per
   H100-hour on 29 October 2026 \citep{ornn2026ocpi} [\$2.50, \$4.17;
-  \cite{thunder2026gpu}]; 989.5 dense BF16 TFLOP/s per GPU
+  \cite{thunder2026gpu}]; 989.5 dense BF16 TFLOP/s per H100 SXM GPU
   \citep{nvidia2026h100}; generation at 20\% of peak [30\%, 10\%], or 10\%
   [20\%, 7\%] for memory-bound mixture-of-experts (MoE) writers; updates on
   10\% of tokens at 40\% of peak [50\%, 30\%]. The 1.5T rows are scenarios.
