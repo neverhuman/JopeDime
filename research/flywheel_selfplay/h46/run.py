@@ -8,7 +8,10 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 import random
+import signal
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -20,6 +23,7 @@ import torch.nn.functional as F
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "research/flywheel_selfplay"))
 import run_fused_closed_loop as base  # noqa: E402
+from losses import family_balanced_weights  # noqa: E402
 
 DOPE_SHA = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 BASE_UTILITY = 1.1375952947484103
@@ -35,6 +39,199 @@ def atomic(path, obj):
     temp = path.with_suffix(path.suffix + ".new")
     temp.write_text(json.dumps(obj, indent=2, allow_nan=False) + "\n")
     temp.replace(path)
+
+
+def save_adapter_state(path, net, base_sha, dope_sha):
+    path = Path(path)
+    temporary = path.with_suffix(path.suffix + ".new")
+    adapter = {
+        name: parameter.detach().cpu().clone()
+        for name, parameter in net.named_parameters()
+        if parameter.requires_grad
+    }
+    if sum(tensor.numel() for tensor in adapter.values()) != 29211:
+        raise RuntimeError("refusing to save unexpected adapter tensor inventory")
+    torch.save(
+        {
+            "base_checkpoint_sha256": base_sha,
+            "dope_sha256": dope_sha,
+            "trainable_params": 29211,
+            "adapter_trainable_state": adapter,
+        },
+        temporary,
+    )
+    temporary.replace(path)
+
+
+def process_matches(proc, fragment):
+    try:
+        command = " ".join(proc.info.get("cmdline") or [])
+    except (base.psutil.NoSuchProcess, base.psutil.AccessDenied):
+        return False
+    return fragment in command
+
+
+def coordinate_d_runs(input_dir, runs_root, checkpoint, device):
+    script = Path(__file__).resolve()
+    last_report = 0
+    lock_busy_started = None
+    while True:
+        active_wave = False
+        active_runner = False
+        for proc in base.psutil.process_iter(["pid", "cmdline"]):
+            if proc.info["pid"] == os.getpid():
+                continue
+            if process_matches(proc, "research/flywheel_selfplay/h46/run_wave.sh"):
+                active_wave = True
+            if process_matches(proc, "research/flywheel_selfplay/h46/run.py"):
+                active_runner = True
+        if not active_wave and not active_runner:
+            break
+        if active_wave and not active_runner:
+            probe = subprocess.run(
+                [
+                    "flock",
+                    "-n",
+                    str(Path.home() / "jope_plan/qualification.lock"),
+                    "-c",
+                    "true",
+                ],
+                check=False,
+            )
+            if probe.returncode != 0:
+                lock_busy_started = lock_busy_started or time.monotonic()
+                if time.monotonic() - lock_busy_started >= 1200:
+                    print(
+                        "qualification.lock stayed busy for 20 minutes between runs; switching all comparisons to CPU",
+                        flush=True,
+                    )
+                    for proc in base.psutil.process_iter(["pid", "cmdline"]):
+                        if proc.info["pid"] != os.getpid() and process_matches(
+                            proc, "research/flywheel_selfplay/h46/run_wave.sh"
+                        ):
+                            proc.send_signal(signal.SIGTERM)
+                    cpu_env = os.environ.copy()
+                    cpu_env["H46_DEVICE"] = "cpu"
+                    cpu_env["H46_RUN_ROOT"] = str(
+                        Path.home() / "jope-data/h46/runs/cpu"
+                    )
+                    return subprocess.run(
+                        [str(script.parent / "run_wave.sh")],
+                        cwd=ROOT,
+                        env=cpu_env,
+                        check=False,
+                    ).returncode
+            else:
+                lock_busy_started = None
+        else:
+            lock_busy_started = None
+        if time.monotonic() - last_report >= 60:
+            print(
+                "H46-D coordinator waiting for the serialized 0/A/B/C wave to finish",
+                flush=True,
+            )
+            last_report = time.monotonic()
+        time.sleep(2)
+
+    for seed in range(3):
+        output = runs_root / "H46-D" / f"seed{seed}"
+        command = [
+            "nice",
+            "-n",
+            "10",
+            sys.executable,
+            str(script),
+            "--input",
+            str(input_dir),
+            "--checkpoint",
+            str(checkpoint),
+            "--output",
+            str(output),
+            "--arm",
+            "D",
+            "--seed",
+            str(seed),
+            "--device",
+            device,
+            "--own-lock",
+        ]
+        result = subprocess.run(command, check=False)
+        if result.returncode == 75:
+            cpu_env = os.environ.copy()
+            cpu_env["H46_DEVICE"] = "cpu"
+            cpu_env["H46_RUN_ROOT"] = str(Path.home() / "jope-data/h46/runs/cpu")
+            cpu_result = subprocess.run(
+                [str(script.parent / "run_wave.sh")],
+                cwd=ROOT,
+                env=cpu_env,
+                check=False,
+            )
+            return cpu_result.returncode
+        if result.returncode != 0:
+            return result.returncode
+    return 0
+
+
+def coordinate_c0_replay(input_dir, checkpoint, device):
+    script = Path(__file__).resolve()
+    while True:
+        active_wave = False
+        active_runner = False
+        for proc in base.psutil.process_iter(["pid", "cmdline"]):
+            if proc.info["pid"] == os.getpid():
+                continue
+            if process_matches(proc, "research/flywheel_selfplay/h46/run_wave.sh"):
+                active_wave = True
+            if process_matches(proc, "research/flywheel_selfplay/h46/run.py"):
+                active_runner = True
+        if not active_wave and not active_runner:
+            break
+        time.sleep(2)
+
+    output = Path.home() / "jope-data/h46/runs/H46-C/replay_seed0"
+    command = [
+        "nice",
+        "-n",
+        "10",
+        sys.executable,
+        str(script),
+        "--input",
+        str(input_dir),
+        "--checkpoint",
+        str(checkpoint),
+        "--output",
+        str(output),
+        "--arm",
+        "C",
+        "--seed",
+        "0",
+        "--device",
+        device,
+        "--own-lock",
+    ]
+    result = subprocess.run(command, check=False)
+    if result.returncode == 75:
+        cpu_env = os.environ.copy()
+        cpu_env["H46_DEVICE"] = "cpu"
+        cpu_env["H46_RUN_ROOT"] = str(Path.home() / "jope-data/h46/runs/cpu")
+        return subprocess.run(
+            [str(script.parent / "run_wave.sh")], cwd=ROOT, env=cpu_env, check=False
+        ).returncode
+    if result.returncode != 0:
+        return result.returncode
+
+    original = json.loads(
+        (Path.home() / "jope-data/h46/runs/H46-C/seed0/result.json").read_text()
+    )
+    replay = json.loads((output / "result.json").read_text())
+    exact = all(
+        left["val"]["per_context"] == right["val"]["per_context"]
+        for left, right in zip(
+            original["evaluations"], replay["evaluations"], strict=True
+        )
+    )
+    print(f"C seed0 checkpoint replay exact={exact}", flush=True)
+    return 0 if exact else 1
 
 
 def checkpoint_guard(guard, net, expected=DOPE_SHA):
@@ -83,12 +280,30 @@ def main():
         type=Path,
         default=Path.home() / "jope-data/h46/ckpt/round-785.pt",
     )
-    ap.add_argument("--output", type=Path, required=True)
-    ap.add_argument("--arm", choices=["0", "A", "B", "C"], required=True)
-    ap.add_argument("--seed", type=int, required=True)
+    ap.add_argument("--output", type=Path, default=Path.home() / "jope-data/h46/runs")
+    ap.add_argument("--arm", choices=["0", "A", "B", "C", "D"])
+    ap.add_argument("--seed", type=int)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--batch-size", type=int, default=1219)
+    ap.add_argument("--coordinator", action="store_true")
+    ap.add_argument("--replay-c0-coordinator", action="store_true")
+    ap.add_argument("--own-lock", action="store_true")
     args = ap.parse_args()
+    if args.coordinator:
+        raise SystemExit(
+            coordinate_d_runs(
+                args.input,
+                Path.home() / "jope-data/h46/runs",
+                args.checkpoint,
+                args.device,
+            )
+        )
+    if args.replay_c0_coordinator:
+        raise SystemExit(
+            coordinate_c0_replay(args.input, args.checkpoint, args.device)
+        )
+    if args.arm is None or args.seed is None:
+        raise ValueError("--arm and --seed are required unless running as coordinator")
     args.output.mkdir(parents=True, exist_ok=True)
     torch.set_num_threads(4)
     random.seed(args.seed)
@@ -99,11 +314,40 @@ def main():
         if not torch.cuda.is_available():
             raise RuntimeError("CUDA unavailable")
         torch.cuda.set_per_process_memory_fraction(0.90)
+    lock_file = None
+    if args.own_lock:
+        lock_started = time.monotonic()
+        while True:
+            lock_file = open(Path.home() / "jope_plan/qualification.lock", "a")
+            try:
+                base.fcntl.flock(lock_file, base.fcntl.LOCK_EX | base.fcntl.LOCK_NB)
+            except BlockingIOError:
+                lock_file.close()
+                if time.monotonic() - lock_started >= 1200:
+                    print(
+                        "qualification.lock busy for 20 minutes; CPU fallback required",
+                        flush=True,
+                    )
+                    raise SystemExit(75)
+                time.sleep(30)
+                continue
+            if base.psutil.virtual_memory().available < 20 * 1024**3:
+                raise RuntimeError("available RAM below 20 GiB")
+            if device.type == "cuda":
+                free_bytes, _ = torch.cuda.mem_get_info(device)
+                if free_bytes < 20 * 1024**3:
+                    base.fcntl.flock(lock_file, base.fcntl.LOCK_UN)
+                    lock_file.close()
+                    lock_file = None
+                    time.sleep(30)
+                    continue
+            break
     selected, pools, tables = base.load_packet(args.input)
     if len(selected["train"]) != 1219 or len(selected["dev"]) != 91:
         raise RuntimeError("H46 cohort inventory mismatch")
     train = [r["context_sha256"] for r in selected["train"]]
     dev = [r["context_sha256"] for r in selected["dev"]]
+    train_family = {r["context_sha256"]: r["family_id"] for r in selected["train"]}
     spec = importlib.util.spec_from_file_location(
         "h46_fused", args.input / "cpu_exact_fused.py"
     )
@@ -120,6 +364,7 @@ def main():
     state = torch.load(args.checkpoint, map_location=device, weights_only=True)
     net.load_state_dict(state["state_dict"], strict=True)
     before = checkpoint_guard(guard, net)
+    checkpoint_sha = digest(args.checkpoint)
     opt = torch.optim.AdamW(
         [p for p in net.parameters() if p.requires_grad], lr=1e-4, weight_decay=1e-4
     )
@@ -240,6 +485,19 @@ def main():
             pn = ((pred - med) / mad).clamp(-3, 3)
             tn = ((target - med) / mad).clamp(-3, 3)
             loss = F.smooth_l1_loss(pn, tn, beta=1.0)
+        elif args.arm == "D":
+            weights = torch.as_tensor(
+                family_balanced_weights([train_family[cid] for cid in cids]),
+                dtype=torch.float32,
+                device=device,
+            )
+            row_huber = F.smooth_l1_loss(pred, target, reduction="none").mean(dim=1)
+            row_kl = F.kl_div(
+                F.log_softmax(-pred / 0.2, dim=-1),
+                F.softmax(-target / 0.2, dim=-1),
+                reduction="none",
+            ).sum(dim=1)
+            loss = torch.sum(weights * (row_huber + 0.1 * row_kl)) / len(cids)
         else:
             loss = F.smooth_l1_loss(pred, target) + 0.1 * F.kl_div(
                 F.log_softmax(-pred / 0.2, dim=-1),
@@ -277,6 +535,12 @@ def main():
                             p.copy_(ema[n])
             result = evaluate(dev)
             checkpoint_guard(guard, net)
+            save_adapter_state(
+                args.output / f"adapter-step{step + 1:04d}.pt",
+                net,
+                checkpoint_sha,
+                before,
+            )
             row = {
                 "step": step + 1,
                 "loss": float(loss.detach()),
@@ -330,6 +594,7 @@ def main():
         final_val = evaluate(dev)
     final_train = evaluate(train)
     checkpoint_guard(guard, net)
+    save_adapter_state(args.output / "adapter-final.pt", net, checkpoint_sha, before)
     output = {
         "arm": args.arm,
         "seed": args.seed,
@@ -345,7 +610,7 @@ def main():
         "evaluations": hist,
         "wall_seconds": time.monotonic() - start,
         "dope_sha256": before,
-        "checkpoint_sha256": digest(args.checkpoint),
+        "checkpoint_sha256": checkpoint_sha,
         "trainable_params": 29211,
     }
     atomic(args.output / "result.json", output)
