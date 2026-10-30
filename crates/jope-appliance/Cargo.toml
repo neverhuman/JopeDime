@@ -16,7 +16,7 @@ starforge = { path = "../jope-encoders", optional = true, features = ["dope"] }
 anyhow.workspace = true
 clap = { workspace = true, features = ["derive"] }
 jope-api = { path = "../jope-api" }
-jope-client = { path = "../jope-client" }
+jope-client = { path = "../jope-client", optional = true }
 rmcp = { version = "=3.8.0", default-features = false, features = ["server", "transport-io"], optional = true }
 tokio = { workspace = true, optional = true }
 jope-assets = { path = "../jope-assets" }
@@ -40,7 +40,7 @@ tempfile.workspace = true
 
 [features]
 default = ["engine", "mcp"]
-mcp = ["dep:rmcp", "dep:tokio"]
+mcp = ["dep:jope-client", "dep:rmcp", "dep:tokio"]
 engine = ["dep:jope-service"]
 # Build the client surface without the default engine feature.
 client = []

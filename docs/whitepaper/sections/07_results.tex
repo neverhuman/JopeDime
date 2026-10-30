@@ -75,6 +75,12 @@ reference performance within its budget, report that limit.
 
 \subsection{What the map contributes}\label{sub:results-ablation}
 
+A representation study should test whether nearby problem encodings share
+useful programs, with data disjoint from fitting the map. Ranking agreement
+should also be compared with the program-only head, so a global preference
+for common programs is distinguishable from reading the problem.
+\TBD{Supply problem-similarity and program-only-control evaluations.}
+
 A ranking head can agree with a referee without improving the writer.
 In the checkpoint described in \cref{sub:method-map}, the map neither
 conditions nor screens the writer's draw. Its ranking accuracy therefore
