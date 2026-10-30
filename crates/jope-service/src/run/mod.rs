@@ -1,0 +1,16 @@
+//! Run-control kernel, spec §5.2/§5.6. Callers serialize mutations through `&mut`.
+//!
+//! SVC-01/02 must commit state/events/command receipts atomically and persist the
+//! fencing high-water before dispatch. `recover_interrupted` models recovery of
+//! that retained controller state; it is not a disk loader. SVC-04 owns publishing,
+//! DSC-05/08 own admission budgets/discovery, and WRK-01 owns worker supervision.
+//! No dataset rows, model fitting, store transactions or HTTP handlers live here.
+
+mod controller;
+mod evaluator;
+
+pub use controller::*;
+pub use evaluator::*;
+
+#[cfg(test)]
+mod tests;

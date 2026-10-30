@@ -9,6 +9,10 @@ repository.workspace = true
 description = "JopeDime v1 engine service"
 
 [dependencies]
+jope-api = { path = "../jope-api" }
+
+[dev-dependencies]
+proptest = { workspace = true }
 
 [lints]
 workspace = true
