@@ -89,27 +89,28 @@ measurement decides where, and whether, the minimum sits.
 
 \subsection{Rewarding useful hallucination}\label{sub:price-hallucination}
 
-A pretrained writer pulls toward the textbook answer, which is history's
-taste. On a board whose incumbent is that answer, it is an also-ran by
-definition. A \emph{useful hallucination} is a move the pretrained prior rates
-unlikely and the referee confirms (Box~3). Four counterweights push the
-writer toward such moves: a novelty bonus paid only inside the validity gate
-(\cref{sec:game}), temperature and entropy schedules, a curriculum that
-starts past known solutions, and a quality-diversity archive
-\citep{lehman2011novelty,mouret2015mapelites}. \Cref{sec:method} states which
-of these \EZ{} uses. Novelty also raises waste, so exploration gets a stated
-share of games, \TBD{X\%}.
+A familiar solution can be a useful prior. Matching the incumbent's score
+earns a tie; promotion requires improvement under the same protocol. A
+\emph{useful hallucination} here is an unfamiliar proposal whose value the
+referee verifies (Box~3). Possible exploration controls include temperature
+and entropy schedules, a curriculum past known solutions, and
+quality-diversity archives \citep{lehman2011novelty,mouret2015mapelites}.
+Any novelty bonus must preserve the reward ordering in \cref{sec:game}.
+These are design options; \cref{sec:method} describes the reference
+procedure. A measured exploration study must declare its controls and
+budget share and count unsuccessful attempts. \TBD{Supply the exploration
+configuration and its measured quality--cost trade-off.}
 
-\begin{explainer}{Box 3: Why a referee makes hallucination safe}
+\begin{explainer}{Box 3: What a referee verifies}
   \label{box:hallucination}
-  In text, a hallucination is an error nobody checks. In a game, an
-  unfamiliar move is a conjecture, and the referee checks every one.
-  Unfamiliar and verified is a discovery; unfamiliar and unchecked is
-  confabulation. In March 2016, AlphaGo's own estimate put the chance that a
-  human would play its Move~37 against Lee Sedol at about one in ten
+  An unfamiliar program is a conjecture; the referee checks whether it
+  runs and improves the declared score. Verification establishes that
+  bounded result. A claim of discovery also needs comparison with known
+  methods (\cref{sec:meaning}). In March 2016, AlphaGo's own estimate put
+  the chance that a human would play its Move~37 against Lee Sedol at about one in ten
   thousand \citep{metz2016twomoves}, and AlphaGo won the game. A referee does
-  not make strange moves good. It makes them cheap to try, and it is only as
-  trustworthy as what it measures (\cref{sec:method}).
+  not make strange moves good. Its reliability and execution cost must be
+  established for the task (\cref{sec:method}).
 \end{explainer}
 
 \subsection{How many games?}\label{sub:price-games}
