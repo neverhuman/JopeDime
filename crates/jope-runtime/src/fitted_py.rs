@@ -12,6 +12,7 @@
 //! Floats are written with Rust's shortest round-trip form, which CPython parses back to the same
 //! bits; a non-finite value anywhere in a state is refused.
 
+use crate::calibration::OutputTransform;
 use crate::error::Failure;
 use crate::math_pipeline::{MathPipeline, F64_PREDICTION_VERSION};
 use anyhow::Result;
@@ -31,6 +32,10 @@ pub struct CheckRow {
 
 /// The recipe's script guard; the fitted state goes in front of it.
 const MAIN_GUARD: &str = "\n\n\nif __name__ == \"__main__\":";
+
+fn is_identity_transform(transform: &OutputTransform) -> bool {
+    transform.intercept == 0.0 && transform.slope == 1.0 && transform.lower.is_none()
+}
 
 fn python_hex(value: f64) -> String {
     if value.is_nan() {
@@ -53,7 +58,7 @@ fn python_hex(value: f64) -> String {
 
 /// Emit standalone Python 3 that predicts with `model`, fitted from `genome` on rows `width` wide.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
-    emit_with_checks(genome, model, width, &[])
+    emit_calibrated(genome, model, width, None)
 }
 
 /// Emit a predictor with up to 64 caller-supplied engine check rows.
@@ -61,6 +66,27 @@ pub fn emit_with_checks(
     genome: &GenomeIr,
     model: &Model,
     width: usize,
+    checks: &[CheckRow],
+) -> Result<String> {
+    emit_calibrated_with_checks(genome, model, width, None, checks)
+}
+
+/// Emit standalone Python with the optional fitted regression output transform.
+pub fn emit_calibrated(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
+) -> Result<String> {
+    emit_calibrated_with_checks(genome, model, width, output_transform, &[])
+}
+
+/// Emit standalone Python with calibration and caller-supplied engine check rows.
+pub fn emit_calibrated_with_checks(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
     checks: &[CheckRow],
 ) -> Result<String> {
     if checks.len() > 64 || checks.iter().any(|row| row.inputs.len() != width) {
@@ -163,6 +189,39 @@ pub fn emit_with_checks(
          return []\n    \
          return fitted_model().predict(rows)",
     );
+    if let Some(transform) = output_transform
+        .copied()
+        .filter(|t| !is_identity_transform(t))
+    {
+        if !transform.intercept.is_finite()
+            || !transform.slope.is_finite()
+            || transform.lower.is_some_and(|lower| !lower.is_finite())
+        {
+            return Err(Failure::integrity("non-finite regression output transform"));
+        }
+        let floor_code = transform.lower.map_or_else(String::new, |v| {
+            format!(
+                "        if math.isnan(value) or value < {v:?}:\n            value = {v:?}\n        elif value == 0.0 and {v:?} == 0.0 and (math.copysign(1.0, value) > 0.0 or math.copysign(1.0, {v:?}) > 0.0):\n            value = 0.0\n"
+            )
+        });
+        block.push_str(&format!(
+            r#"
+_native_fitted_predict = fitted_predict
+def fitted_predict(rows):
+    predictions = _native_fitted_predict(rows)
+    calibrated = []
+    for prediction in predictions:
+        value = {:?} + {:?} * prediction
+{floor_code}        if not math.isfinite(value):
+            raise ArithmeticError("calibrated prediction is not finite")
+        calibrated.append(value)
+    return calibrated
+"#,
+            transform.intercept,
+            transform.slope,
+            floor_code = floor_code
+        ));
+    }
     let rows = if checks.is_empty() {
         "()".to_owned()
     } else {
