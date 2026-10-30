@@ -16,9 +16,7 @@ pub mod system;
 pub mod warnings;
 
 /// API-02 supplies the closed catalog and RFC 9457 Problem in `error.rs`.
-pub mod error {
-    pub type ErrorCode = String;
-}
+pub mod error;
 
 /// API-03 supplies parsing, ordering and validated newtypes in `ids.rs`.
 pub mod ids {
