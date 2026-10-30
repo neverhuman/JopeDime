@@ -1,5 +1,5 @@
 //! Discovery-loop support.
 
 pub mod effort;
-pub mod splits;
 pub mod elites;
+pub mod splits;

@@ -816,6 +816,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         dsc04_lockfile["source_commit"],
         "17c78f4e650112b19f1390971d4af11e28a14e8a"
     );
+    let dsc02_rechain =
+        old_fixture("transitions/dsc02_after_009de907_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        dsc02_rechain["source_commit"],
+        "85aef0634193e54e607e29878185ab595da7cdb6"
+    );
+    assert_eq!(
+        dsc02_rechain["base_commit"],
+        "009de907e9c1c829f8014aac7974e6c283460f56"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -836,6 +846,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &svc07_lockfile,
         &wrk02_identity,
         &dsc04_lockfile,
+        &dsc02_rechain,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -894,6 +905,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc07_lockfile.clone(),
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
+                dsc02_rechain.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -938,6 +950,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc07_lockfile.clone(),
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
+                dsc02_rechain.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -975,6 +988,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc07_lockfile.clone(),
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
+                dsc02_rechain.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1043,6 +1057,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc07_lockfile.clone(),
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
+                dsc02_rechain.clone(),
             ],
         ),
         (
@@ -1071,6 +1086,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc07_lockfile.clone(),
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
+                dsc02_rechain.clone(),
             ],
         ),
     ] {
@@ -1147,6 +1163,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         svc07_lockfile,
         wrk02_identity,
         dsc04_lockfile,
+        dsc02_rechain,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
