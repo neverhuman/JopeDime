@@ -18,8 +18,9 @@ fi
 # The two settings expected to leave the flat basin fastest are first.
 for spec in '16 3e-4' '64 3e-4' '2 3e-4' '2 1e-4' '16 1e-4' '64 1e-4'; do
   read -r k lr <<<"$spec"
+  lr_key=$(python3 -c 'import sys; print(f"{float(sys.argv[1]):.0e}")' "$lr")
   for seed in 9 10 11; do
-    out="$ARM_DIR/k${k}-lr${lr}/seed${seed}"
+    out="$ARM_DIR/k${k}-lr${lr_key}/seed${seed}"
     mkdir -p "$out"
     if [[ -s "$out/candidate-summary.json" ]]; then
       echo "skip completed H51-STEPS k=$k lr=$lr seed$seed"
