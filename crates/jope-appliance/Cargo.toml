@@ -18,6 +18,7 @@ clap = { workspace = true, features = ["derive"] }
 jope-api = { path = "../jope-api" }
 jope-assets = { path = "../jope-assets" }
 jope-runtime = { path = "../jope-runtime" }
+jope-service = { path = "../jope-service", optional = true }
 serde.workspace = true
 serde_json.workspace = true
 ulid.workspace = true
@@ -32,7 +33,8 @@ portable-pty = "0.9"
 tempfile.workspace = true
 
 [features]
-default = []
+default = ["engine"]
+engine = ["dep:jope-service"]
 dope-encoding = ["dep:starforge"]
 dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
 # The executable refuses to run without its sealed package: every release build sets it, so a

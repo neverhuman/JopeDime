@@ -39,7 +39,7 @@ libc = "=0.2.189"
 nix = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_ProcessStatus", "Win32_System_Threading"] }
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_ProcessStatus", "Win32_System_Threading", "Win32_Security", "Win32_System_JobObjects"] }
 
 [lints]
 workspace = true

@@ -18,6 +18,13 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Internal isolated candidate worker.
+    #[cfg(feature = "engine")]
+    #[command(name = "__worker", hide = true)]
+    Worker {
+        #[arg(long)]
+        protocol: u32,
+    },
     /// Save, inspect, verify and export language-neutral fitted objects; or serve their MCP tools.
     Model(crate::model::ModelArgs),
     /// Product version, source commit, runtime ABI, target and package identity.

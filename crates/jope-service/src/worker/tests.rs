@@ -455,6 +455,7 @@ fn queued_supersession_does_not_consume_a_worker_or_publish_a_score() {
 }
 
 #[test]
+#[cfg(unix)]
 fn original_mapping_survives_replacement_of_its_fixture_path() {
     let _guard = PROCESS_TESTS.lock().unwrap();
     let file = matrix();
@@ -473,4 +474,45 @@ fn original_mapping_survives_replacement_of_its_fixture_path() {
     let reloaded = super::tests::pool(1).evaluate(&request(file.path(), 2, 1, "ok"));
     assert!(reloaded.failure.is_none());
     assert_eq!(reloaded.scores[1], 2.0);
+}
+
+#[cfg(any(windows, target_os = "macos"))]
+#[test]
+fn killing_parent_leaves_no_worker_process() {
+    let _guard = PROCESS_TESTS.lock().unwrap();
+    let file = matrix();
+    let dir = tempfile::tempdir().unwrap();
+    let pid_path = dir.path().join("worker.pid");
+    let mut command = fixture_command("worker::tests::parent_helper");
+    command
+        .env("JOPE_WORKER_PARENT_FIXTURE", "1")
+        .env("JOPE_WORKER_MATRIX", file.path())
+        .env("JOPE_WORKER_PID_FILE", &pid_path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    let mut parent = ChildGuard(command.spawn().unwrap());
+    let started = Instant::now();
+    while !pid_path.exists() {
+        assert!(started.elapsed() < Duration::from_secs(5));
+        thread::sleep(Duration::from_millis(10));
+    }
+    let worker: u32 = loop {
+        if let Ok(pid) = fs::read_to_string(&pid_path).unwrap().parse() {
+            break pid;
+        }
+        assert!(started.elapsed() < Duration::from_secs(5));
+        thread::sleep(Duration::from_millis(10));
+    };
+    thread::sleep(Duration::from_millis(150));
+    parent.0.kill().unwrap();
+    parent.0.wait().unwrap();
+    let killed = Instant::now();
+    while crate::sampler::sample(worker).is_ok() {
+        assert!(
+            killed.elapsed() < Duration::from_secs(2),
+            "worker survived parent death"
+        );
+        thread::sleep(Duration::from_millis(10));
+    }
 }

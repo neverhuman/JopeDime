@@ -2473,6 +2473,7 @@ dependencies = [
  "jope-assets",
  "jope-datasets",
  "jope-runtime",
+ "jope-service",
  "portable-pty",
  "serde",
  "serde_json",
