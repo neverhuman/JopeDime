@@ -47,3 +47,11 @@ import/metric-registry smoke, all1310 data hashes and landmark preflight. After 
 verify at least five live rounds, full training coverage, <=64 fits, frozen DOPE,
 changing candidate SHAs and the validation curve. An unavailable quality quantity
 stays unavailable; no panel or sealed generalization claim follows from this run.
+
+Full-cohort qualification exposed a residency limit: keeping all1219 raw pools on
+the GPU while materializing the8192-context model signatures exceeds the90% cap.
+The gathered slate owns its tensors, so full mode releases raw cached pools and
+unused allocator segments before forward. Every effective batch and both optimizer
+updates remain unchanged; cold transfers are included in native byte counters.
+Startup checks host headroom every16 contexts with the same fixed4 threads and
+80% wait/85% hard budget, avoiding a mandatory5.5min sampling delay per restart.

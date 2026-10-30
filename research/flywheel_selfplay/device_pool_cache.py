@@ -40,6 +40,10 @@ class DevicePoolCache:
         self.transfers += 1
         return values
 
+    def release_resident_pools(self):
+        """Gathered slates own their data; release raw pools before large forwards."""
+        self.entries.clear()
+
     def pack(self, pools, cids, selections):
         start = time.monotonic()
         self.host_payload_bytes = []
