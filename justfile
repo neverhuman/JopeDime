@@ -21,6 +21,7 @@ setup:
 
 hygiene:
     bash deploy/ci/check.sh
+    bash deploy/ci/check-api-schema.sh
 
 # Full default-policy audit of immutable complete tracked input; fresh retained reports.
 # Trusted-main execution uses full-main.yml; the dedicated hosted workflow remains opt-in.

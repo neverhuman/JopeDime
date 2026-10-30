@@ -2653,6 +2653,10 @@
         "orchestration"
       ]
     },
+    "target:jope-api/bin/jope-api-openapi": {
+      "reason": "API-05 OpenAPI generator binary for the jope-api registry (writes schemas/jope.api.v1.openapi.json; drift checked by deploy/ci/check-api-schema.sh); schema tooling infrastructure, not a regression subsystem",
+      "role": "infrastructure"
+    },
     "target:jope-api/lib/jope_api": {
       "reason": "v1 wire-contract data types (serde/schemars) and their unit tests, including the Appendix D error catalog; a transport contract with no regression subsystem until service and worker integration",
       "role": "infrastructure"
