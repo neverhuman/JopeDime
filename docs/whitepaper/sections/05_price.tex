@@ -75,12 +75,15 @@ the effect attributed to the writer.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
-Small models are cheap per token and can be dear per win. Compute per token
-falls about 190-fold from a dense 1.5T writer to an 8B one, so the small
-model is cheaper per win unless its win rate per attempt is more than 190
-times lower, repairs counted. That threshold flatters the small model:
-repair turns re-read a growing context, and a writer that needs three times
-the tokens per attempt breaks even at about 60, not 190.
+Small models are cheap per token and can be dear per win. For generation
+alone, compute per token falls about 190-fold from a dense 1.5T writer to
+an 8B one. With equal token counts and compute unit costs, the smaller
+writer can tolerate a win rate about 190 times lower before that
+component's cost per win matches. If it needs three times the tokens per
+attempt, the generation-only ratio falls to about 60. Repair turns also
+re-read a growing context. Encoding and referee costs further change the
+full-cost ratio, so the threshold for the complete bill in \cref{eq:bill}
+requires all components to be counted.
 
 Reasoning is the second dial. Reasoning tokens may cut stillborn moves, but
 each is billed as output. \Cref{fig:price}b maps cost per win over writer
