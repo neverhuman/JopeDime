@@ -18,18 +18,11 @@ impl std::fmt::Display for InvalidMatrix {
 impl std::error::Error for InvalidMatrix {}
 type Result<T> = std::result::Result<T, InvalidMatrix>;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ColumnKind {
-    Numeric,
-    Categorical,
-}
-impl ColumnKind {
-    fn width(self) -> usize {
-        match self {
-            Self::Numeric => 8,
-            Self::Categorical => 4,
-        }
+pub use jope_runtime::table::ColumnKind;
+fn width(kind: ColumnKind) -> usize {
+    match kind {
+        ColumnKind::Numeric => 8,
+        ColumnKind::Categorical => 4,
     }
 }
 
@@ -262,7 +255,7 @@ impl<B: AsRef<[u8]>> Matrix<B> {
                 return Err(InvalidMatrix);
             }
             cursor = start
-                .checked_add(rows.checked_mul(column.kind.width()).ok_or(InvalidMatrix)?)
+                .checked_add(rows.checked_mul(width(column.kind)).ok_or(InvalidMatrix)?)
                 .ok_or(InvalidMatrix)?;
             let present = aligned(cursor)?;
             zero_padding(bytes, cursor, present)?;
@@ -275,8 +268,8 @@ impl<B: AsRef<[u8]>> Matrix<B> {
             }
             for row in 0..rows {
                 let flag = bytes[present + row];
-                let at = start + row * column.kind.width();
-                let value = &bytes[at..at + column.kind.width()];
+                let at = start + row * width(column.kind);
+                let value = &bytes[at..at + width(column.kind)];
                 if flag > 1 || (flag == 0 && value.iter().any(|b| *b != 0)) {
                     return Err(InvalidMatrix);
                 }
@@ -334,7 +327,7 @@ impl<B: AsRef<[u8]>> Matrix<B> {
         if bytes[column.present as usize + row] == 0 {
             return Some(Cell::Missing);
         }
-        let start = column.values as usize + row * column.kind.width();
+        let start = column.values as usize + row * width(column.kind);
         Some(match column.kind {
             ColumnKind::Numeric => Cell::Numeric(f64::from_le_bytes(
                 bytes[start..start + 8].try_into().expect("validated value"),
