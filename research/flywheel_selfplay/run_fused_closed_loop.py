@@ -302,8 +302,11 @@ def main():
     landmark = {}
     ws = FusedLandmarkWorkspace(num_threads=4)
     tprep = time.monotonic()
-    for cid, (x, y) in tables.items():
-        headroom()
+    for prep_idx, (cid, (x, y)) in enumerate(tables.items()):
+        # Four worker threads remain fixed; check host headroom in bounded groups
+        # instead of imposing a 250ms sampling sleep on every tiny context.
+        if not full or prep_idx % 16 == 0:
+            headroom()
         yn = (
             (y.astype(np.float64) - np.mean(y.astype(np.float64)))
             / max(float(np.std(y.astype(np.float64))), 1e-8)
@@ -851,6 +854,9 @@ def main():
             batch_profile["avoided_cpu_feature_slate_bytes"] += packed[
                 "avoided_cpu_feature_slate_bytes"
             ]
+            if full:
+                device_pool_cache.release_resident_pools()
+                torch.cuda.empty_cache()
             model_start = time.monotonic()
             pred = predict(cids, selections, packed)
             target = packed["fitness"].float()

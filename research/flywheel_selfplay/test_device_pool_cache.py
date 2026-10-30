@@ -139,3 +139,23 @@ def test_landmark_overflow_rescaling_keeps_raw_table_and_ordinary_columns():
     np.testing.assert_array_equal(raw, original)
     np.testing.assert_array_equal(result[:, 0], [1.0, -0.5])
     np.testing.assert_array_equal(result[:, 1], raw[:, 1].astype(np.float32))
+
+
+def test_releasing_resident_pools_keeps_gathered_slate_values():
+    pool = {
+        "program": np.arange(12, dtype=np.float32).reshape(3, 4),
+        "proj16": np.arange(6, dtype=np.float64).reshape(3, 2),
+        "fitness": np.arange(3, dtype=np.float64),
+        "gate": np.ones(3, dtype=bool),
+    }
+    cache = DevicePoolCache("cpu")
+    packed = cache.pack({"c": pool}, ["c"], [np.array([2, 0])])
+    expected = {k: packed[k].clone() for k in cache.FIELDS}
+    cache.release_resident_pools()
+    assert not cache.entries
+    for key in cache.FIELDS:
+        assert torch.equal(packed[key], expected[key])
+    again = cache.pack({"c": pool}, ["c"], [np.array([2, 0])])
+    assert cache.transfers == 2
+    for key in cache.FIELDS:
+        assert torch.equal(again[key], expected[key])
