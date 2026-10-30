@@ -3,8 +3,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 fault=0
-if [[ ${1:-} == --fault-emitter ]]; then fault=1; shift; fi
-[[ $# -le 1 ]] || { echo 'usage: export-parity.sh [--fault-emitter] [NEW_REPORT_DIR]' >&2; exit 2; }
+case ${1:-} in
+  --fault-emitter) fault=1; shift ;;
+  --fault-routing) fault=2; shift ;;
+esac
+[[ $# -le 1 ]] || { echo 'usage: export-parity.sh [--fault-emitter|--fault-routing] [NEW_REPORT_DIR]' >&2; exit 2; }
 report=${1:-"$PWD/target/export-parity/$(date -u +%Y%m%dT%H%M%SZ)-$$"}
 [[ ! -e "$report" && ! -L "$report" ]] || { echo 'report directory must be new' >&2; exit 2; }
 mkdir -p -- "$report"
@@ -593,11 +596,16 @@ try:
         if emission["status"] != "generated"
     ]
     assert not errors, f"advertised support lacks fitted export: {errors}"
-    fault = os.environ["JOPE_EXPORT_PARITY_FAULT"] == "1"
-    report["fault_injected"] = fault
-    if fault:
+    fault = os.environ["JOPE_EXPORT_PARITY_FAULT"]
+    report["fault_injected"] = fault != "0"
+    report["fault_scope"] = {"0": None, "1": "primary", "2": "routing"}[fault]
+    if fault != "0":
         victim = next(
-            e for c in cases for e in c["emissions"] if e["language"] == "python"
+            e
+            for c in cases
+            if fault != "2" or c["key"].startswith("routing/")
+            for e in c["emissions"]
+            if e["language"] == "python"
         )
         p = out / victim["file"]
         text = p.read_text()
