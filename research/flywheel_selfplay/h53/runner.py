@@ -157,6 +157,11 @@ def main() -> None:
     # The comparator weights are scored, then the full trainable adapter module is discarded.
     trainable = reset_adapter(net, args.scale, args.seed)
     initial_sha = adapter_sha(net)
+    initial_trainable = {
+        name: parameter.detach().clone()
+        for name, parameter in net.named_parameters()
+        if parameter.requires_grad
+    }
     frozen_dope_before = h48.h46.checkpoint_guard(guard, net, expected=DOPE_SHA)
     if frozen_dope_before != DOPE_SHA:
         raise RuntimeError("DOPE source checksum mismatch before training")
@@ -168,7 +173,7 @@ def main() -> None:
     started = time.monotonic()
     net.eval()
     initial_val = h48.evaluate_utility(val_ids, val_pools, val_predict)
-    trajectory.append({"round": 0, "family_utility": initial_val["mean"], "context_utility": initial_val["context_mean"], "per_family_utility": initial_val["per_family"], "per_context_utility": initial_val["per_context"], "loss": None})
+    trajectory.append({"round": 0, "family_utility": initial_val["mean"], "context_utility": initial_val["context_mean"], "per_family_utility": initial_val["per_family"], "per_context_utility": initial_val["per_context"], "loss": None, "adapter_sha256": initial_sha, "update_l2_from_init": 0.0})
     for round_index in range(1, args.rounds + 1):
         net.train()
         batch_seed = args.seed * 1_000_003 + round_index * 31
@@ -184,6 +189,12 @@ def main() -> None:
             raise RuntimeError("DOPE identity changed during H53 training")
         net.eval()
         val = h48.evaluate_utility(val_ids, val_pools, val_predict)
+        current_sha = adapter_sha(net)
+        update_l2 = float(torch.sqrt(sum(
+            torch.sum((parameter.detach() - initial_trainable[name]) ** 2)
+            for name, parameter in net.named_parameters()
+            if parameter.requires_grad
+        )))
         trajectory.append({
             "round": round_index,
             "family_utility": val["mean"],
@@ -192,15 +203,14 @@ def main() -> None:
             "per_context_utility": val["per_context"],
             "loss": float(loss.detach().cpu()),
             "grad_norm": grad_norm,
+            "adapter_sha256": current_sha,
+            "update_l2_from_init": update_l2,
             "elapsed_seconds": time.monotonic() - started,
             "diagnostic_only": True,
         })
     candidate = trajectory[-1]["per_family_utility"]
     gains = {family: float(candidate[family]) - float(baseline_by_family[family]) for family in baseline_by_family}
     stats = bootstrap(gains, 53000 + args.seed + int(args.scale * 10))
-    # New ruling is prospective and uses a one-sided mean LCB plus no-harm median.
-    admitted_mean_rule = stats["mean_lcb_one_sided_95"] > 0.001 and stats["median_gain"] >= 0.0
-    old_median_rule = stats["median_gain"] > 0.001 and stats["median_lcb_two_sided_95"] > 0.001
     # Elo is computed on the same diagnostic DL-Val families, with r882 anchored at 1500.
     elo_path = ROOT / "python/src/jope/north_star/elo_tracker.py"
     elo = import_module("h53_elo_tracker", elo_path)
@@ -233,12 +243,20 @@ def main() -> None:
         "r882_checkpoint_sha256_comparator_only": R882_SHA,
         "r882_adapter_sha256_scored_then_discarded": baseline_adapter_digest,
         "fresh_adapter_sha256_before_training": initial_sha,
+        "fresh_adapter_sha256_after_training": adapter_sha(net),
+        "trainable_adapter_update_l2_from_init": float(torch.sqrt(sum(
+            torch.sum((parameter.detach() - initial_trainable[name]) ** 2)
+            for name, parameter in net.named_parameters()
+            if parameter.requires_grad
+        ))),
+        "optimizer_updates_completed": args.rounds,
         "fresh_adapter_scale": args.scale,
         "r882_adapter_transfer_to_candidate": False,
         "family_gain_vs_r882_diagnostic": gains,
         "family_bootstrap": stats,
-        "t537_admit_mean_lcb_and_no_harm": bool(admitted_mean_rule),
-        "old_median_lb_rule": bool(old_median_rule),
+        "t537_admission_evaluated": False,
+        "t537_admission_not_evaluated_reason": "pilot DL-Val reads are diagnostic-only; no independent family endpoint",
+        "old_median_admission_evaluated": False,
         "elo_vs_r882_diagnostic": elo_result,
         "r882_baseline_utility": baseline["mean"],
         "round_to_target_1_1377942": next((row["round"] for row in trajectory if row["family_utility"] >= TARGET_UTILITY), None),

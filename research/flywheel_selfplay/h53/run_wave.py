@@ -12,8 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-RUNS = Path.home() / "jope-data/h53/runs"
-STATUS = Path.home() / "jope_plan/ns/H53_STATUS.md"
+RUNS = Path(os.environ.get("H53_RUN_ROOT", str(Path.home() / "jope-data/h53/runs")))
+STATUS = Path(os.environ.get("H53_STATUS_PATH", str(Path.home() / "jope_plan/ns/H53_STATUS.md")))
 LOCK = Path.home() / "jope_plan/qualification.lock"
 PILOT_STARTED_UTC = "2026-10-30T17:33:21+00:00"
 PILOT_DEADLINE_UTC = "2026-10-30T18:03:21+00:00"
@@ -29,6 +29,7 @@ def now() -> str:
 
 def note(message: str) -> None:
     line = f"{now()} — {message}\n"
+    STATUS.parent.mkdir(parents=True, exist_ok=True)
     with STATUS.open("a") as handle:
         handle.write(line)
         handle.flush()
@@ -153,7 +154,8 @@ def run_cell(index: int, seed: int, scale: float, deadline: float) -> bool:
 
 def main() -> None:
     RUNS.mkdir(parents=True, exist_ok=True)
-    utc_deadline = datetime.fromisoformat(PILOT_DEADLINE_UTC).replace(tzinfo=timezone.utc).timestamp()
+    deadline_text = os.environ.get("H53_DEADLINE_UTC", PILOT_DEADLINE_UTC)
+    utc_deadline = datetime.fromisoformat(deadline_text).replace(tzinfo=timezone.utc).timestamp()
     deadline = time.monotonic() + max(0.0, utc_deadline - time.time())
     note("H53 six-cell pilot begins; seeds=12/13/14 x scales=1.0/0.1; rounds=3; total deadline=30 minutes; no selection on DL-Val")
     completed = []
