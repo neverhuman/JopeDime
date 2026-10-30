@@ -30,6 +30,13 @@ provenance before becoming an empirical result.
   matrix and continuous-latent architecture are not connected to the
   documented reference or committed CSV inputs, so they are not promoted
   into results.
+- Results also retains the method note's historical search diagnostics.
+  The [retained search summary](../internal/asm-manual/sections/targets.md)
+  distinguishes paired final-search observations from the broader seed audit;
+  shared seeds, repeated contexts and unequal times prevent treating them
+  as independent first proposals. Their source/protocol receipts remain
+  explicit placeholders. The older ranking statistic is not assigned to the
+  reference checkpoint without its own model and metric identity.
 - Abstract, Results and Meaning retain explicit evidence placeholders.
   The training-status account uses [admissions.csv](figures/data/admissions.csv)
   and [rounds.csv](figures/data/rounds.csv), distinguishes accepted flags from
