@@ -427,6 +427,11 @@ fn call_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
     }
 }
 
+/// Call the existing model-session handler from the shared MCP adapter.
+pub(crate) fn call_mcp_legacy_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
+    call_tool(root, name, args)
+}
+
 fn serve(root: &Path) -> anyhow::Result<()> {
     let mut input = std::io::stdin().lock();
     let mut output = std::io::stdout().lock();
@@ -515,4 +520,24 @@ fn serve(root: &Path) -> anyhow::Result<()> {
             .map_err(|e| Failure::new(FailureKind::Output, e.to_string()))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mcp_wrapper_preserves_session_show_result() {
+        let root = tempfile::tempdir().unwrap();
+        let result = call_mcp_legacy_tool(
+            root.path(),
+            "model_session_show",
+            json!({"name":"baseline"}),
+        )
+        .unwrap();
+        assert_eq!(result["schema"], sessions::SCHEMA);
+        assert_eq!(result["session"], "baseline");
+        assert_eq!(result["head"], "empty");
+        assert_eq!(result["versions"], json!([]));
+    }
 }

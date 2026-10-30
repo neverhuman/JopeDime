@@ -1,5 +1,6 @@
 //! One rmcp 3.8.0 adapter over the shared v1 client. It owns no engine or run state.
 //! CLI discovery/auto-start, aliases and canonical schema completion retain their owning tasks.
+mod aliases;
 pub mod catalog;
 mod dispatch;
 mod transport;
@@ -64,6 +65,17 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
         request: CallToolRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
+        if aliases::contains(&request.name) {
+            let args = Value::Object(request.arguments.unwrap_or_default());
+            let name = request.name.to_string();
+            let result = tokio::select! {
+                _ = context.ct.cancelled() => return Err(ErrorData::internal_error("request cancelled", None)),
+                result = tokio::task::spawn_blocking(move || aliases::call(&name, args)) => {
+                    result.map_err(|_| ErrorData::internal_error("legacy tool worker failed", None))?
+                }
+            };
+            return Ok(result);
+        }
         let op = OPERATIONS
             .iter()
             .find(|op| op.mcp_tool == Some(request.name.as_ref()))
@@ -230,9 +242,13 @@ impl<T: Transport + Send + Sync + 'static> ServerHandler for Adapter<T> {
         if request.is_some_and(|r| r.cursor.is_some()) {
             return Err(ErrorData::invalid_params("unknown tool cursor", None));
         }
-        Ok(ListToolsResult::with_all_items(
-            serde_json::from_value(catalog::tools()["tools"].clone()).expect("tool definitions"),
-        ))
+        let mut tools: Vec<Tool> =
+            serde_json::from_value(catalog::tools()["tools"].clone()).expect("tool definitions");
+        tools.extend(
+            serde_json::from_value::<Vec<Tool>>(Value::Array(aliases::tools()))
+                .expect("legacy tool definitions"),
+        );
+        Ok(ListToolsResult::with_all_items(tools))
     }
     async fn call_tool(
         &self,
