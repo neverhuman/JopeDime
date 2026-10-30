@@ -155,6 +155,7 @@ mod platform {
         // and cb is set to its exact size before the API writes into it.
         let mut memory = PROCESS_MEMORY_COUNTERS {
             cb: size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
+            // SAFETY: zero is a valid initial state for this output structure.
             ..unsafe { std::mem::zeroed() }
         };
         // SAFETY: memory points to an initialized structure whose size is passed in cb.
