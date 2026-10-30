@@ -141,6 +141,7 @@ mod platform {
         }
         let handle = ProcessHandle(handle);
 
+        // SAFETY: every FILETIME is a plain C integer pair, for which all-zero is valid.
         let (mut creation, mut exit, mut kernel, mut user) =
             unsafe { std::mem::zeroed::<(FILETIME, FILETIME, FILETIME, FILETIME)>() };
         // SAFETY: all FILETIME outputs are writable, and the handle is valid for this call.
@@ -150,6 +151,8 @@ mod platform {
             return Err(io::Error::last_os_error());
         }
 
+        // SAFETY: PROCESS_MEMORY_COUNTERS is an output-only C struct; zero initializes its fields
+        // and cb is set to its exact size before the API writes into it.
         let mut memory = PROCESS_MEMORY_COUNTERS {
             cb: size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
             ..unsafe { std::mem::zeroed() }
