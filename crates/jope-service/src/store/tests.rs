@@ -39,7 +39,7 @@ fn seven_tables_and_all_key_kinds_reopen_losslessly() {
     let blob = store
         .publish_blob(Cursor::new(b"fixture blob\0with exact bytes"))
         .unwrap();
-    let keys = vec![
+    let keys = [
         key(0),
         RecordKey::Event {
             run: run(0),
