@@ -1,0 +1,111 @@
+\section{The Anatomy of Innovation}\label{sec:anatomy}
+% Reader question: What is innovation made of?
+% Core points advanced: 2 (novelty is free; judgment is the inventor) and
+% 4 (right about imitation, wrong about learning); sets up 1 (innovation is a game)
+% and 3 (search = 1).
+
+What is innovation made of? Four pillars: an aim, a source of variation, a means of judgment and a way to retain what survives. Variation is the cheap pillar and judgment the costly one, and the judgment an inventor carries in advance, which we call taste, sets how many tries a discovery takes.
+
+\subsection{Novelty is free}\label{sub:anatomy-novelty}
+
+Novelty is the cheapest part of invention. Borges imagined a library holding every possible book of 410 pages \citep{borges1941babel}, so every algorithm short enough to fit in a volume is already on its shelves. The library is useless, because nothing in it tells a reader which volume is true. A random string generator is the same library with a faster librarian: almost every string it emits is new, and almost none is worth running (\cref{fig:novelty-judgment}, lower right).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig2_novelty_judgment.pdf}
+  \caption{\textbf{Novelty is free; judgment is the inventor.} Schematic. Horizontal: distance from what people have already done. Vertical: value as judged by the referee. A random generator travels far and finds little. An imitating model reaches the incumbent but stops at the historical frontier. An agent swarm crosses the frontier by spending many tries, a few of which clear the incumbent. \EZ{} spends one try; its height is not drawn in advance but set by the results in \cref{sec:results}.}
+  \label{fig:novelty-judgment}
+\end{figure}
+
+Language models show the same split. In a blinded study with 104 NLP researchers, ideas from a language model were rated more original than experts' ideas ($p < 0.05$) \citep{si2024ideas}. Once 43 experts had spent over 100 hours each carrying out ideas from both pools, the generated ideas lost significantly more ground on every metric \citep{si2025gap}. Boden had predicted the asymmetry in 1998: machines, she wrote, would find generating new ideas easier than automating their evaluation \citep{boden1998creativity}. Novelty was never the bottleneck. Judgment was.
+
+\subsection{The four pillars}\label{sub:anatomy-pillars}
+
+Accounts of discovery from biology, psychology, philosophy and engineering keep naming the same four parts (\cref{tab:pillars}). We call them the four pillars of innovation: the synthesis is ours, the content is old.
+
+\textbf{Aim} fixes the problem and what counts as better. Hamming asked colleagues, ``What are the important problems of your field?'' \citep{hamming1986research}. Pólya's first step is to understand the problem \citep{polya1945solve}, and Popper argued that observation is always selective, so it presupposes a problem \citep{popper1963conjectures}.
+
+\textbf{Variation} proposes candidates. Peirce called abduction ``the only logical operation which introduces any new idea'' \citep[CP~5.171]{peirce1934cp}. Campbell modeled creative thought as blind variation \citep{campbell1960bvsr,simonton2011bvsr}, and Koestler located creative acts in bisociation, the joining of two unrelated frames of thought \citep{koestler1964act}. Boden named three routes to a new idea: combining familiar ideas, exploring a conceptual space and transforming it \citep{boden1998creativity}.
+
+\textbf{Judgment} tests a candidate against something outside the mind that proposed it: the attempted refutation \citep{popper1959logic}, the experiment, peer review, and the referee of the common task framework, which scores every entry on data the competitors never see \citep{donoho2017fifty}.
+
+\textbf{Retention} keeps what survives, so the next attempt starts higher: inheritance for \citet{darwin1859origin}, selective retention for \citet{campbell1960bvsr}, the textbook for a science and the incumbent for a game.
+
+The convergence has a reason. Campbell argued that every genuine gain in knowledge needs a mechanism for introducing variation, a consistent selection process, and a mechanism for preserving and reproducing what is selected \citep[p.~381]{campbell1960bvsr}. The aim is what keeps the selection consistent, which makes it the fourth pillar.
+
+\begin{table}[t]
+  \caption{\textbf{Every tradition names the same four pillars of innovation.} A dash marks a pillar outside a tradition's scope: Wallas analyzed a single act of thought. For Darwin and Campbell, the aim is a criterion set by the environment. Engineering is the design--build--test--learn cycle \citep{nielsen2016engineering}; AlphaGo Zero follows \citet{silver2017mastering}; \EZ{} is defined in \cref{sec:game}.}
+  \label{tab:pillars}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.185\linewidth}@{}}
+    \toprule
+    Tradition & Aim & Variation & Judgment & Retention \\
+    \midrule
+    \citet{darwin1859origin} & Fitness to the environment & Variation & Natural selection & Inheritance \\
+    \citet{wallas1926art} & Preparation & Incubation, illumination & Verification & --- \\
+    \citet{campbell1960bvsr} & A selection criterion & Blind variation & Selection & Retention \\
+    \citet{popper1963conjectures} & The problem & Conjecture & Refutation & The surviving theory \\
+    The scientific method & Question & Hypothesis & Experiment & Publication \\
+    Engineering & Design target & Design and build & Test & Learn \\
+    AlphaGo Zero & Win the game & Moves chosen with search & Game outcome & Network weights \\
+    \addlinespace
+    \EZ{} & Problem encoding and metric & Program writer & Referee on hidden folds & Incumbent pool and weights \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
+
+Skill in invention is judgment that arrives before the try. For Poincaré, creating meant not making the useless combinations: ``Invention is discernment, choice.'' The sterile combinations, he added, do not even present themselves to the inventor \citep[pp.~324--325]{poincare1910creation}. Chess masters show the same economy: in de Groot's think-aloud studies they considered about as many moves as weaker players but found the right ones \citep{degroot1965thought}, because they see a position as a few large, familiar chunks \citep{chase1973perception}. Much of that knowledge is tacit; experts know more than they can say \citep{polanyi1966tacit}.
+
+We call judgment learned in advance \emph{taste}. AlphaGo's policy network is taste made explicit: a network that selects which moves are worth playing, trained first on human expert games and then refined by self-play \citep{silver2016mastering}. Its first teacher was history.
+
+Taste has a price we can state. Suppose each try beats the incumbent with probability $q$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
+\begin{equation}
+  \mathbb{E}[N_{\text{tries}}] = \frac{1}{q},
+  \label{eq:taste}
+\end{equation}
+where $N_{\text{tries}}$ counts the candidates the referee scores. Search length is the reciprocal of taste.\footnote{\Cref{eq:taste} is an idealization. Real tries are not independent: a searcher that learns between tries does better than the formula, and one that keeps proposing near-copies does worse. We use the equation for its direction, not its precision: whatever raises the per-try win rate shortens the search.}
+
+The equation sorts the cases in \cref{fig:novelty-judgment}. A random generator has $q$ near zero, so its search never ends in practice. An imitator reproduces the incumbent reliably, but reproducing the incumbent is not beating it: its $q$ is high for matching history and near zero for exceeding it. Taste is what raises $q$ at the frontier, and \searchone{} is its limit: as $q$ approaches one, the first try is the discovery. The same $q$ returns in \cref{sec:price} as economics, where the cost of a win is the cost of a try divided by $q$.
+
+\begin{keyidea}
+Novelty is free. Judgment is the inventor.
+\end{keyidea}
+
+\subsection{History bounds taste; a referee frees it}\label{sub:anatomy-history}
+
+Taste must be learned from something, and its teacher sets its ceiling. People learn taste from the record of their field. Normal science, in Kuhn's account, solves puzzles inside a reigning paradigm \citep{kuhn1962structure}. The record also holds people in place: when a star life scientist dies prematurely, articles by outsiders to the star's collaborators flow into the field, draw on different literature and are disproportionately likely to be highly cited \citep{azoulay2019funeral}.
+
+A model trained to imitate learns the same taste by construction. Its loss rewards predicting what was written, and the record contains the incumbent but not what beats it. This is the true content of the skeptics' claim in \cref{sec:intro}, and it is a claim about the training signal, not about the network.
+
+The remedy is a teacher that is not history: a referee. AlphaGo Zero learned with no human data, from the rules and the outcomes of its own games, and found strategies outside traditional Go knowledge \citep{silver2017mastering}. Its predecessor had already made such a move. As David Silver told Wired in March 2016, AlphaGo put the chance that a human would play its Move~37 against Lee Sedol at one in ten thousand, and it won that game \citep{metz2016twomoves}. The knowledge then flowed back to people. In more than 5.8 million moves by professionals from 1950 to 2021, previously unseen moves grew more frequent once superhuman programs arrived, and came with better decisions \citep{shin2023superhuman}. The skeptics are right about imitation and wrong about learning.
+
+\subsection{Where the pillars live}\label{sub:anatomy-where}
+
+Machines do not remove the pillars; they move them (\cref{tab:where}). The most ambitious swarm design fits the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, the map is retention; the model of reality, the twins and the laboratories are faster and better judgment; and the agents supply variation and critique.
+
+Swarms build referees and scale variation; \EZ{} asks what those referees should teach. The two are complementary: every faster referee a swarm builds is a new board for the game of \cref{sec:game}. The difference that matters is where taste lives. In a swarm, taste sits in a pretrained prior that the search does not change, so judgment is bought again, try by try, on every new problem. In \EZ{}, taste is learned by self-play against the referee and kept in the program writer's weights, so a new problem costs one try on game day, after many in training.
+
+\begin{table}[t]
+  \caption{\textbf{Swarms keep taste in a prior that search does not change; \EZ{} learns it from a referee.} Agent swarms include autoresearch \citep{karpathy2026autoresearch}, the AI Scientist \citep{lu2024aiscientist} and the Eureka Machine \citep{socher2026eureka}; autoresearch, for example, runs about 100 experiments on one problem overnight \citep{karpathy2026autoresearch}. In every column, people still set the aim.}
+  \label{tab:where}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}@{}}
+    \toprule
+     & Human science & Agent swarms & \EZ{} \\
+    \midrule
+    Aim & The researcher chooses & A person writes the goal & Problem encoding and metric, chosen by people for now \\
+    Variation & The scientist's ideas & Agents propose and critique & The program writer makes one move \\
+    Judgment & Experiments, peer review & Experiments, simulators, autonomous labs & The referee, on hidden folds \\
+    Retention & The literature & Logs, archives, a map of knowledge & Incumbent pool and the writer's weights \\
+    \addlinespace
+    Where taste lives & Years of training, in one head & A pretrained prior, fixed during search & Learned by self-play against the referee \\
+    Tries per discovery & Many, and slow & About a hundred or more per problem & One on game day, after many in training \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Each pillar already has a history in AI. The next section tells it, and finds the one piece that, to our knowledge, no one has yet built.

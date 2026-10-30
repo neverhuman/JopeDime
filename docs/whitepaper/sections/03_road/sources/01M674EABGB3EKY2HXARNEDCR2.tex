@@ -1,0 +1,288 @@
+% =====================================================================
+% Section 3 -- The Road to Zero: Five Building Blocks
+% File: sections/03_road.tex        Label: sec:road
+% Reader's question: What has AI already built for each pillar?
+% One-sentence answer: Deep learning gave variation a voice, program
+%   evolution and reinforcement learning built judgment loops, games made
+%   judgment cheap, and the race for self-improvement scales search. None
+%   of them learns taste for invention itself.
+% Core points advanced: 3 (search = 1), 4 (imitation vs. learning),
+%   1 (innovation is a game).
+% Exhibits: Table 3 (tab:roads), Box 2 (Self-play in 90 seconds).
+% Depends on labels: sec:intro, sec:anatomy, eq:taste, sec:game,
+%   sec:method, sec:results, sec:meaning, app:history (Appendix J).
+% =====================================================================
+
+\section{The Road to Zero: Five Building Blocks}\label{sec:road}
+
+What has AI already built for each of the four pillars of
+\cref{sec:anatomy}? Nearly all of it. Deep learning gave variation a voice,
+program evolution and reinforcement learning built judgment loops, games
+made judgment cheap, and the race for self-improvement now scales search to
+swarms of agents. What none has built, to our knowledge, is taste for
+invention itself: judgment learned in advance, so that the first program
+written for a new problem is already strong.\footnote{Each history keeps
+only the milestones the argument needs; \cref{app:history} gives the
+extended version.}
+
+% ---------------------------------------------------------------------
+\subsection{Deep learning gave variation a voice}\label{sub:road-deep}
+
+Deep learning built the variation pillar: machines that propose. Learned
+representations replaced hand-written rules \citep{lecun2015deep}. AlexNet
+made the case on images \citep{krizhevsky2012imagenet}, the transformer
+made it general \citep{vaswani2017attention}, and scaling laws made progress
+predictable \citep{kaplan2020scaling,hoffmann2022chinchilla}.
+\citet{sutton2019bitter} drew the lesson: general methods that use
+computation win. Generative models then turned representations into
+proposals, from text to video \citep{brooks2024sora} and code. Codex solved
+28.8\% of the HumanEval programming problems with one sample, and 70.2\%
+with 100 samples, counting any that passed the unit tests
+\citep{chen2021codex}. That gap is \cref{eq:taste} in miniature: tries,
+judged by a referee, buy what taste cannot supply.
+
+Networks already propose discoveries that a referee outside them confirms:
+protein structures that rival experiment in most cases
+\citep{jumper2021alphafold},
+2.2 million crystals predicted to be stable \citep{merchant2023gnome}, and
+halicin, an antibiotic that then treated infections in mice
+\citep{stokes2020halicin}. CLIP put images and captions in one shared space
+\citep{radford2021clip}, the template for our problem--program map
+(\cref{sec:method}).
+
+\smallskip
+\noindent\textbf{What \EZ{} takes:} representations that read a problem,
+models that write code, and one space for two kinds of object.\\
+\textbf{What was missing:} trained to predict the record, these models learn
+history's taste: the likely, not the better.
+
+% ---------------------------------------------------------------------
+\subsection{Machines that invent algorithms built the variation--judgment loop}\label{sub:road-programs}
+
+Program evolution joined variation to judgment: propose a program, score
+it, keep the better ones. \citet{friedberg1958learning} let a machine vary
+its own instructions, \citet{holland1975adaptation} made variation and
+selection a general method of adaptation, and Lenat's AM and EURISKO
+searched concepts and heuristics by measures of interest
+\citep{lenat1976am,lenat1983eurisko}. EURISKO takes its name from the Greek
+verb behind \emph{eureka}, as ours does. \citet{koza1992genetic} closed the
+loop with genetic programming: a population of programs, a fitness function
+as referee and selection as coach. \emph{Genetic programming invented the
+game; it lacked a player that remembers.}
+
+Later work sharpened both halves: superoptimization
+\citep{massalin1987superoptimizer}, program synthesis from examples
+\citep{gulwani2011flashfill} guided by neural networks
+\citep{balog2017deepcoder}, neural architecture search \citep{zoph2017nas},
+and AutoML-Zero, which evolved learning algorithms from basic mathematical
+operations \citep{real2020automlzero}. Then language models became the
+variation operator. FunSearch found cap-set constructions beyond the best
+known \citep{romeraparedes2024funsearch}: an answer to the skeptics of
+\cref{sec:intro}, bought with search. Lion, an optimizer found by program
+search, went into production at Google \citep{chen2023lion}. AlphaEvolve
+multiplied two $4\times4$ complex matrices with 48 scalar multiplications,
+improving on Strassen's algorithm in that setting after 56 years
+\citep{novikov2025alphaevolve}. MLEvolve carries the loop into
+machine-learning engineering \citep{mlevolve2026}.
+
+\smallskip
+\noindent\textbf{What \EZ{} takes:} programs as moves, and the
+generate--judge loop.\\
+\textbf{What was missing:} retention flows into an archive, a library or a
+memory, not into the program writer. Even DreamCoder's cross-task learning
+guides search rather than replacing it \citep{ellis2021dreamcoder}, so every
+new problem starts its search over.
+
+% ---------------------------------------------------------------------
+\subsection{Reinforcement learning turned retention into taste}\label{sub:road-rl}
+
+Reinforcement learning turns a referee's verdicts into a better player.
+\citet{bellman1957dp} gave it an equation of value. Samuel's checkers
+program improved by playing a copy of itself \citep{samuel1959checkers},
+TD-Gammon reached near the best human backgammon players by self-play
+\citep{tesauro1995tdgammon}, and DQN learned Atari games from pixels
+\citep{mnih2015dqn}. AlphaGo learned from human games and searched at every
+move \citep{silver2016mastering}; AlphaGo Zero learned by self-play alone
+\citep{silver2017mastering}. AlphaZero mastered three games with one
+algorithm \citep{silver2018general}, MuZero learned the rules as well
+\citep{schrittwieser2020muzero}, and AlphaStar's league of mutually
+exploiting agents reached Grandmaster level in StarCraft~II
+\citep{vinyals2019alphastar}.
+
+The key concept is expert iteration \citep{anthony2017expert}: search is the
+teacher, the network is the student, and in the end the student alone plays
+strongly. AlphaGo Zero's raw network, with no search, nearly matched the
+version that had beaten a professional (\cref{sec:intro}); Box~2 shows how.
+Language models now learn the same way, from human preferences
+\citep{christiano2017preferences,ouyang2022instructgpt} and from rule-based
+checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
+
+\smallskip
+\noindent\textbf{What \EZ{} takes:} the learning rule, and proof that a
+network can absorb search.\\
+\textbf{What was missing:} the prize. Verifiable rewards ask whether an
+answer is right; no game here pays for beating the best known algorithm on
+a problem the player has never seen.
+
+\begin{explainer}{Box 2 --- Self-play in 90 seconds}
+A player starts with only the rules and plays itself. A short search
+before each move finds better moves than instinct would, and the referee
+scores each finished game. The network learns to propose the moves the
+search chose (its policy) and to predict the winner (its value), so the
+next search is stronger. Over millions of games, search is distilled into
+intuition \citep{anthony2017expert,silver2017mastering}.
+\emph{What if the board were a problem, and the move an invention?}
+\end{explainer}
+
+% ---------------------------------------------------------------------
+\subsection{Gamification made judgment cheap}\label{sub:road-games}
+
+Games built the judgment pillar at scale. \citet{shannon1950chess} chose
+chess because its moves and its goal are sharply defined. The common task
+framework made machine-learning research a game: shared data, enrolled
+competitors and a referee who scores every entry on a sealed test set
+\citep{donoho2017fifty}, as in the Netflix Prize \citep{bennett2007netflix}
+and ImageNet \citep{russakovsky2015imagenet}. People played science too.
+Foldit players beat automated methods on hard protein puzzles
+\citep{cooper2010foldit} and solved a protease structure that earlier
+attempts had not \citep{khatib2011protease}; EteRNA players, whose designs
+were tested in a laboratory, found RNA design rules \citep{lee2014eterna}.
+
+Then machines played problems. AlphaTensor's TensorGame beat the best known
+matrix-multiplication algorithms for several sizes
+\citep{fawzi2022alphatensor}, and AlphaDev's AssemblyGame found sorting
+routines now in the LLVM C++ library \citep{mankowitz2023alphadev}.
+AlphaGeometry learned olympiad geometry without human demonstrations
+\citep{trinh2024alphageometry}. AlphaProof, refereed by the Lean proof
+checker, reached silver-medal standard at the 2024 International
+Mathematical Olympiad alongside AlphaGeometry~2 \citep{hubert2026alphaproof}.
+
+\smallskip
+\noindent\textbf{What \EZ{} takes:} the recipe for a game: rules, a referee,
+a score and a sealed test.\\
+\textbf{What was missing:} each board was built by hand for one problem
+family, and its player searches on every instance; AlphaProof trained for
+days on variants of each hard problem. AlphaDev made sorting a game; \EZ{}
+makes the problem itself part of the board (\cref{sec:game}).
+
+% ---------------------------------------------------------------------
+\subsection{The race for self-improvement scaled search}\label{sub:road-self}
+
+The race for self-improvement scales all four pillars, so far with search.
+\citet{good1966speculations} foresaw an ``intelligence explosion'', and
+\citet{schmidhuber2003goedel} specified a G\"odel machine that rewrites its
+own code once it proves the rewrite useful. STOP improves the scaffold that calls a language model, including
+itself, and its authors note: ``Since the language models themselves are
+not altered, this is not full recursive self-improvement''
+\citep{zelikman2024stop}. The Darwin G\"odel Machine's self-editing agents
+raised its SWE-bench score from 20.0\% to 50.0\% \citep{zhang2025dgm}, and
+AlphaEvolve cut Gemini's training time by 1\%
+\citep{novikov2025alphaevolve}.
+
+Language models also play themselves. SPIN plays its previous iteration
+\citep{chen2024spin}, Absolute Zero proposes and solves coding tasks under a
+code executor \citep{zhao2025absolutezero}, and STP pairs a conjecturer with
+a Lean prover \citep{dong2025stp}. Such self-play plateaus as the
+conjecturer games its reward, \citet{bailey2026sgs} report, unless a guide
+keeps it on track. Our closest neighbors learn to discover. EvoTune
+fine-tunes on what its own evolutionary search finds \citep{evotune2025},
+and TTT-Discover trains on the one problem at hand, at a few hundred
+dollars per problem \citep{tttdiscover2026}. Evolution Fine-Tuning learns
+from \num{156000} search trajectories across 371 tasks \citep{eft2026}, and
+DiscoRL meta-learned a reinforcement-learning rule that beat human-designed
+ones \citep{oh2025discorl}. Each still searches on a new problem, or finds
+one general method and reuses it, as our frontier contestants do
+(\cref{sec:results}).
+
+Research itself is becoming a swarm. The AI Scientist automates ideas,
+experiments and papers \citep{lu2024aiscientist}, and the AI co-scientist
+ranks agents' hypotheses in an Elo tournament
+\citep{gottweis2025coscientist}. Karpathy's autoresearch, released in March
+2026, runs about 100 experiments overnight and keeps what improves
+\citep{karpathy2026autoresearch}. In May 2026, Recursive raised
+\$650 million to build AI that improves itself
+\citep{recursive2026techcrunch}. Their referees are our boards
+(\cref{sec:anatomy}).
+
+Self-improvement comes in three strengths: better external algorithms,
+better components, and a better ability to improve, with verified
+discoveries per unit of compute rising across generations. Our evidence is
+at the first (\cref{sec:meaning}).
+
+\smallskip
+\noindent\textbf{What \EZ{} takes:} the destination, and the safety frame:
+verify every improvement before keeping it, and sandbox every program.\\
+\textbf{What was missing:} each approach here pays for judgment per problem,
+learns within one problem's search, or plateaus. None is built to make a
+first move strong enough to need no search.
+
+% ---------------------------------------------------------------------
+\subsection{Where the roads meet}\label{sub:road-meet}
+
+\begin{table}[t]
+\caption{\textbf{Every pillar has been built, except learned taste for
+invention.} \emph{Tries}: complete candidates a referee scores per new
+problem. \emph{Learns across problems}: whether experience on one problem
+improves the first try on the next. The last row is \EZ{}'s design, which
+\cref{sec:results} tests.}
+\label{tab:roads}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.235\linewidth}
+                >{\raggedright\arraybackslash}p{0.17\linewidth}
+                >{\raggedright\arraybackslash}p{0.15\linewidth}
+                >{\raggedright\arraybackslash}p{0.17\linewidth}
+                >{\raggedright\arraybackslash}p{0.205\linewidth}@{}}
+\toprule
+System & Output & Tries on a new problem & Learns across problems & Where its taste comes from \\
+\midrule
+Genetic programming; AutoML-Zero
+  & An algorithm & Thousands or more & No
+  & None: blind variation \\
+AlphaTensor; AlphaDev
+  & An algorithm for one family & Search on every instance
+  & At most within that game & Reinforcement learning on that game \\
+FunSearch; AlphaEvolve
+  & An algorithm & Thousands or more & No; an archive per run
+  & A frozen pretrained language model \\
+Research swarms (AI Scientist, autoresearch)
+  & Experiments and code & Tens to hundreds & Partly, through logs and memory
+  & A pretrained language model \\
+EvoTune; TTT-Discover; Evolution Fine-Tuning
+  & An algorithm or construction & Search on every problem
+  & Within one search; across tasks for EFT
+  & Fine-tuning on search trajectories \\
+TabPFN; MotherNet; KumoRFM
+  & Predictions or fixed-network weights & One forward pass & Yes
+  & Pretraining on many tasks \\
+Absolute Zero; STP
+  & Answers and proofs & One or many samples & Yes
+  & Self-play, rewarded for correctness \\
+\midrule
+\textbf{\EZ{}}
+  & \textbf{An algorithm} & \textbf{One (\searchone)} & \textbf{Yes}
+  & \textbf{Self-play against the incumbent} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:roads} sets the closest work on one axis: what a new problem costs
+in tries, and where the taste that cuts that cost comes from. Two neighbors
+also answer in one try. TabPFN, MotherNet and KumoRFM handle a new dataset
+without task-specific training
+\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}, but return
+predictions or a fixed network's weights. \EZ{} returns a readable
+algorithm, and learned to write it by beating incumbents. Absolute Zero and
+STP learn by self-play, but their prize is correctness. Ours is beating the
+best known program, which is why the game needs an opponent
+(\cref{sec:game}).
+
+\begin{keyidea}
+Every pillar has been built. What has not been built, to our knowledge, is
+a player whose taste for invention was learned from a referee, so that a
+new problem needs one try.
+\end{keyidea}
+
+To build that player, we first make invention a game.

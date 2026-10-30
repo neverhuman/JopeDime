@@ -1,0 +1,183 @@
+\section{Innovation Is a Game}\label{sec:game}
+% Reader question: Can invention be played like Go?
+% Core points advanced: 1 (primary: innovation is a game), 2 (novelty is free;
+% judgment is the inventor), 3 (search = 1)
+% Exhibits: Table 4 (tab:go-vs-innovation), Figure 3 (fig:game-loop)
+
+Can invention be played like Go? It can. The problem is the board, an
+algorithm is the move, a verifier is the referee and the best known algorithm
+is the opponent. Because the problem sits on the board rather than in the
+rules, one set of rules covers many kinds of problem.
+
+% ----------------------------------------------------------------------------
+\subsection{Why games came first}\label{sub:game-games}
+
+Games became AI's laboratory because they supply four things at once: fixed
+rules, an impartial referee, a clear winner and cheap replay. Chess was chosen
+because it is ``sharply defined both in allowed operations (the moves) and in
+the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
+that a program could improve by playing itself \citep{samuel1959checkers}.
+Together the four give a learner unlimited experience, scored honestly. People
+scale judgment the same way, through prizes, leaderboards and the common task
+framework's ``scoring referee'' (\citealp{donoho2017fifty}; \cref{sec:road}).
+Invention has the first three properties once the problem and the solution are
+written down; cheap replay is a question of cost (\cref{sec:price}).
+
+% ----------------------------------------------------------------------------
+\subsection{The rules}\label{sub:game-rules}
+
+\Cref{tab:go-vs-innovation} sets the game beside Go. Two rows differ in kind:
+an illegal move is played and lost, and the board holds the incumbent as well as
+the problem, because a move can only win against something.
+
+\begin{table}[!htb]
+  \caption{\textbf{Invention has every part of a board game, except cheap
+  moves.} Go and the innovation game, element by element. Go's game length is
+  from \citet{silver2016mastering}.}
+  \label{tab:go-vs-innovation}
+  \centering
+  \small
+  \begin{tabular}{@{}p{0.16\linewidth}p{0.33\linewidth}p{0.43\linewidth}@{}}
+    \toprule
+                   & Go                              & The innovation game \\
+    \midrule
+    Board          & Stones on a $19\times19$ grid   & The encoded problem plus the incumbent \\
+    Move           & Place one stone                 & Write one complete program, or one edit \\
+    Legal move     & An empty point; no suicide      & Parses, type-checks, runs within limits \\
+    Illegal move   & Not allowed                     & Stillborn: an automatic loss \\
+    Referee        & The rules of Go                 & The verifier, on hidden folds \\
+    Win            & More territory                  & Valid, and beats the incumbent \\
+    Opponent       & A past self                     & The incumbent, often a past self \\
+    Rating         & Elo                             & Win rate and Elo across problems \\
+    Moves per game & About 150, each cheap           & One, costly to judge \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Formally, the game is a tuple of seven parts,
+\[
+  \Game = (\Prob, \encP, \Sol, \encS, \referee, \reward, \opp).
+\]
+Here $\encP$ and $\encS$ embed a problem $p \in \Prob$ and a program
+$w \in \Sol$ as $z_p$ and $z_w$. The referee $\referee$ reports a program's
+validity and score, the reward $\reward$ orders moves, and the opponent $\opp$
+supplies the incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
+selection \citep{rice1976algorithm}: the player writes the algorithm instead of
+picking it, and an opponent decides what counts as winning.
+
+A skeptic might ask whether a one-move game is a game at all. Formally it is a
+contextual bandit, with the board as context, the program as action and the
+verdict as reward \citep{lattimore2020bandit}. It earns the name through an
+opponent that improves as the player does. The honest asymmetry is in the
+moves: Go offers about 250 legal moves per turn over about 150 turns, each free
+to check \citep{silver2016mastering}, while this game offers one move, costly to
+judge. Taste, which raises the chance $q$ that one try wins (\cref{eq:taste}),
+therefore decides it.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
+  \caption{\textbf{Training plays the whole game; game day plays one move.}
+  Schematic. Top row (blue): game day. Dashed box: training only, where every
+  verdict, losses included, becomes a lesson.}
+  \label{fig:game-loop}
+\end{figure}
+
+\Cref{fig:game-loop} draws the loop. Game day plays only its top row, so
+nothing can send a move back for another try; that is \searchone.
+
+% ----------------------------------------------------------------------------
+\subsection{The board and the move}\label{sub:game-board}
+
+The board is the aim pillar of \cref{sec:anatomy}, made machine-readable: a
+summary of the training data, the objective and metric, and the constraints.
+The summary is DOPE's landmark encoding (\cref{sec:method}), in the
+meta-learning tradition of describing a dataset by how cheap learners score on
+it \citep{pfahringer2000landmarking}. A good board is \emph{complete}, since
+problems that encode alike must be answered alike; \emph{canonical} when rows
+and columns are reordered; \emph{leak-free}, blind to test labels and hidden
+folds; and \emph{cheap}, at \TBD{seconds} per problem. Whoever writes the board
+writes the aim. People still choose the problem, and the machine learns to
+answer it.
+
+The move is where invention gets its language: one program in a typed language
+over learning primitives \TBD{primitive set and its size}. Types remove whole classes of stillborn
+programs before they run \citep{montana1995stgp}. A canonical form makes two
+spellings of one idea count once, as AutoML-Zero reused the score of any program
+whose outputs matched one already scored \citep{real2020automlzero}. The
+language bounds what can be invented: in the terms of \citet{boden1990creative},
+it permits exploring its space to any depth but never transforming it. Tighter
+languages waste fewer moves and looser ones say more (\cref{sec:price}).
+
+% ----------------------------------------------------------------------------
+\subsection{The referee and the opponent}\label{sub:game-referee}
+
+The reward is an ordering first and a number second. Validity is a gate: any
+stillborn program scores below any valid one. Past the gate, programs rank by
+improvement over the incumbent on hidden folds, with ties within the referee's
+noise going to the simpler program. Novelty never pays for losing: any novelty
+bonus (\cref{sec:price}) must respect the order. For a stillborn program
+$\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
+\[
+  \reward(p, \tilde{w}) \;<\; \reward(p, w^-) \;<\; \reward(p, w^+).
+\]
+
+The opponent is a ratcheting incumbent. A program is promoted only on a clear
+win, by \TBD{margin} across \TBD{number of} folds and then re-verified
+(\cref{sec:method}), as AlphaGo Zero promoted a network only after it won more
+than 55\% of evaluation games \citep{silver2017mastering}. The ratchet also
+makes this self-play.
+Subtracting the incumbent's score does not change which move is best; what
+matters is what promotion changes. It raises the bar, turns yesterday's winners
+into today's also-rans and so into hard negatives for the problem--program map
+(\cref{sec:method}), and shifts which problems are worth playing.
+
+% ----------------------------------------------------------------------------
+\subsection{One game, many boards}\label{sub:game-boards}
+
+Binary and multiclass classification, regression, ranking, forecasting and
+relational prediction differ only in what the board says: the data summary, the
+metric and the type of output. Beyond machine learning, a board needs only a referee, such as tests
+for sorting \citep{mankowitz2023alphadev}, automatic evaluators for mathematical
+constructions \citep{romeraparedes2024funsearch} and timers for accelerator
+kernels \citep{novikov2025alphaevolve}. These are boards for the recipe, not
+results of this paper (\cref{sec:meaning}).
+
+Casting algorithm discovery as a game is not new, but earlier games wrote one
+family of problems into their rules, as AlphaTensor did for matrix
+multiplication and AlphaDev for sorting
+\citep{fawzi2022alphatensor,mankowitz2023alphadev}. AlphaZero used one algorithm
+for three games and trained a separate network for each
+\citep{silver2018general}. Here the problem is an input on the board, so one
+player can learn many boards.
+
+\begin{keyidea}
+Every discipline with a referee is a game no one has played yet.
+\end{keyidea}
+
+% ----------------------------------------------------------------------------
+\subsection{One game played, and where the analogy breaks}\label{sub:game-played}
+
+The running example is the sealed problem chosen by the paper's stated rule,
+the median win (\cref{sec:results}): \TBD{dataset, task type, metric}. The
+player encodes it in \TBD{time} and writes one program of \TBD{size}, which
+passes its checks. Fit in \TBD{time}, the program scores \TBD{score} on hidden
+folds against the incumbent's \TBD{score}: \TBD{a win or an also-ran}. Had it
+crashed, the game would simply have been lost, with no repair and no second try.
+The update is skipped because the problem is sealed: the verdict is reported,
+never learned from.
+
+The analogy breaks in four places. \textbf{The referee is noisy}: picking a
+winner by a noisy validation score biases that score upward
+\citep{cawley2010overfitting}, so promotion needs a margin. \textbf{Moves are expensive}, each a fit and a cross-validation
+(\cref{sec:price}). \textbf{Judges can be gamed}, as METR documented for
+frontier models in June 2025 \citep{metr2025rewardhacking}; \cref{sec:method}
+lists our safeguards. And \textbf{no algorithm wins everywhere}: averaged
+uniformly over all problems, no learner has lower error off the training set
+than another, ours included \citep{wolpert1996nfl}. Real problems are structured, though, and a player that
+reads the board can choose its bias board by board. \Cref{sec:results} tests
+that bet against frontier-invented algorithms that run unchanged on every
+problem, with head-to-head win rates beside Elo \citep{elo1978rating}, which
+assumes strength is transitive \citep{balduzzi2018reevaluating}.
+
+A game anyone can play is only useful if someone can afford to play it.
