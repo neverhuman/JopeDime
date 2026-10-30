@@ -18,7 +18,7 @@ import torch
 ROOT = Path(__file__).resolve().parents[3]
 H48_PATH = ROOT / "research/flywheel_selfplay/h48/run.py"
 H49_SCORE_PATH = ROOT / "research/flywheel_selfplay/h49/score.py"
-INPUT_SHA = "99a53569fcaf59f9306e9e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+INPUT_SHA = "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
 MANIFEST_ID = "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3"
 DOPE_SHA = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 R882_SHA = "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
