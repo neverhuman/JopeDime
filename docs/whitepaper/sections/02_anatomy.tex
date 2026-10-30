@@ -77,7 +77,8 @@ Skill in invention is judgment that arrives before the try. For Poincaré, creat
 
 We call judgment learned in advance \emph{taste}. AlphaGo's policy network is taste made explicit: a network that selects which moves are worth playing, trained first on human expert games and then refined by self-play \citep{silver2016mastering}. Its first teacher was history.
 
-Taste has a price we can state. Suppose each try beats the incumbent with probability $\winprob$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
+Taste has a price we can state. Suppose each try beats the incumbent with a fixed, nonzero probability
+$\winprob$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
 \begin{equation}
   \mathbb{E}[\Ntries] = \frac{1}{\winprob},
   \label{eq:taste}
