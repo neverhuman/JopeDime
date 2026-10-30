@@ -1056,6 +1056,25 @@ mod tests {
     }
 
     #[test]
+    fn invalid_cgroup_membership_never_reads_quota_outside_the_mount() {
+        for path in [
+            "/../outside",
+            "/a/../../outside",
+            "/a/../b",
+            "/./a",
+            "relative",
+            "",
+        ] {
+            let reads = std::cell::Cell::new(0);
+            let _ = cgroup_allowed_cpus(&format!("0::{path}\n"), 8.0, |_| {
+                reads.set(reads.get() + 1);
+                Some("max 100000".to_owned())
+            });
+            assert_eq!(reads.get(), 0, "invalid cgroup membership was read: {path}");
+        }
+    }
+
+    #[test]
     fn tokens_per_second_uses_tel07_counts_and_registry_names() {
         let t0 = Instant::now();
         let counters = Counters::default();
