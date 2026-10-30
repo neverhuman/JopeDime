@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "SVC-03 appends after actual main fe9cc58b / dsc02_after_009de907 in its assigned slot. Only the existing jope-api edge is added to the jope-service Cargo.lock record; main already provides proptest. No new package/version/source/checksum, behavior fixture or known identity change. Pause replay and quiescent phase fixes do not change any evaluator identity input.",
+  "plan_reference": "SVC-03; ruling0810; ruling0840(a); ruling0945; assigned identity slot after510 at2026-10-30T12:50Z",
+  "source_commit": "1daf68c378887463cd934951f3389624816debfd",
+  "base_commit": "fe9cc58bddabe533e17b02e7c9044dde178181d3",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "43dd003bec32e0dad6301669c5f8e43e6896ee0d92b0da8d8623947ff463d1a6",
+      "after": "08227d59fe1abe4795644b37ff418537f79b7b7f7360eb7d7aed6c015242f818"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "6dd8e9764bdf28094ed53655bf7a4e61c74c7fe6ffca67e59055436765a1c85f",
+      "after": "aae216030e2b104ceb2000a26cc299a686077cbde79aac84712f812523054349"
+    }
+  ],
+  "before_identity_digest": "17576a6a1d3c547859297816eab6dd98cfc08c27152cc00939d1b9699b81e80f",
+  "after_identity_digest": "f855089ddf7f359a951e5355f3967970df8aa9fc38d8883224ed0fea3e83720a",
+  "before_implementation_sha256": "7be9af7a50eaf6b7f56e6d7324f47817090f261099d64de51667610e999a6306",
+  "after_implementation_sha256": "815567dbd7e16f9669bc9289f30bf8016f884d429e61ca2bbb491236378928e5",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
