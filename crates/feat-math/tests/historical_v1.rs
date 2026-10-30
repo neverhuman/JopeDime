@@ -1158,6 +1158,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         dsc08_heuristic["before_identity_digest"],
         bat02_jope_paths["after_identity_digest"]
     );
+    let clienttmp_tempfile =
+        old_fixture("transitions/clienttmp_tempfile_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        clienttmp_tempfile["source_commit"],
+        "900ea63e88a1af154fa3bcbc6dc6ef559e54a179"
+    );
+    assert_eq!(
+        clienttmp_tempfile["base_commit"],
+        "4e6a834794d0bacb7d792a6ff3e1b9172fa435af"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1204,6 +1214,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &svc09_engine,
         &bat02_jope_paths,
         &dsc08_heuristic,
+        &clienttmp_tempfile,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1286,6 +1297,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc09_engine.clone(),
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
+                clienttmp_tempfile.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1354,6 +1366,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc09_engine.clone(),
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
+                clienttmp_tempfile.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1415,6 +1428,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc09_engine.clone(),
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
+                clienttmp_tempfile.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1507,6 +1521,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc09_engine.clone(),
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
+                clienttmp_tempfile.clone(),
             ],
         ),
         (
@@ -1559,6 +1574,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 svc09_engine.clone(),
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
+                clienttmp_tempfile.clone(),
             ],
         ),
     ] {
@@ -1659,6 +1675,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         svc09_engine,
         bat02_jope_paths,
         dsc08_heuristic,
+        clienttmp_tempfile,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
