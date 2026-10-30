@@ -998,13 +998,30 @@
     "feature:jope-telemetry/default": {
       "discovery": {
         "kind": "feature",
-        "dependencies": []
+        "dependencies": [
+          "parquet"
+        ]
       },
       "dispositions": [],
       "lanes": [
         "rust-check"
       ],
       "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; jope-parallel telemetry feature is checked without enabling the neural/LibTorch feature."
+    },
+    "feature:jope-telemetry/parquet": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:arrow-array",
+          "dep:arrow-schema",
+          "dep:parquet"
+        ]
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check"
+      ],
+      "scope": "Default-enabled since TEL-02 (#492): checked with the jope-telemetry default build in deploy/ci/fast-lane.sh rust-check; --no-default-features drops Arrow/Parquet."
     },
     "feature:jope-telemetry/python": {
       "discovery": {
