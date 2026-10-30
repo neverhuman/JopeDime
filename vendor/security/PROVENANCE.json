@@ -1,15 +1,15 @@
 {
-  "bytes": 12750982,
+  "bytes": 12751080,
   "crates": [
     {
       "archive_sha256": "5ecb245093b0f791b89d3420c3df9c6d49c60ab63ba54db896bf8a3baf486706",
       "archive_url": "https://static.crates.io/crates/candle-core/candle-core-0.11.0.crate",
       "directory": "candle-core-0.11.0",
-      "manifest_candidate_sha256": "e33342ccc39bdc63d309959dbf452aa4cef177c7397873a32e33b502f541331c",
+      "manifest_candidate_sha256": "998e90e63d5ac6e24d3ad1bc18a584c325e382f86fdc44ea72a991978f39dd72",
       "manifest_upstream_sha256": "b0557a816df73784924576be4e8f2686957f9906c8080b5543c4bf2cd40f8859",
       "name": "candle-core",
       "repository": "https://github.com/huggingface/candle",
-      "retained_bytes": 1770074,
+      "retained_bytes": 1770172,
       "retained_files": 113,
       "upstream_vcs": {
         "git": {
@@ -578,8 +578,8 @@
       "upstream_sha256": "636fd290e4293fb6354ee0654eb9cad9864f010bb4989c72c78ecc1ad4d76a2a"
     },
     {
-      "bytes": 4921,
-      "candidate_sha256": "e33342ccc39bdc63d309959dbf452aa4cef177c7397873a32e33b502f541331c",
+      "bytes": 4978,
+      "candidate_sha256": "998e90e63d5ac6e24d3ad1bc18a584c325e382f86fdc44ea72a991978f39dd72",
       "changed": true,
       "path": "vendor/security/candle-core-0.11.0/Cargo.toml",
       "upstream_sha256": "b0557a816df73784924576be4e8f2686957f9906c8080b5543c4bf2cd40f8859"
@@ -1103,9 +1103,9 @@
       "upstream_sha256": "5c8000c6dea9803de8befde33b15970c1b1dcbf83b914c6261a3e9c2b658c1da"
     },
     {
-      "bytes": 11226,
-      "candidate_sha256": "bffd78cafb82f4c33a4d39af79a78512c3781cd2d6ea25d30db3faf05c934b1a",
-      "changed": false,
+      "bytes": 11267,
+      "candidate_sha256": "211be545cc3109bbfc2332b1d5d56a62b6bd386a229013b53f1b658758665904",
+      "changed": true,
       "path": "vendor/security/candle-core-0.11.0/src/quantized/tokenizer.rs",
       "upstream_sha256": "bffd78cafb82f4c33a4d39af79a78512c3781cd2d6ea25d30db3faf05c934b1a"
     },
@@ -6163,6 +6163,13 @@
         "upstream_sha256": "7fcb931fb616c35c7817e5461cc6173d7c6635339223c360a6c22fb077c07d63"
       },
       {
+        "bytes": 11267,
+        "candidate_sha256": "211be545cc3109bbfc2332b1d5d56a62b6bd386a229013b53f1b658758665904",
+        "changed": true,
+        "path": "vendor/security/candle-core-0.11.0/src/quantized/tokenizer.rs",
+        "upstream_sha256": "bffd78cafb82f4c33a4d39af79a78512c3781cd2d6ea25d30db3faf05c934b1a"
+      },
+      {
         "bytes": 10797,
         "candidate_sha256": "c4d71e2118e181dac97731f0ca309a60dc0cd38b261307ad049d8ebae06170f7",
         "changed": true,
@@ -6178,7 +6185,7 @@
       }
     ],
     "source_files": 553,
-    "unchanged": 549
+    "unchanged": 548
   },
   "utc": "2026-10-21T14:16:55.096976+00:00"
 }

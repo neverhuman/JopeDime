@@ -53,6 +53,7 @@ metal-debug-labels = [
     "candle-metal-kernels/debug-labels",
 ]
 mkl = ["dep:intel-mkl-src"]
+quantized-tokenizer = ["dep:tokenizers"]
 nccl = [
     "cuda",
     "cudarc/nccl",
@@ -274,3 +275,4 @@ optional = true
 version = "0.22.0"
 features = ["onig"]
 default-features = false
+optional = true

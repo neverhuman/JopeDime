@@ -709,6 +709,12 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         telemetry_lockfile["source_commit"],
         "c4974e5a77fff40d135809ab5d2f49a8d9b353e2"
     );
+    let rnk11_lockfile =
+        old_fixture("transitions/rnk11_cpu_closure_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        rnk11_lockfile["source_commit"],
+        "b54ad345e08a395c5e496cfbc625f376d1cdd51d"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -719,6 +725,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &search_narration,
         &feat_math_hpc_w1_w9,
         &telemetry_lockfile,
+        &rnk11_lockfile,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -766,6 +773,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 search_narration.clone(),
                 feat_math_hpc_w1_w9.clone(),
                 telemetry_lockfile.clone(),
+                rnk11_lockfile.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -799,6 +807,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 search_narration.clone(),
                 feat_math_hpc_w1_w9.clone(),
                 telemetry_lockfile.clone(),
+                rnk11_lockfile.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -825,6 +834,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 search_narration.clone(),
                 feat_math_hpc_w1_w9.clone(),
                 telemetry_lockfile.clone(),
+                rnk11_lockfile.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -882,6 +892,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 search_narration.clone(),
                 feat_math_hpc_w1_w9.clone(),
                 telemetry_lockfile.clone(),
+                rnk11_lockfile.clone(),
             ],
         ),
         (
@@ -899,6 +910,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 search_narration.clone(),
                 feat_math_hpc_w1_w9.clone(),
                 telemetry_lockfile.clone(),
+                rnk11_lockfile.clone(),
             ],
         ),
     ] {
@@ -964,6 +976,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         search_narration,
         feat_math_hpc_w1_w9,
         telemetry_lockfile,
+        rnk11_lockfile,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
