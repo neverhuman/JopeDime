@@ -1,0 +1,417 @@
+{
+  "admission": {
+    "old_median_rule": "NOT EVALUATED: pilot's repeated DL-Val reads are diagnostic-only and do not qualify admission",
+    "per_scale_family_statistics": "reported as DL-Val diagnostics only, not admission evidence",
+    "t537_rule": "NOT EVALUATED: pilot's repeated DL-Val reads are diagnostic-only and do not qualify admission"
+  },
+  "arms": {
+    "0.1": {
+      "best_dl_val_utility_median_diagnostic": 1.1092674421321769,
+      "best_dl_val_utility_seed_bootstrap_ci95_diagnostic": [
+        1.1083157531600651,
+        1.1107894796483524
+      ],
+      "elo_median_diagnostic": 1536.71,
+      "elo_seed_bootstrap_ci95_diagnostic": [
+        1533.01,
+        1540.41
+      ],
+      "family_cluster_diagnostics": {
+        "families": 19,
+        "mean_family_gain_diagnostic": -0.04415771867771362,
+        "median_family_gain_diagnostic": 0.0,
+        "median_lcb95_diagnostic": -0.004579637754602961,
+        "median_ucb95_diagnostic": 0.029818393456643832,
+        "one_sided_mean_lcb95_diagnostic": -0.11771494978672983,
+        "one_sided_mean_ucb95_diagnostic": 0.017404467156265722,
+        "seed_rows": 3
+      },
+      "gap_vs_r882_median_diagnostic": -0.044347834859068014,
+      "gap_vs_r882_seed_bootstrap_ci95_diagnostic": [
+        -0.045299523831179744,
+        -0.04282579734289249
+      ],
+      "seed_count": 3,
+      "seeds": [
+        {
+          "best_dl_val_utility_diagnostic": 1.1092674421321769,
+          "best_round_diagnostic": 3,
+          "cell_receipt": "/home/ubuntu/jope-data/h53/runs/scale-0.1/seed12/summary.json",
+          "discarded_r882_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+          "dl_val_curve_by_round_diagnostic": [
+            {
+              "family_utility": 1.107892485740501,
+              "round": 0
+            },
+            {
+              "family_utility": 1.1084170445170425,
+              "round": 1
+            },
+            {
+              "family_utility": 1.1081584191155986,
+              "round": 2
+            },
+            {
+              "family_utility": 1.1092674421321769,
+              "round": 3
+            }
+          ],
+          "dope_sha256_before_after": [
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+          ],
+          "elo_vs_r882_diagnostic": 1540.41,
+          "family_mean_gain_vs_r882_diagnostic": -0.044347834859068215,
+          "family_median_gain_vs_r882_diagnostic": 0.0,
+          "family_median_lcb95_diagnostic": -0.004819745778496698,
+          "family_one_sided_mean_lcb95_diagnostic": -0.11717366346401029,
+          "gap_to_target": -0.028526757867823216,
+          "gap_vs_r882": -0.044347834859068014,
+          "initial_adapter_sha256": "f6f5000945df82d7e6acec2a66b8c6c6048d62f7489642971492e74a321f3d96",
+          "initialization_scale": 0.1,
+          "r882_baseline_dl_val_utility": 1.1536152769912449,
+          "round_to_target_1_1377942": null,
+          "seed": 12,
+          "updates": 3
+        },
+        {
+          "best_dl_val_utility_diagnostic": 1.1083157531600651,
+          "best_round_diagnostic": 2,
+          "cell_receipt": "/home/ubuntu/jope-data/h53/runs/scale-0.1/seed13/summary.json",
+          "discarded_r882_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+          "dl_val_curve_by_round_diagnostic": [
+            {
+              "family_utility": 1.108001165106997,
+              "round": 0
+            },
+            {
+              "family_utility": 1.1082905633083144,
+              "round": 1
+            },
+            {
+              "family_utility": 1.1083157531600651,
+              "round": 2
+            },
+            {
+              "family_utility": 1.1083157531600651,
+              "round": 3
+            }
+          ],
+          "dope_sha256_before_after": [
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+          ],
+          "elo_vs_r882_diagnostic": 1536.71,
+          "family_mean_gain_vs_r882_diagnostic": -0.04529952383117993,
+          "family_median_gain_vs_r882_diagnostic": 0.0,
+          "family_median_lcb95_diagnostic": -0.004819745778496698,
+          "family_one_sided_mean_lcb95_diagnostic": -0.11641294957476951,
+          "gap_to_target": -0.029478446839934946,
+          "gap_vs_r882": -0.045299523831179744,
+          "initial_adapter_sha256": "4d36fee2151a57264cb071225fe3d3fc148b9cbd0a787ed378cd775323929803",
+          "initialization_scale": 0.1,
+          "r882_baseline_dl_val_utility": 1.1536152769912449,
+          "round_to_target_1_1377942": null,
+          "seed": 13,
+          "updates": 3
+        },
+        {
+          "best_dl_val_utility_diagnostic": 1.1107894796483524,
+          "best_round_diagnostic": 3,
+          "cell_receipt": "/home/ubuntu/jope-data/h53/runs/scale-0.1/seed14/summary.json",
+          "discarded_r882_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+          "dl_val_curve_by_round_diagnostic": [
+            {
+              "family_utility": 1.1091976433477122,
+              "round": 0
+            },
+            {
+              "family_utility": 1.1093660686576974,
+              "round": 1
+            },
+            {
+              "family_utility": 1.1085049361788943,
+              "round": 2
+            },
+            {
+              "family_utility": 1.1107894796483524,
+              "round": 3
+            }
+          ],
+          "dope_sha256_before_after": [
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+          ],
+          "elo_vs_r882_diagnostic": 1533.01,
+          "family_mean_gain_vs_r882_diagnostic": -0.04282579734289273,
+          "family_median_gain_vs_r882_diagnostic": 0.0,
+          "family_median_lcb95_diagnostic": -0.004727616113038069,
+          "family_one_sided_mean_lcb95_diagnostic": -0.11713636136242746,
+          "gap_to_target": -0.027004720351647693,
+          "gap_vs_r882": -0.04282579734289249,
+          "initial_adapter_sha256": "a0ea7881869e74b08431ef88cb3b4981c1309de6e3ee30243fba6035d4db6a7b",
+          "initialization_scale": 0.1,
+          "r882_baseline_dl_val_utility": 1.1536152769912449,
+          "round_to_target_1_1377942": null,
+          "seed": 14,
+          "updates": 3
+        }
+      ],
+      "target_rounds_reached": 0
+    },
+    "1": {
+      "best_dl_val_utility_median_diagnostic": 1.1323789326417182,
+      "best_dl_val_utility_seed_bootstrap_ci95_diagnostic": [
+        1.091685988498427,
+        1.1355620125714474
+      ],
+      "elo_median_diagnostic": 1507.32,
+      "elo_seed_bootstrap_ci95_diagnostic": [
+        1500.0,
+        1510.98
+      ],
+      "family_cluster_diagnostics": {
+        "families": 19,
+        "mean_family_gain_diagnostic": -0.033739632420714184,
+        "median_family_gain_diagnostic": -0.0039858271030795795,
+        "median_lcb95_diagnostic": -0.013364723021139705,
+        "median_ucb95_diagnostic": 0.01711638943804794,
+        "one_sided_mean_lcb95_diagnostic": -0.09655811354787629,
+        "one_sided_mean_ucb95_diagnostic": 0.010712254267165135,
+        "seed_rows": 3
+      },
+      "gap_vs_r882_median_diagnostic": -0.021236344349526703,
+      "gap_vs_r882_seed_bootstrap_ci95_diagnostic": [
+        -0.06192928849281798,
+        -0.018053264419797488
+      ],
+      "seed_count": 3,
+      "seeds": [
+        {
+          "best_dl_val_utility_diagnostic": 1.091685988498427,
+          "best_round_diagnostic": 0,
+          "cell_receipt": "/home/ubuntu/jope-data/h53/runs/scale-1/seed12/summary.json",
+          "discarded_r882_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+          "dl_val_curve_by_round_diagnostic": [
+            {
+              "family_utility": 1.091685988498427,
+              "round": 0
+            },
+            {
+              "family_utility": 1.091685988498427,
+              "round": 1
+            },
+            {
+              "family_utility": 1.091685988498427,
+              "round": 2
+            },
+            {
+              "family_utility": 1.091685988498427,
+              "round": 3
+            }
+          ],
+          "dope_sha256_before_after": [
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+          ],
+          "elo_vs_r882_diagnostic": 1507.32,
+          "family_mean_gain_vs_r882_diagnostic": -0.06192928849281815,
+          "family_median_gain_vs_r882_diagnostic": -0.005633074208560351,
+          "family_median_lcb95_diagnostic": -0.0376379197047948,
+          "family_one_sided_mean_lcb95_diagnostic": -0.1346898126558497,
+          "gap_to_target": -0.04610821150157318,
+          "gap_vs_r882": -0.06192928849281798,
+          "initial_adapter_sha256": "cd32f81d7e52189aafe4c9de0d5835eed67871a8c71a31b81aabcacf10ba05dc",
+          "initialization_scale": 1.0,
+          "r882_baseline_dl_val_utility": 1.1536152769912449,
+          "round_to_target_1_1377942": null,
+          "seed": 12,
+          "updates": 3
+        },
+        {
+          "best_dl_val_utility_diagnostic": 1.1355620125714474,
+          "best_round_diagnostic": 2,
+          "cell_receipt": "/home/ubuntu/jope-data/h53/runs/scale-1/seed13/summary.json",
+          "discarded_r882_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+          "dl_val_curve_by_round_diagnostic": [
+            {
+              "family_utility": 1.1351487202445114,
+              "round": 0
+            },
+            {
+              "family_utility": 1.1351487202445114,
+              "round": 1
+            },
+            {
+              "family_utility": 1.1355620125714474,
+              "round": 2
+            },
+            {
+              "family_utility": 1.1355620125714474,
+              "round": 3
+            }
+          ],
+          "dope_sha256_before_after": [
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+          ],
+          "elo_vs_r882_diagnostic": 1510.98,
+          "family_mean_gain_vs_r882_diagnostic": -0.01805326441979737,
+          "family_median_gain_vs_r882_diagnostic": 0.0020878963634858305,
+          "family_median_lcb95_diagnostic": -0.0028395254465982123,
+          "family_one_sided_mean_lcb95_diagnostic": -0.08351620932160563,
+          "gap_to_target": -0.00223218742855269,
+          "gap_vs_r882": -0.018053264419797488,
+          "initial_adapter_sha256": "2eb7c23e13f9801cd70ca64e5c2fda6e52ff9cb5e5d80a9c2c1efed5e453aea7",
+          "initialization_scale": 1.0,
+          "r882_baseline_dl_val_utility": 1.1536152769912449,
+          "round_to_target_1_1377942": null,
+          "seed": 13,
+          "updates": 3
+        },
+        {
+          "best_dl_val_utility_diagnostic": 1.1323789326417182,
+          "best_round_diagnostic": 0,
+          "cell_receipt": "/home/ubuntu/jope-data/h53/runs/scale-1/seed14/summary.json",
+          "discarded_r882_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+          "dl_val_curve_by_round_diagnostic": [
+            {
+              "family_utility": 1.1323789326417182,
+              "round": 0
+            },
+            {
+              "family_utility": 1.1323789326417182,
+              "round": 1
+            },
+            {
+              "family_utility": 1.1323789326417182,
+              "round": 2
+            },
+            {
+              "family_utility": 1.1323789326417182,
+              "round": 3
+            }
+          ],
+          "dope_sha256_before_after": [
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+            "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+          ],
+          "elo_vs_r882_diagnostic": 1500.0,
+          "family_mean_gain_vs_r882_diagnostic": -0.021236344349527016,
+          "family_median_gain_vs_r882_diagnostic": 0.0,
+          "family_median_lcb95_diagnostic": -0.004911031507307317,
+          "family_one_sided_mean_lcb95_diagnostic": -0.08707430544533903,
+          "gap_to_target": -0.0054152673582819055,
+          "gap_vs_r882": -0.021236344349526703,
+          "initial_adapter_sha256": "cf51e9e0c5a2795ad05722e21344f1daee43185696a7ec994b5b327214db733b",
+          "initialization_scale": 1.0,
+          "r882_baseline_dl_val_utility": 1.1536152769912449,
+          "round_to_target_1_1377942": null,
+          "seed": 14,
+          "updates": 3
+        }
+      ],
+      "target_rounds_reached": 0
+    }
+  },
+  "cohort": {
+    "dl_train_contexts": 1219,
+    "dl_train_families": 205,
+    "dl_val_contexts": 91,
+    "dl_val_families": 19,
+    "holdout_payloads_opened": 0,
+    "outer_rows_delivered": 0
+  },
+  "pilot": {
+    "all_cells_cuda": true,
+    "all_cells_dope_identity_pass": true,
+    "all_cells_fresh_adapter_sha_differs_from_discarded_r882_adapter": true,
+    "integrity_replay": {
+      "all_elo_values_match_original": true,
+      "all_initialization_hashes_match_original": true,
+      "all_optimizer_update_counts": 3,
+      "all_trainable_adapter_hashes_changed": true,
+      "all_val_curves_match_original_within_1e-9": true,
+      "cells": [
+        {
+          "final_adapter_sha256": "396ebe6bbfa8ef27de1dfc76997e7893d9ae353da055eeab674d60fdf1f43ea1",
+          "initial_adapter_sha256": "cd32f81d7e52189aafe4c9de0d5835eed67871a8c71a31b81aabcacf10ba05dc",
+          "matches_original_elo": true,
+          "matches_original_val_curve": true,
+          "optimizer_updates_completed": 3,
+          "scale": 1.0,
+          "seed": 12,
+          "update_l2_from_init": 0.030747462064027786
+        },
+        {
+          "final_adapter_sha256": "4700b055e8f93cdadea294843a78a2c65677866325c5bfe1ec1c8f8ee0144d82",
+          "initial_adapter_sha256": "2eb7c23e13f9801cd70ca64e5c2fda6e52ff9cb5e5d80a9c2c1efed5e453aea7",
+          "matches_original_elo": true,
+          "matches_original_val_curve": true,
+          "optimizer_updates_completed": 3,
+          "scale": 1.0,
+          "seed": 13,
+          "update_l2_from_init": 0.030222538858652115
+        },
+        {
+          "final_adapter_sha256": "acb2b1905675e9c000671e0d591732b2afcd437f2b82e0613b18563b98aabaf7",
+          "initial_adapter_sha256": "cf51e9e0c5a2795ad05722e21344f1daee43185696a7ec994b5b327214db733b",
+          "matches_original_elo": true,
+          "matches_original_val_curve": true,
+          "optimizer_updates_completed": 3,
+          "scale": 1.0,
+          "seed": 14,
+          "update_l2_from_init": 0.0302023496478796
+        },
+        {
+          "final_adapter_sha256": "f1582a076b8747bd033583d4a5b557bff27dee5c5009460bd9168302595ba4ba",
+          "initial_adapter_sha256": "f6f5000945df82d7e6acec2a66b8c6c6048d62f7489642971492e74a321f3d96",
+          "matches_original_elo": true,
+          "matches_original_val_curve": true,
+          "optimizer_updates_completed": 3,
+          "scale": 0.1,
+          "seed": 12,
+          "update_l2_from_init": 0.024236733093857765
+        },
+        {
+          "final_adapter_sha256": "2d0e1ce9ad859bc319a9de6d27b977090b0a7fcdd3f66d7dc7f9d1e3e0fea74c",
+          "initial_adapter_sha256": "4d36fee2151a57264cb071225fe3d3fc148b9cbd0a787ed378cd775323929803",
+          "matches_original_elo": true,
+          "matches_original_val_curve": true,
+          "optimizer_updates_completed": 3,
+          "scale": 0.1,
+          "seed": 13,
+          "update_l2_from_init": 0.024377873167395592
+        },
+        {
+          "final_adapter_sha256": "1667d8048a84e2ff216d187bf892cf3530a89fffaa7292ab972c87df49f6bda9",
+          "initial_adapter_sha256": "a0ea7881869e74b08431ef88cb3b4981c1309de6e3ee30243fba6035d4db6a7b",
+          "matches_original_elo": true,
+          "matches_original_val_curve": true,
+          "optimizer_updates_completed": 3,
+          "scale": 0.1,
+          "seed": 14,
+          "update_l2_from_init": 0.024889254942536354
+        }
+      ],
+      "six_cells_replayed": 6,
+      "source_commit": "f4a381380d730842baa62df50552cc8e6fca3cd8"
+    },
+    "pilot_complete": true,
+    "preregistered_cells": 6,
+    "source_commits": {
+      "coordinator": "2ddb26aec55a99d0a87003dcde5215a9f337e6e0",
+      "integrity_replay_runner_and_coordinator": "f4a381380d730842baa62df50552cc8e6fca3cd8",
+      "preregistration": "9c98aa1f91680e0952a3547090f063c7ec6948c3",
+      "runner": "706915ca58afc31fa4dcac311b6336a8fd461867"
+    },
+    "validation_use": "repeated DL-Val curves are diagnostic-only; no seed, scale, or checkpoint selected"
+  },
+  "schema": "jope.h53.metrics/v1",
+  "source_identities": {
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "input_manifest_file_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "input_manifest_identity": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
+    "r882_comparator_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+  }
+}
