@@ -127,22 +127,22 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | GOV-01 | OWNER | — | W0 | — | Sign the program owner brief | — | todo |
 | GOV-02 | OWNER | — | W0 | — | Decide OD1–OD3, OD5, OD6, OD8 | — | todo |
-| GOV-03 | OWNER + COMPLEX | S | W0 | — | ★ Freeze the v1 h40b checkpoint | M1 | todo |
+| GOV-03 | OWNER + COMPLEX | S | W0 | — | ★ Freeze the v1 h40b checkpoint | M1 | claimed |
 | GOV-04 | LUNA | S | W0 | — | Put spec, review and plan in `docs/product/` with a status table | — | merged |
-| RES-01 | COMPLEX | L | W0 | GOV-03 | ★ Inventory the exact custody closure that produced the checkpoint | M1 | todo |
+| RES-01 | COMPLEX | L | W0 | GOV-03 | ★ Inventory the exact custody closure that produced the checkpoint | M1 | claimed |
 | RES-02 | LUNA | S | W1 | RES-01 | ★ Vendor custody files and write a hash verifier | M1 | todo |
 | RES-03 | LUNA | S | W0 | — | Freeze guard: refuse missing buffers (F09) | M1 | merged |
 | RES-04 | COMPLEX | M | W1 | RES-02 | Document the training proposer and its operator frequencies | M3 | todo |
 | RES-05 | COMPLEX | M | W1 | RES-02 | Surrogate recipe, rung-0 measurement and revealed-slot analysis (OD13) | M3 | todo |
 | RES-06 | COMPLEX | L | W2 | RES-02, RES-03, RES-08 | ★ Deterministic fused-bundle exporter | M1 | todo |
-| RES-07 | COMPLEX | M | W2 | RES-06 | ★ Golden parity fixtures | M2, M3, M5 | todo |
+| RES-07 | COMPLEX | M | W2 | RES-06 | ★ Golden parity fixtures | M2, M3, M5 | claimed |
 | RES-08 | LUNA | S | W0 | — | Fused-bundle JSON Schema | M4 | merged |
 | RES-09 | LUNA | S | W2 | RES-07 | Rust golden-fixture loader for tests | M2, M3 | todo |
 | API-01 | COMPLEX | M | W0 | — | ★ `jope-api` crate and core types (contract freeze) | A2 | merged |
 | API-02 | LUNA | S | W0 | API-01 skeleton | Error catalog and RFC 9457 problem type | A2 | merged |
 | API-03 | LUNA | S | W0 | API-01 skeleton | ID newtypes | A2 | merged |
 | API-04 | LUNA | S | W0 | API-01 skeleton | Decimal-string `u64` serde | A2 | merged |
-| API-05 | LUNA | S | W1 | API-01 | OpenAPI generator and CI drift check | A2 | todo |
+| API-05 | LUNA | S | W1 | API-01 | OpenAPI generator and CI drift check | A2 | claimed |
 | API-06 | LUNA | S | W0 | — | Register new crates in the workspace and CI scope | — | merged |
 | API-07 | COMPLEX | M | W1 | API-01 | Operation registry (17 ops, 12 tools, 24 commands) | A1 | merged |
 | API-08 | LUNA | S | W1 | API-07 | Registry consistency tests | A1 | merged |
@@ -157,12 +157,12 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | SVC-09 | COMPLEX | M | W2 | SVC-05, SVC-06 | Engine lock, idle exit, `serve --status/--stop` | R4 | claimed |
 | SVC-10 | LUNA | S | W1 | SVC-05 | `GET /v1/system` handler | A1 | merged |
 | SVC-11 | COMPLEX | M | W1 | SVC-01 | Dataset registration and the `.jmat` matrix format | S3 | merged |
-| SVC-12 | LUNA | S | W1 | SVC-11 | Dataset profile and target suggestion | — | claimed |
-| SVC-13 | LUNA | S | W2 | SVC-01, SVC-11 | Delete operations and store GC | — | claimed |
+| SVC-12 | LUNA | S | W1 | SVC-11 | Dataset profile and target suggestion | — | blocked |
+| SVC-13 | LUNA | S | W2 | SVC-01, SVC-11 | Delete operations and store GC | — | merged |
 | CLT-01 | COMPLEX | M | W1 | API-07, SVC-05 | Client transports: InProcess (oneshot) and Http (ureq), SSE reader | A1 | merged |
-| CLT-02 | COMPLEX | M | W2 | CLT-01, SVC-09 | Engine discovery and cross-platform auto-start | R4 | todo |
-| CLT-03 | LUNA | S | W2 | CLT-01 | Upload/download and safe atomic extraction to `--out` | E3 | claimed |
-| CLT-04 | LUNA | S | W2 | CLT-01 | Contract test harness across transports | A1 | claimed |
+| CLT-02 | COMPLEX | M | W2 | CLT-01, SVC-09 | Engine discovery and cross-platform auto-start | R4 | claimed |
+| CLT-03 | LUNA | S | W2 | CLT-01 | Upload/download and safe atomic extraction to `--out` | E3 | blocked |
+| CLT-04 | LUNA | S | W2 | CLT-01 | Contract test harness across transports | A1 | merged |
 | DSC-01 | COMPLEX | M | W0 | — | Public per-candidate API in `feat-math` | S2 | merged |
 | DSC-02 | LUNA | S | W0 | — | Random/stratified splits, k-fold, rung-0 subsample | S3 | merged |
 | DSC-03 | COMPLEX | M | W1 | DSC-02 | Grouped and time-ordered folds; leakage audit hooks | S3 | merged |
@@ -183,19 +183,19 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | OBJ-03 | LUNA | S | W1 | OBJ-02 | Remaining binary metrics against golden values | — | merged |
 | OBJ-04 | COMPLEX | M | W2 | OBJ-02 | Cross-fitted Platt calibration in the model object | E2 | merged |
 | OBJ-05 | LUNA | S | W1 | OBJ-01 | Order-dependent refusal and fitting disclosure | — | merged |
-| RNK-01 | COMPLEX | M | W1 | RES-08 | Bundle loader and verification | M4 | claimed |
+| RNK-01 | COMPLEX | M | W1 | RES-08 | Bundle loader and verification | M4 | merged |
 | RNK-02 | LUNA | S | W1 | RES-01 | Port `proj16` | M3 | todo |
 | RNK-03 | COMPLEX | L | W2 | RES-02 | `feat412` featurizer skeleton and first feature family | M3 | todo |
 | RNK-04 | LUNA ×N | S each | W2 | RNK-03 | One task per remaining feature family | M3 | todo |
 | RNK-05 | COMPLEX | L | W2 | RES-02, RES-09 | Full landmark recipe port | M3 | todo |
 | RNK-06 | LUNA | S | W2 | RES-09 | `lm48` projection | M2 | todo |
 | RNK-07 | COMPLEX | M | W2 | RES-09 | Stage-1B token projection | M2 | todo |
-| RNK-08 | COMPLEX | L | W2 | RES-09 | ★ `adapter_10tok.predict_costs` | M2 | todo |
+| RNK-08 | COMPLEX | L | W2 | RES-09 | ★ `adapter_10tok.predict_costs` | M2 | claimed |
 | RNK-09 | LUNA | S | W2 | RES-06 | Champion bank loader and nearest retrieval | — | todo |
-| RNK-10 | COMPLEX | M | W3 | DSC-08, RNK-01..09 | ★ Learned guidance in the loop | M5, S4 | todo |
+| RNK-10 | COMPLEX | M | W3 | DSC-08, RNK-01..09 | ★ Learned guidance in the loop | M5, S4 | claimed |
 | RNK-11 | LUNA | S | W0 | — | Remove C from the CPU closure (candle patch, ban list) | D1 | merged |
 | RNK-12 | COMPLEX | M | W4 | RNK-10 | CUDA parity and placement | M2 | todo |
-| PUB-01 | COMPLEX | M | W2 | API-01, SVC-04 | Public projection and claim levels | T2 | todo |
+| PUB-01 | COMPLEX | M | W2 | API-01, SVC-04 | Public projection and claim levels | T2 | claimed |
 | PUB-02 | LUNA | S | W0 | — | Public names for stage operations | T2 | merged |
 | PUB-03 | LUNA | S | W0 | — | Public names for heads | T2 | merged |
 | PUB-04 | LUNA | S | W0 | — | Public names for parameters | T2 | merged |
@@ -211,14 +211,14 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | EXP-01 | COMPLEX | M | W1 | DSC-01 | Capability registry and proposer filter | E1 | merged |
 | EXP-02 | COMPLEX | L | W2 | DSC-11, EXP-01 | Python fitted-state glue | E2 | merged |
 | EXP-03 | COMPLEX | L | W2 | DSC-11, EXP-01 | Rust fitted-state glue | E2 | merged |
-| EXP-04 | LUNA | S | W3 | EXP-02, EXP-03 | Regression calibration in all three emitters | E2 | todo |
-| EXP-05 | LUNA | S | W3 | OBJ-04, EXP-02, EXP-03 | Platt calibration in all three emitters | E2 | todo |
-| EXP-06 | LUNA | S | W3 | API-01 | TypeScript `.d.ts` generator | E2 | todo |
+| EXP-04 | LUNA | S | W3 | EXP-02, EXP-03 | Regression calibration in all three emitters | E2 | claimed |
+| EXP-05 | LUNA | S | W3 | OBJ-04, EXP-02, EXP-03 | Platt calibration in all three emitters | E2 | blocked |
+| EXP-06 | LUNA | S | W3 | API-01 | TypeScript `.d.ts` generator | E2 | claimed |
 | EXP-07 | LUNA | S | W3 | EXP-02, EXP-03 | `self_check()` and check rows | E2 | claimed |
 | EXP-08 | COMPLEX | M | W3 | EXP-02, EXP-03 | Parity CI harness with real toolchains | E2 | todo |
 | EXP-09 | LUNA | S | W3 | SVC-01, EXP-07 | Export bundle assembly | E3 | todo |
 | TUI-01 | COMPLEX | M | W1 | API-01, TUI-11 | Terminal skeleton: inline viewport, event loop, restore | U2 | merged |
-| TUI-02 | COMPLEX | M | W1 | TUI-01 | Composer and editing | U1 | todo |
+| TUI-02 | COMPLEX | M | W1 | TUI-01 | Composer and editing | U1 | claimed |
 | TUI-03 | LUNA | S | W1 | API-07 | Command parser | U1 | merged |
 | TUI-04 | LUNA | S | W1 | API-07 | Completion engine | U1 | merged |
 | TUI-05 | LUNA | S | W0 | — | Theme tokens, color detection, sanitizer | U2 | merged |
@@ -230,18 +230,18 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | TUI-11 | LUNA | S | W1 | API-01 | Recorded event fixtures and fake transport | — | merged |
 | BAT-01 | LUNA | S | W2 | SVC-09 | `serve` CLI wiring | — | todo |
 | BAT-02 | LUNA | S | W2 | CLT-01, BAT-05 | `run`, `status`, `events` | S1 | claimed |
-| BAT-03 | LUNA | S | W2 | CLT-01, BAT-05 | `control`, `restart`, `runs`, `code` | S1 | todo |
+| BAT-03 | LUNA | S | W2 | CLT-01, BAT-05 | `control`, `restart`, `runs`, `code` | S1 | blocked |
 | BAT-04 | LUNA | S | W2 | CLT-03, BAT-05 | `export`, `predict`, `dataset`, `objective`, `gc` | S1 | todo |
 | BAT-05 | LUNA | S | W1 | API-02 | Exit codes, `--idempotency-key`, receipt printing | R3 | merged |
 | BAT-06 | COMPLEX | M | W3 | CLT-02, BAT-02 | In-process batch lifecycle and `ENGINE_BUSY` | — | todo |
 | BAT-07 | LUNA | S | W2 | CLT-01 | Lite build features and CI job | A1 | claimed |
 | MCP-01 | COMPLEX | M | W0 | — | Conformance spike: `rmcp` vs existing dispatcher (OD9) | A4 | merged |
-| MCP-02 | COMPLEX | L | W2 | MCP-01, API-07, CLT-01 | MCP adapter with 12 tools | A4 | todo |
-| MCP-03 | LUNA | S | W3 | MCP-02 | Legacy tool aliases | A4 | todo |
+| MCP-02 | COMPLEX | L | W2 | MCP-01, API-07, CLT-01 | MCP adapter with 12 tools | A4 | claimed |
+| MCP-03 | LUNA | S | W3 | MCP-02 | Legacy tool aliases | A4 | claimed |
 | MCP-04 | LUNA | S | W3 | MCP-02 | Client setup docs and scenario scripts | A5 | todo |
 | MCP-05 | COMPLEX | M | W4 | MCP-02..04, INT-01 | Named-client runs | A5 | todo |
 | QLT-01 | COMPLEX | M | W1 | — | Q1 preregistration and harness (OD7) | Q1 | merged |
-| QLT-02 | LUNA | S | W1 | RES-01 | Held-out cohort manifest | Q1 | todo |
+| QLT-02 | LUNA | S | W1 | RES-01 | Held-out cohort manifest | Q1 | claimed |
 | QLT-03 | COMPLEX | M | W3 | DSC-08, RNK-10 | `research record` mode | — | todo |
 | QLT-04 | COMPLEX | M | W4 | RNK-10, QLT-01, QLT-02 | ★ Run Q1 and record the decision | Q1 | todo |
 | QLT-05 | LUNA | S | W0 | — | Reference datasets for tests and D2 | D2 | merged |
