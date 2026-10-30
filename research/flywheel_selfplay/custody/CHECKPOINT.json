@@ -1,0 +1,324 @@
+{
+  "schema": "jope.v1-checkpoint-pin/v1",
+  "recorded_utc": "2026-10-30T17:42:43.844583+00:00",
+  "task": "GOV-03",
+  "custody_host": "xbabe1",
+  "checkpoint": {
+    "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-782.pt",
+    "sha256": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+    "bytes": 7493476,
+    "training_round": 782,
+    "admission": "incumbent",
+    "candidate_parameter_sha256": "3fadd727396dc28d67eb19924d555abf1ad5df67349c48b7bc06883d8f163d17",
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+  },
+  "optimizer_state": {
+    "sha256": "68fe20ab5e00013cf6f3e39f94b48dc58f99db01610611223fc02617788b7143",
+    "hash_algorithm": "SHA256 of UTF-8 json.dumps(canonical optimizer, sort_keys=True,separators=(comma,colon),allow_nan=False); tensors replaced by dtype/shape and SHA256(dtype.str:shape: + contiguous little-endian C bytes); dict keys stringified sorted",
+    "state_entries": 41,
+    "steps": [
+      473.0
+    ],
+    "location": "optimizer member of checkpoint; canonical manifest retained in actual-custody-hashes.json"
+  },
+  "dope": {
+    "weights_path": "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt",
+    "weights_file_sha256": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "loaded_weights_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "loaded_weights_hash_algorithm": "dope_freeze_guard.snapshot_dope_weights composite; parameters plus eleven normalizer buffers",
+    "params_sha256": "149d78c68dbb9d9873a12442668152d970ded460e6259e8f1c942e257f6b2152",
+    "buffers_sha256": "4d844373f556bc5c67b6d390b53ca19e36f002130ace4627ba3496d9242e6b4a",
+    "physical_file_equal_parameter_tensors": 56,
+    "frozen": true
+  },
+  "custody_verification": {
+    "utc": "2026-10-30T17:39:46.950777+00:00",
+    "host": "xbabe1",
+    "read_only": true,
+    "checkpoint_hash_stable_before_after_load": true,
+    "all_four_candidate_parameter_hashes_match_producer_round_receipts": true,
+    "dope_file_parameters_match_checkpoint": true
+  },
+  "owner_authority": {
+    "ruling_path": "~/jope_plan/master/GOV-03_ruling.md",
+    "ruling_snapshot_sha256": "56a8630e883734b77632abc27e3365beb61a90c408b0d85c777ab5b0aac3080a",
+    "instruction_path": "~/nudges/gov03_t538_1720.md",
+    "instruction_sha256": "8b9cef81187b1072c02c66fc40d82d9fe12d5c1c4ae0d6f9f35a6a7dccdd6713",
+    "acknowledgment": "this file IS the owner selection + flywheel-owner acknowledgment required by status/GOV-03.md",
+    "coordination_record": "canonical AGENT_CHAT.md, sol_v1_gov03 2026-10-30T17:37:21.574916+00:00",
+    "rule": "Highest logistic Elo; statistically tied candidates use earliest round. All four point estimates equal 1500; paired family-bootstrap intervals include zero; choose round 782."
+  },
+  "development_comparison": {
+    "match_rate_definition": "common matched selected-program fitness rows / 91 development contexts; all failures retained with original constrained-fitness penalty",
+    "match_rate": 1.0,
+    "matched_contexts": 91,
+    "train_contexts": 1219,
+    "train_families": 205,
+    "dev_contexts": 91,
+    "dev_families": 19,
+    "family_key": "selected.json family_id",
+    "train_dev_families_disjoint": true,
+    "protocol": "full-DL-Train1219-DL-Val91/v1",
+    "selected_path": "/home/ubuntu/jope-data/flywheel-full-20261030/input/selected.json",
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "prepared_source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "corpus_manifest_sha256": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
+    "scope": "Regression only; existing development roster and existing two inner folds, repeatedly selected, not independent test",
+    "score": "Original selected-program constrained inner-CV fitness, minimize; independently hash-checked against each authorized pool",
+    "elo": {
+      "implementation": "~/jope_plan/elo/elo.py fit, all defaults, logistic 1500-centered",
+      "source_sha256": "55f3c62d8eaba405ab13b0ca4cc2a0d2928a16cb61fad27ff56f651957339515",
+      "bootstrap": "19 complete family blocks sampled jointly with replacement, unique identifiers for duplicate blocks",
+      "bootstrap_draws": 2000,
+      "bootstrap_seed": 20261030,
+      "ci": "percentile 95%; tie if paired leader-minus-candidate interval contains zero"
+    },
+    "r2": {
+      "definition": "unweighted mean over 91 contexts of the mean of two native inner-fold metrics.r2; no inference from utility or log-RMSE ratio",
+      "evaluator_path": "/home/ubuntu/JopeDimeMicro/bin/bootstrap.s1main",
+      "evaluator_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+      "native_invocations": 105,
+      "unique_context_program_pairs": 105,
+      "inner_fold_evaluations": 210,
+      "all_fitness_replays_match": true,
+      "input": "Prepared hash-pinned nq=0 training-only JTT1; structural all-zero query padding via existing training_cv_envelope; no original outer-query rows",
+      "pilot_invocations": 3,
+      "pilot_max_seconds": 3.8742750559467822,
+      "cpu_only": true,
+      "nice": 10,
+      "max_workers": 8
+    },
+    "binary_elo": {
+      "available": false,
+      "reason": "No binary contexts in this cohort; no blended score"
+    },
+    "candidates": [
+      {
+        "round": 782,
+        "checkpoint_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-782.pt",
+        "sha256": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+        "match_rate": 1.0,
+        "matched_contexts": 91,
+        "elo": 1500.0,
+        "ci95": [
+          1483.1402690235468,
+          1515.738993395305
+        ],
+        "win_half_tie_rate": 0.5,
+        "pairwise_wins": 16,
+        "pairwise_ties": 241,
+        "pairwise_losses": 16,
+        "gate_pass": 90,
+        "leader_minus_method_ci95": [
+          0.0,
+          0.0
+        ],
+        "mean_context_r2": -0.0025500701148550953,
+        "median_context_r2": 0.7425932755328681,
+        "min_context_r2": -68.62650940099914,
+        "max_context_r2": 0.9998690684811062,
+        "contexts": 91,
+        "folds": 182,
+        "recorded_dev_utility": 1.1073772627425547
+      },
+      {
+        "round": 785,
+        "checkpoint_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-785.pt",
+        "sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+        "match_rate": 1.0,
+        "matched_contexts": 91,
+        "elo": 1500.0,
+        "ci95": [
+          1487.0544002058289,
+          1511.587734906041
+        ],
+        "win_half_tie_rate": 0.5,
+        "pairwise_wins": 10,
+        "pairwise_ties": 253,
+        "pairwise_losses": 10,
+        "gate_pass": 91,
+        "leader_minus_method_ci95": [
+          -24.048796509056793,
+          23.061701394634007
+        ],
+        "mean_context_r2": 0.7580375375566288,
+        "median_context_r2": 0.7433192309808203,
+        "min_context_r2": 0.2661399810735594,
+        "max_context_r2": 0.9998690684811062,
+        "contexts": 91,
+        "folds": 182,
+        "recorded_dev_utility": 1.1375952947484103
+      },
+      {
+        "round": 859,
+        "checkpoint_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-859.pt",
+        "sha256": "5802245f447b1852610576cde08b8a299a9e1e99eb82991aac63c958284fa715",
+        "match_rate": 1.0,
+        "matched_contexts": 91,
+        "elo": 1500.0,
+        "ci95": [
+          1491.3022555832417,
+          1508.6912444455947
+        ],
+        "win_half_tie_rate": 0.5,
+        "pairwise_wins": 9,
+        "pairwise_ties": 255,
+        "pairwise_losses": 9,
+        "gate_pass": 91,
+        "leader_minus_method_ci95": [
+          -24.153683036956757,
+          22.206287332345514
+        ],
+        "mean_context_r2": 0.7579481258119423,
+        "median_context_r2": 0.7625907069120603,
+        "min_context_r2": 0.2661399810735594,
+        "max_context_r2": 0.9998690684811062,
+        "contexts": 91,
+        "folds": 182,
+        "recorded_dev_utility": 1.1377941898164525
+      },
+      {
+        "round": 882,
+        "checkpoint_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-882.pt",
+        "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+        "match_rate": 1.0,
+        "matched_contexts": 91,
+        "elo": 1500.0,
+        "ci95": [
+          1491.3022555832417,
+          1508.6912444455947
+        ],
+        "win_half_tie_rate": 0.5,
+        "pairwise_wins": 9,
+        "pairwise_ties": 255,
+        "pairwise_losses": 9,
+        "gate_pass": 91,
+        "leader_minus_method_ci95": [
+          -24.153683036956757,
+          22.206287332345514
+        ],
+        "mean_context_r2": 0.7579481258119423,
+        "median_context_r2": 0.7625907069120603,
+        "min_context_r2": 0.2661399810735594,
+        "max_context_r2": 0.9998690684811062,
+        "contexts": 91,
+        "folds": 182,
+        "recorded_dev_utility": 1.1377941898164525
+      }
+    ]
+  },
+  "custody_path_correction": {
+    "ruling_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029",
+    "actual_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030",
+    "reason": "Ruling path is older 16-train/8-dev run. Requested rounds and exact 1219/91 roster are present in the later full-cohort run; all candidates share its evaluation identity."
+  },
+  "best_ever_audit": {
+    "round_receipts": 623,
+    "max_candidate_utility": 1.1377941898164525,
+    "best_rounds": [
+      {
+        "round": 859,
+        "candidate_utility": 1.1377941898164525,
+        "accepted": true,
+        "receipt_sha256": "8cca1c67461f809ed6cc2605ec70cdd4f84190f946412f6716fb03969e5cd669"
+      },
+      {
+        "round": 882,
+        "candidate_utility": 1.1377941898164525,
+        "accepted": true,
+        "receipt_sha256": "6382a586912e62b0282fee8cfab667c165721d1f4298c42570febb14ca530630"
+      }
+    ],
+    "r1319": [
+      {
+        "round": 1319,
+        "candidate_utility": 1.1352489854411767,
+        "accepted": false,
+        "receipt_sha256": "da7d5ade5acb756093c90ed9911ae9875f66f118566de254173914ba2e0e6a39"
+      }
+    ]
+  },
+  "qualification": {
+    "independently_qualified": false,
+    "serving_promoted": false,
+    "outer_query_rows_delivered": 0,
+    "caveats": [
+      "All four Elo point estimates tie. Owner tie rule chooses r782 despite its one failed development gate, lower dev utility and much worse mean R2. This is not evidence that r782 dominates later rounds.",
+      "H40/H40B historical evidence was cached-pool replay, zero native fits, with reused dl_holdout_91 (u_w -1.133758 to -1.134014; N0 -1.134141). That historical evidence is not independent qualification.",
+      "Historical 16/8-context run was flat from r256 at utility 2.267816; that value is a separate comparison identity from this 1219/91 full-cohort run.",
+      "This task replays native inner folds on the existing development roster only. HWV-01 Golden45 qualification, RES-01 closure, runtime parity and serving promotion remain separate gates."
+    ],
+    "sealed_holdout_metatest_tables_or_labels_opened": 0,
+    "legacy_metadata_access": "Legacy corpus manifest and unfiltered champion_dsl_bank.json schema were inspected during path discovery; no program/feature/metric value from that bank entered scoring. Only allowlisted DL-Val accepts/seeds DSLs and prepared training-only tables were used. See ACCESS-NOTE.md."
+  },
+  "evidence": {
+    "root": "/home/ubuntu/jope_plan/evidence/GOV-03",
+    "bulk_root": "/home/ubuntu/jope-data/gov-03/custody",
+    "files": [
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/PROTOCOL.md",
+        "sha256": "acb7982d13ce4f52f966f3438d0a8d13b1f06556909041c9f3c972d3d93e207e"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/compute_elo.py",
+        "sha256": "6e6aff6337a5fa23b52824f396c6e3e7b840cc650966b0b796c00f44348ea891"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/prepare_comparison.py",
+        "sha256": "d290691d63a0661a387fddb3e6f3b004292c1c6197a27f564931078936377958"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/native_replay.py",
+        "sha256": "523f5e5a990ee9263064965107fb45d43f29d95b5b1f09fa1680297ecc1a6eb9"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/verify_custody_remote.py",
+        "sha256": "a16464202b9532b7ac208c8f79330e4a11cc31b2d316cccdee946cd57497e028"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/actual-custody-hashes.json",
+        "sha256": "a317fd114639e9b5680ea67c004093837169c56c7b61131db4992a528f98d32b"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/checkpoint-receipt-bindings.json",
+        "sha256": "387e66537f728500e7716730f882d46de035857019024c1453cf8c568326a752"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/comparison-rows.json",
+        "sha256": "442a7d79c94b6f92bedbe0c58a0c2edf328613eb5f9f2fa729d1a9fe299ed3b5"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/native-jobs.json",
+        "sha256": "e35bbf324cc6273fcdf8909653136296e30b79ca10d2944365c1f836a91304ce"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/native-pilot.json",
+        "sha256": "296bcffb854e67f2dab5187723894e289eed9a8464379e66269640c2c8ab6b4f"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/native-results.json",
+        "sha256": "18d20f67d8aa9543f94cfb95763b08931fba34613420bb16f2262c6db85b17d5"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/elo-results.json",
+        "sha256": "d185b3a83f2ca6b83c3fb18f4c67711698801f8177c23cbc8915563dfb777d96"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/elo-family-bootstrap.npz",
+        "sha256": "60af10a806b027f6dc42780b50fb6b3a23a79df2e0692e1505df44281e181f86"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/r2-results.json",
+        "sha256": "66a0f37b88757cbc1dbaa1a30fcf15ac25865608e00d3855888bb3bb89c06a84"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/full-cohort-metadata.json",
+        "sha256": "1655e81d51f358dc14164636262c0886269e214782025bbc741e661a1877360c"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/ACCESS-NOTE.md",
+        "sha256": "df49765ad8b719ecfa38dc4cc10556f9a94c957247e5609736325633307ccedd"
+      }
+    ]
+  }
+}
