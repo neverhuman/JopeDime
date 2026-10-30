@@ -1,0 +1,41 @@
+{
+  "description": "Synthetic regression-only rows pin the existing score-store contract; no historical or protected data.",
+  "rows": [
+    {
+      "model": "baseline",
+      "dataset": "real-regression",
+      "family": "family-regression",
+      "split": "fold_0_test",
+      "metric": "rmse",
+      "value": 2.0,
+      "source": "fixture"
+    },
+    {
+      "model": "candidate",
+      "dataset": "real-regression",
+      "family": "family-regression",
+      "split": "fold_0_test",
+      "metric": "rmse",
+      "value": 1.0,
+      "source": "fixture"
+    },
+    {
+      "model": "sealed-row",
+      "dataset": "real-regression",
+      "family": "family-regression",
+      "split": "sealed_meta_test",
+      "metric": "rmse",
+      "value": 0.5,
+      "source": "fixture"
+    }
+  ],
+  "expected": {
+    "append_first": 3,
+    "append_repeat": 0,
+    "stored_after_repeat": 3,
+    "verified_models": ["baseline", "candidate"],
+    "rejected_count": 1,
+    "best_model_lower_rmse": "candidate",
+    "best_percentile": 100.0
+  }
+}
