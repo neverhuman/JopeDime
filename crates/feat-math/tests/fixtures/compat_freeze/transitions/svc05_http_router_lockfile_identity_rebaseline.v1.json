@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Ruling 0840(a) authorizes the SVC-05 lockfile-only identity transition. Cargo.lock only adds existing locked axum/jope-api/serde_json/subtle/tokio/tower dependency names to jope-service; no package/version/source/checksum or behavioral fixture changes. Chain after the latest main identity represented by the before fixture hashes. Preserve all historical identities.",
+  "plan_reference": "SVC-05 / T068; owner scope rulings 0810, 0840 and 0945, 2026-10-30",
+  "source_commit": "ebfbf6596ffca9cc15cb9601f68741332d4f279a",
+  "base_commit": "0009d3603ce3f89d970afdb2d9d6fe3439952dc1",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "5981f17baf2291b3bbd53574ab4aa26508f4957f83f14a38ab601df76a4879de",
+      "after": "53d88bdd9b465c5ab41f8f426893a429c13e0921d153112a25603036ff50bb50"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a8d61dd9f0fa48636a6e82e80954a581ea3b0ed75be74132763b8a12a91d417c",
+      "after": "6025cf380d55a674155304038bd418edf131e42f4f76dfbd0f022f04ce970498"
+    }
+  ],
+  "before_identity_digest": "62dfd68fada288ffc937b7e6e47fbbf18fef15c1eb271f9cf0bd86da0456ed3d",
+  "after_identity_digest": "ef294c37708f42ae07b0250ac0adbb10c28a43eb545004e086340a454a44a16f",
+  "before_implementation_sha256": "749305466bcfd5fe0668969dd43c3c7d21460b3ab1fcf6cf33234ad83eda787d",
+  "after_implementation_sha256": "f6a158c40e46470e9f2fffbc4f01c18b39a0126204f0b09ce26b1b1c47e110b8",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
