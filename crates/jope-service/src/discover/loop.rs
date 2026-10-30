@@ -41,7 +41,7 @@ use std::{
         atomic::{AtomicUsize, Ordering},
         Arc, Mutex,
     },
-    time::Instant,
+    time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
 const CHECKPOINT_VERSION: u32 = 1;
@@ -384,7 +384,32 @@ struct Checkpoint {
     epoch: u32,
     nondeterminism: Vec<String>,
     elapsed_ms: u64,
+    // Durable active-span anchor. Interruption through recovery is conservatively
+    // charged; an explicit paused checkpoint has no active span.
+    active_since_ms: Option<u64>,
     completed: Option<CompletionReason>,
+}
+
+fn wall_clock_ms() -> Result<u64> {
+    Ok(u64::try_from(
+        SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+    )?)
+}
+
+impl Checkpoint {
+    fn elapsed_at(&self, now: u64) -> Result<u64> {
+        let active = self
+            .active_since_ms
+            .map(|start| {
+                now.checked_sub(start)
+                    .context("active wall clock moved backwards; resume refused")
+            })
+            .transpose()?
+            .unwrap_or(0);
+        self.elapsed_ms
+            .checked_add(active)
+            .context("wall budget counter exhausted")
+    }
 }
 
 pub struct Discovery {
@@ -415,6 +440,16 @@ impl Discovery {
             if let Some(c) = &saved.champion {
                 store.verify_blob(&c.model)?;
             }
+            let recovery = record
+                .run
+                .as_ref()
+                .context("run recovery metadata missing")?;
+            ensure!(
+                saved.completed.is_some()
+                    || saved.active_since_ms.is_some()
+                    || (snapshot.state == RunState::Paused && !recovery.interrupted),
+                "interrupted wall budget lacks an active-span anchor; resume refused"
+            );
             (saved, snapshot.clone())
         } else {
             let checkpoint = Checkpoint {
@@ -431,6 +466,7 @@ impl Discovery {
                 epoch: 0,
                 nondeterminism: vec![],
                 elapsed_ms: 0,
+                active_since_ms: None,
                 completed: None,
             };
             let snapshot = RunSnapshot {
@@ -455,6 +491,16 @@ impl Discovery {
             };
             (checkpoint, snapshot)
         };
+        let now = wall_clock_ms()?;
+        checkpoint.elapsed_ms = checkpoint.elapsed_at(now)?;
+        if checkpoint.completed.is_none()
+            && checkpoint.elapsed_ms >= plan.wall_seconds.saturating_mul(1000)
+        {
+            checkpoint.completed = Some(CompletionReason::BudgetTime);
+            snapshot.phase = RunPhase::Finalizing;
+        }
+        checkpoint.active_since_ms = checkpoint.completed.is_none().then_some(now);
+        snapshot.budget_used.wall_seconds = format!("{:.3}", checkpoint.elapsed_ms as f64 / 1000.0);
         checkpoint.epoch = checkpoint
             .epoch
             .checked_add(1)
@@ -555,27 +601,38 @@ impl Discovery {
     /// Pause only at a committed boundary. Pending siblings remain in the
     /// checkpoint; no uncommitted result is installed or publicly visible.
     pub fn pause(&mut self) -> Result<()> {
+        let mut next = self.checkpoint.clone();
+        next.elapsed_ms = next.elapsed_at(wall_clock_ms()?)?;
+        next.active_since_ms = None;
+        self.commit_control(next, RunState::Paused)
+    }
+
+    fn commit_control(&mut self, next: Checkpoint, state: RunState) -> Result<()> {
         ensure!(!self.poisoned, "commit outcome unknown: reopen the run");
         let mut snapshot = self.snapshot.clone();
-        snapshot.state = RunState::Paused;
-        snapshot.revision.0 += 1;
+        snapshot.state = state;
+        snapshot.revision.0 = snapshot
+            .revision
+            .0
+            .checked_add(1)
+            .context("revision exhausted")?;
+        snapshot.budget_used.wall_seconds = format!("{:.3}", next.elapsed_ms as f64 / 1000.0);
+        if next.completed.is_some() {
+            snapshot.phase = RunPhase::Finalizing;
+        }
         self.poisoned = true;
         let result = self.log.commit(
             RunUpdate {
                 expected_revision: Some(self.snapshot.revision.0),
                 snapshot,
-                checkpoint: serde_json::to_value(&self.checkpoint)?,
-                blobs: self
-                    .checkpoint
-                    .champion
-                    .iter()
-                    .map(|c| c.model.clone())
-                    .collect(),
+                checkpoint: serde_json::to_value(&next)?,
+                blobs: next.champion.iter().map(|c| c.model.clone()).collect(),
             },
             vec![],
             |_| Ok(()),
         )?;
         self.snapshot = result.snapshot;
+        self.checkpoint = next;
         self.poisoned = false;
         Ok(())
     }
@@ -604,7 +661,15 @@ impl Discovery {
             return Ok(vec![]);
         }
         let started = Instant::now();
-        let elapsed_before = self.checkpoint.elapsed_ms;
+        let elapsed_before = self.checkpoint.elapsed_at(wall_clock_ms()?)?;
+        if elapsed_before >= self.checkpoint.plan.wall_seconds.saturating_mul(1000) {
+            let mut next = self.checkpoint.clone();
+            next.elapsed_ms = elapsed_before;
+            next.active_since_ms = None;
+            next.completed = Some(CompletionReason::BudgetTime);
+            self.commit_control(next, RunState::Running)?;
+            return Ok(vec![]);
+        }
         let mut next = self.checkpoint.clone();
         if next.pending.is_empty() {
             plan_wave(&mut next, space, admission)?;
@@ -736,6 +801,11 @@ impl Discovery {
                     None
                 };
             }
+            next.active_since_ms = if next.completed.is_none() {
+                Some(wall_clock_ms()?)
+            } else {
+                None
+            };
             events.push(EventBody::Reasoning(ReasoningBody {
                 stage: "searching".into(),
                 algorithm_id: None,
@@ -1417,6 +1487,7 @@ pub fn run_m1(path: &Path, executable: &Path) -> Result<Value> {
         "budget_bound_by":discovery.budget_bound_by(),
         "fitting":"selection_only",
         "threads_per_worker":1,
+        "wall_recovery_policy":"interruption is charged through recovery; explicit pause excludes idle time; backwards clock refuses resume",
         "champion":discovery.champion(), "snapshot":discovery.snapshot(),
         "nondeterminism":discovery.nondeterminism(), "projection":discovery.projection()?,
         "qualification":"M1 heuristic numeric regression; finalization/export and bundle-surrogate parity remain separate gates"}),
@@ -1657,6 +1728,67 @@ mod tests {
         p.seed -= 1;
         p.features.push(p.target.clone());
         assert!(Discovery::open(store, p).is_err());
+    }
+
+    #[test]
+    fn interrupted_active_span_consumes_remaining_wall_budget_before_replay() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut p = plan(directory.path(), 30, Effort::Fast, 24);
+        p.wall_seconds = 1;
+        let home = directory.path().join("store");
+        {
+            let store = Arc::new(Store::open(&home).unwrap());
+            let mut d = Discovery::open(store, p.clone()).unwrap();
+            let mut checkpoint = d.checkpoint.clone();
+            checkpoint.elapsed_ms = 250;
+            checkpoint.active_since_ms = Some(wall_clock_ms().unwrap() - 1500);
+            d.commit_control(checkpoint, RunState::Running).unwrap();
+        }
+        let store = Arc::new(Store::open(&home).unwrap());
+        let mut recovered = Discovery::open(store, p).unwrap();
+        assert!(recovered.checkpoint.elapsed_ms >= 1750);
+        assert_eq!(recovered.completed(), Some(CompletionReason::BudgetTime));
+        assert_eq!(recovered.budget_bound_by(), Some("time"));
+        assert!(recovered
+            .advance(
+                &TinySpace,
+                &HeuristicAdmission,
+                &Controlled { failure: None },
+                1,
+                1
+            )
+            .unwrap()
+            .is_empty());
+        assert_eq!(recovered.admitted(), 0);
+    }
+
+    #[test]
+    fn explicit_pause_excludes_idle_time_and_backwards_active_clock_refuses() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut p = plan(directory.path(), 30, Effort::Fast, 24);
+        p.wall_seconds = 1;
+        let home = directory.path().join("store");
+        {
+            let store = Arc::new(Store::open(&home).unwrap());
+            let mut d = Discovery::open(store, p.clone()).unwrap();
+            let mut checkpoint = d.checkpoint.clone();
+            checkpoint.elapsed_ms = 900;
+            checkpoint.active_since_ms = None;
+            assert_eq!(
+                checkpoint.elapsed_at(u64::MAX).unwrap(),
+                900,
+                "known paused idle interval is not charged"
+            );
+            checkpoint.active_since_ms = Some(1000);
+            assert!(checkpoint.elapsed_at(999).is_err());
+            checkpoint.active_since_ms = None;
+            d.commit_control(checkpoint, RunState::Paused).unwrap();
+        }
+        let store = Arc::new(Store::open(&home).unwrap());
+        let recovered = Discovery::open(store, p).unwrap();
+        assert_eq!(recovered.checkpoint.elapsed_ms, 900);
+        assert_eq!(recovered.completed(), None);
+        assert!(recovered.checkpoint.active_since_ms.is_some());
     }
 
     #[test]
