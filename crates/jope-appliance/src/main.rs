@@ -1046,7 +1046,12 @@ fn main() -> ExitCode {
         #[cfg(feature = "mcp")]
         Command::Run(args) => match cmd::run::dispatch(args) {
             Err(error) => match cmd::run::dispatch_exit_code(&error) {
-                Some(code) => ExitCode::from(code),
+                Some(code) => {
+                    if code != 130 {
+                        eprintln!("jopedime: {error:#}");
+                    }
+                    ExitCode::from(code)
+                }
                 None => report(Err(error)),
             },
             result => report(result),
