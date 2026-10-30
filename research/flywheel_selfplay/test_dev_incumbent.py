@@ -1,4 +1,5 @@
 import copy
+import math
 import sys
 from pathlib import Path
 
@@ -22,7 +23,9 @@ def test_worse_restores_both_weights_and_optimizer():
     model, opt = setup()
     saved = copy.deepcopy(model.state_dict())
     saved_opt = copy.deepcopy(opt.state_dict())
-    gate = DevIncumbent(model, opt, {"mean": 2.2678}, "fixed-dev", "round-40.pt", 40)
+    gate = DevIncumbent(
+        model, opt, {"mean": 2.2678}, "fixed-dev", "round-40.pt", 40, min_gain=0
+    )
     model(torch.ones(1, 1)).sum().backward()
     opt.step()
     event = gate.decide(model, opt, {"mean": 1.148}, "fixed-dev", "round-41.pt", 41)
@@ -36,7 +39,7 @@ def test_worse_restores_both_weights_and_optimizer():
 
 def test_improvement_kept_and_later_regression_restores_it():
     model, opt = setup()
-    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1)
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1, min_gain=0)
     with torch.no_grad():
         model.weight.add_(1)
     assert gate.decide(model, opt, {"mean": 3}, "fixed-dev", "best.pt", 2)["accepted"]
@@ -49,28 +52,92 @@ def test_improvement_kept_and_later_regression_restores_it():
     assert torch.equal(model.weight, best) and gate.best_checkpoint == "best.pt"
 
 
-def test_tie_advances_training_without_lowering_dev_utility():
+def test_tie_restores_training_state_without_advancing_checkpoint():
     model, opt = setup()
-    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1)
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1, min_gain=0)
     best = model.weight.detach().clone()
     with torch.no_grad():
         model.weight.add_(1)
     event = gate.decide(model, opt, {"mean": 2}, "fixed-dev", "tie.pt", 2)
-    assert event["accepted"] and event["action"] == "accept_tie"
-    assert not torch.equal(model.weight, best)
+    assert not event["accepted"]
+    assert event["action"] == "restore_best_model_and_optimizer"
+    assert torch.equal(model.weight, best)
+    assert gate.best_checkpoint == "old.pt" and gate.best_round == 1
+
+
+@pytest.mark.parametrize(
+    ("candidate", "accepted"),
+    [
+        (2.0, False),
+        (2.125, False),
+        (2.25, False),
+        (math.nextafter(2.25, math.inf), True),
+    ],
+)
+def test_margin_boundary_restores_or_retains_model_and_adamw(candidate, accepted):
+    model, opt = setup()
+    before = copy.deepcopy(model.state_dict())
+    before_opt = copy.deepcopy(opt.state_dict())
+    gate = DevIncumbent(
+        model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1, min_gain=0.25
+    )
+    model(torch.ones(1, 1)).sum().backward()
+    opt.step()
+    proposed = copy.deepcopy(model.state_dict())
+    proposed_opt = copy.deepcopy(opt.state_dict())
+    assert gate.accepts({"mean": candidate}, "fixed-dev") is accepted
+    event = gate.decide(model, opt, {"mean": candidate}, "fixed-dev", "new.pt", 2)
+    assert event["accepted"] is accepted
+    assert event["min_gain"] == 0.25 and event["admission_policy"] == "strict-margin/v1"
+    assert event["action"] == (
+        "accept_improvement" if accepted else "restore_best_model_and_optimizer"
+    )
+    expected_model, expected_opt = (
+        (proposed, proposed_opt) if accepted else (before, before_opt)
+    )
+    assert all(torch.equal(v, expected_model[k]) for k, v in model.state_dict().items())
+    actual_opt = opt.state_dict()
+    assert actual_opt["param_groups"] == expected_opt["param_groups"]
+    for key, state in actual_opt["state"].items():
+        for name, value in state.items():
+            assert torch.equal(value, expected_opt["state"][key][name])
+    assert gate.best_checkpoint == ("new.pt" if accepted else "old.pt")
+    assert gate.best_round == (2 if accepted else 1)
+    assert gate.best_utility == (candidate if accepted else 2)
+
+
+def test_zero_margin_accepts_strict_one_ulp_gain():
+    model, opt = setup()
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1, min_gain=0)
+    assert gate.decide(
+        model, opt, {"mean": math.nextafter(2, math.inf)}, "fixed-dev", "new.pt", 2
+    )["accepted"]
+
+
+@pytest.mark.parametrize("margin", [-1, math.nan, math.inf, -math.inf])
+def test_invalid_margin_refused(margin):
+    model, opt = setup()
+    with pytest.raises(ValueError, match="finite and nonnegative"):
+        DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1, min_gain=margin)
+
+
+def test_margin_requires_explicit_selection():
+    model, opt = setup()
+    with pytest.raises(TypeError, match="min_gain"):
+        DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1)
 
 
 @pytest.mark.parametrize("score", [float("nan"), float("inf")])
 def test_invalid_score_fails_closed(score):
     model, opt = setup()
-    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1)
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1, min_gain=0)
     with pytest.raises(ValueError):
         gate.decide(model, opt, {"mean": score}, "fixed-dev", "bad.pt", 2)
 
 
 def test_identity_change_refused():
     model, opt = setup()
-    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1)
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1, min_gain=0)
     with pytest.raises(ValueError):
         gate.decide(model, opt, {"mean": 3}, "different-dev", "bad.pt", 2)
 
@@ -78,7 +145,7 @@ def test_identity_change_refused():
 def test_repeated_rejections_never_mutate_saved_optimizer_state():
     model, opt = setup()
     original = copy.deepcopy(opt.state_dict())
-    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "best.pt", 1)
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "best.pt", 1, min_gain=0)
     for rnd in range(2, 5):
         opt.zero_grad()
         model(torch.ones(1, 1)).sum().backward()

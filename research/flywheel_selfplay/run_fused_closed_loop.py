@@ -50,6 +50,7 @@ sys.path.insert(0, str(HERE))
 from automatic_promotion import promote, replay, training_cv_envelope, training_indices
 from dev_incumbent import (
     DevIncumbent,
+    admission_margin,
     gp_selection_indices,
     project_score_margins,
     proposal_plan,
@@ -156,6 +157,12 @@ def main():
     ap.add_argument("--continuous", action="store_true")
     ap.add_argument("--campaign-prior-output", type=Path, action="append", default=[])
     ap.add_argument("--best-checkpoint", type=Path)
+    ap.add_argument(
+        "--adapter-min-gain",
+        type=admission_margin,
+        required=True,
+        help="explicit H49-SEL utility margin; acceptance requires candidate > best + margin",
+    )
     ap.add_argument(
         "--phase3-gate-bundles",
         type=Path,
@@ -558,6 +565,7 @@ def main():
         evaluation_identity,
         str(best_path or "initial_model"),
         best_round,
+        min_gain=args.adapter_min_gain,
     )
     best_metadata = {
         "evaluation_identity": evaluation_identity,
@@ -567,6 +575,8 @@ def main():
         "best_utility": incumbent.best_utility,
         "utility": incumbent.best_stats,
         "checkpoint_sha256": sha(best_path) if best_path else None,
+        "adapter_admission_policy": "strict-margin/v1",
+        "adapter_min_gain": incumbent.min_gain,
     }
     write_json(args.output / "best_dev_checkpoint.json", best_metadata)
     if resumed_stats["mean"] < initial["mean"]:
@@ -962,7 +972,7 @@ def main():
                 candidate_parameter_sha256,
                 rnd,
             )
-        if candidate_dev["mean"] < incumbent.best_utility:
+        if not incumbent.accepts(candidate_dev, evaluation_identity):
             rejected = args.output / "rejected" / f"round-{rnd:02d}.pt"
             rejected.parent.mkdir(exist_ok=True)
             rejected_tmp = rejected.with_suffix(".pt.new")
@@ -972,6 +982,8 @@ def main():
                     "optimizer": opt.state_dict(),
                     "round": rnd,
                     "admission": "rejected",
+                    "adapter_admission_policy": "strict-margin/v1",
+                    "adapter_min_gain": incumbent.min_gain,
                     "dev_utility": candidate_dev,
                     "dope_sha256": before.composite_sha256,
                 },
@@ -984,6 +996,8 @@ def main():
                 "evaluation_identity": evaluation_identity,
                 "candidate_utility": candidate_dev["mean"],
                 "previous_best_utility": incumbent.best_utility,
+                "admission_policy": "strict-margin/v1",
+                "min_gain": incumbent.min_gain,
                 "accepted": False,
                 "action": "projection_failed_keep_incumbent_and_continue_GP",
                 "best_utility": incumbent.best_utility,
@@ -1156,6 +1170,8 @@ def main():
                 "best_dev_round": incumbent.best_round,
                 "evaluation_identity": evaluation_identity,
                 "margin_projection": margin_policy,
+                "adapter_admission_policy": "strict-margin/v1",
+                "adapter_min_gain": incumbent.min_gain,
             },
             checkpoint_tmp,
         )
@@ -1172,6 +1188,8 @@ def main():
                 "best_utility": incumbent.best_utility,
                 "utility": incumbent.best_stats,
                 "checkpoint_sha256": sha(incumbent.best_checkpoint),
+                "adapter_admission_policy": "strict-margin/v1",
+                "adapter_min_gain": incumbent.min_gain,
             },
         )
         wall = time.monotonic() - start

@@ -10,6 +10,14 @@ import copy
 import math
 
 
+def admission_margin(value):
+    """Require an explicit finite nonnegative utility margin; no guessed default."""
+    value = float(value)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError("adapter admission margin must be finite and nonnegative")
+    return value
+
+
 class DevIncumbent:
     def __init__(
         self,
@@ -19,7 +27,10 @@ class DevIncumbent:
         identity: str,
         checkpoint: str,
         round_idx: int,
+        *,
+        min_gain: float,
     ):
+        self.min_gain = admission_margin(min_gain)
         self.identity = identity
         self.best_utility = self._mean(utility)
         self.best_stats = copy.deepcopy(utility)
@@ -39,6 +50,11 @@ class DevIncumbent:
         model.load_state_dict(self.model_state, strict=True)
         optimizer.load_state_dict(copy.deepcopy(self.optimizer_state))
 
+    def accepts(self, utility: dict, identity: str):
+        if identity != self.identity:
+            raise ValueError("development evaluation identity changed")
+        return self._mean(utility) > self.best_utility + self.min_gain
+
     def decide(
         self,
         model,
@@ -52,8 +68,7 @@ class DevIncumbent:
             raise ValueError("development evaluation identity changed")
         value = self._mean(utility)
         old = self.best_utility
-        # Ties may advance training; only strictly worse dev utility is rolled back.
-        accepted = value >= old
+        accepted = self.accepts(utility, identity)
         if accepted:
             self.best_utility = value
             self.best_stats = copy.deepcopy(utility)
@@ -68,10 +83,10 @@ class DevIncumbent:
             "evaluation_identity": identity,
             "candidate_utility": value,
             "previous_best_utility": old,
+            "admission_policy": "strict-margin/v1",
+            "min_gain": self.min_gain,
             "accepted": accepted,
             "action": "accept_improvement"
-            if value > old
-            else "accept_tie"
             if accepted
             else "restore_best_model_and_optimizer",
             "best_utility": self.best_utility,

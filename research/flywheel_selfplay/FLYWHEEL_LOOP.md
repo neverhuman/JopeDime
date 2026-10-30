@@ -101,11 +101,12 @@ Git at `/home/ubuntu/jope-data/flywheel-gp-fused/`.
 python -m pytest -q research/flywheel_selfplay/test_automatic_promotion.py
 python research/flywheel_selfplay/run_fused_closed_loop.py \
   --input /home/ubuntu/jope-data/flywheel-gp-fused/input \
-  --output /home/ubuntu/jope-data/flywheel-gp-fused/dry-run --dry-run
+  --output /home/ubuntu/jope-data/flywheel-gp-fused/dry-run --dry-run --adapter-min-gain 0
 python research/flywheel_selfplay/run_fused_closed_loop.py \
   --input /home/ubuntu/jope-data/flywheel-gp-fused/input \
   --output /home/ubuntu/jope-data/flywheel-gp-fused/run-20261029 \
-  --rounds 2 --steps 64 --batch-size 32
+  --rounds 2 --steps 64 --batch-size 32 \
+  --adapter-min-gain "${H49_ADAPTER_MIN_GAIN:?set the owner-approved H49-SEL margin}"
 ```
 
 Development contexts/s counts actual stochastic training presentations and is
@@ -167,8 +168,23 @@ The failed log and manifests remain in custody; no other jobs were interrupted.
 comparison identity. The runner first resumes the latest logical round, then
 restores the highest-utility historical adapter and AdamW state (most recent tie:
 round40). Training proposals that reduce utility are saved under `rejected/`;
-both model and optimizer are restored before GP ranking. Equal scores may advance
-training, preventing long argmin plateaus from suppressing every optimizer update.
+both model and optimizer are restored before GP ranking. The original running
+campaign allowed equal scores to advance training across discrete argmin plateaus;
+those historical tie accepts are not validation gains. The owner0935 policy
+preparation changes future admission to `candidate > incumbent + margin`, strictly.
+Ties, exact margin-boundary scores and smaller gains restore both model and AdamW.
+All failed admissions, including ties and sub-margin gains, preserve rejected
+candidate checkpoints. Accepted checkpoints and receipts record the margin policy.
+
+The runner requires an explicit finite nonnegative `--adapter-min-gain`; there is
+no default or threshold inferred from these repeatedly selected validation scores.
+Set its utility-unit value from the owner-approved H49-SEL family-bootstrap inner-CV
+gain result when available. Zero is supported for a strict-only comparison fixture,
+not an asserted H49-SEL calibration. This policy preparation is not deployment:
+keep the existing live loop unchanged until the PR is gated, H49-SEL supplies the
+margin and Jepson/owner authorizes a planned restart. Resume preserves the existing
+incumbent, optimizer and GP journal; it does not retroactively rewrite old tie
+decisions. The future explicit margin is recorded with the checkpoint and pointer.
 `best_dev_checkpoint.json` binds the incumbent checkpoint hash, fixed development
 identity and utility; `adapter_admissions.jsonl` records each acceptance/rollback.
 The pointer is published after a durable accepted-state checkpoint. Old files and
