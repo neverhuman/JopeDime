@@ -3,6 +3,16 @@
 No H38 or r782 Golden45 rating is claimed yet. The existing Jope Dime Regressor
 reference is **1687.0 Elo, rank 31, coverage 42/45**; it is a different entrant.
 
+| Entrant | Rank | Elo | Scored datasets |
+| --- | ---: | ---: | ---: |
+| H38 F2_SMART_LM80_STD_SVD32 | Unrated | Unavailable | 0/45 (not attempted) |
+| GOV-03 r782 | Unrated | Unavailable | 0/45 (not attempted) |
+| Prior Jope Dime Regressor | 31 | 1687.0 | 42/45 |
+
+Zero recorded candidate scores means execution is pending; it does not assign
+zero fitness or count missing outcomes as losses. The preparation receipt lists
+all 45 missing dataset IDs and the artifact/execution reason for each candidate.
+
 ## Design note
 
 Freeze the 304-method, 45-dataset, 8,718-row benchmark-valid ladder and its 45

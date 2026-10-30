@@ -5,10 +5,12 @@ CPU preparation only: this command never opens dataset tables or starts inferenc
 """
 
 import argparse
+import datetime
 import hashlib
 import json
 import os
 from pathlib import Path
+import platform
 import subprocess
 import time
 
@@ -105,6 +107,7 @@ def main():
         CARGO_INCREMENTAL="0",
         CARGO_PROFILE_DEV_DEBUG="line-tables-only",
     )
+    started_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
     started = time.monotonic()
     run = subprocess.run(command, cwd=repo, env=env, capture_output=True, text=True)
     wall = time.monotonic() - started
@@ -141,6 +144,18 @@ def main():
         "command": command,
         "exit_code": run.returncode,
         "wall_seconds": wall,
+        "started_utc": started_utc,
+        "finished_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "environment": {
+            "host": platform.node(),
+            "platform": platform.platform(),
+            "nice": os.getpriority(os.PRIO_PROCESS, 0),
+            "CARGO_BUILD_JOBS": 4,
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+            "CARGO_TARGET_DIR": os.environ.get("CARGO_TARGET_DIR"),
+            "GPU_work": False,
+        },
         "reference": {
             "methods": 304,
             "datasets": 45,
@@ -156,6 +171,11 @@ def main():
             "corrections": sha(corrections),
             "registry": sha(registry),
             "source": sha(Path(__file__)),
+            "cargo_lock": sha(repo / "Cargo.lock"),
+            "native_elo_source": sha(repo / "crates/jope-arena/src/elo.rs"),
+            "native_leaderboard_source": sha(
+                repo / "crates/jope-arena/src/leaderboard.rs"
+            ),
         },
         "h38_HWV02_verified": H38,
         "dope_loaded_sha256_pin": DOPE,
