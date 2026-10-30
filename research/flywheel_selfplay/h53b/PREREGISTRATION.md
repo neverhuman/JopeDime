@@ -84,3 +84,13 @@ Separate timing-pilot diagnostic (not part of H53b seed bootstrap): final mean f
 ## Infrastructure-only attempt and owner GO chronology
 
 After the timing-only pilot completed, a continuation seed13 CPU process started at 19:27:57Z when the GPU was busy. At 19:28:33Z, it was stopped before any optimizer update after the owner GO ruling required equal fresh budgets and a fresh seed12/scale1.0 cell first. Its setup-only log and `wave.json` are preserved under `~/jope-data/h53b/attempt-03/remaining/`; it is not an outcome. The final source amendment is committed before the next training cell. The new coordinator anchors its 150-minute deadline to its own UTC start and stores start/deadline in `wave.json`.
+
+## GPU-only equal-budget amendment (2026-10-30T19:35Z)
+
+The 19:30Z CPU fallback cell (fresh seed12/scale1.0) was terminated by the coordinator RSS guard after its first training step measured 60.5s, versus about 2.05s/step on CUDA. It is infra-void, contributes no endpoint, and is retained under `~/jope-data/h53b/go-1930-wave/scale-1/seed12/`. The 19:30Z wave receipt records 0/6 outcome cells; no foreign GPU process or lock holder was touched.
+
+All six outcome cells are GPU-only and start fresh in the original preregistered order: scale1.0 seeds12/13/14, then scale0.1 seeds12/13/14. The 10-minute timing pilot remains separate and excluded. Each cell has a 20-minute wall cap, with runner cap 1110s and 90s for terminal score/receipt; the coordinator enforces the cell cap. No CPU substitution is permitted.
+
+Before each cell, wait on `~/jope_plan/qualification.lock` using exclusive `flock`, polling every 30s, and require at least 6144 MiB free on cuda:0 while holding the lock. Release the lock after each cell. The 150-minute budget counts cumulative cell wall time only; all lock and GPU-memory waits are excluded. Stop with a partial wave receipt if cumulative waiting reaches 3 hours. Record per-cell lock wait, free memory, device, wall time and endpoint; never disturb another process or lock holder.
+
+Primary and diagnostic metrics, ties-fail rule, source pins and no-H55-training rule remain as specified by the 19:30Z owner GO amendment. This resource amendment was committed before the next training cell.
