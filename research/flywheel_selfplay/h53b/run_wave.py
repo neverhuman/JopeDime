@@ -98,11 +98,14 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
  if h is not None: cmd.append('--lock-held')
  env=os.environ.copy(); env.update({'OMP_NUM_THREADS':'8','MKL_NUM_THREADS':'8','OPENBLAS_NUM_THREADS':'8','CARGO_INCREMENTAL':'0','CARGO_PROFILE_DEV_DEBUG':'line-tables-only'})
  start=time.monotonic(); note(f"START cell {i}/6 seed={seed} scale={scale:g} device={device} wall_cap={wall_cap}; guard={json.dumps(guard,sort_keys=True)}")
- log=out/'run.log'; code=None; fail=None
+ log=out/'run.log'; code=None; fail=None; child_nice=None
  with log.open('w') as f:
   proc=subprocess.Popen(cmd,cwd=ROOT,env=env,stdout=f,stderr=subprocess.STDOUT,preexec_fn=lambda:os.nice(10))
   while proc.poll() is None:
    if time.monotonic()>=cell_deadline: proc.terminate(); fail='coordinator cell deadline'; break
+   try:
+    child_nice=next(int(x.split()[1]) for x in Path(f'/proc/{proc.pid}/status').read_text().splitlines() if x.startswith('NI:'))
+   except (FileNotFoundError,ProcessLookupError,StopIteration): pass
    current=rss(proc.pid)
    if current is not None and current>=RSS_LIMIT_KIB: proc.terminate(); fail='RSS cap'; break
    time.sleep(3)
@@ -110,7 +113,7 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
  if h is not None: fcntl.flock(h,fcntl.LOCK_UN); h.close()
  wall=time.monotonic()-start
  if fail or code!=0: note(f"STOP after cell {i}: {fail or f'runner exit={code}'} log={log}; later cells not launched"); return None
- summary=json.loads((out/'summary.json').read_text()); summary['coordinator_preflight']=guard; summary['coordinator_nice']=10
+ summary=json.loads((out/'summary.json').read_text()); summary['coordinator_preflight']=guard; summary['process_nice']=child_nice
  (out/'summary.json').write_text(json.dumps(summary,sort_keys=True,indent=2,allow_nan=False)+'\n')
  utility=summary.get('final_family_utility')
  note(f"DONE cell {i}/6 seed={seed} scale={scale:g} status={summary.get('status')} rounds={summary['rounds_completed']} wall={wall:.1f}s utility={utility if utility is not None else 'unavailable'} device={device}")

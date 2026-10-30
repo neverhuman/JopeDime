@@ -65,3 +65,6 @@ The corrected time-only pilot is also the preregistered cell 1 (seed12, scale1.0
 ## GPU occupancy fallback rule clarification (2026-10-30T19:28Z)
 
 Before waiting on `qualification.lock`, query current free GPU memory. If less than 20 GiB is free, treat the GPU as busy and use the preregistered guarded CPU fallback immediately without waiting on or disturbing the lock holder. Otherwise acquire the lock, then recheck free memory; if occupancy rises below 20 GiB, release the lock and fall back. If the GPU has headroom but its lock remains held, retain the original 20-minute busy-lock wait before CPU fallback. CPU guard receipt includes `SwapTotal`/`SwapFree`; RSS remains capped at 6 GiB. This changes coordinator resource routing only, not any arm/update/metric protocol.
+
+
+The coordinator records the child process's observed Linux nice value (the host parent is already nice 15, and the child adds 10, so it may appear as NI 19). It continues to enforce host CPU <=85%, OMP/MKL <=8, MemAvailable >=20 GiB, and RSS <6 GiB; CPU fallback also records swap occupancy.
