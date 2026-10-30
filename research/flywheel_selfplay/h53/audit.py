@@ -59,6 +59,7 @@ def clustered_family_stats(rows: list[dict[str, float]], label: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=Path, default=Path.home() / "jope-data/h53/runs")
+    parser.add_argument("--replay-runs", type=Path, default=Path.home() / "jope-data/h53/replay")
     parser.add_argument("--metrics", type=Path, default=Path(__file__).resolve().parents[3] / "docs/research/studies/dope-neural-ranking-20261021/h53/metrics.json")
     parser.add_argument("--audit", type=Path, default=Path.home() / "jope-data/h53/runs/audit.json")
     args = parser.parse_args()
@@ -68,6 +69,7 @@ def main() -> None:
         raise RuntimeError("H53 pilot wave is incomplete or cell order/roster differs")
     per_scale: dict[str, list[dict]] = {}
     raw = []
+    replay_updates = []
     for scale in SCALES:
         rows = []
         for seed in SEEDS:
@@ -128,6 +130,45 @@ def main() -> None:
             }
             rows.append(row)
             raw.append(row)
+            replay = load_cell(args.replay_runs, scale, seed)
+            replay_required = {
+                "seed": seed,
+                "initialization_scale": scale,
+                "rounds": 3,
+                "dope_sha256_before": DOPE_SHA,
+                "dope_sha256_after": DOPE_SHA,
+                "manifest_file_sha256": MANIFEST_SHA,
+                "r882_adapter_transfer_to_candidate": False,
+                "optimizer_updates_completed": 3,
+            }
+            for key, value in replay_required.items():
+                if replay.get(key) != value:
+                    raise RuntimeError(f"replay seed{seed} scale{scale:g}: {key} mismatch")
+            if replay["fresh_adapter_sha256_before_training"] != cell["fresh_adapter_sha256_before_training"]:
+                raise RuntimeError("integrity replay did not reproduce fresh initialization")
+            if replay["fresh_adapter_sha256_after_training"] == replay["fresh_adapter_sha256_before_training"]:
+                raise RuntimeError("integrity replay shows no parameter change")
+            if replay["trainable_adapter_update_l2_from_init"] <= 0:
+                raise RuntimeError("integrity replay has zero trainable adapter update")
+            if not np.allclose(
+                [point["family_utility"] for point in replay["trajectory"]],
+                [point["family_utility"] for point in cell["trajectory"]],
+                rtol=0,
+                atol=1e-9,
+            ):
+                raise RuntimeError("integrity replay utility curve differs from original pilot")
+            if replay["elo_vs_r882_diagnostic"]["ratings"]["H53"] != cell["elo_vs_r882_diagnostic"]["ratings"]["H53"]:
+                raise RuntimeError("integrity replay Elo differs from original pilot")
+            replay_updates.append({
+                "seed": seed,
+                "scale": scale,
+                "initial_adapter_sha256": replay["fresh_adapter_sha256_before_training"],
+                "final_adapter_sha256": replay["fresh_adapter_sha256_after_training"],
+                "update_l2_from_init": replay["trainable_adapter_update_l2_from_init"],
+                "optimizer_updates_completed": replay["optimizer_updates_completed"],
+                "matches_original_val_curve": True,
+                "matches_original_elo": True,
+            })
         per_scale[f"{scale:g}"] = rows
 
     scales_summary = {}
@@ -156,6 +197,8 @@ def main() -> None:
             "preregistration": "9c98aa1f91680e0952a3547090f063c7ec6948c3",
             "runner": "706915ca58afc31fa4dcac311b6336a8fd461867",
             "coordinator": "2ddb26aec55a99d0a87003dcde5215a9f337e6e0",
+            "integrity_replay_runner_and_coordinator": "f4a381380d730842baa62df50552cc8e6fca3cd8",
+            "audit_builder": "pending",
         },
         "input_manifest_identity": MANIFEST_ID,
         "input_manifest_file_sha256": MANIFEST_SHA,
@@ -166,6 +209,16 @@ def main() -> None:
         "all_cells_cuda": True,
         "all_cells_dope_identity_pass": True,
         "all_cells_fresh_adapter_sha_differs_from_discarded_r882_adapter": True,
+        "integrity_replay": {
+            "source_commit": "f4a381380d730842baa62df50552cc8e6fca3cd8",
+            "six_cells_replayed": len(replay_updates),
+            "all_initialization_hashes_match_original": True,
+            "all_val_curves_match_original_within_1e-9": True,
+            "all_elo_values_match_original": True,
+            "all_trainable_adapter_hashes_changed": True,
+            "all_optimizer_update_counts": 3,
+            "cells": replay_updates,
+        },
         "validation_use": "repeated DL-Val curves are diagnostic-only; no seed, scale, or checkpoint selected",
         "admission": {
             "t537_rule": "NOT EVALUATED: pilot's repeated DL-Val reads are diagnostic-only and do not qualify admission",
@@ -180,7 +233,7 @@ def main() -> None:
         "arms": scales_summary,
         "admission": payload["admission"],
         "source_identities": {key: payload[key] for key in ("input_manifest_identity", "input_manifest_file_sha256", "dope_sha256", "r882_comparator_checkpoint_sha256")},
-        "pilot": {key: payload[key] for key in ("pilot_complete", "preregistered_cells", "all_cells_cuda", "all_cells_dope_identity_pass", "all_cells_fresh_adapter_sha_differs_from_discarded_r882_adapter", "validation_use", "source_commits")},
+        "pilot": {key: payload[key] for key in ("pilot_complete", "preregistered_cells", "all_cells_cuda", "all_cells_dope_identity_pass", "all_cells_fresh_adapter_sha_differs_from_discarded_r882_adapter", "validation_use", "source_commits", "integrity_replay")},
     }
     args.audit.parent.mkdir(parents=True, exist_ok=True)
     args.audit.write_text(json.dumps(payload, sort_keys=True, indent=2, allow_nan=False) + "\n")
