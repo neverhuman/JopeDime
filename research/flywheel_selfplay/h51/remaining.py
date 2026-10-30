@@ -292,6 +292,7 @@ def run_null(args) -> dict:
         "selection_rule": "maximum paired family-median gain vs matched STEPS among 16 directions",
         "candidate_summaries": rows, "family_median_gain_vs_r882": best["base_median"],
         "family_bootstrap_lb95_vs_r882": best["base_lb"], "family_bootstrap_ub95_vs_r882": best["base_ub"],
+        "inner_cv_mean_gain_vs_r882": float(np.mean(list(best["gains"].values()))),
         "paired_control": "STEPS-k16-lr1e-4-same-seed-fold (batch order not applicable to random directions)",
         "paired_family_median_gain": med, "paired_family_bootstrap_lb95": lb,
         "paired_family_bootstrap_ub95": ub,
