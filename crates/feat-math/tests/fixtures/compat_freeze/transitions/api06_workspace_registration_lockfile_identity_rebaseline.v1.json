@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced API-06 workspace registration adds only jope-client and jope-service package records to Cargo.lock. Append this ADR-0004 evaluator identity and lineage fixture provenance edge after the merged PUB-02 transition; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
+  "plan_reference": "API-06; owner-authority lanes_0645 2026-10-30 06:45Z",
+  "source_commit": "f11f6f474a5f457692d9e4ab6b4fb31860575a91",
+  "base_commit": "cef579478940030a64cca706f43901853c64dfdd",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "9d327a68841f075a4294fa08b7fa76598cbc2484ba90de4083a8079e4c605b27",
+      "after": "7653d5b8040a6c68124f4bcc086b639a1e0d1221dc56abce4df86e4baa3a2fc3"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "95fb42ddc8d997faecfc4c90a08cd5615adb174e0342323ad4bc343d14c2146d",
+      "after": "105214196577e85ace635f5ddc3d41099db9ed90b8762e0501887d200697b471"
+    }
+  ],
+  "before_identity_digest": "d6612bb0854769ba9e5c869968191d8efa80ca827ca37ebf3e6a8f35d11ae7c8",
+  "after_identity_digest": "0ecbbbd7738fdc7b2fedb67aba2aa556d04532006fcf444792e097320f3df883",
+  "before_implementation_sha256": "cd46314f74ca3e6d56b5283a50c6b06c64a5560a39fc42c6af86285aecf102e2",
+  "after_implementation_sha256": "2f0afd13a08c87b82695dcc55433d31af7c945fdc7a2bd7b6c2521dc6b711a70",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
