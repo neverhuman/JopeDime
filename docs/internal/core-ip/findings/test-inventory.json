@@ -1827,6 +1827,10 @@
         "training"
       ]
     },
+    "python:research/flywheel_selfplay/h46/test_analyze.py": {
+      "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
       "role": "research"
@@ -1837,6 +1841,10 @@
     },
     "python:research/flywheel_selfplay/test_device_pool_cache.py": {
       "reason": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/test_phase3_gates.py": {
+      "reason": "Owner-requested pytest proofs for the flywheel Phase 3 fail-closed gatekeeper (#459): round qualification and comparison, deterministic verification sampling and miss-to-training-pair conversion; research flywheel outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
@@ -2617,6 +2625,14 @@
         "orchestration"
       ]
     },
+    "target:jope-api/lib/jope_api": {
+      "reason": "v1 wire-contract data types (serde/schemars) and their unit tests, including the Appendix D error catalog; a transport contract with no regression subsystem until service and worker integration",
+      "role": "infrastructure"
+    },
+    "target:jope-api/test/contract": {
+      "reason": "v1 wire-contract JSON round-trip and schema-snapshot drift tests for jope-api; contract infrastructure, not a regression subsystem",
+      "role": "infrastructure"
+    },
     "target:jope-appliance/bin/jopedime": {
       "role": "regression",
       "subsystems": [
@@ -2820,6 +2836,10 @@
         "orchestration"
       ]
     },
+    "target:jope-client/lib/jope_client": {
+      "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
+      "role": "infrastructure"
+    },
     "target:jope-datasets/bin/jope-datasets": {
       "role": "regression",
       "subsystems": [
@@ -2832,6 +2852,12 @@
       "subsystems": [
         "preparation",
         "storage"
+      ]
+    },
+    "target:jope-datasets/test/fused_bundle_schema": {
+      "role": "regression",
+      "subsystems": [
+        "export"
       ]
     },
     "target:jope-datasets/test/ingest_dry_run": {
@@ -4685,6 +4711,10 @@
         "evidence"
       ],
       "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+    },
+    "target:jope-service/lib/jope_service": {
+      "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
+      "role": "infrastructure"
     },
     "target:jope-telemetry/bin/jtel": {
       "reason": "Telemetry inspection and export CLI; operational tooling that supports training runs without exercising a regression subsystem",
