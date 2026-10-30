@@ -1853,10 +1853,82 @@ impl PyRatchetLive {
     }
 }
 
+#[pyclass(name = "FullFlywheelReporter", unsendable)]
+struct PyFullFlywheel {
+    inner: crate::hooks::flywheel::FullFlywheel,
+}
+#[pymethods]
+impl PyFullFlywheel {
+    #[new]
+    fn new(packet: PathBuf, output: PathBuf, history: PathBuf) -> PyResult<Self> {
+        Ok(Self {
+            inner: crate::hooks::flywheel::FullFlywheel::new(&packet, output, history)
+                .map_err(runtime_error)?,
+        })
+    }
+    fn training_order(&self, seed: u64, limit: usize, gp: bool) -> PyResult<Vec<String>> {
+        self.inner
+            .training_order(seed, limit, gp)
+            .map_err(runtime_error)
+    }
+    fn utility<'py>(
+        &self,
+        py: Python<'py>,
+        cids: Vec<String>,
+        fitness: Vec<f64>,
+        gates: Vec<bool>,
+        programs: Vec<String>,
+        role: &str,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        to_py(
+            py,
+            &self
+                .inner
+                .utility(&cids, &fitness, &gates, &programs, role)
+                .map_err(runtime_error)?,
+        )
+    }
+    fn begin(&mut self) {
+        self.inner.begin();
+    }
+    fn begin_pack(&mut self) {
+        self.inner.begin_pack();
+    }
+    fn packed(&mut self, cids: Vec<String>, payload_bytes: Vec<u64>) -> PyResult<()> {
+        self.inner
+            .packed(&cids, &payload_bytes)
+            .map_err(runtime_error)
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn scores(
+        &self,
+        cids: Vec<String>,
+        values: Vec<f64>,
+        metric: &str,
+        higher: bool,
+        model: &str,
+        model_sha: &str,
+        round: u64,
+    ) -> PyResult<()> {
+        self.inner
+            .scores(&cids, &values, metric, higher, model, model_sha, round)
+            .map_err(runtime_error)
+    }
+    fn finish<'py>(
+        &mut self,
+        py: Python<'py>,
+        row: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let row: Value = serde_json::from_str(&to_json(row)?).map_err(runtime_error)?;
+        to_py(py, &self.inner.finish(row).map_err(runtime_error)?)
+    }
+}
+
 #[pymodule]
 fn _telemetry(module: &Bound<'_, PyModule>) -> PyResult<()> {
     let py = module.py();
     module.add_class::<PyRecorder>()?;
+    module.add_class::<PyFullFlywheel>()?;
     module.add_class::<PyRecordSink>()?;
     module.add_class::<PyGpSession>()?;
     module.add_class::<PyGenerationRecorder>()?;

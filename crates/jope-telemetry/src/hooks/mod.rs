@@ -9,6 +9,7 @@
 
 pub mod dope;
 pub mod eval;
+pub mod flywheel;
 pub mod generation;
 pub mod hardware;
 pub mod io;

@@ -242,3 +242,35 @@ def project_score_margins(parameters, constraints, max_passes=2, tolerance=1e-6)
             for v in after
         ),
     }
+
+
+def warm_restart_adapter(model, optimizer, seed, round_idx):
+    """Perturb only trainable adapter tensors; reset LR independently of restored LR.
+
+    A private generator makes consecutive rejected proposals differ without changing
+    frozen DOPE or its anchor. Adam state still comes from the complete incumbent.
+    """
+    import torch
+
+    params = [p for p in model.parameters() if p.requires_grad]
+    if not params:
+        raise ValueError("no trainable adapter")
+    generator = torch.Generator(device=params[0].device).manual_seed(seed)
+    sigma = (1e-5, 3e-5, 1e-4, 3e-4)[round_idx % 4]
+    lr = (1e-4, 3e-4, 2.5e-5, 1e-4)[round_idx % 4]
+    with torch.no_grad():
+        for p in params:
+            p.add_(
+                torch.randn(
+                    p.shape, dtype=p.dtype, device=p.device, generator=generator
+                ),
+                alpha=sigma,
+            )
+    for group in optimizer.param_groups:
+        group["lr"] = lr
+    return {
+        "version": "seeded-adapter-warm-restart/v1",
+        "seed": seed,
+        "sigma": sigma,
+        "lr": lr,
+    }
