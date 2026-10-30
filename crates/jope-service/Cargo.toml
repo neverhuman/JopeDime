@@ -21,6 +21,7 @@ jope-runtime = { path = "../jope-runtime" }
 feat-math = { path = "../feat-math" }
 memmap2 = "=0.9.11"
 jope-api = { path = "../jope-api" }
+jope-paths = { path = "../jope-paths" }
 redb = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true }

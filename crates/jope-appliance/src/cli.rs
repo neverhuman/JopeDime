@@ -85,6 +85,15 @@ pub enum Command {
     Mcp,
     /// Serve the same fit/evaluate API on stdin/stdout as JSON lines.
     Api,
+    /// Start or inspect the shared background engine.
+    Serve {
+        #[arg(long, conflicts_with_all = ["stop", "idle_exit"])]
+        status: bool,
+        #[arg(long, conflicts_with = "idle_exit")]
+        stop: bool,
+        #[arg(long, value_name = "D", conflicts_with_all = ["status", "stop"])]
+        idle_exit: Option<String>,
+    },
     /// Verify this executable's embedded package completely. A diagnostic: it cannot establish
     /// trust in a binary that may itself be modified; verify downloads with `jope-dist verify`.
     VerifySelf(JsonFlag),
@@ -178,4 +187,50 @@ pub enum FitnessCommand {
     },
     /// Print the JSON Schema of objective specifications.
     Schema,
+}
+
+#[cfg(test)]
+mod serve_tests {
+    use super::{Cli, Command};
+    use clap::Parser;
+
+    #[test]
+    fn serve_accepts_the_specified_lifecycle_flags() {
+        assert!(matches!(
+            Cli::try_parse_from(["jopedime", "serve"]).unwrap().command,
+            Command::Serve {
+                status: false,
+                stop: false,
+                idle_exit: None
+            }
+        ));
+        assert!(matches!(
+            Cli::try_parse_from(["jopedime", "serve", "--status"])
+                .unwrap()
+                .command,
+            Command::Serve {
+                status: true,
+                stop: false,
+                idle_exit: None
+            }
+        ));
+        assert!(matches!(
+            Cli::try_parse_from(["jopedime", "serve", "--stop"])
+                .unwrap()
+                .command,
+            Command::Serve {
+                status: false,
+                stop: true,
+                idle_exit: None
+            }
+        ));
+        assert!(matches!(
+            Cli::try_parse_from(["jopedime", "serve", "--idle-exit", "2s"])
+                .unwrap()
+                .command,
+            Command::Serve { status: false, stop: false, idle_exit: Some(value) } if value == "2s"
+        ));
+        assert!(Cli::try_parse_from(["jopedime", "serve", "--status", "--stop"]).is_err());
+        assert!(Cli::try_parse_from(["jopedime", "serve", "--stop", "--idle-exit", "2s"]).is_err());
+    }
 }
