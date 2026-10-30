@@ -858,6 +858,18 @@ fn main() -> ExitCode {
             common,
         } => run_fit(&train, output.as_deref(), &model_root, &common),
         Command::Model(args) => report(model::run(args)),
+        Command::Run(args) => report((|| {
+            let client = cmd::client()?;
+            cmd::run::run(args, &client)
+        })()),
+        Command::Status(args) => report((|| {
+            let client = cmd::client()?;
+            cmd::status::run(args, &client)
+        })()),
+        Command::Events(args) => report((|| {
+            let client = cmd::client()?;
+            cmd::events::run(args, &client)
+        })()),
         Command::Predict {
             model,
             input,

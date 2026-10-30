@@ -2502,6 +2502,7 @@ dependencies = [
  "jope-assets",
  "jope-client",
  "jope-datasets",
+ "jope-paths",
  "jope-runtime",
  "jope-service",
  "portable-pty",

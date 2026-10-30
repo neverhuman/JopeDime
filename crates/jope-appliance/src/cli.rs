@@ -27,6 +27,12 @@ pub enum Command {
     },
     /// Save, inspect, verify and export language-neutral fitted objects; or serve their MCP tools.
     Model(crate::model::ModelArgs),
+    /// Start a run from an API dataset identifier.
+    Run(crate::cmd::run::RunArgs),
+    /// Read or long-poll a run snapshot.
+    Status(crate::cmd::status::StatusArgs),
+    /// Read or follow run events as NDJSON.
+    Events(crate::cmd::events::EventsArgs),
     /// Product version, source commit, runtime ABI, target and package identity.
     Version(JsonFlag),
     /// Package integrity, devices, promised methods and limits.
