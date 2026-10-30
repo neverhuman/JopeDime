@@ -1,0 +1,70 @@
+{
+  "schema": "jope.hwv05.analysis-preregistration/v1",
+  "registered_at": "2026-10-30T12:32:23.895198+00:00",
+  "owner": "sol_v1_obj02",
+  "authority": [
+    "lanes_1220",
+    "lanes_1230"
+  ],
+  "state": "ANALYSIS_DESIGN_ONLY_EXECUTION_NOT_ADMITTED",
+  "primary": {
+    "contrast": "matched ranker with eight five-fold H27 GP-fingerprint coordinates versus same ranker with those coordinates zeroed after fitted scaling",
+    "task": "regression",
+    "endpoint": "family-weighted paired relative routing Elo; reference arm relative Elo0, not a Golden45 Elo",
+    "win_rule": "For each fixed seed/context, compare chosen archived raw constrained fitness on the identical slate/evaluator; lower is better. Exact finite equality ties. Explicit evaluation failure loses to finite success; two explicit failures tie. Missing/unknown outcomes stop analysis, never become zero or failure.",
+    "aggregation": "average paired win/tie scores over contexts within each authoritative family and over all three seeds, then weight families equally",
+    "elo": "400*log10(p/(1-p)); retain infinite endpoints at p=0/1, no arbitrary clipping or pseudocount",
+    "ci": {
+      "confidence": 0.975,
+      "method": "100000 paired whole-family bootstrap draws; preserve contexts and all seed pairs together",
+      "seed": 20261030,
+      "quantiles": [
+        0.0125,
+        0.9875
+      ]
+    },
+    "verdict": "ADOPT only if lower97.5% bound on relative Elo >0 and all admission/coverage/failure requirements hold; otherwise REJECT adoption with uncertainty retained. No verdict before valid execution."
+  },
+  "recipe": {
+    "arms": 2,
+    "seeds": [
+      20261030,
+      20261031,
+      20261032
+    ],
+    "ranker": "H27-style width64 M0 candidate/context interaction architecture; common240/candidate412 and identical padded frozen-DOPE state; literal fingerprint zeros after DL-Train-only scaling in control",
+    "updates_per_fit": 400,
+    "batch_queries": 128,
+    "microbatch_queries": 16,
+    "optimizer": "AdamW lr0.0003 weight_decay0.1 dropout0.3 clip1",
+    "paired": "same initialization/schedules/capacity; no feature-only task-bias cancellation, verify actual candidate interactions",
+    "selection": "fixed final400 endpoint, no seed/checkpoint/hyperparameter selection using DL-Val"
+  },
+  "safeguards": {
+    "hardware": "CPU only; nice10/build-or-thread8; one heavy job; available>=32GiB/load<=85",
+    "planned_ranker_fits": 6,
+    "planned_ranker_updates": 2400,
+    "new_GP_probe_fits": 0,
+    "DOPE_optimizer_updates": 0,
+    "DOPE_pin": "c51a56d0; full checkpoint hash must be resolved/verified before any forward",
+    "data": "catalogued real S3 inputs only; DL-Train fits/scalers and DL-Val final evaluation; no holdout/sealed numerical payload reads",
+    "reuse": "existing hash-verified H27 34000 fits; no substitute fresh probe cohort or synthetic scientific outcomes",
+    "admission": "full input/context/candidate/evaluator/family/role/cut/vocabulary/feature identities, disjoint Train/Val families, complete fingerprint coverage and source/resource freeze required; unresolved identities block execution"
+  },
+  "reporting": {
+    "primary": "regression relative routing Elo and97.5%CI, not AUC or absolute Golden45 rating",
+    "binary": "NOT_RUN/deferred, never pooled",
+    "coverage": "all admitted contexts/slates/seeds/families; failures/unknowns/skips explicit",
+    "secondary": "chosen-fitness/regret and per-dataset+split percentile summaries; one-fold comparison diagnostic only, no extra adoption endpoint",
+    "history": "append only actual, identity-bound scored results to existing score history; no placeholder outcomes",
+    "follow_up": "if ADOPT file RNK follow-up; no serving/model promotion"
+  },
+  "pending": {
+    "worktree": "one additional vacancy required after ruling1230; no worktree/code/scoring now",
+    "source_commit": null,
+    "input_manifest_sha256": null,
+    "full_DOPE_checkpoint_sha256": null,
+    "DL_Train_and_DL_Val_roster_sha256": null,
+    "H27_materialized_feature_and_target_paths": null
+  }
+}
