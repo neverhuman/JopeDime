@@ -1,24 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Ruling 0840(a) authorizes the SVC-05 lockfile-only identity transition. Cargo.lock only adds existing locked axum/jope-api/serde_json/subtle/tokio/tower dependency names to jope-service; no package/version/source/checksum or behavioral fixture changes. Chain after the latest main identity represented by the before fixture hashes. Preserve all historical identities.",
-  "plan_reference": "SVC-05 / T068; owner scope rulings 0810, 0840 and 0945, 2026-10-30",
-  "source_commit": "ebfbf6596ffca9cc15cb9601f68741332d4f279a",
-  "base_commit": "0009d3603ce3f89d970afdb2d9d6fe3439952dc1",
+  "decision": "Announced SVC-05 lockfile identity successor after merging main 80b954a2b: only this PR's dependency edges change Cargo.lock; no evaluator input version/feature or evaluator behavior changed. Re-chained at its queue slot by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "SVC-05; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "899261ff31bd1be314e49dd18ea1b566f1cbb2ff",
+  "base_commit": "80b954a2bf83e0ff3e8ed9fd6fbb72457b4d0940",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "5981f17baf2291b3bbd53574ab4aa26508f4957f83f14a38ab601df76a4879de",
-      "after": "53d88bdd9b465c5ab41f8f426893a429c13e0921d153112a25603036ff50bb50"
+      "before": "a196c3ce233bc6bdd33742a88712916496de41cdfb4d14f406ce4ed3c81f4ce0",
+      "after": "99b7b6c28fc4d8aff0d33a1b2b0dc24a555f0a72103cfb69ac26eb49b0fee678"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "a8d61dd9f0fa48636a6e82e80954a581ea3b0ed75be74132763b8a12a91d417c",
-      "after": "6025cf380d55a674155304038bd418edf131e42f4f76dfbd0f022f04ce970498"
+      "before": "0b7cd6c8dbc9e2392f6c9cdffca962e52c577cd76c7fa48b819aca80dccd5f4e",
+      "after": "fc1a2896ed22d62d82f437e5c44500157913c1e11d7c812fb9f5d0fa2a09bc72"
     }
   ],
-  "before_identity_digest": "62dfd68fada288ffc937b7e6e47fbbf18fef15c1eb271f9cf0bd86da0456ed3d",
-  "after_identity_digest": "ef294c37708f42ae07b0250ac0adbb10c28a43eb545004e086340a454a44a16f",
-  "before_implementation_sha256": "749305466bcfd5fe0668969dd43c3c7d21460b3ab1fcf6cf33234ad83eda787d",
-  "after_implementation_sha256": "f6a158c40e46470e9f2fffbc4f01c18b39a0126204f0b09ce26b1b1c47e110b8",
+  "before_identity_digest": "a1aa6bbe500269a3800df297a0c2e026cfe482873125ad4b0efe68fcf79da236",
+  "after_identity_digest": "7a0c318b019568e5fe07db1acaa35b1c8626d22471cc90878ea4fe67f87e85f1",
+  "before_implementation_sha256": "4c5326affb4f873c294906407d7c91ad64537309cff3e9ef738428cea021e508",
+  "after_implementation_sha256": "76e0e7ada402ec15e33f75a3e1c7d5d95581cc458dc681dbd52689f2e2f6195f",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }
