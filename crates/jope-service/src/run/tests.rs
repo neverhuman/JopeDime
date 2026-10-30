@@ -315,7 +315,10 @@ fn pause_waits_for_every_pipelined_round_and_fences_only_unfinished_attempts() {
         "future arrival cannot skip current round"
     );
     run.control(Control::Pause, None).unwrap();
-    assert_eq!(run.expire_pause().unwrap(), [first.key.clone()]);
+    assert_eq!(
+        run.expire_pause().unwrap().as_slice(),
+        std::slice::from_ref(&first.key)
+    );
     run.round_committed().unwrap();
     assert_eq!(run.snapshot().state, RunState::Pausing);
     run.round_committed().unwrap();

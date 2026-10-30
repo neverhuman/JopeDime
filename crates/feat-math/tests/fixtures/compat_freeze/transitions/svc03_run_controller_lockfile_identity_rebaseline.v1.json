@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "SVC-03 adds only existing jope-api/proptest dependency edges to the jope-service Cargo.lock record. Announced lockfile-only identity edge under owner ruling0840; no new package/version/source/checksum, behavior fixture or known identity change.",
+  "plan_reference": "SVC-03; ruling 0810 dependency scope; ruling 0840(a) 2026-10-30",
+  "source_commit": "61cb102a6503085fdc4b399c45ebf0b464038f7d",
+  "base_commit": "8f417243b4073cd40eb2d80aaeeb491411ec245a",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526",
+      "after": "a13a0d78e657ed6b4917ea6b31eea717deb1cec130843c18bfc66232075ea1a4"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de",
+      "after": "523fcaf097dffced08f072a600571f9e7fb16b76bd28fcfcfc2682d1ed2252be"
+    }
+  ],
+  "before_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b",
+  "after_identity_digest": "f001f5e5474371be3de0f07b8465d137601493088881f16e52a88dc58f842865",
+  "before_implementation_sha256": "3337743e65bd3186aa9f56a62f6144ab8201da1365a3e2d103df787d0af9940c",
+  "after_implementation_sha256": "7b00acc17a4fca9c733f241eb635eeffb0f76a70420d583c6589b9c8ee162ccb",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
