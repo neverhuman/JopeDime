@@ -4,8 +4,6 @@ import json
 import math
 import os
 import random
-import subprocess
-import threading
 import time
 from collections.abc import Iterable, Iterator
 from dataclasses import asdict, dataclass
@@ -78,91 +76,6 @@ def _append_jsonl(path: Path, value: Any) -> None:
         handle.write(json.dumps(value, sort_keys=True) + "\n")
         handle.flush()
         os.fsync(handle.fileno())
-
-
-class _LiveMetricsWriter:
-    """Aggregate step telemetry into lightweight windows and rotate by size."""
-
-    def __init__(
-        self,
-        path: Path,
-        *,
-        hz: float,
-        rotate_bytes: int = 8 * 1024 * 1024,
-    ) -> None:
-        if hz <= 0:
-            raise ValueError("live metrics frequency must be positive")
-        self.path = path
-        self.period = 1.0 / hz
-        self.rotate_bytes = rotate_bytes
-        self.window_started = time.monotonic()
-        self.rows: list[dict[str, Any]] = []
-
-    def add(self, row: dict[str, Any]) -> None:
-        self.rows.append(row)
-        if time.monotonic() - self.window_started >= self.period:
-            self.flush()
-
-    def _aggregate(self, ended: float) -> dict[str, Any]:
-        latest = self.rows[-1]
-        mean_fields = (
-            "total_loss",
-            "huber_loss",
-            "bradley_terry_loss",
-            "validity_loss",
-            "loader_wait_ms",
-            "h2d_ms",
-            "compute_ms",
-            "optimizer_ms",
-            "gradient_norm",
-        )
-        output = {
-            "schema": "jope-prime.dime-live-metrics.v1",
-            "time_unix_seconds": time.time(),
-            "window_seconds": max(ended - self.window_started, 1e-9),
-            "steps_in_window": len(self.rows),
-            "samples": sum(int(row["batch_samples"]) for row in self.rows),
-            "queue_starvations": sum(int(bool(row["starved"])) for row in self.rows),
-        }
-        output["samples_per_second"] = output["samples"] / output["window_seconds"]
-        for name in mean_fields:
-            output[name] = float(np.mean([float(row[name]) for row in self.rows]))
-        depths = [int(row["queue_depth"]) for row in self.rows if row.get("queue_depth") is not None]
-        output["queue_depth"] = min(depths) if depths else None
-        for name in (
-            "epoch",
-            "step",
-            "steps",
-            "global_step",
-            "batch_shape",
-            "learning_rate",
-            "eta_seconds",
-        ):
-            output[name] = latest.get(name)
-        total_ms = sum(output[name] for name in ("loader_wait_ms", "h2d_ms", "compute_ms", "optimizer_ms"))
-        output["loader_wait_pct"] = 100.0 * output["loader_wait_ms"] / max(total_ms, 1e-9)
-        return output
-
-    def flush(self) -> None:
-        if not self.rows:
-            return
-        ended = time.monotonic()
-        payload = json.dumps(self._aggregate(ended), sort_keys=True) + "\n"
-        try:
-            size = self.path.stat().st_size
-        except FileNotFoundError:
-            size = 0
-        if size and size + len(payload.encode()) > self.rotate_bytes:
-            rotated = self.path.with_name(f"{self.path.name}.1")
-            os.replace(self.path, rotated)
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(payload)
-            handle.flush()
-        self.rows.clear()
-        self.window_started = ended
-
-    def close(self) -> None:
-        self.flush()
 
 
 def _update_suite_progress(
@@ -479,79 +392,6 @@ def _validity_positive_weight(corpus: TokenizedCorpus, heldout: bool) -> float:
     return max(0.05, min(20.0, negative / max(positive, 1e-8)))
 
 
-def _gpu_telemetry() -> dict[str, float | None]:
-    try:
-        output = subprocess.check_output(
-            [
-                "nvidia-smi",
-                (
-                    "--query-gpu=utilization.gpu,memory.used,memory.total,"
-                    "temperature.gpu,power.draw,clocks.current.graphics,"
-                    "clocks.current.sm,clocks.current.memory"
-                ),
-                "--format=csv,noheader,nounits",
-            ],
-            text=True,
-            timeout=2,
-        ).splitlines()[0]
-        utilization, used, total, temperature, power, graphics, sm, memory = [
-            float(value.strip()) for value in output.split(",")
-        ]
-        return {
-            "gpu_utilization_pct": utilization,
-            "gpu_memory_used_mib": used,
-            "gpu_memory_total_mib": total,
-            "gpu_temperature_c": temperature,
-            "gpu_power_watts": power,
-            "gpu_graphics_clock_mhz": graphics,
-            "gpu_sm_clock_mhz": sm,
-            "gpu_memory_clock_mhz": memory,
-            "gpu_headroom_mib": total - used,
-            "gpu_headroom_ok": total - used >= MINIMUM_VRAM_HEADROOM_MIB,
-        }
-    except Exception:
-        return {
-            "gpu_utilization_pct": None,
-            "gpu_memory_used_mib": None,
-            "gpu_memory_total_mib": None,
-            "gpu_temperature_c": None,
-            "gpu_power_watts": None,
-            "gpu_graphics_clock_mhz": None,
-            "gpu_sm_clock_mhz": None,
-            "gpu_memory_clock_mhz": None,
-            "gpu_headroom_mib": None,
-            "gpu_headroom_ok": None,
-        }
-
-
-class _HardwareMonitor:
-    def __init__(self, hz: float) -> None:
-        if hz <= 0:
-            raise ValueError("hardware telemetry frequency must be positive")
-        self.period = 1.0 / hz
-        self._value = _gpu_telemetry()
-        self._stop = threading.Event()
-        self._thread = threading.Thread(
-            target=self._run,
-            name="dime-hardware-telemetry",
-            daemon=True,
-        )
-
-    def start(self) -> None:
-        self._thread.start()
-
-    def _run(self) -> None:
-        while not self._stop.wait(self.period):
-            self._value = _gpu_telemetry()
-
-    def snapshot(self) -> dict[str, float | None]:
-        return dict(self._value)
-
-    def stop(self) -> None:
-        self._stop.set()
-        self._thread.join(timeout=max(2.0, self.period + 0.5))
-
-
 def _available_loader_workers() -> tuple[int, ...]:
     try:
         cpus = len(os.sched_getaffinity(0))
@@ -667,6 +507,8 @@ def _benchmark_configuration(
     stage: str,
     mode: str,
 ) -> dict[str, Any]:
+    from jope.telemetry import gpu_snapshot
+
     eligible_datasets = len(
         DatasetUniformBatchSampler(
             corpus,
@@ -765,7 +607,7 @@ def _benchmark_configuration(
             "mean_queue_depth": (float(np.mean(queue_depths)) if queue_depths else None),
             "free_vram_mib": free_mib,
             "peak_vram_mib": torch.cuda.max_memory_allocated() / (1024 * 1024),
-            **_gpu_telemetry(),
+            **gpu_snapshot(MINIMUM_VRAM_HEADROOM_MIB),
         }
         return record
     except torch.OutOfMemoryError:
@@ -1411,14 +1253,13 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
         pin_memory=device.type == "cuda",
         seed=config.seed,
     )
-    hardware = _HardwareMonitor(config.hardware_hz)
+    from jope.telemetry import HardwareMonitor, LiveMetricsWriter
+
+    hardware = HardwareMonitor(config.hardware_hz, MINIMUM_VRAM_HEADROOM_MIB)
     sampler.set_epoch(start_epoch)
     prefetcher = _BatchPrefetcher(loader, device)
     hardware.start()
-    live = _LiveMetricsWriter(
-        config.run_dir / "live-metrics.jsonl",
-        hz=config.live_hz,
-    )
+    live = LiveMetricsWriter(config.run_dir / "live-metrics.jsonl", config.live_hz)
     _update_suite_progress(config, checkpoint_state="training")
     global_step = start_epoch * len(sampler)
     try:

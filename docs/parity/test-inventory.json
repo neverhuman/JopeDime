@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored",
-  "count": 6054,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored",
+  "count": 6091,
   "ignored": 81,
   "packages": {
    "battle-gpu": {
@@ -9000,12 +9000,12 @@
     }
    },
    "jope-telemetry": {
-    "count": 42,
+    "count": 79,
     "ignored": 0,
     "binaries": {
      "jope-telemetry": {
       "kind": "lib",
-      "count": 40,
+      "count": 77,
       "ignored": 0,
       "tests": [
        "alarm::tests::collapse_needs_consecutive_generations_per_context",
@@ -9020,6 +9020,8 @@
        "core::tests::producer_is_nonblocking_bounded_and_counted",
        "core::tests::record_lane_is_bounded_and_reports_oversize",
        "event::tests::event_layout_is_fixed_and_nonfinite_is_preserved",
+       "fleet::tests::both_tok_s_lines_print_without_any_values",
+       "fleet::tests::fleet_reports_the_labeled_tok_s_pair_per_host_and_in_total",
        "flywheel::tests::contender_digest_is_order_free",
        "flywheel::tests::gate_matches_ns_predicate",
        "flywheel::tests::missing_roster_is_flagged",
@@ -9029,6 +9031,40 @@
        "gp::tests::parse_matches_python_reference_cases",
        "gp::tests::quantiles_match_numpy_linear",
        "gp::tests::sampled_pairs_are_distinct_and_seeded",
+       "hooks::dope::tests::counts_root_params_and_reconcile",
+       "hooks::dope::tests::digest_matches_ns3_layout",
+       "hooks::dope::tests::guard_fails_closed_on_every_broken_invariant",
+       "hooks::dope::tests::snapshot_orders_and_prefixes_like_ns3",
+       "hooks::eval::tests::buckets_are_log2_ms",
+       "hooks::eval::tests::overlap_and_slot_cap",
+       "hooks::eval::tests::splits_latency_and_counts_rc",
+       "hooks::generation::tests::helpers_match_the_python_hooks",
+       "hooks::generation::tests::summarizes_a_generation_with_provenance",
+       "hooks::hardware::tests::monitor_rejects_bad_rates_and_stops",
+       "hooks::hardware::tests::ratchet_document_and_rate_limit",
+       "hooks::hardware::tests::snapshot_keys_and_headroom",
+       "hooks::io::tests::evolution_sampler_never_writes_end_to_end",
+       "hooks::io::tests::h2d_slots_stride_and_drops",
+       "hooks::io::tests::rates_from_raw_counters",
+       "hooks::io::tests::read_span_is_union_not_sum",
+       "hooks::io::tests::tok_s_is_always_the_labeled_pair",
+       "hooks::json::tests::keeps_insertion_order_and_nulls_non_finite",
+       "hooks::live::tests::aggregate_writes_the_python_record",
+       "hooks::live::tests::float_repr_matches_python",
+       "hooks::live::tests::pairwise_sum_follows_numpy_blocks",
+       "hooks::live::tests::strings_escape_like_ensure_ascii",
+       "hooks::live::tests::writer_rotates_past_the_cap",
+       "hooks::pipeline_tests::flywheel_round_writes_step_h2d_and_round_records",
+       "hooks::step::tests::rejects_bad_layouts",
+       "hooks::step::tests::timer_spans_sum_to_wall",
+       "hooks::tests::quantile_matches_python_formula",
+       "hooks::trainers::tests::layout_errors_are_explicit",
+       "hooks::trainers::tests::layouts_resolve_against_their_groups",
+       "hooks::validation::tests::family_weighting_is_equal_across_families",
+       "hooks::validation::tests::no_family_ids_is_unavailable_not_imitated",
+       "hooks::validation::tests::rejects_unknown_task_and_metrics",
+       "hooks::validation::tests::sealed_label_fails_closed_and_missing_is_counted",
+       "hooks::validation::tests::selection_concentration",
        "import::tests::engine_rows_map_and_validation_is_deduplicated",
        "import::tests::hwm_consistency_flags_beats_from_an_earlier_run",
        "import::tests::hwm_lists_missing_identity_and_drops_dsl",
@@ -9043,6 +9079,7 @@
        "sink::parquet::tests::rollup_is_readable_and_ignores_low_rate_records",
        "summary::tests::elo_is_read_against_methods_in_the_latest_snapshot",
        "summary::tests::summary_reports_spans_diminishing_deltas_and_missing",
+       "summary::tests::tok_s_is_the_labeled_pair_with_its_timing_basis",
        "train::tests::cosine_schedule_endpoints",
        "train::tests::dope_param_classification",
        "train::tests::ids_and_names_are_unique",
@@ -9290,10 +9327,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 227,
+  "count": 201,
   "packages": {
    "jope": {
-    "count": 227,
+    "count": 201,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9500,68 +9537,17 @@
        "tests/test_target_artifact_pins.py::test_manifest_producer_pins_all_joblib_paths"
       ]
      },
-     "tests/test_telemetry_dope_guard.py": {
-      "count": 9,
+     "tests/test_telemetry_smoke.py": {
+      "count": 8,
       "tests": [
-       "tests/test_telemetry_dope_guard.py::test_clean_head_only_epoch_passes_and_records",
-       "tests/test_telemetry_dope_guard.py::test_digests_match_ns3_reference",
-       "tests/test_telemetry_dope_guard.py::test_dope_param_in_a_later_optimizer_group_fails",
-       "tests/test_telemetry_dope_guard.py::test_golden_tensor_digest",
-       "tests/test_telemetry_dope_guard.py::test_nested_dropout_in_train_mode_fails",
-       "tests/test_telemetry_dope_guard.py::test_no_trainable_jope_params_fails",
-       "tests/test_telemetry_dope_guard.py::test_requires_grad_and_leaked_grad_fail",
-       "tests/test_telemetry_dope_guard.py::test_root_parameters_are_counted_and_reconciled",
-       "tests/test_telemetry_dope_guard.py::test_weight_drift_names_the_changed_tensor"
-      ]
-     },
-     "tests/test_telemetry_eval_hooks.py": {
-      "count": 3,
-      "tests": [
-       "tests/test_telemetry_eval_hooks.py::test_batch_record_splits_latency_and_counts_rc",
-       "tests/test_telemetry_eval_hooks.py::test_bucket_edges",
-       "tests/test_telemetry_eval_hooks.py::test_overlap_and_slot_bounds_are_reported"
-      ]
-     },
-     "tests/test_telemetry_gp_hooks.py": {
-      "count": 2,
-      "tests": [
-       "tests/test_telemetry_gp_hooks.py::test_marshals_result_dicts_and_resets_after_finish",
-       "tests/test_telemetry_gp_hooks.py::test_status_and_bits_edge_cases"
-      ]
-     },
-     "tests/test_telemetry_io_hooks.py": {
-      "count": 6,
-      "tests": [
-       "tests/test_telemetry_io_hooks.py::test_batch_io_stats_leaves_queue_metrics_missing_when_queue_is_disabled",
-       "tests/test_telemetry_io_hooks.py::test_batch_io_stats_write_batch_and_queue_values",
-       "tests/test_telemetry_io_hooks.py::test_disabled_read_observer_does_not_stat_path",
-       "tests/test_telemetry_io_hooks.py::test_end_to_end_gb_s_uses_data_wait_plus_completed_h2d_span",
-       "tests/test_telemetry_io_hooks.py::test_h2d_sampler_is_inert_without_cuda",
-       "tests/test_telemetry_io_hooks.py::test_local_read_observer_counts_logical_file_bytes_and_npz_reads"
-      ]
-     },
-     "tests/test_telemetry_train_hooks.py": {
-      "count": 9,
-      "tests": [
-       "tests/test_telemetry_train_hooks.py::test_failing_sink_is_counted_not_raised",
-       "tests/test_telemetry_train_hooks.py::test_frozen_memory_bounds_are_enforced_at_construction",
-       "tests/test_telemetry_train_hooks.py::test_layout_validation",
-       "tests/test_telemetry_train_hooks.py::test_missing_value_uses_the_rust_batch_sentinel_bits",
-       "tests/test_telemetry_train_hooks.py::test_rows_submit_in_blocks_and_missing_values_stay_nan",
-       "tests/test_telemetry_train_hooks.py::test_steady_state_put_commit_does_not_grow_with_steps",
-       "tests/test_telemetry_train_hooks.py::test_steps_above_float32_precision_are_exact",
-       "tests/test_telemetry_train_hooks.py::test_timer_spans_are_exclusive_and_unattributed_is_the_rest",
-       "tests/test_telemetry_train_hooks.py::test_w_shaped_loop_records_existing_host_values_only"
-      ]
-     },
-     "tests/test_telemetry_val_hooks.py": {
-      "count": 5,
-      "tests": [
-       "tests/test_telemetry_val_hooks.py::test_bounds_validation_and_reset",
-       "tests/test_telemetry_val_hooks.py::test_family_weighting_differs_from_dataset_weighting",
-       "tests/test_telemetry_val_hooks.py::test_sealed_label_fails_closed_and_missing_label_is_counted",
-       "tests/test_telemetry_val_hooks.py::test_selection_concentration_and_prediction_spread",
-       "tests/test_telemetry_val_hooks.py::test_without_roster_or_family_ids_nothing_is_presented_as_family_grouped"
+       "tests/test_telemetry_smoke.py::test_dime_hardware_monitor_and_ratchet_live",
+       "tests/test_telemetry_smoke.py::test_dime_live_metrics_spell_like_json_dumps",
+       "tests/test_telemetry_smoke.py::test_dope_guard_hashes_like_ns3_and_fails_closed",
+       "tests/test_telemetry_smoke.py::test_emit_rates_divides_in_rust",
+       "tests/test_telemetry_smoke.py::test_flywheel_round_on_cpu",
+       "tests/test_telemetry_smoke.py::test_python_trainer_step_rows",
+       "tests/test_telemetry_smoke.py::test_records_and_fail_closed_guards",
+       "tests/test_telemetry_smoke.py::test_registry_keeps_frozen_names"
       ]
      },
      "tests/test_test_exact_campaign.py": {
@@ -9662,7 +9648,7 @@
   }
  },
  "totals": {
-  "rust": 6054,
-  "python": 227
+  "rust": 6091,
+  "python": 201
  }
 }

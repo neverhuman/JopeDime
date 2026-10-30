@@ -8,6 +8,15 @@ use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+
+/// Availability reason ids, as listed in every manifest's `availability_reasons`.
+pub const REASON_NO_S3_PATH: u16 = 3;
+pub const REASON_NO_OBJECT_CACHE: u16 = 4;
+pub const REASON_NO_NVML_OR_GPU: u16 = 7;
+pub const REASON_PROCFS_UNAVAILABLE: u16 = 8;
+pub const REASON_NO_TEXT_TOKEN_PATH: u16 = 10;
+pub const REASON_STARTUP_READS_NOT_OBSERVED: u16 = 11;
+pub const REASON_CUDA_EVENT_UNAVAILABLE: u16 = 12;
 use ulid::Ulid;
 
 pub const MANIFEST_SCHEMA: &str = "jope.telemetry.manifest/v1";
