@@ -2456,9 +2456,11 @@ dependencies = [
 name = "jope-api"
 version = "0.4.1"
 dependencies = [
+ "proptest",
  "schemars",
  "serde",
  "serde_json",
+ "ulid",
 ]
 
 [[package]]
@@ -2467,6 +2469,7 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "clap",
+ "jope-api",
  "jope-assets",
  "jope-datasets",
  "jope-runtime",
@@ -2582,6 +2585,10 @@ dependencies = [
 [[package]]
 name = "jope-client"
 version = "0.4.1"
+dependencies = [
+ "jope-api",
+ "serde_json",
+]
 
 [[package]]
 name = "jope-datasets"
@@ -2851,7 +2858,15 @@ name = "jope-service"
 version = "0.4.1"
 dependencies = [
  "anyhow",
+ "jope-api",
  "jope-runtime",
+ "libc",
+ "proptest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "toml",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
