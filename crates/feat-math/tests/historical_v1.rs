@@ -747,7 +747,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/svc07_config_loader_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         svc07_lockfile["source_commit"],
-        "100fad8b43b12240395c23d37d21ce6dcc747292"
+        "b7d3aa24ed3f8d69245a57357b9941be2572f22d"
     );
     assert_eq!(svc07_lockfile["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(svc07_lockfile["fixtures"][0]["path"], changed_fixtures[0]);
