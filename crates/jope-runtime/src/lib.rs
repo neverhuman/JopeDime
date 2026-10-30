@@ -19,6 +19,7 @@ pub mod budget;
 pub mod calibration;
 pub mod error;
 pub mod fitness;
+pub mod fitness_classification;
 pub mod fitted;
 pub mod fitted_js;
 pub mod landmark_args;
