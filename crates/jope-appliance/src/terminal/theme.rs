@@ -2,6 +2,9 @@
 
 use std::env;
 
+#[path = "highlight.rs"]
+pub mod highlight;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ThemeMode {
     Light,
