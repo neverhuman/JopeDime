@@ -248,8 +248,13 @@ fn ensure_real_dir(path: &Path) -> super::Result<()> {
 }
 
 fn is_shard(value: Option<&str>) -> bool {
+    value.is_some_and(|value| value.len() == 2 && is_lowercase_hex(value))
+}
+
+fn is_lowercase_hex(value: &str) -> bool {
     value
-        .is_some_and(|value| value.len() == 2 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .bytes()
+        .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
 fn digest_from_path(first: &Path, second: &Path, file: &Path) -> super::Result<[u8; 32]> {
@@ -265,7 +270,11 @@ fn digest_from_path(first: &Path, second: &Path, file: &Path) -> super::Result<[
         .file_name()
         .and_then(|value| value.to_str())
         .ok_or(StoreError::Integrity("invalid CAS blob name"))?;
-    if !is_shard(Some(first)) || !is_shard(Some(second)) || tail.len() != 60 {
+    if !is_shard(Some(first))
+        || !is_shard(Some(second))
+        || tail.len() != 60
+        || !is_lowercase_hex(tail)
+    {
         return Err(StoreError::Integrity("invalid CAS blob path"));
     }
     let hex = format!("{first}{second}{tail}");
@@ -415,5 +424,28 @@ mod tests {
         assert_eq!(removed, dry);
         assert!(store.verify_blob(&orphan).is_err());
         assert!(store.verify_blob(&accepted_model).is_ok());
+    }
+
+    #[test]
+    fn gc_rejects_malformed_utf8_cas_name_without_poisoning_writer() {
+        let (_dir, store) = store();
+        let shard = store.cas.home.join("cas/sha256/aa/bb");
+        fs::create_dir_all(&shard).unwrap();
+        let malformed_tail = format!("aé{}", "a".repeat(57));
+        assert_eq!(malformed_tail.len(), 60);
+        fs::write(shard.join(malformed_tail), b"malformed blob").unwrap();
+
+        assert!(matches!(store.gc(true), Err(StoreError::Integrity(_))));
+
+        let id = dataset();
+        store
+            .transaction(|write| {
+                write.put(
+                    &RecordKey::Dataset(id.clone()),
+                    &Record::metadata(json!({"id": id}), vec![]),
+                )
+            })
+            .unwrap();
+        assert!(store.get(&RecordKey::Dataset(id)).unwrap().is_some());
     }
 }
