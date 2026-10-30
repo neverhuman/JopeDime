@@ -19,6 +19,7 @@ pub mod gp;
 pub mod hooks;
 pub mod import;
 pub mod manifest;
+pub mod nvml_device;
 pub mod record;
 pub mod sink;
 pub mod summary;
