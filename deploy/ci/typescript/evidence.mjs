@@ -51,6 +51,18 @@ function qualification(version) {
   assert.match(read('contracts.log'),/pass [1-9]\d*/); assert.match(read('contracts.log'),/fail 0\b/);
   assert.match(read('contracts.log'),/model\.js\s+\|\s+100\.00\s+\|\s+100\.00\s+\|\s+100\.00/);
   assert.match(read('receipt-controls.log'),/pass [1-9]\d*/); assert.match(read('receipt-controls.log'),/fail 0\b/);
+  assert.match(read('fitted-bundle-consumer.log'),/test result: ok\. 1 passed; 0 failed/);
+  const fitted=name=>read('fitted-bundle/'+name), declaration=fitted('predictor.d.ts'), module=fitted('predictor.mjs');
+  assert.equal(fitted('predictor.d.mts'),declaration);
+  assert.ok(declaration.includes(`readonly ${JSON.stringify('quote"field')}: number | null;`));
+  assert.match(module,/export function predict\(/); assert.match(module,/export function predictBatch\(/);
+  assert.match(fitted('fitted-consumer.mts'),/from "\.\/predictor\.mjs"/);
+  assert.match(fitted('tsc.log'),/command: tsc --strict[\s\S]*status: exit status: 0/);
+  assert.match(fitted('node-runtime.log'),/predict and predictBatch/);
+  const manifest=JSON.parse(fitted('manifest.json'));
+  assert.equal(manifest.entries['src/typescript/predictor.d.ts'],hash(declaration));
+  assert.equal(manifest.entries['src/typescript/predictor.d.mts'],manifest.entries['src/typescript/predictor.d.ts']);
+  assert.equal(manifest.entries['src/typescript/predictor.mjs'],hash(module));
   let browsers=[];
   if(version==='26.1.0') {
     const report=JSON.parse(read('browsers.json'));
@@ -68,7 +80,7 @@ function qualification(version) {
     const native=JSON.parse(read('browser-dependencies.json'));
     assert.equal(native.lock_sha256,hash(readFileSync(inputs[1])));
   }
-  return {counts,cases,browsers,facade:{lines:100,branches:100,functions:100}};
+  return {counts,cases,browsers,facade:{lines:100,branches:100,functions:100},fittedBundle:{strictConsumer:true,nodePredictAndBatch:true}};
 }
 const version=mode==='create'?process.env.JOPE_TS_EXPECTED_NODE:nodeVersion;
 assert.ok(['24.19.0','26.1.0'].includes(version),'exact supported Node version required');
