@@ -2695,6 +2695,12 @@
         "fitting"
       ]
     },
+    "target:jope-appliance/test/e2e": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
     "target:jope-arena/bin/jope-arena": {
       "role": "regression",
       "subsystems": [

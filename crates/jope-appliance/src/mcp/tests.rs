@@ -705,28 +705,11 @@ async fn long_poll_uses_bounded_http_slices_and_returns_within_the_requested_dea
 fn canonical_schema_gaps_are_explicit_and_cached_resources_are_bounded() {
     let inventory = catalog::schema_inventory();
     assert_eq!(inventory.len(), 12);
-    assert_eq!(
-        catalog::pending_exchanges(),
-        vec![
-            "AlgorithmPage",
-            "DatasetPage",
-            "DatasetRegistration",
-            "DeleteReceipt",
-            "EventPage",
-            "GcReport",
-            "GcRequest",
-            "ObjectiveValidation",
-            "ObjectiveValidationRequest",
-            "RunControlRequest",
-            "RunForkRequest",
-            "RunPage",
-            "TrainingFeedback"
-        ]
-    );
-    assert!(inventory["objective_validate"]
-        .as_array()
-        .unwrap()
-        .contains(&json!("ObjectiveValidation")));
+    // API-07-F02 (#677) materialized every exchange schema, so no tool reports a gap.
+    assert_eq!(catalog::pending_exchanges(), Vec::<&str>::new());
+    for (tool, gaps) in &inventory {
+        assert_eq!(gaps, &json!([]), "{tool} still reports schema gaps");
+    }
     let resource = dispatch::Resources::default();
     assert!(resource
         .put(
