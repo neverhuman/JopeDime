@@ -4,6 +4,9 @@
 //! group/time constraints, admission budgets, objective direction and final refit policy belong
 //! to the caller. Every evaluation refits the complete pipeline inside each supplied fold.
 
+#[path = "../capability.rs"]
+pub mod capability;
+
 use anyhow::{ensure, Context, Result};
 
 pub use super::{

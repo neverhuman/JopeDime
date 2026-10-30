@@ -12,6 +12,9 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
+#[path = "calibration_platt.rs"]
+pub mod calibration_platt;
+
 pub const INSPECTION_SCHEMA: &str = "jope.model-object-inspection/v1";
 pub const SCHEMA: &str = "jope.model-object/v1";
 pub const APPLIANCE: &str = "org.jopedime/appliance-fitted/v1";
@@ -312,7 +315,13 @@ impl ModelObject {
     }
 
     fn unsupported(&self) -> Vec<String> {
-        let mut out = self.manifest.required_capabilities.clone();
+        let mut out: Vec<_> = self
+            .manifest
+            .required_capabilities
+            .iter()
+            .filter(|c| c.as_str() != calibration_platt::CAPABILITY)
+            .cloned()
+            .collect();
         if !matches!(
             self.manifest.format.as_str(),
             APPLIANCE | BOUND | MATH_PIPELINE
@@ -322,8 +331,139 @@ impl ModelObject {
         out
     }
 
+    /// A versioned required section: neither its bytes nor its capability may be omitted.
+    pub fn platt_calibration(&self) -> Result<Option<calibration_platt::Calibration>> {
+        let required = self
+            .manifest
+            .required_capabilities
+            .iter()
+            .any(|c| c == calibration_platt::CAPABILITY);
+        match (required, self.parts.get(calibration_platt::PART)) {
+            (false, None) => Ok(None),
+            (true, Some(bytes)) => {
+                if bytes.len() > 64 * 1024 {
+                    return Err(Failure::integrity("Platt section exceeds 64 KiB"));
+                }
+                let calibration: calibration_platt::Calibration = crate::strict_json::decode(bytes)
+                    .map_err(|e| Failure::integrity(format!("Platt section: {e}")))?;
+                calibration
+                    .validate()
+                    .map_err(|e| Failure::integrity(format!("Platt section: {e:#}")))?;
+                Ok(Some(calibration))
+            }
+            _ => Err(Failure::integrity(
+                "Platt section and required capability must occur together",
+            )),
+        }
+    }
+
+    fn platt_head(
+        &self,
+        calibration: &calibration_platt::Calibration,
+    ) -> Result<feat_math::advanced_v3::BoundModel> {
+        let model = match self.manifest.format.as_str() {
+            APPLIANCE => {
+                let fitted = FittedModel::from_bytes(&self.parts[&self.manifest.primary])?;
+                if fitted.header.class_order != calibration.class_order {
+                    return Err(Failure::integrity(
+                        "Platt class order differs from fitted head",
+                    ));
+                }
+                fitted.model
+            }
+            BOUND => crate::strict_json::decode(&self.parts[&self.manifest.primary])
+                .map_err(|e| Failure::integrity(format!("bound state: {e}")))?,
+            _ => {
+                return Err(Failure::integrity(
+                    "Platt section requires an appliance or bound binary head",
+                ))
+            }
+        };
+        model
+            .validate_binding()
+            .map_err(|e| Failure::integrity(format!("Platt head: {e:#}")))?;
+        if model.task.kind != feat_math::advanced_v3::TaskKind::Binary {
+            return Err(Failure::integrity(
+                "Platt section is only valid for binary heads",
+            ));
+        }
+        Ok(model)
+    }
+
+    /// Attach a final map learned from out-of-fold scores, preserving every native state byte.
+    /// For bare bound heads, `calibration.class_order` declares the native IDs' 0/1 label order.
+    pub fn with_platt_calibration(
+        &self,
+        calibration: calibration_platt::Calibration,
+    ) -> Result<Self> {
+        self.require_executable()?;
+        if self.platt_calibration()?.is_some() {
+            return Err(Failure::input(
+                "model object already has a Platt calibration",
+            ));
+        }
+        calibration.validate()?;
+        self.platt_head(&calibration)?;
+        let bytes = serde_json::to_vec(&calibration)?;
+        let mut manifest = self.manifest.clone();
+        manifest
+            .required_capabilities
+            .push(calibration_platt::CAPABILITY.into());
+        manifest.files.push(Part::new(
+            calibration_platt::PART,
+            "application/json",
+            &bytes,
+        ));
+        let mut parts = self.parts.clone();
+        parts.insert(calibration_platt::PART.into(), bytes);
+        Self::new(
+            manifest,
+            parts,
+            crate::limits::Limits::default().max_model_bytes,
+        )
+    }
+
+    /// Predict through the complete object. Calibrated binary rows retain explicit class order.
+    /// Math pipelines keep their separate numeric-input API, and a bare uncalibrated binary
+    /// bound object lacks class names; wrap it in an appliance object or attach its calibration.
+    pub fn predict(
+        &self,
+        table: &feat_math::advanced_v3::RawTable,
+    ) -> Result<crate::methods::native::Predictions> {
+        use crate::methods::native::{predict_bound, Predictions};
+        self.require_executable()?;
+        if let Some(calibration) = self.platt_calibration()? {
+            let head = self.platt_head(&calibration)?;
+            let Predictions::Probabilities { classes, values } =
+                predict_bound(&head, table, &calibration.class_order)?
+            else {
+                return Err(Failure::integrity(
+                    "Platt head did not return binary probabilities",
+                ));
+            };
+            let values = values
+                .into_iter()
+                .map(|row| {
+                    let p = calibration.sigmoid.apply(row[1])?;
+                    Ok(vec![1.0 - p, p])
+                })
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(Predictions::Probabilities { classes, values });
+        }
+        match self.manifest.format.as_str() {
+            APPLIANCE => self.fitted()?.predict(table),
+            BOUND => predict_bound(&self.bound()?, table, &[]),
+            _ => Err(Failure::backend(
+                "use the registered decoder's prediction API for this object format",
+            )),
+        }
+    }
+
     pub fn fitted(&self) -> Result<FittedModel> {
         self.require_executable()?;
+        if self.platt_calibration()?.is_some() {
+            return Err(Failure::backend("standalone fitted export would drop Platt calibration; use the complete object and ModelObject::predict"));
+        }
         if self.manifest.format != APPLIANCE {
             return Err(Failure::backend(
                 "this command needs an appliance fitted object",
@@ -334,6 +474,11 @@ impl ModelObject {
 
     pub fn bound(&self) -> Result<feat_math::advanced_v3::BoundModel> {
         self.require_executable()?;
+        if self.platt_calibration()?.is_some() {
+            return Err(Failure::backend(
+                "bound/source export would drop Platt calibration; export the complete object",
+            ));
+        }
         if self.manifest.format == MATH_PIPELINE {
             return Err(Failure::backend(
                 "a math-pipeline object has no bound state; export object or javascript instead",
@@ -365,6 +510,11 @@ impl ModelObject {
     /// contract. See [`crate::math_pipeline`].
     pub fn math_pipeline(&self) -> Result<crate::math_pipeline::MathPipeline> {
         self.require_executable()?;
+        if self.platt_calibration()?.is_some() {
+            return Err(Failure::backend(
+                "math-pipeline decode/source export cannot preserve Platt calibration; export the complete object",
+            ));
+        }
         if self.manifest.format != MATH_PIPELINE {
             return Err(Failure::backend(
                 "this command needs a math-pipeline object",
@@ -425,7 +575,9 @@ impl ModelObject {
     /// Verify the complete executable state without reducing an appliance to its native model.
     pub fn verify_executable(&self) -> Result<()> {
         self.require_executable()?;
-        if self.manifest.format == APPLIANCE {
+        if let Some(calibration) = self.platt_calibration()? {
+            self.platt_head(&calibration)?;
+        } else if self.manifest.format == APPLIANCE {
             self.fitted()?;
         } else if self.manifest.format == MATH_PIPELINE {
             self.math_pipeline()?;
@@ -608,6 +760,276 @@ pub fn load_fitted(path: &Path, max_bytes: u64) -> Result<FittedModel> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn math_pipeline_decode_and_javascript_export_refuse_a_missing_required_platt_part() {
+        use crate::math_pipeline::{INPUT_PART, PIPELINE_PART};
+
+        let parts: BTreeMap<String, Vec<u8>> = BTreeMap::from([
+            (
+                PIPELINE_PART.into(),
+                include_bytes!("../tests/fixtures/math-pipeline/pipeline.json").to_vec(),
+            ),
+            (
+                INPUT_PART.into(),
+                include_bytes!("../tests/fixtures/math-pipeline/input.json").to_vec(),
+            ),
+        ]);
+        let mut manifest = Manifest {
+            schema: SCHEMA.into(),
+            minimum_reader_version: 1,
+            format: MATH_PIPELINE.into(),
+            producer: Producer::default(),
+            primary: PIPELINE_PART.into(),
+            required_capabilities: vec![],
+            files: parts
+                .iter()
+                .map(|(path, bytes)| Part::new(path, "application/json", bytes))
+                .collect(),
+            metadata: Value::Null,
+        };
+        let legacy = ModelObject::new(manifest.clone(), parts.clone(), 1 << 20).unwrap();
+        assert!(legacy.inspect().unwrap().executable);
+        legacy.verify_executable().unwrap();
+        legacy.math_pipeline().unwrap();
+        assert!(!legacy.export_source("javascript").unwrap().is_empty());
+
+        manifest
+            .required_capabilities
+            .push(calibration_platt::CAPABILITY.into());
+        let invalid = ModelObject::new(manifest, parts, 1 << 20).unwrap();
+        assert!(invalid.platt_calibration().is_err());
+        assert!(invalid.inspect().is_err());
+        assert!(invalid.verify_executable().is_err());
+        let decoded = invalid.math_pipeline();
+        let exported = invalid.export_source("javascript");
+        assert!(
+            decoded.is_err() && exported.is_err(),
+            "missing required Platt part accepted: math_pipeline={}, javascript_export={}",
+            decoded.is_ok(),
+            exported.is_ok()
+        );
+        for error in [decoded.unwrap_err(), exported.unwrap_err()] {
+            assert_eq!(crate::error::kind_of(&error), crate::FailureKind::Integrity);
+            assert!(error.to_string().contains("must occur together"));
+        }
+    }
+
+    fn binary_fixture() -> (FittedModel, feat_math::advanced_v3::RawTable) {
+        use crate::{api, budget::Budget, fitted::CreatedBy, limits::Limits, table, task};
+        let mut csv = String::from("x,y\n");
+        for i in 0..40 {
+            csv.push_str(&format!(
+                "{},{}\n",
+                i % 10,
+                if i % 10 > 4 { "yes" } else { "no" }
+            ));
+        }
+        let parsed = table::parse_csv(csv.as_bytes(), &Limits::default()).unwrap();
+        let training = table::training(
+            &parsed,
+            "y",
+            task::TaskChoice::Fixed(task::TaskKind::Binary),
+            &Limits::default(),
+        )
+        .unwrap();
+        let fitted = api::fit(
+            &training,
+            &api::FitOptions {
+                method: "logistic".into(),
+                ..Default::default()
+            },
+            &Budget::new(None, 1),
+            &parsed.sha256,
+            CreatedBy::default(),
+        )
+        .unwrap()
+        .fitted;
+        let query = table::parse_csv(b"x\n0\n3\n6\n9\n", &Limits::default()).unwrap();
+        (
+            fitted,
+            table::prediction(&query, &training.schema, &training.target)
+                .unwrap()
+                .0,
+        )
+    }
+
+    fn platt_fixture() -> calibration_platt::Calibration {
+        let mut scores = Vec::new();
+        let mut labels = Vec::new();
+        let mut folds = Vec::new();
+        for fold in 0..3 {
+            for i in 0..20 {
+                scores.push(if i < 10 { 0.001 } else { 0.999 });
+                labels.push(if i % 10 < (if i < 10 { 2 } else { 8 }) {
+                    "yes"
+                } else {
+                    "no"
+                });
+                folds.push(fold);
+            }
+        }
+        calibration_platt::cross_fit(&scores, &labels, ["no", "yes"], &folds)
+            .unwrap()
+            .calibration
+    }
+
+    #[test]
+    fn a_platt_part_without_its_required_capability_cannot_be_silently_stripped() {
+        let (fitted, _) = binary_fixture();
+        let object = ModelObject::from_fitted(&fitted).unwrap();
+        let bytes = serde_json::to_vec(&platt_fixture()).unwrap();
+        let mut manifest = object.manifest.clone();
+        let mut parts = object.parts.clone();
+        manifest.files.push(Part::new(
+            calibration_platt::PART,
+            "application/json",
+            &bytes,
+        ));
+        parts.insert(calibration_platt::PART.into(), bytes);
+        let object = ModelObject::new(manifest, parts, 1 << 20).unwrap();
+        assert!(
+            object.fitted().is_err(),
+            "calibration part was discarded while exporting the bare fitted head"
+        );
+        assert!(object.bound().is_err());
+    }
+
+    #[test]
+    fn platt_object_round_trip_predicts_with_the_stored_map_and_retains_native_bytes() {
+        use crate::methods::native::Predictions;
+        let (fitted, query) = binary_fixture();
+        let raw = fitted.predict(&query).unwrap();
+        let Predictions::Probabilities { classes, values } = &raw else {
+            panic!("binary fixture");
+        };
+        let calibration = platt_fixture();
+        let expected = Predictions::Probabilities {
+            classes: classes.clone(),
+            values: values
+                .iter()
+                .map(|row| {
+                    let p = calibration.apply(row[1]).unwrap();
+                    vec![1.0 - p, p]
+                })
+                .collect(),
+        };
+        assert_ne!(
+            serde_json::to_vec(&raw).unwrap(),
+            serde_json::to_vec(&expected).unwrap()
+        );
+        for object in [
+            ModelObject::from_fitted(&fitted).unwrap(),
+            ModelObject::from_bound(&fitted.model).unwrap(),
+        ] {
+            let before = object.parts.clone();
+            let calibrated = object.with_platt_calibration(calibration.clone()).unwrap();
+            for (name, bytes) in before {
+                assert_eq!(calibrated.parts[&name], bytes);
+            }
+            assert_eq!(object.platt_calibration().unwrap(), None);
+            assert_eq!(
+                calibrated.manifest.required_capabilities,
+                vec![calibration_platt::CAPABILITY]
+            );
+            assert_eq!(
+                calibrated.platt_calibration().unwrap(),
+                Some(calibration.clone())
+            );
+            assert!(calibrated.inspect().unwrap().executable);
+            assert_eq!(
+                serde_json::to_vec(&calibrated.predict(&query).unwrap()).unwrap(),
+                serde_json::to_vec(&expected).unwrap()
+            );
+            assert!(calibrated.fitted().is_err());
+            assert!(calibrated.bound().is_err());
+            for language in ["python", "rust", "javascript"] {
+                assert!(calibrated.export_source(language).is_err());
+            }
+            assert!(calibrated
+                .with_platt_calibration(calibration.clone())
+                .is_err());
+            let directory = tempfile::tempdir().unwrap();
+            let path = calibrated.save(directory.path(), 1 << 20).unwrap();
+            let loaded = ModelObject::read(&path, 1 << 20).unwrap();
+            assert_eq!(loaded.manifest_bytes, calibrated.manifest_bytes);
+            assert_eq!(loaded.parts, calibrated.parts);
+            assert_eq!(
+                serde_json::to_vec(&loaded.predict(&query).unwrap()).unwrap(),
+                serde_json::to_vec(&expected).unwrap()
+            );
+            assert!(load_fitted(&path, 1 << 20).is_err());
+        }
+        let legacy = ModelObject::from_fitted(&fitted).unwrap();
+        assert_eq!(
+            legacy.fitted().unwrap().to_bytes().unwrap(),
+            fitted.to_bytes().unwrap()
+        );
+        assert_eq!(
+            serde_json::to_vec(&legacy.predict(&query).unwrap()).unwrap(),
+            serde_json::to_vec(&raw).unwrap()
+        );
+    }
+
+    #[test]
+    fn invalid_platt_sections_fail_before_store_mutation() {
+        let (fitted, _) = binary_fixture();
+        let object = ModelObject::from_fitted(&fitted).unwrap();
+        let calibration = platt_fixture();
+        let mut reordered = calibration.clone();
+        reordered.class_order.swap(0, 1);
+        assert!(object.with_platt_calibration(reordered).is_err());
+        let mut negative = calibration.clone();
+        negative.sigmoid.slope = -1.0;
+        assert!(object.with_platt_calibration(negative).is_err());
+        let calibrated = object.with_platt_calibration(calibration.clone()).unwrap();
+        for value in [
+            json!({"schema":"jope.platt-calibration/v2"}),
+            json!({"unknown_required_field":true}),
+            json!({"sigmoid":{"intercept":0.0,"slope":-1.0,"scale":1.0,"center":0.0}}),
+            json!({"cross_fit_folds":1}),
+            json!({"class_order":["yes","no"]}),
+            json!({"score_kind":"raw-margin/v999"}),
+        ] {
+            let mut encoded = serde_json::to_value(&calibration).unwrap();
+            for (key, value) in value.as_object().unwrap() {
+                encoded[key] = value.clone();
+            }
+            let bytes = serde_json::to_vec(&encoded).unwrap();
+            let mut manifest = calibrated.manifest.clone();
+            *manifest
+                .files
+                .iter_mut()
+                .find(|p| p.path == calibration_platt::PART)
+                .unwrap() = Part::new(calibration_platt::PART, "application/json", &bytes);
+            let mut parts = calibrated.parts.clone();
+            parts.insert(calibration_platt::PART.into(), bytes);
+            let invalid = ModelObject::new(manifest, parts, 1 << 20).unwrap();
+            let directory = tempfile::tempdir().unwrap();
+            let store = directory.path().join("store");
+            assert!(invalid.save(&store, 1 << 20).is_err(), "accepted {encoded}");
+            assert!(!store.exists());
+        }
+        let mut manifest = calibrated.manifest.clone();
+        manifest.files.retain(|p| p.path != calibration_platt::PART);
+        let mut parts = calibrated.parts.clone();
+        parts.remove(calibration_platt::PART);
+        let missing = ModelObject::new(manifest, parts, 1 << 20).unwrap();
+        assert!(missing.inspect().is_err());
+        let mut manifest = calibrated.manifest.clone();
+        manifest.required_capabilities[0] = "org.jopedime/platt-calibration/v2".into();
+        let future = ModelObject::new(manifest, calibrated.parts.clone(), 1 << 20).unwrap();
+        assert!(!future.inspect().unwrap().executable);
+        assert!(future.verify_executable().is_err());
+        let genome = feat_math::GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let x: Vec<_> = (0..16).map(|i| vec![i as f64]).collect();
+        let y: Vec<_> = (0..16).map(|i| i as f64).collect();
+        let reg = feat_math::advanced_v3::fit_legacy_numeric_bound(&genome, &x, &y).unwrap();
+        assert!(ModelObject::from_bound(&reg)
+            .unwrap()
+            .with_platt_calibration(calibration)
+            .is_err());
+    }
 
     #[test]
     fn portable_parts_refuse_device_names_trailing_dots_and_case_collisions() {
