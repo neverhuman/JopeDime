@@ -148,8 +148,57 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
     if args.m1_plan.is_some() {
         return run_m1(&args);
     }
-    let client = super::client()?;
-    run(args, &client)
+    use jope_client::discover::{self, Engine, Mode, Options};
+    let selection = discover::discover(&Options {
+        home: jope_paths::jopedime_home(),
+        executable: std::env::current_exe()?,
+        endpoint: None,
+        mode: Mode::Batch,
+        engine_available: cfg!(feature = "engine"),
+    })?;
+    match selection {
+        Engine::Background(background) => run(args, &background.client),
+        // An explicit endpoint is authoritative. Never substitute a daemon or
+        // legacy server when the selected endpoint cannot be authenticated.
+        Engine::Endpoint(_) => Err(DispatchUnavailable::EndpointCredentials.into()),
+        // The approved scope supplies no store-bound router/transport factory.
+        // Refuse before opening a Store; a test-only bridge is not production.
+        Engine::InProcess => Err(DispatchUnavailable::LocalHandlers.into()),
+    }
+}
+
+#[derive(Debug)]
+enum DispatchUnavailable {
+    EndpointCredentials,
+    LocalHandlers,
+}
+
+impl std::fmt::Display for DispatchUnavailable {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(match self {
+            Self::EndpointCredentials => {
+                "explicit run endpoints require supported bearer credentials"
+            }
+            Self::LocalHandlers => "in-process batch runs are unavailable in this build",
+        })
+    }
+}
+
+impl std::error::Error for DispatchUnavailable {}
+
+pub fn dispatch_exit_code(error: &anyhow::Error) -> Option<u8> {
+    if let Some(code) = interrupted_exit_code(error) {
+        return Some(code);
+    }
+    let top: &(dyn std::error::Error + 'static) = error.as_ref();
+    if let Some(error) = top.downcast_ref::<jope_client::discover::Error>() {
+        return Some(error.exit_code());
+    }
+    top.downcast_ref::<DispatchUnavailable>()
+        .map(|error| match error {
+            DispatchUnavailable::EndpointCredentials => 9,
+            DispatchUnavailable::LocalHandlers => 2,
+        })
 }
 
 /// Only a direct, acknowledged interruption may select exit130. A surrounding
@@ -534,6 +583,37 @@ mod tests {
         assert_eq!(interrupted_exit_code(&acknowledged), Some(130));
         let error = acknowledged.context("response reader shutdown failed");
         assert_eq!(interrupted_exit_code(&error), None);
+        assert_eq!(dispatch_exit_code(&error), None);
+    }
+
+    #[test]
+    fn batch_discovery_failures_keep_catalog_exit_codes_and_do_not_mask_cleanup_errors() {
+        for (error, expected) in [
+            (jope_client::discover::Error::NoEngine, 9),
+            (jope_client::discover::Error::InvalidEndpoint, 2),
+            (
+                jope_client::discover::Error::Busy {
+                    pid: Some(123),
+                    command: "owned-fixture".into(),
+                },
+                9,
+            ),
+        ] {
+            let error: anyhow::Error = error.into();
+            assert_eq!(dispatch_exit_code(&error), Some(expected));
+            assert_eq!(
+                dispatch_exit_code(&error.context("response shutdown failed")),
+                None
+            );
+        }
+        assert_eq!(
+            dispatch_exit_code(&DispatchUnavailable::EndpointCredentials.into()),
+            Some(9)
+        );
+        assert_eq!(
+            dispatch_exit_code(&DispatchUnavailable::LocalHandlers.into()),
+            Some(2)
+        );
     }
 
     fn m1_argv(path: &std::path::Path) -> Vec<String> {
