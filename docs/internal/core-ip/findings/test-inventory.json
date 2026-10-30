@@ -1851,6 +1851,10 @@
       "reason": "Owner-requested tests for H50 seeded sensitivity directions, adapter-state transforms, search candidate generation, and finite JSON metadata; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h58/test_h58.py": {
+      "reason": "Owner-requested pytest proofs for the H58 multi-arm flywheel runner and cache preparation (Arms A/B/C/D); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
       "role": "research"
