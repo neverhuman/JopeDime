@@ -1,5 +1,6 @@
 //! JopeDime v1 engine service.
 
 pub mod config;
+pub mod daemon_file;
 pub mod discover;
 pub mod lex;
