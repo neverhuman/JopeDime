@@ -17,7 +17,7 @@ pub fn allowed_cpus() -> f64 {
     }
     #[cfg(not(target_os = "linux"))]
     {
-        logical as f64
+        logical_cpu_count() as f64
     }
 }
 
