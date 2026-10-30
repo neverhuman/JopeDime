@@ -62,3 +62,13 @@ def test_es_generation_is_antithetic_with_population_32():
     assert len(candidates) == 32
     for positive, negative in zip(candidates[::2], candidates[1::2], strict=True):
         assert torch.equal(positive, -negative)
+
+
+def test_candidate_at_or_below_margin_uses_finite_ci_sentinel():
+    deltas = {f"f{i}": 0.0 for i in range(5)}
+    median, lower, upper = search.candidate_median_ci(
+        deltas,
+        torch.zeros((2, 5), dtype=torch.int64),
+    )
+
+    assert (median, lower, upper) == (0.0, 0.0, 0.0)

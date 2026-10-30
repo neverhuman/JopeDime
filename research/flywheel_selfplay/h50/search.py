@@ -83,11 +83,20 @@ def bootstrap_median_ci(deltas: dict[str, float], sample_indexes: np.ndarray) ->
     )
 
 
+def candidate_median_ci(deltas: dict[str, float], sample_indexes: np.ndarray) -> tuple[float, float, float]:
+    median = float(np.median(list(deltas.values())))
+    if median <= STRICT_MARGIN:
+        # The bootstrap lower bound cannot exceed this median, so the
+        # candidate is certainly rejected and needs no resampling.
+        return median, median, median
+    return bootstrap_median_ci(deltas, sample_indexes)
+
+
 def score_candidate(net, candidate, heldouts, pools, predict, guard, baseline_by_family, samples):
     deltas = family_deltas(net, candidate, heldouts, pools, predict, guard, baseline_by_family)
     mean_delta = float(np.mean(list(deltas.values())))
-    median_delta = float(np.median(list(deltas.values())))
-    ci = bootstrap_median_ci(deltas, samples) if median_delta > STRICT_MARGIN else (median_delta, float("-inf"), median_delta)
+    median_delta, ci_lower, ci_upper = candidate_median_ci(deltas, samples)
+    ci = (median_delta, ci_lower, ci_upper)
     return {
         "candidate": candidate,
         "family_deltas": deltas,
