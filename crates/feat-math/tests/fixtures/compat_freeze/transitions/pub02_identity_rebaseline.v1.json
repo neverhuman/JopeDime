@@ -1,26 +1,26 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced identity-only successor for PUB-02 public stage-operation names and registry wiring, after the API-01 jope-api lockfile identity, which follows RNK-11. The public-name catalog and its module declaration change the feat-math implementation identity; evaluation semantics, DSL ABI, Cargo.lock, behavior fixtures, lineage source hashes and shipped known-identity rows do not change.",
+  "decision": "Announced identity-only successor for PUB-02 public stage-operation names and registry wiring, after the DSC-01 feat-math identity successor; that edge follows API-01 and RNK-11. The public-name catalog and its module declaration change the feat-math implementation identity; evaluation semantics, DSL ABI, Cargo.lock, behavior fixtures, lineage source hashes and shipped known-identity rows do not change.",
   "plan_reference": "JopeDime v1 PUB-02; Jepson-approved scope_2218 and pub02_0515 rulings; ADR-0004",
   "pr_reference": "pending",
-  "source_commit": "2b159a118851c8a8f2c21d474b569c9dfeffd6b8",
+  "source_commit": "58c776b613a601f3cbacdba6cb2e0016db70105c",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "c0fa72e43b451e8cabedd916780543a04452f7b7907b49728e0d98c9d00de0db",
-      "after": "f8a48f8554c0506a2f63e3e734bc53ccbb46c760f00d6b4d7596e369830da17c"
+      "before": "0bb7afd9cd4f8cdb0a34684f7d19a9f69c6a01cf70bc3fde10864c71a5d89141",
+      "after": "af6113c255d893cd53a9244a3c35b6e5c2288c3a28105f8b4091b0d87844d3fd"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "900c2bf7a1b096906d6559af3babf7106915655f1833a5646057c33fb69c8101",
-      "after": "31c2e4afdc6dff69d2c41a7d2f87705554472e13694c93e276218424a300f6f1"
+      "after": "e37a2878c7cea2721f44743bf27298bb9d21afbfad22c3edf3f40a0e8f265047"
     }
   ],
   "identity": {
-    "old_implementation_sha256": "44c1f73ba257e509a8350a72a6ea6790140d165eb6bd0ef9174c3e5dcb5a4d64",
-    "new_implementation_sha256": "bd23428e33c286f33b7c5161a00ecfc35f8d5aa831f7f011837c86639fe2d7ad",
+    "old_implementation_sha256": "04d59d4d2bc54fc3448a35f8224c76fd0b0a8be99bd9f1218af57889b4cddb78",
+    "new_implementation_sha256": "cd46314f74ca3e6d56b5283a50c6b06c64a5560a39fc42c6af86285aecf102e2",
     "cargo_lock_sha256": "89d5812adf6dcfd0b549435ee38863753a21550206623cefad553a970dc80420",
-    "old_identity_digest": "75294fa33fd0855958db6ad6c6f75a85ab61d84a8e4d28dcea25b9305b7003d7",
-    "new_identity_digest": "ba253e90391fb943513dccc83e09c6fbed240c1acf5c47181134eefd441c6221"
+    "old_identity_digest": "dbfe797208ac96bb67e5f5109c23e54fc2b9e8b76ac89638dea90189b9b48309",
+    "new_identity_digest": "d6612bb0854769ba9e5c869968191d8efa80ca827ca37ebf3e6a8f35d11ae7c8"
   }
 }
