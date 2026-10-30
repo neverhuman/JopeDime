@@ -947,6 +947,27 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         )
         .expect("preserved original parallel TUI-07 identity announcement");
     }
+    let tui07_rechain = old_fixture("transitions/tui07_after_eeabea_identity_rechain.v1.json");
+    assert_eq!(
+        tui07_rechain["source_commit"],
+        "c23c022b9e6f9c266b70633a1c5d9bad3ed137fe"
+    );
+    assert_eq!(
+        tui07_rechain["base_commit"],
+        "eeabea7fa8fb8f156296511459058b2677922263"
+    );
+    assert_eq!(
+        tui07_rechain["before_identity_digest"],
+        svc01_store["after_identity_digest"]
+    );
+    assert_eq!(
+        tui07_rechain["after_identity_digest"],
+        svc01_store["after_identity_digest"]
+    );
+    assert_eq!(tui07_rechain["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(tui07_rechain["fixtures"][0]["path"], changed_fixtures[0]);
+    assert_eq!(tui07_rechain["fixtures"][1]["path"], changed_fixtures[1]);
+
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -978,6 +999,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &svc06_daemon_file,
         &svc01_store,
         &tui07_lockfile,
+        &tui07_rechain,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1045,6 +1067,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
                 svc01_store.clone(),
+                tui07_rechain.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1098,6 +1121,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
                 svc01_store.clone(),
+                tui07_rechain.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1144,6 +1168,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
                 svc01_store.clone(),
+                tui07_rechain.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1221,6 +1246,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
                 svc01_store.clone(),
+                tui07_rechain.clone(),
             ],
         ),
         (
@@ -1258,6 +1284,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat05_cli_ulid.clone(),
                 svc06_daemon_file.clone(),
                 svc01_store.clone(),
+                tui07_rechain.clone(),
             ],
         ),
     ] {
@@ -1343,6 +1370,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         bat05_cli_ulid,
         svc06_daemon_file,
         svc01_store,
+        tui07_rechain,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
