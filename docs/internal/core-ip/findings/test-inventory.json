@@ -1587,6 +1587,10 @@
         "training"
       ]
     },
+    "python:deploy/qualification/q1/harness/test_q1.py": {
+      "reason": "Q1 qualification harness protocol/statistical fixtures (QLT-01): owner-signature refusal, holdout guards and failure accounting; no learned model or sealed payload executes",
+      "role": "infrastructure"
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
@@ -1829,6 +1833,10 @@
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h47/test_analyze.py": {
+      "reason": "Owner-requested pytest proofs for H47 ranking-loss closeout analysis (family-bootstrap CI, pseudoreplicate disclosure, no-win verdict); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
@@ -2639,6 +2647,10 @@
         "export",
         "fitting"
       ]
+    },
+    "target:jope-appliance/test/pty_smoke": {
+      "reason": "Portable PTY harness smoke test for the terminal UI test infrastructure (TUI-10); supports UI tests without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-appliance/test/single_file": {
       "role": "regression",
