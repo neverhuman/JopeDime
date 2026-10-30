@@ -1,0 +1,21 @@
+# Windows OS libraries commonly linked by an MSVC Rust CLI.
+advapi32.dll
+bcrypt.dll
+bcryptprimitives.dll
+combase.dll
+comctl32.dll
+crypt32.dll
+gdi32.dll
+kernel32.dll
+ntdll.dll
+ole32.dll
+oleaut32.dll
+secur32.dll
+shell32.dll
+user32.dll
+userenv.dll
+version.dll
+winmm.dll
+ws2_32.dll
+api-ms-win-*.dll
+ext-ms-win-*.dll

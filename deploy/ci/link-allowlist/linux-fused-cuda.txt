@@ -1,0 +1,20 @@
+# Linux OS runtime libraries.
+ld-linux-x86-64.so.2
+libc.so.6
+libgcc_s.so.1
+libm.so.6
+# CUDA libraries permitted only for the fused-cuda profile.
+libcuda.so.*
+libcudart.so.*
+libcublas.so.*
+libcublasLt.so.*
+libnvrtc.so.*
+libnvrtc-builtins.so.*
+libcudnn.so.*
+libcudnn_adv.so.*
+libcudnn_cnn.so.*
+libcudnn_engines_precompiled.so.*
+libcudnn_engines_runtime_compiled.so.*
+libcudnn_graph.so.*
+libcudnn_heuristic.so.*
+libcudnn_ops.so.*
