@@ -15,5 +15,6 @@ pub mod ranker;
 pub mod run;
 pub mod sampler;
 pub mod store;
+pub mod telemetry;
 pub mod warnings;
 pub mod worker;
