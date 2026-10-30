@@ -1,0 +1,643 @@
+//! DSL-only inputs to the frozen 412-coordinate ranker recipe (§5.8).
+//!
+//! RNK-03 implements structural features only. Missing families remain explicit;
+//! a partial extraction cannot be converted into a complete ranker input.
+
+pub mod parse;
+pub mod structural;
+
+use anyhow::{ensure, Result};
+use std::collections::{BTreeMap, BTreeSet};
+
+pub const FEATURE_COUNT: usize = 412;
+pub const REFERENCE_SOURCE_SHA256: &str =
+    "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40";
+pub const FEATURE_NAMES_SHA256: &str =
+    "c4e4373d1bc7e99bc38e44eb4acda22d0f9ecc9e332fa8cb9c6a0b463fe37962";
+
+/// The caller supplies the authenticated bundle's name order, without sorting.
+/// This is an internal projection helper, not a bundle authentication boundary.
+pub struct Featurizer {
+    names: [String; FEATURE_COUNT],
+}
+
+impl Default for Featurizer {
+    fn default() -> Self {
+        Self {
+            names: FEATURE_NAMES.map(str::to_owned),
+        }
+    }
+}
+
+impl Featurizer {
+    pub fn from_names(names: Vec<String>) -> Result<Self> {
+        ensure!(names.len() == FEATURE_COUNT, "expected 412 feature names");
+        let unique: BTreeSet<_> = names.iter().map(String::as_str).collect();
+        ensure!(unique.len() == FEATURE_COUNT, "duplicate feature name");
+        ensure!(
+            unique == FEATURE_NAMES.into_iter().collect(),
+            "feature names differ from the frozen recipe"
+        );
+        Ok(Self {
+            names: names.try_into().expect("length checked above"),
+        })
+    }
+
+    pub fn feature_names(&self) -> &[String; FEATURE_COUNT] {
+        &self.names
+    }
+
+    /// Families include explicit zeroes for their own absent counts/flags.
+    /// Other families' missing keys remain None, never implicit model inputs.
+    /// Unknown dictionary keys are ignored, as in the reference's name projection.
+    pub fn project(&self, features: &BTreeMap<String, f64>) -> PartialFeatures {
+        PartialFeatures {
+            values: std::array::from_fn(|i| features.get(&self.names[i]).copied()),
+        }
+    }
+
+    pub fn structural(&self, dsl: &str) -> Result<PartialFeatures> {
+        let program = parse::parse(dsl)?;
+        Ok(self.project(&structural::extract(&program)))
+    }
+}
+
+#[derive(Debug)]
+pub struct PartialFeatures {
+    values: [Option<f64>; FEATURE_COUNT],
+}
+
+impl PartialFeatures {
+    pub fn values(&self) -> &[Option<f64>; FEATURE_COUNT] {
+        &self.values
+    }
+
+    pub fn require_complete(self) -> Result<[f64; FEATURE_COUNT]> {
+        let missing = self.values.iter().filter(|v| v.is_none()).count();
+        ensure!(
+            missing == 0,
+            "incomplete feat412: {missing} coordinates missing"
+        );
+        let values = self.values.map(|v| v.expect("all coordinates present"));
+        ensure!(
+            values.iter().all(|v| v.is_finite()),
+            "nonfinite feat412 value"
+        );
+        Ok(values)
+    }
+}
+
+#[cfg(test)]
+mod test_support {
+    use super::*;
+    use serde::Deserialize;
+    use std::{fs, path::PathBuf};
+
+    #[derive(Deserialize)]
+    pub struct ProgramRecord {
+        pub context_sha256: String,
+        pub dsl: String,
+        pub program_sha256: String,
+        pub dl_split: Option<String>,
+    }
+
+    pub fn custody() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../research/flywheel_selfplay/custody/files")
+            .join("home")
+            .join("ubuntu")
+    }
+
+    pub fn pinned(path: PathBuf, sha256: &str) -> Vec<u8> {
+        let bytes = fs::read(&path).unwrap();
+        assert_eq!(
+            jope_runtime::sha256_hex(&bytes),
+            sha256,
+            "{}",
+            path.display()
+        );
+        bytes
+    }
+
+    pub fn names() -> Vec<String> {
+        let path = custody().join("JopeDimeMicro/assets/projections/program-feature-names.json");
+        serde_json::from_slice(&pinned(path, FEATURE_NAMES_SHA256)).unwrap()
+    }
+
+    pub fn corpus() -> Vec<ProgramRecord> {
+        let root = custody().join("jope-data/res-01/input");
+        let mut rows: Vec<ProgramRecord> = serde_json::from_slice(&pinned(
+            root.join("champions.json"),
+            "a444047ffb937dc8d69012cbdbf0891faf3e7d743b127e7cac3baed114cf141d",
+        ))
+        .unwrap();
+        assert_eq!(rows.len(), 1219);
+        assert!(rows
+            .iter()
+            .all(|r| r.dl_split.as_deref() == Some("DL-Train")));
+        let train: BTreeSet<_> = rows.iter().map(|r| r.context_sha256.clone()).collect();
+        let winners: serde_json::Value = serde_json::from_slice(&pinned(
+            root.join("winners.json"),
+            "f38b2732d2e28f73972a5c09990029bfdcee45d7f2128609d00dc53625e58f44",
+        ))
+        .unwrap();
+        let winners: Vec<ProgramRecord> =
+            serde_json::from_value(winners["all_90_qualified_novel_winner_records"].clone())
+                .unwrap();
+        assert_eq!(winners.len(), 90);
+        assert!(winners.iter().all(|r| train.contains(&r.context_sha256)));
+        rows.extend(winners);
+        assert_eq!(rows.len(), 1309);
+        assert_eq!(
+            rows.iter()
+                .map(|r| &r.program_sha256)
+                .collect::<BTreeSet<_>>()
+                .len(),
+            1292
+        );
+        for row in &rows {
+            assert_eq!(
+                jope_runtime::sha256_hex(row.dsl.as_bytes()),
+                row.program_sha256
+            );
+        }
+        rows
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn feature_order_and_reference_are_the_pinned_custody_recipe() {
+        assert_eq!(FEATURE_NAMES.to_vec(), test_support::names());
+        test_support::pinned(
+            test_support::custody().join("JopeDimeMicro/python/rank_prepare.py"),
+            REFERENCE_SOURCE_SHA256,
+        );
+    }
+
+    #[test]
+    fn incomplete_families_are_not_silent_zero_filled_ranker_inputs() {
+        let extracted = Featurizer::default()
+            .structural("(pipe X (ridge))")
+            .unwrap();
+        assert_eq!(
+            extracted.values().iter().filter(|v| v.is_some()).count(),
+            30
+        );
+        assert!(extracted
+            .require_complete()
+            .unwrap_err()
+            .to_string()
+            .contains("382"));
+    }
+
+    #[test]
+    fn bundle_order_is_preserved_and_bad_name_sets_are_refused() {
+        let mut names = test_support::names();
+        names.reverse();
+        let f = Featurizer::from_names(names.clone()).unwrap();
+        let result = f.structural("(pipe X (ridge))").unwrap();
+        assert_eq!(f.feature_names(), names.as_slice());
+        assert_eq!(result.values()[0], Some(1.0)); // steps is last in the frozen order.
+        names.pop();
+        assert!(Featurizer::from_names(names).is_err());
+        let mut names = test_support::names();
+        names[1] = names[0].clone();
+        assert!(Featurizer::from_names(names).is_err());
+        let mut names = test_support::names();
+        names[0] = "unknown.feature".into();
+        assert!(Featurizer::from_names(names).is_err());
+    }
+
+    #[test]
+    fn projection_ignores_unknown_keys_and_refuses_nonfinite_complete_inputs() {
+        let f = Featurizer::default();
+        let mut values: BTreeMap<_, _> = FEATURE_NAMES.iter().map(|&n| (n.into(), 1.0)).collect();
+        values.insert("unknown.feature".into(), f64::NAN);
+        assert_eq!(
+            f.project(&values).require_complete().unwrap(),
+            [1.0; FEATURE_COUNT]
+        );
+        values.insert("steps".into(), f64::INFINITY);
+        assert!(f.project(&values).require_complete().is_err());
+    }
+}
+
+/// Frozen name order, generated from the hash-pinned custody metadata above.
+pub const FEATURE_NAMES: [&str; FEATURE_COUNT] = [
+    "count.bin_onehot",
+    "count.blom",
+    "count.cheb",
+    "count.elasticnet",
+    "count.hinge",
+    "count.histgbm",
+    "count.ksmooth",
+    "count.oblique_hinge",
+    "count.pair_prod",
+    "count.poly_interact",
+    "count.quantile_bins",
+    "count.rand_proj",
+    "count.rank",
+    "count.rff_cos",
+    "count.rff_sin",
+    "count.ridge",
+    "count.ridge_gcv",
+    "count.robust_scale",
+    "count.row_stats",
+    "count.sigmoid",
+    "count.standardize",
+    "count.target_bin_encode",
+    "count.winsor_clip",
+    "dsl_characters",
+    "estimator.elasticnet",
+    "estimator.histgbm",
+    "estimator.ksmooth",
+    "estimator.ridge",
+    "estimator.ridge_gcv",
+    "parameter.bin_onehot.append.count",
+    "parameter.bin_onehot.append.sum",
+    "parameter.bin_onehot.bins.count",
+    "parameter.bin_onehot.bins.sum",
+    "parameter.blom.append.count",
+    "parameter.blom.append.sum",
+    "parameter.cheb.append.count",
+    "parameter.cheb.append.sum",
+    "parameter.cheb.degree.count",
+    "parameter.cheb.degree.sum",
+    "parameter.elasticnet.alpha.count",
+    "parameter.elasticnet.alpha.sum",
+    "parameter.elasticnet.l1_ratio.count",
+    "parameter.elasticnet.l1_ratio.sum",
+    "parameter.hinge.append.count",
+    "parameter.hinge.append.sum",
+    "parameter.hinge.knots.count",
+    "parameter.hinge.knots.sum",
+    "parameter.histgbm.depth.count",
+    "parameter.histgbm.depth.sum",
+    "parameter.histgbm.lr.count",
+    "parameter.histgbm.lr.sum",
+    "parameter.histgbm.rounds.count",
+    "parameter.histgbm.rounds.sum",
+    "parameter.ksmooth.gamma.count",
+    "parameter.ksmooth.gamma.sum",
+    "parameter.ksmooth.k.count",
+    "parameter.ksmooth.k.sum",
+    "parameter.oblique_hinge.append.count",
+    "parameter.oblique_hinge.append.sum",
+    "parameter.oblique_hinge.gamma.count",
+    "parameter.oblique_hinge.gamma.sum",
+    "parameter.oblique_hinge.n.count",
+    "parameter.oblique_hinge.n.sum",
+    "parameter.pair_prod.append.count",
+    "parameter.pair_prod.append.sum",
+    "parameter.pair_prod.topk.count",
+    "parameter.pair_prod.topk.sum",
+    "parameter.poly_interact.append.count",
+    "parameter.poly_interact.append.sum",
+    "parameter.quantile_bins.append.count",
+    "parameter.quantile_bins.append.sum",
+    "parameter.quantile_bins.bins.count",
+    "parameter.quantile_bins.bins.sum",
+    "parameter.rand_proj.append.count",
+    "parameter.rand_proj.append.sum",
+    "parameter.rand_proj.k.count",
+    "parameter.rand_proj.k.sum",
+    "parameter.rank.append.count",
+    "parameter.rank.append.sum",
+    "parameter.rff_cos.append.count",
+    "parameter.rff_cos.append.sum",
+    "parameter.rff_cos.gamma.count",
+    "parameter.rff_cos.gamma.sum",
+    "parameter.rff_cos.n.count",
+    "parameter.rff_cos.n.sum",
+    "parameter.rff_sin.append.count",
+    "parameter.rff_sin.append.sum",
+    "parameter.rff_sin.gamma.count",
+    "parameter.rff_sin.gamma.sum",
+    "parameter.rff_sin.n.count",
+    "parameter.rff_sin.n.sum",
+    "parameter.ridge.lambda_frac.count",
+    "parameter.ridge.lambda_frac.sum",
+    "parameter.robust_scale.append.count",
+    "parameter.robust_scale.append.sum",
+    "parameter.row_stats.append.count",
+    "parameter.row_stats.append.sum",
+    "parameter.sigmoid.append.count",
+    "parameter.sigmoid.append.sum",
+    "parameter.standardize.append.count",
+    "parameter.standardize.append.sum",
+    "parameter.target_bin_encode.append.count",
+    "parameter.target_bin_encode.append.sum",
+    "parameter.target_bin_encode.bins.count",
+    "parameter.target_bin_encode.bins.sum",
+    "parameter.winsor_clip.append.count",
+    "parameter.winsor_clip.append.sum",
+    "parameter.winsor_clip.q.count",
+    "parameter.winsor_clip.q.sum",
+    "position0.append",
+    "position0.bin_onehot",
+    "position0.bins",
+    "position0.blom",
+    "position0.cheb",
+    "position0.degree",
+    "position0.gamma",
+    "position0.hinge",
+    "position0.k",
+    "position0.knots",
+    "position0.n",
+    "position0.oblique_hinge",
+    "position0.pair_prod",
+    "position0.poly_interact",
+    "position0.q",
+    "position0.quantile_bins",
+    "position0.rand_proj",
+    "position0.rank",
+    "position0.rff_cos",
+    "position0.rff_sin",
+    "position0.robust_scale",
+    "position0.row_stats",
+    "position0.sigmoid",
+    "position0.standardize",
+    "position0.target_bin_encode",
+    "position0.topk",
+    "position0.winsor_clip",
+    "position1.alpha",
+    "position1.append",
+    "position1.bin_onehot",
+    "position1.bins",
+    "position1.blom",
+    "position1.cheb",
+    "position1.degree",
+    "position1.depth",
+    "position1.elasticnet",
+    "position1.gamma",
+    "position1.hinge",
+    "position1.histgbm",
+    "position1.k",
+    "position1.knots",
+    "position1.ksmooth",
+    "position1.l1_ratio",
+    "position1.lambda_frac",
+    "position1.lr",
+    "position1.n",
+    "position1.oblique_hinge",
+    "position1.pair_prod",
+    "position1.poly_interact",
+    "position1.q",
+    "position1.quantile_bins",
+    "position1.rand_proj",
+    "position1.rank",
+    "position1.rff_cos",
+    "position1.rff_sin",
+    "position1.ridge",
+    "position1.ridge_gcv",
+    "position1.robust_scale",
+    "position1.rounds",
+    "position1.row_stats",
+    "position1.sigmoid",
+    "position1.standardize",
+    "position1.target_bin_encode",
+    "position1.topk",
+    "position1.winsor_clip",
+    "position2.alpha",
+    "position2.append",
+    "position2.bin_onehot",
+    "position2.bins",
+    "position2.blom",
+    "position2.cheb",
+    "position2.degree",
+    "position2.depth",
+    "position2.elasticnet",
+    "position2.gamma",
+    "position2.hinge",
+    "position2.histgbm",
+    "position2.k",
+    "position2.knots",
+    "position2.ksmooth",
+    "position2.l1_ratio",
+    "position2.lambda_frac",
+    "position2.lr",
+    "position2.n",
+    "position2.oblique_hinge",
+    "position2.pair_prod",
+    "position2.poly_interact",
+    "position2.q",
+    "position2.quantile_bins",
+    "position2.rand_proj",
+    "position2.rank",
+    "position2.rff_cos",
+    "position2.rff_sin",
+    "position2.ridge",
+    "position2.ridge_gcv",
+    "position2.robust_scale",
+    "position2.rounds",
+    "position2.row_stats",
+    "position2.sigmoid",
+    "position2.standardize",
+    "position2.target_bin_encode",
+    "position2.topk",
+    "position2.winsor_clip",
+    "position3.alpha",
+    "position3.append",
+    "position3.bin_onehot",
+    "position3.bins",
+    "position3.blom",
+    "position3.cheb",
+    "position3.degree",
+    "position3.depth",
+    "position3.elasticnet",
+    "position3.gamma",
+    "position3.hinge",
+    "position3.histgbm",
+    "position3.k",
+    "position3.knots",
+    "position3.ksmooth",
+    "position3.l1_ratio",
+    "position3.lambda_frac",
+    "position3.lr",
+    "position3.n",
+    "position3.oblique_hinge",
+    "position3.pair_prod",
+    "position3.poly_interact",
+    "position3.q",
+    "position3.quantile_bins",
+    "position3.rand_proj",
+    "position3.rank",
+    "position3.rff_cos",
+    "position3.rff_sin",
+    "position3.ridge",
+    "position3.ridge_gcv",
+    "position3.robust_scale",
+    "position3.rounds",
+    "position3.row_stats",
+    "position3.sigmoid",
+    "position3.standardize",
+    "position3.target_bin_encode",
+    "position3.topk",
+    "position3.winsor_clip",
+    "position4.alpha",
+    "position4.append",
+    "position4.bin_onehot",
+    "position4.bins",
+    "position4.blom",
+    "position4.cheb",
+    "position4.degree",
+    "position4.depth",
+    "position4.elasticnet",
+    "position4.gamma",
+    "position4.hinge",
+    "position4.histgbm",
+    "position4.k",
+    "position4.knots",
+    "position4.ksmooth",
+    "position4.l1_ratio",
+    "position4.lambda_frac",
+    "position4.lr",
+    "position4.n",
+    "position4.oblique_hinge",
+    "position4.pair_prod",
+    "position4.poly_interact",
+    "position4.q",
+    "position4.quantile_bins",
+    "position4.rand_proj",
+    "position4.rank",
+    "position4.rff_cos",
+    "position4.rff_sin",
+    "position4.ridge",
+    "position4.ridge_gcv",
+    "position4.robust_scale",
+    "position4.rounds",
+    "position4.row_stats",
+    "position4.sigmoid",
+    "position4.standardize",
+    "position4.target_bin_encode",
+    "position4.topk",
+    "position4.winsor_clip",
+    "position5.alpha",
+    "position5.append",
+    "position5.bin_onehot",
+    "position5.bins",
+    "position5.blom",
+    "position5.cheb",
+    "position5.degree",
+    "position5.depth",
+    "position5.elasticnet",
+    "position5.gamma",
+    "position5.hinge",
+    "position5.histgbm",
+    "position5.k",
+    "position5.knots",
+    "position5.ksmooth",
+    "position5.l1_ratio",
+    "position5.lr",
+    "position5.n",
+    "position5.oblique_hinge",
+    "position5.pair_prod",
+    "position5.poly_interact",
+    "position5.q",
+    "position5.quantile_bins",
+    "position5.rand_proj",
+    "position5.rank",
+    "position5.rff_cos",
+    "position5.rff_sin",
+    "position5.ridge",
+    "position5.ridge_gcv",
+    "position5.robust_scale",
+    "position5.rounds",
+    "position5.row_stats",
+    "position5.sigmoid",
+    "position5.standardize",
+    "position5.target_bin_encode",
+    "position5.topk",
+    "position5.winsor_clip",
+    "position6.alpha",
+    "position6.append",
+    "position6.bin_onehot",
+    "position6.bins",
+    "position6.blom",
+    "position6.cheb",
+    "position6.degree",
+    "position6.depth",
+    "position6.elasticnet",
+    "position6.gamma",
+    "position6.hinge",
+    "position6.histgbm",
+    "position6.k",
+    "position6.knots",
+    "position6.ksmooth",
+    "position6.l1_ratio",
+    "position6.lr",
+    "position6.n",
+    "position6.oblique_hinge",
+    "position6.pair_prod",
+    "position6.poly_interact",
+    "position6.q",
+    "position6.quantile_bins",
+    "position6.rand_proj",
+    "position6.rank",
+    "position6.rff_cos",
+    "position6.rff_sin",
+    "position6.ridge",
+    "position6.ridge_gcv",
+    "position6.robust_scale",
+    "position6.rounds",
+    "position6.row_stats",
+    "position6.sigmoid",
+    "position6.standardize",
+    "position6.target_bin_encode",
+    "position6.topk",
+    "position6.winsor_clip",
+    "position7.alpha",
+    "position7.append",
+    "position7.bin_onehot",
+    "position7.bins",
+    "position7.blom",
+    "position7.cheb",
+    "position7.degree",
+    "position7.depth",
+    "position7.elasticnet",
+    "position7.gamma",
+    "position7.hinge",
+    "position7.histgbm",
+    "position7.k",
+    "position7.knots",
+    "position7.ksmooth",
+    "position7.l1_ratio",
+    "position7.lr",
+    "position7.n",
+    "position7.oblique_hinge",
+    "position7.pair_prod",
+    "position7.poly_interact",
+    "position7.q",
+    "position7.quantile_bins",
+    "position7.rand_proj",
+    "position7.rank",
+    "position7.rff_cos",
+    "position7.rff_sin",
+    "position7.ridge",
+    "position7.ridge_gcv",
+    "position7.robust_scale",
+    "position7.rounds",
+    "position7.row_stats",
+    "position7.sigmoid",
+    "position7.standardize",
+    "position7.target_bin_encode",
+    "position7.topk",
+    "position7.winsor_clip",
+    "position8.alpha",
+    "position8.depth",
+    "position8.elasticnet",
+    "position8.gamma",
+    "position8.histgbm",
+    "position8.k",
+    "position8.ksmooth",
+    "position8.l1_ratio",
+    "position8.lr",
+    "position8.ridge",
+    "position8.ridge_gcv",
+    "position8.rounds",
+    "steps",
+];
