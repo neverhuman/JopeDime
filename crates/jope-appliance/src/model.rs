@@ -435,6 +435,7 @@ fn call_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
 }
 
 /// Call the existing model-session handler from the shared MCP adapter.
+#[cfg(feature = "mcp")]
 pub(crate) fn call_mcp_legacy_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
     call_tool(root, name, args)
 }
@@ -529,7 +530,7 @@ fn serve(root: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "mcp"))]
 mod tests {
     use super::*;
 
