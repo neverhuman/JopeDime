@@ -8,7 +8,17 @@ license.workspace = true
 repository.workspace = true
 description = "JopeDime v1 API client"
 
+[features]
+fake = ["dep:jope-api", "dep:serde_json"]
+
 [dependencies]
+jope-api = { path = "../jope-api", optional = true }
+serde_json = { workspace = true, optional = true }
+
+[[test]]
+name = "fake_replay"
+path = "tests/fake_replay.rs"
+required-features = ["fake"]
 
 [lints]
 workspace = true
