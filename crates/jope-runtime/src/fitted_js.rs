@@ -141,7 +141,7 @@ pub fn emit_calibrated_with_checks(
 // Fitted state: prediction only. Regression output calibration.
 const FITTED_STATES=Object.freeze({});
 const FITTED_HEAD=Object.freeze({});
-function modelFittedHandle(){{const base=new Model(FITTED_STATES,FITTED_HEAD);return {{model:{{predict(rows){{return base.predict(rows).map(pred=>{{const value={intercept:?}+{slope:?}*pred;return {lower}===null?value:(Number.isNaN(value)?{lower}:Math.max(value,{lower}));}});}}}},width:{width}}};}}
+function modelFittedHandle(){{const base=new Model(FITTED_STATES,FITTED_HEAD);return {{model:{{predict(rows){{return base.predict(rows).map(pred=>{{const value={intercept:?}+{slope:?}*pred;const calibrated={lower}===null?value:(Number.isNaN(value)?{lower}:Math.max(value,{lower}));if(!Number.isFinite(calibrated))throw new Error("calibrated prediction is not finite");return calibrated;}});}}}},width:{width}}};}}
 "#, serde_json::to_string(&Value::Array(states))?, serde_json::to_string(&head_state)?, intercept=transform.intercept, slope=transform.slope, lower=lower, width=width));
     } else {
         source.push_str(&format!(
