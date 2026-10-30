@@ -16,7 +16,7 @@ import torch
 from jope.broad_shadow.corpus import BroadCorpus, ExactOnceBatchSampler
 
 from .model import DimeBroadCritic, broad_critic_losses, broad_partial_warm_start
-from .train import _HardwareMonitor
+from .train import MINIMUM_VRAM_HEADROOM_MIB
 
 
 @dataclass
@@ -577,10 +577,11 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
     )
     history_path = telemetry_dir / "epoch-history.v2.jsonl"
     stopped_early = False
-    training_started = time.monotonic()
-    hardware = _HardwareMonitor(1.0)
+    from jope.telemetry import HardwareMonitor, RatchetLive
+
+    hardware = HardwareMonitor(1.0, MINIMUM_VRAM_HEADROOM_MIB)
     hardware.start()
-    last_live = 0.0
+    live = RatchetLive(telemetry_dir / "live.v2.json", hardware, "broad_shadow")
     for epoch in range(start_epoch, config.epochs):
         sampler.set_epoch(epoch)
         model.train()
@@ -632,45 +633,7 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
             train_fidelities.append(batch["fidelity_ids"].detach().cpu().numpy())
             examples += len(batch_rows)
             tokens_seen += int(batch["lengths"].sum())
-            now = time.monotonic()
-            if now - last_live >= 0.1:
-                gpu = hardware.snapshot()
-                used = gpu["gpu_memory_used_mib"]
-                total = gpu["gpu_memory_total_mib"]
-                live = {
-                    "schema": "RatchetLiveTelemetry.v2",
-                    "updated_at_ms": int(time.time() * 1000),
-                    "render_hz": 10,
-                    "hardware_hz": 1,
-                    "nodes": [
-                        {
-                            "node": os.environ.get("HOSTNAME", "local").split(".")[0],
-                            "role": "trainer",
-                            "state": "running",
-                            "scq_job_id": os.environ.get("SCQ_JOB_ID"),
-                            "scq_owner": "broad_shadow",
-                            "gpu_utilization_percent": gpu["gpu_utilization_pct"],
-                            "used_vram_mib": (int(used) if used is not None else None),
-                            "free_vram_mib": (
-                                int(total - used) if total is not None and used is not None else None
-                            ),
-                            "total_vram_mib": (int(total) if total is not None else None),
-                            "updated_at_ms": int(time.time() * 1000),
-                        }
-                    ],
-                    "labels": {
-                        "labels_per_second": 0.0,
-                        "evaluator_backlog": 0,
-                        "failures_total": 0,
-                        "self_play_wins_total": 0,
-                        "time_to_best_seconds": (
-                            time.monotonic() - training_started if best_epoch >= 0 else None
-                        ),
-                    },
-                    "evaluator_failures": [],
-                }
-                _atomic_json(telemetry_dir / "live.v2.json", live)
-                last_live = now
+            live.tick(best_epoch >= 0)
             iterator_started = time.perf_counter()
         elapsed = max(time.monotonic() - epoch_started, 1e-9)
         coverage = sampler.last_report

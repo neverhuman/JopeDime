@@ -5,8 +5,10 @@
 //!   themselves are recorded and queried from Python, where the torch stream lives; Python only
 //!   reports the elapsed milliseconds of a completed slot.
 //! * [`ReadStats`] aggregates logical file sizes and wall time around startup reads.
+//! * [`rates`] turns a step's raw counters into tok/s and GB/s for loops without a step layout.
 
 use crate::hooks::step::{missing, StepBatch};
+use crate::train::{IO_BATCH_BYTES_PER_S, IO_BATCH_GB_S, IO_H2D_GB_S, SAMPLES_PER_S, TOKENS_PER_S};
 use anyhow::{anyhow, Result};
 use serde::Serialize;
 use std::time::Instant;
@@ -271,6 +273,46 @@ impl ReadStats {
     }
 }
 
+/// One step's raw counters for [`rates`]; `None` skips that metric.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct RateCounters {
+    pub tokens: Option<f64>,
+    pub samples: Option<f64>,
+    pub batch_bytes: Option<f64>,
+    pub h2d_bytes: Option<f64>,
+    /// Copy time for `io.h2d_gb_s`; the step time when absent.
+    pub h2d_seconds: Option<f64>,
+}
+
+/// `(metric id, value)` per-step throughput: `throughput.tokens_per_s`,
+/// `throughput.samples_per_s`, `io.batch_bytes_per_s` with `io.batch_gb_s`, and `io.h2d_gb_s`.
+pub fn rates(seconds: f64, c: &RateCounters) -> Result<Vec<(u16, f64)>> {
+    let positive = |what: &str, s: f64| {
+        if s.is_finite() && s > 0.0 {
+            Ok(s)
+        } else {
+            Err(anyhow!("{what} must be positive and finite, got {s}"))
+        }
+    };
+    let seconds = positive("seconds", seconds)?;
+    let mut out = Vec::with_capacity(5);
+    if let Some(tokens) = c.tokens {
+        out.push((TOKENS_PER_S, tokens / seconds));
+    }
+    if let Some(samples) = c.samples {
+        out.push((SAMPLES_PER_S, samples / seconds));
+    }
+    if let Some(bytes) = c.batch_bytes {
+        out.push((IO_BATCH_BYTES_PER_S, bytes / seconds));
+        out.push((IO_BATCH_GB_S, bytes / seconds / 1e9));
+    }
+    if let Some(bytes) = c.h2d_bytes {
+        let copy = positive("h2d_seconds", c.h2d_seconds.unwrap_or(seconds))?;
+        out.push((IO_H2D_GB_S, bytes / copy / 1e9));
+    }
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -327,5 +369,38 @@ mod tests {
         assert!((s.read_ms - 4.0).abs() < 1e-9);
         assert!((s.read_operation_ms - 6.0).abs() < 1e-9);
         assert_eq!(r.snapshot().reads, 0);
+    }
+
+    #[test]
+    fn rates_from_raw_counters() {
+        let c = RateCounters {
+            tokens: Some(9_000.0),
+            samples: Some(64.0),
+            batch_bytes: Some(3e9),
+            h2d_bytes: Some(1e9),
+            h2d_seconds: Some(0.25),
+        };
+        assert_eq!(
+            rates(1.5, &c).unwrap(),
+            vec![
+                (TOKENS_PER_S, 6_000.0),
+                (SAMPLES_PER_S, 64.0 / 1.5),
+                (IO_BATCH_BYTES_PER_S, 2e9),
+                (IO_BATCH_GB_S, 2.0),
+                (IO_H2D_GB_S, 4.0),
+            ]
+        );
+        let h2d_only = RateCounters {
+            h2d_bytes: Some(1e9),
+            ..RateCounters::default()
+        };
+        assert_eq!(rates(2.0, &h2d_only).unwrap(), vec![(IO_H2D_GB_S, 0.5)]);
+        assert!(rates(0.0, &c).is_err());
+        assert!(rates(f64::NAN, &RateCounters::default()).is_err());
+        let bad_copy = RateCounters {
+            h2d_seconds: Some(-1.0),
+            ..c
+        };
+        assert!(rates(1.0, &bad_copy).is_err());
     }
 }
