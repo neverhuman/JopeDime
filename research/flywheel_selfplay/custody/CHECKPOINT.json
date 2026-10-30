@@ -241,14 +241,15 @@
   "qualification": {
     "independently_qualified": false,
     "serving_promoted": false,
-    "sealed_holdout_metatest_payloads_opened": 0,
     "outer_query_rows_delivered": 0,
     "caveats": [
       "All four Elo point estimates tie. Owner tie rule chooses r782 despite its one failed development gate, lower dev utility and much worse mean R2. This is not evidence that r782 dominates later rounds.",
       "H40/H40B historical evidence was cached-pool replay, zero native fits, with reused dl_holdout_91 (u_w -1.133758 to -1.134014; N0 -1.134141). That historical evidence is not independent qualification.",
       "Historical 16/8-context run was flat from r256 at utility 2.267816; that value is a separate comparison identity from this 1219/91 full-cohort run.",
       "This task replays native inner folds on the existing development roster only. HWV-01 Golden45 qualification, RES-01 closure, runtime parity and serving promotion remain separate gates."
-    ]
+    ],
+    "sealed_holdout_metatest_tables_or_labels_opened": 0,
+    "legacy_metadata_access": "Legacy corpus manifest and unfiltered champion_dsl_bank.json schema were inspected during path discovery; no program/feature/metric value from that bank entered scoring. Only allowlisted DL-Val accepts/seeds DSLs and prepared training-only tables were used. See ACCESS-NOTE.md."
   },
   "evidence": {
     "root": "/home/ubuntu/jope_plan/evidence/GOV-03",
@@ -313,6 +314,10 @@
       {
         "path": "/home/ubuntu/jope_plan/evidence/GOV-03/full-cohort-metadata.json",
         "sha256": "1655e81d51f358dc14164636262c0886269e214782025bbc741e661a1877360c"
+      },
+      {
+        "path": "/home/ubuntu/jope_plan/evidence/GOV-03/ACCESS-NOTE.md",
+        "sha256": "df49765ad8b719ecfa38dc4cc10556f9a94c957247e5609736325633307ccedd"
       }
     ]
   }
