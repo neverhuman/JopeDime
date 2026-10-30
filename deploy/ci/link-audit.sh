@@ -82,8 +82,10 @@ case $platform in
       /following dependencies:/ { in_dependencies = 1; next }
       in_dependencies && /^[[:space:]]*Summary[[:space:]]*$/ { exit }
       in_dependencies {
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "")
-        if ($0 ~ /^[[:alnum:]_.+-]+[.]dll$/) print tolower($0)
+        dependency = $0
+        sub(/^[[:space:]]+/, "", dependency)
+        sub(/[[:space:]]+$/, "", dependency)
+        if (dependency != "") print tolower(dependency)
       }
     ' | sort -u)
     ;;
