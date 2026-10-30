@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced DSC-02 identity-only successor for the jope-service sha2 Cargo.lock dependency edge. The already-locked sha2 0.10.9 package is unchanged; no dependency version, feature, registry source, evaluator behavior, or feat-math source changed. Re-chained after API-03 on current main per ruling 0945 and ruling 0840(a).",
+  "plan_reference": "DSC-02; ruling 0810 service wiring/dependency, ruling 0840(a), ruling 0945; ADR-0004; chained after api03_id_newtypes_lockfile_identity_rebaseline",
+  "source_commit": "f19e71d6b6301e44017f4cd6594d11c01cfa326b",
+  "base_commit": "9d4d7d6b8a941427a98ebb31616f1344ea3ee168",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "42ca1a5bd891c28527de3d6d2d3380cb036f01a7b0dd9561c5994fe2ba16e250",
+      "after": "5504fef088ae05ee823596b8dc0b5c5f92c9acf86c3176899d8ae12e2afe4cb0"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "ea15dcbc112197d3e02fd9589dde8b6617a5ac96b3686ad30e19b2f5a6e70ac1",
+      "after": "ae8b49734329b6c16ca67eed026d4fa667644718175288a0cd68b2cec0f0e4c5"
+    }
+  ],
+  "before_identity_digest": "a7367494259ac52d7c2453b3f12215cf5f895bb75bda0e2ca260c49c0421f41b",
+  "after_identity_digest": "a39073bfcdc04334758e1eaa8b5dab990a25f306e6dc56f03b6ef1573e20a7f0",
+  "before_implementation_sha256": "bba7ac4a8bf9690894a2416a01f7ca40c67568186913c78a26e3db98934f2271",
+  "after_implementation_sha256": "e0050bf8c886e51a7aed176eda226745acbd9087e562edbaaca11722409c0407",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
