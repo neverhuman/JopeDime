@@ -1,24 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "DSC-08 adds exactly one existing-locked jope-service dependency edge, rand_chacha 0.3.1. feat-math becomes a normal no-defaults dependency as well as its existing dev edge, so that existing lock edge is unchanged. No package version/source/checksum, evaluator behavior fixture, known identity table or lineage body changes.",
-  "plan_reference": "T073/DSC-08; owner lanes_t539_1725; standing ruling0810(c) and0840(a); exact dependency patch posted before mutation; ADR-0004",
-  "source_commit": "8d87b64f31af03670304586835afaacbe382b9ef",
-  "base_commit": "cfd1bac4d7f6feb2ad3ccdf247a75bb3fd767792",
+  "decision": "DSC-08 adds exactly one existing-locked jope-service dependency edge, rand_chacha 0.3.1. The incoming main normal feat-math dependency and its feature selection are preserved. tempfile becomes a normal dependency while retaining its existing dev lock edge, which is unchanged. No package version/source/checksum, evaluator behavior fixture, known identity table or lineage body changes.",
+  "plan_reference": "T073/DSC-08; owner dsc08_t542_1855; standing ruling0810(c) and0840(a); exact dependency patch posted before mutation; ADR-0004",
+  "source_commit": "fb2a59b862133af4312ea9e0ed48a8a890010320",
+  "base_commit": "6f3abba9fddc19ebfe008cbfc2226e58cc61d8c1",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "82f99b5e4c8f1774e082958c7bbb6ae3cfb3db973f90ee80bcd62c81f1419a0c",
-      "after": "a1fab28a215986bcc27f12972f9eb7e1fd67095cea217f6d567444694aabc2c3"
+      "before": "8d33346eb6d089bac5db0139f987eba63aa71b4e619ea06438b9b3097ede6385",
+      "after": "655543895ece1c9cadb142e741594c18769e364ffa63ccfbf779d645263b4853"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "36643024b3ebe16e448345aaeb43a5f67fc04442fc2532928e9bec0f5a2a6633",
-      "after": "fbda332e4507e3daa347fb48cda272b37b3e2f6e7e5dfaa26ea4c2039eea5be7"
+      "before": "5c5203118c3d88ba471a0b11972d1a4bca4335c60f2877ab5a48b833c1f42e8f",
+      "after": "746e996985141ee590fae05a984655877d14e788236dd573efc3053eea6d05fc"
     }
   ],
-  "before_identity_digest": "2cbeefc0fe4fa27ab1d61c81be7b0e16dbfd8e90691af5e58304f0c1cab1ec2e",
-  "after_identity_digest": "a801c3f1e62d5691788a3f663711e6fe3988a470aa22868d2bd61449ecaab77a",
-  "before_implementation_sha256": "b36e7601865cafa5fa96b88e20c04509d7c109ec61bef0e10466443058a6282b",
-  "after_implementation_sha256": "d8d15de63f91dba0683c37c562785cfe80355f01ef0974cea2519a85d0b6a27a",
+  "before_identity_digest": "b8a02f9ea4d87183ae387c7c5c6292a6044f3a588ce1c246e0d4bf9016c6c76d",
+  "after_identity_digest": "570ca03d385ce52e41d29e8dec90a545448edff91583638c2ed426a070cac98f",
+  "before_implementation_sha256": "c0d36508de092890c474760fc6feeecd6a0a09f3d74121ce09611ec4a7c13d83",
+  "after_implementation_sha256": "06392f2307442951c958ce170203c91eb29754ba225fe7cadb2aa89612708eaa",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }
