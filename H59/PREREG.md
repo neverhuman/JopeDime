@@ -1,7 +1,7 @@
 # H59 preregistration — Robust and context-normalized flywheel loss
 
-**Status:** preregistered design only; no H59 outcome work has run.  
-**Date:** 2026-10-30  
+**Status:** preregistered design only; no H59 outcome work has run.
+**Date:** 2026-10-30
 **Scope:** offline adapter loss ablation; CPU-only preparation, no training, GPU use, or dataset payload reads are authorized by this document.
 
 ## Question and limits
