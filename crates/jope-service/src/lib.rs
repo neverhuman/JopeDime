@@ -3,3 +3,4 @@
 pub mod config;
 pub mod discover;
 pub mod lex;
+pub mod store;
