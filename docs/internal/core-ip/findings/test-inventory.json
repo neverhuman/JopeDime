@@ -2876,6 +2876,10 @@
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
       "role": "infrastructure"
     },
+    "target:jope-client/test/contract": {
+      "reason": "CLT-04 cross-transport contract harness for jope-client (feature `engine`): identical operation outcomes and idempotent replay over HTTP, in-process and resumable SSE transports; contract test infrastructure, not a regression subsystem",
+      "role": "infrastructure"
+    },
     "target:jope-client/test/fake_replay": {
       "reason": "Recorded-event fixture replay through the jope-client fake transport (TUI-11, feature `fake`): validates the committed event fixtures and deterministic replay cadence; test infrastructure for terminal UI tests, not a regression subsystem",
       "role": "infrastructure"
