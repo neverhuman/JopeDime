@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Lockfile identity successor: #694 (RNK-09) gave jope-service a ruzstd edge (ruzstd already locked) without declaring it; no evaluator input version/feature or evaluator behavior changed. Declared and chained after the current tip by super_merge_claude under merge_policy_t543 to restore main.",
+  "plan_reference": "RNK-09 (#694); merge_policy_t543; ADR-0004",
+  "source_commit": "d3b589181be62f2b99928be419f359c0b77e7626",
+  "base_commit": "31ba8225da6c8c0128dd8c58fbb2839920fb102f",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "6333ec2cbbd489272f874567e1030bdf4ad014f87a03aaa6a70a7c1e6427950b",
+      "after": "bb54d15cf027983df9612670a71535cb7a8b01d35135dd4b3f28d8e37cb4d26a"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "337c3b524a786f8b61e8bc6bf626212cd403f6c438bf4b5fee52adeeb6602ded",
+      "after": "c31e974aac472f4ffd15c8bb34116133bb140761d872079cb2a2dbcc067a9cec"
+    }
+  ],
+  "before_identity_digest": "e496d2ad46a1c9c423e05d23eb4325ef3515b23b3b02f5980af51f25cab6a4aa",
+  "after_identity_digest": "9ff7dccc6320e8ea9f0528c22157b4ee877f6ae7fa90a10a4a4eeb021ce59990",
+  "before_implementation_sha256": "54c23d9d478dfca5ee2a5e6915fb3b8fe5f7328a467c5a20ac9a9f46513ae6c8",
+  "after_implementation_sha256": "9b291248ed50341fe1cc982b4be9a38dbbf46c13091227b8f093ddd694e57fe7",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
