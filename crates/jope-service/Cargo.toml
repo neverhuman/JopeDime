@@ -9,6 +9,7 @@ repository.workspace = true
 description = "JopeDime v1 engine service"
 
 [dependencies]
+serde = { workspace = true }
 toml = { workspace = true }
 serde_json.workspace = true
 
