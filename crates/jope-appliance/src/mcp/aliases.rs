@@ -19,6 +19,66 @@ pub(super) fn contains(name: &str) -> bool {
     FITNESS.contains(&name) || MODEL_SESSIONS.contains(&name) || REMOVED.contains(&name)
 }
 
+fn input_schema(name: &str) -> Value {
+    let definitions = jope_runtime::fitness::schema()["$defs"].clone();
+    let fitness = json!({"oneOf":[{"$ref":"#/$defs/fitness"},
+        {"type":"string","description":"A catalog name or name:key=value,... shorthand"}]});
+    match name {
+        "fitness_list" => json!({
+            "type":"object","properties":{},"additionalProperties":false
+        }),
+        "fitness_validate" => json!({
+            "$defs":definitions,"type":"object","required":["fitness"],
+            "properties":{"fitness":fitness},"additionalProperties":false
+        }),
+        "fitness_evaluate" => json!({
+            "$defs":definitions,"type":"object","required":["fitness","targets","predictions"],
+            "properties":{"fitness":fitness,
+                "targets":{"type":"array","items":{"type":"number"},"minItems":1},
+                "predictions":{"type":"array","items":{"type":"number"},"minItems":1},
+                "columns":{"type":"object","additionalProperties":{"type":"array","items":{"type":"number"}}}},
+            "additionalProperties":false
+        }),
+        "regression_fit_predict" => json!({
+            "$defs":definitions,"type":"object","required":["train_csv","input_csv","target"],
+            "properties":{"train_csv":{"type":"string"},"input_csv":{"type":"string"},"target":{"type":"string"},
+                "options":{"type":"object","additionalProperties":false,"properties":{
+                    "method":{"type":"string","default":"auto"},
+                    "candidates":{"type":"array","items":{"type":"string"},"maxItems":32},
+                    "folds":{"type":"integer","minimum":2,"maximum":20,"default":5},"fitness":fitness,
+                    "validation":{"oneOf":[
+                        {"type":"object","required":["kind"],"additionalProperties":false,"properties":{"kind":{"const":"iid"}}},
+                        {"type":"object","required":["kind","gap"],"additionalProperties":false,"properties":{"kind":{"const":"forward"},"gap":{"type":"integer","minimum":0}}}]},
+                    "calibration":{"enum":["auto","none","shift","affine"],"default":"auto"}}}},
+            "additionalProperties":false
+        }),
+        "model_session_show" => json!({
+            "type":"object","required":["name"],"properties":{"name":{"type":"string"}},"additionalProperties":false
+        }),
+        "model_session_record" => json!({
+            "type":"object","required":["name","id","expected_head"],
+            "properties":{"name":{"type":"string"},"id":{"type":"string","pattern":"^sha256-[0-9a-f]{64}$"},
+                "expected_head":{"type":"string"},"label":{"type":"string"}},"additionalProperties":false
+        }),
+        "model_session_rollback" => json!({
+            "type":"object","required":["name","version","expected_head"],
+            "properties":{"name":{"type":"string"},"version":{"type":"integer","minimum":1},
+                "expected_head":{"type":"string"},"label":{"type":"string"}},"additionalProperties":false
+        }),
+        "narration_read" => json!({
+            "type":"object","properties":{"run_id":{"type":"string"},
+                "after":{"type":"string","pattern":"^(0|[1-9][0-9]*)$"},
+                "limit":{"type":"integer","minimum":1,"maximum":256}},
+            "required":["run_id"],"additionalProperties":false
+        }),
+        "narration_inspect" => json!({
+            "type":"object","properties":{"run_id":{"type":"string"}},
+            "required":["run_id"],"additionalProperties":false
+        }),
+        _ => json!({"type":"object","properties":{},"additionalProperties":false}),
+    }
+}
+
 pub(super) fn tools() -> Vec<Value> {
     FITNESS
         .iter()
@@ -33,7 +93,7 @@ pub(super) fn tools() -> Vec<Value> {
             json!({
                 "name": name,
                 "description": format!("Deprecated compatibility alias. Replacement: {replacement}."),
-                "inputSchema": {"type":"object", "additionalProperties":true},
+                "inputSchema": input_schema(name),
                 "annotations": {"readOnlyHint": *name == "fitness_list" || *name == "fitness_validate" || *name == "fitness_evaluate" || *name == "model_session_show", "openWorldHint":false},
                 "_meta": {"deprecated": true, "replacement": replacement}
             })
@@ -120,6 +180,34 @@ mod tests {
             assert_eq!(tool["_meta"]["deprecated"], true);
             assert!(tool["_meta"]["replacement"].is_string());
         }
+    }
+
+    #[test]
+    fn alias_schemas_preserve_legacy_arguments() {
+        let tools = tools();
+        let find = |name: &str| tools.iter().find(|tool| tool["name"] == name).unwrap();
+        assert_eq!(
+            find("fitness_validate")["inputSchema"]["required"][0],
+            "fitness"
+        );
+        assert_eq!(
+            find("regression_fit_predict")["inputSchema"]["required"]
+                .as_array()
+                .unwrap()
+                .len(),
+            3
+        );
+        assert_eq!(
+            find("model_session_record")["inputSchema"]["required"]
+                .as_array()
+                .unwrap()
+                .len(),
+            3
+        );
+        assert_eq!(
+            find("narration_read")["inputSchema"]["required"][0],
+            "run_id"
+        );
     }
 
     #[test]
