@@ -1,24 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "SVC-04 adds only already-locked chrono and futures-util edges to jope-service after actual main4c9fd776 / pub05_identity. Axum query support is already represented in the locked axum graph. All572 package/version/source/checksum records stay unchanged; no evaluator behavior fixture, lineage body or known identity changes. Events/SSE implementation and module wiring are outside the38 hashed evaluator inputs.",
-  "plan_reference": "SVC-04; lanes1420; ruling0810; ruling0840(a); ADR-0004; successor after merged539",
-  "source_commit": "c882858c539974c5b088be4d6785b9222a39dd17",
-  "base_commit": "4c9fd776d7c650596aea4babed4cf52812473c4e",
+  "decision": "Announced SVC-04 lockfile identity successor after merging main 2a7c4cdd2: only this PR's dependency edges change Cargo.lock; no evaluator input version/feature or evaluator behavior changed. Re-chained at its queue slot by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "SVC-04; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "08571c00178e91ded00e9df08feaf936f4124954",
+  "base_commit": "2a7c4cdd266ae7d441c81f83e52bb78ce9b782c0",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "787111f68b020899289857bc19aad61e2d2fa5aeb715d076351cb220b9d979d6",
-      "after": "f835e0173bac9414d7496804ee566685fd0933790262f8b9c9fb016782ea9be8"
+      "before": "2abd21cb329061acd20477f713d0103cb9d9cc7633c2d0cdcf441134e9491638",
+      "after": "f57168b016ce84c41a21c576dc952a2f1dff7c421bedec993438a0f42eae2858"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "d200495d1e5ce45e8b67607cb93f9601ee69655576a92be95bbbd08d6a6039fe",
-      "after": "73b7d604bcec832ff51ace76323aae8d3b66ad4da551433ef86027d0176c0f00"
+      "before": "4134e3fe9ee013091ab42ba666edfb7af26ae89f31936eff5a8f5d57f1106455",
+      "after": "10ae608a27d5855f4c286a48be4530f6f3900c0487c569595bc8ed1b6ea7c8a7"
     }
   ],
-  "before_identity_digest": "c82443ae79473c7899f1abe76b214c3fa600858d70fb22468384c79353f428a8",
-  "after_identity_digest": "141c8f6902d42db4d8bd113fadaa1ef31967ae400c4700316a4142f744619abc",
-  "before_implementation_sha256": "1ea51e44c33ad884306cb40a686e34d527f80fb6f57220730df484c36baa97de",
-  "after_implementation_sha256": "da03f73e3bc36bf5a16dbfeadde4cc1a781b890c611ab40f44dfd3a23d7b95ba",
+  "before_identity_digest": "8cfe5918b95da3c0b21494e378f9c8acf6196bc882ebc026eac52aabf6b655a8",
+  "after_identity_digest": "f9d046d10d71bdad82dc789981b70e7455147b9808bff41c76626e5390db7262",
+  "before_implementation_sha256": "3a9c47e367ffa3bec65f576ab7cb053e314a53f59db347670ec29310e3027d1d",
+  "after_implementation_sha256": "2c95ac623044aef05241de585b41a44647806eb2f653ba341f24a140730360c9",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }
