@@ -127,3 +127,15 @@ def test_round_handoff_unlocks_even_if_gpu_sync_fails(tmp_path, monkeypatch):
         with pytest.raises(RuntimeError, match="GPU sync failed"):
             module.release_gpu_round(owner)
         fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def test_landmark_overflow_rescaling_keeps_raw_table_and_ordinary_columns():
+    from device_pool_cache import landmark_float32
+
+    raw = np.array([[1e300, 1.5], [-5e299, 2.0]], dtype=np.float64)
+    original = raw.copy()
+    result = landmark_float32(raw)
+    assert np.isfinite(result).all()
+    np.testing.assert_array_equal(raw, original)
+    np.testing.assert_array_equal(result[:, 0], [1.0, -0.5])
+    np.testing.assert_array_equal(result[:, 1], raw[:, 1].astype(np.float32))

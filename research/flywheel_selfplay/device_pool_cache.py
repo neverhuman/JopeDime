@@ -21,6 +21,7 @@ class DevicePoolCache:
         self.device = torch.device(device)
         self.entries = {}
         self.transfers = 0
+        self.host_payload_bytes = []
 
     def _get(self, cid, pool):
         sources = tuple(pool[field] for field in self.FIELDS)
@@ -30,6 +31,7 @@ class DevicePoolCache:
         size = len(sources[0])
         if not size or any(len(a) != size for a in sources):
             raise ValueError("unaligned or empty device pool")
+        self.host_payload_bytes.extend(value.nbytes for value in sources)
         values = {
             name: torch.as_tensor(np.ascontiguousarray(value), device=self.device)
             for name, value in zip(self.FIELDS, sources)
@@ -40,6 +42,7 @@ class DevicePoolCache:
 
     def pack(self, pools, cids, selections):
         start = time.monotonic()
+        self.host_payload_bytes = []
         if not cids or len(cids) != len(selections):
             raise ValueError("empty or mismatched slate batch")
         unique = list(dict.fromkeys(cids))
@@ -63,6 +66,7 @@ class DevicePoolCache:
             field: torch.cat([values[c][field] for c in unique], dim=0)[index_tensor]
             for field in self.FIELDS
         }
+        packed["host_payload_bytes"] = [*self.host_payload_bytes, flat.nbytes]
         packed["packing_cpu_wall_seconds"] = time.monotonic() - start
         packed["cpu_index_bytes"] = flat.nbytes
         packed["avoided_cpu_feature_slate_bytes"] = (
@@ -98,3 +102,18 @@ def release_gpu_round(lock):
         torch.cuda.empty_cache()
     finally:
         fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def landmark_float32(features):
+    """Avoid overflow before the frozen landmark engine's per-column scaling.
+
+    Rescale only columns outside float32 range by their finite maximum magnitude.
+    Raw JTT1 data and labels used by GP evaluation remain untouched.
+    """
+    values = np.asarray(features, dtype=np.float64)
+    maxima = np.max(np.where(np.isfinite(values), np.abs(values), 0.0), axis=0)
+    columns = maxima > np.finfo(np.float32).max
+    if columns.any():
+        values = values.copy()
+        values[:, columns] /= maxima[columns]
+    return np.ascontiguousarray(values, dtype=np.float32)
