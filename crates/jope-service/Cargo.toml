@@ -19,6 +19,7 @@ futures-util.workspace = true
 anyhow.workspace = true
 jope-runtime = { path = "../jope-runtime" }
 feat-math = { path = "../feat-math" }
+rand_chacha = "=0.3.1"
 memmap2 = "=0.9.11"
 nvml-wrapper.workspace = true
 jope-api = { path = "../jope-api" }
