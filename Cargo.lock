@@ -2858,6 +2858,7 @@ name = "jope-service"
 version = "0.4.1"
 dependencies = [
  "anyhow",
+ "axum",
  "jope-api",
  "jope-runtime",
  "libc",
@@ -2865,7 +2866,10 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "subtle",
+ "tokio",
  "toml",
+ "tower",
  "windows-sys 0.61.2",
 ]
 

@@ -14,11 +14,15 @@ jope-runtime = { path = "../jope-runtime" }
 jope-api = { path = "../jope-api" }
 sha2 = { workspace = true }
 serde = { workspace = true }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+subtle = "=2.6.1"
+tokio = { workspace = true }
 toml = { workspace = true }
 serde_json.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true
+tower = { version = "=0.5.3", default-features = false, features = ["util"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "=0.2.189"
