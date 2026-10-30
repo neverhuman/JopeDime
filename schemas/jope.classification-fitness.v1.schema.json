@@ -8,20 +8,60 @@
   "properties": {
     "schema": {"const": "jope.classification-fitness/v1"},
     "metric": {
-      "enum": ["logloss", "brier"],
-      "description": "logloss: -ln(p_true) without clipping; zero true-class probability fails the candidate. brier: (p_positive - is_positive)^2, without a factor of two; positive is class_order[1]. Both are defined on a single-class fold."
+      "enum": ["logloss", "brier", "roc_auc", "pr_auc", "f1", "balanced_accuracy", "cost_matrix_loss"],
+      "description": "logloss: -ln(p_true), without clipping; brier: (p_positive - is_positive)^2 without a factor of two; both retain mean/sum row aggregation and are defined on single-class folds. roc_auc uses tie-averaged ROC area; pr_auc is average precision. f1 uses the positive class and threshold, defaulting to 0.5, with p_positive >= threshold predicting positive. balanced_accuracy uses threshold 0.5. cost_matrix_loss uses threshold 0.5 and the supplied matrix with rows=actual and columns=predicted. New dataset-level metrics require both classes in each fold and mean aggregation."
     },
     "class_order": {"$ref": "#/$defs/class_order"},
     "aggregation": {
       "enum": ["mean", "sum"],
-      "description": "Unweighted arithmetic mean or sum of row losses over all supplied held-out rows, in input order. No row is omitted."
+      "description": "For logloss and brier: unweighted arithmetic mean or sum of row losses over all supplied held-out rows. Dataset-level metrics require mean aggregation and produce one score per fold; threshold metrics are averaged by mean across folds."
     },
     "undefined": {
       "const": "fail_candidate",
       "description": "Invalid inputs, undefined/non-finite losses or predictions return FITNESS_UNDEFINED for this candidate only. Never return a placeholder score or fail the whole run."
+    },
+    "threshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.5,
+      "description": "Optional F1 threshold. Omitted means 0.5; p_positive >= threshold predicts the positive class."
+    },
+    "cost_matrix": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {"type": "number", "minimum": 0}
+      },
+      "description": "Required for cost_matrix_loss. Rows are actual class [negative, positive], columns are predicted class [negative, positive]: [[C_TN,C_FP],[C_FN,C_TP]]. Entries must be finite and non-negative."
     }
   },
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {"properties": {"metric": {"const": "f1"}}, "required": ["metric"]},
+      "then": {},
+      "else": {"not": {"required": ["threshold"]}}
+    },
+    {
+      "if": {"properties": {"metric": {"const": "cost_matrix_loss"}}, "required": ["metric"]},
+      "then": {"required": ["cost_matrix"]},
+      "else": {"not": {"required": ["cost_matrix"]}}
+    },
+    {
+      "if": {
+        "properties": {
+          "metric": {"enum": ["roc_auc", "pr_auc", "f1", "balanced_accuracy", "cost_matrix_loss"]}
+        },
+        "required": ["metric"]
+      },
+      "then": {"properties": {"aggregation": {"const": "mean"}}}
+    }
+  ],
   "$defs": {
     "class_order": {
       "type": "array",
@@ -77,6 +117,21 @@
       "class_order": ["no", "yes"],
       "aggregation": "sum",
       "undefined": "fail_candidate"
+    },
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "f1",
+      "class_order": ["no", "yes"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate"
+    },
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "cost_matrix_loss",
+      "class_order": ["no", "yes"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate",
+      "cost_matrix": [[0.0, 1.0], [1.0, 0.0]]
     }
   ]
 }

@@ -1095,6 +1095,35 @@
         ],
         "type": "string"
       },
+      "ErrorCode": {
+        "description": "Every Appendix D code. There is no arbitrary-string/fallback variant.",
+        "enum": [
+          "INVALID_INPUT",
+          "DATASET_INVALID",
+          "TASK_AMBIGUOUS",
+          "OBJECTIVE_INVALID",
+          "OBJECTIVE_REQUIRES_ORDER",
+          "LANGUAGE_INTERSECTION_EMPTY",
+          "CAPABILITY_UNAVAILABLE",
+          "NOT_FOUND",
+          "IMMUTABLE_FIELD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PLAN_CHANGED",
+          "MODEL_INTEGRITY_FAILED",
+          "BACKEND_UNAVAILABLE",
+          "NO_VALID_MODEL",
+          "NUMERICAL_FAILURE",
+          "IO_FAILURE",
+          "OUTPUT_EXISTS",
+          "DISK_LOW",
+          "UNAUTHORIZED",
+          "ENGINE_UNREACHABLE",
+          "ENGINE_BUSY",
+          "FITNESS_UNDEFINED"
+        ],
+        "type": "string"
+      },
       "ExperimentFinishedBody": {
         "properties": {
           "experiment_id": {
@@ -1359,7 +1388,7 @@
       "PublicFailure": {
         "properties": {
           "code": {
-            "type": "string"
+            "$ref": "#/$defs/ErrorCode"
           },
           "reason": {
             "type": "string"

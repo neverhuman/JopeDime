@@ -1,0 +1,28 @@
+{
+  "wave": "H47",
+  "status": "queued",
+  "baseline": {
+    "checkpoint": "round-785.pt",
+    "sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+    "dl_val91_utility": 1.1375952947484103,
+    "train_utility": 1.425042,
+    "dope_sha256_prefix": "c51a56d0",
+    "trainable_params": 29211
+  },
+  "motivating_h46_interim": {
+    "H46-A_final_ema_val": [1.036767, 1.037759, 1.036767],
+    "H46-A_train_utility": [1.354527, 1.352207, 1.355108],
+    "H46-A_loss_first_last_seed0": [3.68987, 3.35932],
+    "H46-B_seed0_val_train": [1.053521, 1.358874],
+    "diagnosis": "loss falls while train and val argmin utility fall => objective mismatch"
+  },
+  "arms": ["H47-R", "H47-Z", "H47-PW", "H47-RP"],
+  "seeds": [0, 1, 2],
+  "steps": 64,
+  "eval_every": 8,
+  "ema_decay": 0.98,
+  "host": "xbabe2",
+  "device": "cuda:0",
+  "results": null,
+  "results_path": "xbabe2:~/jope-data/h47/runs/"
+}
