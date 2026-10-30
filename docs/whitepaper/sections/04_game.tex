@@ -26,9 +26,11 @@ written down; cheap replay is a question of cost (\cref{sec:price}).
 % ----------------------------------------------------------------------------
 \subsection{The rules}\label{sub:game-rules}
 
-\Cref{tab:go-vs-innovation} sets the game beside Go. Two rows differ in kind:
-an illegal move is played and lost, and the board holds the incumbent as well as
-the problem, because a move can only win against something.
+\Cref{tab:go-vs-innovation} sets the game beside Go. An illegal move is
+counted as a failed attempt. The reference writer reads the encoded problem;
+the referee keeps the incumbent as a separate comparison standard
+(\cref{sub:method-board}). The incumbent's code and score are not part of
+that writer input.
 
 \begin{table}[!htb]
   \caption{\textbf{Invention has every part of a board game, except cheap
@@ -42,7 +44,7 @@ the problem, because a move can only win against something.
     \toprule
                    & Go                              & The innovation game \\
     \midrule
-    Board          & Stones on a $19\times19$ grid   & The encoded problem plus the incumbent \\
+    Board          & Stones on a $19\times19$ grid   & The encoded problem \\
     Move           & Place one stone                 & Write one complete program, or one edit \\
     Legal move     & An empty point; no suicide      & Parses, type-checks, runs within limits \\
     Illegal move   & Not allowed                     & Stillborn: an automatic loss \\
