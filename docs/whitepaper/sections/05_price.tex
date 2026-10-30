@@ -23,22 +23,30 @@ we separate planning assumptions from the measurements still required in
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
-For repeated attempts with a fixed win probability, expected cost per win
-is mean cost per attempt, repairs included, divided by that probability:
+For independent attempts with fixed win probability and cost distribution,
+expected cost per win is mean cost per attempt divided by that probability
+(\cref{eq:taste}):
 \begin{equation}
-  \Cwin = \frac{\Cattempt + \mathbb{E}[\Nrepair]\,\Crepair}{\winprob}.
+  \Cwin = \frac{\Cattempt}{\winprob}.
   \label{eq:bill}
 \end{equation}
-Here $\Cattempt$ is the cost of one try, including the referee's
-fit; $\Crepair$ is the cost of one repair turn, and $\mathbb{E}[\Nrepair]$
-the mean number of repairs per attempt. The $\winprob$ is that of \cref{eq:taste},
-the probability that one try beats the incumbent: what sets the number of
-tries also sets the price. It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
+Here $\Cattempt$ is the mean incurred cost of one candidate attempt,
+including input processing, reasoning, generation, checks and referee
+execution. Work spent on failures remains in the mean. A repair that emits
+a revised candidate is another attempt; charge its work once. The
+$\winprob$ is the probability that one attempt beats the incumbent.
+It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
 the share of moves that run times the share of those that win. A move that
 runs and loses still costs money, so we divide by $\winprob$, not by the survival
 rate. Generating a token costs about 2~FLOPs per active parameter, and
 training on one about~6 \citep{kaplan2020scaling}. We give self-hosted
 projections and dated API-price examples (\cref{sub:price-run}).
+
+For an observed batch, cost per verified win is the total ledger divided
+by verified wins, including update and operating costs where applicable.
+This accounting does not require independent attempts. Adaptive search
+still needs empirical cost and attempt curves; a batch with no verified
+win has no finite observed cost per win.
 
 The bill has two ledgers. Training pays for every attempted candidate,
 including failures; deployment pays for encoding, one proposal and its

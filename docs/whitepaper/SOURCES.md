@@ -30,6 +30,11 @@ provenance before becoming an empirical result.
   matrix and continuous-latent architecture are not connected to the
   documented reference or committed CSV inputs, so they are not promoted
   into results.
+- Price adopts the [supplied cost-accounting draft](sections/05_price/sources/01M674EAF8KG9MQT1QDR3QSCJQ.md)'s
+  candidate-level ledger: a repair emitting a revised algorithm is another
+  attempt, and every operation is charged once. The independent-try cost
+  projection is distinguished from observed batch cost per verified win;
+  the draft's alternate numerical pricing table is not promoted.
 - Results also retains the method note's historical search diagnostics.
   The [retained search summary](../internal/asm-manual/sections/targets.md)
   distinguishes paired final-search observations from the broader seed audit;
