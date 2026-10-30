@@ -26,6 +26,7 @@ from pathlib import Path
 os.environ.setdefault("OMP_NUM_THREADS", "4")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "4")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import numpy as np
 import psutil
 import torch
@@ -670,6 +671,7 @@ def main():
         "parameter_counts": counts,
         "path": "cpu_exact_landmarks+frozen_dope+GPU_adapter",
         "phase2_kernel_used": False,
+        "cuda_allocator_config": os.environ.get("PYTORCH_CUDA_ALLOC_CONF"),
         "task_counts": {
             "train_regression": len(train),
             "val_regression": len(dev),
@@ -901,6 +903,10 @@ def main():
             del packed  # release the large slate before the next gather/GP phase
             if projection_failed:
                 break
+        # The final autograd result keeps references to large input/signature
+        # tensors even after backward. Drop them before the next round guard.
+        del pred, target, gates, loss
+        opt.zero_grad(set_to_none=True)
         torch.cuda.synchronize()
         train_wall = time.monotonic() - start
         guard.verify_dope_frozen_unchanged(net, before)

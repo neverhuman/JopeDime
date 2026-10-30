@@ -55,3 +55,15 @@ unused allocator segments before forward. Every effective batch and both optimiz
 updates remain unchanged; cold transfers are included in native byte counters.
 Startup checks host headroom every16 contexts with the same fixed4 threads and
 80% wait/85% hard budget, avoiding a mandatory5.5min sampling delay per restart.
+
+Owner update t528u (regfirst_2250): train, select and judge regression only for now.
+Headline regression validation, regression Elo and per-dataset/split percentile
+trend; binary/JRB-01 work is deferred until sustained regression validation gains.
+This supersedes the immediate joint-training priority above. No binary blend.
+
+Inter-round qualification also exposed allocator fragmentation: after a real8192
+slate, only38MB remained allocated but free device capacity fell below the20GiB
+guard. Releasing final training references helps; expandable allocator segments
+restore more than20GiB free in the locked real-input diagnostic. Configure this
+before importing Torch, record it in the run manifest, and retain the20GiB wait
+and90% cap. No batch, optimizer or frozen-weight adjustment is authorized by this.

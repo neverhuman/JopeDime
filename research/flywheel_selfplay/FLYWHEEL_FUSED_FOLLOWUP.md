@@ -33,3 +33,8 @@ language or reasoning emission tokens. Those three rates remain unavailable.
 No Phase 2 code, new split objects, benchmark fits or serving promotion is enabled
 by this document. Golden45/panel Elo remains unavailable in this loop until a
 same-protocol panel evaluation fits the approved resource budget.
+
+Owner update t528u (regfirst_2250): train, select and judge regression only for now.
+Headline regression validation, regression Elo and per-dataset/split percentile
+trend; binary/JRB-01 work is deferred until sustained regression validation gains.
+This supersedes the immediate joint-training priority above. No binary blend.
