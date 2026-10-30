@@ -492,6 +492,32 @@ mod tests {
     }
 
     #[test]
+    fn accepted_percentage_handles_finite_extremes() {
+        for (before, after, percentage) in [
+            (1e308, -1e308, Some("-200.0%")),
+            (-1e308, 1e308, Some("+200.0%")),
+            (f64::MIN_POSITIVE, f64::MAX, None),
+        ] {
+            let body = reasoning_of(
+                projector()
+                    .project(Claim::Accepted {
+                        champion: champion(true, after),
+                        previous: Some(score(before)),
+                    })
+                    .unwrap(),
+            );
+            assert!(!body.summary.contains("inf") && !body.summary.contains("NaN"));
+            match percentage {
+                Some(expected) => assert!(body.summary.contains(expected)),
+                None => assert!(!body.summary.contains('%')),
+            }
+            let evidence = body.evidence.unwrap();
+            assert!(evidence.comparable);
+            assert_eq!((evidence.before, evidence.after), (Some(before), Some(after)));
+        }
+    }
+
+    #[test]
     fn mismatched_comparisons_are_unavailable_and_matching_ones_compare() {
         let current = score(0.493);
         let matching = compare(&current, Some(&score(0.487))).unwrap();
