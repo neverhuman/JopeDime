@@ -1,0 +1,130 @@
+% ===========================================================================
+% Section 1 -- Introduction: Can Machines Invent?
+% File: sections/01_introduction.tex
+% Reader question: Can an AI create knowledge no human wrote down?
+% One-sentence answer: Skeptics say models trained on history can only
+%   recombine it. AlphaGo Zero showed that a learner with a referee can go
+%   beyond history, and we test that for invention.
+% Core points advanced: 4 (skeptics right about imitation, wrong about
+%   learning), 3 (search = 1), 1 (innovation is a game).
+% Exhibits: Figure 1 (front matter, label fig:emptysquare) and Box 1.
+% Budget: 1.5 pages. Editor notes: sections/01_introduction.notes.md
+% ===========================================================================
+
+\section{Can Machines Invent?}\label{sec:intro}
+
+Can a machine create knowledge that no human has written down? The strongest
+skeptics say no: a model trained on the record of human knowledge can only
+recombine it. Go suggests another answer. AlphaGo Zero, taught by a referee
+instead of a record, went beyond the best human play without seeing a human
+game \citep{silver2017mastering}. We test whether invention
+can do the same.
+
+\paragraph{The skeptics' challenge.}
+In March 2025, Yann LeCun argued that language models retrieve existing
+solutions rather than find new ones: ``in their purest form, they are incapable
+of inventing new things'' \citep{lecun2025bigtech}. The same month, Thomas Wolf
+warned that current trends will give us ``a country of yes-men on servers''
+\citep{wolf2025einstein}. Dwarkesh Patel had asked Dario Amodei in August 2023
+what to make of models with ``basically the entire corpus of human knowledge
+memorized'' that had not made ``a single new connection that has led to a
+discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
+the hardest version as a benchmark for general intelligence: today's systems
+``can play a game of Go at a world champion level. But could a system invent
+Go?'' \citep{hassabis2025bigtech}. The skeptics have found a real limit. A
+model trained to imitate inherits the judgment of the record it imitates, so
+its sense of what will work next is history's sense. That is a claim about the
+training signal, not the network (\cref{sec:anatomy}).
+
+\paragraph{Humans are bounded by history too.}
+Research effort keeps rising while its productivity
+falls: Moore's law now needs more than 18 times as many researchers as in the early 1970s \citep{bloom2020ideas}. Under a growing burden
+of knowledge, inventors reach the frontier later and specialize more narrowly
+\citep{jones2009burden}. Papers and patents have grown less likely to
+break with the past \citep{park2023disruptive}, and fields open to outsiders
+when their leading scientists die \citep{azoulay2019funeral}. The bottleneck is
+not a shortage of minds. It is the gravity of what we already know.
+
+\paragraph{Everyone is scaling search.}
+The field's answer to both limits has been more tries. Andrej Karpathy's
+autoresearch, released in March 2026, runs about 100 training experiments
+overnight and keeps each change only if it helps
+\citep{karpathy2026autoresearch}. The AI Scientist \citep{lu2024aiscientist}
+and the AI co-scientist \citep{gottweis2025coscientist} run agentic research
+loops, and AlphaEvolve evolves programs against automated evaluators
+\citep{novikov2025alphaevolve}. Richard Socher's \emph{Eureka Machine} imagines
+``millions of AI agents'' that ``critique each other's ideas''
+\citep{socher2026bookbite,socher2026eureka}, and his company, Recursive, raised
+\$650 million to automate the research cycle \citep{recursive2026techcrunch}.
+These systems work, and their evaluators are exactly the referees our game
+needs. But each pays for judgment at test time, one try at a time, and pays
+again on the next problem. What a search learns stays mostly in its outputs,
+not in the model that proposes the next idea.
+
+\begin{keyidea}
+Everyone else is buying judgment by the try. We learn it once.
+\end{keyidea}
+
+\paragraph{The Zero move.}
+Go faced the same choice and took the other road. AlphaGo learned from human
+expert games and searched heavily at every move \citep{silver2016mastering}.
+AlphaGo Zero learned only from games against itself, and its network alone,
+with no search, rated 3,055 Elo. That is close to the 3,144 of AlphaGo Fan, the
+version that beat the European champion Fan Hui
+\citep{silver2016mastering,silver2017mastering}. Search had been distilled into
+intuition. Can invention have its own Zero moment? Make innovation a game,
+learn judgment once by self-play, then invent in one move: \searchone{}
+(\hyperref[box:searchone]{Box~1}). \Cref{fig:emptysquare} places this in the
+one square that Go has filled and invention has not.
+
+\begin{explainer}{Box 1: What ``search = 1'' means}
+\phantomsection\label{box:searchone}%
+\begin{itemize}[leftmargin=*,nosep]
+  \item \textbf{One inference, one candidate.} For a new problem, the program
+    writer emits one complete program ($B = 1$), with no retries, repairs,
+    best-of-$N$, reranking or weight updates.
+  \item \textbf{Everything is counted,} including reasoning tokens and problem
+    encoding. One inference is one generation, not one forward pass.
+  \item \textbf{Fitting is not search.} The program is fit to the training
+    data like any learning algorithm; fitting sets parameters, never chooses
+    programs. Training search is priced in \cref{sec:price}.
+\end{itemize}
+\textbf{Zero search, not zero knowledge:} the writer starts from pretraining and
+human ideas.
+\end{explainer}
+
+\paragraph{What we show.}
+We make innovation a game: the encoded problem is the board, a complete program
+is the move, a verifier is the referee and the best known algorithm is the
+opponent (\cref{sec:game}). \EZ{} plays it with a program writer that
+proposes moves and a problem--program map that judges them, like AlphaGo's
+policy and value networks, trained by self-play (\cref{sec:method}). The
+contest is narrow by design. On \TBD{M} unseen problems spanning binary and
+multiclass classification and regression, one inference \TBD{beats} the
+algorithms that Claude, Codex and Gemini invented when asked for a generally
+competitive machine-learning method,\footnote{Model versions, dates, the
+verbatim prompt and every invented algorithm are published in the appendix.}
+winning \TBD{K} of \TBD{M} (\cref{tab:headtohead}). It also \TBD{beats}
+the foundation model KumoRFM \citep{kumorfm2025}, at an Elo of \TBD{E} (\cref{fig:leaderboard}). The best frontier model, run as an
+agent with validation feedback, needs \TBD{R} tries to match it
+(\cref{fig:searchone}). The problem--program map cuts wasted moves from
+\TBD{X}\% to \TBD{Y}\% (\cref{tab:ablation}). Our contributions are five:
+\begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]
+  \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
+    judgment and retention), and the observation that search length is the
+    reciprocal of taste, judgment learned in advance (\cref{sec:anatomy}).
+  \item \textbf{The innovation game:} rules that make invention playable on
+    many boards (\cref{sec:game}).
+  \item \textbf{The economics of algorithmic self-play,} from 8B to 1.5T
+    parameters (\cref{sec:price}).
+  \item \textbf{\EZ{}:} a program writer and a problem--program map that learn
+    taste (\cref{sec:method}).
+  \item \textbf{Evidence:} one inference against frontier-invented algorithms
+    and KumoRFM on unseen problems, and the tries an agent needs to match it
+    (\cref{sec:results}).
+\end{enumerate}
+\Cref{sec:road} traces each pillar's history in AI; \cref{sec:meaning} asks
+what changes and where the claim stops.
+
+To see why a referee changes everything, we first ask what innovation is made
+of.
