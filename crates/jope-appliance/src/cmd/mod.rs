@@ -1,5 +1,14 @@
 pub mod events;
 pub mod run;
+pub(crate) use crate::common;
+#[cfg(feature = "mcp")]
+pub(crate) mod dataset;
+#[cfg(feature = "mcp")]
+pub(crate) mod export;
+#[cfg(feature = "mcp")]
+pub(crate) mod gc;
+#[cfg(feature = "mcp")]
+pub(crate) mod objective;
 pub mod serve;
 pub mod status;
 

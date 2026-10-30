@@ -675,7 +675,22 @@ fn run_fit(
     run.finish(result)
 }
 
-fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -> ExitCode {
+fn run_predict(model: &str, input: &Path, output: &Path, common: &CommonArgs) -> ExitCode {
+    #[cfg(feature = "mcp")]
+    if let Some((run_id, algorithm_id)) = model
+        .split_once(':')
+        .or_else(|| model.strip_prefix("run_").map(|_| (model, "")))
+    {
+        if run_id.parse::<jope_api::ids::RunId>().is_ok() {
+            return cmd::dataset::report(run_predict_remote(
+                run_id,
+                (!algorithm_id.is_empty()).then_some(algorithm_id),
+                input,
+                output,
+            ));
+        }
+    }
+    let model = Path::new(model);
     let mut run = Run::new("predict", common);
     let result = (|| -> anyhow::Result<()> {
         run.refuse_aliasing(output, &[model, input])?;
@@ -719,6 +734,71 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
         Ok(())
     })();
     run.finish(result)
+}
+
+#[cfg(feature = "mcp")]
+fn run_predict_remote(
+    run: &str,
+    algorithm: Option<&str>,
+    input: &Path,
+    output: &Path,
+) -> anyhow::Result<()> {
+    use jope_api::{
+        ids::{AlgorithmId, RunId},
+        PredictRequest, RunSnapshot,
+    };
+    use jope_client::{files, Transport};
+    use std::{io::Read, str::FromStr};
+    let client = cmd::dataset::resolve_client()?;
+    let run_id = RunId::from_str(run).map_err(|_| anyhow::anyhow!("invalid run id"))?;
+    let snapshot: RunSnapshot = client.run_status(&run_id)?;
+    let algorithm = match algorithm {
+        Some(value) => {
+            AlgorithmId::from_str(value).map_err(|_| anyhow::anyhow!("invalid algorithm id"))?
+        }
+        None => {
+            snapshot
+                .best
+                .ok_or_else(|| anyhow::anyhow!("run has no best algorithm"))?
+                .algorithm_id
+        }
+    };
+    let record = client.algorithm_get(&run_id, &algorithm)?;
+    let artifact = record
+        .model_artifact
+        .ok_or_else(|| anyhow::anyhow!("algorithm has no model artifact"))?;
+    let register_key = cmd::common::resolve_idempotency_key(None);
+    cmd::common::write_idempotency_key(&mut std::io::stderr().lock(), &register_key)?;
+    let name = input
+        .file_name()
+        .map(|v| v.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "prediction.csv".into());
+    let registered = files::upload_csv(&client, &name, std::fs::File::open(input)?, &register_key)?
+        .json::<jope_api::DatasetProfile>()?;
+    let predict_key = cmd::common::resolve_idempotency_key(None);
+    cmd::common::write_idempotency_key(&mut std::io::stderr().lock(), &predict_key)?;
+    let request = PredictRequest {
+        model_artifact: artifact,
+        dataset: registered.dataset_id,
+    };
+    let mut response = client.model_predict(&request, &predict_key)?;
+    let mut bytes = Vec::new();
+    response
+        .body
+        .by_ref()
+        .take((1_u64 << 30) + 1)
+        .read_to_end(&mut bytes)?;
+    anyhow::ensure!(
+        bytes.len() as u64 <= (1_u64 << 30),
+        "prediction output exceeds 1 GiB"
+    );
+    if output == Path::new("-") {
+        use std::io::Write;
+        std::io::stdout().lock().write_all(&bytes)?;
+    } else {
+        io::write_atomic("predictions", output, &bytes)?;
+    }
+    Ok(())
 }
 
 fn is_math_pipeline(object_dir: &Path) -> anyhow::Result<bool> {
@@ -870,6 +950,38 @@ fn main() -> ExitCode {
             let client = cmd::client()?;
             cmd::events::run(args, &client)
         })()),
+        #[cfg(feature = "mcp")]
+        Command::Export {
+            run,
+            alg,
+            kind,
+            lang,
+            out,
+            force,
+            idempotency_key,
+            json,
+        } => cmd::dataset::report(cmd::export::run(cmd::export::Options {
+            run: &run,
+            alg: alg.as_deref(),
+            kind,
+            language: lang,
+            out: &out,
+            force,
+            idempotency_key: idempotency_key.as_deref(),
+            json_out: json,
+        })),
+        #[cfg(feature = "mcp")]
+        Command::Dataset { command } => cmd::dataset::report(cmd::dataset::run(command)),
+        #[cfg(feature = "mcp")]
+        Command::Objective {
+            command: cli::ObjectiveCommand::Validate { spec, json },
+        } => cmd::dataset::report(cmd::objective::run(&spec, json)),
+        #[cfg(feature = "mcp")]
+        Command::Gc {
+            dry_run,
+            idempotency_key,
+            json,
+        } => cmd::dataset::report(cmd::gc::run(dry_run, idempotency_key.as_deref(), json)),
         Command::Predict {
             model,
             input,
