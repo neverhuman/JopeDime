@@ -1,0 +1,43 @@
+name: export-parity
+on:
+  # Called only by the existing admitted ci.yml context when its owner wires it.
+  # No direct dispatch/automatic event or new runner admission is introduced.
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  export-parity:
+    runs-on: [self-hosted, linux, x64, jope-ci]
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_BUILD_JOBS: '8'
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Python 3.12.3
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.3'
+      - name: Node 26.1.0
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '26.1.0'
+      - name: Pinned Rust
+        run: rustup toolchain install 1.97.1 --profile minimal
+      - name: Execute real emitted predictors
+        run: bash deploy/ci/export-parity.sh "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+      - name: Retain source-bound parity report and generated predictors
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: export-parity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/export-parity/${{ github.run_id }}/${{ github.run_attempt }}
