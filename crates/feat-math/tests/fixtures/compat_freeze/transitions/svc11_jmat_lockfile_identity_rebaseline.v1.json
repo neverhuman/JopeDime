@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Initial SVC-11 lockfile-only announcement under standing rulings0810(c)/0840: jope-service gains only the already locked memmap2=0.9.11 dependency edge. No package/version/source/checksum or behavior fixtures change. Append after current-main PUB05 identity, preserve every prior identity/transition. Final integration rechain remains serialized with the merger.",
+  "plan_reference": "SVC-11 / T069; rulings0810,0840 and lanes1445; ADR-0004",
+  "source_commit": "187f02bbb196f208e83d1b3aa517340a47458522",
+  "base_commit": "4c9fd776d7c650596aea4babed4cf52812473c4e",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "787111f68b020899289857bc19aad61e2d2fa5aeb715d076351cb220b9d979d6",
+      "after": "2abd21cb329061acd20477f713d0103cb9d9cc7633c2d0cdcf441134e9491638"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "d200495d1e5ce45e8b67607cb93f9601ee69655576a92be95bbbd08d6a6039fe",
+      "after": "4134e3fe9ee013091ab42ba666edfb7af26ae89f31936eff5a8f5d57f1106455"
+    }
+  ],
+  "before_identity_digest": "c82443ae79473c7899f1abe76b214c3fa600858d70fb22468384c79353f428a8",
+  "after_identity_digest": "8cfe5918b95da3c0b21494e378f9c8acf6196bc882ebc026eac52aabf6b655a8",
+  "before_implementation_sha256": "1ea51e44c33ad884306cb40a686e34d527f80fb6f57220730df484c36baa97de",
+  "after_implementation_sha256": "3a9c47e367ffa3bec65f576ab7cb053e314a53f59db347670ec29310e3027d1d",
+  "before_cargo_lock_sha256": "cfbdd26fea16ec7637c12cbce081ecffe8a71f5426c755ddaa7b87fe0e5e794f",
+  "after_cargo_lock_sha256": "521c6bc4549587f82ac7d4c9f25c1647a583ad2a62494e72b748d90c863b2451",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

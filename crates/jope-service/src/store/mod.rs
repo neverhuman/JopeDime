@@ -4,6 +4,7 @@
 //! owners' work; opening this store never dispatches workers or publishes events.
 
 mod cas;
+pub mod commands;
 mod record;
 use cas::{sync_dir, Cas};
 use jope_api::RunState;

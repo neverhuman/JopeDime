@@ -2,9 +2,11 @@
 
 pub mod config;
 pub mod daemon_file;
+pub mod dataset;
 pub mod discover;
 pub mod events;
 pub mod http;
+pub mod idempotency;
 pub mod lex;
 pub mod objective;
 pub mod public;

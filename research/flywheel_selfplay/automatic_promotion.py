@@ -11,10 +11,173 @@ import hashlib
 import json
 import math
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
+
+
+def encode_program(dsl: str) -> dict:
+    """Lossless postfix S-expression IR; numeric lexemes stay exact constants."""
+    import re
+
+    tokens, gaps = [], []
+    i = 0
+    while i < len(dsl):
+        start = i
+        while i < len(dsl) and dsl[i].isspace():
+            i += 1
+        gaps.append(dsl[start:i])
+        if i == len(dsl):
+            break
+        start = i
+        if dsl[i] in "()":
+            i += 1
+        else:
+            quote, escape = False, False
+            while i < len(dsl):
+                char = dsl[i]
+                if not quote and (char.isspace() or char in "()"):
+                    break
+                if escape:
+                    escape = False
+                elif char == "\\" and quote:
+                    escape = True
+                elif char == '"':
+                    quote = not quote
+                i += 1
+            if quote:
+                raise ValueError("unterminated program string")
+        tokens.append(dsl[start:i])
+    if len(gaps) == len(tokens):
+        gaps.append("")
+    symbols, constants, postfix, stack = [], [], [], []
+    number = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?\Z")
+    for token in tokens:
+        if token == "(":
+            stack.append(0)
+        elif token == ")":
+            if not stack:
+                raise ValueError("unbalanced program")
+            postfix.append([3, stack.pop()])
+            if stack:
+                stack[-1] += 1
+        else:
+            prefix, separator, value = token.partition("=")
+            numeric = value if separator else token
+            if number.fullmatch(numeric):
+                constants.append(numeric)
+                if separator:
+                    if prefix not in symbols:
+                        symbols.append(prefix)
+                    postfix.append([2, symbols.index(prefix), len(constants) - 1])
+                else:
+                    postfix.append([1, len(constants) - 1])
+            else:
+                if token not in symbols:
+                    symbols.append(token)
+                postfix.append([0, symbols.index(token)])
+            if stack:
+                stack[-1] += 1
+    if stack:
+        raise ValueError("unbalanced program")
+    tree = {
+        "schema": "jope.gp-postfix/v1",
+        "tokens": postfix,
+        "symbols": symbols,
+        "constants": constants,
+        "layout": gaps,
+        "program_sha256": hashlib.sha256(dsl.encode()).hexdigest(),
+    }
+    if rebuild_program(tree) != dsl:
+        raise ValueError("program round-trip mismatch")
+    return tree
+
+
+def rebuild_program(tree: dict) -> str:
+    """Rebuild source deterministically without eval, fitting or compiled models."""
+    if tree["schema"] != "jope.gp-postfix/v1":
+        raise ValueError("unknown tree schema")
+    stack = []
+    for token in tree["tokens"]:
+        kind = token[0]
+        if kind == 0:
+            stack.append([tree["symbols"][token[1]]])
+        elif kind == 1:
+            stack.append([tree["constants"][token[1]]])
+        elif kind == 2:
+            stack.append(
+                [tree["symbols"][token[1]] + "=" + tree["constants"][token[2]]]
+            )
+        elif kind == 3:
+            count = token[1]
+            if count < 0 or count > len(stack):
+                raise ValueError("invalid postfix arity")
+            children = stack[-count:] if count else []
+            if count:
+                del stack[-count:]
+            stack.append(["(", *(x for child in children for x in child), ")"])
+        else:
+            raise ValueError("unknown postfix token")
+    if len(stack) != 1 or len(tree["layout"]) != len(stack[0]) + 1:
+        raise ValueError("invalid tree or layout")
+    dsl = (
+        "".join(gap + atom for gap, atom in zip(tree["layout"], stack[0]))
+        + tree["layout"][-1]
+    )
+    if hashlib.sha256(dsl.encode()).hexdigest() != tree["program_sha256"]:
+        raise ValueError("rebuilt program identity mismatch")
+    return dsl
+
+
+def write_tree_shard(records, destination):
+    """One zstd JSONL frame per scored round; no tensors or fitted programs."""
+    import subprocess
+
+    destination = Path(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists():
+        raise ValueError("tree shard already exists")
+    rows = []
+    for record in records:
+        payloads = {
+            "dsl",
+            "feat412",
+            "proj16",
+            "state_dict",
+            "optimizer",
+            "compiled_program",
+            "model_blob",
+            "program_binary",
+        }
+        row = {k: v for k, v in record.items() if k not in payloads}
+        try:
+            row["tree"] = encode_program(record["dsl"])
+        except ValueError:
+            # Invalid syntax is still an audit outcome, never silently discarded.
+            row["invalid_source"] = record["dsl"]
+        rows.append(row)
+    raw = b"".join(json.dumps(row, sort_keys=True).encode() + b"\n" for row in rows)
+    subprocess.run(
+        ["zstd", "-T2", "-1", "-o", str(destination)],
+        input=raw,
+        capture_output=True,
+        check=True,
+    )
+    restored = subprocess.run(
+        ["zstd", "-dc", str(destination)], capture_output=True, check=True
+    ).stdout
+    if restored != raw:
+        raise ValueError("tree shard readback mismatch")
+    with destination.open("rb") as stream:
+        os.fsync(stream.fileno())
+    return {
+        "path": str(destination),
+        "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
+        "records": len(rows),
+        "raw_bytes": len(raw),
+        "compressed_bytes": destination.stat().st_size,
+    }
 
 
 def apply_event(pool: dict, event: dict) -> bool:
@@ -104,7 +267,7 @@ def promote(
             "program_sha256": pid,
             "dsl": candidate["dsl"],
             "round": round_idx,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "old_utility": -incumbent,
             "new_utility": -score,
             "fitness": score,

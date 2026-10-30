@@ -2866,6 +2866,7 @@ dependencies = [
  "jope-api",
  "jope-runtime",
  "libc",
+ "memmap2",
  "nix 0.29.0",
  "proptest",
  "redb",
