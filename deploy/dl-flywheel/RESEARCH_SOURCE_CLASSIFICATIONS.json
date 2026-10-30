@@ -3672,6 +3672,30 @@
       },
       "sha256": "9b9f0933675b6b98f39662f0c0334655aeb6d306e054c7dd5e37360655723b1e"
     },
+    "python:research/flywheel_selfplay/h53/audit.py": {
+      "bytes": 14374,
+      "classification": {
+        "reason": "H53 offline audit: validates six preregistered pilot cells and deterministic integrity replay, including update identity and diagnostic-only outcome scope.",
+        "role": "research"
+      },
+      "sha256": "8deb2f5c4b5402c3cd06e4258125fdbba30556cf6b8c57c7c02b3f74a8a91529"
+    },
+    "python:research/flywheel_selfplay/h53/run_wave.py": {
+      "bytes": 7187,
+      "classification": {
+        "reason": "H53 serialized pilot coordinator: enforces the 30-minute cap, per-cell qualification lock and resource guards; offline research only.",
+        "role": "research"
+      },
+      "sha256": "fe96278274eeafaa5dfb7dcaff00ea27c5cfb4cf24f367c9d2e6f0678d74c86a"
+    },
+    "python:research/flywheel_selfplay/h53/runner.py": {
+      "bytes": 13341,
+      "classification": {
+        "reason": "H53 offline learn-from-zero pilot runner: fresh outer adapter, frozen DOPE source, pinned family-grouped inputs; no live or serving authority.",
+        "role": "research"
+      },
+      "sha256": "9d859d576744d33c7a4a6eeae65543c2855377c3140a3a820c27f9d6c48f66e5"
+    },
     "python:research/flywheel_selfplay/model.py": {
       "bytes": 24938,
       "classification": {
