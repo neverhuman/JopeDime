@@ -53,7 +53,8 @@ The convergence has a reason. Campbell argued that every genuine gain in knowled
   \label{tab:pillars}
   \centering
   \footnotesize
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.185\linewidth}@{}}
+  \setlength{\tabcolsep}{2.8pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.185\linewidth}>{\raggedright\arraybackslash}p{0.175\linewidth}>{\raggedright\arraybackslash}p{0.165\linewidth}>{\raggedright\arraybackslash}p{0.165\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}@{}}
     \toprule
     Tradition & Aim & Variation & Judgment & Retention \\
     \midrule
@@ -76,12 +77,12 @@ Skill in invention is judgment that arrives before the try. For Poincaré, creat
 
 We call judgment learned in advance \emph{taste}. AlphaGo's policy network is taste made explicit: a network that selects which moves are worth playing, trained first on human expert games and then refined by self-play \citep{silver2016mastering}. Its first teacher was history.
 
-Taste has a price we can state. Suppose each try beats the incumbent with probability $q$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
+Taste has a price we can state. Suppose each try beats the incumbent with probability $\winprob$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
 \begin{equation}
-  \mathbb{E}[N_{\text{tries}}] = \frac{1}{q},
+  \mathbb{E}[\Ntries] = \frac{1}{\winprob},
   \label{eq:taste}
 \end{equation}
-where $N_{\text{tries}}$ counts the candidates the referee scores. Under
+where $\Ntries$ counts the candidates the referee scores. Under
 this fixed-probability, independent-try model, better proposal quality
 shortens the expected search.\footnote{Adaptive search and correlated
 proposals need not follow \cref{eq:taste}; independence alone does not say
@@ -134,7 +135,8 @@ people still set the aim.}
   \label{tab:where}
   \centering
   \footnotesize
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}@{}}
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.265\linewidth}>{\raggedright\arraybackslash}p{0.265\linewidth}@{}}
     \toprule
      & Human science & Agent search & \EZ{} \\
     \midrule
