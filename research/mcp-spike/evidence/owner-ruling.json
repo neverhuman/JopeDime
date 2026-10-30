@@ -1,0 +1,26 @@
+{
+  "schema": "jope.mcp-spike-owner-ruling/v1",
+  "recorded_utc": "2026-10-30T04:22:32.496487+00:00",
+  "authority": "Jepson-approved t526u",
+  "ruling_date": "2026-10-29 22:18 MDT",
+  "source_path": "/home/ubuntu/nudges/scope_2218.md",
+  "source_sha256": "a2755395b1d07138a9b5c7769c956f77960d1d038b86613afcb8c3ba0e5f2d3d",
+  "relevant_verbatim": [
+    "Find YOUR task below, re-read your task card (Owner ruling section appended), and proceed. KI-1/2/3 = known main failures: record, do not block. Commit owned changes, push, open PR with gh-role writer (do NOT merge, no GitHub CI). Cite this ruling in the PR body.",
+    "- OD9 RULED: rmcp 3.8.0. Commit the spike and open the PR (push via xbabe2 if xbabe1 lacks writer auth)."
+  ],
+  "implementation_decision": "rmcp 3.8.0",
+  "known_main_failures": "record, do not block; failures and unknown candidate comparison remain disclosed",
+  "later_direct_user_instruction": "Read ~/nudges/scope_2218.md: OD9 RULED rmcp 3.8.0. Commit the MCP-01 spike on its branch, then run: git bundle create ~/nudges/mcp01.bundle origin/main..HEAD and report the branch name and HEAD sha. Do NOT push; ENG:watcher pushes from xbabe2 and opens the PR.",
+  "delivery_owner": "ENG:watcher on xbabe2",
+  "worker_actions": [
+    "commit on assigned branch",
+    "create requested incremental Git bundle",
+    "report branch and full HEAD",
+    "do not push",
+    "do not open PR",
+    "do not merge",
+    "no GitHub CI"
+  ],
+  "product_qualification": "MCP-02 retains full product conformance and modern-version shipping qualification"
+}

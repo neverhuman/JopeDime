@@ -1,0 +1,8 @@
+mcp-spike-dispatcher v0.1.0 (/home/ubuntu/JopeDime/.agent/worktrees/mcp-01/research/mcp-spike/dispatcher)
+├── mcp-spike-tools v0.1.0 (/home/ubuntu/JopeDime/.agent/worktrees/mcp-01/research/mcp-spike/tools)
+│   └── serde_json v1.0.151
+│       ├── itoa v1.0.18
+│       ├── memchr v2.8.3
+│       ├── serde_core v1.0.229
+│       └── zmij v1.0.23
+└── serde_json v1.0.151 (*)

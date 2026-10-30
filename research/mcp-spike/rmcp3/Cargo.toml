@@ -1,0 +1,12 @@
+[package]
+name = "mcp-spike-rmcp3"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+mcp-spike-tools.workspace = true
+serde_json.workspace = true
+rmcp = { version = "=3.8.0", default-features = false, features = ["server", "transport-io"] }
+tokio = { version = "1", features = ["macros", "rt", "time"] }
