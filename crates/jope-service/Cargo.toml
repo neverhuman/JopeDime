@@ -28,6 +28,7 @@ serde_json.workspace = true
 ulid = { workspace = true }
 
 [dev-dependencies]
+feat-math = { path = "../feat-math" }
 proptest.workspace = true
 tempfile = { workspace = true }
 tower = { version = "=0.5.3", default-features = false, features = ["util"] }
