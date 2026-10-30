@@ -87,9 +87,11 @@ in advance.
     best-of-$N$, reranking or weight updates.
   \item \textbf{Everything is counted,} including reasoning tokens and problem
     encoding. One inference is one generation, not one forward pass.
-  \item \textbf{Fitting is not search.} The program is fit to the training
-    data like any learning algorithm; fitting sets parameters, never chooses
-    programs. Training search is priced in \cref{sec:price}.
+  \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
+    to training rows is allowed. Any internal model or hyperparameter
+    selection must be disclosed and counted in its compute budget. One
+    outer proposal does not establish the absence of internal search.
+    Training search is priced separately in \cref{sec:price}.
 \end{itemize}
 \textbf{A single candidate, with prior knowledge:} the writer starts from
 pretraining and human ideas. The Zero analogy concerns the training signal;

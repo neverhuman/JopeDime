@@ -19,11 +19,12 @@ What has AI already built for each of the four pillars of
 \cref{sec:anatomy}? Nearly all of it. Deep learning gave variation a voice,
 program evolution and reinforcement learning built judgment loops, games
 made judgment cheap, and the race for self-improvement now scales search to
-swarms of agents. What none has built, to our knowledge, is taste for
-invention itself: judgment learned in advance, so that the first program
-written for a new problem is already strong.\footnote{Each history keeps
-only the milestones the argument needs; \cref{app:history} gives the
-extended version.}
+swarms of agents. These lines of work motivate a narrower question: can
+experience across algorithm-discovery tasks improve the first complete
+program proposed for a new family? The combination matters more than a
+claim that any one component is new.\footnote{Each history keeps only the
+milestones the argument needs; \cref{app:history} reserves space for an
+extended account.}
 
 % ---------------------------------------------------------------------
 \subsection{Deep learning gave variation a voice}\label{sub:road-deep}
@@ -38,10 +39,11 @@ computation win. Generative models then turned representations into
 proposals, from text to video \citep{brooks2024sora} and code. Codex solved
 28.8\% of the HumanEval programming problems with one sample, and 70.2\%
 with 100 samples, counting any that passed the unit tests
-\citep{chen2021codex}. That gap is \cref{eq:taste} in miniature: tries,
-judged by a referee, buy what taste cannot supply.
+\citep{chen2021codex}. That gap illustrates the value of a larger sampling budget. It is not
+a direct estimate of the geometric model in \cref{eq:taste}: pass rates
+and the probability of beating an incumbent measure different outcomes.
 
-Networks already propose discoveries that a referee outside them confirms:
+Networks already propose outputs assessed by task-specific tests:
 protein structures that rival experiment in most cases
 \citep{jumper2021alphafold},
 2.2 million crystals predicted to be stable \citep{merchant2023gnome}, and
@@ -53,8 +55,8 @@ halicin, an antibiotic that then treated infections in mice
 \smallskip
 \noindent\textbf{What \EZ{} takes:} representations that read a problem,
 models that write code, and one space for two kinds of object.\\
-\textbf{What was missing:} trained to predict the record, these models learn
-history's taste: the likely, not the better.
+\textbf{The question carried forward:} how to train a code proposer directly
+on verified algorithm quality, and test transfer beyond its training tasks.
 
 % ---------------------------------------------------------------------
 \subsection{Machines that invent algorithms built the variation--judgment loop}\label{sub:road-programs}
@@ -67,8 +69,8 @@ searched concepts and heuristics by measures of interest
 \citep{lenat1976am,lenat1983eurisko}. EURISKO takes its name from the Greek
 verb behind \emph{eureka}, as ours does. \citet{koza1992genetic} closed the
 loop with genetic programming: a population of programs, a fitness function
-as referee and selection as coach. \emph{Genetic programming invented the
-game; it lacked a player that remembers.}
+as referee and selection as coach. A population retains useful programs; a learned proposer can also retain
+patterns that help construct programs for later tasks.
 
 Later work sharpened both halves: superoptimization
 \citep{massalin1987superoptimizer}, program synthesis from examples
@@ -88,10 +90,11 @@ machine-learning engineering \citep{mlevolve2026}.
 \smallskip
 \noindent\textbf{What \EZ{} takes:} programs as moves, and the
 generate--judge loop.\\
-\textbf{What was missing:} retention flows into an archive, a library or a
-memory, not into the program writer. Even DreamCoder's cross-task learning
-guides search rather than replacing it \citep{ellis2021dreamcoder}, so every
-new problem starts its search over.
+\textbf{The question carried forward:} how much of a verified search can
+transfer into the proposer. DreamCoder already learns reusable libraries
+and a search-guiding model across tasks \citep{ellis2021dreamcoder}; a
+single-candidate evaluation tests how useful a learned proposal is before
+additional task-specific search.
 
 % ---------------------------------------------------------------------
 \subsection{Reinforcement learning turned retention into taste}\label{sub:road-rl}
@@ -120,9 +123,9 @@ checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 \smallskip
 \noindent\textbf{What \EZ{} takes:} the learning rule, and proof that a
 network can absorb search.\\
-\textbf{What was missing:} the prize. Verifiable rewards ask whether an
-answer is right; no game here pays for beating the best known algorithm on
-a problem the player has never seen.
+\textbf{The question carried forward:} how to define a reward for relative
+algorithm quality, then distinguish improvement on training games from
+improvement on unseen families.
 
 \begin{explainer}{Box 2 --- Self-play in 90 seconds}
 A player starts with only the rules and plays itself. A short search
@@ -160,10 +163,10 @@ Mathematical Olympiad alongside AlphaGeometry~2 \citep{hubert2026alphaproof}.
 \smallskip
 \noindent\textbf{What \EZ{} takes:} the recipe for a game: rules, a referee,
 a score and a sealed test.\\
-\textbf{What was missing:} each board was built by hand for one problem
-family, and its player searches on every instance; AlphaProof trained for
-days on variants of each hard problem. AlphaDev made sorting a game; \EZ{}
-makes the problem itself part of the board (\cref{sec:game}).
+\textbf{The question carried forward:} which parts of a task can vary under
+a shared representation and referee. \EZ{} makes the problem an input to
+the proposer (\cref{sec:game}); whether that supports transfer across
+families remains a result to establish.
 
 % ---------------------------------------------------------------------
 \subsection{The race for self-improvement scaled search}\label{sub:road-self}
@@ -190,9 +193,10 @@ and TTT-Discover trains on the one problem at hand, at a few hundred
 dollars per problem \citep{tttdiscover2026}. Evolution Fine-Tuning learns
 from \num{156000} search trajectories across 371 tasks \citep{eft2026}, and
 DiscoRL meta-learned a reinforcement-learning rule that beat human-designed
-ones \citep{oh2025discorl}. Each still searches on a new problem, or finds
-one general method and reuses it, as our frontier contestants do
-(\cref{sec:results}).
+ones \citep{oh2025discorl}. These approaches retain improvements in different places: a search
+trajectory, a task-specific learner or a reusable learning rule. Our
+comparison asks about the quality and cost of the first complete candidate,
+rather than treating these forms of learning as absent.
 
 Research itself is becoming a swarm. The AI Scientist automates ideas,
 experiments and papers \citep{lu2024aiscientist}, and the AI co-scientist
@@ -206,83 +210,82 @@ ranks agents' hypotheses in an Elo tournament
 
 Self-improvement comes in three strengths: better external algorithms,
 better components, and a better ability to improve, with verified
-discoveries per unit of compute rising across generations. Our evidence is
-at the first (\cref{sec:meaning}).
+discoveries per unit of compute rising across generations. These require separate evidence (\cref{sec:meaning}); a recorded
+training trajectory alone establishes none of them on an unseen task.
 
 \smallskip
 \noindent\textbf{What \EZ{} takes:} the destination, and the safety frame:
 verify every improvement before keeping it, and sandbox every program.\\
-\textbf{What was missing:} each approach here pays for judgment per problem,
-learns within one problem's search, or plateaus. None is built to make a
-first move strong enough to need no search.
+\textbf{The question carried forward:} whether learning across discovery
+episodes improves the first proposal, compared with the corresponding
+frozen proposer under the same deployment budget.
 
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}
 
 \begin{table}[t]
-\caption{\textbf{Every pillar has been built, except learned taste for
-invention.} \emph{Tries}: complete candidates a referee scores per new
-problem. \emph{Learns across problems}: whether experience on one problem
-improves the first try on the next. The last row is \EZ{}'s design, which
-\cref{sec:results} tests.}
+\caption{\textbf{Related approaches retain experience in different forms.}
+This qualitative comparison separates output, deployment budget and retained
+state. Exact budgets depend on each study's protocol. The last row states
+\EZ{}'s design; its proposal quality is still to be tested.}
 \label{tab:roads}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{2.8pt}
 \renewcommand{\arraystretch}{1.1}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.235\linewidth}
-                >{\raggedright\arraybackslash}p{0.17\linewidth}
-                >{\raggedright\arraybackslash}p{0.15\linewidth}
-                >{\raggedright\arraybackslash}p{0.17\linewidth}
-                >{\raggedright\arraybackslash}p{0.205\linewidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.21\linewidth}
+                >{\raggedright\arraybackslash}p{0.165\linewidth}
+                >{\raggedright\arraybackslash}p{0.165\linewidth}
+                >{\raggedright\arraybackslash}p{0.165\linewidth}
+                >{\raggedright\arraybackslash}p{0.195\linewidth}@{}}
 \toprule
-System & Output & Tries on a new problem & Learns across problems & Where its taste comes from \\
+System & Output & Deployment budget & Retained experience & Feedback source \\
 \midrule
 Genetic programming; AutoML-Zero
-  & An algorithm & Thousands or more & No
-  & None: blind variation \\
+  & An algorithm & Study-specific search & Selected programs
+  & Executable objective \\
 AlphaTensor; AlphaDev
-  & An algorithm for one family & Search on every instance
-  & At most within that game & Reinforcement learning on that game \\
+  & An algorithm for one family & Task-specific search
+  & A policy for that game & Game reward \\
 FunSearch; AlphaEvolve
-  & An algorithm & Thousands or more & No; an archive per run
-  & A frozen pretrained language model \\
+  & An algorithm & Iterative search & Program archive
+  & Automated evaluation \\
 Research swarms (AI Scientist, autoresearch)
-  & Experiments and code & Tens to hundreds & Partly, through logs and memory
-  & A pretrained language model \\
+  & Experiments and code & Adaptive attempts & Context, logs and archives
+  & Experimental outcomes \\
 EvoTune; TTT-Discover; Evolution Fine-Tuning
-  & An algorithm or construction & Search on every problem
-  & Within one search; across tasks for EFT
-  & Fine-tuning on search trajectories \\
+  & An algorithm or construction & Protocol-specific search
+  & Fine-tuned policy or search state
+  & Search trajectories \\
 TabPFN; MotherNet; KumoRFM
-  & Predictions or fixed-network weights & One forward pass & Yes
-  & Pretraining on many tasks \\
+  & Predictions or network weights & Task-specific inference
+  & Pretrained parameters & Training across tasks \\
 Absolute Zero; STP
-  & Answers and proofs & One or many samples & Yes
-  & Self-play, rewarded for correctness \\
+  & Answers and proofs & Decoding budget varies & Policy parameters
+  & Correctness feedback \\
 \midrule
 \textbf{\EZ{}}
-  & \textbf{An algorithm} & \textbf{One (\searchone)} & \textbf{Yes}
-  & \textbf{Self-play against the incumbent} \\
+  & \textbf{An algorithm} & \textbf{One candidate}
+  & \textbf{Proposed writer updates}
+  & \textbf{Incumbent comparisons} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\Cref{tab:roads} sets the closest work on one axis: what a new problem costs
-in tries, and where the taste that cuts that cost comes from. Two neighbors
-also answer in one try. TabPFN, MotherNet and KumoRFM handle a new dataset
-without task-specific training
-\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}, but return
-predictions or a fixed network's weights. \EZ{} returns a readable
-algorithm, and learned to write it by beating incumbents. Absolute Zero and
-STP learn by self-play, but their prize is correctness. Ours is beating the
-best known program, which is why the game needs an opponent
+\Cref{tab:roads} distinguishes what a system produces from how it retains
+experience. TabPFN, MotherNet and KumoRFM provide neighboring examples of
+learning across tasks \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}.
+Their prediction or network-generation interfaces differ from the proposed
+readable-program output of \EZ{}, but a common candidate budget alone
+would not make their computation or task assumptions equivalent. Absolute Zero and
+STP learn by self-play, with correctness as feedback. Our proposed
+comparison standard is improvement against a declared incumbent, which is
+why the game needs an opponent
 (\cref{sec:game}).
 
 \begin{keyidea}
-Every pillar has been built. What has not been built, to our knowledge, is
-a player whose taste for invention was learned from a referee, so that a
-new problem needs one try.
+The test is whether experience on earlier discovery tasks improves the first
+complete proposal on a new one.
 \end{keyidea}
 
 To build that player, we first make invention a game.
