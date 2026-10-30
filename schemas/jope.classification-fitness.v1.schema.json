@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.classification-fitness.v1.schema.json",
   "title": "JopeDime binary classification fitness v1",
-  "description": "Strict binary objectives on calibrated probabilities (spec §5.10). Both minimize. Runtime bounds spec JSON to 32 KiB, refuses duplicate keys, and enforces input alignment, class membership/order and probability sums. Calibration and event integration are separate. Multiclass is deferred.",
+  "description": "Strict binary objectives on calibrated probabilities (spec §5.10). logloss, brier and cost_matrix_loss minimize; roc_auc, pr_auc, f1 and balanced_accuracy maximize. Runtime bounds spec JSON to 32 KiB, refuses duplicate keys, and enforces input alignment, class membership/order and probability sums. Calibration and event integration are separate. Multiclass is deferred.",
   "type": "object",
   "required": ["schema", "metric", "class_order", "aggregation", "undefined"],
   "properties": {
     "schema": {"const": "jope.classification-fitness/v1"},
     "metric": {
       "enum": ["logloss", "brier", "roc_auc", "pr_auc", "f1", "balanced_accuracy", "cost_matrix_loss"],
-      "description": "logloss: -ln(p_true), without clipping; brier: (p_positive - is_positive)^2 without a factor of two; both retain mean/sum row aggregation and are defined on single-class folds. roc_auc uses tie-averaged ROC area; pr_auc is average precision. f1 uses the positive class and threshold, defaulting to 0.5, with p_positive >= threshold predicting positive. balanced_accuracy uses threshold 0.5. cost_matrix_loss uses threshold 0.5 and the supplied matrix with rows=actual and columns=predicted. New dataset-level metrics require both classes in each fold and mean aggregation."
+      "description": "logloss: -ln(p_true), without clipping; brier: (p_positive - is_positive)^2 without a factor of two; both retain mean/sum row aggregation and are defined on single-class folds. roc_auc uses tie-averaged ROC area; pr_auc is average precision. f1 uses the positive class and threshold, defaulting to 0.5, with p_positive >= threshold predicting positive. balanced_accuracy uses threshold 0.5. cost_matrix_loss uses threshold 0.5 and the supplied matrix with rows=actual and columns=predicted. New dataset-level metrics require both classes in each fold and mean aggregation; runtime refuses these single-class folds with FITNESS_UNDEFINED."
     },
     "class_order": {"$ref": "#/$defs/class_order"},
     "aggregation": {
@@ -25,7 +25,7 @@
       "minimum": 0,
       "maximum": 1,
       "default": 0.5,
-      "description": "Optional F1 threshold. Omitted means 0.5; p_positive >= threshold predicts the positive class."
+      "description": "Optional F1-only threshold. Omitted means 0.5; p_positive >= threshold predicts the positive class. F1 objective identity canonicalizes an omitted threshold to 0.5. Other metrics refuse this parameter."
     },
     "cost_matrix": {
       "type": "array",
@@ -37,7 +37,7 @@
         "maxItems": 2,
         "items": {"type": "number", "minimum": 0}
       },
-      "description": "Required for cost_matrix_loss. Rows are actual class [negative, positive], columns are predicted class [negative, positive]: [[C_TN,C_FP],[C_FN,C_TP]]. Entries must be finite and non-negative."
+      "description": "Required only for cost_matrix_loss. Rows are actual class [negative, positive], columns are predicted class [negative, positive]: [[C_TN,C_FP],[C_FN,C_TP]]. Entries must be finite and non-negative; runtime rejects non-finite values. Other metrics refuse this parameter."
     }
   },
   "additionalProperties": false,
@@ -121,6 +121,35 @@
     {
       "schema": "jope.classification-fitness/v1",
       "metric": "f1",
+      "class_order": ["no", "yes"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate"
+    },
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "f1",
+      "class_order": ["no", "yes"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate",
+      "threshold": 0.9
+    },
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "roc_auc",
+      "class_order": ["no", "yes"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate"
+    },
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "pr_auc",
+      "class_order": ["no", "yes"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate"
+    },
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "balanced_accuracy",
       "class_order": ["no", "yes"],
       "aggregation": "mean",
       "undefined": "fail_candidate"
