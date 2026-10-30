@@ -66,3 +66,21 @@ Record per candidate the compact summary fields above and retain full per-family
 - A red-team comparison reports that H50-ESEMA rows are byte-identical to H50-ES3 (the same 64 candidates). H50 therefore supplies two independent search arms, not three; ESEMA is not independent corroborating evidence. This comparison is overseer-supplied and is not re-described as independently verified here.
 - Emit `CONTROL` as the canonical H51 arm label even where the reused H48 implementation internally calls that baseline arm `0`. Record selected adapter update L2 from r785 and its adapter-weight SHA. If all fold/seed utilities are exactly zero, interpret that as step-like utility consistent with H50-S, not “no change by design.”
 - Due to xbabe2 swap being full (19/19 GiB), keep each run's RSS below approximately 6 GiB in addition to the existing RAM/CPU/GPU guards; continue to cap OMP/MKL at 8 and run at nice 15. Use targeted checks only; do not run `just required` for H51.
+
+## Findings (interim, 2026-10-30)
+
+### CONTROL: training moves weights; utility is step-like
+
+CONTROL produced three distinct adapter weight hashes. Their update L2 distances from r785 were 0.102599, 0.101629, and 0.101990 for seeds 9, 10, and 11. Mean inner-family gains were +0.005890, +0.005825, and +0.005950, while each seed's family median and bootstrap interval were exactly 0.0 ([0, 0]). This is step-like argmin utility, not “no change”: 176/205, 178/205, and 175/205 families, respectively, had exactly zero gain. A family changes utility only when its selected argmin changes, so weight movement and positive mean gain can coexist with a zero median.
+
+### STEPS: larger r882 regression steps have hurt so far
+
+In the completed lr=3e-4 cells, increasing the step budget from k=2 to k=16 and k=64 produced increasingly negative family medians from the r882 baseline. At k=2, all three seeds had median and interval zero, mean gain about -0.010, and update L2 about 0.105. At k=16, medians were -0.026836, -0.025059, and -0.019407, all with bootstrap upper bounds below zero; means ranged from -0.081818 to -0.093824 and update L2 from 0.927 to 0.972. At k=64, medians were -0.036789, -0.033753, and -0.037672, again with upper bounds below zero; update L2 was 3.112–3.160 and means ranged approximately -0.068 to -0.110. These results are consistent with regression-loss gradient steps moving away from argmin utility, rather than a simple under-optimization plateau. The lr=1e-4 cells are still running, so this interpretation remains provisional until that factorial branch completes.
+
+### Seed dependence and live-loop winner's curse
+
+The overseer reports that k2 seed 9 and seed 10 utilities match to four decimals, but the persisted fold summaries do not exactly match at that precision: for example, fold 2 family deltas are -0.002979 and -0.003380, and the corresponding candidate family utilities differ by about 0.0004. The saved evidence therefore supports similar, step-like fold behavior, not an exact four-decimal match. The three seeds should not be treated as fully independent confirmation; seed changes may mainly alter minibatch order, and across-seed intervals can understate run-to-run variation.
+
+Separately, the overseer-supplied live-loop figures say that r882 utility 1.1377942 was the maximum across roughly 1,280 reads of the same 91 validation contexts, while later live candidates were 1.1344–1.1352. These figures have not been independently verified and the live loop was not inspected. If accurate, selection of the incumbent at that maximum creates winner's-curse bias and regression to the mean, which could contribute to the apparent plateau. This is a caveat, not a change to the offline H51 baseline or protocol.
+
+The preregistered remaining order is STEPS lr=1e-4, then DATA, CLIP + SMOOTH, and NULL. No additional H51 arms are being added. These findings are interim; the final verdict and compact metrics are reserved for closeout after all arms finish.
