@@ -63,13 +63,11 @@ def wait_cpu_guard(deadline):
 def run_cell(i,seed,scale,overall_deadline,wall_cap):
  cell_started=time.monotonic()
  pilot=wall_cap<=PILOT_LIMIT
- pilot_deadline=min(overall_deadline,cell_started+wall_cap) if pilot else overall_deadline
- resource_deadline=pilot_deadline if pilot else min(overall_deadline,cell_started+20*60)
+ resource_deadline=min(overall_deadline,cell_started+20*60)
  guard=wait_cpu_guard(resource_deadline)
  if guard is None: note(f"STOP before cell {i}: total/pilot deadline while waiting for CPU/memory guard"); return None
  h,fallback=lock_gpu(resource_deadline)
  if time.monotonic()>=resource_deadline and not fallback: note(f"STOP before cell {i}: deadline waiting on GPU lock"); return None
- if pilot and time.monotonic()>=pilot_deadline: note(f"STOP before pilot cell {i}: 10-minute pilot cap reached waiting for qualification.lock"); return None
  device='cpu' if fallback else 'cuda:0'
  if device=='cuda:0':
   guard['gpu_free_mib']=gpu_free_mib()
@@ -80,12 +78,13 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
   if guard is None: note(f"STOP before cell {i}: CPU fallback guard failed"); return None
   guard['fallback_reason']='GPU qualification lock busy >20m or <20GiB free'
  training_started=time.monotonic()
- cell_deadline=min(overall_deadline,pilot_deadline if pilot else training_started+wall_cap)
+ cell_deadline=min(overall_deadline,training_started+wall_cap)
  if time.monotonic()>=cell_deadline: note(f"STOP before cell {i}: cell execution budget unavailable after resource acquisition"); return None
  out=RUNS/f"scale-{scale:g}"/f"seed{seed}"
  out.mkdir(parents=True,exist_ok=False)
+ runner_cap=max(1,wall_cap-90)
  cmd=[sys.executable,str(ROOT/'research/flywheel_selfplay/h53b/runner.py'),'--seed',str(seed),'--scale',str(scale),
-      '--max-rounds','300','--wall-seconds',str(wall_cap),'--device',device,'--out',str(out)]
+      '--max-rounds','300','--wall-seconds',str(runner_cap),'--device',device,'--out',str(out)]
  if h is not None: cmd.append('--lock-held')
  env=os.environ.copy(); env.update({'OMP_NUM_THREADS':'8','MKL_NUM_THREADS':'8','OPENBLAS_NUM_THREADS':'8','CARGO_INCREMENTAL':'0','CARGO_PROFILE_DEV_DEBUG':'line-tables-only'})
  start=time.monotonic(); note(f"START cell {i}/6 seed={seed} scale={scale:g} device={device} wall_cap={wall_cap}; guard={json.dumps(guard,sort_keys=True)}")
@@ -103,8 +102,9 @@ def run_cell(i,seed,scale,overall_deadline,wall_cap):
  if fail or code!=0: note(f"STOP after cell {i}: {fail or f'runner exit={code}'} log={log}; later cells not launched"); return None
  summary=json.loads((out/'summary.json').read_text()); summary['coordinator_preflight']=guard; summary['coordinator_nice']=10
  (out/'summary.json').write_text(json.dumps(summary,sort_keys=True,indent=2,allow_nan=False)+'\n')
- note(f"DONE cell {i}/6 seed={seed} scale={scale:g} rounds={summary['rounds_completed']} wall={wall:.1f}s utility={summary['final_family_utility']:.6f} device={device}")
- return {'seed':seed,'scale':scale,'wall_seconds':wall,'rounds':summary['rounds_completed'],'device':device}
+ utility=summary.get('final_family_utility')
+ note(f"DONE cell {i}/6 seed={seed} scale={scale:g} status={summary.get('status')} rounds={summary['rounds_completed']} wall={wall:.1f}s utility={utility if utility is not None else 'unavailable'} device={device}")
+ return {'seed':seed,'scale':scale,'wall_seconds':wall,'rounds':summary['rounds_completed'],'device':device,'status':summary.get('status')}
 
 def main():
  RUNS.mkdir(parents=True,exist_ok=False)
@@ -120,29 +120,36 @@ def main():
    r=run_cell(i,seed,scale,deadline,CELL_LIMIT)
    if r is None: stop='cell stopped or failed'; break
    completed.append(r)
-  result={'complete':len(completed)==6,'completed':completed,'planned':[{'seed':s,'scale':x} for s,x in CELLS],
-          'stop_reason':stop,'wall_seconds':time.monotonic()-started,'pilot_attempts':['~/jope-data/h53b/runs/wave.json','~/jope-data/h53b/attempt-02/wave.json']}
+  result={'complete':len(completed)==6 and all(x['status']=='complete' for x in completed),
+          'completed':completed,'planned':[{'seed':s,'scale':x} for s,x in CELLS],
+          'stop_reason':stop,'wall_seconds':time.monotonic()-started,
+          'pilot_attempts':['~/jope-data/h53b/runs/wave.json','~/jope-data/h53b/attempt-02/wave.json']}
  else:
   first=run_cell(1,12,1.0,deadline,PILOT_LIMIT)
   if first is None:
-   result={'complete':False,'completed':completed,'stop_reason':'pilot did not complete'}
+   result={'complete':False,'completed':completed,'stop_reason':'pilot did not produce a receipt'}
   else:
    completed.append(first)
-   sec_per_round=first['wall_seconds']/max(1,first['rounds'])
-   projected_cell=min(CELL_LIMIT,sec_per_round*300)
-   projected_total=first['wall_seconds']+5*projected_cell
-   note(f"PILOT estimate: {sec_per_round:.3f}s/round; projected 6-cell total={projected_total/60:.1f}m at cell caps")
-   if projected_total>2.5*60*60:
-    result={'complete':False,'completed':completed,'stop_reason':'projected total exceeds 2.5h','projected_total_seconds':projected_total}
-    note('STOP after timing pilot: projected six-cell total exceeds 2.5h')
+   if os.environ.get('H53B_PILOT_ONLY')=='1':
+    result={'complete':False,'completed':completed,'stop_reason':'pilot-only run; review timing before more cells','wall_seconds':time.monotonic()-started}
+    note('Pilot-only run complete; no other cell launched pending throughput review')
    else:
-    stop=None
-    for i,(seed,scale) in enumerate(CELLS[1:],2):
-     r=run_cell(i,seed,scale,deadline,CELL_LIMIT)
-     if r is None: stop='cell stopped or failed'; break
-     completed.append(r)
-    result={'complete':len(completed)==6,'completed':completed,'planned':[{'seed':s,'scale':x} for s,x in CELLS],
-            'stop_reason':stop,'wall_seconds':time.monotonic()-started,'projected_total_seconds':projected_total}
+    sec_per_round=first['wall_seconds']/max(1,first['rounds'])
+    projected_cell=min(CELL_LIMIT,sec_per_round*300)
+    projected_total=first['wall_seconds']+5*projected_cell
+    note(f"PILOT estimate: {sec_per_round:.3f}s/round; projected 6-cell total={projected_total/60:.1f}m at cell caps")
+    if projected_total>2.5*60*60:
+     result={'complete':False,'completed':completed,'stop_reason':'projected total exceeds 2.5h','projected_total_seconds':projected_total}
+     note('STOP after timing pilot: projected six-cell total exceeds 2.5h')
+    else:
+     stop=None
+     for i,(seed,scale) in enumerate(CELLS[1:],2):
+      r=run_cell(i,seed,scale,deadline,CELL_LIMIT)
+      if r is None: stop='cell stopped or failed'; break
+      completed.append(r)
+     result={'complete':len(completed)==6 and all(x['status']=='complete' for x in completed),
+             'completed':completed,'planned':[{'seed':s,'scale':x} for s,x in CELLS],
+             'stop_reason':stop,'wall_seconds':time.monotonic()-started,'projected_total_seconds':projected_total}
  result['schema']='jope.h53b.wave/v1'; result['prereg_commit']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
  (RUNS/'wave.json').write_text(json.dumps(result,sort_keys=True,indent=2)+'\n')
  note(f"H53b wave stopped/complete {len(completed)}/6; receipt={RUNS/'wave.json'}")

@@ -62,6 +62,13 @@ def reset_adapter(net, scale, seed):
     if any(name.startswith('anchor.') and p.requires_grad for name,p in net.adapter_10tok.named_parameters()): raise RuntimeError('frozen anchor trainable')
     return trainable
 
+def cached_training_indices(pool, order, slate_size):
+    """Live training_indices with only the immutable per-pool argsort cached."""
+    if slate_size < 1 or not len(pool['pids']): raise ValueError('positive slate and nonempty pool required')
+    k=min(48,slate_size,len(order)); rest_pool=order[k:] if len(order)>k else order
+    rest=np.random.choice(rest_pool,slate_size-k,replace=len(rest_pool)<slate_size-k)
+    return np.concatenate([order[:k],rest])
+
 def bootstrap(gains, seed):
     values=np.asarray(list(gains.values()),dtype=np.float64)
     if values.size!=19: raise RuntimeError(f'expected 19 families, got {values.size}')
@@ -109,6 +116,17 @@ def main():
     selected,train_pools,train_ids,family_by_cid,net,trainable,tokens,masks,guard=h48.build_model(a.input,a.checkpoint,device)
     print(f'phase complete: build model in {time.monotonic()-started:.1f}s',flush=True)
     if len(train_ids)!=1219 or len({family_by_cid[c] for c in train_ids})!=205: raise RuntimeError('pinned train roster mismatch')
+    # Exact-semantics speedup: fitness is immutable, so cache each sort; NumPy RNG calls stay in the same order.
+    sorted_order={cid:np.argsort(train_pools[cid]['fitness']) for cid in train_ids}
+    rng_state=np.random.get_state(); np.random.seed(61353)
+    probe=train_ids[:32]
+    reference=[training.training_indices(train_pools[cid],SLATE_SIZE) for cid in probe]
+    np.random.seed(61353)
+    cached=[cached_training_indices(train_pools[cid],sorted_order[cid],SLATE_SIZE) for cid in probe]
+    if any(not np.array_equal(left,right) for left,right in zip(reference,cached,strict=True)):
+        raise RuntimeError('cached live slate differs from reference sampler')
+    np.random.set_state(rng_state)
+    print(f'phase complete: cached {len(sorted_order)} immutable fitness orders; sampler equivalence verified',flush=True)
     phase_started=time.monotonic(); print('phase: load pinned DL-Val packet',flush=True)
     selected_val,val_pools,val_tables=h49.load_validation_packet(a.input)
     print(f'phase complete: load DL-Val in {time.monotonic()-phase_started:.1f}s',flush=True)
@@ -134,9 +152,11 @@ def main():
     trajectory=[{'round':0,'family_utility':initial['mean'],'context_utility':initial['context_mean'],
                  'per_family_utility':initial['per_family'],'per_context_utility':initial['per_context'],
                  'adapter_sha256':init_sha,'diagnostic_only':True}]
-    completed=0; stop_reason='round_cap'
+    completed=0; stop_reason='round_cap'; optimizer_steps_completed=0; partial_steps_discarded=0
     for round_idx in range(1,a.max_rounds+1):
         if time.monotonic()>=deadline: stop_reason='wall_cap'; break
+        round_started=time.monotonic(); round_snapshot={n:p.detach().clone() for n,p in net.named_parameters() if p.requires_grad}
+        slate_seconds=0.0; step_seconds=0.0; round_steps=0
         round_seed=a.seed+round_idx*104729
         random.seed(round_seed); np.random.seed(round_seed%(2**32)); torch.manual_seed(round_seed)
         rotation=round_idx%len(train_ids); round_train=train_ids[rotation:]+train_ids[:rotation]
@@ -144,14 +164,27 @@ def main():
             if time.monotonic()>=deadline: stop_reason='wall_cap_mid_unit'; break
             step_seed=dev.batch_seed(a.seed,round_idx,step)
             cids=random.Random(step_seed).choices(round_train,k=BATCH_SIZE)
-            np.random.seed(round_seed%(2**32))
-            indexes=[training.training_indices(train_pools[cid],SLATE_SIZE) for cid in cids]
+            slate_started=time.monotonic()
+            indexes=[cached_training_indices(train_pools[cid],sorted_order[cid],SLATE_SIZE) for cid in cids]
+            slate_seconds+=time.monotonic()-slate_started
+            step_started=time.monotonic()
             optimizer.zero_grad(set_to_none=True)
             loss=live_objective(train_predict(cids,indexes),train_pools,cids,indexes)
             loss.backward(); grad=float(torch.nn.utils.clip_grad_norm_(trainable,1.0)); optimizer.step()
+            step_wall=time.monotonic()-step_started; step_seconds+=step_wall
+            round_steps+=1; optimizer_steps_completed+=1
+            print(f'step round={round_idx} step={step} slate_s={slate_seconds:.3f} forward_backward_step_s={step_wall:.3f} cum_s={time.monotonic()-started:.1f}',flush=True)
             if h48.h46.checkpoint_guard(guard,net,expected=DOPE_SHA)!=DOPE_SHA: raise RuntimeError('DOPE changed during cell')
-        if stop_reason=='wall_cap_mid_unit': break
+        if round_steps<K_STEPS:
+            with torch.no_grad():
+                for name,p in net.named_parameters():
+                    if p.requires_grad: p.copy_(round_snapshot[name])
+            partial_steps_discarded+=round_steps; optimizer_steps_completed-=round_steps
+            stop_reason='wall_cap_partial_unit'
+            print(f'round={round_idx} incomplete discarded_steps={round_steps} train_s={time.monotonic()-round_started:.3f} cum_s={time.monotonic()-started:.1f}',flush=True)
+            break
         completed=round_idx
+        print(f'round={completed} train_s={time.monotonic()-round_started:.3f} slate_s={slate_seconds:.3f} step_s={step_seconds:.3f} cum_s={time.monotonic()-started:.1f}',flush=True)
         if completed%EVAL_EVERY==0 or completed==a.max_rounds or time.monotonic()>=deadline:
             net.eval(); val=h48.evaluate_utility(val_ids,val_pools,val_predict)
             digest=adapter_sha(net)
@@ -161,25 +194,35 @@ def main():
                 'adapter_sha256':digest,'update_l2_from_init':drift,'elapsed_seconds':time.monotonic()-started,'diagnostic_only':True})
             net.train()
         if time.monotonic()>=deadline: stop_reason='wall_cap'; break
-    if completed==0: raise RuntimeError('cell ended before a complete live update unit')
     if trajectory[-1]['round']!=completed:
         net.eval(); val=h48.evaluate_utility(val_ids,val_pools,val_predict); digest=adapter_sha(net)
         drift=float(torch.sqrt(sum(torch.sum((p.detach()-init_params[n])**2) for n,p in net.named_parameters() if p.requires_grad)))
         trajectory.append({'round':completed,'family_utility':val['mean'],'context_utility':val['context_mean'],
             'per_family_utility':val['per_family'],'per_context_utility':val['per_context'],'adapter_sha256':digest,
             'update_l2_from_init':drift,'elapsed_seconds':time.monotonic()-started,'diagnostic_only':True})
+    dope_after=h48.h46.checkpoint_guard(guard,net,expected=DOPE_SHA)
+    if dope_after!=DOPE_SHA or sha256(a.input/'source_manifest.json')!=INPUT_SHA or sha256(a.checkpoint)!=R882_SHA: raise RuntimeError('integrity identity changed')
+    source_hashes={str(p.relative_to(ROOT)):sha256(p) for p in (FUSED_PATH,DEV_PATH,TRAINING_PATH,H48_PATH,H49_SCORE_PATH,Path(__file__).resolve(),ROOT/'research/flywheel_selfplay/h53b/run_wave.py',ROOT/'research/flywheel_selfplay/h53b/audit.py')}
+    if completed==0:
+        payload={'schema':'jope.h53b.cell/v1','status':'partial_no_complete_update_unit','seed':a.seed,'initialization_scale':a.scale,
+            'rounds_completed':0,'optimizer_updates_completed':0,'partial_optimizer_steps_discarded':partial_steps_discarded,
+            'k_steps_per_round':K_STEPS,'learning_rate':LEARNING_RATE,'weight_decay':WEIGHT_DECAY,'batch_size':BATCH_SIZE,'slate_size':SLATE_SIZE,
+            'device':str(device),'manifest_identity':MANIFEST_ID,'manifest_file_sha256':INPUT_SHA,'dope_sha256_before':dope_before,'dope_sha256_after':dope_after,
+            'r882_checkpoint_sha256_comparator_only':R882_SHA,'fresh_adapter_sha256_before_training':init_sha,'fresh_adapter_sha256_after_training':adapter_sha(net),
+            'r882_adapter_transfer_to_candidate':False,'stop_reason':stop_reason,'final_round':None,'final_family_utility':None,'final_context_utility':None,
+            'final_elo_vs_r882_diagnostic':None,'validation_diagnostic_only':True,'holdout_payloads_opened':0,'outer_rows_delivered':0,
+            'wall_seconds':time.monotonic()-started,'trajectory':trajectory,'source_sha256':source_hashes}
+        a.out.mkdir(parents=True,exist_ok=True); tmp=a.out/'summary.json.new'; tmp.write_text(json.dumps(payload,sort_keys=True,indent=2,allow_nan=False)+'\n'); tmp.replace(a.out/'summary.json')
+        print(json.dumps({k:v for k,v in payload.items() if k!='trajectory'},allow_nan=False),flush=True); return
     final=trajectory[-1]; gains={f:float(final['per_family_utility'][f])-float(baseline_family[f]) for f in baseline_family}
     stats=bootstrap(gains,53000+a.seed+int(a.scale*10))
     elo=import_module('h53b_elo',ROOT/'python/src/jope/north_star/elo_tracker.py')
     records=[elo.DatasetEvalRecord(dataset_id=cid,family_id=val_families[cid],task_type='regression',
         scores_by_contender={'r882':float(baseline_context[cid]),'H53b':float(final['per_context_utility'][cid])}) for cid in val_ids]
     elo_result=elo.compute_family_grouped_bradley_terry_elo(records,anchor_contender='r882',anchor_elo=1500.0)
-    dope_after=h48.h46.checkpoint_guard(guard,net,expected=DOPE_SHA)
-    if dope_after!=DOPE_SHA or sha256(a.input/'source_manifest.json')!=INPUT_SHA or sha256(a.checkpoint)!=R882_SHA: raise RuntimeError('integrity identity changed')
     crossings={str(target):next((r['round'] for r in trajectory if r['family_utility']>=target),None) for target in TARGETS}
-    source_hashes={str(p.relative_to(ROOT)):sha256(p) for p in (FUSED_PATH,DEV_PATH,TRAINING_PATH,H48_PATH,H49_SCORE_PATH,Path(__file__).resolve(),ROOT/'research/flywheel_selfplay/h53b/run_wave.py',ROOT/'research/flywheel_selfplay/h53b/audit.py')}
-    payload={'schema':'jope.h53b.cell/v1','seed':a.seed,'initialization_scale':a.scale,'rounds_completed':completed,
-        'optimizer_updates_completed':completed*K_STEPS,'k_steps_per_round':K_STEPS,'learning_rate':LEARNING_RATE,
+    payload={'schema':'jope.h53b.cell/v1','status':'complete','seed':a.seed,'initialization_scale':a.scale,'rounds_completed':completed,
+        'optimizer_updates_completed':optimizer_steps_completed,'partial_optimizer_steps_discarded':partial_steps_discarded,'k_steps_per_round':K_STEPS,'learning_rate':LEARNING_RATE,
         'weight_decay':WEIGHT_DECAY,'batch_size':BATCH_SIZE,'slate_size':SLATE_SIZE,'batch_sampler':'dev_incumbent.batch_seed + random.Random.choices(round-rotated-train-roster); automatic_promotion.training_indices',
         'objective':'mean(SmoothL1 + 0.1*KL(softmax(-prediction/0.2), softmax(-target/0.2))); gated target=2.0',
         'device':str(device),'train_contexts':len(train_ids),'train_families':205,'validation_contexts':len(val_ids),'validation_families':19,
