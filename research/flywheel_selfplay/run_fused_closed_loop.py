@@ -26,6 +26,7 @@ from pathlib import Path
 os.environ.setdefault("OMP_NUM_THREADS", "4")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "4")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import numpy as np
 import psutil
 import torch
@@ -302,8 +303,11 @@ def main():
     landmark = {}
     ws = FusedLandmarkWorkspace(num_threads=4)
     tprep = time.monotonic()
-    for cid, (x, y) in tables.items():
-        headroom()
+    for prep_idx, (cid, (x, y)) in enumerate(tables.items()):
+        # Four worker threads remain fixed; check host headroom in bounded groups
+        # instead of imposing a 250ms sampling sleep on every tiny context.
+        if not full or prep_idx % 16 == 0:
+            headroom()
         yn = (
             (y.astype(np.float64) - np.mean(y.astype(np.float64)))
             / max(float(np.std(y.astype(np.float64))), 1e-8)
@@ -667,6 +671,7 @@ def main():
         "parameter_counts": counts,
         "path": "cpu_exact_landmarks+frozen_dope+GPU_adapter",
         "phase2_kernel_used": False,
+        "cuda_allocator_config": os.environ.get("PYTORCH_CUDA_ALLOC_CONF"),
         "task_counts": {
             "train_regression": len(train),
             "val_regression": len(dev),
@@ -851,6 +856,9 @@ def main():
             batch_profile["avoided_cpu_feature_slate_bytes"] += packed[
                 "avoided_cpu_feature_slate_bytes"
             ]
+            if full:
+                device_pool_cache.release_resident_pools()
+                torch.cuda.empty_cache()
             model_start = time.monotonic()
             pred = predict(cids, selections, packed)
             target = packed["fitness"].float()
@@ -895,6 +903,10 @@ def main():
             del packed  # release the large slate before the next gather/GP phase
             if projection_failed:
                 break
+        # The final autograd result keeps references to large input/signature
+        # tensors even after backward. Drop them before the next round guard.
+        del pred, target, gates, loss
+        opt.zero_grad(set_to_none=True)
         torch.cuda.synchronize()
         train_wall = time.monotonic() - start
         guard.verify_dope_frozen_unchanged(net, before)
