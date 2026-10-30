@@ -1,7 +1,7 @@
 use super::{
     frame::{decode_frame, encode_frame},
     process::{self, Containment},
-    Attempt, Failure, Request, Response,
+    Attempt, Request, Response, WorkerFailure,
 };
 use jope_api::ids::RunId;
 use std::{
@@ -104,7 +104,7 @@ impl WorkerPool {
             || request.limits.wall_ms == 0
             || request.limits.rss_bytes == 0
         {
-            return Response::failed(request.attempt.clone(), Failure::InvalidRequest, 0);
+            return Response::failed(request.attempt.clone(), WorkerFailure::InvalidRequest, 0);
         }
         // Reject oversized/invalid requests before touching a worker or consuming the fence.
         let bytes = match serde_json::to_value(request)
@@ -112,7 +112,9 @@ impl WorkerPool {
             .and_then(|v| encode_frame(&v).map_err(io::Error::other))
         {
             Ok(bytes) => bytes,
-            Err(_) => return Response::failed(request.attempt.clone(), Failure::InvalidRequest, 0),
+            Err(_) => {
+                return Response::failed(request.attempt.clone(), WorkerFailure::InvalidRequest, 0)
+            }
         };
         {
             let mut fences = self.fences.lock().unwrap();
@@ -121,7 +123,7 @@ impl WorkerPool {
                 .get(&key)
                 .is_some_and(|f| f.attempt >= request.attempt.attempt)
             {
-                return Response::failed(request.attempt.clone(), Failure::StaleAttempt, 0);
+                return Response::failed(request.attempt.clone(), WorkerFailure::StaleAttempt, 0);
             }
             fences.insert(
                 key,
@@ -134,7 +136,7 @@ impl WorkerPool {
         let mut state = self.state.lock().unwrap();
         let index = loop {
             if !self.current(&request.attempt) {
-                return Response::failed(request.attempt.clone(), Failure::StaleAttempt, 0);
+                return Response::failed(request.attempt.clone(), WorkerFailure::StaleAttempt, 0);
             }
             if let Some(index) = state.available.pop() {
                 break index;
@@ -156,10 +158,18 @@ impl WorkerPool {
         let mut retried_idle_exit = false;
         loop {
             if !self.current(&request.attempt) {
-                return Response::failed(request.attempt.clone(), Failure::StaleAttempt, elapsed());
+                return Response::failed(
+                    request.attempt.clone(),
+                    WorkerFailure::StaleAttempt,
+                    elapsed(),
+                );
             }
             if started.elapsed() >= Duration::from_millis(request.limits.wall_ms) {
-                return Response::failed(request.attempt.clone(), Failure::Timeout, elapsed());
+                return Response::failed(
+                    request.attempt.clone(),
+                    WorkerFailure::Timeout,
+                    elapsed(),
+                );
             }
             // A matrix/cap change requires a fresh process and one new mapping.
             if lease.process.as_mut().is_some_and(|p| {
@@ -175,7 +185,7 @@ impl WorkerPool {
                     Err(_) => {
                         return Response::failed(
                             request.attempt.clone(),
-                            Failure::ProcessExited,
+                            WorkerFailure::ProcessExited,
                             elapsed(),
                         )
                     }
@@ -200,7 +210,7 @@ impl WorkerPool {
                     }
                     return response;
                 }
-                Err(Failure::ProcessExited) if previously_healthy && !retried_idle_exit => {
+                Err(WorkerFailure::ProcessExited) if previously_healthy && !retried_idle_exit => {
                     // A worker may retire immediately after its last successful reply. A send
                     // can race that exit. Retry once on a replacement, within the ORIGINAL
                     // deadline and fence. Evaluators are stateless and have no store effects.
@@ -222,29 +232,29 @@ impl WorkerPool {
         request: &Request,
         bytes: Vec<u8>,
         started: Instant,
-    ) -> Result<Response, Failure> {
+    ) -> Result<Response, WorkerFailure> {
         process
             .requests
             .send(bytes)
-            .map_err(|_| Failure::ProcessExited)?;
+            .map_err(|_| WorkerFailure::ProcessExited)?;
         let deadline = Duration::from_millis(request.limits.wall_ms);
         loop {
             if !self.current(&request.attempt) {
-                return Err(Failure::StaleAttempt);
+                return Err(WorkerFailure::StaleAttempt);
             }
             if started.elapsed() >= deadline {
-                return Err(Failure::Timeout);
+                return Err(WorkerFailure::Timeout);
             }
             match crate::sampler::sample(process.child.id()) {
                 Ok((_, rss)) => {
                     if rss > request.limits.rss_bytes {
-                        return Err(Failure::MemoryLimit);
+                        return Err(WorkerFailure::MemoryLimit);
                     }
                     process.last_rss = rss;
                 }
                 Err(_) => {
                     if process.child.try_wait().ok().flatten().is_none() {
-                        return Err(Failure::Unavailable);
+                        return Err(WorkerFailure::Unavailable);
                     }
                 }
             }
@@ -254,29 +264,29 @@ impl WorkerPool {
             match process.responses.recv_timeout(remaining) {
                 Ok(Ok(response)) => {
                     if response.attempt != request.attempt || !response.valid() {
-                        return Err(Failure::Protocol);
+                        return Err(WorkerFailure::Protocol);
                     }
                     // Startup samples can precede page faults/matrix load. Capture the actual
                     // post-load RSS before retaining a process; a disappeared worker retires.
                     match crate::sampler::sample(process.child.id()) {
                         Ok((_, rss)) => {
                             if rss > request.limits.rss_bytes {
-                                return Err(Failure::MemoryLimit);
+                                return Err(WorkerFailure::MemoryLimit);
                             }
                             process.last_rss = rss;
                         }
                         Err(_) => process.last_rss = 0,
                     }
                     if !self.current(&request.attempt) {
-                        return Err(Failure::StaleAttempt);
+                        return Err(WorkerFailure::StaleAttempt);
                     }
                     if started.elapsed() >= deadline {
-                        return Err(Failure::Timeout);
+                        return Err(WorkerFailure::Timeout);
                     }
                     return Ok(response);
                 }
                 Ok(Err(_)) | Err(mpsc::RecvTimeoutError::Disconnected) => {
-                    return Err(Failure::ProcessExited)
+                    return Err(WorkerFailure::ProcessExited)
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => {}
             }

@@ -47,7 +47,7 @@ pub struct Request {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Failure {
+pub enum WorkerFailure {
     Timeout,
     MemoryLimit,
     Panicked,
@@ -67,11 +67,11 @@ pub struct Response {
     pub predictions_digest: String,
     pub wall_ms: u64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub failure: Option<Failure>,
+    pub failure: Option<WorkerFailure>,
 }
 
 impl Response {
-    pub fn failed(attempt: Attempt, failure: Failure, wall_ms: u64) -> Self {
+    pub fn failed(attempt: Attempt, failure: WorkerFailure, wall_ms: u64) -> Self {
         Self {
             attempt,
             scores: Vec::new(),

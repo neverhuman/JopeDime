@@ -2,7 +2,7 @@
 
 use super::{
     frame::{decode_frame, encode_frame, FrameError},
-    process, Failure, Request, Response, Scores,
+    process, Request, Response, Scores, WorkerFailure,
 };
 use crate::dataset::jmat::{self, Matrix};
 use memmap2::Mmap;
@@ -26,7 +26,7 @@ use std::{
 /// The callback must not retain the borrowed bytes, write stdout, or perform store effects.
 pub fn serve(
     protocol: u32,
-    mut evaluate: impl FnMut(&Request, &Matrix<Mmap>) -> Result<Scores, Failure>,
+    mut evaluate: impl FnMut(&Request, &Matrix<Mmap>) -> Result<Scores, WorkerFailure>,
 ) -> io::Result<()> {
     if protocol != 1 || io::stdin().is_terminal() {
         return Err(io::Error::new(
@@ -68,31 +68,33 @@ pub fn serve(
                 || request.limits.rss_bytes == 0
                 || request.attempt.attempt == 0
             {
-                return Err(Failure::InvalidRequest);
+                return Err(WorkerFailure::InvalidRequest);
             }
             if matrix
                 .as_ref()
                 .is_some_and(|(path, _)| path != &request.matrix_path)
             {
-                return Err(Failure::InvalidRequest);
+                return Err(WorkerFailure::InvalidRequest);
             }
             if matrix.is_none() {
-                let file = File::open(&request.matrix_path).map_err(|_| Failure::InvalidRequest)?;
-                // SAFETY: callers supply immutable store artifacts; the file stays unmodified
-                // for the mapping lifetime, and the mapping exposes read-only bytes only.
+                let file =
+                    File::open(&request.matrix_path).map_err(|_| WorkerFailure::InvalidRequest)?;
                 #[allow(unsafe_code)]
-                let map =
-                    unsafe { jmat::map_read_only(&file) }.map_err(|_| Failure::InvalidRequest)?;
+                let map = {
+                    // SAFETY: the immutable store artifact stays unmodified and untruncated for this read-only mapping.
+                    unsafe { jmat::map_read_only(&file) }
+                }
+                .map_err(|_| WorkerFailure::InvalidRequest)?;
                 matrix = Some((request.matrix_path.clone(), map));
                 baseline = crate::sampler::sample(std::process::id())
-                    .map_err(|_| Failure::Unavailable)?
+                    .map_err(|_| WorkerFailure::Unavailable)?
                     .1;
             }
             match catch_unwind(AssertUnwindSafe(|| {
                 evaluate(&request, &matrix.as_ref().unwrap().1)
             })) {
                 Ok(result) => result,
-                Err(_) => Err(Failure::Panicked),
+                Err(_) => Err(WorkerFailure::Panicked),
             }
         })();
         let wall_ms = started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64;
@@ -108,7 +110,7 @@ pub fn serve(
                 if value.valid() {
                     value
                 } else {
-                    Response::failed(request.attempt, Failure::NonFinite, wall_ms)
+                    Response::failed(request.attempt, WorkerFailure::NonFinite, wall_ms)
                 }
             }
             Err(failure) => Response::failed(request.attempt, failure, wall_ms),

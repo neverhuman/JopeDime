@@ -7,7 +7,7 @@ mod protocol;
 mod runtime;
 
 pub use pool::{PoolConfig, WorkerPool};
-pub use protocol::{Attempt, Failure, Limits, Request, Response, Scores};
+pub use protocol::{Attempt, Limits, Request, Response, Scores, WorkerFailure};
 pub use runtime::serve;
 
 #[cfg(test)]

@@ -84,7 +84,7 @@ fn child_helper() {
         let request: Request = serde_json::from_value(value).unwrap();
         let mut attempt = request.attempt;
         attempt.attempt += 1;
-        let response = Response::failed(attempt, Failure::Unavailable, 0);
+        let response = Response::failed(attempt, WorkerFailure::Unavailable, 0);
         std::io::stdout()
             .write_all(&frame::encode_frame(&serde_json::to_value(response).unwrap()).unwrap())
             .unwrap();
@@ -149,7 +149,7 @@ fn timeout_and_memory_breach_are_bounded_and_the_run_continues() {
     let mut hang = request(file.path(), 1, 1, "loop");
     hang.limits.wall_ms = 200;
     let started = Instant::now();
-    assert_eq!(pool.evaluate(&hang).failure, Some(Failure::Timeout));
+    assert_eq!(pool.evaluate(&hang).failure, Some(WorkerFailure::Timeout));
     assert!(started.elapsed() < Duration::from_millis(2200));
     assert!(pool
         .evaluate(&request(file.path(), 2, 1, "ok"))
@@ -158,7 +158,10 @@ fn timeout_and_memory_breach_are_bounded_and_the_run_continues() {
     let mut bomb = request(file.path(), 3, 1, "memory");
     bomb.limits.rss_bytes = 96 * 1024 * 1024;
     let started = Instant::now();
-    assert_eq!(pool.evaluate(&bomb).failure, Some(Failure::MemoryLimit));
+    assert_eq!(
+        pool.evaluate(&bomb).failure,
+        Some(WorkerFailure::MemoryLimit)
+    );
     assert!(started.elapsed() < Duration::from_secs(3));
     assert!(pool
         .evaluate(&request(file.path(), 4, 1, "ok"))
@@ -227,16 +230,22 @@ fn newer_and_revoked_attempts_fence_running_and_queued_work() {
         assert!(pool.evaluate(&new).failure.is_none());
         assert_eq!(
             old_result.join().unwrap().failure,
-            Some(Failure::StaleAttempt)
+            Some(WorkerFailure::StaleAttempt)
         );
     });
-    assert_eq!(pool.evaluate(&new).failure, Some(Failure::StaleAttempt));
+    assert_eq!(
+        pool.evaluate(&new).failure,
+        Some(WorkerFailure::StaleAttempt)
+    );
     let revoked = request(file.path(), 1, 1, "loop");
     thread::scope(|scope| {
         let result = scope.spawn(|| pool.evaluate(&revoked));
         thread::sleep(Duration::from_millis(150));
         pool.revoke(&revoked.attempt);
-        assert_eq!(result.join().unwrap().failure, Some(Failure::StaleAttempt));
+        assert_eq!(
+            result.join().unwrap().failure,
+            Some(WorkerFailure::StaleAttempt)
+        );
     });
     assert!(pool
         .evaluate(&request(file.path(), 2, 1, "ok"))
@@ -251,16 +260,16 @@ fn panic_nonfinite_and_bad_matrix_fail_only_the_candidate() {
     let pool = pool(1);
     assert_eq!(
         pool.evaluate(&request(file.path(), 1, 1, "panic")).failure,
-        Some(Failure::Panicked)
+        Some(WorkerFailure::Panicked)
     );
     assert_eq!(
         pool.evaluate(&request(file.path(), 2, 1, "nan")).failure,
-        Some(Failure::NonFinite)
+        Some(WorkerFailure::NonFinite)
     );
     let missing = request(&file.path().with_extension("absent"), 3, 1, "ok");
     assert_eq!(
         pool.evaluate(&missing).failure,
-        Some(Failure::InvalidRequest)
+        Some(WorkerFailure::InvalidRequest)
     );
     assert!(pool
         .evaluate(&request(file.path(), 4, 1, "ok"))
@@ -311,7 +320,10 @@ fn rejects_invalid_plan_and_zero_limits() {
     let file = matrix();
     let mut value = request(file.path(), 0, 1, "ok");
     value.limits.wall_ms = 0;
-    assert_eq!(pool.evaluate(&value).failure, Some(Failure::InvalidRequest));
+    assert_eq!(
+        pool.evaluate(&value).failure,
+        Some(WorkerFailure::InvalidRequest)
+    );
 }
 
 #[test]
@@ -428,7 +440,7 @@ fn wrong_reply_fence_is_rejected_before_publication() {
     let file = matrix();
     assert_eq!(
         pool.evaluate(&request(file.path(), 0, 1, "ok")).failure,
-        Some(Failure::Protocol)
+        Some(WorkerFailure::Protocol)
     );
 }
 
@@ -447,9 +459,15 @@ fn queued_supersession_does_not_consume_a_worker_or_publish_a_score() {
         let old = scope.spawn(|| pool.evaluate(&waiting));
         thread::sleep(Duration::from_millis(100));
         let new = scope.spawn(|| pool.evaluate(&replacement));
-        assert_eq!(old.join().unwrap().failure, Some(Failure::StaleAttempt));
+        assert_eq!(
+            old.join().unwrap().failure,
+            Some(WorkerFailure::StaleAttempt)
+        );
         pool.revoke(&occupying.attempt);
-        assert_eq!(busy.join().unwrap().failure, Some(Failure::StaleAttempt));
+        assert_eq!(
+            busy.join().unwrap().failure,
+            Some(WorkerFailure::StaleAttempt)
+        );
         assert!(new.join().unwrap().failure.is_none());
     });
 }

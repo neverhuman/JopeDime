@@ -93,57 +93,60 @@ impl Containment {
 #[allow(unsafe_code)]
 mod windows {
     use super::*;
-    use std::{mem::size_of, os::windows::io::AsRawHandle};
-    use windows_sys::Win32::{
-        Foundation::{CloseHandle, HANDLE},
-        System::JobObjects::{
-            AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
-            SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
-            JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, JOB_OBJECT_LIMIT_PROCESS_MEMORY,
-        },
+    use std::{
+        mem::size_of,
+        os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle},
     };
-    pub(crate) struct Containment(HANDLE);
-    // SAFETY: the owned Job Object handle supports use/closure on any thread.
-    unsafe impl Send for Containment {}
+    use windows_sys::Win32::System::JobObjects::{
+        AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
+        SetInformationJobObject, JOBOBJECT_BASIC_LIMIT_INFORMATION,
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+        JOB_OBJECT_LIMIT_PROCESS_MEMORY,
+    };
+    // OwnedHandle supplies thread-safe ownership and closes the non-inherited job on drop.
+    pub(crate) struct Containment(OwnedHandle);
     impl Containment {
         pub(crate) fn assign(child: &Child, cap: u64) -> io::Result<Self> {
             let cap = usize::try_from(cap).map_err(|_| {
                 io::Error::new(io::ErrorKind::InvalidInput, "RSS cap exceeds address space")
             })?;
-            // SAFETY: unnamed, non-inheritable owned Job Object; return handle checked.
+            // SAFETY: null attributes create an unnamed, non-inheritable owned Job Object.
             let raw = unsafe { CreateJobObjectW(std::ptr::null(), std::ptr::null()) };
             if raw.is_null() {
                 return Err(io::Error::last_os_error());
             }
-            let job = Self(raw);
-            // SAFETY: the C structure has a valid all-zero initial representation.
-            let mut info: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { std::mem::zeroed() };
-            info.BasicLimitInformation.LimitFlags =
-                JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | JOB_OBJECT_LIMIT_PROCESS_MEMORY;
-            info.ProcessMemoryLimit = cap;
-            // SAFETY: info is initialized, size/layout match the requested information class;
-            // process and job handles remain valid for the duration of both calls.
-            if unsafe {
+            // SAFETY: the non-null CreateJobObjectW handle is owned exactly once from here.
+            let job = Self(unsafe { OwnedHandle::from_raw_handle(raw.cast()) });
+            let info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION {
+                BasicLimitInformation: JOBOBJECT_BASIC_LIMIT_INFORMATION {
+                    LimitFlags: JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+                        | JOB_OBJECT_LIMIT_PROCESS_MEMORY,
+                    ..Default::default()
+                },
+                ProcessMemoryLimit: cap,
+                ..Default::default()
+            };
+            // SAFETY: the initialized C structure matches this class and size; the owned job
+            // remains alive for the synchronous call, which only reads this structure.
+            let configured = unsafe {
                 SetInformationJobObject(
-                    job.0,
+                    job.0.as_raw_handle().cast(),
                     JobObjectExtendedLimitInformation,
                     (&info as *const JOBOBJECT_EXTENDED_LIMIT_INFORMATION).cast(),
                     size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
                 )
-            } == 0
-                || unsafe { AssignProcessToJobObject(job.0, child.as_raw_handle().cast()) } == 0
-            {
+            };
+            if configured == 0 {
+                return Err(io::Error::last_os_error());
+            }
+            // SAFETY: job and child are live owned kernel handles; no request has been sent.
+            let assigned = unsafe {
+                AssignProcessToJobObject(job.0.as_raw_handle().cast(), child.as_raw_handle().cast())
+            };
+            if assigned == 0 {
                 return Err(io::Error::last_os_error());
             }
             Ok(job)
-        }
-    }
-    impl Drop for Containment {
-        fn drop(&mut self) {
-            // SAFETY: this is the sole owner of the non-inherited Job Object handle.
-            unsafe {
-                CloseHandle(self.0);
-            }
         }
     }
 }
