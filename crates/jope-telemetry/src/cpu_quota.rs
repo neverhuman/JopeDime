@@ -10,10 +10,8 @@ pub fn allowed_cpus() -> f64 {
     #[cfg(target_os = "linux")]
     {
         let logical = logical_cpu_count();
-        // Rust's safe platform query uses the calling thread's CPU affinity on Linux.
-        let affinity = std::thread::available_parallelism().map_or(logical, usize::from);
         let quota = cgroup_cpu_quota();
-        intersect_quota_with_affinity(quota, affinity)
+        allowed_cpus_from_sources(quota, sched_affinity_cpu_count(), logical)
     }
     #[cfg(not(target_os = "linux"))]
     {
@@ -27,6 +25,40 @@ fn logical_cpu_count() -> usize {
 
 fn intersect_quota_with_affinity(quota: Option<f64>, affinity: usize) -> f64 {
     quota.map_or(affinity as f64, |quota| quota.min(affinity as f64))
+}
+
+fn allowed_cpus_from_sources(quota: Option<f64>, affinity: Option<usize>, logical: usize) -> f64 {
+    intersect_quota_with_affinity(quota, affinity.unwrap_or(logical))
+}
+
+#[cfg(target_os = "linux")]
+#[allow(unsafe_code)]
+fn sched_affinity_cpu_count() -> Option<usize> {
+    const EINVAL: i32 = 22;
+    const MAX_MASK_BYTES: usize = 1 << 20;
+    let word_size = std::mem::size_of::<usize>();
+    let mut words = 128 / word_size;
+    while words * word_size <= MAX_MASK_BYTES {
+        let mut mask = vec![0_usize; words];
+        let bytes = mask.len() * word_size;
+        // SAFETY: pid 0 selects this thread; mask is writable, word-aligned, and `bytes` long.
+        let result = unsafe { sched_getaffinity(0, bytes, mask.as_mut_ptr().cast()) };
+        if result == 0 {
+            let count = mask.iter().map(|word| word.count_ones() as usize).sum();
+            return (count > 0).then_some(count);
+        }
+        if std::io::Error::last_os_error().raw_os_error() != Some(EINVAL) {
+            return None;
+        }
+        words *= 2;
+    }
+    None
+}
+
+#[cfg(target_os = "linux")]
+#[allow(unsafe_code)]
+unsafe extern "C" {
+    fn sched_getaffinity(pid: i32, cpusetsize: usize, mask: *mut std::ffi::c_void) -> i32;
 }
 
 #[cfg(target_os = "linux")]
@@ -105,9 +137,12 @@ fn parse_quota_v1(quota: &str, period: &str) -> Option<f64> {
 #[cfg(test)]
 mod tests {
     #[cfg(target_os = "linux")]
+    use super::sched_affinity_cpu_count;
+    #[cfg(target_os = "linux")]
     use super::v1_cpu_membership;
     use super::{
-        intersect_quota_with_affinity, parse_quota_v1, parse_quota_v2, quota_v1, quota_v2,
+        allowed_cpus_from_sources, intersect_quota_with_affinity, parse_quota_v1, parse_quota_v2,
+        quota_v1, quota_v2,
     };
     use std::fs;
 
@@ -161,5 +196,16 @@ mod tests {
         let v1 = intersect_quota_with_affinity(parse_quota_v1("-1", "100000"), affinity);
         assert_eq!(v2, 3.0);
         assert_eq!(v1, 3.0);
+    }
+
+    #[test]
+    fn public_allowed_cpu_path_preserves_fractional_quota_with_raw_affinity() {
+        assert_eq!(allowed_cpus_from_sources(Some(1.5), Some(8), 1), 1.5);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn sched_affinity_reports_at_least_one_current_cpu() {
+        assert!(sched_affinity_cpu_count().is_some_and(|count| count >= 1));
     }
 }
