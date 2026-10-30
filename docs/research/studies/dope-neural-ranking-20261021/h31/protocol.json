@@ -1,0 +1,52 @@
+{
+  "Dope_features": 0,
+  "all_six_fit_barrier_before_OOF": true,
+  "arms": {
+    "D": "Mean8+scaled populationSD8",
+    "M": "Mean8+zero8 AFTER scaling",
+    "S": "Mean8+same scaledSD8 multiset in registered context hash order"
+  },
+  "bootstrap": {
+    "central_each": 0.9875,
+    "cluster": "162 known expanded union groups; carry original-component numerator/member denominator",
+    "draws": 100000,
+    "familywise": 0.975,
+    "seed": 20261022
+  },
+  "current_phase": "VERIFIED_WITH_LIMITS",
+  "final_selector_fits": 6,
+  "fixed_protocol_science_unchanged_after_QA": true,
+  "fixed_recipe": "LightGBM4.6 L2,15leaves,learning_rate.05,max_bin31,min_child_samples64,deterministicseed20261022,no grid/no early stopping",
+  "full_slate_support_per_arm": 979200,
+  "future_recipe_selection_from_this_result": false,
+  "hypothesis_precedes_H30_endpoint_inspection": true,
+  "layout": [
+    "A088",
+    "candidate412",
+    "FIVEmean8",
+    "dispersion8"
+  ],
+  "lower_raw_fitness_better": true,
+  "meta_folds": 2,
+  "monitor_analysis": false,
+  "objective": "Does per-probe fold populationSD add ranking information beyond five-fold means and a matched context-specific scramble?",
+  "preregistered_parent_packet_sha256": "2633cab37e952d1d110aba8c5b6bc409f12c6322f7ac865a33a3525aff51e1ac",
+  "primaries": [
+    "D_minus_M",
+    "D_minus_S"
+  ],
+  "requested_trees_each": 120,
+  "resources": {
+    "CPU_RAM_disk_guards_retained": true,
+    "RuntimeMax": "infinity",
+    "TasksMax": 64,
+    "network": "private AF_UNIX",
+    "per_unit_CPU": 2,
+    "per_unit_RAM_bytes": 8589934592,
+    "research_deadlines": false,
+    "swap_bytes": 0
+  },
+  "scalers_and_target_scale": "Gradient partition only; monitor and OOF labels hidden during fitting; zero AFTER scaling.",
+  "schema": "h31.public-fixed-protocol/v1",
+  "width": 516
+}

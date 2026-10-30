@@ -1,0 +1,210 @@
+{
+  "execution_status_in_this_file": "Historical prospective configuration extract; actual execution/results/failures are in RESULTS.json",
+  "frozen_configuration": {
+    "arms": [
+      "BASE",
+      "REAL",
+      "WRONG_CONTEXT"
+    ],
+    "development_only": true,
+    "distinct_final_tree_fits": 6,
+    "donor_contract": {
+      "algorithm": "SHA-prioritized deterministic bipartite perfect matching; fullCID receiver order; iterative augmenting paths",
+      "constraints": [
+        "same exact fold/role partition",
+        "different full context and different known expanded-union component",
+        "bijection, every recipient and donor exactly once",
+        "original typed source_row_index chain",
+        "no outcome/score/success or fitted transform used"
+      ],
+      "domain_prefix_hex": "6a6f70652d77726f6e672d636f6e746578742d646f6e6f722d763100",
+      "inference": "label-blind negative control, not a new independent draw/cohort",
+      "priority": "SHA256(prefix+str(fold)+NUL+role+NUL+receiverCID+NUL+donorCID), then donorCID",
+      "required_before_any_arrays": "complete6 partition maps covering all850 twice over two folds",
+      "roles": [
+        "gradient",
+        "monitor",
+        "OOF"
+      ],
+      "stop": "no perfect matching\u2192failure; never drop/relax/retry"
+    },
+    "evaluation": {
+      "OOF_contexts": [
+        401,
+        449
+      ],
+      "barrier": "all6 exact source/protocol stopped fit closures before OOF; all6 OOF closures before choices aggregation",
+      "bootstrap": {
+        "central_CI_each": 0.9875,
+        "familywise_confidence": 0.975,
+        "favorable": "adjusted upper bound<0",
+        "replicates": 100000,
+        "seed": 20261022,
+        "unit": "maximal known saved-union groups; preserve originalcomponent numerator/member-count denominator, currentK162"
+      },
+      "endpoint": "equalcomponent->equalcontext selected rawfitness; lower better",
+      "gate_report": "all3arms failedpick count/N850 and perOOFfoldN401/449, plus originalcomponent-weighted fraction; strict0/1 flags",
+      "monitor_contexts": [
+        41,
+        39
+      ],
+      "primaries": [
+        "REAL_minus_BASE",
+        "REAL_minus_WRONG_CONTEXT"
+      ],
+      "promotion_or_external_confirmation": false,
+      "raw_gate_counts_and_denominators_required": true,
+      "top1": "minimum predicted centeredcost, ascending fullprogramSHA tie"
+    },
+    "feature_contract": {
+      "A0": [
+        0,
+        88
+      ],
+      "BASE": "compute fixed projected products then set appended128 to literal +0.0",
+      "DSL": [
+        88,
+        500
+      ],
+      "Dope": 0,
+      "FIVE_mean": [
+        500,
+        508
+      ],
+      "H31_SD": 0,
+      "REAL": "projected16 outer recipient scaledFIVE8",
+      "WRONG_CONTEXT": "projected16 outer role-local donor scaledFIVE8; recipient base508 remains actual",
+      "common_actual_recipient_base508_all_arms": true,
+      "fitted_interaction_scaler": false,
+      "fixed_interactions": [
+        508,
+        636
+      ],
+      "no_input_clipping": true,
+      "projection": {
+        "SHA256_k_major_int8": "f732f4ac6a8b2e85cb3fea49e9a9055db7c678c7b8444bd9f082c693a53068fc",
+        "fit": false,
+        "input": 412,
+        "normalizer": "sqrt(412)",
+        "order": "FP64 sequential i0..411, k0..15; outer k-major task-j-minor",
+        "output": 16,
+        "prefix_hex": "6a6f70652d636f6e746578742d63726f73732d763100",
+        "seed": "none: fixed domain prefix",
+        "sign": "low bit of SHA256(prefix+uint32le(i)+uint32le(k))[0]; one\u2192+1, zero\u2192-1"
+      },
+      "width": 636
+    },
+    "fit_phase": {
+      "curves": "six postfit TRAIN weighted centered L2 points at20/40/60/80/100/120; actualtrees=min(requested,fitted)",
+      "fit_fixed_no_grid_no_earlystop": true,
+      "memory": "one preallocated FP64 X(n,636); context-small projection/product temporary; no concatenated duplicate636 matrix/no3804fullproduct",
+      "visible_pool_ids": "exact own fold gradient_source_row_indices only"
+    },
+    "native_initialization_precision_clarification": {
+      "H30_native_MSE_used_FP32_target_and_boost_from_average": true,
+      "all_arms_boost_from_average": false,
+      "all_arms_external_qualified_FP64_costs": true,
+      "claimed_equivalence": "callback MSE derivatives to FP64 reference; native L2 derivative equation exact on representable toys only; NOT H30 model byte identity",
+      "same_zero_placeholder_labels_initialization": true
+    },
+    "new_GP_Dope_baseline_NN_fits": 0,
+    "objective": {
+      ".5_loss": ".5*mean_j((p_j-c_j)^2)",
+      "cost": "FP64 archived S1 constrained F, query-centered by math.fsum mean, one global gradient positive-IQR median scale floor.001",
+      "gradient": "a*(p-c)/m",
+      "name": "MSE only",
+      "native_Dataset_labels": "literal zero FP32 placeholders",
+      "native_curvature": "a/m exact",
+      "native_gradient_hessian_boundary": "LightGBM converts returned gradients/Hessians to FP32; optimizer is not end-to-end FP64",
+      "native_init_score": "explicit FP64 zero",
+      "query_coefficient": "N_candidates/(K_gradient_components*n_component_contexts)"
+    },
+    "optional_monitor_metadata_hook": {
+      "contexts": [
+        41,
+        39
+      ],
+      "gate": "all6 fit closures + separately reviewed source/grant",
+      "implementation_or_grant_in_this_packet": false,
+      "labels": "descriptive postfit reconstruction, not live/OOF/selection",
+      "metric": "weighted centered L2, mean1 equalcomponent/equalcontext/slate weights within monitor only",
+      "no_checkpoint_choice": true,
+      "observations_MONITOR": 36,
+      "observations_TRAIN": 36,
+      "prospectively_fixed": true,
+      "requested_prefixes": [
+        20,
+        40,
+        60,
+        80,
+        100,
+        120
+      ],
+      "scalers": "saved gradient mean/scale/targetscale; zero fits"
+    },
+    "preprocessing": {
+      "external_cost": "FP64 never converted to native labels",
+      "fit_role": "gradient408/362only; monitor/OOF/CALDEV excluded",
+      "initial_score": 0,
+      "shared_FIVE_scaler": "same equal ONE/FIVE gradient views as H30; population std<1e-6\u21921; no clipping"
+    },
+    "raw_target_contract": {
+      "NN_component_folds": "separate2fold query-generalization partition",
+      "gate_fail_F": "100+cv_mean_log_ratio+cv_tail_log_ratio+cv_log_ratio_sd",
+      "gate_pass_F": ".8*cv_mean_log_ratio+.1*cv_tail_log_ratio+.1*cv_log_ratio_sd+.0005*complexity_open_parens",
+      "probe_CV5": "feature contract only, not replacement target",
+      "selection_protocol": "jope.s1-two-fold/v1"
+    },
+    "recipe": {
+      "bagging_seed": 3,
+      "boost_from_average": false,
+      "colsample_bytree": 1.0,
+      "data_random_seed": 1,
+      "deterministic": true,
+      "feature_fraction_bynode": 1.0,
+      "feature_fraction_seed": 2,
+      "force_col_wise": true,
+      "learning_rate": 0.05,
+      "max_bin": 31,
+      "max_depth": -1,
+      "metric": "None",
+      "min_child_samples": 64,
+      "min_child_weight": 0.001,
+      "min_split_gain": 0.0,
+      "n_estimators": 120,
+      "n_jobs": 2,
+      "num_leaves": 15,
+      "objective": "custom external FP64 MSE all3 representation arms",
+      "random_state": 20261022,
+      "reg_alpha": 0.0,
+      "reg_lambda": 0.0,
+      "reg_sqrt": false,
+      "subsample": 1.0,
+      "subsample_for_bin": 200000,
+      "subsample_freq": 0,
+      "verbosity": -1
+    },
+    "representation_only_no_severity_or_Dope_claim": true,
+    "run_ids": [
+      "fold-0/BASE",
+      "fold-0/REAL",
+      "fold-0/WRONG_CONTEXT",
+      "fold-1/BASE",
+      "fold-1/REAL",
+      "fold-1/WRONG_CONTEXT"
+    ],
+    "seed": 20261022,
+    "stochasticity": {
+      "bagging_fraction": 1,
+      "bagging_freq": 0,
+      "bin_sampling_rows": 200000,
+      "data_random_seed": 1,
+      "feature_fraction": 1,
+      "independent_seed_replicates": false,
+      "matched_seed_is_not_pathwise_RNG_equivalence": true
+    }
+  },
+  "historical_S1_formula_authority": "Declared historical target contract reused; original formula fields were not independently recomputed by this later replay",
+  "schema": "h33.public-frozen-scientific-protocol-extract/v1",
+  "source_protocol_sha256": "e2c6a02f5355810fd5f219eae9207b8c15a891d89083ebfa171e96a8c1e4042a"
+}

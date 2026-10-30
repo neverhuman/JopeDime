@@ -1,0 +1,264 @@
+{
+  "compute_deadlines": false,
+  "costs": {
+    "all_preparation_wall_CPU_seconds": null,
+    "closed_phases": [
+      {
+        "arm": "M",
+        "fit_attempts": 1,
+        "fold": 0,
+        "phase": "fit",
+        "receipt_sha256": "388632c838bb87bf7685554afdbdf6a4bcc7240fac51a92fa6505ba53285bb1b",
+        "terminal_metadata_sha256": "e6ec1f470f3c490e0fe82f58d01030d8779977cc1cfe2afc41703f7981c71f57",
+        "unit_CPU_seconds": 95.731287,
+        "unit_peak_memory_bytes": 4528066560,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 90.61688055500001,
+        "worker_wall_seconds": 89.45739336300176
+      },
+      {
+        "arm": "M",
+        "fit_attempts": 0,
+        "fold": 0,
+        "phase": "OOF",
+        "receipt_sha256": "13955816924aeeaf9063a207c0bc4f796b27fac0d2208a431a77fa499253d616",
+        "terminal_metadata_sha256": "3691f27c14e0d44af15d78e796335d0e3f267312330a3f18d3065f8718d0599d",
+        "unit_CPU_seconds": 22.106342,
+        "unit_peak_memory_bytes": 173912064,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 16.925700132,
+        "worker_wall_seconds": 17.556567798019387
+      },
+      {
+        "arm": "D",
+        "fit_attempts": 1,
+        "fold": 0,
+        "phase": "fit",
+        "receipt_sha256": "ba07cbf549cdb9748287d2242f74bb938b1fb8f62baf03c9a39f7905025ea275",
+        "terminal_metadata_sha256": "dba8c0fb666b71c90d3480c94dc3f9142988dd00690c85733a402ffd8d525e97",
+        "unit_CPU_seconds": 97.00437,
+        "unit_peak_memory_bytes": 4543729664,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 91.76056777199999,
+        "worker_wall_seconds": 83.05234676192049
+      },
+      {
+        "arm": "D",
+        "fit_attempts": 0,
+        "fold": 0,
+        "phase": "OOF",
+        "receipt_sha256": "7aa7290124b212e08242a21cce0b4121e6d97d423254027f31100108256a63be",
+        "terminal_metadata_sha256": "fd5729ef7a7f41d75c73eafd209b28fef47de7667678f494eaac26b82fda3ea1",
+        "unit_CPU_seconds": 22.91564,
+        "unit_peak_memory_bytes": 66211840,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 17.727358266000003,
+        "worker_wall_seconds": 18.066834027995355
+      },
+      {
+        "arm": "S",
+        "fit_attempts": 1,
+        "fold": 0,
+        "phase": "fit",
+        "receipt_sha256": "26b14a0cdb72e46272816e6d85171bf6afd99a4447affe309320dec892d351f5",
+        "terminal_metadata_sha256": "a9230367bd61788eb1daad79cf9f491c8ac5c583b2b8db6159249751fb0b40d7",
+        "unit_CPU_seconds": 93.95306,
+        "unit_peak_memory_bytes": 4635389952,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 88.865652217,
+        "worker_wall_seconds": 78.13907447701786
+      },
+      {
+        "arm": "S",
+        "fit_attempts": 0,
+        "fold": 0,
+        "phase": "OOF",
+        "receipt_sha256": "0dc4927a16ed22b7672c66261bf9dfbe6589d3fbc075e0b5f47b020019e34063",
+        "terminal_metadata_sha256": "56722972c3db0df21b5f16fd1f7ae5ce478ba16619a5a9957cf938995d1e17ca",
+        "unit_CPU_seconds": 21.897385,
+        "unit_peak_memory_bytes": 62152704,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 16.653022584,
+        "worker_wall_seconds": 15.530425259959884
+      },
+      {
+        "arm": "M",
+        "fit_attempts": 1,
+        "fold": 1,
+        "phase": "fit",
+        "receipt_sha256": "e31a98eae1f4350a63598c7df068047e4e2b899eab6aef63b703a9a4e828ab76",
+        "terminal_metadata_sha256": "d5582e379ea9eafd1ace0d1a55a32f1a32fceae9a93bccd7cc28e183f9509a47",
+        "unit_CPU_seconds": 79.978847,
+        "unit_peak_memory_bytes": 4306628608,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 75.66248342099999,
+        "worker_wall_seconds": 68.08691202290356
+      },
+      {
+        "arm": "M",
+        "fit_attempts": 0,
+        "fold": 1,
+        "phase": "OOF",
+        "receipt_sha256": "48aa07d8f153228c7a252f0140ed76fca4887ce90d3aea15ef02eee852652660",
+        "terminal_metadata_sha256": "801cf9775a97734d8696f3777703cbe4842197eeeaafe8e0b688c80333f4be1d",
+        "unit_CPU_seconds": 23.88967,
+        "unit_peak_memory_bytes": 63213568,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 17.911343084000002,
+        "worker_wall_seconds": 19.460612796945497
+      },
+      {
+        "arm": "D",
+        "fit_attempts": 1,
+        "fold": 1,
+        "phase": "fit",
+        "receipt_sha256": "f38d0ef4634605bf8f20c055bdd3cbcc7d884fedc66f8e3af0235c38c72b3b73",
+        "terminal_metadata_sha256": "234598ae44eab7f9d9869156e3c03775448161b83b2f491994f8c322fd70db53",
+        "unit_CPU_seconds": 118.525516,
+        "unit_peak_memory_bytes": 3000897536,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 114.381512874,
+        "worker_wall_seconds": 138.5151829320239
+      },
+      {
+        "arm": "D",
+        "fit_attempts": 0,
+        "fold": 1,
+        "phase": "OOF",
+        "receipt_sha256": "890736b082b6f499da45099ec777016b9507bcddbff020ae5b66597d0bc5b45a",
+        "terminal_metadata_sha256": "38ab95c17373ab5a647c45ba9df47383333e5ec8acdd6f080b60b16e4679fd7e",
+        "unit_CPU_seconds": 21.259552,
+        "unit_peak_memory_bytes": 70025216,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 15.456787496,
+        "worker_wall_seconds": 16.778011785936542
+      },
+      {
+        "arm": "S",
+        "fit_attempts": 1,
+        "fold": 1,
+        "phase": "fit",
+        "receipt_sha256": "934df0471a14c1ab84733701782a0266c159ded64222464397650e3abb8e0f1d",
+        "terminal_metadata_sha256": "c2b221506ac8dca5c19f2fc2a8657c4b35e94041de67fb78ce4bd6cacd317ef9",
+        "unit_CPU_seconds": 121.995221,
+        "unit_peak_memory_bytes": 2772959232,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 117.97235389299999,
+        "worker_wall_seconds": 142.4370633190265
+      },
+      {
+        "arm": "S",
+        "fit_attempts": 0,
+        "fold": 1,
+        "phase": "OOF",
+        "receipt_sha256": "df5d634aa0e676260acfd52c47195a98b8281ecb4cd25f0838e00d714cd45526",
+        "terminal_metadata_sha256": "b3678fa5ddfa3fd7e91ecfdfef7ce25d67483383619d17f6260a824b49555ecf",
+        "unit_CPU_seconds": 21.177195,
+        "unit_peak_memory_bytes": 62218240,
+        "unknown_fit_attempts": 0,
+        "worker_CPU_seconds": 15.3522489,
+        "worker_wall_seconds": 15.162881970987655
+      },
+      {
+        "dataset_fits": 0,
+        "phase": "two_synthetic_selector_fits",
+        "receipt_sha256": "3e0229ce1042e3d2e40689c19a6d310f21e1356f08808dca64f4d58039c607c5",
+        "synthetic_selector_fits": 2,
+        "unit_CPU_seconds": null,
+        "unit_peak_memory_bytes": null,
+        "worker_CPU_seconds": 5.002469559,
+        "worker_wall_seconds": 30.306205498985946
+      },
+      {
+        "dataset_fits": 0,
+        "phase": "feature_derivation_no_fits",
+        "receipt_sha256": "5790969667bdb72cc7bb42e84309fd05917af57d823f35c4ba96de6fb1228ca3",
+        "synthetic_selector_fits": 0,
+        "unit_CPU_seconds": null,
+        "unit_peak_memory_bytes": null,
+        "worker_CPU_seconds": 2.351804602,
+        "worker_wall_seconds": 19.502820580964908
+      },
+      {
+        "dataset_fits": 0,
+        "phase": "producer_aggregate_no_fits",
+        "receipt_sha256": "1a1188be93a4c8ca81a103f56485547ed8d534c71aafe22088f808c1372e0b94",
+        "synthetic_selector_fits": 0,
+        "unit_CPU_seconds": null,
+        "unit_peak_memory_bytes": null,
+        "worker_CPU_seconds": 2.660242449,
+        "worker_wall_seconds": 9.956958428956568
+      },
+      {
+        "dataset_fits": 0,
+        "phase": "nine_NumPy_only_controls_no_fits",
+        "receipt_sha256": "2789dda3d27cc60a5294c94b7922bd2df7454c037b406db27a302e44fdcd39ce",
+        "synthetic_selector_fits": 0,
+        "unit_CPU_seconds": null,
+        "unit_peak_memory_bytes": null,
+        "worker_CPU_seconds": 8.345280963,
+        "worker_wall_seconds": 14.467963976087049
+      },
+      {
+        "dataset_fits": 0,
+        "note": "48 initial+49 final=97 source-control executions;49 current distinct tests; no numerical/native imports.",
+        "phase": "independent_source_48_stdlib_controls",
+        "receipt_sha256": "0b9d4f4b0aa1a798d3084f9f8c6aa46ca15754a861515689313aceebc94672c7",
+        "synthetic_selector_fits": 0,
+        "unit_CPU_seconds": null,
+        "unit_peak_memory_bytes": null,
+        "worker_CPU_seconds": null,
+        "worker_wall_seconds": 0.13806941593065858
+      },
+      {
+        "dataset_fits": 0,
+        "note": "48 initial+49 final=97 source-control executions;49 current distinct tests; no numerical/native imports.",
+        "phase": "independent_source_49_stdlib_controls",
+        "receipt_sha256": "5dcd30d3310f4d3e365a40ebded8725c48402ec5324a7638d733d9b42bb8202c",
+        "synthetic_selector_fits": 0,
+        "unit_CPU_seconds": null,
+        "unit_peak_memory_bytes": null,
+        "worker_CPU_seconds": 0.079107,
+        "worker_wall_seconds": 0.0918530416674912
+      }
+    ],
+    "mandatory_independent_replay": {
+      "API_calls": 0,
+      "new_fits": 0,
+      "receipt_sha256": "c89eaff9a350e7c5e5940370a053b57cbfab3903d57e7b903fd67dc62342201c",
+      "state": "PASS_INDEPENDENT_H31_FULL_SCORE_PICK_AND_ARITHMETIC_WITH_LIMITS",
+      "unit_CPU_seconds": 71.832236,
+      "unit_peak_memory_bytes": 641503232,
+      "worker_CPU_seconds": 55.629623050000006,
+      "worker_wall_seconds": 48.179860254982486
+    },
+    "unmeasured_is_not_zero": true
+  },
+  "independent_verification_pending": false,
+  "no_historical_failures_erased": true,
+  "prospective_failures": [
+    {
+      "cost_seconds": null,
+      "dataset_fit_attempts": 0,
+      "phase": "producer_source_R0",
+      "reason": "Bank.features broadcast8 conflicted with16landmarks",
+      "state": "BLOCKED_BEFORE_EXECUTION"
+    },
+    {
+      "cost_seconds": null,
+      "dataset_fit_attempts": 0,
+      "phase": "producer_source_R1",
+      "reason": "BalancedXOR fixture has zero first greedy split gain; source-shaped positive-gain interaction fixed prospectively inR2",
+      "state": "BLOCKED_BEFORE_EXECUTION"
+    },
+    {
+      "cost_seconds": null,
+      "dataset_fit_attempts": 0,
+      "phase": "R2_false_template_pin",
+      "reason": "Stale protocol literal corrected only in new proposals; original false templates retained",
+      "state": "UNEXECUTED_PROPOSAL_CORRECTED"
+    }
+  ],
+  "same_study_GP_Dope_NN_new_fits": 0,
+  "schema": "h31.closed-cost-and-source-failure-ledger/v1"
+}

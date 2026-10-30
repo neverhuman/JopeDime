@@ -1,0 +1,227 @@
+{
+  "independent_verification_sha256": "c89eaff9a350e7c5e5940370a053b57cbfab3903d57e7b903fd67dc62342201c",
+  "kind": "POSTFIT_RECONSTRUCTED_TRAIN_PREFIX_ONLY",
+  "observations": 36,
+  "panels": [
+    {
+      "TRAIN_candidates": 470016,
+      "TRAIN_contexts": 408,
+      "arm": "M",
+      "curve_receipt_sha256": "a4d5860e39a2592f66d967ba4affc1493cfda94143957d791c426c73ba27892b",
+      "fitted_trees": 120,
+      "fold": 0,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 2611.151877767055,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2463.569077319905,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2378.683298686574,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2319.8579702130073,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2270.178155290085,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2232.079841200204,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "388632c838bb87bf7685554afdbdf6a4bcc7240fac51a92fa6505ba53285bb1b"
+    },
+    {
+      "TRAIN_candidates": 470016,
+      "TRAIN_contexts": 408,
+      "arm": "D",
+      "curve_receipt_sha256": "ec0180f9ce6aafe01f5b4efc79634f45e05ad6cb9d60f3a9b2b020a8fccfd409",
+      "fitted_trees": 120,
+      "fold": 0,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 2611.151877767055,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2463.569077319905,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2378.683298686574,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2319.8217986577474,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2270.1619031290693,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2230.849265675622,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "ba07cbf549cdb9748287d2242f74bb938b1fb8f62baf03c9a39f7905025ea275"
+    },
+    {
+      "TRAIN_candidates": 470016,
+      "TRAIN_contexts": 408,
+      "arm": "S",
+      "curve_receipt_sha256": "41329d3718a59ef1045c7971a92af758332e5f116b3d2d4f11e80f3381aad179",
+      "fitted_trees": 120,
+      "fold": 0,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 2611.151877767055,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2463.569077319905,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2378.733447409384,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2320.1783438319953,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2270.4563179908546,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2231.743924418361,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "26b14a0cdb72e46272816e6d85171bf6afd99a4447affe309320dec892d351f5"
+    },
+    {
+      "TRAIN_candidates": 417024,
+      "TRAIN_contexts": 362,
+      "arm": "M",
+      "curve_receipt_sha256": "193cf1746c55aee450499e9120d5eb5dbc788fab50e1e6d92a37795d601a0660",
+      "fitted_trees": 120,
+      "fold": 1,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 1670.8440620339966,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1579.066404619029,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1522.9083870595498,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1483.2128807976437,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1452.3591877845392,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1427.4233934025879,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "e31a98eae1f4350a63598c7df068047e4e2b899eab6aef63b703a9a4e828ab76"
+    },
+    {
+      "TRAIN_candidates": 417024,
+      "TRAIN_contexts": 362,
+      "arm": "D",
+      "curve_receipt_sha256": "e9ecf7ad88fc9606550405a9ded2df0a8ff999242e378b97a68263c624990353",
+      "fitted_trees": 120,
+      "fold": 1,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 1670.8440620339966,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1579.066404619029,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1522.7749863987976,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1482.5229774077236,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1451.4876813442331,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1423.7688609899576,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "f38d0ef4634605bf8f20c055bdd3cbcc7d884fedc66f8e3af0235c38c72b3b73"
+    },
+    {
+      "TRAIN_candidates": 417024,
+      "TRAIN_contexts": 362,
+      "arm": "S",
+      "curve_receipt_sha256": "8c2033f5a403388844f1dcffa7b1287aca8ff19100ab4f4139713f27daf1a30d",
+      "fitted_trees": 120,
+      "fold": 1,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 1670.8440620339966,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1579.066404619029,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1522.9001244461904,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1483.2031395823637,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1452.3497352661163,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1426.654286888187,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "934df0471a14c1ab84733701782a0266c159ded64222464397650e3abb8e0f1d"
+    }
+  ],
+  "phase": "VERIFIED_WITH_LIMITS",
+  "scale_note": "Each panel retains its own fold target scale; do not pool objective values across folds.",
+  "schema": "h31.all-six-TRAIN-curves/v1",
+  "validation_monitor_intermediate_OOF_observations": 0
+}

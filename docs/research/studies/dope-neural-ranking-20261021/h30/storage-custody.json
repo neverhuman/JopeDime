@@ -1,0 +1,45 @@
+{
+  "H31_bulk_S3_archived": false,
+  "archived_members": 687,
+  "archived_source_bytes": 239727952,
+  "conditional_PUTs": 3,
+  "empty_metadata_files": 2,
+  "exact_returned_version_full_GETs": 3,
+  "explicit_first_captures": 2,
+  "full_GET_bytes": 242698420,
+  "independent_offline_verification_sha256": "be1244935be4728d4805bcf417ea194fa5b5e4aae406d78f2fb07d1925778683",
+  "limits": [
+    "Independent opaque local PACK tar/capsule and saved recovery-index SHA/length replay, not scientific/model interpretation.",
+    "Producer GET bodies were streamed to hashes, not saved as separate downloaded objects. Saved responses/counters/durable receipts bind producer full-GET claims to independently rehashed original local upload bytes.",
+    "No new independent server readback, request instrumentation or credential/provider execution.",
+    "Conditional PUT and exact-Version GET arguments are pinned-source assertions cross-checked with saved metadata, not independent wire observation.",
+    "PACK/TRANSFER objects in capsule/index are semantically equal to separately raw-SHA-pinned actual grant files; raw original formatting is not embedded there.",
+    "Two first-capture hashes remain distinguished from 685 prior pins; 54 aliases retain original missing-path history.",
+    "Runtime/library/libz/code-view and original features/pools remain excluded. No cleanup, scientific admission or new durability beyond this byte-custody scope."
+  ],
+  "metadata_aliases": 54,
+  "new_QA_receipts_uploaded_S3": false,
+  "no_cleanup_authority": true,
+  "objects": 3,
+  "offline_QA_member_replay": 687,
+  "offline_QA_new_GETs": 0,
+  "offline_QA_new_fits_numeric_decodes_deletions": 0,
+  "offline_QA_source_capsule_bytes": 4234786,
+  "offline_QA_source_capsule_files": 84,
+  "original_failures_preserved": [
+    "R0 source-pin placeholder refusal before dispatch",
+    "R1 unit-name mismatch before launcher",
+    "R2 verifier source-file positive-length domain error",
+    "R3 verifier metadata mirror namespace domain error"
+  ],
+  "prior_SHA_pinned_members": 685,
+  "root_acceptance": {
+    "bytes": 3247,
+    "sha256": "c8383a3029142d036c8255d1ababda096986641f9b08248e2a2095dba277436d"
+  },
+  "schema": "jope.research.h30.storage-custody-public/v1",
+  "source_R2_corrective_scope": "Source-frozen full relative key and exact tuple/mirror bridge; no source-byte substitution, invented writer or original-missing-path repair.",
+  "state": "THREE_VERSIONED_OBJECTS_READBACK_AND_INDEPENDENT_OFFLINE_RECOVERY_VERIFIED_WITH_LIMITS",
+  "transport_retries": 0,
+  "transport_unknown": 0
+}

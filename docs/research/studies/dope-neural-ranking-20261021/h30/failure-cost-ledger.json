@@ -1,0 +1,290 @@
+{
+  "complete_preparation_cost": null,
+  "final_OOF_cost": {
+    "receipt_sha256": "c545dc5bc497b41ec374408e92470413cc8e9448dc1fa81f4e73a7807dbed780",
+    "sum_unit_CPU_seconds": 166.986491,
+    "sum_worker_CPU_seconds": 126.41170024700001,
+    "sum_worker_wall_seconds_not_elapsed": 150.24298538919538
+  },
+  "independent_final_replay_cost": {
+    "CPU_seconds": 71.112010531,
+    "receipt_sha256": "1000e38780d1a688c8bbd3c4d1ffdaeaeedb8145aa6d24de82238841fd9ba64d",
+    "unit_CPU_seconds": 88.98132,
+    "unit_peak_memory_bytes": 1052590080,
+    "wall_seconds": 74.28571026097052
+  },
+  "limits": [
+    "Phase worker wall sums are not elapsed fleet duration; overlapping phases are not a common wall clock.",
+    "Source preparation/control/import failures are preserved; old failed dispatches were not retried under their old authority.",
+    "Source/durability/publication work is separate; this is not the complete all-time research cost.",
+    "Runtime code-body qualification is not data/model fitting."
+  ],
+  "operational_wrapper": {
+    "original_failed_launch_cost": null,
+    "original_single-argument_launch_failure_preserved": true,
+    "purpose": "split949 positive read-only paths across3 repeated systemd properties; science unchanged",
+    "scientific_retries": 0,
+    "source_receipt_sha256": "6f3148e1a068168e90df3e929e91b0cb747c51627385a89fc3cf79388367e23f",
+    "unknown_cost_is_not_zero": true
+  },
+  "phases": [
+    {
+      "attempted_returned_unknown": [
+        0,
+        0,
+        0
+      ],
+      "imports_began": true,
+      "phase": "R2_SYNTHETIC_IMPORT_FAILURE",
+      "real_data_fits": 0,
+      "receipt_sha256": "51cc658c0d77afe1ed7624efc5272328a12fec84a507a5b932322363f317c25d",
+      "state": "CLOSED_FAILED_PRE_FIT_IMPORT_NO_RETRY",
+      "unit_CPU_seconds": 9.54263,
+      "unit_peak_memory_bytes": 234323968,
+      "worker_CPU_seconds": 9.031263921,
+      "worker_wall_seconds": 435.85830937698483
+    },
+    {
+      "attempted_returned_unknown": [
+        4,
+        4,
+        0
+      ],
+      "phase": "R3_FOUR_SYNTHETIC_FITS",
+      "receipt_sha256": "fd1d3de11cfc037a6b56cb3a20305378719e39cf60288646fb3eb1be06ea08d2",
+      "state": "COMPLETE_SYNTHETIC_RUNTIME_ONLY_NO_DATA_FITS",
+      "unit_CPU_seconds": 5.084406,
+      "unit_memory_peak_bytes": 25960448,
+      "worker_CPU_seconds": 4.6511071930000005,
+      "worker_wall_seconds": 7.875261457054876
+    },
+    {
+      "attempted_returned_unknown": [
+        0,
+        0,
+        0
+      ],
+      "conditions_unattempted": 4,
+      "dispatches_failed": 4,
+      "per_dispatch_costs": [
+        {
+          "run_id": "fold-0/zero",
+          "unit_CPU_seconds": 6.600792,
+          "unit_peak_memory_bytes": 2334720,
+          "worker_CPU_seconds": 2.0213997060000004,
+          "worker_wall_seconds": 10.16594374505803
+        },
+        {
+          "run_id": "fold-1/zero",
+          "unit_CPU_seconds": 5.823432,
+          "unit_peak_memory_bytes": 3547136,
+          "worker_CPU_seconds": 2.0062202890000003,
+          "worker_wall_seconds": 10.589712743996643
+        },
+        {
+          "run_id": "fold-0/one",
+          "unit_CPU_seconds": 6.290245,
+          "unit_peak_memory_bytes": 1052672,
+          "worker_CPU_seconds": 1.844680437,
+          "worker_wall_seconds": 9.200964531046338
+        },
+        {
+          "run_id": "fold-1/one",
+          "unit_CPU_seconds": 5.60654,
+          "unit_peak_memory_bytes": null,
+          "worker_CPU_seconds": 1.9016270890000002,
+          "worker_wall_seconds": 9.161953934002668
+        }
+      ],
+      "phase": "R3_REVOKED_DATA_DISPATCH_FAILURE",
+      "real_data_fits": 0,
+      "reason": "INPUT_PIN before preimport/numerical decodes/fits; one system-code hash drift, cause unknown",
+      "receipt_sha256": "26e13d7c1afa1bde0bcdd01954e6ece002240d68fa93d42320056fd637c2d913",
+      "state": "CLOSED_INCOMPLETE_4_PRENUMERICAL_PIN_FAILURES_4_UNATTEMPTED"
+    },
+    {
+      "attempted_returned_unknown": [
+        0,
+        0,
+        0
+      ],
+      "full_runtime_recapture": false,
+      "model_fit": false,
+      "native_code_metadata_bytes_read": 113000,
+      "phase": "R4_ONE_NATIVE_CODE_METADATA_DELTA",
+      "receipt_sha256": "dc8b2036bba586928f3abc3b056cb8bb8e3d1b01cbcc8d30f1cab8be899a14bd",
+      "state": "CLOSED_PASS_CODE_METADATA_ONLY_PENDING_SEPARATE_FOUR_TOY_GRANT",
+      "unit_CPU_seconds": 0.538093,
+      "unit_peak_memory_bytes": 22495232,
+      "worker_CPU_seconds": 0.23859025099999998,
+      "worker_wall_seconds": 0.5928986280923709
+    },
+    {
+      "attempted_returned_unknown": [
+        0,
+        0,
+        0
+      ],
+      "phase": "R4_SYNTHETIC_NAMESPACE_FAILURE",
+      "reason": "MASKED_NAMESPACE_EXTRA_ENTRY: authorized metadata was rejected by redundant final prefix guard",
+      "receipt_sha256": "1125dac6b9b2b2de5f8150826c08f61129cba0e78fe5be3c9a17e5bafa23c63b",
+      "state": "CLOSED_FAILED_NAMESPACE_GUARD_0_IMPORTS_0_FITS_NO_RETRY",
+      "unit_CPU_seconds": 0.707696,
+      "unit_peak_memory_bytes": 29626368,
+      "worker_CPU_seconds": 0.423577122,
+      "worker_wall_seconds": 1.0767586670117453
+    },
+    {
+      "attempted_returned_unknown": [
+        4,
+        4,
+        0
+      ],
+      "phase": "R5_FOUR_SYNTHETIC_FITS",
+      "receipt_sha256": "f5bcc33d6f31945d6f82912856298c6973e88f44e7c582f7aafc1dda138171d2",
+      "state": "CLOSED_PASS_SYNTHETIC_RUNTIME_ONLY_NO_DATA_FITS",
+      "unit_CPU_seconds": 5.902374,
+      "unit_peak_memory_bytes": 31850496,
+      "worker_CPU_seconds": 5.332538157,
+      "worker_wall_seconds": 12.151175927952863
+    },
+    {
+      "attempted_returned_unknown": [
+        8,
+        8,
+        0
+      ],
+      "fitted_trees": 960,
+      "per_model_costs": [
+        {
+          "run_id": "fold-0/zero",
+          "unit_CPU_seconds": 106.371652,
+          "unit_peak_memory_bytes": 4742238208,
+          "worker_CPU_seconds": 101.56789655099999,
+          "worker_wall_seconds": 102.67361898196395
+        },
+        {
+          "run_id": "fold-0/one",
+          "unit_CPU_seconds": 104.526933,
+          "unit_peak_memory_bytes": 4755750912,
+          "worker_CPU_seconds": 99.67706734199999,
+          "worker_wall_seconds": 100.36267231102102
+        },
+        {
+          "run_id": "fold-0/five",
+          "unit_CPU_seconds": 93.02638,
+          "unit_peak_memory_bytes": 161550336,
+          "worker_CPU_seconds": 87.900685626,
+          "worker_wall_seconds": 74.95471472200006
+        },
+        {
+          "run_id": "fold-0/permuted_one",
+          "unit_CPU_seconds": 89.686509,
+          "unit_peak_memory_bytes": 62611456,
+          "worker_CPU_seconds": 84.358238175,
+          "worker_wall_seconds": 69.62322197994217
+        },
+        {
+          "run_id": "fold-1/zero",
+          "unit_CPU_seconds": 88.51603,
+          "unit_peak_memory_bytes": 4219727872,
+          "worker_CPU_seconds": 84.084014134,
+          "worker_wall_seconds": 91.92052902898286
+        },
+        {
+          "run_id": "fold-1/one",
+          "unit_CPU_seconds": 93.55504,
+          "unit_peak_memory_bytes": 4220035072,
+          "worker_CPU_seconds": 89.342891485,
+          "worker_wall_seconds": 92.83568310004193
+        },
+        {
+          "run_id": "fold-1/five",
+          "unit_CPU_seconds": 76.059352,
+          "unit_peak_memory_bytes": 104148992,
+          "worker_CPU_seconds": 71.65348660800001,
+          "worker_wall_seconds": 62.35834530205466
+        },
+        {
+          "run_id": "fold-1/permuted_one",
+          "unit_CPU_seconds": 79.990864,
+          "unit_peak_memory_bytes": 62492672,
+          "worker_CPU_seconds": 75.460668528,
+          "worker_wall_seconds": 63.43104833504185
+        }
+      ],
+      "phase": "R5_EIGHT_FRESH_DATA_FITS",
+      "receipt_sha256": "0516051952e1f70e92178dc5b3a3e25206bdf4a654831589aa8a69ed5a158f33",
+      "requested_trees": 960,
+      "state": "CLOSED_ALL_EIGHT_FITS_COMPLETE",
+      "sum_unit_CPU_seconds": 731.73276,
+      "sum_worker_CPU_seconds": 694.044948449,
+      "sum_worker_wall_seconds_not_elapsed": 658.1598337610485
+    },
+    {
+      "phase": "VERIFIER_SIX_NUMPY_SYNTHETIC_CONTROLS",
+      "receipt_sha256": "8d9112949de607b4ece407a867198b5a4518146881b148e32ee315df25bfaa63",
+      "state": "PASS_SIX_NUMPY_SYNTHETIC_CONTROLS_NO_ORIGINAL_DATA",
+      "tests_attempted": 6,
+      "tests_errored": 0,
+      "tests_failed": 0,
+      "tests_successful": 6,
+      "tests_unknown": 0,
+      "tree_fits": 0,
+      "worker_CPU_seconds": 6.9586979509999995,
+      "worker_wall_seconds": 14.455184614052996
+    },
+    {
+      "MONITOR_observations": 48,
+      "OOF_pool_reads": 0,
+      "TRAIN_observations": 48,
+      "fits": 0,
+      "models_replayed": 8,
+      "phase": "POSTFIT_MONITOR_DIAGNOSTICS",
+      "receipt_sha256": "b83c2dd5cc12d8bad8b186ff0b047ab09032ffae98f329defd9a53f8fcab9969",
+      "state": "BOTH_FOLDS_COMPLETE_STOPPED",
+      "sum_worker_CPU_seconds": 16.600561102,
+      "sum_worker_wall_seconds_not_elapsed": 18.211700054001994
+    },
+    {
+      "CPU_seconds": 71.112010531,
+      "attempted_returned_unknown": [
+        0,
+        0,
+        0
+      ],
+      "candidate_scores_replayed": 3916800,
+      "choices_replayed": 3400,
+      "phase": "INDEPENDENT_FINAL_FULL_REPLAY",
+      "receipt_sha256": "1000e38780d1a688c8bbd3c4d1ffdaeaeedb8145aa6d24de82238841fd9ba64d",
+      "state": "PASS_INDEPENDENT_H30_FULL_SCORE_PICK_AND_ARITHMETIC_WITH_LIMITS",
+      "unit_CPU_seconds": 88.98132,
+      "unit_peak_memory_bytes": 1052590080,
+      "wall_seconds": 74.28571026097052
+    },
+    {
+      "arms": 4,
+      "candidate_rows_per_arm": 979200,
+      "contexts_per_arm": 850,
+      "fits": 0,
+      "phase": "EIGHT_FINAL_FULL_SLATE_OOF_EVALUATIONS",
+      "receipt_sha256": "c545dc5bc497b41ec374408e92470413cc8e9448dc1fa81f4e73a7807dbed780",
+      "state": "ALL_EIGHT_FINAL_OOF_EVALUATIONS_CLOSED_PENDING_SEPARATE_AGGREGATE_GRANT",
+      "sum_unit_CPU_seconds": 166.986491,
+      "sum_worker_CPU_seconds": 126.41170024700001,
+      "sum_worker_wall_seconds_not_elapsed": 150.24298538919538
+    },
+    {
+      "fits": 0,
+      "phase": "PRODUCER_AGGREGATE",
+      "receipt_sha256": "4d7d87476b9192692c7d85974a5252115e92278323affa4c47a44f5f3098ed6b",
+      "state": "CLOSED_PRODUCER_AGGREGATE_COMPLETE_PENDING_INDEPENDENT_REPLAY",
+      "unit_CPU_seconds": 8.127318,
+      "unit_MemoryPeak_bytes": 213409792,
+      "worker_CPU_seconds": 7.705279148,
+      "worker_wall_seconds": 11.097386928042397
+    }
+  ],
+  "schema": "h30.public-closed-phase-costs-and-failures/v1",
+  "state": "FINAL_CLOSED_PHASE_COSTS_WITH_EXPLICIT_UNMEASURED_PREPARATION"
+}

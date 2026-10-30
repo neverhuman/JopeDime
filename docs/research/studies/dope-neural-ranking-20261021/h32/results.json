@@ -1,0 +1,84 @@
+{
+  "actual_final_choice_correctness": null,
+  "actual_final_model": null,
+  "actual_final_postpredict_loss": null,
+  "actual_final_predictions": null,
+  "callback_timing": "Each callback precedes that native update; last observation precedes the final update.",
+  "created_utc": "2026-10-23T11:44:22.766809+00:00",
+  "interpretation": "Loss decline did not satisfy scientific qualification. No routing lift or binary split-path cause established.",
+  "missing_artifact_reason": "Compound choice-and-loss assertion preceded artifact saves. No refit recovered logging.",
+  "phases": [
+    {
+      "attempted": 1,
+      "callbacks": 0,
+      "closed_MainPID0": true,
+      "literal_failure": "ctypes objects containing pointers cannot be pickled",
+      "no_retry": true,
+      "phase": "R0",
+      "raw_dataset_fits": 0,
+      "returned": 0,
+      "state": "FAILED_H32_SYNTHETIC_CALLBACK_QUALIFICATION",
+      "unknown": 1,
+      "worker_CPU_seconds": 3.865277605,
+      "worker_wall_seconds": 5.6492634050082415
+    },
+    {
+      "attempted": 1,
+      "callbacks": 120,
+      "closed_MainPID0": true,
+      "literal_failure": "CONDITIONAL_CHOICES_AND_OWN_LOSS",
+      "no_retry": true,
+      "phase": "R1",
+      "raw_dataset_fits": 0,
+      "returned": 1,
+      "state": "FAILED_H32_SYNTHETIC_CALLBACK_QUALIFICATION",
+      "unknown": 0,
+      "worker_CPU_seconds": 4.427490035,
+      "worker_wall_seconds": 5.625718350056559
+    }
+  ],
+  "precision": "Python cost/derivative closure FP64; native custom gradients and Hessians cast FP32.",
+  "r1_callback_first_loss": 220.44444444444446,
+  "r1_callback_last_loss": 133.3337681348259,
+  "r1_callback_observations": 120,
+  "ranking_lift_missing_reason": "No dataset study was admitted.",
+  "ranking_lift_result": null,
+  "remaining_five_r1_toys": "UNATTEMPTED_NOT_RELAUNCHED",
+  "schema": "jope.research.h32.synthetic-qualification-closed/v1",
+  "scientific_question": "Qualify fixed smooth reflected-cost objectives before a future decision-quality experiment.",
+  "scope": "Synthetic qualification only; zero real-data/probe/GP/Dope/NN/baseline fits and zero OOF results.",
+  "source_receipts": {
+    "diagnosis": {
+      "bytes": 4878,
+      "sha256": "691d25b962c804c27861fdc6df03b30a771793c5a2e16cf80ac4879e37bbc42a"
+    },
+    "mechanism": {
+      "bytes": 5938,
+      "sha256": "4bdc50b5f4da5c133e0bf25bd92632055a90b1f5a5105bb14113b2a1fb4ef156"
+    },
+    "r0": {
+      "bytes": 1101,
+      "sha256": "14ca1a7e4d28e92a0df54081e32e03339515b5ece35d21cd946dba7aa76d58b9"
+    },
+    "r0_closure": {
+      "bytes": 2073,
+      "sha256": "ea2f27b038304f999d3919777c2c999a8c41b39d44d44fdc0ddfad3361c83e17"
+    },
+    "r1": {
+      "bytes": 1080,
+      "sha256": "2846e545bcbdf6d063948fc81c868bb069506e3419bfb663774e7e27f30556f3"
+    },
+    "r1_closure": {
+      "bytes": 3289,
+      "sha256": "3b6ae0f7bf3b7e66ad0bddd30cf5233560c2b5437a0f0dd22d5d883945feea03"
+    },
+    "r1_trace": {
+      "bytes": 60888,
+      "sha256": "f04030f2c389bd614f46ba6c93721ed6a1a7ce30d1a6647d0d3b0375b0b10986"
+    }
+  },
+  "state": "CLOSED_FAILED_NO_DATA_STUDY",
+  "total_native_calls_unknown": 1,
+  "total_native_fit_attempts": 2,
+  "total_native_fit_returns": 1
+}

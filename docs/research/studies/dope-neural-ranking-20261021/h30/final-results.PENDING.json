@@ -1,0 +1,14 @@
+{
+  "do_not_replace_with_producer_only_or_best_arm": true,
+  "established_lift": false,
+  "failure_counts": null,
+  "independent_verification_receipt": null,
+  "primaries": {
+    "one_minus_permuted_one": null,
+    "one_minus_zero": null
+  },
+  "schema": "h30.public-final-result-placeholder/v1",
+  "secondary_five": null,
+  "state": "PENDING_INDEPENDENT_FULL_REPLAY_NOT_A_RESULT",
+  "summaries": null
+}

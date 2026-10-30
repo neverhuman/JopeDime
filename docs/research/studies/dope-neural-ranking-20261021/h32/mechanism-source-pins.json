@@ -1,0 +1,18 @@
+{
+  "exact_gain_script": {
+    "bytes": 4306,
+    "sha256": "0870772fca6dcefedf0b0599e5ce01641e7aeec5a44d8046b9444a9981f13ac5"
+  },
+  "mechanism_packet_freeze_sha256": "dec644f717ecb236368a9f2017a13f1dee0cb433f14689e27b9d6e24bfb79f55",
+  "no_native_binary_path_proof": true,
+  "no_new_fits": true,
+  "pure_math_results": {
+    "bytes": 5938,
+    "sha256": "4bdc50b5f4da5c133e0bf25bd92632055a90b1f5a5105bb14113b2a1fb4ef156"
+  },
+  "schema": "jope.research.h32.mechanism-source-pins/v1",
+  "sources": [
+    "https://raw.githubusercontent.com/microsoft/LightGBM/v4.6.0/src/treelearner/serial_tree_learner.cpp",
+    "https://raw.githubusercontent.com/microsoft/LightGBM/v4.6.0/src/treelearner/feature_histogram.hpp"
+  ]
+}

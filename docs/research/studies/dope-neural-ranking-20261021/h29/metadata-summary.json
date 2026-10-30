@@ -1,0 +1,45 @@
+{
+  "cost": {
+    "CPU_seconds": 3.463292054,
+    "max_RSS_KiB": 307304,
+    "wall_seconds": 8.871486808988266
+  },
+  "counts": {
+    "POTENTIAL_CURRENT_TRAIN_METADATA_ONLY": 1301,
+    "RESERVED_WHOLE_CLOSURE": 303,
+    "contexts_with_unresolved_closure_role": 0,
+    "exact_context_overlap_current850": 732,
+    "legacy_Dope_missing10_preserved": 10
+  },
+  "current850": 850,
+  "current850_now_touching_reserved_after_all_edges": 0,
+  "current_components_spanning_legacy_meta_folds": 2,
+  "future_fit_gate_current850_new_source_reservation_closure_clear": true,
+  "legacy_Dope_complete_case": 1594,
+  "legacy_Dope_complete_case_families": 379,
+  "legacy_Dope_missing": 10,
+  "limits": [
+    "Only the approved pinned metadata graph; not a global/current-production alias census.",
+    "1301 potential TRAIN contexts/305 groups are metadata candidates, not admitted feature/label rows.",
+    "All10 missing legacy Dope encodings remain in the1604 denominator.",
+    "143 components outside the current declared graph do not establish untouched validation.",
+    "Historical64 G0 candidates remain distinct from adaptive/current1152 slates; no evaluator/fold graft.",
+    "Two expanded components span legacy meta folds; any future split must respect whole current closure."
+  ],
+  "metadata_bytes_read": 103461825,
+  "metadata_read_count": 25,
+  "metadata_sources_unattempted": 0,
+  "new_independent_validation_admissions": 0,
+  "new_numeric_admissions": 0,
+  "original_candidates_exact64": 102656,
+  "original_eligible": 1604,
+  "original_families": 382,
+  "original_teacher_inputs_or_labels_replayed_here": false,
+  "original_universe": 2000,
+  "planned_metadata_sources": 25,
+  "potential_TRAIN_components_in_declared_graph": 305,
+  "potential_TRAIN_components_outside_current850_declared_graph": 143,
+  "producer_results_sha256": "195e52ada140fa19a9474b52a0ab888c4138fc26a433f8af6a54afc771266e0f",
+  "schema": "h29.public-original-cohort-metadata-summary/v1",
+  "state": "PRODUCER_METADATA_COMPLETE_INDEPENDENT_QA_PENDING_NO_ADMISSIONS"
+}

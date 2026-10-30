@@ -1,0 +1,192 @@
+{
+  "development_only": true,
+  "diagnostics": {
+    "OOF_intermediate": false,
+    "TRAIN": "six fixed postfit20/40/60/80/100/120 prefix predictions; all outputs saved; own objective only within objective, common weighted centered L2 descriptive",
+    "monitor": "not implemented/granted here; separate postfit source and all-fit barrier required"
+  },
+  "evaluation": {
+    "bootstrap": {
+      "central_CI_each": 0.9875,
+      "cluster": "maximal known saved union; original component numerator/member denominator unchanged",
+      "engine": "NumPy1.26.4 default_rng PCG64",
+      "familywise_confidence": 0.975,
+      "paired_draws_shared": true,
+      "quantiles": [
+        0.00625,
+        0.99375
+      ],
+      "replicates": 100000,
+      "seed": 20261022
+    },
+    "criterion": "BOTH adjusted upper bounds<0 AND exact support/comparator source/input/stat gates; still development-only",
+    "endpoint": "equal original162 component then equal context selected raw constrained fitness; lower better",
+    "gate_report": "strict raw failed counts/N850 and per fold401/449, unweighted fraction, original-component/context-weighted fraction; no inference-time gate filter",
+    "no_reranking_or_censoring": true,
+    "primaries": [
+      "GAP_minus_MSE",
+      "GAP_minus_ORDINAL"
+    ],
+    "stable_pick": "minimum predicted cost then full program SHA"
+  },
+  "exposure": "Adaptive mechanism chosen after exposed H27-H33 history; no fresh confirmation, independent admissions or general Dope/state/landmark lift claim",
+  "feature_contract": {
+    "A088": 88,
+    "Dope_features": 0,
+    "FIVE8": 8,
+    "candidate_DSL": 412,
+    "fixed_products": 128,
+    "projection": {
+      "SHA256_k_major_int8": "f732f4ac6a8b2e85cb3fea49e9a9055db7c678c7b8444bd9f082c693a53068fc",
+      "fit": false,
+      "input": 412,
+      "normalizer": "sqrt(412)",
+      "order": "FP64 sequential i0..411, k0..15; outer k-major task-j-minor",
+      "output": 16,
+      "prefix_hex": "6a6f70652d636f6e746578742d63726f73732d763100",
+      "seed": "none: fixed domain prefix",
+      "sign": "low bit of SHA256(prefix+uint32le(i)+uint32le(k))[0]; one\u2192+1, zero\u2192-1"
+    },
+    "representation": "All objective arms use the same REAL636 recipient features",
+    "width": 636
+  },
+  "limits": [
+    "No new independent data, source formula execution, native optimizer or training implementation validation.",
+    "770 historical input QA is inherited input/schema/target/weight evidence only. New exact comparator/input/source bridge is mandatory.",
+    "Full shape memory is prospective; any guard/native failure preserved, no fallback/drop/resume/retry.",
+    "MSE cached outcomes cannot be read by new fit workers and are used only after all new fits and OOF stops.",
+    "A favorable adaptive development result would still require external task qualification/confirmation."
+  ],
+  "mechanism": "Continuous regret weighting of fixed best-versus-rest softplus versus ordinal slots and reused MSE; pairwise ranking itself is prior work.",
+  "monitor": {
+    "common_L2": "descriptive weighted centered L2 retains prediction offsets; not decision regret; no pooling fold scales",
+    "expected_fit_TRAIN_observations": 24,
+    "expected_optional_MONITOR_observations": 24,
+    "expected_optional_reconstructed_TRAIN_observations": 24,
+    "fitted_tree_count": "actual1..120 from closed model; effective=min(requested,fitted)",
+    "label": "POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+    "no_MSE_predictions_rerun": true,
+    "no_six_distinct_checkpoint_claim": true,
+    "optional": true,
+    "own_objective": "within each objective only; different GAP/ORDINAL weighting changes numerical scale",
+    "reconstruction_is_not_new_models": true,
+    "requested_prefixes": [
+      20,
+      40,
+      60,
+      80,
+      100,
+      120
+    ]
+  },
+  "objectives": {
+    "Dataset_weights": null,
+    "GAP": "best-vs-rest softplus; normalized uncapped positive cost gaps/(m-1)",
+    "ORDINAL": "same best and slots; weight1 for strictly worse cost,0 ties",
+    "best": "minimum gradient TRAIN cost then ascending full program SHA",
+    "constant_query": "literal zero loss/gradient/curvature; no status floor/drop; all-constant fit refused before native",
+    "global_diagonal": "pair w/[2*(m-1)*tau^2] on both pair endpoints; real-arithmetic global majorizer, not true Hessian/exact Newton/native convergence",
+    "initial_score": "FP64 zeros",
+    "native_labels": "literal FP32 zeros",
+    "native_precision": "external FP64 target/features/callback; LightGBM gradients/Hessians cross FP32 with finite/nonzero checks; no exactcast or FP64 optimizer claim",
+    "query_coefficient": "N/(K_gradient_components*n_contexts_in_component), applied exactly once in callback",
+    "tau": 1.0,
+    "weight_or_cost_clip": null
+  },
+  "preprocessing": {
+    "comparison_gate": "own-fold saved H33 REAL preprocessing byte identity before native; exact target/query/sample-weight/support hashes; no historical whole-X hash exists",
+    "external_cost": "FP64 never converted to native labels",
+    "fit_role": "gradient408/362only; monitor/OOF/CALDEV excluded",
+    "initial_score": 0,
+    "shared_FIVE_scaler": "same equal ONE/FIVE gradient views as H30; population std<1e-6\u21921; no clipping"
+  },
+  "raw_target_contract": {
+    "NN_component_folds": "separate2fold query-generalization partition",
+    "gate_fail_F": "100+cv_mean_log_ratio+cv_tail_log_ratio+cv_log_ratio_sd",
+    "gate_pass_F": ".8*cv_mean_log_ratio+.1*cv_tail_log_ratio+.1*cv_log_ratio_sd+.0005*complexity_open_parens",
+    "probe_CV5": "feature contract only, not replacement target",
+    "selection_protocol": "jope.s1-two-fold/v1"
+  },
+  "recipe": {
+    "bagging_seed": 3,
+    "boost_from_average": false,
+    "colsample_bytree": 1.0,
+    "data_random_seed": 1,
+    "deterministic": true,
+    "feature_fraction_bynode": 1.0,
+    "feature_fraction_seed": 2,
+    "force_col_wise": true,
+    "learning_rate": 0.05,
+    "max_bin": 31,
+    "max_depth": -1,
+    "metric": "None",
+    "min_child_samples": 64,
+    "min_child_weight": 0.001,
+    "min_split_gain": 0.0,
+    "n_estimators": 120,
+    "n_jobs": 2,
+    "num_leaves": 15,
+    "objective": "GAP or ORDINAL custom external FP64; fixed tau1; MSE control exact H33 REAL cached model/OOF only",
+    "random_state": 20261022,
+    "reg_alpha": 0.0,
+    "reg_lambda": 0.0,
+    "reg_sqrt": false,
+    "subsample": 1.0,
+    "subsample_for_bin": 200000,
+    "subsample_freq": 0,
+    "verbosity": -1
+  },
+  "roles": {
+    "OOF": [
+      401,
+      449
+    ],
+    "OOF_candidates": [
+      461952,
+      517248
+    ],
+    "TRAIN_candidates": [
+      470016,
+      417024
+    ],
+    "aggregate_visible_pools": "none",
+    "all_new_OOF_successful_stops_before_aggregate": true,
+    "all_new_fit_successful_stops_before_any_new_OOF_or_cached_MSE_outcomes": true,
+    "components": 162,
+    "contexts": 850,
+    "evaluation_visible_pools": "own OOF only; no refit",
+    "fit_visible_pools": "own gradient only",
+    "full_candidates": 979200,
+    "gradient": [
+      408,
+      362
+    ],
+    "monitor": [
+      41,
+      39
+    ],
+    "original25graph_independently_reconstructed": false,
+    "original_known_union_162_bijection": true
+  },
+  "schema": "h34.public-regret-weighted-pairwise-method/v1",
+  "work": {
+    "GP_Dope_NN_fits": 0,
+    "MSE_refits": 0,
+    "early_stop": false,
+    "fixed_runs": [
+      "fold-0/GAP",
+      "fold-0/ORDINAL",
+      "fold-1/GAP",
+      "fold-1/ORDINAL"
+    ],
+    "grid": 0,
+    "model_checkpoint_or_duration_selection": false,
+    "new_OOF_calls": 4,
+    "new_fits": 4,
+    "requested_trees_each": 120,
+    "reused_MSE_OOF_parts": 2,
+    "reused_MSE_models": 2,
+    "seed": 20261022,
+    "warmstart": false
+  }
+}
