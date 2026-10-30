@@ -97,11 +97,13 @@ pub fn download_artifact<T: Transport>(
     }
     let mut response = transport.artifact_download(artifact)?;
     let archive_path = unique_sibling(parent, name, "download");
-    let mut archive_guard = RemoveOnDrop(Some(archive_path.clone()));
+    // Arm only after exclusive creation; the later file binding closes first.
+    let mut archive_guard = RemoveOnDrop(None);
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(&archive_path)?;
+    archive_guard.0 = Some(archive_path.clone());
     let mut hash = Sha256::new();
     let mut buffer = [0u8; 64 * 1024];
     loop {
@@ -122,7 +124,6 @@ pub fn download_artifact<T: Transport>(
     let mut stage_guard = RemoveOnDrop(Some(stage_path.clone()));
     let archive_file = File::open(&archive_path)?;
     extract_zip(archive_file, &stage_path)?;
-    drop(archive_guard.take());
     publish(&stage_path, out, force)?;
     stage_guard.take();
     Ok(())
