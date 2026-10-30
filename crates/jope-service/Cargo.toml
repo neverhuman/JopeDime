@@ -9,6 +9,10 @@ repository.workspace = true
 description = "JopeDime v1 engine service"
 
 [dependencies]
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
 
 [lints]
 workspace = true
