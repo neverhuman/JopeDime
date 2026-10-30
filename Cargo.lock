@@ -2857,7 +2857,9 @@ dependencies = [
 name = "jope-service"
 version = "0.4.1"
 dependencies = [
+ "anyhow",
  "jope-api",
+ "jope-runtime",
  "libc",
  "proptest",
  "serde",
