@@ -1,0 +1,2 @@
+{"run_id":"run_01JBD8Q6N4V2T5Y8K3M7P9R1S0","sequence":"1","time":"2026-10-30T10:04:00.000Z","kind":"run.state","body":{"state":"running","phase":"searching","pending":null,"reason":null}}
+{"run_id":"run_01JBD8Q6N4V2T5Y8K3M7P9R1S0","sequence":"2","time":"2026-10-30T10:04:01.000Z","kind":"run.state","body":{"state":"cancelled","phase":"searching","pending":null,"reason":"cancelled by user"}}

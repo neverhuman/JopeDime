@@ -752,6 +752,20 @@
       ],
       "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
     },
+    "feature:jope-client/fake": {
+      "discovery": {
+        "dependencies": [
+          "dep:jope-api",
+          "dep:serde_json"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Test-only fake transport feature. Exercised explicitly by TUI-11's feature-enabled jope-client package checks; absent from default client builds."
+    },
     "feature:jope-dime-regressor/gpr-scratch-reuse": {
       "discovery": {
         "dependencies": [
@@ -7322,6 +7336,22 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-client/test/fake_replay": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "fake"
+        ],
+        "source": "crates/jope-client/tests/fake_replay.rs",
+        "test": true
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "TUI-11 strict PublicEvent fixture validation and deterministic fake replay; run explicitly with jope-client --features fake."
     },
     "target:jope-datasets/bin/jope-datasets": {
       "discovery": {

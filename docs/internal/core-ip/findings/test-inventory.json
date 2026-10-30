@@ -2864,6 +2864,10 @@
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
       "role": "infrastructure"
     },
+    "target:jope-client/test/fake_replay": {
+      "reason": "Recorded-event fixture replay through the jope-client fake transport (TUI-11, feature `fake`): validates the committed event fixtures and deterministic replay cadence; test infrastructure for terminal UI tests, not a regression subsystem",
+      "role": "infrastructure"
+    },
     "target:jope-datasets/bin/jope-datasets": {
       "role": "regression",
       "subsystems": [
