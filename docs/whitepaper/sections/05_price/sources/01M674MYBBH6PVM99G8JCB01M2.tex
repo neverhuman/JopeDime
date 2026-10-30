@@ -1,0 +1,107 @@
+\section{The Price of Play}\label{sec:price}\label{sec:economics}
+% Reader question: Can anyone afford to play it? / What does useful experience cost?
+% Core points advanced: Point 2 (Novelty is free; judgment is the inventor; E[N_tries] = 1/q),
+%                       Point 3 (Search = 1 amortizes learned judgment),
+%                       Speaking Point 7 (Waste, not tokens, sets the price of play).
+
+Can anyone afford to play the innovation game at scale? Yes: the cost of a verified discovery is the cost of one attempt divided by the win rate, so wasted moves---not token prices---set the bill. An experiment in algorithmic self-play does two jobs at once: it evaluates a candidate program for the problem at hand and generates training experience that improves the player's next move. Once that experience is distilled into the program writer's weights, deploying \EZ{} on an unseen problem requires a single generation (\searchone{}), shifting compute from repeated test-time search to a one-time training investment \citep{amos2023amortized}.
+
+\begin{keyidea}
+The cheapest way to make invention affordable is not cheaper tokens. It is fewer wasted moves.
+\end{keyidea}
+
+\subsection{The bill in one line}\label{sub:price-bill}\label{subsec:bill-one-line}
+
+The cost of discovering a winning algorithm is governed by the same taste parameter $q$ that determines search length in \cref{eq:taste}. To keep the economics transparent, we maintain two separate ledgers: one for \emph{acquiring experience} during self-play training (or inventing a general method once), and a second for \emph{deploying} the frozen player on a new problem at \searchone{} ($B = 1$). During training, each attempt on a problem $p \in \Prob$ incurs three direct charges: encoding the board and prompt context of $t_{\text{in}}$ tokens at price $p_{\text{in}}$, generating $t_{\text{think}}$ reasoning tokens and $t_{\text{code}}$ program tokens at output price $p_{\text{out}}$, and running the referee $\referee$ on hidden cross-validation folds at cost $c_{\text{ref}}$,
+\begin{equation*}
+  C_{\text{attempt}} = t_{\text{in}}\,p_{\text{in}} + \bigl(t_{\text{think}} + t_{\text{code}}\bigr)\,p_{\text{out}} + c_{\text{ref}}.
+\end{equation*}
+When an initial move fails to parse or crashes, a system that permits iterative debugging spends an expected $\mathbb{E}[r]$ repair turns at cost $C_{\text{repair}}$ each before the candidate is abandoned or scored. The expected cost of producing one verified win against the incumbent $\inc{p}$ is therefore the total cost per attempt divided by the per-attempt win probability $q$,
+\begin{equation}
+  C_{\text{win}} = \frac{C_{\text{attempt}} + \mathbb{E}[r]\,C_{\text{repair}}}{q},
+  \label{eq:bill}\label{eq:batch-cost}
+\end{equation}
+where $q$ (written $q_{\text{win}}$ when distinguishing wins from syntactic survival) is the share of attempts that both execute legally and outperform $\inc{p}$ on the referee's held-out folds. We divide by the win rate $q$ rather than the execution rate because a program that runs cleanly and loses still consumes full generation and cross-validation compute. Across a full self-play batch of $N_{\text{attempts}}$ rollouts, the total training bill adds parameter updates $C_{\text{learn}}$ and orchestration overhead $C_{\text{infra}}$:
+\begin{equation*}
+  C_{\text{run}} = N_{\text{attempts}}\,C_{\text{attempt}} + N_{\text{attempts}}\,\mathbb{E}[r]\,C_{\text{repair}} + C_{\text{learn}} + C_{\text{infra}}.
+\end{equation*}
+
+Under standard dense transformer accounting \citep{kaplan2020scaling,hoffmann2022chinchilla}, autoregressive generation expends approximately $2 P_{\text{active}}$ floating-point operations (FLOPs) per active parameter per output token ($F_{\text{rollout}} \approx 2 P_{\text{active}} T_{\text{out}}$), whereas gradient updates expend approximately $6 P$ FLOPs per parameter per trained token. We price every workload in two ways without double-counting: from self-hosted accelerator-hours at measured or stated utilization, and from dated commercial API list prices, which bill reasoning tokens alongside emitted code tokens. As an illustrative baseline, generating \num{1000} proposals of \num{5000} output tokens each produces $5\text{ million}$ output tokens; at an assumed hosted rate of $\$1.00$ per million output tokens (October 2026), raw generation costs $\$5.00$ before input processing, repairs, referee evaluation, or weight updates.
+
+\subsection{Wasted moves: stillborn code and also-rans}\label{sub:price-waste}\label{subsec:stillborn-alsoran}
+
+Most moves in unguided program search are wasted, and that waste dominates the cost per discovery. Failed attempts fall into two distinct operational classes:
+\begin{itemize}
+  \item \textbf{Stillborn moves ($\tilde{w}$)} never compete on the problem's metric. They fail to parse or type-check, crash at runtime, emit degenerate predictions (\texttt{NaN}, infinities, or constant arrays), or breach memory and wall-clock limits.
+  \item \textbf{Also-ran moves ($w^-$)} satisfy every structural and resource constraint and receive a valid cross-validation score from the referee, but fail to beat the reigning incumbent $\inc{p}$ ($\Delta \le 0$).
+\end{itemize}
+
+\Cref{eq:bill} makes the arithmetic of waste immediate. When $90\%$ of attempts fail to beat the incumbent ($q = 0.10$), every winning algorithm carries the bill of ten attempts; when $99\%$ fail ($q = 0.01$), it carries the bill of a hundred. Constraining the move space to a typed program grammar \citep{koza1992genetic,kusner2017grammar} sharply reduces syntactic stillbirths, but shifts the economic bottleneck to also-rans: valid programs that consume the referee's full fitting and cross-validation budget only to finish behind the incumbent. Crucially, however, an unsuccessful move in self-play is not wasted learning experience. In \EZ{}, both stillborn programs and also-rans are retained as structured negative examples that train the problem--program map to steer future proposals away from non-viable or inferior regions (\TBD{pilot waste reduction from X\% to Y\%}).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig4_price.pdf}
+  \caption{\textbf{Most moves are wasted, and where the cost-per-win optimum sits.} \textbf{(a)} The survival funnel from raw generated moves through parsing, sandbox execution, cross-validation scoring, beating the incumbent, and independent champion re-verification, showing the share of attempts and compute consumed at each gate across \TBD{N} pilot attempts. \textbf{(b)} Measured cost per verified win $C_{\text{win}}$ (dollars, October 2026 basis) across generator active-parameter scale (vertical) and reasoning token budget $t_{\text{think}}$ (horizontal), with $95\%$ bootstrap intervals over development problem families (\TBD{seed count}).}
+  \label{fig:price}\label{fig:waste}
+\end{figure}
+
+\subsection{The correction tax and the reasoning dial}\label{sub:price-tax}\label{subsec:correction-tax}
+
+Smaller models reduce the price of a token, while test-time reasoning reduces the rate of stillborn code, creating an empirical trade-off between generator scale and thinking budget. Because dense generation FLOPs scale linearly with active parameters \citep{kaplan2020scaling}, raw compute per token falls by $187.5\times$ (about $190\times$) from a hypothetical $1.5\text{T}$-parameter dense model to an $8\text{B}$-parameter model. By \cref{eq:bill}, the $8\text{B}$ model is cheaper per verified win unless its per-attempt win rate $q$ is more than $190\times$ lower once repair loops are included. In practice, however, small generators face a steep \emph{correction tax}: when a syntactically broken or crashing program triggers multi-turn traceback repair ($\mathbb{E}[r] > 0$), the prompt context accumulates prior code and error logs on every turn while the probability that a patched script beats a strong incumbent remains small.
+
+Allocating internal reasoning tokens $t_{\text{think}}$ before code emission \citep{guo2025deepseekr1} acts as a second dial. Extended chain-of-thought deliberation catches type mismatches, shape errors, and degenerate hyperparameters before the referee is invoked, lowering the stillborn rate at the price of billing additional output tokens on every attempt. Whether the resulting cost per win $C_{\text{win}}$ exhibits a U-shaped interior minimum across model size and reasoning budget is an empirical question rather than an axiom; \cref{fig:price}b reports the measured cost surface from development pilots rather than presuming an optimal tier in advance.
+
+\subsection{Escaping history: rewarding useful hallucination}\label{sub:price-hallucination}\label{subsec:useful-hallucination}
+
+Pretrained language models pull generation toward textbook algorithms, so discovering better methods requires paying a controlled exploration tax for speculative moves that a referee can verify. Because standard pretraining maximizes the likelihood of historical code, an unsteered policy defaults to familiar estimators---history's taste. Moving beyond that prior introduces a deliberate tension: increasing variation uncovers unfamiliar algorithmic compositions, but also raises the fraction of stillborn and losing moves.
+
+To encourage departures from textbook templates without subsidizing broken code, \EZ{} combines four counterweights during training:
+\begin{enumerate}
+  \item \textbf{Gated novelty bonus:} structural novelty is rewarded strictly inside the validity and win gate ($\Delta > 0$), so an unfamiliar loser never outranks a familiar winner;
+  \item \textbf{Entropy and temperature schedules:} sampling diversity is widened during early exploration and annealed as the problem--program map sharpens;
+  \item \textbf{Ratcheting curriculum:} boards initialize with strong incumbent baselines so the writer cannot win by emitting trivial textbook defaults;
+  \item \textbf{Quality-diversity archiving:} in the tradition of novelty search \citep{lehman2011novelty} and MAP-Elites \citep{mouret2015mapelites}, distinct behavioral stepping stones are retained even when their immediate margin over the incumbent is small \citep{stanley2015greatness}.
+\end{enumerate}
+Because speculative exploration increases waste, we budget high-temperature exploratory games as a fixed share (\TBD{E\%}) of each training round rather than allowing unbounded trial-and-error.
+
+\begin{explainer}{Box 3: Why a referee makes hallucination safe}\label{box:hallucination}
+Unfamiliar and unchecked is confabulation; unfamiliar and verified is a discovery. In open-ended conversation, when a language model departs from its training distribution, the result is usually an error because no external test checks whether the claim holds. In a game with an impartial referee, a speculative proposal---a ``hallucination'' in program space---is simply a move. If the proposed algorithm fails to compile, leaks labels, or loses on hidden cross-validation folds, the referee rejects it at the bounded cost of one attempt. If it runs cleanly, beats the incumbent on held-out data, and passes independent champion re-verification, it is warranted new knowledge regardless of how improbable it looked under the pretrained prior. In Game~2 against Lee Sedol, AlphaGo estimated that a human professional would play Move~37 with probability one in ten thousand \citep{silver2016mastering,metz2016twomoves}; the rules of Go and the final territory count turned an extreme statistical departure into the canonical useful hallucination.
+\end{explainer}
+
+\subsection{How many games?}\label{sub:price-games}\label{subsec:how-many-games}
+
+Sizing a self-play budget requires separating three quantities that are frequently conflated: the attempts needed to find a single improvement, the experience needed to train a transferable player, and the independent problems needed to evaluate the trained player.
+
+\begin{enumerate}
+  \item \textbf{Tries to find one improvement ($1/q$).} Under the idealized assumption that successive tries on a problem are independent Bernoulli trials with win probability $q$, the expected number of attempts to beat the incumbent is $\mathbb{E}[N_{\text{tries}}] = 1/q$ (\cref{eq:taste}), and the probability of finding at least one winning move in $N$ attempts is $1 - (1 - q)^N$. Because repeated samples from a fixed policy on the same board share prior biases, real tries are positively correlated; $1/q$ therefore serves as an idealized baseline rather than an exact sample-complexity law.
+  \item \textbf{Experience to train a transferable player.} Board-game self-play offers order-of-magnitude context---AlphaGo Zero played $4.9\text{ million}$ games of Go over three days \citep{silver2017mastering}, and AlphaZero played approximately $44\text{ million}$ games of chess and $140\text{ million}$ games of Go \citep{silver2018general}---but board-game trajectories do not determine the sample complexity of algorithm synthesis. As an explicit \emph{planning workload scenario} rather than a convergence guarantee, playing \num{10000} problems across \num{100} self-play rounds with $8$ attempts per round totals $8\text{ million}$ attempts, or $40\text{ billion}$ generated tokens at \num{5000} tokens per attempt. In practice, transfer to unseen problems depends far more on the diversity of training problem families than on raw attempt volume, and pilot learning curves---interpreted strictly within the measured range---govern when training stops.
+  \item \textbf{Test problems to establish the tournament claim.} At deployment, statistical power depends on the number of independent unseen problems $M$, not the number of training games \citep{agarwal2021precipice}. Under standard binomial variance, evaluating frozen entrants on $M \approx 150$ independent problems yields a $\pm 8$-percentage-point $95\%$ bootstrap confidence interval around a $60\%$ head-to-head win rate ($1.96\sqrt{0.6 \times 0.4 / 150} \approx 0.078$). To prevent artificial precision, the tournament counts distinct problem families rather than correlated data splits.
+\end{enumerate}
+
+\begin{table}[t]
+  \caption{\textbf{Wasted moves, not tokens, set the bill: \TBD{\$} for a full run.} Best-estimate scenario ledger before pilot calibration (illustrative, October 2026 price basis). Workload scenario: $8\text{ million}$ attempts at \num{5000} output tokens per attempt ($40\text{B}$ output tokens total). Hardware basis: H100-class GPUs ($\approx \num{e15}\text{ dense FLOP/s}$ peak) rented at $\$2.50/\text{GPU-hour}$ (market band: $\$1.80\text{--}\$3.50$), assuming $20\%$ FLOP utilization during autoregressive generation ($10\%\text{--}30\%$ band) and $40\%$ utilization during learner updates on $10\%$ of generated tokens. Excludes input prompt processing, multi-turn repairs, and referee CPU evaluation (priced separately in the text).}
+  \label{tab:price}\label{tab:run-priced}\label{tab:cost-scenarios}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}l r r r r r@{}}
+    \toprule
+    Generator tier & Active params & {GPU-h / 1k tries} & {\$ / 1k tries} & {Rollouts (8M tries)} & {Updates (full run)} \\
+    \midrule
+    Small dense & 8B & 0.11 & \$0.28 & about \$\num{2200} & under \$\num{500} \\
+    Mid dense & 32B & 0.44 & \$1.10 & about \$\num{8900} & about \$\num{1300} \\
+    Large dense & 70B & 0.97 & \$2.40 & about \$\num{19000} & about \$\num{2900} \\
+    Very large dense & 120B & 1.70 & \$4.20 & about \$\num{33000} & about \$\num{5000} \\
+    1T mixture-of-experts & about 32B & 0.44 + mem. & \$1.10--\$3.00 & about \$\num{9000}--\$\num{25000} & about \$\num{1300} \\
+    1.5T mixture-of-experts (scenario) & about 50B & 0.69 + mem. & \$1.70--\$5.00 & about \$\num{14000}--\$\num{40000} & about \$\num{2100} \\
+    1.5T dense (scenario) & 1.5T & 21.00 & about \$52.00 & about \$\num{420000} & about \$\num{63000} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{A batch, priced: open-weight tiers to the 1.5T frontier}\label{sub:price-batch}\label{subsec:run-priced}
+
+Pricing the $8\text{ million}$-attempt planning scenario from $8\text{B}$ open-weight generators to a hypothetical $1.5\text{T}$-parameter frontier shows that algorithmic self-play is affordable today and bounded by waste rather than raw token generation (\cref{tab:price}). With a $32\text{B}$ dense open-weight model at October 2026 rental rates ($\$2.50$ per H100 GPU-hour at $20\%$ generation utilization, or $7.2 \times 10^{17}\text{ sustained FLOP/hour}$), \num{1000} attempts of \num{5000} tokens require $3.2 \times 10^{17}\text{ FLOPs}$, or $0.44\text{ GPU-hours}$ ($\$1.10$). Scaling to $8\text{ million}$ attempts costs about \$\num{8900} in rollouts and \$\num{1300} in gradient updates (trained at $40\%$ utilization on the $10\%$ of tokens corresponding to promoted winners and informative negatives)---roughly \$\num{10200} in total accelerator compute, with a low--high sensitivity band of \$\num{5500}--\$\num{28000} across utilization ($10\%\text{--}30\%$) and rental rates ($\$1.80\text{--}\$3.50/\text{GPU-hour}$).
+
+At the frontier, architecture determines whether memory capacity or arithmetic dominates the bill. A hypothetical $1.5\text{T}$ dense generator expends $F_{\text{rollout}} \approx 2 \times (1.5 \times 10^{12}) \times (4 \times 10^{10}) = 1.2 \times 10^{23}\text{ FLOPs}$ for $8\text{ million}$ rollouts and $1.8 \times 10^{22}\text{ FLOPs}$ for updates, costing about \$\num{420000} and \$\num{63000} respectively; that combined $1.38 \times 10^{23}\text{ FLOP}$ budget is roughly $1\%$ of the $10^{25}\text{ FLOP}$ compute spent pretraining a frontier foundation model \citep{epoch2024data}. By contrast, a sparse mixture-of-experts (MoE) model with $1\text{T}$ to $1.5\text{T}$ total parameters but only $32\text{B}$ to $50\text{B}$ active parameters per token \citep{deepseekv3} requires only $2.6\text{--}4.0 \times 10^{21}\text{ rollout FLOPs}$, placing its arithmetic cost near a $32\text{B}$ dense model. However, total parameter count still governs memory: holding $1.5\text{T}$ weights at two bytes per parameter requires approximately $3\text{ TB}$ of high-bandwidth memory before KV-cache or activations, and parameter-efficient adapters (LoRA) do not eliminate base-model forward and backward passes, producing the wider \$\num{14000}--\$\num{40000} rollout range in \cref{tab:price}.
+
+Finally, the referee must be priced alongside the generator. Fitting and cross-validating each candidate on CPU workers at $\$0.02\text{--}\$0.05$ per vCPU-hour (October 2026 cloud compute rates) costs roughly \$\num{1000} for $8\text{ million}$ attempts when each evaluation takes $10\text{ seconds}$ ($\approx \num{22200}\text{ CPU-hours}$), and roughly \$\num{10000} when evaluation takes $100\text{ seconds}$ ($\approx \num{222200}\text{ CPU-hours}$). For an $8\text{B}$ generator (\$\num{2200} in rollouts), a $100\text{-second}$ referee costs more than four times as much as the neural network writing the programs. On our running example (\TBD{median sealed win problem}), one training attempt costs \TBD{\$X} (\TBD{Y} seconds of referee cross-validation), whereas game-day deployment at \searchone{} requires one encoding pass and one generation costing \TBD{\$Z} before standard model fitting. Whether compute is spent on GPU rollouts or CPU cross-validation, \cref{eq:bill} points to the same lever: the cheapest way to make invention affordable is not cheaper tokens, but fewer wasted moves. The method's job is now clear: raise $q$, so fewer moves are wasted.

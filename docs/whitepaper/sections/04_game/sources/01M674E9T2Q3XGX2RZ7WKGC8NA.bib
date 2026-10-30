@@ -1,0 +1,288 @@
+% ===================================================================
+% EurekaZero -- bibliography fragment for Section 4 (Innovation Is a Game)
+% Every key cited in sections/04_game.tex, and nothing else.
+% Shared keys (already in the plan's refs.bib key list):
+%   shannon1950chess, samuel1959checkers, silver2016mastering, silver2017mastering, silver2018general, fawzi2022alphatensor, mankowitz2023alphadev, romeraparedes2024funsearch, novikov2025alphaevolve, real2020automlzero, boden1990creative, donoho2017fifty, elo1978rating, balduzzi2018reevaluating, wolpert1996nfl, metr2025rewardhacking
+% NEW keys proposed for the editor to merge:
+%   rice1976algorithm, pfahringer2000landmarking, montana1995stgp, cawley2010overfitting, lattimore2020bandit
+% Every entry checked against its DOI record (Crossref), publisher, arXiv,
+% PMLR/JMLR/NeurIPS proceedings or a library catalogue on 30 October 2026.
+% ===================================================================
+
+% ---------------------------------------------------------------
+% Games, self-play and Go
+% ---------------------------------------------------------------
+
+@article{shannon1950chess,
+  author  = {Shannon, Claude E.},
+  title   = {Programming a Computer for Playing Chess},
+  journal = {The London, Edinburgh, and Dublin Philosophical Magazine and Journal of Science},
+  series  = {7},
+  volume  = {41},
+  number  = {314},
+  pages   = {256--275},
+  year    = {1950},
+  doi     = {10.1080/14786445008521796}
+}
+
+@article{samuel1959checkers,
+  author  = {Samuel, Arthur L.},
+  title   = {Some Studies in Machine Learning Using the Game of Checkers},
+  journal = {IBM Journal of Research and Development},
+  volume  = {3},
+  number  = {3},
+  pages   = {210--229},
+  year    = {1959},
+  doi     = {10.1147/rd.33.0210}
+}
+
+@article{silver2016mastering,
+  author  = {Silver, David and Huang, Aja and Maddison, Chris J. and Guez, Arthur and
+             Sifre, Laurent and van den Driessche, George and Schrittwieser, Julian and
+             Antonoglou, Ioannis and Panneershelvam, Veda and Lanctot, Marc and
+             Dieleman, Sander and Grewe, Dominik and Nham, John and Kalchbrenner, Nal and
+             Sutskever, Ilya and Lillicrap, Timothy and Leach, Madeleine and
+             Kavukcuoglu, Koray and Graepel, Thore and Hassabis, Demis},
+  title   = {Mastering the Game of {Go} with Deep Neural Networks and Tree Search},
+  journal = {Nature},
+  volume  = {529},
+  number  = {7587},
+  pages   = {484--489},
+  year    = {2016},
+  doi     = {10.1038/nature16961}
+}
+
+@article{silver2017mastering,
+  author  = {Silver, David and Schrittwieser, Julian and Simonyan, Karen and
+             Antonoglou, Ioannis and Huang, Aja and Guez, Arthur and Hubert, Thomas and
+             Baker, Lucas and Lai, Matthew and Bolton, Adrian and Chen, Yutian and
+             Lillicrap, Timothy and Hui, Fan and Sifre, Laurent and
+             van den Driessche, George and Graepel, Thore and Hassabis, Demis},
+  title   = {Mastering the Game of {Go} without Human Knowledge},
+  journal = {Nature},
+  volume  = {550},
+  number  = {7676},
+  pages   = {354--359},
+  year    = {2017},
+  doi     = {10.1038/nature24270}
+}
+
+@article{silver2018general,
+  author  = {Silver, David and Hubert, Thomas and Schrittwieser, Julian and
+             Antonoglou, Ioannis and Lai, Matthew and Guez, Arthur and Lanctot, Marc and
+             Sifre, Laurent and Kumaran, Dharshan and Graepel, Thore and
+             Lillicrap, Timothy and Simonyan, Karen and Hassabis, Demis},
+  title   = {A General Reinforcement Learning Algorithm That Masters Chess, Shogi, and {Go}
+             through Self-Play},
+  journal = {Science},
+  volume  = {362},
+  number  = {6419},
+  pages   = {1140--1144},
+  year    = {2018},
+  doi     = {10.1126/science.aar6404}
+}
+
+% ---------------------------------------------------------------
+% Algorithm discovery cast as a game, and boards with referees
+% ---------------------------------------------------------------
+
+@article{fawzi2022alphatensor,
+  author  = {Fawzi, Alhussein and Balog, Matej and Huang, Aja and Hubert, Thomas and
+             Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and
+             Ruiz, Francisco J. R. and Schrittwieser, Julian and Swirszcz, Grzegorz and
+             Silver, David and Hassabis, Demis and Kohli, Pushmeet},
+  title   = {Discovering Faster Matrix Multiplication Algorithms with Reinforcement Learning},
+  journal = {Nature},
+  volume  = {610},
+  number  = {7930},
+  pages   = {47--53},
+  year    = {2022},
+  doi     = {10.1038/s41586-022-05172-4}
+}
+
+@article{mankowitz2023alphadev,
+  author  = {Mankowitz, Daniel J. and Michi, Andrea and Zhernov, Anton and Gelmi, Marco and
+             Selvi, Marco and Paduraru, Cosmin and Leurent, Edouard and Iqbal, Shariq and
+             Lespiau, Jean-Baptiste and Ahern, Alex and K{\"o}ppe, Thomas and
+             Millikin, Kevin and Gaffney, Stephen and Elster, Sophie and Broshear, Jackson and
+             Gamble, Chris and Milan, Kieran and Tung, Robert and Hwang, Minjae and
+             Cemgil, Taylan and Barekatain, Mohammadamin and Li, Yujia and
+             Mandhane, Amol and Hubert, Thomas and Schrittwieser, Julian and
+             Hassabis, Demis and Kohli, Pushmeet and Riedmiller, Martin and
+             Vinyals, Oriol and Silver, David},
+  title   = {Faster Sorting Algorithms Discovered Using Deep Reinforcement Learning},
+  journal = {Nature},
+  volume  = {618},
+  number  = {7964},
+  pages   = {257--263},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06004-9}
+}
+
+@article{romeraparedes2024funsearch,
+  author  = {Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and
+             Balog, Matej and Kumar, M. Pawan and Dupont, Emilien and Ruiz, Francisco J. R. and
+             Ellenberg, Jordan S. and Wang, Pengming and Fawzi, Omar and Kohli, Pushmeet and
+             Fawzi, Alhussein},
+  title   = {Mathematical Discoveries from Program Search with Large Language Models},
+  journal = {Nature},
+  volume  = {625},
+  number  = {7995},
+  pages   = {468--475},
+  year    = {2024},
+  doi     = {10.1038/s41586-023-06924-6}
+}
+
+@misc{novikov2025alphaevolve,
+  author        = {Novikov, Alexander and V{\~u}, Ng{\^a}n and Eisenberger, Marvin and
+                   Dupont, Emilien and Huang, Po-Sen and Wagner, Adam Zsolt and
+                   Shirobokov, Sergey and Kozlovskii, Borislav and Ruiz, Francisco J. R. and
+                   Mehrabian, Abbas and Kumar, M. Pawan and See, Abigail and
+                   Chaudhuri, Swarat and Holland, George and Davies, Alex and
+                   Nowozin, Sebastian and Kohli, Pushmeet and Balog, Matej},
+  title         = {{AlphaEvolve}: A Coding Agent for Scientific and Algorithmic Discovery},
+  year          = {2025},
+  eprint        = {2506.13131},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.AI},
+  howpublished  = {arXiv:2506.13131},
+  url           = {https://arxiv.org/abs/2506.13131}
+}
+
+@inproceedings{real2020automlzero,
+  author    = {Real, Esteban and Liang, Chen and So, David R. and Le, Quoc V.},
+  title     = {{AutoML-Zero}: Evolving Machine Learning Algorithms From Scratch},
+  booktitle = {Proceedings of the 37th International Conference on Machine Learning},
+  editor    = {Daum{\'e} III, Hal and Singh, Aarti},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {119},
+  pages     = {8007--8019},
+  publisher = {PMLR},
+  year      = {2020},
+  url       = {https://proceedings.mlr.press/v119/real20a.html}
+}
+
+% ---------------------------------------------------------------
+% The board: problem description and algorithm selection
+% ---------------------------------------------------------------
+
+@incollection{rice1976algorithm,
+  author    = {Rice, John R.},
+  title     = {The Algorithm Selection Problem},
+  booktitle = {Advances in Computers},
+  editor    = {Rubinoff, Morris and Yovits, Marshall C.},
+  volume    = {15},
+  pages     = {65--118},
+  publisher = {Academic Press},
+  address   = {New York},
+  year      = {1976},
+  doi       = {10.1016/S0065-2458(08)60520-3}
+}
+
+@inproceedings{pfahringer2000landmarking,
+  author    = {Pfahringer, Bernhard and Bensusan, Hilan and Giraud-Carrier, Christophe},
+  title     = {Meta-Learning by Landmarking Various Learning Algorithms},
+  booktitle = {Proceedings of the Seventeenth International Conference on Machine Learning},
+  pages     = {743--750},
+  publisher = {Morgan Kaufmann},
+  year      = {2000}
+}
+
+% ---------------------------------------------------------------
+% The move: program languages and the limits of a language
+% ---------------------------------------------------------------
+
+@article{montana1995stgp,
+  author  = {Montana, David J.},
+  title   = {Strongly Typed Genetic Programming},
+  journal = {Evolutionary Computation},
+  volume  = {3},
+  number  = {2},
+  pages   = {199--230},
+  year    = {1995},
+  doi     = {10.1162/evco.1995.3.2.199}
+}
+
+@book{boden1990creative,
+  author    = {Boden, Margaret A.},
+  title     = {The Creative Mind: Myths and Mechanisms},
+  publisher = {Weidenfeld \& Nicolson},
+  address   = {London},
+  year      = {1990}
+}
+
+% ---------------------------------------------------------------
+% The referee, the opponent and the rating
+% ---------------------------------------------------------------
+
+@article{donoho2017fifty,
+  author  = {Donoho, David},
+  title   = {50 Years of Data Science},
+  journal = {Journal of Computational and Graphical Statistics},
+  volume  = {26},
+  number  = {4},
+  pages   = {745--766},
+  year    = {2017},
+  doi     = {10.1080/10618600.2017.1384734}
+}
+
+@article{cawley2010overfitting,
+  author  = {Cawley, Gavin C. and Talbot, Nicola L. C.},
+  title   = {On Over-fitting in Model Selection and Subsequent Selection Bias in
+             Performance Evaluation},
+  journal = {Journal of Machine Learning Research},
+  volume  = {11},
+  number  = {70},
+  pages   = {2079--2107},
+  year    = {2010},
+  url     = {https://www.jmlr.org/papers/v11/cawley10a.html}
+}
+
+@book{lattimore2020bandit,
+  author    = {Lattimore, Tor and Szepesv{\'a}ri, Csaba},
+  title     = {Bandit Algorithms},
+  publisher = {Cambridge University Press},
+  address   = {Cambridge},
+  year      = {2020},
+  doi       = {10.1017/9781108571401}
+}
+
+@book{elo1978rating,
+  author    = {Elo, Arpad E.},
+  title     = {The Rating of Chessplayers, Past and Present},
+  publisher = {Arco},
+  address   = {New York},
+  year      = {1978}
+}
+
+@inproceedings{balduzzi2018reevaluating,
+  author    = {Balduzzi, David and Tuyls, Karl and P{\'e}rolat, Julien and Graepel, Thore},
+  title     = {Re-evaluating Evaluation},
+  booktitle = {Advances in Neural Information Processing Systems 31},
+  pages     = {3268--3279},
+  publisher = {Curran Associates},
+  year      = {2018},
+  url       = {https://arxiv.org/abs/1806.02643}
+}
+
+@article{wolpert1996nfl,
+  author  = {Wolpert, David H.},
+  title   = {The Lack of A Priori Distinctions Between Learning Algorithms},
+  journal = {Neural Computation},
+  volume  = {8},
+  number  = {7},
+  pages   = {1341--1390},
+  year    = {1996},
+  doi     = {10.1162/neco.1996.8.7.1341}
+}
+
+@misc{metr2025rewardhacking,
+  author       = {Von Arx, Sydney and Chan, Lawrence and Barnes, Beth},
+  title        = {Recent Frontier Models Are Reward Hacking},
+  howpublished = {METR blog},
+  organization = {METR},
+  month        = jun,
+  year         = {2025},
+  note         = {5 June 2025. Accessed 30 October 2026},
+  url          = {https://metr.org/blog/2025-06-05-recent-reward-hacking/}
+}

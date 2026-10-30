@@ -1,0 +1,209 @@
+% =============================================================================
+% EurekaZero Master Bibliography (references.bib)
+% Covers: Self-Play RL, Algorithm Discovery, LLM Code Synthesis,
+%         Test-Time Compute, Pre-Training Memorization, and Latent Program Spaces
+% =============================================================================
+
+@article{silver2017mastering,
+  title={Mastering the game of {Go} without human knowledge},
+  author={Silver, David and Schrittwieser, Julian and Simonyan, Karen and Antonoglou, Ioannis and Huang, Aja and Guez, Arthur and Hubert, Thomas and Baker, Lucas and Lai, Matthew and Bolton, Adrian and others},
+  journal={Nature},
+  volume={550},
+  number={7676},
+  pages={354--359},
+  year={2017},
+  publisher={Nature Publishing Group}
+}
+
+@article{silver2018general,
+  title={A general reinforcement learning algorithm that masters chess, shogi, and {Go} through self-play},
+  author={Silver, David and Hubert, Thomas and Schrittwieser, Julian and Antonoglou, Ioannis and Lai, Matthew and Guez, Arthur and Lanctot, Marc and Sifre, Laurent and Kumaran, Dharshan and Graepel, Thore and others},
+  journal={Science},
+  volume={362},
+  number={6419},
+  pages={1140--1144},
+  year={2018},
+  publisher={American Association for the Advancement of Science}
+}
+
+@article{schrittwieser2020mastering,
+  title={Mastering {Atari}, {Go}, chess and shogi by planning with a learned model},
+  author={Schrittwieser, Julian and Antonoglou, Ioannis and Hubert, Thomas and Simonyan, Karen and Sifre, Laurent and Schmitt, Simon and Guez, Arthur and Lockhart, Edward and Hassabis, Demis and Graepel, Thore and others},
+  journal={Nature},
+  volume={588},
+  number={7839},
+  pages={604--609},
+  year={2020},
+  publisher={Nature Publishing Group}
+}
+
+@article{fawzi2022discovering,
+  title={Discovering faster matrix multiplication algorithms with reinforcement learning},
+  author={Fawzi, Alhussein and Balog, Matej and Huang, Aja and Hubert, Thomas and Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and R.~Ruiz, Francisco J. and Schrittwieser, Julian and Swirszcz, Grzegorz and others},
+  journal={Nature},
+  volume={610},
+  number={7930},
+  pages={47--53},
+  year={2022},
+  publisher={Nature Publishing Group}
+}
+
+@article{mankowitz2023faster,
+  title={Faster sorting algorithms discovered using deep reinforcement learning},
+  author={Mankowitz, Daniel J. and Michi, Andrea and Zhernov, Anton and Gelmi, Marco and Selvi, Marco and Paduraru, Cosmin and Leurent, Edouard and Iqbal, Shariq and Lespiau, Jean-Baptiste and Ahern, Alex and others},
+  journal={Nature},
+  volume={618},
+  number={7964},
+  pages={257--263},
+  year={2023},
+  publisher={Nature Publishing Group}
+}
+
+@article{romera2024mathematical,
+  title={Mathematical discoveries from program search with large language models},
+  author={Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and Balog, Matej and Kumar, M.~Pawan and Dupont, Emilien and Ruiz, Francisco J.~R. and Ellenberg, Jordan S. and Wang, Pengming and Fawzi, Omar and others},
+  journal={Nature},
+  volume={625},
+  number={7995},
+  pages={468--475},
+  year={2024},
+  publisher={Nature Publishing Group}
+}
+
+@article{novikov2025alphaevolve,
+  title={{AlphaEvolve}: A coding agent for scientific and algorithmic discovery},
+  author={Novikov, Alexander and Vu, Ngân and Eisenberger, Marvin and Dupont, Emilien and Huang, Po-Sen and Wagner, Adam Zsolt and Shirobokov, Sergey and Kozlovskii, Borislav and Ruiz, Francisco J.~R. and Mehrabian, Abbas and others},
+  journal={DeepMind Technical Report},
+  year={2025}
+}
+
+@article{ma2024eureka,
+  title={Eureka: Human-level reward design via coding large language models},
+  author={Ma, Yecheng Jason and Liang, William and Wang, Guanzhi and Huang, De-An and Bastani, Osbert and Jayaraman, Dinesh and Zhu, Yuke and Fan, Linxi and Anandkumar, Anima},
+  journal={arXiv preprint arXiv:2310.12931},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024}
+}
+
+@article{deepseek2025r1,
+  title={{DeepSeek-R1}: Incentivizing reasoning capability in {LLMs} via reinforcement learning},
+  author={Guo, Daya and Yang, Dejian and Zhang, Haowei and Song, Junxiao and Zhang, Ruoyu and Xu, Runxin and Zhu, Qihao and Ma, Shirong and Wang, Peiyi and Bi, Xiao and others},
+  journal={arXiv preprint arXiv:2501.12948},
+  year={2025}
+}
+
+@article{shao2024deepseekmath,
+  title={{DeepSeekMath}: Pushing the limits of mathematical reasoning in open language models},
+  author={Shao, Zhihong and Wang, Peiyi and Zhu, Qihao and Xu, Runxin and Song, Junxiao and Bi, Xiao and Zhang, Haowei and Zhang, Mingchuan and Li, Y.~K. and Wu, Y. and others},
+  journal={arXiv preprint arXiv:2402.03300},
+  year={2024}
+}
+
+@article{snell2024scaling,
+  title={Scaling {LLM} test-time compute optimally can be more effective than scaling model parameters},
+  author={Snell, Charlie and Lee, Jaehoon and Xu, Kelvin and Kumar, Aviral},
+  journal={arXiv preprint arXiv:2408.03314},
+  year={2024}
+}
+
+@article{jaech2024openai,
+  title={{OpenAI o1} System Card: Learning to reason with {LLMs}},
+  author={{OpenAI}},
+  journal={arXiv preprint arXiv:2412.16720},
+  year={2024}
+}
+
+@article{chen2021evaluating,
+  title={Evaluating large language models trained on code},
+  author={Chen, Mark and Tworek, Jerry and Jun, Heewoo and Yuan, Qiming and Pinto, Henrique Ponde de Oliveira and Kaplan, Jared and Edwards, Harri and Burda, Yuri and Joseph, Nicholas and Brockman, Greg and others},
+  journal={arXiv preprint arXiv:2107.03374},
+  year={2021}
+}
+
+@article{li2022competition,
+  title={Competition-level code generation with {AlphaCode}},
+  author={Li, Yujia and Choi, David and Chung, Junyoung and Kushman, Nate and Schrittwieser, Julian and Leblond, R{\'e}mi and Eccles, Tom and Keeling, James and Gimeno, Felix and Dal Lago, Agustin and others},
+  journal={Science},
+  volume={378},
+  number={6624},
+  pages={1092--1097},
+  year={2022},
+  publisher={American Association for the Advancement of Science}
+}
+
+@inproceedings{le2022coderl,
+  title={{CodeRL}: Mastering code generation through pretrained models and deep reinforcement learning},
+  author={Le, Hung and Wang, Yue and Gotmare, Akhilesh Deepak and Savarese, Silvio and Hoi, Steven Chu Hong},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  volume={35},
+  pages={21314--21328},
+  year={2022}
+}
+
+@inproceedings{chen2023teaching,
+  title={Teaching large language models to self-debug},
+  author={Chen, Xinyun and Lin, Maxwell and Sch{\"a}rli, Nathanael and Zhou, Denny},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024}
+}
+
+@inproceedings{shinn2023reflexion,
+  title={Reflexion: Language agents with verbal reinforcement learning},
+  author={Shinn, Noah and Cassano, Federico and Gopinath, Ashwin and Narasimhan, Karthik and Yao, Shunyu},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  volume={36},
+  pages={8634--8652},
+  year={2023}
+}
+
+@article{liu2024lost,
+  title={Lost in the middle: How language models use long contexts},
+  author={Liu, Nelson F. and Lin, Kevin and Hewitt, John and Paranjape, Ashwin and Bevilacqua, Michele and Petroni, Fabio and Liang, Percy},
+  journal={Transactions of the Association for Computational Linguistics},
+  volume={12},
+  pages={157--173},
+  year={2024}
+}
+
+@inproceedings{ouyang2022training,
+  title={Training language models to follow instructions with human feedback},
+  author={Ouyang, Long and Wu, Jeffrey and Jiang, Xu and Almeida, Diogo and Wainwright, Carroll and Mishkin, Pamela and Zhang, Chong and Agarwal, Sandhini and Slama, Katarina and Ray, Alex and others},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  volume={35},
+  pages={27730--27744},
+  year={2022}
+}
+
+@inproceedings{tirumala2022memorization,
+  title={Memorization without overfitting: Analyzing the training dynamics of large language models},
+  author={Tirumala, Kushal and Markosyan, Aram and Zettlemoyer, Luke and Aghajanyan, Armen},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  volume={35},
+  pages={38274--38290},
+  year={2022}
+}
+
+@inproceedings{carlini2023quantifying,
+  title={Quantifying memorization across neural language models},
+  author={Carlini, Nicholas and Ippolito, Daphne and Jagielski, Matthew and Lee, Katherine and Tramer, Florian and Zhang, Chiyuan},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2023}
+}
+
+@inproceedings{trivedi2021learning,
+  title={Learning to synthesize programs as interpretable and generalizable policies},
+  author={Trivedi, Dweep and Zhang, Jesse and Shao, Shao-Hua and Lim, Joseph J.},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  volume={34},
+  pages={25146--25163},
+  year={2021}
+}
+
+@inproceedings{hong2021latent,
+  title={Latent programmer: Discrete latent codes for program synthesis},
+  author={Hong, Joey and Dohan, David and Singh, Rishabh and Sutton, Charles and Zaheer, Manzil},
+  booktitle={International Conference on Machine Learning (ICML)},
+  pages={4308--4318},
+  year={2021},
+  organization={PMLR}
+}

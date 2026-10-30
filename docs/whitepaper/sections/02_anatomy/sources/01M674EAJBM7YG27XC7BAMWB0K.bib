@@ -1,0 +1,381 @@
+% refs.bib -- entries used by Section 2 (The Anatomy of Innovation).
+% Every entry below was checked on 30 October 2026 against the primary record
+% named in its "note" comment (DOI resolver, publisher, arXiv, proceedings,
+% library catalog or the source itself). Keys follow the Final Paper Plan where
+% the plan names one; new keys are listed in sections/02_anatomy.notes.md.
+
+% ---------------------------------------------------------------------------
+% Novelty and ideas
+% ---------------------------------------------------------------------------
+
+@inproceedings{si2024ideas,
+  author    = {Si, Chenglei and Yang, Diyi and Hashimoto, Tatsunori},
+  title     = {Can {LLMs} Generate Novel Research Ideas? {A} Large-Scale Human Study with 100+ {NLP} Researchers},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2025},
+  url       = {https://openreview.net/forum?id=M23dTGWCZy},
+  eprint    = {2409.04109},
+  archivePrefix = {arXiv}
+}
+% checked: ICLR 2025 poster page; arXiv v1. 104 participants (49 writers, 79 reviewers);
+% "more novel (p < 0.05) ... slightly weaker on feasibility".
+
+@inproceedings{si2025gap,
+  author    = {Si, Chenglei and Hashimoto, Tatsunori and Yang, Diyi},
+  title     = {The Ideation--Execution Gap: Execution Outcomes of {LLM}-Generated versus Human Research Ideas},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2026},
+  url       = {https://openreview.net/forum?id=Fllp8l6Puy},
+  eprint    = {2506.20803},
+  archivePrefix = {arXiv}
+}
+% checked: ICLR 2026 poster page; arXiv v1 (25 June 2025). Author order differs from si2024ideas.
+% 43 executors, >100 hours each; LLM ideas' scores "decrease significantly more ... on all
+% evaluation metrics (novelty, excitement, effectiveness, and overall; p < 0.05)".
+% Key keeps the plan's name; the venue year is 2026.
+
+% ---------------------------------------------------------------------------
+% Go, self-play and the referee
+% ---------------------------------------------------------------------------
+
+@article{silver2016mastering,
+  author  = {Silver, David and Huang, Aja and Maddison, Chris J. and Guez, Arthur and Sifre, Laurent and van den Driessche, George and Schrittwieser, Julian and Antonoglou, Ioannis and Panneershelvam, Veda and Lanctot, Marc and Dieleman, Sander and Grewe, Dominik and Nham, John and Kalchbrenner, Nal and Sutskever, Ilya and Lillicrap, Timothy and Leach, Madeleine and Kavukcuoglu, Koray and Graepel, Thore and Hassabis, Demis},
+  title   = {Mastering the Game of {Go} with Deep Neural Networks and Tree Search},
+  journal = {Nature},
+  volume  = {529},
+  number  = {7587},
+  pages   = {484--489},
+  year    = {2016},
+  doi     = {10.1038/nature16961}
+}
+% checked: Europe PMC abstract (PMID 26819042).
+
+@article{silver2017mastering,
+  author  = {Silver, David and Schrittwieser, Julian and Simonyan, Karen and Antonoglou, Ioannis and Huang, Aja and Guez, Arthur and Hubert, Thomas and Baker, Lucas and Lai, Matthew and Bolton, Adrian and Chen, Yutian and Lillicrap, Timothy and Hui, Fan and Sifre, Laurent and van den Driessche, George and Graepel, Thore and Hassabis, Demis},
+  title   = {Mastering the Game of {Go} without Human Knowledge},
+  journal = {Nature},
+  volume  = {550},
+  number  = {7676},
+  pages   = {354--359},
+  year    = {2017},
+  doi     = {10.1038/nature24270}
+}
+% checked: Europe PMC abstract; UCL Discovery accepted manuscript for the body text on
+% "non-standard strategies beyond the scope of traditional Go knowledge" (paraphrased in Sec. 2).
+
+@misc{metz2016twomoves,
+  author       = {Metz, Cade},
+  title        = {In Two Moves, {AlphaGo} and {Lee Sedol} Redefined the Future},
+  howpublished = {\emph{Wired}},
+  year         = {2016},
+  month        = mar,
+  note         = {Published 16 March 2016},
+  url          = {https://www.wired.com/2016/03/two-moves-alphago-lee-sedol-redefined-future/}
+}
+% checked: article. "As Silver told me, AlphaGo had calculated that there was a one-in-ten-thousand
+% chance that a human would make that move." ... "AlphaGo went on to win Game Two".
+
+@article{shin2023superhuman,
+  author  = {Shin, Minkyu and Kim, Jin and van Opheusden, Bas and Griffiths, Thomas L.},
+  title   = {Superhuman Artificial Intelligence Can Improve Human Decision-Making by Increasing Novelty},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {120},
+  number  = {12},
+  pages   = {e2214840120},
+  year    = {2023},
+  doi     = {10.1073/pnas.2214840120}
+}
+% checked: PNAS abstract. >5.8 million move decisions, 1950-2021; previously unobserved moves
+% more frequent and associated with higher decision quality after superhuman AI.
+
+% ---------------------------------------------------------------------------
+% History's pull
+% ---------------------------------------------------------------------------
+
+@article{azoulay2019funeral,
+  author  = {Azoulay, Pierre and Fons-Rosen, Christian and Graff Zivin, Joshua S.},
+  title   = {Does Science Advance One Funeral at a Time?},
+  journal = {American Economic Review},
+  volume  = {109},
+  number  = {8},
+  pages   = {2889--2920},
+  year    = {2019},
+  doi     = {10.1257/aer.20161574}
+}
+% checked: aeaweb.org abstract. The 8.6% figure appears only in the NBER working-paper abstract
+% (w21788), so Sec. 2 states the AER finding without a percentage.
+
+% ---------------------------------------------------------------------------
+% Swarms and automated research
+% ---------------------------------------------------------------------------
+
+@book{socher2026eureka,
+  author    = {Socher, Richard},
+  title     = {The {Eureka} Machine: Why {AI} Is the Key to Unlocking a New Era of Scientific Discoveries},
+  publisher = {PublicAffairs},
+  address   = {New York},
+  year      = {2026},
+  isbn      = {9781541705708},
+  url       = {https://www.hachettebookgroup.com/titles/richard-socher/the-eureka-machine/9781541705708/}
+}
+% checked: Hachette page; on sale 22 September 2026.
+
+@misc{socher2026bookbite,
+  author       = {Socher, Richard},
+  title        = {{AI}'s Biggest Breakthrough Won't Be a Chatbot},
+  howpublished = {Next Big Idea Club, Book Bites},
+  year         = {2026},
+  month        = oct,
+  note         = {Published 8 October 2026},
+  url          = {https://nextbigideaclub.com/magazine/ais-biggest-breakthrough-wont-chatbot-bookbite/61534/}
+}
+% checked: article. Pillar labels verbatim: "A living map of all human knowledge", "A unified
+% model of physical reality", "High-fidelity digital twins", "Fully autonomous physical
+% laboratories"; "millions of AI agents ... will critique each other's ideas".
+
+@misc{karpathy2026autoresearch,
+  author       = {Karpathy, Andrej},
+  title        = {autoresearch},
+  howpublished = {GitHub repository},
+  year         = {2026},
+  note         = {First commit 6 March 2026},
+  url          = {https://github.com/karpathy/autoresearch}
+}
+% checked: repository and README: "approx 12 experiments/hour and approx 100 experiments while you sleep."
+
+@misc{lu2024aiscientist,
+  author        = {Lu, Chris and Lu, Cong and Lange, Robert Tjarko and Foerster, Jakob and Clune, Jeff and Ha, David},
+  title         = {The {AI Scientist}: Towards Fully Automated Open-Ended Scientific Discovery},
+  year          = {2024},
+  eprint        = {2408.06292},
+  archivePrefix = {arXiv},
+  note          = {arXiv:2408.06292},
+  doi           = {10.48550/arXiv.2408.06292}
+}
+% checked: arXiv abstract page (v1 12 Aug 2024; v3 1 Sep 2024).
+
+% ---------------------------------------------------------------------------
+% The four pillars: books (metadata checked against loc.gov, Open Library,
+% archive.org, darwin-online.org.uk and Crossref)
+% ---------------------------------------------------------------------------
+
+@incollection{borges1941babel,
+  author    = {Borges, Jorge Luis},
+  title     = {La biblioteca de {Babel}},
+  booktitle = {El jard{\'\i}n de senderos que se bifurcan},
+  publisher = {Sur},
+  address   = {Buenos Aires},
+  year      = {1941},
+  note      = {Printed 30 December 1941, issued 1942 (LCCN 43002084). English translation by James E. Irby, ``The Library of Babel'', in \emph{Labyrinths}, New Directions, 1962}
+}
+% checked: loc.gov 43002084 (SUR [1942]); Foster A72.1 gives "1942 [30 December 1941]".
+% Each book: 410 pages, 40 lines per page, about 80 letters per line.
+
+@book{darwin1859origin,
+  author    = {Darwin, Charles},
+  title     = {On the Origin of Species by Means of Natural Selection, or the Preservation of Favoured Races in the Struggle for Life},
+  publisher = {John Murray},
+  address   = {London},
+  year      = {1859},
+  url       = {http://darwin-online.org.uk/content/frameset?itemID=F373&viewtype=text&pageseq=1}
+}
+% checked: darwin-online.org.uk, record F373 (first edition).
+
+@book{wallas1926art,
+  author    = {Wallas, Graham},
+  title     = {The Art of Thought},
+  publisher = {Jonathan Cape},
+  address   = {London},
+  year      = {1926}
+}
+% checked: loc.gov 26011392; archive.org "theartofthought". Stages verbatim: "Preparation,
+% Incubation, Illumination (and its accompaniments), and Verification" (ch. IV, p. 80).
+
+@book{popper1959logic,
+  author    = {Popper, Karl R.},
+  title     = {The Logic of Scientific Discovery},
+  publisher = {Hutchinson},
+  address   = {London},
+  year      = {1959}
+}
+% checked: Open Library OL19479153M; archive.org. Translation of Logik der Forschung (1935).
+
+@book{popper1963conjectures,
+  author    = {Popper, Karl R.},
+  title     = {Conjectures and Refutations: The Growth of Scientific Knowledge},
+  publisher = {Routledge \& Kegan Paul},
+  address   = {London},
+  year      = {1963}
+}
+% checked: Open Library OL13574654M (OCLC 3959022).
+
+@book{kuhn1962structure,
+  author    = {Kuhn, Thomas S.},
+  title     = {The Structure of Scientific Revolutions},
+  publisher = {University of Chicago Press},
+  address   = {Chicago},
+  year      = {1962}
+}
+% checked: loc.gov 62019621.
+
+@book{koestler1964act,
+  author    = {Koestler, Arthur},
+  title     = {The Act of Creation},
+  publisher = {Hutchinson},
+  address   = {London},
+  year      = {1964}
+}
+% checked: loc.gov 64004738; archive.org full text: "I have coined the term 'bisociation'".
+
+@book{polya1945solve,
+  author    = {P{\'o}lya, George},
+  title     = {How to Solve It: A New Aspect of Mathematical Method},
+  publisher = {Princeton University Press},
+  address   = {Princeton, NJ},
+  year      = {1945}
+}
+% checked: loc.gov a45003112. First phase "Understanding the problem" (heading checked in the
+% 2nd edition, which changed only "a few minor improvements" in this part).
+
+@book{polanyi1966tacit,
+  author    = {Polanyi, Michael},
+  title     = {The Tacit Dimension},
+  publisher = {Doubleday},
+  address   = {Garden City, NY},
+  year      = {1966}
+}
+% checked: loc.gov 66021015.
+
+@book{degroot1965thought,
+  author    = {de Groot, Adriaan D.},
+  title     = {Thought and Choice in Chess},
+  publisher = {Mouton},
+  address   = {The Hague},
+  year      = {1965}
+}
+% checked: loc.gov 65020898. Translation of Het denken van den schaker (1946).
+
+@book{peirce1934cp,
+  author    = {Peirce, Charles Sanders},
+  title     = {Collected Papers of {Charles Sanders Peirce}, Volume {V}: Pragmatism and Pragmaticism},
+  publisher = {Harvard University Press},
+  address   = {Cambridge, MA},
+  year      = {1934},
+  note      = {Edited by Charles Hartshorne and Paul Weiss}
+}
+% checked: Open Library OL21352725M; series LCCN 31030898. Quoted passage is CP 5.171.
+
+@article{nielsen2016engineering,
+  author  = {Nielsen, Jens and Keasling, Jay D.},
+  title   = {Engineering Cellular Metabolism},
+  journal = {Cell},
+  volume  = {164},
+  number  = {6},
+  pages   = {1185--1197},
+  year    = {2016},
+  doi     = {10.1016/j.cell.2016.02.004}
+}
+% checked: Crossref. Section "Design-Build-Test-Learn Cycle"; Figure 3 "The Design-Build-Test-Learn
+% Cycle of Metabolic Engineering" (p. 1190).
+
+@misc{hamming1986research,
+  author       = {Hamming, Richard W.},
+  title        = {You and Your Research},
+  howpublished = {Bell Communications Research Colloquium Seminar, Morris Research and Engineering Center, Morristown, NJ},
+  year         = {1986},
+  note         = {Talk given 7 March 1986; transcribed by J. F. Kaiser},
+  url          = {https://hdl.handle.net/10945/37504}
+}
+% checked: Calhoun (Naval Postgraduate School) record; transcript header.
+
+% ---------------------------------------------------------------------------
+% The four pillars and taste: articles (quotes checked against scans of the
+% original issues where noted)
+% ---------------------------------------------------------------------------
+
+@article{campbell1960bvsr,
+  author  = {Campbell, Donald T.},
+  title   = {Blind Variation and Selective Retention in Creative Thought as in Other Knowledge Processes},
+  journal = {Psychological Review},
+  volume  = {67},
+  number  = {6},
+  pages   = {380--400},
+  year    = {1960},
+  doi     = {10.1037/h0040373}
+}
+% checked: scan of the original issue (archive.org sim_psychological-review_1960-11_67_6).
+% Printed title is singular "Retention"; APA's database record has the plural "Retentions".
+% p. 381: "Three conditions are necessary: a mechanism for introducing variation, a consistent
+% selection process, and a mechanism for preserving and reproducing the selected variations."
+
+@article{simonton2011bvsr,
+  author  = {Simonton, Dean Keith},
+  title   = {Creativity and Discovery as Blind Variation: {Campbell's} (1960) {BVSR} Model after the Half-Century Mark},
+  journal = {Review of General Psychology},
+  volume  = {15},
+  number  = {2},
+  pages   = {158--174},
+  year    = {2011},
+  doi     = {10.1037/a0022912}
+}
+% checked: Crossref.
+
+@article{boden1998creativity,
+  author  = {Boden, Margaret A.},
+  title   = {Creativity and Artificial Intelligence},
+  journal = {Artificial Intelligence},
+  volume  = {103},
+  number  = {1--2},
+  pages   = {347--356},
+  year    = {1998},
+  doi     = {10.1016/S0004-3702(98)00055-1}
+}
+% checked: Crossref; ScienceDirect abstract: new ideas "by producing novel combinations of familiar
+% ideas; by exploring the potential of conceptual spaces; and by making transformations that
+% enable the generation of previously impossible ideas. AI will have less difficulty in modelling
+% the generation of new ideas than in automating their evaluation."
+% Replaces the plan's key boden1990creative (see notes).
+
+@article{poincare1910creation,
+  author  = {Poincar{\'e}, Henri},
+  title   = {Mathematical Creation},
+  journal = {The Monist},
+  volume  = {20},
+  number  = {3},
+  pages   = {321--335},
+  year    = {1910},
+  note    = {Translated by George Bruce Halsted},
+  doi     = {10.1093/monist/20.3.321}
+}
+% checked: scan of the July 1910 issue (archive.org sim_monist_1910-07_20_3), pp. 324-325:
+% "Invention is discernment, choice." / "The sterile combinations do not even present themselves
+% to the mind of the inventor."
+
+@article{chase1973perception,
+  author  = {Chase, William G. and Simon, Herbert A.},
+  title   = {Perception in Chess},
+  journal = {Cognitive Psychology},
+  volume  = {4},
+  number  = {1},
+  pages   = {55--81},
+  year    = {1973},
+  doi     = {10.1016/0010-0285(73)90004-2}
+}
+% checked: Crossref and full text. p. 55 on de Groot: masters "search through about the same number
+% of possibilities as weaker players--perhaps even fewer, almost certainly not more--but they are
+% very good at coming up with the 'right' moves". p. 80: stronger players "encode the position into
+% larger perceptual chunks, each consisting of a familiar subconfiguration of pieces."
+
+@article{donoho2017fifty,
+  author  = {Donoho, David},
+  title   = {50 Years of Data Science},
+  journal = {Journal of Computational and Graphical Statistics},
+  volume  = {26},
+  number  = {4},
+  pages   = {745--766},
+  year    = {2017},
+  doi     = {10.1080/10618600.2017.1384734}
+}
+% checked: Crossref; Common Task Framework definition (Sec. 6.1) read in the 2015 preprint: a
+% "scoring referee" runs each submitted rule against "a testing dataset which is sequestered
+% behind a Chinese wall". Sec. 2 paraphrases only.
