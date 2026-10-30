@@ -510,6 +510,11 @@ impl ModelObject {
     /// contract. See [`crate::math_pipeline`].
     pub fn math_pipeline(&self) -> Result<crate::math_pipeline::MathPipeline> {
         self.require_executable()?;
+        if self.platt_calibration()?.is_some() {
+            return Err(Failure::backend(
+                "math-pipeline decode/source export cannot preserve Platt calibration; export the complete object",
+            ));
+        }
         if self.manifest.format != MATH_PIPELINE {
             return Err(Failure::backend(
                 "this command needs a math-pipeline object",
@@ -755,6 +760,60 @@ pub fn load_fitted(path: &Path, max_bytes: u64) -> Result<FittedModel> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn math_pipeline_decode_and_javascript_export_refuse_a_missing_required_platt_part() {
+        use crate::math_pipeline::{INPUT_PART, PIPELINE_PART};
+
+        let parts: BTreeMap<String, Vec<u8>> = BTreeMap::from([
+            (
+                PIPELINE_PART.into(),
+                include_bytes!("../tests/fixtures/math-pipeline/pipeline.json").to_vec(),
+            ),
+            (
+                INPUT_PART.into(),
+                include_bytes!("../tests/fixtures/math-pipeline/input.json").to_vec(),
+            ),
+        ]);
+        let mut manifest = Manifest {
+            schema: SCHEMA.into(),
+            minimum_reader_version: 1,
+            format: MATH_PIPELINE.into(),
+            producer: Producer::default(),
+            primary: PIPELINE_PART.into(),
+            required_capabilities: vec![],
+            files: parts
+                .iter()
+                .map(|(path, bytes)| Part::new(path, "application/json", bytes))
+                .collect(),
+            metadata: Value::Null,
+        };
+        let legacy = ModelObject::new(manifest.clone(), parts.clone(), 1 << 20).unwrap();
+        assert!(legacy.inspect().unwrap().executable);
+        legacy.verify_executable().unwrap();
+        legacy.math_pipeline().unwrap();
+        assert!(!legacy.export_source("javascript").unwrap().is_empty());
+
+        manifest
+            .required_capabilities
+            .push(calibration_platt::CAPABILITY.into());
+        let invalid = ModelObject::new(manifest, parts, 1 << 20).unwrap();
+        assert!(invalid.platt_calibration().is_err());
+        assert!(invalid.inspect().is_err());
+        assert!(invalid.verify_executable().is_err());
+        let decoded = invalid.math_pipeline();
+        let exported = invalid.export_source("javascript");
+        assert!(
+            decoded.is_err() && exported.is_err(),
+            "missing required Platt part accepted: math_pipeline={}, javascript_export={}",
+            decoded.is_ok(),
+            exported.is_ok()
+        );
+        for error in [decoded.unwrap_err(), exported.unwrap_err()] {
+            assert_eq!(crate::error::kind_of(&error), crate::FailureKind::Integrity);
+            assert!(error.to_string().contains("must occur together"));
+        }
+    }
 
     fn binary_fixture() -> (FittedModel, feat_math::advanced_v3::RawTable) {
         use crate::{api, budget::Budget, fitted::CreatedBy, limits::Limits, table, task};
