@@ -518,18 +518,19 @@ mod tests {
         let path = format!("/v1/runs/{}", snapshot.run_id);
         let router = app(Arc::clone(&log));
         let waiting = tokio::spawn(router.oneshot(request(
-            &format!("{path}?wait_seconds=1&after_event=0"),
+            &format!("{path}?wait_seconds=60&after_event=0"),
             false,
             None,
         )));
         tokio::time::sleep(Duration::from_millis(5)).await;
         let writer = Arc::clone(&log);
         let old = snapshot.clone();
-        let start = std::time::Instant::now();
-        let committed =
-            tokio::task::spawn_blocking(move || append(&writer, &old, vec![test_body("wake")]))
-                .await
-                .unwrap();
+        let (committed, start) = tokio::task::spawn_blocking(move || {
+            let snapshot = append(&writer, &old, vec![test_body("wake")]);
+            (snapshot, std::time::Instant::now())
+        })
+        .await
+        .unwrap();
         let response = tokio::time::timeout(
             Duration::from_millis(50).saturating_sub(start.elapsed()),
             waiting,

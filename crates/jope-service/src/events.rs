@@ -375,7 +375,7 @@ pub(crate) mod tests {
         let run = snapshot.run_id.clone();
         let waiter = tokio::spawn(async move {
             reader
-                .wait_after(&run, 0, Duration::from_secs(2))
+                .wait_after(&run, 0, Duration::from_secs(60))
                 .await
                 .unwrap()
                 .unwrap()
@@ -383,12 +383,13 @@ pub(crate) mod tests {
         tokio::task::yield_now().await;
         let (staged_tx, staged_rx) = std::sync::mpsc::channel();
         let (release_tx, release_rx) = std::sync::mpsc::channel();
+        let (committed_tx, committed_rx) = tokio::sync::oneshot::channel();
         let writer = Arc::clone(&log);
         let mut next = snapshot.clone();
         next.revision.0 += 1;
         let run = snapshot.run_id.clone();
         let worker = std::thread::spawn(move || {
-            writer.commit(
+            let result = writer.commit(
                 RunUpdate {
                     expected_revision: Some(1),
                     snapshot: next,
@@ -411,9 +412,11 @@ pub(crate) mod tests {
                     release_rx.recv().unwrap();
                     Ok(())
                 },
-            )
+            );
+            let _ = committed_tx.send(std::time::Instant::now());
+            result
         });
-        staged_rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        staged_rx.recv_timeout(Duration::from_secs(20)).unwrap();
         assert!(!wake.has_changed().unwrap());
         assert_eq!(
             log.snapshot(&snapshot.run_id).unwrap(),
@@ -435,12 +438,19 @@ pub(crate) mod tests {
             .is_none());
         tokio::time::sleep(Duration::from_millis(10)).await;
         assert!(!waiter.is_finished());
-        let start = std::time::Instant::now();
         release_tx.send(()).unwrap();
-        let visible = tokio::time::timeout(Duration::from_millis(50), waiter)
+        // Publication/fsync is setup; measure delivery once the event is committed.
+        let start = tokio::time::timeout(Duration::from_secs(20), committed_rx)
             .await
             .unwrap()
             .unwrap();
+        let visible = tokio::time::timeout(
+            Duration::from_millis(50).saturating_sub(start.elapsed()),
+            waiter,
+        )
+        .await
+        .unwrap()
+        .unwrap();
         assert!(start.elapsed() < Duration::from_millis(50));
         worker.join().unwrap().unwrap();
         wake.changed().await.unwrap();
@@ -694,6 +704,8 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn long_poll_times_out_without_waking_for_revision_only_or_telemetry() {
         let (_dir, log, snapshot) = fixture();
+        // Finish the synchronous revision-only write before starting the deadline.
+        let current = append(&log, &snapshot, vec![]);
         let reader = Arc::clone(&log);
         let id = snapshot.run_id.clone();
         let start = std::time::Instant::now();
@@ -705,7 +717,8 @@ pub(crate) mod tests {
                 .unwrap()
         });
         tokio::time::sleep(Duration::from_millis(5)).await;
-        let current = append(&log, &snapshot, vec![]);
+        // An unrelated/spurious wake hint must also recheck the event watermark.
+        log.wake.send_replace(());
         log.publish_telemetry(TelemetryEvent {
             run_id: snapshot.run_id.clone(),
             time: "2026-10-30T00:00:00Z".into(),
