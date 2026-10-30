@@ -650,21 +650,38 @@ impl Discovery {
                     .is_some_and(|rank| rank < 4)
             }) {
                 let request = self.request(round.number, 0, 1, candidate)?;
-                let response = checked_response(&request, executor.evaluate(&request));
+                let mut response = checked_response(&request, executor.evaluate(&request));
+                let improving = response.failure.is_none()
+                    && next
+                        .champion
+                        .as_ref()
+                        .is_none_or(|c| response.scores[1] < c.loss);
+                let bytes = if improving {
+                    // Numerical refit failure belongs to this candidate. Store IO
+                    // failure below still aborts the round and requires recovery.
+                    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        executor.fitted_model(&next.plan, &candidate.dsl)
+                    })) {
+                        Ok(Ok(bytes)) if !bytes.is_empty() => Some(bytes),
+                        _ => {
+                            response = Response::failed(
+                                request.attempt.clone(),
+                                WorkerFailure::NonFinite,
+                                response.wall_ms,
+                            );
+                            None
+                        }
+                    }
+                } else {
+                    None
+                };
                 let id = experiment(round.number, 0, 1);
                 add_events(&mut next, &response, &id, &mut events);
                 records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,
                     "scores":response.scores,"predictions_digest":response.predictions_digest,"failure":response.failure}));
-                if response.failure.is_none()
-                    && next
-                        .champion
-                        .as_ref()
-                        .is_none_or(|c| response.scores[1] < c.loss)
-                {
+                if let Some(bytes) = bytes {
                     // Publication precedes the metadata reference. An aborted transaction
                     // may leave an unreferenced CAS object, never a partial champion.
-                    let bytes = executor.fitted_model(&next.plan, &candidate.dsl)?;
-                    ensure!(!bytes.is_empty(), "empty fitted artifact");
                     let model = self.store.publish_blob(bytes.as_slice())?;
                     let previous = next.champion.as_ref().map(|c| c.value);
                     let artifact: ArtifactId = format!("art_{}", &digest(&bytes)[..24]).parse()?;
@@ -993,7 +1010,12 @@ fn add_events(state: &mut Checkpoint, response: &Response, id: &str, events: &mu
         metric: state.plan.objective.clone(),
         value: response.scores.get(2).copied(),
         failure: response.failure.map(|failure| PublicFailure {
-            code: jope_api::error::ErrorCode::InvalidInput,
+            code: match failure {
+                WorkerFailure::NonFinite => jope_api::error::ErrorCode::FitnessUndefined,
+                WorkerFailure::Unavailable => jope_api::error::ErrorCode::BackendUnavailable,
+                WorkerFailure::InvalidRequest => jope_api::error::ErrorCode::InvalidInput,
+                _ => jope_api::error::ErrorCode::NumericalFailure,
+            },
             reason: format!("worker {failure:?}"),
         }),
     }));
@@ -1085,8 +1107,23 @@ pub fn evaluate_native<B: AsRef<[u8]>>(
     request: &Request,
     matrix: &Matrix<B>,
 ) -> std::result::Result<worker::Scores, WorkerFailure> {
-    native_scores(request, matrix).map_err(|_| WorkerFailure::InvalidRequest)
+    native_scores(request, matrix).map_err(|error| {
+        if error.is::<UndefinedFitness>() {
+            WorkerFailure::NonFinite
+        } else {
+            WorkerFailure::InvalidRequest
+        }
+    })
 }
+
+#[derive(Debug)]
+struct UndefinedFitness;
+impl std::fmt::Display for UndefinedFitness {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("candidate has undefined fitness or numerical predictions")
+    }
+}
+impl std::error::Error for UndefinedFitness {}
 
 fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<worker::Scores> {
     let spec: NativeFolds = serde_json::from_value(request.fold_spec.clone())?;
@@ -1104,6 +1141,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
             .as_str()
             .context("objective must be a specification string")?,
     )?;
+    feat_math::GenomeIr::parse(&request.dsl)?;
     let mut targets = vec![];
     let mut predictions = vec![];
     let mut validation_rows = BTreeSet::new();
@@ -1123,11 +1161,16 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
             "overlapping fold rows"
         );
         let (x, y) = numeric_rows(matrix, &spec.target, &spec.features, &fold.train)?;
-        let fitted = NativeModel::fit(&spec.features, &request.dsl, &x, &y)?;
+        let fitted =
+            NativeModel::fit(&spec.features, &request.dsl, &x, &y).map_err(|_| UndefinedFitness)?;
         let (vx, vy) = numeric_rows(matrix, &spec.target, &spec.features, &fold.validation)?;
-        let prediction = fitted.predict(&vx)?;
-        let score = objective.evaluate(&vy, &prediction)?;
-        let rmse = RegressionObjective::parse("rmse")?.evaluate(&vy, &prediction)?;
+        let prediction = fitted.predict(&vx).map_err(|_| UndefinedFitness)?;
+        let score = objective
+            .evaluate(&vy, &prediction)
+            .map_err(|_| UndefinedFitness)?;
+        let rmse = RegressionObjective::parse("rmse")?
+            .evaluate(&vy, &prediction)
+            .map_err(|_| UndefinedFitness)?;
         losses.push(score.loss);
         values.push(score.value);
         surrogate.push(rmse.loss);
@@ -1365,6 +1408,7 @@ pub fn run_m1(path: &Path, executable: &Path) -> Result<Value> {
     Ok(
         json!({"stage":"search_finished", "completion_reason":discovery.completed(),
         "budget_bound_by":discovery.budget_bound_by(),
+        "fitting":"selection_only",
         "champion":discovery.champion(), "snapshot":discovery.snapshot(),
         "nondeterminism":discovery.nondeterminism(), "projection":discovery.projection()?,
         "qualification":"M1 heuristic numeric regression; finalization/export and bundle-surrogate parity remain separate gates"}),
@@ -1538,6 +1582,7 @@ mod tests {
             WorkerFailure::Timeout,
             WorkerFailure::MemoryLimit,
             WorkerFailure::InvalidRequest,
+            WorkerFailure::NonFinite,
         ] {
             let directory = tempfile::tempdir().unwrap();
             let p = plan(directory.path(), 30, Effort::Fast, 1);
@@ -1554,7 +1599,10 @@ mod tests {
             assert_eq!(d.admitted(), 1);
             assert!(d.champion().is_none());
             assert_eq!(d.completed(), Some(CompletionReason::BudgetEvaluations));
-            let expected = usize::from(failure != WorkerFailure::InvalidRequest);
+            let expected = usize::from(matches!(
+                failure,
+                WorkerFailure::Timeout | WorkerFailure::MemoryLimit
+            ));
             assert_eq!(d.nondeterminism().count.0, expected as u64);
             assert_eq!(
                 d.nondeterminism().experiment_ids,
@@ -1564,6 +1612,14 @@ mod tests {
                     vec![]
                 }
             );
+            if failure == WorkerFailure::NonFinite {
+                let projection = d.projection().unwrap();
+                assert!(projection
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|e| e["body"]["failure"]["code"] == "FITNESS_UNDEFINED"));
+            }
         }
     }
 
@@ -1694,6 +1750,33 @@ mod tests {
             4
         );
         assert_eq!(d.champion().unwrap().candidate.algorithm_id, "alg_00000001");
+    }
+
+    #[test]
+    fn numerical_artifact_refit_failure_fails_only_the_candidate() {
+        struct Unfittable;
+        impl Executor for Unfittable {
+            fn evaluate(&self, request: &Request) -> Response {
+                Controlled { failure: None }.evaluate(request)
+            }
+            fn fitted_model(&self, _: &Plan, _: &str) -> Result<Vec<u8>> {
+                bail!("unit fixture numerical refit failure")
+            }
+        }
+        let directory = tempfile::tempdir().unwrap();
+        let p = plan(directory.path(), 30, Effort::Fast, 1);
+        let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
+        let mut d = Discovery::open(store, p).unwrap();
+        finish(&mut d, &TinySpace, &Unfittable, 1);
+        assert!(d.champion().is_none());
+        assert_eq!(d.completed(), Some(CompletionReason::BudgetEvaluations));
+        assert_eq!(d.nondeterminism().count.0, 0);
+        let projection = d.projection().unwrap();
+        assert!(projection
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|e| e["body"]["failure"]["code"] == "FITNESS_UNDEFINED"));
     }
 
     #[test]
@@ -1915,6 +1998,11 @@ mod tests {
         }
         if let Some(receipt) = std::env::var_os("JOPE_DSC_RECEIPT_DIR") {
             let receipt = PathBuf::from(receipt);
+            fs::write(
+                receipt.join("s2-plan.json"),
+                serde_json::to_vec_pretty(&p).unwrap(),
+            )
+            .unwrap();
             fs::copy(&p.matrix_path, receipt.join("s2-fit.jmat")).unwrap();
             fs::copy(
                 directory.path().join("fit-source-rows.json"),
