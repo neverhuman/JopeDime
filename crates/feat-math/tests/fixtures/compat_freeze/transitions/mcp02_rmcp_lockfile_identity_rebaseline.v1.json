@@ -2,18 +2,18 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "MCP-02 integrates owner-approved optional rmcp =3.8.0 (server, transport-io; no defaults), optional workspace Tokio, and the normal shared-client dependency. Cargo.lock is the only changed input among the38 evaluator inputs; four new packages and no existing version changes. No evaluator implementation source, behavior fixture, lineage body, DSL ABI or known identity row changes.",
   "plan_reference": "MCP-02; owner lanes_t540_1745 approved exact df45c9d5 SDK graph and derived ADR0004 transition; ADR-0004",
-  "source_commit": "be0f07337da2eb28079642b5383facf01cafe87c",
-  "base_commit": "cfd1bac4d7f6feb2ad3ccdf247a75bb3fd767792",
+  "source_commit": "6790a10355c67f2993a4c00c43c96015166be3af",
+  "base_commit": "dee223831e1462d9d097389ee45f4cc829c304fa",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "82f99b5e4c8f1774e082958c7bbb6ae3cfb3db973f90ee80bcd62c81f1419a0c",
-      "after": "e81137d27ceb5af6778d07a2373c80d5dffafbeddf652e9229c9fbb808e51302"
+      "after": "998262baeae46d3c340e62ffad73288436fdc068625e62e51def0805dab4f6ff"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "36643024b3ebe16e448345aaeb43a5f67fc04442fc2532928e9bec0f5a2a6633",
-      "after": "966397f14b33bdceb1971ce405deff961c7ba50dab0721037ef8150bc0d749c6"
+      "after": "61cad8dd9f1e3fcf98260a439826f7ef2eb19b486ca14a0cbda1f3d7d32483f7"
     }
   ],
   "before_identity_digest": "2cbeefc0fe4fa27ab1d61c81be7b0e16dbfd8e90691af5e58304f0c1cab1ec2e",

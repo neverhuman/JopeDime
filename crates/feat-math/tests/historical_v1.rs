@@ -1059,11 +1059,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let mcp02_rmcp = old_fixture("transitions/mcp02_rmcp_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         mcp02_rmcp["source_commit"],
-        "be0f07337da2eb28079642b5383facf01cafe87c"
+        "6790a10355c67f2993a4c00c43c96015166be3af"
     );
     assert_eq!(
         mcp02_rmcp["base_commit"],
-        "cfd1bac4d7f6feb2ad3ccdf247a75bb3fd767792"
+        "dee223831e1462d9d097389ee45f4cc829c304fa"
     );
     assert_eq!(
         mcp02_rmcp["before_identity_digest"],
