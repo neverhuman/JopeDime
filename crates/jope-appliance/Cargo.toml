@@ -26,6 +26,7 @@ serde_json.workspace = true
 jope-assets = { path = "../jope-assets", features = ["pack", "dev-keys"] }
 # The repository's JSON Schema validator, for the run receipt schema.
 jope-datasets = { path = "../jope-datasets" }
+portable-pty = "0.9"
 tempfile.workspace = true
 
 [features]

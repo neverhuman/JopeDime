@@ -1,0 +1,42 @@
+{
+  "schema": "jope.q1-smoke-catalog/v1",
+  "catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+  "datasets": [
+    {
+      "id": "00d3d3a9335ea29d",
+      "name": "liver-disorders",
+      "rows": 345,
+      "features": 5,
+      "family_id": "39e1da6af95d7b4ba5273df38ea525139c3d9be7",
+      "canonical_sha256": "00d3d3a9335ea29d756f787462a4a80bdfc35d9547293fe49f36053a081b55c5",
+      "train_sha256": "a234973d3760d0277f6695d448639e8a0218aa39a9dae2fff084b47cf1c68501",
+      "s3_bucket": "veox-jopedime-datasets-use2",
+      "split_method": "quota stratified by target distribution plus high-variance feature quantile bins",
+      "license_status": "unknown"
+    },
+    {
+      "id": "02683ae98254d34e",
+      "name": "fruitfly",
+      "rows": 125,
+      "features": 4,
+      "family_id": "7cb62e043430507680dca23f853177721c30b493",
+      "canonical_sha256": "02683ae98254d34e5dcac9d54517641a9f67bb5bb93408ca73c4bac79e817bf5",
+      "train_sha256": "50622299028468b4990bca8ac6433e301b527e1a5b436454412c13993b64994b",
+      "s3_bucket": "veox-jopedime-datasets-use2",
+      "split_method": "quota stratified by target distribution plus high-variance feature quantile bins",
+      "license_status": "unknown"
+    },
+    {
+      "id": "030629180644e2ca",
+      "name": "Temperature Summary Data, Geography Limited",
+      "rows": 197,
+      "features": 5,
+      "family_id": "8f5e964cd5a2e18e2ce97869c53ede752fc0a8d8",
+      "canonical_sha256": "030629180644e2ca7219516ff23f4c4cdeff23d08ec6c93f4a5fdf73b95dda3c",
+      "train_sha256": "7a1da679b4491c56569e420ffd560a3e5cbdf4a0e7899e6804e68986c23a29cc",
+      "s3_bucket": "veox-jopedime-datasets-use2",
+      "split_method": "quota stratified by target distribution plus high-variance feature quantile bins",
+      "license_status": "unknown"
+    }
+  ]
+}

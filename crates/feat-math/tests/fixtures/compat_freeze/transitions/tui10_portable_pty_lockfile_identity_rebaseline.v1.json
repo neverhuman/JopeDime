@@ -1,0 +1,29 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced lockfile-only identity successor for TUI-10 portable-pty dev dependency, chained after merged API-06 (#493). Cargo.lock adds only portable-pty compatible package graph entries and required duplicate-dependency disambiguations; all API-06 and other existing package entries/versions remain. No feat-math implementation source or dependency version changed. Identity-only regeneration updates evaluator identity and lineage provenance; behavioral and historical fixtures remain unchanged.",
+  "plan_reference": "TUI-10; ENG:watcher lanes_0810 owner ruling; ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/489",
+  "source_commit": "e1c814b5885f5993b101ddf9d6f4c4eb4822040a",
+  "base_commit": "26c54e4f0432c5035433fffb6437bd160e2a1198",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "7653d5b8040a6c68124f4bcc086b639a1e0d1221dc56abce4df86e4baa3a2fc3",
+      "after": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "105214196577e85ace635f5ddc3d41099db9ed90b8762e0501887d200697b471",
+      "after": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de"
+    }
+  ],
+  "identity": {
+    "old_implementation_sha256": "2f0afd13a08c87b82695dcc55433d31af7c945fdc7a2bd7b6c2521dc6b711a70",
+    "new_implementation_sha256": "3337743e65bd3186aa9f56a62f6144ab8201da1365a3e2d103df787d0af9940c",
+    "old_cargo_lock_sha256": "fff7118e8f106bbc67f220458795854b69dd86a0c23d2d18fce4bc6e2ca5929a",
+    "new_cargo_lock_sha256": "5ff115c4f2b6f11888bc424199f53acb05374b5f43e2da7d49d50409c38b0dbc",
+    "old_identity_digest": "0ecbbbd7738fdc7b2fedb67aba2aa556d04532006fcf444792e097320f3df883",
+    "new_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b"
+  },
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

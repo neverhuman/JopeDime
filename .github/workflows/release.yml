@@ -99,6 +99,9 @@ jobs:
           cp "$binary" "dist/jope-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu"
           cat "$RUNNER_TEMP/builder/builder-libc.txt" "$RUNNER_TEMP/builder/rustc-vV.txt"
 
+      - name: Audit linked libraries (fused-cpu)
+        run: bash deploy/ci/link-audit.sh "dist/jope-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu" fused-cpu
+
       - name: Build receipt (glibc ≤ ${{ env.MAX_GLIBC }}, no CUDA/LibTorch libraries)
         run: |
           set -euo pipefail
