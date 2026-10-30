@@ -897,6 +897,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         svc05_http_router["base_commit"],
         "80b954a2bf83e0ff3e8ed9fd6fbb72457b4d0940"
     );
+    let bat05_cli_ulid =
+        old_fixture("transitions/bat05_cli_ulid_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        bat05_cli_ulid["source_commit"],
+        "942a9fd7e59022fbf0faedd14129818604bd5fcb"
+    );
+    assert_eq!(
+        bat05_cli_ulid["base_commit"],
+        "cd3bf1f432ece683eba47984e788225dc2a17ff9"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -924,6 +934,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &wrk03_sampler,
         &obj01_runtime_fitness,
         &svc05_http_router,
+        &bat05_cli_ulid,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -988,6 +999,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk03_sampler.clone(),
                 obj01_runtime_fitness.clone(),
                 svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1038,6 +1050,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk03_sampler.clone(),
                 obj01_runtime_fitness.clone(),
                 svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1081,6 +1094,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk03_sampler.clone(),
                 obj01_runtime_fitness.clone(),
                 svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1155,6 +1169,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk03_sampler.clone(),
                 obj01_runtime_fitness.clone(),
                 svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
             ],
         ),
         (
@@ -1189,6 +1204,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk03_sampler.clone(),
                 obj01_runtime_fitness.clone(),
                 svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
             ],
         ),
     ] {
@@ -1271,6 +1287,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         wrk03_sampler,
         obj01_runtime_fitness,
         svc05_http_router,
+        bat05_cli_ulid,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
