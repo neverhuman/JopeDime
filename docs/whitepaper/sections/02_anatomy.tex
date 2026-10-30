@@ -83,8 +83,9 @@ $\winprob$, independently of the others. The number of tries up to and including
   \mathbb{E}[\Ntries] = \frac{1}{\winprob},
   \label{eq:taste}
 \end{equation}
-where $\Ntries$ counts the candidates the referee scores. Under
-this fixed-probability, independent-try model, better proposal quality
+where $\Ntries$ counts all candidate attempts, including incomplete or
+invalid outputs and failed executions. Under this fixed-probability,
+independent-try model, better proposal quality
 shortens the expected search.\footnote{Adaptive search and correlated
 proposals need not follow \cref{eq:taste}; independence alone does not say
 whether the approximation overstates or understates their cost. Empirical
