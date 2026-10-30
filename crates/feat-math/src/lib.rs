@@ -39,6 +39,7 @@ pub mod numeric_v2_emit;
 pub mod ops;
 pub mod portable_math;
 pub mod portfolio;
+pub mod public_names;
 pub mod registry;
 pub mod rng;
 pub mod router_policy;
