@@ -24,21 +24,25 @@ from jope.north_star import (
     snapshot_dope_weights,
     verify_dope_frozen_unchanged,
 )
+from jope.north_star.dope_freeze_guard import DOPE_NORMALIZER_BUFFERS
+
+
+class _ToyFusedNet(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.dope_model = nn.Module()
+        self.dope_model.sub = nn.Linear(4, 4, bias=False)
+        self.dope_model.bn = nn.BatchNorm1d(4)
+        self.head = nn.Linear(4, 2, bias=False)
+        self.root_scale = nn.Parameter(torch.ones(3))
+        for name in DOPE_NORMALIZER_BUFFERS:
+            self.register_buffer(name, torch.zeros(1))
 
 
 def test_ns3_dope_freeze_guard_and_counterexamples() -> None:
     torch.manual_seed(42)
 
-    class ToyFusedNet(nn.Module):
-        def __init__(self) -> None:
-            super().__init__()
-            self.dope_model = nn.Module()
-            self.dope_model.sub = nn.Linear(4, 4, bias=False)
-            self.dope_model.bn = nn.BatchNorm1d(4)
-            self.head = nn.Linear(4, 2, bias=False)
-            self.root_scale = nn.Parameter(torch.ones(3))
-
-    model = ToyFusedNet()
+    model = _ToyFusedNet()
     lock_dope_weights_and_eval_mode(model)
     snap = snapshot_dope_weights(model)
 
@@ -75,6 +79,45 @@ def test_ns3_dope_freeze_guard_and_counterexamples() -> None:
         model.dope_model.bn.running_mean.add_(1.0)
     with pytest.raises(DopeFreezeViolationError):
         verify_dope_frozen_unchanged(model, snap)
+
+
+def test_ns3_missing_normalizer_buffer_is_rejected() -> None:
+    model = _ToyFusedNet()
+    lock_dope_weights_and_eval_mode(model)
+    delattr(model, DOPE_NORMALIZER_BUFFERS[0])
+
+    with pytest.raises(DopeFreezeViolationError, match="required normalizer buffer.*missing"):
+        snapshot_dope_weights(model)
+
+
+def test_ns3_extra_trainable_dope_parameter_is_rejected() -> None:
+    model = _ToyFusedNet()
+    lock_dope_weights_and_eval_mode(model)
+    model.dope_model.extra = nn.Parameter(torch.ones(1))
+
+    with pytest.raises(DopeFreezeViolationError, match="dope_model.extra.*requires_grad=True"):
+        snapshot_dope_weights(model)
+
+
+def test_ns3_reshaped_normalizer_buffer_is_detected() -> None:
+    model = _ToyFusedNet()
+    lock_dope_weights_and_eval_mode(model)
+    before = snapshot_dope_weights(model)
+    model.step2_lm_mean_1x256 = torch.zeros(1, 1)
+
+    with pytest.raises(DopeFreezeViolationError, match="hash mismatch"):
+        verify_dope_frozen_unchanged(model, before)
+
+
+def test_ns3_mutated_normalizer_buffer_is_detected() -> None:
+    model = _ToyFusedNet()
+    lock_dope_weights_and_eval_mode(model)
+    before = snapshot_dope_weights(model)
+    with torch.no_grad():
+        model.step2_lm_mean_1x256.add_(1.0)
+
+    with pytest.raises(DopeFreezeViolationError, match="hash mismatch"):
+        verify_dope_frozen_unchanged(model, before)
 
 
 def test_ns4_binary_clf_metrics_and_valid_mask_nan_counterexample() -> None:
