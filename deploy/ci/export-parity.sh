@@ -475,13 +475,13 @@ def compare(case, language, actual):
     absolute, relative = (1e-9, 1e-7) if language == "javascript" else (1e-12, 1e-10)
     differences = []
     for i, (a, b) in enumerate(zip(actual, expected)):
-        if (
+        assert not (
             isinstance(a, bool)
             or not isinstance(a, (int, float))
             or not math.isfinite(a)
             or not math.isfinite(b)
-            or abs(a - b) > absolute + relative * abs(b)
-        ):
+        ), f"{case['key']}/{language}: invalid numeric output at row {i}"
+        if abs(a - b) > absolute + relative * abs(b):
             differences.append(i)
     if case.get("decision"):
         flips = [i for i, (a, b) in enumerate(zip(actual, expected)) if a != b]
@@ -856,6 +856,24 @@ try:
     assert expected_cells > 0 and executed == expected_cells, (
         f"{executed}/{expected_cells} supported cells passed; see failed case records"
     )
+    expected_emissions = [
+        (case["key"], emission["language"])
+        for case in cases
+        for emission in case["emissions"]
+    ]
+    observed_emissions = [(case["key"], case["language"]) for case in report["cases"]]
+    report["expected_emitted_modules"] = len(expected_emissions)
+    report["executed_emitted_modules"] = len(observed_emissions)
+    assert any(case["key"].startswith("routing/") for case in cases), "no routing probes"
+    assert sorted(observed_emissions) == sorted(expected_emissions), (
+        "missing or duplicate emitted predictor execution"
+    )
+    failed = [
+        (case["key"], case["language"])
+        for case in report["cases"]
+        if case["status"] != "pass"
+    ]
+    assert not failed, f"emitted predictors failed: {failed}"
     report.update(
         status="pass",
         passed=True,
