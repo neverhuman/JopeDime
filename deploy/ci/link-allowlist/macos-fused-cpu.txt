@@ -1,0 +1,15 @@
+# Apple OS libraries commonly linked by a Rust CLI.
+libsystem.*.dylib
+libresolv.*.dylib
+libiconv.*.dylib
+libobjc.*.dylib
+libc++.*.dylib
+libunwind.*.dylib
+libz.*.dylib
+libcompression.dylib
+corefoundation
+security
+systemconfiguration
+iokit
+foundation
+coreservices
