@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced TUI-03 lockfile identity successor after merging main 13dfc08c1: only this PR's dependency edges change Cargo.lock; no evaluator input version/feature or evaluator behavior changed. Re-chained at its queue slot by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "TUI-03; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "fb9925fe9c85294c80214625625abda19e31b891",
+  "base_commit": "13dfc08c15ae7e86a77229c6d429dffad7db5512",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "f0d97aab0d58a30bc4ab0e0859a36df08299581267624269a7ef67da1bff0394",
+      "after": "93e404ff824bc6695ac25cbf08fe3680bfab7de2c065a6d09e83c36da3ef4f6a"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "4a3ddfbc5d37fa0f145d70ded404404a81654d02f36dae3aa04d6d53557a3a2d",
+      "after": "fbd0e28c3b1c3401b2752da7ed058bd5518160af167af325b5cf6ccad0a674c3"
+    }
+  ],
+  "before_identity_digest": "c1f5b1950e06adbf7109d90e0b846a0b15a738b1a5a240474006d1bab3e829c6",
+  "after_identity_digest": "29f890f66105caf74e659d6b7d341f50d1effeb101ee0490794e324af02db39d",
+  "before_implementation_sha256": "768bce8c02d6d92e4192d282143ae732caaffd232ba806252ef9d5824b370de6",
+  "after_implementation_sha256": "239a478e53edc1e7a77ed24d33dd6379c901a924156dee5cdcc259404a7b94b1",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

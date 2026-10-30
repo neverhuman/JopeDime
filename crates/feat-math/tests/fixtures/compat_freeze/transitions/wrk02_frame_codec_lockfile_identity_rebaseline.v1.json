@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced WRK-02 adds only already-locked serde_json and proptest dependency edges to jope-service in Cargo.lock for the worker frame codec. Append this ADR-0004 lockfile-only evaluator identity and lineage fixture provenance edge after the merged SVC-07 transition on main; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
+  "plan_reference": "WRK-02; owner-authority ruling 0840; re-chain ruling 1045",
+  "source_commit": "b22603d45adc7260b3ab217569a53eaf55093c4e",
+  "base_commit": "4158c237bcaf23ada68957206b417344ab1075a3",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "5981f17baf2291b3bbd53574ab4aa26508f4957f83f14a38ab601df76a4879de",
+      "after": "d723171a209a2170bed6dc0f51c87d9eca9bc62a3b5166b59a3d19a25b9f8a48"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a8d61dd9f0fa48636a6e82e80954a581ea3b0ed75be74132763b8a12a91d417c",
+      "after": "adcd4dc55e42de37660b3ad0b1116c2850524e1fd533c53febe7062029af7299"
+    }
+  ],
+  "before_identity_digest": "62dfd68fada288ffc937b7e6e47fbbf18fef15c1eb271f9cf0bd86da0456ed3d",
+  "after_identity_digest": "15ced8f8f1c0bde071a50733d7ea83d48e1591ea02c3fccd04b52bf4d88db984",
+  "before_implementation_sha256": "749305466bcfd5fe0668969dd43c3c7d21460b3ab1fcf6cf33234ad83eda787d",
+  "after_implementation_sha256": "72015b2a951a481bfd9959ba2b613a96b7797635565afb5f445631c143ac4330",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

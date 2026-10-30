@@ -25,7 +25,7 @@ you saw.
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 28 | 0 | 28 | 0 | 0 | 0 |
-| new-example | 9 | 0 | 9 | 0 | 0 | 0 |
+| new-example | 10 | 0 | 10 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **838** | **353** | **75** | **1** | **402** | **7** |
+| **total** | **839** | **353** | **76** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 302.
 
@@ -838,6 +838,7 @@ you saw.
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |
 | new-example | (new) pipeline receipt schema | crates/jope-pipeline/examples/receipt_schema.rs (receipt_schema) | jope-pipeline::schema_agreement committed_schema_is_generated_from_code_exactly | new | Regenerate the v3 receipt schema from the Rust contract; v1 and v2 retained for reading. |
+| new-example | (new) jope-api schema snapshots | crates/jope-api/examples/schema_snapshots.rs (schema_snapshots) | jope-api::contract every_top_level_schema_matches_the_committed_snapshot | new | Print JSON Schema snapshots for the jope-api wire contract; changes are reviewed against the committed snapshots. |
 | new-example | (new) W7 test-only native-loop fixture executable | crates/jope-engine/tests/support/native_loop_fixture.rs (jope-native-loop-fixture) | jope-parallel::bounded_census cli_collect_merge_and_preflight_round_trip_without_side_effects; jope-parallel::bounded_smartcluster smartcluster_ranks_commit_the_whole_group_exactly_once | new | Test-only, not a product binary: the `jope-native-loop` command line (`native_loop::cli`) observing the checked-in fixture host (`tests/fixtures/host`) instead of the machine the tests run on, so the census and SmartCluster fixtures pass in the read-only runner container whose `/etc/machine-id` is empty. Cargo's default test target selection builds it; the default `cargo build` and `cargo install` do not produce it. The product binary hardwires `HostSources::system()` |
 | new-example | (new) kernel2 capability report | crates/feat-math/examples/capability_dump.rs (capability_dump) | feat-math::kernel::capabilities::tests::rendered_text_is_lint_clean_and_document_is_fresh; feat-math::capability_manifest kernel_profiles_equal_the_manifest_tier_in_both_directions | new | Print the current capability declaration, four revisioned search profiles, or the generated Markdown. |
 | new-example | (new) operator registry v2 codegen | crates/feat-math/examples/registry_codegen.rs (registry_codegen) | feat-math::registry_agreement generator_is_reproducible_and_checked_in_bytes_match | new | Deterministic codegen and freshness verifier for `crates/feat-math/registry/operators.toml` (`I07`). |

@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced TUI-11 lockfile identity successor: jope-client gains optional jope-api and serde_json edges behind its fake feature. No dependency version or feature of an evaluator input changed and no evaluator behavior changed. Chained after dsc02_after_009de907 by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "TUI-11; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "b760efc14de92a14940851b767c0a3432f7173a9",
+  "base_commit": "0462cd418f733269ba69270402fc7c97cf30eaa2",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "43dd003bec32e0dad6301669c5f8e43e6896ee0d92b0da8d8623947ff463d1a6",
+      "after": "f0d97aab0d58a30bc4ab0e0859a36df08299581267624269a7ef67da1bff0394"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "6dd8e9764bdf28094ed53655bf7a4e61c74c7fe6ffca67e59055436765a1c85f",
+      "after": "4a3ddfbc5d37fa0f145d70ded404404a81654d02f36dae3aa04d6d53557a3a2d"
+    }
+  ],
+  "before_identity_digest": "17576a6a1d3c547859297816eab6dd98cfc08c27152cc00939d1b9699b81e80f",
+  "after_identity_digest": "c1f5b1950e06adbf7109d90e0b846a0b15a738b1a5a240474006d1bab3e829c6",
+  "before_implementation_sha256": "7be9af7a50eaf6b7f56e6d7324f47817090f261099d64de51667610e999a6306",
+  "after_implementation_sha256": "768bce8c02d6d92e4192d282143ae732caaffd232ba806252ef9d5824b370de6",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
