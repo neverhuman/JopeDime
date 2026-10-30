@@ -321,6 +321,8 @@ mod tests {
             class_order: ["no".into(), "yes".into()],
             aggregation: Aggregation::Mean,
             undefined: UndefinedPolicy::FailCandidate,
+            threshold: None,
+            cost_matrix: None,
         };
         let raw: Vec<_> = scores.iter().map(|p| [1.0 - p, *p]).collect();
         let loss = |p: &[[f64; 2]]| {
