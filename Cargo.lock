@@ -2860,9 +2860,11 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "axum",
+ "feat-math",
  "jope-api",
  "jope-runtime",
  "libc",
+ "memmap2",
  "nix 0.29.0",
  "proptest",
  "redb",
