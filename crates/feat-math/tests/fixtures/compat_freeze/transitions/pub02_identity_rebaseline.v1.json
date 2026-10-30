@@ -3,17 +3,17 @@
   "decision": "Announced identity-only successor for PUB-02 public stage-operation names and registry wiring, after the DSC-01 feat-math identity successor; that edge follows API-01 and RNK-11. The public-name catalog and its module declaration change the feat-math implementation identity; evaluation semantics, DSL ABI, Cargo.lock, behavior fixtures, lineage source hashes and shipped known-identity rows do not change.",
   "plan_reference": "JopeDime v1 PUB-02; Jepson-approved scope_2218 and pub02_0515 rulings; ADR-0004",
   "pr_reference": "pending",
-  "source_commit": "73ad88647c048b9c0a9d6cdd7b73ada49e5bc081",
+  "source_commit": "4e71f0c692d7839f5b2c12f69bb2191886a9c2ae",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "0bb7afd9cd4f8cdb0a34684f7d19a9f69c6a01cf70bc3fde10864c71a5d89141",
-      "after": "795472b5d041eb214db44fdfdbdf7eea1335dbdc3d30cdc76795cdfa3ca14bf8"
+      "after": "300458b8cc55d5ab8a7509639fa233f3f7b39a893ee88d250f71494ede57baf0"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "900c2bf7a1b096906d6559af3babf7106915655f1833a5646057c33fb69c8101",
-      "after": "e1ad63125b4f1663e97163cbc9e36a49fd8ef5c1869cd5b2a3530c97d5078caa"
+      "after": "a0d36b19a850b07cf65c37f5ddbef89e2841ea85f7c82d3a4c8fcca8bd97e8bb"
     }
   ],
   "identity": {
