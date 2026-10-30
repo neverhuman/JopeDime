@@ -12,13 +12,15 @@ description = "JopeDime v1 engine service"
 failpoints = []
 
 [dependencies]
+chrono = "=0.4.45"
+futures-util.workspace = true
 anyhow.workspace = true
 jope-runtime = { path = "../jope-runtime" }
 jope-api = { path = "../jope-api" }
 redb = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true }
-axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "query", "tokio"] }
 subtle = "=2.6.1"
 tokio = { workspace = true }
 toml = { workspace = true }
