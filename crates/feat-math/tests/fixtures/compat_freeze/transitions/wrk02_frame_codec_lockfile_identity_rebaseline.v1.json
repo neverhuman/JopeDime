@@ -1,24 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced WRK-02 adds only already-locked serde_json and proptest dependencies to jope-service in Cargo.lock for the worker frame codec. Append this ADR-0004 lockfile-only evaluator identity and lineage fixture provenance edge after the merged TUI-10 transition on main; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
-  "plan_reference": "WRK-02; owner-authority ruling 0840",
-  "source_commit": "8a79f0e1e00fa214ffdc8031b4c5a72712b00144",
-  "base_commit": "8f417243b4073cd40eb2d80aaeeb491411ec245a",
+  "decision": "Announced WRK-02 adds only already-locked serde_json and proptest dependency edges to jope-service in Cargo.lock for the worker frame codec. Append this ADR-0004 lockfile-only evaluator identity and lineage fixture provenance edge after the merged SVC-07 transition on main; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
+  "plan_reference": "WRK-02; owner-authority ruling 0840; re-chain ruling 1045",
+  "source_commit": "b22603d45adc7260b3ab217569a53eaf55093c4e",
+  "base_commit": "4158c237bcaf23ada68957206b417344ab1075a3",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526",
-      "after": "2e5b5caa1bb80a49567f9e7a8451e99c742afdd7221039b5ca8da59ee2027179"
+      "before": "5981f17baf2291b3bbd53574ab4aa26508f4957f83f14a38ab601df76a4879de",
+      "after": "d723171a209a2170bed6dc0f51c87d9eca9bc62a3b5166b59a3d19a25b9f8a48"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de",
-      "after": "f380a73a467ea11dbd4685707fd3bcdf235acdffe9a9ebf8392c8135c64b88d9"
+      "before": "a8d61dd9f0fa48636a6e82e80954a581ea3b0ed75be74132763b8a12a91d417c",
+      "after": "adcd4dc55e42de37660b3ad0b1116c2850524e1fd533c53febe7062029af7299"
     }
   ],
-  "before_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b",
-  "after_identity_digest": "c30ed59eed746bdb41c93810d42c2ca31f669016b13f5b8008dc4548b078b33d",
-  "before_implementation_sha256": "3337743e65bd3186aa9f56a62f6144ab8201da1365a3e2d103df787d0af9940c",
-  "after_implementation_sha256": "55f1bf2e7edb760a230aad29563cc327c6ebd7c18220c2b00c31b85ca45780ca",
+  "before_identity_digest": "62dfd68fada288ffc937b7e6e47fbbf18fef15c1eb271f9cf0bd86da0456ed3d",
+  "after_identity_digest": "15ced8f8f1c0bde071a50733d7ea83d48e1591ea02c3fccd04b52bf4d88db984",
+  "before_implementation_sha256": "749305466bcfd5fe0668969dd43c3c7d21460b3ab1fcf6cf33234ad83eda787d",
+  "after_implementation_sha256": "72015b2a951a481bfd9959ba2b613a96b7797635565afb5f445631c143ac4330",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }
