@@ -61,6 +61,7 @@ pub struct Governor {
     disk_reserve: u64,
     memory_pressure: bool,
     retire_pending: bool,
+    worker_target: Option<NonZeroU32>,
     disk_low: bool,
     memory_available: Option<u64>,
     pause_pending: bool,
@@ -79,6 +80,7 @@ impl Governor {
             disk_reserve,
             memory_pressure: false,
             retire_pending: false,
+            worker_target: None,
             disk_low: false,
             memory_available: None,
             pause_pending: false,
@@ -91,6 +93,7 @@ impl Governor {
     pub fn planned_workers(&self) -> NonZeroU32 {
         self.planned_workers
     }
+    /// Last acknowledged capacity; an in-doubt effect keeps admission closed until reconciled.
     pub fn live_workers(&self) -> NonZeroU32 {
         self.live_workers
     }
@@ -159,8 +162,9 @@ impl Governor {
         let disk = sensors.disk_free();
         let low_disk = disk.as_ref().is_ok_and(|free| *free < self.disk_reserve);
         self.pause_pending |= low_disk && !self.disk_low;
-        let allowed =
-            disk.as_ref().is_ok_and(|free| *free >= self.disk_reserve) && !self.pause_pending;
+        let allowed = disk.as_ref().is_ok_and(|free| *free >= self.disk_reserve)
+            && !self.pause_pending
+            && self.worker_target.is_none();
         // A failed adapter must not leave the policy claiming admission is safe.
         self.admission_allowed = false;
         self.admission_confirmed = false;
@@ -210,7 +214,8 @@ impl Governor {
 
     /// Apply at most one live-worker change per monotonically numbered drained boundary.
     /// A low sample remains pending through the band; confirmed >20% recovery supersedes it.
-    /// Duplicate calls do nothing. Failed effects can retry the same boundary; R is immutable.
+    /// Duplicate calls do nothing. Failed effects retain their absolute target and close
+    /// admission until acknowledged, even if sensor readings change; R is immutable.
     pub fn round_boundary(
         &mut self,
         boundary: u64,
@@ -236,18 +241,35 @@ impl Governor {
             RoundEffect::Paused(ErrorCode::DiskLow)
         } else {
             let previous = self.live_workers.get();
-            let current = match self.memory_available {
-                _ if self.retire_pending => previous.saturating_sub(1).max(1),
-                Some(value) if self.below_ten_percent(value) => previous.saturating_sub(1).max(1),
-                Some(value) if self.above_twenty_percent(value) && self.admission_allowed => {
+            let current = match (self.worker_target, self.memory_available) {
+                (Some(target), _) => target.get(),
+                (None, _) if self.retire_pending => previous.saturating_sub(1).max(1),
+                (None, Some(value)) if self.below_ten_percent(value) => {
+                    previous.saturating_sub(1).max(1)
+                }
+                (None, Some(value))
+                    if self.above_twenty_percent(value) && self.admission_allowed =>
+                {
                     previous.saturating_add(1).min(self.planned_workers.get())
                 }
                 _ => previous,
             };
             if current != previous {
                 let workers = NonZeroU32::new(current).unwrap();
-                control.live_workers(workers)?;
+                self.worker_target = Some(workers);
+                if let Err(error) = control.live_workers(workers) {
+                    self.admission_allowed = false;
+                    self.admission_confirmed = false;
+                    if let Err(close) = control.resource_admission(false) {
+                        return Err(io::Error::other(format!(
+                            "worker resize failed ({error}); admission close failed ({close})"
+                        )));
+                    }
+                    self.admission_confirmed = true;
+                    return Err(error);
+                }
                 self.live_workers = workers;
+                self.worker_target = None;
                 RoundEffect::Workers { previous, current }
             } else {
                 RoundEffect::None
@@ -362,6 +384,7 @@ mod tests {
         workers: u32,
         admission: bool,
         fail_resize: bool,
+        partial_resize: bool,
         fail_checkpoint: bool,
         fail_admission: bool,
     }
@@ -376,6 +399,9 @@ mod tests {
         }
         fn live_workers(&mut self, workers: NonZeroU32) -> io::Result<()> {
             if self.fail_resize {
+                if self.partial_resize {
+                    self.workers = workers.get();
+                }
                 return Err(io::Error::other("resize unavailable"));
             }
             self.workers = workers.get();
@@ -871,5 +897,60 @@ mod tests {
             RoundEffect::None
         );
         assert_eq!(gov.live_workers().get(), 7);
+    }
+
+    #[test]
+    fn partial_resize_error_keeps_target_and_gate_until_confirmed() {
+        let mut gov = governor(8);
+        let mut effects = Effects {
+            workers: 8,
+            fail_resize: true,
+            partial_resize: true,
+            ..Default::default()
+        };
+        let mut sensors = Readings::new(99, 100);
+        gov.poll(&mut sensors, &mut effects).unwrap();
+        assert!(gov.round_boundary(0, &mut effects).is_err());
+        assert_eq!(
+            effects.workers, 7,
+            "the actuator took effect before reporting failure"
+        );
+        assert_eq!(
+            gov.live_workers().get(),
+            8,
+            "only the last confirmed count is known"
+        );
+        assert!(
+            !effects.admission,
+            "in-doubt worker effects close admission"
+        );
+        sensors.memory = Ok(201);
+        assert!(
+            !gov.poll(&mut sensors, &mut effects)
+                .unwrap()
+                .admission_allowed
+        );
+        effects.fail_resize = false;
+        assert_eq!(
+            gov.round_boundary(0, &mut effects).unwrap(),
+            RoundEffect::Workers {
+                previous: 8,
+                current: 7
+            }
+        );
+        assert_eq!(effects.workers, gov.live_workers().get());
+        assert!(
+            gov.poll(&mut sensors, &mut effects)
+                .unwrap()
+                .admission_allowed
+        );
+        assert_eq!(
+            gov.round_boundary(1, &mut effects).unwrap(),
+            RoundEffect::Workers {
+                previous: 7,
+                current: 8
+            }
+        );
+        assert_eq!(gov.planned_r().get(), 2);
     }
 }
