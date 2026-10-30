@@ -20,8 +20,8 @@ held-out isolation be recorded and excluded rather than silently dropped:
   test-fold scores biases the reported metric upward
   \citep{cawley2010overfitting}, that entry is excluded from
   all comparative claims.
-  \item \textbf{Input-closure and canary checks.} The evaluation harness
-  enforces three automated regression checks: an inner-fold label-poison test,
+  \item \textbf{Input-closure and canary checks.} Before benchmark release,
+  the evaluation protocol requires passing receipts for: an inner-fold label-poison test,
   a sealed canary check, and a train-only input-closure audit verifying that
   held-out test targets and their derived statistics do not enter board
   encoding or candidate generation. \TBD{Attach final pre-registration and
@@ -42,9 +42,9 @@ later adapter snapshot in \cref{sec:method-status}):
   regressor hidden state capped at \num{768} context rows and \num{256} query
   rows (\TBD{name, version, and licence}); and (iii)~\num{512} values from two
   frozen target-summary windows initialized with fixed seed~17. Any context
-  with a non-finite entry is refused rather than imputed. Across eight
-  reference encoding jobs, measured wall-clock latency ranged from 11.7\,s to
-  20.8\,s within the 30\,s cap.
+  with a non-finite entry is refused rather than imputed. The supplied notes
+  report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
+  encoding jobs, within the 30\,s cap.
   \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem, with
   percentile $\rho_w = 1 - \mathrm{rank}/(|G_p|-1)$ and writer sequence weight
@@ -68,7 +68,8 @@ later adapter snapshot in \cref{sec:method-status}):
   \TBD{Provide the checkpoint acceptance record and held-out promotion receipt
   before final evaluation.}
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
-  Refereed evaluation isolates candidate execution with seccomp and Landlock,
-  enforces cgroup memory limits with swap disabled, and requires native and
-  emitted-code predictions to agree within $10^{-9}\max(1, |\hat{y}|)$.
+  The final evaluation protocol requires candidate isolation with seccomp
+  and Landlock, cgroup memory limits with swap disabled, and native versus
+  emitted-code agreement within $10^{-9}\max(1, |\hat{y}|)$.
+  \TBD{Attach isolation and parity receipts from the final evaluator.}
 \end{itemize}
