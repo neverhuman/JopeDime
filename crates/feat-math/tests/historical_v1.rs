@@ -752,6 +752,12 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     assert_eq!(tui10_identity["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(tui10_identity["fixtures"][0]["path"], changed_fixtures[0]);
     assert_eq!(tui10_identity["fixtures"][1]["path"], changed_fixtures[1]);
+    let obj01_identity =
+        old_fixture("transitions/obj01_runtime_fitness_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        obj01_identity["source_commit"],
+        "0a6cba29be5de3459b524a1156b15bfd99ef9d79"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -767,6 +773,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &pub02_identity,
         &api06_lockfile,
         &tui10_identity,
+        &obj01_identity,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -820,6 +827,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
+                obj01_identity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -859,6 +867,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
+                obj01_identity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -891,6 +900,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
+                obj01_identity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -954,6 +964,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
+                obj01_identity.clone(),
             ],
         ),
         (
@@ -977,6 +988,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
                 tui10_identity.clone(),
+                obj01_identity.clone(),
             ],
         ),
     ] {
@@ -1048,6 +1060,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         pub02_identity,
         api06_lockfile,
         tui10_identity,
+        obj01_identity,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

@@ -1,0 +1,29 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced lockfile-only identity successor for OBJ-01 runtime regression fitness adapter under ruling 0910(h), module/dependency ruling 0810 and identity ruling 0840. Cargo.lock changes only jope-service dependency edges to existing-locked anyhow and jope-runtime; all 572 package records/versions/sources/checksums remain, with no new packages. No feat-math implementation, DSL, metric, behavior fixture or known historical identity is changed. This edge follows the currently merged TUI-10 tail; final merge must serialize/re-chain after the actual predecessor in Claude's identity queue.",
+  "plan_reference": "OBJ-01; ruling 0910(h); ruling 0810; ruling 0840; ADR-0004",
+  "pr_reference": "pending ENG:watcher publication: v1/obj-01-wire-regression-objectives-int",
+  "source_commit": "0a6cba29be5de3459b524a1156b15bfd99ef9d79",
+  "base_commit": "069d200319ae2775606e1cb1fa58d467e393cc8c",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526",
+      "after": "c3d5ab5c3f6cb0c73ac08bb013e9e98cbc2136c8f68e843f54ca4e59706f128d"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de",
+      "after": "fd94671a396f80392829ee02542bdfd1b370c9fef637f5c592b3a46d6f7b66f9"
+    }
+  ],
+  "identity": {
+    "old_implementation_sha256": "3337743e65bd3186aa9f56a62f6144ab8201da1365a3e2d103df787d0af9940c",
+    "new_implementation_sha256": "c74e7eae5c586fd69405c21aa7a266daaf1479844661ce2878a4198f73beb94f",
+    "old_cargo_lock_sha256": "5ff115c4f2b6f11888bc424199f53acb05374b5f43e2da7d49d50409c38b0dbc",
+    "new_cargo_lock_sha256": "375018af8a477e9b76dc1d656113bdc8654a278ef2e3c5bb8f4e06a882deb13b",
+    "old_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b",
+    "new_identity_digest": "9958bcb93c46df46c317754353067a0b169c89d28e30028fba8c9f2ddbf8ae60"
+  },
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
