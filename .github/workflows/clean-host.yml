@@ -1,0 +1,36 @@
+name: Clean-host D1 pre-stage
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x86_64-prestage:
+    runs-on: ubuntu-24.04
+    env:
+      CARGO_BUILD_JOBS: 4
+      CARGO_INCREMENTAL: 0
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build local engine candidate
+        run: nice -n 10 cargo build --locked -p jope-appliance --bin jopedime
+      - name: Exercise synthetic Linux clean-host pre-stage
+        run: |
+          mkdir -p target/rel-04
+          bash deploy/appliance/test-clean-host.sh \
+            target/debug/jopedime target/rel-04/clean-host --prestage
+
+  macos-arm64-pending:
+    if: ${{ false }}
+    runs-on: macos-14
+    steps:
+      - run: echo "Pending owner-authorized macOS arm64 D1 qualification."
+
+  windows-x86_64-pending:
+    if: ${{ false }}
+    runs-on: windows-2022
+    steps:
+      - run: echo "Pending owner-authorized Windows x86-64 D1 qualification."
