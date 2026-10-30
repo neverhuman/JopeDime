@@ -141,7 +141,8 @@ pub fn emit_calibrated_with_checks(
         no_null(&state["Pipeline"]["target"]) || fitted_target.is_none(),
         "non-finite fitted target state"
     );
-    let mut source = feat_math::emit_rs::emit_rust(&plan, &Default::default());
+    let mut source =
+        fitted_module_header(feat_math::emit_rs::emit_rust(&plan, &Default::default()))?;
     // The recipe's final CSV training CLI is not an entry point in a fitted module.
     let end = source
         .find("\nfn main() {")
@@ -242,6 +243,60 @@ fn self_check() {{
 "#));
     lint(&source)?;
     Ok(source)
+}
+
+fn fitted_module_header(source: String) -> Result<String> {
+    const CODE_START: &str = "\n#![forbid(unsafe_code)]";
+    let code_start = source
+        .find(CODE_START)
+        .context("recipe has no module code boundary")?;
+    let mut lines = source[..code_start].lines();
+    lines.next(); // The recipe title describes the old training program.
+
+    let mut first_paragraph_started = false;
+    let mut preserving = false;
+    let mut operation_docs = Vec::new();
+    for line in lines {
+        if !preserving {
+            if first_paragraph_started && line == "//!" {
+                preserving = true;
+            } else if line != "//!" {
+                first_paragraph_started = true;
+            }
+            continue;
+        }
+        if line.starts_with("//! Build:")
+            || line.starts_with("//! Runtime:")
+            || line.starts_with("//! Usage:")
+        {
+            continue;
+        }
+        operation_docs.push(line);
+    }
+
+    while operation_docs.first() == Some(&"//!") {
+        operation_docs.remove(0);
+    }
+    while operation_docs.last() == Some(&"//!") {
+        operation_docs.pop();
+    }
+
+    let mut header = String::from(
+        "//! Fitted, std-only Rust prediction module generated from an already fitted model.\n\
+         //!\n\
+         //! Save this artifact as `predictor.rs`, then import it with `mod predictor;`. Call\n\
+         //! `predictor::predict_numeric(&rows)` with encoded numeric rows of the fitted width.\n\
+         //! The module embeds fitted state and predicts without fitting or reading files.\n\
+         //! When emitted with a version-two input contract, use `predict_cells` or\n\
+         //! `predict_table` to predict from raw cells or named table columns.\n\
+         //!\n",
+    );
+    if !operation_docs.is_empty() {
+        header.push_str(&operation_docs.join("\n"));
+        header.push('\n');
+    }
+    header.push_str(&source[code_start..]);
+    Ok(header)
 }
 
 /// Emit version-two raw-cell prediction without changing the stored object or legacy semantics.
@@ -795,6 +850,50 @@ mod tests {
             String::from_utf8_lossy(&output.stderr)
         );
         eprintln!("{name}: {}", String::from_utf8_lossy(&output.stdout));
+    }
+
+    #[test]
+    fn fitted_module_docs_compile_and_run_as_a_plain_rust_module() {
+        let (genome, model) = fitted("(pipe X (standardize) (ridge))");
+        let source = emit(&genome, &model, 12).unwrap();
+        assert!(source.starts_with("//! Fitted, std-only Rust prediction module"));
+        assert!(source.contains("`mod predictor;`"));
+        assert!(source.contains("predictor::predict_numeric(&rows)"));
+        assert!(source.contains("centers each column by its training mean"));
+        assert!(!source.contains("train.csv"));
+        assert!(!source.contains("test_features.csv"));
+        assert!(!source.contains("Usage: ./model"));
+        assert!(!source.contains("fn main()"));
+
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../target/fitted-rs-proof/module-usage");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("predictor.rs"), source).unwrap();
+        let consumer = dir.join("consumer.rs");
+        std::fs::write(
+            &consumer,
+            "mod predictor;\nfn main() {\n    let rows = vec![vec![0.5; 12]];\n    let predictions = predictor::predict_numeric(&rows).expect(\"fitted prediction\");\n    assert_eq!(predictions.len(), 1);\n    assert!(predictions[0].is_finite());\n}\n",
+        )
+        .unwrap();
+        let executable = dir.join("consumer");
+        let compile = Command::new("rustc")
+            .args(["--edition=2021"])
+            .arg(&consumer)
+            .arg("-o")
+            .arg(&executable)
+            .output()
+            .unwrap();
+        assert!(
+            compile.status.success(),
+            "plain rustc consumer compile failed: {}",
+            String::from_utf8_lossy(&compile.stderr)
+        );
+        let output = Command::new(executable).output().unwrap();
+        assert!(
+            output.status.success(),
+            "plain rustc consumer failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     fn numeric_case(index: usize, dsl: &str, test: &[Vec<f64>]) -> String {
