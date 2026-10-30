@@ -301,3 +301,18 @@ API. Rust must count bytes,compute rates,aggregate and write sinks; Python
 passes existing DL values/buffers with one-line calls. Unsupported IO timing
 must remain unavailable rather than fabricated. Use only the landed,locally
 qualified API/wheel; the in-progress owned Rust checkout is not a stable ABI.
+
+GPU handoff protocol (2040 owner direction): startup qualification and each
+round hold xbabe1's `/home/ubuntu/jope_plan/qualification.lock`. At round end,
+finish queued GPU work,synchronize,release unused allocator cache,unlock and
+yield1second. Other xbabe1 GPU jobs acquire the same host-local lock and check
+remaining VRAM (the model remains resident). Phase3 runs on xbabe2 with its own
+independent lock. A separate EX|NB descriptor observed the released window at
+round677. Resource guard still waits for20GiBfree at the next round start.
+
+Storage recovery receipt `results/fused-20261029/storage_custody_recovery.json`
+binds the S3 version,fullarchive/manifest SHA,independent POSIX restoration of
+all1068 checkpoint bodies/modes,and protected best/anchor/journal hashes. Only
+verified old nonbest checkpoints were pruned; all score/round receipts and
+scratch remain. Run size fell10.753GB→2.749GB under the unchanged10GiB ceiling.
+Telemetry-off resumed661;662/663 verified frozen DOPE and journal continuity.
