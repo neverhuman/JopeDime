@@ -1,24 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "WRK-03 adds only the already-locked libc and windows-sys dependencies to jope-service in Cargo.lock. Append this ADR-0004 identity and lineage fixture edge after merged API-06; no package versions, registry sources, behavior fixtures or known identity rows change.",
-  "plan_reference": "WRK-03; owner scope ruling 0810; ADR-0004",
-  "source_commit": "c186d8f30da021698282b29766714d82d8c21462",
-  "base_commit": "6923cbd2b3cd9ce7dbd32b64eeb36f5af5bf4f88",
+  "decision": "WRK-03 adds only already-locked libc and windows-sys dependencies to jope-service in Cargo.lock. Append this ADR-0004 identity and lineage fixture edge after merged TUI-10; no package versions or registry sources change.",
+  "plan_reference": "WRK-03; owner scope ruling 0810; ruling 0840; ADR-0004",
+  "source_commit": "e3197354596ae57ea07211e406b451327d0c63bc",
+  "base_commit": "8f417243b4073cd40eb2d80aaeeb491411ec245a",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "7653d5b8040a6c68124f4bcc086b639a1e0d1221dc56abce4df86e4baa3a2fc3",
-      "after": "7cde51d4501898edcd30602ebe308a840969d9b829f3913dab55aa12375d0abb"
+      "before": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526",
+      "after": "046c1607230a953f52ded0da4ce3cf6f634d3c48caff5f95951190c6ab62eef5"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "105214196577e85ace635f5ddc3d41099db9ed90b8762e0501887d200697b471",
-      "after": "deb3e3b665a086f283d855c7ec741808f970c7ff115b44a7b6614e3d9dde77f5"
+      "before": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de",
+      "after": "9fbfc3f3aaf5121394b010f48cbf48d567538d6f3af133bb273b9699fd54db7b"
     }
   ],
-  "before_identity_digest": "0ecbbbd7738fdc7b2fedb67aba2aa556d04532006fcf444792e097320f3df883",
-  "after_identity_digest": "034d2909196d8e652490648fcc01a98a748c4fc21eeeb31c435fcf6fd17925a9",
-  "before_implementation_sha256": "2f0afd13a08c87b82695dcc55433d31af7c945fdc7a2bd7b6c2521dc6b711a70",
-  "after_implementation_sha256": "d70750cb6ae0e70e407d576820d23f173de62c69c1e525db5854faf0abc49ba8",
+  "before_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b",
+  "after_identity_digest": "63ccb2e483c500ddfb579cfb07be85169d10782934824b6ecc1283f558fba590",
+  "before_implementation_sha256": "3337743e65bd3186aa9f56a62f6144ab8201da1365a3e2d103df787d0af9940c",
+  "after_implementation_sha256": "ccf8ce385a48b3bfa2703e5ff217e998ee3ac32297ec52d395452e6eaa764319",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }
