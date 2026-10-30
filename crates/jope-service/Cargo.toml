@@ -9,6 +9,8 @@ repository.workspace = true
 description = "JopeDime v1 engine service"
 
 [dependencies]
+anyhow.workspace = true
+jope-runtime = { path = "../jope-runtime" }
 
 [lints]
 workspace = true
