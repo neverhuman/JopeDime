@@ -50,9 +50,10 @@ requires a measured crossover, still pending in \cref{sec:results}.
 \subsection{Wasted moves}\label{sub:price-waste}
 
 An attempt can fail before or after it becomes a valid competitor.
-A stillborn move never competes: it fails
-to parse or type-check, crashes, times out or returns degenerate output. An
-also-ran runs and loses. The planned funnel in \cref{fig:price}a traces
+A stillborn attempt fails to produce a usable program under the declared
+protocol: generation is incomplete, parsing or type-checking fails,
+execution exceeds its limits or crashes, or outputs fail predeclared
+validity checks. An also-ran is valid but does not beat the incumbent. The planned funnel in \cref{fig:price}a traces
 those stages and the compute spent before each failed attempt stops. If 90\% of attempts fail to improve the incumbent, the independent-try
 model requires ten attempts per improvement in expectation. A typed program language
 removes many stillborn moves by construction (\cref{sec:game}), and those
