@@ -1,24 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced BAT-05 adds only the already-locked ulid dependency edge to jope-appliance in Cargo.lock. Append this lockfile-only ADR-0004 identity and lineage fixture after SVC-07; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition. This pre-queue candidate is re-chained at the assigned identity slot.",
-  "plan_reference": "BAT-05; owner-authority rulings 1030(p) and 1045(t), 2026-10-30",
-  "source_commit": "7495ade75c8806394d650f00cdb8cb43884ed5bc",
-  "base_commit": "0009d3603ce3f89d970afdb2d9d6fe3439952dc1",
+  "decision": "Announced BAT-05 lockfile identity successor after merging main cd3bf1f43: only this PR's dependency edges change Cargo.lock; no evaluator input version/feature or evaluator behavior changed. Re-chained at its queue slot by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "BAT-05; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "942a9fd7e59022fbf0faedd14129818604bd5fcb",
+  "base_commit": "cd3bf1f432ece683eba47984e788225dc2a17ff9",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "5981f17baf2291b3bbd53574ab4aa26508f4957f83f14a38ab601df76a4879de",
-      "after": "0fbffe1007c98a272eb9f220bf15fd4632e277694b0c437ce5e8a0f7c94d7855"
+      "before": "99b7b6c28fc4d8aff0d33a1b2b0dc24a555f0a72103cfb69ac26eb49b0fee678",
+      "after": "9a3785a9870587e9e43a22426f5772db4c16a718421c00a556a053b59ae9d193"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "a8d61dd9f0fa48636a6e82e80954a581ea3b0ed75be74132763b8a12a91d417c",
-      "after": "16caf6e7a2961a1709f03ea78dd6461b570bfa7ca903e2e13f2e11368cdab334"
+      "before": "fc1a2896ed22d62d82f437e5c44500157913c1e11d7c812fb9f5d0fa2a09bc72",
+      "after": "31d855adc5b46ec1930ebce4bad7c9bf7b2bce73c6a9e1c3668f5f8e2dc11164"
     }
   ],
-  "before_identity_digest": "62dfd68fada288ffc937b7e6e47fbbf18fef15c1eb271f9cf0bd86da0456ed3d",
-  "after_identity_digest": "6341c9a764efdb193e458907ae26e94d54b609fbf7f2a56d0b86984cb120c909",
-  "before_implementation_sha256": "749305466bcfd5fe0668969dd43c3c7d21460b3ab1fcf6cf33234ad83eda787d",
-  "after_implementation_sha256": "6a6065257963d8e4c28394264b020ee4b53850a606047c60a98262eb08279134",
+  "before_identity_digest": "7a0c318b019568e5fe07db1acaa35b1c8626d22471cc90878ea4fe67f87e85f1",
+  "after_identity_digest": "d3b110dbce261918e906eb893d2b2a2686a186e6e6a99656df1d33bcf3c378f1",
+  "before_implementation_sha256": "76e0e7ada402ec15e33f75a3e1c7d5d95581cc458dc681dbd52689f2e2f6195f",
+  "after_implementation_sha256": "1447984c1e9bf55b83cf565011d5701fc8d331f18089107ccb0bcdecf9cfe550",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }
