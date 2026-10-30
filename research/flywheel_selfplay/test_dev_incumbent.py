@@ -809,3 +809,89 @@ def test_retention_actual_after_scoring_hook_archives_each_round(
         for n in [1, 2, 5, 6]:
             assert (root / f"round-{n:02d}.pt").exists()
         assert not list((root / "rejected").glob("*.pt"))
+
+
+def test_restart_scales_do_not_repeat_the_four_round_cycle():
+    import copy
+
+    from dev_incumbent import warm_restart_adapter
+
+    model = torch.nn.Linear(4, 2)
+    opt = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    baseline = copy.deepcopy(model.state_dict())
+    scales = []
+    for rnd in range(1341, 1373):
+        model.load_state_dict(baseline)
+        result = warm_restart_adapter(model, opt, 42 + rnd * 104729, rnd)
+        assert 2.5e-5 <= result["lr"] <= 3e-4
+        assert 1e-5 <= result["sigma"] <= 3e-4
+        scales.append((result["lr"], result["sigma"]))
+    assert len({x[0] for x in scales}) == 32
+    assert len({x[1] for x in scales}) == 32
+    assert all(a != b for a, b in zip(scales, scales[4:]))
+
+
+def test_restart_replays_exactly_preserves_adam_and_global_rng():
+    import copy
+
+    from dev_incumbent import warm_restart_adapter
+
+    model = torch.nn.Sequential(torch.nn.Linear(4, 4), torch.nn.Linear(4, 2))
+    model[0].requires_grad_(False)
+    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=1e-4)
+    model(torch.ones((2, 4))).square().mean().backward()
+    opt.step()
+    baseline = copy.deepcopy(model.state_dict())
+    optimizer = copy.deepcopy(opt.state_dict())
+    global_rng = torch.random.get_rng_state().clone()
+    outputs = []
+    for seed, rnd in [(731, 1361), (731, 1361), (732, 1361), (731, 1365)]:
+        model.load_state_dict(baseline)
+        opt.load_state_dict(copy.deepcopy(optimizer))
+        result = warm_restart_adapter(model, opt, seed, rnd)
+        for name in ["0.weight", "0.bias"]:
+            assert torch.equal(model.state_dict()[name], baseline[name])
+        for key, state in optimizer["state"].items():
+            for name, value in state.items():
+                assert torch.equal(opt.state_dict()["state"][key][name], value)
+        outputs.append(
+            (
+                result,
+                torch.cat(
+                    [
+                        p.detach().flatten()
+                        for p in model.parameters()
+                        if p.requires_grad
+                    ]
+                ).clone(),
+            )
+        )
+    assert outputs[0][0] == outputs[1][0] and torch.equal(outputs[0][1], outputs[1][1])
+    assert (
+        outputs[0][0]["lr"] != outputs[2][0]["lr"]
+        and outputs[0][0]["sigma"] != outputs[2][0]["sigma"]
+    )
+    assert (
+        outputs[0][0]["lr"] != outputs[3][0]["lr"]
+        and outputs[0][0]["sigma"] != outputs[3][0]["sigma"]
+    )
+    assert torch.equal(torch.random.get_rng_state(), global_rng)
+
+
+@pytest.mark.parametrize("digest", [b"\0" * 32, b"\xff" * 32])
+def test_restart_scale_endpoints_respect_previous_bounds(monkeypatch, digest):
+    import hashlib
+
+    from dev_incumbent import warm_restart_adapter
+
+    model = torch.nn.Linear(3, 1)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+
+    class FixedHash:
+        def digest(self):
+            return digest
+
+    monkeypatch.setattr(hashlib, "sha256", lambda *args: FixedHash())
+    result = warm_restart_adapter(model, optimizer, 42, 1361)
+    assert 1e-5 <= result["sigma"] <= 3e-4
+    assert 2.5e-5 <= result["lr"] <= 3e-4
