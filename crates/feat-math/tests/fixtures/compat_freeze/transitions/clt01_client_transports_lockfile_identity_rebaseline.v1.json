@@ -1,26 +1,24 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced CLT-01 client-transport lockfile-only successor after PUB-05. Scope1445 authorizes the optional engine feature and existing locked HTTP/router dependencies. Only Cargo.lock changes among the 52 pinned evaluator/lineage inputs; no evaluator behavior, vocabulary, wire schema, package version/source/checksum or known-identity table is changed. No shipped native artifact is claimed for the new identity.",
-  "plan_reference": "T056/CLT-01; lanes_1420; scope_1445; ruling0840; ADR-0004",
-  "source_commit": "0a22a6425e9e3cf4c5094963f6ee00af460ad10b",
-  "base_commit": "4c9fd776d7c650596aea4babed4cf52812473c4e",
+  "decision": "Announced CLT-01 lockfile identity successor after merging main d11246413: only this PR's dependency edges change Cargo.lock; no evaluator input version/feature or evaluator behavior changed. Re-chained at its queue slot by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "CLT-01; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "438631e619f67479eaf89a60bedf5e8d595b9a8e",
+  "base_commit": "d112464133c9fa4454f39f617554d119dfed0356",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "787111f68b020899289857bc19aad61e2d2fa5aeb715d076351cb220b9d979d6",
-      "after": "e03cee2a875119b9cdaba25393000c632d6ff9f5c666aac64b13f8d374eab403"
+      "before": "f57168b016ce84c41a21c576dc952a2f1dff7c421bedec993438a0f42eae2858",
+      "after": "4ce5ae9699f03c4298d9bc49ccd28d74971816f4985fd40e5189eb491100cbaa"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "d200495d1e5ce45e8b67607cb93f9601ee69655576a92be95bbbd08d6a6039fe",
-      "after": "2ee241187156dca56792bb55d2f9c214c7866c5869ab1fc1fa3cbb182850ea8e"
+      "before": "10ae608a27d5855f4c286a48be4530f6f3900c0487c569595bc8ed1b6ea7c8a7",
+      "after": "07e3cb4b57c17d824875b1af7cbc2eae76f5d82f0fc4aef8881b0185ce2a77aa"
     }
   ],
-  "before_identity_digest": "c82443ae79473c7899f1abe76b214c3fa600858d70fb22468384c79353f428a8",
-  "after_identity_digest": "8f4597adf8cea16f79f52743e449bea8a141b732fe5e8de58f6f196807c4b167",
-  "before_implementation_sha256": "1ea51e44c33ad884306cb40a686e34d527f80fb6f57220730df484c36baa97de",
-  "after_implementation_sha256": "4254abdcbbcb976189ed202c47236f1c9dfc256437a3bd851f33eefe1748c645",
-  "before_cargo_lock_sha256": "cfbdd26fea16ec7637c12cbce081ecffe8a71f5426c755ddaa7b87fe0e5e794f",
-  "after_cargo_lock_sha256": "c3f610d8c19e8903e66c62caa4c032df79977d84c2075ec01cf016562afa9e83",
+  "before_identity_digest": "f9d046d10d71bdad82dc789981b70e7455147b9808bff41c76626e5390db7262",
+  "after_identity_digest": "1828fa116db313f023ec63c0e1e5573835fd71b63e7029d7062475a44d6ae6c1",
+  "before_implementation_sha256": "2c95ac623044aef05241de585b41a44647806eb2f653ba341f24a140730360c9",
+  "after_implementation_sha256": "a91a518baa5e558e158415c30c599752f60de45f1312558c60a8d550b9d1c66b",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
 }

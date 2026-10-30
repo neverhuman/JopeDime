@@ -1002,6 +1002,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         svc04_identity["base_commit"],
         "2a7c4cdd266ae7d441c81f83e52bb78ce9b782c0"
     );
+    let clt01_client_transports =
+        old_fixture("transitions/clt01_client_transports_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        clt01_client_transports["source_commit"],
+        "438631e619f67479eaf89a60bedf5e8d595b9a8e"
+    );
+    assert_eq!(
+        clt01_client_transports["base_commit"],
+        "d112464133c9fa4454f39f617554d119dfed0356"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1037,6 +1047,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &pub05_identity,
         &svc11_jmat,
         &svc04_identity,
+        &clt01_client_transports,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1108,6 +1119,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub05_identity.clone(),
                 svc11_jmat.clone(),
                 svc04_identity.clone(),
+                clt01_client_transports.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1165,6 +1177,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub05_identity.clone(),
                 svc11_jmat.clone(),
                 svc04_identity.clone(),
+                clt01_client_transports.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1215,6 +1228,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub05_identity.clone(),
                 svc11_jmat.clone(),
                 svc04_identity.clone(),
+                clt01_client_transports.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1296,6 +1310,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub05_identity.clone(),
                 svc11_jmat.clone(),
                 svc04_identity.clone(),
+                clt01_client_transports.clone(),
             ],
         ),
         (
@@ -1337,6 +1352,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 pub05_identity.clone(),
                 svc11_jmat.clone(),
                 svc04_identity.clone(),
+                clt01_client_transports.clone(),
             ],
         ),
     ] {
@@ -1426,6 +1442,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         pub05_identity,
         svc11_jmat,
         svc04_identity,
+        clt01_client_transports,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
