@@ -10,6 +10,56 @@ import copy
 import math
 
 
+def batch_seed(seed: int, round_idx: int, step: int):
+    """A private batch stream advances by logical round/step, never best_round."""
+    import hashlib
+
+    payload = f"flywheel-batch/v1:{seed}:{round_idx}:{step}".encode()
+    return int.from_bytes(hashlib.sha256(payload).digest()[:8], "little")
+
+
+class RejectedCandidateError(RuntimeError):
+    pass
+
+
+class CandidateNovelty:
+    """Refuse previously rejected parameter bytes before invoking an evaluator."""
+
+    def __init__(self, identity: str, history):
+        self.identity = identity
+        self.rejected = {}
+        for row in history:
+            decision = row.get("adapter_admission", row)
+            self.record(
+                {
+                    **decision,
+                    "candidate_parameter_sha256": decision.get(
+                        "candidate_parameter_sha256",
+                        row.get("candidate_parameter_sha256"),
+                    ),
+                }
+            )
+
+    def record(self, decision):
+        if (
+            decision.get("evaluation_identity") == self.identity
+            and decision.get("accepted") is False
+            and decision.get("candidate_parameter_sha256")
+        ):
+            sha = decision["candidate_parameter_sha256"]
+            self.rejected[sha] = min(
+                self.rejected.get(sha, decision["round"]), decision["round"]
+            )
+
+    def evaluate(self, parameter_sha: str, evaluate):
+        if parameter_sha in self.rejected:
+            raise RejectedCandidateError(
+                f"refuse rejected candidate {parameter_sha}; first rejected round "
+                f"{self.rejected[parameter_sha]}; evaluator not called"
+            )
+        return evaluate()
+
+
 class DevIncumbent:
     def __init__(
         self,
