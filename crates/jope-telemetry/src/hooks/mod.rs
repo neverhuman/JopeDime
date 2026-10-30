@@ -179,6 +179,7 @@ mod pipeline_tests {
             "throughput.tokens_per_s",
             "throughput.tokens_per_s.rust",
             "throughput.tokens_per_s.all_languages",
+            "throughput.reasoning_tok_per_s",
         ] {
             assert_eq!(per_metric[&id(tok_s)], (0, 1));
         }

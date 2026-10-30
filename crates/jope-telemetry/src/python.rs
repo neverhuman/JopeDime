@@ -602,6 +602,32 @@ impl PyRecorder {
             .count())
     }
 
+    /// The run's reasoning tok/s, a third tok/s metric apart from the Rust-only and
+    /// all-languages pair: `reasoning_tokens` (the run's total so far, counted by `tokenizer`)
+    /// over `wall_seconds`, or over the seconds since this recorder started when absent. Emit it
+    /// at the end of the run, or periodically with the running total; the last one is the run's
+    /// value. Writes the three `throughput.reasoning_*` events and a `reasoning-tok-s` record
+    /// with the tokenizer. Returns the rate.
+    #[pyo3(signature = (source, step, *, reasoning_tokens, tokenizer, wall_seconds=None))]
+    fn emit_reasoning_tok_per_s(
+        &mut self,
+        source: usize,
+        step: u64,
+        reasoning_tokens: f64,
+        tokenizer: &str,
+        wall_seconds: Option<f64>,
+    ) -> PyResult<f64> {
+        let elapsed = self.producer_mut(source)?.run_elapsed_s();
+        let run = io::reasoning_rate(reasoning_tokens, tokenizer, wall_seconds, elapsed)
+            .map_err(value_error)?;
+        let producer = self.producer_mut(source)?;
+        for (metric, value) in run.events() {
+            producer.emit_scalar(metric, 0, step, value, false);
+        }
+        crate::record::record(self.recorder_ref()?, io::REASONING_KIND, &run);
+        Ok(run.reasoning_tok_per_s)
+    }
+
     /// Raw block submit of `rows` x layout-width float64 values (`array('d')` buffers).
     fn submit(
         &mut self,

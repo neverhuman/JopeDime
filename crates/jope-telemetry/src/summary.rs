@@ -7,6 +7,7 @@
 use crate::alarm::{Alarm, Severity};
 use crate::flywheel::{EloSnapshot, RoundRecord, TaskType, ELO_SCHEMA};
 use crate::gp::{GenSummary, GEN_SCHEMA};
+use crate::hooks::io::REASONING_KIND;
 use crate::import::{HwmConsistency, Retention, HWM_CONSISTENCY_SCHEMA, RETENTION_SCHEMA};
 use serde::Serialize;
 use serde_json::Value;
@@ -71,7 +72,8 @@ pub struct TrainingSummary {
 }
 
 /// tok/s as the two labeled metrics every report shows (Jepson ruling 2026-10-29 19:18 MDT):
-/// Rust-only, the headline, and all languages. Legacy unlabeled values are kept apart.
+/// Rust-only, the headline, and all languages. Legacy unlabeled values are kept apart, and so is
+/// reasoning tok/s (ruling t518u), a run total rather than a per-step distribution.
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct TokSummary {
     pub rust_only: Dist,
@@ -81,12 +83,22 @@ pub struct TokSummary {
     pub rust_shared_span_steps: u64,
     /// `throughput.tokens_per_s` from producers that predate the pair; not either metric.
     pub legacy_unlabeled: Option<Dist>,
+    /// The run's total reasoning tokens over its wall-clock seconds, from the last emission, with
+    /// the two counts it divides and the tokenizer that counted the tokens.
+    pub reasoning_tok_per_s: Option<f64>,
+    pub reasoning_tokens: Option<f64>,
+    pub reasoning_wall_s: Option<f64>,
+    pub reasoning_tokenizer: Option<String>,
 }
 
 pub const TOK_S_RUST: &str = "throughput.tokens_per_s.rust";
 pub const TOK_S_ALL_LANGUAGES: &str = "throughput.tokens_per_s.all_languages";
 pub const TOK_S_RUST_TIMED_ALONE: &str = "throughput.tokens_per_s.rust_timed_alone";
 pub const TOK_S_LEGACY: &str = "throughput.tokens_per_s";
+pub const TOK_S_REASONING: &str = "throughput.reasoning_tok_per_s";
+pub const REASONING_TOKENS: &str = "throughput.reasoning_tokens";
+pub const REASONING_WALL_S: &str = "throughput.reasoning_wall_s";
+pub const TOK_S_REASONING_LABEL: &str = "reasoning tok/s";
 /// The labels every report prints next to the two tok/s metrics, Rust-only first.
 pub const TOK_S_LABELS: [(&str, &str); 2] = [
     (TOK_S_RUST, "Rust-only tok/s (headline)"),
@@ -242,6 +254,12 @@ fn elo_summary(snap: &EloSnapshot, seen: u32) -> EloSummary {
     }
 }
 
+/// The part of a `reasoning-tok-s` record the summary reads; the numbers come from its events.
+#[derive(serde::Deserialize)]
+struct TokenizerIn {
+    tokenizer: String,
+}
+
 const HOST_SPANS: &[&str] = &[
     "step.span.fwd",
     "step.span.bwd",
@@ -337,11 +355,20 @@ pub fn summarize<'a>(
         .iter()
         .any(|v| v.is_finite())
         .then(|| Dist::of(&legacy));
-    for (metric, dist) in [TOK_S_RUST, TOK_S_ALL_LANGUAGES]
+    let last = |m: &str| vals(m).into_iter().rev().find(|v| v.is_finite());
+    k.reasoning_tok_per_s = last(TOK_S_REASONING);
+    k.reasoning_tokens = last(REASONING_TOKENS);
+    k.reasoning_wall_s = last(REASONING_WALL_S);
+    let reasoning = k.reasoning_tok_per_s;
+    for (metric, value) in [TOK_S_RUST, TOK_S_ALL_LANGUAGES, TOK_S_REASONING]
         .into_iter()
-        .zip([&out.tok_s.rust_only, &out.tok_s.all_languages])
+        .zip([
+            out.tok_s.rust_only.p50,
+            out.tok_s.all_languages.p50,
+            reasoning,
+        ])
     {
-        if dist.p50.is_none() {
+        if value.is_none() {
             out.missing.insert(
                 metric.into(),
                 "no values (unavailable or not emitted)".into(),
@@ -354,6 +381,8 @@ pub fn summarize<'a>(
     let mut elo_seen = 0u32;
     for (kind, body) in records {
         let ok = match kind {
+            REASONING_KIND => serde_json::from_value::<TokenizerIn>(body.clone())
+                .map(|r| out.tok_s.reasoning_tokenizer = Some(r.tokenizer)),
             GEN_SCHEMA => serde_json::from_value::<GenSummary>(body.clone()).map(|g| {
                 let c = out.gp.entry(g.context.clone()).or_default();
                 c.generations += 1;
@@ -537,6 +566,25 @@ impl Summary {
                 d.n - d.nonfinite
             );
         }
+        let _ = match (
+            k.reasoning_tok_per_s,
+            k.reasoning_tokens,
+            k.reasoning_wall_s,
+        ) {
+            (Some(rate), tokens, wall) => writeln!(
+                s,
+                "{TOK_S_REASONING_LABEL:<26} {}  = {} tokens / {} s wall-clock, run total  \
+                 (tokenizer {})",
+                opt(Some(rate)),
+                opt(tokens),
+                opt(wall),
+                k.reasoning_tokenizer.as_deref().unwrap_or("unrecorded")
+            ),
+            (None, ..) => writeln!(
+                s,
+                "{TOK_S_REASONING_LABEL:<26} -  unavailable  (run total / wall-clock; not measured)"
+            ),
+        };
         let d = &self.dope;
         let _ = writeln!(s, "== DOPE freeze");
         let _ = writeln!(
@@ -706,6 +754,48 @@ mod tests {
             assert!(s.missing.contains_key(metric));
             assert!(text.contains(label), "{label} prints even without values");
         }
+        assert!(s.missing.contains_key(TOK_S_REASONING));
+        assert!(text.contains("reasoning tok/s            -  unavailable"));
+    }
+
+    #[test]
+    fn reasoning_tok_s_is_the_last_run_total_with_its_tokenizer() {
+        // A periodic running total, then the final one: the last emission is the run's value.
+        let sc = [
+            (TOK_S_REASONING, 5, 50.0),
+            (REASONING_TOKENS, 5, 200.0),
+            (REASONING_WALL_S, 5, 4.0),
+            (TOK_S_REASONING, 9, 100.0),
+            (REASONING_TOKENS, 9, 1_000.0),
+            (REASONING_WALL_S, 9, 10.0),
+        ]
+        .map(|(metric, step, value)| ScalarIn {
+            metric,
+            group: None,
+            step: Some(step),
+            value,
+        });
+        let body = serde_json::json!({"tokenizer": "qwen2", "reasoning_tokens": 1000.0});
+        let s = summarize(sc, [(REASONING_KIND, &body)]);
+        let k = &s.tok_s;
+        assert_eq!(
+            (
+                k.reasoning_tok_per_s,
+                k.reasoning_tokens,
+                k.reasoning_wall_s
+            ),
+            (Some(100.0), Some(1_000.0), Some(10.0))
+        );
+        assert_eq!(k.reasoning_tokenizer.as_deref(), Some("qwen2"));
+        assert!(!s.missing.contains_key(TOK_S_REASONING));
+        // Kept apart from the labeled pair, which still reports no values.
+        assert!(k.rust_only.p50.is_none() && s.missing.contains_key(TOK_S_RUST));
+        let text = s.render_text();
+        let line = text.lines().find(|l| l.starts_with(TOK_S_REASONING_LABEL));
+        assert!(
+            line.is_some_and(|l| l.contains("100.0000  = 1000.0000 tokens / 10.0000 s")
+                && l.ends_with("(tokenizer qwen2)"))
+        );
     }
 
     #[test]

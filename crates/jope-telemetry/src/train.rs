@@ -89,6 +89,14 @@ metrics! {
     TOKENS_PER_S_RUST = 0x012a, "throughput.tokens_per_s.rust", "1/s", "T12", Step, false;
     TOKENS_PER_S_ALL_LANGUAGES = 0x012b, "throughput.tokens_per_s.all_languages", "1/s", "T12", Step, false;
     TOKENS_RUST_TIMED_ALONE = 0x012c, "throughput.tokens_per_s.rust_timed_alone", "bool", "T12", Step, false;
+    // Reasoning tok/s is a third tok/s metric, kept apart from the pair (Jepson ruling t518u,
+    // 2026-10-29 20:34 MDT): the run's total reasoning tokens over its total wall-clock seconds,
+    // once per run, never an average of per-step rates. A reasoning token is one a language model
+    // generates while reasoning, counted with that model's tokenizer (named in the run's
+    // `reasoning-tok-s` record); emitted source tokens are not reasoning tokens.
+    REASONING_TOK_PER_S = 0x012d, "throughput.reasoning_tok_per_s", "1/s", "T12", Run, false;
+    REASONING_TOKENS = 0x012e, "throughput.reasoning_tokens", "tokens", "T12", Run, false;
+    REASONING_WALL_S = 0x012f, "throughput.reasoning_wall_s", "s", "T12", Run, false;
     DOPE_HASH_EQUAL = 0x0201, "dope.freeze.equal", "bool", "D1", Epoch, false;
     PARAMS_TRAINABLE = 0x0202, "params.count.trainable", "count", "D2", Epoch, true;
     PARAMS_FROZEN = 0x0203, "params.count.frozen", "count", "D2", Epoch, true;
