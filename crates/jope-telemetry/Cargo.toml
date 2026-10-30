@@ -15,16 +15,17 @@ name = "jtel"
 path = "src/bin/jtel.rs"
 
 [features]
-default = []
+default = ["parquet"]
+parquet = ["dep:arrow-array", "dep:arrow-schema", "dep:parquet"]
 python = ["dep:pyo3"]
 
 [dependencies]
 anyhow.workspace = true
-arrow-array.workspace = true
-arrow-schema.workspace = true
+arrow-array = { workspace = true, optional = true }
+arrow-schema = { workspace = true, optional = true }
 clap.workspace = true
 nvml-wrapper.workspace = true
-parquet.workspace = true
+parquet = { workspace = true, optional = true }
 pyo3 = { workspace = true, optional = true }
 rtrb.workspace = true
 serde.workspace = true
