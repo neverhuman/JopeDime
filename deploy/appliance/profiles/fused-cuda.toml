@@ -1,0 +1,25 @@
+# REL-02 plumbing (Watcher merge_1930): the fused-ranker packaging path on CUDA, exercised with a
+# deterministic synthetic bundle from `jope-dist fixture`, so no real weight is packaged.
+# Owner decision (b) keeps model weights out of every package until (a) (ecded022 / F1)
+# clears; the real r782 fused bundle (RES-06 exporter) replaces `fixture-fused-ranker` then
+# (REL-02-F01). `full` stays selectable until then. Signed only with the development key.
+schema = "jope.appliance-profile/v1"
+name = "fused-cuda"
+description = "Fused-ranker packaging path (CUDA), synthetic fixture bundle (plumbing only)."
+scope = "development"
+redistribution = ["permitted"]
+methods = ["native"]
+bundles = "deploy/appliance/fixtures/bundles"
+max_payload_mib = 4
+
+[codec]
+name = "shuffle+zstd"
+level = 19
+frame_mib = 1
+
+[[component]]
+id = "fused-ranker"
+bundle = "fixture-fused-ranker"
+files = ["ranker.safetensors", "fused.config.json"]
+role = "model"
+backends = ["cuda"]
