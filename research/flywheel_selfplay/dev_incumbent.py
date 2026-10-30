@@ -10,6 +10,390 @@ import copy
 import math
 
 
+def publish_checkpoint_archive(path, s3_prefix, profile="veox-jepson-prod"):
+    """Host AWS CLI only; deletion requires a version-pinned independent GET."""
+    import hashlib
+    import json
+    import subprocess
+    import tempfile
+    from pathlib import Path
+    from urllib.parse import urlparse
+
+    path = Path(path)
+    location = urlparse(s3_prefix)
+    if (
+        location.scheme != "s3"
+        or location.netloc != "veox-jopedime-learning-use2"
+        or not location.path.startswith("/experiments/")
+    ):
+        raise ValueError("retention requires the approved learning experiments prefix")
+    with path.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    key = location.path.lstrip("/").rstrip("/") + "/" + path.name
+    uri = f"s3://{location.netloc}/{key}"
+    subprocess.run(
+        [
+            "aws",
+            "s3",
+            "cp",
+            str(path),
+            uri,
+            "--profile",
+            profile,
+            "--only-show-errors",
+            "--metadata",
+            "sha256=" + digest,
+        ],
+        capture_output=True,
+        timeout=120,
+        check=True,
+    )
+    head = json.loads(
+        subprocess.run(
+            [
+                "aws",
+                "s3api",
+                "head-object",
+                "--bucket",
+                location.netloc,
+                "--key",
+                key,
+                "--profile",
+                profile,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=True,
+        ).stdout
+    )
+    if head["ContentLength"] != path.stat().st_size or not head.get("VersionId"):
+        raise ValueError("S3 archive size/version verification failed")
+    with tempfile.TemporaryDirectory(prefix="s3-readback-", dir=path.parent) as folder:
+        downloaded = Path(folder) / "object"
+        subprocess.run(
+            [
+                "aws",
+                "s3api",
+                "get-object",
+                "--bucket",
+                location.netloc,
+                "--key",
+                key,
+                "--version-id",
+                head["VersionId"],
+                "--profile",
+                profile,
+                str(downloaded),
+            ],
+            capture_output=True,
+            timeout=120,
+            check=True,
+        )
+        with downloaded.open("rb") as stream:
+            if (
+                downloaded.stat().st_size != path.stat().st_size
+                or hashlib.file_digest(stream, "sha256").hexdigest() != digest
+            ):
+                raise ValueError("S3 archive readback hash mismatch")
+    return {
+        "uri": uri,
+        "version_id": head["VersionId"],
+        "sha256": digest,
+        "bytes": path.stat().st_size,
+    }
+
+
+def retain_checkpoint_payloads(
+    output,
+    archive_root,
+    protected_paths=(),
+    keep_last=20,
+    guarded_roots=(),
+    minimum_free_bytes=50 * 1024**3,
+    s3_prefix="s3://veox-jopedime-learning-use2/experiments/flywheel-full-20261030/run-20261030/retention/",
+    scored_round=None,
+    rotate_bytes=8 * 1024**2,
+):
+    """Archive/restore-verify old payloads before pruning; callers hold the run lock.
+
+    Root receipts and unknown files stay in place. No model, dataset or optimizer
+    access is needed; host S3 custody must succeed. The canonical best pointer and explicit resume/pins are fences.
+    """
+    import hashlib
+    import json
+    import os
+    import shutil
+    import stat
+    import subprocess
+    import tarfile
+    import tempfile
+    import time
+    import uuid
+    from pathlib import Path
+
+    if keep_last < 1:
+        raise ValueError("checkpoint retention must keep at least one round")
+    root, archive_root = Path(output).resolve(), Path(archive_root).resolve()
+    roots = [
+        root,
+        *(Path(p).resolve() for p in guarded_roots),
+        Path(__file__).resolve().parents[2],
+    ]
+    # Managed worktrees sit below the canonical checkout; exclude that whole tree.
+    roots.extend(p for p in Path(__file__).resolve().parents if (p / ".git").is_dir())
+    if any(archive_root.is_relative_to(p) for p in roots):
+        raise ValueError("archive must be outside guarded roots and the checkout")
+
+    def digest(p):
+        with p.open("rb") as stream:
+            return hashlib.file_digest(stream, "sha256").hexdigest()
+
+    def durable_json(path, value):
+        with path.open("w") as stream:
+            json.dump(value, stream, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+
+    pointer = root / "best_dev_checkpoint.json"
+    pointer_bytes = pointer.read_bytes() if pointer.exists() else None
+    declared = list(protected_paths)
+    if pointer_bytes:
+        best = json.loads(pointer_bytes)["best_checkpoint"]
+        if best != "initial_model":
+            # Runner pointers can be cwd-relative; explicit pins below are run-relative.
+            best = Path(best)
+            declared.append(best.resolve() if best.is_file() else root / best)
+    protected = set()
+    for name in declared:
+        if name is None:
+            continue
+        path = Path(name)
+        path = path if path.is_absolute() else root / path
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"protected checkpoint is missing or not regular: {path}")
+        protected.add(path.resolve())
+    protected_hashes = {str(p): digest(p) for p in protected}
+    completed, accepted = set(), set()
+    for p in root.glob("round-*.json"):
+        number = p.stem.removeprefix("round-")
+        if number.isdecimal():
+            n = int(number)
+            observation = json.loads(p.read_text())
+            if p.is_symlink() or observation.get("round") != n:
+                raise ValueError("invalid completed-round receipt")
+            completed.add(n)
+            if observation.get("adapter_admission", {}).get("accepted"):
+                accepted.add(n)
+    # Legacy fixtures/receipts without admission metadata keep their recent checkpoints.
+    recent = set(sorted(accepted or completed)[-keep_last:])
+    if completed:
+        recent.add(
+            max(completed)
+        )  # Logical restart frontier, including rejected rounds.
+    if (root / "round-882.pt").exists():
+        protected.add((root / "round-882.pt").resolve())
+        protected_hashes[str(root / "round-882.pt")] = digest(root / "round-882.pt")
+    candidates = []
+    rejected = root / "rejected"
+    if rejected.is_symlink():
+        raise ValueError("symlinked rejected directory")
+    for p in [*root.glob("round-*.pt"), *rejected.glob("round-*.pt")]:
+        number = p.stem.removeprefix("round-")
+        if (
+            number.isdecimal()
+            and int(number) in completed
+            and (p.parent == rejected or int(number) not in recent)
+            and p.resolve() not in protected
+        ):
+            candidates.append(p)
+    old_directories = []
+    for directory in root.glob("rust_eval_round*"):
+        number = directory.name.removeprefix("rust_eval_round")
+        eligible_eval = completed if scored_round is not None else completed - recent
+        if number.isdecimal() and int(number) in eligible_eval:
+            if directory.is_symlink() or not directory.is_dir():
+                raise ValueError("invalid evaluation directory")
+            old_directories.append(directory)
+            for p in directory.rglob("*"):
+                if p.is_symlink():
+                    raise ValueError("symlink in evaluation directory")
+                # t533 allows candidate artifacts only after compact score/tree publication.
+                eligible_suffix = (
+                    (".jtt1", ".json") if scored_round is not None else (".jtt1",)
+                )
+                if p.is_file() and p.suffix.lower() in eligible_suffix:
+                    candidates.append(p)
+    rotations = set()
+    for pattern in ["summary.jsonl", "*.log"]:
+        for p in root.glob(pattern):
+            if p.is_file() and not p.is_symlink() and p.stat().st_size >= rotate_bytes:
+                candidates.append(p)
+                rotations.add(str(p.relative_to(root)))
+    rows = {}
+    for p in candidates:
+        if p.is_symlink() or not p.is_file() or not p.resolve().is_relative_to(root):
+            raise ValueError("unsafe retention candidate")
+        if p.resolve() in protected:
+            continue
+        s = p.stat()
+        rows[str(p.relative_to(root))] = {
+            "bytes": s.st_size,
+            "mtime_ns": s.st_mtime_ns,
+            "mode": stat.S_IMODE(s.st_mode),
+            "sha256": digest(p),
+        }
+    if not rows:
+        return {"pruned_files": 0}
+    if pointer_bytes is None:
+        raise ValueError("best checkpoint pointer required before pruning")
+    existing = archive_root
+    while not existing.exists():
+        existing = existing.parent
+    if shutil.disk_usage(existing).free < minimum_free_bytes + 2 * sum(
+        r["bytes"] for r in rows.values()
+    ):
+        raise ValueError("insufficient archive/restore headroom; nothing pruned")
+    archive_root.mkdir(parents=True, exist_ok=True)
+    name = f"retention-{max(completed)}-{time.time_ns()}-{uuid.uuid4().hex}"
+    archive = archive_root / (name + ".tar.zst")
+    manifest = {
+        "source_run": str(root),
+        "keep_last": keep_last,
+        "protected": protected_hashes,
+        "archive": str(archive),
+        "files": rows,
+    }
+    manifest_path = archive_root / (name + ".manifest.json")
+    durable_json(manifest_path, manifest)
+    with subprocess.Popen(
+        ["zstd", "-T2", "-1", "--long=27", "-o", str(archive)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    ) as compressor:
+        with tarfile.open(fileobj=compressor.stdin, mode="w|") as tar:
+            for rel in sorted(rows):
+                tar.add(root / rel, arcname=rel, recursive=False)
+        compressor.stdin.close()
+        error = compressor.stderr.read()
+        if compressor.wait() != 0:
+            raise RuntimeError(
+                f"checkpoint archive failed: {error.decode(errors='replace')}"
+            )
+    with archive.open("rb") as stream:
+        os.fsync(stream.fileno())
+    archive_hash = digest(archive)
+    # Stream into a fresh independent directory; never extract unchecked tar paths.
+    with tempfile.TemporaryDirectory(
+        prefix="verify-retention-", dir=archive_root
+    ) as folder:
+        restored = Path(folder)
+        seen = set()
+        with subprocess.Popen(
+            ["zstd", "-dc", str(archive)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ) as decoder:
+            with tarfile.open(fileobj=decoder.stdout, mode="r|") as tar:
+                for member in tar:
+                    if (
+                        not member.isfile()
+                        or member.name not in rows
+                        or member.name in seen
+                    ):
+                        raise ValueError("unexpected archive member")
+                    expected = rows[member.name]
+                    if (
+                        member.size != expected["bytes"]
+                        or member.mode != expected["mode"]
+                    ):
+                        raise ValueError("archive metadata mismatch")
+                    target = restored / member.name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    with (
+                        tar.extractfile(member) as source,
+                        target.open("wb") as destination,
+                    ):
+                        shutil.copyfileobj(source, destination)
+                    target.chmod(expected["mode"])
+                    os.utime(target, ns=(expected["mtime_ns"], expected["mtime_ns"]))
+                    if (
+                        target.stat().st_size != expected["bytes"]
+                        or digest(target) != expected["sha256"]
+                    ):
+                        raise ValueError("restored checkpoint hash mismatch")
+                    seen.add(member.name)
+            if decoder.wait() != 0 or seen != set(rows):
+                raise ValueError("incomplete checkpoint archive")
+    if digest(archive) != archive_hash or pointer.read_bytes() != pointer_bytes:
+        raise ValueError("archive or best pointer changed during retention")
+    # Preserve the hash manifest in S3 too, before any source deletion/rotation.
+    remote_archive = publish_checkpoint_archive(archive, s3_prefix)
+    remote_manifest = publish_checkpoint_archive(manifest_path, s3_prefix)
+    for path, expected in protected_hashes.items():
+        if digest(Path(path)) != expected:
+            raise ValueError("protected checkpoint changed during retention")
+    for rel, expected in rows.items():
+        p = root / rel
+        if (
+            p.is_symlink()
+            or p.stat().st_mtime_ns != expected["mtime_ns"]
+            or digest(p) != expected["sha256"]
+        ):
+            raise ValueError("retention source changed; nothing pruned")
+    # A fresh dependency check is mandatory. Missing lsof fails closed.
+    for offset in range(0, len(rows), 256):
+        paths = [str(root / rel) for rel in list(rows)[offset : offset + 256]]
+        check = subprocess.run(
+            ["lsof", "-t", "--", *paths], capture_output=True, text=True, check=False
+        )
+        if check.returncode != 1 or check.stdout.strip() or check.stderr.strip():
+            raise ValueError("active or unknown checkpoint consumer; nothing pruned")
+    receipt = {
+        "archive": str(archive),
+        "archive_sha256": archive_hash,
+        "manifest": str(manifest_path),
+        "restored_verified_files": len(rows),
+        "protected": protected_hashes,
+        "pruned_files": 0,
+        "s3_archive": remote_archive,
+        "s3_manifest": remote_manifest,
+    }
+    receipt_path = archive_root / (name + ".receipt.json")
+    if shutil.disk_usage(archive_root).free < minimum_free_bytes:
+        raise ValueError("free-space reserve reached; nothing pruned")
+    durable_json(receipt_path, receipt)
+    directory_fd = os.open(archive_root, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    for rel in rows:
+        if pointer.read_bytes() != pointer_bytes:
+            raise ValueError("best pointer changed; remaining payloads retained")
+        if rel in rotations:
+            with (root / rel).open("wb") as stream:
+                stream.flush()
+                os.fsync(stream.fileno())
+        else:
+            (root / rel).unlink()
+        receipt["pruned_files"] += 1
+    # Preserve nonempty receipt directories; remove only empty eval subdirectories.
+    for directory in old_directories:
+        if directory.is_dir() and not directory.is_symlink():
+            for p in sorted(
+                directory.rglob("*"), key=lambda p: len(p.parts), reverse=True
+            ):
+                if p.is_dir() and not any(p.iterdir()):
+                    p.rmdir()
+            if not any(directory.iterdir()):
+                directory.rmdir()
+    durable_json(receipt_path, receipt)
+    return receipt
+
+
 def batch_seed(seed: int, round_idx: int, step: int):
     """A private batch stream advances by logical round/step, never best_round."""
     import hashlib

@@ -163,6 +163,41 @@ The failed log and manifests remain in custody; no other jobs were interrupted.
 
 ## Development adapter admission (16:35Z owner nudge)
 
+Checkpoint retention runs at startup and after every scored round. It retains
+round882, the canonical `best_dev_checkpoint.json` target, the actual startup
+`--resume` checkpoint, the last20 accepted root checkpoints, the latest logical
+restart frontier, and explicit `--retain-checkpoint` pins. Unqualified/orphan and
+partial checkpoints remain. Preserve the earlier r785 witness using
+`--retain-checkpoint round-785.pt`.
+
+Rejected checkpoint payloads and scored Rust candidate scratch are archived before
+removal. Every GP proposal receives a lossless postfix tree and exact constant
+lexemes in a compressed JSONL shard, with evaluated scores, cached pool scores or
+an explicit unselected status. `rebuild_program(tree)` verifies the original source
+SHA. These trees reconstruct GP programs; neural best/resume checkpoints retain
+model and optimizer state separately. Root round receipts, score JSONL, promotions
+and admissions remain in place. At8MiB, summary JSONL and run-local logs rotate
+through verified archives; externally redirected live stdout is outside this scope.
+
+Retention creates a tar.zst and hash manifest outside guarded roots and the checkout,
+independently restores every body/size/mode, uploads archive and manifest with the
+host AWS CLI, then downloads their exact S3 versions and checks full hashes before
+any deletion or rotation. Tree shards undergo the same S3 body verification before
+scored scratch cleanup. The approved learning experiments prefix is used; existing
+host profile `veox-jepson-prod` supplies credentials. No credentials are provisioned
+or passed to containers. Changed pointers/sources, active readers, upload failures
+and insufficient restore headroom defer removal. Unknown evidence remains. The
+original10GiB combined-output and50GiB free-space guards still apply.
+
+Defaults: `--checkpoint-keep-last 20`,
+`--checkpoint-archive-dir ~/jope-data/archive/flywheel-retention` and
+`--retention-s3-prefix s3://veox-jopedime-learning-use2/experiments/flywheel-full-20261030/run-20261030/retention/`.
+Local archives are retained. Host tools `aws`, `zstd` and `lsof` are required.
+`retention-round-N.json` records each post-scoring outcome and bytes after cleanup;
+archive manifests/receipts retain the recovery route. Maintenance adds time beyond
+the existing measured training/GP window. Preparation and offline proofs do not
+update the running process: the watcher owns deployment at a safe restart.
+
 `dev_incumbent.DevIncumbent` preserves the best development utility under a fixed
 comparison identity. The runner first resumes the latest logical round, then
 restores the highest-utility historical adapter and AdamW state (most recent tie:
