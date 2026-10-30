@@ -2,6 +2,7 @@
 
 pub mod heads;
 pub mod ops;
+pub mod params;
 
 /// A public-facing name and short explanation for an internal catalog entry.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

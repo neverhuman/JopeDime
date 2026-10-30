@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced DSC-02 identity successor after merging main 009de907. The existing jope-service sha2 0.10.9 edge remains unchanged; the lockfile also carries dependencies introduced by already-merged service work. No dependency version or feature changed and no evaluator behavior changed. Re-chained once in the assigned identity slot per merge_1235.",
+  "plan_reference": "DSC-02; ruling 0810 service wiring/dependency; ruling 0840(a); ruling 0945; merge_1235; ADR-0004",
+  "source_commit": "85aef0634193e54e607e29878185ab595da7cdb6",
+  "base_commit": "009de907e9c1c829f8014aac7974e6c283460f56",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "1adcbba66d4dc7f6be864ed0036ccb28a6f6dd47f675f483f6acb3df31cd01d3",
+      "after": "43dd003bec32e0dad6301669c5f8e43e6896ee0d92b0da8d8623947ff463d1a6"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "7f83bef4710b36739d556d1aef52c3545633b79035e7e4e51da35f976ddd53cc",
+      "after": "6dd8e9764bdf28094ed53655bf7a4e61c74c7fe6ffca67e59055436765a1c85f"
+    }
+  ],
+  "before_identity_digest": "daa6459d543136797e9fab925cad661af7a092f1415e96328d6149bac40903a9",
+  "after_identity_digest": "17576a6a1d3c547859297816eab6dd98cfc08c27152cc00939d1b9699b81e80f",
+  "before_implementation_sha256": "4653247a272f0cb5c7fb58604074dad9b405fe4ee41bc128679a3ba81a263a71",
+  "after_implementation_sha256": "7be9af7a50eaf6b7f56e6d7324f47817090f261099d64de51667610e999a6306",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
