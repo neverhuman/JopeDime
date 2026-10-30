@@ -1,5 +1,6 @@
 //! JopeDime v1 API client.
 
+pub mod discover;
 pub mod files;
 pub mod http;
 #[cfg(feature = "engine")]
