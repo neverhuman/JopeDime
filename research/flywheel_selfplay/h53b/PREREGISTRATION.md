@@ -33,3 +33,8 @@ H53 is **pilot only: inconclusive at three updates**. Final-round outcome is pri
 ## Closeout
 
 The wave folder will contain `SUMMARY.md`, `metrics.json` (<50 KB), and per-cell receipts outside the source tree. Add one index row and open one small PR with only summary/compact metrics and the minimal runner/protocol needed to reproduce. Run targeted local checks; ignore GitHub CI/protection per owner policy. After merge/closure preserve and verify source/evidence, remove the owned lane using `git worktree remove`, inspect `target/` before any cleanup, and report `df -h /` in comms.
+
+
+## Amendment before any cell — source and sampler pins
+
+The fully prepared cell runner/coordinator/audit and exact source dependencies are pinned in `code-manifest.sha256` before cell 1. In particular, `run_fused_closed_loop.py` defines the live objective and limits full-cohort updates to at most two optimizer steps; `dev_incumbent.py` defines `batch_seed`; `automatic_promotion.py` defines `training_indices`. H53b fixes k=2, LR=1e-4, B=1219, slate=192, and uses these pinned routines. This is an offline fixed-roster application of the live sampler, not a claim that live data grew at the same rate.
