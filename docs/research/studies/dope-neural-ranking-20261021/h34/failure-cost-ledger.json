@@ -1,0 +1,565 @@
+{
+  "DATA_fits": {
+    "fold-0/GAP": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-0/GAP",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 707.329908301,
+      "worker_wall_seconds": 753.6582007190445
+    },
+    "fold-0/ORDINAL": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-0/ORDINAL",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 692.7883445809999,
+      "worker_wall_seconds": 744.4488438180415
+    },
+    "fold-1/GAP": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-1/GAP",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 614.5228649830001,
+      "worker_wall_seconds": 666.5856072760653
+    },
+    "fold-1/ORDINAL": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-1/ORDINAL",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 621.0638653249999,
+      "worker_wall_seconds": 668.8090455119964
+    }
+  },
+  "DATA_units": {
+    "fold-0/GAP": {
+      "MemoryPeak_bytes": 4385431552,
+      "successful_exit": true,
+      "unit_CPU_seconds": 724.508714
+    },
+    "fold-0/ORDINAL": {
+      "MemoryPeak_bytes": 4383997952,
+      "successful_exit": true,
+      "unit_CPU_seconds": 710.172434
+    },
+    "fold-1/GAP": {
+      "MemoryPeak_bytes": 3975979008,
+      "successful_exit": true,
+      "unit_CPU_seconds": 630.003525
+    },
+    "fold-1/ORDINAL": {
+      "MemoryPeak_bytes": 3978600448,
+      "successful_exit": true,
+      "unit_CPU_seconds": 636.715134
+    }
+  },
+  "OOF_aggregate_QA_monitor_costs": [
+    {
+      "MemoryPeak_bytes": 4385431552,
+      "attempts": 1,
+      "failure_code": null,
+      "phase": "fit",
+      "returned": 1,
+      "state": "FIT_COMPLETE_FOLD_0_GAP",
+      "unit_CPU_seconds": 724.508714,
+      "unknown": 0,
+      "worker_CPU_seconds": 707.329908301,
+      "worker_wall_seconds": 753.6582007190445
+    },
+    {
+      "MemoryPeak_bytes": 398573568,
+      "attempts": null,
+      "failure_code": null,
+      "phase": "evaluate",
+      "returned": null,
+      "state": "OOF_EVALUATION_COMPLETE_FOLD_0_GAP",
+      "unit_CPU_seconds": 124.840116,
+      "unknown": null,
+      "worker_CPU_seconds": 108.67252241,
+      "worker_wall_seconds": 219.96543147601187
+    },
+    {
+      "MemoryPeak_bytes": 272175104,
+      "attempts": 2694,
+      "failure_code": null,
+      "phase": "postfit_monitor",
+      "returned": 2694,
+      "state": "POSTFIT_FIXED_PREFIX_COMPLETE_FOLD_0_GAP",
+      "unit_CPU_seconds": 189.3628,
+      "unknown": 0,
+      "worker_CPU_seconds": 168.825444777,
+      "worker_wall_seconds": 194.4606250380166
+    },
+    {
+      "MemoryPeak_bytes": 4383997952,
+      "attempts": 1,
+      "failure_code": null,
+      "phase": "fit",
+      "returned": 1,
+      "state": "FIT_COMPLETE_FOLD_0_ORDINAL",
+      "unit_CPU_seconds": 710.172434,
+      "unknown": 0,
+      "worker_CPU_seconds": 692.7883445809999,
+      "worker_wall_seconds": 744.4488438180415
+    },
+    {
+      "MemoryPeak_bytes": 365228032,
+      "attempts": null,
+      "failure_code": null,
+      "phase": "evaluate",
+      "returned": null,
+      "state": "OOF_EVALUATION_COMPLETE_FOLD_0_ORDINAL",
+      "unit_CPU_seconds": 124.394659,
+      "unknown": null,
+      "worker_CPU_seconds": 108.218752924,
+      "worker_wall_seconds": 217.51290826895274
+    },
+    {
+      "MemoryPeak_bytes": 278290432,
+      "attempts": 2694,
+      "failure_code": null,
+      "phase": "postfit_monitor",
+      "returned": 2694,
+      "state": "POSTFIT_FIXED_PREFIX_COMPLETE_FOLD_0_ORDINAL",
+      "unit_CPU_seconds": 189.648825,
+      "unknown": 0,
+      "worker_CPU_seconds": 169.445429703,
+      "worker_wall_seconds": 194.3520874750102
+    },
+    {
+      "MemoryPeak_bytes": 3975979008,
+      "attempts": 1,
+      "failure_code": null,
+      "phase": "fit",
+      "returned": 1,
+      "state": "FIT_COMPLETE_FOLD_1_GAP",
+      "unit_CPU_seconds": 630.003525,
+      "unknown": 0,
+      "worker_CPU_seconds": 614.5228649830001,
+      "worker_wall_seconds": 666.5856072760653
+    },
+    {
+      "MemoryPeak_bytes": 309510144,
+      "attempts": null,
+      "failure_code": null,
+      "phase": "evaluate",
+      "returned": null,
+      "state": "OOF_EVALUATION_COMPLETE_FOLD_1_GAP",
+      "unit_CPU_seconds": 138.635631,
+      "unknown": null,
+      "worker_CPU_seconds": 120.75628617,
+      "worker_wall_seconds": 232.66510591004044
+    },
+    {
+      "MemoryPeak_bytes": 271073280,
+      "attempts": 2406,
+      "failure_code": null,
+      "phase": "postfit_monitor",
+      "returned": 2406,
+      "state": "POSTFIT_FIXED_PREFIX_COMPLETE_FOLD_1_GAP",
+      "unit_CPU_seconds": 159.978735,
+      "unknown": 0,
+      "worker_CPU_seconds": 139.938438107,
+      "worker_wall_seconds": 148.48987164592836
+    },
+    {
+      "MemoryPeak_bytes": 3978600448,
+      "attempts": 1,
+      "failure_code": null,
+      "phase": "fit",
+      "returned": 1,
+      "state": "FIT_COMPLETE_FOLD_1_ORDINAL",
+      "unit_CPU_seconds": 636.715134,
+      "unknown": 0,
+      "worker_CPU_seconds": 621.0638653249999,
+      "worker_wall_seconds": 668.8090455119964
+    },
+    {
+      "MemoryPeak_bytes": 290304000,
+      "attempts": null,
+      "failure_code": null,
+      "phase": "evaluate",
+      "returned": null,
+      "state": "OOF_EVALUATION_COMPLETE_FOLD_1_ORDINAL",
+      "unit_CPU_seconds": 139.029695,
+      "unknown": null,
+      "worker_CPU_seconds": 121.33769177399999,
+      "worker_wall_seconds": 231.923922198941
+    },
+    {
+      "MemoryPeak_bytes": 283656192,
+      "attempts": 2406,
+      "failure_code": null,
+      "phase": "postfit_monitor",
+      "returned": 2406,
+      "state": "POSTFIT_FIXED_PREFIX_COMPLETE_FOLD_1_ORDINAL",
+      "unit_CPU_seconds": 156.796607,
+      "unknown": 0,
+      "worker_CPU_seconds": 140.042790148,
+      "worker_wall_seconds": 150.8798578189453
+    },
+    {
+      "MemoryPeak_bytes": 375042048,
+      "attempts": null,
+      "failure_code": null,
+      "phase": "aggregate",
+      "returned": null,
+      "state": "AGGREGATE_COMPLETE_PENDING_REPLAY_AT_TIME",
+      "unit_CPU_seconds": 18.832037,
+      "unknown": null,
+      "worker_CPU_seconds": 12.628338178,
+      "worker_wall_seconds": 33.94292914995458
+    },
+    {
+      "MemoryPeak_bytes": 213225472,
+      "attempts": 6,
+      "failure_code": "VALUEERROR",
+      "phase": "runtime_controls",
+      "returned": null,
+      "state": "SIX_NUMPY_R0_FAILED_ONE_ERROR",
+      "unit_CPU_seconds": 3.670937,
+      "unknown": null,
+      "worker_CPU_seconds": 3.203288005,
+      "worker_wall_seconds": 15.100718204979785
+    },
+    {
+      "MemoryPeak_bytes": 95023104,
+      "attempts": 6,
+      "failure_code": null,
+      "phase": "runtime_controls",
+      "returned": null,
+      "state": "SIX_NUMPY_R1_PASS",
+      "unit_CPU_seconds": 3.987019,
+      "unknown": null,
+      "worker_CPU_seconds": 3.454686398,
+      "worker_wall_seconds": 4.720051486976445
+    },
+    {
+      "MemoryPeak_bytes": 262144,
+      "attempts": 0,
+      "failure_code": "EXACT_SOURCE_DIRECTORY",
+      "phase": "independent_replay",
+      "returned": 0,
+      "state": "FULL_REPLAY_R1_FAILED_PRE_MODEL",
+      "unit_CPU_seconds": 22.078523,
+      "unknown": 0,
+      "worker_CPU_seconds": 2.0834727799999975,
+      "worker_wall_seconds": 6.8492078189738095
+    },
+    {
+      "MemoryPeak_bytes": 1223745536,
+      "attempts": 2550,
+      "failure_code": null,
+      "phase": "independent_replay",
+      "returned": 2550,
+      "state": "FULL_REPLAY_R2_PASS_WITH_LIMITS",
+      "unit_CPU_seconds": 86.487367,
+      "unknown": 0,
+      "worker_CPU_seconds": 67.74086569800001,
+      "worker_wall_seconds": 85.54430820606649
+    },
+    {
+      "MemoryPeak_bytes": 341876736,
+      "attempts": 4,
+      "failure_code": null,
+      "phase": "native_qualification",
+      "returned": 4,
+      "state": "FOUR_SYNTHETIC_FITS_PASS_CLOSED",
+      "unit_CPU_seconds": 16.309594,
+      "unknown": 0,
+      "worker_CPU_seconds": 10.825607015,
+      "worker_wall_seconds": 20.432376499054953
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 0,
+      "failure_code": "SYNTAXERROR",
+      "phase": "source_controls",
+      "returned": 0,
+      "state": "ROOT_CONTROLLER_SYNTAX_FAILURE_BEFORE_STATEMENTS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": null
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": null,
+      "failure_code": null,
+      "phase": "runtime_controls",
+      "returned": null,
+      "state": "ROOT_TWO_OWN_CACHE_DIRS_QUARANTINED_R2",
+      "unit_CPU_seconds": null,
+      "unknown": null,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": null
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 12,
+      "failure_code": "FINITE_ARITHMETIC_SOURCE_BLOCKER",
+      "phase": "source_controls",
+      "returned": 12,
+      "state": "BLOCKED_SOURCE_FINITE_ARITHMETIC",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": 0.007030999999999996,
+      "worker_wall_seconds": 0.008681833
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": null,
+      "failure_code": "PREPARATION_ASSERTION_ERROR",
+      "phase": "source_controls",
+      "returned": null,
+      "state": "STUDY_SOURCE_R0_CONTROL_ERROR",
+      "unit_CPU_seconds": null,
+      "unknown": null,
+      "worker_CPU_seconds": 0.08219,
+      "worker_wall_seconds": 0.08636979199945927
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 34,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": null,
+      "state": "STUDY_SOURCE_R1_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": null,
+      "worker_CPU_seconds": 0.08131000000000001,
+      "worker_wall_seconds": 0.09433162491768599
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 34,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": null,
+      "state": "STUDY_SOURCE_FINAL_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": null,
+      "worker_CPU_seconds": 0.08370399999999999,
+      "worker_wall_seconds": 0.10074079222977161
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 17,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 17,
+      "state": "MONITOR_SOURCE_INITIAL_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": 0.06732099999999999,
+      "worker_wall_seconds": 0.0846412917599082
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 17,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 17,
+      "state": "MONITOR_SOURCE_FINAL_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": 0.064151,
+      "worker_wall_seconds": 0.07668899977579713
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 15,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 15,
+      "state": "SCALAR_MATH_R1_FIFTEEN_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": 0.005285999999999999,
+      "worker_wall_seconds": 0.006874707993119955
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 22,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 22,
+      "state": "NATIVE_SOURCE_INITIAL_TWENTYTWO_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": null
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 25,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 25,
+      "state": "NATIVE_SOURCE_FINAL_TWENTYFIVE_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": 0.313979,
+      "worker_wall_seconds": 0.3212605002336204
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 25,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 25,
+      "state": "NATIVE_SOURCE_PEER_TWENTYFIVE_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": 0.36991999999999997,
+      "worker_wall_seconds": 0.39253841573372483
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 36,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 36,
+      "state": "VERIFIER_SOURCE_PURE_CONTROLS_R0_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": 0.07575204176828265
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 43,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 43,
+      "state": "VERIFIER_SOURCE_PURE_CONTROLS_FINAL_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": 0.12658687494695187
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 43,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 43,
+      "state": "VERIFIER_SOURCE_PURE_CONTROLS_FINAL2_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": 0.09475633269175887
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 43,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 43,
+      "state": "VERIFIER_SOURCE_PURE_CONTROLS_STOPPED_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": 0.09661141689866781
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": null,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": null,
+      "state": "VERIFIER_BUILDER_METADATA_CONTROLS_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": null,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": null
+    },
+    {
+      "MemoryPeak_bytes": null,
+      "attempts": 3,
+      "failure_code": null,
+      "phase": "source_controls",
+      "returned": 3,
+      "state": "TEMP_ROOT_THREE_ADDITIONAL_PURE_PASS",
+      "unit_CPU_seconds": null,
+      "unknown": 0,
+      "worker_CPU_seconds": null,
+      "worker_wall_seconds": 0.07592904195189476
+    }
+  ],
+  "known_closed_evidence": {
+    "actual_DATA_lifecycle_metadata_read": false,
+    "actual_model_preprocessing_vector_or_OOF_body_read": false,
+    "optional_monitor_source_controls": {
+      "actual_executions": 34,
+      "current_unique": 17,
+      "final_errors": 0,
+      "final_failures": 0,
+      "native_predictions": 0
+    },
+    "qualified_synthetic_fits": {
+      "attempted": 4,
+      "callback_attempted": 480,
+      "callback_returned": 480,
+      "callback_unknown": 0,
+      "cost_status": "PENDING_ROOT_APPROVED_CLOSED_COST_METADATA",
+      "costs": null,
+      "returned": 4,
+      "scope": "two source-fixed fixtures crossed with GAP/ORDINAL; no DATA/MSE/GP/Dope/NN fits",
+      "state": "CLOSED_PASS_FOUR_NEW_SYNTHETIC_FITS_STOPPED",
+      "unknown": 0
+    },
+    "schema": "h34.known-closed-source-only-evidence/v1",
+    "source_controls": {
+      "actual_executions": 100,
+      "current_unique": 34,
+      "final_errors": 0,
+      "final_failures": 0,
+      "preserved_initial_test_errors": 1,
+      "scope": "RO coverage Path-vs-string preparation assertion; no native/data execution"
+    },
+    "source_history": [
+      {
+        "note": "A nonrepresentable temperature curvature denominator could create false zero curvature. Preserved; separate R1 refuses this domain.",
+        "stage": "scalar-reference-R0",
+        "state": "BLOCKED_SOURCE_FINITE_ARITHMETIC"
+      },
+      {
+        "stage": "scalar-reference-R1",
+        "state": "SOURCE_GO_NOT_NATIVE_CONVERGENCE_PROOF"
+      },
+      {
+        "note": "Earlier source-only audit/entropy controls remain separate from native or DATA attempts; no DATA count is inferred from these.",
+        "stage": "source-audit-preparation",
+        "state": "PRESERVED_PRIOR_CONTROL_FAILURES"
+      }
+    ]
+  },
+  "no_deletion_or_cleanup_authority": true,
+  "read_accounting": "Explicit Reader counts are not a global process IO census",
+  "schema": "h34.public-failure-cost-ledger/v1",
+  "unprovided_failures": "UNKNOWN_NOT_INFERRED_ABSENT",
+  "unprovided_phase_costs": "PENDING_NULL_NOT_ZERO"
+}

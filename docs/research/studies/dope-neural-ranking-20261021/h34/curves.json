@@ -1,0 +1,1239 @@
+{
+  "L2_is_not_decision_regret": true,
+  "L2_retains_prediction_offset": true,
+  "actual_fit_observations": 24,
+  "actual_optional_observations": 48,
+  "fit_postfit_TRAIN": [
+    {
+      "descriptive_weighted_centered_L2": 3062.6801828387056,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 6.506891436039556,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3057.5766204692145,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 4.95205356161811,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3054.237882393972,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 4.075380372821391,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3051.7997460775146,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 3.5088307598237356,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3049.6623271253184,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 3.092555830033788,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3047.9309449440048,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 2.779508123665034,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3070.6527837745684,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.5448092018739535,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3068.9399785446785,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.46186683850534155,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3067.354944589613,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.40642911855510927,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3066.4070781866585,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.3656843237826701,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3065.640880471286,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.33340312958951673,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3064.719693735041,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.3087044789920208,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1893.1155044341342,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 4.279224036464822,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1889.0925271007864,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 3.1946306347723223,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1886.860287031019,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 2.6130470691186103,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1885.237405079802,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 2.239229490397747,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1883.8635361722954,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 1.9844700608847283,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1882.7975050399116,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 1.7875729019012465,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1900.4404806532066,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.5242189653909265,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1899.1952418550236,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.44352941594705514,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1897.8731154212053,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.3885591127669607,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1896.9270136888242,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.3466884817629208,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1896.2042811757547,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.31590989271783676,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1895.561986554539,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": null,
+      "fitted_tree_count": 120,
+      "origin": "FIT_POSTFIT_TRAIN",
+      "own_objective_loss": 0.29149511581943877,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    }
+  ],
+  "no_pooled_fold_scale": true,
+  "optional_postfit_reconstructed": [
+    {
+      "descriptive_weighted_centered_L2": 2928.9058561770184,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 7.108563835790383,
+      "requested_prefix": 20,
+      "role": "MONITOR",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2923.8458450644075,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 5.846273400314489,
+      "requested_prefix": 40,
+      "role": "MONITOR",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2920.6118861054174,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.035416666666666666,
+        "raw_failure_count": 2,
+        "unweighted_failure_fraction": 0.04878048780487805
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 5.300868006984351,
+      "requested_prefix": 60,
+      "role": "MONITOR",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2918.253755983215,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.035416666666666666,
+        "raw_failure_count": 2,
+        "unweighted_failure_fraction": 0.04878048780487805
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 5.022581490246715,
+      "requested_prefix": 80,
+      "role": "MONITOR",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2916.434965755372,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 4.736806300804804,
+      "requested_prefix": 100,
+      "role": "MONITOR",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2914.931288615466,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 4.541406028668024,
+      "requested_prefix": 120,
+      "role": "MONITOR",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3062.6801828387065,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.018949771689497717,
+        "raw_failure_count": 6,
+        "unweighted_failure_fraction": 0.014705882352941176
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 6.506891436039556,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3057.576620469215,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.00700152207001522,
+        "raw_failure_count": 3,
+        "unweighted_failure_fraction": 0.007352941176470588
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 4.95205356161811,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3054.2378823939735,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.005574581430745814,
+        "raw_failure_count": 4,
+        "unweighted_failure_fraction": 0.00980392156862745
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 4.075380372821391,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3051.799746077516,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.002834855403348554,
+        "raw_failure_count": 3,
+        "unweighted_failure_fraction": 0.007352941176470588
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 3.5088307598237356,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3049.6623271253184,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.00045662100456621003,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.0024509803921568627
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 3.092555830033788,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3047.930944944006,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.00045662100456621003,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.0024509803921568627
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 2.779508123665034,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-0/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2936.4172222275442,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.08541666666666667,
+        "raw_failure_count": 4,
+        "unweighted_failure_fraction": 0.0975609756097561
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.631716248904696,
+      "requested_prefix": 20,
+      "role": "MONITOR",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2934.7256787512206,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.025,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.024390243902439025
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5976364997176846,
+      "requested_prefix": 40,
+      "role": "MONITOR",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2933.083946126411,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.025,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.024390243902439025
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5640253542029865,
+      "requested_prefix": 60,
+      "role": "MONITOR",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2932.33750872906,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.06666666666666667,
+        "raw_failure_count": 2,
+        "unweighted_failure_fraction": 0.04878048780487805
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.547144389167529,
+      "requested_prefix": 80,
+      "role": "MONITOR",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2931.660759254616,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.09791666666666667,
+        "raw_failure_count": 3,
+        "unweighted_failure_fraction": 0.07317073170731707
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5359641695433605,
+      "requested_prefix": 100,
+      "role": "MONITOR",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2930.885916496013,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 8,
+        "context_denominator": 41,
+        "equal_component_context_failure_fraction": 0.09791666666666667,
+        "raw_failure_count": 3,
+        "unweighted_failure_fraction": 0.07317073170731707
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5290969830961593,
+      "requested_prefix": 120,
+      "role": "MONITOR",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3070.65278377457,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.0420662100456621,
+        "raw_failure_count": 17,
+        "unweighted_failure_fraction": 0.041666666666666664
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5448092018739535,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3068.939978544679,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.048344748858447494,
+        "raw_failure_count": 16,
+        "unweighted_failure_fraction": 0.0392156862745098
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.46186683850534155,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3067.3549445896138,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.05034246575342466,
+        "raw_failure_count": 17,
+        "unweighted_failure_fraction": 0.041666666666666664
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.40642911855510927,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3066.4070781866594,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.03808980213089802,
+        "raw_failure_count": 15,
+        "unweighted_failure_fraction": 0.03676470588235294
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.3656843237826701,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3065.640880471288,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.040620243531202437,
+        "raw_failure_count": 17,
+        "unweighted_failure_fraction": 0.041666666666666664
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.33340312958951673,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 3064.7196937350423,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 73,
+        "context_denominator": 408,
+        "equal_component_context_failure_fraction": 0.03359969558599696,
+        "raw_failure_count": 14,
+        "unweighted_failure_fraction": 0.03431372549019608
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.3087044789920208,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-0/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2102.3360066649693,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.025,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.02564102564102564
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 6.652429218467383,
+      "requested_prefix": 20,
+      "role": "MONITOR",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2098.3075705047836,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.1638888888888889,
+        "raw_failure_count": 5,
+        "unweighted_failure_fraction": 0.1282051282051282
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 6.126814970870746,
+      "requested_prefix": 40,
+      "role": "MONITOR",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2096.1248250328,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.06666666666666667,
+        "raw_failure_count": 2,
+        "unweighted_failure_fraction": 0.05128205128205128
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 5.94003825548216,
+      "requested_prefix": 60,
+      "role": "MONITOR",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2094.5524933276847,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.013888888888888888,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.02564102564102564
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 5.73043471549453,
+      "requested_prefix": 80,
+      "role": "MONITOR",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2093.0563910882033,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.013888888888888888,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.02564102564102564
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 5.570537757475105,
+      "requested_prefix": 100,
+      "role": "MONITOR",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2091.960248581036,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.013888888888888888,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.02564102564102564
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 5.502517230948013,
+      "requested_prefix": 120,
+      "role": "MONITOR",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1893.1155044341342,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.0061643835616438354,
+        "raw_failure_count": 2,
+        "unweighted_failure_fraction": 0.0055248618784530384
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 4.279224036464822,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1889.0925271007873,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.010502283105022832,
+        "raw_failure_count": 4,
+        "unweighted_failure_fraction": 0.011049723756906077
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 3.1946306347723223,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1886.8602870310192,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.016438356164383564,
+        "raw_failure_count": 6,
+        "unweighted_failure_fraction": 0.016574585635359115
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 2.6130470691186103,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1885.2374050798016,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.018264840182648404,
+        "raw_failure_count": 6,
+        "unweighted_failure_fraction": 0.016574585635359115
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 2.239229490397747,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1883.8635361722954,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.01449771689497717,
+        "raw_failure_count": 5,
+        "unweighted_failure_fraction": 0.013812154696132596
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 1.9844700608847283,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1882.797505039913,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.01906392694063927,
+        "raw_failure_count": 6,
+        "unweighted_failure_fraction": 0.016574585635359115
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 1.7875729019012465,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-1/GAP",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2108.9539455868717,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.58375159183136,
+      "requested_prefix": 20,
+      "role": "MONITOR",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2107.6031867579036,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5454743403176198,
+      "requested_prefix": 40,
+      "role": "MONITOR",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2106.1995199404723,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5275807388323251,
+      "requested_prefix": 60,
+      "role": "MONITOR",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2105.331467853807,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.0,
+        "raw_failure_count": 0,
+        "unweighted_failure_fraction": 0.0
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5196671691796004,
+      "requested_prefix": 80,
+      "role": "MONITOR",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2104.608699640579,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.025,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.02564102564102564
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5143650652847536,
+      "requested_prefix": 100,
+      "role": "MONITOR",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 2104.044604126508,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 8,
+        "context_denominator": 39,
+        "equal_component_context_failure_fraction": 0.025,
+        "raw_failure_count": 1,
+        "unweighted_failure_fraction": 0.02564102564102564
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.520480691820615,
+      "requested_prefix": 120,
+      "role": "MONITOR",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1900.4404806532077,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 20,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.01886195995785037,
+        "raw_failure_count": 6,
+        "unweighted_failure_fraction": 0.016574585635359115
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.5242189653909265,
+      "requested_prefix": 20,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1899.1952418550247,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 40,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.005505795574288725,
+        "raw_failure_count": 3,
+        "unweighted_failure_fraction": 0.008287292817679558
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.44352941594705514,
+      "requested_prefix": 40,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1897.8731154212064,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 60,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.01375131717597471,
+        "raw_failure_count": 6,
+        "unweighted_failure_fraction": 0.016574585635359115
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.3885591127669607,
+      "requested_prefix": 60,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1896.9270136888251,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 80,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.025447839831401475,
+        "raw_failure_count": 11,
+        "unweighted_failure_fraction": 0.03038674033149171
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.3466884817629208,
+      "requested_prefix": 80,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1896.2042811757556,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 100,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.03158587987355111,
+        "raw_failure_count": 13,
+        "unweighted_failure_fraction": 0.03591160220994475
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.31590989271783676,
+      "requested_prefix": 100,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    },
+    {
+      "descriptive_weighted_centered_L2": 1895.5619865545393,
+      "distinct_trained_checkpoint_claimed": false,
+      "effective_prefix": 120,
+      "failures": {
+        "components": 73,
+        "context_denominator": 362,
+        "equal_component_context_failure_fraction": 0.023709167544783985,
+        "raw_failure_count": 10,
+        "unweighted_failure_fraction": 0.027624309392265192
+      },
+      "fitted_tree_count": 120,
+      "origin": "OPTIONAL_POSTFIT_RECONSTRUCTED_FIXED_PREFIX",
+      "own_objective_loss": 0.29149511581943877,
+      "requested_prefix": 120,
+      "role": "TRAIN",
+      "run_id": "fold-1/ORDINAL",
+      "state": "OBSERVED_CLOSED_METADATA"
+    }
+  ],
+  "own_objectives_not_cross_comparable": true,
+  "reconstructed_points_are_not_live_checkpoints": true,
+  "schema": "h34.public-curves/v1",
+  "state": "PENDING_OR_EXACT_CLOSED_METADATA_BY_ROW"
+}

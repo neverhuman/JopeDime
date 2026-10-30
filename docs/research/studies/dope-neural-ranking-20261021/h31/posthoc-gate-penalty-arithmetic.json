@@ -1,0 +1,54 @@
+{
+  "arms": [
+    {
+      "arm": "M",
+      "component_context_weighted_failure_fraction": 0.004526748971193416,
+      "raw_context_denominator": 850,
+      "raw_failed_picks": 3,
+      "unweighted_failure_fraction": 0.0035294117647058825
+    },
+    {
+      "arm": "D",
+      "component_context_weighted_failure_fraction": 0.0020576131687242796,
+      "raw_context_denominator": 850,
+      "raw_failed_picks": 1,
+      "unweighted_failure_fraction": 0.001176470588235294
+    },
+    {
+      "arm": "S",
+      "component_context_weighted_failure_fraction": 0.0032921810699588477,
+      "raw_context_denominator": 850,
+      "raw_failed_picks": 2,
+      "unweighted_failure_fraction": 0.002352941176470588
+    }
+  ],
+  "causal_attribution": false,
+  "conditional_passing_model_RMSE": false,
+  "contrasts": [
+    {
+      "contrast": "D_minus_M",
+      "explicit100_gate_penalty_contribution": -0.24691358024691365,
+      "raw_fitness_difference": -0.23207939014850998,
+      "remaining_fitness_difference": 0.014834190098403671
+    },
+    {
+      "contrast": "D_minus_S",
+      "explicit100_gate_penalty_contribution": -0.12345679012345681,
+      "raw_fitness_difference": -0.1093396674456969,
+      "remaining_fitness_difference": 0.014117122677759913
+    }
+  ],
+  "fixed_gate_penalty": 100,
+  "independent_verification_sha256": "c89eaff9a350e7c5e5940370a053b57cbfab3903d57e7b903fd67dc62342201c",
+  "limits": [
+    "Posthoc arithmetic on the already selected fixed choices.",
+    "The remainder contains the other fixed fitness terms; it is not conditional passing-model RMSE or a new ranking endpoint.",
+    "No uncertainty interval is computed for this remainder. Both original primary intervals and the no-established-lift conclusion remain unchanged.",
+    "The explicit100 penalty coefficient is the root-declared fixed-formula term; this does not independently reconstruct the complete original S1 fitness formula."
+  ],
+  "no_new_fits_reranking_CIs_or_primary_changes": true,
+  "schema": "h31.posthoc-fixed-gate-arithmetic/v1",
+  "source_posthoc_receipt_sha256": "58853a239a26e3fbd6236515ca3cd2d4353d9a704d5c76598ccae5f8f63483db",
+  "state": "POSTHOC_ARITHMETIC_ONLY_NO_NEW_FITS_RERANK_CI_OR_PRIMARY_CHANGE",
+  "weighting": "Equal original component, then equal context within component; not raw failures divided by850."
+}

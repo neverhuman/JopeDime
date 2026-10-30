@@ -1,0 +1,9 @@
+# Follow-up: expose candidate × task interactions
+
+Query centering can make a task-only feature have zero root gain despite being useful after a candidate split. In the fixed synthetic teacher, exact unregularized gains are candidate root 1568/9, task root 0, task child 400/3, and explicit candidate × task root 3872/9. The official [serial learner](https://raw.githubusercontent.com/microsoft/LightGBM/v4.6.0/src/treelearner/serial_tree_learner.cpp) can omit a feature from child search when its cached parent histogram is nonsplittable. The [numerical histogram](https://raw.githubusercontent.com/microsoft/LightGBM/v4.6.0/src/treelearner/feature_histogram.hpp) marks it splittable after a strictly improving threshold.
+
+This is a conditional source-supported mechanism, not proof of the pinned binary's actual path. Real distributions, binning, floating-point sums, cache conditions and later residuals can differ. The observed near-program-only callback loss is compatible with this hypothesis and is not causal evidence.
+
+Root selected H33 SOURCE IMPLEMENTATION: six future MSE selectors, BASE/REAL/WRONG_CONTEXT × two whole-component folds. All arms retain the actual recipient base508. A fixed data-independent candidate412→16 hash-sign projection crossed with FIVE8 contributes 128 appended columns (total636); BASE zeros those columns and WRONG_CONTEXT substitutes a label-blind role-local donor only within that block. No Dope, severity-objective, independent-validation or new-volume claim is planned. FIVE was chosen before H31 endpoints. No numerical H33 authority follows from this plan.
+
+A new qualification must save returned models, predictions and separate loss/choice checks before assertions. Dataset work requires source/control/role/runtime review, new grants, all-fit closure before once-only OOF and independent replay. No old H32 grant can be reused.

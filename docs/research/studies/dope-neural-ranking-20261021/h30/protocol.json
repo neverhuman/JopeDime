@@ -1,0 +1,171 @@
+{
+  "development_only": true,
+  "evaluation": {
+    "OOF_contexts": [
+      401,
+      449
+    ],
+    "barrier": "all8FIT_COMPLETE_NO_OOF_READS exactprotocol/source closures before any OOFpooldecode",
+    "bootstrap": {
+      "central_CI_each": 0.9875,
+      "familywise_confidence": 0.975,
+      "favorable": "adjusted upper bound<0",
+      "replicates": 100000,
+      "seed": 20261022,
+      "unit": "162 wholecomponents paired"
+    },
+    "endpoint": "equalcomponent->equalcontext selected rawfitness; lower better",
+    "five": "secondary only",
+    "gate_report": "paired rawselectedfailure fraction/count; no invented practicalmargin/causalclaim",
+    "monitor_contexts": [
+      41,
+      39
+    ],
+    "primaries": [
+      "one_minus_zero",
+      "one_minus_permuted_one"
+    ],
+    "promotion_or_external_confirmation": false,
+    "top1": "minimum predicted centeredcost, ascending fullprogramSHA tie"
+  },
+  "feature_contract": {
+    "A0": 88,
+    "Dope_state_coordinates": 0,
+    "arms": [
+      "zero",
+      "one",
+      "five",
+      "permuted_one"
+    ],
+    "fingerprint_coordinates": 8,
+    "full_candidate_program": 412,
+    "width": 508
+  },
+  "final_results": {
+    "established_lift": false,
+    "primaries": {
+      "one_minus_permuted_one": {
+        "CI_central_98_75": [
+          -0.37194532230803895,
+          0.81373151897326
+        ],
+        "endpoint": "selected raw constrained fitness; lower better",
+        "favorable_adjusted_upper_below_zero": false,
+        "mean": 0.1612235997928494
+      },
+      "one_minus_zero": {
+        "CI_central_98_75": [
+          -0.00091609721169901,
+          0.8911260794291421
+        ],
+        "endpoint": "selected raw constrained fitness; lower better",
+        "favorable_adjusted_upper_below_zero": false,
+        "mean": 0.2944942940250448
+      }
+    },
+    "raw_failure_counts": {
+      "five": 3,
+      "one": 3,
+      "permuted_one": 2,
+      "zero": 1
+    },
+    "result_file": "final-results.json",
+    "secondary_five": {
+      "fitness_regret": 1.3835225126209092,
+      "selected_fitness": -0.46482997419315564,
+      "selected_gate_failure": 0.004526748971193416,
+      "selected_logratio": -1.034639250479596
+    },
+    "state": "INDEPENDENT_REPLAY_PASS_WITH_LIMITS_NO_ESTABLISHED_LANDMARK_LIFT"
+  },
+  "independent_seed_replicates": false,
+  "limits": [
+    "Historically exposed850curatedGPouterTRAIN tasks, not freshfamilies/productionproof.",
+    "Current role/reservation closure is inherited from exactH18/H27 authorities, not a newwholegraphaudit. Any newsourceedge must refresh anti-join.",
+    "Raw acquisition preprocessing is not proven fold-safe; this is the frozen curated-view benchmark.",
+    "WeightedMSE is a surrogate; it does not directly optimize discrete top1fitness.",
+    "NoDope508contract differs from H27commoncovariates, so this is not a purearchitecturecausalcontrast.",
+    "Per-contextpermutation retains distribution information and may differ in tree split availability; matched config/seed is not equal learningtrajectory.",
+    "New no-Dope feature contract; not a causal architecture-only contrast with H27.",
+    "H27-informed development design, not a fresh independent confirmation cohort.",
+    "Current162-to-expanded162 partition is metadata-qualified; original full graph not independently reconstructed by final replay."
+  ],
+  "models": 8,
+  "objective": {
+    "LightGBM_internal_label_dtype": "FP32; transformedlabel nonfinitecast refuses, never clips/drops",
+    "actual_trees": "record<=120 if kernel exhausts valid splits; no tuning/earlystop/retry",
+    "no_gate_forward_or_label_mask": true,
+    "requested_rounds": 120,
+    "scale": "median strictlypositive per-query TRAINIQR floor.001; one scalar across all queries",
+    "target": "raw constrained S1fitnessF; query-centered then divided by one global TRAINscale",
+    "uncapped": true,
+    "weights": "mean1 candidate weights N/(K*n_component_contexts*n_query_candidates)"
+  },
+  "population": {
+    "OOF_contexts": [
+      401,
+      449
+    ],
+    "candidates_per_context": 1152,
+    "components": 162,
+    "context_candidate_outcomes": 979200,
+    "contexts": 850,
+    "families": 164,
+    "gradient_contexts": [
+      408,
+      362
+    ],
+    "meta_folds": 2,
+    "monitor_contexts": [
+      41,
+      39
+    ]
+  },
+  "preprocessing": {
+    "A0_program": "no scaling/no clipping",
+    "fit_role": "gradient only408/362 contexts73components",
+    "monitor_excluded_from_all_scalers_and_fits": true,
+    "permuted_one": "transform ONE then order coordinates by SHA256(h30-permuted-one-v1:+fullcontextSHA+:+probeordinal); context-specific label-blind exact multiset",
+    "probe_scaler": "per coordinate population mean/std of concatenated gradient ONE+FIVE; each context/view equal; std<1e-6->1; no clipping",
+    "zero": "literal8 zeros after scaling"
+  },
+  "probe_features": {
+    "existing_GP_probe_fits": 34000,
+    "five": "mean of the same five fold scores; fold0 reused",
+    "new_GP_fits_for_H30": 0,
+    "one": "fixed probe fold0",
+    "permuted_one": "context-specific label-blind coordinate permutation after the same gradient-only scaling",
+    "zero": "literal zero after shared scaling"
+  },
+  "recipe": {
+    "bagging_seed": 3,
+    "boost_from_average": true,
+    "colsample_bytree": 1.0,
+    "data_random_seed": 1,
+    "deterministic": true,
+    "feature_fraction_bynode": 1.0,
+    "feature_fraction_seed": 2,
+    "force_col_wise": true,
+    "learning_rate": 0.05,
+    "max_bin": 31,
+    "max_depth": -1,
+    "min_child_samples": 64,
+    "min_child_weight": 0.001,
+    "min_split_gain": 0.0,
+    "n_estimators": 120,
+    "n_jobs": 2,
+    "num_leaves": 15,
+    "objective": "regression",
+    "random_state": 20261022,
+    "reg_alpha": 0.0,
+    "reg_lambda": 0.0,
+    "reg_sqrt": false,
+    "subsample": 1.0,
+    "subsample_for_bin": 200000,
+    "subsample_freq": 0,
+    "verbosity": -1
+  },
+  "schema": "h30.public-fixed-eight-tree-protocol/v1",
+  "state": "FIXED_RECIPE_COMPLETE_INDEPENDENT_REPLAY_PASS_WITH_LIMITS",
+  "superseded_dated_seed_proposal_models": 24
+}

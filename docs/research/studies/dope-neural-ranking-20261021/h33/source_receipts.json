@@ -1,0 +1,73 @@
+{
+  "final_independent_verification": {
+    "bytes": 29704,
+    "sha256": "91fa129e37f74177b087d8bedc08ff6c1ab595a044637bb2f19ffdd5879c67aa"
+  },
+  "receipts": {
+    "all_monitor_curves": {
+      "bytes": 19083,
+      "sha256": "e243caebe839a0cff1229e0fc05ac81f98df5b1a3a9fa73f89cc13e302762b5c"
+    },
+    "all_six_OOF_administration": {
+      "bytes": 21847,
+      "sha256": "dad3d026a21aca3b9d9f5fb92bd7e19433650f394013e26afbf5622c8ac5f966"
+    },
+    "all_six_fit_administration": {
+      "bytes": 16190,
+      "sha256": "b67aeafde84384222e24a80dadc0d52e4fb9af8694b219175ae4ffb81e6d9c76"
+    },
+    "all_six_model_monitor_administration": {
+      "bytes": 6846,
+      "sha256": "7ab40656babc7d5ee13a9683ca8917e2af22a9a4de02dd34e59c6c92fbe98dc0"
+    },
+    "model_structure_preregistered_plan": {
+      "bytes": 1527,
+      "sha256": "54a0ae56801855e45b8bdf57584793ce740428a34497052e334a06639b4c3979"
+    },
+    "monitor_protocol": {
+      "bytes": 2219,
+      "sha256": "2be9365716de75cb9ad92c82a6a886b6d84b6ea18cfed93b94a843042769a969"
+    },
+    "monitor_source_freeze": {
+      "bytes": 1964,
+      "sha256": "148fb1a38d8743eb917a7a4593159140cd0fff6870d0690b2ed97e8b670c357e"
+    },
+    "producer_aggregate": {
+      "bytes": 5095,
+      "sha256": "ed47e1f2dc2c88a6b0ca604d4dc293227fb4e0a285a904e556cc8588c3541c34"
+    },
+    "training_protocol": {
+      "bytes": 11607,
+      "sha256": "e2c6a02f5355810fd5f219eae9207b8c15a891d89083ebfa171e96a8c1e4042a"
+    },
+    "training_source_freeze": {
+      "bytes": 10974,
+      "sha256": "ff4327ba2d7b37042ce55856c64a201b4fce772cf8031f3f4cccc6d321cc5cd7"
+    },
+    "training_source_peer_review": {
+      "bytes": 7924,
+      "sha256": "e3a2d211907da2a3c58d95f7d441ca40ff92410bcd7fcc270aed20fe81e61845"
+    }
+  },
+  "replay_attempt_results": [
+    {
+      "bytes": 3488,
+      "sha256": "379e50b1a614eaf983bcb13e5cb7f5c7748614a808dd0e5e892b38332c470960"
+    },
+    {
+      "bytes": 3506,
+      "sha256": "034bf4a18b89627ddc00d238138d3fab5cd634738e7187c35d22971a89de956c"
+    },
+    {
+      "bytes": 29704,
+      "sha256": "91fa129e37f74177b087d8bedc08ff6c1ab595a044637bb2f19ffdd5879c67aa"
+    }
+  ],
+  "root_acceptance": {
+    "bytes": 2868,
+    "sha256": "7e2b1ecf9133f092326922eabf53ebebb9635500d3412be1790aafe33a012406"
+  },
+  "schema": "h33.public-source-receipts/v1",
+  "source_paths_and_private_model_or_context_identities_excluded": true,
+  "status": "COMPLETE_VERIFIED_DEVELOPMENT_ONLY_NO_ESTABLISHED_INTERACTION_LIFT"
+}
