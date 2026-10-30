@@ -16,6 +16,7 @@ starforge = { path = "../jope-encoders", optional = true, features = ["dope"] }
 anyhow.workspace = true
 clap = { workspace = true, features = ["derive"] }
 jope-assets = { path = "../jope-assets" }
+jope-api = { path = "../jope-api" }
 jope-runtime = { path = "../jope-runtime" }
 serde.workspace = true
 serde_json.workspace = true
