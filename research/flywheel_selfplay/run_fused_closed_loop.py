@@ -49,7 +49,10 @@ spec.loader.exec_module(guard)
 sys.path.insert(0, str(HERE))
 from automatic_promotion import promote, replay, training_cv_envelope, training_indices
 from dev_incumbent import (
+    CandidateNovelty,
     DevIncumbent,
+    RejectedCandidateError,
+    batch_seed,
     gp_selection_indices,
     project_score_margins,
     proposal_plan,
@@ -753,6 +756,15 @@ def main():
     proposal_history = [
         json.loads(path.read_text()) for path in args.output.glob("round-*.json")
     ]
+    admission_path = args.output / "adapter_admissions.jsonl"
+    admission_history = (
+        [json.loads(line) for line in admission_path.read_text().splitlines()]
+        if admission_path.exists()
+        else []
+    )
+    novelty = CandidateNovelty(
+        evaluation_identity, [*proposal_history, *admission_history]
+    )
     release_gpu_round(lock)  # startup qualification is complete
     for rnd in round_indices:
         if reporter:
@@ -818,6 +830,7 @@ def main():
         transfers_before = device_pool_cache.transfers
         projection_failed = False
         executed_steps = 0
+        training_batches = []
         optimizer_step_before = max(
             (int(v["step"]) for v in opt.state.values() if "step" in v), default=0
         )
@@ -838,12 +851,21 @@ def main():
             phase_start = time.monotonic()
             if reporter:
                 reporter.begin_pack()
+            step_seed = batch_seed(args.seed, rnd, step)
             cids = (
-                reporter.training_order(
-                    plan["round_seed"] + step, args.batch_size, False
-                )
+                reporter.training_order(step_seed, args.batch_size, False)
                 if reporter
-                else random.choices(round_train, k=args.batch_size)
+                else random.Random(step_seed).choices(round_train, k=args.batch_size)
+            )
+            training_batches.append(
+                {
+                    "step": step,
+                    "seed": step_seed,
+                    "contexts": len(cids),
+                    "order_sha256": hashlib.sha256(
+                        json.dumps(cids).encode()
+                    ).hexdigest(),
+                }
             )
             selections = []
             for c in cids:
@@ -933,8 +955,6 @@ def main():
             (int(v["step"]) for v in opt.state.values() if "step" in v), default=0
         )
         phase_start = time.monotonic()
-        candidate_dev = utility()
-        candidate_train = utility(train, "train") if full else None
         candidate_hash = hashlib.sha256()
         for name, parameter in sorted(net.named_parameters()):
             if parameter.requires_grad:
@@ -943,6 +963,28 @@ def main():
                     parameter.detach().cpu().contiguous().numpy().tobytes()
                 )
         candidate_parameter_sha256 = candidate_hash.hexdigest()
+        try:
+            candidate_dev, candidate_train = novelty.evaluate(
+                candidate_parameter_sha256,
+                lambda: (utility(), utility(train, "train") if full else None),
+            )
+        except RejectedCandidateError as error:
+            incumbent.restore(net, opt)
+            guard.verify_dope_frozen_unchanged(net, before)
+            write_json(
+                args.output / f"candidate_refusal_round-{rnd}.json",
+                {
+                    "round": rnd,
+                    "candidate_parameter_sha256": candidate_parameter_sha256,
+                    "evaluation_identity": evaluation_identity,
+                    "training_batches": training_batches,
+                    "reason": str(error),
+                    "candidate_evaluated": False,
+                    "completed_round": False,
+                    "incumbent_restored": True,
+                },
+            )
+            raise
         if reporter:
             reporter.scores(
                 dev,
@@ -1004,10 +1046,12 @@ def main():
         if dev_stats != incumbent.best_stats:
             raise RuntimeError("incumbent restore did not reproduce best-dev selection")
         adapter_admission["timestamp"] = time.time()
+        adapter_admission["candidate_parameter_sha256"] = candidate_parameter_sha256
         with (args.output / "adapter_admissions.jsonl").open("a") as admission_log:
             admission_log.write(json.dumps(adapter_admission) + "\n")
             admission_log.flush()
             os.fsync(admission_log.fileno())
+        novelty.record(adapter_admission)
         phase["dev_gate"] = time.monotonic() - phase_start
         gp_start = time.monotonic()
         seen_before_round = {pid for c in train for pid in pools[c]["pids"]}
@@ -1185,6 +1229,8 @@ def main():
             "projection_failed": projection_failed,
             "proposal_plan": plan,
             "candidate_parameter_sha256": candidate_parameter_sha256,
+            "training_batch_rng": "round-step/v1",
+            "training_batches": training_batches,
             "changed_tensors": changed,
             "trainable_params": counts["__global_total__"]["trainable_params"],
             "parameter_counts": counts,
