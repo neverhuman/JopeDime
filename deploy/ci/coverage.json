@@ -246,6 +246,16 @@
       ],
       "scope": "Opt-in benchmark-local arena/compare CLI. Synthetic compare and live-scope refusal fixtures run via run_rlfw_offline.py; no native execution or performance proof in CI."
     },
+    "benchmark:deploy/qualification/d2/bench.sh": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "REL-06 D2 harness source; static assignment only, with no reference-laptop execution or performance claim."
+    },
     "benchmark:examples/objectives/real-world/benchmark.sh": {
       "discovery": {
         "kind": "benchmark-source"

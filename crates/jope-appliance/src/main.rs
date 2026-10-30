@@ -1144,7 +1144,10 @@ fn main() -> ExitCode {
                 Ok(())
             })(),
         }),
-        Command::Mcp => report(serve(true)),
+        #[cfg(feature = "mcp")]
+        Command::Mcp => report(cmd::mcp_entry::run()),
+        #[cfg(not(feature = "mcp"))]
+        Command::Mcp => report(Err(anyhow::anyhow!("MCP is unavailable in this build"))),
         Command::Api => report(serve(false)),
         Command::Serve {
             status,

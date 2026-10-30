@@ -171,16 +171,17 @@ to that discipline still needs evidence.
 \end{keyidea}
 
 % ----------------------------------------------------------------------------
-\subsection{One game played, and where the analogy breaks}\label{sub:game-played}
+\subsection{A worked game and the analogy's limits}\label{sub:game-played}
 
-The running example is the sealed problem chosen by the paper's stated rule,
-the median win (\cref{sec:results}): \TBD{dataset, task type, metric}. The
-player encodes it in \TBD{time} and writes one program of \TBD{size}, which
-passes its checks. Fit in \TBD{time}, the program scores \TBD{score} on hidden
-folds against the incumbent's \TBD{score}: \TBD{a win or an also-ran}. Had it
-crashed, the game would simply have been lost, with no repair and no second try.
-The update is skipped because the problem is sealed: the verdict is reported,
-never learned from.
+The planned worked game follows the selection rule to be fixed in
+\cref{sub:results-failures}; an empty selected outcome category must be
+reported rather than replaced. \TBD{Identify the problem, task and metric.}
+Report encoding time \TBD{time}, the emitted output \TBD{program or unfinished
+draft and size}, and its observed check and fitting outcomes
+\TBD{outcomes and time}. For a valid fit, report its hidden-fold score
+\TBD{score} and the incumbent's score \TBD{score}; otherwise report the
+failure and its incurred cost. The attempt permits no repair or second try.
+A sealed verdict is reported without updating the writer.
 
 The analogy breaks in four places. \textbf{The referee is noisy}: picking a
 winner by a noisy validation score biases that score upward
