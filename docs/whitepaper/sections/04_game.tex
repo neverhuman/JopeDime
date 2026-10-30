@@ -4,8 +4,8 @@
 % judgment is the inventor), 3 (search = 1)
 % Exhibits: Table 4 (tab:go-vs-innovation), Figure 3 (fig:game-loop)
 
-Can invention be played like Go? It can. The problem is the board, an
-algorithm is the move, a verifier is the referee and the best known algorithm
+Can invention be played like Go? It can. The encoded problem is the board, an
+algorithm is the move, a verifier is the referee and a declared incumbent
 is the opponent. Because the problem sits on the board rather than in the
 rules, one set of rules covers many kinds of problem.
 
@@ -17,9 +17,9 @@ rules, an impartial referee, a clear winner and cheap replay. Chess was chosen
 because it is ``sharply defined both in allowed operations (the moves) and in
 the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
 that a program could improve by playing itself \citep{samuel1959checkers}.
-Together the four give a learner unlimited experience, scored honestly. People
+Together these properties support repeated, reproducible evaluation. People
 scale judgment the same way, through prizes, leaderboards and the common task
-framework's ``scoring referee'' (\citealp{donoho2017fifty}; \cref{sec:road}).
+framework's ``scoring referee'' (\cite{donoho2017fifty}; \cref{sec:road}).
 Invention has the first three properties once the problem and the solution are
 written down; cheap replay is a question of cost (\cref{sec:price}).
 
@@ -63,7 +63,7 @@ $w \in \Sol$ as $z_p$ and $z_w$. The referee $\referee$ reports a program's
 validity and score, the reward $\reward$ orders moves, and the opponent $\opp$
 supplies the incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
 selection \citep{rice1976algorithm}: the player writes the algorithm instead of
-picking it, and an opponent decides what counts as winning.
+picking it, and a declared incumbent sets the comparison standard.
 
 A skeptic might ask whether a one-move game is a game at all. Formally it is a
 contextual bandit, with the board as context, the program as action and the
@@ -91,17 +91,21 @@ nothing can send a move back for another try; that is \searchone.
 
 The board is the aim pillar of \cref{sec:anatomy}, made machine-readable: a
 summary of the training data, the objective and metric, and the constraints.
-The summary is DOPE's landmark encoding (\cref{sec:method}), in the
-meta-learning tradition of describing a dataset by how cheap learners score on
-it \citep{pfahringer2000landmarking}. A good board is \emph{complete}, since
-problems that encode alike must be answered alike; \emph{canonical} when rows
-and columns are reordered; \emph{leak-free}, blind to test labels and hidden
-folds; and \emph{cheap}, at \TBD{seconds} per problem. Whoever writes the board
+Landmark scores from cheap learners \citep{pfahringer2000landmarking} and
+learned tabular summaries are possible encodings. The reference checkpoint
+in \cref{sub:method-board} uses a frozen 2,048-value summary with a
+30-second cap; it does not use the optional DOPE landmark interface.
+A useful board should preserve distinctions relevant to algorithm choice,
+remain stable under irrelevant reorderings, exclude final evaluation
+information and have a measured cost. These are requirements to test, not
+properties guaranteed by naming an encoder. Whoever writes the board
 writes the aim. People still choose the problem, and the machine learns to
 answer it.
 
 The move is where invention gets its language: one program in a typed language
-over learning primitives \TBD{primitive set and its size}. Types remove whole classes of stillborn
+over learning primitives. The reference language uses a 401-token
+vocabulary, with up to six transforms chosen from 31 and one of 22 prediction
+heads (\cref{sub:method-move}). Types remove whole classes of stillborn
 programs before they run \citep{montana1995stgp}. A canonical form makes two
 spellings of one idea count once, as AutoML-Zero reused the score of any program
 whose outputs matched one already scored \citep{real2020automlzero}. The
@@ -122,10 +126,12 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
   \reward(p, \tilde{w}) \;<\; \reward(p, w^-) \;<\; \reward(p, w^+).
 \]
 
-The opponent is a ratcheting incumbent. A program is promoted only on a clear
-win, by \TBD{margin} across \TBD{number of} folds and then re-verified
-(\cref{sec:method}), as AlphaGo Zero promoted a network only after it won more
-than 55\% of evaluation games \citep{silver2017mastering}. The ratchet also
+The opponent is a ratcheting incumbent. In the reference procedure a program displaces a board's incumbent only
+by strict improvement on five inner folds. A retrained writer has a separate
+admission test on 16 held-out cuts with three seeds each
+(\cref{sub:method-selfplay}). These are distinct ratchets, as AlphaGo Zero's
+network admission was distinct from choosing a move during play
+\citep{silver2017mastering}. The ratchet also
 makes this self-play.
 Subtracting the incumbent's score does not change which move is best; what
 matters is what promotion changes. It raises the bar, turns yesterday's winners
@@ -152,7 +158,8 @@ for three games and trained a separate network for each
 player can learn many boards.
 
 \begin{keyidea}
-Every discipline with a referee is a game no one has played yet.
+A reliable referee makes a discipline a candidate for this game; transfer
+to that discipline still needs evidence.
 \end{keyidea}
 
 % ----------------------------------------------------------------------------
@@ -175,9 +182,9 @@ frontier models in June 2025 \citep{metr2025rewardhacking}; \cref{sec:method}
 lists our safeguards. And \textbf{no algorithm wins everywhere}: averaged
 uniformly over all problems, no learner has lower error off the training set
 than another, ours included \citep{wolpert1996nfl}. Real problems are structured, though, and a player that
-reads the board can choose its bias board by board. \Cref{sec:results} tests
-that bet against frontier-invented algorithms that run unchanged on every
-problem, with head-to-head win rates beside Elo \citep{elo1978rating}, which
-assumes strength is transitive \citep{balduzzi2018reevaluating}.
+reads the board can choose its bias board by board. \Cref{sec:results} reserves the tests of that hypothesis against fixed
+frontier-designed algorithms, with paired outcomes beside Elo summaries
+\citep{elo1978rating}. Non-transitive comparisons are one reason not to
+reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
 
 A game anyone can play is only useful if someone can afford to play it.
