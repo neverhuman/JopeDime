@@ -283,16 +283,61 @@ fn run_spec() -> Value {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn legacy_aliases_are_listed_and_dispatched_through_existing_handlers() {
+    let mut wire = Wire::connect("2025-11-25").await;
+    wire.ready().await;
+
+    let catalog = wire.call("tools/list", json!({})).await;
+    let tools = catalog["result"]["tools"].as_array().unwrap();
+    for name in [
+        "fitness_list",
+        "fitness_validate",
+        "fitness_evaluate",
+        "regression_fit_predict",
+        "model_session_show",
+        "model_session_record",
+        "model_session_rollback",
+        "narration_read",
+        "narration_inspect",
+    ] {
+        let tool = tools.iter().find(|tool| tool["name"] == name).unwrap();
+        assert!(tool["description"].as_str().unwrap().contains("Deprecated"));
+        assert_eq!(tool["_meta"]["deprecated"], true);
+        assert!(tool["_meta"]["replacement"].is_string());
+    }
+
+    let fitness = wire.tool("fitness_list", json!({})).await;
+    assert_eq!(fitness["result"]["isError"], false);
+    assert!(fitness["result"]["structuredContent"]["fitness"].is_array());
+
+    let removed = wire.tool("narration_read", json!({})).await;
+    assert_eq!(removed["result"]["isError"], true);
+    assert_eq!(
+        removed["result"]["structuredContent"]["code"],
+        "tool_removed"
+    );
+
+    wire.finish("legacy-aliases").await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
     for version in VERSIONS {
         let mut wire = Wire::connect(version).await;
         wire.ready().await;
         let catalog = wire.call("tools/list", json!({})).await;
         let tools = catalog["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 12);
+        assert_eq!(tools.len(), 21);
         let names: Vec<_> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
         let expected: Vec<_> = OPERATIONS.iter().filter_map(|op| op.mcp_tool).collect();
-        assert_eq!(names, expected);
+        assert_eq!(names[..expected.len()], expected);
+        for tool in &tools[expected.len()..] {
+            assert_eq!(tool["_meta"]["deprecated"], true);
+            assert!(tool["_meta"]["replacement"].is_string());
+        }
+        assert!(tools[expected.len()..]
+            .iter()
+            .any(|tool| tool["name"] == "narration_read"));
         for tool in tools {
             assert_eq!(tool["inputSchema"]["type"], "object");
             if tool["_meta"]["jope/schemaQualified"] == true {
