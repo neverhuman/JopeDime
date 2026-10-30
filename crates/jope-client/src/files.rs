@@ -297,6 +297,8 @@ mod tests {
     };
     use zip::{write::SimpleFileOptions, ZipWriter};
 
+    static TEST_TEMP_ID: AtomicU64 = AtomicU64::new(0);
+
     struct Fake {
         bytes: Vec<u8>,
     }
@@ -308,20 +310,38 @@ mod tests {
             Ok(Response::new(200, headers, Cursor::new(self.bytes.clone())))
         }
     }
-    fn temp_dir() -> PathBuf {
+    struct TestTempDir(PathBuf);
+
+    impl std::ops::Deref for TestTempDir {
+        type Target = Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl AsRef<Path> for TestTempDir {
+        fn as_ref(&self) -> &Path {
+            &self.0
+        }
+    }
+
+    impl Drop for TestTempDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_dir() -> TestTempDir {
         let n = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let target = std::env::current_exe()
-            .unwrap()
-            .ancestors()
-            .find(|path| path.file_name().is_some_and(|name| name == "target"))
-            .unwrap()
-            .to_path_buf();
-        let path = target.join(format!("jope-client-files-{}-{n}", std::process::id()));
+        let id = TEST_TEMP_ID.fetch_add(1, Ordering::Relaxed);
+        let path =
+            std::env::temp_dir().join(format!("jope-client-files-{}-{n}-{id}", std::process::id()));
         fs::create_dir(&path).unwrap();
-        path
+        TestTempDir(path)
     }
     fn zip(entries: &[(&str, &[u8])]) -> Vec<u8> {
         let cursor = Cursor::new(Vec::new());
