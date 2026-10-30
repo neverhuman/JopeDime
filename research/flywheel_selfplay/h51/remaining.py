@@ -241,7 +241,7 @@ def run_null(args) -> dict:
     base_state = h48.parameter_snapshot(net)
     for candidate_id in range(NULL_N):
         delta = {name: torch.randn(value.shape, generator=generator, dtype=value.dtype) for name, value in base_state.items()}
-        norm = torch.sqrt(sum(torch.sum(value.float() ** 2) for value in delta))
+        norm = torch.sqrt(sum(torch.sum(value.float() ** 2) for value in delta.values()))
         direction = {name: value.to(device) * (0.30 / float(norm)) for name, value in delta.items()}
         direction_sets.append(direction)
         for fold_id, held_families in enumerate(folds):
