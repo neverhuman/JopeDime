@@ -163,6 +163,33 @@ The failed log and manifests remain in custody; no other jobs were interrupted.
 
 ## Development adapter admission (16:35Z owner nudge)
 
+Checkpoint retention runs at startup, every50logical rounds, and before the unchanged
+combined-output cap check when usage exceeds9GiB. It retains the canonical
+`best_dev_checkpoint.json` target, the actual `--resume` checkpoint, the latest20
+completed rounds in both root/rejected checkpoint sets, and explicit
+`--retain-checkpoint` pins. Unqualified/orphan and partial checkpoints remain.
+For this campaign, preserve the earlier r785 witness with
+`--retain-checkpoint round-785.pt`; best882 and startupresume are automatic fences.
+
+Before pruning an eligible `.pt` or old evaluation `.jtt1` payload, retention writes
+one `.tar.zst` plus hash manifest outside all guarded roots and the checkout, then
+independently restores and checks every body, size and mode. A fresh dependency
+check and unchanged best/protected-state checks precede removal. Symlinks, changed
+sources/pointers, active readers, missing tools and insufficient restore/free-space
+headroom defer retention. The original10GiBcombined/50GiBfree guards still apply.
+All JSON/JSONL receipts stay at their original paths, including evaluation JSON;
+unknown evidence stays too. Only empty old evaluation directories are removed.
+
+Defaults: `--checkpoint-keep-last 20` and
+`--checkpoint-archive-dir ~/jope-data/archive/flywheel-retention`. Archives stay on
+local disk and are never automatically deleted. Operator S3 custody is separate;
+the worker gains no AWS credentials or network dependency. Requires host `zstd`
+and `lsof`. Each maintenance outcome and elapsed time is recorded separately in
+the round receipt/console, including deferred failures; maintenance time is outside
+the existing measured training/GP round window and must be added for end-to-end
+throughput. The current live process is not updated by preparing this source change;
+deployment belongs to the watcher at the next authorized restart.
+
 `dev_incumbent.DevIncumbent` preserves the best development utility under a fixed
 comparison identity. The runner first resumes the latest logical round, then
 restores the highest-utility historical adapter and AdamW state (most recent tie:

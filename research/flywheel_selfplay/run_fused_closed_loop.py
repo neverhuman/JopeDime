@@ -19,7 +19,9 @@ import random
 import shutil
 import socket
 import struct
+import subprocess
 import sys
+import tarfile
 import time
 from pathlib import Path
 
@@ -56,6 +58,7 @@ from dev_incumbent import (
     gp_selection_indices,
     project_score_margins,
     proposal_plan,
+    retain_checkpoint_payloads,
     warm_restart_adapter,
 )
 from device_pool_cache import (
@@ -159,13 +162,35 @@ def main():
     ap.add_argument("--continuous", action="store_true")
     ap.add_argument("--campaign-prior-output", type=Path, action="append", default=[])
     ap.add_argument("--best-checkpoint", type=Path)
+    ap.add_argument("--checkpoint-keep-last", type=int, default=20)
+    ap.add_argument(
+        "--checkpoint-archive-dir",
+        type=Path,
+        default=Path.home() / "jope-data/archive/flywheel-retention",
+    )
+    ap.add_argument(
+        "--retain-checkpoint",
+        type=Path,
+        action="append",
+        default=[],
+        help="additional checkpoint pin, relative to output or absolute",
+    )
     ap.add_argument(
         "--phase3-gate-bundles",
         type=Path,
         help="directory containing round-NN.json keyed-S3 qualification bundles",
     )
     args = ap.parse_args()
-    if min(args.rounds, args.steps, args.batch_size, args.slate_size) <= 0:
+    if (
+        min(
+            args.rounds,
+            args.steps,
+            args.batch_size,
+            args.slate_size,
+            args.checkpoint_keep_last,
+        )
+        <= 0
+    ):
         raise ValueError("positive bounds required")
     args.output.mkdir(parents=True, exist_ok=True)
     lock = open(Path.home() / "jope_plan/qualification.lock", "a")  # noqa: SIM115 -- held for process lifetime
@@ -766,10 +791,16 @@ def main():
         evaluation_identity, [*proposal_history, *admission_history]
     )
     release_gpu_round(lock)  # startup qualification is complete
+    last_retention_attempt = None
     for rnd in round_indices:
         if reporter:
             reporter.begin()
         fcntl.flock(lock, fcntl.LOCK_EX)
+        if (args.output / f"round-{rnd:02d}.json").exists():
+            raise ValueError(
+                "completed round exists; use a new run with explicit checkpoint resume"
+            )
+        retention = None
         used_bytes = sum(
             p.stat().st_size
             for root in [args.output, *args.campaign_prior_output]
@@ -777,15 +808,67 @@ def main():
             if p.is_file()
         )
         if (
+            rnd == start_round
+            or rnd % 50 == 0
+            or (
+                used_bytes > 9 * 1024**3
+                and (
+                    last_retention_attempt is None or rnd - last_retention_attempt >= 5
+                )
+            )
+        ):
+            last_retention_attempt = rnd
+            retention_started = time.monotonic()
+            protected = [
+                p.resolve()
+                for p in [args.resume, args.best_checkpoint]
+                if p is not None
+            ]
+            for name in [
+                incumbent.best_checkpoint,
+                margin_policy.get("anchor_checkpoint"),
+            ]:
+                if name and name != "initial_model":
+                    protected.append(Path(name).resolve())
+            protected.extend(
+                p if p.is_absolute() else args.output.resolve() / p
+                for p in args.retain_checkpoint
+            )
+            try:
+                retention = retain_checkpoint_payloads(
+                    args.output,
+                    args.checkpoint_archive_dir,
+                    protected,
+                    keep_last=args.checkpoint_keep_last,
+                    guarded_roots=args.campaign_prior_output,
+                )
+            except (
+                OSError,
+                ValueError,
+                RuntimeError,
+                subprocess.SubprocessError,
+                tarfile.TarError,
+            ) as error:
+                # An unsafe/unavailable retention route never authorizes deletion.
+                # The original cap still stops the worker if reclamation was needed.
+                retention = {"pruned_files": None, "deferred": str(error)}
+            retention["wall_seconds"] = time.monotonic() - retention_started
+            print(
+                json.dumps({"checkpoint_retention": retention, "before_round": rnd}),
+                flush=True,
+            )
+            used_bytes = sum(
+                p.stat().st_size
+                for root in [args.output, *args.campaign_prior_output]
+                for p in root.rglob("*")
+                if p.is_file()
+            )
+        if (
             used_bytes > 10 * 1024**3
             or shutil.disk_usage(args.output).free < 50 * 1024**3
         ):
             raise RuntimeError(
                 "storage guard: retain receipts; stop before exceeding 10 GiB or 50 GiB free reserve"
-            )
-        if (args.output / f"round-{rnd:02d}.json").exists():
-            raise ValueError(
-                "completed round exists; use a new run with explicit checkpoint resume"
             )
         plan = proposal_plan(args.seed, rnd, proposal_history, args.steps)
         if full:
@@ -1229,6 +1312,7 @@ def main():
             "projection_failed": projection_failed,
             "proposal_plan": plan,
             "candidate_parameter_sha256": candidate_parameter_sha256,
+            "checkpoint_retention": retention,
             "training_batch_rng": "round-step/v1",
             "training_batches": training_batches,
             "changed_tensors": changed,

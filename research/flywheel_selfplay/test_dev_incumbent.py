@@ -1,4 +1,5 @@
 import copy
+import json
 import sys
 from pathlib import Path
 
@@ -7,6 +8,288 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).parent))
 from dev_incumbent import DevIncumbent
+
+
+def retention_fixture(tmp_path, count=6, best=1):
+    root = tmp_path / "run"
+    root.mkdir()
+    (root / "rejected").mkdir()
+    for n in range(1, count + 1):
+        (root / f"round-{n:02d}.pt").write_bytes(f"root-{n}".encode())
+        (root / "rejected" / f"round-{n:02d}.pt").write_bytes(f"rejected-{n}".encode())
+        (root / f"round-{n:02d}.json").write_text(json.dumps({"round": n}))
+        (root / f"round-{n:02d}-scores.jsonl").write_text("{}\n")
+        directory = root / f"rust_eval_round{n}"
+        directory.mkdir()
+        (directory / "input.jtt1").write_bytes(b"training-only-fixture")
+        (directory / "eval_s1.json").write_text("{}")
+        (directory / "unknown.bin").write_bytes(b"retain unknown evidence")
+    (root / "best_dev_checkpoint.json").write_text(
+        json.dumps({"best_checkpoint": str(root / f"round-{best:02d}.pt")})
+    )
+    for name in ["summary.jsonl", "promotions.jsonl", "adapter_admissions.jsonl"]:
+        (root / name).write_text("{}\n")
+    return root, tmp_path / "archives"
+
+
+@pytest.mark.parametrize(("best", "resume"), [(1, 2), (2, 1), (1, 1), (6, 1), (1, 6)])
+def test_retention_archives_then_prunes_and_preserves_best_resume_recent_receipts(
+    tmp_path, best, resume
+):
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path, best=best)
+    receipts = {
+        str(p.relative_to(root)): p.read_bytes()
+        for p in root.rglob("*")
+        if p.suffix in (".json", ".jsonl")
+    }
+    result = retain_checkpoint_payloads(
+        root, archives, [f"round-{resume:02d}.pt"], keep_last=2, minimum_free_bytes=0
+    )
+    assert result["pruned_files"] == result["restored_verified_files"] > 0
+    assert Path(result["archive"]).is_file()
+    manifest = json.loads(Path(result["manifest"]).read_text())
+    assert manifest["files"] and all(
+        not p.endswith((".json", ".jsonl")) for p in manifest["files"]
+    )
+    for n in {best, resume, 5, 6}:
+        assert (root / f"round-{n:02d}.pt").read_bytes() == f"root-{n}".encode()
+    assert (root / "rejected/round-05.pt").exists()
+    assert (root / "rejected/round-06.pt").exists()
+    assert not (root / "rejected/round-03.pt").exists()
+    assert not (root / "rust_eval_round3/input.jtt1").exists()
+    assert (root / "rust_eval_round3/unknown.bin").exists()
+    for rel, body in receipts.items():
+        assert (root / rel).read_bytes() == body
+
+
+def test_retention_default_keeps_twenty_and_retains_unqualified_payloads(tmp_path):
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path, count=25)
+    (root / "round-999.pt").write_bytes(b"incomplete; no round receipt")
+    (root / "round-03.pt.new").write_bytes(b"partial checkpoint")
+    retain_checkpoint_payloads(
+        root, archives, [root / "round-02.pt"], minimum_free_bytes=0
+    )
+    for n in [1, 2, *range(6, 26)]:
+        assert (root / f"round-{n:02d}.pt").exists()
+    assert not (root / "round-03.pt").exists()
+    assert (root / "round-999.pt").exists() and (root / "round-03.pt.new").exists()
+
+
+def test_retention_resolves_cwd_relative_canonical_best_pointer(tmp_path):
+    import os
+
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+    (root / "best_dev_checkpoint.json").write_text(
+        json.dumps({"best_checkpoint": os.path.relpath(root / "round-01.pt")})
+    )
+    retain_checkpoint_payloads(
+        root, archives, [root / "round-02.pt"], keep_last=2, minimum_free_bytes=0
+    )
+    assert (root / "round-01.pt").exists() and (root / "round-02.pt").exists()
+
+
+def test_retention_actual_runner_prelude_preserves_resume_and_operator_pin(tmp_path):
+    import ast
+    import fcntl
+    import shutil
+    import subprocess
+    import tarfile
+    import time
+    from types import SimpleNamespace
+
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
+    main = next(
+        n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main"
+    )
+    loop = next(
+        n
+        for n in main.body
+        if isinstance(n, ast.For)
+        and isinstance(n.target, ast.Name)
+        and n.target.id == "rnd"
+    )
+    prelude = []
+    for statement in loop.body:
+        if isinstance(statement, ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id == "plan" for t in statement.targets
+        ):
+            break
+        prelude.append(statement)
+    args = SimpleNamespace(
+        output=root,
+        campaign_prior_output=[],
+        resume=root / "round-02.pt",
+        best_checkpoint=None,
+        checkpoint_archive_dir=archives,
+        checkpoint_keep_last=2,
+        retain_checkpoint=[Path("round-03.pt")],
+    )
+
+    def fixture_retention(*positional, **kwargs):
+        # Preserve the actual archive/prune path with a tiny fixture disk budget.
+        return retain_checkpoint_payloads(*positional, **kwargs, minimum_free_bytes=0)
+
+    with (tmp_path / "test-qualification.lock").open("a") as lock:
+        env = {
+            "args": args,
+            "rnd": 7,
+            "start_round": 7,
+            "reporter": None,
+            "fcntl": fcntl,
+            "lock": lock,
+            "time": time,
+            "Path": Path,
+            "json": json,
+            "shutil": shutil,
+            "subprocess": subprocess,
+            "tarfile": tarfile,
+            "last_retention_attempt": None,
+            "incumbent": SimpleNamespace(best_checkpoint=str(root / "round-01.pt")),
+            "margin_policy": {},
+            "retain_checkpoint_payloads": fixture_retention,
+        }
+        exec(  # noqa: S102 -- execute only the checked-in runner prelude against CPU fixtures.
+            compile(
+                ast.Module(body=prelude, type_ignores=[]),
+                "actual-runner-prelude",
+                "exec",
+            ),
+            env,
+        )
+    assert env["retention"]["pruned_files"] > 0
+    for n in [1, 2, 3, 5, 6]:
+        assert (root / f"round-{n:02d}.pt").exists()
+    assert not (root / "round-04.pt").exists()
+
+
+@pytest.mark.parametrize("where", ["run", "prior", "symlink"])
+def test_retention_rejects_archive_inside_any_guarded_root(tmp_path, where):
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, _ = retention_fixture(tmp_path)
+    prior = tmp_path / "prior"
+    prior.mkdir()
+    if where == "symlink":
+        target = tmp_path / "archive-link"
+        target.symlink_to(root, target_is_directory=True)
+    else:
+        target = (root if where == "run" else prior) / "archive"
+    with pytest.raises(ValueError, match="outside"):
+        retain_checkpoint_payloads(
+            root,
+            target,
+            [root / "round-02.pt"],
+            guarded_roots=[prior],
+            minimum_free_bytes=0,
+        )
+    assert (root / "round-03.pt").exists()
+
+
+def test_retention_rejects_missing_resume_and_symlink_escape(tmp_path):
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+    with pytest.raises(ValueError, match="protected checkpoint"):
+        retain_checkpoint_payloads(
+            root, archives, [root / "missing.pt"], minimum_free_bytes=0
+        )
+    outside = tmp_path / "foreign.pt"
+    outside.write_bytes(b"do not touch")
+    (root / "round-03.pt").unlink()
+    (root / "round-03.pt").symlink_to(outside)
+    with pytest.raises(ValueError, match="unsafe"):
+        retain_checkpoint_payloads(
+            root, archives, [root / "round-02.pt"], keep_last=2, minimum_free_bytes=0
+        )
+    assert outside.read_bytes() == b"do not touch"
+
+
+def test_retention_corrupt_archive_never_prunes_source(tmp_path, monkeypatch):
+    import tarfile
+
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+    bad = tmp_path / "bad.pt"
+    bad.write_bytes(
+        b"broken"
+    )  # Same length as root-3; header/size alone cannot catch it.
+    original = tarfile.TarFile.add
+
+    def corrupt(tar, name, **kwargs):
+        return original(
+            tar, bad if Path(name) == root / "round-03.pt" else name, **kwargs
+        )
+
+    monkeypatch.setattr(tarfile.TarFile, "add", corrupt)
+    with pytest.raises(ValueError, match="hash mismatch"):
+        retain_checkpoint_payloads(
+            root, archives, [root / "round-02.pt"], keep_last=2, minimum_free_bytes=0
+        )
+    assert (root / "round-03.pt").read_bytes() == b"root-3"
+    assert (root / "rejected/round-03.pt").exists()
+
+
+def test_retention_pointer_change_at_delete_boundary_aborts(tmp_path, monkeypatch):
+    import subprocess
+
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+
+    def move_pointer(command, **kwargs):
+        (root / "best_dev_checkpoint.json").write_text(
+            json.dumps({"best_checkpoint": str(root / "round-03.pt")})
+        )
+        return subprocess.CompletedProcess(command, 1, "", "")
+
+    monkeypatch.setattr(subprocess, "run", move_pointer)
+    with pytest.raises(ValueError, match="pointer changed"):
+        retain_checkpoint_payloads(
+            root, archives, [root / "round-02.pt"], keep_last=2, minimum_free_bytes=0
+        )
+    for n in range(1, 7):
+        assert (root / f"round-{n:02d}.pt").exists()
+
+
+def test_retention_active_reader_blocks_pruning(tmp_path):
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+    with (root / "round-03.pt").open("rb"), pytest.raises(ValueError, match="consumer"):
+        retain_checkpoint_payloads(
+            root,
+            archives,
+            [root / "round-02.pt"],
+            keep_last=2,
+            minimum_free_bytes=0,
+        )
+    assert (root / "round-03.pt").exists()
+
+
+def test_retention_free_space_refusal_preserves_sources(tmp_path, monkeypatch):
+    import shutil
+
+    from dev_incumbent import retain_checkpoint_payloads
+
+    root, archives = retention_fixture(tmp_path)
+    monkeypatch.setattr(
+        shutil, "disk_usage", lambda _: shutil._ntuple_diskusage(100, 100, 0)
+    )
+    with pytest.raises(ValueError, match="headroom"):
+        retain_checkpoint_payloads(
+            root, archives, [root / "round-02.pt"], keep_last=2, minimum_free_bytes=1
+        )
+    assert (root / "round-03.pt").exists() and not archives.exists()
 
 
 def setup():
