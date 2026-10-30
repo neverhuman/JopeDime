@@ -1,0 +1,184 @@
+{
+  "arms": {
+    "H48-0": {
+      "effective_seed_replicates": 3,
+      "elo": 1492.68,
+      "family_bootstrap_95_ci": [
+        -0.015337639984611722,
+        0.00107300434192156
+      ],
+      "median_context_weighted_delta": -0.006550913601216311,
+      "median_family_mean_delta": -0.0062750856601124115,
+      "minimum_loco_delta": -0.007544370577799004,
+      "seeds": [
+        {
+          "context_weighted_delta": -0.006646565267943577,
+          "family_mean_delta": -0.006366709888240633,
+          "seed": 0,
+          "selected_fold": 3,
+          "selected_inner_cv_delta_exploratory": 0.030771123289897506,
+          "train_wall_seconds": 127.93537001591176,
+          "val_context_utility": 1.1309487294804665,
+          "wall_budget_seconds": null
+        },
+        {
+          "context_weighted_delta": -0.006550913601216311,
+          "family_mean_delta": -0.0062750856601124115,
+          "seed": 1,
+          "selected_fold": 3,
+          "selected_inner_cv_delta_exploratory": 0.031190432296324788,
+          "train_wall_seconds": 93.9573300650809,
+          "val_context_utility": 1.1310443811471937,
+          "wall_budget_seconds": null
+        },
+        {
+          "context_weighted_delta": -0.004086771185792037,
+          "family_mean_delta": -0.003914696609548109,
+          "seed": 2,
+          "selected_fold": 3,
+          "selected_inner_cv_delta_exploratory": 0.031190432296324788,
+          "train_wall_seconds": 82.38285929802805,
+          "val_context_utility": 1.133508523562618,
+          "wall_budget_seconds": null
+        }
+      ],
+      "strict_win": false
+    },
+    "H48-ES": {
+      "effective_seed_replicates": 3,
+      "elo": 1492.68,
+      "family_bootstrap_95_ci": [
+        -0.0013632926987375662,
+        0.009352710311984702
+      ],
+      "median_context_weighted_delta": 0.0027802002683460524,
+      "median_family_mean_delta": 0.0026631392044157197,
+      "minimum_loco_delta": -0.036723655219798465,
+      "paired_vs_H48_0": {
+        "family_bootstrap_95_ci_of_median_seed_family_delta": [
+          -2.235680665856566e-05,
+          0.015391526509326486
+        ],
+        "median_context_mean_delta": 0.007541750639465272,
+        "median_family_mean_delta": 0.007224203244119391
+      },
+      "seeds": [
+        {
+          "context_weighted_delta": -0.033425561263086656,
+          "family_mean_delta": -0.032018169209904024,
+          "seed": 0,
+          "selected_fold": "all",
+          "selected_inner_cv_delta_exploratory": 0.006643974194467939,
+          "train_wall_seconds": 70.85418591182679,
+          "val_context_utility": 1.1041697334853233,
+          "wall_budget_seconds": 70.0
+        },
+        {
+          "context_weighted_delta": 0.0027802002683460524,
+          "family_mean_delta": 0.0026631392044157197,
+          "seed": 1,
+          "selected_fold": "all",
+          "selected_inner_cv_delta_exploratory": 0.006645899439823522,
+          "train_wall_seconds": 75.528602699982,
+          "val_context_utility": 1.1403754950167562,
+          "wall_budget_seconds": 70.0
+        },
+        {
+          "context_weighted_delta": 0.003454979453673286,
+          "family_mean_delta": 0.0033095066345712816,
+          "seed": 2,
+          "selected_fold": "all",
+          "selected_inner_cv_delta_exploratory": 0.007244079023473793,
+          "train_wall_seconds": 70.26814061007462,
+          "val_context_utility": 1.1410502742020834,
+          "wall_budget_seconds": 70.0
+        }
+      ],
+      "strict_win": false
+    },
+    "H48-PF": {
+      "effective_seed_replicates": 3,
+      "elo": 1503.66,
+      "family_bootstrap_95_ci": [
+        -0.09194254692815475,
+        0.02141784563699607
+      ],
+      "median_context_weighted_delta": -0.02224250214094656,
+      "median_family_mean_delta": -0.021305975735011928,
+      "minimum_loco_delta": -0.026192607454572883,
+      "paired_vs_H48_0": {
+        "family_bootstrap_95_ci_of_median_seed_family_delta": [
+          -0.08770612115541163,
+          0.029649907505309235
+        ],
+        "median_context_mean_delta": -0.015634117047885088,
+        "median_family_mean_delta": -0.014975838435342396
+      },
+      "seeds": [
+        {
+          "context_weighted_delta": -0.022280682315828495,
+          "family_mean_delta": -0.021342548323583024,
+          "seed": 0,
+          "selected_fold": 3,
+          "selected_inner_cv_delta_exploratory": 0.0546936173589434,
+          "train_wall_seconds": 70.56160421902314,
+          "val_context_utility": 1.1153146124325815,
+          "wall_budget_seconds": null
+        },
+        {
+          "context_weighted_delta": 0.013258237868026225,
+          "family_mean_delta": 0.012699996273583078,
+          "seed": 1,
+          "selected_fold": 3,
+          "selected_inner_cv_delta_exploratory": 0.04811346770580083,
+          "train_wall_seconds": 123.57241121400148,
+          "val_context_utility": 1.1508535326164364,
+          "wall_budget_seconds": null
+        },
+        {
+          "context_weighted_delta": -0.02224250214094656,
+          "family_mean_delta": -0.021305975735011928,
+          "seed": 2,
+          "selected_fold": 3,
+          "selected_inner_cv_delta_exploratory": 0.054926207714184994,
+          "train_wall_seconds": 55.7614646689035,
+          "val_context_utility": 1.1153527926074636,
+          "wall_budget_seconds": null
+        }
+      ],
+      "strict_win": false
+    }
+  },
+  "baseline": "r785 (reused H47 terminal baseline; no new baseline DL-Val score)",
+  "bootstrap": "10,000 family resamples; 19 DL-Val families; interval on median seed family-mean delta",
+  "cohort": {
+    "context_overlap": 0,
+    "excluded_dl_holdout_count": 93,
+    "excluded_payloads_opened": 0,
+    "family_overlap": 0,
+    "outer_rows_delivered": 0,
+    "source_manifest_sha256": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
+    "train_context_ids_sha256_sorted_newline": "17921187eb747512f0e44ee9125d71c6405ed147f34a6344cc131a32916c496c",
+    "train_contexts": 1219,
+    "train_families": 205,
+    "train_family_ids_sha256_sorted_newline": "b28c13780ff2d54a1e94c5fdba6b26f278c40528d5981c21b8c6ba60a5a3aef7",
+    "validation_context_ids_sha256_sorted_newline": "dc90f97df6ddff9be9c7ae0c6bc710bea45a91be8c95623505561073cc742a21",
+    "validation_contexts": 91,
+    "validation_families": 19,
+    "validation_family_ids_sha256_sorted_newline": "2ed0f16300982c29db29a8ed942a4380adf804bc5e77da2d9876022ced17e892"
+  },
+  "device": "cuda:0",
+  "full_metrics": {
+    "path": "~/jope-data/h48/metrics_full.json",
+    "sha256": "cd77ab828973c1688b9254b80801334f51a06adaf869030b47bce003f63f12b5"
+  },
+  "model": {
+    "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "trainable_params": 29211
+  },
+  "schema": "jope.h48.summary-metrics/v1",
+  "status": "complete_no_strict_win",
+  "strict_win_rule": "median family-mean final delta > 0 and family-bootstrap 95% lower bound > 0; ties fail",
+  "wave": "H48"
+}
