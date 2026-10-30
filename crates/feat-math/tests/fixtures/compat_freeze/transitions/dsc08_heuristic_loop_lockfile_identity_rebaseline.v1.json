@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "DSC-08 adds exactly one existing-locked jope-service dependency edge, rand_chacha 0.3.1. The incoming main normal feat-math dependency and its feature selection are preserved. tempfile becomes a normal dependency while retaining its existing dev lock edge, which is unchanged. No package version/source/checksum, evaluator behavior fixture, known identity table or lineage body changes.",
+  "plan_reference": "DSC-08; gb1445 owner publication; ADR-0004 successor after BAT-02, following svc09_engine; standing0810(c)/0840(a) and t542 scope",
+  "source_commit": "62473fb5ed12333e705ed1b0ce332051e0960c21",
+  "base_commit": "6697c1402249ede99db9b290a50b3808c1e8bba6",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "303c3abf590493eb88ed9fa240830a6ee6d2485952a664454cdfeeba0fb16846",
+      "after": "25a03e076b1f19ded532a011f23b14946102f537fe2f9ea1351a67979a4bca34"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "1a60d37244a9fa30ab4f1730535608e7d6590370c42af8815873e381a8392ec7",
+      "after": "3552426eece0da80af3610ebef34a6c595ac6472a3e7c214f53ca4581b3475e1"
+    }
+  ],
+  "before_identity_digest": "a5ec46b83045f5186016325ae166a250201f0d5bbf9f9e032875296ea935f892",
+  "after_identity_digest": "9e2a05183e2f416d6f6a6db5b8dcd461691dbd66a9576caad7c5c8f84e276a05",
+  "before_implementation_sha256": "0cbc80f8cfa08921b517dbd211321a92ab2606c33067ab72e9f3f5ef9e2c153e",
+  "after_implementation_sha256": "0c4fe57817737cc233bd3ea1cec7a133650ca6fe7ba84afe2d4bc50ac4793e48",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
