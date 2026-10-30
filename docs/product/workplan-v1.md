@@ -127,7 +127,7 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | GOV-01 | OWNER | — | W0 | — | Sign the program owner brief | — | todo |
 | GOV-02 | OWNER | — | W0 | — | Decide OD1–OD3, OD5, OD6, OD8 | — | todo |
-| GOV-03 | OWNER + COMPLEX | S | W0 | — | ★ Freeze the v1 h40b checkpoint | M1 | claimed |
+| GOV-03 | OWNER + COMPLEX | S | W0 | — | ★ Freeze the v1 h40b checkpoint | M1 | merged |
 | GOV-04 | LUNA | S | W0 | — | Put spec, review and plan in `docs/product/` with a status table | — | merged |
 | RES-01 | COMPLEX | L | W0 | GOV-03 | ★ Inventory the exact custody closure that produced the checkpoint | M1 | claimed |
 | RES-02 | LUNA | S | W1 | RES-01 | ★ Vendor custody files and write a hash verifier | M1 | todo |
