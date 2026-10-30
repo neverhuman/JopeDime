@@ -1,12 +1,54 @@
 {
   "wave": "H46",
-  "status": "planned",
-  "baseline": {"checkpoint": "round-785.pt", "sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
-               "dl_val91_utility": 1.1375952947484103, "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
-               "dope_sha256_prefix": "c51a56d0", "trainable_params": 29211},
-  "live_rounds_775_844": {"n": 70, "mean": 1.131696, "sd": 0.010469, "min": 1.103278, "max": 1.137595,
-                          "diagnosis": "restore_best_model_and_optimizer + 2 steps/round => deterministic candidate cycle"},
-  "arms": ["H46-0", "H46-A", "H46-B", "H46-C", "H46-S"],
-  "seeds": [0, 1, 2],
-  "results": null
+  "status": "running",
+  "baseline": {
+    "checkpoint": "round-785.pt",
+    "sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+    "dl_val91_utility": 1.1375952947484103,
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "dope_sha256_prefix": "c51a56d0",
+    "trainable_params": 29211
+  },
+  "live_rounds_775_844": {
+    "n": 70,
+    "mean": 1.131696,
+    "sd": 0.010469,
+    "min": 1.103278,
+    "max": 1.137595,
+    "diagnosis": "restore_best_model_and_optimizer + 2 steps/round => deterministic candidate cycle"
+  },
+  "arms": [
+    "H46-0",
+    "H46-A",
+    "H46-B",
+    "H46-C",
+    "H46-S"
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "results": null,
+  "execution": {
+    "host": "xbabe2",
+    "device": "cuda:0",
+    "completed_runs": [
+      "H46-0/seed0",
+      "H46-0/seed1"
+    ],
+    "interim_control_max_candidate_utility": 1.1355344400915894,
+    "interim_control_delta_vs_r785": -0.002060854656820821,
+    "interim_verdict": "pending_all_arms_and_seeds",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "trainable_params": 29211,
+    "approved_contexts": {
+      "train_regression": 1219,
+      "val_regression": 91
+    },
+    "failed_attempts": [
+      "H46-0/seed2: training completed but final validation batching failed on variable candidate-pool sizes; rerun queued; no metrics accepted"
+    ],
+    "results_path": "~/jope-data/h46/runs/"
+  }
 }
