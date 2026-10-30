@@ -485,7 +485,8 @@
     "feature:jope-appliance/default": {
       "discovery": {
         "dependencies": [
-          "engine"
+          "engine",
+          "mcp"
         ],
         "kind": "feature"
       },
@@ -562,6 +563,22 @@
         "full-default"
       ],
       "scope": "Default engine feature includes the isolated worker runtime. Covered by appliance and service default-package lanes; platform and native-evaluator qualification remain separately recorded."
+    },
+    "feature:jope-appliance/mcp": {
+      "discovery": {
+        "dependencies": [
+          "dep:rmcp",
+          "dep:tokio"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-on registry-driven rmcp adapter over an injected shared client. Appliance protocol fixture tests cover lifecycle, tools, resources, framing and concurrent status/cancel; live CLI/daemon integration and named-client qualification are separate."
     },
     "feature:jope-arena/default": {
       "discovery": {
