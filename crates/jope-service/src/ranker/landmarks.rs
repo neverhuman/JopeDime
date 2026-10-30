@@ -14,6 +14,151 @@ pub const RAW_COLUMN_WIDTH: usize = 24;
 pub const RANKER_COLUMN_WIDTH: usize = 17;
 pub const RANKER_COLUMN_COUNT: usize = 64;
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct LandmarkOutput {
+    vector: [f32; VECTOR_WIDTH],
+    columns: [[f32; RANKER_COLUMN_WIDTH]; RANKER_COLUMN_COUNT],
+}
+
+impl LandmarkOutput {
+    pub fn from_descriptor_parts(
+        report: &[f32; REPORT_WIDTH],
+        table: &[f32; TABLE_WIDTH],
+        interactions: &[f32; INTERACTION_WIDTH],
+        building_blocks: &[f32; BUILDING_BLOCK_WIDTH],
+        raw_columns: &[[f32; RAW_COLUMN_WIDTH]],
+    ) -> Self {
+        Self {
+            vector: assemble_vector(report, table, interactions, building_blocks),
+            columns: pad_ranker_columns(raw_columns),
+        }
+    }
+
+    pub fn vector(&self) -> &[f32; VECTOR_WIDTH] {
+        &self.vector
+    }
+
+    pub fn columns(&self) -> &[[f32; RANKER_COLUMN_WIDTH]; RANKER_COLUMN_COUNT] {
+        &self.columns
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct AgreementSummary {
+    pub sampled_rows: usize,
+    pub full_rows: usize,
+    pub values_compared: usize,
+    pub exact_matches: usize,
+    pub max_abs_error: f64,
+    pub mean_abs_error: f64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AgreementError {
+    EmptyTable,
+    SampleOverLimit,
+    SampleExceedsFullTable,
+}
+
+impl std::fmt::Display for AgreementError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::EmptyTable => formatter.write_str("landmark tables must contain FIT rows"),
+            Self::SampleOverLimit => {
+                formatter.write_str("landmark FIT sample exceeds the 1,024-row cap")
+            }
+            Self::SampleExceedsFullTable => {
+                formatter.write_str("landmark FIT sample exceeds the full-table row count")
+            }
+        }
+    }
+}
+
+impl std::error::Error for AgreementError {}
+
+/// Summarize sampled-versus-full outputs without imposing a pass threshold.
+/// T099 requires reporting agreement; the qualification owner sets the
+/// acceptance interpretation when RES-09 fixtures and approved inputs land.
+pub fn compare_sampled_to_full(
+    sampled: &LandmarkOutput,
+    full: &LandmarkOutput,
+    sampled_rows: usize,
+    full_rows: usize,
+) -> Result<AgreementSummary, AgreementError> {
+    if sampled_rows == 0 || full_rows == 0 {
+        return Err(AgreementError::EmptyTable);
+    }
+    if sampled_rows > 1_024 {
+        return Err(AgreementError::SampleOverLimit);
+    }
+    if sampled_rows > full_rows {
+        return Err(AgreementError::SampleExceedsFullTable);
+    }
+
+    let mut values_compared = 0;
+    let mut exact_matches = 0;
+    let mut max_abs_error = 0.0_f64;
+    let mut total_abs_error = 0.0_f64;
+
+    for (sampled_value, full_value) in sampled
+        .vector
+        .iter()
+        .chain(sampled.columns.iter().flatten())
+        .zip(full.vector.iter().chain(full.columns.iter().flatten()))
+    {
+        let abs_error = f64::from((*sampled_value - *full_value).abs());
+        values_compared += 1;
+        exact_matches += usize::from(abs_error == 0.0);
+        max_abs_error = max_abs_error.max(abs_error);
+        total_abs_error += abs_error;
+    }
+
+    Ok(AgreementSummary {
+        sampled_rows,
+        full_rows,
+        values_compared,
+        exact_matches,
+        max_abs_error,
+        mean_abs_error: total_abs_error / values_compared as f64,
+    })
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LatencySummary {
+    pub samples: usize,
+    pub min_ms: f64,
+    pub median_ms: f64,
+    pub max_ms: f64,
+}
+
+/// Summarize repeated `landmarks.ms` measurements for a pre-stage report.
+pub fn summarize_latency(samples: &[std::time::Duration]) -> Option<LatencySummary> {
+    if samples.is_empty() {
+        return None;
+    }
+
+    let mut millis = samples
+        .iter()
+        .map(std::time::Duration::as_secs_f64)
+        .map(|seconds| seconds * 1_000.0)
+        .collect::<Vec<_>>();
+    millis.sort_by(f64::total_cmp);
+
+    let middle = millis.len() / 2;
+    let median_ms = if millis.len() % 2 == 0 {
+        (millis[middle - 1] + millis[middle]) / 2.0
+    } else {
+        millis[middle]
+    };
+
+    Some(LatencySummary {
+        samples: millis.len(),
+        min_ms: millis[0],
+        median_ms,
+        max_ms: millis[millis.len() - 1],
+    })
+}
+
 /// Join the four high-level descriptor blocks in the training order.
 ///
 /// The source concatenates `vector116`, `table_vec24`, `inter_vec48`, and
@@ -70,7 +215,8 @@ fn finite_or_zero(value: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::{
-        assemble_vector, pad_ranker_columns, BUILDING_BLOCK_WIDTH, INTERACTION_WIDTH,
+        assemble_vector, compare_sampled_to_full, pad_ranker_columns, summarize_latency,
+        AgreementError, AgreementSummary, LandmarkOutput, BUILDING_BLOCK_WIDTH, INTERACTION_WIDTH,
         RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH, RAW_COLUMN_WIDTH, REPORT_WIDTH, TABLE_WIDTH,
         VECTOR_WIDTH,
     };
@@ -135,6 +281,77 @@ mod tests {
         let columns = pad_ranker_columns(&raw);
         assert_eq!(columns[0][16], 0.0);
         assert_eq!(columns[1], [0.0; RANKER_COLUMN_WIDTH]);
+    }
+
+    fn output_with_report_value(value: f32) -> LandmarkOutput {
+        let mut report = [0.0; REPORT_WIDTH];
+        report[0] = value;
+        LandmarkOutput::from_descriptor_parts(
+            &report,
+            &[0.0; TABLE_WIDTH],
+            &[0.0; INTERACTION_WIDTH],
+            &[0.0; BUILDING_BLOCK_WIDTH],
+            &[],
+        )
+    }
+
+    #[test]
+    fn table_agreement_reports_full_shape_and_absolute_error_summary() {
+        let sampled = output_with_report_value(2.0);
+        let full = output_with_report_value(3.0);
+
+        let summary = compare_sampled_to_full(&sampled, &full, 12, 100).unwrap();
+
+        assert_eq!(
+            summary,
+            AgreementSummary {
+                sampled_rows: 12,
+                full_rows: 100,
+                values_compared: VECTOR_WIDTH + RANKER_COLUMN_COUNT * RANKER_COLUMN_WIDTH,
+                exact_matches: VECTOR_WIDTH + RANKER_COLUMN_COUNT * RANKER_COLUMN_WIDTH - 1,
+                max_abs_error: 1.0,
+                mean_abs_error: 1.0
+                    / (VECTOR_WIDTH + RANKER_COLUMN_COUNT * RANKER_COLUMN_WIDTH) as f64,
+            }
+        );
+    }
+
+    #[test]
+    fn table_agreement_rejects_invalid_fit_row_counts() {
+        let output = output_with_report_value(0.0);
+
+        assert_eq!(
+            compare_sampled_to_full(&output, &output, 0, 1),
+            Err(AgreementError::EmptyTable)
+        );
+        assert_eq!(
+            compare_sampled_to_full(&output, &output, 1_025, 2_000),
+            Err(AgreementError::SampleOverLimit)
+        );
+        assert_eq!(
+            compare_sampled_to_full(&output, &output, 4, 3),
+            Err(AgreementError::SampleExceedsFullTable)
+        );
+    }
+
+    #[test]
+    fn latency_summary_reports_median_and_range_in_milliseconds() {
+        use std::time::Duration;
+
+        assert_eq!(summarize_latency(&[]), None);
+        assert_eq!(
+            summarize_latency(&[
+                Duration::from_millis(3),
+                Duration::from_millis(1),
+                Duration::from_millis(2),
+            ]),
+            Some(super::LatencySummary {
+                samples: 3,
+                min_ms: 1.0,
+                median_ms: 2.0,
+                max_ms: 3.0,
+            })
+        );
     }
 
     #[test]
