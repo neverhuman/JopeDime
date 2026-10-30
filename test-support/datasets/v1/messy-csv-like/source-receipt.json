@@ -1,0 +1,21 @@
+{
+  "catalog_dataset_id": "f803c49aca66290d",
+  "origin": "real",
+  "source_s3_key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+  "source_sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+  "source_size_bytes": 1602007,
+  "source_etag": "1694aac6284efd37bad473cec5409a0d",
+  "source_catalog_shape": "2000x35",
+  "subset": "header and first 1000 data rows parsed from the raw source; values and header retained",
+  "subset_rows_including_header": 1001,
+  "subset_columns": 35,
+  "subset_sha256": "2bb5dee875d2a5c41d004c5083d17acc3bac38e86005c2149eb6b004448889d3",
+  "subset_size_bytes": 138263,
+  "license": {
+    "status": "unknown"
+  },
+  "partial_gaps": [
+    "quoted fields",
+    "Unicode headers"
+  ]
+}

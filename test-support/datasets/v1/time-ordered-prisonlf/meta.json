@@ -1,0 +1,204 @@
+{
+  "acquisition": {
+    "acquired_at": "2026-09-09T02:03:13+00:00",
+    "batch": "expansion_v10",
+    "family": "rdatasets-fpp2-prisonlf",
+    "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/fpp2/prisonLF.csv",
+    "tool": "expansion_v1"
+  },
+  "counts": {
+    "dropped_feature_count": 0,
+    "n_features": 6,
+    "original_columns": 7,
+    "original_rows": 1536,
+    "rows_after_target_cleanup": 1504,
+    "selected_rows": 1504,
+    "test_rows": 214,
+    "train_rows": 1290
+  },
+  "created_at": "2026-09-09T02:03:13+00:00",
+  "dataset_hash": "05f1f3e17ca435fb",
+  "dropped_feature_columns": [],
+  "expansion_extra": {
+    "description": "Australian prison population quarterly panel by state, gender and legal status; 1-step count.",
+    "dropped": [
+      "rownames"
+    ],
+    "horizon_steps": 1,
+    "license": "GPL-3 (R package fpp2)",
+    "n_series": 32,
+    "provenance": "fpp2::prisonLF."
+  },
+  "feature_columns": [
+    "series",
+    "month",
+    "state",
+    "gender",
+    "legal",
+    "count_t"
+  ],
+  "feature_encodings": {
+    "count_t": {
+      "impute_value": 229.0,
+      "kind": "numeric"
+    },
+    "gender": {
+      "kind": "categorical_codes",
+      "mapping": {
+        "Female": 0,
+        "Male": 1
+      },
+      "unseen": -1
+    },
+    "legal": {
+      "kind": "categorical_codes",
+      "mapping": {
+        "Remanded": 0,
+        "Sentenced": 1
+      },
+      "unseen": -1
+    },
+    "month": {
+      "impute_value": 6.0,
+      "kind": "numeric"
+    },
+    "series": {
+      "kind": "categorical_codes",
+      "mapping": {
+        "ACT_Female_Remanded": 0,
+        "ACT_Female_Sentenced": 1,
+        "ACT_Male_Remanded": 2,
+        "ACT_Male_Sentenced": 3,
+        "NSW_Female_Remanded": 4,
+        "NSW_Female_Sentenced": 5,
+        "NSW_Male_Remanded": 6,
+        "NSW_Male_Sentenced": 7,
+        "NT_Female_Remanded": 8,
+        "NT_Female_Sentenced": 9,
+        "NT_Male_Remanded": 10,
+        "NT_Male_Sentenced": 11,
+        "QLD_Female_Remanded": 12,
+        "QLD_Female_Sentenced": 13,
+        "QLD_Male_Remanded": 14,
+        "QLD_Male_Sentenced": 15,
+        "SA_Female_Remanded": 16,
+        "SA_Female_Sentenced": 17,
+        "SA_Male_Remanded": 18,
+        "SA_Male_Sentenced": 19,
+        "TAS_Female_Remanded": 20,
+        "TAS_Female_Sentenced": 21,
+        "TAS_Male_Remanded": 22,
+        "TAS_Male_Sentenced": 23,
+        "VIC_Female_Remanded": 24,
+        "VIC_Female_Sentenced": 25,
+        "VIC_Male_Remanded": 26,
+        "VIC_Male_Sentenced": 27,
+        "WA_Female_Remanded": 28,
+        "WA_Female_Sentenced": 29,
+        "WA_Male_Remanded": 30,
+        "WA_Male_Sentenced": 31
+      },
+      "unseen": -1
+    },
+    "state": {
+      "kind": "categorical_codes",
+      "mapping": {
+        "ACT": 0,
+        "NSW": 1,
+        "NT": 2,
+        "QLD": 3,
+        "SA": 4,
+        "TAS": 5,
+        "VIC": 6,
+        "WA": 7
+      },
+      "unseen": -1
+    }
+  },
+  "feature_scaling": {
+    "constant_columns": [],
+    "max": [
+      31.0,
+      12.0,
+      7.0,
+      1.0,
+      1.0,
+      7254.0
+    ],
+    "method": "minmax over training rows only",
+    "min": [
+      0.0,
+      3.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "hash_algorithm": "sha256:first16",
+  "headers_removed_from_csv": true,
+  "horizon": 214,
+  "n_features": 6,
+  "origin": "real",
+  "original_headers": [
+    "series",
+    "month",
+    "state",
+    "gender",
+    "legal",
+    "count_t",
+    "count"
+  ],
+  "output_headers": [
+    "series",
+    "month",
+    "state",
+    "gender",
+    "legal",
+    "count_t",
+    "count"
+  ],
+  "retrieved_at": "2026-09-09T02:03:13+00:00",
+  "sampling": {
+    "final_max_rows": 50000,
+    "method": "newest_contiguous_chronological",
+    "seed": 20260908,
+    "split": "global_time"
+  },
+  "sha256": "05f1f3e17ca435fb2fd49ca405cb4f59350e3150e1b52a5f3c1ae3623f62e72a",
+  "source_file": "rdatasets-fpp2-prisonlf.csv",
+  "source_path": "/home/ubuntu/hyper/data/tabular/expansion_v10/rdatasets-fpp2-prisonlf.csv",
+  "source_real_data": true,
+  "source_size_bytes": 75424,
+  "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/fpp2/prisonLF.csv",
+  "split": {
+    "max_total_rows": 50000,
+    "policy": "final_chronological_holdout",
+    "test_rows": 214,
+    "train_rows": 1290
+  },
+  "target_column": "count",
+  "target_is_final_column": true,
+  "target_names": [
+    "count"
+  ],
+  "target_scaling": {
+    "max": 7493.0,
+    "min": 1.0,
+    "mode": "regression",
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "target_source_encoding": {
+    "kind": "numeric"
+  },
+  "task_type": "timeseries",
+  "test_rows": 214,
+  "train_rows": 1290
+}
