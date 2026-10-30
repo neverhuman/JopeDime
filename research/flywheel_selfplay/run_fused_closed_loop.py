@@ -139,6 +139,11 @@ def main():
     ap.add_argument("--resume", type=Path)
     ap.add_argument("--continuous", action="store_true")
     ap.add_argument("--best-checkpoint", type=Path)
+    ap.add_argument(
+        "--phase3-gate-bundles",
+        type=Path,
+        help="directory containing round-NN.json keyed-S3 qualification bundles",
+    )
     args = ap.parse_args()
     if min(args.rounds, args.steps, args.batch_size, args.slate_size) <= 0:
         raise ValueError("positive bounds required")
@@ -1081,6 +1086,23 @@ def main():
             "gpu_peak_allocated_bytes": torch.cuda.max_memory_allocated(),
             "gpu_peak_reserved_bytes": torch.cuda.max_memory_reserved(),
         }
+        if args.phase3_gate_bundles:
+            from phase3_round_runner import qualify_phase3_bundle
+
+            bundle_path = args.phase3_gate_bundles / f"round-{rnd:02d}.json"
+            try:
+                phase3 = qualify_phase3_bundle(json.loads(bundle_path.read_text()))
+            except Exception as exc:
+                phase3 = {
+                    "schema": "jope.phase3.round_qualification.v1",
+                    "scope": "keyed_subset",
+                    "round": rnd,
+                    "qualified": False,
+                    "qualified_rounds_increment": 0,
+                    "gate_error": f"{type(exc).__name__}: {exc}",
+                }
+            row["phase3_qualification"] = phase3
+            write_json(args.output / f"round-{rnd:02d}.phase3.json", phase3)
         write_json(args.output / f"round-{rnd:02d}.json", row)
         proposal_history.append(row)
         remaining = (
