@@ -242,16 +242,28 @@ impl ClassificationFitness {
         if !value.is_finite() {
             return Err(FitnessError::Undefined("non-finite objective value".into()));
         }
+        let direction = self.metric.direction();
         Ok(Score {
             value,
-            loss: value,
-            direction: Direction::Minimize,
+            loss: if direction == Direction::Maximize {
+                -value
+            } else {
+                value
+            },
+            direction,
             fitness_sha256: self.identity()?,
         })
     }
 }
 
 impl Metric {
+    fn direction(self) -> Direction {
+        match self {
+            Self::RocAuc | Self::PrAuc | Self::F1 | Self::BalancedAccuracy => Direction::Maximize,
+            Self::Logloss | Self::Brier | Self::CostMatrixLoss => Direction::Minimize,
+        }
+    }
+
     fn value(
         self,
         labels: &[usize],
@@ -521,8 +533,16 @@ mod tests {
         for (objective, expected) in goldens {
             let score = objective.evaluate(inputs(&labels, &probabilities)).unwrap();
             assert!((score.value - expected).abs() <= 1e-12);
-            assert_eq!(score.loss, score.value);
-            assert_eq!(score.direction, Direction::Minimize);
+            let direction = objective.metric.direction();
+            assert_eq!(score.direction, direction);
+            assert_eq!(
+                score.loss,
+                if direction == Direction::Maximize {
+                    -score.value
+                } else {
+                    score.value
+                }
+            );
         }
 
         // The threshold comparison is inclusive, including ties exactly at the threshold.
@@ -530,6 +550,26 @@ mod tests {
             .evaluate(inputs(&labels, &probabilities))
             .unwrap();
         assert!((at_point_nine.value - 0.4).abs() <= 1e-12);
+    }
+
+    #[test]
+    fn obj03_selection_loss_prefers_better_predictions_for_maximize_metrics() {
+        let labels = ["no", "yes"];
+        let perfect = [[1.0, 0.0], [0.0, 1.0]];
+        let reversed = [[0.0, 1.0], [1.0, 0.0]];
+        for metric in ["roc_auc", "pr_auc", "f1", "balanced_accuracy"] {
+            let objective = spec(metric, "mean");
+            let better = objective.evaluate(inputs(&labels, &perfect)).unwrap();
+            let worse = objective.evaluate(inputs(&labels, &reversed)).unwrap();
+
+            assert_eq!(better.direction, Direction::Maximize, "{metric}");
+            assert_eq!(worse.direction, Direction::Maximize, "{metric}");
+            assert_eq!(better.value, 1.0, "{metric}");
+            assert!(worse.value < better.value, "{metric}");
+            assert_eq!(better.loss, -better.value, "{metric}");
+            assert_eq!(worse.loss, -worse.value, "{metric}");
+            assert!(better.loss < worse.loss, "{metric}");
+        }
     }
 
     #[test]
