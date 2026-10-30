@@ -63,8 +63,8 @@
         },
         {
           "path": "d2-regression/README.md",
-          "sha256": "c6c598f43811a1547d735e60e2310c64b57666c40426fd9c2b5c3efb091ec834",
-          "size_bytes": 1572,
+          "sha256": "2a49272de7c0be363cc4cf6bf7293930e8952dc319782728a06433401b35fa5c",
+          "size_bytes": 1804,
           "license": {
             "status": "unknown"
           },
@@ -133,8 +133,8 @@
         },
         {
           "path": "binary-loanapp/README.md",
-          "sha256": "57eff80aa9bd2f6a87c6b2d78359107a6b5e6c49605485dcacc66d9fa79ca342",
-          "size_bytes": 1522,
+          "sha256": "186abf4d316f7ffabcb89230cdc391ab49e8778844195ef7cc6ec36cd0e85ce8",
+          "size_bytes": 1728,
           "license": {
             "status": "unknown"
           },
@@ -144,79 +144,88 @@
       ]
     },
     {
-      "slug": "multiclass-skillcraft",
+      "slug": "grouped-apartment-rent",
       "categories": [
-        "multiclass"
+        "grouped"
       ],
-      "dataset_hash": "e7ed111d2a7d05e1",
+      "dataset_hash": "c4b905cec711a618",
       "origin": "real",
-      "catalog_task": "multi_label",
-      "source_url": "https://archive.ics.uci.edu/dataset/272",
+      "catalog_task": "regression",
+      "source_url": "https://archive.ics.uci.edu/dataset/555",
       "license": {
         "status": "unknown"
       },
       "source_s3_manifest": {
-        "key": "datasets/e7ed111d2a7d05e1/manifest.json",
-        "sha256": "590f497edc15da9bb804cf2a11afae658497dea41b6789f78ff5669cdf2e171c",
-        "size_bytes": 1287
+        "key": "datasets/c4b905cec711a618/manifest.json",
+        "sha256": "5932d9e510a4a44a7fb5a916267ff905d098d041ddc8e7175a51dc024c988780",
+        "size_bytes": 1279
       },
       "files": [
         {
-          "path": "multiclass-skillcraft/train.csv",
-          "sha256": "dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
-          "size_bytes": 560730,
+          "path": "grouped-apartment-rent/train.csv",
+          "sha256": "1599896e8259d16c56afb4a300cbd22846745657687ae8a041cc4f8e73a9c641",
+          "size_bytes": 881520,
           "license": {
             "status": "unknown"
           },
-          "source_s3_key": "blobs/sha256/dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
-          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+          "source_s3_key": "blobs/sha256/1599896e8259d16c56afb4a300cbd22846745657687ae8a041cc4f8e73a9c641",
+          "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
         },
         {
-          "path": "multiclass-skillcraft/test.csv",
-          "sha256": "56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
-          "size_bytes": 139711,
+          "path": "grouped-apartment-rent/test.csv",
+          "sha256": "9abb7b4e729839a4896c34ff1e0fe96c083dda466bb4b7ad17878f1beef03550",
+          "size_bytes": 222691,
           "license": {
             "status": "unknown"
           },
-          "source_s3_key": "blobs/sha256/56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
-          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+          "source_s3_key": "blobs/sha256/9abb7b4e729839a4896c34ff1e0fe96c083dda466bb4b7ad17878f1beef03550",
+          "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
         },
         {
-          "path": "multiclass-skillcraft/meta.json",
-          "sha256": "4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
-          "size_bytes": 5579,
+          "path": "grouped-apartment-rent/meta.json",
+          "sha256": "97ceb4b9b6afd5ceb8ce0185ea298e4767b3a6289bf1b8a7c7438b6c454e680d",
+          "size_bytes": 207987,
           "license": {
             "status": "unknown"
           },
-          "source_s3_key": "blobs/sha256/4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
-          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+          "source_s3_key": "blobs/sha256/97ceb4b9b6afd5ceb8ce0185ea298e4767b3a6289bf1b8a7c7438b6c454e680d",
+          "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
         },
         {
-          "path": "multiclass-skillcraft/source-manifest.json",
-          "sha256": "590f497edc15da9bb804cf2a11afae658497dea41b6789f78ff5669cdf2e171c",
-          "size_bytes": 1287,
+          "path": "grouped-apartment-rent/source-manifest.json",
+          "sha256": "5932d9e510a4a44a7fb5a916267ff905d098d041ddc8e7175a51dc024c988780",
+          "size_bytes": 1279,
           "license": {
             "status": "unknown"
           },
-          "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
-          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+          "source_s3_key": "datasets/c4b905cec711a618/manifest.json",
+          "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
         },
         {
-          "path": "multiclass-skillcraft/README.md",
-          "sha256": "bf95f14e1c773d5516a152dd2727806e5d78b17b5ff6309327d04334dbdb1bbb",
-          "size_bytes": 1505,
+          "path": "grouped-apartment-rent/native-split.json",
+          "sha256": "454ad37b129482c30b0f2973a24de17c05aa7ac539ec6ac00a550cad084fa202",
+          "size_bytes": 1397,
           "license": {
             "status": "unknown"
           },
-          "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
-          "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+          "source_s3_key": "split-registry/v1/datasets/c4b905cec711a618/native/454ad37b129482c30b0f2973a24de17c05aa7ac539ec6ac00a550cad084fa202.json",
+          "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
+        },
+        {
+          "path": "grouped-apartment-rent/README.md",
+          "sha256": "6eba5525af2c5bfb6e6549f6e6fa5a2fa28e0e8a1bb60b1e8869c56658bdc2af",
+          "size_bytes": 2079,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/c4b905cec711a618/manifest.json",
+          "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
         }
       ]
     },
     {
-      "slug": "grouped-time-series-prisonlf",
+      "slug": "time-ordered-prisonlf",
       "categories": [
-        "grouped",
         "time-ordered"
       ],
       "dataset_hash": "05f1f3e17ca435fb",
@@ -233,7 +242,7 @@
       },
       "files": [
         {
-          "path": "grouped-time-series-prisonlf/train.csv",
+          "path": "time-ordered-prisonlf/train.csv",
           "sha256": "539dec765cd7ba40cb85b81776572f991624f2748e7b29822206c4366cba07ab",
           "size_bytes": 74505,
           "license": {
@@ -243,7 +252,7 @@
           "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
         },
         {
-          "path": "grouped-time-series-prisonlf/test.csv",
+          "path": "time-ordered-prisonlf/test.csv",
           "sha256": "5368e1f0e44ef362464db8ef0d7f29d5602a4c393547efa1f35d95a85ec06d19",
           "size_bytes": 12477,
           "license": {
@@ -253,7 +262,7 @@
           "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
         },
         {
-          "path": "grouped-time-series-prisonlf/meta.json",
+          "path": "time-ordered-prisonlf/meta.json",
           "sha256": "d9afe8a606c2bb9ac5293a07cb02ccce440c2ff32a235cbbd4bfb801b225bcf6",
           "size_bytes": 4687,
           "license": {
@@ -263,7 +272,7 @@
           "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
         },
         {
-          "path": "grouped-time-series-prisonlf/source-manifest.json",
+          "path": "time-ordered-prisonlf/source-manifest.json",
           "sha256": "1b22512dd69135592ae8396c25408c3af08aa7a467b7679b0cc7d358f5b12130",
           "size_bytes": 1278,
           "license": {
@@ -273,9 +282,9 @@
           "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
         },
         {
-          "path": "grouped-time-series-prisonlf/README.md",
-          "sha256": "a9de8015d59f9e31110948fb96053a7c80d401e3679ee8fa2db58dee2f104446",
-          "size_bytes": 1550,
+          "path": "time-ordered-prisonlf/README.md",
+          "sha256": "c7ea47fe9dbf7a6c8d9c653656b174cdc0646f60e43640d97ca64051d1eb2aa1",
+          "size_bytes": 1753,
           "license": {
             "status": "unknown"
           },
@@ -289,51 +298,149 @@
       "categories": [
         "tiny-30-row-table"
       ],
-      "dataset_hash": "21fbfe8b53dbcd60",
+      "dataset_hash": "b4c8807a75fc190f",
       "origin": "real",
+      "catalog_task": "regression",
+      "source_url": null,
       "license": {
         "status": "unknown"
       },
       "source_s3_manifest": {
-        "key": "datasets/21fbfe8b53dbcd60/manifest.json",
-        "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
-        "size_bytes": 1545
+        "key": "datasets/b4c8807a75fc190f/manifest.json",
+        "sha256": "d7a96e613d30773b0058e4d57bc898bcfdda497ff9fc5112d0542e1769bb1155",
+        "size_bytes": 1242
       },
       "files": [
         {
-          "path": "tiny-30-row-table/table.csv",
-          "sha256": "97e96179d0764c24dc8b4614159e3204656a5616b837940f33b89dcc2d716c2f",
-          "size_bytes": 7774,
+          "path": "tiny-30-row-table/train.csv",
+          "sha256": "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
+          "size_bytes": 3683,
           "license": {
             "status": "unknown"
           },
-          "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
-          "source_sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
-          "source_size_bytes": 259938,
-          "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+          "source_s3_key": "blobs/sha256/782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
+          "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
+        },
+        {
+          "path": "tiny-30-row-table/test.csv",
+          "sha256": "5d5cf50916887e9874a6481edf656be753504df159ffb1fcef566622ab0ebe64",
+          "size_bytes": 718,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/5d5cf50916887e9874a6481edf656be753504df159ffb1fcef566622ab0ebe64",
+          "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
+        },
+        {
+          "path": "tiny-30-row-table/meta.json",
+          "sha256": "99c8d3c38a0bb658334e8a48e0826f5a00f947967f305c5cf399013acbe18908",
+          "size_bytes": 3747,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "blobs/sha256/99c8d3c38a0bb658334e8a48e0826f5a00f947967f305c5cf399013acbe18908",
+          "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
+        },
+        {
+          "path": "tiny-30-row-table/source-manifest.json",
+          "sha256": "d7a96e613d30773b0058e4d57bc898bcfdda497ff9fc5112d0542e1769bb1155",
+          "size_bytes": 1242,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "datasets/b4c8807a75fc190f/manifest.json",
+          "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
         },
         {
           "path": "tiny-30-row-table/README.md",
-          "sha256": "00405b0881467091426d5f8efb1e49f2305c097d8587f7328ab964d51b0b676b",
-          "size_bytes": 906,
+          "sha256": "2b1f985d52009c989709d332da951c43af297cf95cf0bf1dfd55cfcd61d76af5",
+          "size_bytes": 1711,
           "license": {
             "status": "unknown"
           },
-          "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
-          "source_s3_manifest": {
-            "key": "datasets/21fbfe8b53dbcd60/manifest.json",
-            "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
-            "size_bytes": 1545
-          }
+          "source_s3_key": "datasets/b4c8807a75fc190f/manifest.json",
+          "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
         }
+      ]
+    },
+    {
+      "slug": "messy-csv-like",
+      "categories": [
+        "messy-csv-like"
+      ],
+      "dataset_hash": "f803c49aca66290d",
+      "origin": "real",
+      "catalog_task": "regression",
+      "source_url": null,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_manifest": {
+        "key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+        "sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+        "size_bytes": 1602007,
+        "etag": "1694aac6284efd37bad473cec5409a0d"
+      },
+      "files": [
+        {
+          "path": "messy-csv-like/raw-source-subset.csv",
+          "sha256": "2bb5dee875d2a5c41d004c5083d17acc3bac38e86005c2149eb6b004448889d3",
+          "size_bytes": 138263,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+          "source_sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+          "source_size_bytes": 1602007,
+          "source_etag": "1694aac6284efd37bad473cec5409a0d"
+        },
+        {
+          "path": "messy-csv-like/source-receipt.json",
+          "sha256": "acb2fc8703112d813ae7cc05a8773715d0f9c7aad2636767254ee3c0b22cfe36",
+          "size_bytes": 802,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+          "source_sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+          "source_size_bytes": 1602007,
+          "source_etag": "1694aac6284efd37bad473cec5409a0d"
+        },
+        {
+          "path": "messy-csv-like/README.md",
+          "sha256": "dd30b7d101d39e80df433cd942c0ea9904e8f13d1f79f4708052e7dcacdc339c",
+          "size_bytes": 1028,
+          "license": {
+            "status": "unknown"
+          },
+          "source_s3_key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+          "source_sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+          "source_size_bytes": 1602007,
+          "source_etag": "1694aac6284efd37bad473cec5409a0d"
+        }
+      ],
+      "partial_gaps": [
+        "quoted fields",
+        "Unicode headers"
       ]
     }
   ],
-  "gaps": [
+  "deferred": [
+    {
+      "category": "multiclass",
+      "status": "DEFERRED (t525u)",
+      "reason": "S3 catalog v246 has no multiclass entries; owner amendment defers this category."
+    }
+  ],
+  "partial_gaps": [
     {
       "category": "messy-csv-like",
-      "status": "GAP",
-      "reason": "The inspected canonical real S3 corpus entries store normalized headerless train/test CSVs and metadata; no selected canonical S3 object preserves a messy source CSV with quoted fields, missing values, and Unicode headers. No public or synthetic substitute was added."
+      "status": "PARTIAL GAP",
+      "traits": [
+        "quoted fields",
+        "Unicode headers"
+      ],
+      "source_dataset": "f803c49aca66290d"
     }
   ],
   "files": [
@@ -379,8 +486,8 @@
     },
     {
       "path": "d2-regression/README.md",
-      "sha256": "c6c598f43811a1547d735e60e2310c64b57666c40426fd9c2b5c3efb091ec834",
-      "size_bytes": 1572,
+      "sha256": "2a49272de7c0be363cc4cf6bf7293930e8952dc319782728a06433401b35fa5c",
+      "size_bytes": 1804,
       "license": {
         "status": "unknown"
       },
@@ -429,8 +536,8 @@
     },
     {
       "path": "binary-loanapp/README.md",
-      "sha256": "57eff80aa9bd2f6a87c6b2d78359107a6b5e6c49605485dcacc66d9fa79ca342",
-      "size_bytes": 1522,
+      "sha256": "186abf4d316f7ffabcb89230cdc391ab49e8778844195ef7cc6ec36cd0e85ce8",
+      "size_bytes": 1728,
       "license": {
         "status": "unknown"
       },
@@ -438,57 +545,67 @@
       "source_dataset_manifest_key": "datasets/02d7a557213d8979/manifest.json"
     },
     {
-      "path": "multiclass-skillcraft/train.csv",
-      "sha256": "dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
-      "size_bytes": 560730,
+      "path": "grouped-apartment-rent/train.csv",
+      "sha256": "1599896e8259d16c56afb4a300cbd22846745657687ae8a041cc4f8e73a9c641",
+      "size_bytes": 881520,
       "license": {
         "status": "unknown"
       },
-      "source_s3_key": "blobs/sha256/dd5bcbf52a2eb737a8ebc9a5efc7594587e10e5de3f7be5ceb6008fd8a9fb661",
-      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+      "source_s3_key": "blobs/sha256/1599896e8259d16c56afb4a300cbd22846745657687ae8a041cc4f8e73a9c641",
+      "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
     },
     {
-      "path": "multiclass-skillcraft/test.csv",
-      "sha256": "56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
-      "size_bytes": 139711,
+      "path": "grouped-apartment-rent/test.csv",
+      "sha256": "9abb7b4e729839a4896c34ff1e0fe96c083dda466bb4b7ad17878f1beef03550",
+      "size_bytes": 222691,
       "license": {
         "status": "unknown"
       },
-      "source_s3_key": "blobs/sha256/56c7967b4643ad6a933df26640de7b279d0e61576ce61d759506b5ed1d4358d0",
-      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+      "source_s3_key": "blobs/sha256/9abb7b4e729839a4896c34ff1e0fe96c083dda466bb4b7ad17878f1beef03550",
+      "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
     },
     {
-      "path": "multiclass-skillcraft/meta.json",
-      "sha256": "4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
-      "size_bytes": 5579,
+      "path": "grouped-apartment-rent/meta.json",
+      "sha256": "97ceb4b9b6afd5ceb8ce0185ea298e4767b3a6289bf1b8a7c7438b6c454e680d",
+      "size_bytes": 207987,
       "license": {
         "status": "unknown"
       },
-      "source_s3_key": "blobs/sha256/4cde0b00aed4d9248ada2c7758ebaf8b68b4e3cc1fa4fe58c017fd5194e626b2",
-      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+      "source_s3_key": "blobs/sha256/97ceb4b9b6afd5ceb8ce0185ea298e4767b3a6289bf1b8a7c7438b6c454e680d",
+      "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
     },
     {
-      "path": "multiclass-skillcraft/source-manifest.json",
-      "sha256": "590f497edc15da9bb804cf2a11afae658497dea41b6789f78ff5669cdf2e171c",
-      "size_bytes": 1287,
+      "path": "grouped-apartment-rent/source-manifest.json",
+      "sha256": "5932d9e510a4a44a7fb5a916267ff905d098d041ddc8e7175a51dc024c988780",
+      "size_bytes": 1279,
       "license": {
         "status": "unknown"
       },
-      "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
-      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+      "source_s3_key": "datasets/c4b905cec711a618/manifest.json",
+      "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
     },
     {
-      "path": "multiclass-skillcraft/README.md",
-      "sha256": "bf95f14e1c773d5516a152dd2727806e5d78b17b5ff6309327d04334dbdb1bbb",
-      "size_bytes": 1505,
+      "path": "grouped-apartment-rent/native-split.json",
+      "sha256": "454ad37b129482c30b0f2973a24de17c05aa7ac539ec6ac00a550cad084fa202",
+      "size_bytes": 1397,
       "license": {
         "status": "unknown"
       },
-      "source_s3_key": "datasets/e7ed111d2a7d05e1/manifest.json",
-      "source_dataset_manifest_key": "datasets/e7ed111d2a7d05e1/manifest.json"
+      "source_s3_key": "split-registry/v1/datasets/c4b905cec711a618/native/454ad37b129482c30b0f2973a24de17c05aa7ac539ec6ac00a550cad084fa202.json",
+      "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
     },
     {
-      "path": "grouped-time-series-prisonlf/train.csv",
+      "path": "grouped-apartment-rent/README.md",
+      "sha256": "6eba5525af2c5bfb6e6549f6e6fa5a2fa28e0e8a1bb60b1e8869c56658bdc2af",
+      "size_bytes": 2079,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/c4b905cec711a618/manifest.json",
+      "source_dataset_manifest_key": "datasets/c4b905cec711a618/manifest.json"
+    },
+    {
+      "path": "time-ordered-prisonlf/train.csv",
       "sha256": "539dec765cd7ba40cb85b81776572f991624f2748e7b29822206c4366cba07ab",
       "size_bytes": 74505,
       "license": {
@@ -498,7 +615,7 @@
       "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
     },
     {
-      "path": "grouped-time-series-prisonlf/test.csv",
+      "path": "time-ordered-prisonlf/test.csv",
       "sha256": "5368e1f0e44ef362464db8ef0d7f29d5602a4c393547efa1f35d95a85ec06d19",
       "size_bytes": 12477,
       "license": {
@@ -508,7 +625,7 @@
       "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
     },
     {
-      "path": "grouped-time-series-prisonlf/meta.json",
+      "path": "time-ordered-prisonlf/meta.json",
       "sha256": "d9afe8a606c2bb9ac5293a07cb02ccce440c2ff32a235cbbd4bfb801b225bcf6",
       "size_bytes": 4687,
       "license": {
@@ -518,7 +635,7 @@
       "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
     },
     {
-      "path": "grouped-time-series-prisonlf/source-manifest.json",
+      "path": "time-ordered-prisonlf/source-manifest.json",
       "sha256": "1b22512dd69135592ae8396c25408c3af08aa7a467b7679b0cc7d358f5b12130",
       "size_bytes": 1278,
       "license": {
@@ -528,9 +645,9 @@
       "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
     },
     {
-      "path": "grouped-time-series-prisonlf/README.md",
-      "sha256": "a9de8015d59f9e31110948fb96053a7c80d401e3679ee8fa2db58dee2f104446",
-      "size_bytes": 1550,
+      "path": "time-ordered-prisonlf/README.md",
+      "sha256": "c7ea47fe9dbf7a6c8d9c653656b174cdc0646f60e43640d97ca64051d1eb2aa1",
+      "size_bytes": 1753,
       "license": {
         "status": "unknown"
       },
@@ -538,31 +655,101 @@
       "source_dataset_manifest_key": "datasets/05f1f3e17ca435fb/manifest.json"
     },
     {
-      "path": "tiny-30-row-table/table.csv",
-      "sha256": "97e96179d0764c24dc8b4614159e3204656a5616b837940f33b89dcc2d716c2f",
-      "size_bytes": 7774,
+      "path": "tiny-30-row-table/train.csv",
+      "sha256": "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
+      "size_bytes": 3683,
       "license": {
         "status": "unknown"
       },
-      "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
-      "source_sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
-      "source_size_bytes": 259938,
-      "source_dataset_manifest_key": "datasets/21fbfe8b53dbcd60/manifest.json"
+      "source_s3_key": "blobs/sha256/782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
+      "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
+    },
+    {
+      "path": "tiny-30-row-table/test.csv",
+      "sha256": "5d5cf50916887e9874a6481edf656be753504df159ffb1fcef566622ab0ebe64",
+      "size_bytes": 718,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/5d5cf50916887e9874a6481edf656be753504df159ffb1fcef566622ab0ebe64",
+      "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
+    },
+    {
+      "path": "tiny-30-row-table/meta.json",
+      "sha256": "99c8d3c38a0bb658334e8a48e0826f5a00f947967f305c5cf399013acbe18908",
+      "size_bytes": 3747,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "blobs/sha256/99c8d3c38a0bb658334e8a48e0826f5a00f947967f305c5cf399013acbe18908",
+      "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
+    },
+    {
+      "path": "tiny-30-row-table/source-manifest.json",
+      "sha256": "d7a96e613d30773b0058e4d57bc898bcfdda497ff9fc5112d0542e1769bb1155",
+      "size_bytes": 1242,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "datasets/b4c8807a75fc190f/manifest.json",
+      "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
     },
     {
       "path": "tiny-30-row-table/README.md",
-      "sha256": "00405b0881467091426d5f8efb1e49f2305c097d8587f7328ab964d51b0b676b",
-      "size_bytes": 906,
+      "sha256": "2b1f985d52009c989709d332da951c43af297cf95cf0bf1dfd55cfcd61d76af5",
+      "size_bytes": 1711,
       "license": {
         "status": "unknown"
       },
-      "source_s3_key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
-      "source_s3_manifest": {
-        "key": "datasets/21fbfe8b53dbcd60/manifest.json",
-        "sha256": "0aa7a8c954b07edd9befa0746bf510bccf8cd8c8d3b405d1073a8e1a6fc9cc78",
-        "size_bytes": 1545
-      }
+      "source_s3_key": "datasets/b4c8807a75fc190f/manifest.json",
+      "source_dataset_manifest_key": "datasets/b4c8807a75fc190f/manifest.json"
+    },
+    {
+      "path": "messy-csv-like/raw-source-subset.csv",
+      "sha256": "2bb5dee875d2a5c41d004c5083d17acc3bac38e86005c2149eb6b004448889d3",
+      "size_bytes": 138263,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+      "source_sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+      "source_size_bytes": 1602007,
+      "source_etag": "1694aac6284efd37bad473cec5409a0d"
+    },
+    {
+      "path": "messy-csv-like/source-receipt.json",
+      "sha256": "acb2fc8703112d813ae7cc05a8773715d0f9c7aad2636767254ee3c0b22cfe36",
+      "size_bytes": 802,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+      "source_sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+      "source_size_bytes": 1602007,
+      "source_etag": "1694aac6284efd37bad473cec5409a0d"
+    },
+    {
+      "path": "messy-csv-like/README.md",
+      "sha256": "dd30b7d101d39e80df433cd942c0ea9904e8f13d1f79f4708052e7dcacdc339c",
+      "size_bytes": 1028,
+      "license": {
+        "status": "unknown"
+      },
+      "source_s3_key": "full-source-registry/v1/sources/sha256/f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099.csv",
+      "source_sha256": "f803c49aca66290d31fd0832b10b72df9a627e057877b06e880ba90ce1284099",
+      "source_size_bytes": 1602007,
+      "source_etag": "1694aac6284efd37bad473cec5409a0d"
+    },
+    {
+      "path": "README.md",
+      "sha256": "054815a65cebb8fc566fcb49009aac126a1121193f4412e836fb84eec95b6f15",
+      "size_bytes": 1196,
+      "license": {
+        "status": "not_applicable",
+        "reason": "Task-generated documentation, not a dataset."
+      },
+      "source": "See per-dataset S3 source receipts in this manifest."
     }
   ],
-  "total_file_bytes_excluding_this_manifest": 1946848
+  "total_file_bytes_excluding_this_manifest": 2699340
 }
