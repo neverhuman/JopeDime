@@ -26,16 +26,16 @@ we separate planning assumptions from the measurements still required in
 For repeated attempts with a fixed win probability, expected cost per win
 is mean cost per attempt, repairs included, divided by that probability:
 \begin{equation}
-  C_{\text{win}} = \frac{C_{\text{attempt}} + \mathbb{E}[r]\,C_{\text{repair}}}{q}.
+  \Cwin = \frac{\Cattempt + \mathbb{E}[\Nrepair]\,\Crepair}{\winprob}.
   \label{eq:bill}
 \end{equation}
-Here $C_{\text{attempt}}$ is the cost of one try, including the referee's
-fit; $C_{\text{repair}}$ is the cost of one repair turn, and $\mathbb{E}[r]$
-the mean number of repairs per attempt. The $q$ is that of \cref{eq:taste},
+Here $\Cattempt$ is the cost of one try, including the referee's
+fit; $\Crepair$ is the cost of one repair turn, and $\mathbb{E}[\Nrepair]$
+the mean number of repairs per attempt. The $\winprob$ is that of \cref{eq:taste},
 the probability that one try beats the incumbent: what sets the number of
-tries also sets the price. It factors as $q = q_{\text{run}}\,q_{\text{beat}}$,
+tries also sets the price. It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
 the share of moves that run times the share of those that win. A move that
-runs and loses still costs money, so we divide by $q$, not by the survival
+runs and loses still costs money, so we divide by $\winprob$, not by the survival
 rate. Generating a token costs about 2~FLOPs per active parameter, and
 training on one about~6 \citep{kaplan2020scaling}. We give self-hosted
 projections and dated API-price examples (\cref{sub:price-run}).
@@ -50,9 +50,10 @@ requires a measured crossover, still pending in \cref{sec:results}.
 \subsection{Wasted moves}\label{sub:price-waste}
 
 An attempt can fail before or after it becomes a valid competitor.
-A stillborn move never competes: it fails
-to parse or type-check, crashes, times out or returns degenerate output. An
-also-ran runs and loses. The planned funnel in \cref{fig:price}a traces
+A stillborn attempt fails to produce a usable program under the declared
+protocol: generation is incomplete, parsing or type-checking fails,
+execution exceeds its limits or crashes, or outputs fail predeclared
+validity checks. An also-ran is valid but does not beat the incumbent. The planned funnel in \cref{fig:price}a traces
 those stages and the compute spent before each failed attempt stops. If 90\% of attempts fail to improve the incumbent, the independent-try
 model requires ten attempts per improvement in expectation. A typed program language
 removes many stillborn moves by construction (\cref{sec:game}), and those
@@ -114,8 +115,8 @@ share of games, \TBD{X\%}.
 \subsection{How many games?}\label{sub:price-games}
 
 Three quantities differ by orders of magnitude.
-\textbf{Tries to find one improvement:} $1/q$ on average (\cref{eq:taste}).
-If tries were independent, $q = 1\%$ would need 69 tries for even odds and
+\textbf{Tries to find one improvement:} $1/\winprob$ on average (\cref{eq:taste}).
+If tries were independent, $\winprob = 1\%$ would need 69 tries for even odds and
 299 for 95\% confidence; tries from one writer are correlated, so these are
 guides, not guarantees.
 \textbf{Experience to train a transferable player:} AlphaGo Zero generated
@@ -141,14 +142,14 @@ compute on their active parameters, such as the 32B of 1T in Kimi~K2 \citep{kimi
 or the 37B of 671B in DeepSeek-V3 \citep{deepseekv3}. They need memory for
 all of them: 1T one-byte weights fill at least 13 H100s.
 
-\begin{table}[t]
+\begin{table*}[t]
   \centering
   \caption{\textbf{Projected generation and update costs for a fixed
   attempt budget.} These totals exclude other components of a full run;
   the number of verified wins remains to be measured. Projections before pilots; [low-cost, high-cost] in
   brackets. Base: 8 million attempts of 5,000 generated tokens; \$2.92 per
   H100-hour on 29 October 2026 \citep{ornn2026ocpi} [\$2.50, \$4.17;
-  \citealp{thunder2026gpu}]; 989.5 dense BF16 TFLOP/s per GPU
+  \cite{thunder2026gpu}]; 989.5 dense BF16 TFLOP/s per GPU
   \citep{nvidia2026h100}; generation at 20\% of peak [30\%, 10\%], or 10\%
   [20\%, 7\%] for memory-bound mixture-of-experts (MoE) writers; updates on
   10\% of tokens at 40\% of peak [50\%, 30\%]. The 1.5T rows are scenarios.
@@ -170,7 +171,7 @@ all of them: 1T one-byte weights fill at least 13 H100s.
     1.5T dense (scenario) & 1.5T & 21.05 & 61 & 492 [281, 1405] & 73.8 [50.5, 140] \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
 The referee runs on CPUs, at 10 to 100 CPU-seconds per move and
 \$0.015--\$0.045 per vCPU-hour \citep{doit2026c7i}. For a full run that is
@@ -189,7 +190,7 @@ for the same model. The running example's single game cost \TBD{\$c}:
 
 The table prices a fixed number of attempts, not a fixed number of wins.
 Converting those totals to cost per win requires a measured win rate. Under
-\cref{eq:bill}'s fixed-probability accounting, doubling $q$ halves the
+\cref{eq:bill}'s fixed-probability accounting, doubling $\winprob$ halves the
 expected cost per win while leaving the per-attempt bill unchanged.
 
 The scaling scenarios in this section concern 8B--1.5T language-model

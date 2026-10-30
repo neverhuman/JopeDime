@@ -4,6 +4,7 @@ pub mod config;
 pub mod daemon_file;
 pub mod dataset;
 pub mod discover;
+pub mod engine;
 pub mod events;
 pub mod export;
 pub mod governor;

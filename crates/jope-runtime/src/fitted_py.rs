@@ -48,12 +48,12 @@ fn python_hex(value: f64) -> String {
     let fraction = bits & ((1u64 << 52) - 1);
     if exponent == 0 {
         if fraction == 0 {
-            format!("{sign}\"0x0.0p+0\"")
+            format!("\"{sign}0x0.0p+0\"")
         } else {
-            format!("{sign}\"0x0.{fraction:013x}p-1022\"")
+            format!("\"{sign}0x0.{fraction:013x}p-1022\"")
         }
     } else {
-        format!("{sign}\"0x1.{fraction:013x}p{:+}\"", exponent - 1023)
+        format!("\"{sign}0x1.{fraction:013x}p{:+}\"", exponent - 1023)
     }
 }
 

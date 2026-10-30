@@ -94,6 +94,28 @@ pub fn files() -> Vec<FixtureFile> {
                 ],
             ),
         },
+        // REL-02 plumbing: a synthetic stand-in for the fused-ranker bundle, so the fused
+        // profiles exercise packing without any real weight (owner decision (b)).
+        FixtureFile {
+            bundle: "fixture-fused-ranker",
+            path: "ranker.safetensors",
+            kind: "model",
+            bytes: safetensors(
+                3,
+                &[
+                    ("ctx_proj.weight", "F32", &[48, 64]),
+                    ("ctx_proj.bias", "F32", &[48]),
+                    ("score_head.weight", "F32", &[1, 48]),
+                ],
+            ),
+        },
+        FixtureFile {
+            bundle: "fixture-fused-ranker",
+            path: "fused.config.json",
+            kind: "config",
+            bytes: br#"{"architecture":"dope-fused-ranker/h40b","fixture":true,"version":1,"ctx_dim":64}"#
+                .to_vec(),
+        },
     ]
 }
 
@@ -123,7 +145,7 @@ pub fn manifest(bundle: &str) -> serde_json::Value {
     })
 }
 
-pub const BUNDLES: [&str; 2] = ["fixture-encoder", "fixture-policy"];
+pub const BUNDLES: [&str; 3] = ["fixture-encoder", "fixture-policy", "fixture-fused-ranker"];
 
 /// Canonical manifest text.
 pub fn manifest_text(bundle: &str) -> String {

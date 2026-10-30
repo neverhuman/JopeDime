@@ -110,8 +110,17 @@ training budget and deployment protocol otherwise matched.
 
 \subsection{Failure cases and a worked example}\label{sub:results-failures}
 
-Describe unsuccessful proposals and coverage limits as well as wins. Choose
-the worked example by a rule fixed before inspection, and show its emitted
+Describe unsuccessful proposals and coverage limits as well as wins.
+Assign each attempt one terminal status: incomplete generation, parse or
+type-checking refusal, execution
+or resource failure, invalid output under declared checks, and valid ties,
+losses and wins. Every attempted candidate contributes its incurred cost.
+Unresolved outcomes retain an explicit unknown status; fix their treatment
+and the validity rules before opening final outcomes.
+\TBD{Supply attempt inventories and costs by outcome class, identifying
+unresolved cases.}
+
+Choose the worked example by a rule fixed before inspection, and show its emitted
 program, fitting procedure and comparison outcome; if the selected category
 is empty, report that fact. \TBD{Supply the example selection rule, actual
 program and verified outcomes, with no replacement of failed attempts.}

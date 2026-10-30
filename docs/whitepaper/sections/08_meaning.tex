@@ -1,7 +1,7 @@
 \section{Meaning}\label{sec:meaning}
 
-What would a successful single proposal establish, and where would that
-claim stop? The answer depends on the independent results in
+What would better first proposals on independent new families establish,
+and where would that claim stop? The answer depends on the independent results in
 \cref{sec:results}. The recorded training trajectory alone cannot establish
 transfer, useful new composition or autonomous scientific discovery.
 \TBD{Reconcile every conclusion below with the completed evaluation.}
@@ -12,7 +12,11 @@ A better task-dependent choice from a fixed program archive demonstrates
 selection. A useful composition absent from the training archive is a stronger
 result, and requires an output space that permits it. Token-by-token decoding does not distinguish the two:
 report the admissible output space, the training archive and the relation
-of each proposed program to that archive. \TBD{State which claim the evaluated
+of each proposed program to that archive. Absence from an archive establishes
+novelty relative to that archive, rather than to the scientific literature.
+Different program spellings can also express the same computation. Claims
+of invention therefore need comparisons of program behavior and known
+methods, alongside predictive quality. \TBD{State which claim the evaluated
 checkpoint and its outputs actually support.}
 
 \subsection{Moving judgment across problems}
@@ -28,7 +32,11 @@ should be compared with the training cost it takes to improve that writer.
 
 The framework optimizes what its referee measures. Repeated development
 comparisons can overfit that referee, while a restricted language can hide
-useful algorithms from the learner. Task representations, training families
+useful algorithms from the learner. An admission based on a higher
+development score records a selection decision. It does not quantify
+uncertainty or guarantee improvement in the target population. The independent evaluation must
+keep the chosen checkpoint fixed and report paired uncertainty, including
+failures and ties. Task representations, training families
 and runtime limits further bound the result. A referee for a new scientific
 domain would need its own validity and cost evidence; analogy to a game
 supplies neither. \TBD{Report observed failures, distribution shifts and
@@ -38,7 +46,10 @@ remaining tests of the referee.}
 
 Improving an external algorithm, improving the proposer and improving the
 rate at which the proposer learns are distinct claims. Evidence for the
-first does not establish the others. People still choose the task, metric,
+first does not establish the others. An optimizer trace with verified
+parameter changes can establish that training occurred; a lower training
+objective measures the fitting criterion. Neither alone shows that first
+proposals improved on unseen families. People still choose the task, metric,
 representation and resource limits. \TBD{State the strongest supported level
 of improvement and leave untested extensions as future work.}
 

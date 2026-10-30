@@ -1,0 +1,44 @@
+name: export-parity
+on:
+  # The CI owner wires this later; EXP-08 runs the local harness only.
+  # Future qualification uses an isolated managed VM.
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: export-parity-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  export-parity:
+    # Future qualification is restricted to this repository's manual main caller.
+    if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Python 3.12.3
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.3'
+      - name: Node 26.1.0
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '26.1.0'
+      - name: Pinned Rust
+        run: rustup toolchain install 1.97.1 --profile minimal
+      - name: Execute real emitted predictors
+        run: bash deploy/ci/export-parity.sh "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+      - name: Retain source-bound parity report and generated predictors
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: export-parity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/export-parity/${{ github.run_id }}/${{ github.run_attempt }}

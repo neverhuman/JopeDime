@@ -34,7 +34,7 @@ case $out in /tmp | /tmp/*) echo "$0: never build under /tmp (AGENTS.md)" >&2; e
 scope=$(sed -n 's/^scope = "\(.*\)"$/\1/p' "$profile_file")
 features=embedded
 [ "$scope" = development ] && features=embedded,dev-keys
-[ "$profile" != dope-gpu ] || features=$features,dope-cuda
+case $profile in dope-gpu | fused-cuda) features=$features,dope-cuda ;; esac
 mkdir -p "$out"
 
 dist() { cargo run -q --locked -p jope-dist -- "$@"; }
@@ -47,7 +47,7 @@ cargo fetch --locked
 echo "== lock and dependency fence"
 dist lock --check
 dist audit
-if [ "$profile" = dope-gpu ]; then
+if [ "$profile" = dope-gpu ] || [ "$profile" = fused-cuda ]; then
   dist audit --policy deploy/appliance/dependencies-dope-gpu.toml
 fi
 
