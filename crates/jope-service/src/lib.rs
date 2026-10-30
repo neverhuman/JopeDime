@@ -10,6 +10,7 @@ pub mod idempotency;
 pub mod lex;
 pub mod objective;
 pub mod public;
+pub mod ranker;
 pub mod run;
 pub mod sampler;
 pub mod store;
