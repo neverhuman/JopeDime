@@ -43,7 +43,7 @@ struct Metadata {
 
 /// Values retain f64 bits, rather than conflating signed zeros in round-trip tests.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Cell<'a> {
+pub enum JmatCell<'a> {
     Missing,
     Numeric(f64),
     Categorical(&'a str),
@@ -86,9 +86,14 @@ fn numeric(value: &str) -> Option<f64> {
 /// Encode the runtime parser's cells without choosing targets or fitting transforms.
 pub fn encode(table: &CsvTable) -> Result<Vec<u8>> {
     if table.headers.is_empty()
-        || table.headers.iter().any(String::is_empty)
+        || table.headers.iter().any(|name| name.trim().is_empty())
         || table.headers.iter().collect::<BTreeSet<_>>().len() != table.headers.len()
-        || table.rows.iter().any(|r| r.len() != table.headers.len())
+        || table.rows.iter().any(|r| {
+            r.len() != table.headers.len()
+                || r.iter()
+                    .flatten()
+                    .any(|v| v.trim_matches(|c: char| c.is_ascii_whitespace()).is_empty())
+        })
     {
         return Err(InvalidMatrix);
     }
@@ -221,7 +226,7 @@ impl<B: AsRef<[u8]>> Matrix<B> {
         let row_ids = integer(bytes, 48)?;
         if metadata.columns.is_empty()
             || integer(bytes, 40)? != metadata.columns.len()
-            || metadata.columns.iter().any(|c| c.name.is_empty())
+            || metadata.columns.iter().any(|c| c.name.trim().is_empty())
             || metadata
                 .columns
                 .iter()
@@ -251,6 +256,10 @@ impl<B: AsRef<[u8]>> Matrix<B> {
             if usize::try_from(column.values).map_err(|_| InvalidMatrix)? != start
                 || (column.kind == ColumnKind::Numeric && !column.dictionary.is_empty())
                 || column.dictionary.windows(2).any(|w| w[0] >= w[1])
+                || column
+                    .dictionary
+                    .iter()
+                    .any(|v| v.trim_matches(|c: char| c.is_ascii_whitespace()).is_empty())
             {
                 return Err(InvalidMatrix);
             }
@@ -318,24 +327,24 @@ impl<B: AsRef<[u8]>> Matrix<B> {
             integer(self.bytes(), self.row_ids + row * 8).expect("validated row ID") as u64
         })
     }
-    pub fn cell(&self, row: usize, column: usize) -> Option<Cell<'_>> {
+    pub fn cell(&self, row: usize, column: usize) -> Option<JmatCell<'_>> {
         if row >= self.rows {
             return None;
         }
         let column = self.metadata.columns.get(column)?;
         let bytes = self.bytes();
         if bytes[column.present as usize + row] == 0 {
-            return Some(Cell::Missing);
+            return Some(JmatCell::Missing);
         }
         let start = column.values as usize + row * width(column.kind);
         Some(match column.kind {
-            ColumnKind::Numeric => Cell::Numeric(f64::from_le_bytes(
+            ColumnKind::Numeric => JmatCell::Numeric(f64::from_le_bytes(
                 bytes[start..start + 8].try_into().expect("validated value"),
             )),
             ColumnKind::Categorical => {
                 let code =
                     u32::from_le_bytes(bytes[start..start + 4].try_into().expect("validated code"));
-                Cell::Categorical(&column.dictionary[code as usize])
+                JmatCell::Categorical(&column.dictionary[code as usize])
             }
         })
     }
@@ -389,11 +398,11 @@ mod tests {
                 for (row, values) in parsed.rows.iter().enumerate() {
                     assert_eq!(matrix.row_id(row), Some(row as u64));
                     match (&values[column], matrix.cell(row, column).unwrap()) {
-                        (None, Cell::Missing) => missing += 1,
-                        (Some(text), Cell::Numeric(number)) => {
+                        (None, JmatCell::Missing) => missing += 1,
+                        (Some(text), JmatCell::Numeric(number)) => {
                             assert_eq!(numeric(text).unwrap().to_bits(), number.to_bits())
                         }
-                        (Some(text), Cell::Categorical(value)) => assert_eq!(text, value),
+                        (Some(text), JmatCell::Categorical(value)) => assert_eq!(text, value),
                         other => panic!("roundtrip kind mismatch: {other:?}"),
                     }
                 }
@@ -462,12 +471,12 @@ mod tests {
         };
         let matrix = Matrix::open(encode(&table).unwrap()).unwrap();
         for (row, bits) in [(0, (-0.0_f64).to_bits()), (1, 0.0_f64.to_bits())] {
-            let Some(Cell::Numeric(value)) = matrix.cell(row, 0) else {
+            let Some(JmatCell::Numeric(value)) = matrix.cell(row, 0) else {
                 panic!("numeric expected")
             };
             assert_eq!(value.to_bits(), bits);
         }
-        assert_eq!(matrix.cell(2, 0), Some(Cell::Missing));
+        assert_eq!(matrix.cell(2, 0), Some(JmatCell::Missing));
     }
 
     #[test]
@@ -495,8 +504,8 @@ mod tests {
         for (row, original) in table.rows.iter().enumerate() {
             let expected = original[0]
                 .as_deref()
-                .map(Cell::Categorical)
-                .unwrap_or(Cell::Missing);
+                .map(JmatCell::Categorical)
+                .unwrap_or(JmatCell::Missing);
             assert_eq!(matrix.cell(row, 0), Some(expected));
         }
         let mut bad = encoded.clone();
@@ -526,12 +535,12 @@ mod tests {
             hash.update(matrix.row_id(row).unwrap().to_le_bytes());
             for col in 0..matrix.columns().len() {
                 match matrix.cell(row, col).unwrap() {
-                    Cell::Missing => hash.update([0]),
-                    Cell::Numeric(v) => {
+                    JmatCell::Missing => hash.update([0]),
+                    JmatCell::Numeric(v) => {
                         hash.update([1]);
                         hash.update(v.to_bits().to_le_bytes());
                     }
-                    Cell::Categorical(s) => {
+                    JmatCell::Categorical(s) => {
                         hash.update([2]);
                         hash.update((s.len() as u64).to_le_bytes());
                         hash.update(s.as_bytes());
