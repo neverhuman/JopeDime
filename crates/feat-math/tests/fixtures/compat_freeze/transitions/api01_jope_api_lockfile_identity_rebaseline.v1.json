@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the root Cargo.lock change from API-01 (#467: the new jope-api contract crate adds one 9-line local lock entry depending only on schemars, serde and serde_json, before API-06 registers it as a workspace member), after the RNK-11 CPU-closure lockfile identity. No crates/feat-math source changes; only Cargo.lock's hash, the implementation_sha256 and identity digest it feeds, and both fixtures' generated_at_sha move. All behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "JopeDime v1 master plan API-01 (jope-api crate and core types); identity transition added by super_merge_claude under the ENG:watcher merge_0505 scope ruling because the PR changed Cargo.lock without one, failing feat-math::compat_freeze; ADR-0004",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/467",
+  "source_commit": "6fb55261b22712fa011a9b8e96e3174c229ada61",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "f54f102d9b9b696e8bd237c5ba91658bc3cf7b26a62be8d7b58170428dab2473",
+      "after": "c0fa72e43b451e8cabedd916780543a04452f7b7907b49728e0d98c9d00de0db"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "33ddc012f8fcc74e1edbe771a0f3325fd7e99f142000d91c48f4105ca0c693fa",
+      "after": "900c2bf7a1b096906d6559af3babf7106915655f1833a5646057c33fb69c8101"
+    }
+  ]
+}

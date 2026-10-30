@@ -1,0 +1,32 @@
+{
+  "dataset": "ds_7f3a9c0e1b2d4a5f6e7d8c9b",
+  "target": "median_house_value",
+  "task": "auto",
+  "ignore_columns": [
+    "row_id"
+  ],
+  "test_dataset": null,
+  "split": {
+    "kind": "random",
+    "holdout_fraction": 0.2,
+    "group_column": null,
+    "time_column": null
+  },
+  "objective": "rmse",
+  "effort": "medium",
+  "budget": {
+    "evaluations": null,
+    "wall_seconds": null
+  },
+  "landmarks": "full",
+  "guidance": "auto",
+  "languages": [
+    "python",
+    "rust"
+  ],
+  "require_all_languages": true,
+  "device": "auto",
+  "seed": "20261029",
+  "dry_run": false,
+  "plan_digest": null
+}
