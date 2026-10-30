@@ -2,18 +2,18 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "WRK-03 adds only already-locked libc and windows-sys dependencies to jope-service in Cargo.lock. Append this ADR-0004 identity and lineage fixture edge after merged TUI-10; no package versions or registry sources change.",
   "plan_reference": "WRK-03; owner scope ruling 0810; ruling 0840; ADR-0004",
-  "source_commit": "e3197354596ae57ea07211e406b451327d0c63bc",
-  "base_commit": "8f417243b4073cd40eb2d80aaeeb491411ec245a",
+  "source_commit": "6d7461f850495b803812fb1e17057a37d9721dc3",
+  "base_commit": "069d200319ae2775606e1cb1fa58d467e393cc8c",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526",
-      "after": "046c1607230a953f52ded0da4ce3cf6f634d3c48caff5f95951190c6ab62eef5"
+      "after": "4d047d03e3559574cc92a450bbf149e87fba1a0df394e0013562f26b7727cfbb"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de",
-      "after": "9fbfc3f3aaf5121394b010f48cbf48d567538d6f3af133bb273b9699fd54db7b"
+      "after": "dea632d8f63dc05a312ab25787798dcdb819006af049da656392bf83230c6cf6"
     }
   ],
   "before_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b",
