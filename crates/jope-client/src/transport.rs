@@ -290,6 +290,18 @@ macro_rules! post_method {
 
 pub trait Transport: Send + Sync {
     fn execute(&self, request: Request) -> Result<Response>;
+    /// Stream a CSV upload through the canonical dataset registration route.
+    /// Transports without streaming support keep compiling and fail explicitly.
+    fn dataset_register_stream(
+        &self,
+        _name: &str,
+        _body: Box<dyn Read + Send>,
+        _idempotency_key: &str,
+    ) -> Result<Response> {
+        Err(Error::InvalidRequest(
+            "streaming dataset registration is unsupported by this transport",
+        ))
+    }
     get_method!(system_info, 1, 0, SystemInfo);
     post_method!(dataset_register, 2, Value, DatasetProfile);
     get_method!(datasets, 3, 0, Value);

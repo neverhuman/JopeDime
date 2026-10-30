@@ -582,7 +582,10 @@ impl ModelObject {
             let pipeline = self.math_pipeline()?;
             return match language {
                 "javascript" => pipeline.export_javascript(),
-                "python" | "rust" => Err(Failure::backend(format!(
+                "rust" => crate::fitted_rs::emit_pipeline(&pipeline)
+                    .map(String::into_bytes)
+                    .map_err(|error| Failure::backend(error.to_string())),
+                "python" => Err(Failure::backend(format!(
                     "{language} export is not implemented for {MATH_PIPELINE}"
                 ))),
                 _ => Err(Failure::input(
@@ -856,16 +859,130 @@ mod tests {
         assert!(invalid.verify_executable().is_err());
         let decoded = invalid.math_pipeline();
         let exported = invalid.export_source("javascript");
+        let rust_exported = invalid.export_source("rust");
         assert!(
-            decoded.is_err() && exported.is_err(),
-            "missing required Platt part accepted: math_pipeline={}, javascript_export={}",
+            decoded.is_err() && exported.is_err() && rust_exported.is_err(),
+            "missing required Platt part accepted: math_pipeline={}, javascript_export={}, rust_export={}",
             decoded.is_ok(),
-            exported.is_ok()
+            exported.is_ok(),
+            rust_exported.is_ok()
         );
-        for error in [decoded.unwrap_err(), exported.unwrap_err()] {
+        for error in [
+            decoded.unwrap_err(),
+            exported.unwrap_err(),
+            rust_exported.unwrap_err(),
+        ] {
             assert_eq!(crate::error::kind_of(&error), crate::FailureKind::Integrity);
             assert!(error.to_string().contains("must occur together"));
         }
+    }
+
+    #[test]
+    fn loaded_math_pipeline_object_exports_rust_and_legacy_version_is_refused() {
+        use crate::math_pipeline::{INPUT_PART, PIPELINE_PART};
+        use std::{fs, process::Command};
+
+        fn fixture_object(input: Vec<u8>) -> ModelObject {
+            let parts = BTreeMap::from([
+                (
+                    PIPELINE_PART.to_owned(),
+                    include_bytes!("../tests/fixtures/math-pipeline/pipeline.json").to_vec(),
+                ),
+                (INPUT_PART.to_owned(), input),
+            ]);
+            let manifest = Manifest {
+                schema: SCHEMA.into(),
+                minimum_reader_version: 1,
+                format: MATH_PIPELINE.into(),
+                producer: Producer::default(),
+                primary: PIPELINE_PART.into(),
+                required_capabilities: vec![],
+                files: parts
+                    .iter()
+                    .map(|(path, bytes)| Part::new(path, "application/json", bytes))
+                    .collect(),
+                metadata: Value::Null,
+            };
+            ModelObject::new(manifest, parts, 1 << 20).unwrap()
+        }
+
+        let mut input: serde_json::Value =
+            serde_json::from_slice(include_bytes!("../tests/fixtures/math-pipeline/input.json"))
+                .unwrap();
+        input["prediction_version"] = serde_json::json!(2);
+        let object = fixture_object(serde_json::to_vec(&input).unwrap());
+        let root = tempfile::tempdir().unwrap();
+        let path = object.save(root.path(), 1 << 20).unwrap();
+        let loaded = ModelObject::read(&path, 1 << 20).unwrap();
+        let source = loaded.export_source("rust").unwrap();
+        let source = String::from_utf8(source).expect("Rust export is UTF-8");
+        let pipeline = loaded.math_pipeline().unwrap();
+        let table = crate::table::parse_csv(
+            include_bytes!("../tests/fixtures/math-pipeline/rows.csv"),
+            &crate::limits::Limits::default(),
+        )
+        .unwrap();
+        let (expected, _) = pipeline.predict_table(&table).unwrap();
+        let headers = format!(
+            "[{}]",
+            table
+                .headers
+                .iter()
+                .map(|header| format!("{header:?}"))
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        let rows = format!(
+            "vec![{}]",
+            table
+                .rows
+                .iter()
+                .map(|row| format!(
+                    "vec![{}]",
+                    row.iter()
+                        .map(|cell| format!("{:?}", cell.as_deref()))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                ))
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        let expected = format!("vec!{:?}", expected);
+        let program = format!(
+            "{source}\nfn main() {{ let got = predict_table(&{headers}, &{rows}).unwrap(); let expected = {expected}; assert_eq!(got.len(), expected.len()); for (actual, expected) in got.iter().zip(expected) {{ assert!((actual - expected).abs() <= 1e-12 + 1e-10 * expected.abs()); }} }}"
+        );
+        let out_dir = std::env::current_dir()
+            .unwrap()
+            .join("target/exp-03-f01-rust-export");
+        fs::create_dir_all(&out_dir).unwrap();
+        let source_path = out_dir.join("fixture_export.rs");
+        let binary_path = out_dir.join("fixture_export");
+        fs::write(&source_path, program).unwrap();
+        let compile = Command::new("rustc")
+            .args(["--edition=2021", "-D", "warnings"])
+            .arg(&source_path)
+            .arg("-o")
+            .arg(&binary_path)
+            .output()
+            .expect("run rustc for the exported module");
+        assert!(
+            compile.status.success(),
+            "rustc failed: {}",
+            String::from_utf8_lossy(&compile.stderr)
+        );
+        let run = Command::new(&binary_path)
+            .output()
+            .expect("run the exported module");
+        assert!(
+            run.status.success(),
+            "exported Rust failed: {}",
+            String::from_utf8_lossy(&run.stderr)
+        );
+
+        let legacy =
+            fixture_object(include_bytes!("../tests/fixtures/math-pipeline/input.json").to_vec());
+        let error = legacy.export_source("rust").unwrap_err();
+        assert!(error.to_string().contains("prediction_version=2"));
     }
 
     fn binary_fixture() -> (FittedModel, feat_math::advanced_v3::RawTable) {
