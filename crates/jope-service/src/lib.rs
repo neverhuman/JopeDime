@@ -6,6 +6,7 @@ pub mod discover;
 pub mod http;
 pub mod lex;
 pub mod objective;
+pub mod public;
 pub mod run;
 pub mod sampler;
 pub mod store;
