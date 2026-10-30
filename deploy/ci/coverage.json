@@ -995,6 +995,17 @@
       ],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
     },
+    "feature:jope-service/failpoints": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "SVC-01 opt-in process-crash hooks; absent from default production builds. Local exact-head failpoints suite supervises six abort/reopen boundaries. Hosted/manual feature qualification remains deferred; this mapping is not execution evidence."
+    },
     "feature:jope-telemetry/default": {
       "discovery": {
         "kind": "feature",
