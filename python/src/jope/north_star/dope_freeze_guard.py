@@ -182,15 +182,18 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
 
     net_buffers = dict(fused_net.named_buffers())
     for buf_name in DOPE_NORMALIZER_BUFFERS:
-        if buf_name in net_buffers:
-            b = net_buffers[buf_name]
-            full_name = f"normalizer.{buf_name}"
-            th = _tensor_le_sha256(b)
-            tensor_hashes[full_name] = th
-            tensor_shapes[full_name] = list(b.shape)
-            h_buffers.update(f"{full_name}={th}\n".encode())
-            num_buffer_tensors += 1
-            num_buffer_elements += int(b.numel())
+        if buf_name not in net_buffers:
+            raise DopeFreezeViolationError(
+                f"DOPE freeze violation: required normalizer buffer `{buf_name}` is missing."
+            )
+        b = net_buffers[buf_name]
+        full_name = f"normalizer.{buf_name}"
+        th = _tensor_le_sha256(b)
+        tensor_hashes[full_name] = th
+        tensor_shapes[full_name] = list(b.shape)
+        h_buffers.update(f"{full_name}={th}\n".encode())
+        num_buffer_tensors += 1
+        num_buffer_elements += int(b.numel())
 
     params_sha = h_params.hexdigest()
     buffers_sha = h_buffers.hexdigest()
