@@ -5,6 +5,7 @@
 
 mod cas;
 pub mod commands;
+pub mod gc;
 mod record;
 use cas::{sync_dir, Cas};
 use jope_api::RunState;
