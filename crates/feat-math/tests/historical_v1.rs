@@ -847,6 +847,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         tui11_fake_transport["base_commit"],
         "0462cd418f733269ba69270402fc7c97cf30eaa2"
     );
+    let tui03_command_parser =
+        old_fixture("transitions/tui03_command_parser_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        tui03_command_parser["source_commit"],
+        "fb9925fe9c85294c80214625625abda19e31b891"
+    );
+    assert_eq!(
+        tui03_command_parser["base_commit"],
+        "13dfc08c15ae7e86a77229c6d429dffad7db5512"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -869,6 +879,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &dsc04_lockfile,
         &dsc02_rechain,
         &tui11_fake_transport,
+        &tui03_command_parser,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -928,6 +939,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
                 tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -973,6 +985,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
                 tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1011,6 +1024,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
                 tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1080,6 +1094,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
                 tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
             ],
         ),
         (
@@ -1109,6 +1124,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
                 tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
             ],
         ),
     ] {
@@ -1186,6 +1202,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         dsc04_lockfile,
         dsc02_rechain,
         tui11_fake_transport,
+        tui03_command_parser,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
