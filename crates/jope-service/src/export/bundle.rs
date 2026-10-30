@@ -4,10 +4,15 @@
 //! independently from the store and archive implementation.
 
 use anyhow::{ensure, Context, Result};
+use feat_math::{genome::GenomeIr, heads::FittedHead, model::Model};
 use jope_api::Language;
+use jope_runtime::model_object::ModelObject;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeMap;
+use std::{
+    collections::BTreeMap,
+    io::{Cursor, Write},
+};
 
 pub const BUNDLE_SCHEMA_VERSION: u32 = 1;
 
@@ -16,6 +21,7 @@ pub const BUNDLE_SCHEMA_VERSION: u32 = 1;
 pub struct BundleManifest {
     pub schema_version: u32,
     pub model_object_digest: String,
+    pub retains_training_data: bool,
     /// Archive path to the lower-case SHA-256 digest of that entry's exact bytes.
     pub entries: BTreeMap<String, String>,
 }
@@ -53,6 +59,35 @@ pub struct Bundle {
     pub manifest: BundleManifest,
 }
 
+impl Bundle {
+    fn validate(&self) -> Result<()> {
+        self.manifest.validate()?;
+        let manifest_bytes = self
+            .entries
+            .get("manifest.json")
+            .context("bundle manifest missing")?;
+        ensure!(
+            manifest_bytes == &serde_json::to_vec(&self.manifest)?,
+            "bundle manifest entry differs from validated manifest"
+        );
+        ensure!(
+            self.entries.len() == self.manifest.entries.len() + 1,
+            "bundle contains unlisted or missing entries"
+        );
+        for (path, digest) in &self.manifest.entries {
+            let bytes = self
+                .entries
+                .get(path)
+                .with_context(|| format!("bundle entry missing: {path}"))?;
+            ensure!(
+                sha256_hex(bytes) == *digest,
+                "bundle entry digest mismatch: {path}"
+            );
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LanguageFiles {
     pub predictor: Vec<u8>,
@@ -68,9 +103,12 @@ pub fn assemble(
     requested: &[Language],
     emitted: &BTreeMap<LanguageKey, LanguageFiles>,
     parity_receipt: &[u8],
+    retains_training_data: bool,
 ) -> Result<Bundle> {
     ensure!(!model_object.is_empty(), "model object is empty");
     ensure!(!requested.is_empty(), "no export languages requested");
+    serde_json::from_slice::<serde_json::Value>(parity_receipt)
+        .context("parity receipt must be valid JSON")?;
     let mut unique = requested.iter().map(LanguageKey::from).collect::<Vec<_>>();
     unique.sort();
     unique.dedup();
@@ -120,7 +158,7 @@ pub fn assemble(
         );
         entries.insert(
             format!("src/{directory}/README.md"),
-            usage_readme(language).into_bytes(),
+            usage_readme(language, retains_training_data).into_bytes(),
         );
         if let Some(declaration) = &files.declaration {
             entries.insert("src/typescript/predictor.d.ts".into(), declaration.clone());
@@ -134,6 +172,7 @@ pub fn assemble(
     let manifest = BundleManifest {
         schema_version: BUNDLE_SCHEMA_VERSION,
         model_object_digest: sha256_hex(model_object),
+        retains_training_data,
         entries: hashes,
     };
     manifest.validate()?;
@@ -141,19 +180,44 @@ pub fn assemble(
     Ok(Bundle { entries, manifest })
 }
 
-/// Writer owns the final encoding and store publication. Tests use an in-memory stub.
+/// Writer owns publication of the completed ZIP archive. Tests use an in-memory stub.
 pub trait BundleWriter {
     type Published;
-    fn publish(&mut self, entries: &BTreeMap<String, Vec<u8>>) -> Result<Self::Published>;
+    fn publish(&mut self, archive: &[u8]) -> Result<Self::Published>;
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PublishedBundle {
+    pub blob_id: String,
+    pub sha256: String,
+    pub size: u64,
+}
+
+pub struct StoreBundleWriter<'a> {
+    pub store: &'a crate::store::Store,
+}
+
+impl BundleWriter for StoreBundleWriter<'_> {
+    type Published = PublishedBundle;
+
+    fn publish(&mut self, archive: &[u8]) -> Result<Self::Published> {
+        let reference = self.store.publish_blob(Cursor::new(archive))?;
+        let sha256: String = reference
+            .sha256
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect();
+        Ok(PublishedBundle {
+            blob_id: format!("sha256:{sha256}"),
+            sha256,
+            size: reference.bytes,
+        })
+    }
 }
 
 pub fn publish<W: BundleWriter>(bundle: &Bundle, writer: &mut W) -> Result<W::Published> {
-    bundle.manifest.validate()?;
-    ensure!(
-        bundle.entries.contains_key("manifest.json"),
-        "bundle manifest missing"
-    );
-    writer.publish(&bundle.entries)
+    bundle.validate()?;
+    writer.publish(&zip_bytes(bundle)?)
 }
 
 pub fn assemble_and_publish<W: BundleWriter>(
@@ -161,10 +225,146 @@ pub fn assemble_and_publish<W: BundleWriter>(
     requested: &[Language],
     emitted: &BTreeMap<LanguageKey, LanguageFiles>,
     parity_receipt: &[u8],
+    retains_training_data: bool,
     writer: &mut W,
 ) -> Result<W::Published> {
-    let bundle = assemble(model_object, requested, emitted, parity_receipt)?;
+    let bundle = assemble(
+        model_object,
+        requested,
+        emitted,
+        parity_receipt,
+        retains_training_data,
+    )?;
     publish(&bundle, writer)
+}
+
+pub fn publish_stored_model(
+    store: &crate::store::Store,
+    model_blob: &crate::store::BlobRef,
+    requested: &[Language],
+    checks: &[ParityCheck],
+    parity_receipt: &[u8],
+) -> Result<PublishedBundle> {
+    let model_bytes = store.read_blob(model_blob)?;
+    let (emitted, retains_training_data) = emit_fitted_sources(&model_bytes, requested, checks)?;
+    let bundle = assemble(
+        &model_bytes,
+        requested,
+        &emitted,
+        parity_receipt,
+        retains_training_data,
+    )?;
+    publish(&bundle, &mut StoreBundleWriter { store })
+}
+
+#[derive(Clone, Debug)]
+pub struct ParityCheck {
+    pub inputs: Vec<f64>,
+    pub expected: f64,
+}
+
+/// Emit supported requested languages from a fitted `model.jope` blob. Unknown bound-model
+/// layouts refuse rather than emitting a predictor with different learned state.
+pub fn emit_fitted_sources(
+    model_jope: &[u8],
+    requested: &[Language],
+    checks: &[ParityCheck],
+) -> Result<(BTreeMap<LanguageKey, LanguageFiles>, bool)> {
+    let object = ModelObject::from_fitted_bytes(model_jope.to_vec())?;
+    let fitted = object.fitted()?;
+    let genome = GenomeIr::parse(&fitted.header.method.recipe)
+        .context("fitted header recipe is not an exportable genome")?;
+    let model = legacy_model(&fitted.model)?;
+    let retains_training_data = retains_training_data(&model);
+    let width = fitted.header.input_schema.len();
+    let js_checks = checks
+        .iter()
+        .map(|row| jope_runtime::fitted_js::CheckRow {
+            inputs: row.inputs.clone(),
+            expected: row.expected,
+        })
+        .collect::<Vec<_>>();
+    let py_checks = checks
+        .iter()
+        .map(|row| jope_runtime::fitted_py::CheckRow {
+            inputs: row.inputs.clone(),
+            expected: row.expected,
+        })
+        .collect::<Vec<_>>();
+    let rs_checks = checks
+        .iter()
+        .map(|row| jope_runtime::fitted_rs::CheckRow {
+            inputs: row.inputs.clone(),
+            expected: row.expected,
+        })
+        .collect::<Vec<_>>();
+    let mut emitted = BTreeMap::new();
+    for language in requested.iter().map(LanguageKey::from) {
+        let files = match language {
+            LanguageKey::Javascript | LanguageKey::Typescript => {
+                let predictor =
+                    jope_runtime::fitted_js::emit_with_checks(&genome, &model, width, &js_checks)?;
+                LanguageFiles {
+                    predictor: predictor.into_bytes(),
+                    declaration: if language == LanguageKey::Typescript {
+                        Some(crate::export::dts::generate(&fitted.header)?.into_bytes())
+                    } else {
+                        None
+                    },
+                }
+            }
+            LanguageKey::Python => LanguageFiles {
+                predictor: jope_runtime::fitted_py::emit_with_checks(
+                    &genome, &model, width, &py_checks,
+                )?
+                .into_bytes(),
+                declaration: None,
+            },
+            LanguageKey::Rust => LanguageFiles {
+                predictor: jope_runtime::fitted_rs::emit_with_checks(
+                    &genome, &model, width, &rs_checks,
+                )?
+                .into_bytes(),
+                declaration: None,
+            },
+        };
+        emitted.insert(language, files);
+    }
+    Ok((emitted, retains_training_data))
+}
+
+fn legacy_model(bound: &feat_math::advanced_v3::BoundModel) -> Result<Model> {
+    let state = serde_json::to_value(bound)?;
+    let legacy = state
+        .get("predictor")
+        .and_then(|predictor| predictor.get("Legacy"))
+        .cloned()
+        .context("fitted model is outside the fitted source emitter contract")?;
+    serde_json::from_value(legacy).context("decode retained legacy fitted model")
+}
+
+fn retains_training_data(model: &Model) -> bool {
+    let Model::Pipeline { head, .. } = model else {
+        return false;
+    };
+    matches!(
+        head.as_ref(),
+        FittedHead::Krr(_) | FittedHead::Gpr(_) | FittedHead::GprKernel(_) | FittedHead::Ksmooth(_)
+    )
+}
+
+fn zip_bytes(bundle: &Bundle) -> Result<Vec<u8>> {
+    let mut writer = zip::ZipWriter::new(Cursor::new(Vec::new()));
+    let timestamp = zip::DateTime::from_date_and_time(1980, 1, 1, 0, 0, 0)?;
+    let options = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated)
+        .compression_level(Some(6))
+        .last_modified_time(timestamp);
+    for (path, bytes) in &bundle.entries {
+        writer.start_file(path, options)?;
+        writer.write_all(bytes)?;
+    }
+    Ok(writer.finish()?.into_inner())
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -197,9 +397,14 @@ impl LanguageKey {
     }
 }
 
-fn usage_readme(language: LanguageKey) -> String {
+fn usage_readme(language: LanguageKey, retains_training_data: bool) -> String {
+    let notice = if retains_training_data {
+        "\n**Privacy notice:** this fitted model retains training rows in its learned state. Treat the bundle as containing training data.\n"
+    } else {
+        ""
+    };
     format!(
-        "# {} predictor\n\nThis directory contains a standalone fitted predictor. Use `predictor.{}` with the prediction input contract for the bundled model.\n",
+        "# {} predictor\n\nThis directory contains a standalone fitted predictor. Use `predictor.{}` with the prediction input contract for the bundled model.\n{notice}",
         language.as_str(),
         if language == LanguageKey::Javascript || language == LanguageKey::Typescript { "mjs" }
         else if language == LanguageKey::Python { "py" } else { "rs" },
@@ -277,9 +482,40 @@ mod tests {
     #[test]
     fn manifest_round_trips_and_hashes_every_file() {
         let requested = [Language::Javascript, Language::Typescript];
-        let a = assemble(b"model object", &requested, &sources(), b"{\"checks\":[]}").unwrap();
-        let b = assemble(b"model object", &requested, &sources(), b"{\"checks\":[]}").unwrap();
+        let a = assemble(
+            b"model object",
+            &requested,
+            &sources(),
+            b"{\"checks\":[]}",
+            false,
+        )
+        .unwrap();
+        let b = assemble(
+            b"model object",
+            &requested,
+            &sources(),
+            b"{\"checks\":[]}",
+            false,
+        )
+        .unwrap();
         assert_eq!(a.entries, b.entries);
+        let archive = zip_bytes(&a).unwrap();
+        assert_eq!(archive, zip_bytes(&b).unwrap());
+        let mut zip = zip::ZipArchive::new(Cursor::new(archive)).unwrap();
+        let names = (0..zip.len())
+            .map(|index| zip.by_index(index).unwrap().name().unwrap().into_owned())
+            .collect::<Vec<_>>();
+        let mut sorted = names.clone();
+        sorted.sort();
+        assert_eq!(names, sorted);
+        for index in 0..zip.len() {
+            let file = zip.by_index(index).unwrap();
+            assert_eq!(
+                file.last_modified(),
+                Some(zip::DateTime::from_date_and_time(1980, 1, 1, 0, 0, 0).unwrap())
+            );
+            assert_eq!(file.compression(), zip::CompressionMethod::Deflated);
+        }
         let parsed: BundleManifest = serde_json::from_slice(&a.entries["manifest.json"]).unwrap();
         parsed.validate().unwrap();
         assert_eq!(parsed, a.manifest);
@@ -295,16 +531,45 @@ mod tests {
         }
         impl BundleWriter for Stub {
             type Published = ();
-            fn publish(&mut self, _: &BTreeMap<String, Vec<u8>>) -> Result<()> {
+            fn publish(&mut self, _: &[u8]) -> Result<()> {
                 self.calls += 1;
                 Ok(())
             }
         }
         let absent = BTreeMap::new();
         let mut writer = Stub { calls: 0 };
-        let result = assemble_and_publish(b"model", &[Language::Rust], &absent, b"{}", &mut writer);
+        let result = assemble_and_publish(
+            b"model",
+            &[Language::Rust],
+            &absent,
+            b"{}",
+            false,
+            &mut writer,
+        );
         assert!(result.is_err());
         assert_eq!(writer.calls, 0);
+    }
+
+    #[test]
+    fn store_publication_returns_content_identity_and_archive_bytes() {
+        let root = tempfile::tempdir().unwrap();
+        let store = crate::store::Store::open(root.path()).unwrap();
+        let bundle =
+            assemble(b"model object", &[Language::Rust], &sources(), b"{}", false).unwrap();
+        let expected = zip_bytes(&bundle).unwrap();
+        let published = publish(&bundle, &mut StoreBundleWriter { store: &store }).unwrap();
+        assert_eq!(published.blob_id, format!("sha256:{}", published.sha256));
+        assert_eq!(published.size, expected.len() as u64);
+        let digest = (0..32)
+            .map(|index| {
+                u8::from_str_radix(&published.sha256[index * 2..index * 2 + 2], 16).unwrap()
+            })
+            .collect::<Vec<_>>();
+        let reference = crate::store::BlobRef {
+            sha256: digest.try_into().unwrap(),
+            bytes: published.size,
+        };
+        assert_eq!(store.read_blob(&reference).unwrap(), expected);
     }
 
     #[test]
@@ -312,10 +577,57 @@ mod tests {
         let mut manifest = BundleManifest {
             schema_version: 1,
             model_object_digest: "a".repeat(64),
+            retains_training_data: false,
             entries: BTreeMap::from([("../evil".into(), "b".repeat(64))]),
         };
         assert!(manifest.validate().is_err());
         manifest.entries = BTreeMap::from([("model.jope".into(), "bad".into())]);
         assert!(manifest.validate().is_err());
+    }
+
+    #[test]
+    fn retention_flag_tracks_training_row_heads() {
+        let model = |head: &str, value: serde_json::Value| -> Model {
+            serde_json::from_value(serde_json::json!({
+                "Pipeline": {"target": null, "ops": [], "head": {head: value}}
+            }))
+            .unwrap()
+        };
+        let krr = serde_json::json!({"means": [], "scales": [], "basis": [], "alpha": [], "gamma": 0.0, "y_mean": 0.0});
+        let gpr = serde_json::json!({"means": [], "scales": [], "basis": [], "alpha": [], "ls": [], "sf2": 0.0, "y_mean": 0.0});
+        let ksmooth = serde_json::json!({"means": [], "scales": [], "z": [], "ys": [], "k": 1, "gamma": 1.0, "y_mean": 0.0});
+        let ridge = serde_json::json!({"means": [], "scales": [], "w": []});
+        assert!(retains_training_data(&model("Krr", krr)));
+        assert!(retains_training_data(&model("Gpr", gpr)));
+        assert!(retains_training_data(&model("Ksmooth", ksmooth)));
+        assert!(!retains_training_data(&model("Ridge", ridge)));
+    }
+
+    #[test]
+    fn retained_legacy_bound_model_reaches_all_fitted_emitters() {
+        let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let bound = feat_math::advanced_v3::fit_legacy_numeric_bound(
+            &genome,
+            &[vec![0.0], vec![1.0], vec![2.0], vec![3.0]],
+            &[0.0, 1.0, 2.0, 3.0],
+        )
+        .unwrap();
+        let model = legacy_model(&bound).unwrap();
+        assert!(!retains_training_data(&model));
+        assert!(
+            !jope_runtime::fitted_js::emit_with_checks(&genome, &model, 1, &[])
+                .unwrap()
+                .is_empty()
+        );
+        assert!(
+            !jope_runtime::fitted_py::emit_with_checks(&genome, &model, 1, &[])
+                .unwrap()
+                .is_empty()
+        );
+        assert!(
+            !jope_runtime::fitted_rs::emit_with_checks(&genome, &model, 1, &[])
+                .unwrap()
+                .is_empty()
+        );
     }
 }

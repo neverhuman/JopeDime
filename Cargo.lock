@@ -2926,6 +2926,7 @@ dependencies = [
  "tower",
  "ulid",
  "windows-sys 0.61.2",
+ "zip",
 ]
 
 [[package]]
