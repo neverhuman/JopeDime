@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced SVC-03 lockfile identity successor after merging main 123349f75: only this PR's dependency edges change Cargo.lock; no evaluator input version/feature or evaluator behavior changed. Re-chained at its queue slot by super_merge_claude under merge_drain_0721.",
+  "plan_reference": "SVC-03; merge_drain_0721 (Jepson t532u); ADR-0004",
+  "source_commit": "a1ba0f6cdda630c22d82146db24409232db61e8d",
+  "base_commit": "123349f752780968a8750e77c44ea4da4016c45a",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "93e404ff824bc6695ac25cbf08fe3680bfab7de2c065a6d09e83c36da3ef4f6a",
+      "after": "e988012a9c89ecf1bd28a275af933bcdf0f585a8de85c8770559332923581dcc"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "fbd0e28c3b1c3401b2752da7ed058bd5518160af167af325b5cf6ccad0a674c3",
+      "after": "ace44aceac1bb5d93400b6c17ceda4c99db5455fac5ce3433a4b29e5747ad960"
+    }
+  ],
+  "before_identity_digest": "29f890f66105caf74e659d6b7d341f50d1effeb101ee0490794e324af02db39d",
+  "after_identity_digest": "ddf7511b6ec3c42402a34bea3bb8fa5db7a37141c5af576bd57388582b4b2c41",
+  "before_implementation_sha256": "239a478e53edc1e7a77ed24d33dd6379c901a924156dee5cdcc259404a7b94b1",
+  "after_implementation_sha256": "7fa0f6d758b613b7b7ba11f9d96ac412b8ed7a21243c963d6e3a42d0ba2930b3",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
