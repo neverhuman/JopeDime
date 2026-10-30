@@ -107,7 +107,7 @@ TD-Gammon reached near the best human backgammon players by self-play
 \citep{mnih2015dqn}. AlphaGo learned from human games and searched at every
 move \citep{silver2016mastering}; AlphaGo Zero learned by self-play alone
 \citep{silver2017mastering}. AlphaZero mastered three games with one
-algorithm \citep{silver2018general}, MuZero learned the rules as well
+algorithm \citep{silver2018general}, MuZero learned a model for planning
 \citep{schrittwieser2020muzero}, and AlphaStar's league of mutually
 exploiting agents reached Grandmaster level in StarCraft~II
 \citep{vinyals2019alphastar}.
@@ -116,8 +116,8 @@ The key concept is expert iteration \citep{anthony2017expert}: search is the
 teacher, the network is the student, and in the end the student alone plays
 strongly. AlphaGo Zero's raw network, with no search, nearly matched the
 version that had beaten a professional (\cref{sec:intro}); Box~2 shows how.
-Language models now learn the same way, from human preferences
-\citep{christiano2017preferences,ouyang2022instructgpt} and from rule-based
+Language models also learn from feedback: human preferences
+\citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 
 \smallskip

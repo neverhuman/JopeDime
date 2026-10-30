@@ -67,9 +67,9 @@ base_executable_bytes = 19258792
 final_executable_bytes = 20792951
 note = "measured GPU edition dist-ci; 1,782,874 model/license bytes and selected dependency notices; no bundled CUDA runtime"
 [profile.fused-cpu]
-base_executable_bytes = 7162208
-final_executable_bytes = 7206080
-note = "REL-02 plumbing: measured dist-ci embedded,dev-keys build (2026-10-30, main f5cae963) plus the 13 KB synthetic fused-ranker fixture and notices; replace when the real r782 bundle lands (REL-02-F01)"
+base_executable_bytes = 7856768
+final_executable_bytes = 7902400
+note = "REL-03 measured fused-cpu dist-ci embedded,dev-keys package on Linux x86_64 (2026-10-30, source e1b402af89bbe7ef7af03062d7bba9a0b6a89eb6); base 7,856,768 B and final 7,902,400 B; 5% tolerance applies. macOS/Windows reports pending platform builders."
 [profile.fused-cuda]
 base_executable_bytes = 20292112
 final_executable_bytes = 20343345
