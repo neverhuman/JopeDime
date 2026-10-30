@@ -708,19 +708,23 @@ impl Sensors for SystemSensors {
 /// process's own cgroup (from `/proc/self/cgroup`, line `0::<path>`) up to the root.
 /// `cpu_max(relative)` reads `<relative>/cpu.max` under the cgroup v2 mount; an absent file or
 /// `max` quota imposes no limit. Without a v2 membership line, affinity alone applies.
+/// Unresolved or relative membership is unavailable and never passed to the reader.
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn cgroup_allowed_cpus(
     membership: &str,
     affinity: f64,
     cpu_max: impl Fn(&str) -> Option<String>,
-) -> f64 {
+) -> Result<f64, String> {
     let Some(path) = membership
         .lines()
         .find_map(|line| line.strip_prefix("0::"))
         .map(str::trim)
     else {
-        return affinity;
+        return Ok(affinity);
     };
+    if !path.starts_with('/') || path.split('/').any(|part| matches!(part, "." | "..")) {
+        return Err("cgroup_path_unresolved".to_owned());
+    }
     let mut allowed = affinity;
     let mut current = path.trim_matches('/').to_owned();
     loop {
@@ -733,7 +737,7 @@ fn cgroup_allowed_cpus(
             allowed = allowed.min(limit);
         }
         if current.is_empty() {
-            return allowed;
+            return Ok(allowed);
         }
         current = current
             .rsplit_once('/')
@@ -767,9 +771,9 @@ mod platform {
         // SAFETY: `set` was initialized by sched_getaffinity above.
         let affinity = unsafe { libc::CPU_COUNT(&set) } as f64;
         let membership = fs::read_to_string("/proc/self/cgroup").unwrap_or_default();
-        Ok(super::cgroup_allowed_cpus(&membership, affinity, |path| {
+        super::cgroup_allowed_cpus(&membership, affinity, |path| {
             fs::read_to_string(Path::new("/sys/fs/cgroup").join(path).join("cpu.max")).ok()
-        }))
+        })
     }
 
     pub(super) fn mem_available() -> Result<u64, String> {
@@ -1040,18 +1044,24 @@ mod tests {
         .into();
         let read = |path: &str| files.get(path).map(|s| s.to_string());
         let membership = "0::/system.slice/jope.service/worker\n";
-        assert_eq!(cgroup_allowed_cpus(membership, 64.0, read), 2.5);
+        assert_eq!(cgroup_allowed_cpus(membership, 64.0, read), Ok(2.5));
         // Affinity can be tighter than any quota.
-        assert_eq!(cgroup_allowed_cpus(membership, 2.0, read), 2.0);
+        assert_eq!(cgroup_allowed_cpus(membership, 2.0, read), Ok(2.0));
         // A sibling cgroup does not inherit an unrelated quota.
-        assert_eq!(cgroup_allowed_cpus("0::/user.slice\n", 64.0, read), 64.0);
+        assert_eq!(
+            cgroup_allowed_cpus("0::/user.slice\n", 64.0, read),
+            Ok(64.0)
+        );
         // cgroup v1 only (no 0:: line): affinity alone.
-        assert_eq!(cgroup_allowed_cpus("4:cpu,cpuacct:/x\n", 12.0, read), 12.0);
+        assert_eq!(
+            cgroup_allowed_cpus("4:cpu,cpuacct:/x\n", 12.0, read),
+            Ok(12.0)
+        );
         // Root membership reads the root file only.
         assert_eq!(
             cgroup_allowed_cpus("0::/\n", 16.0, |p| (p.is_empty())
                 .then(|| "400000 100000".to_string())),
-            4.0
+            Ok(4.0)
         );
     }
 
@@ -1066,11 +1076,12 @@ mod tests {
             "",
         ] {
             let reads = std::cell::Cell::new(0);
-            let _ = cgroup_allowed_cpus(&format!("0::{path}\n"), 8.0, |_| {
+            let result = cgroup_allowed_cpus(&format!("0::{path}\n"), 8.0, |_| {
                 reads.set(reads.get() + 1);
                 Some("max 100000".to_owned())
             });
             assert_eq!(reads.get(), 0, "invalid cgroup membership was read: {path}");
+            assert_eq!(result, Err("cgroup_path_unresolved".to_owned()));
         }
     }
 
