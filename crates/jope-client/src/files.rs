@@ -312,8 +312,13 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("jope-client-files-{}-{n}", std::process::id()));
+        let target = std::env::current_exe()
+            .unwrap()
+            .ancestors()
+            .find(|path| path.file_name().is_some_and(|name| name == "target"))
+            .unwrap()
+            .to_path_buf();
+        let path = target.join(format!("jope-client-files-{}-{n}", std::process::id()));
         fs::create_dir(&path).unwrap();
         path
     }
