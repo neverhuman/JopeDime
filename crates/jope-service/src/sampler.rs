@@ -141,9 +141,22 @@ mod platform {
         }
         let handle = ProcessHandle(handle);
 
-        // SAFETY: every FILETIME is a plain C integer pair, for which all-zero is valid.
-        let (mut creation, mut exit, mut kernel, mut user) =
-            unsafe { std::mem::zeroed::<(FILETIME, FILETIME, FILETIME, FILETIME)>() };
+        let mut creation = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut exit = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut kernel = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut user = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
         // SAFETY: all FILETIME outputs are writable, and the handle is valid for this call.
         if unsafe { GetProcessTimes(handle.0, &mut creation, &mut exit, &mut kernel, &mut user) }
             == 0
@@ -151,12 +164,17 @@ mod platform {
             return Err(io::Error::last_os_error());
         }
 
-        // SAFETY: PROCESS_MEMORY_COUNTERS is an output-only C struct; zero initializes its fields
-        // and cb is set to its exact size before the API writes into it.
         let mut memory = PROCESS_MEMORY_COUNTERS {
             cb: size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
-            // SAFETY: zero is a valid initial state for this output structure.
-            ..unsafe { std::mem::zeroed() }
+            PageFaultCount: 0,
+            PeakWorkingSetSize: 0,
+            WorkingSetSize: 0,
+            QuotaPeakPagedPoolUsage: 0,
+            QuotaPagedPoolUsage: 0,
+            QuotaPeakNonPagedPoolUsage: 0,
+            QuotaNonPagedPoolUsage: 0,
+            PagefileUsage: 0,
+            PeakPagefileUsage: 0,
         };
         // SAFETY: memory points to an initialized structure whose size is passed in cb.
         if unsafe {
