@@ -13,18 +13,16 @@
 
 \section{Can Machines Invent?}\label{sec:intro}
 
-Can a machine create knowledge that no human has written down? The strongest
-skeptics say no: a model trained on the record of human knowledge can only
-recombine it. Go suggests another answer. AlphaGo Zero, taught by a referee
-instead of a record, went beyond the best human play without seeing a human
-game \citep{silver2017mastering}. We ask whether a similar training signal
-can improve algorithm invention: can learning from past evaluations make
-the first proposal on a new problem more useful?
+Can a machine create knowledge that no human has written down? Learning
+from a referee offers a precedent within a fixed task. AlphaGo Zero went
+beyond the best human play without seeing a human game, learning from
+self-play under the rules of Go \citep{silver2017mastering}. We ask whether
+similar feedback can improve the first algorithm proposal on a new problem.
 
 \paragraph{The skeptics' challenge.}
 In March 2025, Yann LeCun argued that language models retrieve existing
 solutions rather than find new ones: ``in their purest form, they are incapable
-of inventing new things'' \citep{lecun2025bigtech}. The same month, Thomas Wolf
+of inventing new things'' \citep{lecun2025bigtech}. Thomas Wolf
 warned that current trends will give us ``a country of yes-men on servers''
 \citep{wolf2025einstein}. Dwarkesh Patel had asked Dario Amodei in August 2023
 what to make of models with ``basically the entire corpus of human knowledge
@@ -32,11 +30,12 @@ memorized'' that had not made ``a single new connection that has led to a
 discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
 the hardest version as a benchmark for general intelligence: today's systems
 ``can play a game of Go at a world champion level. But could a system invent
-Go?'' \citep{hassabis2025bigtech}. These challenges separate producing an
-unfamiliar idea from learning which ideas will work. Predicting historical
-text does not directly reward improvement over an incumbent. That motivates
-a different training signal; it does not establish a ceiling on what a
-pretrained model can discover (\cref{sec:anatomy}).
+Go?'' \citep{hassabis2025bigtech}. These challenges concern both proposing
+solutions and choosing new questions. Our test concerns algorithm proposals
+under human-defined tasks and metrics (\cref{sec:meaning}). Predicting
+historical text does not directly reward improvement over an incumbent.
+That motivates a different training signal; it does not establish a ceiling
+on what a pretrained model can discover (\cref{sec:anatomy}).
 
 \paragraph{The human challenge.}
 In their 2020 study, \citet{bloom2020ideas} reported rising research effort
@@ -70,8 +69,8 @@ Can judgment bought during training improve the first proposal at deployment?
 \end{keyidea}
 
 \paragraph{The Zero move.}
-Go faced the same choice and took the other road. AlphaGo learned from human
-expert games and searched heavily at every move \citep{silver2016mastering}.
+AlphaGo learned from human expert games and searched heavily at every move
+\citep{silver2016mastering}.
 AlphaGo Zero learned only from games against itself, and its network alone,
 with no search, rated 3,055 Elo. That is close to the 3,144 of AlphaGo Fan, the
 version that beat the European champion Fan Hui
