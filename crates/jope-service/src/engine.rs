@@ -200,8 +200,9 @@ fn read_holder(path: &Path) -> (Option<u32>, String) {
 
 /// The same home lock and recovery path used by background engines, without daemon publication.
 pub struct InProcessEngine {
-    _lock: EngineLock,
+    // Fields drop in declaration order: close redb before releasing home ownership.
     store: Store,
+    _lock: EngineLock,
 }
 
 impl InProcessEngine {
@@ -209,7 +210,7 @@ impl InProcessEngine {
         let home = home.as_ref();
         let lock = EngineLock::acquire(home)?;
         let store = Store::open(home)?;
-        Ok(Self { _lock: lock, store })
+        Ok(Self { store, _lock: lock })
     }
 
     pub fn store(&self) -> &Store {
@@ -424,30 +425,29 @@ fn single_header(headers: &HeaderMap, name: HeaderName) -> Option<&HeaderValue> 
 /// Start the shared engine in this process. Store recovery occurs after lock acquisition.
 pub fn serve(idle_exit: Option<Duration>) -> Result<(), EngineError> {
     let home = jope_paths::jopedime_home();
-    let lock = EngineLock::acquire(&home)?;
-    let _store = Store::open(&home)?;
+    let engine = InProcessEngine::open(&home)?;
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .map_err(|error| EngineError::Runtime(error.to_string()))?;
     runtime.block_on(serve_locked(
         home,
-        lock,
+        engine,
         idle_exit.unwrap_or(DEFAULT_IDLE_EXIT),
     ))
 }
 
 async fn serve_locked(
     home: PathBuf,
-    lock: EngineLock,
+    engine: InProcessEngine,
     idle_exit: Duration,
 ) -> Result<(), EngineError> {
-    serve_with_activity(home, lock, idle_exit, Arc::new(EngineActivity::default())).await
+    serve_with_activity(home, engine, idle_exit, Arc::new(EngineActivity::default())).await
 }
 
 async fn serve_with_activity(
     home: PathBuf,
-    _lock: EngineLock,
+    _engine: InProcessEngine,
     idle_exit: Duration,
     activity: Arc<EngineActivity>,
 ) -> Result<(), EngineError> {
@@ -700,11 +700,11 @@ mod tests {
     #[tokio::test]
     async fn bound_engine_publishes_then_authenticated_stop_shuts_it_down() {
         let home = tempfile::tempdir().unwrap();
-        let lock = EngineLock::acquire(home.path()).unwrap();
+        let engine = InProcessEngine::open(home.path()).unwrap();
         let server_home = home.path().to_path_buf();
         let server = tokio::spawn(serve_locked(
             server_home.clone(),
-            lock,
+            engine,
             Duration::from_secs(60),
         ));
         let record = tokio::time::timeout(Duration::from_secs(5), async {
@@ -738,11 +738,11 @@ mod tests {
     #[tokio::test]
     async fn unauthorized_stop_cannot_signal_shutdown() {
         let home = tempfile::tempdir().unwrap();
-        let lock = EngineLock::acquire(home.path()).unwrap();
+        let engine = InProcessEngine::open(home.path()).unwrap();
         let server_home = home.path().to_path_buf();
         let server = tokio::spawn(serve_locked(
             server_home.clone(),
-            lock,
+            engine,
             Duration::from_secs(60),
         ));
         let record = tokio::time::timeout(Duration::from_secs(5), async {
@@ -789,13 +789,13 @@ mod tests {
     #[tokio::test]
     async fn two_second_idle_exit_waits_for_active_runs_and_connected_clients() {
         let home = tempfile::tempdir().unwrap();
-        let lock = EngineLock::acquire(home.path()).unwrap();
+        let engine = InProcessEngine::open(home.path()).unwrap();
         let activity = Arc::new(EngineActivity::default());
         let server_home = home.path().to_path_buf();
         let server_activity = Arc::clone(&activity);
         let server = tokio::spawn(serve_with_activity(
             server_home.clone(),
-            lock,
+            engine,
             Duration::from_secs(2),
             server_activity,
         ));
@@ -867,6 +867,48 @@ mod tests {
                 .filter(|result| matches!(result, Err(EngineError::Busy { .. })))
                 .count(),
             1
+        );
+    }
+
+    #[test]
+    fn in_process_handoff_retains_ownership_through_store_close() {
+        let home = tempfile::tempdir().unwrap();
+        drop(InProcessEngine::open(home.path()).unwrap());
+        let barrier = Arc::new(Barrier::new(3));
+        let mut threads = Vec::new();
+        for _ in 0..2 {
+            let home = home.path().to_path_buf();
+            let barrier = Arc::clone(&barrier);
+            threads.push(std::thread::spawn(move || {
+                barrier.wait();
+                let deadline = std::time::Instant::now() + Duration::from_secs(2);
+                let mut starts = 0;
+                let mut unexpected = Vec::new();
+                while std::time::Instant::now() < deadline {
+                    match InProcessEngine::open(&home) {
+                        Ok(engine) => {
+                            starts += 1;
+                            drop(engine);
+                        }
+                        Err(EngineError::Busy { .. }) => {}
+                        Err(error) => unexpected.push(error.to_string()),
+                    }
+                }
+                (starts, unexpected)
+            }));
+        }
+        barrier.wait();
+        let mut starts = 0;
+        let mut unexpected = Vec::new();
+        for thread in threads {
+            let (count, errors) = thread.join().unwrap();
+            starts += count;
+            unexpected.extend(errors);
+        }
+        assert!(starts > 0, "the probe must open an engine");
+        assert!(
+            unexpected.is_empty(),
+            "advisory ownership ended before Store closed: {unexpected:?}"
         );
     }
 }

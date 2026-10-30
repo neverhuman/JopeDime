@@ -1123,13 +1123,7 @@ fn main() -> ExitCode {
             status,
             stop,
             idle_exit,
-        } => match cmd::serve::run(status, stop, idle_exit.as_deref()) {
-            Err(error) if error.to_string().starts_with("ENGINE_BUSY:") => {
-                eprintln!("jopedime: {error:#}");
-                ExitCode::from(9)
-            }
-            result => report(result),
-        },
+        } => ExitCode::from(cmd::serve::run(status, stop, idle_exit.as_deref())),
         Command::VerifySelf(flag) => report(verify_self(flag.json)),
         Command::Licenses(flag) => report(licenses(flag.json)),
     }
