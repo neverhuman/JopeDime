@@ -2,6 +2,12 @@
 \usepackage{xurl}
 \sisetup{group-separator={,},group-minimum-digits=4}
 \renewcommand{\bibpreamble}{\raggedright}
+\setlength{\textfloatsep}{16pt plus 10pt minus 4pt}
+\setlength{\floatsep}{10pt plus 6pt minus 2pt}
+\setlength{\intextsep}{10pt plus 6pt minus 2pt}
+\setlength{\dbltextfloatsep}{16pt plus 10pt minus 4pt}
+\setlength{\dblfloatsep}{10pt plus 6pt minus 2pt}
+\setlength{\parskip}{0pt plus 3pt}
 \makeatletter
 \providecommand*{\theHalgorithm}{\thealgorithm}
 \providecommand*{\theHALG@line}{\theHalgorithm.\arabic{ALG@line}}
@@ -39,8 +45,8 @@
 \newcommand{\Ntries}{N_{\mathrm{tries}}}
 \newcommand{\winprob}{q}
 \newcommand{\budget}{B}
-\newtcolorbox{keyidea}{colback=blue!4,colframe=blue!40!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,title=Key idea,fonttitle=\bfseries\small}
-\newtcolorbox{explainer}[1]{colback=gray!5,colframe=gray!50!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,title={#1},fonttitle=\bfseries\small}
+\newtcolorbox{keyidea}{colback=blue!4,colframe=blue!40!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,beforeafter skip=8pt plus 6pt minus 2pt,title=Key idea,fonttitle=\bfseries\small}
+\newtcolorbox{explainer}[1]{colback=gray!5,colframe=gray!50!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,beforeafter skip=8pt plus 6pt minus 2pt,title={#1},fonttitle=\bfseries\small}
 % Missing figure files render as a labelled placeholder instead of failing.
 \let\EZincludegraphics\includegraphics
 \renewcommand{\includegraphics}[2][]{\IfFileExists{#2}{\EZincludegraphics[#1]{#2}}{\fbox{\parbox[c][1.2in][c]{0.9\linewidth}{\centering\small\textcolor{red}{Figure pending: \texttt{\detokenize{#2}}}}}}}
