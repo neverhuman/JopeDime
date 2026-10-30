@@ -10,6 +10,8 @@ pub(crate) mod dataset;
 pub(crate) mod export;
 #[cfg(feature = "mcp")]
 pub(crate) mod gc;
+#[cfg(all(feature = "engine", feature = "mcp"))]
+pub mod inproc;
 #[cfg(feature = "mcp")]
 pub(crate) mod objective;
 pub mod serve;
