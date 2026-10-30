@@ -6,7 +6,7 @@
 use anyhow::{ensure, Context, Result};
 use feat_math::{genome::GenomeIr, heads::FittedHead, model::Model};
 use jope_api::Language;
-use jope_runtime::model_object::ModelObject;
+use jope_runtime::{fitted::Header, model_object::ModelObject};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -162,6 +162,11 @@ pub fn assemble(
         );
         if let Some(declaration) = &files.declaration {
             entries.insert("src/typescript/predictor.d.ts".into(), declaration.clone());
+            if language == LanguageKey::Typescript {
+                // NodeNext pairs an .mjs module with a .d.mts declaration. Keep the
+                // EXP-06 .d.ts artifact as well for direct consumers of the declaration.
+                entries.insert("src/typescript/predictor.d.mts".into(), declaration.clone());
+            }
         }
     }
 
@@ -302,8 +307,11 @@ pub fn emit_fitted_sources(
     for language in requested.iter().map(LanguageKey::from) {
         let files = match language {
             LanguageKey::Javascript | LanguageKey::Typescript => {
-                let predictor =
+                let mut predictor =
                     jope_runtime::fitted_js::emit_with_checks(&genome, &model, width, &js_checks)?;
+                if language == LanguageKey::Typescript {
+                    append_typescript_api(&mut predictor, &fitted.header)?;
+                }
                 LanguageFiles {
                     predictor: predictor.into_bytes(),
                     declaration: if language == LanguageKey::Typescript {
@@ -331,6 +339,43 @@ pub fn emit_fitted_sources(
         emitted.insert(language, files);
     }
     Ok((emitted, retains_training_data))
+}
+
+/// Add the named-row API declared beside the TypeScript bundle's fitted JavaScript module.
+/// The underlying fitted runtime remains the authority for prediction math and width checks.
+fn append_typescript_api(source: &mut String, header: &Header) -> Result<()> {
+    let columns = serde_json::to_string(
+        &header
+            .input_schema
+            .iter()
+            .map(|column| column.name.as_str())
+            .collect::<Vec<_>>(),
+    )?;
+    source.push_str(&format!(
+        r#"
+// Named-row API paired with predictor.d.ts. Prediction math remains in the fitted runtime above.
+const JOPE_PREDICTOR_COLUMNS={columns};
+function jopePredictRows(rows){{
+  if(!Array.isArray(rows))throw new TypeError("predictBatch expects an array of rows");
+  const columns=JOPE_PREDICTOR_COLUMNS.length,flat=new Float64Array(rows.length*columns);
+  for(let i=0;i<rows.length;i++){{
+    const row=rows[i];
+    if(row===null || typeof row!=="object" || Array.isArray(row))throw new TypeError("predict expects a row object");
+    for(let j=0;j<columns;j++){{
+      const value=row[JOPE_PREDICTOR_COLUMNS[j]];
+      flat[i*columns+j]=value===null?Number.NaN:value;
+    }}
+  }}
+  const output=new Float64Array(rows.length);
+  const status=modelPredictNumericBatch(modelFittedHandle(),flat,flat.length,rows.length,columns,null,0,output,output.length);
+  if(status!==0)throw new Error(`fitted predictor failed with status ${{status}}`);
+  return Array.from(output);
+}}
+export function predict(row){{return jopePredictRows([row])[0];}}
+export function predictBatch(rows){{return jopePredictRows(rows);}}
+"#
+    ));
+    Ok(())
 }
 
 fn legacy_model(bound: &feat_math::advanced_v3::BoundModel) -> Result<Model> {
@@ -445,6 +490,31 @@ fn sha256_hex(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
+    use std::process::Command;
+
+    fn typescript_header() -> Header {
+        serde_json::from_value(json!({
+            "schema": "jope.appliance-fitted/v1",
+            "minimum_reader_version": 1,
+            "product": "jopedime",
+            "product_version": "1.0.0",
+            "runtime_abi": "jope.appliance-runtime/v1",
+            "method": {"id":"ridge", "family":"linear", "configuration":"default", "recipe":"ridge", "implementation":"fixture"},
+            "task":"regression", "metric":"rmse", "class_order":[], "target":"target",
+            "input_schema":[
+                {"name":"age", "kind":"numeric"},
+                {"name":"region", "kind":"categorical"},
+                {"name":"quote\"field", "kind":"numeric"}
+            ],
+            "preprocessing":{"raw_cell_encoding":"jope.raw-cell-encoding/v1", "input_policy":"named-columns"},
+            "recipe_sha256":"00", "required_asset_hashes":[], "fitted_sections":[],
+            "training_procedure":{"rows":1, "fitting_input_sha256":"00", "training_file_sha256":"00", "method_choice":"requested", "selection":null, "budget":{}, "final_refit":true},
+            "retained_training_context":{"neural_support_rows":0, "note":"fixture"},
+            "created_by":{"source_sha40":"0000000000", "package_manifest_sha256":null, "package_profile":null}
+        }))
+        .unwrap()
+    }
 
     fn sources() -> BTreeMap<LanguageKey, LanguageFiles> {
         BTreeMap::from([
@@ -629,5 +699,127 @@ mod tests {
                 .unwrap()
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn typescript_bundle_consumer_compiles_and_calls_named_predictors() {
+        let Some(tsc) = std::env::var_os("JOPE_TSC") else {
+            return;
+        };
+        let header = typescript_header();
+        let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let bound = feat_math::advanced_v3::fit_legacy_numeric_bound(
+            &genome,
+            &[
+                vec![0.0, 0.0, 0.0],
+                vec![1.0, 1.0, 1.0],
+                vec![2.0, 2.0, 2.0],
+            ],
+            &[0.0, 1.0, 2.0],
+        )
+        .unwrap();
+        let model = legacy_model(&bound).unwrap();
+        let mut predictor =
+            jope_runtime::fitted_js::emit_with_checks(&genome, &model, 3, &[]).unwrap();
+        append_typescript_api(&mut predictor, &header).unwrap();
+        let emitted = BTreeMap::from([(
+            LanguageKey::Typescript,
+            LanguageFiles {
+                predictor: predictor.into_bytes(),
+                declaration: Some(crate::export::dts::generate(&header).unwrap().into_bytes()),
+            },
+        )]);
+        let bundle = assemble(
+            b"fitted model fixture",
+            &[Language::Typescript],
+            &emitted,
+            b"{}",
+            false,
+        )
+        .unwrap();
+        let archive_bytes = zip_bytes(&bundle).unwrap();
+        let mut archive = zip::ZipArchive::new(Cursor::new(archive_bytes)).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let evidence_dir =
+            std::env::var_os("JOPE_TS_BUNDLE_EVIDENCE_DIR").map(std::path::PathBuf::from);
+        if let Some(path) = &evidence_dir {
+            std::fs::create_dir_all(path).unwrap();
+            std::fs::write(path.join("manifest.json"), &bundle.entries["manifest.json"]).unwrap();
+        }
+        for entry_name in [
+            "src/typescript/predictor.mjs",
+            "src/typescript/predictor.d.ts",
+            "src/typescript/predictor.d.mts",
+        ] {
+            let mut entry = archive.by_name(entry_name).unwrap();
+            let destination = dir
+                .path()
+                .join(std::path::Path::new(entry_name).file_name().unwrap());
+            let mut output = std::fs::File::create(destination).unwrap();
+            std::io::copy(&mut entry, &mut output).unwrap();
+            if let Some(path) = &evidence_dir {
+                std::fs::copy(
+                    dir.path()
+                        .join(std::path::Path::new(entry_name).file_name().unwrap()),
+                    path.join(std::path::Path::new(entry_name).file_name().unwrap()),
+                )
+                .unwrap();
+            }
+        }
+        let consumer = dir.path().join("fitted-consumer.mts");
+        let consumer_source = include_str!("../../../../deploy/ci/typescript/fitted-consumer.mts");
+        std::fs::write(&consumer, consumer_source).unwrap();
+        if let Some(path) = &evidence_dir {
+            std::fs::write(path.join("fitted-consumer.mts"), consumer_source).unwrap();
+        }
+        let output = Command::new(tsc)
+            .args([
+                "--strict",
+                "--noEmit",
+                "--target",
+                "ES2020",
+                "--module",
+                "NodeNext",
+                "--moduleResolution",
+                "NodeNext",
+            ])
+            .arg(&consumer)
+            .output()
+            .unwrap();
+        if let Some(path) = &evidence_dir {
+            let log = format!(
+                "command: tsc --strict --noEmit --target ES2020 --module NodeNext --moduleResolution NodeNext fitted-consumer.mts\nstatus: {}\nstdout:\n{}\nstderr:\n{}",
+                output.status,
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            std::fs::write(path.join("tsc.log"), log).unwrap();
+        }
+        assert!(
+            output.status.success(),
+            "tsc --strict failed:\n{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        let runtime = dir.path().join("exercise.mjs");
+        std::fs::write(
+            &runtime,
+            "import {predict,predictBatch} from './predictor.mjs';\nconst row={age:1,region:2,'quote\\\"field':3};\nconst single=predict(row),batch=predictBatch([row]);\nif(!Number.isFinite(single)||batch.length!==1||batch[0]!==single)throw Error('predict API mismatch');\n",
+        )
+        .unwrap();
+        let output = Command::new("node").arg(runtime).output().unwrap();
+        assert!(
+            output.status.success(),
+            "generated predictor runtime failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        if let Some(path) = evidence_dir {
+            std::fs::write(
+                path.join("node-runtime.log"),
+                "node exercised exported predict and predictBatch with the same fitted row; result finite and equal\n",
+            )
+            .unwrap();
+        }
     }
 }
