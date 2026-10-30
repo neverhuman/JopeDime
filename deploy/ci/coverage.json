@@ -578,6 +578,7 @@
     "feature:jope-appliance/mcp": {
       "discovery": {
         "dependencies": [
+          "dep:jope-client",
           "dep:rmcp",
           "dep:tokio"
         ],
