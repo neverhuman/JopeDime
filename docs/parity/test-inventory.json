@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored",
-  "count": 6091,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored",
+  "count": 6094,
   "ignored": 81,
   "packages": {
    "battle-gpu": {
@@ -9000,12 +9000,12 @@
     }
    },
    "jope-telemetry": {
-    "count": 79,
+    "count": 82,
     "ignored": 0,
     "binaries": {
      "jope-telemetry": {
       "kind": "lib",
-      "count": 77,
+      "count": 80,
       "ignored": 0,
       "tests": [
        "alarm::tests::collapse_needs_consecutive_generations_per_context",
@@ -9022,6 +9022,7 @@
        "event::tests::event_layout_is_fixed_and_nonfinite_is_preserved",
        "fleet::tests::both_tok_s_lines_print_without_any_values",
        "fleet::tests::fleet_reports_the_labeled_tok_s_pair_per_host_and_in_total",
+       "fleet::tests::reasoning_tok_s_is_one_value_per_run",
        "flywheel::tests::contender_digest_is_order_free",
        "flywheel::tests::gate_matches_ns_predicate",
        "flywheel::tests::missing_roster_is_flagged",
@@ -9047,6 +9048,7 @@
        "hooks::io::tests::h2d_slots_stride_and_drops",
        "hooks::io::tests::rates_from_raw_counters",
        "hooks::io::tests::read_span_is_union_not_sum",
+       "hooks::io::tests::reasoning_tok_s_is_the_run_total_over_wall_clock",
        "hooks::io::tests::tok_s_is_always_the_labeled_pair",
        "hooks::json::tests::keeps_insertion_order_and_nulls_non_finite",
        "hooks::live::tests::aggregate_writes_the_python_record",
@@ -9078,6 +9080,7 @@
        "sink::jsonl::tests::writes_finite_and_nonfinite_values_without_fabricating_zero",
        "sink::parquet::tests::rollup_is_readable_and_ignores_low_rate_records",
        "summary::tests::elo_is_read_against_methods_in_the_latest_snapshot",
+       "summary::tests::reasoning_tok_s_is_the_last_run_total_with_its_tokenizer",
        "summary::tests::summary_reports_spans_diminishing_deltas_and_missing",
        "summary::tests::tok_s_is_the_labeled_pair_with_its_timing_basis",
        "train::tests::cosine_schedule_endpoints",
@@ -9648,7 +9651,7 @@
   }
  },
  "totals": {
-  "rust": 6091,
+  "rust": 6094,
   "python": 201
  }
 }

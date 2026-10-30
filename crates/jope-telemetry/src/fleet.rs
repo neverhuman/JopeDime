@@ -5,12 +5,14 @@
 //! finite event value of each metric across that host's runs, plus unavailable counts by reason
 //! (an unavailable value is never counted as 0). Fleet: the sum of per-host medians for rate
 //! metrics, which assumes the hosts ran concurrently. tok/s is always the labeled pair, Rust-only
-//! first; both lines print even when a host has no values for them.
+//! first; both lines print even when a host has no values for them. Reasoning tok/s prints apart
+//! from the pair, also always: one value per run (its last emission, the run total over
+//! wall-clock), so a host's median is over runs, not steps.
 
 use crate::gp::quantile_sorted;
 use crate::summary::{
-    rust_timing, TOK_S_ALL_LANGUAGES, TOK_S_LABELS, TOK_S_LEGACY, TOK_S_RUST,
-    TOK_S_RUST_TIMED_ALONE,
+    rust_timing, TOK_S_ALL_LANGUAGES, TOK_S_LABELS, TOK_S_LEGACY, TOK_S_REASONING,
+    TOK_S_REASONING_LABEL, TOK_S_RUST, TOK_S_RUST_TIMED_ALONE,
 };
 use anyhow::{Context, Result};
 use serde::Serialize;
@@ -32,6 +34,7 @@ const METRICS: &[(&str, bool)] = &[
     (TOK_S_RUST, true),
     (TOK_S_ALL_LANGUAGES, true),
     (TOK_S_LEGACY, true),
+    (TOK_S_REASONING, true),
     ("throughput.samples_per_s", true),
     ("io.samples_per_s", true),
     ("host.gpu.util", false),
@@ -138,6 +141,7 @@ fn read_run(run: &Path, host: &mut HostValues) -> Result<()> {
     r.event_drops += count("event_drops");
     r.sink_errors += count("sink_errors");
     let file = fs::File::open(run.join("events.jsonl"))?;
+    let mut reasoning_last = None;
     for line in BufReader::new(file).lines() {
         let Ok(row) = serde_json::from_str::<Value>(&line?) else {
             host.report.skipped_lines += 1; // a torn final line from an interrupted writer
@@ -177,8 +181,15 @@ fn read_run(run: &Path, host: &mut HostValues) -> Result<()> {
             let stats = host.report.metrics.entry(metric.to_owned()).or_default();
             *stats.unavailable.entry(why).or_default() += 1;
         } else if let Some(v) = value.filter(|v| v.is_finite()) {
-            host.values.entry(metric).or_default().push(v);
+            if metric == TOK_S_REASONING {
+                reasoning_last = Some(v);
+            } else {
+                host.values.entry(metric).or_default().push(v);
+            }
         }
+    }
+    if let Some(v) = reasoning_last {
+        host.values.entry(TOK_S_REASONING).or_default().push(v);
     }
     Ok(())
 }
@@ -239,15 +250,18 @@ fn g4(v: f64) -> String {
 
 fn label(metric: &str) -> String {
     TOK_S_LABELS.iter().find(|(m, _)| *m == metric).map_or_else(
-        || {
-            if metric == TOK_S_LEGACY {
-                "tok/s unlabeled (legacy)".to_owned()
-            } else {
-                metric.to_owned()
-            }
+        || match metric {
+            TOK_S_LEGACY => "tok/s unlabeled (legacy)".to_owned(),
+            TOK_S_REASONING => format!("{TOK_S_REASONING_LABEL} (per run)"),
+            _ => metric.to_owned(),
         },
         |(_, l)| (*l).to_owned(),
     )
+}
+
+/// Lines printed even without values: the labeled tok/s pair and reasoning tok/s.
+fn always_printed(metric: &str) -> bool {
+    metric == TOK_S_REASONING || TOK_S_LABELS.iter().any(|(m, _)| *m == metric)
 }
 
 impl FleetReport {
@@ -261,7 +275,7 @@ impl FleetReport {
             );
             for &(metric, _) in METRICS {
                 let stats = r.metrics.get(metric);
-                let pair = TOK_S_LABELS.iter().any(|(m, _)| *m == metric);
+                let always = always_printed(metric);
                 let name = label(metric);
                 match stats {
                     Some(e) if e.median.is_some() => {
@@ -280,7 +294,7 @@ impl FleetReport {
                         }
                         let _ = writeln!(s);
                     }
-                    None if pair => {
+                    None if always => {
                         let _ = writeln!(s, "  {name:<30} no values");
                     }
                     _ => {}
@@ -295,7 +309,7 @@ impl FleetReport {
             "== fleet (sum of per-host medians; assumes concurrent hosts)"
         );
         for &(metric, _) in METRICS.iter().filter(|m| m.1) {
-            let pair = TOK_S_LABELS.iter().any(|(m, _)| *m == metric);
+            let always = always_printed(metric);
             match self.fleet.get(metric) {
                 Some(f) => {
                     let _ = writeln!(
@@ -306,7 +320,7 @@ impl FleetReport {
                         f.hosts.join(", ")
                     );
                 }
-                None if pair => {
+                None if always => {
                     let _ = writeln!(s, "  {:<30} no values", label(metric));
                 }
                 None => {}
@@ -325,11 +339,12 @@ mod tests {
         fs::create_dir_all(dir).unwrap();
         let manifest = json!({
             "status": "complete", "event_drops": 0, "sink_errors": 0,
-            "availability_reasons": {"10": "no_text_token_path"},
+            "availability_reasons": {"10": "no_text_token_path", "14": "no_language_model"},
             "metrics": [
                 {"id": 0x012a, "name": TOK_S_RUST},
                 {"id": 0x012b, "name": TOK_S_ALL_LANGUAGES},
                 {"id": 0x012c, "name": TOK_S_RUST_TIMED_ALONE},
+                {"id": 0x012d, "name": TOK_S_REASONING},
                 {"id": 0x041b, "name": "io.batch_gb_s"},
             ],
         });
@@ -396,6 +411,42 @@ mod tests {
     }
 
     #[test]
+    fn reasoning_tok_s_is_one_value_per_run() {
+        let root = tempfile::tempdir().unwrap();
+        // A running total at step 5 and the final one at step 9: only the last counts.
+        let a = [ev(0x012d, 5, Some(50.0), 0), ev(0x012d, 9, Some(100.0), 0)];
+        run(&root.path().join("xbabe1/run-a"), &a, false);
+        run(
+            &root.path().join("xbabe1/run-b"),
+            &[ev(0x012d, 3, Some(300.0), 0)],
+            false,
+        );
+        run(
+            &root.path().join("xbabe3/run-c"),
+            &[ev(0x012d, 0, None, 14)],
+            false,
+        );
+        let r = roll_up(root.path()).unwrap();
+        let x1 = &r.hosts["xbabe1"].metrics[TOK_S_REASONING];
+        assert_eq!((x1.n, x1.median, x1.mean), (2, Some(200.0), Some(200.0)));
+        assert_eq!(
+            r.hosts["xbabe3"].metrics[TOK_S_REASONING].unavailable["no_language_model"],
+            1
+        );
+        assert_eq!(r.fleet[TOK_S_REASONING].sum_of_host_medians, 200.0);
+        let text = r.render_text();
+        let label = "reasoning tok/s (per run)";
+        assert_eq!(
+            text.lines()
+                .filter(|l| l.contains(label) && l.contains("n=2"))
+                .count(),
+            1
+        );
+        assert!(text.contains(&format!("{label:<30} unavailable x1: no_language_model")));
+        assert!(text.contains(&format!("{label:<30} 200.0  over xbabe1")));
+    }
+
+    #[test]
     fn both_tok_s_lines_print_without_any_values() {
         let root = tempfile::tempdir().unwrap();
         run(
@@ -404,7 +455,11 @@ mod tests {
             false,
         );
         let text = roll_up(root.path()).unwrap().render_text();
-        for (_, label) in TOK_S_LABELS {
+        for label in TOK_S_LABELS
+            .map(|(_, l)| l)
+            .into_iter()
+            .chain(["reasoning tok/s"])
+        {
             let both = |l: &&str| l.contains(label) && l.ends_with("no values");
             assert_eq!(text.lines().filter(both).count(), 2, "host and fleet");
         }

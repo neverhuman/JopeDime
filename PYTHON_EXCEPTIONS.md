@@ -8,10 +8,10 @@ All remaining `978` tracked `.py` files (`247,435` LOC) are pure orchestration, 
 
 | Exception ID | Category | Kept `.py` Files | Kept LOC | Justification Rule |
 | --- | --- | ---: | ---: | --- |
-| `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 204 | 93,150 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
+| `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 204 | 93,181 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI shim | 4 | 945 | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. |
 | `PR-EXCEPT-EXT-ML` | External third-party Python ML baseline adapters (LightGBM/XGBoost/CatBoost/TabPFN) | 16 | 8,092 | External third-party Python ML baseline adapter (LightGBM/XGBoost/CatBoost/TabPFN parity harness). |
-| **Total Kept** | **All Authorized Python Exceptions** | **224** | **102,187** | **Strict 1-line justification per file below** |
+| **Total Kept** | **All Authorized Python Exceptions** | **224** | **102,218** | **Strict 1-line justification per file below** |
 
 ## Per-File 1-Line Justifications (`224` Files)
 
@@ -236,7 +236,7 @@ All remaining `978` tracked `.py` files (`247,435` LOC) are pure orchestration, 
 | `python/tests/test_fused_hpc_accelerator.py` | 383 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Parity and speed-up unit tests for the NS11/NS12 Phase E fused-path HPC speed-ups.) |
 | `python/tests/test_north_star_flywheel_guards.py` | 224 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Tests for the NS3/NS4/NS5/NS7 flywheel training guards.) |
 | `python/tests/test_policy_training_contract.py` | 660 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Synthetic CPU fixtures; no real dataset admission or model-quality claim.) |
-| `python/tests/test_telemetry_smoke.py` | 303 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Smoke test of the Rust telemetry extension through the trainer call sites; skipped without the extension.) |
+| `python/tests/test_telemetry_smoke.py` | 334 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Smoke test of the Rust telemetry extension through the trainer call sites; skipped without the extension.) |
 | `python/tests/test_training_campaign.py` | 675 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Explicit synthetic contracts. Tiny CPU optimizer proof is not real-corpus qualification.) |
 | `python/tests/test_training_comparison.py` | 116 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Pytest fixtures imported from the existing contract suite.) |
 | `python/tests/test_training_transition.py` | 127 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Pytest fixtures imported from the existing contract suite.) |

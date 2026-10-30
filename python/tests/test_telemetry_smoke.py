@@ -27,11 +27,12 @@ def _ids() -> dict[str, int]:
 
 def test_registry_keeps_frozen_names() -> None:
     ids = _ids()
-    assert len(ids) == 89
+    assert len(ids) == 92
     assert ids["io.batch_gb_s"] == 0x041B
     assert tel.metric_id("throughput.tokens_per_s") == 0x0119
     assert ids["throughput.tokens_per_s.rust"] == 0x012A
     assert ids["throughput.tokens_per_s.all_languages"] == 0x012B
+    assert ids["throughput.reasoning_tok_per_s"] == 0x012D
 
 
 def test_python_trainer_step_rows(tmp_path: Path) -> None:
@@ -126,6 +127,7 @@ def test_flywheel_round_on_cpu(tmp_path: Path) -> None:
         "throughput.tokens_per_s.all_languages",
     ):
         assert unavailable[ids[tok_s]] == 10
+    assert unavailable[ids["throughput.reasoning_tok_per_s"]] == 14  # no language model
     kinds = [e["kind"] for e in rows if e["kind"] != "event"]
     assert "jope.telemetry.evo-queue/v1" in kinds and "jope.telemetry.eval-batch/v1" in kinds
 
@@ -301,3 +303,32 @@ def test_emit_rates_divides_in_rust(tmp_path: Path) -> None:
     assert got[ids["throughput.tokens_per_s.all_languages"]] == 6000.0
     assert got[ids["throughput.tokens_per_s.rust_timed_alone"]] == 1.0
     assert got[ids["io.batch_gb_s"]] == 2.0 and got[ids["io.h2d_gb_s"]] == 4.0
+
+
+def test_reasoning_tok_per_s_is_run_total_over_wall_clock(tmp_path: Path) -> None:
+    rec = tel.Recorder(str(tmp_path / "q"), ["reasoning"], {"smoke": True})
+    kw = {"reasoning_tokens": 1000.0, "tokenizer": "smoke-tok"}
+    assert rec.emit_reasoning_tok_per_s(0, 9, wall_seconds=10.0, **kw) == 100.0
+    assert rec.emit_reasoning_tok_per_s(0, 10, **kw) > 0.0  # timed on the recorder's clock
+    with pytest.raises(ValueError):
+        rec.emit_reasoning_tok_per_s(0, 11, reasoning_tokens=1.0, tokenizer="", wall_seconds=1.0)
+    with pytest.raises(ValueError):
+        rec.emit_reasoning_tok_per_s(0, 11, reasoning_tokens=-1.0, tokenizer="t")
+    with pytest.raises(TypeError):
+        rec.emit_reasoning_tok_per_s(0, 11, reasoning_tokens=1.0)  # the tokenizer is required
+    assert rec.close()["status"] == "complete"
+    ids = _ids()
+    rows = _events(tmp_path / "q")
+    got = {
+        e["event"]["metric_id"]: e["event"]["value"]
+        for e in rows
+        if e["kind"] == "event" and e["event"]["step"] == 9
+    }
+    assert got[ids["throughput.reasoning_tok_per_s"]] == 100.0
+    assert got[ids["throughput.reasoning_tokens"]] == 1000.0
+    assert got[ids["throughput.reasoning_wall_s"]] == 10.0
+    bodies = [e["body"] for e in rows if e["kind"] == "jope.telemetry.reasoning-tok-s/v1"]
+    assert [(b["tokenizer"], b["wall_basis"]) for b in bodies] == [
+        ("smoke-tok", "caller"),
+        ("smoke-tok", "recorder"),
+    ]

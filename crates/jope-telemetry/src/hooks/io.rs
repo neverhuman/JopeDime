@@ -6,11 +6,13 @@
 //!   reports the elapsed milliseconds of a completed slot.
 //! * [`ReadStats`] aggregates logical file sizes and wall time around startup reads.
 //! * [`rates`] turns a step's raw counters into tok/s and GB/s for loops without a step layout.
+//! * [`reasoning_rate`] is the run's reasoning tok/s: total reasoning tokens over wall-clock.
 
 use crate::hooks::step::{missing, StepBatch};
 use crate::train::{
-    IO_BATCH_BYTES_PER_S, IO_BATCH_GB_S, IO_H2D_GB_S, SAMPLES_PER_S, TOKENS_PER_S_ALL_LANGUAGES,
-    TOKENS_PER_S_RUST, TOKENS_RUST_TIMED_ALONE,
+    IO_BATCH_BYTES_PER_S, IO_BATCH_GB_S, IO_H2D_GB_S, REASONING_TOKENS, REASONING_TOK_PER_S,
+    REASONING_WALL_S, SAMPLES_PER_S, TOKENS_PER_S_ALL_LANGUAGES, TOKENS_PER_S_RUST,
+    TOKENS_RUST_TIMED_ALONE,
 };
 use anyhow::{anyhow, bail, Result};
 use serde::Serialize;
@@ -333,6 +335,64 @@ pub fn rates(seconds: f64, c: &RateCounters) -> Result<Vec<(u16, f64)>> {
     Ok(out)
 }
 
+pub const REASONING_KIND: &str = "jope.telemetry.reasoning-tok-s/v1";
+
+/// The run's reasoning tok/s with the counts behind it, also written as a [`REASONING_KIND`]
+/// record so the tokenizer that counted the tokens travels with the number.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct ReasoningRun {
+    pub reasoning_tok_per_s: f64,
+    pub reasoning_tokens: f64,
+    pub wall_seconds: f64,
+    pub tokenizer: String,
+    /// `recorder` when the wall clock ran from the recorder's start, `caller` when passed in.
+    pub wall_basis: &'static str,
+}
+
+impl ReasoningRun {
+    /// `(metric id, value)` run events: `throughput.reasoning_tok_per_s`, `.reasoning_tokens`
+    /// and `.reasoning_wall_s`.
+    pub fn events(&self) -> [(u16, f64); 3] {
+        [
+            (REASONING_TOK_PER_S, self.reasoning_tok_per_s),
+            (REASONING_TOKENS, self.reasoning_tokens),
+            (REASONING_WALL_S, self.wall_seconds),
+        ]
+    }
+}
+
+/// Reasoning tok/s over a whole run: the total reasoning tokens generated so far divided by the
+/// run's wall-clock seconds, never an average of per-step rates. `wall_seconds` is the caller's
+/// run clock, or `recorder_elapsed_s` (the recorder's own) when absent.
+pub fn reasoning_rate(
+    reasoning_tokens: f64,
+    tokenizer: &str,
+    wall_seconds: Option<f64>,
+    recorder_elapsed_s: f64,
+) -> Result<ReasoningRun> {
+    if !(reasoning_tokens.is_finite() && reasoning_tokens >= 0.0) {
+        bail!("reasoning_tokens must be a finite count >= 0, got {reasoning_tokens}");
+    }
+    if tokenizer.trim().is_empty() {
+        bail!("name the tokenizer that counted the reasoning tokens");
+    }
+    let wall = wall_seconds.unwrap_or(recorder_elapsed_s);
+    if !(wall.is_finite() && wall > 0.0) {
+        bail!("wall_seconds must be positive and finite, got {wall}");
+    }
+    Ok(ReasoningRun {
+        reasoning_tok_per_s: reasoning_tokens / wall,
+        reasoning_tokens,
+        wall_seconds: wall,
+        tokenizer: tokenizer.to_owned(),
+        wall_basis: if wall_seconds.is_some() {
+            "caller"
+        } else {
+            "recorder"
+        },
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -474,5 +534,43 @@ mod tests {
         ] {
             assert!(rates(1.0, &half).is_err(), "{half:?}");
         }
+    }
+
+    #[test]
+    fn reasoning_tok_s_is_the_run_total_over_wall_clock() {
+        // Steps of 900 tokens in 1 s and 100 in 9 s: 1,000 tokens over 10 s is 100 tok/s, not
+        // the 455.6 mean of the per-step rates.
+        let run = reasoning_rate(900.0 + 100.0, "qwen2", Some(1.0 + 9.0), 99.0).unwrap();
+        assert_eq!(run.reasoning_tok_per_s, 100.0);
+        assert_eq!(run.wall_basis, "caller");
+        assert_eq!(
+            run.events(),
+            [
+                (REASONING_TOK_PER_S, 100.0),
+                (REASONING_TOKENS, 1_000.0),
+                (REASONING_WALL_S, 10.0)
+            ]
+        );
+        let timed = reasoning_rate(50.0, "qwen2", None, 4.0).unwrap();
+        assert_eq!(
+            (timed.reasoning_tok_per_s, timed.wall_basis),
+            (12.5, "recorder")
+        );
+        assert_eq!(
+            reasoning_rate(0.0, "qwen2", None, 4.0)
+                .unwrap()
+                .reasoning_tok_per_s,
+            0.0
+        );
+        for (tokens, tokenizer, wall) in [
+            (-1.0, "qwen2", Some(1.0)),
+            (f64::NAN, "qwen2", Some(1.0)),
+            (1.0, " ", Some(1.0)),
+            (1.0, "qwen2", Some(0.0)),
+            (1.0, "qwen2", Some(f64::INFINITY)),
+        ] {
+            assert!(reasoning_rate(tokens, tokenizer, wall, 1.0).is_err());
+        }
+        assert!(reasoning_rate(1.0, "qwen2", None, 0.0).is_err());
     }
 }
