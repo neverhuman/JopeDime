@@ -311,6 +311,16 @@ mod tests {
                     .unwrap();
                 let a = http.execute(request.clone()).unwrap();
                 let b = inproc.execute(request).unwrap();
+                if op.name == "system_info" {
+                    // SVC-10 (#554) implements GET /v1/system; both transports must agree.
+                    assert_eq!((a.status, b.status), (200, 200));
+                    let a: Value = a.json().unwrap();
+                    let b: Value = b.json().unwrap();
+                    assert_eq!(a, b);
+                    assert_eq!(a["api_version"], "1.0");
+                    count += 1;
+                    continue;
+                }
                 assert_eq!(a.status, 422);
                 assert_eq!(b.status, 422);
                 assert_eq!(
