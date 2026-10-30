@@ -558,12 +558,14 @@ impl PyRecorder {
             .emit_unavailable(metric_id, group_id, step, reason_id, sampled))
     }
 
-    /// One step's throughput from raw counters, divided and emitted here:
-    /// `throughput.tokens_per_s`, `throughput.samples_per_s`, `io.batch_bytes_per_s` with
+    /// One step's throughput from raw counters, divided and emitted here. tok/s is the labeled
+    /// pair `throughput.tokens_per_s.rust` (over `rust_seconds` when the Rust output was timed
+    /// alone, else `seconds`) and `throughput.tokens_per_s.all_languages`, so `rust_tokens` and
+    /// `all_tokens` come together. Also `throughput.samples_per_s`, `io.batch_bytes_per_s` with
     /// `io.batch_gb_s`, and `io.h2d_gb_s` over `h2d_seconds`. Returns the events queued.
     #[pyo3(signature = (
-        source, step, seconds, *, tokens=None, samples=None, batch_bytes=None, h2d_bytes=None,
-        h2d_seconds=None
+        source, step, seconds, *, rust_tokens=None, all_tokens=None, rust_seconds=None,
+        samples=None, batch_bytes=None, h2d_bytes=None, h2d_seconds=None
     ))]
     #[allow(clippy::too_many_arguments)]
     fn emit_rates(
@@ -571,14 +573,18 @@ impl PyRecorder {
         source: usize,
         step: u64,
         seconds: f64,
-        tokens: Option<f64>,
+        rust_tokens: Option<f64>,
+        all_tokens: Option<f64>,
+        rust_seconds: Option<f64>,
         samples: Option<f64>,
         batch_bytes: Option<f64>,
         h2d_bytes: Option<f64>,
         h2d_seconds: Option<f64>,
     ) -> PyResult<usize> {
         let counters = io::RateCounters {
-            tokens,
+            rust_tokens,
+            all_tokens,
+            rust_seconds,
             samples,
             batch_bytes,
             h2d_bytes,

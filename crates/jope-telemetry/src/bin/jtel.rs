@@ -44,6 +44,13 @@ enum Command {
         left: PathBuf,
         right: PathBuf,
     },
+    /// Per-host and fleet GB/s, tok/s (Rust-only and all languages) and host utilization over
+    /// `ROOT/<host>/.../<run_dir>`.
+    Fleet {
+        root: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -74,6 +81,15 @@ fn main() -> Result<()> {
         Command::Recover { run_dir } => recover(&run_dir),
         Command::Summary { run_dir, text } => summary(&run_dir, text),
         Command::Diff { left, right } => diff(&left, &right),
+        Command::Fleet { root, json } => {
+            let report = jope_telemetry::fleet::roll_up(&root)?;
+            if json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                print!("{}", report.render_text());
+            }
+            Ok(())
+        }
     }
 }
 

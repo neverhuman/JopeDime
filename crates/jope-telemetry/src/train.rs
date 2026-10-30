@@ -65,6 +65,7 @@ metrics! {
     SPAN_GUARD_MS = 0x0116, "step.span.guard", "ms", "T11", Epoch, false;
     SAMPLES_PER_S = 0x0117, "throughput.samples_per_s", "1/s", "T12", Step, false;
     DATASETS_PER_S = 0x0118, "throughput.datasets_per_s", "1/s", "T12", Step, false;
+    // Unlabeled tok/s, kept so older runs still read; new producers emit the labeled pair below.
     TOKENS_PER_S = 0x0119, "throughput.tokens_per_s", "1/s", "T12", Step, false;
     EXISTING_TELEMETRY_S = 0x011a, "train.existing_telemetry_s", "s", "T13", Step, false;
     COORDINATION_S = 0x011b, "train.coordination_s", "s", "T13", Step, false;
@@ -82,6 +83,12 @@ metrics! {
     SPAN_DATA_MS = 0x0127, "step.span.data", "ms", "T11", Step, false;
     SPAN_H2D_MS = 0x0128, "step.span.h2d", "ms", "T11", Step, false;
     SPAN_READBACK_MS = 0x0129, "step.span.readback", "ms", "T11", Step, false;
+    // tok/s is always two labeled metrics (Jepson ruling 2026-10-29 19:18 MDT): Rust-only, the
+    // headline, and all languages. `rust_timed_alone` is 1 when the Rust-only rate was timed on
+    // the Rust output alone and 0 when it shares the all-languages span.
+    TOKENS_PER_S_RUST = 0x012a, "throughput.tokens_per_s.rust", "1/s", "T12", Step, false;
+    TOKENS_PER_S_ALL_LANGUAGES = 0x012b, "throughput.tokens_per_s.all_languages", "1/s", "T12", Step, false;
+    TOKENS_RUST_TIMED_ALONE = 0x012c, "throughput.tokens_per_s.rust_timed_alone", "bool", "T12", Step, false;
     DOPE_HASH_EQUAL = 0x0201, "dope.freeze.equal", "bool", "D1", Epoch, false;
     PARAMS_TRAINABLE = 0x0202, "params.count.trainable", "count", "D2", Epoch, true;
     PARAMS_FROZEN = 0x0203, "params.count.frozen", "count", "D2", Epoch, true;
