@@ -1300,6 +1300,7 @@ mod tests {
         }
         let off = search();
         let (_dir, log, snapshot) = crate::events::tests::fixture();
+        let mut frames = log.subscribe_telemetry();
         let service = TelemetryService::spawn(
             snapshot.run_id,
             log,
@@ -1308,6 +1309,15 @@ mod tests {
             Instant::now(),
             Duration::from_millis(1),
         );
+        // The zero-duration fake search can finish before the sampler is scheduled.
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            match frames.try_recv() {
+                Ok(_) => break,
+                Err(_) if Instant::now() < deadline => thread::sleep(Duration::from_millis(2)),
+                Err(error) => panic!("telemetry did not start: {error:?}"),
+            }
+        }
         let on = search();
         let summary = service.stop();
         assert!(summary.samples > 0);
