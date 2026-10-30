@@ -36,7 +36,7 @@ for arm in ES3 CMA ESEMA; do
           PYTHONPATH=/home/ubuntu/jope_work/telemetry-wheel-5c8a1671/site \
           python3 -u "$PY" --arm "$ARM" --seed "$SEED" --input "$INPUT" \
             --checkpoint "$CHECKPOINT" --output "$OUTPUT" --lock-held
-      ' -- "$PY" "$INPUT" "$CHECKPOINT" "$OUTPUT" "$arm" "$seed" >>"$out/run.log" 2>&1
+      ' "$PY" "$INPUT" "$CHECKPOINT" "$OUTPUT" "$arm" "$seed" >>"$out/run.log" 2>&1
       result=$?
       if (( result == 0 )); then
         break
