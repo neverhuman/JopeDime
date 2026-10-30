@@ -8,6 +8,8 @@
 //! is EXECUTED by the Rust interpreter (`model::fit/predict`); evaluation is population-parallel
 //! via rayon, with a cross-generation memo so duplicates are never re-evaluated.
 
+pub mod api;
+
 use crate::credit::TokenLedger;
 use crate::dsl::{DslExpr, ParamValue, Stage};
 use crate::heads::RidgeModel;
@@ -93,7 +95,7 @@ pub const EXPANSION_TRANSFORMS: [&str; 5] =
 
 /// Curated starter genomes (beyond the champion) covering distinct pipeline families, including the
 /// v2.1 grammar: a composite-kernel GP, the Nadaraya-Watson smoother, and deep bagged boosting.
-const STARTERS: [&str; 8] = [
+pub const STARTERS: [&str; 8] = [
     "(pipe X (robust_scale) (histgbm depth=4 lr=0.1 rounds=120))",
     "(pipe X (standardize) (ridge))",
     "(pipe X (winsor_clip q=0.05) (cheb degree=4) (robust_scale) (histgbm depth=3 rounds=150))",
