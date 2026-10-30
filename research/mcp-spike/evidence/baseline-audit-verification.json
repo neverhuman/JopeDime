@@ -1,0 +1,24 @@
+{
+  "schema": "jope.audit-verification/v1",
+  "artifact_valid": true,
+  "audit_passed": false,
+  "audit_exit": 1,
+  "score": 54,
+  "minimum_score": 85,
+  "hard_findings": 294,
+  "soft_findings": 86,
+  "source_sha": "5c8a16711632b4b8c588c9a16679a585abc0f135",
+  "checkout_sha": "5c8a16711632b4b8c588c9a16679a585abc0f135",
+  "tree_sha": "924d90b59077c9f2b364f269d16a59580c62946a",
+  "file_count": 6694,
+  "manifest_sha256": "f78bdbfc05609d60121a70f357be648bfd7a96cd0c2b7280b28c18c4d446c339",
+  "input_reverified_after_audit": true,
+  "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111",
+  "reports": {
+    "repo-score.json": "acec9e4edabee0e83811ac67d4194b809683f95c938ac2a8d879a7e8c93118df",
+    "repo-score.md": "dbf9cbffaf8deab92378bb428c5c3a80ee057d078c59a67b374baf4dd21b81bf",
+    "timings.json": "e3abbcded92f95a5f0eb4a0d607f94f8027f3a79734c4d6fced6c96b47be54c7",
+    "summary.md": "4c8a22a4ea1dbb7a78bd28e6b0f06ae687131a95628a428c8fd8b334a88a6313",
+    "repair-queue.jsonl": "61828790c2464568209670ec35414cae90a353cc41e1fed48fec777954c01155"
+  }
+}

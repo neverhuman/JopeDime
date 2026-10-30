@@ -1,0 +1,114 @@
+mcp-spike-rmcp3 v0.1.0 (/home/ubuntu/JopeDime/.agent/worktrees/mcp-01/research/mcp-spike/rmcp3)
+├── mcp-spike-tools v0.1.0 (/home/ubuntu/JopeDime/.agent/worktrees/mcp-01/research/mcp-spike/tools)
+│   └── serde_json v1.0.151
+│       ├── itoa v1.0.18
+│       ├── memchr v2.8.3
+│       ├── serde_core v1.0.229
+│       └── zmij v1.0.23
+├── rmcp v3.8.0
+│   ├── chrono v0.4.45
+│   │   ├── num-traits v0.2.19
+│   │   └── serde v1.0.229
+│   │       ├── serde_core v1.0.229
+│   │       └── serde_derive v1.0.229 (proc-macro)
+│   │           ├── proc-macro2 v1.0.107
+│   │           │   └── unicode-ident v1.0.27
+│   │           ├── quote v1.0.47
+│   │           │   └── proc-macro2 v1.0.107 (*)
+│   │           └── syn v3.0.9
+│   │               ├── proc-macro2 v1.0.107 (*)
+│   │               ├── quote v1.0.47 (*)
+│   │               └── unicode-ident v1.0.27
+│   ├── futures v0.3.34
+│   │   ├── futures-channel v0.3.34
+│   │   │   ├── futures-core v0.3.34
+│   │   │   └── futures-sink v0.3.34
+│   │   ├── futures-core v0.3.34
+│   │   ├── futures-executor v0.3.34
+│   │   │   ├── futures-core v0.3.34
+│   │   │   ├── futures-task v0.3.34
+│   │   │   └── futures-util v0.3.34
+│   │   │       ├── futures-channel v0.3.34 (*)
+│   │   │       ├── futures-core v0.3.34
+│   │   │       ├── futures-io v0.3.34
+│   │   │       ├── futures-macro v0.3.34 (proc-macro)
+│   │   │       │   ├── proc-macro2 v1.0.107 (*)
+│   │   │       │   ├── quote v1.0.47 (*)
+│   │   │       │   └── syn v3.0.9 (*)
+│   │   │       ├── futures-sink v0.3.34
+│   │   │       ├── futures-task v0.3.34
+│   │   │       ├── memchr v2.8.3
+│   │   │       ├── pin-project-lite v0.2.17
+│   │   │       └── slab v0.4.12
+│   │   ├── futures-io v0.3.34
+│   │   ├── futures-sink v0.3.34
+│   │   ├── futures-task v0.3.34
+│   │   └── futures-util v0.3.34 (*)
+│   ├── indexmap v2.14.2
+│   │   ├── equivalent v1.0.3
+│   │   ├── hashbrown v0.17.1
+│   │   └── serde_core v1.0.229
+│   ├── libc v0.2.191
+│   ├── pastey v0.2.3 (proc-macro)
+│   ├── pin-project-lite v0.2.17
+│   ├── schemars v1.2.3
+│   │   ├── chrono v0.4.45 (*)
+│   │   ├── dyn-clone v1.0.20
+│   │   ├── ref-cast v1.0.27
+│   │   │   └── ref-cast-impl v1.0.27 (proc-macro)
+│   │   │       ├── proc-macro2 v1.0.107 (*)
+│   │   │       ├── quote v1.0.47 (*)
+│   │   │       └── syn v3.0.9 (*)
+│   │   ├── schemars_derive v1.2.3 (proc-macro)
+│   │   │   ├── proc-macro2 v1.0.107 (*)
+│   │   │   ├── quote v1.0.47 (*)
+│   │   │   ├── serde_derive_internals v0.30.0
+│   │   │   │   ├── proc-macro2 v1.0.107 (*)
+│   │   │   │   ├── quote v1.0.47 (*)
+│   │   │   │   └── syn v3.0.9 (*)
+│   │   │   └── syn v3.0.9 (*)
+│   │   ├── serde v1.0.229 (*)
+│   │   └── serde_json v1.0.151 (*)
+│   ├── serde v1.0.229 (*)
+│   ├── serde_json v1.0.151 (*)
+│   ├── thiserror v2.0.21
+│   │   └── thiserror-impl v2.0.21 (proc-macro)
+│   │       ├── proc-macro2 v1.0.107 (*)
+│   │       ├── quote v1.0.47 (*)
+│   │       └── syn v3.0.9 (*)
+│   ├── tokio v1.54.1
+│   │   ├── bytes v1.12.1
+│   │   ├── libc v0.2.191
+│   │   ├── mio v1.2.4
+│   │   │   └── libc v0.2.191
+│   │   ├── pin-project-lite v0.2.17
+│   │   ├── socket2 v0.6.5
+│   │   │   └── libc v0.2.191
+│   │   └── tokio-macros v2.7.2 (proc-macro)
+│   │       ├── proc-macro2 v1.0.107 (*)
+│   │       ├── quote v1.0.47 (*)
+│   │       └── syn v3.0.9 (*)
+│   ├── tokio-util v0.7.20
+│   │   ├── bytes v1.12.1
+│   │   ├── futures-core v0.3.34
+│   │   ├── futures-sink v0.3.34
+│   │   ├── libc v0.2.191
+│   │   ├── pin-project-lite v0.2.17
+│   │   └── tokio v1.54.1 (*)
+│   ├── tracing v0.1.44
+│   │   ├── pin-project-lite v0.2.17
+│   │   ├── tracing-attributes v0.1.31 (proc-macro)
+│   │   │   ├── proc-macro2 v1.0.107 (*)
+│   │   │   ├── quote v1.0.47 (*)
+│   │   │   └── syn v2.0.119
+│   │   │       ├── proc-macro2 v1.0.107 (*)
+│   │   │       ├── quote v1.0.47 (*)
+│   │   │       └── unicode-ident v1.0.27
+│   │   └── tracing-core v0.1.36
+│   │       └── once_cell v1.21.4
+│   └── uuid v1.29.0
+│       └── getrandom v0.4.3
+│           ├── cfg-if v1.0.5
+│           └── libc v0.2.191
+├── serde_json v1.0.151 (*)
+└── tokio v1.54.1 (*)

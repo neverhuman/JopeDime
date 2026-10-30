@@ -1,0 +1,13 @@
+{
+  "command": "just hygiene",
+  "source_head": "5b72f953cbdc987a12528c50e0f45ff388331908",
+  "exit_code": 1,
+  "utc": "2026-10-30T03:36:12.805894+00:00",
+  "log_sha256": "210b012e5034c01b3c7afd3a1195b28eb6a8660c2f9c5325fa9ba10cdfd3184a",
+  "blocking_outputs": [
+    "unassigned addition: python:research/flywheel_selfplay/test_phase3_gates.py",
+    "{\"counts\": {\"benchmark-source\": 19, \"feature\": 52, \"package\": 34, \"python-family\": 268, \"target\": 478, \"workflow\": 10, \"workflow-job\": 27}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}",
+    "secret scan requires full HEAD history; fetch complete history before scanning"
+  ],
+  "scope": "Git-based inventories exclude untracked spike files"
+}

@@ -1,0 +1,10 @@
+research(mcp): compare rmcp 3.8.0 and the existing stdio dispatcher [skip ci]
+
+Add isolated two-tool servers, a raw-wire four-version experiment, dependency
+closure receipts, the owner-ratified OD9 choice and downstream LUNA handoff cards.
+Keep the experiment outside all product crates. Owner ruling t526u selects
+rmcp 3.8.0; known main failures remain disclosed per scope_2218.md.
+
+Agent-Session: sol_v1_mcp01
+Agent-Model: gpt-6.1-sol (xhigh)
+Agent-Task: v1/MCP-01
