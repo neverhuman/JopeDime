@@ -143,6 +143,18 @@ impl Transport for Http {
             body.into_reader(),
         ))
     }
+
+    fn dataset_register_stream(
+        &self,
+        name: &str,
+        body: Box<dyn Read + Send>,
+        idempotency_key: &str,
+    ) -> Result<Response> {
+        let request = Request::new(2, 0, &[])?
+            .query(&[("name", name)])
+            .key(Some(idempotency_key))?;
+        self.execute_streaming(request, body, "text/csv")
+    }
 }
 
 #[cfg(test)]

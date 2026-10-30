@@ -55,9 +55,10 @@ protocol: generation is incomplete, parsing or type-checking fails,
 execution exceeds its limits or crashes, or outputs fail predeclared
 validity checks. An also-ran is valid but does not beat the incumbent. The planned funnel in \cref{fig:price}a traces
 those stages and the compute spent before each failed attempt stops. If 90\% of attempts fail to improve the incumbent, the independent-try
-model requires ten attempts per improvement in expectation. A typed program language
-removes many stillborn moves by construction (\cref{sec:game}), and those
-that remain usually fail before the costly fit. Whether also-rans dominate is a pilot question. Learning, a changed search
+model requires ten attempts per improvement in expectation. A typed language
+can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
+resource and output failures may consume part or all of the fit, and their
+incurred cost must be counted. Whether also-rans dominate is a pilot question. Learning, a changed search
 procedure or a changed opponent can affect the measured win rate; isolate
 the effect attributed to the writer.
 
@@ -87,8 +88,8 @@ full-cost ratio, so the threshold for the complete bill in \cref{eq:bill}
 requires all components to be counted.
 
 Reasoning is the second dial. Reasoning tokens may cut stillborn moves, but
-each is billed as output. \Cref{fig:price}b maps cost per win over writer
-size and reasoning effort. A U-shaped curve is the hypothesis; the
+each is billed as output. The planned pilot in \cref{fig:price}b compares
+cost per win over writer size and reasoning effort. A U-shaped curve is the hypothesis; the
 measurement decides where, and whether, the minimum sits.
 
 \subsection{Rewarding useful hallucination}\label{sub:price-hallucination}

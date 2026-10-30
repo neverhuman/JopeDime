@@ -4733,6 +4733,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline."
     },
+    "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the release lanes.",
+      "discovery": {
+        "kind": "python-family"
+      }
+    },
     "python:research/flywheel_selfplay/test_device_pool_cache.py": {
       "discovery": {
         "kind": "python-family"
@@ -4772,6 +4782,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested tests for H48 deterministic family-fold assignment and family-balanced minibatch sampling; offline research diagnostic outside the reviewed product baseline."
+    },
+    "python:research/flywheel_selfplay/h58/test_h58.py": {
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest proofs for the H58 multi-arm flywheel runner and cache preparation; offline research diagnostic outside the release lanes.",
+      "discovery": {
+        "kind": "python-family"
+      }
     },
     "python:research/flywheel_selfplay/test_phase3_gates.py": {
       "discovery": {
@@ -6914,6 +6934,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-appliance/test/e2e": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/e2e/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Pre-stage surface projection comparator with synthetic bounded-run fixtures. Full multi-surface acceptance remains pending executable handlers, RNK-10 and TUI-09; ignored acceptance is not product qualification."
     },
     "target:jope-appliance/test/single_file": {
       "discovery": {

@@ -14,11 +14,17 @@ mod cli;
 mod cmd;
 #[path = "cmd/common.rs"]
 mod common;
+#[cfg(feature = "client")]
+#[path = "terminal/draft.rs"]
+mod draft;
 mod io;
 mod landmarks;
 #[cfg(feature = "mcp")]
 pub mod mcp;
 mod model;
+#[cfg(feature = "client")]
+#[path = "terminal/session.rs"]
+mod session;
 #[path = "terminal/theme.rs"]
 pub mod terminal;
 #[cfg(feature = "engine")]
@@ -957,6 +963,10 @@ fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         _ => {}
+    }
+    #[cfg(feature = "client")]
+    if let Some(attach) = session::requested(&args) {
+        return report(session::run(attach));
     }
     let cli = Cli::parse();
     match cli.command {

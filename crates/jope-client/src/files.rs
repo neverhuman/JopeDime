@@ -1,8 +1,5 @@
 //! Client side file transfer helpers for the v1 dataset and artifact routes.
-use crate::{
-    http::Http,
-    transport::{Error as TransportError, Request, Response, Result as TransportResult, Transport},
-};
+use crate::transport::{Error as TransportError, Response, Result as TransportResult, Transport};
 use jope_api::ids::ArtifactId;
 use sha2::{Digest, Sha256};
 use std::{
@@ -60,16 +57,58 @@ pub type Result<T> = std::result::Result<T, FileError>;
 
 /// Stream a CSV file to the existing remote dataset registration endpoint.
 /// `idempotency_key` is required by the registry's mutating-operation contract.
-pub fn upload_csv(
-    http: &Http,
+pub fn upload_csv<T: Transport>(
+    transport: &T,
     name: &str,
     reader: impl Read + Send + 'static,
     idempotency_key: &str,
 ) -> TransportResult<Response> {
-    let request = Request::new(2, 0, &[])?
-        .query(&[("name", name)])
-        .key(Some(idempotency_key))?;
-    http.execute_streaming(request, reader, "text/csv")
+    transport.dataset_register_stream(name, Box::new(reader), idempotency_key)
+}
+
+/// Atomically publish a CSV response at `out`; an existing path is never replaced.
+pub fn write_csv_atomic(out: &Path, mut reader: impl Read) -> Result<u64> {
+    let parent = out
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let name = out
+        .file_name()
+        .ok_or(FileError::UnsafeArchive("output must name a file"))?;
+    if !parent.is_dir() {
+        return Err(FileError::Io(io::Error::new(
+            io::ErrorKind::NotFound,
+            "output parent does not exist",
+        )));
+    }
+    match fs::symlink_metadata(out) {
+        Ok(_) => return Err(FileError::OutputExists),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.into()),
+    }
+
+    let (temporary, mut file) = loop {
+        let temporary = unique_sibling(parent, name, "csv");
+        match OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)
+        {
+            Ok(file) => break (temporary, file),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error.into()),
+        }
+    };
+    let mut cleanup = RemoveOnDrop(Some(temporary.clone()));
+    let bytes = io::copy(&mut reader, &mut file)?;
+    file.sync_all()?;
+    drop(file);
+    if fs::symlink_metadata(out).is_ok() {
+        return Err(FileError::OutputExists);
+    }
+    fs::rename(&temporary, out)?;
+    cleanup.take();
+    Ok(bytes)
 }
 
 /// Download an artifact, verify the service-provided digest, and publish its ZIP contents.
@@ -288,10 +327,14 @@ impl Drop for RemoveOnDrop {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::transport::{HeaderMap, Response};
+    use crate::{
+        http::Http,
+        transport::{HeaderMap, Request, Response},
+    };
     use std::{
         io::{BufRead, BufReader, Cursor, Read},
         net::TcpListener,
+        sync::Mutex,
         thread,
     };
     use zip::{write::SimpleFileOptions, ZipWriter};
@@ -348,6 +391,87 @@ mod tests {
     }
     fn artifact_id() -> ArtifactId {
         "art_0123456789abcdef01234567".parse().unwrap()
+    }
+
+    #[derive(Default)]
+    struct UploadCapture(Mutex<Option<(String, String, Vec<u8>)>>);
+    impl Transport for UploadCapture {
+        fn execute(&self, _: Request) -> TransportResult<Response> {
+            unreachable!("upload test uses the streaming method")
+        }
+
+        fn dataset_register_stream(
+            &self,
+            name: &str,
+            mut body: Box<dyn Read + Send>,
+            idempotency_key: &str,
+        ) -> TransportResult<Response> {
+            let mut bytes = Vec::new();
+            body.read_to_end(&mut bytes)?;
+            *self.0.lock().unwrap() = Some((name.to_owned(), idempotency_key.to_owned(), bytes));
+            let mut headers = HeaderMap::new();
+            headers.insert("content-type", "application/json".parse().unwrap());
+            headers.insert("jope-api-version", "1.0".parse().unwrap());
+            Ok(Response::new(200, headers, Cursor::new(b"{}".to_vec())))
+        }
+    }
+
+    #[test]
+    fn generic_csv_upload_preserves_name_key_and_bytes() {
+        let transport = UploadCapture::default();
+        upload_csv(
+            &transport,
+            "input.csv",
+            Cursor::new(b"x,y\n1,2\n"),
+            "retry-key",
+        )
+        .unwrap();
+        assert_eq!(
+            transport.0.lock().unwrap().as_ref().unwrap(),
+            &(
+                "input.csv".into(),
+                "retry-key".into(),
+                b"x,y\n1,2\n".to_vec()
+            )
+        );
+    }
+
+    #[test]
+    fn atomic_csv_write_publishes_complete_file_and_refuses_overwrite() {
+        let temp = temp_dir();
+        let out = temp.join("prediction.csv");
+        assert_eq!(
+            write_csv_atomic(&out, Cursor::new(b"prediction\n0.25\n".to_vec())).unwrap(),
+            16
+        );
+        assert_eq!(fs::read(&out).unwrap(), b"prediction\n0.25\n");
+        assert!(matches!(
+            write_csv_atomic(&out, Cursor::new(b"replacement".to_vec())),
+            Err(FileError::OutputExists)
+        ));
+        assert_eq!(fs::read(&out).unwrap(), b"prediction\n0.25\n");
+        assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
+    }
+
+    struct FailsAfterPrefix(bool);
+    impl Read for FailsAfterPrefix {
+        fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
+            if !self.0 {
+                self.0 = true;
+                output[..7].copy_from_slice(b"partial");
+                return Ok(7);
+            }
+            Err(io::Error::other("fixture read failure"))
+        }
+    }
+
+    #[test]
+    fn atomic_csv_write_removes_partial_temporary_after_read_error() {
+        let temp = temp_dir();
+        let out = temp.join("prediction.csv");
+        assert!(write_csv_atomic(&out, FailsAfterPrefix(false)).is_err());
+        assert!(!out.exists());
+        assert_eq!(fs::read_dir(&*temp).unwrap().count(), 0);
     }
 
     #[test]

@@ -37,17 +37,23 @@ by itself train or steer the proposer;
 \subsection{Reading the board}\label{sub:method-board}
 
 The reference checkpoint uses a frozen encoder to turn the board of
-\cref{sec:game} into 2,048 numbers, $z_p=\encP(p)$, in three
-blocks. The first summarizes a pretrained row encoder's embeddings across rows, independent of row
-order (512 values). The second projects the hidden state of a pretrained third-party tabular
-regressor that reads the training rows and labels (1,024; \TBD{name, version, licence}). The third
-passes the scaled targets through two frozen windows (512). The encoding contract permits training-side task evidence only; final
-held-out labels and their derived statistics must stay outside the input
-closure. A context's recorded declaration that no final target was used is
-part of the audit trail, not a substitute for checking that closure. It is fixed and pinned by hash in the reference procedure, rather than
-jointly trained with the writer. It is bounded at 30 seconds per
-problem, and a context with any non-finite value is refused rather than imputed
-(\cref{app:training}). Whether problems with similar best programs sit together requires a
+\cref{sec:game} into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
+The first summarizes a pretrained row encoder's embeddings across rows,
+independent of row order (512 values). The second projects the hidden
+state of a pretrained third-party tabular regressor that reads the training
+rows and labels (1,024; \TBD{name, version, licence}). The third passes the
+scaled targets through two frozen windows (512).
+
+The encoder is fixed and pinned by hash in the reference procedure,
+rather than jointly trained with the writer. Encoding is bounded at
+30 seconds per problem, and a context with any non-finite value is refused
+rather than imputed (\cref{app:training}). The input contract permits
+training-side task evidence only; final held-out labels and their derived
+statistics must stay outside the input closure. A context's recorded
+declaration that no final target was used is part of the audit trail,
+not a substitute for checking that closure.
+
+Whether problems with similar best programs sit together requires a
 separate representation study; \cref{sub:results-ablation} reserves that test.
 
 \subsection{Describing the move}\label{sub:method-move}

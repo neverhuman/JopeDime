@@ -517,7 +517,13 @@ def load_inputs(custody=CUSTODY_PATH):
         raise ExportError("checkpoint lineage metadata disagrees with custody pin")
     # NumPy reconstruction is needed only by this byte-pinned historical asset.
     # Never fall back to weights_only=False or import its original network.
-    numpy_globals = [np.core.multiarray._reconstruct, np.ndarray, np.dtype]
+    numpy_core = getattr(np, "_core", None)
+    if numpy_core is None:
+        numpy_core = np.core
+    reconstruct = numpy_core.multiarray._reconstruct
+    numpy_globals = [reconstruct, np.ndarray, np.dtype]
+    if reconstruct.__module__ != "numpy.core.multiarray":
+        numpy_globals.append((reconstruct, "numpy.core.multiarray._reconstruct"))
     numpy_globals.extend(type(np.dtype(kind)) for kind in ("float32", "float64", "int64", "int32", "bool"))
     projection = asset("frozen_stage1_stage2_inference_params_v3.pt")
     with torch.serialization.safe_globals(numpy_globals):
