@@ -1,8 +1,24 @@
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use std::borrow::Cow;
 
 /// A `u64` represented on the wire as a canonical decimal string.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct DecimalU64(pub u64);
+
+impl JsonSchema for DecimalU64 {
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn schema_name() -> Cow<'static, str> {
+        String::schema_name()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        String::json_schema(generator)
+    }
+}
 
 impl Serialize for DecimalU64 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -66,5 +82,11 @@ mod tests {
     fn rejects_json_numbers() {
         assert!(serde_json::from_str::<DecimalU64>("0").is_err());
         assert!(serde_json::from_str::<DecimalU64>("9007199254740993").is_err());
+    }
+
+    #[test]
+    fn json_schema_describes_a_string() {
+        let schema = serde_json::to_value(schemars::schema_for!(DecimalU64)).unwrap();
+        assert_eq!(schema["type"], "string");
     }
 }

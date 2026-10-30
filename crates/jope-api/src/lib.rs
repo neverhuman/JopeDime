@@ -9,6 +9,8 @@
 //! No handler, runtime, store, tensor or transport dependency belongs here.
 
 pub mod artifacts;
+/// API-04 supplies canonical string serialization and validation in `decimal.rs`.
+pub mod decimal;
 pub mod events;
 pub mod metrics;
 pub mod runs;
@@ -24,11 +26,6 @@ pub mod ids {
     pub type DatasetId = String;
     pub type AlgorithmId = String;
     pub type ArtifactId = String;
-}
-
-/// API-04 supplies canonical string serialization and validation in `decimal.rs`.
-pub mod decimal {
-    pub type DecimalU64 = String;
 }
 
 pub use artifacts::*;
