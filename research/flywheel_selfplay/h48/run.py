@@ -23,9 +23,15 @@ import torch
 import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "research/flywheel_selfplay/h46"))
+H46_DIR = ROOT / "research/flywheel_selfplay/h46"
 sys.path.insert(0, str(ROOT / "research/flywheel_selfplay"))
-import run as h46  # noqa: E402
+sys.path.insert(0, str(H46_DIR))
+H46_SPEC = importlib.util.spec_from_file_location("h48_h46_run", H46_DIR / "run.py")
+if H46_SPEC is None or H46_SPEC.loader is None:
+    raise RuntimeError("could not load the H46 offline runner helpers")
+h46 = importlib.util.module_from_spec(H46_SPEC)
+sys.modules[H46_SPEC.name] = h46
+H46_SPEC.loader.exec_module(h46)
 import run_fused_closed_loop as base  # noqa: E402
 from losses import family_balanced_weights  # noqa: E402
 
@@ -240,6 +246,21 @@ def parameter_snapshot(net) -> dict[str, torch.Tensor]:
     }
 
 
+def save_adapter_snapshot(path: Path, snapshot: dict[str, torch.Tensor], base_checkpoint_sha: str) -> None:
+    adapter = {name: value.detach().cpu().clone() for name, value in snapshot.items()}
+    if sum(value.numel() for value in adapter.values()) != TRAINABLE_PARAMS:
+        raise RuntimeError("refusing to save unexpected adapter tensor inventory")
+    payload = {
+        "base_checkpoint_sha256": base_checkpoint_sha,
+        "dope_sha256": DOPE_SHA,
+        "trainable_params": TRAINABLE_PARAMS,
+        "adapter_trainable_state": adapter,
+    }
+    temporary = path.with_suffix(path.suffix + ".new")
+    torch.save(payload, temporary)
+    temporary.replace(path)
+
+
 def load_adapter_snapshot(net, state: dict[str, torch.Tensor]) -> None:
     with torch.no_grad():
         for name, parameter in net.named_parameters():
@@ -367,11 +388,10 @@ def select_fold_arm(args, net, pools, train_ids, family_by_cid, predict, trainab
             # after every rejected/nonbest checkpoint.
 
         h46.checkpoint_guard(guard, net, expected=DOPE_SHA)
-        h46.save_adapter_state(
+        save_adapter_snapshot(
             args.output / f"fold{fold_index}-selected.pt",
-            _AdapterView(net, best_weights),
+            best_weights,
             digest(args.checkpoint),
-            DOPE_SHA,
         )
         summaries.append({
             "fold": fold_index,
@@ -541,11 +561,10 @@ def run_es_arm(args, net, pools, train_ids, family_by_cid, predict, trainable, g
     load_adapter_snapshot(net, best_candidate)
     h46.checkpoint_guard(guard, net, expected=DOPE_SHA)
     args.output.mkdir(parents=True, exist_ok=True)
-    h46.save_adapter_state(
+    save_adapter_snapshot(
         args.output / "es-selected.pt",
-        _AdapterView(net, best_candidate),
+        best_candidate,
         digest(args.checkpoint),
-        DOPE_SHA,
     )
     result = {
         "schema": "jope.h48.train-arm/v1",
@@ -644,19 +663,6 @@ def run_training_arm(args):
         if lock_file is not None:
             base.fcntl.flock(lock_file, base.fcntl.LOCK_UN)
             lock_file.close()
-
-
-class _AdapterView:
-    """Expose a chosen parameter snapshot to H46's guarded adapter saver."""
-
-    def __init__(self, net, snapshot):
-        self._net = net
-        self._snapshot = snapshot
-
-    def named_parameters(self):
-        for name, parameter in self._net.named_parameters():
-            if parameter.requires_grad:
-                yield name, self._snapshot[name]
 
 
 def surrogate_gradient(cids, family_by_cid, pools, predict, trainable, seed: int):

@@ -92,11 +92,18 @@ run_one() {
     fi
   fi
   echo "start H48-$arm seed$seed device=$DEVICE budget=${budget}s RAM_KiB=$avail_kb"
+  set +e
   nice -n 10 env OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=4 \
     PYTHONPATH=/home/ubuntu/jope_work/telemetry-wheel-5c8a1671/site \
     python3 -u "$PY" --input "$INPUT" --checkpoint "$CHECKPOINT" \
       --output "$OUTPUT" --arm "$arm" --seed "$seed" --device "$DEVICE" \
       --budget-seconds "$budget" --lock-held >"$out/run.log" 2>&1
+  local rc=$?
+  set -e
+  if (( rc != 0 )); then
+    echo "failed H48-$arm seed$seed rc=$rc; see $out/run.log"
+    return "$rc"
+  fi
   echo "complete H48-$arm seed$seed"
 }
 
