@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "BAT-02 adds the existing jope-paths package as a direct jope-appliance edge so command handlers resolve the owner-scoped default daemon record through jope_paths::jopedime_home(). CLT-03 already added the jope-client sha2/zip edges to the base, MCP-02 already carried jope-appliance -> jope-client, and SVC-09 already carried jope-service -> jope-paths; those edges are not duplicated here. Cargo.lock is the only evaluator identity input changed by this transition; no evaluator source, behavior fixture, lineage body, DSL ABI or known identity row changes.",
+  "plan_reference": "BAT-02; owner ruling lanes_t541b_1830; ADR-0004 successor after svc09_engine",
+  "source_commit": "a8edb0d6ea06ad6d8df7ef1e65ee5af399ab430d",
+  "base_commit": "57693b7712aff9ffdf6caa689769e93bc5b8b3db",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "7a4b0d448686f747cbe0e2aded46bb65ba49f512dfcff60f43baedec2dfc559a",
+      "after": "303c3abf590493eb88ed9fa240830a6ee6d2485952a664454cdfeeba0fb16846"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "e633d06245778e0e7826c9e70628e1aa8ceea70793af336da08e020edb195a65",
+      "after": "1a60d37244a9fa30ab4f1730535608e7d6590370c42af8815873e381a8392ec7"
+    }
+  ],
+  "before_identity_digest": "bd4f9b4d9708122c42e917dec0264811134f59873c0b74569a21800edd5265fc",
+  "after_identity_digest": "a5ec46b83045f5186016325ae166a250201f0d5bbf9f9e032875296ea935f892",
+  "before_implementation_sha256": "d015e8339171917e4922c2d3116a608e79fb63d87846ce1e0891c19e4f0925e7",
+  "after_implementation_sha256": "0cbc80f8cfa08921b517dbd211321a92ab2606c33067ab72e9f3f5ef9e2c153e",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
