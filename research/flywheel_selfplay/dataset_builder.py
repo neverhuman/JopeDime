@@ -34,7 +34,15 @@ import sys
 import tarfile
 import time
 from pathlib import Path
-import numpy as np
+
+# The isolated metadata mode must not import the legacy numerical builder or follow its paths.
+if __name__ == "__main__" and sys.argv[1:2] == ["qualified-manifest"]:
+    sys.dont_write_bytecode = True
+    from input_manifest import main as manifest_main
+
+    raise SystemExit(manifest_main(sys.argv[2:]))
+else:
+    import numpy as np
 
 # Add corrected-study to sys.path (with dont_write_bytecode=True to never touch __pycache__)
 sys.dont_write_bytecode = True

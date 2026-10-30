@@ -1839,6 +1839,18 @@
       "reason": "Owner-requested pytest proofs for H47 ranking-loss closeout analysis (family-bootstrap CI, pseudoreplicate disclosure, no-win verdict); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h48/test_run.py": {
+      "reason": "Owner-requested pytest proofs for H48 utility-alignment harness adapters, fold selection, and persisted checkpoint snapshots; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h49/test_run.py": {
+      "reason": "Owner-requested tests for H49 K=8 family-bootstrap margin admission and SWA cycle contract; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h50/test_sensitivity.py": {
+      "reason": "Owner-requested tests for H50 seeded sensitivity directions, adapter-state transforms, search candidate generation, and finite JSON metadata; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
       "role": "research"
@@ -1857,6 +1869,10 @@
     },
     "python:research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py": {
       "reason": "Executed offline CPU synthetic/stub unit checks for Phase 7 flywheel v3 comparator labels, fail-closed S3/checkpoint guards, and OS worker SIGKILL vs CPython ITIMER_REAL deadline boundaries in the Python lane; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/h-followups/h09/test_run.py": {
+      "reason": "Pytest proofs for the HWV-04 / H09 conditional DSL-residual-around-tree experiment harness (protocol, arms and result-record shape); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "target:battle-gpu/lib/battle_gpu": {
@@ -2641,6 +2657,10 @@
       "reason": "v1 wire-contract JSON round-trip and schema-snapshot drift tests for jope-api; contract infrastructure, not a regression subsystem",
       "role": "infrastructure"
     },
+    "target:jope-api/test/registry": {
+      "reason": "Operation-registry consistency invariants for the v1 jope-api contract (API-08): operation/command uniqueness, schema references and terminal command coverage; contract infrastructure, not a regression subsystem",
+      "role": "infrastructure"
+    },
     "target:jope-appliance/bin/jopedime": {
       "role": "regression",
       "subsystems": [
@@ -2850,6 +2870,10 @@
     },
     "target:jope-client/lib/jope_client": {
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
+      "role": "infrastructure"
+    },
+    "target:jope-client/test/fake_replay": {
+      "reason": "Recorded-event fixture replay through the jope-client fake transport (TUI-11, feature `fake`): validates the committed event fixtures and deterministic replay cadence; test infrastructure for terminal UI tests, not a regression subsystem",
       "role": "infrastructure"
     },
     "target:jope-datasets/bin/jope-datasets": {
@@ -4826,10 +4850,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h48/test_run.py": {
-      "reason": "Owner-requested pytest proofs for H48 utility-alignment harness adapters, fold selection, and persisted checkpoint snapshots; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
