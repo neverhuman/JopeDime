@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced TUI-01 current-main successor: exactly three appliance Cargo.lock edges for pinned ratatui0.29/crossterm0.28, signal-hook0.3.18 and devjope-client(fake),572unchangedpackageidentities/checksums. Prior private proof retained under preserve/tui01-qualified-fea; this owns only the current initial TUI01 edge. No evaluator behavior, known identity table, old peer transition or scientific fixture changes.",
+  "plan_reference": "T070/TUI-01; scope1520 approved patch261255152673664e116afc77c1bae8011197f4b84f28f2800579b7ea7f4db102; ruling0840(a); ADR-0004",
+  "source_commit": "8042ebbacab435e91457caeffbb1400d37291cec",
+  "base_commit": "5614f6fed6154e82a8033a96ba2aac9ff5475be0",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "4ce5ae9699f03c4298d9bc49ccd28d74971816f4985fd40e5189eb491100cbaa",
+      "after": "5d0cdf1ee7894307738e2ab7294561796e2a2a58ff8e9b0aa5107c30aeca1468"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "07e3cb4b57c17d824875b1af7cbc2eae76f5d82f0fc4aef8881b0185ce2a77aa",
+      "after": "a3e6a3c7772cdc9c0b30621b97db37f6a5666fbaa59d7dc1937f1fd296ad07e4"
+    }
+  ],
+  "before_identity_digest": "1828fa116db313f023ec63c0e1e5573835fd71b63e7029d7062475a44d6ae6c1",
+  "after_identity_digest": "fc708496741554ea4bd7641bb2262a7e511ba07797f371b27a9790e9b54befc3",
+  "before_implementation_sha256": "a91a518baa5e558e158415c30c599752f60de45f1312558c60a8d550b9d1c66b",
+  "after_implementation_sha256": "68f2005a0661e82669f1a84ea016209d49b4628d65bd0cb212845529dee309f6",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
