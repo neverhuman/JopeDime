@@ -210,9 +210,10 @@ tokens and \TBD{s} CPU-seconds of referee time.
 \end{keyidea}
 
 The table prices a fixed number of attempts, not a fixed number of wins.
-Converting those totals to cost per win requires a measured win rate. Under
-\cref{eq:bill}'s fixed-probability accounting, doubling $\winprob$ halves the
-expected cost per win while leaving the per-attempt bill unchanged.
+Converting those totals to cost per win requires a measured win rate;
+comparisons require a common task mix, incumbent standard and verification
+rule. Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$
+halves expected cost per win only if mean cost per attempt stays fixed.
 
 The scaling scenarios in this section concern 8B--1.5T language-model
 writers producing 5,000 tokens per attempt; they do not price the reference
