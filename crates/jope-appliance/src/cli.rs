@@ -1,4 +1,5 @@
 //! User-facing commands and flags (SPECIFICATION.md §3.3).
+use clap::ValueEnum;
 use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -18,6 +19,47 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Export a run's selected model and generated sources.
+    #[cfg(feature = "mcp")]
+    Export {
+        run: String,
+        #[arg(long)]
+        alg: Option<String>,
+        #[arg(long, value_enum)]
+        kind: ExportKindArg,
+        #[arg(long, value_enum)]
+        lang: LanguageArg,
+        #[arg(long)]
+        out: PathBuf,
+        #[arg(long)]
+        force: bool,
+        #[arg(long)]
+        idempotency_key: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Manage datasets registered with the local engine.
+    #[cfg(feature = "mcp")]
+    Dataset {
+        #[command(subcommand)]
+        command: DatasetCommand,
+    },
+    /// Validate an objective specification.
+    #[cfg(feature = "mcp")]
+    Objective {
+        #[command(subcommand)]
+        command: ObjectiveCommand,
+    },
+    /// Collect unused engine-store objects.
+    #[cfg(feature = "mcp")]
+    Gc {
+        #[arg(long)]
+        dry_run: bool,
+        #[arg(long)]
+        idempotency_key: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
     /// Internal isolated candidate worker.
     #[cfg(feature = "engine")]
     #[command(name = "__worker", hide = true)]
@@ -58,10 +100,11 @@ pub enum Command {
         #[command(flatten)]
         common: CommonArgs,
     },
-    /// Predict with a fitted model file; never refits.
+    /// Predict with a local fitted model or a model from a run; never refits.
     Predict {
+        /// A local model path or a completed run ID, optionally with `:ALG`.
         #[arg(long)]
-        model: PathBuf,
+        model: String,
         /// CSV rows to predict, with the model's feature columns in any order.
         #[arg(long)]
         input: PathBuf,
@@ -105,6 +148,58 @@ pub enum Command {
     VerifySelf(JsonFlag),
     /// Print the embedded licence and notice inventory.
     Licenses(JsonFlag),
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+pub enum ExportKindArg {
+    Model,
+    Source,
+    Bundle,
+}
+#[derive(Clone, Copy, Debug, ValueEnum)]
+pub enum LanguageArg {
+    Rust,
+    Python,
+    Javascript,
+    Typescript,
+}
+#[cfg(feature = "mcp")]
+#[derive(Subcommand)]
+pub enum DatasetCommand {
+    Add {
+        path: PathBuf,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        idempotency_key: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+    List {
+        #[arg(long)]
+        json: bool,
+    },
+    Show {
+        id: String,
+        #[arg(long)]
+        json: bool,
+    },
+    Delete {
+        id: String,
+        #[arg(long)]
+        idempotency_key: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+}
+#[cfg(feature = "mcp")]
+#[derive(Subcommand)]
+pub enum ObjectiveCommand {
+    Validate {
+        spec: String,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Args, Clone, Copy)]
@@ -230,13 +325,51 @@ mod serve_tests {
                 idle_exit: None
             }
         ));
-        assert!(matches!(
-            Cli::try_parse_from(["jopedime", "serve", "--idle-exit", "2s"])
-                .unwrap()
-                .command,
-            Command::Serve { status: false, stop: false, idle_exit: Some(value) } if value == "2s"
-        ));
+        assert!(
+            matches!(Cli::try_parse_from(["jopedime", "serve", "--idle-exit", "2s"]).unwrap().command, Command::Serve { status: false, stop: false, idle_exit: Some(value) } if value == "2s")
+        );
         assert!(Cli::try_parse_from(["jopedime", "serve", "--status", "--stop"]).is_err());
         assert!(Cli::try_parse_from(["jopedime", "serve", "--stop", "--idle-exit", "2s"]).is_err());
+    }
+}
+
+#[cfg(all(test, feature = "mcp"))]
+mod batch_cli_tests {
+    use super::{Cli, Command, DatasetCommand, ObjectiveCommand};
+    use clap::Parser;
+
+    #[test]
+    fn parses_bat04_command_shapes() {
+        assert!(
+            matches!(Cli::try_parse_from(["jopedime", "predict", "--model", "run_01ARZ3NDEKTSV4RRFFQ69G5FAV", "--input", "in.csv", "--output", "-"]).unwrap().command, Command::Predict { output, .. } if output.as_os_str() == std::ffi::OsStr::new("-"))
+        );
+        assert!(
+            matches!(Cli::try_parse_from(["jopedime", "dataset", "add", "train.csv", "--name", "train"]).unwrap().command, Command::Dataset { command: DatasetCommand::Add { name: Some(name), .. } } if name == "train")
+        );
+        assert!(
+            matches!(Cli::try_parse_from(["jopedime", "objective", "validate", "mae"]).unwrap().command, Command::Objective { command: ObjectiveCommand::Validate { spec, .. } } if spec == "mae")
+        );
+        assert!(matches!(
+            Cli::try_parse_from(["jopedime", "gc", "--dry-run"])
+                .unwrap()
+                .command,
+            Command::Gc { dry_run: true, .. }
+        ));
+        assert!(matches!(
+            Cli::try_parse_from([
+                "jopedime",
+                "export",
+                "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                "--kind",
+                "bundle",
+                "--lang",
+                "rust",
+                "--out",
+                "bundle"
+            ])
+            .unwrap()
+            .command,
+            Command::Export { .. }
+        ));
     }
 }
