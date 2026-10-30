@@ -1,0 +1,734 @@
+{
+  "admission": {
+    "reason": "all six per-cell one-sided family mean-LCB95 values are below zero; ties fail",
+    "result": "none"
+  },
+  "cells": [
+    {
+      "device": "cuda:0",
+      "diagnostic_trajectory": [
+        {
+          "family_utility": 1.091685988498427,
+          "round": 0
+        },
+        {
+          "family_utility": 1.0923441039131774,
+          "round": 25
+        },
+        {
+          "family_utility": 1.1329308055252252,
+          "round": 50
+        },
+        {
+          "family_utility": 1.1066256639578367,
+          "round": 75
+        },
+        {
+          "family_utility": 1.095957260912618,
+          "round": 100
+        },
+        {
+          "family_utility": 1.0983145817172946,
+          "round": 121
+        }
+      ],
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882_diagnostic": {
+        "datasets": 91,
+        "delta_vs_anchor": -74.25,
+        "families": 19,
+        "losses": 38,
+        "rating": 1425.75,
+        "ties": 35,
+        "wins": 18
+      },
+      "family_mean_gain_vs_r882": -0.055300695273950456,
+      "family_mean_lcb95_one_sided_vs_r882": -0.0931432248365003,
+      "family_median_ci95_vs_r882": [
+        -0.09437234947617756,
+        0.0
+      ],
+      "family_median_gain_vs_r882": -0.009790304531745342,
+      "final_family_utility": 1.0983145817172946,
+      "final_round": 121,
+      "gpu_free_mib_after_lock": 24124,
+      "gpu_min_free_mib": 6144,
+      "holdout_payloads_opened": 0,
+      "infra_confounded_below_60pct_median_rounds": false,
+      "lock_wait_seconds": 572.0365587349515,
+      "matched_horizon_family_utility": 1.095957260912618,
+      "matched_horizon_round": 100,
+      "matched_horizon_status": "diagnostic only",
+      "optimizer_updates_completed": 242,
+      "outer_rows_delivered": 0,
+      "partial_optimizer_steps_discarded": 0,
+      "peak_diagnostic": {
+        "admissible": false,
+        "family_utility": 1.1329308055252252,
+        "reason": "DL-Val-selected diagnostic read; not a valid endpoint",
+        "round": 50
+      },
+      "round0_family_utility": 1.091685988498427,
+      "rounds_completed": 121,
+      "scale": 1.0,
+      "seed": 12,
+      "status": "complete",
+      "wall_seconds": 1110.9222287950106,
+      "worst_five_family_gains_vs_r882": [
+        {
+          "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+          "gain": -0.2434874758063157
+        },
+        {
+          "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+          "gain": -0.23885693022090654
+        },
+        {
+          "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+          "gain": -0.21253065543906308
+        },
+        {
+          "family_id": "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+          "gain": -0.15879580155304884
+        },
+        {
+          "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+          "gain": -0.11981612614654147
+        }
+      ]
+    },
+    {
+      "device": "cuda:0",
+      "diagnostic_trajectory": [
+        {
+          "family_utility": 1.1351487202445114,
+          "round": 0
+        },
+        {
+          "family_utility": 1.1068970526112691,
+          "round": 25
+        },
+        {
+          "family_utility": 1.1116772899701914,
+          "round": 50
+        },
+        {
+          "family_utility": 1.1685600830400988,
+          "round": 75
+        },
+        {
+          "family_utility": 1.1548537897737716,
+          "round": 100
+        },
+        {
+          "family_utility": 1.0810348878005336,
+          "round": 125
+        },
+        {
+          "family_utility": 1.0888207572527606,
+          "round": 150
+        },
+        {
+          "family_utility": 1.0797006984279642,
+          "round": 175
+        },
+        {
+          "family_utility": 1.045451683119038,
+          "round": 185
+        }
+      ],
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882_diagnostic": {
+        "datasets": 91,
+        "delta_vs_anchor": -36.71,
+        "families": 19,
+        "losses": 42,
+        "rating": 1463.29,
+        "ties": 21,
+        "wins": 28
+      },
+      "family_mean_gain_vs_r882": -0.10816359387220717,
+      "family_mean_lcb95_one_sided_vs_r882": -0.22283935283641942,
+      "family_median_ci95_vs_r882": [
+        -0.09700495185874053,
+        0.0032356632123080598
+      ],
+      "family_median_gain_vs_r882": -0.009276244679020107,
+      "final_family_utility": 1.045451683119038,
+      "final_round": 185,
+      "gpu_free_mib_after_lock": 24124,
+      "gpu_min_free_mib": 6144,
+      "holdout_payloads_opened": 0,
+      "infra_confounded_below_60pct_median_rounds": false,
+      "lock_wait_seconds": 1298.1201593610458,
+      "matched_horizon_family_utility": 1.1548537897737716,
+      "matched_horizon_round": 100,
+      "matched_horizon_status": "diagnostic only",
+      "optimizer_updates_completed": 370,
+      "outer_rows_delivered": 0,
+      "partial_optimizer_steps_discarded": 1,
+      "peak_diagnostic": {
+        "admissible": false,
+        "family_utility": 1.1685600830400988,
+        "reason": "DL-Val-selected diagnostic read; not a valid endpoint",
+        "round": 75
+      },
+      "round0_family_utility": 1.1351487202445114,
+      "rounds_completed": 185,
+      "scale": 1.0,
+      "seed": 13,
+      "status": "complete",
+      "wall_seconds": 1110.607300908072,
+      "worst_five_family_gains_vs_r882": [
+        {
+          "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+          "gain": -1.0342558679330396
+        },
+        {
+          "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+          "gain": -0.6890032183565431
+        },
+        {
+          "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+          "gain": -0.18270704883336075
+        },
+        {
+          "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+          "gain": -0.1390308105054121
+        },
+        {
+          "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+          "gain": -0.10276369962495835
+        }
+      ]
+    },
+    {
+      "device": "cuda:0",
+      "diagnostic_trajectory": [
+        {
+          "family_utility": 1.1323789326417182,
+          "round": 0
+        },
+        {
+          "family_utility": 1.1316017329775985,
+          "round": 25
+        },
+        {
+          "family_utility": 1.127857633130535,
+          "round": 50
+        },
+        {
+          "family_utility": 1.0954590300173055,
+          "round": 75
+        },
+        {
+          "family_utility": 1.1263081452085808,
+          "round": 100
+        },
+        {
+          "family_utility": 1.0497780160705599,
+          "round": 125
+        },
+        {
+          "family_utility": 1.039737086136955,
+          "round": 150
+        },
+        {
+          "family_utility": 1.0833452496729528,
+          "round": 153
+        }
+      ],
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882_diagnostic": {
+        "datasets": 91,
+        "delta_vs_anchor": -36.71,
+        "families": 19,
+        "losses": 43,
+        "rating": 1463.29,
+        "ties": 19,
+        "wins": 29
+      },
+      "family_mean_gain_vs_r882": -0.07027002731829214,
+      "family_mean_lcb95_one_sided_vs_r882": -0.13746239179684533,
+      "family_median_ci95_vs_r882": [
+        -0.07470156437739695,
+        0.01760249540297565
+      ],
+      "family_median_gain_vs_r882": -0.014476399753208136,
+      "final_family_utility": 1.0833452496729528,
+      "final_round": 153,
+      "gpu_free_mib_after_lock": 24124,
+      "gpu_min_free_mib": 6144,
+      "holdout_payloads_opened": 0,
+      "infra_confounded_below_60pct_median_rounds": false,
+      "lock_wait_seconds": 994.1519585601054,
+      "matched_horizon_family_utility": 1.1263081452085808,
+      "matched_horizon_round": 100,
+      "matched_horizon_status": "diagnostic only",
+      "optimizer_updates_completed": 306,
+      "outer_rows_delivered": 0,
+      "partial_optimizer_steps_discarded": 1,
+      "peak_diagnostic": {
+        "admissible": false,
+        "family_utility": 1.1323789326417182,
+        "reason": "DL-Val-selected diagnostic read; not a valid endpoint",
+        "round": 0
+      },
+      "round0_family_utility": 1.1323789326417182,
+      "rounds_completed": 153,
+      "scale": 1.0,
+      "seed": 14,
+      "status": "complete",
+      "wall_seconds": 1114.1436703759246,
+      "worst_five_family_gains_vs_r882": [
+        {
+          "family_id": "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+          "gain": -0.47750047950956087
+        },
+        {
+          "family_id": "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+          "gain": -0.4757170423577173
+        },
+        {
+          "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+          "gain": -0.34356688951562797
+        },
+        {
+          "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+          "gain": -0.12572367319796007
+        },
+        {
+          "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+          "gain": -0.07797893591796745
+        }
+      ]
+    },
+    {
+      "device": "cuda:0",
+      "diagnostic_trajectory": [
+        {
+          "family_utility": 1.107892485740501,
+          "round": 0
+        },
+        {
+          "family_utility": 1.1062692377291696,
+          "round": 25
+        },
+        {
+          "family_utility": 1.1265852769984233,
+          "round": 50
+        },
+        {
+          "family_utility": 1.1222499992497361,
+          "round": 75
+        },
+        {
+          "family_utility": 1.1271628663019768,
+          "round": 100
+        },
+        {
+          "family_utility": 1.1343979617073279,
+          "round": 125
+        },
+        {
+          "family_utility": 1.102480795167098,
+          "round": 150
+        },
+        {
+          "family_utility": 1.1414517825527746,
+          "round": 175
+        },
+        {
+          "family_utility": 1.1270396715648725,
+          "round": 200
+        },
+        {
+          "family_utility": 1.1245953814084384,
+          "round": 211
+        }
+      ],
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882_diagnostic": {
+        "datasets": 91,
+        "delta_vs_anchor": -21.97,
+        "families": 19,
+        "losses": 26,
+        "rating": 1478.03,
+        "ties": 45,
+        "wins": 20
+      },
+      "family_mean_gain_vs_r882": -0.029019895582806324,
+      "family_mean_lcb95_one_sided_vs_r882": -0.06744876106562633,
+      "family_median_ci95_vs_r882": [
+        -0.019903736087352575,
+        0.013212526535616664
+      ],
+      "family_median_gain_vs_r882": 0.0,
+      "final_family_utility": 1.1245953814084384,
+      "final_round": 211,
+      "gpu_free_mib_after_lock": 24124,
+      "gpu_min_free_mib": 6144,
+      "holdout_payloads_opened": 0,
+      "infra_confounded_below_60pct_median_rounds": false,
+      "lock_wait_seconds": 0.0305083179846406,
+      "matched_horizon_family_utility": 1.1271628663019768,
+      "matched_horizon_round": 100,
+      "matched_horizon_status": "diagnostic only",
+      "optimizer_updates_completed": 422,
+      "outer_rows_delivered": 0,
+      "partial_optimizer_steps_discarded": 1,
+      "peak_diagnostic": {
+        "admissible": false,
+        "family_utility": 1.1414517825527746,
+        "reason": "DL-Val-selected diagnostic read; not a valid endpoint",
+        "round": 175
+      },
+      "round0_family_utility": 1.107892485740501,
+      "rounds_completed": 211,
+      "scale": 0.1,
+      "seed": 12,
+      "status": "complete",
+      "wall_seconds": 1111.2613051990047,
+      "worst_five_family_gains_vs_r882": [
+        {
+          "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+          "gain": -0.315676221293018
+        },
+        {
+          "family_id": "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+          "gain": -0.27433068193150056
+        },
+        {
+          "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+          "gain": -0.06524846358781627
+        },
+        {
+          "family_id": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+          "gain": -0.025236333650581977
+        },
+        {
+          "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+          "gain": -0.021055289454440795
+        }
+      ]
+    },
+    {
+      "device": "cuda:0",
+      "diagnostic_trajectory": [
+        {
+          "family_utility": 1.108001165106997,
+          "round": 0
+        },
+        {
+          "family_utility": 1.1074378414380537,
+          "round": 25
+        },
+        {
+          "family_utility": 1.1542280355778305,
+          "round": 50
+        },
+        {
+          "family_utility": 1.145207899714056,
+          "round": 75
+        },
+        {
+          "family_utility": 1.1386968062235878,
+          "round": 100
+        },
+        {
+          "family_utility": 1.1266408883897632,
+          "round": 125
+        },
+        {
+          "family_utility": 1.1264059200612866,
+          "round": 150
+        },
+        {
+          "family_utility": 1.1298016378540772,
+          "round": 175
+        },
+        {
+          "family_utility": 1.107693980517608,
+          "round": 200
+        },
+        {
+          "family_utility": 1.11074171707472,
+          "round": 225
+        },
+        {
+          "family_utility": 1.1106888980307987,
+          "round": 250
+        },
+        {
+          "family_utility": 1.106993154245865,
+          "round": 275
+        },
+        {
+          "family_utility": 1.0954928276065332,
+          "round": 300
+        }
+      ],
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882_diagnostic": {
+        "datasets": 91,
+        "delta_vs_anchor": -62.85,
+        "families": 19,
+        "losses": 36,
+        "rating": 1437.15,
+        "ties": 36,
+        "wins": 19
+      },
+      "family_mean_gain_vs_r882": -0.058122449384711776,
+      "family_mean_lcb95_one_sided_vs_r882": -0.10743150160112556,
+      "family_median_ci95_vs_r882": [
+        -0.0621952621473143,
+        0.008911943221816432
+      ],
+      "family_median_gain_vs_r882": -0.009790304531745342,
+      "final_family_utility": 1.0954928276065332,
+      "final_round": 300,
+      "gpu_free_mib_after_lock": 24124,
+      "gpu_min_free_mib": 6144,
+      "holdout_payloads_opened": 0,
+      "infra_confounded_below_60pct_median_rounds": false,
+      "lock_wait_seconds": 0.025454561924561858,
+      "matched_horizon_family_utility": 1.1386968062235878,
+      "matched_horizon_round": 100,
+      "matched_horizon_status": "diagnostic only",
+      "optimizer_updates_completed": 600,
+      "outer_rows_delivered": 0,
+      "partial_optimizer_steps_discarded": 0,
+      "peak_diagnostic": {
+        "admissible": false,
+        "family_utility": 1.1542280355778305,
+        "reason": "DL-Val-selected diagnostic read; not a valid endpoint",
+        "round": 50
+      },
+      "round0_family_utility": 1.108001165106997,
+      "rounds_completed": 300,
+      "scale": 0.1,
+      "seed": 13,
+      "status": "complete",
+      "wall_seconds": 989.222061388893,
+      "worst_five_family_gains_vs_r882": [
+        {
+          "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+          "gain": -0.4584510786582643
+        },
+        {
+          "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+          "gain": -0.20148126313837084
+        },
+        {
+          "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+          "gain": -0.18613554815522493
+        },
+        {
+          "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+          "gain": -0.17197619847838352
+        },
+        {
+          "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+          "gain": -0.11603236742382395
+        }
+      ]
+    },
+    {
+      "device": "cuda:0",
+      "diagnostic_trajectory": [
+        {
+          "family_utility": 1.1091976433477122,
+          "round": 0
+        },
+        {
+          "family_utility": 1.1313300508931197,
+          "round": 25
+        },
+        {
+          "family_utility": 1.1223725276758154,
+          "round": 50
+        },
+        {
+          "family_utility": 1.103250977356304,
+          "round": 75
+        },
+        {
+          "family_utility": 1.130740074665152,
+          "round": 100
+        },
+        {
+          "family_utility": 1.134605433631256,
+          "round": 125
+        },
+        {
+          "family_utility": 1.1302624025040438,
+          "round": 150
+        },
+        {
+          "family_utility": 1.0938146382579772,
+          "round": 175
+        },
+        {
+          "family_utility": 1.1245434848451632,
+          "round": 200
+        },
+        {
+          "family_utility": 1.129354298816869,
+          "round": 225
+        },
+        {
+          "family_utility": 1.1224344652039044,
+          "round": 250
+        },
+        {
+          "family_utility": 1.1241346753628627,
+          "round": 275
+        },
+        {
+          "family_utility": 1.0966191455405454,
+          "round": 300
+        }
+      ],
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882_diagnostic": {
+        "datasets": 91,
+        "delta_vs_anchor": -21.97,
+        "families": 19,
+        "losses": 30,
+        "rating": 1478.03,
+        "ties": 37,
+        "wins": 24
+      },
+      "family_mean_gain_vs_r882": -0.0569961314506994,
+      "family_mean_lcb95_one_sided_vs_r882": -0.10896664027700122,
+      "family_median_ci95_vs_r882": [
+        -0.011527948431545143,
+        0.007208184773308646
+      ],
+      "family_median_gain_vs_r882": 0.0,
+      "final_family_utility": 1.0966191455405454,
+      "final_round": 300,
+      "gpu_free_mib_after_lock": 24124,
+      "gpu_min_free_mib": 6144,
+      "holdout_payloads_opened": 0,
+      "infra_confounded_below_60pct_median_rounds": false,
+      "lock_wait_seconds": 0.027687310008332133,
+      "matched_horizon_family_utility": 1.130740074665152,
+      "matched_horizon_round": 100,
+      "matched_horizon_status": "diagnostic only",
+      "optimizer_updates_completed": 600,
+      "outer_rows_delivered": 0,
+      "partial_optimizer_steps_discarded": 0,
+      "peak_diagnostic": {
+        "admissible": false,
+        "family_utility": 1.134605433631256,
+        "reason": "DL-Val-selected diagnostic read; not a valid endpoint",
+        "round": 125
+      },
+      "round0_family_utility": 1.1091976433477122,
+      "rounds_completed": 300,
+      "scale": 0.1,
+      "seed": 14,
+      "status": "complete",
+      "wall_seconds": 897.177027131198,
+      "worst_five_family_gains_vs_r882": [
+        {
+          "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+          "gain": -0.4584510786582643
+        },
+        {
+          "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+          "gain": -0.3145676873551634
+        },
+        {
+          "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+          "gain": -0.193663170726956
+        },
+        {
+          "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+          "gain": -0.13439424901461972
+        },
+        {
+          "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+          "gain": -0.1175465850371869
+        }
+      ]
+    }
+  ],
+  "cells_complete": 6,
+  "comparator": {
+    "family_utility": 1.1536152769912449,
+    "higher_is_better": true,
+    "name": "r882 harness"
+  },
+  "elo_interpretation": "Elo is a family-grouped pairwise diagnostic, not AUC",
+  "infra_confounded_rule": "flag any cell with rounds_completed < 60% of the six-cell median; do not rerun this wave",
+  "infra_void_cpu_attempt": {
+    "counted_as_cell": false,
+    "path": "~/jope-data/h53b/go-1930-wave/scale-1/seed12/",
+    "reason": "CPU cell terminated after a very slow first training step; no outcome"
+  },
+  "live_loop_target": {
+    "comparison_status": "cross-harness and not comparable to r882 harness results; omitted from endpoint and admission",
+    "family_utility": 1.1377942
+  },
+  "matched_horizon": {
+    "diagnostic_round": 100,
+    "median_rounds": 198.0,
+    "r_star_min_rounds": 121,
+    "selection": "largest saved 25-round read at or below R*; no best-round selection"
+  },
+  "primary_endpoint": "final-round DL-Val family utility; diagnostic read only and not an admission score",
+  "scale_summaries": [
+    {
+      "inference": "descriptive seed medians only; no scale-level admission test was preregistered",
+      "median_elo_rating": 1463.29,
+      "median_final_family_utility": 1.0833452496729528,
+      "median_seed_mean_gain_vs_r882": -0.07027002731829214,
+      "scale": 1.0,
+      "seed_count": 3
+    },
+    {
+      "inference": "descriptive seed medians only; no scale-level admission test was preregistered",
+      "median_elo_rating": 1478.03,
+      "median_final_family_utility": 1.0966191455405454,
+      "median_seed_mean_gain_vs_r882": -0.0569961314506994,
+      "scale": 0.1,
+      "seed_count": 3
+    }
+  ],
+  "schema": "jope.h53b.closeout/v1",
+  "scope": {
+    "dope_identity": "c51a56d0",
+    "holdout_payloads_opened": 0,
+    "outer_rows_delivered": 0,
+    "sealed_or_holdout_access": false
+  },
+  "tie_rule": "ties fail",
+  "timing_pilot": {
+    "elo_delta_vs_r882": 29.33,
+    "family_mean_gain_vs_r882": -0.0172230669,
+    "family_mean_lcb95_one_sided_vs_r882": -0.0836600796,
+    "final_family_utility": 1.1363922101321586,
+    "losses": 19,
+    "path": "~/jope-data/h53b/attempt-03/pilot-fixed/",
+    "rounds": 93,
+    "scale": 1.0,
+    "seed": 12,
+    "ties": 45,
+    "use": "timing-only; excluded from the six-cell wave and every seed summary",
+    "wins": 27
+  },
+  "wave_compute_seconds": 6373.871757921064,
+  "wave_lock_wait_seconds": 2864.3923268460203,
+  "wave_prereg_commit": "c78d8789d6ec3c01479be08227adfe90d3999946",
+  "wave_receipt": "/home/ubuntu/jope-data/h53b/go-1935-gpu/wave.json",
+  "wave_start_utc": "2026-10-30T19:35:02.707261+00:00",
+  "wave_total_budget_seconds": 9000.0
+}
