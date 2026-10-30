@@ -10,6 +10,10 @@ description = "JopeDime v1 engine service"
 
 [dependencies]
 toml = { workspace = true }
+serde_json.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
 
 [lints]
 workspace = true
