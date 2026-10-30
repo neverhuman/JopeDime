@@ -1,5 +1,6 @@
 //! Plain-language names and purposes for public descriptions of model changes.
 
+pub mod heads;
 pub mod ops;
 
 /// A public-facing name and short explanation for an internal catalog entry.
