@@ -311,7 +311,10 @@ class ProtocolTests(unittest.TestCase):
                 self.assertEqual(row["response"]["status"], "failed")
                 self.assertIsNone(row["response"]["loss"])
                 self.assertIsNone(row["response"]["charged"])
-            with self.assertRaisesRegex(ValueError, "overwrite"):
+            with (
+                patch.object(q1.os, "getloadavg", return_value=(0, 0, 0)),
+                self.assertRaisesRegex(ValueError, "overwrite"),
+            ):
                 q1.execute(plan, backend, output)
 
     def test_owner_signed_ledger_root_cannot_be_changed(self):
