@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced API-03 identity-only successor for the two jope-api Cargo.lock package dependency entries (workspace ulid and proptest), re-chained after the TUI-10 portable-pty lockfile transition (merge_0905). No dependency version, feature, registry source, evaluator behavior, or feat-math source changed.",
+  "plan_reference": "API-03; owner-authorized rulings gov04_0650, rulings_0725, and lanes_0810; ADR-0004; re-chained after tui10_portable_pty_lockfile by super_merge_claude under ENG:watcher merge_0905",
+  "source_commit": "f99d5d09759f2a27609684d27f0f7ab9679bdff1",
+  "base_commit": "8f417243b4073cd40eb2d80aaeeb491411ec245a",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "c55ab82d4322653e96bd0171ce834070b993bb1f9b85070a0c5f575ebd580526",
+      "after": "42ca1a5bd891c28527de3d6d2d3380cb036f01a7b0dd9561c5994fe2ba16e250"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "7367f5f7557e1fb89807ec3181d5cee358641afd372b3565cab0898b20fe41de",
+      "after": "ea15dcbc112197d3e02fd9589dde8b6617a5ac96b3686ad30e19b2f5a6e70ac1"
+    }
+  ],
+  "before_identity_digest": "ba1de9075489d3bee810f25cf639f0a09fae475e2847b8fab01c151417b6b52b",
+  "after_identity_digest": "a7367494259ac52d7c2453b3f12215cf5f895bb75bda0e2ca260c49c0421f41b",
+  "before_implementation_sha256": "3337743e65bd3186aa9f56a62f6144ab8201da1365a3e2d103df787d0af9940c",
+  "after_implementation_sha256": "bba7ac4a8bf9690894a2416a01f7ca40c67568186913c78a26e3db98934f2271",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

@@ -19,12 +19,7 @@ pub mod warnings;
 pub mod error;
 
 /// API-03 supplies parsing, ordering and validated newtypes in `ids.rs`.
-pub mod ids {
-    pub type RunId = String;
-    pub type DatasetId = String;
-    pub type AlgorithmId = String;
-    pub type ArtifactId = String;
-}
+pub mod ids;
 
 /// API-04 supplies canonical string serialization and validation in `decimal.rs`.
 pub mod decimal {
