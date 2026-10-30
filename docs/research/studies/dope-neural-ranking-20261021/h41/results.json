@@ -1,0 +1,64 @@
+{
+  "schema_version": "jopedime.dope_neural_ranking.h41.results.v1_preflight_wall_clock_blocker",
+  "experiment_id": "h41_worst_case_compliant_4arm_2_1_1_live_stage2_flywheel_preflight",
+  "status": "PREFLIGHT_PASSES_0PCT_CACHE_EVAL_AND_FIT_CAPS_BLOCKED_BY_CAMPAIGN_WALL_CLOCK_CEILING",
+  "generated_at_utc": "2026-10-26T06:49:15Z",
+  "authorizing_directive": "/home/ubuntu/.codex-screen-monitor/20261026T025226Z-jope-proceed-owner-v2.txt",
+  "authorizing_directive_sha256": "3bd61a44bf613fd16a8446c5015b8cbdf3f712ca9245e3d05bd882c257baaa8a",
+  "reconciling_directives": {
+    "cap_and_fold_directive": "/home/ubuntu/.codex-screen-monitor/20261026T041038Z-jope-cap-and-fold-evidence.txt",
+    "cap_and_fold_directive_sha256": "8fe02dc8d1a8d7d6e66de3d4ad5c0f38a856fc7a5c537e4ab3e5819b2e268ed0",
+    "followup_directive": "/home/ubuntu/.codex-screen-monitor/20261026T055143Z-jope-review-followup.txt",
+    "followup_directive_sha256": "00bdbcb60648533cbaee0bacf06e8f7516e8009e27a265df10924788bfe8e1d2"
+  },
+  "generalization_claim": false,
+  "selection_exposed_stage2_20": true,
+  "worst_case_0pct_cache_hit_schedule_preflight": {
+    "n_arms": 4,
+    "arm_names": [
+      "H41_SMART_SVD_FIRST_PARTY_COMPLETE",
+      "H41_SMART_SVD_FIRST_PARTY_ANALYTIC_NO_CKPT",
+      "H41_N0_AST_PRIOR_ONLY",
+      "H41_UNGUIDED_CONTROL"
+    ],
+    "n_contexts": 20,
+    "identical_arm_context_support_verified": true,
+    "n_cycles": 2,
+    "proposals_3fold_per_context_per_cycle": 2,
+    "confirmations_7fold_per_context_per_cycle": 1,
+    "holdout30_verifications_per_context_total": 2,
+    "zero_cache_hit_assumption_enforced": true,
+    "worst_case_3fold_evals": 320,
+    "worst_case_7fold_evals": 160,
+    "worst_case_holdout30_evals": 160,
+    "worst_case_total_uncached_evals": 640,
+    "worst_case_total_reserved_native_fits": 3840,
+    "worst_case_total_actual_cv_fold_fits": 2240,
+    "prior_spent_evals": 0,
+    "prior_spent_reserved_fits": 0,
+    "projected_worst_case_cumulative_evals": 640,
+    "projected_worst_case_cumulative_reserved_fits": 3840,
+    "max_uncached_candidate_evals_cap": 720,
+    "max_reserved_native_fits_cap": 4320,
+    "within_caps": true
+  },
+  "campaign_wall_clock_blocker": {
+    "post_h40_cumulative_campaign_wall_interval_seconds": [
+      3158.351,
+      3160.351
+    ],
+    "approved_cumulative_campaign_wall_ceiling_seconds": 3162.914,
+    "remaining_campaign_wall_seconds_after_h40": 2.563,
+    "estimated_wall_seconds_for_640_live_rust_evals": [
+      210.0,
+      240.0
+    ],
+    "fail_closed_reason": "Executing 640 live Rust evaluations (2,240 actual CV/verification fold fits) requires ~210-240s, which exceeds the remaining 2.563s campaign wall-clock margin to 3,162.914s. Fail-closed preflight halts before launching live Rust evaluations rather than starting a run guaranteed to abort mid-flight.",
+    "required_budget_delta_if_live_h41_desired": {
+      "additional_campaign_wall_clock_seconds": 240.0,
+      "new_wave_uncached_candidate_evals_cap": 640,
+      "new_wave_reserved_native_fits_cap": 3840,
+      "new_wave_campaign_attempt_delta": 1
+    }
+  }
+}

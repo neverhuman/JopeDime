@@ -1,0 +1,335 @@
+{
+  "curves": [
+    {
+      "TRAIN_candidates": 470016,
+      "TRAIN_contexts": 408,
+      "arm": "zero",
+      "curve_receipt_sha256": "74636e462026f4acf9f778bd62ad13acf319e89869f8d41eb6537c4be51523e7",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 0,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 2611.6619425521258,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2463.7227115955093,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2381.022943242761,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2323.9956046562056,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2272.183683092689,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2236.083286930441,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "ed20666bc84649e599d4ad300182d76c65a83a8547a707b3bede33d1a4057909",
+      "unmeasured_tree0": null
+    },
+    {
+      "TRAIN_candidates": 470016,
+      "TRAIN_contexts": 408,
+      "arm": "one",
+      "curve_receipt_sha256": "f1b560b98468abb3bc89a4290b10cdf3251144ce61dfaebdfbe17ef162020f8b",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 0,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 2611.1284798412867,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2464.1502226558814,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2380.0499313590412,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2318.6303866866383,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2271.82793290061,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2231.7881940538355,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "8f8821f65eac572ff108164c728f75d2b1336c36be80bfada4eafbc48dc67ff0",
+      "unmeasured_tree0": null
+    },
+    {
+      "TRAIN_candidates": 470016,
+      "TRAIN_contexts": 408,
+      "arm": "five",
+      "curve_receipt_sha256": "a4d5860e39a2592f66d967ba4affc1493cfda94143957d791c426c73ba27892b",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 0,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 2611.151877767055,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2463.569077319905,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2378.683298686574,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2319.8579702130073,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2270.178155290085,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2232.079841200204,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "d8ecf99d05489ca8f9c43e13932b03f7855508ccf4c1a21f638a2e93b1798b6a",
+      "unmeasured_tree0": null
+    },
+    {
+      "TRAIN_candidates": 470016,
+      "TRAIN_contexts": 408,
+      "arm": "permuted_one",
+      "curve_receipt_sha256": "75938b82838fd4baabeb0a2649237a97f4d1a2b54fc05eb0a1e0eb88a47a549a",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 0,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 2611.6619425521258,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2463.7227115955093,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2381.274839062079,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2321.4144826207635,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2274.293724587341,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 2235.9642203713547,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "c600a1e94d3170ef6c6fb400bb38a64a3bb2d0997bec768c5c3c1082a99391e6",
+      "unmeasured_tree0": null
+    },
+    {
+      "TRAIN_candidates": 417024,
+      "TRAIN_contexts": 362,
+      "arm": "zero",
+      "curve_receipt_sha256": "8decb8b30e2ec85e40531198c4b71c280f3b7a2ff8267a3781404f7139575375",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 1,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 1673.4028864808365,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1581.697967925935,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1523.3640519285818,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1483.5901694228144,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1453.6033696292093,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1428.635090737764,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "82aa8eec3b75227618459bde06e662c42f47df70f74bf36815b8e86cca4fff01",
+      "unmeasured_tree0": null
+    },
+    {
+      "TRAIN_candidates": 417024,
+      "TRAIN_contexts": 362,
+      "arm": "one",
+      "curve_receipt_sha256": "857843df355ad14acd766f30c98d17bf5a64fab2a0a776c041276fa350585c19",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 1,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 1672.715066903835,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1580.9485386352712,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1524.2108387475234,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1484.8906012470475,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1453.4640688564245,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1427.5745722858064,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "5bc086b423947a089831afde35bdf3fb0f918e416c12c2c461e165eea5112b7a",
+      "unmeasured_tree0": null
+    },
+    {
+      "TRAIN_candidates": 417024,
+      "TRAIN_contexts": 362,
+      "arm": "five",
+      "curve_receipt_sha256": "193cf1746c55aee450499e9120d5eb5dbc788fab50e1e6d92a37795d601a0660",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 1,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 1670.8440620339966,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1579.066404619029,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1522.9083870595498,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1483.2128807976437,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1452.3591877845392,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1427.4233934025879,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "536500ff0a8dc53e9d1a59b0c9c7749994f4a68a30c327aa6e5eef3c507660fb",
+      "unmeasured_tree0": null
+    },
+    {
+      "TRAIN_candidates": 417024,
+      "TRAIN_contexts": 362,
+      "arm": "permuted_one",
+      "curve_receipt_sha256": "f706df7c04fc8e91e867992d07261806e701e73dbd6cd9f76372650081b5d8f7",
+      "final_OOF_endpoint": null,
+      "fitted_trees": 120,
+      "fold": 1,
+      "monitor_observations": null,
+      "observations": [
+        {
+          "TRAIN_weighted_centered_L2": 1672.9529313896846,
+          "trees": 20
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1581.719347178839,
+          "trees": 40
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1524.3721144301346,
+          "trees": 60
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1483.8517550902163,
+          "trees": 80
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1450.140784043818,
+          "trees": 100
+        },
+        {
+          "TRAIN_weighted_centered_L2": 1425.4072663807892,
+          "trees": 120
+        }
+      ],
+      "requested_trees": 120,
+      "run_receipt_sha256": "f2378fafd8b2c89f0066013a2f4f4ec4bbce5af17417805cee5b4c0c87c5d831",
+      "unmeasured_tree0": null
+    }
+  ],
+  "limits": [
+    "Postfit reconstructed TRAIN prefixes, not live independent validation or OOF checkpoints.",
+    "Fold-specific target scales and different gradient panels; no pooled loss mean or best-run selection.",
+    "No tree0/intermediateOOF/monitor observations invented; null means unavailable/pending."
+  ],
+  "metric": "weighted query-centered uncapped rawfitness L2 on gradient TRAIN only; lower better",
+  "models": 8,
+  "observations": 48,
+  "pooled_fold_curve": null,
+  "requested_tree_positions": [
+    20,
+    40,
+    60,
+    80,
+    100,
+    120
+  ],
+  "schema": "h30.public-all-eight-postfit-TRAIN-curves/v1",
+  "state": "ACTUAL_TRAIN_CURVES_FINAL_OOF_PENDING"
+}

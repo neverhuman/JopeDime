@@ -1,0 +1,29 @@
+{
+  "authorizing_directive": "/home/ubuntu/.codex-screen-monitor/20261026T071210Z-jope-evidence-closeout.txt",
+  "authorizing_directive_sha256": "a8c26da718d1075ddc1138ddee2975700b4abc556bca639536c6cca7762eb28b",
+  "execution_status": "PREFLIGHT_PASSES_0PCT_CACHE_EVAL_AND_FIT_CAPS_BLOCKED_BY_CAMPAIGN_WALL_CLOCK_CEILING",
+  "fixture_receipts": {
+    "v12_canonical_sha256": "36c2da563c4da32449af62a04b1d3769d23a3e2746f9aa7c6174f659cddaea84",
+    "v13_closeout_sha256": "d6f9aab0572fe4ca6fd1fd8a4ba73c96829deddf7584ac96159192ff6477b7aa"
+  },
+  "hypothesis_id": "H41_wave7_multi_round_compounded_flywheel_loop",
+  "preserved_v1_results_sha256": "57df980cef8423029f9e808a66d7d8155c22be4658e802673d0bcf349323439b",
+  "reconciled_at_utc": "2026-10-26T07:27:53Z",
+  "surfaced_resource_blocker_reconciled": {
+    "campaign_wall_clock_ceiling_seconds": 3162.914,
+    "combined_unmodified_h40_plus_live_h41_wall_clock_delta_seconds": 435.0,
+    "cumulative_campaign_wall_clock_after_h40_launch1_seconds_interval": [
+      3158.351,
+      3160.351
+    ],
+    "live_h41_4arm_2cycle_2plus1plus1_required_wall_seconds": 240.0,
+    "live_h41_worst_case_0pct_cache_actual_cv_fits": 2240,
+    "live_h41_worst_case_0pct_cache_reserved_fits": 3840,
+    "live_h41_worst_case_0pct_cache_uncached_evals": 640,
+    "projected_campaign_wall_clock_ceiling_if_both_authorized_seconds": 3595.351,
+    "remaining_campaign_wall_clock_margin_seconds": 2.563,
+    "retracted_prior_h40_wall_estimate_seconds": 45.0,
+    "unmodified_h40_112_step_loop_active_cutoff_seconds": 180.0,
+    "unmodified_h40_112_step_loop_required_wall_seconds": 195.0
+  }
+}

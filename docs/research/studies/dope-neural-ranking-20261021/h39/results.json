@@ -1,0 +1,106 @@
+{
+  "schema_version": "jopedime.dope_neural_ranking.h39.results.v1_failed_cap_reconciled",
+  "experiment_id": "h39_live_stage2_closed_loop_with_repaired_gate_and_smart_svd",
+  "status": "FAILED_EVAL_CAP_EXCEEDED_RECONCILED_NO_RETRY",
+  "started_at_utc": "2026-10-26T03:54:48Z",
+  "stopped_at_utc": "2026-10-26T03:58:37Z",
+  "reconciled_at_utc": "2026-10-26T06:49:14Z",
+  "authorizing_directive": "/home/ubuntu/.codex-screen-monitor/20261026T025226Z-jope-proceed-owner-v2.txt",
+  "authorizing_directive_sha256": "3bd61a44bf613fd16a8446c5015b8cbdf3f712ca9245e3d05bd882c257baaa8a",
+  "reconciling_directives": {
+    "cap_and_fold_directive": "/home/ubuntu/.codex-screen-monitor/20261026T041038Z-jope-cap-and-fold-evidence.txt",
+    "cap_and_fold_directive_sha256": "8fe02dc8d1a8d7d6e66de3d4ad5c0f38a856fc7a5c537e4ab3e5819b2e268ed0",
+    "followup_directive": "/home/ubuntu/.codex-screen-monitor/20261026T055143Z-jope-review-followup.txt",
+    "followup_directive_sha256": "00bdbcb60648533cbaee0bacf06e8f7516e8009e27a265df10924788bfe8e1d2"
+  },
+  "generalization_claim": false,
+  "selection_exposed_stage2_20": true,
+  "bounded_guard_enforced": true,
+  "no_new_h39_budget_approved": true,
+  "remaining_eval_and_native_fit_budget_in_h39": 0,
+  "reconciled_execution_vs_denied_reservation": {
+    "schema_version": "jopedime.dope_neural_ranking.h39.reconciled_execution_vs_denied_reservation_ledger.v1",
+    "reconciled_at_utc": "2026-10-26T06:49:14Z",
+    "preserved_original_h39_ledger_path": "/mnt/jope-archive/flywheel-20261023/results/H39_wave5_live_stage2_closed_loop_repaired_gate/h39_bounded_additive_budget_ledger.json",
+    "preserved_original_h39_ledger_sha256": "a09ed0e844caae9ef4a6a2dc6ef0b87399b997907e8c504ce785e4bebdc16115",
+    "original_ledger_immutable_and_untouched": true,
+    "no_new_h39_budget_or_cap_increase_approved": true,
+    "remaining_eval_and_native_fit_budget_in_h39": 0,
+    "resumed_or_decremented_or_renamed_exhausted_attempt": false,
+    "worst_case_0pct_cache_hit_preflight_audit": {
+      "n_arms": 5,
+      "n_contexts": 20,
+      "n_cycles": 2,
+      "schedule_per_context_per_cycle": "4 x 3-fold screening + 2 x 7-fold confirmation + 1 x holdout30_verify",
+      "worst_case_uncached_candidate_evals_0pct_cache": 1400,
+      "approved_max_uncached_candidate_evals": 720,
+      "worst_case_reserved_native_fits_0pct_cache": 8400,
+      "approved_max_reserved_native_fits": 4320,
+      "worst_case_actual_cv_and_verification_fold_fits_0pct_cache": 5400,
+      "fail_closed_preflight_verdict": "REJECTED_EXCEEDS_720_EVAL_AND_4320_FIT_CAPS",
+      "fail_closed_exception_message": "FAIL_CLOSED_SCHEDULE_PREFLIGHT_WORST_CASE_EXCEEDS_CAP: worst_case_evals=1400/720 (3f=800, 7f=400, hold30=200), worst_case_reserved_fits=8400/4320 (zero cache-hit assumption required for admission)"
+    },
+    "algebraic_and_source_reconciliation_of_launch1": {
+      "launch1_started_at_utc": "2026-10-26T03:54:48Z",
+      "launch1_finished_at_utc": "2026-10-26T03:58:37Z",
+      "launch1_wall_seconds_elapsed": 228.941,
+      "launch1_status": "FAILED_EVAL_CAP_EXCEEDED",
+      "last_phase_label": "h39_H39_UNGUIDED_96_STRICT881_MATCHED_cycle_2_7f",
+      "recorded_counters_in_original_ledger_including_denied_request": {
+        "uncached_candidate_evals_reserved": 740,
+        "reserved_native_fits_used": 4440,
+        "actual_cv_fold_fits_used": 3228
+      },
+      "exact_linear_system": {
+        "equations": [
+          "N_3f + N_7f_rec + N_h30 = 740",
+          "3 * N_3f + 7 * N_7f_rec + 1 * N_h30 = 3228"
+        ],
+        "parametric_integer_solution": {
+          "parameter": "m = N_h30 / 2 >= 0 (even N_h30 from end-of-Cycle-1 holdout30_verify)",
+          "N_3f": "488 - 3*m",
+          "N_7f_recorded_including_denied": "252 + m",
+          "N_h30": "2*m",
+          "canonical_m0_solution": {
+            "N_3f": 488,
+            "N_7f_recorded": 252,
+            "N_h30": 0
+          }
+        }
+      },
+      "denied_final_reservation_request_at_cycle_2_7f": {
+        "phase_label": "h39_H39_UNGUIDED_96_STRICT881_MATCHED_cycle_2_7f",
+        "evaluator_invoked": false,
+        "proof_from_source": "In run_h38_h40_owner_flywheel_waves_v1_h38_launch3.py:2810, guard.reserve_candidate_evals_and_fits is called BEFORE p12._evaluate_20ctx_rust_batches_concurrently at line 2816. In dope_high_only_live_steps_v1_h38_launch3.py:267-278, reserve_candidate_evals_and_fits incremented uncached_candidate_evals_reserved (+d_denied), reserved_native_fits_used (+6*d_denied), and actual_cv_fold_fits_used (+7*d_denied) before raising ProtocolGateFailureError at line 278.",
+        "denied_7fold_candidate_evals_interval": [
+          20,
+          40
+        ],
+        "denied_reserved_native_fits_interval": [
+          120,
+          240
+        ],
+        "denied_cv_fold_fits_interval": [
+          140,
+          280
+        ]
+      },
+      "actual_admitted_and_executed_work_before_denied_request": {
+        "admitted_uncached_candidate_evals_interval": [
+          700,
+          720
+        ],
+        "admitted_reserved_native_fits_interval": [
+          4200,
+          4320
+        ],
+        "executed_actual_cv_and_verification_fold_fits_interval": [
+          2948,
+          3088
+        ],
+        "admitted_work_within_720_and_4320_caps": true
+      },
+      "eval_cache_flush_reconciliation": "In run_h38_h40_owner_flywheel_waves_v1_h38_launch3.py:3146, save_stage2_eval_cache was called only after the `for cycle_idx in (1, 2):` loop completed, so the in-memory evaluations from H39 Launch 1 were not flushed before ProtocolGateFailureError exited the context manager. Fixed in v2 to flush after every batch."
+    }
+  }
+}

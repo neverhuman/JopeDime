@@ -1,0 +1,84 @@
+{
+  "artifacts": {
+    "fit_fold-0_GAP": {
+      "bytes": 66855,
+      "sha256": "8bcf257be1e4c6102f627102b17406e19b6c8e4e5a41514ad33247238a486628"
+    },
+    "fit_fold-0_ORDINAL": {
+      "bytes": 66871,
+      "sha256": "43974347fe010ddb41e30b85b3452a346efa27f9b449ffbcc9a9fcaf75fde5c4"
+    },
+    "fit_fold-1_GAP": {
+      "bytes": 59914,
+      "sha256": "9812fd36e619c2222393f05b30f6839c0233b135af5e5ae0baff0993ae89a015"
+    },
+    "fit_fold-1_ORDINAL": {
+      "bytes": 59926,
+      "sha256": "7638ece769351e3093b3048f117975066a4d2df1624e19a476017af5b5a7e73f"
+    },
+    "independent_QA_source_ONLY_NOT_RUNTIME_PASS": {
+      "bytes": 6387,
+      "sha256": "2f6057be06e8ce2fd64a8b6677b0bbb93c1fd54680c214d8ef8396e92f251fbe"
+    },
+    "independent_replay": {
+      "bytes": 11634,
+      "sha256": "72b58d8b0a1ab72971698f58fee3e4c5c3229d43abd01a9ad625d02dba6d889a"
+    },
+    "native_own_stop": {
+      "bytes": 1673,
+      "sha256": "effa0692d0536ff4878718c0740aec5b1861c5215ed30771f02ac8448d3356ef"
+    },
+    "native_source": {
+      "bytes": 4689,
+      "sha256": "5e395926b9c1a553e012a39a1c8d501322db5d05663a37c7e7e0cfa4d2e36cd3"
+    },
+    "native_source_peer_review": {
+      "bytes": 7036,
+      "sha256": "47d850c5401eca00b4bac018ed1e95d833f799d43e5ea3c7e080fe959c612f65"
+    },
+    "optional_postfit_source": {
+      "bytes": 5514,
+      "sha256": "3dc7e2038e1624555f5ae2bec3a157754a06f556012409c88acf8a3cfd5de96f"
+    },
+    "optional_postfit_source_controls": {
+      "bytes": 561,
+      "sha256": "d97b24d120b276deef15e408c036c3f970f4c7452e0fe3f153f6ea4d3933964d"
+    },
+    "phase_costs": {
+      "bytes": 13152,
+      "sha256": "819e9d6b35229131b81011c53b545d35e8b53a74538b94243fd92696e8a291b2"
+    },
+    "producer_aggregate": {
+      "bytes": 6060,
+      "sha256": "b3551c9960495d010a228faa2914cca9d5107f6e013dacbd3ff52190a59c1083"
+    },
+    "qualified_four_synthetic_fits": {
+      "bytes": 574782,
+      "sha256": "e13b014178c602040aeea2a48a8a719e0c3fda23625dc094bd2e12b90cfad36b"
+    },
+    "root_final_acceptance": {
+      "bytes": 1989,
+      "sha256": "861c7fcdf1e4d9b7b9c4176908c1d35553b1810f25d7bc73674db3453ee9b5ff"
+    },
+    "study_protocol": {
+      "bytes": 10997,
+      "sha256": "b3ef9e57525761a676b12684da0da82d122b52901a2a0799c99df2bedadf2af6"
+    },
+    "study_pure_controls": {
+      "bytes": 515,
+      "sha256": "ba5cbd9a4128a299642795a3c6bb206eca2b71bd4a40e6b007b5ec29eca41d36"
+    },
+    "study_source": {
+      "bytes": 10474,
+      "sha256": "37459814687993aa68cc041dfc50183174f01d42443eaf0b1189bb758a89af08"
+    },
+    "study_source_peer_review": {
+      "bytes": 7603,
+      "sha256": "f4213a13eba35b43447bc6649a300a3d55489a48c9a564a1e43f0f3a82a27c2e"
+    }
+  },
+  "method_authority": "preregistered fixed source and declared archived S1 formula, not a new evaluator or acquisition execution",
+  "notes": "SHA/length identities only; private locators, raw input/model hashes and source bodies excluded. Missing future refs remain null.",
+  "pending_final_QA_source_sha256": "77a602230681d3e86fafcf7ddc5d777e85aeef19e21c9ee5d39095aca9469db4",
+  "schema": "h34.public-source-receipts/v1"
+}

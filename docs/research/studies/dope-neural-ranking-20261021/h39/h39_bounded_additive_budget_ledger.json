@@ -1,0 +1,77 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_type": "additive_attempt_budget_and_failure_ledger",
+  "step_key": "step4",
+  "step_name": "h39_live_stage2_closed_loop_with_repaired_gate_and_smart_svd",
+  "selected_cohort_policy": "COHORT_DISJOINT_STAGE_A_1278_PLUS_STAGE2_20_INNER70",
+  "attempt_number": 20,
+  "prior_attempts_completed": 19,
+  "prior_cumulative_wall_clock_interval_seconds": [
+    2608.062,
+    2610.062
+  ],
+  "approved_attempt_envelope": {
+    "max_wall_seconds": 480.0,
+    "active_cutoff_seconds": 450.0,
+    "cleanup_reserve_seconds": 30.0,
+    "approved_cumulative_wall_clock_ceiling_seconds": 3162.914,
+    "max_campaign_attempts_delta": 1,
+    "max_uncached_candidate_evals": 720,
+    "max_reserved_native_fits": 4320,
+    "max_encoder_optimizer_steps": 0,
+    "max_cpu_workers": 6,
+    "whole_host_cpu_hard_ceiling_pct": 85.0,
+    "enforce_hard_caps": true
+  },
+  "launches": [
+    {
+      "launch_index": 1,
+      "owner_pid": 2589089,
+      "owner_hostname": "xbabe2",
+      "owner_starttime_ticks": 117201657,
+      "started_at_utc": "2026-10-26T03:54:48Z",
+      "completed_at_utc": "2026-10-26T03:58:37Z",
+      "status": "FAILED_EVAL_CAP_EXCEEDED",
+      "last_phase_label": "h39_H39_UNGUIDED_96_STRICT881_MATCHED_cycle_2_7f",
+      "elapsed_wall_seconds": 228.941,
+      "wall_seconds_lower_bound": 228.941,
+      "wall_seconds_upper_bound": 228.941,
+      "unknown_post_checkpoint_work": false,
+      "adapter_optimizer_micro_steps_executed": 0,
+      "adapter_steps_by_arm": {},
+      "encoder_optimizer_steps_executed": 0,
+      "uncached_candidate_evals_reserved": 740,
+      "reserved_native_fits_used": 4440,
+      "actual_cv_fold_fits_used": 3228,
+      "peak_whole_host_cpu_pct": 19.87,
+      "enforce_hard_caps": true,
+      "failure_reason": "STEP_CANDIDATE_EVAL_CAP_EXCEEDED in h39_live_stage2_closed_loop_with_repaired_gate_and_smart_svd (h39_H39_UNGUIDED_96_STRICT881_MATCHED_cycle_2_7f): cumulative_evals=740 (prior=0, current=740) > cap=720"
+    }
+  ],
+  "cumulative_attempt_totals": {
+    "total_launches_recorded": 1,
+    "unresolved_abrupt_terminated_launches_count": 0,
+    "unknown_post_checkpoint_cost_state": false,
+    "cumulative_attempt_wall_clock_interval_seconds": [
+      228.941,
+      228.941
+    ],
+    "updated_cumulative_campaign_wall_clock_interval_seconds": [
+      2837.003,
+      2839.003
+    ],
+    "approved_attempt_max_wall_seconds": 480.0,
+    "approved_attempt_active_cutoff_seconds": 450.0,
+    "approved_cumulative_wall_clock_ceiling_seconds": 3162.914,
+    "remaining_attempt_active_wall_seconds": 221.059,
+    "remaining_attempt_total_wall_seconds": 251.059,
+    "remaining_campaign_wall_seconds_to_ceiling": 323.911,
+    "cumulative_adapter_optimizer_micro_steps_executed": 0,
+    "cumulative_encoder_optimizer_steps_executed": 0,
+    "cumulative_uncached_candidate_evaluations_reserved": 740,
+    "remaining_uncached_candidate_evaluations": 0,
+    "cumulative_reserved_native_fits_used": 4440,
+    "remaining_reserved_native_fits": 0,
+    "cumulative_actual_cv_fold_fits_used": 3228
+  }
+}

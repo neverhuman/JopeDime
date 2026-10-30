@@ -1,0 +1,81 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_type": "additive_attempt_budget_and_failure_ledger",
+  "step_key": "step4",
+  "step_name": "h40_compounded_checkpoint_continuation_vs_analytic_warmstart_within_budget",
+  "selected_cohort_policy": "COHORT_DISJOINT_STAGE_A_1278_PLUS_STAGE2_20_INNER70",
+  "attempt_number": 20,
+  "prior_attempts_completed": 19,
+  "prior_cumulative_wall_clock_interval_seconds": [
+    3147.491,
+    3149.491
+  ],
+  "approved_attempt_envelope": {
+    "max_wall_seconds": 11.5,
+    "active_cutoff_seconds": 10.0,
+    "cleanup_reserve_seconds": 1.5,
+    "approved_cumulative_wall_clock_ceiling_seconds": 3162.914,
+    "max_campaign_attempts_delta": 1,
+    "max_uncached_candidate_evals": 0,
+    "max_reserved_native_fits": 0,
+    "max_encoder_optimizer_steps": 0,
+    "max_cpu_workers": 6,
+    "whole_host_cpu_hard_ceiling_pct": 85.0,
+    "enforce_hard_caps": true
+  },
+  "launches": [
+    {
+      "launch_index": 1,
+      "owner_pid": 3025082,
+      "owner_hostname": "xbabe2",
+      "owner_starttime_ticks": 118201030,
+      "started_at_utc": "2026-10-26T06:39:18Z",
+      "completed_at_utc": "2026-10-26T06:39:29Z",
+      "status": "FAILED_WALL_CLOCK_CAP_EXCEEDED",
+      "last_phase_label": "h40_round0_smart_svd_fp_complete_16steps_step_8",
+      "elapsed_wall_seconds": 10.86,
+      "wall_seconds_lower_bound": 10.86,
+      "wall_seconds_upper_bound": 10.86,
+      "unknown_post_checkpoint_work": false,
+      "adapter_optimizer_micro_steps_executed": 8,
+      "adapter_steps_by_arm": {
+        "h40_round0_smart_svd_fp_complete_16steps": 8
+      },
+      "encoder_optimizer_steps_executed": 0,
+      "uncached_candidate_evals_reserved": 0,
+      "reserved_native_fits_used": 0,
+      "actual_cv_fold_fits_used": 0,
+      "denied_reservation_requests": [],
+      "peak_whole_host_cpu_pct": 15.06,
+      "enforce_hard_caps": true,
+      "failure_reason": "STEP_WALL_CLOCK_CAP_EXCEEDED in h40_compounded_checkpoint_continuation_vs_analytic_warmstart_within_budget (h40_round0_smart_svd_fp_complete_16steps_step_8): cumulative_elapsed=10.860s (prior_launches=0.000s + current=10.860s) > limit=10.000s"
+    }
+  ],
+  "cumulative_attempt_totals": {
+    "total_launches_recorded": 1,
+    "unresolved_abrupt_terminated_launches_count": 0,
+    "unknown_post_checkpoint_cost_state": false,
+    "cumulative_attempt_wall_clock_interval_seconds": [
+      10.86,
+      10.86
+    ],
+    "updated_cumulative_campaign_wall_clock_interval_seconds": [
+      3158.351,
+      3160.351
+    ],
+    "approved_attempt_max_wall_seconds": 11.5,
+    "approved_attempt_active_cutoff_seconds": 10.0,
+    "approved_cumulative_wall_clock_ceiling_seconds": 3162.914,
+    "remaining_attempt_active_wall_seconds": 0.0,
+    "remaining_attempt_total_wall_seconds": 0.64,
+    "remaining_campaign_wall_seconds_to_ceiling": 2.563,
+    "cumulative_adapter_optimizer_micro_steps_executed": 8,
+    "cumulative_encoder_optimizer_steps_executed": 0,
+    "cumulative_uncached_candidate_evaluations_reserved": 0,
+    "remaining_uncached_candidate_evaluations": 0,
+    "cumulative_reserved_native_fits_used": 0,
+    "remaining_reserved_native_fits": 0,
+    "cumulative_actual_cv_fold_fits_used": 0,
+    "cumulative_denied_reservation_requests_count": 0
+  }
+}

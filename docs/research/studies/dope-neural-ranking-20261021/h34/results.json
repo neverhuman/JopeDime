@@ -1,0 +1,349 @@
+{
+  "MSE_refits": 0,
+  "cached_MSE_controls": 2,
+  "development_only": true,
+  "established_external_lift": false,
+  "fits": {
+    "fold-0/GAP": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-0/GAP",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 707.329908301,
+      "worker_wall_seconds": 753.6582007190445
+    },
+    "fold-0/ORDINAL": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-0/ORDINAL",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 692.7883445809999,
+      "worker_wall_seconds": 744.4488438180415
+    },
+    "fold-1/GAP": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-1/GAP",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 614.5228649830001,
+      "worker_wall_seconds": 666.5856072760653
+    },
+    "fold-1/ORDINAL": {
+      "actual_successful_stop": true,
+      "fit_attempts": 1,
+      "fit_calls_returned": 1,
+      "fitted_tree_count": 120,
+      "matched_comparator": true,
+      "requested_trees": 120,
+      "run_id": "fold-1/ORDINAL",
+      "state": "FIT_COMPLETE_NO_OOF_READS",
+      "unknown_fit_attempts": 0,
+      "worker_CPU_seconds": 621.0638653249999,
+      "worker_wall_seconds": 668.8090455119964
+    }
+  },
+  "independent_replay_coverage": {
+    "canonical_picks": 2550,
+    "components": 162,
+    "contexts": 850,
+    "maximum_absolute_score_error": 0.0,
+    "models": 6,
+    "new_fits": 0,
+    "new_models": 4,
+    "reused_MSE_models": 2,
+    "score_bits": 2937600
+  },
+  "independent_verified_readout": {
+    "gate_counts_by_arm": {
+      "GAP": {
+        "components": 162,
+        "context_denominator": 850,
+        "equal_component_context_failure_fraction": 0.013888888888888888,
+        "raw_failure_count": 7,
+        "unweighted_failure_fraction": 0.00823529411764706
+      },
+      "MSE": {
+        "components": 162,
+        "context_denominator": 850,
+        "equal_component_context_failure_fraction": 0.0032921810699588477,
+        "raw_failure_count": 2,
+        "unweighted_failure_fraction": 0.002352941176470588
+      },
+      "ORDINAL": {
+        "components": 162,
+        "context_denominator": 850,
+        "equal_component_context_failure_fraction": 0.04226030313993277,
+        "raw_failure_count": 33,
+        "unweighted_failure_fraction": 0.03882352941176471
+      }
+    },
+    "gate_counts_by_arm_and_fold": {
+      "GAP": {
+        "0": {
+          "components": 81,
+          "context_denominator": 401,
+          "equal_component_context_failure_fraction": 0.006172839506172839,
+          "raw_failure_count": 2,
+          "unweighted_failure_fraction": 0.004987531172069825
+        },
+        "1": {
+          "components": 81,
+          "context_denominator": 449,
+          "equal_component_context_failure_fraction": 0.021604938271604937,
+          "raw_failure_count": 5,
+          "unweighted_failure_fraction": 0.011135857461024499
+        }
+      },
+      "MSE": {
+        "0": {
+          "components": 81,
+          "context_denominator": 401,
+          "equal_component_context_failure_fraction": 0.0,
+          "raw_failure_count": 0,
+          "unweighted_failure_fraction": 0.0
+        },
+        "1": {
+          "components": 81,
+          "context_denominator": 449,
+          "equal_component_context_failure_fraction": 0.006584362139917695,
+          "raw_failure_count": 2,
+          "unweighted_failure_fraction": 0.004454342984409799
+        }
+      },
+      "ORDINAL": {
+        "0": {
+          "components": 81,
+          "context_denominator": 401,
+          "equal_component_context_failure_fraction": 0.058097423838164575,
+          "raw_failure_count": 20,
+          "unweighted_failure_fraction": 0.04987531172069826
+        },
+        "1": {
+          "components": 81,
+          "context_denominator": 449,
+          "equal_component_context_failure_fraction": 0.026423182441700964,
+          "raw_failure_count": 13,
+          "unweighted_failure_fraction": 0.028953229398663696
+        }
+      }
+    },
+    "primary": {
+      "GAP_minus_MSE": {
+        "CI_central_98_75": [
+          -0.830205626604168,
+          2.947455343312834
+        ],
+        "favorable_adjusted_upper_below_zero": false,
+        "lower_better": true,
+        "mean": 0.7041938737892114,
+        "original_component_member_denominator_preserved": true,
+        "union_clusters": 162
+      },
+      "GAP_minus_ORDINAL": {
+        "CI_central_98_75": [
+          -6.054787714038155,
+          -0.09688684578431109
+        ],
+        "favorable_adjusted_upper_below_zero": true,
+        "lower_better": true,
+        "mean": -3.065664476875792,
+        "original_component_member_denominator_preserved": true,
+        "union_clusters": 162
+      }
+    },
+    "summaries": {
+      "GAP": {
+        "fitness_regret": 1.9559812799347729,
+        "selected_fitness": 0.10762879312070792,
+        "selected_gate_failure": 0.013888888888888888,
+        "selected_logratio": -1.4651513994282799
+      },
+      "MSE": {
+        "fitness_regret": 1.2517874061455618,
+        "selected_fitness": -0.5965650806685034,
+        "selected_gate_failure": 0.0032921810699588477,
+        "selected_logratio": -1.0437016030106117
+      },
+      "ORDINAL": {
+        "fitness_regret": 5.021645756810566,
+        "selected_fitness": 3.1732932699965,
+        "selected_gate_failure": 0.04226030313993277,
+        "selected_logratio": -1.2378514306072839
+      }
+    }
+  },
+  "limits": [
+    "No new independent data, source formula execution, native optimizer or training implementation validation.",
+    "770 historical input QA is inherited input/schema/target/weight evidence only. New exact comparator/input/source bridge is mandatory.",
+    "Full shape memory is prospective; any guard/native failure preserved, no fallback/drop/resume/retry.",
+    "MSE cached outcomes cannot be read by new fit workers and are used only after all new fits and OOF stops.",
+    "A favorable adaptive development result would still require external task qualification/confirmation.",
+    "Shared pinned prediction engine, not independent native training.",
+    "No pooled fold curve or own-loss comparison across objective arms."
+  ],
+  "new_independent_admissions": 0,
+  "planned_new_models": 4,
+  "primary": {
+    "GAP_minus_MSE": {
+      "CI_central_98_75": [
+        -0.830205626604168,
+        2.947455343312834
+      ],
+      "favorable_adjusted_upper_below_zero": false,
+      "lower_better": true,
+      "mean": 0.7041938737892114,
+      "original_component_member_denominator_preserved": true,
+      "union_clusters": 162
+    },
+    "GAP_minus_ORDINAL": {
+      "CI_central_98_75": [
+        -6.054787714038155,
+        -0.09688684578431109
+      ],
+      "favorable_adjusted_upper_below_zero": true,
+      "lower_better": true,
+      "mean": -3.065664476875792,
+      "original_component_member_denominator_preserved": true,
+      "union_clusters": 162
+    }
+  },
+  "primary_status": "ROOT_ACCEPTED_VERIFIED",
+  "producer_only_readout": {
+    "gate_counts_by_arm": {
+      "GAP": {
+        "components": 162,
+        "context_denominator": 850,
+        "equal_component_context_failure_fraction": 0.013888888888888888,
+        "raw_failure_count": 7,
+        "unweighted_failure_fraction": 0.00823529411764706
+      },
+      "MSE": {
+        "components": 162,
+        "context_denominator": 850,
+        "equal_component_context_failure_fraction": 0.0032921810699588477,
+        "raw_failure_count": 2,
+        "unweighted_failure_fraction": 0.002352941176470588
+      },
+      "ORDINAL": {
+        "components": 162,
+        "context_denominator": 850,
+        "equal_component_context_failure_fraction": 0.04226030313993277,
+        "raw_failure_count": 33,
+        "unweighted_failure_fraction": 0.03882352941176471
+      }
+    },
+    "gate_counts_by_arm_and_fold": {
+      "GAP": {
+        "0": {
+          "components": 81,
+          "context_denominator": 401,
+          "equal_component_context_failure_fraction": 0.006172839506172839,
+          "raw_failure_count": 2,
+          "unweighted_failure_fraction": 0.004987531172069825
+        },
+        "1": {
+          "components": 81,
+          "context_denominator": 449,
+          "equal_component_context_failure_fraction": 0.021604938271604937,
+          "raw_failure_count": 5,
+          "unweighted_failure_fraction": 0.011135857461024499
+        }
+      },
+      "MSE": {
+        "0": {
+          "components": 81,
+          "context_denominator": 401,
+          "equal_component_context_failure_fraction": 0.0,
+          "raw_failure_count": 0,
+          "unweighted_failure_fraction": 0.0
+        },
+        "1": {
+          "components": 81,
+          "context_denominator": 449,
+          "equal_component_context_failure_fraction": 0.006584362139917695,
+          "raw_failure_count": 2,
+          "unweighted_failure_fraction": 0.004454342984409799
+        }
+      },
+      "ORDINAL": {
+        "0": {
+          "components": 81,
+          "context_denominator": 401,
+          "equal_component_context_failure_fraction": 0.058097423838164575,
+          "raw_failure_count": 20,
+          "unweighted_failure_fraction": 0.04987531172069826
+        },
+        "1": {
+          "components": 81,
+          "context_denominator": 449,
+          "equal_component_context_failure_fraction": 0.026423182441700964,
+          "raw_failure_count": 13,
+          "unweighted_failure_fraction": 0.028953229398663696
+        }
+      }
+    },
+    "primary": {
+      "GAP_minus_MSE": {
+        "CI_central_98_75": [
+          -0.830205626604168,
+          2.947455343312834
+        ],
+        "favorable_adjusted_upper_below_zero": false,
+        "lower_better": true,
+        "mean": 0.7041938737892114,
+        "original_component_member_denominator_preserved": true,
+        "union_clusters": 162
+      },
+      "GAP_minus_ORDINAL": {
+        "CI_central_98_75": [
+          -6.054787714038155,
+          -0.09688684578431109
+        ],
+        "favorable_adjusted_upper_below_zero": true,
+        "lower_better": true,
+        "mean": -3.065664476875792,
+        "original_component_member_denominator_preserved": true,
+        "union_clusters": 162
+      }
+    },
+    "summaries": {
+      "GAP": {
+        "fitness_regret": 1.9559812799347729,
+        "selected_fitness": 0.10762879312070792,
+        "selected_gate_failure": 0.013888888888888888,
+        "selected_logratio": -1.4651513994282799
+      },
+      "MSE": {
+        "fitness_regret": 1.2517874061455618,
+        "selected_fitness": -0.5965650806685034,
+        "selected_gate_failure": 0.0032921810699588477,
+        "selected_logratio": -1.0437016030106117
+      },
+      "ORDINAL": {
+        "fitness_regret": 5.021645756810566,
+        "selected_fitness": 3.1732932699965,
+        "selected_gate_failure": 0.04226030313993277,
+        "selected_logratio": -1.2378514306072839
+      }
+    }
+  },
+  "schema": "h34.public-results/v1",
+  "source_level_comparator_gates": "exact inputs/source/native policy plus actual pre-fit saved-stat/target/weight/support checks",
+  "state": "VERIFIED_DEVELOPMENT_ONLY_NO_EXTERNAL_CONFIRMATION",
+  "units": "costs minimized; adjusted upper<0 for both primaries plus support; development evidence only"
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Jepson-approved DSC-01 public per-candidate API exposure changes only raw evolve.rs source identity; append after current-main RNK11/API01 successors without changing their records or any numerical, emitted, generator/search or historical object fixtures.",
+  "plan_reference": "DSC-01; scope_2218/t526u and owner-authority lanes_0545 2026-10-30 05:45Z",
+  "source_commit": "d053acf5a84990caa3fd5a277666840e7991a01a",
+  "base_commit": "0cbac52869a67ad58d4787ee18532d26e3878c3d",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "c0fa72e43b451e8cabedd916780543a04452f7b7907b49728e0d98c9d00de0db",
+      "after": "0bb7afd9cd4f8cdb0a34684f7d19a9f69c6a01cf70bc3fde10864c71a5d89141"
+    }
+  ],
+  "before_identity_digest": "75294fa33fd0855958db6ad6c6f75a85ab61d84a8e4d28dcea25b9305b7003d7",
+  "after_identity_digest": "dbfe797208ac96bb67e5f5109c23e54fc2b9e8b76ac89638dea90189b9b48309",
+  "before_implementation_sha256": "44c1f73ba257e509a8350a72a6ea6790140d165eb6bd0ef9174c3e5dcb5a4d64",
+  "after_implementation_sha256": "04d59d4d2bc54fc3448a35f8224c76fd0b0a8be99bd9f1218af57889b4cddb78",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
