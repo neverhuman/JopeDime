@@ -1,3 +1,4 @@
+#![cfg(feature = "quantized-tokenizer")]
 use crate::quantized::gguf_file;
 use crate::{Context, Error, Result};
 use std::collections::HashSet;

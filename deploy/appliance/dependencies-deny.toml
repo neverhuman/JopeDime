@@ -8,6 +8,8 @@ feature_sets = [[], ["embedded"], ["embedded", "dev-keys"]]
 # Never in the normal or build closure of `jopedime`.
 deny = [
   # Python, LibTorch and external ML runtimes.
+  # Additional CPU appliance bans from spec §3.4.
+  "rusqlite", "libsqlite3-sys", "esaxx-rs", "syntect",
   "tch", "torch-sys", "pyo3*", "ort", "ort-sys", "onnxruntime*",
   # Research, training, benchmark, cluster and cloud crates.
   "jope-parallel", "jope-learning", "jope-campaigns", "jope-bench", "jope-pipeline",
