@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.classification-fitness.v1.schema.json",
+  "title": "JopeDime binary classification fitness v1",
+  "description": "Strict binary objectives on calibrated probabilities (spec §5.10). Both minimize. Runtime bounds spec JSON to 32 KiB, refuses duplicate keys, and enforces input alignment, class membership/order and probability sums. Calibration and event integration are separate. Multiclass is deferred.",
+  "type": "object",
+  "required": ["schema", "metric", "class_order", "aggregation", "undefined"],
+  "properties": {
+    "schema": {"const": "jope.classification-fitness/v1"},
+    "metric": {
+      "enum": ["logloss", "brier"],
+      "description": "logloss: -ln(p_true) without clipping; zero true-class probability fails the candidate. brier: (p_positive - is_positive)^2, without a factor of two; positive is class_order[1]. Both are defined on a single-class fold."
+    },
+    "class_order": {"$ref": "#/$defs/class_order"},
+    "aggregation": {
+      "enum": ["mean", "sum"],
+      "description": "Unweighted arithmetic mean or sum of row losses over all supplied held-out rows, in input order. No row is omitted."
+    },
+    "undefined": {
+      "const": "fail_candidate",
+      "description": "Invalid inputs, undefined/non-finite losses or predictions return FITNESS_UNDEFINED for this candidate only. Never return a placeholder score or fail the whole run."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "class_order": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256},
+      "description": "Two distinct exact class names in probability-column order; class_order[1] is positive."
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["class_order", "labels", "probabilities"],
+      "properties": {
+        "class_order": {"$ref": "#/$defs/class_order"},
+        "labels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 256}
+        },
+        "probabilities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "Runtime additionally requires equal nonzero row counts, exact agreement with the specification's class_order, labels drawn from those classes, finite probabilities and each pair summing to one within absolute tolerance 1e-12. No renormalization or clipping.",
+      "examples": [
+        {
+          "class_order": ["no", "yes"],
+          "labels": ["no", "yes", "no", "yes"],
+          "probabilities": [[0.5, 0.5], [0.75, 0.25], [0.75, 0.25], [0, 1]]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "logloss",
+      "class_order": ["no", "yes"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate"
+    },
+    {
+      "schema": "jope.classification-fitness/v1",
+      "metric": "brier",
+      "class_order": ["no", "yes"],
+      "aggregation": "sum",
+      "undefined": "fail_candidate"
+    }
+  ]
+}
