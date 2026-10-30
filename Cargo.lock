@@ -2849,6 +2849,9 @@ dependencies = [
 [[package]]
 name = "jope-service"
 version = "0.4.1"
+dependencies = [
+ "sha2 0.10.9",
+]
 
 [[package]]
 name = "jope-telemetry"

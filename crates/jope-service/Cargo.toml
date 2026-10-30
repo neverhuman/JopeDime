@@ -9,6 +9,7 @@ repository.workspace = true
 description = "JopeDime v1 engine service"
 
 [dependencies]
+sha2 = { workspace = true }
 
 [lints]
 workspace = true
