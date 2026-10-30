@@ -62,6 +62,38 @@ def family_median_interval(gains: dict[str, float], seed: int) -> tuple[float, f
     )
 
 
+def adapter_weight_identity(adapter_path: Path, checkpoint_path: Path) -> tuple[str, str, float]:
+    """Hash selected trainable weights and measure L2 movement from the base."""
+    payload = torch.load(adapter_path, map_location="cpu", weights_only=True)
+    adapter = payload.get("adapter_trainable_state")
+    if not isinstance(adapter, dict):
+        raise RuntimeError("selected checkpoint has no adapter_trainable_state")
+    base_payload = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    base_state = base_payload.get("state_dict")
+    if not isinstance(base_state, dict) or set(adapter) - set(base_state):
+        raise RuntimeError("adapter tensor names do not match the pinned base checkpoint")
+    count = sum(tensor.numel() for tensor in adapter.values())
+    if count != h48.TRAINABLE_PARAMS:
+        raise RuntimeError(f"adapter parameter count mismatch: {count}")
+
+    def digest(values: dict[str, torch.Tensor]) -> str:
+        hasher = hashlib.sha256()
+        for name in sorted(values):
+            tensor = values[name].detach().cpu().contiguous()
+            hasher.update(name.encode("utf-8"))
+            hasher.update(str(tensor.dtype).encode("ascii"))
+            hasher.update(np.asarray(tensor.shape, dtype=np.int64).tobytes())
+            hasher.update(tensor.reshape(-1).view(torch.uint8).numpy().tobytes())
+        return hasher.hexdigest()
+
+    base_adapter = {name: base_state[name] for name in adapter}
+    delta_sq = sum(
+        torch.sum((adapter[name].float() - base_adapter[name].float()) ** 2)
+        for name in adapter
+    )
+    return digest(adapter), digest(base_adapter), float(torch.sqrt(delta_sq))
+
+
 def run_control(args: argparse.Namespace) -> dict:
     if args.seed not in SEEDS:
         raise RuntimeError(f"H51 seeds are exactly {SEEDS}")
@@ -123,8 +155,17 @@ def run_control(args: argparse.Namespace) -> dict:
     median, lower, upper = family_median_interval(family_gains, args.seed)
     selection = json.loads((seed_dir / "selected-candidate.json").read_text())
     adapter_path = seed_dir / selection["checkpoint"]
-    adapter_sha = sha256(adapter_path)
+    adapter_sha, baseline_adapter_sha, update_l2 = adapter_weight_identity(
+        adapter_path, args.checkpoint
+    )
     accepted = median > STRICT_MARGIN and lower > STRICT_MARGIN
+    result_path = seed_dir / "train-result.json"
+    result["legacy_h48_arm_label"] = result.get("arm")
+    result["arm"] = "CONTROL"
+    atomic_json(result_path, result)
+    selection["legacy_h48_arm_label"] = selection.get("arm")
+    selection["arm"] = "CONTROL"
+    atomic_json(seed_dir / "selected-candidate.json", selection)
     summary = {
         "schema": "jope.h51.candidate-summary/v1",
         "candidate_id": f"H51-CONTROL-seed{args.seed}",
@@ -132,6 +173,10 @@ def run_control(args: argparse.Namespace) -> dict:
         "seed": args.seed,
         "device": args.device,
         "adapter_sha256": adapter_sha,
+        "adapter_file_sha256": sha256(adapter_path),
+        "r785_adapter_sha256": baseline_adapter_sha,
+        "adapter_update_l2_vs_r785": update_l2,
+        "adapter_param_count": h48.TRAINABLE_PARAMS,
         "family_median_gain": median,
         "family_bootstrap_lb95": lower,
         "family_bootstrap_ub95": upper,
