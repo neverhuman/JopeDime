@@ -518,7 +518,10 @@ mod tests {
             }
             let evidence = body.evidence.unwrap();
             assert!(evidence.comparable);
-            assert_eq!((evidence.before, evidence.after), (Some(before), Some(after)));
+            assert_eq!(
+                (evidence.before, evidence.after),
+                (Some(before), Some(after))
+            );
         }
     }
 
