@@ -262,6 +262,73 @@ def pool_census(packet, allowed):
     )
 
 
+def proposal_census(packet, allowed, index):
+    """Replay the closed promotion prefix before each observed proposal group."""
+    meta = index["promotions"]
+    if meta["first_later_round"] <= 782 or sha(meta["local_path"]) != meta["sha256"]:
+        raise ValueError("incomplete/corrupted promotion prefix")
+    events = [
+        json.loads(line) for line in Path(meta["local_path"]).read_text().splitlines()
+    ]
+    if len(events) != meta["entries"] or [e["round"] for e in events] != sorted(
+        e["round"] for e in events
+    ):
+        raise ValueError("promotion prefix inventory/order mismatch")
+    for e in events:
+        if (
+            e["context_sha256"] not in allowed
+            or e["cv_gate_passed"] is not True
+            or hashlib.sha256(e["dsl"].encode()).hexdigest() != e["program_sha256"]
+        ):
+            raise ValueError("invalid training admission")
+        finite(e["fitness"])
+    contexts = {g["context_sha256"] for r in index["rounds"] for g in r["groups"]}
+    pools = {}
+    for cid in contexts:
+        p = packet / "pools" / (cid + ".npz")
+        if sha(p) != allowed[cid]["pool_sha256"]:
+            raise ValueError("snapshot base hash mismatch")
+        with np.load(p, allow_pickle=False) as z:
+            ids = [
+                v.decode() if isinstance(v, bytes) else str(v)
+                for v in z["program_sha256"].tolist()
+            ]
+            pools[cid] = (ids, z["fitness"].astype(np.float64))
+    position = 0
+    counts, records = Counter(), []
+    for r in index["rounds"]:
+        while position < len(events) and events[position]["round"] < r["round"]:
+            event = events[position]
+            cid = event["context_sha256"]
+            if cid in pools:
+                ids, values = pools[cid]
+                if event["program_sha256"] not in ids:
+                    ids.append(event["program_sha256"])
+                    pools[cid] = (ids, np.append(values, event["fitness"]))
+            position += 1
+        group_ids = [g["context_sha256"] for g in r["groups"]]
+        if len(group_ids) != len(set(group_ids)):
+            raise ValueError(
+                "repeated context within round needs a finer snapshot join"
+            )
+        for cid in group_ids:
+            category, tied = classify(*pools[cid])
+            counts[category] += 1
+            counts["boundary_ties"] += tied
+            records.append(
+                dict(
+                    round=r["round"], context=cid, category=category, boundary_tie=tied
+                )
+            )
+    counts["snapshots"] = len(records)
+    return dict(
+        counts=dict(counts),
+        records=records,
+        promotion_prefix_sha256=meta["sha256"],
+        population="Actual pre-proposal training pools in rounds775-782; repeated adaptive observations.",
+    )
+
+
 class Controls(unittest.TestCase):
     def test_passing_formula(self):
         value, gate = fitness("(a)", -1.0, -0.5, 0.5, 2)
@@ -308,7 +375,7 @@ class Controls(unittest.TestCase):
 
     def test_journal_inventory_refusal(self):
         with self.assertRaises(ValueError):
-            replay({"rounds": []}, {})
+            replay({"rounds": [], "evaluator_source_sha256": EVALUATOR}, {})
 
 
 def main():
@@ -341,6 +408,7 @@ def main():
         index_sha256=sha(args.journal_index),
         surrogate=replay(index, allowed),
         initial_pools=pool_census(args.packet, allowed),
+        proposal_snapshots=proposal_census(args.packet, allowed, index),
         native_fits=0,
         model_forwards=0,
         GPU_work=False,
@@ -355,6 +423,7 @@ def main():
             dict(
                 surrogate=result["surrogate"],
                 pool_counts=result["initial_pools"]["counts"],
+                proposal_counts=result["proposal_snapshots"]["counts"],
                 row_range=result["initial_pools"]["row_range"],
                 wall_seconds=result["wall_seconds"],
             )
