@@ -204,7 +204,12 @@ impl Projector {
                 let after = champion.score.value;
                 let change = match evidence.before {
                     Some(before) if before != 0.0 => {
-                        format!(", {:+.1}%", (after - before) / before.abs() * 100.0)
+                        let percent = (after / before.abs() - before.signum()) * 100.0;
+                        if percent.is_finite() {
+                            format!(", {percent:+.1}%")
+                        } else {
+                            String::new()
+                        }
                     }
                     Some(_) => String::new(),
                     None => "; comparison unavailable".to_owned(),
