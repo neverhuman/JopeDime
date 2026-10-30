@@ -9,11 +9,19 @@ repository.workspace = true
 description = "JopeDime v1 API client"
 
 [features]
-fake = ["dep:jope-api", "dep:serde_json"]
+engine = ["dep:axum", "dep:http-body-util", "dep:jope-service", "dep:tokio", "dep:tower"]
+fake = []
 
 [dependencies]
-jope-api = { path = "../jope-api", optional = true }
-serde_json = { workspace = true, optional = true }
+axum = { version = "=0.8.9", default-features = false, optional = true }
+http-body-util = { version = "=0.1.5", optional = true }
+jope-api = { path = "../jope-api" }
+jope-service = { path = "../jope-service", optional = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, optional = true }
+tower = { version = "=0.5.3", default-features = false, features = ["util"], optional = true }
+ureq = { version = "=3.4.2", default-features = false }
 
 [[test]]
 name = "fake_replay"
