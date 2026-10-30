@@ -542,7 +542,8 @@ mod tests {
         let actual: RunSnapshot = serde_json::from_value(document(response).await).unwrap();
         assert_eq!(actual, committed);
         let start = std::time::Instant::now();
-        let response = app(log)
+        // Keep database teardown outside the HTTP timeout measurement.
+        let response = app(Arc::clone(&log))
             .oneshot(request(
                 &format!("{path}?wait_seconds=0.04&after_event=1"),
                 false,
