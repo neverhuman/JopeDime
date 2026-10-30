@@ -32,6 +32,10 @@ def terminal_arm_by_preregistered_order(admission: dict) -> str | None:
                  if admission.get("arms", {}).get(arm, {}).get("admitted") is True), None)
 
 
+def deadline_remaining(deadline: float, now: float | None = None) -> float:
+    return deadline - (time.monotonic() if now is None else now)
+
+
 def note(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     line = f"{datetime.now(timezone.utc).isoformat()} — {text}\n"
@@ -118,7 +122,7 @@ def safe_preflight() -> dict:
     }
 
 
-def acquire_lock(status_path: Path, wait_total: float) -> tuple[object, float, int]:
+def acquire_lock(status_path: Path, wait_total: float, deadline: float | None = None) -> tuple[object, float, int]:
     handle = LOCK.open("a+")
     started = time.monotonic()
     next_note = started
@@ -132,8 +136,13 @@ def acquire_lock(status_path: Path, wait_total: float) -> tuple[object, float, i
         except BlockingIOError:
             pass
         waited = time.monotonic() - started
-        if waited >= max(0.0, MAX_LOCK_WAIT_SECONDS - wait_total):
+        remaining_lock_wait = max(0.0, MAX_LOCK_WAIT_SECONDS - wait_total)
+        if deadline is not None:
+            remaining_lock_wait = min(remaining_lock_wait, max(0.0, deadline_remaining(deadline)))
+        if waited >= remaining_lock_wait:
             handle.close()
+            if deadline is not None and time.monotonic() >= deadline:
+                raise TimeoutError("fixed H55 total GPU-wave cap expired while waiting for qualification.lock")
             raise TimeoutError(f"qualification.lock wait exceeded 3h; cumulative={wait_total + waited:.1f}s")
         if time.monotonic() >= next_note:
             note(status_path, f"WAIT qualification.lock / GPU >=6GiB; cumulative_wait={wait_total + waited:.0f}s")
@@ -190,10 +199,10 @@ def run_child(cmd: list[str], log_path: Path, timeout: float, status_path: Path)
 
 def run_locked_cell(
     *, key: str, cmd: list[str], output_dir: Path, timeout: float,
-    status_path: Path, cumulative_wait: float,
+    status_path: Path, cumulative_wait: float, deadline: float | None = None,
 ) -> tuple[dict, float]:
     preflight = safe_preflight()
-    handle, wait_seconds, free_mib = acquire_lock(status_path, cumulative_wait)
+    handle, wait_seconds, free_mib = acquire_lock(status_path, cumulative_wait, deadline)
     try:
         post_lock = safe_preflight()
         preflight.update({f"post_lock_{key}": value for key, value in post_lock.items()})
@@ -202,6 +211,10 @@ def run_locked_cell(
         preflight["gpu_free_mib_after_lock"] = free_mib
         preflight["gpu_min_free_mib"] = MIN_GPU_FREE_MIB
         preflight["qualification_lock_wait_seconds"] = wait_seconds
+        if deadline is not None:
+            timeout = min(timeout, deadline_remaining(deadline))
+            if timeout <= 0:
+                raise TimeoutError("fixed H55 total GPU-wave cap expired before cell launch")
         note(status_path, f"START {key}; CUDA free={free_mib} MiB; lock_wait={wait_seconds:.1f}s; preflight={json.dumps(preflight, sort_keys=True)}")
         log_path = RUN_ROOT / "logs" / f"{key.replace('/', '-')}.log"
         code, wall, max_rss, max_cpu = run_child(cmd, log_path, timeout, status_path)
@@ -298,8 +311,11 @@ def run_outcomes(amendment: Path) -> dict:
     wave_path = outcome_root / "wave.json"
     if wave_path.exists():
         raise RuntimeError("H55 outcome wave receipt already exists")
-    outcome_root.mkdir(parents=True, exist_ok=False)
+    if outcome_root.exists() and any(outcome_root.iterdir()):
+        raise RuntimeError("H55 outcome directory contains a prior or partial wave")
+    outcome_root.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()
+    deadline = start + cap
     cells = []
     wait_total = 0.0
     reason = None
@@ -312,7 +328,8 @@ def run_outcomes(amendment: Path) -> dict:
         try:
             cell, waited = run_locked_cell(
                 key=f"{arm}/seed{seed}", cmd=runner_cmd("outcome", out, arm, seed),
-                output_dir=out, timeout=remaining, status_path=status_path, cumulative_wait=wait_total,
+                output_dir=out, timeout=remaining, status_path=status_path,
+                cumulative_wait=wait_total, deadline=deadline,
             )
             wait_total += waited
             cells.append(cell)
