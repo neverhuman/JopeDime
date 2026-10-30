@@ -7,6 +7,7 @@ pub mod discover;
 pub mod engine;
 pub mod events;
 pub mod export;
+pub mod governor;
 pub mod http;
 pub mod idempotency;
 pub mod lex;
