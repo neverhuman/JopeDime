@@ -142,6 +142,8 @@ metrics! {
     IO_BATCH_BYTES = 0x0419, "io.batch.bytes", "bytes", "I2", Step, false;
     IO_BATCH_BYTES_PER_S = 0x041a, "io.batch_bytes_per_s", "bytes/s", "I2", Step, false;
     IO_BATCH_GB_S = 0x041b, "io.batch_gb_s", "GB/s", "I2", Step, false;
+    CPU_CORES = 0x041c, "cpu.cores", "core-equivalents", "I8", Sampled, false;
+    CPU_HOST_PCT = 0x041d, "cpu.host_pct", "%", "I8", Sampled, false;
 }
 
 pub fn metric(id: u16) -> Option<&'static MetricDef> {
