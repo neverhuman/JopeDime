@@ -1,3 +1,74 @@
-\section{Historical notes}\label{app:history}\TBD{appendix content}
-\section{Incident log}\label{app:incidents}\TBD{appendix content}
-\section{Training details}\label{app:training}\TBD{appendix content}
+\section{Historical notes}\label{app:history}
+
+\Cref{sec:road} traces the four pillars of \cref{sec:anatomy} through the
+milestones directly needed for our argument: algorithm selection
+\citep{rice1976algorithm}, typed genetic programming and evolutionary search
+\citep{koza1992genetic,montana1995stgp,real2020automlzero}, self-play and expert
+iteration \citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and
+task-conditioned amortization across tabular problems
+\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}. \TBD{Expand with
+the full chronological survey table and domain-by-domain referee inventory.}
+
+\section{Incident log and audit safeguards}\label{app:incidents}
+
+\Cref{sub:method-referee} requires that evaluation artifacts violating
+held-out isolation be recorded and excluded rather than silently dropped:
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
+  \item \textbf{Excluded test-selected search baseline.} An earlier internal
+  leaderboard entry took, per dataset, the best of \num{63108} test-scored
+  evaluations across 42 datasets. Because selecting among candidates using
+  test-fold scores biases the reported metric upward
+  \citep{cawley2010overfitting}, that entry is excluded from
+  all comparative claims.
+  \item \textbf{Input-closure and canary checks.} The evaluation harness
+  enforces three automated regression checks: an inner-fold label-poison test,
+  a sealed canary check, and a train-only input-closure audit verifying that
+  held-out test targets and their derived statistics do not enter board
+  encoding or candidate generation. \TBD{Attach final pre-registration and
+  audit receipts before benchmark release.}
+\end{itemize}
+
+\section{Training details}\label{app:training}
+
+This appendix records the implementation specifications referenced in
+\cref{sec:method} for the historical reference checkpoint (separate from the
+later adapter snapshot in \cref{sec:method-status}):
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
+  \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
+  \num{2048}-value context $z_p = \encP(p)$ concatenates three blocks:
+  (i)~\num{512} values pooling a \num{128}-dimensional pretrained row encoder
+  across training rows by mean, standard deviation, and 10th and 90th
+  percentiles; (ii)~\num{1024} values from a projected third-party tabular
+  regressor hidden state capped at \num{768} context rows and \num{256} query
+  rows (\TBD{name, version, and licence}); and (iii)~\num{512} values from two
+  frozen target-summary windows initialized with fixed seed~17. Any context
+  with a non-finite entry is refused rather than imputed. Across eight
+  reference encoding jobs, measured wall-clock latency ranged from 11.7\,s to
+  20.8\,s within the 30\,s cap.
+  \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
+  Lists $G_p$ require at least eight valid scored programs per problem, with
+  percentile $\rho_w = 1 - \mathrm{rank}/(|G_p|-1)$ and writer sequence weight
+  $0.05 + \rho_w^4$. In the combined objective
+  $\mathcal{L}_{\text{writer}} + 0.1\,\mathcal{L}_{\text{map}} +
+  0.25\,\mathcal{L}_{\text{BT}} + 0.1\,\mathcal{L}_{\text{runtime}} +
+  0.05\,\mathcal{L}_{\text{prog}}$, the pairwise Bradley--Terry term weights
+  pairs by their score gap, doubled when either program is at or above the
+  0.90 percentile. The network has \num{27796494} parameters in total (six
+  decoder blocks, width \num{512}, four attention heads, prefix context token,
+  and maximum length \num{128} tokens over the \num{401}-token grammar);
+  approximately \num{1.05} million parameters belong to training-time ranking
+  and control heads that are absent at deployment.
+  \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
+  The supplied source notes describe an AdamW run (learning rate $10^{-4}$,
+  weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
+  on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
+  80 training datasets (\num{7877} lists; \num{8894} contexts). These
+  historical reference specifications are separate from the later adapter
+  snapshot in \cref{sec:method-status}.
+  \TBD{Provide the checkpoint acceptance record and held-out promotion receipt
+  before final evaluation.}
+  \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
+  Refereed evaluation isolates candidate execution with seccomp and Landlock,
+  enforces cgroup memory limits with swap disabled, and requires native and
+  emitted-code predictions to agree within $10^{-9}\max(1, |\hat{y}|)$.
+\end{itemize}

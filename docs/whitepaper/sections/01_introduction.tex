@@ -75,15 +75,15 @@ version that beat the European champion Fan Hui
 goal for invention: learn from repeated program evaluations during training,
 then deploy a writer with a single candidate budget, \searchone{}
 (\hyperref[box:searchone]{Box~1}). The budget is a test condition, not a
-promise that every first proposal wins. \Cref{fig:emptysquare} summarizes
-the distinction between spending search at deployment and learning from it
-in advance.
+promise that every first proposal wins. \Cref{fig:emptysquare} separates
+the training feedback path from the frozen writer and fitting procedure at
+deployment.
 
 \begin{explainer}{Box 1: What ``search = 1'' means}
 \phantomsection\label{box:searchone}%
 \begin{itemize}[leftmargin=*,nosep]
   \item \textbf{One inference, one candidate.} For a new problem, the program
-    writer emits one complete program ($B = 1$), with no retries, repairs,
+    writer emits one complete program ($\budget = 1$), with no retries, repairs,
     best-of-$N$, reranking or weight updates.
   \item \textbf{Everything is counted,} including reasoning tokens and problem
     encoding. One inference is one generation, not one forward pass.
@@ -100,10 +100,20 @@ it does not imply that the system starts without human knowledge.
 
 \begin{figure}[t]
   \centering
-  \fbox{\parbox{0.88\linewidth}{\TBD{Conceptual diagram: distinguish search
-  during training from the candidate budget at deployment.}}}
-  \caption{\textbf{Learning before deployment and searching during it.}
-  A conceptual comparison is pending; no measured \EZ{} advantage is implied.}
+  \small
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.23\linewidth}X@{}}
+    \toprule
+    \textbf{Training} & Propose $\rightarrow$ Evaluate $\rightarrow$ Update \\
+    & Repeated attempts; referee feedback can change the writer. \\
+    \midrule
+    \textbf{Deployment} & Encode $\rightarrow$ Propose $\rightarrow$ Fit $\rightarrow$ Predict \\
+    & Frozen writer; one candidate committed before its score is known. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{\textbf{Training feedback and the single-candidate contract.}
+  The writer updates during training; the emitted estimator fits during
+  deployment. Whether the learned writer improves the first proposal is
+  the empirical question in \cref{sec:results}.}
   \label{fig:emptysquare}
 \end{figure}
 
