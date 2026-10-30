@@ -24,7 +24,15 @@ for seed in 9 10 11; do
   fi
   while true; do
     if [[ "$DEVICE" == "cpu" ]]; then
-      break
+      available_kb=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)
+      cpu_pct=$(python3 -c 'import psutil; print(psutil.cpu_percent(interval=1))')
+      if (( available_kb >= 20971520 )) && python3 -c 'import sys; sys.exit(0 if float(sys.argv[1]) <= 85 else 1)' "$cpu_pct"; then
+        gpu_free=""
+        break
+      fi
+      echo "CPU fallback preflight failed: RAM=${available_kb}KiB CPU=${cpu_pct}%; retry after 30s"
+      sleep 30
+      continue
     fi
     exec {lockfd}>"$LOCK"
     if ! flock -n "$lockfd"; then
@@ -42,7 +50,7 @@ Path(sys.argv[1]).write_text(json.dumps({
 }, indent=2) + "\n")
 PY
         echo "GPU lock busy for 20 minutes before H51 start; using preregistered CPU fallback"
-        break
+        continue
       fi
       echo "qualification.lock busy; H51 waits"
       sleep 30
