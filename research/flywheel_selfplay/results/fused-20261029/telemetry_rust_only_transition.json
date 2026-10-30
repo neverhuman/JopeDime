@@ -1,0 +1,33 @@
+{
+  "utc": "2026-10-29T21:56:26.193490+00:00",
+  "owner_direction": "tel_rust_only_wiring_20261029.md; TELEMETRY_RUST_PORT.md",
+  "state": "Python adapter removed; native high-level API pending; no restart",
+  "supersedes": "telemetry_enable_readiness.json and legacy Python enabler",
+  "same_live_pid": 441927,
+  "superseded_enabler_pid_stopped": 1550947,
+  "legacy_enabler_archive": "/home/ubuntu/jope-data/flywheel-gp-fused/telemetry-enable/superseded-python-adapter/enable_when_ready.py",
+  "python_adapter_and_tests_absent": true,
+  "runtime_source_matches_current_main": {
+    "research/flywheel_selfplay/run_fused_closed_loop.py": true,
+    "research/flywheel_selfplay/device_pool_cache.py": true
+  },
+  "main": "bdcc01c34875354c1d44df17c39413f94285f753",
+  "native_tests": {
+    "passed": 40,
+    "failed": 0,
+    "scope": "existing jope-telemetry --lib; not qualification of the pending port"
+  },
+  "learning_tests": {
+    "passed": 48,
+    "failed": 0
+  },
+  "inventory": "pass",
+  "paper_trace": "pass",
+  "native_import": "pass with explicit JOPE_PRIME_CONFIG pointing to the existing python/prime.toml; default installed package import seeks absent venv prime.toml",
+  "github_ci": "old own run40957803839 cancellation requested; no new dispatch; skip-ci commits per owner",
+  "latest_observed_round": 360,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "trainable_params": 29211,
+  "native_backend_dependency": "luna_tel_train P1/P2 native StepTimer,StepBatch,IO/flywheel lifecycle/aggregation API; current main exposes only generic Recorder/GpSession/metric_registry",
+  "next_action": "History-preserving update to actual Rust port,one-line calls at DL boundaries,local native tests/direct import,then original checkpoint/pool/promotions-preserving telemetry restart with frozen DOPE."
+}

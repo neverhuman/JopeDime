@@ -262,3 +262,57 @@ Max4 native evaluations/context,64/round; training/LR/dev/DOPE unchanged.
 Pre-outcome policy: `results/fused-20261029/dev-regression/gp_exploration_preregistration.json`.
 Full per-round/per-context audit: `results/fused-20261029/dev-regression/gp_plateau_audit.md`.
 No promotion or dev improvement is promised by exploration.
+
+Rust-only telemetry direction supersedes the Python adapter (Jepson21:47Z).
+`fused_telemetry.py` and its Python telemetry tests are removed. The pending
+legacy enabler is stopped; the current training process remains telemetry-off.
+All new telemetry metric computation,aggregation,clocking and sink writing must
+run in `crates/jope-telemetry` through `jope._telemetry`,with only one-line calls
+at PyTorch loop boundaries. Preserve `JOPE_TELEMETRY_RUN_DIR`,the events schema
+and all stable metric names/ids,including `io.batch_gb_s`0x041b.
+
+PR453 stays draft until luna_tel_train's native StepTimer/StepBatch/IO/flywheel
+API lands. Current generic `Recorder.emit_scalar` is not a substitute for moving
+rate computation and lifecycle/aggregation into Rust. Update this branch onto
+that actual API without rewriting shared history; use targeted local native
+tests and a direct extension smoke test,no new GitHub CI dispatch. Then install
+the compatible native wheel and perform the original completed-checkpoint
+handoff,preserving the pool/promotions,optimizer and frozen DOPE. Until then,
+do not restart with the superseded Python adapter or resurrect its enabler.
+
+Priority2205 recovery uses the unchanged logical batch8192/checkpoint360,with
+telemetry off while the Rust API is developed. `wait_for_gpu_headroom` is DL
+allocation control: release unused own cache,wait for20GiBfree,back off5s at
+startup and before each round. The measured training peak is about17GiB.
+This check cannot replace a common exclusion lock across all GPU launchers.
+Two guard tests cover busy→busy→ready and insufficient hardware. Actual
+rounds361/362 completed50.07/52.22s,with unchanged DOPE and64 native evaluations
+each. Full checkpoint/best-pointer/journal-prefix verification is in
+`results/fused-20261029/gpu_guard_recovery_proof.json`.
+
+Native port integration handoff (reviewed uncommitted P1 API on xbabe2):
+`Recorder.begin/mark/put/end/commit` and `open_flywheel_step` are being added.
+The latter currently targets the older W trainer and `record_io` requires the
+legacy resident-NumPy batch dictionary. The fused worker instead delivers
+cached GPU pool gathers plus CPU indices/cold-pool payload. Confirm native
+fused/frozen-DOPE metadata and a compatible native IO path before adopting the
+factory. Never reconstruct the eliminated multi-GB CPU slates to fit an IO
+API. Rust must count bytes,compute rates,aggregate and write sinks; Python
+passes existing DL values/buffers with one-line calls. Unsupported IO timing
+must remain unavailable rather than fabricated. Use only the landed,locally
+qualified API/wheel; the in-progress owned Rust checkout is not a stable ABI.
+
+GPU handoff protocol (2040 owner direction): startup qualification and each
+round hold xbabe1's `/home/ubuntu/jope_plan/qualification.lock`. At round end,
+finish queued GPU work,synchronize,release unused allocator cache,unlock and
+yield1second. Other xbabe1 GPU jobs acquire the same host-local lock and check
+remaining VRAM (the model remains resident). Phase3 runs on xbabe2 with its own
+independent lock. A separate EX|NB descriptor observed the released window at
+round677. Resource guard still waits for20GiBfree at the next round start.
+
+Storage recovery receipt `results/fused-20261029/storage_custody_recovery.json`
+binds the S3 version,fullarchive/manifest SHA,independent POSIX restoration of
+all1068 checkpoint bodies/modes,and protected best/anchor/journal hashes. Only
+verified old nonbest checkpoints were pruned; all score/round receipts and
+scratch remain. Run size fell10.753GB→2.749GB under the unchanged10GiB ceiling.
+Telemetry-off resumed661;662/663 verified frozen DOPE and journal continuity.

@@ -1,0 +1,100 @@
+{
+  "utc": "2026-10-29T22:01:40.714593+00:00",
+  "state": "worker stopped on concurrent GPU memory contention; native telemetry remains disabled",
+  "last_complete_round": 360,
+  "checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-360.pt",
+  "checkpoint_sha256": "2fda9f6ccc8fa13b6e64327308427bf82dde67bc086dba389b10802312225e0e",
+  "journal_sha256": "c5e4c42b67be7efca7cffeaf938945d266fa32a5811d8d8e048c0370c6341448",
+  "journal_events": 165,
+  "best_pointer": {
+    "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+    "evaluation_contract": {
+      "protocol": "fixed-dev-cost-argmin-negative-fitness/v1",
+      "selected_packet_sha256": "47cf3714ab2ca5713fff5347f7fe952009e468003f555f4a82c5923b7796f9b5",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "source_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+      "model_source_sha256": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+      "adapter_source_sha256": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+      "contexts": [
+        {
+          "cid": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "pool_sha256": "6f62d0d964433dba0d568455ad88232cd8105d50ab733f6b5c092752819b28e3",
+          "training_table_sha256": "d8f2dea88c157d0f5ad0b8fd9db796db419462703d6b8e9dd72910ce7cbd39ee"
+        },
+        {
+          "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "pool_sha256": "bdc530cfa0bb0198beed1c5e3b0694ae3f3f4698b2389f0815c3b44f0b5128ee",
+          "training_table_sha256": "77ddb03f5e43efd0efbb350007f5a6db053962f8430a1846d879d1b82774dd7e"
+        },
+        {
+          "cid": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "pool_sha256": "9c469b95f09ae6c48e39f3463bd64e275368efcca08bd17800353330ee8b6c9d",
+          "training_table_sha256": "c75099d5a0df962461949334fa05276a18fc82e925a7095848d241c9de35d23a"
+        },
+        {
+          "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "pool_sha256": "1bf1f882d980ebec30a2a78d0d1edfe3326ea4df74bac862f57350e9dd82250c",
+          "training_table_sha256": "ed82c4c8736303f6961d080c64a8456021f5e9b4ceee7a5694f18d19a99d2970"
+        },
+        {
+          "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "pool_sha256": "d081e30d4a09f89075e618d2256f0aaa6c01c93e1dba15e6d0e0d42b2391449c",
+          "training_table_sha256": "98c9e5bb756a20b51d8be3390a5cae92a2d2cf59adebbf862348345cb2832575"
+        },
+        {
+          "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "pool_sha256": "56cbbf9ae596fe69e7a10d92041d396e3f879e85ae14b1d692ccf0e4a49506aa",
+          "training_table_sha256": "e2b2d0deadb2f968947dbb6e2c75fa14604344e616bbb167a30fec8192f7d6f1"
+        },
+        {
+          "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "pool_sha256": "4532f52b5403698adee66de7be5102dbeb762ab47c81c7e0b87aa2b71b1e2711",
+          "training_table_sha256": "75034fc7fe4abca48f1a1bb0ba05fefe7406c64502108af1acce7f28990bcc2e"
+        },
+        {
+          "cid": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "pool_sha256": "2e22a84685e9639f64428d16df9625546b28efd4a6cd0d32763fe5386f180d8a",
+          "training_table_sha256": "3610b3ccd7100b9594c8507c00fea2c3f6fb1603360d52d7905cf0fa37a70529"
+        }
+      ]
+    },
+    "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-256.pt",
+    "best_round": 256,
+    "best_utility": 2.267816067203105,
+    "utility": {
+      "mean": 2.267816067203105,
+      "per_context": [
+        0.4595724478760325,
+        1.1321918041103844,
+        1.6493666422408813,
+        0.3804703956781366,
+        2.876232122429703,
+        0.8377046659779932,
+        0.19225477831682752,
+        10.614735680994883
+      ],
+      "selected_programs": [
+        "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+        "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+        "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+        "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+        "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+        "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+        "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+        "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+      ],
+      "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+    },
+    "checkpoint_sha256": "f19c500fae4b7748c2724a1c1ed86c369a29c0de4ec35aeca1215c4e49138e89"
+  },
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "last_complete_dope_check": true,
+  "last_candidate_optimizer_step": 472,
+  "incomplete_round_outcome": "unknown; do not count as zero or pass",
+  "error": "CUDA OOM allocating3.27GiB with3.13GiB free; another process held12.29GiB",
+  "observed_foreign_job": "/home/ubuntu/gpu_bench/fused/run_phase2_shard_and_fleet.py,currently2002270,12710MiB",
+  "lock_mismatch": "foreign job uses /tmp/qualification_fused_shard0.lock; standard ~/jope_plan/qualification.lock is free",
+  "actions": "No foreign signal,lock takeover,batch/learning change or automatic restart; completed checkpoint/journal retained. Legacy Python enabler remains stopped/archived.",
+  "recovery_gate": "Coordinated GPU availability sufficient for unchanged batch8192 plus shared qualification.lock; native telemetry wiring additionally waits for luna Rust API.",
+  "source_change": "none; no telemetry-on restart ever occurred"
+}

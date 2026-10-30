@@ -53,7 +53,7 @@ from dev_incumbent import (
     project_score_margins,
     proposal_plan,
 )
-from device_pool_cache import DevicePoolCache
+from device_pool_cache import DevicePoolCache, release_gpu_round, wait_for_gpu_headroom
 
 
 def sha(path):
@@ -150,6 +150,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     lock = open(Path.home() / "jope_plan/qualification.lock", "a")  # noqa: SIM115 -- held for process lifetime
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    wait_for_gpu_headroom(torch.device("cuda"))
     torch.set_num_threads(4)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -669,7 +670,9 @@ def main():
     proposal_history = [
         json.loads(path.read_text()) for path in args.output.glob("round-*.json")
     ]
+    release_gpu_round(lock)  # startup qualification is complete
     for rnd in round_indices:
+        fcntl.flock(lock, fcntl.LOCK_EX)
         used_bytes = sum(
             p.stat().st_size for p in args.output.rglob("*") if p.is_file()
         )
@@ -697,7 +700,7 @@ def main():
         rotation = plan["training_rotation"] % len(train)
         round_train = train[rotation:] + train[:rotation]
         # Return unused cached segments between rounds to limit fragmentation.
-        torch.cuda.empty_cache()
+        wait_for_gpu_headroom(device)
         start = time.monotonic()
         torch.cuda.reset_peak_memory_stats()
         losses = []
@@ -1148,6 +1151,8 @@ def main():
             ),
             flush=True,
         )
+        release_gpu_round(lock)
+        time.sleep(1)  # give waiting xbabe1 jobs an inter-round handoff window
 
 
 if __name__ == "__main__":

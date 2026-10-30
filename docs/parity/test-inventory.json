@@ -9330,10 +9330,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 201,
+  "count": 202,
   "packages": {
    "jope": {
-    "count": 201,
+    "count": 202,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9541,7 +9541,7 @@
       ]
      },
      "tests/test_telemetry_smoke.py": {
-      "count": 8,
+      "count": 9,
       "tests": [
        "tests/test_telemetry_smoke.py::test_dime_hardware_monitor_and_ratchet_live",
        "tests/test_telemetry_smoke.py::test_dime_live_metrics_spell_like_json_dumps",
@@ -9549,6 +9549,7 @@
        "tests/test_telemetry_smoke.py::test_emit_rates_divides_in_rust",
        "tests/test_telemetry_smoke.py::test_flywheel_round_on_cpu",
        "tests/test_telemetry_smoke.py::test_python_trainer_step_rows",
+       "tests/test_telemetry_smoke.py::test_reasoning_tok_per_s_is_run_total_over_wall_clock",
        "tests/test_telemetry_smoke.py::test_records_and_fail_closed_guards",
        "tests/test_telemetry_smoke.py::test_registry_keeps_frozen_names"
       ]
@@ -9652,6 +9653,6 @@
  },
  "totals": {
   "rust": 6094,
-  "python": 201
+  "python": 202
  }
 }

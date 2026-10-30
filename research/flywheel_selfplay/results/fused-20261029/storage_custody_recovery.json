@@ -1,0 +1,146 @@
+{
+  "archive": {
+    "status": "archived_s3_restored_verified_then_pruned",
+    "s3_prefix": "s3://veox-jopedime-archive-use2/evidence/flywheel-gp-fused/run-20261029/20261030T024935Z",
+    "s3_archive_version": "dE3YOgyLa0CN6sWGpLunXJLq2c.pvckr",
+    "archive_sha256": "5221693fde7fe9bfb1a0cbfff686bf5f1d2c48de92b15732d4b7fd32038e527e",
+    "manifest_sha256": "bb8db5412e74284c387e9bf1cb7cd69ff911004ea30fa8b9a522bc6c63dfd21b",
+    "files_pruned": 1068,
+    "logical_run_bytes_removed": 8003758220,
+    "remaining_run_bytes": 2749068895,
+    "protected_sha256": {
+      "promotions.jsonl": "9ca3c88a70aa660b41a704715f09a080d28786d8cd39ef7c64053466fa6f9df2",
+      "best_dev_checkpoint.json": "5532c35072287a329cba9c7a691b3e7918e6c1a14a08d6e7581571f07f4cf433",
+      "adapter_margin_constraints.json": "0e7856844bf4ad6db74d148e6eac1738be4e247a8290e0f85413897893ed38f7",
+      "round-661.pt": "b3ca76a604ddf71332ec498c520f701e27e601789a787a5c00a976d2020e88fd",
+      "round-256.pt": "f19c500fae4b7748c2724a1c1ed86c369a29c0de4ec35aeca1215c4e49138e89",
+      "round-95.pt": "4d7b5c7fe364cf10946727f9fab08b8cc5e659e6d1268296ac0d2405d73a48cd"
+    },
+    "custody": "/mnt/amphora-backup/jope-custody/flywheel-gp-fused/20261030T024935Z",
+    "restore_verification": {
+      "independent_s3_download": true,
+      "s3_version": "dE3YOgyLa0CN6sWGpLunXJLq2c.pvckr",
+      "files_verified": 1068,
+      "bytes_verified": 8003758220,
+      "archive_sha256": "5221693fde7fe9bfb1a0cbfff686bf5f1d2c48de92b15732d4b7fd32038e527e",
+      "body_inventory_and_modes": "exact on independent POSIX filesystem",
+      "first_restore_note": "external data filesystem forces modes755; source bodies matched; repeated actual restore on POSIX for exact664 mode verification"
+    }
+  },
+  "resume": {
+    "pid": 4145972,
+    "source": "fe83138ece13645514cfff8de347f022b683f06e",
+    "resume_checkpoint_sha256": "b3ca76a604ddf71332ec498c520f701e27e601789a787a5c00a976d2020e88fd",
+    "journal_prefix_bytes": 659825,
+    "journal_prefix_sha256": "9ca3c88a70aa660b41a704715f09a080d28786d8cd39ef7c64053466fa6f9df2",
+    "best_pointer_sha256": "5532c35072287a329cba9c7a691b3e7918e6c1a14a08d6e7581571f07f4cf433",
+    "telemetry": "off",
+    "batch_size": 8192
+  },
+  "rows": [
+    {
+      "round": 662,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_checksum_match": true,
+      "trainable_params": 29211,
+      "optimizer_steps": 1,
+      "optimizer_step_before": 471,
+      "optimizer_step_candidate": 472,
+      "adapter_admission": {
+        "round": 662,
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "candidate_utility": 2.2562596084931466,
+        "previous_best_utility": 2.267816067203105,
+        "accepted": false,
+        "action": "restore_best_model_and_optimizer",
+        "best_utility": 2.267816067203105,
+        "best_round": 256,
+        "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-256.pt",
+        "timestamp": 1793328875.2552025
+      },
+      "dev_utility": {
+        "mean": 2.267816067203105,
+        "per_context": [
+          0.4595724478760325,
+          1.1321918041103844,
+          1.6493666422408813,
+          0.3804703956781366,
+          2.876232122429703,
+          0.8377046659779932,
+          0.19225477831682752,
+          10.614735680994883
+        ],
+        "selected_programs": [
+          "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+        ],
+        "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+      },
+      "promotions": 0,
+      "wall_seconds": 53.87524903006852
+    },
+    {
+      "round": 663,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_checksum_match": true,
+      "trainable_params": 29211,
+      "optimizer_steps": 1,
+      "optimizer_step_before": 471,
+      "optimizer_step_candidate": 472,
+      "adapter_admission": {
+        "round": 663,
+        "evaluation_identity": "3c576a6b54b0ddbc8a7332afed5aae1c4854866f727b69a7c785c0f39b020084",
+        "candidate_utility": 2.2562596084931466,
+        "previous_best_utility": 2.267816067203105,
+        "accepted": false,
+        "action": "restore_best_model_and_optimizer",
+        "best_utility": 2.267816067203105,
+        "best_round": 256,
+        "best_checkpoint": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-256.pt",
+        "timestamp": 1793328930.7985537
+      },
+      "dev_utility": {
+        "mean": 2.267816067203105,
+        "per_context": [
+          0.4595724478760325,
+          1.1321918041103844,
+          1.6493666422408813,
+          0.3804703956781366,
+          2.876232122429703,
+          0.8377046659779932,
+          0.19225477831682752,
+          10.614735680994883
+        ],
+        "selected_programs": [
+          "9838f09fd73ef8bf6bb91df280de88f855d69160b0501692b46222c13ee09cf9",
+          "afded787eb4a89fbf95ef87a390569d9f6ca1f94b9c8d3b3ce8df22a8e9bb244",
+          "58af9e837dfc6d00f74c95ad1b5f2d1f347f9b9d13373c11d8f80f4aacb26a66",
+          "0f8b9cad4e9837d4576629c7ad9fafe580f99d255416c1ce4b0a3817478eaa83",
+          "00b02fea76888757195e88c4a7d0e08d21bc2428ff5e20354b9a78af2201da14",
+          "671b42d45a1c8ee17ac88d34249fd0cba3a1366114c55945d2d2ae9115b60f03",
+          "001b78dbf921fceeba69b2e534c01659a790ddc9660b2b6b5916aee4bd399458",
+          "1d7c9ff64ed6364baa65ba58968262a71fee04805b8c86b20582368c9232e522"
+        ],
+        "scope": "family-disjoint development subset of DL-Train; not sealed generalization"
+      },
+      "promotions": 0,
+      "wall_seconds": 57.631507536396384
+    }
+  ],
+  "handoff_observed": {
+    "at_round": 677,
+    "utc_seconds": 1793329759.7612846,
+    "probe": "separate file description acquired EX|NB and immediately released between live rounds"
+  },
+  "lock_protocol": "startup lease; EX at each round start; synchronize+empty_cache+UN at round end;1s yield; other xbabe1 jobs use same local qualification.lock; Phase3 xbabe2 lock is independent",
+  "telemetry": "off",
+  "budgets": "unchanged",
+  "learning_state": "resume661/best256/anchor95/journal prefix retained",
+  "tests_passed": 52
+}

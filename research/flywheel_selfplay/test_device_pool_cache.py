@@ -65,3 +65,65 @@ def test_same_length_replacement_invalidates_cache():
 def test_context_bounds_are_checked(index):
     with pytest.raises(ValueError):
         DevicePoolCache("cpu").pack({"a": pool(5, 0)}, ["a"], [np.array([index])])
+
+
+def test_gpu_memory_guard_backs_off_until_safe_without_changing_batch(monkeypatch):
+    import device_pool_cache as module
+
+    available = iter([(3, 24), (12, 24), (21, 24)])
+    sleeps, releases = [], []
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda device: next(available))
+    monkeypatch.setattr(torch.cuda, "empty_cache", lambda: releases.append(True))
+    monkeypatch.setattr(module.time, "sleep", sleeps.append)
+    module.wait_for_gpu_headroom("cuda", minimum_free_bytes=20, pause_seconds=5)
+    assert sleeps == [5, 5] and len(releases) == 3
+
+
+def test_gpu_memory_guard_refuses_insufficient_hardware(monkeypatch):
+    import device_pool_cache as module
+
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda device: (16, 16))
+    monkeypatch.setattr(torch.cuda, "empty_cache", lambda: None)
+    with pytest.raises(RuntimeError, match="capacity"):
+        module.wait_for_gpu_headroom("cuda", minimum_free_bytes=20)
+
+
+def test_round_handoff_finishes_gpu_before_unlock(tmp_path, monkeypatch):
+    import fcntl
+
+    import device_pool_cache as module
+
+    events = []
+    monkeypatch.setattr(torch.cuda, "synchronize", lambda: events.append("sync"))
+    monkeypatch.setattr(
+        torch.cuda, "empty_cache", lambda: events.append("release_cache")
+    )
+    with (
+        (tmp_path / "gpu.lock").open("a") as owner,
+        (tmp_path / "gpu.lock").open("a") as other,
+    ):
+        fcntl.flock(owner, fcntl.LOCK_EX)
+        with pytest.raises(BlockingIOError):
+            fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        module.release_gpu_round(owner)
+        fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        assert events == ["sync", "release_cache"]
+
+
+def test_round_handoff_unlocks_even_if_gpu_sync_fails(tmp_path, monkeypatch):
+    import fcntl
+
+    import device_pool_cache as module
+
+    def fail():
+        raise RuntimeError("GPU sync failed")
+
+    monkeypatch.setattr(torch.cuda, "synchronize", fail)
+    with (
+        (tmp_path / "gpu.lock").open("a") as owner,
+        (tmp_path / "gpu.lock").open("a") as other,
+    ):
+        fcntl.flock(owner, fcntl.LOCK_EX)
+        with pytest.raises(RuntimeError, match="GPU sync failed"):
+            module.release_gpu_round(owner)
+        fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)

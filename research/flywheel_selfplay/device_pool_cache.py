@@ -7,6 +7,7 @@ can retain its existing path independently.
 
 from __future__ import annotations
 
+import fcntl
 import time
 
 import numpy as np
@@ -70,3 +71,30 @@ class DevicePoolCache:
             * pools[cids[0]]["program"].dtype.itemsize
         )
         return packed
+
+
+def wait_for_gpu_headroom(device, minimum_free_bytes=20 * 1024**3, pause_seconds=5):
+    """DL allocation guard; release our unused cache and wait for a safe round.
+
+    The measured batch8192 peak is about17GiB. Reserve20GiB free before starting
+    another round. This cannot replace a shared lock for simultaneous launchers.
+    """
+    while True:
+        torch.cuda.empty_cache()
+        free, total = torch.cuda.mem_get_info(device)
+        if minimum_free_bytes > total:
+            raise RuntimeError(
+                "GPU capacity is below the unchanged campaign requirement"
+            )
+        if free >= minimum_free_bytes:
+            return
+        time.sleep(pause_seconds)
+
+
+def release_gpu_round(lock):
+    """Finish queued GPU work and release cache before admitting another job."""
+    try:
+        torch.cuda.synchronize()
+        torch.cuda.empty_cache()
+    finally:
+        fcntl.flock(lock, fcntl.LOCK_UN)
