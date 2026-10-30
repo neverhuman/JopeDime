@@ -67,3 +67,10 @@ guard. Releasing final training references helps; expandable allocator segments
 restore more than20GiB free in the locked real-input diagnostic. Configure this
 before importing Torch, record it in the run manifest, and retain the20GiB wait
 and90% cap. No batch, optimizer or frozen-weight adjustment is authorized by this.
+
+Resume precision: older native JSON parsing could shift a round receipt's f64
+validation utility by one ULP while every selected program stayed identical. The
+validated best pointer is committed admission state and always takes precedence
+over observational round maxima. Native serde_json uses float_roundtrip so future
+receipt serialization preserves exact f64 bits; old receipts remain immutable.
+The original failure and corrected bit-exact test are retained in custody.
