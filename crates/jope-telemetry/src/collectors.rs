@@ -5,8 +5,8 @@
 
 use crate::core::ProducerHandle;
 use crate::train::{
-    CPU_CORE_UTIL, CPU_NODE_UTIL, CPU_PROCESS_RSS_BYTES, CPU_PROCESS_UTIL, GPU_MEMORY_BYTES,
-    GPU_UTIL,
+    CPU_CORES, CPU_CORE_UTIL, CPU_HOST_PCT, CPU_NODE_UTIL, CPU_PROCESS_RSS_BYTES, CPU_PROCESS_UTIL,
+    GPU_MEMORY_BYTES, GPU_UTIL,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -145,34 +145,51 @@ fn sample_loop(producer: &mut ProducerHandle, stop: Arc<AtomicBool>, interval: D
         if let (Some(current), Some(previous)) = (process_ticks(), previous_process) {
             let tick_delta = current.saturating_sub(previous);
             let elapsed = now.duration_since(previous_at).as_secs_f64();
-            if elapsed > 0.0 && total_delta > 0 {
-                // Normalize process use to one whole node: 100% means all node CPUs busy.
-                let process_pct = 100.0 * tick_delta as f64 / (total_delta as f64 / node_cores);
-                producer.emit_scalar(
-                    CPU_PROCESS_UTIL,
-                    0,
-                    step,
-                    process_pct.clamp(0.0, 100.0),
-                    true,
-                );
-            } else if !process_unavailable {
-                producer.emit_unavailable(
-                    CPU_PROCESS_UTIL,
-                    0,
-                    step,
-                    REASON_PROCFS_UNAVAILABLE,
-                    true,
-                );
-                process_unavailable = true;
+            if elapsed > 0.0 {
+                if let Some((cores, host_pct)) =
+                    cpu_process_usage(tick_delta, total_delta, node_cores)
+                {
+                    producer.emit_scalar(CPU_CORES, 0, step, cores, true);
+                    producer.emit_scalar(CPU_HOST_PCT, 0, step, host_pct, true);
+                    // Preserve the historical metric name with the corrected host percentage.
+                    producer.emit_scalar(CPU_PROCESS_UTIL, 0, step, host_pct, true);
+                } else if !process_unavailable {
+                    producer.emit_unavailable(CPU_CORES, 0, step, REASON_PROCFS_UNAVAILABLE, true);
+                    producer.emit_unavailable(
+                        CPU_HOST_PCT,
+                        0,
+                        step,
+                        REASON_PROCFS_UNAVAILABLE,
+                        true,
+                    );
+                    producer.emit_unavailable(
+                        CPU_PROCESS_UTIL,
+                        0,
+                        step,
+                        REASON_PROCFS_UNAVAILABLE,
+                        true,
+                    );
+                    process_unavailable = true;
+                }
             }
             previous_process = Some(current);
         } else if !process_unavailable {
+            producer.emit_unavailable(CPU_CORES, 0, step, REASON_PROCFS_UNAVAILABLE, true);
+            producer.emit_unavailable(CPU_HOST_PCT, 0, step, REASON_PROCFS_UNAVAILABLE, true);
             producer.emit_unavailable(CPU_PROCESS_UTIL, 0, step, REASON_PROCFS_UNAVAILABLE, true);
             process_unavailable = true;
         }
         previous_at = now;
         step = step.saturating_add(1);
     }
+}
+
+fn cpu_process_usage(process_ticks: u64, host_ticks: u64, logical_cpus: f64) -> Option<(f64, f64)> {
+    if host_ticks == 0 || logical_cpus <= 0.0 {
+        return None;
+    }
+    let cores = process_ticks as f64 * logical_cpus / host_ticks as f64;
+    Some((cores, 100.0 * cores / logical_cpus))
 }
 
 #[cfg(target_os = "linux")]
@@ -334,5 +351,27 @@ impl GpuProbe {
         producer.emit_unavailable(GPU_UTIL, 0, step, REASON_NVML_UNAVAILABLE, true);
         producer.emit_unavailable(GPU_MEMORY_BYTES, 0, step, REASON_NVML_UNAVAILABLE, true);
         self.unavailable_reported = true;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cpu_process_usage;
+
+    #[test]
+    fn cpu_process_usage_reports_expected_core_equivalents_and_host_percent() {
+        assert_eq!(cpu_process_usage(100, 800, 8.0), Some((1.0, 12.5)));
+        assert_eq!(cpu_process_usage(400, 800, 8.0), Some((4.0, 50.0)));
+    }
+
+    #[test]
+    fn cpu_process_usage_is_not_clamped() {
+        assert_eq!(cpu_process_usage(1_600, 800, 8.0), Some((16.0, 200.0)));
+    }
+
+    #[test]
+    fn cpu_process_usage_rejects_empty_denominators() {
+        assert_eq!(cpu_process_usage(1, 0, 8.0), None);
+        assert_eq!(cpu_process_usage(1, 8, 0.0), None);
     }
 }
