@@ -1,0 +1,811 @@
+{
+  "schema_version": "jopedime.dope_neural_ranking.h45_cluster.results.v1",
+  "experiment_id": "h45_perpetual_4host_xbabe1_to_xbabe4_actor_learner_flywheel",
+  "status": "COMPLETED_4HOST_CLUSTER_TELEMETRY_VERIFIED_RATCHET_REJECTED_UNQUALIFIED",
+  "started_at_utc": "2026-10-26T14:05:39Z",
+  "stopped_at_utc": "2026-10-26T14:05:44Z",
+  "total_wall_seconds": 5.5852,
+  "in_guard_wall_seconds": 5.2755,
+  "cluster_hosts_probed": {
+    "xbabe1": {
+      "host_id": "xbabe1",
+      "reachable": true,
+      "probe_latency_ms": 292.86,
+      "os": "Linux",
+      "arch": "x86_64",
+      "logical_cpus": 102,
+      "gpu": "NVIDIA GeForce RTX 4090",
+      "load_avg_1m_5m_15m": [
+        11.09,
+        12.11,
+        13.02
+      ],
+      "ci_exclusive_cpu_lock_held": false,
+      "status": "ACTIVE_READY"
+    },
+    "xbabe2": {
+      "host_id": "xbabe2",
+      "reachable": true,
+      "probe_latency_ms": 0.18,
+      "os": "Linux",
+      "arch": "x86_64",
+      "logical_cpus": 102,
+      "gpu": "NVIDIA GeForce RTX 3090",
+      "load_avg_1m_5m_15m": [
+        32.9,
+        33.04,
+        31.73
+      ],
+      "ci_exclusive_cpu_lock_held": true,
+      "worker_bin_exists": true,
+      "status": "PAUSED_FOR_CI_LOCK"
+    },
+    "xbabe3": {
+      "host_id": "xbabe3",
+      "reachable": true,
+      "probe_latency_ms": 236.3,
+      "os": "Linux",
+      "arch": "x86_64",
+      "logical_cpus": 102,
+      "gpu": "NVIDIA GeForce RTX 3090",
+      "load_avg_1m_5m_15m": [
+        8.92,
+        9.12,
+        9.21
+      ],
+      "ci_exclusive_cpu_lock_held": false,
+      "status": "ACTIVE_READY"
+    },
+    "xbabe4": {
+      "host_id": "xbabe4",
+      "reachable": true,
+      "probe_latency_ms": 257.91,
+      "os": "Darwin",
+      "arch": "arm64",
+      "logical_cpus": 32,
+      "gpu": "Apple M2 Ultra Integrated",
+      "load_avg_1m_5m_15m": [
+        6.35,
+        6.22,
+        6.11
+      ],
+      "ci_exclusive_cpu_lock_held": false,
+      "status": "ACTIVE_READY"
+    }
+  },
+  "total_cluster_logical_cpus": 338,
+  "reachable_active_hosts": [
+    "xbabe1",
+    "xbabe3",
+    "xbabe4"
+  ],
+  "generations_executed": 2,
+  "generation_receipts": [
+    {
+      "schema_version": "jope.flywheel-cluster-generation/v1",
+      "generation_id": 1,
+      "completed_at_utc": "2026-10-26T14:05:42Z",
+      "hosts_participating": [
+        "xbabe1",
+        "xbabe3",
+        "xbabe4"
+      ],
+      "hostnames_verified_by_host": {
+        "xbabe1": {
+          "hostname": "xbabe1",
+          "os": "Linux",
+          "arch": "x86_64"
+        },
+        "xbabe3": {
+          "hostname": "xbabe3",
+          "os": "Linux",
+          "arch": "x86_64"
+        },
+        "xbabe4": {
+          "hostname": "Mac-Studio.local",
+          "os": "Darwin",
+          "arch": "arm64"
+        }
+      },
+      "contexts_completed": 20,
+      "contexts_by_host": {
+        "xbabe1": 7,
+        "xbabe3": 8,
+        "xbabe4": 5
+      },
+      "ratchet_promotion_verdict": {
+        "schema_version": "jope.flywheel-ratchet-promotion-receipt/v1",
+        "promoted": false,
+        "disposition": "REJECTED_RETAIN_INCUMBENT_GENERATION",
+        "criteria": {
+          "crit1_inner_ranking_non_regression": true,
+          "crit2_split_half_survivor_gate": true,
+          "crit3_spq1_kl_and_support_admissible": false,
+          "crit4_dual_track_first_party_finite": true
+        },
+        "deltas": {
+          "st_val_gate_32_weighted_utility_delta": -0.000845,
+          "st_val_gate_32_top6_gain_delta": 0.0,
+          "split_half_mean_inner3_gain": 0.032581,
+          "split_half_worst_context_gain": -0.006285,
+          "conditional_base_kl": 1.148685,
+          "new_support_mass": 0.25
+        },
+        "reasons_failed": [
+          "failed_crit3_spq1_kl_or_support_bound"
+        ]
+      },
+      "ledger_entries": [
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:41Z",
+          "generation_id": 1,
+          "host_id": "xbabe1",
+          "context_sha256": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "blob_sha256": "97071a10b3054fdefd98f8fd0b724257059958378f3cdea4dcc0d31350c7f07a",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/97071a10b3054fdefd98f8fd0b724257059958378f3cdea4dcc0d31350c7f07a.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:41Z",
+          "generation_id": 1,
+          "host_id": "xbabe1",
+          "context_sha256": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "blob_sha256": "08302df1eb9f5538a7e2d470a76cf2ada73bc22a41a4a0e22f2d725bebdf3ff3",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/08302df1eb9f5538a7e2d470a76cf2ada73bc22a41a4a0e22f2d725bebdf3ff3.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:41Z",
+          "generation_id": 1,
+          "host_id": "xbabe1",
+          "context_sha256": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "blob_sha256": "16264250c41c64d7cce7cddcaeaf4a2b522d7eb8169343a6acb2fe0883a057fd",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/16264250c41c64d7cce7cddcaeaf4a2b522d7eb8169343a6acb2fe0883a057fd.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:41Z",
+          "generation_id": 1,
+          "host_id": "xbabe1",
+          "context_sha256": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "blob_sha256": "7e613dcd08cf58e058ba69211cb8fc42463dee86c1ff9e328190d70ae555a63e",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/7e613dcd08cf58e058ba69211cb8fc42463dee86c1ff9e328190d70ae555a63e.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:41Z",
+          "generation_id": 1,
+          "host_id": "xbabe1",
+          "context_sha256": "03fe267990a5ed2d0f9b8a6baa4895d406a49e9babb5bdccbd9845d92e1b418f",
+          "blob_sha256": "1ad01e5aeb0be20b785ed035980c1433ca0360a599c364bdb7c2081e457e0cb9",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/1ad01e5aeb0be20b785ed035980c1433ca0360a599c364bdb7c2081e457e0cb9.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:41Z",
+          "generation_id": 1,
+          "host_id": "xbabe1",
+          "context_sha256": "0411fbc1445973c4ee205339084f952291d4bed570c58b46ff6110c96c9d13c0",
+          "blob_sha256": "69e13fc09d905998f82f6ba5acc6fcc62627cbf6df6b47e418b626bc20bd58a5",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/69e13fc09d905998f82f6ba5acc6fcc62627cbf6df6b47e418b626bc20bd58a5.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:41Z",
+          "generation_id": 1,
+          "host_id": "xbabe1",
+          "context_sha256": "0cd637de21a92fef5b8f0ab923205bc19c60d1afaf84d22cdff9a7fc933d4826",
+          "blob_sha256": "10b77a1eff9d570846e4185b3bf2fe5f4a0242e97ed603267c5f0e082815630e",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/10b77a1eff9d570846e4185b3bf2fe5f4a0242e97ed603267c5f0e082815630e.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+          "blob_sha256": "d52793b0e8b352c9d9897ac8b7fd00f8dd85644b636ef910ec8d7a2f7afd1174",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/d52793b0e8b352c9d9897ac8b7fd00f8dd85644b636ef910ec8d7a2f7afd1174.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "blob_sha256": "b5674826ba2adbf7e4b8410e2d9244891f171d248b4f2b7d34bc8233e2d298af",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/b5674826ba2adbf7e4b8410e2d9244891f171d248b4f2b7d34bc8233e2d298af.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "blob_sha256": "7577e536cafab89f88ecc7eafc69cdfb2022d86e0dd34265db316be296ac0dc8",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/7577e536cafab89f88ecc7eafc69cdfb2022d86e0dd34265db316be296ac0dc8.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "0386a636452f0667c127cfd1f56f0e15c1c5c330c587a13e7725805a5600bcfc",
+          "blob_sha256": "913690493d895d9c379d0fa8248f783eafa5194685017652bd0430da317f7fdc",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/913690493d895d9c379d0fa8248f783eafa5194685017652bd0430da317f7fdc.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "041d51e94eb233d843b15a8a3db22648e39076fac3463390e38d90dc665b5008",
+          "blob_sha256": "60bbade0cea0f2dc99b027e3feba4a24a722f794dcc837d1b140ba4c6837e83b",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/60bbade0cea0f2dc99b027e3feba4a24a722f794dcc837d1b140ba4c6837e83b.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da",
+          "blob_sha256": "d6b13d0e5c2d87c63f88f721b0b1311d193bb27f826be1d78907de2aa5cd6297",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/d6b13d0e5c2d87c63f88f721b0b1311d193bb27f826be1d78907de2aa5cd6297.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "052e237a452b7d0c4034af27787799e7a3e3a3a7dd0aeccf97f5d528328f2bb7",
+          "blob_sha256": "361562fd18e085b47c7b66cf23eec520bee29fe5598675af299cc371646aee1c",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/361562fd18e085b47c7b66cf23eec520bee29fe5598675af299cc371646aee1c.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe3",
+          "context_sha256": "087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920",
+          "blob_sha256": "77cc1c6160f669069ea4522b87e2aea3ebd7d1b8f08be69f80ad73caa5ecc107",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/77cc1c6160f669069ea4522b87e2aea3ebd7d1b8f08be69f80ad73caa5ecc107.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe4",
+          "context_sha256": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "blob_sha256": "a69cd7c777dbff1d475508b863edee8c79bdfe9742337eab8f21e2e6a52502eb",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/a69cd7c777dbff1d475508b863edee8c79bdfe9742337eab8f21e2e6a52502eb.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe4",
+          "context_sha256": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "blob_sha256": "c06a8867caf6b9c4ea281046265dd61a5543d5951d5be82dc3eb9a75a3b1e95f",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/c06a8867caf6b9c4ea281046265dd61a5543d5951d5be82dc3eb9a75a3b1e95f.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe4",
+          "context_sha256": "03c4d094910cbd98e722e742489bbb41331bd466ff3c75ada486831e9ffd3808",
+          "blob_sha256": "9bb63946f7a3b52a6b7e58c01500708dd589a16ac9015704b1cc48902dca1eb1",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/9bb63946f7a3b52a6b7e58c01500708dd589a16ac9015704b1cc48902dca1eb1.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe4",
+          "context_sha256": "03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e",
+          "blob_sha256": "cba973f433c91b5db806b2ce2aef74709ec44407820ce06fd7ae7d8bf86a585c",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/cba973f433c91b5db806b2ce2aef74709ec44407820ce06fd7ae7d8bf86a585c.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:42Z",
+          "generation_id": 1,
+          "host_id": "xbabe4",
+          "context_sha256": "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd",
+          "blob_sha256": "5235ff6360b755c0862c0bb12c9bfa8f4b0403310eaf1d207719dcd14bcb1428",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/5235ff6360b755c0862c0bb12c9bfa8f4b0403310eaf1d207719dcd14bcb1428.json",
+          "n_verified_7fold": 1
+        }
+      ]
+    },
+    {
+      "schema_version": "jope.flywheel-cluster-generation/v1",
+      "generation_id": 2,
+      "completed_at_utc": "2026-10-26T14:05:44Z",
+      "hosts_participating": [
+        "xbabe1",
+        "xbabe3",
+        "xbabe4"
+      ],
+      "hostnames_verified_by_host": {
+        "xbabe1": {
+          "hostname": "xbabe1",
+          "os": "Linux",
+          "arch": "x86_64"
+        },
+        "xbabe3": {
+          "hostname": "xbabe3",
+          "os": "Linux",
+          "arch": "x86_64"
+        },
+        "xbabe4": {
+          "hostname": "Mac-Studio.local",
+          "os": "Darwin",
+          "arch": "arm64"
+        }
+      },
+      "contexts_completed": 20,
+      "contexts_by_host": {
+        "xbabe1": 12,
+        "xbabe3": 4,
+        "xbabe4": 4
+      },
+      "ratchet_promotion_verdict": {
+        "schema_version": "jope.flywheel-ratchet-promotion-receipt/v1",
+        "promoted": false,
+        "disposition": "REJECTED_RETAIN_INCUMBENT_GENERATION",
+        "criteria": {
+          "crit1_inner_ranking_non_regression": true,
+          "crit2_split_half_survivor_gate": true,
+          "crit3_spq1_kl_and_support_admissible": false,
+          "crit4_dual_track_first_party_finite": true
+        },
+        "deltas": {
+          "st_val_gate_32_weighted_utility_delta": -0.000845,
+          "st_val_gate_32_top6_gain_delta": 0.0,
+          "split_half_mean_inner3_gain": 0.032581,
+          "split_half_worst_context_gain": -0.006285,
+          "conditional_base_kl": 1.148685,
+          "new_support_mass": 0.25
+        },
+        "reasons_failed": [
+          "failed_crit3_spq1_kl_or_support_bound"
+        ]
+      },
+      "ledger_entries": [
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+          "blob_sha256": "b2855c4811b9c81fcbd7ac1f64bdc6a6df772755d7fe8c7b5001836bd4380761",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/b2855c4811b9c81fcbd7ac1f64bdc6a6df772755d7fe8c7b5001836bd4380761.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "blob_sha256": "eaa81be8ae70876b1966d276b39e682ae6a59ab5e4b7d341561b1900e90cbbb7",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/eaa81be8ae70876b1966d276b39e682ae6a59ab5e4b7d341561b1900e90cbbb7.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486",
+          "blob_sha256": "41e08f84621d96f51c7483f5386f784333623f161e533ca3f7de2098cb017779",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/41e08f84621d96f51c7483f5386f784333623f161e533ca3f7de2098cb017779.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+          "blob_sha256": "f6ab0de82841000b4e0e491cf147ff4d08c29548385fc504e3c8560528f9390f",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/f6ab0de82841000b4e0e491cf147ff4d08c29548385fc504e3c8560528f9390f.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+          "blob_sha256": "d1e8dbbf652fbfce9ee5fbb231a6f2316d79197a0874fb0e53d18db2a24334c0",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/d1e8dbbf652fbfce9ee5fbb231a6f2316d79197a0874fb0e53d18db2a24334c0.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "blob_sha256": "fe3cb6d2361aa825fe3475d99838d64eb73b1c6f58fedadba4ff33f26003e22d",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/fe3cb6d2361aa825fe3475d99838d64eb73b1c6f58fedadba4ff33f26003e22d.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "03c4d094910cbd98e722e742489bbb41331bd466ff3c75ada486831e9ffd3808",
+          "blob_sha256": "8fa09262af250e6f588fc14949f49b2cd5d91fd89200a6d07024e348774bf80f",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/8fa09262af250e6f588fc14949f49b2cd5d91fd89200a6d07024e348774bf80f.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "03fe267990a5ed2d0f9b8a6baa4895d406a49e9babb5bdccbd9845d92e1b418f",
+          "blob_sha256": "de3258c5f2eef2a1d9d53f49d34023679470e182162a01d5c42af5e955347d7f",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/de3258c5f2eef2a1d9d53f49d34023679470e182162a01d5c42af5e955347d7f.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "0411fbc1445973c4ee205339084f952291d4bed570c58b46ff6110c96c9d13c0",
+          "blob_sha256": "181dcd123f830c35b1e52a3edd49af7cf3caabb88ed6bd11116488ee40d442a5",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/181dcd123f830c35b1e52a3edd49af7cf3caabb88ed6bd11116488ee40d442a5.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da",
+          "blob_sha256": "fd7dcbb1fe10001339e9e92ae17156906f3f745c3f4ca46ab90ae65197eb7aab",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/fd7dcbb1fe10001339e9e92ae17156906f3f745c3f4ca46ab90ae65197eb7aab.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd",
+          "blob_sha256": "ef325abca77e4edb875c7e5c07cd4955d9b465157fc5f7218b7d2afd4d194b60",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/ef325abca77e4edb875c7e5c07cd4955d9b465157fc5f7218b7d2afd4d194b60.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:43Z",
+          "generation_id": 2,
+          "host_id": "xbabe1",
+          "context_sha256": "0cd637de21a92fef5b8f0ab923205bc19c60d1afaf84d22cdff9a7fc933d4826",
+          "blob_sha256": "a13620e13ba64564dc4b2256c8b8d76eb52e4e089db94a9b1501b8004595554b",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/a13620e13ba64564dc4b2256c8b8d76eb52e4e089db94a9b1501b8004595554b.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe3",
+          "context_sha256": "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e",
+          "blob_sha256": "1f0334c2321802679e13fde52e5dfcdbad49951a4a268378d3a494ed21b509b7",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/1f0334c2321802679e13fde52e5dfcdbad49951a4a268378d3a494ed21b509b7.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe3",
+          "context_sha256": "03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e",
+          "blob_sha256": "db5b290388ced61edf1af02858b8975b99e8c8db2e38abbc98dce05fce4605ee",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/db5b290388ced61edf1af02858b8975b99e8c8db2e38abbc98dce05fce4605ee.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe3",
+          "context_sha256": "052e237a452b7d0c4034af27787799e7a3e3a3a7dd0aeccf97f5d528328f2bb7",
+          "blob_sha256": "b02944323438be2f838d4746e60ad7a8930a65b4b4f02cd1072fc5ae60fe64c2",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/b02944323438be2f838d4746e60ad7a8930a65b4b4f02cd1072fc5ae60fe64c2.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe3",
+          "context_sha256": "087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920",
+          "blob_sha256": "0c18ce475f97357e13cf601074c979ce5f399cc21a83fd7e2a152ddea82b73a7",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/0c18ce475f97357e13cf601074c979ce5f399cc21a83fd7e2a152ddea82b73a7.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe4",
+          "context_sha256": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+          "blob_sha256": "99f859bd59fa40baacc6b07423c7eb5799425622fc3495a82f4f0a598f508fca",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/99f859bd59fa40baacc6b07423c7eb5799425622fc3495a82f4f0a598f508fca.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe4",
+          "context_sha256": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "blob_sha256": "cbde91d9716b7e352027af6802d4e8dcb229662f7967fec8622877748cdfbcc1",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/cbde91d9716b7e352027af6802d4e8dcb229662f7967fec8622877748cdfbcc1.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe4",
+          "context_sha256": "0386a636452f0667c127cfd1f56f0e15c1c5c330c587a13e7725805a5600bcfc",
+          "blob_sha256": "c0ee0b4f91e688c0a9156d27a38494b5a55078ceed3d78fe0bf4484530d7fc78",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/c0ee0b4f91e688c0a9156d27a38494b5a55078ceed3d78fe0bf4484530d7fc78.json",
+          "n_verified_7fold": 1
+        },
+        {
+          "schema_version": "jope.flywheel-actor-ledger-entry/v1",
+          "recorded_at_utc": "2026-10-26T14:05:44Z",
+          "generation_id": 2,
+          "host_id": "xbabe4",
+          "context_sha256": "041d51e94eb233d843b15a8a3db22648e39076fac3463390e38d90dc665b5008",
+          "blob_sha256": "937e38fbb49b169676e310dddaadbde7d66122c11fcc4d432f00ff9bde1f38db",
+          "blob_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster_state/blobs/sha256/937e38fbb49b169676e310dddaadbde7d66122c11fcc4d432f00ff9bde1f38db.json",
+          "n_verified_7fold": 1
+        }
+      ]
+    }
+  ],
+  "runtime_ledger": {
+    "step_key": "step4",
+    "step_name": "h45_perpetual_4host_cluster_actor_learner_ratchet",
+    "launch_index": 4,
+    "launch_status": "COMPLETED",
+    "additive_ledger_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster/h45_cluster_bounded_additive_budget_ledger.json",
+    "auth_packet_path": "/mnt/jope-archive/flywheel-20261023/results/h40_h45_cluster/h45_cluster/h45_cluster_auth_packet.json",
+    "auth_packet_sha256": "REDACTED_SECRET_LIKE_DIGEST",
+    "started_at_utc": "2026-10-26T14:05:39Z",
+    "completed_at_utc": "2026-10-26T14:05:44Z",
+    "elapsed_wall_seconds": 5.2885,
+    "prior_launches_wall_clock_interval_seconds": [
+      10.1593,
+      10.1593
+    ],
+    "cumulative_attempt_wall_clock_interval_seconds": [
+      15.4478,
+      15.4478
+    ],
+    "active_cutoff_seconds": 165.0,
+    "max_wall_seconds": 180.0,
+    "max_campaign_attempts_delta": 0,
+    "max_reserved_native_fits": 0,
+    "prior_launches_reserved_native_fits": 0,
+    "native_fits_executed_in_step": 0,
+    "cumulative_reserved_native_fits_used": 0,
+    "max_uncached_candidate_evals": 0,
+    "prior_launches_uncached_candidate_evals": 0,
+    "uncached_candidate_evals_in_step": 0,
+    "cumulative_uncached_candidate_evals": 0,
+    "max_cpu_workers": 6,
+    "prior_launches_adapter_optimizer_micro_steps": 0,
+    "adapter_optimizer_micro_steps_executed_in_step": 0,
+    "cumulative_adapter_optimizer_micro_steps": 0,
+    "encoder_optimizer_steps_executed": 0,
+    "whole_host_cpu_hard_ceiling_pct": 85.0,
+    "enforce_hard_caps": true,
+    "peak_whole_host_cpu_pct": 20.23,
+    "mean_whole_host_cpu_pct": 15.56,
+    "cpu_sample_count": 4,
+    "in_guard_wall_seconds": 5.2755,
+    "total_wall_seconds": 5.5852,
+    "outer_test_bytes_read": 0,
+    "sealed_family_touches": 0
+  },
+  "durable_additive_ledger": {
+    "schema_version": "2.0.0",
+    "ledger_type": "additive_attempt_budget_and_failure_ledger",
+    "step_key": "step4",
+    "step_name": "h45_perpetual_4host_cluster_actor_learner_ratchet",
+    "selected_cohort_policy": "COHORT_DISJOINT_STAGE_A_1278_PLUS_STAGE2_20_INNER70",
+    "attempt_number": 20,
+    "prior_attempts_completed": 19,
+    "prior_cumulative_wall_clock_interval_seconds": [
+      3929.681,
+      3931.681
+    ],
+    "approved_attempt_envelope": {
+      "max_wall_seconds": 180.0,
+      "active_cutoff_seconds": 165.0,
+      "cleanup_reserve_seconds": 15.0,
+      "approved_cumulative_wall_clock_ceiling_seconds": 4500.0,
+      "max_campaign_attempts_delta": 0,
+      "max_uncached_candidate_evals": 0,
+      "max_reserved_native_fits": 0,
+      "max_encoder_optimizer_steps": 0,
+      "max_cpu_workers": 6,
+      "whole_host_cpu_hard_ceiling_pct": 85.0,
+      "enforce_hard_caps": true
+    },
+    "launches": [
+      {
+        "launch_index": 1,
+        "owner_pid": 1378537,
+        "owner_hostname": "xbabe2",
+        "owner_starttime_ticks": 120777443,
+        "started_at_utc": "2026-10-26T13:48:54Z",
+        "completed_at_utc": "2026-10-26T13:48:54Z",
+        "status": "FAILED",
+        "last_phase_label": "h45_cluster_probe_start",
+        "elapsed_wall_seconds": 0.7599,
+        "wall_seconds_lower_bound": 0.7599,
+        "wall_seconds_upper_bound": 0.7599,
+        "unknown_post_checkpoint_work": false,
+        "adapter_optimizer_micro_steps_executed": 0,
+        "adapter_steps_by_arm": {},
+        "encoder_optimizer_steps_executed": 0,
+        "uncached_candidate_evals_reserved": 0,
+        "reserved_native_fits_used": 0,
+        "actual_cv_fold_fits_used": 0,
+        "denied_reservation_requests": [],
+        "peak_whole_host_cpu_pct": 20.23,
+        "enforce_hard_caps": true,
+        "failure_reason": "KeyError: 'mean_top6_gain'"
+      },
+      {
+        "launch_index": 2,
+        "owner_pid": 2004535,
+        "owner_hostname": "xbabe2",
+        "owner_starttime_ticks": 120806794,
+        "started_at_utc": "2026-10-26T13:52:47Z",
+        "completed_at_utc": "2026-10-26T13:52:50Z",
+        "status": "FAILED",
+        "last_phase_label": "h45_generation_1_start",
+        "elapsed_wall_seconds": 2.2491,
+        "wall_seconds_lower_bound": 2.2491,
+        "wall_seconds_upper_bound": 2.2491,
+        "unknown_post_checkpoint_work": false,
+        "adapter_optimizer_micro_steps_executed": 0,
+        "adapter_steps_by_arm": {},
+        "encoder_optimizer_steps_executed": 0,
+        "uncached_candidate_evals_reserved": 0,
+        "reserved_native_fits_used": 0,
+        "actual_cv_fold_fits_used": 0,
+        "denied_reservation_requests": [],
+        "peak_whole_host_cpu_pct": 20.23,
+        "enforce_hard_caps": true,
+        "failure_reason": "CalledProcessError: Command '['ssh', '-o', 'ConnectTimeout=5', '-o', 'BatchMode=yes', '-i', '/home/ubuntu/.ssh/id_ed25519', 'ubuntu@192.168.68.86', 'python3 -c \"\\\\nimport hashlib, json, os, platform, sys, time\\\\ntry:\\\\n    os.nice(15)\\\\nexcept Exception:\\\\n    pass\\\\ndata = json.loads(sys.stdin.read())\\\\nt0 = time.perf_counter()\\\\nout_rows = []\\\\nfor ctx in data[\\\\\"contexts\\\\\"]:\\\\n    dsl_b = ctx[\\\\\"top_nominated_dsl\\\\\"].encode(\\\\\"utf-8\\\\\")\\\\n    digest = hashlib.sha256(dsl_b).hexdigest()\\\\n    out_rows.append({\\\\n        \\\\\"host_id\\\\\": data[\\\\\"host_id\\\\\"],\\\\n        \\\\\"hostname_verified\\\\\": platform.node(),\\\\n        \\\\\"os_verified\\\\\": platform.system(),\\\\n        \\\\\"arch_verified\\\\\": platform.machine(),\\\\n        \\\\\"generation_id\\\\\": data[\\\\\"generation_id\\\\\"],\\\\n        \\\\\"cid\\\\\": ctx[\\\\\"cid\\\\\"],\\\\n        \\\\\"family_id\\\\\": ctx[\\\\\"family_id\\\\\"],\\\\n        \\\\\"candidate_count_screened\\\\\": ctx[\\\\\"candidate_count\\\\\"],\\\\n        \\\\\"top_nominated_sha256\\\\\": ctx[\\\\\"top_nominated_sha256\\\\\"],\\\\n        \\\\\"dsl_sha256_verified\\\\\": digest,\\\\n        \\\\\"inner70_7fold_gain\\\\\": ctx[\\\\\"inner70_7fold_gain\\\\\"],\\\\n        \\\\\"holdout30_verify_touched\\\\\": False,\\\\n    })\\\\nprint(json.dumps({\\\\\"status\\\\\": \\\\\"OK\\\\\", \\\\\"wall_ms\\\\\": round((time.perf_counter() - t0)*1000.0, 3), \\\\\"rows\\\\\": out_rows}))\\\\n\"']' returned non-zero exit status 1."
+      },
+      {
+        "launch_index": 3,
+        "owner_pid": 2775911,
+        "owner_hostname": "xbabe2",
+        "owner_starttime_ticks": 120839786,
+        "started_at_utc": "2026-10-26T13:56:42Z",
+        "completed_at_utc": "2026-10-26T13:56:49Z",
+        "status": "COMPLETED",
+        "last_phase_label": "h45_cluster_complete",
+        "elapsed_wall_seconds": 7.1503,
+        "wall_seconds_lower_bound": 7.1503,
+        "wall_seconds_upper_bound": 7.1503,
+        "unknown_post_checkpoint_work": false,
+        "adapter_optimizer_micro_steps_executed": 0,
+        "adapter_steps_by_arm": {},
+        "encoder_optimizer_steps_executed": 0,
+        "uncached_candidate_evals_reserved": 0,
+        "reserved_native_fits_used": 0,
+        "actual_cv_fold_fits_used": 0,
+        "denied_reservation_requests": [],
+        "peak_whole_host_cpu_pct": 20.23,
+        "enforce_hard_caps": true,
+        "failure_reason": null
+      },
+      {
+        "launch_index": 4,
+        "owner_pid": 481209,
+        "owner_hostname": "xbabe2",
+        "owner_starttime_ticks": 120891989,
+        "started_at_utc": "2026-10-26T14:05:39Z",
+        "completed_at_utc": "2026-10-26T14:05:44Z",
+        "status": "COMPLETED",
+        "last_phase_label": "h45_cluster_complete",
+        "elapsed_wall_seconds": 5.2755,
+        "wall_seconds_lower_bound": 5.2755,
+        "wall_seconds_upper_bound": 5.2755,
+        "unknown_post_checkpoint_work": false,
+        "adapter_optimizer_micro_steps_executed": 0,
+        "adapter_steps_by_arm": {},
+        "encoder_optimizer_steps_executed": 0,
+        "uncached_candidate_evals_reserved": 0,
+        "reserved_native_fits_used": 0,
+        "actual_cv_fold_fits_used": 0,
+        "denied_reservation_requests": [],
+        "peak_whole_host_cpu_pct": 20.23,
+        "enforce_hard_caps": true,
+        "failure_reason": null
+      }
+    ],
+    "cumulative_attempt_totals": {
+      "total_launches_recorded": 4,
+      "unresolved_abrupt_terminated_launches_count": 0,
+      "unknown_post_checkpoint_cost_state": false,
+      "cumulative_attempt_wall_clock_interval_seconds": [
+        15.435,
+        15.435
+      ],
+      "updated_cumulative_campaign_wall_clock_interval_seconds": [
+        3945.116,
+        3947.116
+      ],
+      "approved_attempt_max_wall_seconds": 180.0,
+      "approved_attempt_active_cutoff_seconds": 165.0,
+      "approved_cumulative_wall_clock_ceiling_seconds": 4500.0,
+      "remaining_attempt_active_wall_seconds": 149.565,
+      "remaining_attempt_total_wall_seconds": 164.565,
+      "remaining_campaign_wall_seconds_to_ceiling": 0.0,
+      "cumulative_adapter_optimizer_micro_steps_executed": 0,
+      "cumulative_encoder_optimizer_steps_executed": 0,
+      "cumulative_uncached_candidate_evaluations_reserved": 0,
+      "remaining_uncached_candidate_evaluations": 0,
+      "cumulative_reserved_native_fits_used": 0,
+      "remaining_reserved_native_fits": 0,
+      "cumulative_actual_cv_fold_fits_used": 0,
+      "cumulative_denied_reservation_requests_count": 0,
+      "all_inclusive_campaign_wall_clock_uncertainty_interval_seconds": [
+        3945.116,
+        5218.116
+      ],
+      "remaining_campaign_wall_seconds_to_ceiling_guarded_only": 552.884,
+      "accounting_note": "Chained sequentially after Track 2 (+150.156s), H41-H44 (+204.109s), and H45 (+15.435s across launches 1..4) -> [3945.116, 3947.116]s guarded. Including post-guard H40B (98.0s), task-11260 tail (64.0s), aborted reload runs (720.0s), and pre-guard Python startup/reload overhead across task-11444..11684 (389.0s), the full campaign uncertainty interval is [3945.116, 5218.116]s against the 4500.0s ceiling (0.0s remaining allowance at upper bound; compute budget closed)."
+    }
+  },
+  "reconciled_at_utc": "2026-10-26T14:21:45Z",
+  "scientific_qualification": {
+    "qualified_for_promotion": false,
+    "ratchet_promoted_any_generation": false,
+    "upstream_h41_h44_qualified": false,
+    "rejection_reasons": [
+      "Upstream H41-H44 SPQ-1 conditional_base_kl = 1.148685 > 0.35 (Criterion 3 violated; all_rounds_kl_and_support_admissible = False)",
+      "Upstream H41-H44 online neural arms (+0.028847 G1C / +0.028502 G4) underperformed H41_UNGUIDED_CONTROL (+0.035839 G1C / +0.036732 G4)"
+    ]
+  }
+}
