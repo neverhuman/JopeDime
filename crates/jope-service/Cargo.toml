@@ -12,6 +12,8 @@ description = "JopeDime v1 engine service"
 failpoints = []
 
 [dependencies]
+p256.workspace = true
+safetensors = "=0.8.0"
 chrono = "=0.4.45"
 futures-util.workspace = true
 anyhow.workspace = true
