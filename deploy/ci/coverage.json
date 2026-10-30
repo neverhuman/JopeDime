@@ -482,6 +482,17 @@
       "lanes": [],
       "scope": "GPU feature not selected in CPU CI."
     },
+    "feature:jope-appliance/client": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "lite-client"
+      ],
+      "scope": "BAT-07 explicit client-only build and strict normal dependency graph; existing CLT-04 loopback HTTP/in-process/SSE fixture contracts. Full product CLI/MCP A1 remains dependent on their composition tasks."
+    },
     "feature:jope-appliance/default": {
       "discovery": {
         "dependencies": [
@@ -1377,6 +1388,16 @@
         "hygiene"
       ],
       "scope": "Jankurai v1.7.5 repository audit job on pull requests and main; execution requires JANKURAI_HOSTED_RUNNER=true."
+    },
+    "job:.github/workflows/lite-client.yml/lite-client": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "lite-client"
+      ],
+      "scope": "BAT-07 explicit client-only build and strict normal dependency graph; existing CLT-04 loopback HTTP/in-process/SSE fixture contracts. Full product CLI/MCP A1 remains dependent on their composition tasks."
     },
     "job:.github/workflows/main-guard.yml/guard": {
       "discovery": {
@@ -12799,6 +12820,16 @@
       ],
       "scope": "Jankurai v1.7.5 repository audit workflow on pull requests and main."
     },
+    "workflow:.github/workflows/lite-client.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "lite-client"
+      ],
+      "scope": "BAT-07 explicit client-only build and strict normal dependency graph; existing CLT-04 loopback HTTP/in-process/SSE fixture contracts. Full product CLI/MCP A1 remains dependent on their composition tasks."
+    },
     "workflow:.github/workflows/main-guard.yml": {
       "discovery": {
         "kind": "workflow"
@@ -13763,6 +13794,42 @@
       "path_applicability": "ci.yml changes.inputs",
       "requires_nonzero_tests": false,
       "result_backend": "none",
+      "stage": "execution"
+    },
+    "lite-client": {
+      "command": [
+        "cargo build --locked -p jope-appliance --no-default-features --features client",
+        "cargo tree --locked -p jope-appliance --no-default-features --features client -e normal --prefix none --format {p}",
+        "cargo nextest run -P pr --locked -p jope-client --features engine --test contract --build-jobs 8 --test-threads 1 --no-tests=fail"
+      ],
+      "environment": {
+        "CARGO_BUILD_JOBS": "8",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CARGO_TARGET_DIR": "job-scoped persistent runner lane target",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "RAYON_NUM_THREADS": "8"
+      },
+      "evidence": [
+        "source-sha.txt",
+        "lite-build.log",
+        "lite-cargo-tree.txt: HTTP client present and engine/banned crates absent",
+        "transport-contract.log",
+        "contract-junit.xml: nonzero executed cases, zero failures/errors/skips"
+      ],
+      "feature_selection": "explicit",
+      "inputs": [
+        "exact source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        ".github/workflows/lite-client.yml",
+        "crates/jope-client/tests/contract/operations.json"
+      ],
+      "path_applicability": "manual dispatch or reusable workflow call; no automatic PR trigger",
+      "requires_nonzero_tests": true,
+      "result_backend": "nextest",
       "stage": "execution"
     },
     "mac-runner-qualification": {
