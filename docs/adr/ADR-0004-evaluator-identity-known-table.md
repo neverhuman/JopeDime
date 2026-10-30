@@ -25,11 +25,12 @@ accepted historical identity in one file.
 ## Current identity transition: public stage names (2026-10-30)
 
 PUB-02 adds the public-names module declaration to `crates/feat-math/src/lib.rs`, which is an ADR-0004
-hashed input. The implementation hash changes from
-`22d2f11436495a5329abf1a1660c584d28ae2430923d9b5213d76036d1376110` to
-`10a1514f0309607534d4c4593ae3908aceef7bbff1a41afbea1a248448c48cd1`; the identity digest changes
-from `b1c89e347bd296ad7f2d8e4333e45e1580189d302a0bc2b77637d73dc824d12a` to
-`2b9433410dc2a69cac595272f6033e9dd29e2dede5a48d23b32d0d4449aeec08`. The DSL ABI and Cargo.lock
-hashes are unchanged. This transition exposes presentation metadata and does not alter evaluator
-calculations. The identity fixture records the new current identity; the historical JSON table gains
-no row here because this PR has no shipped receipt to support one.
+hashed input. After the merged API-01 lockfile identity transition, the implementation hash changes from
+`44c1f73ba257e509a8350a72a6ea6790140d165eb6bd0ef9174c3e5dcb5a4d64` to
+`bd23428e33c286f33b7c5161a00ecfc35f8d5aa831f7f011837c86639fe2d7ad`; the identity digest changes from
+`75294fa33fd0855958db6ad6c6f75a85ab61d84a8e4d28dcea25b9305b7003d7` to
+`ba253e90391fb943513dccc83e09c6fbed240c1acf5c47181134eefd441c6221`. The Cargo.lock hash remains
+`89d5812adf6dcfd0b549435ee38863753a21550206623cefad553a970dc80420` across this PUB-02 transition (API-01
+is the preceding lockfile change). The DSL ABI and evaluator calculations are unchanged. The identity fixture
+records the new current identity; the historical JSON table gains no row here because this PR has no shipped
+receipt to support one.
