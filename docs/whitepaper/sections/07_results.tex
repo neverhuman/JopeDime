@@ -1,0 +1,111 @@
+\section{Results}\label{sec:results}
+
+Does training make the first proposed algorithm better on an unseen problem?
+The available training trajectory in \cref{sec:method-status} records
+validation behavior during learning. It does not answer the deployment
+question: those validation outcomes inform admission and are not an
+untouched test. This section specifies the comparisons still needed.
+\TBD{Add independent evaluation evidence before making a performance claim.}
+
+\subsection{Evaluation contract}\label{sub:results-protocol}
+
+Freeze the writer, permitted task inputs, output support, decoding rule and
+budgets before opening final outcomes. Separate unseen problem families from
+training and development, and report which task types were actually tested.
+Each \EZ{} submission follows \cref{alg:gameday}; failed generations and
+executions remain in the denominator. Report paired results and uncertainty
+at the family level, alongside encoding, generation and fitting costs.
+\TBD{Document the final problem inventory, family exclusions, evaluator,
+checkpoint, seeds, task metrics and failure accounting.}
+
+\subsection{One proposal against fixed methods}\label{sub:results-headtohead}
+
+The proposed comparison asks whether one task-conditioned program competes
+with methods that run unchanged across tasks. Frontier-designed algorithms
+must be fixed before final evaluation; record the originating models,
+prompts, dates and implementation checks. Pin the KumoRFM configuration
+\citep{kumorfm2025}, disclose its permitted inputs and fitting procedure, and
+compare under the same task metrics. \Cref{tab:headtohead} reserves the
+comparison; no winner is assumed.
+
+\begin{table}[t]
+  \centering
+  \caption{\textbf{Planned paired comparisons.} No outcomes are yet supplied.
+  Report ties, failures and excluded cases alongside wins.}
+  \label{tab:headtohead}
+  \small
+  \begin{tabularx}{\linewidth}{@{}XX@{}}
+    \toprule
+    Comparator & Outcome and uncertainty \\
+    \midrule
+    Claude-designed method & \TBD{paired evaluation} \\
+    Codex-designed method & \TBD{paired evaluation} \\
+    Gemini-designed method & \TBD{paired evaluation} \\
+    KumoRFM & \TBD{paired evaluation} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.88\linewidth}{\TBD{Leaderboard: supply the evaluated methods,
+  paired outcomes, rating protocol and uncertainty.}}}
+  \caption{\textbf{Leaderboard pending.} Elo is a summary of a specified
+  comparison population, not a substitute for paired task results.}
+  \label{fig:leaderboard}
+\end{figure}
+
+\subsection{The cost of more attempts}\label{sub:results-search}
+
+Compare the single proposal with agents allowed successive attempts and
+development feedback. Keep final outcomes unavailable to those agents and
+count complete candidates, repairs and all task-time computation. Plot
+performance against both attempts and cost; if an agent does not reach a
+reference performance within its budget, report that limit.
+\TBD{Supply attempt curves, matched budgets, repeated seeds and uncertainty.}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.88\linewidth}{\TBD{Search curve: performance versus attempts
+  and compute, including failed attempts and unreached targets.}}}
+  \caption{\textbf{Deployment search comparison pending.} The single-candidate
+  condition fixes a budget; its measured quality remains to be established.}
+  \label{fig:searchone}
+\end{figure}
+
+\subsection{What the map contributes}\label{sub:results-ablation}
+
+A ranking head can agree with a referee without improving the writer.
+In the checkpoint described in \cref{sub:method-map}, the map neither
+conditions nor screens the writer's draw. Its ranking accuracy therefore
+cannot establish a reduction in wasted proposals. A causal ablation needs
+a declared route by which the map changes training, with the writer,
+training budget and deployment protocol otherwise matched.
+\TBD{Identify an implemented influence path or limit the study to ranking.}
+
+\begin{table}[t]
+  \centering
+  \caption{\textbf{Map evidence still required.} Ranking quality and a change
+  in first-proposal quality are separate outcomes.}
+  \label{tab:ablation}
+  \small
+  \begin{tabularx}{\linewidth}{@{}XX@{}}
+    \toprule
+    Question & Required evidence \\
+    \midrule
+    Does the map rank candidates? & \TBD{held-out ranking study} \\
+    Does it improve the writer? & \TBD{matched causal ablation} \\
+    Does it reduce execution failures? & \TBD{failure-class comparison} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Failure cases and a worked example}\label{sub:results-failures}
+
+Describe unsuccessful proposals and coverage limits as well as wins. Choose
+the worked example by a rule fixed before inspection, and show its emitted
+program, fitting procedure and comparison outcome; if the selected category
+is empty, report that fact. \TBD{Supply the example selection rule, actual
+program and verified outcomes, with no replacement of failed attempts.}
+These results will determine which interpretations in \cref{sec:meaning}
+the evidence can support.

@@ -1,4 +1,10 @@
 % Shared notation. One definition per symbol; sections must not redefine.
+\usepackage{xurl}
+\sisetup{group-separator={,},group-minimum-digits=4}
+\makeatletter
+\providecommand*{\theHalgorithm}{\thealgorithm}
+\providecommand*{\theHALG@line}{\theHalgorithm.\arabic{ALG@line}}
+\makeatother
 \newcommand{\EZ}{EurekaZero}
 \newcommand{\searchone}{search\,$=$\,1}
 \newcommand{\TBD}[1]{\textcolor{red}{\textbf{[TBD:~#1]}}}
@@ -15,6 +21,11 @@
 \renewcommand{\Game}{\mathcal{G}}
 \newcommand{\Cwin}{C_{\mathrm{win}}}
 \newcommand{\Cattempt}{C_{\mathrm{attempt}}}
+\newcommand{\Crepair}{C_{\mathrm{repair}}}
+\newcommand{\Nrepair}{n_{\mathrm{repair}}}
+\newcommand{\Ntries}{N_{\mathrm{tries}}}
+\newcommand{\winprob}{q}
+\newcommand{\budget}{B}
 \newtcolorbox{keyidea}{colback=blue!4,colframe=blue!40!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,title=Key idea,fonttitle=\bfseries\small}
 \newtcolorbox{explainer}[1]{colback=gray!5,colframe=gray!50!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,title={#1},fonttitle=\bfseries\small}
 % Missing figure files render as a labelled placeholder instead of failing.

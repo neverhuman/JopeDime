@@ -179,6 +179,16 @@ for the same model. The running example's single game cost \TBD{\$c}:
   It is fewer wasted moves.
 \end{keyidea}
 
-Every row of \cref{tab:price} scales with $1/q$ as surely as with
-parameters: doubling $q$ halves the cost of a win at any writer size. The
-method's job is now clear: raise $q$, so fewer moves are wasted.
+The table prices a fixed number of attempts, not a fixed number of wins.
+Converting those totals to cost per win requires a measured win rate. Under
+\cref{eq:bill}'s fixed-probability accounting, doubling $q$ halves the
+expected cost per win while leaving the per-attempt bill unchanged.
+
+The scaling scenarios in this section concern 8B--1.5T language-model
+writers producing 5,000 tokens per attempt; they do not price the reference
+checkpoint in \cref{sec:method}. That checkpoint uses a compact network with 27.8 million parameters and at most 128 grammar-constrained tokens, with no repair
+in the proposed single-candidate deployment protocol. Its measured costs
+must be reported separately from the scaling projections.
+
+The method's job is to improve proposal quality; whether it does so must be
+measured under the stated deployment budget.

@@ -14,6 +14,7 @@
 
 use crate::calibration::OutputTransform;
 use crate::error::Failure;
+use crate::fitted_js::ExportCalibration;
 use crate::math_pipeline::{MathPipeline, F64_PREDICTION_VERSION};
 use anyhow::Result;
 use feat_math::genome::GenomeIr;
@@ -58,7 +59,7 @@ fn python_hex(value: f64) -> String {
 
 /// Emit standalone Python 3 that predicts with `model`, fitted from `genome` on rows `width` wide.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
-    emit_calibrated(genome, model, width, None)
+    emit_with_platt(genome, model, width, &ExportCalibration::default())
 }
 
 /// Emit a predictor with up to 64 caller-supplied engine check rows.
@@ -68,7 +69,64 @@ pub fn emit_with_checks(
     width: usize,
     checks: &[CheckRow],
 ) -> Result<String> {
-    emit_calibrated_with_checks(genome, model, width, None, checks)
+    emit_with_checks_and_platt(genome, model, width, &ExportCalibration::default(), checks)
+}
+
+/// Emit standalone Python with the shared optional regression and Platt calibration.
+pub fn emit_with_platt(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    calibration: &ExportCalibration,
+) -> Result<String> {
+    emit_with_checks_and_platt(genome, model, width, calibration, &[])
+}
+
+/// Emit Python with shared calibration and caller-supplied engine check rows.
+pub fn emit_with_checks_and_platt(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    calibration: &ExportCalibration,
+    checks: &[CheckRow],
+) -> Result<String> {
+    let mut source =
+        emit_calibrated_with_checks(genome, model, width, calibration.output.as_ref(), checks)?;
+    if let Some(platt) = &calibration.platt {
+        platt
+            .validate()
+            .map_err(|e| Failure::integrity(format!("invalid Platt calibration: {e:#}")))?;
+        let sigmoid = &platt.sigmoid;
+        source.push_str(&format!(
+            r#"
+PLATT_CLASS_ORDER = {}
+def fitted_platt(score):
+    import math
+    if not math.isfinite(score) or score < 0 or score > 1:
+        raise ValueError("invalid Platt score")
+    z = {} if {} == 0 else {} + {} * (score / {} - {})
+    if z >= 0:
+        p = 1 / (1 + math.exp(-z))
+    else:
+        e = math.exp(z)
+        p = e / (1 + e)
+    return [1 - p, p]
+"#,
+            serde_json::to_string(&platt.class_order)?,
+            py_number(sigmoid.intercept),
+            py_number(sigmoid.slope),
+            py_number(sigmoid.intercept),
+            py_number(sigmoid.slope),
+            py_number(sigmoid.scale),
+            py_number(sigmoid.center),
+        ));
+    }
+    lint(&source)?;
+    Ok(source)
+}
+
+fn py_number(value: f64) -> String {
+    serde_json::to_string(&value).expect("validated finite Platt coefficient")
 }
 
 /// Emit standalone Python with the optional fitted regression output transform.
