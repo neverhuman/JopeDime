@@ -13,6 +13,7 @@ pub mod artifacts;
 pub mod decimal;
 pub mod events;
 pub mod metrics;
+pub mod registry;
 pub mod runs;
 pub mod system;
 pub mod warnings;
