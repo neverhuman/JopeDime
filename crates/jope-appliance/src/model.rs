@@ -384,22 +384,29 @@ fn call_tool(root: &Path, name: &str, args: Value) -> anyhow::Result<Value> {
             if args.csv.len() > 1 << 20 {
                 return Err(Failure::input("prediction CSV exceeds 1 MiB"));
             }
-            let fitted =
-                ModelObject::read(&object_path(root, &args.id)?, MAX_FRAME as u64)?.fitted()?;
+            let object = ModelObject::read(&object_path(root, &args.id)?, MAX_FRAME as u64)?;
             let limits = Limits {
                 max_input_bytes: 1 << 20,
                 max_rows: 10_000,
                 ..Limits::default()
             };
-            let csv = jope_runtime::table::parse_csv(args.csv.as_bytes(), &limits)?;
-            let (rows, _) = jope_runtime::table::prediction_ignoring(
-                &csv,
-                fitted.schema(),
-                &fitted.header.target,
-                &fitted.header.auxiliary_columns,
-            )?;
             let budget = jope_runtime::budget::Budget::new(None, 1);
-            let predictions = jope_runtime::api::predict(&fitted, &rows, &budget)?;
+            // A Platt-calibrated object predicts whole; `fitted()` refuses to drop its map.
+            let predictions = if let Some(contract) = object.calibrated_input()? {
+                let csv = jope_runtime::table::parse_csv(args.csv.as_bytes(), &limits)?;
+                let (rows, _) = contract.table(&csv)?;
+                jope_runtime::api::predict_object(&object, &rows, &budget)?
+            } else {
+                let fitted = object.fitted()?;
+                let csv = jope_runtime::table::parse_csv(args.csv.as_bytes(), &limits)?;
+                let (rows, _) = jope_runtime::table::prediction_ignoring(
+                    &csv,
+                    fitted.schema(),
+                    &fitted.header.target,
+                    &fitted.header.auxiliary_columns,
+                )?;
+                jope_runtime::api::predict(&fitted, &rows, &budget)?
+            };
             Ok(
                 json!({"id":args.id,"predictions_csv":String::from_utf8(jope_runtime::api::predictions_csv(&predictions)?)?}),
             )
