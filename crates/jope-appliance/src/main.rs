@@ -10,6 +10,8 @@
 
 mod bootstrap;
 mod cli;
+#[path = "cmd/common.rs"]
+mod common;
 mod io;
 mod landmarks;
 mod model;

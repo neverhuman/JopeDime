@@ -1009,6 +1009,17 @@
       ],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
     },
+    "feature:jope-service/failpoints": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "SVC-01 opt-in process-crash hooks; absent from default production builds. Local exact-head failpoints suite supervises six abort/reopen boundaries. Hosted/manual feature qualification remains deferred; this mapping is not execution evidence."
+    },
     "feature:jope-telemetry/default": {
       "discovery": {
         "kind": "feature",
@@ -12767,6 +12778,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested H49 offline tests for the strict-margin SEL admission rule, known-noise audit, and SWA cycle contract."
+    },
+    "python:research/flywheel_selfplay/h50/test_sensitivity.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H50 offline proofs for seeded unit directions, adapter flattening, antithetic population generation, deterministic rank shaping, and finite strict-JSON rejection metadata."
     },
     "python:research/h-followups/h09/test_run.py": {
       "discovery": {
