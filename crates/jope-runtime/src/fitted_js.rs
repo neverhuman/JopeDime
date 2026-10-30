@@ -100,6 +100,10 @@ pub fn emit_with_checks_and_platt(
     Ok(source)
 }
 
+fn js_number(value: f64) -> String {
+    serde_json::to_string(&value).expect("validated finite Platt coefficient")
+}
+
 /// Emit standalone JavaScript with the optional fitted regression output transform.
 pub fn emit_calibrated(
     genome: &GenomeIr,

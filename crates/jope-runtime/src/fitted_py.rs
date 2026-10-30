@@ -125,6 +125,10 @@ def fitted_platt(score):
     Ok(source)
 }
 
+fn py_number(value: f64) -> String {
+    serde_json::to_string(&value).expect("validated finite Platt coefficient")
+}
+
 /// Emit standalone Python with the optional fitted regression output transform.
 pub fn emit_calibrated(
     genome: &GenomeIr,

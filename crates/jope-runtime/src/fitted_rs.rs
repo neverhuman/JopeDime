@@ -85,6 +85,10 @@ pub fn emit_with_checks_and_platt(
     Ok(source)
 }
 
+fn rs_number(value: f64) -> String {
+    format!("{value:?}")
+}
+
 /// Emit std-only Rust with the optional fitted regression output transform.
 pub fn emit_calibrated(
     genome: &GenomeIr,
@@ -1446,7 +1450,6 @@ mod tests {
         )
         .unwrap()
         .calibration;
-        calibration.sigmoid.intercept = -0.35;
         calibration.sigmoid.scale = 0.7;
         calibration.sigmoid.center = 0.1;
         let scores = [0.0, 0.2, 0.75, 1.0];
@@ -1467,7 +1470,8 @@ mod tests {
             crate::fitted_rs::emit(&genome, &model, 12).unwrap()
         );
 
-        for slope in [2.4, 0.0] {
+        for (intercept, slope) in [(-0.35, 2.4), (1000.0, 2.4), (-1000.0, 0.0)] {
+            calibration.sigmoid.intercept = intercept;
             calibration.sigmoid.slope = slope;
             let expected = scores
                 .iter()
