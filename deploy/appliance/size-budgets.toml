@@ -69,7 +69,7 @@ note = "measured GPU edition dist-ci; 1,782,874 model/license bytes and selected
 [profile.fused-cpu]
 base_executable_bytes = 7856880
 final_executable_bytes = 7902400
-note = "REL-03 measured fused-cpu dist-ci embedded,dev-keys package on Linux x86_64 (2026-10-30, source 7f17c64ee33df106652218924c3a5603b5a01b9f); base 7,856,880 B and final 7,902,400 B; 5% tolerance applies. macOS/Windows reports pending platform builders."
+note = "REL-03 measured fused-cpu dist-ci embedded,dev-keys package on Linux x86_64 (2026-10-30, source 0d615cdb0051672f41f18e2547006616f534da2e); base 7,856,880 B and final 7,902,400 B; 5% tolerance applies. macOS/Windows reports pending platform builders."
 [profile.fused-cuda]
 base_executable_bytes = 20292112
 final_executable_bytes = 20343345
