@@ -150,6 +150,47 @@ impl FoldPlan {
             .collect())
     }
 
+    /// Cross-fit calibration inside a rung fold's training roster, never its
+    /// validation rows. Group/time/gap policy is inherited without asking the
+    /// executor to reconstruct aligned constraint vectors. Insufficient inner
+    /// data is an explicit refusal, not a fallback to unconstrained calibration.
+    pub fn calibration_folds(
+        &self,
+        outer: &CvFold,
+        folds: usize,
+        cap: usize,
+    ) -> Result<Vec<CvFold>, FoldError> {
+        let positions: BTreeMap<_, _> = self.rows.iter().enumerate().map(|(i, r)| (r, i)).collect();
+        let selected: Vec<_> = outer
+            .train()
+            .iter()
+            .map(|row| {
+                positions
+                    .get(row)
+                    .copied()
+                    .ok_or(FoldError::InvalidFitRoster)
+            })
+            .collect::<Result<_, _>>()?;
+        let constraints = FoldConstraints {
+            groups: self
+                .constraints
+                .groups
+                .as_ref()
+                .map(|g| selected.iter().map(|&i| g[i]).collect()),
+            times: self
+                .constraints
+                .times
+                .as_ref()
+                .map(|t| selected.iter().map(|&i| t[i]).collect()),
+            gap_rows: self.constraints.gap_rows,
+        };
+        Self::new(outer.train().to_vec(), constraints, self.seed)?.folds(
+            CvPhase::Calibration,
+            folds,
+            cap,
+        )
+    }
+
     fn group_folds(
         &self,
         selected: &[usize],
@@ -401,6 +442,54 @@ mod tests {
                 .map(|r| groups[r.row as usize])
                 .collect();
             assert!(train.is_disjoint(&validation));
+        }
+    }
+
+    #[test]
+    fn nested_calibration_inherits_constraints_and_excludes_outer_validation() {
+        let groups: Vec<_> = (0..120).map(|i| i / 2).collect();
+        let times: Vec<_> = (0..120).map(|i| i as f64).collect();
+        let plan = FoldPlan::new(
+            ids(120),
+            FoldConstraints {
+                groups: Some(groups.clone()),
+                times: Some(times.clone()),
+                gap_rows: 2,
+            },
+            17,
+        )
+        .unwrap();
+        for phase in [CvPhase::Rung0, CvPhase::Rung1] {
+            for outer in plan.folds(phase, 2, 120).unwrap() {
+                for inner in plan.calibration_folds(&outer, 2, 120).unwrap() {
+                    assert!(inner
+                        .train()
+                        .iter()
+                        .chain(inner.validation())
+                        .all(|r| outer.train().contains(r)));
+                    assert!(inner
+                        .train()
+                        .iter()
+                        .chain(inner.validation())
+                        .all(|r| !outer.validation().contains(r)));
+                    let train: BTreeSet<_> = inner
+                        .train()
+                        .iter()
+                        .map(|r| groups[r.row as usize])
+                        .collect();
+                    let validation: BTreeSet<_> = inner
+                        .validation()
+                        .iter()
+                        .map(|r| groups[r.row as usize])
+                        .collect();
+                    assert!(train.is_disjoint(&validation));
+                    assert!(
+                        times[inner.train().last().unwrap().row as usize]
+                            < times[inner.validation()[0].row as usize]
+                    );
+                    assert!(inner.validation()[0].row - inner.train().last().unwrap().row > 2);
+                }
+            }
         }
     }
 
