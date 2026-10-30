@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced BAT-05 adds only the already-locked ulid dependency edge to jope-appliance in Cargo.lock. Append this lockfile-only ADR-0004 identity and lineage fixture after SVC-07; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition. This pre-queue candidate is re-chained at the assigned identity slot.",
+  "plan_reference": "BAT-05; owner-authority rulings 1030(p) and 1045(t), 2026-10-30",
+  "source_commit": "7495ade75c8806394d650f00cdb8cb43884ed5bc",
+  "base_commit": "0009d3603ce3f89d970afdb2d9d6fe3439952dc1",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "5981f17baf2291b3bbd53574ab4aa26508f4957f83f14a38ab601df76a4879de",
+      "after": "0fbffe1007c98a272eb9f220bf15fd4632e277694b0c437ce5e8a0f7c94d7855"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a8d61dd9f0fa48636a6e82e80954a581ea3b0ed75be74132763b8a12a91d417c",
+      "after": "16caf6e7a2961a1709f03ea78dd6461b570bfa7ca903e2e13f2e11368cdab334"
+    }
+  ],
+  "before_identity_digest": "62dfd68fada288ffc937b7e6e47fbbf18fef15c1eb271f9cf0bd86da0456ed3d",
+  "after_identity_digest": "6341c9a764efdb193e458907ae26e94d54b609fbf7f2a56d0b86984cb120c909",
+  "before_implementation_sha256": "749305466bcfd5fe0668969dd43c3c7d21460b3ab1fcf6cf33234ad83eda787d",
+  "after_implementation_sha256": "6a6065257963d8e4c28394264b020ee4b53850a606047c60a98262eb08279134",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
