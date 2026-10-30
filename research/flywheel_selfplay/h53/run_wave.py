@@ -8,12 +8,15 @@ import os
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 RUNS = Path.home() / "jope-data/h53/runs"
 STATUS = Path.home() / "jope_plan/ns/H53_STATUS.md"
 LOCK = Path.home() / "jope_plan/qualification.lock"
+PILOT_STARTED_UTC = "2026-10-30T17:33:21+00:00"
+PILOT_DEADLINE_UTC = "2026-10-30T18:03:21+00:00"
 PILOT_SECONDS = 30 * 60
 LOCK_FALLBACK_SECONDS = 20 * 60
 RSS_LIMIT_KIB = 6 * 1024 * 1024
@@ -150,7 +153,8 @@ def run_cell(index: int, seed: int, scale: float, deadline: float) -> bool:
 
 def main() -> None:
     RUNS.mkdir(parents=True, exist_ok=True)
-    deadline = time.monotonic() + PILOT_SECONDS
+    utc_deadline = datetime.fromisoformat(PILOT_DEADLINE_UTC).replace(tzinfo=timezone.utc).timestamp()
+    deadline = time.monotonic() + max(0.0, utc_deadline - time.time())
     note("H53 six-cell pilot begins; seeds=12/13/14 x scales=1.0/0.1; rounds=3; total deadline=30 minutes; no selection on DL-Val")
     completed = []
     for index, (seed, scale) in enumerate(CELLS, 1):
