@@ -16,6 +16,15 @@ use feat_math::ops::FittedOp;
 use feat_math::transpile::{emit_javascript, lint_shipped_text, EmitOptions};
 use serde_json::{json, Value};
 
+/// Calibration options shared by the fitted language emitters.
+///
+/// The output transform is used for regression predictions. Binary Platt
+/// calibration may be added by the emitter that owns that interface.
+#[derive(Clone, Debug, Default)]
+pub struct ExportCalibration {
+    pub output: Option<OutputTransform>,
+}
+
 /// Engine output for one caller-supplied parity row.
 #[derive(Clone, Debug)]
 pub struct CheckRow {
