@@ -1,0 +1,616 @@
+{
+  "schema": "jope.proposer-frequencies/v1",
+  "checkpoint_round": 782,
+  "checkpoint_sha256": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+  "captured_utc": "2026-10-30T21:59:23.869221+00:00",
+  "custody_host": "xbabe1",
+  "source_sha256": {
+    "files/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "files/home/ubuntu/jope_plan/evidence/RES-01/frozen-source/research/flywheel_selfplay/run_fused_closed_loop.py": "3cd807519e4f6985f62b00e6b9e43a902641eeab8bcf3124da9ccf9550aea887",
+    "files/home/ubuntu/jope_plan/evidence/RES-01/frozen-source/research/flywheel_selfplay/dev_incumbent.py": "ec91b780e2f29b3e769b2fa9448f3e0c51319cb2498f9054ba3965b2820ae2f5",
+    "files/home/ubuntu/jope-data/res-01/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab"
+  },
+  "source_revision_context": "Frozen runner/helpers07e03984de9a1a7be5b0c94bba166423aa21a549; external Micro proposer identified by exact hash, upstream commit unavailable. Earlier run manifest662 pins the same Micro bytes.",
+  "population": {
+    "kind": "evaluated GP proposal attempts",
+    "round_min": 767,
+    "round_max": 782,
+    "completed_rounds": 16,
+    "records": 1024,
+    "generated_in_round_receipts": 3712,
+    "not_individually_operator_labelled": 2688,
+    "unique_contexts": 132,
+    "unique_families": 105,
+    "status_counts": {
+      "completed": 1024
+    },
+    "filter": "Every score-log record in each chosen completed round, including failures if present. No success/gate/promotion filter and no global program dedup. Exact ordered join to selected_programs in round receipt and allowlisted DL-Train roster; program hash recomputed from DSL.",
+    "excluded": "No post-r782 record, DL-Val observation, outer-query row, sealed cohort or new generated proposal is used."
+  },
+  "interval": {
+    "method": "two-sided Wilson score",
+    "coverage": 0.95,
+    "z": 1.959963984540054,
+    "formula": "p=k/n; d=1+z²/n; center=(p+z²/(2n))/d; radius=z*sqrt(p(1-p)/n+z²/(4n²))/d; bounds clipped to [0,1].",
+    "limits": "Marginal binomial intervals are descriptive. Repeated contexts/programs, adaptive admission and correlated rounds violate independent-trial assumptions. They are not calibrated confidence bounds for the unrecorded generated-family mix or M3 parity thresholds."
+  },
+  "operators": [
+    {
+      "operator": "champion_retrieval",
+      "count": 252,
+      "fraction": 0.24609375,
+      "wilson_95": [
+        0.22069299211438048,
+        0.27339240837469103
+      ]
+    },
+    {
+      "operator": "edit_parameter",
+      "count": 238,
+      "fraction": 0.232421875,
+      "wilson_95": [
+        0.207580865066172,
+        0.25926298006461873
+      ]
+    },
+    {
+      "operator": "edit_replace_head",
+      "count": 175,
+      "fraction": 0.1708984375,
+      "wilson_95": [
+        0.14908338620290557,
+        0.19517345981562173
+      ]
+    },
+    {
+      "operator": "edit_insert_stage",
+      "count": 187,
+      "fraction": 0.1826171875,
+      "wilson_95": [
+        0.1601542224752173,
+        0.2074525281361221
+      ]
+    },
+    {
+      "operator": "edit_delete_stage",
+      "count": 130,
+      "fraction": 0.126953125,
+      "wilson_95": [
+        0.10794679084164278,
+        0.14874791295383918
+      ]
+    },
+    {
+      "operator": "edit_crossover",
+      "count": 42,
+      "fraction": 0.041015625,
+      "wilson_95": [
+        0.03048574091676788,
+        0.0549763291980921
+      ]
+    },
+    {
+      "operator": "landmark_synthesis",
+      "count": 0,
+      "fraction": 0.0,
+      "wilson_95": [
+        0,
+        0.0037374040400176777
+      ]
+    }
+  ],
+  "protocol_strata": [
+    {
+      "name": "legacy16_context_roster",
+      "round_min": 767,
+      "round_max": 774,
+      "records": 512,
+      "operators": [
+        {
+          "operator": "champion_retrieval",
+          "count": 96,
+          "fraction": 0.1875,
+          "wilson_95": [
+            0.15606453821977367,
+            0.22358982160702806
+          ]
+        },
+        {
+          "operator": "edit_parameter",
+          "count": 129,
+          "fraction": 0.251953125,
+          "wilson_95": [
+            0.21629080364256667,
+            0.2913098444699571
+          ]
+        },
+        {
+          "operator": "edit_replace_head",
+          "count": 78,
+          "fraction": 0.15234375,
+          "wilson_95": [
+            0.1238141090073912,
+            0.1860513662999257
+          ]
+        },
+        {
+          "operator": "edit_insert_stage",
+          "count": 89,
+          "fraction": 0.173828125,
+          "wilson_95": [
+            0.14346421730104167,
+            0.2090500207681826
+          ]
+        },
+        {
+          "operator": "edit_delete_stage",
+          "count": 78,
+          "fraction": 0.15234375,
+          "wilson_95": [
+            0.1238141090073912,
+            0.1860513662999257
+          ]
+        },
+        {
+          "operator": "edit_crossover",
+          "count": 42,
+          "fraction": 0.08203125,
+          "wilson_95": [
+            0.06125951961291098,
+            0.10902818665543632
+          ]
+        },
+        {
+          "operator": "landmark_synthesis",
+          "count": 0,
+          "fraction": 0.0,
+          "wilson_95": [
+            0,
+            0.007446975722882739
+          ]
+        }
+      ]
+    },
+    {
+      "name": "full1219_context_roster",
+      "round_min": 775,
+      "round_max": 782,
+      "records": 512,
+      "operators": [
+        {
+          "operator": "champion_retrieval",
+          "count": 156,
+          "fraction": 0.3046875,
+          "wilson_95": [
+            0.26639554250826725,
+            0.3458884323834839
+          ]
+        },
+        {
+          "operator": "edit_parameter",
+          "count": 109,
+          "fraction": 0.212890625,
+          "wilson_95": [
+            0.17963878194802874,
+            0.25041866114284533
+          ]
+        },
+        {
+          "operator": "edit_replace_head",
+          "count": 97,
+          "fraction": 0.189453125,
+          "wilson_95": [
+            0.15787017585478835,
+            0.22566134422309586
+          ]
+        },
+        {
+          "operator": "edit_insert_stage",
+          "count": 98,
+          "fraction": 0.19140625,
+          "wilson_95": [
+            0.1596771615064055,
+            0.22773151882256118
+          ]
+        },
+        {
+          "operator": "edit_delete_stage",
+          "count": 52,
+          "fraction": 0.1015625,
+          "wilson_95": [
+            0.07829375610514352,
+            0.13076555267402867
+          ]
+        },
+        {
+          "operator": "edit_crossover",
+          "count": 0,
+          "fraction": 0.0,
+          "wilson_95": [
+            0,
+            0.007446975722882739
+          ]
+        },
+        {
+          "operator": "landmark_synthesis",
+          "count": 0,
+          "fraction": 0.0,
+          "wilson_95": [
+            0,
+            0.007446975722882739
+          ]
+        }
+      ]
+    }
+  ],
+  "round_journals": [
+    {
+      "bytes": 48215,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-767-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-767.json",
+      "round_receipt_sha256": "870116ded55474ce83ba68e2cd8bdcc7bb4f8b64b7aaf80530377b00f3303565",
+      "sha256": "cc745ce96216c688a9bfacdfff13f7b3819a7e0f56c683ed868c50073126f094",
+      "round": 767,
+      "operator_counts": {
+        "champion_retrieval": 14,
+        "edit_parameter": 12,
+        "edit_replace_head": 11,
+        "edit_insert_stage": 12,
+        "edit_delete_stage": 7,
+        "edit_crossover": 8,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 47717,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-768-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-768.json",
+      "round_receipt_sha256": "e1972b7fb098667a7b1732d985938361ebea18f81c3a4a5194284f0c4ce4916f",
+      "sha256": "004c2651453e5dd99022179ade6f24359acbc74210a373f28b4e79f74bab1adc",
+      "round": 768,
+      "operator_counts": {
+        "champion_retrieval": 14,
+        "edit_parameter": 17,
+        "edit_replace_head": 11,
+        "edit_insert_stage": 8,
+        "edit_delete_stage": 9,
+        "edit_crossover": 5,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 48195,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-769-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-769.json",
+      "round_receipt_sha256": "946404d5fe6d00773b337a3698b8e23e7f2c9088998fca9b2e293e1a79869e28",
+      "sha256": "6e3787393310e50f65cdd7521b28c78b860ff2cd4502c6589cfc466f4f8abf51",
+      "round": 769,
+      "operator_counts": {
+        "champion_retrieval": 11,
+        "edit_parameter": 13,
+        "edit_replace_head": 11,
+        "edit_insert_stage": 13,
+        "edit_delete_stage": 11,
+        "edit_crossover": 5,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 47677,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-770-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-770.json",
+      "round_receipt_sha256": "535e8ec16b0c50e38b018e2a917d10fff5d0a7b6bc8b708357bc434bb9546ef2",
+      "sha256": "4cd253b99b3f0597682aaa7feaa8e9fea78b1b7034b5cc13b2564abba2586b1c",
+      "round": 770,
+      "operator_counts": {
+        "champion_retrieval": 10,
+        "edit_parameter": 15,
+        "edit_replace_head": 10,
+        "edit_insert_stage": 14,
+        "edit_delete_stage": 11,
+        "edit_crossover": 4,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 47830,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-771-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-771.json",
+      "round_receipt_sha256": "2aa530deb950f8f1925fca39c828858b0721e8982c66693671caf1c13713da88",
+      "sha256": "aede908b995631732da61f4a969a61daefadc5fdfffdaaeb2ab23c60165e56c7",
+      "round": 771,
+      "operator_counts": {
+        "champion_retrieval": 8,
+        "edit_parameter": 16,
+        "edit_replace_head": 13,
+        "edit_insert_stage": 10,
+        "edit_delete_stage": 12,
+        "edit_crossover": 5,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 47612,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-772-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-772.json",
+      "round_receipt_sha256": "2eb47df292f8e3a82afd0f098313f21435d0437fc08c5b17a700f7900e0b23c2",
+      "sha256": "89166ad22de18e60f3be7aec6cdb03428e857c48f39ef469fc5edbc57c7b1035",
+      "round": 772,
+      "operator_counts": {
+        "champion_retrieval": 14,
+        "edit_parameter": 20,
+        "edit_replace_head": 11,
+        "edit_insert_stage": 8,
+        "edit_delete_stage": 6,
+        "edit_crossover": 5,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 47773,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-773-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-773.json",
+      "round_receipt_sha256": "96694acfe500d6d05087aae2021a5427a8542c887e0dd0edc3e4f7e97b0551a7",
+      "sha256": "01c70eed716ae71359b119196edf1ae076a871c910280cb2ebb1dfd8ebc437f2",
+      "round": 773,
+      "operator_counts": {
+        "champion_retrieval": 14,
+        "edit_parameter": 17,
+        "edit_replace_head": 7,
+        "edit_insert_stage": 14,
+        "edit_delete_stage": 9,
+        "edit_crossover": 3,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 48143,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-774-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/round-774.json",
+      "round_receipt_sha256": "9afb74f9878de659e46420d7e6122fa122f096a069f0c70b42236ee0439a3cd2",
+      "sha256": "3aeead26b5163ffb6691810b4c3d92212e4c7275451fe4bafd78f3c52c080229",
+      "round": 774,
+      "operator_counts": {
+        "champion_retrieval": 11,
+        "edit_parameter": 19,
+        "edit_replace_head": 4,
+        "edit_insert_stage": 10,
+        "edit_delete_stage": 13,
+        "edit_crossover": 7,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 48289,
+      "evaluated": 64,
+      "generated": 128,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-775-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-775.json",
+      "round_receipt_sha256": "65c236db181b038b358d50ee184dab52b4350e19e658467c80688fb8f7641e44",
+      "sha256": "5be6fe0590f7dc2e16dd8dd97745f6b9e10d8901593010f44957987caf7da692",
+      "round": 775,
+      "operator_counts": {
+        "champion_retrieval": 19,
+        "edit_parameter": 15,
+        "edit_replace_head": 12,
+        "edit_insert_stage": 12,
+        "edit_delete_stage": 6,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": false
+    },
+    {
+      "bytes": 48167,
+      "evaluated": 64,
+      "generated": 128,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-776-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-776.json",
+      "round_receipt_sha256": "ee5eba10b97a934a13ddc26505bb14e16158b5618458a3c9c32860c337d1ca49",
+      "sha256": "4f84c01677e90ab4355efbeefd63988e41a4e489dc5cfd55224872a7069dee1c",
+      "round": 776,
+      "operator_counts": {
+        "champion_retrieval": 11,
+        "edit_parameter": 21,
+        "edit_replace_head": 16,
+        "edit_insert_stage": 13,
+        "edit_delete_stage": 3,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": false
+    },
+    {
+      "bytes": 49080,
+      "evaluated": 64,
+      "generated": 128,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-777-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-777.json",
+      "round_receipt_sha256": "4496af21a82637f1dadb7d450f5ed1477f0d50ce67452b4f6d2419655623225e",
+      "sha256": "26ac5d491aceffad4b6befb11f0842470d544af665639bd26de35f8509e74a8a",
+      "round": 777,
+      "operator_counts": {
+        "champion_retrieval": 16,
+        "edit_parameter": 15,
+        "edit_replace_head": 17,
+        "edit_insert_stage": 9,
+        "edit_delete_stage": 7,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": false
+    },
+    {
+      "bytes": 48244,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-778-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-778.json",
+      "round_receipt_sha256": "ecaa08f1adcc6d39dea9321ce3dda9aaea289d613b27f386977d75f4290a24ea",
+      "sha256": "88d1c6db20c10d09b2a2b8a9b6674c73b27be98972a8f8a6004db503156fe289",
+      "round": 778,
+      "operator_counts": {
+        "champion_retrieval": 22,
+        "edit_parameter": 11,
+        "edit_replace_head": 12,
+        "edit_insert_stage": 15,
+        "edit_delete_stage": 4,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 48821,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-779-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-779.json",
+      "round_receipt_sha256": "0504df70f452b3f123506e5e09efb69ac19bad2839ea397678d5f680b651f458",
+      "sha256": "5c15b186ca548035125f9b1dafd80f87deac41a20df6c6e2e664692cdb7dedb6",
+      "round": 779,
+      "operator_counts": {
+        "champion_retrieval": 24,
+        "edit_parameter": 10,
+        "edit_replace_head": 9,
+        "edit_insert_stage": 12,
+        "edit_delete_stage": 9,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 48235,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-780-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-780.json",
+      "round_receipt_sha256": "5e12edb334f7b083626031891c64785f981c12c1f8116cb2a1109a5eaaf23fbc",
+      "sha256": "17ee46027310c9f2f62a61245144c3d2d338f432bde31a574d758f1a01853332",
+      "round": 780,
+      "operator_counts": {
+        "champion_retrieval": 22,
+        "edit_parameter": 15,
+        "edit_replace_head": 9,
+        "edit_insert_stage": 10,
+        "edit_delete_stage": 8,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 49389,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-781-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-781.json",
+      "round_receipt_sha256": "b5ddaeb326cf5c4d51b6e5960cbd8975c7ab9b7c62094246e98473c55c9c1150",
+      "sha256": "2051b53400295463162eaba9e15cb1c448b6b4f10d6b1cc808a889a944e0dfa0",
+      "round": 781,
+      "operator_counts": {
+        "champion_retrieval": 20,
+        "edit_parameter": 11,
+        "edit_replace_head": 11,
+        "edit_insert_stage": 13,
+        "edit_delete_stage": 9,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    },
+    {
+      "bytes": 48420,
+      "evaluated": 64,
+      "generated": 256,
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-782-scores.jsonl",
+      "records": 64,
+      "round_receipt_path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-782.json",
+      "round_receipt_sha256": "0bd324bdcf9fd3e864ebd101c9a7b3dd5f2e85e3f555fbad357afeacaeee4bbe",
+      "sha256": "2e0d357f6f9f7f8147d67ca8486e2036fb1621eb3b61e965680a8393443ab05b",
+      "round": 782,
+      "operator_counts": {
+        "champion_retrieval": 22,
+        "edit_parameter": 11,
+        "edit_replace_head": 11,
+        "edit_insert_stage": 14,
+        "edit_delete_stage": 6,
+        "edit_crossover": 0,
+        "landmark_synthesis": 0
+      },
+      "exploration": true
+    }
+  ],
+  "run_manifests": [
+    {
+      "external_sources": {
+        "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+      },
+      "path": "/home/ubuntu/jope-data/flywheel-gp-fused/run-20261029/run_manifest_round662.json",
+      "sha256": "5593de13a8d5e0a00112506b94b3788e7e3c17075b167b1d2bb49ad656e67584",
+      "source_sha": "fe83138ece13645514cfff8de347f022b683f06e"
+    },
+    {
+      "external_sources": {
+        "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+      },
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/run_manifest_round775.json",
+      "sha256": "7f831acf6bb835b178752e421a71fe22a0dc965fad9469c03968669c68b38f04",
+      "source_sha": "58c1c4a442c8b65c0a3c6bbcbc200c29bc7ab0c4"
+    },
+    {
+      "external_sources": {
+        "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+      },
+      "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/run_manifest_round776.json",
+      "sha256": "44165d53b7e91dfee442923a32dde9200df55c0891126e714d2cf51be59b66a0",
+      "source_sha": "07e03984de9a1a7be5b0c94bba166423aa21a549"
+    }
+  ],
+  "projection_evidence": {
+    "path": "/home/ubuntu/jope_plan/evidence/RES-chain/t547/proposer-journal-preparation.json",
+    "sha256": "97705cc4edd2f260bc7010b4b2bae2e8dc7f0087d405b0103d42467145002148",
+    "capture_script_sha256": "47ac8f5d2c86a457581fdcb814c85523f612d6ca93d26d83f8505b9fe856aa1b"
+  },
+  "qualification": "Source documentation and evaluated-journal measurement only; not a Rust proposer parity, model quality or serving qualification."
+}

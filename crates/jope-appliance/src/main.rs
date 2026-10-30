@@ -1034,10 +1034,7 @@ fn main() -> ExitCode {
         } => run_fit(&train, output.as_deref(), &model_root, &common),
         Command::Model(args) => report(model::run(args)),
         #[cfg(feature = "mcp")]
-        Command::Run(args) => report((|| {
-            let client = cmd::client()?;
-            cmd::run::run(args, &client)
-        })()),
+        Command::Run(args) => report(cmd::run::dispatch(args)),
         #[cfg(feature = "mcp")]
         Command::Status(args) => report((|| {
             let client = cmd::client()?;
