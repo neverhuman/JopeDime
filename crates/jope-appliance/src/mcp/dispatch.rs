@@ -7,7 +7,9 @@ use jope_client::{Request, Transport};
 use serde_json::{json, Value};
 use std::{
     collections::{BTreeMap, VecDeque},
-    io::Read,
+    fs::File,
+    io::{Cursor, Read},
+    path::Path,
     sync::Mutex,
     time::Instant,
 };
@@ -315,7 +317,7 @@ fn execute_inner<T: Transport>(
             // CLT-03 owns atomic local artifact download/extraction. Refuse before a mutation.
             if args.get("out_dir").is_some() {
                 return Err(unavailable(
-                    "local export extraction requires CLT-03 integration",
+                    "local export extraction requires an archive digest in the export contract",
                 ));
             }
             let (run, alg) = run(args)?;
@@ -373,19 +375,16 @@ fn predict<T: Transport>(
     args: &Value,
     key: Option<&str>,
 ) -> jope_client::Result<Value> {
-    if args.get("out_path").is_some()
-        || args["model"].get("path").is_some()
-        || args["input"].get("path").is_some()
-    {
-        return Err(unavailable(
-            "local prediction files require client file integration",
-        ));
-    }
     let model = args["model"]
         .as_object()
         .ok_or_else(|| invalid("model must be an object"))?;
     let artifact = if model.len() == 1 && model.contains_key("artifact_id") {
         id::<ArtifactId>(&args["model"], "artifact_id")?
+    } else if model.len() == 1 && model.contains_key("path") {
+        let path = required(&args["model"], "path")?;
+        path.parse::<ArtifactId>()
+            .map_err(|_| invalid("model.path must be an explicit artifact ID"))?;
+        path.to_owned()
     } else {
         if model
             .keys()
@@ -406,10 +405,25 @@ fn predict<T: Transport>(
     let input = args["input"]
         .as_object()
         .ok_or_else(|| invalid("input must be an object"))?;
-    if input.len() != 1 || !input.contains_key("dataset_id") {
-        return Err(invalid("input must name one registered dataset"));
-    }
-    let dataset = id::<DatasetId>(&args["input"], "dataset_id")?;
+    let dataset = if input.len() == 1 && input.contains_key("dataset_id") {
+        id::<DatasetId>(&args["input"], "dataset_id")?
+    } else if input.len() == 1 && input.contains_key("path") {
+        let path_text = required(&args["input"], "path")?;
+        let path = Path::new(path_text);
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .filter(|name| !name.is_empty())
+            .ok_or_else(|| invalid("input path must name a UTF-8 file"))?;
+        let file = File::open(path)?;
+        let key = key.ok_or_else(|| invalid("missing idempotency key"))?;
+        jope_client::files::upload_csv(client, name, file, key)?
+            .json::<DatasetProfile>()?
+            .dataset_id
+            .to_string()
+    } else {
+        return Err(invalid("input must name one dataset_id or local path"));
+    };
     let body: PredictRequest =
         serde_json::from_value(json!({"model_artifact":artifact,"dataset":dataset}))?;
     let started = Instant::now();
@@ -430,6 +444,17 @@ fn predict<T: Transport>(
     let table = jope_runtime::table::parse_csv(&bytes, &Default::default())
         .map_err(|_| invalid("invalid prediction CSV"))?;
     let hash = jope_runtime::sha256_hex(&bytes);
+    if let Some(out_path) = args.get("out_path") {
+        let out_path = out_path
+            .as_str()
+            .filter(|path| !path.is_empty())
+            .ok_or_else(|| invalid("out_path must be a nonempty string"))?;
+        jope_client::files::write_csv_atomic(Path::new(out_path), Cursor::new(&bytes))
+            .map_err(|error| invalid(error.to_string()))?;
+        return Ok(
+            json!({"rows":table.rows.len().to_string(),"sha256":hash,"wall_seconds":started.elapsed().as_secs_f64(),"out_path":out_path}),
+        );
+    }
     let uri = format!("jope://predictions/{hash}");
     resources
         .put(
@@ -455,47 +480,47 @@ pub fn read_resource<T: Transport>(
         .strip_prefix("jope://")
         .ok_or("unsupported resource scheme")?;
     let pieces: Vec<_> = path.split('/').collect();
-    let v =
-        match pieces.as_slice() {
-            ["runs", run] => {
-                let _: RunId = run.parse().map_err(|_| "invalid run resource")?;
-                client
-                    .execute(Request::new(7, 1, &[("id", run)]).map_err(|e| e.to_string())?)
-                    .and_then(|r| r.json::<RunSnapshot>())
-                    .and_then(|v| serde_json::to_value(v).map_err(Into::into))
-            }
-            ["datasets", dataset, "profile"] => {
-                let _: DatasetId = dataset.parse().map_err(|_| "invalid dataset resource")?;
-                client
-                    .execute(Request::new(3, 1, &[("id", dataset)]).map_err(|e| e.to_string())?)
-                    .and_then(|r| r.json::<DatasetProfile>())
-                    .and_then(|v| serde_json::to_value(v).map_err(Into::into))
-            }
-            ["runs", run, "algorithms", alg, "source", language] => {
-                let _: RunId = run.parse().map_err(|_| "invalid run resource")?;
-                let _: AlgorithmId = alg.parse().map_err(|_| "invalid algorithm resource")?;
-                let language: jope_api::Language = serde_json::from_value(json!(language))
-                    .map_err(|_| "invalid source language")?;
-                let algorithm =
-                    algorithm(client, run, alg).map_err(|_| "source resource unavailable")?;
-                let source = algorithm
-                    .source
-                    .into_iter()
-                    .find(|s| s.language == language)
-                    .ok_or("source language unavailable")?
-                    .source;
-                if source.len() > MAX_CONTENT {
-                    return Err("source resource exceeds limit".into());
-                }
-                return Ok(("text/plain".into(), source));
-            }
-            ["artifacts", _, "manifest"] => return Err(
-                "manifest is not cached; persistent artifact decoding requires CLT-03 integration"
-                    .into(),
-            ),
-            _ => return Err("resource not found".into()),
+    let v = match pieces.as_slice() {
+        ["runs", run] => {
+            let _: RunId = run.parse().map_err(|_| "invalid run resource")?;
+            client
+                .execute(Request::new(7, 1, &[("id", run)]).map_err(|e| e.to_string())?)
+                .and_then(|r| r.json::<RunSnapshot>())
+                .and_then(|v| serde_json::to_value(v).map_err(Into::into))
         }
-        .map_err(|_| "engine resource unavailable")?;
+        ["datasets", dataset, "profile"] => {
+            let _: DatasetId = dataset.parse().map_err(|_| "invalid dataset resource")?;
+            client
+                .execute(Request::new(3, 1, &[("id", dataset)]).map_err(|e| e.to_string())?)
+                .and_then(|r| r.json::<DatasetProfile>())
+                .and_then(|v| serde_json::to_value(v).map_err(Into::into))
+        }
+        ["runs", run, "algorithms", alg, "source", language] => {
+            let _: RunId = run.parse().map_err(|_| "invalid run resource")?;
+            let _: AlgorithmId = alg.parse().map_err(|_| "invalid algorithm resource")?;
+            let language: jope_api::Language =
+                serde_json::from_value(json!(language)).map_err(|_| "invalid source language")?;
+            let algorithm =
+                algorithm(client, run, alg).map_err(|_| "source resource unavailable")?;
+            let source = algorithm
+                .source
+                .into_iter()
+                .find(|s| s.language == language)
+                .ok_or("source language unavailable")?
+                .source;
+            if source.len() > MAX_CONTENT {
+                return Err("source resource exceeds limit".into());
+            }
+            return Ok(("text/plain".into(), source));
+        }
+        ["artifacts", _, "manifest"] => {
+            return Err(
+                "manifest unavailable: artifact manifest is not cached in this process".into(),
+            )
+        }
+        _ => return Err("resource not found".into()),
+    }
+    .map_err(|_| "engine resource unavailable")?;
     let text = serde_json::to_string(&v).map_err(|_| "resource serialization failed")?;
     if text.len() > MAX_CONTENT {
         return Err("resource exceeds limit".into());

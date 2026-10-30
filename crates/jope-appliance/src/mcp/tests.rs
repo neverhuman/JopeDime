@@ -6,7 +6,7 @@ use jope_client::{
 use serde_json::Value;
 use std::{
     collections::BTreeMap,
-    io::Cursor,
+    io::{Cursor, Read},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Mutex,
@@ -28,6 +28,7 @@ const TRAIN_SHA: &str = "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2
 #[derive(Default)]
 struct Fixture {
     requests: Mutex<Vec<Value>>,
+    uploads: Mutex<Vec<(String, String, Vec<u8>)>>,
     cancelled: AtomicBool,
     waits: AtomicUsize,
     delay_immediate: AtomicBool,
@@ -141,6 +142,22 @@ impl Transport for Client {
             return Ok(response(snapshot(self.0.cancelled.load(Ordering::SeqCst))));
         }
         panic!("unexpected fixture request {target}")
+    }
+
+    fn dataset_register_stream(
+        &self,
+        name: &str,
+        mut body: Box<dyn Read + Send>,
+        idempotency_key: &str,
+    ) -> jope_client::Result<Response> {
+        let mut bytes = Vec::new();
+        body.read_to_end(&mut bytes)?;
+        self.0
+            .uploads
+            .lock()
+            .unwrap()
+            .push((name.to_owned(), idempotency_key.to_owned(), bytes));
+        Ok(response(profile()))
     }
 }
 
@@ -437,6 +454,103 @@ async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
         assert_eq!(control["key"], "cancel-key");
         wire.finish("all-tools").await;
     }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn model_predict_uploads_local_csv_and_atomically_writes_requested_output() {
+    let mut wire = Wire::connect("2025-11-25").await;
+    wire.ready().await;
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("local-input.csv");
+    let output = dir.path().join("predictions.csv");
+    std::fs::write(&input, b"x,target\n1,0\n2,1\n").unwrap();
+
+    let result = wire
+        .tool(
+            "model_predict",
+            json!({"model":{"artifact_id":ARTIFACT},"input":{"path":input},"out_path":output,"idempotency_key":"local-predict-key"}),
+        )
+        .await;
+    assert_ne!(result["result"]["isError"], true, "{result}");
+    let value = &result["result"]["structuredContent"];
+    assert_eq!(value["rows"], "2");
+    assert_eq!(value["out_path"], output.to_string_lossy().as_ref());
+    assert_eq!(std::fs::read(&output).unwrap(), b"prediction\n0.25\n0.5\n");
+
+    {
+        let uploads = wire.backend.uploads.lock().unwrap();
+        assert_eq!(uploads.len(), 1);
+        assert_eq!(uploads[0].0, "local-input.csv");
+        assert_eq!(uploads[0].1, "local-predict-key");
+        assert_eq!(uploads[0].2, b"x,target\n1,0\n2,1\n");
+    }
+    {
+        let requests = wire.backend.requests.lock().unwrap();
+        let prediction = requests
+            .iter()
+            .find(|request| request["target"] == "/v1/predictions")
+            .unwrap();
+        assert_eq!(prediction["key"], "local-predict-key");
+        assert_eq!(prediction["body"]["dataset"], DATASET);
+    }
+    wire.finish("local-file-predict").await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn local_model_path_is_rejected_before_dataset_upload() {
+    let mut wire = Wire::connect("2025-11-25").await;
+    wire.ready().await;
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("local-input.csv");
+    std::fs::write(&input, b"x,target\n1,0\n").unwrap();
+    let result = wire
+        .tool(
+            "model_predict",
+            json!({"model":{"path":"model.bundle"},"input":{"path":input},"idempotency_key":"local-model-key"}),
+        )
+        .await;
+    assert_eq!(result["result"]["isError"], true);
+    assert!(wire.backend.uploads.lock().unwrap().is_empty());
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+    wire.finish("local-model-refused").await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn model_path_accepts_only_an_explicit_artifact_id() {
+    let mut wire = Wire::connect("2025-11-25").await;
+    wire.ready().await;
+    let result = wire
+        .tool(
+            "model_predict",
+            json!({"model":{"path":ARTIFACT},"input":{"dataset_id":DATASET},"idempotency_key":"artifact-path-key"}),
+        )
+        .await;
+    assert_ne!(result["result"]["isError"], true, "{result}");
+    {
+        let requests = wire.backend.requests.lock().unwrap();
+        let prediction = requests
+            .iter()
+            .find(|request| request["target"] == "/v1/predictions")
+            .unwrap();
+        assert_eq!(prediction["body"]["model_artifact"], ARTIFACT);
+    }
+    assert!(wire.backend.uploads.lock().unwrap().is_empty());
+    wire.finish("artifact-id-model-path").await;
+}
+
+#[test]
+fn uncached_manifest_is_reported_as_explicitly_unavailable() {
+    let client = Client(Arc::new(Fixture::default()));
+    let result = dispatch::read_resource(
+        &client,
+        &dispatch::Resources::default(),
+        &format!("jope://artifacts/{ARTIFACT}/manifest"),
+    );
+    assert_eq!(
+        result.unwrap_err(),
+        "manifest unavailable: artifact manifest is not cached in this process"
+    );
+    assert!(client.0.requests.lock().unwrap().is_empty());
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
