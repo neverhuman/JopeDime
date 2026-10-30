@@ -17,11 +17,13 @@ axum = { version = "=0.8.9", default-features = false, optional = true }
 http-body-util = { version = "=0.1.5", optional = true }
 jope-api = { path = "../jope-api" }
 jope-service = { path = "../jope-service", optional = true }
+sha2 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, optional = true }
 tower = { version = "=0.5.3", default-features = false, features = ["util"], optional = true }
 ureq = { version = "=3.4.2", default-features = false }
+zip = { version = "=9.0.5", default-features = false, features = ["deflate"] }
 
 [[test]]
 name = "fake_replay"
