@@ -4625,6 +4625,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest proofs for H47 family-row construction and deterministic family bootstrap analysis; offline research analysis outside the reviewed product baseline."
     },
+    "python:research/flywheel_selfplay/h48/test_run.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested tests for H48 deterministic family-fold assignment and family-balanced minibatch sampling; offline research diagnostic outside the reviewed product baseline."
+    },
     "python:research/flywheel_selfplay/test_phase3_gates.py": {
       "discovery": {
         "kind": "python-family"

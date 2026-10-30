@@ -4826,6 +4826,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h48/test_run.py": {
+      "reason": "Owner-requested pytest proofs for H48 utility-alignment harness adapters, fold selection, and persisted checkpoint snapshots; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
