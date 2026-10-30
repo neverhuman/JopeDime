@@ -27,7 +27,7 @@ def _ids() -> dict[str, int]:
 
 def test_registry_keeps_frozen_names() -> None:
     ids = _ids()
-    assert len(ids) == 92
+    assert len(ids) == 94
     assert ids["io.batch_gb_s"] == 0x041B
     assert tel.metric_id("throughput.tokens_per_s") == 0x0119
     assert ids["throughput.tokens_per_s.rust"] == 0x012A
