@@ -11,6 +11,7 @@
 //! | Resolver | Variable | Default | Historical value it replaces |
 //! |---|---|---|---|
 //! | [`jope_home`] | `JOPE_HOME` | nearest ancestor of the current directory, then of the executable, holding a [`HOME_MARKER`] file; else the current directory | `~/jope-dime` (the source checkout: assets, manifests, seeds, `python/`) |
+//! | [`jopedime_home`] | `JOPEDIME_HOME` | OS data directory for the JopeDime service | — |
 //! | [`jope_state`] | `JOPE_STATE` | `$XDG_STATE_HOME/jope`, else `$HOME/.local/state/jope`, else `<jope_home>/state` | `~/jope-flywheel/test_exact_gen0` and every other mutable tree (runs, queues, sqlite, pointers, logs); the restored `parallel/` tree lives here, lineage-A material under `legacy/` |
 //! | [`jope_registry`] | `JOPE_REGISTRY` | `<jope_home>/datasets/by-id` | `~/remote_super/quant/regression` (dataset ids resolve to directories under it) |
 //! | [`sotarena_root`] | `SOTARENA_ROOT` | `<jope_home>/benchmarks/sotarena` | the nested `sotarena` benchmark clone |
@@ -83,6 +84,54 @@ pub fn jope_home() -> PathBuf {
         env::current_dir().ok().as_deref(),
         env::current_exe().ok().as_deref(),
     )
+}
+
+/// JopeDime's service data directory.
+///
+/// `JOPEDIME_HOME` when set; otherwise `$XDG_DATA_HOME/jopedime` or
+/// `$HOME/.local/share/jopedime` on Linux, `~/Library/Application Support/jopedime`
+/// on macOS, and `%LOCALAPPDATA%\\jopedime` on Windows. The environment is
+/// read on every call so callers and tests can change it at runtime.
+pub fn jopedime_home() -> PathBuf {
+    let override_path = env::var_os("JOPEDIME_HOME");
+    let xdg_data_home = env::var_os("XDG_DATA_HOME");
+    let home = env::var_os("HOME");
+    let local_app_data = env::var_os("LOCALAPPDATA");
+    default_jopedime_home(
+        std::env::consts::OS,
+        override_path.as_deref(),
+        xdg_data_home.as_deref(),
+        home.as_deref(),
+        local_app_data.as_deref(),
+    )
+}
+
+fn default_jopedime_home(
+    os: &str,
+    override_path: Option<&std::ffi::OsStr>,
+    xdg_data_home: Option<&std::ffi::OsStr>,
+    home: Option<&std::ffi::OsStr>,
+    local_app_data: Option<&std::ffi::OsStr>,
+) -> PathBuf {
+    if let Some(path) = override_path.filter(|path| !path.is_empty()) {
+        return PathBuf::from(path);
+    }
+
+    let home = home
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    match os {
+        "linux" => xdg_data_home
+            .filter(|path| !path.is_empty() && Path::new(path).is_absolute())
+            .map(|path| PathBuf::from(path).join("jopedime"))
+            .unwrap_or_else(|| home.join(".local/share/jopedime")),
+        "macos" => home.join("Library/Application Support/jopedime"),
+        "windows" => local_app_data
+            .filter(|path| !path.is_empty())
+            .map(|path| PathBuf::from(path).join("jopedime"))
+            .unwrap_or_else(|| home.join("AppData/Local/jopedime")),
+        _ => home.join(".local/share/jopedime"),
+    }
 }
 
 fn select_home(home: Option<&Path>, cwd: Option<&Path>, executable: Option<&Path>) -> PathBuf {
@@ -213,15 +262,18 @@ mod tests {
     /// this lock and restores what it touched.
     static ENV_LOCK: Mutex<()> = Mutex::new(());
 
-    const VARS: [&str; 8] = [
+    const VARS: [&str; 11] = [
         var::JOPE_HOME,
         var::JOPE_STATE,
         var::JOPE_REGISTRY,
         var::SOTARENA_ROOT,
         var::SOTARENA_REPORTER_ROOT,
         var::JOPE_SCQ_ROOT,
+        "JOPEDIME_HOME",
         "XDG_STATE_HOME",
+        "XDG_DATA_HOME",
         "HOME",
+        "LOCALAPPDATA",
     ];
 
     struct EnvScope {
@@ -281,6 +333,56 @@ mod tests {
         assert_eq!(jope_home(), PathBuf::from("/opt/jope/checkout"));
         env::set_var(var::JOPE_HOME, "");
         assert_ne!(jope_home(), PathBuf::from(""), "an empty value is unset");
+    }
+
+    #[test]
+    fn jopedime_home_uses_environment_and_os_data_directories() {
+        let _scope = EnvScope::new();
+
+        env::set_var("JOPEDIME_HOME", "/configured/jopedime");
+        assert_eq!(jopedime_home(), PathBuf::from("/configured/jopedime"));
+        env::remove_var("JOPEDIME_HOME");
+
+        assert_eq!(
+            default_jopedime_home(
+                "linux",
+                None,
+                Some(std::ffi::OsStr::new("/xdg/data")),
+                Some(std::ffi::OsStr::new("/users/alice")),
+                None,
+            ),
+            PathBuf::from("/xdg/data/jopedime")
+        );
+        assert_eq!(
+            default_jopedime_home(
+                "linux",
+                None,
+                None,
+                Some(std::ffi::OsStr::new("/users/alice")),
+                None,
+            ),
+            PathBuf::from("/users/alice/.local/share/jopedime")
+        );
+        assert_eq!(
+            default_jopedime_home(
+                "macos",
+                None,
+                None,
+                Some(std::ffi::OsStr::new("/Users/alice")),
+                None,
+            ),
+            PathBuf::from("/Users/alice/Library/Application Support/jopedime")
+        );
+        assert_eq!(
+            default_jopedime_home(
+                "windows",
+                None,
+                None,
+                None,
+                Some(std::ffi::OsStr::new(r"C:\Users\Alice\AppData\Local")),
+            ),
+            PathBuf::from(r"C:\Users\Alice\AppData\Local").join("jopedime")
+        );
     }
 
     #[test]

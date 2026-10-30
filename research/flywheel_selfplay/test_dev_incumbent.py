@@ -251,3 +251,37 @@ def test_first_gp_policy_installation_does_not_invent_past_exploration_rounds():
 
     plan = proposal_plan(42, 24, gp_drought_history(23))
     assert plan["gp_exploration"] and plan["gp_drought_policy"]["phase"] == 0
+
+
+def test_consecutive_restored_candidates_have_distinct_parameter_shas():
+    import copy
+    import hashlib
+
+    import torch
+    from dev_incumbent import warm_restart_adapter
+
+    model = torch.nn.Sequential(torch.nn.Linear(3, 2), torch.nn.Linear(2, 1))
+    model[0].requires_grad_(False)
+    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=1e-4)
+    baseline = copy.deepcopy(model.state_dict())
+    optimizer = copy.deepcopy(opt.state_dict())
+    candidates = []
+    for rnd in (8, 9):
+        model.load_state_dict(baseline)
+        opt.load_state_dict(copy.deepcopy(optimizer))
+        warm_restart_adapter(model, opt, 104729 * rnd, rnd)
+        opt.zero_grad()
+        model(torch.ones((4, 3))).square().mean().backward()
+        opt.step()
+        candidates.append(
+            hashlib.sha256(
+                b"".join(
+                    p.detach().numpy().tobytes()
+                    for p in model.parameters()
+                    if p.requires_grad
+                )
+            ).hexdigest()
+        )
+        for name in ("0.weight", "0.bias"):
+            assert torch.equal(model.state_dict()[name], baseline[name])
+    assert candidates[0] != candidates[1]

@@ -1,0 +1,181 @@
+{
+  "counts": {
+    "dropped_feature_count": 0,
+    "n_features": 12,
+    "original_columns": 13,
+    "original_rows": 30,
+    "rows_after_target_cleanup": 30,
+    "selected_rows": 30,
+    "strata_count": 10,
+    "test_rows": 5,
+    "train_rows": 25
+  },
+  "created_at": "2026-06-21T07:58:42+00:00",
+  "dataset_hash": "b4c8807a75fc190f",
+  "dropped_feature_columns": [],
+  "feature_columns": [
+    "pH_target",
+    "Clay_target",
+    "Altitude",
+    "Slope",
+    "ERa",
+    "G_Total_Counts",
+    "G_K",
+    "G_U",
+    "G_Th",
+    "G_Cs",
+    "B04",
+    "NDVI"
+  ],
+  "feature_encodings": {
+    "Altitude": {
+      "impute_value": 46.5599994659424,
+      "kind": "numeric"
+    },
+    "B04": {
+      "impute_value": 2326.0,
+      "kind": "numeric"
+    },
+    "Clay_target": {
+      "impute_value": 2.8035,
+      "kind": "numeric"
+    },
+    "ERa": {
+      "impute_value": 239.58623612443648,
+      "kind": "numeric"
+    },
+    "G_Cs": {
+      "impute_value": 5.275229783049215,
+      "kind": "numeric"
+    },
+    "G_K": {
+      "impute_value": 363.0867378398855,
+      "kind": "numeric"
+    },
+    "G_Th": {
+      "impute_value": 19.63340250492885,
+      "kind": "numeric"
+    },
+    "G_Total_Counts": {
+      "impute_value": 704.3650143486379,
+      "kind": "numeric"
+    },
+    "G_U": {
+      "impute_value": 15.28617200682605,
+      "kind": "numeric"
+    },
+    "NDVI": {
+      "impute_value": 0.5123771822511125,
+      "kind": "numeric"
+    },
+    "Slope": {
+      "impute_value": 0.0337498188018799,
+      "kind": "numeric"
+    },
+    "pH_target": {
+      "impute_value": 5.307,
+      "kind": "numeric"
+    }
+  },
+  "feature_scaling": {
+    "constant_columns": [],
+    "max": [
+      7.616,
+      6.752,
+      47.8800010681152,
+      0.0812506675720215,
+      606.819205565087,
+      776.287279671099,
+      418.682970920672,
+      18.8046473946002,
+      22.8875396024078,
+      7.06818057876418,
+      2494.0,
+      0.585462805224304
+    ],
+    "method": "minmax over cleaned source rows before sampling",
+    "min": [
+      4.142,
+      1.051,
+      42.9599990844727,
+      0.0125007629394531,
+      69.4098226516571,
+      546.33616588169,
+      296.132387567327,
+      8.98266050605833,
+      12.8875481127034,
+      2.98666473971223,
+      2010.0,
+      0.464622641509434
+    ],
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "hash_algorithm": "sha256:first16",
+  "headers_removed_from_csv": true,
+  "n_features": 12,
+  "original_headers": [
+    "pH_target",
+    "Clay_target",
+    "Altitude",
+    "Slope",
+    "ERa",
+    "G_Total_Counts",
+    "G_K",
+    "G_U",
+    "G_Th",
+    "G_Cs",
+    "B04",
+    "NDVI",
+    "target"
+  ],
+  "output_headers": [
+    "pH_target",
+    "Clay_target",
+    "Altitude",
+    "Slope",
+    "ERa",
+    "G_Total_Counts",
+    "G_K",
+    "G_U",
+    "G_Th",
+    "G_Cs",
+    "B04",
+    "NDVI",
+    "target"
+  ],
+  "sampling": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "minimum_test_to_train_ratio_when_small": 0.2,
+    "seed": 3053299575,
+    "test_target_rows": 1000,
+    "train_target_rows": 1000
+  },
+  "sha256": "b4c8807a75fc190f3678bea975d0e457bfa7ece6d4b6d14a9742ebf7519d8ca5",
+  "source_file": "limesoda-bb-30-2-dataset.csv",
+  "source_modified_at": "2026-06-20T10:07:23+00:00",
+  "source_path": "/home/ubuntu/hyper/data/tabular/limesoda-bb-30-2-dataset.csv",
+  "source_size_bytes": 5473,
+  "target_column": "target",
+  "target_is_final_column": true,
+  "target_names": [
+    "target"
+  ],
+  "target_scaling": {
+    "max": 1.164,
+    "min": 0.343,
+    "mode": "regression",
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "target_source_encoding": {
+    "kind": "numeric"
+  },
+  "task_type": "regression",
+  "test_rows": 5,
+  "train_rows": 25
+}

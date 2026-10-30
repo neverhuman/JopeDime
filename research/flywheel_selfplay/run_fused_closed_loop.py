@@ -26,6 +26,7 @@ from pathlib import Path
 os.environ.setdefault("OMP_NUM_THREADS", "4")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "4")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import numpy as np
 import psutil
 import torch
@@ -52,8 +53,14 @@ from dev_incumbent import (
     gp_selection_indices,
     project_score_margins,
     proposal_plan,
+    warm_restart_adapter,
 )
-from device_pool_cache import DevicePoolCache, release_gpu_round, wait_for_gpu_headroom
+from device_pool_cache import (
+    DevicePoolCache,
+    landmark_float32,
+    release_gpu_round,
+    wait_for_gpu_headroom,
+)
 
 
 def sha(path):
@@ -79,13 +86,22 @@ def load_packet(root):
         raise ValueError("family overlap or empty partition")
     pools = {}
     tables = {}
+    full = selected.get("protocol") == "full-DL-Train1219-DL-Val91/v1"
+    if full and (len(selected["train"]) != 1219 or len(selected["dev"]) != 91):
+        raise ValueError("full cohort inventory mismatch")
     for role in ("train", "dev"):
         for rec in selected[role]:
-            if rec["dl_split"] != "DL-Train" or rec["source_split"] not in (
+            if rec["dl_split"] != (
+                "DL-Val" if full and role == "dev" else "DL-Train"
+            ) or rec["source_split"] not in (
                 "train",
                 "inner",
             ):
                 raise ValueError("outside training closure")
+            if full and rec.get("task") != "regression":
+                raise ValueError(
+                    "this GP evaluator is regression-only; binary requires task-correct pools and admission"
+                )
             cid = rec["context_sha256"]
             pp = root / "pools" / f"{cid}.npz"
             if sha(pp) != rec["pool_sha256"]:
@@ -122,7 +138,7 @@ def load_packet(root):
                 .reshape(nt, width + 1)
                 .copy()
             )
-            tables[cid] = (a[:, :-1].astype(np.float32), a[:, -1].astype(np.float32))
+            tables[cid] = (a[:, :-1], a[:, -1])
     return selected, pools, tables
 
 
@@ -138,6 +154,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--resume", type=Path)
     ap.add_argument("--continuous", action="store_true")
+    ap.add_argument("--campaign-prior-output", type=Path, action="append", default=[])
     ap.add_argument("--best-checkpoint", type=Path)
     ap.add_argument(
         "--phase3-gate-bundles",
@@ -156,6 +173,20 @@ def main():
     np.random.seed(args.seed)
     random.seed(args.seed)
     selected, pools, tables = load_packet(args.input)
+    full = selected.get("protocol") == "full-DL-Train1219-DL-Val91/v1"
+    reporter = None
+    if full:
+        from jope._telemetry import FullFlywheelReporter
+
+        if args.steps > 2 or args.batch_size > 8192 or args.batch_size < 1219:
+            raise ValueError(
+                "full cohort must retain max2 steps and 1219..8192 batch bound"
+            )
+        reporter = FullFlywheelReporter(
+            args.input / "selected.json",
+            args.output,
+            Path.home() / "jope_plan/scores/history.jsonl",
+        )
     train = [r["context_sha256"] for r in selected["train"]]
     dev = [r["context_sha256"] for r in selected["dev"]]
     journal = args.output / "promotions.jsonl"
@@ -248,6 +279,11 @@ def main():
             p.requires_grad_(True)
     guard.lock_dope_weights_and_eval_mode(net)
     before = guard.snapshot_dope_weights(net)
+    if (
+        before.composite_sha256
+        != "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    ):
+        raise RuntimeError("frozen DOPE source differs from campaign pin")
     counts = guard.get_trainable_param_counts_by_submodule(net)
     opt = torch.optim.AdamW(
         [p for p in net.parameters() if p.requires_grad], lr=1e-4, weight_decay=1e-4
@@ -265,16 +301,19 @@ def main():
     token = {}
     mask = {}
     landmark = {}
-    ws = FusedLandmarkWorkspace()
+    ws = FusedLandmarkWorkspace(num_threads=4)
     tprep = time.monotonic()
-    for cid, (x, y) in tables.items():
-        headroom()
+    for prep_idx, (cid, (x, y)) in enumerate(tables.items()):
+        # Four worker threads remain fixed; check host headroom in bounded groups
+        # instead of imposing a 250ms sampling sleep on every tiny context.
+        if not full or prep_idx % 16 == 0:
+            headroom()
         yn = (
             (y.astype(np.float64) - np.mean(y.astype(np.float64)))
             / max(float(np.std(y.astype(np.float64))), 1e-8)
         ).astype(np.float32)
         v, col, _ = ws.fit_transform_and_extract_bundle_high(
-            np.ascontiguousarray(x), np.ascontiguousarray(yn)
+            landmark_float32(x), np.ascontiguousarray(yn)
         )
         cl = np.zeros((64, 17), np.float32)
         n = min(len(col), 64)
@@ -298,6 +337,15 @@ def main():
         for r in json.loads((args.input / "champions.json").read_text())
         if r["context_sha256"] in train
     ]
+
+    for parent in bank:
+        if "feat412" not in parent:
+            feat, proj = evaluator.featurize_dsl_412(parent["dsl"])
+            parent.update(
+                feat412=feat.tolist(),
+                proj16=proj.tolist(),
+                landmark_summary=landmark[parent["context_sha256"]][:12].tolist(),
+            )
 
     # Recovered promotions also become mutation parents after a process restart.
     known_bank = {(r["context_sha256"], r["program_sha256"]) for r in bank}
@@ -370,18 +418,22 @@ def main():
             revealed_gate=history_gate,
         )["total_cost"].float()
 
-    def utility():
+    def utility(cids=None, role="dev"):
+        cids = dev if cids is None else cids
         net.eval()
-        values = []
-        choices = []
+        values, fitness, gates, choices = [], [], [], []
         with torch.no_grad():
-            for c in dev:
+            for c in cids:
                 p = pools[c]
-                s = np.arange(len(p["pids"]))
-                pred = predict([c], [s])[0].cpu().numpy()
+                pred = predict([c], [np.arange(len(p["pids"]))])[0].cpu().numpy()
                 i = int(np.argmin(pred))
-                values.append(-float(p["fitness"][i]) if p["gate"][i] else -2.0)
+                fitness.append(float(p["fitness"][i]))
+                gates.append(bool(p["gate"][i]))
                 choices.append(p["pids"][i])
+                if not full:
+                    values.append(-fitness[-1] if gates[-1] else -2.0)
+        if reporter:
+            return reporter.utility(cids, fitness, gates, choices, role)
         return {
             "mean": float(np.mean(values)),
             "per_context": values,
@@ -444,6 +496,8 @@ def main():
         json.dumps(eval_contract, sort_keys=True).encode()
     ).hexdigest()
     historical_best = None
+    if full and args.best_checkpoint:
+        raise ValueError("old-cohort best cannot enter full-cohort admission")
     if args.best_checkpoint:
         best_path = args.best_checkpoint
         historical_best = json.loads(best_path.with_suffix(".json").read_text())
@@ -475,15 +529,14 @@ def main():
         prior_path = Path(prior_best["best_checkpoint"])
         if sha(prior_path) != prior_best["checkpoint_sha256"]:
             raise ValueError("persisted best-dev checkpoint hash mismatch")
-        if (
-            historical_best is None
-            or prior_best["best_utility"] >= historical_best["dev_utility"]["mean"]
-        ):
-            historical_best = {
-                "round": prior_best["best_round"],
-                "dev_utility": prior_best["utility"],
-            }
-            best_path = prior_path
+        # This identity/hash-validated pointer is the committed admission state.
+        # Scientific round receipts are observations; older writers may differ
+        # by a JSON parsing ULP and must never supersede the committed pointer.
+        historical_best = {
+            "round": prior_best["best_round"],
+            "dev_utility": prior_best["utility"],
+        }
+        best_path = prior_path
     if historical_best:
         best_state = torch.load(best_path, map_location=device, weights_only=True)
         net.load_state_dict(best_state["state_dict"], strict=True)
@@ -532,73 +585,77 @@ def main():
                 )
                 + "\n"
             )
-    # Preserve only uncertain incumbent rankings, using prediction margins, not
-    # held-out candidate utilities as gradient targets. Raw-argmin evaluation stays unchanged.
-    constraint_path = args.output / "adapter_margin_constraints.json"
-    if constraint_path.exists():
-        margin_policy = json.loads(constraint_path.read_text())
-        if margin_policy["evaluation_identity"] != evaluation_identity:
-            raise ValueError("margin constraint evaluation identity changed")
+    if full:
+        margin_policy = {"version": "disabled-DL-Val-never-gradient/v1", "anchors": []}
+        constraint_functions = []
+    else:
+        # Preserve only uncertain incumbent rankings, using prediction margins, not
+        # held-out candidate utilities as gradient targets. Raw-argmin evaluation stays unchanged.
+        constraint_path = args.output / "adapter_margin_constraints.json"
+        if constraint_path.exists():
+            margin_policy = json.loads(constraint_path.read_text())
+            if margin_policy["evaluation_identity"] != evaluation_identity:
+                raise ValueError("margin constraint evaluation identity changed")
+            if (
+                sha(margin_policy["anchor_checkpoint"])
+                != margin_policy["anchor_checkpoint_sha256"]
+            ):
+                raise ValueError("margin anchor checkpoint changed")
+        elif historical_best and best_state.get("margin_projection"):
+            margin_policy = best_state["margin_projection"]
+            if margin_policy["evaluation_identity"] != evaluation_identity:
+                raise ValueError("checkpoint margin constraint identity changed")
+            write_json(constraint_path, margin_policy)
+        else:
+            anchors = []
+            with torch.no_grad():
+                for c, pid in zip(dev, initial["selected_programs"]):
+                    costs = predict([c], [np.arange(len(pools[c]["pids"]))])[0]
+                    ref = pools[c]["pids"].index(pid)
+                    others = torch.cat([costs[:ref], costs[ref + 1 :]])
+                    gap = float(others.min() - costs[ref])
+                    if 0 <= gap < 1e-3:
+                        anchors.append(
+                            {
+                                "context_sha256": c,
+                                "reference_program": pid,
+                                "initial_margin": gap,
+                                "minimum_margin": 0.5 * gap,
+                            }
+                        )
+            margin_policy = {
+                "version": "projected-low-margin-ranking/v1",
+                "evaluation_identity": evaluation_identity,
+                "anchor_checkpoint": str(best_path),
+                "anchor_checkpoint_sha256": sha(best_path),
+                "activation_margin": 1e-3,
+                "retained_fraction": 0.5,
+                "max_passes_per_step": 2,
+                "anchors": anchors,
+                "scope": "development-feature prediction-stability tuning; no candidate utility gradient targets; not independent validation",
+            }
+            write_json(constraint_path, margin_policy)
+        if margin_policy["version"] != "projected-low-margin-ranking/v1":
+            raise ValueError("unknown margin constraint policy")
         if (
             sha(margin_policy["anchor_checkpoint"])
             != margin_policy["anchor_checkpoint_sha256"]
         ):
             raise ValueError("margin anchor checkpoint changed")
-    elif historical_best and best_state.get("margin_projection"):
-        margin_policy = best_state["margin_projection"]
-        if margin_policy["evaluation_identity"] != evaluation_identity:
-            raise ValueError("checkpoint margin constraint identity changed")
-        write_json(constraint_path, margin_policy)
-    else:
-        anchors = []
-        with torch.no_grad():
-            for c, pid in zip(dev, initial["selected_programs"]):
-                costs = predict([c], [np.arange(len(pools[c]["pids"]))])[0]
-                ref = pools[c]["pids"].index(pid)
-                others = torch.cat([costs[:ref], costs[ref + 1 :]])
-                gap = float(others.min() - costs[ref])
-                if 0 <= gap < 1e-3:
-                    anchors.append(
-                        {
-                            "context_sha256": c,
-                            "reference_program": pid,
-                            "initial_margin": gap,
-                            "minimum_margin": 0.5 * gap,
-                        }
-                    )
-        margin_policy = {
-            "version": "projected-low-margin-ranking/v1",
-            "evaluation_identity": evaluation_identity,
-            "anchor_checkpoint": str(best_path),
-            "anchor_checkpoint_sha256": sha(best_path),
-            "activation_margin": 1e-3,
-            "retained_fraction": 0.5,
-            "max_passes_per_step": 2,
-            "anchors": anchors,
-            "scope": "development-feature prediction-stability tuning; no candidate utility gradient targets; not independent validation",
-        }
-        write_json(constraint_path, margin_policy)
-    if margin_policy["version"] != "projected-low-margin-ranking/v1":
-        raise ValueError("unknown margin constraint policy")
-    if (
-        sha(margin_policy["anchor_checkpoint"])
-        != margin_policy["anchor_checkpoint_sha256"]
-    ):
-        raise ValueError("margin anchor checkpoint changed")
-    constraint_functions = []
-    for anchor in margin_policy["anchors"]:
-        cid = anchor["context_sha256"]
-        if cid not in dev:
-            raise ValueError(
-                "margin anchor is outside the unchanged development cohort"
-            )
-        ref = pools[cid]["pids"].index(anchor["reference_program"])
+        constraint_functions = []
+        for anchor in margin_policy["anchors"]:
+            cid = anchor["context_sha256"]
+            if cid not in dev:
+                raise ValueError(
+                    "margin anchor is outside the unchanged development cohort"
+                )
+            ref = pools[cid]["pids"].index(anchor["reference_program"])
 
-        def margin_fn(cid=cid, ref=ref):
-            values = predict([cid], [np.arange(len(pools[cid]["pids"]))])[0]
-            return torch.cat([values[:ref], values[ref + 1 :]]).min() - values[ref]
+            def margin_fn(cid=cid, ref=ref):
+                values = predict([cid], [np.arange(len(pools[cid]["pids"]))])[0]
+                return torch.cat([values[:ref], values[ref + 1 :]]).min() - values[ref]
 
-        constraint_functions.append((cid, margin_fn, anchor["minimum_margin"]))
+            constraint_functions.append((cid, margin_fn, anchor["minimum_margin"]))
 
     manifest = {
         "node": socket.gethostname(),
@@ -613,6 +670,20 @@ def main():
         "parameter_counts": counts,
         "path": "cpu_exact_landmarks+frozen_dope+GPU_adapter",
         "phase2_kernel_used": False,
+        "cuda_allocator_config": os.environ.get("PYTORCH_CUDA_ALLOC_CONF"),
+        "task_counts": {
+            "train_regression": len(train),
+            "val_regression": len(dev),
+            "train_binary": 0,
+            "val_binary": 0,
+        }
+        if full
+        else None,
+        "landmark_preprocessing": "float64 raw tables; only out-of-f32-range feature columns scaled by finite max before frozen landmark standardization; raw evaluator bytes and labels unchanged",
+        "protocol_transition": "fresh DL-Val91 admission baseline; prior DL-Train8 development score is incomparable"
+        if full
+        else None,
+        "campaign_prior_outputs": [str(p) for p in args.campaign_prior_output],
         "prep_wall_seconds": prep_wall,
         "initial_dev": initial,
         "resumed_dev": resumed_stats,
@@ -620,7 +691,13 @@ def main():
         "margin_projection": margin_policy,
         "input_hashes": {
             p.name: sha(p)
-            for p in (args.input / "selected.json", args.input / "winners.json", source)
+            for p in (
+                args.input / "selected.json",
+                args.input / "winners.json",
+                args.input / "champions.json",
+                args.input / "source_manifest.json",
+                source,
+            )
         },
         "external_sources": {
             str(p): sha(p)
@@ -652,6 +729,12 @@ def main():
             HERE / "device_pool_cache.py",
         ]
     }
+    if full:
+        native_path = Path(sys.modules["jope._telemetry"].__file__)
+        manifest["native_telemetry_extension"] = {
+            "path": str(native_path),
+            "sha256": sha(native_path),
+        }
     preregistration = args.output / "gp_exploration_preregistration.json"
     manifest["gp_exploration_preregistration"] = (
         {"path": str(preregistration), "sha256": sha(preregistration)}
@@ -672,9 +755,14 @@ def main():
     ]
     release_gpu_round(lock)  # startup qualification is complete
     for rnd in round_indices:
+        if reporter:
+            reporter.begin()
         fcntl.flock(lock, fcntl.LOCK_EX)
         used_bytes = sum(
-            p.stat().st_size for p in args.output.rglob("*") if p.is_file()
+            p.stat().st_size
+            for root in [args.output, *args.campaign_prior_output]
+            for p in root.rglob("*")
+            if p.is_file()
         )
         if (
             used_bytes > 10 * 1024**3
@@ -688,6 +776,10 @@ def main():
                 "completed round exists; use a new run with explicit checkpoint resume"
             )
         plan = proposal_plan(args.seed, rnd, proposal_history, args.steps)
+        if full:
+            plan["steps"] = args.steps
+            plan["lr_factor"] = 1.0
+            plan["reason"] = "full_cohort_seeded_adapter_warm_restart"
         if constraint_functions:
             plan["lr_factor"] = 1.0
             plan["reason"] = "projected_score_margin_step_not_further_lr_decay"
@@ -734,12 +826,25 @@ def main():
         snap = {
             n: p.detach().clone() for n, p in net.named_parameters() if p.requires_grad
         }
+        if full:
+            plan["warm_restart"] = warm_restart_adapter(
+                net, opt, plan["round_seed"], rnd
+            )
+            effective_lr = [g["lr"] for g in opt.param_groups]
         for step in range(plan["steps"]):
             phase_start = time.monotonic()
             headroom()
             phase["headroom_wait"] += time.monotonic() - phase_start
             phase_start = time.monotonic()
-            cids = random.choices(round_train, k=args.batch_size)
+            if reporter:
+                reporter.begin_pack()
+            cids = (
+                reporter.training_order(
+                    plan["round_seed"] + step, args.batch_size, False
+                )
+                if reporter
+                else random.choices(round_train, k=args.batch_size)
+            )
             selections = []
             for c in cids:
                 selections.append(training_indices(pools[c], args.slate_size))
@@ -749,11 +854,16 @@ def main():
             pack_start = time.monotonic()
             packed = device_pool_cache.pack(pools, cids, selections)
             torch.cuda.synchronize()
+            if reporter:
+                reporter.packed(cids, packed["host_payload_bytes"])
             batch_profile["device_pack_seconds"] += time.monotonic() - pack_start
             batch_profile["cpu_index_bytes"] += packed["cpu_index_bytes"]
             batch_profile["avoided_cpu_feature_slate_bytes"] += packed[
                 "avoided_cpu_feature_slate_bytes"
             ]
+            if full:
+                device_pool_cache.release_resident_pools()
+                torch.cuda.empty_cache()
             model_start = time.monotonic()
             pred = predict(cids, selections, packed)
             target = packed["fitness"].float()
@@ -798,6 +908,10 @@ def main():
             del packed  # release the large slate before the next gather/GP phase
             if projection_failed:
                 break
+        # The final autograd result keeps references to large input/signature
+        # tensors even after backward. Drop them before the next round guard.
+        del pred, target, gates, loss
+        opt.zero_grad(set_to_none=True)
         torch.cuda.synchronize()
         train_wall = time.monotonic() - start
         guard.verify_dope_frozen_unchanged(net, before)
@@ -820,6 +934,7 @@ def main():
         )
         phase_start = time.monotonic()
         candidate_dev = utility()
+        candidate_train = utility(train, "train") if full else None
         candidate_hash = hashlib.sha256()
         for name, parameter in sorted(net.named_parameters()):
             if parameter.requires_grad:
@@ -828,6 +943,25 @@ def main():
                     parameter.detach().cpu().contiguous().numpy().tobytes()
                 )
         candidate_parameter_sha256 = candidate_hash.hexdigest()
+        if reporter:
+            reporter.scores(
+                dev,
+                candidate_dev["per_context"],
+                "negative_train_cv_fitness_gate_penalty",
+                True,
+                "flywheel-adapter-candidate",
+                candidate_parameter_sha256,
+                rnd,
+            )
+            reporter.scores(
+                train,
+                candidate_train["per_context"],
+                "negative_train_cv_fitness_gate_penalty",
+                True,
+                "flywheel-adapter-candidate",
+                candidate_parameter_sha256,
+                rnd,
+            )
         if candidate_dev["mean"] < incumbent.best_utility:
             rejected = args.output / "rejected" / f"round-{rnd:02d}.pt"
             rejected.parent.mkdir(exist_ok=True)
@@ -887,7 +1021,10 @@ def main():
 
         tokenizer = tiktoken.get_encoding("cl100k_base")
         evaluator.EVAL_SCRATCH_ROOT = args.output / f"rust_eval_round{rnd:02d}"
-        for i, c in enumerate(train):
+        gp_contexts = (
+            reporter.training_order(plan["round_seed"], 16, True) if reporter else train
+        )
+        for i, c in enumerate(gp_contexts):
             headroom()
             p = pools[c]
             parents = [r for r in bank if r["context_sha256"] == c]
@@ -974,6 +1111,16 @@ def main():
                         )
                         + "\n"
                     )
+                if reporter and r["status"] == "completed":
+                    reporter.scores(
+                        [c],
+                        [float(r["fitness"])],
+                        "train_cv_fitness",
+                        False,
+                        "gp-program",
+                        r["program_sha256"],
+                        rnd,
+                    )
                 r["context_sha256"] = c
                 r["evaluation_scope"] = "full_train_cv"
                 r["input_identity"] = {
@@ -1048,11 +1195,12 @@ def main():
             * args.batch_size
             / train_wall,
             "round_contexts_per_second": len(train) / wall,
-            "tokens_per_second": token_count / wall,
+            "gp_dsl_tokens_per_second": None if full else token_count / wall,
             "tokens_count": token_count,
             "tokens_scope": "evaluated GP DSL tokens (cl100k_base) per full round wall second; not emitted target-language code",
             "dev_utility": dev_stats,
             "candidate_dev_utility": candidate_dev,
+            "candidate_train_utility": candidate_train,
             "adapter_admission": adapter_admission,
             "evaluation_identity": evaluation_identity,
             "phase_wall_seconds": phase,
@@ -1095,7 +1243,7 @@ def main():
             bundle_path = args.phase3_gate_bundles / f"round-{rnd:02d}.json"
             try:
                 phase3 = qualify_phase3_bundle(json.loads(bundle_path.read_text()))
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 -- invalid bundles remain unqualified
                 phase3 = {
                     "schema": "jope.phase3.round_qualification.v1",
                     "scope": "keyed_subset",
@@ -1106,7 +1254,10 @@ def main():
                 }
             row["phase3_qualification"] = phase3
             write_json(args.output / f"round-{rnd:02d}.phase3.json", phase3)
-        write_json(args.output / f"round-{rnd:02d}.json", row)
+        if reporter:
+            row = reporter.finish(row)
+        else:
+            write_json(args.output / f"round-{rnd:02d}.json", row)
         proposal_history.append(row)
         remaining = (
             "continuous"
@@ -1121,15 +1272,16 @@ def main():
             if args.continuous
             else f"remaining approximately {(start_round + args.rounds - 1 - rnd) * wall:.0f}s"
         )
-        status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
-        status.write_text(
-            "# Fused flywheel status\n\n"
-            + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; training {train_wall:.2f}s; device packing {batch_profile['device_pack_seconds']:.2f}s; model/targets {batch_profile['model_forward_target_seconds']:.2f}s. Old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nProposal seed {plan['round_seed']}; retry level {plan['retry_level']}; actual updates {plan['steps']}; GP exploration {plan['gp_exploration']}. Effective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
-        )
-        findings = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_FINDINGS.md"
-        if findings.exists():
-            with status.open("a") as status_stream:
-                status_stream.write("\n" + findings.read_text())
+        if not full:
+            status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
+            status.write_text(
+                "# Fused flywheel status\n\n"
+                + f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['gp_dsl_tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; training {train_wall:.2f}s; device packing {batch_profile['device_pack_seconds']:.2f}s; model/targets {batch_profile['model_forward_target_seconds']:.2f}s. Old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nProposal seed {plan['round_seed']}; retry level {plan['retry_level']}; actual updates {plan['steps']}; GP exploration {plan['gp_exploration']}. Effective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
+            )
+            findings = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_FINDINGS.md"
+            if findings.exists():
+                with status.open("a") as status_stream:
+                    status_stream.write("\n" + findings.read_text())
         if generated and failed == len(generated):
             raise RuntimeError(
                 "all GP evaluations failed; round retained as unqualified, stopping continuation"

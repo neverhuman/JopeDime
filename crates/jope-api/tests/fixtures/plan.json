@@ -1,0 +1,61 @@
+{
+  "plan_digest": "sha256:9c1e…",
+  "task": {
+    "value": "regression",
+    "inferred": true,
+    "reason": "numeric target with 3,842 distinct values"
+  },
+  "objective": {
+    "name": "rmse",
+    "digest": "sha256:…",
+    "direction": "minimize",
+    "fitting": "selection_only"
+  },
+  "rows": {
+    "total": "20640",
+    "fit": "16512",
+    "holdout": "4128",
+    "test": null
+  },
+  "effort": {
+    "name": "medium",
+    "evaluations": "128",
+    "wall_seconds": "60",
+    "cv_folds": 5,
+    "rounds_in_flight": 1
+  },
+  "guidance": {
+    "value": "learned",
+    "prior_only": false,
+    "reason": "bundle qualified for regression with full landmarks on cpu-f32"
+  },
+  "landmarks": {
+    "mode": "full",
+    "sample_rows": 1024
+  },
+  "languages": {
+    "requested": [
+      "python",
+      "rust"
+    ],
+    "excluded_operations": [
+      "<op names>"
+    ],
+    "intersection_empty": false
+  },
+  "placement": {
+    "dope": "cpu",
+    "ranker": "cpu",
+    "evaluation": "cpu",
+    "workers": 7
+  },
+  "limits": {
+    "eval_timeout_s": 30,
+    "worker_rss_bytes": "2147483648"
+  },
+  "estimates": {
+    "peak_ram_bytes": "1181116006",
+    "disk_bytes": "52428800"
+  },
+  "warnings": []
+}
