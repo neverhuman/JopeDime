@@ -2550,6 +2550,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-client"
+version = "0.4.1"
+
+[[package]]
 name = "jope-datasets"
 version = "0.4.1"
 dependencies = [
@@ -2811,6 +2815,10 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.20",
 ]
+
+[[package]]
+name = "jope-service"
+version = "0.4.1"
 
 [[package]]
 name = "jope-telemetry"
