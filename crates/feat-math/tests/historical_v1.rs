@@ -731,7 +731,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let pub02_identity = old_fixture("transitions/pub02_identity_rebaseline.v1.json");
     assert_eq!(
         pub02_identity["source_commit"],
-        "785f0f774a73b5ece6215a2bc81604230b310117"
+        "2b159a118851c8a8f2c21d474b569c9dfeffd6b8"
     );
     for record in [
         &optional_landmarks_dependency,

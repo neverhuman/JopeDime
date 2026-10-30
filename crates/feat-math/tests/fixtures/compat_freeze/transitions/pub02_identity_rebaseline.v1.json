@@ -3,17 +3,17 @@
   "decision": "Announced identity-only successor for PUB-02 public stage-operation names and registry wiring, after the API-01 jope-api lockfile identity, which follows RNK-11. The public-name catalog and its module declaration change the feat-math implementation identity; evaluation semantics, DSL ABI, Cargo.lock, behavior fixtures, lineage source hashes and shipped known-identity rows do not change.",
   "plan_reference": "JopeDime v1 PUB-02; Jepson-approved scope_2218 and pub02_0515 rulings; ADR-0004",
   "pr_reference": "pending",
-  "source_commit": "785f0f774a73b5ece6215a2bc81604230b310117",
+  "source_commit": "2b159a118851c8a8f2c21d474b569c9dfeffd6b8",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "c0fa72e43b451e8cabedd916780543a04452f7b7907b49728e0d98c9d00de0db",
-      "after": "fbfbb7dd059589ce78cb65a29eff35332ae6a9bc2db92731b68279395e417247"
+      "after": "f8a48f8554c0506a2f63e3e734bc53ccbb46c760f00d6b4d7596e369830da17c"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "900c2bf7a1b096906d6559af3babf7106915655f1833a5646057c33fb69c8101",
-      "after": "f33a66eaaafad6cf61981de00247aa9d34d5c3b9031acda977cc89367c1d0def"
+      "after": "31c2e4afdc6dff69d2c41a7d2f87705554472e13694c93e276218424a300f6f1"
     }
   ],
   "identity": {
